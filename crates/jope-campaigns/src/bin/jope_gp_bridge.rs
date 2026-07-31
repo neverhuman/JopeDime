@@ -482,7 +482,12 @@ fn read_dynamic_robust_bank(
     ensure!(
         bank.tasks
             .keys()
-            .all(|key| matches!(key.as_str(), "regression" | "binary" | "timeseries")),
+            .all(|key| {
+                matches!(
+                    key.as_str(),
+                    "regression" | "binary" | "timeseries" | "multiclass"
+                )
+            }),
         "robust seed bank contains an unsupported task"
     );
     let mut rows = bank

@@ -1925,6 +1925,18 @@ fn manifest_wave(path: &Path) -> Result<String> {
     Ok(wave.to_owned())
 }
 
+/// Per-task authority metric (R1/D2); must agree with
+/// `jope_dime_regressor::task::TaskKind::primary_metric`.
+fn expected_manifest_metric(task: &str) -> Option<&'static str> {
+    match task {
+        "regression" => Some("r2"),
+        "binary" => Some("auc"),
+        "timeseries" => Some("negative_mase"),
+        "multiclass" => Some("macro_f1"),
+        _ => None,
+    }
+}
+
 fn validate_manifest(
     path: &Path,
     checkpoint_sha256: &str,
@@ -1978,7 +1990,7 @@ fn validate_manifest(
     let task = value
         .get("task")
         .and_then(Value::as_str)
-        .filter(|task| matches!(*task, "regression" | "binary" | "timeseries"))
+        .filter(|task| matches!(*task, "regression" | "binary" | "timeseries" | "multiclass"))
         .context("manifest task is invalid")?;
     let dataset_hash = value
         .get("dataset_hash")
@@ -1994,12 +2006,7 @@ fn validate_manifest(
     let authority = value
         .get("label_authority")
         .context("manifest authority is absent")?;
-    let expected_metric = match task {
-        "regression" => "r2",
-        "binary" => "auc",
-        "timeseries" => "negative_mase",
-        _ => unreachable!("task filtered above"),
-    };
+    let expected_metric = expected_manifest_metric(task).expect("task filtered above");
     if authority.get("score_tier").and_then(Value::as_str) != Some("test_exact")
         || authority.get("metric").and_then(Value::as_str) != Some(expected_metric)
         || authority.get("test_adaptive").and_then(Value::as_bool) != Some(true)
@@ -2953,6 +2960,23 @@ impl Drop for SingleInstanceLock {
 mod tests {
     use super::*;
     use tempfile::tempdir;
+
+    #[test]
+    fn manifest_metric_map_agrees_with_task_authority() {
+        use jope_dime_regressor::task::TaskKind;
+        for kind in [
+            TaskKind::Regression,
+            TaskKind::Binary,
+            TaskKind::Timeseries,
+            TaskKind::Multiclass,
+        ] {
+            assert_eq!(
+                expected_manifest_metric(kind.as_str()).unwrap(),
+                kind.primary_metric()
+            );
+        }
+        assert_eq!(expected_manifest_metric("multi_label"), None);
+    }
 
     fn checkpoint() -> String {
         "a".repeat(64)

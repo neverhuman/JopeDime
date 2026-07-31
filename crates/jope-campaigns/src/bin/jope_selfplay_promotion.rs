@@ -20,6 +20,7 @@
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
+use jope_dime_regressor::selfplay_expansion::TASKS;
 use rusqlite::{params, Connection, OptionalExtension};
 use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
@@ -553,16 +554,36 @@ impl ActionJournal {
 // Catalog validation (verify_contexts=False surface of the Python original)
 // ---------------------------------------------------------------------------
 
+/// Per-task authority metric (R1/D2); must agree with
+/// `jope_dime_regressor::task::TaskKind::primary_metric`.
+fn expected_catalog_metric(task: &str) -> Result<&'static str> {
+    match task {
+        "regression" => Ok("r2"),
+        "binary" => Ok("auc"),
+        "timeseries" => Ok("negative_mase"),
+        "multiclass" => Ok("macro_f1"),
+        _ => bail!("catalog contains unsupported task {task}"),
+    }
+}
+
 fn declared_catalog_counts(manifest: &Value) -> BTreeMap<String, i64> {
     let mut counts = BTreeMap::new();
     let declared = manifest
         .get("task_counts")
         .or_else(|| manifest.get("declared_task_counts"));
     if let Some(Value::Object(map)) = declared {
-        for task in ["regression", "binary"] {
+        for task in TASKS {
+            // The legacy tasks must always be declared (-1 fails closed
+            // below); catalogs written before the new tasks existed simply
+            // omit them, which is a declared count of zero.
+            let missing = if matches!(task, "regression" | "binary") {
+                -1
+            } else {
+                0
+            };
             counts.insert(
                 task.to_owned(),
-                map.get(task).and_then(Value::as_i64).unwrap_or(-1),
+                map.get(task).and_then(Value::as_i64).unwrap_or(missing),
             );
         }
         return counts;
@@ -591,12 +612,23 @@ fn validate_catalog_counts(
     if declared.values().any(|count| *count < 0) {
         bail!("catalog manifest does not declare every per-task count");
     }
-    let expected_tasks: BTreeSet<&str> = ["regression", "binary"].into();
-    if declared.keys().map(String::as_str).collect::<BTreeSet<_>>() != expected_tasks {
+    let known_tasks: BTreeSet<&str> = TASKS.into();
+    let declared_tasks = declared.keys().map(String::as_str).collect::<BTreeSet<_>>();
+    if !declared_tasks.is_subset(&known_tasks)
+        || !declared_tasks.contains("regression")
+        || !declared_tasks.contains("binary")
+    {
         bail!("catalog manifest declares unsupported task counts");
     }
+    // Missing new-task declarations mean zero datasets for that task; the
+    // legacy-task declarations stay mandatory (checked just above).
+    let mut expected: BTreeMap<String, i64> =
+        TASKS.iter().map(|task| ((*task).to_owned(), 0)).collect();
+    for (task, count) in declared {
+        expected.insert(task.clone(), *count);
+    }
     let mut counts: BTreeMap<String, i64> =
-        [("regression".to_owned(), 0), ("binary".to_owned(), 0)].into();
+        TASKS.iter().map(|task| ((*task).to_owned(), 0)).collect();
     let mut seen = BTreeSet::new();
     for entry in entries {
         let task = entry.get("task").and_then(Value::as_str).unwrap_or("");
@@ -612,7 +644,7 @@ fn validate_catalog_counts(
         }
         *counts.get_mut(task).expect("checked") += 1;
     }
-    if &counts != declared {
+    if counts != expected {
         bail!("catalog count mismatch: expected {declared:?}, found {counts:?}");
     }
     Ok(counts)
@@ -719,12 +751,7 @@ fn validate_catalog_manifest(pointer_path: &Path) -> Result<Value> {
     for entry in entries {
         let task = get_str(entry, "task")?;
         let metric = entry.get("metric").and_then(Value::as_str).unwrap_or("");
-        let expected_metric = match task {
-            "regression" => "r2",
-            "binary" => "auc",
-            "timeseries" => "negative_mase",
-            _ => bail!("catalog contains unsupported task {task}"),
-        };
+        let expected_metric = expected_catalog_metric(task)?;
         if metric != expected_metric {
             bail!("catalog metric mismatch for {task}");
         }
@@ -3079,6 +3106,23 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn catalog_metric_map_agrees_with_task_authority() {
+        use jope_dime_regressor::task::TaskKind;
+        for kind in [
+            TaskKind::Regression,
+            TaskKind::Binary,
+            TaskKind::Timeseries,
+            TaskKind::Multiclass,
+        ] {
+            assert_eq!(
+                expected_catalog_metric(kind.as_str()).unwrap(),
+                kind.primary_metric()
+            );
+        }
+        assert!(expected_catalog_metric("multi_label").is_err());
+    }
 
     #[test]
     fn promotion_ends_at_pointer_publication_and_never_builds_supply() {

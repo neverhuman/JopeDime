@@ -194,9 +194,9 @@ fn load_request(path: &Path) -> Result<(Request, String)> {
     ensure!(
         matches!(
             request.task.as_str(),
-            "regression" | "binary" | "timeseries"
+            "regression" | "binary" | "timeseries" | "multiclass"
         ),
-        "task must be regression, binary, or timeseries"
+        "task must be regression, binary, timeseries, or multiclass"
     );
     for (label, digest) in [
         ("checkpoint_sha256", &request.checkpoint_sha256),

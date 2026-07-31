@@ -205,6 +205,18 @@ pub fn run(command: &Path, arguments: &[String]) -> Result<Output> {
         .with_context(|| format!("run {}", command.display()))
 }
 
+/// Per-task authority metric (R1/D2); must agree with
+/// `crate::task::TaskKind::primary_metric`.
+fn expected_evaluation_metric(task: &str) -> Result<&'static str> {
+    match task {
+        "regression" => Ok("r2"),
+        "binary" => Ok("auc"),
+        "timeseries" => Ok("negative_mase"),
+        "multiclass" => Ok("macro_f1"),
+        _ => bail!("unsupported evaluation task"),
+    }
+}
+
 pub fn evaluation_protocol_sha256(
     task: &str,
     metric: &str,
@@ -212,12 +224,7 @@ pub fn evaluation_protocol_sha256(
     train_sha256: &str,
     test_sha256: &str,
 ) -> Result<String> {
-    let expected = match task {
-        "regression" => "r2",
-        "binary" => "auc",
-        "timeseries" => "negative_mase",
-        _ => bail!("unsupported evaluation task"),
-    };
+    let expected = expected_evaluation_metric(task)?;
     if metric != expected || score_tier != "test_exact" {
         bail!("evaluation protocol task/metric/tier mismatch");
     }
@@ -301,6 +308,23 @@ pub fn collect_json_files(directory: &Path, recursive: bool) -> Result<Vec<PathB
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn evaluation_metric_map_agrees_with_task_authority() {
+        use crate::task::TaskKind;
+        for kind in [
+            TaskKind::Regression,
+            TaskKind::Binary,
+            TaskKind::Timeseries,
+            TaskKind::Multiclass,
+        ] {
+            assert_eq!(
+                expected_evaluation_metric(kind.as_str()).unwrap(),
+                kind.primary_metric()
+            );
+        }
+        assert!(expected_evaluation_metric("multi_label").is_err());
+    }
 
     #[test]
     fn protocol_hash_matches_frozen_python_vector() {

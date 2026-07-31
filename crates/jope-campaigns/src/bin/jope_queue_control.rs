@@ -1033,7 +1033,7 @@ fn validate_manifest(claim: &Claim) -> Result<Value> {
         .get("task")
         .and_then(Value::as_str)
         .unwrap_or_default();
-    if !matches!(task, "regression" | "binary" | "timeseries") {
+    if !matches!(task, "regression" | "binary" | "timeseries" | "multiclass") {
         bail!("unsupported task");
     }
     let candidates = manifest
@@ -2529,7 +2529,10 @@ fn build_wave_blocker_plan(
             as usize;
         if !is_sha256(expected_hash)
             || !seen_paths.insert(relative.to_owned())
-            || !matches!(expected_task, "regression" | "binary" | "timeseries")
+            || !matches!(
+                expected_task,
+                "regression" | "binary" | "timeseries" | "multiclass"
+            )
         {
             bail!("wave summary manifest entry is invalid or duplicated");
         }

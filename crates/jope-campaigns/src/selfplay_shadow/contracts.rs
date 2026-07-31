@@ -48,20 +48,87 @@ pub const FLYWHEEL_LIVENESS_SCHEMA: &str = "FlywheelLiveness.v1";
 pub enum Task {
     Binary,
     Regression,
+    Timeseries,
+    Multiclass,
 }
 
 impl Task {
+    /// Every wire task, legacy tasks first (order is load-bearing for the
+    /// `find`-style scans that historically probed `[Regression, Binary]`).
+    pub const ALL: [Task; 4] = [
+        Task::Regression,
+        Task::Binary,
+        Task::Timeseries,
+        Task::Multiclass,
+    ];
+
+    /// The 8-slot alternation cycle (D6): R,B,R,B,TS,R,B,MC. With only
+    /// regression/binary eligible the starvation-skip reproduces the legacy
+    /// strict R,B alternation exactly.
+    pub const ROTATION_CYCLE: [Task; 8] = [
+        Task::Regression,
+        Task::Binary,
+        Task::Regression,
+        Task::Binary,
+        Task::Timeseries,
+        Task::Regression,
+        Task::Binary,
+        Task::Multiclass,
+    ];
+
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Binary => "binary",
             Self::Regression => "regression",
+            Self::Timeseries => "timeseries",
+            Self::Multiclass => "multiclass",
         }
     }
 
-    pub fn other(self) -> Self {
-        match self {
-            Self::Binary => Self::Regression,
-            Self::Regression => Self::Binary,
+    /// On-disk corpus directory for this task (D1): the multiclass corpus
+    /// keeps its legacy `multi_label` directory name; every other task's
+    /// directory matches its wire name.
+    pub fn corpus_dir_name(self) -> &'static str {
+        crate::task::TaskKind::from(self).corpus_dir_name()
+    }
+
+    /// Starting at slot `position` of [`Task::ROTATION_CYCLE`], return the
+    /// first eligible task scanning forward (wrapping), plus the slot index
+    /// immediately after the chosen slot. Ineligible tasks are skipped
+    /// (starvation-skip). If NO task is eligible the slot at `position` is
+    /// returned unconditionally, so the successor can never deadlock.
+    pub fn rotation_successor(position: usize, eligible: impl Fn(Task) -> bool) -> (Task, usize) {
+        let length = Self::ROTATION_CYCLE.len();
+        for offset in 0..length {
+            let slot = (position + offset) % length;
+            let task = Self::ROTATION_CYCLE[slot];
+            if eligible(task) {
+                return (task, (slot + 1) % length);
+            }
+        }
+        let slot = position % length;
+        (Self::ROTATION_CYCLE[slot], (slot + 1) % length)
+    }
+}
+
+impl From<crate::task::TaskKind> for Task {
+    fn from(kind: crate::task::TaskKind) -> Self {
+        match kind {
+            crate::task::TaskKind::Regression => Self::Regression,
+            crate::task::TaskKind::Binary => Self::Binary,
+            crate::task::TaskKind::Timeseries => Self::Timeseries,
+            crate::task::TaskKind::Multiclass => Self::Multiclass,
+        }
+    }
+}
+
+impl From<Task> for crate::task::TaskKind {
+    fn from(task: Task) -> Self {
+        match task {
+            Task::Regression => Self::Regression,
+            Task::Binary => Self::Binary,
+            Task::Timeseries => Self::Timeseries,
+            Task::Multiclass => Self::Multiclass,
         }
     }
 }
@@ -79,7 +146,9 @@ impl FromStr for Task {
         match value {
             "binary" => Ok(Self::Binary),
             "regression" => Ok(Self::Regression),
-            _ => bail!("task must be binary or regression"),
+            "timeseries" => Ok(Self::Timeseries),
+            "multiclass" => Ok(Self::Multiclass),
+            _ => bail!("task must be regression, binary, timeseries, or multiclass"),
         }
     }
 }
@@ -857,6 +926,79 @@ mod tests {
 
     fn digest(character: char) -> Sha256Digest {
         Sha256Digest::parse(character.to_string().repeat(64)).unwrap()
+    }
+
+    #[test]
+    fn task_wire_names_and_conversions_are_stable() {
+        for task in Task::ALL {
+            assert_eq!(
+                serde_json::to_value(task).unwrap(),
+                serde_json::Value::String(task.as_str().to_owned())
+            );
+            assert_eq!(task.as_str().parse::<Task>().unwrap(), task);
+            assert_eq!(Task::from(crate::task::TaskKind::from(task)), task);
+        }
+        assert_eq!(Task::Multiclass.corpus_dir_name(), "multi_label");
+        assert_eq!(Task::Timeseries.corpus_dir_name(), "timeseries");
+        assert!("multi_label".parse::<Task>().is_err());
+    }
+
+    #[test]
+    fn rotation_successor_with_legacy_eligibility_reproduces_strict_alternation() {
+        let legacy = |task: Task| matches!(task, Task::Regression | Task::Binary);
+        let mut position = 0;
+        let mut picks = Vec::new();
+        for _ in 0..8 {
+            let (task, next) = Task::rotation_successor(position, legacy);
+            picks.push(task);
+            position = next;
+        }
+        // Exactly the pre-widening R,B alternation, for eight successive calls.
+        assert_eq!(
+            picks,
+            vec![
+                Task::Regression,
+                Task::Binary,
+                Task::Regression,
+                Task::Binary,
+                Task::Regression,
+                Task::Binary,
+                Task::Regression,
+                Task::Binary,
+            ]
+        );
+    }
+
+    #[test]
+    fn rotation_successor_visits_every_eligible_task_and_never_deadlocks() {
+        let mut position = 0;
+        let mut picks = Vec::new();
+        for _ in 0..8 {
+            let (task, next) = Task::rotation_successor(position, |_| true);
+            picks.push(task);
+            position = next;
+        }
+        assert_eq!(picks, Task::ROTATION_CYCLE.to_vec());
+
+        // Starvation-skip: with multiclass still ineligible the cycle covers
+        // the other three tasks and returns to the top.
+        let no_multiclass = |task: Task| task != Task::Multiclass;
+        let mut position = 4;
+        let mut picks = Vec::new();
+        for _ in 0..4 {
+            let (task, next) = Task::rotation_successor(position, no_multiclass);
+            picks.push(task);
+            position = next;
+        }
+        assert_eq!(
+            picks,
+            vec![Task::Timeseries, Task::Regression, Task::Binary, Task::Regression]
+        );
+
+        // No eligible task at all: the current slot is returned unconditionally.
+        let (task, next) = Task::rotation_successor(4, |_| false);
+        assert_eq!(task, Task::Timeseries);
+        assert_eq!(next, 5);
     }
 
     #[test]

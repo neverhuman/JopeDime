@@ -457,11 +457,14 @@ fn raw_table_named(headers: &[String], rows: &[Vec<f64>]) -> Result<RawTable> {
     RawTable::new(headers.to_vec(), cells)
 }
 
+/// Per-task authority metric (R1/D2); must agree with
+/// `jope_dime_regressor::task::TaskKind::primary_metric`.
 fn task_metric(task: &str) -> Option<&'static str> {
     match task {
         "regression" => Some("r2"),
         "binary" => Some("auc"),
         "timeseries" => Some("negative_mase"),
+        "multiclass" => Some("macro_f1"),
         _ => None,
     }
 }
@@ -470,6 +473,7 @@ fn secondary_metric(task: &str) -> &'static str {
     match task {
         "binary" => "logloss",
         "timeseries" => "mase",
+        "multiclass" => "accuracy",
         _ => "rmse",
     }
 }
@@ -1568,6 +1572,24 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn metric_maps_agree_with_task_authority() {
+        use jope_dime_regressor::task::TaskKind;
+        for kind in [
+            TaskKind::Regression,
+            TaskKind::Binary,
+            TaskKind::Timeseries,
+            TaskKind::Multiclass,
+        ] {
+            assert_eq!(task_metric(kind.as_str()), Some(kind.primary_metric()));
+        }
+        assert_eq!(task_metric("multi_label"), None);
+        assert_eq!(secondary_metric("multiclass"), "accuracy");
+        assert_eq!(secondary_metric("timeseries"), "mase");
+        assert_eq!(secondary_metric("binary"), "logloss");
+        assert_eq!(secondary_metric("regression"), "rmse");
+    }
 
     fn shard(task: &str, authority: Option<LabelAuthority>) -> Shard {
         Shard {

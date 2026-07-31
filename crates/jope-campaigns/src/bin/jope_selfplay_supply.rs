@@ -1872,7 +1872,7 @@ fn context_proposal_request(
             .get("dataset_hash")
             .and_then(Value::as_str)
             .context("frozen cohort entry lacks dataset hash")?;
-        if !matches!(task, "binary" | "regression") {
+        if !matches!(task, "binary" | "regression" | "timeseries" | "multiclass") {
             bail!("frozen cohort has an invalid task");
         }
         let matches = by_dataset

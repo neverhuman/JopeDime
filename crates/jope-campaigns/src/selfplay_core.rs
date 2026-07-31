@@ -525,7 +525,9 @@ pub fn compiled_cache_key(
             return Err(error(format!("invalid compile-cache identity: {label}")));
         }
     }
-    if !matches!(task, "regression" | "binary" | "timeseries") || target_triple.is_empty() {
+    if !matches!(task, "regression" | "binary" | "timeseries" | "multiclass")
+        || target_triple.is_empty()
+    {
         return Err(error("invalid compile-cache task or target"));
     }
     let material = json!({

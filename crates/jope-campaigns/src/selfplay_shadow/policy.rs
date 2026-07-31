@@ -893,10 +893,18 @@ impl TargetCheckpointMetrics {
     }
 }
 
+/// Enforce the 50% target-task / 50% auxiliary mix of a training batch.
+///
+/// `auxiliary_rows` is the POOLED count of every non-target task: with the
+/// four-task vocabulary the auxiliary half may mix regression, binary,
+/// timeseries, and multiclass rows, and this validator is deliberately
+/// indifferent to that composition (per-task quota policy is D5 work on the
+/// trainer side). Semantics are unchanged from the two-task era, where the
+/// auxiliary half was simply the one other task.
 pub fn validate_target_aux_mix(target_rows: usize, auxiliary_rows: usize) -> Result<()> {
     ensure!(
         target_rows == auxiliary_rows && target_rows > 0,
-        "training batches must be 50% target-task and 50% auxiliary-task"
+        "training batches must be 50% target-task and 50% pooled auxiliary-task"
     );
     Ok(())
 }

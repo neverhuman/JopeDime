@@ -961,9 +961,13 @@ fn allocate_requests(
         rows.sort_by(|left, right| left.pair_id.cmp(&right.pair_id));
     }
     let priority_quota = (limit * 3).div_ceil(5);
-    let other = match priority {
-        Task::Binary => Task::Regression,
-        Task::Regression => Task::Binary,
+    // The repair lane still splits its budget across the two legacy tasks;
+    // `task_priority` can only return Regression or Binary until new-task
+    // repair activates with its own allocation policy.
+    let other = if priority == Task::Binary {
+        Task::Regression
+    } else {
+        Task::Binary
     };
     let mut output = Vec::new();
     for (task, quota) in [(priority, priority_quota), (other, limit - priority_quota)] {

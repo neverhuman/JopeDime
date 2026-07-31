@@ -788,6 +788,14 @@ impl DatasetProfileV1 {
                     reasons.push("finite regression targets are below 99%".to_owned());
                 }
             }
+            // The OpenML acquisition lane only sources the two legacy tasks;
+            // quarantine anything else fail-closed until per-task eligibility
+            // rules exist for the new lanes.
+            Task::Timeseries | Task::Multiclass => {
+                reasons.push(format!(
+                    "{task} datasets are not eligible for the OpenML acquisition lane"
+                ));
+            }
         }
         Ok(DatasetEligibilityV1 {
             eligible: reasons.is_empty(),

@@ -249,7 +249,10 @@ pub struct DatasetIdentity {
 impl DatasetIdentity {
     pub fn validate(&self) -> Result<()> {
         ensure!(
-            matches!(self.task.as_str(), "regression" | "binary" | "timeseries"),
+            matches!(
+                self.task.as_str(),
+                "regression" | "binary" | "timeseries" | "multiclass"
+            ),
             "invalid task: {}",
             self.task
         );
@@ -639,8 +642,14 @@ fn spread_rank(spread: Option<f64>) -> i64 {
     }
 }
 
-/// Select exactly 64 regression and 64 binary datasets using the 16/32/16
+/// Select exactly 64 datasets per participating task using the 16/32/16
 /// policy, under the breadth-over-depth admission rules in [`MicroAdmission`].
+///
+/// A task participates once its pool is non-empty; the legacy regression and
+/// binary tasks always participate (an empty legacy pool is an error). The
+/// new tasks have empty pools until their corpora are admitted, so today's
+/// waves remain exactly 64 regression + 64 binary; per-task cohort sizing for
+/// small corpora is Stage-5 (D9) work.
 pub fn select_micro_cohort(
     entries: &[MicroDataset],
     observations: &HashMap<(String, String), u64>,
@@ -650,12 +659,15 @@ pub fn select_micro_cohort(
     ensure!(!wave_id.is_empty(), "wave id is absent");
     admission.validate()?;
     let mut selected_all = Vec::with_capacity(MICRO_WAVE_SIZE);
-    for task in ["regression", "binary"] {
+    for task in crate::selfplay_expansion::TASKS {
         let pool = entries
             .iter()
             .filter(|row| row.task == task)
             .cloned()
             .collect::<Vec<_>>();
+        if pool.is_empty() && !matches!(task, "regression" | "binary") {
+            continue;
+        }
         ensure!(
             pool.len() >= MICRO_TASK_SIZE,
             "{task}: a micro-wave requires at least 64 datasets"

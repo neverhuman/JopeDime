@@ -286,6 +286,13 @@ impl AcceptedByTaskV2 {
         match task {
             Task::Binary => &self.binary,
             Task::Regression => &self.regression,
+            // AcceptedByTask.v2 is a two-front wire schema; new-task fronts
+            // arrive with a future schema revision. No caller can reach this
+            // today (no new-task anchors exist), and reaching it would mean a
+            // routing bug, so fail loudly rather than mislabel a front.
+            Task::Timeseries | Task::Multiclass => {
+                panic!("AcceptedByTask.v2 has no {task} front")
+            }
         }
     }
 
@@ -301,6 +308,9 @@ impl AcceptedByTaskV2 {
         let front = match task {
             Task::Binary => &mut self.binary,
             Task::Regression => &mut self.regression,
+            Task::Timeseries | Task::Multiclass => {
+                bail!("AcceptedByTask.v2 has no {task} front to swap")
+            }
         };
         ensure!(
             &front.checkpoint_sha256 == expected_parent,

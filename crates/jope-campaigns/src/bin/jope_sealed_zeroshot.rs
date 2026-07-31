@@ -35,6 +35,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
+use jope_dime_regressor::selfplay_expansion::TASKS;
 use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -257,7 +258,7 @@ fn build_portfolio(root: &Path, top_k: usize) -> Result<BTreeMap<String, Vec<Por
     }
 
     let mut per_task: BTreeMap<String, Vec<PortfolioGenome>> = BTreeMap::new();
-    for task in ["regression", "binary"] {
+    for task in TASKS {
         let mut rows: Vec<_> = tally
             .iter()
             .filter(|((t, _), _)| t == task)
@@ -344,7 +345,7 @@ fn plan(
     let mut per_task_planned: BTreeMap<String, usize> = BTreeMap::new();
     let mut spec_list = Vec::new();
 
-    for task in ["regression", "binary"] {
+    for task in TASKS {
         let mut taken = 0_usize;
         // Deterministic order: dataset_id ASC.
         let mut entries: Vec<&SealedEntry> =
@@ -626,7 +627,7 @@ fn report(plan_dir: &Path, runs: &Path, scq: &Path, out: &Path) -> Result<Value>
 
     // semantic -> (arm, checkpoint, coverage)
     let mut meta: HashMap<String, (String, String, u64)> = HashMap::new();
-    for task in ["regression", "binary"] {
+    for task in TASKS {
         for g in doc["portfolio"][task].as_array().into_iter().flatten() {
             meta.insert(
                 g["semantic_sha256"].as_str().unwrap_or_default().to_owned(),

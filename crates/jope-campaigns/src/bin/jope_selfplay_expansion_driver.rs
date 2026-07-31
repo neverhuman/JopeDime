@@ -11,6 +11,7 @@
 //! jope_expanded_catalog tool; Python is invoked only for torch encoders.
 
 use anyhow::{anyhow, bail, Context, Result};
+use jope_dime_regressor::selfplay_expansion::{corpus_dir_name, TASKS};
 use jope_dime_regressor::selfplay_runtime::{atomic_json, sha256_bytes, sha256_file};
 use rusqlite::Connection;
 use serde::Serialize;
@@ -601,9 +602,14 @@ fn refresh_filesystem_state(conn: &Connection, root: &Path) -> Result<(u64, u64)
     let now = now_ms();
     let mut scanned = 0_u64;
     let tx = conn.unchecked_transaction()?;
-    for task in ["regression", "binary"] {
-        let reg = Path::new(REGISTRY).join(task);
+    for task in TASKS {
+        let reg = Path::new(REGISTRY).join(corpus_dir_name(task));
         let cache_root = Path::new(ENCODINGS).join(format!("{task}-expanded"));
+        // The legacy corpus roots are mandatory; a new task's root may not
+        // exist on every host yet and simply contributes no rows.
+        if !reg.is_dir() && !matches!(task, "regression" | "binary") {
+            continue;
+        }
         for entry in std::fs::read_dir(&reg)?.flatten() {
             let name = entry.file_name().to_string_lossy().into_owned();
             let bare = name.strip_prefix("synth_").unwrap_or(&name);
@@ -726,7 +732,7 @@ fn refresh_observation_state(conn: &Connection, root: &Path) -> Result<u64> {
 
 fn stage_summary(conn: &Connection) -> Result<Value> {
     let mut summary = BTreeMap::new();
-    for task in ["regression", "binary"] {
+    for task in TASKS {
         let row = conn.query_row(
             "SELECT COUNT(*),
                     SUM(has_train_test_meta),

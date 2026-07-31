@@ -44,7 +44,7 @@ fn now_ms() -> i64 {
 fn validate_identity(identity: &PairIdentity) -> Result<()> {
     if !matches!(
         identity.task.as_str(),
-        "regression" | "binary" | "timeseries"
+        "regression" | "binary" | "timeseries" | "multiclass"
     ) {
         bail!("unsupported pair task {}", identity.task);
     }

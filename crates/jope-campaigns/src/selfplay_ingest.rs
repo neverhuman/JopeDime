@@ -214,13 +214,20 @@ fn finite_f64(value: &Value, field: &str) -> Result<f64> {
     Ok(number)
 }
 
-fn authority(value: &Value, task: &str, receipt: bool) -> Result<Authority> {
-    let expected_metric = match task {
-        "regression" => "r2",
-        "binary" => "auc",
-        "timeseries" => "negative_mase",
+/// Per-task authority metric (R1/D2); must agree with
+/// `crate::task::TaskKind::primary_metric`.
+fn expected_authority_metric(task: &str) -> Result<&'static str> {
+    match task {
+        "regression" => Ok("r2"),
+        "binary" => Ok("auc"),
+        "timeseries" => Ok("negative_mase"),
+        "multiclass" => Ok("macro_f1"),
         _ => bail!("unsupported task {task}"),
-    };
+    }
+}
+
+fn authority(value: &Value, task: &str, receipt: bool) -> Result<Authority> {
+    let expected_metric = expected_authority_metric(task)?;
     let tier_field = if receipt && value.get("tier").is_some() {
         "tier"
     } else {
@@ -1590,8 +1597,8 @@ fn known_rows(root: &Path) -> Result<BTreeMap<(String, String), Value>> {
 }
 
 fn validate_evidence_scope(task: &str, protocol_sha256: &str, limit: usize) -> Result<()> {
-    if !matches!(task, "regression" | "binary" | "timeseries") {
-        bail!("evidence task must be regression, binary, or timeseries");
+    if !matches!(task, "regression" | "binary" | "timeseries" | "multiclass") {
+        bail!("evidence task must be regression, binary, timeseries, or multiclass");
     }
     if !is_sha256(protocol_sha256) {
         bail!("evidence protocol is not a SHA-256 value");
@@ -2199,7 +2206,7 @@ fn newest_cohort(root: &Path) -> Result<Value> {
 fn expanded_cache_progress(catalog: &Value) -> Result<Value> {
     let counts = catalog.get("task_counts").cloned().unwrap_or(json!({}));
     let mut result = Map::new();
-    for task in ["regression", "binary"] {
+    for task in crate::selfplay_expansion::TASKS {
         let path = PathBuf::from(format!(
             "/home/ubuntu/jope-flywheel/encodings/{task}-expanded"
         ));
@@ -2854,6 +2861,23 @@ pub fn seeding_curve_after_reconcile(root: &Path) -> Value {
 mod tests {
     use super::*;
     use tempfile::TempDir;
+
+    #[test]
+    fn authority_metric_map_agrees_with_task_authority() {
+        use crate::task::TaskKind;
+        for kind in [
+            TaskKind::Regression,
+            TaskKind::Binary,
+            TaskKind::Timeseries,
+            TaskKind::Multiclass,
+        ] {
+            assert_eq!(
+                expected_authority_metric(kind.as_str()).unwrap(),
+                kind.primary_metric()
+            );
+        }
+        assert!(expected_authority_metric("multi_label").is_err());
+    }
 
     fn digest(character: char) -> String {
         std::iter::repeat_n(character, 64).collect()

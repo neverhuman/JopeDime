@@ -301,7 +301,12 @@ impl ProposalsPointer {
         ensure!(
             self.dl_slots_by_task
                 .keys()
-                .all(|key| matches!(key.as_str(), "regression" | "binary" | "timeseries")),
+                .all(|key| {
+                    matches!(
+                        key.as_str(),
+                        "regression" | "binary" | "timeseries" | "multiclass"
+                    )
+                }),
             "proposal pointer has an unknown task allocation"
         );
         let slots = *self
@@ -555,7 +560,10 @@ fn validate_catalog_entries(entries: &[CatalogEntry]) -> Result<()> {
     ensure!(!entries.is_empty(), "catalog is empty");
     for entry in entries {
         ensure!(
-            matches!(entry.task.as_str(), "regression" | "binary" | "timeseries"),
+            matches!(
+                entry.task.as_str(),
+                "regression" | "binary" | "timeseries" | "multiclass"
+            ),
             "catalog has invalid task"
         );
         ensure!(
@@ -659,7 +667,10 @@ fn validate_frozen_sealed(cohort: &FrozenSealedCohort, catalog_sha256: &str) -> 
     let mut families = HashSet::with_capacity(cohort.entries.len());
     for entry in &cohort.entries {
         ensure!(
-            matches!(entry.task.as_str(), "regression" | "binary" | "timeseries")
+            matches!(
+                entry.task.as_str(),
+                "regression" | "binary" | "timeseries" | "multiclass"
+            )
                 && !entry.dataset_hash.is_empty()
                 && !entry.source_family.is_empty(),
             "sealed cohort contains an invalid entry"
@@ -817,7 +828,10 @@ fn load_sealed(path: &Path, catalog: &[CatalogEntry]) -> Result<(HashSet<String>
     let mut counts = BTreeMap::<String, usize>::new();
     for row in sealed.entries {
         ensure!(
-            matches!(row.task.as_str(), "regression" | "binary" | "timeseries"),
+            matches!(
+                row.task.as_str(),
+                "regression" | "binary" | "timeseries" | "multiclass"
+            ),
             "sealed cohort has invalid task"
         );
         ensure!(
@@ -1550,7 +1564,10 @@ fn sanitize_proposals(args: SanitizeProposalsArgs) -> Result<Value> {
         let row: GpProposal = serde_json::from_str(&line)
             .with_context(|| format!("parse proposal JSONL line {}", ordinal + 1))?;
         ensure!(
-            matches!(row.task.as_str(), "regression" | "binary" | "timeseries")
+            matches!(
+                row.task.as_str(),
+                "regression" | "binary" | "timeseries" | "multiclass"
+            )
                 && !row.dataset_hash.is_empty()
                 && valid_proposal_reservoir_slot(row.slot),
             "proposal file contains an invalid identity or slot at line {}",
@@ -1827,7 +1844,12 @@ fn load_robust(path: &Path) -> Result<(BTreeMap<String, Vec<RobustSeed>>, String
     ensure!(
         bank.tasks
             .keys()
-            .all(|task| matches!(task.as_str(), "regression" | "binary" | "timeseries"))
+            .all(|task| {
+                matches!(
+                    task.as_str(),
+                    "regression" | "binary" | "timeseries" | "multiclass"
+                )
+            })
             && bank.tasks.contains_key("regression")
             && bank.tasks.contains_key("binary"),
         "robust seed bank must contain regression/binary and only supported tasks"

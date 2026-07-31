@@ -169,7 +169,7 @@ fn main() -> Result<()> {
             ensure!(task_valid(task.as_deref()), "unsupported task filter");
             ensure!(
                 !should_freeze || (task.is_none() && limit.is_none()),
-                "sealed cohort requires a complete two-task inventory"
+                "sealed cohort requires a complete all-task inventory"
             );
             let audit = audit_discover(&paths, task.as_deref(), limit)?;
             if !audit.conflicts.is_empty() {
@@ -301,6 +301,9 @@ mod tests {
     fn task_filter_is_fail_closed() {
         assert!(task_valid(None));
         assert!(task_valid(Some("binary")));
-        assert!(!task_valid(Some("multiclass")));
+        assert!(task_valid(Some("timeseries")));
+        assert!(task_valid(Some("multiclass")));
+        // The on-disk compatibility directory name is NOT a task string.
+        assert!(!task_valid(Some("multi_label")));
     }
 }

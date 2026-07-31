@@ -15,5 +15,8 @@ pub mod selfplay_shadow;
 /// fails when two renderers disagree.
 pub mod spec_drift;
 pub mod spec_policy;
+/// R2: the library's task-vocabulary authority (TaskKind + corpus-dir and
+/// primary-metric maps); `selfplay_shadow::Task` remains the wire type.
+pub mod task;
 pub mod timeseries;
 pub mod training_history;

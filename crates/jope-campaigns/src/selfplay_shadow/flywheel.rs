@@ -777,22 +777,70 @@ pub fn canonical_shadow_canary_contexts() -> Vec<CanaryContextKind> {
 pub struct ShadowAlternationState {
     #[serde(default)]
     pub next_task: Option<Task>,
+    /// Slot cursor into [`Task::ROTATION_CYCLE`]. Absent in legacy state
+    /// files, where the cursor is derived from `next_task`; `next_task`
+    /// remains the override channel (terminal-failure retries write it), so
+    /// whenever the two disagree, `next_task` wins.
+    #[serde(default)]
+    pub rotation_position: Option<usize>,
     #[serde(default)]
     pub accepted_parent_by_task: BTreeMap<Task, Sha256Digest>,
     #[serde(default)]
     pub last_shadow_by_task: BTreeMap<Task, Sha256Digest>,
 }
 
+/// A task may hold a rotation slot once it has an accepted anchor; the two
+/// legacy tasks are unconditionally eligible (their anchors predate this
+/// eligibility rule, and a missing legacy anchor must surface loudly in the
+/// accepted-pointer readers, not silently stall the rotation).
+pub fn rotation_eligible(task: Task, accepted: &BTreeMap<Task, Sha256Digest>) -> bool {
+    matches!(task, Task::Regression | Task::Binary) || accepted.contains_key(&task)
+}
+
 impl ShadowAlternationState {
+    /// First slot of `task` in the rotation cycle (used to re-anchor the
+    /// cursor after a `next_task` override or when migrating legacy state).
+    fn cycle_anchor(task: Task) -> usize {
+        Task::ROTATION_CYCLE
+            .iter()
+            .position(|slot| *slot == task)
+            .expect("every task appears in the rotation cycle")
+    }
+
     pub fn next(&mut self, accepted: &BTreeMap<Task, Sha256Digest>) -> Task {
-        for task in [Task::Regression, Task::Binary] {
+        for task in Task::ALL {
             if self.accepted_parent_by_task.get(&task) != accepted.get(&task) {
                 self.last_shadow_by_task.remove(&task);
             }
         }
         self.accepted_parent_by_task = accepted.clone();
-        let task = self.next_task.unwrap_or(Task::Regression);
-        self.next_task = Some(task.other());
+        let position = match (self.next_task, self.rotation_position) {
+            (Some(task), Some(position)) => {
+                let (predicted, _) =
+                    Task::rotation_successor(position, |task| rotation_eligible(task, accepted));
+                if predicted == task {
+                    // The pending task is exactly what the cursor would pick:
+                    // trust the cursor (its slot may sit deeper in the cycle
+                    // than the task's first occurrence).
+                    position
+                } else {
+                    // Override (terminal-failure retry) or eligibility drift:
+                    // re-anchor on the explicitly requested task.
+                    Self::cycle_anchor(task)
+                }
+            }
+            // Legacy state predates the cursor: re-anchor on the pending task.
+            (Some(task), None) => Self::cycle_anchor(task),
+            (None, Some(position)) => position,
+            // Fresh state starts the cycle at regression, as before.
+            (None, None) => 0,
+        };
+        let (task, next_position) =
+            Task::rotation_successor(position, |task| rotation_eligible(task, accepted));
+        self.rotation_position = Some(next_position);
+        let (pending, _) =
+            Task::rotation_successor(next_position, |task| rotation_eligible(task, accepted));
+        self.next_task = Some(pending);
         task
     }
 
@@ -804,7 +852,7 @@ impl ShadowAlternationState {
 }
 
 pub fn production_task(ledger: &CausalEvidenceLedgerV1) -> Option<Task> {
-    [Task::Regression, Task::Binary].into_iter().find(|task| {
+    Task::ALL.into_iter().find(|task| {
         ledger
             .tasks
             .get(task)
@@ -973,6 +1021,62 @@ mod tests {
             BTreeMap::from([(Task::Binary, digest('b')), (Task::Regression, digest('e'))]);
         assert_eq!(state.next(&changed), Task::Regression);
         assert_eq!(state.warm_start(Task::Regression), Some(&digest('e')));
+    }
+
+    #[test]
+    fn alternation_with_only_legacy_tasks_reproduces_the_old_sequence() {
+        // S1.2 gate: with only regression+binary eligible (no accepted anchors
+        // for the new tasks), eight successive calls reproduce the exact
+        // pre-widening R,B,R,B,R,B,R,B alternation.
+        let accepted =
+            BTreeMap::from([(Task::Binary, digest('b')), (Task::Regression, digest('c'))]);
+        let mut state = ShadowAlternationState::default();
+        let picks: Vec<Task> = (0..8).map(|_| state.next(&accepted)).collect();
+        assert_eq!(
+            picks,
+            vec![
+                Task::Regression,
+                Task::Binary,
+                Task::Regression,
+                Task::Binary,
+                Task::Regression,
+                Task::Binary,
+                Task::Regression,
+                Task::Binary,
+            ]
+        );
+    }
+
+    #[test]
+    fn alternation_honours_next_task_override_and_legacy_state() {
+        let accepted =
+            BTreeMap::from([(Task::Binary, digest('b')), (Task::Regression, digest('c'))]);
+        // Legacy state file: next_task persisted, no rotation cursor.
+        let mut state = ShadowAlternationState {
+            next_task: Some(Task::Binary),
+            ..ShadowAlternationState::default()
+        };
+        assert_eq!(state.next(&accepted), Task::Binary);
+        assert_eq!(state.next(&accepted), Task::Regression);
+        // Terminal-failure retry: the controller re-pins next_task.
+        state.next_task = Some(Task::Regression);
+        assert_eq!(state.next(&accepted), Task::Regression);
+        assert_eq!(state.next(&accepted), Task::Binary);
+    }
+
+    #[test]
+    fn alternation_rotates_new_tasks_once_they_have_accepted_anchors() {
+        let accepted = BTreeMap::from([
+            (Task::Binary, digest('b')),
+            (Task::Regression, digest('c')),
+            (Task::Timeseries, digest('d')),
+            (Task::Multiclass, digest('e')),
+        ]);
+        let mut state = ShadowAlternationState::default();
+        let picks: Vec<Task> = (0..8).map(|_| state.next(&accepted)).collect();
+        assert_eq!(picks, Task::ROTATION_CYCLE.to_vec());
+        // The cycle wraps deterministically.
+        assert_eq!(state.next(&accepted), Task::Regression);
     }
 
     #[test]

@@ -23,14 +23,36 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use zip::ZipArchive;
 
-pub const TASKS: [&str; 2] = ["regression", "binary"];
+pub const TASKS: [&str; 4] = ["regression", "binary", "timeseries", "multiclass"];
 pub const REQUIRED_ENCODINGS: [&str; 3] =
     ["hyperion3train128dim.vs", "train3.vs", "train_target.vs"];
 pub const OPTIONAL_ENCODINGS: [&str; 1] = ["hyperion3train.vs"];
 pub const ENCODER_PROTOCOL: &str = "hyperion-train-context-v3";
 pub const CONTEXT_PROTOCOL: &str = "jope-dataset1536-target512-f32le-v1";
 pub const TRANCHE_MAX: usize = 2_048;
-pub const SEALED_PER_TASK: usize = 256;
+
+/// Sealed zero-shot carve-out per task (D7). The legacy tasks keep their
+/// frozen 256; the new tasks get carve-outs sized to their far smaller
+/// corpora (multiclass 252 real datasets, timeseries 42), topped up toward
+/// 256 only from NEWLY admitted datasets so the zero-shot guarantee holds.
+pub fn sealed_target(task: &str) -> usize {
+    match task {
+        "regression" | "binary" => 256,
+        "multiclass" => 64,
+        "timeseries" => 8,
+        _ => 0,
+    }
+}
+
+/// On-disk corpus directory for a task string (D1): the multiclass corpus
+/// keeps its legacy `multi_label` directory name. Unknown task strings pass
+/// through unchanged (callers validate against [`TASKS`] first).
+pub fn corpus_dir_name(task: &str) -> &str {
+    match crate::task::TaskKind::parse(task) {
+        Some(kind) => kind.corpus_dir_name(),
+        None => task,
+    }
+}
 pub const DATASET_DIM: usize = 1_536;
 pub const TARGET_DIM: usize = 512;
 pub const CONTEXT_FLOATS: usize = DATASET_DIM + TARGET_DIM;
@@ -219,7 +241,7 @@ fn read_meta(path: &Path) -> Result<Value> {
 
 fn mirror_dataset(paths: &ExpansionPaths, task: &str, dataset_id: &str) -> Option<PathBuf> {
     [
-        paths.mirror_root.join(task).join(dataset_id),
+        paths.mirror_root.join(corpus_dir_name(task)).join(dataset_id),
         paths.mirror_root.join(dataset_id),
     ]
     .into_iter()
@@ -347,7 +369,12 @@ fn candidate_directories(
         if task_filter.is_some_and(|filter| filter != task) {
             continue;
         }
-        let task_root = paths.source_root.join(task);
+        let task_root = paths.source_root.join(corpus_dir_name(task));
+        // The legacy corpus roots are mandatory; a new task's root may not
+        // exist on every host yet and simply contributes no candidates.
+        if !task_root.is_dir() && !matches!(task, "regression" | "binary") {
+            continue;
+        }
         let mut directories = fs::read_dir(&task_root)
             .with_context(|| format!("read authoritative root {}", task_root.display()))?
             .filter_map(std::result::Result::ok)
@@ -798,21 +825,31 @@ fn validate_sealed_cohort(cohort: &SealedCohort) -> Result<()> {
             "sealed cohort repeats a source family"
         );
     }
+    let mut expected_total = 0_usize;
     for task in TASKS {
+        let declared = cohort.counts.get(task).copied().unwrap_or(0);
+        let observed = cohort.entries.iter().filter(|row| row.task == task).count();
+        let target = sealed_target(task);
+        // Legacy tasks must carry their full frozen carve-out. The new tasks
+        // are absent from cohorts frozen before their carve-out exists (D7):
+        // zero is legal for them, any other shortfall is drift.
+        let legacy = matches!(task, "regression" | "binary");
+        let complete = declared == target || (!legacy && declared == 0);
         ensure!(
-            cohort.counts.get(task) == Some(&SEALED_PER_TASK)
-                && cohort.entries.iter().filter(|row| row.task == task).count() == SEALED_PER_TASK,
+            observed == declared && complete,
             "{task}: sealed cohort count drift"
         );
+        expected_total += declared;
     }
     ensure!(
-        cohort.entries.len() == SEALED_PER_TASK * TASKS.len(),
+        cohort.entries.len() == expected_total,
         "sealed cohort total count drift"
     );
     Ok(())
 }
 
-/// Freeze exactly 256 family-disjoint datasets per task in a private file.
+/// Freeze exactly `sealed_target(task)` family-disjoint datasets per task in
+/// a private file (256 per legacy task; D7 carve-outs for the new tasks).
 ///
 /// The returned value deliberately contains only counts and the cohort digest;
 /// identities and families never appear in normal status output.
@@ -826,9 +863,11 @@ pub fn freeze_sealed(
         validate_sealed_cohort(&cohort)?;
         return Ok(json!({"cohort_sha256": cohort.cohort_sha256, "counts": cohort.counts}));
     }
-    let mut selected = Vec::with_capacity(SEALED_PER_TASK * 2);
+    let mut selected = Vec::with_capacity(TASKS.iter().map(|task| sealed_target(task)).sum());
     let mut used_families = HashSet::new();
+    let mut counts = BTreeMap::new();
     for task in TASKS {
+        let target = sealed_target(task);
         let mut candidates = entries
             .iter()
             .filter(|entry| entry.task == task)
@@ -838,19 +877,17 @@ pub fn freeze_sealed(
         for row in candidates {
             if used_families.insert(row.source_family.clone()) {
                 selected.push(row);
-                if selected.iter().filter(|row| row.task == task).count() == SEALED_PER_TASK {
+                if selected.iter().filter(|row| row.task == task).count() == target {
                     break;
                 }
             }
         }
         ensure!(
-            selected.iter().filter(|row| row.task == task).count() == SEALED_PER_TASK,
+            selected.iter().filter(|row| row.task == task).count() == target,
             "{task}: insufficient family-disjoint candidates for sealed cohort"
         );
+        counts.insert(task.to_owned(), target);
     }
-    let mut counts = BTreeMap::new();
-    counts.insert("binary".to_owned(), SEALED_PER_TASK);
-    counts.insert("regression".to_owned(), SEALED_PER_TASK);
     let mut cohort = SealedCohort {
         schema: "JopeSealedExpandedCohort.v1".to_owned(),
         immutable: true,
@@ -2186,7 +2223,7 @@ pub fn install_sidecars(
             .and_then(|value| value.to_str())
             .context("sidecar source has no UTF-8 identity")?
             .to_owned();
-        let registry = paths.source_root.join(task).join(&dataset_id);
+        let registry = paths.source_root.join(corpus_dir_name(task)).join(&dataset_id);
         if !registry.is_dir() {
             missing_registry += 1;
             record(
@@ -2411,7 +2448,7 @@ mod tests {
         let paths = paths(&temp);
         let mut entries = Vec::new();
         for task in TASKS {
-            for index in 0..SEALED_PER_TASK {
+            for index in 0..sealed_target(task) {
                 entries.push(InventoryEntry {
                     task: task.to_owned(),
                     dataset_id: format!("{index:016x}"),
@@ -2534,7 +2571,7 @@ mod tests {
         .unwrap();
         let mut sealed = Vec::new();
         for task in TASKS {
-            for index in 0..SEALED_PER_TASK {
+            for index in 0..sealed_target(task) {
                 sealed.push(InventoryEntry {
                     task: task.to_owned(),
                     dataset_id: format!("{index:016x}"),
@@ -2606,7 +2643,7 @@ mod tests {
         .unwrap();
         let mut sealed = Vec::new();
         for task in TASKS {
-            for index in 0..SEALED_PER_TASK {
+            for index in 0..sealed_target(task) {
                 sealed.push(InventoryEntry {
                     task: task.to_owned(),
                     dataset_id: format!("{index:016x}"),

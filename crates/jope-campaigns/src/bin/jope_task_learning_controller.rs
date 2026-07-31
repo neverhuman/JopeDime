@@ -673,11 +673,16 @@ fn publish_plateau_diagnoses(
     if !directory.is_dir() {
         return Ok(plateau_tasks);
     }
-    for task in [Task::Binary, Task::Regression] {
-        let parent = &accepted
-            .get(&task)
-            .with_context(|| format!("accepted pointer lacks {task}"))?
-            .digest;
+    for task in Task::ALL {
+        let parent = match accepted.get(&task) {
+            Some(pointer) => &pointer.digest,
+            // Legacy tasks must always have an accepted pointer; the new
+            // tasks are skipped until their first anchor is promoted.
+            None if matches!(task, Task::Binary | Task::Regression) => {
+                bail!("accepted pointer lacks {task}")
+            }
+            None => continue,
+        };
         let mut by_candidate = BTreeMap::<Sha256Digest, (u64, Value)>::new();
         for entry in fs::read_dir(&directory)?.filter_map(|entry| entry.ok()) {
             let Ok(value) = read_json(&entry.path()) else {
@@ -825,11 +830,16 @@ fn accepted_pointers(root: &Path) -> Result<BTreeMap<Task, AcceptedPointer>> {
         "accepted-by-task pointer schema drift"
     );
     let mut output = BTreeMap::new();
-    for task in [Task::Binary, Task::Regression] {
-        let row = value
-            .get("tasks")
-            .and_then(|tasks| tasks.get(task.as_str()))
-            .with_context(|| format!("accepted-by-task lacks {task}"))?;
+    for task in Task::ALL {
+        let row = match value.get("tasks").and_then(|tasks| tasks.get(task.as_str())) {
+            Some(row) => row,
+            // Legacy tasks must always be present; the new tasks appear in
+            // accepted-by-task.json only once their first anchor is promoted.
+            None if matches!(task, Task::Binary | Task::Regression) => {
+                bail!("accepted-by-task lacks {task}")
+            }
+            None => continue,
+        };
         let path = PathBuf::from(
             row.get("checkpoint")
                 .and_then(Value::as_str)
@@ -854,7 +864,7 @@ fn reset_changed_shadow_epochs(
     state: &mut ControllerState,
     accepted: &BTreeMap<Task, AcceptedPointer>,
 ) {
-    for task in [Task::Binary, Task::Regression] {
+    for task in Task::ALL {
         if state.shadow_models.get(&task).is_some_and(|model| {
             accepted
                 .get(&task)
@@ -1181,7 +1191,7 @@ fn production_task_v3(
     ledger: &CausalEvidenceLedgerV3,
     accepted: &BTreeMap<Task, AcceptedPointer>,
 ) -> Option<Task> {
-    [Task::Regression, Task::Binary].into_iter().find(|task| {
+    Task::ALL.into_iter().find(|task| {
         ledger.promotion_epoch.get(task).is_some_and(|row| {
             row.production_gate_open
                 && accepted.get(task).is_some_and(|pointer| {
