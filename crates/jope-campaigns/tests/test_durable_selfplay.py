@@ -17,9 +17,11 @@ import test_exact_service as service_module  # noqa: E402
 import test_exact_backlog as backlog_module  # noqa: E402
 from test_exact_accept import evaluate_gate  # noqa: E402
 from test_exact_common import (  # noqa: E402
+    EXPECTED_METRIC,
     dynamic_queue_targets,
     evaluation_protocol_sha256,
     sha256_text,
+    validate_catalog_counts,
     validate_catalog_manifest,
 )
 from test_exact_controller import default_handlers  # noqa: E402
@@ -91,7 +93,14 @@ def catalog_fixture(tmp_path: Path) -> Path:
 def test_catalog_manifest_is_authority_for_counts_hashes_and_contexts(tmp_path):
     pointer = catalog_fixture(tmp_path)
     result = validate_catalog_manifest(pointer)
-    assert result["task_counts"] == {"regression": 1, "binary": 1}
+    # A pre-four-task manifest declares only the legacy counts; the new tasks
+    # read as zero (mirrors jope_selfplay_promotion.rs::validate_catalog_counts).
+    assert result["task_counts"] == {
+        "regression": 1,
+        "binary": 1,
+        "timeseries": 0,
+        "multiclass": 0,
+    }
     assert result["row_count"] == 2
 
     value = json.loads(pointer.read_text())
@@ -103,6 +112,54 @@ def test_catalog_manifest_is_authority_for_counts_hashes_and_contexts(tmp_path):
     pointer.write_text(json.dumps(value))
     with pytest.raises(ValueError, match="catalog count mismatch"):
         validate_catalog_manifest(pointer)
+
+
+def test_expected_metric_matches_the_rust_task_authority():
+    """R1/D2 wire values; the Rust twin is expected_catalog_metric /
+    TaskKind::primary_metric (asserted from that side by cargo tests)."""
+
+    assert EXPECTED_METRIC == {
+        "regression": "r2",
+        "binary": "auc",
+        "timeseries": "negative_mase",
+        "multiclass": "macro_f1",
+    }
+
+
+def test_catalog_counts_default_missing_new_tasks_and_reject_unknown_tasks():
+    entries = [
+        {"task": "regression", "dataset_hash": "d1"},
+        {"task": "binary", "dataset_hash": "d2"},
+        {"task": "timeseries", "dataset_hash": "d3"},
+        {"task": "multiclass", "dataset_hash": "d4"},
+    ]
+    # Full four-task declaration.
+    assert validate_catalog_counts(
+        entries,
+        {"regression": 1, "binary": 1, "timeseries": 1, "multiclass": 1},
+    ) == {"regression": 1, "binary": 1, "timeseries": 1, "multiclass": 1}
+    # Legacy two-task declaration: missing NEW tasks default to zero.
+    assert validate_catalog_counts(
+        entries[:2], {"regression": 1, "binary": 1}
+    ) == {"regression": 1, "binary": 1, "timeseries": 0, "multiclass": 0}
+    # ... which still fails closed when the catalog contains new-task entries.
+    with pytest.raises(ValueError, match="catalog count mismatch"):
+        validate_catalog_counts(entries, {"regression": 1, "binary": 1})
+    # Unknown tasks are rejected, in declarations and in entries.
+    with pytest.raises(ValueError, match="unsupported task counts"):
+        validate_catalog_counts(
+            entries[:2], {"regression": 1, "binary": 1, "multi_label": 1}
+        )
+    with pytest.raises(ValueError, match="unsupported or anonymous"):
+        validate_catalog_counts(
+            [{"task": "bogus", "dataset_hash": "d9"}],
+            {"regression": 0, "binary": 0},
+        )
+    # The legacy declarations stay mandatory.
+    with pytest.raises(ValueError, match="unsupported task counts"):
+        validate_catalog_counts([], {"binary": 0})
+    with pytest.raises(ValueError, match="does not declare every per-task count"):
+        validate_catalog_counts([], {"regression": -1, "binary": 0})
 
 
 def protocol(task="regression", version="v1"):
