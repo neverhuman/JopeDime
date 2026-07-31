@@ -17,9 +17,11 @@ import test_exact_service as service_module  # noqa: E402
 import test_exact_backlog as backlog_module  # noqa: E402
 from test_exact_accept import evaluate_gate  # noqa: E402
 from test_exact_common import (  # noqa: E402
+    EXPECTED_METRIC,
     dynamic_queue_targets,
     evaluation_protocol_sha256,
     sha256_text,
+    validate_catalog_counts,
     validate_catalog_manifest,
 )
 from test_exact_controller import default_handlers  # noqa: E402
@@ -91,7 +93,14 @@ def catalog_fixture(tmp_path: Path) -> Path:
 def test_catalog_manifest_is_authority_for_counts_hashes_and_contexts(tmp_path):
     pointer = catalog_fixture(tmp_path)
     result = validate_catalog_manifest(pointer)
-    assert result["task_counts"] == {"regression": 1, "binary": 1}
+    # A pre-four-task manifest declares only the legacy counts; the new tasks
+    # read as zero (mirrors jope_selfplay_promotion.rs::validate_catalog_counts).
+    assert result["task_counts"] == {
+        "regression": 1,
+        "binary": 1,
+        "timeseries": 0,
+        "multiclass": 0,
+    }
     assert result["row_count"] == 2
 
     value = json.loads(pointer.read_text())
@@ -103,6 +112,54 @@ def test_catalog_manifest_is_authority_for_counts_hashes_and_contexts(tmp_path):
     pointer.write_text(json.dumps(value))
     with pytest.raises(ValueError, match="catalog count mismatch"):
         validate_catalog_manifest(pointer)
+
+
+def test_expected_metric_matches_the_rust_task_authority():
+    """R1/D2 wire values; the Rust twin is expected_catalog_metric /
+    TaskKind::primary_metric (asserted from that side by cargo tests)."""
+
+    assert EXPECTED_METRIC == {
+        "regression": "r2",
+        "binary": "auc",
+        "timeseries": "negative_mase",
+        "multiclass": "macro_f1",
+    }
+
+
+def test_catalog_counts_default_missing_new_tasks_and_reject_unknown_tasks():
+    entries = [
+        {"task": "regression", "dataset_hash": "d1"},
+        {"task": "binary", "dataset_hash": "d2"},
+        {"task": "timeseries", "dataset_hash": "d3"},
+        {"task": "multiclass", "dataset_hash": "d4"},
+    ]
+    # Full four-task declaration.
+    assert validate_catalog_counts(
+        entries,
+        {"regression": 1, "binary": 1, "timeseries": 1, "multiclass": 1},
+    ) == {"regression": 1, "binary": 1, "timeseries": 1, "multiclass": 1}
+    # Legacy two-task declaration: missing NEW tasks default to zero.
+    assert validate_catalog_counts(
+        entries[:2], {"regression": 1, "binary": 1}
+    ) == {"regression": 1, "binary": 1, "timeseries": 0, "multiclass": 0}
+    # ... which still fails closed when the catalog contains new-task entries.
+    with pytest.raises(ValueError, match="catalog count mismatch"):
+        validate_catalog_counts(entries, {"regression": 1, "binary": 1})
+    # Unknown tasks are rejected, in declarations and in entries.
+    with pytest.raises(ValueError, match="unsupported task counts"):
+        validate_catalog_counts(
+            entries[:2], {"regression": 1, "binary": 1, "multi_label": 1}
+        )
+    with pytest.raises(ValueError, match="unsupported or anonymous"):
+        validate_catalog_counts(
+            [{"task": "bogus", "dataset_hash": "d9"}],
+            {"regression": 0, "binary": 0},
+        )
+    # The legacy declarations stay mandatory.
+    with pytest.raises(ValueError, match="unsupported task counts"):
+        validate_catalog_counts([], {"binary": 0})
+    with pytest.raises(ValueError, match="does not declare every per-task count"):
+        validate_catalog_counts([], {"regression": -1, "binary": 0})
 
 
 def protocol(task="regression", version="v1"):
@@ -536,6 +593,42 @@ def test_unmeasured_conditionality_is_fail_closed_not_zero():
     null_valued["candidate"]["val_conditional_advantage"] = None
     result = evaluate_gate(null_valued)
     assert "candidate_conditional_advantage_evidence_missing" in result["reasons"]
+
+
+def test_new_task_verdicts_are_advisory_until_anchored():
+    """U3: an unanchored branch is recorded (`"advisory": true`) but can never
+    alter `pass` / `promotion_tier` / the global reasons; an accepted anchor in
+    accepted-by-task.json flips it to gating, exactly like a legacy branch."""
+
+    evidence = gate_evidence(0.05)
+    result = evaluate_gate(evidence)
+    assert result["pass"] is True and result["promotion_tier"] == "milestone"
+    assert result["task_verdicts"]["regression"]["advisory"] is False
+    for task in ("timeseries", "multiclass"):
+        verdict = result["task_verdicts"][task]
+        assert verdict["advisory"] is True
+        assert verdict["pass"] is False
+        assert verdict["pairwise_lift"] is None
+        assert result["task_pairwise_deltas"][task] is None
+    assert result["tasks_passing"] == ["regression", "binary"]
+
+    # Advisory evidence, even a hard regression, never blocks the global gate.
+    evidence["baseline"]["timeseries_pairwise_accuracy"] = 0.6
+    evidence["candidate"]["timeseries_pairwise_accuracy"] = 0.5
+    result = evaluate_gate(evidence)
+    assert result["pass"] is True and result["promotion_tier"] == "milestone"
+    verdict = result["task_verdicts"]["timeseries"]
+    assert verdict["advisory"] is True
+    assert "timeseries_regressed_more_than_half_point" in verdict["reasons"]
+    assert not any(r.startswith("timeseries_") for r in result["milestone_reasons"])
+
+    # Once anchored, the same evidence gates.
+    anchor = {"tasks": {"timeseries": {"checkpoint_sha256": "c" * 64}}}
+    gated = evaluate_gate(evidence, anchor)
+    assert gated["pass"] is False and gated["promotion_tier"] == "rejected"
+    assert "timeseries_regressed_more_than_half_point" in gated["reasons"]
+    assert gated["task_verdicts"]["timeseries"]["advisory"] is False
+    assert gated["task_verdicts"]["multiclass"]["advisory"] is True
 
 
 PARITY_FIXTURE = Path(__file__).parent / "fixtures" / "conditionality_gate_parity.json"

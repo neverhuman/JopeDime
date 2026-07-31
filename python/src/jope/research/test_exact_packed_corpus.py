@@ -29,7 +29,10 @@ PACK_SCHEMA = "PackedCorpus.v3"
 LEGACY_PACK_SCHEMA = "PackedCorpus.v2"
 PACK_LAYOUT = "content-addressed-label-shards-plus-mmap-columns.v1"
 LABEL_SHARD_ROWS = 65_536
-TASK_CODE = {"regression": 0, "binary": 1}
+# Wire-frozen and append-only (D3): these codes are baked into every packed
+# corpus's uint8 `tasks` column, so existing rows must repack byte-identically.
+# Never renumber or remove a code; new tasks only ever append the next integer.
+TASK_CODE = {"regression": 0, "binary": 1, "timeseries": 2, "multiclass": 3}
 SPLIT_CODE = {"train": 0, "validation": 1}
 
 

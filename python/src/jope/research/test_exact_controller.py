@@ -1776,10 +1776,16 @@ def _build_acceptance_evidence(request: dict) -> dict:
 
 
 def _run_checkpoint_gate(request: dict) -> dict:
-    from test_exact_accept import evaluate_gate
+    from test_exact_accept import evaluate_gate, load_accepted_by_task
 
     evidence = request["artifacts"]["build_acceptance_evidence"]
-    result = evaluate_gate(evidence)
+    # Advisory-until-anchor (same input the Rust port's
+    # handle_run_checkpoint_gate reads): new-task verdicts gate only once
+    # accepted-by-task.json carries their anchor.
+    result = evaluate_gate(
+        evidence,
+        load_accepted_by_task(ROOT / "training" / "accepted-by-task.json"),
+    )
     destination = (
         ROOT
         / "training"

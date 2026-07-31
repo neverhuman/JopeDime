@@ -11,7 +11,20 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Iterable, Mapping, Sequence
 
-EXPECTED_METRIC = {"regression": "r2", "binary": "auc"}
+# Per-task authority metric. Keep in lockstep with the Rust side
+# (`jope_selfplay_promotion.rs::expected_catalog_metric` /
+# `task::TaskKind::primary_metric`): "negative_mase" is the existing wire
+# value corpus_eval pins for timeseries receipts (R1) — never "neg_mase".
+EXPECTED_METRIC = {
+    "regression": "r2",
+    "binary": "auc",
+    "timeseries": "negative_mase",
+    "multiclass": "macro_f1",
+}
+# Tasks that predate the four-task widening. Their catalog declarations stay
+# mandatory; catalogs written before the new tasks existed simply omit the
+# new tasks, which is a declared count of zero.
+LEGACY_TASKS = ("regression", "binary")
 SELFPLAY_SELECTION_BIAS = "test-exact-reused"
 SLOT_COUNTS = {"local_elite": 32, "dl_proposal": 64, "common_winner": 96, "offspring": 64}
 CATALOG_STRIDE_BYTES = 2_048 * 4
@@ -190,8 +203,10 @@ def selfplay_authority(
 def _declared_catalog_counts(manifest: Mapping[str, object]) -> dict[str, int]:
     declared = manifest.get("task_counts") or manifest.get("declared_task_counts")
     if isinstance(declared, Mapping):
+        # The legacy tasks must always be declared (-1 fails closed in
+        # `validate_catalog_counts`); missing new tasks read as zero.
         return {
-            task: int(declared.get(task, -1))
+            task: int(declared.get(task, -1 if task in LEGACY_TASKS else 0))
             for task in EXPECTED_METRIC
         }
     return {
@@ -208,13 +223,21 @@ def validate_catalog_counts(
 
     Counts deliberately have no code-side default. The catalog is the authority,
     so changing a catalog cannot be accidentally blocked by a stale literal.
+    Missing NEW-task declarations mean zero datasets for that task; the legacy
+    regression/binary declarations stay mandatory, and unknown tasks are still
+    rejected. Keep in lockstep with
+    `jope_selfplay_promotion.rs::validate_catalog_counts`.
     """
 
-    expected = {task: int(declared_counts.get(task, -1)) for task in EXPECTED_METRIC}
-    if any(value < 0 for value in expected.values()):
+    declared = {str(task): int(count) for task, count in declared_counts.items()}
+    if any(value < 0 for value in declared.values()):
         raise ValueError("catalog manifest does not declare every per-task count")
-    if set(declared_counts) != set(EXPECTED_METRIC):
+    if not set(declared) <= set(EXPECTED_METRIC) or not set(LEGACY_TASKS) <= set(
+        declared
+    ):
         raise ValueError("catalog manifest declares unsupported task counts")
+    expected = {task: 0 for task in EXPECTED_METRIC}
+    expected.update(declared)
     counts = {task: 0 for task in EXPECTED_METRIC}
     seen: set[tuple[str, str]] = set()
     for entry in entries:
