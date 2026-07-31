@@ -595,6 +595,42 @@ def test_unmeasured_conditionality_is_fail_closed_not_zero():
     assert "candidate_conditional_advantage_evidence_missing" in result["reasons"]
 
 
+def test_new_task_verdicts_are_advisory_until_anchored():
+    """U3: an unanchored branch is recorded (`"advisory": true`) but can never
+    alter `pass` / `promotion_tier` / the global reasons; an accepted anchor in
+    accepted-by-task.json flips it to gating, exactly like a legacy branch."""
+
+    evidence = gate_evidence(0.05)
+    result = evaluate_gate(evidence)
+    assert result["pass"] is True and result["promotion_tier"] == "milestone"
+    assert result["task_verdicts"]["regression"]["advisory"] is False
+    for task in ("timeseries", "multiclass"):
+        verdict = result["task_verdicts"][task]
+        assert verdict["advisory"] is True
+        assert verdict["pass"] is False
+        assert verdict["pairwise_lift"] is None
+        assert result["task_pairwise_deltas"][task] is None
+    assert result["tasks_passing"] == ["regression", "binary"]
+
+    # Advisory evidence, even a hard regression, never blocks the global gate.
+    evidence["baseline"]["timeseries_pairwise_accuracy"] = 0.6
+    evidence["candidate"]["timeseries_pairwise_accuracy"] = 0.5
+    result = evaluate_gate(evidence)
+    assert result["pass"] is True and result["promotion_tier"] == "milestone"
+    verdict = result["task_verdicts"]["timeseries"]
+    assert verdict["advisory"] is True
+    assert "timeseries_regressed_more_than_half_point" in verdict["reasons"]
+    assert not any(r.startswith("timeseries_") for r in result["milestone_reasons"])
+
+    # Once anchored, the same evidence gates.
+    anchor = {"tasks": {"timeseries": {"checkpoint_sha256": "c" * 64}}}
+    gated = evaluate_gate(evidence, anchor)
+    assert gated["pass"] is False and gated["promotion_tier"] == "rejected"
+    assert "timeseries_regressed_more_than_half_point" in gated["reasons"]
+    assert gated["task_verdicts"]["timeseries"]["advisory"] is False
+    assert gated["task_verdicts"]["multiclass"]["advisory"] is True
+
+
 PARITY_FIXTURE = Path(__file__).parent / "fixtures" / "conditionality_gate_parity.json"
 
 

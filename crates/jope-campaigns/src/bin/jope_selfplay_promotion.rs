@@ -1808,14 +1808,19 @@ const CONDITIONAL_ADVANTAGE_KEYS: [&str; 3] = [
 const CONDITIONAL_INTERNAL_MARGIN: f64 = 0.005;
 const CONDITIONAL_MILESTONE_MARGIN: f64 = 0.02;
 
-/// The two independent promotion branches. A generation that trades one against
-/// the other can never clear a single global gate — which is the observed state
-/// (gen-1 `ff95a336`: binary +0.0421, regression -0.0161, tier "rejected", and
-/// the original anchor still accepted). `task_verdicts` records the decision
-/// each branch reaches on its OWN evidence, so the branches can advance
+/// The independent promotion branches, in the same order as
+/// `selfplay_expansion::TASKS`. A generation that trades one against another
+/// can never clear a single global gate — which is the observed state (gen-1
+/// `ff95a336`: binary +0.0421, regression -0.0161, tier "rejected", and the
+/// original anchor still accepted). `task_verdicts` records the decision each
+/// branch reaches on its OWN evidence, so the branches can advance
 /// independently. It never widens the global verdict: `pass`, `promotion_tier`
 /// and `reasons` are computed exactly as before.
-const TASK_BRANCHES: [&str; 2] = ["regression", "binary"];
+///
+/// The NEW branches (timeseries, multiclass) are ADVISORY until anchored: see
+/// `task_verdict_is_gating`. Keep in lockstep with
+/// `test_exact_accept.TASK_BRANCHES` (same members, same order).
+const TASK_BRANCHES: [&str; 4] = ["regression", "binary", "timeseries", "multiclass"];
 /// Per-task ports of the global lift margins. The global tier reads the macro
 /// average; a task verdict reads that task's own pairwise lift.
 const TASK_INTERNAL_LIFT_MARGIN: f64 = 0.002;
@@ -1826,6 +1831,35 @@ const TASK_MILESTONE_LIFT_MARGIN: f64 = 0.01;
 /// inherited unchanged — an unmeasured branch is fail-closed, never waived.
 const FAILURE_RATE_REASON: &str = "candidate_failure_rate_regressed";
 const EQUAL_BUDGET_REASON: &str = "candidate_did_not_win_equal_budget_proposal_gate";
+
+/// Port of `test_exact_accept.load_accepted_by_task`:
+/// `training/accepted-by-task.json` if present, else None. A missing file
+/// means no per-task anchors exist yet (every new branch stays advisory);
+/// malformed JSON is surfaced, never silently waived.
+fn load_accepted_by_task(path: &Path) -> Result<Option<Value>> {
+    if !path.is_file() {
+        return Ok(None);
+    }
+    Ok(Some(read_json(path)?))
+}
+
+/// Port of `test_exact_accept.task_verdict_is_gating`: true when `task`'s
+/// verdict participates in gating. The legacy branches always gate —
+/// bit-identical to the two-branch gate. A NEW branch gates only once
+/// `accepted-by-task.json` carries an accepted anchor for it; presence of the
+/// task entry IS the anchor, the same rule
+/// `jope_task_learning_controller.rs::accepted_pointers` applies (new tasks
+/// are never bootstrapped into that file, so presence implies a promoted
+/// per-task anchor).
+fn task_verdict_is_gating(task: &str, accepted_by_task: Option<&Value>) -> bool {
+    if matches!(task, "regression" | "binary") {
+        return true;
+    }
+    accepted_by_task
+        .and_then(|value| value.get("tasks"))
+        .and_then(|tasks| tasks.get(task))
+        .is_some_and(Value::is_object)
+}
 
 /// Port of `test_exact_accept.conditional_advantage`: first *present*, finite,
 /// numeric reading wins; a present-but-unreadable value is terminal. `None` is
@@ -1858,12 +1892,16 @@ fn task_number(node: &Value, field: &str, task: &str) -> Option<f64> {
 
 /// Port of `test_exact_accept.task_verdicts`.
 ///
-/// A branch verdict is the global verdict with (a) the OTHER branch's pairwise
-/// regression dropped, (b) the macro lift replaced by this branch's own lift,
+/// A branch verdict is the global verdict with (a) the OTHER branches' pairwise
+/// regressions dropped, (b) the macro lift replaced by this branch's own lift,
 /// and (c) any aggregate reason for which a task-scoped measurement exists
 /// replaced by that measurement's own reason. Everything else — replay
 /// verification, conditionality, proposal validity, latency — is a property of
 /// the checkpoint, not of a branch, and is inherited verbatim.
+///
+/// A branch in `advisory_tasks` is computed identically but marked
+/// `"advisory": true`: the caller guarantees such a branch contributed nothing
+/// to the global verdict, and consumers must not gate on it.
 #[allow(clippy::too_many_arguments)]
 fn task_verdicts(
     baseline: &Value,
@@ -1874,6 +1912,7 @@ fn task_verdicts(
     shared_internal_extra: &[String],
     shared_milestone_extra: &[String],
     aggregate_equal_budget_lost: bool,
+    advisory_tasks: &BTreeSet<&str>,
 ) -> Map<String, Value> {
     let mut verdicts = Map::new();
     for task in TASK_BRANCHES {
@@ -1956,6 +1995,7 @@ fn task_verdicts(
         verdicts.insert(
             task.to_owned(),
             json!({
+                "advisory": advisory_tasks.contains(task),
                 "pass": internal_pass,
                 "internal_learning_pass": internal_pass,
                 "milestone_pass": milestone_pass,
@@ -1987,9 +2027,16 @@ fn task_verdicts(
 }
 
 /// Port of `test_exact_accept.evaluate_gate`.
-fn evaluate_gate(evidence: &Value) -> Result<Value> {
+fn evaluate_gate(evidence: &Value, accepted_by_task: Option<&Value>) -> Result<Value> {
     let baseline = &evidence["baseline"];
     let candidate = &evidence["candidate"];
+    // Advisory-until-anchor: a branch with no accepted anchor is recorded but
+    // never gates — its evidence fields are optional and its reasons stay out
+    // of the global verdict entirely.
+    let advisory_tasks: BTreeSet<&str> = TASK_BRANCHES
+        .into_iter()
+        .filter(|task| !task_verdict_is_gating(task, accepted_by_task))
+        .collect();
     let macro_lift = get_f64(candidate, "macro_pairwise_accuracy")?
         - get_f64(baseline, "macro_pairwise_accuracy")?;
     let mut common_reasons: Vec<String> = Vec::new();
@@ -2001,6 +2048,36 @@ fn evaluate_gate(evidence: &Value) -> Result<Value> {
     let mut task_delta_values: BTreeMap<&str, f64> = BTreeMap::new();
     for task in TASK_BRANCHES {
         let key = format!("{task}_pairwise_accuracy");
+        if advisory_tasks.contains(task) {
+            // Optional evidence; a regression here reaches only this branch's
+            // own advisory verdict, never the global reasons.
+            let delta = match (
+                candidate
+                    .get(&key)
+                    .and_then(Value::as_f64)
+                    .filter(|value| value.is_finite()),
+                baseline
+                    .get(&key)
+                    .and_then(Value::as_f64)
+                    .filter(|value| value.is_finite()),
+            ) {
+                (Some(candidate_value), Some(baseline_value)) => {
+                    Some(candidate_value - baseline_value).filter(|value| value.is_finite())
+                }
+                _ => None,
+            };
+            if let Some(value) = delta {
+                task_delta_values.insert(task, value);
+                if value < -0.005 - 1e-12 {
+                    task_own_reasons
+                        .entry(task)
+                        .or_default()
+                        .push(format!("{task}_regressed_more_than_half_point"));
+                }
+            }
+            task_deltas.insert(task.to_owned(), optional_number(delta));
+            continue;
+        }
         let delta = get_f64(candidate, &key)? - get_f64(baseline, &key)?;
         task_delta_values.insert(task, delta);
         task_deltas.insert(
@@ -2201,6 +2278,7 @@ fn evaluate_gate(evidence: &Value) -> Result<Value> {
         common_reasons
             .iter()
             .any(|reason| reason == EQUAL_BUDGET_REASON),
+        &advisory_tasks,
     );
     let passing: Vec<Value> = TASK_BRANCHES
         .iter()
@@ -2351,6 +2429,15 @@ fn advance_task_accepted_pointers(
             .unwrap_or(false);
         if !passed {
             if existing.is_none() {
+                // Advisory-until-anchor: a NEW task is never bootstrapped into
+                // this file — presence of its entry IS the anchor that turns
+                // its verdict gating (`task_verdict_is_gating`, and the same
+                // presence rule in the task learning controller's
+                // `accepted_pointers`). Only a genuinely passing verdict below
+                // may create it.
+                if !matches!(task, "regression" | "binary") {
+                    continue;
+                }
                 document["tasks"][task] = json!({
                     "task": task,
                     "checkpoint": global_path.to_string_lossy(),
@@ -2452,7 +2539,10 @@ fn handle_run_checkpoint_gate(request: &Value, root: &Path) -> Result<Value> {
     let evidence = request
         .pointer("/artifacts/build_acceptance_evidence")
         .ok_or_else(|| anyhow!("missing build_acceptance_evidence artifact"))?;
-    let result = evaluate_gate(evidence)?;
+    // Advisory-until-anchor: new-task verdicts gate only once
+    // accepted-by-task.json carries their anchor.
+    let accepted_by_task = load_accepted_by_task(&task_accepted_pointer(root))?;
+    let result = evaluate_gate(evidence, accepted_by_task.as_ref())?;
     let destination =
         watermark_dir(root, get_i64(request, "watermark")?).join("checkpoint-gate.json");
     atomic_json(&destination, &result)?;
@@ -2492,7 +2582,11 @@ fn promote(
     enforce_pointer_ancestor: bool,
 ) -> Result<Value> {
     let evidence = read_json(evidence_path)?;
-    let result = evaluate_gate(&evidence)?;
+    // The per-task anchor file lives beside the global accepted pointer; it
+    // decides which NEW branches gate (advisory-until-anchor).
+    let accepted_by_task =
+        load_accepted_by_task(&accepted_pointer.with_file_name("accepted-by-task.json"))?;
+    let result = evaluate_gate(&evidence, accepted_by_task.as_ref())?;
     atomic_json(gate_path, &result)?;
     if result.get("pass") != Some(&Value::Bool(true)) {
         return Ok(result);
@@ -3034,7 +3128,8 @@ struct Args {
 fn run_task_accept(args: &Args) -> Result<Value> {
     let evidence_path = args.task_accept.as_ref().expect("--task-accept");
     let evidence = read_json(evidence_path)?;
-    let gate = evaluate_gate(&evidence)?;
+    let accepted_by_task = load_accepted_by_task(&task_accepted_pointer(&args.root))?;
+    let gate = evaluate_gate(&evidence, accepted_by_task.as_ref())?;
     let (global_path, global_sha) = match &args.global_checkpoint {
         Some(path) => (path.clone(), sha256_file(path)?),
         None => accepted_checkpoint()?,
@@ -3285,12 +3380,12 @@ mod tests {
 
     #[test]
     fn gate_thresholds() {
-        let internal = evaluate_gate(&synthetic_evidence(0.005)).unwrap();
+        let internal = evaluate_gate(&synthetic_evidence(0.005), None).unwrap();
         assert_eq!(internal["pass"], json!(true));
         assert_eq!(internal["promotion_tier"], json!("internal"));
-        let milestone = evaluate_gate(&synthetic_evidence(0.02)).unwrap();
+        let milestone = evaluate_gate(&synthetic_evidence(0.02), None).unwrap();
         assert_eq!(milestone["promotion_tier"], json!("milestone"));
-        let rejected = evaluate_gate(&synthetic_evidence(0.001)).unwrap();
+        let rejected = evaluate_gate(&synthetic_evidence(0.001), None).unwrap();
         assert_eq!(rejected["pass"], json!(false));
         assert_eq!(rejected["promotion_tier"], json!("rejected"));
         assert!(rejected["reasons"]
@@ -3303,7 +3398,8 @@ mod tests {
     /// be promoted, however large its macro lift is.
     #[test]
     fn conditionality_is_a_hard_promotion_gate() {
-        let dead = evaluate_gate(&synthetic_evidence_with(0.05, Some(-0.06), Some(0.02))).unwrap();
+        let dead =
+            evaluate_gate(&synthetic_evidence_with(0.05, Some(-0.06), Some(0.02)), None).unwrap();
         assert_eq!(dead["pass"], json!(false));
         assert_eq!(dead["promotion_tier"], json!("rejected"));
         assert!(gate_reasons(&dead, "reasons")
@@ -3314,13 +3410,14 @@ mod tests {
         assert_eq!(dead["conditional_advantage_lift"], json!(-0.06 - 0.02));
 
         // Exactly zero advantage is still not a conditional policy.
-        let zero = evaluate_gate(&synthetic_evidence_with(0.05, Some(0.0), Some(-0.01))).unwrap();
+        let zero =
+            evaluate_gate(&synthetic_evidence_with(0.05, Some(0.0), Some(-0.01)), None).unwrap();
         assert_eq!(zero["pass"], json!(false));
         assert!(gate_reasons(&zero, "reasons")
             .contains(&"candidate_policy_is_not_conditional".to_owned()));
 
         // Unmeasured conditionality is fail-closed, never treated as zero.
-        let missing = evaluate_gate(&synthetic_evidence_with(0.05, None, None)).unwrap();
+        let missing = evaluate_gate(&synthetic_evidence_with(0.05, None, None), None).unwrap();
         assert_eq!(missing["pass"], json!(false));
         assert_eq!(missing["candidate_conditional_advantage"], Value::Null);
         assert_eq!(missing["conditional_advantage_lift"], Value::Null);
@@ -3330,21 +3427,22 @@ mod tests {
         assert!(!reasons.contains(&"candidate_policy_is_not_conditional".to_owned()));
 
         // Positive, but under the internal margin.
-        let thin = evaluate_gate(&synthetic_evidence_with(0.05, Some(0.004), Some(-0.02))).unwrap();
+        let thin =
+            evaluate_gate(&synthetic_evidence_with(0.05, Some(0.004), Some(-0.02)), None).unwrap();
         assert_eq!(thin["pass"], json!(false));
         assert!(gate_reasons(&thin, "reasons")
             .contains(&"conditional_advantage_below_half_point".to_owned()));
 
         // Beats the baseline by half a point but not by two: internal only.
         let internal =
-            evaluate_gate(&synthetic_evidence_with(0.05, Some(0.03), Some(0.02))).unwrap();
+            evaluate_gate(&synthetic_evidence_with(0.05, Some(0.03), Some(0.02)), None).unwrap();
         assert_eq!(internal["promotion_tier"], json!("internal"));
         assert!(gate_reasons(&internal, "milestone_reasons")
             .contains(&"conditional_advantage_lift_below_two_points".to_owned()));
 
         // Conditional on both margins: milestone stays reachable.
         let milestone =
-            evaluate_gate(&synthetic_evidence_with(0.05, Some(0.06), Some(0.02))).unwrap();
+            evaluate_gate(&synthetic_evidence_with(0.05, Some(0.06), Some(0.02)), None).unwrap();
         assert_eq!(milestone["promotion_tier"], json!("milestone"));
     }
 
@@ -3360,8 +3458,11 @@ mod tests {
         assert!(!cases.is_empty(), "parity fixture has no cases");
         for case in cases {
             let name = case["name"].as_str().unwrap();
-            let produced =
-                py_dumps(&evaluate_gate(&case["evidence"]).unwrap(), PyStyle::Compact).unwrap();
+            let produced = py_dumps(
+                &evaluate_gate(&case["evidence"], None).unwrap(),
+                PyStyle::Compact,
+            )
+            .unwrap();
             assert_eq!(
                 produced,
                 case["expected_gate_compact_json"].as_str().unwrap(),
@@ -3493,7 +3594,15 @@ mod tests {
         assert_eq!(out["promotion_tier"], json!("rejected"));
         assert_eq!(out["tasks_passing"], json!(["binary"]));
         assert_eq!(out["task_verdicts"]["binary"]["pass"], json!(true));
+        assert_eq!(out["task_verdicts"]["binary"]["advisory"], json!(false));
         assert_eq!(out["task_verdicts"]["regression"]["pass"], json!(false));
+        // Unanchored new tasks: recorded as advisory, failing on their own
+        // (absent) evidence, and never gating.
+        for task in ["timeseries", "multiclass"] {
+            assert_eq!(out["task_verdicts"][task]["advisory"], json!(true));
+            assert_eq!(out["task_verdicts"][task]["pass"], json!(false));
+            assert_eq!(out["task_verdicts"][task]["pairwise_lift"], Value::Null);
+        }
 
         // The artifact on disk, not just the return value.
         let artifact =
@@ -3540,10 +3649,62 @@ mod tests {
             pointers["tasks"]["regression"]["checkpoint_sha256"],
             json!(checkpoint_sha)
         );
+        // Advisory-until-anchor: the new tasks are NOT bootstrapped — presence
+        // in this file is the anchor, so only a passing verdict may create it.
+        assert!(pointers["tasks"].get("timeseries").is_none());
+        assert!(pointers["tasks"].get("multiclass").is_none());
         // ONE global lineage pointer, and this phase does not write it: the
         // freshness epoch is defined by these two files alone.
         assert!(!root.join("training/accepted.json").exists());
         assert!(!root.join("training/learning.json").exists());
+    }
+
+    /// U3 invariant: with no anchor, a new task's verdict — even a regressing
+    /// one computed from real evidence — must not alter any global decision;
+    /// once anchored, the same evidence gates exactly like a legacy branch.
+    #[test]
+    fn new_task_verdicts_are_advisory_until_anchored() {
+        let mut evidence = synthetic_evidence(0.05);
+        evidence["baseline"]["timeseries_pairwise_accuracy"] = json!(0.6);
+        evidence["candidate"]["timeseries_pairwise_accuracy"] = json!(0.5);
+
+        let advisory = evaluate_gate(&evidence, None).unwrap();
+        assert_eq!(advisory["pass"], json!(true));
+        assert_eq!(advisory["promotion_tier"], json!("milestone"));
+        assert!(!gate_reasons(&advisory, "milestone_reasons")
+            .iter()
+            .any(|reason| reason.starts_with("timeseries_")));
+        let verdict = &advisory["task_verdicts"]["timeseries"];
+        assert_eq!(verdict["advisory"], json!(true));
+        assert_eq!(verdict["pass"], json!(false));
+        assert!(verdict["reasons"]
+            .as_array()
+            .unwrap()
+            .contains(&json!("timeseries_regressed_more_than_half_point")));
+        assert_eq!(
+            advisory["task_pairwise_deltas"]["timeseries"],
+            json!(0.5 - 0.6)
+        );
+
+        // An anchor entry in accepted-by-task.json flips the branch to gating.
+        let anchored = json!({
+            "schema": "JopeSelfplayAcceptedByTask.v1",
+            "tasks": {"timeseries": {"checkpoint_sha256": "c".repeat(64)}},
+        });
+        assert!(task_verdict_is_gating("timeseries", Some(&anchored)));
+        assert!(!task_verdict_is_gating("multiclass", Some(&anchored)));
+        let gated = evaluate_gate(&evidence, Some(&anchored)).unwrap();
+        assert_eq!(gated["pass"], json!(false));
+        assert_eq!(gated["promotion_tier"], json!("rejected"));
+        assert!(gate_reasons(&gated, "reasons")
+            .contains(&"timeseries_regressed_more_than_half_point".to_owned()));
+        assert_eq!(
+            gated["task_verdicts"]["timeseries"]["advisory"],
+            json!(false)
+        );
+        // Multiclass stays advisory and, with no evidence at all, records nulls.
+        assert_eq!(gated["task_verdicts"]["multiclass"]["advisory"], json!(true));
+        assert_eq!(gated["task_pairwise_deltas"]["multiclass"], Value::Null);
     }
 
     #[test]

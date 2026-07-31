@@ -27,19 +27,30 @@ CONDITIONAL_ADVANTAGE_KEYS = (
 CONDITIONAL_INTERNAL_MARGIN = 0.005
 CONDITIONAL_MILESTONE_MARGIN = 0.02
 
-# The two independent promotion branches. A generation that trades one against
-# the other can never clear a single global gate -- which is the observed state
-# (gen-1 ff95a336: binary +0.0421, regression -0.0161, tier "rejected", and the
+# The independent promotion branches, in the same order as the Rust
+# `selfplay_expansion::TASKS`. A generation that trades one against another can
+# never clear a single global gate -- which is the observed state (gen-1
+# ff95a336: binary +0.0421, regression -0.0161, tier "rejected", and the
 # original anchor still accepted after every attempt). `task_verdicts` records
 # the decision each branch reaches on its OWN evidence. It never widens the
 # global verdict: `pass`, `promotion_tier` and `reasons` are computed exactly as
 # before, and `task_verdicts` / `task_verdict_schema` / `tasks_passing` are
 # purely additive keys.
 #
+# The NEW branches (timeseries, multiclass) are ADVISORY until anchored: their
+# verdicts are recorded with `"advisory": true` but excluded from gating --
+# they contribute nothing to `pass` / `promotion_tier` / the global reasons,
+# and their evidence fields are optional -- until
+# `training/accepted-by-task.json` carries an accepted anchor for the task
+# (see `task_verdict_is_gating`). The legacy branches gate exactly as before.
+#
 # Keep in lockstep with `jope_selfplay_promotion.rs::task_verdicts` -- that Rust
 # port is what the live controller runs; this is the reference implementation
 # and the drift check compares the two on the same evidence.
-TASK_BRANCHES = ("regression", "binary")
+TASK_BRANCHES = ("regression", "binary", "timeseries", "multiclass")
+# Branches that predate per-task anchors: they always gate. Mirrors the
+# legacy-task carve-out in `jope_task_learning_controller.rs::accepted_pointers`.
+LEGACY_GATING_TASKS = ("regression", "binary")
 TASK_INTERNAL_LIFT_MARGIN = 0.002
 TASK_MILESTONE_LIFT_MARGIN = 0.01
 TASK_VERDICT_SCHEMA = "JopeSelfplayCheckpointGateTaskVerdict.v1"
@@ -62,6 +73,40 @@ def _task_number(node: dict, field: str, task: str):
     return value if math.isfinite(value) else None
 
 
+def load_accepted_by_task(path: Path) -> dict | None:
+    """`training/accepted-by-task.json` if present, else None.
+
+    A missing file means no per-task anchors exist yet (every new branch stays
+    advisory). Malformed JSON is surfaced, never silently waived.
+    """
+
+    try:
+        text = path.read_text()
+    except FileNotFoundError:
+        return None
+    return json.loads(text)
+
+
+def task_verdict_is_gating(task: str, accepted_by_task: dict | None) -> bool:
+    """True when `task`'s verdict participates in gating.
+
+    The legacy branches always gate -- bit-identical to the two-branch gate. A
+    NEW branch gates only once `accepted-by-task.json` carries an accepted
+    anchor for it; presence of the task entry IS the anchor, the same rule
+    `jope_task_learning_controller.rs::accepted_pointers` applies (new tasks
+    are never bootstrapped into that file, so presence implies a promoted
+    per-task anchor). Keep in lockstep with
+    `jope_selfplay_promotion.rs::task_verdict_is_gating`.
+    """
+
+    if task in LEGACY_GATING_TASKS:
+        return True
+    if not isinstance(accepted_by_task, dict):
+        return False
+    tasks = accepted_by_task.get("tasks")
+    return isinstance(tasks, dict) and isinstance(tasks.get(task), dict)
+
+
 def task_verdicts(
     baseline: dict,
     candidate: dict,
@@ -70,15 +115,20 @@ def task_verdicts(
     task_deltas: dict,
     shared_internal_extra: list,
     shared_milestone_extra: list,
+    advisory_tasks: frozenset = frozenset(),
 ) -> dict:
     """The global verdict, re-derived once per branch.
 
-    A branch verdict is the global verdict with (a) the OTHER branch's pairwise
-    regression dropped, (b) the macro lift replaced by this branch's own lift,
+    A branch verdict is the global verdict with (a) the OTHER branches' pairwise
+    regressions dropped, (b) the macro lift replaced by this branch's own lift,
     and (c) any aggregate reason for which a task-scoped measurement exists
     replaced by that measurement's own reason. Everything else -- replay
     verification, conditionality, proposal validity, latency -- is a property of
     the checkpoint, not of a branch, and is inherited verbatim.
+
+    A branch in `advisory_tasks` is computed identically but marked
+    `"advisory": true`: the caller guarantees such a branch contributed nothing
+    to the global verdict, and consumers must not gate on it.
     """
     verdicts = {}
     for task in TASK_BRANCHES:
@@ -128,6 +178,7 @@ def task_verdicts(
             | {r for r in internal_reasons if r.startswith(f"{task}_")}
         )
         verdicts[task] = {
+            "advisory": task in advisory_tasks,
             "pass": internal_pass,
             "internal_learning_pass": internal_pass,
             "milestone_pass": milestone_pass,
@@ -163,9 +214,17 @@ def conditional_advantage(node: dict) -> float | None:
     return None
 
 
-def evaluate_gate(evidence: dict) -> dict:
+def evaluate_gate(evidence: dict, accepted_by_task: dict | None = None) -> dict:
     baseline = evidence["baseline"]
     candidate = evidence["candidate"]
+    # Advisory-until-anchor: a branch with no accepted anchor is recorded but
+    # never gates -- its evidence fields are optional and its reasons stay out
+    # of the global verdict entirely.
+    advisory_tasks = frozenset(
+        task
+        for task in TASK_BRANCHES
+        if not task_verdict_is_gating(task, accepted_by_task)
+    )
     reasons = []
     macro_lift = float(candidate["macro_pairwise_accuracy"]) - float(
         baseline["macro_pairwise_accuracy"]
@@ -176,9 +235,28 @@ def evaluate_gate(evidence: dict) -> dict:
     # `common_reasons` in the original order, so the global verdict is unchanged.
     task_own_reasons: dict[str, list[str]] = {}
     for task in TASK_BRANCHES:
-        delta = float(candidate[f"{task}_pairwise_accuracy"]) - float(
-            baseline[f"{task}_pairwise_accuracy"]
-        )
+        key = f"{task}_pairwise_accuracy"
+        if task in advisory_tasks:
+            # Optional evidence; a regression here reaches only this branch's
+            # own advisory verdict, never the global reasons.
+            candidate_value = candidate.get(key)
+            baseline_value = baseline.get(key)
+            delta = None
+            if not isinstance(candidate_value, bool) and isinstance(
+                candidate_value, (int, float)
+            ) and not isinstance(baseline_value, bool) and isinstance(
+                baseline_value, (int, float)
+            ):
+                delta = float(candidate_value) - float(baseline_value)
+                if not math.isfinite(delta):
+                    delta = None
+            task_deltas[task] = delta
+            if delta is not None and delta < -0.005 - 1e-12:
+                task_own_reasons.setdefault(task, []).append(
+                    f"{task}_regressed_more_than_half_point"
+                )
+            continue
+        delta = float(candidate[key]) - float(baseline[key])
         task_deltas[task] = delta
         if delta < -0.005 - 1e-12:
             reason = f"{task}_regressed_more_than_half_point"
@@ -301,6 +379,7 @@ def evaluate_gate(evidence: dict) -> dict:
         task_deltas,
         shared_internal_extra,
         shared_milestone_extra,
+        advisory_tasks,
     )
     return {
         "schema": "JopeSelfplayCheckpointGate.v3",
@@ -339,7 +418,12 @@ def promote(
     enforce_pointer_ancestor: bool = True,
 ) -> dict:
     evidence = json.loads(evidence_path.read_text())
-    result = evaluate_gate(evidence)
+    # The per-task anchor file lives beside the global accepted pointer; it
+    # decides which NEW branches gate (advisory-until-anchor).
+    accepted_by_task = load_accepted_by_task(
+        accepted_pointer.with_name("accepted-by-task.json")
+    )
+    result = evaluate_gate(evidence, accepted_by_task)
     atomic_json(gate_path, result)
     if not result["pass"]:
         return result
