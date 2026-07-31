@@ -1,0 +1,11 @@
+[Unit]
+Description=Two-minute JOPE dataset breadth and encoding cycle
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=2min
+Persistent=true
+AccuracySec=10s
+
+[Install]
+WantedBy=timers.target

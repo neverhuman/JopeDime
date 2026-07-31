@@ -1,0 +1,54 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-00",
+  "receipt_sequence": 3,
+  "ledger_sequence": 10,
+  "timestamp": "2026-07-22T05:35:25Z",
+  "actor": "/root",
+  "from": "in_progress",
+  "to": "review",
+  "baseline_sha256": {
+    "phase_snapshot": "ba6edbfeabc9c36cce0ae0e8f5dcbee1a03dc8824d6cdd6da69adabe6b5909c5",
+    "unverified_preservation_snapshot": "f223a0d41bb3a8e5b51ca63fbb02ec00064819d94098160ce35ca02a4b7d6dd7",
+    "prior_v2_graph": "9c89d38cc2d7abc6c54e6edc62ac5b71be1125d29e173e39326ecc8379b3f977",
+    "prior_v2_ledger": "8148ee88fcbf0c8e6276084fafdca13b49d606a93b36cce5750f7ece88ae51d3"
+  },
+  "changed_paths": [
+    "ROADMAP.md",
+    "docs/advanced-v3/COORDINATION_V2.md",
+    "manifests/advanced-v3/task-graph.v2.json",
+    "manifests/advanced-v3/work-ledger.v2.jsonl",
+    "manifests/advanced-v3/task-receipts",
+    "manifests/advanced-v3/reconciliation-inventory-20260722T045728Z.v1.json",
+    "manifests/advanced-v3/reconciliation-checkpoint-20260722T053421Z.v1.json",
+    "scripts/validate_advanced_v3_v2.py",
+    "scripts/validate_advanced_v3_ownership.sh"
+  ],
+  "checks": [
+    "all live external writers were stopped and their bytes preserved before review",
+    "every authority-snapshot path was classified as adopted or rejected",
+    "rejected K-15/S-21 claims, S-21 source, shared-interface expansion, and formatting-only churn are preserved in f223a0d4",
+    "K-14 corrective receipt and K-15 review/verification transitions validate",
+    "V2 graph preserves every imported V1 owner, dependency, and state",
+    "V2 ledger-derived current state, receipt hashes, DAG, and migration validate",
+    "root, kernel, search, and verification ownership inventories pass",
+    "workspace root, feat-math library, battle-gpu, champion, tokens, golden, bench, and doctest gates pass",
+    "two independently created deterministic archives have identical SHA-256 and the archive listing succeeds"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/reconciliation-inventory-20260722T045728Z.v1.json",
+    "manifests/advanced-v3/reconciliation-checkpoint-20260722T053421Z.v1.json",
+    "manifests/advanced-v3/task-receipts/K-14/0001.v1.json",
+    "manifests/advanced-v3/task-receipts/K-15/0002.v1.json",
+    "/home/ubuntu/jope-dime-snapshots/217c847afab5ddbfa566f64da42d636dab5e353de95b39faa9e9eb80e98bd5b6.tar.zst"
+  ],
+  "result_sha256": {
+    "task_graph_v2": "18374f9b41e2965eed50116ec371498978b950f4fe290c18aaad121a885b4f8c",
+    "reconciliation_inventory": "5bee909b25ffea9daa4d1d288558c69238060282ae8696de16b70b59b75fdbfe",
+    "reconciliation_checkpoint": "47df3802b214ca4ce468bc71233d0e6b758ad7bf4350fe6e8093e8cc930aba0d",
+    "checkpoint_snapshot": "217c847afab5ddbfa566f64da42d636dab5e353de95b39faa9e9eb80e98bd5b6"
+  },
+  "remaining_scope": "P-1A and all later waves remain gated. This receipt does not verify portable backends, search-v2, GPU, Hyperion, admission, release, or any campaign.",
+  "decision": "Move P-00 to review. The reconciled metadata and K-14/K-15 frontier are ready for an independent governance audit."
+}

@@ -1,0 +1,67 @@
+{
+  "schema": "jope-dime.advanced-v3-reconciliation-checkpoint.v1",
+  "created_utc": "2026-07-22T05:34:21Z",
+  "status": "verified-reconciliation-checkpoint",
+  "snapshot": {
+    "path": "/home/ubuntu/jope-dime-snapshots/217c847afab5ddbfa566f64da42d636dab5e353de95b39faa9e9eb80e98bd5b6.tar.zst",
+    "sha256": "217c847afab5ddbfa566f64da42d636dab5e353de95b39faa9e9eb80e98bd5b6",
+    "bytes": 12025983,
+    "canonical_tar": {
+      "sort": "name",
+      "mtime_unix": 0,
+      "uid": 0,
+      "gid": 0,
+      "compression": "zstd-19-single-thread"
+    },
+    "excluded": [
+      "target",
+      "runs",
+      "datasets",
+      "data",
+      ".cache",
+      "__pycache__"
+    ],
+    "reproduction_path": "/tmp/jope-dime-p00-candidate-b.tar.zst",
+    "reproduction_sha256": "217c847afab5ddbfa566f64da42d636dab5e353de95b39faa9e9eb80e98bd5b6",
+    "archive_listing_exit_code": 0
+  },
+  "authority_at_capture": {
+    "task_graph_v1_sha256": "c057fc3e3d50a9ed8ef200dbb7088b38c032825a43d190e3e820f6818ee0485b",
+    "work_ledger_v1_sha256": "75c2fa97c1ccdaf830c6ebe384d0ec199e101468079ea160dc36f273ea65b914",
+    "task_graph_v2_sha256": "9c89d38cc2d7abc6c54e6edc62ac5b71be1125d29e173e39326ecc8379b3f977",
+    "work_ledger_v2_sha256": "8148ee88fcbf0c8e6276084fafdca13b49d606a93b36cce5750f7ece88ae51d3",
+    "work_ledger_v2_last_sequence": 8,
+    "v2_validator_sha256": "4d57c12cd43a79ec6f054befdf3214efcec47c276c0f105a7ec987d42b0f9708",
+    "ownership_validator_sha256": "100734997d1773c5ea8bf67c1c61544d2a9a72dbfeac15ee6e8daea8863130d7",
+    "roadmap_sha256": "0f9f016eaa1a68c3b379c65cbedab8a64228c401c7b988965c8926f890128121"
+  },
+  "material_source_sha256": {
+    "vendor/feat-math/src/advanced_v3/input.rs": "c0cdbc60d0704625ac59e7e26ad9202d24621d1c19cc45d5370ccd0b9380dafa",
+    "vendor/feat-math/src/advanced_v3/transforms/mod.rs": "ebdd6ca1d9022d95cf93cfcf6d33f64d800daf34d6a4a5a3dd4fcdd33c652b71",
+    "vendor/feat-math/src/advanced_v3/pipeline.rs": "69fcb2f50f7c70c993a05fb4f2bf96d995f3e455656cb152736a64d2a05e366c",
+    "vendor/feat-math/src/advanced_v3/emit/mod.rs": "38c1a6a2ee2b0d5e82cfd31471d6262ed1761c8f453e5cb56050233d5155592d",
+    "vendor/feat-math/src/advanced_v3/feature_block.rs": "d3ee0b3b6eb754ef7b2befc7aa9ee43adaa221d7db39fe0d92423214bcea056b",
+    "vendor/feat-math/src/portable_math.rs": "b765bb8bcf8480e8a433b647790ce72cef86ee909e3e73937d922a70b29db931",
+    "vendor/feat-math/src/transpile.rs": "cc93612237ed1d907adf3539c342b5acf1d274fb49b15e75cb90254d06a9cf6d",
+    "vendor/feat-math/src/lib.rs": "ccd4d6a204f3083af6d3b447b2c35c4230e1b4641ca6f65e36b53a40905bf002"
+  },
+  "checks": [
+    {"command":"rtk cargo test -p jope-dime-regressor --locked -- --test-threads=1","result":"pass","summary":"75 passed, 1 ignored"},
+    {"command":"rtk cargo test -p feat-math --lib --locked -- --test-threads=1","result":"pass","summary":"240 passed, 2 ignored in 389.26s"},
+    {"command":"rtk cargo test -p battle-gpu --locked -- --test-threads=1","result":"pass","summary":"6 passed"},
+    {"command":"rtk cargo test -p feat-math --test champion_parity --locked -- --test-threads=1","result":"pass","summary":"2 passed"},
+    {"command":"rtk cargo test -p feat-math --test tokens --locked -- --test-threads=1","result":"pass","summary":"4 passed"},
+    {"command":"rtk cargo test -p feat-math --test golden --locked -- --test-threads=1","result":"pass","summary":"83 passed in 1085.56s"},
+    {"command":"rtk cargo test -p feat-math --test bench --locked -- --test-threads=1","result":"pass","summary":"1 intentionally ignored benchmark"},
+    {"command":"rtk cargo test --workspace --doc --locked -- --test-threads=1","result":"pass","summary":"two suites, zero failures"},
+    {"command":"rtk python3 scripts/validate_advanced_v3_v2.py","result":"pass","summary":"graph, DAG, V1 migration, ledger chain, receipts, and current-state projection pass"},
+    {"command":"rtk bash scripts/validate_advanced_v3_ownership.sh <actor> <inventory>","result":"pass","summary":"root, kernel, search, and verification inventories pass"},
+    {"command":"rtk rustfmt --edition 2021 --check <K-14/K-15-owned Rust files>","result":"pass","summary":"no owned-file diff"}
+  ],
+  "receipts": {
+    "K-14/0001": "253cd0421f7a5d36dc00fdfe435d0c84eb48019995769ba989e5ad99e53fe771",
+    "K-15/0001": "2fa7a0c5a15736fc2af4da77a6a098b50d1787c30ef10f56bd45b2edb23cd2cc",
+    "K-15/0002": "66f3db057f53159a5fcc00c0a753fe8797a81ee20c9c949355ac7c923094323f"
+  },
+  "scope_note": "This verifies the P-00 reconciliation checkpoint and K-14/K-15 frontier. Portable P-1A remains unverified WIP; later wave and release gates remain closed."
+}

@@ -1,0 +1,36 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-1D",
+  "receipt_sequence": 1,
+  "ledger_sequence": 46,
+  "timestamp": "2026-07-22T08:48:24Z",
+  "actor": "/root",
+  "from": "queued",
+  "to": "ready",
+  "baseline_sha256": {
+    "verified_dependency_receipt": "1253287f0b0452077cda15cdccc3302eb975e55220a21874db00d78d99e13b27",
+    "mathexpr": "d4290e00f8864513fa299e6b22c012953ed3e2c9fe383dbdc9e0d2cea7e89e19",
+    "tokens": "d8a60062c92afa1de9a85361b670b7d7d1d019bb93ae85bd9620e308c527a9a4",
+    "transpile": "bf68033b7b2f01dca11ba2e9861686f455db3c8f664d4d5a25a4d24110139350",
+    "task_graph_v2": "b6bd9677c5d1830e5fdb9694a39bfc03061b0e2fb9e6d34137f417e9f7a36214",
+    "roadmap": "dfad36ee8635bf40e596de579069ba04982ec94e8c070750435eb22f0ec56845"
+  },
+  "changed_paths": [],
+  "checks": [
+    "P-1C is verified at V2 sequence 44 and is P-1D's sole dependency",
+    "emit_js.rs does not exist and the shared P-1D integration paths have no live writer",
+    "stock Node v26.1.0 is available and the verified P-1B JavaScript helper fixture passes syntax checking",
+    "the initial certified slice is limited to target-free Plan pipelines, the P-1C 22 transforms, and Ridge or ElasticNet; every other form must fail closed",
+    "PlatformLibm remains the byte-identical default and legacy Rust and Python Portable emission remains fail-closed"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/task-receipts/P-1C/0005.v1.json",
+    "vendor/feat-math/tests/portable/full_ref.js",
+    "vendor/feat-math/src/mathexpr.rs",
+    "vendor/feat-math/src/tokens.rs",
+    "vendor/feat-math/src/transpile.rs"
+  ],
+  "remaining_scope": "Search-v2, selected fitted export, persistent workers, an 80-worker executor, CUDA, campaign admission, release, and optional Hyperion remain closed.",
+  "decision": "Move P-1D to ready. Verified P-1C clears the narrow serialized JavaScript fitted-emitter frontier."
+}

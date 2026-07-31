@@ -1,0 +1,12 @@
+ROADMAP.md
+manifests/advanced-v3/ownership-checks/p1c-root.txt
+manifests/advanced-v3/task-graph.v2.json
+manifests/advanced-v3/task-receipts/P-1C/0003.v1.json
+manifests/advanced-v3/task-receipts/P-1C/0004.v1.json
+manifests/advanced-v3/task-receipts/P-1C/0005.v1.json
+manifests/advanced-v3/work-ledger.v2.jsonl
+scripts/validate_advanced_v3_ownership.sh
+vendor/feat-math/src/emit_cpp.rs
+vendor/feat-math/src/mathexpr.rs
+vendor/feat-math/src/tokens.rs
+vendor/feat-math/src/transpile.rs

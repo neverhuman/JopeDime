@@ -1,0 +1,10 @@
+[Unit]
+Description=6-hourly JOPE robust GP seed-bank export
+
+[Timer]
+OnCalendar=00/6:00
+Persistent=true
+RandomizedDelaySec=600
+
+[Install]
+WantedBy=timers.target

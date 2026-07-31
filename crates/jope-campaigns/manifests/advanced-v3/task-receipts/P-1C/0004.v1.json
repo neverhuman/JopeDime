@@ -1,0 +1,56 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-1C",
+  "receipt_sequence": 4,
+  "ledger_sequence": 42,
+  "timestamp": "2026-07-22T08:42:26Z",
+  "actor": "/root",
+  "from": "review",
+  "to": "review",
+  "baseline_sha256": {
+    "rejected_review_receipt": "5b6c6414a21e3e6b72c128ff5fb1543ffbbbb5be04fbb08d225b00cf8901980a",
+    "task_graph_v2": "8d6b133a4753e20cc0c84c283667fa6b3260b3677b0479c934d109d1eb955e4f",
+    "ledger_through_sequence_41": "591e8191711644581b22597e7ea495d102bfbf877d39213262675c820c29129b",
+    "roadmap_after_review_and_recovery": "968aca4a9bcb03f086c3617afe670fbbb9115402184138958d4573291eb2cd8c",
+    "rejected_executor_recovery_archive": "3eba1bdb1471de72c0b6f86efead86891f822bbc77d2eec677fe1448687457f0"
+  },
+  "changed_paths": [
+    "vendor/feat-math/src/emit_cpp.rs",
+    "vendor/feat-math/src/mathexpr.rs",
+    "vendor/feat-math/src/tokens.rs",
+    "vendor/feat-math/src/transpile.rs"
+  ],
+  "checks": [
+    "emitted fitting has no process-I/O termination path; source and shared-object symbol audits reject filesystem, environment, network, process, clock, RNG, printf, exit, and abort dependencies",
+    "the numeric C ABI is noexcept, catches exceptions, validates explicit flat values, target, and output capacities, rejects rows-times-columns overflow, and handles zero-row prediction",
+    "strict stock C++17, ASan, and nonrecovering UBSan builds execute successfully with contraction and fast-math disabled",
+    "all 22 certified transforms under both Ridge and ElasticNet plus a distinct 23-case corpus produce exact Rust and C++17 prediction bits",
+    "a fitted Portable sigmoid-plus-ridge artifact strict-compiles and exactly matches the Rust portable-exp reference; the complete Portable helper body remains byte-bound to P-1B",
+    "counted artifacts bind deterministic source SHA-256, code and documentation token counts, bytes, and math policy while PlatformLibm remains the byte-identical default",
+    "two independent read-only reviews approve the corrected exact source hashes and confirm all five rejected acceptance gaps are closed",
+    "the focused C++17 suite passes six tests and the full feat-math library passes 248 tests with two intentional ignores",
+    "the frozen golden suite passes all 83 tests in 600.00 seconds; portable parity, legacy freeze, champion parity, and token suites pass",
+    "owned rustfmt, ownership validation, workspace all-target checking, and the V2 graph, DAG, migration, receipt, and ledger validator pass",
+    "an unleased incomplete 80-worker attempt was reproducibly preserved and rejected; its two live deltas exactly match the verified baseline again and no campaign was launched"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "vendor/feat-math/src/emit_cpp.rs",
+    "vendor/feat-math/src/mathexpr.rs",
+    "vendor/feat-math/src/tokens.rs",
+    "vendor/feat-math/src/transpile.rs",
+    "vendor/feat-math/tests/portable_parity.rs",
+    "vendor/feat-math/tests/portable/full_ref.cpp",
+    "manifests/advanced-v3/task-receipts/P-1C/0003.v1.json",
+    "manifests/advanced-v3/ownership-checks/p1c-root.txt",
+    "/home/ubuntu/jope-dime-snapshots/3eba1bdb1471de72c0b6f86efead86891f822bbc77d2eec677fe1448687457f0.tar.zst"
+  ],
+  "result_sha256": {
+    "vendor/feat-math/src/emit_cpp.rs": "47e0b2a7219e0d3635d8ae615e10aec5177ee81f181370d3a56148806e205b22",
+    "vendor/feat-math/src/mathexpr.rs": "d4290e00f8864513fa299e6b22c012953ed3e2c9fe383dbdc9e0d2cea7e89e19",
+    "vendor/feat-math/src/tokens.rs": "d8a60062c92afa1de9a85361b670b7d7d1d019bb93ae85bd9620e308c527a9a4",
+    "vendor/feat-math/src/transpile.rs": "bf68033b7b2f01dca11ba2e9861686f455db3c8f664d4d5a25a4d24110139350"
+  },
+  "remaining_scope": "This correction certifies only the fail-closed standalone Plan emitter for 22 transforms and Ridge/ElasticNet. JavaScript, unsupported transforms and heads, selected fitted BoundModel export, persistent workers, the 80-worker executor, campaign admission, CUDA, and release remain separately gated.",
+  "decision": "Correctively adopt P-1C's review state at the independently approved exact hashes without rewriting the raced sequence-41 receipt or changing task state."
+}

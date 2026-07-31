@@ -1,0 +1,13 @@
+[Unit]
+Description=JOPE training-history ANALYSIS archive (WS-A): reload history.sqlite3 + refresh exports
+Documentation=file:///home/ubuntu/jope-flywheel/test_exact_gen0/training/history/db/SCHEMA-DB.md
+
+[Service]
+Type=oneshot
+# Read-only against every source; the only writes are inside
+# test_exact_gen0/training/history/db/. Ingest is idempotent, so a missed run
+# costs nothing and a double run costs nothing.
+ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_training_archive ingest
+ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_training_archive export --format both
+Nice=10
+IOSchedulingClass=idle

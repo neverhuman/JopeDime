@@ -1,0 +1,52 @@
+{
+  "schema": "SelfPlayShadowConfig.v2",
+  "namespace_root": "/home/ubuntu/ratchet-shadow/causal-v2",
+  "production_anchor_root": "/home/ubuntu/jope-flywheel/test_exact_gen0",
+  "production_anchor_read_only": true,
+  "accepted_pointer_schema": "AcceptedByTask.v2",
+  "evaluation_key_schema": "EvaluationKey.v2",
+  "evaluation_result_schema": "EvaluationResult.v2",
+  "cache_receipt_schema": "EvaluationCacheReceipt.v2",
+  "runtime_bundle_schema": "RuntimeBundle.v3",
+  "cohort": {
+    "datasets": 64,
+    "below_80pct": {
+      "frontier": 48,
+      "hard": 8,
+      "anchor": 8
+    },
+    "at_or_above_80pct": {
+      "frontier": 32,
+      "hard": 16,
+      "anchor": 16
+    },
+    "hard_cooldown_waves": 3
+  },
+  "evaluation": {
+    "per_dataset": 256,
+    "direct_budgets": [8, 16, 32, 48, 64],
+    "initial_direct_budget": 8,
+    "cross_context_backfill": false,
+    "normal_cross_protocol_repeats": false
+  },
+  "training": {
+    "minimum_parent_direct_outcomes": 2048,
+    "minimum_completed_parent_waves": 1,
+    "shared_training_slots": 1,
+    "target_task_fraction": 0.5,
+    "target_loss_weight": 2.0
+  },
+  "encoding": {
+    "project": "jope-selfplay-breadth-encode",
+    "chunk_datasets": 256,
+    "tranche_datasets": 512,
+    "retry_interval_seconds": 120,
+    "first_touch_release_fraction": 0.3,
+    "node": "xbabe3",
+    "gpu": 1,
+    "companion_cpu_cores": 4,
+    "preemptible": true,
+    "may_preempt": ["jope-selfplay-eval"],
+    "must_not_preempt": ["jope-selfplay-train"]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-1D",
+  "receipt_sequence": 2,
+  "ledger_sequence": 47,
+  "timestamp": "2026-07-22T08:48:25Z",
+  "actor": "/root",
+  "from": "ready",
+  "to": "in_progress",
+  "baseline_sha256": {
+    "ready_receipt": "acc9982846b05baaa08080fe11c95f3d60ef80837910efed16fdaa990c562618",
+    "task_graph_v2": "b6bd9677c5d1830e5fdb9694a39bfc03061b0e2fb9e6d34137f417e9f7a36214"
+  },
+  "changed_paths": [],
+  "checks": [
+    "the implementation lease is limited to emit_js.rs, mathexpr.rs, tokens.rs, transpile.rs, and P-1D receipts; root retains governance and shared integration",
+    "generated ES2020 must use typed Float64Array boundaries, safe-integer shape and capacity checks, deterministic exact source and token identity, and no dataset reads",
+    "Portable output must use the verified P-1B helper body and match fitted Rust and C++17 bits while PlatformLibm artifacts remain unchanged",
+    "PCG32 state and increment arithmetic must remain BigInt-confined and every unsupported transform, head, target transform, symbolic form, and portfolio must fail closed",
+    "P-2, selected fitted export, persistent workers, CUDA, campaigns, and release remain closed"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/task-receipts/P-1D/0001.v1.json",
+    "manifests/advanced-v3/ownership-checks/p1d-root.txt"
+  ],
+  "remaining_scope": "Only the standalone P-1D emitter is opened. No campaign or later-wave implementation is authorized by this transition.",
+  "decision": "Begin P-1D under an exclusive serialized implementation lease with root retaining public and governance boundaries."
+}

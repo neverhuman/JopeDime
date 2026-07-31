@@ -1,0 +1,29 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "SCQ80",
+  "receipt_sequence": 1,
+  "ledger_sequence": 49,
+  "timestamp": "2026-07-22T09:12:01Z",
+  "actor": "/root",
+  "from": "queued",
+  "to": "ready",
+  "baseline_sha256": {
+    "verified_p1c_receipt": "1253287f0b0452077cda15cdccc3302eb975e55220a21874db00d78d99e13b27",
+    "pre_fast_lane_task_graph": "b6bd9677c5d1830e5fdb9694a39bfc03061b0e2fb9e6d34137f417e9f7a36214",
+    "cargo_lock": "72362e9fb1bfb3a2836c06a699be141862dcdfd5da5b2e25044d767caad544c3"
+  },
+  "changed_paths": [],
+  "checks": [
+    "P-1C is verified only for standalone Plan emission and is SCQ80's sole governed dependency",
+    "full live-registry fitted C++ correctness is mandatory before C++ timing can admit that backend",
+    "the complete Rust fitted evaluator remains available as the explicit fail-closed campaign backend",
+    "the legacy 90-core executor and all prior run artifacts remain frozen"
+  ],
+  "evidence": [
+    "manifests/advanced-v3/task-receipts/P-1C/0005.v1.json",
+    "ROADMAP.md",
+    "src/test_adaptive/scq_batch.rs"
+  ],
+  "remaining_scope": "Implementation, fitted admission, SCQ80 preflight, launch, and validation remain required.",
+  "decision": "Open the additive SCQ80 frontier without advancing legacy K-50/K-51/K-53 or claiming fitted C++ support."
+}

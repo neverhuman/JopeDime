@@ -1,0 +1,10 @@
+[Unit]
+Description=Run the JOPE self-play health alarm scan every 60 seconds
+
+[Timer]
+OnBootSec=60
+OnUnitActiveSec=60
+AccuracySec=5
+
+[Install]
+WantedBy=timers.target

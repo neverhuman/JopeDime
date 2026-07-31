@@ -1,0 +1,29 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "SCQ80",
+  "receipt_sequence": 2,
+  "ledger_sequence": 50,
+  "timestamp": "2026-07-22T09:12:02Z",
+  "actor": "/root",
+  "from": "ready",
+  "to": "in_progress",
+  "baseline_sha256": {
+    "ready_receipt": "23af4943e951b9d5f3a3ea5332c161d4ee0187731b1d3ddada13f0b8bdfbb326",
+    "task_graph_v2": "fd134a5d41abb461319eaf5d6a74782888a8a5518d845a80cda7b6aa7f880abd"
+  },
+  "changed_paths": [],
+  "checks": [
+    "the new executor uses distinct schemas and commands rather than changing frozen campaign behavior",
+    "logical slot routing is fixed as nodes[(slot + generation) mod 3] with exactly 80 primary requests per node",
+    "C++ admission fails closed to Rust when full fitted-registry parity is absent",
+    "all new campaign-level artifacts are explicitly test-adaptive and benchmark-invalid"
+  ],
+  "evidence": [
+    "manifests/advanced-v3/task-receipts/SCQ80/0001.v1.json",
+    "manifests/advanced-v3/ownership-checks/scq80-root.txt",
+    "src/aggressive.rs",
+    "src/test_adaptive/aggressive.rs"
+  ],
+  "remaining_scope": "Complete implementation and local gates, then attempt launch through the resource preflight.",
+  "decision": "Begin the additive SCQ80 implementation under the root ownership inventory."
+}

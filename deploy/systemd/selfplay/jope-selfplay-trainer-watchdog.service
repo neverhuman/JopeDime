@@ -1,0 +1,14 @@
+[Unit]
+Description=JOPE task-aware alternating shadow and strictly gated production trainer
+After=jope-selfplay-ingestion.service jope-causal-evidence.service jope-gpu-lane-admission.service
+Wants=jope-selfplay-ingestion.service jope-causal-evidence.service jope-gpu-lane-admission.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ubuntu/jope-flywheel/test_exact_gen0
+ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_task_learning_controller --submit --interval-seconds 30
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

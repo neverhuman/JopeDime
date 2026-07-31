@@ -1,0 +1,10 @@
+[Unit]
+Description=Disabled compatibility timer for the retired whole-catalog proposer
+
+[Timer]
+OnBootSec=1h
+OnUnitActiveSec=1h
+Persistent=false
+
+[Install]
+WantedBy=timers.target

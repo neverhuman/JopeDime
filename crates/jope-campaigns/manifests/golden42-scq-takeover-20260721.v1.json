@@ -1,0 +1,99 @@
+{
+  "schema": "JopeGolden42ScqTakeoverSnapshot.v1",
+  "captured_at_utc": "2026-07-21T13:22:20Z",
+  "controller_scq_binary": "/home/ubuntu/smart_cluster/target/release/scq",
+  "controller_scq_sha256": "c7a5dc66188c3c7390659e7cf9ed46ec461ddb1811a589802bd3b8ba9ef75c11",
+  "frozen_campaign_binary": "/home/ubuntu/jope-dime/target/release/jope-dime-regressor",
+  "frozen_campaign_binary_sha256": "d8b2c6efca653358d89f3fa20304fe706841de64ce60380f6e6b154baae8f023",
+  "scq_jobs": [
+    {
+      "id": "bgga-20260721-bandgap-ga-r1-agent-xbabe1-033322",
+      "project": "xhyp3",
+      "node": "xbabe1",
+      "pid": 1421781,
+      "process_group": 1421781,
+      "started_at": "Tue Jul 21 03:33:22 2026",
+      "command_prefix": "/home/ubuntu/nomad/artifacts/bandgap_ga/20260721-bandgap-ga-r1/cluster/agent-xbabe1.sh",
+      "run_dir": "/home/ubuntu/smart_cluster/var/runs/bgga-20260721-bandgap-ga-r1-agent-xbabe1-033322",
+      "artifact_root": "/home/ubuntu/nomad/artifacts/bandgap_ga/20260721-bandgap-ga-r1"
+    },
+    {
+      "id": "bgga-20260721-bandgap-ga-r1-agent-xbabe3-033322",
+      "project": "xhyp3",
+      "node": "xbabe3",
+      "pid": 1651528,
+      "process_group": 1651528,
+      "started_at": "Tue Jul 21 03:33:22 2026",
+      "command_prefix": "/home/ubuntu/nomad/artifacts/bandgap_ga/20260721-bandgap-ga-r1/cluster/agent-xbabe3.sh",
+      "run_dir": "/home/ubuntu/smart_cluster/var/runs/bgga-20260721-bandgap-ga-r1-agent-xbabe3-033322",
+      "artifact_root": "/home/ubuntu/nomad/artifacts/bandgap_ga/20260721-bandgap-ga-r1"
+    },
+    {
+      "id": "jope-codex-smoke-xbabe1",
+      "project": "jope",
+      "state": "queued",
+      "command": "/bin/true",
+      "run_dir": "/home/ubuntu/smart_cluster/var/runs/jope-codex-smoke-xbabe1"
+    },
+    {
+      "id": "jope-codex-smoke-xbabe3",
+      "project": "jope",
+      "state": "queued",
+      "command": "/bin/true",
+      "run_dir": "/home/ubuntu/smart_cluster/var/runs/jope-codex-smoke-xbabe3"
+    }
+  ],
+  "coordinator": {
+    "node": "xbabe2",
+    "pid": 1262147,
+    "process_group": 1262147,
+    "started_at": "Tue Jul 21 12:47:18 2026",
+    "command_prefix": "rtk env RUST_BACKTRACE=1 target/release/bandgap-ga resume",
+    "artifact_root": "/home/ubuntu/nomad/artifacts/bandgap_ga/20260721-bandgap-ga-r1"
+  },
+  "jope_prime": {
+    "node": "xbabe1",
+    "artifact_roots": [
+      "/home/ubuntu/jope-prime/loop1200",
+      "/home/ubuntu/jope-scratch/loop1200"
+    ],
+    "recorded_process_groups": [
+      799608,
+      799609,
+      799610,
+      799611,
+      799612,
+      3344118,
+      3344119,
+      3368495,
+      3368496,
+      3394161,
+      3394164,
+      3394166,
+      3394167,
+      3394169,
+      3394171,
+      3394173,
+      3394175
+    ],
+    "allowed_command_prefixes": [
+      "/usr/bin/python3 /home/ubuntu/jope-prime/loop1200/",
+      "bash -c cd /home/ubuntu/jope-prime/loop1200",
+      "python3 supervisor.py --jain /home/ubuntu/jope-prime/rust/target/release/jain"
+    ],
+    "started_at_values": [
+      "Sun Jul 19 13:04:43 2026",
+      "Sun Jul 19 13:12:23 2026",
+      "Sun Jul 19 13:20:22 2026",
+      "Mon Jul 20 22:34:32 2026"
+    ]
+  },
+  "preserve": [
+    "CI",
+    "Codex and Claude sessions",
+    "interactive shells",
+    "Jeryu",
+    "system services",
+    "all job and run artifacts"
+  ]
+}

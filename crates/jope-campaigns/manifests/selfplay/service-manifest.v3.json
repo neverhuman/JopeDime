@@ -1,0 +1,182 @@
+{
+  "schema": "JopeSelfplayServiceManifest.v3",
+  "binaries": [
+    "corpus_eval",
+    "jope_canary_executor",
+    "jope_causal_evidence",
+    "jope_causal_pair_repair",
+    "jope_capacity",
+    "jope_compile_cache",
+    "jope_expanded_catalog",
+    "jope_flywheel_liveness",
+    "jope_gp_bridge",
+    "jope_gpu_lane_admission",
+    "jope_ledger_reconciler",
+    "jope_ops_health_check",
+    "jope_queue_control",
+    "jope_sealed_zeroshot",
+    "jope_selfplay_alarms",
+    "jope_selfplay_bundle",
+    "jope_selfplay_corpus_freezer",
+    "jope_selfplay_expansion_driver",
+    "jope_selfplay_freshness",
+    "jope_selfplay_gc",
+    "jope_selfplay_mcp",
+    "jope_selfplay_promotion",
+    "jope_selfplay_propose_driver",
+    "jope_selfplay_queue",
+    "jope_selfplay_shadow",
+    "jope_selfplay_status",
+    "jope_selfplay_supply",
+    "jope_selfplay_trainer_watchdog",
+    "jope_selfplay_tui",
+    "jope_selfplay_wave",
+    "jope_spec_drift",
+    "jope_task_learning_controller",
+    "jope_training_archive",
+    "jope_training_history",
+    "jope_training_replica",
+    "jope_utilization_supervisor",
+    "jope_v3_control"
+  ],
+  "services": [
+    {
+      "unit": "jope-canary-executor.service",
+      "binary": "jope_canary_executor",
+      "owner": "flywheel",
+      "active": true
+    },
+    {
+      "unit": "jope-causal-evidence.service",
+      "binary": "jope_causal_evidence",
+      "owner": "causal_evidence_ledger",
+      "active": true
+    },
+    {
+      "unit": "jope-causal-pair-repair.service",
+      "binary": "jope_causal_pair_repair",
+      "owner": "causal_pair_repair",
+      "active": true
+    },
+    {
+      "unit": "jope-flywheel-liveness.service",
+      "binary": "jope_flywheel_liveness",
+      "owner": "flywheel",
+      "active": true
+    },
+    {
+      "unit": "jope-gpu-lane-admission.service",
+      "binary": "jope_gpu_lane_admission",
+      "owner": "gpu_lane_capacity",
+      "active": true
+    },
+    {
+      "unit": "jope-selfplay-alarms.service",
+      "binary": "jope_selfplay_alarms",
+      "owner": "monitoring",
+      "active": true
+    },
+    {
+      "unit": "jope-selfplay-corpus-freezer.service",
+      "binary": "jope_selfplay_corpus_freezer",
+      "owner": "corpus_pointer",
+      "active": true
+    },
+    {
+      "unit": "jope-selfplay-expansion.service",
+      "binary": "jope_selfplay_expansion_driver",
+      "owner": "catalog_expansion",
+      "active": true
+    },
+    {
+      "unit": "jope-selfplay-freshness.service",
+      "binary": "jope_selfplay_freshness",
+      "owner": "freshness",
+      "active": true
+    },
+    {
+      "unit": "jope-selfplay-gc.service",
+      "binary": "jope_selfplay_gc",
+      "owner": "garbage_collection",
+      "active": true
+    },
+    {
+      "unit": "jope-selfplay-ingestion.service",
+      "binary": "jope_selfplay_status",
+      "owner": "authoritative_ingestion",
+      "active": true
+    },
+    {
+      "unit": "jope-selfplay-promotion.service",
+      "binary": "jope_selfplay_promotion",
+      "owner": "legacy_monolithic_promotion_disabled",
+      "active": false
+    },
+    {
+      "unit": "jope-selfplay-propose.service",
+      "binary": "jope_selfplay_propose_driver",
+      "owner": "retired_whole_catalog_proposer_audit",
+      "active": false
+    },
+    {
+      "unit": "jope-selfplay-queue.service",
+      "binary": "jope_selfplay_queue",
+      "owner": "scheduler_submission",
+      "active": true
+    },
+    {
+      "unit": "jope-selfplay-seedbank.service",
+      "binary": "jope_queue_control",
+      "owner": "robust_seed_bank",
+      "active": true
+    },
+    {
+      "unit": "jope-selfplay-supply.service",
+      "binary": "jope_selfplay_supply",
+      "owner": "cohort_and_wave_build",
+      "active": true
+    },
+    {
+      "unit": "jope-selfplay-trainer-watchdog.service",
+      "binary": "jope_task_learning_controller",
+      "owner": "task_shadow_and_production_checkpoint",
+      "active": true
+    },
+    {
+      "unit": "jope-training-archive.service",
+      "binary": "jope_training_archive",
+      "owner": "training_archive",
+      "active": true
+    },
+    {
+      "unit": "jope-training-history.service",
+      "binary": "jope_training_history",
+      "owner": "training_history",
+      "active": true
+    },
+    {
+      "unit": "jope-selfplay-controller.service",
+      "binary": "jope_selfplay_queue",
+      "owner": "retired_compatibility",
+      "active": false
+    },
+    {
+      "unit": "jope-selfplay-reserve.service",
+      "binary": "jope_selfplay_queue",
+      "owner": "retired_compatibility",
+      "active": false
+    },
+    {
+      "unit": "jope-selfplay-watchdog.service",
+      "binary": "jope_selfplay_queue",
+      "owner": "retired_compatibility",
+      "active": false
+    },
+    {
+      "unit": "jope-testonly-monitor.service",
+      "binary": "jope_queue_control",
+      "owner": "retired_compatibility",
+      "active": false
+    }
+  ]
+}

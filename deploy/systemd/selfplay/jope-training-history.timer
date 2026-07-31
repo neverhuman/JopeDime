@@ -1,0 +1,13 @@
+[Unit]
+Description=Capture DL trainer per-epoch metrics every 3 minutes
+
+[Timer]
+# The trainer emits roughly one epoch every 4 minutes, so a 3-minute cadence
+# bounds worst-case loss at the single row being written when a run dies.
+OnBootSec=2min
+OnUnitActiveSec=3min
+AccuracySec=15s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

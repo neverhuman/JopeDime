@@ -1,0 +1,14 @@
+[Unit]
+Description=Reload the DL training-history analysis archive every 15 minutes
+
+[Timer]
+# WS-B's jope-training-history.timer (3 min) is what bounds data loss; this is the
+# analysis reload on top of it, so a slower cadence is fine and keeps the ingest
+# off the trainer's IO path.
+OnBootSec=5min
+OnUnitActiveSec=15min
+AccuracySec=1min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

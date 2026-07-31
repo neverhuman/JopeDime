@@ -1,0 +1,15 @@
+[Unit]
+Description=JOPE crash-safe xbabe1/2/3 GPU lane admission
+After=jope-selfplay-queue.service
+Wants=jope-selfplay-queue.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ubuntu/jope-flywheel/test_exact_gen0
+ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_gpu_lane_admission --interval-seconds 120
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

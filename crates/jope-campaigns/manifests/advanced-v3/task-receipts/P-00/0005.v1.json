@@ -1,0 +1,34 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-00",
+  "receipt_sequence": 5,
+  "ledger_sequence": 12,
+  "timestamp": "2026-07-22T05:44:56Z",
+  "actor": "/root",
+  "from": "verified",
+  "to": "verified",
+  "baseline_sha256": {
+    "premature_verification_receipt": "9aeaeffdce18cc1979b6e05ab689cb0fb2f053811ba1ea787c24e3974522f5e9",
+    "roadmap_after_required_review_sync": "16578dd685a85883251a07a4ad3232aa00fdce3bb3d7624efcd33f04b8d4bb0e",
+    "ledger_through_sequence_11": "8ffe0159f1b54ed3e5aaf096a4852c58efb4da7090beba606efbfdad93556f76",
+    "task_graph_v2": "18374f9b41e2965eed50116ec371498978b950f4fe290c18aaad121a885b4f8c"
+  },
+  "changed_paths": [],
+  "checks": [
+    "the complete five-section ROADMAP was hash-guardedly synchronized with sequences 5 through 10 before this root corrective adoption",
+    "the stale external Jope coordinator that raced sequence 11 was identified and stopped before this receipt was created",
+    "sequence 11 and receipt 0004 are preserved byte-for-byte and pass canonical hash, previous-hash, receipt-binding, and state-transition validation",
+    "the independent P-00 review found graph migration, ownership inventories, reconciled source hashes, full gates, and deterministic snapshot reproduction clean",
+    "the V2 validator passes through sequence 11 with the graph and ledger both projecting P-00 verified"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/task-receipts/P-00/0003.v1.json",
+    "manifests/advanced-v3/task-receipts/P-00/0004.v1.json",
+    "manifests/advanced-v3/reconciliation-checkpoint-20260722T053421Z.v1.json",
+    "manifests/advanced-v3/reconciliation-inventory-20260722T045728Z.v1.json",
+    "/home/ubuntu/jope-dime-snapshots/217c847afab5ddbfa566f64da42d636dab5e353de95b39faa9e9eb80e98bd5b6.tar.zst"
+  ],
+  "remaining_scope": "P-1A and all subsequent portable, search-v2, performance, vocabulary, GPU, admission, release, and optional Hyperion work remain separately gated. No campaign is authorized.",
+  "decision": "Correctively adopt P-00's verified state without changing it. Sequence 11 is mechanically valid but raced the required ROADMAP activity synchronization; this root-only receipt records the incident, the quiescence action, and the now-satisfied governance precondition without rewriting append-only history."
+}

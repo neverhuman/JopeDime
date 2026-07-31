@@ -1,0 +1,32 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-1C",
+  "receipt_sequence": 1,
+  "ledger_sequence": 38,
+  "timestamp": "2026-07-22T07:22:05Z",
+  "actor": "/root",
+  "from": "queued",
+  "to": "ready",
+  "baseline_sha256": {
+    "verified_dependency_receipt": "f449171ea5ec890281636ad5681e9d062886ea34fad7e2f78795cc455274e9e8",
+    "mathexpr": "1520327fd5bfb254fc9d37ab9c08aeb46dc62091dea4737131cfbdb408e89741",
+    "tokens": "434fdd59c6a40223006a5d843ee4953c2cc0de49fb60fd51593848e988da2162",
+    "transpile": "9f1c1912e6173f47d6cb47ee184d1188cbc54c769cbfcfff766caa442a28fe28",
+    "task_graph_v2": "46071f9a4953829886b85a1d6cdb85a4e8cdcb76b97e9ef5c079d47c062eda95"
+  },
+  "changed_paths": [],
+  "checks": [
+    "P-1B is verified at V2 sequence 30 and is P-1C's sole dependency",
+    "emit_cpp.rs does not exist and the existing P-1C integration paths have no live repository writer",
+    "P-1D remains serialized after P-1C and shared public boundaries remain root-owned",
+    "PlatformLibm remains the default and its emitted bytes may not change"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/task-receipts/P-1B/0004.v1.json",
+    "vendor/feat-math/src/mathexpr.rs",
+    "vendor/feat-math/src/tokens.rs",
+    "vendor/feat-math/src/transpile.rs"
+  ],
+  "decision": "Move P-1C to ready. The verified parity oracle clears a narrow serialized C++17 emitter lease."
+}

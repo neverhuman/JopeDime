@@ -1,0 +1,13 @@
+[package]
+name = "battle-gpu"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Raw CUDA driver FFI backend for feat-math rung-0 ridge screening (RTX-class, sm_86 PTX)"
+
+[dependencies]
+libc = "0.2"
+# Seam types + the bit-exact CPU reference used for GPU-ineligible problems.
+# feat-math never depends on battle-gpu (the backend is injected as a closure
+# by the campaign binary), so there is no cycle.
+feat-math = { path = "../feat-math" }

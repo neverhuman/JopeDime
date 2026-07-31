@@ -1,0 +1,33 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-00",
+  "receipt_sequence": 2,
+  "ledger_sequence": 4,
+  "timestamp": "2026-07-22T04:20:01Z",
+  "actor": "/root",
+  "from": "ready",
+  "to": "in_progress",
+  "baseline_sha256": {
+    "recovery_snapshot": "547cac54629e54d94cb85d47a07a5663483a2ada2307996e0e9c0b8aea6bf824",
+    "task_graph_v2": "d743ccfb3f78e42c54ff5566dde5d8b92de17ff86cce95fc2f9a7fa08a060202"
+  },
+  "changed_paths": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/task-graph.v2.json",
+    "manifests/advanced-v3/task-receipts/P-00/0001.v1.json",
+    "manifests/advanced-v3/task-receipts/P-00/0002.v1.json",
+    "scripts/validate_advanced_v3_v2.py"
+  ],
+  "checks": [
+    "duplicate worker count reduced to the three-worker cap",
+    "out-of-scope Jain branch switch restored without commit or push",
+    "K-13/K-14 current input hash matches the V1 ledger receipt",
+    "K-14 chronology defect reproduced by code review"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/recovery-wip-20260722T0409Z.v1.json"
+  ],
+  "blocker": "K-15 and imported portable-math still require quiescent handoff; K-14 requires a cross-group chronology correction and review.",
+  "decision": "P-00 is in progress. V2 metadata is a reconciled draft until the blocker is cleared and a verified deterministic snapshot reproduces."
+}

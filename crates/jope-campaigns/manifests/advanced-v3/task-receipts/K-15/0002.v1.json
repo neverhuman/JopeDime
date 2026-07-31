@@ -1,0 +1,32 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "K-15",
+  "receipt_sequence": 2,
+  "ledger_sequence": 8,
+  "timestamp": "2026-07-22T05:03:25Z",
+  "actor": "/root",
+  "from": "review",
+  "to": "verified",
+  "baseline_sha256": {
+    "review_receipt": "2fa7a0c5a15736fc2af4da77a6a098b50d1787c30ef10f56bd45b2edb23cd2cc"
+  },
+  "changed_paths": [],
+  "checks": [
+    "independent read-only re-review finds no remaining K-15 chronology blocker",
+    "independent reviewer reruns corrupt-state, cutoff, ten-transform, emitted-artifact, public parity/property, legacy-freeze, and rustfmt gates",
+    "root reruns the 68-test advanced-v3 library lane, parity, property, V-10 conformance, legacy freeze, and all-target compile"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/task-receipts/K-15/0001.v1.json",
+    "manifests/advanced-v3/reconciliation-inventory-20260722T045728Z.v1.json"
+  ],
+  "result_sha256": {
+    "vendor/feat-math/src/advanced_v3/transforms/mod.rs": "ebdd6ca1d9022d95cf93cfcf6d33f64d800daf34d6a4a5a3dd4fcdd33c652b71",
+    "vendor/feat-math/src/advanced_v3/pipeline.rs": "69fcb2f50f7c70c993a05fb4f2bf96d995f3e455656cb152736a64d2a05e366c",
+    "vendor/feat-math/src/advanced_v3/emit/mod.rs": "38c1a6a2ee2b0d5e82cfd31471d6262ed1761c8f453e5cb56050233d5155592d",
+    "vendor/feat-math/src/advanced_v3/feature_block.rs": "d3ee0b3b6eb754ef7b2befc7aa9ee43adaa221d7db39fe0d92423214bcea056b"
+  },
+  "residual_risk": "The per-tail digest is an integrity checksum rather than an authenticity signature; durable full-model trust binding remains a later release-layer gate.",
+  "decision": "Verify K-15. Prediction rows for a seen group must be strictly later than fitted state; malformed fitted state and unsupported schema/order combinations fail closed."
+}

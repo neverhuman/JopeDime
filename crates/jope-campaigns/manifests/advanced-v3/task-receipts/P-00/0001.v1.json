@@ -1,0 +1,29 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-00",
+  "receipt_sequence": 1,
+  "ledger_sequence": 3,
+  "timestamp": "2026-07-22T04:20:00Z",
+  "actor": "/root",
+  "from": "queued",
+  "to": "ready",
+  "baseline_sha256": {
+    "phase_snapshot": "ba6edbfeabc9c36cce0ae0e8f5dcbee1a03dc8824d6cdd6da69adabe6b5909c5",
+    "task_graph_v1": "c057fc3e3d50a9ed8ef200dbb7088b38c032825a43d190e3e820f6818ee0485b",
+    "work_ledger_v1": "75c2fa97c1ccdaf830c6ebe384d0ec199e101468079ea160dc36f273ea65b914"
+  },
+  "changed_paths": [
+    "manifests/advanced-v3/task-graph.v2.json",
+    "scripts/validate_advanced_v3_v2.py"
+  ],
+  "checks": [
+    "V1 graph and ledger hashes match the V2 migration seal",
+    "required P-00 and P-1A through P-6 nodes are present",
+    "all P-00 dependencies are verified"
+  ],
+  "evidence": [
+    "manifests/advanced-v3/recovery-wip-20260722T0409Z.v1.json",
+    "ROADMAP.md"
+  ],
+  "decision": "P-00 is ready to reconcile the preserved live tree; no implementation wave may pass its gate yet."
+}

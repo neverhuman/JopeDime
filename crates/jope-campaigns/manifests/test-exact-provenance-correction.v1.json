@@ -1,0 +1,31 @@
+{
+  "benchmark_valid": false,
+  "correction": {
+    "benchmark_valid": {
+      "corrected": false,
+      "historical_value": true
+    },
+    "generation": {
+      "corrected": "actual strict-wave identifier",
+      "historical_value": "zero"
+    },
+    "selection_bias": {
+      "corrected": "test-exact-reused",
+      "historical_value": null
+    },
+    "test_adaptive": {
+      "corrected": true,
+      "historical_value": false
+    }
+  },
+  "historical_artifacts_rewritten": false,
+  "internal_use": "selected-test self-improvement only",
+  "schema": "JopeSelfplayProvenanceCorrection.v1",
+  "selection_bias": "test-exact-reused",
+  "supersedes_claims_in": [
+    "JopeFlywheelCorpusEvalShard.v1 generation-zero manifests",
+    "JopeFlywheelCorpusEvalReceipt.v1 generation-zero receipts",
+    "JopeTestOnlyTrainingCorpus.v1 snapshots created before this correction"
+  ],
+  "test_adaptive": true
+}

@@ -1,0 +1,44 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "K-15",
+  "receipt_sequence": 1,
+  "ledger_sequence": 7,
+  "timestamp": "2026-07-22T05:03:24Z",
+  "actor": "/root",
+  "from": "in_progress",
+  "to": "review",
+  "baseline_sha256": {
+    "phase_snapshot": "ba6edbfeabc9c36cce0ae0e8f5dcbee1a03dc8824d6cdd6da69adabe6b5909c5",
+    "preserved_wip_snapshot": "f223a0d41bb3a8e5b51ca63fbb02ec00064819d94098160ce35ca02a4b7d6dd7"
+  },
+  "changed_paths": [
+    "vendor/feat-math/src/advanced_v3/transforms/mod.rs",
+    "vendor/feat-math/src/advanced_v3/pipeline.rs",
+    "vendor/feat-math/src/advanced_v3/emit/mod.rs",
+    "vendor/feat-math/src/advanced_v3/feature_block.rs"
+  ],
+  "checks": [
+    "earlier/equal fitted-tail runtime regression failed before the correction and passes after it",
+    "emitted Python stale-row regression failed before the correction and passes after it",
+    "corrupt serialized tail-state regression rejects malformed, wrong-kind, non-finite, missing-field, and digest-mismatched state",
+    "ten focused transform tests pass",
+    "emitted lag/roll Python and Rust artifact parity passes",
+    "68 advanced-v3 library tests pass",
+    "public parity, property, and V-10 conformance tests pass",
+    "legacy-v2 freeze and all-target compilation pass",
+    "owned rustfmt check passes"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/reconciliation-inventory-20260722T045728Z.v1.json",
+    "vendor/feat-math/src/advanced_v3/transforms/mod.rs",
+    "vendor/feat-math/src/advanced_v3/emit/mod.rs"
+  ],
+  "result_sha256": {
+    "vendor/feat-math/src/advanced_v3/transforms/mod.rs": "ebdd6ca1d9022d95cf93cfcf6d33f64d800daf34d6a4a5a3dd4fcdd33c652b71",
+    "vendor/feat-math/src/advanced_v3/pipeline.rs": "69fcb2f50f7c70c993a05fb4f2bf96d995f3e455656cb152736a64d2a05e366c",
+    "vendor/feat-math/src/advanced_v3/emit/mod.rs": "38c1a6a2ee2b0d5e82cfd31471d6262ed1761c8f453e5cb56050233d5155592d",
+    "vendor/feat-math/src/advanced_v3/feature_block.rs": "d3ee0b3b6eb754ef7b2befc7aa9ee43adaa221d7db39fe0d92423214bcea056b"
+  },
+  "decision": "Move K-15 to review with strict per-group fitted cutoffs, schema-bound and checksummed tail state, caller-order restoration, and runtime/Python/Rust parity."
+}

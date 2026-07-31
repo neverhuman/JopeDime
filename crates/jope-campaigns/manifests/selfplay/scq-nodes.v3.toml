@@ -1,0 +1,30 @@
+# Pinned JOPE self-play SCQ node policy. Deploy only with an SCQ build that
+# validates cpu_job_slot_multiplier; the live daemon is not rewritten in place.
+a100_gpu_share = 1
+h100_gpu_share = 1
+poll_ms = 2000
+telemetry_ms = 1000
+
+[[node]]
+name = "xbabe1"
+reserved_gpus = 0
+allow_disk_critical_launch = true
+cpu_job_slot_multiplier = 1.0
+
+[[node]]
+name = "xbabe2"
+local = true
+reserved_gpus = 0
+allow_disk_critical_launch = true
+cpu_job_slot_multiplier = 1.0
+
+[[node]]
+name = "xbabe3"
+reserved_gpus = 0
+allow_disk_critical_launch = true
+cpu_job_slot_multiplier = 1.0
+
+[[node]]
+name = "xbabe4"
+reserved_gpus = 0
+cpu_job_slot_multiplier = 2.0

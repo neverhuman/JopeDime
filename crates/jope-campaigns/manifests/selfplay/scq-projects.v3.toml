@@ -1,0 +1,45 @@
+# Target project policy for the checkpoint-fresh self-play rollout. The fresh
+# lane outranks legacy drain work without changing protected training/GPU lanes.
+default_max_tier = "normal"
+allow_live_priority_overrides = false
+
+[projects.xhyp3]
+max_tier = "normal"
+weight = 1.0
+
+[projects.jope]
+max_tier = "normal"
+weight = 1.0
+max_gpus = 2
+
+[projects.sotarena-b42]
+max_tier = "normal"
+weight = 10.0
+
+[projects.jope-testonly]
+max_tier = "normal"
+weight = 1.0
+max_gpus = 1
+
+[projects.jope-selfplay-eval]
+max_tier = "normal"
+weight = 10.0
+max_gpus = 0
+
+[projects.jope-selfplay-fresh]
+max_tier = "normal"
+weight = 20.0
+max_gpus = 0
+
+[projects.jope-selfplay-train]
+max_tier = "normal"
+weight = 10.0
+max_gpus = 3
+
+# Isolated, preemptible 256-dataset encoding chunks. Jobs in this project
+# request one GPU plus four companion CPU cores on xbabe3. The job spec marks
+# them preemptible; training and proposal projects remain non-preemptible.
+[projects.jope-selfplay-breadth-encode]
+max_tier = "normal"
+weight = 5.0
+max_gpus = 1

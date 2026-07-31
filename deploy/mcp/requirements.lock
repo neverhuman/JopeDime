@@ -1,0 +1,2 @@
+# Historical v1 MCP fixture only; production uses the Rust v2 MCP runtime.
+mcp==1.28.1

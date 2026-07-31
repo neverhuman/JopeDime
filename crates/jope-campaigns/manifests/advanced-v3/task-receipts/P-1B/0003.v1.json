@@ -1,0 +1,63 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-1B",
+  "receipt_sequence": 3,
+  "ledger_sequence": 28,
+  "timestamp": "2026-07-22T06:58:19Z",
+  "actor": "/root",
+  "from": "in_progress",
+  "to": "review",
+  "baseline_sha256": {
+    "in_progress_receipt": "bda58aa5f84d2d959d328ead1307f9e9a7547ac45fcaccd630af2c497e6db6d5",
+    "pre_review_task_graph": "cd932947ae786359891c288f93c4ee015725ea87119d46aa621580a35be26379",
+    "frozen_golden": "cc960036a498880e92c49adebb8ce6acc313a3f88add7925d9392b72fc5d5303",
+    "scratch_handoff_output": "d58ad657e16f99944b400fb9d8e85d5352f0a0d5a32cce9e94927bd649aeafce"
+  },
+  "changed_paths": [
+    "vendor/feat-math/tests/portable_parity.rs",
+    "vendor/feat-math/tests/portable/full_ref.rs",
+    "vendor/feat-math/tests/portable/full_ref.cpp",
+    "vendor/feat-math/tests/portable/full_ref.js",
+    "vendor/feat-math/tests/portable/full_ref.py",
+    "vendor/feat-math/tests/golden.rs",
+    "manifests/advanced-v3/ownership-checks/p1b-verification.txt",
+    "manifests/advanced-v3/ownership-checks/p1b-root.txt",
+    "manifests/advanced-v3/task-graph.v2.json",
+    "manifests/advanced-v3/work-ledger.v2.jsonl",
+    "ROADMAP.md"
+  ],
+  "checks": [
+    "root independently reproduces the scratch four-language all-helper output before adoption",
+    "the strengthened unary and binary grids cover signed zero, subnormal and normal boundaries, finite extrema, infinities, quiet NaNs, and the 0x80000000 low-word case",
+    "Rust, stock C++17, Python, and JavaScript each produce two identical runs and agree on 17761 lines and 695455 bytes at SHA-256 650cef95d412110ddaa094fe73687ee8fbe7e03033eb0cda490c4051f3d360ee",
+    "non-recovering C++17 UBSan passes the complete declared corpus after both signed-arithmetic defects are replaced with defined uint32_t operations",
+    "portable fixture sources contain no dataset or file-read operations and missing secondary toolchains are explicit skips while Rust remains required",
+    "frozen golden.rs is restored byte-for-byte to cc960036a498880e92c49adebb8ce6acc313a3f88add7925d9392b72fc5d5303",
+    "the complete frozen golden suite passes 83 tests in 583.84 seconds",
+    "public parity passes 1, public property passes 2, conformance passes 7, and legacy-v2 freeze passes 3 with one intentional ignore",
+    "both P-1B ownership inventories, owned Rust formatting, Python and Node syntax, and the V2 graph/DAG/V1-migration/ledger validator pass",
+    "independent read-only re-review approves the stable P-1B hashes for review after reproducing UBSan and four-language parity"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "vendor/feat-math/tests/portable_parity.rs",
+    "vendor/feat-math/tests/portable/full_ref.rs",
+    "vendor/feat-math/tests/portable/full_ref.cpp",
+    "vendor/feat-math/tests/portable/full_ref.js",
+    "vendor/feat-math/tests/portable/full_ref.py",
+    "manifests/advanced-v3/ownership-checks/p1b-verification.txt",
+    "manifests/advanced-v3/ownership-checks/p1b-root.txt",
+    "manifests/advanced-v3/task-receipts/P-1B/0002.v1.json"
+  ],
+  "result_sha256": {
+    "vendor/feat-math/tests/portable_parity.rs": "15e4c7d8c609564201fc026a38696fa2a939b58db171391fc2ad1c6e0fe2c7f9",
+    "vendor/feat-math/tests/portable/full_ref.rs": "129cd1562cf4c7b055c1456f8f52515d551434c260c49804b6eba37c25f5c915",
+    "vendor/feat-math/tests/portable/full_ref.cpp": "0a98e6d7605b27df88fb38d17bca5643d33e064ca4c9c5cc5dfff91a89210eba",
+    "vendor/feat-math/tests/portable/full_ref.js": "b215a71f1fe49c791957143ef6750bf1fadeb1fadddbe3263134777a6bf17513",
+    "vendor/feat-math/tests/portable/full_ref.py": "62fe871b64c03b66d883a1690bb50823c17458649b878585752debb238d3c200",
+    "vendor/feat-math/tests/golden.rs": "cc960036a498880e92c49adebb8ce6acc313a3f88add7925d9392b72fc5d5303",
+    "task_graph_v2": "3d1e6a230913d9401341f8463ecb3e0e41a8781c98fab79f5a5355741bff017d"
+  },
+  "remaining_scope": "P-1C and P-1D must add the actual C++17 and JavaScript model emitters with token accounting. Portable emitted routing remains fail-closed, CUDA remains deferred to P-5, and later waves remain closed.",
+  "decision": "Move P-1B to review. The additive oracle proves all-helper portable-reference parity across four stock backends without changing frozen PlatformLibm or V1 bytes."
+}

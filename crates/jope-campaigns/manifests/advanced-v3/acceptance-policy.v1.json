@@ -1,0 +1,48 @@
+{
+  "schema": "jope-dime.advanced-v3-acceptance-policy.v1",
+  "status": "skeleton",
+  "immutable_decisions": {
+    "legacy_kernel": "legacy-v2",
+    "candidate_kernel": "advanced-v3",
+    "binary_championship_allowed": false,
+    "failed_gate_waivable": false,
+    "bootstrap_seed": 20260722,
+    "bootstrap_resamples": 10000,
+    "independent_unit": "dataset_after_fold_and_seed_aggregation",
+    "confidence_interval": 0.95,
+    "family_pass_condition": "paired_bootstrap_lower_bound_improvement_gt_zero",
+    "significant_regression_condition": "paired_bootstrap_upper_bound_improvement_lt_zero"
+  },
+  "whole_kernel_gate": {
+    "equal_logical_slot_budget": true,
+    "equal_cpu_budget": true,
+    "median_normalized_regret": "candidate_lte_legacy",
+    "win_count": "candidate_gte_legacy",
+    "legacy_only_throughput_regression_max": 0.02,
+    "v3_screening_throughput_regression_max": 0.05,
+    "invalid_winners_allowed": 0
+  },
+  "coverage": {
+    "routine_genomes": 100000,
+    "admission_genomes": 1000000,
+    "golden42_datasets": 42,
+    "golden42_hard_slice_datasets": 3,
+    "tabarena_regression_datasets": 13,
+    "tabarena_binary_datasets": 30,
+    "binary_two_fixture_manifest_role": "smoke_only"
+  },
+  "release_requirements": [
+    "all_correctness_and_parity_gates_pass",
+    "every_experimental_family_has_admission_or_rejection_receipt",
+    "whole_kernel_gate_passes",
+    "selection_freeze_is_sealed",
+    "one_held_out_confirmation_passes",
+    "exact_release_binary_is_reverified_and_cross_node_replayed"
+  ],
+  "release_blockers": [
+    "whole_kernel_gate_failure",
+    "held_out_confirmation_failure",
+    "missing_authoritative_dataset_or_schema_manifest",
+    "missing_required_cuda_host_when_gpu_screening_is_admitted"
+  ]
+}

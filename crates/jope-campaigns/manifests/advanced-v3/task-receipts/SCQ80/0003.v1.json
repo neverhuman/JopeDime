@@ -1,0 +1,64 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "SCQ80",
+  "receipt_sequence": 3,
+  "ledger_sequence": 51,
+  "timestamp": "2026-07-22T09:12:03Z",
+  "actor": "/root",
+  "from": "in_progress",
+  "to": "review",
+  "baseline_sha256": {
+    "in_progress_receipt": "726e1a19779e8a0025ed92ecea8f122f8832f604bf2bc8786fe8a4d09237482a",
+    "task_graph_v2": "fd134a5d41abb461319eaf5d6a74782888a8a5518d845a80cda7b6aa7f880abd",
+    "cargo_lock": "72362e9fb1bfb3a2836c06a699be141862dcdfd5da5b2e25044d767caad544c3"
+  },
+  "changed_paths": [
+    "README.md",
+    "src/aggressive.rs",
+    "src/main.rs",
+    "src/test_adaptive.rs",
+    "src/test_adaptive/aggressive.rs",
+    "src/test_adaptive/scq_batch.rs",
+    "vendor/feat-math/src/advanced_v3/pipeline.rs",
+    "vendor/feat-math/src/advanced_v3/emit/mod.rs",
+    "vendor/feat-math/src/advanced_v3/tests.rs",
+    "scripts/validate_advanced_v3_ownership.sh",
+    "manifests/advanced-v3/ownership-checks/scq80-root.txt",
+    "manifests/advanced-v3/task-graph.v2.json",
+    "manifests/advanced-v3/work-ledger.v2.jsonl",
+    "manifests/advanced-v3/task-receipts/SCQ80/0001.v1.json",
+    "manifests/advanced-v3/task-receipts/SCQ80/0002.v1.json",
+    "manifests/advanced-v3/task-receipts/SCQ80/0003.v1.json",
+    "ROADMAP.md"
+  ],
+  "checks": [
+    "fitted admission runs 30 real fit, predict, and Rust/Python fitted-emission repetitions and freezes Rust because complete C++ fitted lowering is absent",
+    "BoundModel prediction and emission recompute the fitted vocabulary identity before use",
+    "SCQ80 exposes additive run, validate, and hidden worker commands while the 90-core command behavior is unchanged",
+    "240 logical candidates form four 60-member islands and route to three concurrent 80-worker single-threaded node batches",
+    "selection sorts logical slots, writes hash-chained atomic complete barriers, resumes between barrier and confirmation, treats ties as losses, and caps unresolved datasets after generation 99",
+    "one missing infrastructure result retries on the next node only and no model failure silently changes backend",
+    "winners reproduce exact prediction and RMSE bits independently on xbabe1, xbabe2, and xbabe3",
+    "78 root tests pass with one intentional ignore; 352 feat-math tests pass with four intentional ignores; all-target checking and focused formatting pass",
+    "the actual release launch command rejects xbabe2 at 8589914112 swap bytes before staging or run-directory creation; the SCQ queue remains empty"
+  ],
+  "evidence": [
+    "README.md",
+    "src/aggressive.rs",
+    "src/test_adaptive/aggressive.rs",
+    "src/test_adaptive/scq_batch.rs",
+    "vendor/feat-math/src/advanced_v3/pipeline.rs",
+    "vendor/feat-math/src/advanced_v3/tests.rs",
+    "manifests/advanced-v3/ownership-checks/scq80-root.txt"
+  ],
+  "result_sha256": {
+    "src/aggressive.rs": "74488e2052c1f9501d4cb4de7bb48d7318cfb9a2c13d0800fa96d071e064dc2b",
+    "src/main.rs": "54f89d88e2bf2ceeb94fb00d8d59b78d3bc2344232babb971a1ac0dd1871235a",
+    "src/test_adaptive.rs": "a1d01463eb2f0bb2bf26ee17c3ab800f7f6961e007ceca81fe94059fe168e664",
+    "src/test_adaptive/aggressive.rs": "13ca5ee492dfe6c4c166e9910c129c81c439fff9c6dfb4c1aa2add9c9dbfa361",
+    "src/test_adaptive/scq_batch.rs": "33cecca0d270302604d29bd5db0159397881424ba56569e08b4b2a7752bff4d7",
+    "release_binary": "0e29da0f458c0be781404ef40031c7201d2e5cdb5b4d7b74b2c07094c1bdc427"
+  },
+  "remaining_scope": "SCQ80 cannot be verified or launched until xbabe2 swap use is externally reduced below 1 GiB; FCPP-00 remains queued because full fitted C++ runtime parity was not implemented.",
+  "decision": "Move SCQ80 to review with Rust frozen as the backend and the external xbabe2 swap condition as the sole launch blocker."
+}

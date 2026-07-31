@@ -1,0 +1,28 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-1A",
+  "receipt_sequence": 2,
+  "ledger_sequence": 15,
+  "timestamp": "2026-07-22T05:48:16Z",
+  "actor": "/root",
+  "from": "ready",
+  "to": "in_progress",
+  "baseline_sha256": {
+    "ready_receipt": "865c3fe08cd18e935178e10a1b45a0a2d68de12c8494b5d41454a2ee63a9dbe3",
+    "task_graph_v2": "13bfcb720d90021d4653c4232273600000507ca93e8a164f8dfc3762d74c5f58"
+  },
+  "changed_paths": [],
+  "checks": [
+    "root holds the exact P-1A source and evidence lease",
+    "PlatformLibm remains the default math policy",
+    "portable helpers contain no dataset or filesystem access"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/task-receipts/P-1A/0001.v1.json",
+    "vendor/feat-math/src/portable_math.rs",
+    "vendor/feat-math/src/transpile.rs"
+  ],
+  "remaining_scope": "Review fixed-edge and special-value behavior, prove the default artifact bytes remain frozen, and independently review public registration before moving to review.",
+  "decision": "Begin the root P-1A audit without authorizing portable emitted backends or any later wave."
+}

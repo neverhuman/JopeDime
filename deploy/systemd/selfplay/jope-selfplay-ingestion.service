@@ -1,0 +1,13 @@
+[Unit]
+Description=JOPE Rust self-play receipt ingestion and index rebuilding
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ubuntu/jope-dime
+ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_selfplay_status reconcile --fetch-completed --limit 100
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

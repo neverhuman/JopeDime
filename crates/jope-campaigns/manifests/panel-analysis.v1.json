@@ -1,0 +1,1600 @@
+{
+  "bootstrap": {
+    "full_cohort_resampled_to_42": {
+      "exact_order_fraction": 0.8028,
+      "position_probabilities": {
+        "Fable5": [
+          0.0,
+          0.0,
+          0.9778,
+          0.0222,
+          0.0,
+          0.0
+        ],
+        "Grok4p5": [
+          0.0,
+          0.0001,
+          0.0221,
+          0.9745,
+          0.0033,
+          0.0
+        ],
+        "Kimik3": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0002,
+          0.9998
+        ],
+        "OpenAI GPT-5.6-sol": [
+          0.0,
+          0.0,
+          0.0,
+          0.0033,
+          0.9965,
+          0.0002
+        ],
+        "TabFM ensemble": [
+          0.8233,
+          0.1767,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "TabPFNv3": [
+          0.1767,
+          0.8232,
+          0.0001,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "samples": 10000,
+      "seed": 20260720
+    },
+    "panel_resampled_to_42": {
+      "exact_order_fraction": 0.7516,
+      "position_probabilities": {
+        "Fable5": [
+          0.0,
+          0.0,
+          0.9415,
+          0.0585,
+          0.0,
+          0.0
+        ],
+        "Grok4p5": [
+          0.0,
+          0.0,
+          0.0585,
+          0.9304,
+          0.0111,
+          0.0
+        ],
+        "Kimik3": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0003,
+          0.9997
+        ],
+        "OpenAI GPT-5.6-sol": [
+          0.0,
+          0.0,
+          0.0,
+          0.0111,
+          0.9886,
+          0.0003
+        ],
+        "TabFM ensemble": [
+          0.8105,
+          0.1895,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "TabPFNv3": [
+          0.1895,
+          0.8105,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "samples": 10000,
+      "seed": 20260720
+    }
+  },
+  "canonical_common_count": 1973,
+  "canonical_common_sha256": "e3baa9cf9373c3e50b50251cee8813103f835f387ae2c9af62bb3a0f17b3ad1e",
+  "datasets": [
+    {
+      "dataset_hash": "1cb97b1d7314d43d",
+      "features": 10,
+      "model_order": [
+        "TabFM ensemble",
+        "TabPFNv3",
+        "Fable5",
+        "OpenAI GPT-5.6-sol",
+        "Grok4p5",
+        "Kimik3"
+      ],
+      "platform": "pmlb",
+      "rmse": {
+        "Fable5": 0.07464526121418379,
+        "Grok4p5": 0.0843473107653838,
+        "Kimik3": 0.09117146838281688,
+        "OpenAI GPT-5.6-sol": 0.08317040271457761,
+        "TabFM ensemble": 0.07230844743748056,
+        "TabPFNv3": 0.07376070787809401
+      },
+      "source_family": "pwlinear",
+      "source_id": "229_pwLinear",
+      "source_name": "229_pwLinear",
+      "target": "target",
+      "test_rows": 34,
+      "train_rows": 166,
+      "winner": "TabFM ensemble"
+    },
+    {
+      "dataset_hash": "24713c7f7bfa7807",
+      "features": 6,
+      "model_order": [
+        "TabFM ensemble",
+        "Fable5",
+        "Grok4p5",
+        "TabPFNv3",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "openml",
+      "rmse": {
+        "Fable5": 0.06316771782064494,
+        "Grok4p5": 0.06367336925389766,
+        "Kimik3": 0.08444333728414428,
+        "OpenAI GPT-5.6-sol": 0.06595550364298992,
+        "TabFM ensemble": 0.06295124334370077,
+        "TabPFNv3": 0.06445541186760725
+      },
+      "source_family": null,
+      "source_id": "46931",
+      "source_name": "healthcare_insurance_expenses",
+      "target": "charges",
+      "test_rows": 338,
+      "train_rows": 1000,
+      "winner": "TabFM ensemble"
+    },
+    {
+      "dataset_hash": "30ef3eaa6d2971a9",
+      "features": 30,
+      "model_order": [
+        "TabFM ensemble",
+        "OpenAI GPT-5.6-sol",
+        "TabPFNv3",
+        "Fable5",
+        "Kimik3",
+        "Grok4p5"
+      ],
+      "platform": "rdatasets",
+      "rmse": {
+        "Fable5": 0.09194172759314446,
+        "Grok4p5": 0.11624426858364258,
+        "Kimik3": 0.101761067332826,
+        "OpenAI GPT-5.6-sol": 0.06756082438322186,
+        "TabFM ensemble": 0.06447001416279004,
+        "TabPFNv3": 0.07132451509855323
+      },
+      "source_family": "barium",
+      "source_id": "wooldridge/barium",
+      "source_name": "barium",
+      "target": "bchlimp",
+      "test_rows": 22,
+      "train_rows": 109,
+      "winner": "TabFM ensemble"
+    },
+    {
+      "dataset_hash": "3305a3ad973fb227",
+      "features": 2,
+      "model_order": [
+        "TabFM ensemble",
+        "TabPFNv3",
+        "Grok4p5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3",
+        "Fable5"
+      ],
+      "platform": "rdatasets",
+      "rmse": {
+        "Fable5": 0.21484612650930537,
+        "Grok4p5": 0.20859342166827063,
+        "Kimik3": 0.21408504160450398,
+        "OpenAI GPT-5.6-sol": 0.2103149784981321,
+        "TabFM ensemble": 0.20053376166272055,
+        "TabPFNv3": 0.20835060720311932
+      },
+      "source_family": "herbicide-applied",
+      "source_id": "drc/G.aparine",
+      "source_name": "Herbicide applied to Galium aparine",
+      "target": "dose",
+      "test_rows": 40,
+      "train_rows": 200,
+      "winner": "TabFM ensemble"
+    },
+    {
+      "dataset_hash": "43b4cc3ab0ebbd97",
+      "features": 39,
+      "model_order": [
+        "TabFM ensemble",
+        "TabPFNv3",
+        "Grok4p5",
+        "Fable5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "socrata",
+      "rmse": {
+        "Fable5": 0.10091147974156651,
+        "Grok4p5": 0.10030873653813022,
+        "Kimik3": 0.11051334170508932,
+        "OpenAI GPT-5.6-sol": 0.10151856426187747,
+        "TabFM ensemble": 0.08308718716144205,
+        "TabPFNv3": 0.0997985981909172
+      },
+      "source_family": "development-of",
+      "source_id": "37nu-tuw8",
+      "source_name": "Development of an Empirically Derived Measure of Food Safety Culture in Restaurants",
+      "target": "observation",
+      "test_rows": 97,
+      "train_rows": 482,
+      "winner": "TabFM ensemble"
+    },
+    {
+      "dataset_hash": "55b144de19659467",
+      "features": 4,
+      "model_order": [
+        "TabFM ensemble",
+        "TabPFNv3",
+        "Grok4p5",
+        "Fable5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "tidytuesday",
+      "rmse": {
+        "Fable5": 0.027505885036549875,
+        "Grok4p5": 0.023634341939090663,
+        "Kimik3": 0.0523492532772414,
+        "OpenAI GPT-5.6-sol": 0.02940272495622066,
+        "TabFM ensemble": 0.005713115748786767,
+        "TabPFNv3": 0.005803225394046138
+      },
+      "source_family": "tidytuesday-week4",
+      "source_id": "data/2018/2018-04-23/week4_australian_salary.csv",
+      "source_name": "TidyTuesday 2018: Week4 Australian Salary",
+      "target": "average_taxable_income",
+      "test_rows": 999,
+      "train_rows": 1000,
+      "winner": "TabFM ensemble"
+    },
+    {
+      "dataset_hash": "5f91a00bd3b66742",
+      "features": 8,
+      "model_order": [
+        "TabFM ensemble",
+        "TabPFNv3",
+        "Fable5",
+        "Grok4p5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "sklearn",
+      "rmse": {
+        "Fable5": 0.16115995153817447,
+        "Grok4p5": 0.16279421838068503,
+        "Kimik3": 0.18660536311707787,
+        "OpenAI GPT-5.6-sol": 0.1734075262862731,
+        "TabFM ensemble": 0.14089557437998745,
+        "TabPFNv3": 0.14862690598874548
+      },
+      "source_family": "california-housing",
+      "source_id": "fetch_california_housing",
+      "source_name": "California Housing (sklearn)",
+      "target": "target",
+      "test_rows": 999,
+      "train_rows": 1000,
+      "winner": "TabFM ensemble"
+    },
+    {
+      "dataset_hash": "79e600bc5fcd5da7",
+      "features": 3,
+      "model_order": [
+        "TabFM ensemble",
+        "Grok4p5",
+        "TabPFNv3",
+        "OpenAI GPT-5.6-sol",
+        "Fable5",
+        "Kimik3"
+      ],
+      "platform": "rdatasets",
+      "rmse": {
+        "Fable5": 0.12921148323032264,
+        "Grok4p5": 0.11713231217690144,
+        "Kimik3": 0.13481337738265992,
+        "OpenAI GPT-5.6-sol": 0.12755244423374765,
+        "TabFM ensemble": 0.11529203846326293,
+        "TabPFNv3": 0.12618149083846067
+      },
+      "source_family": "uniformity-trial",
+      "source_id": "agridat/bancroft.peanut.uniformity",
+      "source_name": "Uniformity trial of peanuts",
+      "target": "yield",
+      "test_rows": 36,
+      "train_rows": 180,
+      "winner": "TabFM ensemble"
+    },
+    {
+      "dataset_hash": "860e5558f732f638",
+      "features": 13,
+      "model_order": [
+        "TabFM ensemble",
+        "TabPFNv3",
+        "Grok4p5",
+        "OpenAI GPT-5.6-sol",
+        "Fable5",
+        "Kimik3"
+      ],
+      "platform": "worldbank",
+      "rmse": {
+        "Fable5": 0.070556375988301,
+        "Grok4p5": 0.05472593968611454,
+        "Kimik3": 0.08371002088934171,
+        "OpenAI GPT-5.6-sol": 0.06668532357171515,
+        "TabFM ensemble": 0.012549743072124161,
+        "TabPFNv3": 0.04591645945942821
+      },
+      "source_family": "world-bank",
+      "source_id": "country-year-panel-sp.pop.totl",
+      "source_name": "World Bank country-year indicators target population_total",
+      "target": "population_total",
+      "test_rows": 999,
+      "train_rows": 1000,
+      "winner": "TabFM ensemble"
+    },
+    {
+      "dataset_hash": "ab0239b9ef0ba28e",
+      "features": 1040,
+      "model_order": [
+        "TabFM ensemble",
+        "TabPFNv3",
+        "Fable5",
+        "OpenAI GPT-5.6-sol",
+        "Grok4p5",
+        "Kimik3"
+      ],
+      "platform": "legacy",
+      "rmse": {
+        "Fable5": 0.07822502125856934,
+        "Grok4p5": 0.10126010428545247,
+        "Kimik3": 0.12065829689784524,
+        "OpenAI GPT-5.6-sol": 0.09479011917974307,
+        "TabFM ensemble": 0.026867664161481248,
+        "TabPFNv3": 0.027262812718888408
+      },
+      "source_family": null,
+      "source_id": "chang.csv",
+      "source_name": "chang.csv",
+      "target": "target",
+      "test_rows": 6,
+      "train_rows": 28,
+      "winner": "TabFM ensemble"
+    },
+    {
+      "dataset_hash": "aebf5d861a8365b4",
+      "features": 7,
+      "model_order": [
+        "TabFM ensemble",
+        "Fable5",
+        "TabPFNv3",
+        "Grok4p5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "pmlb",
+      "rmse": {
+        "Fable5": 0.13950114426127505,
+        "Grok4p5": 0.14308169475981675,
+        "Kimik3": 0.1599822626210715,
+        "OpenAI GPT-5.6-sol": 0.15434790800335443,
+        "TabFM ensemble": 0.13568121771253946,
+        "TabPFNv3": 0.13959938962210203
+      },
+      "source_family": "pm10",
+      "source_id": "522_pm10",
+      "source_name": "522_pm10",
+      "target": "target",
+      "test_rows": 84,
+      "train_rows": 416,
+      "winner": "TabFM ensemble"
+    },
+    {
+      "dataset_hash": "b1f909fcfceeef4b",
+      "features": 299,
+      "model_order": [
+        "TabFM ensemble",
+        "TabPFNv3",
+        "Fable5",
+        "Grok4p5",
+        "Kimik3",
+        "OpenAI GPT-5.6-sol"
+      ],
+      "platform": "openml",
+      "rmse": {
+        "Fable5": 0.06467389730793544,
+        "Grok4p5": 0.0696446812372378,
+        "Kimik3": 0.1191811674637362,
+        "OpenAI GPT-5.6-sol": 0.1614712682999237,
+        "TabFM ensemble": 0.057276763462516346,
+        "TabPFNv3": 0.059241063237881864
+      },
+      "source_family": "scene",
+      "source_id": "312",
+      "source_name": "scene",
+      "target": "attr27",
+      "test_rows": 999,
+      "train_rows": 1000,
+      "winner": "TabFM ensemble"
+    },
+    {
+      "dataset_hash": "b253fbfae8460dc1",
+      "features": 7,
+      "model_order": [
+        "TabFM ensemble",
+        "Fable5",
+        "TabPFNv3",
+        "Grok4p5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "legacy",
+      "rmse": {
+        "Fable5": 0.08818632465419228,
+        "Grok4p5": 0.1061604933419355,
+        "Kimik3": 0.11395845000495115,
+        "OpenAI GPT-5.6-sol": 0.10702997240472234,
+        "TabFM ensemble": 0.08741277728450068,
+        "TabPFNv3": 0.10318875252864483
+      },
+      "source_family": null,
+      "source_id": "limesoda-nsw-52-dataset.csv",
+      "source_name": "limesoda-nsw-52-dataset.csv",
+      "target": "target",
+      "test_rows": 9,
+      "train_rows": 43,
+      "winner": "TabFM ensemble"
+    },
+    {
+      "dataset_hash": "b78d323566930bd7",
+      "features": 50,
+      "model_order": [
+        "TabFM ensemble",
+        "TabPFNv3",
+        "Fable5",
+        "Grok4p5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "pmlb",
+      "rmse": {
+        "Fable5": 0.05374476858335329,
+        "Grok4p5": 0.0643498621309887,
+        "Kimik3": 0.1260806628691603,
+        "OpenAI GPT-5.6-sol": 0.08361816420869128,
+        "TabFM ensemble": 0.029904140953436114,
+        "TabPFNv3": 0.031097621230036343
+      },
+      "source_family": "fri-c1",
+      "source_id": "583_fri_c1_1000_50",
+      "source_name": "583_fri_c1_1000_50",
+      "target": "target",
+      "test_rows": 167,
+      "train_rows": 833,
+      "winner": "TabFM ensemble"
+    },
+    {
+      "dataset_hash": "c7d815714ca52bce",
+      "features": 7,
+      "model_order": [
+        "TabFM ensemble",
+        "Grok4p5",
+        "TabPFNv3",
+        "OpenAI GPT-5.6-sol",
+        "Fable5",
+        "Kimik3"
+      ],
+      "platform": "rdatasets",
+      "rmse": {
+        "Fable5": 0.18297472878905832,
+        "Grok4p5": 0.18214030622045713,
+        "Kimik3": 0.19906512132532794,
+        "OpenAI GPT-5.6-sol": 0.18279148736027723,
+        "TabFM ensemble": 0.18172381047546565,
+        "TabPFNv3": 0.1825593133611327
+      },
+      "source_family": "voting-intentions",
+      "source_id": "stevedata/chile88",
+      "source_name": "Voting Intentions in the 1988 Chilean Plebiscite",
+      "target": "sq",
+      "test_rows": 999,
+      "train_rows": 1000,
+      "winner": "TabFM ensemble"
+    },
+    {
+      "dataset_hash": "c8f90fc9cc5364be",
+      "features": 116,
+      "model_order": [
+        "TabFM ensemble",
+        "TabPFNv3",
+        "Fable5",
+        "Grok4p5",
+        "Kimik3",
+        "OpenAI GPT-5.6-sol"
+      ],
+      "platform": "socrata",
+      "rmse": {
+        "Fable5": 0.022879067655079494,
+        "Grok4p5": 0.024884030834525495,
+        "Kimik3": 0.1273064042707649,
+        "OpenAI GPT-5.6-sol": 0.16372367272756225,
+        "TabFM ensemble": 0.02145249223333034,
+        "TabPFNv3": 0.022464019863648516
+      },
+      "source_family": "national-community",
+      "source_id": "8hus-y5nc",
+      "source_name": "National Community Based Survey of Supports for Healthy Eating and Active Living  (CBS HEAL)",
+      "target": "nr_adj_wt",
+      "test_rows": 982,
+      "train_rows": 1000,
+      "winner": "TabFM ensemble"
+    },
+    {
+      "dataset_hash": "fe3cc716a05d036f",
+      "features": 2,
+      "model_order": [
+        "TabFM ensemble",
+        "Fable5",
+        "OpenAI GPT-5.6-sol",
+        "TabPFNv3",
+        "Kimik3",
+        "Grok4p5"
+      ],
+      "platform": "rdatasets",
+      "rmse": {
+        "Fable5": 0.17034499826377977,
+        "Grok4p5": 0.18444611793327903,
+        "Kimik3": 0.18088858354261575,
+        "OpenAI GPT-5.6-sol": 0.17197525701775,
+        "TabFM ensemble": 0.16151479501960808,
+        "TabPFNv3": 0.17822869959697524
+      },
+      "source_family": "uniformity-trials",
+      "source_id": "agridat/batchelor.valencia.uniformity",
+      "source_name": "Uniformity trials of apples, lemons, oranges, and walnuts",
+      "target": "yield",
+      "test_rows": 40,
+      "train_rows": 200,
+      "winner": "TabFM ensemble"
+    },
+    {
+      "dataset_hash": "019de5d76a718163",
+      "features": 2,
+      "model_order": [
+        "TabPFNv3",
+        "TabFM ensemble",
+        "Grok4p5",
+        "Fable5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "seaborn",
+      "rmse": {
+        "Fable5": 0.021917516631648478,
+        "Grok4p5": 0.01895097452497349,
+        "Kimik3": 0.1426560663609512,
+        "OpenAI GPT-5.6-sol": 0.0288412933101767,
+        "TabFM ensemble": 0.01414195922335998,
+        "TabPFNv3": 0.014024424353217841
+      },
+      "source_family": "monthly-airline",
+      "source_id": "flights",
+      "source_name": "Monthly airline passengers",
+      "target": "passengers",
+      "test_rows": 24,
+      "train_rows": 120,
+      "winner": "TabPFNv3"
+    },
+    {
+      "dataset_hash": "047e62b52a3f4ede",
+      "features": 12,
+      "model_order": [
+        "TabPFNv3",
+        "Grok4p5",
+        "TabFM ensemble",
+        "Fable5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "pmlb",
+      "rmse": {
+        "Fable5": 0.05443994639293875,
+        "Grok4p5": 0.05358859037968891,
+        "Kimik3": 0.07236180495412059,
+        "OpenAI GPT-5.6-sol": 0.058568014439482285,
+        "TabFM ensemble": 0.05401933308266814,
+        "TabPFNv3": 0.05344747866505666
+      },
+      "source_family": "chatfield",
+      "source_id": "695_chatfield_4",
+      "source_name": "695_chatfield_4",
+      "target": "target",
+      "test_rows": 40,
+      "train_rows": 195,
+      "winner": "TabPFNv3"
+    },
+    {
+      "dataset_hash": "1a803b27c2400dc4",
+      "features": 4,
+      "model_order": [
+        "TabPFNv3",
+        "Fable5",
+        "TabFM ensemble",
+        "Grok4p5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "pmlb",
+      "rmse": {
+        "Fable5": 0.0009931699100706299,
+        "Grok4p5": 0.0023608189335761476,
+        "Kimik3": 0.09260966462149395,
+        "OpenAI GPT-5.6-sol": 0.012094050406305347,
+        "TabFM ensemble": 0.001134701309199565,
+        "TabPFNv3": 0.0008293996275409356
+      },
+      "source_family": "feynman-iii",
+      "source_id": "feynman_III_10_19",
+      "source_name": "feynman_III_10_19",
+      "target": "target",
+      "test_rows": 999,
+      "train_rows": 1000,
+      "winner": "TabPFNv3"
+    },
+    {
+      "dataset_hash": "21fbfe8b53dbcd60",
+      "features": 21,
+      "model_order": [
+        "TabPFNv3",
+        "TabFM ensemble",
+        "Grok4p5",
+        "Fable5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "uci",
+      "rmse": {
+        "Fable5": 0.018825407410251106,
+        "Grok4p5": 0.01691993481671924,
+        "Kimik3": 0.15132275690512337,
+        "OpenAI GPT-5.6-sol": 0.04166541680115159,
+        "TabFM ensemble": 0.0016174939536422524,
+        "TabPFNv3": 0.0015100638327815129
+      },
+      "source_family": "parkinsons-telemonitoring",
+      "source_id": "parkinsons-telemonitoring",
+      "source_name": "Parkinsons Telemonitoring",
+      "target": "total_UPDRS",
+      "test_rows": 999,
+      "train_rows": 1000,
+      "winner": "TabPFNv3"
+    },
+    {
+      "dataset_hash": "3f781a51af45387e",
+      "features": 3,
+      "model_order": [
+        "TabPFNv3",
+        "TabFM ensemble",
+        "Fable5",
+        "Grok4p5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "seaborn",
+      "rmse": {
+        "Fable5": 0.009353297606653741,
+        "Grok4p5": 0.013710350353501474,
+        "Kimik3": 0.0843416612372541,
+        "OpenAI GPT-5.6-sol": 0.01763496664715977,
+        "TabFM ensemble": 0.005842768889501124,
+        "TabPFNv3": 0.00511637615957884
+      },
+      "source_family": "health-expenditure",
+      "source_id": "healthexp",
+      "source_name": "Health expenditure by country",
+      "target": "Spending_USD",
+      "test_rows": 46,
+      "train_rows": 228,
+      "winner": "TabPFNv3"
+    },
+    {
+      "dataset_hash": "542e75bc0cfdd1bf",
+      "features": 17,
+      "model_order": [
+        "TabPFNv3",
+        "Fable5",
+        "TabFM ensemble",
+        "Grok4p5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "legacy",
+      "rmse": {
+        "Fable5": 0.2855171568582647,
+        "Grok4p5": 0.2975489097936512,
+        "Kimik3": 0.35238092037182395,
+        "OpenAI GPT-5.6-sol": 0.3505373409906221,
+        "TabFM ensemble": 0.2937134894629922,
+        "TabPFNv3": 0.28489311039754384
+      },
+      "source_family": null,
+      "source_id": "climate-change-dataset2020-2024.csv",
+      "source_name": "climate-change-dataset2020-2024.csv",
+      "target": "target",
+      "test_rows": 8,
+      "train_rows": 37,
+      "winner": "TabPFNv3"
+    },
+    {
+      "dataset_hash": "55f06d147bcc2a32",
+      "features": 27,
+      "model_order": [
+        "TabPFNv3",
+        "TabFM ensemble",
+        "Fable5",
+        "OpenAI GPT-5.6-sol",
+        "Grok4p5",
+        "Kimik3"
+      ],
+      "platform": "openml",
+      "rmse": {
+        "Fable5": 0.07300233400175563,
+        "Grok4p5": 0.07485006132259064,
+        "Kimik3": 0.0774995913484309,
+        "OpenAI GPT-5.6-sol": 0.07432917672834165,
+        "TabFM ensemble": 0.07002799858928282,
+        "TabPFNv3": 0.06998605575712902
+      },
+      "source_family": "sick",
+      "source_id": "38",
+      "source_name": "sick",
+      "target": "T3",
+      "test_rows": 999,
+      "train_rows": 1000,
+      "winner": "TabPFNv3"
+    },
+    {
+      "dataset_hash": "7af85a04de0c7018",
+      "features": 14,
+      "model_order": [
+        "TabPFNv3",
+        "TabFM ensemble",
+        "Fable5",
+        "Grok4p5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "uci",
+      "rmse": {
+        "Fable5": 0.001322458946108794,
+        "Grok4p5": 0.003621601209226781,
+        "Kimik3": 0.11780346832032496,
+        "OpenAI GPT-5.6-sol": 0.01396139271294063,
+        "TabFM ensemble": 0.0010537970440201276,
+        "TabPFNv3": 0.0006623401298067574
+      },
+      "source_family": "bike-sharing",
+      "source_id": "bike-sharing-day",
+      "source_name": "Bike Sharing Day",
+      "target": "cnt",
+      "test_rows": 122,
+      "train_rows": 609,
+      "winner": "TabPFNv3"
+    },
+    {
+      "dataset_hash": "b5beff4a53fa12c0",
+      "features": 15,
+      "model_order": [
+        "TabPFNv3",
+        "Fable5",
+        "TabFM ensemble",
+        "Grok4p5",
+        "Kimik3",
+        "OpenAI GPT-5.6-sol"
+      ],
+      "platform": "openml",
+      "rmse": {
+        "Fable5": 0.01846020734300616,
+        "Grok4p5": 0.018934888889656,
+        "Kimik3": 0.022588604103074457,
+        "OpenAI GPT-5.6-sol": 0.023398669078329923,
+        "TabFM ensemble": 0.018708530199433766,
+        "TabPFNv3": 0.016930332594626705
+      },
+      "source_family": "credit-approval",
+      "source_id": "29",
+      "source_name": "credit-approval",
+      "target": "A15",
+      "test_rows": 115,
+      "train_rows": 575,
+      "winner": "TabPFNv3"
+    },
+    {
+      "dataset_hash": "c32fa09b48fb2f27",
+      "features": 9,
+      "model_order": [
+        "TabPFNv3",
+        "Grok4p5",
+        "TabFM ensemble",
+        "Fable5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "openml",
+      "rmse": {
+        "Fable5": 0.18079506647936644,
+        "Grok4p5": 0.17987402990106993,
+        "Kimik3": 0.1925903359264595,
+        "OpenAI GPT-5.6-sol": 0.18150745701586266,
+        "TabFM ensemble": 0.18004025357086673,
+        "TabPFNv3": 0.17814588413748433
+      },
+      "source_family": "cmc",
+      "source_id": "23",
+      "source_name": "cmc",
+      "target": "Wifes_age",
+      "test_rows": 473,
+      "train_rows": 1000,
+      "winner": "TabPFNv3"
+    },
+    {
+      "dataset_hash": "e1c1db5260d0894e",
+      "features": 10,
+      "model_order": [
+        "TabPFNv3",
+        "TabFM ensemble",
+        "Fable5",
+        "Grok4p5",
+        "Kimik3",
+        "OpenAI GPT-5.6-sol"
+      ],
+      "platform": "legacy",
+      "rmse": {
+        "Fable5": 0.07803983315157322,
+        "Grok4p5": 0.10355612656516007,
+        "Kimik3": 0.12735064912022132,
+        "OpenAI GPT-5.6-sol": 0.12920909508568024,
+        "TabFM ensemble": 0.04388471776386374,
+        "TabPFNv3": 0.04271254735102238
+      },
+      "source_family": null,
+      "source_id": "fri-c4-100-10.csv",
+      "source_name": "fri-c4-100-10.csv",
+      "target": "target",
+      "test_rows": 17,
+      "train_rows": 83,
+      "winner": "TabPFNv3"
+    },
+    {
+      "dataset_hash": "ee56a1015e344c11",
+      "features": 4,
+      "model_order": [
+        "TabPFNv3",
+        "Fable5",
+        "OpenAI GPT-5.6-sol",
+        "TabFM ensemble",
+        "Grok4p5",
+        "Kimik3"
+      ],
+      "platform": "openml",
+      "rmse": {
+        "Fable5": 0.22364867926419132,
+        "Grok4p5": 0.23318851856236023,
+        "Kimik3": 0.24426484125208223,
+        "OpenAI GPT-5.6-sol": 0.2261083776769964,
+        "TabFM ensemble": 0.22964772608001857,
+        "TabPFNv3": 0.2042620383871189
+      },
+      "source_family": "fruitfly",
+      "source_id": "199",
+      "source_name": "fruitfly",
+      "target": "SLEEP",
+      "test_rows": 21,
+      "train_rows": 104,
+      "winner": "TabPFNv3"
+    },
+    {
+      "dataset_hash": "17a4542ee4fb9e44",
+      "features": 9,
+      "model_order": [
+        "Fable5",
+        "TabFM ensemble",
+        "TabPFNv3",
+        "OpenAI GPT-5.6-sol",
+        "Grok4p5",
+        "Kimik3"
+      ],
+      "platform": "legacy",
+      "rmse": {
+        "Fable5": 0.10410192261432104,
+        "Grok4p5": 0.11923998928874374,
+        "Kimik3": 0.12793063024235907,
+        "OpenAI GPT-5.6-sol": 0.1111414613555667,
+        "TabFM ensemble": 0.10890890890688762,
+        "TabPFNv3": 0.10969233675798624
+      },
+      "source_family": null,
+      "source_id": "lowbwt.csv",
+      "source_name": "lowbwt.csv",
+      "target": "target",
+      "test_rows": 32,
+      "train_rows": 157,
+      "winner": "Fable5"
+    },
+    {
+      "dataset_hash": "471f11cc2d38853a",
+      "features": 4,
+      "model_order": [
+        "Fable5",
+        "TabPFNv3",
+        "TabFM ensemble",
+        "Grok4p5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "pmlb",
+      "rmse": {
+        "Fable5": 0.0006130445415718761,
+        "Grok4p5": 0.002759834468874847,
+        "Kimik3": 0.07952193639335046,
+        "OpenAI GPT-5.6-sol": 0.02014682531674603,
+        "TabFM ensemble": 0.0010781838422999812,
+        "TabPFNv3": 0.0009766006077696486
+      },
+      "source_family": "feynman-test",
+      "source_id": "feynman_test_11",
+      "source_name": "feynman_test_11",
+      "target": "target",
+      "test_rows": 999,
+      "train_rows": 1000,
+      "winner": "Fable5"
+    },
+    {
+      "dataset_hash": "bd49e740a79bcb6c",
+      "features": 12,
+      "model_order": [
+        "Fable5",
+        "TabPFNv3",
+        "TabFM ensemble",
+        "Grok4p5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "socrata",
+      "rmse": {
+        "Fable5": 0.00030333750783641234,
+        "Grok4p5": 0.0023733246391298554,
+        "Kimik3": 0.08976073395066562,
+        "OpenAI GPT-5.6-sol": 0.022622723212139036,
+        "TabFM ensemble": 0.0007054484565711712,
+        "TabPFNv3": 0.00035787922508661555
+      },
+      "source_family": "beach-lab",
+      "source_id": "2ivx-z93u",
+      "source_name": "Beach Lab Data",
+      "target": "longitude",
+      "test_rows": 999,
+      "train_rows": 1000,
+      "winner": "Fable5"
+    },
+    {
+      "dataset_hash": "f8536dfeef471c2f",
+      "features": 7,
+      "model_order": [
+        "Fable5",
+        "TabFM ensemble",
+        "TabPFNv3",
+        "Grok4p5",
+        "Kimik3",
+        "OpenAI GPT-5.6-sol"
+      ],
+      "platform": "rdatasets",
+      "rmse": {
+        "Fable5": 0.4153152246167823,
+        "Grok4p5": 0.4172481114913724,
+        "Kimik3": 0.42201532561273913,
+        "OpenAI GPT-5.6-sol": 0.42461087859073215,
+        "TabFM ensemble": 0.4160544979608032,
+        "TabPFNv3": 0.41658944976441037
+      },
+      "source_family": "fertility-women",
+      "source_id": "AER/Fertility",
+      "source_name": "Fertility and Women's Labor Supply",
+      "target": "work",
+      "test_rows": 999,
+      "train_rows": 1000,
+      "winner": "Fable5"
+    },
+    {
+      "dataset_hash": "3baa7e37fc1f7861",
+      "features": 4,
+      "model_order": [
+        "Grok4p5",
+        "TabFM ensemble",
+        "TabPFNv3",
+        "Fable5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "legacy",
+      "rmse": {
+        "Fable5": 0.035367982030387844,
+        "Grok4p5": 0.032583975279261726,
+        "Kimik3": 0.15144827627174637,
+        "OpenAI GPT-5.6-sol": 0.03667555092874371,
+        "TabFM ensemble": 0.03345763570457619,
+        "TabPFNv3": 0.03413873273964053
+      },
+      "source_family": null,
+      "source_id": "visualizing-galaxy.csv",
+      "source_name": "visualizing-galaxy.csv",
+      "target": "target",
+      "test_rows": 54,
+      "train_rows": 269,
+      "winner": "Grok4p5"
+    },
+    {
+      "dataset_hash": "4f68d277d770477f",
+      "features": 4,
+      "model_order": [
+        "Grok4p5",
+        "TabFM ensemble",
+        "TabPFNv3",
+        "Fable5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "rdatasets",
+      "rmse": {
+        "Fable5": 0.11088655946143136,
+        "Grok4p5": 0.11016067048230105,
+        "Kimik3": 0.11181161680507123,
+        "OpenAI GPT-5.6-sol": 0.11120818061311093,
+        "TabFM ensemble": 0.11033039076542361,
+        "TabPFNv3": 0.1105706077147943
+      },
+      "source_family": "well-switching",
+      "source_id": "carData/Wells",
+      "source_name": "Well Switching in Bangladesh",
+      "target": "distance",
+      "test_rows": 999,
+      "train_rows": 1000,
+      "winner": "Grok4p5"
+    },
+    {
+      "dataset_hash": "693890aae9dc860b",
+      "features": 1,
+      "model_order": [
+        "Grok4p5",
+        "TabPFNv3",
+        "TabFM ensemble",
+        "Fable5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "pmlb",
+      "rmse": {
+        "Fable5": 0.00881578550279518,
+        "Grok4p5": 0.003833192693539209,
+        "Kimik3": 0.21007402854258908,
+        "OpenAI GPT-5.6-sol": 0.046495935178365595,
+        "TabFM ensemble": 0.005158999958985089,
+        "TabPFNv3": 0.004338976581866946
+      },
+      "source_family": "first-principles",
+      "source_id": "first_principles_supernovae_zg",
+      "source_name": "first_principles_supernovae_zg",
+      "target": "target",
+      "test_rows": 41,
+      "train_rows": 202,
+      "winner": "Grok4p5"
+    },
+    {
+      "dataset_hash": "dee1fc8e9afd81c9",
+      "features": 8,
+      "model_order": [
+        "Grok4p5",
+        "TabPFNv3",
+        "TabFM ensemble",
+        "Fable5",
+        "OpenAI GPT-5.6-sol",
+        "Kimik3"
+      ],
+      "platform": "legacy",
+      "rmse": {
+        "Fable5": 0.2761596301613651,
+        "Grok4p5": 0.2703750584570855,
+        "Kimik3": 0.309296498563959,
+        "OpenAI GPT-5.6-sol": 0.2783706432431682,
+        "TabFM ensemble": 0.27526244077442213,
+        "TabPFNv3": 0.2704356593119726
+      },
+      "source_family": null,
+      "source_id": "grub-damage.csv",
+      "source_name": "grub-damage.csv",
+      "target": "target",
+      "test_rows": 26,
+      "train_rows": 129,
+      "winner": "Grok4p5"
+    },
+    {
+      "dataset_hash": "13b5df533e59a626",
+      "features": 19,
+      "model_order": [
+        "OpenAI GPT-5.6-sol",
+        "TabPFNv3",
+        "TabFM ensemble",
+        "Fable5",
+        "Kimik3",
+        "Grok4p5"
+      ],
+      "platform": "openml",
+      "rmse": {
+        "Fable5": 0.14888086225338648,
+        "Grok4p5": 0.1765151228692177,
+        "Kimik3": 0.15548877947418516,
+        "OpenAI GPT-5.6-sol": 0.12277946849207148,
+        "TabFM ensemble": 0.14690932786836158,
+        "TabPFNv3": 0.13457781931170407
+      },
+      "source_family": "hepatitis",
+      "source_id": "55",
+      "source_name": "hepatitis",
+      "target": "ALK_PHOSPHATE",
+      "test_rows": 21,
+      "train_rows": 105,
+      "winner": "OpenAI GPT-5.6-sol"
+    },
+    {
+      "dataset_hash": "e5a3a7b3668a1cc2",
+      "features": 3,
+      "model_order": [
+        "OpenAI GPT-5.6-sol",
+        "TabFM ensemble",
+        "TabPFNv3",
+        "Fable5",
+        "Grok4p5",
+        "Kimik3"
+      ],
+      "platform": "pmlb",
+      "rmse": {
+        "Fable5": 0.0572112611474484,
+        "Grok4p5": 0.06554226278923617,
+        "Kimik3": 0.10592398949791029,
+        "OpenAI GPT-5.6-sol": 0.034947960031258066,
+        "TabFM ensemble": 0.04220891080613055,
+        "TabPFNv3": 0.049744395518136975
+      },
+      "source_family": "analcatdata-apnea2",
+      "source_id": "556_analcatdata_apnea2",
+      "source_name": "556_analcatdata_apnea2",
+      "target": "target",
+      "test_rows": 80,
+      "train_rows": 395,
+      "winner": "OpenAI GPT-5.6-sol"
+    },
+    {
+      "dataset_hash": "f0e7eb3d790df37d",
+      "features": 8,
+      "model_order": [
+        "OpenAI GPT-5.6-sol",
+        "TabFM ensemble",
+        "TabPFNv3",
+        "Fable5",
+        "Grok4p5",
+        "Kimik3"
+      ],
+      "platform": "openml",
+      "rmse": {
+        "Fable5": 0.14867521556116817,
+        "Grok4p5": 0.1489160656105644,
+        "Kimik3": 0.15881665948947882,
+        "OpenAI GPT-5.6-sol": 0.14654850095538507,
+        "TabFM ensemble": 0.1482971022382845,
+        "TabPFNv3": 0.1484703764554405
+      },
+      "source_family": "diabetes",
+      "source_id": "37",
+      "source_name": "diabetes",
+      "target": "pres",
+      "test_rows": 128,
+      "train_rows": 640,
+      "winner": "OpenAI GPT-5.6-sol"
+    },
+    {
+      "dataset_hash": "cf5e74b4e9594944",
+      "features": 569,
+      "model_order": [
+        "Kimik3",
+        "TabPFNv3",
+        "TabFM ensemble",
+        "Fable5",
+        "Grok4p5",
+        "OpenAI GPT-5.6-sol"
+      ],
+      "platform": "legacy",
+      "rmse": {
+        "Fable5": 0.5646398181874333,
+        "Grok4p5": 0.5647353129980148,
+        "Kimik3": 0.5531346848691432,
+        "OpenAI GPT-5.6-sol": 0.5680993515310909,
+        "TabFM ensemble": 0.5574543379326282,
+        "TabPFNv3": 0.556759048717342
+      },
+      "source_family": null,
+      "source_id": "tsutumi.csv",
+      "source_name": "tsutumi.csv",
+      "target": "target",
+      "test_rows": 3,
+      "train_rows": 10,
+      "winner": "Kimik3"
+    },
+    {
+      "dataset_hash": "d2daf53412ab18dc",
+      "features": 18,
+      "model_order": [
+        "Kimik3",
+        "TabFM ensemble",
+        "TabPFNv3",
+        "Fable5",
+        "Grok4p5",
+        "OpenAI GPT-5.6-sol"
+      ],
+      "platform": "rdatasets",
+      "rmse": {
+        "Fable5": 0.3170938520513457,
+        "Grok4p5": 0.3236356974892391,
+        "Kimik3": 0.3141412346872359,
+        "OpenAI GPT-5.6-sol": 0.3299776062960299,
+        "TabFM ensemble": 0.31450226061947445,
+        "TabPFNv3": 0.31631377444863074
+      },
+      "source_family": "subject-level",
+      "source_id": "admiral/admiral_adsl",
+      "source_name": "Subject Level Analysis Dataset",
+      "target": "SUBJID",
+      "test_rows": 51,
+      "train_rows": 255,
+      "winner": "Kimik3"
+    }
+  ],
+  "diversity": {
+    "distinct_model_orderings": 28,
+    "distinct_platforms": 10,
+    "distinct_source_datasets": 42,
+    "distinct_source_families": 42,
+    "feature_bins": {
+      "1-2": 4,
+      "101+": 4,
+      "11-25": 9,
+      "26-100": 4,
+      "3-5": 9,
+      "6-10": 12
+    },
+    "feature_range": [
+      1,
+      1040
+    ],
+    "full_cohort_quantile_difficulty_bins": {
+      "Q1": 8,
+      "Q2": 6,
+      "Q3": 5,
+      "Q4": 6,
+      "Q5": 6,
+      "Q6": 11
+    },
+    "full_cohort_quantile_disagreement_bins": {
+      "Q1": 13,
+      "Q2": 11,
+      "Q3": 5,
+      "Q4": 13
+    },
+    "platform_counts": {
+      "legacy": 8,
+      "openml": 8,
+      "pmlb": 8,
+      "rdatasets": 8,
+      "seaborn": 2,
+      "sklearn": 1,
+      "socrata": 3,
+      "tidytuesday": 1,
+      "uci": 2,
+      "worldbank": 1
+    },
+    "row_bins": {
+      "1000": 15,
+      "129-256": 10,
+      "257-512": 4,
+      "513-999": 4,
+      "65-128": 5,
+      "8-64": 4
+    },
+    "train_row_range": [
+      10,
+      1000
+    ]
+  },
+  "elo_config": {
+    "batch_rounds": 60,
+    "initial_rating": 1000.0,
+    "normalized_k": 64.0,
+    "tie_tolerance": 1e-12,
+    "utility": "-RMSE"
+  },
+  "elo_fidelity": {
+    "adjacent_gap_full": [
+      37.227696639649594,
+      176.66480877108825,
+      76.77048493641962,
+      123.82725674167102,
+      194.8572405720987
+    ],
+    "adjacent_gap_panel": [
+      33.63578138416892,
+      176.79476342956855,
+      75.34595843513148,
+      127.61512670250443,
+      194.34035518756707
+    ],
+    "integer_aggregate_neighborhood_candidates": 9331,
+    "integer_aggregate_optimum_rank": 1,
+    "max_absolute_model_elo_error": 2.444073329919661,
+    "model_elo_rmse": 1.672786121875494,
+    "order_preserved": true
+  },
+  "leave_one_out": {
+    "order_preserved_count": 42,
+    "smallest_adjacent_gap_max": 47.75096781703974,
+    "smallest_adjacent_gap_min": 21.638210416631864,
+    "trials": 42
+  },
+  "method": {
+    "hard_constraints": [
+      "exactly 42 unique common-cohort datasets",
+      "winner minimums 10/10/4/4/3/2 in canonical rank order",
+      "no repeated underlying source dataset",
+      "no repeated named source family",
+      "all ten available source platforms represented",
+      "no source platform contributes more than eight datasets",
+      "minimum coverage in row, feature, difficulty, and disagreement bins",
+      "canonical Elo order must be preserved"
+    ],
+    "search": "binary MILP fixing the optimal integer aggregate Elo score and winner mix, then minimizing full-vs-panel pairwise-rate L1 error with a small model-order rarity reward",
+    "selection_claim": "best found under the stated fidelity and diversity constraints; not a claim of a unique semantic optimum"
+  },
+  "model_rows": [
+    {
+      "algorithm": "tabfm_ensemble_regressor",
+      "elo_delta": -2.4424137683688514,
+      "full_elo": 1260.936821191217,
+      "label": "TabFM ensemble",
+      "panel_elo": 1258.494407422848,
+      "panel_mean_rmse": 0.10794752385092549,
+      "panel_median_rmse": 0.06724900637603642,
+      "panel_wins": 17,
+      "rank": 1,
+      "winner_minimum": 10
+    },
+    {
+      "algorithm": "tabpfn_v3_regressor",
+      "elo_delta": 1.14950148711182,
+      "full_elo": 1223.7091245515674,
+      "label": "TabPFNv3",
+      "panel_elo": 1224.8586260386792,
+      "panel_mean_rmse": 0.10984155482442788,
+      "panel_median_rmse": 0.07065528542784112,
+      "panel_wins": 12,
+      "rank": 2,
+      "winner_minimum": 10
+    },
+    {
+      "algorithm": "fable5_regressor",
+      "elo_delta": 1.019546828631519,
+      "full_elo": 1047.044315780479,
+      "label": "Fable5",
+      "panel_elo": 1048.0638626091106,
+      "panel_mean_rmse": 0.11640132212091757,
+      "panel_median_rmse": 0.07813242720507127,
+      "panel_wins": 4,
+      "rank": 3,
+      "winner_minimum": 4
+    },
+    {
+      "algorithm": "grok4p5_regressor",
+      "elo_delta": 2.444073329919661,
+      "full_elo": 970.2738308440595,
+      "label": "Grok4p5",
+      "panel_elo": 972.7179041739792,
+      "panel_mean_rmse": 0.12053439603677533,
+      "panel_median_rmse": 0.10078442041179134,
+      "panel_wins": 4,
+      "rank": 4,
+      "winner_minimum": 4
+    },
+    {
+      "algorithm": "gpt5p6sol_regressor",
+      "elo_delta": -1.3437966309137437,
+      "full_elo": 846.4465741023885,
+      "label": "OpenAI GPT-5.6-sol",
+      "panel_elo": 845.1027774714747,
+      "panel_mean_rmse": 0.1299237256759104,
+      "panel_median_rmse": 0.1042742683332999,
+      "panel_wins": 3,
+      "rank": 5,
+      "winner_minimum": 3
+    },
+    {
+      "algorithm": "kimik3_regressor",
+      "elo_delta": -0.8269112463821102,
+      "full_elo": 651.5893335302898,
+      "label": "Kimik3",
+      "panel_elo": 650.7624222839077,
+      "panel_mean_rmse": 0.15889780902126116,
+      "panel_median_rmse": 0.1273285266954931,
+      "panel_wins": 2,
+      "rank": 6,
+      "winner_minimum": 2
+    }
+  ],
+  "pairwise_fidelity": {
+    "Fable5 vs Grok4p5": {
+      "absolute_deviation": 0.00979895252576446,
+      "full_win_rate_a": 0.6568677141409022,
+      "panel_win_rate_a": 0.6666666666666666
+    },
+    "Fable5 vs Kimik3": {
+      "absolute_deviation": 0.003077257258706889,
+      "full_win_rate_a": 0.9254941713127217,
+      "panel_win_rate_a": 0.9285714285714286
+    },
+    "Fable5 vs OpenAI GPT-5.6-sol": {
+      "absolute_deviation": 0.003958197571983679,
+      "full_win_rate_a": 0.8134820070957932,
+      "panel_win_rate_a": 0.8095238095238095
+    },
+    "Grok4p5 vs Kimik3": {
+      "absolute_deviation": 0.007542297202712822,
+      "full_win_rate_a": 0.8884946781550938,
+      "panel_win_rate_a": 0.8809523809523809
+    },
+    "Grok4p5 vs OpenAI GPT-5.6-sol": {
+      "absolute_deviation": 0.01735331740400159,
+      "full_win_rate_a": 0.7445514445007603,
+      "panel_win_rate_a": 0.7619047619047619
+    },
+    "OpenAI GPT-5.6-sol vs Kimik3": {
+      "absolute_deviation": 0.0014360533873964965,
+      "full_win_rate_a": 0.8347693867207299,
+      "panel_win_rate_a": 0.8333333333333334
+    },
+    "TabFM ensemble vs Fable5": {
+      "absolute_deviation": 0.008012936548162042,
+      "full_win_rate_a": 0.8175367460719716,
+      "panel_win_rate_a": 0.8095238095238095
+    },
+    "TabFM ensemble vs Grok4p5": {
+      "absolute_deviation": 0.0009412786908986615,
+      "full_win_rate_a": 0.8580841358337558,
+      "panel_win_rate_a": 0.8571428571428571
+    },
+    "TabFM ensemble vs Kimik3": {
+      "absolute_deviation": 0.004078874327227089,
+      "full_win_rate_a": 0.9483020780537252,
+      "panel_win_rate_a": 0.9523809523809523
+    },
+    "TabFM ensemble vs OpenAI GPT-5.6-sol": {
+      "absolute_deviation": 0.002582482562208832,
+      "full_win_rate_a": 0.9021794221996959,
+      "panel_win_rate_a": 0.9047619047619048
+    },
+    "TabFM ensemble vs TabPFNv3": {
+      "absolute_deviation": 0.011440156397074852,
+      "full_win_rate_a": 0.5828687278256462,
+      "panel_win_rate_a": 0.5714285714285714
+    },
+    "TabPFNv3 vs Fable5": {
+      "absolute_deviation": 0.011753915960707628,
+      "full_win_rate_a": 0.7977698935631019,
+      "panel_win_rate_a": 0.8095238095238095
+    },
+    "TabPFNv3 vs Grok4p5": {
+      "absolute_deviation": 0.013600270315931695,
+      "full_win_rate_a": 0.8469336036492651,
+      "panel_win_rate_a": 0.8333333333333334
+    },
+    "TabPFNv3 vs Kimik3": {
+      "absolute_deviation": 0.005092559071271596,
+      "full_win_rate_a": 0.9472883933096807,
+      "panel_win_rate_a": 0.9523809523809523
+    },
+    "TabPFNv3 vs OpenAI GPT-5.6-sol": {
+      "absolute_deviation": 0.00855598194675744,
+      "full_win_rate_a": 0.8895083628991384,
+      "panel_win_rate_a": 0.8809523809523809
+    }
+  },
+  "pairwise_fidelity_summary": {
+    "max_absolute_win_rate_deviation": 0.01735331740400159,
+    "mean_absolute_win_rate_deviation": 0.007281635411387052
+  },
+  "panel_count": 42,
+  "panel_dataset_ids": [
+    "019de5d76a718163",
+    "047e62b52a3f4ede",
+    "13b5df533e59a626",
+    "17a4542ee4fb9e44",
+    "1a803b27c2400dc4",
+    "1cb97b1d7314d43d",
+    "21fbfe8b53dbcd60",
+    "24713c7f7bfa7807",
+    "30ef3eaa6d2971a9",
+    "3305a3ad973fb227",
+    "3baa7e37fc1f7861",
+    "3f781a51af45387e",
+    "43b4cc3ab0ebbd97",
+    "471f11cc2d38853a",
+    "4f68d277d770477f",
+    "542e75bc0cfdd1bf",
+    "55b144de19659467",
+    "55f06d147bcc2a32",
+    "5f91a00bd3b66742",
+    "693890aae9dc860b",
+    "79e600bc5fcd5da7",
+    "7af85a04de0c7018",
+    "860e5558f732f638",
+    "ab0239b9ef0ba28e",
+    "aebf5d861a8365b4",
+    "b1f909fcfceeef4b",
+    "b253fbfae8460dc1",
+    "b5beff4a53fa12c0",
+    "b78d323566930bd7",
+    "bd49e740a79bcb6c",
+    "c32fa09b48fb2f27",
+    "c7d815714ca52bce",
+    "c8f90fc9cc5364be",
+    "cf5e74b4e9594944",
+    "d2daf53412ab18dc",
+    "dee1fc8e9afd81c9",
+    "e1c1db5260d0894e",
+    "e5a3a7b3668a1cc2",
+    "ee56a1015e344c11",
+    "f0e7eb3d790df37d",
+    "f8536dfeef471c2f",
+    "fe3cc716a05d036f"
+  ],
+  "panel_dataset_sha256": "b86c8ea5f5ab1051e8aafb4368f8dabdcfd8c740c63eaa1d086ddb72fae0ba75",
+  "status": "passed"
+}

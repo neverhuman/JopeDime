@@ -1,0 +1,9 @@
+ROADMAP.md
+manifests/advanced-v3/task-graph.v2.json
+manifests/advanced-v3/work-ledger.v2.jsonl
+manifests/advanced-v3/task-receipts/P-1B/0001.v1.json
+manifests/advanced-v3/task-receipts/P-1B/0002.v1.json
+manifests/advanced-v3/task-receipts/P-1B/0003.v1.json
+manifests/advanced-v3/task-receipts/P-1B/0004.v1.json
+manifests/advanced-v3/ownership-checks/p1b-verification.txt
+manifests/advanced-v3/ownership-checks/p1b-root.txt

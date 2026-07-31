@@ -1,0 +1,31 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-00",
+  "receipt_sequence": 4,
+  "ledger_sequence": 11,
+  "timestamp": "2026-07-22T05:42:30Z",
+  "actor": "/root",
+  "from": "review",
+  "to": "verified",
+  "baseline_sha256": {
+    "review_receipt": "fceaa90ec7343e66dae09005aa5c3e0c38e6d40c2e4fa930f39ceaa1a33d153b",
+    "task_graph_v2": "18374f9b41e2965eed50116ec371498978b950f4fe290c18aaad121a885b4f8c",
+    "checkpoint_snapshot": "217c847afab5ddbfa566f64da42d636dab5e353de95b39faa9e9eb80e98bd5b6"
+  },
+  "changed_paths": [],
+  "checks": [
+    "independent governance audit confirms every reconciled source hash matches the verified checkpoint",
+    "checkpoint archive SHA-256 matches its content-addressed name and zstd integrity verification passes",
+    "V2 graph, DAG, V1 migration, ledger chain, receipt bindings, and ownership inventories pass through the review frontier",
+    "review evidence records passing workspace, feat-math, battle-gpu, champion, token, golden, bench, and doctest gates",
+    "the only pre-transition validator mismatch is the intentional P-00 review-to-verified state projection"
+  ],
+  "evidence": [
+    "manifests/advanced-v3/task-receipts/P-00/0003.v1.json",
+    "manifests/advanced-v3/reconciliation-checkpoint-20260722T053421Z.v1.json",
+    "manifests/advanced-v3/reconciliation-inventory-20260722T045728Z.v1.json",
+    "/home/ubuntu/jope-dime-snapshots/217c847afab5ddbfa566f64da42d636dab5e353de95b39faa9e9eb80e98bd5b6.tar.zst"
+  ],
+  "remaining_scope": "Portable arithmetic, cross-language parity, emitters, search-v2, performance, algorithm completion, GPU execution, quality admission, audit hardening, and release remain separate gated work.",
+  "decision": "Verify P-00. The additive V2 graph and ledger become the live Advanced V3 coordination authority without changing frozen V1 evidence or implementation bytes."
+}

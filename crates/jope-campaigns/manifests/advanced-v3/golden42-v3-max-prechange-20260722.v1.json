@@ -1,0 +1,52 @@
+{
+  "schema": "jope-dime.golden42-v3-max-prechange.v1",
+  "created_utc": "2026-07-22T10:12:00Z",
+  "source_control": null,
+  "active_writer_audit": {
+    "advanced_v3_fcpp_scq_cli_governance_processes": [],
+    "result": "no active writer process observed"
+  },
+  "snapshot": {
+    "path": "/home/ubuntu/jope-dime-snapshots/fe20de80ec5d2e674340b71ca1810ad0937a28a15eeb7cf616493e56cbf795f5.tar.zst",
+    "sha256": "fe20de80ec5d2e674340b71ca1810ad0937a28a15eeb7cf616493e56cbf795f5",
+    "bytes": 646742,
+    "canonical_tar": {
+      "sort": "name",
+      "mtime_unix": 0,
+      "uid": 0,
+      "gid": 0,
+      "compression": "zstd-19-single-thread"
+    },
+    "excluded": ["target", "runs", ".claude", "feedback", "artifacts"]
+  },
+  "source_tree_sha256": "b1e693ce7982e29f9b5f52a06b2550a91bba2b22886cb3c8291177184d3ad699",
+  "hashes": {
+    "Cargo.toml": "74cefeecbd8fdbb40f3ca50505eed6a7d0175c8865039629b08f205054019a8a",
+    "Cargo.lock": "72362e9fb1bfb3a2836c06a699be141862dcdfd5da5b2e25044d767caad544c3",
+    "vendor/feat-math/Cargo.toml": "8c50e0b84f3bfa59ae198036eeea901ae6bcbad022a2dc369d1c0f5391b5ebae",
+    "vendor/feat-math/src/advanced_v3.rs": "b6dc70d5202c69ac0ff644e0771ac380fb62ddc871886997b4b258f35ace3c67",
+    "vendor/feat-math/src/advanced_v3/fitted_cpp.rs": "4691b0da517e7cdfe9a77ac7146821b8cfb7810c92ab47a119c17d36ef94d0ef",
+    "src/main.rs": "eb510b0148abdd3cfb7823e0999e59d31378c2fb4f2568583cce5adf85756c1e",
+    "src/aggressive.rs": "74488e2052c1f9501d4cb4de7bb48d7318cfb9a2c13d0800fa96d071e064dc2b"
+  },
+  "dataset": {
+    "dataset_hash": "24713c7f7bfa7807",
+    "source_name": "healthcare_insurance_expenses",
+    "root": "/home/ubuntu/remote_super/quant/regression/24713c7f7bfa7807",
+    "train_sha256": "792b5536a28dc7180265ea0a0f5a770e9d7eb002b150298e20c66f3278690836",
+    "test_sha256": "89b77683e7c4899d043f6bbad31d291cbae40d90639fc2d161655d965a2d66b2",
+    "meta_sha256": "785d6a9db129badc87ca32e4c4e83a2f4d34bfa9ee87816e062fe9286ceec3e8"
+  },
+  "toolchain": {
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+    "gxx": "g++ 13.3.0",
+    "host": "x86_64-unknown-linux-gnu",
+    "llvm": "22.1.2"
+  },
+  "baseline_checks": {
+    "cargo_check_workspace_all_targets": "passed with warnings",
+    "cargo_check_workspace_all_targets_all_features": "failed: feat-math gpu-parity did not declare optional battle-gpu dependency",
+    "advanced_v3_v2_governance": "passed"
+  }
+}

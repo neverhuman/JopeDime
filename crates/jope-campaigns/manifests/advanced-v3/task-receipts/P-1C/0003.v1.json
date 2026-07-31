@@ -1,0 +1,59 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-1C",
+  "receipt_sequence": 3,
+  "ledger_sequence": 41,
+  "timestamp": "2026-07-22T08:08:08Z",
+  "actor": "/root",
+  "from": "in_progress",
+  "to": "review",
+  "baseline_sha256": {
+    "in_progress_receipt": "23ba150d0923d7318bcfc4d8ca4a977b8593979c8d6439747be9c951546c4fa8",
+    "pre_review_task_graph": "46071f9a4953829886b85a1d6cdb85a4e8cdcb76b97e9ef5c079d47c062eda95",
+    "preserved_handoff_archive": "8ff242d5170f081e3fce353d4355e59a8a08d66b8835673ea7b7eb44fde483f0",
+    "frozen_golden": "cc960036a498880e92c49adebb8ce6acc313a3f88add7925d9392b72fc5d5303",
+    "cargo_lock": "72362e9fb1bfb3a2836c06a699be141862dcdfd5da5b2e25044d767caad544c3"
+  },
+  "changed_paths": [
+    "vendor/feat-math/src/emit_cpp.rs",
+    "vendor/feat-math/src/mathexpr.rs",
+    "vendor/feat-math/src/tokens.rs",
+    "vendor/feat-math/src/transpile.rs",
+    "scripts/validate_advanced_v3_ownership.sh",
+    "manifests/advanced-v3/ownership-checks/p1c-root.txt",
+    "manifests/advanced-v3/task-graph.v2.json",
+    "manifests/advanced-v3/work-ledger.v2.jsonl",
+    "ROADMAP.md"
+  ],
+  "checks": [
+    "the additive C++17 emitter leaves existing emit() Python, Rust, and manifest construction unchanged",
+    "23 declared pipeline/head cases compile with stock g++ and produce exact Rust prediction bits; unsupported target, symbolic, portfolio, transform, and head forms fail closed",
+    "normal, ASan, and nonrecovering UBSan builds run the numeric C ABI with exact prediction bits",
+    "the C ABI validates target/output lengths, multiplication overflow, zero-row prediction, and exception containment",
+    "Portable helper source is byte-bound to the verified P-1B C++ fixture while PlatformLibm remains the default",
+    "shared-library undefined-symbol audit rejects file, environment, process, and socket access",
+    "counted C++17 artifacts bind deterministic source SHA-256, code tokens, documentation tokens, bytes, and math policy",
+    "the complete frozen golden suite passes 83 tests in 595.10 seconds",
+    "the current feat-math library passes 247 tests with two intentional ignores",
+    "legacy freeze, token, champion, portable parity, public parity/property, and conformance pass 20 tests with one intentional ignore",
+    "owned formatting, all-target checking, ownership validation, Cargo.lock, frozen lib.rs/golden bytes, and V2 validation pass"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "vendor/feat-math/src/emit_cpp.rs",
+    "vendor/feat-math/src/mathexpr.rs",
+    "vendor/feat-math/src/tokens.rs",
+    "vendor/feat-math/src/transpile.rs",
+    "manifests/advanced-v3/ownership-checks/p1c-root.txt",
+    "manifests/advanced-v3/task-receipts/P-1C/0002.v1.json"
+  ],
+  "result_sha256": {
+    "vendor/feat-math/src/emit_cpp.rs": "e1ae9b9ab4d21fade5200ec1f1e98cf2de0fb0502e7caf10065d1563196d7ffb",
+    "vendor/feat-math/src/mathexpr.rs": "d4290e00f8864513fa299e6b22c012953ed3e2c9fe383dbdc9e0d2cea7e89e19",
+    "vendor/feat-math/src/tokens.rs": "d8a60062c92afa1de9a85361b670b7d7d1d019bb93ae85bd9620e308c527a9a4",
+    "vendor/feat-math/src/transpile.rs": "b3603666d3b23e243f754a22c1a66a3aee1ec06233130d92eae53e7e82b26327",
+    "task_graph_v2": "8d6b133a4753e20cc0c84c283667fa6b3260b3677b0479c934d109d1eb955e4f"
+  },
+  "remaining_scope": "This review covers the standalone GenomeIr training-recipe emitter only. It does not claim Rust-fitted BoundModel/V3 state support, fitted-model campaign speed, JavaScript completion, or campaign admission.",
+  "decision": "Move P-1C to review after root adoption, exact declared-slice parity, sanitizer, symbol, token, full-suite, and frozen-byte gates."
+}

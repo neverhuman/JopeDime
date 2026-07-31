@@ -1,0 +1,10 @@
+[Unit]
+Description=JOPE training-history capture: sync trainer per-epoch metrics into the durable archive (training/history)
+
+[Service]
+Type=oneshot
+# Read-only against var/runs. Always exits 0; failures surface as
+# training_history_* alarms via jope-selfplay-alarms.timer, not as a red unit.
+ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_training_history capture
+Nice=10
+IOSchedulingClass=idle

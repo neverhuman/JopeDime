@@ -1,0 +1,212 @@
+{
+  "schema": "advanced-v3-v10-conformance-evidence-v1",
+  "task_id": "V-10",
+  "recorded_at_utc": "2026-07-22T04:11:08Z",
+  "status": "runtime_passed_emitted_csv_deferred",
+  "scope": {
+    "public_integration": [
+      "strict runtime CSV and schema validation",
+      "task and positive-class validation",
+      "1024 and 1776 raw-column retention",
+      "generated dense 511 and 512 acceptance and 513 rejection",
+      "role, missing-mask, lineage, and sparse-index accounting",
+      "numeric and categorical missing-value fitted state"
+    ],
+    "private_kernel_cross_check": [
+      "honest IID ordered encoding",
+      "future-safe ordered historical encoding",
+      "group/order-aware lag and rolling mean",
+      "fitted group tails and unseen-group behavior",
+      "row-operation FeatureBlock metadata preservation"
+    ],
+    "explicitly_deferred": [
+      "emitted Python and Rust CSV parser conformance"
+    ]
+  },
+  "environment": {
+    "os": "Linux 6.8.0-134-generic x86_64",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+    "cargo_lock_sha256": "72362e9fb1bfb3a2836c06a699be141862dcdfd5da5b2e25044d767caad544c3"
+  },
+  "test_files": [
+    {
+      "path": "vendor/feat-math/tests/advanced_v3_conformance.rs",
+      "sha256": "6c0b24ffd0afe47a15d1bb4a68766754e39aa380b3a63230b6ea0e44e52ddc2a"
+    },
+    {
+      "path": "vendor/feat-math/tests/fixtures/advanced_v3/csv-runtime-v1.json",
+      "sha256": "1a8b94d029888495552c90c5034d3ade3b4ec5ddfeafbc2c3c3c93b9fc65d948"
+    },
+    {
+      "path": "vendor/feat-math/src/advanced_v3/tests.rs",
+      "sha256": "7bfe8cddd3dc9e243dd0753cd3faf96bc28d0385a8665b0e4090f3c2649f320c"
+    },
+    {
+      "path": "vendor/feat-math/tests/advanced_v3_property.rs",
+      "sha256": "0508ef335c033c4419956c310c80396b829ab331527ed6422eb4b43b1fdb2d19"
+    },
+    {
+      "path": "vendor/feat-math/tests/advanced_v3_parity.rs",
+      "sha256": "e40e97398bbff8b55dd1f30069ba709bb83f93fca8b78f8c0df4c0954619b841"
+    },
+    {
+      "path": "vendor/feat-math/tests/legacy_v2_freeze.rs",
+      "sha256": "549a17a421bf27c35bf383ef64d17bb79beb6da6b4453d370a546ce9a180b969"
+    }
+  ],
+  "kernel_files_under_test": [
+    {
+      "path": "vendor/feat-math/src/advanced_v3/schema.rs",
+      "sha256": "6758e4b4bda81bd28653c245f05fdf6f7ecd9734a24a2f1cf3615bee723e609a"
+    },
+    {
+      "path": "vendor/feat-math/src/advanced_v3/csv.rs",
+      "sha256": "05ee6e402665779428b4f2a2b2ff6ff9752057a7fb3495f71d7bff6d0d5ac2bf"
+    },
+    {
+      "path": "vendor/feat-math/src/advanced_v3/feature_block.rs",
+      "sha256": "d3ee0b3b6eb754ef7b2befc7aa9ee43adaa221d7db39fe0d92423214bcea056b"
+    },
+    {
+      "path": "vendor/feat-math/src/advanced_v3/input.rs",
+      "sha256": "ed6e4cc6053eeb7e0285815f1464fbd49b734d8c6d0c5f5179fe21e8eaa8e78d"
+    },
+    {
+      "path": "vendor/feat-math/src/advanced_v3/transforms/mod.rs",
+      "sha256": "ccdc74dcaf09c067ad89ba59a668b571ec2df078d3357a7209a65bfea1847473"
+    }
+  ],
+  "commands": [
+    {
+      "command": "rtk cargo test -p feat-math --test advanced_v3_conformance --locked -- --test-threads=1",
+      "result": "pass",
+      "summary": "7 passed"
+    },
+    {
+      "command": "rtk cargo test -p feat-math --lib --locked advanced_v3::transforms::tests:: -- --test-threads=1",
+      "result": "pass",
+      "summary": "6 passed, 231 filtered out"
+    },
+    {
+      "command": "rtk cargo test -p feat-math --lib --locked advanced_v3::input::tests:: -- --test-threads=1",
+      "result": "pass",
+      "summary": "5 passed, 232 filtered out"
+    },
+    {
+      "command": "rtk cargo test -p feat-math --lib --locked advanced_v3::tests:: -- --test-threads=1",
+      "result": "pass",
+      "summary": "18 passed, 219 filtered out"
+    },
+    {
+      "command": "rtk cargo test -p feat-math --all-targets --locked --no-run",
+      "result": "pass",
+      "summary": "all feat-math targets compiled"
+    },
+    {
+      "command": "rtk cargo test -p feat-math --test advanced_v3_property --locked -- --test-threads=1",
+      "result": "pass",
+      "summary": "2 passed"
+    },
+    {
+      "command": "rtk cargo test -p feat-math --test advanced_v3_parity --locked -- --test-threads=1",
+      "result": "pass",
+      "summary": "1 passed"
+    },
+    {
+      "command": "rtk cargo test -p feat-math --test legacy_v2_freeze --locked -- --test-threads=1",
+      "result": "pass",
+      "summary": "3 passed, 1 ignored generator"
+    },
+    {
+      "command": "rtk rustfmt --edition 2021 --check vendor/feat-math/tests/advanced_v3_conformance.rs",
+      "result": "pass",
+      "summary": "no diff"
+    },
+    {
+      "command": "rtk python3 -m json.tool vendor/feat-math/tests/fixtures/advanced_v3/csv-runtime-v1.json",
+      "result": "pass",
+      "summary": "valid JSON"
+    }
+  ],
+  "subgates": [
+    {
+      "id": "V10-SCHEMA",
+      "status": "pass",
+      "evidence": [
+        "advanced_v3_conformance::schema_task_and_header_contracts_are_strict_and_hash_bound",
+        "advanced_v3_conformance::binary_positive_class_is_exactly_one"
+      ]
+    },
+    {
+      "id": "V10-CSV-RUNTIME",
+      "status": "pass",
+      "evidence": [
+        "advanced_v3_conformance::strict_runtime_csv_corpus_is_canonical",
+        "vendor/feat-math/tests/fixtures/advanced_v3/csv-runtime-v1.json"
+      ]
+    },
+    {
+      "id": "V10-WIDTH-AND-LAYOUT",
+      "status": "pass",
+      "evidence": [
+        "advanced_v3_conformance::wide_raw_and_one_to_one_layout_preserve_metadata",
+        "advanced_v3_conformance::generated_dense_sparse_role_mask_and_lineage_accounting_is_exact",
+        "advanced_v3_conformance::public_fitted_input_retains_all_1024_to_1776_raw_columns",
+        "advanced_v3::transforms::tests::one_to_one_v3_transform_never_truncates_wide_raw_block"
+      ]
+    },
+    {
+      "id": "V10-INPUT-MISSING-AND-ROLES",
+      "status": "pass",
+      "evidence": [
+        "advanced_v3_conformance::numeric_and_categorical_missing_contract_is_visible_in_fitted_state",
+        "advanced_v3::input::tests::numeric_modes_treat_tokens_and_nonfinite_values_as_missing",
+        "advanced_v3::input::tests::categorical_vocabulary_is_canonical_and_missing_nan_unseen_are_distinct",
+        "advanced_v3::input::tests::every_categorical_mode_keeps_its_declared_roles"
+      ]
+    },
+    {
+      "id": "V10-ORDERED-LEAKAGE",
+      "status": "pass_private_kernel_lane",
+      "evidence": [
+        "advanced_v3::input::tests::iid_ordered_encoding_uses_only_fold_training_statistics",
+        "advanced_v3::input::tests::ordered_history_is_stable_for_ties_and_has_no_future_access",
+        "advanced_v3::tests::ordered_training_values_do_not_reveal_unique_targets"
+      ],
+      "note": "Exact training FeatureBlock values are intentionally not exposed through the public API."
+    },
+    {
+      "id": "V10-TABLE-ROW-OPERATIONS",
+      "status": "pass_private_kernel_lane",
+      "evidence": [
+        "advanced_v3::transforms::tests::lag_and_roll_are_group_order_aware_and_restore_caller_order",
+        "advanced_v3::transforms::tests::rolling_all_missing_window_stays_missing",
+        "advanced_v3::transforms::tests::append_preserves_original_metadata_and_generated_missing_mask",
+        "advanced_v3::transforms::tests::prediction_uses_fitted_group_tails_and_unseen_groups_have_no_history",
+        "advanced_v3::transforms::tests::rolling_prediction_starts_with_fitted_tail"
+      ],
+      "note": "Exact fitted transform state remains crate-private and is verified beside the implementation."
+    },
+    {
+      "id": "V10-CSV-EMITTED-PARITY",
+      "status": "deferred",
+      "depends_on": [
+        "K-52",
+        "K-53"
+      ],
+      "reason": "The current Python artifact uses csv.reader and the emitted Rust artifact has a separate parser. V-10 does not claim runtime/Python/Rust CSV-corpus parity before the shared emitted-parser work lands."
+    }
+  ],
+  "ownership": {
+    "implementation_files_modified_by_verification": [],
+    "public_api_changes": [],
+    "new_test_paths": [
+      "vendor/feat-math/tests/advanced_v3_conformance.rs",
+      "vendor/feat-math/tests/fixtures/advanced_v3/csv-runtime-v1.json"
+    ],
+    "new_evidence_paths": [
+      "manifests/advanced-v3/evidence/v-10-conformance.v1.json"
+    ]
+  }
+}

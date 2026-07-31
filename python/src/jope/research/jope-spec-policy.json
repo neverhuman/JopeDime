@@ -1,0 +1,69 @@
+{
+  "schema": "JopeSpecPolicy.v1",
+  "generated_by": "jope_spec_drift --emit-json (src/spec_policy.rs)",
+  "scq_safety_floor_mb": 8192,
+  "cohort_schema": "JopeMicroCohort.v2",
+  "exclude_sealed_families": true,
+  "families": {
+    "trainer": {
+      "gpus_per_task": 1,
+      "cpus_reserved": 4,
+      "omp_threads": 4,
+      "ram_mb": 16384,
+      "gang_size": 1,
+      "placement": "single_node",
+      "measured_peak_mb": 9174,
+      "peak_evidence": "scq show jope-selfplay-train-001805437-c-r000024 --json: peak_ram_mb = 9174 (2026-07-28 23:1xZ)",
+      "max_runtime_hours": 168,
+      "preemptible": true,
+      "smoke": [
+        {"name": "jope-prime policy source present", "command": "/usr/bin/test", "args": ["-f", "/home/ubuntu/jope-prime/src/jope/policy/model_v3.py"], "timeout_secs": 5}
+      ]
+    },
+    "propose": {
+      "gpus_per_task": 1,
+      "cpus_reserved": 4,
+      "omp_threads": 4,
+      "ram_mb": 12288,
+      "gang_size": 1,
+      "placement": "single_node",
+      "measured_peak_mb": 1055,
+      "peak_evidence": "scq show jope-selfplay-propose-fbcd5459f2c1-c4255cdc7963d --json: peak_ram_mb = 1055 (n=3 retained, p50 965, 2026-07-28 23:1xZ)",
+      "max_runtime_hours": 24,
+      "preemptible": true,
+      "smoke": [
+        {"name": "jope-prime policy source present", "command": "/usr/bin/test", "args": ["-f", "/home/ubuntu/jope-prime/src/jope/policy/model_v3.py"], "timeout_secs": 5}
+      ]
+    },
+    "eval": {
+      "gpus_per_task": 0,
+      "cpus_reserved": 1,
+      "omp_threads": 1,
+      "ram_mb": 512,
+      "gang_size": 1,
+      "placement": "single_node",
+      "measured_peak_mb": 483,
+      "peak_evidence": "scq --json ls, full retained population: n=2154 eval (max 483 MB, p95 97) + n=284 coverage (max 217 MB), 2026-07-29 00:0xZ",
+      "max_runtime_hours": 6,
+      "preemptible": true,
+      "smoke": [
+
+      ]
+    },
+    "encode": {
+      "gpus_per_task": 1,
+      "cpus_reserved": 4,
+      "omp_threads": 4,
+      "ram_mb": 16384,
+      "gang_size": 1,
+      "placement": "single_node",
+      "measured_peak_mb": null,
+      "peak_evidence": "UNMEASURED: 0 jope-binexp-* records in `scq ls --json` (n=4330, 2026-07-28 23:1xZ)",
+      "max_runtime_hours": 12,
+      "preemptible": true,
+      "smoke": [
+        {"name": "jope-prime policy source present", "command": "/usr/bin/test", "args": ["-f", "/home/ubuntu/jope-prime/src/jope/policy/model_v3.py"], "timeout_secs": 5}
+      ]
+    }
+  }
+}

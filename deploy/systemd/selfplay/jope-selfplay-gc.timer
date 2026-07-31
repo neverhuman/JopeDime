@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily JOPE self-play GC sweep
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=1800
+
+[Install]
+WantedBy=timers.target

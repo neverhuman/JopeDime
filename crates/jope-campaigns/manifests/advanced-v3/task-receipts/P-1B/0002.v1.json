@@ -1,0 +1,26 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-1B",
+  "receipt_sequence": 2,
+  "ledger_sequence": 24,
+  "timestamp": "2026-07-22T06:19:01Z",
+  "actor": "/root",
+  "from": "ready",
+  "to": "in_progress",
+  "baseline_sha256": {
+    "ready_receipt": "40fd820664479fc8e5c69db7b74bae49025cc0dc1916001f9893b37b3c738949",
+    "task_graph_v2": "8227332126557305d140359dd112d10bcd30802ef62b7932005fb3659bf87de8"
+  },
+  "changed_paths": [],
+  "checks": [
+    "the task is limited to a generalized language/build/run oracle and its immutable evidence",
+    "missing stock toolchains must be explicit skips rather than silent passes",
+    "all-helper portable-reference parity and unchanged PlatformLibm golden bytes remain required"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/task-receipts/P-1B/0001.v1.json"
+  ],
+  "remaining_scope": "No C++17 or JavaScript model emitter, portable emitted routing, CUDA, or later wave is authorized by this transition.",
+  "decision": "Begin P-1B with an exclusive verification-workstream lease on the golden oracle."
+}

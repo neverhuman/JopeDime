@@ -1,0 +1,61 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-1A",
+  "receipt_sequence": 3,
+  "ledger_sequence": 19,
+  "timestamp": "2026-07-22T06:14:31Z",
+  "actor": "/root",
+  "from": "in_progress",
+  "to": "review",
+  "baseline_sha256": {
+    "in_progress_receipt": "eb1c41a2beebddbc65b527d0f277dc6ef5a5f2d2744579d21a4780864dbc6ce2",
+    "imported_portable_math": "b765bb8bcf8480e8a433b647790ce72cef86ee909e3e73937d922a70b29db931",
+    "imported_transpile": "cc93612237ed1d907adf3539c342b5acf1d274fb49b15e75cb90254d06a9cf6d",
+    "public_registration": "ccd4d6a204f3083af6d3b447b2c35c4230e1b4641ca6f65e36b53a40905bf002"
+  },
+  "changed_paths": [
+    "vendor/feat-math/src/portable_math.rs",
+    "vendor/feat-math/src/transpile.rs",
+    "vendor/feat-math/src/tokens.rs",
+    "vendor/feat-math/src/advanced_v3/emit/mod.rs",
+    "manifests/advanced-v3/recovery-evidence/portable-xlang/full_ref.rs",
+    "manifests/advanced-v3/recovery-evidence/portable-xlang/PORTABILITY_EVIDENCE.md",
+    "manifests/advanced-v3/ownership-checks/p1a-root.txt",
+    "scripts/validate_advanced_v3_ownership.sh",
+    "manifests/advanced-v3/task-graph.v2.json",
+    "manifests/advanced-v3/work-ledger.v2.jsonl",
+    "ROADMAP.md"
+  ],
+  "checks": [
+    "the atan2 signed-high-word overflow regression fails before the correction and passes afterward for negative zero and negative-x quadrants",
+    "all ten public helpers canonicalize NaN outputs to 0x7ff8000000000000",
+    "twelve portable-kernel tests and two math-policy tests pass",
+    "legacy, fitted-bound, and token-estimation entry points fail closed for Portable until routing is complete; explicit PlatformLibm matches default artifact bytes",
+    "root full feat-math library gate passes 242 tests with two intentional ignores in 435.72 seconds",
+    "public parity passes 1 test, public property passes 2 tests, and legacy-v2 freeze passes 3 tests with one intentional ignore",
+    "stock rustc builds the repository-relative full helper oracle; two 1325310-byte runs match SHA-256 cb88fe62a5c6d6a2950b4ec14bbc0733ac9ac8527934c821e592d117c108e276",
+    "portable helper standalone clippy-driver with denied warnings and owned-file rustfmt checks pass",
+    "portable helper source contains no filesystem, CSV, or dataset access",
+    "P-1A root ownership and the V2 graph/DAG/V1-migration/ledger validator pass",
+    "independent read-only re-review approves the stable P-1A hashes for review"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/recovery-evidence/portable-xlang/PORTABILITY_EVIDENCE.md",
+    "manifests/advanced-v3/recovery-evidence/portable-xlang/full_ref.rs",
+    "manifests/advanced-v3/ownership-checks/p1a-root.txt",
+    "manifests/advanced-v3/task-receipts/P-1A/0002.v1.json"
+  ],
+  "result_sha256": {
+    "vendor/feat-math/src/portable_math.rs": "96d6cb2b091446fc1d7d1365d4b60821f42fe684c62cbb4af298879ad96ad0d3",
+    "vendor/feat-math/src/transpile.rs": "9f1c1912e6173f47d6cb47ee184d1188cbc54c769cbfcfff766caa442a28fe28",
+    "vendor/feat-math/src/tokens.rs": "434fdd59c6a40223006a5d843ee4953c2cc0de49fb60fd51593848e988da2162",
+    "vendor/feat-math/src/advanced_v3/emit/mod.rs": "f61e6f8c480116c92447b5bd372dab0acfc8e8bae4adefd261dd1d5762b3d55d",
+    "vendor/feat-math/src/lib.rs": "ccd4d6a204f3083af6d3b447b2c35c4230e1b4641ca6f65e36b53a40905bf002",
+    "manifests/advanced-v3/recovery-evidence/portable-xlang/full_ref.rs": "2b9987aff483f921568f837799a335ffb9834bccf7599aa3c472932f90e5098a",
+    "manifests/advanced-v3/recovery-evidence/portable-xlang/PORTABILITY_EVIDENCE.md": "eb651f21569fd53960836d14ec2b962c12597922a461d51d7c169636fc9b281f",
+    "task_graph_v2": "a92dd489219b59405a1706bf4ac60066c481398ab436bfb7a2f764869df52758"
+  },
+  "remaining_scope": "P-1B must prove all-helper cross-language portable-reference parity. P-1C/P-1D must add C++17/JavaScript emitters, and Portable emission remains fail-closed until every backend call is routed. CUDA remains deferred.",
+  "decision": "Move P-1A to review. The scalar kernel and reserved policy identity satisfy the explicitly qualified acceptance contract without changing PlatformLibm bytes or authorizing any portable emitted backend."
+}

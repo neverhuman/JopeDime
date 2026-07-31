@@ -1,0 +1,5 @@
+vendor/feat-math/tests/portable_parity.rs
+vendor/feat-math/tests/portable/full_ref.rs
+vendor/feat-math/tests/portable/full_ref.cpp
+vendor/feat-math/tests/portable/full_ref.js
+vendor/feat-math/tests/portable/full_ref.py

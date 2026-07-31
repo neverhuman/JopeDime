@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "status": "unverified_recovery_evidence",
+  "source_session": "claude portable-math handoff",
+  "source_directory": "/tmp/claude-1000/-home-ubuntu-jope-dime/ae2c6575-19c9-4db3-8873-50ba7cce33e2/scratchpad/xlang",
+  "preserved_at_utc": "2026-07-22T04:28:00Z",
+  "note": "Small source and evidence files are preserved byte-for-byte. Generated outputs and binaries are represented only by OUTPUTS.sha256 and were not copied."
+}

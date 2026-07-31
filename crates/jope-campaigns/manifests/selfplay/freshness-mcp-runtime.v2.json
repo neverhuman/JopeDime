@@ -1,0 +1,11 @@
+{
+  "schema": "JopeFreshnessMcpRuntime.v2",
+  "mcp_protocol_version": "2025-06-18",
+  "runtime": "rust",
+  "server_version": "2.0.0",
+  "transport": "stdio-jsonrpc",
+  "backend": "unix-socket",
+  "entrypoint": "runtime/bin/jope_selfplay_mcp",
+  "arbitrary_scq_commands": false,
+  "running_job_cancellation": false
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "FCPP-00",
+  "receipt_sequence": 2,
+  "ledger_sequence": 54,
+  "timestamp": "2026-07-22T09:28:46Z",
+  "actor": "/root",
+  "from": "ready",
+  "to": "in_progress",
+  "baseline_sha256": {
+    "ready_receipt": "79015d259602b8037b15aa241948967232cad576b42c5e610a8e2886800ede96",
+    "task_graph_v2": "df24d4f072145c46be1019c4e79d1032370842d2c6e19c889577c896b4be73b8"
+  },
+  "changed_paths": [],
+  "checks": [
+    "the body lease is limited to new fitted_cpp.rs and new advanced_v3_fitted_cpp.rs; no existing file may be edited",
+    "root retains advanced_v3 module registration, public exports, ownership manifests, ROADMAP, task graph, ledger, and receipts",
+    "emitted C++17 must contain exact fitted state and expose a dependency-free length-checked noexcept C ABI over typed table data",
+    "every live input, transform, head, calibration, target, symbolic, portfolio, and row-aware state must be exhaustively admitted or truthfully rejected",
+    "normal, strict stock, ASan, nonrecovering UBSan, exact-bit parity, no-data/no-process symbol, persistent-runtime, and performance gates remain mandatory"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/task-receipts/FCPP-00/0001.v1.json",
+    "manifests/advanced-v3/task-graph.v2.json"
+  ],
+  "remaining_scope": "Only the isolated FCPP-00 body implementation is opened. Campaign backend selection, remote launch, shared registration, and any completeness claim remain root-gated.",
+  "decision": "Begin FCPP-00 implementation under the exact two-new-file lease with root retaining integration and acceptance authority."
+}

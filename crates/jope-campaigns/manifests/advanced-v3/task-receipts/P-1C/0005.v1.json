@@ -1,0 +1,58 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-1C",
+  "receipt_sequence": 5,
+  "ledger_sequence": 44,
+  "timestamp": "2026-07-22T08:44:35Z",
+  "actor": "/root",
+  "from": "review",
+  "to": "verified",
+  "baseline_sha256": {
+    "corrective_review_receipt": "665567fb419a229b2d437ef6f04cda81431addc87e555bfb84be2ca5475895c6",
+    "review_graph": "8d6b133a4753e20cc0c84c283667fa6b3260b3677b0479c934d109d1eb955e4f",
+    "verification_graph": "51e7b9a318f40d1725f1b28de51cd169551e5743ecd8f7805175d8a2cde72104",
+    "ledger_through_sequence_43": "7f193b1624089b840c464b02ab29d0eefdb3551db43856548d68d3d7af53d706",
+    "roadmap_after_review_and_recovery": "968aca4a9bcb03f086c3617afe670fbbb9115402184138958d4573291eb2cd8c",
+    "frozen_golden": "cc960036a498880e92c49adebb8ce6acc313a3f88add7925d9392b72fc5d5303",
+    "cargo_lock": "72362e9fb1bfb3a2836c06a699be141862dcdfd5da5b2e25044d767caad544c3"
+  },
+  "changed_paths": [
+    "manifests/advanced-v3/task-receipts/P-1C/0005.v1.json",
+    "manifests/advanced-v3/task-graph.v2.json",
+    "manifests/advanced-v3/work-ledger.v2.jsonl",
+    "manifests/advanced-v3/ownership-checks/p1c-root.txt",
+    "ROADMAP.md"
+  ],
+  "checks": [
+    "corrective receipt 0004 binds two independent approvals and all five closed rejection items at the exact stable source hashes",
+    "root post-review rerun passes six focused C++17 tests including strict stock, ASan, nonrecovering UBSan, no-data symbol audit, explicit ABI capacities, Portable fitted parity, and deterministic source and token identity",
+    "all 22 certified transforms under both Ridge and ElasticNet plus the independent secondary corpus produce exact Rust and C++17 prediction bits",
+    "the complete feat-math library passes 248 tests with two intentional ignores",
+    "the complete frozen PlatformLibm golden suite passes all 83 tests in 600.00 seconds",
+    "portable parity, legacy-v2 freeze, champion parity, and token suites pass nine active tests with one intentional ignore",
+    "workspace all-target checking passes after rejected executor WIP is preserved and the two unverified live deltas exactly reproduce verified hashes",
+    "owned rustfmt, ownership validation, frozen bytes, and the V2 graph, DAG, V1 migration, receipt, and ledger validator pass through corrective sequence 42",
+    "no Advanced V3 campaign, 80-worker executor, Zain stability GA, held-out-data evaluation, or release was launched"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "vendor/feat-math/src/emit_cpp.rs",
+    "vendor/feat-math/src/mathexpr.rs",
+    "vendor/feat-math/src/tokens.rs",
+    "vendor/feat-math/src/transpile.rs",
+    "vendor/feat-math/tests/golden.rs",
+    "vendor/feat-math/tests/portable_parity.rs",
+    "manifests/advanced-v3/task-receipts/P-1C/0004.v1.json",
+    "manifests/advanced-v3/ownership-checks/p1c-root.txt",
+    "/home/ubuntu/jope-dime-snapshots/3eba1bdb1471de72c0b6f86efead86891f822bbc77d2eec677fe1448687457f0.tar.zst"
+  ],
+  "result_sha256": {
+    "vendor/feat-math/src/emit_cpp.rs": "47e0b2a7219e0d3635d8ae615e10aec5177ee81f181370d3a56148806e205b22",
+    "vendor/feat-math/src/mathexpr.rs": "d4290e00f8864513fa299e6b22c012953ed3e2c9fe383dbdc9e0d2cea7e89e19",
+    "vendor/feat-math/src/tokens.rs": "d8a60062c92afa1de9a85361b670b7d7d1d019bb93ae85bd9620e308c527a9a4",
+    "vendor/feat-math/src/transpile.rs": "bf68033b7b2f01dca11ba2e9861686f455db3c8f664d4d5a25a4d24110139350",
+    "task_graph_v2": "51e7b9a318f40d1725f1b28de51cd169551e5743ecd8f7805175d8a2cde72104"
+  },
+  "remaining_scope": "P-1D JavaScript emission, unsupported fitted vocabulary, search-v2, selected fitted BoundModel export, persistent generation-atomic workers, an admissible 80-worker executor, later waves, campaign admission, CUDA, and release remain separately gated. P-1C verification alone does not make a campaign ready.",
+  "decision": "Verify only the fail-closed standalone P-1C C++17 Plan emitter after corrective review, independent reproduction, full post-review gates, and restoration of a green locked workspace."
+}

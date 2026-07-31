@@ -1,0 +1,13 @@
+[Unit]
+Description=JOPE Rust proactive immutable micro-wave supply supervisor
+After=jope-selfplay-freshness.service jope-selfplay-queue.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ubuntu/jope-flywheel/test_exact_gen0
+ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_selfplay_supply --build --queue-floor 1000 --queued-target 2048 --queued-hard-cap 4096 --ready-reserve-min 1024 --max-overlap-waves 8 --max-candidates-per-manifest 25 --queue-status-max-age-seconds 600 --wave-builder /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_selfplay_wave --proposal-generator /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch/proposals/test_exact_context_proposals.py --proposal-legacy-generator /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch/proposals/test_exact_dl_generate.py --proposal-common /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch/shared/test_exact_common.py --proposal-pythonpath /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

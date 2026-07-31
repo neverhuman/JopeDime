@@ -1,0 +1,6 @@
+[Unit]
+Description=JOPE robust GP seed-bank export (DL-origin merit merge capped at floor(limit/3) per task; receipts in ops/seed-bank-receipts/)
+
+[Service]
+Type=oneshot
+ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_queue_control --export-seed-bank /home/ubuntu/jope-flywheel/test_exact_gen0/corpus/robust-gp-seed-bank.v1.json --receipt-dir /home/ubuntu/jope-flywheel/test_exact_gen0/ops/seed-bank-receipts

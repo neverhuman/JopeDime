@@ -1,0 +1,57 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-1B",
+  "receipt_sequence": 4,
+  "ledger_sequence": 30,
+  "timestamp": "2026-07-22T07:02:32Z",
+  "actor": "/root",
+  "from": "review",
+  "to": "verified",
+  "baseline_sha256": {
+    "review_receipt": "b23824a755e8d5d4fdf8baee1f3e24ca3601a700e68a27d809ad599d50d29286",
+    "review_graph": "3d1e6a230913d9401341f8463ecb3e0e41a8781c98fab79f5a5355741bff017d",
+    "verification_graph": "12cb87ca6d5eb0f38e7ea60839991f73b2735c04b6fcb5f1b951781428acc7f2",
+    "frozen_golden": "cc960036a498880e92c49adebb8ce6acc313a3f88add7925d9392b72fc5d5303",
+    "cargo_lock": "72362e9fb1bfb3a2836c06a699be141862dcdfd5da5b2e25044d767caad544c3"
+  },
+  "changed_paths": [
+    "manifests/advanced-v3/task-receipts/P-1B/0004.v1.json",
+    "manifests/advanced-v3/task-graph.v2.json",
+    "manifests/advanced-v3/work-ledger.v2.jsonl",
+    "ROADMAP.md"
+  ],
+  "checks": [
+    "receipt 0003 binds an independent read-only re-review that reproduced the non-recovering C++17 UBSan and four-language parity gates",
+    "root post-review rerun passes the Rust, stock C++17, Python, and JavaScript double-run oracle at 17761 lines, 695455 bytes, and SHA-256 650cef95d412110ddaa094fe73687ee8fbe7e03033eb0cda490c4051f3d360ee",
+    "root post-review C++17 rerun with -fsanitize=undefined -fno-sanitize-recover=undefined passes the complete corpus with the same output digest",
+    "the complete frozen PlatformLibm golden suite passes all 83 tests in 1096.40 seconds",
+    "public parity, property, conformance, portable parity, and legacy-v2 freeze pass 14 tests with one intentional ignore",
+    "champion parity and token suites pass 6 tests",
+    "locked workspace all-target checking passes with zero errors and only pre-existing warnings",
+    "both ownership lanes, owned formatting, Python and Node syntax, frozen golden bytes, and Cargo.lock bytes pass",
+    "the V2 graph, DAG, V1 migration, receipts, and ledger chain validate through the review transition"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "vendor/feat-math/tests/portable_parity.rs",
+    "vendor/feat-math/tests/portable/full_ref.rs",
+    "vendor/feat-math/tests/portable/full_ref.cpp",
+    "vendor/feat-math/tests/portable/full_ref.js",
+    "vendor/feat-math/tests/portable/full_ref.py",
+    "vendor/feat-math/tests/golden.rs",
+    "manifests/advanced-v3/ownership-checks/p1b-verification.txt",
+    "manifests/advanced-v3/ownership-checks/p1b-root.txt",
+    "manifests/advanced-v3/task-receipts/P-1B/0003.v1.json"
+  ],
+  "result_sha256": {
+    "vendor/feat-math/tests/portable_parity.rs": "15e4c7d8c609564201fc026a38696fa2a939b58db171391fc2ad1c6e0fe2c7f9",
+    "vendor/feat-math/tests/portable/full_ref.rs": "129cd1562cf4c7b055c1456f8f52515d551434c260c49804b6eba37c25f5c915",
+    "vendor/feat-math/tests/portable/full_ref.cpp": "0a98e6d7605b27df88fb38d17bca5643d33e064ca4c9c5cc5dfff91a89210eba",
+    "vendor/feat-math/tests/portable/full_ref.js": "b215a71f1fe49c791957143ef6750bf1fadeb1fadddbe3263134777a6bf17513",
+    "vendor/feat-math/tests/portable/full_ref.py": "62fe871b64c03b66d883a1690bb50823c17458649b878585752debb238d3c200",
+    "vendor/feat-math/tests/golden.rs": "cc960036a498880e92c49adebb8ce6acc313a3f88add7925d9392b72fc5d5303",
+    "task_graph_v2": "12cb87ca6d5eb0f38e7ea60839991f73b2735c04b6fcb5f1b951781428acc7f2"
+  },
+  "remaining_scope": "This verifies only portable-scalar-kernel-v1 parity evidence. The strict portable-f64-v1 arithmetic identity, production C++17/JavaScript model emitters, CUDA, and all later phases remain separate gated work.",
+  "decision": "Verify P-1B after independent reproduction, root post-review gates, frozen V1 byte confirmation, and defined C++17 arithmetic."
+}

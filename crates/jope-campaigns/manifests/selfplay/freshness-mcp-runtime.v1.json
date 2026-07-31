@@ -1,0 +1,14 @@
+{
+  "schema": "JopeFreshnessMcpRuntime.v1",
+  "historical_only": true,
+  "production_successor": "manifests/selfplay/freshness-mcp-runtime.v2.json",
+  "mcp_protocol_version": "2025-06-18",
+  "python_runtime": "CPython 3.12",
+  "server_version": "1.0.0",
+  "transport": "stdio-jsonrpc",
+  "backend": "unix-socket",
+  "sdk": "mcp==1.28.1",
+  "sdk_lock": "mcp/requirements.lock",
+  "dependency_policy": "official-sdk-pinned-with-stdlib-wire-fallback",
+  "entrypoint": "scripts/test_exact_freshness_mcp.py"
+}

@@ -1,0 +1,494 @@
+{
+  "cases": [
+    {
+      "evidence": {
+        "baseline": {
+          "binary_pairwise_accuracy": 0.5,
+          "checkpoint_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.5,
+          "p95_proposal_latency_ms": 100.0,
+          "regression_pairwise_accuracy": 0.5,
+          "val_conditional_advantage": 0.02
+        },
+        "baseline_equal_budget_result": 0.5,
+        "candidate": {
+          "binary_pairwise_accuracy": 0.55,
+          "checkpoint_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.55,
+          "p95_proposal_latency_ms": 110.0,
+          "regression_pairwise_accuracy": 0.55,
+          "val_conditional_advantage": 0.06
+        },
+        "candidate_equal_budget_result": 0.6,
+        "proposal_validity": 1.0,
+        "replay_verification": {
+          "candidate_origin": true,
+          "dataset_hashes": true,
+          "evaluator_identity": true,
+          "predictions": true,
+          "scores": true
+        },
+        "verified_checkpoint_origin_strict_wins": 3
+      },
+      "expected_gate_compact_json": "{\"accepted_ancestor_sha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"baseline_conditional_advantage\":0.02,\"baseline_equal_budget_result\":0.5,\"candidate_conditional_advantage\":0.06,\"candidate_equal_budget_result\":0.6,\"checkpoint_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"conditional_advantage_lift\":0.039999999999999994,\"failure_rate_delta\":0.0,\"internal_learning_pass\":true,\"latency_exception_applied\":false,\"macro_pairwise_lift\":0.050000000000000044,\"milestone_pass\":true,\"milestone_reasons\":[],\"model_lift_claim_publishable\":false,\"p95_latency_ratio\":1.1,\"pass\":true,\"promotion_scope\":\"internal-selected-test-flywheel-only\",\"promotion_tier\":\"milestone\",\"reasons\":[],\"schema\":\"JopeSelfplayCheckpointGate.v3\",\"task_pairwise_deltas\":{\"binary\":0.050000000000000044,\"regression\":0.050000000000000044},\"task_verdict_schema\":\"JopeSelfplayCheckpointGateTaskVerdict.v1\",\"task_verdicts\":{\"binary\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":false,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":true,\"milestone_pass\":true,\"milestone_reasons\":[],\"pairwise_lift\":0.050000000000000044,\"pass\":true,\"promotion_tier\":\"milestone\",\"reasons\":[]},\"regression\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":false,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":true,\"milestone_pass\":true,\"milestone_reasons\":[],\"pairwise_lift\":0.050000000000000044,\"pass\":true,\"promotion_tier\":\"milestone\",\"reasons\":[]}},\"tasks_passing\":[\"regression\",\"binary\"]}",
+      "name": "milestone_conditional"
+    },
+    {
+      "evidence": {
+        "baseline": {
+          "binary_pairwise_accuracy": 0.5,
+          "checkpoint_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.5,
+          "p95_proposal_latency_ms": 100.0,
+          "regression_pairwise_accuracy": 0.5,
+          "val_conditional_advantage": 0.02
+        },
+        "baseline_equal_budget_result": 0.5,
+        "candidate": {
+          "binary_pairwise_accuracy": 0.55,
+          "checkpoint_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.55,
+          "p95_proposal_latency_ms": 110.0,
+          "regression_pairwise_accuracy": 0.55,
+          "val_conditional_advantage": 0.03
+        },
+        "candidate_equal_budget_result": 0.6,
+        "proposal_validity": 1.0,
+        "replay_verification": {
+          "candidate_origin": true,
+          "dataset_hashes": true,
+          "evaluator_identity": true,
+          "predictions": true,
+          "scores": true
+        },
+        "verified_checkpoint_origin_strict_wins": 3
+      },
+      "expected_gate_compact_json": "{\"accepted_ancestor_sha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"baseline_conditional_advantage\":0.02,\"baseline_equal_budget_result\":0.5,\"candidate_conditional_advantage\":0.03,\"candidate_equal_budget_result\":0.6,\"checkpoint_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"conditional_advantage_lift\":0.009999999999999998,\"failure_rate_delta\":0.0,\"internal_learning_pass\":true,\"latency_exception_applied\":false,\"macro_pairwise_lift\":0.050000000000000044,\"milestone_pass\":false,\"milestone_reasons\":[\"conditional_advantage_lift_below_two_points\"],\"model_lift_claim_publishable\":false,\"p95_latency_ratio\":1.1,\"pass\":true,\"promotion_scope\":\"internal-selected-test-flywheel-only\",\"promotion_tier\":\"internal\",\"reasons\":[],\"schema\":\"JopeSelfplayCheckpointGate.v3\",\"task_pairwise_deltas\":{\"binary\":0.050000000000000044,\"regression\":0.050000000000000044},\"task_verdict_schema\":\"JopeSelfplayCheckpointGateTaskVerdict.v1\",\"task_verdicts\":{\"binary\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":false,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":true,\"milestone_pass\":false,\"milestone_reasons\":[\"conditional_advantage_lift_below_two_points\"],\"pairwise_lift\":0.050000000000000044,\"pass\":true,\"promotion_tier\":\"internal\",\"reasons\":[]},\"regression\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":false,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":true,\"milestone_pass\":false,\"milestone_reasons\":[\"conditional_advantage_lift_below_two_points\"],\"pairwise_lift\":0.050000000000000044,\"pass\":true,\"promotion_tier\":\"internal\",\"reasons\":[]}},\"tasks_passing\":[\"regression\",\"binary\"]}",
+      "name": "internal_only_conditional_lift"
+    },
+    {
+      "evidence": {
+        "baseline": {
+          "binary_pairwise_accuracy": 0.5,
+          "checkpoint_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.5,
+          "p95_proposal_latency_ms": 100.0,
+          "regression_pairwise_accuracy": 0.5,
+          "val_conditional_advantage": 0.02
+        },
+        "baseline_equal_budget_result": 0.5,
+        "candidate": {
+          "binary_pairwise_accuracy": 0.55,
+          "checkpoint_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.55,
+          "p95_proposal_latency_ms": 110.0,
+          "regression_pairwise_accuracy": 0.55,
+          "val_conditional_advantage": -0.06
+        },
+        "candidate_equal_budget_result": 0.6,
+        "proposal_validity": 1.0,
+        "replay_verification": {
+          "candidate_origin": true,
+          "dataset_hashes": true,
+          "evaluator_identity": true,
+          "predictions": true,
+          "scores": true
+        },
+        "verified_checkpoint_origin_strict_wins": 3
+      },
+      "expected_gate_compact_json": "{\"accepted_ancestor_sha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"baseline_conditional_advantage\":0.02,\"baseline_equal_budget_result\":0.5,\"candidate_conditional_advantage\":-0.06,\"candidate_equal_budget_result\":0.6,\"checkpoint_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"conditional_advantage_lift\":-0.08,\"failure_rate_delta\":0.0,\"internal_learning_pass\":false,\"latency_exception_applied\":false,\"macro_pairwise_lift\":0.050000000000000044,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_two_points\",\"conditional_advantage_lift_below_two_points\"],\"model_lift_claim_publishable\":false,\"p95_latency_ratio\":1.1,\"pass\":false,\"promotion_scope\":\"internal-selected-test-flywheel-only\",\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_half_point\",\"conditional_advantage_lift_below_half_point\"],\"schema\":\"JopeSelfplayCheckpointGate.v3\",\"task_pairwise_deltas\":{\"binary\":0.050000000000000044,\"regression\":0.050000000000000044},\"task_verdict_schema\":\"JopeSelfplayCheckpointGateTaskVerdict.v1\",\"task_verdicts\":{\"binary\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_two_points\",\"conditional_advantage_lift_below_two_points\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_half_point\",\"conditional_advantage_lift_below_half_point\"]},\"regression\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_two_points\",\"conditional_advantage_lift_below_two_points\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_half_point\",\"conditional_advantage_lift_below_half_point\"]}},\"tasks_passing\":[]}",
+      "name": "not_conditional_negative"
+    },
+    {
+      "evidence": {
+        "baseline": {
+          "binary_pairwise_accuracy": 0.5,
+          "checkpoint_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.5,
+          "p95_proposal_latency_ms": 100.0,
+          "regression_pairwise_accuracy": 0.5,
+          "val_conditional_advantage": -0.01
+        },
+        "baseline_equal_budget_result": 0.5,
+        "candidate": {
+          "binary_pairwise_accuracy": 0.55,
+          "checkpoint_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.55,
+          "p95_proposal_latency_ms": 110.0,
+          "regression_pairwise_accuracy": 0.55,
+          "val_conditional_advantage": 0.0
+        },
+        "candidate_equal_budget_result": 0.6,
+        "proposal_validity": 1.0,
+        "replay_verification": {
+          "candidate_origin": true,
+          "dataset_hashes": true,
+          "evaluator_identity": true,
+          "predictions": true,
+          "scores": true
+        },
+        "verified_checkpoint_origin_strict_wins": 3
+      },
+      "expected_gate_compact_json": "{\"accepted_ancestor_sha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"baseline_conditional_advantage\":-0.01,\"baseline_equal_budget_result\":0.5,\"candidate_conditional_advantage\":0.0,\"candidate_equal_budget_result\":0.6,\"checkpoint_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"conditional_advantage_lift\":0.01,\"failure_rate_delta\":0.0,\"internal_learning_pass\":false,\"latency_exception_applied\":false,\"macro_pairwise_lift\":0.050000000000000044,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_two_points\",\"conditional_advantage_lift_below_two_points\"],\"model_lift_claim_publishable\":false,\"p95_latency_ratio\":1.1,\"pass\":false,\"promotion_scope\":\"internal-selected-test-flywheel-only\",\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_half_point\"],\"schema\":\"JopeSelfplayCheckpointGate.v3\",\"task_pairwise_deltas\":{\"binary\":0.050000000000000044,\"regression\":0.050000000000000044},\"task_verdict_schema\":\"JopeSelfplayCheckpointGateTaskVerdict.v1\",\"task_verdicts\":{\"binary\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_two_points\",\"conditional_advantage_lift_below_two_points\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_half_point\"]},\"regression\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_two_points\",\"conditional_advantage_lift_below_two_points\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_half_point\"]}},\"tasks_passing\":[]}",
+      "name": "not_conditional_zero"
+    },
+    {
+      "evidence": {
+        "baseline": {
+          "binary_pairwise_accuracy": 0.5,
+          "checkpoint_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.5,
+          "p95_proposal_latency_ms": 100.0,
+          "regression_pairwise_accuracy": 0.5,
+          "val_conditional_advantage": -0.02
+        },
+        "baseline_equal_budget_result": 0.5,
+        "candidate": {
+          "binary_pairwise_accuracy": 0.55,
+          "checkpoint_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.55,
+          "p95_proposal_latency_ms": 110.0,
+          "regression_pairwise_accuracy": 0.55,
+          "val_conditional_advantage": 0.004
+        },
+        "candidate_equal_budget_result": 0.6,
+        "proposal_validity": 1.0,
+        "replay_verification": {
+          "candidate_origin": true,
+          "dataset_hashes": true,
+          "evaluator_identity": true,
+          "predictions": true,
+          "scores": true
+        },
+        "verified_checkpoint_origin_strict_wins": 3
+      },
+      "expected_gate_compact_json": "{\"accepted_ancestor_sha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"baseline_conditional_advantage\":-0.02,\"baseline_equal_budget_result\":0.5,\"candidate_conditional_advantage\":0.004,\"candidate_equal_budget_result\":0.6,\"checkpoint_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"conditional_advantage_lift\":0.024,\"failure_rate_delta\":0.0,\"internal_learning_pass\":false,\"latency_exception_applied\":false,\"macro_pairwise_lift\":0.050000000000000044,\"milestone_pass\":false,\"milestone_reasons\":[\"conditional_advantage_below_two_points\"],\"model_lift_claim_publishable\":false,\"p95_latency_ratio\":1.1,\"pass\":false,\"promotion_scope\":\"internal-selected-test-flywheel-only\",\"promotion_tier\":\"rejected\",\"reasons\":[\"conditional_advantage_below_half_point\"],\"schema\":\"JopeSelfplayCheckpointGate.v3\",\"task_pairwise_deltas\":{\"binary\":0.050000000000000044,\"regression\":0.050000000000000044},\"task_verdict_schema\":\"JopeSelfplayCheckpointGateTaskVerdict.v1\",\"task_verdicts\":{\"binary\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"conditional_advantage_below_two_points\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"conditional_advantage_below_half_point\"]},\"regression\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"conditional_advantage_below_two_points\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"conditional_advantage_below_half_point\"]}},\"tasks_passing\":[]}",
+      "name": "conditional_below_internal_margin"
+    },
+    {
+      "evidence": {
+        "baseline": {
+          "binary_pairwise_accuracy": 0.5,
+          "checkpoint_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.5,
+          "p95_proposal_latency_ms": 100.0,
+          "regression_pairwise_accuracy": 0.5
+        },
+        "baseline_equal_budget_result": 0.5,
+        "candidate": {
+          "binary_pairwise_accuracy": 0.55,
+          "checkpoint_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.55,
+          "p95_proposal_latency_ms": 110.0,
+          "regression_pairwise_accuracy": 0.55
+        },
+        "candidate_equal_budget_result": 0.6,
+        "proposal_validity": 1.0,
+        "replay_verification": {
+          "candidate_origin": true,
+          "dataset_hashes": true,
+          "evaluator_identity": true,
+          "predictions": true,
+          "scores": true
+        },
+        "verified_checkpoint_origin_strict_wins": 3
+      },
+      "expected_gate_compact_json": "{\"accepted_ancestor_sha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"baseline_conditional_advantage\":null,\"baseline_equal_budget_result\":0.5,\"candidate_conditional_advantage\":null,\"candidate_equal_budget_result\":0.6,\"checkpoint_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"conditional_advantage_lift\":null,\"failure_rate_delta\":0.0,\"internal_learning_pass\":false,\"latency_exception_applied\":false,\"macro_pairwise_lift\":0.050000000000000044,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_conditional_advantage_evidence_missing\",\"baseline_conditional_advantage_evidence_missing\"],\"model_lift_claim_publishable\":false,\"p95_latency_ratio\":1.1,\"pass\":false,\"promotion_scope\":\"internal-selected-test-flywheel-only\",\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_conditional_advantage_evidence_missing\",\"baseline_conditional_advantage_evidence_missing\"],\"schema\":\"JopeSelfplayCheckpointGate.v3\",\"task_pairwise_deltas\":{\"binary\":0.050000000000000044,\"regression\":0.050000000000000044},\"task_verdict_schema\":\"JopeSelfplayCheckpointGateTaskVerdict.v1\",\"task_verdicts\":{\"binary\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_conditional_advantage_evidence_missing\",\"baseline_conditional_advantage_evidence_missing\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_conditional_advantage_evidence_missing\",\"baseline_conditional_advantage_evidence_missing\"]},\"regression\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_conditional_advantage_evidence_missing\",\"baseline_conditional_advantage_evidence_missing\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_conditional_advantage_evidence_missing\",\"baseline_conditional_advantage_evidence_missing\"]}},\"tasks_passing\":[]}",
+      "name": "conditional_evidence_missing_both"
+    },
+    {
+      "evidence": {
+        "baseline": {
+          "binary_pairwise_accuracy": 0.5,
+          "checkpoint_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.5,
+          "p95_proposal_latency_ms": 100.0,
+          "regression_pairwise_accuracy": 0.5
+        },
+        "baseline_equal_budget_result": 0.5,
+        "candidate": {
+          "binary_pairwise_accuracy": 0.55,
+          "checkpoint_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.55,
+          "p95_proposal_latency_ms": 110.0,
+          "regression_pairwise_accuracy": 0.55,
+          "val_conditional_advantage": 0.06
+        },
+        "candidate_equal_budget_result": 0.6,
+        "proposal_validity": 1.0,
+        "replay_verification": {
+          "candidate_origin": true,
+          "dataset_hashes": true,
+          "evaluator_identity": true,
+          "predictions": true,
+          "scores": true
+        },
+        "verified_checkpoint_origin_strict_wins": 3
+      },
+      "expected_gate_compact_json": "{\"accepted_ancestor_sha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"baseline_conditional_advantage\":null,\"baseline_equal_budget_result\":0.5,\"candidate_conditional_advantage\":0.06,\"candidate_equal_budget_result\":0.6,\"checkpoint_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"conditional_advantage_lift\":null,\"failure_rate_delta\":0.0,\"internal_learning_pass\":false,\"latency_exception_applied\":false,\"macro_pairwise_lift\":0.050000000000000044,\"milestone_pass\":false,\"milestone_reasons\":[\"baseline_conditional_advantage_evidence_missing\"],\"model_lift_claim_publishable\":false,\"p95_latency_ratio\":1.1,\"pass\":false,\"promotion_scope\":\"internal-selected-test-flywheel-only\",\"promotion_tier\":\"rejected\",\"reasons\":[\"baseline_conditional_advantage_evidence_missing\"],\"schema\":\"JopeSelfplayCheckpointGate.v3\",\"task_pairwise_deltas\":{\"binary\":0.050000000000000044,\"regression\":0.050000000000000044},\"task_verdict_schema\":\"JopeSelfplayCheckpointGateTaskVerdict.v1\",\"task_verdicts\":{\"binary\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"baseline_conditional_advantage_evidence_missing\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"baseline_conditional_advantage_evidence_missing\"]},\"regression\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"baseline_conditional_advantage_evidence_missing\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"baseline_conditional_advantage_evidence_missing\"]}},\"tasks_passing\":[]}",
+      "name": "conditional_evidence_missing_baseline"
+    },
+    {
+      "evidence": {
+        "baseline": {
+          "binary_pairwise_accuracy": 0.5,
+          "checkpoint_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.5,
+          "p95_proposal_latency_ms": 100.0,
+          "regression_pairwise_accuracy": 0.5,
+          "val_conditional_advantage": 0.02
+        },
+        "baseline_equal_budget_result": 0.5,
+        "candidate": {
+          "binary_pairwise_accuracy": 0.55,
+          "checkpoint_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.55,
+          "p95_proposal_latency_ms": 110.0,
+          "regression_pairwise_accuracy": 0.55,
+          "val_conditional_advantage": null
+        },
+        "candidate_equal_budget_result": 0.6,
+        "proposal_validity": 1.0,
+        "replay_verification": {
+          "candidate_origin": true,
+          "dataset_hashes": true,
+          "evaluator_identity": true,
+          "predictions": true,
+          "scores": true
+        },
+        "verified_checkpoint_origin_strict_wins": 3
+      },
+      "expected_gate_compact_json": "{\"accepted_ancestor_sha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"baseline_conditional_advantage\":0.02,\"baseline_equal_budget_result\":0.5,\"candidate_conditional_advantage\":null,\"candidate_equal_budget_result\":0.6,\"checkpoint_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"conditional_advantage_lift\":null,\"failure_rate_delta\":0.0,\"internal_learning_pass\":false,\"latency_exception_applied\":false,\"macro_pairwise_lift\":0.050000000000000044,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_conditional_advantage_evidence_missing\"],\"model_lift_claim_publishable\":false,\"p95_latency_ratio\":1.1,\"pass\":false,\"promotion_scope\":\"internal-selected-test-flywheel-only\",\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_conditional_advantage_evidence_missing\"],\"schema\":\"JopeSelfplayCheckpointGate.v3\",\"task_pairwise_deltas\":{\"binary\":0.050000000000000044,\"regression\":0.050000000000000044},\"task_verdict_schema\":\"JopeSelfplayCheckpointGateTaskVerdict.v1\",\"task_verdicts\":{\"binary\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_conditional_advantage_evidence_missing\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_conditional_advantage_evidence_missing\"]},\"regression\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_conditional_advantage_evidence_missing\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_conditional_advantage_evidence_missing\"]}},\"tasks_passing\":[]}",
+      "name": "conditional_evidence_null_candidate"
+    },
+    {
+      "evidence": {
+        "baseline": {
+          "binary_pairwise_accuracy": 0.5,
+          "checkpoint_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.5,
+          "p95_proposal_latency_ms": 100.0,
+          "regression_pairwise_accuracy": 0.5,
+          "val_conditional_advantage": 0.02
+        },
+        "baseline_equal_budget_result": 0.5,
+        "candidate": {
+          "binary_pairwise_accuracy": 0.501,
+          "checkpoint_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.501,
+          "p95_proposal_latency_ms": 110.0,
+          "regression_pairwise_accuracy": 0.501,
+          "val_conditional_advantage": 0.06
+        },
+        "candidate_equal_budget_result": 0.6,
+        "proposal_validity": 1.0,
+        "replay_verification": {
+          "candidate_origin": true,
+          "dataset_hashes": true,
+          "evaluator_identity": true,
+          "predictions": true,
+          "scores": true
+        },
+        "verified_checkpoint_origin_strict_wins": 3
+      },
+      "expected_gate_compact_json": "{\"accepted_ancestor_sha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"baseline_conditional_advantage\":0.02,\"baseline_equal_budget_result\":0.5,\"candidate_conditional_advantage\":0.06,\"candidate_equal_budget_result\":0.6,\"checkpoint_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"conditional_advantage_lift\":0.039999999999999994,\"failure_rate_delta\":0.0,\"internal_learning_pass\":false,\"latency_exception_applied\":false,\"macro_pairwise_lift\":0.0010000000000000009,\"milestone_pass\":false,\"milestone_reasons\":[\"macro_pairwise_lift_below_one_point\"],\"model_lift_claim_publishable\":false,\"p95_latency_ratio\":1.1,\"pass\":false,\"promotion_scope\":\"internal-selected-test-flywheel-only\",\"promotion_tier\":\"rejected\",\"reasons\":[\"macro_pairwise_lift_below_point_two\"],\"schema\":\"JopeSelfplayCheckpointGate.v3\",\"task_pairwise_deltas\":{\"binary\":0.0010000000000000009,\"regression\":0.0010000000000000009},\"task_verdict_schema\":\"JopeSelfplayCheckpointGateTaskVerdict.v1\",\"task_verdicts\":{\"binary\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":false,\"blocking_reasons_owned_by_this_task\":[\"binary_pairwise_lift_below_point_two\"],\"candidate_pairwise_accuracy\":0.501,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"binary_pairwise_lift_below_one_point\"],\"pairwise_lift\":0.0010000000000000009,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"binary_pairwise_lift_below_point_two\"]},\"regression\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":false,\"blocking_reasons_owned_by_this_task\":[\"regression_pairwise_lift_below_point_two\"],\"candidate_pairwise_accuracy\":0.501,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"regression_pairwise_lift_below_one_point\"],\"pairwise_lift\":0.0010000000000000009,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"regression_pairwise_lift_below_point_two\"]}},\"tasks_passing\":[]}",
+      "name": "macro_lift_below_internal_but_conditional"
+    },
+    {
+      "evidence": {
+        "baseline": {
+          "binary_pairwise_accuracy": 0.5,
+          "checkpoint_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.5,
+          "p95_proposal_latency_ms": 100.0,
+          "regression_pairwise_accuracy": 0.5,
+          "val_conditional_advantage": 0.02
+        },
+        "baseline_equal_budget_result": 0.5,
+        "candidate": {
+          "binary_pairwise_accuracy": 0.505,
+          "checkpoint_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.505,
+          "p95_proposal_latency_ms": 110.0,
+          "regression_pairwise_accuracy": 0.505,
+          "val_conditional_advantage": 0.06
+        },
+        "candidate_equal_budget_result": 0.6,
+        "proposal_validity": 1.0,
+        "replay_verification": {
+          "candidate_origin": true,
+          "dataset_hashes": true,
+          "evaluator_identity": true,
+          "predictions": true,
+          "scores": true
+        },
+        "verified_checkpoint_origin_strict_wins": 3
+      },
+      "expected_gate_compact_json": "{\"accepted_ancestor_sha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"baseline_conditional_advantage\":0.02,\"baseline_equal_budget_result\":0.5,\"candidate_conditional_advantage\":0.06,\"candidate_equal_budget_result\":0.6,\"checkpoint_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"conditional_advantage_lift\":0.039999999999999994,\"failure_rate_delta\":0.0,\"internal_learning_pass\":true,\"latency_exception_applied\":false,\"macro_pairwise_lift\":0.0050000000000000044,\"milestone_pass\":false,\"milestone_reasons\":[\"macro_pairwise_lift_below_one_point\"],\"model_lift_claim_publishable\":false,\"p95_latency_ratio\":1.1,\"pass\":true,\"promotion_scope\":\"internal-selected-test-flywheel-only\",\"promotion_tier\":\"internal\",\"reasons\":[],\"schema\":\"JopeSelfplayCheckpointGate.v3\",\"task_pairwise_deltas\":{\"binary\":0.0050000000000000044,\"regression\":0.0050000000000000044},\"task_verdict_schema\":\"JopeSelfplayCheckpointGateTaskVerdict.v1\",\"task_verdicts\":{\"binary\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":false,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.505,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":true,\"milestone_pass\":false,\"milestone_reasons\":[\"binary_pairwise_lift_below_one_point\"],\"pairwise_lift\":0.0050000000000000044,\"pass\":true,\"promotion_tier\":\"internal\",\"reasons\":[]},\"regression\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":false,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.505,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":true,\"milestone_pass\":false,\"milestone_reasons\":[\"regression_pairwise_lift_below_one_point\"],\"pairwise_lift\":0.0050000000000000044,\"pass\":true,\"promotion_tier\":\"internal\",\"reasons\":[]}},\"tasks_passing\":[\"regression\",\"binary\"]}",
+      "name": "internal_macro_lift_with_conditionality"
+    },
+    {
+      "evidence": {
+        "baseline": {
+          "binary_pairwise_accuracy": 0.5,
+          "checkpoint_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.5,
+          "p95_proposal_latency_ms": 100.0,
+          "regression_pairwise_accuracy": 0.5,
+          "val_conditional_advantage": 0.02
+        },
+        "baseline_equal_budget_result": 0.5,
+        "candidate": {
+          "binary_pairwise_accuracy": 0.55,
+          "checkpoint_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.55,
+          "p95_proposal_latency_ms": 110.0,
+          "regression_pairwise_accuracy": 0.55,
+          "val_conditional_advantage": 0
+        },
+        "candidate_equal_budget_result": 0.6,
+        "proposal_validity": 1.0,
+        "replay_verification": {
+          "candidate_origin": true,
+          "dataset_hashes": true,
+          "evaluator_identity": true,
+          "predictions": true,
+          "scores": true
+        },
+        "verified_checkpoint_origin_strict_wins": 3
+      },
+      "expected_gate_compact_json": "{\"accepted_ancestor_sha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"baseline_conditional_advantage\":0.02,\"baseline_equal_budget_result\":0.5,\"candidate_conditional_advantage\":0.0,\"candidate_equal_budget_result\":0.6,\"checkpoint_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"conditional_advantage_lift\":-0.02,\"failure_rate_delta\":0.0,\"internal_learning_pass\":false,\"latency_exception_applied\":false,\"macro_pairwise_lift\":0.050000000000000044,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_two_points\",\"conditional_advantage_lift_below_two_points\"],\"model_lift_claim_publishable\":false,\"p95_latency_ratio\":1.1,\"pass\":false,\"promotion_scope\":\"internal-selected-test-flywheel-only\",\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_half_point\",\"conditional_advantage_lift_below_half_point\"],\"schema\":\"JopeSelfplayCheckpointGate.v3\",\"task_pairwise_deltas\":{\"binary\":0.050000000000000044,\"regression\":0.050000000000000044},\"task_verdict_schema\":\"JopeSelfplayCheckpointGateTaskVerdict.v1\",\"task_verdicts\":{\"binary\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_two_points\",\"conditional_advantage_lift_below_two_points\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_half_point\",\"conditional_advantage_lift_below_half_point\"]},\"regression\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_two_points\",\"conditional_advantage_lift_below_two_points\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_policy_is_not_conditional\",\"conditional_advantage_below_half_point\",\"conditional_advantage_lift_below_half_point\"]}},\"tasks_passing\":[]}",
+      "name": "conditional_advantage_integer_zero"
+    },
+    {
+      "evidence": {
+        "baseline": {
+          "binary_pairwise_accuracy": 0.5,
+          "checkpoint_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.5,
+          "p95_proposal_latency_ms": 100.0,
+          "regression_pairwise_accuracy": 0.5,
+          "val_conditional_advantage": 0
+        },
+        "baseline_equal_budget_result": 0.5,
+        "candidate": {
+          "binary_pairwise_accuracy": 0.55,
+          "checkpoint_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.55,
+          "p95_proposal_latency_ms": 110.0,
+          "regression_pairwise_accuracy": 0.55,
+          "val_conditional_advantage": 0.06
+        },
+        "candidate_equal_budget_result": 0.6,
+        "proposal_validity": 1.0,
+        "replay_verification": {
+          "candidate_origin": true,
+          "dataset_hashes": true,
+          "evaluator_identity": true,
+          "predictions": true,
+          "scores": true
+        },
+        "verified_checkpoint_origin_strict_wins": 3
+      },
+      "expected_gate_compact_json": "{\"accepted_ancestor_sha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"baseline_conditional_advantage\":0.0,\"baseline_equal_budget_result\":0.5,\"candidate_conditional_advantage\":0.06,\"candidate_equal_budget_result\":0.6,\"checkpoint_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"conditional_advantage_lift\":0.06,\"failure_rate_delta\":0.0,\"internal_learning_pass\":true,\"latency_exception_applied\":false,\"macro_pairwise_lift\":0.050000000000000044,\"milestone_pass\":true,\"milestone_reasons\":[],\"model_lift_claim_publishable\":false,\"p95_latency_ratio\":1.1,\"pass\":true,\"promotion_scope\":\"internal-selected-test-flywheel-only\",\"promotion_tier\":\"milestone\",\"reasons\":[],\"schema\":\"JopeSelfplayCheckpointGate.v3\",\"task_pairwise_deltas\":{\"binary\":0.050000000000000044,\"regression\":0.050000000000000044},\"task_verdict_schema\":\"JopeSelfplayCheckpointGateTaskVerdict.v1\",\"task_verdicts\":{\"binary\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":false,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":true,\"milestone_pass\":true,\"milestone_reasons\":[],\"pairwise_lift\":0.050000000000000044,\"pass\":true,\"promotion_tier\":\"milestone\",\"reasons\":[]},\"regression\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":false,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":true,\"milestone_pass\":true,\"milestone_reasons\":[],\"pairwise_lift\":0.050000000000000044,\"pass\":true,\"promotion_tier\":\"milestone\",\"reasons\":[]}},\"tasks_passing\":[\"regression\",\"binary\"]}",
+      "name": "conditional_advantage_integer_baseline"
+    },
+    {
+      "evidence": {
+        "baseline": {
+          "binary_pairwise_accuracy": 0.5,
+          "checkpoint_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.5,
+          "p95_proposal_latency_ms": 100.0,
+          "regression_pairwise_accuracy": 0.5,
+          "val_conditional_advantage": 0.02
+        },
+        "baseline_equal_budget_result": 0.5,
+        "candidate": {
+          "binary_pairwise_accuracy": 0.55,
+          "checkpoint_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.55,
+          "p95_proposal_latency_ms": 110.0,
+          "regression_pairwise_accuracy": 0.55,
+          "val_conditional_advantage": "0.05"
+        },
+        "candidate_equal_budget_result": 0.6,
+        "proposal_validity": 1.0,
+        "replay_verification": {
+          "candidate_origin": true,
+          "dataset_hashes": true,
+          "evaluator_identity": true,
+          "predictions": true,
+          "scores": true
+        },
+        "verified_checkpoint_origin_strict_wins": 3
+      },
+      "expected_gate_compact_json": "{\"accepted_ancestor_sha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"baseline_conditional_advantage\":0.02,\"baseline_equal_budget_result\":0.5,\"candidate_conditional_advantage\":null,\"candidate_equal_budget_result\":0.6,\"checkpoint_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"conditional_advantage_lift\":null,\"failure_rate_delta\":0.0,\"internal_learning_pass\":false,\"latency_exception_applied\":false,\"macro_pairwise_lift\":0.050000000000000044,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_conditional_advantage_evidence_missing\"],\"model_lift_claim_publishable\":false,\"p95_latency_ratio\":1.1,\"pass\":false,\"promotion_scope\":\"internal-selected-test-flywheel-only\",\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_conditional_advantage_evidence_missing\"],\"schema\":\"JopeSelfplayCheckpointGate.v3\",\"task_pairwise_deltas\":{\"binary\":0.050000000000000044,\"regression\":0.050000000000000044},\"task_verdict_schema\":\"JopeSelfplayCheckpointGateTaskVerdict.v1\",\"task_verdicts\":{\"binary\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_conditional_advantage_evidence_missing\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_conditional_advantage_evidence_missing\"]},\"regression\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_conditional_advantage_evidence_missing\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_conditional_advantage_evidence_missing\"]}},\"tasks_passing\":[]}",
+      "name": "conditional_advantage_string_value"
+    },
+    {
+      "evidence": {
+        "baseline": {
+          "binary_pairwise_accuracy": 0.5,
+          "checkpoint_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.5,
+          "p95_proposal_latency_ms": 100.0,
+          "regression_pairwise_accuracy": 0.5,
+          "val_conditional_advantage": 0.02
+        },
+        "baseline_equal_budget_result": 0.5,
+        "candidate": {
+          "binary_pairwise_accuracy": 0.55,
+          "checkpoint_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "failure_rate": 0.01,
+          "macro_pairwise_accuracy": 0.55,
+          "p95_proposal_latency_ms": 110.0,
+          "regression_pairwise_accuracy": 0.55,
+          "val_conditional_advantage": true
+        },
+        "candidate_equal_budget_result": 0.6,
+        "proposal_validity": 1.0,
+        "replay_verification": {
+          "candidate_origin": true,
+          "dataset_hashes": true,
+          "evaluator_identity": true,
+          "predictions": true,
+          "scores": true
+        },
+        "verified_checkpoint_origin_strict_wins": 3
+      },
+      "expected_gate_compact_json": "{\"accepted_ancestor_sha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"baseline_conditional_advantage\":0.02,\"baseline_equal_budget_result\":0.5,\"candidate_conditional_advantage\":null,\"candidate_equal_budget_result\":0.6,\"checkpoint_sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"conditional_advantage_lift\":null,\"failure_rate_delta\":0.0,\"internal_learning_pass\":false,\"latency_exception_applied\":false,\"macro_pairwise_lift\":0.050000000000000044,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_conditional_advantage_evidence_missing\"],\"model_lift_claim_publishable\":false,\"p95_latency_ratio\":1.1,\"pass\":false,\"promotion_scope\":\"internal-selected-test-flywheel-only\",\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_conditional_advantage_evidence_missing\"],\"schema\":\"JopeSelfplayCheckpointGate.v3\",\"task_pairwise_deltas\":{\"binary\":0.050000000000000044,\"regression\":0.050000000000000044},\"task_verdict_schema\":\"JopeSelfplayCheckpointGateTaskVerdict.v1\",\"task_verdicts\":{\"binary\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_conditional_advantage_evidence_missing\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_conditional_advantage_evidence_missing\"]},\"regression\":{\"baseline_pairwise_accuracy\":0.5,\"blocked_only_by_shared_evidence\":true,\"blocking_reasons_owned_by_this_task\":[],\"candidate_pairwise_accuracy\":0.55,\"equal_budget_result\":null,\"failure_rate_delta\":null,\"internal_learning_pass\":false,\"milestone_pass\":false,\"milestone_reasons\":[\"candidate_conditional_advantage_evidence_missing\"],\"pairwise_lift\":0.050000000000000044,\"pass\":false,\"promotion_tier\":\"rejected\",\"reasons\":[\"candidate_conditional_advantage_evidence_missing\"]}},\"tasks_passing\":[]}",
+      "name": "conditional_advantage_bool_value"
+    }
+  ],
+  "purpose": "Byte-for-byte cross-check of scripts/test_exact_accept.evaluate_gate against its Rust port in src/bin/jope_selfplay_promotion.rs. Both implementations must reproduce expected_gate_compact_json exactly (Python json.dumps(sort_keys=True, separators=(',',':')) == Rust py_dumps(PyStyle::Compact)).",
+  "regenerate_with": "JOPE_REGENERATE_PARITY_FIXTURE=1 python3 -m pytest tests/test_durable_selfplay.py -k conditionality_gate_parity  (then re-run cargo test for the Rust port)",
+  "schema": "JopeSelfplayGateParityFixture.v1"
+}

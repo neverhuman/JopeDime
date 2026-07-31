@@ -1,0 +1,37 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-1A",
+  "receipt_sequence": 4,
+  "ledger_sequence": 21,
+  "timestamp": "2026-07-22T06:16:23Z",
+  "actor": "/root",
+  "from": "review",
+  "to": "verified",
+  "baseline_sha256": {
+    "review_receipt": "9e0a00ad597cab67ec671e0e52bbe1494d83eb478729adfe15aafaeca6d11144",
+    "review_graph": "a92dd489219b59405a1706bf4ac60066c481398ab436bfb7a2f764869df52758"
+  },
+  "changed_paths": [],
+  "checks": [
+    "independent read-only re-review approves in-progress to review on stable source hashes",
+    "root reruns the full locked feat-math library gate: 242 passed and two intentionally ignored",
+    "review receipt binds targeted kernel, policy, fitted guard, public parity/property, legacy freeze, stock oracle, formatting, clippy, ownership, no-data, and V2 validation evidence",
+    "post-review V2 graph, DAG, V1 migration, receipt bindings, ownership, and ledger chain validate"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/task-receipts/P-1A/0003.v1.json",
+    "manifests/advanced-v3/recovery-evidence/portable-xlang/PORTABILITY_EVIDENCE.md",
+    "manifests/advanced-v3/ownership-checks/p1a-root.txt"
+  ],
+  "result_sha256": {
+    "vendor/feat-math/src/portable_math.rs": "96d6cb2b091446fc1d7d1365d4b60821f42fe684c62cbb4af298879ad96ad0d3",
+    "vendor/feat-math/src/transpile.rs": "9f1c1912e6173f47d6cb47ee184d1188cbc54c769cbfcfff766caa442a28fe28",
+    "vendor/feat-math/src/tokens.rs": "434fdd59c6a40223006a5d843ee4953c2cc0de49fb60fd51593848e988da2162",
+    "vendor/feat-math/src/advanced_v3/emit/mod.rs": "f61e6f8c480116c92447b5bd372dab0acfc8e8bae4adefd261dd1d5762b3d55d",
+    "vendor/feat-math/src/lib.rs": "ccd4d6a204f3083af6d3b447b2c35c4230e1b4641ca6f65e36b53a40905bf002",
+    "task_graph_v2": "f1a855de6915d70a05d997c610562b7298609cac6b01195039ff3e340df5c35a"
+  },
+  "remaining_scope": "P-1B and later Wave 1 tasks remain closed until their own normal transitions. Portable emission still fails closed; cross-language all-helper parity, C++17, JavaScript, and CUDA are not verified by P-1A.",
+  "decision": "Verify P-1A under its explicit qualified numeric contract. The portable scalar reference and policy identity are accepted without changing V1/default artifacts or pretending emitted-language routing already exists."
+}

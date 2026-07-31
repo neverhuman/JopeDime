@@ -1,0 +1,31 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "FCPP-00",
+  "receipt_sequence": 1,
+  "ledger_sequence": 53,
+  "timestamp": "2026-07-22T09:28:45Z",
+  "actor": "/root",
+  "from": "queued",
+  "to": "ready",
+  "baseline_sha256": {
+    "verified_dependency_receipt": "1253287f0b0452077cda15cdccc3302eb975e55220a21874db00d78d99e13b27",
+    "task_graph_v2": "df24d4f072145c46be1019c4e79d1032370842d2c6e19c889577c896b4be73b8",
+    "roadmap": "4afa33e37f3b1482679304e68e42d05359ac1becaca51ddad5510430ac620a90"
+  },
+  "changed_paths": [],
+  "checks": [
+    "P-1C is verified at V2 sequence 44 and is FCPP-00's sole graph dependency",
+    "both implementation paths are absent at baseline and the worker acknowledged the exact two-new-file lease",
+    "the complete live BoundModel enum and fitted-state registry is being inventoried before any coverage claim",
+    "raw CSV parsing remains outside the hot loop; the fitted runtime consumes an explicit typed numeric and categorical table ABI",
+    "unsupported live states must fail closed and cannot be counted as complete fitted C++17 support"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/task-receipts/P-1C/0005.v1.json",
+    "vendor/feat-math/src/advanced_v3/pipeline.rs",
+    "vendor/feat-math/src/advanced_v3/emit/mod.rs"
+  ],
+  "remaining_scope": "Implementation, public registration, exhaustive state parity, sanitizers, persistent execution, performance qualification, independent review, and verification remain open.",
+  "decision": "Move FCPP-00 to ready under the isolated two-new-file implementation handoff; root retains all shared boundaries and governance."
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-1C",
+  "receipt_sequence": 2,
+  "ledger_sequence": 39,
+  "timestamp": "2026-07-22T07:22:06Z",
+  "actor": "/root",
+  "from": "ready",
+  "to": "in_progress",
+  "baseline_sha256": {
+    "ready_receipt": "c0d30ea266cacbe2033367c61a1384d2cf5cac1320f6800a66611157101a3e7e",
+    "task_graph_v2": "46071f9a4953829886b85a1d6cdb85a4e8cdcb76b97e9ef5c079d47c062eda95"
+  },
+  "changed_paths": [],
+  "checks": [
+    "the implementation lease is limited to emit_cpp.rs, mathexpr.rs, tokens.rs, transpile.rs, and P-1C receipts",
+    "the C++17 artifact must compile with contraction and fast-math disabled and perform no dataset reads",
+    "portable output must match the verified helper oracle while PlatformLibm artifacts remain byte-identical",
+    "JavaScript, CUDA, P-2, campaigns, and release work remain closed"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/task-receipts/P-1C/0001.v1.json"
+  ],
+  "remaining_scope": "P-1D remains queued behind verified P-1C. CUDA remains deferred to P-5 and no campaign is authorized.",
+  "decision": "Begin P-1C under an exclusive portable-workstream lease with root retaining all shared governance and public boundaries."
+}

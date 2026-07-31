@@ -1,0 +1,6 @@
+vendor/feat-math/src/advanced_v3/emit/mod.rs
+vendor/feat-math/src/advanced_v3/feature_block.rs
+vendor/feat-math/src/advanced_v3/input.rs
+vendor/feat-math/src/advanced_v3/pipeline.rs
+vendor/feat-math/src/advanced_v3/tests.rs
+vendor/feat-math/src/advanced_v3/transforms/mod.rs

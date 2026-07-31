@@ -1,0 +1,6 @@
+[Unit]
+Description=JOPE self-play health alarm scan (read-only, writes ops/health-alarms.v1.json)
+
+[Service]
+Type=oneshot
+ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_selfplay_alarms

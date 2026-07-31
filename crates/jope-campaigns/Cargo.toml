@@ -1,0 +1,53 @@
+[package]
+name = "jope-dime-regressor"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Frozen 42-dataset jope-dime evolutionary regression campaign"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+crossterm = "=0.28.1"
+feat-math = { path = "vendor/feat-math" }
+hex = "0.4"
+libc = "0.2"
+memmap2 = "0.9"
+ratatui = "=0.29.0"
+rayon = "1"
+rusqlite = "0.32"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+sha2 = "0.10"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+# GPU screening backend (raw CUDA driver FFI). Optional: the default build is
+# dependency-identical; only `--features gpu` links it. The frozen exact-cv
+# lane keeps rejecting GPU flags regardless.
+battle-gpu = { path = "vendor/battle-gpu", optional = true }
+
+[dev-dependencies]
+tempfile = "3"
+
+[features]
+gpu = ["dep:battle-gpu"]
+
+[workspace]
+resolver = "2"
+members = [".", "vendor/feat-math", "vendor/battle-gpu"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+
+[workspace.dependencies]
+anyhow = "1"
+rayon = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

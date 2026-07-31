@@ -1,0 +1,45 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-0A",
+  "receipt_sequence": 2,
+  "ledger_sequence": 36,
+  "timestamp": "2026-07-22T07:18:42Z",
+  "actor": "/root",
+  "from": "ready",
+  "to": "rejected",
+  "baseline_sha256": {
+    "ready_receipt": "5ac2b3cc3ec203f37cc7492b20a143fa8a43773f47d3fab1e70dd5e03f4206d8",
+    "pre_audit_task_graph": "6aca80b77a15fa8676d9e202bb5b4ba1bb1062fcf2a1e0549dfe49f8d143c6d8",
+    "pre_audit_validator": "71f64230e251a575d4ee758a13999052b5b428e81a7a37b9e8cf5d017f4d0659",
+    "recovery_snapshot": "5e7f50fccbbd5d12700435bb3b050574100c2bdcf4e9ea5e389987478dffef4d"
+  },
+  "changed_paths": [
+    "manifests/advanced-v3/task-graph.v2.json",
+    "scripts/validate_advanced_v3_v2.py",
+    "manifests/advanced-v3/task-receipts/P-0A/0002.v1.json",
+    "manifests/advanced-v3/work-ledger.v2.jsonl",
+    "ROADMAP.md"
+  ],
+  "checks": [
+    "the supplied Advanced-v3 completion roadmap names P-00, P-1A, P-1B, P-1C, P-1D, and P-2 through P-6 but does not authorize P-0A or P-1E",
+    "verified P-1A intentionally records a qualified medium-range trigonometric contract and P-1B proves fixed-grid portable-reference parity across all four declared backends",
+    "the sequence-31 strict full-domain 256-bit oracle and sequence-32 broad repository rewrite are material scope expansions rather than dependencies of the requested C++17 emitter",
+    "no P-0A implementation path was created or changed and no source lease was recorded before rejection",
+    "the complete sequence-33 tree is preserved by two identical deterministic archive builds at the recovery snapshot hash",
+    "the corrective graph keeps P-0A as rejected ledger history, removes untransitioned P-1E, and restores P-1C then P-1D serialization",
+    "frozen V1 graph, ledger, receipts, Cargo.lock, PlatformLibm artifacts, and implementation sources remain unchanged"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/task-graph.v2.json",
+    "manifests/advanced-v3/work-ledger.v2.jsonl",
+    "manifests/advanced-v3/task-receipts/P-0A/0001.v1.json",
+    "/home/ubuntu/jope-dime-snapshots/5e7f50fccbbd5d12700435bb3b050574100c2bdcf4e9ea5e389987478dffef4d.tar.zst"
+  ],
+  "result_sha256": {
+    "task_graph_v2": "949d1c4ca348a91ec69c3241fb2197698e95d166a0509cdafc0e0713abaf86cf",
+    "validator": "4d57c12cd43a79ec6f054befdf3214efcec47c276c0f105a7ec987d42b0f9708"
+  },
+  "remaining_scope": "P-1C is the sole dependency-clear Wave-1 task. P-1D remains serialized after P-1C; CUDA and later waves remain closed.",
+  "decision": "Reject P-0A and the untransitioned P-1E expansion after preserving their complete live-tree bytes. Resume the supplied roadmap at P-1C."
+}

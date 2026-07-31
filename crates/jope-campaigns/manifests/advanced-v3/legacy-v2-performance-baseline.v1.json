@@ -1,0 +1,214 @@
+{
+  "schema": "jope-dime.legacy-v2-performance-baseline.v1",
+  "status": "captured_with_allocation_profiler_limitation",
+  "captured_utc": {
+    "start": "2026-07-22T03:09:41Z",
+    "end": "2026-07-22T03:16:37Z"
+  },
+  "role": "takeover baseline for advanced-v3 regression comparisons; not an admission receipt",
+  "identity": {
+    "kernel": "legacy-v2",
+    "source_snapshot_path": "/home/ubuntu/jope-dime-snapshots/2285c594ec8d12ae5d66a4e751db92c806e97a6a84d7c940c0dca75a25f3a096.tar.zst",
+    "source_snapshot_sha256": "2285c594ec8d12ae5d66a4e751db92c806e97a6a84d7c940c0dca75a25f3a096",
+    "cargo_lock_sha256": "72362e9fb1bfb3a2836c06a699be141862dcdfd5da5b2e25044d767caad544c3",
+    "advanced_v3_source_sha256_before_and_after": "057298f8685f57630593c0cdda3aad7c41d7d5313bd5da8ca0788bee0d2bfc22",
+    "feat_math_lib_source_sha256_before_and_after": "32b6c1baf483dc7ff4f23cb74316306cca73352fe1ea457df0104d123e1f83e5"
+  },
+  "toolchain": {
+    "active": "stable-x86_64-unknown-linux-gnu",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "rustc_commit": "ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96",
+    "llvm": "22.1.2",
+    "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+    "host": "x86_64-unknown-linux-gnu",
+    "release_profile": "Cargo --release defaults",
+    "rustflags": null,
+    "cargo_build_rustflags": null,
+    "rayon_num_threads": null,
+    "workspace_cargo_config_present": false
+  },
+  "host": {
+    "hostname": "xbabe2",
+    "os": "Ubuntu 24.04",
+    "kernel": "Linux 6.8.0-134-generic x86_64",
+    "glibc": "2.39",
+    "python": "Python 3.12.3",
+    "cpu": "AMD Ryzen Threadripper PRO 3995WX 64-Cores",
+    "sockets": 1,
+    "physical_cores": 64,
+    "logical_cpus": 128,
+    "numa_nodes": 1,
+    "l3_cache_bytes": 268435456,
+    "frequency_boost": true,
+    "cpu_min_mhz": 2200.0,
+    "cpu_max_mhz": 4309.9941,
+    "memory_total_bytes": 134838878208,
+    "memory_available_bytes_at_receipt": 93644894208,
+    "swap_total_bytes": 8589930496,
+    "swap_used_bytes_at_receipt": 8589742080,
+    "filesystem": "ext4",
+    "filesystem_use_fraction": 0.90,
+    "post_run_load_average_1m_5m_15m": [0.98, 1.92, 8.47]
+  },
+  "isolation": {
+    "method": "Before each benchmark group, pgrep found no Cargo, rustc, jope-dime test, emitted-model Python, or evolve_smoke process other than the pgrep command itself.",
+    "cargo_contention": false,
+    "source_hashes_rechecked_after_runs": true,
+    "test_threads": 1,
+    "notes": "The search harness intentionally used Rayon and averaged about five CPU cores. CPU boost and frequency scaling remained enabled. Unrelated system users and services were not stopped."
+  },
+  "binaries": {
+    "emitter": {
+      "path": "target/release/deps/bench-09dcaa5d90d48361",
+      "bytes": 1714440,
+      "sha256": "96a0dfecc5ab1a7dcc2e7480a1d292d637eb06c75d4838ee29536417e980ad11",
+      "source": "vendor/feat-math/tests/bench.rs",
+      "source_sha256": "9522042ea826d19a784f14feaa1509de9fc64f37058488bea00156ba321af42a"
+    },
+    "fit": {
+      "path": "target/release/deps/feat_math-714e14bdd41a4eda",
+      "bytes": 4279936,
+      "sha256": "d09e6ea01c8fc50b1f3550df6941a37a50588ec1ee34ecd657b691c2c4da4d0d",
+      "source": "vendor/feat-math/src/heads.rs",
+      "source_sha256": "711b03acbce336f07666db1a44086416499c70d69b395d1f860ef7dd1dbb7710"
+    },
+    "search": {
+      "path": "target/release/examples/evolve_smoke",
+      "bytes": 1977824,
+      "sha256": "218b42a1a1a31124665616c81e8c1184cd63da13dc8c9a2a60538ccc5d53b506",
+      "source": "vendor/feat-math/examples/evolve_smoke.rs",
+      "source_sha256": "fbd2b6b03400863923aa5dcb70213a082d0b0d2c4ee5da18e97c82578dc3a212",
+      "evolution_source_sha256": "e71e62606323bcb5b0a33edc30559dc750adc22f010790f701310f58250dccfa"
+    }
+  },
+  "measurements": {
+    "emission": {
+      "authoritative_harness": "feat-math tests/bench.rs::emitter_speed",
+      "workload": {
+        "stages": 8,
+        "warmup_emissions": 200,
+        "measured_emissions_per_process": 4000,
+        "tokens_per_emission": 9594,
+        "process_repetitions": 5
+      },
+      "build_command": "rtk cargo test -p feat-math --release --test bench --locked --no-run",
+      "measurement_command": "rtk proxy bash -c '/usr/bin/time -f <fixed-fields> -o <run-file> target/release/deps/bench-09dcaa5d90d48361 --ignored --nocapture --test-threads=1 >/dev/null'",
+      "internal_runs": [
+        {"min_ns": 100801, "median_ns": 105259, "tokens_per_sec_at_min": 95180000.0, "tokens_per_sec_at_median": 91150000.0},
+        {"min_ns": 101131, "median_ns": 103225, "tokens_per_sec_at_min": 94870000.0, "tokens_per_sec_at_median": 92940000.0},
+        {"min_ns": 101783, "median_ns": 105679, "tokens_per_sec_at_min": 94260000.0, "tokens_per_sec_at_median": 90780000.0},
+        {"min_ns": 103555, "median_ns": 105931, "tokens_per_sec_at_min": 92650000.0, "tokens_per_sec_at_median": 90570000.0},
+        {"min_ns": 100700, "median_ns": 104607, "tokens_per_sec_at_min": 95270000.0, "tokens_per_sec_at_median": 91710000.0}
+      ],
+      "process_runs": [
+        {"elapsed_seconds": 1.53, "user_seconds": 1.53, "system_seconds": 0.00, "max_rss_kb": 2048, "minor_faults": 207, "major_faults": 0, "voluntary_context_switches": 2, "involuntary_context_switches": 1, "swaps": 0},
+        {"elapsed_seconds": 1.54, "user_seconds": 1.53, "system_seconds": 0.00, "max_rss_kb": 2048, "minor_faults": 203, "major_faults": 0, "voluntary_context_switches": 3, "involuntary_context_switches": 8, "swaps": 0},
+        {"elapsed_seconds": 1.53, "user_seconds": 1.53, "system_seconds": 0.00, "max_rss_kb": 2048, "minor_faults": 207, "major_faults": 0, "voluntary_context_switches": 3, "involuntary_context_switches": 7, "swaps": 0},
+        {"elapsed_seconds": 1.57, "user_seconds": 1.57, "system_seconds": 0.00, "max_rss_kb": 2048, "minor_faults": 205, "major_faults": 0, "voluntary_context_switches": 3, "involuntary_context_switches": 3, "swaps": 0},
+        {"elapsed_seconds": 1.58, "user_seconds": 1.58, "system_seconds": 0.00, "max_rss_kb": 2048, "minor_faults": 205, "major_faults": 0, "voluntary_context_switches": 3, "involuntary_context_switches": 4, "swaps": 0}
+      ],
+      "median": {
+        "process_elapsed_seconds": 1.54,
+        "max_rss_kb": 2048,
+        "minor_faults": 205,
+        "internal_min_ns": 101131,
+        "internal_median_ns": 105259,
+        "tokens_per_sec_at_internal_min": 94870000.0,
+        "tokens_per_sec_at_internal_median": 91150000.0
+      }
+    },
+    "fit": {
+      "authoritative_harness": "feat-math heads::tests::ridge_gcv_wide_perf",
+      "workload": {
+        "fits_per_process": 2,
+        "case_a": "62 rows x 130 columns, seed 51, dual route",
+        "case_b": "1000 rows x 512 columns, seed 52, screen to 384 then primal route",
+        "process_repetitions": 5
+      },
+      "build_command": "rtk cargo test -p feat-math --release --lib --locked ridge_gcv_wide_perf --no-run",
+      "measurement_command": "rtk proxy bash -c '/usr/bin/time -f <fixed-fields> -o <run-file> target/release/deps/feat_math-714e14bdd41a4eda ridge_gcv_wide_perf --ignored --nocapture --test-threads=1 >/dev/null'",
+      "internal_fit_seconds": [
+        {"case_a": 0.004, "case_b": 1.369},
+        {"case_a": 0.003, "case_b": 1.385},
+        {"case_a": 0.004, "case_b": 1.384},
+        {"case_a": 0.003, "case_b": 1.379},
+        {"case_a": 0.004, "case_b": 1.369}
+      ],
+      "process_runs": [
+        {"elapsed_seconds": 1.39, "user_seconds": 1.39, "system_seconds": 0.00, "max_rss_kb": 9216, "minor_faults": 2080, "major_faults": 0, "voluntary_context_switches": 2, "involuntary_context_switches": 5, "swaps": 0},
+        {"elapsed_seconds": 1.38, "user_seconds": 1.37, "system_seconds": 0.00, "max_rss_kb": 9216, "minor_faults": 2082, "major_faults": 0, "voluntary_context_switches": 2, "involuntary_context_switches": 3, "swaps": 0},
+        {"elapsed_seconds": 1.39, "user_seconds": 1.38, "system_seconds": 0.00, "max_rss_kb": 9216, "minor_faults": 2080, "major_faults": 0, "voluntary_context_switches": 3, "involuntary_context_switches": 4, "swaps": 0},
+        {"elapsed_seconds": 1.39, "user_seconds": 1.38, "system_seconds": 0.00, "max_rss_kb": 9216, "minor_faults": 2084, "major_faults": 0, "voluntary_context_switches": 3, "involuntary_context_switches": 1, "swaps": 0},
+        {"elapsed_seconds": 1.38, "user_seconds": 1.37, "system_seconds": 0.00, "max_rss_kb": 9216, "minor_faults": 2082, "major_faults": 0, "voluntary_context_switches": 2, "involuntary_context_switches": 7, "swaps": 0}
+      ],
+      "median": {
+        "process_elapsed_seconds": 1.39,
+        "case_a_fit_seconds": 0.004,
+        "case_b_fit_seconds": 1.379,
+        "case_b_fits_per_second": 0.7251631617,
+        "max_rss_kb": 9216,
+        "minor_faults": 2082
+      },
+      "baseline_warning": "The release lib-test build emits one pre-existing unused_mut warning in src/ops.rs; the benchmark passed."
+    },
+    "search": {
+      "authoritative_harness": "feat-math examples/evolve_smoke.rs",
+      "workload": {
+        "rows": 240,
+        "columns": 6,
+        "population": 24,
+        "generations": 6,
+        "folds": 3,
+        "seed": 3235835917,
+        "max_transforms": 4,
+        "configured_time_budget_seconds": 25.0,
+        "process_repetitions": 5
+      },
+      "build_command": "rtk cargo build -p feat-math --example evolve_smoke --release --locked",
+      "measurement_command": "rtk proxy bash -c '/usr/bin/time -f <fixed-fields> -o <run-file> target/release/examples/evolve_smoke >/dev/null'",
+      "representative_output": {
+        "generations_observed": 6,
+        "improvements": 6,
+        "last_static_estimator_tokens_per_second": 1910405.0,
+        "best_cv_r2": 0.9931,
+        "best_genome": "(pipe X (hinge append=true knots=8) (poly_interact append=true) (hinge append=false knots=6) (histgbm2 bags=5 col_subsample=0.8 leaves=15 lr=0.08 min_leaf=3 rounds=1000 row_subsample=0.7 val_pct=15 val_shuffle=true))"
+      },
+      "process_runs": [
+        {"elapsed_seconds": 0.63, "user_seconds": 2.78, "system_seconds": 0.48, "cpu_percent": 515, "max_rss_kb": 82176, "minor_faults": 84396, "major_faults": 0, "voluntary_context_switches": 821, "involuntary_context_switches": 17, "swaps": 0},
+        {"elapsed_seconds": 0.63, "user_seconds": 2.83, "system_seconds": 0.43, "cpu_percent": 515, "max_rss_kb": 83020, "minor_faults": 82897, "major_faults": 0, "voluntary_context_switches": 744, "involuntary_context_switches": 99, "swaps": 0},
+        {"elapsed_seconds": 0.62, "user_seconds": 2.80, "system_seconds": 0.46, "cpu_percent": 522, "max_rss_kb": 80888, "minor_faults": 80354, "major_faults": 0, "voluntary_context_switches": 718, "involuntary_context_switches": 15, "swaps": 0},
+        {"elapsed_seconds": 0.61, "user_seconds": 2.79, "system_seconds": 0.47, "cpu_percent": 531, "max_rss_kb": 74436, "minor_faults": 85314, "major_faults": 0, "voluntary_context_switches": 734, "involuntary_context_switches": 81, "swaps": 0},
+        {"elapsed_seconds": 0.63, "user_seconds": 2.75, "system_seconds": 0.46, "cpu_percent": 508, "max_rss_kb": 74420, "minor_faults": 83299, "major_faults": 0, "voluntary_context_switches": 725, "involuntary_context_switches": 27, "swaps": 0}
+      ],
+      "median": {
+        "process_elapsed_seconds": 0.63,
+        "generations_per_second": 9.5238095238,
+        "nominal_population_slots_per_second": 228.5714285714,
+        "cpu_percent": 515,
+        "max_rss_kb": 80888,
+        "minor_faults": 83299
+      },
+      "throughput_limitation": "The existing observer exposes evals and evals_per_sec internally but evolve_smoke does not persist them. Generations per second is directly measured. Nominal population slots per second is population times generations divided by wall time and must not be treated as exact model-evaluation throughput."
+    }
+  },
+  "allocation_and_memory": {
+    "rss_source": "GNU time 1.9 maximum resident set size",
+    "allocation_profiler": null,
+    "heaptrack_available": false,
+    "valgrind_available": false,
+    "minor_page_faults_recorded_as_memory_activity_proxy": true,
+    "minor_page_faults_are_heap_allocations": false,
+    "limitation": "Exact heap allocation count and allocated bytes are not available from the existing authoritative harnesses or installed tools. RSS and page-fault baselines are valid; page faults are not a substitute for allocator instrumentation. No dependency or preload allocator was added merely to manufacture an allocation receipt."
+  },
+  "interpretation": {
+    "admission_use": "Later performance gates must use the same exact workload, release profile, thread behavior, and host class. Compare medians over at least five isolated repetitions.",
+    "legacy_throughput_regression_limit": 0.02,
+    "known_constraints": [
+      "CPU boost and scaling introduce normal run-to-run variance.",
+      "The filesystem was 90% full and host swap was nearly full, although every measured process recorded zero swaps and zero major faults.",
+      "Emitter RSS is the direct child test binary, excluding Cargo driver overhead.",
+      "Fit coverage is the existing wide Ridge-GCV performance probe, not every legacy head.",
+      "Search coverage is the deterministic synthetic evolve smoke, not a production Golden42 campaign."
+    ]
+  }
+}

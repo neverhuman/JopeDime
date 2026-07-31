@@ -1,0 +1,17 @@
+README.md
+src/aggressive.rs
+src/main.rs
+src/test_adaptive.rs
+src/test_adaptive/aggressive.rs
+src/test_adaptive/scq_batch.rs
+vendor/feat-math/src/advanced_v3/pipeline.rs
+vendor/feat-math/src/advanced_v3/emit/mod.rs
+vendor/feat-math/src/advanced_v3/tests.rs
+scripts/validate_advanced_v3_ownership.sh
+manifests/advanced-v3/ownership-checks/scq80-root.txt
+manifests/advanced-v3/task-graph.v2.json
+manifests/advanced-v3/work-ledger.v2.jsonl
+manifests/advanced-v3/task-receipts/SCQ80/0001.v1.json
+manifests/advanced-v3/task-receipts/SCQ80/0002.v1.json
+manifests/advanced-v3/task-receipts/SCQ80/0003.v1.json
+ROADMAP.md

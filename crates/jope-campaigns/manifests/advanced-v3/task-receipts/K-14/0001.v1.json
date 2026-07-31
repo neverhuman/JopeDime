@@ -1,0 +1,35 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "K-14",
+  "receipt_sequence": 1,
+  "ledger_sequence": 6,
+  "timestamp": "2026-07-22T05:03:23Z",
+  "actor": "/root",
+  "from": "verified",
+  "to": "verified",
+  "baseline_sha256": {
+    "phase_snapshot": "ba6edbfeabc9c36cce0ae0e8f5dcbee1a03dc8824d6cdd6da69adabe6b5909c5",
+    "prior_input_receipt": "ed6e4cc6053eeb7e0285815f1464fbd49b734d8c6d0c5f5179fe21e8eaa8e78d"
+  },
+  "changed_paths": [
+    "vendor/feat-math/src/advanced_v3/input.rs"
+  ],
+  "checks": [
+    "cross-group chronology regression failed before the correction and passes after it",
+    "six focused input tests pass",
+    "68 advanced-v3 library tests pass after the reconciled frontier corrections",
+    "public advanced-v3 parity and property tests pass",
+    "legacy-v2 freeze passes with three tests and one intentional generator ignore",
+    "owned rustfmt check passes",
+    "independent read-only review accepts the chronology correction"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/reconciliation-inventory-20260722T045728Z.v1.json",
+    "vendor/feat-math/src/advanced_v3/input.rs"
+  ],
+  "result_sha256": {
+    "vendor/feat-math/src/advanced_v3/input.rs": "c0cdbc60d0704625ac59e7e26ad9202d24621d1c19cc45d5370ccd0b9380dafa"
+  },
+  "decision": "Correct the historical K-14 evidence without rewriting V1: global fallback chronology is ordered by typed order key, group key, then ordinal; K-14 remains verified."
+}

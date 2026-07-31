@@ -1,0 +1,44 @@
+{
+  "schema": "jope-dime.advanced-v3-source-baseline.v1",
+  "created_utc": "2026-07-22T02:49:35Z",
+  "source_control": null,
+  "snapshot": {
+    "path": "/home/ubuntu/jope-dime-snapshots/2285c594ec8d12ae5d66a4e751db92c806e97a6a84d7c940c0dca75a25f3a096.tar.zst",
+    "sha256": "2285c594ec8d12ae5d66a4e751db92c806e97a6a84d7c940c0dca75a25f3a096",
+    "bytes": 15028396,
+    "canonical_tar": {
+      "sort": "name",
+      "mtime_unix": 0,
+      "uid": 0,
+      "gid": 0,
+      "compression": "zstd"
+    },
+    "excluded": ["target", "runs", "datasets", "data", "cache directories"]
+  },
+  "hashes": {
+    "Cargo.lock": "72362e9fb1bfb3a2836c06a699be141862dcdfd5da5b2e25044d767caad544c3",
+    "Cargo.toml": "74cefeecbd8fdbb40f3ca50505eed6a7d0175c8865039629b08f205054019a8a",
+    "src/main.rs": "eeb414c1c4c12a6d74f67d400e8a6da80b4d3ff982daf9f572cedef516db57b4",
+    "vendor/feat-math/src/lib.rs": "32b6c1baf483dc7ff4f23cb74316306cca73352fe1ea457df0104d123e1f83e5",
+    "vendor/feat-math/src/advanced_v3.rs": "057298f8685f57630593c0cdda3aad7c41d7d5313bd5da8ca0788bee0d2bfc22",
+    "vendor/battle-gpu/src/lib.rs": "c0b0fe76ae6f671b77e32afb702ffc931bdc2af1132cd9373d35f867504cc189",
+    "vendor/battle-gpu/src/driver.rs": "624e8eb70ca57a126107bdd5a573e62b6c9159479e97ed9fee58eb4461040a85"
+  },
+  "toolchain": {
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "rustc_commit": "ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96",
+    "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+    "host": "x86_64-unknown-linux-gnu",
+    "llvm": "22.1.2"
+  },
+  "host": {
+    "os": "Ubuntu 24.04",
+    "kernel": "Linux 6.8.0-134-generic x86_64",
+    "cpu": "AMD Ryzen Threadripper PRO 3995WX 64-Cores",
+    "logical_cpus": 128
+  },
+  "preexisting_binaries": {
+    "target/debug/jope-dime-regressor": "55c21119fd0cb35355ecf0344c322bb013d077923d7641c8ebd8b77a8a4bcd46",
+    "target/release/jope-dime-regressor": "9adb61552a21e3a08fb99d9ef281a955a73fe47b00e3ca40427f51d8e3b59d5c"
+  }
+}

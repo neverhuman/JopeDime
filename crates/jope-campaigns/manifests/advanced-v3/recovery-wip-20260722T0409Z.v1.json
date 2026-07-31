@@ -1,0 +1,46 @@
+{
+  "schema": "jope-dime.advanced-v3-recovery-wip.v1",
+  "created_utc": "2026-07-22T04:09:49Z",
+  "status": "unverified-recovery-wip",
+  "reason": "K-15 and S-20 reached stable source hashes without ledger handoff or review entries",
+  "snapshot": {
+    "path": "/home/ubuntu/jope-dime-snapshots/547cac54629e54d94cb85d47a07a5663483a2ada2307996e0e9c0b8aea6bf824.tar.zst",
+    "sha256": "547cac54629e54d94cb85d47a07a5663483a2ada2307996e0e9c0b8aea6bf824",
+    "bytes": 11998848,
+    "canonical_tar": {
+      "sort": "name",
+      "mtime_unix": 0,
+      "uid": 0,
+      "gid": 0,
+      "compression": "zstd"
+    },
+    "excluded": ["target", "runs", "datasets", "data", ".cache"]
+  },
+  "active_tasks": ["K-15", "S-20"],
+  "source_hashes": {
+    "vendor/feat-math/src/advanced_v3/transforms/mod.rs": "ccdc74dcaf09c067ad89ba59a668b571ec2df078d3357a7209a65bfea1847473",
+    "vendor/feat-math/src/advanced_v3/pipeline.rs": "7f6397d3d419a3cb8c062d10dc313c6f86311ee3a30a78bfd43713bf1be33d99",
+    "vendor/feat-math/src/advanced_v3/emit/mod.rs": "a62028758aa456407072ee48fbef9836352d6371cf248a4f6bd6e92e4c87d160",
+    "vendor/feat-math/src/advanced_v3/profile.rs": "33231b023478628ec813288c9773358a5218d8ac23e5e9d2158e8648a52d8efc",
+    "vendor/feat-math/src/advanced_v3.rs": "23219acd7f302bbfcbe8313bafe37bd50485a3026bd2942155603942849ea86e",
+    "vendor/feat-math/src/portable_math.rs": "b765bb8bcf8480e8a433b647790ce72cef86ee909e3e73937d922a70b29db931",
+    "vendor/feat-math/src/transpile.rs": "cc93612237ed1d907adf3539c342b5acf1d274fb49b15e75cb90254d06a9cf6d"
+  },
+  "checks": {
+    "archive_sha256_matches_filename": true,
+    "archive_listing_exit_code": 0,
+    "focused_current_tree": [
+      "profile: 8 passed",
+      "portable_math: 12 passed",
+      "champion_parity: 2 passed",
+      "golden default-byte freeze: 1 passed"
+    ],
+    "not_yet_authoritative": [
+      "complete post-hash advanced_v3 suite",
+      "independent K-15 review",
+      "independent S-20 review",
+      "legacy-v2 full golden archive"
+    ]
+  },
+  "admission": "This snapshot is recovery evidence only and must not be cited as a verified milestone or production admission."
+}

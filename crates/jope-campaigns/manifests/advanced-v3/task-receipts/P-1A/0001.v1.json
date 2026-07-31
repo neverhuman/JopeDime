@@ -1,0 +1,28 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-1A",
+  "receipt_sequence": 1,
+  "ledger_sequence": 14,
+  "timestamp": "2026-07-22T05:48:15Z",
+  "actor": "/root",
+  "from": "queued",
+  "to": "ready",
+  "baseline_sha256": {
+    "task_graph_v2": "13bfcb720d90021d4653c4232273600000507ca93e8a164f8dfc3762d74c5f58",
+    "portable_math_rs": "b765bb8bcf8480e8a433b647790ce72cef86ee909e3e73937d922a70b29db931",
+    "transpile_rs": "cc93612237ed1d907adf3539c342b5acf1d274fb49b15e75cb90254d06a9cf6d",
+    "lib_rs": "ccd4d6a204f3083af6d3b447b2c35c4230e1b4641ca6f65e36b53a40905bf002"
+  },
+  "changed_paths": [],
+  "checks": [
+    "P-00 dependency is verified and correctively adopted through V2 sequence 12",
+    "portable source and public-registration baselines match the reconciled P-00 checkpoint",
+    "no external writer owns or is editing the P-1A paths"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/task-receipts/P-00/0005.v1.json",
+    "manifests/advanced-v3/recovery-evidence/portable-xlang/PORTABILITY_EVIDENCE.md"
+  ],
+  "decision": "Move P-1A to ready. Reconciliation is closed and the portable-kernel audit has an exclusive root lease."
+}

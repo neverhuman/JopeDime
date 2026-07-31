@@ -1,0 +1,13 @@
+ROADMAP.md
+vendor/feat-math/src/lib.rs
+vendor/feat-math/src/portable_math.rs
+vendor/feat-math/src/transpile.rs
+vendor/feat-math/src/tokens.rs
+vendor/feat-math/src/advanced_v3/emit/mod.rs
+manifests/advanced-v3/recovery-evidence/portable-xlang/PORTABILITY_EVIDENCE.md
+manifests/advanced-v3/recovery-evidence/portable-xlang/full_ref.rs
+manifests/advanced-v3/task-graph.v2.json
+manifests/advanced-v3/work-ledger.v2.jsonl
+manifests/advanced-v3/task-receipts/P-1A/0001.v1.json
+manifests/advanced-v3/task-receipts/P-1A/0002.v1.json
+scripts/validate_advanced_v3_ownership.sh

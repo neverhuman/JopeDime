@@ -1,0 +1,53 @@
+{
+  "schema": "jope-dime.advanced-v3-reconciliation-wip.v1",
+  "created_utc": "2026-07-22T04:38:00Z",
+  "status": "unverified-reconciliation-wip",
+  "reason": "Quiescent preservation after stopping stale resumed Codex and portable-math sessions; snapshot includes all accepted, pending, and rejected-candidate bytes before further review.",
+  "snapshot": {
+    "path": "/home/ubuntu/jope-dime-snapshots/f223a0d41bb3a8e5b51ca63fbb02ec00064819d94098160ce35ca02a4b7d6dd7.tar.zst",
+    "sha256": "f223a0d41bb3a8e5b51ca63fbb02ec00064819d94098160ce35ca02a4b7d6dd7",
+    "bytes": 15171430,
+    "canonical_tar": {
+      "sort": "name",
+      "mtime_unix": 0,
+      "uid": 0,
+      "gid": 0,
+      "compression": "zstd"
+    },
+    "excluded": [
+      "target",
+      "runs",
+      "datasets",
+      "data",
+      ".cache"
+    ],
+    "reproduction_sha256": "f223a0d41bb3a8e5b51ca63fbb02ec00064819d94098160ce35ca02a4b7d6dd7",
+    "archive_listing_exit_code": 0
+  },
+  "authority_at_capture": {
+    "task_graph_v1_sha256": "c057fc3e3d50a9ed8ef200dbb7088b38c032825a43d190e3e820f6818ee0485b",
+    "work_ledger_v1_sha256": "75c2fa97c1ccdaf830c6ebe384d0ec199e101468079ea160dc36f273ea65b914",
+    "verified_phase_snapshot_sha256": "ba6edbfeabc9c36cce0ae0e8f5dcbee1a03dc8824d6cdd6da69adabe6b5909c5",
+    "note": "V2 remains draft while P-00 is in progress."
+  },
+  "material_source_hashes": {
+    "vendor/feat-math/src/advanced_v3/input.rs": "c0cdbc60d0704625ac59e7e26ad9202d24621d1c19cc45d5370ccd0b9380dafa",
+    "vendor/feat-math/src/advanced_v3/transforms/mod.rs": "47d587d30bd45344ad01c3fcfc317f1d19de3ebccf1e211cda9a4494fba50afb",
+    "vendor/feat-math/src/advanced_v3/pipeline.rs": "7f6397d3d419a3cb8c062d10dc313c6f86311ee3a30a78bfd43713bf1be33d99",
+    "vendor/feat-math/src/advanced_v3/emit/mod.rs": "6e5882c41cffa474d2668e9c8e658bce90d018dcacfe24f3eb66eaeee1659f29",
+    "vendor/feat-math/src/advanced_v3/feature_block.rs": "d3ee0b3b6eb754ef7b2befc7aa9ee43adaa221d7db39fe0d92423214bcea056b",
+    "vendor/feat-math/src/advanced_v3/evolution.rs": "1d8585380d078ec5e9429afb17d749aa86241f86399fcdf5fd0cf5cb08f0c8ac",
+    "vendor/feat-math/src/portable_math.rs": "b765bb8bcf8480e8a433b647790ce72cef86ee909e3e73937d922a70b29db931",
+    "vendor/feat-math/src/transpile.rs": "cc93612237ed1d907adf3539c342b5acf1d274fb49b15e75cb90254d06a9cf6d"
+  },
+  "pending_review": [
+    "K-15 fitted-tail chronology correction",
+    "S-21 evolution.rs and root module registration",
+    "P-1A all-helper cross-language parity",
+    "stale 04:35 continuation evidence and V2 graph edits"
+  ],
+  "known_blockers": [
+    "Independent review found K-15 fitted tails can leak later training feature values into earlier or equal-order prediction rows.",
+    "The 04:35 stale continuation modified V2 graph/evidence without the append-only V2 ledger and before P-00 authority."
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-0A",
+  "receipt_sequence": 1,
+  "ledger_sequence": 34,
+  "timestamp": "2026-07-22T07:13:47Z",
+  "actor": "/root",
+  "from": "queued",
+  "to": "ready",
+  "baseline_sha256": {
+    "verified_dependency_receipt": "f449171ea5ec890281636ad5681e9d062886ea34fad7e2f78795cc455274e9e8",
+    "task_graph_v2": "6aca80b77a15fa8676d9e202bb5b4ba1bb1062fcf2a1e0549dfe49f8d143c6d8",
+    "roadmap": "5db45fc0769ede01cb14a77a2569c941fc5db8e7a262082f2dddb38aab6c53e6",
+    "cargo_lock": "72362e9fb1bfb3a2836c06a699be141862dcdfd5da5b2e25044d767caad544c3"
+  },
+  "changed_paths": [],
+  "checks": [
+    "P-1B is verified at V2 sequence 30",
+    "the P-0A exact paths are disjoint from every live implementation lease",
+    "the task is additive and may hash but never rewrite frozen V1 authorities"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/task-receipts/P-1B/0004.v1.json",
+    "manifests/advanced-v3/task-graph.v2.json"
+  ],
+  "decision": "Move P-0A to ready and reserve its exact repository-gate paths for the root coordinator."
+}

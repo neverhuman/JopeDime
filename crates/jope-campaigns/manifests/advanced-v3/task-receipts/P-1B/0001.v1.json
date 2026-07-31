@@ -1,0 +1,27 @@
+{
+  "schema": "jope-dime.advanced-v3-task-receipt.v1",
+  "task_id": "P-1B",
+  "receipt_sequence": 1,
+  "ledger_sequence": 23,
+  "timestamp": "2026-07-22T06:19:00Z",
+  "actor": "/root",
+  "from": "queued",
+  "to": "ready",
+  "baseline_sha256": {
+    "verified_dependency_receipt": "40575294c8bd58792a2a3a4590e82ab6a94bc467d27120bf56099723bd19c8b4",
+    "golden_rs": "cc960036a498880e92c49adebb8ce6acc313a3f88add7925d9392b72fc5d5303",
+    "task_graph_v2": "8227332126557305d140359dd112d10bcd30802ef62b7932005fb3659bf87de8"
+  },
+  "changed_paths": [],
+  "checks": [
+    "P-1A is verified at V2 sequence 21",
+    "P-1B golden-oracle source has no live repository writer",
+    "scratch cross-language work is unverified and will be audited before adoption"
+  ],
+  "evidence": [
+    "ROADMAP.md",
+    "manifests/advanced-v3/task-receipts/P-1A/0004.v1.json",
+    "vendor/feat-math/tests/golden.rs"
+  ],
+  "decision": "Move P-1B to ready. Its sole dependency is verified and the oracle path can be leased independently."
+}
