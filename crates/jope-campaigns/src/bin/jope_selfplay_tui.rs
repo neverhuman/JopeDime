@@ -2397,16 +2397,36 @@ fn funnel_census_root(task: &str) -> Option<&'static str> {
     }
 }
 
-/// Count dataset directories in a corpus root (42 timeseries / 252 multiclass
-/// entries today — cheap enough to run every slow refresh).
-fn funnel_census_count(task: &str) -> Option<u64> {
-    let entries = fs::read_dir(funnel_census_root(task)?).ok()?;
+/// Installed-encodings root for census tasks: a dataset dir here means its
+/// sidecars are encoded and awaiting catalog activation — the funnel's
+/// "queued" stage semantics exactly.
+fn funnel_encoded_root(task: &str) -> Option<&'static str> {
+    match task {
+        "timeseries" => Some("/home/ubuntu/jope-flywheel/encodings/timeseries-expanded"),
+        "multiclass" => Some("/home/ubuntu/jope-flywheel/encodings/multiclass-expanded"),
+        _ => None,
+    }
+}
+
+fn count_dataset_dirs(root: &str) -> Option<u64> {
+    let entries = fs::read_dir(root).ok()?;
     Some(
         entries
             .filter_map(std::result::Result::ok)
             .filter(|entry| entry.file_type().is_ok_and(|kind| kind.is_dir()))
+            .filter(|entry| !entry.file_name().to_string_lossy().starts_with('.'))
             .count() as u64,
     )
+}
+
+/// Census for tasks absent from the dataset-state index: (corpus datasets,
+/// installed encodings). Both cheap directory counts (≤ a few hundred entries).
+fn funnel_census_count(task: &str) -> Option<(u64, u64)> {
+    let corpus = count_dataset_dirs(funnel_census_root(task)?)?;
+    let encoded = funnel_encoded_root(task)
+        .and_then(count_dataset_dirs)
+        .unwrap_or(0);
+    Some((corpus, encoded))
 }
 
 fn funnel_tag(task: &str) -> &'static str {
@@ -2430,14 +2450,18 @@ fn funnel_tag_compact(task: &str) -> &'static str {
 }
 
 /// Ensure every funnel task has a row and impose canonical display order.
-/// Missing tasks get census-only rows: registry = corpus size, all pipeline
-/// stages zero, so `locked()` reports the whole corpus as still waiting.
-fn complete_funnel_rows(rows: &mut Vec<FunnelRow>, census: impl Fn(&str) -> Option<u64>) {
+/// Missing tasks get census rows: registry = corpus size, queued = installed
+/// encodings (encoded, awaiting activation), and `locked()` derives the
+/// remainder still waiting for encoding.
+fn complete_funnel_rows(rows: &mut Vec<FunnelRow>, census: impl Fn(&str) -> Option<(u64, u64)>) {
     for task in FUNNEL_TASKS {
         if !rows.iter().any(|row| row.task == task) {
+            let (registry, encoded) = census(task).unwrap_or((0, 0));
             rows.push(FunnelRow {
                 task: task.to_owned(),
-                registry: census(task).unwrap_or(0),
+                registry,
+                encoded,
+                queued: encoded.min(registry),
                 ..Default::default()
             });
         }
@@ -6138,7 +6162,9 @@ mod tests {
                 },
                 FunnelRow {
                     task: "multiclass".to_owned(),
-                    registry: 252,
+                    registry: 272,
+                    encoded: 269,
+                    queued: 269,
                     ..FunnelRow::default()
                 },
             ],
@@ -6175,7 +6201,11 @@ mod tests {
         );
         assert!(rendered.contains("active 2,073"), "binary active visible");
         assert!(rendered.contains("TS 42"), "timeseries census row visible");
-        assert!(rendered.contains("MC 252"), "multiclass census row visible");
+        assert!(rendered.contains("MC 272"), "multiclass census row visible");
+        assert!(
+            rendered.contains("queued +269"),
+            "installed multiclass encodings visible as queued"
+        );
     }
 
     /// Data sources that predate a task must not hide its corpus: missing
@@ -6196,19 +6226,22 @@ mod tests {
             },
         ];
         complete_funnel_rows(&mut rows, |task| match task {
-            "timeseries" => Some(42),
-            "multiclass" => Some(252),
+            "timeseries" => Some((42, 0)),
+            "multiclass" => Some((272, 269)),
             _ => None,
         });
         let order: Vec<&str> = rows.iter().map(|row| row.task.as_str()).collect();
         assert_eq!(order, vec!["regression", "binary", "timeseries", "multiclass"]);
         assert_eq!(rows[2].registry, 42);
         assert_eq!(rows[2].locked(), 42, "census rows report the corpus as waiting");
-        assert_eq!(rows[3].registry, 252);
-        assert_eq!(rows[3].active, 0, "census rows include nothing yet");
+        assert_eq!(rows[3].registry, 272);
+        assert_eq!(rows[3].queued, 269, "installed encodings surface as queued");
+        assert_eq!(rows[3].encoded, 269);
+        assert_eq!(rows[3].locked(), 3, "remainder still awaiting encoding");
+        assert_eq!(rows[3].active, 0, "census rows are not in the catalog yet");
         // Existing rows are never duplicated or overwritten by the census.
         let mut again = rows.clone();
-        complete_funnel_rows(&mut again, |_| Some(999));
+        complete_funnel_rows(&mut again, |_| Some((999, 999)));
         assert_eq!(again, rows);
     }
 
