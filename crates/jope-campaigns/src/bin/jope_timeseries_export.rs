@@ -99,7 +99,11 @@ fn export_dataset(source: &Path, destination: &Path) -> Result<(usize, usize)> {
 
     fs::create_dir_all(destination)?;
     write_table(&destination.join("train.csv"), &reduction.x, &reduction.y)?;
-    write_table(&destination.join("test.csv"), &forecast_rows, &scaled_test_y)?;
+    write_table(
+        &destination.join("test.csv"),
+        &forecast_rows,
+        &scaled_test_y,
+    )?;
     let out_meta = json!({
         "task_type": "timeseries",
         "problem_type": "timeseries",
@@ -164,7 +168,10 @@ fn main() -> Result<()> {
             }
         }
     }
-    println!("exported={exported} failed={failed} out={}", out_root.display());
+    println!(
+        "exported={exported} failed={failed} out={}",
+        out_root.display()
+    );
     if failed > 0 {
         bail!("{failed} dataset(s) failed to export");
     }

@@ -22,6 +22,7 @@ use std::time::{Instant, SystemTime, UNIX_EPOCH};
 mod aggressive;
 mod binary42;
 mod island_extension;
+mod multiclass60;
 mod scq_batch;
 mod tabarena_islands;
 mod timeseries42;
@@ -34,6 +35,10 @@ pub(crate) use binary42::{
 pub(crate) use island_extension::{
     run_champion_continuation, run_island_extension, validate_champion_continuation,
     validate_island_extension,
+};
+pub(crate) use multiclass60::{
+    plan as plan_multiclass60, run_all as run_multiclass60_all,
+    validate_all as validate_multiclass60_all,
 };
 pub(crate) use scq_batch::{aggressive_batch_worker, island_batch_worker};
 pub(crate) use tabarena_islands::{
@@ -867,6 +872,52 @@ fn sha256_bytes(bytes: &[u8]) -> String {
 
 fn sha256_file(path: &Path) -> Result<String> {
     Ok(sha256_bytes(&fs::read(path)?))
+}
+
+fn validate_receipt_report_files(
+    receipt: &Value,
+    expected: usize,
+    require_report_set: bool,
+) -> Result<()> {
+    let reports = receipt
+        .get("reports")
+        .and_then(Value::as_array)
+        .filter(|rows| rows.len() == expected)
+        .context("receipt report matrix is incomplete")?;
+    if require_report_set {
+        let report_set_sha256 = receipt
+            .get("report_set_sha256")
+            .and_then(Value::as_str)
+            .context("coverage receipt is missing report_set_sha256")?;
+        if sha256_bytes(&serde_json::to_vec(reports)?) != report_set_sha256 {
+            bail!("coverage receipt report-set digest drift");
+        }
+    }
+    for row in reports {
+        let raw_path = row
+            .get("report_path")
+            .and_then(Value::as_str)
+            .context("receipt report_path is missing")?;
+        let expected_sha256 = row
+            .get("report_sha256")
+            .and_then(Value::as_str)
+            .filter(|digest| {
+                digest.len() == 64 && digest.bytes().all(|byte| byte.is_ascii_hexdigit())
+            })
+            .context("receipt report_sha256 is invalid")?;
+        let raw_path = Path::new(raw_path);
+        let report_path = if raw_path.is_absolute() {
+            raw_path.to_path_buf()
+        } else {
+            Path::new("/home/ubuntu/remote_super/quant").join(raw_path)
+        };
+        let observed = sha256_file(&report_path)
+            .with_context(|| format!("hash receipt report {}", report_path.display()))?;
+        if observed != expected_sha256 {
+            bail!("receipt report drift at {}", report_path.display());
+        }
+    }
+    Ok(())
 }
 
 fn canonical_json<T: Serialize>(value: &T) -> Result<Vec<u8>> {
@@ -5048,6 +5099,26 @@ mod tests {
         fn drop(&mut self) {
             let _ = fs::remove_dir_all(&self.0);
         }
+    }
+
+    #[test]
+    fn coverage_receipt_report_set_detects_file_drift() {
+        let directory = TestDirectory::new("coverage-receipt-report-set");
+        let report_path = directory.0.join("report.json");
+        fs::write(&report_path, b"valid report\n").unwrap();
+        let reports = vec![json!({
+            "dataset_hash": "dataset",
+            "model": "model",
+            "report_path": report_path.to_string_lossy(),
+            "report_sha256": sha256_file(&report_path).unwrap(),
+        })];
+        let receipt = json!({
+            "reports": reports,
+            "report_set_sha256": sha256_bytes(&serde_json::to_vec(&reports).unwrap()),
+        });
+        validate_receipt_report_files(&receipt, 1, true).unwrap();
+        fs::write(&report_path, b"drifted report\n").unwrap();
+        assert!(validate_receipt_report_files(&receipt, 1, true).is_err());
     }
 
     fn spec(dataset_hash: &str) -> DatasetSpec {

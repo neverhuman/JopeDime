@@ -941,13 +941,21 @@ mod tests {
             .iter()
             .map(|row| (row[lead_frac] * 3.0).round() as i64)
             .collect();
-        assert_eq!(observed, BTreeSet::from([1, 2, 3]), "train must see every lead 1..=H");
+        assert_eq!(
+            observed,
+            BTreeSet::from([1, 2, 3]),
+            "train must see every lead 1..=H"
+        );
         // first sorted pair is (origin=1, lead=1): target y[1]=12.0 scaled by 2.0
         assert_eq!(reduction.y[0], 6.0);
         // last sorted pair is (origin=4, lead=1): target y[4]=14.0 scaled by 2.0
         assert_eq!(reduction.y[8], 7.0);
         // scaling round-trips exactly on this fixture
-        for (scaled, raw) in reduction.y.iter().zip([12.0, 12.0, 14.0, 12.0, 14.0, 14.0, 14.0, 14.0, 14.0]) {
+        for (scaled, raw) in reduction
+            .y
+            .iter()
+            .zip([12.0, 12.0, 14.0, 12.0, 14.0, 14.0, 14.0, 14.0, 14.0])
+        {
             assert_eq!(scaled * reduction.target_scale, raw);
         }
     }
@@ -958,8 +966,19 @@ mod tests {
         let reduction = make_direct_reduction(&data).unwrap();
         let names = &reduction.feature_names;
         let first = &reduction.x[0]; // origin=1: single-point history
-        for name in ["lag_2", "lag_3", "seasonal_lag_1", "seasonal_lag_2", "diff_1", "diff_seasonal", "rolling_absdiff_3"] {
-            assert!(first[feature_index(names, name)].is_nan(), "{name} must be NaN on a 1-point history");
+        for name in [
+            "lag_2",
+            "lag_3",
+            "seasonal_lag_1",
+            "seasonal_lag_2",
+            "diff_1",
+            "diff_seasonal",
+            "rolling_absdiff_3",
+        ] {
+            assert!(
+                first[feature_index(names, name)].is_nan(),
+                "{name} must be NaN on a 1-point history"
+            );
         }
         assert_eq!(first[feature_index(names, "lag_1")], 5.0); // y[0]=10.0 / 2.0
         let last = &reduction.x[8]; // origin=4: 4-point history, seasonality 2
@@ -1029,7 +1048,9 @@ mod tests {
     #[test]
     fn direct_reduction_caps_rows_newest_first() {
         let n = 9000;
-        let y: Vec<f64> = (0..n).map(|i| ((i % 7) + 1) as f64 + i as f64 * 0.01).collect();
+        let y: Vec<f64> = (0..n)
+            .map(|i| ((i % 7) + 1) as f64 + i as f64 * 0.01)
+            .collect();
         let denominator = mase_denominator(&y, 7).unwrap();
         let data = TimeSeriesData {
             train: TimeSeriesTable {
@@ -1054,7 +1075,10 @@ mod tests {
         // survive, so every retained row has a fully observed seasonal lag.
         let names = &reduction.feature_names;
         let seasonal_lag_2 = feature_index(names, "seasonal_lag_2");
-        assert!(reduction.x.iter().all(|row| row[seasonal_lag_2].is_finite()));
+        assert!(reduction
+            .x
+            .iter()
+            .all(|row| row[seasonal_lag_2].is_finite()));
     }
 
     #[test]

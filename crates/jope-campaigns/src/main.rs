@@ -367,10 +367,52 @@ enum Command {
         #[arg(long, default_value = "binary42-test-adaptive-all-v1")]
         run_id: String,
     },
+    /// Freeze the all-272 multiclass corpus, comparator locks, and generation-zero population.
+    #[command(name = "plan-multiclass-test-adaptive")]
+    PlanMulticlassTestAdaptive {
+        #[arg(long, default_value = "multiclass272-test-adaptive-union43-gen20-v2")]
+        run_id: String,
+        #[arg(long, default_value = "/home/ubuntu/jope-dime/campaigns/test-adaptive")]
+        campaign_root: PathBuf,
+        #[arg(
+            long,
+            default_value = "/home/ubuntu/remote_super/quant/releases/mc-union-runnable272-v5/manifest.json"
+        )]
+        corpus_manifest: PathBuf,
+        #[arg(
+            long,
+            default_value = "/home/ubuntu/jope-dime/campaigns/test-adaptive/comparators/post-coverage-v2"
+        )]
+        comparator_root: PathBuf,
+        #[arg(long, default_value = "seeds/generation-zero.txt")]
+        seed_catalog: PathBuf,
+        #[arg(long, default_value_t = 60)]
+        population: usize,
+        #[arg(long, default_value_t = 20)]
+        generations: usize,
+    },
+    /// Harvest, evolve, and resume all 272 held-out-test-adaptive multiclass campaigns.
+    #[command(name = "run-multiclass-test-adaptive-all")]
+    RunMulticlassTestAdaptiveAll {
+        #[arg(long, default_value = "multiclass272-test-adaptive-union43-gen20-v2")]
+        run_id: String,
+        #[arg(long, default_value = "/home/ubuntu/jope-dime/campaigns/test-adaptive")]
+        campaign_root: PathBuf,
+        #[arg(long)]
+        resume: bool,
+    },
+    /// Validate terminal ledgers, final incumbents, wave ordering, and three-node replay.
+    #[command(name = "validate-multiclass-test-adaptive-all")]
+    ValidateMulticlassTestAdaptiveAll {
+        #[arg(long, default_value = "multiclass272-test-adaptive-union43-gen20-v2")]
+        run_id: String,
+        #[arg(long, default_value = "/home/ubuntu/jope-dime/campaigns/test-adaptive")]
+        campaign_root: PathBuf,
+    },
     /// Run or resume all 42 benchmark-invalid TimeSeries42 held-out-test-adaptive shards.
     #[command(name = "run-timeseries-test-adaptive-all")]
     RunTimeseriesTestAdaptiveAll {
-        #[arg(long, default_value = "timeseries42-test-adaptive-all-v1")]
+        #[arg(long, default_value = "timeseries42-test-adaptive-forecast3-gen20-v2")]
         run_id: String,
         #[arg(long)]
         resume: bool,
@@ -378,7 +420,7 @@ enum Command {
     /// Validate all TimeSeries42 campaign artifacts and rebuild final indexes.
     #[command(name = "validate-timeseries-test-adaptive-all")]
     ValidateTimeseriesTestAdaptiveAll {
-        #[arg(long, default_value = "timeseries42-test-adaptive-all-v1")]
+        #[arg(long, default_value = "timeseries42-test-adaptive-forecast3-gen20-v2")]
         run_id: String,
     },
     /// Continue a finished TimeSeries42 base campaign through generation 29.
@@ -1052,6 +1094,50 @@ fn main() -> Result<()> {
                 bail!("validate-binary-test-adaptive-all does not accept --dataset");
             }
             test_adaptive::validate_binary42_all(&run_id)
+        }
+        Command::PlanMulticlassTestAdaptive {
+            run_id,
+            campaign_root,
+            corpus_manifest,
+            comparator_root,
+            seed_catalog,
+            population,
+            generations,
+        } => {
+            if cli.dataset.is_some() {
+                bail!("plan-multiclass-test-adaptive does not accept --dataset");
+            }
+            if population != 60 || generations != 20 {
+                bail!(
+                    "multiclass all-dataset campaign is frozen at population=60 and generations=20"
+                );
+            }
+            test_adaptive::plan_multiclass60(
+                &run_id,
+                &campaign_root,
+                &corpus_manifest,
+                &comparator_root,
+                &seed_catalog,
+            )
+        }
+        Command::RunMulticlassTestAdaptiveAll {
+            run_id,
+            campaign_root,
+            resume,
+        } => {
+            if cli.dataset.is_some() {
+                bail!("run-multiclass-test-adaptive-all does not accept --dataset");
+            }
+            test_adaptive::run_multiclass60_all(&run_id, &campaign_root, resume)
+        }
+        Command::ValidateMulticlassTestAdaptiveAll {
+            run_id,
+            campaign_root,
+        } => {
+            if cli.dataset.is_some() {
+                bail!("validate-multiclass-test-adaptive-all does not accept --dataset");
+            }
+            test_adaptive::validate_multiclass60_all(&run_id, &campaign_root)
         }
         Command::RunTimeseriesTestAdaptiveAll { run_id, resume } => {
             if cli.dataset.is_some() {

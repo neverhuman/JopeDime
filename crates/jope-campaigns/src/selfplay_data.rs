@@ -645,11 +645,10 @@ fn spread_rank(spread: Option<f64>) -> i64 {
 /// Select exactly 64 datasets per participating task using the 16/32/16
 /// policy, under the breadth-over-depth admission rules in [`MicroAdmission`].
 ///
-/// A task participates once its pool is non-empty; the legacy regression and
-/// binary tasks always participate (an empty legacy pool is an error). The
-/// new tasks have empty pools until their corpora are admitted, so today's
-/// waves remain exactly 64 regression + 64 binary; per-task cohort sizing for
-/// small corpora is Stage-5 (D9) work.
+/// The legacy regression and binary tasks always participate (an empty legacy
+/// pool is an error). Future tasks remain out of this fixed 128-dataset
+/// protocol until their Stage-5 (D9) cohort policy exists; a partially admitted
+/// future-task catalog must not stop legacy supply.
 pub fn select_micro_cohort(
     entries: &[MicroDataset],
     observations: &HashMap<(String, String), u64>,
@@ -660,6 +659,9 @@ pub fn select_micro_cohort(
     admission.validate()?;
     let mut selected_all = Vec::with_capacity(MICRO_WAVE_SIZE);
     for task in crate::selfplay_expansion::TASKS {
+        if !matches!(task, "regression" | "binary") {
+            continue;
+        }
         let pool = entries
             .iter()
             .filter(|row| row.task == task)
@@ -1375,6 +1377,32 @@ mod tests {
                 16
             );
         }
+    }
+
+    #[test]
+    fn partial_future_task_catalog_does_not_block_legacy_supply() {
+        let entries = [
+            ("regression", 80),
+            ("binary", 80),
+            ("timeseries", 42),
+            ("multiclass", 80),
+        ]
+        .into_iter()
+        .flat_map(|(task, count)| (0..count).map(move |index| micro(task, index)))
+        .collect::<Vec<_>>();
+
+        let selected = select_micro_cohort(
+            &entries,
+            &HashMap::new(),
+            "strict-wave-000002",
+            &MicroAdmission::default(),
+        )
+        .unwrap();
+
+        assert_eq!(selected.len(), 128);
+        assert!(selected
+            .iter()
+            .all(|row| matches!(row.dataset.task.as_str(), "regression" | "binary")));
     }
 
     /// A wide pool of unseen datasets plus a block of capped ones: the cap must

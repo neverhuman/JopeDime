@@ -35,12 +35,14 @@ impl TaskKind {
     /// On-disk corpus directory under the authoritative quant root (D1).
     ///
     /// The multiclass corpus keeps its legacy `multi_label` directory name
-    /// (the on-disk compatibility name; the problem type is multiclass);
-    /// every other task's directory matches its wire name.
+    /// (the on-disk compatibility name; the problem type is multiclass), and
+    /// time-series training consumes the immutable reduced-v2 export rather
+    /// than the raw source corpus.
     #[allow(dead_code)]
     pub fn corpus_dir_name(self) -> &'static str {
         match self {
             TaskKind::Multiclass => "multi_label",
+            TaskKind::Timeseries => "timeseries_reduced_v2",
             other => other.as_str(),
         }
     }
@@ -91,7 +93,10 @@ mod tests {
     fn task_kind_maps_corpus_dirs_and_metrics() {
         assert_eq!(TaskKind::Regression.corpus_dir_name(), "regression");
         assert_eq!(TaskKind::Binary.corpus_dir_name(), "binary");
-        assert_eq!(TaskKind::Timeseries.corpus_dir_name(), "timeseries");
+        assert_eq!(
+            TaskKind::Timeseries.corpus_dir_name(),
+            "timeseries_reduced_v2"
+        );
         assert_eq!(TaskKind::Multiclass.corpus_dir_name(), "multi_label");
         assert_eq!(TaskKind::Regression.primary_metric(), "r2");
         assert_eq!(TaskKind::Binary.primary_metric(), "auc");

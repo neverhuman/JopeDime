@@ -188,6 +188,11 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
     // flywheel families, but its SCQ resource/placement syntax is still
     // audited so a future campaign cannot reintroduce ignored host pins.
     ("scripts/train_only_redteam_scq.py", "render_spec", None),
+    // Coverage recovery renderers are isolated campaign controllers. Their
+    // reservations are manifest-driven rather than flywheel-family policy,
+    // but their SCQ syntax remains subject to the generic rejection checks.
+    ("scripts/coverage_control_plane.py", "render_spec", None),
+    ("scripts/mc_union_coverage.py", "render_spec", None),
     // Smart-v3 CPU study dispatcher. It is a frozen, development-only
     // campaign renderer outside the flywheel families, but it still belongs
     // in the registry so its SCQ syntax is audited by the repository test.
@@ -219,6 +224,12 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
     ("src/test_adaptive/scq_batch.rs", "submit_true", None),
     ("src/test_adaptive/scq_batch.rs", "run_batch_flavored", None),
     ("src/test_adaptive/timeseries42.rs", "scq_spec", None),
+    ("src/test_adaptive/multiclass60.rs", "render_spec", None),
+    (
+        "src/test_adaptive/multiclass60.rs",
+        "render_replay_spec",
+        None,
+    ),
 ];
 
 /// Directories the scanner reads. Kept explicit so a new renderer is a

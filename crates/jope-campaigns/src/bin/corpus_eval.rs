@@ -35,8 +35,8 @@ use feat_math::genome::GenomeIr;
 use feat_math::heads::is_head_op;
 use feat_math::target_transform::is_target_op;
 use feat_math::{
-    auc, fit_predict, fit_table, logloss, r2, rmse, ColumnSpec, DataSchema, Objective, RawTable,
-    RowSemantics, Rows, TaskSpec,
+    auc, fit_predict, fit_table, logloss, multiclass_accuracy, r2, rmse, ColumnSpec, DataSchema,
+    Objective, RawTable, RowSemantics, Rows, TaskSpec,
 };
 use jope_dime_regressor::timeseries::{
     make_direct_forecast_rows, make_direct_reduction, make_forecast_features,
@@ -62,12 +62,16 @@ const SHARD_SCHEMA_V2: &str = "JopeFlywheelCorpusEvalShard.v2";
 const RECEIPT_SCHEMA: &str = "JopeFlywheelCorpusEvalReceipt.v1";
 /// Binary heads accepted by the schema-bound grammar that are NOT in the
 /// legacy `heads::is_head_op` list (mirrors `pipeline::is_v3_head` extras).
-const V3_EXTRA_HEADS: [&str; 5] = [
+const V3_EXTRA_HEADS: [&str; 9] = [
     "tab_boost",
     "extra_trees",
     "gam_boost",
     "pls",
     "logit_ridge",
+    "multiclass_ridge",
+    "multiclass_ovr_logistic",
+    "multiclass_diagonal_lda",
+    "multiclass_nearest_centroid",
 ];
 
 // ---------------------------------------------------------------------------
@@ -181,8 +185,18 @@ struct Receipt {
     predictions_sha256: Option<String>,
     predictions_path: Option<String>,
     prediction_count: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    class_labels: Option<Vec<i64>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    probabilities_sha256: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    probabilities_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    probability_shape: Option<[usize; 2]>,
     #[serde(skip)]
     prediction_bytes: Option<Vec<u8>>,
+    #[serde(skip)]
+    probability_bytes: Option<Vec<u8>>,
     valid: bool,
     failure: Option<String>,
     failure_message: Option<String>,
@@ -212,6 +226,20 @@ struct Data {
     features: usize,
 }
 
+#[derive(Clone, Debug)]
+struct MulticlassContext {
+    /// Fitted class index -> declared metadata class index.
+    observed_declared: Vec<i64>,
+    declared_classes: usize,
+}
+
+#[derive(Debug)]
+struct DecodedMulticlassSplits {
+    train: Vec<f64>,
+    test: Vec<f64>,
+    context: MulticlassContext,
+}
+
 enum Outcome {
     Score {
         score: f64,
@@ -219,11 +247,17 @@ enum Outcome {
         balanced_accuracy: Option<f64>,
         timeseries_metrics: Option<TimeSeriesMetrics>,
         predictions: Vec<f64>,
+        multiclass: Option<MulticlassEvidence>,
     },
     Fail {
         class: &'static str,
         message: String,
     },
+}
+
+struct MulticlassEvidence {
+    classes: Vec<i64>,
+    probabilities: Vec<Vec<f64>>,
 }
 
 // ---------------------------------------------------------------------------
@@ -241,6 +275,17 @@ fn prediction_bytes(predictions: &[f64]) -> Vec<u8> {
     let mut bytes = Vec::with_capacity(predictions.len() * 8);
     for prediction in predictions {
         bytes.extend_from_slice(&prediction.to_le_bytes());
+    }
+    bytes
+}
+
+fn probability_bytes(probabilities: &[Vec<f64>]) -> Vec<u8> {
+    let values = probabilities.iter().map(Vec::len).sum::<usize>();
+    let mut bytes = Vec::with_capacity(values * 8);
+    for row in probabilities {
+        for probability in row {
+            bytes.extend_from_slice(&probability.to_le_bytes());
+        }
     }
     bytes
 }
@@ -508,6 +553,12 @@ fn is_strict_wave(value: &str) -> bool {
         .is_some_and(|suffix| suffix.len() == 6 && suffix.bytes().all(|byte| byte.is_ascii_digit()))
 }
 
+fn is_multiclass_generation(value: &str) -> bool {
+    value
+        .strip_prefix("multiclass-generation-")
+        .is_some_and(|suffix| suffix.len() == 3 && suffix.bytes().all(|byte| byte.is_ascii_digit()))
+}
+
 /// Resolve receipt labeling before loading any data. The default deliberately
 /// preserves the legacy adaptive lane. Corrected authority is fail-closed.
 /// Superseded generation-zero manifests are accepted only in their exact old
@@ -535,6 +586,20 @@ fn resolve_authority(shard: &Shard) -> Result<ResolvedAuthority> {
         && !authority.benchmark_valid
         && authority.selection_bias.as_deref() == Some("test-exact-reused")
         && is_strict_wave(&authority.generation);
+    let multiclass_test_selected = shard.task == "multiclass"
+        && authority.score_tier == "test"
+        && authority.metric == "macro_f1"
+        && authority.test_adaptive
+        && !authority.benchmark_valid
+        && authority.selection_bias.as_deref() == Some("test-selected")
+        && is_multiclass_generation(&authority.generation);
+    let timeseries_test_selected = shard.task == "timeseries"
+        && authority.score_tier == "test_exact"
+        && authority.metric == "negative_mase"
+        && authority.test_adaptive
+        && !authority.benchmark_valid
+        && authority.selection_bias.as_deref() == Some("test-selected")
+        && is_strict_wave(&authority.generation);
     let legacy_superseded = authority.score_tier == "test_exact"
         && shard.task != "timeseries"
         && authority.metric == expected_metric
@@ -542,11 +607,19 @@ fn resolve_authority(shard: &Shard) -> Result<ResolvedAuthority> {
         && authority.benchmark_valid
         && authority.selection_bias.is_none()
         && authority.generation == "zero";
-    if !corrected && !legacy_superseded {
+    if !corrected
+        && !multiclass_test_selected
+        && !timeseries_test_selected
+        && !legacy_superseded
+    {
         bail!(
-            "self-play authority requires score_tier=test_exact, metric={expected_metric}, \
-             test_adaptive=true, benchmark_valid=false, selection_bias=test-exact-reused, \
-             generation=strict-wave-NNNNNN"
+            "self-play authority requires either the strict-wave test_exact contract or the \
+             multiclass score_tier=test, metric=macro_f1, test_adaptive=true, \
+             benchmark_valid=false, selection_bias=test-selected, \
+             generation=multiclass-generation-NNN contract or the timeseries \
+             score_tier=test_exact, metric=negative_mase, test_adaptive=true, \
+             benchmark_valid=false, selection_bias=test-selected, \
+             generation=strict-wave-NNNNNN contract"
         );
     }
     for (name, value) in [
@@ -666,6 +739,7 @@ fn evaluate_regression(candidate: &ShardCandidate, train: &Data, test: &Data) ->
         balanced_accuracy: None,
         timeseries_metrics: None,
         predictions,
+        multiclass: None,
     }
 }
 
@@ -724,6 +798,133 @@ fn evaluate_binary(
         balanced_accuracy: Some(balanced_accuracy(test_y, &predictions)),
         timeseries_metrics: None,
         predictions,
+        multiclass: None,
+    }
+}
+
+fn evaluate_multiclass(
+    candidate: &ShardCandidate,
+    train_table: &RawTable,
+    train_y: &[f64],
+    test_table: &RawTable,
+    test_y: &[f64],
+    features: usize,
+    context: &MulticlassContext,
+) -> Outcome {
+    let genome = match parse_canonical(candidate) {
+        Ok(genome) => genome,
+        Err(outcome) => return outcome,
+    };
+    let task =
+        TaskSpec::multiclass(Objective::MacroF1).expect("macro_f1 is a multiclass objective");
+    let schema = binary_schema(features);
+    let model = match fit_table(&genome, &task, &schema, train_table, train_y) {
+        Ok(model) => model,
+        Err(error) => {
+            return Outcome::Fail {
+                class: "fit",
+                message: format!("{error:#}"),
+            }
+        }
+    };
+    let output = match model.predict_multiclass_table(test_table) {
+        Ok(output) => output,
+        Err(error) => {
+            return Outcome::Fail {
+                class: "fit",
+                message: format!("{error:#}"),
+            }
+        }
+    };
+    if output.labels.len() != test_y.len() || output.probabilities.len() != test_y.len() {
+        return Outcome::Fail {
+            class: "nonfinite",
+            message: "multiclass labels or aligned probabilities are invalid".to_string(),
+        };
+    }
+    let mut fitted_columns = std::collections::BTreeMap::new();
+    for (column, fitted_class) in output.classes.iter().copied().enumerate() {
+        let Ok(fitted_index) = usize::try_from(fitted_class) else {
+            return Outcome::Fail {
+                class: "nonfinite",
+                message: "multiclass model emitted a negative fitted class".to_string(),
+            };
+        };
+        if fitted_index >= context.observed_declared.len()
+            || fitted_columns.insert(fitted_index, column).is_some()
+        {
+            return Outcome::Fail {
+                class: "nonfinite",
+                message: "multiclass model emitted an unknown or duplicate fitted class"
+                    .to_string(),
+            };
+        }
+    }
+    if fitted_columns.len() != context.observed_declared.len() {
+        return Outcome::Fail {
+            class: "nonfinite",
+            message: "multiclass probability output omitted an observed training class".to_string(),
+        };
+    }
+    let mut predictions = Vec::with_capacity(output.labels.len());
+    for fitted_class in &output.labels {
+        let Ok(fitted_index) = usize::try_from(*fitted_class) else {
+            return Outcome::Fail {
+                class: "nonfinite",
+                message: "multiclass model predicted a negative fitted class".to_string(),
+            };
+        };
+        let Some(declared_index) = context.observed_declared.get(fitted_index) else {
+            return Outcome::Fail {
+                class: "nonfinite",
+                message: "multiclass model predicted an unknown fitted class".to_string(),
+            };
+        };
+        predictions.push(*declared_index as f64);
+    }
+    let mut aligned_probabilities = Vec::with_capacity(output.probabilities.len());
+    for row in &output.probabilities {
+        if row.len() != output.classes.len()
+            || row.iter().any(|value| !value.is_finite() || *value < 0.0)
+        {
+            return Outcome::Fail {
+                class: "nonfinite",
+                message: "multiclass probability row is invalid".to_string(),
+            };
+        }
+        let mut aligned = vec![0.0; context.declared_classes];
+        for (fitted_index, column) in &fitted_columns {
+            let declared_index = context.observed_declared[*fitted_index] as usize;
+            aligned[declared_index] = row[*column];
+        }
+        let sum: f64 = aligned.iter().sum();
+        if !sum.is_finite() || sum <= 0.0 {
+            return Outcome::Fail {
+                class: "nonfinite",
+                message: "multiclass probability row has a nonpositive sum".to_string(),
+            };
+        }
+        aligned.iter_mut().for_each(|value| *value /= sum);
+        aligned_probabilities.push(aligned);
+    }
+    let score = declared_macro_f1(test_y, &predictions, context.declared_classes);
+    let secondary = multiclass_accuracy(test_y, &predictions);
+    if !score.is_finite() || !secondary.is_finite() {
+        return Outcome::Fail {
+            class: "nonfinite",
+            message: "computed multiclass metric is non-finite".to_string(),
+        };
+    }
+    Outcome::Score {
+        score,
+        secondary,
+        balanced_accuracy: None,
+        timeseries_metrics: None,
+        predictions,
+        multiclass: Some(MulticlassEvidence {
+            classes: (0..context.declared_classes as i64).collect(),
+            probabilities: aligned_probabilities,
+        }),
     }
 }
 
@@ -845,6 +1046,7 @@ fn evaluate_timeseries(candidate: &ShardCandidate, data: &TimeSeriesData) -> Out
         balanced_accuracy: None,
         timeseries_metrics: Some(metrics),
         predictions,
+        multiclass: None,
     }
 }
 
@@ -960,6 +1162,7 @@ fn evaluate_timeseries_v2(candidate: &ShardCandidate, data: &TimeSeriesData) -> 
         balanced_accuracy: None,
         timeseries_metrics: Some(metrics),
         predictions,
+        multiclass: None,
     }
 }
 
@@ -1017,6 +1220,12 @@ fn run_eval(manifest: &Path, output_dir: &Path, threads: usize, timeout: Duratio
             Outcome::Fail { .. } => None,
         };
         let predictions_sha256 = bytes.as_ref().map(|value| sha256_hex(value));
+        let multiclass = match &outcome {
+            Outcome::Score { multiclass, .. } => multiclass.as_ref(),
+            Outcome::Fail { .. } => None,
+        };
+        let probability_bytes = multiclass.map(|value| probability_bytes(&value.probabilities));
+        let probabilities_sha256 = probability_bytes.as_ref().map(|value| sha256_hex(value));
         Receipt {
             schema: RECEIPT_SCHEMA.to_string(),
             task: shard.task.clone(),
@@ -1117,7 +1326,19 @@ fn run_eval(manifest: &Path, output_dir: &Path, threads: usize, timeout: Duratio
                 Outcome::Score { predictions, .. } => Some(predictions.len()),
                 Outcome::Fail { .. } => None,
             },
+            class_labels: multiclass.map(|value| value.classes.clone()),
+            probabilities_sha256,
+            probabilities_path: probability_bytes
+                .as_ref()
+                .map(|_| format!("probabilities/{sha}.f64le")),
+            probability_shape: multiclass.map(|value| {
+                [
+                    value.probabilities.len(),
+                    value.probabilities.first().map_or(0, Vec::len),
+                ]
+            }),
             prediction_bytes: bytes,
+            probability_bytes,
             valid: matches!(outcome, Outcome::Score { .. }),
             failure: match &outcome {
                 Outcome::Score { .. } => None,
@@ -1186,16 +1407,8 @@ fn run_eval(manifest: &Path, output_dir: &Path, threads: usize, timeout: Duratio
                 .collect()
         })
     } else {
-        let train = Arc::new(load_pinned_csv(
-            &shard.train_csv,
-            &shard.train_sha256,
-            "train",
-        )?);
-        let test = Arc::new(load_pinned_csv(
-            &shard.test_csv,
-            &shard.test_sha256,
-            "test",
-        )?);
+        let mut train = load_pinned_csv(&shard.train_csv, &shard.train_sha256, "train")?;
+        let mut test = load_pinned_csv(&shard.test_csv, &shard.test_sha256, "test")?;
         if train.features != test.features {
             bail!(
                 "train/test feature widths differ ({} vs {})",
@@ -1205,9 +1418,32 @@ fn run_eval(manifest: &Path, output_dir: &Path, threads: usize, timeout: Duratio
         }
         // Binary dataset admission: targets bitwise 0.0/1.0 with both classes
         // present, else every candidate gets a dataset-level failure receipt.
+        let mut multiclass_context = None;
         let dataset_failure = if shard.task == "binary" {
             validate_binary_targets(&train.y, "train")
                 .or_else(|| validate_binary_targets(&test.y, "test"))
+        } else if shard.task == "multiclass" {
+            let decoded =
+                (|| -> Result<DecodedMulticlassSplits, String> {
+                    let meta_path = shard.meta_json.as_deref().ok_or_else(|| {
+                        "multiclass shard manifest must pin meta_json".to_string()
+                    })?;
+                    let meta_sha256 = shard.meta_sha256.as_deref().ok_or_else(|| {
+                        "multiclass shard manifest must pin meta_sha256".to_string()
+                    })?;
+                    let meta = load_pinned_json(meta_path, meta_sha256, "meta")
+                        .map_err(|error| format!("{error:#}"))?;
+                    decode_multiclass_splits(&train.y, &test.y, &meta)
+                })();
+            match decoded {
+                Ok(decoded) => {
+                    train.y = decoded.train;
+                    test.y = decoded.test;
+                    multiclass_context = Some(decoded.context);
+                    None
+                }
+                Err(error) => Some(error),
+            }
         } else {
             None
         };
@@ -1231,7 +1467,7 @@ fn run_eval(manifest: &Path, output_dir: &Path, threads: usize, timeout: Duratio
         } else {
             // Binary string tables are built once per shard and shared (identical
             // bytes to a per-candidate build, so bit-parity is unaffected).
-            let tables = if shard.task == "binary" {
+            let tables = if matches!(shard.task.as_str(), "binary" | "multiclass") {
                 Some((
                     Arc::new(raw_table(train.features, &train.x)?),
                     Arc::new(raw_table(test.features, &test.x)?),
@@ -1239,9 +1475,13 @@ fn run_eval(manifest: &Path, output_dir: &Path, threads: usize, timeout: Duratio
             } else {
                 None
             };
+            let train = Arc::new(train);
+            let test = Arc::new(test);
+            let multiclass_context = multiclass_context.map(Arc::new);
             let pool = rayon::ThreadPoolBuilder::new()
                 .num_threads(threads)
                 .build()?;
+            let multiclass_task = shard.task == "multiclass";
             pool.install(|| {
                 use rayon::prelude::*;
                 shard
@@ -1252,6 +1492,7 @@ fn run_eval(manifest: &Path, output_dir: &Path, threads: usize, timeout: Duratio
                         let started = Instant::now();
                         let candidate = c.clone();
                         let (train, test) = (Arc::clone(&train), Arc::clone(&test));
+                        let multiclass_context = multiclass_context.as_ref().map(Arc::clone);
                         let outcome = match &tables {
                             None => run_with_timeout(
                                 move || evaluate_regression(&candidate, &train, &test),
@@ -1262,14 +1503,28 @@ fn run_eval(manifest: &Path, output_dir: &Path, threads: usize, timeout: Duratio
                                     (Arc::clone(train_table), Arc::clone(test_table));
                                 run_with_timeout(
                                     move || {
-                                        evaluate_binary(
-                                            &candidate,
-                                            &train_table,
-                                            &train.y,
-                                            &test_table,
-                                            &test.y,
-                                            train.features,
-                                        )
+                                        if multiclass_task {
+                                            evaluate_multiclass(
+                                                &candidate,
+                                                &train_table,
+                                                &train.y,
+                                                &test_table,
+                                                &test.y,
+                                                train.features,
+                                                multiclass_context
+                                                    .as_deref()
+                                                    .expect("validated multiclass context"),
+                                            )
+                                        } else {
+                                            evaluate_binary(
+                                                &candidate,
+                                                &train_table,
+                                                &train.y,
+                                                &test_table,
+                                                &test.y,
+                                                train.features,
+                                            )
+                                        }
                                     },
                                     timeout,
                                 )
@@ -1285,6 +1540,8 @@ fn run_eval(manifest: &Path, output_dir: &Path, threads: usize, timeout: Duratio
     fs::create_dir_all(output_dir)?;
     let prediction_dir = output_dir.join("predictions");
     fs::create_dir_all(&prediction_dir)?;
+    let probability_dir = output_dir.join("probabilities");
+    fs::create_dir_all(&probability_dir)?;
     for line in &receipts {
         if let (Some(relative), Some(expected), Some(bytes)) = (
             line.predictions_path.as_ref(),
@@ -1296,6 +1553,19 @@ fn run_eval(manifest: &Path, output_dir: &Path, threads: usize, timeout: Duratio
             }
             let path = output_dir.join(relative);
             let temporary = prediction_dir.join(format!(".{}.tmp", line.semantic_sha256));
+            fs::write(&temporary, bytes)?;
+            fs::rename(&temporary, path)?;
+        }
+        if let (Some(relative), Some(expected), Some(bytes)) = (
+            line.probabilities_path.as_ref(),
+            line.probabilities_sha256.as_ref(),
+            line.probability_bytes.as_ref(),
+        ) {
+            if sha256_hex(bytes) != *expected {
+                bail!("probability evidence hash changed before persistence");
+            }
+            let path = output_dir.join(relative);
+            let temporary = probability_dir.join(format!(".{}.tmp", line.semantic_sha256));
             fs::write(&temporary, bytes)?;
             fs::rename(&temporary, path)?;
         }
@@ -1359,6 +1629,30 @@ fn validate_manifest(path: &Path) -> Result<()> {
     } else {
         None
     };
+    let multiclass_features = if shard.task == "multiclass" {
+        let train = load_pinned_csv(&shard.train_csv, &shard.train_sha256, "train")?;
+        let test = load_pinned_csv(&shard.test_csv, &shard.test_sha256, "test")?;
+        if train.features != test.features {
+            bail!(
+                "train/test feature widths differ ({} vs {})",
+                train.features,
+                test.features
+            );
+        }
+        let meta_path = shard
+            .meta_json
+            .as_deref()
+            .context("multiclass shard manifest must pin meta_json")?;
+        let meta_sha256 = shard
+            .meta_sha256
+            .as_deref()
+            .context("multiclass shard manifest must pin meta_sha256")?;
+        let meta = load_pinned_json(meta_path, meta_sha256, "meta")?;
+        decode_multiclass_splits(&train.y, &test.y, &meta).map_err(anyhow::Error::msg)?;
+        Some(train.features)
+    } else {
+        None
+    };
     let mut seen = std::collections::BTreeSet::new();
     for (index, candidate) in shard.candidates.iter().enumerate() {
         let computed = sha256_hex(candidate.canonical_genome.as_bytes());
@@ -1380,6 +1674,15 @@ fn validate_manifest(path: &Path) -> Result<()> {
                 TaskSpec::binary(Objective::RocAuc).expect("roc_auc is a valid binary objective");
             validate_v3_genome(&genome, &task, &binary_schema(8))
                 .with_context(|| format!("candidate {index} is not binary-task-valid"))?;
+        } else if shard.task == "multiclass" {
+            let task = TaskSpec::multiclass(Objective::MacroF1)
+                .expect("macro_f1 is a valid multiclass objective");
+            validate_v3_genome(
+                &genome,
+                &task,
+                &binary_schema(multiclass_features.expect("multiclass data loaded")),
+            )
+            .with_context(|| format!("candidate {index} is not multiclass-task-valid"))?;
         } else if shard.task == "timeseries" {
             if matches!(terminal_head(&genome), Some("logit_ridge" | "logistic")) {
                 bail!("candidate {index} uses a binary classification head");
@@ -1407,6 +1710,176 @@ fn validate_binary_targets(y: &[f64], split: &str) -> Option<String> {
         return Some(format!("{split} split does not contain both classes"));
     }
     None
+}
+
+fn declared_multiclass_codes(meta: &serde_json::Value) -> Result<Vec<f64>, String> {
+    if let Some(mapping) = meta.get("class_mapping").and_then(|value| value.as_array()) {
+        let mut entries: Vec<&serde_json::Value> =
+            mapping.iter().filter(|entry| entry.is_object()).collect();
+        entries.sort_by_key(|entry| {
+            entry
+                .get("code")
+                .and_then(|value| value.as_i64())
+                .unwrap_or(i64::MAX)
+        });
+        if entries.len() >= 3 {
+            let explicit: Option<Vec<f64>> = entries
+                .iter()
+                .map(|entry| {
+                    entry
+                        .get("scaled_code")
+                        .or_else(|| entry.get("csv_value"))
+                        .and_then(|value| value.as_f64())
+                })
+                .collect();
+            if let Some(codes) = explicit {
+                return Ok(codes);
+            }
+            let denominator = (entries.len() - 1) as f64;
+            return Ok((0..entries.len())
+                .map(|index| index as f64 / denominator)
+                .collect());
+        }
+    }
+    if let Some(mapping) = meta
+        .get("class_mapping")
+        .and_then(|value| value.as_object())
+    {
+        if mapping.len() >= 3 {
+            let mut ordered: Vec<i64> = mapping
+                .values()
+                .map(|value| {
+                    value
+                        .as_i64()
+                        .ok_or_else(|| "class_mapping indices must be integers".to_string())
+                })
+                .collect::<Result<_, _>>()?;
+            ordered.sort_unstable();
+            ordered.dedup();
+            if ordered.len() != mapping.len() {
+                return Err("class_mapping indices must be unique".to_string());
+            }
+            let denominator = (ordered.len() - 1) as f64;
+            return Ok((0..ordered.len())
+                .map(|index| index as f64 / denominator)
+                .collect());
+        }
+    }
+    if let Some(classes) = meta
+        .get("target_scaling")
+        .and_then(|value| value.get("classes"))
+        .and_then(|value| value.as_array())
+    {
+        if classes.len() >= 3 {
+            let denominator = (classes.len() - 1) as f64;
+            return Ok((0..classes.len())
+                .map(|index| index as f64 / denominator)
+                .collect());
+        }
+    }
+    Err("meta.json must declare at least three ordered multiclass classes".to_string())
+}
+
+fn decode_declared_targets(
+    values: &[f64],
+    declared_codes: &[f64],
+    split: &str,
+) -> Result<Vec<i64>, String> {
+    const TOLERANCE: f64 = 1e-6;
+    values
+        .iter()
+        .map(|raw| {
+            if !raw.is_finite() {
+                return Err(format!("{split} target is nonfinite"));
+            }
+            let matches: Vec<usize> = declared_codes
+                .iter()
+                .enumerate()
+                .filter_map(|(index, code)| ((*raw - *code).abs() <= TOLERANCE).then_some(index))
+                .collect();
+            if matches.len() != 1 {
+                return Err(format!(
+                    "{split} target {raw} is ambiguous or outside the declared-code tolerance"
+                ));
+            }
+            Ok(matches[0] as i64)
+        })
+        .collect()
+}
+
+fn decode_multiclass_splits(
+    train: &[f64],
+    test: &[f64],
+    meta: &serde_json::Value,
+) -> Result<DecodedMulticlassSplits, String> {
+    let declared_codes = declared_multiclass_codes(meta)?;
+    if declared_codes.iter().any(|code| !code.is_finite()) {
+        return Err("declared multiclass codes must be finite".to_string());
+    }
+    for (index, code) in declared_codes.iter().enumerate() {
+        if declared_codes[..index]
+            .iter()
+            .any(|prior| (*prior - *code).abs() <= f64::EPSILON)
+        {
+            return Err("declared multiclass codes must be unique".to_string());
+        }
+    }
+    let decoded_train = decode_declared_targets(train, &declared_codes, "train")?;
+    let decoded_test = decode_declared_targets(test, &declared_codes, "test")?;
+    let observed_declared: Vec<i64> = decoded_train
+        .iter()
+        .copied()
+        .collect::<std::collections::BTreeSet<_>>()
+        .into_iter()
+        .collect();
+    if observed_declared.len() < 2 {
+        return Err(
+            "multiclass training split must contain at least two declared classes".to_string(),
+        );
+    }
+    let fitted_train = decoded_train
+        .iter()
+        .map(|declared| {
+            observed_declared
+                .binary_search(declared)
+                .expect("observed class came from training targets") as f64
+        })
+        .collect();
+    Ok(DecodedMulticlassSplits {
+        train: fitted_train,
+        test: decoded_test.into_iter().map(|value| value as f64).collect(),
+        context: MulticlassContext {
+            observed_declared,
+            declared_classes: declared_codes.len(),
+        },
+    })
+}
+
+fn declared_macro_f1(y_true: &[f64], y_pred: &[f64], declared_classes: usize) -> f64 {
+    let mut total = 0.0;
+    for class in 0..declared_classes {
+        let label = class as f64;
+        let true_positive = y_true
+            .iter()
+            .zip(y_pred)
+            .filter(|(truth, prediction)| **truth == label && **prediction == label)
+            .count() as f64;
+        let false_positive = y_true
+            .iter()
+            .zip(y_pred)
+            .filter(|(truth, prediction)| **truth != label && **prediction == label)
+            .count() as f64;
+        let false_negative = y_true
+            .iter()
+            .zip(y_pred)
+            .filter(|(truth, prediction)| **truth == label && **prediction != label)
+            .count() as f64;
+        let denominator = 2.0 * true_positive + false_positive + false_negative;
+        if denominator > 0.0 {
+            total += 2.0 * true_positive / denominator;
+        }
+    }
+    total / declared_classes as f64
 }
 
 // ---------------------------------------------------------------------------
@@ -1591,6 +2064,153 @@ mod tests {
         assert_eq!(secondary_metric("regression"), "rmse");
     }
 
+    #[test]
+    fn multiclass_decoding_preserves_declared_missing_classes_and_noise() {
+        let meta = serde_json::json!({
+            "target_scaling": {"classes": ["a", "b", "c", "d"]}
+        });
+        let train = [0.0 + 5e-7, 0.0, 2.0 / 3.0, 2.0 / 3.0 - 5e-7];
+        let test = [1.0 / 3.0, 1.0];
+        let decoded = decode_multiclass_splits(&train, &test, &meta).unwrap();
+        assert_eq!(decoded.train, vec![0.0, 0.0, 1.0, 1.0]);
+        assert_eq!(decoded.test, vec![1.0, 3.0]);
+        assert_eq!(decoded.context.observed_declared, vec![0, 2]);
+        assert_eq!(decoded.context.declared_classes, 4);
+    }
+
+    #[test]
+    fn multiclass_decoding_rejects_ambiguous_nonfinite_and_out_of_range_codes() {
+        let ambiguous = serde_json::json!({
+            "class_mapping": [
+                {"code": 0, "scaled_code": 0.0},
+                {"code": 1, "scaled_code": 0.0000015},
+                {"code": 2, "scaled_code": 1.0}
+            ]
+        });
+        assert!(
+            decode_multiclass_splits(&[0.00000075, 1.0], &[0.0], &ambiguous)
+                .unwrap_err()
+                .contains("ambiguous")
+        );
+        let ordinary = serde_json::json!({"target_scaling": {"classes": [0, 1, 2]}});
+        assert!(decode_multiclass_splits(&[0.0, f64::NAN], &[1.0], &ordinary).is_err());
+        assert!(decode_multiclass_splits(&[0.0, 0.5], &[0.51], &ordinary).is_err());
+    }
+
+    #[test]
+    fn multiclass_decoding_supports_one_hundred_declared_classes() {
+        let classes: Vec<usize> = (0..100).collect();
+        let meta = serde_json::json!({"target_scaling": {"classes": classes}});
+        let decoded = decode_multiclass_splits(&[0.0, 1.0], &[50.0 / 99.0], &meta).unwrap();
+        assert_eq!(decoded.context.declared_classes, 100);
+        assert_eq!(decoded.test, vec![50.0]);
+    }
+
+    #[test]
+    fn declared_macro_f1_assigns_zero_to_undefined_classes() {
+        assert_eq!(declared_macro_f1(&[0.0, 0.0], &[0.0, 0.0], 4), 0.25);
+    }
+
+    #[test]
+    fn multiclass_evaluation_returns_aligned_probability_evidence() {
+        let canonical = GenomeIr::parse(
+            "(pipe X (input numeric=median) \
+             (multiclass_ridge class_weight=balanced l2=0.02))",
+        )
+        .unwrap()
+        .canonical();
+        let candidate = ShardCandidate {
+            semantic_sha256: sha256_hex(canonical.as_bytes()),
+            canonical_genome: canonical,
+        };
+        let labels = vec![0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0];
+        let rows: Rows = labels
+            .iter()
+            .enumerate()
+            .map(|(row, label)| {
+                vec![
+                    f64::from(*label == 0.0) + row as f64 * 1e-3,
+                    f64::from(*label == 1.0),
+                    f64::from(*label == 2.0),
+                ]
+            })
+            .collect();
+        let table = raw_table(3, &rows).unwrap();
+        let context = MulticlassContext {
+            observed_declared: vec![0, 1, 2],
+            declared_classes: 3,
+        };
+        let outcome =
+            evaluate_multiclass(&candidate, &table, &labels, &table, &labels, 3, &context);
+        let Outcome::Score {
+            score,
+            secondary,
+            predictions,
+            multiclass: Some(evidence),
+            ..
+        } = outcome
+        else {
+            panic!("multiclass fixture did not produce a score");
+        };
+        assert!(score.is_finite() && secondary.is_finite());
+        assert_eq!(predictions.len(), labels.len());
+        assert_eq!(evidence.classes, vec![0, 1, 2]);
+        assert_eq!(evidence.probabilities.len(), labels.len());
+        assert!(evidence
+            .probabilities
+            .iter()
+            .all(|row| row.len() == 3 && (row.iter().sum::<f64>() - 1.0).abs() < 1e-12));
+    }
+
+    #[test]
+    fn multiclass_evaluation_accepts_singleton_and_pads_unseen_declared_class() {
+        let canonical = GenomeIr::parse(
+            "(pipe X (input numeric=median) \
+             (multiclass_ridge class_weight=balanced l2=0.02))",
+        )
+        .unwrap()
+        .canonical();
+        let candidate = ShardCandidate {
+            semantic_sha256: sha256_hex(canonical.as_bytes()),
+            canonical_genome: canonical,
+        };
+        let train_labels = vec![0.0, 0.0, 1.0, 1.0, 2.0];
+        let train_rows: Rows = train_labels
+            .iter()
+            .enumerate()
+            .map(|(row, label)| vec![*label, row as f64 * 1e-3])
+            .collect();
+        let test_labels = vec![0.0, 1.0, 2.0, 3.0];
+        let test_rows: Rows = test_labels
+            .iter()
+            .enumerate()
+            .map(|(row, label)| vec![*label, row as f64 * 1e-3])
+            .collect();
+        let context = MulticlassContext {
+            observed_declared: vec![0, 1, 2],
+            declared_classes: 4,
+        };
+        let outcome = evaluate_multiclass(
+            &candidate,
+            &raw_table(2, &train_rows).unwrap(),
+            &train_labels,
+            &raw_table(2, &test_rows).unwrap(),
+            &test_labels,
+            2,
+            &context,
+        );
+        let Outcome::Score {
+            multiclass: Some(evidence),
+            ..
+        } = outcome
+        else {
+            panic!("singleton-class multiclass fixture did not produce a score");
+        };
+        assert!(evidence.probabilities.iter().all(|row| {
+            row.len() == 4 && row[3] == 0.0 && (row.iter().sum::<f64>() - 1.0).abs() < 1e-12
+        }));
+    }
+
     fn shard(task: &str, authority: Option<LabelAuthority>) -> Shard {
         Shard {
             schema: SHARD_SCHEMA.to_string(),
@@ -1647,6 +2267,34 @@ mod tests {
         }
     }
 
+    fn multiclass_authority() -> LabelAuthority {
+        LabelAuthority {
+            score_tier: "test".to_string(),
+            metric: "macro_f1".to_string(),
+            test_adaptive: true,
+            benchmark_valid: false,
+            selection_bias: Some("test-selected".to_string()),
+            generation: "multiclass-generation-001".to_string(),
+            frozen_seed_sha256: "2".repeat(64),
+            model_checkpoint_sha256: "3".repeat(64),
+            hall_of_fame_sha256: "4".repeat(64),
+        }
+    }
+
+    fn timeseries_test_selected_authority() -> LabelAuthority {
+        LabelAuthority {
+            score_tier: "test_exact".to_string(),
+            metric: "negative_mase".to_string(),
+            test_adaptive: true,
+            benchmark_valid: false,
+            selection_bias: Some("test-selected".to_string()),
+            generation: "strict-wave-000001".to_string(),
+            frozen_seed_sha256: "2".repeat(64),
+            model_checkpoint_sha256: "3".repeat(64),
+            hall_of_fame_sha256: "4".repeat(64),
+        }
+    }
+
     #[test]
     fn legacy_shards_remain_adaptive() {
         let resolved = resolve_authority(&shard("regression", None)).unwrap();
@@ -1669,6 +2317,41 @@ mod tests {
         );
         assert_eq!(resolved.generation, "strict-wave-000001");
         assert!(resolved.authority_sha256.is_some());
+    }
+
+    #[test]
+    fn multiclass_authority_is_explicitly_test_selected_and_fail_closed() {
+        let resolved =
+            resolve_authority(&shard("multiclass", Some(multiclass_authority()))).unwrap();
+        assert_eq!(resolved.tier, "test");
+        assert_eq!(resolved.metric, "macro_f1");
+        assert_eq!(resolved.selection_bias.as_deref(), Some("test-selected"));
+        assert_eq!(resolved.generation, "multiclass-generation-001");
+        assert!(resolved.test_adaptive);
+        assert!(!resolved.benchmark_valid);
+
+        let mut wrong = multiclass_authority();
+        wrong.selection_bias = Some("test-exact-reused".to_string());
+        assert!(resolve_authority(&shard("multiclass", Some(wrong))).is_err());
+    }
+
+    #[test]
+    fn timeseries_authority_is_explicitly_test_selected_and_fail_closed() {
+        let resolved = resolve_authority(&shard(
+            "timeseries",
+            Some(timeseries_test_selected_authority()),
+        ))
+        .unwrap();
+        assert_eq!(resolved.tier, "test_exact");
+        assert_eq!(resolved.metric, "negative_mase");
+        assert_eq!(resolved.selection_bias.as_deref(), Some("test-selected"));
+        assert_eq!(resolved.generation, "strict-wave-000001");
+        assert!(resolved.test_adaptive);
+        assert!(!resolved.benchmark_valid);
+
+        let mut wrong = timeseries_test_selected_authority();
+        wrong.metric = "mase".to_string();
+        assert!(resolve_authority(&shard("timeseries", Some(wrong))).is_err());
     }
 
     #[test]

@@ -25,7 +25,8 @@ const OUTPUT_ROOT: &str = "/home/ubuntu/jope-test-adaptive/timeseries42";
 const SCQ_BINARY: &str = "/home/ubuntu/super_cluster/scq";
 const CORPUS_EVAL: &str = "/home/ubuntu/jope-dime/target/release/corpus_eval";
 const SOTARENA_PULL: &str = "/home/ubuntu/sotarena_pull/target/release/sotarena_pull";
-const PROJECT: &str = "jope";
+const LEGACY_PROJECT: &str = "jope";
+const FORECAST3_PROJECT: &str = "jope-timeseries-test-adaptive";
 const NODES: [&str; 4] = ["xbabe1", "xbabe2", "xbabe3", "xbabe4"];
 const LOCAL_SCQ_NODE: &str = "xbabe2";
 const POPULATION: usize = 60;
@@ -37,6 +38,26 @@ const DATASET_WORKERS_ENV: &str = "JOPE_TIMESERIES42_DATASET_WORKERS";
 const SKIP_RESUME_STAGING_VERIFY_ENV: &str = "JOPE_TIMESERIES42_SKIP_RESUME_STAGING_VERIFY";
 const FULL_RESUME_STAGING_VERIFY_ENV: &str = "JOPE_TIMESERIES42_FULL_RESUME_STAGING_VERIFY";
 const GENERATIONS: usize = 2;
+const FORECAST3_RUN_ID: &str = "timeseries42-test-adaptive-forecast3-gen20-v2";
+const FORECAST3_GENERATIONS: usize = 20;
+const COVERAGE_COMPARATOR_ROOT: &str =
+    "/home/ubuntu/jope-dime/campaigns/test-adaptive/comparators/post-coverage-v2";
+const COVERAGE_COMPARATOR_SET: &str =
+    "/home/ubuntu/jope-dime/campaigns/test-adaptive/comparators/post-coverage-v2/comparator-set.v2.json";
+const MC_COVERAGE_MANIFEST: &str =
+    "/home/ubuntu/remote_super/quant/releases/mc-union-runnable272-v5/manifest.json";
+const MC_COVERAGE_MANIFEST_SHA256: &str =
+    "93888beb0d24f7cb7f0def66c88127a6cee6d0606c25c11ddff82161506e4938";
+const MC_COVERAGE_RECEIPT: &str =
+    "/home/ubuntu/remote_super/quant/releases/mc-union-runnable272-v5/receipts/final.json";
+const TS_COVERAGE_MANIFEST: &str =
+    "/home/ubuntu/remote_super/quant/releases/timeseries42-forecast3-v10/manifest.json";
+const TS_COVERAGE_MANIFEST_SHA256: &str =
+    "dda881dab5eeebcd7293081df5838062c97cfb5e15b9383776a4a3630f32c06d";
+const TS_COVERAGE_RECEIPT: &str =
+    "/home/ubuntu/remote_super/quant/releases/timeseries42-forecast3-v10/receipts/final.json";
+const TS_BASELINE_RECEIPT: &str =
+    "/home/ubuntu/remote_super/quant/releases/mc272-ts42-coverage-v1/receipts/timeseries-baseline-all21.json";
 const GEN30_GENERATIONS: usize = 30;
 const GEN30_START_GENERATION: usize = GENERATIONS;
 const DEFAULT_WINALL_GENERATIONS: usize = 120;
@@ -66,7 +87,31 @@ const CORPUS_SHARD_SCHEMA: &str = "JopeFlywheelCorpusEvalShard.v1";
 /// binaries fail closed on (they reject the unknown schema string).
 const CORPUS_SHARD_SCHEMA_V2: &str = "JopeFlywheelCorpusEvalShard.v2";
 const JOPE_TIMESERIES_REPORT_SCHEMA: &str = "JopeTimeseries42DatasetReport.v1";
-const JOPE_TIMESERIES_REPORT_FILE: &str = "jope-dime-regressor.json";
+const JOPE_TIMESERIES_REPORT_FILE: &str =
+    "jope-dime-regressor-test-adaptive-forecast3-gen20-v2.json";
+const BASELINE_MODELS: [&str; 21] = [
+    "seasonal_naive",
+    "auto_arima",
+    "auto_ets",
+    "auto_theta",
+    "prophet",
+    "mlforecast_lightgbm",
+    "neuralforecast_nbeats",
+    "neuralforecast_patchtst",
+    "sktime_reduction_lightgbm",
+    "darts_tft",
+    "autogluon_timeseries",
+    "tabpfn_ts_3",
+    "tabicl_forecaster",
+    "chronos_2_small",
+    "timesfm_2_5_200m",
+    "moirai_2_small",
+    "tabfm_ensemble_regressor",
+    "gpt5p6sol_regressor",
+    "fable5_regressor",
+    "kimik3_regressor",
+    "grok4p5_regressor",
+];
 
 fn dataset_worker_count() -> Result<usize> {
     let Ok(value) = std::env::var(DATASET_WORKERS_ENV) else {
@@ -100,6 +145,16 @@ struct OfficialLeader {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
+struct ExternalReport {
+    model: String,
+    report_path: String,
+    report_sha256: String,
+    mase: f64,
+    rmse: f64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
 struct DatasetSpec {
     schema: String,
     dataset_hash: String,
@@ -129,6 +184,13 @@ struct DatasetSpec {
     /// for. Skipped when empty so historical manifests stay byte-identical.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     reduction_version: String,
+    /// The immutable external envelope used by the all-models campaign.  This
+    /// is absent from historical manifests so their canonical bytes remain
+    /// unchanged when they are resumed.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    accepted_external_reports: Vec<ExternalReport>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    comparator_lock_sha256: String,
     official_leader: OfficialLeader,
 }
 
@@ -217,6 +279,8 @@ struct CampaignConfig {
     candidate_threads: usize,
     candidate_timeout_seconds: u64,
     infrastructure_retries: usize,
+    #[serde(default, skip_serializing_if = "is_zero")]
+    minimum_generations: usize,
     ranking: String,
     win_rule: String,
     #[serde(default, skip_serializing_if = "String::is_empty")]
@@ -244,6 +308,15 @@ impl CampaignConfig {
         )
     }
 
+    fn forecast3_gen20() -> Self {
+        let mut config = Self::fixed_with_generations(
+            FORECAST3_GENERATIONS,
+            "stop after the first confirmed finite candidate with raw test MASE strictly lower than the frozen authorized external comparator, including generation 0; otherwise exhaust after generation 19",
+        );
+        config.minimum_generations = 0;
+        config
+    }
+
     fn winall(generations: usize, start_generation: usize, lineage_salt: &str) -> Self {
         let mut config = Self::fixed_with_generations(
             generations,
@@ -267,11 +340,28 @@ impl CampaignConfig {
             candidate_threads: SHARD_SIZE,
             candidate_timeout_seconds: CANDIDATE_TIMEOUT_SECONDS,
             infrastructure_retries: NODES.len() - 1,
+            minimum_generations: 0,
             ranking: "test_mase ASC, rmse ASC, complexity ASC, semantic_sha256 ASC".to_string(),
             win_rule: win_rule.to_string(),
             lineage_salt: String::new(),
             reduction_version: String::new(),
         }
+    }
+}
+
+fn is_zero(value: &usize) -> bool {
+    *value == 0
+}
+
+fn is_forecast3_gen20(run_id: &str) -> bool {
+    run_id == FORECAST3_RUN_ID
+}
+
+fn base_campaign_config(run_id: &str) -> CampaignConfig {
+    if is_forecast3_gen20(run_id) {
+        CampaignConfig::forecast3_gen20()
+    } else {
+        CampaignConfig::fixed()
     }
 }
 
@@ -296,11 +386,36 @@ struct CampaignManifest {
     corpus_eval_sha256: String,
     scq_binary: String,
     scq_binary_sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    coverage_binding: Option<CoverageBinding>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    seed_populations: Vec<SeedPopulationBinding>,
     ordered_dataset_ids: Vec<String>,
     ordered_cohort_sha256: String,
     config: CampaignConfig,
     datasets: Vec<DatasetSpec>,
     started_at_unix_ms: u128,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+struct SeedPopulationBinding {
+    dataset_hash: String,
+    seed_bank_path: String,
+    seed_bank_sha256: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+struct CoverageBinding {
+    multiclass_manifest_sha256: String,
+    multiclass_final_receipt_sha256: String,
+    timeseries_manifest_sha256: String,
+    timeseries_final_receipt_sha256: String,
+    timeseries_baseline_receipt_sha256: String,
+    comparator_root: String,
+    comparator_set_path: String,
+    comparator_set_sha256: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -364,12 +479,30 @@ struct ShardCandidate {
 #[serde(deny_unknown_fields)]
 struct CorpusShardManifest {
     schema: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    run_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    campaign_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    release_binary_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    comparator_lock_sha256: Option<String>,
     task: String,
     dataset_hash: String,
     train_csv: String,
     test_csv: String,
     train_sha256: String,
     test_sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    checkpoint_epoch: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    checkpoint_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    catalog_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    protocol_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    generated_at_ms: Option<u128>,
     label_authority: LabelAuthority,
     meta_json: String,
     meta_sha256: String,
@@ -511,6 +644,7 @@ struct EvalReceipt {
     runtime_seconds: f64,
     predictions_sha256: Option<String>,
     rmse: Option<f64>,
+    protocol_sha256: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -698,11 +832,15 @@ fn required_usize(value: &Value, key: &str) -> Result<usize> {
         .with_context(|| format!("meta_json missing numeric {key}"))
 }
 
-fn official_leader(dataset_dir: &Path) -> Result<OfficialLeader> {
+fn external_reports(dataset_dir: &Path, dataset_hash: &str) -> Result<Vec<ExternalReport>> {
     let reports = dataset_dir.join("reports");
-    let mut best: Option<OfficialLeader> = None;
-    for entry in fs::read_dir(&reports).with_context(|| format!("read {}", reports.display()))? {
-        let path = entry?.path();
+    let mut paths = fs::read_dir(&reports)
+        .with_context(|| format!("read {}", reports.display()))?
+        .map(|entry| Ok(entry?.path()))
+        .collect::<Result<Vec<_>>>()?;
+    paths.sort();
+    let mut accepted = Vec::new();
+    for path in paths {
         if path.extension().and_then(|value| value.to_str()) != Some("json") {
             continue;
         }
@@ -712,10 +850,18 @@ fn official_leader(dataset_dir: &Path) -> Result<OfficialLeader> {
             Err(_) => continue,
         };
         if value.get("task_type").and_then(Value::as_str) != Some("timeseries")
-            || matches!(
+            || !matches!(
                 value.get("status").and_then(Value::as_str),
-                Some("failed" | "error" | "timeout")
+                Some("completed" | "completed-valid")
             )
+            || value.get("test_adaptive").and_then(Value::as_bool) == Some(true)
+        {
+            continue;
+        }
+        if value
+            .get("dataset_hash")
+            .and_then(Value::as_str)
+            .is_some_and(|bound| bound != dataset_hash)
         {
             continue;
         }
@@ -735,27 +881,42 @@ fn official_leader(dataset_dir: &Path) -> Result<OfficialLeader> {
         let Some(mase) = finite_metric(&value, "mase") else {
             continue;
         };
-        let rmse = finite_metric(&value, "rmse").unwrap_or(f64::INFINITY);
-        let candidate = OfficialLeader {
+        let Some(rmse) = finite_metric(&value, "rmse") else {
+            continue;
+        };
+        accepted.push(ExternalReport {
             model,
             mase,
             rmse,
             report_path: path.to_string_lossy().into_owned(),
             report_sha256: sha256_bytes(&bytes),
-        };
-        let replace = best.as_ref().is_none_or(|prior| {
-            candidate
-                .mase
-                .total_cmp(&prior.mase)
-                .then(candidate.rmse.total_cmp(&prior.rmse))
-                .then(candidate.model.cmp(&prior.model))
-                == Ordering::Less
         });
-        if replace {
-            best = Some(candidate);
-        }
     }
-    best.with_context(|| {
+    if accepted.is_empty() {
+        bail!(
+            "{} has no finite completed non-Jope external time-series report",
+            dataset_dir.display()
+        );
+    }
+    Ok(accepted)
+}
+
+fn official_leader(accepted: &[ExternalReport], dataset_dir: &Path) -> Result<OfficialLeader> {
+    let best = accepted.iter().min_by(|left, right| {
+        left.mase
+            .total_cmp(&right.mase)
+            .then(left.rmse.total_cmp(&right.rmse))
+            .then(left.model.cmp(&right.model))
+            .then(left.report_sha256.cmp(&right.report_sha256))
+    });
+    best.map(|report| OfficialLeader {
+        model: report.model.clone(),
+        mase: report.mase,
+        rmse: report.rmse,
+        report_path: report.report_path.clone(),
+        report_sha256: report.report_sha256.clone(),
+    })
+    .with_context(|| {
         format!(
             "{} has no finite non-Jope official time-series MASE report",
             dataset_dir.display()
@@ -763,7 +924,349 @@ fn official_leader(dataset_dir: &Path) -> Result<OfficialLeader> {
     })
 }
 
-fn load_dataset_specs() -> Result<Vec<DatasetSpec>> {
+fn embedded_payload_sha256(value: &Value, key: &str) -> Result<String> {
+    let embedded = value
+        .get(key)
+        .and_then(Value::as_str)
+        .filter(|digest| digest.len() == 64 && digest.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        .with_context(|| format!("missing or invalid {key}"))?
+        .to_string();
+    let mut unsigned = value.clone();
+    unsigned
+        .as_object_mut()
+        .context("hashed payload must be an object")?
+        .remove(key);
+    if sha256_bytes(&serde_json::to_vec(&unsigned)?) != embedded {
+        bail!("{key} digest drift");
+    }
+    Ok(embedded)
+}
+
+fn validate_coverage_final_receipt(
+    path: &Path,
+    campaign_id: &str,
+    manifest_sha256: &str,
+    task: &str,
+    expected: usize,
+) -> Result<String> {
+    let value: Value = load_json(path)?;
+    if value.get("schema").and_then(Value::as_str) != Some("coverage.final-receipt.v1")
+        || value.get("campaign_id").and_then(Value::as_str) != Some(campaign_id)
+        || value
+            .get("campaign_manifest_sha256")
+            .and_then(Value::as_str)
+            != Some(manifest_sha256)
+        || value.get("task").and_then(Value::as_str) != Some(task)
+        || value.get("expected").and_then(Value::as_u64) != Some(expected as u64)
+        || value.get("valid").and_then(Value::as_u64) != Some(expected as u64)
+        || value.get("missing").and_then(Value::as_u64) != Some(0)
+        || value.get("invalid").and_then(Value::as_u64) != Some(0)
+        || value.get("complete").and_then(Value::as_bool) != Some(true)
+        || value.get("reports").and_then(Value::as_array).map(Vec::len) != Some(expected)
+    {
+        bail!("invalid or incomplete coverage receipt {}", path.display());
+    }
+    let receipt_sha256 = embedded_payload_sha256(&value, "receipt_sha256")?;
+    validate_receipt_report_files(&value, expected, true)?;
+    Ok(receipt_sha256)
+}
+
+fn validate_timeseries_baseline_receipt() -> Result<String> {
+    let value: Value = load_json(Path::new(TS_BASELINE_RECEIPT))?;
+    if value.get("schema").and_then(Value::as_str)
+        != Some("timeseries42.baseline-all21-final-receipt.v1")
+        || value.get("parent_manifest_sha256").and_then(Value::as_str)
+            != Some("75194fba4d85aefd9e065cd71bd95d3b9a9744cace74a7e2aa92859887ca8885")
+        || value.get("repair_manifest_sha256").and_then(Value::as_str)
+            != Some(TS_COVERAGE_MANIFEST_SHA256)
+        || value.get("expected").and_then(Value::as_u64) != Some(882)
+        || value.get("completed_numeric").and_then(Value::as_u64) != Some(877)
+        || value.get("skipped_ineligible").and_then(Value::as_u64) != Some(5)
+        || value.get("missing").and_then(Value::as_u64) != Some(0)
+        || value.get("invalid").and_then(Value::as_u64) != Some(0)
+        || value.get("errored").and_then(Value::as_u64) != Some(0)
+        || value.get("complete").and_then(Value::as_bool) != Some(true)
+        || value.get("reports").and_then(Value::as_array).map(Vec::len) != Some(882)
+    {
+        bail!("invalid exact 877+5 time-series baseline receipt");
+    }
+    let receipt_sha256 = embedded_payload_sha256(&value, "receipt_sha256")?;
+    validate_receipt_report_files(&value, 882, false)?;
+    Ok(receipt_sha256)
+}
+
+fn validate_coverage_binding() -> Result<CoverageBinding> {
+    for (path, schema, campaign_id, expected_sha256) in [
+        (
+            MC_COVERAGE_MANIFEST,
+            "multiclass-union-runnable-v5",
+            "mc-union-runnable272-v5",
+            MC_COVERAGE_MANIFEST_SHA256,
+        ),
+        (
+            TS_COVERAGE_MANIFEST,
+            "timeseries42-forecast-campaign-v10",
+            "timeseries42-forecast3-v10",
+            TS_COVERAGE_MANIFEST_SHA256,
+        ),
+    ] {
+        let value: Value = load_json(Path::new(path))?;
+        if value.get("schema_version").and_then(Value::as_str) != Some(schema)
+            || value.get("campaign_id").and_then(Value::as_str) != Some(campaign_id)
+            || embedded_payload_sha256(&value, "manifest_sha256")? != expected_sha256
+        {
+            bail!("coverage successor manifest drift at {path}");
+        }
+    }
+    let multiclass_final_receipt_sha256 = validate_coverage_final_receipt(
+        Path::new(MC_COVERAGE_RECEIPT),
+        "mc-union-runnable272-v5",
+        MC_COVERAGE_MANIFEST_SHA256,
+        "multiclass",
+        11_696,
+    )?;
+    let timeseries_final_receipt_sha256 = validate_coverage_final_receipt(
+        Path::new(TS_COVERAGE_RECEIPT),
+        "timeseries42-forecast3-v10",
+        TS_COVERAGE_MANIFEST_SHA256,
+        "timeseries",
+        126,
+    )?;
+    let timeseries_baseline_receipt_sha256 = validate_timeseries_baseline_receipt()?;
+    let set: Value = load_json(Path::new(COVERAGE_COMPARATOR_SET))?;
+    if set.get("schema").and_then(Value::as_str) != Some("test-adaptive-comparator-set.v2")
+        || set.get("root").and_then(Value::as_str) != Some(COVERAGE_COMPARATOR_ROOT)
+        || set
+            .get("multiclass_coverage_receipt_sha256")
+            .and_then(Value::as_str)
+            != Some(multiclass_final_receipt_sha256.as_str())
+        || set
+            .get("timeseries_coverage_receipt_sha256")
+            .and_then(Value::as_str)
+            != Some(timeseries_final_receipt_sha256.as_str())
+        || set
+            .get("timeseries_baseline_receipt_sha256")
+            .and_then(Value::as_str)
+            != Some(timeseries_baseline_receipt_sha256.as_str())
+        || set.get("lock_count").and_then(Value::as_u64) != Some(314)
+        || set.get("locks").and_then(Value::as_array).map(Vec::len) != Some(314)
+    {
+        bail!("post-coverage comparator set identity drift");
+    }
+    let comparator_set_sha256 = embedded_payload_sha256(&set, "comparator_set_sha256")?;
+    Ok(CoverageBinding {
+        multiclass_manifest_sha256: MC_COVERAGE_MANIFEST_SHA256.to_string(),
+        multiclass_final_receipt_sha256,
+        timeseries_manifest_sha256: TS_COVERAGE_MANIFEST_SHA256.to_string(),
+        timeseries_final_receipt_sha256,
+        timeseries_baseline_receipt_sha256,
+        comparator_root: COVERAGE_COMPARATOR_ROOT.to_string(),
+        comparator_set_path: COVERAGE_COMPARATOR_SET.to_string(),
+        comparator_set_sha256,
+    })
+}
+
+fn bind_forecast3_comparators(specs: &mut [DatasetSpec], coverage: &CoverageBinding) -> Result<()> {
+    for spec in specs {
+        let authorized = BASELINE_MODELS
+            .iter()
+            .copied()
+            .filter(|model| !declared_baseline_skip(&spec.dataset_hash, model))
+            .collect::<BTreeSet<_>>();
+        let path = Path::new(COVERAGE_COMPARATOR_ROOT)
+            .join("timeseries")
+            .join(&spec.dataset_hash)
+            .join("comparator-lock.v2.json");
+        let lock: Value = load_json(&path)?;
+        if lock.get("schema").and_then(Value::as_str) != Some("test-adaptive-comparator-lock-v2")
+            || lock.get("task").and_then(Value::as_str) != Some("timeseries")
+            || lock.get("dataset_hash").and_then(Value::as_str) != Some(spec.dataset_hash.as_str())
+            || lock.get("run_id").and_then(Value::as_str) != Some(FORECAST3_RUN_ID)
+            || lock.get("coverage_campaign_id").and_then(Value::as_str)
+                != Some("timeseries42-forecast3-v10")
+            || lock.get("coverage_manifest_sha256").and_then(Value::as_str)
+                != Some(TS_COVERAGE_MANIFEST_SHA256)
+            || lock
+                .get("coverage_final_receipt_sha256")
+                .and_then(Value::as_str)
+                != Some(coverage.timeseries_final_receipt_sha256.as_str())
+            || lock
+                .get("timeseries_baseline_receipt_sha256")
+                .and_then(Value::as_str)
+                != Some(coverage.timeseries_baseline_receipt_sha256.as_str())
+            || lock.get("accepted_report_count").and_then(Value::as_u64)
+                != Some(authorized.len() as u64)
+        {
+            bail!(
+                "timeseries comparator lock identity drift at {}",
+                path.display()
+            );
+        }
+        let protocol_sha256 = lock
+            .get("protocol_sha256")
+            .and_then(Value::as_str)
+            .context("timeseries comparator lacks protocol_sha256")?;
+        let mut protocol = lock
+            .get("protocol")
+            .cloned()
+            .context("timeseries comparator lacks protocol")?;
+        let evaluator_sha256 = current_corpus_eval_sha256()?;
+        if protocol.get("protocol_sha256").and_then(Value::as_str) != Some(protocol_sha256)
+            || protocol
+                .pointer("/evaluator/sha256")
+                .and_then(Value::as_str)
+                != Some(evaluator_sha256.as_str())
+            || protocol.get("minimum_generations").and_then(Value::as_u64) != Some(0)
+            || protocol.get("maximum_generations").and_then(Value::as_u64) != Some(20)
+            || protocol.get("population").and_then(Value::as_u64) != Some(60)
+        {
+            bail!("timeseries comparator protocol drift at {}", path.display());
+        }
+        protocol
+            .as_object_mut()
+            .context("timeseries comparator protocol must be an object")?
+            .remove("protocol_sha256");
+        if sha256_bytes(&serde_json::to_vec(&protocol)?) != protocol_sha256 {
+            bail!(
+                "timeseries comparator protocol digest drift at {}",
+                path.display()
+            );
+        }
+        let files = lock
+            .get("dataset_file_hashes")
+            .and_then(Value::as_object)
+            .context("timeseries comparator lacks dataset file hashes")?;
+        if files.get("train.csv").and_then(Value::as_str) != Some(spec.train_sha256.as_str())
+            || files.get("test.csv").and_then(Value::as_str) != Some(spec.test_sha256.as_str())
+            || files.get("meta.json").and_then(Value::as_str) != Some(spec.meta_sha256.as_str())
+        {
+            bail!("timeseries comparator input drift at {}", path.display());
+        }
+        let accepted = lock
+            .get("accepted_reports")
+            .and_then(Value::as_array)
+            .context("timeseries comparator lacks accepted reports")?;
+        let mut reports = Vec::with_capacity(authorized.len());
+        for row in accepted {
+            let model = row
+                .get("model")
+                .and_then(Value::as_str)
+                .context("timeseries comparator report lacks model")?;
+            let report_path = row
+                .get("report_path")
+                .and_then(Value::as_str)
+                .context("timeseries comparator report lacks path")?;
+            let report_sha256 = row
+                .get("report_sha256")
+                .and_then(Value::as_str)
+                .context("timeseries comparator report lacks digest")?;
+            let mase = row
+                .get("primary")
+                .and_then(Value::as_f64)
+                .filter(|v| v.is_finite());
+            let rmse = row
+                .get("secondary")
+                .and_then(Value::as_f64)
+                .filter(|v| v.is_finite());
+            if !authorized.contains(model)
+                || sha256_file(Path::new(report_path))? != report_sha256
+                || mase.is_none()
+                || rmse.is_none()
+            {
+                bail!("invalid authorized comparator report at {}", path.display());
+            }
+            reports.push(ExternalReport {
+                model: model.to_string(),
+                report_path: report_path.to_string(),
+                report_sha256: report_sha256.to_string(),
+                mase: mase.unwrap(),
+                rmse: rmse.unwrap(),
+            });
+        }
+        if reports.len() != authorized.len()
+            || reports
+                .iter()
+                .map(|row| row.model.as_str())
+                .collect::<BTreeSet<_>>()
+                != authorized
+        {
+            bail!(
+                "timeseries comparator report membership drift at {}",
+                path.display()
+            );
+        }
+        reports.sort_by(|left, right| {
+            left.mase
+                .total_cmp(&right.mase)
+                .then(left.rmse.total_cmp(&right.rmse))
+                .then(left.model.cmp(&right.model))
+                .then(left.report_sha256.cmp(&right.report_sha256))
+        });
+        spec.official_leader = official_leader(&reports, Path::new(&spec.train_path))?;
+        spec.accepted_external_reports = reports;
+        spec.comparator_lock_sha256 = embedded_payload_sha256(&lock, "lock_sha256")?;
+    }
+    Ok(())
+}
+
+fn declared_baseline_skip(dataset_hash: &str, model: &str) -> bool {
+    matches!(
+        (dataset_hash, model),
+        ("080d2674945eb5d7", "autogluon_timeseries")
+            | ("c400e4876a9046ae", "autogluon_timeseries")
+            | ("c43cfcfc9313d051", "autogluon_timeseries")
+            | ("080d2674945eb5d7", "sktime_reduction_lightgbm")
+            | ("c43cfcfc9313d051", "sktime_reduction_lightgbm")
+    )
+}
+
+fn verify_allmodels_baseline(
+    dataset_dir: &Path,
+    dataset_hash: &str,
+    accepted: &[ExternalReport],
+) -> Result<()> {
+    let accepted_models = accepted
+        .iter()
+        .map(|row| row.model.as_str())
+        .collect::<BTreeSet<_>>();
+    for model in BASELINE_MODELS {
+        let path = dataset_dir.join("reports").join(format!("{model}.json"));
+        let value: Value = serde_json::from_slice(
+            &fs::read(&path)
+                .with_context(|| format!("missing baseline report {}", path.display()))?,
+        )
+        .with_context(|| format!("parse baseline report {}", path.display()))?;
+        if value.get("dataset_hash").and_then(Value::as_str) != Some(dataset_hash)
+            || value.get("task_type").and_then(Value::as_str) != Some("timeseries")
+            || value.get("test_adaptive").and_then(Value::as_bool) == Some(true)
+        {
+            bail!("baseline report identity drift at {}", path.display());
+        }
+        let status = value.get("status").and_then(Value::as_str).unwrap_or("");
+        if declared_baseline_skip(dataset_hash, model) {
+            if status != "skipped-ineligible" {
+                bail!("declared eligibility terminal drift at {}", path.display());
+            }
+        } else if !matches!(status, "completed" | "completed-valid")
+            || finite_metric(&value, "mase").is_none()
+            || finite_metric(&value, "rmse").is_none()
+            || !accepted_models.contains(model)
+        {
+            bail!("numeric baseline is incomplete at {}", path.display());
+        }
+    }
+    let expected_numeric = BASELINE_MODELS
+        .iter()
+        .filter(|model| !declared_baseline_skip(dataset_hash, model))
+        .copied()
+        .collect::<BTreeSet<_>>();
+    if accepted_models != expected_numeric {
+        bail!("baseline comparator envelope drift for {dataset_hash}");
+    }
+    Ok(())
+}
+
+fn load_dataset_specs(require_allmodels_baseline: bool) -> Result<Vec<DatasetSpec>> {
     let registry = Path::new(REGISTRY);
     let mut dirs = fs::read_dir(registry)
         .with_context(|| format!("read {REGISTRY}"))?
@@ -828,6 +1331,11 @@ fn load_dataset_specs() -> Result<Vec<DatasetSpec>> {
         let data = validate_timeseries_data(train, test, &meta, &manifest_spec)
             .with_context(|| format!("validate time-series data for {dataset_hash}"))?;
         let reduction_features = make_supervised_reduction(&data)?.feature_names.len();
+        let accepted_external_reports = external_reports(&dir, &dataset_hash)?;
+        if require_allmodels_baseline {
+            verify_allmodels_baseline(&dir, &dataset_hash, &accepted_external_reports)?;
+        }
+        let official_leader = official_leader(&accepted_external_reports, &dir)?;
         specs.push(DatasetSpec {
             schema: DATASET_SCHEMA.to_string(),
             dataset_hash,
@@ -866,7 +1374,9 @@ fn load_dataset_specs() -> Result<Vec<DatasetSpec>> {
                 .and_then(Value::as_bool)
                 .unwrap_or(false),
             reduction_version: String::new(),
-            official_leader: official_leader(&dir)?,
+            accepted_external_reports,
+            comparator_lock_sha256: String::new(),
+            official_leader,
         });
     }
     Ok(specs)
@@ -1353,6 +1863,31 @@ fn load_existing_seed_bank(root: &Path, spec: &DatasetSpec) -> Result<(SeedBank,
         );
     }
     read_seed_bank(&path, spec)
+}
+
+fn seed_population_bindings(
+    root: &Path,
+    specs: &[DatasetSpec],
+    create: bool,
+) -> Result<Vec<SeedPopulationBinding>> {
+    specs
+        .iter()
+        .map(|spec| {
+            let path = dataset_root(root, &spec.dataset_hash)
+                .join("seeds")
+                .join("generation-zero.v1.json");
+            let (_, seed_bank_sha256) = if create {
+                load_or_create_seed_bank(root, spec)?
+            } else {
+                load_existing_seed_bank(root, spec)?
+            };
+            Ok(SeedPopulationBinding {
+                dataset_hash: spec.dataset_hash.clone(),
+                seed_bank_path: path.display().to_string(),
+                seed_bank_sha256,
+            })
+        })
+        .collect()
 }
 
 fn current_corpus_eval_sha256() -> Result<String> {
@@ -1897,7 +2432,7 @@ fn label_authority(
         metric: "negative_mase".to_string(),
         test_adaptive: true,
         benchmark_valid: false,
-        selection_bias: Some("test-exact-reused".to_string()),
+        selection_bias: Some("test-selected".to_string()),
         generation: format!("strict-wave-{generation:06}"),
         frozen_seed_sha256: seed_sha256.to_string(),
         model_checkpoint_sha256: release_sha256.to_string(),
@@ -1910,6 +2445,8 @@ fn corpus_manifest(
     members: &[Member],
     paths: (&str, &str, &str),
     authority: LabelAuthority,
+    protocol_sha256: Option<&str>,
+    execution_binding: Option<(&str, &str, &str)>,
 ) -> Result<CorpusShardManifest> {
     let (schema, reduction) = match spec.reduction()? {
         ReductionVersion::V1 => (CORPUS_SHARD_SCHEMA, None),
@@ -1920,14 +2457,35 @@ fn corpus_manifest(
             }),
         ),
     };
+    let checkpoint_sha256 = protocol_sha256.map(|_| authority.model_checkpoint_sha256.clone());
+    let (run_id, campaign_sha256, release_binary_sha256) = execution_binding
+        .map(|(run_id, campaign_sha256, release_binary_sha256)| {
+            (
+                Some(run_id.to_string()),
+                Some(campaign_sha256.to_string()),
+                Some(release_binary_sha256.to_string()),
+            )
+        })
+        .unwrap_or((None, None, None));
     Ok(CorpusShardManifest {
         schema: schema.to_string(),
+        run_id,
+        campaign_sha256,
+        release_binary_sha256,
+        comparator_lock_sha256: execution_binding.map(|_| spec.comparator_lock_sha256.clone()),
         task: "timeseries".to_string(),
         dataset_hash: spec.dataset_hash.clone(),
         train_csv: paths.0.to_string(),
         test_csv: paths.1.to_string(),
         train_sha256: spec.train_sha256.clone(),
         test_sha256: spec.test_sha256.clone(),
+        checkpoint_epoch: checkpoint_sha256
+            .as_ref()
+            .map(|digest| format!("checkpoint-{digest}")),
+        checkpoint_sha256,
+        catalog_sha256: protocol_sha256.map(|_| authority.frozen_seed_sha256.clone()),
+        protocol_sha256: protocol_sha256.map(str::to_string),
+        generated_at_ms: protocol_sha256.map(|_| 0),
         label_authority: authority,
         meta_json: paths.2.to_string(),
         meta_sha256: spec.meta_sha256.clone(),
@@ -1946,6 +2504,26 @@ fn corpus_manifest(
             })
             .collect(),
     })
+}
+
+fn dataset_protocol_sha256(spec: &DatasetSpec) -> Result<String> {
+    let path = Path::new(COVERAGE_COMPARATOR_ROOT)
+        .join("timeseries")
+        .join(&spec.dataset_hash)
+        .join("comparator-lock.v2.json");
+    let lock: Value = load_json(&path)?;
+    let protocol = lock
+        .get("protocol_sha256")
+        .and_then(Value::as_str)
+        .context("timeseries comparator lacks protocol_sha256")?;
+    if lock
+        .pointer("/protocol/protocol_sha256")
+        .and_then(Value::as_str)
+        != Some(protocol)
+    {
+        bail!("timeseries comparator protocol drift at {}", path.display());
+    }
+    Ok(protocol.to_string())
 }
 
 fn validate_with_corpus_eval(manifest: &Path) -> Result<()> {
@@ -1988,6 +2566,7 @@ fn scq_spec(
     job_id: &str,
     remote_manifest: &str,
     remote_output: &str,
+    project: &str,
 ) -> Result<String> {
     let args = [
         "RAYON_NUM_THREADS=1".to_string(),
@@ -2023,7 +2602,7 @@ fn scq_spec(
         .collect::<std::result::Result<Vec<_>, _>>()?
         .join(", ");
     Ok(format!(
-        "[job]\nid = {job_id:?}\nproject = {PROJECT:?}\ncommand = \"/usr/bin/env\"\nargs = [{rendered_args}]\nworkdir = {workdir:?}\ntier = \"normal\"\n\n[resource]\ngpus_per_task = 0\ncpus_reserved = {SHARD_SIZE}\nomp_threads = 1\nram_gb = 0\ngang_size = 1\nplacement = \"single_node\"\n\n[[dependencies.smoke]]\nname = {probe_name:?}\ncommand = \"/usr/bin/test\"\nargs = [{rendered_node_probe_args}]\ntimeout_secs = 5\n\n[preempt]\npreemptible = false\nsignal = \"SIGTERM\"\ngrace_seconds = 60\n\n[limits]\nmax_runtime_hours = 24\nmax_restarts = 0\n",
+        "[job]\nid = {job_id:?}\nproject = {project:?}\ncommand = \"/usr/bin/env\"\nargs = [{rendered_args}]\nworkdir = {workdir:?}\ntier = \"normal\"\n\n[resource]\ngpus_per_task = 0\ncpus_reserved = {SHARD_SIZE}\nomp_threads = 1\nram_gb = 0\ngang_size = 1\nplacement = \"single_node\"\n\n[[dependencies.smoke]]\nname = {probe_name:?}\ncommand = \"/usr/bin/test\"\nargs = [{rendered_node_probe_args}]\ntimeout_secs = 5\n\n[preempt]\npreemptible = false\nsignal = \"SIGTERM\"\ngrace_seconds = 60\n\n[limits]\nmax_runtime_hours = 24\nmax_restarts = 0\n",
         workdir = node.bundle_root,
         probe_name = format!("TimeSeries42 staged node {}", node.node),
     ))
@@ -2221,7 +2800,16 @@ fn submit_batch(spec_paths: &[PathBuf]) -> Result<()> {
     Ok(())
 }
 
-fn preflight_representative_scq_checks(root: &Path, staging: &StagingReceipt) -> Result<()> {
+fn preflight_representative_scq_checks(
+    root: &Path,
+    staging: &StagingReceipt,
+    run_id: &str,
+) -> Result<()> {
+    let project = if is_forecast3_gen20(run_id) {
+        FORECAST3_PROJECT
+    } else {
+        LEGACY_PROJECT
+    };
     let mut passed = 0usize;
     for node in &staging.nodes {
         let job_id = format!(
@@ -2234,6 +2822,7 @@ fn preflight_representative_scq_checks(root: &Path, staging: &StagingReceipt) ->
             &job_id,
             &format!("{}/preflight/manifest.json", node.bundle_root),
             &format!("{}/preflight/{job_id}/output", node.bundle_root),
+            project,
         )?;
         let spec_sha256 = sha256_bytes(spec.as_bytes());
         let spec_path = root.join("preflight").join("scq-checks").join(format!(
@@ -2324,17 +2913,28 @@ fn prepare_shard(
     let node = staged_node(staging, node_name)?;
     let staged = staged_dataset(staging, node_name, &spec.dataset_hash)?;
     let authority = label_authority(generation, seed_sha256, release_sha256, campaign_sha256);
+    let protocol_sha256 = if is_forecast3_gen20(run_id) {
+        Some(dataset_protocol_sha256(spec)?)
+    } else {
+        None
+    };
+    let execution_binding =
+        is_forecast3_gen20(run_id).then_some((run_id, campaign_sha256, release_sha256));
     let remote_manifest_value = corpus_manifest(
         spec,
         members,
         (&staged.train_path, &staged.test_path, &staged.meta_path),
         authority.clone(),
+        protocol_sha256.as_deref(),
+        execution_binding,
     )?;
     let local_manifest_value = corpus_manifest(
         spec,
         members,
         (&spec.train_path, &spec.test_path, &spec.meta_path),
         authority,
+        protocol_sha256.as_deref(),
+        execution_binding,
     )?;
     let local_manifest_bytes = canonical_json(&local_manifest_value)?;
     let local_manifest_sha256 = sha256_bytes(&local_manifest_bytes);
@@ -2369,7 +2969,12 @@ fn prepare_shard(
         node.bundle_root
     );
     let remote_output = format!("{}/jobs/{job_id}/output", node.bundle_root);
-    let spec_text = scq_spec(node, &job_id, &remote_manifest, &remote_output)?;
+    let project = if is_forecast3_gen20(run_id) {
+        FORECAST3_PROJECT
+    } else {
+        LEGACY_PROJECT
+    };
+    let spec_text = scq_spec(node, &job_id, &remote_manifest, &remote_output, project)?;
     let spec_path = root
         .join("jobs")
         .join("specs")
@@ -2637,17 +3242,28 @@ fn execute_shard(
     let node = staged_node(staging, node_name)?;
     let staged = staged_dataset(staging, node_name, &spec.dataset_hash)?;
     let authority = label_authority(generation, seed_sha256, release_sha256, campaign_sha256);
+    let protocol_sha256 = if is_forecast3_gen20(run_id) {
+        Some(dataset_protocol_sha256(spec)?)
+    } else {
+        None
+    };
+    let execution_binding =
+        is_forecast3_gen20(run_id).then_some((run_id, campaign_sha256, release_sha256));
     let remote_manifest_value = corpus_manifest(
         spec,
         members,
         (&staged.train_path, &staged.test_path, &staged.meta_path),
         authority.clone(),
+        protocol_sha256.as_deref(),
+        execution_binding,
     )?;
     let local_manifest_value = corpus_manifest(
         spec,
         members,
         (&spec.train_path, &spec.test_path, &spec.meta_path),
         authority,
+        protocol_sha256.as_deref(),
+        execution_binding,
     )?;
     let local_manifest_bytes = canonical_json(&local_manifest_value)?;
     let local_manifest_sha256 = sha256_bytes(&local_manifest_bytes);
@@ -2682,7 +3298,12 @@ fn execute_shard(
         node.bundle_root
     );
     let remote_output = format!("{}/jobs/{job_id}/output", node.bundle_root);
-    let spec_text = scq_spec(node, &job_id, &remote_manifest, &remote_output)?;
+    let project = if is_forecast3_gen20(run_id) {
+        FORECAST3_PROJECT
+    } else {
+        LEGACY_PROJECT
+    };
+    let spec_text = scq_spec(node, &job_id, &remote_manifest, &remote_output, project)?;
     let spec_path = root
         .join("jobs")
         .join("specs")
@@ -2960,6 +3581,11 @@ fn evaluate_generation(
         &chunks,
     )?;
 
+    let expected_protocol = if is_forecast3_gen20(run_id) {
+        Some(dataset_protocol_sha256(spec)?)
+    } else {
+        None
+    };
     let mut slots = Vec::with_capacity(POPULATION);
     for record in &records {
         let receipts = read_receipts(Path::new(&record.receipt_file))?;
@@ -2972,6 +3598,9 @@ fn evaluate_generation(
             if receipt.dataset_hash != spec.dataset_hash
                 || receipt.semantic_sha256 != members[slot].semantic_sha256
                 || receipt.canonical_genome != members[slot].canonical_genome
+                || expected_protocol
+                    .as_ref()
+                    .is_some_and(|expected| receipt.protocol_sha256.as_deref() != Some(expected))
             {
                 bail!("TimeSeries42 receipt/member binding mismatch");
             }
@@ -3040,6 +3669,11 @@ fn load_generation_slots(
         );
     }
     let mut records = manifest.shards.clone();
+    let expected_protocol = if is_forecast3_gen20(run_id) {
+        Some(dataset_protocol_sha256(spec)?)
+    } else {
+        None
+    };
     records.sort_by_key(|record| record.shard);
     let mut seen_shards = BTreeSet::new();
     let mut slots = Vec::with_capacity(POPULATION);
@@ -3074,6 +3708,9 @@ fn load_generation_slots(
             if receipt.dataset_hash != spec.dataset_hash
                 || receipt.semantic_sha256 != manifest.members[slot].semantic_sha256
                 || receipt.canonical_genome != manifest.members[slot].canonical_genome
+                || expected_protocol
+                    .as_ref()
+                    .is_some_and(|expected| receipt.protocol_sha256.as_deref() != Some(expected))
             {
                 bail!("TimeSeries42 base receipt/member binding mismatch");
             }
@@ -3128,6 +3765,27 @@ fn slot_is_strict_winner(
         && slot.member.evolved_descendant
         && score.mase < spec.official_leader.mase
         && generation_zero_best.is_some_and(|g0| score.mase < g0)
+}
+
+fn slot_beats_external(slot: &LogicalSlot, spec: &DatasetSpec) -> bool {
+    slot.valid
+        && slot
+            .score
+            .as_ref()
+            .is_some_and(|score| score.mase.is_finite() && score.mase < spec.official_leader.mase)
+}
+
+fn slot_is_base_campaign_winner(
+    slot: &LogicalSlot,
+    spec: &DatasetSpec,
+    generation_zero_best: Option<f64>,
+    allow_generation_zero_win: bool,
+) -> bool {
+    if allow_generation_zero_win {
+        slot_beats_external(slot, spec)
+    } else {
+        slot_is_strict_winner(slot, spec, generation_zero_best, 1)
+    }
 }
 
 fn has_strict_winner_from_generation(
@@ -3352,6 +4010,24 @@ fn load_reusable_dataset_result(
     }
 }
 
+fn base_campaign_status(
+    run_id: &str,
+    strict_winner: bool,
+    best_score: Option<&TimeSeriesScore>,
+    official_mase: f64,
+) -> &'static str {
+    if is_forecast3_gen20(run_id) {
+        return if strict_winner { "win" } else { "exhausted" };
+    }
+    match (strict_winner, best_score) {
+        (true, _) => "win",
+        (_, None) => "exhausted",
+        (false, Some(score)) if score.mase.total_cmp(&official_mase) == Ordering::Equal => "tie",
+        (false, Some(score)) if score.mase > official_mase => "loss",
+        (false, Some(_)) => "exhausted",
+    }
+}
+
 fn write_dataset_result(
     root: &Path,
     run_id: &str,
@@ -3361,27 +4037,19 @@ fn write_dataset_result(
     all_slots: &[LogicalSlot],
     generation_zero_best: Option<f64>,
     release_sha256: &str,
+    allow_generation_zero_win: bool,
 ) -> Result<DatasetResult> {
     let mut ranked = all_slots.to_vec();
     ranked.sort_by(rank_slots);
     let best = ranked.iter().find(|slot| slot.valid);
-    let strict_winner =
-        best.is_some_and(|slot| slot_is_strict_winner(slot, spec, generation_zero_best, 1));
+    let strict_winner = best.is_some_and(|slot| {
+        slot_is_base_campaign_winner(slot, spec, generation_zero_best, allow_generation_zero_win)
+    });
     let best_score = best.and_then(|slot| slot.score.as_ref());
     let best_beats_official =
         best_score.is_some_and(|score| score.mase < spec.official_leader.mase);
-    let status = match (strict_winner, best_score) {
-        (true, _) => "win",
-        (_, None) => "exhausted",
-        (false, Some(score))
-            if score.mase.total_cmp(&spec.official_leader.mase) == Ordering::Equal =>
-        {
-            "tie"
-        }
-        (false, Some(score)) if score.mase > spec.official_leader.mase => "loss",
-        (false, Some(_)) => "exhausted",
-    }
-    .to_string();
+    let status = base_campaign_status(run_id, strict_winner, best_score, spec.official_leader.mase)
+        .to_string();
     let result = DatasetResult {
         schema: RESULT_SCHEMA.to_string(),
         test_adaptive: true,
@@ -3575,6 +4243,8 @@ fn run_dataset(
     spec: &DatasetSpec,
     staging: &StagingReceipt,
     release_sha256: &str,
+    config: &CampaignConfig,
+    allow_generation_zero_win: bool,
 ) -> Result<DatasetResult> {
     if let Some(result) =
         load_reusable_dataset_result(root, run_id, campaign_sha256, spec, release_sha256)?
@@ -3589,7 +4259,7 @@ fn run_dataset(
         .collect::<Vec<_>>();
     let mut all_slots = Vec::new();
     let mut generation_zero_best = None;
-    for generation in 0..GENERATIONS {
+    for generation in 0..config.generations {
         let mut slots = evaluate_generation(
             root,
             run_id,
@@ -3610,9 +4280,17 @@ fn run_dataset(
                 .and_then(|slot| slot.score.as_ref().map(|score| score.mase));
         }
         all_slots.append(&mut slots);
-        let has_strict_winner =
-            has_strict_winner_from_generation(&ranked, spec, generation_zero_best, 1);
-        if has_strict_winner || generation + 1 == GENERATIONS {
+        let has_strict_winner = ranked.iter().any(|slot| {
+            slot_is_base_campaign_winner(
+                slot,
+                spec,
+                generation_zero_best,
+                allow_generation_zero_win,
+            )
+        });
+        if (has_strict_winner && generation + 1 >= config.minimum_generations.max(1))
+            || generation + 1 == config.generations
+        {
             break;
         }
         members = next_population(spec, &ranked, generation + 1, "")?;
@@ -3626,6 +4304,7 @@ fn run_dataset(
         &all_slots,
         generation_zero_best,
         release_sha256,
+        allow_generation_zero_win,
     )
 }
 
@@ -3955,12 +4634,18 @@ fn run_winall_dataset(
 
 fn initialize(run_id: &str, resume: bool) -> Result<(CampaignManifest, StagingReceipt, String)> {
     validate_run_id(run_id)?;
+    let expected_coverage = if is_forecast3_gen20(run_id) {
+        Some(validate_coverage_binding()?)
+    } else {
+        None
+    };
     let root = campaign_root(run_id);
     fs::create_dir_all(&root)?;
     let release_sha256 = current_binary_sha256()?;
     let corpus_eval_sha256 = current_corpus_eval_sha256()?;
     let scq_binary_sha256 = sha256_file(Path::new(SCQ_BINARY))?;
     let manifest_path = root.join("campaign.v1.json");
+    let expected_config = base_campaign_config(run_id);
     let manifest = if manifest_path.is_file() {
         if !resume {
             bail!("TimeSeries42 campaign exists; pass --resume to reuse it");
@@ -3972,6 +4657,15 @@ fn initialize(run_id: &str, resume: bool) -> Result<(CampaignManifest, StagingRe
             || !manifest.test_adaptive
             || manifest.benchmark_valid
             || manifest.run_id != run_id
+            || manifest.config != expected_config
+            || manifest.coverage_binding != expected_coverage
+            || manifest.release_binary_sha256 != release_sha256
+            || manifest.corpus_eval_sha256 != corpus_eval_sha256
+            || manifest.scq_binary != SCQ_BINARY
+            || manifest.scq_binary_sha256 != scq_binary_sha256
+            || (is_forecast3_gen20(run_id)
+                && manifest.seed_populations
+                    != seed_population_bindings(&root, &manifest.datasets, false)?)
         {
             bail!(
                 "existing TimeSeries42 campaign manifest is invalid or bound to a different binary"
@@ -3979,8 +4673,16 @@ fn initialize(run_id: &str, resume: bool) -> Result<(CampaignManifest, StagingRe
         }
         manifest
     } else {
-        let specs = load_dataset_specs()?;
+        let mut specs = load_dataset_specs(false)?;
+        if let Some(coverage) = expected_coverage.as_ref() {
+            bind_forecast3_comparators(&mut specs, coverage)?;
+        }
         let ids = ordered_ids(&specs);
+        let seed_populations = if is_forecast3_gen20(run_id) {
+            seed_population_bindings(&root, &specs, true)?
+        } else {
+            Vec::new()
+        };
         let manifest = CampaignManifest {
             schema: CAMPAIGN_SCHEMA.to_string(),
             test_adaptive: true,
@@ -3996,9 +4698,11 @@ fn initialize(run_id: &str, resume: bool) -> Result<(CampaignManifest, StagingRe
             corpus_eval_sha256: corpus_eval_sha256.clone(),
             scq_binary: SCQ_BINARY.to_string(),
             scq_binary_sha256,
+            coverage_binding: expected_coverage,
+            seed_populations,
             ordered_dataset_ids: ids.clone(),
             ordered_cohort_sha256: ordered_cohort_sha256(&ids),
-            config: CampaignConfig::fixed(),
+            config: expected_config,
             datasets: specs,
             started_at_unix_ms: unix_millis(),
         };
@@ -4012,7 +4716,7 @@ fn initialize(run_id: &str, resume: bool) -> Result<(CampaignManifest, StagingRe
         &manifest.release_binary_sha256,
         &manifest.corpus_eval_sha256,
     )?;
-    preflight_representative_scq_checks(&root, &staging)?;
+    preflight_representative_scq_checks(&root, &staging, run_id)?;
     Ok((manifest, staging, campaign_sha256))
 }
 
@@ -4235,6 +4939,8 @@ fn initialize_gen30(
             corpus_eval_sha256: corpus_eval_sha256.clone(),
             scq_binary: SCQ_BINARY.to_string(),
             scq_binary_sha256,
+            coverage_binding: None,
+            seed_populations: Vec::new(),
             ordered_dataset_ids: ids.clone(),
             ordered_cohort_sha256: ordered_cohort_sha256(&ids),
             config: CampaignConfig::gen30(),
@@ -4251,7 +4957,7 @@ fn initialize_gen30(
         &manifest.release_binary_sha256,
         &manifest.corpus_eval_sha256,
     )?;
-    preflight_representative_scq_checks(&root, &staging)?;
+    preflight_representative_scq_checks(&root, &staging, run_id)?;
     Ok((base, manifest, staging, campaign_sha256))
 }
 
@@ -4323,6 +5029,8 @@ fn initialize_winall(
             corpus_eval_sha256: corpus_eval_sha256.clone(),
             scq_binary: SCQ_BINARY.to_string(),
             scq_binary_sha256,
+            coverage_binding: None,
+            seed_populations: Vec::new(),
             ordered_dataset_ids: ids.clone(),
             ordered_cohort_sha256: ordered_cohort_sha256(&ids),
             config: expected_config,
@@ -4339,7 +5047,7 @@ fn initialize_winall(
         &manifest.release_binary_sha256,
         &manifest.corpus_eval_sha256,
     )?;
-    preflight_representative_scq_checks(&root, &staging)?;
+    preflight_representative_scq_checks(&root, &staging, run_id)?;
     Ok((source, manifest, staging, campaign_sha256))
 }
 
@@ -4509,7 +5217,7 @@ fn timeseries_report_value(
         "source_path": result.best_receipt_file,
         "benchmark_valid": false,
         "test_adaptive": true,
-        "selection_bias": "held-out test MASE reused for generation selection",
+        "selection_bias": "test-selected",
         "train_rows": spec.train_rows,
         "test_rows": spec.test_rows,
         "n_features": spec.reduction_features,
@@ -4568,23 +5276,9 @@ fn write_report_file(path: &Path, value: &Value) -> Result<String> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    if path.is_file() {
-        let existing: Value = load_json(path)?;
-        if existing.get("algorithm").and_then(Value::as_str) != Some("jope-dime-regressor")
-            || existing
-                .get("report_schema_version")
-                .and_then(Value::as_str)
-                != Some(JOPE_TIMESERIES_REPORT_SCHEMA)
-        {
-            bail!(
-                "refusing to overwrite non-Jope TimeSeries report {}",
-                path.display()
-            );
-        }
-    }
     let mut bytes = serde_json::to_vec_pretty(value)?;
     bytes.push(b'\n');
-    fs::write(path, &bytes)?;
+    immutable_or_equal(path, &bytes)?;
     Ok(sha256_bytes(&bytes))
 }
 
@@ -4607,7 +5301,48 @@ fn write_timeseries_dataset_reports(
         let spec = specs
             .get(result.dataset_hash.as_str())
             .with_context(|| format!("missing spec for {}", result.dataset_hash))?;
-        let report = timeseries_report_value(spec, result, summary_path, &summary_sha256);
+        let mut report = timeseries_report_value(spec, result, summary_path, &summary_sha256);
+        let checkpoint_path = result.best_generation.map(|generation| {
+            dataset_root(&campaign_root(&manifest.run_id), &result.dataset_hash)
+                .join("generations")
+                .join(format!("generation-{generation:06}"))
+                .join("generation.v1.json")
+        });
+        let checkpoint_sha256 = checkpoint_path
+            .as_ref()
+            .filter(|path| path.is_file())
+            .map(|path| sha256_file(path))
+            .transpose()?;
+        let object = report
+            .as_object_mut()
+            .context("timeseries report must be an object")?;
+        object.insert("official_combined_rank_eligible".to_string(), json!(false));
+        object.insert("ranking_eligible".to_string(), json!(false));
+        object.insert(
+            "comparator".to_string(),
+            json!({
+                "lock_sha256": spec.comparator_lock_sha256,
+                "accepted_report_count": spec.accepted_external_reports.len(),
+                "winner_model": spec.official_leader.model,
+                "winner_report_sha256": spec.official_leader.report_sha256,
+            }),
+        );
+        object.insert(
+            "checkpoint".to_string(),
+            json!({
+                "path": checkpoint_path,
+                "sha256": checkpoint_sha256,
+            }),
+        );
+        object.insert(
+            "confirmation".to_string(),
+            json!({
+                "strict_beat_confirmed": result.strict_winner,
+                "receipt_path": result.best_receipt_file,
+                "receipt_sha256": result.best_receipt_sha256,
+                "prediction_sha256": result.best_prediction_sha256,
+            }),
+        );
         let report_path = Path::new(REGISTRY)
             .join(&result.dataset_hash)
             .join("reports")
@@ -4623,9 +5358,16 @@ pub(crate) fn run_all(run_id: &str, resume: bool) -> Result<()> {
     let root = campaign_root(run_id);
     if root.join("terminal-summary.v1.json").is_file() {
         validate_all(run_id)?;
+        let summary: TerminalSummary = load_json(&root.join("terminal-summary.v1.json"))?;
+        write_timeseries_dataset_reports(
+            &manifest,
+            &summary,
+            &root.join("terminal-summary.v1.json"),
+        )?;
         return Ok(());
     }
     let dataset_workers = dataset_worker_count()?;
+    let allow_generation_zero_win = is_forecast3_gen20(run_id);
     println!(
         "TimeSeries42 dataset_workers={dataset_workers} shards_per_generation={SHARDS} shard_cpus={SHARD_SIZE}"
     );
@@ -4640,6 +5382,7 @@ pub(crate) fn run_all(run_id: &str, resume: bool) -> Result<()> {
             let campaign_sha256 = campaign_sha256.clone();
             let root = root.clone();
             let run_id = run_id.to_string();
+            let config = manifest.config.clone();
             scope.spawn(move || loop {
                 let Some(spec) = queue.lock().unwrap().pop_front() else {
                     break;
@@ -4651,6 +5394,8 @@ pub(crate) fn run_all(run_id: &str, resume: bool) -> Result<()> {
                     &spec,
                     &staging,
                     &release_sha256,
+                    &config,
+                    allow_generation_zero_win,
                 ) {
                     errors
                         .lock()
@@ -4677,9 +5422,14 @@ pub(crate) fn run_all(run_id: &str, resume: bool) -> Result<()> {
     {
         bail!("TimeSeries42 did not finish with 42 terminal datasets");
     }
+    let reports_written = write_timeseries_dataset_reports(
+        &manifest,
+        &summary,
+        &root.join("terminal-summary.v1.json"),
+    )?;
     println!(
-        "TimeSeries42 complete: wins={} losses={} ties={} exhausted={} valid_evaluations={}",
-        summary.wins, summary.losses, summary.ties, summary.exhausted, summary.valid_evaluations
+        "TimeSeries42 complete: wins={} losses={} ties={} exhausted={} valid_evaluations={} dataset_reports_written={}",
+        summary.wins, summary.losses, summary.ties, summary.exhausted, summary.valid_evaluations, reports_written
     );
     Ok(())
 }
@@ -4958,6 +5708,11 @@ pub(crate) fn run_winall(
 
 pub(crate) fn validate_all(run_id: &str) -> Result<()> {
     validate_run_id(run_id)?;
+    let expected_coverage = if is_forecast3_gen20(run_id) {
+        Some(validate_coverage_binding()?)
+    } else {
+        None
+    };
     let root = campaign_root(run_id);
     let manifest_path = root.join("campaign.v1.json");
     let manifest: CampaignManifest = load_json(&manifest_path)?;
@@ -4967,10 +5722,25 @@ pub(crate) fn validate_all(run_id: &str) -> Result<()> {
         || manifest.benchmark_valid
         || manifest.run_id != run_id
         || manifest.datasets.len() != 42
+        || manifest.config != base_campaign_config(run_id)
+        || manifest.coverage_binding != expected_coverage
     {
         bail!("invalid TimeSeries42 campaign manifest");
     }
     for spec in &manifest.datasets {
+        if is_forecast3_gen20(run_id)
+            && (spec.accepted_external_reports.len()
+                != BASELINE_MODELS
+                    .iter()
+                    .filter(|model| !declared_baseline_skip(&spec.dataset_hash, model))
+                    .count()
+                || spec.comparator_lock_sha256.len() != 64)
+        {
+            bail!(
+                "TimeSeries42 dataset {} is not bound to the forecast3 comparator",
+                spec.dataset_hash
+            );
+        }
         let (bank, _) = load_or_create_seed_bank(&root, spec)?;
         if bank.seeds.len() != POPULATION {
             bail!("TimeSeries42 seed bank changed for {}", spec.dataset_hash);
@@ -4985,6 +5755,19 @@ pub(crate) fn validate_all(run_id: &str) -> Result<()> {
         ) {
             bail!(
                 "invalid TimeSeries42 dataset result for {}",
+                spec.dataset_hash
+            );
+        }
+        if result.completed_generations == 0
+            || result.completed_generations < manifest.config.minimum_generations.max(1)
+            || result.completed_generations > manifest.config.generations
+            || (!result.strict_winner
+                && result.completed_generations != manifest.config.generations)
+            || (is_forecast3_gen20(run_id) && result.strict_winner != result.best_beats_official)
+            || (is_forecast3_gen20(run_id) && !result.strict_winner && result.status != "exhausted")
+        {
+            bail!(
+                "invalid TimeSeries42 generation accounting for {}",
                 spec.dataset_hash
             );
         }
@@ -5192,7 +5975,7 @@ mod tests {
         json!({
             "task_type": "timeseries",
             "model_name": model,
-            "status": "ok",
+            "status": "completed",
             "metrics": {"mase": mase, "rmse": rmse}
         })
     }
@@ -5217,7 +6000,9 @@ mod tests {
             serde_json::to_vec(&leader("c", 0.7, 5.0)).unwrap(),
         )
         .unwrap();
-        let best = official_leader(dir.path()).unwrap();
+        let accepted = external_reports(dir.path(), "dataset").unwrap();
+        let best = official_leader(&accepted, dir.path()).unwrap();
+        assert_eq!(accepted.len(), 3);
         assert_eq!(best.model, "c");
         assert_eq!(best.mase, 0.7);
     }
@@ -5234,7 +6019,14 @@ mod tests {
             corpus_eval_sha256: "b".repeat(64),
             datasets: Vec::new(),
         };
-        let spec = scq_spec(&node, "job", "/remote/manifest.json", "/remote/output").unwrap();
+        let spec = scq_spec(
+            &node,
+            "job",
+            "/remote/manifest.json",
+            "/remote/output",
+            LEGACY_PROJECT,
+        )
+        .unwrap();
         assert!(spec.contains("xbabe4"));
         assert!(spec.contains("[[dependencies.smoke]]"));
         assert!(spec.contains("command = \"/usr/bin/test\""));
@@ -5341,6 +6133,7 @@ dependency diagnostics:\n  xbabe1: smoke TimeSeries42 staged node xbabe1: smoke 
             runtime_seconds: 0.0,
             predictions_sha256: None,
             rmse: Some(1.5),
+            protocol_sha256: None,
         };
         let score = receipt_mase(&receipt).unwrap();
         assert_eq!(score.mase, 0.41);
@@ -5372,6 +6165,8 @@ dependency diagnostics:\n  xbabe1: smoke TimeSeries42 staged node xbabe1: smoke 
             source_real_data: true,
             synthetic_origin: false,
             reduction_version: String::new(),
+            accepted_external_reports: Vec::new(),
+            comparator_lock_sha256: String::new(),
             official_leader: OfficialLeader {
                 model: "official".to_string(),
                 mase: official_mase,
@@ -5395,6 +6190,36 @@ dependency diagnostics:\n  xbabe1: smoke TimeSeries42 staged node xbabe1: smoke 
                 retry_count: 0,
             },
         }
+    }
+
+    #[test]
+    fn forecast3_worker_manifest_binds_campaign_binary_and_comparator() {
+        let mut spec = test_spec(1.0);
+        spec.comparator_lock_sha256 = "e".repeat(64);
+        let member = test_member(&"f".repeat(64), false);
+        let seed = "1".repeat(64);
+        let release = "2".repeat(64);
+        let campaign = "3".repeat(64);
+        let protocol = "4".repeat(64);
+        let manifest = corpus_manifest(
+            &spec,
+            &[member],
+            ("train.csv", "test.csv", "meta.json"),
+            label_authority(0, &seed, &release, &campaign),
+            Some(&protocol),
+            Some((FORECAST3_RUN_ID, &campaign, &release)),
+        )
+        .unwrap();
+        assert_eq!(manifest.run_id.as_deref(), Some(FORECAST3_RUN_ID));
+        assert_eq!(manifest.campaign_sha256.as_deref(), Some(campaign.as_str()));
+        assert_eq!(
+            manifest.release_binary_sha256.as_deref(),
+            Some(release.as_str())
+        );
+        assert_eq!(
+            manifest.comparator_lock_sha256.as_deref(),
+            Some(spec.comparator_lock_sha256.as_str())
+        );
     }
 
     fn test_slot(
@@ -5505,6 +6330,64 @@ dependency diagnostics:\n  xbabe1: smoke TimeSeries42 staged node xbabe1: smoke 
             &spec,
             Some(0.4),
             GEN30_GENERATIONS - 1,
+        ));
+    }
+
+    #[test]
+    fn forecast3_campaign_can_win_at_generation_zero_and_runs_at_most_twenty_generations() {
+        let config = base_campaign_config(FORECAST3_RUN_ID);
+        assert_eq!(config.generations, FORECAST3_GENERATIONS);
+        assert_eq!(config.minimum_generations, 0);
+
+        let spec = test_spec(0.5);
+        let seed = test_slot(0, 0, 0.49, false);
+        assert!(slot_is_base_campaign_winner(&seed, &spec, Some(0.49), true,));
+        assert!(!slot_is_base_campaign_winner(
+            &seed,
+            &spec,
+            Some(0.49),
+            false,
+        ));
+    }
+
+    #[test]
+    fn forecast3_non_winners_are_exhausted_after_the_terminal_generation() {
+        let loss = TimeSeriesScore {
+            mase: 2.0,
+            rmse: 3.0,
+        };
+        let tie = TimeSeriesScore {
+            mase: 1.0,
+            rmse: 3.0,
+        };
+        assert_eq!(
+            base_campaign_status(FORECAST3_RUN_ID, false, Some(&loss), 1.0),
+            "exhausted"
+        );
+        assert_eq!(
+            base_campaign_status(FORECAST3_RUN_ID, false, Some(&tie), 1.0),
+            "exhausted"
+        );
+        assert_eq!(
+            base_campaign_status("legacy", false, Some(&loss), 1.0),
+            "loss"
+        );
+        assert_eq!(
+            base_campaign_status("legacy", false, Some(&tie), 1.0),
+            "tie"
+        );
+    }
+
+    #[test]
+    fn forecast3_win_rule_targets_external_leader_not_generation_zero_seed() {
+        let spec = test_spec(0.5);
+        let child = test_slot(1, 0, 0.45, true);
+        assert!(slot_is_base_campaign_winner(&child, &spec, Some(0.4), true,));
+        assert!(!slot_is_base_campaign_winner(
+            &child,
+            &spec,
+            Some(0.4),
+            false,
         ));
     }
 
