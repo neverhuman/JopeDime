@@ -21,7 +21,12 @@ const CORPUS: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0/corpus/strict-t
 const STATUS_AGES: &[(&str, u64)] = &[
     ("ops/queue-keeper-v3.json", 900),
     ("ops/micro-wave-supply-v1.json", 120),
-    ("ops/trainer-watchdog-v1.json", 120),
+    // 2026-08-01: was ops/trainer-watchdog-v1.json, which had no writer left —
+    // the unit now runs jope_task_learning_controller (30 s cycle) and this
+    // doc is where trainer liveness actually lives. The old doc's last write
+    // was 2026-07-29 and it still claimed a dead run active; watching a file
+    // nobody writes trained operators to ignore a permanent red alarm.
+    ("ops/task-learning-controller.v2.json", 120),
     ("ops/last-ingest.json", 900),
     ("ops/freshness-status.json", 300),
 ];
@@ -106,6 +111,45 @@ fn file_age_secs(path: &Path) -> Option<u64> {
         .map(|d| d.as_secs())
 }
 
+/// SCQ emits UTC RFC3339 timestamps. Parsing them locally avoids pulling a
+/// high-level time runtime into the scanner — same implementation as
+/// jope_selfplay_queue.rs::parse_rfc3339_seconds (bins cannot share items).
+fn parse_rfc3339_seconds(value: &str) -> Option<i64> {
+    let year = value.get(0..4)?.parse::<i64>().ok()?;
+    let month = value.get(5..7)?.parse::<i64>().ok()?;
+    let day = value.get(8..10)?.parse::<i64>().ok()?;
+    let hour = value.get(11..13)?.parse::<i64>().ok()?;
+    let minute = value.get(14..16)?.parse::<i64>().ok()?;
+    let second = value.get(17..19)?.parse::<i64>().ok()?;
+    let timezone = value.find('Z').map(|_| 0).or_else(|| {
+        let index = value.get(19..)?.find(['+', '-'])? + 19;
+        let sign = if value.as_bytes()[index] == b'+' { 1 } else { -1 };
+        let hours = value.get(index + 1..index + 3)?.parse::<i64>().ok()?;
+        let minutes = value.get(index + 4..index + 6)?.parse::<i64>().ok()?;
+        Some(sign * (hours * 3_600 + minutes * 60))
+    })?;
+    if !(1..=12).contains(&month)
+        || !(1..=31).contains(&day)
+        || hour > 23
+        || minute > 59
+        || second > 60
+    {
+        return None;
+    }
+    let days = days_from_civil(year, month, day)?;
+    Some(days * 86_400 + hour * 3_600 + minute * 60 + second - timezone)
+}
+
+fn days_from_civil(year: i64, month: i64, day: i64) -> Option<i64> {
+    let year = year - i64::from(month <= 2);
+    let era = if year >= 0 { year } else { year - 399 } / 400;
+    let year_of_era = year - era * 400;
+    let adjusted_month = month + if month > 2 { -3 } else { 9 };
+    let day_of_year = (153 * adjusted_month + 2) / 5 + day - 1;
+    let day_of_era = year_of_era * 365 + year_of_era / 4 - year_of_era / 100 + day_of_year;
+    Some(era * 146_097 + day_of_era - 719_468)
+}
+
 fn check_status_ages(root: &Path, alarms: &mut Alarms) {
     for (relative, max_age) in STATUS_AGES {
         let path = root.join(relative);
@@ -177,7 +221,7 @@ const FAILING_CYCLES: u64 = 3;
 const CONTENT_FROZEN_SECS: &[(&str, u64)] = &[
     ("ops/queue-keeper-v3.json", 900),
     ("ops/micro-wave-supply-v1.json", 300),
-    ("ops/trainer-watchdog-v1.json", 300),
+    ("ops/task-learning-controller.v2.json", 300),
     ("ops/freshness-status.json", 600),
 ];
 
@@ -215,8 +259,8 @@ const OPS_CONTRACTS: &[Contract] = &[
         consumer: None,
     },
     Contract {
-        file: "ops/trainer-watchdog-v1.json",
-        schema: "JopeContinuousTrainerWatchdog.v1",
+        file: "ops/task-learning-controller.v2.json",
+        schema: "TaskLearningControllerStatus.v2",
         producer: "jope-selfplay-trainer-watchdog.service",
         consumer: None,
     },
@@ -743,12 +787,137 @@ fn check_scq_and_jobs(alarms: &mut Alarms) {
             )
     });
     if !live_trainer {
+        // A trainer absent because policy paused it is a WARNING with the
+        // pause spelled out; an unexplained absence stays CRITICAL. The
+        // authority is the task-learning controller's status doc (30 s
+        // cycle): "plateau_diagnosis_requires_recipe_change" and
+        // "waiting_for_newer_corpus" are the two states in which zero live
+        // trainer jobs is the controller's own intent. Before 2026-08-01 a
+        // policy pause showed as a permanent critical no_active_trainer,
+        // which trained operators to ignore the one alarm that matters when
+        // the trainer dies for real.
+        let controller_action =
+            std::fs::read(Path::new(ROOT).join("ops/task-learning-controller.v2.json"))
+                .ok()
+                .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok())
+                .and_then(|doc| doc.get("action").and_then(Value::as_str).map(str::to_owned))
+                .unwrap_or_default();
+        if matches!(
+            controller_action.as_str(),
+            "plateau_diagnosis_requires_recipe_change" | "waiting_for_newer_corpus"
+        ) {
+            alarms.push(
+                "trainer_paused_by_policy",
+                "warning",
+                format!("controller action: {controller_action}"),
+                "policy pause lifts or a trainer job appears".into(),
+            );
+        } else {
+            alarms.push(
+                "no_active_trainer",
+                "critical",
+                "zero live jope-selfplay-train jobs".into(),
+                ">=1 running/queued trainer".into(),
+            );
+        }
+    }
+    // "Blocked or throttled must be LOUD": SCQ's `held` state is sticky. On
+    // 2026-08-01 a cpu-overload-guard episode stranded 996 jope-selfplay-eval
+    // jobs for ~3 h on an otherwise idle cluster (3 running, 329/408 cores
+    // free) with no alarm. Held work at this volume while almost none of ours
+    // runs is starvation, never steady state — the queue keeper's janitor
+    // releases these, so this firing means the janitor is dead or losing.
+    let held_jope = jobs
+        .iter()
+        .filter(|job| {
+            job.get("state").and_then(Value::as_str) == Some("held")
+                && job
+                    .get("project")
+                    .and_then(Value::as_str)
+                    .is_some_and(|project| project.starts_with("jope-selfplay"))
+        })
+        .count();
+    let running_jope = jobs
+        .iter()
+        .filter(|job| {
+            job.get("state").and_then(Value::as_str) == Some("running")
+                && job
+                    .get("project")
+                    .and_then(Value::as_str)
+                    .is_some_and(|project| project.starts_with("jope-selfplay"))
+        })
+        .count();
+    if held_jope >= 32 && running_jope < held_jope / 4 {
         alarms.push(
-            "no_active_trainer",
+            "scq_jobs_held_starving",
             "critical",
-            "zero live jope-selfplay-train jobs".into(),
-            ">=1 running/queued trainer".into(),
+            format!("{held_jope} jope jobs held, only {running_jope} running"),
+            "held jope jobs drain via the queue keeper's release janitor".into(),
         );
+    }
+    // A cohort proposer stuck in "queued" is the flywheel's single point of
+    // failure: waves cannot compose without >=8 fresh DL proposals per task
+    // (DL_SLOT_RUNGS has no 0), so one starved 13-second GPU job idles every
+    // CPU core within two keeper cycles. On 2026-08-01 the proposer sat
+    // queued 3 h 12 m behind an external weight-10 GPU queue while a weight
+    // guard pinned every jope family to 1; utilization collapsed 98% -> 3%
+    // and no alarm named the cause for five hours.
+    let now_secs = (now_ms() / 1_000) as i64;
+    for job in &jobs {
+        let id = job.get("id").and_then(Value::as_str).unwrap_or("");
+        if !id.starts_with("jope-selfplay-cohort-propose")
+            || job.get("state").and_then(Value::as_str) != Some("queued")
+        {
+            continue;
+        }
+        let Some(queued_at) = job
+            .get("queue_ts")
+            .and_then(Value::as_str)
+            .and_then(parse_rfc3339_seconds)
+        else {
+            continue;
+        };
+        let age = now_secs.saturating_sub(queued_at);
+        if age > 900 {
+            alarms.push(
+                "proposer_gpu_starved",
+                "critical",
+                format!("cohort proposer {id} queued {age}s for 1 GPU"),
+                "proposer dispatches <900s; check `scq priority ls` for jope weight flattening"
+                    .into(),
+            );
+        }
+    }
+    // A proposer that FAILS (vs starves in queue) exhausts supply's 5-attempt
+    // retry budget and hard-wedges wave production until an operator
+    // intervenes (2026-08-03: bundle absent on the dispatch node -> six
+    // "vanished" attempts -> eval queue drained to 1% cluster CPU). The
+    // generic status_error_doc warning is not loud enough for a
+    // flywheel-stopping state.
+    let supply_doc = Path::new(ROOT).join("ops/micro-wave-supply-v1.json");
+    if let Ok(bytes) = std::fs::read(&supply_doc) {
+        if let Ok(doc) = serde_json::from_slice::<Value>(&bytes) {
+            if doc.get("schema").and_then(Value::as_str) == Some("JopeMicroWaveSupplyError.v1") {
+                let identical = doc
+                    .get("identical_failures")
+                    .and_then(Value::as_u64)
+                    .unwrap_or(0);
+                let critical = doc
+                    .get("critical")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
+                if critical || identical >= 3 {
+                    let error = doc.get("error").and_then(Value::as_str).unwrap_or("unknown");
+                    alarms.push(
+                        "cohort_proposer_failing",
+                        "critical",
+                        format!("supply error x{identical}: {error}"),
+                        "wave production halted; inspect the proposer job in scq and the supply journal"
+                            .into(),
+                    );
+                }
+            }
+        }
     }
     // "Self-play never stops": a fresh strict wave must exist (cadence ~9-13 min).
     let newest_wave_age = std::fs::read_dir(Path::new(ROOT).join("waves"))
@@ -2027,9 +2196,9 @@ mod tests {
         let temp = TempDir::new().unwrap();
         let root = contract_root(&temp);
         std::fs::write(
-            root.join("ops/trainer-watchdog-v1.json"),
+            root.join("ops/task-learning-controller.v2.json"),
             format!(
-                r#"{{"schema":"JopeContinuousTrainerWatchdog.v1","generated_at_ms":{},
+                r#"{{"schema":"TaskLearningControllerStatus.v2","generated_at_ms":{},
                    "degraded":true,"error":"scq unreachable","action":"cycle_failed"}}"#,
                 now_ms() as u64
             ),
@@ -2039,7 +2208,7 @@ mod tests {
         let row = alarms
             .rows
             .iter()
-            .find(|row| row["alarm"] == "status_degraded:ops/trainer-watchdog-v1.json")
+            .find(|row| row["alarm"] == "status_degraded:ops/task-learning-controller.v2.json")
             .unwrap_or_else(|| panic!("{:?}", alarm_names(&alarms)));
         assert_eq!(row["observed"], "scq unreachable");
     }

@@ -664,6 +664,7 @@ fn cycle(args: &Args) -> Value {
                     // failed cycle could delete the corpus the trainer is still
                     // reading and leave nothing to replace it.
                     report.insert("retention".into(), prune_snapshots(args));
+                    report.insert("packed_retention".into(), prune_packed(args));
                 }
                 Err(error) => {
                     report.insert("lifecycle".into(), json!("error"));
@@ -714,10 +715,148 @@ fn mark_degraded(report: &mut Value) {
     }
 }
 
+/// Packed-corpus retention, same shape as `prune_snapshots` for the same
+/// reason: `training/packed/<sha>/` dirs are derived artifacts (each is the
+/// packed form of a snapshot, ~1.5-2 GB) and nothing pruned them — by
+/// 2026-08-01 there were 38 dirs / 73 GB on a root at 86%. Protections:
+///   1. the sha named by `training/current-corpus.json` `packed_manifest`;
+///   2. any sha the live tournament state mentions (flywheel-state.json and
+///      the task-learning controller docs are scanned as text — a serialized
+///      pointer is a pin wherever it appears, exactly like snapshot pins);
+///   3. the newest `keep` by mtime;
+///   4. younger than `min_age_hours`.
+/// Dot-prefixed `.…tmp-<pid>` dirs are crashed pack builds (the pack path
+/// renames on success); they are removed once older than `min_age_hours`.
+fn prune_packed(args: &Args) -> Value {
+    let root = &args.root;
+    if args.keep_snapshots == 0 {
+        return json!({"pruned": 0, "reason": "retention disabled"});
+    }
+    let packed_root = root.join("training/packed");
+    let mut pinned: Vec<String> = Vec::new();
+    if let Ok(bytes) = fs::read(root.join(POINTER)) {
+        if let Ok(value) = serde_json::from_slice::<Value>(&bytes) {
+            if let Some(path) = value.get("packed_manifest").and_then(Value::as_str) {
+                if let Some(sha) = path
+                    .split("packed/")
+                    .nth(1)
+                    .and_then(|rest| rest.split('/').next())
+                {
+                    pinned.push(sha.to_owned());
+                }
+            }
+        }
+    }
+    for relative in [
+        "ops/flywheel-state.json",
+        "training/task-learning-controller.v2.json",
+        "ops/task-learning-controller.v2.json",
+    ] {
+        if let Ok(text) = fs::read_to_string(root.join(relative)) {
+            for chunk in text.split("packed/").skip(1) {
+                let sha: String = chunk
+                    .chars()
+                    .take_while(|c| c.is_ascii_hexdigit())
+                    .collect();
+                if sha.len() >= 8 {
+                    pinned.push(sha);
+                }
+            }
+        }
+    }
+
+    let Ok(entries) = fs::read_dir(&packed_root) else {
+        return json!({"pruned": 0, "reason": "packed directory is unreadable"});
+    };
+    let keep_after = Duration::from_secs(args.keep_snapshots_min_age_hours * 3600);
+    let mut dirs: Vec<(PathBuf, SystemTime, u64, bool)> = Vec::new();
+    for entry in entries.flatten() {
+        let path = entry.path();
+        let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
+            continue;
+        };
+        if !path.is_dir() {
+            continue;
+        }
+        let orphan_tmp = name.starts_with('.') && name.contains(".tmp-");
+        if !orphan_tmp && !name.chars().all(|c| c.is_ascii_hexdigit()) {
+            continue;
+        }
+        let Ok(metadata) = entry.metadata() else {
+            continue;
+        };
+        let Ok(modified) = metadata.modified() else {
+            continue;
+        };
+        let bytes = directory_bytes(&path);
+        dirs.push((path, modified, bytes, orphan_tmp));
+    }
+    dirs.sort_by(|a, b| b.1.cmp(&a.1));
+    let mut removed = Vec::new();
+    let mut freed: u64 = 0;
+    let mut rank = 0usize;
+    for (path, modified, bytes, orphan_tmp) in dirs {
+        if !orphan_tmp {
+            rank += 1;
+            if rank <= args.keep_snapshots {
+                continue;
+            }
+        }
+        let name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or_default()
+            .to_owned();
+        if !orphan_tmp && pinned.iter().any(|sha| name.starts_with(sha.as_str())) {
+            continue;
+        }
+        let age = SystemTime::now()
+            .duration_since(modified)
+            .unwrap_or_default();
+        if age < keep_after {
+            continue;
+        }
+        if args.dry_run {
+            freed = freed.saturating_add(bytes);
+            removed.push(json!({
+                "path": path.to_string_lossy(),
+                "bytes": bytes,
+                "age_hours": age.as_secs() / 3600,
+                "orphan_tmp": orphan_tmp,
+                "dry_run": true,
+            }));
+            continue;
+        }
+        match fs::remove_dir_all(&path) {
+            Ok(()) => {
+                freed = freed.saturating_add(bytes);
+                removed.push(json!({
+                    "path": path.to_string_lossy(),
+                    "bytes": bytes,
+                    "age_hours": age.as_secs() / 3600,
+                    "orphan_tmp": orphan_tmp,
+                }));
+            }
+            Err(error) => removed.push(json!({
+                "path": path.to_string_lossy(),
+                "error": error.to_string(),
+            })),
+        }
+    }
+    json!({
+        "pruned": removed.len(),
+        "freed_bytes": freed,
+        "keep": args.keep_snapshots,
+        "min_age_hours": args.keep_snapshots_min_age_hours,
+        "removed": removed,
+    })
+}
+
 fn main() -> Result<()> {
     let args = Args::parse();
     if args.prune_only {
         println!("{}", prune_snapshots(&args));
+        println!("{}", prune_packed(&args));
         return Ok(());
     }
     loop {

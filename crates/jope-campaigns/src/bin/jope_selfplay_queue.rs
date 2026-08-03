@@ -79,6 +79,11 @@ struct Args {
     /// Bound scheduler submissions in one cycle.
     #[arg(long, default_value_t = 256)]
     max_submit_per_cycle: usize,
+    /// Keep provenance-valid held jobs held instead of running the release
+    /// janitor. Used while a higher-priority GPU campaign needs host RAM/core
+    /// headroom; submissions and all non-held work continue normally.
+    #[arg(long)]
+    preserve_held: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -192,6 +197,7 @@ struct CycleReport {
     running: usize,
     dispatching: usize,
     held: usize,
+    released_held: usize,
     queue_maximum_age_seconds: f64,
     stale_or_unproven_active: usize,
     launch_ready: usize,
@@ -429,6 +435,33 @@ impl Keeper {
             .filter(|job| useful.contains(&job.id) && job.state == "held")
             .count();
 
+        // 2026-08-01 incident: a host CPU-overload episode (load ~194 on
+        // xbabe2) made the scheduler guard-hold ~996 jope-selfplay-eval jobs
+        // ("priority preemption for cpu-overload-guard", "CPU target
+        // reached"). SCQ's `held` state is sticky — no daemon releases it —
+        // so the flywheel sat at 3 running jobs on an otherwise idle cluster
+        // (329/408 cores free) for ~3 hours until an operator released them
+        // by hand. The keeper is the one process that knows which held jobs
+        // are still provenance-useful, so it now releases them, rate-limited,
+        // whenever the useful queue is under target. If the host is genuinely
+        // overloaded the guard simply holds them again; a release is one
+        // cheap socket call, so the worst case is a slow benign loop.
+        let mut released_held = 0;
+        if self.args.submit && !self.args.preserve_held {
+            let budget = held_release_budget(queued_starting, targets.target, held);
+            for job in jobs
+                .iter()
+                .filter(|job| useful.contains(&job.id) && job.state == "held")
+            {
+                if released_held >= budget {
+                    break;
+                }
+                if scq_release(&self.args.scq, &job.id).is_ok() {
+                    released_held += 1;
+                }
+            }
+        }
+
         let mut adopted = 0;
         let mut retries = 0;
         if self.args.submit {
@@ -583,6 +616,7 @@ impl Keeper {
             running,
             dispatching,
             held,
+            released_held,
             queue_maximum_age_seconds: max_queue_age,
             stale_or_unproven_active: stale_or_unproven,
             launch_ready: ready.len(),
@@ -1493,6 +1527,7 @@ fn empty_report(
         running: 0,
         dispatching: 0,
         held: 0,
+        released_held: 0,
         queue_maximum_age_seconds: 0.0,
         stale_or_unproven_active: 0,
         launch_ready: 0,
@@ -2711,6 +2746,41 @@ fn render_spec(
     atomic_write(path, text.as_bytes())
 }
 
+/// How many guard-held jobs one cycle may release. Deliberately bounded so a
+/// 5-second cycle cannot flood a recovering host: draining 996 held jobs (the
+/// 2026-08-01 pileup) at 64/cycle takes ~80 s, while the overload guard gets a
+/// fresh look between batches. Release only fills the gap left under the
+/// queue target — a full queue releases nothing.
+const HELD_RELEASE_BATCH_MAX: usize = 64;
+
+fn held_release_budget(queued_starting: usize, queued_target: i64, held: usize) -> usize {
+    let target = queued_target.max(0) as usize;
+    target
+        .saturating_sub(queued_starting)
+        .min(held)
+        .min(HELD_RELEASE_BATCH_MAX)
+}
+
+fn scq_release(scq: &Path, job_id: &str) -> Result<()> {
+    let output = Command::new(scq)
+        .arg("release")
+        .arg(job_id)
+        .output()
+        .with_context(|| format!("run SCQ release {job_id}"))?;
+    if !output.status.success() {
+        bail!(
+            "SCQ refused release of {job_id}: {}",
+            String::from_utf8_lossy(if output.stderr.is_empty() {
+                &output.stdout
+            } else {
+                &output.stderr
+            })
+            .trim()
+        );
+    }
+    Ok(())
+}
+
 fn scq_check(scq: &Path, spec: &Path) -> Result<()> {
     let output = Command::new(scq)
         .arg("check")
@@ -3035,6 +3105,24 @@ mod tests {
         assert!(QUEUE_STATES.contains(&"starting"));
         assert!(!QUEUE_STATES.contains(&"held"));
         assert!(!QUEUE_STATES.contains(&"running"));
+    }
+
+    #[test]
+    fn held_release_only_fills_the_gap_under_target() {
+        // The 2026-08-01 pileup: 996 held, queue empty, target 2048 — release
+        // a full batch, never more than the batch cap.
+        assert_eq!(held_release_budget(0, 2_048, 996), HELD_RELEASE_BATCH_MAX);
+        // Queue already at/over target: a busy cluster releases nothing, so
+        // the overload guard's decision is respected while pressure is real.
+        assert_eq!(held_release_budget(2_048, 2_048, 996), 0);
+        assert_eq!(held_release_budget(3_000, 2_048, 996), 0);
+        // Fewer held than gap: release exactly what exists.
+        assert_eq!(held_release_budget(2_040, 2_048, 3), 3);
+        // Gap smaller than batch cap: release exactly the gap.
+        assert_eq!(held_release_budget(2_000, 2_048, 996), 48);
+        // A zero/negative target (fail-closed cycles) releases nothing.
+        assert_eq!(held_release_budget(0, 0, 996), 0);
+        assert_eq!(held_release_budget(0, -5, 996), 0);
     }
 
     #[test]

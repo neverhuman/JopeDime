@@ -77,7 +77,10 @@ const SEEDING_CURVE_ROWS: usize = 3;
 const DAEMON_HEARTBEATS: [(&str, u64); 5] = [
     ("ops/queue-keeper-v3.json", 450),
     ("ops/micro-wave-supply-v1.json", 60),
-    ("ops/trainer-watchdog-v1.json", 60),
+    // 2026-08-01: was ops/trainer-watchdog-v1.json, which lost its writer when
+    // the watchdog unit was switched to jope_task_learning_controller; trainer
+    // liveness now lives in the controller status doc (30 s cycle).
+    ("ops/task-learning-controller.v2.json", 60),
     ("ops/last-ingest.json", 450),
     ("ops/freshness-status.json", 150),
 ];
@@ -2472,7 +2475,11 @@ fn complete_funnel_rows(rows: &mut Vec<FunnelRow>, census: impl Fn(&str) -> Opti
             .position(|known| *known == task)
             .unwrap_or(FUNNEL_TASKS.len())
     };
-    rows.sort_by(|a, b| position(&a.task).cmp(&position(&b.task)).then(a.task.cmp(&b.task)));
+    rows.sort_by(|a, b| {
+        position(&a.task)
+            .cmp(&position(&b.task))
+            .then(a.task.cmp(&b.task))
+    });
 }
 
 /// Freshest source: the expansion driver's per-dataset lifecycle index.
@@ -3305,8 +3312,68 @@ fn add_stale_source_alert(
     }
 }
 
+/// The one condition an operator must never be able to miss: the scheduler is
+/// blocked or throttled and our work is not flowing. Requested 2026-08-01
+/// after a cpu-overload-guard episode stranded 996 held eval jobs for ~3 h
+/// with only a quiet queue panel to show for it. Returns the most severe
+/// active condition, or None when work flows normally.
+fn blocked_banner(dashboard: &Dashboard) -> Option<String> {
+    let queue = &dashboard.queue;
+    // Sticky guard-holds: lots held, almost nothing of ours running.
+    if queue.held >= 32 && queue.running < queue.held / 4 {
+        return Some(format!(
+            "SCQ THROTTLED — {} jobs HELD, only {} running (guard-held work is NOT draining)",
+            queue.held, queue.running
+        ));
+    }
+    if queue.admission_allowed == Some(false) {
+        return Some("SCQ BLOCKED — fresh admission is blocked by the queue keeper".to_owned());
+    }
+    let waiting = queue.queued + queue.starting + queue.dispatching;
+    if queue.running == 0 && waiting > 0 {
+        return Some(format!(
+            "SCQ STALLED — {waiting} jobs waiting, ZERO running"
+        ));
+    }
+    // Critical starvation alarms from the alarm files (the collector inserts
+    // them into `alerts` as "ALARM[severity] name: ..." rows). These two are
+    // the flywheel-is-not-flowing signatures the 2026-08-01 incidents proved
+    // can otherwise hide below the fold of the alerts panel.
+    if let Some(alert) = dashboard.alerts.iter().find(|alert| {
+        alert.starts_with("ALARM[critical] proposer_gpu_starved")
+            || alert.starts_with("ALARM[critical] scq_jobs_held_starving")
+    }) {
+        return Some(alert.clone());
+    }
+    // The scheduler's own alert lines (surfaced into alerts as "SCQ: ...").
+    dashboard
+        .alerts
+        .iter()
+        .find(|alert| alert.starts_with("SCQ: "))
+        .map(|alert| format!("{alert} — scheduler is degraded"))
+}
+
 fn render(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms: u64, ui: UiState) {
-    let area = frame.area();
+    let mut area = frame.area();
+    // The blocked/throttled banner pre-empts the first row of EVERY tab and
+    // both compact layouts: if the flywheel is starved, no view is allowed to
+    // look calm.
+    if let Some(text) = blocked_banner(dashboard) {
+        let rows = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Length(1), Constraint::Min(0)])
+            .split(area);
+        frame.render_widget(
+            Paragraph::new(format!("▲▲▲  {text}  ▲▲▲")).style(
+                Style::default()
+                    .fg(Color::White)
+                    .bg(Color::Red)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            rows[0],
+        );
+        area = rows[1];
+    }
     if area.width < 100 || area.height < 32 {
         match ui.tab {
             Tab::Overview | Tab::Gameplay => render_compact(frame, dashboard, refresh_ms, area),
@@ -6231,9 +6298,16 @@ mod tests {
             _ => None,
         });
         let order: Vec<&str> = rows.iter().map(|row| row.task.as_str()).collect();
-        assert_eq!(order, vec!["regression", "binary", "timeseries", "multiclass"]);
+        assert_eq!(
+            order,
+            vec!["regression", "binary", "timeseries", "multiclass"]
+        );
         assert_eq!(rows[2].registry, 42);
-        assert_eq!(rows[2].locked(), 42, "census rows report the corpus as waiting");
+        assert_eq!(
+            rows[2].locked(),
+            42,
+            "census rows report the corpus as waiting"
+        );
         assert_eq!(rows[3].registry, 272);
         assert_eq!(rows[3].queued, 269, "installed encodings surface as queued");
         assert_eq!(rows[3].encoded, 269);

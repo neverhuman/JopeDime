@@ -46,6 +46,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 const ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
 const SCQ: &str = "/home/ubuntu/smart_cluster/target/release/scq";
+const SCQ_SNAPSHOT_TIMEOUT_SECS: &str = "30";
 const HOUR_MS: u64 = 3_600_000;
 
 // ---------------------------------------------------------------------------
@@ -269,7 +270,10 @@ impl Utilization {
 
 fn measure(args: &Args) -> Utilization {
     let mut u = Utilization::default();
-    let output = Command::new(&args.scq)
+    let output = Command::new("/usr/bin/timeout")
+        .arg("--kill-after=5")
+        .arg(SCQ_SNAPSHOT_TIMEOUT_SECS)
+        .arg(&args.scq)
         .arg("--json")
         .arg("snapshot")
         .output();
@@ -533,6 +537,49 @@ fn content_age_secs(value: &Value, now: u64) -> Option<u64> {
     Some(now.saturating_sub(generated) / 1000)
 }
 
+/// Blocked-stage verdict when the newest cohort-supply state has sat at
+/// `submit_cohort_proposer` for longer than any healthy dispatch would take.
+/// Returns None when the proposer pipeline is moving (no stage row at all —
+/// absence of a proposer stage means "not the bottleneck").
+fn proposer_stage(args: &Args, now: u64) -> Option<Stage> {
+    let state_dir = args.root.join("ops/cohort-supply-state-v2");
+    let newest = std::fs::read_dir(&state_dir)
+        .ok()?
+        .flatten()
+        .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "json"))
+        .max_by_key(|entry| {
+            entry
+                .metadata()
+                .and_then(|meta| meta.modified())
+                .unwrap_or(std::time::UNIX_EPOCH)
+        })?;
+    let age_secs = newest
+        .metadata()
+        .and_then(|meta| meta.modified())
+        .ok()
+        .and_then(|modified| std::time::SystemTime::now().duration_since(modified).ok())
+        .map(|age| age.as_secs())?;
+    let value = read_json(&newest.path())?;
+    if str_at(&value, "stage") != Some("submit_cohort_proposer") || age_secs <= 900 {
+        return None;
+    }
+    let _ = now;
+    Some(Stage {
+        name: "proposer",
+        health: Health::Blocked,
+        detail: format!(
+            "{} stuck at submit_cohort_proposer {age_secs}s; job {} waiting on 1 GPU — check `scq priority ls` for jope weight flattening and GPU occupancy",
+            str_at(&value, "wave").unwrap_or("?"),
+            str_at(&value, "proposal_job_id").unwrap_or("?"),
+        ),
+        receipt: format!(
+            "ops/cohort-supply-state-v2/{}",
+            newest.file_name().to_string_lossy()
+        ),
+        repair: None,
+    })
+}
+
 /// Diagnose every stage, in pipeline order. Order matters for repair priority:
 /// the stage closest to the scheduler is the one whose repair puts work on the
 /// cluster soonest.
@@ -705,6 +752,21 @@ fn diagnose(args: &Args, util: &Utilization, work: &WorkOnDisk) -> Vec<Stage> {
             }
         }
     });
+
+    // ---- cohort proposer (GPU-arbitration starvation) ---------------------
+    // 2026-08-01: the supervisor had no stage for "the cohort proposer is
+    // GPU-starved", so when an external weight guard pinned jope families to
+    // weight 1 and the proposer sat queued 3 h 12 m, this loop blamed
+    // coverage/expansion for 1,173 consecutive cycles and burned 48 repair
+    // attempts restarting innocent daemons. Waves cannot compose without the
+    // proposer (>=8 fresh DL proposals per task; DL_SLOT_RUNGS has no 0), so
+    // a wedged submit stage IS the pipeline outage. There is no safe
+    // automatic repair — the fix is scheduling policy (scq priority ls) or
+    // GPU capacity — so this stage escalates with the real cause instead of
+    // improvising.
+    if let Some(stage) = proposer_stage(args, now) {
+        stages.push(stage);
+    }
 
     // ---- coverage lane (breadth: first-touch) -----------------------------
     let coverage_receipt = "coverage/ops/coverage-events.v1.jsonl".to_owned();

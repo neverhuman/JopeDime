@@ -2083,6 +2083,7 @@ fn render_cohort_proposer_spec(
         &runtime_bundle_sha256,
     )?;
     let cache_root = args.root.join("proposals/context-cache.v3");
+    let pin_lines = proposer_placement_pin_lines(args)?;
     let args_line = format!(
         "args = [\"{{input:generator}}\", \"--catalog-pointer\", \"{{input:pointer}}\", \
          \"--catalog\", \"{{input:catalog}}\", \"--data\", \"{{input:data}}\", \
@@ -2106,6 +2107,9 @@ fn render_cohort_proposer_spec(
         "ram_mb = 12288".into(),
         "gang_size = 1".into(),
         "placement = \"single_node\"".into(),
+        String::new(),
+        pin_lines[0].clone(),
+        pin_lines[1].clone(),
         String::new(),
         "[[dependencies.smoke]]".into(),
         "name = \"proposal GPU capacity\"".into(),
@@ -2197,6 +2201,22 @@ fn render_cohort_proposer_spec(
     }
     fs::write(&spec, body)?;
     Ok(spec)
+}
+
+/// Pin the cohort proposer to the node hosting the flywheel state root: the
+/// scheduler's launch deadline (~46 s observed 2026-08-03) is shorter than
+/// cross-node input staging (295 MB) plus a cold bundle smoke, so any
+/// off-root dispatch dies "vanished from its node". A `[dependencies]`
+/// binaries requirement constrains placement to nodes where the path exists;
+/// `[resource] node_affinity` parses but does not constrain placement.
+fn proposer_placement_pin_lines(args: &Args) -> Result<[String; 2]> {
+    Ok([
+        "[dependencies]".into(),
+        format!(
+            "binaries = [{}]",
+            toml_quote(&args.catalog_pointer().to_string_lossy())?
+        ),
+    ])
 }
 
 fn resolve_pinned_proposer_spec(
@@ -3039,6 +3059,19 @@ mod tests {
         args.max_candidates_per_manifest = 25;
         args.queued_hard_cap = 3_000;
         assert!(validate_args(&args).is_err());
+    }
+
+    #[test]
+    fn cohort_proposer_spec_pins_placement_to_the_state_root_node() {
+        let directory = tempdir().unwrap();
+        let args = audit_args(directory.path());
+        let lines = proposer_placement_pin_lines(&args).unwrap();
+        assert_eq!(lines[0], "[dependencies]");
+        let expected = args.catalog_pointer();
+        assert_eq!(
+            lines[1],
+            format!("binaries = [\"{}\"]", expected.display())
+        );
     }
 
     #[test]

@@ -433,7 +433,10 @@ fn guardrail_block(g: &Guardrails, coverage: Option<f64>) -> Option<String> {
             // every slot goes idle. That exact loop idled all 1,052 slots on
             // 2026-07-28. Block only on conditions expansion itself would make
             // worse; local disk is still checked below.
-            if matches!(name, "wave_stalled" | "no_active_trainer")
+            if matches!(
+                name,
+                "wave_stalled" | "no_active_trainer" | "scq_jobs_held_starving"
+            ) || name.starts_with("status_stale:ops/task-learning-controller")
                 || name.starts_with("status_stale:ops/trainer-watchdog")
             {
                 continue;
@@ -1999,8 +2002,10 @@ mod tests {
         std::fs::write(
             &alarms,
             r#"{"alarms":[
+                {"alarm":"status_stale:ops/task-learning-controller.v2.json","severity":"critical"},
                 {"alarm":"status_stale:ops/trainer-watchdog-v1.json","severity":"critical"},
-                {"alarm":"no_active_trainer","severity":"critical"}
+                {"alarm":"no_active_trainer","severity":"critical"},
+                {"alarm":"scq_jobs_held_starving","severity":"critical"}
             ]}"#,
         )
         .unwrap();

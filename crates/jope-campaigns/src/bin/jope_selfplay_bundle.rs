@@ -23,6 +23,16 @@ const DEFAULT_SCQ_PROJECTS: &str = "/home/ubuntu/smart_cluster/etc/projects.toml
 const DEFAULT_OUTPUT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles";
 const DEFAULT_SERVICE_MANIFEST: &str = "manifests/selfplay/service-manifest.v3.json";
 
+/// GPU nodes that can host bundle-pinned GPU jobs (cohort proposer, trainer).
+/// Their scq specs pin `[env] PYTHONPATH` and a smoke test to the bundle path
+/// on the EXECUTION node, so a bundle that exists only on this host kills wave
+/// production the moment another workload takes the local GPU (2026-08-03:
+/// six vanished proposer dispatches, supply retry budget exhausted).
+/// Activation refuses to advance the pointer until the bundle is present on
+/// every listed node. JOPE_BUNDLE_SYNC_NODES overrides the list (comma
+/// separated; empty disables — single-node development only).
+const GPU_SYNC_NODES: &[&str] = &["xbabe1", "xbabe3"];
+
 /// These are the complete Python exception. Adding a file requires a code
 /// review of this exact list and an ML-only role.
 const PYTORCH_ALLOWLIST: &[(&str, &str, &str)] = &[
@@ -179,6 +189,10 @@ fn main() -> Result<()> {
 
 fn activate_manifest(output_root: &Path, manifest: &Value) -> Result<()> {
     let bundle_sha256 = manifest["bundle_sha256"].as_str().context("bundle hash")?;
+    // Refuse to advance any activation pointer until the bundle exists on
+    // every GPU node — a locally-activated, unsynced bundle killed wave
+    // production on 2026-08-03 (see GPU_SYNC_NODES).
+    sync_bundle_to_gpu_nodes(output_root, bundle_sha256)?;
     let manifest_path = output_root.join(bundle_sha256).join("bundle.json");
     let pointer = json!({
         "schema": "JopeSelfplayRuntimeBundlePointer.v2",
@@ -585,6 +599,49 @@ fn validate_supply_pytorch_boundary(line: &str) -> Result<()> {
             ),
         "supply may name only the bundled PyTorch proposal boundary"
     );
+    Ok(())
+}
+
+fn sync_bundle_to_gpu_nodes(output_root: &Path, bundle_sha256: &str) -> Result<()> {
+    let nodes: Vec<String> = match std::env::var("JOPE_BUNDLE_SYNC_NODES") {
+        Ok(value) => value
+            .split(',')
+            .map(str::trim)
+            .filter(|node| !node.is_empty())
+            .map(str::to_owned)
+            .collect(),
+        Err(_) => GPU_SYNC_NODES.iter().map(|node| (*node).to_owned()).collect(),
+    };
+    let source = output_root.join(bundle_sha256);
+    let local_manifest_sha256 = sha256_file(&source.join("bundle.json"))?;
+    for node in &nodes {
+        let sync = std::process::Command::new("rsync")
+            .arg("-a")
+            .arg(&source)
+            .arg(format!("{node}:{}/", output_root.display()))
+            .output()
+            .with_context(|| format!("spawn rsync of bundle {bundle_sha256} to {node}"))?;
+        ensure!(
+            sync.status.success(),
+            "bundle sync to {node} failed: {}",
+            String::from_utf8_lossy(&sync.stderr)
+        );
+        let remote_manifest = source.join("bundle.json");
+        let check = std::process::Command::new("ssh")
+            .args(["-o", "BatchMode=yes", node, "sha256sum"])
+            .arg(remote_manifest.as_os_str())
+            .output()
+            .with_context(|| format!("spawn bundle sync verification on {node}"))?;
+        let remote_sha256 = String::from_utf8_lossy(&check.stdout)
+            .split_whitespace()
+            .next()
+            .unwrap_or_default()
+            .to_owned();
+        ensure!(
+            check.status.success() && remote_sha256 == local_manifest_sha256,
+            "bundle {bundle_sha256} failed post-sync verification on {node}"
+        );
+    }
     Ok(())
 }
 
