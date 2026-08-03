@@ -1925,6 +1925,115 @@ impl PlateauDiagnosisV1 {
     }
 }
 
+pub const PLATEAU_DIAGNOSIS_V2_SCHEMA: &str = "PlateauDiagnosis.v2";
+pub const RECIPE_CHANGE_DIRECTIVE_V1_SCHEMA: &str = "RecipeChangeDirective.v1";
+
+/// One rejected shadow counted toward a recipe-scoped plateau, with the
+/// recipe identity its trainer intent resolves to (None = legacy receipt
+/// without a resolvable recipe; counted conservatively unless an operator
+/// RecipeChangeDirective bridges it).
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct PlateauCountedCandidateV1 {
+    pub candidate_checkpoint_sha256: Sha256Digest,
+    pub recipe_identity_sha256: Option<String>,
+}
+
+/// Recipe-identity-scoped plateau diagnosis. The v1 pause keyed only on
+/// (>=3 rejected shadows, unchanged parent) — a hard deadlock, because no
+/// new shadow can train while paused, so the parent can never change. v2
+/// counts a rejected shadow only when its training recipe identity matches
+/// the recipe the lane would train with RIGHT NOW: a genuine recipe change
+/// re-schedules training exactly as the v1 status string always promised
+/// ("identical shadow training is paused"). v1 documents are preserved and
+/// still written; this receipt is additive.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct PlateauDiagnosisV2 {
+    pub schema: String,
+    pub task: Task,
+    pub unchanged_parent_checkpoint_sha256: Sha256Digest,
+    /// Identity of the recipe the paused lane would use now; None when it
+    /// could not be computed (scoping then stays conservative: everything
+    /// counts, exactly the v1 behavior).
+    pub current_recipe_identity_sha256: Option<String>,
+    pub counted_candidates: Vec<PlateauCountedCandidateV1>,
+    pub recipe_change_directive_present: bool,
+    pub proposal_validity: f64,
+    pub gp_disadvantage: f64,
+    pub calibration_summary: String,
+    pub data_slice_summary: String,
+    pub latency_summary: String,
+    pub replay_summary: String,
+    pub diagnosed_at_ms: u128,
+}
+
+impl PlateauDiagnosisV2 {
+    pub fn validate(&self) -> Result<()> {
+        ensure!(
+            self.schema == PLATEAU_DIAGNOSIS_V2_SCHEMA,
+            "plateau diagnosis v2 schema mismatch"
+        );
+        ensure!(
+            self.counted_candidates.len() >= 3
+                && self
+                    .counted_candidates
+                    .iter()
+                    .map(|candidate| &candidate.candidate_checkpoint_sha256)
+                    .collect::<BTreeSet<_>>()
+                    .len()
+                    == self.counted_candidates.len(),
+            "plateau diagnosis v2 requires three distinct counted candidates"
+        );
+        ensure!(
+            self.proposal_validity.is_finite() && self.gp_disadvantage.is_finite(),
+            "plateau diagnosis v2 contains a non-finite metric"
+        );
+        Ok(())
+    }
+}
+
+/// Operator receipt attesting that the training recipe HAS changed in a way
+/// receipts cannot prove (the six legacy rejects predate recipe stamping in
+/// TrainerIntent.v3). Its only effect: rejected shadows whose recipe
+/// identity is UNRESOLVABLE stop counting toward the named parent's
+/// plateau. Rejects that resolve to the currently-scheduled recipe identity
+/// still pause — ground truth beats attestation.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct RecipeChangeDirectiveV1 {
+    pub schema: String,
+    pub task: Task,
+    pub unchanged_parent_checkpoint_sha256: Sha256Digest,
+    /// Path or digest of the plateau diagnosis this directive answers.
+    pub answers_diagnosis: String,
+    /// The concrete, enumerated recipe changes the operator is attesting to.
+    pub enumerated_changes: Vec<String>,
+    pub created_at_ms: u128,
+}
+
+impl RecipeChangeDirectiveV1 {
+    pub fn validate(&self) -> Result<()> {
+        ensure!(
+            self.schema == RECIPE_CHANGE_DIRECTIVE_V1_SCHEMA,
+            "recipe change directive schema mismatch"
+        );
+        ensure!(
+            !self.answers_diagnosis.trim().is_empty(),
+            "recipe change directive must name the diagnosis it answers"
+        );
+        ensure!(
+            !self.enumerated_changes.is_empty()
+                && self
+                    .enumerated_changes
+                    .iter()
+                    .all(|change| !change.trim().is_empty()),
+            "recipe change directive requires enumerated concrete changes"
+        );
+        Ok(())
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ThroughputProgressV2 {

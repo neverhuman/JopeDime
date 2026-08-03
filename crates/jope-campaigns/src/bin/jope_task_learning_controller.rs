@@ -7,10 +7,11 @@ use jope_dime_regressor::selfplay_runtime::{
 };
 use jope_dime_regressor::selfplay_shadow::{
     deterministic_canary_contexts, validate_panel_consumption, CanaryContextV2,
-    CausalEvidenceLedgerV3, PlateauDiagnosisV1, SealedPanelConsumptionV1, SealedPanelPoolV2,
-    Sha256Digest, ShadowAlternationState, ShadowCheckpointV1, Task, TaskCanaryStreaks,
-    TaskPromotionEvaluationV3, TrainerIntentV2, TrainerMode, SEALED_PANEL_CONSUMPTION_V1_SCHEMA,
-    SHADOW_CHECKPOINT_SCHEMA, TRAINER_INTENT_V3_SCHEMA,
+    CausalEvidenceLedgerV3, PlateauCountedCandidateV1, PlateauDiagnosisV1, PlateauDiagnosisV2,
+    RecipeChangeDirectiveV1, SealedPanelConsumptionV1, SealedPanelPoolV2, Sha256Digest,
+    ShadowAlternationState, ShadowCheckpointV1, Task, TaskCanaryStreaks,
+    TaskPromotionEvaluationV3, TrainerIntentV2, TrainerMode, PLATEAU_DIAGNOSIS_V2_SCHEMA,
+    SEALED_PANEL_CONSUMPTION_V1_SCHEMA, SHADOW_CHECKPOINT_SCHEMA, TRAINER_INTENT_V3_SCHEMA,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -274,12 +275,43 @@ fn cycle(args: &Args) -> Result<Value> {
         save_state(&state_path, &state)?;
     }
     reset_changed_shadow_epochs(&mut state, &accepted);
-    let plateau_tasks = publish_plateau_diagnoses(&args.root, &accepted)?;
+    let corpus = corpus_pointer(&args.root)?;
+    // The recipe each task's shadow lane would train with RIGHT NOW; plateau
+    // scoping compares rejected shadows against this. A task whose current
+    // recipe cannot be computed scopes conservatively (v1 behavior).
+    let mut current_recipe_identities = BTreeMap::new();
+    for task in Task::ALL {
+        let Some(pointer) = accepted.get(&task) else {
+            continue;
+        };
+        let Ok((_, recipe)) = trainer_recipe(
+            &corpus,
+            task,
+            TrainerMode::Shadow,
+            &pointer.digest,
+            state
+                .last_recipe_e_corpus_watermark
+                .get(&task)
+                .copied()
+                .unwrap_or(0),
+            state
+                .last_recipe_e_descendant_receipts
+                .get(&task)
+                .copied()
+                .unwrap_or(0),
+        ) else {
+            continue;
+        };
+        if let Ok(identity) = recipe_identity_sha256(&recipe) {
+            current_recipe_identities.insert(task, identity);
+        }
+    }
+    let plateau_tasks =
+        publish_plateau_diagnoses(&args.root, &accepted, &current_recipe_identities)?;
     let accepted_digests = accepted
         .iter()
         .map(|(task, pointer)| (*task, pointer.digest.clone()))
         .collect::<BTreeMap<_, _>>();
-    let corpus = corpus_pointer(&args.root)?;
     let jobs = scheduler_jobs(&scq_json(&args.scq, &["ls"])?)?;
 
     if let Some(intent) = state.intent.clone() {
@@ -664,9 +696,98 @@ fn shadow_summary_eligible(summary: &Value) -> bool {
             == Some(true)
 }
 
+/// Keys in a trainer recipe that vary run-to-run without changing what the
+/// trainer actually DOES (corpus counters, evidence tallies, the parent the
+/// plateau already keys on). Stripped before hashing so a recipe identity
+/// names the training procedure, not the moment it ran.
+const RECIPE_VOLATILE_KEYS: &[&str] = &[
+    "complete_parent_pairs",
+    "completed_descendant_rows",
+    "completed_descendant_receipts",
+    "hard_negative_rows",
+    "new_eligible_labels",
+    "new_completed_descendant_receipts",
+    "accepted_parent_checkpoint_sha256",
+];
+
+fn recipe_identity_sha256(recipe: &Value) -> Result<String> {
+    let object = recipe
+        .as_object()
+        .context("trainer recipe is not an object")?;
+    let canonical = object
+        .iter()
+        .filter(|(key, _)| !RECIPE_VOLATILE_KEYS.contains(&key.as_str()))
+        .collect::<BTreeMap<_, _>>();
+    Ok(sha256_bytes(&serde_json::to_vec(&canonical)?))
+}
+
+/// Resolve the recipe identity a rejected candidate was trained with:
+/// candidate checkpoint -> ShadowCheckpoint.v1 (trainer_intent_sha256) ->
+/// content-addressed TrainerIntent receipt -> its recipe. None when any
+/// link is missing (legacy receipts predating recipe stamping).
+fn resolve_candidate_recipe_identity(
+    root: &Path,
+    task: Task,
+    candidate: &Sha256Digest,
+) -> Result<Option<String>> {
+    let checkpoint_doc = root
+        .join("training/shadow-checkpoints")
+        .join(task.as_str())
+        .join(format!("{}.v1.json", candidate.as_str()));
+    if !checkpoint_doc.is_file() {
+        return Ok(None);
+    }
+    let checkpoint = read_json(&checkpoint_doc)?;
+    let Some(intent_sha256) = checkpoint
+        .get("trainer_intent_sha256")
+        .and_then(Value::as_str)
+    else {
+        return Ok(None);
+    };
+    let intents = root.join("training/trainer-intents");
+    if !intents.is_dir() {
+        return Ok(None);
+    }
+    for entry in fs::read_dir(&intents)?.filter_map(|entry| entry.ok()) {
+        let path = entry.path();
+        if path.extension().and_then(|extension| extension.to_str()) != Some("json")
+            || sha256_file(&path)? != intent_sha256
+        {
+            continue;
+        }
+        let intent = read_json(&path)?;
+        return match intent.get("recipe") {
+            Some(recipe) if !recipe.is_null() => Ok(Some(recipe_identity_sha256(recipe)?)),
+            _ => Ok(None),
+        };
+    }
+    Ok(None)
+}
+
+/// A valid operator directive for (task, parent) at ops/recipe-changes/.
+/// Malformed documents are treated as absent (the pause stays), never as
+/// a bridge.
+fn recipe_change_directive(root: &Path, task: Task, parent: &Sha256Digest) -> bool {
+    let path = root.join("ops/recipe-changes").join(format!(
+        "{}-{}.v1.json",
+        task.as_str(),
+        parent.as_str()
+    ));
+    let Ok(value) = read_json(&path) else {
+        return false;
+    };
+    let Ok(directive) = serde_json::from_value::<RecipeChangeDirectiveV1>(value) else {
+        return false;
+    };
+    directive.validate().is_ok()
+        && directive.task == task
+        && directive.unchanged_parent_checkpoint_sha256 == *parent
+}
+
 fn publish_plateau_diagnoses(
     root: &Path,
     accepted: &BTreeMap<Task, AcceptedPointer>,
+    current_recipe_identities: &BTreeMap<Task, String>,
 ) -> Result<BTreeSet<Task>> {
     let directory = root.join("training/shadow-canaries/completed");
     let mut plateau_tasks = BTreeSet::new();
@@ -721,10 +842,36 @@ fn publish_plateau_diagnoses(
             .filter(|(_, (_, summary))| !shadow_summary_eligible(summary))
             .collect::<Vec<_>>();
         rejected.sort_by_key(|(_, (created, _))| *created);
-        if rejected.len() < 3 {
+        // Recipe scoping: a rejected shadow counts toward THIS plateau only
+        // if it was trained with the recipe the lane would use right now.
+        // Unresolvable identities (legacy receipts) count conservatively,
+        // unless an operator RecipeChangeDirective bridges them. An unknown
+        // CURRENT identity disables scoping entirely (v1 behavior).
+        let current_identity = current_recipe_identities.get(&task);
+        let directive_present = recipe_change_directive(root, task, parent);
+        let mut counted = Vec::new();
+        for (candidate, (created, summary)) in rejected {
+            let identity = resolve_candidate_recipe_identity(root, task, &candidate)?;
+            let counts = match (&identity, current_identity) {
+                (Some(candidate_identity), Some(current)) => candidate_identity == current,
+                (Some(_), None) => true,
+                (None, _) => !directive_present,
+            };
+            if counts {
+                counted.push((candidate, identity, created, summary));
+            }
+        }
+        if counted.len() < 3 {
             continue;
         }
-        let selected = &rejected[rejected.len() - 3..];
+        let counted_slice = &counted[counted.len() - 3..];
+        let selected = counted_slice
+            .iter()
+            .map(|(candidate, _, created, summary)| {
+                (candidate.clone(), (*created, summary.clone()))
+            })
+            .collect::<Vec<_>>();
+        let selected = &selected[..];
         let proposal_validity = selected
             .iter()
             .filter_map(|(_, (_, summary))| {
@@ -789,6 +936,43 @@ fn publish_plateau_diagnoses(
             );
         } else {
             atomic_json(&path, &serde_json::to_value(&diagnosis)?)?;
+        }
+        let v2 = PlateauDiagnosisV2 {
+            schema: PLATEAU_DIAGNOSIS_V2_SCHEMA.to_owned(),
+            task,
+            unchanged_parent_checkpoint_sha256: parent.clone(),
+            current_recipe_identity_sha256: current_identity.cloned(),
+            counted_candidates: counted_slice
+                .iter()
+                .map(|(candidate, identity, _, _)| PlateauCountedCandidateV1 {
+                    candidate_checkpoint_sha256: candidate.clone(),
+                    recipe_identity_sha256: identity.clone(),
+                })
+                .collect(),
+            recipe_change_directive_present: directive_present,
+            proposal_validity: diagnosis.proposal_validity,
+            gp_disadvantage: diagnosis.gp_disadvantage,
+            calibration_summary: diagnosis.calibration_summary.clone(),
+            data_slice_summary: diagnosis.data_slice_summary.clone(),
+            latency_summary: diagnosis.latency_summary.clone(),
+            replay_summary: diagnosis.replay_summary.clone(),
+            diagnosed_at_ms: diagnosis.diagnosed_at_ms,
+        };
+        v2.validate()?;
+        let v2_path = root.join("training/plateau-diagnoses").join(format!(
+            "{}-{}.v2.json",
+            task.as_str(),
+            parent.as_str()
+        ));
+        if v2_path.is_file() {
+            let existing: PlateauDiagnosisV2 = serde_json::from_value(read_json(&v2_path)?)?;
+            existing.validate()?;
+            ensure!(
+                existing.unchanged_parent_checkpoint_sha256 == *parent,
+                "plateau diagnosis v2 parent drift"
+            );
+        } else {
+            atomic_json(&v2_path, &serde_json::to_value(&v2)?)?;
         }
         plateau_tasks.insert(task);
     }
@@ -2456,7 +2640,7 @@ mod tests {
                 },
             ),
         ]);
-        let plateau = publish_plateau_diagnoses(root, &accepted).unwrap();
+        let plateau = publish_plateau_diagnoses(root, &accepted, &BTreeMap::new()).unwrap();
         assert_eq!(plateau, BTreeSet::from([Task::Binary]));
         let path = root
             .join("training/plateau-diagnoses")
@@ -2465,5 +2649,220 @@ mod tests {
             serde_json::from_value(read_json(&path).unwrap()).unwrap();
         assert_eq!(diagnosis.rejected_candidates.len(), 3);
         assert_eq!(diagnosis.gp_disadvantage, 0.04);
+        // The additive v2 receipt records the (here unresolvable) recipe
+        // identities and the conservative scoping that still paused.
+        let v2: PlateauDiagnosisV2 = serde_json::from_value(
+            read_json(
+                &root
+                    .join("training/plateau-diagnoses")
+                    .join(format!("binary-{}.v2.json", parent.as_str())),
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(v2.counted_candidates.len(), 3);
+        assert!(v2
+            .counted_candidates
+            .iter()
+            .all(|candidate| candidate.recipe_identity_sha256.is_none()));
+        assert!(!v2.recipe_change_directive_present);
+    }
+
+    fn write_reject_summary(root: &Path, parent: &Sha256Digest, candidate: &str, created: u64) {
+        let completed = root.join("training/shadow-canaries/completed");
+        fs::create_dir_all(&completed).unwrap();
+        atomic_json(
+            &completed.join(format!("{candidate}.json")),
+            &json!({
+                "schema": "ShadowBattleSummary.v1",
+                "mode": "shadow",
+                "task": "binary",
+                "accepted_parent_checkpoint_sha256": parent,
+                "candidate_checkpoint_sha256": candidate,
+                "created_at_ms": created,
+                "contexts": vec![json!({"context": "x"}); 16],
+                "accepted_validity": 1.0,
+                "gp_validity": 1.0,
+                "replay_verification_complete": true,
+                "candidate_vs_accepted": {
+                    "validity": 0.98,
+                    "pairwise_lift": -0.01,
+                    "latency_ratio": 1.1,
+                    "stability": 1.0
+                },
+                "candidate_vs_gp": {
+                    "pairwise_lift": -0.04
+                }
+            }),
+        )
+        .unwrap();
+    }
+
+    fn install_candidate_recipe(root: &Path, candidate: &str, recipe: &Value) {
+        let intents = root.join("training/trainer-intents");
+        fs::create_dir_all(&intents).unwrap();
+        let intent_path = intents.join(format!("intent-{}.v3.json", &candidate[..8]));
+        atomic_json(
+            &intent_path,
+            &json!({"schema": "TrainerIntent.v3", "recipe": recipe}),
+        )
+        .unwrap();
+        let checkpoint_dir = root.join("training/shadow-checkpoints/binary");
+        fs::create_dir_all(&checkpoint_dir).unwrap();
+        atomic_json(
+            &checkpoint_dir.join(format!("{candidate}.v1.json")),
+            &json!({"trainer_intent_sha256": sha256_file(&intent_path).unwrap()}),
+        )
+        .unwrap();
+    }
+
+    fn binary_accepted(parent: &Sha256Digest) -> BTreeMap<Task, AcceptedPointer> {
+        BTreeMap::from([
+            (
+                Task::Binary,
+                AcceptedPointer {
+                    digest: parent.clone(),
+                    path: PathBuf::new(),
+                },
+            ),
+            (
+                Task::Regression,
+                AcceptedPointer {
+                    digest: Sha256Digest::parse("b".repeat(64)).unwrap(),
+                    path: PathBuf::new(),
+                },
+            ),
+        ])
+    }
+
+    #[test]
+    fn a_changed_recipe_reschedules_training_instead_of_pausing() {
+        let directory = tempdir().unwrap();
+        let root = directory.path();
+        let parent = Sha256Digest::parse("a".repeat(64)).unwrap();
+        let old_recipe = json!({
+            "recipe_name": "a",
+            "broad_replay_fraction": 1.0,
+            "complete_parent_pairs": 17,
+        });
+        for (index, character) in ["1", "2", "3"].into_iter().enumerate() {
+            let candidate = character.repeat(64);
+            write_reject_summary(root, &parent, &candidate, index as u64 + 1);
+            install_candidate_recipe(root, &candidate, &old_recipe);
+        }
+        let accepted = binary_accepted(&parent);
+        // Same recipe as the rejects (volatile counters differ): still pauses.
+        let same = recipe_identity_sha256(&json!({
+            "recipe_name": "a",
+            "broad_replay_fraction": 1.0,
+            "complete_parent_pairs": 99,
+        }))
+        .unwrap();
+        let plateau = publish_plateau_diagnoses(
+            root,
+            &accepted,
+            &BTreeMap::from([(Task::Binary, same)]),
+        )
+        .unwrap();
+        assert_eq!(plateau, BTreeSet::from([Task::Binary]));
+        // A genuinely different recipe re-schedules training for the task.
+        let changed = recipe_identity_sha256(&json!({
+            "recipe_name": "d",
+            "broad_replay_fraction": 0.75,
+            "exact_causal_pair_fraction": 0.25,
+        }))
+        .unwrap();
+        fs::remove_dir_all(root.join("training/plateau-diagnoses")).unwrap();
+        let plateau = publish_plateau_diagnoses(
+            root,
+            &accepted,
+            &BTreeMap::from([(Task::Binary, changed)]),
+        )
+        .unwrap();
+        assert!(plateau.is_empty());
+        assert!(!root.join("training/plateau-diagnoses").is_dir());
+    }
+
+    #[test]
+    fn a_recipe_change_directive_bridges_unresolvable_legacy_rejects() {
+        let directory = tempdir().unwrap();
+        let root = directory.path();
+        let parent = Sha256Digest::parse("a".repeat(64)).unwrap();
+        for (index, character) in ["1", "2", "3"].into_iter().enumerate() {
+            // No shadow-checkpoint/intent fixtures: identities unresolvable.
+            write_reject_summary(root, &parent, &character.repeat(64), index as u64 + 1);
+        }
+        let accepted = binary_accepted(&parent);
+        let directive_dir = root.join("ops/recipe-changes");
+        fs::create_dir_all(&directive_dir).unwrap();
+        let directive_path =
+            directive_dir.join(format!("binary-{}.v1.json", parent.as_str()));
+        // A malformed directive (no enumerated changes) is treated as absent.
+        atomic_json(
+            &directive_path,
+            &json!({
+                "schema": "RecipeChangeDirective.v1",
+                "task": "binary",
+                "unchanged_parent_checkpoint_sha256": parent,
+                "answers_diagnosis": format!("binary-{}.v1.json", parent.as_str()),
+                "enumerated_changes": [],
+                "created_at_ms": 2,
+            }),
+        )
+        .unwrap();
+        let plateau =
+            publish_plateau_diagnoses(root, &accepted, &BTreeMap::new()).unwrap();
+        assert_eq!(plateau, BTreeSet::from([Task::Binary]));
+        // A valid directive bridges the legacy rejects: training resumes.
+        atomic_json(
+            &directive_path,
+            &json!({
+                "schema": "RecipeChangeDirective.v1",
+                "task": "binary",
+                "unchanged_parent_checkpoint_sha256": parent,
+                "answers_diagnosis": format!("binary-{}.v1.json", parent.as_str()),
+                "enumerated_changes": [
+                    "ShadowBattleSummary.v2: median latency gate vs matched GP comparators",
+                ],
+                "created_at_ms": 3,
+            }),
+        )
+        .unwrap();
+        fs::remove_dir_all(root.join("training/plateau-diagnoses")).unwrap();
+        let plateau =
+            publish_plateau_diagnoses(root, &accepted, &BTreeMap::new()).unwrap();
+        assert!(plateau.is_empty());
+    }
+
+    #[test]
+    fn recipe_identity_ignores_volatile_counters_only() {
+        let base = json!({
+            "recipe_name": "d",
+            "broad_replay_fraction": 0.75,
+            "complete_parent_pairs": 32,
+            "new_eligible_labels": 51_000,
+            "accepted_parent_checkpoint_sha256": "a".repeat(64),
+        });
+        let counters_shifted = json!({
+            "recipe_name": "d",
+            "broad_replay_fraction": 0.75,
+            "complete_parent_pairs": 640,
+            "new_eligible_labels": 1,
+            "accepted_parent_checkpoint_sha256": "c".repeat(64),
+        });
+        let fraction_changed = json!({
+            "recipe_name": "d",
+            "broad_replay_fraction": 0.50,
+            "complete_parent_pairs": 32,
+        });
+        let base_identity = recipe_identity_sha256(&base).unwrap();
+        assert_eq!(
+            base_identity,
+            recipe_identity_sha256(&counters_shifted).unwrap()
+        );
+        assert_ne!(
+            base_identity,
+            recipe_identity_sha256(&fraction_changed).unwrap()
+        );
     }
 }
