@@ -35,8 +35,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
-use jope_dime_regressor::selfplay_expansion::TASKS;
 use clap::{Parser, Subcommand};
+use jope_dime_regressor::selfplay_expansion::TASKS;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};

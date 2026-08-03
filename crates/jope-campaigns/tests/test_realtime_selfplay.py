@@ -426,7 +426,12 @@ def test_expanded_cache_resumes_and_catalog_v2_validates(tmp_path):
         tmp_path / "catalog" / "current.json"
     )
     assert authority["catalog_version"] == 2
-    assert authority["task_counts"] == {"regression": 1, "binary": 1}
+    assert authority["task_counts"] == {
+        "regression": 1,
+        "binary": 1,
+        "timeseries": 0,
+        "multiclass": 0,
+    }
     assert pointer["row_count"] == 2
 
 

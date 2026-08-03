@@ -831,7 +831,10 @@ fn accepted_pointers(root: &Path) -> Result<BTreeMap<Task, AcceptedPointer>> {
     );
     let mut output = BTreeMap::new();
     for task in Task::ALL {
-        let row = match value.get("tasks").and_then(|tasks| tasks.get(task.as_str())) {
+        let row = match value
+            .get("tasks")
+            .and_then(|tasks| tasks.get(task.as_str()))
+        {
             Some(row) => row,
             // Legacy tasks must always be present; the new tasks appear in
             // accepted-by-task.json only once their first anchor is promoted.

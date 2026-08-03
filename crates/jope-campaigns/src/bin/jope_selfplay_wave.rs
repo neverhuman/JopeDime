@@ -299,14 +299,12 @@ impl ProposalsPointer {
             return Ok(CHECKPOINT_PROPOSAL_SLOTS);
         }
         ensure!(
-            self.dl_slots_by_task
-                .keys()
-                .all(|key| {
-                    matches!(
-                        key.as_str(),
-                        "regression" | "binary" | "timeseries" | "multiclass"
-                    )
-                }),
+            self.dl_slots_by_task.keys().all(|key| {
+                matches!(
+                    key.as_str(),
+                    "regression" | "binary" | "timeseries" | "multiclass"
+                )
+            }),
             "proposal pointer has an unknown task allocation"
         );
         let slots = *self
@@ -670,8 +668,7 @@ fn validate_frozen_sealed(cohort: &FrozenSealedCohort, catalog_sha256: &str) -> 
             matches!(
                 entry.task.as_str(),
                 "regression" | "binary" | "timeseries" | "multiclass"
-            )
-                && !entry.dataset_hash.is_empty()
+            ) && !entry.dataset_hash.is_empty()
                 && !entry.source_family.is_empty(),
             "sealed cohort contains an invalid entry"
         );
@@ -1567,8 +1564,7 @@ fn sanitize_proposals(args: SanitizeProposalsArgs) -> Result<Value> {
             matches!(
                 row.task.as_str(),
                 "regression" | "binary" | "timeseries" | "multiclass"
-            )
-                && !row.dataset_hash.is_empty()
+            ) && !row.dataset_hash.is_empty()
                 && valid_proposal_reservoir_slot(row.slot),
             "proposal file contains an invalid identity or slot at line {}",
             ordinal + 1
@@ -1842,15 +1838,12 @@ fn load_robust(path: &Path) -> Result<(BTreeMap<String, Vec<RobustSeed>>, String
         "unsupported robust seed-bank schema"
     );
     ensure!(
-        bank.tasks
-            .keys()
-            .all(|task| {
-                matches!(
-                    task.as_str(),
-                    "regression" | "binary" | "timeseries" | "multiclass"
-                )
-            })
-            && bank.tasks.contains_key("regression")
+        bank.tasks.keys().all(|task| {
+            matches!(
+                task.as_str(),
+                "regression" | "binary" | "timeseries" | "multiclass"
+            )
+        }) && bank.tasks.contains_key("regression")
             && bank.tasks.contains_key("binary"),
         "robust seed bank must contain regression/binary and only supported tasks"
     );

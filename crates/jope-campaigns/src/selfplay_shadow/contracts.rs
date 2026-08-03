@@ -939,7 +939,7 @@ mod tests {
             assert_eq!(Task::from(crate::task::TaskKind::from(task)), task);
         }
         assert_eq!(Task::Multiclass.corpus_dir_name(), "multi_label");
-        assert_eq!(Task::Timeseries.corpus_dir_name(), "timeseries");
+        assert_eq!(Task::Timeseries.corpus_dir_name(), "timeseries_reduced_v2");
         assert!("multi_label".parse::<Task>().is_err());
     }
 
@@ -992,7 +992,12 @@ mod tests {
         }
         assert_eq!(
             picks,
-            vec![Task::Timeseries, Task::Regression, Task::Binary, Task::Regression]
+            vec![
+                Task::Timeseries,
+                Task::Regression,
+                Task::Binary,
+                Task::Regression
+            ]
         );
 
         // No eligible task at all: the current slot is returned unconditionally.

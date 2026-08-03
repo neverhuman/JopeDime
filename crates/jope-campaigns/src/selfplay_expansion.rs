@@ -241,7 +241,10 @@ fn read_meta(path: &Path) -> Result<Value> {
 
 fn mirror_dataset(paths: &ExpansionPaths, task: &str, dataset_id: &str) -> Option<PathBuf> {
     [
-        paths.mirror_root.join(corpus_dir_name(task)).join(dataset_id),
+        paths
+            .mirror_root
+            .join(corpus_dir_name(task))
+            .join(dataset_id),
         paths.mirror_root.join(dataset_id),
     ]
     .into_iter()
@@ -609,6 +612,194 @@ pub fn validate_cache(path: &Path, expected: Option<&InventoryEntry>) -> Result<
     Ok(manifest)
 }
 
+fn is_legacy_cache(path: &Path) -> Result<bool> {
+    let value = read_json(&path.join("cache-manifest.v1.json"))?;
+    Ok(
+        value["schema"].as_str() == Some("JopeExpandedEncodingCache.v1")
+            && value["immutable"].as_bool() == Some(true)
+            && value["train_only_encoding"].as_bool() == Some(true)
+            && value["dataset_id"].is_null()
+            && value["source_family"].is_null()
+            && value["train_sha256"].is_null()
+            && value["test_sha256"].is_null(),
+    )
+}
+
+/// Upgrade the first-generation sidecar-only cache envelope in place.
+///
+/// The old encoder produced trustworthy sidecars, but its manifest omitted
+/// dataset identity, source CSVs, and the signature manifest required by the
+/// current activation contract. Every old manifest/file hash is checked before
+/// any new file is written; the only added data files come from the audited
+/// authoritative source.
+fn repair_legacy_cache(path: &Path, entry: &InventoryEntry) -> Result<CacheManifest> {
+    ensure!(
+        path.is_dir(),
+        "legacy cache directory is absent: {}",
+        path.display()
+    );
+    ensure!(
+        !path.symlink_metadata()?.file_type().is_symlink(),
+        "legacy cache directory must not be a symlink: {}",
+        path.display()
+    );
+    let legacy = read_json(&path.join("cache-manifest.v1.json"))?;
+    ensure!(
+        legacy["schema"].as_str() == Some("JopeExpandedEncodingCache.v1")
+            && legacy["immutable"].as_bool() == Some(true)
+            && legacy["train_only_encoding"].as_bool() == Some(true),
+        "existing cache is not a recognized legacy envelope: {}",
+        path.display()
+    );
+    ensure!(
+        legacy["task"].as_str() == Some(entry.task.as_str())
+            && legacy["dataset_hash"].as_str() == Some(entry.dataset_hash.as_str())
+            && legacy["source"].as_str() == entry.source.to_str(),
+        "legacy cache identity drift: {}",
+        path.display()
+    );
+    ensure!(
+        legacy["encoder_protocol"].as_str() == Some(ENCODER_PROTOCOL),
+        "legacy cache encoder protocol drift: {}",
+        path.display()
+    );
+    let legacy_files = legacy["files"]
+        .as_object()
+        .context("legacy cache manifest lacks files")?;
+    for (name, digest) in legacy_files {
+        let expected = digest
+            .as_str()
+            .with_context(|| format!("legacy cache file hash is invalid: {name}"))?;
+        let file = path.join(name);
+        ensure!(
+            file.is_file() && sha256_file(&file)? == expected,
+            "legacy cache content drift: {}",
+            file.display()
+        );
+    }
+    for name in REQUIRED_ENCODINGS {
+        validate_sidecar(&path.join(name), name)
+            .with_context(|| format!("legacy cache sidecar validation failed: {name}"))?;
+    }
+    for name in SIDECAR_NAMES {
+        let file = path.join(name);
+        if file.is_file() {
+            validate_sidecar(&file, name)
+                .with_context(|| format!("legacy cache sidecar validation failed: {name}"))?;
+        }
+    }
+    ensure!(
+        sha256_file(&entry.source.join("train.csv"))? == entry.train_sha256
+            && sha256_file(&entry.source.join("test.csv"))? == entry.test_sha256
+            && sha256_file(&entry.source.join("meta.json"))? == entry.meta_sha256,
+        "authoritative source changed during legacy cache repair"
+    );
+
+    for name in ["train.csv", "test.csv", "meta.json"] {
+        let destination = path.join(name);
+        let expected = match name {
+            "train.csv" => &entry.train_sha256,
+            "test.csv" => &entry.test_sha256,
+            "meta.json" => &entry.meta_sha256,
+            _ => unreachable!(),
+        };
+        if destination.is_file() {
+            ensure!(
+                sha256_file(&destination)? == *expected,
+                "legacy cache data drift: {}",
+                destination.display()
+            );
+            continue;
+        }
+        let temporary = path.join(format!(
+            ".{}.repair-{}-{}",
+            name,
+            std::process::id(),
+            now_ms()
+        ));
+        copy_reflink_or_copy(&entry.source.join(name), &temporary)?;
+        let result = (|| -> Result<()> {
+            ensure!(
+                sha256_file(&temporary)? == *expected,
+                "repaired cache data hash drift: {}",
+                temporary.display()
+            );
+            fs::rename(&temporary, &destination)?;
+            Ok(())
+        })();
+        if result.is_err() {
+            cleanup_staging(&temporary);
+        }
+        result?;
+    }
+
+    let encoding_hashes = REQUIRED_ENCODINGS
+        .into_iter()
+        .chain(OPTIONAL_ENCODINGS)
+        .filter(|name| path.join(name).is_file())
+        .map(|name| Ok((name.to_owned(), sha256_file(&path.join(name))?)))
+        .collect::<Result<BTreeMap<_, _>>>()?;
+    let signature = json!({
+        "schema": "JopeExpandedSignatureManifest.v1",
+        "task": entry.task,
+        "dataset_id": entry.dataset_id,
+        "train_only": true,
+        "encoder_protocol": ENCODER_PROTOCOL,
+        "encoder_protocol_sha256": encoder_protocol_sha256()?,
+        "files": encoding_hashes,
+    });
+    let signature_path = path.join("signature_manifest.json");
+    if signature_path.is_file() {
+        ensure!(
+            read_json(&signature_path)? == signature,
+            "legacy cache signature manifest drift: {}",
+            signature_path.display()
+        );
+    } else {
+        atomic_json(&signature_path, &signature)?;
+    }
+
+    let files = fs::read_dir(path)?
+        .filter_map(std::result::Result::ok)
+        .filter(|item| {
+            item.file_type().is_ok_and(|kind| kind.is_file())
+                && item.file_name() != "cache-manifest.v1.json"
+        })
+        .map(|item| {
+            let name = item.file_name().to_string_lossy().to_string();
+            Ok((name, sha256_file(&item.path())?))
+        })
+        .collect::<Result<BTreeMap<_, _>>>()?;
+    ensure!(
+        files["train.csv"] == entry.train_sha256
+            && files["test.csv"] == entry.test_sha256
+            && files["meta.json"] == entry.meta_sha256,
+        "repaired cache data inventory drift"
+    );
+    let manifest = CacheManifest {
+        schema: "JopeExpandedEncodingCache.v1".to_owned(),
+        immutable: true,
+        task: entry.task.clone(),
+        dataset_id: entry.dataset_id.clone(),
+        dataset_hash: entry.dataset_hash.clone(),
+        source: entry.source.clone(),
+        source_family: entry.source_family.clone(),
+        train_sha256: entry.train_sha256.clone(),
+        test_sha256: entry.test_sha256.clone(),
+        encoder_protocol: ENCODER_PROTOCOL.to_owned(),
+        encoder_protocol_sha256: encoder_protocol_sha256()?,
+        train_only_encoding: true,
+        files,
+        created_at_ms: now_ms(),
+    };
+    manifest.cache_identity().validate()?;
+    atomic_json(
+        &path.join("cache-manifest.v1.json"),
+        &serde_json::to_value(&manifest)?,
+    )?;
+    validate_cache(path, Some(entry))
+}
+
 fn verify_native_encoder(path: &Path) -> Result<()> {
     ensure!(path.is_file(), "Rust encoder is absent: {}", path.display());
     let mut header = [0_u8; 4];
@@ -672,7 +863,20 @@ pub fn materialize_cache(
         .join(format!("{}.lock", entry.dataset_id));
     let _lock = FileLock::exclusive(&lock_path)?;
     if final_path.is_dir() {
-        return validate_cache(&final_path, Some(entry));
+        match validate_cache(&final_path, Some(entry)) {
+            Ok(manifest) => return Ok(manifest),
+            Err(validation_error) => {
+                if is_legacy_cache(&final_path)? {
+                    return repair_legacy_cache(&final_path, entry).with_context(|| {
+                        format!(
+                            "upgrade legacy expanded cache {} after validation failure: {validation_error}",
+                            final_path.display()
+                        )
+                    });
+                }
+                return Err(validation_error);
+            }
+        }
     }
     let staging = final_path.with_file_name(format!(
         ".{}.tmp-{}-{}",
@@ -2014,11 +2218,11 @@ pub fn merge_live(
                 tranche.tranche_id,
                 entry.dataset.dataset_hash
             );
-            let metric = if entry.dataset.task == "binary" {
-                "auc"
-            } else {
-                "r2"
-            };
+            let metric = crate::task::TaskKind::parse(&entry.dataset.task)
+                .with_context(|| {
+                    format!("unknown task in expanded tranche: {}", entry.dataset.task)
+                })?
+                .primary_metric();
             let catalog_index = merged_entries.len();
             merged_entries.push(json!({
                 "catalog_index": catalog_index,
@@ -2080,11 +2284,24 @@ pub fn merge_live(
         "merged catalog families straddle train/validation"
     );
     let data_sha256 = sha256_bytes(&blob);
+    let task_counts = TASKS
+        .into_iter()
+        .filter_map(|task| {
+            let count = merged_entries
+                .iter()
+                .filter(|entry| entry["task"].as_str() == Some(task))
+                .count();
+            (count != 0).then(|| (task.to_owned(), count))
+        })
+        .collect::<BTreeMap<_, _>>();
     let regression_count = merged_entries
         .iter()
         .filter(|entry| entry["task"].as_str() == Some("regression"))
         .count();
-    let binary_count = merged_entries.len() - regression_count;
+    let binary_count = merged_entries
+        .iter()
+        .filter(|entry| entry["task"].as_str() == Some("binary"))
+        .count();
     let mut merged_catalog = catalog.clone();
     merged_catalog["entries"] = Value::Array(merged_entries);
     merged_catalog["row_count"] = json!(
@@ -2096,6 +2313,7 @@ pub fn merge_live(
     );
     merged_catalog["regression_count"] = json!(regression_count);
     merged_catalog["binary_count"] = json!(binary_count);
+    merged_catalog["task_counts"] = json!(task_counts);
     merged_catalog["data_sha256"] = Value::String(data_sha256.clone());
     merged_catalog["source_family_disjoint"] = Value::Bool(true);
     merged_catalog["expanded_tranches"] = Value::Array(appended.clone());
@@ -2108,6 +2326,7 @@ pub fn merge_live(
         "row_count": merged_catalog["row_count"],
         "regression_count": regression_count,
         "binary_count": binary_count,
+        "task_counts": task_counts,
         "inherited_splits": inherited_splits,
         "tranches": appended,
         "already_merged_tranches": already_merged,
@@ -2223,7 +2442,10 @@ pub fn install_sidecars(
             .and_then(|value| value.to_str())
             .context("sidecar source has no UTF-8 identity")?
             .to_owned();
-        let registry = paths.source_root.join(corpus_dir_name(task)).join(&dataset_id);
+        let registry = paths
+            .source_root
+            .join(corpus_dir_name(task))
+            .join(&dataset_id);
         if !registry.is_dir() {
             missing_registry += 1;
             record(
@@ -2324,7 +2546,14 @@ mod tests {
         )
         .unwrap();
         fs::write(path.join("train3.vs"), "0\n").unwrap();
-        fs::write(path.join("train_target.vs"), "0\n").unwrap();
+        fs::write(
+            path.join("train_target.vs"),
+            format!(
+                "{}\n",
+                (0..TARGET_DIM).map(|_| "0").collect::<Vec<_>>().join(",")
+            ),
+        )
+        .unwrap();
     }
 
     #[test]
@@ -2393,6 +2622,58 @@ mod tests {
         );
         fs::write(cache.join("train.csv"), "drift").unwrap();
         assert!(validate_cache(&cache, Some(&entry)).is_err());
+    }
+
+    #[test]
+    fn legacy_sidecar_cache_is_upgraded_with_verified_source_files() {
+        let temp = TempDir::new().unwrap();
+        let paths = paths(&temp);
+        let id = "0014b9dad5725a1e";
+        dataset(&paths.source_root, "timeseries_reduced_v2", id, "1");
+        let entry = discover(&paths, Some("timeseries"), None)
+            .unwrap()
+            .remove(0);
+        materialize_cache(&paths, &entry, None).unwrap();
+        let cache = cache_path(&paths, "timeseries", id);
+        let current = read_json(&cache.join("cache-manifest.v1.json")).unwrap();
+        let old_files = current["files"]
+            .as_object()
+            .unwrap()
+            .iter()
+            .filter(|(name, _)| {
+                !matches!(
+                    name.as_str(),
+                    "train.csv" | "test.csv" | "signature_manifest.json"
+                )
+            })
+            .map(|(name, digest)| (name.clone(), digest.clone()))
+            .collect::<serde_json::Map<_, _>>();
+        fs::remove_file(cache.join("cache-manifest.v1.json")).unwrap();
+        fs::remove_file(cache.join("signature_manifest.json")).unwrap();
+        fs::remove_file(cache.join("train.csv")).unwrap();
+        fs::remove_file(cache.join("test.csv")).unwrap();
+        atomic_json(
+            &cache.join("cache-manifest.v1.json"),
+            &json!({
+                "schema": "JopeExpandedEncodingCache.v1",
+                "task": entry.task,
+                "source": entry.source,
+                "dataset_hash": entry.dataset_hash,
+                "encoder_protocol": ENCODER_PROTOCOL,
+                "train_only_encoding": true,
+                "immutable": true,
+                "staged_by": "legacy-fixture",
+                "files": old_files,
+            }),
+        )
+        .unwrap();
+
+        let manifest = materialize_cache(&paths, &entry, None).unwrap();
+        assert_eq!(manifest.dataset_id, id);
+        assert!(cache.join("train.csv").is_file());
+        assert!(cache.join("test.csv").is_file());
+        assert!(cache.join("signature_manifest.json").is_file());
+        validate_cache(&cache, Some(&entry)).unwrap();
     }
 
     #[test]

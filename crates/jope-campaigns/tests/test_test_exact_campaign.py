@@ -369,7 +369,12 @@ def test_selfplay_authority_and_catalog_counts_fail_closed():
         for index in range(count)
     ]
     declared = {"regression": 2_322, "binary": 542}
-    assert validate_catalog_counts(entries, declared) == declared
+    assert validate_catalog_counts(entries, declared) == {
+        "regression": 2_322,
+        "binary": 542,
+        "timeseries": 0,
+        "multiclass": 0,
+    }
     with pytest.raises(ValueError, match="catalog count mismatch"):
         validate_catalog_counts(
             entries + [{"task": "regression", "dataset_hash": "extra"}],

@@ -3398,8 +3398,11 @@ mod tests {
     /// be promoted, however large its macro lift is.
     #[test]
     fn conditionality_is_a_hard_promotion_gate() {
-        let dead =
-            evaluate_gate(&synthetic_evidence_with(0.05, Some(-0.06), Some(0.02)), None).unwrap();
+        let dead = evaluate_gate(
+            &synthetic_evidence_with(0.05, Some(-0.06), Some(0.02)),
+            None,
+        )
+        .unwrap();
         assert_eq!(dead["pass"], json!(false));
         assert_eq!(dead["promotion_tier"], json!("rejected"));
         assert!(gate_reasons(&dead, "reasons")
@@ -3427,8 +3430,11 @@ mod tests {
         assert!(!reasons.contains(&"candidate_policy_is_not_conditional".to_owned()));
 
         // Positive, but under the internal margin.
-        let thin =
-            evaluate_gate(&synthetic_evidence_with(0.05, Some(0.004), Some(-0.02)), None).unwrap();
+        let thin = evaluate_gate(
+            &synthetic_evidence_with(0.05, Some(0.004), Some(-0.02)),
+            None,
+        )
+        .unwrap();
         assert_eq!(thin["pass"], json!(false));
         assert!(gate_reasons(&thin, "reasons")
             .contains(&"conditional_advantage_below_half_point".to_owned()));
@@ -3703,7 +3709,10 @@ mod tests {
             json!(false)
         );
         // Multiclass stays advisory and, with no evidence at all, records nulls.
-        assert_eq!(gated["task_verdicts"]["multiclass"]["advisory"], json!(true));
+        assert_eq!(
+            gated["task_verdicts"]["multiclass"]["advisory"],
+            json!(true)
+        );
         assert_eq!(gated["task_pairwise_deltas"]["multiclass"], Value::Null);
     }
 
