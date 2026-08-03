@@ -3,6 +3,26 @@
 default_max_tier = "normal"
 allow_live_priority_overrides = false
 
+# Coverage and post-coverage test-adaptive families are owned by the unified
+# Priority-10 guard.  Listing the current names here prevents the self-play
+# policy loader from normalizing them back to the default weight of 1.
+[projects.quant-multiclass]
+max_tier = "normal"
+weight = 10.0
+
+[projects.quant-timeseries-model]
+max_tier = "normal"
+weight = 10.0
+
+[projects.jope-multiclass-test-adaptive]
+max_tier = "normal"
+weight = 10.0
+max_gpus = 0
+
+[projects.jope-timeseries-test-adaptive]
+max_tier = "normal"
+weight = 10.0
+
 [projects.xhyp3]
 max_tier = "normal"
 weight = 1.0
