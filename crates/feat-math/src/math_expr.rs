@@ -123,7 +123,7 @@ impl MathExpr {
 
 fn expr_to_cpp17(expr: &Expr, elementwise: bool) -> Result<String> {
     let rendered = match expr {
-        Expr::Const(value) => format!("d(0x{:016x}ULL)", value.to_bits()),
+        Expr::Const(value) => format!("f64_from_bits(0x{:016x}ULL)", value.to_bits()),
         Expr::Var(Var::X) => {
             if !elementwise {
                 bail!("variable x is only valid in map expressions");

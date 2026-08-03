@@ -37,13 +37,16 @@ pub use fitted_cpp_runtime::{
     encode_fitted_cpp17, validate_fitted_cpp_codec, EncodedTable, FittedCppError, FittedCppModel,
     FittedCppRuntime, FittedModelCodec,
 };
+pub use heads::MULTICLASS_MAX_TRANSFORMED_FEATURES;
 pub use pipeline::{
-    fit_legacy_numeric_bound, fit_table, predict_table, validate_v3_genome, BoundModel,
+    fit_legacy_numeric_bound, fit_table, predict_labels_table, predict_multiclass_table,
+    predict_probabilities_table, predict_table, validate_v3_genome, BoundModel,
+    MulticlassPrediction,
 };
 pub use schema::{ColumnKind, ColumnSpec, DataSchema, RowSemantics};
 pub use types::{
-    balanced_accuracy_at, stratified_fold_assignments, Objective, TaskKind, TaskSpec,
-    ARTIFACT_SCHEMA,
+    balanced_accuracy_at, macro_f1, multiclass_accuracy, stratified_fold_assignments, Objective,
+    TaskKind, TaskSpec, ARTIFACT_SCHEMA,
 };
 
 #[cfg(test)]

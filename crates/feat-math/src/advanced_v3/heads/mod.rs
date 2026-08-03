@@ -9,6 +9,9 @@ use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
+pub const MULTICLASS_MAX_TRANSFORMED_FEATURES: usize = 64;
+const MULTICLASS_FEATURE_BUDGETS: [usize; 4] = [32, 64, 128, 256];
+
 // ------------------------------- v3 heads --------------------------------
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -27,6 +30,29 @@ pub(super) struct LogitRidgeModel {
 impl LogitRidgeModel {
     fn fit(x: &Rows, y: &[f64], l2: f64, class_weight: ClassWeight) -> Result<Self> {
         validate_binary_fit_target(y, x.len())?;
+        Self::fit_binary_unchecked(x, y, l2, class_weight)
+    }
+
+    fn fit_ovr(x: &Rows, y: &[f64], l2: f64) -> Result<Self> {
+        if y.len() != x.len() || x.is_empty() {
+            bail!("multiclass OvR target length differs from nonempty training rows");
+        }
+        let positives = y.iter().filter(|value| **value == 1.0).count();
+        if positives == 0
+            || positives == y.len()
+            || y.iter().any(|value| !matches!(*value, 0.0 | 1.0))
+        {
+            bail!("multiclass OvR targets must contain both zero and one");
+        }
+        Self::fit_binary_unchecked(x, y, l2, ClassWeight::Balanced)
+    }
+
+    fn fit_binary_unchecked(
+        x: &Rows,
+        y: &[f64],
+        l2: f64,
+        class_weight: ClassWeight,
+    ) -> Result<Self> {
         let n = x.len();
         let cols = x[0].len();
         let mut means = vec![0.0; cols];
@@ -708,6 +734,439 @@ impl PlsHeadModel {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub(super) struct MulticlassRidgeModel {
+    classes: Vec<i64>,
+    feature_count: usize,
+    means: Vec<f64>,
+    scales: Vec<f64>,
+    weights: Vec<Vec<f64>>,
+}
+
+impl MulticlassRidgeModel {
+    fn fit(x: &Rows, y: &[f64], stage: &Stage) -> Result<Self> {
+        let classes = validate_multiclass_target(y, x.len())?;
+        if x.first().is_none_or(Vec::is_empty) || x.iter().any(|row| row.len() != x[0].len()) {
+            bail!("multiclass fits require a nonempty rectangular feature matrix");
+        }
+        let class_weight = str_param(stage, "class_weight", "balanced")?;
+        if class_weight != "balanced" {
+            bail!("multiclass_ridge: class_weight must be balanced");
+        }
+        let feature_count = x[0].len().min(multiclass_feature_budget(stage)?);
+        let mut means = vec![0.0; feature_count];
+        for row in x {
+            for feature in 0..feature_count {
+                means[feature] += finite(row[feature]) / x.len() as f64;
+            }
+        }
+        let mut scales = vec![0.0; feature_count];
+        for row in x {
+            for feature in 0..feature_count {
+                let delta = finite(row[feature]) - means[feature];
+                scales[feature] += delta * delta;
+            }
+        }
+        for scale in &mut scales {
+            *scale = (*scale / x.len() as f64).sqrt().max(1e-12);
+        }
+
+        let mut class_counts = vec![0usize; classes.len()];
+        let class_indices: Vec<usize> = y
+            .iter()
+            .map(|value| {
+                classes
+                    .binary_search(&(*value as i64))
+                    .expect("validated class is present")
+            })
+            .collect();
+        for &class in &class_indices {
+            class_counts[class] += 1;
+        }
+
+        let width = feature_count + 1;
+        let mut gram = vec![vec![0.0; width]; width];
+        let mut rhs = vec![vec![0.0; width]; classes.len()];
+        for (row, &class) in x.iter().zip(&class_indices) {
+            let sample_weight = x.len() as f64 / (classes.len() * class_counts[class]) as f64;
+            let mut values = Vec::with_capacity(width);
+            values.push(1.0);
+            values.extend((0..feature_count).map(|feature| {
+                ((finite(row[feature]) - means[feature]) / scales[feature]).clamp(-30.0, 30.0)
+            }));
+            for left in 0..width {
+                for right in 0..=left {
+                    gram[left][right] += sample_weight * values[left] * values[right];
+                }
+                rhs[class][left] += sample_weight * values[left];
+            }
+        }
+        for left in 0..width {
+            for right in 0..left {
+                gram[right][left] = gram[left][right];
+            }
+        }
+        let l2 = stage.get_f64("l2", 0.02).clamp(1e-9, 1e6) * x.len() as f64;
+        gram[0][0] += 1e-9;
+        for feature in 1..width {
+            gram[feature][feature] += l2;
+        }
+        let weights = rhs
+            .iter()
+            .map(|target| {
+                solve_positive_definite(&gram, target).ok_or_else(|| {
+                    anyhow::anyhow!("multiclass ridge normal equations are singular")
+                })
+            })
+            .collect::<Result<Vec<_>>>()?;
+        Ok(Self {
+            classes,
+            feature_count,
+            means,
+            scales,
+            weights,
+        })
+    }
+
+    fn probabilities(&self, x: &Rows) -> Vec<Vec<f64>> {
+        x.iter()
+            .map(|row| {
+                let mut scores = Vec::with_capacity(self.classes.len());
+                for weights in &self.weights {
+                    let mut score = weights[0];
+                    for feature in 0..self.feature_count.min(row.len()) {
+                        let value = ((finite(row[feature]) - self.means[feature])
+                            / self.scales[feature])
+                            .clamp(-30.0, 30.0);
+                        score += weights[feature + 1] * value;
+                    }
+                    scores.push(finite(score));
+                }
+                let maximum = scores.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+                let mut probabilities: Vec<f64> = scores
+                    .iter()
+                    .map(|score| (score - maximum).clamp(-40.0, 0.0).exp())
+                    .collect();
+                let sum = probabilities.iter().sum::<f64>().max(1e-300);
+                for probability in &mut probabilities {
+                    *probability /= sum;
+                }
+                probabilities
+            })
+            .collect()
+    }
+
+    fn labels(&self, x: &Rows) -> Vec<i64> {
+        self.probabilities(x)
+            .iter()
+            .map(|row| {
+                let index = row
+                    .iter()
+                    .enumerate()
+                    .max_by(|left, right| left.1.total_cmp(right.1))
+                    .map_or(0, |(index, _)| index);
+                self.classes[index]
+            })
+            .collect()
+    }
+}
+
+fn multiclass_feature_budget(stage: &Stage) -> Result<usize> {
+    let budget = stage.get_usize("feature_budget", 64);
+    if !MULTICLASS_FEATURE_BUDGETS.contains(&budget) {
+        bail!("{}: feature_budget must be one of 32|64|128|256", stage.op);
+    }
+    Ok(budget)
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(super) struct MulticlassOvrLogisticModel {
+    classes: Vec<i64>,
+    models: Vec<LogitRidgeModel>,
+}
+
+impl MulticlassOvrLogisticModel {
+    fn fit(x: &Rows, y: &[f64], stage: &Stage) -> Result<Self> {
+        let classes = validate_multiclass_target(y, x.len())?;
+        let feature_count = x[0].len().min(multiclass_feature_budget(stage)?);
+        let bounded = x
+            .iter()
+            .map(|row| row[..feature_count].to_vec())
+            .collect::<Rows>();
+        let l2 = stage.get_f64("l2", 0.02).clamp(1e-9, 1e6);
+        let models = classes
+            .iter()
+            .map(|class| {
+                let binary = y
+                    .iter()
+                    .map(|value| f64::from(*value as i64 == *class))
+                    .collect::<Vec<_>>();
+                LogitRidgeModel::fit_ovr(&bounded, &binary, l2)
+            })
+            .collect::<Result<Vec<_>>>()?;
+        Ok(Self { classes, models })
+    }
+
+    fn probabilities(&self, x: &Rows) -> Vec<Vec<f64>> {
+        let columns = self
+            .models
+            .iter()
+            .map(|model| model.predict(x))
+            .collect::<Vec<_>>();
+        (0..x.len())
+            .map(|row| {
+                let mut values = columns
+                    .iter()
+                    .map(|column| finite(column[row]).max(0.0))
+                    .collect::<Vec<_>>();
+                let sum = values.iter().sum::<f64>();
+                if !sum.is_finite() || sum <= 0.0 {
+                    let uniform = 1.0 / values.len() as f64;
+                    values.fill(uniform);
+                } else {
+                    for value in &mut values {
+                        *value /= sum;
+                    }
+                }
+                values
+            })
+            .collect()
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(super) struct MulticlassDiagonalLdaModel {
+    classes: Vec<i64>,
+    feature_count: usize,
+    means: Vec<Vec<f64>>,
+    variances: Vec<f64>,
+    log_priors: Vec<f64>,
+}
+
+impl MulticlassDiagonalLdaModel {
+    fn fit(x: &Rows, y: &[f64], stage: &Stage) -> Result<Self> {
+        let classes = validate_multiclass_target(y, x.len())?;
+        let feature_count = x[0].len().min(multiclass_feature_budget(stage)?);
+        let mut means = vec![vec![0.0; feature_count]; classes.len()];
+        let mut counts = vec![0usize; classes.len()];
+        for (row, label) in x.iter().zip(y) {
+            let class = classes
+                .binary_search(&(*label as i64))
+                .expect("validated class");
+            counts[class] += 1;
+            for feature in 0..feature_count {
+                means[class][feature] += finite(row[feature]);
+            }
+        }
+        for (mean, count) in means.iter_mut().zip(&counts) {
+            for value in mean {
+                *value /= *count as f64;
+            }
+        }
+        let mut variances = vec![0.0; feature_count];
+        for (row, label) in x.iter().zip(y) {
+            let class = classes
+                .binary_search(&(*label as i64))
+                .expect("validated class");
+            for feature in 0..feature_count {
+                let delta = finite(row[feature]) - means[class][feature];
+                variances[feature] += delta * delta;
+            }
+        }
+        let shrinkage = stage.get_f64("shrinkage", 0.01).clamp(0.0, 1.0);
+        let global = (variances.iter().sum::<f64>()
+            / (feature_count.max(1) * x.len().max(1)) as f64)
+            .max(1e-12);
+        for variance in &mut variances {
+            *variance =
+                ((1.0 - shrinkage) * (*variance / x.len() as f64) + shrinkage * global).max(1e-12);
+        }
+        let log_priors = counts
+            .iter()
+            .map(|count| (*count as f64 / x.len() as f64).ln())
+            .collect();
+        Ok(Self {
+            classes,
+            feature_count,
+            means,
+            variances,
+            log_priors,
+        })
+    }
+
+    fn probabilities(&self, x: &Rows) -> Vec<Vec<f64>> {
+        x.iter()
+            .map(|row| {
+                let scores = self
+                    .means
+                    .iter()
+                    .zip(&self.log_priors)
+                    .map(|(mean, prior)| {
+                        *prior
+                            - 0.5
+                                * (0..self.feature_count)
+                                    .map(|feature| {
+                                        let delta = finite(row[feature]) - mean[feature];
+                                        delta * delta / self.variances[feature]
+                                    })
+                                    .sum::<f64>()
+                    })
+                    .collect::<Vec<_>>();
+                softmax(&scores)
+            })
+            .collect()
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(super) struct MulticlassNearestCentroidModel {
+    classes: Vec<i64>,
+    feature_count: usize,
+    centroids: Vec<Vec<f64>>,
+    scales: Vec<f64>,
+}
+
+impl MulticlassNearestCentroidModel {
+    fn fit(x: &Rows, y: &[f64], stage: &Stage) -> Result<Self> {
+        let classes = validate_multiclass_target(y, x.len())?;
+        let feature_count = x[0].len().min(multiclass_feature_budget(stage)?);
+        let mut centroids = vec![vec![0.0; feature_count]; classes.len()];
+        let mut counts = vec![0usize; classes.len()];
+        for (row, label) in x.iter().zip(y) {
+            let class = classes
+                .binary_search(&(*label as i64))
+                .expect("validated class");
+            counts[class] += 1;
+            for feature in 0..feature_count {
+                centroids[class][feature] += finite(row[feature]);
+            }
+        }
+        for (centroid, count) in centroids.iter_mut().zip(&counts) {
+            for value in centroid {
+                *value /= *count as f64;
+            }
+        }
+        let mut global = vec![0.0; feature_count];
+        for row in x {
+            for feature in 0..feature_count {
+                global[feature] += finite(row[feature]) / x.len() as f64;
+            }
+        }
+        let mut scales = vec![0.0; feature_count];
+        for row in x {
+            for feature in 0..feature_count {
+                let delta = finite(row[feature]) - global[feature];
+                scales[feature] += delta * delta;
+            }
+        }
+        for scale in &mut scales {
+            *scale = (*scale / x.len() as f64).sqrt().max(1e-12);
+        }
+        Ok(Self {
+            classes,
+            feature_count,
+            centroids,
+            scales,
+        })
+    }
+
+    fn probabilities(&self, x: &Rows) -> Vec<Vec<f64>> {
+        x.iter()
+            .map(|row| {
+                let scores = self
+                    .centroids
+                    .iter()
+                    .map(|centroid| {
+                        -(0..self.feature_count)
+                            .map(|feature| {
+                                let delta = (finite(row[feature]) - centroid[feature])
+                                    / self.scales[feature];
+                                delta * delta
+                            })
+                            .sum::<f64>()
+                    })
+                    .collect::<Vec<_>>();
+                softmax(&scores)
+            })
+            .collect()
+    }
+}
+
+fn softmax(scores: &[f64]) -> Vec<f64> {
+    let maximum = scores.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+    let mut probabilities = scores
+        .iter()
+        .map(|score| (finite(*score) - maximum).clamp(-40.0, 0.0).exp())
+        .collect::<Vec<_>>();
+    let sum = probabilities.iter().sum::<f64>().max(1e-300);
+    for probability in &mut probabilities {
+        *probability /= sum;
+    }
+    probabilities
+}
+
+fn solve_positive_definite(matrix: &[Vec<f64>], target: &[f64]) -> Option<Vec<f64>> {
+    let size = matrix.len();
+    if size == 0 || target.len() != size {
+        return None;
+    }
+    for attempt in 0..6 {
+        let jitter = if attempt == 0 {
+            0.0
+        } else {
+            10f64.powi(attempt - 12)
+        };
+        let mut lower = vec![vec![0.0; size]; size];
+        let mut valid = true;
+        for row in 0..size {
+            for column in 0..=row {
+                let mut value = matrix[row][column];
+                if row == column {
+                    value += jitter;
+                }
+                for prior in 0..column {
+                    value -= lower[row][prior] * lower[column][prior];
+                }
+                if row == column {
+                    if !value.is_finite() || value <= 1e-18 {
+                        valid = false;
+                        break;
+                    }
+                    lower[row][column] = value.sqrt();
+                } else {
+                    lower[row][column] = value / lower[column][column];
+                }
+            }
+            if !valid {
+                break;
+            }
+        }
+        if !valid {
+            continue;
+        }
+        let mut forward = vec![0.0; size];
+        for row in 0..size {
+            let residual = target[row]
+                - (0..row)
+                    .map(|column| lower[row][column] * forward[column])
+                    .sum::<f64>();
+            forward[row] = residual / lower[row][row];
+        }
+        let mut solution = vec![0.0; size];
+        for row in (0..size).rev() {
+            let residual = forward[row]
+                - ((row + 1)..size)
+                    .map(|column| lower[column][row] * solution[column])
+                    .sum::<f64>();
+            solution[row] = residual / lower[row][row];
+        }
+        if solution.iter().all(|value| value.is_finite()) {
+            return Some(solution);
+        }
+    }
+    None
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(super) enum V3Head {
     Legacy(FittedHead),
     LogitRidge(LogitRidgeModel),
@@ -716,6 +1175,10 @@ pub(super) enum V3Head {
     GamBoost(GamBoostModel),
     Pls(PlsHeadModel),
     ClassificationPortfolio(ClassificationPortfolioModel),
+    MulticlassRidge(MulticlassRidgeModel),
+    MulticlassOvrLogistic(MulticlassOvrLogisticModel),
+    MulticlassDiagonalLda(MulticlassDiagonalLdaModel),
+    MulticlassNearestCentroid(MulticlassNearestCentroidModel),
 }
 
 impl V3Head {
@@ -728,13 +1191,69 @@ impl V3Head {
             V3Head::GamBoost(head) => head.predict(x),
             V3Head::Pls(head) => head.predict(x),
             V3Head::ClassificationPortfolio(head) => head.predict(x),
+            V3Head::MulticlassRidge(head) => head
+                .labels(x)
+                .into_iter()
+                .map(|label| label as f64)
+                .collect(),
+            V3Head::MulticlassOvrLogistic(head) => {
+                probability_labels(&head.classes, head.probabilities(x))
+            }
+            V3Head::MulticlassDiagonalLda(head) => {
+                probability_labels(&head.classes, head.probabilities(x))
+            }
+            V3Head::MulticlassNearestCentroid(head) => {
+                probability_labels(&head.classes, head.probabilities(x))
+            }
         }
     }
+
+    pub(super) fn multiclass_probabilities(&self, x: &Rows) -> Option<(Vec<i64>, Vec<Vec<f64>>)> {
+        match self {
+            V3Head::MulticlassRidge(head) => Some((head.classes.clone(), head.probabilities(x))),
+            V3Head::MulticlassOvrLogistic(head) => {
+                Some((head.classes.clone(), head.probabilities(x)))
+            }
+            V3Head::MulticlassDiagonalLda(head) => {
+                Some((head.classes.clone(), head.probabilities(x)))
+            }
+            V3Head::MulticlassNearestCentroid(head) => {
+                Some((head.classes.clone(), head.probabilities(x)))
+            }
+            _ => None,
+        }
+    }
+}
+
+fn probability_labels(classes: &[i64], probabilities: Vec<Vec<f64>>) -> Vec<f64> {
+    probabilities
+        .iter()
+        .map(|row| {
+            let index = row
+                .iter()
+                .enumerate()
+                .max_by(|left, right| left.1.total_cmp(right.1))
+                .map_or(0, |(index, _)| index);
+            classes[index] as f64
+        })
+        .collect()
 }
 
 pub(super) fn fit_v3_head(stage: &Stage, x: &Rows, y: &[f64], task: TaskKind) -> Result<V3Head> {
     let binary = task == TaskKind::Binary;
     match stage.op.as_str() {
+        "multiclass_ridge" if task == TaskKind::Multiclass => Ok(V3Head::MulticlassRidge(
+            MulticlassRidgeModel::fit(x, y, stage)?,
+        )),
+        "multiclass_ovr_logistic" if task == TaskKind::Multiclass => Ok(
+            V3Head::MulticlassOvrLogistic(MulticlassOvrLogisticModel::fit(x, y, stage)?),
+        ),
+        "multiclass_diagonal_lda" if task == TaskKind::Multiclass => Ok(
+            V3Head::MulticlassDiagonalLda(MulticlassDiagonalLdaModel::fit(x, y, stage)?),
+        ),
+        "multiclass_nearest_centroid" if task == TaskKind::Multiclass => Ok(
+            V3Head::MulticlassNearestCentroid(MulticlassNearestCentroidModel::fit(x, y, stage)?),
+        ),
         "logit_ridge" | "logistic" if binary => {
             let class_weight = parse_class_weight(stage)?;
             Ok(V3Head::LogitRidge(LogitRidgeModel::fit(
@@ -760,7 +1279,18 @@ pub(super) fn fit_v3_head(stage: &Stage, x: &Rows, y: &[f64], task: TaskKind) ->
         "ridge" if binary => bail!("binary advanced-v3 pipelines require a probability head"),
         "logit_ridge" => bail!("logit_ridge is only valid for binary tasks"),
         "pls" => bail!("pls is only valid for regression tasks"),
-        _ if !binary => Ok(V3Head::Legacy(fit_head(stage, x, y)?)),
+        _ if matches!(task, TaskKind::Regression | TaskKind::Timeseries) => {
+            Ok(V3Head::Legacy(fit_head(stage, x, y)?))
+        }
+        "multiclass_ridge"
+        | "multiclass_ovr_logistic"
+        | "multiclass_diagonal_lda"
+        | "multiclass_nearest_centroid" => {
+            bail!("{} is only valid for multiclass tasks", stage.op)
+        }
+        other if task == TaskKind::Multiclass => {
+            bail!("head '{other}' is not probability-capable for a multiclass task")
+        }
         other => bail!("head '{other}' is not probability-capable for a binary task"),
     }
 }
@@ -788,6 +1318,33 @@ pub(super) fn validate_binary_target(y: &[f64], rows: usize) -> Result<()> {
         bail!("binary tasks require at least two rows in each class");
     }
     Ok(())
+}
+
+pub(super) fn validate_multiclass_target(y: &[f64], rows: usize) -> Result<Vec<i64>> {
+    if y.len() != rows || rows == 0 {
+        bail!("multiclass target length differs from nonempty training rows");
+    }
+    let mut classes = BTreeSet::new();
+    for value in y {
+        if !value.is_finite() || value.fract() != 0.0 || *value < 0.0 || *value > i64::MAX as f64 {
+            bail!("multiclass targets must be finite nonnegative integer class codes");
+        }
+        classes.insert(*value as i64);
+    }
+    if classes.len() < 3 {
+        bail!("multiclass fits require at least three observed training classes");
+    }
+    let mut counts = vec![0usize; classes.len()];
+    let classes: Vec<i64> = classes.into_iter().collect();
+    for value in y {
+        counts[classes
+            .binary_search(&(*value as i64))
+            .expect("class present")] += 1;
+    }
+    // One-shot observed classes are valid. The native heads all regularize or
+    // shrink their estimates, and the corpus evaluator maps these contiguous
+    // fitted classes back into the full declared metadata class space.
+    Ok(classes)
 }
 
 fn validate_binary_fit_target(y: &[f64], rows: usize) -> Result<()> {

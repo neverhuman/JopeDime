@@ -11,6 +11,7 @@ pub enum TaskKind {
     Regression,
     Binary,
     Timeseries,
+    Multiclass,
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -28,6 +29,7 @@ pub enum Objective {
     Accuracy,
     BalancedAccuracy,
     F1,
+    MacroF1,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -64,6 +66,15 @@ impl TaskSpec {
         Ok(task)
     }
 
+    pub fn multiclass(objective: Objective) -> Result<Self> {
+        let task = Self {
+            kind: TaskKind::Multiclass,
+            objective,
+        };
+        task.validate()?;
+        Ok(task)
+    }
+
     pub fn validate(&self) -> Result<()> {
         let valid = match self.kind {
             TaskKind::Regression | TaskKind::Timeseries => matches!(
@@ -84,6 +95,9 @@ impl TaskSpec {
                     | Objective::BalancedAccuracy
                     | Objective::F1
             ),
+            TaskKind::Multiclass => {
+                matches!(self.objective, Objective::MacroF1 | Objective::Accuracy)
+            }
         };
         if !valid {
             bail!(
@@ -106,11 +120,62 @@ impl TaskSpec {
             Objective::RocAuc => auc(y, predictions),
             Objective::PrAuc => average_precision(y, predictions),
             Objective::BrierScore => -brier(y, predictions),
+            Objective::Accuracy if self.kind == TaskKind::Multiclass => {
+                multiclass_accuracy(y, predictions)
+            }
             Objective::Accuracy => accuracy_at(y, predictions, threshold),
             Objective::BalancedAccuracy => balanced_accuracy_at(y, predictions, threshold),
             Objective::F1 => f1_at(y, predictions, threshold),
+            Objective::MacroF1 => macro_f1(y, predictions),
         }
     }
+}
+
+pub fn multiclass_accuracy(y: &[f64], predictions: &[f64]) -> f64 {
+    let n = y.len().min(predictions.len());
+    if n == 0 {
+        return 0.0;
+    }
+    (0..n).filter(|&row| y[row] == predictions[row]).count() as f64 / n as f64
+}
+
+pub fn macro_f1(y: &[f64], predictions: &[f64]) -> f64 {
+    let n = y.len().min(predictions.len());
+    if n == 0 {
+        return 0.0;
+    }
+    let mut classes: Vec<i64> = y
+        .iter()
+        .take(n)
+        .filter_map(|value| (value.is_finite() && value.fract() == 0.0).then_some(*value as i64))
+        .collect();
+    classes.sort_unstable();
+    classes.dedup();
+    if classes.is_empty() {
+        return 0.0;
+    }
+    classes
+        .iter()
+        .map(|class| {
+            let mut true_positive = 0usize;
+            let mut false_positive = 0usize;
+            let mut false_negative = 0usize;
+            for row in 0..n {
+                let actual = y[row] as i64;
+                let predicted = predictions[row] as i64;
+                true_positive += usize::from(actual == *class && predicted == *class);
+                false_positive += usize::from(actual != *class && predicted == *class);
+                false_negative += usize::from(actual == *class && predicted != *class);
+            }
+            let denominator = 2 * true_positive + false_positive + false_negative;
+            if denominator == 0 {
+                0.0
+            } else {
+                2.0 * true_positive as f64 / denominator as f64
+            }
+        })
+        .sum::<f64>()
+        / classes.len() as f64
 }
 
 fn mean_squared_error(y: &[f64], predictions: &[f64]) -> f64 {

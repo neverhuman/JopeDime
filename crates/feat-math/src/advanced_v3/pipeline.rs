@@ -1,7 +1,9 @@
 use super::calibration::{fit_calibration, CalibrationModel};
 use super::csv::RawTable;
 use super::feature_block::FeatureBlock;
-use super::heads::{finite, fit_v3_head, validate_binary_target, V3Head};
+use super::heads::{
+    finite, fit_v3_head, validate_binary_target, validate_multiclass_target, V3Head,
+};
 use super::input::{str_param, FittedInput, InputConfig};
 use super::schema::{DataSchema, RowSemantics};
 use super::transforms::{fit_v3_op, V3Op};
@@ -38,6 +40,13 @@ pub struct BoundModel {
     pub threshold: f64,
     pub(super) input: FittedInput,
     pub(super) predictor: BoundPredictor,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct MulticlassPrediction {
+    pub classes: Vec<i64>,
+    pub labels: Vec<i64>,
+    pub probabilities: Vec<Vec<f64>>,
 }
 
 impl BoundModel {
@@ -118,13 +127,106 @@ impl BoundModel {
                     };
                 }
             }
+            TaskKind::Multiclass => {
+                for value in &mut predictions {
+                    if !value.is_finite() || value.fract() != 0.0 {
+                        bail!("multiclass head returned a non-integer class label");
+                    }
+                }
+            }
         }
         Ok(predictions)
+    }
+
+    pub fn predict_multiclass_table(&self, table: &RawTable) -> Result<MulticlassPrediction> {
+        if self.task.kind != TaskKind::Multiclass {
+            bail!("multiclass prediction API requires a multiclass bound model");
+        }
+        table.validate_against(&self.schema)?;
+        self.validate_binding()?;
+        let mut block = self.input.transform(table)?;
+        let BoundPredictor::Pipeline {
+            target,
+            ops,
+            head,
+            missing_aware,
+            ..
+        } = &self.predictor
+        else {
+            bail!("multiclass prediction requires a schema-bound pipeline");
+        };
+        if target.is_some() {
+            bail!("multiclass bound models cannot carry target transforms");
+        }
+        if *missing_aware {
+            restore_missing_values(&mut block);
+        }
+        for op in ops {
+            block = op.apply_block(&block, table)?;
+        }
+        let (classes, probabilities) = head
+            .multiclass_probabilities(&block.values)
+            .ok_or_else(|| anyhow::anyhow!("bound model does not carry a multiclass head"))?;
+        if probabilities.iter().any(|row| {
+            row.len() != classes.len()
+                || row
+                    .iter()
+                    .any(|value| !value.is_finite() || *value < 0.0 || *value > 1.0)
+                || (row.iter().sum::<f64>() - 1.0).abs() > 1e-9
+        }) {
+            bail!("multiclass head returned invalid aligned probabilities");
+        }
+        let labels = probabilities
+            .iter()
+            .map(|row| {
+                let index = row
+                    .iter()
+                    .enumerate()
+                    .max_by(|left, right| left.1.total_cmp(right.1))
+                    .map_or(0, |(index, _)| index);
+                classes[index]
+            })
+            .collect();
+        Ok(MulticlassPrediction {
+            classes,
+            labels,
+            probabilities,
+        })
+    }
+
+    pub fn predict_probabilities_table(
+        &self,
+        table: &RawTable,
+    ) -> Result<(Vec<i64>, Vec<Vec<f64>>)> {
+        let prediction = self.predict_multiclass_table(table)?;
+        Ok((prediction.classes, prediction.probabilities))
+    }
+
+    pub fn predict_labels_table(&self, table: &RawTable) -> Result<Vec<i64>> {
+        Ok(self.predict_multiclass_table(table)?.labels)
     }
 }
 
 pub fn predict_table(model: &BoundModel, table: &RawTable) -> Result<Vec<f64>> {
     model.predict_table(table)
+}
+
+pub fn predict_multiclass_table(
+    model: &BoundModel,
+    table: &RawTable,
+) -> Result<MulticlassPrediction> {
+    model.predict_multiclass_table(table)
+}
+
+pub fn predict_probabilities_table(
+    model: &BoundModel,
+    table: &RawTable,
+) -> Result<(Vec<i64>, Vec<Vec<f64>>)> {
+    model.predict_probabilities_table(table)
+}
+
+pub fn predict_labels_table(model: &BoundModel, table: &RawTable) -> Result<Vec<i64>> {
+    model.predict_labels_table(table)
 }
 
 /// Bind the frozen numeric legacy fitter to the V3 artifact envelope.
@@ -206,6 +308,8 @@ pub fn fit_table(
     }
     if task.kind == TaskKind::Binary {
         validate_binary_target(y, table.rows.len())?;
+    } else if task.kind == TaskKind::Multiclass {
+        validate_multiclass_target(y, table.rows.len())?;
     }
     validate_v3_genome(genome, task, schema)?;
 
@@ -258,10 +362,10 @@ pub fn fit_table(
                 ops.push(op);
             }
             let head_stage = parsed.head.cloned().unwrap_or_else(|| {
-                Stage::new(if task.kind == TaskKind::Binary {
-                    "logit_ridge"
-                } else {
-                    "ridge"
+                Stage::new(match task.kind {
+                    TaskKind::Binary => "logit_ridge",
+                    TaskKind::Multiclass => "multiclass_ridge",
+                    TaskKind::Regression | TaskKind::Timeseries => "ridge",
                 })
             });
             let missing_aware = matches!(head_stage.op.as_str(), "tab_boost" | "extra_trees")
@@ -350,7 +454,15 @@ fn is_v3_head(op: &str) -> bool {
     crate::heads::is_head_op(op)
         || matches!(
             op,
-            "logit_ridge" | "tab_boost" | "extra_trees" | "gam_boost" | "pls"
+            "logit_ridge"
+                | "multiclass_ridge"
+                | "multiclass_ovr_logistic"
+                | "multiclass_diagonal_lda"
+                | "multiclass_nearest_centroid"
+                | "tab_boost"
+                | "extra_trees"
+                | "gam_boost"
+                | "pls"
         )
 }
 
@@ -408,7 +520,7 @@ pub fn validate_v3_genome(genome: &GenomeIr, task: &TaskSpec, schema: &DataSchem
         }
     }
     let parsed = split_v3_pipeline(dsl)?;
-    if task.kind == TaskKind::Binary && parsed.target.is_some() {
+    if matches!(task.kind, TaskKind::Binary | TaskKind::Multiclass) && parsed.target.is_some() {
         bail!("target transforms are regression-only");
     }
     if matches!(schema.row_semantics, RowSemantics::Iid)
@@ -449,10 +561,10 @@ pub fn validate_v3_genome(genome: &GenomeIr, task: &TaskSpec, schema: &DataSchem
         }
     }
     let head_name = parsed.head.map_or(
-        if task.kind == TaskKind::Binary {
-            "logit_ridge"
-        } else {
-            "ridge"
+        match task.kind {
+            TaskKind::Binary => "logit_ridge",
+            TaskKind::Multiclass => "multiclass_ridge",
+            TaskKind::Regression | TaskKind::Timeseries => "ridge",
         },
         |stage| stage.op.as_str(),
     );
@@ -480,6 +592,17 @@ pub fn validate_v3_genome(genome: &GenomeIr, task: &TaskSpec, schema: &DataSchem
             bail!("head '{head_name}' is incompatible with binary tasks")
         }
         TaskKind::Binary if head_name == "pls" => bail!("pls is regression-only"),
+        TaskKind::Multiclass
+            if !matches!(
+                head_name,
+                "multiclass_ridge"
+                    | "multiclass_ovr_logistic"
+                    | "multiclass_diagonal_lda"
+                    | "multiclass_nearest_centroid"
+            ) =>
+        {
+            bail!("head '{head_name}' is incompatible with multiclass tasks")
+        }
         _ => {}
     }
     Ok(())

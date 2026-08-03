@@ -282,7 +282,7 @@ impl TaskMask {
 
     fn contains(self, task: TaskKind) -> bool {
         match task {
-            TaskKind::Regression | TaskKind::Timeseries => self.regression,
+            TaskKind::Regression | TaskKind::Timeseries | TaskKind::Multiclass => self.regression,
             TaskKind::Binary => self.binary,
         }
     }
@@ -617,6 +617,25 @@ const LOGIT_PARAMS: &[ParamDescriptor] = &[
         ModeDefaults::both(StaticValue::String("0.5")),
         Some(ParamDomain::StringSet(THRESHOLDS_PROTOTYPE)),
         Some(ParamDomain::StringSet(THRESHOLDS_PRODUCTION))
+    ),
+];
+const MULTICLASS_RIDGE_PARAMS: &[ParamDescriptor] = &[
+    param!(
+        "l2",
+        FiniteFloat,
+        ModeDefaults::both(StaticValue::Float(0.02)),
+        Some(ParamDomain::FloatRange {
+            min: 1e-9,
+            max: 1e6
+        }),
+        Some(ParamDomain::FloatSet(LOGIT_L2))
+    ),
+    param!(
+        "class_weight",
+        String,
+        ModeDefaults::both(StaticValue::String("balanced")),
+        Some(ParamDomain::StringSet(&["balanced"])),
+        Some(ParamDomain::StringSet(&["balanced"]))
     ),
 ];
 
@@ -1276,6 +1295,24 @@ const REGISTRY: &[OperationDescriptor] = &[
         admission = Baseline
     ),
     operation!(
+        "multiclass_ridge",
+        aliases = NO_ALIASES,
+        class = Head,
+        tasks = REGRESSION_ONLY,
+        roles = Any / NumericLike,
+        rows = Any,
+        params = MULTICLASS_RIDGE_PARAMS,
+        append = false,
+        width = WidthEffect::None,
+        masks = "consumed",
+        target = true,
+        support = BackendSupport::PROTOTYPE_ONLY,
+        family = "linear",
+        island = "linear",
+        surrogate = "multiclass_ridge",
+        admission = Baseline
+    ),
+    operation!(
         "tab_boost",
         aliases = NO_ALIASES,
         class = Head,
@@ -1628,10 +1665,10 @@ pub(crate) fn compile_v3_genome(
             descriptor,
         )
     } else {
-        let name = if task.kind == TaskKind::Binary {
-            "logit_ridge"
-        } else {
-            "ridge"
+        let name = match task.kind {
+            TaskKind::Binary => "logit_ridge",
+            TaskKind::Multiclass => "multiclass_ridge",
+            TaskKind::Regression | TaskKind::Timeseries => "ridge",
         };
         let descriptor = descriptor_for(name, task.kind).expect("default head is registered");
         (
@@ -1849,7 +1886,10 @@ fn static_value(value: StaticValue, task: &TaskSpec, operation: &str) -> ParamVa
         StaticValue::TaskLoss => ParamValue::Str(
             match (operation, task.kind) {
                 ("tab_boost", TaskKind::Binary) => "log_loss",
-                ("tab_boost", TaskKind::Regression | TaskKind::Timeseries) => "squared",
+                (
+                    "tab_boost",
+                    TaskKind::Regression | TaskKind::Timeseries | TaskKind::Multiclass,
+                ) => "squared",
                 _ => unreachable!("task-dependent loss is only used by tab_boost"),
             }
             .to_string(),
@@ -1992,6 +2032,7 @@ fn validate_task_specific_values(stage: &Stage, task: TaskKind) -> Result<()> {
         let accepted = match task {
             TaskKind::Regression | TaskKind::Timeseries => TAB_REGRESSION_LOSSES,
             TaskKind::Binary => TAB_BINARY_LOSSES,
+            TaskKind::Multiclass => &[],
         };
         if !accepted.contains(&loss) {
             bail!("tab_boost: loss '{loss}' is incompatible with {task:?}");

@@ -115,6 +115,12 @@ fn emit_bound_python(model: &BoundModel) -> Result<String> {
         V3Head::GamBoost(_) => "gam_boost",
         V3Head::Pls(_) => "pls",
         V3Head::ClassificationPortfolio(_) => "classification_portfolio",
+        V3Head::MulticlassRidge(_)
+        | V3Head::MulticlassOvrLogistic(_)
+        | V3Head::MulticlassDiagonalLda(_)
+        | V3Head::MulticlassNearestCentroid(_) => {
+            bail!("multiclass probability matrices are not supported by scalar bound emission")
+        }
         V3Head::Legacy(FittedHead::Ridge(_)) => "ridge",
         V3Head::Legacy(_) => bail!("this fitted legacy head is not supported by bound emission"),
     };
@@ -1137,6 +1143,12 @@ fn rust_head_body(head: &V3Head) -> Result<String> {
                 ));
             }
             format!("({}).clamp(0.0, 1.0)", terms.join(" + "))
+        }
+        V3Head::MulticlassRidge(_)
+        | V3Head::MulticlassOvrLogistic(_)
+        | V3Head::MulticlassDiagonalLda(_)
+        | V3Head::MulticlassNearestCentroid(_) => {
+            bail!("multiclass probability matrices are not supported by scalar bound emission")
         }
         V3Head::Legacy(_) => bail!("this fitted legacy head is not supported by bound emission"),
     };

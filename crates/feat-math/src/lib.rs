@@ -53,12 +53,14 @@ pub mod explain;
 pub use advanced_v3::{
     balanced_accuracy_at, crossover_candidates, deterministic_seed_enumeration, emit_bound,
     emit_fitted_cpp17, encode_fitted_cpp17, fit_legacy_numeric_bound, fit_table,
-    initial_population, mutate_candidate, next_generation, predict_table, supports_fitted_cpp17,
-    validate_fitted_cpp_codec, BoundEmitted, BoundModel, ColumnKind, ColumnSpec, DataSchema,
-    EncodedTable, FeatureBlock, FeatureLineage, FeatureOrigin, FeatureRole, FeatureWidths,
-    FittedCppArtifact, FittedCppError, FittedCppModel, FittedCppRuntime, FittedModelCodec,
-    Objective, RawTable, RowSemantics, TaskKind, TaskSpec, V3Archive, V3Candidate,
-    V3EvolutionConfig, V3ScoredCandidate, MAX_GENERATED_DENSE_WIDTH,
+    initial_population, macro_f1, multiclass_accuracy, mutate_candidate, next_generation,
+    predict_labels_table, predict_multiclass_table, predict_probabilities_table, predict_table,
+    supports_fitted_cpp17, validate_fitted_cpp_codec, BoundEmitted, BoundModel, ColumnKind,
+    ColumnSpec, DataSchema, EncodedTable, FeatureBlock, FeatureLineage, FeatureOrigin, FeatureRole,
+    FeatureWidths, FittedCppArtifact, FittedCppError, FittedCppModel, FittedCppRuntime,
+    FittedModelCodec, MulticlassPrediction, Objective, RawTable, RowSemantics, TaskKind, TaskSpec,
+    V3Archive, V3Candidate, V3EvolutionConfig, V3ScoredCandidate, MAX_GENERATED_DENSE_WIDTH,
+    MULTICLASS_MAX_TRANSFORMED_FEATURES,
 };
 pub use folds::fold_of;
 pub use genome::GenomeIr;

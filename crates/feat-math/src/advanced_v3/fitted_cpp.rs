@@ -182,6 +182,12 @@ fn check_head(head: &V3Head) -> Result<()> {
             }
             Ok(())
         }
+        V3Head::MulticlassRidge(_)
+        | V3Head::MulticlassOvrLogistic(_)
+        | V3Head::MulticlassDiagonalLda(_)
+        | V3Head::MulticlassNearestCentroid(_) => {
+            bail!("multiclass probability matrices are not supported by the scalar C++ ABI")
+        }
     }
 }
 
@@ -1064,6 +1070,12 @@ fn emit_head_function(name: &str, head: &V3Head, out: &mut String) -> Result<()>
             ));
             Ok(())
         }
+        V3Head::MulticlassRidge(_)
+        | V3Head::MulticlassOvrLogistic(_)
+        | V3Head::MulticlassDiagonalLda(_)
+        | V3Head::MulticlassNearestCentroid(_) => {
+            bail!("multiclass probability matrices are not supported by the scalar C++ ABI")
+        }
     }
 }
 
@@ -1731,6 +1743,7 @@ fn emit_prediction_steps(
     let final_task = match task {
         TaskKind::Regression | TaskKind::Timeseries => "  value=finitev(value);\n",
         TaskKind::Binary => "  value=std::isfinite(value)?clampv(value,0.0,1.0):0.5;\n",
+        TaskKind::Multiclass => "  value=finitev(value);\n",
     };
     format!("{calibrated}{inverse}{final_task}")
 }

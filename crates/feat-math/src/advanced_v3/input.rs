@@ -324,7 +324,10 @@ impl FittedInput {
                     };
                     if matches!(
                         task,
-                        TaskKind::Regression | TaskKind::Binary | TaskKind::Timeseries
+                        TaskKind::Regression
+                            | TaskKind::Binary
+                            | TaskKind::Timeseries
+                            | TaskKind::Multiclass
                     ) {
                         columns.push(FittedColumn::Categorical {
                             mode,

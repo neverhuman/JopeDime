@@ -384,6 +384,14 @@ fn compute_statistics<'a>(
             positive.min(selected_targets.len() - positive) as f64
                 / selected_targets.len().max(1) as f64
         }
+        TaskKind::Multiclass => {
+            let mut counts = std::collections::BTreeMap::<i64, usize>::new();
+            for target in &selected_targets {
+                *counts.entry(*target as i64).or_default() += 1;
+            }
+            counts.values().copied().min().unwrap_or(0) as f64
+                / selected_targets.len().max(1) as f64
+        }
     };
     let statistics = [
         (table.rows.len() as f64).ln_1p(),
@@ -469,6 +477,7 @@ fn compute_landmarks(
             CheapLandmarkKind::BinaryShallowTree,
             CheapLandmarkKind::BinaryShallowGam,
         ],
+        TaskKind::Multiclass => Vec::new(),
     };
     let assignments = stratified_fold_assignments(&landmark_targets, LANDMARK_FOLDS);
     let mut predictions = vec![vec![0.0; landmark_targets.len()]; kinds.len()];
@@ -620,6 +629,7 @@ fn fold_baseline(task: TaskKind, targets: &[f64]) -> f64 {
     match task {
         TaskKind::Regression | TaskKind::Timeseries => finite_stat(mean),
         TaskKind::Binary => mean.clamp(1e-6, 1.0 - 1e-6),
+        TaskKind::Multiclass => targets.first().copied().unwrap_or(0.0),
     }
 }
 
@@ -630,6 +640,7 @@ fn finite_prediction(task: TaskKind, prediction: f64, fallback: f64) -> f64 {
     match task {
         TaskKind::Regression | TaskKind::Timeseries => prediction,
         TaskKind::Binary => prediction.clamp(0.0, 1.0),
+        TaskKind::Multiclass => prediction.round().max(0.0),
     }
 }
 
