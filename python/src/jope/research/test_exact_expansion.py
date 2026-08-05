@@ -30,7 +30,18 @@ SOURCE_ROOT = Path("/home/ubuntu/remote_super/quant")
 MIRROR_ROOT = Path("/home/ubuntu/quant")
 CACHE_ROOT = Path("/home/ubuntu/jope-flywheel/encodings")
 FLYWHEEL_ROOT = Path("/home/ubuntu/jope-flywheel/test_exact_gen0")
-TASKS = ("regression", "binary")
+TASKS = ("regression", "binary", "multiclass", "timeseries")
+# The multiclass corpus keeps its legacy on-disk directory name; every other
+# task's directory matches its task name. This mirrors TaskKind::corpus_dir_name
+# in src/task.rs:44 -- the two MUST agree or the Rust and Python halves of the
+# expansion pipeline disagree about where a dataset lives.
+CORPUS_DIR_NAMES = {"multiclass": "multi_label"}
+
+
+def corpus_dir_name(task: str) -> str:
+    """On-disk directory for a task's source corpus."""
+
+    return CORPUS_DIR_NAMES.get(task, task)
 TRANCHE_MAX = 2_048
 SEALED_PER_TASK = 256
 ENCODER_PROTOCOL = "hyperion-train-context-v3"
@@ -149,6 +160,7 @@ def source_family(meta: Mapping[str, object], dataset_id: str) -> str:
 
 def mirror_dataset(task: str, dataset_id: str, mirror_root: Path = MIRROR_ROOT) -> Path | None:
     candidates = (
+        mirror_root / corpus_dir_name(task) / dataset_id,
         mirror_root / task / dataset_id,
         mirror_root / dataset_id,
     )
@@ -226,7 +238,7 @@ def discover(
 ) -> list[dict]:
     entries = []
     for task in TASKS:
-        task_root = source_root / task
+        task_root = source_root / corpus_dir_name(task)
         for source in sorted(task_root.iterdir()):
             if (
                 not source.is_dir()
@@ -649,7 +661,7 @@ def main() -> None:
             )
         )
         return
-    source = SOURCE_ROOT / args.task / args.dataset_id
+    source = SOURCE_ROOT / corpus_dir_name(args.task) / args.dataset_id
     compare_mirror(args.task, args.dataset_id, source)
     meta = json.loads((source / "meta.json").read_text())
     entry = {
