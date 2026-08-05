@@ -1,0 +1,34 @@
+{
+  "schema": "JopeBinary42HistoricalReportFixtureCapsule.v1",
+  "purpose": "Immutable test-only recovery of two frozen Binary42 leader reports whose current external copies drifted or disappeared.",
+  "source": {
+    "repository": "sotarena",
+    "commit": "2109b8f001778c97cea681650786c2202e6be3a0",
+    "tree": "c21408eb41e87b6ee12728a6dc225a7f0492958a"
+  },
+  "files": [
+    {
+      "dataset_hash": "5a4e21c520a20dd3",
+      "algorithm": "tabfm_classifier",
+      "source_path": "results/external-references/binary42/5a4e21c520a20dd3/tabfm_classifier.json",
+      "source_git_blob": "5022eff08d828e00bf9e5acd065c9a0128af2148",
+      "fixture_path": "fixtures/binary42-historical-reports/v1/5a4e21c520a20dd3/tabfm_classifier.json",
+      "bytes": 1844,
+      "sha256": "9ca4e4943780f9054a34b96db0867a2e37c58a0fc330341358eb22c80baf3274"
+    },
+    {
+      "dataset_hash": "fcd74a7f31328927",
+      "algorithm": "tabfm_ensemble_classifier",
+      "source_path": "results/external-references/binary42/fcd74a7f31328927/tabfm_ensemble_classifier.json",
+      "source_git_blob": "e027d0f04f557baf7f1ade98725d9225dce2ecf2",
+      "fixture_path": "fixtures/binary42-historical-reports/v1/fcd74a7f31328927/tabfm_ensemble_classifier.json",
+      "bytes": 1866,
+      "sha256": "2a66f1e4aa34d464fa0b8f41e53e2699ffd657b3b5ecccae5111955573605fbe"
+    }
+  ],
+  "policy": {
+    "test_only": true,
+    "regeneration_allowed": false,
+    "release_runtime_dependency": false
+  }
+}
