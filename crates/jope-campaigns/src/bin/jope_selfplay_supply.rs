@@ -23,6 +23,10 @@ use std::process::Command;
 use std::thread;
 use std::time::Duration;
 
+/// Host-local file the cohort proposer opens at runtime. It is NOT a pinned
+/// job input, so a node without it fails the job rather than declining it --
+/// which is why the proposer spec probes for it as a capability.
+const PRIME_OPERATOR_REGISTRY: &str = "/home/ubuntu/jope-prime/registry/operator_registry.json";
 const MICRO_WAVE_KIND: &str = "deterministic_128_dataset_micro_wave";
 const WAVE_SCHEMA: &str = "JopeRealtimeSelfplayWave.v1";
 const DATASETS_PER_WAVE: usize = 128;
@@ -2354,6 +2358,23 @@ fn render_cohort_proposer_spec(
             toml_quote(&format!("PYTHONPATH={}", pythonpath.to_string_lossy()))?
         ),
         "timeout_secs = 30".into(),
+        String::new(),
+        // The proposer reads the jope-prime operator registry from a fixed
+        // absolute path at runtime. It was present on xbabe1/2/3 and absent on
+        // xbabe0/xbabe4, so once the node pin was lifted the proposer landed on
+        // incapable nodes and burned its whole 5-retry budget on
+        // FileNotFoundError -- the evaluation queue drained to zero for hours.
+        // Probe the CAPABILITY, never the hostname: spec_policy.rs:526 forbids
+        // /etc/hostname probes, and a capability probe self-maintains when a
+        // node gains or loses the registry.
+        "[[dependencies.smoke]]".into(),
+        "name = \"jope-prime operator registry\"".into(),
+        "command = \"/usr/bin/test\"".into(),
+        format!(
+            "args = [\"-f\", {}]",
+            toml_quote(PRIME_OPERATOR_REGISTRY)?
+        ),
+        "timeout_secs = 5".into(),
         String::new(),
         "[env]".into(),
         format!(
