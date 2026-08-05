@@ -7,6 +7,7 @@
     "jope_causal_pair_repair",
     "jope_capacity",
     "jope_compile_cache",
+    "jope_effective_unit_audit",
     "jope_expanded_catalog",
     "jope_flywheel_liveness",
     "jope_gp_bridge",
@@ -14,6 +15,7 @@
     "jope_ledger_reconciler",
     "jope_ops_health_check",
     "jope_queue_control",
+    "jope_reporting",
     "jope_sealed_zeroshot",
     "jope_selfplay_alarms",
     "jope_selfplay_bundle",
@@ -33,6 +35,7 @@
     "jope_selfplay_wave",
     "jope_spec_drift",
     "jope_task_learning_controller",
+    "jope_task_rating",
     "jope_training_archive",
     "jope_training_history",
     "jope_training_replica",
@@ -71,6 +74,12 @@
       "active": true
     },
     {
+      "unit": "jope-reporting.service",
+      "binary": "jope_reporting",
+      "owner": "four_task_telemetry_and_terminal_learning_reporting",
+      "active": true
+    },
+    {
       "unit": "jope-selfplay-alarms.service",
       "binary": "jope_selfplay_alarms",
       "owner": "monitoring",
@@ -85,8 +94,8 @@
     {
       "unit": "jope-selfplay-expansion.service",
       "binary": "jope_selfplay_expansion_driver",
-      "owner": "catalog_expansion",
-      "active": true
+      "owner": "encoder_v2_identity_gate_inactive",
+      "active": false
     },
     {
       "unit": "jope-selfplay-freshness.service",

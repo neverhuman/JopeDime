@@ -1,0 +1,93 @@
+{
+  "schema": "JopeProjectBoundary.v1",
+  "project": "jope-dime",
+  "authority": {
+    "source_control": ".",
+    "runtime_state": "/home/ubuntu/jope-flywheel/test_exact_gen0",
+    "legacy_workspace": "/home/ubuntu/flywheel",
+    "independent_project": "/home/ubuntu/jope-slime"
+  },
+  "active_source_roots": [
+    "src",
+    "scripts",
+    "tests",
+    "mcp",
+    "reference",
+    "sotarena",
+    "sotarena-refresh",
+    "vendor",
+    "manifests",
+    "systemd",
+    "campaigns",
+    "Cargo.toml",
+    "Cargo.lock"
+  ],
+  "documentation_roots": [
+    "docs",
+    "README.md",
+    "ROADMAP.md",
+    "REALTIME_AGENT_CHAT.md"
+  ],
+  "archived_roots": [
+    "docs/archive/legacy-flywheel"
+  ],
+  "jope_flywheel_runtime_roots": [
+    {
+      "path": "/home/ubuntu/jope-flywheel/test_exact_gen0",
+      "role": "active immutable runtime state and content-addressed bundles"
+    },
+    {
+      "path": "/home/ubuntu/jope-flywheel/encodings",
+      "role": "append-only encoded dataset inventory"
+    },
+    {
+      "path": "/home/ubuntu/jope-flywheel/training/round1/checkpoints",
+      "role": "read-only legacy bootstrap checkpoints"
+    }
+  ],
+  "task_vocabulary": [
+    "regression",
+    "binary",
+    "multiclass",
+    "timeseries"
+  ],
+  "service_manifest": "manifests/selfplay/service-manifest.v3.json",
+  "permitted_dependencies": {
+    "jope_prime": "/home/ubuntu/jope-prime",
+    "scq": "/home/ubuntu/smart_cluster"
+  },
+  "versioned_control_plane_artifacts": {
+    "operational_status": "JopeSelfplayOperationalStatus.v3",
+    "task_learning_status": "TaskLearningControllerStatus.v2",
+    "task_training_eligibility": "JopeTaskTrainingEligibility.v1",
+    "learning_report": "JopeLearningReport.v2",
+    "recovery_report": "JopeRecoveryReport.v2",
+    "recovery_continuity": "JopeRecoveryContinuity.v1",
+    "effective_unit_audit": "JopeEffectiveUnitAudit.v1",
+    "unreplayable_pair_disposition": "JopeUnreplayablePairDisposition.v2",
+    "evaluator_retention_index": "JopeEvaluatorRetentionIndex.v1",
+    "recipe_change_directive": "RecipeChangeDirective.v2"
+  },
+  "forbidden_references": {
+    "paths": [
+      "/home/ubuntu/jope-slime",
+      "/home/ubuntu/flywheel"
+    ],
+    "service_prefixes": [
+      "jope-slime-"
+    ],
+    "artifact_terms": [
+      "jope-slime checkpoint",
+      "jope-slime dataset",
+      "jope-slime artifact"
+    ]
+  },
+  "forbidden_runtime_dependencies": [
+    "/home/ubuntu/jope",
+    "/home/ubuntu/jope-dime/scripts",
+    "/home/ubuntu/jope-dime/target",
+    "/home/ubuntu/jope-slime",
+    "/home/ubuntu/flywheel"
+  ],
+  "allowed_prose_exchange": "documented lessons only in documentation_roots; no source, service, runtime artifact, evidence, checkpoint, dataset, or model-state dependency"
+}

@@ -9,6 +9,7 @@ use clap::Parser;
 use jope_dime_regressor::selfplay_runtime::{
     atomic_json, now_ms, read_json, scq_json, sha256_bytes, sha256_file, DEFAULT_ROOT, DEFAULT_SCQ,
 };
+use jope_dime_regressor::spec_policy::TRAINER;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::fs::{self, File, OpenOptions};
@@ -39,7 +40,8 @@ const LIVE_STATES: &[&str] = &[
 const DEFAULT_TRAINER: &str = "/home/ubuntu/jope-dime/scripts/test_exact_train.py";
 const DEFAULT_COMMON: &str = "/home/ubuntu/jope-dime/scripts/test_exact_common.py";
 const DEFAULT_PACKER: &str = "/home/ubuntu/jope-dime/scripts/test_exact_packed_corpus.py";
-const DEFAULT_PRIME: &str = "/home/ubuntu/jope-prime/src";
+const DEFAULT_PRIME: &str =
+    "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch";
 const LEGACY_CHECKPOINT_ROOT: &str = "/home/ubuntu/jope-flywheel/training/round1/checkpoints";
 const DEFAULT_RUNS_ROOT: &str = "/home/ubuntu/smart_cluster/var/runs";
 /// Prefixes of the trainer run directories whose `train-result.json` forms the
@@ -1564,45 +1566,45 @@ fn render_spec(
     }
 
     let output_name = format!("watermark-{:09}", snapshot.watermark);
-    let mut text = format!(
-        "[job]\n\
-         id = {}\n\
-         project = \"{PROJECT}\"\n\
-         tier = \"normal\"\n\
-         command = \"/usr/bin/python3\"\n\
-         args = [\"{{input:script}}\", \"train\", \"--corpus-manifest\", \
-         \"{{input:manifest}}\", \"--output\", \"{{output:training}}/{output_name}\", \
-         \"--device\", \"cuda\", \"--warm\", \"{{input:checkpoint}}\", \"--recipe\", \
-         {}, \"--seed\", \"{seed}\", \"--packed-manifest\", \"{{input:packed_manifest}}\", \
-         \"--packed-catalog-data\", \"{{input:packed_catalog}}\"]\n\n\
-         [resource]\n\
-         gpus_per_task = 1\n\
-         cpus_reserved = 1\n\
-         omp_threads = 4\n\
-         ram_mb = 16384\n\
-         gang_size = 1\n\
-         placement = \"single_node\"\n\n\
-         [[dependencies.smoke]]\n\
-         name = \"flywheel live root present\"\n\
-         command = \"/usr/bin/test\"\n\
-         args = [\"-f\", \
-         \"/home/ubuntu/jope-flywheel/test_exact_gen0/catalog/current.json\"]\n\
-         timeout_secs = 5\n\n\
-         [env]\n\
-         PYTHONPATH = {}\n\
-         JOPE_TRAINER_SPEC_CONTRACT = \"{TRAINER_SPEC_CONTRACT}\"\n\
-         OMP_NUM_THREADS = \"4\"\n\n\
-         [preempt]\n\
-         preemptible = true\n\
-         checkpoint = \"none\"\n\
-         resume = \"rerun\"\n\n\
-         [limits]\n\
-         max_runtime_hours = 168\n\
-         max_restarts = 1\n\n",
-        toml_string(job_id)?,
-        toml_string(&args.recipe)?,
-        toml_string(&args.prime_source.to_string_lossy())?,
-    );
+    let mut lines = vec![
+        "[job]".to_owned(),
+        format!("id = {}", toml_string(job_id)?),
+        format!("project = \"{PROJECT}\""),
+        "tier = \"normal\"".to_owned(),
+        "command = \"/usr/bin/python3\"".to_owned(),
+        format!(
+            "args = [\"{{input:script}}\", \"train\", \"--corpus-manifest\", \
+             \"{{input:manifest}}\", \"--output\", \"{{output:training}}/{output_name}\", \
+             \"--device\", \"cuda\", \"--warm\", \"{{input:checkpoint}}\", \"--recipe\", \
+             {}, \"--seed\", \"{seed}\", \"--packed-manifest\", \"{{input:packed_manifest}}\", \
+             \"--packed-catalog-data\", \"{{input:packed_catalog}}\"]",
+            toml_string(&args.recipe)?,
+        ),
+        String::new(),
+    ];
+    lines.extend(TRAINER.render_resource_block().lines().map(str::to_owned));
+    lines.push(String::new());
+    lines.extend(TRAINER.render_placement_block().lines().map(str::to_owned));
+    lines.extend([
+        String::new(),
+        "[env]".to_owned(),
+        format!(
+            "PYTHONPATH = {}",
+            toml_string(&args.prime_source.to_string_lossy())?
+        ),
+        format!("JOPE_TRAINER_SPEC_CONTRACT = \"{TRAINER_SPEC_CONTRACT}\""),
+        format!("OMP_NUM_THREADS = \"{}\"", TRAINER.omp_threads),
+        String::new(),
+        "[preempt]".to_owned(),
+        format!("preemptible = {}", TRAINER.preemptible),
+        "checkpoint = \"none\"".to_owned(),
+        "resume = \"rerun\"".to_owned(),
+        String::new(),
+    ]);
+    lines.extend(TRAINER.render_limits_block().lines().map(str::to_owned));
+    lines.push(String::new());
+    let mut text = lines.join("\n");
+    text.push('\n');
     for input in inputs {
         text.push_str(&format!(
             "[[input]]\nname = {}\nsource = {}\ntarget = {}\nsha256 = {}\n\n",
@@ -2320,27 +2322,19 @@ mod tests {
     /// qualifying node auto-qualifies instead of being hard-coded out.
     #[test]
     fn spec_constrains_placement_via_smoke_dependency_only() {
-        // Asserted against this file's own source because the template lives
-        // inline in `render_spec` and rendering it needs a full snapshot fixture.
-        // Only the code ABOVE the test module is searched -- otherwise these
-        // assertions match their own needle literals and the test is vacuous.
-        let full = include_str!("jope_selfplay_trainer_watchdog.rs");
-        let code = full
-            .split_once("mod tests")
-            .map(|(before, _)| before)
-            .expect("test module marker not found");
+        let code = TRAINER.render_placement_block();
         assert!(
-            code.contains(r#"[[dependencies.smoke]]\n\"#),
+            code.contains("[[dependencies.smoke]]\n"),
             "smoke dependency missing -- placement would be UNCONSTRAINED and can \
              black-hole a remote node"
         );
         assert!(
-            !code.contains(r#"node = \"xbabe2\"\n\n\"#),
+            !code.contains("node = \"xbabe2\""),
             "[resource] node pin present -- scq rejects it as controller-only and \
              the trainer will not launch at all"
         );
         assert!(
-            !code.contains(r#"hostname = [{{ command"#),
+            !code.contains("hostname"),
             "the hostname dependency is a serde no-op and must not come back"
         );
     }

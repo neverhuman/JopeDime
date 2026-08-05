@@ -68,14 +68,16 @@ def render(node: str, manifest_path: Path, evaluator: Path) -> tuple[str, Path]:
         "gpus_per_task = 0",
         "cpus_reserved = 1",
         "omp_threads = 1",
-        "ram_mb = 512",
+        "ram_mb = 768",
         "gang_size = 1",
         'placement = "single_node"',
         "",
-        "[dependencies]",
-        "smoke = [{ command = \"/usr/bin/grep\", "
-        f"args = [\"-qx\", \"{node}\", \"/etc/hostname\"], "
-        "timeout_secs = 5 }]",
+        "[[dependencies.smoke]]",
+        'name = "immutable runtime bundle evaluator available"',
+        'command = "/usr/bin/test"',
+        'args = ["-x", "/home/ubuntu/jope-flywheel/test_exact_gen0/'
+        'runtime-bundles/current/runtime/bin/corpus_eval"]',
+        "timeout_secs = 5",
         "",
         "[env]",
         'RAYON_NUM_THREADS = "1"',

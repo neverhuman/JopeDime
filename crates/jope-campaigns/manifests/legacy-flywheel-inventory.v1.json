@@ -1,0 +1,21 @@
+{
+  "schema": "JopeLegacyWorkspaceInventory.v1",
+  "workspace": "/home/ubuntu/flywheel",
+  "classification": "legacy-priority-10",
+  "current_authority": false,
+  "retained_for_audit": true,
+  "code_roots": [
+    "bin/priority10_runtime.py",
+    "lib/priority10",
+    "models/tools/priority10_campaign.py",
+    "tests/test_priority10.py",
+    "tests/test_priority10_runtime.py"
+  ],
+  "service_units": [
+    "systemd/priority10-supervisor-v2.service",
+    "systemd/priority10-supervisor-v2.timer",
+    "systemd/priority10-queue-guard-v2.service",
+    "systemd/priority10-queue-guard-v2.timer"
+  ],
+  "disposition": "freeze-and-audit; migrate only under an explicit ownership decision"
+}

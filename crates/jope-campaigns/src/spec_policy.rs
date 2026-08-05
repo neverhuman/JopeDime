@@ -54,16 +54,7 @@ pub const MIN_MARGIN: f64 = 1.5;
 /// here, so `jope_spec_drift` keeps reporting it. The only thing an entry
 /// suppresses is the unit-test hard failure, so that a reservation change which
 /// needs an operator capacity decision does not masquerade as a code defect.
-pub const UNDER_MARGIN_ACCEPTED: &[(Family, &str)] = &[(
-    Family::Eval,
-    "eval is the highest-count job class (~2,100 queued / ~300 running). The \
-     measured peak rose from a 270 MB n=323 sample to 483 MB over the full \
-     n=2154 population (2026-07-29). Meeting MIN_MARGIN would mean ram_mb 725+, \
-     i.e. ~256 MB more per RUNNING eval job -- roughly 27 GB extra on xbabe3 \
-     alone -- which is a cluster-packing decision for the operator, not a \
-     default. Current headroom is 1.06x: an eval job at 483 MB sits 29 MB from \
-     its own cgroup ceiling.",
-)];
+pub const UNDER_MARGIN_ACCEPTED: &[(Family, &str)] = &[];
 
 /// The recorded reason this family may sit below `MIN_MARGIN`, if any.
 pub fn under_margin_accepted(family: Family) -> Option<&'static str> {
@@ -210,18 +201,19 @@ impl FamilyPolicy {
 // that file on a new node makes the node eligible with no code change.
 // ---------------------------------------------------------------------------
 
-/// The GPU-job capability probe. VERIFIED PRESENT ON ALL THREE GPU NODES
-/// 2026-07-28 23:2xZ (`ssh xbabe1/xbabe3 test -f ...` -> PRESENT; local xbabe2
-/// -> PRESENT). This is the file the job genuinely dereferences: both the
-/// trainer and the generator run with `PYTHONPATH=<prime_source>` and import
-/// `jope.policy.model_v3`, so a node that lacks it cannot run the job at all.
+/// The GPU-job capability probe. The immutable runtime bundle is synchronized
+/// to every execution node before activation, and trainer/proposer imports use
+/// its bundled `pytorch` tree.
 ///
 /// Everything else the job needs -- the script, corpus manifest, checkpoint,
 /// packed shards -- is STAGED by scq via `[[input]]`, so it must NOT be probed.
 pub const PROBE_PRIME_POLICY_SRC: SmokeProbe = SmokeProbe {
-    name: "jope-prime policy source present",
+    name: "runtime bundle JOPE policy present",
     command: "/usr/bin/test",
-    args: &["-f", "/home/ubuntu/jope-prime/src/jope/policy/model_v3.py"],
+    args: &[
+        "-f",
+        "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch/jope/policy/model_v3.py",
+    ],
     timeout_secs: 5,
 };
 
@@ -271,7 +263,7 @@ pub const TRAINER: FamilyPolicy = FamilyPolicy {
                     peak_ram_mb = 9174 (2026-07-28 23:1xZ)",
     smoke: &[PROBE_PRIME_POLICY_SRC],
     max_runtime_hours: 168,
-    preemptible: true,
+    preemptible: false,
 };
 
 pub const PROPOSE: FamilyPolicy = FamilyPolicy {
@@ -310,18 +302,14 @@ pub const EVAL: FamilyPolicy = FamilyPolicy {
     // max by 1.79x. 8 of 2154 eval jobs exceed 270 MB and 5 exceed the 341 MB
     // implied by MIN_MARGIN, so the sample had simply not seen the tail.
     //
-    // ram_mb is LEFT AT 512 deliberately -- eval is the highest-count job class
-    // and inflating it would reduce cluster packing, which is an operator call,
-    // not a verifier's. At 512 the margin over the true peak is 1.06x, BELOW
-    // MIN_MARGIN, so `audit()` now raises `MarginOutOfBounds` for this family.
-    // That finding is correct and load-bearing: an eval job at 483 MB is 29 MB
-    // from its own cgroup ceiling. Resolving it means raising ram_mb to >=725
-    // (483 * 1.5) or accepting the risk explicitly.
+    // 768 MB is the smallest round reservation above the 1.5x measured-peak
+    // floor (483 * 1.5 = 724.5 MB). The scheduler's independent safety floor
+    // remains unchanged.
     //
     // Deliberately NOT given a smoke probe -- eval jobs carry every input via
     // `[[input]]`, and a dependency block would make submits FAIL under
     // saturation instead of queueing (see PROBE_FLYWHEEL_ROOT_XBABE2_ONLY).
-    ram_mb: 512,
+    ram_mb: 768,
     gang_size: 1,
     placement: "single_node",
     measured_peak_mb: Some(483),

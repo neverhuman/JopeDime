@@ -22,8 +22,9 @@
 //!
 //! # Scanner contract
 //!
-//! A "render site" is any line containing the literal `[resource]` in a source
-//! file under `src/bin/` or `scripts/`. Comments and Rust `mod tests` blocks are
+//! A "render site" is any line containing the literal `[resource]` or a call to
+//! the central `render_resource_block()` policy helper in a source file under
+//! `src/bin/` or `scripts/`. Comments and Rust `mod tests` blocks are
 //! stripped first, because a commented-out `ram_mb = 49152` is documentation,
 //! not a reservation -- an earlier version of this scanner reported exactly that
 //! false positive against `scripts/test_exact_ops.py`.
@@ -123,6 +124,26 @@ impl RenderSite {
 /// appear here; anything else fails as `UnregisteredSite`.
 pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
     (
+        "src/bin/jope_canary_executor.rs",
+        "ensure_proposals",
+        Some(Family::Propose),
+    ),
+    (
+        "src/bin/jope_canary_executor.rs",
+        "build_evaluations",
+        Some(Family::Eval),
+    ),
+    (
+        "src/bin/jope_causal_pair_repair.rs",
+        "render_spec",
+        Some(Family::Eval),
+    ),
+    (
+        "src/bin/jope_task_learning_controller.rs",
+        "render_spec",
+        Some(Family::Trainer),
+    ),
+    (
         "src/bin/jope_selfplay_promotion.rs",
         "render_checkpoint_proposal_spec",
         Some(Family::Propose),
@@ -182,6 +203,11 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
     (
         "scripts/test_exact_train.py",
         "render_spec",
+        Some(Family::Trainer),
+    ),
+    (
+        "scripts/test_exact_train.py",
+        "render_resource_block",
         Some(Family::Trainer),
     ),
     // Offline train-only red-team campaign renderer. It is not part of the
@@ -549,7 +575,7 @@ fn registry_entry(file: &str, function: &str) -> Option<Option<Family>> {
 fn scan_file(repo_root: &Path, rel: &str) -> std::io::Result<Vec<RenderSite>> {
     let full: PathBuf = repo_root.join(rel);
     let raw = std::fs::read_to_string(&full)?;
-    if !raw.contains("[resource]") {
+    if !raw.contains("[resource]") && !raw.contains("render_resource_block()") {
         return Ok(vec![]);
     }
     let is_py = rel.ends_with(".py");
@@ -562,7 +588,8 @@ fn scan_file(repo_root: &Path, rel: &str) -> std::io::Result<Vec<RenderSite>> {
 
     let mut out = vec![];
     for (i, ln) in lines.iter().enumerate() {
-        if !ln.contains("[resource]") {
+        let central_policy = ln.contains("render_resource_block()");
+        if !ln.contains("[resource]") && !central_policy {
             continue;
         }
         // Unescape literal `\n` before extracting values. Several renderers emit
@@ -581,13 +608,30 @@ fn scan_file(repo_root: &Path, rel: &str) -> std::io::Result<Vec<RenderSite>> {
         let hi2 = (i + 100).min(lines.len());
         let window2 = unescape(lines[i..hi2].join("\n"));
 
+        let function = enclosing_function(&lines, i, is_py);
+        let family = registry_entry(rel, &function).flatten();
         let mut params = BTreeMap::new();
-        for k in SHARED_KEYS {
-            if let Some(v) = find_value(&window, k) {
-                params.insert((*k).to_owned(), v);
+        if central_policy {
+            if let Some(family) = family {
+                for key in SHARED_KEYS {
+                    if let Some(value) = policy_value(family, key) {
+                        params.insert((*key).to_owned(), value);
+                    }
+                }
+            }
+        } else {
+            for key in SHARED_KEYS {
+                if let Some(value) = find_value(&window, key) {
+                    params.insert((*key).to_owned(), value);
+                }
             }
         }
-        let dep_form = if window2.contains("[[dependencies.smoke]]") {
+        let dep_form = if central_policy
+            && window2.contains("render_placement_block()")
+            && family.is_some_and(|family| !spec_policy::policy(family).smoke.is_empty())
+        {
+            DepForm::Smoke
+        } else if window2.contains("[[dependencies.smoke]]") {
             DepForm::Smoke
         } else if window2.contains("smoke = [") {
             DepForm::SmokeInline
@@ -599,8 +643,6 @@ fn scan_file(repo_root: &Path, rel: &str) -> std::io::Result<Vec<RenderSite>> {
         // A probe reading /etc/hostname is a host pin whichever form carries it.
         let probes_etc_hostname = matches!(dep_form, DepForm::Smoke | DepForm::SmokeInline)
             && window2.contains("/etc/hostname");
-        let function = enclosing_function(&lines, i, is_py);
-        let family = registry_entry(rel, &function).flatten();
         out.push(RenderSite {
             file: rel.to_owned(),
             line: i + 1,
@@ -608,9 +650,10 @@ fn scan_file(repo_root: &Path, rel: &str) -> std::io::Result<Vec<RenderSite>> {
             family,
             params,
             dep_form,
-            emits_resource_node: section_declares(resource_section(&window2), "node")
-                || window.contains("node_line"),
-            emits_ram_gb: section_declares(resource_section(&window2), "ram_gb"),
+            emits_resource_node: !central_policy
+                && (section_declares(resource_section(&window2), "node")
+                    || window.contains("node_line")),
+            emits_ram_gb: !central_policy && section_declares(resource_section(&window2), "ram_gb"),
             probes_etc_hostname,
         });
     }
@@ -927,10 +970,9 @@ mod tests {
     }
 
     /// Both spellings of a smoke dependency are enforced by scq and must both be
-    /// recognised. The inline `smoke = [{ ... }]` form is REAL: it is how
-    /// `scripts/test_exact_canary.py` pins itself to a host, and an earlier
-    /// version of this scanner reported that file as having no placement
-    /// constraint at all.
+    /// recognised. The live canary now probes an immutable bundle capability;
+    /// a synthetic legacy renderer keeps coverage for the inline spelling and
+    /// the forbidden hostname form.
     #[test]
     fn both_smoke_spellings_are_recognised_and_hostname_pins_are_flagged() {
         let s = sites();
@@ -940,15 +982,30 @@ mod tests {
             .expect("canary render site");
         assert_eq!(
             canary.dep_form,
-            DepForm::SmokeInline,
-            "inline `smoke = [{{...}}]` must be seen as an ENFORCED dependency, not as none"
+            DepForm::Smoke,
+            "the canary capability must use an enforced smoke dependency"
         );
+        assert!(!canary.probes_etc_hostname);
         assert!(
-            canary.probes_etc_hostname,
-            "a probe grepping /etc/hostname is a host pin and must be flagged"
+            !audit(std::slice::from_ref(canary))
+                .iter()
+                .any(|f| matches!(f, Finding::HostnamePinnedProbe { .. })),
+            "the immutable-bundle capability must not be reported as a hostname pin"
         );
+
+        let root = tempfile::tempdir().expect("temporary synthetic renderer root");
+        std::fs::create_dir_all(root.path().join("scripts")).unwrap();
+        std::fs::write(
+            root.path().join("scripts/test_exact_canary.py"),
+            "def render():\n    return '''[resource]\nram_mb = 768\n[dependencies]\nsmoke = [{ command = \"/usr/bin/grep\", args = [\"-qx\", \"xbabe2\", \"/etc/hostname\"] }]\n'''\n",
+        )
+        .unwrap();
+        let synthetic = scan_file(root.path(), "scripts/test_exact_canary.py").unwrap();
+        let legacy = synthetic.first().expect("synthetic inline smoke site");
+        assert_eq!(legacy.dep_form, DepForm::SmokeInline);
+        assert!(legacy.probes_etc_hostname);
         assert!(
-            audit(std::slice::from_ref(canary))
+            audit(std::slice::from_ref(legacy))
                 .iter()
                 .any(|f| matches!(f, Finding::HostnamePinnedProbe { .. })),
             "the audit must raise HostnamePinnedProbe for an /etc/hostname probe"
@@ -972,10 +1029,8 @@ mod tests {
             "a one-line `\\n`-escaped spec must yield its [resource] values: {:?}",
             site.params
         );
-        assert!(
-            site.emits_resource_node,
-            "`node = {{node:?}}` inside [resource] is a controller-only pin and must be flagged"
-        );
+        assert_eq!(site.dep_form, DepForm::Smoke);
+        assert!(!site.emits_resource_node);
     }
 
     /// `[resource] node` must be detected from the SECTION, not from a stray

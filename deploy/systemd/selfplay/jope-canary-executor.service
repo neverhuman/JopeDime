@@ -5,7 +5,7 @@ After=jope-selfplay-queue.service
 [Service]
 Type=simple
 WorkingDirectory=/home/ubuntu/jope-flywheel/test_exact_gen0
-ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_canary_executor
+ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_canary_executor --runner /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/scripts/fweval_runner.sh
 Restart=always
 RestartSec=5
 

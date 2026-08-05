@@ -37,6 +37,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
 use jope_dime_regressor::selfplay_expansion::TASKS;
+use jope_dime_regressor::spec_policy::EVAL;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -394,6 +395,7 @@ fn plan(
                 if task == "binary" { "b" } else { "r" },
                 entry.dataset_id.replace("synth_", "s")
             );
+            let resource_block = EVAL.render_resource_block();
             let spec = format!(
                 r#"[job]
 id = "{job_id}"
@@ -402,13 +404,7 @@ tier = "normal"
 command = "/usr/bin/env"
 args = ["{{input:runner}}", "{{input:manifest}}", "{{input:train}}", "{{input:test}}", "{{input:evaluator}}", "{{output:receipt}}"]
 
-[resource]
-gpus_per_task = 0
-cpus_reserved = 1
-omp_threads = 1
-ram_mb = 512
-gang_size = 1
-placement = "single_node"
+{resource_block}
 
 [env]
 RAYON_NUM_THREADS = "1"

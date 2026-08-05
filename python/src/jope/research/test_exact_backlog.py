@@ -411,7 +411,7 @@ def render_spec(manifest_path: Path, evaluator: Path) -> tuple[str, Path, str]:
         "gpus_per_task = 0",
         "cpus_reserved = 1",
         "omp_threads = 1",
-        "ram_mb = 512",
+        "ram_mb = 768",
         "gang_size = 1",
         'placement = "single_node"',
         "",

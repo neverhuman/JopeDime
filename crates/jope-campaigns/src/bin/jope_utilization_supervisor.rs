@@ -686,8 +686,8 @@ fn diagnose(args: &Args, util: &Utilization, work: &WorkOnDisk) -> Vec<Stage> {
     });
 
     // ---- supply / wave builder -------------------------------------------
-    let supply_path = args.root.join("ops/micro-wave-supply-v1.json");
-    let supply_receipt = "ops/micro-wave-supply-v1.json".to_owned();
+    let supply_path = args.root.join("ops/micro-wave-supply-v2.json");
+    let supply_receipt = "ops/micro-wave-supply-v2.json".to_owned();
     stages.push(match read_json(&supply_path) {
         None => Stage {
             name: "supply",
