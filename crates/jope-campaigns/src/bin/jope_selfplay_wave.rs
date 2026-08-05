@@ -2129,6 +2129,31 @@ fn load_local_elites(corpus: &Path, task: &str, dataset: &str) -> Result<Vec<Loc
     Ok(result)
 }
 
+/// Deterministically re-head an offspring whose mutation left its task.
+///
+/// The mutation and crossover operators draw replacement heads from the FROZEN
+/// evolve head list -- an RNG modulus that predates multiclass and timeseries
+/// and must never change, or every historical regression/binary stream forks.
+/// For those new tasks nearly every head-mutation therefore produces a child
+/// whose terminal head fails `task_valid`, and 100,000 attempts could not fill
+/// 125 offspring slots for the first multiclass wave. Grafting the LEFT
+/// parent's terminal head back onto the child keeps the mutated transform
+/// stack (the part the operator actually varied) while restoring a task-legal
+/// head, with no randomness of its own. Callers gate this to tasks outside the
+/// legacy pair so regression/binary offspring selection is byte-identical to
+/// every wave ever built.
+fn graft_task_head(child: &str, parent: &str) -> Option<String> {
+    let GenomeIr::Pipeline(mut child_pipeline) = GenomeIr::parse(child).ok()? else {
+        return None;
+    };
+    let GenomeIr::Pipeline(parent_pipeline) = GenomeIr::parse(parent).ok()? else {
+        return None;
+    };
+    let parent_head = parent_pipeline.stages.last()?.clone();
+    *child_pipeline.stages.last_mut()? = parent_head;
+    Some(GenomeIr::Pipeline(child_pipeline).canonical())
+}
+
 fn task_valid(source: &str, task: &str) -> bool {
     let Ok(genome) = GenomeIr::parse(source) else {
         return false;
@@ -2709,9 +2734,19 @@ fn compose_dataset_with_dl(
         let Ok(child) = child else {
             continue;
         };
-        if !task_valid(&child, task) {
+        // Legacy tasks keep the historical accept/reject stream exactly; the
+        // new tasks (no history to fork) get a deterministic head graft when
+        // the frozen mutator swapped their head off-task. See graft_task_head.
+        let child = if task_valid(&child, task) {
+            child
+        } else if matches!(task, "multiclass" | "timeseries") {
+            match graft_task_head(&child, &parents[left].0) {
+                Some(grafted) if task_valid(&grafted, task) => grafted,
+                _ => continue,
+            }
+        } else {
             continue;
-        }
+        };
         let child_semantic = semantic(&child);
         if !used.insert(child_semantic.clone()) {
             continue;
@@ -3873,6 +3908,26 @@ mod tests {
         assert!(view.unavailable.contains(&semantic(&genomes[1])));
         assert!(!view.unavailable.contains(&semantic(&genomes[2])));
         assert_eq!(view.unavailable.len(), 2);
+    }
+
+    #[test]
+    /// A head-swapped multiclass offspring gets its parent's head back and is
+    /// then task-valid; a graft that still cannot become valid returns None
+    /// through the caller's filter. Regression/binary never take this path.
+    #[test]
+    fn grafting_restores_a_task_legal_head_deterministically() {
+        let parent =
+            "(pipe X (standardize) (multiclass_ridge class_weight=balanced l2=0.02))";
+        assert!(task_valid(parent, "multiclass"));
+        // The frozen mutator swapped the head to a regression one.
+        let child = "(pipe X (winsor_clip q=0.02) (standardize) (ridge))";
+        assert!(!task_valid(child, "multiclass"));
+        let grafted = graft_task_head(child, parent).expect("graft succeeds");
+        assert!(task_valid(&grafted, "multiclass"), "grafted: {grafted}");
+        assert!(grafted.contains("multiclass_ridge"));
+        assert!(grafted.contains("winsor_clip"), "transform stack preserved");
+        // Deterministic: same inputs, same output.
+        assert_eq!(graft_task_head(child, parent).unwrap(), grafted);
     }
 
     #[test]
