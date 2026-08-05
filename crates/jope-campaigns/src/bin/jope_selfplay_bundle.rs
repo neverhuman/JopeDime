@@ -21,6 +21,8 @@ const PRIME_SOURCE_BUNDLE_SHA256: &str =
     "9521ffcef11159339f314cb26430739d5472a54e1b521a868bd9ccb08acf6bd4";
 const ROLLBACK_BUNDLE_SHA256: &str = PRIME_SOURCE_BUNDLE_SHA256;
 const DEFAULT_PRIME: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/9521ffcef11159339f314cb26430739d5472a54e1b521a868bd9ccb08acf6bd4/pytorch";
+const ACTIVE_BUNDLE_PYTORCH_ROOT: &str =
+    "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch";
 const DEFAULT_ENCODING_DRIVER: &str = "/home/ubuntu/jope-flywheel/encodings/_driver";
 const DEFAULT_RUNNER: &str = "/home/ubuntu/jope-flywheel/scripts/fweval_runner.sh";
 const DEFAULT_SCQ_PROJECTS: &str = "/home/ubuntu/smart_cluster/etc/projects.toml";
@@ -908,7 +910,8 @@ fn validate_python_candidate(
 }
 
 fn validate_systemd_unit(contents: &str) -> Result<()> {
-    for line in contents.lines().map(str::trim) {
+    for line in systemd_logical_lines(contents)? {
+        let line = line.trim();
         if line.starts_with("ExecStart=")
             || line.starts_with("ExecStartPre=")
             || line.starts_with("ExecStartPost=")
@@ -916,7 +919,7 @@ fn validate_systemd_unit(contents: &str) -> Result<()> {
             if line.contains("/jope_selfplay_supply ") {
                 validate_supply_pytorch_boundary(line)?;
             } else {
-                validate_no_python_runtime(line)?;
+                validate_systemd_python_boundary(line)?;
             }
             ensure!(
                 !line.contains("/target-") && !line.contains("/home/ubuntu/jope-dime/target/"),
@@ -926,6 +929,70 @@ fn validate_systemd_unit(contents: &str) -> Result<()> {
                 !line.contains("/home/ubuntu/jope-prime/src")
                     && !line.contains("/home/ubuntu/jope-dime/scripts"),
                 "systemd runtime references a live source directory"
+            );
+        }
+    }
+    Ok(())
+}
+
+fn systemd_logical_lines(contents: &str) -> Result<Vec<String>> {
+    let mut logical = Vec::new();
+    let mut continued = String::new();
+    for physical in contents.lines() {
+        let physical = physical.trim();
+        let (fragment, continues) = physical
+            .strip_suffix('\\')
+            .map(|fragment| (fragment.trim_end(), true))
+            .unwrap_or((physical, false));
+        if !continued.is_empty() && !fragment.is_empty() {
+            continued.push(' ');
+        }
+        continued.push_str(fragment);
+        if !continues {
+            logical.push(std::mem::take(&mut continued));
+        }
+    }
+    ensure!(
+        continued.is_empty(),
+        "systemd unit ends with a dangling line continuation"
+    );
+    Ok(logical)
+}
+
+fn validate_systemd_python_boundary(line: &str) -> Result<()> {
+    let allowed_root = Path::new(ACTIVE_BUNDLE_PYTORCH_ROOT);
+    for (index, token) in line.split_ascii_whitespace().enumerate() {
+        let value = token
+            .split_once('=')
+            .map(|(_, value)| value)
+            .unwrap_or(token)
+            .trim_matches(['\'', '"']);
+        let path = Path::new(value);
+        let basename = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or(value)
+            .to_ascii_lowercase();
+        let is_python_interpreter = !basename.contains(".py")
+            && (basename.starts_with("python") || basename.starts_with("pypy"));
+        ensure!(
+            !is_python_interpreter,
+            "systemd may not invoke a Python interpreter directly"
+        );
+        if value.to_ascii_lowercase().contains(".py") {
+            ensure!(
+                index != 0
+                    && !value.contains(':')
+                    && path.is_absolute()
+                    && path.starts_with(allowed_root)
+                    && path.extension().and_then(|extension| extension.to_str()) == Some("py")
+                    && !path.components().any(|component| {
+                        matches!(
+                            component,
+                            std::path::Component::ParentDir | std::path::Component::CurDir
+                        )
+                    }),
+                "Python script reference escaped the active bundle PyTorch boundary"
             );
         }
     }
@@ -1609,6 +1676,63 @@ mod tests {
             "[Service]\nExecStart=/home/ubuntu/jope-dime/target-promotion/release/jope_selfplay_promotion\n"
         )
         .is_err());
+    }
+
+    #[test]
+    fn systemd_accepts_only_bundle_local_pytorch_scripts() {
+        let watchdog = include_str!("../../systemd/jope-selfplay-trainer-watchdog.service");
+        validate_systemd_unit(watchdog).unwrap();
+
+        let inside = format!(
+            "[Service]\nExecStart=/runtime/bin/controller --trainer-script {ACTIVE_BUNDLE_PYTORCH_ROOT}/training/test_exact_train.py\n"
+        );
+        validate_systemd_unit(&inside).unwrap();
+
+        let outside =
+            "[Service]\nExecStart=/runtime/bin/controller --trainer-script /tmp/training.py\n";
+        assert!(validate_systemd_unit(outside).is_err());
+
+        let mixed = format!(
+            "[Service]\nExecStart=/runtime/bin/controller --trainer-script {ACTIVE_BUNDLE_PYTORCH_ROOT}/training/test_exact_train.py --common-script /tmp/common.py\n"
+        );
+        assert!(validate_systemd_unit(&mixed).is_err());
+
+        let traversal = format!(
+            "[Service]\nExecStart=/runtime/bin/controller --trainer-script {ACTIVE_BUNDLE_PYTORCH_ROOT}/../outside.py\n"
+        );
+        assert!(validate_systemd_unit(&traversal).is_err());
+
+        let continued = "[Service]\nExecStart=/runtime/bin/controller \\\n+  --trainer-script /tmp/training.py\n";
+        assert!(validate_systemd_unit(continued).is_err());
+
+        for interpreter in ["/usr/bin/python3-dbg", "/usr/bin/pypy3"] {
+            let unit = format!("[Service]\nExecStart={interpreter} --version\n");
+            assert!(validate_systemd_unit(&unit).is_err());
+        }
+
+        let packed = format!(
+            "[Service]\nExecStart=/runtime/bin/controller --pythonpath {ACTIVE_BUNDLE_PYTORCH_ROOT}/training/test_exact_train.py:/tmp/outside.py\n"
+        );
+        assert!(validate_systemd_unit(&packed).is_err());
+
+        let direct_script = format!(
+            "[Service]\nExecStart={ACTIVE_BUNDLE_PYTORCH_ROOT}/training/test_exact_train.py\n"
+        );
+        assert!(validate_systemd_unit(&direct_script).is_err());
+    }
+
+    #[test]
+    fn every_tracked_systemd_unit_satisfies_the_runtime_boundary() {
+        let systemd = Path::new(env!("CARGO_MANIFEST_DIR")).join("systemd");
+        for entry in fs::read_dir(&systemd).unwrap() {
+            let path = entry.unwrap().path();
+            if path.extension().and_then(|extension| extension.to_str()) != Some("service") {
+                continue;
+            }
+            let contents = fs::read_to_string(&path).unwrap();
+            validate_systemd_unit(&contents)
+                .unwrap_or_else(|error| panic!("{}: {error:#}", path.display()));
+        }
     }
 
     #[test]
