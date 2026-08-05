@@ -2270,6 +2270,51 @@ fn load_local_elites(corpus: &Path, task: &str, dataset: &str) -> Result<Vec<Loc
 /// head, with no randomness of its own. Callers gate this to tasks outside the
 /// legacy pair so regression/binary offspring selection is byte-identical to
 /// every wave ever built.
+/// Breed ONE task-legal child from two parents. This is the single sanctioned
+/// way to produce a candidate genome, and every generation loop must route
+/// through it.
+///
+/// The reason it exists is a real outage. The evolve head list is frozen (it
+/// is an RNG modulus, so it cannot gain multiclass/timeseries heads without
+/// forking every historical stream), which means a mutated new-task child
+/// almost always carries an off-task head. Two loops in this file --
+/// registry backfill and offspring -- independently implemented
+/// "mutate/crossover, then filter on task_valid, then graft". Backfill was
+/// written without the graft, so for multiclass it could exhaust all 100_000
+/// attempts without yielding one legal child; supply wedged on
+/// multiclass:06d990577f1565f5 for 3.5 hours and the evaluation queue drained
+/// to zero. Fixing the second instance is not enough -- a third loop would be
+/// written the same wrong way -- so the policy lives here, once.
+///
+/// Determinism contract: `seed` and `attempt` alone decide the operator and
+/// the outcome. Regression and binary are returned exactly as the frozen
+/// mutator produced them (a failed `task_valid` is a rejection, never a
+/// repair), so their historical accept/reject streams stay byte-for-byte
+/// identical. Only multiclass and timeseries -- which have no stream to fork,
+/// having never run before -- get the deterministic head graft.
+fn breed_task_valid_child(
+    left_parent: &str,
+    right_parent: &str,
+    seed: u64,
+    attempt: usize,
+    task: &str,
+) -> Option<String> {
+    let child = if attempt % 2 == 0 {
+        mutate_canonical_pipeline_v2(left_parent, seed, 12, true)
+    } else {
+        crossover_canonical_pipelines(left_parent, right_parent, seed, 12)
+    }
+    .ok()?;
+    if task_valid(&child, task) {
+        return Some(child);
+    }
+    if !matches!(task, "multiclass" | "timeseries") {
+        return None;
+    }
+    let grafted = graft_task_head(&child, left_parent)?;
+    task_valid(&grafted, task).then_some(grafted)
+}
+
 fn graft_task_head(child: &str, parent: &str) -> Option<String> {
     let GenomeIr::Pipeline(mut child_pipeline) = GenomeIr::parse(child).ok()? else {
         return None;
@@ -2416,29 +2461,13 @@ fn registry_filter_and_fill(
             let seed = registry_backfill_seed(wave, task, dataset, candidate, attempt);
             let left = (seed as usize) % parents.len();
             let right = ((seed.rotate_left(23) as usize) + attempt) % parents.len();
-            let child = if attempt % 2 == 0 {
-                mutate_canonical_pipeline_v2(&parents[left].0, seed, 12, true)
-            } else {
-                crossover_canonical_pipelines(&parents[left].0, &parents[right].0, seed, 12)
-            };
-            let Ok(child) = child else {
-                continue;
-            };
-            // Same frozen-mutator problem the offspring loop has: the evolve
-            // head list predates multiclass/timeseries, so a mutated child
-            // almost always carries an off-task head and 100_000 attempts can
-            // retire without one legal candidate -- which wedged supply for
-            // 3.5h on multiclass:06d990577f1565f5. Legacy tasks keep their
-            // historical accept/reject stream byte-for-byte; the new tasks get
-            // the same deterministic head graft used for offspring.
-            let child = if task_valid(&child, task) {
-                child
-            } else if matches!(task, "multiclass" | "timeseries") {
-                match graft_task_head(&child, &parents[left].0) {
-                    Some(grafted) if task_valid(&grafted, task) => grafted,
-                    _ => continue,
-                }
-            } else {
+            let Some(child) = breed_task_valid_child(
+                &parents[left].0,
+                &parents[right].0,
+                seed,
+                attempt,
+                task,
+            ) else {
                 continue;
             };
             let child_semantic = semantic(&child);
@@ -2868,25 +2897,9 @@ fn compose_dataset_with_dl(
         let seed = mutation_seed(wave, task, dataset, attempt);
         let left = (seed as usize) % parents.len();
         let right = ((seed.rotate_left(23) as usize) + attempt) % parents.len();
-        let child = if attempt % 2 == 0 {
-            mutate_canonical_pipeline_v2(&parents[left].0, seed, 12, true)
-        } else {
-            crossover_canonical_pipelines(&parents[left].0, &parents[right].0, seed, 12)
-        };
-        let Ok(child) = child else {
-            continue;
-        };
-        // Legacy tasks keep the historical accept/reject stream exactly; the
-        // new tasks (no history to fork) get a deterministic head graft when
-        // the frozen mutator swapped their head off-task. See graft_task_head.
-        let child = if task_valid(&child, task) {
-            child
-        } else if matches!(task, "multiclass" | "timeseries") {
-            match graft_task_head(&child, &parents[left].0) {
-                Some(grafted) if task_valid(&grafted, task) => grafted,
-                _ => continue,
-            }
-        } else {
+        let Some(child) =
+            breed_task_valid_child(&parents[left].0, &parents[right].0, seed, attempt, task)
+        else {
             continue;
         };
         let child_semantic = semantic(&child);
@@ -4207,6 +4220,47 @@ mod tests {
         assert!(grafted.contains("winsor_clip"), "transform stack preserved");
         // Deterministic: same inputs, same output.
         assert_eq!(graft_task_head(child, parent).unwrap(), grafted);
+    }
+
+    /// Both generation loops route through one breeder, so the legacy tasks
+    /// cannot be silently repaired and the new tasks cannot be silently
+    /// starved. Backfill was written without the graft and wedged supply for
+    /// 3.5 hours; this pins the policy that replaced both copies.
+    #[test]
+    fn the_breeder_repairs_only_new_tasks_and_is_deterministic() {
+        let mc_parent = "(pipe X (standardize) (multiclass_ridge class_weight=balanced l2=0.02))";
+        let reg_parent = "(pipe X (standardize) (ridge))";
+
+        // Regression is returned exactly as the frozen mutator produced it:
+        // whatever comes back must be task-legal WITHOUT repair, and the same
+        // seed/attempt must reproduce it bit for bit.
+        for attempt in 0..64 {
+            let seed = 0x5eed_0000_u64 + attempt as u64;
+            let first = breed_task_valid_child(reg_parent, reg_parent, seed, attempt, "regression");
+            let again = breed_task_valid_child(reg_parent, reg_parent, seed, attempt, "regression");
+            assert_eq!(first, again, "breeding must be deterministic");
+            if let Some(child) = first {
+                assert!(task_valid(&child, "regression"), "no repair for legacy tasks");
+            }
+        }
+
+        // Multiclass: the graft must actually rescue children the frozen head
+        // list would otherwise reject, or the lane starves the way it did.
+        let mut rescued = 0;
+        for attempt in 0..256 {
+            let seed = 0xbeef_0000_u64 + attempt as u64;
+            if let Some(child) =
+                breed_task_valid_child(mc_parent, mc_parent, seed, attempt, "multiclass")
+            {
+                assert!(task_valid(&child, "multiclass"), "child: {child}");
+                rescued += 1;
+            }
+        }
+        assert!(
+            rescued > 0,
+            "the breeder produced no legal multiclass child in 256 attempts -- \
+             this is exactly the starvation that wedged supply"
+        );
     }
 
     /// The ts contract must be satisfiable by the metadata that actually
