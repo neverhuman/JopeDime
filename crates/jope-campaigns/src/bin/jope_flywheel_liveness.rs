@@ -11,8 +11,7 @@ use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
 
-const MIN_DYNAMIC_TARGET: usize = 2_048;
-const MAX_DYNAMIC_TARGET: usize = 4_096;
+const MIN_USEFUL_WORK_TARGET: usize = 6_144;
 const STALE_CONTROL_MS: u128 = 2 * 60 * 1_000;
 const IDLE_GPU_MS: u128 = 5 * 60 * 1_000;
 
@@ -84,10 +83,13 @@ fn disk_used_percent(path: &Path) -> Result<u8> {
     })
 }
 
-fn dynamic_target(burn_per_second_p95: f64, proposer_to_ready_seconds_p95: f64) -> usize {
-    (1.5 * burn_per_second_p95.max(0.0) * proposer_to_ready_seconds_p95.max(0.0))
-        .ceil()
-        .clamp(MIN_DYNAMIC_TARGET as f64, MAX_DYNAMIC_TARGET as f64) as usize
+fn dynamic_target(p95_jobs_per_minute: f64, proposer_to_ready_minutes_p95: f64) -> usize {
+    MIN_USEFUL_WORK_TARGET
+        .max((120.0 * p95_jobs_per_minute.max(0.0)).ceil() as usize)
+        .max(
+            (1.5 * p95_jobs_per_minute.max(0.0) * proposer_to_ready_minutes_p95.max(0.0)).ceil()
+                as usize,
+        )
 }
 
 fn percentile_95(mut values: Vec<f64>) -> f64 {
@@ -115,7 +117,6 @@ fn observed_supply_performance(root: &Path, queue: &Value) -> Value {
         .get("p95_60m_jobs_per_minute")
         .and_then(Value::as_f64)
         .filter(|value| value.is_finite() && *value > 0.0)
-        .map(|value| value / 60.0)
         .unwrap_or_default();
     let mut lead_times = Vec::new();
     let states = root.join("ops/cohort-supply-state-v2");
@@ -144,7 +145,9 @@ fn observed_supply_performance(root: &Path, queue: &Value) -> Value {
     json!({
         "schema": "SupplyPerformance.v1",
         "generated_at_ms": now_ms(),
-        "evaluator_burn_per_second_p95": burn,
+        "p95_jobs_per_minute": burn,
+        "evaluator_burn_per_second_p95": burn / 60.0,
+        "proposer_to_ready_minutes_p95": proposer / 60.0,
         "proposer_to_ready_seconds_p95": proposer,
         "proposer_samples": lead_times.len(),
         "source": "queue-keeper p95 burn plus immutable proposer-spec-to-wave-summary timestamps",
@@ -154,7 +157,7 @@ fn observed_supply_performance(root: &Path, queue: &Value) -> Value {
 fn cycle(root: &Path, scq: &Path) -> Result<Value> {
     let now = now_ms();
     let queue = optional_json(&root.join("ops/queue-keeper-v3.json"));
-    let supply = optional_json(&root.join("ops/micro-wave-supply-v1.json"));
+    let supply = optional_json(&root.join("ops/micro-wave-supply-v2.json"));
     let ingest = optional_json(&root.join("ops/last-ingest.json"));
     let corpus = optional_json(&root.join("training/current-corpus.json"));
     let trainer_status = optional_json(&root.join("ops/task-learning-controller.v2.json"));
@@ -169,7 +172,11 @@ fn cycle(root: &Path, scq: &Path) -> Result<Value> {
     atomic_json(&root.join("ops/supply-performance.v1.json"), &performance)?;
 
     let queued = queue
-        .get("queued_starting")
+        .get("queued")
+        .and_then(Value::as_u64)
+        .unwrap_or_default() as usize;
+    let starting = queue
+        .get("starting")
         .and_then(Value::as_u64)
         .unwrap_or_default() as usize;
     let dispatching = queue
@@ -177,15 +184,15 @@ fn cycle(root: &Path, scq: &Path) -> Result<Value> {
         .and_then(Value::as_u64)
         .unwrap_or_default() as usize;
     let ready = queue
-        .get("unclaimed_current_checkpoint_manifests")
+        .get("validated_ready")
         .and_then(Value::as_u64)
         .unwrap_or_default() as usize;
     let burn = performance
-        .get("evaluator_burn_per_second_p95")
+        .get("p95_jobs_per_minute")
         .and_then(Value::as_f64)
         .unwrap_or_default();
     let proposer_time = performance
-        .get("proposer_to_ready_seconds_p95")
+        .get("proposer_to_ready_minutes_p95")
         .and_then(Value::as_f64)
         .unwrap_or_default();
     let target = dynamic_target(burn, proposer_time);
@@ -221,7 +228,11 @@ fn cycle(root: &Path, scq: &Path) -> Result<Value> {
         .unwrap_or_default();
     let pair_repair_age = now.saturating_sub(timestamp(&pair_repair));
     let disk = disk_used_percent(root)?;
-    let proposer_eligible = queued.saturating_add(dispatching).saturating_add(ready) < target;
+    let useful_work = queued
+        .saturating_add(starting)
+        .saturating_add(dispatching)
+        .saturating_add(ready);
+    let proposer_eligible = useful_work < target;
     let proposer_active = supply
         .get("builds_planned")
         .and_then(Value::as_u64)
@@ -273,7 +284,7 @@ fn cycle(root: &Path, scq: &Path) -> Result<Value> {
     if supply_age > STALE_CONTROL_MS
         || !matches!(
             supply.get("schema").and_then(Value::as_str),
-            Some("JopeMicroWaveSupplyStatus.v1" | "JopeMicroWaveSupplyError.v1")
+            Some("JopeMicroWaveSupplyStatus.v2" | "JopeMicroWaveSupplyError.v1")
         )
     {
         alarms.push("supply_off_schema_or_stale_over_two_minutes".to_owned());
@@ -290,7 +301,15 @@ fn cycle(root: &Path, scq: &Path) -> Result<Value> {
     if encoder_eligible && !encoder_active && encoder_age > IDLE_GPU_MS {
         alarms.push("eligible_encoder_gpu_idle_over_five_minutes".to_owned());
     }
-    if queued.saturating_add(dispatching).saturating_add(ready) < target {
+    if useful_work < target
+        || supply.get("target_feasible").and_then(Value::as_bool) != Some(true)
+        || supply
+            .get("complete_reserve_waves")
+            .and_then(Value::as_u64)
+            .unwrap_or_default()
+            < 2
+        || supply.get("performance_fresh").and_then(Value::as_bool) != Some(true)
+    {
         alarms.push("queue_plus_ready_reserve_below_projected_low_watermark".to_owned());
     }
     if pending_shadow.saturating_add(pending_production) > 0 && !canary_consuming {
@@ -317,12 +336,13 @@ fn cycle(root: &Path, scq: &Path) -> Result<Value> {
     Ok(json!({
         "schema": "FlywheelLiveness.v1",
         "generated_at_ms": now,
-        "queue_depth": queued.saturating_add(dispatching),
+        "queue_depth": queued.saturating_add(starting).saturating_add(dispatching),
         "ready_reserve": ready,
+        "useful_work": useful_work,
         "dynamic_target": target,
-        "target_formula": "min(4096,max(2048,1.5*p95_evaluator_burn_rate*p95_proposer_to_ready_time))",
-        "p95_evaluator_burn_per_second": burn,
-        "p95_proposer_to_ready_seconds": proposer_time,
+        "target_formula": "max(6144,ceil(120*p95_jobs_per_minute),ceil(1.5*p95_proposer_to_ready_minutes*p95_jobs_per_minute))",
+        "p95_jobs_per_minute": burn,
+        "p95_proposer_to_ready_minutes": proposer_time,
         "ingestion_lag_labels": 0,
         "corpus_lag_labels": labels.saturating_sub(corpus_watermark),
         "pending_canaries": {
@@ -379,10 +399,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn supply_target_is_bounded_and_uses_p95_product() {
-        assert_eq!(dynamic_target(0.0, 0.0), 2_048);
-        assert_eq!(dynamic_target(10.0, 200.0), 3_000);
-        assert_eq!(dynamic_target(100.0, 200.0), 4_096);
+    fn supply_target_has_runway_floor_and_dynamic_growth() {
+        assert_eq!(dynamic_target(0.0, 0.0), 6_144);
+        assert_eq!(dynamic_target(10.0, 20.0), 6_144);
+        assert_eq!(dynamic_target(60.0, 1.0), 7_200);
+        assert_eq!(dynamic_target(100.0, 200.0), 30_000);
     }
 
     #[test]

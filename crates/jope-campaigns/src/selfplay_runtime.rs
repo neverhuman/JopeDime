@@ -207,7 +207,11 @@ pub fn run(command: &Path, arguments: &[String]) -> Result<Output> {
 
 /// Per-task authority metric (R1/D2); must agree with
 /// `crate::task::TaskKind::primary_metric`.
-fn expected_evaluation_metric(task: &str) -> Result<&'static str> {
+///
+/// Public so callers that are about to build an evaluation protocol can ask for the
+/// metric instead of keeping their own copy — `evaluation_protocol_sha256` validates
+/// against this exact function, so any private duplicate is a latent fail-closed bug.
+pub fn expected_evaluation_metric(task: &str) -> Result<&'static str> {
     match task {
         "regression" => Ok("r2"),
         "binary" => Ok("auc"),

@@ -4,7 +4,7 @@ After=default.target
 
 [Service]
 Type=simple
-WorkingDirectory=/home/ubuntu/jope-dime
+WorkingDirectory=/home/ubuntu/jope-flywheel/test_exact_gen0
 ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_selfplay_freshness --auto-retire-stale
 Restart=always
 RestartSec=5

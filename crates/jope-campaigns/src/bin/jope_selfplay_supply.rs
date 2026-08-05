@@ -35,6 +35,8 @@ const RUNTIME_PINNED_INTENT_SCHEMA: &str = "RuntimePinnedIntent.v1";
 const COHORT_CONTEXT_MIGRATION_SCHEMA: &str = "CohortContextMigrationReceipt.v1";
 const COHORT_CONTEXT_EXCLUSION_SCHEMA: &str = "CohortContextExclusionReceipt.v1";
 const ERROR_BACKOFF_MAX_SECONDS: u64 = 120;
+const MIN_USEFUL_WORK: usize = 6_144;
+const MIN_COMPLETE_RESERVE_WAVES: usize = 2;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -51,15 +53,21 @@ struct Args {
     once: bool,
     #[arg(long, default_value_t = 5)]
     interval_seconds: u64,
-    #[arg(long, default_value_t = 1_000)]
+    #[arg(long, default_value_t = 2_048)]
     queue_floor: usize,
     #[arg(long, default_value_t = 2_048)]
     queued_target: usize,
     #[arg(long, default_value_t = 4_096)]
     queued_hard_cap: usize,
     /// Maintain this many current-checkpoint manifests beyond scheduler demand.
-    #[arg(long, default_value_t = 1_024)]
+    #[arg(long, default_value_t = 2_048)]
     ready_reserve_min: usize,
+    /// Minimum queued/starting/dispatching plus checkpoint-valid ready work.
+    #[arg(long, default_value_t = MIN_USEFUL_WORK)]
+    useful_work_min: usize,
+    /// Newest complete waves protected from scheduler admission.
+    #[arg(long, default_value_t = MIN_COMPLETE_RESERVE_WAVES)]
+    min_complete_reserve_waves: usize,
     /// Maximum current-checkpoint waves with unclaimed manifests.
     #[arg(long, default_value_t = 8)]
     max_overlap_waves: usize,
@@ -71,6 +79,8 @@ struct Args {
     max_candidates_per_manifest: usize,
     #[arg(long, default_value_t = 30)]
     queue_status_max_age_seconds: u64,
+    #[arg(long, default_value_t = 300)]
+    performance_max_age_seconds: u64,
     #[arg(long, default_value = DEFAULT_SCQ)]
     scq: PathBuf,
     #[arg(
@@ -172,17 +182,29 @@ struct QueueStatus {
     checkpoint_epoch: Option<String>,
     queued_target: i64,
     queued_hard_cap: i64,
+    queued: usize,
+    starting: usize,
     queued_starting: usize,
     dispatching: usize,
     admission_waves: Vec<KeeperAdmissionWave>,
+    protected_reserve_waves: Vec<KeeperAdmissionWave>,
+    complete_current_checkpoint_waves: usize,
+    partial_current_checkpoint_waves: usize,
+    complete_reserve_waves: usize,
+    reserve_manifests: usize,
+    admission_manifests: usize,
+    validated_ready: usize,
+    useful_work: usize,
     unclaimed_current_checkpoint_manifests: usize,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 struct KeeperAdmissionWave {
     wave: String,
     summary_sha256: String,
+    manifest_count: usize,
     unclaimed_manifests: usize,
+    complete: bool,
 }
 
 #[derive(Debug)]
@@ -205,9 +227,19 @@ struct ReadyWave {
 struct SupplyDecision {
     below_floor: bool,
     overloaded: bool,
-    projected_jobs: usize,
+    useful_work: usize,
+    useful_work_target: usize,
     estimated_manifests_per_wave: usize,
+    target_feasible: bool,
     builds_planned: usize,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct PerformanceMeasurements {
+    generated_at_ms: u128,
+    p95_jobs_per_minute: f64,
+    proposer_to_ready_minutes: f64,
+    useful_work_target: usize,
 }
 
 #[derive(Debug, Serialize)]
@@ -230,15 +262,35 @@ struct CycleReport {
     queued_target: usize,
     queued_hard_cap: usize,
     ready_reserve_min: usize,
+    useful_work_min: usize,
+    useful_work_target: usize,
+    useful_work_target_formula: &'static str,
+    p95_jobs_per_minute: Option<f64>,
+    proposer_to_ready_minutes: Option<f64>,
+    performance_generated_at_ms: Option<u128>,
+    performance_fresh: bool,
     keeper_queued_target: i64,
     keeper_queued_hard_cap: i64,
     queued_starting: usize,
+    queued: usize,
+    starting: usize,
     dispatching: usize,
     queue_depth: usize,
     below_floor: bool,
     overloaded: bool,
     current_ready_waves: Vec<ReadyWave>,
     ready_manifests: usize,
+    validated_ready: usize,
+    reserve_manifests: usize,
+    admission_manifests: usize,
+    complete_current_checkpoint_waves: usize,
+    partial_current_checkpoint_waves: usize,
+    complete_reserve_waves: usize,
+    minimum_complete_reserve_waves: usize,
+    protected_reserve_waves: Vec<KeeperAdmissionWave>,
+    useful_work: usize,
+    target_feasible: bool,
+    critical_infeasibility_reason: Option<String>,
     projected_jobs_before_build: usize,
     projected_jobs_after_build: usize,
     max_overlap_waves: usize,
@@ -577,7 +629,7 @@ fn main() -> Result<()> {
         match cycle(&args) {
             Ok(report) => {
                 let value = serde_json::to_value(&report)?;
-                atomic_json(&args.root.join("ops/micro-wave-supply-v1.json"), &value)?;
+                atomic_json(&args.root.join("ops/micro-wave-supply-v2.json"), &value)?;
                 previous_error = None;
                 identical_failures = 0;
                 atomic_json(
@@ -617,7 +669,7 @@ fn main() -> Result<()> {
                     "critical": identical_failures >= 3,
                     "retry_after_seconds": retry_after_seconds,
                 });
-                atomic_json(&args.root.join("ops/micro-wave-supply-v1.json"), &failure)?;
+                atomic_json(&args.root.join("ops/micro-wave-supply-v2.json"), &failure)?;
                 atomic_json(
                     &circuit_path,
                     &json!({
@@ -674,7 +726,15 @@ fn validate_args(args: &Args) -> Result<()> {
         bail!("queue thresholds must satisfy 0 < floor <= target <= hard cap");
     }
     if args.ready_reserve_min == 0 || args.ready_reserve_min > args.queued_target {
-        bail!("ready reserve must satisfy 0 < reserve <= target");
+        bail!("ready reserve must satisfy 0 < reserve <= scheduler target");
+    }
+    if args.useful_work_min < MIN_USEFUL_WORK {
+        bail!("useful work minimum must be at least {MIN_USEFUL_WORK}");
+    }
+    if args.min_complete_reserve_waves < MIN_COMPLETE_RESERVE_WAVES
+        || args.min_complete_reserve_waves > args.max_overlap_waves
+    {
+        bail!("complete reserve waves must be within 2..=max-overlap-waves");
     }
     if !(1..=64).contains(&args.max_overlap_waves) {
         bail!("--max-overlap-waves must be in 1..=64");
@@ -685,44 +745,86 @@ fn validate_args(args: &Args) -> Result<()> {
     if !(25..=100).contains(&args.max_candidates_per_manifest) {
         bail!("--max-candidates-per-manifest must be in 25..=100");
     }
-    let maximum_wave_manifests = manifests_per_wave(args.max_candidates_per_manifest);
-    if args.queued_target.saturating_add(maximum_wave_manifests) > args.queued_hard_cap {
-        bail!("one micro-wave could overshoot the configured queued hard cap");
-    }
     Ok(())
 }
 
-fn dynamic_queued_target(args: &Args) -> usize {
+fn performance_measurements(args: &Args) -> Result<PerformanceMeasurements> {
     let performance = args.root.join("ops/supply-performance.v1.json");
-    let Ok(value) = fs::read(&performance)
-        .ok()
-        .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok())
-        .context("supply performance unavailable")
-    else {
-        return args.queued_target;
-    };
-    let burn = value
-        .get("evaluator_burn_per_second_p95")
-        .and_then(Value::as_f64)
-        .unwrap_or_default();
-    let proposer_seconds = value
-        .get("proposer_to_ready_seconds_p95")
-        .and_then(Value::as_f64)
-        .unwrap_or_default();
-    if !burn.is_finite() || !proposer_seconds.is_finite() || burn <= 0.0 || proposer_seconds <= 0.0
-    {
-        return args.queued_target;
+    let value: Value =
+        serde_json::from_slice(&fs::read(&performance).context("supply performance unavailable")?)
+            .context("parse supply performance")?;
+    if value.get("schema").and_then(Value::as_str) != Some("SupplyPerformance.v1") {
+        bail!("supply performance schema drift");
     }
-    (1.5 * burn * proposer_seconds)
-        .ceil()
-        .clamp(2_048.0, args.queued_hard_cap.min(4_096) as f64) as usize
+    let generated_at_ms = value
+        .get("generated_at_ms")
+        .and_then(Value::as_u64)
+        .map(u128::from)
+        .context("supply performance timestamp is absent")?;
+    if now_ms().saturating_sub(generated_at_ms)
+        > u128::from(args.performance_max_age_seconds) * 1_000
+    {
+        bail!("supply performance is stale");
+    }
+    let p95_jobs_per_minute = value
+        .get("p95_jobs_per_minute")
+        .and_then(Value::as_f64)
+        .or_else(|| {
+            value
+                .get("evaluator_burn_per_second_p95")
+                .and_then(Value::as_f64)
+                .map(|per_second| per_second * 60.0)
+        })
+        .context("p95 jobs-per-minute measurement is absent")?;
+    let proposer_to_ready_minutes = value
+        .get("proposer_to_ready_minutes_p95")
+        .and_then(Value::as_f64)
+        .or_else(|| {
+            value
+                .get("proposer_to_ready_seconds_p95")
+                .and_then(Value::as_f64)
+                .map(|seconds| seconds / 60.0)
+        })
+        .context("p95 proposer-to-ready measurement is absent")?;
+    if !p95_jobs_per_minute.is_finite()
+        || !proposer_to_ready_minutes.is_finite()
+        || p95_jobs_per_minute <= 0.0
+        || proposer_to_ready_minutes <= 0.0
+        || value
+            .get("proposer_samples")
+            .and_then(Value::as_u64)
+            .unwrap_or_default()
+            == 0
+    {
+        bail!("supply performance measurements are missing or invalid");
+    }
+    let burn_runway = (120.0 * p95_jobs_per_minute).ceil() as usize;
+    let lead_time_runway = (1.5 * proposer_to_ready_minutes * p95_jobs_per_minute).ceil() as usize;
+    Ok(PerformanceMeasurements {
+        generated_at_ms,
+        p95_jobs_per_minute,
+        proposer_to_ready_minutes,
+        useful_work_target: args.useful_work_min.max(burn_runway).max(lead_time_runway),
+    })
 }
 
 fn cycle(args: &Args) -> Result<CycleReport> {
     let status = load_queue_status(args)?;
+    let measured = performance_measurements(args);
     if !status.admission_allowed {
-        return Ok(held_report(args, &status));
+        return Ok(held_report(args, &status, measured.ok(), None));
     }
+    let performance = match measured {
+        Ok(value) => value,
+        Err(error) => {
+            return Ok(held_report(
+                args,
+                &status,
+                None,
+                Some(format!("performance_fail_closed:{error:#}")),
+            ))
+        }
+    };
     let inputs = checkpoint_inputs(args, &status)?;
     let epoch = checkpoint_epoch(&inputs.checkpoint_sha256)?;
     if status.checkpoint_epoch.as_deref() != Some(epoch.as_str()) {
@@ -760,22 +862,25 @@ fn cycle(args: &Args) -> Result<CycleReport> {
     if queue_depth > args.queued_hard_cap {
         bail!("current queued+dispatching depth exceeds the configured hard cap");
     }
-    let ready_before = status.unclaimed_current_checkpoint_manifests;
-    let queued_target = dynamic_queued_target(args);
+    let ready_before = status.validated_ready;
     let decision = supply_decision(
         queue_depth,
         ready_before,
+        status.reserve_manifests,
         waves.len(),
+        status.complete_reserve_waves,
         args.queue_floor,
-        queued_target,
+        args.queued_target,
+        performance.useful_work_target,
         args.queued_hard_cap,
         args.ready_reserve_min,
+        args.min_complete_reserve_waves,
         args.max_overlap_waves,
         args.max_builds_per_cycle,
         args.max_candidates_per_manifest,
     );
     let mut completed = Vec::new();
-    let builds_planned = if pending_ack.is_none() {
+    let builds_planned = if pending_ack.is_none() && decision.target_feasible {
         decision.builds_planned.min(1)
     } else {
         0
@@ -793,18 +898,32 @@ fn cycle(args: &Args) -> Result<CycleReport> {
             completed.push(built);
         }
     }
+    let runway_compliant = decision.target_feasible
+        && decision.useful_work >= decision.useful_work_target
+        && status.reserve_manifests >= args.ready_reserve_min
+        && status.complete_reserve_waves >= args.min_complete_reserve_waves;
     let report = CycleReport {
-        schema: "JopeMicroWaveSupplyStatus.v1",
+        schema: "JopeMicroWaveSupplyStatus.v2",
         generated_at_ms: now_ms(),
         mode: if args.build { "build" } else { "audit" },
         active_checkpoint_sha256: inputs.checkpoint_sha256,
         checkpoint_epoch: epoch,
         queue_floor: args.queue_floor,
-        queued_target,
+        queued_target: args.queued_target,
         queued_hard_cap: args.queued_hard_cap,
         ready_reserve_min: args.ready_reserve_min,
+        useful_work_min: args.useful_work_min,
+        useful_work_target: performance.useful_work_target,
+        useful_work_target_formula:
+            "max(6144,ceil(120*p95_jobs_per_minute),ceil(1.5*proposer_to_ready_minutes*p95_jobs_per_minute))",
+        p95_jobs_per_minute: Some(performance.p95_jobs_per_minute),
+        proposer_to_ready_minutes: Some(performance.proposer_to_ready_minutes),
+        performance_generated_at_ms: Some(performance.generated_at_ms),
+        performance_fresh: true,
         keeper_queued_target: status.queued_target,
         keeper_queued_hard_cap: status.queued_hard_cap,
+        queued: status.queued,
+        starting: status.starting,
         queued_starting: status.queued_starting,
         dispatching: status.dispatching,
         queue_depth,
@@ -812,18 +931,44 @@ fn cycle(args: &Args) -> Result<CycleReport> {
         overloaded: decision.overloaded,
         current_ready_waves: waves,
         ready_manifests: ready_before,
-        projected_jobs_before_build: decision.projected_jobs,
+        validated_ready: status.validated_ready,
+        reserve_manifests: status.reserve_manifests,
+        admission_manifests: status.admission_manifests,
+        complete_current_checkpoint_waves: status.complete_current_checkpoint_waves,
+        partial_current_checkpoint_waves: status.partial_current_checkpoint_waves,
+        complete_reserve_waves: status.complete_reserve_waves,
+        minimum_complete_reserve_waves: args.min_complete_reserve_waves,
+        protected_reserve_waves: status.protected_reserve_waves.clone(),
+        useful_work: decision.useful_work,
+        target_feasible: decision.target_feasible,
+        critical_infeasibility_reason: (!decision.target_feasible).then(|| {
+            format!(
+                "eight_overlap_waves_cannot_meet_useful_work_target:{}",
+                performance.useful_work_target
+            )
+        }),
+        projected_jobs_before_build: decision.useful_work,
         // A built wave is deliberately not counted until a newer keeper
         // status acknowledges it in the bounded admission set.
-        projected_jobs_after_build: decision.projected_jobs,
+        projected_jobs_after_build: decision.useful_work,
         max_overlap_waves: args.max_overlap_waves,
         builds_planned,
         builds_completed: completed,
         awaiting_keeper_ack: pending_ack.as_ref().map(|pending| pending.wave.clone()),
         awaiting_keeper_ack_since_ms: pending_ack.as_ref().map(|pending| pending.since_ms),
         keeper_status_generated_at_ms: status.generated_at_ms,
-        admission_allowed: status.admission_allowed,
-        hold_reason: None,
+        admission_allowed: status.admission_allowed && runway_compliant,
+        hold_reason: (!runway_compliant).then(|| {
+            if !decision.target_feasible {
+                "useful_work_target_infeasible_with_eight_overlap_waves".to_owned()
+            } else if status.complete_reserve_waves < args.min_complete_reserve_waves {
+                "complete_reserve_waves_below_minimum".to_owned()
+            } else if status.reserve_manifests < args.ready_reserve_min {
+                "ready_reserve_below_minimum".to_owned()
+            } else {
+                "useful_work_below_dynamic_target".to_owned()
+            }
+        }),
     };
     if !report.builds_completed.is_empty() {
         append_event(
@@ -834,34 +979,61 @@ fn cycle(args: &Args) -> Result<CycleReport> {
     Ok(report)
 }
 
-fn held_report(args: &Args, status: &QueueStatus) -> CycleReport {
+fn held_report(
+    args: &Args,
+    status: &QueueStatus,
+    performance: Option<PerformanceMeasurements>,
+    explicit_reason: Option<String>,
+) -> CycleReport {
     let active = status.active_checkpoint_sha256.clone().unwrap_or_default();
     let epoch = status.checkpoint_epoch.clone().unwrap_or_default();
     let queue_depth = status.queued_starting.saturating_add(status.dispatching);
     CycleReport {
-        schema: "JopeMicroWaveSupplyStatus.v1",
+        schema: "JopeMicroWaveSupplyStatus.v2",
         generated_at_ms: now_ms(),
         mode: if args.build { "build" } else { "audit" },
         active_checkpoint_sha256: active,
         checkpoint_epoch: epoch,
         queue_floor: args.queue_floor,
-        queued_target: dynamic_queued_target(args),
+        queued_target: args.queued_target,
         queued_hard_cap: args.queued_hard_cap,
         ready_reserve_min: args.ready_reserve_min,
+        useful_work_min: args.useful_work_min,
+        useful_work_target: performance
+            .map(|value| value.useful_work_target)
+            .unwrap_or(args.useful_work_min),
+        useful_work_target_formula:
+            "max(6144,ceil(120*p95_jobs_per_minute),ceil(1.5*proposer_to_ready_minutes*p95_jobs_per_minute))",
+        p95_jobs_per_minute: performance.map(|value| value.p95_jobs_per_minute),
+        proposer_to_ready_minutes: performance.map(|value| value.proposer_to_ready_minutes),
+        performance_generated_at_ms: performance.map(|value| value.generated_at_ms),
+        performance_fresh: performance.is_some(),
         keeper_queued_target: status.queued_target,
         keeper_queued_hard_cap: status.queued_hard_cap,
+        queued: status.queued,
+        starting: status.starting,
         queued_starting: status.queued_starting,
         dispatching: status.dispatching,
         queue_depth,
         below_floor: queue_depth < args.queue_floor,
-        overloaded: queue_depth.saturating_add(status.unclaimed_current_checkpoint_manifests)
-            > dynamic_queued_target(args),
+        overloaded: queue_depth > args.queued_target,
         current_ready_waves: Vec::new(),
-        ready_manifests: status.unclaimed_current_checkpoint_manifests,
+        ready_manifests: status.validated_ready,
+        validated_ready: status.validated_ready,
+        reserve_manifests: status.reserve_manifests,
+        admission_manifests: status.admission_manifests,
+        complete_current_checkpoint_waves: status.complete_current_checkpoint_waves,
+        partial_current_checkpoint_waves: status.partial_current_checkpoint_waves,
+        complete_reserve_waves: status.complete_reserve_waves,
+        minimum_complete_reserve_waves: args.min_complete_reserve_waves,
+        protected_reserve_waves: status.protected_reserve_waves.clone(),
+        useful_work: status.useful_work,
+        target_feasible: false,
+        critical_infeasibility_reason: explicit_reason.clone(),
         projected_jobs_before_build: queue_depth
-            .saturating_add(status.unclaimed_current_checkpoint_manifests),
+            .saturating_add(status.validated_ready),
         projected_jobs_after_build: queue_depth
-            .saturating_add(status.unclaimed_current_checkpoint_manifests),
+            .saturating_add(status.validated_ready),
         max_overlap_waves: args.max_overlap_waves,
         builds_planned: 0,
         builds_completed: Vec::new(),
@@ -869,7 +1041,7 @@ fn held_report(args: &Args, status: &QueueStatus) -> CycleReport {
         awaiting_keeper_ack_since_ms: None,
         keeper_status_generated_at_ms: status.generated_at_ms,
         admission_allowed: false,
-        hold_reason: status
+        hold_reason: explicit_reason.or_else(|| status
             .error
             .clone()
             .or_else(|| status.fail_closed_reason.clone())
@@ -878,7 +1050,7 @@ fn held_report(args: &Args, status: &QueueStatus) -> CycleReport {
                     .degraded
                     .then(|| "queue keeper is degraded".to_owned())
             })
-            .or_else(|| Some("queue admission is held".to_owned())),
+            .or_else(|| Some("queue admission is held".to_owned()))),
     }
 }
 
@@ -893,17 +1065,50 @@ fn load_queue_status(args: &Args) -> Result<QueueStatus> {
     if now_ms().saturating_sub(status.generated_at_ms) > maximum_age_ms {
         bail!("queue keeper status is stale");
     }
+    if status.queued.saturating_add(status.starting) != status.queued_starting {
+        bail!("queue keeper queued/starting aggregate drift");
+    }
+    if status
+        .reserve_manifests
+        .saturating_add(status.admission_manifests)
+        != status.unclaimed_current_checkpoint_manifests
+    {
+        bail!("queue keeper reserve/admission manifest aggregate drift");
+    }
+    if status.complete_reserve_waves != status.protected_reserve_waves.len() {
+        bail!("queue keeper complete reserve-wave aggregate drift");
+    }
+    let useful_work = status
+        .queued
+        .saturating_add(status.starting)
+        .saturating_add(status.dispatching)
+        .saturating_add(status.validated_ready);
+    if useful_work != status.useful_work {
+        bail!("queue keeper useful-work aggregate drift");
+    }
+    let admission = status
+        .admission_waves
+        .iter()
+        .map(|wave| wave.wave.as_str())
+        .collect::<BTreeSet<_>>();
+    if status
+        .protected_reserve_waves
+        .iter()
+        .any(|wave| !wave.complete || admission.contains(wave.wave.as_str()))
+    {
+        bail!("queue keeper reserve/admission wave separation drift");
+    }
     Ok(status)
 }
 
 fn load_pending_ack(root: &Path, checkpoint_sha256: &str) -> Result<Option<PendingAck>> {
-    let path = root.join("ops/micro-wave-supply-v1.json");
+    let path = root.join("ops/micro-wave-supply-v2.json");
     if !path.is_file() {
         return Ok(None);
     }
     let value: Value = serde_json::from_slice(&fs::read(&path)?)
         .with_context(|| format!("parse prior supply status {}", path.display()))?;
-    if value.get("schema").and_then(Value::as_str) != Some("JopeMicroWaveSupplyStatus.v1")
+    if value.get("schema").and_then(Value::as_str) != Some("JopeMicroWaveSupplyStatus.v2")
         || value
             .get("active_checkpoint_sha256")
             .and_then(Value::as_str)
@@ -941,6 +1146,7 @@ fn keeper_acknowledged(
     if status
         .admission_waves
         .iter()
+        .chain(status.protected_reserve_waves.iter())
         .any(|wave| wave.wave == pending.wave)
     {
         return Ok(true);
@@ -966,7 +1172,12 @@ fn validate_keeper_admission(
     pending_wave: Option<&str>,
     max_overlap_waves: usize,
 ) -> Result<()> {
-    if status.admission_waves.len() > max_overlap_waves {
+    if status
+        .admission_waves
+        .len()
+        .saturating_add(status.protected_reserve_waves.len())
+        > max_overlap_waves
+    {
         bail!("keeper admission wave set exceeds the bounded overlap");
     }
     if status
@@ -979,6 +1190,7 @@ fn validate_keeper_admission(
     let reported_unclaimed = status
         .admission_waves
         .iter()
+        .chain(status.protected_reserve_waves.iter())
         .try_fold(0_usize, |total, wave| {
             total.checked_add(wave.unclaimed_manifests)
         })
@@ -991,7 +1203,11 @@ fn validate_keeper_admission(
         .map(|wave| (wave.wave.as_str(), wave))
         .collect::<BTreeMap<_, _>>();
     let mut admitted = BTreeSet::new();
-    for keeper_wave in &status.admission_waves {
+    for keeper_wave in status
+        .admission_waves
+        .iter()
+        .chain(status.protected_reserve_waves.iter())
+    {
         if !admitted.insert(keeper_wave.wave.as_str()) {
             bail!("keeper admission wave is duplicated");
         }
@@ -1010,6 +1226,13 @@ fn validate_keeper_admission(
                 bail!("keeper admitted a wave with no matching local immutable summary");
             }
         }
+    }
+    if status
+        .protected_reserve_waves
+        .iter()
+        .any(|wave| !wave.complete || wave.manifest_count != wave.unclaimed_manifests)
+    {
+        bail!("keeper protected a partial reserve wave");
     }
     for wave in ready {
         if !admitted.contains(wave.wave.as_str()) && pending_wave != Some(wave.wave.as_str()) {
@@ -1275,34 +1498,44 @@ fn manifests_per_wave(max_candidates_per_manifest: usize) -> usize {
 #[allow(clippy::too_many_arguments)]
 fn supply_decision(
     queue_depth: usize,
-    ready_manifests: usize,
+    validated_ready: usize,
+    reserve_manifests: usize,
     current_ready_waves: usize,
+    complete_ready_waves: usize,
     queue_floor: usize,
     queued_target: usize,
+    useful_work_target: usize,
     queued_hard_cap: usize,
     ready_reserve_min: usize,
+    min_complete_reserve_waves: usize,
     max_overlap_waves: usize,
     max_builds_per_cycle: usize,
     max_candidates_per_manifest: usize,
 ) -> SupplyDecision {
-    let projected_jobs = queue_depth.saturating_add(ready_manifests);
+    let useful_work = queue_depth.saturating_add(validated_ready);
     let estimated_manifests_per_wave = manifests_per_wave(max_candidates_per_manifest);
-    let queue_deficit = queued_target.saturating_sub(projected_jobs);
-    let reserve_deficit = ready_reserve_min.saturating_sub(ready_manifests);
-    let desired_manifests = queue_deficit.max(reserve_deficit);
+    let useful_work_deficit = useful_work_target.saturating_sub(useful_work);
+    let reserve_deficit = ready_reserve_min.saturating_sub(reserve_manifests);
+    let desired_manifests = useful_work_deficit.max(reserve_deficit);
     let waves_for_deficit = desired_manifests.div_ceil(estimated_manifests_per_wave);
-    let waves_with_hard_cap_room =
-        queued_hard_cap.saturating_sub(projected_jobs) / estimated_manifests_per_wave;
+    let waves_for_complete_reserve =
+        min_complete_reserve_waves.saturating_sub(complete_ready_waves);
     let overlap_slots = max_overlap_waves.saturating_sub(current_ready_waves);
+    let maximum_useful_work = queued_hard_cap
+        .saturating_add(max_overlap_waves.saturating_mul(estimated_manifests_per_wave));
+    let target_feasible = useful_work_target <= maximum_useful_work;
     SupplyDecision {
         below_floor: queue_depth < queue_floor,
-        overloaded: projected_jobs > queued_target,
-        projected_jobs,
+        overloaded: queue_depth > queued_target,
+        useful_work,
+        useful_work_target,
         estimated_manifests_per_wave,
+        target_feasible,
         builds_planned: waves_for_deficit
-            .min(waves_with_hard_cap_room)
+            .max(waves_for_complete_reserve)
             .min(overlap_slots)
-            .min(max_builds_per_cycle),
+            .min(max_builds_per_cycle)
+            * usize::from(target_feasible),
     }
 }
 
@@ -2150,6 +2383,12 @@ fn render_cohort_proposer_spec(
         "legacy_generator",
         &proposal_legacy_generator,
         "test_exact_dl_generate.py",
+    )?;
+    append_spec_input(
+        &mut lines,
+        "selection_policy",
+        &pythonpath.join("proposals/proposal-selection-policy.v1.json"),
+        "proposal-selection-policy.v1.json",
     )?;
     append_spec_input(
         &mut lines,
@@ -3101,14 +3340,17 @@ mod tests {
             build: false,
             once: true,
             interval_seconds: 5,
-            queue_floor: 1_000,
+            queue_floor: 2_048,
             queued_target: 2_048,
             queued_hard_cap: 4_096,
-            ready_reserve_min: 1_024,
+            ready_reserve_min: 2_048,
+            useful_work_min: MIN_USEFUL_WORK,
+            min_complete_reserve_waves: MIN_COMPLETE_RESERVE_WAVES,
             max_overlap_waves: 8,
             max_builds_per_cycle: 1,
             max_candidates_per_manifest: 100,
             queue_status_max_age_seconds: 30,
+            performance_max_age_seconds: 300,
             scq: PathBuf::from("/unused-scq"),
             wave_builder: PathBuf::from("/unused"),
             proposal_generator: PathBuf::from("/unused-generator"),
@@ -3128,30 +3370,76 @@ mod tests {
 
     #[test]
     fn decision_builds_to_target_with_bounded_overlap() {
-        let decision = supply_decision(900, 0, 0, 1_000, 2_048, 4_096, 1_024, 8, 1, 100);
-        assert!(decision.below_floor);
+        let decision = supply_decision(
+            2_048, 3_072, 1_536, 4, 2, 2_048, 2_048, 6_144, 4_096, 2_048, 2, 8, 1, 50,
+        );
+        assert!(!decision.below_floor);
         assert!(!decision.overloaded);
-        assert_eq!(decision.estimated_manifests_per_wave, 384);
+        assert_eq!(decision.useful_work, 5_120);
+        assert_eq!(decision.estimated_manifests_per_wave, 768);
         assert_eq!(decision.builds_planned, 1);
 
-        let bounded = supply_decision(0, 0, 7, 1_000, 2_048, 4_096, 1_024, 8, 1, 100);
-        assert_eq!(bounded.builds_planned, 1);
+        // Scheduler occupancy at the hard cap never prevents building ready
+        // reserve; the cap applies only to queued/starting/dispatching jobs.
+        let scheduler_capped = supply_decision(
+            4_096, 0, 0, 0, 0, 2_048, 2_048, 6_144, 4_096, 2_048, 2, 8, 1, 50,
+        );
+        assert!(scheduler_capped.overloaded);
+        assert_eq!(scheduler_capped.builds_planned, 1);
 
-        let full = supply_decision(1_500, 1_024, 2, 1_000, 2_048, 4_096, 1_024, 8, 1, 100);
-        assert!(!full.below_floor);
-        assert!(full.overloaded);
-        assert_eq!(full.builds_planned, 0);
+        let complete_reserve_deficit = supply_decision(
+            2_048, 4_096, 2_048, 3, 1, 2_048, 2_048, 6_144, 4_096, 2_048, 2, 8, 1, 50,
+        );
+        assert_eq!(complete_reserve_deficit.useful_work, 6_144);
+        assert_eq!(complete_reserve_deficit.builds_planned, 1);
 
-        let reserve = supply_decision(2_048, 600, 2, 1_000, 2_048, 4_096, 1_024, 8, 1, 100);
-        assert!(reserve.overloaded);
-        assert_eq!(reserve.builds_planned, 1);
-
-        let capped = supply_decision(4_096, 0, 0, 1_000, 2_048, 4_096, 1_024, 8, 1, 100);
-        assert_eq!(capped.builds_planned, 0);
+        let infeasible = supply_decision(
+            0, 0, 0, 0, 0, 2_048, 2_048, 20_000, 4_096, 2_048, 2, 8, 1, 50,
+        );
+        assert!(!infeasible.target_feasible);
+        assert_eq!(infeasible.builds_planned, 0);
     }
 
     #[test]
-    fn configuration_rejects_a_wave_that_can_overshoot_the_hard_cap() {
+    fn useful_work_target_has_a_6144_floor_and_increases_dynamically() {
+        let directory = tempdir().unwrap();
+        let args = audit_args(directory.path());
+        let path = directory.path().join("ops/supply-performance.v1.json");
+        atomic_json(
+            &path,
+            &json!({
+                "schema": "SupplyPerformance.v1",
+                "generated_at_ms": now_ms(),
+                "p95_jobs_per_minute": 10.0,
+                "proposer_to_ready_minutes_p95": 60.0,
+                "proposer_samples": 4,
+            }),
+        )
+        .unwrap();
+        assert_eq!(
+            performance_measurements(&args).unwrap().useful_work_target,
+            6_144
+        );
+
+        atomic_json(
+            &path,
+            &json!({
+                "schema": "SupplyPerformance.v1",
+                "generated_at_ms": now_ms(),
+                "p95_jobs_per_minute": 60.0,
+                "proposer_to_ready_minutes_p95": 60.0,
+                "proposer_samples": 4,
+            }),
+        )
+        .unwrap();
+        assert_eq!(
+            performance_measurements(&args).unwrap().useful_work_target,
+            7_200
+        );
+    }
+
+    #[test]
+    fn scheduler_hard_cap_is_independent_from_ready_reserve() {
         let directory = tempdir().unwrap();
         let mut args = audit_args(directory.path());
         assert!(validate_args(&args).is_ok());
@@ -3159,7 +3447,7 @@ mod tests {
         assert!(validate_args(&args).is_err());
         args.max_candidates_per_manifest = 25;
         args.queued_hard_cap = 3_000;
-        assert!(validate_args(&args).is_err());
+        assert!(validate_args(&args).is_ok());
     }
 
     /// The proposer must NOT be placement-pinned to the state-root node.
@@ -3554,13 +3842,25 @@ mod tests {
             checkpoint_epoch: Some(checkpoint_epoch(&"c".repeat(64)).unwrap()),
             queued_target: 2_048,
             queued_hard_cap: 4_096,
+            queued: 0,
+            starting: 0,
             queued_starting: 0,
             dispatching: 0,
             admission_waves: vec![KeeperAdmissionWave {
                 wave: ready[0].wave.clone(),
                 summary_sha256: ready[0].summary_sha256.clone(),
+                manifest_count: 384,
                 unclaimed_manifests: ready[0].unclaimed_manifests,
+                complete: false,
             }],
+            protected_reserve_waves: Vec::new(),
+            complete_current_checkpoint_waves: 0,
+            partial_current_checkpoint_waves: 1,
+            complete_reserve_waves: 0,
+            reserve_manifests: 0,
+            admission_manifests: 300,
+            validated_ready: 300,
+            useful_work: 300,
             unclaimed_current_checkpoint_manifests: 300,
         };
         assert!(validate_keeper_admission(
@@ -3594,13 +3894,25 @@ mod tests {
             checkpoint_epoch: Some(checkpoint_epoch(&"c".repeat(64)).unwrap()),
             queued_target: 2_048,
             queued_hard_cap: 4_096,
+            queued: 0,
+            starting: 0,
             queued_starting: 0,
             dispatching: 0,
             admission_waves: vec![KeeperAdmissionWave {
                 wave: ready[0].wave.clone(),
                 summary_sha256: ready[0].summary_sha256.clone(),
+                manifest_count: 384,
                 unclaimed_manifests: 300,
+                complete: false,
             }],
+            protected_reserve_waves: Vec::new(),
+            complete_current_checkpoint_waves: 0,
+            partial_current_checkpoint_waves: 1,
+            complete_reserve_waves: 0,
+            reserve_manifests: 0,
+            admission_manifests: 300,
+            validated_ready: 300,
+            useful_work: 300,
             unclaimed_current_checkpoint_manifests: 300,
         };
         assert!(validate_keeper_admission(&status, &ready, directory.path(), None, 8).is_ok());
@@ -3634,13 +3946,25 @@ mod tests {
             checkpoint_epoch: Some(checkpoint_epoch(&checkpoint).unwrap()),
             queued_target: 2_048,
             queued_hard_cap: 4_096,
+            queued: 0,
+            starting: 0,
             queued_starting: 0,
             dispatching: 0,
-            admission_waves: vec![KeeperAdmissionWave {
+            admission_waves: Vec::new(),
+            protected_reserve_waves: vec![KeeperAdmissionWave {
                 wave: wave.to_owned(),
                 summary_sha256: "a".repeat(64),
+                manifest_count: 384,
                 unclaimed_manifests: 384,
+                complete: true,
             }],
+            complete_current_checkpoint_waves: 1,
+            partial_current_checkpoint_waves: 0,
+            complete_reserve_waves: 1,
+            reserve_manifests: 384,
+            admission_manifests: 0,
+            validated_ready: 384,
+            useful_work: 384,
             unclaimed_current_checkpoint_manifests: 384,
         };
         let inputs = CheckpointInputs {
@@ -3903,13 +4227,25 @@ mod tests {
                 "checkpoint_epoch": checkpoint_epoch(&"a".repeat(64)).unwrap(),
                 "queued_target": 2048,
                 "queued_hard_cap": 4096,
+                "queued": 900,
+                "starting": 0,
                 "queued_starting": 900,
                 "dispatching": 50,
                 "admission_waves": [{
                     "wave": wave,
                     "summary_sha256": summary_sha256,
-                    "unclaimed_manifests": 1
+                    "manifest_count": 1,
+                    "unclaimed_manifests": 1,
+                    "complete": true
                 }],
+                "protected_reserve_waves": [],
+                "complete_current_checkpoint_waves": 1,
+                "partial_current_checkpoint_waves": 0,
+                "complete_reserve_waves": 0,
+                "reserve_manifests": 0,
+                "admission_manifests": 1,
+                "validated_ready": 1,
+                "useful_work": 951,
                 "unclaimed_current_checkpoint_manifests": 1
             }),
         )
@@ -3956,9 +4292,19 @@ mod tests {
                 "checkpoint_epoch": Value::Null,
                 "queued_target": 0,
                 "queued_hard_cap": 0,
+                "queued": 0,
+                "starting": 0,
                 "queued_starting": 0,
                 "dispatching": 0,
                 "admission_waves": [],
+                "protected_reserve_waves": [],
+                "complete_current_checkpoint_waves": 0,
+                "partial_current_checkpoint_waves": 0,
+                "complete_reserve_waves": 0,
+                "reserve_manifests": 0,
+                "admission_manifests": 0,
+                "validated_ready": 0,
+                "useful_work": 0,
                 "unclaimed_current_checkpoint_manifests": 0
             }),
         )

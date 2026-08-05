@@ -6,15 +6,16 @@ After=jope-selfplay-freshness.service jope-selfplay-queue.service
 Type=simple
 WorkingDirectory=/home/ubuntu/jope-flywheel/test_exact_gen0
 # Multiclass is ACTIVATED for cohort planning (explicit operator opt-in; pool
-# size alone never changes wave shape). Timeseries stays off until the
-# ts-reduction-v2 shard path (schema pin + manifest fields) is proven.
+# size alone never changes wave shape). Timeseries remains advisory until its
+# independent-data floor and sealed/replay gates pass; its v2 shard contract is
+# now emitted explicitly by the wave builder.
 Environment=JOPE_MICRO_COHORT_OPTIONAL_TASKS=multiclass
 # Manifest cap 50 (validated range 25..=100): a 192-dataset three-task wave at
 # cap 25 emits 2,112 manifests and breaks queued_target + manifests_per_wave
 # <= queued_hard_cap (2048 + 2112 > 4096). At 50 it emits 1,152 -- and each
 # eval job carries ~50 candidates instead of 25, halving run-dir churn for the
 # same work. The original P1 plan approved raising this toward 100.
-ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_selfplay_supply --build --queue-floor 1000 --queued-target 2048 --queued-hard-cap 4096 --ready-reserve-min 1024 --max-overlap-waves 8 --max-candidates-per-manifest 50 --queue-status-max-age-seconds 600 --wave-builder /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_selfplay_wave --proposal-generator /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch/proposals/test_exact_context_proposals.py --proposal-legacy-generator /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch/proposals/test_exact_dl_generate.py --proposal-common /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch/shared/test_exact_common.py --proposal-pythonpath /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch
+ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_selfplay_supply --build --queue-floor 2048 --queued-target 2048 --queued-hard-cap 4096 --ready-reserve-min 2048 --useful-work-min 6144 --min-complete-reserve-waves 2 --max-overlap-waves 8 --max-candidates-per-manifest 50 --queue-status-max-age-seconds 600 --performance-max-age-seconds 300 --wave-builder /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_selfplay_wave --proposal-generator /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch/proposals/test_exact_context_proposals.py --proposal-legacy-generator /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch/proposals/test_exact_dl_generate.py --proposal-common /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch/shared/test_exact_common.py --proposal-pythonpath /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch
 Restart=always
 RestartSec=5
 

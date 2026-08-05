@@ -12,7 +12,7 @@
 //! ```
 //!
 //! All of that is true. The process never exited; it caught its error, wrote it
-//! to `ops/micro-wave-supply-v1.json`, slept, and tried again. systemd watches
+//! to `ops/micro-wave-supply-v2.json`, slept, and tried again. systemd watches
 //! *processes*, and the process was fine. Nothing watched the *work*.
 //!
 //! The same held for `jope-selfplay-queue.service` (1,097 identical failures)
@@ -396,7 +396,7 @@ mod tests {
         let temp = root_with(&[
             fresh_alarms(),
             ("queue-keeper-v3.json", KEEPER_ERROR),
-            ("micro-wave-supply-v1.json", SUPPLY_ERROR),
+            ("micro-wave-supply-v2.json", SUPPLY_ERROR),
         ]);
         let args = args_for(temp.path());
         for cycle in 1..=3 {
@@ -420,7 +420,7 @@ mod tests {
         // And the downstream victim is named separately, not hidden behind it.
         let supply = rows
             .iter()
-            .find(|row| row["file"] == "ops/micro-wave-supply-v1.json")
+            .find(|row| row["file"] == "ops/micro-wave-supply-v2.json")
             .unwrap();
         assert!(supply["error"].as_str().unwrap().contains("queued_target"));
     }

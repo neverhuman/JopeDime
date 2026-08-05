@@ -3,7 +3,15 @@
 //! This module deliberately contains no scheduler mutation.  A receipt must
 //! already be durable below `receipts/` before it can enter the corpus.
 
-use anyhow::{bail, Context, Result};
+use crate::four_task::{
+    bounded_task_utility, operational_loss, Distribution, FourTaskTelemetryRow,
+    JopeFourTaskTelemetryV1, RatingTelemetry, SourceBinding, TelemetryCounts, TelemetryEligibility,
+    TelemetryMetrics, TrainerValidationTelemetry, TypedCount, TypedDistribution, TypedNumber,
+    TypedRating, TypedText, FOUR_TASK_ORDER, FOUR_TASK_TELEMETRY_SCHEMA,
+};
+use crate::selfplay_shadow::{Sha256Digest, Task};
+use crate::task_rating::{JopeTaskRatingSnapshotV1, RatingKindV1};
+use anyhow::{bail, ensure, Context, Result};
 use rusqlite::types::ValueRef;
 use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use serde_json::{json, Map, Value};
@@ -2264,6 +2272,791 @@ fn compile_cache_status(root: &Path) -> Result<Value> {
     }))
 }
 
+#[derive(Default)]
+struct TelemetryCatalog {
+    digest: Option<String>,
+    entries: BTreeMap<Task, u64>,
+    families: BTreeMap<Task, BTreeSet<String>>,
+    family_by_context: BTreeMap<(Task, String), String>,
+    sources: Vec<SourceBinding>,
+}
+
+#[derive(Default)]
+struct TelemetryDatasetState {
+    encoded: u64,
+    active: u64,
+    observed: u64,
+}
+
+#[derive(Default)]
+struct TelemetryCorpusTask {
+    valid: u64,
+    failed: u64,
+    latest_observation_at_ms: Option<u64>,
+    valid_last_minute: u64,
+    failures_last_minute: u64,
+    primary: Option<Distribution>,
+    utility: Option<Distribution>,
+    loss: Option<Distribution>,
+    native_errors: BTreeMap<String, Distribution>,
+}
+
+fn file_timestamp_ms(path: &Path) -> Result<u128> {
+    Ok(fs::metadata(path)?
+        .modified()?
+        .duration_since(UNIX_EPOCH)
+        .context("file timestamp predates Unix epoch")?
+        .as_millis())
+}
+
+fn telemetry_source(
+    path: &Path,
+    schema: &str,
+    freshness_budget_seconds: u64,
+) -> Result<SourceBinding> {
+    Ok(SourceBinding {
+        path: path.to_string_lossy().into_owned(),
+        schema: schema.to_owned(),
+        sha256: Sha256Digest::parse(sha256_file(path)?)?,
+        timestamp_ms: file_timestamp_ms(path)?,
+        freshness_budget_seconds,
+    })
+}
+
+fn telemetry_catalog(root: &Path) -> Result<TelemetryCatalog> {
+    let pointer_path = root.join("catalog/current.json");
+    if !pointer_path.is_file() {
+        return Ok(TelemetryCatalog::default());
+    }
+    let pointer = read_json(&pointer_path)?;
+    let catalog_path = PathBuf::from(required_str(&pointer, "catalog")?);
+    let digest = sha256_file(&catalog_path)?;
+    ensure!(
+        pointer.get("catalog_sha256").and_then(Value::as_str) == Some(digest.as_str()),
+        "telemetry catalog pointer drift"
+    );
+    let catalog = read_json(&catalog_path)?;
+    let schema = catalog
+        .get("schema")
+        .and_then(Value::as_str)
+        .unwrap_or("unknown");
+    let mut output = TelemetryCatalog {
+        digest: Some(digest),
+        sources: vec![
+            telemetry_source(&pointer_path, "JopeTestOnlyContextPointer.v1", 45)?,
+            telemetry_source(&catalog_path, schema, 45)?,
+        ],
+        ..TelemetryCatalog::default()
+    };
+    for row in catalog
+        .get("entries")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
+        let Some(task) = row
+            .get("task")
+            .and_then(Value::as_str)
+            .and_then(|task| task.parse::<Task>().ok())
+        else {
+            continue;
+        };
+        let Some(context) = row.get("dataset_hash").and_then(Value::as_str) else {
+            continue;
+        };
+        let Some(family) = row.get("source_family").and_then(Value::as_str) else {
+            continue;
+        };
+        *output.entries.entry(task).or_default() += 1;
+        output
+            .families
+            .entry(task)
+            .or_default()
+            .insert(family.to_owned());
+        output
+            .family_by_context
+            .insert((task, context.to_owned()), family.to_owned());
+    }
+    Ok(output)
+}
+
+fn telemetry_dataset_state(root: &Path) -> Result<BTreeMap<Task, TelemetryDatasetState>> {
+    let path = root.join("ops/dataset-state.sqlite");
+    if !path.is_file() {
+        return Ok(BTreeMap::new());
+    }
+    let connection = Connection::open_with_flags(
+        path,
+        rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY | rusqlite::OpenFlags::SQLITE_OPEN_NO_MUTEX,
+    )?;
+    connection.busy_timeout(std::time::Duration::from_millis(900))?;
+    connection.pragma_update(None, "query_only", "ON")?;
+    let mut statement = connection.prepare(
+        "SELECT task, COALESCE(SUM(sidecars_complete),0),
+                COALESCE(SUM(catalog_active),0),
+                COALESCE(SUM(CASE WHEN catalog_active=1 AND obs_count>0 THEN 1 ELSE 0 END),0)
+           FROM datasets GROUP BY task",
+    )?;
+    let rows = statement.query_map([], |row| {
+        Ok((
+            row.get::<_, String>(0)?,
+            TelemetryDatasetState {
+                encoded: row.get::<_, i64>(1)?.max(0) as u64,
+                active: row.get::<_, i64>(2)?.max(0) as u64,
+                observed: row.get::<_, i64>(3)?.max(0) as u64,
+            },
+        ))
+    })?;
+    let mut output = BTreeMap::new();
+    for row in rows {
+        let (task, state) = row?;
+        if let Ok(task) = task.parse::<Task>() {
+            output.insert(task, state);
+        }
+    }
+    Ok(output)
+}
+
+fn family_distribution(
+    rows: impl IntoIterator<Item = (String, f64)>,
+    task: Task,
+    family_by_context: &BTreeMap<(Task, String), String>,
+    transform: impl Fn(f64) -> Result<f64>,
+) -> Result<Option<Distribution>> {
+    let mut by_family = BTreeMap::<String, Vec<f64>>::new();
+    for (context, value) in rows {
+        let Some(family) = family_by_context.get(&(task, context)) else {
+            continue;
+        };
+        by_family
+            .entry(family.clone())
+            .or_default()
+            .push(transform(value)?);
+    }
+    let values = by_family
+        .into_values()
+        .filter(|values| !values.is_empty())
+        .map(|values| values.iter().sum::<f64>() / values.len() as f64)
+        .collect::<Vec<_>>();
+    if values.is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(Distribution::from_values(values)?))
+    }
+}
+
+fn query_context_averages(
+    connection: &Connection,
+    task: Task,
+    expression: &str,
+    predicate: &str,
+) -> Result<Vec<(String, f64)>> {
+    let sql = format!(
+        "SELECT dataset_hash, AVG({expression}) FROM observations
+          WHERE task=?1 AND ({predicate}) GROUP BY dataset_hash ORDER BY dataset_hash"
+    );
+    let mut statement = connection.prepare(&sql)?;
+    let rows = statement
+        .query_map([task.as_str()], |row| Ok((row.get(0)?, row.get(1)?)))?
+        .collect::<rusqlite::Result<Vec<_>>>()?;
+    Ok(rows)
+}
+
+fn telemetry_corpus(
+    root: &Path,
+    catalog: &TelemetryCatalog,
+    now: i64,
+) -> Result<BTreeMap<Task, TelemetryCorpusTask>> {
+    let path = root.join("corpus/strict-test-exact.sqlite");
+    if !path.is_file() {
+        return Ok(BTreeMap::new());
+    }
+    let connection = Connection::open_with_flags(
+        path,
+        rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY | rusqlite::OpenFlags::SQLITE_OPEN_NO_MUTEX,
+    )?;
+    connection.busy_timeout(std::time::Duration::from_millis(900))?;
+    connection.pragma_update(None, "query_only", "ON")?;
+    let cutoff = now.saturating_sub(60_000);
+    let mut output = BTreeMap::new();
+    for task in FOUR_TASK_ORDER {
+        let (valid, latest, recent): (u64, Option<i64>, u64) = connection.query_row(
+            "SELECT COUNT(*), MAX(created_at_ms),
+                    COALESCE(SUM(CASE WHEN created_at_ms>=?2 THEN 1 ELSE 0 END),0)
+               FROM observations WHERE task=?1",
+            params![task.as_str(), cutoff],
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+        )?;
+        let (failed, recent_failed): (u64, u64) = connection.query_row(
+            "SELECT COUNT(*),
+                    COALESCE(SUM(CASE WHEN created_at_ms>=?2 THEN 1 ELSE 0 END),0)
+               FROM failures WHERE task=?1",
+            params![task.as_str(), cutoff],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )?;
+        let expression = if task == Task::Regression {
+            "CASE WHEN score < -1.0 THEN -1.0 WHEN score > 1.0 THEN 1.0 ELSE score END"
+        } else {
+            "score"
+        };
+        let primary_rows = query_context_averages(&connection, task, expression, "1=1")?;
+        let display = family_distribution(
+            primary_rows.clone(),
+            task,
+            &catalog.family_by_context,
+            |score| {
+                ensure!(score.is_finite(), "primary score is non-finite");
+                Ok(if task == Task::Timeseries {
+                    -score
+                } else {
+                    score
+                })
+            },
+        )?;
+        let utility = family_distribution(
+            primary_rows.clone(),
+            task,
+            &catalog.family_by_context,
+            |score| bounded_task_utility(task, score),
+        )?;
+        let loss = family_distribution(primary_rows, task, &catalog.family_by_context, |score| {
+            operational_loss(task, score)
+        })?;
+        let mut native_errors = BTreeMap::new();
+        if task == Task::Timeseries {
+            if let Some(distribution) = display.clone() {
+                native_errors.insert("mase".to_owned(), distribution);
+            }
+        }
+        let secondary_names: &[&str] = match task {
+            Task::Regression => &[],
+            Task::Binary => &["log_loss", "balanced_accuracy"],
+            Task::Multiclass => &["accuracy", "one_minus_accuracy"],
+            Task::Timeseries => &["rmse", "mae", "smape", "wape"],
+        };
+        for name in secondary_names {
+            let rows = if *name == "balanced_accuracy" {
+                query_context_averages(
+                    &connection,
+                    task,
+                    "balanced_accuracy",
+                    "balanced_accuracy IS NOT NULL",
+                )?
+            } else {
+                query_context_averages(
+                    &connection,
+                    task,
+                    "secondary_score",
+                    &format!(
+                        "secondary_metric='{}' AND secondary_score IS NOT NULL",
+                        name
+                    ),
+                )?
+            };
+            if let Some(distribution) =
+                family_distribution(rows, task, &catalog.family_by_context, |value| {
+                    ensure!(value.is_finite(), "native error is non-finite");
+                    Ok(value)
+                })?
+            {
+                native_errors.insert((*name).to_owned(), distribution);
+            }
+        }
+        output.insert(
+            task,
+            TelemetryCorpusTask {
+                valid,
+                failed,
+                latest_observation_at_ms: latest.map(|value| value.max(0) as u64),
+                valid_last_minute: recent,
+                failures_last_minute: recent_failed,
+                primary: display,
+                utility,
+                loss,
+                native_errors,
+            },
+        );
+    }
+    Ok(output)
+}
+
+fn typed_distribution(value: Option<Distribution>, reason: &str) -> TypedDistribution {
+    value.map_or_else(|| TypedDistribution::na(reason), TypedDistribution::value)
+}
+
+fn typed_checkpoint(value: Option<&Value>, field: &str, reason: &str) -> TypedText {
+    value
+        .and_then(|value| value.get(field))
+        .and_then(Value::as_str)
+        .map(|value| TypedText::value(value.to_owned()))
+        .unwrap_or_else(|| TypedText::na(reason))
+}
+
+fn latest_rating(
+    root: &Path,
+    task: Task,
+    kind: RatingKindV1,
+) -> Result<(TypedRating, Vec<SourceBinding>)> {
+    let kind_name = match kind {
+        RatingKindV1::AdaptiveSearch => "adaptive",
+        RatingKindV1::DiagnosticAnchor => "diagnostic",
+    };
+    let freshness_budget = match kind {
+        RatingKindV1::AdaptiveSearch => 300,
+        RatingKindV1::DiagnosticAnchor => u64::MAX,
+    };
+    let path = root
+        .join("ops/ratings")
+        .join(task.as_str())
+        .join(format!("{kind_name}-current.v1.json"));
+    if !path.is_file() {
+        return Ok((
+            TypedRating::na(format!("no {kind_name} rating")),
+            Vec::new(),
+        ));
+    }
+    let current = read_json(&path)?;
+    let (snapshot_path, snapshot_value, mut sources) =
+        if current.get("schema").and_then(Value::as_str) == Some("JopeTaskRatingPointer.v1") {
+            ensure!(
+                current.get("task").and_then(Value::as_str) == Some(task.as_str())
+                    && current.get("promotion_eligible").and_then(Value::as_bool) == Some(false),
+                "{task} {kind_name} rating pointer scope drift"
+            );
+            let declared = PathBuf::from(required_str(&current, "snapshot")?);
+            let snapshot_path = if declared.is_absolute() {
+                declared
+            } else {
+                path.parent().unwrap_or(root).join(declared)
+            };
+            ensure!(
+                sha256_file(&snapshot_path)? == required_str(&current, "snapshot_sha256")?,
+                "{task} {kind_name} rating pointer hash drift"
+            );
+            let sources = vec![telemetry_source(
+                &path,
+                "JopeTaskRatingPointer.v1",
+                freshness_budget,
+            )?];
+            let value = read_json(&snapshot_path)?;
+            (snapshot_path, value, sources)
+        } else {
+            (path.clone(), current, Vec::new())
+        };
+    let value: JopeTaskRatingSnapshotV1 = serde_json::from_value(snapshot_value)?;
+    value.validate()?;
+    ensure!(
+        value.task == task && value.rating_kind == kind && !value.promotion_eligible,
+        "{task} {kind_name} rating contract drift"
+    );
+    let digest = Sha256Digest::parse(sha256_file(&path)?)?;
+    let player = value
+        .players
+        .iter()
+        .find(|player| player.player == value.display_player)
+        .context("rating display player is absent after validation")?;
+    sources.push(telemetry_source(
+        &snapshot_path,
+        "JopeTaskRatingSnapshot.v1",
+        freshness_budget,
+    )?);
+    Ok((
+        TypedRating::value(RatingTelemetry {
+            snapshot_sha256: digest,
+            player: player.player.clone(),
+            rating: player.rating,
+            interval_95: player.rating_interval_95,
+            delta_from_anchor: player.rating - 1500.0,
+            promotion_eligible: false,
+        }),
+        sources,
+    ))
+}
+
+/// Rebuild and atomically publish the four-task telemetry authority from
+/// read-only snapshots. Missing source evidence becomes typed N/A, never zero.
+pub fn four_task_telemetry(root: &Path) -> Result<JopeFourTaskTelemetryV1> {
+    let now = now_ms();
+    let catalog = telemetry_catalog(root)?;
+    let dataset_state = telemetry_dataset_state(root)?;
+    let corpus = telemetry_corpus(root, &catalog, now)?;
+    let accepted_path = root.join("training/accepted-by-task.json");
+    let accepted = optional_json(&accepted_path)?;
+    let accepted_tasks = accepted.get("tasks").and_then(Value::as_object);
+    let controller_path = root.join("ops/task-learning-controller.v2.json");
+    let controller = optional_json(&controller_path)?;
+    let shadows = controller.get("shadow_models").and_then(Value::as_object);
+    let candidates = controller
+        .get("active_candidates")
+        .and_then(Value::as_object);
+    let corpus_pointer_path = root.join("training/current-corpus.json");
+    let corpus_pointer = optional_json(&corpus_pointer_path)?;
+    let corpus_watermark = corpus_pointer
+        .get("watermark")
+        .and_then(Value::as_u64)
+        .map_or_else(
+            || TypedCount::na("current corpus watermark unavailable"),
+            TypedCount::value,
+        );
+    let mut shared_sources = catalog.sources.clone();
+    if accepted_path.is_file() {
+        shared_sources.push(telemetry_source(
+            &accepted_path,
+            accepted
+                .get("schema")
+                .and_then(Value::as_str)
+                .unwrap_or("unknown"),
+            45,
+        )?);
+    }
+    if controller_path.is_file() {
+        shared_sources.push(telemetry_source(
+            &controller_path,
+            controller
+                .get("schema")
+                .and_then(Value::as_str)
+                .unwrap_or("unknown"),
+            120,
+        )?);
+    }
+    if corpus_pointer_path.is_file() {
+        shared_sources.push(telemetry_source(
+            &corpus_pointer_path,
+            corpus_pointer
+                .get("schema")
+                .and_then(Value::as_str)
+                .unwrap_or("unknown"),
+            60,
+        )?);
+    }
+    let mut rows = Vec::with_capacity(4);
+    for task in FOUR_TASK_ORDER {
+        let catalog_entries = catalog.entries.get(&task).copied();
+        let family_count = catalog.families.get(&task).map(BTreeSet::len);
+        let state = dataset_state.get(&task);
+        let evidence = corpus.get(&task);
+        let no_observations = evidence.is_none_or(|row| row.valid == 0);
+        let has_evaluation_evidence =
+            evidence.is_some_and(|row| row.valid.saturating_add(row.failed) > 0);
+        let missing_evidence_reason = if no_observations {
+            "no observations"
+        } else {
+            "metric unavailable"
+        };
+        let eligibility_path = root
+            .join("training/task-training-eligibility")
+            .join(format!("{}.v1.json", task.as_str()));
+        let eligibility = optional_json(&eligibility_path)?;
+        let eligibility_valid = eligibility.get("schema").and_then(Value::as_str)
+            == Some("JopeTaskTrainingEligibility.v1")
+            && eligibility.get("task").and_then(Value::as_str) == Some(task.as_str())
+            && eligibility.get("catalog_sha256").and_then(Value::as_str)
+                == catalog.digest.as_deref();
+        let evidence_eligible = eligibility_valid
+            && eligibility
+                .get("evidence_lane_enabled")
+                .and_then(Value::as_bool)
+                .unwrap_or(false);
+        let training_eligible = eligibility_valid
+            && eligibility
+                .get("training_eligible")
+                .and_then(Value::as_bool)
+                .unwrap_or(false);
+        let promotion_eligible = eligibility_valid
+            && eligibility
+                .get("promotion_eligible")
+                .and_then(Value::as_bool)
+                .unwrap_or(false);
+        let mut blockers = Vec::new();
+        if matches!(task, Task::Multiclass | Task::Timeseries) {
+            match (family_count, state) {
+                (Some(count), Some(state)) if count < 500 => blockers.push(format!(
+                    "N/A — {count}/500 catalog families; {} observed datasets",
+                    state.observed
+                )),
+                (Some(count), None) if count < 500 => blockers.push(format!(
+                    "N/A — {count}/500 catalog families; observed datasets unavailable"
+                )),
+                (None, _) => blockers.push("N/A — catalog families unavailable".to_owned()),
+                _ => {}
+            }
+        }
+        if !eligibility_valid {
+            blockers.push("missing_or_stale_catalog_bound_eligibility".to_owned());
+        }
+        if !training_eligible {
+            blockers.push(
+                eligibility
+                    .get("advisory_reason")
+                    .and_then(Value::as_str)
+                    .unwrap_or("training_ineligible")
+                    .to_owned(),
+            );
+        }
+        if !promotion_eligible {
+            blockers.push("promotion_ineligible".to_owned());
+        }
+        let (adaptive_rating, adaptive_source) =
+            latest_rating(root, task, RatingKindV1::AdaptiveSearch)?;
+        let (diagnostic_rating, diagnostic_source) =
+            latest_rating(root, task, RatingKindV1::DiagnosticAnchor)?;
+        let mut sources = shared_sources.clone();
+        if eligibility_path.is_file() {
+            sources.push(telemetry_source(
+                &eligibility_path,
+                "JopeTaskTrainingEligibility.v1",
+                60,
+            )?);
+        }
+        sources.extend(adaptive_source);
+        sources.extend(diagnostic_source);
+        let accepted_row = accepted_tasks.and_then(|tasks| tasks.get(task.as_str()));
+        let shadow_row = shadows.and_then(|tasks| tasks.get(task.as_str()));
+        let candidate_row = candidates.and_then(|tasks| tasks.get(task.as_str()));
+        let trainer_metrics = shadow_row
+            .and_then(|row| row.get("validation_metrics"))
+            .and_then(Value::as_object)
+            .map(|metrics| {
+                metrics
+                    .iter()
+                    .map(|(name, value)| {
+                        (
+                            name.clone(),
+                            value
+                                .as_f64()
+                                .filter(|value| value.is_finite())
+                                .map_or_else(
+                                    || TypedNumber::na("trainer metric unavailable"),
+                                    TypedNumber::value,
+                                ),
+                        )
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        let trainer_updated = shadow_row
+            .and_then(|row| row.get("updated_at_ms"))
+            .and_then(Value::as_u64);
+        let latest = evidence.and_then(|row| row.latest_observation_at_ms);
+        let freshness_reason = latest.map_or_else(
+            || "N/A — no observations".to_owned(),
+            |at| {
+                let age = (now.max(0) as u64).saturating_sub(at) / 1_000;
+                if age <= 900 {
+                    format!("fresh — last observation {age}s ago")
+                } else {
+                    format!("stale — last observation {age}s ago")
+                }
+            },
+        );
+        let native_errors = if task == Task::Regression {
+            BTreeMap::from([(
+                "rmse".to_owned(),
+                TypedDistribution::na(
+                    "per-context RMSE only; heterogeneous global aggregation is forbidden",
+                ),
+            )])
+        } else if evidence.is_some_and(|row| !row.native_errors.is_empty()) {
+            evidence
+                .into_iter()
+                .flat_map(|row| row.native_errors.iter())
+                .map(|(name, distribution)| {
+                    (name.clone(), TypedDistribution::value(distribution.clone()))
+                })
+                .collect()
+        } else {
+            BTreeMap::from([(
+                crate::four_task::task_metric_contract(task)
+                    .native_error
+                    .to_owned(),
+                TypedDistribution::na(missing_evidence_reason),
+            )])
+        };
+        rows.push(FourTaskTelemetryRow {
+            task,
+            counts: TelemetryCounts {
+                catalog_entries: catalog_entries
+                    .map_or_else(|| TypedCount::na("catalog unavailable"), TypedCount::value),
+                source_families: family_count.map_or_else(
+                    || TypedCount::na("catalog families unavailable"),
+                    |count| TypedCount::value(count as u64),
+                ),
+                encoded: state.map_or_else(
+                    || TypedCount::na("dataset-state index unavailable"),
+                    |state| TypedCount::value(state.encoded),
+                ),
+                active: state.map_or_else(
+                    || TypedCount::na("dataset-state index unavailable"),
+                    |state| TypedCount::value(state.active),
+                ),
+                observed: state.map_or_else(
+                    || TypedCount::na("dataset-state index unavailable"),
+                    |state| TypedCount::value(state.observed),
+                ),
+                queued: TypedCount::na("task-attributed scheduler queue unavailable"),
+                running: TypedCount::na("task-attributed scheduler running set unavailable"),
+                completed: evidence.filter(|_| has_evaluation_evidence).map_or_else(
+                    || {
+                        TypedCount::na(if evidence.is_some() {
+                            "no observations"
+                        } else {
+                            "corpus unavailable"
+                        })
+                    },
+                    |row| TypedCount::value(row.valid + row.failed),
+                ),
+                failed: evidence.filter(|_| has_evaluation_evidence).map_or_else(
+                    || {
+                        TypedCount::na(if evidence.is_some() {
+                            "no observations"
+                        } else {
+                            "corpus unavailable"
+                        })
+                    },
+                    |row| TypedCount::value(row.failed),
+                ),
+                quarantined: TypedCount::na("task quarantine index unavailable"),
+            },
+            latest_observation_at_ms: latest
+                .map_or_else(|| TypedCount::na("no observations"), TypedCount::value),
+            valid_observations_per_minute: evidence
+                .filter(|_| has_evaluation_evidence)
+                .map_or_else(
+                    || TypedNumber::na("no observations"),
+                    |row| TypedNumber::value(row.valid_last_minute as f64),
+                ),
+            evaluator_failures_per_minute: evidence
+                .filter(|_| has_evaluation_evidence)
+                .map_or_else(
+                    || TypedNumber::na("no observations"),
+                    |row| TypedNumber::value(row.failures_last_minute as f64),
+                ),
+            freshness_reason,
+            metrics: TelemetryMetrics {
+                primary_metric: crate::four_task::task_metric_contract(task)
+                    .primary_metric
+                    .to_owned(),
+                primary_performance: typed_distribution(
+                    evidence.and_then(|row| row.primary.clone()),
+                    missing_evidence_reason,
+                ),
+                native_errors,
+                bounded_utility: typed_distribution(
+                    evidence.and_then(|row| row.utility.clone()),
+                    missing_evidence_reason,
+                ),
+                operational_loss: typed_distribution(
+                    evidence.and_then(|row| row.loss.clone()),
+                    missing_evidence_reason,
+                ),
+            },
+            accepted_checkpoint: typed_checkpoint(
+                accepted_row,
+                "checkpoint_sha256",
+                "no accepted checkpoint",
+            ),
+            bootstrap_anchor_state: accepted_row
+                .and_then(|row| row.get("accepted"))
+                .and_then(Value::as_bool)
+                .map_or_else(
+                    || "absent_unaccepted_bootstrap_required".to_owned(),
+                    |accepted| {
+                        if accepted {
+                            "accepted".to_owned()
+                        } else {
+                            "bootstrap_unaccepted".to_owned()
+                        }
+                    },
+                ),
+            latest_shadow: typed_checkpoint(
+                shadow_row,
+                "checkpoint_sha256",
+                "no shadow checkpoint",
+            ),
+            active_candidate: typed_checkpoint(
+                candidate_row,
+                "checkpoint_sha256",
+                "no active candidate",
+            ),
+            eligibility: TelemetryEligibility {
+                evidence_eligible,
+                training_eligible,
+                promotion_eligible,
+                blockers,
+            },
+            adaptive_rating,
+            diagnostic_rating,
+            sealed_promotion: TypedText::na("no terminal sealed promotion receipt"),
+            trainer_validation: TrainerValidationTelemetry {
+                metrics: trainer_metrics,
+                age_seconds: trainer_updated.map_or_else(
+                    || TypedCount::na("no trainer validation"),
+                    |updated| {
+                        TypedCount::value((now.max(0) as u64).saturating_sub(updated) / 1_000)
+                    },
+                ),
+            },
+            sources,
+        });
+    }
+    let telemetry = JopeFourTaskTelemetryV1 {
+        schema: FOUR_TASK_TELEMETRY_SCHEMA.to_owned(),
+        generated_at_ms: now.max(0) as u128,
+        corpus_watermark,
+        rows,
+    };
+    telemetry.validate()?;
+    atomic_json(
+        &root.join("ops/four-task-telemetry.v1.json"),
+        &serde_json::to_value(&telemetry)?,
+    )?;
+    Ok(telemetry)
+}
+
+fn task_status(
+    root: &Path,
+    corpus_watermark: i64,
+    queue_fresh: bool,
+    promotion: &Value,
+) -> Result<Value> {
+    let accepted = optional_json(&root.join("training/accepted-by-task.json"))?;
+    let controller = optional_json(&root.join("ops/task-learning-controller.v2.json"))?;
+    let accepted_tasks = accepted.get("tasks").cloned().unwrap_or_else(|| json!({}));
+    let shadows = controller
+        .get("shadow_models")
+        .cloned()
+        .unwrap_or_else(|| json!({}));
+    let learning = promotion
+        .get("internal_learning")
+        .cloned()
+        .unwrap_or_else(|| json!({}));
+    let mut tasks = Map::new();
+    for task in crate::selfplay_expansion::TASKS {
+        let accepted_row = accepted_tasks.get(task).cloned().unwrap_or(Value::Null);
+        let shadow_row = shadows.get(task).cloned().unwrap_or(Value::Null);
+        let task_learning = learning
+            .get("tasks")
+            .and_then(|value| value.get(task))
+            .cloned()
+            .unwrap_or_else(|| json!({}));
+        tasks.insert(
+            task.to_owned(),
+            json!({
+                "accepted_checkpoint": accepted_row.get("checkpoint_sha256").cloned().unwrap_or(Value::Null),
+                "latest_shadow": shadow_row.get("checkpoint_sha256").cloned().unwrap_or(Value::Null),
+                "corpus_watermark": corpus_watermark,
+                "queue_fresh": queue_fresh,
+                "promotion_eligibility": task_learning.get("promotion_eligible").cloned().unwrap_or(Value::Null),
+                "blocking_gate": task_learning.get("blocking_gate")
+                    .or_else(|| task_learning.get("gate_reason"))
+                    .cloned().unwrap_or(Value::Null),
+                "last_verified_learning_delta": task_learning.get("last_verified_learning_delta").cloned().unwrap_or(Value::Null),
+            }),
+        );
+    }
+    Ok(Value::Object(tasks))
+}
+
 fn collect_named(root: &Path, filename: &str, output: &mut Vec<PathBuf>) -> Result<()> {
     if !root.is_dir() {
         return Ok(());
@@ -2416,6 +3209,33 @@ pub fn build_status(root: &Path) -> Result<Value> {
             .unwrap_or(json!(0)),
     );
     let flywheel = optional_json(&root.join("ops/flywheel-state.json"))?;
+    let promotion = json!({
+        "internal_learning": optional_json(&root.join("training/learning.json"))?,
+        "milestone": optional_json(&root.join("training/milestone.json"))?,
+    });
+    let tasks = task_status(&root, watermark, useful_depth > 0, &promotion)?;
+    let four_task_telemetry = four_task_telemetry(root)?;
+    let recovery = optional_json(&root.join("ops/recovery-report.v2.json"))?;
+    let recovery_valid =
+        recovery.get("schema").and_then(Value::as_str) == Some("JopeRecoveryReport.v2");
+    let release_healthy = recovery_valid
+        && recovery.get("healthy").and_then(Value::as_bool) == Some(true)
+        && recovery.get("release_gate").and_then(Value::as_str) == Some("ready")
+        && alerts.is_empty();
+    let mut release_blockers = alerts.clone();
+    if !recovery_valid {
+        release_blockers.insert("missing_or_invalid_recovery_report_v2".to_owned());
+    } else if !release_healthy {
+        release_blockers.insert(
+            recovery
+                .get("release_gate")
+                .and_then(Value::as_str)
+                .map_or_else(
+                    || "recovery_release_gate_unavailable".to_owned(),
+                    |gate| format!("recovery_release_gate_{gate}"),
+                ),
+        );
+    }
     let result = json!({
         "schema": "JopeSelfplayOperationalStatus.v3",
         "updated_at_ms": now,
@@ -2432,10 +3252,7 @@ pub fn build_status(root: &Path) -> Result<Value> {
             "consecutive_rejections": flywheel.get("consecutive_rejections")
                 .cloned().unwrap_or(json!(0)),
         },
-        "promotion": {
-            "internal_learning": optional_json(&root.join("training/learning.json"))?,
-            "milestone": optional_json(&root.join("training/milestone.json"))?,
-        },
+        "promotion": promotion,
         "scq_watchdog": services.get("watchdog").and_then(
             |value| value.get("result")
         ).cloned().unwrap_or(Value::Null),
@@ -2469,6 +3286,13 @@ pub fn build_status(root: &Path) -> Result<Value> {
             "checkpoint_to_first_job_latency_ms"
         ).cloned().unwrap_or(Value::Null),
         "services": services,
+        "tasks": tasks,
+        "four_task_telemetry": four_task_telemetry,
+        "release_gate": {
+            "healthy": release_healthy,
+            "blocking_gates": release_blockers,
+            "report": "ops/recovery-report.v2.json",
+        },
         "alerts": alerts,
     });
     atomic_json(&root.join("ops/status-v3.json"), &result)?;
@@ -3453,6 +4277,131 @@ mod tests {
         let second = seeding_curve_after_reconcile(root);
         assert_eq!(second["written"], false);
         assert_eq!(second["skipped"], "fresh");
+        Ok(())
+    }
+
+    #[test]
+    fn four_task_telemetry_is_complete_bounded_and_uses_typed_absence() -> Result<()> {
+        let temporary = TempDir::new()?;
+        let root = temporary.path();
+        let catalog_path = root.join("catalog/catalog.json");
+        let entries = [
+            ("regression", "r1", "family-r"),
+            ("binary", "b1", "family-b"),
+            ("multiclass", "m1", "family-m"),
+            ("timeseries", "t1", "family-t"),
+        ]
+        .into_iter()
+        .map(|(task, dataset_hash, source_family)| {
+            json!({
+                "task": task,
+                "dataset_hash": dataset_hash,
+                "source_family": source_family,
+            })
+        })
+        .collect::<Vec<_>>();
+        atomic_json(
+            &catalog_path,
+            &json!({
+                "schema": "JopeTestOnlyContextCatalog.v1",
+                "entries": entries,
+            }),
+        )?;
+        atomic_json(
+            &root.join("catalog/current.json"),
+            &json!({
+                "schema": "JopeTestOnlyContextPointer.v1",
+                "catalog": catalog_path,
+                "catalog_sha256": sha256_file(&catalog_path)?,
+            }),
+        )?;
+        atomic_json(
+            &root.join("training/current-corpus.json"),
+            &json!({"schema":"PackedCorpus.v3", "watermark": 17}),
+        )?;
+        atomic_json(
+            &root.join("training/accepted-by-task.json"),
+            &json!({
+                "schema":"JopeSelfplayAcceptedByTask.v1",
+                "tasks": {
+                    "regression": {
+                        "checkpoint_sha256": digest('a'),
+                        "accepted": true,
+                    }
+                }
+            }),
+        )?;
+        let state_path = root.join("ops/dataset-state.sqlite");
+        fs::create_dir_all(state_path.parent().unwrap())?;
+        let state = Connection::open(&state_path)?;
+        state.execute_batch(
+            "CREATE TABLE datasets(
+               task TEXT NOT NULL,dataset_hash TEXT NOT NULL,
+               sidecars_complete INTEGER NOT NULL,catalog_active INTEGER NOT NULL,
+               obs_count INTEGER NOT NULL);
+             INSERT INTO datasets VALUES
+               ('regression','r1',1,1,1),
+               ('binary','b1',1,1,0),
+               ('multiclass','m1',1,1,0),
+               ('timeseries','t1',1,1,0);",
+        )?;
+        drop(state);
+        let corpus = open_corpus(&root.join("corpus/strict-test-exact.sqlite"))?;
+        insert_curve_row(
+            &corpus,
+            "r1",
+            "(pipe X (ridge))",
+            "robust_gp_seed_bank",
+            &digest('a'),
+            now_ms(),
+        )?;
+        corpus.execute(
+            "UPDATE observations SET score=-99.0 WHERE task='regression' AND dataset_hash='r1'",
+            [],
+        )?;
+        drop(corpus);
+
+        let first = four_task_telemetry(root)?;
+        let second = four_task_telemetry(root)?;
+        assert_eq!(first.rows, second.rows);
+        assert_eq!(
+            first.rows.iter().map(|row| row.task).collect::<Vec<_>>(),
+            FOUR_TASK_ORDER
+        );
+        let regression = &first.rows[0];
+        assert_eq!(
+            regression
+                .metrics
+                .primary_performance
+                .value
+                .as_ref()
+                .unwrap()
+                .minimum,
+            -1.0
+        );
+        assert_eq!(
+            regression
+                .metrics
+                .operational_loss
+                .value
+                .as_ref()
+                .unwrap()
+                .maximum,
+            2.0
+        );
+        let timeseries = &first.rows[3];
+        assert!(timeseries.metrics.primary_performance.value.is_none());
+        assert_eq!(
+            timeseries.metrics.primary_performance.na_reason.as_deref(),
+            Some("no observations")
+        );
+        assert!(timeseries.counts.completed.value.is_none());
+        assert_eq!(
+            timeseries.counts.completed.na_reason.as_deref(),
+            Some("no observations")
+        );
+        assert!(timeseries.valid_observations_per_minute.value.is_none());
+        assert!(root.join("ops/four-task-telemetry.v1.json").is_file());
         Ok(())
     }
 }

@@ -20,7 +20,7 @@ const CORPUS: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0/corpus/strict-t
 /// daemon is dead or wedged even if systemd thinks it is running.
 const STATUS_AGES: &[(&str, u64)] = &[
     ("ops/queue-keeper-v3.json", 900),
-    ("ops/micro-wave-supply-v1.json", 120),
+    ("ops/micro-wave-supply-v2.json", 120),
     // 2026-08-01: was ops/trainer-watchdog-v1.json, which had no writer left —
     // the unit now runs jope_task_learning_controller (30 s cycle) and this
     // doc is where trainer liveness actually lives. The old doc's last write
@@ -123,7 +123,11 @@ fn parse_rfc3339_seconds(value: &str) -> Option<i64> {
     let second = value.get(17..19)?.parse::<i64>().ok()?;
     let timezone = value.find('Z').map(|_| 0).or_else(|| {
         let index = value.get(19..)?.find(['+', '-'])? + 19;
-        let sign = if value.as_bytes()[index] == b'+' { 1 } else { -1 };
+        let sign = if value.as_bytes()[index] == b'+' {
+            1
+        } else {
+            -1
+        };
         let hours = value.get(index + 1..index + 3)?.parse::<i64>().ok()?;
         let minutes = value.get(index + 4..index + 6)?.parse::<i64>().ok()?;
         Some(sign * (hours * 3_600 + minutes * 60))
@@ -220,7 +224,7 @@ const FAILING_CYCLES: u64 = 3;
 /// timestamp is old, which is the one thing mtime cannot see.
 const CONTENT_FROZEN_SECS: &[(&str, u64)] = &[
     ("ops/queue-keeper-v3.json", 900),
-    ("ops/micro-wave-supply-v1.json", 300),
+    ("ops/micro-wave-supply-v2.json", 300),
     ("ops/task-learning-controller.v2.json", 300),
     ("ops/freshness-status.json", 600),
 ];
@@ -253,8 +257,8 @@ const OPS_CONTRACTS: &[Contract] = &[
         consumer: Some(("src/bin/jope_selfplay_supply.rs", "QueueStatus")),
     },
     Contract {
-        file: "ops/micro-wave-supply-v1.json",
-        schema: "JopeMicroWaveSupplyStatus.v1",
+        file: "ops/micro-wave-supply-v2.json",
+        schema: "JopeMicroWaveSupplyStatus.v2",
         producer: "jope-selfplay-supply.service",
         consumer: None,
     },
@@ -894,7 +898,7 @@ fn check_scq_and_jobs(alarms: &mut Alarms) {
     // "vanished" attempts -> eval queue drained to 1% cluster CPU). The
     // generic status_error_doc warning is not loud enough for a
     // flywheel-stopping state.
-    let supply_doc = Path::new(ROOT).join("ops/micro-wave-supply-v1.json");
+    let supply_doc = Path::new(ROOT).join("ops/micro-wave-supply-v2.json");
     if let Ok(bytes) = std::fs::read(&supply_doc) {
         if let Ok(doc) = serde_json::from_slice::<Value>(&bytes) {
             if doc.get("schema").and_then(Value::as_str) == Some("JopeMicroWaveSupplyError.v1") {
@@ -907,7 +911,10 @@ fn check_scq_and_jobs(alarms: &mut Alarms) {
                     .and_then(Value::as_bool)
                     .unwrap_or(false);
                 if critical || identical >= 3 {
-                    let error = doc.get("error").and_then(Value::as_str).unwrap_or("unknown");
+                    let error = doc
+                        .get("error")
+                        .and_then(Value::as_str)
+                        .unwrap_or("unknown");
                     alarms.push(
                         "cohort_proposer_failing",
                         "critical",

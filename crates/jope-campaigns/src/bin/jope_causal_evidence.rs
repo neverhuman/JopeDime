@@ -4,7 +4,7 @@ use anyhow::{ensure, Context, Result};
 use clap::Parser;
 use jope_dime_regressor::selfplay_ingest::{ingest_receipt_with_manifest_connection, open_corpus};
 use jope_dime_regressor::selfplay_runtime::{
-    atomic_json, now_ms, read_json, sha256_file, DEFAULT_ROOT,
+    atomic_json, now_ms, read_json, sha256_bytes, sha256_file, DEFAULT_ROOT,
 };
 use jope_dime_regressor::selfplay_shadow::{
     build_causal_evidence_ledger_v2, build_causal_evidence_ledger_v3, CausalEvaluationReceiptV2,
@@ -13,7 +13,10 @@ use jope_dime_regressor::selfplay_shadow::{
 };
 use rusqlite::{Connection, OpenFlags};
 use serde_json::{json, Value};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
+use std::fs::{self, OpenOptions};
+use std::io::Write;
+use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
@@ -105,12 +108,15 @@ fn main() -> Result<()> {
 fn rebuild(root: &Path) -> Result<(CausalEvidenceLedgerV2, CausalEvidenceLedgerV3, Value)> {
     let (accepted, accepted_lineage_valid) = accepted_parents(root)?;
     let waves = wave_states(root)?;
-    let mut requested_slots = BTreeMap::from([(Task::Binary, 0), (Task::Regression, 0)]);
+    let mut requested_slots = Task::ALL
+        .into_iter()
+        .map(|task| (task, 0))
+        .collect::<BTreeMap<_, _>>();
     for wave in waves.values() {
         if !wave.completed {
             continue;
         }
-        for task in [Task::Binary, Task::Regression] {
+        for task in Task::ALL {
             if accepted.get(&task).map(Sha256Digest::as_str)
                 == Some(wave.checkpoint_sha256.as_str())
             {
@@ -147,6 +153,7 @@ fn rebuild(root: &Path) -> Result<(CausalEvidenceLedgerV2, CausalEvidenceLedgerV
     )?;
     let binary = &ledger_v2.tasks[&Task::Binary];
     let regression = &ledger_v2.tasks[&Task::Regression];
+    let unreplayable = unreplayable_pair_disposition(root, generated_at_ms)?;
     let audit = json!({
         "schema": "CausalEvidenceAudit.v3",
         "generated_at_ms": generated_at_ms,
@@ -170,6 +177,7 @@ fn rebuild(root: &Path) -> Result<(CausalEvidenceLedgerV2, CausalEvidenceLedgerV
             "regression": regression.proposal_validity,
         },
         "pair_repair_queue_depth": ledger_v2.pair_repairs.len(),
+        "unreplayable_pair_disposition": unreplayable,
         "production_gate_open": {
             "binary": ledger_v3.promotion_epoch.get(&Task::Binary).is_some_and(|row| row.production_gate_open),
             "regression": ledger_v3.promotion_epoch.get(&Task::Regression).is_some_and(|row| row.production_gate_open),
@@ -184,6 +192,157 @@ fn rebuild(root: &Path) -> Result<(CausalEvidenceLedgerV2, CausalEvidenceLedgerV
         }
     });
     Ok((ledger_v2, ledger_v3, audit))
+}
+
+fn write_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
+    if path.is_file() {
+        ensure!(
+            fs::read(path)? == bytes,
+            "immutable unreplayable-pair object collision at {}",
+            path.display()
+        );
+        return Ok(());
+    }
+    fs::create_dir_all(path.parent().context("immutable object has no parent")?)?;
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .mode(0o444)
+        .open(path)?;
+    file.write_all(bytes)?;
+    file.sync_all()?;
+    let mut permissions = file.metadata()?.permissions();
+    permissions.set_mode(0o444);
+    fs::set_permissions(path, permissions)?;
+    Ok(())
+}
+
+fn retained_evaluator(root: &Path, digest: &str) -> Result<bool> {
+    let path = root
+        .join("training/evaluator-vault")
+        .join(digest)
+        .join("corpus_eval");
+    Ok(path.is_file() && sha256_file(&path)? == digest)
+}
+
+fn failure_class(root: &Path, entry: &Value) -> Result<&'static str> {
+    let Some(evaluator) = entry
+        .get("original_evaluator_sha256")
+        .and_then(Value::as_str)
+    else {
+        return Ok("expected_evaluator_unrecorded");
+    };
+    ensure!(
+        evaluator.len() == 64
+            && evaluator
+                .bytes()
+                .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte)),
+        "repair state contains an invalid expected evaluator digest"
+    );
+    if !retained_evaluator(root, evaluator)? {
+        return Ok("evaluator_binary_unavailable");
+    }
+    if entry
+        .get("identical_failures")
+        .and_then(Value::as_u64)
+        .unwrap_or_default()
+        >= 3
+    {
+        return Ok("repeated_identical_failure");
+    }
+    Ok("permanent_repair_failure")
+}
+
+/// Publish permanent causal failures without evaluator substitution or outcome
+/// imputation. Pair identities live in a content-addressed JSONL object so the
+/// summary stays small and can be grouped without exposing a mutable ID list.
+fn unreplayable_pair_disposition(root: &Path, generated_at_ms: u128) -> Result<Value> {
+    let path = root.join("ops/causal-pair-repair-state.v1.json");
+    let mut identities = BTreeMap::<(String, String), Value>::new();
+    let mut groups = BTreeMap::<(String, String), usize>::new();
+    if path.is_file() {
+        let state = read_json(&path)?;
+        ensure!(
+            state.get("schema").and_then(Value::as_str) == Some("CausalPairRepairExecutorState.v1"),
+            "causal pair repair state schema drift"
+        );
+        if let Some(entries) = state.get("entries").and_then(Value::as_object) {
+            for entry in entries.values() {
+                if entry.get("status").and_then(Value::as_str) != Some("permanent_failure") {
+                    continue;
+                }
+                let pair_id = entry
+                    .get("pair_id")
+                    .and_then(Value::as_str)
+                    .context("permanent failure lacks pair identity")?;
+                let lane = entry
+                    .get("missing_lane")
+                    .and_then(Value::as_str)
+                    .unwrap_or("unknown");
+                let expected = entry
+                    .get("original_evaluator_sha256")
+                    .and_then(Value::as_str);
+                let class = failure_class(root, entry)?;
+                *groups
+                    .entry((
+                        expected.unwrap_or("unrecorded").to_owned(),
+                        class.to_owned(),
+                    ))
+                    .or_default() += 1;
+                identities.insert(
+                    (pair_id.to_owned(), lane.to_owned()),
+                    json!({
+                        "pair_id": pair_id,
+                        "task": entry.get("task").and_then(Value::as_str),
+                        "missing_lane": lane,
+                        "expected_evaluator_sha256": expected,
+                        "failure_class": class,
+                        "promotion_eligible": false,
+                    }),
+                );
+            }
+        }
+    }
+    let mut bytes = Vec::new();
+    for identity in identities.values() {
+        bytes.extend(serde_json::to_vec(identity)?);
+        bytes.push(b'\n');
+    }
+    let identities_sha256 = sha256_bytes(&bytes);
+    let identities_path = root
+        .join("training/unreplayable-pair-identities")
+        .join(format!("{identities_sha256}.v2.jsonl"));
+    write_immutable(&identities_path, &bytes)?;
+    let grouped_counts = groups
+        .into_iter()
+        .map(|((evaluator, class), count)| {
+            json!({
+                "expected_evaluator_sha256": (evaluator != "unrecorded").then_some(evaluator),
+                "failure_class": class,
+                "count": count,
+            })
+        })
+        .collect::<Vec<_>>();
+    let disposition = json!({
+        "schema": "JopeUnreplayablePairDisposition.v2",
+        "generated_at_ms": generated_at_ms,
+        "policy": "explicit-unreplayable-no-imputation",
+        "source_repair_state": path,
+        "source_repair_state_sha256": path.is_file().then(|| sha256_file(&path)).transpose()?,
+        "pair_identities_path": identities_path,
+        "pair_identities_sha256": identities_sha256,
+        "count": identities.len(),
+        "unique_pair_count": identities.keys().map(|(pair, _)| pair).collect::<BTreeSet<_>>().len(),
+        "grouped_counts": grouped_counts,
+        "promotion_eligible": false,
+        "evaluator_substitution_allowed": false,
+        "outcome_imputation_allowed": false,
+    });
+    atomic_json(
+        &root.join("training/unreplayable-pair-disposition.v2.json"),
+        &disposition,
+    )?;
+    Ok(disposition)
 }
 
 type EpochAccounting = (
@@ -201,7 +360,7 @@ fn load_promotion_epochs(
     let mut policy_pins_match = BTreeMap::new();
     let mut logged_slots = BTreeMap::new();
     let mut permanent_missing_slots = BTreeMap::new();
-    for task in [Task::Binary, Task::Regression] {
+    for task in Task::ALL {
         let path = root
             .join("training/causal-evidence-epochs")
             .join(format!("{}.v1.json", task.as_str()));
@@ -304,11 +463,32 @@ fn accepted_parents(root: &Path) -> Result<(BTreeMap<Task, Sha256Digest>, bool)>
     );
     let mut output = BTreeMap::new();
     let mut valid = true;
-    for task in [Task::Binary, Task::Regression] {
-        let row = pointer
+    for task in Task::ALL {
+        let accepted_row = pointer
             .get("tasks")
-            .and_then(|value| value.get(task.as_str()))
-            .with_context(|| format!("accepted pointer lacks {task}"))?;
+            .and_then(|value| value.get(task.as_str()));
+        let anchor;
+        let row = if let Some(row) = accepted_row {
+            row
+        } else if matches!(task, Task::Multiclass | Task::Timeseries) {
+            let path = root
+                .join("training/bootstrap-evaluation-anchors")
+                .join(format!("{}.v1.json", task.as_str()));
+            if !path.is_file() {
+                continue;
+            }
+            anchor = read_json(&path)?;
+            ensure!(
+                anchor.get("schema").and_then(Value::as_str)
+                    == Some("TaskBootstrapEvaluationAnchor.v1")
+                    && anchor.get("task").and_then(Value::as_str) == Some(task.as_str())
+                    && anchor.get("accepted").and_then(Value::as_bool) == Some(false),
+                "{task} bootstrap evaluation anchor is not an unaccepted v1 anchor"
+            );
+            &anchor
+        } else {
+            anyhow::bail!("accepted pointer lacks {task}");
+        };
         let digest = row
             .get("checkpoint_sha256")
             .and_then(Value::as_str)
@@ -371,7 +551,10 @@ fn wave_states(root: &Path) -> Result<BTreeMap<u64, WaveState>> {
             .context("wave summary lacks checkpoint identity")?
             .to_owned();
         let cohort = read_json(&cohort_path)?;
-        let mut requested_slots = BTreeMap::from([(Task::Binary, 0), (Task::Regression, 0)]);
+        let mut requested_slots = Task::ALL
+            .into_iter()
+            .map(|task| (task, 0))
+            .collect::<BTreeMap<_, _>>();
         for row in cohort
             .get("entries")
             .and_then(Value::as_array)
@@ -668,5 +851,45 @@ mod tests {
         .unwrap();
         apply_permanent_repair_failures(temporary.path(), &mut ledger).unwrap();
         assert!(ledger.pair_repairs[0].permanent_failure);
+    }
+
+    #[test]
+    fn missing_evaluator_is_classified_unreplayable_without_imputation() {
+        let temporary = tempfile::tempdir().unwrap();
+        fs::create_dir_all(temporary.path().join("ops")).unwrap();
+        atomic_json(
+            &temporary
+                .path()
+                .join("ops/causal-pair-repair-state.v1.json"),
+            &json!({
+                "schema": "CausalPairRepairExecutorState.v1",
+                "entries": {
+                    "pair": {
+                        "pair_id": "pair",
+                        "status": "permanent_failure"
+                    },
+                    "replayable": {
+                        "pair_id": "replayable",
+                        "status": "permanent_failure",
+                        "original_evaluator_sha256": "a".repeat(64)
+                    }
+                }
+            }),
+        )
+        .unwrap();
+        let disposition = unreplayable_pair_disposition(temporary.path(), 10).unwrap();
+        assert_eq!(disposition["schema"], "JopeUnreplayablePairDisposition.v2");
+        assert_eq!(disposition["count"], 2);
+        assert_eq!(disposition["unique_pair_count"], 2);
+        assert_eq!(disposition["promotion_eligible"], false);
+        assert_eq!(disposition["evaluator_substitution_allowed"], false);
+        assert_eq!(disposition["outcome_imputation_allowed"], false);
+        let object = PathBuf::from(disposition["pair_identities_path"].as_str().unwrap());
+        assert!(object.is_file());
+        assert_eq!(
+            sha256_file(&object).unwrap(),
+            disposition["pair_identities_sha256"]
+        );
+        assert!(disposition.get("pair_ids").is_none());
     }
 }

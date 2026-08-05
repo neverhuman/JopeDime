@@ -13,6 +13,7 @@ use jope_dime_regressor::selfplay_runtime::{
     active_checkpoint, atomic_json, now_ms, protocol_for_manifest, read_json, scq_json,
     sha256_bytes, sha256_file, DEFAULT_EVALUATOR, DEFAULT_ROOT, DEFAULT_RUNNER, DEFAULT_SCQ,
 };
+use jope_dime_regressor::spec_policy::EVAL;
 use rayon::prelude::*;
 use rayon::ThreadPoolBuilder;
 use rusqlite::{params, Connection, OptionalExtension, Transaction, TransactionBehavior};
@@ -176,7 +177,9 @@ struct MicroWave {
 struct AdmissionWave {
     wave: String,
     summary_sha256: String,
+    manifest_count: usize,
     unclaimed_manifests: usize,
+    complete: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -192,10 +195,18 @@ struct CycleReport {
     checkpoint_epoch: Option<String>,
     newest_micro_wave: Option<String>,
     admission_waves: Vec<AdmissionWave>,
+    protected_reserve_waves: Vec<AdmissionWave>,
+    complete_current_checkpoint_waves: usize,
+    partial_current_checkpoint_waves: usize,
+    complete_reserve_waves: usize,
+    reserve_manifests: usize,
+    admission_manifests: usize,
     unclaimed_current_checkpoint_manifests: usize,
     queued_target: i64,
     queued_hard_cap: i64,
     p95_60m_jobs_per_minute: f64,
+    queued: usize,
+    starting: usize,
     queued_starting: usize,
     running: usize,
     dispatching: usize,
@@ -204,6 +215,8 @@ struct CycleReport {
     queue_maximum_age_seconds: f64,
     stale_or_unproven_active: usize,
     launch_ready: usize,
+    validated_ready: usize,
+    useful_work: usize,
     launch_ready_deferred_by_horizon: usize,
     manifests_unclaimed: usize,
     manifests_validated: usize,
@@ -370,15 +383,16 @@ impl Keeper {
             .map(|wave| wave.wave.clone())
             .collect::<BTreeSet<_>>();
         let rejected = load_rejected_manifests(&self.backlog)?;
-        let mut admission_waves =
+        let wave_inventory =
             current_admission_waves(&self.args.root, &current_waves, &claims, &rejected)?;
-        if admission_waves.len() > MAX_ADMISSION_WAVES {
+        if wave_inventory.len() > MAX_ADMISSION_WAVES {
             bail!(
                 "current checkpoint has {} unclaimed waves; maximum admission overlap is {}",
-                admission_waves.len(),
+                wave_inventory.len(),
                 MAX_ADMISSION_WAVES
             );
         }
+        let (mut admission_waves, _) = partition_protected_reserve(wave_inventory);
         let scheduler_by_id = jobs
             .iter()
             .map(|job| (job.id.as_str(), job))
@@ -421,10 +435,15 @@ impl Keeper {
             }
         }
 
-        let queued_starting = jobs
+        let queued = jobs
             .iter()
-            .filter(|job| useful.contains(&job.id) && QUEUE_STATES.contains(&job.state.as_str()))
+            .filter(|job| useful.contains(&job.id) && job.state == "queued")
             .count();
+        let starting = jobs
+            .iter()
+            .filter(|job| useful.contains(&job.id) && job.state == "starting")
+            .count();
+        let queued_starting = queued.saturating_add(starting);
         let running = jobs
             .iter()
             .filter(|job| useful.contains(&job.id) && job.state == "running")
@@ -581,23 +600,49 @@ impl Keeper {
         };
         let report_claims = load_claims(&self.backlog)?;
         let report_rejected = load_rejected_manifests(&self.backlog)?;
-        admission_waves = current_admission_waves(
+        let wave_inventory = current_admission_waves(
             &self.args.root,
             &current_waves,
             &report_claims,
             &report_rejected,
         )?;
-        if admission_waves.len() > MAX_ADMISSION_WAVES {
+        if wave_inventory.len() > MAX_ADMISSION_WAVES {
             bail!(
                 "current checkpoint has {} unclaimed waves after admission; maximum overlap is {}",
-                admission_waves.len(),
+                wave_inventory.len(),
                 MAX_ADMISSION_WAVES
             );
         }
-        let unclaimed_current_checkpoint_manifests = admission_waves
+        let complete_current_checkpoint_waves =
+            wave_inventory.iter().filter(|wave| wave.complete).count();
+        let partial_current_checkpoint_waves = wave_inventory
+            .len()
+            .saturating_sub(complete_current_checkpoint_waves);
+        let (next_admission_waves, protected_reserve_waves) =
+            partition_protected_reserve(wave_inventory);
+        admission_waves = next_admission_waves;
+        let admission_manifests: usize = admission_waves
             .iter()
             .map(|wave| wave.unclaimed_manifests)
             .sum();
+        let reserve_manifests: usize = protected_reserve_waves
+            .iter()
+            .map(|wave| wave.unclaimed_manifests)
+            .sum();
+        let unclaimed_current_checkpoint_manifests =
+            admission_manifests.saturating_add(reserve_manifests);
+        let launch_ready = ready.len().saturating_sub(submitted);
+        let validated_ready = unclaimed_current_checkpoint_manifests.saturating_add(launch_ready);
+        // Successful submissions happened after the scheduler snapshot above.
+        // Count them as queued immediately so the published identity remains
+        // `queued + starting + dispatching + validated_ready` without a
+        // one-cycle hole that could trigger an unnecessary reserve build.
+        let queued = queued.saturating_add(submitted);
+        let queued_starting = queued.saturating_add(starting);
+        let useful_work = queued
+            .saturating_add(starting)
+            .saturating_add(dispatching)
+            .saturating_add(validated_ready);
 
         Ok(CycleReport {
             schema: "JopeSelfplayQueueKeeper.v3",
@@ -611,10 +656,18 @@ impl Keeper {
             checkpoint_epoch: Some(checkpoint_epoch),
             newest_micro_wave: Some(newest_wave),
             admission_waves,
+            complete_reserve_waves: protected_reserve_waves.len(),
+            protected_reserve_waves,
+            complete_current_checkpoint_waves,
+            partial_current_checkpoint_waves,
+            reserve_manifests,
+            admission_manifests,
             unclaimed_current_checkpoint_manifests,
             queued_target: targets.target,
             queued_hard_cap: targets.hard_cap,
             p95_60m_jobs_per_minute: targets.p95_jobs_per_minute,
+            queued,
+            starting,
             queued_starting,
             running,
             dispatching,
@@ -622,7 +675,9 @@ impl Keeper {
             released_held,
             queue_maximum_age_seconds: max_queue_age,
             stale_or_unproven_active: stale_or_unproven,
-            launch_ready: ready.len(),
+            launch_ready,
+            validated_ready,
+            useful_work,
             launch_ready_deferred_by_horizon: deferred,
             manifests_unclaimed: prepare.unclaimed,
             manifests_validated: prepare.validated,
@@ -1522,10 +1577,18 @@ fn empty_report(
         checkpoint_epoch: None,
         newest_micro_wave: None,
         admission_waves: Vec::new(),
+        protected_reserve_waves: Vec::new(),
+        complete_current_checkpoint_waves: 0,
+        partial_current_checkpoint_waves: 0,
+        complete_reserve_waves: 0,
+        reserve_manifests: 0,
+        admission_manifests: 0,
         unclaimed_current_checkpoint_manifests: 0,
         queued_target: targets.target,
         queued_hard_cap: targets.hard_cap,
         p95_60m_jobs_per_minute: targets.p95_jobs_per_minute,
+        queued: 0,
+        starting: 0,
         queued_starting: 0,
         running: 0,
         dispatching: 0,
@@ -1534,6 +1597,8 @@ fn empty_report(
         queue_maximum_age_seconds: 0.0,
         stale_or_unproven_active: 0,
         launch_ready: 0,
+        validated_ready: 0,
+        useful_work: 0,
         launch_ready_deferred_by_horizon: 0,
         manifests_unclaimed: 0,
         manifests_validated: 0,
@@ -1924,21 +1989,46 @@ fn current_admission_waves(
     let mut admission = Vec::new();
     for wave in waves {
         let directory = wave_manifest_directory(root, &wave.wave);
-        let unclaimed_manifests = fs::read_dir(&directory)?
+        let manifest_paths = fs::read_dir(&directory)?
             .filter_map(|entry| entry.ok().map(|value| value.path()))
             .filter(|path| path.extension().and_then(|value| value.to_str()) == Some("json"))
+            .collect::<Vec<_>>();
+        let manifest_count = manifest_paths.len();
+        let unclaimed_manifests = manifest_paths
+            .iter()
             .filter(|path| !claimed.contains(path.as_path()))
-            .filter(|path| !rejected.contains(path))
+            .filter(|path| !rejected.contains(*path))
             .count();
         if unclaimed_manifests > 0 {
             admission.push(AdmissionWave {
                 wave: wave.wave.clone(),
                 summary_sha256: wave.summary_sha256.clone(),
+                manifest_count,
                 unclaimed_manifests,
+                complete: unclaimed_manifests == manifest_count,
             });
         }
     }
     Ok(admission)
+}
+
+/// Keep the newest two byte-complete waves outside scheduler admission. Older
+/// work remains oldest-first, so reserve capacity cannot be consumed before a
+/// newer keeper acknowledgment replenishes it.
+fn partition_protected_reserve(
+    waves: Vec<AdmissionWave>,
+) -> (Vec<AdmissionWave>, Vec<AdmissionWave>) {
+    let protected = waves
+        .iter()
+        .rev()
+        .filter(|wave| wave.complete)
+        .take(2)
+        .map(|wave| wave.wave.clone())
+        .collect::<BTreeSet<_>>();
+    let (admission, reserve): (Vec<_>, Vec<_>) = waves
+        .into_iter()
+        .partition(|wave| !protected.contains(&wave.wave));
+    (admission, reserve)
 }
 
 fn wave_manifest_directory(root: &Path, wave: &str) -> PathBuf {
@@ -2734,21 +2824,37 @@ fn render_spec(
         }
     }
     let quoted = |value: &str| serde_json::to_string(value).expect("string JSON");
-    let mut text = format!(
-        "[job]\nid = {}\nproject = \"{}\"\ntier = \"normal\"\n\
-         command = \"/usr/bin/env\"\n\
-         args = [\"{{input:runner}}\", \"{{input:manifest}}\", \"{{input:train}}\", \
-         \"{{input:test}}\", \"{{input:evaluator}}\", \"{{output:receipt}}\"]\n\n\
-         [resource]\ngpus_per_task = 0\ncpus_reserved = 1\nomp_threads = 1\n\
-         ram_mb = 512\ngang_size = 1\nplacement = \"single_node\"\n\n\
-         [env]\nRAYON_NUM_THREADS = \"1\"\nOMP_NUM_THREADS = \"1\"\n\
-         OPENBLAS_NUM_THREADS = \"1\"\nMKL_NUM_THREADS = \"1\"\n\
-         NUMEXPR_NUM_THREADS = \"1\"\n\n\
-         [preempt]\npreemptible = true\ncheckpoint = \"none\"\nresume = \"rerun\"\n\n\
-         [limits]\nmax_runtime_hours = 24\nmax_restarts = 1\n\n",
-        quoted(job_id),
-        PROJECT
-    );
+    let mut lines = vec![
+        "[job]".to_owned(),
+        format!("id = {}", quoted(job_id)),
+        format!("project = \"{PROJECT}\""),
+        "tier = \"normal\"".to_owned(),
+        "command = \"/usr/bin/env\"".to_owned(),
+        "args = [\"{input:runner}\", \"{input:manifest}\", \"{input:train}\", \
+         \"{input:test}\", \"{input:evaluator}\", \"{output:receipt}\"]"
+            .to_owned(),
+        String::new(),
+    ];
+    lines.extend(EVAL.render_resource_block().lines().map(str::to_owned));
+    lines.extend([
+        String::new(),
+        "[env]".to_owned(),
+        format!("RAYON_NUM_THREADS = \"{}\"", EVAL.omp_threads),
+        format!("OMP_NUM_THREADS = \"{}\"", EVAL.omp_threads),
+        format!("OPENBLAS_NUM_THREADS = \"{}\"", EVAL.omp_threads),
+        format!("MKL_NUM_THREADS = \"{}\"", EVAL.omp_threads),
+        format!("NUMEXPR_NUM_THREADS = \"{}\"", EVAL.omp_threads),
+        String::new(),
+        "[preempt]".to_owned(),
+        format!("preemptible = {}", EVAL.preemptible),
+        "checkpoint = \"none\"".to_owned(),
+        "resume = \"rerun\"".to_owned(),
+        String::new(),
+    ]);
+    lines.extend(EVAL.render_limits_block().lines().map(str::to_owned));
+    lines.push(String::new());
+    let mut text = lines.join("\n");
+    text.push('\n');
     for (name, source, target, digest) in inputs {
         text.push_str("[[input]]\n");
         text.push_str(&format!("name = {}\n", quoted(name)));
@@ -3143,6 +3249,19 @@ mod tests {
     }
 
     #[test]
+    fn held_multiclass_jobs_are_outside_the_release_contract() {
+        let job = SchedulerJob {
+            id: "jope-mc272-protected".to_owned(),
+            project: "jope-multiclass-test-a".to_owned(),
+            state: "held".to_owned(),
+            failure_class: None,
+            queue_ts: None,
+        };
+
+        assert!(!scheduler_job_is_adoptable(&job));
+    }
+
+    #[test]
     fn failure_report_preserves_the_queue_status_envelope() {
         let value = serde_json::to_value(failure_report(true, "boom")).unwrap();
         assert_eq!(value["schema"], "JopeSelfplayQueueKeeper.v3");
@@ -3244,6 +3363,38 @@ mod tests {
                 .unwrap()
                 .is_empty()
         );
+    }
+
+    #[test]
+    fn newest_two_complete_waves_are_never_admitted() {
+        let wave = |index: usize, unclaimed: usize, complete: bool| AdmissionWave {
+            wave: format!("strict-wave-{index:06}"),
+            summary_sha256: format!("{index:064x}"),
+            manifest_count: 10,
+            unclaimed_manifests: unclaimed,
+            complete,
+        };
+        let (admission, reserve) = partition_protected_reserve(vec![
+            wave(1, 4, false),
+            wave(2, 10, true),
+            wave(3, 10, true),
+            wave(4, 10, true),
+        ]);
+        assert_eq!(
+            admission
+                .iter()
+                .map(|wave| wave.wave.as_str())
+                .collect::<Vec<_>>(),
+            ["strict-wave-000001", "strict-wave-000002"]
+        );
+        assert_eq!(
+            reserve
+                .iter()
+                .map(|wave| wave.wave.as_str())
+                .collect::<Vec<_>>(),
+            ["strict-wave-000003", "strict-wave-000004"]
+        );
+        assert!(reserve.iter().all(|wave| wave.complete));
     }
 
     #[test]

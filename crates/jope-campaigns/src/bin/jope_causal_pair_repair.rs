@@ -7,6 +7,7 @@ use jope_dime_regressor::selfplay_runtime::{
     atomic_json, now_ms, read_json, sha256_file, DEFAULT_ROOT, DEFAULT_SCQ,
 };
 use jope_dime_regressor::selfplay_shadow::{CausalLane, PairRepairRequestV1, Sha256Digest, Task};
+use jope_dime_regressor::spec_policy::EVAL;
 use rusqlite::{Connection, OpenFlags};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -717,31 +718,27 @@ fn render_spec(
         "command = \"/usr/bin/env\"".to_owned(),
         "args = [\"{input:runner}\", \"{input:manifest}\", \"{input:train}\", \"{input:test}\", \"{input:evaluator}\", \"{output:receipt}\"]".to_owned(),
         String::new(),
-        "[resource]".to_owned(),
-        "gpus_per_task = 0".to_owned(),
-        "cpus_reserved = 1".to_owned(),
-        "omp_threads = 1".to_owned(),
-        "ram_mb = 512".to_owned(),
-        "gang_size = 1".to_owned(),
-        "placement = \"single_node\"".to_owned(),
-        String::new(),
+    ];
+    lines.extend(EVAL.render_resource_block().lines().map(str::to_owned));
+    lines.push(String::new());
+    lines.extend(EVAL.render_placement_block().lines().map(str::to_owned));
+    lines.push(String::new());
+    lines.extend([
         "[env]".to_owned(),
-        "RAYON_NUM_THREADS = \"1\"".to_owned(),
-        "OMP_NUM_THREADS = \"1\"".to_owned(),
-        "OPENBLAS_NUM_THREADS = \"1\"".to_owned(),
-        "MKL_NUM_THREADS = \"1\"".to_owned(),
-        "NUMEXPR_NUM_THREADS = \"1\"".to_owned(),
+        format!("RAYON_NUM_THREADS = \"{}\"", EVAL.omp_threads),
+        format!("OMP_NUM_THREADS = \"{}\"", EVAL.omp_threads),
+        format!("OPENBLAS_NUM_THREADS = \"{}\"", EVAL.omp_threads),
+        format!("MKL_NUM_THREADS = \"{}\"", EVAL.omp_threads),
+        format!("NUMEXPR_NUM_THREADS = \"{}\"", EVAL.omp_threads),
         String::new(),
         "[preempt]".to_owned(),
-        "preemptible = true".to_owned(),
+        format!("preemptible = {}", EVAL.preemptible),
         "checkpoint = \"none\"".to_owned(),
         "resume = \"rerun\"".to_owned(),
         String::new(),
-        "[limits]".to_owned(),
-        "max_runtime_hours = 24".to_owned(),
-        "max_restarts = 1".to_owned(),
-        String::new(),
-    ];
+    ]);
+    lines.extend(EVAL.render_limits_block().lines().map(str::to_owned));
+    lines.push(String::new());
     append_input(&mut lines, "runner", runner, "runner.sh", None)?;
     append_input(&mut lines, "manifest", manifest, "manifest.json", None)?;
     append_input(&mut lines, "train", &train, "train.csv", Some(train_sha))?;

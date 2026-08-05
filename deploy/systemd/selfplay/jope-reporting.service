@@ -1,0 +1,13 @@
+[Unit]
+Description=JOPE native four-task telemetry and terminal-learning reporter
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ubuntu/jope-flywheel/test_exact_gen0
+ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_reporting --interval-seconds 30
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

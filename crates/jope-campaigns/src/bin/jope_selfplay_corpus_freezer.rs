@@ -61,18 +61,18 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
-use serde_json::{json, Value};
+use jope_dime_regressor::selfplay_runtime::sha256_file;
+use serde_json::{json, Map, Value};
 use std::fs::{self, File, OpenOptions};
 use std::io::Write;
 use std::os::unix::fs::OpenOptionsExt;
 use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Stdio};
 use std::thread::sleep;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 const DEFAULT_ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
-const DEFAULT_TRAINER: &str = "/home/ubuntu/jope-dime/scripts/test_exact_train.py";
 const STATUS: &str = "ops/corpus-freezer-v1.json";
 const EVENTS: &str = "ops/corpus-freezer-events.v1.jsonl";
 const LOCK: &str = "ops/corpus-freezer.lock";
@@ -81,11 +81,10 @@ const LABEL_POINTER: &str = "ops/last-ingest.json";
 const SCHEMA: &str = "JopeSelfplayCorpusFreezer.v1";
 const MANIFEST_SCHEMA: &str = "JopeTestOnlyTrainingCorpus.v1";
 
-/// Same step the tournament uses (`test_exact_controller.py:198`
-/// `label_threshold: int = 50_000`). Matching it means this binary never
-/// freezes at a watermark the tournament would not also have chosen; it only
-/// removes the requirement that a tournament be alive to ask for it.
-const DEFAULT_LABEL_STEP: u64 = 50_000;
+/// Full consolidation remains above one hour at the current corpus size. A
+/// 50,000-label step would make this unit permanently busy, so production
+/// stays at 250,000 until measured build time is below one hour.
+const DEFAULT_LABEL_STEP: u64 = 250_000;
 
 /// A freeze at the current size writes tens of GB of JSONL and reads the whole
 /// observations table. Six hours is the ceiling, not the expectation.
@@ -97,8 +96,10 @@ const BUILD_TIMEOUT_SECS: u64 = 6 * 3600;
 struct Args {
     #[arg(long, default_value = DEFAULT_ROOT)]
     root: PathBuf,
-    #[arg(long, default_value = DEFAULT_TRAINER)]
-    trainer_script: PathBuf,
+    /// Compatibility override accepted only when it resolves to the exact
+    /// script pinned by this executable's runtime bundle.
+    #[arg(long)]
+    trainer_script: Option<PathBuf>,
     /// Freeze once the label pointer is this far ahead of the frozen watermark.
     #[arg(long, default_value_t = DEFAULT_LABEL_STEP)]
     label_step: u64,
@@ -253,49 +254,178 @@ fn decide(root: &Path, label_step: u64) -> Result<Decision> {
     })
 }
 
-/// Runs `test_exact_train.py build-corpus` and returns its manifest.
-///
-/// stdout is the manifest JSON and nothing else (`test_exact_train.py:1245`).
-/// stderr is kept in the receipt because a quarantined freeze — the two
-/// `ops/generalization-plan.md` guardrails both quarantine — reports the reason
-/// only there.
-fn run_build(args: &Args) -> Result<(Value, String, Duration)> {
+#[derive(Clone, Debug)]
+struct BundleRuntime {
+    bundle_root: PathBuf,
+    bundle_sha256: String,
+    trainer_script: PathBuf,
+    trainer_script_sha256: String,
+}
+
+fn resolve_bundle_runtime_from(
+    executable: &Path,
+    trainer_override: Option<&Path>,
+) -> Result<BundleRuntime> {
+    let executable = fs::canonicalize(executable)?;
+    let bundle_root = executable
+        .parent()
+        .and_then(Path::parent)
+        .and_then(Path::parent)
+        .context("corpus freezer is not running from a runtime bundle")?
+        .to_path_buf();
+    let bundle_manifest = bundle_root.join("bundle.json");
+    let bundle = read_json(&bundle_manifest)?;
+    ensure!(
+        bundle.get("schema").and_then(Value::as_str) == Some("RuntimeBundle.v3"),
+        "corpus freezer bundle manifest schema drift"
+    );
+    let bundle_sha256 = bundle
+        .get("bundle_sha256")
+        .and_then(Value::as_str)
+        .context("runtime bundle lacks bundle_sha256")?
+        .to_owned();
+    ensure!(
+        bundle_sha256.len() == 64 && bundle_sha256.chars().all(|value| value.is_ascii_hexdigit()),
+        "runtime bundle digest is invalid"
+    );
+    let trainer_script = bundle_root.join("pytorch/training/test_exact_train.py");
+    let trainer_script_sha256 = sha256_file(&trainer_script)?;
+    ensure!(
+        bundle
+            .get("files")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .any(|row| {
+                row.get("target").and_then(Value::as_str)
+                    == Some("pytorch/training/test_exact_train.py")
+                    && row.get("sha256").and_then(Value::as_str)
+                        == Some(trainer_script_sha256.as_str())
+            }),
+        "bundled trainer script is absent from or disagrees with bundle.json"
+    );
+    if let Some(requested) = trainer_override {
+        ensure!(
+            fs::canonicalize(requested)? == fs::canonicalize(&trainer_script)?,
+            "corpus freezer refuses an unbundled trainer script override"
+        );
+    }
+    Ok(BundleRuntime {
+        bundle_root,
+        bundle_sha256,
+        trainer_script,
+        trainer_script_sha256,
+    })
+}
+
+fn resolve_bundle_runtime(args: &Args) -> Result<BundleRuntime> {
+    resolve_bundle_runtime_from(&std::env::current_exe()?, args.trainer_script.as_deref())
+}
+
+fn stderr_tail(stderr: &str) -> String {
+    stderr
+        .chars()
+        .rev()
+        .take(2_000)
+        .collect::<String>()
+        .chars()
+        .rev()
+        .collect()
+}
+
+/// Spawn the bundled builder, publish its PID before it can become invisible,
+/// and refresh the same status document throughout the build.
+fn run_build(args: &Args, report: &mut Map<String, Value>) -> Result<(Value, String, Duration)> {
+    let runtime = resolve_bundle_runtime(args)?;
     let started = SystemTime::now();
-    // Wrapped in `timeout` rather than left unbounded: a wedged build holds the
-    // exclusive lock, and a lock held forever is the same starvation this binary
-    // exists to end, just with a different owner.
-    let output = Command::new("/usr/bin/timeout")
-        .arg(format!("{BUILD_TIMEOUT_SECS}"))
-        .arg("/usr/bin/python3")
-        .arg(&args.trainer_script)
+    let started_at_ms = now_ms();
+    let logs = args.root.join("ops/corpus-freezer-builds");
+    fs::create_dir_all(&logs)?;
+    let log_key = format!("{started_at_ms}-{}", &runtime.trainer_script_sha256[..12]);
+    let stdout_path = logs.join(format!("{log_key}.stdout"));
+    let stderr_path = logs.join(format!("{log_key}.stderr"));
+    let stdout_file = OpenOptions::new()
+        .create_new(true)
+        .write(true)
+        .mode(0o600)
+        .open(&stdout_path)?;
+    let stderr_file = OpenOptions::new()
+        .create_new(true)
+        .write(true)
+        .mode(0o600)
+        .open(&stderr_path)?;
+    let mut child = Command::new("/usr/bin/python3")
+        .arg(&runtime.trainer_script)
         .arg("build-corpus")
         .arg("--corpus-mode")
         .arg(&args.corpus_mode)
         .current_dir(
-            args.trainer_script
+            runtime
+                .trainer_script
                 .parent()
-                .unwrap_or(Path::new("/home/ubuntu/jope-dime/scripts")),
+                .context("bundled trainer script has no parent")?,
         )
-        .output()
-        .context("spawn test_exact_train.py build-corpus")?;
+        .stdout(Stdio::from(stdout_file))
+        .stderr(Stdio::from(stderr_file))
+        .spawn()
+        .context("spawn bundled test_exact_train.py build-corpus")?;
+    report.insert("lifecycle".into(), json!("building"));
+    report.insert("action".into(), json!("build_corpus"));
+    report.insert("build_stage".into(), json!("build-corpus"));
+    report.insert("build_started_at_ms".into(), json!(started_at_ms));
+    report.insert("build_heartbeat_at_ms".into(), json!(started_at_ms));
+    report.insert("child_pid".into(), json!(child.id()));
+    report.insert("target_watermark".into(), report["label_watermark"].clone());
+    report.insert("script_path".into(), json!(runtime.trainer_script));
+    report.insert("script_sha256".into(), json!(runtime.trainer_script_sha256));
+    report.insert("bundle_path".into(), json!(runtime.bundle_root));
+    report.insert("bundle_sha256".into(), json!(runtime.bundle_sha256));
+    report.insert("stdout_path".into(), json!(stdout_path));
+    report.insert("stderr_path".into(), json!(stderr_path));
+    atomic_json(&args.root.join(STATUS), &Value::Object(report.clone()))?;
+
+    let mut last_heartbeat = SystemTime::now();
+    let exit_status = loop {
+        if let Some(status) = child.try_wait()? {
+            break status;
+        }
+        let elapsed = started.elapsed().unwrap_or_default();
+        if elapsed.as_secs() >= BUILD_TIMEOUT_SECS {
+            child.kill().context("terminate timed-out corpus builder")?;
+            let status = child.wait()?;
+            let stderr = fs::read_to_string(&stderr_path).unwrap_or_default();
+            report.insert("lifecycle".into(), json!("error"));
+            report.insert("action".into(), json!("build_timed_out"));
+            report.insert("timed_out".into(), json!(true));
+            report.insert("timeout_seconds".into(), json!(BUILD_TIMEOUT_SECS));
+            report.insert("exit_status".into(), json!(status.to_string()));
+            report.insert("stderr_tail".into(), json!(stderr_tail(&stderr)));
+            report.insert("build_heartbeat_at_ms".into(), json!(now_ms()));
+            atomic_json(&args.root.join(STATUS), &Value::Object(report.clone()))?;
+            bail!("build-corpus timed out after {BUILD_TIMEOUT_SECS}s");
+        }
+        if last_heartbeat.elapsed().unwrap_or_default() >= Duration::from_secs(30) {
+            report.insert("build_heartbeat_at_ms".into(), json!(now_ms()));
+            report.insert("build_elapsed_seconds".into(), json!(elapsed.as_secs()));
+            atomic_json(&args.root.join(STATUS), &Value::Object(report.clone()))?;
+            last_heartbeat = SystemTime::now();
+        }
+        sleep(Duration::from_secs(1));
+    };
     let elapsed = started.elapsed().unwrap_or_default();
-    let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
-    if !output.status.success() {
+    let stdout = fs::read(&stdout_path)?;
+    let stderr = fs::read_to_string(&stderr_path)?.trim().to_owned();
+    if !exit_status.success() {
+        report.insert("exit_status".into(), json!(exit_status.to_string()));
+        report.insert("stderr_tail".into(), json!(stderr_tail(&stderr)));
         bail!(
             "build-corpus exited {}: {}",
-            output.status,
-            stderr
-                .chars()
-                .rev()
-                .take(2000)
-                .collect::<String>()
-                .chars()
-                .rev()
-                .collect::<String>()
+            exit_status,
+            stderr_tail(&stderr)
         );
     }
     let manifest: Value =
-        serde_json::from_slice(&output.stdout).context("build-corpus stdout is not a manifest")?;
+        serde_json::from_slice(&stdout).context("build-corpus stdout is not a manifest")?;
     Ok((manifest, stderr, elapsed))
 }
 
@@ -616,7 +746,7 @@ fn cycle(args: &Args) -> Value {
         }),
     );
 
-    match run_build(args) {
+    match run_build(args, &mut report) {
         Ok((manifest, stderr, elapsed)) => {
             match verify_published(root, &manifest, decision.frozen) {
                 Ok(watermark) => {
@@ -920,7 +1050,7 @@ mod tests {
     /// A fresh root has no pointer at all; that is watermark zero, not a crash.
     #[test]
     fn missing_pointer_is_watermark_zero() {
-        let dir = root_with(None, 60_000);
+        let dir = root_with(None, 260_000);
         let decision = decide(dir.path(), DEFAULT_LABEL_STEP).unwrap();
         assert_eq!(decision.frozen, 0);
         assert!(decision.freeze);
@@ -1005,7 +1135,7 @@ mod tests {
     fn retention_args(root: &Path, keep: usize, min_age_hours: u64) -> Args {
         Args {
             root: root.to_path_buf(),
-            trainer_script: PathBuf::from(DEFAULT_TRAINER),
+            trainer_script: None,
             label_step: DEFAULT_LABEL_STEP,
             corpus_mode: "full_consolidation".into(),
             interval_seconds: 600,
@@ -1016,6 +1146,38 @@ mod tests {
             prune_only: false,
             dry_run: false,
         }
+    }
+
+    #[test]
+    fn freezer_resolves_only_the_bundle_pinned_trainer_script() {
+        let directory = TempDir::new().unwrap();
+        let bundle = directory.path().join("bundle");
+        let executable = bundle.join("runtime/bin/jope_selfplay_corpus_freezer");
+        let trainer = bundle.join("pytorch/training/test_exact_train.py");
+        fs::create_dir_all(executable.parent().unwrap()).unwrap();
+        fs::create_dir_all(trainer.parent().unwrap()).unwrap();
+        fs::write(&executable, b"binary").unwrap();
+        fs::write(&trainer, b"print('ok')\n").unwrap();
+        atomic_json(
+            &bundle.join("bundle.json"),
+            &json!({
+                "schema": "RuntimeBundle.v3",
+                "bundle_sha256": "a".repeat(64),
+                "files": [{
+                    "target": "pytorch/training/test_exact_train.py",
+                    "sha256": sha256_file(&trainer).unwrap(),
+                }],
+            }),
+        )
+        .unwrap();
+        let runtime = resolve_bundle_runtime_from(&executable, None).unwrap();
+        assert_eq!(runtime.trainer_script, trainer);
+
+        let mutable = directory.path().join("mutable/test_exact_train.py");
+        fs::create_dir_all(mutable.parent().unwrap()).unwrap();
+        fs::write(&mutable, b"print('mutable')\n").unwrap();
+        assert!(resolve_bundle_runtime_from(&executable, Some(&mutable)).is_err());
+        assert!(resolve_bundle_runtime_from(&executable, Some(&trainer)).is_ok());
     }
 
     /// Complete snapshot directories, oldest first, each aged past any plausible

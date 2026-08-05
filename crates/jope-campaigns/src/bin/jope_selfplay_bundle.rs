@@ -9,14 +9,18 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, File};
 use std::io::{BufReader, Read, Write};
 use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 const DEFAULT_SOURCE: &str = "/home/ubuntu/jope-dime";
-const DEFAULT_PRIME: &str = "/home/ubuntu/jope-prime";
+const PRIME_SOURCE_BUNDLE_SHA256: &str =
+    "9521ffcef11159339f314cb26430739d5472a54e1b521a868bd9ccb08acf6bd4";
+const ROLLBACK_BUNDLE_SHA256: &str = PRIME_SOURCE_BUNDLE_SHA256;
+const DEFAULT_PRIME: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/9521ffcef11159339f314cb26430739d5472a54e1b521a868bd9ccb08acf6bd4/pytorch";
 const DEFAULT_ENCODING_DRIVER: &str = "/home/ubuntu/jope-flywheel/encodings/_driver";
 const DEFAULT_RUNNER: &str = "/home/ubuntu/jope-flywheel/scripts/fweval_runner.sh";
 const DEFAULT_SCQ_PROJECTS: &str = "/home/ubuntu/smart_cluster/etc/projects.toml";
@@ -29,9 +33,8 @@ const DEFAULT_SERVICE_MANIFEST: &str = "manifests/selfplay/service-manifest.v3.j
 /// production the moment another workload takes the local GPU (2026-08-03:
 /// six vanished proposer dispatches, supply retry budget exhausted).
 /// Activation refuses to advance the pointer until the bundle is present on
-/// every listed node. JOPE_BUNDLE_SYNC_NODES overrides the list (comma
-/// separated; empty disables — single-node development only).
-const GPU_SYNC_NODES: &[&str] = &["xbabe1", "xbabe3"];
+/// every listed node. The production node set is not runtime-overridable.
+const GPU_SYNC_NODES: &[&str] = &["xbabe0", "xbabe1", "xbabe2", "xbabe3", "xbabe4"];
 
 /// These are the complete Python exception. Adding a file requires a code
 /// review of this exact list and an ML-only role.
@@ -120,6 +123,26 @@ struct Args {
     /// rebuilding from a source tree that may be changing concurrently.
     #[arg(long, value_name = "SHA256", conflicts_with = "activate")]
     activate_existing: Option<String>,
+    /// Verify a staged content-addressed bundle without changing any pointer.
+    #[arg(
+        long,
+        value_name = "SHA256",
+        conflicts_with_all = ["activate", "activate_existing", "synchronize_existing"]
+    )]
+    verify_existing: Option<String>,
+    /// Synchronize and hash-verify a staged bundle on all five nodes without
+    /// changing the active runtime pointer.
+    #[arg(
+        long,
+        value_name = "SHA256",
+        conflicts_with_all = ["activate", "activate_existing", "verify_existing"]
+    )]
+    synchronize_existing: Option<String>,
+    /// Explicit reciprocal review acknowledgements required for activation.
+    #[arg(long)]
+    codex_ack_reviewed: bool,
+    #[arg(long)]
+    claude_ack_reviewed: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -129,7 +152,7 @@ struct Candidate {
     python_role: Option<&'static str>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 struct InventoryRow {
     source: String,
     target: String,
@@ -137,6 +160,22 @@ struct InventoryRow {
     bytes: u64,
     #[serde(skip_serializing_if = "Option::is_none")]
     python_role: Option<&'static str>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct PrimeSupportFile {
+    source_bundle_target: String,
+    bundle_target: String,
+    sha256: String,
+    bytes: u64,
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct PrimeSupportProvenance {
+    source_bundle_sha256: &'static str,
+    source_bundle_manifest_sha256: String,
+    package_tree_sha256: String,
+    files: Vec<PrimeSupportFile>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -156,25 +195,73 @@ struct ServiceRow {
 
 fn main() -> Result<()> {
     let args = Args::parse();
-    if let Some(bundle_sha256) = args.activate_existing.as_deref() {
+    if args.activate || args.activate_existing.is_some() || args.synchronize_existing.is_some() {
+        ensure!(
+            args.codex_ack_reviewed && args.claude_ack_reviewed,
+            "bundle activation requires explicit Codex and Claude review acknowledgements"
+        );
+    }
+    if let Some(bundle_sha256) = args
+        .verify_existing
+        .as_deref()
+        .or(args.synchronize_existing.as_deref())
+        .or(args.activate_existing.as_deref())
+    {
         ensure!(
             bundle_sha256.len() == 64
                 && bundle_sha256
                     .bytes()
                     .all(|byte| { byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte) }),
-            "activate-existing requires a lowercase SHA-256"
+            "existing bundle verification requires a lowercase SHA-256"
         );
         let manifest_path = args.output_root.join(bundle_sha256).join("bundle.json");
         let manifest: Value = serde_json::from_reader(
             File::open(&manifest_path)
                 .with_context(|| format!("open staged bundle {}", manifest_path.display()))?,
         )?;
-        verify_existing(
-            manifest_path
-                .parent()
-                .context("staged bundle manifest has no parent")?,
-            &manifest,
-        )?;
+        if bundle_sha256 == ROLLBACK_BUNDLE_SHA256 {
+            verify_rollback_candidate(
+                manifest_path
+                    .parent()
+                    .context("rollback manifest has no bundle directory")?,
+                &manifest,
+            )?;
+        } else {
+            verify_existing(
+                manifest_path
+                    .parent()
+                    .context("staged bundle manifest has no parent")?,
+                &manifest,
+            )?;
+        }
+        if args.verify_existing.is_some() {
+            println!(
+                "{}",
+                serde_json::to_string(&json!({
+                    "schema": "JopeBundleVerification.v1",
+                    "bundle_sha256": bundle_sha256,
+                    "verified": true,
+                    "rollback_service_unit_closure_verified": bundle_sha256
+                        == ROLLBACK_BUNDLE_SHA256,
+                    "pointer_changed": false,
+                }))?
+            );
+            return Ok(());
+        }
+        if args.synchronize_existing.is_some() {
+            let receipt = sync_bundle_to_gpu_nodes(&args.output_root, bundle_sha256, &manifest)?;
+            ensure!(
+                receipt.get("complete").and_then(Value::as_bool) == Some(true),
+                "bundle synchronization is incomplete"
+            );
+            let receipt_path = args
+                .output_root
+                .join("synchronization")
+                .join(format!("{bundle_sha256}.v1.json"));
+            atomic_json(&receipt_path, &receipt)?;
+            println!("{}", serde_json::to_string(&receipt)?);
+            return Ok(());
+        }
         activate_manifest(&args.output_root, &manifest)?;
         println!("{}", serde_json::to_string(&manifest)?);
         return Ok(());
@@ -189,23 +276,229 @@ fn main() -> Result<()> {
 
 fn activate_manifest(output_root: &Path, manifest: &Value) -> Result<()> {
     let bundle_sha256 = manifest["bundle_sha256"].as_str().context("bundle hash")?;
+    let rollback_path = output_root.join(ROLLBACK_BUNDLE_SHA256).join("bundle.json");
+    let rollback_manifest: Value = serde_json::from_reader(
+        File::open(&rollback_path)
+            .with_context(|| format!("open rollback bundle {}", rollback_path.display()))?,
+    )?;
+    verify_rollback_candidate(
+        rollback_path
+            .parent()
+            .context("rollback manifest has no bundle directory")?,
+        &rollback_manifest,
+    )?;
+    let rollback_synchronization =
+        sync_bundle_to_gpu_nodes(output_root, ROLLBACK_BUNDLE_SHA256, &rollback_manifest)?;
+    ensure!(
+        rollback_synchronization
+            .get("complete")
+            .and_then(Value::as_bool)
+            == Some(true),
+        "rollback bundle is not verified on all five nodes"
+    );
     // Refuse to advance any activation pointer until the bundle exists on
     // every GPU node — a locally-activated, unsynced bundle killed wave
     // production on 2026-08-03 (see GPU_SYNC_NODES).
-    sync_bundle_to_gpu_nodes(output_root, bundle_sha256)?;
+    let synchronization = sync_bundle_to_gpu_nodes(output_root, bundle_sha256, manifest)?;
+    let synchronization_path = output_root
+        .join("synchronization")
+        .join(format!("{bundle_sha256}.v1.json"));
+    atomic_json(&synchronization_path, &synchronization)?;
+    let retention = retain_evaluators(output_root, bundle_sha256)?;
+    ensure!(
+        retention
+            .get("all_referenced_evaluators_retained")
+            .and_then(Value::as_bool)
+            == Some(true),
+        "evaluator retention is incomplete"
+    );
     let manifest_path = output_root.join(bundle_sha256).join("bundle.json");
     let pointer = json!({
         "schema": "JopeSelfplayRuntimeBundlePointer.v2",
         "bundle": manifest_path,
         "bundle_manifest_sha256": sha256_file(&manifest_path)?,
         "bundle_sha256": bundle_sha256,
+        "synchronization_receipt": synchronization_path,
+        "synchronization_receipt_sha256": sha256_file(&synchronization_path)?,
+        "synchronized_nodes": GPU_SYNC_NODES,
+        "rollback_bundle_sha256": ROLLBACK_BUNDLE_SHA256,
+        "rollback_synchronization": rollback_synchronization,
         "runtime": "rust",
     });
     atomic_json(&output_root.join("active.json"), &pointer)?;
     activate_current_bundle(output_root, bundle_sha256)
 }
 
+fn collect_evaluator_digests(value: &Value, output: &mut BTreeSet<String>) {
+    match value {
+        Value::Object(map) => {
+            for (key, value) in map {
+                if matches!(
+                    key.as_str(),
+                    "evaluator_sha256"
+                        | "original_evaluator_sha256"
+                        | "expected_evaluator_sha256"
+                        | "evaluator_binary_sha256"
+                ) {
+                    if let Some(digest) = value.as_str() {
+                        if digest.len() == 64
+                            && digest
+                                .bytes()
+                                .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+                        {
+                            output.insert(digest.to_owned());
+                        }
+                    }
+                }
+                collect_evaluator_digests(value, output);
+            }
+        }
+        Value::Array(rows) => {
+            for row in rows {
+                collect_evaluator_digests(row, output);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn collect_json_references(path: &Path, output: &mut BTreeSet<String>) -> Result<()> {
+    if !path.is_file() {
+        return Ok(());
+    }
+    let value: Value = serde_json::from_reader(
+        File::open(path).with_context(|| format!("open evaluator reference {}", path.display()))?,
+    )?;
+    collect_evaluator_digests(&value, output);
+    Ok(())
+}
+
+fn evaluator_reference_index(root: &Path) -> Result<BTreeMap<String, BTreeSet<String>>> {
+    let mut references = BTreeMap::<String, BTreeSet<String>>::new();
+    for (class, path) in [
+        (
+            "repair_state",
+            root.join("ops/causal-pair-repair-state.v1.json"),
+        ),
+        (
+            "repair_request",
+            root.join("ops/causal-pair-repair-queue.v1.json"),
+        ),
+        (
+            "unreplayable_disposition",
+            root.join("training/unreplayable-pair-disposition.v2.json"),
+        ),
+    ] {
+        let mut digests = BTreeSet::new();
+        collect_json_references(&path, &mut digests)?;
+        references.insert(class.to_owned(), digests);
+    }
+    let epoch_directory = root.join("training/causal-evidence-epochs");
+    let mut epoch_digests = BTreeSet::new();
+    if epoch_directory.is_dir() {
+        for entry in fs::read_dir(epoch_directory)? {
+            let path = entry?.path();
+            if path.extension().and_then(|value| value.to_str()) == Some("json") {
+                collect_json_references(&path, &mut epoch_digests)?;
+            }
+        }
+    }
+    references.insert("evidence_epoch".to_owned(), epoch_digests);
+    Ok(references)
+}
+
+/// Retain every evaluator still available in a content-addressed vault before
+/// advancing the active bundle pointer. Hard links make later bundle cleanup
+/// safe without copying or changing the evaluator bytes.
+fn retain_evaluators(output_root: &Path, active_bundle_sha256: &str) -> Result<Value> {
+    let root = output_root
+        .parent()
+        .context("runtime bundle root has no flywheel parent")?;
+    let vault = root.join("training/evaluator-vault");
+    fs::create_dir_all(&vault)?;
+    let mut retained = BTreeMap::<String, BTreeSet<String>>::new();
+    for entry in fs::read_dir(output_root)? {
+        let bundle = entry?;
+        if !bundle.file_type()?.is_dir() {
+            continue;
+        }
+        let bundle_sha256 = bundle.file_name().to_string_lossy().into_owned();
+        if bundle_sha256.len() != 64 {
+            continue;
+        }
+        let evaluator = bundle.path().join("runtime/bin/corpus_eval");
+        if !evaluator.is_file() {
+            continue;
+        }
+        let evaluator_sha256 = sha256_file(&evaluator)?;
+        let directory = vault.join(&evaluator_sha256);
+        fs::create_dir_all(&directory)?;
+        let target = directory.join("corpus_eval");
+        if target.is_file() {
+            ensure!(
+                sha256_file(&target)? == evaluator_sha256,
+                "evaluator vault content drift for {evaluator_sha256}"
+            );
+        } else {
+            fs::hard_link(&evaluator, &target).with_context(|| {
+                format!(
+                    "hard-link evaluator {} into {}",
+                    evaluator.display(),
+                    target.display()
+                )
+            })?;
+        }
+        retained
+            .entry(evaluator_sha256)
+            .or_default()
+            .insert(bundle_sha256);
+    }
+    ensure!(
+        retained
+            .values()
+            .any(|bundles| bundles.contains(active_bundle_sha256)),
+        "active bundle does not retain runtime/bin/corpus_eval"
+    );
+    let references = evaluator_reference_index(root)?;
+    let referenced = references
+        .values()
+        .flat_map(|digests| digests.iter().cloned())
+        .collect::<BTreeSet<_>>();
+    let unavailable = referenced
+        .iter()
+        .filter(|digest| !retained.contains_key(*digest))
+        .cloned()
+        .collect::<Vec<_>>();
+    let all_referenced_evaluators_retained = unavailable.is_empty();
+    let generated_at_ms = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
+    let index = json!({
+        "schema": "JopeEvaluatorRetentionIndex.v1",
+        "generated_at_ms": generated_at_ms,
+        "active_bundle_sha256": active_bundle_sha256,
+        "vault": vault,
+        "retained": retained.into_iter().map(|(evaluator_sha256, bundle_sha256)| {
+            let path = root.join("training/evaluator-vault").join(&evaluator_sha256).join("corpus_eval");
+            json!({
+                "evaluator_sha256": evaluator_sha256,
+                "path": path,
+                "bundle_sha256": bundle_sha256,
+            })
+        }).collect::<Vec<_>>(),
+        "reference_classes": references,
+        "referenced_evaluator_sha256": referenced,
+        "unavailable_referenced_evaluator_sha256": unavailable,
+        "all_referenced_evaluators_retained": all_referenced_evaluators_retained,
+        "cleanup_policy": "vault hard links are outside runtime-bundle cleanup scope",
+    });
+    atomic_json(
+        &root.join("training/evaluator-retention-index.v1.json"),
+        &index,
+    )?;
+    Ok(index)
+}
+
 fn build(args: &Args) -> Result<Value> {
+    let integration_commit = clean_detached_commit(&args.source)?;
     let service_manifest_path = args
         .service_manifest
         .clone()
@@ -217,9 +510,10 @@ fn build(args: &Args) -> Result<Value> {
                 service_manifest_path.display()
             )
         })?)?;
-    validate_service_manifest(&service_manifest)?;
+    validate_recovery_service_manifest(&service_manifest)?;
     let candidates = sources(args, &service_manifest, &service_manifest_path)?;
     let inventory = inventory(&candidates)?;
+    let prime_support = prime_support_provenance(args, &candidates, &inventory)?;
     let identity = inventory_identity(&inventory)?;
     let final_dir = args.output_root.join(&identity);
     let manifest_path = final_dir.join("bundle.json");
@@ -274,8 +568,19 @@ fn build(args: &Args) -> Result<Value> {
             "schema": "RuntimeBundle.v3",
             "bundle_sha256": identity,
             "runtime": "rust",
+            "integration_commit": integration_commit,
+            "clean_detached_source": true,
             "operational_python_allowed": false,
             "pytorch_python_allowlist": python_targets,
+            "prime_support": prime_support,
+            "required_sync_nodes": GPU_SYNC_NODES,
+            "five_node_synchronization": {
+                "schema": "JopeBundleSynchronizationContract.v1",
+                "receipt_schema": "JopeBundleSynchronizationReceipt.v1",
+                "receipt_relative_path": format!("synchronization/{identity}.v1.json"),
+                "required_nodes": GPU_SYNC_NODES,
+                "activation_requires_complete": true,
+            },
             "test_adaptive": true,
             "benchmark_valid": false,
             "selection_bias": "test-exact-reused",
@@ -293,6 +598,39 @@ fn build(args: &Args) -> Result<Value> {
         fs::remove_dir_all(&temporary)?;
     }
     result
+}
+
+fn git_output(source: &Path, arguments: &[&str]) -> Result<String> {
+    let output = std::process::Command::new("git")
+        .arg("-C")
+        .arg(source)
+        .args(arguments)
+        .output()
+        .with_context(|| format!("run git in {}", source.display()))?;
+    ensure!(
+        output.status.success(),
+        "git {} failed: {}",
+        arguments.join(" "),
+        String::from_utf8_lossy(&output.stderr).trim()
+    );
+    Ok(String::from_utf8(output.stdout)?.trim().to_owned())
+}
+
+fn clean_detached_commit(source: &Path) -> Result<String> {
+    ensure!(
+        git_output(source, &["status", "--porcelain"])?.is_empty(),
+        "runtime bundle source worktree is dirty"
+    );
+    ensure!(
+        git_output(source, &["rev-parse", "--abbrev-ref", "HEAD"])? == "HEAD",
+        "runtime bundle source must be a detached reviewed commit"
+    );
+    let commit = git_output(source, &["rev-parse", "HEAD"])?;
+    ensure!(
+        commit.len() == 40 && commit.bytes().all(|byte| byte.is_ascii_hexdigit()),
+        "runtime bundle integration commit is malformed"
+    );
+    Ok(commit)
 }
 
 fn sources(
@@ -346,6 +684,7 @@ fn sources(
         "manifests/selfplay/scq-projects.v3.toml",
         "manifests/selfplay/freshness-mcp-runtime.v2.json",
         "manifests/selfplay/causal-shadow.v2.json",
+        "manifests/selfplay/proposal-selection-policy.v1.json",
     ] {
         add(
             &mut selected,
@@ -397,13 +736,20 @@ fn sources(
     }
     add(
         &mut selected,
+        args.source
+            .join("manifests/selfplay/proposal-selection-policy.v1.json"),
+        "pytorch/proposals/proposal-selection-policy.v1.json".to_owned(),
+        None,
+    );
+    add(
+        &mut selected,
         args.encoding_driver.join("binexp/runner.sh"),
         "pytorch/encoding/runner.sh".to_owned(),
         None,
     );
     collect_extension(
-        &args.prime.join("src/jope"),
-        &args.prime.join("src"),
+        &args.prime.join("jope"),
+        &args.prime,
         "py",
         "pytorch",
         Some("pytorch_dependency_package"),
@@ -506,6 +852,12 @@ fn resolve_locator(
         return Ok(source.join(relative));
     }
     if let Some(relative) = locator.strip_prefix("prime:") {
+        let relative = match relative {
+            "scripts/prime_policy_trainer.py" => "training/prime_policy_trainer.py",
+            "scripts/ratchet_dl_update.py" => "training/ratchet_dl_update.py",
+            "scripts/encode_external.py" => "encoding/encode_external.py",
+            _ => relative,
+        };
         return Ok(prime.join(relative));
     }
     if let Some(relative) = locator.strip_prefix("encoding:") {
@@ -544,7 +896,7 @@ fn validate_python_candidate(
             .unwrap_or(false)
     });
     let dependency_package = candidate.python_role == Some("pytorch_dependency_package")
-        && candidate.source.starts_with(prime.join("src/jope"))
+        && candidate.source.starts_with(prime.join("jope"))
         && candidate.target.starts_with("pytorch/jope/")
         && candidate.target.ends_with(".py");
     ensure!(
@@ -602,19 +954,32 @@ fn validate_supply_pytorch_boundary(line: &str) -> Result<()> {
     Ok(())
 }
 
-fn sync_bundle_to_gpu_nodes(output_root: &Path, bundle_sha256: &str) -> Result<()> {
-    let nodes: Vec<String> = match std::env::var("JOPE_BUNDLE_SYNC_NODES") {
-        Ok(value) => value
-            .split(',')
-            .map(str::trim)
-            .filter(|node| !node.is_empty())
-            .map(str::to_owned)
-            .collect(),
-        Err(_) => GPU_SYNC_NODES.iter().map(|node| (*node).to_owned()).collect(),
-    };
+fn sync_bundle_to_gpu_nodes(
+    output_root: &Path,
+    bundle_sha256: &str,
+    manifest: &Value,
+) -> Result<Value> {
     let source = output_root.join(bundle_sha256);
     let local_manifest_sha256 = sha256_file(&source.join("bundle.json"))?;
-    for node in &nodes {
+    let rows = manifest
+        .get("files")
+        .and_then(Value::as_array)
+        .context("bundle manifest lacks file inventory for synchronization")?;
+    let expected = rows
+        .iter()
+        .map(|row| {
+            Ok((
+                row.get("target")
+                    .and_then(Value::as_str)
+                    .context("bundle file lacks target")?,
+                row.get("sha256")
+                    .and_then(Value::as_str)
+                    .context("bundle file lacks digest")?,
+            ))
+        })
+        .collect::<Result<Vec<_>>>()?;
+    let mut receipts = Vec::new();
+    for node in GPU_SYNC_NODES {
         let sync = std::process::Command::new("rsync")
             .arg("-a")
             .arg(&source)
@@ -626,23 +991,49 @@ fn sync_bundle_to_gpu_nodes(output_root: &Path, bundle_sha256: &str) -> Result<(
             "bundle sync to {node} failed: {}",
             String::from_utf8_lossy(&sync.stderr)
         );
-        let remote_manifest = source.join("bundle.json");
-        let check = std::process::Command::new("ssh")
-            .args(["-o", "BatchMode=yes", node, "sha256sum"])
-            .arg(remote_manifest.as_os_str())
+        let mut command = std::process::Command::new("ssh");
+        command.args(["-o", "BatchMode=yes", node, "sha256sum"]);
+        for (target, _) in &expected {
+            command.arg(source.join(target));
+        }
+        command.arg(source.join("bundle.json"));
+        let check = command
             .output()
             .with_context(|| format!("spawn bundle sync verification on {node}"))?;
-        let remote_sha256 = String::from_utf8_lossy(&check.stdout)
-            .split_whitespace()
-            .next()
-            .unwrap_or_default()
-            .to_owned();
         ensure!(
-            check.status.success() && remote_sha256 == local_manifest_sha256,
-            "bundle {bundle_sha256} failed post-sync verification on {node}"
+            check.status.success(),
+            "bundle {bundle_sha256} hash verification failed on {node}: {}",
+            String::from_utf8_lossy(&check.stderr).trim()
         );
+        let observed = String::from_utf8(check.stdout)?
+            .lines()
+            .filter_map(|line| line.split_whitespace().next().map(str::to_owned))
+            .collect::<Vec<_>>();
+        ensure!(
+            observed.len() == expected.len() + 1
+                && observed
+                    .iter()
+                    .zip(expected.iter())
+                    .all(|(actual, (_, digest))| actual == digest)
+                && observed.last().map(String::as_str) == Some(local_manifest_sha256.as_str()),
+            "bundle {bundle_sha256} failed complete asset verification on {node}"
+        );
+        receipts.push(json!({
+            "node": node,
+            "bundle_sha256": bundle_sha256,
+            "bundle_manifest_sha256": local_manifest_sha256,
+            "files_verified": expected.len(),
+            "verified": true,
+        }));
     }
-    Ok(())
+    Ok(json!({
+        "schema": "JopeBundleSynchronizationReceipt.v1",
+        "generated_at_ms": SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis(),
+        "bundle_sha256": bundle_sha256,
+        "required_nodes": GPU_SYNC_NODES,
+        "receipts": receipts,
+        "complete": receipts.len() == GPU_SYNC_NODES.len(),
+    }))
 }
 
 fn activate_current_bundle(output_root: &Path, bundle_sha256: &str) -> Result<()> {
@@ -709,6 +1100,89 @@ fn inventory(candidates: &[Candidate]) -> Result<Vec<InventoryRow>> {
         .collect()
 }
 
+fn prime_support_provenance(
+    args: &Args,
+    candidates: &[Candidate],
+    inventory: &[InventoryRow],
+) -> Result<PrimeSupportProvenance> {
+    let source_bundle = args
+        .prime
+        .parent()
+        .context("Prime capsule has no source bundle directory")?;
+    ensure!(
+        source_bundle.file_name().and_then(|name| name.to_str())
+            == Some(PRIME_SOURCE_BUNDLE_SHA256),
+        "Prime support must come from immutable bundle {PRIME_SOURCE_BUNDLE_SHA256}"
+    );
+    let manifest_path = source_bundle.join("bundle.json");
+    let manifest: Value = serde_json::from_reader(
+        File::open(&manifest_path)
+            .with_context(|| format!("open Prime source bundle {}", manifest_path.display()))?,
+    )?;
+    ensure!(
+        manifest.get("bundle_sha256").and_then(Value::as_str) == Some(PRIME_SOURCE_BUNDLE_SHA256),
+        "Prime source bundle identity drift"
+    );
+    let source_rows = manifest
+        .get("files")
+        .and_then(Value::as_array)
+        .context("Prime source bundle lacks file inventory")?;
+    let mut files = Vec::new();
+    let mut seen = BTreeSet::new();
+    for (candidate, row) in candidates.iter().zip(inventory) {
+        if !candidate.source.starts_with(&args.prime) {
+            continue;
+        }
+        let relative = candidate.source.strip_prefix(&args.prime)?;
+        let source_target = format!("pytorch/{}", relative.display());
+        let source_row = source_rows
+            .iter()
+            .find(|source| source.get("target").and_then(Value::as_str) == Some(&source_target))
+            .with_context(|| format!("Prime source bundle lacks {source_target}"))?;
+        ensure!(
+            source_row.get("sha256").and_then(Value::as_str) == Some(row.sha256.as_str())
+                && source_row.get("bytes").and_then(Value::as_u64) == Some(row.bytes),
+            "Prime source bundle content drift for {source_target}"
+        );
+        if seen.insert((source_target.clone(), row.target.clone())) {
+            files.push(PrimeSupportFile {
+                source_bundle_target: source_target,
+                bundle_target: row.target.clone(),
+                sha256: row.sha256.clone(),
+                bytes: row.bytes,
+            });
+        }
+    }
+    ensure!(!files.is_empty(), "Prime support capsule is empty");
+    files.sort_by(|left, right| {
+        left.source_bundle_target
+            .cmp(&right.source_bundle_target)
+            .then_with(|| left.bundle_target.cmp(&right.bundle_target))
+    });
+    let package_tree_sha256 = prime_support_identity(&files)?;
+    Ok(PrimeSupportProvenance {
+        source_bundle_sha256: PRIME_SOURCE_BUNDLE_SHA256,
+        source_bundle_manifest_sha256: sha256_file(&manifest_path)?,
+        package_tree_sha256,
+        files,
+    })
+}
+
+fn prime_support_identity(files: &[PrimeSupportFile]) -> Result<String> {
+    let rows = files
+        .iter()
+        .map(|row| {
+            json!([
+                row.source_bundle_target,
+                row.bundle_target,
+                row.sha256,
+                row.bytes,
+            ])
+        })
+        .collect::<Vec<_>>();
+    Ok(sha256_bytes(&serde_json::to_vec(&rows)?))
+}
+
 fn inventory_identity(inventory: &[InventoryRow]) -> Result<String> {
     let rows: Vec<Value> = inventory
         .iter()
@@ -724,13 +1198,129 @@ fn inventory_identity(inventory: &[InventoryRow]) -> Result<String> {
     Ok(sha256_bytes(&serde_json::to_vec(&rows)?))
 }
 
+fn verify_rollback_candidate(root: &Path, manifest: &Value) -> Result<()> {
+    ensure!(
+        manifest.get("bundle_sha256").and_then(Value::as_str) == Some(ROLLBACK_BUNDLE_SHA256)
+            && root.file_name().and_then(|name| name.to_str()) == Some(ROLLBACK_BUNDLE_SHA256),
+        "rollback candidate identity drift"
+    );
+    let rows = manifest
+        .get("files")
+        .and_then(Value::as_array)
+        .context("rollback bundle lacks file inventory")?;
+    let targets = rows
+        .iter()
+        .map(|row| {
+            let target = row
+                .get("target")
+                .and_then(Value::as_str)
+                .context("rollback file target is absent")?;
+            let expected = row
+                .get("sha256")
+                .and_then(Value::as_str)
+                .context("rollback file digest is absent")?;
+            ensure!(
+                sha256_file(&root.join(target))? == expected,
+                "rollback bundle content drift: {target}"
+            );
+            Ok(target)
+        })
+        .collect::<Result<BTreeSet<_>>>()?;
+    let service: ServiceManifest = serde_json::from_value(
+        manifest
+            .get("service_manifest")
+            .cloned()
+            .context("rollback bundle lacks service manifest")?,
+    )?;
+    validate_service_manifest(&service)?;
+    for row in service.services.iter().filter(|row| row.active) {
+        ensure!(
+            targets.contains(format!("runtime/bin/{}", row.binary).as_str())
+                && targets.contains(format!("runtime/systemd/{}", row.unit).as_str()),
+            "rollback service/unit closure is incomplete for {}",
+            row.unit
+        );
+    }
+    ensure!(
+        targets.contains("runtime/bin/corpus_eval"),
+        "rollback bundle lacks evaluator"
+    );
+    Ok(())
+}
+
 fn verify_existing(root: &Path, manifest: &Value) -> Result<()> {
     ensure!(manifest["runtime"] == "rust", "bundle runtime is not Rust");
     ensure!(
         manifest["operational_python_allowed"] == false,
         "bundle permits operational Python"
     );
+    ensure!(
+        manifest
+            .get("clean_detached_source")
+            .and_then(Value::as_bool)
+            == Some(true)
+            && manifest
+                .get("integration_commit")
+                .and_then(Value::as_str)
+                .is_some_and(|commit| {
+                    commit.len() == 40 && commit.bytes().all(|byte| byte.is_ascii_hexdigit())
+                }),
+        "bundle lacks clean detached integration provenance"
+    );
+    ensure!(
+        manifest
+            .pointer("/prime_support/source_bundle_sha256")
+            .and_then(Value::as_str)
+            == Some(PRIME_SOURCE_BUNDLE_SHA256),
+        "bundle does not bind immutable Prime support"
+    );
+    let required_nodes = manifest
+        .get("required_sync_nodes")
+        .and_then(Value::as_array)
+        .context("bundle lacks five-node synchronization contract")?;
+    ensure!(
+        required_nodes
+            == &GPU_SYNC_NODES
+                .iter()
+                .map(|node| Value::String((*node).to_owned()))
+                .collect::<Vec<_>>(),
+        "bundle synchronization node set drift"
+    );
+    ensure!(
+        manifest
+            .pointer("/five_node_synchronization/schema")
+            .and_then(Value::as_str)
+            == Some("JopeBundleSynchronizationContract.v1")
+            && manifest
+                .pointer("/five_node_synchronization/receipt_schema")
+                .and_then(Value::as_str)
+                == Some("JopeBundleSynchronizationReceipt.v1")
+            && manifest
+                .pointer("/five_node_synchronization/activation_requires_complete")
+                .and_then(Value::as_bool)
+                == Some(true)
+            && manifest
+                .pointer("/five_node_synchronization/required_nodes")
+                .and_then(Value::as_array)
+                == Some(required_nodes)
+            && manifest
+                .pointer("/five_node_synchronization/receipt_relative_path")
+                .and_then(Value::as_str)
+                == manifest
+                    .get("bundle_sha256")
+                    .and_then(Value::as_str)
+                    .map(|identity| format!("synchronization/{identity}.v1.json"))
+                    .as_deref(),
+        "bundle synchronization receipt contract drift"
+    );
     let rows = manifest["files"].as_array().context("manifest files")?;
+    let service_manifest: ServiceManifest = serde_json::from_value(
+        manifest
+            .get("service_manifest")
+            .cloned()
+            .context("bundle lacks embedded service manifest")?,
+    )?;
+    validate_recovery_service_manifest(&service_manifest)?;
     let identity_rows: Vec<_> = rows
         .iter()
         .map(|row| {
@@ -776,6 +1366,55 @@ fn verify_existing(root: &Path, manifest: &Value) -> Result<()> {
                 validate_no_python_runtime(&contents)?;
             }
         }
+    }
+    for service in service_manifest.services.iter().filter(|row| row.active) {
+        ensure!(
+            rows.iter().any(|row| {
+                row.get("target").and_then(Value::as_str)
+                    == Some(format!("runtime/bin/{}", service.binary).as_str())
+            }) && rows.iter().any(|row| {
+                row.get("target").and_then(Value::as_str)
+                    == Some(format!("runtime/systemd/{}", service.unit).as_str())
+            }),
+            "bundle service/unit closure is incomplete for {}",
+            service.unit
+        );
+    }
+    let prime_files = manifest
+        .pointer("/prime_support/files")
+        .and_then(Value::as_array)
+        .context("bundle lacks Prime per-file provenance")?;
+    let mut canonical_prime_files =
+        serde_json::from_value::<Vec<PrimeSupportFile>>(Value::Array(prime_files.clone()))?;
+    canonical_prime_files.sort_by(|left, right| {
+        left.source_bundle_target
+            .cmp(&right.source_bundle_target)
+            .then_with(|| left.bundle_target.cmp(&right.bundle_target))
+    });
+    let computed_prime_tree_sha256 = prime_support_identity(&canonical_prime_files)?;
+    ensure!(
+        manifest
+            .pointer("/prime_support/package_tree_sha256")
+            .and_then(Value::as_str)
+            == Some(computed_prime_tree_sha256.as_str()),
+        "Prime package-tree digest drift"
+    );
+    for prime in prime_files {
+        let target = prime
+            .get("bundle_target")
+            .and_then(Value::as_str)
+            .context("Prime support row lacks bundle target")?;
+        let digest = prime
+            .get("sha256")
+            .and_then(Value::as_str)
+            .context("Prime support row lacks digest")?;
+        ensure!(
+            rows.iter().any(|row| {
+                row.get("target").and_then(Value::as_str) == Some(target)
+                    && row.get("sha256").and_then(Value::as_str) == Some(digest)
+            }),
+            "Prime support row is absent from bundle inventory: {target}"
+        );
     }
     for required in [
         "pytorch/jope/__init__.py",
@@ -842,6 +1481,25 @@ fn validate_service_manifest(manifest: &ServiceManifest) -> Result<()> {
     Ok(())
 }
 
+fn validate_recovery_service_manifest(manifest: &ServiceManifest) -> Result<()> {
+    validate_service_manifest(manifest)?;
+    ensure!(
+        manifest.services.iter().any(|row| {
+            row.unit == "jope-reporting.service" && row.binary == "jope_reporting" && row.active
+        }),
+        "recovery bundle must install and activate jope-reporting.service"
+    );
+    ensure!(
+        manifest.services.iter().any(|row| {
+            row.unit == "jope-selfplay-expansion.service"
+                && row.binary == "jope_selfplay_expansion_driver"
+                && !row.active
+        }),
+        "recovery bundle must carry expansion as an inactive Encoder V2-gated unit"
+    );
+    Ok(())
+}
+
 fn ensure_bundle_target(root: &Path, target: &Path) -> Result<()> {
     ensure!(
         target.starts_with(root),
@@ -889,6 +1547,7 @@ fn atomic_json(path: &Path, value: &Value) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::os::unix::fs::MetadataExt;
 
     #[test]
     fn operational_python_is_rejected() {
@@ -927,7 +1586,7 @@ mod tests {
         };
         validate_python_candidate(&trainer, source, prime, encoding).unwrap();
         let dependency = Candidate {
-            source: prime.join("src/jope/data/active.py"),
+            source: prime.join("jope/data/active.py"),
             target: "pytorch/jope/data/active.py".to_owned(),
             python_role: Some("pytorch_dependency_package"),
         };
@@ -999,5 +1658,93 @@ mod tests {
         let mut invalid = valid;
         invalid.services[0].binary = "missing".to_owned();
         assert!(validate_service_manifest(&invalid).is_err());
+    }
+
+    #[test]
+    fn recovery_manifest_rejects_missing_reporting_or_active_expansion() {
+        let mut manifest = ServiceManifest {
+            schema: "JopeSelfplayServiceManifest.v3".to_owned(),
+            binaries: vec![
+                "jope_reporting".to_owned(),
+                "jope_selfplay_expansion_driver".to_owned(),
+            ],
+            services: vec![ServiceRow {
+                unit: "jope-selfplay-expansion.service".to_owned(),
+                binary: "jope_selfplay_expansion_driver".to_owned(),
+                owner: "encoder_v2_identity_gate_inactive".to_owned(),
+                active: false,
+            }],
+        };
+        assert!(validate_recovery_service_manifest(&manifest).is_err());
+
+        manifest.services.push(ServiceRow {
+            unit: "jope-reporting.service".to_owned(),
+            binary: "jope_reporting".to_owned(),
+            owner: "recovery_reporting".to_owned(),
+            active: true,
+        });
+        validate_recovery_service_manifest(&manifest).unwrap();
+
+        manifest.services[0].active = true;
+        assert!(validate_recovery_service_manifest(&manifest).is_err());
+    }
+
+    #[test]
+    fn rollback_identity_mismatch_is_rejected_before_activation() {
+        let temporary = tempfile::tempdir().unwrap();
+        let manifest = json!({"bundle_sha256": "b".repeat(64)});
+        assert!(verify_rollback_candidate(temporary.path(), &manifest).is_err());
+    }
+
+    #[test]
+    fn activation_retains_all_available_evaluators_and_indexes_missing_history() {
+        let temporary = tempfile::tempdir().unwrap();
+        let root = temporary.path();
+        let bundles = root.join("runtime-bundles");
+        let active = "a".repeat(64);
+        let previous = "b".repeat(64);
+        for (bundle, bytes) in [
+            (&active, b"active".as_slice()),
+            (&previous, b"previous".as_slice()),
+        ] {
+            let evaluator = bundles.join(bundle).join("runtime/bin/corpus_eval");
+            fs::create_dir_all(evaluator.parent().unwrap()).unwrap();
+            fs::write(&evaluator, bytes).unwrap();
+        }
+        let missing = "c".repeat(64);
+        atomic_json(
+            &root.join("ops/causal-pair-repair-state.v1.json"),
+            &json!({
+                "schema": "CausalPairRepairExecutorState.v1",
+                "entries": {"pair": {"original_evaluator_sha256": missing}},
+            }),
+        )
+        .unwrap();
+        let index = retain_evaluators(&bundles, &active).unwrap();
+        assert_eq!(index["schema"], "JopeEvaluatorRetentionIndex.v1");
+        assert_eq!(index["all_referenced_evaluators_retained"], false);
+        assert_eq!(index["unavailable_referenced_evaluator_sha256"][0], missing);
+        for (bundle, bytes) in [
+            (&active, b"active".as_slice()),
+            (&previous, b"previous".as_slice()),
+        ] {
+            let digest = sha256_bytes(bytes);
+            let source = bundles.join(bundle).join("runtime/bin/corpus_eval");
+            let retained = root
+                .join("training/evaluator-vault")
+                .join(digest)
+                .join("corpus_eval");
+            assert_eq!(
+                sha256_file(&retained).unwrap(),
+                sha256_file(&source).unwrap()
+            );
+            assert_eq!(
+                source.metadata().unwrap().ino(),
+                retained.metadata().unwrap().ino()
+            );
+        }
+        assert!(root
+            .join("training/evaluator-retention-index.v1.json")
+            .is_file());
     }
 }
