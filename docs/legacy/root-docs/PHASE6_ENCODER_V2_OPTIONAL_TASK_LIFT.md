@@ -101,6 +101,21 @@ This is the only runtime-critical predecessor.
 - Synchronize and hash-verify both the new bundle and rollback bundle across xbabe0 through xbabe4 without advancing the active pointer.
 - Do not activate until runway, freezer, causal, telemetry, rollback, unit, and continuity prerequisites pass.
 
+### A4. Eliminate path-shaped cluster outages
+
+Treat every absolute path consumed by a job spec or active unit as an explicit deployment input, never as an undocumented property of whichever node receives the job.
+
+- Publish `JopeAbsolutePathAudit.v1` from a read-only preflight over the exact active unit inventory and every spec selected for the cutover window.
+- Resolve logical systemd lines before extracting `ExecStart`, `ExecStartPre`, and `ExecStartPost`; a backslash continuation must not hide an executable or Python input.
+- Classify each absolute path as one of: exact bundle-local immutable file, content-addressed immutable external input, host executable/capability, or runtime-output parent. Unknown classes fail closed.
+- Rewrite `runtime-bundles/current/...` references to the proposed exact bundle digest for preflight checks without moving the live pointer.
+- Require every bundle-local and immutable external file to have the same type, size, mode policy, and SHA-256 on xbabe0 through xbabe4. Presence alone is insufficient.
+- Require host executable/capability paths to satisfy their typed contract on all eligible nodes. Capability probes test the resource itself and never `/etc/hostname`.
+- Require runtime-output parents to exist with the expected ownership/write policy, but never hash mutable outputs as if they were immutable inputs.
+- Reject live checkout paths, dangling symlinks, path traversal, colon-packed mixed roots, and a path that exists on only a subset of eligible nodes.
+- Prefer a copy already inside the content-addressed bundle. For example, proposers bind `JOPE_OPERATOR_REGISTRY` to the exact bundle-local registry, include its SHA-256 as a pinned input, and probe that path; the distributed `/home/ubuntu/jope-prime` copy is rollback compatibility only.
+- Keep the audit receipt beside bundle synchronization receipts and require a second zero-diff run immediately before activation.
+
 ## 6. Workstream B: define complete Encoder V2 identity
 
 ### B1. Deterministic identity split
@@ -396,14 +411,15 @@ Production expansion remains inactive until all gates are green:
 
 1. Phase 5 recovery continuity is green for 86,400 uninterrupted seconds.
 2. One effective Phase 5 bundle/process hash exists across all five nodes.
-3. Encoder V2 identity mutation tests pass.
-4. Same-capsule replay passes on the full release sample.
-5. Benchmark speed and resource gates pass.
-6. Optional-task readiness is typed and fresh; no task is admitted by missing-data default.
-7. Lift experiment is complete and reproducible.
-8. V2 shadow catalog runs for a pre-registered observation window without drift.
-9. V1 rollback is verified and V1 artifacts remain readable.
-10. Codex and Claude explicitly acknowledge the V2 bundle and activation in `REALTIME_AGENT_CHAT.md`.
+3. `JopeAbsolutePathAudit.v1` is green for every staged input and active unit on all five nodes.
+4. Encoder V2 identity mutation tests pass.
+5. Same-capsule replay passes on the full release sample.
+6. Benchmark speed and resource gates pass.
+7. Optional-task readiness is typed and fresh; no task is admitted by missing-data default.
+8. Lift experiment is complete and reproducible.
+9. V2 shadow catalog runs for a pre-registered observation window without drift.
+10. V1 rollback is verified and V1 artifacts remain readable.
+11. Codex and Claude explicitly acknowledge the V2 bundle and activation in `REALTIME_AGENT_CHAT.md`.
 
 Rollout is canary-first: one bounded V2 tranche, one catalog merge, one shadow/training observation, then an explicit hold for review. No automatic model promotion is coupled to V2 activation.
 
@@ -414,6 +430,7 @@ The schedule is expressed as dependency waves, not optimistic calendar promises.
 ### Wave 0: now, parallel with Phase 5 closure
 
 - Finish full-suite and capability-marker fixes.
+- Land the five-node absolute-path auditor and replace mutable external proposer inputs with exact bundle-local, hash-pinned inputs.
 - Land the detailed plan and ownership ledger.
 - Add pure V2 identity types, canonical hashing, and mutation tests only; no reader/writer activation.
 - Build the benchmark inventory query and baseline manifest generator in audit-only mode.
@@ -473,6 +490,7 @@ Phase 6 introduces or requires these interfaces:
 - `JopeOptionalTaskReadiness.v2`
 - `JopeEncoderLiftExperiment.v2`
 - `JopeEncoderLiftReport.v2`
+- `JopeAbsolutePathAudit.v1`
 - Existing `JopeFourTaskTelemetry.v1`, `JopeTaskRatingSnapshot.v1`, `JopeMicroWaveSupplyStatus.v2`, `JopeEvaluatorRetentionIndex.v1`, `JopeEffectiveUnitAudit.v1`, and `JopeRecoveryContinuity.v1`
 
 Every status has a timestamp, freshness budget, explicit input digests, typed absence, and fail-closed validation.
