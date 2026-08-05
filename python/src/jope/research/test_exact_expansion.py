@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import fcntl
 import hashlib
+import importlib
 import json
 import os
 import re
@@ -50,8 +51,8 @@ DATASET_DIM = 1_536
 TARGET_DIM = 512
 CONTEXT_STRIDE = (DATASET_DIM + TARGET_DIM) * 4
 STANDARDIZATION = Path(
-    "/home/ubuntu/jope/data/processed/active_v3_dual_20260706/"
-    "standardization.json"
+    "/home/ubuntu/jope-flywheel/encodings/foundation-v1/standardization/sha256/"
+    "daac224cf7c6d13a1bf74fc3bb7defd36f33bc3f30db35d3e881c16ede976d1f.json"
 )
 TRAIN_ENCODING_NAMES = (
     "hyperion3train128dim.vs",
@@ -400,10 +401,81 @@ def materialize_cache(
             raise
 
 
+# Root of the foundation-expert tree. `fusion.experts.TabPFNv3Reg.__init__`
+# hard-codes `sys.path.insert(0, "/home/ubuntu/fable_god")` and then imports
+# `python.elo_finetune.model_io` -- but that root was MOVED here and the old
+# path no longer exists, so the import raised ModuleNotFoundError, which
+# `encode_external` caught and reported as "cuda expert load failed; falling
+# back to cpu". The CPU fallback calls the same loader and fails identically,
+# so the encoder was dead on BOTH devices while the log blamed the device.
+# Putting the real root on sys.path fixes it without touching another repo:
+# `default_weights_dir()` locates the weights relative to its own package, and
+# the stale hard-coded path is simply skipped once it does not exist.
+FOUNDATION_EXPERT_ROOT = Path("/home/ubuntu/remote_super/fable_god")
+
+
+def ensure_foundation_expert_importable() -> None:
+    """Put the foundation expert tree on sys.path and PROVE it resolves.
+
+    The failure this guards against cost 854 seconds per attempt and reported
+    the wrong cause. A missing dependency must fail here, immediately, naming
+    the path it could not import from -- not degrade into a device message.
+    """
+
+    root = str(FOUNDATION_EXPERT_ROOT)
+    if root not in sys.path:
+        sys.path.insert(0, root)
+    try:
+        importlib.import_module("python.elo_finetune.model_io")
+    except ImportError as error:
+        raise SystemExit(
+            f"foundation expert is unimportable from {root}: {error}. "
+            "The encoder cannot run on ANY device until this resolves; do not "
+            "interpret a device fallback message as the cause."
+        ) from error
+
+
+# `jope.signatures.make_signatures` caps hyperion_vs at 300s by default and
+# exposes no environment or keyword override to its callers. Measured on a real
+# multiclass source, hyperion_vs takes ~344s on CPU and ~4s on a GPU -- so the
+# default fails on CPU by a margin of seconds, and it fails as a TIMEOUT, which
+# reads like a hang rather than a budget that is simply too small. The encoder
+# must also run on nodes with no GPU at all (xbabe4), so the CPU cost is not
+# exceptional, it is the floor. Widen it here rather than editing ~/jope.
+SIGNATURE_TIMEOUT_SECONDS = 3_600.0
+
+
+def widen_signature_timeout(seconds: float = SIGNATURE_TIMEOUT_SECONDS) -> None:
+    """Raise hyperion_vs's ceiling for this process. Idempotent.
+
+    `encode_external` lives in ~/jope/scripts but the `jope` package it imports
+    lives in ~/jope/src, so both roots have to be reachable before the patch
+    target can even be named.
+    """
+
+    jope_src = "/home/ubuntu/jope/src"
+    if jope_src not in sys.path:
+        sys.path.insert(0, jope_src)
+    import jope.signatures as signatures
+
+    if getattr(signatures.make_signatures, "_jope_dime_widened", False):
+        return
+    original = signatures.make_signatures
+
+    def widened(dataset_dir, **kwargs):
+        kwargs.setdefault("timeout_s", seconds)
+        return original(dataset_dir, **kwargs)
+
+    widened._jope_dime_widened = True
+    signatures.make_signatures = widened
+
+
 def existing_hyperion_encoder(source: Path, destination: Path, task: str) -> None:
     """Generate missing sidecars with JOPE's pinned train-only encoder."""
 
     del task
+    ensure_foundation_expert_importable()
+    widen_signature_timeout()
     jope_root = Path("/home/ubuntu/jope")
     sys.path.insert(0, str(jope_root / "scripts"))
     from encode_external import encode_external
