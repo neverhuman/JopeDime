@@ -70,7 +70,57 @@ const DL_RUN_POINTS_MAX: usize = 128;
 /// while a-g9 was training at epoch 14/24. Keying on the id prefix also makes
 /// the panel self-consistent: an arm flagged `is_trainer` is exactly one whose
 /// run dir feeds `collect_dl_history`.
-const TRAINER_ID_PREFIX: &str = "jope-selfplay-train-";
+/// Every id prefix a DL trainer run has ever used.
+///
+/// This must be a LIST, because the naming changed and the chart silently died
+/// when it did. The task-aware shadow trainer emits
+/// `jope-selfplay-shadow-<task>-<watermark>-s<seq>`, not the legacy
+/// `jope-selfplay-train-<watermark>-<recipe>`. With only the legacy prefix
+/// matched, `collect_dl_history` skipped every current run dir, so the loss
+/// panel froze on the last legacy run -- **2026-07-29 08:52, six days stale** --
+/// while a trainer was actively writing `train_metrics.jsonl` under the shadow
+/// name. It kept redrawing, so it looked alive; it just never fell, because it
+/// was not plotting the training that was happening.
+///
+/// The job's scq *project* is `jope-selfplay-train` for both, but the run dir is
+/// named from the job id, so the project name cannot be used here.
+const TRAINER_ID_PREFIXES: [&str; 2] = ["jope-selfplay-train-", "jope-selfplay-shadow-"];
+
+/// Is this run id a DL trainer, under any of its historical names?
+fn is_trainer_run_id(id: &str) -> bool {
+    TRAINER_ID_PREFIXES
+        .iter()
+        .any(|prefix| id.starts_with(prefix))
+}
+
+#[cfg(test)]
+mod trainer_id_tests {
+    use super::is_trainer_run_id;
+
+    /// The loss chart froze for six days because the trainer was renamed and this
+    /// predicate was not. Both schemes must be recognised, and neither the
+    /// proposer nor the eval lane may be mistaken for a trainer.
+    #[test]
+    fn both_trainer_naming_schemes_feed_the_loss_chart() {
+        // Current: the task-aware shadow trainer (live 2026-08-04).
+        assert!(is_trainer_run_id(
+            "jope-selfplay-shadow-regression-008145630-s000014"
+        ));
+        assert!(is_trainer_run_id(
+            "jope-selfplay-shadow-binary-005428139-s000010"
+        ));
+        // Legacy: still on disk, still worth plotting.
+        assert!(is_trainer_run_id("jope-selfplay-train-004754860-c-r000037"));
+
+        // Everything else must stay out of the DL history.
+        assert!(!is_trainer_run_id(
+            "jope-selfplay-cohort-propose-fbcd5459f2c1-0bff466581ab"
+        ));
+        assert!(!is_trainer_run_id("jte-051a60090d757cbbcf22cb66"));
+        assert!(!is_trainer_run_id("jcv-3e506ffe465718c5c"));
+        assert!(!is_trainer_run_id("jope-selfplay-coverage-001"));
+    }
+}
 /// Newest seeding-curve generations rendered in the tab-4 generations panel.
 const SEEDING_CURVE_ROWS: usize = 3;
 /// (ops status file, expected write cadence seconds) for the DL tab heartbeat panel.
@@ -1294,7 +1344,7 @@ fn discover_gpu_jobs(scq: &Value) -> Vec<(String, String, PathBuf, bool)> {
             let id = string_at(job, &["id"])?;
             let node = string_at(job, &["node"]).unwrap_or("-");
             let run_dir = string_at(job, &["run_dir"]).map(PathBuf::from)?;
-            let is_trainer = id.starts_with(TRAINER_ID_PREFIX);
+            let is_trainer = is_trainer_run_id(id);
             Some((id.to_owned(), node.to_owned(), run_dir, is_trainer))
         })
         .collect()
@@ -1620,7 +1670,7 @@ fn collect_dl_history(
     let mut found: Vec<(SystemTime, String, PathBuf)> = Vec::new();
     for entry in entries.filter_map(|entry| entry.ok()) {
         let run_id = entry.file_name().to_string_lossy().to_string();
-        if !run_id.starts_with(TRAINER_ID_PREFIX) {
+        if !is_trainer_run_id(&run_id) {
             continue;
         }
         // Cache the resolved metrics path against the attempt it was resolved
@@ -1664,6 +1714,16 @@ fn collect_dl_history(
     found.sort_by(|left, right| left.0.cmp(&right.0));
     let skip = found.len().saturating_sub(DL_GENERATIONS_MAX);
     let kept = found.split_off(skip);
+    // Cache retention must be keyed by the ORIGINAL run ids. The display label
+    // trims the "jope-selfplay-train-" prefix, and re-prefixing the label only
+    // round-trips for train-* runs: a shadow-* run's label re-prefixes to a key
+    // that never existed, so its cache entries were evicted on every 250 ms
+    // refresh -- forcing a full metrics re-read for exactly the runs that
+    // dominate the chart now.
+    let kept_ids = kept
+        .iter()
+        .map(|(_, run_id, _)| run_id.clone())
+        .collect::<HashSet<_>>();
     let mut runs = Vec::with_capacity(kept.len());
     for (modified, run_id, metrics) in kept {
         let reuse = state
@@ -1681,7 +1741,12 @@ fn collect_dl_history(
                 points
             }
         };
-        let run_label = run_id.trim_start_matches("jope-selfplay-train-").to_owned();
+        // Trim whichever trainer prefix matches so shadow-* runs get labels as
+        // short as train-* runs instead of their full 40+ character ids.
+        let run_label = TRAINER_ID_PREFIXES
+            .iter()
+            .find_map(|prefix| run_id.strip_prefix(prefix).map(str::to_owned))
+            .unwrap_or_else(|| run_id.clone());
         runs.push(RunSeries {
             short_label: short_generation_label(&run_label),
             run_label,
@@ -1695,10 +1760,6 @@ fn collect_dl_history(
     }
     // Drop caches for generations that fell out of the window so a long-lived
     // TUI cannot accumulate every trainer run ever made.
-    let kept_ids = runs
-        .iter()
-        .map(|run| format!("jope-selfplay-train-{}", run.run_label))
-        .collect::<HashSet<_>>();
     state.dl_points_cache.retain(|id, _| kept_ids.contains(id));
     state.dl_metrics_paths.retain(|id, _| kept_ids.contains(id));
     DlHistory {
@@ -6663,7 +6724,7 @@ mod tests {
         assert!(!propose.3, "propose job must not be flagged as a trainer");
         let trainer = jobs
             .iter()
-            .find(|(id, _, _, _)| id.starts_with(TRAINER_ID_PREFIX))
+            .find(|(id, _, _, _)| is_trainer_run_id(id))
             .expect("trainer job discovered");
         assert!(trainer.3, "the real trainer must still be flagged");
 

@@ -251,7 +251,9 @@ def main() -> None:
     # branch can be regenerated from ITS OWN accepted checkpoint. The output file
     # then carries a single (task, checkpoint) identity, which is what
     # jope_selfplay_wave.rs:1072 requires of any file it sanitizes.
-    parser.add_argument("--task", choices=("regression", "binary"))
+    parser.add_argument(
+        "--task", choices=("regression", "binary", "multiclass", "timeseries")
+    )
     parser.add_argument("--proposals-per-dataset", type=int, default=64)
     # 0 = strict (every context must reach the full budget). A positive floor
     # tolerates low-diversity contexts down to that many uniques, recording them
@@ -335,7 +337,14 @@ def main() -> None:
     started = time.perf_counter()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = args.output.with_name(f".{args.output.name}.tmp-{os.getpid()}")
-    counts = {"regression": 0, "binary": 0}
+    # Accounting maps carry ALL FOUR tasks even while sampling only iterates
+    # regression/binary. The canary path feeds this script entries derived from
+    # the LIVE catalog, and the live catalog now contains multiclass and
+    # timeseries rows -- with two-key maps, the first such entry KeyError'd at
+    # the histogram update and permanently wedged the canary executor (job id =
+    # intent_hash + implementation_sha, so the crash-looping job never rotated).
+    ALL_TASKS = ("regression", "binary", "multiclass", "timeseries")
+    counts = {task: 0 for task in ALL_TASKS}
     validity = {"decoded": 0, "kept": 0}
     # Native (model-sampled) unique count for every context that fell short of
     # the budget, keyed "<task>:<dataset_hash>". Always recorded now -- it is the
@@ -346,9 +355,9 @@ def main() -> None:
     # copies of another context's model-sampled rows, so counting them would
     # dilute exactly the signal this measures). A task whose entire histogram is
     # one head has mode-collapsed; jope_selfplay_alarms reads this field.
-    native_head_counts: dict[str, dict[str, int]] = {"regression": {}, "binary": {}}
-    native_unique_total = {"regression": 0, "binary": 0}
-    context_totals = {"regression": 0, "binary": 0}
+    native_head_counts: dict[str, dict[str, int]] = {task: {} for task in ALL_TASKS}
+    native_unique_total = {task: 0 for task in ALL_TASKS}
+    context_totals = {task: 0 for task in ALL_TASKS}
     with temporary.open("w", encoding="utf-8") as handle:
         entries = [
             entry
@@ -378,14 +387,23 @@ def main() -> None:
                 (row["task"], row["dataset_hash"])
                 for row in cohort.get("entries") or []
             }
-            if len(identities) != 128:
-                raise RuntimeError("proposal micro-cohort must contain 128 datasets")
+            # The wave contract is tasks.len() * 64 (micro_wave_size in
+            # selfplay_data.rs): 128, 192, or 256 datasets. A cohort without a
+            # declared task list predates the field and is two-task by
+            # definition -- the same default CohortPlan::tasks deserializes to.
+            cohort_tasks = cohort.get("tasks") or ["regression", "binary"]
+            expected = 64 * len(cohort_tasks)
+            if len(identities) != expected:
+                raise RuntimeError(
+                    f"proposal micro-cohort must contain {expected} datasets "
+                    f"for tasks {cohort_tasks}, found {len(identities)}"
+                )
             entries = [
                 entry
                 for entry in entries
                 if (entry["task"], entry["dataset_hash"]) in identities
             ]
-            if len(entries) != 128:
+            if len(entries) != expected:
                 raise RuntimeError("proposal micro-cohort is absent from the catalog")
             cohort_hash = sha256_file(args.cohort)
         for start in range(0, len(entries), args.batch_contexts):
@@ -419,7 +437,11 @@ def main() -> None:
                     )
                 embedding_tensor = torch.tensor(jittered, dtype=torch.float32)
             by_context: list[list[dict]] = [[] for _ in batch]
-            for task in ("regression", "binary"):
+            # Iterate the tasks PRESENT, not a hard-coded pair: a multiclass or
+            # timeseries context must be sampled with its own task conditioning,
+            # never silently skipped (skipping left the context empty and the
+            # wave builder counted it as a proposal deficiency).
+            for task in sorted({entry["task"] for entry in batch}):
                 indices = [index for index, entry in enumerate(batch) if entry["task"] == task]
                 if not indices:
                     continue
@@ -469,7 +491,7 @@ def main() -> None:
                 ]
                 if not deficient:
                     break
-                for task in ("regression", "binary"):
+                for task in sorted({batch[index]["task"] for index in deficient}):
                     indices = [
                         index
                         for index in deficient
@@ -602,7 +624,7 @@ def main() -> None:
     # A thin context is visible and survivable: it emits fewer direct rows and
     # the wave builder transfers the unused slots to GP.
     deficiency_by_task = {}
-    for task in ("regression", "binary"):
+    for task in sorted(context_totals):
         total = context_totals[task]
         if not total:
             continue

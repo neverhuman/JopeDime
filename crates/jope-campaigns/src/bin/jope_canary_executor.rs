@@ -4,8 +4,8 @@ use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
 use jope_dime_regressor::selfplay_ingest::ingest_receipt_with_manifest;
 use jope_dime_regressor::selfplay_runtime::{
-    atomic_json, checkpoint_epoch, evaluation_protocol_sha256, now_ms, read_json, sha256_bytes,
-    sha256_file, DEFAULT_ROOT, DEFAULT_SCQ,
+    atomic_json, checkpoint_epoch, evaluation_protocol_sha256, expected_evaluation_metric, now_ms,
+    read_json, sha256_bytes, sha256_file, DEFAULT_ROOT, DEFAULT_SCQ,
 };
 use jope_dime_regressor::selfplay_shadow::{
     CanaryContextClass, CanaryContextV2, CanaryIntentV2, CanaryMode, Sha256Digest, Task,
@@ -67,6 +67,14 @@ struct AggregateMetrics {
     context_gaps: Vec<(CanaryContextClass, f64)>,
     candidate_pairwise_gaps: Vec<f64>,
     gp_pairwise_gaps: Vec<f64>,
+    /// Contexts excluded from the order-statistic lift estimate because the two
+    /// arms returned UNEQUAL numbers of valid scores. Zipping sorted survivor
+    /// vectors of unequal length silently truncates to the shorter one -- so a
+    /// candidate that FAILED on its weakest proposals was compared only on its
+    /// surviving top scores, and failure could *improve* measured lift. An
+    /// incomplete context is reported, never silently averaged.
+    incomplete_accepted_contexts: usize,
+    incomplete_gp_contexts: usize,
 }
 
 fn normalized_intent(path: &Path) -> Result<CanaryIntentV2> {
@@ -669,11 +677,15 @@ fn build_evaluations(
             sha256_file(&train)? == train_sha && sha256_file(&test)? == test_sha,
             "canary dataset content drift"
         );
-        let metric = if pending.value.task == Task::Binary {
-            "auc"
-        } else {
-            "r2"
-        };
+        // Ask the protocol's own authority rather than keeping a local map. The previous
+        // `if Binary { "auc" } else { "r2" }` silently claimed r2 for timeseries and
+        // multiclass; `evaluation_protocol_sha256` validates against
+        // `expected_evaluation_metric`, so every MC/TS canary aborted with "evaluation
+        // protocol task/metric/tier mismatch" before writing a manifest. Fail-closed, but
+        // it left an anchored branch with an unrunnable verification lane. The metric is
+        // also bound a second time into `label_authority` below, so a local copy has two
+        // chances to drift.
+        let metric = expected_evaluation_metric(pending.value.task.as_str())?;
         let protocol = evaluation_protocol_sha256(
             pending.value.task.as_str(),
             metric,
@@ -1044,18 +1056,31 @@ fn summarize(
         candidate_sorted.sort_by(|a, b| b.total_cmp(a));
         accepted_sorted.sort_by(|a, b| b.total_cmp(a));
         gp_sorted.sort_by(|a, b| b.total_cmp(a));
-        aggregate.candidate_pairwise_gaps.extend(
-            candidate_sorted
-                .iter()
-                .zip(&accepted_sorted)
-                .map(|(candidate, accepted)| candidate - accepted),
-        );
-        aggregate.gp_pairwise_gaps.extend(
-            candidate_sorted
-                .iter()
-                .zip(&gp_sorted)
-                .map(|(candidate, gp)| candidate - gp),
-        );
+        // Order statistics are only meaningful over equal-length vectors. When
+        // an arm lost proposals to failures, the context is INCOMPLETE for that
+        // comparison and is counted, not truncated: failures already lower the
+        // arm's validity field, and letting them also shrink this vector let a
+        // candidate's failures raise its measured lift (epoch-06 lane 05).
+        if candidate_sorted.len() == accepted_sorted.len() {
+            aggregate.candidate_pairwise_gaps.extend(
+                candidate_sorted
+                    .iter()
+                    .zip(&accepted_sorted)
+                    .map(|(candidate, accepted)| candidate - accepted),
+            );
+        } else {
+            aggregate.incomplete_accepted_contexts += 1;
+        }
+        if candidate_sorted.len() == gp_sorted.len() {
+            aggregate.gp_pairwise_gaps.extend(
+                candidate_sorted
+                    .iter()
+                    .zip(&gp_sorted)
+                    .map(|(candidate, gp)| candidate - gp),
+            );
+        } else {
+            aggregate.incomplete_gp_contexts += 1;
+        }
         let candidate_best = candidate_sorted
             .first()
             .copied()
@@ -1164,6 +1189,12 @@ fn summarize(
             "validity": candidate_validity.min(gp_validity),
             "pairwise_lift": gp_lift,
         },
+        // Contexts whose arms returned unequal valid counts: their gaps are
+        // EXCLUDED from the lift means above rather than silently truncated to
+        // the shorter survivor vector. A reviewer reading pairwise_lift must be
+        // able to see how much of the panel actually backs it.
+        "incomplete_accepted_contexts": aggregate.incomplete_accepted_contexts,
+        "incomplete_gp_contexts": aggregate.incomplete_gp_contexts,
         "accepted_validity": accepted_validity,
         "gp_validity": gp_validity,
         "strict_wins": aggregate.strict_wins,

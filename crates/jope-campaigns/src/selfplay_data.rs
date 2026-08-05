@@ -11,10 +11,24 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 pub const MICRO_TASK_SIZE: usize = 64;
+/// The two-task wave shape. Retained as the *legacy* size: it is what every cohort written
+/// before cohorts declared their task set has, and what `micro_wave_size` returns for two
+/// tasks. New code should call `micro_wave_size` rather than assume this constant.
 pub const MICRO_WAVE_SIZE: usize = 128;
 pub const STABLE_ANCHOR_SLOTS: usize = 16;
 pub const LEAST_OBSERVED_SLOTS: usize = 32;
 pub const HARD_UNCERTAIN_SLOTS: usize = 16;
+
+/// Datasets in a micro-wave that lanes `tasks`.
+///
+/// The per-task structure stays frozen — every task contributes exactly `MICRO_TASK_SIZE`
+/// rows split 16 anchor / 32 least-observed / 16 hard-uncertain — so widening the wave is
+/// purely additive and touches no RNG modulus. `GP_SEED_SLOTS` is unaffected because
+/// `export_gp_seeds` filters by `(task, dataset_hash)`: its 64-slot contract is per-dataset,
+/// not per-wave.
+pub fn micro_wave_size(tasks: &[String]) -> usize {
+    tasks.len() * MICRO_TASK_SIZE
+}
 
 pub const WAVE_SIZE: usize = 256;
 pub const LOCAL_ELITE_SLOTS: usize = 32;
@@ -654,25 +668,44 @@ pub fn select_micro_cohort(
     observations: &HashMap<(String, String), u64>,
     wave_id: &str,
     admission: &MicroAdmission,
+    active_optional_tasks: &[String],
 ) -> Result<Vec<SelectedMicroDataset>> {
     ensure!(!wave_id.is_empty(), "wave id is absent");
     admission.validate()?;
+    ensure!(
+        active_optional_tasks.iter().all(|task| {
+            crate::selfplay_expansion::TASKS.contains(&task.as_str())
+                && !matches!(task.as_str(), "regression" | "binary")
+        }),
+        "active optional task list may only name multiclass/timeseries"
+    );
     let mut selected_all = Vec::with_capacity(MICRO_WAVE_SIZE);
     for task in crate::selfplay_expansion::TASKS {
-        if !matches!(task, "regression" | "binary") {
-            continue;
-        }
         let pool = entries
             .iter()
             .filter(|row| row.task == task)
             .cloned()
             .collect::<Vec<_>>();
-        if pool.is_empty() && !matches!(task, "regression" | "binary") {
+        // Regression and binary are mandatory -- they are the frozen backbone, and a
+        // short pool there is a real defect that must surface. Multiclass and
+        // timeseries join ONLY when explicitly activated by the operator AND their
+        // pool can fill a whole lane. Explicit activation is the epoch-06 lane-01
+        // correction to the original implicit opt-in: wave 546 was planned as a
+        // 192-entry cohort the moment the catalog crossed 64 multiclass rows, and
+        // the pinned proposer bundle -- still two-task -- rejected it 17 times and
+        // idled the whole cluster behind the one-wave-in-flight rule. Task
+        // membership must never toggle on mutable pool state alone; it is an
+        // operator decision made after the downstream path is proven end to end.
+        let mandatory = matches!(task, "regression" | "binary");
+        if !mandatory
+            && (!active_optional_tasks.iter().any(|active| active == task)
+                || pool.len() < MICRO_TASK_SIZE)
+        {
             continue;
         }
         ensure!(
             pool.len() >= MICRO_TASK_SIZE,
-            "{task}: a micro-wave requires at least 64 datasets"
+            "{task}: a micro-wave requires at least {MICRO_TASK_SIZE} datasets"
         );
         ensure!(
             pool.iter()
@@ -908,8 +941,15 @@ pub fn select_micro_cohort(
             micro_lane: MicroLane::HardUncertain,
         }));
     }
+    // The wave is however many lanes actually qualified, each exactly MICRO_TASK_SIZE.
+    let laned_tasks = crate::selfplay_expansion::TASKS
+        .iter()
+        .filter(|task| selected_all.iter().any(|row| row.dataset.task == **task))
+        .map(|task| (*task).to_owned())
+        .collect::<Vec<_>>();
+    let expected = micro_wave_size(&laned_tasks);
     ensure!(
-        selected_all.len() == MICRO_WAVE_SIZE,
+        selected_all.len() == expected,
         "deterministic micro-cohort is incomplete"
     );
     ensure!(
@@ -918,7 +958,7 @@ pub fn select_micro_cohort(
             .map(|row| (row.dataset.task.as_str(), row.dataset.dataset_hash.as_str()))
             .collect::<HashSet<_>>()
             .len()
-            == MICRO_WAVE_SIZE,
+            == expected,
         "deterministic micro-cohort repeats a dataset identity"
     );
     Ok(selected_all)
@@ -1344,9 +1384,9 @@ mod tests {
             .collect::<Vec<_>>();
         let policy = MicroAdmission::default();
         let first =
-            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000001", &policy).unwrap();
+            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000001", &policy, &[]).unwrap();
         let second =
-            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000001", &policy).unwrap();
+            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000001", &policy, &[]).unwrap();
         assert_eq!(first, second);
         assert_eq!(first.len(), 128);
         for task in ["regression", "binary"] {
@@ -1379,8 +1419,18 @@ mod tests {
         }
     }
 
+    /// Activation is explicit AND floor-checked; a partial future task never blocks supply.
+    ///
+    /// Three properties in one fixture, learned from the wave-546 incident (a 192-entry
+    /// cohort auto-planned the moment the catalog crossed 64 multiclass rows, while the
+    /// pinned proposer was still two-task -- 17 identical failures, cluster idle):
+    /// 1. an ACTIVATED task at or above the floor joins with a full 16/32/16 lane;
+    /// 2. an activated task BELOW the floor (timeseries at 42) is quietly excluded
+    ///    rather than raising -- it must never block supply;
+    /// 3. without activation, the same pools produce a two-task 128 cohort no matter
+    ///    how large the optional pools are -- pool size alone must never change shape.
     #[test]
-    fn partial_future_task_catalog_does_not_block_legacy_supply() {
+    fn optional_tasks_join_only_when_activated_and_at_the_floor() {
         let entries = [
             ("regression", 80),
             ("binary", 80),
@@ -1391,18 +1441,53 @@ mod tests {
         .flat_map(|(task, count)| (0..count).map(move |index| micro(task, index)))
         .collect::<Vec<_>>();
 
+        let activated = ["multiclass".to_owned(), "timeseries".to_owned()];
         let selected = select_micro_cohort(
             &entries,
             &HashMap::new(),
             "strict-wave-000002",
             &MicroAdmission::default(),
+            &activated,
         )
         .unwrap();
 
-        assert_eq!(selected.len(), 128);
-        assert!(selected
-            .iter()
-            .all(|row| matches!(row.dataset.task.as_str(), "regression" | "binary")));
+        assert_eq!(selected.len(), 3 * MICRO_TASK_SIZE);
+        for task in ["regression", "binary", "multiclass"] {
+            assert_eq!(
+                selected
+                    .iter()
+                    .filter(|row| row.dataset.task == task)
+                    .count(),
+                MICRO_TASK_SIZE,
+                "{task} must fill exactly one lane"
+            );
+        }
+        assert!(
+            !selected
+                .iter()
+                .any(|row| row.dataset.task == "timeseries"),
+            "an activated task below the lane floor must not enter the cohort"
+        );
+
+        let unactivated = select_micro_cohort(
+            &entries,
+            &HashMap::new(),
+            "strict-wave-000002",
+            &MicroAdmission::default(),
+            &[],
+        )
+        .unwrap();
+        assert_eq!(
+            unactivated.len(),
+            2 * MICRO_TASK_SIZE,
+            "without explicit activation the wave must stay two-task"
+        );
+        assert!(
+            unactivated
+                .iter()
+                .all(|row| matches!(row.dataset.task.as_str(), "regression" | "binary")),
+            "pool size alone must never widen the wave"
+        );
     }
 
     /// A wide pool of unseen datasets plus a block of capped ones: the cap must
@@ -1422,7 +1507,7 @@ mod tests {
             }
         }
         let cohort =
-            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000042", &policy).unwrap();
+            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000042", &policy, &[]).unwrap();
         assert_eq!(cohort.len(), MICRO_WAVE_SIZE);
         for task in ["regression", "binary"] {
             let rows = cohort
@@ -1499,7 +1584,7 @@ mod tests {
             }
         }
         let cohort =
-            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000043", &policy).unwrap();
+            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000043", &policy, &[]).unwrap();
         for task in ["regression", "binary"] {
             let least = cohort
                 .iter()
@@ -1544,7 +1629,7 @@ mod tests {
             }
         }
         let cohort =
-            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000044", &policy).unwrap();
+            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000044", &policy, &[]).unwrap();
         assert_eq!(cohort.len(), MICRO_WAVE_SIZE);
         for task in ["regression", "binary"] {
             for (lane, want) in [
@@ -1583,7 +1668,7 @@ mod tests {
             .iter()
             .all(|row| !row.stable_anchor && !row.golden42 && row.current_catalog == Some(false)));
         let cohort =
-            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000046", &policy).unwrap();
+            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000046", &policy, &[]).unwrap();
         assert_eq!(cohort.len(), MICRO_WAVE_SIZE);
         for task in ["regression", "binary"] {
             assert_eq!(
@@ -1611,7 +1696,7 @@ mod tests {
             }
         }
         let cohort =
-            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000045", &policy).unwrap();
+            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000045", &policy, &[]).unwrap();
         assert_eq!(cohort.len(), MICRO_WAVE_SIZE);
     }
 

@@ -1870,17 +1870,24 @@ fn valid_micro_waves(root: &Path, checkpoint_sha256: &str, epoch: &str) -> Resul
                 .or_else(|| summary.get("model_checkpoint_sha256"))
                 .and_then(Value::as_str)
                 == Some(checkpoint_sha256)
-            && summary.get("datasets").and_then(Value::as_u64) == Some(128)
+            // Shape check driven by the summary's own task_datasets map: every
+            // declared task carries exactly one 64-dataset lane, the mandatory
+            // regression/binary backbone is present, and the dataset total is
+            // the lane sum. The previous literal (exactly 128 = 64+64) silently
+            // dropped valid 192/256 waves -- a whole wave of evaluation work
+            // vanishing with no error is exactly the failure class epoch-06
+            // lane 09 warned about.
             && summary
                 .get("task_datasets")
-                .and_then(|value| value.get("regression"))
-                .and_then(Value::as_u64)
-                == Some(64)
-            && summary
-                .get("task_datasets")
-                .and_then(|value| value.get("binary"))
-                .and_then(Value::as_u64)
-                == Some(64)
+                .and_then(Value::as_object)
+                .is_some_and(|tasks| {
+                    !tasks.is_empty()
+                        && tasks.values().all(|count| count.as_u64() == Some(64))
+                        && tasks.contains_key("regression")
+                        && tasks.contains_key("binary")
+                        && summary.get("datasets").and_then(Value::as_u64)
+                            == Some(64 * tasks.len() as u64)
+                })
             && summary
                 .get("candidates_per_dataset")
                 .and_then(Value::as_u64)

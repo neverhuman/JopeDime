@@ -342,7 +342,11 @@ def request_entries(request: dict, catalog: dict, data_path: Path) -> list[dict]
     if request.get("schema") not in SUPPORTED_REQUEST_SCHEMAS:
         raise RuntimeError("unsupported context proposal request")
     task = request.get("task")
-    if task not in ("binary", "regression", "mixed"):
+    # All four task families plus the "mixed" cohort request. This gate crashed
+    # wave 546 seventeen times: the Rust planner produced a three-task cohort
+    # while this validator still named two tasks, and the whole cluster idled
+    # behind the failed proposer. The task list must track the wave contract.
+    if task not in ("binary", "regression", "multiclass", "timeseries", "mixed"):
         raise RuntimeError("context proposal request has an invalid task")
     requested = request.get("requested_contexts", request.get("contexts"))
     if not isinstance(requested, list) or not requested:
@@ -365,7 +369,7 @@ def request_entries(request: dict, catalog: dict, data_path: Path) -> list[dict]
     with data_path.open("rb") as data_handle:
         for requested_row in requested:
             row_task = requested_row.get("task", task)
-            if row_task not in ("binary", "regression"):
+            if row_task not in ("binary", "regression", "multiclass", "timeseries"):
                 raise RuntimeError("requested context has an invalid task")
             if task != "mixed" and row_task != task:
                 raise RuntimeError("requested context crosses the request task")
@@ -702,8 +706,8 @@ def main() -> None:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = args.output.with_name(f".{args.output.name}.tmp-{os.getpid()}")
     permanent_missing = 0
-    ready_by_task = {"binary": 0, "regression": 0}
-    requested_by_task = {"binary": 0, "regression": 0}
+    ready_by_task = {t: 0 for t in ("binary", "regression", "multiclass", "timeseries")}
+    requested_by_task = {t: 0 for t in ("binary", "regression", "multiclass", "timeseries")}
     with temporary.open("w", encoding="utf-8") as handle:
         for entry, artifact in final_artifacts:
             task = entry["task"]

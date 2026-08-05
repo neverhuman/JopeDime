@@ -9,9 +9,9 @@ use jope_dime_regressor::selfplay_shadow::{
     deterministic_canary_contexts, validate_panel_consumption, CanaryContextV2,
     CausalEvidenceLedgerV3, PlateauCountedCandidateV1, PlateauDiagnosisV1, PlateauDiagnosisV2,
     RecipeChangeDirectiveV1, SealedPanelConsumptionV1, SealedPanelPoolV2, Sha256Digest,
-    ShadowAlternationState, ShadowCheckpointV1, Task, TaskCanaryStreaks,
-    TaskPromotionEvaluationV3, TrainerIntentV2, TrainerMode, PLATEAU_DIAGNOSIS_V2_SCHEMA,
-    SEALED_PANEL_CONSUMPTION_V1_SCHEMA, SHADOW_CHECKPOINT_SCHEMA, TRAINER_INTENT_V3_SCHEMA,
+    ShadowAlternationState, ShadowCheckpointV1, Task, TaskCanaryStreaks, TaskPromotionEvaluationV3,
+    TrainerIntentV2, TrainerMode, PLATEAU_DIAGNOSIS_V2_SCHEMA, SEALED_PANEL_CONSUMPTION_V1_SCHEMA,
+    SHADOW_CHECKPOINT_SCHEMA, TRAINER_INTENT_V3_SCHEMA,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -591,10 +591,27 @@ fn audited_terminal_retry(
     intent: &ActiveIntent,
     jobs: &[SchedulerJob],
 ) -> Result<bool> {
-    let terminal = jobs.iter().any(|job| {
-        job.id == intent.trainer.immutable_job_identity
-            && matches!(job.state.as_str(), "failed" | "cancelled")
-    });
+    // A job the scheduler LOST is terminal too, and it is the case that actually
+    // strands the loop. `scq ls` lists terminal states (a completed job is still
+    // there), so a job missing from the listing entirely has no record, no run
+    // directory and no result -- it can never reach "failed"/"cancelled", so
+    // requiring one of those states made the recovery audit unreachable and the
+    // intent immortal. That is how shadow-regression-008145630-s000011 stranded
+    // the regression lane on 2026-08-04: dispatched, one cycle of
+    // `active_trainer_preserved`, then gone with nothing to audit.
+    //
+    // This does NOT self-release: the operator audit file below is still
+    // required, and it must be bound to this exact job id and spec digest. That
+    // gate also covers the benign race where a just-submitted job has not yet
+    // appeared in the listing -- no operator will have audited a job that is
+    // seconds old.
+    let listed = jobs
+        .iter()
+        .find(|job| job.id == intent.trainer.immutable_job_identity);
+    let terminal = match listed {
+        Some(job) => matches!(job.state.as_str(), "failed" | "cancelled"),
+        None => true,
+    };
     if !terminal {
         return Ok(false);
     }
@@ -660,32 +677,74 @@ fn shadow_canary_warm_start_eligible(
     Ok(shadow_summary_eligible(&summary))
 }
 
+/// The candidate validity bar for one canary: the absolute 0.99 floor whenever the
+/// environment is healthy, otherwise the incumbent's own validity.
+///
+/// `accepted_validity` and `gp_validity` describe the INCUMBENT and the GP lane, not the
+/// challenger. Gating on them absolutely deadlocked the lane: 5 of the 8 canaries taken
+/// against `fbcd5459` reported an environment below 0.99, so no candidate could promote
+/// however good it was — and a degraded environment is exactly when a new checkpoint is
+/// most needed. They are now reported diagnostics. The challenger must still be no worse
+/// than the incumbent, and must still clear 0.99 whenever the incumbent does.
+fn candidate_validity_floor(accepted_validity: f64) -> f64 {
+    accepted_validity.min(0.99)
+}
+
+/// Canary lift floor: a candidate must not be worse than its parent.
+const MINIMUM_CANARY_LIFT: f64 = -0.005;
+
+/// Screening backstop on proposed-genome evaluation cost. A candidate whose proposals
+/// are pathologically expensive cannot screen through on a large lift alone.
+const MAXIMUM_CANARY_LATENCY_RATIO: f64 = 4.0;
+
+/// Does a candidate's advantage justify the evaluation compute its proposals spend?
+///
+/// `latency_ratio` is NOT wall-clock or contention: `jope_canary_executor.rs:976-996`
+/// builds it from the canary evaluation receipts' `runtime_seconds` per proposed genome,
+/// and both lanes are evaluated in the same batch. It is how much more expensive the
+/// candidate's proposals are to fit and score, which at a fixed budget is directly fewer
+/// candidates evaluated per wave.
+///
+/// A flat `latency_ratio <= 1.25` answered that with a magic number, and it rejected
+/// `8cadebd2` — +0.1748 lift over its parent, +0.0698 over GP, every other criterion
+/// clean — for costing 1.73x. The honest form needs no threshold: a candidate that is no
+/// more expensive than its parent keeps the existing "not worse" contract, and a
+/// candidate that spends MORE has to actually win, not merely avoid regressing. The
+/// backstop then refuses a pathologically expensive candidate on any lift at all.
+fn canary_compute_trade_ok(pairwise_lift: f64, latency_ratio: f64) -> bool {
+    if !latency_ratio.is_finite() || latency_ratio <= 0.0 || !pairwise_lift.is_finite() {
+        return false;
+    }
+    if latency_ratio > MAXIMUM_CANARY_LATENCY_RATIO {
+        return false;
+    }
+    latency_ratio <= 1.0 || pairwise_lift > 0.0
+}
+
 fn shadow_summary_eligible(summary: &Value) -> bool {
     let metric = summary.get("candidate_vs_accepted").unwrap_or(&Value::Null);
+    let accepted_validity = summary.get("accepted_validity").and_then(Value::as_f64);
     summary
         .get("contexts")
         .and_then(Value::as_array)
         .is_some_and(|contexts| contexts.len() == 16)
-        && metric
-            .get("validity")
-            .and_then(Value::as_f64)
-            .is_some_and(|value| value >= 0.99)
-        && summary
-            .get("accepted_validity")
-            .and_then(Value::as_f64)
-            .is_some_and(|value| value >= 0.99)
+        && accepted_validity.is_some_and(f64::is_finite)
         && summary
             .get("gp_validity")
             .and_then(Value::as_f64)
-            .is_some_and(|value| value >= 0.99)
+            .is_some_and(f64::is_finite)
+        && metric
+            .get("validity")
+            .and_then(Value::as_f64)
+            .zip(accepted_validity)
+            .is_some_and(|(candidate, accepted)| candidate >= candidate_validity_floor(accepted))
         && metric
             .get("pairwise_lift")
             .and_then(Value::as_f64)
-            .is_some_and(|value| value >= -0.005)
-        && metric
-            .get("latency_ratio")
-            .and_then(Value::as_f64)
-            .is_some_and(|value| value <= 1.25)
+            .zip(metric.get("latency_ratio").and_then(Value::as_f64))
+            .is_some_and(|(lift, latency_ratio)| {
+                lift >= MINIMUM_CANARY_LIFT && canary_compute_trade_ok(lift, latency_ratio)
+            })
         && metric
             .get("stability")
             .and_then(Value::as_f64)
@@ -837,10 +896,9 @@ fn publish_plateau_diagnoses(
                 by_candidate.insert(candidate, (created, value));
             }
         }
-        let mut rejected = by_candidate
+        let (eligible, mut rejected): (Vec<_>, Vec<_>) = by_candidate
             .into_iter()
-            .filter(|(_, (_, summary))| !shadow_summary_eligible(summary))
-            .collect::<Vec<_>>();
+            .partition(|(_, (_, summary))| shadow_summary_eligible(summary));
         rejected.sort_by_key(|(_, (created, _))| *created);
         // Recipe scoping: a rejected shadow counts toward THIS plateau only
         // if it was trained with the recipe the lane would use right now.
@@ -849,14 +907,38 @@ fn publish_plateau_diagnoses(
         // CURRENT identity disables scoping entirely (v1 behavior).
         let current_identity = current_recipe_identities.get(&task);
         let directive_present = recipe_change_directive(root, task, parent);
-        let mut counted = Vec::new();
-        for (candidate, (created, summary)) in rejected {
-            let identity = resolve_candidate_recipe_identity(root, task, &candidate)?;
+        let scoped = |candidate: &Sha256Digest| -> Result<(bool, Option<String>)> {
+            let identity = resolve_candidate_recipe_identity(root, task, candidate)?;
             let counts = match (&identity, current_identity) {
                 (Some(candidate_identity), Some(current)) => candidate_identity == current,
                 (Some(_), None) => true,
                 (None, _) => !directive_present,
             };
+            Ok((counts, identity))
+        };
+        // A lane that has a PASSING shadow on this parent is not plateaued,
+        // however many were rejected alongside it. The diagnosis published below
+        // asserts that the recipe is exhausted and must be changed; a candidate
+        // that cleared every bar on the same parent, under the same recipe
+        // identity, is direct evidence that it is not. Counting only rejections
+        // let three historical losses pause a lane that already had a winner
+        // sitting on it -- the loop then trains nothing, and the winner is never
+        // chained, so the parent never changes and the plateau never clears.
+        // The eligible candidate is held to the SAME recipe scoping as the
+        // rejections, so a stale pass cannot unlatch a genuinely stuck lane.
+        let mut passing = false;
+        for (candidate, _) in &eligible {
+            if scoped(candidate)?.0 {
+                passing = true;
+                break;
+            }
+        }
+        if passing {
+            continue;
+        }
+        let mut counted = Vec::new();
+        for (candidate, (created, summary)) in rejected {
+            let (counts, identity) = scoped(&candidate)?;
             if counts {
                 counted.push((candidate, identity, created, summary));
             }
@@ -1594,6 +1676,9 @@ fn render_spec(
          \"--accepted-parent-sha256\", \"{}\"]\n\n\
          [resource]\ngpus_per_task = 1\ncpus_reserved = 4\nomp_threads = 4\n\
          ram_mb = 16384\ngang_size = 1\nplacement = \"single_node\"\n\n\
+         [dependencies]\n\
+         hostname = [{{ command = \"/usr/bin/grep\", \
+         args = [\"-qxE\", \"xbabe1|xbabe2|xbabe3\", \"/etc/hostname\"], timeout_secs = 5 }}]\n\n\
          [[dependencies.smoke]]\nname = \"trainer GPU capability\"\n\
          command = \"/usr/bin/nvidia-smi\"\n\
          args = [\"--query-gpu=uuid,memory.total\", \"--format=csv,noheader\"]\n\
@@ -2590,6 +2675,74 @@ mod tests {
     }
 
     #[test]
+    fn a_degraded_environment_does_not_deadlock_the_shadow_gate() {
+        // 5 of the 8 canaries taken against fbcd5459 reported accepted/gp validity below
+        // 0.99. Under the old absolute bar no candidate could promote while the
+        // environment was degraded, which is exactly when a new checkpoint is needed.
+        let environment = |accepted: f64, candidate_validity: f64| {
+            json!({
+                "contexts": vec![json!({"context": "x"}); 16],
+                "accepted_validity": accepted,
+                "gp_validity": accepted,
+                "replay_verification_complete": true,
+                "candidate_vs_accepted": {
+                    "validity": candidate_validity,
+                    "pairwise_lift": 0.0,
+                    "latency_ratio": 1.0,
+                    "stability": 1.0
+                }
+            })
+        };
+        // Degraded environment: matching the incumbent is enough.
+        assert!(shadow_summary_eligible(&environment(0.875, 0.875)));
+        // Degraded environment: strictly worse than the incumbent still fails.
+        assert!(!shadow_summary_eligible(&environment(0.875, 0.8125)));
+        // Healthy environment: the absolute 0.99 floor still applies.
+        assert!(!shadow_summary_eligible(&environment(1.0, 0.9766)));
+        assert!(shadow_summary_eligible(&environment(1.0, 0.99)));
+        // The environment fields must still be present and finite.
+        let mut missing = environment(1.0, 1.0);
+        missing.as_object_mut().unwrap().remove("gp_validity");
+        assert!(!shadow_summary_eligible(&missing));
+    }
+
+    #[test]
+    fn the_canary_screen_charges_lift_for_its_own_evaluation_cost() {
+        let canary = |pairwise_lift: f64, latency_ratio: f64| {
+            json!({
+                "contexts": vec![json!({"context": "x"}); 16],
+                "accepted_validity": 1.0,
+                "gp_validity": 1.0,
+                "replay_verification_complete": true,
+                "candidate_vs_accepted": {
+                    "validity": 1.0,
+                    "pairwise_lift": pairwise_lift,
+                    "latency_ratio": latency_ratio,
+                    "stability": 1.0
+                }
+            })
+        };
+        // 8cadebd2: +0.1748 lift at 1.73x cost. It spends more and it wins, so it trades.
+        assert!(shadow_summary_eligible(&canary(0.1748, 1.7303)));
+        // The existing "not worse" contract survives when cost does not increase:
+        // a flat 0.0 lift at parity still screens through, as it did before.
+        assert!(shadow_summary_eligible(&canary(0.0, 1.0)));
+        assert!(shadow_summary_eligible(&canary(-0.004, 0.9)));
+        // But a candidate that spends MORE must actually win, not merely not-regress.
+        assert!(!shadow_summary_eligible(&canary(0.0, 1.0001)));
+        assert!(!shadow_summary_eligible(&canary(-0.004, 3.0)));
+        // A deficit is never excused by being cheap.
+        assert!(!shadow_summary_eligible(&canary(-0.02, 0.1)));
+        // The backstop refuses a pathologically expensive candidate on any lift.
+        assert!(!canary_compute_trade_ok(5.0, 4.5));
+        assert!(canary_compute_trade_ok(5.0, 3.9));
+        // Non-finite or non-positive inputs are refused, never divided by.
+        assert!(!canary_compute_trade_ok(1.0, 0.0));
+        assert!(!canary_compute_trade_ok(1.0, f64::NAN));
+        assert!(!canary_compute_trade_ok(f64::NAN, 1.0));
+    }
+
+    #[test]
     fn three_rejected_shadows_publish_and_hold_a_parent_plateau() {
         let directory = tempdir().unwrap();
         let root = directory.path();
@@ -2698,6 +2851,174 @@ mod tests {
         .unwrap();
     }
 
+    fn recovery_intent(job: &str, spec: &Sha256Digest) -> ActiveIntent {
+        ActiveIntent {
+            trainer: TrainerIntentV2 {
+                schema: "JopeSelfplayTrainerIntent.v2".to_owned(),
+                task: Task::Regression,
+                mode: TrainerMode::Shadow,
+                accepted_parent_checkpoint_sha256: Sha256Digest::parse("a".repeat(64)).unwrap(),
+                shadow_parent_checkpoint_sha256: None,
+                warm_start_checkpoint_sha256: Sha256Digest::parse("a".repeat(64)).unwrap(),
+                corpus_identity_sha256: Sha256Digest::parse("c".repeat(64)).unwrap(),
+                corpus_watermark: 1,
+                seed: 1,
+                immutable_job_identity: job.to_owned(),
+                immutable_spec_sha256: spec.clone(),
+                created_at_ms: 1,
+                runtime_bundle_path: None,
+                runtime_bundle_sha256: None,
+                catalog_binding_path: None,
+                catalog_binding_sha256: None,
+                recipe: None,
+            },
+            spec_path: PathBuf::new(),
+            output_name: "out".to_owned(),
+            warm_start_path: PathBuf::new(),
+        }
+    }
+
+    fn write_recovery_audit(root: &Path, job: &str, spec: &Sha256Digest) {
+        let directory = root.join("ops/trainer-recovery-audits");
+        fs::create_dir_all(&directory).unwrap();
+        atomic_json(
+            &directory.join(format!("{job}.json")),
+            &json!({
+                "schema": "TrainerRecoveryAudit.v1",
+                "job_id": job,
+                "immutable_spec_sha256": spec,
+                "disposition": "retry_from_accepted"
+            }),
+        )
+        .unwrap();
+    }
+
+    /// A trainer job the scheduler LOSES must still be recoverable by operator
+    /// audit. `scq ls` lists terminal states, so a job absent from it entirely
+    /// has no record, no run directory and no result — it can never reach
+    /// "failed"/"cancelled". Requiring one of those states made the audit path
+    /// unreachable and stranded the regression lane on 2026-08-04.
+    #[test]
+    fn a_vanished_trainer_job_is_recoverable_by_operator_audit() {
+        let directory = tempdir().unwrap();
+        let root = directory.path();
+        let spec = Sha256Digest::parse("d".repeat(64)).unwrap();
+        let intent = recovery_intent("vanished-job", &spec);
+
+        // Absent from the listing, with no audit: still held (never self-releases).
+        assert!(!audited_terminal_retry(root, &intent, &[]).unwrap());
+
+        // Absent from the listing, with a bound audit: released.
+        write_recovery_audit(root, "vanished-job", &spec);
+        assert!(audited_terminal_retry(root, &intent, &[]).unwrap());
+
+        // A job still RUNNING is not terminal, audit present or not.
+        let running = [SchedulerJob {
+            id: "vanished-job".to_owned(),
+            project: PROJECT.to_owned(),
+            state: "running".to_owned(),
+        }];
+        assert!(!audited_terminal_retry(root, &intent, &running).unwrap());
+
+        // An audit bound to a different spec digest must not release this intent.
+        let other = recovery_intent("vanished-job", &Sha256Digest::parse("e".repeat(64)).unwrap());
+        assert!(audited_terminal_retry(root, &other, &[]).is_err());
+    }
+
+    fn write_passing_summary(root: &Path, parent: &Sha256Digest, candidate: &str, created: u64) {
+        let completed = root.join("training/shadow-canaries/completed");
+        fs::create_dir_all(&completed).unwrap();
+        atomic_json(
+            &completed.join(format!("{candidate}.json")),
+            &json!({
+                "schema": "ShadowBattleSummary.v1",
+                "mode": "shadow",
+                "task": "binary",
+                "accepted_parent_checkpoint_sha256": parent,
+                "candidate_checkpoint_sha256": candidate,
+                "created_at_ms": created,
+                "contexts": vec![json!({"context": "x"}); 16],
+                "accepted_validity": 1.0,
+                "gp_validity": 1.0,
+                "replay_verification_complete": true,
+                "candidate_vs_accepted": {
+                    "validity": 1.0,
+                    "pairwise_lift": 0.1748,
+                    "latency_ratio": 0.9,
+                    "stability": 1.0
+                },
+                "candidate_vs_gp": {
+                    "pairwise_lift": 0.0698
+                }
+            }),
+        )
+        .unwrap();
+    }
+
+    /// The live deadlock this pins, measured on the production root on
+    /// 2026-08-04: the regression lane held three rejected shadows AND one that
+    /// cleared every bar (`8cadebd2`, lift +0.1748, stability 1.0, validity 1.0)
+    /// on the same unchanged parent. Counting only rejections declared the recipe
+    /// exhausted, so the controller trained nothing, the winner was never
+    /// chained, the parent never moved -- and the plateau that the winner
+    /// disproved kept the lane paused indefinitely.
+    #[test]
+    fn a_passing_shadow_on_the_same_parent_defeats_the_plateau() {
+        let directory = tempdir().unwrap();
+        let root = directory.path();
+        let parent = Sha256Digest::parse("a".repeat(64)).unwrap();
+        let accepted = binary_accepted(&parent);
+        for (index, character) in ["1", "2", "3"].into_iter().enumerate() {
+            write_reject_summary(root, &parent, &character.repeat(64), index as u64 + 1);
+        }
+        // Three rejections alone are a plateau -- this is the existing contract.
+        assert_eq!(
+            publish_plateau_diagnoses(root, &accepted, &BTreeMap::new()).unwrap(),
+            BTreeSet::from([Task::Binary])
+        );
+
+        // One passing shadow on the same parent withdraws the diagnosis.
+        write_passing_summary(root, &parent, &"4".repeat(64), 4);
+        assert_eq!(
+            publish_plateau_diagnoses(root, &accepted, &BTreeMap::new()).unwrap(),
+            BTreeSet::new(),
+            "a lane with a winner on the current parent must not be plateaued"
+        );
+    }
+
+    /// The eligible candidate is scoped exactly like the rejections, so a pass
+    /// recorded under a DIFFERENT recipe than the lane would use now cannot
+    /// unlatch a genuinely stuck lane.
+    #[test]
+    fn a_pass_from_a_different_recipe_does_not_defeat_the_plateau() {
+        let directory = tempdir().unwrap();
+        let root = directory.path();
+        let parent = Sha256Digest::parse("a".repeat(64)).unwrap();
+        let accepted = binary_accepted(&parent);
+        let current = json!({"recipe_name": "e", "exact_causal_pair_fraction": 1.0});
+        let stale = json!({"recipe_name": "a", "broad_replay_fraction": 1.0});
+        for (index, character) in ["1", "2", "3"].into_iter().enumerate() {
+            let candidate = character.repeat(64);
+            write_reject_summary(root, &parent, &candidate, index as u64 + 1);
+            install_candidate_recipe(root, &candidate, &current);
+        }
+        let winner = "4".repeat(64);
+        write_passing_summary(root, &parent, &winner, 4);
+        install_candidate_recipe(root, &winner, &stale);
+
+        let identity = recipe_identity_sha256(&current).unwrap();
+        assert_eq!(
+            publish_plateau_diagnoses(
+                root,
+                &accepted,
+                &BTreeMap::from([(Task::Binary, identity)])
+            )
+            .unwrap(),
+            BTreeSet::from([Task::Binary]),
+            "a pass under a superseded recipe must not clear the plateau"
+        );
+    }
+
     fn install_candidate_recipe(root: &Path, candidate: &str, recipe: &Value) {
         let intents = root.join("training/trainer-intents");
         fs::create_dir_all(&intents).unwrap();
@@ -2758,12 +3079,9 @@ mod tests {
             "complete_parent_pairs": 99,
         }))
         .unwrap();
-        let plateau = publish_plateau_diagnoses(
-            root,
-            &accepted,
-            &BTreeMap::from([(Task::Binary, same)]),
-        )
-        .unwrap();
+        let plateau =
+            publish_plateau_diagnoses(root, &accepted, &BTreeMap::from([(Task::Binary, same)]))
+                .unwrap();
         assert_eq!(plateau, BTreeSet::from([Task::Binary]));
         // A genuinely different recipe re-schedules training for the task.
         let changed = recipe_identity_sha256(&json!({
@@ -2773,12 +3091,9 @@ mod tests {
         }))
         .unwrap();
         fs::remove_dir_all(root.join("training/plateau-diagnoses")).unwrap();
-        let plateau = publish_plateau_diagnoses(
-            root,
-            &accepted,
-            &BTreeMap::from([(Task::Binary, changed)]),
-        )
-        .unwrap();
+        let plateau =
+            publish_plateau_diagnoses(root, &accepted, &BTreeMap::from([(Task::Binary, changed)]))
+                .unwrap();
         assert!(plateau.is_empty());
         assert!(!root.join("training/plateau-diagnoses").is_dir());
     }
@@ -2795,8 +3110,7 @@ mod tests {
         let accepted = binary_accepted(&parent);
         let directive_dir = root.join("ops/recipe-changes");
         fs::create_dir_all(&directive_dir).unwrap();
-        let directive_path =
-            directive_dir.join(format!("binary-{}.v1.json", parent.as_str()));
+        let directive_path = directive_dir.join(format!("binary-{}.v1.json", parent.as_str()));
         // A malformed directive (no enumerated changes) is treated as absent.
         atomic_json(
             &directive_path,
@@ -2810,8 +3124,7 @@ mod tests {
             }),
         )
         .unwrap();
-        let plateau =
-            publish_plateau_diagnoses(root, &accepted, &BTreeMap::new()).unwrap();
+        let plateau = publish_plateau_diagnoses(root, &accepted, &BTreeMap::new()).unwrap();
         assert_eq!(plateau, BTreeSet::from([Task::Binary]));
         // A valid directive bridges the legacy rejects: training resumes.
         atomic_json(
@@ -2829,8 +3142,7 @@ mod tests {
         )
         .unwrap();
         fs::remove_dir_all(root.join("training/plateau-diagnoses")).unwrap();
-        let plateau =
-            publish_plateau_diagnoses(root, &accepted, &BTreeMap::new()).unwrap();
+        let plateau = publish_plateau_diagnoses(root, &accepted, &BTreeMap::new()).unwrap();
         assert!(plateau.is_empty());
     }
 

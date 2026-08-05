@@ -2083,7 +2083,6 @@ fn render_cohort_proposer_spec(
         &runtime_bundle_sha256,
     )?;
     let cache_root = args.root.join("proposals/context-cache.v3");
-    let pin_lines = proposer_placement_pin_lines(args)?;
     let args_line = format!(
         "args = [\"{{input:generator}}\", \"--catalog-pointer\", \"{{input:pointer}}\", \
          \"--catalog\", \"{{input:catalog}}\", \"--data\", \"{{input:data}}\", \
@@ -2107,9 +2106,6 @@ fn render_cohort_proposer_spec(
         "ram_mb = 12288".into(),
         "gang_size = 1".into(),
         "placement = \"single_node\"".into(),
-        String::new(),
-        pin_lines[0].clone(),
-        pin_lines[1].clone(),
         String::new(),
         "[[dependencies.smoke]]".into(),
         "name = \"proposal GPU capacity\"".into(),
@@ -2203,20 +2199,36 @@ fn render_cohort_proposer_spec(
     Ok(spec)
 }
 
-/// Pin the cohort proposer to the node hosting the flywheel state root: the
-/// scheduler's launch deadline (~46 s observed 2026-08-03) is shorter than
-/// cross-node input staging (295 MB) plus a cold bundle smoke, so any
-/// off-root dispatch dies "vanished from its node". A `[dependencies]`
-/// binaries requirement constrains placement to nodes where the path exists;
-/// `[resource] node_affinity` parses but does not constrain placement.
-fn proposer_placement_pin_lines(args: &Args) -> Result<[String; 2]> {
-    Ok([
-        "[dependencies]".into(),
-        format!(
-            "binaries = [{}]",
-            toml_quote(&args.catalog_pointer().to_string_lossy())?
-        ),
-    ])
+/// The cohort proposer is NOT placement-pinned. Kept as a function so the reason
+/// survives, exactly as `spec_policy::PROBE_FLYWHEEL_ROOT_XBABE2_ONLY` does.
+///
+/// It used to emit `[dependencies] binaries = ["<root>/catalog/current.json"]`,
+/// which scq resolves as a node-local file requirement. That path exists only on
+/// the state-root node, so placement collapsed to xbabe2 alone. On 2026-08-04
+/// that deadlocked the whole flywheel: the mobile shadow trainer took xbabe2's
+/// single GPU under a 168-hour cap, the immobile proposer queued behind it
+/// forever on "need 1 any GPU(s) without external use", no waves were produced,
+/// and the eval queue drained to zero while three other GPUs sat idle.
+///
+/// The pin is redundant on both of its grounds:
+///
+/// 1. Its stated rationale was the ~46 s launch deadline being shorter than
+///    cross-node staging. That deadline was `VANISH_GRACE_SECS = 45` in the scq
+///    controller and is now **180** (measured launch results return at 65-86 s),
+///    so cross-node dispatch no longer dies "vanished from its node".
+/// 2. The proposer reads NOTHING from a state-root host path at runtime. The
+///    catalog, the context blob, the pointer, the checkpoint, the cohort and the
+///    request are all staged as sha256-pinned `[[input]]`s into the job's own
+///    directory -- which is precisely the rule `PROBE_PRIME_POLICY_SRC` states:
+///    staged inputs "must NOT be probed".
+///
+/// Node capability is still enforced, by the two smoke probes the spec already
+/// carries: `proposal GPU capacity` (nvidia-smi) and `RuntimeBundle JOPE Python
+/// package` (`import jope`). Those exclude a node that genuinely cannot run the
+/// job -- e.g. xbabe0, which has a free GPU but no runtime bundle -- on real
+/// capability rather than on an accident of file placement.
+fn proposer_placement_pin_lines(_args: &Args) -> Result<Vec<String>> {
+    Ok(Vec::new())
 }
 
 fn resolve_pinned_proposer_spec(
@@ -2271,12 +2283,36 @@ fn run_scq(args: &Args, arguments: &[&str]) -> Result<String> {
     Ok(String::from_utf8_lossy(&output.stdout).into_owned())
 }
 
+/// Is this scq rejection "come back later", or a real configuration error?
+///
+/// scq probes dependencies only on nodes that ALREADY have the requested
+/// GPU/cores/RAM free, so a perfectly healthy cluster rejects a submit whenever
+/// every capable node happens to be busy. That must queue, not `bail!` -- a bail
+/// fails the supply cycle and opens the circuit breaker.
+///
+/// This used to name ONE probe (`smoke proposal GPU capacity`) literally. That
+/// made it fragile in exactly the way `spec_policy::PROBE_FLYWHEEL_ROOT_XBABE2_ONLY`
+/// documents: when the proposer's probe changed, a busy-node rejection stopped
+/// matching and produced **44 consecutive `cycle_failed` records**. Now that the
+/// proposer probes `jope-prime policy source present` instead, a busy-node
+/// rejection reads `... smoke jope-prime policy source present: smoke test exited
+/// with exit 1`, which the old literal would also have missed.
+///
+/// So match the SHAPE of a probe failure rather than any probe's name. scq renders
+/// one as `<node>: smoke <probe name>: smoke test exited with exit <n>`, so the
+/// discriminator is the delimiter **`": smoke test exited"`** -- a named probe
+/// that ran and failed. Bare prose that merely happens to contain the words is
+/// not a probe result and stays fatal, which is what
+/// `proposer_capacity_pressure_is_a_normal_backoff` has always asserted.
+///
+/// A genuinely mis-provisioned node (e.g. xbabe0, which has a free GPU but no
+/// runtime bundle) lands here too -- correctly, because the right response is to
+/// keep queueing for a node that can run the job, not to fail the supply loop.
 fn temporarily_lacks_launch_capacity(message: &str) -> bool {
     message.contains("dependency-unsatisfied")
         && (message.contains("no eligible launch-ready node currently")
             || message.contains("eligible_node launch-ready-capacity")
-            || (message.contains("smoke proposal GPU capacity")
-                && message.contains("smoke test exited")))
+            || (message.contains("smoke ") && message.contains(": smoke test exited")))
 }
 
 fn register_proposer_admission(args: &Args, spec: &Path) -> Result<()> {
@@ -2439,7 +2475,16 @@ fn fetch_cohort_proposals(args: &Args, state: &PersistedSupplyState) -> Result<(
         || summary.get("cohort_sha256").and_then(Value::as_str)
             != Some(state.cohort_sha256.as_str())
         || summary.get("output_sha256").and_then(Value::as_str) != Some(proposal_sha256.as_str())
-        || summary.get("datasets").and_then(Value::as_u64) != Some(DATASETS_PER_WAVE as u64)
+        // Any legal micro-wave shape (tasks.len() * 64). The cohort identity is
+        // already pinned by cohort_sha256 above, so this is a sanity check on
+        // shape, not the provenance authority. NOTE for activation: a 192-wave
+        // at max_candidates_per_manifest=25 emits 2,112 manifests, which breaks
+        // `queued_target + manifests_per_wave <= queued_hard_cap` -- raising the
+        // manifest cap (validated 25..=100) is part of flipping activation on.
+        || !matches!(
+            summary.get("datasets").and_then(Value::as_u64),
+            Some(128 | 192 | 256)
+        )
         || summary
             .get("zero_cross_context_backfill")
             .and_then(Value::as_bool)
@@ -2626,11 +2671,34 @@ fn create_supply_state(
         runtime_pinned_attempts: Vec::new(),
     };
     let mut state = state;
+    // Snapshot the catalog pointer NOW, while the cohort is being frozen and the
+    // live pointer still names the binding this state carries. The proposer-spec
+    // renderer also snapshots lazily, but by the time it runs the expansion
+    // driver may already have rotated `catalog/current.json` -- and a rotation
+    // with no snapshot on disk is unrecoverable, because the pointer for a
+    // superseded catalog cannot be reconstructed from anything that remains.
+    // Taking it here is what makes a frozen cohort genuinely self-contained:
+    // whatever the live catalog does afterwards, this wave can still resolve the
+    // catalog it was planned against. Snapshots are content-addressed by catalog
+    // digest and are never garbage collected, so this is write-once per catalog.
+    snapshot_frozen_catalog_pointer(args, &state.catalog_sha256)?;
     if !state.recovery_accounting_only {
         resolve_pinned_proposer_spec(args, inputs, &mut state)?;
     }
     persist_supply_state(&args.root, &state)?;
     Ok(state)
+}
+
+/// Persist the live catalog pointer under its own digest so a cohort frozen
+/// against it stays resolvable after `catalog/current.json` rotates. Idempotent:
+/// an existing snapshot is verified rather than rewritten.
+fn snapshot_frozen_catalog_pointer(args: &Args, catalog_sha256: &str) -> Result<()> {
+    let pointer_directory = args.root.join("proposals/cohort-inputs");
+    fs::create_dir_all(&pointer_directory)?;
+    let pointer_snapshot = pointer_directory.join(format!("{catalog_sha256}.pointer.json"));
+    frozen_catalog_pointer(&args.catalog_pointer(), &pointer_snapshot, catalog_sha256)
+        .with_context(|| format!("snapshot catalog pointer {catalog_sha256} at cohort freeze"))?;
+    Ok(())
 }
 
 fn ensure_cohort_lookahead(
@@ -2641,17 +2709,40 @@ fn ensure_cohort_lookahead(
 ) -> Result<()> {
     loop {
         let pending = waves_root.join("pending");
-        let unresolved = fs::read_dir(&pending)
-            .into_iter()
-            .flatten()
-            .flatten()
-            .filter_map(|entry| {
-                let path = entry.path();
-                let stem = path.file_stem()?.to_str()?;
-                let wave = stem.strip_suffix(".cohort")?;
-                (valid_wave_id(wave) && !waves_root.join(wave).is_dir()).then_some(())
-            })
-            .count();
+        // Count only cohorts that can actually still become waves. A QUARANTINED
+        // cohort never will -- `wave_to_build` skips it forever via
+        // `pending_wave_quarantined` -- so counting it here fills the lookahead
+        // budget with corpses and stops any new cohort being pre-planned.
+        //
+        // Measured 2026-08-04: waves 224 and 226 have been quarantined since
+        // 07-30 and still sit in `pending/`. With `desired_pending = 3` they plus
+        // the one real pending wave satisfied the budget permanently, so the
+        // effective lookahead was 1 and the 9-28 minute cohort-plan step ran on
+        // the critical path of every wave instead of being hidden behind the
+        // previous one. That is roughly two thirds of the ~21 min wave period.
+        //
+        // This is the same predicate `wave_to_build` already uses; the two
+        // disagreeing is the whole bug. Written as a loop rather than a
+        // `filter_map` because `pending_wave_quarantined` returns `Result` and
+        // legitimately bails on cohort/state drift -- swallowing that with `.ok()`
+        // would hide real corruption behind a silently short lookahead.
+        let mut unresolved = 0_usize;
+        for entry in fs::read_dir(&pending).into_iter().flatten().flatten() {
+            let path = entry.path();
+            let Some(stem) = path.file_stem().and_then(|value| value.to_str()) else {
+                continue;
+            };
+            let Some(wave) = stem.strip_suffix(".cohort") else {
+                continue;
+            };
+            if !valid_wave_id(wave) || waves_root.join(wave).is_dir() {
+                continue;
+            }
+            if pending_wave_quarantined(waves_root, wave, &path)? {
+                continue;
+            }
+            unresolved += 1;
+        }
         if unresolved >= desired_pending {
             return Ok(());
         }
@@ -3061,17 +3152,60 @@ mod tests {
         assert!(validate_args(&args).is_err());
     }
 
+    /// The proposer must NOT be placement-pinned to the state-root node.
+    ///
+    /// It used to emit `[dependencies] binaries = ["<root>/catalog/current.json"]`,
+    /// a path that exists only on xbabe2. On 2026-08-04 that deadlocked the
+    /// flywheel: the mobile trainer held xbabe2's one GPU under a 168-hour cap
+    /// while the immobile proposer queued behind it forever and three other GPUs
+    /// sat idle. Everything the proposer reads is staged as a content-pinned
+    /// `[[input]]`, and node capability is covered by the GPU and
+    /// `import jope` smoke probes, so the pin bought nothing.
     #[test]
-    fn cohort_proposer_spec_pins_placement_to_the_state_root_node() {
+    fn the_cohort_proposer_is_not_pinned_to_one_node() {
         let directory = tempdir().unwrap();
         let args = audit_args(directory.path());
-        let lines = proposer_placement_pin_lines(&args).unwrap();
-        assert_eq!(lines[0], "[dependencies]");
-        let expected = args.catalog_pointer();
-        assert_eq!(
-            lines[1],
-            format!("binaries = [\"{}\"]", expected.display())
+        assert!(
+            proposer_placement_pin_lines(&args).unwrap().is_empty(),
+            "a placement pin would confine the proposer to the state-root node"
         );
+    }
+
+    /// A busy cluster must queue, never fail the supply cycle.
+    ///
+    /// scq probes dependencies only on nodes that already have the resources
+    /// free, so a healthy cluster rejects a submit whenever every capable node is
+    /// busy. Naming one probe literally is what produced 44 consecutive
+    /// `cycle_failed` records once already (see
+    /// `spec_policy::PROBE_FLYWHEEL_ROOT_XBABE2_ONLY`), so this matches the SHAPE
+    /// of a probe failure instead.
+    #[test]
+    fn any_busy_node_smoke_rejection_is_transient_not_fatal() {
+        // The historical literal, still transient.
+        assert!(temporarily_lacks_launch_capacity(
+            "error[dependency-unsatisfied]: xbabe3: smoke proposal GPU capacity: \
+             smoke test exited with exit 1"
+        ));
+        // The bundle probe the proposer actually carries.
+        assert!(temporarily_lacks_launch_capacity(
+            "error[dependency-unsatisfied]: xbabe0: smoke RuntimeBundle JOPE Python \
+             package: smoke test exited with exit 1"
+        ));
+        // The probe named by spec_policy for this family.
+        assert!(temporarily_lacks_launch_capacity(
+            "error[dependency-unsatisfied]: xbabe1: smoke jope-prime policy source \
+             present: smoke test exited with exit 1"
+        ));
+        assert!(temporarily_lacks_launch_capacity(
+            "error[dependency-unsatisfied]: no eligible launch-ready node currently"
+        ));
+        // A real configuration error must still be fatal.
+        assert!(!temporarily_lacks_launch_capacity(
+            "error[spec-invalid]: unknown field `node_affinity`"
+        ));
+        assert!(!temporarily_lacks_launch_capacity(
+            "error[dependency-unsatisfied]: binary /usr/bin/nope: not found in PATH"
+        ));
     }
 
     #[test]

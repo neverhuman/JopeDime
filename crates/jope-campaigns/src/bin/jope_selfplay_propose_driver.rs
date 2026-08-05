@@ -80,16 +80,23 @@ const MAX_ATTEMPTS: u64 = 3;
 //     `proposals/by-task/<task>/` and named by the ADDITIVE pointer
 //     `proposals/current-by-task.json`. `proposals/current.json` is left
 //     untouched, so no consumer can ever be handed a mixed-epoch file.
-const TASK_BRANCHES: [&str; 2] = ["binary", "regression"];
+const TASK_BRANCHES: [&str; 4] = ["binary", "regression", "multiclass", "timeseries"];
 const TASK_ACCEPTED_POINTER: &str = "training/accepted-by-task.json";
 const TASK_POINTER_SCHEMA: &str = "JopeSelfplayProposalPointerByTask.v1";
 
 /// Two-letter lane tag so a per-task job id can never collide with the
 /// whole-catalog family prefix `jope-selfplay-propose-<sha12>-c`.
+///
+/// Every task gets its OWN tag. The old `_ => "tr"` fallback would have tagged
+/// timeseries jobs identically to regression jobs, so a timeseries proposal
+/// job id could collide with -- and silently shadow -- a regression one.
 fn task_tag(task: &str) -> &'static str {
     match task {
         "binary" => "tb",
-        _ => "tr",
+        "regression" => "tr",
+        "multiclass" => "tm",
+        "timeseries" => "tt",
+        other => unreachable!("task_tag called with unknown task {other}"),
     }
 }
 
@@ -1387,7 +1394,12 @@ mod tests {
         write(&checkpoint, "model");
         let checkpoint_sha = "a".repeat(64);
         let combined = render_spec(root, &checkpoint, &checkpoint_sha, &live, 1, None).unwrap();
-        for (task, tag) in [("binary", "tb"), ("regression", "tr")] {
+        for (task, tag) in [
+            ("binary", "tb"),
+            ("regression", "tr"),
+            ("multiclass", "tm"),
+            ("timeseries", "tt"),
+        ] {
             let spec =
                 render_spec(root, &checkpoint, &checkpoint_sha, &live, 1, Some(task)).unwrap();
             assert_eq!(
@@ -1487,6 +1499,12 @@ mod tests {
         let regression_checkpoint = root.join("training/immutable/checkpoints/r.model.pt");
         write(&regression_checkpoint, "regression-model");
         let regression_sha = sha256_file(&regression_checkpoint).unwrap();
+        // Multiclass and timeseries share the regression artifact here: a task
+        // without its own promoted anchor may legitimately ride another lane's
+        // checkpoint, and the fork must still enumerate all four branches. (In
+        // production a task absent from the pointer falls back to the GLOBAL
+        // accepted checkpoint, whose artifact always resolves; this fixture's
+        // binding sha is a fake with no artifact, so the entries are explicit.)
         atomic_json(
             &root.join(TASK_ACCEPTED_POINTER),
             &json!({"tasks": {
@@ -1498,16 +1516,28 @@ mod tests {
                     "checkpoint_sha256": regression_sha,
                     "checkpoint": regression_checkpoint.to_string_lossy(),
                 },
+                "multiclass": {
+                    "checkpoint_sha256": regression_sha,
+                    "checkpoint": regression_checkpoint.to_string_lossy(),
+                },
+                "timeseries": {
+                    "checkpoint_sha256": regression_sha,
+                    "checkpoint": regression_checkpoint.to_string_lossy(),
+                },
             }}),
         )
         .unwrap();
         let lanes = read_task_lanes(root, &binding).unwrap().expect("forked");
-        assert_eq!(lanes.len(), 2);
+        assert_eq!(lanes.len(), 4);
         assert_eq!(lanes[0].task.as_deref(), Some("binary"));
         assert_eq!(lanes[0].checkpoint_sha256, binary_sha);
         assert_eq!(lanes[1].task.as_deref(), Some("regression"));
         assert_eq!(lanes[1].checkpoint_sha256, regression_sha);
         assert_ne!(lanes[0].checkpoint_sha256, lanes[1].checkpoint_sha256);
+        assert_eq!(lanes[2].task.as_deref(), Some("multiclass"));
+        assert_eq!(lanes[3].task.as_deref(), Some("timeseries"));
+        assert_eq!(lanes[2].checkpoint_sha256, regression_sha);
+        assert_eq!(lanes[3].checkpoint_sha256, regression_sha);
         assert_ne!(lanes[0].family(), lanes[1].family());
     }
 

@@ -245,16 +245,19 @@ fn cycle(root: &Path, scq: &Path) -> Result<Value> {
         .pointer("/intent/trainer/immutable_job_identity")
         .and_then(Value::as_str);
     let trainer_active = scheduler_job_active(&scheduler, trainer_job_id, &[]);
-    let trainer_eligible = corpus_watermark
-        > trainer_state
-            .pointer("/last_shadow_corpus_watermark/binary")
-            .and_then(Value::as_u64)
-            .unwrap_or_default()
-        || corpus_watermark
-            > trainer_state
-                .pointer("/last_shadow_corpus_watermark/regression")
-                .and_then(Value::as_u64)
-                .unwrap_or_default();
+    // Eligible when ANY task has corpus the trainer has not yet shadowed.
+    // Hard-coding binary/regression here meant a multiclass or timeseries lane
+    // could stall invisibly: the corpus grows, no shadow ever trains, and this
+    // gauge still reports the trainer as caught up.
+    let trainer_eligible = ["binary", "regression", "multiclass", "timeseries"]
+        .iter()
+        .any(|task| {
+            corpus_watermark
+                > trainer_state
+                    .pointer(&format!("/last_shadow_corpus_watermark/{task}"))
+                    .and_then(Value::as_u64)
+                    .unwrap_or_default()
+        });
     let encoder_eligible = encoder
         .get("remaining")
         .or_else(|| encoder.get("pending_datasets"))

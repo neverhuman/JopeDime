@@ -104,6 +104,23 @@ RECIPE_E_LOSS_WEIGHTS = {
     "directional_edit_operator_policy": 0.15,
     "validity_stability_calibration": 0.10,
 }
+# The (task, metric) pairs the trainer accepts into the frozen corpus. This is
+# the SINGLE authority: the freeze CTE derives its WHERE clause from it, the
+# packed-corpus task guard derives its superset check from it, and the CLI
+# derives --task choices from it. Before this existed the CTE, the guard, and
+# the CLI each hard-coded regression/binary separately, so every multiclass and
+# timeseries observation was silently excluded from every checkpoint -- waves
+# evaluated them, the corpus stored them, and the model never saw one.
+ENABLED_TASK_METRICS = {
+    "regression": "r2",
+    "binary": "auc",
+    "multiclass": "macro_f1",
+    "timeseries": "negative_mase",
+}
+# Tasks that must ALWAYS be present in a packed corpus. The optional tasks join
+# as their observations arrive; their absence is a data condition, not an error.
+MANDATORY_TASKS = ("regression", "binary")
+
 RECIPE_E_MODEL_OUTPUTS = (
     "immediate_utility",
     "strict_win_probability",
@@ -364,6 +381,28 @@ def even_spread(items: list, cap: int) -> list:
     if count <= cap:
         return list(items)
     return [items[(index * count) // cap] for index in range(cap)]
+
+
+def task_reward(task: str, score: float) -> float:
+    """Map a task's native metric onto the shared [-1, 1] reward scale.
+
+    ``r2``, ``auc`` and ``macro_f1`` already live on a scale where clamping to
+    [-1, 1] is meaningful: 1.0 is perfect and 0.0 is the trivial baseline.
+    ``negative_mase`` does not. It is ``-MASE``, so parity with the seasonal-naive
+    baseline is **-1.0**, not 0.0, and every model merely as good as naive or worse
+    lands at or below the clamp floor. The bare ``max(-1, min(1, score))`` therefore
+    collapsed that whole half of the timeseries distribution onto the single value
+    -1.0 and squeezed all genuine skill into (-1, 0] -- the ranker would have seen
+    almost no ordering to learn from, while the pipeline looked healthy.
+
+    Shifting timeseries by +1 restores r2's semantics (1.0 perfect, 0.0 parity with
+    the baseline, negative worse than it), after which one clamp is correct for all
+    four tasks.
+    """
+    value = float(score)
+    if task == "timeseries":
+        value += 1.0
+    return max(-1.0, min(1.0, value))
 
 
 def equal_quota_draw(pool: list, quota: int, rng: random.Random) -> list:
@@ -993,12 +1032,19 @@ def build_corpus(
     # unchanged, and `dataset_rank` is assigned by its own window ORDER BY
     # (created_at_ms, semantic_sha256) which does not depend on the CTE's order.
     covers_every_row = watermark >= total
+    # Four-task freeze: the WHERE clause is derived from ENABLED_TASK_METRICS so
+    # the CTE can never silently disagree with the guard or the CLI about which
+    # observations are learnable. Each task is pinned to its OWN metric -- an
+    # observation whose metric drifted from its task's contract stays excluded.
+    task_predicate = " OR ".join(
+        f"(task='{task}' AND metric='{metric}')"
+        for task, metric in sorted(ENABLED_TASK_METRICS.items())
+    )
     if covers_every_row:
         frozen_cte = f"""
             WITH frozen AS (
               SELECT {projection} FROM observations
-              WHERE (task='regression' AND metric='r2')
-                 OR (task='binary' AND metric='auc')
+              WHERE {task_predicate}
             )
         """
         frozen_params: tuple = ()
@@ -1006,8 +1052,7 @@ def build_corpus(
         frozen_cte = f"""
             WITH frozen AS (
               SELECT {projection} FROM observations
-              WHERE (task='regression' AND metric='r2')
-                 OR (task='binary' AND metric='auc')
+              WHERE {task_predicate}
               ORDER BY created_at_ms,receipt_sha256,task,dataset_hash,semantic_sha256
               LIMIT ?
             )
@@ -1079,9 +1124,24 @@ def build_corpus(
             skipped["unencodable"] += 1
             continue
         survivors[identity].append((row, engine))
-    if set(task_counts) != {"regression", "binary"}:
+    # Superset-over-enabled, not equality: the mandatory backbone (regression,
+    # binary) must be present, unknown tasks must never slip in, and the optional
+    # tasks (multiclass, timeseries) join as their first observations arrive.
+    # The old equality check would have REJECTED the corpus the moment the first
+    # multiclass observation landed -- turning new-task success into a trainer
+    # outage.
+    present = set(task_counts)
+    if not present.issuperset(MANDATORY_TASKS):
         con.close()
-        raise RuntimeError(f"shared trainer needs both tasks, found {dict(task_counts)}")
+        raise RuntimeError(
+            f"shared trainer needs the mandatory tasks {sorted(MANDATORY_TASKS)}, "
+            f"found {dict(task_counts)}"
+        )
+    if not present.issubset(ENABLED_TASK_METRICS):
+        con.close()
+        raise RuntimeError(
+            f"corpus contains tasks outside the enabled contract: {dict(task_counts)}"
+        )
 
     blob = Path(pointer["data"]).read_bytes()
     temporary = snapshot.with_name(f".{snapshot.name}.tmp-{os.getpid()}")
@@ -1126,7 +1186,7 @@ def build_corpus(
             embedding = list(values[:1536])
             target_embedding = list(values[1536:])
             for row, engine in pool:
-                reward = max(-1.0, min(1.0, float(row["score"])))
+                reward = task_reward(row["task"], row["score"])
                 strict_wave = (
                     row["strict_wave"]
                     if "strict_wave" in row.keys() and row["strict_wave"]
@@ -2253,6 +2313,46 @@ def render_spec(
     }
 
 
+def _establish_cuda_context_early(device: str) -> None:
+    """Create the CUDA context BEFORE the packed corpus load.
+
+    scq reclaims a GPU from a job that shows "no CUDA context or utilization"
+    for IDLE_RECLAIM_SECS (120 s) while other GPU work is queued. That policy is
+    correct -- a GPU job not touching CUDA is holding a GPU it is not using.
+
+    But this trainer loads ~1.94 M packed rows before it ever touches the device,
+    and that load takes ~5 minutes (measured 2026-08-04: 38.6 % complete at the
+    120 s mark). So the reclaim fired every time, requeued the job, and the next
+    attempt started the same load from zero -- an unbreakable loop in which the
+    trainer could never reach a single training step. Two attempts of
+    shadow-regression-008145630-s000013 died this way at 38.6 % and 23.2 %.
+
+    Touching CUDA here makes the job's GPU claim honest from the first second
+    rather than five minutes in. The allocation is one element, is freed
+    immediately, and consumes no RNG, so it cannot perturb training or the
+    bit-exactness contracts. Failure is non-fatal: if CUDA is unavailable the
+    real device setup downstream reports it properly.
+    """
+    if not str(device).startswith("cuda"):
+        return
+    try:
+        import torch
+
+        if not torch.cuda.is_available():
+            return
+        torch.cuda.init()
+        marker = torch.zeros(1, device=device)
+        torch.cuda.synchronize(device=device)
+        del marker
+        print(
+            f"cuda-context-established device={device} "
+            f"name={torch.cuda.get_device_name(device)}",
+            flush=True,
+        )
+    except Exception as error:  # pragma: no cover - environment dependent
+        print(f"cuda-context-early-init-skipped {error}", flush=True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     commands = parser.add_subparsers(dest="command", required=True)
@@ -2274,7 +2374,9 @@ def main() -> None:
         "--recipe", choices=("a", "b", "c", "d", "e"), default="a"
     )
     train_command.add_argument("--seed", type=int, default=20260726)
-    train_command.add_argument("--task", choices=("binary", "regression"), required=True)
+    train_command.add_argument(
+        "--task", choices=tuple(sorted(ENABLED_TASK_METRICS)), required=True
+    )
     train_command.add_argument("--mode", choices=("shadow", "production"), required=True)
     train_command.add_argument("--packed-manifest", type=Path)
     train_command.add_argument("--packed-source-train", type=Path)
@@ -2287,10 +2389,12 @@ def main() -> None:
         "--recipe", choices=("a", "b", "c", "d", "e"), default="a"
     )
     render.add_argument("--seed", type=int, default=20260726)
-    render.add_argument("--task", choices=("binary", "regression"), required=True)
+    render.add_argument("--task", choices=tuple(sorted(ENABLED_TASK_METRICS)), required=True)
     render.add_argument("--mode", choices=("shadow", "production"), default="shadow")
     render.add_argument("--packed-manifest", type=Path)
     args = parser.parse_args()
+    if args.command == "train":
+        _establish_cuda_context_early(args.device)
     if args.command == "build-corpus":
         print(
             json.dumps(

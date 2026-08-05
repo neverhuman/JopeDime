@@ -130,11 +130,53 @@ fn export_dataset(source: &Path, destination: &Path) -> Result<(usize, usize)> {
             "meta_sha256": format!("{:x}", Sha256::digest(&meta_bytes)),
         },
     });
+    let mut out_meta = out_meta;
+    carry_synthetic_provenance(&meta, &mut out_meta);
     fs::write(
         destination.join("meta.json"),
         serde_json::to_string_pretty(&out_meta)?,
     )?;
     Ok((reduction.y.len(), scaled_test_y.len()))
+}
+
+/// Keys that must survive the reduction for a SYNTHETIC dataset.
+///
+/// `source_family` (`selfplay_data.rs:133-165`) branches on `synthetic_origin`
+/// and then hashes `generator_recipe`. The reduced meta is rebuilt from scratch,
+/// so without this a `synth_*` dataset arrives with no recipe, falls through to
+/// hashing the whole meta -- which contains `source.dataset_dir` and per-dataset
+/// shas -- and lands in a family of exactly one. That is the same defect that
+/// left 16,890 synthetic regression datasets in 16,890 distinct families, making
+/// the 10 % family-disjoint validation split hold out singletons and measure
+/// nothing.
+const SYNTHETIC_PROVENANCE_KEYS: [&str; 7] = [
+    "origin",
+    "synthetic_origin",
+    "source_real_data",
+    "generator_name",
+    "generator_version",
+    "generator_recipe",
+    "generator_instance",
+];
+
+/// Copy synthetic provenance from the raw meta into the reduced meta.
+///
+/// Deliberately gated on `synthetic_origin == true`: the 42 real reduced metas
+/// must stay **byte-identical**, because their `meta_sha256` is pinned inside
+/// already-written `cache-manifest.v1.json` files and any drift fails the
+/// expansion cache's identity check.
+fn carry_synthetic_provenance(source_meta: &Value, out_meta: &mut Value) {
+    if source_meta.get("synthetic_origin").and_then(Value::as_bool) != Some(true) {
+        return;
+    }
+    let Some(target) = out_meta.as_object_mut() else {
+        return;
+    };
+    for key in SYNTHETIC_PROVENANCE_KEYS {
+        if let Some(value) = source_meta.get(key) {
+            target.insert(key.to_owned(), value.clone());
+        }
+    }
 }
 
 fn main() -> Result<()> {

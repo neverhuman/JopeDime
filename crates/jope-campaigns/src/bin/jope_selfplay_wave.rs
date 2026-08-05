@@ -12,14 +12,14 @@ use feat_math::genome::GenomeIr;
 #[cfg(test)]
 use jope_dime_regressor::selfplay_data::validate_wave_composition;
 use jope_dime_regressor::selfplay_data::{
-    select_micro_cohort, validate_dl_slot_rung, validate_wave_composition_with_dl, CandidateOrigin,
-    GpProposal, MicroAdmission, MicroDataset, MicroLane, WaveSlot, WaveSlotGroup,
-    CHECKPOINT_PROPOSAL_SLOTS, COMMON_WINNER_SLOTS, LOCAL_ELITE_SLOTS, MICRO_WAVE_SIZE,
-    OFFSPRING_SLOTS, WAVE_SIZE,
+    micro_wave_size, select_micro_cohort, validate_dl_slot_rung,
+    validate_wave_composition_with_dl, CandidateOrigin, GpProposal, MicroAdmission, MicroDataset,
+    MicroLane, WaveSlot, WaveSlotGroup, CHECKPOINT_PROPOSAL_SLOTS, COMMON_WINNER_SLOTS,
+    LOCAL_ELITE_SLOTS, MICRO_TASK_SIZE, OFFSPRING_SLOTS, WAVE_SIZE,
 };
 use jope_dime_regressor::selfplay_runtime::{
-    atomic_json, canonical_json_bytes, checkpoint_epoch, evaluation_protocol_sha256, now_ms,
-    read_json, sha256_bytes, sha256_file,
+    atomic_json, canonical_json_bytes, checkpoint_epoch, evaluation_protocol_sha256,
+    expected_evaluation_metric, now_ms, read_json, sha256_bytes, sha256_file,
 };
 use rusqlite::{params, Connection, OpenFlags};
 use serde::{Deserialize, Serialize};
@@ -315,10 +315,16 @@ impl ProposalsPointer {
         Ok(slots)
     }
 
-    fn normalized_dl_slots(&self) -> Result<BTreeMap<String, usize>> {
-        ["regression", "binary"]
-            .into_iter()
-            .map(|task| Ok((task.to_owned(), self.dl_slots(task)?)))
+    /// DL allocation for exactly the tasks the cohort carries.
+    ///
+    /// This used to return a fixed two-key map while callers indexed it by
+    /// `cohort_row.task`. On a cohort containing any multiclass or timeseries row that index
+    /// is a missing key, and `BTreeMap`'s `Index` impl panics rather than returning an error
+    /// — so the wave binary aborted outright instead of failing closed with a message.
+    fn normalized_dl_slots(&self, tasks: &[String]) -> Result<BTreeMap<String, usize>> {
+        tasks
+            .iter()
+            .map(|task| Ok((task.clone(), self.dl_slots(task)?)))
             .collect()
     }
 }
@@ -392,7 +398,23 @@ struct CohortPlan {
     checkpoint_sha256: String,
     catalog_sha256: String,
     sealed_cohort_sha256: String,
+    /// Tasks this cohort actually carries, in the order they were laned.
+    ///
+    /// The wave shape is `tasks.len() * MICRO_TASK_SIZE`, so a cohort grows from 128 to
+    /// 192 to 256 as multiclass and then timeseries reach the per-task floor, instead of
+    /// requiring a flag day where every task must qualify at once.
+    ///
+    /// The default is load-bearing: every cohort already on disk was written before this
+    /// field existed and is a two-task cohort, so an absent `tasks` MUST deserialize to
+    /// exactly `["regression", "binary"]` or replaying those waves would fail validation.
+    #[serde(default = "legacy_cohort_tasks")]
+    tasks: Vec<String>,
     entries: Vec<CohortEntry>,
+}
+
+/// The task set every cohort written before `CohortPlan::tasks` existed implicitly had.
+fn legacy_cohort_tasks() -> Vec<String> {
+    vec!["regression".to_owned(), "binary".to_owned()]
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -603,7 +625,17 @@ fn select_sealed_cohort(catalog: &Catalog, catalog_sha256: &str) -> Result<Froze
 
     // Binary has the smaller candidate pool in the current catalog, so reserve it
     // first. The SHA-bound ordering remains stable if catalog rows are reordered.
-    for task in ["binary", "regression"] {
+    // Multiclass and timeseries follow with their own, far smaller carve-outs
+    // (`sealed_target`: 256/256/64/8) and are skipped entirely until their corpora can
+    // supply that many *globally family-disjoint* datasets. Skipping rather than failing
+    // is deliberate: a hard requirement here would block sealed-cohort generation, and
+    // with it the whole loop, on a task that is still filling up.
+    for task in ["binary", "regression", "multiclass", "timeseries"] {
+        let target = jope_dime_regressor::selfplay_expansion::sealed_target(task);
+        if target == 0 {
+            continue;
+        }
+        let mandatory = matches!(task, "regression" | "binary");
         let mut candidates = catalog
             .entries
             .iter()
@@ -615,24 +647,37 @@ fn select_sealed_cohort(catalog: &Catalog, catalog_sha256: &str) -> Result<Froze
                 .then_with(|| left.source_family.cmp(&right.source_family))
                 .then_with(|| left.dataset_hash.cmp(&right.dataset_hash))
         });
+        // Reserve against a scratch copy so a task that cannot reach its target does not
+        // consume families the later tasks may need.
+        let mut claimed = Vec::new();
+        let mut claimed_families = Vec::new();
         for entry in candidates {
-            if !used_families.insert(entry.source_family.as_str()) {
+            if used_families.contains(entry.source_family.as_str())
+                || claimed_families.contains(&entry.source_family.as_str())
+            {
                 continue;
             }
-            entries.push(FrozenSealedEntry {
+            claimed_families.push(entry.source_family.as_str());
+            claimed.push(FrozenSealedEntry {
                 task: entry.task.clone(),
                 dataset_hash: entry.dataset_hash.clone(),
                 source_family: entry.source_family.clone(),
             });
-            if entries.iter().filter(|entry| entry.task == task).count() == REQUIRED_SEALED_PER_TASK
-            {
+            if claimed.len() == target {
                 break;
             }
         }
-        ensure!(
-            entries.iter().filter(|entry| entry.task == task).count() == REQUIRED_SEALED_PER_TASK,
-            "catalog lacks 256 globally family-disjoint {task} datasets"
-        );
+        if claimed.len() < target {
+            ensure!(
+                !mandatory,
+                "catalog lacks {target} globally family-disjoint {task} datasets"
+            );
+            continue;
+        }
+        for family in claimed_families {
+            used_families.insert(family);
+        }
+        entries.extend(claimed);
     }
     entries.sort_by(|left, right| {
         left.task
@@ -681,19 +726,28 @@ fn validate_frozen_sealed(cohort: &FrozenSealedCohort, catalog_sha256: &str) -> 
             "sealed cohort repeats a source family"
         );
     }
-    for task in ["regression", "binary"] {
+    // Each task present must hold exactly its carve-out. Regression and binary are
+    // mandatory; multiclass and timeseries are optional, so an older 512-row sealed
+    // cohort (256 + 256, written before either carve-out existed) still validates.
+    let mut expected_total = 0usize;
+    for task in jope_dime_regressor::selfplay_expansion::TASKS {
+        let present = cohort
+            .entries
+            .iter()
+            .filter(|entry| entry.task == task)
+            .count();
+        let target = jope_dime_regressor::selfplay_expansion::sealed_target(task);
+        if present == 0 && !matches!(task, "regression" | "binary") {
+            continue;
+        }
         ensure!(
-            cohort
-                .entries
-                .iter()
-                .filter(|entry| entry.task == task)
-                .count()
-                == REQUIRED_SEALED_PER_TASK,
-            "sealed cohort must contain exactly 256 {task} datasets"
+            present == target,
+            "sealed cohort must contain exactly {target} {task} datasets, found {present}"
         );
+        expected_total += target;
     }
     ensure!(
-        cohort.entries.len() == REQUIRED_SEALED_PER_TASK * 2,
+        cohort.entries.len() == expected_total,
         "sealed cohort size drift"
     );
     Ok(())
@@ -776,11 +830,26 @@ fn freeze_sealed(args: FreezeSealedArgs) -> Result<Value> {
         "catalog_sha256": catalog_sha256,
         "output": args.output,
         "sealed_sha256": sha256_bytes(&bytes),
-        "datasets": REQUIRED_SEALED_PER_TASK * 2,
-        "task_counts": {
-            "regression": REQUIRED_SEALED_PER_TASK,
-            "binary": REQUIRED_SEALED_PER_TASK,
-        },
+        // Report what was actually sealed, not a hard-coded two-task shape: which optional
+        // carve-outs made it in is the signal that tells an operator whether multiclass and
+        // timeseries have enough family-disjoint data yet.
+        "datasets": cohort.entries.len(),
+        "task_counts": jope_dime_regressor::selfplay_expansion::TASKS
+            .iter()
+            .map(|task| {
+                (
+                    (*task).to_owned(),
+                    Value::from(
+                        cohort
+                            .entries
+                            .iter()
+                            .filter(|entry| entry.task == *task)
+                            .count(),
+                    ),
+                )
+            })
+            .filter(|(_, count)| count.as_u64() != Some(0))
+            .collect::<serde_json::Map<_, _>>(),
         "mode": "0600",
         "created": created,
         "identities_redacted": true,
@@ -1211,10 +1280,33 @@ fn plan(args: PlanArgs) -> Result<Value> {
     }
 
     let (observed, signals) = dataset_signals(&args.corpus, &args.output_root)?;
+    // Drop datasets the evaluator can provably never score. `corpus_eval` rejects
+    // a feature matrix with no feature columns ("needs at least one feature and
+    // one target", data.rs:130), so a single-column train.csv is a guaranteed
+    // exit 1 for every candidate ever drawn against it -- 4 wasted evaluations
+    // per wave slot, forever, because the dataset stays eligible and keeps being
+    // reselected. On 2026-08-04 exactly 7 of 27,539 regression datasets were in
+    // this state (their features live in sibling `.vs` files and only the target
+    // was written to CSV); they produced 100 % of the 348 eval-job failures in a
+    // two-hour window and nothing else did.
+    //
+    // This is deliberately filtered HERE rather than at catalog merge: merged
+    // entries are positionally indexed into a strided context blob, so skipping
+    // one at merge time would silently misalign every entry after it. Eligibility
+    // is the first point where a dataset can be excluded without disturbing that
+    // mapping or mutating an immutable catalog.
+    let mut unevaluatable = Vec::new();
     let eligible = catalog
         .entries
         .iter()
         .filter(|row| !sealed_families.contains(&row.source_family))
+        .filter(|row| {
+            if dataset_has_feature_columns(&row.train_csv) {
+                return true;
+            }
+            unevaluatable.push(format!("{}/{}", row.task, row.dataset_hash));
+            false
+        })
         .map(|row| MicroDataset {
             task: row.task.clone(),
             dataset_hash: row.dataset_hash.clone(),
@@ -1233,7 +1325,22 @@ fn plan(args: PlanArgs) -> Result<Value> {
                 .map(|signal| signal.stale_waves),
         })
         .collect::<Vec<_>>();
-    let selected = select_micro_cohort(&eligible, &observed, &wave, &admission)?;
+    // Optional-task activation is an OPERATOR decision, not an emergent property of
+    // pool size. Interim contract until the activation-receipt design lands: the
+    // JOPE_MICRO_COHORT_OPTIONAL_TASKS environment variable (comma-separated) names
+    // the optional tasks allowed into cohorts; unset or empty means regression and
+    // binary only. Set it only after the ENTIRE downstream path (proposer, sanitizer,
+    // builder, supply, queue) is proven for the wider shape -- wave 546 idled the
+    // cluster because the shape widened while the pinned proposer was still two-task.
+    let active_optional_tasks = std::env::var("JOPE_MICRO_COHORT_OPTIONAL_TASKS")
+        .unwrap_or_default()
+        .split(',')
+        .map(str::trim)
+        .filter(|task| !task.is_empty())
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    let selected =
+        select_micro_cohort(&eligible, &observed, &wave, &admission, &active_optional_tasks)?;
     let admission_report = admission_summary(&eligible, &observed, &selected, &admission);
     if args.dry_run {
         return Ok(json!({
@@ -1257,6 +1364,15 @@ fn plan(args: PlanArgs) -> Result<Value> {
                 .collect::<Vec<_>>(),
         }));
     }
+    // Declare exactly the tasks the selector actually laned, ordered by the canonical
+    // `TASKS` array so the field is deterministic rather than dependent on selection order.
+    // Deriving it from `selected` (instead of recomputing eligibility) guarantees the
+    // declaration and the rows can never disagree, which is what `validate_cohort` checks.
+    let cohort_tasks = jope_dime_regressor::selfplay_expansion::TASKS
+        .iter()
+        .filter(|task| selected.iter().any(|row| row.dataset.task == **task))
+        .map(|task| (*task).to_owned())
+        .collect::<Vec<_>>();
     let plan = CohortPlan {
         schema: COHORT_SCHEMA.to_owned(),
         immutable: true,
@@ -1265,6 +1381,7 @@ fn plan(args: PlanArgs) -> Result<Value> {
         checkpoint_sha256,
         catalog_sha256,
         sealed_cohort_sha256: sealed_sha256,
+        tasks: cohort_tasks,
         entries: selected
             .into_iter()
             .map(|row| CohortEntry {
@@ -1279,6 +1396,10 @@ fn plan(args: PlanArgs) -> Result<Value> {
         .output_root
         .join("pending")
         .join(format!("{wave}.cohort.json"));
+    // The cohort this call is answering for: the adopted immutable file when one
+    // already exists, otherwise the plan just written. Everything reported below
+    // must describe THIS cohort, because that is what downstream stages resolve.
+    let effective: CohortPlan;
     if path.exists() {
         // Adopt the immutable pending cohort; do NOT compare it against a fresh
         // derivation. `select_micro_cohort` ranks its `least_observed` lane by
@@ -1335,20 +1456,60 @@ fn plan(args: PlanArgs) -> Result<Value> {
                 entry.dataset_hash
             );
         }
+        effective = current;
     } else {
         atomic_json(&path, &serde_json::to_value(&plan)?)?;
+        effective = plan;
     }
+    // Report the ADOPTED cohort's catalog binding, never the live one. The
+    // adoption branch above deliberately tolerates a cohort that outlived a
+    // catalog rotation (see the NOTE on membership-instead-of-equality), so
+    // `plan.catalog_sha256` here is the digest of whatever `catalog/current.json`
+    // happens to say right now -- which is precisely the binding the cohort on
+    // disk is NOT scoped to. Supply persists this value into its state, the
+    // proposer stamps it onto the pointer it emits, and `sanitize_proposals`
+    // then compares that pointer against the frozen cohort's own
+    // `catalog_sha256`. Leaking the live digest here therefore re-imposes the
+    // exact equality this function disclaims, one stage later and as an
+    // unrecoverable error: the cohort is immutable, so the two can never be made
+    // to agree and the wave retries identically forever.
     Ok(json!({
         "schema": COHORT_SCHEMA,
         "wave": wave,
-        "checkpoint_sha256": plan.checkpoint_sha256,
-        "catalog_sha256": plan.catalog_sha256,
-        "datasets": plan.entries.len(),
+        "checkpoint_sha256": effective.checkpoint_sha256,
+        "catalog_sha256": effective.catalog_sha256,
+        "datasets": effective.entries.len(),
         "cohort": path,
         "cohort_sha256": sha256_file(&path)?,
         "admission": admission_report,
+        // Reported, never silent: a dataset dropped from eligibility is a dataset
+        // the flywheel will never observe again, and that must be visible.
+        "unevaluatable_datasets_excluded": unevaluatable.len(),
+        "unevaluatable_datasets_sample": unevaluatable.iter().take(16).collect::<Vec<_>>(),
         "proposal_generation_boundary": "run the PyTorch proposal generator for this cohort, then invoke build"
     }))
+}
+
+/// Does this training CSV carry at least one feature column alongside the target?
+///
+/// `corpus_eval` needs >= 2 columns; with one it bails before fitting anything, so
+/// such a dataset can never yield an observation no matter which genome is drawn.
+/// Reading the first line is enough to tell, and it is cheap: the header is one
+/// short read per catalog row per wave plan, against files the page cache already
+/// holds. A missing or unreadable file is treated as unevaluatable for the same
+/// reason -- the evaluation would fail anyway, and failing to select is strictly
+/// better than dispatching work that cannot succeed.
+fn dataset_has_feature_columns(train_csv: &Path) -> bool {
+    let Ok(file) = File::open(train_csv) else {
+        return false;
+    };
+    let mut first = String::new();
+    if BufReader::new(file).read_line(&mut first).is_err() {
+        return false;
+    }
+    // Delimiter presence is the test, not a full parse: one column means no
+    // separator on the first row.
+    first.trim_end_matches(['\r', '\n']).contains(',')
 }
 
 /// Per-wave breadth accounting. This is the measurement surface for the
@@ -1459,12 +1620,40 @@ fn validate_cohort(plan: &CohortPlan) -> Result<()> {
     );
     validate_sha256(&plan.catalog_sha256, "cohort catalog SHA-256")?;
     validate_sha256(&plan.sealed_cohort_sha256, "cohort sealed receipt SHA-256")?;
+    ensure!(!plan.tasks.is_empty(), "cohort declares no tasks");
     ensure!(
-        plan.entries.len() == MICRO_WAVE_SIZE,
-        "cohort must contain exactly 128 datasets"
+        plan.tasks
+            .iter()
+            .all(|task| jope_dime_regressor::selfplay_expansion::TASKS
+                .contains(&task.as_str())),
+        "cohort declares an unknown task"
+    );
+    ensure!(
+        plan.tasks.iter().collect::<HashSet<_>>().len() == plan.tasks.len(),
+        "cohort repeats a task"
+    );
+    // Regression and binary are the frozen backbone of every wave; a cohort that dropped
+    // one of them would silently stop training the tasks that already work.
+    for required in ["regression", "binary"] {
+        ensure!(
+            plan.tasks.iter().any(|task| task == required),
+            "cohort omits the mandatory {required} lane"
+        );
+    }
+    let expected_datasets = micro_wave_size(&plan.tasks);
+    ensure!(
+        plan.entries.len() == expected_datasets,
+        "cohort must contain exactly {expected_datasets} datasets ({} tasks x {MICRO_TASK_SIZE})",
+        plan.tasks.len()
+    );
+    ensure!(
+        plan.entries
+            .iter()
+            .all(|row| plan.tasks.contains(&row.task)),
+        "cohort carries a row for a task it does not declare"
     );
     let mut identities = HashSet::new();
-    for task in ["regression", "binary"] {
+    for task in plan.tasks.iter().map(String::as_str) {
         let task_rows = plan
             .entries
             .iter()
@@ -1531,7 +1720,7 @@ fn sanitize_proposals(args: SanitizeProposalsArgs) -> Result<Value> {
             "cohort proposal pointer scope differs from the frozen cohort"
         );
     }
-    let dl_slots_by_task = pointer.normalized_dl_slots()?;
+    let dl_slots_by_task = pointer.normalized_dl_slots(&plan.tasks)?;
     let source_path = resolve_pointer_path(&args.proposals_pointer, &pointer.proposals);
     ensure!(
         source_path.is_file(),
@@ -1979,12 +2168,30 @@ fn task_valid(source: &str, task: &str) -> bool {
             head,
             "logit_ridge" | "logistic" | "tab_boost" | "extra_trees" | "gam_boost" | "portfolio"
         ),
-        "regression" => {
+        // Timeseries shares the regression allowlist because `corpus_eval` validates a
+        // timeseries genome as exactly that: `TaskSpec::regression(Objective::Rmse)` against
+        // the reduced schema (corpus_eval.rs:1682-1690). The v2 direct reduction has already
+        // moved temporal structure into columns, so what remains is a regression fit. That
+        // same branch bails on `logit_ridge`/`logistic` as "a binary classification head",
+        // which is the exclusion the regression arm below already encodes -- so routing both
+        // through one predicate keeps the wave and the evaluator from ever disagreeing.
+        "regression" | "timeseries" => {
             head != "logit_ridge"
                 && head != "logistic"
                 && (feat_math::heads::is_head_op(head)
                     || matches!(head, "tab_boost" | "extra_trees" | "gam_boost" | "pls"))
         }
+        // Only the four multiclass heads emit a K-class prediction. They are the same set
+        // `corpus_eval` carries in V3_EXTRA_HEADS (:71-74) and the campaign pins as
+        // MULTICLASS_HEADS (test_adaptive/multiclass60.rs:55-60); a binary or regression head
+        // cannot satisfy `TaskSpec::multiclass(Objective::MacroF1)`.
+        "multiclass" => matches!(
+            head,
+            "multiclass_ridge"
+                | "multiclass_ovr_logistic"
+                | "multiclass_diagonal_lda"
+                | "multiclass_nearest_centroid"
+        ),
         _ => false,
     }
 }
@@ -2593,6 +2800,10 @@ fn build(args: BuildArgs) -> Result<Value> {
     let plan: CohortPlan = serde_json::from_value(read_json(&args.cohort)?)
         .with_context(|| format!("parse cohort {}", args.cohort.display()))?;
     validate_cohort(&plan)?;
+    // Datasets in THIS cohort. `validate_cohort` has already proved it equals
+    // `plan.entries.len()`, so downstream pair-count arithmetic tracks a 192- or 256-dataset
+    // wave instead of assuming the two-task 128.
+    let cohort_datasets = micro_wave_size(&plan.tasks);
     let (catalog, catalog_sha256) = load_catalog(&args.catalog_pointer)?;
     // Catalog GROWTH must not invalidate a frozen cohort. The expansion driver
     // merges a tranche and rewrites catalog/current.json roughly hourly, so a
@@ -2626,7 +2837,7 @@ fn build(args: BuildArgs) -> Result<Value> {
     let proposals = load_proposals(&args.proposals_pointer, &plan)?;
     let proposal_pointer: ProposalsPointer =
         serde_json::from_value(read_json(&args.proposals_pointer)?)?;
-    let requested_dl_slots_by_task = proposal_pointer.normalized_dl_slots()?;
+    let requested_dl_slots_by_task = proposal_pointer.normalized_dl_slots(&plan.tasks)?;
     let (robust_by_task, robust_sha256) = load_robust(&args.robust_seed_bank)?;
     let pair_registry = open_pair_registry_readonly(&args.pair_registry)?;
     let final_directory = args.output_root.join(&plan.wave);
@@ -2687,11 +2898,12 @@ fn build(args: BuildArgs) -> Result<Value> {
         let key = (cohort_row.task.clone(), cohort_row.dataset_hash.clone());
         let entry = catalog_by_identity[&key];
         let local = load_local_elites(&args.corpus, &cohort_row.task, &cohort_row.dataset_hash)?;
-        let metric = if cohort_row.task == "regression" {
-            "r2"
-        } else {
-            "auc"
-        };
+        // Ask the one function that knows all four metrics rather than assuming anything
+        // that is not regression is binary. The old ternary stamped "auc" onto timeseries
+        // and multiclass rows, and because the protocol sha256 is derived from (task,
+        // metric) the shard then failed closed against the evaluator's `negative_mase` /
+        // `macro_f1` -- a silent-looking wave that could never produce an observation.
+        let metric = expected_evaluation_metric(&cohort_row.task)?;
         let protocol_sha256 = evaluation_protocol_sha256(
             &cohort_row.task,
             metric,
@@ -2824,7 +3036,7 @@ fn build(args: BuildArgs) -> Result<Value> {
             .iter()
             .map(|row| row.candidate_count)
             .sum::<usize>()
-            == MICRO_WAVE_SIZE * WAVE_SIZE,
+            == cohort_datasets * WAVE_SIZE,
         "wave candidate count drift"
     );
     ensure!(
@@ -2850,7 +3062,7 @@ fn build(args: BuildArgs) -> Result<Value> {
         "proposal_file_sha256": proposal_pointer.proposals_sha256,
         "robust_seed_bank_sha256": robust_sha256,
         "generated_at_ms": generated_at_ms,
-        "datasets": MICRO_WAVE_SIZE,
+        "datasets": cohort_datasets,
         "task_datasets": {"regression": 64, "binary": 64},
         "cohort_sha256": sha256_file(&cohort_copy)?,
         "candidates_per_dataset": WAVE_SIZE,
@@ -2872,7 +3084,7 @@ fn build(args: BuildArgs) -> Result<Value> {
             "gp_exploration_count": gp_exploration_count,
             "thin_contexts": thin_contexts,
             "cache_dispositions": {
-                "novel": MICRO_WAVE_SIZE * WAVE_SIZE - registry_filtered_pairs,
+                "novel": cohort_datasets * WAVE_SIZE - registry_filtered_pairs,
                 "registry_replaced": registry_filtered_pairs,
                 "proposal_resampled": proposal_cache_resampled,
                 "proposal_reservoir_considered": proposal_reservoir_considered,
@@ -2902,8 +3114,8 @@ fn build(args: BuildArgs) -> Result<Value> {
         "wave": plan.wave,
         "wave_directory": final_directory,
         "summary_sha256": sha256_file(&final_directory.join("summary.json"))?,
-        "datasets": MICRO_WAVE_SIZE,
-        "candidate_pairs": MICRO_WAVE_SIZE * WAVE_SIZE,
+        "datasets": cohort_datasets,
+        "candidate_pairs": cohort_datasets * WAVE_SIZE,
         "registry_filtered_pairs": registry_filtered_pairs,
         "manifests": receipts.len(),
         "submitted_to_scq": false,
@@ -2913,7 +3125,101 @@ fn build(args: BuildArgs) -> Result<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use jope_dime_regressor::selfplay_data::{
+        HARD_UNCERTAIN_SLOTS, LEAST_OBSERVED_SLOTS, MICRO_WAVE_SIZE, STABLE_ANCHOR_SLOTS,
+    };
     use tempfile::tempdir;
+
+    /// Build a well-formed cohort over `tasks`, 16/32/16 per task.
+    fn cohort_over(tasks: &[&str]) -> CohortPlan {
+        let checkpoint = "a".repeat(64);
+        let mut entries = Vec::new();
+        for (task_index, task) in tasks.iter().enumerate() {
+            for (lane, count) in [
+                (MicroLane::StableAnchor, STABLE_ANCHOR_SLOTS),
+                (MicroLane::LeastObserved, LEAST_OBSERVED_SLOTS),
+                (MicroLane::HardUncertain, HARD_UNCERTAIN_SLOTS),
+            ] {
+                for _ in 0..count {
+                    entries.push(CohortEntry {
+                        task: (*task).to_owned(),
+                        dataset_hash: format!("{:016x}", entries.len() + task_index * 1_000),
+                        micro_lane: lane,
+                    });
+                }
+            }
+        }
+        CohortPlan {
+            schema: COHORT_SCHEMA.to_owned(),
+            immutable: true,
+            wave: "strict-wave-000002".to_owned(),
+            checkpoint_epoch: checkpoint_epoch(&checkpoint).expect("epoch"),
+            checkpoint_sha256: checkpoint,
+            catalog_sha256: "b".repeat(64),
+            sealed_cohort_sha256: "c".repeat(64),
+            tasks: tasks.iter().map(|task| (*task).to_owned()).collect(),
+            entries,
+        }
+    }
+
+    /// Every cohort already on disk predates `CohortPlan::tasks`. If an absent field did not
+    /// deserialize to exactly the two-task set, replaying those waves would fail validation
+    /// on a size mismatch -- so this is the property that makes the change non-breaking.
+    #[test]
+    fn a_legacy_cohort_without_a_tasks_field_replays_as_two_tasks() {
+        let mut value = serde_json::to_value(cohort_over(&["regression", "binary"])).expect("json");
+        value
+            .as_object_mut()
+            .expect("object")
+            .remove("tasks")
+            .expect("fixture carries tasks");
+        assert!(
+            value.get("tasks").is_none(),
+            "fixture must omit the field to exercise the default"
+        );
+
+        let plan: CohortPlan = serde_json::from_value(value).expect("legacy cohort parses");
+        assert_eq!(plan.tasks, vec!["regression", "binary"]);
+        assert_eq!(plan.entries.len(), MICRO_WAVE_SIZE);
+        validate_cohort(&plan).expect("a legacy two-task cohort still validates");
+    }
+
+    /// Multiclass joining widens the wave to 192 without touching per-task structure.
+    #[test]
+    fn a_three_task_cohort_validates_at_one_lane_per_task() {
+        let plan = cohort_over(&["regression", "binary", "multiclass"]);
+        assert_eq!(plan.entries.len(), 3 * MICRO_TASK_SIZE);
+        validate_cohort(&plan).expect("a three-task cohort validates");
+
+        let four = cohort_over(&["regression", "binary", "multiclass", "timeseries"]);
+        assert_eq!(four.entries.len(), 4 * MICRO_TASK_SIZE);
+        validate_cohort(&four).expect("a four-task cohort validates");
+    }
+
+    /// The declaration and the rows must agree, in both directions.
+    #[test]
+    fn a_cohort_whose_rows_contradict_its_declaration_is_rejected() {
+        let mut undersized = cohort_over(&["regression", "binary", "multiclass"]);
+        undersized.tasks = vec!["regression".to_owned(), "binary".to_owned()];
+        assert!(
+            validate_cohort(&undersized).is_err(),
+            "192 rows against a two-task declaration must fail"
+        );
+
+        let mut dropped = cohort_over(&["regression", "binary"]);
+        dropped.tasks = vec!["regression".to_owned()];
+        assert!(
+            validate_cohort(&dropped).is_err(),
+            "dropping a mandatory lane must fail"
+        );
+
+        let mut unknown = cohort_over(&["regression", "binary"]);
+        unknown.tasks.push("clustering".to_owned());
+        assert!(
+            validate_cohort(&unknown).is_err(),
+            "an unknown task must fail"
+        );
+    }
 
     #[test]
     fn adaptive_reservoir_accepts_declared_rungs_but_nothing_larger() {
@@ -2990,6 +3296,12 @@ mod tests {
             checkpoint_sha256: checkpoint.clone(),
             catalog_sha256: "a".repeat(64),
             sealed_cohort_sha256: "b".repeat(64),
+            // Evaluated before `entries` moves the vec (struct fields evaluate in order).
+            tasks: jope_dime_regressor::selfplay_expansion::TASKS
+                .iter()
+                .filter(|task| cohort_entries.iter().any(|row| row.task == **task))
+                .map(|task| (*task).to_owned())
+                .collect(),
             entries: cohort_entries,
         };
         let cohort_path = directory.join("cohort.json");
@@ -3761,5 +4073,94 @@ mod tests {
             output_root,
         })
         .is_err());
+    }
+
+    /// Pins the eligibility guard against the exact shape that broke production on
+    /// 2026-08-04: 7 regression datasets whose features live in sibling `.vs` files
+    /// and whose train.csv holds only the target column. Every candidate drawn
+    /// against them exits 1 in `corpus_eval`, so they burn four evaluations per
+    /// wave slot and stay eligible to do it again next wave.
+    #[test]
+    fn a_dataset_with_no_feature_columns_is_never_eligible() {
+        let directory = tempdir().unwrap();
+
+        // The real failing shape: one bare numeric column, no header, no comma.
+        let target_only = directory.path().join("target-only.csv");
+        fs::write(&target_only, "0.0123044169\n0.695948541\n0.31\n").unwrap();
+        assert!(
+            !dataset_has_feature_columns(&target_only),
+            "a single-column train.csv can never be evaluated"
+        );
+
+        // A normal supervised table is eligible.
+        let usable = directory.path().join("usable.csv");
+        fs::write(&usable, "f0,f1,target\n0.1,0.2,1.0\n0.3,0.4,0.0\n").unwrap();
+        assert!(dataset_has_feature_columns(&usable));
+
+        // Header-less multi-column data is still usable.
+        let headerless = directory.path().join("headerless.csv");
+        fs::write(&headerless, "0.1,0.2,1.0\n0.3,0.4,0.0\n").unwrap();
+        assert!(dataset_has_feature_columns(&headerless));
+
+        // An absent file is unevaluatable rather than a panic: selecting it would
+        // dispatch work that cannot succeed.
+        assert!(!dataset_has_feature_columns(&directory.path().join("gone.csv")));
+
+        // A trailing newline must not be mistaken for a delimiter.
+        let empty = directory.path().join("empty.csv");
+        fs::write(&empty, "\n").unwrap();
+        assert!(!dataset_has_feature_columns(&empty));
+    }
+
+    /// The wedge this pins: a proposal pointer scoped to the LIVE catalog while
+    /// the frozen cohort is bound to an older one is unrecoverable. The cohort is
+    /// immutable, so the two digests can never be reconciled and the wave retries
+    /// identically forever -- which is exactly how the queue drained to zero on
+    /// 2026-08-04 (23 identical failures on wave 474).
+    ///
+    /// The pointer's catalog scope is not chosen by the proposer. It is copied
+    /// from the digest the `cohort` subcommand reports, so the only way to keep
+    /// this invariant satisfiable is for that subcommand to report the ADOPTED
+    /// cohort's binding rather than whatever `catalog/current.json` says at the
+    /// moment it runs. This test fails if that reporting ever regresses.
+    #[test]
+    fn a_pointer_scoped_to_a_rotated_catalog_cannot_satisfy_a_frozen_cohort() {
+        let directory = tempdir().unwrap();
+        let (cohort, pointer, output_root, plan, _) = sanitizer_fixture(directory.path());
+
+        // Same pointer, declared under the schema that carries a catalog scope,
+        // bound to the catalog the cohort was actually frozen against.
+        let mut matched = read_json(&pointer).unwrap();
+        matched["schema"] = Value::String("CohortProposalPointer.v1".to_owned());
+        matched["cohort_sha256"] = Value::String(sha256_file(&cohort).unwrap());
+        matched["catalog_sha256"] = Value::String(plan.catalog_sha256.clone());
+        atomic_json(&pointer, &matched).unwrap();
+        assert!(
+            sanitize_proposals(SanitizeProposalsArgs {
+                cohort: cohort.clone(),
+                proposals_pointer: pointer.clone(),
+                output_root: output_root.clone(),
+            })
+            .is_ok(),
+            "a pointer bound to the cohort's own catalog must build"
+        );
+
+        // The same pointer after a catalog rotation leaked into its scope.
+        let mut rotated = matched;
+        rotated["catalog_sha256"] = Value::String("c".repeat(64));
+        assert_ne!(rotated["catalog_sha256"], Value::String(plan.catalog_sha256));
+        atomic_json(&pointer, &rotated).unwrap();
+        let error = sanitize_proposals(SanitizeProposalsArgs {
+            cohort,
+            proposals_pointer: pointer,
+            output_root,
+        })
+        .expect_err("a live-catalog-scoped pointer must not satisfy a frozen cohort");
+        assert!(
+            error
+                .to_string()
+                .contains("cohort proposal pointer scope differs from the frozen cohort"),
+            "unexpected failure: {error}"
+        );
     }
 }

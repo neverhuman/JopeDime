@@ -364,8 +364,20 @@ def select_micro_cohort(
         if row.get("source_family")
     }
 
+    # Same explicit-activation contract as the Rust selector: optional tasks
+    # join only when the operator names them in JOPE_MICRO_COHORT_OPTIONAL_TASKS
+    # AND their pool can fill a whole 64-dataset lane. Pool size alone must
+    # never change wave shape.
+    activated = tuple(
+        task.strip()
+        for task in os.environ.get("JOPE_MICRO_COHORT_OPTIONAL_TASKS", "").split(",")
+        if task.strip()
+    )
+    selector_tasks = list(LEGACY_COHORT_TASKS) + [
+        task for task in ("multiclass", "timeseries") if task in activated
+    ]
     selected_all = []
-    for task in ("regression", "binary"):
+    for task in selector_tasks:
         pool = [
             dict(row)
             for row in entries
@@ -373,6 +385,8 @@ def select_micro_cohort(
             and row.get("source_family") not in sealed_families
         ]
         if len(pool) < 64:
+            if task not in LEGACY_COHORT_TASKS:
+                continue
             raise RuntimeError(f"{task}: a micro-wave requires at least 64 datasets")
 
         def tie(row: dict, lane: str) -> bytes:
@@ -427,14 +441,21 @@ def select_micro_cohort(
     return selected_all
 
 
-MICRO_COHORT_LANE_SIZES = {
-    ("regression", "stable_anchor"): 16,
-    ("regression", "least_observed"): 32,
-    ("regression", "hard_uncertain"): 16,
-    ("binary", "stable_anchor"): 16,
-    ("binary", "least_observed"): 32,
-    ("binary", "hard_uncertain"): 16,
-}
+# Per-task lane composition is frozen at 16/32/16; WHICH tasks a cohort carries
+# is declared by the cohort itself ("tasks", defaulting to the two-task legacy
+# set exactly like Rust's CohortPlan::tasks serde default). A fixed six-key map
+# here rejected every valid multiclass lane -- epoch-06 lane 01 flagged it, and
+# wave 546 proved it.
+MICRO_LANE_SHAPE = {"stable_anchor": 16, "least_observed": 32, "hard_uncertain": 16}
+LEGACY_COHORT_TASKS = ("regression", "binary")
+
+
+def micro_cohort_lane_sizes(tasks):
+    return {
+        (task, lane): count
+        for task in tasks
+        for lane, count in MICRO_LANE_SHAPE.items()
+    }
 
 
 def _validate_pending_cohort(
@@ -477,12 +498,14 @@ def _validate_pending_cohort(
                 f"{existing.get(field)!r} != {expected!r}"
             )
     entries = existing.get("entries") or []
+    cohort_tasks = tuple(existing.get("tasks") or LEGACY_COHORT_TASKS)
     lanes = Counter(
         (entry.get("task"), entry.get("micro_lane")) for entry in entries
     )
-    if lanes != Counter(MICRO_COHORT_LANE_SIZES):
+    if lanes != Counter(micro_cohort_lane_sizes(cohort_tasks)):
         raise RuntimeError(
-            f"pending micro-cohort identity drift: lane sizes {dict(lanes)}"
+            f"pending micro-cohort identity drift: lane sizes {dict(lanes)} "
+            f"for declared tasks {list(cohort_tasks)}"
         )
     identities = {(entry["task"], entry["dataset_hash"]) for entry in entries}
     if len(identities) != len(entries):
@@ -630,6 +653,10 @@ def plan_micro_cohort() -> dict:
             "checkpoint_sha256": checkpoint_hash,
             "catalog_sha256": pointer["catalog_sha256"],
             "sealed_cohort_sha256": sha256_file(SEALED_COHORT),
+            "tasks": sorted(
+                {row["task"] for row in cohort},
+                key=("regression", "binary", "timeseries", "multiclass").index,
+            ),
             "entries": [
                 {
                     "task": row["task"],
@@ -976,7 +1003,7 @@ def build(
         "datasets": len(ordered),
         "task_datasets": {
             task: sum(row["task"] == task for row in ordered)
-            for task in ("regression", "binary")
+            for task in sorted({row["task"] for row in ordered})
         },
         "micro_cohort": [
             {

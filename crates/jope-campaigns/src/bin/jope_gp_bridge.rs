@@ -35,6 +35,8 @@ const ROBUST_BANK_SCHEMA: &str = "JopeRobustGpSeedBank.v1";
 enum Task {
     Regression,
     Binary,
+    Multiclass,
+    Timeseries,
 }
 
 impl Task {
@@ -42,6 +44,8 @@ impl Task {
         match self {
             Self::Regression => "regression",
             Self::Binary => "binary",
+            Self::Multiclass => "multiclass",
+            Self::Timeseries => "timeseries",
         }
     }
 }
@@ -308,17 +312,30 @@ fn task_valid(source: &str, task: &str) -> bool {
     let Some(head) = pipeline.stages.last().map(|stage| stage.op.as_str()) else {
         return false;
     };
+    // Mirrors the wave-side allowlist in jope_selfplay_wave.rs exactly: timeseries
+    // shares the regression arm because corpus_eval validates a timeseries genome
+    // as TaskSpec::regression(Rmse) over the reduced schema, and multiclass admits
+    // only the four multiclass_* heads (the same set corpus_eval's V3_EXTRA_HEADS
+    // and the multiclass60 campaign pin). If these two allowlists ever disagree,
+    // the bridge injects seeds the evaluator rejects -- silent seed loss.
     match task {
         "binary" => matches!(
             head,
             "logit_ridge" | "logistic" | "tab_boost" | "extra_trees" | "gam_boost" | "portfolio"
         ),
-        "regression" => {
+        "regression" | "timeseries" => {
             head != "logit_ridge"
                 && head != "logistic"
                 && (feat_math::heads::is_head_op(head)
                     || matches!(head, "tab_boost" | "extra_trees" | "gam_boost" | "pls"))
         }
+        "multiclass" => matches!(
+            head,
+            "multiclass_ridge"
+                | "multiclass_ovr_logistic"
+                | "multiclass_diagonal_lda"
+                | "multiclass_nearest_centroid"
+        ),
         _ => false,
     }
 }

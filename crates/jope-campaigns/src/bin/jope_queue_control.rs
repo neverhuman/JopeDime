@@ -2347,8 +2347,11 @@ fn load_wave_desired_pairs(
         }
         hashes.insert(expected_hash.to_owned());
     }
-    if desired.len() != 128 * 256 {
-        bail!("wave desired identity count is not 32,768");
+    if desired.len() % 256 != 0 || !matches!(desired.len() / 256, 128 | 192 | 256) {
+        bail!(
+            "wave desired identity count {} is not a legal micro-wave total",
+            desired.len()
+        );
     }
     Ok((wave, desired, hashes))
 }
@@ -2480,7 +2483,13 @@ fn build_wave_blocker_plan(
         || checkpoint_epoch != format!("checkpoint-{checkpoint_sha256}")
         || !is_sha256(catalog_sha256)
         || summary.get("immutable").and_then(Value::as_bool) != Some(true)
-        || summary.get("datasets").and_then(Value::as_u64) != Some(128)
+        // Any legal micro-wave shape: tasks.len() * 64. The exact count is
+        // cross-checked against the frozen cohort's entry list below, so this
+        // is a range gate, not the authority.
+        || !matches!(
+            summary.get("datasets").and_then(Value::as_u64),
+            Some(128 | 192 | 256)
+        )
         || summary
             .get("candidates_per_dataset")
             .and_then(Value::as_u64)
@@ -2489,6 +2498,10 @@ fn build_wave_blocker_plan(
     {
         bail!("wave summary invariants failed");
     }
+    let wave_datasets = summary
+        .get("datasets")
+        .and_then(Value::as_u64)
+        .expect("validated above") as usize;
     if cohort.get("schema").and_then(Value::as_str) != Some("JopeMicroCohort.v2")
         || cohort.get("wave").and_then(Value::as_str) != Some(wave.as_str())
         || cohort.get("checkpoint_sha256").and_then(Value::as_str)
@@ -2500,7 +2513,7 @@ fn build_wave_blocker_plan(
             .get("entries")
             .and_then(Value::as_array)
             .map(Vec::len)
-            != Some(128)
+            != Some(wave_datasets)
     {
         bail!("wave cohort invariants failed");
     }
@@ -2509,10 +2522,22 @@ fn build_wave_blocker_plan(
         .get("manifests")
         .and_then(Value::as_array)
         .context("wave summary manifests are absent")?;
+    // manifests = datasets * ceil(256 / max_candidates_per_manifest), derived
+    // from the summary's own declared shard cap (the historical literal 384 was
+    // 128 datasets at the never-used cap of 100 -- 128 * 3 shards).
+    let max_shard = summary
+        .get("max_candidates_per_manifest")
+        .and_then(Value::as_u64)
+        .unwrap_or(100)
+        .max(1) as usize;
+    let expected_manifests = wave_datasets * 256usize.div_ceil(max_shard);
     if summary.get("manifest_count").and_then(Value::as_u64) != Some(entries.len() as u64)
-        || entries.len() != 384
+        || entries.len() != expected_manifests
     {
-        bail!("wave summary manifest count is not exactly 384");
+        bail!(
+            "wave summary manifest count {} is not the expected {expected_manifests}",
+            entries.len()
+        );
     }
     let mut desired = BTreeSet::<(String, String, String, String)>::new();
     let mut current_manifest_hashes = BTreeSet::new();
@@ -2585,8 +2610,11 @@ fn build_wave_blocker_plan(
         }
         current_manifest_hashes.insert(expected_hash.to_owned());
     }
-    if desired.len() != 128 * 256 {
-        bail!("current wave does not contain exactly 32,768 unique desired pairs");
+    if desired.len() % 256 != 0 || !matches!(desired.len() / 256, 128 | 192 | 256) {
+        bail!(
+            "current wave desired pair count {} is not a legal micro-wave total",
+            desired.len()
+        );
     }
 
     let connection = Connection::open_with_flags(
