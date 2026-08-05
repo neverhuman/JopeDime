@@ -2532,6 +2532,16 @@ fn fetch_cohort_proposals(args: &Args, state: &PersistedSupplyState) -> Result<(
     if !summary_path.is_file() {
         fs::copy(&summary_source, &summary_path)?;
     }
+    // Every task the cohort carries gets a DL allocation at the historical
+    // 8-slot rung. The literal {"binary": 8, "regression": 8} that used to sit
+    // in the pointer stranded wave 552 for hours: the wave builder asks
+    // `normalized_dl_slots` for each DECLARED task, and a three-task cohort
+    // met a two-key map -- "proposal pointer lacks multiclass DL allocation",
+    // retried forever against the same immutable pointer.
+    let dl_slots_by_task = task_counts
+        .keys()
+        .map(|task| (task.clone(), json!(8)))
+        .collect::<serde_json::Map<_, _>>();
     let task_scopes = task_counts
         .into_iter()
         .map(|(task, context_count)| {
@@ -2557,7 +2567,7 @@ fn fetch_cohort_proposals(args: &Args, state: &PersistedSupplyState) -> Result<(
         "proposals_sha256": proposal_sha256,
         "summary": summary_path,
         "summary_sha256": summary_sha256,
-        "dl_slots_by_task": {"binary": 8, "regression": 8},
+        "dl_slots_by_task": dl_slots_by_task,
         "cross_context_backfill_rows": 0,
     });
     let mut bytes = serde_json::to_vec(&pointer)?;
