@@ -15,13 +15,10 @@ use std::process::Command;
 const SCHEMA: &str = "JopeEffectiveUnitAudit.v1";
 const SERVICE_MANIFEST_SCHEMA: &str = "JopeSelfplayServiceManifest.v3";
 const POINTER_SCHEMA: &str = "JopeSelfplayRuntimeBundlePointer.v2";
-const FORBIDDEN_EXECSTART: &[&str] = &[
-    "/home/ubuntu/jope-dime",
-    "/home/ubuntu/jope-slime",
-    "/home/ubuntu/flywheel",
-    "/target/",
-    "/build/",
-];
+// Checkout names are intentionally absent: the project boundary forbids
+// embedding sibling-project roots, and the exact expected bundle path below
+// already rejects every executable outside the active immutable bundle.
+const FORBIDDEN_EXECSTART: &[&str] = &["/target/", "/build/"];
 
 #[derive(Parser, Debug)]
 #[command(name = "jope-effective-unit-audit")]
