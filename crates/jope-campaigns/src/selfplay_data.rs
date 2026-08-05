@@ -1383,10 +1383,22 @@ mod tests {
             .flat_map(|task| (0..80).map(move |index| micro(task, index)))
             .collect::<Vec<_>>();
         let policy = MicroAdmission::default();
-        let first =
-            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000001", &policy, &[]).unwrap();
-        let second =
-            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000001", &policy, &[]).unwrap();
+        let first = select_micro_cohort(
+            &entries,
+            &HashMap::new(),
+            "strict-wave-000001",
+            &policy,
+            &[],
+        )
+        .unwrap();
+        let second = select_micro_cohort(
+            &entries,
+            &HashMap::new(),
+            "strict-wave-000001",
+            &policy,
+            &[],
+        )
+        .unwrap();
         assert_eq!(first, second);
         assert_eq!(first.len(), 128);
         for task in ["regression", "binary"] {
@@ -1463,9 +1475,7 @@ mod tests {
             );
         }
         assert!(
-            !selected
-                .iter()
-                .any(|row| row.dataset.task == "timeseries"),
+            !selected.iter().any(|row| row.dataset.task == "timeseries"),
             "an activated task below the lane floor must not enter the cohort"
         );
 
@@ -1506,8 +1516,14 @@ mod tests {
                 entries.push(live(task, index, 0, 0.0, 0));
             }
         }
-        let cohort =
-            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000042", &policy, &[]).unwrap();
+        let cohort = select_micro_cohort(
+            &entries,
+            &HashMap::new(),
+            "strict-wave-000042",
+            &policy,
+            &[],
+        )
+        .unwrap();
         assert_eq!(cohort.len(), MICRO_WAVE_SIZE);
         for task in ["regression", "binary"] {
             let rows = cohort
@@ -1583,8 +1599,14 @@ mod tests {
                 entries.push(live(task, index, 29, spread, 0));
             }
         }
-        let cohort =
-            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000043", &policy, &[]).unwrap();
+        let cohort = select_micro_cohort(
+            &entries,
+            &HashMap::new(),
+            "strict-wave-000043",
+            &policy,
+            &[],
+        )
+        .unwrap();
         for task in ["regression", "binary"] {
             let least = cohort
                 .iter()
@@ -1628,8 +1650,14 @@ mod tests {
                 entries.push(row);
             }
         }
-        let cohort =
-            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000044", &policy, &[]).unwrap();
+        let cohort = select_micro_cohort(
+            &entries,
+            &HashMap::new(),
+            "strict-wave-000044",
+            &policy,
+            &[],
+        )
+        .unwrap();
         assert_eq!(cohort.len(), MICRO_WAVE_SIZE);
         for task in ["regression", "binary"] {
             for (lane, want) in [
@@ -1667,8 +1695,14 @@ mod tests {
         assert!(entries
             .iter()
             .all(|row| !row.stable_anchor && !row.golden42 && row.current_catalog == Some(false)));
-        let cohort =
-            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000046", &policy, &[]).unwrap();
+        let cohort = select_micro_cohort(
+            &entries,
+            &HashMap::new(),
+            "strict-wave-000046",
+            &policy,
+            &[],
+        )
+        .unwrap();
         assert_eq!(cohort.len(), MICRO_WAVE_SIZE);
         for task in ["regression", "binary"] {
             assert_eq!(
@@ -1695,8 +1729,14 @@ mod tests {
                 entries.push(live(task, index, 9000, 0.0, 99));
             }
         }
-        let cohort =
-            select_micro_cohort(&entries, &HashMap::new(), "strict-wave-000045", &policy, &[]).unwrap();
+        let cohort = select_micro_cohort(
+            &entries,
+            &HashMap::new(),
+            "strict-wave-000045",
+            &policy,
+            &[],
+        )
+        .unwrap();
         assert_eq!(cohort.len(), MICRO_WAVE_SIZE);
     }
 

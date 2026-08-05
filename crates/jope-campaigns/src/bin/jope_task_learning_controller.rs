@@ -8,11 +8,14 @@ use jope_dime_regressor::selfplay_runtime::{
 use jope_dime_regressor::selfplay_shadow::{
     deterministic_canary_contexts, validate_panel_consumption, CanaryContextV2,
     CausalEvidenceLedgerV3, PlateauCountedCandidateV1, PlateauDiagnosisV1, PlateauDiagnosisV2,
-    RecipeChangeDirectiveV1, SealedPanelConsumptionV1, SealedPanelPoolV2, Sha256Digest,
-    ShadowAlternationState, ShadowCheckpointV1, Task, TaskCanaryStreaks, TaskPromotionEvaluationV3,
-    TrainerIntentV2, TrainerMode, PLATEAU_DIAGNOSIS_V2_SCHEMA, SEALED_PANEL_CONSUMPTION_V1_SCHEMA,
-    SHADOW_CHECKPOINT_SCHEMA, TRAINER_INTENT_V3_SCHEMA,
+    PlateauFailureClassV2, PromotionContextScheduleV3, RecipeChangeDirectiveV1,
+    RecipeChangeDirectiveV2, SealedPanelConsumptionV1, SealedPanelPoolV2, Sha256Digest,
+    ShadowAlternationState, ShadowCheckpointV1, Task, TaskCanaryStreaks,
+    TaskPromotionEvaluationIntentV3, TaskPromotionEvaluationV3, TrainerIntentV2, TrainerMode,
+    PLATEAU_DIAGNOSIS_V2_SCHEMA, SEALED_PANEL_CONSUMPTION_V1_SCHEMA, SHADOW_CHECKPOINT_SCHEMA,
+    TASK_PROMOTION_EVALUATION_INTENT_V3_SCHEMA, TRAINER_INTENT_V3_SCHEMA,
 };
+use jope_dime_regressor::spec_policy::TRAINER;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
@@ -30,7 +33,8 @@ const DEFAULT_RUNS_ROOT: &str = "/home/ubuntu/smart_cluster/var/runs";
 const DEFAULT_TRAINER: &str = "/home/ubuntu/jope-dime/scripts/test_exact_train.py";
 const DEFAULT_COMMON: &str = "/home/ubuntu/jope-dime/scripts/test_exact_common.py";
 const DEFAULT_PACKER: &str = "/home/ubuntu/jope-dime/scripts/test_exact_packed_corpus.py";
-const DEFAULT_PRIME: &str = "/home/ubuntu/jope-prime/src";
+const DEFAULT_PRIME: &str =
+    "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch";
 const ACTIVE_STATES: &[&str] = &[
     "queued",
     "starting",
@@ -271,9 +275,9 @@ fn cycle(args: &Args) -> Result<Value> {
     let promoted_tasks = apply_task_canary_acceptances(args, &mut state, &accepted)?;
     if !promoted_tasks.is_empty() {
         accepted = accepted_pointers(&args.root)?;
-        state.updated_at_ms = now_ms();
-        save_state(&state_path, &state)?;
     }
+    state.updated_at_ms = now_ms();
+    save_state(&state_path, &state)?;
     reset_changed_shadow_epochs(&mut state, &accepted);
     let corpus = corpus_pointer(&args.root)?;
     // The recipe each task's shadow lane would train with RIGHT NOW; plateau
@@ -826,21 +830,75 @@ fn resolve_candidate_recipe_identity(
 /// A valid operator directive for (task, parent) at ops/recipe-changes/.
 /// Malformed documents are treated as absent (the pause stays), never as
 /// a bridge.
-fn recipe_change_directive(root: &Path, task: Task, parent: &Sha256Digest) -> bool {
+fn recipe_change_directive(
+    root: &Path,
+    task: Task,
+    parent: &Sha256Digest,
+    current_recipe_identity: Option<&String>,
+) -> bool {
+    let diagnosis_path = root.join("training/plateau-diagnoses").join(format!(
+        "{}-{}.v2.json",
+        task.as_str(),
+        parent.as_str()
+    ));
+    let v2_path = root.join("ops/recipe-changes").join(format!(
+        "{}-{}.v2.json",
+        task.as_str(),
+        parent.as_str()
+    ));
+    if diagnosis_path.is_file() && v2_path.is_file() {
+        let Ok(diagnosis_value) = read_json(&diagnosis_path) else {
+            return false;
+        };
+        let Ok(diagnosis) = serde_json::from_value::<PlateauDiagnosisV2>(diagnosis_value) else {
+            return false;
+        };
+        let Ok(value) = read_json(&v2_path) else {
+            return false;
+        };
+        let Ok(directive) = serde_json::from_value::<RecipeChangeDirectiveV2>(value) else {
+            return false;
+        };
+        let Ok(diagnosis_sha256) = sha256_file(&diagnosis_path).and_then(Sha256Digest::parse)
+        else {
+            return false;
+        };
+        let current_matches = current_recipe_identity
+            .and_then(|identity| Sha256Digest::parse(identity.clone()).ok())
+            .is_some_and(|identity| identity == directive.next_recipe_identity_sha256);
+        let previous_matches = diagnosis
+            .current_recipe_identity_sha256
+            .as_ref()
+            .and_then(|identity| Sha256Digest::parse(identity.clone()).ok())
+            .map_or(
+                directive.previous_recipe_identity_sha256.is_none(),
+                |identity| directive.previous_recipe_identity_sha256.as_ref() == Some(&identity),
+            );
+        return diagnosis.validate().is_ok()
+            && directive.validate(&diagnosis).is_ok()
+            && directive.answers_diagnosis_sha256 == diagnosis_sha256
+            && current_matches
+            && previous_matches;
+    }
+
+    // V1 can bridge only pre-v2 legacy diagnoses. Once a v2 diagnosis exists,
+    // an enumerated but unaudited free-form directive is never sufficient.
+    if diagnosis_path.is_file() {
+        return false;
+    }
     let path = root.join("ops/recipe-changes").join(format!(
         "{}-{}.v1.json",
         task.as_str(),
         parent.as_str()
     ));
-    let Ok(value) = read_json(&path) else {
-        return false;
-    };
-    let Ok(directive) = serde_json::from_value::<RecipeChangeDirectiveV1>(value) else {
-        return false;
-    };
-    directive.validate().is_ok()
-        && directive.task == task
-        && directive.unchanged_parent_checkpoint_sha256 == *parent
+    read_json(&path)
+        .ok()
+        .and_then(|value| serde_json::from_value::<RecipeChangeDirectiveV1>(value).ok())
+        .is_some_and(|directive| {
+            directive.validate().is_ok()
+                && directive.task == task
+                && directive.unchanged_parent_checkpoint_sha256 == *parent
+        })
 }
 
 fn publish_plateau_diagnoses(
@@ -906,7 +964,7 @@ fn publish_plateau_diagnoses(
         // unless an operator RecipeChangeDirective bridges them. An unknown
         // CURRENT identity disables scoping entirely (v1 behavior).
         let current_identity = current_recipe_identities.get(&task);
-        let directive_present = recipe_change_directive(root, task, parent);
+        let directive_present = recipe_change_directive(root, task, parent, current_identity);
         let scoped = |candidate: &Sha256Digest| -> Result<(bool, Option<String>)> {
             let identity = resolve_candidate_recipe_identity(root, task, candidate)?;
             let counts = match (&identity, current_identity) {
@@ -1038,6 +1096,14 @@ fn publish_plateau_diagnoses(
             data_slice_summary: diagnosis.data_slice_summary.clone(),
             latency_summary: diagnosis.latency_summary.clone(),
             replay_summary: diagnosis.replay_summary.clone(),
+            failure_classes: [
+                (proposal_validity < 0.99).then_some(PlateauFailureClassV2::ValidityLoss),
+                (gp_disadvantage > 0.0).then_some(PlateauFailureClassV2::GpDisadvantage),
+                (latency > 1.25).then_some(PlateauFailureClassV2::LatencyRegression),
+            ]
+            .into_iter()
+            .flatten()
+            .collect(),
             diagnosed_at_ms: diagnosis.diagnosed_at_ms,
         };
         v2.validate()?;
@@ -1129,6 +1195,43 @@ fn accepted_pointers(root: &Path) -> Result<BTreeMap<Task, AcceptedPointer>> {
     Ok(output)
 }
 
+fn bootstrap_evaluation_anchor(root: &Path, task: Task) -> Result<Option<AcceptedPointer>> {
+    if matches!(task, Task::Binary | Task::Regression) {
+        return Ok(None);
+    }
+    let anchor_path = root
+        .join("training/bootstrap-evaluation-anchors")
+        .join(format!("{}.v1.json", task.as_str()));
+    if !anchor_path.is_file() {
+        return Ok(None);
+    }
+    let anchor = read_json(&anchor_path)?;
+    ensure!(
+        anchor.get("schema").and_then(Value::as_str) == Some("TaskBootstrapEvaluationAnchor.v1")
+            && anchor.get("task").and_then(Value::as_str) == Some(task.as_str())
+            && anchor.get("accepted").and_then(Value::as_bool) == Some(false),
+        "optional-task bootstrap evaluation anchor is not an unaccepted v1 anchor"
+    );
+    let path = PathBuf::from(
+        anchor
+            .get("checkpoint")
+            .and_then(Value::as_str)
+            .context("bootstrap evaluation anchor lacks checkpoint path")?,
+    );
+    let digest = Sha256Digest::parse(
+        anchor
+            .get("checkpoint_sha256")
+            .and_then(Value::as_str)
+            .context("bootstrap evaluation anchor lacks checkpoint digest")?
+            .to_owned(),
+    )?;
+    ensure!(
+        path.is_file() && sha256_file(&path)? == digest.as_str(),
+        "bootstrap evaluation anchor content drift"
+    );
+    Ok(Some(AcceptedPointer { digest, path }))
+}
+
 fn reset_changed_shadow_epochs(
     state: &mut ControllerState,
     accepted: &BTreeMap<Task, AcceptedPointer>,
@@ -1152,21 +1255,30 @@ fn apply_task_canary_acceptances(
     state: &mut ControllerState,
     accepted: &BTreeMap<Task, AcceptedPointer>,
 ) -> Result<Vec<Task>> {
-    let directory = args
-        .root
-        .join("training/task-promotion-evaluations/accepted");
-    if !directory.is_dir() {
+    let evaluation_root = args.root.join("training/task-promotion-evaluations");
+    if !evaluation_root.is_dir() {
         return Ok(Vec::new());
     }
-    let mut receipts = fs::read_dir(&directory)?
-        .filter_map(|entry| entry.ok())
-        .filter(|entry| entry.path().extension().and_then(|value| value.to_str()) == Some("json"))
-        .filter_map(|entry| {
-            let value = read_json(&entry.path()).ok()?;
-            let evaluation: TaskPromotionEvaluationV3 = serde_json::from_value(value).ok()?;
-            Some((evaluation.evaluated_at_ms, entry.path(), evaluation))
-        })
-        .collect::<Vec<_>>();
+    let mut receipts = Vec::new();
+    for tier in ["accepted", "rejected"] {
+        let directory = evaluation_root.join(tier);
+        if !directory.is_dir() {
+            continue;
+        }
+        receipts.extend(
+            fs::read_dir(directory)?
+                .filter_map(|entry| entry.ok())
+                .filter(|entry| {
+                    entry.path().extension().and_then(|value| value.to_str()) == Some("json")
+                })
+                .filter_map(|entry| {
+                    let value = read_json(&entry.path()).ok()?;
+                    let evaluation: TaskPromotionEvaluationV3 =
+                        serde_json::from_value(value).ok()?;
+                    Some((evaluation.evaluated_at_ms, entry.path(), evaluation))
+                }),
+        );
+    }
     receipts.sort_by(|left, right| left.0.cmp(&right.0).then_with(|| left.1.cmp(&right.1)));
     let mut promoted = Vec::new();
     for (_, path, receipt) in receipts {
@@ -1181,7 +1293,9 @@ fn apply_task_canary_acceptances(
         };
         let parent = accepted
             .get(&task)
-            .context("accepted task pointer is absent")?;
+            .cloned()
+            .or(bootstrap_evaluation_anchor(&args.root, task)?)
+            .context("accepted task pointer or bootstrap evaluation anchor is absent")?;
         if receipt.accepted_parent_checkpoint_sha256 != parent.digest
             || candidate.accepted_parent_checkpoint_sha256 != parent.digest
             || receipt.candidate_checkpoint_sha256 != candidate.checkpoint_sha256
@@ -1212,8 +1326,20 @@ fn apply_task_canary_acceptances(
                 "independent_single_use_panel_passes": independent_passes.len(),
             }),
         )?;
-        if ready && !promoted.contains(&task) {
-            promote_task_pointer(args, task, parent, &candidate, &independent_passes)?;
+        if !accepted_verdict {
+            state.production_candidates.remove(&task);
+            append_event(
+                &args.root,
+                "task_production_candidate_closed_after_rejection",
+                &json!({
+                    "task": task,
+                    "candidate_checkpoint_sha256": candidate.checkpoint_sha256,
+                    "run_index": receipt.run_index,
+                    "later_panels_consumed": false,
+                }),
+            )?;
+        } else if ready && !promoted.contains(&task) {
+            promote_task_pointer(args, task, &parent, &candidate, &independent_passes)?;
             state.canary_streaks.reset_after_promotion(task);
             state.production_candidates.remove(&task);
             state.shadow_models.remove(&task);
@@ -1221,6 +1347,30 @@ fn apply_task_canary_acceptances(
             state.last_recipe_e_corpus_watermark.remove(&task);
             state.last_recipe_e_descendant_receipts.remove(&task);
             promoted.push(task);
+        } else if !ready {
+            let consumption_path = args
+                .root
+                .join("training/sealed-panels/consumed")
+                .join(format!(
+                    "{}.v1.json",
+                    receipt.panel_consumption_sha256.as_str()
+                ));
+            let consumption: SealedPanelConsumptionV1 =
+                serde_json::from_value(read_json(&consumption_path)?)?;
+            ensure!(
+                consumption.run_index == receipt.run_index
+                    && consumption.seed > receipt.run_index as u64,
+                "accepted promotion run consumption seed drift"
+            );
+            let base_seed = consumption.seed - receipt.run_index as u64 - 1;
+            schedule_promotion_run(
+                args,
+                task,
+                &parent.digest,
+                &candidate.checkpoint_sha256,
+                base_seed,
+                independent_passes.len(),
+            )?;
         }
     }
     Ok(promoted)
@@ -1249,9 +1399,6 @@ fn independent_external_passes(
         })
         .collect::<Vec<_>>();
     rows.sort_by_key(|(_, evaluation)| evaluation.run_index);
-    if rows.len() < 3 {
-        return Ok(Vec::new());
-    }
     let mut prior = Vec::new();
     let mut receipt_ids = Vec::new();
     for (expected_run, (path, evaluation)) in rows.into_iter().take(3).enumerate() {
@@ -1287,7 +1434,7 @@ fn independent_external_passes(
             .map(|row| row.seed)
             .collect::<BTreeSet<_>>()
             .len()
-            == 3,
+            == prior.len(),
         "external promotion runs must use disjoint seeds"
     );
     Ok(receipt_ids)
@@ -1316,20 +1463,38 @@ fn promote_task_pointer(
     );
     let pointer_path = args.root.join("training/accepted-by-task.json");
     let mut pointer = read_json(&pointer_path)?;
-    ensure!(
-        pointer
-            .get("tasks")
-            .and_then(|tasks| tasks.get(task.as_str()))
-            .and_then(|row| row.get("checkpoint_sha256"))
-            .and_then(Value::as_str)
-            == Some(parent.digest.as_str()),
-        "accepted task pointer changed before compare-and-swap"
-    );
-    let row = pointer
+    let current = pointer
+        .get("tasks")
+        .and_then(|tasks| tasks.get(task.as_str()))
+        .and_then(|row| row.get("checkpoint_sha256"))
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let absent_to_candidate = current.is_none();
+    if absent_to_candidate {
+        ensure!(
+            matches!(task, Task::Multiclass | Task::Timeseries),
+            "legacy task pointer cannot be absent during compare-and-swap"
+        );
+        let anchor = bootstrap_evaluation_anchor(&args.root, task)?
+            .context("first optional-task promotion lacks a bootstrap evaluation anchor")?;
+        ensure!(
+            anchor.digest == parent.digest,
+            "bootstrap evaluation anchor changed before absent-to-candidate compare-and-swap"
+        );
+    } else {
+        ensure!(
+            current.as_deref() == Some(parent.digest.as_str()),
+            "accepted task pointer changed before compare-and-swap"
+        );
+    }
+    let tasks = pointer
         .get_mut("tasks")
         .and_then(Value::as_object_mut)
-        .and_then(|tasks| tasks.get_mut(task.as_str()))
-        .and_then(Value::as_object_mut)
+        .context("accepted task pointer task map is not mutable")?;
+    let row = tasks
+        .entry(task.as_str().to_owned())
+        .or_insert_with(|| json!({}))
+        .as_object_mut()
         .context("accepted task pointer row is not mutable")?;
     row.insert(
         "checkpoint".to_owned(),
@@ -1371,6 +1536,8 @@ fn promote_task_pointer(
         "child_checkpoint": child.checkpoint_path,
         "external_pass_receipt_ids": external_pass_receipt_ids,
         "independent_single_use_panel_acceptances": 3,
+        "compare_and_swap": if absent_to_candidate { "absent_to_candidate" } else { "parent_to_candidate" },
+        "bootstrap_anchor_was_accepted": false,
         "evidence_counter_reset": true,
         "promoted_at_ms": now_ms(),
     });
@@ -1665,6 +1832,9 @@ fn render_spec(
         TrainerMode::Production => "production",
     };
     let quoted = |value: &str| serde_json::to_string(value).expect("JSON string");
+    let resource_block = TRAINER.render_resource_block();
+    let placement_block = TRAINER.render_placement_block();
+    let limits_block = TRAINER.render_limits_block();
     let mut text = format!(
         "[job]\nid = {}\nproject = \"{PROJECT}\"\ntier = \"normal\"\n\
          command = \"/usr/bin/python3\"\n\
@@ -1674,30 +1844,17 @@ fn render_spec(
          \"--task\", \"{}\", \"--mode\", \"{mode_name}\", \"--packed-manifest\", \
          \"{{input:packed_manifest}}\", \"--packed-catalog-data\", \"{{input:packed_catalog}}\", \
          \"--accepted-parent-sha256\", \"{}\"]\n\n\
-         [resource]\ngpus_per_task = 1\ncpus_reserved = 4\nomp_threads = 4\n\
-         ram_mb = 16384\ngang_size = 1\nplacement = \"single_node\"\n\n\
-         [dependencies]\n\
-         hostname = [{{ command = \"/usr/bin/grep\", \
-         args = [\"-qxE\", \"xbabe1|xbabe2|xbabe3\", \"/etc/hostname\"], timeout_secs = 5 }}]\n\n\
-         [[dependencies.smoke]]\nname = \"trainer GPU capability\"\n\
-         command = \"/usr/bin/nvidia-smi\"\n\
-         args = [\"--query-gpu=uuid,memory.total\", \"--format=csv,noheader\"]\n\
-         timeout_secs = 5\n\n\
-         [[dependencies.smoke]]\nname = \"trainer Python package\"\n\
-         command = \"/usr/bin/env\"\nargs = [{}, \"/usr/bin/python3\", \"-c\", \"import jope\"]\n\
-         timeout_secs = 30\n\n\
-         [env]\nPYTHONPATH = {}\nOMP_NUM_THREADS = \"4\"\n\
+         {resource_block}\n{placement_block}\n\
+         [env]\nPYTHONPATH = {}\nOMP_NUM_THREADS = \"{}\"\n\
          JOPE_TRAINER_INTENT_SCHEMA = \"TrainerIntent.v3\"\n\n\
-         [preempt]\npreemptible = true\ncheckpoint = \"none\"\nresume = \"rerun\"\n\n\
-         [limits]\nmax_runtime_hours = 168\nmax_restarts = 1\n\n",
+         [preempt]\npreemptible = {}\ncheckpoint = \"none\"\nresume = \"rerun\"\n\n\
+         {limits_block}\n",
         quoted(job_id),
         task.as_str(),
         accepted_parent.as_str(),
-        quoted(&format!(
-            "PYTHONPATH={}",
-            args.prime_source.to_string_lossy()
-        )),
         quoted(&args.prime_source.to_string_lossy()),
+        TRAINER.omp_threads,
+        TRAINER.preemptible,
     );
     let mut inputs = vec![
         (
@@ -1988,45 +2145,98 @@ fn write_production_canary_intents(
     intent: &ActiveIntent,
     candidate: &Sha256Digest,
 ) -> Result<()> {
+    schedule_promotion_run(
+        args,
+        intent.trainer.task,
+        &intent.trainer.accepted_parent_checkpoint_sha256,
+        candidate,
+        intent.trainer.seed,
+        0,
+    )
+}
+
+fn schedule_promotion_run(
+    args: &Args,
+    task: Task,
+    accepted_parent: &Sha256Digest,
+    candidate: &Sha256Digest,
+    base_seed: u64,
+    run_index: usize,
+) -> Result<()> {
+    ensure!(run_index < 3, "promotion run index must be 0..3");
+    let file_name = format!("{}-{}-run{}.v3.json", task.as_str(), candidate, run_index);
+    let pending_path = args
+        .root
+        .join("training/task-promotion-evaluations/pending")
+        .join(&file_name);
+    let consumed_intent_path = args
+        .root
+        .join("training/task-promotion-evaluations/intents")
+        .join(&file_name);
+    if pending_path.is_file() || consumed_intent_path.is_file() {
+        let path = if pending_path.is_file() {
+            &pending_path
+        } else {
+            &consumed_intent_path
+        };
+        let existing: TaskPromotionEvaluationIntentV3 = serde_json::from_value(read_json(path)?)?;
+        existing.validate()?;
+        ensure!(
+            existing.task == task
+                && &existing.accepted_parent_checkpoint_sha256 == accepted_parent
+                && &existing.candidate_checkpoint_sha256 == candidate
+                && existing.run_index == run_index,
+            "existing promotion intent scope drift"
+        );
+        return Ok(());
+    }
     let pool: SealedPanelPoolV2 = serde_json::from_value(read_json(
         &args.root.join("training/sealed-panel-pool.v2.json"),
     )?)?;
     pool.validate()?;
     let consumed_directory = args.root.join("training/sealed-panels/consumed");
-    let mut prior = if consumed_directory.is_dir() {
+    let mut prior_with_paths = if consumed_directory.is_dir() {
         fs::read_dir(&consumed_directory)?
             .filter_map(|entry| entry.ok())
             .filter_map(|entry| {
-                serde_json::from_value::<SealedPanelConsumptionV1>(read_json(&entry.path()).ok()?)
-                    .ok()
+                let path = entry.path();
+                let receipt =
+                    serde_json::from_value::<SealedPanelConsumptionV1>(read_json(&path).ok()?)
+                        .ok()?;
+                Some((path, receipt))
             })
             .collect::<Vec<_>>()
     } else {
         Vec::new()
     };
-    let consumed_panels = prior
+    let prior = prior_with_paths
         .iter()
-        .map(|receipt| receipt.panel.as_str())
-        .collect::<BTreeSet<_>>();
-    let mut panels = pool
-        .entries
-        .iter()
-        .filter(|entry| entry.task == intent.trainer.task)
-        .filter_map(|entry| entry.promotion_panel.as_deref())
-        .filter(|panel| !consumed_panels.contains(panel))
-        .collect::<BTreeSet<_>>()
-        .into_iter()
-        .filter(|panel| pool.promotion_panel(intent.trainer.task, panel).len() >= 128)
-        .take(3)
+        .map(|(_, receipt)| receipt.clone())
         .collect::<Vec<_>>();
-    panels.sort_unstable();
-    ensure!(
-        panels.len() == 3,
-        "sealed pool cannot supply three unused task-local promotion panels"
-    );
-    for run_index in 0..3_usize {
-        let panel = panels[run_index];
-        let available = pool.promotion_panel(intent.trainer.task, panel);
+    let existing_consumption = prior_with_paths.iter().find(|(_, receipt)| {
+        receipt.task == task
+            && &receipt.candidate_checkpoint_sha256 == candidate
+            && receipt.run_index == run_index
+    });
+    let (consumption_path, consumption) = if let Some((path, receipt)) = existing_consumption {
+        validate_panel_consumption(&pool, receipt, &[])?;
+        (path.clone(), receipt.clone())
+    } else {
+        let consumed_panels = prior
+            .iter()
+            .map(|receipt| receipt.panel.as_str())
+            .collect::<BTreeSet<_>>();
+        let panel = pool
+            .entries
+            .iter()
+            .filter(|entry| entry.task == task)
+            .filter_map(|entry| entry.promotion_panel.as_deref())
+            .filter(|panel| !consumed_panels.contains(panel))
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .find(|panel| pool.promotion_panel(task, panel).len() >= 128)
+            .context("sealed pool cannot supply the next unused task-local promotion panel")?;
+        let available = pool.promotion_panel(task, panel);
         let scheduled = (available.len().min(512) - 128) / 64 * 64 + 128;
         let contexts = available
             .into_iter()
@@ -2035,11 +2245,11 @@ fn write_production_canary_intents(
             .collect::<Vec<_>>();
         let consumption = SealedPanelConsumptionV1 {
             schema: SEALED_PANEL_CONSUMPTION_V1_SCHEMA.to_owned(),
-            task: intent.trainer.task,
+            task,
             panel: panel.to_owned(),
             candidate_checkpoint_sha256: candidate.clone(),
             run_index,
-            seed: intent.trainer.seed.saturating_add(run_index as u64 + 1),
+            seed: base_seed.saturating_add(run_index as u64 + 1),
             context_sha256: contexts.clone(),
             consumed_at_ms: now_ms(),
         };
@@ -2057,44 +2267,33 @@ fn write_production_canary_intents(
             "sealed panel consumption identity already exists"
         );
         fs::rename(&temporary, &consumption_path)?;
-        prior.push(consumption);
-        let rows = contexts
-            .into_iter()
-            .map(|context_sha256| {
-                json!({
-                    "context_sha256": context_sha256,
-                })
-            })
-            .collect::<Vec<_>>();
-        atomic_json(
-            &args
-                .root
-                .join("training/task-promotion-evaluations/pending")
-                .join(format!(
-                    "{}-{}-run{}.v3.json",
-                    intent.trainer.task.as_str(),
-                    candidate.as_str(),
-                    run_index
-                )),
-            &json!({
-                "schema": "TaskPromotionEvaluationIntent.v3",
-                "task": intent.trainer.task,
-                "accepted_parent_checkpoint_sha256":
-                    intent.trainer.accepted_parent_checkpoint_sha256,
-                "candidate_checkpoint_sha256": candidate,
-                "run_index": run_index,
-                "seed": intent.trainer.seed.saturating_add(run_index as u64 + 1),
-                "panel_consumption": consumption_path,
-                "panel_consumption_sha256": consumption_sha,
-                "context_schedule": rows,
-                "initial_contexts": 128,
-                "context_step": 64,
-                "maximum_contexts": scheduled,
-                "bootstrap_resamples": 10_000,
-                "created_at_ms": now_ms(),
-            }),
-        )?;
-    }
+        prior_with_paths.push((consumption_path.clone(), consumption.clone()));
+        (consumption_path, consumption)
+    };
+    let consumption_sha = Sha256Digest::parse(sha256_file(&consumption_path)?)?;
+    let promotion_intent = TaskPromotionEvaluationIntentV3 {
+        schema: TASK_PROMOTION_EVALUATION_INTENT_V3_SCHEMA.to_owned(),
+        task,
+        accepted_parent_checkpoint_sha256: accepted_parent.clone(),
+        candidate_checkpoint_sha256: candidate.clone(),
+        run_index,
+        seed: consumption.seed,
+        panel_consumption: consumption_path,
+        panel_consumption_sha256: consumption_sha,
+        context_schedule: consumption
+            .context_sha256
+            .iter()
+            .cloned()
+            .map(|context_sha256| PromotionContextScheduleV3 { context_sha256 })
+            .collect(),
+        initial_contexts: 128,
+        context_step: 64,
+        maximum_contexts: consumption.context_sha256.len(),
+        bootstrap_resamples: 10_000,
+        created_at_ms: now_ms(),
+    };
+    promotion_intent.validate()?;
+    atomic_json(&pending_path, &serde_json::to_value(promotion_intent)?)?;
     Ok(())
 }
 
@@ -2367,6 +2566,10 @@ mod tests {
     use super::*;
     use tempfile::tempdir;
 
+    fn digest(value: &str) -> Sha256Digest {
+        Sha256Digest::of_bytes(value.as_bytes())
+    }
+
     #[test]
     fn causal_recipe_requires_32_exact_pairs_and_is_shadow_only() {
         let directory = tempdir().unwrap();
@@ -2616,6 +2819,423 @@ mod tests {
             parent_digest.as_str()
         );
         assert!(pointer["global_checkpoint_sha256"].is_null());
+    }
+
+    #[test]
+    fn promotion_panels_are_consumed_only_when_each_run_is_scheduled() {
+        use jope_dime_regressor::selfplay_shadow::{
+            build_sealed_panel_pool_v2, ClusteredConfidenceBoundsV3, DatasetOriginV2,
+            SealedPanelCandidateV2, TaskPromotionMetricsV3,
+        };
+
+        let directory = tempdir().unwrap();
+        let root = directory.path();
+        fs::create_dir_all(root.join("training/sealed-panels/consumed")).unwrap();
+        let candidates = (0..5_120_usize)
+            .map(|index| SealedPanelCandidateV2 {
+                task: if index % 2 == 0 {
+                    Task::Binary
+                } else {
+                    Task::Regression
+                },
+                context_identity: format!("context-{index}"),
+                context_sha256: Sha256Digest::parse(format!("{index:064x}")).unwrap(),
+                source_family_sha256: Sha256Digest::parse(format!("{:064x}", index + 10_000))
+                    .unwrap(),
+                near_duplicate_cluster_sha256: Sha256Digest::parse(format!(
+                    "{:064x}",
+                    index + 20_000
+                ))
+                .unwrap(),
+                origin: DatasetOriginV2::Real,
+                base_seal_sha256: digest("base-seal"),
+                catalog_sha256: digest("catalog"),
+                train_sha256: digest(&format!("train-{index}")),
+                test_sha256: digest(&format!("test-{index}")),
+                context_facts_sha256: digest(&format!("facts-{index}")),
+                prior_use_index_sha256: digest("prior-use"),
+                zero_prior_use_proof_sha256:
+                    jope_dime_regressor::selfplay_shadow::sealed_zero_prior_use_proof_v2(
+                        &Sha256Digest::parse(format!("{index:064x}")).unwrap(),
+                        &digest("base-seal"),
+                        &digest("catalog"),
+                        &digest("prior-use"),
+                        1,
+                    ),
+                admission_watermark: 1,
+            })
+            .collect::<Vec<_>>();
+        let pool = build_sealed_panel_pool_v2(candidates, 1).unwrap();
+        atomic_json(
+            &root.join("training/sealed-panel-pool.v2.json"),
+            &serde_json::to_value(pool).unwrap(),
+        )
+        .unwrap();
+        let parent_path = root.join("parent.model.pt");
+        let candidate_path = root.join("candidate.model.pt");
+        fs::write(&parent_path, b"parent").unwrap();
+        fs::write(&candidate_path, b"candidate").unwrap();
+        let parent = Sha256Digest::parse(sha256_file(&parent_path).unwrap()).unwrap();
+        let candidate = Sha256Digest::parse(sha256_file(&candidate_path).unwrap()).unwrap();
+        atomic_json(
+            &root.join("training/accepted-by-task.json"),
+            &json!({
+                "schema": "JopeSelfplayAcceptedByTask.v1",
+                "global_checkpoint_sha256": parent,
+                "global_pointer": null,
+                "tasks": {
+                    "binary": {
+                        "checkpoint": parent_path,
+                        "checkpoint_sha256": parent,
+                        "promotion_tier": null,
+                        "source": "fixture",
+                        "updated_at_ms": 1
+                    },
+                    "regression": {
+                        "checkpoint": parent_path,
+                        "checkpoint_sha256": parent,
+                        "promotion_tier": null,
+                        "source": "fixture",
+                        "updated_at_ms": 1
+                    }
+                },
+                "updated_at_ms": 1,
+            }),
+        )
+        .unwrap();
+        let args = Args {
+            root: root.to_owned(),
+            scq: PathBuf::from("/bin/false"),
+            runs_root: root.join("runs"),
+            trainer_script: root.join("trainer"),
+            common_script: root.join("common"),
+            packed_script: root.join("packed"),
+            prime_source: root.join("prime"),
+            submit: false,
+            once: true,
+            interval_seconds: 1,
+            seed_base: 1,
+        };
+        schedule_promotion_run(&args, Task::Binary, &parent, &candidate, 10, 0).unwrap();
+        let consumed = || {
+            fs::read_dir(root.join("training/sealed-panels/consumed"))
+                .unwrap()
+                .count()
+        };
+        assert_eq!(consumed(), 1);
+        assert!(root
+            .join(format!(
+                "training/task-promotion-evaluations/pending/binary-{}-run0.v3.json",
+                candidate
+            ))
+            .is_file());
+        assert!(!root
+            .join(format!(
+                "training/task-promotion-evaluations/pending/binary-{}-run1.v3.json",
+                candidate
+            ))
+            .exists());
+
+        schedule_promotion_run(&args, Task::Binary, &parent, &candidate, 10, 0).unwrap();
+        assert_eq!(consumed(), 1, "run zero scheduling must be idempotent");
+        let consumption_path = fs::read_dir(root.join("training/sealed-panels/consumed"))
+            .unwrap()
+            .next()
+            .unwrap()
+            .unwrap()
+            .path();
+        let consumption_sha = Sha256Digest::parse(sha256_file(&consumption_path).unwrap()).unwrap();
+        let evaluation = TaskPromotionEvaluationV3 {
+            schema: "TaskPromotionEvaluation.v3".to_owned(),
+            task: Task::Binary,
+            accepted_parent_checkpoint_sha256: parent.clone(),
+            candidate_checkpoint_sha256: candidate.clone(),
+            panel_consumption_sha256: consumption_sha,
+            run_index: 0,
+            metrics: TaskPromotionMetricsV3 {
+                contexts: 128,
+                confidence: ClusteredConfidenceBoundsV3 {
+                    resamples: 10_000,
+                    seed: 11,
+                    candidate_vs_accepted_lower: -0.1,
+                    candidate_vs_gp_lower: -0.1,
+                    conditional_advantage_lower: 0.01,
+                },
+                maximum_slice_regression: 0.1,
+                validity: 1.0,
+                replay_verification: 1.0,
+                failure_rate_increase: 0.0,
+                latency_ratio: 1.0,
+                strict_wins: 1,
+                equal_budget_wins: 1,
+            },
+            accepted: false,
+            rejection_reasons: vec!["fixture rejection".to_owned()],
+            evaluated_at_ms: 2,
+        };
+        evaluation.validate().unwrap();
+        atomic_json(
+            &root
+                .join("training/task-promotion-evaluations/rejected")
+                .join("run0.v3.json"),
+            &serde_json::to_value(evaluation).unwrap(),
+        )
+        .unwrap();
+        let mut state = ControllerState::default();
+        state.production_candidates.insert(
+            Task::Binary,
+            ModelRef {
+                accepted_parent_checkpoint_sha256: parent.clone(),
+                checkpoint_sha256: candidate.clone(),
+                checkpoint_path: candidate_path,
+            },
+        );
+        let accepted = accepted_pointers(root).unwrap();
+        assert!(apply_task_canary_acceptances(&args, &mut state, &accepted)
+            .unwrap()
+            .is_empty());
+        assert!(!state.production_candidates.contains_key(&Task::Binary));
+        assert_eq!(consumed(), 1, "rejection must not consume run one or two");
+        assert!(!root
+            .join(format!(
+                "training/task-promotion-evaluations/pending/binary-{}-run1.v3.json",
+                candidate
+            ))
+            .exists());
+    }
+
+    #[test]
+    fn first_optional_promotion_uses_absent_to_candidate_cas() {
+        let directory = tempdir().unwrap();
+        let root = directory.path();
+        fs::create_dir_all(root.join("training/bootstrap-evaluation-anchors")).unwrap();
+        let anchor_path = root.join("multiclass-anchor.model.pt");
+        let child_path = root.join("multiclass-child.model.pt");
+        fs::write(&anchor_path, b"anchor").unwrap();
+        fs::write(&child_path, b"child").unwrap();
+        let anchor_digest = Sha256Digest::parse(sha256_file(&anchor_path).unwrap()).unwrap();
+        let child_digest = Sha256Digest::parse(sha256_file(&child_path).unwrap()).unwrap();
+        atomic_json(
+            &root.join("training/bootstrap-evaluation-anchors/multiclass.v1.json"),
+            &json!({
+                "schema": "TaskBootstrapEvaluationAnchor.v1",
+                "task": "multiclass",
+                "checkpoint": anchor_path,
+                "checkpoint_sha256": anchor_digest,
+                "accepted": false,
+                "created_at_ms": 1,
+            }),
+        )
+        .unwrap();
+        atomic_json(
+            &root.join("training/accepted-by-task.json"),
+            &json!({
+                "schema": "JopeSelfplayAcceptedByTask.v1",
+                "global_checkpoint_sha256": null,
+                "global_pointer": null,
+                "tasks": {},
+                "updated_at_ms": 1,
+            }),
+        )
+        .unwrap();
+        let args = Args {
+            root: root.to_owned(),
+            scq: PathBuf::from("/bin/false"),
+            runs_root: root.join("runs"),
+            trainer_script: root.join("trainer"),
+            common_script: root.join("common"),
+            packed_script: root.join("packed"),
+            prime_source: root.join("prime"),
+            submit: false,
+            once: true,
+            interval_seconds: 1,
+            seed_base: 1,
+        };
+        promote_task_pointer(
+            &args,
+            Task::Multiclass,
+            &AcceptedPointer {
+                digest: anchor_digest.clone(),
+                path: anchor_path,
+            },
+            &ModelRef {
+                accepted_parent_checkpoint_sha256: anchor_digest,
+                checkpoint_sha256: child_digest.clone(),
+                checkpoint_path: child_path,
+            },
+            &["one".to_owned(), "two".to_owned(), "three".to_owned()],
+        )
+        .unwrap();
+        let pointer = read_json(&root.join("training/accepted-by-task.json")).unwrap();
+        assert_eq!(
+            pointer["tasks"]["multiclass"]["checkpoint_sha256"],
+            child_digest.as_str()
+        );
+        let anchor =
+            read_json(&root.join("training/bootstrap-evaluation-anchors/multiclass.v1.json"))
+                .unwrap();
+        assert_eq!(anchor["accepted"], false);
+    }
+
+    #[test]
+    fn three_sequential_passes_advance_the_pointer_once() {
+        use jope_dime_regressor::selfplay_shadow::{
+            build_sealed_panel_pool_v2, ClusteredConfidenceBoundsV3, DatasetOriginV2,
+            SealedPanelCandidateV2, TaskPromotionMetricsV3,
+        };
+
+        let directory = tempdir().unwrap();
+        let root = directory.path();
+        fs::create_dir_all(root.join("training/sealed-panels/consumed")).unwrap();
+        let pool = build_sealed_panel_pool_v2(
+            (0..5_120_usize)
+                .map(|index| SealedPanelCandidateV2 {
+                    task: if index % 2 == 0 {
+                        Task::Binary
+                    } else {
+                        Task::Regression
+                    },
+                    context_identity: format!("context-{index}"),
+                    context_sha256: Sha256Digest::parse(format!("{index:064x}")).unwrap(),
+                    source_family_sha256: Sha256Digest::parse(format!("{:064x}", index + 10_000))
+                        .unwrap(),
+                    near_duplicate_cluster_sha256: Sha256Digest::parse(format!(
+                        "{:064x}",
+                        index + 20_000
+                    ))
+                    .unwrap(),
+                    origin: DatasetOriginV2::Real,
+                    base_seal_sha256: digest("base-seal"),
+                    catalog_sha256: digest("catalog"),
+                    train_sha256: digest(&format!("train-{index}")),
+                    test_sha256: digest(&format!("test-{index}")),
+                    context_facts_sha256: digest(&format!("facts-{index}")),
+                    prior_use_index_sha256: digest("prior-use"),
+                    zero_prior_use_proof_sha256:
+                        jope_dime_regressor::selfplay_shadow::sealed_zero_prior_use_proof_v2(
+                            &Sha256Digest::parse(format!("{index:064x}")).unwrap(),
+                            &digest("base-seal"),
+                            &digest("catalog"),
+                            &digest("prior-use"),
+                            1,
+                        ),
+                    admission_watermark: 1,
+                })
+                .collect(),
+            1,
+        )
+        .unwrap();
+        atomic_json(
+            &root.join("training/sealed-panel-pool.v2.json"),
+            &serde_json::to_value(pool).unwrap(),
+        )
+        .unwrap();
+        let parent_path = root.join("parent.model.pt");
+        let candidate_path = root.join("candidate.model.pt");
+        fs::write(&parent_path, b"parent").unwrap();
+        fs::write(&candidate_path, b"candidate").unwrap();
+        let parent = Sha256Digest::parse(sha256_file(&parent_path).unwrap()).unwrap();
+        let candidate = Sha256Digest::parse(sha256_file(&candidate_path).unwrap()).unwrap();
+        atomic_json(
+            &root.join("training/accepted-by-task.json"),
+            &json!({
+                "schema": "JopeSelfplayAcceptedByTask.v1",
+                "global_checkpoint_sha256": parent,
+                "global_pointer": null,
+                "tasks": {
+                    "binary": {"checkpoint": parent_path, "checkpoint_sha256": parent},
+                    "regression": {"checkpoint": parent_path, "checkpoint_sha256": parent}
+                },
+                "updated_at_ms": 1,
+            }),
+        )
+        .unwrap();
+        let args = Args {
+            root: root.to_owned(),
+            scq: PathBuf::from("/bin/false"),
+            runs_root: root.join("runs"),
+            trainer_script: root.join("trainer"),
+            common_script: root.join("common"),
+            packed_script: root.join("packed"),
+            prime_source: root.join("prime"),
+            submit: false,
+            once: true,
+            interval_seconds: 1,
+            seed_base: 1,
+        };
+        for run_index in 0..3 {
+            schedule_promotion_run(&args, Task::Binary, &parent, &candidate, 100, run_index)
+                .unwrap();
+        }
+        let consumptions = fs::read_dir(root.join("training/sealed-panels/consumed"))
+            .unwrap()
+            .filter_map(|entry| entry.ok())
+            .map(|entry| {
+                let path = entry.path();
+                let receipt: SealedPanelConsumptionV1 =
+                    serde_json::from_value(read_json(&path).unwrap()).unwrap();
+                (path, receipt)
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(consumptions.len(), 3);
+        for (path, consumption) in consumptions {
+            let evaluation = TaskPromotionEvaluationV3 {
+                schema: "TaskPromotionEvaluation.v3".to_owned(),
+                task: Task::Binary,
+                accepted_parent_checkpoint_sha256: parent.clone(),
+                candidate_checkpoint_sha256: candidate.clone(),
+                panel_consumption_sha256: Sha256Digest::parse(sha256_file(&path).unwrap()).unwrap(),
+                run_index: consumption.run_index,
+                metrics: TaskPromotionMetricsV3 {
+                    contexts: 128,
+                    confidence: ClusteredConfidenceBoundsV3 {
+                        resamples: 10_000,
+                        seed: consumption.seed,
+                        candidate_vs_accepted_lower: 0.01,
+                        candidate_vs_gp_lower: 0.01,
+                        conditional_advantage_lower: 0.01,
+                    },
+                    maximum_slice_regression: 0.0,
+                    validity: 1.0,
+                    replay_verification: 1.0,
+                    failure_rate_increase: 0.0,
+                    latency_ratio: 1.0,
+                    strict_wins: 1,
+                    equal_budget_wins: 1,
+                },
+                accepted: true,
+                rejection_reasons: Vec::new(),
+                evaluated_at_ms: consumption.run_index as u128 + 1,
+            };
+            evaluation.validate().unwrap();
+            atomic_json(
+                &root
+                    .join("training/task-promotion-evaluations/accepted")
+                    .join(format!("run{}.v3.json", consumption.run_index)),
+                &serde_json::to_value(evaluation).unwrap(),
+            )
+            .unwrap();
+        }
+        let mut state = ControllerState::default();
+        state.production_candidates.insert(
+            Task::Binary,
+            ModelRef {
+                accepted_parent_checkpoint_sha256: parent.clone(),
+                checkpoint_sha256: candidate.clone(),
+                checkpoint_path: candidate_path,
+            },
+        );
+        let accepted = accepted_pointers(root).unwrap();
+        assert_eq!(
+            apply_task_canary_acceptances(&args, &mut state, &accepted).unwrap(),
+            vec![Task::Binary]
+        );
+        let pointer = read_json(&root.join("training/accepted-by-task.json")).unwrap();
+        assert_eq!(
+            pointer["tasks"]["binary"]["checkpoint_sha256"],
+            candidate.as_str()
+        );
+        assert!(!state.production_candidates.contains_key(&Task::Binary));
     }
 
     #[test]
@@ -2921,7 +3541,10 @@ mod tests {
         assert!(!audited_terminal_retry(root, &intent, &running).unwrap());
 
         // An audit bound to a different spec digest must not release this intent.
-        let other = recovery_intent("vanished-job", &Sha256Digest::parse("e".repeat(64)).unwrap());
+        let other = recovery_intent(
+            "vanished-job",
+            &Sha256Digest::parse("e".repeat(64)).unwrap(),
+        );
         assert!(audited_terminal_retry(root, &other, &[]).is_err());
     }
 
@@ -3008,12 +3631,8 @@ mod tests {
 
         let identity = recipe_identity_sha256(&current).unwrap();
         assert_eq!(
-            publish_plateau_diagnoses(
-                root,
-                &accepted,
-                &BTreeMap::from([(Task::Binary, identity)])
-            )
-            .unwrap(),
+            publish_plateau_diagnoses(root, &accepted, &BTreeMap::from([(Task::Binary, identity)]))
+                .unwrap(),
             BTreeSet::from([Task::Binary]),
             "a pass under a superseded recipe must not clear the plateau"
         );
@@ -3099,10 +3718,12 @@ mod tests {
     }
 
     #[test]
-    fn a_recipe_change_directive_bridges_unresolvable_legacy_rejects() {
+    fn a_recipe_change_directive_v2_bridges_only_the_exact_recipe_plateau() {
         let directory = tempdir().unwrap();
         let root = directory.path();
         let parent = Sha256Digest::parse("a".repeat(64)).unwrap();
+        let old_recipe = "c".repeat(64);
+        let changed_recipe = "d".repeat(64);
         for (index, character) in ["1", "2", "3"].into_iter().enumerate() {
             // No shadow-checkpoint/intent fixtures: identities unresolvable.
             write_reject_summary(root, &parent, &character.repeat(64), index as u64 + 1);
@@ -3124,9 +3745,15 @@ mod tests {
             }),
         )
         .unwrap();
-        let plateau = publish_plateau_diagnoses(root, &accepted, &BTreeMap::new()).unwrap();
+        let plateau = publish_plateau_diagnoses(
+            root,
+            &accepted,
+            &BTreeMap::from([(Task::Binary, old_recipe.clone())]),
+        )
+        .unwrap();
         assert_eq!(plateau, BTreeSet::from([Task::Binary]));
-        // A valid directive bridges the legacy rejects: training resumes.
+        // Once the controller publishes a v2 diagnosis, even a valid free-form
+        // v1 directive cannot release the pause.
         atomic_json(
             &directive_path,
             &json!({
@@ -3141,8 +3768,44 @@ mod tests {
             }),
         )
         .unwrap();
-        fs::remove_dir_all(root.join("training/plateau-diagnoses")).unwrap();
-        let plateau = publish_plateau_diagnoses(root, &accepted, &BTreeMap::new()).unwrap();
+        let plateau = publish_plateau_diagnoses(
+            root,
+            &accepted,
+            &BTreeMap::from([(Task::Binary, changed_recipe.clone())]),
+        )
+        .unwrap();
+        assert_eq!(plateau, BTreeSet::from([Task::Binary]));
+
+        // The v2 directive binds the exact immutable diagnosis, old and new
+        // recipe identities, failure classes, and their required knobs.
+        let diagnosis_path = root
+            .join("training/plateau-diagnoses")
+            .join(format!("binary-{}.v2.json", parent.as_str()));
+        let v2_path = directive_dir.join(format!("binary-{}.v2.json", parent.as_str()));
+        atomic_json(
+            &v2_path,
+            &json!({
+                "schema": "RecipeChangeDirective.v2",
+                "task": "binary",
+                "unchanged_parent_checkpoint_sha256": parent,
+                "answers_diagnosis_sha256": sha256_file(&diagnosis_path).unwrap(),
+                "previous_recipe_identity_sha256": old_recipe,
+                "next_recipe_identity_sha256": changed_recipe.clone(),
+                "failure_classes": ["validity_loss", "gp_disadvantage"],
+                "changed_knobs": [
+                    "hard_negative_validity_sampling",
+                    "exact_causal_pair_gp_comparator_mixture"
+                ],
+                "created_at_ms": 4,
+            }),
+        )
+        .unwrap();
+        let plateau = publish_plateau_diagnoses(
+            root,
+            &accepted,
+            &BTreeMap::from([(Task::Binary, changed_recipe)]),
+        )
+        .unwrap();
         assert!(plateau.is_empty());
     }
 

@@ -8,14 +8,18 @@ use jope_dime_regressor::selfplay_runtime::{
     read_json, sha256_bytes, sha256_file, DEFAULT_ROOT, DEFAULT_SCQ,
 };
 use jope_dime_regressor::selfplay_shadow::{
-    CanaryContextClass, CanaryContextV2, CanaryIntentV2, CanaryMode, Sha256Digest, Task,
-    TaskCanaryAcceptanceV2, TaskCanaryMetricsV2, CANARY_INTENT_SCHEMA,
-    TASK_CANARY_ACCEPTANCE_V2_SCHEMA,
+    evaluate_task_promotion_v3, CanaryContextClass, CanaryContextV2, CanaryIntentV2, CanaryMode,
+    PromotionObservationV3, SealedPanelConsumptionV1, SealedPanelContextFactsV1, SealedPanelPoolV2,
+    Sha256Digest, Task, TaskCanaryAcceptanceV2, TaskCanaryMetricsV2,
+    TaskPromotionEvaluationIntentV3, TaskPromotionEvaluationV3, TaskPromotionObservationSetV3,
+    CANARY_INTENT_SCHEMA, PROMOTION_CONTEXT_STEP, SEALED_PANEL_CONTEXT_FACTS_V1_SCHEMA,
+    TASK_CANARY_ACCEPTANCE_V2_SCHEMA, TASK_PROMOTION_OBSERVATION_SET_V3_SCHEMA,
 };
+use jope_dime_regressor::spec_policy::{EVAL, PROPOSE};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, OpenOptions};
-use std::io::Write;
+use std::io::{BufRead, BufReader, Write};
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -47,6 +51,7 @@ struct PendingIntent {
     path: PathBuf,
     value: CanaryIntentV2,
     created_at_ms: u64,
+    promotion: Option<TaskPromotionEvaluationIntentV3>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -188,13 +193,92 @@ fn pending_intents(root: &Path) -> Result<Vec<PendingIntent>> {
                     .and_then(Value::as_u64)
                     .unwrap_or_default(),
                 path,
+                promotion: None,
+            });
+        }
+    }
+    let promotion_directory = root.join("training/task-promotion-evaluations/pending");
+    if promotion_directory.is_dir() {
+        let pool: SealedPanelPoolV2 =
+            serde_json::from_value(read_json(&root.join("training/sealed-panel-pool.v2.json"))?)?;
+        pool.validate()?;
+        for entry in fs::read_dir(promotion_directory)? {
+            let path = entry?.path();
+            if path.extension().and_then(|value| value.to_str()) != Some("json") {
+                continue;
+            }
+            let promotion: TaskPromotionEvaluationIntentV3 =
+                serde_json::from_value(read_json(&path)?)?;
+            promotion.validate()?;
+            let consumption: SealedPanelConsumptionV1 =
+                serde_json::from_value(read_json(&promotion.panel_consumption)?)?;
+            consumption.validate()?;
+            ensure!(
+                consumption.task == promotion.task
+                    && consumption.candidate_checkpoint_sha256
+                        == promotion.candidate_checkpoint_sha256
+                    && consumption.run_index == promotion.run_index
+                    && consumption.seed == promotion.seed
+                    && consumption.context_sha256
+                        == promotion
+                            .context_schedule
+                            .iter()
+                            .map(|row| row.context_sha256.clone())
+                            .collect::<Vec<_>>(),
+                "promotion intent and sealed panel consumption drift"
+            );
+            let panel = pool.promotion_panel(promotion.task, &consumption.panel);
+            let contexts_by_digest = panel
+                .into_iter()
+                .map(|row| (&row.context_sha256, row.context_identity.as_str()))
+                .collect::<BTreeMap<_, _>>();
+            let contexts = promotion
+                .context_schedule
+                .iter()
+                .map(|row| {
+                    Ok(CanaryContextV2 {
+                        context_identity: contexts_by_digest
+                            .get(&row.context_sha256)
+                            .with_context(|| {
+                                format!(
+                                    "promotion context {} is absent from its sealed panel",
+                                    row.context_sha256
+                                )
+                            })?
+                            .to_string(),
+                        class: CanaryContextClass::Frontier,
+                    })
+                })
+                .collect::<Result<Vec<_>>>()?;
+            let created_at_ms = u64::try_from(promotion.created_at_ms)
+                .context("promotion intent creation time exceeds u64")?;
+            let value = CanaryIntentV2 {
+                schema: CANARY_INTENT_SCHEMA.to_owned(),
+                mode: CanaryMode::Production,
+                task: promotion.task,
+                candidate_checkpoint_sha256: promotion.candidate_checkpoint_sha256.clone(),
+                accepted_checkpoint_sha256: promotion.accepted_parent_checkpoint_sha256.clone(),
+                run_index: promotion.run_index,
+                seed: promotion.seed,
+                contexts,
+                candidate_proposals_per_context: 8,
+                accepted_baseline_proposals_per_context: 8,
+                zero_dl_gp_proposals_per_context: 8,
+                created_at_ms: Some(promotion.created_at_ms),
+            };
+            output.push(PendingIntent {
+                path,
+                value,
+                created_at_ms,
+                promotion: Some(promotion),
             });
         }
     }
     output.sort_by(|left, right| {
-        left.value
-            .mode
-            .cmp(&right.value.mode)
+        left.promotion
+            .is_none()
+            .cmp(&right.promotion.is_none())
+            .then(left.value.mode.cmp(&right.value.mode))
             .then(left.created_at_ms.cmp(&right.created_at_ms))
             .then(
                 left.value
@@ -205,6 +289,39 @@ fn pending_intents(root: &Path) -> Result<Vec<PendingIntent>> {
             .then(left.path.cmp(&right.path))
     });
     Ok(output)
+}
+
+fn predecessor_passed(root: &Path, pending: &PendingIntent) -> Result<bool> {
+    let Some(promotion) = &pending.promotion else {
+        return production_predecessor_passed(root, &pending.value);
+    };
+    if promotion.run_index == 0 {
+        return Ok(true);
+    }
+    let directory = root.join("training/task-promotion-evaluations/accepted");
+    if !directory.is_dir() {
+        return Ok(false);
+    }
+    for entry in fs::read_dir(directory)? {
+        let path = entry?.path();
+        if path.extension().and_then(|value| value.to_str()) != Some("json") {
+            continue;
+        }
+        let Ok(evaluation) = serde_json::from_value::<TaskPromotionEvaluationV3>(read_json(&path)?)
+        else {
+            continue;
+        };
+        if evaluation.accepted
+            && evaluation.task == promotion.task
+            && evaluation.accepted_parent_checkpoint_sha256
+                == promotion.accepted_parent_checkpoint_sha256
+            && evaluation.candidate_checkpoint_sha256 == promotion.candidate_checkpoint_sha256
+            && evaluation.run_index + 1 == promotion.run_index
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn production_predecessor_passed(root: &Path, intent: &CanaryIntentV2) -> Result<bool> {
@@ -235,12 +352,25 @@ fn production_predecessor_passed(root: &Path, intent: &CanaryIntentV2) -> Result
     Ok(false)
 }
 
-fn checkpoint_paths(root: &Path, intent: &CanaryIntentV2) -> Result<(PathBuf, PathBuf)> {
+fn checkpoint_paths(root: &Path, pending: &PendingIntent) -> Result<(PathBuf, PathBuf)> {
+    let intent = &pending.value;
     let accepted = read_json(&root.join("training/accepted-by-task.json"))?;
     let accepted_row = accepted
         .get("tasks")
         .and_then(|value| value.get(intent.task.as_str()))
-        .context("accepted task pointer is absent")?;
+        .cloned()
+        .or_else(|| {
+            pending.promotion.as_ref()?;
+            let path = root
+                .join("training/bootstrap-evaluation-anchors")
+                .join(format!("{}.v1.json", intent.task.as_str()));
+            read_json(&path).ok().filter(|value| {
+                value.get("schema").and_then(Value::as_str)
+                    == Some("TaskBootstrapEvaluationAnchor.v1")
+                    && value.get("accepted").and_then(Value::as_bool) == Some(false)
+            })
+        })
+        .context("accepted task pointer or immutable bootstrap evaluation anchor is absent")?;
     ensure!(
         accepted_row
             .get("checkpoint_sha256")
@@ -439,8 +569,12 @@ fn ensure_proposals(
         return Ok(Some(proposal_set));
     }
     let intent_path = work.join("intent.v2.json");
-    atomic_json(&intent_path, &serde_json::to_value(&pending.value)?)?;
-    let (candidate, accepted) = checkpoint_paths(&args.root, &pending.value)?;
+    let mut intent_document = serde_json::to_value(&pending.value)?;
+    if pending.promotion.is_some() {
+        intent_document["promotion_evaluation_v3"] = json!(true);
+    }
+    atomic_json(&intent_path, &intent_document)?;
+    let (candidate, accepted) = checkpoint_paths(&args.root, pending)?;
     let bundle = runtime_bundle()?;
     let pointer = read_json(&args.root.join("catalog/current.json"))?;
     let catalog = PathBuf::from(
@@ -476,45 +610,29 @@ fn ensure_proposals(
             "project = \"jope-selfplay-train\"".to_owned(),
             "tier = \"normal\"".to_owned(),
             "command = \"/usr/bin/python3\"".to_owned(),
-            "args = [\"{input:worker}\", \"--intent\", \"{input:intent}\", \"--generator\", \"{input:generator}\", \"--catalog-pointer\", \"{input:pointer}\", \"--catalog\", \"{input:catalog}\", \"--data\", \"{input:data}\", \"--candidate\", \"{input:candidate}\", \"--accepted\", \"{input:accepted}\", \"--seed-bank\", \"{input:seedbank}\", \"--output\", \"{output:canary}/canary-proposals.json\"]".to_owned(),
+            "args = [\"{input:worker}\", \"--intent\", \"{input:intent}\", \"--generator\", \"{input:generator}\", \"--catalog-pointer\", \"{input:pointer}\", \"--catalog\", \"{input:catalog}\", \"--data\", \"{input:data}\", \"--candidate\", \"{input:candidate}\", \"--accepted\", \"{input:accepted}\", \"--seed-bank\", \"{input:seedbank}\", \"--selection-policy\", \"{input:selection_policy}\", \"--output\", \"{output:canary}/canary-proposals.json\"]".to_owned(),
             String::new(),
-            "[resource]".to_owned(),
-            "gpus_per_task = 1".to_owned(),
-            "cpus_reserved = 4".to_owned(),
-            "omp_threads = 4".to_owned(),
-            "ram_mb = 12288".to_owned(),
-            "gang_size = 1".to_owned(),
-            "placement = \"single_node\"".to_owned(),
-            String::new(),
-            "[[dependencies.smoke]]".to_owned(),
-            "name = \"xbabe1 canary proposal GPU capacity\"".to_owned(),
-            "command = \"/usr/bin/nvidia-smi\"".to_owned(),
-            "args = [\"-i\", \"GPU-784030c4-b1f9-d5a3-f0eb-9337f133f503\", \"--query-gpu=uuid\", \"--format=csv,noheader\"]".to_owned(),
-            "timeout_secs = 5".to_owned(),
-            String::new(),
-            "[[dependencies.smoke]]".to_owned(),
-            "name = \"xbabe1 RuntimeBundle Python package\"".to_owned(),
-            "command = \"/usr/bin/env\"".to_owned(),
-            format!(
-                "args = [{}, \"/usr/bin/python3\", \"-c\", \"import jope\"]",
-                toml_quote(&format!("PYTHONPATH={}", pythonpath.to_string_lossy()))?
-            ),
-            "timeout_secs = 30".to_owned(),
-            String::new(),
+        ];
+        lines.extend(PROPOSE.render_resource_block().lines().map(str::to_owned));
+        lines.push(String::new());
+        lines.extend(PROPOSE.render_placement_block().lines().map(str::to_owned));
+        lines.push(String::new());
+        lines.extend([
             "[env]".to_owned(),
-            format!("PYTHONPATH = {}", toml_quote(&pythonpath.to_string_lossy())?),
-            "OMP_NUM_THREADS = \"4\"".to_owned(),
+            format!(
+                "PYTHONPATH = {}",
+                toml_quote(&pythonpath.to_string_lossy())?
+            ),
+            format!("OMP_NUM_THREADS = \"{}\"", PROPOSE.omp_threads),
             String::new(),
             "[preempt]".to_owned(),
-            "preemptible = true".to_owned(),
+            format!("preemptible = {}", PROPOSE.preemptible),
             "checkpoint = \"none\"".to_owned(),
             "resume = \"rerun\"".to_owned(),
             String::new(),
-            "[limits]".to_owned(),
-            "max_runtime_hours = 24".to_owned(),
-            "max_restarts = 1".to_owned(),
-            String::new(),
-        ];
+        ]);
+        lines.extend(PROPOSE.render_limits_block().lines().map(str::to_owned));
+        lines.push(String::new());
         append_input(
             &mut lines,
             "worker",
@@ -526,6 +644,12 @@ fn ensure_proposals(
             "generator",
             &bundle.join("pytorch/proposals/test_exact_dl_generate.py"),
             "test_exact_dl_generate.py",
+        )?;
+        append_input(
+            &mut lines,
+            "selection_policy",
+            &bundle.join("pytorch/proposals/proposal-selection-policy.v1.json"),
+            "proposal-selection-policy.v1.json",
         )?;
         append_input(
             &mut lines,
@@ -627,6 +751,7 @@ fn build_evaluations(
     pending: &PendingIntent,
     work: &Path,
     proposal_set: &Path,
+    context_limit: usize,
 ) -> Result<Vec<(String, PathBuf)>> {
     let proposals = read_json(proposal_set)?;
     ensure!(
@@ -644,6 +769,7 @@ fn build_evaluations(
         .and_then(Value::as_array)
         .context("canary proposal set lacks contexts")?
         .iter()
+        .take(context_limit)
         .enumerate()
     {
         let dataset = context
@@ -816,28 +942,24 @@ fn build_evaluations(
                 "command = \"/usr/bin/env\"".to_owned(),
                 "args = [\"{input:runner}\", \"{input:manifest}\", \"{input:train}\", \"{input:test}\", \"{input:evaluator}\", \"{output:receipt}\"]".to_owned(),
                 String::new(),
-                "[resource]".to_owned(),
-                "gpus_per_task = 0".to_owned(),
-                "cpus_reserved = 1".to_owned(),
-                "omp_threads = 1".to_owned(),
-                "ram_mb = 512".to_owned(),
-                "gang_size = 1".to_owned(),
-                "placement = \"single_node\"".to_owned(),
-                String::new(),
+            ];
+            lines.extend(EVAL.render_resource_block().lines().map(str::to_owned));
+            lines.push(String::new());
+            lines.extend(EVAL.render_placement_block().lines().map(str::to_owned));
+            lines.push(String::new());
+            lines.extend([
                 "[env]".to_owned(),
-                "RAYON_NUM_THREADS = \"1\"".to_owned(),
-                "OMP_NUM_THREADS = \"1\"".to_owned(),
+                format!("RAYON_NUM_THREADS = \"{}\"", EVAL.omp_threads),
+                format!("OMP_NUM_THREADS = \"{}\"", EVAL.omp_threads),
                 String::new(),
                 "[preempt]".to_owned(),
-                "preemptible = true".to_owned(),
+                format!("preemptible = {}", EVAL.preemptible),
                 "checkpoint = \"none\"".to_owned(),
                 "resume = \"rerun\"".to_owned(),
                 String::new(),
-                "[limits]".to_owned(),
-                "max_runtime_hours = 24".to_owned(),
-                "max_restarts = 1".to_owned(),
-                String::new(),
-            ];
+            ]);
+            lines.extend(EVAL.render_limits_block().lines().map(str::to_owned));
+            lines.push(String::new());
             append_input(&mut lines, "runner", &args.runner, "runner.sh")?;
             append_input(&mut lines, "manifest", &manifest_path, "manifest.json")?;
             append_input(&mut lines, "train", &train, "train.csv")?;
@@ -962,6 +1084,211 @@ fn mean(values: &[f64]) -> f64 {
     }
 }
 
+fn dataset_slices(
+    train: &Path,
+    task: Task,
+) -> Result<(usize, usize, String, String, String, String, String)> {
+    let mut rows = 0_usize;
+    let mut columns = None;
+    let mut missing = 0_usize;
+    let mut cells = 0_usize;
+    let mut target_counts = BTreeMap::<String, usize>::new();
+    for line in BufReader::new(fs::File::open(train)?).lines() {
+        let line = line?;
+        if line.trim().is_empty() {
+            continue;
+        }
+        let fields = line.split(',').collect::<Vec<_>>();
+        ensure!(
+            fields.len() >= 2,
+            "sealed panel CSV has fewer than two columns"
+        );
+        match columns {
+            Some(expected) => ensure!(fields.len() == expected, "sealed panel CSV width drift"),
+            None => columns = Some(fields.len()),
+        }
+        rows += 1;
+        cells += fields.len();
+        missing += fields
+            .iter()
+            .filter(|value| {
+                matches!(
+                    value.trim().to_ascii_lowercase().as_str(),
+                    "" | "na" | "nan" | "null" | "none"
+                )
+            })
+            .count();
+        if matches!(task, Task::Binary | Task::Multiclass) {
+            *target_counts
+                .entry(fields.last().unwrap_or(&"").trim().to_owned())
+                .or_default() += 1;
+        }
+    }
+    let columns = columns.context("sealed panel CSV is empty")?;
+    ensure!(rows > 0 && cells > 0, "sealed panel CSV is empty");
+    let missing_fraction = missing as f64 / cells as f64;
+    let size_slice = if rows < 2_000 {
+        "small"
+    } else if rows <= 20_000 {
+        "medium"
+    } else {
+        "large"
+    };
+    let missingness_slice = if missing == 0 {
+        "none"
+    } else if missing_fraction <= 0.05 {
+        "low"
+    } else {
+        "high"
+    };
+    let (imbalance_slice, target_shape_slice) =
+        if matches!(task, Task::Binary | Task::Multiclass) && target_counts.len() >= 2 {
+            let minimum = target_counts.values().copied().min().unwrap_or_default();
+            let maximum = target_counts.values().copied().max().unwrap_or(1);
+            let shape = if minimum as f64 / (maximum as f64) < 0.2 {
+                "imbalanced"
+            } else {
+                "balanced"
+            };
+            (shape, shape)
+        } else {
+            ("not_applicable", "unknown")
+        };
+    Ok((
+        rows,
+        columns,
+        format!("{missing_fraction:.12}"),
+        size_slice.to_owned(),
+        missingness_slice.to_owned(),
+        imbalance_slice.to_owned(),
+        target_shape_slice.to_owned(),
+    ))
+}
+
+fn promotion_context_facts(
+    args: &Args,
+    pending: &PendingIntent,
+    context_limit: usize,
+) -> Result<BTreeMap<Sha256Digest, SealedPanelContextFactsV1>> {
+    let promotion = pending
+        .promotion
+        .as_ref()
+        .context("promotion facts requested for a canary intent")?;
+    ensure!(
+        context_limit <= promotion.maximum_contexts,
+        "promotion context prefix exceeds its schedule"
+    );
+    let pool: SealedPanelPoolV2 = serde_json::from_value(read_json(
+        &args.root.join("training/sealed-panel-pool.v2.json"),
+    )?)?;
+    pool.validate()?;
+    let consumption: SealedPanelConsumptionV1 =
+        serde_json::from_value(read_json(&promotion.panel_consumption)?)?;
+    let pool_by_context = pool
+        .promotion_panel(promotion.task, &consumption.panel)
+        .into_iter()
+        .map(|row| (&row.context_sha256, row))
+        .collect::<BTreeMap<_, _>>();
+    let (pointer, catalog) = catalog_entries(&args.root)?;
+    let catalog_sha256 = Sha256Digest::parse(
+        pointer
+            .get("catalog_sha256")
+            .and_then(Value::as_str)
+            .context("catalog pointer lacks catalog digest")?
+            .to_owned(),
+    )?;
+    let facts_root = args.root.join("training/sealed-panel-context-facts");
+    let mut output = BTreeMap::new();
+    for scheduled in promotion.context_schedule.iter().take(context_limit) {
+        let sealed = pool_by_context
+            .get(&scheduled.context_sha256)
+            .context("scheduled promotion context is absent from the sealed panel")?;
+        let path = facts_root.join(format!("{}.v1.json", scheduled.context_sha256));
+        if path.is_file() {
+            let facts: SealedPanelContextFactsV1 = serde_json::from_value(read_json(&path)?)?;
+            facts.validate()?;
+            ensure!(
+                facts.task == promotion.task
+                    && facts.context_sha256 == scheduled.context_sha256
+                    && facts.catalog_sha256 == catalog_sha256
+                    && facts.context_identity == sealed.context_identity,
+                "sealed panel context facts scope drift"
+            );
+            output.insert(scheduled.context_sha256.clone(), facts);
+            continue;
+        }
+        let entry = catalog
+            .get(&(promotion.task, sealed.context_identity.clone()))
+            .context("sealed context is absent from the current pinned catalog")?;
+        ensure!(
+            entry.get("context_sha256").and_then(Value::as_str)
+                == Some(scheduled.context_sha256.as_str()),
+            "sealed context vector changed in the current catalog"
+        );
+        let train = PathBuf::from(
+            entry
+                .get("train_csv")
+                .and_then(Value::as_str)
+                .context("sealed catalog entry lacks train CSV")?,
+        );
+        let test = PathBuf::from(
+            entry
+                .get("test_csv")
+                .and_then(Value::as_str)
+                .context("sealed catalog entry lacks test CSV")?,
+        );
+        let train_sha256 = Sha256Digest::parse(sha256_file(&train)?)?;
+        let test_sha256 = Sha256Digest::parse(sha256_file(&test)?)?;
+        ensure!(
+            entry.get("train_sha256").and_then(Value::as_str) == Some(train_sha256.as_str())
+                && entry.get("test_sha256").and_then(Value::as_str) == Some(test_sha256.as_str()),
+            "sealed dataset content drift"
+        );
+        let (
+            rows,
+            columns,
+            missing_fraction,
+            size_slice,
+            missingness_slice,
+            imbalance_slice,
+            target_shape_slice,
+        ) = dataset_slices(&train, promotion.task)?;
+        let facts = SealedPanelContextFactsV1 {
+            schema: SEALED_PANEL_CONTEXT_FACTS_V1_SCHEMA.to_owned(),
+            task: promotion.task,
+            context_identity: sealed.context_identity.clone(),
+            context_sha256: scheduled.context_sha256.clone(),
+            catalog_sha256: catalog_sha256.clone(),
+            train_sha256,
+            test_sha256,
+            source_family_sha256: sealed.source_family_sha256.clone(),
+            near_duplicate_cluster_sha256: sealed.near_duplicate_cluster_sha256.clone(),
+            origin: sealed.origin,
+            rows,
+            columns,
+            missing_fraction,
+            size_slice,
+            missingness_slice,
+            imbalance_slice,
+            target_shape_slice,
+            created_at_ms: now_ms(),
+        };
+        facts.validate()?;
+        write_immutable(&path, &serde_json::to_vec(&facts)?)?;
+        output.insert(scheduled.context_sha256.clone(), facts);
+    }
+    Ok(output)
+}
+
+fn bounded_task_score(task: Task, score: f64) -> f64 {
+    let score = if task == Task::Timeseries {
+        score + 1.0
+    } else {
+        score
+    };
+    score.clamp(-1.0, 1.0)
+}
+
 fn summarize(
     args: &Args,
     pending: &PendingIntent,
@@ -977,7 +1304,7 @@ fn summarize(
         contexts.len() == receipts.len(),
         "canary receipt count drift"
     );
-    let replay_verification_complete = receipts.iter().all(|path| {
+    let receipts_replay_complete = receipts.iter().all(|path| {
         path.metadata()
             .map(|value| value.len() > 0)
             .unwrap_or(false)
@@ -1163,6 +1490,9 @@ fn summarize(
         .count() as f64
         / aggregate.context_gaps.len().max(1) as f64;
     let efficiency = pairwise_lift / mean(&aggregate.candidate.runtimes).max(1e-9);
+    let matched_comparisons_complete =
+        aggregate.incomplete_accepted_contexts == 0 && aggregate.incomplete_gp_contexts == 0;
+    let replay_verification_complete = receipts_replay_complete && matched_comparisons_complete;
     let summary = json!({
         "schema": "ShadowBattleSummary.v1",
         "task": pending.value.task,
@@ -1195,6 +1525,7 @@ fn summarize(
         // able to see how much of the panel actually backs it.
         "incomplete_accepted_contexts": aggregate.incomplete_accepted_contexts,
         "incomplete_gp_contexts": aggregate.incomplete_gp_contexts,
+        "matched_comparisons_complete": matched_comparisons_complete,
         "accepted_validity": accepted_validity,
         "gp_validity": gp_validity,
         "strict_wins": aggregate.strict_wins,
@@ -1240,8 +1571,320 @@ fn summarize(
     Ok(summary)
 }
 
+fn promotion_observations(
+    pending: &PendingIntent,
+    work: &Path,
+    proposal_set: &Path,
+    receipts: &[PathBuf],
+    facts: &BTreeMap<Sha256Digest, SealedPanelContextFactsV1>,
+) -> Result<TaskPromotionObservationSetV3> {
+    let promotion = pending
+        .promotion
+        .as_ref()
+        .context("promotion observations requested for a canary")?;
+    let proposals = read_json(proposal_set)?;
+    let contexts = proposals
+        .get("contexts")
+        .and_then(Value::as_array)
+        .context("promotion proposal set lacks contexts")?;
+    ensure!(
+        receipts.len() <= contexts.len() && receipts.len() <= promotion.maximum_contexts,
+        "promotion receipt prefix exceeds its proposal schedule"
+    );
+    let mut observations = Vec::with_capacity(receipts.len());
+    for (index, (context, receipt_path)) in contexts.iter().zip(receipts).enumerate() {
+        let context_sha256 = &promotion.context_schedule[index].context_sha256;
+        let context_facts = facts
+            .get(context_sha256)
+            .context("promotion context facts are absent")?;
+        let manifest = read_json(&work.join(format!("manifest-{index:02}.json")))?;
+        let requested = manifest
+            .pointer("/canary/requested")
+            .and_then(Value::as_object)
+            .context("promotion manifest lacks requested lanes")?;
+        let mut scores = BTreeMap::<String, (f64, u64)>::new();
+        let mut replayed = BTreeSet::new();
+        for line in fs::read_to_string(receipt_path)?.lines() {
+            if line.trim().is_empty() {
+                continue;
+            }
+            let row: Value = serde_json::from_str(line)?;
+            let semantic = row
+                .get("semantic_sha256")
+                .and_then(Value::as_str)
+                .context("promotion receipt row lacks semantic identity")?
+                .to_owned();
+            replayed.insert(semantic.clone());
+            if row.get("valid").and_then(Value::as_bool) != Some(true) {
+                continue;
+            }
+            let score = bounded_task_score(
+                pending.value.task,
+                row.get("score")
+                    .and_then(Value::as_f64)
+                    .context("valid promotion receipt lacks score")?,
+            );
+            let runtime_ms = (row
+                .get("runtime_seconds")
+                .and_then(Value::as_f64)
+                .context("valid promotion receipt lacks runtime")?
+                .max(0.0)
+                * 1_000.0)
+                .round()
+                .min(u64::MAX as f64) as u64;
+            scores.insert(semantic, (score, runtime_ms));
+        }
+        let lane = |name: &str| -> Result<(f64, usize, u64, BTreeSet<String>)> {
+            let semantics = requested
+                .get(name)
+                .and_then(Value::as_array)
+                .with_context(|| format!("promotion {name} lane is absent"))?;
+            ensure!(
+                semantics.len() <= 8,
+                "promotion lane exceeds its eight-slot budget"
+            );
+            let identities = semantics
+                .iter()
+                .map(|value| {
+                    value
+                        .as_str()
+                        .map(str::to_owned)
+                        .with_context(|| format!("promotion {name} lane identity is invalid"))
+                })
+                .collect::<Result<Vec<_>>>()?;
+            ensure!(
+                identities.iter().collect::<BTreeSet<_>>().len() == identities.len(),
+                "promotion lane repeats a semantic identity"
+            );
+            let mut values = Vec::with_capacity(8);
+            let mut runtimes = Vec::new();
+            let mut valid = 0_usize;
+            for semantic in &identities {
+                if let Some((score, runtime)) = scores.get(semantic) {
+                    values.push(*score);
+                    runtimes.push(*runtime);
+                    valid += 1;
+                } else {
+                    values.push(-1.0);
+                }
+            }
+            values.resize(8, -1.0);
+            Ok((
+                mean(&values),
+                valid,
+                if runtimes.is_empty() {
+                    0
+                } else {
+                    runtimes.iter().sum::<u64>() / runtimes.len() as u64
+                },
+                identities.into_iter().collect(),
+            ))
+        };
+        let (candidate_score, candidate_valid, candidate_latency_ms, candidate_requested) =
+            lane("candidate")?;
+        let (accepted_score, accepted_valid, accepted_latency_ms, accepted_requested) =
+            lane("accepted")?;
+        let (gp_score, gp_valid, _, gp_requested) = lane("gp")?;
+        let mut requested_union = candidate_requested;
+        requested_union.extend(accepted_requested);
+        requested_union.extend(gp_requested);
+        let replay_verified = receipt_path.metadata()?.len() > 0
+            && requested_union
+                .iter()
+                .all(|semantic| replayed.contains(semantic));
+        let conditional = context
+            .get("conditional_advantage")
+            .and_then(Value::as_object)
+            .context("promotion proposal set lacks common-union conditional rescoring")?;
+        let candidate_conditional_advantage = conditional
+            .get("candidate_checkpoint")
+            .and_then(Value::as_f64)
+            .context("promotion proposal set lacks candidate conditional advantage")?;
+        let accepted_conditional_advantage = conditional
+            .get("accepted_checkpoint")
+            .and_then(Value::as_f64)
+            .context("promotion proposal set lacks accepted conditional advantage")?;
+        ensure!(
+            candidate_conditional_advantage.is_finite()
+                && accepted_conditional_advantage.is_finite(),
+            "promotion conditional advantage is non-finite"
+        );
+        let candidate_wins = candidate_score > accepted_score;
+        observations.push(PromotionObservationV3 {
+            context_sha256: context_sha256.clone(),
+            source_family_sha256: context_facts.source_family_sha256.clone(),
+            candidate_score,
+            accepted_score,
+            gp_score,
+            candidate_conditional_advantage,
+            accepted_conditional_advantage,
+            valid: candidate_valid == 8,
+            replay_verified,
+            candidate_failed: candidate_valid < 8,
+            accepted_failed: accepted_valid < 8,
+            candidate_latency_ms,
+            accepted_latency_ms,
+            strict_win: candidate_wins,
+            equal_budget_win: candidate_wins && gp_valid == 8,
+            slices: context_facts.slices(),
+        });
+    }
+    let observation_set = TaskPromotionObservationSetV3 {
+        schema: TASK_PROMOTION_OBSERVATION_SET_V3_SCHEMA.to_owned(),
+        panel_consumption_sha256: promotion.panel_consumption_sha256.clone(),
+        observations,
+    };
+    observation_set.validate()?;
+    Ok(observation_set)
+}
+
+fn promotion_prefix(
+    work: &Path,
+    promotion: &TaskPromotionEvaluationIntentV3,
+) -> Result<(usize, Option<TaskPromotionEvaluationV3>)> {
+    let mut prefix = promotion.initial_contexts;
+    loop {
+        let path = work.join(format!("prefix-{prefix}.evaluation.v3.json"));
+        if !path.is_file() {
+            return Ok((prefix, None));
+        }
+        let evaluation: TaskPromotionEvaluationV3 = serde_json::from_value(read_json(&path)?)?;
+        evaluation.validate()?;
+        let irreversible_rejection = evaluation.metrics.replay_verification < 1.0;
+        if evaluation.accepted || irreversible_rejection || prefix == promotion.maximum_contexts {
+            return Ok((prefix, Some(evaluation)));
+        }
+        prefix = prefix.saturating_add(promotion.context_step);
+        ensure!(
+            prefix <= promotion.maximum_contexts,
+            "promotion prefix advanced beyond its maximum"
+        );
+    }
+}
+
+fn finalize_promotion_intent(
+    args: &Args,
+    pending: &PendingIntent,
+    evaluation: &TaskPromotionEvaluationV3,
+) -> Result<Value> {
+    let tier = if evaluation.accepted {
+        "accepted"
+    } else {
+        "rejected"
+    };
+    let directory = args
+        .root
+        .join("training/task-promotion-evaluations")
+        .join(tier);
+    let evaluation_path = directory.join(format!(
+        "{}-{}-run{}-n{}.v3.json",
+        evaluation.candidate_checkpoint_sha256,
+        evaluation.task.as_str(),
+        evaluation.run_index,
+        evaluation.metrics.contexts,
+    ));
+    write_immutable(&evaluation_path, &serde_json::to_vec(evaluation)?)?;
+    let intent_destination = args
+        .root
+        .join("training/task-promotion-evaluations/intents")
+        .join(
+            pending
+                .path
+                .file_name()
+                .context("promotion intent has no filename")?,
+        );
+    fs::create_dir_all(
+        intent_destination
+            .parent()
+            .context("promotion intent destination has no parent")?,
+    )?;
+    fs::rename(&pending.path, &intent_destination)?;
+    Ok(json!({
+        "action": if evaluation.accepted { "promotion_run_accepted" } else { "promotion_run_rejected" },
+        "evaluation": evaluation_path,
+        "consumed_intent": intent_destination,
+        "run_index": evaluation.run_index,
+        "contexts": evaluation.metrics.contexts,
+    }))
+}
+
+fn consume_promotion_intent(args: &Args, pending: &PendingIntent) -> Result<Value> {
+    let promotion = pending
+        .promotion
+        .as_ref()
+        .context("promotion consumer received a canary")?;
+    if !predecessor_passed(&args.root, pending)? {
+        return Ok(json!({
+            "action": "waiting_for_prior_promotion_run",
+            "task": promotion.task,
+            "candidate": promotion.candidate_checkpoint_sha256,
+            "run_index": promotion.run_index,
+        }));
+    }
+    let intent_hash = sha256_file(&pending.path)?;
+    let work = args
+        .root
+        .join("training/task-promotion-evaluations/work")
+        .join(&intent_hash);
+    fs::create_dir_all(&work)?;
+    let (prefix, completed) = promotion_prefix(&work, promotion)?;
+    if let Some(evaluation) = completed {
+        return finalize_promotion_intent(args, pending, &evaluation);
+    }
+    let jobs = scq_jobs(args)?;
+    let Some(proposal_set) = ensure_proposals(args, pending, &work, &jobs)? else {
+        return Ok(json!({
+            "action": "promotion_proposal_job_pending",
+            "intent_sha256": intent_hash,
+        }));
+    };
+    let facts = promotion_context_facts(args, pending, prefix)?;
+    let evaluations = build_evaluations(args, pending, &work, &proposal_set, prefix)?;
+    let jobs = scq_jobs(args)?;
+    let Some(receipts) = ensure_evaluations(args, &work, &evaluations, &jobs)? else {
+        return Ok(json!({
+            "action": "promotion_evaluation_jobs_pending",
+            "intent_sha256": intent_hash,
+            "evaluation_jobs": evaluations.len(),
+            "context_prefix": prefix,
+        }));
+    };
+    let observation_set = promotion_observations(pending, &work, &proposal_set, &receipts, &facts)?;
+    let observation_path = work.join(format!("prefix-{prefix}.observations.v3.json"));
+    write_immutable(&observation_path, &serde_json::to_vec(&observation_set)?)?;
+    let evaluation = evaluate_task_promotion_v3(
+        promotion.task,
+        promotion.accepted_parent_checkpoint_sha256.clone(),
+        promotion.candidate_checkpoint_sha256.clone(),
+        promotion.panel_consumption_sha256.clone(),
+        promotion.run_index,
+        &observation_set.observations,
+        promotion.seed,
+        now_ms(),
+    )?;
+    let evaluation_path = work.join(format!("prefix-{prefix}.evaluation.v3.json"));
+    write_immutable(&evaluation_path, &serde_json::to_vec(&evaluation)?)?;
+    if evaluation.accepted
+        || evaluation.metrics.replay_verification < 1.0
+        || prefix == promotion.maximum_contexts
+    {
+        return finalize_promotion_intent(args, pending, &evaluation);
+    }
+    Ok(json!({
+        "action": "promotion_prefix_inconclusive",
+        "intent_sha256": intent_hash,
+        "context_prefix": prefix,
+        "next_context_prefix": prefix + PROMOTION_CONTEXT_STEP,
+        "observation_set": observation_path,
+        "evaluation": evaluation_path,
+    }))
+}
+
 fn consume_intent(args: &Args, pending: &PendingIntent) -> Result<Value> {
-    if !production_predecessor_passed(&args.root, &pending.value)? {
+    if pending.promotion.is_some() {
+        return consume_promotion_intent(args, pending);
+    }
+    if !predecessor_passed(&args.root, pending)? {
         return Ok(json!({
             "action": "waiting_for_prior_production_canary",
             "task": pending.value.task,
@@ -1262,7 +1905,13 @@ fn consume_intent(args: &Args, pending: &PendingIntent) -> Result<Value> {
             "intent_sha256": intent_hash,
         }));
     };
-    let evaluations = build_evaluations(args, pending, &work, &proposal_set)?;
+    let evaluations = build_evaluations(
+        args,
+        pending,
+        &work,
+        &proposal_set,
+        pending.value.contexts.len(),
+    )?;
     let jobs = scq_jobs(args)?;
     let Some(receipts) = ensure_evaluations(args, &work, &evaluations, &jobs)? else {
         return Ok(json!({
@@ -1303,9 +1952,7 @@ fn consume_intent(args: &Args, pending: &PendingIntent) -> Result<Value> {
 fn cycle(args: &Args) -> Result<Value> {
     let pending = pending_intents(&args.root)?;
     for intent in &pending {
-        if intent.value.mode == CanaryMode::Production
-            && !production_predecessor_passed(&args.root, &intent.value)?
-        {
+        if intent.value.mode == CanaryMode::Production && !predecessor_passed(&args.root, intent)? {
             continue;
         }
         let result = consume_intent(args, intent)?;
@@ -1478,5 +2125,53 @@ mod tests {
             "accepted_dl"
         );
         assert_eq!(canary_lane_ancestry(CanaryMode::Shadow, "gp"), "none");
+    }
+
+    #[test]
+    fn promotion_intent_parser_denies_unknown_fields() {
+        let mut value = json!({
+            "schema": "TaskPromotionEvaluationIntent.v3",
+            "task": "binary",
+            "accepted_parent_checkpoint_sha256": "a".repeat(64),
+            "candidate_checkpoint_sha256": "b".repeat(64),
+            "run_index": 0,
+            "seed": 7,
+            "panel_consumption": "/does/not/exist",
+            "panel_consumption_sha256": "c".repeat(64),
+            "context_schedule": (0..128).map(|index| json!({
+                "context_sha256": format!("{index:064x}"),
+            })).collect::<Vec<_>>(),
+            "initial_contexts": 128,
+            "context_step": 64,
+            "maximum_contexts": 128,
+            "bootstrap_resamples": 10_000,
+            "created_at_ms": 1,
+        });
+        assert!(serde_json::from_value::<TaskPromotionEvaluationIntentV3>(value.clone()).is_ok());
+        value["untrusted_extension"] = json!(true);
+        assert!(serde_json::from_value::<TaskPromotionEvaluationIntentV3>(value).is_err());
+    }
+
+    #[test]
+    fn promotion_scores_are_bounded_before_comparison() {
+        assert_eq!(bounded_task_score(Task::Regression, -1000.0), -1.0);
+        assert_eq!(bounded_task_score(Task::Binary, 1000.0), 1.0);
+        assert_eq!(bounded_task_score(Task::Timeseries, -0.25), 0.75);
+        assert_eq!(bounded_task_score(Task::Timeseries, -1000.0), -1.0);
+    }
+
+    #[test]
+    fn context_facts_slices_are_derived_from_the_pinned_csv() {
+        let directory = tempdir().unwrap();
+        let csv = directory.path().join("train.csv");
+        fs::write(&csv, b"1,2,0\n3,,0\n4,5,1\n").unwrap();
+        let (rows, columns, missing, size, missingness, imbalance, target_shape) =
+            dataset_slices(&csv, Task::Binary).unwrap();
+        assert_eq!((rows, columns), (3, 3));
+        assert_eq!(missing, "0.111111111111");
+        assert_eq!(size, "small");
+        assert_eq!(missingness, "high");
+        assert_eq!(imbalance, "balanced");
+        assert_eq!(target_shape, "balanced");
     }
 }

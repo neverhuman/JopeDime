@@ -21,6 +21,7 @@
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
 use jope_dime_regressor::selfplay_expansion::TASKS;
+use jope_dime_regressor::spec_policy::{PROPOSE, TRAINER};
 use rusqlite::{params, Connection, OptionalExtension};
 use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
@@ -37,6 +38,8 @@ const ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
 const SCQ: &str = "/home/ubuntu/smart_cluster/target/release/scq";
 const RUNS_ROOT: &str = "/home/ubuntu/smart_cluster/var/runs";
 const SCRIPTS: &str = "/home/ubuntu/jope-dime/scripts";
+const PROPOSAL_SELECTION_POLICY: &str =
+    "/home/ubuntu/jope-dime/manifests/selfplay/proposal-selection-policy.v1.json";
 const PRIME_SRC: &str = "/home/ubuntu/jope-prime/src";
 const EVALUATOR: &str = "/home/ubuntu/jope-dime/target/release/corpus_eval";
 const WARM: &str = "/home/ubuntu/jope-flywheel/training/round1/checkpoints/fbcd5459f2c18f6cd5e4c23eef76a508a91d653a82f27c6ea41bcee8cafa2592.model.pt";
@@ -1085,6 +1088,7 @@ fn render_checkpoint_proposal_spec(
          \"--catalog\", \"{{input:catalog}}\", \"--data\", \"{{input:data}}\", \
          \"--checkpoint\", \"{{input:checkpoint}}\", \
          \"--output\", \"{{output:proposals}}/{output}\", \"--device\", \"cuda\", \
+         \"--selection-policy\", \"{{input:selection_policy}}\", \
          \"--seed\", \"{seed}\", \"--proposals-per-dataset\", \
          \"{proposals_per_dataset}\", \"--batch-contexts\", \"64\", \
          \"--allow-deficient-floor\", \"8\""
@@ -1104,31 +1108,24 @@ fn render_checkpoint_proposal_spec(
         "command = \"/usr/bin/python3\"".to_owned(),
         args_line,
         String::new(),
-        "[resource]".to_owned(),
-        "gpus_per_task = 1".to_owned(),
-        "cpus_reserved = 4".to_owned(),
-        "omp_threads = 4".to_owned(),
-        "ram_mb = 49152".to_owned(),
-        "gang_size = 1".to_owned(),
-        "placement = \"single_node\"".to_owned(),
-        String::new(),
-        "[dependencies]".to_owned(),
-        "hostname = [{ command = \"/usr/bin/grep\", args = [\"-qxE\", \"xbabe2|xbabe3\", \"/etc/hostname\"], timeout_secs = 5 }]".to_owned(),
-        String::new(),
+    ];
+    lines.extend(PROPOSE.render_resource_block().lines().map(str::to_owned));
+    lines.push(String::new());
+    lines.extend(PROPOSE.render_placement_block().lines().map(str::to_owned));
+    lines.push(String::new());
+    lines.extend([
         "[env]".to_owned(),
         format!("PYTHONPATH = \"{PRIME_SRC}:{SCRIPTS}\""),
-        "OMP_NUM_THREADS = \"4\"".to_owned(),
+        format!("OMP_NUM_THREADS = \"{}\"", PROPOSE.omp_threads),
         String::new(),
         "[preempt]".to_owned(),
-        "preemptible = true".to_owned(),
+        format!("preemptible = {}", PROPOSE.preemptible),
         "checkpoint = \"none\"".to_owned(),
         "resume = \"rerun\"".to_owned(),
         String::new(),
-        "[limits]".to_owned(),
-        "max_runtime_hours = 24".to_owned(),
-        "max_restarts = 1".to_owned(),
-        String::new(),
-    ];
+    ]);
+    lines.extend(PROPOSE.render_limits_block().lines().map(str::to_owned));
+    lines.push(String::new());
     let catalog_name = catalog
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
@@ -1151,6 +1148,11 @@ fn render_checkpoint_proposal_spec(
             "common".into(),
             common,
             "scripts/test_exact_common.py".into(),
+        ),
+        (
+            "selection_policy".into(),
+            PathBuf::from(PROPOSAL_SELECTION_POLICY),
+            "scripts/proposal-selection-policy.v1.json".into(),
         ),
         (
             "pointer".into(),
@@ -1312,31 +1314,24 @@ fn render_trainer_spec(
         "command = \"/usr/bin/python3\"".to_owned(),
         args_line,
         String::new(),
-        "[resource]".to_owned(),
-        "gpus_per_task = 1".to_owned(),
-        "cpus_reserved = 4".to_owned(),
-        "omp_threads = 4".to_owned(),
-        "ram_mb = 49152".to_owned(),
-        "gang_size = 1".to_owned(),
-        "placement = \"single_node\"".to_owned(),
-        String::new(),
-        "[dependencies]".to_owned(),
-        "hostname = [{ command = \"/usr/bin/grep\", args = [\"-qx\", \"xbabe2\", \"/etc/hostname\"], timeout_secs = 5 }]".to_owned(),
-        String::new(),
+    ];
+    lines.extend(TRAINER.render_resource_block().lines().map(str::to_owned));
+    lines.push(String::new());
+    lines.extend(TRAINER.render_placement_block().lines().map(str::to_owned));
+    lines.push(String::new());
+    lines.extend([
         "[env]".to_owned(),
         format!("PYTHONPATH = \"{PRIME_SRC}:{SCRIPTS}\""),
-        "OMP_NUM_THREADS = \"4\"".to_owned(),
+        format!("OMP_NUM_THREADS = \"{}\"", TRAINER.omp_threads),
         String::new(),
         "[preempt]".to_owned(),
-        "preemptible = true".to_owned(),
+        format!("preemptible = {}", TRAINER.preemptible),
         "checkpoint = \"none\"".to_owned(),
         "resume = \"rerun\"".to_owned(),
         String::new(),
-        "[limits]".to_owned(),
-        "max_runtime_hours = 168".to_owned(),
-        "max_restarts = 1".to_owned(),
-        String::new(),
-    ];
+    ]);
+    lines.extend(TRAINER.render_limits_block().lines().map(str::to_owned));
+    lines.push(String::new());
     for (name, source, target) in &inputs {
         lines.extend([
             "[[input]]".to_owned(),
@@ -2324,7 +2319,19 @@ fn evaluate_gate(evidence: &Value, accepted_by_task: Option<&Value>) -> Result<V
 /// `selfplay_runtime.rs:83` and `promotion.rs:accepted_checkpoint`, and they
 /// alone define the freshness epoch. Nothing in this file participates in epoch
 /// identity, so advancing a branch never retires a queued job.
-const TASK_ACCEPTED_SCHEMA: &str = "AcceptedByTask.v2";
+///
+/// The schema string is `JopeSelfplayAcceptedByTask.v1` — the value already on disk
+/// and already written by `jope_task_learning_controller.rs` and `jope_selfplay_tui.rs`.
+/// It was previously `AcceptedByTask.v2`, which is the *shadow* namespace's constant
+/// (`selfplay_shadow/contracts.rs:7`) for a different artifact
+/// (`accepted/by-task.v2.json`) with a different shape. Because
+/// `advance_task_accepted_pointers` rewrites `document["schema"]` unconditionally — even
+/// on a cycle where every branch is unchanged — the first promotion run would have
+/// rewritten the live pointer to a string that four readers reject outright:
+/// `jope_task_learning_controller.rs:1055`, `jope_causal_evidence.rs:302`,
+/// `scripts/test_exact_train.py:843`, `train_only_study.rs:1437`. Two of those run as
+/// live services against this root, so the break would have been immediate and fleet-wide.
+const TASK_ACCEPTED_SCHEMA: &str = "JopeSelfplayAcceptedByTask.v1";
 
 fn task_accepted_pointer(root: &Path) -> PathBuf {
     root.join("training/accepted-by-task.json")
@@ -3628,7 +3635,12 @@ mod tests {
         );
 
         let pointers = read_json(&task_accepted_pointer(root)).unwrap();
-        assert_eq!(pointers["schema"], json!("AcceptedByTask.v2"));
+        // The written schema must match what the live readers require, and what the
+        // fixture below already writes. This assertion previously expected
+        // "AcceptedByTask.v2" — the shadow namespace's constant for a different file —
+        // which is exactly the drift that would have broken the trainer and the causal
+        // ledger on the first promotion cycle.
+        assert_eq!(pointers["schema"], json!("JopeSelfplayAcceptedByTask.v1"));
         assert_eq!(
             pointers["tasks"]["binary"]["checkpoint_sha256"],
             json!(checkpoint_sha)

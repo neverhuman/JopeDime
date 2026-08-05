@@ -20,6 +20,8 @@ const TAPE_SCHEMA: &str = "JopeDimePredictionTape.v1";
 const FITNESS_SCHEMA: &str = "JopeDimeRegressionFitness.v1";
 const RECEIPT_SCHEMA: &str = "JopeDimeSemanticEvaluationReceipt.v2";
 const OBSERVATION_SCHEMA: &str = "JopeDimeEvaluationObservation.v1";
+const COMPATIBILITY_SHADOW_SCHEMA: &str = "JopeDimePredictionCompatibilityShadow.v1";
+const NO_FORGETTING_ARCHIVE_SCHEMA: &str = "JopeDimeNoForgettingArchiveEntry.v1";
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -860,6 +862,157 @@ pub(crate) struct EvaluationOutcomeV2 {
     pub(crate) observation: EvaluationObservationV1,
 }
 
+/// Scientific compatibility around the frozen V1 tape. Runtime observations
+/// are deliberately absent: hardware, worker count, and elapsed time cannot
+/// affect selection or archive replacement.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct PredictionCompatibilityShadowV1 {
+    pub(crate) schema: String,
+    pub(crate) frozen_evaluator_sha256: String,
+    pub(crate) baseline_semantic_receipt_sha256: String,
+    pub(crate) challenger_semantic_receipt_sha256: String,
+    pub(crate) fold_sha256: String,
+    pub(crate) common_rows_sha256: String,
+    pub(crate) common_rows: usize,
+    pub(crate) objective_rescore_only: bool,
+    pub(crate) shadow_sha256: String,
+}
+
+impl PredictionCompatibilityShadowV1 {
+    pub(crate) fn build(
+        baseline: &SemanticEvaluationReceiptV2,
+        baseline_contract: &RunContractV2,
+        challenger: &SemanticEvaluationReceiptV2,
+        challenger_contract: &RunContractV2,
+    ) -> Result<Self> {
+        baseline.validate_against(baseline_contract)?;
+        challenger.validate_against(challenger_contract)?;
+        let baseline_evaluator = baseline_contract.prediction.evaluator.digest()?;
+        let challenger_evaluator = challenger_contract.prediction.evaluator.digest()?;
+        if baseline_evaluator != challenger_evaluator {
+            bail!("prediction compatibility shadow evaluator drift");
+        }
+        if baseline.fold_sha256 != challenger.fold_sha256
+            || baseline.prediction_tape.validation_row_ids
+                != challenger.prediction_tape.validation_row_ids
+            || baseline.prediction_tape.truth_bits != challenger.prediction_tape.truth_bits
+        {
+            bail!("prediction compatibility shadow requires common fold rows and truth");
+        }
+        let mut common = SemanticHasher::new("jope-dime/prediction-compatibility-rows/v1");
+        common.str("fold_sha256", &baseline.fold_sha256);
+        for (row, truth) in baseline
+            .prediction_tape
+            .validation_row_ids
+            .iter()
+            .zip(&baseline.prediction_tape.truth_bits)
+        {
+            common.str("row", row);
+            common.u64("truth_bits", *truth);
+        }
+        let common_rows_sha256 = common.finish();
+        let objective_rescore_only = baseline.candidate_semantic_sha256
+            == challenger.candidate_semantic_sha256
+            && baseline.prediction_tape.prediction_bits
+                == challenger.prediction_tape.prediction_bits
+            && baseline.evaluation_key == challenger.evaluation_key
+            && baseline.objective_sha256 != challenger.objective_sha256;
+        let mut identity = SemanticHasher::new("jope-dime/prediction-compatibility-shadow/v1");
+        identity.str("frozen_evaluator_sha256", &baseline_evaluator);
+        identity.str(
+            "baseline_semantic_receipt_sha256",
+            &baseline.semantic_receipt_sha256,
+        );
+        identity.str(
+            "challenger_semantic_receipt_sha256",
+            &challenger.semantic_receipt_sha256,
+        );
+        identity.str("fold_sha256", &baseline.fold_sha256);
+        identity.str("common_rows_sha256", &common_rows_sha256);
+        identity.u64(
+            "common_rows",
+            baseline.prediction_tape.validation_row_ids.len() as u64,
+        );
+        identity.u64("objective_rescore_only", objective_rescore_only as u64);
+        Ok(Self {
+            schema: COMPATIBILITY_SHADOW_SCHEMA.into(),
+            frozen_evaluator_sha256: baseline_evaluator,
+            baseline_semantic_receipt_sha256: baseline.semantic_receipt_sha256.clone(),
+            challenger_semantic_receipt_sha256: challenger.semantic_receipt_sha256.clone(),
+            fold_sha256: baseline.fold_sha256.clone(),
+            common_rows_sha256,
+            common_rows: baseline.prediction_tape.validation_row_ids.len(),
+            objective_rescore_only,
+            shadow_sha256: identity.finish(),
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct NoForgettingArchiveEntryV1 {
+    pub(crate) schema: String,
+    pub(crate) candidate_semantic_sha256: String,
+    /// Content-addressed common-evidence slice -> bounded scientific score bits.
+    pub(crate) confirmed_evidence: BTreeMap<String, u64>,
+    pub(crate) compatibility_shadow_sha256: String,
+}
+
+impl NoForgettingArchiveEntryV1 {
+    pub(crate) fn validate(&self) -> Result<()> {
+        require_schema(
+            &self.schema,
+            NO_FORGETTING_ARCHIVE_SCHEMA,
+            "no-forgetting archive",
+        )?;
+        validate_sha256("archive candidate", &self.candidate_semantic_sha256)?;
+        validate_sha256(
+            "archive compatibility shadow",
+            &self.compatibility_shadow_sha256,
+        )?;
+        if self.confirmed_evidence.is_empty() {
+            bail!("no-forgetting archive requires confirmed evidence");
+        }
+        for (evidence, score) in &self.confirmed_evidence {
+            validate_sha256("archive evidence", evidence)?;
+            if !f64::from_bits(*score).is_finite() {
+                bail!("no-forgetting archive contains non-finite scientific score");
+            }
+        }
+        Ok(())
+    }
+}
+
+/// Replace only on a strict evidence superset with no regression on any
+/// previously confirmed slice. Equal evidence, partial overlap, and hardware
+/// diagnostics can never evict an archive member.
+pub(crate) fn replace_no_forgetting_archive(
+    current: &NoForgettingArchiveEntryV1,
+    challenger: NoForgettingArchiveEntryV1,
+) -> Result<NoForgettingArchiveEntryV1> {
+    current.validate()?;
+    challenger.validate()?;
+    if challenger.confirmed_evidence.len() <= current.confirmed_evidence.len()
+        || !current
+            .confirmed_evidence
+            .keys()
+            .all(|evidence| challenger.confirmed_evidence.contains_key(evidence))
+    {
+        bail!("archive replacement requires a strict confirmed-evidence superset");
+    }
+    for (evidence, current_score) in &current.confirmed_evidence {
+        let challenger_score = challenger
+            .confirmed_evidence
+            .get(evidence)
+            .context("strict evidence superset changed during validation")?;
+        if f64::from_bits(*challenger_score) < f64::from_bits(*current_score) {
+            bail!("archive replacement regresses previously confirmed evidence");
+        }
+    }
+    Ok(challenger)
+}
+
 /// Campaign-scoped prediction reuse for the next V2 orchestration slice.
 /// The one-shot proof command is intentionally stateless.
 #[allow(dead_code)]
@@ -1638,6 +1791,78 @@ mod tests {
             second.semantic.prediction_tape.tape_sha256
         );
         assert_ne!(first.semantic.score_key, second.semantic.score_key);
+    }
+
+    #[test]
+    fn compatibility_shadow_uses_common_tape_evidence_only() {
+        let (rows, targets, ids) = fixture_data();
+        let (view, fold, contract) = fixture(&rows, &targets, &ids);
+        let mut memo = EvaluationMemoV2::default();
+        let baseline = memo
+            .evaluate_regression_fold(&view, &contract, &fold, "(pipe X (ridge))")
+            .unwrap();
+        let rescored_contract = RunContractV2::strict_legacy(
+            view.feature_view_sha256().into(),
+            evaluator(),
+            objective("negative-rmse"),
+        )
+        .unwrap();
+        let challenger = memo
+            .evaluate_regression_fold(&view, &rescored_contract, &fold, "(pipe X (ridge))")
+            .unwrap();
+        let shadow = PredictionCompatibilityShadowV1::build(
+            &baseline.semantic,
+            &contract,
+            &challenger.semantic,
+            &rescored_contract,
+        )
+        .unwrap();
+        assert!(shadow.objective_rescore_only);
+        assert_eq!(shadow.common_rows, fold.validation_rows.len());
+
+        let mut changed_truth = challenger.semantic.clone();
+        changed_truth.prediction_tape.truth_bits[0] ^= 1;
+        assert!(PredictionCompatibilityShadowV1::build(
+            &baseline.semantic,
+            &contract,
+            &changed_truth,
+            &rescored_contract,
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn no_forgetting_archive_replaces_only_on_confirmed_superset_evidence() {
+        let first_evidence = "1".repeat(64);
+        let second_evidence = "2".repeat(64);
+        let current = NoForgettingArchiveEntryV1 {
+            schema: NO_FORGETTING_ARCHIVE_SCHEMA.into(),
+            candidate_semantic_sha256: "a".repeat(64),
+            confirmed_evidence: BTreeMap::from([(first_evidence.clone(), 0.1_f64.to_bits())]),
+            compatibility_shadow_sha256: "c".repeat(64),
+        };
+        let challenger = NoForgettingArchiveEntryV1 {
+            schema: NO_FORGETTING_ARCHIVE_SCHEMA.into(),
+            candidate_semantic_sha256: "b".repeat(64),
+            confirmed_evidence: BTreeMap::from([
+                (first_evidence.clone(), 0.1_f64.to_bits()),
+                (second_evidence, 0.2_f64.to_bits()),
+            ]),
+            compatibility_shadow_sha256: "d".repeat(64),
+        };
+        assert_eq!(
+            replace_no_forgetting_archive(&current, challenger.clone()).unwrap(),
+            challenger
+        );
+
+        let mut equal_evidence = challenger.clone();
+        equal_evidence.confirmed_evidence.remove(&"2".repeat(64));
+        assert!(replace_no_forgetting_archive(&current, equal_evidence).is_err());
+        let mut regressed = challenger;
+        regressed
+            .confirmed_evidence
+            .insert(first_evidence, 0.09_f64.to_bits());
+        assert!(replace_no_forgetting_archive(&current, regressed).is_err());
     }
 
     #[test]

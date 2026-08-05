@@ -607,11 +607,7 @@ fn resolve_authority(shard: &Shard) -> Result<ResolvedAuthority> {
         && authority.benchmark_valid
         && authority.selection_bias.is_none()
         && authority.generation == "zero";
-    if !corrected
-        && !multiclass_test_selected
-        && !timeseries_test_selected
-        && !legacy_superseded
-    {
+    if !corrected && !multiclass_test_selected && !timeseries_test_selected && !legacy_superseded {
         bail!(
             "self-play authority requires either the strict-wave test_exact contract or the \
              multiclass score_tier=test, metric=macro_f1, test_adaptive=true, \

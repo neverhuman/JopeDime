@@ -3,8 +3,10 @@ use super::{
     Sha256Digest, Task, TaskCausalEvidenceV2, CAUSAL_EVIDENCE_EPOCH_SCHEMA,
     CAUSAL_EVIDENCE_LEDGER_V3_SCHEMA, CONTEXT_PROPOSAL_ARTIFACT_V3_SCHEMA,
     DATASET_PROFILE_V1_SCHEMA, DATASET_PROVENANCE_V2_SCHEMA, FLYWHEEL_PROGRESS_V2_SCHEMA,
-    MIN_PARENT_DIRECT_OUTCOMES, PACKED_CORPUS_V3_SCHEMA, SEALED_PANEL_CONSUMPTION_V1_SCHEMA,
-    SEALED_PANEL_POOL_V2_SCHEMA, TASK_PROMOTION_EVALUATION_V3_SCHEMA,
+    MIN_PARENT_DIRECT_OUTCOMES, PACKED_CORPUS_V3_SCHEMA, SEALED_PANEL_CANDIDATE_SET_V2_SCHEMA,
+    SEALED_PANEL_CONSUMPTION_V1_SCHEMA, SEALED_PANEL_CONTEXT_FACTS_V1_SCHEMA,
+    SEALED_PANEL_POOL_V2_SCHEMA, TASK_PROMOTION_EVALUATION_INTENT_V3_SCHEMA,
+    TASK_PROMOTION_EVALUATION_V3_SCHEMA, TASK_PROMOTION_OBSERVATION_SET_V3_SCHEMA,
 };
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
@@ -1000,6 +1002,84 @@ pub struct SealedPanelCandidateV2 {
     pub source_family_sha256: Sha256Digest,
     pub near_duplicate_cluster_sha256: Sha256Digest,
     pub origin: DatasetOriginV2,
+    pub base_seal_sha256: Sha256Digest,
+    pub catalog_sha256: Sha256Digest,
+    pub train_sha256: Sha256Digest,
+    pub test_sha256: Sha256Digest,
+    pub context_facts_sha256: Sha256Digest,
+    pub prior_use_index_sha256: Sha256Digest,
+    pub zero_prior_use_proof_sha256: Sha256Digest,
+    pub admission_watermark: u64,
+}
+
+pub fn sealed_zero_prior_use_proof_v2(
+    context_sha256: &Sha256Digest,
+    base_seal_sha256: &Sha256Digest,
+    catalog_sha256: &Sha256Digest,
+    prior_use_index_sha256: &Sha256Digest,
+    admission_watermark: u64,
+) -> Sha256Digest {
+    Sha256Digest::of_bytes(
+        format!(
+            "SealedPanelZeroPriorUseProof.v2\0{}\0{}\0{}\0{}\0{admission_watermark}",
+            context_sha256.as_str(),
+            base_seal_sha256.as_str(),
+            catalog_sha256.as_str(),
+            prior_use_index_sha256.as_str(),
+        )
+        .as_bytes(),
+    )
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SealedPanelCandidateSetV2 {
+    pub schema: String,
+    pub base_seal_sha256: Sha256Digest,
+    pub catalog_sha256: Sha256Digest,
+    pub prior_use_index_sha256: Sha256Digest,
+    pub admission_watermark: u64,
+    pub entries: Vec<SealedPanelCandidateV2>,
+    pub produced_at_ms: u128,
+}
+
+impl SealedPanelCandidateSetV2 {
+    pub fn validate(&self) -> Result<()> {
+        ensure!(
+            self.schema == SEALED_PANEL_CANDIDATE_SET_V2_SCHEMA,
+            "sealed panel candidate set schema is not v2"
+        );
+        ensure!(
+            !self.entries.is_empty(),
+            "sealed panel candidate set is empty"
+        );
+        let mut contexts = BTreeSet::new();
+        for entry in &self.entries {
+            ensure!(
+                !entry.context_identity.trim().is_empty() && contexts.insert(&entry.context_sha256),
+                "sealed panel candidate repeats or empties a context"
+            );
+            ensure!(
+                entry.base_seal_sha256 == self.base_seal_sha256
+                    && entry.catalog_sha256 == self.catalog_sha256
+                    && entry.prior_use_index_sha256 == self.prior_use_index_sha256
+                    && entry.admission_watermark == self.admission_watermark,
+                "sealed panel candidate authority drift"
+            );
+            ensure!(
+                entry.zero_prior_use_proof_sha256
+                    == sealed_zero_prior_use_proof_v2(
+                        &entry.context_sha256,
+                        &entry.base_seal_sha256,
+                        &entry.catalog_sha256,
+                        &entry.prior_use_index_sha256,
+                        entry.admission_watermark,
+                    ),
+                "sealed panel zero-prior-use proof drift"
+            );
+        }
+        Ok(())
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -1034,6 +1114,8 @@ impl SealedPanelPoolV2 {
         let mut contexts = BTreeSet::new();
         let mut family_pool = BTreeMap::new();
         let mut cluster_pool = BTreeMap::new();
+        let mut family_panel = BTreeMap::new();
+        let mut cluster_panel = BTreeMap::new();
         let mut panel_counts: BTreeMap<(Task, &str), (usize, usize)> = BTreeMap::new();
         for entry in &self.entries {
             ensure!(
@@ -1060,6 +1142,23 @@ impl SealedPanelPoolV2 {
                         .promotion_panel
                         .as_deref()
                         .context("promotion entry lacks a panel identity")?;
+                    let panel_identity = (entry.task, panel);
+                    if let Some(existing) =
+                        family_panel.insert(&entry.source_family_sha256, panel_identity)
+                    {
+                        ensure!(
+                            existing == panel_identity,
+                            "a source family crosses promotion panels"
+                        );
+                    }
+                    if let Some(existing) =
+                        cluster_panel.insert(&entry.near_duplicate_cluster_sha256, panel_identity)
+                    {
+                        ensure!(
+                            existing == panel_identity,
+                            "a near-duplicate cluster crosses promotion panels"
+                        );
+                    }
                     let counts = panel_counts.entry((entry.task, panel)).or_default();
                     counts.0 += 1;
                     counts.1 += usize::from(entry.origin == DatasetOriginV2::Real);
@@ -1176,6 +1275,21 @@ pub fn build_sealed_panel_pool_v2(
             PanelComponent { indexes, key, real }
         })
         .collect::<Vec<_>>();
+    let mut component_key_by_index = vec![None; candidates.len()];
+    for component in &components {
+        let tasks = component
+            .indexes
+            .iter()
+            .map(|index| candidates[*index].task)
+            .collect::<BTreeSet<_>>();
+        ensure!(
+            tasks.len() == 1,
+            "a family/near-duplicate component crosses tasks"
+        );
+        for index in &component.indexes {
+            component_key_by_index[*index] = Some(component.key.clone());
+        }
+    }
     let total = candidates.len();
     let promotion_target = total * 15 / 100;
     let development_target = total * 10 / 100;
@@ -1217,19 +1331,14 @@ pub fn build_sealed_panel_pool_v2(
     }
     let mut panel_by_index = BTreeMap::<usize, String>::new();
     for task in [Task::Binary, Task::Regression] {
-        let mut promotion = candidates
+        let promotion = candidates
             .iter()
             .enumerate()
             .filter(|(index, candidate)| {
                 candidate.task == task && assignment[*index] == PanelPoolKindV2::Promotion
             })
-            .map(|(index, candidate)| (index, candidate))
+            .map(|(index, _)| index)
             .collect::<Vec<_>>();
-        promotion.sort_by(|(_, left), (_, right)| {
-            usize::from(right.origin == DatasetOriginV2::Real)
-                .cmp(&usize::from(left.origin == DatasetOriginV2::Real))
-                .then_with(|| left.context_sha256.cmp(&right.context_sha256))
-        });
         ensure!(
             promotion.len() >= 3 * PROMOTION_MIN_CONTEXTS,
             "{task} promotion pool cannot supply three independent panels"
@@ -1239,10 +1348,57 @@ pub fn build_sealed_panel_pool_v2(
             promotion.len() >= panel_count * PROMOTION_MIN_CONTEXTS,
             "{task} promotion panels cannot all reach 128 contexts"
         );
-        for (offset, (index, _)) in promotion.into_iter().enumerate() {
-            let panel = offset % panel_count;
-            panel_by_index.insert(index, format!("{}-promotion-{panel:03}", task.as_str()));
+        let mut by_component = BTreeMap::<Sha256Digest, Vec<usize>>::new();
+        for index in promotion {
+            by_component
+                .entry(
+                    component_key_by_index[index]
+                        .clone()
+                        .context("promotion context lacks a component")?,
+                )
+                .or_default()
+                .push(index);
         }
+        let mut components = by_component.into_iter().collect::<Vec<_>>();
+        components.sort_by(|(left_key, left), (right_key, right)| {
+            let left_real = left
+                .iter()
+                .filter(|index| candidates[**index].origin == DatasetOriginV2::Real)
+                .count();
+            let right_real = right
+                .iter()
+                .filter(|index| candidates[**index].origin == DatasetOriginV2::Real)
+                .count();
+            (right_real * left.len())
+                .cmp(&(left_real * right.len()))
+                .then_with(|| right.len().cmp(&left.len()))
+                .then_with(|| left_key.cmp(right_key))
+        });
+        ensure!(
+            components.len() >= panel_count
+                && components
+                    .iter()
+                    .all(|(_, indexes)| indexes.len() <= PROMOTION_MAX_CONTEXTS),
+            "{task} promotion components cannot form bounded independent panels"
+        );
+        let mut panel_sizes = vec![0_usize; panel_count];
+        for (_, indexes) in components {
+            let panel = (0..panel_count)
+                .filter(|panel| panel_sizes[*panel] + indexes.len() <= PROMOTION_MAX_CONTEXTS)
+                .min_by_key(|panel| (panel_sizes[*panel], *panel))
+                .context("promotion component does not fit any panel")?;
+            panel_sizes[panel] += indexes.len();
+            let panel_name = format!("{}-promotion-{panel:03}", task.as_str());
+            for index in indexes {
+                panel_by_index.insert(index, panel_name.clone());
+            }
+        }
+        ensure!(
+            panel_sizes
+                .iter()
+                .all(|size| *size >= PROMOTION_MIN_CONTEXTS),
+            "{task} component-preserving promotion panels cannot all reach 128 contexts"
+        );
     }
     let entries = candidates
         .into_iter()
@@ -1280,6 +1436,138 @@ pub fn build_sealed_panel_pool_v2(
         );
     }
     Ok(pool)
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SealedPanelContextFactsV1 {
+    pub schema: String,
+    pub task: Task,
+    pub context_identity: String,
+    pub context_sha256: Sha256Digest,
+    pub catalog_sha256: Sha256Digest,
+    pub train_sha256: Sha256Digest,
+    pub test_sha256: Sha256Digest,
+    pub source_family_sha256: Sha256Digest,
+    pub near_duplicate_cluster_sha256: Sha256Digest,
+    pub origin: DatasetOriginV2,
+    pub rows: usize,
+    pub columns: usize,
+    pub missing_fraction: String,
+    pub size_slice: String,
+    pub missingness_slice: String,
+    pub imbalance_slice: String,
+    pub target_shape_slice: String,
+    pub created_at_ms: u128,
+}
+
+impl SealedPanelContextFactsV1 {
+    pub fn validate(&self) -> Result<()> {
+        ensure!(
+            self.schema == SEALED_PANEL_CONTEXT_FACTS_V1_SCHEMA,
+            "sealed panel context facts schema is not v1"
+        );
+        ensure!(
+            !self.context_identity.trim().is_empty()
+                && self.rows > 0
+                && self.columns >= 2
+                && [
+                    self.missing_fraction.as_str(),
+                    self.size_slice.as_str(),
+                    self.missingness_slice.as_str(),
+                    self.imbalance_slice.as_str(),
+                    self.target_shape_slice.as_str(),
+                ]
+                .into_iter()
+                .all(|value| !value.trim().is_empty()),
+            "sealed panel context facts are incomplete"
+        );
+        let missing_fraction = self
+            .missing_fraction
+            .parse::<f64>()
+            .context("sealed panel missing fraction is not numeric")?;
+        ensure!(
+            missing_fraction.is_finite() && (0.0..=1.0).contains(&missing_fraction),
+            "sealed panel missing fraction is outside 0..1"
+        );
+        Ok(())
+    }
+
+    pub fn slices(&self) -> BTreeMap<String, String> {
+        BTreeMap::from([
+            (
+                "origin".to_owned(),
+                format!("{:?}", self.origin).to_ascii_lowercase(),
+            ),
+            ("size".to_owned(), self.size_slice.clone()),
+            ("missingness".to_owned(), self.missingness_slice.clone()),
+            ("imbalance".to_owned(), self.imbalance_slice.clone()),
+            ("target_shape".to_owned(), self.target_shape_slice.clone()),
+        ])
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct PromotionContextScheduleV3 {
+    pub context_sha256: Sha256Digest,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct TaskPromotionEvaluationIntentV3 {
+    pub schema: String,
+    pub task: Task,
+    pub accepted_parent_checkpoint_sha256: Sha256Digest,
+    pub candidate_checkpoint_sha256: Sha256Digest,
+    pub run_index: usize,
+    pub seed: u64,
+    pub panel_consumption: PathBuf,
+    pub panel_consumption_sha256: Sha256Digest,
+    pub context_schedule: Vec<PromotionContextScheduleV3>,
+    pub initial_contexts: usize,
+    pub context_step: usize,
+    pub maximum_contexts: usize,
+    pub bootstrap_resamples: usize,
+    pub created_at_ms: u128,
+}
+
+impl TaskPromotionEvaluationIntentV3 {
+    pub fn validate(&self) -> Result<()> {
+        ensure!(
+            self.schema == TASK_PROMOTION_EVALUATION_INTENT_V3_SCHEMA,
+            "task promotion evaluation intent schema is not v3"
+        );
+        ensure!(self.run_index < 3, "promotion run index must be 0..3");
+        ensure!(
+            self.initial_contexts == PROMOTION_MIN_CONTEXTS
+                && self.context_step == PROMOTION_CONTEXT_STEP
+                && (PROMOTION_MIN_CONTEXTS..=PROMOTION_MAX_CONTEXTS)
+                    .contains(&self.maximum_contexts)
+                && (self.maximum_contexts - PROMOTION_MIN_CONTEXTS) % PROMOTION_CONTEXT_STEP == 0
+                && self.context_schedule.len() == self.maximum_contexts
+                && self
+                    .context_schedule
+                    .iter()
+                    .map(|row| &row.context_sha256)
+                    .collect::<BTreeSet<_>>()
+                    .len()
+                    == self.context_schedule.len(),
+            "promotion intent has an invalid 128..512 sequential context schedule"
+        );
+        ensure!(
+            self.bootstrap_resamples == PROMOTION_BOOTSTRAP_RESAMPLES,
+            "promotion intent must request exactly 10000 clustered resamples"
+        );
+        ensure!(
+            self.panel_consumption.is_file()
+                && Sha256Digest::parse(crate::selfplay_runtime::sha256_file(
+                    &self.panel_consumption,
+                )?)? == self.panel_consumption_sha256,
+            "promotion intent panel consumption content drift"
+        );
+        Ok(())
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -1392,6 +1680,37 @@ impl PromotionObservationV3 {
                     .get(dimension)
                     .is_some_and(|value| !value.trim().is_empty()),
                 "promotion observation lacks predefined {dimension} slice"
+            );
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct TaskPromotionObservationSetV3 {
+    pub schema: String,
+    pub panel_consumption_sha256: Sha256Digest,
+    pub observations: Vec<PromotionObservationV3>,
+}
+
+impl TaskPromotionObservationSetV3 {
+    pub fn validate(&self) -> Result<()> {
+        ensure!(
+            self.schema == TASK_PROMOTION_OBSERVATION_SET_V3_SCHEMA,
+            "task promotion observation set schema is not v3"
+        );
+        ensure!(
+            (PROMOTION_MIN_CONTEXTS..=PROMOTION_MAX_CONTEXTS).contains(&self.observations.len())
+                && (self.observations.len() - PROMOTION_MIN_CONTEXTS) % PROMOTION_CONTEXT_STEP == 0,
+            "promotion observation set is outside the sequential prefix schedule"
+        );
+        let mut contexts = BTreeSet::new();
+        for observation in &self.observations {
+            observation.validate()?;
+            ensure!(
+                contexts.insert(&observation.context_sha256),
+                "promotion observation set repeats a context"
             );
         }
         Ok(())
@@ -1927,6 +2246,39 @@ impl PlateauDiagnosisV1 {
 
 pub const PLATEAU_DIAGNOSIS_V2_SCHEMA: &str = "PlateauDiagnosis.v2";
 pub const RECIPE_CHANGE_DIRECTIVE_V1_SCHEMA: &str = "RecipeChangeDirective.v1";
+pub const RECIPE_CHANGE_DIRECTIVE_V2_SCHEMA: &str = "RecipeChangeDirective.v2";
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PlateauFailureClassV2 {
+    ValidityLoss,
+    GpDisadvantage,
+    FamilyWeakness,
+    ConditionalCollapse,
+    LatencyRegression,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RecipeKnobV2 {
+    HardNegativeValiditySampling,
+    ExactCausalPairGpComparatorMixture,
+    SliceBalancedSampling,
+    AblationRoutingLoss,
+    ProposalModelComplexityBudget,
+}
+
+impl PlateauFailureClassV2 {
+    fn required_knob(self) -> RecipeKnobV2 {
+        match self {
+            Self::ValidityLoss => RecipeKnobV2::HardNegativeValiditySampling,
+            Self::GpDisadvantage => RecipeKnobV2::ExactCausalPairGpComparatorMixture,
+            Self::FamilyWeakness => RecipeKnobV2::SliceBalancedSampling,
+            Self::ConditionalCollapse => RecipeKnobV2::AblationRoutingLoss,
+            Self::LatencyRegression => RecipeKnobV2::ProposalModelComplexityBudget,
+        }
+    }
+}
 
 /// One rejected shadow counted toward a recipe-scoped plateau, with the
 /// recipe identity its trainer intent resolves to (None = legacy receipt
@@ -1965,7 +2317,84 @@ pub struct PlateauDiagnosisV2 {
     pub data_slice_summary: String,
     pub latency_summary: String,
     pub replay_summary: String,
+    #[serde(default)]
+    pub failure_classes: BTreeSet<PlateauFailureClassV2>,
     pub diagnosed_at_ms: u128,
+}
+
+/// A recipe change tied to the exact immutable plateau diagnosis it answers.
+/// Every diagnosed failure class must be addressed by its auditable recipe
+/// knob, and the next recipe identity must differ from the exhausted one.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct RecipeChangeDirectiveV2 {
+    pub schema: String,
+    pub task: Task,
+    pub unchanged_parent_checkpoint_sha256: Sha256Digest,
+    pub answers_diagnosis_sha256: Sha256Digest,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub previous_recipe_identity_sha256: Option<Sha256Digest>,
+    pub next_recipe_identity_sha256: Sha256Digest,
+    pub failure_classes: BTreeSet<PlateauFailureClassV2>,
+    pub changed_knobs: BTreeSet<RecipeKnobV2>,
+    pub created_at_ms: u128,
+}
+
+impl RecipeChangeDirectiveV2 {
+    pub fn validate(&self, diagnosis: &PlateauDiagnosisV2) -> Result<()> {
+        ensure!(
+            self.schema == RECIPE_CHANGE_DIRECTIVE_V2_SCHEMA,
+            "recipe change directive v2 schema mismatch"
+        );
+        ensure!(
+            self.task == diagnosis.task
+                && self.unchanged_parent_checkpoint_sha256
+                    == diagnosis.unchanged_parent_checkpoint_sha256,
+            "recipe change directive v2 diagnosis scope mismatch"
+        );
+        let mut diagnosed = diagnosis.failure_classes.clone();
+        if diagnosed.is_empty() {
+            if diagnosis.proposal_validity < 0.99 {
+                diagnosed.insert(PlateauFailureClassV2::ValidityLoss);
+            }
+            if diagnosis.gp_disadvantage > 0.0 {
+                diagnosed.insert(PlateauFailureClassV2::GpDisadvantage);
+            }
+            if diagnosis
+                .latency_summary
+                .split_whitespace()
+                .last()
+                .and_then(|value| value.parse::<f64>().ok())
+                .is_some_and(|ratio| ratio > 1.25)
+            {
+                diagnosed.insert(PlateauFailureClassV2::LatencyRegression);
+            }
+        }
+        ensure!(
+            !self.failure_classes.is_empty() && self.failure_classes == diagnosed,
+            "recipe change directive v2 must answer the diagnosed failure classes exactly"
+        );
+        ensure!(
+            self.failure_classes
+                .iter()
+                .all(|class| self.changed_knobs.contains(&class.required_knob())),
+            "recipe change directive v2 does not change the knob required by its diagnosis"
+        );
+        let diagnosed_recipe = diagnosis
+            .current_recipe_identity_sha256
+            .as_ref()
+            .context("recipe change directive v2 requires a recipe-scoped diagnosis")
+            .and_then(|identity| Sha256Digest::parse(identity.clone()))?;
+        ensure!(
+            self.previous_recipe_identity_sha256.as_ref() == Some(&diagnosed_recipe),
+            "recipe change directive v2 previous recipe does not match its diagnosis"
+        );
+        ensure!(
+            diagnosed_recipe != self.next_recipe_identity_sha256,
+            "recipe change directive v2 does not change recipe identity"
+        );
+        Ok(())
+    }
 }
 
 impl PlateauDiagnosisV2 {
@@ -1989,6 +2418,10 @@ impl PlateauDiagnosisV2 {
             self.proposal_validity.is_finite() && self.gp_disadvantage.is_finite(),
             "plateau diagnosis v2 contains a non-finite metric"
         );
+        if let Some(identity) = &self.current_recipe_identity_sha256 {
+            Sha256Digest::parse(identity.clone())
+                .context("plateau diagnosis v2 has an invalid recipe identity")?;
+        }
         Ok(())
     }
 }
@@ -2454,11 +2887,14 @@ mod tests {
                 },
                 context_identity: format!("context-{index}"),
                 context_sha256: Sha256Digest::parse(format!("{index:064x}")).unwrap(),
-                source_family_sha256: Sha256Digest::parse(format!("{:064x}", index + 10_000))
-                    .unwrap(),
+                source_family_sha256: Sha256Digest::parse(format!(
+                    "{:064x}",
+                    10_000 + (index / 4) * 2 + index % 2
+                ))
+                .unwrap(),
                 near_duplicate_cluster_sha256: Sha256Digest::parse(format!(
                     "{:064x}",
-                    index + 20_000
+                    20_000 + (index / 4) * 2 + index % 2
                 ))
                 .unwrap(),
                 origin: if index < 1_024 {
@@ -2466,6 +2902,20 @@ mod tests {
                 } else {
                     DatasetOriginV2::Synthetic
                 },
+                base_seal_sha256: digest("base-seal"),
+                catalog_sha256: digest("catalog"),
+                train_sha256: digest(&format!("train-{index}")),
+                test_sha256: digest(&format!("test-{index}")),
+                context_facts_sha256: digest(&format!("facts-{index}")),
+                prior_use_index_sha256: digest("prior-use"),
+                zero_prior_use_proof_sha256: sealed_zero_prior_use_proof_v2(
+                    &Sha256Digest::parse(format!("{index:064x}")).unwrap(),
+                    &digest("base-seal"),
+                    &digest("catalog"),
+                    &digest("prior-use"),
+                    1,
+                ),
+                admission_watermark: 1,
             })
             .collect();
         let pool = build_sealed_panel_pool_v2(candidates, 1).unwrap();
@@ -2481,6 +2931,17 @@ mod tests {
             assert!(panels
                 .iter()
                 .all(|panel| pool.promotion_panel(task, panel).len() == 128));
+            let mut family_panels = BTreeMap::new();
+            for entry in pool
+                .entries
+                .iter()
+                .filter(|entry| entry.task == task && entry.pool == PanelPoolKindV2::Promotion)
+            {
+                let panel = entry.promotion_panel.as_deref().unwrap();
+                assert!(family_panels
+                    .insert(&entry.source_family_sha256, panel)
+                    .is_none_or(|existing| existing == panel));
+            }
         }
     }
 
@@ -2539,6 +3000,55 @@ mod tests {
         )
         .unwrap();
         assert!(!rejected.accepted);
+    }
+
+    #[test]
+    fn recipe_change_v2_is_recipe_scoped_and_diagnosis_matched() {
+        let previous = digest("previous-recipe");
+        let diagnosis = PlateauDiagnosisV2 {
+            schema: PLATEAU_DIAGNOSIS_V2_SCHEMA.to_owned(),
+            task: Task::Binary,
+            unchanged_parent_checkpoint_sha256: digest("parent"),
+            current_recipe_identity_sha256: Some(previous.as_str().to_owned()),
+            counted_candidates: ["one", "two", "three"]
+                .into_iter()
+                .map(|candidate| PlateauCountedCandidateV1 {
+                    candidate_checkpoint_sha256: digest(candidate),
+                    recipe_identity_sha256: Some(previous.as_str().to_owned()),
+                })
+                .collect(),
+            recipe_change_directive_present: false,
+            proposal_validity: 1.0,
+            gp_disadvantage: 0.04,
+            calibration_summary: "calibrated".to_owned(),
+            data_slice_summary: "family-disjoint".to_owned(),
+            latency_summary: "worst candidate/accepted latency ratio 1.000000".to_owned(),
+            replay_summary: "3/3 replay-verified".to_owned(),
+            failure_classes: BTreeSet::from([PlateauFailureClassV2::GpDisadvantage]),
+            diagnosed_at_ms: 1,
+        };
+        diagnosis.validate().unwrap();
+        let mut directive = RecipeChangeDirectiveV2 {
+            schema: RECIPE_CHANGE_DIRECTIVE_V2_SCHEMA.to_owned(),
+            task: Task::Binary,
+            unchanged_parent_checkpoint_sha256: diagnosis
+                .unchanged_parent_checkpoint_sha256
+                .clone(),
+            answers_diagnosis_sha256: digest("diagnosis"),
+            previous_recipe_identity_sha256: Some(previous.clone()),
+            next_recipe_identity_sha256: digest("next-recipe"),
+            failure_classes: diagnosis.failure_classes.clone(),
+            changed_knobs: BTreeSet::from([RecipeKnobV2::ExactCausalPairGpComparatorMixture]),
+            created_at_ms: 2,
+        };
+        directive.validate(&diagnosis).unwrap();
+
+        directive.changed_knobs = BTreeSet::from([RecipeKnobV2::HardNegativeValiditySampling]);
+        assert!(directive.validate(&diagnosis).is_err());
+        directive.changed_knobs =
+            BTreeSet::from([RecipeKnobV2::ExactCausalPairGpComparatorMixture]);
+        directive.next_recipe_identity_sha256 = previous;
+        assert!(directive.validate(&diagnosis).is_err());
     }
 
     #[test]

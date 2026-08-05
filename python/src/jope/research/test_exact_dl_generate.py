@@ -23,6 +23,7 @@ DEFAULT_CHECKPOINT = Path(
 )
 DEFAULT_OUTPUT = Path("/home/ubuntu/jope-flywheel/test_exact_gen0/proposals/dl-proposals.jsonl")
 STRIDE_FLOATS = 1536 + 512
+PROPOSAL_SELECTION_POLICY_SCHEMA = "JopeProposalSelectionPolicy.v1"
 # Terminal-head allowlist mirroring the Rust reference task_valid
 # (jope_selfplay_wave.rs): binary requires a classifier-capable head;
 # regression accepts any head except the two classifier-only ones.
@@ -30,12 +31,77 @@ BINARY_HEADS = frozenset(
     ("logit_ridge", "logistic", "tab_boost", "extra_trees", "gam_boost", "portfolio")
 )
 CLASSIFIER_ONLY_HEADS = frozenset(("logit_ridge", "logistic"))
+MULTICLASS_HEADS = frozenset(
+    (
+        "multiclass_ridge",
+        "multiclass_ovr_logistic",
+        "multiclass_diagonal_lda",
+        "multiclass_nearest_centroid",
+    )
+)
+
+
+def default_proposal_selection_policy() -> Path:
+    bundled = Path(__file__).with_name("proposal-selection-policy.v1.json")
+    if bundled.is_file():
+        return bundled
+    return (
+        Path(__file__).resolve().parents[1]
+        / "manifests/selfplay/proposal-selection-policy.v1.json"
+    )
+
+
+def load_proposal_selection_policy(path: Path | None = None) -> tuple[dict, str]:
+    path = path or default_proposal_selection_policy()
+    value = json.loads(path.read_text())
+    if value.get("schema") != PROPOSAL_SELECTION_POLICY_SCHEMA:
+        raise RuntimeError("proposal selection policy schema is not v1")
+    if value.get("proposal_budget") != 8 or value.get("invalid_slot_utility") != -1.0:
+        raise RuntimeError("proposal selection policy budget/invalid-slot drift")
+    routing = value.get("task_head_routing")
+    if routing != {
+        "binary": "binary",
+        "multiclass": "binary",
+        "regression": "regression",
+        "timeseries": "regression",
+    }:
+        raise RuntimeError("proposal selection policy task routing drift")
+    learned = value.get("learned_risk") or {}
+    if learned.get("enabled") is not False or learned.get("calibration_sha256") is not None:
+        raise RuntimeError("learned risk must remain disabled without calibrated evidence")
+    required_coefficients = {
+        "reward_dispersion",
+        "instability",
+        "static_risk",
+        "instability_hard_threshold",
+        "instability_hard_penalty",
+        "complexity",
+        "novelty",
+        "latency",
+        "calibrated_win",
+        "calibrated_delta",
+    }
+    coefficients = value.get("coefficients")
+    if not isinstance(coefficients, dict) or set(coefficients) != required_coefficients:
+        raise RuntimeError("proposal selection policy coefficients are incomplete")
+    if any(
+        not isinstance(coefficient, (int, float))
+        or isinstance(coefficient, bool)
+        or not math.isfinite(float(coefficient))
+        for coefficient in coefficients.values()
+    ):
+        raise RuntimeError("proposal selection policy coefficient is not finite")
+    return value, sha256_file(path)
 
 
 def head_valid_for_task(head, task):
     if task == "binary":
         return head in BINARY_HEADS
-    return head not in CLASSIFIER_ONLY_HEADS
+    if task == "multiclass":
+        return head in MULTICLASS_HEADS
+    if task in {"regression", "timeseries"}:
+        return head not in CLASSIFIER_ONLY_HEADS and head not in MULTICLASS_HEADS
+    return False
 
 
 def rank_scored_proposals(proposals, requested):
@@ -161,6 +227,8 @@ def score_context_candidates(
     target,
     proposals,
     *,
+    task,
+    selection_policy,
     device,
     selector_calibration=None,
 ):
@@ -171,9 +239,14 @@ def score_context_candidates(
     if not proposals:
         return []
     sequences = [row["tokens"] for row in proposals]
+    if task not in {"regression", "binary", "multiclass", "timeseries"}:
+        raise ValueError(f"unknown proposal task {task!r}")
+    if any(row.get("task") != task for row in proposals):
+        raise ValueError("proposal scoring batch mixes tasks")
+    coefficients = selection_policy["coefficients"]
     with torch.no_grad():
         mean, std = model.score_token_sequences(
-            embedding, target, sequences, device=device
+            embedding, target, sequences, device=device, task=task
         )
         token_ids, pad = pad_sequences(sequences, device=device)
         reward_context = model.reward_context(
@@ -185,6 +258,7 @@ def score_context_candidates(
                 token_ids,
                 pad,
                 reward_context.expand(token_ids.shape[0], -1),
+                [task] * token_ids.shape[0],
             )
         ).cpu()
     for index, row in enumerate(proposals):
@@ -192,11 +266,12 @@ def score_context_candidates(
         uncertainty = float(std[index])
         instability = float(p_bad[index])
         risk_reason = candidate_risk_reason_v3("featmath", row["_actions"])
+        reward_lcb = reward_mean - float(coefficients["reward_dispersion"]) * uncertainty
         row.update(
             {
                 "reward_mean": reward_mean,
                 "reward_uncertainty": uncertainty,
-                "reward_lcb": reward_mean - 0.5 * uncertainty,
+                "reward_lcb": reward_lcb,
                 "instability_probability": instability,
                 "candidate_risk_reason": risk_reason,
             }
@@ -220,16 +295,24 @@ def score_context_candidates(
         calibrated_delta = row.get("calibrated_expected_delta")
         calibration_signal = 0.0
         if isinstance(calibrated_win, (int, float)):
-            calibration_signal += 0.35 * (float(calibrated_win) - 0.5)
+            calibration_signal += float(coefficients["calibrated_win"]) * (
+                float(calibrated_win) - 0.5
+            )
         if isinstance(calibrated_delta, (int, float)) and math.isfinite(
             float(calibrated_delta)
         ):
-            calibration_signal += 0.25 * math.tanh(float(calibrated_delta))
+            calibration_signal += float(coefficients["calibrated_delta"]) * math.tanh(
+                float(calibrated_delta)
+            )
         row["selection_score"] = (
             row["reward_lcb"]
-            - instability
-            - (1.0 if risk_reason else 0.0)
-            - (1.0 if instability > 0.5 else 0.0)
+            - float(coefficients["instability"]) * instability
+            - (float(coefficients["static_risk"]) if risk_reason else 0.0)
+            - (
+                float(coefficients["instability_hard_penalty"])
+                if instability > float(coefficients["instability_hard_threshold"])
+                else 0.0
+            )
             + calibration_signal
         )
         row["proposal_score"] = row["selection_score"]
@@ -261,6 +344,7 @@ def main() -> None:
     # proposal sets must stay exactly proposals-per-dataset for their consumers.
     parser.add_argument("--allow-deficient-floor", type=int, default=0)
     parser.add_argument("--selector-calibration", type=Path)
+    parser.add_argument("--selection-policy", type=Path)
     parser.add_argument("--seed", type=int, default=20260726)
     parser.add_argument("--device", default="cuda")
     # Additive train-only red-team mode. Defaults preserve every existing v2
@@ -315,6 +399,13 @@ def main() -> None:
     model = load_any_model(args.checkpoint, map_location="cpu").to(args.device)
     model.eval()
     selector_calibration = load_selector_calibration(args.selector_calibration)
+    selection_policy, selection_policy_sha256 = load_proposal_selection_policy(
+        args.selection_policy
+    )
+    if selector_calibration is not None:
+        raise RuntimeError(
+            "learned selector calibration is disabled by JopeProposalSelectionPolicy.v1"
+        )
     embedding_sd = None
     embedding_sd_hash = None
     if args.embedding_sd is not None:
@@ -531,6 +622,8 @@ def main() -> None:
                     embedding_tensor[batch_index],
                     target_tensor[batch_index],
                     list(unique.values()),
+                    task=entry["task"],
+                    selection_policy=selection_policy,
                     device=args.device,
                     selector_calibration=selector_calibration,
                 )
@@ -689,7 +782,8 @@ def main() -> None:
         "dataset_manifest_sha256": dataset_manifest_hash,
         "seed": args.seed,
         "batch_contexts": args.batch_contexts,
-        "selection_policy": "reward-lcb-stability-risk-head-diversity-v2",
+        "selection_policy": PROPOSAL_SELECTION_POLICY_SCHEMA,
+        "selection_policy_sha256": selection_policy_sha256,
         "native_engine": "featmath",
         "elapsed_ms": (time.perf_counter() - started) * 1000.0,
         "p95_proposal_latency_ms": (

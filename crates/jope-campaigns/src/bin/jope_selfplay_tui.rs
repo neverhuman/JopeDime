@@ -7,6 +7,9 @@ use crossterm::execute;
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
+use jope_dime_regressor::four_task::{
+    task_metric_contract, FourTaskTelemetryRow, JopeFourTaskTelemetryV1, FOUR_TASK_ORDER,
+};
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style};
@@ -126,7 +129,7 @@ const SEEDING_CURVE_ROWS: usize = 3;
 /// (ops status file, expected write cadence seconds) for the DL tab heartbeat panel.
 const DAEMON_HEARTBEATS: [(&str, u64); 5] = [
     ("ops/queue-keeper-v3.json", 450),
-    ("ops/micro-wave-supply-v1.json", 60),
+    ("ops/micro-wave-supply-v2.json", 60),
     // 2026-08-01: was ops/trainer-watchdog-v1.json, which lost its writer when
     // the watchdog unit was switched to jope_task_learning_controller; trainer
     // liveness now lives in the controller status doc (30 s cycle).
@@ -200,6 +203,7 @@ struct RawSources {
     trainer_fallback: Option<Value>,
     flywheel: Option<Value>,
     accepted_by_task: Option<Value>,
+    four_task_telemetry: Option<JopeFourTaskTelemetryV1>,
     evidence_bytes: Option<u64>,
     local_events: Vec<Value>,
     source_states: Vec<SourceState>,
@@ -394,7 +398,9 @@ struct GameplayEvent {
     task: String,
     dataset_hash: String,
     score: Option<f64>,
-    delta_vs_champion: Option<f64>,
+    /// Present only when a fresh typed incumbent authority supplies the exact
+    /// task/context/checkpoint identity. Legacy champion indexes are forbidden.
+    delta_vs_incumbent: Option<f64>,
     origin: Origin,
     node: String,
     wave: String,
@@ -408,8 +414,8 @@ struct GameplayStats {
     dl_top1: u64,
     gp_top1: u64,
     dl_slot_share_pct: f64,
-    dl_beats_champion: u64,
-    gp_beats_champion: u64,
+    dl_beats_incumbent: u64,
+    gp_beats_incumbent: u64,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -568,6 +574,7 @@ struct Dashboard {
     trainers: Vec<TrainerDetail>,
     watchdog: Option<TrainerWatchdogView>,
     accepted_tasks: Vec<AcceptedTaskFront>,
+    four_task_telemetry: Option<JopeFourTaskTelemetryV1>,
     gameplay: Vec<GameplayEvent>,
     gameplay_stats: GameplayStats,
     wave_progress: Option<WaveProgress>,
@@ -874,7 +881,7 @@ fn collect_sources(args: &Args) -> RawSources {
         &mut raw.source_states,
     );
     raw.supply = read_json_source(
-        &args.root.join("ops/micro-wave-supply-v1.json"),
+        &args.root.join("ops/micro-wave-supply-v2.json"),
         "supply",
         true,
         &mut raw.source_states,
@@ -905,6 +912,10 @@ fn collect_sources(args: &Args) -> RawSources {
         false,
         &mut raw.source_states,
     );
+    raw.four_task_telemetry = read_four_task_telemetry(
+        &args.root.join("ops/four-task-telemetry.v1.json"),
+        &mut raw.source_states,
+    );
     raw.evidence_bytes = fs::metadata(args.root.join("indexes/gene-evidence.v2.jsonl"))
         .ok()
         .map(|metadata| metadata.len());
@@ -921,6 +932,43 @@ fn collect_sources(args: &Args) -> RawSources {
     }
     raw.collection_latency_ms = started.elapsed().as_millis();
     raw
+}
+
+fn read_four_task_telemetry(
+    path: &Path,
+    states: &mut Vec<SourceState>,
+) -> Option<JopeFourTaskTelemetryV1> {
+    let result = fs::read(path)
+        .with_context(|| format!("read {}", path.display()))
+        .and_then(|bytes| {
+            let telemetry: JopeFourTaskTelemetryV1 = serde_json::from_slice(&bytes)
+                .with_context(|| format!("parse {}", path.display()))?;
+            telemetry.validate()?;
+            Ok(telemetry)
+        });
+    match result {
+        Ok(telemetry) => {
+            let age_seconds = now_ms().saturating_sub(telemetry.generated_at_ms) / 1_000;
+            states.push(SourceState {
+                name: "four-task-telemetry".to_owned(),
+                healthy: age_seconds <= 45,
+                note: if age_seconds <= 45 {
+                    format!("fresh {age_seconds}s")
+                } else {
+                    format!("stale {age_seconds}s; last-known only")
+                },
+            });
+            Some(telemetry)
+        }
+        Err(error) => {
+            states.push(SourceState {
+                name: "four-task-telemetry".to_owned(),
+                healthy: false,
+                note: format!("{error:#}"),
+            });
+            None
+        }
+    }
 }
 
 fn read_json_source(
@@ -1077,7 +1125,6 @@ struct SlowState {
     gate_progress: IntervalGate,
     gate_metrics: IntervalGate,
     gate_receipts: IntervalGate,
-    gate_indexes: IntervalGate,
     gate_wave: IntervalGate,
     gate_claims: IntervalGate,
     known_receipt_dirs: HashSet<String>,
@@ -1085,10 +1132,6 @@ struct SlowState {
     wave_manifest_paths: HashMap<String, HashMap<String, String>>,
     manifest_semantics: HashMap<String, HashMap<String, (String, String)>>,
     manifest_order: VecDeque<String>,
-    champions: HashMap<(String, String), f64>,
-    champions_mtime: Option<SystemTime>,
-    hof_seen: usize,
-    hof_mtime: Option<SystemTime>,
     ring: VecDeque<GameplayEvent>,
     stats_window: VecDeque<(Origin, bool)>,
     manifests_seen: u64,
@@ -1133,7 +1176,6 @@ impl SlowState {
             gate_progress: IntervalGate::new(Duration::from_secs(1)),
             gate_metrics: IntervalGate::new(Duration::from_secs(5)),
             gate_receipts: IntervalGate::new(Duration::from_secs(2)),
-            gate_indexes: IntervalGate::new(Duration::from_secs(5)),
             gate_wave: IntervalGate::new(Duration::from_secs(10)),
             gate_claims: IntervalGate::new(Duration::from_secs(15)),
             known_receipt_dirs: HashSet::new(),
@@ -1141,10 +1183,6 @@ impl SlowState {
             wave_manifest_paths: HashMap::new(),
             manifest_semantics: HashMap::new(),
             manifest_order: VecDeque::new(),
-            champions: HashMap::new(),
-            champions_mtime: None,
-            hof_seen: 0,
-            hof_mtime: None,
             ring: VecDeque::new(),
             stats_window: VecDeque::new(),
             manifests_seen: 0,
@@ -1216,8 +1254,8 @@ impl SlowState {
                 } else {
                     self.dl_slots as f64 * 100.0 / self.total_slots as f64
                 },
-                dl_beats_champion: dl_beats,
-                gp_beats_champion: gp_beats,
+                dl_beats_incumbent: dl_beats,
+                gp_beats_incumbent: gp_beats,
             },
             wave_progress: self.wave_progress.clone(),
             health_alarms: self.health_alarms.clone(),
@@ -1310,10 +1348,6 @@ fn collect_slow_sources(args: &Args, raw: &RawSources, state: &mut SlowState) {
         if let Some(seeding) = read_seeding_curve(&args.root) {
             state.seeding = seeding;
         }
-    }
-    if Instant::now() < deadline && state.gate_indexes.due() {
-        refresh_champions(&args.root, state);
-        refresh_strict_wins(&args.root, state);
     }
     if Instant::now() < deadline && state.gate_receipts.due() {
         scan_receipts(&args.root, state);
@@ -1944,101 +1978,6 @@ fn read_alarm_file(path: &Path, label: &str, states: &mut Vec<SourceState>) -> V
     }
 }
 
-fn refresh_champions(root: &Path, state: &mut SlowState) {
-    let path = root.join("indexes/champions.json");
-    let Ok(modified) = fs::metadata(&path).and_then(|metadata| metadata.modified()) else {
-        return;
-    };
-    if state.champions_mtime == Some(modified) {
-        return;
-    }
-    let Ok(bytes) = fs::read(&path) else {
-        return;
-    };
-    let Ok(value) = serde_json::from_slice::<Value>(&bytes) else {
-        state.source_states.push(SourceState {
-            name: "champions".to_owned(),
-            healthy: false,
-            note: "invalid JSON".to_owned(),
-        });
-        return;
-    };
-    let entries = value
-        .as_array()
-        .cloned()
-        .or_else(|| value.get("champions").and_then(Value::as_array).cloned())
-        .unwrap_or_default();
-    let mut champions = HashMap::with_capacity(entries.len());
-    for entry in &entries {
-        let Some(task) = string_at(entry, &["task"]) else {
-            continue;
-        };
-        let Some(dataset) = string_at(entry, &["dataset_hash"]) else {
-            continue;
-        };
-        let incumbent = f64_at(entry, &["recorded_incumbent", "score"]);
-        let strict = if bool_at(entry, &["strictly_improves"]).unwrap_or(false) {
-            f64_at(entry, &["best_new_strict", "score"])
-        } else {
-            None
-        };
-        let best = match (incumbent, strict) {
-            (Some(left), Some(right)) => Some(left.max(right)),
-            (Some(left), None) => Some(left),
-            (None, right) => right,
-        };
-        if let Some(best) = best {
-            champions.insert((task.to_owned(), dataset.to_owned()), best);
-        }
-    }
-    state.champions = champions;
-    state.champions_mtime = Some(modified);
-}
-
-fn refresh_strict_wins(root: &Path, state: &mut SlowState) {
-    let path = root.join("indexes/hall-of-fame.json");
-    let Ok(modified) = fs::metadata(&path).and_then(|metadata| metadata.modified()) else {
-        return;
-    };
-    if state.hof_mtime == Some(modified) {
-        return;
-    }
-    let Ok(bytes) = fs::read(&path) else {
-        return;
-    };
-    let Ok(value) = serde_json::from_slice::<Value>(&bytes) else {
-        return;
-    };
-    let wins = value
-        .get("strict_wins")
-        .and_then(Value::as_array)
-        .cloned()
-        .unwrap_or_default();
-    if state.hof_mtime.is_some() && wins.len() > state.hof_seen {
-        for win in wins.iter().skip(state.hof_seen) {
-            let event = GameplayEvent {
-                at_ms: now_ms(),
-                task: string_at(win, &["task"]).unwrap_or("-").to_owned(),
-                dataset_hash: string_at(win, &["dataset_hash"]).unwrap_or("-").to_owned(),
-                score: f64_at(win, &["new_score"]),
-                delta_vs_champion: f64_at(win, &["delta"]),
-                origin: if string_at(win, &["checkpoint_origin"]).is_some() {
-                    Origin::DlProposal
-                } else {
-                    Origin::Unknown
-                },
-                node: "-".to_owned(),
-                wave: "-".to_owned(),
-                valid: true,
-                kind: EventKind::StrictWin,
-            };
-            push_ring(&mut state.ring, event);
-        }
-    }
-    state.hof_seen = wins.len();
-    state.hof_mtime = Some(modified);
-}
-
 fn push_ring(ring: &mut VecDeque<GameplayEvent>, event: GameplayEvent) {
     if ring.len() >= GAMEPLAY_RING {
         ring.pop_front();
@@ -2158,14 +2097,6 @@ fn ingest_receipt_dir(root: &Path, dir: &Path, state: &mut SlowState) {
             if origin == Origin::DlProposal {
                 manifest_dl_slots += 1;
             }
-            let champion = state
-                .champions
-                .get(&(task.clone(), dataset.clone()))
-                .copied();
-            let delta = match (score, champion) {
-                (Some(score), Some(champion)) => Some(score - champion),
-                _ => None,
-            };
             if let Some(score_value) = score {
                 if top
                     .as_ref()
@@ -2190,7 +2121,7 @@ fn ingest_receipt_dir(root: &Path, dir: &Path, state: &mut SlowState) {
                     task,
                     dataset_hash: dataset,
                     score,
-                    delta_vs_champion: delta,
+                    delta_vs_incumbent: None,
                     origin,
                     node: string_at(&row, &["node"]).unwrap_or(&done_node).to_owned(),
                     wave,
@@ -2203,15 +2134,14 @@ fn ingest_receipt_dir(root: &Path, dir: &Path, state: &mut SlowState) {
             state.manifests_seen += 1;
             state.dl_slots += manifest_dl_slots;
             state.total_slots += manifest_total;
-            if let Some((top_score, origin, task, dataset)) = top {
-                let beats = state
-                    .champions
-                    .get(&(task, dataset))
-                    .is_some_and(|champion| top_score > *champion);
+            if let Some((_top_score, origin, _task, _dataset)) = top {
                 if state.stats_window.len() >= GAMEPLAY_STATS_WINDOW {
                     state.stats_window.pop_front();
                 }
-                state.stats_window.push_back((origin, beats));
+                // A typed task/context incumbent authority does not exist yet.
+                // Preserve the feed, but never manufacture a comparison from
+                // the legacy champion index.
+                state.stats_window.push_back((origin, false));
             }
         }
     }
@@ -2450,49 +2380,6 @@ const FUNNEL_HISTORY_CAP: usize = 200;
 /// corpus is visible as "waiting" instead of silently absent.
 const FUNNEL_TASKS: [&str; 4] = ["regression", "binary", "timeseries", "multiclass"];
 
-/// On-disk corpus root for tasks the dataset-state index may not know yet.
-/// "multi_label" is the multiclass corpus's legacy directory name. Regression
-/// and binary are always present in the index, so they never need a census.
-fn funnel_census_root(task: &str) -> Option<&'static str> {
-    match task {
-        "timeseries" => Some("/home/ubuntu/remote_super/quant/timeseries"),
-        "multiclass" => Some("/home/ubuntu/remote_super/quant/multi_label"),
-        _ => None,
-    }
-}
-
-/// Installed-encodings root for census tasks: a dataset dir here means its
-/// sidecars are encoded and awaiting catalog activation — the funnel's
-/// "queued" stage semantics exactly.
-fn funnel_encoded_root(task: &str) -> Option<&'static str> {
-    match task {
-        "timeseries" => Some("/home/ubuntu/jope-flywheel/encodings/timeseries-expanded"),
-        "multiclass" => Some("/home/ubuntu/jope-flywheel/encodings/multiclass-expanded"),
-        _ => None,
-    }
-}
-
-fn count_dataset_dirs(root: &str) -> Option<u64> {
-    let entries = fs::read_dir(root).ok()?;
-    Some(
-        entries
-            .filter_map(std::result::Result::ok)
-            .filter(|entry| entry.file_type().is_ok_and(|kind| kind.is_dir()))
-            .filter(|entry| !entry.file_name().to_string_lossy().starts_with('.'))
-            .count() as u64,
-    )
-}
-
-/// Census for tasks absent from the dataset-state index: (corpus datasets,
-/// installed encodings). Both cheap directory counts (≤ a few hundred entries).
-fn funnel_census_count(task: &str) -> Option<(u64, u64)> {
-    let corpus = count_dataset_dirs(funnel_census_root(task)?)?;
-    let encoded = funnel_encoded_root(task)
-        .and_then(count_dataset_dirs)
-        .unwrap_or(0);
-    Some((corpus, encoded))
-}
-
 fn funnel_tag(task: &str) -> &'static str {
     match task {
         "regression" => "REG",
@@ -2514,20 +2401,15 @@ fn funnel_tag_compact(task: &str) -> &'static str {
 }
 
 /// Ensure every funnel task has a row and impose canonical display order.
-/// Missing tasks get census rows: registry = corpus size, queued = installed
-/// encodings (encoded, awaiting activation), and `locked()` derives the
-/// remainder still waiting for encoding.
-fn complete_funnel_rows(rows: &mut Vec<FunnelRow>, census: impl Fn(&str) -> Option<(u64, u64)>) {
+/// Missing tasks use only the typed catalog/dataset-state telemetry fallback.
+/// Filesystem census roots are deliberately not a scientific authority.
+fn complete_funnel_rows(rows: &mut Vec<FunnelRow>, fallback: &BTreeMap<String, FunnelRow>) {
     for task in FUNNEL_TASKS {
         if !rows.iter().any(|row| row.task == task) {
-            let (registry, encoded) = census(task).unwrap_or((0, 0));
-            rows.push(FunnelRow {
+            rows.push(fallback.get(task).cloned().unwrap_or_else(|| FunnelRow {
                 task: task.to_owned(),
-                registry,
-                encoded,
-                queued: encoded.min(registry),
                 ..Default::default()
-            });
+            }));
         }
     }
     let position = |task: &str| {
@@ -2541,6 +2423,40 @@ fn complete_funnel_rows(rows: &mut Vec<FunnelRow>, census: impl Fn(&str) -> Opti
             .cmp(&position(&b.task))
             .then(a.task.cmp(&b.task))
     });
+}
+
+fn funnel_rows_from_telemetry(root: &Path) -> BTreeMap<String, FunnelRow> {
+    let path = root.join("ops/four-task-telemetry.v1.json");
+    let Ok(bytes) = fs::read(path) else {
+        return BTreeMap::new();
+    };
+    let Ok(telemetry) = serde_json::from_slice::<JopeFourTaskTelemetryV1>(&bytes) else {
+        return BTreeMap::new();
+    };
+    if telemetry.validate().is_err() {
+        return BTreeMap::new();
+    }
+    telemetry
+        .rows
+        .into_iter()
+        .map(|row| {
+            let registry = row.counts.catalog_entries.value.unwrap_or(0);
+            let encoded = row.counts.encoded.value.unwrap_or(0);
+            let active = row.counts.active.value.unwrap_or(0);
+            (
+                row.task.as_str().to_owned(),
+                FunnelRow {
+                    task: row.task.as_str().to_owned(),
+                    registry,
+                    encoded,
+                    active,
+                    in_play: row.counts.observed.value.unwrap_or(0),
+                    queued: encoded.saturating_sub(active).min(registry),
+                    ..FunnelRow::default()
+                },
+            )
+        })
+        .collect()
 }
 
 /// Freshest source: the expansion driver's per-dataset lifecycle index.
@@ -2708,7 +2624,7 @@ fn refresh_unlock_funnel(root: &Path, state: &mut SlowState) {
     if rows.is_empty() {
         return; // keep the previous snapshot rather than blanking the panel
     }
-    complete_funnel_rows(&mut rows, funnel_census_count);
+    complete_funnel_rows(&mut rows, &funnel_rows_from_telemetry(root));
     let now = now_ms();
     apply_funnel_deltas(&mut rows, &mut state.funnel_history, now);
     state.funnel = UnlockFunnel {
@@ -2857,6 +2773,7 @@ fn build_dashboard(raw: &RawSources, slow: &SlowView) -> Dashboard {
         trainers: slow.trainers.clone(),
         watchdog: slow.watchdog.clone(),
         accepted_tasks: parse_accepted_task_fronts(raw.accepted_by_task.as_ref()),
+        four_task_telemetry: raw.four_task_telemetry.clone(),
         gameplay: slow.gameplay.clone(),
         gameplay_stats: slow.gameplay_stats.clone(),
         wave_progress: slow.wave_progress.clone(),
@@ -3458,6 +3375,203 @@ fn footer_line(dashboard: &Dashboard, refresh_ms: u64) -> Paragraph<'static> {
     .style(Style::default().fg(Color::DarkGray))
 }
 
+fn telemetry_count(value: &jope_dime_regressor::four_task::TypedCount) -> String {
+    value
+        .value
+        .map(human_count)
+        .unwrap_or_else(|| "N/A".to_owned())
+}
+
+fn telemetry_median(value: &jope_dime_regressor::four_task::TypedDistribution) -> String {
+    value
+        .value
+        .as_ref()
+        .map(|distribution| format!("{:.4}", distribution.median))
+        .unwrap_or_else(|| "N/A".to_owned())
+}
+
+fn four_task_scoreboard_rows(
+    telemetry: Option<&JopeFourTaskTelemetryV1>,
+    now: u128,
+) -> Vec<Row<'static>> {
+    let stale = telemetry.is_none_or(|value| now.saturating_sub(value.generated_at_ms) > 45_000);
+    FOUR_TASK_ORDER
+        .into_iter()
+        .map(|task| {
+            let Some(row) =
+                telemetry.and_then(|telemetry| telemetry.rows.iter().find(|row| row.task == task))
+            else {
+                return Row::new(vec![
+                    Cell::from(match task.as_str() {
+                        "regression" => "R",
+                        "binary" => "B",
+                        "multiclass" => "MC",
+                        "timeseries" => "TS",
+                        _ => "?",
+                    }),
+                    Cell::from("N/A"),
+                    Cell::from("N/A"),
+                    Cell::from("N/A"),
+                    Cell::from("N/A"),
+                    Cell::from("N/A"),
+                    Cell::from("N/A"),
+                    Cell::from("N/A"),
+                    Cell::from("N/A"),
+                    Cell::from("N/A — telemetry absent"),
+                ])
+                .style(Style::default().fg(Color::DarkGray));
+            };
+            four_task_scoreboard_row(row, now, stale)
+        })
+        .collect()
+}
+
+fn four_task_scoreboard_row(
+    row: &FourTaskTelemetryRow,
+    now: u128,
+    telemetry_stale: bool,
+) -> Row<'static> {
+    let completed = row.counts.completed.value;
+    let failed = row.counts.failed.value;
+    let valid = completed
+        .zip(failed)
+        .map(|(total, failed)| total.saturating_sub(failed));
+    let validity = completed.zip(failed).and_then(|(total, failed)| {
+        (total > 0).then_some((total.saturating_sub(failed)) as f64 / total as f64)
+    });
+    let error_name = task_metric_contract(row.task).native_error;
+    let native_error = row
+        .metrics
+        .native_errors
+        .get(error_name)
+        .map(telemetry_median)
+        .unwrap_or_else(|| "N/A".to_owned());
+    let search_elo = row.adaptive_rating.value.as_ref().map_or_else(
+        || "N/A".to_owned(),
+        |rating| {
+            format!(
+                "{:.0} [{:.0},{:.0}]",
+                rating.rating, rating.interval_95[0], rating.interval_95[1]
+            )
+        },
+    );
+    let anchor_delta = row.diagnostic_rating.value.as_ref().map_or_else(
+        || "N/A".to_owned(),
+        |rating| format!("{:+.0}", rating.delta_from_anchor),
+    );
+    let accepted = row
+        .accepted_checkpoint
+        .value
+        .as_deref()
+        .map_or_else(|| "N/A".to_owned(), |checkpoint| short(checkpoint, 9));
+    let flow = row.latest_observation_at_ms.value.map_or_else(
+        || "N/A — no observations".to_owned(),
+        |latest| {
+            let age = now.saturating_sub(latest as u128) / 1_000;
+            let rate = row.valid_observations_per_minute.value.unwrap_or(0.0);
+            format!("{rate:.0}/m {age}s")
+        },
+    );
+    let cells = vec![
+        Cell::from(match row.task.as_str() {
+            "regression" => "R",
+            "binary" => "B",
+            "multiclass" => "MC",
+            "timeseries" => "TS",
+            _ => "?",
+        }),
+        Cell::from(telemetry_count(&row.counts.source_families)),
+        Cell::from(completed.zip(failed).map_or_else(
+            || "N/A".to_owned(),
+            |(_, failed)| {
+                format!(
+                    "{}/{}",
+                    human_count(valid.unwrap_or(0)),
+                    human_count(failed)
+                )
+            },
+        )),
+        Cell::from(validity.map_or_else(
+            || "N/A".to_owned(),
+            |value| format!("{:.1}%", value * 100.0),
+        )),
+        Cell::from(telemetry_median(&row.metrics.primary_performance)),
+        Cell::from(native_error),
+        Cell::from(search_elo),
+        Cell::from(anchor_delta),
+        Cell::from(accepted),
+        Cell::from(flow),
+    ];
+    Row::new(cells).style(if telemetry_stale {
+        Style::default().fg(Color::DarkGray)
+    } else {
+        Style::default()
+    })
+}
+
+fn render_four_task_scoreboard(frame: &mut Frame<'_>, dashboard: &Dashboard, area: Rect) {
+    let age = dashboard.four_task_telemetry.as_ref().map_or_else(
+        || "NO DATA".to_owned(),
+        |telemetry| {
+            let age = dashboard
+                .collected_at_ms
+                .saturating_sub(telemetry.generated_at_ms)
+                / 1_000;
+            if age > 45 {
+                format!("STALE {age}s — LAST-KNOWN ONLY")
+            } else {
+                format!("fresh {age}s")
+            }
+        },
+    );
+    let header = Row::new([
+        "TASK",
+        "FAM",
+        "OBS/FAIL",
+        "VALID",
+        "PRIMARY",
+        "ERROR",
+        "SEARCH ELO [95%]",
+        "Δ ANCHOR",
+        "ACCEPTED",
+        "FLOW/AGE",
+    ])
+    .style(
+        Style::default()
+            .fg(Color::Cyan)
+            .add_modifier(Modifier::BOLD),
+    );
+    frame.render_widget(
+        Table::new(
+            four_task_scoreboard_rows(
+                dashboard.four_task_telemetry.as_ref(),
+                dashboard.collected_at_ms,
+            ),
+            [
+                Constraint::Length(5),
+                Constraint::Length(7),
+                Constraint::Length(14),
+                Constraint::Length(7),
+                Constraint::Length(10),
+                Constraint::Length(10),
+                Constraint::Length(21),
+                Constraint::Length(10),
+                Constraint::Length(11),
+                Constraint::Min(18),
+            ],
+        )
+        .header(header)
+        .block(
+            Block::default()
+                .title(format!(
+                    " FOUR-TASK • ADAPTIVE/TEST-USED/NOT PROMOTION • ΔANCHOR DIAGNOSTIC/REUSABLE/PROMOTION-INELIGIBLE • {age} "
+                ))
+                .borders(Borders::ALL),
+        ),
+        area,
+    );
+}
+
 fn render_overview(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms: u64, area: Rect) {
     let rows = Layout::default()
         .direction(Direction::Vertical)
@@ -3465,7 +3579,8 @@ fn render_overview(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms: u64
             Constraint::Length(3),
             Constraint::Length(4),
             Constraint::Length(1),
-            Constraint::Min(12),
+            Constraint::Length(7),
+            Constraint::Min(10),
             Constraint::Length(9),
             Constraint::Length(8),
             Constraint::Length(1),
@@ -3474,25 +3589,26 @@ fn render_overview(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms: u64
     render_header(frame, dashboard, rows[0]);
     render_global(frame, dashboard, rows[1]);
     frame.render_widget(compact_funnel_line(dashboard), rows[2]);
+    render_four_task_scoreboard(frame, dashboard, rows[3]);
     let main = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(62), Constraint::Percentage(38)])
-        .split(rows[3]);
+        .split(rows[4]);
     render_nodes(frame, dashboard, main[0]);
     render_queue(frame, dashboard, main[1]);
     let learning = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-        .split(rows[4]);
+        .split(rows[5]);
     render_learning(frame, dashboard, learning[0]);
     render_wave(frame, dashboard, learning[1]);
     let tail = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(45), Constraint::Percentage(55)])
-        .split(rows[5]);
+        .split(rows[6]);
     render_alerts(frame, dashboard, tail[0]);
     render_events(frame, dashboard, tail[1]);
-    frame.render_widget(footer_line(dashboard, refresh_ms), rows[6]);
+    frame.render_widget(footer_line(dashboard, refresh_ms), rows[7]);
 }
 
 fn stale_suffix(now_ms_value: u128, fetched_at_ms: u128) -> String {
@@ -3834,6 +3950,7 @@ fn render_gameplay_tab(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms:
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(3),
+            Constraint::Length(7),
             Constraint::Length(5),
             Constraint::Length(7),
             Constraint::Min(8),
@@ -3841,11 +3958,12 @@ fn render_gameplay_tab(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms:
         ])
         .split(area);
     render_header(frame, dashboard, rows[0]);
+    render_four_task_scoreboard(frame, dashboard, rows[1]);
 
     let top = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(45), Constraint::Percentage(55)])
-        .split(rows[1]);
+        .split(rows[2]);
     if let Some(progress) = &dashboard.wave_progress {
         let ratio = if progress.manifest_count > 0 {
             (progress.receipts_landed as f64 / progress.manifest_count as f64).clamp(0.0, 1.0)
@@ -3895,8 +4013,8 @@ fn render_gameplay_tab(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms:
                 stats.manifests_seen, stats.dl_top1, stats.gp_top1, GAMEPLAY_STATS_WINDOW
             )),
             Line::from(format!(
-                "DL slot share {:.1}% • beats-champion DL {} / GP {}",
-                stats.dl_slot_share_pct, stats.dl_beats_champion, stats.gp_beats_champion
+                "DL slot share {:.1}% • Δ incumbent N/A (typed context authority unavailable)",
+                stats.dl_slot_share_pct
             )),
         ])
         .block(
@@ -3923,7 +4041,7 @@ fn render_gameplay_tab(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms:
                     .map(|value| format!("{value:.5}"))
                     .unwrap_or_else(|| "-".to_owned()),
                 event
-                    .delta_vs_champion
+                    .delta_vs_incumbent
                     .map(|value| format!("{value:+.5}"))
                     .unwrap_or_else(|| "-".to_owned()),
                 label
@@ -3947,7 +4065,7 @@ fn render_gameplay_tab(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms:
                 .title(" Strict wins (live) ")
                 .borders(Borders::ALL),
         ),
-        rows[2],
+        rows[3],
     );
 
     let feed_title = format!(
@@ -3955,7 +4073,14 @@ fn render_gameplay_tab(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms:
         stale_suffix(dashboard.collected_at_ms, dashboard.feed_fetched_at_ms)
     );
     let header = Row::new([
-        "time", "T", "dataset", "score", "Δ champ", "origin", "node", "wave",
+        "time",
+        "T",
+        "dataset",
+        "score",
+        "Δ incumbent",
+        "origin",
+        "node",
+        "wave",
     ])
     .style(
         Style::default()
@@ -3966,16 +4091,16 @@ fn render_gameplay_tab(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms:
         .gameplay
         .iter()
         .filter(|event| event.kind == EventKind::Eval)
-        .take(rows[3].height.saturating_sub(3) as usize)
+        .take(rows[4].height.saturating_sub(3) as usize)
         .map(|event| {
             let (label, color) = origin_label(event.origin);
             let delta_cell = event
-                .delta_vs_champion
+                .delta_vs_incumbent
                 .map(|value| format!("{value:+.5}"))
                 .unwrap_or_else(|| "-".to_owned());
             let style = if !event.valid {
                 Style::default().fg(Color::DarkGray)
-            } else if event.delta_vs_champion.is_some_and(|value| value > 0.0) {
+            } else if event.delta_vs_incumbent.is_some_and(|value| value > 0.0) {
                 Style::default().fg(Color::Green)
             } else {
                 Style::default()
@@ -4025,9 +4150,9 @@ fn render_gameplay_tab(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms:
         )
         .header(header)
         .block(Block::default().title(feed_title).borders(Borders::ALL)),
-        rows[3],
+        rows[4],
     );
-    frame.render_widget(footer_line(dashboard, refresh_ms), rows[4]);
+    frame.render_widget(footer_line(dashboard, refresh_ms), rows[5]);
 }
 
 fn phase_label(trainer: &TrainerDetail) -> String {
@@ -5391,54 +5516,88 @@ fn render_compact(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms: u64,
         })
         .collect::<Vec<_>>()
         .join(" | ");
+    let mut lines = vec![
+        Line::from("JOPE SELF-PLAY • read-only Rust TUI"),
+        Line::from(format!(
+            "CPU {:.1}% (target 80 / guard 95) PSI {}/{}/{}",
+            dashboard.cluster.cpu_busy_pct,
+            dashboard.cluster.psi_cpu10,
+            dashboard.cluster.psi_mem10,
+            dashboard.cluster.psi_io10
+        )),
+        Line::from(nodes),
+        Line::from(format!(
+            "queue fresh {}/{} cap {} age {:.0}s epoch {}",
+            dashboard.queue.useful_depth,
+            dashboard.queue.target,
+            dashboard.queue.hard_cap,
+            dashboard.queue.maximum_age_seconds,
+            short_epoch(&dashboard.queue.epoch)
+        )),
+        Line::from(format!(
+            "checkpoint {} trainer {} [{}] labels {}",
+            short_hash(&dashboard.learning.checkpoint),
+            short(&dashboard.learning.trainer, 30),
+            dashboard.learning.trainer_state,
+            human_count(dashboard.learning.labels)
+        )),
+        Line::from(format!(
+            "wave {} adaptive R{}/B{} sealed {}",
+            dashboard.wave.active_wave,
+            dashboard.wave.adaptive_regression,
+            dashboard.wave.adaptive_binary,
+            yes_no(dashboard.wave.sealed_isolated)
+        )),
+    ];
+    for task in FOUR_TASK_ORDER {
+        let row = dashboard
+            .four_task_telemetry
+            .as_ref()
+            .and_then(|telemetry| telemetry.rows.iter().find(|row| row.task == task));
+        lines.push(Line::from(row.map_or_else(
+            || {
+                format!(
+                    "{:>2} N/A — four-task telemetry unavailable",
+                    funnel_tag(task.as_str())
+                )
+            },
+            |row| {
+                format!(
+                    "{:>2} fam {} primary {} error {} flow {}",
+                    funnel_tag(task.as_str()),
+                    telemetry_count(&row.counts.source_families),
+                    telemetry_median(&row.metrics.primary_performance),
+                    row.metrics
+                        .native_errors
+                        .get(task_metric_contract(task).native_error)
+                        .map(telemetry_median)
+                        .unwrap_or_else(|| "N/A".to_owned()),
+                    row.valid_observations_per_minute
+                        .value
+                        .map(|value| format!("{value:.0}/m"))
+                        .unwrap_or_else(|| "N/A".to_owned()),
+                )
+            },
+        )));
+    }
+    lines.extend([
+        Line::from(format!(
+            "alerts: {}",
+            if dashboard.alerts.is_empty() {
+                "none".to_owned()
+            } else {
+                dashboard.alerts.join(" | ")
+            }
+        )),
+        Line::from(format!(
+            "1 overview • 2 gpu/dl • 4 charts • q/esc quit • {}ms refresh • {}ms collect",
+            refresh_ms, dashboard.collection_latency_ms
+        )),
+    ]);
     frame.render_widget(
-        Paragraph::new(vec![
-            Line::from("JOPE SELF-PLAY • read-only Rust TUI"),
-            Line::from(format!(
-                "CPU {:.1}% (target 80 / guard 95) PSI {}/{}/{}",
-                dashboard.cluster.cpu_busy_pct,
-                dashboard.cluster.psi_cpu10,
-                dashboard.cluster.psi_mem10,
-                dashboard.cluster.psi_io10
-            )),
-            Line::from(nodes),
-            Line::from(format!(
-                "queue fresh {}/{} cap {} age {:.0}s epoch {}",
-                dashboard.queue.useful_depth,
-                dashboard.queue.target,
-                dashboard.queue.hard_cap,
-                dashboard.queue.maximum_age_seconds,
-                short_epoch(&dashboard.queue.epoch)
-            )),
-            Line::from(format!(
-                "checkpoint {} trainer {} [{}] labels {}",
-                short_hash(&dashboard.learning.checkpoint),
-                short(&dashboard.learning.trainer, 30),
-                dashboard.learning.trainer_state,
-                human_count(dashboard.learning.labels)
-            )),
-            Line::from(format!(
-                "wave {} adaptive R{}/B{} sealed {}",
-                dashboard.wave.active_wave,
-                dashboard.wave.adaptive_regression,
-                dashboard.wave.adaptive_binary,
-                yes_no(dashboard.wave.sealed_isolated)
-            )),
-            Line::from(format!(
-                "alerts: {}",
-                if dashboard.alerts.is_empty() {
-                    "none".to_owned()
-                } else {
-                    dashboard.alerts.join(" | ")
-                }
-            )),
-            Line::from(format!(
-                "1 overview • 2 gpu/dl • 4 charts • q/esc quit • {}ms refresh • {}ms collect",
-                refresh_ms, dashboard.collection_latency_ms
-            )),
-        ])
-        .wrap(Wrap { trim: true })
-        .block(Block::default().borders(Borders::ALL)),
+        Paragraph::new(lines)
+            .wrap(Wrap { trim: true })
+            .block(Block::default().borders(Borders::ALL)),
         area,
     );
 }
@@ -5631,6 +5790,37 @@ fn now_ms() -> u128 {
 mod tests {
     use super::*;
 
+    #[test]
+    fn four_task_scoreboard_is_complete_when_telemetry_is_absent() {
+        let rows = four_task_scoreboard_rows(None, 10_000);
+        assert_eq!(rows.len(), 4);
+
+        use ratatui::backend::TestBackend;
+        let dashboard = Dashboard {
+            collected_at_ms: 10_000,
+            ..Dashboard::default()
+        };
+        let backend = TestBackend::new(150, 7);
+        let mut terminal = Terminal::new(backend).unwrap();
+        terminal
+            .draw(|frame| {
+                let area = frame.area();
+                render_four_task_scoreboard(frame, &dashboard, area);
+            })
+            .unwrap();
+        let rendered = terminal
+            .backend()
+            .buffer()
+            .content()
+            .iter()
+            .map(|cell| cell.symbol())
+            .collect::<String>();
+        for task in ["R", "B", "MC", "TS"] {
+            assert!(rendered.contains(task), "missing task {task}: {rendered}");
+        }
+        assert!(rendered.contains("N/A — telemetry absent"), "{rendered}");
+    }
+
     fn fixture() -> RawSources {
         RawSources {
             scq: Some(json!({
@@ -5727,6 +5917,7 @@ mod tests {
                     }
                 }
             })),
+            four_task_telemetry: None,
             evidence_bytes: Some(1024 * 1024),
             local_events: Vec::new(),
             source_states: vec![
@@ -5996,9 +6187,6 @@ mod tests {
         )
         .unwrap();
         let mut state = SlowState::new();
-        state
-            .champions
-            .insert(("regression".to_owned(), "ds1".to_owned()), 0.8);
         scan_receipts(root, &mut state);
         assert_eq!(state.ring.len(), 2);
         let dl_event = state
@@ -6007,9 +6195,7 @@ mod tests {
             .find(|event| event.score == Some(0.9))
             .expect("dl event");
         assert_eq!(dl_event.origin, Origin::DlProposal);
-        assert!(dl_event
-            .delta_vs_champion
-            .is_some_and(|delta| (delta - 0.1).abs() < 1e-9));
+        assert_eq!(dl_event.delta_vs_incumbent, None);
         let gp_event = state
             .ring
             .iter()
@@ -6017,7 +6203,7 @@ mod tests {
             .expect("gp event");
         assert_eq!(gp_event.origin, Origin::GpOffspring);
         assert_eq!(state.stats_window.len(), 1);
-        assert_eq!(state.stats_window[0], (Origin::DlProposal, true));
+        assert_eq!(state.stats_window[0], (Origin::DlProposal, false));
         scan_receipts(root, &mut state);
         assert_eq!(state.ring.len(), 2, "second scan must not re-emit");
     }
@@ -6336,8 +6522,7 @@ mod tests {
         );
     }
 
-    /// Data sources that predate a task must not hide its corpus: missing
-    /// tasks get census rows (registry only, everything locked/waiting) and
+    /// Data sources that predate a task use the typed telemetry fallback and
     /// rows always land in canonical display order.
     #[test]
     fn funnel_rows_are_task_complete_and_canonically_ordered() {
@@ -6353,11 +6538,27 @@ mod tests {
                 ..FunnelRow::default()
             },
         ];
-        complete_funnel_rows(&mut rows, |task| match task {
-            "timeseries" => Some((42, 0)),
-            "multiclass" => Some((272, 269)),
-            _ => None,
-        });
+        let fallback = BTreeMap::from([
+            (
+                "timeseries".to_owned(),
+                FunnelRow {
+                    task: "timeseries".to_owned(),
+                    registry: 42,
+                    ..FunnelRow::default()
+                },
+            ),
+            (
+                "multiclass".to_owned(),
+                FunnelRow {
+                    task: "multiclass".to_owned(),
+                    registry: 272,
+                    encoded: 269,
+                    queued: 269,
+                    ..FunnelRow::default()
+                },
+            ),
+        ]);
+        complete_funnel_rows(&mut rows, &fallback);
         let order: Vec<&str> = rows.iter().map(|row| row.task.as_str()).collect();
         assert_eq!(
             order,
@@ -6367,16 +6568,16 @@ mod tests {
         assert_eq!(
             rows[2].locked(),
             42,
-            "census rows report the corpus as waiting"
+            "telemetry rows report the corpus as waiting"
         );
         assert_eq!(rows[3].registry, 272);
         assert_eq!(rows[3].queued, 269, "installed encodings surface as queued");
         assert_eq!(rows[3].encoded, 269);
         assert_eq!(rows[3].locked(), 3, "remainder still awaiting encoding");
-        assert_eq!(rows[3].active, 0, "census rows are not in the catalog yet");
-        // Existing rows are never duplicated or overwritten by the census.
+        assert_eq!(rows[3].active, 0, "fallback rows are not active yet");
+        // Existing rows are never duplicated or overwritten by the fallback.
         let mut again = rows.clone();
-        complete_funnel_rows(&mut again, |_| Some((999, 999)));
+        complete_funnel_rows(&mut again, &BTreeMap::new());
         assert_eq!(again, rows);
     }
 

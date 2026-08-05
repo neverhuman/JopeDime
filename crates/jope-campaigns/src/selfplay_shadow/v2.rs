@@ -471,7 +471,7 @@ pub fn build_causal_evidence_ledger_v2(
     receipts: Vec<CausalEvaluationReceiptV2>,
     generated_at_ms: u128,
 ) -> Result<CausalEvidenceLedgerV2> {
-    let mut tasks = [Task::Binary, Task::Regression]
+    let mut tasks = Task::ALL
         .into_iter()
         .map(|task| {
             (
@@ -1104,6 +1104,26 @@ mod tests {
         )
         .unwrap();
         assert_eq!(ledger.tasks[&Task::Binary].proposal_validity, 0.125);
+    }
+
+    #[test]
+    fn optional_task_receipts_are_accounted_without_panicking() {
+        let parent = digest('a');
+        let mut direct = receipt(CausalLane::NativeDlDirect, 0);
+        direct.task = Task::Multiclass;
+        direct.pair_id = causal_pair_id(&parent, 191, Task::Multiclass, "context", 0);
+        let mut comparator = receipt(CausalLane::MatchedGpComparator, 0);
+        comparator.task = Task::Multiclass;
+        comparator.pair_id = direct.pair_id.clone();
+        let ledger = build_causal_evidence_ledger_v2(
+            &BTreeMap::from([(Task::Multiclass, parent)]),
+            &BTreeMap::from([(Task::Multiclass, 8)]),
+            vec![direct, comparator],
+            1,
+        )
+        .unwrap();
+        assert_eq!(ledger.tasks[&Task::Multiclass].complete_pairs, 1);
+        assert!(!ledger.tasks[&Task::Multiclass].production_gate_open);
     }
 
     #[test]

@@ -25,6 +25,7 @@ from test_exact_dl_generate import (
     STRIDE_FLOATS,
     decode_batch,
     head_valid_for_task,
+    load_proposal_selection_policy,
     rank_scored_proposals,
     score_context_candidates,
 )
@@ -91,8 +92,13 @@ def decoding_policy(
     calibration_evidence: dict | None,
     calibration_evidence_sha256: str | None,
     selector_calibration_sha256: str | None,
+    proposal_selection_policy: dict,
+    proposal_selection_policy_sha256: str,
 ) -> dict:
-    learned_risk_enabled = calibration_qualifies(calibration_evidence)
+    learned_risk_enabled = (
+        proposal_selection_policy["learned_risk"]["enabled"]
+        and calibration_qualifies(calibration_evidence)
+    )
     return {
         "schema": "ContextDecodingPolicy.v4",
         "reservoirs": list(RESERVOIRS),
@@ -109,6 +115,7 @@ def decoding_policy(
             selector_calibration_sha256 if learned_risk_enabled else None
         ),
         "selection": "reward-stability-risk-head-diversity-v4",
+        "proposal_selection_policy_sha256": proposal_selection_policy_sha256,
         "validity_repair": "dataset-local-deterministic-featmath-grammar-v1",
         "validity_repair_only_for_missing_slots": True,
     }
@@ -399,6 +406,7 @@ def generate_reservoir(
     seed: int,
     reservoir: int,
     device: str,
+    proposal_selection_policy: dict,
     learned_risk_enabled: bool,
     selector_calibration,
 ) -> tuple[list[dict], list[dict]]:
@@ -438,6 +446,8 @@ def generate_reservoir(
         embedding,
         target,
         list(unique.values()),
+        task=task,
+        selection_policy=proposal_selection_policy,
         device=device,
         selector_calibration=(
             selector_calibration if learned_risk_enabled else None
@@ -458,6 +468,8 @@ def generate_reservoir(
             embedding,
             target,
             repairs,
+            task=task,
+            selection_policy=proposal_selection_policy,
             device=device,
             selector_calibration=(
                 selector_calibration if learned_risk_enabled else None
@@ -595,6 +607,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--calibration-evidence", type=Path)
     parser.add_argument("--selector-calibration", type=Path)
+    parser.add_argument("--selection-policy", type=Path)
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
 
@@ -631,8 +644,15 @@ def main() -> None:
         if args.selector_calibration
         else None
     )
+    proposal_selection_policy, proposal_selection_policy_sha256 = (
+        load_proposal_selection_policy(args.selection_policy)
+    )
     policy = decoding_policy(
-        calibration_evidence, calibration_evidence_sha256, selector_sha256
+        calibration_evidence,
+        calibration_evidence_sha256,
+        selector_sha256,
+        proposal_selection_policy,
+        proposal_selection_policy_sha256,
     )
     policy_sha256 = sha256_json(policy)
     learned_risk_enabled = policy["learned_uncertainty_and_risk_enabled"]
@@ -685,6 +705,7 @@ def main() -> None:
                         seed,
                         reservoir,
                         args.device,
+                        proposal_selection_policy,
                         learned_risk_enabled,
                         selector_calibration,
                     )
@@ -740,6 +761,7 @@ def main() -> None:
         "catalog_sha256": pointer["catalog_sha256"],
         "decoding_policy": policy,
         "decoding_policy_sha256": policy_sha256,
+        "proposal_selection_policy_sha256": proposal_selection_policy_sha256,
         "contexts": len(entries),
         "datasets": len(entries),
         "requested_slots": len(entries) * SLOTS,

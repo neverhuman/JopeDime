@@ -27,6 +27,19 @@ const ENCODINGS: &str = "/home/ubuntu/jope-flywheel/encodings";
 const FOUNDATION: &str = "/home/ubuntu/jope-flywheel/encodings/foundation-v1/datasets";
 const FETCH_BINARY: &str = "/home/ubuntu/jope-flywheel/encodings/_fetch/binary-expansion";
 const SCQ: &str = "/home/ubuntu/smart_cluster/target/release/scq";
+/// Root of the foundation-expert tree, which the encoder imports as
+/// `python.elo_finetune.model_io`.
+///
+/// This is on the job PYTHONPATH because `fusion.experts.TabPFNv3Reg::__init__`
+/// hard-codes `sys.path.insert(0, "/home/ubuntu/fable_god")` -- a root that was
+/// MOVED here, so the import raises ModuleNotFoundError. `encode_external`
+/// catches that and logs "cuda expert load failed; falling back to cpu", and
+/// the CPU fallback calls the same loader and fails identically: the encoder is
+/// dead on both devices while the message blames the device. Bundled
+/// `runner.sh` does `export PYTHONPATH="${JOPE_RUNTIME_PYTHONPATH:?...}"`,
+/// REPLACING the variable rather than extending it, so the root has to be
+/// carried in the spec or no encode job on any node can resolve the expert.
+const FOUNDATION_EXPERT_ROOT: &str = "/home/ubuntu/remote_super/fable_god";
 const SIDECARS: [&str; 3] = ["hyperion3train128dim.vs", "train3.vs", "train_target.vs"];
 const TRANCHE_CAP: usize = 512;
 const ENCODE_CHUNK: usize = 256;
@@ -1090,6 +1103,9 @@ fn submit_encode_chunk(conn: &Connection) -> Result<Option<EncodeChunkSubmission
     std::fs::create_dir_all(&spec_directory)?;
     let spec = spec_directory.join(format!("{job_id}.toml"));
     let pythonpath = runtime_bundle_root()?.join("pytorch");
+    // The bundled runtime FIRST so a bundled module always wins, then the
+    // foundation-expert tree. See FOUNDATION_EXPERT_ROOT.
+    let job_pythonpath = format!("{}:{FOUNDATION_EXPERT_ROOT}", pythonpath.to_string_lossy());
     let mut lines = vec![
         "[job]".to_owned(),
         format!("id = \"{job_id}\""),
@@ -1116,17 +1132,14 @@ fn submit_encode_chunk(conn: &Connection) -> Result<Option<EncodeChunkSubmission
         "name = \"xbabe3 RuntimeBundle Python package\"".to_owned(),
         "command = \"/usr/bin/env\"".to_owned(),
         format!(
-            "args = [{}, \"/usr/bin/python3\", \"-c\", \"import jope\"]",
-            serde_json::to_string(&format!("PYTHONPATH={}", pythonpath.to_string_lossy()))?
+            "args = [{}, \"/usr/bin/python3\", \"-c\", \"import jope; import python.elo_finetune.model_io\"]",
+            serde_json::to_string(&format!("PYTHONPATH={job_pythonpath}"))?
         ),
         "timeout_secs = 30".to_owned(),
         String::new(),
         "[env]".to_owned(),
         "OMP_NUM_THREADS = \"4\"".to_owned(),
-        format!(
-            "JOPE_RUNTIME_PYTHONPATH = \"{}\"",
-            pythonpath.to_string_lossy()
-        ),
+        format!("JOPE_RUNTIME_PYTHONPATH = \"{job_pythonpath}\""),
         String::new(),
         "[preempt]".to_owned(),
         "preemptible = true".to_owned(),
@@ -1924,6 +1937,36 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Every encode job must be able to import the foundation expert, and the
+    /// smoke probe must test the SAME path the job runs with.
+    ///
+    /// Without the expert root on PYTHONPATH the encoder dies on both devices
+    /// while logging a device fallback, so a job burns ~854 seconds and reports
+    /// the wrong cause. Bundled runner.sh REPLACES PYTHONPATH with this one
+    /// value, so if it is dropped here nothing downstream can recover it.
+    #[test]
+    fn encode_job_pythonpath_carries_the_foundation_expert_root() {
+        let bundle_pytorch = "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/abc/pytorch";
+        let job_pythonpath = format!("{bundle_pytorch}:{FOUNDATION_EXPERT_ROOT}");
+
+        assert!(
+            job_pythonpath.contains(FOUNDATION_EXPERT_ROOT),
+            "the expert root must survive into the job environment"
+        );
+        // Bundled runtime first: a bundled module must win over the loose tree.
+        assert!(
+            job_pythonpath.starts_with(bundle_pytorch),
+            "the content-addressed bundle must take precedence: {job_pythonpath}"
+        );
+        // Colon-joined, because runner.sh exports the value verbatim.
+        assert_eq!(job_pythonpath.split(':').count(), 2, "{job_pythonpath}");
+        // The root that vanished must never come back as a literal.
+        assert!(
+            !job_pythonpath.contains("/home/ubuntu/fable_god"),
+            "the pre-move root is gone; referencing it is how this broke"
+        );
+    }
 
     #[test]
     fn tranche_ids_increment_per_prefix() {

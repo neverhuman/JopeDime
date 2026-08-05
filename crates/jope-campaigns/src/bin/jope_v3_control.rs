@@ -5,10 +5,14 @@ use clap::{Parser, Subcommand};
 use jope_dime_regressor::selfplay_runtime::{
     atomic_json, now_ms, read_json, sha256_file, DEFAULT_ROOT,
 };
+#[cfg(test)]
+use jope_dime_regressor::selfplay_shadow::PromotionObservationV3;
 use jope_dime_regressor::selfplay_shadow::{
     build_sealed_panel_pool_v2, ensure_evidence_epoch_immutable, evaluate_task_promotion_v3,
-    validate_panel_consumption, CausalEvidenceEpochV1, PromotionObservationV3,
-    SealedPanelCandidateV2, SealedPanelConsumptionV1, SealedPanelPoolV2, Sha256Digest, Task,
+    sealed_zero_prior_use_proof_v2, validate_panel_consumption, CausalEvidenceEpochV1,
+    SealedPanelCandidateSetV2, SealedPanelCandidateV2, SealedPanelConsumptionV1,
+    SealedPanelContextFactsV1, SealedPanelPoolV2, Sha256Digest, Task,
+    TaskPromotionObservationSetV3, SEALED_PANEL_CANDIDATE_SET_V2_SCHEMA,
 };
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -43,6 +47,20 @@ enum Command {
         #[arg(long)]
         output: Option<PathBuf>,
     },
+    ProduceSealedPanelCandidates {
+        #[arg(long)]
+        base_seal: PathBuf,
+        #[arg(long)]
+        catalog: PathBuf,
+        #[arg(long)]
+        facts_directory: PathBuf,
+        #[arg(long)]
+        prior_use_index: PathBuf,
+        #[arg(long)]
+        admission_watermark: u64,
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
     EvaluateTaskPromotion {
         #[arg(long)]
         pool: PathBuf,
@@ -60,17 +78,122 @@ enum Command {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct PromotionObservationSetV3 {
+struct SealedPanelPriorUseIndexV1 {
     schema: String,
-    panel_consumption_sha256: Sha256Digest,
-    observations: Vec<PromotionObservationV3>,
+    watermark: u64,
+    used_context_sha256: Vec<Sha256Digest>,
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct SealedPanelCandidateSetV2 {
-    schema: String,
-    entries: Vec<SealedPanelCandidateV2>,
+fn produce_sealed_panel_candidates(
+    root: &Path,
+    base_seal: &Path,
+    catalog: &Path,
+    facts_directory: &Path,
+    prior_use_index: &Path,
+    admission_watermark: u64,
+    output: Option<PathBuf>,
+) -> Result<Value> {
+    ensure!(
+        base_seal.is_file()
+            && catalog.is_file()
+            && prior_use_index.is_file()
+            && facts_directory.is_dir(),
+        "sealed candidate producer input is absent"
+    );
+    let base_seal_sha256 = Sha256Digest::parse(sha256_file(base_seal)?)?;
+    let catalog_sha256 = Sha256Digest::parse(sha256_file(catalog)?)?;
+    let prior_use_index_sha256 = Sha256Digest::parse(sha256_file(prior_use_index)?)?;
+    let prior: SealedPanelPriorUseIndexV1 = serde_json::from_value(read_json(prior_use_index)?)?;
+    ensure!(
+        prior.schema == "SealedPanelPriorUseIndex.v1" && prior.watermark == admission_watermark,
+        "sealed prior-use index scope drift"
+    );
+    let used = prior
+        .used_context_sha256
+        .into_iter()
+        .collect::<std::collections::BTreeSet<_>>();
+    let mut facts_paths = fs::read_dir(facts_directory)?
+        .filter_map(|entry| entry.ok())
+        .map(|entry| entry.path())
+        .filter(|path| path.extension().and_then(|value| value.to_str()) == Some("json"))
+        .collect::<Vec<_>>();
+    facts_paths.sort();
+    ensure!(
+        !facts_paths.is_empty(),
+        "sealed context-facts directory is empty"
+    );
+    let mut entries = Vec::with_capacity(facts_paths.len());
+    for path in facts_paths {
+        let facts_sha256 = Sha256Digest::parse(sha256_file(&path)?)?;
+        let facts: SealedPanelContextFactsV1 = serde_json::from_value(read_json(&path)?)?;
+        facts.validate()?;
+        ensure!(
+            facts.catalog_sha256 == catalog_sha256,
+            "sealed context facts catalog drift"
+        );
+        ensure!(
+            !used.contains(&facts.context_sha256),
+            "sealed context was already used at the admission watermark"
+        );
+        let proof = sealed_zero_prior_use_proof_v2(
+            &facts.context_sha256,
+            &base_seal_sha256,
+            &catalog_sha256,
+            &prior_use_index_sha256,
+            admission_watermark,
+        );
+        entries.push(SealedPanelCandidateV2 {
+            task: facts.task,
+            context_identity: facts.context_identity,
+            context_sha256: facts.context_sha256,
+            source_family_sha256: facts.source_family_sha256,
+            near_duplicate_cluster_sha256: facts.near_duplicate_cluster_sha256,
+            origin: facts.origin,
+            base_seal_sha256: base_seal_sha256.clone(),
+            catalog_sha256: catalog_sha256.clone(),
+            train_sha256: facts.train_sha256,
+            test_sha256: facts.test_sha256,
+            context_facts_sha256: facts_sha256,
+            prior_use_index_sha256: prior_use_index_sha256.clone(),
+            zero_prior_use_proof_sha256: proof,
+            admission_watermark,
+        });
+    }
+    entries.sort_by(|left, right| left.context_sha256.cmp(&right.context_sha256));
+    let output = output.unwrap_or_else(|| root.join("training/sealed-panel-candidates.v2.json"));
+    let produced_at_ms = if output.is_file() {
+        serde_json::from_value::<SealedPanelCandidateSetV2>(read_json(&output)?)?.produced_at_ms
+    } else {
+        now_ms()
+    };
+    let candidate_set = SealedPanelCandidateSetV2 {
+        schema: SEALED_PANEL_CANDIDATE_SET_V2_SCHEMA.to_owned(),
+        base_seal_sha256,
+        catalog_sha256,
+        prior_use_index_sha256,
+        admission_watermark,
+        entries,
+        produced_at_ms,
+    };
+    candidate_set.validate()?;
+    if output.is_file() {
+        let existing: SealedPanelCandidateSetV2 = serde_json::from_value(read_json(&output)?)?;
+        existing.validate()?;
+        ensure!(
+            existing == candidate_set,
+            "sealed candidate set is immutable"
+        );
+    } else {
+        atomic_json(&output, &serde_json::to_value(&candidate_set)?)?;
+    }
+    Ok(json!({
+        "schema": "SealedPanelCandidateSetPublication.v2",
+        "candidate_set": output,
+        "candidate_set_sha256": sha256_file(&output)?,
+        "entries": candidate_set.entries.len(),
+        "admission_watermark": admission_watermark,
+        "published_at_ms": now_ms(),
+    }))
 }
 
 fn accepted_parent(root: &Path, task: Task) -> Result<String> {
@@ -155,8 +278,9 @@ fn evaluate_task_promotion(
         serde_json::from_value(read_json(consumption_path)?)?;
     consumption.validate()?;
     let consumption_sha256 = Sha256Digest::parse(sha256_file(consumption_path)?)?;
-    let observation_set: PromotionObservationSetV3 =
+    let observation_set: TaskPromotionObservationSetV3 =
         serde_json::from_value(read_json(observations_path)?)?;
+    observation_set.validate()?;
     ensure!(
         observation_set.schema == "TaskPromotionObservationSet.v3"
             && observation_set.panel_consumption_sha256 == consumption_sha256,
@@ -260,10 +384,7 @@ fn main() -> Result<()> {
             let candidates_sha256 = sha256_file(&candidates)?;
             let source: SealedPanelCandidateSetV2 =
                 serde_json::from_value(read_json(&candidates)?)?;
-            ensure!(
-                source.schema == "SealedPanelCandidateSet.v2",
-                "sealed panel candidate set schema is not v2"
-            );
+            source.validate()?;
             let output =
                 output.unwrap_or_else(|| args.root.join("training/sealed-panel-pool.v2.json"));
             let existing = if output.is_file() {
@@ -295,6 +416,22 @@ fn main() -> Result<()> {
                 "built_at_ms": now_ms(),
             })
         }
+        Command::ProduceSealedPanelCandidates {
+            base_seal,
+            catalog,
+            facts_directory,
+            prior_use_index,
+            admission_watermark,
+            output,
+        } => produce_sealed_panel_candidates(
+            &args.root,
+            &base_seal,
+            &catalog,
+            &facts_directory,
+            &prior_use_index,
+            admission_watermark,
+            output,
+        )?,
         Command::EvaluateTaskPromotion {
             pool,
             consumption,
@@ -326,6 +463,90 @@ mod tests {
 
     fn digest(value: &str) -> Sha256Digest {
         Sha256Digest::of_bytes(value.as_bytes())
+    }
+
+    #[test]
+    fn sealed_candidate_producer_binds_authorities_and_rejects_prior_use() {
+        let temporary = tempdir().unwrap();
+        let root = temporary.path();
+        let facts_directory = root.join("facts");
+        fs::create_dir_all(&facts_directory).unwrap();
+        let base_seal = root.join("base-seal.json");
+        let catalog = root.join("catalog.json");
+        atomic_json(&base_seal, &json!({"schema":"BaseSeal.v1"})).unwrap();
+        atomic_json(&catalog, &json!({"schema":"Catalog.v1"})).unwrap();
+        let catalog_sha256 = Sha256Digest::parse(sha256_file(&catalog).unwrap()).unwrap();
+        let context_sha256 = digest("context");
+        atomic_json(
+            &facts_directory.join("context.v1.json"),
+            &json!({
+                "schema": "SealedPanelContextFacts.v1",
+                "task": "binary",
+                "context_identity": "context",
+                "context_sha256": context_sha256,
+                "catalog_sha256": catalog_sha256,
+                "train_sha256": digest("train"),
+                "test_sha256": digest("test"),
+                "source_family_sha256": digest("family"),
+                "near_duplicate_cluster_sha256": digest("cluster"),
+                "origin": "real",
+                "rows": 10,
+                "columns": 2,
+                "missing_fraction": "0",
+                "size_slice": "small",
+                "missingness_slice": "none",
+                "imbalance_slice": "balanced",
+                "target_shape_slice": "balanced",
+                "created_at_ms": 1
+            }),
+        )
+        .unwrap();
+        let prior = root.join("prior.json");
+        atomic_json(
+            &prior,
+            &json!({
+                "schema": "SealedPanelPriorUseIndex.v1",
+                "watermark": 7,
+                "used_context_sha256": []
+            }),
+        )
+        .unwrap();
+        let output = root.join("candidates.json");
+        produce_sealed_panel_candidates(
+            root,
+            &base_seal,
+            &catalog,
+            &facts_directory,
+            &prior,
+            7,
+            Some(output.clone()),
+        )
+        .unwrap();
+        let candidates: SealedPanelCandidateSetV2 =
+            serde_json::from_value(read_json(&output).unwrap()).unwrap();
+        candidates.validate().unwrap();
+        assert_eq!(candidates.entries.len(), 1);
+        assert_eq!(candidates.entries[0].admission_watermark, 7);
+
+        atomic_json(
+            &prior,
+            &json!({
+                "schema": "SealedPanelPriorUseIndex.v1",
+                "watermark": 7,
+                "used_context_sha256": [context_sha256]
+            }),
+        )
+        .unwrap();
+        assert!(produce_sealed_panel_candidates(
+            root,
+            &base_seal,
+            &catalog,
+            &facts_directory,
+            &prior,
+            7,
+            Some(root.join("rejected.json")),
+        )
+        .is_err());
     }
 
     #[test]

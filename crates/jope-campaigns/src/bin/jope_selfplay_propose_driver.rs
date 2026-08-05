@@ -40,9 +40,13 @@ use std::process::Command;
 use jope_dime_regressor::selfplay_runtime::{
     atomic_json, now_ms, read_json, sha256_file, DEFAULT_ROOT, DEFAULT_SCQ,
 };
+use jope_dime_regressor::spec_policy::PROPOSE;
 
 const SCRIPTS: &str = "/home/ubuntu/jope-dime/scripts";
-const PRIME_SRC: &str = "/home/ubuntu/jope-prime/src";
+const PROPOSAL_SELECTION_POLICY: &str =
+    "/home/ubuntu/jope-dime/manifests/selfplay/proposal-selection-policy.v1.json";
+const PRIME_SRC: &str =
+    "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch";
 const CHECKPOINTS: &str = "/home/ubuntu/jope-flywheel/training/round1/checkpoints";
 const STATE_SCHEMA: &str = "JopeProposeDriver.v1";
 const EVENT_SCHEMA: &str = "JopeProposeDriverEvent.v1";
@@ -51,9 +55,6 @@ const PROPOSALS_PER_DATASET: i64 = 8;
 /// Deficiency is no longer fatal or backfilled; retained for CLI compatibility.
 const ALLOW_DEFICIENT_FLOOR: i64 = 0;
 const PROPOSAL_SEED: i64 = 20260726;
-/// GPU nodes this job may land on. xbabe2 is excluded by policy: the priority
-/// trainer lives there and must never contend for the GPU.
-const PROPOSE_HOSTS: &str = "xbabe1|xbabe3";
 const MAX_ATTEMPTS: u64 = 3;
 
 // ---------------------------------------------------------------------------
@@ -478,7 +479,9 @@ fn render_spec(
          \"--catalog\", \"{{input:catalog}}\", \"--data\", \"{{input:data}}\", \
          \"--checkpoint\", \"{{input:checkpoint}}\", \
          \"--output\", \"{{output:proposals}}/dl-proposals.jsonl\", \
-         \"--device\", \"cuda\", \"--seed\", \"{PROPOSAL_SEED}\", \
+         \"--device\", \"cuda\", \
+         \"--selection-policy\", \"{{input:selection_policy}}\", \
+         \"--seed\", \"{PROPOSAL_SEED}\", \
          \"--proposals-per-dataset\", \"{PROPOSALS_PER_DATASET}\", \
          \"--batch-contexts\", \"64\", \
          \"--allow-deficient-floor\", \"{ALLOW_DEFICIENT_FLOOR}\"{task_argument}]"
@@ -493,33 +496,19 @@ fn render_spec(
         "command = \"/usr/bin/python3\"".to_owned(),
         args_line,
         String::new(),
-        "[resource]".to_owned(),
-        "gpus_per_task = 1".to_owned(),
-        "cpus_reserved = 4".to_owned(),
-        "omp_threads = 4".to_owned(),
-        // Working set is the context blob plus a ~104 MB model plus CUDA host
-        // allocations; 12 GB is several times that and fits xbabe1's free RAM.
-        "ram_mb = 12288".to_owned(),
-        "gang_size = 1".to_owned(),
-        "placement = \"single_node\"".to_owned(),
-        String::new(),
-        "[dependencies]".to_owned(),
-        format!(
-            "hostname = [{{ command = \"/usr/bin/grep\", args = [\"-qxE\", \"{PROPOSE_HOSTS}\", \"/etc/hostname\"], timeout_secs = 5 }}]"
-        ),
+        PROPOSE.render_resource_block(),
+        PROPOSE.render_placement_block(),
         String::new(),
         "[env]".to_owned(),
         format!("PYTHONPATH = \"{PRIME_SRC}:{SCRIPTS}\""),
-        "OMP_NUM_THREADS = \"4\"".to_owned(),
+        format!("OMP_NUM_THREADS = \"{}\"", PROPOSE.omp_threads),
         String::new(),
         "[preempt]".to_owned(),
-        "preemptible = true".to_owned(),
+        format!("preemptible = {}", PROPOSE.preemptible),
         "checkpoint = \"none\"".to_owned(),
         "resume = \"rerun\"".to_owned(),
         String::new(),
-        "[limits]".to_owned(),
-        "max_runtime_hours = 24".to_owned(),
-        "max_restarts = 1".to_owned(),
+        PROPOSE.render_limits_block(),
         String::new(),
     ];
     let catalog_name = file_name(&live.catalog);
@@ -528,6 +517,11 @@ fn render_spec(
     let inputs: Vec<(&str, PathBuf, String)> = vec![
         ("script", script, "scripts/test_exact_dl_generate.py".into()),
         ("common", common, "scripts/test_exact_common.py".into()),
+        (
+            "selection_policy",
+            PathBuf::from(PROPOSAL_SELECTION_POLICY),
+            "scripts/proposal-selection-policy.v1.json".into(),
+        ),
         ("pointer", pointer, "catalog/current.json".into()),
         (
             "catalog",
@@ -1374,9 +1368,12 @@ mod tests {
         let body = fs::read_to_string(&first.path).unwrap();
         assert!(body.contains("--allow-deficient-floor"), "{body}");
         assert!(body.contains("gpus_per_task = 1"), "{body}");
-        assert!(body.contains("xbabe1|xbabe3"), "{body}");
+        assert!(body.contains("[[dependencies.smoke]]"), "{body}");
+        assert!(body.contains("runtime-bundles/current/pytorch"), "{body}");
+        assert!(!body.contains("/etc/hostname"), "{body}");
         // Every staged input must carry the hash the scheduler will verify.
-        assert_eq!(body.matches("sha256 = ").count(), 6, "{body}");
+        assert_eq!(body.matches("sha256 = ").count(), 7, "{body}");
+        assert!(body.contains("--selection-policy"), "{body}");
         // The combined lane's argv must not gain a --task argument: this spec is
         // byte-identical to what the driver has always submitted.
         assert!(!body.contains("--task"), "{body}");
