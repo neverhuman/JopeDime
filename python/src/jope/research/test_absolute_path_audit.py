@@ -14,8 +14,10 @@ from scripts import absolute_path_audit as audit_mod
 
 
 def file_row(path: Path) -> dict[str, object]:
-    info = path.lstat()
-    kind = "file" if path.is_file() else "directory"
+    link_info = path.lstat()
+    symlink = stat.S_ISLNK(link_info.st_mode)
+    info = path.stat() if symlink else link_info
+    kind = "file" if stat.S_ISREG(info.st_mode) else "directory"
     row: dict[str, object] = {
         "exists": True,
         "type": kind,
@@ -24,7 +26,10 @@ def file_row(path: Path) -> dict[str, object]:
         "gid": info.st_gid,
         "executable": os.access(path, os.X_OK),
         "writable": os.access(path, os.W_OK),
+        "symlink": symlink,
     }
+    if symlink:
+        row["symlink_target"] = os.readlink(path)
     if kind == "file":
         row["size"] = info.st_size
         row["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -44,6 +49,7 @@ class BundleFixture:
         current_binary = self.bundle.parent / "current/runtime/bin/worker"
         self.unit.write_text(
             "[Service]\n"
+            "ExecStartPre=/bin/sh -c true\n"
             f"ExecStart={current_binary} \\\n  --runtime-path {self.bundle.parent}/current/runtime/bin\n"
         )
         self.unit.chmod(0o644)
@@ -206,6 +212,64 @@ class AbsolutePathAuditTests(unittest.TestCase):
         classification, error = audit_mod.classify(use, exact)
         self.assertIsNone(error)
         self.assertEqual(classification, "content_addressed_immutable_external")
+
+    def test_host_executable_symlink_is_verified_by_resolved_file(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            target = root / "tool"
+            link = root / "tool-link"
+            target.write_bytes(b"tool")
+            target.chmod(0o755)
+            link.symlink_to(target)
+            contract, error = audit_mod._local_contract(
+                link,
+                "host_executable_or_capability",
+                {},
+                root / ("1" * 64),
+                set(),
+            )
+            self.assertIsNone(error)
+            self.assertEqual(contract["type"], "file")
+            self.assertTrue(contract["symlink"])
+            self.assertEqual(contract["symlink_target"], str(target))
+            link.unlink()
+            link.symlink_to(root / "absent")
+            _, error = audit_mod._local_contract(
+                link,
+                "host_executable_or_capability",
+                {},
+                root / ("1" * 64),
+                set(),
+            )
+            self.assertIn("dangling", error or "")
+
+    def test_symlink_target_mismatch_blocks(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            fixture = BundleFixture(Path(raw))
+
+            def mismatch(nodes: list[str], paths: list[str]):
+                results, failures = fixture.probe(nodes, paths)
+                results["node-a"]["/bin/sh"]["symlink_target"] = "different-shell"
+                return results, failures
+
+            report = audit_mod.audit(
+                bundle_root=fixture.bundle,
+                service_manifest_path=fixture.services,
+                specs=[],
+                units=[],
+                nodes=["node-a", "node-b"],
+                node_probe=mismatch,
+            )
+            self.assertFalse(report["healthy"])
+            self.assertIn(
+                "symlink_target_mismatch",
+                {finding["code"] for finding in report["findings"]},
+            )
+
+    def test_cli_rejects_a_node_subset(self) -> None:
+        with self.assertRaisesRegex(ValueError, "exactly xbabe0"):
+            audit_mod.validate_cli_nodes(["xbabe2"])
+        audit_mod.validate_cli_nodes(list(reversed(audit_mod.DEFAULT_NODES)))
 
     def test_unreachable_mandatory_node_blocks(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

@@ -339,11 +339,16 @@ def _local_contract(
 ) -> tuple[dict[str, Any], str | None]:
     contract: dict[str, Any] = {}
     try:
-        info = path.lstat()
+        link_info = path.lstat()
     except OSError as error:
         return contract, f"local audit target is missing: {path}: {error}"
-    if stat.S_ISLNK(info.st_mode):
-        return contract, f"symlinks are forbidden audit targets: {path}"
+    is_symlink = stat.S_ISLNK(link_info.st_mode)
+    if is_symlink and classification != "host_executable_or_capability":
+        return contract, f"immutable/runtime audit target must not be a symlink: {path}"
+    try:
+        info = path.stat() if is_symlink else link_info
+    except OSError as error:
+        return contract, f"dangling symlink audit target: {path}: {error}"
     if stat.S_ISREG(info.st_mode):
         kind = "file"
     elif stat.S_ISDIR(info.st_mode):
@@ -355,7 +360,10 @@ def _local_contract(
         mode=stat.S_IMODE(info.st_mode),
         uid=info.st_uid,
         gid=info.st_gid,
+        symlink=is_symlink,
     )
+    if is_symlink:
+        contract["symlink_target"] = os.readlink(path)
     if kind == "file":
         contract.update(size=info.st_size, sha256=sha256_file(path))
 
@@ -376,31 +384,44 @@ def _local_contract(
     return contract, None
 
 
-REMOTE_PROBE = r'''
-import hashlib, json, os, stat, sys
-answer = {}
-for name in json.load(sys.stdin):
-    try:
-        info = os.lstat(name)
-        if stat.S_ISLNK(info.st_mode): kind = "symlink"
-        elif stat.S_ISREG(info.st_mode): kind = "file"
-        elif stat.S_ISDIR(info.st_mode): kind = "directory"
-        else: kind = "other"
-        row = {"exists": True, "type": kind, "mode": stat.S_IMODE(info.st_mode),
-               "uid": info.st_uid, "gid": info.st_gid,
-               "executable": os.access(name, os.X_OK), "writable": os.access(name, os.W_OK)}
-        if kind == "file":
-            digest = hashlib.sha256()
-            with open(name, "rb") as handle:
-                for block in iter(lambda: handle.read(1048576), b""): digest.update(block)
-            row.update(size=info.st_size, sha256=digest.hexdigest())
-        if kind == "symlink": row["symlink_target"] = os.readlink(name)
-        answer[name] = row
-    except FileNotFoundError:
-        answer[name] = {"exists": False}
-    except Exception as error:
-        answer[name] = {"exists": False, "error": f"{type(error).__name__}: {error}"}
-json.dump(answer, sys.stdout, sort_keys=True)
+SHELL_PROBE = r'''
+while IFS= read -r name; do
+    if [ -L "$name" ] && [ ! -e "$name" ]; then
+        printf '%s\t0\tdangling_symlink\n' "$name"
+        continue
+    fi
+    if [ ! -e "$name" ]; then
+        printf '%s\t0\tmissing\n' "$name"
+        continue
+    fi
+    if [ -f "$name" ]; then kind=file
+    elif [ -d "$name" ]; then kind=directory
+    else kind=other
+    fi
+    metadata=$(stat -Lc '%a %u %g %s' -- "$name") || {
+        printf '%s\t0\tstat_failed\n' "$name"
+        continue
+    }
+    set -- $metadata
+    mode=$1 uid=$2 gid=$3 size=$4
+    if [ -x "$name" ]; then executable=1; else executable=0; fi
+    if [ -w "$name" ]; then writable=1; else writable=0; fi
+    if [ -L "$name" ]; then
+        symlink=1
+        symlink_target=$(readlink -- "$name") || symlink_target=readlink_failed
+    else
+        symlink=0
+        symlink_target=-
+    fi
+    if [ "$kind" = file ]; then
+        sha256=$(sha256sum -- "$name" | cut -d ' ' -f 1) || sha256=hash_failed
+    else
+        sha256=-
+    fi
+    printf '%s\t1\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$name" "$kind" "$mode" "$uid" "$gid" "$executable" "$writable" \
+        "$size" "$sha256" "$symlink" "$symlink_target"
+done
 '''
 
 
@@ -410,12 +431,12 @@ def probe_nodes(
     results: dict[str, dict[str, dict[str, Any]]] = {}
     failures: dict[str, str] = {}
     local_names = {"local", socket.gethostname(), socket.gethostname().split(".", 1)[0]}
-    payload = json.dumps(paths)
+    payload = "".join(f"{path}\n" for path in paths)
     for node in nodes:
         if node in local_names:
-            command = ["/usr/bin/python3", "-c", REMOTE_PROBE]
+            command = ["/bin/sh", "-c", SHELL_PROBE]
         else:
-            remote = f"/usr/bin/python3 -c {shlex.quote(REMOTE_PROBE)}"
+            remote = f"/bin/sh -c {shlex.quote(SHELL_PROBE)}"
             command = [
                 "/usr/bin/ssh",
                 "-o",
@@ -441,11 +462,50 @@ def probe_nodes(
             failures[node] = f"probe exited {done.returncode}: {done.stderr.strip()}"
             continue
         try:
-            decoded = json.loads(done.stdout)
-            if not isinstance(decoded, dict) or any(path not in decoded for path in paths):
+            decoded: dict[str, dict[str, Any]] = {}
+            for line in done.stdout.splitlines():
+                columns = line.split("\t")
+                if len(columns) < 3:
+                    raise ValueError("probe returned a malformed row")
+                name, exists, detail = columns[:3]
+                if exists == "0":
+                    decoded[name] = {"exists": False, "error": detail}
+                    continue
+                if exists != "1" or len(columns) != 12:
+                    raise ValueError("probe returned a malformed present row")
+                (
+                    kind,
+                    mode,
+                    uid,
+                    gid,
+                    executable,
+                    writable,
+                    size,
+                    sha256,
+                    symlink,
+                    symlink_target,
+                ) = columns[2:]
+                row: dict[str, Any] = {
+                    "exists": True,
+                    "type": kind,
+                    "mode": int(mode, 8),
+                    "uid": int(uid),
+                    "gid": int(gid),
+                    "executable": executable == "1",
+                    "writable": writable == "1",
+                    "symlink": symlink == "1",
+                }
+                if symlink == "1":
+                    row["symlink_target"] = symlink_target
+                if kind == "file":
+                    if not SHA256_RE.fullmatch(sha256):
+                        raise ValueError("probe could not hash a regular file")
+                    row.update(size=int(size), sha256=sha256)
+                decoded[name] = row
+            if any(path not in decoded for path in paths):
                 raise ValueError("probe omitted requested paths")
             results[node] = decoded
-        except (json.JSONDecodeError, ValueError) as error:
+        except ValueError as error:
             failures[node] = f"invalid probe response: {error}"
     return results, failures
 
@@ -650,7 +710,7 @@ def audit(
                     )
                 )
                 continue
-            for key in ("type", "mode"):
+            for key in ("type", "mode", "symlink", "symlink_target"):
                 if key in contract and observed.get(key) != contract[key]:
                     findings.append(
                         _finding(
@@ -769,12 +829,18 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def validate_cli_nodes(nodes: list[str]) -> None:
+    if len(nodes) != len(DEFAULT_NODES) or set(nodes) != set(DEFAULT_NODES):
+        raise ValueError(
+            "--node must name exactly xbabe0, xbabe1, xbabe2, xbabe3, and xbabe4"
+        )
+
+
 def main() -> int:
     args = parse_args()
     nodes = args.node or list(DEFAULT_NODES)
-    if not nodes or len(nodes) != len(set(nodes)):
-        raise SystemExit("--node values must be nonempty and unique")
     try:
+        validate_cli_nodes(nodes)
         report = audit(
             bundle_root=args.bundle_root,
             service_manifest_path=args.service_manifest,
