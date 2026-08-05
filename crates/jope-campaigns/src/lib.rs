@@ -4,6 +4,7 @@
 //! boundary. Queueing, provenance, fitness bookkeeping, freshness, datasets,
 //! and deployment policy live in this crate.
 
+pub mod four_task;
 pub mod selfplay_core;
 pub mod selfplay_data;
 pub mod selfplay_expansion;
@@ -18,5 +19,6 @@ pub mod spec_policy;
 /// R2: the library's task-vocabulary authority (TaskKind + corpus-dir and
 /// primary-metric maps); `selfplay_shadow::Task` remains the wire type.
 pub mod task;
+pub mod task_rating;
 pub mod timeseries;
 pub mod training_history;
