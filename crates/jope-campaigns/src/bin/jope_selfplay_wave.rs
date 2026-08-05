@@ -2928,6 +2928,21 @@ fn build(args: BuildArgs) -> Result<Value> {
                 available_proposals.len(),
             );
         }
+        // Fail closed with a message, never panic: a task can be catalogued,
+        // cohort-eligible, and proposal-backed while its robust seed bank does
+        // not exist yet (a brand-new task has zero observations, so it cannot
+        // have repeated cross-dataset winners). Composition needs 32 local-
+        // surrogate + 96 common-winner rows from this bank, so the task cannot
+        // build waves until a bank is bootstrapped -- say so.
+        let robust_rows = robust_by_task.get(&cohort_row.task).with_context(|| {
+            format!(
+                "{}: robust seed bank has no entry for this task; a cold task needs \
+                 a bootstrapped bank (>= {} unique repeated winners) before its \
+                 wave lane can open",
+                cohort_row.task,
+                COMMON_WINNER_SLOTS + LOCAL_ELITE_SLOTS
+            )
+        })?;
         let logical_candidates = compose_dataset_with_dl(
             &plan.wave,
             &cohort_row.task,
@@ -2935,7 +2950,7 @@ fn build(args: BuildArgs) -> Result<Value> {
             &plan.checkpoint_sha256,
             &available_proposals,
             &local,
-            &robust_by_task[&cohort_row.task],
+            robust_rows,
             requested_dl_slots,
         )?;
         let (mut candidates, filtered) = registry_filter_and_fill(
