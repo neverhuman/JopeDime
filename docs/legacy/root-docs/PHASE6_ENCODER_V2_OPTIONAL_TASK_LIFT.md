@@ -40,7 +40,7 @@ The execution plan starts from evidence already established in Phase 5:
 - A complete migration replay returned identical document digests and reverified every legacy source and destination link.
 - Existing V1 cache identity binds the dataset, protocol, and output hashes, but it does not fully bind the encoder executable, model weights, numerical runtime, backend actually executed, or foundation documents.
 - Existing cache paths are keyed by task and dataset ID. That makes CPU/CUDA or weight variants collide even when their bytes legitimately differ.
-- Historical slice/binary logs suggest roughly 570–588 datasets/hour on their old cohorts, while a real uncached CPU encode ran for roughly 30 minutes. These are incompatible observational contexts, not a fleet-wide baseline; the frozen V2 A/B plan is the only speed authority.
+- Historical slice/binary logs suggest roughly 570–588 datasets/hour on their old cohorts, but single-dataset probes are dominated by repeatedly loading the roughly 233 MB expert and cannot estimate batch throughput. Earlier CPU/GPU and per-dataset drain projections based on those probes are retracted. The frozen chunk-level V2 A/B plan is the only speed authority.
 - Multiclass has substantial corpus evidence, but three-node replay must be capability-routed without hostname pins. Time-series evidence remains incomplete and must use rolling-origin, time-causal evaluation.
 - Phase 5 keeps expansion inactive and production pointers frozen.
 
@@ -241,17 +241,19 @@ Create `JopeEncoderBenchmarkPlan.v2` with a stratified, immutable dataset sample
 - CPU reference, current CUDA, and each proposed optimization lane.
 - At least three timed repetitions after one untimed warm-up per lane.
 
+Before sizing or scaling the backlog, submit exactly one production-shaped chunk through the reviewed driver and bundled runtime. It must finish without fallback and publish per-stage timing for process startup, expert load, first dataset, each later dataset, verification, and durable publication. The baseline report separates cold-start cost from marginal per-dataset cost and records datasets per chunk; no estimate derived from a one-dataset process may be multiplied across the backlog.
+
 Publish per-dataset wall time, kernel time, input/output time, peak RAM/VRAM, GPU utilization, output bytes, and cache-validation time. Report median, p90, p95, and throughput; do not report only the fastest example.
 
 Every attempt also records queue wait, expert load, preprocess, encode, verify/publish, cache lookup, rows, features, bytes, actual device, peak RSS/VRAM, output hash, and typed failure class. Aggregate p50/p95/p99 and datasets/hour per reserved GPU slot and CPU-hour, partitioned by task, backend, shape bin, and cold/warm state. Missing or stale measurements fail closed.
 
-Historical logs are context, not the benchmark authority: the slice-500 lane completed 500/500 at p50 6.31 seconds and p95 7.72 seconds (about 588/hour), while binary-42 completed 41/41 at p50 2.36 seconds and p95 25.35 seconds (about 570/hour). Only the frozen controlled V2 A/B cohort may support a release speed claim.
+Historical logs are context, not the benchmark authority: the slice-500 lane completed 500/500 at p50 6.31 seconds and p95 7.72 seconds (about 588/hour), while binary-42 completed 41/41 at p50 2.36 seconds and p95 25.35 seconds (about 570/hour). Single-dataset cold starts and the largest-file probe are explicitly excluded from capacity planning. Only the frozen controlled V2 A/B cohort may support a release speed claim.
 
 ### D2. Optimization order
 
 Optimize in this order so each gain is attributable:
 
-1. Remove avoidable process startup and repeated model/weight loading.
+1. Remove avoidable process startup and repeated model/weight loading; the production batch driver must load the expert once per process and amortize that cost across a bounded chunk.
 2. Keep a bounded resident encoder worker per GPU capability lane.
 3. Batch compatible datasets by shape/memory class while retaining one receipt per dataset.
 4. Pipeline input hashing/copy, GPU execution, and output hashing with bounded queues.
@@ -265,6 +267,7 @@ Optimize in this order so each gain is attributable:
 
 - Use a dedicated, low-weight V2 project and an explicit CPU or GPU namespace; implicit device fallback is forbidden.
 - Start with one long-lived worker per verified GPU capability lane and bounded chunks with a durable per-dataset commit.
+- The first real chunk is a proof job, not a backlog launch. Scale to the next rung only from its measured marginal throughput and resource envelope.
 - Ramp from one to two or more workers only after zero collisions/fallbacks, at least 1.5x measured RAM/VRAM headroom, and green availability thresholds: CPU PSI at most 0.25, memory PSI at most 0.05, I/O PSI at most 0.10, and free memory at least 15%.
 - Pause before impairing recovery useful-work runway, the trainer, proposer, waiting four-CPU GPU companion credits, or evaluator service. Never cancel evaluations or release/cancel the three held multiclass jobs.
 
