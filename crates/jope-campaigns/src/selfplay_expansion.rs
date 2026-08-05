@@ -142,6 +142,24 @@ pub struct CacheManifest {
     pub encoder_protocol: String,
     pub encoder_protocol_sha256: String,
     pub train_only_encoding: bool,
+    /// Which numerical backend actually produced these bytes.
+    ///
+    /// `encoder_protocol_sha256` binds only the protocol string and the
+    /// train-only flag -- NOT the device class, model weights, or library
+    /// versions. Measured on identical input, a CUDA encode (3s) and a CPU
+    /// encode (344s) of the same dataset produce DIFFERENT bytes, and
+    /// `cache_path` is keyed only by task+dataset_id, so the two cannot
+    /// coexist and nothing records which one a given cache holds. The
+    /// encoder also falls back to CPU on GPU-memory pressure, so a retry can
+    /// change corpus identity while every identity label stays the same.
+    ///
+    /// This field does not fix that -- it makes it AUDITABLE, which must come
+    /// first: `None` means "produced before attestation existed, backend
+    /// unknown", and every new encode records what it actually ran on. It is
+    /// `serde(default)` because ~25,000 existing manifests predate it and
+    /// `validate_cache` must keep accepting them unchanged.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub encoder_backend: Option<String>,
     pub files: BTreeMap<String, String>,
     pub created_at_ms: u128,
 }
@@ -559,6 +577,25 @@ fn encoder_protocol_sha256() -> Result<String> {
     canonical_json_sha256(&json!({"protocol": ENCODER_PROTOCOL, "train_only": true}))
 }
 
+/// The numerical backend this process will hand the encoder, recorded into
+/// every new cache manifest as `encoder_backend`.
+///
+/// `CUDA_VISIBLE_DEVICES` set to an empty string is how every caller pins the
+/// encoder to CPU, so an empty-or-unset value means the CUDA build will use a
+/// GPU if one is free. This is an ATTESTATION of intent at manifest-writing
+/// time, not proof of what the kernel did -- the encoder can still fall back
+/// to CPU under GPU-memory pressure. Proving the executed backend requires the
+/// encoder itself to report it; until then this narrows an unknown to a
+/// declared expectation, and a mismatch between the two is exactly the audit
+/// this field makes possible.
+fn observed_encoder_backend() -> Option<String> {
+    match std::env::var("CUDA_VISIBLE_DEVICES") {
+        Ok(value) if value.trim().is_empty() => Some("cpu".to_owned()),
+        Ok(_) => Some("cuda-requested".to_owned()),
+        Err(_) => Some("cuda-requested".to_owned()),
+    }
+}
+
 pub fn validate_cache(path: &Path, expected: Option<&InventoryEntry>) -> Result<CacheManifest> {
     let manifest_path = path.join("cache-manifest.v1.json");
     let manifest: CacheManifest = serde_json::from_value(read_json(&manifest_path)?)?;
@@ -789,6 +826,7 @@ fn repair_legacy_cache(path: &Path, entry: &InventoryEntry) -> Result<CacheManif
         encoder_protocol: ENCODER_PROTOCOL.to_owned(),
         encoder_protocol_sha256: encoder_protocol_sha256()?,
         train_only_encoding: true,
+        encoder_backend: observed_encoder_backend(),
         files,
         created_at_ms: now_ms(),
     };
@@ -961,6 +999,7 @@ pub fn materialize_cache(
             encoder_protocol: ENCODER_PROTOCOL.to_owned(),
             encoder_protocol_sha256: encoder_protocol_sha256()?,
             train_only_encoding: true,
+            encoder_backend: observed_encoder_backend(),
             files,
             created_at_ms: now_ms(),
         };
