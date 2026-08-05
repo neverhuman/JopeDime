@@ -34,6 +34,8 @@ use std::path::{Path, PathBuf};
 const COHORT_SCHEMA: &str = "JopeMicroCohort.v2";
 const WAVE_SCHEMA: &str = "JopeRealtimeSelfplayWave.v1";
 const MANIFEST_SCHEMA: &str = "JopeFlywheelCorpusEvalShard.v1";
+const MANIFEST_SCHEMA_V2: &str = "JopeFlywheelCorpusEvalShard.v2";
+const TS_REDUCTION_V2: &str = "ts-reduction-v2";
 const ROBUST_BANK_SCHEMA: &str = "JopeRobustGpSeedBank.v1";
 const SEALED_SCHEMA: &str = "JopeSealedCohort.v1";
 const SEALED_SCHEMAS: [&str; 2] = ["JopeSealedCohort.v1", "JopeSealedMilestoneCohort.v1"];
@@ -42,6 +44,7 @@ const COHORT_PROPOSAL_SEED: u64 = 20_260_726;
 const MAX_PROPOSAL_RESERVOIR_PER_CONTEXT: usize = 256;
 const REQUIRED_SEALED_PER_TASK: usize = 256;
 const MAX_MUTATION_ATTEMPTS: usize = 100_000;
+const OPTIONAL_TASK_INDEPENDENT_DATASET_FLOOR: usize = 500;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -521,6 +524,20 @@ struct Manifest {
     meta_json: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     meta_sha256: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    horizon: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    seasonality: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    frequency: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    target_is_final_column: Option<bool>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    known_future_covariates: Vec<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    past_only_covariates: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reduction: Option<Value>,
     label_authority: Value,
     candidates: Vec<Candidate>,
 }
@@ -614,6 +631,87 @@ fn validate_catalog_entries(entries: &[CatalogEntry]) -> Result<()> {
         );
     }
     Ok(())
+}
+
+/// Read the time-series contract from the pinned dataset metadata. The
+/// reduction policy is deliberately not read from metadata: it is a builder
+/// decision and is stamped into every v2 shard so a later evaluator cannot
+/// silently execute a different reduction.
+fn timeseries_manifest_contract(
+    train_csv: &Path,
+) -> Result<(PathBuf, String, usize, usize, String, bool, Vec<String>, Vec<String>, Value)> {
+    let meta_path = train_csv
+        .parent()
+        .context("timeseries train_csv has no parent directory")?
+        .join("meta.json");
+    let meta_bytes = fs::read(&meta_path)
+        .with_context(|| format!("read timeseries meta.json {}", meta_path.display()))?;
+    let meta_sha256 = sha256_bytes(&meta_bytes);
+    let meta: Value = serde_json::from_slice(&meta_bytes)
+        .with_context(|| format!("parse timeseries meta.json {}", meta_path.display()))?;
+    ensure!(
+        meta.get("task_type").and_then(Value::as_str) == Some("timeseries"),
+        "timeseries meta.json must declare task_type=timeseries"
+    );
+    let required_usize = |field: &str| -> Result<usize> {
+        meta.get(field)
+            .and_then(Value::as_u64)
+            .map(|value| value as usize)
+            .with_context(|| format!("timeseries meta.json missing numeric {field}"))
+    };
+    let horizon = required_usize("horizon")?;
+    let seasonality = required_usize("seasonality")?;
+    let frequency = meta
+        .get("frequency")
+        .and_then(Value::as_str)
+        .filter(|value| !value.trim().is_empty())
+        .map(str::to_owned)
+        .context("timeseries meta.json missing frequency")?;
+    let target_is_final_column = meta
+        .get("target_is_final_column")
+        .and_then(Value::as_bool)
+        .context("timeseries meta.json missing target_is_final_column")?;
+    ensure!(
+        target_is_final_column,
+        "timeseries meta.json target_is_final_column must be true"
+    );
+    let string_array = |field: &str| -> Result<Vec<String>> {
+        meta.get(field)
+            .and_then(Value::as_array)
+            .with_context(|| format!("timeseries meta.json missing array {field}"))?
+            .iter()
+            .map(|value| {
+                value
+                    .as_str()
+                    .map(str::to_owned)
+                    .with_context(|| format!("timeseries meta.json {field} contains non-string"))
+            })
+            .collect()
+    };
+    // Covariate roles come from `feature_columns`, the ONLY column list any
+    // timeseries dataset actually declares: all 94 encoded datasets (52
+    // synthetic + 42 real) carry `feature_columns` and none carries
+    // `known_dynamic_columns` or `past_dynamic_columns_excluded`. Requiring
+    // those names would fail every ts shard build and wedge supply in a retry
+    // storm, exactly as wave 552 did for multiclass. The evaluator agrees they
+    // are optional: corpus_eval.rs declares both `#[serde(default)]`, with
+    // `known_dynamic_columns` merely an alias for `known_future_covariates`.
+    // Every declared feature is observed for the whole forecast window, so all
+    // of them are known-future and none is past-only; an empty past-only list
+    // is skipped by serde and defaults back to empty at the evaluator.
+    let known_future_covariates = string_array("feature_columns")?;
+    let past_only_covariates: Vec<String> = Vec::new();
+    Ok((
+        meta_path,
+        meta_sha256,
+        horizon,
+        seasonality,
+        frequency,
+        target_is_final_column,
+        known_future_covariates,
+        past_only_covariates,
+        json!({"version": TS_REDUCTION_V2}),
+    ))
 }
 
 fn sealed_rank(catalog_sha256: &str, entry: &CatalogEntry) -> [u8; 32] {
@@ -1334,19 +1432,36 @@ fn plan(args: PlanArgs) -> Result<Value> {
                 .map(|signal| signal.stale_waves),
         })
         .collect::<Vec<_>>();
-    // Optional-task activation is an OPERATOR decision, not an emergent property of
-    // pool size. Interim contract until the activation-receipt design lands: the
-    // JOPE_MICRO_COHORT_OPTIONAL_TASKS environment variable (comma-separated) names
-    // the optional tasks allowed into cohorts; unset or empty means regression and
-    // binary only. Set it only after the ENTIRE downstream path (proposer, sanitizer,
-    // builder, supply, queue) is proven for the wider shape -- wave 546 idled the
-    // cluster because the shape widened while the pinned proposer was still two-task.
-    let active_optional_tasks = std::env::var("JOPE_MICRO_COHORT_OPTIONAL_TASKS")
+    // Optional-task activation is an operator decision bounded by an
+    // independent-dataset floor. The explicit environment opt-in alone must
+    // not turn a 29-dataset multiclass sample into a shared-trunk training
+    // distribution; until the floor is met, the task remains advisory.
+    let requested_optional_tasks = std::env::var("JOPE_MICRO_COHORT_OPTIONAL_TASKS")
         .unwrap_or_default()
         .split(',')
         .map(str::trim)
         .filter(|task| !task.is_empty())
         .map(str::to_owned)
+        .collect::<Vec<_>>();
+    let independent_dataset_counts = jope_dime_regressor::selfplay_expansion::TASKS
+        .iter()
+        .map(|task| {
+            (
+                (*task).to_owned(),
+                eligible.iter().filter(|row| row.task == *task).count(),
+            )
+        })
+        .collect::<BTreeMap<_, _>>();
+    let active_optional_tasks = requested_optional_tasks
+        .iter()
+        .filter(|task| {
+            independent_dataset_counts
+                .get(*task)
+                .copied()
+                .unwrap_or(0)
+                >= OPTIONAL_TASK_INDEPENDENT_DATASET_FLOOR
+        })
+        .cloned()
         .collect::<Vec<_>>();
     let selected =
         select_micro_cohort(&eligible, &observed, &wave, &admission, &active_optional_tasks)?;
@@ -1356,6 +1471,10 @@ fn plan(args: PlanArgs) -> Result<Value> {
             "schema": COHORT_SCHEMA,
             "wave": wave,
             "dry_run": true,
+            "independent_dataset_counts": independent_dataset_counts,
+            "optional_task_floor": OPTIONAL_TASK_INDEPENDENT_DATASET_FLOOR,
+            "requested_optional_tasks": requested_optional_tasks,
+            "active_optional_tasks": active_optional_tasks,
             "admission": admission_report,
             "entries": selected
                 .iter()
@@ -2305,9 +2424,23 @@ fn registry_filter_and_fill(
             let Ok(child) = child else {
                 continue;
             };
-            if !task_valid(&child, task) {
+            // Same frozen-mutator problem the offspring loop has: the evolve
+            // head list predates multiclass/timeseries, so a mutated child
+            // almost always carries an off-task head and 100_000 attempts can
+            // retire without one legal candidate -- which wedged supply for
+            // 3.5h on multiclass:06d990577f1565f5. Legacy tasks keep their
+            // historical accept/reject stream byte-for-byte; the new tasks get
+            // the same deterministic head graft used for offspring.
+            let child = if task_valid(&child, task) {
+                child
+            } else if matches!(task, "multiclass" | "timeseries") {
+                match graft_task_head(&child, &parents[left].0) {
+                    Some(grafted) if task_valid(&grafted, task) => grafted,
+                    _ => continue,
+                }
+            } else {
                 continue;
-            }
+            };
             let child_semantic = semantic(&child);
             if logical_semantics.contains(child_semantic.as_str())
                 || registry.unavailable.contains(&child_semantic)
@@ -3048,38 +3181,86 @@ fn build(args: BuildArgs) -> Result<Value> {
             "model_checkpoint_sha256": plan.checkpoint_sha256,
             "hall_of_fame_sha256": robust_sha256,
         });
-        // Multiclass and timeseries shards must pin the dataset's meta.json --
-        // the evaluator's class-label / reduction authority. It lives beside
-        // the catalogued train.csv in the encoding cache and is itself pinned
-        // by the cache manifest, so hashing it here is stable.
-        let (dataset_meta_json, dataset_meta_sha256) =
-            if matches!(cohort_row.task.as_str(), "multiclass" | "timeseries") {
-                let meta_path = entry
-                    .train_csv
-                    .parent()
-                    .with_context(|| {
-                        format!("{} train_csv has no parent directory", cohort_row.task)
-                    })?
-                    .join("meta.json");
-                let sha = sha256_file(&meta_path).with_context(|| {
-                    format!(
-                        "{}:{} shard meta.json is absent beside the catalogued train.csv",
-                        cohort_row.task, cohort_row.dataset_hash
-                    )
-                })?;
-                (
-                    Some(meta_path.to_string_lossy().into_owned()),
-                    Some(sha),
+        // Multiclass and timeseries shards pin the dataset's meta.json. A
+        // timeseries shard additionally carries the complete v2 contract and
+        // an explicit builder-owned reduction policy; no policy is inferred
+        // from metadata or evaluator defaults.
+        let (
+            dataset_meta_json,
+            dataset_meta_sha256,
+            horizon,
+            seasonality,
+            frequency,
+            target_is_final_column,
+            known_future_covariates,
+            past_only_covariates,
+            reduction,
+        ) = if cohort_row.task == "timeseries" {
+            let contract = timeseries_manifest_contract(&entry.train_csv).with_context(|| {
+                format!(
+                    "{}:{} timeseries shard contract",
+                    cohort_row.task, cohort_row.dataset_hash
                 )
-            } else {
-                (None, None)
-            };
+            })?;
+            (
+                Some(contract.0.to_string_lossy().into_owned()),
+                Some(contract.1),
+                Some(contract.2),
+                Some(contract.3),
+                Some(contract.4),
+                Some(contract.5),
+                contract.6,
+                contract.7,
+                Some(contract.8),
+            )
+        } else if cohort_row.task == "multiclass" {
+            let meta_path = entry
+                .train_csv
+                .parent()
+                .with_context(|| {
+                    format!("{} train_csv has no parent directory", cohort_row.task)
+                })?
+                .join("meta.json");
+            let sha = sha256_file(&meta_path).with_context(|| {
+                format!(
+                    "{}:{} shard meta.json is absent beside the catalogued train.csv",
+                    cohort_row.task, cohort_row.dataset_hash
+                )
+            })?;
+            (
+                Some(meta_path.to_string_lossy().into_owned()),
+                Some(sha),
+                None,
+                None,
+                None,
+                None,
+                Vec::new(),
+                Vec::new(),
+                None,
+            )
+        } else {
+            (
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                Vec::new(),
+                Vec::new(),
+                None,
+            )
+        };
         for (shard, chunk) in candidates
             .chunks(args.max_candidates_per_manifest)
             .enumerate()
         {
             let manifest = Manifest {
-                schema: MANIFEST_SCHEMA,
+                schema: if cohort_row.task == "timeseries" {
+                    MANIFEST_SCHEMA_V2
+                } else {
+                    MANIFEST_SCHEMA
+                },
                 evaluation_lane: "adaptive_selfplay",
                 strict_wave: plan.wave.clone(),
                 generation: plan.wave.clone(),
@@ -3097,6 +3278,13 @@ fn build(args: BuildArgs) -> Result<Value> {
                 test_sha256: entry.test_sha256.clone(),
                 meta_json: dataset_meta_json.clone(),
                 meta_sha256: dataset_meta_sha256.clone(),
+                horizon,
+                seasonality,
+                frequency: frequency.clone(),
+                target_is_final_column,
+                known_future_covariates: known_future_covariates.clone(),
+                past_only_covariates: past_only_covariates.clone(),
+                reduction: reduction.clone(),
                 label_authority: authority.clone(),
                 candidates: chunk.to_vec(),
             };
@@ -3224,6 +3412,52 @@ mod tests {
         HARD_UNCERTAIN_SLOTS, LEAST_OBSERVED_SLOTS, MICRO_WAVE_SIZE, STABLE_ANCHOR_SLOTS,
     };
     use tempfile::tempdir;
+
+    #[test]
+    fn timeseries_builder_pins_complete_contract_and_builder_policy() {
+        let directory = tempdir().unwrap();
+        let dataset = directory.path().join("dataset");
+        fs::create_dir_all(&dataset).unwrap();
+        fs::write(dataset.join("train.csv"), "1.0,2.0\n").unwrap();
+        fs::write(
+            dataset.join("meta.json"),
+            serde_json::to_vec(&json!({
+                "task_type": "timeseries",
+                "horizon": 3,
+                "seasonality": 7,
+                "frequency": "D",
+                "target_is_final_column": true,
+                "feature_columns": ["promo"],
+                "reduction": {"version": "ts-reduction-v1"}
+            }))
+            .unwrap(),
+        )
+        .unwrap();
+
+        let contract = timeseries_manifest_contract(&dataset.join("train.csv")).unwrap();
+        assert_eq!(contract.2, 3);
+        assert_eq!(contract.3, 7);
+        assert_eq!(contract.4, "D");
+        assert_eq!(contract.5, true);
+        assert_eq!(contract.6, vec!["promo"]);
+        assert!(contract.7.is_empty());
+        assert_eq!(contract.8, json!({"version": TS_REDUCTION_V2}));
+        assert_eq!(contract.1, sha256_file(&contract.0).unwrap());
+    }
+
+    #[test]
+    fn timeseries_builder_rejects_incomplete_meta_contract() {
+        let directory = tempdir().unwrap();
+        let dataset = directory.path().join("dataset");
+        fs::create_dir_all(&dataset).unwrap();
+        fs::write(dataset.join("train.csv"), "1.0,2.0\n").unwrap();
+        fs::write(
+            dataset.join("meta.json"),
+            br#"{"task_type":"timeseries","horizon":3,"seasonality":7,"frequency":"D","target_is_final_column":true}"#,
+        )
+        .unwrap();
+        assert!(timeseries_manifest_contract(&dataset.join("train.csv")).is_err());
+    }
 
     /// Build a well-formed cohort over `tasks`, 16/32/16 per task.
     fn cohort_over(tasks: &[&str]) -> CohortPlan {
@@ -3973,6 +4207,43 @@ mod tests {
         assert!(grafted.contains("winsor_clip"), "transform stack preserved");
         // Deterministic: same inputs, same output.
         assert_eq!(graft_task_head(child, parent).unwrap(), grafted);
+    }
+
+    /// The ts contract must be satisfiable by the metadata that actually
+    /// exists. Every encoded timeseries dataset declares `feature_columns` and
+    /// NONE declares `known_dynamic_columns` / `past_dynamic_columns_excluded`,
+    /// so requiring those names failed all 94 datasets and would have wedged
+    /// supply the way wave 552 did for multiclass.
+    #[test]
+    fn timeseries_contract_reads_the_metadata_datasets_actually_have() {
+        let directory = tempfile::tempdir().expect("tempdir");
+        let train_csv = directory.path().join("train.csv");
+        fs::write(&train_csv, b"1,2\n").expect("write train");
+        // Exactly the key set of a real encodings/timeseries-expanded meta.json.
+        fs::write(
+            directory.path().join("meta.json"),
+            serde_json::to_vec(&json!({
+                "task_type": "timeseries",
+                "horizon": 28,
+                "seasonality": 7,
+                "frequency": "D",
+                "target_is_final_column": true,
+                "reduction_version": "ts-reduction-v2",
+                "feature_columns": ["lag_1", "lag_7"],
+            }))
+            .expect("meta bytes"),
+        )
+        .expect("write meta");
+
+        let contract = timeseries_manifest_contract(&train_csv).expect("contract resolves");
+        assert_eq!(contract.2, 28, "horizon");
+        assert_eq!(contract.3, 7, "seasonality");
+        assert_eq!(contract.4, "D", "frequency");
+        assert!(contract.5, "target_is_final_column");
+        assert_eq!(contract.6, vec!["lag_1", "lag_7"], "known-future covariates");
+        assert!(contract.7.is_empty(), "no past-only covariates are declared");
+        // The reduction is the BUILDER's policy, never read from metadata.
+        assert_eq!(contract.8, json!({"version": TS_REDUCTION_V2}));
     }
 
     #[test]
