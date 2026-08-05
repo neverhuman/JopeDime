@@ -29,6 +29,9 @@ use std::time::Duration;
 
 const PROJECT: &str = "jope-selfplay-eval";
 const MANIFEST_SCHEMA: &str = "JopeFlywheelCorpusEvalShard.v1";
+/// Timeseries shards only: they must pin a reduction version, which a v1
+/// shard is forbidden to carry (corpus_eval.rs `resolve_reduction`).
+const MANIFEST_SCHEMA_V2: &str = "JopeFlywheelCorpusEvalShard.v2";
 const MICRO_WAVE_KIND: &str = "deterministic_128_dataset_micro_wave";
 const VALIDATION_HEADROOM: usize = 64;
 const MAX_ADMISSION_WAVES: usize = 8;
@@ -1986,7 +1989,14 @@ fn validate_manifest(
     wave: &str,
 ) -> Result<ValidManifest> {
     let value = read_json(path)?;
-    if value.get("schema").and_then(Value::as_str) != Some(MANIFEST_SCHEMA) {
+    // Timeseries shards are published as ...Shard.v2 because the evaluator
+    // demands a reduction pin that a v1 shard is forbidden to carry; every
+    // other task stays v1. Admitting only v1 would refuse every timeseries
+    // manifest at the queue even though the builder produced it correctly.
+    if !matches!(
+        value.get("schema").and_then(Value::as_str),
+        Some(MANIFEST_SCHEMA) | Some(MANIFEST_SCHEMA_V2)
+    ) {
         bail!("manifest schema is outside self-play");
     }
     if value
