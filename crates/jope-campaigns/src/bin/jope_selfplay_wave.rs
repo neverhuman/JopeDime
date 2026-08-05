@@ -512,6 +512,15 @@ struct Manifest {
     test_csv: PathBuf,
     train_sha256: String,
     test_sha256: String,
+    /// Pinned dataset meta.json, REQUIRED by the evaluator for multiclass
+    /// (class-label decode authority) and timeseries (reduction contract).
+    /// Skipped when absent so regression/binary manifests stay byte-identical
+    /// to every wave ever built. Wave 552's 704 multiclass manifests were all
+    /// rejected with "must pin meta_json" because these fields did not exist.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    meta_json: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    meta_sha256: Option<String>,
     label_authority: Value,
     candidates: Vec<Candidate>,
 }
@@ -3039,6 +3048,32 @@ fn build(args: BuildArgs) -> Result<Value> {
             "model_checkpoint_sha256": plan.checkpoint_sha256,
             "hall_of_fame_sha256": robust_sha256,
         });
+        // Multiclass and timeseries shards must pin the dataset's meta.json --
+        // the evaluator's class-label / reduction authority. It lives beside
+        // the catalogued train.csv in the encoding cache and is itself pinned
+        // by the cache manifest, so hashing it here is stable.
+        let (dataset_meta_json, dataset_meta_sha256) =
+            if matches!(cohort_row.task.as_str(), "multiclass" | "timeseries") {
+                let meta_path = entry
+                    .train_csv
+                    .parent()
+                    .with_context(|| {
+                        format!("{} train_csv has no parent directory", cohort_row.task)
+                    })?
+                    .join("meta.json");
+                let sha = sha256_file(&meta_path).with_context(|| {
+                    format!(
+                        "{}:{} shard meta.json is absent beside the catalogued train.csv",
+                        cohort_row.task, cohort_row.dataset_hash
+                    )
+                })?;
+                (
+                    Some(meta_path.to_string_lossy().into_owned()),
+                    Some(sha),
+                )
+            } else {
+                (None, None)
+            };
         for (shard, chunk) in candidates
             .chunks(args.max_candidates_per_manifest)
             .enumerate()
@@ -3060,6 +3095,8 @@ fn build(args: BuildArgs) -> Result<Value> {
                 test_csv: entry.test_csv.clone(),
                 train_sha256: entry.train_sha256.clone(),
                 test_sha256: entry.test_sha256.clone(),
+                meta_json: dataset_meta_json.clone(),
+                meta_sha256: dataset_meta_sha256.clone(),
                 label_authority: authority.clone(),
                 candidates: chunk.to_vec(),
             };
@@ -3113,7 +3150,15 @@ fn build(args: BuildArgs) -> Result<Value> {
         "robust_seed_bank_sha256": robust_sha256,
         "generated_at_ms": generated_at_ms,
         "datasets": cohort_datasets,
-        "task_datasets": {"regression": 64, "binary": 64},
+        // One 64-lane per DECLARED task. The queue's valid_micro_waves proves
+        // datasets == 64 * task_datasets.len() with every entry exactly 64, so
+        // a hard-coded two-task map here made every wider wave invisible to
+        // the queue -- built, published, and silently never admitted.
+        "task_datasets": plan
+            .tasks
+            .iter()
+            .map(|task| (task.clone(), Value::from(MICRO_TASK_SIZE)))
+            .collect::<serde_json::Map<_, _>>(),
         "cohort_sha256": sha256_file(&cohort_copy)?,
         "candidates_per_dataset": WAVE_SIZE,
         "slot_composition": {
