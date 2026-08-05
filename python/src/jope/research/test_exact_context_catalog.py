@@ -31,7 +31,8 @@ BINARY_ENCODING_ROOTS = (
     Path("/home/ubuntu/jope-flywheel/encodings/binary42"),
 )
 STANDARDIZATION = Path(
-    "/home/ubuntu/jope/data/processed/active_v3_dual_20260706/standardization.json"
+    "/home/ubuntu/jope-flywheel/encodings/foundation-v1/standardization/sha256/"
+    "daac224cf7c6d13a1bf74fc3bb7defd36f33bc3f30db35d3e881c16ede976d1f.json"
 )
 OUTPUT = Path("/home/ubuntu/jope-flywheel/test_exact_gen0/catalog")
 DATASET_DIM = 1536

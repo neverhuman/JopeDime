@@ -7,7 +7,8 @@ Subcommands:
   binary and worker scripts into the campaign root, write per-shard combined
   feature manifests, and emit SCQ TOML job specs into
   ``<campaign-root>/scq-specs/``:
-  - feature shards: 0 GPUs, 8 CPUs, 2 h, non-preemptible, node-pinned;
+  - feature shards: 0 GPUs, 8 CPUs, 2 h, non-preemptible, and admitted only
+    where the staged campaign binary is available;
   - DL shards (per shard x backend x arm): 4 CPUs, 8 h;
     ``tabpfn*`` backends get ``gpus_per_task = 1``.
   ``--submit`` exists but DEFAULTS TO DRY-RUN: without it the script only
@@ -133,9 +134,8 @@ def render_spec(
     max_runtime_hours: int,
     max_restarts: int,
     preemptible: bool,
-    node: str | None,
+    capability_path: Path,
 ) -> str:
-    node_line = f"node = {json.dumps(node)}\n" if node else ""
     return (
         "[job]\n"
         f"id = {json.dumps(job_id)}\n"
@@ -150,9 +150,14 @@ def render_spec(
         f"cpus_reserved = {cpus_reserved}\n"
         "omp_threads = 1\n"
         f"ram_gb = {ram_gb}\n"
-        f"{node_line}"
         "gang_size = 1\n"
         'placement = "single_node"\n'
+        "\n"
+        "[[dependencies.smoke]]\n"
+        'name = "campaign runtime capability available"\n'
+        'command = "/usr/bin/test"\n'
+        f"args = [\"-e\", {json.dumps(str(capability_path))}]\n"
+        "timeout_secs = 5\n"
         "\n"
         "[preempt]\n"
         f"preemptible = {str(preemptible).lower()}\n"
@@ -257,7 +262,7 @@ def plan(arguments: argparse.Namespace) -> None:
                 max_runtime_hours=2,
                 max_restarts=0,
                 preemptible=False,
-                node=arguments.feature_node,
+                capability_path=bundled_binary,
             )
             spec_path = spec_dir / f"{job_id}.toml"
             atomic_write_bytes(spec_path, spec.encode())
@@ -301,7 +306,7 @@ def plan(arguments: argparse.Namespace) -> None:
                     max_runtime_hours=8,
                     max_restarts=1 if backend.startswith("tabpfn") else 0,
                     preemptible=backend.startswith("tabpfn"),
-                    node=arguments.dl_node,
+                    capability_path=VENV_PYTHON,
                 )
                 spec_path = spec_dir / f"{job_id}.toml"
                 atomic_write_bytes(spec_path, spec.encode())
@@ -319,8 +324,8 @@ def plan(arguments: argparse.Namespace) -> None:
         "arms": list(ARMS),
         "release_binary_sha256": binary_sha256,
         "staged_code_sha256": staged_code,
-        "feature_node": arguments.feature_node,
-        "dl_node": arguments.dl_node,
+        "feature_capability": str(bundled_binary),
+        "dl_capability": str(VENV_PYTHON),
         "worker_root": str(worker_root),
         "specs": [str(path) for path in specs],
         "submitted": [],
@@ -761,8 +766,6 @@ def main() -> None:
     plan_parser.add_argument("--datasets", default="golden42")
     plan_parser.add_argument("--backends", default=",".join(DEFAULT_BACKENDS))
     plan_parser.add_argument("--binary", type=Path, default=RELEASE_BINARY)
-    plan_parser.add_argument("--feature-node", default="xbabe2", help="node pin for feature shards")
-    plan_parser.add_argument("--dl-node", default=None, help="optional node pin for DL shards")
     plan_parser.add_argument("--dl-only", action="store_true")
     plan_parser.add_argument("--worker-root", type=Path)
     plan_parser.add_argument("--spec-dir", type=Path)

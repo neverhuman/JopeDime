@@ -49,6 +49,21 @@ const ACTIVE_DATASETS: usize = 5;
 // latency, controls the number that actually run at once.
 const QUEUE_BUFFER_DATASETS: usize = 64;
 const SPEC_REVISION: usize = 2;
+const REPLAY_SPEC_REVISION: usize = 3;
+const REPLAY_ROLE_CAPABILITIES: [(&str, &str); 3] = [
+    (
+        "xbabe1",
+        "/etc/jope/capabilities/multiclass-replay-slot-a.v1",
+    ),
+    (
+        "xbabe2",
+        "/etc/jope/capabilities/multiclass-replay-slot-b.v1",
+    ),
+    (
+        "xbabe3",
+        "/etc/jope/capabilities/multiclass-replay-slot-c.v1",
+    ),
+];
 const MIN_GENERATIONS: usize = 0;
 const MAX_GENERATIONS: usize = 20;
 const MAX_SCHEDULER_PREEMPTIONS: usize = 64;
@@ -1765,10 +1780,17 @@ fn replay_job_id(
     manifest_sha256: &str,
 ) -> String {
     format!(
-        "jope-mc272-{dataset_hash}-replay-{}-{node}-a{attempt}-m{}-r{SPEC_REVISION}",
+        "jope-mc272-{dataset_hash}-replay-{}-{node}-a{attempt}-m{}-r{REPLAY_SPEC_REVISION}",
         &semantic_sha256[..12],
         &manifest_sha256[..12]
     )
+}
+
+fn replay_role_capability(node: &str) -> Result<&'static str> {
+    REPLAY_ROLE_CAPABILITIES
+        .iter()
+        .find_map(|(candidate, marker)| (*candidate == node).then_some(*marker))
+        .with_context(|| format!("no multiclass replay capability role is assigned to {node}"))
 }
 
 fn render_replay_spec(
@@ -1779,7 +1801,7 @@ fn render_replay_spec(
     manifest: &Path,
     manifest_sha256: &str,
     evaluator_sha256: &str,
-) -> String {
+) -> Result<String> {
     let id = replay_job_id(
         &dataset.dataset_hash,
         &champion.semantic_sha256,
@@ -1806,14 +1828,14 @@ fn render_replay_spec(
     .map(|value| serde_json::to_string(value).expect("TOML JSON quoting"))
     .collect::<Vec<_>>()
     .join(", ");
-    format!(
-        "[job]\nid = {id:?}\nproject = {PROJECT:?}\ncommand = \"/usr/bin/env\"\nargs = [{evaluator:?}, {args}]\nworkdir = \"/home/ubuntu\"\ntier = \"normal\"\n\n[resource]\ngpus_per_task = 0\ncpus_reserved = 1\nomp_threads = 1\nram_gb = {ram_gb}\ngang_size = 1\nplacement = \"single_node\"\n\n[[dependencies.smoke]]\nname = {probe:?}\ncommand = \"/usr/bin/grep\"\nargs = [\"-qx\", {node:?}, \"/etc/hostname\"]\ntimeout_secs = 5\n\n[env]\nOMP_NUM_THREADS = \"1\"\nMKL_NUM_THREADS = \"1\"\nOPENBLAS_NUM_THREADS = \"1\"\n\n[preempt]\npreemptible = false\ncheckpoint = \"none\"\nresume = \"rerun\"\n\n[limits]\nmax_runtime_hours = 1\nmax_restarts = 0\n\n[[input]]\nname = \"evaluator\"\nsource = {evaluator_source:?}\ntarget = \"corpus_eval\"\nsha256 = {evaluator_sha256:?}\n\n[[input]]\nname = \"manifest\"\nsource = {manifest:?}\ntarget = \"manifest.json\"\nsha256 = {manifest_sha256:?}\n\n[[output]]\nname = \"candidate-receipts\"\nsource = \"candidate-receipts\"\ndirectory = true\n",
+    let role_capability = replay_role_capability(node)?;
+    Ok(format!(
+        "[job]\nid = {id:?}\nproject = {PROJECT:?}\ncommand = \"/usr/bin/env\"\nargs = [{evaluator:?}, {args}]\nworkdir = \"/home/ubuntu\"\ntier = \"normal\"\n\n[resource]\ngpus_per_task = 0\ncpus_reserved = 1\nomp_threads = 1\nram_gb = {ram_gb}\ngang_size = 1\nplacement = \"single_node\"\n\n[[dependencies.smoke]]\nname = \"multiclass replay role capability available\"\ncommand = \"/usr/bin/test\"\nargs = [\"-f\", {role_capability:?}]\ntimeout_secs = 5\n\n[[dependencies.smoke]]\nname = \"multiclass evaluator compiler available\"\ncommand = \"/usr/bin/test\"\nargs = [\"-x\", \"/usr/bin/g++\"]\ntimeout_secs = 5\n\n[env]\nOMP_NUM_THREADS = \"1\"\nMKL_NUM_THREADS = \"1\"\nOPENBLAS_NUM_THREADS = \"1\"\n\n[preempt]\npreemptible = false\ncheckpoint = \"none\"\nresume = \"rerun\"\n\n[limits]\nmax_runtime_hours = 1\nmax_restarts = 0\n\n[[input]]\nname = \"evaluator\"\nsource = {evaluator_source:?}\ntarget = \"corpus_eval\"\nsha256 = {evaluator_sha256:?}\n\n[[input]]\nname = \"manifest\"\nsource = {manifest:?}\ntarget = \"manifest.json\"\nsha256 = {manifest_sha256:?}\n\n[[output]]\nname = \"candidate-receipts\"\nsource = \"candidate-receipts\"\ndirectory = true\n",
         ram_gb = if attempt >= 2 { 64 } else { 24 },
-        probe = format!("deterministic replay on {node}"),
         evaluator = "{input:evaluator}",
         evaluator_source = CORPUS_EVAL,
         manifest = manifest.display().to_string(),
-    )
+    ))
 }
 
 fn validate_replay_receipt(
@@ -1931,7 +1953,7 @@ fn manage_winner_replay(
             );
             let Some(row) = rows.get(&job_id) else {
                 let spec_path =
-                    replay_root.join(format!("{node}-a{attempt}-r{SPEC_REVISION}.toml"));
+                    replay_root.join(format!("{node}-a{attempt}-r{REPLAY_SPEC_REVISION}.toml"));
                 let rendered = render_replay_spec(
                     dataset,
                     champion,
@@ -1940,7 +1962,7 @@ fn manage_winner_replay(
                     &manifest,
                     &sha256_bytes(&manifest_bytes),
                     &plan.corpus_eval_sha256,
-                );
+                )?;
                 if spec_path.is_file() {
                     if fs::read_to_string(&spec_path)? != rendered {
                         bail!(
@@ -2680,6 +2702,51 @@ mod tests {
         assert_eq!(config.maximum_generations, 20);
         assert_eq!(config.candidate_timeout_seconds, 180);
         assert_eq!(config.infrastructure_retries, 1);
+    }
+
+    #[test]
+    fn replay_specs_route_three_roles_by_fail_closed_capability() {
+        let dataset = DatasetBinding {
+            order: 0,
+            wave: "fixture".to_string(),
+            dataset_hash: "fixture".to_string(),
+            train_path: "train.csv".to_string(),
+            train_sha256: "1".repeat(64),
+            test_path: "test.csv".to_string(),
+            test_sha256: "2".repeat(64),
+            meta_path: "meta.json".to_string(),
+            meta_sha256: "3".repeat(64),
+            class_count: 4,
+            n_features: 12,
+            fast_baselines_complete: true,
+            completed_incumbent_count: 43,
+            comparator_sha256: "4".repeat(64),
+            strongest_available_incumbent: None,
+        };
+        let champion = SeedMember {
+            slot: 0,
+            canonical_genome: "input | standardize | multiclass_ridge".to_string(),
+            semantic_sha256: "5".repeat(64),
+            source: "fixture".to_string(),
+        };
+        for (node, marker) in REPLAY_ROLE_CAPABILITIES {
+            let rendered = render_replay_spec(
+                &dataset,
+                &champion,
+                node,
+                0,
+                Path::new("manifest.json"),
+                &"6".repeat(64),
+                &"7".repeat(64),
+            )
+            .unwrap();
+            assert!(rendered.contains("[[dependencies.smoke]]"));
+            assert!(rendered.contains(marker));
+            assert!(!rendered.contains("/etc/hostname"));
+            assert!(!rendered.contains("\nnode = "));
+            assert!(rendered.contains("-r3\""));
+        }
+        assert!(replay_role_capability(NODES[3]).is_err());
     }
 
     #[test]

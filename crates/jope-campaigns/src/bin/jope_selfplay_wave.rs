@@ -9,7 +9,6 @@ use anyhow::{bail, ensure, Context, Result};
 use clap::{Args, Parser, Subcommand};
 use feat_math::evolve::{crossover_canonical_pipelines, mutate_canonical_pipeline_v2};
 use feat_math::genome::GenomeIr;
-#[cfg(test)]
 use jope_dime_regressor::selfplay_data::{
     micro_wave_size, select_micro_cohort, validate_dl_slot_rung,
     validate_wave_composition_with_dl, CandidateOrigin, GpProposal, MicroAdmission, MicroDataset,

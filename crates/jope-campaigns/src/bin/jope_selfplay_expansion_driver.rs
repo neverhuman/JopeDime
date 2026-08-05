@@ -24,7 +24,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 const ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
 const REGISTRY: &str = "/home/ubuntu/remote_super/quant";
 const ENCODINGS: &str = "/home/ubuntu/jope-flywheel/encodings";
-const FOUNDATION: &str = "/home/ubuntu/jope/data/processed/foundation_enc_v1";
+const FOUNDATION: &str = "/home/ubuntu/jope-flywheel/encodings/foundation-v1/datasets";
 const FETCH_BINARY: &str = "/home/ubuntu/jope-flywheel/encodings/_fetch/binary-expansion";
 const SCQ: &str = "/home/ubuntu/smart_cluster/target/release/scq";
 const SIDECARS: [&str; 3] = ["hyperion3train128dim.vs", "train3.vs", "train_target.vs"];
@@ -1661,6 +1661,24 @@ fn run_tranche(
 
 fn install_batch(root: &Path, task: &str, ids: &[String], log: &mut Vec<Value>) -> Result<()> {
     let fetch = fetch_root(task);
+    let fetched_foundation = fetch.join("foundation");
+    let mut verified = 0_usize;
+    for id in ids {
+        let from = fetched_foundation.join(format!("{id}.npy"));
+        if !from.is_file() {
+            continue;
+        }
+        let published = Path::new(FOUNDATION).join(format!("{id}.npy"));
+        if !published.is_file() {
+            bail!(
+                "foundation V1 is immutable and has no object for {id}; keep expansion disabled until Encoder V2 publishes a namespaced object"
+            );
+        }
+        if sha256_file(&from)? != sha256_file(&published)? {
+            bail!("foundation V1 identity collision for {id}");
+        }
+        verified += 1;
+    }
     let receipts = root.join("ops/sidecar-install-driver.v1.jsonl");
     let tool = bundled_binary("jope_expanded_catalog")?;
     sh(
@@ -1675,19 +1693,7 @@ fn install_batch(root: &Path, task: &str, ids: &[String], log: &mut Vec<Value>) 
             &receipts.to_string_lossy(),
         ],
     )?;
-    let mut copied = 0_usize;
-    let src = fetch.join("foundation");
-    for id in ids {
-        let from = src.join(format!("{id}.npy"));
-        let to = Path::new(FOUNDATION).join(format!("{id}.npy"));
-        if from.is_file() && !to.exists() {
-            let tmp = Path::new(FOUNDATION).join(format!(".{id}.npy.tmp"));
-            std::fs::copy(&from, &tmp)?;
-            std::fs::rename(&tmp, &to)?;
-            copied += 1;
-        }
-    }
-    log.push(json!({"step": "install", "task": task, "sidecar_batch": ids.len(), "foundation_copied": copied}));
+    log.push(json!({"step": "install", "task": task, "sidecar_batch": ids.len(), "foundation_v1_verified": verified}));
     Ok(())
 }
 

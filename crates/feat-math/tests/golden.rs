@@ -1150,23 +1150,11 @@ fn assert_fast_parity(name: &str, genome_src: &str) {
     let fast = emit(&genome, &fast_opts()).unwrap();
     // Default bytes carry no fast markers; fast artifacts carry both.
     for marker in ["predict_rows", "available_parallelism", "lto=fat"] {
-        assert!(
-            !default.rust.contains(marker),
-            "default rust leaks {marker}"
-        );
+        assert!(!default.rust.contains(marker), "default rust leaks {marker}");
     }
-    assert!(
-        !default.python.contains("PyPy"),
-        "default python leaks PyPy"
-    );
-    assert!(
-        fast.rust.contains("predict_rows"),
-        "fast rust missing wrapper"
-    );
-    assert!(
-        fast.python.contains("PyPy"),
-        "fast python missing PyPy note"
-    );
+    assert!(!default.python.contains("PyPy"), "default python leaks PyPy");
+    assert!(fast.rust.contains("predict_rows"), "fast rust missing wrapper");
+    assert!(fast.python.contains("PyPy"), "fast python missing PyPy note");
 
     let (x, y) = toy_data(240, 5, 42);
     let x_train: Vec<Vec<f64>> = x[..200].to_vec();
@@ -1235,10 +1223,7 @@ fn fast_profile_histgbm2() {
 
 #[test]
 fn fast_profile_gpr_poly() {
-    assert_fast_parity(
-        "gpr_poly",
-        "(pipe X (poly_interact append=true) (gpr m=60 steps=8))",
-    );
+    assert_fast_parity("gpr_poly", "(pipe X (poly_interact append=true) (gpr m=60 steps=8))");
 }
 
 #[test]
@@ -1248,10 +1233,7 @@ fn fast_profile_portfolio_head() {
 
 #[test]
 fn fast_profile_symbolic_affine() {
-    assert_fast_parity(
-        "sym_affine",
-        "(sym affine \"sigmoid(col(0)) + 0.5*col(1)\")",
-    );
+    assert_fast_parity("sym_affine", "(sym affine \"sigmoid(col(0)) + 0.5*col(1)\")");
 }
 
 #[test]

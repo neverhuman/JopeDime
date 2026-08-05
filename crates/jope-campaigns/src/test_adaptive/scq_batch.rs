@@ -496,7 +496,7 @@ pub(super) fn wait_for_job(id: &str) -> Result<Value> {
 fn submit_true(node: &str, suffix: &str) -> Result<(String, String)> {
     let id = format!("jope-g42-preflight-{node}-{suffix}");
     let spec = format!(
-        "[job]\nid = {id:?}\nproject = {project:?}\ncommand = \"/bin/true\"\ntier = \"normal\"\n\n[resource]\ngpus_per_task = 0\ncpus_reserved = 1\nomp_threads = 1\nram_gb = 0\nnode = {node:?}\ngang_size = 1\nplacement = \"single_node\"\n\n[preempt]\npreemptible = false\nsignal = \"SIGTERM\"\ngrace_seconds = 60\n\n[limits]\nmax_runtime_hours = 1\nmax_restarts = 0\n",
+        "[job]\nid = {id:?}\nproject = {project:?}\ncommand = \"/bin/true\"\ntier = \"normal\"\n\n[resource]\ngpus_per_task = 0\ncpus_reserved = 1\nomp_threads = 1\nram_gb = 0\ngang_size = 1\nplacement = \"single_node\"\n\n[[dependencies.smoke]]\nname = \"Golden42 C++17 compiler available\"\ncommand = \"/usr/bin/test\"\nargs = [\"-x\", \"/usr/bin/g++\"]\ntimeout_secs = 5\n\n[preempt]\npreemptible = false\nsignal = \"SIGTERM\"\ngrace_seconds = 60\n\n[limits]\nmax_runtime_hours = 1\nmax_restarts = 0\n",
         project = SCQ_PROJECT,
     );
     let spec_path = std::env::temp_dir().join(format!("{id}.toml"));
@@ -509,7 +509,6 @@ fn submit_true(node: &str, suffix: &str) -> Result<(String, String)> {
     let show = wait_for_job(&id)?;
     let job = scq_job(&show, &id)?;
     if job.get("state").and_then(Value::as_str) != Some("completed")
-        || job.get("node").and_then(Value::as_str) != Some(node)
         || job.get("exit_code").and_then(Value::as_i64) != Some(0)
     {
         bail!("pinned SCQ preflight {id} did not complete successfully on {node}");
@@ -1114,11 +1113,10 @@ fn run_batch_flavored(
         .collect::<Result<Vec<_>, _>>()?
         .join(", ");
     let spec = format!(
-        "[job]\nid = {id:?}\nproject = {project:?}\ncommand = \"/usr/bin/env\"\nargs = [{rendered_args}]\nworkdir = {workdir:?}\ntier = \"normal\"\n\n[resource]\ngpus_per_task = 0\ncpus_reserved = {cpus}\nomp_threads = 1\nram_gb = 0\nnode = {node:?}\ngang_size = 1\nplacement = \"single_node\"\n\n[preempt]\npreemptible = false\nsignal = \"SIGTERM\"\ngrace_seconds = 60\n\n[limits]\nmax_runtime_hours = {max_runtime_hours}\nmax_restarts = 0\n",
+        "[job]\nid = {id:?}\nproject = {project:?}\ncommand = \"/usr/bin/env\"\nargs = [{rendered_args}]\nworkdir = {workdir:?}\ntier = \"normal\"\n\n[resource]\ngpus_per_task = 0\ncpus_reserved = {cpus}\nomp_threads = 1\nram_gb = 0\ngang_size = 1\nplacement = \"single_node\"\n\n[[dependencies.smoke]]\nname = \"Golden42 immutable worker manifest staged\"\ncommand = \"/usr/bin/test\"\nargs = [\"-f\", {remote_manifest:?}]\ntimeout_secs = 5\n\n[preempt]\npreemptible = false\nsignal = \"SIGTERM\"\ngrace_seconds = 60\n\n[limits]\nmax_runtime_hours = {max_runtime_hours}\nmax_restarts = 0\n",
         project = SCQ_PROJECT,
         workdir = bundle_root,
         cpus = manifest.cpus,
-        node = node,
         max_runtime_hours = manifest.max_runtime_hours,
     );
     let spec_relative = PathBuf::from("batches/scq-specs").join(format!("{id}.toml"));

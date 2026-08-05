@@ -20,6 +20,7 @@ import time
 from collections import Counter, defaultdict, deque
 from pathlib import Path
 
+import jope_spec_policy
 from test_exact_common import atomic_json, prime_source_root, sha256_file
 
 ROOT = Path("/home/ubuntu/jope-flywheel/test_exact_gen0")
@@ -32,6 +33,19 @@ WARM = Path(
 WARM_SHA = "fbcd5459f2c18f6cd5e4c23eef76a508a91d653a82f27c6ea41bcee8cafa2592"
 SCQ = Path("/home/ubuntu/smart_cluster/target/release/scq")
 STRIDE_FLOATS = 1536 + 512
+TRAINER_POLICY = jope_spec_policy.policy("trainer")
+
+
+def render_resource_block() -> str:
+    """Bind this renderer to the central trainer resource policy."""
+
+    return jope_spec_policy.render_resource_block("trainer")
+
+
+def render_placement_block() -> str:
+    """Bind this renderer to the central trainer capability probes."""
+
+    return jope_spec_policy.render_placement_block("trainer")
 
 # ---------------------------------------------------------------------------
 # EQUAL PER-DATASET REPRESENTATION
@@ -2286,50 +2300,26 @@ def render_spec(
             f"{packed_arg}]"
         ),
         "",
-        "[resource]",
-        "gpus_per_task = 1",
-        # Batch assembly, tokenization and the listwise grouping are pure Python
-        # on the critical path between GPU steps; at 4 cores the 3090 was left
-        # waiting (peak GPU memory 6 GB of 24 GB, util bursty). More cores feed
-        # it. xbabe2 has 128, and the eval lane is preemptible weight-1.
-        "cpus_reserved = 4",
-        "omp_threads = 4",
-        # Measured peak RSS is ~6 GB; 32 GB is 5x headroom and still leaves room
-        # for a second arm on the same node. 64 GB could not be placed at all
-        # (scq adds an 8 GB safety floor, so it demanded 72 GB free).
-        # 8 GB: measured peak RSS is ~6 GB and the packed .npy corpus is mmapped
-        # rather than resident. scq adds an 8 GB safety floor on top, and xbabe1
-        # only has ~18 GB free, so anything larger cannot be placed there.
-        "ram_mb = 8192",
-        "gang_size = 1",
-        'placement = "single_node"',
-        "",
-        "[dependencies]",
-        # Any GPU node, not just xbabe2. scq picks whichever has a free GPU, so
-        # parallel tournament arms spread across xbabe1 (4090) and the two 3090s
-        # instead of queueing behind one another on a single host.
-        'hostname = [{ command = "/usr/bin/grep", '
-        'args = ["-qxE", "xbabe1|xbabe2|xbabe3", "/etc/hostname"], timeout_secs = 5 }]',
-        "",
-        "[env]",
-        f'PYTHONPATH = "{prime_source}:{script.parent}"',
-        # Must match omp_threads in [resource]. Kept at 4: the eval lane holds the
-        # cluster at its 85% CPU target, and a 16-core reservation could not be
-        # admitted at all ("CPU target reached"). The packed .npy memmap path
-        # makes batch assembly far cheaper than the old JSONL parsing, so the
-        # GPU is no longer starved at 4.
-        'OMP_NUM_THREADS = "4"',
-        "",
-        "[preempt]",
-        "preemptible = true",
-        'checkpoint = "none"',
-        'resume = "rerun"',
-        "",
-        "[limits]",
-        "max_runtime_hours = 168",
-        "max_restarts = 1",
-        "",
     ]
+    lines.extend(render_resource_block().splitlines())
+    lines.append("")
+    lines.extend(render_placement_block().splitlines())
+    lines.extend(
+        [
+            "",
+            *jope_spec_policy.render_env_block(
+                "trainer", f"{prime_source}:{script.parent}"
+            ).splitlines(),
+            "",
+            "[preempt]",
+            f"preemptible = {str(bool(TRAINER_POLICY['preemptible'])).lower()}",
+            'checkpoint = "none"',
+            'resume = "rerun"',
+            "",
+            *jope_spec_policy.render_limits_block("trainer").splitlines(),
+            "",
+        ]
+    )
     for name, source, target in inputs:
         lines.extend(
             [

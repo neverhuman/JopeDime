@@ -48,7 +48,7 @@ struct PathArgs {
     sealed_path: PathBuf,
     #[arg(
         long,
-        default_value = "/home/ubuntu/jope/data/processed/active_v3_dual_20260706/standardization.json"
+        default_value = "/home/ubuntu/jope-flywheel/encodings/foundation-v1/standardization/sha256/daac224cf7c6d13a1bf74fc3bb7defd36f33bc3f30db35d3e881c16ede976d1f.json"
     )]
     standardization: PathBuf,
 }

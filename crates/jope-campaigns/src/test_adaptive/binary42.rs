@@ -1722,7 +1722,7 @@ fn copy_local_atomic(source: &Path, destination: &Path, executable: bool) -> Res
 fn submit_canary(node: &str, suffix: &str) -> Result<(String, String)> {
     let id = format!("jope-b42-canary-{node}-{suffix}");
     let spec = format!(
-        "[job]\nid = {id:?}\nproject = {PROJECT:?}\ncommand = \"/bin/true\"\ntier = \"normal\"\n\n[resource]\ngpus_per_task = 0\ncpus_reserved = {SHARD_SIZE}\nomp_threads = 1\nram_gb = 0\nnode = {node:?}\ngang_size = 1\nplacement = \"single_node\"\n\n[preempt]\npreemptible = false\nsignal = \"SIGTERM\"\ngrace_seconds = 60\n\n[limits]\nmax_runtime_hours = 1\nmax_restarts = 0\n"
+        "[job]\nid = {id:?}\nproject = {PROJECT:?}\ncommand = \"/bin/true\"\ntier = \"normal\"\n\n[resource]\ngpus_per_task = 0\ncpus_reserved = {SHARD_SIZE}\nomp_threads = 1\nram_gb = 0\ngang_size = 1\nplacement = \"single_node\"\n\n[[dependencies.smoke]]\nname = \"Binary42 C++17 compiler available\"\ncommand = \"/usr/bin/test\"\nargs = [\"-x\", \"/usr/bin/g++\"]\ntimeout_secs = 5\n\n[preempt]\npreemptible = false\nsignal = \"SIGTERM\"\ngrace_seconds = 60\n\n[limits]\nmax_runtime_hours = 1\nmax_restarts = 0\n"
     );
     let spec_path = std::env::temp_dir().join(format!("{id}.toml"));
     {
@@ -1746,7 +1746,6 @@ fn submit_canary(node: &str, suffix: &str) -> Result<(String, String)> {
     let show = scq_batch::wait_for_job(&id)?;
     let job = scq_batch::scq_job(&show, &id)?;
     if job.get("state").and_then(Value::as_str) != Some("completed")
-        || job.get("node").and_then(Value::as_str) != Some(node)
         || job.get("exit_code").and_then(Value::as_i64) != Some(0)
         || job.get("cpus").and_then(Value::as_u64) != Some(SHARD_SIZE as u64)
     {
@@ -1763,7 +1762,7 @@ fn submit_canary_at(
 ) -> Result<(String, String)> {
     let id = format!("jope-b42-all-canary-{node}-{suffix}");
     let spec = format!(
-        "[job]\nid = {id:?}\nproject = {PROJECT:?}\ncommand = \"/bin/true\"\ntier = \"normal\"\n\n[resource]\ngpus_per_task = 0\ncpus_reserved = {cpus_reserved}\nomp_threads = 1\nram_gb = 0\nnode = {node:?}\ngang_size = 1\nplacement = \"single_node\"\n\n[preempt]\npreemptible = false\nsignal = \"SIGTERM\"\ngrace_seconds = 60\n\n[limits]\nmax_runtime_hours = 1\nmax_restarts = 0\n"
+        "[job]\nid = {id:?}\nproject = {PROJECT:?}\ncommand = \"/bin/true\"\ntier = \"normal\"\n\n[resource]\ngpus_per_task = 0\ncpus_reserved = {cpus_reserved}\nomp_threads = 1\nram_gb = 0\ngang_size = 1\nplacement = \"single_node\"\n\n[[dependencies.smoke]]\nname = \"Binary42 C++17 compiler available\"\ncommand = \"/usr/bin/test\"\nargs = [\"-x\", \"/usr/bin/g++\"]\ntimeout_secs = 5\n\n[preempt]\npreemptible = false\nsignal = \"SIGTERM\"\ngrace_seconds = 60\n\n[limits]\nmax_runtime_hours = 1\nmax_restarts = 0\n"
     );
     let spec_path = std::env::temp_dir().join(format!("{id}.toml"));
     {
@@ -1787,7 +1786,6 @@ fn submit_canary_at(
     let show = wait_for_job_at(scq_binary, &id)?;
     let job = scq_batch::scq_job(&show, &id)?;
     if job.get("state").and_then(Value::as_str) != Some("completed")
-        || job.get("node").and_then(Value::as_str) != Some(node)
         || job.get("exit_code").and_then(Value::as_i64) != Some(0)
         || job.get("cpus").and_then(Value::as_u64) != Some(cpus_reserved as u64)
     {
@@ -2350,7 +2348,7 @@ fn scq_spec(manifest: &ShardManifest) -> Result<String> {
         binary,
         "binary-test-adaptive-batch-worker".to_string(),
         "--manifest".to_string(),
-        remote_manifest,
+        remote_manifest.clone(),
         "--output-dir".to_string(),
         remote_output,
     ];
@@ -2360,10 +2358,9 @@ fn scq_spec(manifest: &ShardManifest) -> Result<String> {
         .collect::<std::result::Result<Vec<_>, _>>()?
         .join(", ");
     Ok(format!(
-        "[job]\nid = {id:?}\nproject = {PROJECT:?}\ncommand = \"/usr/bin/env\"\nargs = [{rendered_args}]\nworkdir = \"/tmp\"\ntier = \"normal\"\n\n[resource]\ngpus_per_task = 0\ncpus_reserved = {cpus}\nomp_threads = 1\nram_gb = 0\nnode = {node:?}\ngang_size = 1\nplacement = \"single_node\"\n\n[preempt]\npreemptible = false\nsignal = \"SIGTERM\"\ngrace_seconds = 60\n\n[limits]\nmax_runtime_hours = 24\nmax_restarts = 0\n",
+        "[job]\nid = {id:?}\nproject = {PROJECT:?}\ncommand = \"/usr/bin/env\"\nargs = [{rendered_args}]\nworkdir = \"/tmp\"\ntier = \"normal\"\n\n[resource]\ngpus_per_task = 0\ncpus_reserved = {cpus}\nomp_threads = 1\nram_gb = 0\ngang_size = 1\nplacement = \"single_node\"\n\n[[dependencies.smoke]]\nname = \"Binary42 immutable worker manifest staged\"\ncommand = \"/usr/bin/test\"\nargs = [\"-f\", {remote_manifest:?}]\ntimeout_secs = 5\n\n[preempt]\npreemptible = false\nsignal = \"SIGTERM\"\ngrace_seconds = 60\n\n[limits]\nmax_runtime_hours = 24\nmax_restarts = 0\n",
         id = manifest.job_id,
         cpus = manifest.cpus_reserved,
-        node = manifest.node,
     ))
 }
 

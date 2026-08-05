@@ -2822,13 +2822,15 @@ fn evaluate_rung_chunk(
     rung: usize,
     chunk: &[(String, DslExpr)],
     gpu: Option<(&GpuRidgeScoreBatchFn<'_>, GpuRidgeScorePolicy)>,
+    overall_budget: f64,
     obs: &dyn Observer,
 ) -> RungChunkEvaluation {
     let rows = &ctx.rows[rung];
     let assign = &ctx.assigns[rung];
     let k = RACE_RUNG_FOLDS[rung];
-    let gpu_attempt =
-        gpu.map(|(backend, policy)| eval_rung0_gpu_wave(ctx, chunk, backend, policy, obs));
+    let gpu_attempt = gpu.map(|(backend, policy)| {
+        eval_rung0_gpu_wave(ctx, chunk, backend, policy, overall_budget, obs)
+    });
     match gpu_attempt {
         Some(GpuWaveAttempt {
             scored: Some(scored),
@@ -2858,7 +2860,7 @@ fn evaluate_rung_chunk(
                         k,
                         ctx.metric,
                         ctx.t0,
-                        ctx.overall_budget,
+                        overall_budget,
                         obs,
                     )
                 })
@@ -2887,7 +2889,7 @@ fn evaluate_rung_chunk(
                         k,
                         ctx.metric,
                         ctx.t0,
-                        ctx.overall_budget,
+                        overall_budget,
                         obs,
                     )
                 })
@@ -3088,16 +3090,29 @@ fn eval_rung(
         RACE_CHUNK
     };
     for (chunk_index, chunk) in todo.chunks(chunk_len).enumerate() {
-        if st.spent[rung] > ctx.caps[rung] {
+        // Always admit one bounded rung-0 chunk. The run-level clock starts
+        // before vocabulary/population construction, so scheduler starvation
+        // can otherwise consume a positive budget before any candidate is
+        // ranked. Cancellation still wins, and every later chunk remains
+        // subject to the configured wall-clock and per-rung caps.
+        let bootstrap_chunk = rung == 0 && st.rung_evals[0] == 0 && chunk_index == 0;
+        if !bootstrap_chunk && st.spent[rung] > ctx.caps[rung] {
             break;
         }
-        if elapsed_budget_exhausted(ctx.t0.elapsed().as_secs_f64(), ctx.overall_budget) {
+        if !bootstrap_chunk
+            && elapsed_budget_exhausted(ctx.t0.elapsed().as_secs_f64(), ctx.overall_budget)
+        {
             break;
         }
         if obs.is_cancelled() {
             break;
         }
         let c0 = Instant::now();
+        let chunk_budget = if bootstrap_chunk {
+            0.0
+        } else {
+            ctx.overall_budget
+        };
         let logical_r0_seq_base = st.rung_evals[0];
         let mut candidate_receipts = vec![None; chunk.len()];
         let mut evaluation = if rung == 0
@@ -3118,11 +3133,13 @@ fn eval_rung(
                         .collect::<Vec<_>>();
                     let representative_count = representatives.len() as u64;
                     let representative_evaluation =
-                        evaluate_rung_chunk(ctx, rung, &representatives, gpu, obs);
+                        evaluate_rung_chunk(ctx, rung, &representatives, gpu, chunk_budget, obs);
                     st.rung0_exact_surrogate_dedup
                         .physical_candidate_evaluations += representative_count;
                     let cancelled = obs.is_cancelled();
-                    if cancelled || !rung_time_admission_live(ctx, st, rung, c0) {
+                    if cancelled
+                        || (!bootstrap_chunk && !rung_time_admission_live(ctx, st, rung, c0))
+                    {
                         st.rung0_exact_surrogate_dedup.rejected_chunks += 1;
                         if cancelled {
                             st.rung0_exact_surrogate_dedup.cancellation_rejections += 1;
@@ -3177,7 +3194,10 @@ fn eval_rung(
                                     }
                                 }
                                 let cancelled = obs.is_cancelled();
-                                if cancelled || !rung_time_admission_live(ctx, st, rung, c0) {
+                                if cancelled
+                                    || (!bootstrap_chunk
+                                        && !rung_time_admission_live(ctx, st, rung, c0))
+                                {
                                     if cancelled {
                                         st.rung0_exact_surrogate_dedup.cancellation_rejections += 1;
                                     } else {
@@ -3190,8 +3210,14 @@ fn eval_rung(
                                         representative_evaluation.timings,
                                     )
                                 } else {
-                                    let mut fallback =
-                                        evaluate_rung_chunk(ctx, rung, chunk, gpu, obs);
+                                    let mut fallback = evaluate_rung_chunk(
+                                        ctx,
+                                        rung,
+                                        chunk,
+                                        gpu,
+                                        chunk_budget,
+                                        obs,
+                                    );
                                     st.rung0_exact_surrogate_dedup
                                         .physical_candidate_evaluations += chunk.len() as u64;
                                     fallback.timings.add(representative_evaluation.timings);
@@ -3220,7 +3246,9 @@ fn eval_rung(
                         }
                     }
                     let cancelled = obs.is_cancelled();
-                    if cancelled || !rung_time_admission_live(ctx, st, rung, c0) {
+                    if cancelled
+                        || (!bootstrap_chunk && !rung_time_admission_live(ctx, st, rung, c0))
+                    {
                         if cancelled {
                             st.rung0_exact_surrogate_dedup.cancellation_rejections += 1;
                         } else {
@@ -3230,12 +3258,12 @@ fn eval_rung(
                     } else {
                         st.rung0_exact_surrogate_dedup
                             .physical_candidate_evaluations += chunk.len() as u64;
-                        evaluate_rung_chunk(ctx, rung, chunk, gpu, obs)
+                        evaluate_rung_chunk(ctx, rung, chunk, gpu, chunk_budget, obs)
                     }
                 }
             }
         } else {
-            evaluate_rung_chunk(ctx, rung, chunk, gpu, obs)
+            evaluate_rung_chunk(ctx, rung, chunk, gpu, chunk_budget, obs)
         };
         st.gpu_screen_timings.add(evaluation.timings);
         st.spent[rung] += c0.elapsed().as_secs_f64();
@@ -3473,6 +3501,7 @@ fn eval_rung0_gpu_wave<'chunk>(
     chunk: &'chunk [(String, DslExpr)],
     backend: &GpuRidgeScoreBatchFn<'_>,
     policy: GpuRidgeScorePolicy,
+    overall_budget: f64,
     obs: &dyn Observer,
 ) -> GpuWaveAttempt<'chunk> {
     let rows = &ctx.rows[0];
@@ -3490,7 +3519,7 @@ fn eval_rung0_gpu_wave<'chunk>(
                 assign,
                 k,
                 ctx.t0,
-                ctx.overall_budget,
+                overall_budget,
                 obs,
             )
         })
@@ -3594,7 +3623,7 @@ fn eval_rung0_gpu_wave<'chunk>(
                         k,
                         ctx.metric,
                         ctx.t0,
-                        ctx.overall_budget,
+                        overall_budget,
                         obs,
                     )),
                 })
@@ -4077,7 +4106,10 @@ fn evolve_lite_race_impl<'backend>(
         if obs.is_cancelled() {
             break;
         }
-        if cfg.time_budget_secs > 0.0 && t0.elapsed().as_secs_f64() > cfg.time_budget_secs {
+        if st.rung_evals[0] > 0
+            && cfg.time_budget_secs > 0.0
+            && t0.elapsed().as_secs_f64() > cfg.time_budget_secs
+        {
             break;
         }
 
@@ -4896,8 +4928,10 @@ mod tests {
         assert_eq!(a.rung_evals, b.rung_evals);
     }
 
-    /// A tiny wall budget terminates promptly (chunked rung gates, no hang) and still ranks
-    /// whatever it managed to score.
+    /// Even a budget already exhausted by setup admits exactly one bounded
+    /// rung-0 chunk, then terminates promptly. This is deterministic under
+    /// concurrent test load and prevents a positive-budget race from returning
+    /// no ranking merely because its worker was descheduled before admission.
     #[test]
     fn race_respects_tiny_time_budget() {
         let (x, y) = race_fixture(5, 400);
@@ -4905,7 +4939,7 @@ mod tests {
         let mut cfg = race_cfg(13);
         cfg.pop = 64;
         cfg.gens = 10_000;
-        cfg.time_budget_secs = 0.3;
+        cfg.time_budget_secs = f64::MIN_POSITIVE;
         let t = Instant::now();
         let out = evolve_lite_race(&x, &y, &metric, &cfg, &quiet_obs());
         assert!(
@@ -4913,7 +4947,7 @@ mod tests {
             "race must respect the wall budget"
         );
         assert!(!out.ranked.is_empty());
-        assert!(out.rung_evals[0] > 0);
+        assert_eq!(out.rung_evals[0], RACE_CHUNK as u64);
     }
 
     #[test]
