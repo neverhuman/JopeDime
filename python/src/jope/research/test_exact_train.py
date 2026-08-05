@@ -120,6 +120,52 @@ ENABLED_TASK_METRICS = {
 # Tasks that must ALWAYS be present in a packed corpus. The optional tasks join
 # as their observations arrive; their absence is a data condition, not an error.
 MANDATORY_TASKS = ("regression", "binary")
+# An optional task joins TRAINING only once it has this many distinct datasets.
+#
+# Evaluation is deliberately NOT gated on it: waves keep running the task, so
+# the evidence that clears the floor can actually accumulate. Gating wave
+# generation instead would be a deadlock dressed as a safeguard.
+#
+# The number guards the shared trunk. Task share tracks dataset share (rows are
+# capped per dataset by CANDIDATE_ROW_CAP, not per task), so admitting a task
+# with 29 datasets does not give it 0.1% of the gradient harmlessly -- it gives
+# those 29 datasets unlimited repetition across epochs, which is how a trunk
+# memorises a handful of datasets and calls it a task.
+OPTIONAL_TASK_DATASET_FLOOR = 500
+
+def trainable_task_metrics(con) -> dict:
+    """Tasks whose observations may enter a checkpoint, task -> metric.
+
+    Mandatory tasks always qualify. An optional task qualifies only once it has
+    at least OPTIONAL_TASK_DATASET_FLOOR distinct datasets carrying its own
+    contract metric, counted from the corpus itself rather than from a config
+    file, so the gate cannot drift from the data it is protecting.
+    """
+
+    trainable = {
+        task: metric
+        for task, metric in ENABLED_TASK_METRICS.items()
+        if task in MANDATORY_TASKS
+    }
+    for task, metric in sorted(ENABLED_TASK_METRICS.items()):
+        if task in MANDATORY_TASKS:
+            continue
+        (datasets,) = con.execute(
+            "SELECT count(DISTINCT dataset_hash) FROM observations "
+            "WHERE task=? AND metric=?",
+            (task, metric),
+        ).fetchone()
+        if datasets >= OPTIONAL_TASK_DATASET_FLOOR:
+            trainable[task] = metric
+        else:
+            print(
+                f"[trainer] {task} withheld from training: {datasets} distinct "
+                f"datasets < floor {OPTIONAL_TASK_DATASET_FLOOR}; evaluation "
+                f"continues so the floor can be reached",
+                flush=True,
+            )
+    return trainable
+
 
 RECIPE_E_MODEL_OUTPUTS = (
     "immediate_utility",
@@ -1036,9 +1082,14 @@ def build_corpus(
     # the CTE can never silently disagree with the guard or the CLI about which
     # observations are learnable. Each task is pinned to its OWN metric -- an
     # observation whose metric drifted from its task's contract stays excluded.
+    # ...and an optional task additionally has to clear the dataset floor before
+    # its observations are learnable. This fails CLOSED: a task under the floor
+    # is excluded from training while its evaluation continues, so the evidence
+    # that clears the floor keeps accumulating. Mandatory tasks are never gated.
+    trainable_tasks = trainable_task_metrics(con)
     task_predicate = " OR ".join(
         f"(task='{task}' AND metric='{metric}')"
-        for task, metric in sorted(ENABLED_TASK_METRICS.items())
+        for task, metric in sorted(trainable_tasks.items())
     )
     if covers_every_row:
         frozen_cte = f"""

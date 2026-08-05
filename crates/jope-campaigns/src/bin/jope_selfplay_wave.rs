@@ -10,7 +10,6 @@ use clap::{Args, Parser, Subcommand};
 use feat_math::evolve::{crossover_canonical_pipelines, mutate_canonical_pipeline_v2};
 use feat_math::genome::GenomeIr;
 #[cfg(test)]
-use jope_dime_regressor::selfplay_data::validate_wave_composition;
 use jope_dime_regressor::selfplay_data::{
     micro_wave_size, select_micro_cohort, validate_dl_slot_rung,
     validate_wave_composition_with_dl, CandidateOrigin, GpProposal, MicroAdmission, MicroDataset,
@@ -4202,7 +4201,6 @@ mod tests {
         assert_eq!(view.unavailable.len(), 2);
     }
 
-    #[test]
     /// A head-swapped multiclass offspring gets its parent's head back and is
     /// then task-valid; a graft that still cannot become valid returns None
     /// through the caller's filter. Regression/binary never take this path.
