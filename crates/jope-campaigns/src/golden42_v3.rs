@@ -2592,8 +2592,7 @@ mod tests {
         fs::remove_dir_all(root).unwrap();
     }
 
-    #[test]
-    fn target_campaign_v3_fit_preserves_frozen_near_winner_bits() {
+    fn assert_target_campaign_v3_fit_preserves_frozen_near_winner_bits() {
         let root = Path::new("/home/ubuntu/remote_super/quant/regression").join(DATASET);
         if !root.join("train.csv").is_file() || !root.join("test.csv").is_file() {
             return;
@@ -2647,5 +2646,16 @@ mod tests {
             cpp_times[15],
             rust_times[15]
         );
+    }
+
+    #[test]
+    fn target_campaign_v3_fit_preserves_frozen_near_winner_bits() {
+        std::thread::Builder::new()
+            .name("golden42-v3-frozen-near-winner".to_string())
+            .stack_size(16 * 1024 * 1024)
+            .spawn(assert_target_campaign_v3_fit_preserves_frozen_near_winner_bits)
+            .expect("spawn Golden42 V3 parity test with its qualified stack")
+            .join()
+            .expect("Golden42 V3 parity test thread panicked");
     }
 }

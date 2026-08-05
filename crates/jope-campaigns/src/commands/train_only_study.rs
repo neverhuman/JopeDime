@@ -5721,7 +5721,10 @@ mod tests {
 
     #[test]
     fn production_sotarena_registry_freezes_exact_37_to_requested_10() {
-        let sotarena_root = Path::new(DEFAULT_SOTARENA_ROOT);
+        let qualified_root = std::env::var_os("JOPE_TEST_SOTARENA_ROOT").map(PathBuf::from);
+        let sotarena_root = qualified_root
+            .as_deref()
+            .unwrap_or_else(|| Path::new(DEFAULT_SOTARENA_ROOT));
         let (_, catalog) =
             load_catalog(Path::new(DEFAULT_CATALOG_POINTER)).expect("production context catalog");
         let disclosure = CorpusExclusions {

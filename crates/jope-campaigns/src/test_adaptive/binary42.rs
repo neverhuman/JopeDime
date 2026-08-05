@@ -5804,6 +5804,33 @@ mod tests {
     use super::*;
     use tempfile::tempdir;
 
+    fn qualified_dataset(mut spec: FrozenDataset) -> FrozenDataset {
+        if let Some(root) = std::env::var_os("JOPE_BINARY42_TEST_DATA_ROOT") {
+            let root = PathBuf::from(root).join(&spec.id);
+            spec.train_path = root.join("train.csv").display().to_string();
+            spec.test_path = root.join("test.csv").display().to_string();
+        }
+        let filename = Path::new(&spec.leader_report_path)
+            .file_name()
+            .expect("frozen leader report path has a filename")
+            .to_owned();
+        let historical = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("fixtures/binary42-historical-reports/v1")
+            .join(&spec.id)
+            .join(&filename);
+        if historical.is_file() {
+            spec.leader_report_path = historical.display().to_string();
+        } else if let Some(root) = std::env::var_os("JOPE_BINARY42_TEST_REPORT_ROOT") {
+            spec.leader_report_path = PathBuf::from(root)
+                .join(&spec.id)
+                .join("reports")
+                .join(&filename)
+                .display()
+                .to_string();
+        }
+        spec
+    }
+
     #[test]
     fn confirmed_binary_winners_are_first_in_generation_zero() {
         let genomes = [
@@ -6081,8 +6108,9 @@ mod tests {
     fn all_frozen_dataset_bindings_and_binary_labels_are_valid() {
         let (cohort, _) = read_cohort().unwrap();
         assert_eq!(cohort.datasets.len(), 42);
-        for spec in &cohort.datasets {
-            verify_dataset_binding(spec).unwrap();
+        for frozen in cohort.datasets {
+            let spec = qualified_dataset(frozen);
+            verify_dataset_binding(&spec).unwrap();
             for path in [&spec.train_path, &spec.test_path] {
                 let data = read_binary_csv(Path::new(path)).unwrap();
                 assert!(data.y.iter().all(|label| *label == 0.0 || *label == 1.0));
@@ -6214,11 +6242,13 @@ mod tests {
     #[test]
     fn binary42_fitted_cpp17_predictions_match_rust_bits() {
         let (cohort, _) = read_cohort().unwrap();
-        let spec = cohort
-            .datasets
-            .iter()
-            .find(|dataset| dataset.id == ILPD)
-            .unwrap();
+        let spec = qualified_dataset(
+            cohort
+                .datasets
+                .into_iter()
+                .find(|dataset| dataset.id == ILPD)
+                .unwrap(),
+        );
         let train = read_binary_csv(Path::new(&spec.train_path)).unwrap();
         let test = read_binary_csv(Path::new(&spec.test_path)).unwrap();
         let member = seed_population(spec.features).unwrap().remove(0);
