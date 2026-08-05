@@ -2165,8 +2165,11 @@ mod tests {
                 r#"{{"schema":"JopeSelfplayQueueKeeper.v3","generated_at_ms":{},
                    "admission_allowed":true,"active_checkpoint_sha256":null,
                    "queued_target":2048,"queued_hard_cap":4096,"queued_starting":3,
-                   "dispatching":1,"admission_waves":[],
-                   "unclaimed_current_checkpoint_manifests":7}}"#,
+                   "queued":2,"starting":1,"dispatching":1,"admission_waves":[],
+                   "protected_reserve_waves":[],"complete_current_checkpoint_waves":0,
+                   "partial_current_checkpoint_waves":0,"complete_reserve_waves":0,
+                   "reserve_manifests":0,"admission_manifests":0,"validated_ready":7,
+                   "useful_work":11,"unclaimed_current_checkpoint_manifests":7}}"#,
                 now_ms() as u64
             ),
         )
