@@ -1,169 +1,805 @@
 #!/usr/bin/env python3
-"""Resolve every absolute path our jobs and units depend on, on every node.
-
-Three outages in one day came from one defect class: a hard-coded absolute path
-whose target is not where the code assumes.
-
-  1. `/home/ubuntu/fable_god` -- the foundation-expert root had moved, so the
-     encoder died on BOTH devices while logging "falling back to cpu". Hidden
-     for an unknown period; each attempt burned ~854s.
-  2. Eleven dangling symlinks across five chimera trees, all pointing into the
-     same vanished root, including model weights.
-  3. `/home/ubuntu/jope-prime/registry/operator_registry.json` -- present on
-     xbabe1/2/3, absent on xbabe0/xbabe4. Once the proposer's node pin was
-     lifted, jobs landed where they could not run and burned the retry budget.
-     The evaluation queue sat at zero.
-
-Every one of them surfaced as a symptom that did NOT name the path: a device
-fallback, a retry-budget message, a load error. This resolves them up front.
-
-The per-NODE dimension is the point. A path that exists on the submitting host
-proves nothing about the host the job lands on, and that asymmetry is exactly
-what defect 3 was.
-"""
+"""Fail-closed, read-only absolute-path preflight for JOPE bundles and jobs."""
 
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
+import os
 import re
+import shlex
+import socket
+import stat
 import subprocess
-import sys
-from collections import defaultdict
-from pathlib import Path
+import tempfile
+import time
+import tomllib
+from dataclasses import dataclass
+from pathlib import Path, PurePosixPath
+from typing import Any, Callable, Iterable
 
-NODES = ("xbabe0", "xbabe1", "xbabe2", "xbabe3", "xbabe4")
-# Absolute paths under the roots this system actually depends on. Anchored to
-# avoid sweeping up every /usr/bin/env in an args list, which is noise.
-PATH_PATTERN = re.compile(r"/home/ubuntu/[A-Za-z0-9._/+-]+")
-# Content-addressed and per-run paths are expected to differ across nodes or to
-# be absent once a run retires; auditing them produces noise, not findings.
-# scq stages these from the submitting node; they need not exist elsewhere.
-STAGED_INPUT = re.compile(r"\s*(source|workdir)\s*=")
-VOLATILE = re.compile(
-    r"(/runtime-bundles/(?!current)[0-9a-f]{16,}|/waves/|/receipts/"
-    r"|/proposals/|/\.encoder-|\.tmp-|/scratch|/specs/)"
+SCHEMA = "JopeAbsolutePathAudit.v1"
+DEFAULT_NODES = ("xbabe0", "xbabe1", "xbabe2", "xbabe3", "xbabe4")
+DEFAULT_CURRENT = Path(
+    "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current"
 )
+STATE_ROOT = Path("/home/ubuntu/jope-flywheel/test_exact_gen0")
+RUNTIME_BUNDLES_ROOT = STATE_ROOT / "runtime-bundles"
+MUTABLE_ROOTS = (
+    Path("/home/ubuntu/jope-dime"),
+    Path("/home/ubuntu/jope-prime"),
+    Path("/home/ubuntu/fable_god"),
+    Path("/home/ubuntu/sotarena"),
+    Path("/tmp"),
+)
+HOST_ROOTS = (
+    Path("/usr/bin"),
+    Path("/usr/sbin"),
+    Path("/bin"),
+    Path("/sbin"),
+    Path("/dev"),
+    Path("/proc"),
+    Path("/sys"),
+    Path("/home/ubuntu/smart_cluster/target/release"),
+)
+UNIT_PATH_KEYS = {
+    "ExecStart",
+    "ExecStartPre",
+    "ExecStartPost",
+    "WorkingDirectory",
+    "Environment",
+    "EnvironmentFile",
+}
+EXEC_KEYS = {"ExecStart", "ExecStartPre", "ExecStartPost", "command"}
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+ABSOLUTE_RE = re.compile(r"/(?:[A-Za-z0-9._+@%=-]+/?)+")
 
 
-def sources(root: Path, flywheel: Path, specs_per_family: int) -> list[Path]:
-    """What we audit, and why each surface matters.
-
-    JOB SPECS are the dangerous surface and the reason this exists: a spec is
-    submitted to scq and can land on ANY node, so a host-local path it names
-    must resolve everywhere. The proposer's operator-registry defect lived
-    exactly here and cost hours of idle cluster.
-
-    Service UNITS run only on the control node, so a unit-only path being
-    absent elsewhere is expected, not a finding -- they are audited for the
-    narrower question of whether the control node itself is complete.
-    """
-
-    found: list[Path] = []
-    for pattern in ("systemd/*.service",):
-        found += sorted(root.glob(pattern))
-    installed = Path.home() / ".config/systemd/user"
-    if installed.is_dir():
-        found += sorted(installed.glob("jope*.service"))
-    # Newest specs per family: they are regenerated constantly, so auditing
-    # every historical one is pure cost for no additional signal.
-    specs = flywheel / "specs"
-    if specs.is_dir():
-        for family in sorted(p for p in specs.iterdir() if p.is_dir()):
-            recent = sorted(family.glob("*.toml"), key=lambda p: p.stat().st_mtime)
-            found += recent[-specs_per_family:]
-    return [p for p in found if p.is_file()]
+@dataclass(frozen=True)
+class PathUse:
+    original: str
+    path: str
+    source: str
+    field: str
+    scope: str
+    executable: bool = False
+    pinned_sha256: str | None = None
+    colon_group: str | None = None
 
 
-def harvest(files: list[Path]) -> dict[str, set[str]]:
-    """path -> the files that reference it."""
-
-    referenced: dict[str, set[str]] = defaultdict(set)
-    for path in files:
-        try:
-            text = path.read_text(errors="replace")
-        except OSError:
-            continue
-        for line in text.splitlines():
-            # An scq `[[input]] source = ...` is resolved on the SUBMITTING
-            # node and staged onto whichever node runs the job, so it does not
-            # need to exist anywhere else. Auditing it is a guaranteed false
-            # positive, and false positives are how an audit gets ignored.
-            # What is dangerous is a path the job opens at runtime, which is
-            # precisely what the operator-registry defect was.
-            if STAGED_INPUT.match(line):
-                continue
-            for match in PATH_PATTERN.findall(line):
-                candidate = match.rstrip(".,;:\"')")
-                if VOLATILE.search(candidate):
-                    continue
-                referenced[candidate].add(path.name)
-    return referenced
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
 
 
-def probe(node: str, paths: list[str], local: bool) -> set[str]:
-    """Return the subset of `paths` that EXIST on `node`."""
-
-    script = "while IFS= read -r p; do [ -e \"$p\" ] && printf '%s\\n' \"$p\"; done"
-    command = ["/bin/sh", "-c", script]
-    if not local:
-        command = ["ssh", "-o", "ConnectTimeout=20", node, script]
+def is_under(path: Path, root: Path) -> bool:
     try:
-        done = subprocess.run(
-            command,
-            input="\n".join(paths),
-            capture_output=True,
-            text=True,
-            timeout=180,
-        )
-    except (subprocess.TimeoutExpired, OSError) as error:
-        print(f"  {node}: UNREACHABLE ({error})", file=sys.stderr)
-        # Unreachable is not "everything is missing"; report nothing rather
-        # than manufacturing hundreds of false findings.
-        return set(paths)
-    return {line.strip() for line in done.stdout.splitlines() if line.strip()}
+        path.relative_to(root)
+        return True
+    except ValueError:
+        return False
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--root", type=Path, default=Path("/home/ubuntu/jope-dime"))
-    parser.add_argument("--nodes", nargs="*", default=list(NODES))
-    parser.add_argument("--local-node", default="xbabe2")
-    parser.add_argument(
-        "--flywheel", type=Path, default=Path("/home/ubuntu/jope-flywheel/test_exact_gen0")
-    )
-    parser.add_argument("--specs-per-family", type=int, default=2)
-    args = parser.parse_args()
+def absolute_tokens(value: str) -> list[str]:
+    """Extract every path from commands, assignments, and colon path lists."""
 
-    files = sources(args.root, args.flywheel, args.specs_per_family)
-    referenced = harvest(files)
-    paths = sorted(referenced)
-    print(f"scanned {len(files)} spec/unit files -> {len(paths)} distinct absolute paths")
-    if not paths:
-        return
+    return [match.group(0).rstrip(".,;:)") for match in ABSOLUTE_RE.finditer(value)]
 
-    present: dict[str, set[str]] = {}
-    for node in args.nodes:
-        present[node] = probe(node, paths, local=(node == args.local_node))
-        print(f"  {node}: {len(present[node])}/{len(paths)} resolve")
 
-    findings = 0
-    for path in paths:
-        missing = [n for n in args.nodes if path not in present[n]]
-        if not missing:
+def logical_systemd_entries(text: str) -> list[tuple[str, str]]:
+    """Join systemd continuation lines, rejecting a dangling continuation."""
+
+    logical: list[str] = []
+    pending = ""
+    for physical in text.splitlines():
+        line = physical.rstrip()
+        continued = line.endswith("\\")
+        fragment = line[:-1].rstrip() if continued else line
+        pending = f"{pending} {fragment.lstrip()}".strip() if pending else fragment
+        if not continued:
+            logical.append(pending)
+            pending = ""
+    if pending:
+        raise ValueError("dangling systemd line continuation")
+
+    entries: list[tuple[str, str]] = []
+    for line in logical:
+        stripped = line.strip()
+        if not stripped or stripped.startswith(("#", ";")) or "=" not in stripped:
             continue
-        findings += 1
-        where = ", ".join(sorted(referenced[path]))
-        # A path missing EVERYWHERE is usually a template or a retired
-        # reference; a path missing on SOME nodes is the dangerous one,
-        # because placement decides whether the job works.
-        severity = "SPLIT" if len(missing) < len(args.nodes) else "absent-everywhere"
-        print(f"\n  [{severity}] {path}")
-        print(f"     missing on: {', '.join(missing)}")
-        print(f"     referenced by: {where}")
+        key, value = stripped.split("=", 1)
+        if key in UNIT_PATH_KEYS:
+            entries.append((key, value.strip()))
+    return entries
 
-    print(f"\n{findings} path(s) do not resolve on every node")
-    sys.exit(1 if findings else 0)
+
+def resolve_current(path: str, bundle_root: Path) -> tuple[str, bool]:
+    """Resolve a current reference against an exact candidate without reading it."""
+
+    candidate = Path(path)
+    prefixes = (DEFAULT_CURRENT, bundle_root.parent / "current")
+    for prefix in prefixes:
+        if candidate == prefix or is_under(candidate, prefix):
+            relative = candidate.relative_to(prefix)
+            return str(bundle_root / relative), True
+    return path, False
+
+
+def exact_bundle_path(path: Path, bundle_root: Path) -> bool:
+    for container in (RUNTIME_BUNDLES_ROOT, bundle_root.parent):
+        if not is_under(path, container):
+            continue
+        relative = path.relative_to(container)
+        if relative.parts and SHA256_RE.fullmatch(relative.parts[0]):
+            return True
+    return False
+
+
+def path_use(
+    raw: str,
+    *,
+    source: Path,
+    field: str,
+    scope: str,
+    bundle_root: Path,
+    executable: bool = False,
+    pinned_sha256: str | None = None,
+    colon_group: str | None = None,
+) -> PathUse:
+    if not raw.startswith("/"):
+        raise ValueError(f"path is not absolute: {raw}")
+    if ".." in PurePosixPath(raw).parts:
+        raise ValueError(f"path traversal is forbidden: {raw}")
+    resolved, _ = resolve_current(raw, bundle_root)
+    return PathUse(
+        original=raw,
+        path=resolved,
+        source=str(source),
+        field=field,
+        scope=scope,
+        executable=executable,
+        pinned_sha256=pinned_sha256,
+        colon_group=colon_group,
+    )
+
+
+def _uses_from_value(
+    value: str,
+    *,
+    source: Path,
+    field: str,
+    scope: str,
+    bundle_root: Path,
+    executable: bool = False,
+    pinned_sha256: str | None = None,
+) -> list[PathUse]:
+    tokens = absolute_tokens(value)
+    group = None
+    if len(tokens) > 1 and ":" in value:
+        group = f"{source}:{field}"
+    return [
+        path_use(
+            token,
+            source=source,
+            field=field,
+            scope=scope,
+            bundle_root=bundle_root,
+            executable=executable and index == 0,
+            pinned_sha256=pinned_sha256,
+            colon_group=group,
+        )
+        for index, token in enumerate(tokens)
+    ]
+
+
+def collect_unit(path: Path, bundle_root: Path) -> list[PathUse]:
+    entries = logical_systemd_entries(path.read_text())
+    uses: list[PathUse] = []
+    for key, value in entries:
+        uses.extend(
+            _uses_from_value(
+                value,
+                source=path,
+                field=key,
+                scope="unit_control_node",
+                bundle_root=bundle_root,
+                executable=key in EXEC_KEYS,
+            )
+        )
+    return uses
+
+
+def _walk_spec(
+    value: Any,
+    *,
+    source: Path,
+    bundle_root: Path,
+    field: str = "",
+) -> Iterable[PathUse]:
+    if isinstance(value, dict):
+        for key, child in value.items():
+            next_field = f"{field}.{key}" if field else key
+            yield from _walk_spec(
+                child, source=source, bundle_root=bundle_root, field=next_field
+            )
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            next_field = f"{field}[{index}]"
+            yield from _walk_spec(
+                child, source=source, bundle_root=bundle_root, field=next_field
+            )
+    elif isinstance(value, str):
+        yield from _uses_from_value(
+            value,
+            source=source,
+            field=field,
+            scope="job_eligible_nodes",
+            bundle_root=bundle_root,
+            executable=field.endswith(".command") or field == "command",
+        )
+
+
+def collect_spec(path: Path, bundle_root: Path) -> list[PathUse]:
+    with path.open("rb") as handle:
+        document = tomllib.load(handle)
+    uses = list(_walk_spec(document, source=path, bundle_root=bundle_root))
+
+    # Only source fields in actual [[input]] tables are staged by SCQ. A
+    # workdir or an unrelated source-shaped key remains a runtime dependency.
+    for index, item in enumerate(document.get("input", [])):
+        if not isinstance(item, dict) or not isinstance(item.get("source"), str):
+            continue
+        source_path = item["source"]
+        pinned = item.get("sha256")
+        replacement = _uses_from_value(
+            source_path,
+            source=path,
+            field=f"input[{index}].source",
+            scope="staged_submission_node",
+            bundle_root=bundle_root,
+            pinned_sha256=pinned if isinstance(pinned, str) else None,
+        )
+        uses = [
+            use
+            for use in uses
+            if not (
+                use.original == source_path
+                and use.field.startswith(f"input[{index}]")
+                and use.field.endswith(".source")
+            )
+        ]
+        uses.extend(replacement)
+    return uses
+
+
+def load_bundle(bundle_root: Path) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+    digest = bundle_root.name
+    if not SHA256_RE.fullmatch(digest):
+        raise ValueError("bundle root must end in an exact 64-character SHA-256")
+    with (bundle_root / "bundle.json").open() as handle:
+        manifest = json.load(handle)
+    if manifest.get("bundle_sha256") != digest:
+        raise ValueError("bundle manifest identity does not match the exact bundle root")
+    inventory: dict[str, dict[str, Any]] = {}
+    for row in manifest.get("files", []):
+        target = row.get("target")
+        if not isinstance(target, str) or Path(target).is_absolute() or ".." in Path(target).parts:
+            raise ValueError("bundle inventory contains an unsafe target")
+        if target in inventory:
+            raise ValueError(f"bundle inventory repeats {target}")
+        inventory[target] = row
+    return manifest, inventory
+
+
+def load_services(path: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    with path.open() as handle:
+        manifest = json.load(handle)
+    if manifest.get("schema") != "JopeSelfplayServiceManifest.v3":
+        raise ValueError("unsupported service manifest schema")
+    active = [row for row in manifest.get("services", []) if row.get("active") is True]
+    if not active:
+        raise ValueError("service manifest has no active units")
+    return manifest, active
+
+
+def classify(use: PathUse, bundle_root: Path) -> tuple[str | None, str | None]:
+    path = Path(use.path)
+    if is_under(path, bundle_root):
+        return "bundle_local_immutable", None
+    if exact_bundle_path(path, bundle_root):
+        return "content_addressed_immutable_external", None
+    for root in MUTABLE_ROOTS:
+        if is_under(path, root):
+            return None, f"mutable checkout path is forbidden: {path}"
+    if is_under(path, RUNTIME_BUNDLES_ROOT):
+        return None, f"runtime bundle path has no exact content identity: {path}"
+    if use.scope == "staged_submission_node":
+        if not use.pinned_sha256 or not SHA256_RE.fullmatch(use.pinned_sha256):
+            return None, f"staged input lacks a valid SHA-256: {path}"
+        return "content_addressed_immutable_external", None
+    if is_under(path, STATE_ROOT):
+        return "runtime_output_parent", None
+    if any(is_under(path, root) for root in HOST_ROOTS):
+        return "host_executable_or_capability", None
+    if ".dependencies.smoke" in use.field or use.field.startswith("dependencies.smoke"):
+        return "host_executable_or_capability", None
+    return None, f"unclassified absolute path: {path}"
+
+
+def _local_contract(
+    path: Path,
+    classification: str,
+    inventory: dict[str, dict[str, Any]],
+    bundle_root: Path,
+    pinned: set[str],
+) -> tuple[dict[str, Any], str | None]:
+    contract: dict[str, Any] = {}
+    try:
+        info = path.lstat()
+    except OSError as error:
+        return contract, f"local audit target is missing: {path}: {error}"
+    if stat.S_ISLNK(info.st_mode):
+        return contract, f"symlinks are forbidden audit targets: {path}"
+    if stat.S_ISREG(info.st_mode):
+        kind = "file"
+    elif stat.S_ISDIR(info.st_mode):
+        kind = "directory"
+    else:
+        kind = "other"
+    contract.update(
+        type=kind,
+        mode=stat.S_IMODE(info.st_mode),
+        uid=info.st_uid,
+        gid=info.st_gid,
+    )
+    if kind == "file":
+        contract.update(size=info.st_size, sha256=sha256_file(path))
+
+    if classification == "bundle_local_immutable" and kind == "file":
+        target = str(path.relative_to(bundle_root))
+        row = inventory.get(target)
+        if row is None:
+            return contract, f"bundle-local file is absent from bundle inventory: {target}"
+        if row.get("sha256") != contract["sha256"] or row.get("bytes") != contract["size"]:
+            return contract, f"local bundle file disagrees with manifest: {target}"
+    if classification == "content_addressed_immutable_external" and kind == "file":
+        exact_runtime_bundle = exact_bundle_path(path, bundle_root)
+        if len(pinned) != 1 and not exact_runtime_bundle:
+            return contract, f"immutable input has missing or conflicting pinned hashes: {path}"
+        expected = next(iter(pinned)) if len(pinned) == 1 else contract["sha256"]
+        if contract["sha256"] != expected:
+            return contract, f"staged input SHA-256 mismatch: {path}"
+    return contract, None
+
+
+REMOTE_PROBE = r'''
+import hashlib, json, os, stat, sys
+answer = {}
+for name in json.load(sys.stdin):
+    try:
+        info = os.lstat(name)
+        if stat.S_ISLNK(info.st_mode): kind = "symlink"
+        elif stat.S_ISREG(info.st_mode): kind = "file"
+        elif stat.S_ISDIR(info.st_mode): kind = "directory"
+        else: kind = "other"
+        row = {"exists": True, "type": kind, "mode": stat.S_IMODE(info.st_mode),
+               "uid": info.st_uid, "gid": info.st_gid,
+               "executable": os.access(name, os.X_OK), "writable": os.access(name, os.W_OK)}
+        if kind == "file":
+            digest = hashlib.sha256()
+            with open(name, "rb") as handle:
+                for block in iter(lambda: handle.read(1048576), b""): digest.update(block)
+            row.update(size=info.st_size, sha256=digest.hexdigest())
+        if kind == "symlink": row["symlink_target"] = os.readlink(name)
+        answer[name] = row
+    except FileNotFoundError:
+        answer[name] = {"exists": False}
+    except Exception as error:
+        answer[name] = {"exists": False, "error": f"{type(error).__name__}: {error}"}
+json.dump(answer, sys.stdout, sort_keys=True)
+'''
+
+
+def probe_nodes(
+    nodes: list[str], paths: list[str]
+) -> tuple[dict[str, dict[str, dict[str, Any]]], dict[str, str]]:
+    results: dict[str, dict[str, dict[str, Any]]] = {}
+    failures: dict[str, str] = {}
+    local_names = {"local", socket.gethostname(), socket.gethostname().split(".", 1)[0]}
+    payload = json.dumps(paths)
+    for node in nodes:
+        if node in local_names:
+            command = ["/usr/bin/python3", "-c", REMOTE_PROBE]
+        else:
+            remote = f"/usr/bin/python3 -c {shlex.quote(REMOTE_PROBE)}"
+            command = [
+                "/usr/bin/ssh",
+                "-o",
+                "BatchMode=yes",
+                "-o",
+                "ConnectTimeout=20",
+                node,
+                remote,
+            ]
+        try:
+            done = subprocess.run(
+                command,
+                input=payload,
+                capture_output=True,
+                text=True,
+                timeout=180,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as error:
+            failures[node] = f"{type(error).__name__}: {error}"
+            continue
+        if done.returncode != 0:
+            failures[node] = f"probe exited {done.returncode}: {done.stderr.strip()}"
+            continue
+        try:
+            decoded = json.loads(done.stdout)
+            if not isinstance(decoded, dict) or any(path not in decoded for path in paths):
+                raise ValueError("probe omitted requested paths")
+            results[node] = decoded
+        except (json.JSONDecodeError, ValueError) as error:
+            failures[node] = f"invalid probe response: {error}"
+    return results, failures
+
+
+def _finding(code: str, detail: str, **extra: Any) -> dict[str, Any]:
+    return {"code": code, "detail": detail, **extra}
+
+
+def audit(
+    *,
+    bundle_root: Path,
+    service_manifest_path: Path,
+    specs: list[Path],
+    units: list[Path],
+    nodes: list[str],
+    node_probe: Callable[
+        [list[str], list[str]],
+        tuple[dict[str, dict[str, dict[str, Any]]], dict[str, str]],
+    ] = probe_nodes,
+) -> dict[str, Any]:
+    started_ms = int(time.time() * 1000)
+    findings: list[dict[str, Any]] = []
+    manifest, inventory = load_bundle(bundle_root)
+    service_manifest, active_services = load_services(service_manifest_path)
+    service_manifest_sha256 = sha256_file(service_manifest_path)
+    declared_service_sha256 = manifest.get("service_manifest_sha256")
+    if (
+        declared_service_sha256 is not None
+        and declared_service_sha256 != service_manifest_sha256
+    ):
+        raise ValueError("service manifest does not match the bundle declaration")
+    if (
+        manifest.get("service_manifest") is not None
+        and manifest["service_manifest"] != service_manifest
+    ):
+        raise ValueError("service manifest content does not match the bundled inventory")
+    active_units = {row["unit"] for row in active_services}
+
+    if units:
+        unit_by_name = {path.name: path for path in units}
+        if set(unit_by_name) != active_units:
+            missing = sorted(active_units - set(unit_by_name))
+            extra = sorted(set(unit_by_name) - active_units)
+            findings.append(
+                _finding(
+                    "active_unit_inventory_mismatch",
+                    "provided units do not exactly match the active service manifest",
+                    missing=missing,
+                    extra=extra,
+                )
+            )
+    else:
+        unit_by_name = {
+            name: bundle_root / "runtime/systemd" / name for name in active_units
+        }
+
+    uses: list[PathUse] = []
+    for row in active_services:
+        unit_path = unit_by_name.get(row["unit"])
+        if unit_path is None:
+            continue
+        try:
+            uses.extend(collect_unit(unit_path, bundle_root))
+        except (OSError, ValueError) as error:
+            findings.append(
+                _finding("unit_parse_failed", str(error), source=str(unit_path))
+            )
+        for asset, field in (
+            (unit_path, "active_unit_asset"),
+            (bundle_root / "runtime/bin" / row["binary"], "active_binary_asset"),
+        ):
+            try:
+                uses.append(
+                    path_use(
+                        str(asset),
+                        source=service_manifest_path,
+                        field=field,
+                        scope="bundle_sync_all_nodes",
+                        bundle_root=bundle_root,
+                        executable=field == "active_binary_asset",
+                    )
+                )
+            except ValueError as error:
+                findings.append(_finding("invalid_path", str(error)))
+
+    for spec in specs:
+        try:
+            uses.extend(collect_spec(spec, bundle_root))
+        except (OSError, ValueError, tomllib.TOMLDecodeError) as error:
+            findings.append(_finding("spec_parse_failed", str(error), source=str(spec)))
+
+    classified: list[tuple[PathUse, str]] = []
+    colon_classes: dict[str, set[str]] = {}
+    for use in uses:
+        classification, error = classify(use, bundle_root)
+        if error:
+            code = "mutable_checkout_path" if error.startswith("mutable") else "unclassified_path"
+            findings.append(
+                _finding(code, error, path=use.path, source=use.source, field=use.field)
+            )
+            continue
+        assert classification is not None
+        classified.append((use, classification))
+        if use.colon_group:
+            colon_classes.setdefault(use.colon_group, set()).add(classification)
+    for group, classes in colon_classes.items():
+        if len(classes) > 1:
+            findings.append(
+                _finding(
+                    "mixed_root_colon_list",
+                    "colon-packed path list crosses deployment classes",
+                    source_field=group,
+                    classes=sorted(classes),
+                )
+            )
+
+    control_node = socket.gethostname().split(".", 1)[0]
+    if control_node not in nodes:
+        control_node = nodes[0] if nodes else ""
+    grouped: dict[str, list[tuple[PathUse, str]]] = {}
+    for use, classification in classified:
+        grouped.setdefault(use.path, []).append((use, classification))
+
+    path_rows: list[dict[str, Any]] = []
+    contracts: dict[str, dict[str, Any]] = {}
+    scopes: dict[str, list[str]] = {}
+    for path_string, entries in sorted(grouped.items()):
+        classes = {classification for _, classification in entries}
+        if len(classes) != 1:
+            findings.append(
+                _finding(
+                    "path_class_conflict",
+                    "one path has conflicting deployment classes",
+                    path=path_string,
+                    classes=sorted(classes),
+                )
+            )
+            continue
+        classification = next(iter(classes))
+        sync_required = classification == "bundle_local_immutable"
+        eligible_required = any(use.scope == "job_eligible_nodes" for use, _ in entries)
+        if sync_required or eligible_required:
+            scope_nodes = list(nodes)
+        else:
+            scope_nodes = [control_node]
+        scopes[path_string] = scope_nodes
+        pinned = {use.pinned_sha256 for use, _ in entries if use.pinned_sha256}
+        contract, error = _local_contract(
+            Path(path_string), classification, inventory, bundle_root, pinned
+        )
+        contracts[path_string] = contract
+        if error:
+            findings.append(_finding("local_contract_failed", error, path=path_string))
+        path_rows.append(
+            {
+                "path": path_string,
+                "original_paths": sorted({use.original for use, _ in entries}),
+                "current_rewritten": any(use.original != use.path for use, _ in entries),
+                "class": classification,
+                "execution_scope": sorted({use.scope for use, _ in entries}),
+                "required_nodes": scope_nodes,
+                "sources": sorted({f"{use.source}:{use.field}" for use, _ in entries}),
+                "expected": contract,
+                "executable_required": any(use.executable for use, _ in entries),
+            }
+        )
+
+    probe_results, node_failures = node_probe(nodes, sorted(grouped))
+    for node in nodes:
+        if node in node_failures:
+            findings.append(
+                _finding(
+                    "mandatory_node_unreachable",
+                    node_failures[node],
+                    node=node,
+                )
+            )
+
+    for row in path_rows:
+        path_string = row["path"]
+        contract = contracts[path_string]
+        for node in scopes[path_string]:
+            observed = probe_results.get(node, {}).get(path_string)
+            if observed is None:
+                if node not in node_failures:
+                    findings.append(
+                        _finding(
+                            "node_probe_omitted_path",
+                            "node probe did not return the required path",
+                            node=node,
+                            path=path_string,
+                        )
+                    )
+                continue
+            if not observed.get("exists"):
+                findings.append(
+                    _finding(
+                        "missing_target",
+                        observed.get("error", "required path does not exist"),
+                        node=node,
+                        path=path_string,
+                    )
+                )
+                continue
+            for key in ("type", "mode"):
+                if key in contract and observed.get(key) != contract[key]:
+                    findings.append(
+                        _finding(
+                            f"{key}_mismatch",
+                            f"expected {contract[key]!r}, observed {observed.get(key)!r}",
+                            node=node,
+                            path=path_string,
+                        )
+                    )
+            if row["class"] != "runtime_output_parent" and contract.get("type") == "file":
+                for key in ("size", "sha256"):
+                    if observed.get(key) != contract.get(key):
+                        findings.append(
+                            _finding(
+                                f"{key}_mismatch",
+                                f"expected {contract.get(key)!r}, observed {observed.get(key)!r}",
+                                node=node,
+                                path=path_string,
+                            )
+                        )
+            if row["executable_required"] and not observed.get("executable"):
+                findings.append(
+                    _finding(
+                        "not_executable",
+                        "command path is not executable",
+                        node=node,
+                        path=path_string,
+                    )
+                )
+            if row["class"] == "runtime_output_parent":
+                for key in ("uid", "gid"):
+                    if key in contract and observed.get(key) != contract[key]:
+                        findings.append(
+                            _finding(
+                                f"runtime_{key}_mismatch",
+                                f"expected {contract[key]!r}, observed {observed.get(key)!r}",
+                                node=node,
+                                path=path_string,
+                            )
+                        )
+                if contract.get("type") == "directory" and not observed.get("writable"):
+                    findings.append(
+                        _finding(
+                            "runtime_parent_not_writable",
+                            "runtime-output parent is not writable",
+                            node=node,
+                            path=path_string,
+                        )
+                    )
+
+    finished_ms = int(time.time() * 1000)
+    node_rows = {
+        node: {
+            "status": "unreachable" if node in node_failures else "checked",
+            "error": node_failures.get(node),
+            "paths_returned": len(probe_results.get(node, {})),
+        }
+        for node in nodes
+    }
+    return {
+        "schema": SCHEMA,
+        "generated_at_unix_ms": finished_ms,
+        "freshness": {
+            "status": "fresh",
+            "max_age_seconds": 300,
+            "audit_duration_ms": finished_ms - started_ms,
+        },
+        "bundle_sha256": manifest["bundle_sha256"],
+        "bundle_root": str(bundle_root),
+        "bundle_manifest_sha256": sha256_file(bundle_root / "bundle.json"),
+        "service_manifest": str(service_manifest_path),
+        "service_manifest_sha256": service_manifest_sha256,
+        "active_units": sorted(active_units),
+        "specs": [str(path) for path in specs],
+        "required_nodes": nodes,
+        "control_node": control_node,
+        "nodes": node_rows,
+        "paths": path_rows,
+        "findings": findings,
+        "healthy": not findings,
+    }
+
+
+def atomic_json(path: Path, value: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w") as handle:
+            json.dump(value, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temporary, 0o644)
+        os.replace(temporary, path)
+        directory_fd = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--bundle-root", type=Path, required=True)
+    parser.add_argument("--service-manifest", type=Path, required=True)
+    parser.add_argument("--spec", type=Path, action="append", default=[])
+    parser.add_argument("--unit", type=Path, action="append", default=[])
+    parser.add_argument("--node", action="append", default=[])
+    parser.add_argument("--output", type=Path, required=True)
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    nodes = args.node or list(DEFAULT_NODES)
+    if not nodes or len(nodes) != len(set(nodes)):
+        raise SystemExit("--node values must be nonempty and unique")
+    try:
+        report = audit(
+            bundle_root=args.bundle_root,
+            service_manifest_path=args.service_manifest,
+            specs=args.spec,
+            units=args.unit,
+            nodes=nodes,
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        now_ms = int(time.time() * 1000)
+        report = {
+            "schema": SCHEMA,
+            "generated_at_unix_ms": now_ms,
+            "freshness": {"status": "fresh", "max_age_seconds": 300},
+            "bundle_root": str(args.bundle_root),
+            "required_nodes": nodes,
+            "findings": [_finding("audit_configuration_failed", str(error))],
+            "healthy": False,
+        }
+    atomic_json(args.output, report)
+    print(
+        f"{SCHEMA}: {'green' if report['healthy'] else 'blocked'}; "
+        f"{len(report['findings'])} finding(s); receipt={args.output}"
+    )
+    return 0 if report["healthy"] else 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
