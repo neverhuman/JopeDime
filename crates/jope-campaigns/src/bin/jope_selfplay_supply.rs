@@ -23,10 +23,6 @@ use std::process::Command;
 use std::thread;
 use std::time::Duration;
 
-/// Host-local file the cohort proposer opens at runtime. It is NOT a pinned
-/// job input, so a node without it fails the job rather than declining it --
-/// which is why the proposer spec probes for it as a capability.
-const PRIME_OPERATOR_REGISTRY: &str = "/home/ubuntu/jope-prime/registry/operator_registry.json";
 const MICRO_WAVE_KIND: &str = "deterministic_128_dataset_micro_wave";
 const WAVE_SCHEMA: &str = "JopeRealtimeSelfplayWave.v1";
 const DATASETS_PER_WAVE: usize = 128;
@@ -107,7 +103,10 @@ struct Args {
         default_value = "/home/ubuntu/jope-dime/scripts/test_exact_common.py"
     )]
     proposal_common: PathBuf,
-    #[arg(long, default_value = "/home/ubuntu/jope-prime/src")]
+    #[arg(
+        long,
+        default_value = "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch"
+    )]
     proposal_pythonpath: PathBuf,
     #[arg(long)]
     catalog_pointer: Option<PathBuf>,
@@ -1800,7 +1799,7 @@ fn runtime_pinned_intent_from_spec(spec: &Path, attempt: u32) -> Result<RuntimeP
         .lines()
         .find_map(|line| toml_string_assignment(line, "id"))
         .context("cohort proposer spec lacks job identity")?;
-    let pythonpath = fs::canonicalize(proposer_pythonpath(&body)?)
+    let pythonpath = fs::canonicalize(proposer_env_path(&body, "PYTHONPATH")?)
         .context("canonicalize pinned proposer PYTHONPATH")?;
     if pythonpath.file_name().and_then(|value| value.to_str()) != Some("pytorch") {
         bail!("pinned proposer PYTHONPATH is not inside a runtime bundle");
@@ -1917,10 +1916,13 @@ fn normalized_proposer_spec(body: &str) -> String {
         .map(|line| {
             if line.starts_with("PYTHONPATH = ") {
                 "PYTHONPATH = \"<content-verified-runtime>\""
+            } else if line.starts_with("JOPE_OPERATOR_REGISTRY = ") {
+                "JOPE_OPERATOR_REGISTRY = \"<content-verified-runtime-registry>\""
             } else if line.starts_with("source = ")
                 && (line.ends_with("/pytorch/proposals/test_exact_context_proposals.py\"")
                     || line.ends_with("/pytorch/proposals/test_exact_dl_generate.py\"")
-                    || line.ends_with("/pytorch/shared/test_exact_common.py\""))
+                    || line.ends_with("/pytorch/shared/test_exact_common.py\"")
+                    || line.ends_with("/pytorch/registry/operator_registry.json\""))
             {
                 "source = \"<content-verified-runtime-input>\""
             } else {
@@ -1931,27 +1933,41 @@ fn normalized_proposer_spec(body: &str) -> String {
         .join("\n")
 }
 
-fn proposer_pythonpath(body: &str) -> Result<PathBuf> {
+fn proposer_env_path(body: &str, key: &str) -> Result<PathBuf> {
+    let prefix = format!("{key} = \"");
     let line = body
         .lines()
-        .find(|line| line.starts_with("PYTHONPATH = "))
-        .context("cohort proposer spec lacks PYTHONPATH")?;
+        .find(|line| line.starts_with(&prefix))
+        .with_context(|| format!("cohort proposer spec lacks {key}"))?;
     let value = line
-        .strip_prefix("PYTHONPATH = \"")
+        .strip_prefix(&prefix)
         .and_then(|value| value.strip_suffix('"'))
-        .context("cohort proposer PYTHONPATH is malformed")?;
+        .with_context(|| format!("cohort proposer {key} is malformed"))?;
     if value.is_empty() || value.contains(['\\', '\n', '\r', '"']) {
-        bail!("cohort proposer PYTHONPATH is unsafe");
+        bail!("cohort proposer {key} is unsafe");
     }
     Ok(PathBuf::from(value))
 }
 
 fn validate_proposer_runtime(existing_body: &str, expected_body: &str, args: &Args) -> Result<()> {
+    if existing_body.contains("/home/ubuntu/jope-prime")
+        || expected_body.contains("/home/ubuntu/jope-prime")
+    {
+        bail!("cohort proposer spec references the mutable Prime checkout");
+    }
     if normalized_proposer_spec(existing_body) != normalized_proposer_spec(expected_body) {
         bail!("immutable cohort proposer spec drift");
     }
-    let pythonpath = proposer_pythonpath(existing_body)?;
+    let pythonpath = proposer_env_path(existing_body, "PYTHONPATH")?;
+    let operator_registry = proposer_env_path(existing_body, "JOPE_OPERATOR_REGISTRY")?;
     if !pythonpath.is_dir()
+        || operator_registry != pythonpath.join("registry/operator_registry.json")
+        || sha256_file(&operator_registry)?
+            != sha256_file(
+                &args
+                    .proposal_pythonpath
+                    .join("registry/operator_registry.json"),
+            )?
         || sha256_file(&pythonpath.join("proposals/test_exact_context_proposals.py"))?
             != sha256_file(&args.proposal_generator)?
         || sha256_file(&pythonpath.join("proposals/test_exact_dl_generate.py"))?
@@ -2299,6 +2315,7 @@ fn render_cohort_proposer_spec(
         .context("cohort proposer job identity is absent")?;
     let pythonpath = fs::canonicalize(&args.proposal_pythonpath)
         .unwrap_or_else(|_| args.proposal_pythonpath.clone());
+    let operator_registry = pythonpath.join("registry/operator_registry.json");
     let runtime_bundle_sha256 = pythonpath
         .parent()
         .and_then(Path::file_name)
@@ -2359,20 +2376,15 @@ fn render_cohort_proposer_spec(
         ),
         "timeout_secs = 30".into(),
         String::new(),
-        // The proposer reads the jope-prime operator registry from a fixed
-        // absolute path at runtime. It was present on xbabe1/2/3 and absent on
-        // xbabe0/xbabe4, so once the node pin was lifted the proposer landed on
-        // incapable nodes and burned its whole 5-retry budget on
-        // FileNotFoundError -- the evaluation queue drained to zero for hours.
-        // Probe the CAPABILITY, never the hostname: spec_policy.rs:526 forbids
-        // /etc/hostname probes, and a capability probe self-maintains when a
-        // node gains or loses the registry.
+        // The registry is part of the content-addressed RuntimeBundle and is a
+        // hash-pinned job input. Probe that exact file rather than a hostname
+        // or mutable checkout so placement and execution share one dependency.
         "[[dependencies.smoke]]".into(),
-        "name = \"jope-prime operator registry\"".into(),
+        "name = \"RuntimeBundle operator registry\"".into(),
         "command = \"/usr/bin/test\"".into(),
         format!(
             "args = [\"-f\", {}]",
-            toml_quote(PRIME_OPERATOR_REGISTRY)?
+            toml_quote(&operator_registry.to_string_lossy())?
         ),
         "timeout_secs = 5".into(),
         String::new(),
@@ -2380,6 +2392,10 @@ fn render_cohort_proposer_spec(
         format!(
             "PYTHONPATH = {}",
             toml_quote(&pythonpath.to_string_lossy())?
+        ),
+        format!(
+            "JOPE_OPERATOR_REGISTRY = {}",
+            toml_quote(&operator_registry.to_string_lossy())?
         ),
         "OMP_NUM_THREADS = \"4\"".into(),
         String::new(),
@@ -2416,6 +2432,12 @@ fn render_cohort_proposer_spec(
         "common",
         &proposal_common,
         "test_exact_common.py",
+    )?;
+    append_spec_input(
+        &mut lines,
+        "operator_registry",
+        &operator_registry,
+        "registry/operator_registry.json",
     )?;
     append_spec_input(
         &mut lines,
@@ -3536,6 +3558,7 @@ mod tests {
             fs::create_dir_all(runtime.join("proposals")).unwrap();
             fs::create_dir_all(runtime.join("shared")).unwrap();
             fs::create_dir_all(runtime.join("jope/policy")).unwrap();
+            fs::create_dir_all(runtime.join("registry")).unwrap();
             fs::write(
                 runtime.join("proposals/test_exact_context_proposals.py"),
                 b"context-generator",
@@ -3550,18 +3573,28 @@ mod tests {
             fs::write(runtime.join("jope/__init__.py"), b"").unwrap();
             fs::write(runtime.join("jope/policy/model_v3.py"), b"model").unwrap();
             fs::write(runtime.join("jope/policy/decode.py"), b"decode").unwrap();
+            fs::write(
+                runtime.join("registry/operator_registry.json"),
+                b"operator-registry",
+            )
+            .unwrap();
         }
         let mut args = audit_args(directory.path());
+        args.proposal_pythonpath = new_runtime.clone();
         args.proposal_generator = new_runtime.join("proposals/test_exact_context_proposals.py");
         args.proposal_legacy_generator = new_runtime.join("proposals/test_exact_dl_generate.py");
         args.proposal_common = new_runtime.join("shared/test_exact_common.py");
         let existing = format!(
-            "[env]\nPYTHONPATH = \"{}\"\nOMP_NUM_THREADS = \"4\"\n",
-            old_runtime.display()
+            "[env]\nPYTHONPATH = \"{}\"\nJOPE_OPERATOR_REGISTRY = \"{}\"\nOMP_NUM_THREADS = \"4\"\n\n[[input]]\nsource = \"{}\"\n",
+            old_runtime.display(),
+            old_runtime.join("registry/operator_registry.json").display(),
+            old_runtime.join("registry/operator_registry.json").display(),
         );
         let expected = format!(
-            "[env]\nPYTHONPATH = \"{}\"\nOMP_NUM_THREADS = \"4\"\n",
-            new_runtime.display()
+            "[env]\nPYTHONPATH = \"{}\"\nJOPE_OPERATOR_REGISTRY = \"{}\"\nOMP_NUM_THREADS = \"4\"\n\n[[input]]\nsource = \"{}\"\n",
+            new_runtime.display(),
+            new_runtime.join("registry/operator_registry.json").display(),
+            new_runtime.join("registry/operator_registry.json").display(),
         );
         assert!(validate_proposer_runtime(&existing, &expected, &args).is_ok());
 
@@ -3571,6 +3604,24 @@ mod tests {
         )
         .unwrap();
         assert!(validate_proposer_runtime(&existing, &expected, &args).is_err());
+
+        fs::write(
+            old_runtime.join("proposals/test_exact_context_proposals.py"),
+            b"context-generator",
+        )
+        .unwrap();
+        fs::write(
+            old_runtime.join("registry/operator_registry.json"),
+            b"registry-drift",
+        )
+        .unwrap();
+        assert!(validate_proposer_runtime(&existing, &expected, &args).is_err());
+
+        let mutable_checkout = existing.replace(
+            &old_runtime.to_string_lossy().to_string(),
+            "/home/ubuntu/jope-prime",
+        );
+        assert!(validate_proposer_runtime(&mutable_checkout, &expected, &args).is_err());
     }
 
     #[test]
