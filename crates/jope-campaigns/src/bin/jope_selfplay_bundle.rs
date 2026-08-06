@@ -1045,37 +1045,48 @@ fn sync_bundle_to_gpu_nodes(
             ))
         })
         .collect::<Result<Vec<_>>>()?;
+    let hostname = local_hostname()?;
     let mut receipts = Vec::new();
     for node in GPU_SYNC_NODES {
-        let sync = std::process::Command::new("rsync")
-            .arg("-a")
-            .arg(&source)
-            .arg(format!("{node}:{}/", output_root.display()))
-            .output()
-            .with_context(|| format!("spawn rsync of bundle {bundle_sha256} to {node}"))?;
-        ensure!(
-            sync.status.success(),
-            "bundle sync to {node} failed: {}",
-            String::from_utf8_lossy(&sync.stderr)
-        );
-        let mut command = std::process::Command::new("ssh");
-        command.args(["-o", "BatchMode=yes", node, "sha256sum"]);
-        for (target, _) in &expected {
-            command.arg(source.join(target));
-        }
-        command.arg(source.join("bundle.json"));
-        let check = command
-            .output()
-            .with_context(|| format!("spawn bundle sync verification on {node}"))?;
-        ensure!(
-            check.status.success(),
-            "bundle {bundle_sha256} hash verification failed on {node}: {}",
-            String::from_utf8_lossy(&check.stderr).trim()
-        );
-        let observed = String::from_utf8(check.stdout)?
-            .lines()
-            .filter_map(|line| line.split_whitespace().next().map(str::to_owned))
-            .collect::<Vec<_>>();
+        let (transport, observed) = if node_is_local(node, &hostname) {
+            let mut observed = expected
+                .iter()
+                .map(|(target, _)| sha256_file(&source.join(target)))
+                .collect::<Result<Vec<_>>>()?;
+            observed.push(local_manifest_sha256.clone());
+            ("local", observed)
+        } else {
+            let sync = std::process::Command::new("rsync")
+                .arg("-a")
+                .arg(&source)
+                .arg(format!("{node}:{}/", output_root.display()))
+                .output()
+                .with_context(|| format!("spawn rsync of bundle {bundle_sha256} to {node}"))?;
+            ensure!(
+                sync.status.success(),
+                "bundle sync to {node} failed: {}",
+                String::from_utf8_lossy(&sync.stderr)
+            );
+            let mut command = std::process::Command::new("ssh");
+            command.args(["-o", "BatchMode=yes", node, "sha256sum"]);
+            for (target, _) in &expected {
+                command.arg(source.join(target));
+            }
+            command.arg(source.join("bundle.json"));
+            let check = command
+                .output()
+                .with_context(|| format!("spawn bundle sync verification on {node}"))?;
+            ensure!(
+                check.status.success(),
+                "bundle {bundle_sha256} hash verification failed on {node}: {}",
+                String::from_utf8_lossy(&check.stderr).trim()
+            );
+            let observed = String::from_utf8(check.stdout)?
+                .lines()
+                .filter_map(|line| line.split_whitespace().next().map(str::to_owned))
+                .collect::<Vec<_>>();
+            ("ssh+rsync", observed)
+        };
         ensure!(
             observed.len() == expected.len() + 1
                 && observed
@@ -1090,6 +1101,7 @@ fn sync_bundle_to_gpu_nodes(
             "bundle_sha256": bundle_sha256,
             "bundle_manifest_sha256": local_manifest_sha256,
             "files_verified": expected.len(),
+            "transport": transport,
             "verified": true,
         }));
     }
@@ -1101,6 +1113,27 @@ fn sync_bundle_to_gpu_nodes(
         "receipts": receipts,
         "complete": receipts.len() == GPU_SYNC_NODES.len(),
     }))
+}
+
+fn local_hostname() -> Result<String> {
+    let output = std::process::Command::new("hostname")
+        .output()
+        .context("read local hostname for bundle synchronization")?;
+    ensure!(
+        output.status.success(),
+        "local hostname lookup failed: {}",
+        String::from_utf8_lossy(&output.stderr).trim()
+    );
+    let hostname = String::from_utf8(output.stdout)?.trim().to_owned();
+    ensure!(
+        !hostname.is_empty(),
+        "local hostname lookup returned empty output"
+    );
+    Ok(hostname)
+}
+
+fn node_is_local(node: &str, hostname: &str) -> bool {
+    hostname.split('.').next() == Some(node)
 }
 
 fn activate_current_bundle(output_root: &Path, bundle_sha256: &str) -> Result<()> {
@@ -1615,6 +1648,21 @@ fn atomic_json(path: &Path, value: &Value) -> Result<()> {
 mod tests {
     use super::*;
     use std::os::unix::fs::MetadataExt;
+
+    #[test]
+    fn synchronization_does_not_ssh_the_scheduler_local_node() {
+        let hostname = "xbabe2";
+        let local = GPU_SYNC_NODES
+            .iter()
+            .copied()
+            .filter(|node| node_is_local(node, hostname))
+            .collect::<Vec<_>>();
+        assert_eq!(local, vec!["xbabe2"]);
+        assert!(node_is_local("xbabe2", "xbabe2.cluster.local"));
+        for remote in ["xbabe0", "xbabe1", "xbabe3", "xbabe4"] {
+            assert!(!node_is_local(remote, hostname));
+        }
+    }
 
     #[test]
     fn operational_python_is_rejected() {
