@@ -35,8 +35,11 @@ from test_exact_expansion import (  # noqa: E402
     TRAIN_ENCODING_NAMES,
     activate_tranche,
     compare_mirror,
+    discover,
     materialize_cache,
+    quarantine_identities,
     source_family,
+    validate_cache,
 )
 from test_exact_freshness import FreshnessSupervisor, epoch_for_checkpoint  # noqa: E402
 from test_exact_freshness_mcp import TOOLS  # noqa: E402
@@ -50,6 +53,74 @@ from test_exact_wave import select_micro_cohort  # noqa: E402
 
 def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def write_v1_quarantine(cache_root: Path, denied: str) -> None:
+    root = cache_root / "incident-quarantine"
+    root.mkdir(parents=True)
+    identities = [denied, *(f"{index:016x}" for index in range(1, 18))]
+    (root / "index.v1.json").write_text(
+        json.dumps(
+            {
+                "schema": "JopeV1EncodingQuarantine.v1",
+                "policy": {
+                    "catalog_allowed": False,
+                    "training_allowed": False,
+                    "benchmark_allowed": False,
+                    "v2_import_allowed": False,
+                    "gc_allowed": False,
+                },
+                "trees": [
+                    {
+                        "identity": identity,
+                        "state": "complete" if index < 11 else "partial",
+                    }
+                    for index, identity in enumerate(identities)
+                ],
+            }
+        )
+    )
+
+
+def test_v1_quarantine_is_excluded_from_python_discovery_and_consumption(tmp_path):
+    denied = "abcdef0123456789"
+    cache_root = tmp_path / "cache"
+    write_v1_quarantine(cache_root, denied)
+    assert denied in quarantine_identities(cache_root)
+
+    source_root = tmp_path / "source"
+    for task_root in ("regression", "binary", "multi_label", "timeseries"):
+        (source_root / task_root).mkdir(parents=True)
+    source = source_root / "regression" / denied
+    source.mkdir()
+    for name, contents in (
+        ("train.csv", "x,y\n1,2\n"),
+        ("test.csv", "x,y\n3,4\n"),
+        ("meta.json", "{}"),
+    ):
+        (source / name).write_text(contents)
+    assert discover(
+        source_root=source_root,
+        mirror_root=tmp_path / "mirror",
+        verify_mirror=False,
+        cache_root=cache_root,
+    ) == []
+
+    row = {
+        "task": "regression",
+        "dataset_id": denied,
+        "dataset_hash": denied,
+        "source": str(source),
+        "source_family": "family",
+        "train_sha256": digest(source / "train.csv"),
+        "test_sha256": digest(source / "test.csv"),
+    }
+    with pytest.raises(RuntimeError, match="denied by quarantine"):
+        materialize_cache(row, cache_root=cache_root)
+    with pytest.raises(RuntimeError, match="catalog adoption denied"):
+        activate_tranche([row], cache_root=cache_root, catalog_root=tmp_path / "catalog")
+    with pytest.raises(ValueError, match="quarantined V1 cache"):
+        validate_cache(cache_root / "incident-quarantine" / "complete" / denied)
 
 
 def identity(genome: str = "(pipe X (ridge))") -> dict:

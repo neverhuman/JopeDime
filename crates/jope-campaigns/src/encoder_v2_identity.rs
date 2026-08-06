@@ -18,6 +18,9 @@ pub const CONTEXT_TRANSFORM_SCHEMA: &str = "JopeContextTransformIdentity.v2";
 pub const CACHE_KEY_DOMAIN: &str = "jope-foundation-encoder-cache-v2";
 pub const OUTPUT_DTYPE: &str = "float32";
 pub const OUTPUT_FEATURES: u32 = 2_048;
+pub const OUTPUT_BYTES: u64 = 8_192;
+pub const OUTPUT_BYTE_ORDER: &str = "little-endian";
+pub const OUTPUT_LAYOUT: &str = "mean,std,p10,p90 by hidden-index";
 
 fn is_sha256(value: &str) -> bool {
     value.len() == 64
@@ -46,6 +49,16 @@ fn validate_relative_path(value: &str, field: &str) -> Result<()> {
         "{field} is not a normalized relative path"
     );
     Ok(())
+}
+
+fn path_looks_like_test_input(value: &str) -> bool {
+    Path::new(value).components().any(|component| {
+        let Component::Normal(name) = component else {
+            return false;
+        };
+        let name = name.to_string_lossy().to_ascii_lowercase();
+        name == "test" || name.starts_with("test.") || name.starts_with("test_")
+    })
 }
 
 fn validate_unique_artifacts(artifacts: &[ArtifactIdentity], field: &str) -> Result<()> {
@@ -160,13 +173,18 @@ pub struct NumericalRuntimeIdentity {
     pub requested_backend: String,
     pub required_actual_backend: String,
     pub device_class: String,
+    pub gpu_compute_capability: Option<String>,
+    pub cuda_version: Option<String>,
+    pub driver_version: Option<String>,
     pub deterministic: bool,
+    pub deterministic_flags: BTreeMap<String, bool>,
     pub input_dtype: String,
     pub accumulation_dtype: String,
     pub batch_size: u32,
     pub thread_count: u32,
     pub packages: BTreeMap<String, RuntimePackageIdentity>,
     pub kernel_policy_sha256: String,
+    pub memory_policy_sha256: String,
 }
 
 impl NumericalRuntimeIdentity {
@@ -185,11 +203,48 @@ impl NumericalRuntimeIdentity {
         ensure!(self.batch_size > 0, "batch size is zero");
         ensure!(self.thread_count > 0, "thread count is zero");
         ensure!(self.deterministic, "deterministic runtime mode is disabled");
+        ensure!(
+            !self.deterministic_flags.is_empty()
+                && self.deterministic_flags.values().all(|enabled| *enabled),
+            "deterministic runtime flags are absent or disabled"
+        );
         ensure!(!self.packages.is_empty(), "runtime packages are absent");
         for (name, package) in &self.packages {
             package.validate(name)?;
         }
+        ensure!(
+            self.packages.contains_key("pytorch"),
+            "runtime package tree does not bind PyTorch"
+        );
+        match self.requested_backend.as_str() {
+            "cuda" => {
+                nonempty(
+                    self.gpu_compute_capability.as_deref().unwrap_or_default(),
+                    "GPU compute capability",
+                )?;
+                nonempty(
+                    self.cuda_version.as_deref().unwrap_or_default(),
+                    "CUDA version",
+                )?;
+                nonempty(
+                    self.driver_version.as_deref().unwrap_or_default(),
+                    "driver version",
+                )?;
+                ensure!(
+                    self.packages.contains_key("cuda"),
+                    "CUDA backend does not bind a CUDA package tree"
+                );
+            }
+            "cpu" => ensure!(
+                self.gpu_compute_capability.is_none()
+                    && self.cuda_version.is_none()
+                    && self.driver_version.is_none(),
+                "CPU identity ambiguously declares CUDA/device fields"
+            ),
+            _ => unreachable!("backend validated above"),
+        }
         sha256(&self.kernel_policy_sha256, "kernel policy SHA-256")?;
+        sha256(&self.memory_policy_sha256, "memory policy SHA-256")?;
         Ok(())
     }
 }
@@ -198,7 +253,11 @@ impl NumericalRuntimeIdentity {
 #[serde(deny_unknown_fields)]
 pub struct OutputContractIdentity {
     pub dtype: String,
+    pub vector_count: u32,
     pub feature_count: u32,
+    pub byte_length: u64,
+    pub byte_order: String,
+    pub finite_only: bool,
     pub feature_layout: String,
     pub format_sha256: String,
 }
@@ -207,10 +266,26 @@ impl OutputContractIdentity {
     fn validate(&self) -> Result<()> {
         ensure!(self.dtype == OUTPUT_DTYPE, "output dtype is not float32");
         ensure!(
+            self.vector_count == 1,
+            "output does not contain exactly one vector"
+        );
+        ensure!(
             self.feature_count == OUTPUT_FEATURES,
             "output feature count is not {OUTPUT_FEATURES}"
         );
-        nonempty(&self.feature_layout, "output feature-layout contract")?;
+        ensure!(
+            self.byte_length == OUTPUT_BYTES,
+            "output byte length is not {OUTPUT_BYTES}"
+        );
+        ensure!(
+            self.byte_order == OUTPUT_BYTE_ORDER,
+            "output byte order is not {OUTPUT_BYTE_ORDER}"
+        );
+        ensure!(self.finite_only, "output permits nonfinite values");
+        ensure!(
+            self.feature_layout == OUTPUT_LAYOUT,
+            "output feature layout is not the declared Foundation layout"
+        );
         sha256(&self.format_sha256, "output format SHA-256")?;
         Ok(())
     }
@@ -225,11 +300,18 @@ pub struct FoundationEncoderIdentityV2 {
     pub prime_package_tree_sha256: String,
     pub protocol_name: String,
     pub protocol: ArtifactIdentity,
-    pub implementation: Vec<ArtifactIdentity>,
-    pub supervisor_executable: ArtifactIdentity,
+    pub python_implementation_tree_sha256: String,
+    pub python_encoder: ArtifactIdentity,
+    pub python_support: Vec<ArtifactIdentity>,
+    pub wrapper: ArtifactIdentity,
+    pub batch_driver: ArtifactIdentity,
+    pub native_supervisor: ArtifactIdentity,
     pub build: BuildIdentity,
     pub model_config: ArtifactIdentity,
+    pub model_manifests: Vec<ArtifactIdentity>,
     pub model_weights: Vec<ArtifactIdentity>,
+    pub prime_support_tree_sha256: String,
+    pub prime_support: Vec<ArtifactIdentity>,
     pub preprocessing_sha256: String,
     pub seed: u64,
     pub runtime: NumericalRuntimeIdentity,
@@ -253,23 +335,41 @@ impl FoundationEncoderIdentityV2 {
         )?;
         nonempty(&self.protocol_name, "encoder protocol name")?;
         self.protocol.validate()?;
-        validate_unique_artifacts(&self.implementation, "encoder implementation")?;
-        self.supervisor_executable.validate()?;
+        sha256(
+            &self.python_implementation_tree_sha256,
+            "Python implementation-tree SHA-256",
+        )?;
+        self.python_encoder.validate()?;
+        validate_unique_artifacts(&self.python_support, "Python encoder support tree")?;
+        self.wrapper.validate()?;
+        self.batch_driver.validate()?;
+        self.native_supervisor.validate()?;
         self.build.validate()?;
         self.model_config.validate()?;
+        validate_unique_artifacts(&self.model_manifests, "model manifests")?;
         validate_unique_artifacts(&self.model_weights, "model weights")?;
+        sha256(
+            &self.prime_support_tree_sha256,
+            "Prime support-tree SHA-256",
+        )?;
+        validate_unique_artifacts(&self.prime_support, "Prime support tree")?;
         sha256(&self.preprocessing_sha256, "preprocessing SHA-256")?;
         self.runtime.validate()?;
         self.output.validate()?;
 
         let mut all_paths = BTreeSet::new();
         for artifact in self
-            .implementation
+            .python_support
             .iter()
             .chain(std::iter::once(&self.protocol))
-            .chain(std::iter::once(&self.supervisor_executable))
+            .chain(std::iter::once(&self.python_encoder))
+            .chain(std::iter::once(&self.wrapper))
+            .chain(std::iter::once(&self.batch_driver))
+            .chain(std::iter::once(&self.native_supervisor))
             .chain(std::iter::once(&self.model_config))
+            .chain(self.model_manifests.iter())
             .chain(self.model_weights.iter())
+            .chain(self.prime_support.iter())
             .chain(self.build.lockfiles.iter())
         {
             ensure!(
@@ -391,7 +491,13 @@ impl DatasetReadIdentity {
             "dataset-read purpose is not train-only: {}",
             self.purpose
         );
-        self.artifact.validate()
+        self.artifact.validate()?;
+        ensure!(
+            !path_looks_like_test_input(&self.artifact.path),
+            "dataset read path appears to contain test bytes: {}",
+            self.artifact.path
+        );
+        Ok(())
     }
 }
 
@@ -451,6 +557,14 @@ impl FoundationDatasetInputV2 {
                     < (&pair[1].purpose, &pair[1].artifact.path)
             }),
             "files read must be strictly sorted by purpose and artifact path"
+        );
+        ensure!(
+            self.files_read
+                .iter()
+                .filter(|file| file.purpose == "train_data")
+                .count()
+                == 1,
+            "dataset input must declare exactly one train file"
         );
         ensure!(
             self.files_read
@@ -542,8 +656,12 @@ mod tests {
             prime_package_tree_sha256: digest(3),
             protocol_name: "foundation-pooled-vector-v2".to_owned(),
             protocol: artifact("protocols/foundation-pooled-vector-v2.json", 4),
-            implementation: vec![artifact("python/jope/encoders/foundation.py", 6)],
-            supervisor_executable: artifact("bin/jope-encoder-supervisor", 7),
+            python_implementation_tree_sha256: digest(5),
+            python_encoder: artifact("python/jope/encoders/foundation.py", 6),
+            python_support: vec![artifact("python/jope/encoders/support.py", 38)],
+            wrapper: artifact("pytorch/encoding/foundation_backfill.py", 39),
+            batch_driver: artifact("pytorch/encoding/encode_batch.py", 40),
+            native_supervisor: artifact("bin/jope_encoder_supervisor", 7),
             build: BuildIdentity {
                 repository_commit: "ab".repeat(20),
                 compiler: "rustc-1.test".to_owned(),
@@ -553,14 +671,24 @@ mod tests {
                 lockfiles: vec![artifact("Cargo.lock", 8), artifact("uv.lock", 9)],
             },
             model_config: artifact("prime/config.json", 10),
+            model_manifests: vec![artifact("weights/manifest.json", 41)],
             model_weights: vec![artifact("weights/starlight.safetensors", 11)],
+            prime_support_tree_sha256: digest(42),
+            prime_support: vec![artifact("prime/support/encoder.py", 43)],
             preprocessing_sha256: digest(15),
             seed: 23,
             runtime: NumericalRuntimeIdentity {
                 requested_backend: "cuda".to_owned(),
                 required_actual_backend: "cuda".to_owned(),
                 device_class: "sm_89".to_owned(),
+                gpu_compute_capability: Some("8.9".to_owned()),
+                cuda_version: Some("13.test".to_owned()),
+                driver_version: Some("999.test".to_owned()),
                 deterministic: true,
+                deterministic_flags: BTreeMap::from([
+                    ("cudnn_benchmark_disabled".to_owned(), true),
+                    ("deterministic_algorithms".to_owned(), true),
+                ]),
                 input_dtype: "float32".to_owned(),
                 accumulation_dtype: "float32".to_owned(),
                 batch_size: 16,
@@ -582,11 +710,16 @@ mod tests {
                     ),
                 ]),
                 kernel_policy_sha256: digest(16),
+                memory_policy_sha256: digest(44),
             },
             output: OutputContractIdentity {
                 dtype: OUTPUT_DTYPE.to_owned(),
+                vector_count: 1,
                 feature_count: OUTPUT_FEATURES,
-                feature_layout: "mean,std,p10,p90 by hidden-index".to_owned(),
+                byte_length: OUTPUT_BYTES,
+                byte_order: OUTPUT_BYTE_ORDER.to_owned(),
+                finite_only: true,
+                feature_layout: OUTPUT_LAYOUT.to_owned(),
                 format_sha256: digest(17),
             },
         }
@@ -645,7 +778,7 @@ mod tests {
 
         let encoder_mutations = [
             ("/model_weights/0/sha256", Value::String(digest(20))),
-            ("/supervisor_executable/sha256", Value::String(digest(21))),
+            ("/native_supervisor/sha256", Value::String(digest(21))),
             ("/protocol/sha256", Value::String(digest(22))),
             (
                 "/runtime/packages/pytorch/package_tree_sha256",
@@ -664,6 +797,11 @@ mod tests {
         let mut cpu = encoder.clone();
         cpu.runtime.requested_backend = "cpu".to_owned();
         cpu.runtime.required_actual_backend = "cpu".to_owned();
+        cpu.runtime.device_class = "x86_64-avx2".to_owned();
+        cpu.runtime.gpu_compute_capability = None;
+        cpu.runtime.cuda_version = None;
+        cpu.runtime.driver_version = None;
+        cpu.runtime.packages.remove("cuda");
         assert_ne!(stable, cache_key(&cpu, &input).unwrap(), "cpu vs cuda");
 
         let input_mutations = [
@@ -766,7 +904,7 @@ mod tests {
         assert!(decode_encoder_identity(&serde_json::to_vec(&value).unwrap()).is_err());
 
         let mut invalid = encoder();
-        invalid.implementation[0].path = "../mutable/foundation.py".to_owned();
+        invalid.python_encoder.path = "../mutable/foundation.py".to_owned();
         assert!(invalid.validate().is_err());
 
         let mut uppercase_commit = encoder();

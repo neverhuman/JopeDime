@@ -11,6 +11,7 @@
 //! jope_expanded_catalog tool; Python is invoked only for torch encoders.
 
 use anyhow::{anyhow, bail, Context, Result};
+use jope_dime_regressor::recovery_contracts::V1EncodingQuarantineV1;
 use jope_dime_regressor::selfplay_expansion::{corpus_dir_name, TASKS};
 use jope_dime_regressor::selfplay_runtime::{atomic_json, sha256_bytes, sha256_file};
 use rusqlite::Connection;
@@ -58,6 +59,23 @@ const COVERAGE_VALVE: f64 = 0.3;
 /// budget exists to prevent, while re-listing a genuinely broken dataset only
 /// wastes one slot in a 2,000-dataset chunk. Bias hard toward retrying.
 const MAX_ENCODE_ATTEMPTS: i64 = 8;
+
+fn reject_v1_quarantine_window(encodings_root: &Path) -> Result<()> {
+    let quarantine_root = encodings_root.join("incident-quarantine");
+    if !quarantine_root.exists() {
+        return Ok(());
+    }
+    let index_path = quarantine_root.join("index.v1.json");
+    let index: V1EncodingQuarantineV1 =
+        serde_json::from_reader(std::fs::File::open(&index_path).with_context(|| {
+            format!(
+                "V1 incident quarantine exists without readable frozen index {}",
+                index_path.display()
+            )
+        })?)?;
+    index.validate()?;
+    bail!("legacy expansion driver is disabled throughout the Encoder V2 quarantine window")
+}
 
 fn now_ms() -> u64 {
     SystemTime::now()
@@ -1715,6 +1733,7 @@ fn install_batch(root: &Path, task: &str, ids: &[String], log: &mut Vec<Value>) 
 // ---------------------------------------------------------------------------
 
 fn run_cycle(root: &Path) -> Result<Value> {
+    reject_v1_quarantine_window(Path::new(ENCODINGS))?;
     let conn = open_state_db(root)?;
     let (scanned, _) = refresh_filesystem_state(&conn, root)?;
     let exclusion_receipts_created = emit_encoding_exclusion_receipts(&conn, root)?;
@@ -1938,6 +1957,15 @@ fn main() -> Result<()> {
 mod tests {
     use super::*;
 
+    #[test]
+    fn incident_quarantine_disables_legacy_driver_before_cycle_work() {
+        let dir = tempfile::tempdir().unwrap();
+        reject_v1_quarantine_window(dir.path()).unwrap();
+        std::fs::create_dir(dir.path().join("incident-quarantine")).unwrap();
+        let error = reject_v1_quarantine_window(dir.path()).unwrap_err();
+        assert!(error.to_string().contains("without readable frozen index"));
+    }
+
     /// Every encode job must be able to import the foundation expert, and the
     /// smoke probe must test the SAME path the job runs with.
     ///
@@ -1947,7 +1975,8 @@ mod tests {
     /// value, so if it is dropped here nothing downstream can recover it.
     #[test]
     fn encode_job_pythonpath_carries_the_foundation_expert_root() {
-        let bundle_pytorch = "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/abc/pytorch";
+        let bundle_pytorch =
+            "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/abc/pytorch";
         let job_pythonpath = format!("{bundle_pytorch}:{FOUNDATION_EXPERT_ROOT}");
 
         assert!(

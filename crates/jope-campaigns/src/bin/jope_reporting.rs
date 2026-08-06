@@ -6,6 +6,8 @@
 
 use anyhow::{ensure, Context, Result};
 use clap::Parser;
+use jope_dime_regressor::four_task::JopeFourTaskTelemetryV1;
+use jope_dime_regressor::recovery_contracts::RecoveryContinuityObservationV1;
 use jope_dime_regressor::selfplay_ingest;
 use jope_dime_regressor::selfplay_runtime::{atomic_json, now_ms, sha256_file, DEFAULT_ROOT};
 use jope_dime_regressor::selfplay_shadow::{
@@ -438,7 +440,55 @@ fn materialize_recovery(root: &Path, at_ms: u128) -> Result<Value> {
         .and_then(|value| value.get("fresh"))
         .and_then(Value::as_bool)
         == Some(true);
-    let green = gates_green && queue_fresh && queue_depth > 0;
+    let observation_path = root.join("ops/recovery-continuity-observation.v1.json");
+    let observation_value = read_optional_json(&observation_path);
+    let observation =
+        serde_json::from_value::<RecoveryContinuityObservationV1>(observation_value.clone());
+    let now_ms = at_ms.min(u128::from(u64::MAX)) as u64;
+    let (observation_green, observation_reason, observation_epoch, observation_inputs) =
+        match observation {
+            Ok(observation) => {
+                let validated = observation
+                    .validate_at(now_ms)
+                    .and_then(|()| verify_continuity_observation(root, &observation, at_ms))
+                    .and_then(|()| observation.epoch_identity_sha256(now_ms));
+                match validated {
+                    Ok(epoch) => (
+                        true,
+                        "fresh digest-complete continuity observation is green".to_owned(),
+                        Some(epoch),
+                        observation.input_digests,
+                    ),
+                    Err(error) => (
+                        false,
+                        format!("continuity observation rejected: {error:#}"),
+                        None,
+                        observation.input_digests,
+                    ),
+                }
+            }
+            Err(error) => (
+                false,
+                format!("continuity observation is absent or malformed: {error}"),
+                None,
+                Vec::new(),
+            ),
+        };
+    gates.insert(
+        "continuity_observation".to_owned(),
+        json!(observation_green),
+    );
+    components.insert(
+        "continuity_observation".to_owned(),
+        json!({
+            "path": "ops/recovery-continuity-observation.v1.json",
+            "schema": observation_value.get("schema"),
+            "sha256": observation_path.is_file().then(|| sha256_file(&observation_path)).transpose()?,
+            "healthy": observation_green,
+            "reason": observation_reason,
+        }),
+    );
+    let green = gates_green && queue_fresh && queue_depth > 0 && observation_green;
     let continuity_path = root.join("ops/recovery-continuity.v1.json");
     let previous = read_optional_json(&continuity_path);
     let previous_observed = previous.get("last_observed_at_ms").and_then(Value::as_u64);
@@ -455,6 +505,10 @@ fn materialize_recovery(root: &Path, at_ms: u128) -> Result<Value> {
             .get("green_since_ms")
             .and_then(Value::as_u64)
             .is_some()
+        && previous
+            .get("epoch_identity_sha256")
+            .and_then(Value::as_str)
+            == observation_epoch.as_deref()
         && gap_ok
         && green;
     let green_since = if green {
@@ -470,8 +524,19 @@ fn materialize_recovery(root: &Path, at_ms: u128) -> Result<Value> {
         .map(|since| at_ms.saturating_sub(u128::from(since)) / 1_000)
         .unwrap_or(0);
     let release_ready = green && continuously_green_seconds >= u128::from(REQUIRED_GREEN_SECONDS);
+    let reset_reason = if green {
+        (!continuing && previous.get("green_since_ms").is_some())
+            .then_some("continuity epoch identity changed; a new uninterrupted epoch started")
+    } else {
+        Some(observation_reason.as_str())
+    };
     let continuity = json!({
         "schema": CONTINUITY_SCHEMA,
+        "generated_at_ms": at_ms,
+        "freshness_budget_seconds": MAXIMUM_OBSERVATION_GAP_SECONDS,
+        "input_digests": observation_inputs,
+        "blockers": (!green).then_some(vec![observation_reason.clone()]).unwrap_or_default(),
+        "epoch_identity_sha256": observation_epoch,
         "green_since_ms": green_since,
         "last_observed_at_ms": at_ms,
         "last_observation_green": green,
@@ -487,9 +552,7 @@ fn materialize_recovery(root: &Path, at_ms: u128) -> Result<Value> {
         "required_green_seconds": REQUIRED_GREEN_SECONDS,
         "continuously_green_seconds": continuously_green_seconds,
         "release_ready": release_ready,
-        "reset_reason": (!green).then_some(
-            "one or more native gates failed or useful queue depth was zero"
-        ),
+        "reset_reason": reset_reason,
     });
     atomic_json(&continuity_path, &continuity)?;
     let telemetry = read_optional_json(&root.join("ops/four-task-telemetry.v1.json"));
@@ -519,6 +582,71 @@ fn materialize_recovery(root: &Path, at_ms: u128) -> Result<Value> {
     });
     atomic_json(&root.join("ops/recovery-report.v2.json"), &report)?;
     Ok(report)
+}
+
+fn verify_continuity_observation(
+    root: &Path,
+    observation: &RecoveryContinuityObservationV1,
+    at_ms: u128,
+) -> Result<()> {
+    let unit_audit_path = root.join("ops/effective-unit-audit.v1.json");
+    let unit_audit = read_json(&unit_audit_path)?;
+    ensure!(
+        unit_audit.get("bundle_sha256").and_then(Value::as_str)
+            == Some(observation.runtime_bundle_sha256.as_str()),
+        "effective-unit audit runtime bundle differs from continuity observation"
+    );
+    let expansion_inactive = unit_audit
+        .get("units")
+        .and_then(Value::as_array)
+        .and_then(|rows| {
+            rows.iter().find(|row| {
+                row.get("unit").and_then(Value::as_str) == Some("jope-selfplay-expansion.service")
+            })
+        })
+        .is_some_and(|row| {
+            row.get("active_state").and_then(Value::as_str) != Some("active")
+                && row.get("main_pid").and_then(Value::as_u64).unwrap_or(0) == 0
+        });
+    ensure!(
+        expansion_inactive,
+        "effective-unit audit does not prove expansion stopped and disabled"
+    );
+
+    let telemetry_path = root.join("ops/four-task-telemetry.v1.json");
+    ensure!(
+        sha256_file(&telemetry_path)? == observation.telemetry_sha256,
+        "four-task telemetry digest differs from continuity observation"
+    );
+    let telemetry: JopeFourTaskTelemetryV1 = serde_json::from_value(read_json(&telemetry_path)?)?;
+    telemetry.validate()?;
+    ensure!(
+        telemetry.generated_at_ms <= at_ms
+            && at_ms.saturating_sub(telemetry.generated_at_ms)
+                <= u128::from(observation.freshness_budget_seconds) * 1_000,
+        "four-task telemetry is stale"
+    );
+
+    let causal_path = root.join("ops/causal-evidence-audit.v2.json");
+    ensure!(
+        sha256_file(&causal_path)? == observation.causal_evidence_sha256,
+        "causal evidence digest differs from continuity observation"
+    );
+    let supply = read_json(&root.join("ops/micro-wave-supply-v2.json"))?;
+    ensure!(
+        supply.get("useful_work").and_then(Value::as_u64) == Some(observation.useful_work)
+            && supply.get("useful_work_target").and_then(Value::as_u64)
+                == Some(observation.useful_work_target)
+            && supply.get("complete_reserve_waves").and_then(Value::as_u64)
+                == Some(observation.protected_complete_waves),
+        "supply measurements differ from continuity observation"
+    );
+    ensure!(
+        sha256_file(&root.join("training/accepted-by-task.json"))?
+            == observation.accepted_model_pointer_sha256,
+        "accepted-model pointer changed or is not directly observed"
+    );
+    Ok(())
 }
 
 fn task_name(task: Task) -> &'static str {
@@ -1014,11 +1142,183 @@ mod tests {
                 "effective_unit_audit" => {
                     object.insert("healthy".to_owned(), json!(true));
                     object.insert("violations".to_owned(), json!([]));
+                    object.insert("bundle_sha256".to_owned(), json!("a".repeat(64)));
+                    object.insert(
+                        "units".to_owned(),
+                        json!([{
+                            "unit": "jope-selfplay-expansion.service",
+                            "active_state": "inactive",
+                            "main_pid": 0,
+                        }]),
+                    );
                 }
                 _ => {}
             }
             atomic_json(&root.join(component.path), &value).unwrap();
         }
+        let typed_na = || json!({"na_reason": "not observed in continuity fixture"});
+        let count = || json!({"value": 0});
+        let rows = [
+            ("regression", "r2"),
+            ("binary", "auc"),
+            ("multiclass", "macro_f1"),
+            ("timeseries", "negative_mase"),
+        ]
+        .into_iter()
+        .map(|(task, primary_metric)| {
+            json!({
+                "task": task,
+                "counts": {
+                    "catalog_entries": count(), "source_families": count(),
+                    "encoded": count(), "active": count(), "observed": count(),
+                    "queued": count(), "running": count(), "completed": count(),
+                    "failed": count(), "quarantined": count(),
+                },
+                "latest_observation_at_ms": typed_na(),
+                "valid_observations_per_minute": typed_na(),
+                "evaluator_failures_per_minute": typed_na(),
+                "freshness_reason": "typed absence",
+                "metrics": {
+                    "primary_metric": primary_metric,
+                    "primary_performance": typed_na(),
+                    "native_errors": {},
+                    "bounded_utility": typed_na(),
+                    "operational_loss": typed_na(),
+                },
+                "accepted_checkpoint": typed_na(),
+                "bootstrap_anchor_state": "absent",
+                "latest_shadow": typed_na(),
+                "active_candidate": typed_na(),
+                "eligibility": {
+                    "evidence_eligible": false,
+                    "training_eligible": false,
+                    "promotion_eligible": false,
+                    "blockers": ["fixture_absence"],
+                },
+                "adaptive_rating": typed_na(),
+                "diagnostic_rating": typed_na(),
+                "sealed_promotion": typed_na(),
+                "trainer_validation": {"metrics": {}, "age_seconds": typed_na()},
+                "sources": [],
+            })
+        })
+        .collect::<Vec<_>>();
+        atomic_json(
+            &root.join("ops/four-task-telemetry.v1.json"),
+            &json!({
+                "schema": "JopeFourTaskTelemetry.v1",
+                "generated_at_ms": at_ms,
+                "corpus_watermark": count(),
+                "rows": rows,
+            }),
+        )
+        .unwrap();
+        atomic_json(
+            &root.join("training/accepted-by-task.json"),
+            &json!({"schema": "JopeAcceptedByTask.v1", "tasks": {}}),
+        )
+        .unwrap();
+        atomic_json(
+            &root.join("ops/reporting-status.v1.json"),
+            &json!({"schema": "JopeReportingStatus.v1", "generated_at_ms": at_ms}),
+        )
+        .unwrap();
+        write_green_continuity_observation(root, at_ms);
+    }
+
+    fn write_green_continuity_observation(root: &Path, at_ms: u128) {
+        let runtime = "a".repeat(64);
+        let accepted = sha256_file(&root.join("training/accepted-by-task.json")).unwrap();
+        let causal = sha256_file(&root.join("ops/causal-evidence-audit.v2.json")).unwrap();
+        let telemetry = sha256_file(&root.join("ops/four-task-telemetry.v1.json")).unwrap();
+        let service_paths = [
+            ("freezer", "ops/corpus-freezer-v1.json"),
+            ("freshness", "ops/freshness-status.json"),
+            ("ingestion", "ops/last-ingest.json"),
+            ("liveness", "ops/flywheel-liveness.v1.json"),
+            ("queue", "ops/queue-keeper-v3.json"),
+            ("reporting", "ops/reporting-status.v1.json"),
+            ("supply", "ops/micro-wave-supply-v2.json"),
+        ];
+        let services = service_paths
+            .iter()
+            .map(|(service, path)| {
+                json!({
+                    "service": service,
+                    "status_sha256": sha256_file(&root.join(path)).unwrap(),
+                    "fresh": true,
+                })
+            })
+            .collect::<Vec<_>>();
+        let nodes = ["xbabe0", "xbabe1", "xbabe2", "xbabe3", "xbabe4"]
+            .into_iter()
+            .enumerate()
+            .map(|(index, node)| {
+                json!({
+                    "node": node,
+                    "receipt_sha256": format!("{:064x}", 100 + index),
+                    "runtime_bundle_sha256": runtime,
+                    "active_process_count": 1,
+                    "verified": true,
+                })
+            })
+            .collect::<Vec<_>>();
+        let incident = format!("{:064x}", 1);
+        let quarantine = format!("{:064x}", 2);
+        let model = format!("{:064x}", 3);
+        let held = format!("{:064x}", 4);
+        let v1_inventory = format!("{:064x}", 5);
+        let mut inputs = BTreeSet::from([
+            incident.clone(),
+            quarantine.clone(),
+            runtime.clone(),
+            causal.clone(),
+            telemetry.clone(),
+            accepted.clone(),
+            model.clone(),
+            held.clone(),
+            v1_inventory.clone(),
+        ]);
+        for row in &nodes {
+            inputs.insert(row["receipt_sha256"].as_str().unwrap().to_owned());
+        }
+        for row in &services {
+            inputs.insert(row["status_sha256"].as_str().unwrap().to_owned());
+        }
+        atomic_json(
+            &root.join("ops/recovery-continuity-observation.v1.json"),
+            &json!({
+                "schema": "JopeRecoveryContinuityObservation.v1",
+                "generated_at_unix_ms": at_ms,
+                "freshness_budget_seconds": 120,
+                "input_digests": inputs,
+                "incident_containment_sha256": incident,
+                "quarantine_index_sha256": quarantine,
+                "runtime_bundle_sha256": runtime,
+                "nodes": nodes,
+                "active_process_bundle_sha256": vec!["a".repeat(64); 5],
+                "causal_evidence_sha256": causal,
+                "causal_success": true,
+                "telemetry_sha256": telemetry,
+                "telemetry_rows_exact_and_fresh": true,
+                "useful_work": 6_144,
+                "useful_work_target": 6_144,
+                "protected_complete_waves": 2,
+                "services": services,
+                "accepted_model_pointer_sha256": accepted,
+                "model_pointer_sha256": model,
+                "held_job_inventory_sha256": held,
+                "held_job_count": 3,
+                "ownerless_hold_count": 0,
+                "evaluation_cancellation_count_since_epoch": 0,
+                "v1_output_inventory_sha256": v1_inventory,
+                "new_v1_output_count_since_epoch": 0,
+                "v1_quarantine_consumption_count_since_epoch": 0,
+                "expansion_active": false,
+                "blockers": [],
+            }),
+        )
+        .unwrap();
     }
 
     #[test]
@@ -1031,10 +1331,12 @@ mod tests {
         assert_eq!(warming["healthy"], true);
         assert_eq!(warming["release_gate"], "warming");
 
+        let epoch = warming["continuity"]["epoch_identity_sha256"].clone();
         atomic_json(
             &root.join("ops/recovery-continuity.v1.json"),
             &json!({
                 "schema": CONTINUITY_SCHEMA,
+                "epoch_identity_sha256": epoch,
                 "green_since_ms": at_ms - u128::from(REQUIRED_GREEN_SECONDS) * 1_000,
                 "last_observed_at_ms": at_ms - 30_000,
                 "last_observation_green": true,
@@ -1051,13 +1353,42 @@ mod tests {
         assert_eq!(ready["release_gate"], "ready");
         assert_eq!(ready["continuity"]["release_ready"], true);
 
+        let observation_path = root.join("ops/recovery-continuity-observation.v1.json");
+        let mut observation = read_json(&observation_path).unwrap();
+        let old_model = observation["model_pointer_sha256"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        let new_model = "f".repeat(64);
+        observation["model_pointer_sha256"] = json!(new_model);
+        observation["generated_at_unix_ms"] = json!(at_ms + 30_000);
+        let mut inputs = observation["input_digests"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_str().unwrap().to_owned())
+            .collect::<Vec<_>>();
+        *inputs
+            .iter_mut()
+            .find(|digest| **digest == old_model)
+            .unwrap() = "f".repeat(64);
+        inputs.sort();
+        observation["input_digests"] = json!(inputs);
+        atomic_json(&observation_path, &observation).unwrap();
+        let reset = materialize_recovery(root, at_ms + 30_000).unwrap();
+        assert_eq!(reset["release_gate"], "warming");
+        assert!(reset["continuity"]["reset_reason"]
+            .as_str()
+            .unwrap()
+            .contains("epoch identity changed"));
+
         let queue_path = root.join("ops/queue-keeper-v3.json");
         let mut queue = read_json(&queue_path).unwrap();
-        queue["generated_at_ms"] = json!(at_ms + 30_000);
+        queue["generated_at_ms"] = json!(at_ms + 60_000);
         queue["useful_work"] = json!(0);
         queue["queued"] = json!(0);
         atomic_json(&queue_path, &queue).unwrap();
-        let blocked = materialize_recovery(root, at_ms + 30_000).unwrap();
+        let blocked = materialize_recovery(root, at_ms + 60_000).unwrap();
         assert_eq!(blocked["release_gate"], "blocked");
         assert_eq!(blocked["continuity"]["green_since_ms"], Value::Null);
         assert_eq!(blocked["continuity"]["last_observation_green"], false);

@@ -13,6 +13,7 @@ import sqlite3
 import struct
 import sys
 import random
+import re
 import statistics
 import subprocess
 import threading
@@ -134,7 +135,8 @@ ENABLED_TASK_METRICS = {
 # Tasks that must ALWAYS be present in a packed corpus. The optional tasks join
 # as their observations arrive; their absence is a data condition, not an error.
 MANDATORY_TASKS = ("regression", "binary")
-# An optional task joins TRAINING only once it has this many distinct datasets.
+# Optional tasks join training through JopeOptionalTaskReadiness.v2. Their
+# task-specific dataset floors are deliberately not interchangeable.
 #
 # Evaluation is deliberately NOT gated on it: waves keep running the task, so
 # the evidence that clears the floor can actually accumulate. Gating wave
@@ -145,21 +147,120 @@ MANDATORY_TASKS = ("regression", "binary")
 # with 29 datasets does not give it 0.1% of the gradient harmlessly -- it gives
 # those 29 datasets unlimited repetition across epochs, which is how a trunk
 # memorises a handful of datasets and calls it a task.
-OPTIONAL_TASK_DATASET_FLOOR = 500
+OPTIONAL_TASK_DATASET_FLOORS = {"multiclass": 500, "timeseries": 42}
+OPTIONAL_TASK_READINESS = ROOT / "ops" / "optional-task-readiness.v2.json"
 
-def trainable_task_metrics(con) -> dict:
+
+def load_optional_task_readiness(path: Path = OPTIONAL_TASK_READINESS) -> dict | None:
+    if not path.is_file():
+        return None
+    value = json.loads(path.read_text())
+    if value.get("schema") != "JopeOptionalTaskReadiness.v2":
+        raise RuntimeError("optional-task readiness schema drift")
+    generated = int(value.get("generated_at_unix_ms") or 0)
+    budget = int(value.get("freshness_budget_seconds") or 0)
+    now = int(time.time() * 1000)
+    if generated <= 0 or budget <= 0 or now < generated or now - generated > budget * 1000:
+        raise RuntimeError("optional-task readiness is stale or future-invalid")
+    inputs = value.get("input_digests")
+    if (
+        not isinstance(inputs, list)
+        or not inputs
+        or inputs != sorted(set(inputs))
+        or any(not re.fullmatch(r"[0-9a-f]{64}", str(digest)) for digest in inputs)
+    ):
+        raise RuntimeError("optional-task readiness input digests are invalid")
+    rows = value.get("tasks")
+    if (
+        not isinstance(rows, list)
+        or [row.get("task") for row in rows] != ["multiclass", "timeseries"]
+    ):
+        raise RuntimeError("optional-task readiness rows are incomplete or unordered")
+    return value
+
+
+def optional_task_training_allowed(task: str, row: dict, datasets: int) -> bool:
+    floor = OPTIONAL_TASK_DATASET_FLOORS[task]
+    common = (
+        row.get("state") == "shadow_ready"
+        and row.get("training_allowed") is True
+        and int(row.get("distinct_dataset_identities") or 0) >= floor
+        and datasets >= floor
+        and int(row.get("valid_v2_cache_bindings") or 0) >= datasets
+        and int(row.get("valid_context_transform_bindings") or 0) >= datasets
+        and row.get("evaluator_retained") is True
+        and int(row.get("task_valid_head_count") or 0) > 0
+        and row.get("fresh_unbiased_shadow_evidence") is True
+        and not row.get("blockers")
+    )
+    if task == "multiclass":
+        return (
+            common
+            and int(row.get("minimum_required") or 0) == 500
+            and row.get("primary_metric") == "macro_f1"
+            and row.get("native_error_metric") == "one_minus_macro_f1"
+        )
+    return (
+        common
+        and datasets == 42
+        and int(row.get("distinct_dataset_identities") or 0) == 42
+        and int(row.get("minimum_required") or 0) == 42
+        and int(row.get("minimum_rolling_origins_per_dataset") or 0) >= 3
+        and row.get("causal_reduction_verified") is True
+        and row.get("no_future_leakage") is True
+        and row.get("primary_metric") == "negative_mase"
+        and row.get("native_error_metric") == "mase"
+    )
+
+
+def eight_slot_task_weights(readiness: dict | None) -> dict[str, tuple[int, int]]:
+    rows = {
+        row["task"]: row for row in (readiness or {}).get("tasks", [])
+        if isinstance(row, dict) and row.get("task") in OPTIONAL_TASK_DATASET_FLOORS
+    }
+    multiclass = rows.get("multiclass", {}).get("training_allowed") is True
+    timeseries = rows.get("timeseries", {}).get("training_allowed") is True
+    missing = int(not multiclass) + int(not timeseries)
+    return {
+        "regression": (6 + missing, 16),
+        "binary": (6 + missing, 16),
+        "multiclass": (2 if multiclass else 0, 16),
+        "timeseries": (2 if timeseries else 0, 16),
+    }
+
+
+def require_optional_task_admission(
+    task: str, readiness_path: Path | None
+) -> dict | None:
+    if task in MANDATORY_TASKS:
+        return None
+    path = readiness_path or OPTIONAL_TASK_READINESS
+    readiness = load_optional_task_readiness(path)
+    if readiness is None:
+        raise ValueError(f"{task} training requires JopeOptionalTaskReadiness.v2")
+    row = next(row for row in readiness["tasks"] if row["task"] == task)
+    if row.get("training_allowed") is not True:
+        raise ValueError(f"{task} is not admitted for optional-task training")
+    return readiness
+
+
+def trainable_task_metrics(con, readiness: dict | None = None) -> dict:
     """Tasks whose observations may enter a checkpoint, task -> metric.
 
-    Mandatory tasks always qualify. An optional task qualifies only once it has
-    at least OPTIONAL_TASK_DATASET_FLOOR distinct datasets carrying its own
-    contract metric, counted from the corpus itself rather than from a config
-    file, so the gate cannot drift from the data it is protecting.
+    Mandatory tasks always qualify. Optional tasks require both corpus counts
+    and a fresh V2 readiness authority; missing readiness is typed absence.
     """
 
     trainable = {
         task: metric
         for task, metric in ENABLED_TASK_METRICS.items()
         if task in MANDATORY_TASKS
+    }
+    if readiness is None:
+        readiness = load_optional_task_readiness()
+    readiness_rows = {
+        row["task"]: row for row in (readiness or {}).get("tasks", [])
+        if isinstance(row, dict) and row.get("task") in OPTIONAL_TASK_DATASET_FLOORS
     }
     for task, metric in sorted(ENABLED_TASK_METRICS.items()):
         if task in MANDATORY_TASKS:
@@ -169,13 +270,15 @@ def trainable_task_metrics(con) -> dict:
             "WHERE task=? AND metric=?",
             (task, metric),
         ).fetchone()
-        if datasets >= OPTIONAL_TASK_DATASET_FLOOR:
+        row = readiness_rows.get(task)
+        if row is not None and optional_task_training_allowed(task, row, datasets):
             trainable[task] = metric
         else:
             print(
                 f"[trainer] {task} withheld from training: {datasets} distinct "
-                f"datasets < floor {OPTIONAL_TASK_DATASET_FLOOR}; evaluation "
-                f"continues so the floor can be reached",
+                f"datasets; JopeOptionalTaskReadiness.v2 is absent or not "
+                f"shadow-ready at task floor {OPTIONAL_TASK_DATASET_FLOORS[task]}; "
+                f"evaluation continues",
                 flush=True,
             )
     return trainable
@@ -1506,11 +1609,15 @@ def train(
     packed_source_validation: Path | None = None,
     packed_catalog_data: Path | None = None,
     accepted_parent_sha256: str | None = None,
+    optional_task_readiness: Path | None = None,
 ) -> dict:
-    if task not in {"binary", "regression"}:
-        raise ValueError("trainer task must be binary or regression")
+    if task not in ENABLED_TASK_METRICS:
+        raise ValueError("trainer task is outside the four-task contract")
     if mode not in {"shadow", "production"}:
         raise ValueError("trainer mode must be shadow or production")
+    if task not in MANDATORY_TASKS and mode != "shadow":
+        raise ValueError("optional-task training is shadow-only")
+    readiness = require_optional_task_admission(task, optional_task_readiness)
     if accepted_parent_sha256 is not None and (
         len(accepted_parent_sha256) != 64
         or any(character not in "0123456789abcdef" for character in accepted_parent_sha256)
@@ -1667,12 +1774,47 @@ def train(
                 (str(metadata.get("task_type")), str(metadata.get("dataset_hash")))
             ].append(row)
         rng = random.Random((int(seed) & 0xFFFF_FFFF) * 1_000_003 + epoch * 2_654_435_761)
-        drawn = []
+        drawn_by_family = defaultdict(lambda: defaultdict(list))
         for key in sorted(pools):
             pool = pools[key]
             quota = int((pool[0].metadata or {}).get("epoch_quota") or EQUAL_QUOTA)
-            drawn.extend(equal_quota_draw(pool, quota, rng))
-        return drawn
+            selected = equal_quota_draw(pool, quota, rng)
+            family = str((pool[0].metadata or {}).get("source_family") or "")
+            if not family:
+                raise ValueError("training row lacks source_family for balanced sampling")
+            drawn_by_family[family][key].extend(selected)
+        if not drawn_by_family:
+            return []
+        # Every family contributes the same total weight. Inside a family,
+        # datasets are visited round-robin in a seeded order, so a large source
+        # family cannot dominate and a deep dataset cannot dominate its family.
+        family_quota = min(
+            sum(len(dataset_rows) for dataset_rows in datasets.values())
+            for datasets in drawn_by_family.values()
+        )
+        balanced = []
+        for family in sorted(drawn_by_family):
+            datasets = drawn_by_family[family]
+            keys = sorted(datasets)
+            rng.shuffle(keys)
+            positions = {key: 0 for key in keys}
+            family_rows = []
+            while len(family_rows) < family_quota:
+                progressed = False
+                for key in keys:
+                    position = positions[key]
+                    if position < len(datasets[key]):
+                        family_rows.append(datasets[key][position])
+                        positions[key] += 1
+                        progressed = True
+                        if len(family_rows) == family_quota:
+                            break
+                if not progressed:
+                    break
+            if len(family_rows) != family_quota:
+                raise ValueError("family-balanced sampler could not satisfy its quota")
+            balanced.extend(family_rows)
+        return balanced
 
     def grouped_batches(rows, batch_size, rng):
         from jope.train import _dataset_grouped_batches
@@ -2203,6 +2345,7 @@ def train(
     summary["seed"] = seed
     summary["task"] = task
     summary["trainer_mode"] = mode
+    summary["task_sampling_weights"] = eight_slot_task_weights(readiness)
     summary["checkpoint_contract"] = (
         "ShadowCheckpoint.v1" if mode == "shadow" else "ProductionCheckpointCandidate.v1"
     )
@@ -2219,15 +2362,19 @@ def render_spec(
     task: str,
     mode: str = "shadow",
     packed_manifest: Path | None = None,
+    optional_task_readiness: Path | None = None,
 ) -> dict:
     manifest = json.loads(corpus_manifest.read_text())
     watermark = int(manifest["source_label_watermark"])
     if recipe not in {"a", "b", "c", "d", "e"}:
         raise ValueError("checkpoint recipe must be a, b, c, d, or e")
-    if task not in {"binary", "regression"}:
-        raise ValueError("trainer task must be binary or regression")
+    if task not in ENABLED_TASK_METRICS:
+        raise ValueError("trainer task is outside the four-task contract")
     if mode not in {"shadow", "production"}:
         raise ValueError("trainer mode must be shadow or production")
+    if task not in MANDATORY_TASKS and mode != "shadow":
+        raise ValueError("optional-task training is shadow-only")
+    readiness = require_optional_task_admission(task, optional_task_readiness)
     if recipe == "d" and (mode != "shadow" or packed_manifest is None):
         raise ValueError("causal-pair recipe d is shadow-only and packed-only")
     if recipe == "e" and (mode != "shadow" or packed_manifest is None):
@@ -2241,7 +2388,9 @@ def render_spec(
     prime_source = prime_source_root()
     train_source = prime_source / "jope" / "policy" / "train_v3.py"
     output_name = f"watermark-{watermark:09d}"
-    warm, warm_hash = accepted_checkpoint(task)
+    # Optional tasks have no accepted production pointer by design; they warm
+    # from the still-frozen shared binary/regression parent in shadow only.
+    warm, warm_hash = accepted_checkpoint(task if task in MANDATORY_TASKS else None)
     inputs = [
         ("script", script, f"scripts/{script.name}"),
         ("common", common, f"scripts/{common.name}"),
@@ -2255,6 +2404,15 @@ def render_spec(
         ("trainer_source", train_source, "provenance/train_v3.py"),
     ]
     packed_arg = ""
+    readiness_arg = ""
+    if readiness is not None:
+        readiness_path = optional_task_readiness or OPTIONAL_TASK_READINESS
+        inputs.append(
+            ("optional_task_readiness", readiness_path, "evidence/optional-task-readiness.v2.json")
+        )
+        readiness_arg = (
+            ', "--optional-task-readiness", "{input:optional_task_readiness}"'
+        )
     if packed_manifest is not None:
         packed = json.loads(packed_manifest.read_text())
         pack_root = packed_manifest.parent
@@ -2297,7 +2455,7 @@ def render_spec(
             f'"--warm", "{{input:checkpoint}}", "--recipe", "{recipe}", "--seed", "{seed}", '
             f'"--task", "{task}", "--mode", "{mode}", '
             f'"--accepted-parent-sha256", "{warm_hash}"'
-            f"{packed_arg}]"
+            f"{packed_arg}{readiness_arg}]"
         ),
         "",
     ]
@@ -2424,6 +2582,7 @@ def main() -> None:
     train_command.add_argument("--packed-source-validation", type=Path)
     train_command.add_argument("--packed-catalog-data", type=Path)
     train_command.add_argument("--accepted-parent-sha256")
+    train_command.add_argument("--optional-task-readiness", type=Path)
     render = commands.add_parser("render-spec")
     render.add_argument("--corpus-manifest", type=Path, required=True)
     render.add_argument(
@@ -2433,6 +2592,7 @@ def main() -> None:
     render.add_argument("--task", choices=tuple(sorted(ENABLED_TASK_METRICS)), required=True)
     render.add_argument("--mode", choices=("shadow", "production"), default="shadow")
     render.add_argument("--packed-manifest", type=Path)
+    render.add_argument("--optional-task-readiness", type=Path)
     args = parser.parse_args()
     if args.command == "train":
         _establish_cuda_context_early(args.device)
@@ -2465,6 +2625,7 @@ def main() -> None:
                     packed_source_validation=args.packed_source_validation,
                     packed_catalog_data=args.packed_catalog_data,
                     accepted_parent_sha256=args.accepted_parent_sha256,
+                    optional_task_readiness=args.optional_task_readiness,
                 ),
                 sort_keys=True,
             )
@@ -2479,6 +2640,7 @@ def main() -> None:
                     task=args.task,
                     mode=args.mode,
                     packed_manifest=args.packed_manifest,
+                    optional_task_readiness=args.optional_task_readiness,
                 ),
                 sort_keys=True,
             )

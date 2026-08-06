@@ -6,6 +6,8 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
+use jope_dime_regressor::recovery_contracts::{RollbackCapsuleV1, ROLLBACK_RUNTIME_BUNDLE_SHA256};
+use jope_dime_regressor::selfplay_data::canonical_json_sha256;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -19,7 +21,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 const DEFAULT_SOURCE: &str = "/home/ubuntu/jope-dime";
 const PRIME_SOURCE_BUNDLE_SHA256: &str =
     "9521ffcef11159339f314cb26430739d5472a54e1b521a868bd9ccb08acf6bd4";
-const ROLLBACK_BUNDLE_SHA256: &str = PRIME_SOURCE_BUNDLE_SHA256;
+// The rollback runtime happens to have supplied the immutable Prime support
+// tree, but those are separate authorities. Never derive one identity from
+// the other.
+const ROLLBACK_BUNDLE_SHA256: &str = ROLLBACK_RUNTIME_BUNDLE_SHA256;
 const DEFAULT_PRIME: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/9521ffcef11159339f314cb26430739d5472a54e1b521a868bd9ccb08acf6bd4/pytorch";
 const ACTIVE_BUNDLE_PYTORCH_ROOT: &str =
     "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch";
@@ -145,6 +150,21 @@ struct Args {
     codex_ack_reviewed: bool,
     #[arg(long)]
     claude_ack_reviewed: bool,
+    /// Composite runtime/unit rollback authority required for activation.
+    #[arg(long, value_name = "PATH")]
+    rollback_capsule: Option<PathBuf>,
+    /// Verify a composite rollback capsule without changing runtime pointers.
+    #[arg(
+        long,
+        value_name = "PATH",
+        conflicts_with_all = [
+            "activate",
+            "activate_existing",
+            "verify_existing",
+            "synchronize_existing"
+        ]
+    )]
+    verify_rollback_capsule: Option<PathBuf>,
 }
 
 #[derive(Clone, Debug)]
@@ -197,6 +217,26 @@ struct ServiceRow {
 
 fn main() -> Result<()> {
     let args = Args::parse();
+    if let Some(path) = &args.verify_rollback_capsule {
+        let capsule: RollbackCapsuleV1 = serde_json::from_reader(
+            File::open(path)
+                .with_context(|| format!("open rollback capsule {}", path.display()))?,
+        )?;
+        let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis() as u64;
+        let digest = verify_rollback_capsule(&args.output_root, &capsule, now)?;
+        println!(
+            "{}",
+            serde_json::to_string(&json!({
+                "schema": "JopeRollbackCapsuleVerification.v1",
+                "rollback_capsule_sha256": digest,
+                "runtime_bundle_sha256": capsule.runtime_bundle_sha256,
+                "unit_overlay_sha256": capsule.unit_overlay_sha256,
+                "verified": true,
+                "pointer_changed": false,
+            }))?
+        );
+        return Ok(());
+    }
     if args.activate || args.activate_existing.is_some() || args.synchronize_existing.is_some() {
         ensure!(
             args.codex_ack_reviewed && args.claude_ack_reviewed,
@@ -221,13 +261,10 @@ fn main() -> Result<()> {
             File::open(&manifest_path)
                 .with_context(|| format!("open staged bundle {}", manifest_path.display()))?,
         )?;
-        if bundle_sha256 == ROLLBACK_BUNDLE_SHA256 {
-            verify_rollback_candidate(
-                manifest_path
-                    .parent()
-                    .context("rollback manifest has no bundle directory")?,
-                &manifest,
-            )?;
+        let rollback_capsule_sha256 = if bundle_sha256 == ROLLBACK_BUNDLE_SHA256 {
+            let capsule = load_activation_rollback_capsule(&args)?;
+            let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis() as u64;
+            Some(verify_rollback_capsule(&args.output_root, &capsule, now)?)
         } else {
             verify_existing(
                 manifest_path
@@ -235,7 +272,8 @@ fn main() -> Result<()> {
                     .context("staged bundle manifest has no parent")?,
                 &manifest,
             )?;
-        }
+            None
+        };
         if args.verify_existing.is_some() {
             println!(
                 "{}",
@@ -243,8 +281,8 @@ fn main() -> Result<()> {
                     "schema": "JopeBundleVerification.v1",
                     "bundle_sha256": bundle_sha256,
                     "verified": true,
-                    "rollback_service_unit_closure_verified": bundle_sha256
-                        == ROLLBACK_BUNDLE_SHA256,
+                    "rollback_service_unit_closure_verified": rollback_capsule_sha256.is_some(),
+                    "rollback_capsule_sha256": rollback_capsule_sha256,
                     "pointer_changed": false,
                 }))?
             );
@@ -264,20 +302,39 @@ fn main() -> Result<()> {
             println!("{}", serde_json::to_string(&receipt)?);
             return Ok(());
         }
-        activate_manifest(&args.output_root, &manifest)?;
+        let capsule = load_activation_rollback_capsule(&args)?;
+        activate_manifest(&args.output_root, &manifest, &capsule)?;
         println!("{}", serde_json::to_string(&manifest)?);
         return Ok(());
     }
     let manifest = build(&args)?;
     if args.activate {
-        activate_manifest(&args.output_root, &manifest)?;
+        let capsule = load_activation_rollback_capsule(&args)?;
+        activate_manifest(&args.output_root, &manifest, &capsule)?;
     }
     println!("{}", serde_json::to_string(&manifest)?);
     Ok(())
 }
 
-fn activate_manifest(output_root: &Path, manifest: &Value) -> Result<()> {
+fn load_activation_rollback_capsule(args: &Args) -> Result<RollbackCapsuleV1> {
+    let path = args
+        .rollback_capsule
+        .as_ref()
+        .context("activation requires --rollback-capsule")?;
+    serde_json::from_reader(
+        File::open(path).with_context(|| format!("open rollback capsule {}", path.display()))?,
+    )
+    .context("decode rollback capsule")
+}
+
+fn activate_manifest(
+    output_root: &Path,
+    manifest: &Value,
+    rollback_capsule: &RollbackCapsuleV1,
+) -> Result<()> {
     let bundle_sha256 = manifest["bundle_sha256"].as_str().context("bundle hash")?;
+    let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis() as u64;
+    let rollback_capsule_sha256 = verify_rollback_capsule(output_root, rollback_capsule, now)?;
     let rollback_path = output_root.join(ROLLBACK_BUNDLE_SHA256).join("bundle.json");
     let rollback_manifest: Value = serde_json::from_reader(
         File::open(&rollback_path)
@@ -324,6 +381,8 @@ fn activate_manifest(output_root: &Path, manifest: &Value) -> Result<()> {
         "synchronization_receipt_sha256": sha256_file(&synchronization_path)?,
         "synchronized_nodes": GPU_SYNC_NODES,
         "rollback_bundle_sha256": ROLLBACK_BUNDLE_SHA256,
+        "rollback_capsule_sha256": rollback_capsule_sha256,
+        "rollback_unit_overlay_sha256": rollback_capsule.unit_overlay_sha256,
         "rollback_synchronization": rollback_synchronization,
         "runtime": "rust",
     });
@@ -1346,6 +1405,50 @@ fn verify_rollback_candidate(root: &Path, manifest: &Value) -> Result<()> {
         "rollback bundle lacks evaluator"
     );
     Ok(())
+}
+
+fn verify_rollback_capsule(
+    output_root: &Path,
+    capsule: &RollbackCapsuleV1,
+    now_unix_ms: u64,
+) -> Result<String> {
+    // These checks are intentionally independent: the old runtime bytes are
+    // verified from their own manifest, while the corrected complete unit
+    // inventory is verified from its own canonical overlay digest.
+    capsule.validate_at(now_unix_ms)?;
+    let runtime_root = output_root.join(&capsule.runtime_bundle_sha256);
+    let runtime_manifest_path = runtime_root.join("bundle.json");
+    ensure!(
+        sha256_file(&runtime_manifest_path)? == capsule.runtime_bundle_manifest_sha256,
+        "rollback runtime manifest digest mismatch"
+    );
+    let runtime_manifest: Value = serde_json::from_reader(File::open(&runtime_manifest_path)?)?;
+    verify_rollback_candidate(&runtime_root, &runtime_manifest)?;
+
+    let service_value = runtime_manifest
+        .get("service_manifest")
+        .cloned()
+        .context("rollback runtime lacks service manifest")?;
+    ensure!(
+        canonical_json_sha256(&service_value)? == capsule.service_manifest_sha256,
+        "rollback service manifest digest mismatch"
+    );
+    let service: ServiceManifest = serde_json::from_value(service_value)?;
+    let expected_units = service
+        .services
+        .iter()
+        .map(|row| row.unit.as_str())
+        .collect::<BTreeSet<_>>();
+    let overlay_units = capsule
+        .units
+        .iter()
+        .map(|row| row.unit.as_str())
+        .collect::<BTreeSet<_>>();
+    ensure!(
+        overlay_units == expected_units,
+        "rollback unit overlay does not contain the complete service inventory"
+    );
+    capsule.digest_at(now_unix_ms)
 }
 
 fn verify_existing(root: &Path, manifest: &Value) -> Result<()> {

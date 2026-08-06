@@ -5,6 +5,7 @@
 //! Missing train encodings fail closed unless an explicit native Rust encoder is
 //! supplied.  No command in this module invokes Python.
 
+use crate::recovery_contracts::V1EncodingQuarantineV1;
 use crate::selfplay_data::{
     canonical_json_sha256, source_family, CacheIdentity, CatalogEntryIdentity, CatalogIdentity,
     DatasetIdentity,
@@ -57,6 +58,25 @@ pub const DATASET_DIM: usize = 1_536;
 pub const TARGET_DIM: usize = 512;
 pub const CONTEXT_FLOATS: usize = DATASET_DIM + TARGET_DIM;
 pub const CONTEXT_STRIDE: usize = CONTEXT_FLOATS * 4;
+
+fn load_v1_quarantine(paths: &ExpansionPaths) -> Result<Option<V1EncodingQuarantineV1>> {
+    let root = paths.cache_root.join("incident-quarantine");
+    let index = root.join("index.v1.json");
+    if !root.exists() {
+        return Ok(None);
+    }
+    ensure!(
+        index.is_file(),
+        "V1 incident quarantine exists without its frozen index"
+    );
+    let quarantine: V1EncodingQuarantineV1 = serde_json::from_value(read_json(&index)?)?;
+    quarantine.validate()?;
+    Ok(Some(quarantine))
+}
+
+fn v1_identity_denied(quarantine: Option<&V1EncodingQuarantineV1>, identity: &str) -> bool {
+    quarantine.is_some_and(|index| index.denies_identity(identity))
+}
 
 #[derive(Clone, Debug)]
 pub struct ExpansionPaths {
@@ -385,6 +405,7 @@ fn candidate_directories(
     if let Some(task) = task_filter {
         ensure!(TASKS.contains(&task), "unsupported task: {task}");
     }
+    let quarantine = load_v1_quarantine(paths)?;
     let mut candidates = Vec::new();
     for task in TASKS {
         if task_filter.is_some_and(|filter| filter != task) {
@@ -405,6 +426,9 @@ fn candidate_directories(
         for directory in directories {
             let dataset_id = directory.file_name().to_string_lossy().to_string();
             if !valid_dataset_id(&dataset_id) {
+                continue;
+            }
+            if v1_identity_denied(quarantine.as_ref(), &dataset_id) {
                 continue;
             }
             let source = directory.path();
@@ -431,6 +455,7 @@ pub fn audit_discover(
     limit: Option<usize>,
 ) -> Result<AuditInventory> {
     let candidates = candidate_directories(paths, task_filter, limit)?;
+    let quarantine = load_v1_quarantine(paths)?;
     let mut entries = Vec::with_capacity(candidates.len());
     let mut conflicts = Vec::new();
     for (task, source) in &candidates {
@@ -439,6 +464,9 @@ pub fn audit_discover(
             .and_then(|value| value.to_str())
             .context("candidate dataset path has no UTF-8 identity")?
             .to_owned();
+        if v1_identity_denied(quarantine.as_ref(), &dataset_id) {
+            continue;
+        }
         let mirror = match compare_mirror_evidence(paths, task, &dataset_id, source)? {
             MirrorEvidence::Absent => None,
             MirrorEvidence::Matched(mirror) => Some(mirror),
@@ -597,6 +625,12 @@ fn observed_encoder_backend() -> Option<String> {
 }
 
 pub fn validate_cache(path: &Path, expected: Option<&InventoryEntry>) -> Result<CacheManifest> {
+    ensure!(
+        !path
+            .components()
+            .any(|component| component.as_os_str() == "incident-quarantine"),
+        "quarantined V1 caches cannot be validated for consumption"
+    );
     let manifest_path = path.join("cache-manifest.v1.json");
     let manifest: CacheManifest = serde_json::from_value(read_json(&manifest_path)?)?;
     ensure!(
@@ -884,6 +918,9 @@ pub fn materialize_cache(
     entry: &InventoryEntry,
     rust_encoder: Option<&Path>,
 ) -> Result<CacheManifest> {
+    if let Some(quarantine) = load_v1_quarantine(paths)? {
+        quarantine.require_operation_allowed(&entry.dataset_id, "V1 cache materialization")?;
+    }
     entry.dataset_identity().validate()?;
     // Recheck immediately before materialization; an audit result is not a
     // permission to ignore later mirror drift.
@@ -1587,12 +1624,18 @@ pub fn activate_tranche(
     if let Some(receipt) = existing_activation(&paths.catalog_root, tranche_id)? {
         return Ok(receipt);
     }
+    let quarantine = load_v1_quarantine(paths)?;
     let (sealed_identities, sealed_families) = load_sealed_exclusions(paths)?;
     let activated = activated_identities(&paths.catalog_root)?;
     let mut seen = HashSet::new();
     let mut contexts = Vec::with_capacity(requested.len());
     let mut entries = Vec::with_capacity(requested.len());
     for (index, row) in requested.iter().enumerate() {
+        ensure!(
+            !v1_identity_denied(quarantine.as_ref(), &row.dataset_id),
+            "catalog adoption denied for quarantined V1 identity {}",
+            row.dataset_id
+        );
         let identity = (row.task.clone(), row.dataset_hash.clone());
         ensure!(seen.insert(identity.clone()), "tranche repeats a dataset");
         ensure!(
@@ -1918,8 +1961,12 @@ pub fn select_unactivated_cached(
     );
     let (sealed_identities, sealed_families) = load_sealed_exclusions(paths)?;
     let activated = activated_identities(&paths.catalog_root)?;
+    let quarantine = load_v1_quarantine(paths)?;
     let mut selected = Vec::new();
     for row in inventory {
+        if v1_identity_denied(quarantine.as_ref(), &row.dataset_id) {
+            continue;
+        }
         let identity = (row.task.clone(), row.dataset_hash.clone());
         if sealed_identities.contains(&identity)
             || sealed_families.contains(&row.source_family)
@@ -2433,6 +2480,7 @@ pub fn install_sidecars(
     receipts: &Path,
 ) -> Result<Value> {
     ensure!(TASKS.contains(&task), "unsupported task: {task}");
+    let quarantine = load_v1_quarantine(paths)?;
     if let Some(parent) = receipts.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -2481,6 +2529,17 @@ pub fn install_sidecars(
             .and_then(|value| value.to_str())
             .context("sidecar source has no UTF-8 identity")?
             .to_owned();
+        if v1_identity_denied(quarantine.as_ref(), &dataset_id) {
+            record(
+                &mut ledger,
+                task,
+                &dataset_id,
+                "-",
+                "-",
+                "quarantine_denied",
+            )?;
+            continue;
+        }
         let registry = paths
             .source_root
             .join(corpus_dir_name(task))

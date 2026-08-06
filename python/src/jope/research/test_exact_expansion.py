@@ -86,6 +86,43 @@ IDENTITY_RECIPE_KEYS = {
 _DATASET = re.compile(r"^(?:synth_)?[0-9a-f]{16}$")
 
 
+def quarantine_identities(cache_root: Path = CACHE_ROOT) -> frozenset[str]:
+    """Load the frozen V1 incident denylist, failing closed if it is partial."""
+
+    root = cache_root / "incident-quarantine"
+    if not root.exists():
+        return frozenset()
+    index = root / "index.v1.json"
+    if not index.is_file():
+        raise RuntimeError("V1 incident quarantine exists without index.v1.json")
+    value = json.loads(index.read_text())
+    if value.get("schema") != "JopeV1EncodingQuarantine.v1":
+        raise RuntimeError("V1 incident quarantine schema drift")
+    policy = value.get("policy")
+    if not isinstance(policy, Mapping) or any(
+        policy.get(field) is not False
+        for field in (
+            "catalog_allowed",
+            "training_allowed",
+            "benchmark_allowed",
+            "v2_import_allowed",
+            "gc_allowed",
+        )
+    ):
+        raise RuntimeError("V1 incident quarantine policy permits consumption")
+    trees = value.get("trees")
+    if not isinstance(trees, list):
+        raise RuntimeError("V1 incident quarantine tree inventory is absent")
+    complete = [tree for tree in trees if tree.get("state") == "complete"]
+    partial = [tree for tree in trees if tree.get("state") == "partial"]
+    if len(complete) != 11 or len(partial) != 7:
+        raise RuntimeError("V1 incident quarantine inventory is incomplete")
+    identities = [str(tree.get("identity") or "") for tree in trees]
+    if any(not identity for identity in identities) or len(set(identities)) != 18:
+        raise RuntimeError("V1 incident quarantine identities are invalid")
+    return frozenset(identities)
+
+
 def now_ms() -> int:
     return int(time.time() * 1000)
 
@@ -236,8 +273,10 @@ def discover(
     mirror_root: Path = MIRROR_ROOT,
     verify_mirror: bool = True,
     limit: int | None = None,
+    cache_root: Path = CACHE_ROOT,
 ) -> list[dict]:
     entries = []
+    denied = quarantine_identities(cache_root)
     for task in TASKS:
         task_root = source_root / corpus_dir_name(task)
         for source in sorted(task_root.iterdir()):
@@ -246,6 +285,8 @@ def discover(
                 or not _DATASET.fullmatch(source.name)
                 or not all((source / name).is_file() for name in ("train.csv", "test.csv", "meta.json"))
             ):
+                continue
+            if source.name in denied:
                 continue
             if verify_mirror:
                 mirror = compare_mirror(
@@ -289,6 +330,8 @@ def _copy_reflink_or_copy(source: Path, destination: Path) -> None:
 
 
 def validate_cache(path: Path, *, expected: Mapping[str, object] | None = None) -> dict:
+    if "incident-quarantine" in path.parts:
+        raise ValueError("quarantined V1 cache cannot be consumed")
     manifest_path = path / "cache-manifest.v1.json"
     if not manifest_path.is_file():
         raise ValueError("expanded cache manifest is absent")
@@ -321,6 +364,8 @@ def materialize_cache(
 ) -> dict:
     task = str(entry["task"])
     dataset_id = str(entry.get("dataset_id") or entry["dataset_hash"])
+    if dataset_id in quarantine_identities(cache_root):
+        raise RuntimeError(f"V1 cache materialization denied by quarantine: {dataset_id}")
     source = Path(str(entry["source"]))
     final = cache_path(task, dataset_id, cache_root)
     lock_path = final.parent / ".locks" / f"{dataset_id}.lock"
@@ -606,8 +651,13 @@ def activate_tranche(
     catalog_entries = []
     contexts: list[bytes] = []
     encode = context_encoder or encode_train_context
+    denied = quarantine_identities(cache_root)
     for index, row in enumerate(selected):
         identity = (str(row["task"]), str(row["dataset_hash"]))
+        if identity[1] in denied:
+            raise RuntimeError(
+                f"catalog adoption denied by V1 quarantine: {identity[1]}"
+            )
         if identity in identities:
             raise ValueError(f"tranche repeats {identity}")
         identities.add(identity)

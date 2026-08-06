@@ -63,3 +63,11 @@ max_gpus = 3
 max_tier = "normal"
 weight = 5.0
 max_gpus = 1
+
+# Encoder V2 is shadow-only, preemptible bulk work. The capacity controller
+# advances from one cluster-wide worker to at most one worker per eligible
+# five-node host; job specs still reserve one GPU, four CPUs, and 16 GiB each.
+[projects.jope-encoder-v2]
+max_tier = "normal"
+weight = 1.0
+max_gpus = 5
