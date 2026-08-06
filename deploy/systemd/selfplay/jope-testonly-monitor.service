@@ -5,7 +5,7 @@ Conflicts=jope-selfplay-queue.service
 
 [Service]
 Type=oneshot
-WorkingDirectory=/home/ubuntu/jope-dime
+WorkingDirectory=/home/ubuntu/jope-flywheel/test_exact_gen0
 ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_queue_control
 
 [Install]
