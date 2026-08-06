@@ -2211,6 +2211,31 @@ fn newest_cohort(root: &Path) -> Result<Value> {
     }
 }
 
+/// Count the published caches under an expanded-encoding root.
+///
+/// A cache is published by renaming its staging directory into place, and that
+/// staging directory carries the manifest *before* the rename (see
+/// `selfplay_expansion::materialize_cache`). So a worker killed in that window
+/// leaves behind a directory that has a manifest but was never published, and a
+/// manifest-only test would count it as complete. Staging names are dot-prefixed
+/// by construction and a published cache never is, so the name is the authority
+/// on whether a directory was published.
+fn completed_cache_count(root: &Path) -> Result<usize> {
+    if !root.is_dir() {
+        return Ok(0);
+    }
+    Ok(fs::read_dir(root)?
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| {
+            entry
+                .file_name()
+                .to_str()
+                .is_some_and(|name| !name.starts_with('.'))
+        })
+        .filter(|entry| entry.path().join("cache-manifest.v1.json").is_file())
+        .count())
+}
+
 fn expanded_cache_progress(catalog: &Value) -> Result<Value> {
     let counts = catalog.get("task_counts").cloned().unwrap_or(json!({}));
     let mut result = Map::new();
@@ -2218,14 +2243,7 @@ fn expanded_cache_progress(catalog: &Value) -> Result<Value> {
         let path = PathBuf::from(format!(
             "/home/ubuntu/jope-flywheel/encodings/{task}-expanded"
         ));
-        let completed = if path.is_dir() {
-            fs::read_dir(path)?
-                .filter_map(|entry| entry.ok())
-                .filter(|entry| entry.path().join("cache-manifest.v1.json").is_file())
-                .count()
-        } else {
-            0
-        };
+        let completed = completed_cache_count(&path)?;
         result.insert(
             task.to_owned(),
             json!({
@@ -3685,6 +3703,38 @@ pub fn seeding_curve_after_reconcile(root: &Path) -> Value {
 mod tests {
     use super::*;
     use tempfile::TempDir;
+
+    #[test]
+    fn interrupted_staging_directories_are_not_counted_as_published() {
+        let root = TempDir::new().unwrap();
+        let manifest = |dir: &str| {
+            let path = root.path().join(dir);
+            fs::create_dir_all(&path).unwrap();
+            fs::write(path.join("cache-manifest.v1.json"), "{}").unwrap();
+        };
+
+        // Published caches: renamed into place, never dot-prefixed.
+        manifest("synth_0049e4a0e270dbfa");
+        manifest("81672f160e2b0312");
+
+        // A worker killed between the manifest write and the rename. This is the
+        // case a manifest-only test miscounts, because the manifest really is
+        // there -- the publish just never happened.
+        manifest(".synth_03534d1dad4573d8.tmp-3905477-3905477");
+        manifest(".encoder-.synth_043a5b4fa9e6d2ee.tmp-3905478-3905478");
+
+        // Killed before the manifest write: excluded by name and by manifest.
+        fs::create_dir_all(root.path().join(".synth_044d96887c03bc0a.tmp-1-1")).unwrap();
+
+        assert_eq!(completed_cache_count(root.path()).unwrap(), 2);
+    }
+
+    #[test]
+    fn cache_count_of_a_missing_root_is_zero() {
+        let root = TempDir::new().unwrap();
+        let absent = root.path().join("timeseries-expanded");
+        assert_eq!(completed_cache_count(&absent).unwrap(), 0);
+    }
 
     #[test]
     fn authority_metric_map_agrees_with_task_authority() {
