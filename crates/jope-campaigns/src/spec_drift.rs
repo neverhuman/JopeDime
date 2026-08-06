@@ -251,20 +251,6 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
         "render_replay_spec",
         None,
     ),
-    // Coverage campaign renderers. NOT flywheel families: each drives its own
-    // scq project on a manual cadence (`lane.project` / `PROJECT`) and emits its
-    // own env namespace (`COVERAGE_*`, `MC_UNION_*`), so their reservations are
-    // not comparable with trainer/propose/eval/encode. Registered as `None` on
-    // the same footing as the other offline campaigns above, which keeps the
-    // form audit -- dropped syntax, `[resource] node`, `/etc/hostname` probes --
-    // running over them.
-    //
-    // Both predate this registry (2026-08-02 and 2026-08-03) and are untracked
-    // working-tree files, which is why they read as NEW: the scanner sees the
-    // tree, not the index. Registering them is not an endorsement of what they
-    // emit; it moves them from unseen to reported.
-    ("scripts/coverage_control_plane.py", "render_spec", None),
-    ("scripts/mc_union_coverage.py", "render_spec", None),
 ];
 
 /// Directories the scanner reads. Kept explicit so a new renderer is a
