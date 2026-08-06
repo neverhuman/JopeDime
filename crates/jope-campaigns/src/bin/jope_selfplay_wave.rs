@@ -42,7 +42,31 @@ const COHORT_PROPOSAL_SEED: u64 = 20_260_726;
 const MAX_PROPOSAL_RESERVOIR_PER_CONTEXT: usize = 256;
 const REQUIRED_SEALED_PER_TASK: usize = 256;
 const MAX_MUTATION_ATTEMPTS: usize = 100_000;
-const OPTIONAL_TASK_INDEPENDENT_DATASET_FLOOR: usize = 500;
+/// Independent-dataset floor PER optional task, mirroring the trainer's declared
+/// contract in `scripts/test_exact_train.py` (`OPTIONAL_TASK_DATASET_FLOORS`).
+///
+/// This was a single blanket 500 applied to every optional task, which silently
+/// held timeseries to the multiclass number. Timeseries has 94 catalogued
+/// datasets against a declared floor of 42, so it was refused by a bar it was
+/// never meant to clear -- and the refusal is invisible, because a task that
+/// fails the floor is simply absent from `active_optional_tasks` rather than
+/// reported. The two floors differ for a real reason: multiclass is bounded by
+/// how many datasets we can encode (1,250 sources exist), timeseries by how many
+/// exist at all (42 real registry datasets).
+///
+/// Ordered so the emitted report is stable.
+const OPTIONAL_TASK_INDEPENDENT_DATASET_FLOORS: &[(&str, usize)] =
+    &[("multiclass", 500), ("timeseries", 42)];
+
+/// Fail closed: an optional task with no declared floor can never be activated,
+/// so naming an unknown task in `JOPE_MICRO_COHORT_OPTIONAL_TASKS` is refused
+/// rather than defaulted to zero.
+fn optional_task_independent_dataset_floor(task: &str) -> Option<usize> {
+    OPTIONAL_TASK_INDEPENDENT_DATASET_FLOORS
+        .iter()
+        .find(|(name, _)| *name == task)
+        .map(|(_, floor)| *floor)
+}
 
 #[derive(Parser, Debug)]
 #[command(
@@ -1453,11 +1477,9 @@ fn plan(args: PlanArgs) -> Result<Value> {
     let active_optional_tasks = requested_optional_tasks
         .iter()
         .filter(|task| {
-            independent_dataset_counts
-                .get(*task)
-                .copied()
-                .unwrap_or(0)
-                >= OPTIONAL_TASK_INDEPENDENT_DATASET_FLOOR
+            optional_task_independent_dataset_floor(task).is_some_and(|floor| {
+                independent_dataset_counts.get(*task).copied().unwrap_or(0) >= floor
+            })
         })
         .cloned()
         .collect::<Vec<_>>();
@@ -1470,7 +1492,10 @@ fn plan(args: PlanArgs) -> Result<Value> {
             "wave": wave,
             "dry_run": true,
             "independent_dataset_counts": independent_dataset_counts,
-            "optional_task_floor": OPTIONAL_TASK_INDEPENDENT_DATASET_FLOOR,
+            "optional_task_floors": OPTIONAL_TASK_INDEPENDENT_DATASET_FLOORS
+                .iter()
+                .map(|(task, floor)| ((*task).to_owned(), *floor))
+                .collect::<BTreeMap<_, _>>(),
             "requested_optional_tasks": requested_optional_tasks,
             "active_optional_tasks": active_optional_tasks,
             "admission": admission_report,
@@ -2144,6 +2169,20 @@ fn load_proposals(
     Ok(selected)
 }
 
+/// Which task blocks `load_robust` validates and sorts: every task the bank
+/// actually contains.
+///
+/// This was the fixed pair `["regression", "binary"]`, which meant the 512
+/// multiclass rows already in the live bank were never checked for task
+/// validity, semantic identity or duplicate semantics, and -- most
+/// consequentially -- were never SORTED, so the lane consumed whatever order
+/// the writer emitted rather than the best seeds. Keying off presence also
+/// keeps a task that has no block yet (timeseries) from tripping the
+/// 96-winner floor, because an absent task is simply not iterated.
+fn bank_tasks_to_validate(tasks: &BTreeMap<String, Vec<RobustSeed>>) -> Vec<String> {
+    tasks.keys().cloned().collect()
+}
+
 fn load_robust(path: &Path) -> Result<(BTreeMap<String, Vec<RobustSeed>>, String)> {
     let digest = sha256_file(path)?;
     let mut bank: RobustSeedBank = serde_json::from_value(read_json(path)?)
@@ -2162,11 +2201,24 @@ fn load_robust(path: &Path) -> Result<(BTreeMap<String, Vec<RobustSeed>>, String
             && bank.tasks.contains_key("binary"),
         "robust seed bank must contain regression/binary and only supported tasks"
     );
-    for task in ["regression", "binary"] {
+    // EVERY task present in the bank is validated and sorted, not just the
+    // legacy pair. This loop was `["regression", "binary"]`, so the 512
+    // multiclass rows -- which are in the bank today -- entered it with no
+    // task_valid check, no semantic-identity check, no duplicate-semantic
+    // check, and NO SORT. The sort is not cosmetic: downstream selection takes
+    // the leading rows as the best seeds, so an unsorted block hands the lane
+    // whatever order the writer happened to emit.
+    //
+    // Iterating the keys present (rather than a fixed list) keeps this fail-safe
+    // for a task that is absent: timeseries has no block yet, so it is simply
+    // not iterated rather than failing the 96-winner floor. The presence of
+    // regression/binary is already required above.
+    let tasks_in_bank = bank_tasks_to_validate(&bank.tasks);
+    for task in &tasks_in_bank {
         let rows = bank.tasks.get_mut(task).expect("keys checked");
         let mut semantics = HashSet::new();
         for row in rows.iter() {
-            ensure!(row.task == task, "robust seed task-map provenance drift");
+            ensure!(&row.task == task, "robust seed task-map provenance drift");
             ensure!(
                 row.dataset_count >= 2,
                 "robust seed is not repeated across datasets"
@@ -3423,6 +3475,76 @@ mod tests {
         HARD_UNCERTAIN_SLOTS, LEAST_OBSERVED_SLOTS, MICRO_WAVE_SIZE, STABLE_ANCHOR_SLOTS,
     };
     use tempfile::tempdir;
+
+    /// The bank validation loop must cover every task PRESENT, not a fixed
+    /// legacy pair. Multiclass has 512 rows in the live bank; under the old
+    /// `["regression", "binary"]` loop they were neither validated nor sorted.
+    #[test]
+    fn bank_validation_covers_every_task_present_not_a_legacy_pair() {
+        let mut tasks: BTreeMap<String, Vec<RobustSeed>> = BTreeMap::new();
+        tasks.insert("regression".to_owned(), robust_rows(2));
+        tasks.insert("binary".to_owned(), robust_rows(2));
+        assert_eq!(
+            bank_tasks_to_validate(&tasks),
+            vec!["binary".to_owned(), "regression".to_owned()]
+        );
+
+        // The regression this pins: multiclass must be picked up for validation
+        // and sorting the moment it is in the bank.
+        tasks.insert("multiclass".to_owned(), robust_rows(2));
+        assert!(
+            bank_tasks_to_validate(&tasks).contains(&"multiclass".to_owned()),
+            "a multiclass block in the bank must be validated and sorted"
+        );
+
+        // And timeseries, which has no block yet, must not be conjured into the
+        // loop -- an absent task would otherwise trip the 96-winner floor.
+        assert!(!bank_tasks_to_validate(&tasks).contains(&"timeseries".to_owned()));
+
+        tasks.insert("timeseries".to_owned(), robust_rows(2));
+        assert_eq!(bank_tasks_to_validate(&tasks).len(), 4);
+    }
+
+    /// The blanket floor held timeseries to the multiclass number. 94 catalogued
+    /// timeseries datasets against a declared floor of 42 were refused by a bar
+    /// timeseries was never meant to clear, and the refusal was silent.
+    #[test]
+    fn each_optional_task_is_held_to_its_own_declared_floor() {
+        assert_eq!(
+            optional_task_independent_dataset_floor("multiclass"),
+            Some(500)
+        );
+        assert_eq!(
+            optional_task_independent_dataset_floor("timeseries"),
+            Some(42)
+        );
+
+        // The live shape at the time of the fix: timeseries clears its own floor
+        // and would have failed a blanket 500.
+        let ts = optional_task_independent_dataset_floor("timeseries").unwrap();
+        assert!(94 >= ts, "94 catalogued timeseries datasets clear their floor");
+        assert!(
+            94 < optional_task_independent_dataset_floor("multiclass").unwrap(),
+            "and would have been refused by the multiclass floor"
+        );
+
+        // Multiclass is NOT relaxed by this change: 269 catalogued still fails.
+        assert!(269 < optional_task_independent_dataset_floor("multiclass").unwrap());
+    }
+
+    /// Fail closed. A task with no declared floor must be refused outright, not
+    /// admitted through an `unwrap_or(0)` that compares 0 >= 0.
+    #[test]
+    fn an_optional_task_without_a_declared_floor_can_never_activate() {
+        assert_eq!(optional_task_independent_dataset_floor("regression"), None);
+        assert_eq!(optional_task_independent_dataset_floor("binary"), None);
+        assert_eq!(optional_task_independent_dataset_floor(""), None);
+        assert_eq!(optional_task_independent_dataset_floor("multi_label"), None);
+
+        for (task, floor) in OPTIONAL_TASK_INDEPENDENT_DATASET_FLOORS {
+            assert!(*floor > 0, "{task} floor must be positive");
+        }
+    }
 
     #[test]
     fn timeseries_builder_pins_complete_contract_and_builder_policy() {
