@@ -1,0 +1,814 @@
+//! Strategy screen: race five DL-seeded GP search protocols on one dataset.
+//!
+//! One process = one (strategy, dataset, master_seed) triple, run entirely
+//! in-memory on a <=1000-row train.csv. The `run` subcommand NEVER reads
+//! test.csv -- the job it runs in is staged without one, and final scoring is
+//! a separate `score` invocation executed locally after the winner gene's
+//! identity is frozen in result.json. All search fitness comes from resampled
+//! splits and CV inside train.csv.
+//!
+//! The fitness aggregator (mean - 0.25*sd, worst-split tie-break) and the
+//! per-generation distinct split-seed discipline are copied from
+//! src/commands/train_only_study.rs (paired_robust_fitness :1080, rank_scored
+//! :1098, split seeding :1150) -- copied rather than imported because those
+//! live in the main binary crate, and this screen must not edit shared files
+//! while another agent holds working-tree state across them.
+
+use std::collections::HashSet;
+use std::fs;
+use std::process::ExitCode;
+
+use feat_math::full_rust::{canonicalize, crossover_pipelines, mutate_pipeline};
+use rayon::prelude::*;
+use feat_math::{model, GenomeIr, Pcg32, Rows};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+
+const SCHEMA_RESULT: &str = "JopeStrategyScreenResult.v1";
+const CROSSOVER_PROBABILITY: f64 = 0.25;
+const TOURNAMENT: usize = 3;
+const BREED_RETRIES: usize = 100;
+
+#[derive(Deserialize)]
+struct Budget {
+    population: usize,
+    generations: usize,
+    #[serde(default)]
+    splits_per_gen: usize,
+    elites: usize,
+    #[serde(default)]
+    cv_fitness: usize,
+    #[serde(default)]
+    dl_inject_per_gen: usize,
+    #[serde(default)]
+    halving: Vec<(usize, usize)>,
+}
+
+#[derive(Deserialize)]
+struct Config {
+    schema: String,
+    strategy: String,
+    dataset_hash: String,
+    master_seed: u64,
+    dl_genes: Vec<String>,
+    #[serde(default)]
+    dl_draw_bank: Vec<String>,
+    #[serde(default)]
+    global_prior: Vec<String>,
+    #[serde(default)]
+    neighbor_prior: Vec<String>,
+    budget: Budget,
+    final_cv_folds: usize,
+    final_top_k: usize,
+}
+
+#[derive(Clone, Serialize)]
+struct Member {
+    canonical: String,
+    semantic: String,
+    complexity: usize,
+    origin: String,
+    #[serde(skip)]
+    scores: Vec<f64>,
+}
+
+#[derive(Serialize)]
+struct TopGene {
+    canonical: String,
+    semantic: String,
+    origin: String,
+    robust_fitness: f64,
+    worst_split: f64,
+    splits_seen: usize,
+    cv7_mean_r2: Option<f64>,
+}
+
+fn seed_from(tag: &str) -> u64 {
+    let digest = Sha256::digest(tag.as_bytes());
+    u64::from_le_bytes(digest[..8].try_into().expect("sha256 has 8 bytes"))
+}
+
+/// Headerless numeric CSV, target in the final column (the registry contract:
+/// meta.json `headers_removed_from_csv: true`, `target_is_final_column: true`).
+fn load_csv(path: &str) -> Result<(Rows, Vec<f64>), String> {
+    let text = fs::read_to_string(path).map_err(|e| format!("read {path}: {e}"))?;
+    let mut x: Rows = Vec::new();
+    let mut y = Vec::new();
+    for (line_no, line) in text.lines().enumerate() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        let mut row: Vec<f64> = Vec::new();
+        for cell in line.split(',') {
+            let v: f64 = cell
+                .trim()
+                .parse()
+                .map_err(|e| format!("{path}:{}: {e}", line_no + 1))?;
+            row.push(v);
+        }
+        if row.len() < 2 {
+            return Err(format!("{path}:{}: fewer than 2 columns", line_no + 1));
+        }
+        y.push(row.pop().expect("row has columns"));
+        x.push(row);
+    }
+    if x.is_empty() {
+        return Err(format!("{path}: no rows"));
+    }
+    let width = x[0].len();
+    if x.iter().any(|r| r.len() != width) {
+        return Err(format!("{path}: ragged rows"));
+    }
+    Ok((x, y))
+}
+
+fn r2(actual: &[f64], predicted: &[f64]) -> Option<f64> {
+    if actual.len() != predicted.len() || actual.is_empty() {
+        return None;
+    }
+    if predicted.iter().any(|v| !v.is_finite()) {
+        return None;
+    }
+    let mean = actual.iter().sum::<f64>() / actual.len() as f64;
+    let ss_tot: f64 = actual.iter().map(|a| (a - mean).powi(2)).sum();
+    let ss_res: f64 = actual
+        .iter()
+        .zip(predicted)
+        .map(|(a, p)| (a - p).powi(2))
+        .sum();
+    if ss_tot <= 0.0 {
+        return None;
+    }
+    Some(1.0 - ss_res / ss_tot)
+}
+
+fn rmse(actual: &[f64], predicted: &[f64]) -> Option<f64> {
+    if actual.len() != predicted.len() || actual.is_empty() {
+        return None;
+    }
+    if predicted.iter().any(|v| !v.is_finite()) {
+        return None;
+    }
+    let mse: f64 = actual
+        .iter()
+        .zip(predicted)
+        .map(|(a, p)| (a - p).powi(2))
+        .sum::<f64>()
+        / actual.len() as f64;
+    Some(mse.sqrt())
+}
+
+/// Copied from train_only_study.rs::paired_robust_fitness (mean - 0.25*sd,
+/// scores clipped to >= -1 so one catastrophic split cannot dominate).
+fn robust_fitness(scores: &[f64]) -> f64 {
+    if scores.is_empty() {
+        return -1.0;
+    }
+    let clipped: Vec<f64> = scores.iter().map(|v| v.max(-1.0)).collect();
+    let mean = clipped.iter().sum::<f64>() / clipped.len() as f64;
+    let sd = (clipped.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / clipped.len() as f64)
+        .sqrt();
+    mean - 0.25 * sd.min(1.0)
+}
+
+fn worst_split(scores: &[f64]) -> f64 {
+    scores
+        .iter()
+        .map(|v| v.max(-1.0))
+        .fold(f64::INFINITY, f64::min)
+}
+
+/// rank_scored ordering from train_only_study.rs: fitness desc, worst-split
+/// desc, complexity asc, semantic asc (fully deterministic).
+fn rank(members: &mut [Member]) {
+    members.sort_by(|a, b| {
+        robust_fitness(&b.scores)
+            .total_cmp(&robust_fitness(&a.scores))
+            .then_with(|| worst_split(&b.scores).total_cmp(&worst_split(&a.scores)))
+            .then_with(|| a.complexity.cmp(&b.complexity))
+            .then_with(|| a.semantic.cmp(&b.semantic))
+    });
+}
+
+/// Deterministic stratified index split: rows sorted by target, sliced into
+/// deciles, each decile shuffled with its own stream, the leading `hold_frac`
+/// of each shuffled decile becoming the validation fold. Fresh `seed` per
+/// generation gives a distinct split every time (train_only_study discipline).
+fn split_8020(y: &[f64], seed: u64) -> (Vec<usize>, Vec<usize>) {
+    let mut order: Vec<usize> = (0..y.len()).collect();
+    order.sort_by(|&a, &b| y[a].total_cmp(&y[b]).then(a.cmp(&b)));
+    let deciles = 10usize.min(y.len().max(1));
+    let chunk = order.len().div_ceil(deciles);
+    let mut train = Vec::new();
+    let mut valid = Vec::new();
+    for (d, ids) in order.chunks(chunk).enumerate() {
+        let mut ids: Vec<usize> = ids.to_vec();
+        let mut rng = Pcg32::new(seed, 0x5350_4c49_5430 ^ d as u64);
+        for i in (1..ids.len()).rev() {
+            let j = (rng.next_u32() as usize) % (i + 1);
+            ids.swap(i, j);
+        }
+        let hold = (ids.len() as f64 * 0.2).round().max(1.0) as usize;
+        for (k, id) in ids.into_iter().enumerate() {
+            if k < hold {
+                valid.push(id);
+            } else {
+                train.push(id);
+            }
+        }
+    }
+    if train.is_empty() || valid.is_empty() {
+        let mid = y.len() * 4 / 5;
+        return ((0..mid).collect(), (mid..y.len()).collect());
+    }
+    (train, valid)
+}
+
+/// Deterministic stratified k-fold: per-decile shuffle, then deal round-robin.
+fn kfold(y: &[f64], k: usize, seed: u64) -> Vec<Vec<usize>> {
+    let mut order: Vec<usize> = (0..y.len()).collect();
+    order.sort_by(|&a, &b| y[a].total_cmp(&y[b]).then(a.cmp(&b)));
+    let deciles = 10usize.min(y.len().max(1));
+    let chunk = order.len().div_ceil(deciles);
+    let mut folds = vec![Vec::new(); k];
+    let mut card = 0usize;
+    for (d, ids) in order.chunks(chunk).enumerate() {
+        let mut ids: Vec<usize> = ids.to_vec();
+        let mut rng = Pcg32::new(seed, 0x4b46_4f4c_44 ^ d as u64);
+        for i in (1..ids.len()).rev() {
+            let j = (rng.next_u32() as usize) % (i + 1);
+            ids.swap(i, j);
+        }
+        for id in ids {
+            folds[card % k].push(id);
+            card += 1;
+        }
+    }
+    folds
+}
+
+fn subset(x: &Rows, y: &[f64], ids: &[usize]) -> (Rows, Vec<f64>) {
+    (
+        ids.iter().map(|&i| x[i].clone()).collect(),
+        ids.iter().map(|&i| y[i]).collect(),
+    )
+}
+
+/// Fit on the train subset, score R^2 on the validation subset. Any failure
+/// (parse, fit, nonfinite, degenerate target) scores the clip floor -1.0 so a
+/// broken gene ranks last instead of aborting the run.
+fn eval_on(member: &Member, x: &Rows, y: &[f64], train_ids: &[usize], valid_ids: &[usize]) -> f64 {
+    let Ok(genome) = GenomeIr::parse(&member.canonical) else {
+        return -1.0;
+    };
+    let (tx, ty) = subset(x, y, train_ids);
+    let (vx, vy) = subset(x, y, valid_ids);
+    match model::fit_predict(&genome, &tx, &ty, &vx) {
+        Ok(pred) => r2(&vy, &pred).map_or(-1.0, |v| v.max(-1.0)),
+        Err(_) => -1.0,
+    }
+}
+
+/// Child mode: read {genome, train_ids, valid_ids} from stdin, print r2.
+fn eval_one(train_path: &str) -> Result<(), String> {
+    use std::io::Read;
+    let mut buf = String::new();
+    std::io::stdin()
+        .read_to_string(&mut buf)
+        .map_err(|e| e.to_string())?;
+    let req: serde_json::Value = serde_json::from_str(&buf).map_err(|e| e.to_string())?;
+    let genome = req["genome"].as_str().ok_or("genome missing")?;
+    let ids = |k: &str| -> Vec<usize> {
+        req[k].as_array()
+            .map(|a| a.iter().filter_map(|v| v.as_u64().map(|u| u as usize)).collect())
+            .unwrap_or_default()
+    };
+    let (x, y) = load_csv(train_path)?;
+    let member = Member {
+        canonical: genome.to_string(),
+        semantic: String::new(),
+        complexity: 0,
+        origin: String::new(),
+        scores: Vec::new(),
+    };
+    let score = eval_on(&member, &x, &y, &ids("train_ids"), &ids("valid_ids"));
+    println!("{score}");
+    Ok(())
+}
+
+/// Parent mode: run one evaluation in a killable child with a hard deadline
+/// (campaign parity: golden42 enforced a 30 s per-candidate timeout at the
+/// worker level; timeout scores the clip floor -1.0).
+fn eval_with_timeout(
+    train_path: &str,
+    genome: &str,
+    train_ids: &[usize],
+    valid_ids: &[usize],
+) -> f64 {
+    use std::io::Write;
+    let timeout = std::env::var("JSS_EVAL_TIMEOUT_SECS")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .unwrap_or(30);
+    let exe = match std::env::current_exe() {
+        Ok(e) => e,
+        Err(_) => return -1.0,
+    };
+    let mut child = match std::process::Command::new(exe)
+        .arg("eval-one")
+        .arg("--train")
+        .arg(train_path)
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+    {
+        Ok(c) => c,
+        Err(_) => return -1.0,
+    };
+    let payload = serde_json::json!({
+        "genome": genome, "train_ids": train_ids, "valid_ids": valid_ids,
+    })
+    .to_string();
+    if let Some(mut stdin) = child.stdin.take() {
+        let _ = stdin.write_all(payload.as_bytes());
+    }
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(timeout);
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                if !status.success() {
+                    return -1.0;
+                }
+                let mut out = String::new();
+                use std::io::Read;
+                if let Some(mut stdout) = child.stdout.take() {
+                    let _ = stdout.read_to_string(&mut out);
+                }
+                return out.trim().parse::<f64>().unwrap_or(-1.0).max(-1.0);
+            }
+            Ok(None) => {
+                if std::time::Instant::now() >= deadline {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    return -1.0;
+                }
+                std::thread::sleep(std::time::Duration::from_millis(25));
+            }
+            Err(_) => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return -1.0;
+            }
+        }
+    }
+}
+
+fn make_member(source: &str, origin: &str) -> Option<Member> {
+    let canonical = canonicalize(source).ok()?;
+    Some(Member {
+        canonical: canonical.canonical,
+        semantic: canonical.semantic_sha256,
+        complexity: canonical.complexity,
+        origin: origin.to_string(),
+        scores: Vec::new(),
+    })
+}
+
+fn tournament_pick(rng: &mut Pcg32, pool: usize) -> usize {
+    let mut best = usize::MAX;
+    for _ in 0..TOURNAMENT {
+        let c = (rng.next_u32() as usize) % pool;
+        best = best.min(c);
+    }
+    best
+}
+
+/// Breed one child from the ranked pool (golden42 operators: tournament-3
+/// parents, 0.25 crossover, else mutate; 100 deterministic retries).
+fn breed_child(
+    ranked: &[Member],
+    pool: usize,
+    features: usize,
+    tag: &str,
+    seen: &HashSet<String>,
+) -> Option<Member> {
+    for retry in 0..BREED_RETRIES {
+        let seed = seed_from(&format!("screen:{tag}:{retry}"));
+        let mut rng = Pcg32::new(seed, 0x5343_5245_454e);
+        let first = tournament_pick(&mut rng, pool);
+        let evolved = if rng.next_f64() < CROSSOVER_PROBABILITY {
+            let second = tournament_pick(&mut rng, pool);
+            crossover_pipelines(
+                &ranked[first].canonical,
+                &ranked[second].canonical,
+                rng.next_u32() as u64 | ((rng.next_u32() as u64) << 32),
+            )
+        } else {
+            mutate_pipeline(
+                &ranked[first].canonical,
+                rng.next_u32() as u64 | ((rng.next_u32() as u64) << 32),
+                features,
+            )
+        };
+        if let Ok(g) = evolved {
+            if !seen.contains(&g.semantic_sha256) {
+                return Some(Member {
+                    canonical: g.canonical,
+                    semantic: g.semantic_sha256,
+                    complexity: g.complexity,
+                    origin: "evolved".to_string(),
+                    scores: Vec::new(),
+                });
+            }
+        }
+    }
+    None
+}
+
+fn fill_population(
+    base: Vec<Member>,
+    target: usize,
+    features: usize,
+    tag: &str,
+) -> Vec<Member> {
+    let mut seen: HashSet<String> = base.iter().map(|m| m.semantic.clone()).collect();
+    let mut population = base;
+    let mut slot = 0usize;
+    while population.len() < target && slot < target * 40 {
+        if let Some(child) = breed_child(
+            &population,
+            population.len(),
+            features,
+            &format!("{tag}:fill:{slot}"),
+            &seen,
+        ) {
+            seen.insert(child.semantic.clone());
+            population.push(child);
+        }
+        slot += 1;
+    }
+    population
+}
+
+struct GenerationStat {
+    generation: usize,
+    evaluations: usize,
+    best_fitness: f64,
+}
+
+#[allow(clippy::too_many_arguments)]
+fn run_strategy(
+    config: &Config,
+    train_path: &str,
+    x: &Rows,
+    y: &[f64],
+) -> (Vec<Member>, Vec<GenerationStat>, usize) {
+    let features = x[0].len();
+    let ds = &config.dataset_hash;
+    let ms = config.master_seed;
+    let mut evaluations = 0usize;
+    let mut stats = Vec::new();
+
+    // ---- generation 0 composition ----
+    let mut gen0: Vec<Member> = Vec::new();
+    let mut seen = HashSet::new();
+    let mut push_unique = |pool: &mut Vec<Member>, seen: &mut HashSet<String>, m: Member| {
+        if seen.insert(m.semantic.clone()) {
+            pool.push(m);
+        }
+    };
+    for g in config.dl_genes.iter().take(10) {
+        if let Some(m) = make_member(g, "dl_seed") {
+            push_unique(&mut gen0, &mut seen, m);
+        }
+    }
+    let prior: Vec<(&str, &Vec<String>)> = match config.strategy.as_str() {
+        "s2" => vec![("neighbor_prior", &config.neighbor_prior)],
+        "s5" => vec![
+            ("global_prior", &config.global_prior),
+            ("neighbor_prior", &config.neighbor_prior),
+        ],
+        _ => vec![("global_prior", &config.global_prior)],
+    };
+    for (origin, list) in prior {
+        for g in list.iter().take(if config.strategy == "s5" { 32 } else { 10 }) {
+            if let Some(m) = make_member(g, origin) {
+                push_unique(&mut gen0, &mut seen, m);
+            }
+        }
+    }
+    let schedule: Vec<(usize, usize)> = if config.strategy == "s5" {
+        config.budget.halving.clone()
+    } else {
+        let splits = if config.budget.cv_fitness > 0 {
+            0
+        } else {
+            config.budget.splits_per_gen
+        };
+        (0..config.budget.generations)
+            .map(|_| (config.budget.population, splits))
+            .collect()
+    };
+    let gen0_target = schedule.first().map_or(config.budget.population, |s| s.0);
+    let mut population = fill_population(gen0, gen0_target, features, &format!("{ds}:{ms}:g0"));
+
+    // ---- DL draw bank for s3 (continual injection) ----
+    let mut bank: Vec<Member> = config
+        .dl_draw_bank
+        .iter()
+        .filter_map(|g| make_member(g, "dl_injected"))
+        .filter(|m| !seen.contains(&m.semantic))
+        .collect();
+
+    // ---- generational loop ----
+    let mut split_hashes: HashSet<String> = HashSet::new();
+    for (generation, &(width, splits_per_gen)) in schedule.iter().enumerate() {
+        // shrink (successive halving) or plain carry
+        if population.len() > width {
+            rank(&mut population);
+            population.truncate(width);
+        }
+        // evaluate: fresh split(s) or CV folds, appended to each member's history
+        if config.budget.cv_fitness > 0 {
+            let folds = kfold(
+                y,
+                config.budget.cv_fitness,
+                seed_from(&format!("screen:{ds}:{ms}:cvgen:{generation}")),
+            );
+            for f in 0..folds.len() {
+                let valid_ids = &folds[f];
+                let train_ids: Vec<usize> = folds
+                    .iter()
+                    .enumerate()
+                    .filter(|(i, _)| *i != f)
+                    .flat_map(|(_, ids)| ids.iter().copied())
+                    .collect();
+                let scores: Vec<f64> = population
+                    .par_iter()
+                    .map(|m| eval_with_timeout(train_path, &m.canonical, &train_ids, valid_ids))
+                    .collect();
+                for (m, s) in population.iter_mut().zip(scores) {
+                    m.scores.push(s);
+                    evaluations += 1;
+                }
+            }
+        } else {
+            for s in 0..splits_per_gen.max(1) {
+                let seed = seed_from(&format!("screen:{ds}:{ms}:split:{generation}:{s}"));
+                let (train_ids, valid_ids) = split_8020(y, seed);
+                // train_only_study discipline: refuse silently-identical splits
+                let mut h = Sha256::new();
+                for i in &valid_ids {
+                    h.update(i.to_le_bytes());
+                }
+                let hh = format!("{:x}", h.finalize());
+                if !split_hashes.insert(hh) {
+                    continue;
+                }
+                let scores: Vec<f64> = population
+                    .par_iter()
+                    .map(|m| eval_with_timeout(train_path, &m.canonical, &train_ids, &valid_ids))
+                    .collect();
+                for (m, sc) in population.iter_mut().zip(scores) {
+                    m.scores.push(sc);
+                    evaluations += 1;
+                }
+            }
+        }
+        rank(&mut population);
+        stats.push(GenerationStat {
+            generation,
+            evaluations,
+            best_fitness: population.first().map_or(-1.0, |m| robust_fitness(&m.scores)),
+        });
+        // breed the next generation (skip after the final evaluation round)
+        if generation + 1 == schedule.len() {
+            break;
+        }
+        let next_width = schedule[generation + 1].0;
+        let elites = config.budget.elites.min(population.len());
+        let mut next: Vec<Member> = population.iter().take(elites).cloned().collect();
+        let mut next_seen: HashSet<String> = next.iter().map(|m| m.semantic.clone()).collect();
+        // s3: fresh DL draws take offspring slots each generation
+        let mut injected = 0usize;
+        while injected < config.budget.dl_inject_per_gen && !bank.is_empty() {
+            let m = bank.remove(0);
+            if next_seen.insert(m.semantic.clone()) {
+                next.push(m);
+                injected += 1;
+            }
+        }
+        let mut slot = 0usize;
+        while next.len() < next_width && slot < next_width * 40 {
+            if let Some(child) = breed_child(
+                &population,
+                population.len().min(width),
+                features,
+                &format!("{ds}:{ms}:g{}:{slot}", generation + 1),
+                &next_seen,
+            ) {
+                next_seen.insert(child.semantic.clone());
+                next.push(child);
+            }
+            slot += 1;
+        }
+        population = next;
+    }
+    rank(&mut population);
+    (population, stats, evaluations)
+}
+
+fn final_cv(config: &Config, train_path: &str, x: &Rows, y: &[f64], top: &mut [TopGene]) -> usize {
+    let folds = kfold(
+        y,
+        config.final_cv_folds,
+        seed_from(&format!(
+            "screen:{}:{}:finalcv",
+            config.dataset_hash, config.master_seed
+        )),
+    );
+    let mut evals = 0usize;
+    let fold_train: Vec<Vec<usize>> = (0..folds.len())
+        .map(|f| {
+            folds
+                .iter()
+                .enumerate()
+                .filter(|(i, _)| *i != f)
+                .flat_map(|(_, ids)| ids.iter().copied())
+                .collect()
+        })
+        .collect();
+    let pairs: Vec<(usize, usize)> = (0..top.len())
+        .flat_map(|g| (0..folds.len()).map(move |f| (g, f)))
+        .collect();
+    let fold_scores: Vec<((usize, usize), f64)> = pairs
+        .par_iter()
+        .map(|&(g, f)| {
+            (
+                (g, f),
+                eval_with_timeout(train_path, &top[g].canonical, &fold_train[f], &folds[f]),
+            )
+        })
+        .collect();
+    let cv_scores: Vec<Option<f64>> = (0..top.len())
+        .map(|g| {
+            let s: Vec<f64> = fold_scores
+                .iter()
+                .filter(|((gg, _), _)| *gg == g)
+                .map(|(_, v)| *v)
+                .collect();
+            if s.is_empty() { None } else { Some(s.iter().sum::<f64>() / s.len() as f64) }
+        })
+        .collect();
+    for (gene, cv) in top.iter_mut().zip(cv_scores) {
+        gene.cv7_mean_r2 = cv;
+        evals += folds.len();
+    }
+    #[allow(unreachable_code)]
+    if false {
+    for gene in top.iter_mut() {
+        let Ok(genome) = GenomeIr::parse(&gene.canonical) else {
+            gene.cv7_mean_r2 = None;
+            continue;
+        };
+        let mut scores = Vec::new();
+        for f in 0..folds.len() {
+            let valid_ids = &folds[f];
+            let train_ids: Vec<usize> = folds
+                .iter()
+                .enumerate()
+                .filter(|(i, _)| *i != f)
+                .flat_map(|(_, ids)| ids.iter().copied())
+                .collect();
+            let (tx, ty) = subset(x, y, &train_ids);
+            let (vx, vy) = subset(x, y, valid_ids);
+            evals += 1;
+            match model::fit_predict(&genome, &tx, &ty, &vx) {
+                Ok(pred) => scores.push(r2(&vy, &pred).map_or(-1.0, |v| v.max(-1.0))),
+                Err(_) => scores.push(-1.0),
+            }
+        }
+        gene.cv7_mean_r2 = Some(scores.iter().sum::<f64>() / scores.len() as f64);
+    }
+    }
+    evals
+}
+
+fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), String> {
+    let config: Config = serde_json::from_str(
+        &fs::read_to_string(config_path).map_err(|e| format!("read {config_path}: {e}"))?,
+    )
+    .map_err(|e| format!("parse config: {e}"))?;
+    if config.schema != "JopeStrategyScreenConfig.v1" {
+        return Err(format!("unsupported config schema {}", config.schema));
+    }
+    let (x, y) = load_csv(train_path)?;
+    let started = std::time::Instant::now();
+    let (population, stats, search_evals) = run_strategy(&config, train_path, &x, &y);
+
+    let mut top: Vec<TopGene> = population
+        .iter()
+        .take(config.final_top_k)
+        .map(|m| TopGene {
+            canonical: m.canonical.clone(),
+            semantic: m.semantic.clone(),
+            origin: m.origin.clone(),
+            robust_fitness: robust_fitness(&m.scores),
+            worst_split: worst_split(&m.scores),
+            splits_seen: m.scores.len(),
+            cv7_mean_r2: None,
+        })
+        .collect();
+    let cv_evals = final_cv(&config, train_path, &x, &y, &mut top);
+    // winner: best CV mean, complexity/semantic tie-break via stable sort order
+    let mut order: Vec<usize> = (0..top.len()).collect();
+    order.sort_by(|&a, &b| {
+        top[b]
+            .cv7_mean_r2
+            .unwrap_or(-2.0)
+            .total_cmp(&top[a].cv7_mean_r2.unwrap_or(-2.0))
+            .then_with(|| top[a].semantic.cmp(&top[b].semantic))
+    });
+    let winner = order.first().copied().ok_or("empty final population")?;
+
+    let result = serde_json::json!({
+        "schema": SCHEMA_RESULT,
+        "strategy": config.strategy,
+        "dataset_hash": config.dataset_hash,
+        "master_seed": config.master_seed,
+        "winner_genome": top[winner].canonical,
+        "winner_semantic": top[winner].semantic,
+        "winner_origin": top[winner].origin,
+        "winner_cv_mean_r2": top[winner].cv7_mean_r2,
+        "search_evaluations": search_evals,
+        "final_cv_evaluations": cv_evals,
+        "runtime_seconds": started.elapsed().as_secs_f64(),
+        "top": top,
+        "generations": stats.iter().map(|s| serde_json::json!({
+            "generation": s.generation,
+            "evaluations": s.evaluations,
+            "best_fitness": s.best_fitness,
+        })).collect::<Vec<_>>(),
+        "test_csv_read": false,
+    });
+    fs::write(output_path, serde_json::to_string_pretty(&result).unwrap())
+        .map_err(|e| format!("write {output_path}: {e}"))?;
+    Ok(())
+}
+
+fn score(genome_file: &str, train_path: &str, test_path: &str) -> Result<(), String> {
+    let source = fs::read_to_string(genome_file).map_err(|e| e.to_string())?;
+    let canonical = canonicalize(source.trim()).map_err(|e| format!("canonicalize: {e}"))?;
+    let genome = GenomeIr::parse(&canonical.canonical).map_err(|e| format!("parse: {e}"))?;
+    let (tx, ty) = load_csv(train_path)?;
+    let (vx, vy) = load_csv(test_path)?;
+    let pred = model::fit_predict(&genome, &tx, &ty, &vx).map_err(|e| format!("fit: {e}"))?;
+    let out = serde_json::json!({
+        "rmse": rmse(&vy, &pred),
+        "r2": r2(&vy, &pred),
+        "semantic": canonical.semantic_sha256,
+    });
+    println!("{out}");
+    Ok(())
+}
+
+fn arg(args: &[String], flag: &str) -> Option<String> {
+    args.iter()
+        .position(|a| a == flag)
+        .and_then(|i| args.get(i + 1).cloned())
+}
+
+fn main() -> ExitCode {
+    let args: Vec<String> = std::env::args().collect();
+    let outcome = match args.get(1).map(String::as_str) {
+        Some("run") => match (
+            arg(&args, "--config"),
+            arg(&args, "--train"),
+            arg(&args, "--output"),
+        ) {
+            (Some(c), Some(t), Some(o)) => run(&c, &t, &o),
+            _ => Err("usage: run --config <json> --train <csv> --output <json>".into()),
+        },
+        Some("eval-one") => match arg(&args, "--train") {
+            Some(t) => eval_one(&t),
+            None => Err("usage: eval-one --train <csv>   (stdin: {genome,train_ids,valid_ids})".into()),
+        },
+        Some("score") => match (
+            arg(&args, "--genome-file"),
+            arg(&args, "--train"),
+            arg(&args, "--test"),
+        ) {
+            (Some(g), Some(t), Some(e)) => score(&g, &t, &e),
+            _ => Err("usage: score --genome-file <txt> --train <csv> --test <csv>".into()),
+        },
+        _ => Err("subcommands: run | score".into()),
+    };
+    match outcome {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(message) => {
+            eprintln!("jope_strategy_screen: {message}");
+            ExitCode::FAILURE
+        }
+    }
+}
