@@ -770,7 +770,7 @@ fn run_strategy(
         if config.budget.cv_fitness > 0 {
             let folds = kfold(
                 y,
-                config.budget.cv_fitness,
+                usable_folds(y.len(), config.budget.cv_fitness),
                 seed_from(&format!("screen:{ds}:{ms}:cvgen:{generation}")),
             );
             for f in 0..folds.len() {
@@ -1063,7 +1063,7 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
     for rep in 0..repeats {
         let folds = kfold(
             &y,
-            config.final_cv_folds,
+            usable_folds(y.len(), config.final_cv_folds),
             seed_from(&format!("screen:{}:{}:rcv:{rep}", config.dataset_hash, config.master_seed)),
         );
         let fold_train: Vec<Vec<usize>> = (0..folds.len())
@@ -1073,14 +1073,35 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
         let pairs: Vec<(usize, usize)> = (0..top.len())
             .flat_map(|g| (0..folds.len()).map(move |f| (g, f)))
             .collect();
-        let outs: Vec<((usize, usize), f64)> = pairs
+        // One pooled OOF R^2 per repeat, not a mean of per-fold R^2. Per-fold
+        // R^2 is undefined under leave-one-out -- a single held-out row has
+        // ss_tot = 0, so every fold returns None and the whole estimator
+        // collapses to the clip floor with zero variance, which then hands
+        // selection to the complexity/hash fallback. Pooling the repeat's
+        // predictions keeps the statistic defined at every n we support.
+        let outs: Vec<((usize, usize), Result<Vec<f64>, EvalFailure>)> = pairs
             .par_iter()
-            .map(|&(g, f)| ((g, f),
-                eval_with_timeout(train_path, &top[g].canonical, &fold_train[f], &folds[f])))
+            .map(|&(g, f)| {
+                ((g, f),
+                 eval_predictions(train_path, &top[g].canonical, &fold_train[f], &folds[f]))
+            })
             .collect();
-        for ((g, f), v) in outs {
-            let _ = f;
-            oof_matrix[g].push((rep, v));
+        for g in 0..top.len() {
+            let mut truth: Vec<f64> = Vec::new();
+            let mut pred: Vec<f64> = Vec::new();
+            for f in 0..folds.len() {
+                if let Some((_, Ok(p))) = outs.iter().find(|((gg, ff), _)| *gg == g && *ff == f) {
+                    if p.len() == folds[f].len() {
+                        for (k, &row) in folds[f].iter().enumerate() {
+                            truth.push(y[row]);
+                            pred.push(p[k]);
+                        }
+                    }
+                }
+            }
+            if let Some(v) = r2(&truth, &pred) {
+                oof_matrix[g].push((rep, v.max(-1.0)));
+            }
         }
     }
     for (g, gene) in top.iter_mut().enumerate() {
@@ -1174,7 +1195,7 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
     // ---- T2: ensembles from a common OOF partition (first rcv repeat folds) ----
     let ens_folds = kfold(
         &y,
-        config.final_cv_folds,
+        usable_folds(y.len(), config.final_cv_folds),
         seed_from(&format!("screen:{}:{}:rcv:0", config.dataset_hash, config.master_seed)),
     );
     let ens_train: Vec<Vec<usize>> = (0..ens_folds.len())
