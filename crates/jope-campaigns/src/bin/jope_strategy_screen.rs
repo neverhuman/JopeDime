@@ -70,11 +70,45 @@ struct Config {
     /// replayable bit-for-bit.
     #[serde(default = "default_vocab")]
     vocab: String,
+    /// Seed generation 0 with BASELINE_SEEDS. Off by default so recorded runs
+    /// replay bit-for-bit.
+    #[serde(default)]
+    baseline_seeds: bool,
+    /// Score the finale by pooled out-of-fold R^2 instead of the mean of
+    /// per-fold R^2. Off by default so recorded runs replay bit-for-bit.
+    #[serde(default)]
+    pooled_oof: bool,
+    /// "cv7" (default, historical) picks the argmax of the finale CV score.
+    /// "rcv_1se" picks by repeated CV under the one-standard-error rule, which
+    /// steps back from the argmax that the winner's curse inflates.
+    #[serde(default = "default_winner_rule")]
+    winner_rule: String,
+    /// Exclude folds that never produced a number (timeout/spawn/crash) from a
+    /// gene's CV mean instead of scoring them as the clip floor. Off by default
+    /// so recorded runs replay bit-for-bit. Implied by pooled_oof, which cannot
+    /// pool predictions it never received.
+    #[serde(default)]
+    drop_failed_folds: bool,
+}
+
+fn default_winner_rule() -> String {
+    "cv7".to_string()
 }
 
 fn default_vocab() -> String {
     "legacy".to_string()
 }
+
+/// Fixed textbook models, fittable train-only, chosen a priori rather than by
+/// any test signal. See the D1 ceiling probe for why these must be in the pool.
+const BASELINE_SEEDS: [&str; 6] = [
+    "(pipe X (ridge lambda_frac=0.0))",
+    "(pipe X (ridge_gcv))",
+    "(pipe X (elasticnet))",
+    "(pipe X (histgbm2))",
+    "(pipe X (stack))",
+    "(pipe X (portfolio preset=core))",
+];
 
 #[derive(Clone, Serialize)]
 struct Member {
@@ -100,6 +134,10 @@ struct TopGene {
     rcv_se: Option<f64>,
     boot_mean_r2: Option<f64>,
     boot_sd_r2: Option<f64>,
+    /// Folds that produced no number at all (timeout/spawn/crash), as opposed to
+    /// folds the gene genuinely scored badly on. Non-zero means this gene's CV
+    /// estimate rests on fewer folds than its rivals'.
+    cv_failed_folds: usize,
 }
 
 fn seed_from(tag: &str) -> u64 {
@@ -342,7 +380,26 @@ fn eval_on(member: &Member, x: &Rows, y: &[f64], train_ids: &[usize], valid_ids:
     }
 }
 
+/// Fit on the train subset and return the raw validation predictions, so the
+/// parent can pool them across folds. Pooled out-of-fold R^2 is a single ratio
+/// over every row; the per-fold mean this replaces normalises each fold by its
+/// own ss_tot, which on small folds rewards a gene that drew a lucky slice.
+fn predict_on(
+    member: &Member,
+    x: &Rows,
+    y: &[f64],
+    train_ids: &[usize],
+    valid_ids: &[usize],
+) -> Option<Vec<f64>> {
+    let genome = GenomeIr::parse(&member.canonical).ok()?;
+    let (tx, ty) = subset(x, y, train_ids);
+    let (vx, _) = subset(x, y, valid_ids);
+    model::fit_predict(&genome, &tx, &ty, &vx).ok()
+}
+
 /// Child mode: read {genome, train_ids, valid_ids} from stdin, print r2.
+/// With "want":"pred" the child prints a JSON array of validation predictions
+/// instead, which is what the pooled-OOF finale consumes.
 fn eval_one(train_path: &str) -> Result<(), String> {
     use std::io::Read;
     let mut buf = String::new();
@@ -364,30 +421,50 @@ fn eval_one(train_path: &str) -> Result<(), String> {
         origin: String::new(),
         scores: Vec::new(),
     };
+    if req["want"].as_str() == Some("pred") {
+        let pred = predict_on(&member, &x, &y, &ids("train_ids"), &ids("valid_ids"))
+            .ok_or("fit_predict failed")?;
+        println!(
+            "{}",
+            serde_json::to_string(&pred).map_err(|e| e.to_string())?
+        );
+        return Ok(());
+    }
     let score = eval_on(&member, &x, &y, &ids("train_ids"), &ids("valid_ids"));
     println!("{score}");
     Ok(())
 }
 
+/// Why a child evaluation produced no usable number. A model that fits and
+/// scores badly is NOT a failure -- it earns the -1.0 clip floor honestly.
+/// These variants are the cases where we learned nothing about the gene, and
+/// conflating them with a bad score systematically punishes whatever is
+/// slowest (wide feature sets, heavy heads) for infrastructure reasons.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum EvalFailure {
+    Spawn,
+    Timeout,
+    Crashed,
+    Unparseable,
+}
+
 /// Parent mode: run one evaluation in a killable child with a hard deadline
 /// (campaign parity: golden42 enforced a 30 s per-candidate timeout at the
-/// worker level; timeout scores the clip floor -1.0).
-fn eval_with_timeout(
+/// worker level). Returns the child's raw stdout.
+fn run_eval_child(
     train_path: &str,
     genome: &str,
     train_ids: &[usize],
     valid_ids: &[usize],
-) -> f64 {
+    want_pred: bool,
+) -> Result<String, EvalFailure> {
     use std::io::Write;
     let timeout = std::env::var("JSS_EVAL_TIMEOUT_SECS")
         .ok()
         .and_then(|v| v.parse::<u64>().ok())
         .unwrap_or(30);
-    let exe = match std::env::current_exe() {
-        Ok(e) => e,
-        Err(_) => return -1.0,
-    };
-    let mut child = match std::process::Command::new(exe)
+    let exe = std::env::current_exe().map_err(|_| EvalFailure::Spawn)?;
+    let mut child = std::process::Command::new(exe)
         .arg("eval-one")
         .arg("--train")
         .arg(train_path)
@@ -395,46 +472,81 @@ fn eval_with_timeout(
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::null())
         .spawn()
-    {
-        Ok(c) => c,
-        Err(_) => return -1.0,
-    };
-    let payload = serde_json::json!({
+        .map_err(|_| EvalFailure::Spawn)?;
+    let mut payload = serde_json::json!({
         "genome": genome, "train_ids": train_ids, "valid_ids": valid_ids,
-    })
-    .to_string();
+    });
+    if want_pred {
+        payload["want"] = serde_json::Value::String("pred".to_string());
+    }
     if let Some(mut stdin) = child.stdin.take() {
-        let _ = stdin.write_all(payload.as_bytes());
+        let _ = stdin.write_all(payload.to_string().as_bytes());
     }
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(timeout);
     loop {
         match child.try_wait() {
             Ok(Some(status)) => {
                 if !status.success() {
-                    return -1.0;
+                    return Err(EvalFailure::Crashed);
                 }
                 let mut out = String::new();
                 use std::io::Read;
                 if let Some(mut stdout) = child.stdout.take() {
                     let _ = stdout.read_to_string(&mut out);
                 }
-                return out.trim().parse::<f64>().unwrap_or(-1.0).max(-1.0);
+                return Ok(out);
             }
             Ok(None) => {
                 if std::time::Instant::now() >= deadline {
                     let _ = child.kill();
                     let _ = child.wait();
-                    return -1.0;
+                    return Err(EvalFailure::Timeout);
                 }
                 std::thread::sleep(std::time::Duration::from_millis(25));
             }
             Err(_) => {
                 let _ = child.kill();
                 let _ = child.wait();
-                return -1.0;
+                return Err(EvalFailure::Crashed);
             }
         }
     }
+}
+
+/// Score, distinguishing "did not run" (None) from "ran and was bad" (Some).
+fn eval_checked(
+    train_path: &str,
+    genome: &str,
+    train_ids: &[usize],
+    valid_ids: &[usize],
+) -> Result<f64, EvalFailure> {
+    let out = run_eval_child(train_path, genome, train_ids, valid_ids, false)?;
+    out.trim()
+        .parse::<f64>()
+        .map(|v| v.max(-1.0))
+        .map_err(|_| EvalFailure::Unparseable)
+}
+
+/// Validation predictions for one fold, for the pooled-OOF finale.
+fn eval_predictions(
+    train_path: &str,
+    genome: &str,
+    train_ids: &[usize],
+    valid_ids: &[usize],
+) -> Result<Vec<f64>, EvalFailure> {
+    let out = run_eval_child(train_path, genome, train_ids, valid_ids, true)?;
+    serde_json::from_str::<Vec<f64>>(out.trim()).map_err(|_| EvalFailure::Unparseable)
+}
+
+/// Legacy scoring surface: every failure becomes the clip floor. Retained so
+/// the search loop's recorded behaviour is unchanged.
+fn eval_with_timeout(
+    train_path: &str,
+    genome: &str,
+    train_ids: &[usize],
+    valid_ids: &[usize],
+) -> f64 {
+    eval_checked(train_path, genome, train_ids, valid_ids).unwrap_or(-1.0)
 }
 
 fn make_member(source: &str, origin: &str) -> Option<Member> {
@@ -579,6 +691,20 @@ fn run_strategy(
             }
         }
     }
+    // A fixed, train-only baseline set. D1 measured that a plain fit of one of
+    // these beats a full 1,000-eval search on 7 of 22 datasets (e5a3a7b3 by 37%,
+    // b78d3235 by 12%), and that none of them ever entered a pool: DL proposals
+    // and priors are all elaborate pipelines, and mutation only elaborates
+    // further, so the search could never fall back on a textbook model. Seeding
+    // them costs |BASELINE_SEEDS| evaluations and floors the result.
+    if config.baseline_seeds {
+        for g in BASELINE_SEEDS {
+            if let Some(m) = make_member(g, "baseline") {
+                push_unique(&mut gen0, &mut seen, m);
+            }
+        }
+    }
+
     let schedule: Vec<(usize, usize)> = if config.strategy == "s5" {
         config.budget.halving.clone()
     } else {
@@ -742,27 +868,90 @@ fn final_cv(config: &Config, train_path: &str, x: &Rows, y: &[f64], top: &mut [T
     let pairs: Vec<(usize, usize)> = (0..top.len())
         .flat_map(|g| (0..folds.len()).map(move |f| (g, f)))
         .collect();
-    let fold_scores: Vec<((usize, usize), f64)> = pairs
+    if config.pooled_oof {
+        // Pooled out-of-fold R^2: one ratio computed over every row once, rather
+        // than an average of per-fold R^2 values that each carry their own
+        // ss_tot denominator. feat_math documents the pooled form as the primary
+        // CV estimate; the per-fold mean is unstable on small folds and rewards
+        // a gene that drew one lucky slice.
+        let fold_preds: Vec<((usize, usize), Result<Vec<f64>, EvalFailure>)> = pairs
+            .par_iter()
+            .map(|&(g, f)| {
+                (
+                    (g, f),
+                    eval_predictions(train_path, &top[g].canonical, &fold_train[f], &folds[f]),
+                )
+            })
+            .collect();
+        for g in 0..top.len() {
+            let mut oof_true: Vec<f64> = Vec::new();
+            let mut oof_pred: Vec<f64> = Vec::new();
+            let mut failures = 0usize;
+            for f in 0..folds.len() {
+                let entry = fold_preds
+                    .iter()
+                    .find(|((gg, ff), _)| *gg == g && *ff == f)
+                    .map(|(_, r)| r);
+                match entry {
+                    Some(Ok(pred)) if pred.len() == folds[f].len() => {
+                        for (k, &row) in folds[f].iter().enumerate() {
+                            oof_true.push(y[row]);
+                            oof_pred.push(pred[k]);
+                        }
+                    }
+                    // A fold that never produced a number is dropped, not scored
+                    // as catastrophic: we learned nothing about the gene there.
+                    _ => failures += 1,
+                }
+            }
+            top[g].cv_failed_folds = failures;
+            top[g].cv7_mean_r2 = if oof_true.is_empty() {
+                None
+            } else {
+                r2(&oof_true, &oof_pred).map(|v| v.max(-1.0))
+            };
+            evals += folds.len();
+        }
+        return evals;
+    }
+
+    let fold_scores: Vec<((usize, usize), Result<f64, EvalFailure>)> = pairs
         .par_iter()
         .map(|&(g, f)| {
             (
                 (g, f),
-                eval_with_timeout(train_path, &top[g].canonical, &fold_train[f], &folds[f]),
+                eval_checked(train_path, &top[g].canonical, &fold_train[f], &folds[f]),
             )
         })
         .collect();
-    let cv_scores: Vec<Option<f64>> = (0..top.len())
+    let cv_scores: Vec<(Option<f64>, usize)> = (0..top.len())
         .map(|g| {
-            let s: Vec<f64> = fold_scores
+            let mine: Vec<&Result<f64, EvalFailure>> = fold_scores
                 .iter()
                 .filter(|((gg, _), _)| *gg == g)
-                .map(|(_, v)| *v)
+                .map(|(_, v)| v)
                 .collect();
-            if s.is_empty() { None } else { Some(s.iter().sum::<f64>() / s.len() as f64) }
+            let failures = mine.iter().filter(|r| r.is_err()).count();
+            // Legacy behaviour scores an infrastructure failure as the clip
+            // floor, which is indistinguishable from a genuinely bad model.
+            // Dropping those folds instead is a real change, so it stays behind
+            // a flag: with it off, recorded runs replay bit-for-bit.
+            let s: Vec<f64> = if config.drop_failed_folds {
+                mine.iter().filter_map(|r| r.as_ref().ok().copied()).collect()
+            } else {
+                mine.iter().map(|r| *r.as_ref().unwrap_or(&-1.0)).collect()
+            };
+            let mean = if s.is_empty() {
+                None
+            } else {
+                Some(s.iter().sum::<f64>() / s.len() as f64)
+            };
+            (mean, failures)
         })
         .collect();
-    for (gene, cv) in top.iter_mut().zip(cv_scores) {
+    for (gene, (cv, failures)) in top.iter_mut().zip(cv_scores) {
         gene.cv7_mean_r2 = cv;
+        gene.cv_failed_folds = failures;
         evals += folds.len();
     }
     #[allow(unreachable_code)]
@@ -807,9 +996,26 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
     let started = std::time::Instant::now();
     let (population, stats, search_evals) = run_strategy(&config, train_path, &x, &y);
 
-    let mut top: Vec<TopGene> = population
+    // Seeding baselines into generation 0 is not enough: the in-generation
+    // fitness culls every one of them before the finale (measured — all 8
+    // finalists came back origin=evolved on a seeded run). Union them into the
+    // finale pool so CV always gets to compare against the floor.
+    let mut finalists: Vec<Member> = population.iter().take(config.final_top_k).cloned().collect();
+    if config.baseline_seeds {
+        let chosen: HashSet<String> = finalists.iter().map(|m| m.semantic.clone()).collect();
+        // Rebuilt from the constant, not filtered out of `population`: evolution
+        // has already dropped them by this point, which is the whole problem.
+        for g in BASELINE_SEEDS {
+            if let Some(m) = make_member(g, "baseline") {
+                if !chosen.contains(&m.semantic) {
+                    finalists.push(m);
+                }
+            }
+        }
+    }
+
+    let mut top: Vec<TopGene> = finalists
         .iter()
-        .take(config.final_top_k)
         .map(|m| TopGene {
             canonical: m.canonical.clone(),
             semantic: m.semantic.clone(),
@@ -823,6 +1029,7 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
             rcv_se: None,
             boot_mean_r2: None,
             boot_sd_r2: None,
+            cv_failed_folds: 0,
         })
         .collect();
     let cv_evals = final_cv(&config, train_path, &x, &y, &mut top);
@@ -1006,7 +1213,19 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
             .total_cmp(&top[a].cv7_mean_r2.unwrap_or(-2.0))
             .then_with(|| top[a].semantic.cmp(&top[b].semantic))
     });
-    let winner = order.first().copied().ok_or("empty final population")?;
+    let mut winner = order.first().copied().ok_or("empty final population")?;
+    if config.winner_rule == "rcv_1se" {
+        // The argmax of a CV score computed on the same rows the search already
+        // optimised against is a winner's-curse estimator. Step back to the
+        // simplest gene statistically indistinguishable from the best under
+        // repeated CV. t4_choice is exactly that rule, already computed.
+        if let Some(pick) = t4_choice
+            .as_ref()
+            .and_then(|sem| top.iter().position(|g| &g.semantic == sem))
+        {
+            winner = pick;
+        }
+    }
 
     let result = serde_json::json!({
         "schema": SCHEMA_RESULT,
