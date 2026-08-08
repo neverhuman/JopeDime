@@ -18,7 +18,9 @@ use std::collections::HashSet;
 use std::fs;
 use std::process::ExitCode;
 
-use feat_math::full_rust::{canonicalize, crossover_pipelines, mutate_pipeline};
+use feat_math::full_rust::{
+    canonicalize, crossover_pipelines, mutate_pipeline, mutate_pipeline_expanded,
+};
 use rayon::prelude::*;
 use feat_math::{model, GenomeIr, Pcg32, Rows};
 use serde::{Deserialize, Serialize};
@@ -60,6 +62,18 @@ struct Config {
     budget: Budget,
     final_cv_folds: usize,
     final_top_k: usize,
+    #[serde(default)]
+    perturb_fitness: bool,
+    /// "legacy" keeps the 31-transform vocabulary every prior round searched;
+    /// "expanded" additionally reaches EXPANSION_TRANSFORMS, the zscore target
+    /// and the wider expression set. Defaulting to legacy keeps recorded runs
+    /// replayable bit-for-bit.
+    #[serde(default = "default_vocab")]
+    vocab: String,
+}
+
+fn default_vocab() -> String {
+    "legacy".to_string()
 }
 
 #[derive(Clone, Serialize)]
@@ -77,10 +91,15 @@ struct TopGene {
     canonical: String,
     semantic: String,
     origin: String,
+    complexity: usize,
     robust_fitness: f64,
     worst_split: f64,
     splits_seen: usize,
     cv7_mean_r2: Option<f64>,
+    rcv_mean_r2: Option<f64>,
+    rcv_se: Option<f64>,
+    boot_mean_r2: Option<f64>,
+    boot_sd_r2: Option<f64>,
 }
 
 fn seed_from(tag: &str) -> u64 {
@@ -247,6 +266,60 @@ fn kfold(y: &[f64], k: usize, seed: u64) -> Vec<Vec<usize>> {
     folds
 }
 
+/// T5: deterministic per-generation perturbation of the TRAIN-side rows only.
+/// Even generations: Gaussian column noise at 5% of column SD. Odd: 10% row
+/// dropout (rows zero-weighted by exclusion from train_ids). Validation rows
+/// are always untouched. Returns the CSV path children should load and the
+/// possibly-thinned train ids.
+fn perturbed_generation_csv(
+    x: &Rows,
+    y: &[f64],
+    train_ids: &[usize],
+    generation: usize,
+    tag: &str,
+) -> Result<(String, Vec<usize>), String> {
+    let seed = seed_from(&format!("screen:perturb:{tag}:{generation}"));
+    let mut rng = Pcg32::new(seed, 0x5045_5254);
+    let cols = x[0].len();
+    let mut out = x.clone();
+    let mut kept: Vec<usize> = train_ids.to_vec();
+    if generation % 2 == 0 {
+        let mut sd = vec![0.0f64; cols];
+        for c in 0..cols {
+            let vals: Vec<f64> = train_ids.iter().map(|&i| x[i][c]).collect();
+            let mean = vals.iter().sum::<f64>() / vals.len() as f64;
+            sd[c] = (vals.iter().map(|v| (v - mean).powi(2)).sum::<f64>()
+                / vals.len() as f64)
+                .sqrt();
+        }
+        for &i in train_ids {
+            for c in 0..cols {
+                out[i][c] += 0.05 * sd[c] * rng.gaussian();
+            }
+        }
+    } else {
+        kept = train_ids
+            .iter()
+            .copied()
+            .filter(|_| rng.next_f64() >= 0.10)
+            .collect();
+        if kept.len() < train_ids.len() / 2 {
+            kept = train_ids.to_vec();
+        }
+    }
+    let path = format!(".perturbed-gen{generation}.csv");
+    let mut text = String::new();
+    for (i, row) in out.iter().enumerate() {
+        for v in row {
+            text.push_str(&format!("{v},"));
+        }
+        text.push_str(&format!("{}
+", y[i]));
+    }
+    fs::write(&path, text).map_err(|e| e.to_string())?;
+    Ok((path, kept))
+}
+
 fn subset(x: &Rows, y: &[f64], ids: &[usize]) -> (Rows, Vec<f64>) {
     (
         ids.iter().map(|&i| x[i].clone()).collect(),
@@ -392,6 +465,7 @@ fn breed_child(
     features: usize,
     tag: &str,
     seen: &HashSet<String>,
+    expanded_vocab: bool,
 ) -> Option<Member> {
     for retry in 0..BREED_RETRIES {
         let seed = seed_from(&format!("screen:{tag}:{retry}"));
@@ -405,7 +479,12 @@ fn breed_child(
                 rng.next_u32() as u64 | ((rng.next_u32() as u64) << 32),
             )
         } else {
-            mutate_pipeline(
+            let mutate = if expanded_vocab {
+                mutate_pipeline_expanded
+            } else {
+                mutate_pipeline
+            };
+            mutate(
                 &ranked[first].canonical,
                 rng.next_u32() as u64 | ((rng.next_u32() as u64) << 32),
                 features,
@@ -431,6 +510,7 @@ fn fill_population(
     target: usize,
     features: usize,
     tag: &str,
+    expanded_vocab: bool,
 ) -> Vec<Member> {
     let mut seen: HashSet<String> = base.iter().map(|m| m.semantic.clone()).collect();
     let mut population = base;
@@ -442,6 +522,7 @@ fn fill_population(
             features,
             &format!("{tag}:fill:{slot}"),
             &seen,
+            expanded_vocab,
         ) {
             seen.insert(child.semantic.clone());
             population.push(child);
@@ -510,8 +591,15 @@ fn run_strategy(
             .map(|_| (config.budget.population, splits))
             .collect()
     };
+    let expanded_vocab = config.vocab == "expanded";
     let gen0_target = schedule.first().map_or(config.budget.population, |s| s.0);
-    let mut population = fill_population(gen0, gen0_target, features, &format!("{ds}:{ms}:g0"));
+    let mut population = fill_population(
+        gen0,
+        gen0_target,
+        features,
+        &format!("{ds}:{ms}:g0"),
+        expanded_vocab,
+    );
 
     // ---- DL draw bank for s3 (continual injection) ----
     let mut bank: Vec<Member> = config
@@ -557,6 +645,14 @@ fn run_strategy(
             for s in 0..splits_per_gen.max(1) {
                 let seed = seed_from(&format!("screen:{ds}:{ms}:split:{generation}:{s}"));
                 let (train_ids, valid_ids) = split_8020(y, seed);
+                let (eval_path, train_ids) = if config.perturb_fitness {
+                    match perturbed_generation_csv(x, y, &train_ids, generation, &format!("{ds}:{ms}")) {
+                        Ok(v) => v,
+                        Err(_) => (train_path.to_string(), train_ids),
+                    }
+                } else {
+                    (train_path.to_string(), train_ids)
+                };
                 // train_only_study discipline: refuse silently-identical splits
                 let mut h = Sha256::new();
                 for i in &valid_ids {
@@ -568,11 +664,14 @@ fn run_strategy(
                 }
                 let scores: Vec<f64> = population
                     .par_iter()
-                    .map(|m| eval_with_timeout(train_path, &m.canonical, &train_ids, &valid_ids))
+                    .map(|m| eval_with_timeout(&eval_path, &m.canonical, &train_ids, &valid_ids))
                     .collect();
                 for (m, sc) in population.iter_mut().zip(scores) {
                     m.scores.push(sc);
                     evaluations += 1;
+                }
+                if eval_path.starts_with(".perturbed-") {
+                    let _ = fs::remove_file(&eval_path);
                 }
             }
         }
@@ -607,6 +706,7 @@ fn run_strategy(
                 features,
                 &format!("{ds}:{ms}:g{}:{slot}", generation + 1),
                 &next_seen,
+                expanded_vocab,
             ) {
                 next_seen.insert(child.semantic.clone());
                 next.push(child);
@@ -714,13 +814,189 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
             canonical: m.canonical.clone(),
             semantic: m.semantic.clone(),
             origin: m.origin.clone(),
+            complexity: m.complexity,
             robust_fitness: robust_fitness(&m.scores),
             worst_split: worst_split(&m.scores),
             splits_seen: m.scores.len(),
             cv7_mean_r2: None,
+            rcv_mean_r2: None,
+            rcv_se: None,
+            boot_mean_r2: None,
+            boot_sd_r2: None,
         })
         .collect();
     let cv_evals = final_cv(&config, train_path, &x, &y, &mut top);
+
+    // ---- T4: repeated stratified CV (5 x k folds), 1-SE + parsimony ----
+    let repeats = 5usize;
+    let mut oof_matrix: Vec<Vec<(usize, f64)>> = vec![Vec::new(); top.len()];
+    for rep in 0..repeats {
+        let folds = kfold(
+            &y,
+            config.final_cv_folds,
+            seed_from(&format!("screen:{}:{}:rcv:{rep}", config.dataset_hash, config.master_seed)),
+        );
+        let fold_train: Vec<Vec<usize>> = (0..folds.len())
+            .map(|f| folds.iter().enumerate().filter(|(i, _)| *i != f)
+                .flat_map(|(_, ids)| ids.iter().copied()).collect())
+            .collect();
+        let pairs: Vec<(usize, usize)> = (0..top.len())
+            .flat_map(|g| (0..folds.len()).map(move |f| (g, f)))
+            .collect();
+        let outs: Vec<((usize, usize), f64)> = pairs
+            .par_iter()
+            .map(|&(g, f)| ((g, f),
+                eval_with_timeout(train_path, &top[g].canonical, &fold_train[f], &folds[f])))
+            .collect();
+        for ((g, f), v) in outs {
+            let _ = f;
+            oof_matrix[g].push((rep, v));
+        }
+    }
+    for (g, gene) in top.iter_mut().enumerate() {
+        let vals: Vec<f64> = oof_matrix[g].iter().map(|(_, v)| *v).collect();
+        if !vals.is_empty() {
+            let mean = vals.iter().sum::<f64>() / vals.len() as f64;
+            let sd = (vals.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / vals.len() as f64)
+                .sqrt();
+            gene.rcv_mean_r2 = Some(mean);
+            gene.rcv_se = Some(sd / (vals.len() as f64).sqrt());
+        }
+    }
+    let t4_choice = {
+        let best = top.iter()
+            .filter_map(|g| g.rcv_mean_r2.map(|m| (m, g.rcv_se.unwrap_or(0.0))))
+            .fold((f64::NEG_INFINITY, 0.0), |a, b| if b.0 > a.0 { b } else { a });
+        let threshold = best.0 - best.1;
+        top.iter()
+            .filter(|g| g.rcv_mean_r2.unwrap_or(f64::NEG_INFINITY) >= threshold)
+            .min_by(|a, b| a.complexity.cmp(&b.complexity).then(a.semantic.cmp(&b.semantic)))
+            .map(|g| g.semantic.clone())
+    };
+
+    // ---- T3: bootstrap-refit stability over the top pool ----
+    let bags = 20usize;
+    let n = y.len();
+    let bag_sets: Vec<(Vec<usize>, Vec<usize>)> = (0..bags)
+        .map(|b| {
+            let seed = seed_from(&format!("screen:{}:{}:boot:{b}", config.dataset_hash, config.master_seed));
+            let mut rng = Pcg32::new(seed, 0x424f_4f54);
+            let mut inb = Vec::with_capacity(n);
+            let mut seen = vec![false; n];
+            for _ in 0..n {
+                let i = (rng.next_u32() as usize) % n;
+                inb.push(i);
+                seen[i] = true;
+            }
+            let oob: Vec<usize> = (0..n).filter(|&i| !seen[i]).collect();
+            (inb, oob)
+        })
+        .collect();
+    let boot_pairs: Vec<(usize, usize)> = (0..top.len())
+        .flat_map(|g| (0..bags).map(move |b| (g, b)))
+        .collect();
+    let boot_outs: Vec<((usize, usize), f64)> = boot_pairs
+        .par_iter()
+        .map(|&(g, b)| ((g, b),
+            eval_with_timeout(train_path, &top[g].canonical, &bag_sets[b].0, &bag_sets[b].1)))
+        .collect();
+    let mut boot_scores: Vec<Vec<f64>> = vec![Vec::new(); top.len()];
+    for ((g, _), v) in boot_outs {
+        boot_scores[g].push(v);
+    }
+    for (g, gene) in top.iter_mut().enumerate() {
+        let vals = &boot_scores[g];
+        if !vals.is_empty() {
+            let mean = vals.iter().sum::<f64>() / vals.len() as f64;
+            let sd = (vals.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / vals.len() as f64)
+                .sqrt();
+            gene.boot_mean_r2 = Some(mean);
+            gene.boot_sd_r2 = Some(sd);
+        }
+    }
+    let t3_choice = top.iter()
+        .filter(|g| g.boot_mean_r2.is_some())
+        .max_by(|a, b| {
+            let fa = a.boot_mean_r2.unwrap() - 0.5 * a.boot_sd_r2.unwrap_or(0.0);
+            let fb = b.boot_mean_r2.unwrap() - 0.5 * b.boot_sd_r2.unwrap_or(0.0);
+            fa.total_cmp(&fb).then(b.semantic.cmp(&a.semantic))
+        })
+        .map(|g| g.semantic.clone());
+
+    // ---- T2: ensembles from a common OOF partition (first rcv repeat folds) ----
+    let ens_folds = kfold(
+        &y,
+        config.final_cv_folds,
+        seed_from(&format!("screen:{}:{}:rcv:0", config.dataset_hash, config.master_seed)),
+    );
+    let ens_train: Vec<Vec<usize>> = (0..ens_folds.len())
+        .map(|f| ens_folds.iter().enumerate().filter(|(i, _)| *i != f)
+            .flat_map(|(_, ids)| ids.iter().copied()).collect())
+        .collect();
+    // per-gene OOF prediction vector via child predict? cheap approximation:
+    // per-gene per-fold R2 already captured; greedy selection needs prediction
+    // vectors -- run one more pass collecting predictions in-process (no
+    // timeout risk dominates: reuse eval budget bound by top_k * folds).
+    let mut oof_preds: Vec<Vec<f64>> = vec![vec![f64::NAN; n]; top.len()];
+    for (g, gene) in top.iter().enumerate() {
+        if let Ok(genome) = GenomeIr::parse(&gene.canonical) {
+            for f in 0..ens_folds.len() {
+                let (tx, ty) = subset(&x, &y, &ens_train[f]);
+                let (vx, _) = subset(&x, &y, &ens_folds[f]);
+                if let Ok(pred) = model::fit_predict(&genome, &tx, &ty, &vx) {
+                    for (j, &row) in ens_folds[f].iter().enumerate() {
+                        if let Some(v) = pred.get(j) {
+                            oof_preds[g][row] = *v;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    let oof_rmse = |mix: &[f64]| -> f64 {
+        let mut se = 0.0; let mut c = 0usize;
+        for i in 0..n {
+            if mix[i].is_finite() {
+                se += (mix[i] - y[i]).powi(2);
+                c += 1;
+            }
+        }
+        if c == 0 { f64::INFINITY } else { (se / c as f64).sqrt() }
+    };
+    // uniform top-5
+    let ens_uniform: Vec<String> = top.iter().take(5).map(|g| g.semantic.clone()).collect();
+    // greedy Caruana on OOF predictions, with replacement, up to 8 picks
+    let mut picks: Vec<usize> = Vec::new();
+    let mut mix = vec![f64::NAN; n];
+    for _ in 0..8 {
+        let mut best: Option<(usize, f64)> = None;
+        for g in 0..top.len() {
+            if oof_preds[g].iter().all(|v| !v.is_finite()) { continue; }
+            let k = picks.len() as f64;
+            let cand: Vec<f64> = (0..n).map(|i| {
+                let a = if mix[i].is_finite() { mix[i] * k } else { 0.0 };
+                let b = if oof_preds[g][i].is_finite() { oof_preds[g][i] } else { return f64::NAN; };
+                (a + b) / (k + 1.0)
+            }).collect();
+            let r = oof_rmse(&cand);
+            if best.is_none() || r < best.unwrap().1 { best = Some((g, r)); }
+        }
+        match best {
+            Some((g, _)) => {
+                let k = picks.len() as f64;
+                for i in 0..n {
+                    let b = oof_preds[g][i];
+                    if b.is_finite() {
+                        let a = if mix[i].is_finite() { mix[i] * k } else { 0.0 };
+                        mix[i] = (a + b) / (k + 1.0);
+                    }
+                }
+                picks.push(g);
+            }
+            None => break,
+        }
+    }
+    let ens_greedy: Vec<String> = picks.iter().map(|&g| top[g].semantic.clone()).collect();
     // winner: best CV mean, complexity/semantic tie-break via stable sort order
     let mut order: Vec<usize> = (0..top.len()).collect();
     order.sort_by(|&a, &b| {
@@ -741,6 +1017,13 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
         "winner_semantic": top[winner].semantic,
         "winner_origin": top[winner].origin,
         "winner_cv_mean_r2": top[winner].cv7_mean_r2,
+        "finales": {
+            "control_cv7": top[winner].semantic,
+            "t3_bootstrap": t3_choice,
+            "t4_rcv_1se": t4_choice,
+            "t2_uniform5": ens_uniform,
+            "t2_greedy": ens_greedy,
+        },
         "search_evaluations": search_evals,
         "final_cv_evaluations": cv_evals,
         "runtime_seconds": started.elapsed().as_secs_f64(),
@@ -773,6 +1056,44 @@ fn score(genome_file: &str, train_path: &str, test_path: &str) -> Result<(), Str
     Ok(())
 }
 
+fn score_ensemble(members_file: &str, train_path: &str, test_path: &str) -> Result<(), String> {
+    let members: Vec<String> = serde_json::from_str(
+        &fs::read_to_string(members_file).map_err(|e| e.to_string())?,
+    )
+    .map_err(|e| e.to_string())?;
+    if members.is_empty() {
+        return Err("empty ensemble".into());
+    }
+    let (tx, ty) = load_csv(train_path)?;
+    let (vx, vy) = load_csv(test_path)?;
+    let mut acc = vec![0.0f64; vy.len()];
+    let mut used = 0usize;
+    for m in &members {
+        let canonical = canonicalize(m.trim()).map_err(|e| format!("canonicalize: {e}"))?;
+        let genome = GenomeIr::parse(&canonical.canonical).map_err(|e| format!("parse: {e}"))?;
+        match model::fit_predict(&genome, &tx, &ty, &vx) {
+            Ok(p) if p.len() == vy.len() && p.iter().all(|v| v.is_finite()) => {
+                for (a, b) in acc.iter_mut().zip(&p) {
+                    *a += b;
+                }
+                used += 1;
+            }
+            _ => {}
+        }
+    }
+    if used == 0 {
+        return Err("no ensemble member fit".into());
+    }
+    let pred: Vec<f64> = acc.iter().map(|v| v / used as f64).collect();
+    let out = serde_json::json!({
+        "rmse": rmse(&vy, &pred),
+        "r2": r2(&vy, &pred),
+        "members_used": used,
+    });
+    println!("{out}");
+    Ok(())
+}
+
 fn arg(args: &[String], flag: &str) -> Option<String> {
     args.iter()
         .position(|a| a == flag)
@@ -793,6 +1114,14 @@ fn main() -> ExitCode {
         Some("eval-one") => match arg(&args, "--train") {
             Some(t) => eval_one(&t),
             None => Err("usage: eval-one --train <csv>   (stdin: {genome,train_ids,valid_ids})".into()),
+        },
+        Some("score-ensemble") => match (
+            arg(&args, "--members-file"),
+            arg(&args, "--train"),
+            arg(&args, "--test"),
+        ) {
+            (Some(m), Some(t), Some(e)) => score_ensemble(&m, &t, &e),
+            _ => Err("usage: score-ensemble --members-file <json> --train <csv> --test <csv>".into()),
         },
         Some("score") => match (
             arg(&args, "--genome-file"),
