@@ -89,6 +89,15 @@ struct Config {
     /// pool predictions it never received.
     #[serde(default)]
     drop_failed_folds: bool,
+    /// Width of the repeated-CV acceptance band in standard errors. 1.0 is the
+    /// textbook one-standard-error rule but admitted most of the pool on our
+    /// fold sizes; 0.5 is the measured-sane default for this harness.
+    #[serde(default = "default_se_band")]
+    se_band: f64,
+}
+
+fn default_se_band() -> f64 {
+    1.0
 }
 
 fn default_winner_rule() -> String {
@@ -1074,10 +1083,28 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
         let best = top.iter()
             .filter_map(|g| g.rcv_mean_r2.map(|m| (m, g.rcv_se.unwrap_or(0.0))))
             .fold((f64::NEG_INFINITY, 0.0), |a, b| if b.0 > a.0 { b } else { a });
-        let threshold = best.0 - best.1;
+        // Band width is configurable because 1.0 SE admitted 10-14 of 16
+        // candidates on measured runs, and a band containing most of the pool
+        // is not a selection rule -- combined with the complexity tie-break it
+        // degenerates to "pick whichever injected baseline is simplest".
+        let threshold = best.0 - config.se_band * best.1;
         top.iter()
             .filter(|g| g.rcv_mean_r2.unwrap_or(f64::NEG_INFINITY) >= threshold)
-            .min_by(|a, b| a.complexity.cmp(&b.complexity).then(a.semantic.cmp(&b.semantic)))
+            // Ties at equal complexity break by SCORE, then by hash. Breaking
+            // straight to the hash made this an OLS bias, not a 1-SE rule: all
+            // six baselines are complexity 1 and (pipe X (ridge lambda_frac=0.0))
+            // hashes smallest, so plain OLS won every tie it entered -- on one
+            // measured run it was the worst of five tied candidates.
+            .min_by(|a, b| {
+                a.complexity
+                    .cmp(&b.complexity)
+                    .then(
+                        b.rcv_mean_r2
+                            .unwrap_or(f64::NEG_INFINITY)
+                            .total_cmp(&a.rcv_mean_r2.unwrap_or(f64::NEG_INFINITY)),
+                    )
+                    .then(a.semantic.cmp(&b.semantic))
+            })
             .map(|g| g.semantic.clone())
     };
 
@@ -1214,6 +1241,10 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
             .then_with(|| top[a].semantic.cmp(&top[b].semantic))
     });
     let mut winner = order.first().copied().ok_or("empty final population")?;
+    // Captured BEFORE any winner_rule reassignment. Emitting top[winner] after
+    // the rule ran made control and treatment the same value, so the A/B this
+    // field exists to record was silently never recorded.
+    let control_cv7_semantic = top[winner].semantic.clone();
     if config.winner_rule == "rcv_1se" {
         // The argmax of a CV score computed on the same rows the search already
         // optimised against is a winner's-curse estimator. Step back to the
@@ -1237,7 +1268,7 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
         "winner_origin": top[winner].origin,
         "winner_cv_mean_r2": top[winner].cv7_mean_r2,
         "finales": {
-            "control_cv7": top[winner].semantic,
+            "control_cv7": control_cv7_semantic,
             "t3_bootstrap": t3_choice,
             "t4_rcv_1se": t4_choice,
             "t2_uniform5": ens_uniform,
