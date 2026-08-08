@@ -290,6 +290,20 @@ fn split_8020(y: &[f64], seed: u64) -> (Vec<usize>, Vec<usize>) {
     (train, valid)
 }
 
+/// Folds actually usable for `n` rows. The confirmation cohort runs from 10 to
+/// 269 rows, so a hardcoded k=7 is not merely suboptimal there -- at n=10 it
+/// deals folds of 1-2 rows whose own `ss_tot` is often zero, and `r2` then
+/// returns None for the FOLD, which the harness scores as if the GENE were
+/// terrible. Cap k at n, and below 2k fall back to leave-one-out, which is the
+/// standard small-sample choice and is well defined all the way down to n=2.
+fn usable_folds(n: usize, configured_k: usize) -> usize {
+    if n < 2 {
+        return 0;
+    }
+    let k = configured_k.max(2).min(n);
+    if n < 2 * k { n } else { k }
+}
+
 /// Deterministic stratified k-fold: per-decile shuffle, then deal round-robin.
 fn kfold(y: &[f64], k: usize, seed: u64) -> Vec<Vec<usize>> {
     let mut order: Vec<usize> = (0..y.len()).collect();
@@ -857,7 +871,7 @@ fn run_strategy(
 fn final_cv(config: &Config, train_path: &str, x: &Rows, y: &[f64], top: &mut [TopGene]) -> usize {
     let folds = kfold(
         y,
-        config.final_cv_folds,
+        usable_folds(y.len(), config.final_cv_folds),
         seed_from(&format!(
             "screen:{}:{}:finalcv",
             config.dataset_hash, config.master_seed
