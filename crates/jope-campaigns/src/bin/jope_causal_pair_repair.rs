@@ -557,16 +557,47 @@ fn evaluator_binding(
     bail!("no immutable original evaluator binding exists for the repair pair")
 }
 
+/// Content-addressed evaluators available for replay, keyed by sha256.
+///
+/// Bundles are the primary source, but a bundle directory can be gutted by
+/// cleanup while the evaluator it carried is still referenced by historical
+/// repair state -- which is exactly the live failure: evaluator 6bf93239 is
+/// referenced by 40 pairs, survives nowhere under `runtime-bundles`, and has
+/// accumulated 120,349 identical retry failures because this lookup could not
+/// see it. `retain_evaluators` already hard-links every bundle evaluator into
+/// `training/evaluator-vault/<digest>/corpus_eval` for precisely this reason,
+/// and `jope_causal_evidence::retained_evaluator` already resolves against the
+/// vault. This function was the odd one out.
+///
+/// The vault is content-addressed, so admitting it invents no provenance: the
+/// digest IS the identity, and it is re-verified here rather than trusted from
+/// the path. A bundle entry always wins over a vault entry for the same digest.
 fn bundle_evaluators(root: &Path) -> Result<BTreeMap<String, PathBuf>> {
     let mut output = BTreeMap::new();
     let bundles = root.join("runtime-bundles");
-    if !bundles.is_dir() {
-        return Ok(output);
+    if bundles.is_dir() {
+        for entry in fs::read_dir(bundles)? {
+            let evaluator = entry?.path().join("runtime/bin/corpus_eval");
+            if evaluator.is_file() {
+                output.entry(sha256_file(&evaluator)?).or_insert(evaluator);
+            }
+        }
     }
-    for entry in fs::read_dir(bundles)? {
-        let evaluator = entry?.path().join("runtime/bin/corpus_eval");
-        if evaluator.is_file() {
-            output.entry(sha256_file(&evaluator)?).or_insert(evaluator);
+    let vault = root.join("training/evaluator-vault");
+    if vault.is_dir() {
+        for entry in fs::read_dir(vault)? {
+            let dir = entry?.path();
+            let evaluator = dir.join("corpus_eval");
+            if !evaluator.is_file() {
+                continue;
+            }
+            let digest = sha256_file(&evaluator)?;
+            // The directory name is a claim; the bytes are the proof. Skip any
+            // entry whose contents do not hash to the name it is filed under.
+            if dir.file_name().and_then(|n| n.to_str()) != Some(digest.as_str()) {
+                continue;
+            }
+            output.entry(digest).or_insert(evaluator);
         }
     }
     Ok(output)
