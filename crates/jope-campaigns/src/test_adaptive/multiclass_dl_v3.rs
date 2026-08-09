@@ -2290,9 +2290,80 @@ fn plan_impl(
     let (runtime_bundle_path, runtime_bundle_sha256, runtime_bundle_manifest_sha256) =
         pinned_runtime_bundle()?;
     let pre_async_freeze_path = root.join("inputs/pre-async-input-freeze.v3.json");
-    immutable_or_verify(
-        &pre_async_freeze_path,
-        &canonical_json(&json!({
+    if pre_async_freeze_path.is_file() {
+        let frozen = read_json(&pre_async_freeze_path)?;
+        ensure!(
+            frozen.get("schema").and_then(Value::as_str) == Some(PRE_ASYNC_FREEZE_SCHEMA)
+                && frozen.get("run_id").and_then(Value::as_str) == Some(RUN_ID)
+                && frozen.get("test_adaptive").and_then(Value::as_bool) == Some(true)
+                && frozen.get("benchmark_valid").and_then(Value::as_bool) == Some(false)
+                && required_string(&frozen, "/source_commit")?.len() == 40
+                && required_sha256(&frozen, "/release_binary_sha256")? == current_binary_sha256()?
+                && required_sha256(&frozen, "/runtime_bundle_sha256")? == runtime_bundle_sha256
+                && required_sha256(&frozen, "/runtime_bundle_manifest_sha256")?
+                    == runtime_bundle_manifest_sha256
+                && Path::new(required_string(&frozen, "/runtime_bundle_path")?)
+                    == runtime_bundle_path
+                && Path::new(required_string(&frozen, "/sotarena_root")?) == sotarena_root,
+            "pre-async input freeze identity drift"
+        );
+        for (path_pointer, hash_pointer, expected_path) in [
+            (
+                "/comparator_snapshot_path",
+                "/comparator_snapshot_sha256",
+                snapshot_path.as_path(),
+            ),
+            (
+                "/target_manifest_path",
+                "/target_manifest_sha256",
+                target_path.as_path(),
+            ),
+            (
+                "/base_catalog_pointer_path",
+                "/base_catalog_pointer_sha256",
+                catalog_pointer,
+            ),
+            (
+                "/base_catalog_path",
+                "/base_catalog_sha256",
+                base_catalog_path,
+            ),
+            ("/base_data_path", "/base_data_sha256", base_data_path),
+            ("/checkpoint_path", "/checkpoint_sha256", checkpoint),
+            (
+                "/corpus_manifest_path",
+                "/corpus_manifest_sha256",
+                corpus_manifest,
+            ),
+            (
+                "/selection_policy_path",
+                "/selection_policy_sha256",
+                selection_policy,
+            ),
+            (
+                "/proposal_generator_path",
+                "/proposal_generator_sha256",
+                proposal_generator,
+            ),
+            (
+                "/context_generator_path",
+                "/context_generator_sha256",
+                context_generator.as_path(),
+            ),
+            ("/scq_binary", "/scq_binary_sha256", Path::new(SCQ)),
+        ] {
+            let frozen_path = Path::new(required_string(&frozen, path_pointer)?);
+            ensure!(
+                frozen_path == expected_path
+                    && sha256_file(frozen_path)? == required_sha256(&frozen, hash_pointer)?,
+                "pre-async pinned input drift at {}",
+                frozen_path.display()
+            );
+        }
+    } else {
+        immutable_write(
+            &pre_async_freeze_path,
+            &canonical_json(&json!({
             "schema": PRE_ASYNC_FREEZE_SCHEMA,
             "run_id": RUN_ID,
             "test_adaptive": true,
@@ -2325,9 +2396,9 @@ fn plan_impl(
             "context_generator_sha256": sha256_file(&context_generator)?,
             "scq_binary": SCQ,
             "scq_binary_sha256": sha256_file(Path::new(SCQ))?,
-        }))?,
-        "pre-async input freeze",
-    )?;
+            }))?,
+        )?;
+    }
     // Priority overrides are durable scheduler state, but an operator may
     // normalize all families while this resumable campaign is between polls.
     // Reassert the frozen campaign weight on every non-terminal planning pass
