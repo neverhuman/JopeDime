@@ -22,7 +22,8 @@ const LEDGER_SCHEMA: &str = "JopeMulticlass64ChampionLedger.v3";
 const CHECKPOINT_SCHEMA: &str = "JopeMulticlass210GenerationCheckpoint.v3";
 const SUMMARY_SCHEMA: &str = "JopeMulticlass210CampaignSummary.v3";
 const PROOF_SCHEMA: &str = "JopeMulticlass210PrivateProofBundle.v3";
-const CONTEXT_REQUEST_SCHEMA: &str = "JopeMulticlassContextEncodeRequest.v1";
+const CONTEXT_REQUEST_SCHEMA: &str = "JopeMulticlassContextEncodeRequest.v2";
+const CONTEXT_REQUEST_FILENAME: &str = "request.v2.json";
 const CONTEXT_EXTENSION_SCHEMA: &str = "JopeMulticlassContextExtension.v1";
 const CONTEXT_POINTER_SCHEMA: &str = "JopeTestOnlyContextPointer.v1";
 const PROJECT: &str = "jope-multiclass-test-adaptive";
@@ -778,36 +779,61 @@ fn acquire_controller_lease(root: &Path) -> Result<ControllerLease> {
     Ok(ControllerLease { file })
 }
 
-fn hash_path(path: &Path) -> Result<String> {
-    if path.is_file() {
-        return sha256_file(path);
+fn pinned_runtime_bundle() -> Result<(PathBuf, String, String)> {
+    let root = fs::canonicalize(RUNTIME_BUNDLE_POINTER)
+        .context("resolve pinned runtime bundle pointer")?;
+    let manifest_path = root.join("bundle.json");
+    let manifest = read_json(&manifest_path)?;
+    ensure!(
+        manifest.get("schema").and_then(Value::as_str) == Some("RuntimeBundle.v3"),
+        "runtime bundle schema drift"
+    );
+    let identity = required_sha256(&manifest, "/bundle_sha256")?;
+    ensure!(
+        root.file_name().and_then(|name| name.to_str()) == Some(identity.as_str()),
+        "runtime bundle directory does not match its identity"
+    );
+    let rows = manifest
+        .get("files")
+        .and_then(Value::as_array)
+        .context("runtime bundle manifest lacks files")?;
+    let identity_rows = rows
+        .iter()
+        .map(|row| {
+            json!({
+                "target": row.get("target").cloned().unwrap_or(Value::Null),
+                "sha256": row.get("sha256").cloned().unwrap_or(Value::Null),
+                "bytes": row.get("bytes").cloned().unwrap_or(Value::Null),
+                "python_role": row.get("python_role").cloned().unwrap_or(Value::Null),
+            })
+        })
+        .collect::<Vec<_>>();
+    ensure!(
+        sha256_bytes(&serde_json::to_vec(&identity_rows)?) == identity,
+        "runtime bundle manifest identity drift"
+    );
+    for row in rows {
+        let target = required_string(row, "/target")?;
+        let relative = Path::new(target);
+        ensure!(
+            !relative.is_absolute()
+                && relative
+                    .components()
+                    .all(|component| matches!(component, std::path::Component::Normal(_))),
+            "runtime bundle target is unsafe: {target}"
+        );
+        let path = root.join(relative);
+        ensure!(path.is_file(), "runtime bundle target is missing: {target}");
+        ensure!(
+            path.metadata()?.len() == row.get("bytes").and_then(Value::as_u64).unwrap_or(u64::MAX),
+            "runtime bundle target size drift: {target}"
+        );
+        ensure!(
+            sha256_file(&path)? == required_sha256(row, "/sha256")?,
+            "runtime bundle target hash drift: {target}"
+        );
     }
-    if !path.is_dir() {
-        bail!("cannot hash missing runtime path {}", path.display());
-    }
-    let mut files = Vec::new();
-    fn collect(path: &Path, root: &Path, files: &mut Vec<(String, String)>) -> Result<()> {
-        let mut entries = fs::read_dir(path)?.collect::<std::result::Result<Vec<_>, _>>()?;
-        entries.sort_by_key(|entry| entry.file_name());
-        for entry in entries {
-            let child = entry.path();
-            if child.is_dir() {
-                collect(&child, root, files)?;
-            } else if child.is_file() {
-                files.push((
-                    child
-                        .strip_prefix(root)
-                        .unwrap_or(&child)
-                        .display()
-                        .to_string(),
-                    sha256_file(&child)?,
-                ));
-            }
-        }
-        Ok(())
-    }
-    collect(path, path, &mut files)?;
-    Ok(sha256_bytes(&canonical_json(&files)?))
+    Ok((root, identity, sha256_file(&manifest_path)?))
 }
 
 fn context_source_root(dataset: &str) -> PathBuf {
@@ -815,6 +841,8 @@ fn context_source_root(dataset: &str) -> PathBuf {
 }
 
 fn context_request(root: &Path, base_pointer_path: &Path, base_pointer: &Value) -> Result<Value> {
+    let (runtime_bundle, runtime_bundle_sha256, runtime_bundle_manifest_sha256) =
+        pinned_runtime_bundle()?;
     let standardization = Path::new(STANDARDIZATION_PATH);
     let standardization_value = read_json(standardization)?;
     let projection_path = standardization_value
@@ -850,8 +878,9 @@ fn context_request(root: &Path, base_pointer_path: &Path, base_pointer: &Value) 
         "datasets": datasets,
         "encoder": {
             "protocol": "hyperion-train-context-v3-full-foundation-pca-target-summary",
-            "runtime_bundle_pointer": RUNTIME_BUNDLE_POINTER,
-            "runtime_bundle_sha256": hash_path(Path::new(RUNTIME_BUNDLE_POINTER))?,
+            "runtime_bundle_pointer": runtime_bundle,
+            "runtime_bundle_sha256": runtime_bundle_sha256,
+            "runtime_bundle_manifest_sha256": runtime_bundle_manifest_sha256,
             "standardization_path": standardization,
             "standardization_sha256": sha256_file(standardization)?,
             "projection_path": projection_path,
@@ -872,11 +901,11 @@ fn context_request(root: &Path, base_pointer_path: &Path, base_pointer: &Value) 
 }
 
 fn context_job_id(request_sha256: &str) -> String {
-    format!("jope-mc210-context-{}-qmc3-v3", &request_sha256[..16])
+    format!("jope-mc210-context-{}-qmc4-v3", &request_sha256[..16])
 }
 
 fn context_job_spec_path(root: &Path) -> PathBuf {
-    root.join("job.quant-multiclass-r3.toml")
+    root.join("job.quant-multiclass-r4.toml")
 }
 
 fn render_context_spec(request: &Path, generator: &Path, request_sha256: &str) -> Result<String> {
@@ -1194,12 +1223,12 @@ fn append_context_catalog(
         base_pointer_sha256: sha256_file(base_pointer_path)?,
         effective_pointer_sha256: sha256_file(&pointer_path)?,
         effective_pointer_path: pointer_path,
-        request_path: root.join("request.v1.json"),
-        request_sha256: sha256_file(&root.join("request.v1.json"))?,
+        request_path: root.join(CONTEXT_REQUEST_FILENAME),
+        request_sha256: sha256_file(&root.join(CONTEXT_REQUEST_FILENAME))?,
         receipt_sha256: sha256_file(receipt_path)?,
         receipt_path: receipt_path.to_path_buf(),
         runtime_bundle_sha256: required_sha256(&extension, "/encoder/runtime_bundle_sha256")?,
-        job_id: context_job_id(&sha256_file(&root.join("request.v1.json"))?),
+        job_id: context_job_id(&sha256_file(&root.join(CONTEXT_REQUEST_FILENAME))?),
         job_spec_path: context_job_spec_path(root),
         job_spec_sha256: sha256_file(&context_job_spec_path(root))?,
     })
@@ -1219,7 +1248,7 @@ fn prepare_context_catalog(
             contexts.len() == 272,
             "private context catalog must contain 272 multiclass contexts"
         );
-        let request_path = context_root.join("request.v1.json");
+        let request_path = context_root.join(CONTEXT_REQUEST_FILENAME);
         let receipt_path = context_root.join("context-extension.json");
         let request = read_json(&request_path)?;
         let receipt = read_json(&receipt_path)?;
@@ -1254,7 +1283,7 @@ fn prepare_context_catalog(
         "shared multiclass catalog must contain 269 contexts before extension"
     );
     let request = context_request(&context_root, base_pointer_path, &base_pointer)?;
-    let request_path = context_root.join("request.v1.json");
+    let request_path = context_root.join(CONTEXT_REQUEST_FILENAME);
     let request_bytes = canonical_json(&request)?;
     if request_path.is_file() {
         ensure!(
@@ -3814,7 +3843,7 @@ fn write_campaign_terminal(
         ),
         (
             Path::new(&plan.context_extension_request_path),
-            "context/context-request.v1.json",
+            "context/context-request.v2.json",
         ),
         (
             Path::new(&plan.context_extension_receipt_path),
@@ -4708,7 +4737,7 @@ mod tests {
         let request = "a".repeat(64);
         assert_eq!(
             context_job_id(&request),
-            "jope-mc210-context-aaaaaaaaaaaaaaaa-qmc3-v3"
+            "jope-mc210-context-aaaaaaaaaaaaaaaa-qmc4-v3"
         );
         assert_ne!(context_job_id(&request), context_job_id(&"b".repeat(64)));
         assert_eq!(CONTEXT_EXTENSION_DATASETS.len(), 3);

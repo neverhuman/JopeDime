@@ -41,28 +41,50 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def hash_path(path: Path) -> str:
-    """Match the controller's canonical recursive runtime-bundle hash."""
-    if path.is_file():
-        return sha256_file(path)
-    if not path.is_dir():
-        raise RuntimeError(f"cannot hash missing runtime path {path}")
-    files = [
-        (child.relative_to(path).as_posix(), sha256_file(child))
-        for child in sorted(path.rglob("*"))
-        if child.is_file()
-    ]
-    # Rust's campaign canonical_json helper terminates serialized values with
-    # one newline before hashing.
-    return sha256_bytes(canonical_bytes(files) + b"\n")
-
-
 def require_sha256(value: object, label: str) -> str:
     if not isinstance(value, str) or len(value) != 64 or any(
         char not in "0123456789abcdef" for char in value
     ):
         raise RuntimeError(f"{label} is not a lowercase SHA-256")
     return value
+
+
+def verify_runtime_bundle(root: Path, expected_identity: str, expected_manifest: str) -> None:
+    manifest_path = root / "bundle.json"
+    if sha256_file(manifest_path) != expected_manifest:
+        raise RuntimeError("pinned runtime-bundle manifest hash drift")
+    manifest = json.loads(manifest_path.read_text())
+    if manifest.get("schema") != "RuntimeBundle.v3":
+        raise RuntimeError("pinned runtime-bundle schema drift")
+    if manifest.get("bundle_sha256") != expected_identity or root.name != expected_identity:
+        raise RuntimeError("pinned runtime-bundle identity drift")
+    rows = manifest.get("files")
+    if not isinstance(rows, list) or not rows:
+        raise RuntimeError("pinned runtime-bundle manifest lacks files")
+    identity_rows = [
+        {
+            "target": row.get("target"),
+            "sha256": row.get("sha256"),
+            "bytes": row.get("bytes"),
+            "python_role": row.get("python_role"),
+        }
+        for row in rows
+    ]
+    if sha256_bytes(canonical_bytes(identity_rows)) != expected_identity:
+        raise RuntimeError("pinned runtime-bundle manifest identity drift")
+    resolved_root = root.resolve()
+    for row in rows:
+        target = row.get("target")
+        if not isinstance(target, str):
+            raise RuntimeError("pinned runtime-bundle target is invalid")
+        path = (root / target).resolve()
+        if not path.is_relative_to(resolved_root) or not path.is_file():
+            raise RuntimeError(f"pinned runtime-bundle target is unsafe or missing: {target}")
+        if path.stat().st_size != row.get("bytes"):
+            raise RuntimeError(f"pinned runtime-bundle target size drift: {target}")
+        expected = require_sha256(row.get("sha256"), f"runtime target {target}")
+        if sha256_file(path) != expected:
+            raise RuntimeError(f"pinned runtime-bundle target hash drift: {target}")
 
 
 def source_family(meta: dict, dataset: str) -> str:
@@ -164,7 +186,7 @@ def main() -> None:
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
     request = json.loads(args.request.read_text())
-    if request.get("schema") != "JopeMulticlassContextEncodeRequest.v1":
+    if request.get("schema") != "JopeMulticlassContextEncodeRequest.v2":
         raise RuntimeError("unsupported context request schema")
     if request.get("test_adaptive") is not True or request.get("benchmark_valid") is not False:
         raise RuntimeError("context request disclosure flags are invalid")
@@ -185,8 +207,14 @@ def main() -> None:
         if not path.exists():
             raise RuntimeError(f"pinned runtime-bundle dependency is absent: {path}")
     require_sha256(encoder.get("runtime_bundle_sha256"), "runtime_bundle_sha256")
-    if hash_path(runtime_bundle) != encoder["runtime_bundle_sha256"]:
-        raise RuntimeError("pinned runtime-bundle hash drift")
+    runtime_manifest_sha256 = require_sha256(
+        encoder.get("runtime_bundle_manifest_sha256"), "runtime_bundle_manifest_sha256"
+    )
+    verify_runtime_bundle(
+        runtime_bundle,
+        encoder["runtime_bundle_sha256"],
+        runtime_manifest_sha256,
+    )
     foundation_expert = Path("/home/ubuntu/remote_super/fable_god")
     os.environ["JOPE_RUNTIME_PYTHONPATH"] = (
         f"{runtime_python}:{foundation_expert}"
@@ -253,7 +281,7 @@ def main() -> None:
         "test_adaptive": True,
         "benchmark_valid": False,
         "request_sha256": request_sha256,
-        "job_id": f"jope-mc210-context-{request_sha256[:16]}-qmc3-v3",
+        "job_id": f"jope-mc210-context-{request_sha256[:16]}-qmc4-v3",
         "encoder": encoder,
         "entries": entries,
         "record_stride_bytes": STRIDE,
