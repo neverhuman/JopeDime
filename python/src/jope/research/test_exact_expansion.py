@@ -498,9 +498,15 @@ def widen_signature_timeout(seconds: float = SIGNATURE_TIMEOUT_SECONDS) -> None:
     target can even be named.
     """
 
-    jope_src = "/home/ubuntu/jope/src"
-    if jope_src not in sys.path:
-        sys.path.insert(0, jope_src)
+    runtime_pythonpath = os.environ.get("JOPE_RUNTIME_PYTHONPATH")
+    roots = (
+        runtime_pythonpath.split(":")
+        if runtime_pythonpath
+        else ["/home/ubuntu/jope/src"]
+    )
+    for root in reversed([root for root in roots if root]):
+        if root not in sys.path:
+            sys.path.insert(0, root)
     import jope.signatures as signatures
 
     if getattr(signatures.make_signatures, "_jope_dime_widened", False):
@@ -515,15 +521,32 @@ def widen_signature_timeout(seconds: float = SIGNATURE_TIMEOUT_SECONDS) -> None:
     signatures.make_signatures = widened
 
 
-def existing_hyperion_encoder(source: Path, destination: Path, task: str) -> None:
+def existing_hyperion_encoder(
+    source: Path,
+    destination: Path,
+    task: str,
+    *,
+    art_dir: Path | None = None,
+) -> None:
     """Generate missing sidecars with JOPE's pinned train-only encoder."""
 
     del task
     ensure_foundation_expert_importable()
     widen_signature_timeout()
-    jope_root = Path("/home/ubuntu/jope")
-    sys.path.insert(0, str(jope_root / "scripts"))
-    from encode_external import encode_external
+    external_path = os.environ.get("JOPE_ENCODE_EXTERNAL_PATH")
+    if external_path:
+        spec = importlib.util.spec_from_file_location(
+            "jope_runtime_encode_external", external_path
+        )
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"cannot load bundled encoder from {external_path}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        encode_external = module.encode_external
+    else:
+        jope_root = Path("/home/ubuntu/jope")
+        sys.path.insert(0, str(jope_root / "scripts"))
+        from encode_external import encode_external
 
     scratch_root = destination.parent / f".encoder-{destination.name}-{os.getpid()}"
     scratch = scratch_root / destination.name.lstrip(".").split(".tmp-", 1)[0]
@@ -533,6 +556,7 @@ def existing_hyperion_encoder(source: Path, destination: Path, task: str) -> Non
             scratch.name,
             source / "train.csv",
             scratch,
+            art_dir=art_dir or STANDARDIZATION.parent,
             source_test=source / "test.csv",
             jain_train_csv=source / "train.csv",
             jain_test_csv=source / "test.csv",

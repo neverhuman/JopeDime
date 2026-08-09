@@ -23,6 +23,7 @@ mod aggressive;
 mod binary42;
 mod island_extension;
 mod multiclass60;
+mod multiclass_dl_v3;
 mod scq_batch;
 mod tabarena_islands;
 mod timeseries42;
@@ -39,6 +40,10 @@ pub(crate) use island_extension::{
 pub(crate) use multiclass60::{
     plan as plan_multiclass60, run_all as run_multiclass60_all,
     validate_all as validate_multiclass60_all,
+};
+pub(crate) use multiclass_dl_v3::{
+    plan as plan_multiclass_dl_v3, run_all as run_multiclass_dl_v3_all,
+    validate_all as validate_multiclass_dl_v3_all,
 };
 pub(crate) use scq_batch::{aggressive_batch_worker, island_batch_worker};
 pub(crate) use tabarena_islands::{

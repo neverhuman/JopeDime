@@ -150,8 +150,10 @@ def deterministic_normal(seed, dataset_hash, coordinate):
     return radius * (math.cos(angle) if coordinate % 2 == 0 else math.sin(angle))
 
 
-def filter_exact_dataset_manifest(entries, dataset_manifest, *, catalog_sha256):
-    """Return exactly the train-only study contexts named by a sealed manifest."""
+def filter_exact_dataset_manifest(
+    entries, dataset_manifest, *, catalog_sha256, expected_task="regression"
+):
+    """Return exactly the task contexts named by a sealed manifest."""
 
     value = json.loads(dataset_manifest.read_text())
     if value.get("schema") != "TrainOnlyProposalDatasetManifest.v1":
@@ -166,10 +168,10 @@ def filter_exact_dataset_manifest(entries, dataset_manifest, *, catalog_sha256):
     if (
         not identities
         or len(identities) != len(set(identities))
-        or any(task != "regression" for task, _, _ in identities)
+        or any(task != expected_task for task, _, _ in identities)
     ):
         raise RuntimeError(
-            "train-only proposal manifest needs distinct regression contexts"
+            f"proposal manifest needs distinct {expected_task} contexts"
         )
     by_identity = {
         (entry["task"], entry["dataset_hash"]): entry for entry in entries
@@ -465,6 +467,7 @@ def main() -> None:
                 entries,
                 args.dataset_manifest,
                 catalog_sha256=pointer["catalog_sha256"],
+                expected_task=args.task or "regression",
             )
             dataset_manifest_hash = sha256_file(args.dataset_manifest)
         if args.cohort is not None:

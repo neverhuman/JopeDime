@@ -251,6 +251,30 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
         "render_replay_spec",
         None,
     ),
+    // Private multiclass210 empirical-ceiling campaign. Its context/proposal,
+    // CPU evaluation, and replay lanes have deliberately different resource
+    // shapes from the continuous flywheel families, but every emitted SCQ spec
+    // remains subject to syntax and placement-form auditing.
+    (
+        "src/test_adaptive/multiclass_dl_v3.rs",
+        "render_context_spec",
+        None,
+    ),
+    (
+        "src/test_adaptive/multiclass_dl_v3.rs",
+        "render_proposal_spec",
+        None,
+    ),
+    (
+        "src/test_adaptive/multiclass_dl_v3.rs",
+        "render_eval_spec",
+        None,
+    ),
+    (
+        "src/test_adaptive/multiclass_dl_v3.rs",
+        "render_replay_spec",
+        None,
+    ),
 ];
 
 /// Directories the scanner reads. Kept explicit so a new renderer is a

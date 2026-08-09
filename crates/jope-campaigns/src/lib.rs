@@ -4,11 +4,11 @@
 //! boundary. Queueing, provenance, fitness bookkeeping, freshness, datasets,
 //! and deployment policy live in this crate.
 
-pub mod encoder_v2_identity;
-pub mod encoder_v2_execution;
-pub mod encoder_v2_store;
 pub mod encoder_v2_authority;
 pub mod encoder_v2_capacity;
+pub mod encoder_v2_execution;
+pub mod encoder_v2_identity;
+pub mod encoder_v2_store;
 pub mod encoder_v2_worker;
 pub mod four_task;
 pub mod recovery_contracts;

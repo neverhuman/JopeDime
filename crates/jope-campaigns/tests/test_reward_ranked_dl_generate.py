@@ -114,3 +114,35 @@ def test_exact_dataset_manifest_preserves_order_and_rejects_drift(tmp_path) -> N
         assert "absent or changed" in str(error)
     else:
         raise AssertionError("context drift must fail closed")
+
+
+def test_exact_dataset_manifest_accepts_frozen_multiclass_contexts(tmp_path) -> None:
+    entries = [
+        {
+            "task": "multiclass",
+            "dataset_hash": "mc-a",
+            "context_sha256": "a" * 64,
+        },
+        {
+            "task": "regression",
+            "dataset_hash": "reg-a",
+            "context_sha256": "b" * 64,
+        },
+    ]
+    manifest = tmp_path / "multiclass-datasets.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "schema": "TrainOnlyProposalDatasetManifest.v1",
+                "catalog_sha256": "f" * 64,
+                "entries": [entries[0]],
+            }
+        )
+    )
+    selected = MODULE.filter_exact_dataset_manifest(
+        entries,
+        manifest,
+        catalog_sha256="f" * 64,
+        expected_task="multiclass",
+    )
+    assert selected == [entries[0]]

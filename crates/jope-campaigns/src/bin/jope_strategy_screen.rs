@@ -21,8 +21,8 @@ use std::process::ExitCode;
 use feat_math::full_rust::{
     canonicalize, crossover_pipelines, mutate_pipeline, mutate_pipeline_expanded,
 };
-use rayon::prelude::*;
 use feat_math::{model, GenomeIr, Pcg32, Rows};
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -232,8 +232,8 @@ fn robust_fitness(scores: &[f64]) -> f64 {
     }
     let clipped: Vec<f64> = scores.iter().map(|v| v.max(-1.0)).collect();
     let mean = clipped.iter().sum::<f64>() / clipped.len() as f64;
-    let sd = (clipped.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / clipped.len() as f64)
-        .sqrt();
+    let sd =
+        (clipped.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / clipped.len() as f64).sqrt();
     mean - 0.25 * sd.min(1.0)
 }
 
@@ -335,9 +335,8 @@ fn perturbed_generation_csv(
         for c in 0..cols {
             let vals: Vec<f64> = train_ids.iter().map(|&i| x[i][c]).collect();
             let mean = vals.iter().sum::<f64>() / vals.len() as f64;
-            sd[c] = (vals.iter().map(|v| (v - mean).powi(2)).sum::<f64>()
-                / vals.len() as f64)
-                .sqrt();
+            sd[c] =
+                (vals.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / vals.len() as f64).sqrt();
         }
         for &i in train_ids {
             for c in 0..cols {
@@ -360,8 +359,11 @@ fn perturbed_generation_csv(
         for v in row {
             text.push_str(&format!("{v},"));
         }
-        text.push_str(&format!("{}
-", y[i]));
+        text.push_str(&format!(
+            "{}
+",
+            y[i]
+        ));
     }
     fs::write(&path, text).map_err(|e| e.to_string())?;
     Ok((path, kept))
@@ -418,8 +420,13 @@ fn eval_one(train_path: &str) -> Result<(), String> {
     let req: serde_json::Value = serde_json::from_str(&buf).map_err(|e| e.to_string())?;
     let genome = req["genome"].as_str().ok_or("genome missing")?;
     let ids = |k: &str| -> Vec<usize> {
-        req[k].as_array()
-            .map(|a| a.iter().filter_map(|v| v.as_u64().map(|u| u as usize)).collect())
+        req[k]
+            .as_array()
+            .map(|a| {
+                a.iter()
+                    .filter_map(|v| v.as_u64().map(|u| u as usize))
+                    .collect()
+            })
             .unwrap_or_default()
     };
     let (x, y) = load_csv(train_path)?;
@@ -694,7 +701,10 @@ fn run_strategy(
         _ => vec![("global_prior", &config.global_prior)],
     };
     for (origin, list) in prior {
-        for g in list.iter().take(if config.strategy == "s5" { 32 } else { 10 }) {
+        for g in list
+            .iter()
+            .take(if config.strategy == "s5" { 32 } else { 10 })
+        {
             if let Some(m) = make_member(g, origin) {
                 push_unique(&mut gen0, &mut seen, m);
             }
@@ -781,7 +791,13 @@ fn run_strategy(
                 let seed = seed_from(&format!("screen:{ds}:{ms}:split:{generation}:{s}"));
                 let (train_ids, valid_ids) = split_8020(y, seed);
                 let (eval_path, train_ids) = if config.perturb_fitness {
-                    match perturbed_generation_csv(x, y, &train_ids, generation, &format!("{ds}:{ms}")) {
+                    match perturbed_generation_csv(
+                        x,
+                        y,
+                        &train_ids,
+                        generation,
+                        &format!("{ds}:{ms}"),
+                    ) {
                         Ok(v) => v,
                         Err(_) => (train_path.to_string(), train_ids),
                     }
@@ -814,7 +830,9 @@ fn run_strategy(
         stats.push(GenerationStat {
             generation,
             evaluations,
-            best_fitness: population.first().map_or(-1.0, |m| robust_fitness(&m.scores)),
+            best_fitness: population
+                .first()
+                .map_or(-1.0, |m| robust_fitness(&m.scores)),
         });
         // breed the next generation (skip after the final evaluation round)
         if generation + 1 == schedule.len() {
@@ -946,7 +964,9 @@ fn final_cv(config: &Config, train_path: &str, x: &Rows, y: &[f64], top: &mut [T
             // Dropping those folds instead is a real change, so it stays behind
             // a flag: with it off, recorded runs replay bit-for-bit.
             let s: Vec<f64> = if config.drop_failed_folds {
-                mine.iter().filter_map(|r| r.as_ref().ok().copied()).collect()
+                mine.iter()
+                    .filter_map(|r| r.as_ref().ok().copied())
+                    .collect()
             } else {
                 mine.iter().map(|r| *r.as_ref().unwrap_or(&-1.0)).collect()
             };
@@ -965,30 +985,30 @@ fn final_cv(config: &Config, train_path: &str, x: &Rows, y: &[f64], top: &mut [T
     }
     #[allow(unreachable_code)]
     if false {
-    for gene in top.iter_mut() {
-        let Ok(genome) = GenomeIr::parse(&gene.canonical) else {
-            gene.cv7_mean_r2 = None;
-            continue;
-        };
-        let mut scores = Vec::new();
-        for f in 0..folds.len() {
-            let valid_ids = &folds[f];
-            let train_ids: Vec<usize> = folds
-                .iter()
-                .enumerate()
-                .filter(|(i, _)| *i != f)
-                .flat_map(|(_, ids)| ids.iter().copied())
-                .collect();
-            let (tx, ty) = subset(x, y, &train_ids);
-            let (vx, vy) = subset(x, y, valid_ids);
-            evals += 1;
-            match model::fit_predict(&genome, &tx, &ty, &vx) {
-                Ok(pred) => scores.push(r2(&vy, &pred).map_or(-1.0, |v| v.max(-1.0))),
-                Err(_) => scores.push(-1.0),
+        for gene in top.iter_mut() {
+            let Ok(genome) = GenomeIr::parse(&gene.canonical) else {
+                gene.cv7_mean_r2 = None;
+                continue;
+            };
+            let mut scores = Vec::new();
+            for f in 0..folds.len() {
+                let valid_ids = &folds[f];
+                let train_ids: Vec<usize> = folds
+                    .iter()
+                    .enumerate()
+                    .filter(|(i, _)| *i != f)
+                    .flat_map(|(_, ids)| ids.iter().copied())
+                    .collect();
+                let (tx, ty) = subset(x, y, &train_ids);
+                let (vx, vy) = subset(x, y, valid_ids);
+                evals += 1;
+                match model::fit_predict(&genome, &tx, &ty, &vx) {
+                    Ok(pred) => scores.push(r2(&vy, &pred).map_or(-1.0, |v| v.max(-1.0))),
+                    Err(_) => scores.push(-1.0),
+                }
             }
+            gene.cv7_mean_r2 = Some(scores.iter().sum::<f64>() / scores.len() as f64);
         }
-        gene.cv7_mean_r2 = Some(scores.iter().sum::<f64>() / scores.len() as f64);
-    }
     }
     evals
 }
@@ -1009,7 +1029,11 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
     // fitness culls every one of them before the finale (measured — all 8
     // finalists came back origin=evolved on a seeded run). Union them into the
     // finale pool so CV always gets to compare against the floor.
-    let mut finalists: Vec<Member> = population.iter().take(config.final_top_k).cloned().collect();
+    let mut finalists: Vec<Member> = population
+        .iter()
+        .take(config.final_top_k)
+        .cloned()
+        .collect();
     if config.baseline_seeds {
         let chosen: HashSet<String> = finalists.iter().map(|m| m.semantic.clone()).collect();
         // Rebuilt from the constant, not filtered out of `population`: evolution
@@ -1050,19 +1074,32 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
         let folds = kfold(
             &y,
             config.final_cv_folds,
-            seed_from(&format!("screen:{}:{}:rcv:{rep}", config.dataset_hash, config.master_seed)),
+            seed_from(&format!(
+                "screen:{}:{}:rcv:{rep}",
+                config.dataset_hash, config.master_seed
+            )),
         );
         let fold_train: Vec<Vec<usize>> = (0..folds.len())
-            .map(|f| folds.iter().enumerate().filter(|(i, _)| *i != f)
-                .flat_map(|(_, ids)| ids.iter().copied()).collect())
+            .map(|f| {
+                folds
+                    .iter()
+                    .enumerate()
+                    .filter(|(i, _)| *i != f)
+                    .flat_map(|(_, ids)| ids.iter().copied())
+                    .collect()
+            })
             .collect();
         let pairs: Vec<(usize, usize)> = (0..top.len())
             .flat_map(|g| (0..folds.len()).map(move |f| (g, f)))
             .collect();
         let outs: Vec<((usize, usize), f64)> = pairs
             .par_iter()
-            .map(|&(g, f)| ((g, f),
-                eval_with_timeout(train_path, &top[g].canonical, &fold_train[f], &folds[f])))
+            .map(|&(g, f)| {
+                (
+                    (g, f),
+                    eval_with_timeout(train_path, &top[g].canonical, &fold_train[f], &folds[f]),
+                )
+            })
             .collect();
         for ((g, f), v) in outs {
             let _ = f;
@@ -1073,16 +1110,20 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
         let vals: Vec<f64> = oof_matrix[g].iter().map(|(_, v)| *v).collect();
         if !vals.is_empty() {
             let mean = vals.iter().sum::<f64>() / vals.len() as f64;
-            let sd = (vals.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / vals.len() as f64)
-                .sqrt();
+            let sd =
+                (vals.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / vals.len() as f64).sqrt();
             gene.rcv_mean_r2 = Some(mean);
             gene.rcv_se = Some(sd / (vals.len() as f64).sqrt());
         }
     }
     let t4_choice = {
-        let best = top.iter()
+        let best = top
+            .iter()
             .filter_map(|g| g.rcv_mean_r2.map(|m| (m, g.rcv_se.unwrap_or(0.0))))
-            .fold((f64::NEG_INFINITY, 0.0), |a, b| if b.0 > a.0 { b } else { a });
+            .fold(
+                (f64::NEG_INFINITY, 0.0),
+                |a, b| if b.0 > a.0 { b } else { a },
+            );
         // Band width is configurable because 1.0 SE admitted 10-14 of 16
         // candidates on measured runs, and a band containing most of the pool
         // is not a selection rule -- combined with the complexity tie-break it
@@ -1113,7 +1154,10 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
     let n = y.len();
     let bag_sets: Vec<(Vec<usize>, Vec<usize>)> = (0..bags)
         .map(|b| {
-            let seed = seed_from(&format!("screen:{}:{}:boot:{b}", config.dataset_hash, config.master_seed));
+            let seed = seed_from(&format!(
+                "screen:{}:{}:boot:{b}",
+                config.dataset_hash, config.master_seed
+            ));
             let mut rng = Pcg32::new(seed, 0x424f_4f54);
             let mut inb = Vec::with_capacity(n);
             let mut seen = vec![false; n];
@@ -1131,8 +1175,17 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
         .collect();
     let boot_outs: Vec<((usize, usize), f64)> = boot_pairs
         .par_iter()
-        .map(|&(g, b)| ((g, b),
-            eval_with_timeout(train_path, &top[g].canonical, &bag_sets[b].0, &bag_sets[b].1)))
+        .map(|&(g, b)| {
+            (
+                (g, b),
+                eval_with_timeout(
+                    train_path,
+                    &top[g].canonical,
+                    &bag_sets[b].0,
+                    &bag_sets[b].1,
+                ),
+            )
+        })
         .collect();
     let mut boot_scores: Vec<Vec<f64>> = vec![Vec::new(); top.len()];
     for ((g, _), v) in boot_outs {
@@ -1142,13 +1195,14 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
         let vals = &boot_scores[g];
         if !vals.is_empty() {
             let mean = vals.iter().sum::<f64>() / vals.len() as f64;
-            let sd = (vals.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / vals.len() as f64)
-                .sqrt();
+            let sd =
+                (vals.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / vals.len() as f64).sqrt();
             gene.boot_mean_r2 = Some(mean);
             gene.boot_sd_r2 = Some(sd);
         }
     }
-    let t3_choice = top.iter()
+    let t3_choice = top
+        .iter()
         .filter(|g| g.boot_mean_r2.is_some())
         .max_by(|a, b| {
             let fa = a.boot_mean_r2.unwrap() - 0.5 * a.boot_sd_r2.unwrap_or(0.0);
@@ -1161,11 +1215,20 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
     let ens_folds = kfold(
         &y,
         config.final_cv_folds,
-        seed_from(&format!("screen:{}:{}:rcv:0", config.dataset_hash, config.master_seed)),
+        seed_from(&format!(
+            "screen:{}:{}:rcv:0",
+            config.dataset_hash, config.master_seed
+        )),
     );
     let ens_train: Vec<Vec<usize>> = (0..ens_folds.len())
-        .map(|f| ens_folds.iter().enumerate().filter(|(i, _)| *i != f)
-            .flat_map(|(_, ids)| ids.iter().copied()).collect())
+        .map(|f| {
+            ens_folds
+                .iter()
+                .enumerate()
+                .filter(|(i, _)| *i != f)
+                .flat_map(|(_, ids)| ids.iter().copied())
+                .collect()
+        })
         .collect();
     // per-gene OOF prediction vector via child predict? cheap approximation:
     // per-gene per-fold R2 already captured; greedy selection needs prediction
@@ -1188,14 +1251,19 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
         }
     }
     let oof_rmse = |mix: &[f64]| -> f64 {
-        let mut se = 0.0; let mut c = 0usize;
+        let mut se = 0.0;
+        let mut c = 0usize;
         for i in 0..n {
             if mix[i].is_finite() {
                 se += (mix[i] - y[i]).powi(2);
                 c += 1;
             }
         }
-        if c == 0 { f64::INFINITY } else { (se / c as f64).sqrt() }
+        if c == 0 {
+            f64::INFINITY
+        } else {
+            (se / c as f64).sqrt()
+        }
     };
     // uniform top-5
     let ens_uniform: Vec<String> = top.iter().take(5).map(|g| g.semantic.clone()).collect();
@@ -1205,15 +1273,25 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
     for _ in 0..8 {
         let mut best: Option<(usize, f64)> = None;
         for g in 0..top.len() {
-            if oof_preds[g].iter().all(|v| !v.is_finite()) { continue; }
+            if oof_preds[g].iter().all(|v| !v.is_finite()) {
+                continue;
+            }
             let k = picks.len() as f64;
-            let cand: Vec<f64> = (0..n).map(|i| {
-                let a = if mix[i].is_finite() { mix[i] * k } else { 0.0 };
-                let b = if oof_preds[g][i].is_finite() { oof_preds[g][i] } else { return f64::NAN; };
-                (a + b) / (k + 1.0)
-            }).collect();
+            let cand: Vec<f64> = (0..n)
+                .map(|i| {
+                    let a = if mix[i].is_finite() { mix[i] * k } else { 0.0 };
+                    let b = if oof_preds[g][i].is_finite() {
+                        oof_preds[g][i]
+                    } else {
+                        return f64::NAN;
+                    };
+                    (a + b) / (k + 1.0)
+                })
+                .collect();
             let r = oof_rmse(&cand);
-            if best.is_none() || r < best.unwrap().1 { best = Some((g, r)); }
+            if best.is_none() || r < best.unwrap().1 {
+                best = Some((g, r));
+            }
         }
         match best {
             Some((g, _)) => {
@@ -1307,10 +1385,9 @@ fn score(genome_file: &str, train_path: &str, test_path: &str) -> Result<(), Str
 }
 
 fn score_ensemble(members_file: &str, train_path: &str, test_path: &str) -> Result<(), String> {
-    let members: Vec<String> = serde_json::from_str(
-        &fs::read_to_string(members_file).map_err(|e| e.to_string())?,
-    )
-    .map_err(|e| e.to_string())?;
+    let members: Vec<String> =
+        serde_json::from_str(&fs::read_to_string(members_file).map_err(|e| e.to_string())?)
+            .map_err(|e| e.to_string())?;
     if members.is_empty() {
         return Err("empty ensemble".into());
     }
@@ -1363,7 +1440,9 @@ fn main() -> ExitCode {
         },
         Some("eval-one") => match arg(&args, "--train") {
             Some(t) => eval_one(&t),
-            None => Err("usage: eval-one --train <csv>   (stdin: {genome,train_ids,valid_ids})".into()),
+            None => {
+                Err("usage: eval-one --train <csv>   (stdin: {genome,train_ids,valid_ids})".into())
+            }
         },
         Some("score-ensemble") => match (
             arg(&args, "--members-file"),
@@ -1371,7 +1450,9 @@ fn main() -> ExitCode {
             arg(&args, "--test"),
         ) {
             (Some(m), Some(t), Some(e)) => score_ensemble(&m, &t, &e),
-            _ => Err("usage: score-ensemble --members-file <json> --train <csv> --test <csv>".into()),
+            _ => {
+                Err("usage: score-ensemble --members-file <json> --train <csv> --test <csv>".into())
+            }
         },
         Some("score") => match (
             arg(&args, "--genome-file"),

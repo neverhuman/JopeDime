@@ -268,8 +268,7 @@ fn remove_under(root: &Path, target: &Path) -> Result<()> {
         resolved.display(),
         root.display()
     );
-    fs::remove_dir_all(&resolved)
-        .with_context(|| format!("remove {}", resolved.display()))?;
+    fs::remove_dir_all(&resolved).with_context(|| format!("remove {}", resolved.display()))?;
     Ok(())
 }
 

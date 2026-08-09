@@ -409,6 +409,78 @@ enum Command {
         #[arg(long, default_value = "/home/ubuntu/jope-dime/campaigns/test-adaptive")]
         campaign_root: PathBuf,
     },
+    /// Freeze the 210-dataset DL-generation-zero multiclass recovery campaign.
+    #[command(name = "plan-multiclass-test-adaptive-dl")]
+    PlanMulticlassTestAdaptiveDl {
+        #[arg(
+            long,
+            default_value = "multiclass210-test-adaptive-dlgen0-pop64-gen30-max-v3"
+        )]
+        run_id: String,
+        #[arg(
+            long,
+            default_value = "/home/ubuntu/jope-dime-experiments/aspfm-multiclass-dl-v3/campaigns/test-adaptive"
+        )]
+        campaign_root: PathBuf,
+        #[arg(long, default_value = "/home/ubuntu/sotarena")]
+        sotarena_root: PathBuf,
+        #[arg(
+            long,
+            default_value = "/home/ubuntu/remote_super/quant/releases/mc-union-runnable272-v5/manifest.json"
+        )]
+        corpus_manifest: PathBuf,
+        #[arg(
+            long,
+            default_value = "/home/ubuntu/jope-flywheel/test_exact_gen0/catalog/current.json"
+        )]
+        catalog_pointer: PathBuf,
+        #[arg(
+            long,
+            default_value = "manifests/selfplay/proposal-selection-policy.v1.json"
+        )]
+        selection_policy: PathBuf,
+        #[arg(
+            long,
+            default_value = "/home/ubuntu/jope-flywheel/training/round1/checkpoints/fbcd5459f2c18f6cd5e4c23eef76a508a91d653a82f27c6ea41bcee8cafa2592.model.pt"
+        )]
+        checkpoint: PathBuf,
+        #[arg(long, default_value = "scripts/test_exact_dl_generate.py")]
+        proposal_generator: PathBuf,
+        #[arg(long, default_value_t = 64)]
+        population: usize,
+        #[arg(long, default_value_t = 30)]
+        generations: usize,
+    },
+    /// Harvest, evolve, and resume the private DL-generation-zero recovery campaign.
+    #[command(name = "run-multiclass-test-adaptive-dl-all")]
+    RunMulticlassTestAdaptiveDlAll {
+        #[arg(
+            long,
+            default_value = "multiclass210-test-adaptive-dlgen0-pop64-gen30-max-v3"
+        )]
+        run_id: String,
+        #[arg(
+            long,
+            default_value = "/home/ubuntu/jope-dime-experiments/aspfm-multiclass-dl-v3/campaigns/test-adaptive"
+        )]
+        campaign_root: PathBuf,
+        #[arg(long)]
+        resume: bool,
+    },
+    /// Validate v3 provenance, ledgers, replays, overlay, and exact Elo proof.
+    #[command(name = "validate-multiclass-test-adaptive-dl-all")]
+    ValidateMulticlassTestAdaptiveDlAll {
+        #[arg(
+            long,
+            default_value = "multiclass210-test-adaptive-dlgen0-pop64-gen30-max-v3"
+        )]
+        run_id: String,
+        #[arg(
+            long,
+            default_value = "/home/ubuntu/jope-dime-experiments/aspfm-multiclass-dl-v3/campaigns/test-adaptive"
+        )]
+        campaign_root: PathBuf,
+    },
     /// Run or resume all 42 benchmark-invalid TimeSeries42 held-out-test-adaptive shards.
     #[command(name = "run-timeseries-test-adaptive-all")]
     RunTimeseriesTestAdaptiveAll {
@@ -1139,6 +1211,54 @@ fn main() -> Result<()> {
             }
             test_adaptive::validate_multiclass60_all(&run_id, &campaign_root)
         }
+        Command::PlanMulticlassTestAdaptiveDl {
+            run_id,
+            campaign_root,
+            sotarena_root,
+            corpus_manifest,
+            catalog_pointer,
+            selection_policy,
+            checkpoint,
+            proposal_generator,
+            population,
+            generations,
+        } => {
+            if cli.dataset.is_some() {
+                bail!("plan-multiclass-test-adaptive-dl does not accept --dataset");
+            }
+            if population != 64 || generations != 30 {
+                bail!("v3 multiclass campaign is frozen at population=64 and generations=30");
+            }
+            test_adaptive::plan_multiclass_dl_v3(
+                &run_id,
+                &campaign_root,
+                &sotarena_root,
+                &corpus_manifest,
+                &catalog_pointer,
+                &selection_policy,
+                &checkpoint,
+                &proposal_generator,
+            )
+        }
+        Command::RunMulticlassTestAdaptiveDlAll {
+            run_id,
+            campaign_root,
+            resume,
+        } => {
+            if cli.dataset.is_some() {
+                bail!("run-multiclass-test-adaptive-dl-all does not accept --dataset");
+            }
+            test_adaptive::run_multiclass_dl_v3_all(&run_id, &campaign_root, resume)
+        }
+        Command::ValidateMulticlassTestAdaptiveDlAll {
+            run_id,
+            campaign_root,
+        } => {
+            if cli.dataset.is_some() {
+                bail!("validate-multiclass-test-adaptive-dl-all does not accept --dataset");
+            }
+            test_adaptive::validate_multiclass_dl_v3_all(&run_id, &campaign_root)
+        }
         Command::RunTimeseriesTestAdaptiveAll { run_id, resume } => {
             if cli.dataset.is_some() {
                 bail!("run-timeseries-test-adaptive-all does not accept --dataset");
@@ -1384,6 +1504,8 @@ fn command_starts_campaign(command: &Command) -> bool {
             | Command::RunTrainOnlyRedteam { .. }
             | Command::RunLosses3x
             | Command::RunTimeseriesTestAdaptiveAll { .. }
+            | Command::PlanMulticlassTestAdaptiveDl { .. }
+            | Command::RunMulticlassTestAdaptiveDlAll { .. }
             | Command::RunTimeseriesTestAdaptiveGen30 { .. }
             | Command::TimeseriesTestAdaptiveBatchWorker { .. }
             | Command::RunTestAdaptive { .. }
@@ -2481,6 +2603,73 @@ mod tests {
         assert!(publish_new(&path, b"second\n").is_err());
         assert_eq!(fs::read(&path).unwrap(), b"first\n");
         fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn multiclass_dl_v3_cli_defaults_are_additive_and_frozen() {
+        let plan = Cli::try_parse_from(["jope-dime-regressor", "plan-multiclass-test-adaptive-dl"])
+            .unwrap();
+        match plan.command {
+            Command::PlanMulticlassTestAdaptiveDl {
+                run_id,
+                campaign_root,
+                population,
+                generations,
+                ..
+            } => {
+                assert_eq!(
+                    run_id,
+                    "multiclass210-test-adaptive-dlgen0-pop64-gen30-max-v3"
+                );
+                assert_eq!(
+                    campaign_root,
+                    PathBuf::from(
+                        "/home/ubuntu/jope-dime-experiments/aspfm-multiclass-dl-v3/campaigns/test-adaptive"
+                    )
+                );
+                assert_eq!(population, 64);
+                assert_eq!(generations, 30);
+            }
+            _ => panic!("wrong v3 plan command"),
+        }
+        let run = Cli::try_parse_from([
+            "jope-dime-regressor",
+            "run-multiclass-test-adaptive-dl-all",
+            "--resume",
+        ])
+        .unwrap();
+        assert!(matches!(
+            run.command,
+            Command::RunMulticlassTestAdaptiveDlAll { resume: true, .. }
+        ));
+        let validate = Cli::try_parse_from([
+            "jope-dime-regressor",
+            "validate-multiclass-test-adaptive-dl-all",
+        ])
+        .unwrap();
+        assert!(matches!(
+            validate.command,
+            Command::ValidateMulticlassTestAdaptiveDlAll { .. }
+        ));
+
+        let v2 =
+            Cli::try_parse_from(["jope-dime-regressor", "plan-multiclass-test-adaptive"]).unwrap();
+        match v2.command {
+            Command::PlanMulticlassTestAdaptive {
+                campaign_root,
+                population,
+                generations,
+                ..
+            } => {
+                assert_eq!(
+                    campaign_root,
+                    PathBuf::from("/home/ubuntu/jope-dime/campaigns/test-adaptive")
+                );
+                assert_eq!(population, 60);
+                assert_eq!(generations, 20);
+            }
+            _ => panic!("wrong frozen v2 plan command"),
+        }
     }
 
     #[test]

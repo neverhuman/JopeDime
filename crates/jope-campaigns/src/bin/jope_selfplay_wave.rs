@@ -10,10 +10,10 @@ use clap::{Args, Parser, Subcommand};
 use feat_math::evolve::{crossover_canonical_pipelines, mutate_canonical_pipeline_v2};
 use feat_math::genome::GenomeIr;
 use jope_dime_regressor::selfplay_data::{
-    micro_wave_size, select_micro_cohort, validate_dl_slot_rung,
-    validate_wave_composition_with_dl, CandidateOrigin, GpProposal, MicroAdmission, MicroDataset,
-    MicroLane, WaveSlot, WaveSlotGroup, CHECKPOINT_PROPOSAL_SLOTS, COMMON_WINNER_SLOTS,
-    LOCAL_ELITE_SLOTS, MICRO_TASK_SIZE, OFFSPRING_SLOTS, WAVE_SIZE,
+    micro_wave_size, select_micro_cohort, validate_dl_slot_rung, validate_wave_composition_with_dl,
+    CandidateOrigin, GpProposal, MicroAdmission, MicroDataset, MicroLane, WaveSlot, WaveSlotGroup,
+    CHECKPOINT_PROPOSAL_SLOTS, COMMON_WINNER_SLOTS, LOCAL_ELITE_SLOTS, MICRO_TASK_SIZE,
+    OFFSPRING_SLOTS, WAVE_SIZE,
 };
 use jope_dime_regressor::selfplay_runtime::{
     atomic_json, canonical_json_bytes, checkpoint_epoch, evaluation_protocol_sha256,
@@ -661,7 +661,17 @@ fn validate_catalog_entries(entries: &[CatalogEntry]) -> Result<()> {
 /// silently execute a different reduction.
 fn timeseries_manifest_contract(
     train_csv: &Path,
-) -> Result<(PathBuf, String, usize, usize, String, bool, Vec<String>, Vec<String>, Value)> {
+) -> Result<(
+    PathBuf,
+    String,
+    usize,
+    usize,
+    String,
+    bool,
+    Vec<String>,
+    Vec<String>,
+    Value,
+)> {
     let meta_path = train_csv
         .parent()
         .context("timeseries train_csv has no parent directory")?
@@ -1483,8 +1493,13 @@ fn plan(args: PlanArgs) -> Result<Value> {
         })
         .cloned()
         .collect::<Vec<_>>();
-    let selected =
-        select_micro_cohort(&eligible, &observed, &wave, &admission, &active_optional_tasks)?;
+    let selected = select_micro_cohort(
+        &eligible,
+        &observed,
+        &wave,
+        &admission,
+        &active_optional_tasks,
+    )?;
     let admission_report = admission_summary(&eligible, &observed, &selected, &admission);
     if args.dry_run {
         return Ok(json!({
@@ -1775,8 +1790,7 @@ fn validate_cohort(plan: &CohortPlan) -> Result<()> {
     ensure!(
         plan.tasks
             .iter()
-            .all(|task| jope_dime_regressor::selfplay_expansion::TASKS
-                .contains(&task.as_str())),
+            .all(|task| jope_dime_regressor::selfplay_expansion::TASKS.contains(&task.as_str())),
         "cohort declares an unknown task"
     );
     ensure!(
@@ -2511,13 +2525,9 @@ fn registry_filter_and_fill(
             let seed = registry_backfill_seed(wave, task, dataset, candidate, attempt);
             let left = (seed as usize) % parents.len();
             let right = ((seed.rotate_left(23) as usize) + attempt) % parents.len();
-            let Some(child) = breed_task_valid_child(
-                &parents[left].0,
-                &parents[right].0,
-                seed,
-                attempt,
-                task,
-            ) else {
+            let Some(child) =
+                breed_task_valid_child(&parents[left].0, &parents[right].0, seed, attempt, task)
+            else {
                 continue;
             };
             let child_semantic = semantic(&child);
@@ -3280,9 +3290,7 @@ fn build(args: BuildArgs) -> Result<Value> {
             let meta_path = entry
                 .train_csv
                 .parent()
-                .with_context(|| {
-                    format!("{} train_csv has no parent directory", cohort_row.task)
-                })?
+                .with_context(|| format!("{} train_csv has no parent directory", cohort_row.task))?
                 .join("meta.json");
             let sha = sha256_file(&meta_path).with_context(|| {
                 format!(
@@ -3522,7 +3530,10 @@ mod tests {
         // The live shape at the time of the fix: timeseries clears its own floor
         // and would have failed a blanket 500.
         let ts = optional_task_independent_dataset_floor("timeseries").unwrap();
-        assert!(94 >= ts, "94 catalogued timeseries datasets clear their floor");
+        assert!(
+            94 >= ts,
+            "94 catalogued timeseries datasets clear their floor"
+        );
         assert!(
             94 < optional_task_independent_dataset_floor("multiclass").unwrap(),
             "and would have been refused by the multiclass floor"
@@ -4327,8 +4338,7 @@ mod tests {
     /// through the caller's filter. Regression/binary never take this path.
     #[test]
     fn grafting_restores_a_task_legal_head_deterministically() {
-        let parent =
-            "(pipe X (standardize) (multiclass_ridge class_weight=balanced l2=0.02))";
+        let parent = "(pipe X (standardize) (multiclass_ridge class_weight=balanced l2=0.02))";
         assert!(task_valid(parent, "multiclass"));
         // The frozen mutator swapped the head to a regression one.
         let child = "(pipe X (winsor_clip q=0.02) (standardize) (ridge))";
@@ -4359,7 +4369,10 @@ mod tests {
             let again = breed_task_valid_child(reg_parent, reg_parent, seed, attempt, "regression");
             assert_eq!(first, again, "breeding must be deterministic");
             if let Some(child) = first {
-                assert!(task_valid(&child, "regression"), "no repair for legacy tasks");
+                assert!(
+                    task_valid(&child, "regression"),
+                    "no repair for legacy tasks"
+                );
             }
         }
 
@@ -4413,8 +4426,15 @@ mod tests {
         assert_eq!(contract.3, 7, "seasonality");
         assert_eq!(contract.4, "D", "frequency");
         assert!(contract.5, "target_is_final_column");
-        assert_eq!(contract.6, vec!["lag_1", "lag_7"], "known-future covariates");
-        assert!(contract.7.is_empty(), "no past-only covariates are declared");
+        assert_eq!(
+            contract.6,
+            vec!["lag_1", "lag_7"],
+            "known-future covariates"
+        );
+        assert!(
+            contract.7.is_empty(),
+            "no past-only covariates are declared"
+        );
         // The reduction is the BUILDER's policy, never read from metadata.
         assert_eq!(contract.8, json!({"version": TS_REDUCTION_V2}));
     }
@@ -4663,7 +4683,9 @@ mod tests {
 
         // An absent file is unevaluatable rather than a panic: selecting it would
         // dispatch work that cannot succeed.
-        assert!(!dataset_has_feature_columns(&directory.path().join("gone.csv")));
+        assert!(!dataset_has_feature_columns(
+            &directory.path().join("gone.csv")
+        ));
 
         // A trailing newline must not be mistaken for a delimiter.
         let empty = directory.path().join("empty.csv");
@@ -4707,7 +4729,10 @@ mod tests {
         // The same pointer after a catalog rotation leaked into its scope.
         let mut rotated = matched;
         rotated["catalog_sha256"] = Value::String("c".repeat(64));
-        assert_ne!(rotated["catalog_sha256"], Value::String(plan.catalog_sha256));
+        assert_ne!(
+            rotated["catalog_sha256"],
+            Value::String(plan.catalog_sha256)
+        );
         atomic_json(&pointer, &rotated).unwrap();
         let error = sanitize_proposals(SanitizeProposalsArgs {
             cohort,
