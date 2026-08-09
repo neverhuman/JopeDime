@@ -21,15 +21,20 @@ use std::process::ExitCode;
 use feat_math::full_rust::{
     canonicalize, crossover_pipelines, mutate_pipeline, mutate_pipeline_expanded,
 };
-use rayon::prelude::*;
 use feat_math::{model, GenomeIr, Pcg32, Rows};
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-const SCHEMA_RESULT: &str = "JopeStrategyScreenResult.v1";
+const SCHEMA_CONFIG_V1: &str = "JopeStrategyScreenConfig.v1";
+const SCHEMA_CONFIG_V2: &str = "JopeStrategyScreenConfig.v2";
+const SCHEMA_RESULT_V1: &str = "JopeStrategyScreenResult.v1";
+const SCHEMA_RESULT_V2: &str = "JopeStrategyScreenResult.v2";
 const CROSSOVER_PROBABILITY: f64 = 0.25;
 const TOURNAMENT: usize = 3;
 const BREED_RETRIES: usize = 100;
+const STRICT_MIN_FIT_ROWS: usize = 32;
+const STRICT_MIN_HOLD_ROWS: usize = 2;
 
 #[derive(Deserialize)]
 struct Budget {
@@ -96,6 +101,75 @@ struct Config {
     se_band: f64,
 }
 
+impl Config {
+    fn strict_pooled_search(&self) -> bool {
+        self.schema == SCHEMA_CONFIG_V2
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        // Applies to every schema. These are bare string/float reads at their use
+        // sites, so a typo ("rcv1se", "Expanded") silently selected the HISTORICAL
+        // behaviour and still emitted a normal-looking artifact -- for a selection
+        // A/B that means the treatment arm records as the control and nothing
+        // anywhere says so. Reject unknown values instead.
+        if !matches!(self.vocab.as_str(), "legacy" | "expanded") {
+            return Err(format!(
+                "unknown vocab {:?}: expected \"legacy\" or \"expanded\"",
+                self.vocab
+            ));
+        }
+        if !matches!(self.winner_rule.as_str(), "cv7" | "rcv_1se") {
+            return Err(format!(
+                "unknown winner_rule {:?}: expected \"cv7\" or \"rcv_1se\"",
+                self.winner_rule
+            ));
+        }
+        if !self.se_band.is_finite() || self.se_band < 0.0 {
+            return Err(format!(
+                "se_band must be finite and non-negative, got {}",
+                self.se_band
+            ));
+        }
+        match self.schema.as_str() {
+            SCHEMA_CONFIG_V1 => Ok(()),
+            SCHEMA_CONFIG_V2 => {
+                if self.budget.cv_fitness != 2 {
+                    return Err(format!("{SCHEMA_CONFIG_V2} requires budget.cv_fitness=2"));
+                }
+                if !self.pooled_oof {
+                    return Err(format!("{SCHEMA_CONFIG_V2} requires pooled_oof=true"));
+                }
+                if self.drop_failed_folds {
+                    return Err(format!(
+                        "{SCHEMA_CONFIG_V2} forbids drop_failed_folds; every fold must complete"
+                    ));
+                }
+                if self.winner_rule != "rcv_1se" {
+                    return Err(format!("{SCHEMA_CONFIG_V2} requires winner_rule=rcv_1se"));
+                }
+                if (self.se_band - 0.5).abs() > f64::EPSILON {
+                    return Err(format!("{SCHEMA_CONFIG_V2} requires se_band=0.5"));
+                }
+                if self.perturb_fitness {
+                    return Err(format!(
+                        "{SCHEMA_CONFIG_V2} forbids perturb_fitness in pooled CV search"
+                    ));
+                }
+                if self.budget.population == 0 || self.budget.generations == 0 {
+                    return Err(format!(
+                        "{SCHEMA_CONFIG_V2} requires positive population and generations"
+                    ));
+                }
+                if self.final_cv_folds < 2 {
+                    return Err(format!("{SCHEMA_CONFIG_V2} requires final_cv_folds >= 2"));
+                }
+                Ok(())
+            }
+            other => Err(format!("unsupported config schema {other}")),
+        }
+    }
+}
+
 fn default_se_band() -> f64 {
     1.0
 }
@@ -127,6 +201,8 @@ struct Member {
     origin: String,
     #[serde(skip)]
     scores: Vec<f64>,
+    #[serde(skip)]
+    fitness_complete: bool,
 }
 
 #[derive(Serialize)]
@@ -138,6 +214,7 @@ struct TopGene {
     robust_fitness: f64,
     worst_split: f64,
     splits_seen: usize,
+    search_fitness_complete: bool,
     cv7_mean_r2: Option<f64>,
     rcv_mean_r2: Option<f64>,
     rcv_se: Option<f64>,
@@ -147,6 +224,8 @@ struct TopGene {
     /// folds the gene genuinely scored badly on. Non-zero means this gene's CV
     /// estimate rests on fewer folds than its rivals'.
     cv_failed_folds: usize,
+    /// Repeated-CV partitions lacking at least one required fold prediction.
+    rcv_failed_repeats: usize,
 }
 
 fn seed_from(tag: &str) -> u64 {
@@ -232,8 +311,8 @@ fn robust_fitness(scores: &[f64]) -> f64 {
     }
     let clipped: Vec<f64> = scores.iter().map(|v| v.max(-1.0)).collect();
     let mean = clipped.iter().sum::<f64>() / clipped.len() as f64;
-    let sd = (clipped.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / clipped.len() as f64)
-        .sqrt();
+    let sd =
+        (clipped.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / clipped.len() as f64).sqrt();
     mean - 0.25 * sd.min(1.0)
 }
 
@@ -248,8 +327,9 @@ fn worst_split(scores: &[f64]) -> f64 {
 /// desc, complexity asc, semantic asc (fully deterministic).
 fn rank(members: &mut [Member]) {
     members.sort_by(|a, b| {
-        robust_fitness(&b.scores)
-            .total_cmp(&robust_fitness(&a.scores))
+        b.fitness_complete
+            .cmp(&a.fitness_complete)
+            .then_with(|| robust_fitness(&b.scores).total_cmp(&robust_fitness(&a.scores)))
             .then_with(|| worst_split(&b.scores).total_cmp(&worst_split(&a.scores)))
             .then_with(|| a.complexity.cmp(&b.complexity))
             .then_with(|| a.semantic.cmp(&b.semantic))
@@ -290,18 +370,19 @@ fn split_8020(y: &[f64], seed: u64) -> (Vec<usize>, Vec<usize>) {
     (train, valid)
 }
 
-/// Folds actually usable for `n` rows. The confirmation cohort runs from 10 to
-/// 269 rows, so a hardcoded k=7 is not merely suboptimal there -- at n=10 it
-/// deals folds of 1-2 rows whose own `ss_tot` is often zero, and `r2` then
-/// returns None for the FOLD, which the harness scores as if the GENE were
-/// terrible. Cap k at n, and below 2k fall back to leave-one-out, which is the
-/// standard small-sample choice and is well defined all the way down to n=2.
+/// Legacy V1 fold-count adaptation. Strict V2 never changes the declared fold
+/// count: an infeasible plan is a structural failure rather than a reason to
+/// substitute leave-one-out CV.
 fn usable_folds(n: usize, configured_k: usize) -> usize {
     if n < 2 {
         return 0;
     }
     let k = configured_k.max(2).min(n);
-    if n < 2 * k { n } else { k }
+    if n < 2 * k {
+        n
+    } else {
+        k
+    }
 }
 
 /// Deterministic stratified k-fold: per-decile shuffle, then deal round-robin.
@@ -327,6 +408,89 @@ fn kfold(y: &[f64], k: usize, seed: u64) -> Vec<Vec<usize>> {
     folds
 }
 
+fn validate_strict_fold_plan(row_count: usize, folds: &[Vec<usize>]) -> Result<(), String> {
+    if folds.len() < 2 {
+        return Err("strict pooled CV requires at least two folds".to_string());
+    }
+    let mut coverage = vec![0u8; row_count];
+    for (fold_index, fold) in folds.iter().enumerate() {
+        if fold.len() < STRICT_MIN_HOLD_ROWS {
+            return Err(format!(
+                "fold {fold_index} has {} hold rows; minimum is {STRICT_MIN_HOLD_ROWS}",
+                fold.len()
+            ));
+        }
+        let fit_rows = row_count.saturating_sub(fold.len());
+        if fit_rows < STRICT_MIN_FIT_ROWS {
+            return Err(format!(
+                "fold {fold_index} has {fit_rows} fit rows; minimum is {STRICT_MIN_FIT_ROWS}"
+            ));
+        }
+        for &row in fold {
+            let Some(count) = coverage.get_mut(row) else {
+                return Err(format!("fold {fold_index} contains out-of-range row {row}"));
+            };
+            *count = count.saturating_add(1);
+        }
+    }
+    if let Some((row, count)) = coverage.iter().enumerate().find(|(_, count)| **count != 1) {
+        return Err(format!(
+            "row {row} appears in {count} hold folds; expected exactly one"
+        ));
+    }
+    Ok(())
+}
+
+/// Complete pooled OOF R^2 in original row order. For a fixed truth vector,
+/// ranking by this value is exactly equivalent to ranking by pooled OOF RMSE.
+/// Any absent, malformed, duplicated, or nonfinite fold fails closed.
+fn complete_pooled_oof_r2(
+    y: &[f64],
+    folds: &[Vec<usize>],
+    fold_predictions: &[Option<&[f64]>],
+) -> Option<f64> {
+    if fold_predictions.len() != folds.len() || y.is_empty() {
+        return None;
+    }
+    let mut predictions = vec![f64::NAN; y.len()];
+    let mut covered = vec![false; y.len()];
+    for (fold, maybe_predictions) in folds.iter().zip(fold_predictions) {
+        let values = maybe_predictions.as_ref()?;
+        if values.len() != fold.len() {
+            return None;
+        }
+        for (&row, &prediction) in fold.iter().zip(values.iter()) {
+            if row >= y.len() || covered[row] || !prediction.is_finite() {
+                return None;
+            }
+            predictions[row] = prediction;
+            covered[row] = true;
+        }
+    }
+    if covered.iter().any(|covered| !covered) {
+        return None;
+    }
+    r2(y, &predictions).map(|value| value.max(-1.0))
+}
+
+fn replace_generation_outcomes(population: &mut [Member], outcomes: Vec<Option<f64>>) -> usize {
+    assert_eq!(population.len(), outcomes.len());
+    let mut invalid = 0usize;
+    for (member, outcome) in population.iter_mut().zip(outcomes) {
+        member.scores.clear();
+        member.fitness_complete = outcome.is_some();
+        if !member.fitness_complete {
+            invalid += 1;
+        }
+        member.scores.push(outcome.unwrap_or(-1.0));
+    }
+    invalid
+}
+
+fn expected_search_evaluations(schedule: &[(usize, usize)], folds: usize) -> usize {
+    schedule.iter().map(|(width, _)| width * folds).sum()
+}
+
 /// T5: deterministic per-generation perturbation of the TRAIN-side rows only.
 /// Even generations: Gaussian column noise at 5% of column SD. Odd: 10% row
 /// dropout (rows zero-weighted by exclusion from train_ids). Validation rows
@@ -349,9 +513,8 @@ fn perturbed_generation_csv(
         for c in 0..cols {
             let vals: Vec<f64> = train_ids.iter().map(|&i| x[i][c]).collect();
             let mean = vals.iter().sum::<f64>() / vals.len() as f64;
-            sd[c] = (vals.iter().map(|v| (v - mean).powi(2)).sum::<f64>()
-                / vals.len() as f64)
-                .sqrt();
+            sd[c] =
+                (vals.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / vals.len() as f64).sqrt();
         }
         for &i in train_ids {
             for c in 0..cols {
@@ -374,8 +537,11 @@ fn perturbed_generation_csv(
         for v in row {
             text.push_str(&format!("{v},"));
         }
-        text.push_str(&format!("{}
-", y[i]));
+        text.push_str(&format!(
+            "{}
+",
+            y[i]
+        ));
     }
     fs::write(&path, text).map_err(|e| e.to_string())?;
     Ok((path, kept))
@@ -432,8 +598,13 @@ fn eval_one(train_path: &str) -> Result<(), String> {
     let req: serde_json::Value = serde_json::from_str(&buf).map_err(|e| e.to_string())?;
     let genome = req["genome"].as_str().ok_or("genome missing")?;
     let ids = |k: &str| -> Vec<usize> {
-        req[k].as_array()
-            .map(|a| a.iter().filter_map(|v| v.as_u64().map(|u| u as usize)).collect())
+        req[k]
+            .as_array()
+            .map(|a| {
+                a.iter()
+                    .filter_map(|v| v.as_u64().map(|u| u as usize))
+                    .collect()
+            })
             .unwrap_or_default()
     };
     let (x, y) = load_csv(train_path)?;
@@ -443,6 +614,7 @@ fn eval_one(train_path: &str) -> Result<(), String> {
         complexity: 0,
         origin: String::new(),
         scores: Vec::new(),
+        fitness_complete: false,
     };
     if req["want"].as_str() == Some("pred") {
         let pred = predict_on(&member, &x, &y, &ids("train_ids"), &ids("valid_ids"))
@@ -580,6 +752,7 @@ fn make_member(source: &str, origin: &str) -> Option<Member> {
         complexity: canonical.complexity,
         origin: origin.to_string(),
         scores: Vec::new(),
+        fitness_complete: false,
     })
 }
 
@@ -633,6 +806,7 @@ fn breed_child(
                     complexity: g.complexity,
                     origin: "evolved".to_string(),
                     scores: Vec::new(),
+                    fitness_complete: false,
                 });
             }
         }
@@ -671,6 +845,7 @@ struct GenerationStat {
     generation: usize,
     evaluations: usize,
     best_fitness: f64,
+    invalid_members: usize,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -679,7 +854,7 @@ fn run_strategy(
     train_path: &str,
     x: &Rows,
     y: &[f64],
-) -> (Vec<Member>, Vec<GenerationStat>, usize) {
+) -> Result<(Vec<Member>, Vec<GenerationStat>, usize), String> {
     let features = x[0].len();
     let ds = &config.dataset_hash;
     let ms = config.master_seed;
@@ -689,7 +864,7 @@ fn run_strategy(
     // ---- generation 0 composition ----
     let mut gen0: Vec<Member> = Vec::new();
     let mut seen = HashSet::new();
-    let mut push_unique = |pool: &mut Vec<Member>, seen: &mut HashSet<String>, m: Member| {
+    let push_unique = |pool: &mut Vec<Member>, seen: &mut HashSet<String>, m: Member| {
         if seen.insert(m.semantic.clone()) {
             pool.push(m);
         }
@@ -708,7 +883,10 @@ fn run_strategy(
         _ => vec![("global_prior", &config.global_prior)],
     };
     for (origin, list) in prior {
-        for g in list.iter().take(if config.strategy == "s5" { 32 } else { 10 }) {
+        for g in list
+            .iter()
+            .take(if config.strategy == "s5" { 32 } else { 10 })
+        {
             if let Some(m) = make_member(g, origin) {
                 push_unique(&mut gen0, &mut seen, m);
             }
@@ -740,8 +918,20 @@ fn run_strategy(
             .map(|_| (config.budget.population, splits))
             .collect()
     };
+    if config.strict_pooled_search() && schedule.is_empty() {
+        return Err("strict pooled search requires a non-empty schedule".to_string());
+    }
     let expanded_vocab = config.vocab == "expanded";
     let gen0_target = schedule.first().map_or(config.budget.population, |s| s.0);
+    if config.strict_pooled_search() && gen0.is_empty() {
+        return Err("strict pooled search requires at least one valid seed genome".to_string());
+    }
+    if config.strict_pooled_search() && gen0.len() > gen0_target {
+        return Err(format!(
+            "strict pooled search has {} unique seeds for {gen0_target} generation-0 slots",
+            gen0.len()
+        ));
+    }
     let mut population = fill_population(
         gen0,
         gen0_target,
@@ -766,8 +956,62 @@ fn run_strategy(
             rank(&mut population);
             population.truncate(width);
         }
-        // evaluate: fresh split(s) or CV folds, appended to each member's history
-        if config.budget.cv_fitness > 0 {
+        if config.strict_pooled_search() && population.len() != width {
+            return Err(format!(
+                "generation {generation} contains {} members; exact budget requires {width}",
+                population.len()
+            ));
+        }
+        let mut invalid_members = 0usize;
+        // V2: every member receives exactly one complete pooled OOF score from
+        // the current generation's common two-fold bank. No member carries a
+        // longer fitness history merely because it survived another generation.
+        if config.strict_pooled_search() {
+            let folds = kfold(
+                y,
+                config.budget.cv_fitness,
+                seed_from(&format!("screen:{ds}:{ms}:cvgen:{generation}")),
+            );
+            validate_strict_fold_plan(y.len(), &folds)?;
+            let fold_train: Vec<Vec<usize>> = (0..folds.len())
+                .map(|f| {
+                    folds
+                        .iter()
+                        .enumerate()
+                        .filter(|(i, _)| *i != f)
+                        .flat_map(|(_, ids)| ids.iter().copied())
+                        .collect()
+                })
+                .collect();
+            let outcomes: Vec<Option<f64>> = population
+                .par_iter()
+                .map(|member| {
+                    let predictions: Vec<Result<Vec<f64>, EvalFailure>> = (0..folds.len())
+                        .map(|f| {
+                            eval_predictions(
+                                train_path,
+                                &member.canonical,
+                                &fold_train[f],
+                                &folds[f],
+                            )
+                        })
+                        .collect();
+                    let prediction_views: Vec<Option<&[f64]>> = predictions
+                        .iter()
+                        .map(|result| result.as_ref().ok().map(Vec::as_slice))
+                        .collect();
+                    complete_pooled_oof_r2(y, &folds, &prediction_views)
+                })
+                .collect();
+            invalid_members = replace_generation_outcomes(&mut population, outcomes);
+            if invalid_members == population.len() {
+                return Err(format!(
+                    "generation {generation} produced no complete member fitness"
+                ));
+            }
+            evaluations += population.len() * folds.len();
+        // V1 replay: fresh split(s) or CV folds append to member history.
+        } else if config.budget.cv_fitness > 0 {
             let folds = kfold(
                 y,
                 usable_folds(y.len(), config.budget.cv_fitness),
@@ -795,7 +1039,13 @@ fn run_strategy(
                 let seed = seed_from(&format!("screen:{ds}:{ms}:split:{generation}:{s}"));
                 let (train_ids, valid_ids) = split_8020(y, seed);
                 let (eval_path, train_ids) = if config.perturb_fitness {
-                    match perturbed_generation_csv(x, y, &train_ids, generation, &format!("{ds}:{ms}")) {
+                    match perturbed_generation_csv(
+                        x,
+                        y,
+                        &train_ids,
+                        generation,
+                        &format!("{ds}:{ms}"),
+                    ) {
                         Ok(v) => v,
                         Err(_) => (train_path.to_string(), train_ids),
                     }
@@ -828,7 +1078,10 @@ fn run_strategy(
         stats.push(GenerationStat {
             generation,
             evaluations,
-            best_fitness: population.first().map_or(-1.0, |m| robust_fitness(&m.scores)),
+            best_fitness: population
+                .first()
+                .map_or(-1.0, |m| robust_fitness(&m.scores)),
+            invalid_members,
         });
         // breed the next generation (skip after the final evaluation round)
         if generation + 1 == schedule.len() {
@@ -862,21 +1115,50 @@ fn run_strategy(
             }
             slot += 1;
         }
+        if config.strict_pooled_search() && next.len() != next_width {
+            return Err(format!(
+                "generation {} could produce only {} of {next_width} required members",
+                generation + 1,
+                next.len()
+            ));
+        }
         population = next;
     }
     rank(&mut population);
-    (population, stats, evaluations)
+    if config.strict_pooled_search() {
+        let expected = expected_search_evaluations(&schedule, config.budget.cv_fitness);
+        if evaluations != expected {
+            return Err(format!(
+                "search evaluation count {evaluations} does not match exact budget {expected}"
+            ));
+        }
+    }
+    Ok((population, stats, evaluations))
 }
 
-fn final_cv(config: &Config, train_path: &str, x: &Rows, y: &[f64], top: &mut [TopGene]) -> usize {
+fn final_cv(
+    config: &Config,
+    train_path: &str,
+    x: &Rows,
+    y: &[f64],
+    top: &mut [TopGene],
+) -> Result<usize, String> {
+    let fold_count = if config.strict_pooled_search() {
+        config.final_cv_folds
+    } else {
+        usable_folds(y.len(), config.final_cv_folds)
+    };
     let folds = kfold(
         y,
-        usable_folds(y.len(), config.final_cv_folds),
+        fold_count,
         seed_from(&format!(
             "screen:{}:{}:finalcv",
             config.dataset_hash, config.master_seed
         )),
     );
+    if config.strict_pooled_search() {
+        validate_strict_fold_plan(y.len(), &folds)?;
+    }
     let mut evals = 0usize;
     let fold_train: Vec<Vec<usize>> = (0..folds.len())
         .map(|f| {
@@ -891,7 +1173,14 @@ fn final_cv(config: &Config, train_path: &str, x: &Rows, y: &[f64], top: &mut [T
     let pairs: Vec<(usize, usize)> = (0..top.len())
         .flat_map(|g| (0..folds.len()).map(move |f| (g, f)))
         .collect();
-    if config.pooled_oof {
+    // Per-fold R^2 is not merely unstable on a one-row fold, it is UNDEFINED:
+    // ss_tot is 0, r2() returns None, and the caller scores the clip floor. With
+    // leave-one-out that happens on EVERY fold, so every gene ties at -1.0 and
+    // the winner falls through to the lexicographically smallest hash. Pooling
+    // is therefore not optional below two rows per fold -- it is the only
+    // defined estimator, so force it regardless of the flag.
+    let degenerate_fold = folds.iter().any(|f| f.len() < 2);
+    if config.pooled_oof || degenerate_fold {
         // Pooled out-of-fold R^2: one ratio computed over every row once, rather
         // than an average of per-fold R^2 values that each carry their own
         // ss_tot denominator. feat_math documents the pooled form as the primary
@@ -909,6 +1198,7 @@ fn final_cv(config: &Config, train_path: &str, x: &Rows, y: &[f64], top: &mut [T
         for g in 0..top.len() {
             let mut oof_true: Vec<f64> = Vec::new();
             let mut oof_pred: Vec<f64> = Vec::new();
+            let mut prediction_views: Vec<Option<&[f64]>> = Vec::with_capacity(folds.len());
             let mut failures = 0usize;
             for f in 0..folds.len() {
                 let entry = fold_preds
@@ -917,25 +1207,29 @@ fn final_cv(config: &Config, train_path: &str, x: &Rows, y: &[f64], top: &mut [T
                     .map(|(_, r)| r);
                 match entry {
                     Some(Ok(pred)) if pred.len() == folds[f].len() => {
+                        prediction_views.push(Some(pred.as_slice()));
                         for (k, &row) in folds[f].iter().enumerate() {
                             oof_true.push(y[row]);
                             oof_pred.push(pred[k]);
                         }
                     }
-                    // A fold that never produced a number is dropped, not scored
-                    // as catastrophic: we learned nothing about the gene there.
-                    _ => failures += 1,
+                    _ => {
+                        prediction_views.push(None);
+                        failures += 1;
+                    }
                 }
             }
             top[g].cv_failed_folds = failures;
-            top[g].cv7_mean_r2 = if oof_true.is_empty() {
+            top[g].cv7_mean_r2 = if config.strict_pooled_search() {
+                complete_pooled_oof_r2(y, &folds, &prediction_views)
+            } else if oof_true.is_empty() {
                 None
             } else {
                 r2(&oof_true, &oof_pred).map(|v| v.max(-1.0))
             };
             evals += folds.len();
         }
-        return evals;
+        return Ok(evals);
     }
 
     let fold_scores: Vec<((usize, usize), Result<f64, EvalFailure>)> = pairs
@@ -960,7 +1254,9 @@ fn final_cv(config: &Config, train_path: &str, x: &Rows, y: &[f64], top: &mut [T
             // Dropping those folds instead is a real change, so it stays behind
             // a flag: with it off, recorded runs replay bit-for-bit.
             let s: Vec<f64> = if config.drop_failed_folds {
-                mine.iter().filter_map(|r| r.as_ref().ok().copied()).collect()
+                mine.iter()
+                    .filter_map(|r| r.as_ref().ok().copied())
+                    .collect()
             } else {
                 mine.iter().map(|r| *r.as_ref().unwrap_or(&-1.0)).collect()
             };
@@ -979,32 +1275,32 @@ fn final_cv(config: &Config, train_path: &str, x: &Rows, y: &[f64], top: &mut [T
     }
     #[allow(unreachable_code)]
     if false {
-    for gene in top.iter_mut() {
-        let Ok(genome) = GenomeIr::parse(&gene.canonical) else {
-            gene.cv7_mean_r2 = None;
-            continue;
-        };
-        let mut scores = Vec::new();
-        for f in 0..folds.len() {
-            let valid_ids = &folds[f];
-            let train_ids: Vec<usize> = folds
-                .iter()
-                .enumerate()
-                .filter(|(i, _)| *i != f)
-                .flat_map(|(_, ids)| ids.iter().copied())
-                .collect();
-            let (tx, ty) = subset(x, y, &train_ids);
-            let (vx, vy) = subset(x, y, valid_ids);
-            evals += 1;
-            match model::fit_predict(&genome, &tx, &ty, &vx) {
-                Ok(pred) => scores.push(r2(&vy, &pred).map_or(-1.0, |v| v.max(-1.0))),
-                Err(_) => scores.push(-1.0),
+        for gene in top.iter_mut() {
+            let Ok(genome) = GenomeIr::parse(&gene.canonical) else {
+                gene.cv7_mean_r2 = None;
+                continue;
+            };
+            let mut scores = Vec::new();
+            for f in 0..folds.len() {
+                let valid_ids = &folds[f];
+                let train_ids: Vec<usize> = folds
+                    .iter()
+                    .enumerate()
+                    .filter(|(i, _)| *i != f)
+                    .flat_map(|(_, ids)| ids.iter().copied())
+                    .collect();
+                let (tx, ty) = subset(x, y, &train_ids);
+                let (vx, vy) = subset(x, y, valid_ids);
+                evals += 1;
+                match model::fit_predict(&genome, &tx, &ty, &vx) {
+                    Ok(pred) => scores.push(r2(&vy, &pred).map_or(-1.0, |v| v.max(-1.0))),
+                    Err(_) => scores.push(-1.0),
+                }
             }
+            gene.cv7_mean_r2 = Some(scores.iter().sum::<f64>() / scores.len() as f64);
         }
-        gene.cv7_mean_r2 = Some(scores.iter().sum::<f64>() / scores.len() as f64);
     }
-    }
-    evals
+    Ok(evals)
 }
 
 fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), String> {
@@ -1012,18 +1308,20 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
         &fs::read_to_string(config_path).map_err(|e| format!("read {config_path}: {e}"))?,
     )
     .map_err(|e| format!("parse config: {e}"))?;
-    if config.schema != "JopeStrategyScreenConfig.v1" {
-        return Err(format!("unsupported config schema {}", config.schema));
-    }
+    config.validate()?;
     let (x, y) = load_csv(train_path)?;
     let started = std::time::Instant::now();
-    let (population, stats, search_evals) = run_strategy(&config, train_path, &x, &y);
+    let (population, stats, search_evals) = run_strategy(&config, train_path, &x, &y)?;
 
     // Seeding baselines into generation 0 is not enough: the in-generation
     // fitness culls every one of them before the finale (measured — all 8
     // finalists came back origin=evolved on a seeded run). Union them into the
     // finale pool so CV always gets to compare against the floor.
-    let mut finalists: Vec<Member> = population.iter().take(config.final_top_k).cloned().collect();
+    let mut finalists: Vec<Member> = population
+        .iter()
+        .take(config.final_top_k)
+        .cloned()
+        .collect();
     if config.baseline_seeds {
         let chosen: HashSet<String> = finalists.iter().map(|m| m.semantic.clone()).collect();
         // Rebuilt from the constant, not filtered out of `population`: evolution
@@ -1047,32 +1345,56 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
             robust_fitness: robust_fitness(&m.scores),
             worst_split: worst_split(&m.scores),
             splits_seen: m.scores.len(),
+            search_fitness_complete: m.fitness_complete,
             cv7_mean_r2: None,
             rcv_mean_r2: None,
             rcv_se: None,
             boot_mean_r2: None,
             boot_sd_r2: None,
             cv_failed_folds: 0,
+            rcv_failed_repeats: 0,
         })
         .collect();
-    let cv_evals = final_cv(&config, train_path, &x, &y, &mut top);
+    let cv_evals = final_cv(&config, train_path, &x, &y, &mut top)?;
+    if config.strict_pooled_search() && top.iter().all(|gene| gene.cv7_mean_r2.is_none()) {
+        return Err("strict pooled final CV produced no complete finalist".to_string());
+    }
 
     // ---- T4: repeated stratified CV (5 x k folds), 1-SE + parsimony ----
     let repeats = 5usize;
+    let mut rcv_evals = 0usize;
     let mut oof_matrix: Vec<Vec<(usize, f64)>> = vec![Vec::new(); top.len()];
     for rep in 0..repeats {
+        let fold_count = if config.strict_pooled_search() {
+            config.final_cv_folds
+        } else {
+            usable_folds(y.len(), config.final_cv_folds)
+        };
         let folds = kfold(
             &y,
-            usable_folds(y.len(), config.final_cv_folds),
-            seed_from(&format!("screen:{}:{}:rcv:{rep}", config.dataset_hash, config.master_seed)),
+            fold_count,
+            seed_from(&format!(
+                "screen:{}:{}:rcv:{rep}",
+                config.dataset_hash, config.master_seed
+            )),
         );
+        if config.strict_pooled_search() {
+            validate_strict_fold_plan(y.len(), &folds)?;
+        }
         let fold_train: Vec<Vec<usize>> = (0..folds.len())
-            .map(|f| folds.iter().enumerate().filter(|(i, _)| *i != f)
-                .flat_map(|(_, ids)| ids.iter().copied()).collect())
+            .map(|f| {
+                folds
+                    .iter()
+                    .enumerate()
+                    .filter(|(i, _)| *i != f)
+                    .flat_map(|(_, ids)| ids.iter().copied())
+                    .collect()
+            })
             .collect();
         let pairs: Vec<(usize, usize)> = (0..top.len())
             .flat_map(|g| (0..folds.len()).map(move |f| (g, f)))
             .collect();
+        rcv_evals += pairs.len();
         // One pooled OOF R^2 per repeat, not a mean of per-fold R^2. Per-fold
         // R^2 is undefined under leave-one-out -- a single held-out row has
         // ss_tot = 0, so every fold returns None and the whole estimator
@@ -1082,48 +1404,71 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
         let outs: Vec<((usize, usize), Result<Vec<f64>, EvalFailure>)> = pairs
             .par_iter()
             .map(|&(g, f)| {
-                ((g, f),
-                 eval_predictions(train_path, &top[g].canonical, &fold_train[f], &folds[f]))
+                (
+                    (g, f),
+                    eval_predictions(train_path, &top[g].canonical, &fold_train[f], &folds[f]),
+                )
             })
             .collect();
         for g in 0..top.len() {
             let mut truth: Vec<f64> = Vec::new();
             let mut pred: Vec<f64> = Vec::new();
+            let mut prediction_views: Vec<Option<&[f64]>> = Vec::with_capacity(folds.len());
             for f in 0..folds.len() {
                 if let Some((_, Ok(p))) = outs.iter().find(|((gg, ff), _)| *gg == g && *ff == f) {
                     if p.len() == folds[f].len() {
+                        prediction_views.push(Some(p.as_slice()));
                         for (k, &row) in folds[f].iter().enumerate() {
                             truth.push(y[row]);
                             pred.push(p[k]);
                         }
+                    } else {
+                        prediction_views.push(None);
                     }
+                } else {
+                    prediction_views.push(None);
                 }
             }
-            if let Some(v) = r2(&truth, &pred) {
+            let score = if config.strict_pooled_search() {
+                complete_pooled_oof_r2(&y, &folds, &prediction_views)
+            } else {
+                r2(&truth, &pred).map(|value| value.max(-1.0))
+            };
+            if let Some(v) = score {
                 oof_matrix[g].push((rep, v.max(-1.0)));
+            } else {
+                top[g].rcv_failed_repeats += 1;
             }
         }
     }
     for (g, gene) in top.iter_mut().enumerate() {
         let vals: Vec<f64> = oof_matrix[g].iter().map(|(_, v)| *v).collect();
-        if !vals.is_empty() {
+        let complete = !config.strict_pooled_search()
+            || (gene.rcv_failed_repeats == 0 && vals.len() == repeats);
+        if complete && !vals.is_empty() {
             let mean = vals.iter().sum::<f64>() / vals.len() as f64;
-            let sd = (vals.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / vals.len() as f64)
-                .sqrt();
+            let sd =
+                (vals.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / vals.len() as f64).sqrt();
             gene.rcv_mean_r2 = Some(mean);
             gene.rcv_se = Some(sd / (vals.len() as f64).sqrt());
         }
     }
     let t4_choice = {
-        let best = top.iter()
+        let best = top
+            .iter()
+            .filter(|g| !config.strict_pooled_search() || g.cv_failed_folds == 0)
             .filter_map(|g| g.rcv_mean_r2.map(|m| (m, g.rcv_se.unwrap_or(0.0))))
-            .fold((f64::NEG_INFINITY, 0.0), |a, b| if b.0 > a.0 { b } else { a });
+            .fold(
+                (f64::NEG_INFINITY, 0.0),
+                |a, b| if b.0 > a.0 { b } else { a },
+            );
         // Band width is configurable because 1.0 SE admitted 10-14 of 16
         // candidates on measured runs, and a band containing most of the pool
         // is not a selection rule -- combined with the complexity tie-break it
         // degenerates to "pick whichever injected baseline is simplest".
         let threshold = best.0 - config.se_band * best.1;
         top.iter()
+            .filter(|g| !config.strict_pooled_search() || g.cv_failed_folds == 0)
             .filter(|g| g.rcv_mean_r2.unwrap_or(f64::NEG_INFINITY) >= threshold)
             // Ties at equal complexity break by SCORE, then by hash. Breaking
             // straight to the hash made this an OLS bias, not a 1-SE rule: all
@@ -1142,13 +1487,19 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
             })
             .map(|g| g.semantic.clone())
     };
+    if config.strict_pooled_search() && config.winner_rule == "rcv_1se" && t4_choice.is_none() {
+        return Err("strict repeated CV produced no complete finalist".to_string());
+    }
 
     // ---- T3: bootstrap-refit stability over the top pool ----
     let bags = 20usize;
     let n = y.len();
     let bag_sets: Vec<(Vec<usize>, Vec<usize>)> = (0..bags)
         .map(|b| {
-            let seed = seed_from(&format!("screen:{}:{}:boot:{b}", config.dataset_hash, config.master_seed));
+            let seed = seed_from(&format!(
+                "screen:{}:{}:boot:{b}",
+                config.dataset_hash, config.master_seed
+            ));
             let mut rng = Pcg32::new(seed, 0x424f_4f54);
             let mut inb = Vec::with_capacity(n);
             let mut seen = vec![false; n];
@@ -1164,10 +1515,20 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
     let boot_pairs: Vec<(usize, usize)> = (0..top.len())
         .flat_map(|g| (0..bags).map(move |b| (g, b)))
         .collect();
+    let bootstrap_evals = boot_pairs.len();
     let boot_outs: Vec<((usize, usize), f64)> = boot_pairs
         .par_iter()
-        .map(|&(g, b)| ((g, b),
-            eval_with_timeout(train_path, &top[g].canonical, &bag_sets[b].0, &bag_sets[b].1)))
+        .map(|&(g, b)| {
+            (
+                (g, b),
+                eval_with_timeout(
+                    train_path,
+                    &top[g].canonical,
+                    &bag_sets[b].0,
+                    &bag_sets[b].1,
+                ),
+            )
+        })
         .collect();
     let mut boot_scores: Vec<Vec<f64>> = vec![Vec::new(); top.len()];
     for ((g, _), v) in boot_outs {
@@ -1177,13 +1538,14 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
         let vals = &boot_scores[g];
         if !vals.is_empty() {
             let mean = vals.iter().sum::<f64>() / vals.len() as f64;
-            let sd = (vals.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / vals.len() as f64)
-                .sqrt();
+            let sd =
+                (vals.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / vals.len() as f64).sqrt();
             gene.boot_mean_r2 = Some(mean);
             gene.boot_sd_r2 = Some(sd);
         }
     }
-    let t3_choice = top.iter()
+    let t3_choice = top
+        .iter()
         .filter(|g| g.boot_mean_r2.is_some())
         .max_by(|a, b| {
             let fa = a.boot_mean_r2.unwrap() - 0.5 * a.boot_sd_r2.unwrap_or(0.0);
@@ -1193,14 +1555,32 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
         .map(|g| g.semantic.clone());
 
     // ---- T2: ensembles from a common OOF partition (first rcv repeat folds) ----
+    let ensemble_fold_count = if config.strict_pooled_search() {
+        config.final_cv_folds
+    } else {
+        usable_folds(y.len(), config.final_cv_folds)
+    };
     let ens_folds = kfold(
         &y,
-        usable_folds(y.len(), config.final_cv_folds),
-        seed_from(&format!("screen:{}:{}:rcv:0", config.dataset_hash, config.master_seed)),
+        ensemble_fold_count,
+        seed_from(&format!(
+            "screen:{}:{}:rcv:0",
+            config.dataset_hash, config.master_seed
+        )),
     );
+    if config.strict_pooled_search() {
+        validate_strict_fold_plan(y.len(), &ens_folds)?;
+    }
+    let ensemble_evals = top.len() * ens_folds.len();
     let ens_train: Vec<Vec<usize>> = (0..ens_folds.len())
-        .map(|f| ens_folds.iter().enumerate().filter(|(i, _)| *i != f)
-            .flat_map(|(_, ids)| ids.iter().copied()).collect())
+        .map(|f| {
+            ens_folds
+                .iter()
+                .enumerate()
+                .filter(|(i, _)| *i != f)
+                .flat_map(|(_, ids)| ids.iter().copied())
+                .collect()
+        })
         .collect();
     // per-gene OOF prediction vector via child predict? cheap approximation:
     // per-gene per-fold R2 already captured; greedy selection needs prediction
@@ -1223,14 +1603,19 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
         }
     }
     let oof_rmse = |mix: &[f64]| -> f64 {
-        let mut se = 0.0; let mut c = 0usize;
+        let mut se = 0.0;
+        let mut c = 0usize;
         for i in 0..n {
             if mix[i].is_finite() {
                 se += (mix[i] - y[i]).powi(2);
                 c += 1;
             }
         }
-        if c == 0 { f64::INFINITY } else { (se / c as f64).sqrt() }
+        if c == 0 {
+            f64::INFINITY
+        } else {
+            (se / c as f64).sqrt()
+        }
     };
     // uniform top-5
     let ens_uniform: Vec<String> = top.iter().take(5).map(|g| g.semantic.clone()).collect();
@@ -1240,15 +1625,25 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
     for _ in 0..8 {
         let mut best: Option<(usize, f64)> = None;
         for g in 0..top.len() {
-            if oof_preds[g].iter().all(|v| !v.is_finite()) { continue; }
+            if oof_preds[g].iter().all(|v| !v.is_finite()) {
+                continue;
+            }
             let k = picks.len() as f64;
-            let cand: Vec<f64> = (0..n).map(|i| {
-                let a = if mix[i].is_finite() { mix[i] * k } else { 0.0 };
-                let b = if oof_preds[g][i].is_finite() { oof_preds[g][i] } else { return f64::NAN; };
-                (a + b) / (k + 1.0)
-            }).collect();
+            let cand: Vec<f64> = (0..n)
+                .map(|i| {
+                    let a = if mix[i].is_finite() { mix[i] * k } else { 0.0 };
+                    let b = if oof_preds[g][i].is_finite() {
+                        oof_preds[g][i]
+                    } else {
+                        return f64::NAN;
+                    };
+                    (a + b) / (k + 1.0)
+                })
+                .collect();
             let r = oof_rmse(&cand);
-            if best.is_none() || r < best.unwrap().1 { best = Some((g, r)); }
+            if best.is_none() || r < best.unwrap().1 {
+                best = Some((g, r));
+            }
         }
         match best {
             Some((g, _)) => {
@@ -1293,11 +1688,33 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
         }
     }
 
+    let result_schema = if config.strict_pooled_search() {
+        SCHEMA_RESULT_V2
+    } else {
+        SCHEMA_RESULT_V1
+    };
+    let total_model_fits = search_evals + cv_evals + rcv_evals + bootstrap_evals + ensemble_evals;
     let result = serde_json::json!({
-        "schema": SCHEMA_RESULT,
+        "schema": result_schema,
         "strategy": config.strategy,
         "dataset_hash": config.dataset_hash,
         "master_seed": config.master_seed,
+        "search_fitness": if config.strict_pooled_search() {
+            "complete_pooled_oof_r2"
+        } else {
+            "legacy_history"
+        },
+        "strict_fold_contract": if config.strict_pooled_search() {
+            Some(serde_json::json!({
+                "minimum_fit_rows": STRICT_MIN_FIT_ROWS,
+                "minimum_hold_rows": STRICT_MIN_HOLD_ROWS,
+                "required_search_folds": config.budget.cv_fitness,
+                "required_final_folds": config.final_cv_folds,
+                "complete_predictions_required": true,
+            }))
+        } else {
+            None
+        },
         "winner_genome": top[winner].canonical,
         "winner_semantic": top[winner].semantic,
         "winner_origin": top[winner].origin,
@@ -1311,12 +1728,21 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
         },
         "search_evaluations": search_evals,
         "final_cv_evaluations": cv_evals,
+        "model_fit_accounting": {
+            "search": search_evals,
+            "final_cv": cv_evals,
+            "repeated_cv": rcv_evals,
+            "bootstrap": bootstrap_evals,
+            "ensemble_oof": ensemble_evals,
+            "total": total_model_fits,
+        },
         "runtime_seconds": started.elapsed().as_secs_f64(),
         "top": top,
         "generations": stats.iter().map(|s| serde_json::json!({
             "generation": s.generation,
             "evaluations": s.evaluations,
             "best_fitness": s.best_fitness,
+            "invalid_members": s.invalid_members,
         })).collect::<Vec<_>>(),
         "test_csv_read": false,
     });
@@ -1342,10 +1768,9 @@ fn score(genome_file: &str, train_path: &str, test_path: &str) -> Result<(), Str
 }
 
 fn score_ensemble(members_file: &str, train_path: &str, test_path: &str) -> Result<(), String> {
-    let members: Vec<String> = serde_json::from_str(
-        &fs::read_to_string(members_file).map_err(|e| e.to_string())?,
-    )
-    .map_err(|e| e.to_string())?;
+    let members: Vec<String> =
+        serde_json::from_str(&fs::read_to_string(members_file).map_err(|e| e.to_string())?)
+            .map_err(|e| e.to_string())?;
     if members.is_empty() {
         return Err("empty ensemble".into());
     }
@@ -1398,7 +1823,9 @@ fn main() -> ExitCode {
         },
         Some("eval-one") => match arg(&args, "--train") {
             Some(t) => eval_one(&t),
-            None => Err("usage: eval-one --train <csv>   (stdin: {genome,train_ids,valid_ids})".into()),
+            None => {
+                Err("usage: eval-one --train <csv>   (stdin: {genome,train_ids,valid_ids})".into())
+            }
         },
         Some("score-ensemble") => match (
             arg(&args, "--members-file"),
@@ -1406,7 +1833,9 @@ fn main() -> ExitCode {
             arg(&args, "--test"),
         ) {
             (Some(m), Some(t), Some(e)) => score_ensemble(&m, &t, &e),
-            _ => Err("usage: score-ensemble --members-file <json> --train <csv> --test <csv>".into()),
+            _ => {
+                Err("usage: score-ensemble --members-file <json> --train <csv> --test <csv>".into())
+            }
         },
         Some("score") => match (
             arg(&args, "--genome-file"),
@@ -1424,5 +1853,168 @@ fn main() -> ExitCode {
             eprintln!("jope_strategy_screen: {message}");
             ExitCode::FAILURE
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn member(name: &str, scores: Vec<f64>) -> Member {
+        Member {
+            canonical: name.to_string(),
+            semantic: name.to_string(),
+            complexity: 1,
+            origin: "fixture".to_string(),
+            scores,
+            fitness_complete: false,
+        }
+    }
+
+    fn strict_config() -> Config {
+        Config {
+            schema: SCHEMA_CONFIG_V2.to_string(),
+            strategy: "fixture".to_string(),
+            dataset_hash: "development-fixture".to_string(),
+            master_seed: 101,
+            dl_genes: vec![BASELINE_SEEDS[0].to_string()],
+            dl_draw_bank: Vec::new(),
+            global_prior: Vec::new(),
+            neighbor_prior: Vec::new(),
+            budget: Budget {
+                population: 40,
+                generations: 25,
+                splits_per_gen: 0,
+                elites: 3,
+                cv_fitness: 2,
+                dl_inject_per_gen: 0,
+                halving: Vec::new(),
+            },
+            final_cv_folds: 7,
+            final_top_k: 10,
+            perturb_fitness: false,
+            vocab: "expanded".to_string(),
+            baseline_seeds: true,
+            pooled_oof: true,
+            winner_rule: "rcv_1se".to_string(),
+            drop_failed_folds: false,
+            se_band: 0.5,
+        }
+    }
+
+    #[test]
+    fn v2_config_binds_strict_selection_semantics() {
+        let config = strict_config();
+        config.validate().unwrap();
+
+        let mut incomplete = strict_config();
+        incomplete.drop_failed_folds = true;
+        assert!(incomplete.validate().is_err());
+
+        let mut winner_curse = strict_config();
+        winner_curse.winner_rule = "cv7".to_string();
+        assert!(winner_curse.validate().is_err());
+    }
+
+    #[test]
+    fn v1_config_retains_replay_compatibility() {
+        let mut config = strict_config();
+        config.schema = SCHEMA_CONFIG_V1.to_string();
+        config.budget.cv_fitness = 0;
+        config.pooled_oof = false;
+        config.drop_failed_folds = true;
+        config.winner_rule = "cv7".to_string();
+        config.perturb_fitness = true;
+        config.validate().unwrap();
+    }
+
+    #[test]
+    fn strict_fold_plan_rejects_nine_row_cv7() {
+        let y: Vec<f64> = (0..9).map(|value| value as f64).collect();
+        let folds = kfold(&y, 7, 17);
+        assert!(validate_strict_fold_plan(y.len(), &folds).is_err());
+    }
+
+    #[test]
+    fn strict_fold_plan_rejects_one_row_holds() {
+        let y: Vec<f64> = (0..40).map(|value| value as f64).collect();
+        let folds = kfold(&y, 39, 18);
+        let error = validate_strict_fold_plan(y.len(), &folds).unwrap_err();
+        assert!(error.contains("hold rows"), "{error}");
+    }
+
+    #[test]
+    fn strict_fold_plan_rejects_too_few_fit_rows() {
+        let y: Vec<f64> = (0..60).map(|value| value as f64).collect();
+        let folds = kfold(&y, 2, 19);
+        let error = validate_strict_fold_plan(y.len(), &folds).unwrap_err();
+        assert!(error.contains("fit rows"), "{error}");
+    }
+
+    #[test]
+    fn strict_fold_plan_accepts_complete_feasible_plan() {
+        let y: Vec<f64> = (0..80).map(|value| value as f64).collect();
+        let folds = kfold(&y, 2, 23);
+        validate_strict_fold_plan(y.len(), &folds).unwrap();
+    }
+
+    #[test]
+    fn complete_pooled_score_restores_original_row_order() {
+        let y = vec![0.0, 1.0, 2.0, 3.0];
+        let folds = vec![vec![0, 2], vec![1, 3]];
+        let first = vec![0.1, 2.1];
+        let second = vec![0.9, 3.2];
+        let views = vec![Some(first.as_slice()), Some(second.as_slice())];
+        let actual = complete_pooled_oof_r2(&y, &folds, &views).unwrap();
+        let expected = r2(&y, &[0.1, 0.9, 2.1, 3.2]).unwrap();
+        assert!((actual - expected).abs() < 1e-12);
+    }
+
+    #[test]
+    fn complete_pooled_score_fails_closed_on_missing_fold() {
+        let y = vec![0.0, 1.0, 2.0, 3.0];
+        let folds = vec![vec![0, 2], vec![1, 3]];
+        let first = vec![0.1, 2.1];
+        let views = vec![Some(first.as_slice()), None];
+        assert!(complete_pooled_oof_r2(&y, &folds, &views).is_none());
+    }
+
+    #[test]
+    fn complete_pooled_score_fails_closed_on_duplicate_row() {
+        let y = vec![0.0, 1.0, 2.0, 3.0];
+        let folds = vec![vec![0, 2], vec![0, 3]];
+        let first = vec![0.1, 2.1];
+        let second = vec![0.2, 3.2];
+        let views = vec![Some(first.as_slice()), Some(second.as_slice())];
+        assert!(complete_pooled_oof_r2(&y, &folds, &views).is_none());
+    }
+
+    #[test]
+    fn strict_generation_scores_replace_member_history() {
+        let mut population = vec![
+            member("old-elite", vec![0.1, 0.2, 0.3]),
+            member("new-child", Vec::new()),
+        ];
+        let invalid = replace_generation_outcomes(&mut population, vec![Some(0.4), Some(0.5)]);
+        assert_eq!(invalid, 0);
+        assert_eq!(population[0].scores, vec![0.4]);
+        assert_eq!(population[1].scores, vec![0.5]);
+        assert!(population.iter().all(|member| member.fitness_complete));
+    }
+
+    #[test]
+    fn incomplete_fitness_cannot_win_a_clip_floor_tie() {
+        let mut valid = member("valid", vec![-1.0]);
+        valid.fitness_complete = true;
+        let invalid = member("invalid-but-simpler", vec![-1.0]);
+        let mut population = vec![invalid, valid];
+        rank(&mut population);
+        assert_eq!(population[0].semantic, "valid");
+    }
+
+    #[test]
+    fn forty_by_twenty_five_by_two_is_exactly_two_thousand_fits() {
+        let schedule = vec![(40, 0); 25];
+        assert_eq!(expected_search_evaluations(&schedule, 2), 2_000);
     }
 }
