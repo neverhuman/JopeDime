@@ -1094,6 +1094,44 @@ fn validate_context_receipt(
     Ok(())
 }
 
+fn append_multiclass_catalog_entries(
+    catalog: &mut Value,
+    extension_entries: &mut [Value],
+    base_contexts: &BTreeMap<String, Value>,
+) -> Result<usize> {
+    let entry_count = {
+        let entries = catalog
+            .get_mut("entries")
+            .and_then(Value::as_array_mut)
+            .context("base catalog lacks entries")?;
+        let base_count = entries.len();
+        for (offset, entry) in extension_entries.iter_mut().enumerate() {
+            let dataset = required_string(entry, "/dataset_hash")?;
+            ensure!(
+                !base_contexts.contains_key(dataset),
+                "context extension repeats base dataset {dataset}"
+            );
+            entry["catalog_index"] = Value::from((base_count + offset) as u64);
+            entries.push(entry.clone());
+        }
+        ensure!(
+            entries.len() == base_count + extension_entries.len(),
+            "extended catalog row count drift"
+        );
+        entries.len()
+    };
+    let task_counts = catalog
+        .get_mut("task_counts")
+        .and_then(Value::as_object_mut)
+        .context("base catalog lacks task counts")?;
+    ensure!(
+        task_counts.get("multiclass").and_then(Value::as_u64) == Some(269),
+        "base catalog multiclass task count drift"
+    );
+    task_counts.insert("multiclass".to_string(), Value::from(272_u64));
+    Ok(entry_count)
+}
+
 fn append_context_catalog(
     root: &Path,
     base_pointer_path: &Path,
@@ -1164,27 +1202,8 @@ fn append_context_catalog(
         sha256_file(data_path)? == required_sha256(&extension, "/data_sha256")?,
         "context extension data hash drift"
     );
-    let entry_count = {
-        let entries = catalog
-            .get_mut("entries")
-            .and_then(Value::as_array_mut)
-            .context("base catalog lacks entries")?;
-        let base_count = entries.len();
-        for (offset, entry) in extension_entries.iter_mut().enumerate() {
-            let dataset = required_string(entry, "/dataset_hash")?;
-            ensure!(
-                !base_contexts.contains_key(dataset),
-                "context extension repeats base dataset {dataset}"
-            );
-            entry["catalog_index"] = Value::from((base_count + offset) as u64);
-            entries.push(entry.clone());
-        }
-        ensure!(
-            entries.len() == 272,
-            "extended multiclass catalog must contain 272 contexts"
-        );
-        entries.len()
-    };
+    let entry_count =
+        append_multiclass_catalog_entries(&mut catalog, &mut extension_entries, &base_contexts)?;
     catalog["immutable"] = Value::Bool(true);
     catalog["append_only"] = Value::Bool(true);
     catalog["parent_catalog_sha256"] =
@@ -1196,6 +1215,7 @@ fn append_context_catalog(
     catalog["row_count"] = Value::from(entry_count as u64);
     catalog["data_sha256"] = Value::String(data_sha256.clone());
     catalog["multiclass_count"] = Value::from(272_u64);
+    let extended_task_counts = catalog["task_counts"].clone();
     let catalog_bytes = canonical_json(&catalog)?;
     let catalog_sha256 = sha256_bytes(&catalog_bytes);
     let catalog_path = root.join(format!("{catalog_sha256}.catalog.json"));
@@ -1211,7 +1231,7 @@ fn append_context_catalog(
         "catalog_sha256": catalog_sha256,
         "data": data_destination,
         "data_sha256": data_sha256,
-        "task_counts": {"multiclass": 272},
+        "task_counts": extended_task_counts,
         "row_count": entry_count,
         "test_adaptive": true,
         "benchmark_valid": false,
@@ -4911,6 +4931,49 @@ mod tests {
         assert_ne!(context_job_id(&request), context_job_id(&"b".repeat(64)));
         assert_eq!(CONTEXT_EXTENSION_DATASETS.len(), 3);
         assert_eq!(CONTEXT_RECORD_STRIDE_BYTES, 8192);
+    }
+
+    #[test]
+    fn local_catalog_extension_preserves_other_tasks_and_total_rows() {
+        let mut entries = vec![
+            json!({"task": "regression", "dataset_hash": "regression-base"}),
+            json!({"task": "binary", "dataset_hash": "binary-base"}),
+        ];
+        let base_contexts = (0..269)
+            .map(|index| {
+                let dataset = format!("multiclass-base-{index:03}");
+                let entry = json!({
+                    "task": "multiclass",
+                    "dataset_hash": dataset,
+                    "catalog_index": index + 2,
+                });
+                entries.push(entry.clone());
+                (dataset, entry)
+            })
+            .collect::<BTreeMap<_, _>>();
+        let mut catalog = json!({
+            "entries": entries,
+            "task_counts": {
+                "regression": 1,
+                "binary": 1,
+                "multiclass": 269,
+            },
+        });
+        let mut extension = CONTEXT_EXTENSION_DATASETS
+            .iter()
+            .map(|dataset| json!({"task": "multiclass", "dataset_hash": dataset}))
+            .collect::<Vec<_>>();
+
+        let total = append_multiclass_catalog_entries(&mut catalog, &mut extension, &base_contexts)
+            .unwrap();
+
+        assert_eq!(total, 274);
+        assert_eq!(catalog["entries"].as_array().unwrap().len(), 274);
+        assert_eq!(catalog["task_counts"]["regression"], 1);
+        assert_eq!(catalog["task_counts"]["binary"], 1);
+        assert_eq!(catalog["task_counts"]["multiclass"], 272);
+        assert_eq!(extension[0]["catalog_index"], 271);
+        assert_eq!(extension[2]["catalog_index"], 273);
     }
 
     #[test]
