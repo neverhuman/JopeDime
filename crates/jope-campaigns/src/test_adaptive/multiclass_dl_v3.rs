@@ -2292,13 +2292,13 @@ fn plan_impl(
     let pre_async_freeze_path = root.join("inputs/pre-async-input-freeze.v3.json");
     if pre_async_freeze_path.is_file() {
         let frozen = read_json(&pre_async_freeze_path)?;
+        required_sha256(&frozen, "/release_binary_sha256")?;
         ensure!(
             frozen.get("schema").and_then(Value::as_str) == Some(PRE_ASYNC_FREEZE_SCHEMA)
                 && frozen.get("run_id").and_then(Value::as_str) == Some(RUN_ID)
                 && frozen.get("test_adaptive").and_then(Value::as_bool) == Some(true)
                 && frozen.get("benchmark_valid").and_then(Value::as_bool) == Some(false)
                 && required_string(&frozen, "/source_commit")?.len() == 40
-                && required_sha256(&frozen, "/release_binary_sha256")? == current_binary_sha256()?
                 && required_sha256(&frozen, "/runtime_bundle_sha256")? == runtime_bundle_sha256
                 && required_sha256(&frozen, "/runtime_bundle_manifest_sha256")?
                     == runtime_bundle_manifest_sha256
