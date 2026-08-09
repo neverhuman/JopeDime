@@ -91,9 +91,17 @@ def test_calibration_fallback_removes_learned_risk_from_ranking() -> None:
         "interval_coverage": 0.8,
         "target_coverage": 0.95,
     }
-    policy = MODULE.decoding_policy(bad, digest("d"), digest("e"))
+    selection_policy_sha256 = digest("f")
+    policy = MODULE.decoding_policy(
+        bad,
+        digest("d"),
+        digest("e"),
+        {"learned_risk": {"enabled": True}},
+        selection_policy_sha256,
+    )
     assert not policy["learned_uncertainty_and_risk_enabled"]
     assert policy["selector_calibration_sha256"] is None
+    assert policy["proposal_selection_policy_sha256"] == selection_policy_sha256
     assert policy["uncertainty_fallback"] == "empirical_reward_mad"
     assert (
         policy["validity_repair"]
