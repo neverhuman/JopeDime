@@ -22,6 +22,7 @@ const LEDGER_SCHEMA: &str = "JopeMulticlass64ChampionLedger.v3";
 const CHECKPOINT_SCHEMA: &str = "JopeMulticlass210GenerationCheckpoint.v3";
 const SUMMARY_SCHEMA: &str = "JopeMulticlass210CampaignSummary.v3";
 const PROOF_SCHEMA: &str = "JopeMulticlass210PrivateProofBundle.v3";
+const PRE_ASYNC_FREEZE_SCHEMA: &str = "JopeMulticlass210PreAsyncInputFreeze.v3";
 const CONTEXT_REQUEST_SCHEMA: &str = "JopeMulticlassContextEncodeRequest.v2";
 const CONTEXT_REQUEST_FILENAME: &str = "request.v2.json";
 const CONTEXT_EXTENSION_SCHEMA: &str = "JopeMulticlassContextExtension.v1";
@@ -242,6 +243,8 @@ struct Plan {
     proposal_generator_sha256: String,
     corpus_manifest_path: String,
     corpus_manifest_sha256: String,
+    pre_async_input_freeze_path: String,
+    pre_async_input_freeze_sha256: String,
     comparator_snapshot_path: String,
     comparator_snapshot_sha256: String,
     target_manifest_path: String,
@@ -901,11 +904,11 @@ fn context_request(root: &Path, base_pointer_path: &Path, base_pointer: &Value) 
 }
 
 fn context_job_id(request_sha256: &str) -> String {
-    format!("jope-mc210-context-{}-qmc4-v3", &request_sha256[..16])
+    format!("jope-mc210-context-{}-qmc5-v3", &request_sha256[..16])
 }
 
 fn context_job_spec_path(root: &Path) -> PathBuf {
-    root.join("job.quant-multiclass-r4.toml")
+    root.join("job.quant-multiclass-r5.toml")
 }
 
 fn render_context_spec(request: &Path, generator: &Path, request_sha256: &str) -> Result<String> {
@@ -2243,6 +2246,88 @@ fn plan_impl(
         context_generator.is_file(),
         "multiclass context generator is missing"
     );
+    let snapshot_path = root.join("inputs/comparator-snapshot.v3.json");
+    immutable_or_verify(
+        &snapshot_path,
+        &canonical_json(&snapshot)?,
+        "pre-async comparator snapshot",
+    )?;
+    let target_value = json!({
+        "schema": TARGET_SCHEMA,
+        "run_id": RUN_ID,
+        "test_adaptive": true,
+        "benchmark_valid": false,
+        "ordering": "first 45 easiest positive-gap datasets; remaining 72 positive-gap datasets; remaining 93 already-leading datasets by descending (1 - ASPFM v2), then dataset hash",
+        "lead_recovery_count": LEAD_COHORT,
+        "positive_gap_count": POSITIVE_GAP_TARGETS,
+        "already_leading_count": ALREADY_LEADING_TARGETS,
+        "targets": targets.iter().enumerate().map(|(order, target)| json!({
+            "order": order,
+            "cohort": if order < LEAD_COHORT {"positive-gap-easiest-45"} else if order < POSITIVE_GAP_TARGETS {"positive-gap-remaining-72"} else {"already-leading-headroom-93"},
+            "leaderboard_dataset_hash": target.leaderboard_dataset_hash,
+            "dataset_hash": target.dataset_hash,
+            "aspfm_v2": target.aspfm_v2,
+            "strict_best": target.strict_best.value,
+            "strict_gap": target.strict_gap,
+        })).collect::<Vec<_>>(),
+    });
+    let target_path = root.join("inputs/target-manifest.v3.json");
+    immutable_or_verify(
+        &target_path,
+        &canonical_json(&target_value)?,
+        "pre-async target manifest",
+    )?;
+    let base_pointer = read_json(catalog_pointer)?;
+    let base_catalog_path = Path::new(required_string(&base_pointer, "/catalog")?);
+    let base_data_path = Path::new(required_string(&base_pointer, "/data")?);
+    let base_catalog_sha256 = sha256_file(base_catalog_path)?;
+    let base_data_sha256 = sha256_file(base_data_path)?;
+    ensure!(
+        base_catalog_sha256 == required_sha256(&base_pointer, "/catalog_sha256")?
+            && base_data_sha256 == required_sha256(&base_pointer, "/data_sha256")?,
+        "base context catalog pointer content drift"
+    );
+    let (runtime_bundle_path, runtime_bundle_sha256, runtime_bundle_manifest_sha256) =
+        pinned_runtime_bundle()?;
+    let pre_async_freeze_path = root.join("inputs/pre-async-input-freeze.v3.json");
+    immutable_or_verify(
+        &pre_async_freeze_path,
+        &canonical_json(&json!({
+            "schema": PRE_ASYNC_FREEZE_SCHEMA,
+            "run_id": RUN_ID,
+            "test_adaptive": true,
+            "benchmark_valid": false,
+            "source_commit": source_commit()?,
+            "release_binary_sha256": current_binary_sha256()?,
+            "sotarena_root": sotarena_root,
+            "comparator_snapshot_path": snapshot_path,
+            "comparator_snapshot_sha256": sha256_file(&snapshot_path)?,
+            "target_manifest_path": target_path,
+            "target_manifest_sha256": sha256_file(&target_path)?,
+            "base_catalog_pointer_path": catalog_pointer,
+            "base_catalog_pointer_sha256": sha256_file(catalog_pointer)?,
+            "base_catalog_path": base_catalog_path,
+            "base_catalog_sha256": base_catalog_sha256,
+            "base_data_path": base_data_path,
+            "base_data_sha256": base_data_sha256,
+            "runtime_bundle_path": runtime_bundle_path,
+            "runtime_bundle_sha256": runtime_bundle_sha256,
+            "runtime_bundle_manifest_sha256": runtime_bundle_manifest_sha256,
+            "checkpoint_path": checkpoint,
+            "checkpoint_sha256": sha256_file(checkpoint)?,
+            "corpus_manifest_path": corpus_manifest,
+            "corpus_manifest_sha256": sha256_file(corpus_manifest)?,
+            "selection_policy_path": selection_policy,
+            "selection_policy_sha256": sha256_file(selection_policy)?,
+            "proposal_generator_path": proposal_generator,
+            "proposal_generator_sha256": sha256_file(proposal_generator)?,
+            "context_generator_path": context_generator,
+            "context_generator_sha256": sha256_file(&context_generator)?,
+            "scq_binary": SCQ,
+            "scq_binary_sha256": sha256_file(Path::new(SCQ))?,
+        }))?,
+        "pre-async input freeze",
+    )?;
     // Priority overrides are durable scheduler state, but an operator may
     // normalize all families while this resumable campaign is between polls.
     // Reassert the frozen campaign weight on every non-terminal planning pass
@@ -2270,31 +2355,6 @@ fn plan_impl(
     let catalog_sha256 = required_sha256(&pointer, "/catalog_sha256")?;
     let data_sha256 = required_sha256(&pointer, "/data_sha256")?;
     let policy_sha256 = sha256_file(selection_policy)?;
-    let snapshot_path = root.join("inputs/comparator-snapshot.v3.json");
-    let snapshot_bytes = canonical_json(&snapshot)?;
-    immutable_write(&snapshot_path, &snapshot_bytes)?;
-    let target_value = json!({
-        "schema": TARGET_SCHEMA,
-        "run_id": RUN_ID,
-        "test_adaptive": true,
-        "benchmark_valid": false,
-        "ordering": "first 45 easiest positive-gap datasets; remaining 72 positive-gap datasets; remaining 93 already-leading datasets by descending (1 - ASPFM v2), then dataset hash",
-        "lead_recovery_count": LEAD_COHORT,
-        "positive_gap_count": POSITIVE_GAP_TARGETS,
-        "already_leading_count": ALREADY_LEADING_TARGETS,
-        "targets": targets.iter().enumerate().map(|(order, target)| json!({
-            "order": order,
-            "cohort": if order < LEAD_COHORT {"positive-gap-easiest-45"} else if order < POSITIVE_GAP_TARGETS {"positive-gap-remaining-72"} else {"already-leading-headroom-93"},
-            "leaderboard_dataset_hash": target.leaderboard_dataset_hash,
-            "dataset_hash": target.dataset_hash,
-            "aspfm_v2": target.aspfm_v2,
-            "strict_best": target.strict_best.value,
-            "strict_gap": target.strict_gap,
-        })).collect::<Vec<_>>(),
-    });
-    let target_path = root.join("inputs/target-manifest.v3.json");
-    let target_bytes = canonical_json(&target_value)?;
-    immutable_write(&target_path, &target_bytes)?;
     let target_ids = targets
         .iter()
         .map(|target| target.dataset_hash.clone())
@@ -2375,6 +2435,8 @@ fn plan_impl(
         proposal_generator_sha256: sha256_file(proposal_generator)?,
         corpus_manifest_path: corpus_manifest.display().to_string(),
         corpus_manifest_sha256: sha256_file(corpus_manifest)?,
+        pre_async_input_freeze_path: pre_async_freeze_path.display().to_string(),
+        pre_async_input_freeze_sha256: sha256_file(&pre_async_freeze_path)?,
         comparator_snapshot_path: snapshot_path.display().to_string(),
         comparator_snapshot_sha256: sha256_file(&snapshot_path)?,
         target_manifest_path: target_path.display().to_string(),
@@ -2466,6 +2528,10 @@ fn read_plan(campaign_root: &Path, run_id: &str) -> Result<Plan> {
         ),
         (&plan.corpus_manifest_path, &plan.corpus_manifest_sha256),
         (
+            &plan.pre_async_input_freeze_path,
+            &plan.pre_async_input_freeze_sha256,
+        ),
+        (
             &plan.comparator_snapshot_path,
             &plan.comparator_snapshot_sha256,
         ),
@@ -2480,6 +2546,31 @@ fn read_plan(campaign_root: &Path, run_id: &str) -> Result<Plan> {
         }
     }
     let context_request = read_json(Path::new(&plan.context_extension_request_path))?;
+    let pre_async_freeze = read_json(Path::new(&plan.pre_async_input_freeze_path))?;
+    ensure!(
+        pre_async_freeze.get("schema").and_then(Value::as_str) == Some(PRE_ASYNC_FREEZE_SCHEMA)
+            && pre_async_freeze
+                .get("comparator_snapshot_sha256")
+                .and_then(Value::as_str)
+                == Some(plan.comparator_snapshot_sha256.as_str())
+            && pre_async_freeze
+                .get("target_manifest_sha256")
+                .and_then(Value::as_str)
+                == Some(plan.target_manifest_sha256.as_str())
+            && pre_async_freeze
+                .get("corpus_manifest_sha256")
+                .and_then(Value::as_str)
+                == Some(plan.corpus_manifest_sha256.as_str())
+            && pre_async_freeze
+                .get("checkpoint_sha256")
+                .and_then(Value::as_str)
+                == Some(plan.checkpoint_sha256.as_str())
+            && pre_async_freeze
+                .get("runtime_bundle_sha256")
+                .and_then(Value::as_str)
+                == Some(plan.runtime_bundle_sha256.as_str()),
+        "v3 pre-async input freeze drift"
+    );
     ensure!(
         context_request.get("schema").and_then(Value::as_str) == Some(CONTEXT_REQUEST_SCHEMA),
         "v3 context request schema drift"
@@ -3825,6 +3916,10 @@ fn write_campaign_terminal(
             "target-manifest.v3.json",
         ),
         (
+            Path::new(&plan.pre_async_input_freeze_path),
+            "pre-async-input-freeze.v3.json",
+        ),
+        (
             Path::new(&plan.merged_proposal_set_path),
             "merged.dl-proposals.v2.jsonl",
         ),
@@ -3962,6 +4057,8 @@ fn write_campaign_terminal(
         "plan_sha256": sha256_file(&proof_root.join("campaign-plan.v3.json"))?,
         "source_commit": plan.source_commit,
         "checkpoint_sha256": plan.checkpoint_sha256,
+        "pre_async_input_freeze_path": proof_root.join("pre-async-input-freeze.v3.json"),
+        "pre_async_input_freeze_sha256": sha256_file(&proof_root.join("pre-async-input-freeze.v3.json"))?,
         "catalog_pointer_sha256": plan.catalog_pointer_sha256,
         "exact_context_data_sha256": plan.exact_context_data_sha256,
         "selection_policy_sha256": plan.selection_policy_sha256,
@@ -4000,6 +4097,7 @@ fn write_campaign_terminal(
             "comparator_snapshot_sha256": plan.comparator_snapshot_sha256,
             "corpus_manifest_sha256": plan.corpus_manifest_sha256,
             "checkpoint_sha256": plan.checkpoint_sha256,
+            "pre_async_input_freeze_sha256": plan.pre_async_input_freeze_sha256,
             "runtime_bundle_sha256": plan.runtime_bundle_sha256,
             "context_job_id": plan.context_job_id,
             "context_job_spec_sha256": plan.context_job_spec_sha256,
@@ -4737,7 +4835,7 @@ mod tests {
         let request = "a".repeat(64);
         assert_eq!(
             context_job_id(&request),
-            "jope-mc210-context-aaaaaaaaaaaaaaaa-qmc4-v3"
+            "jope-mc210-context-aaaaaaaaaaaaaaaa-qmc5-v3"
         );
         assert_ne!(context_job_id(&request), context_job_id(&"b".repeat(64)));
         assert_eq!(CONTEXT_EXTENSION_DATASETS.len(), 3);
