@@ -197,6 +197,8 @@ def classify(name, prefix, policy):
         return 'machine_local', 'lock_or_socket'
     if p.suffix in CACHE_SUFFIXES:
         return 'machine_local', 'disposable_cache'
+    if any(part == 'target' or part.startswith('target-') for part in p.parts[:-1]):
+        return 'mutable_snapshot', 'capture_bytes_only'
     if under(name, policy.get('mutable_roots', [])):
         return 'mutable_snapshot', 'capture_bytes_only'
     if under(name, policy['source_roots']):

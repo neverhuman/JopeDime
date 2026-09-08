@@ -12,13 +12,15 @@ from experiment_scheduler import admission_reason, spare_lease
 from kernel_release import digest
 
 
-def summarize(directory, microbatch, global_batch, steps):
+def summarize(directory, microbatch, global_batch, steps, vocabulary_sha256, vocabulary_size):
     rows = [json.loads((directory / f"complete-{rank}.json").read_text()) for rank in range(8)]
     hashes = set()
     for rank, row in enumerate(rows):
         runtime.require(row.get("rank") == rank and row.get("world") == 8
                         and row.get("microbatch") == microbatch and row.get("global_batch") == global_batch
-                        and row.get("steps") == steps and row.get("eligible_checkpoint") is False,
+                        and row.get("steps") == steps and row.get("eligible_checkpoint") is False
+                        and row.get("vocabulary_sha256") == vocabulary_sha256
+                        and row.get("vocabulary_size") == vocabulary_size,
                         "probe rank or batch identity mismatch")
         times = row.get("step_seconds", [])
         runtime.require(len(times) == steps and all(isinstance(t, (float, int)) and not isinstance(t, bool)
@@ -40,12 +42,18 @@ def main():
     parser.add_argument("--binary", type=Path, required=True)
     parser.add_argument("--binary-sha256", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--vocabulary", type=Path, required=True)
     parser.add_argument("--seconds", type=int, default=7200)
     args = parser.parse_args()
     output = runtime.output_root(args.root, args.output)
     binary = runtime.inside(args.root, args.binary)
     runtime.require(digest(binary) == args.binary_sha256, "probe executable changed")
-    request = {"schema": "parallel.gpu_batch_probe.v1", "binary_sha256": args.binary_sha256,
+    vocabulary = runtime.inside(args.root, args.vocabulary)
+    vocabulary_sha256 = digest(vocabulary)
+    vocabulary_size = len(json.loads(vocabulary.read_text())["tokens"])
+    runtime.require(vocabulary_size > 3, "invalid probe vocabulary")
+    request = {"schema": "parallel.gpu_batch_probe.v2",
+               "vocabulary_sha256": vocabulary_sha256, "vocabulary_size": vocabulary_size, "binary_sha256": args.binary_sha256,
                "order": [256, 512, 512, 256], "world": 8, "measured_examples_per_block": 122880,
                "warmup_steps": 5, "seed": 20260907, "learning_protocol_changed": False,
                "scope": "full architecture numerical throughput; no corpus data, no eligible checkpoint"}
@@ -63,7 +71,7 @@ def main():
             attempt = runtime.inside(output, Path(saved["attempt"]))
             if saved.get("status") == "passed":
                 runtime.require(saved["metrics"] == summarize(attempt, microbatch, 8 * microbatch,
-                    5 + request["measured_examples_per_block"] // (8 * microbatch)), "saved probe changed")
+                    5 + request["measured_examples_per_block"] // (8 * microbatch), vocabulary_sha256, vocabulary_size), "saved probe changed")
             continue
         while time.monotonic() < deadline:
             attempt = None
@@ -72,10 +80,11 @@ def main():
             try:
                 with spare_lease(args.root, "gpu-batch-probe", cpus=16, gpu=True), runtime.owned_ranks(children):
                     runtime.require(digest(binary) == args.binary_sha256, "probe executable changed")
+                    runtime.require(digest(vocabulary) == vocabulary_sha256, "probe vocabulary changed")
                     attempt = output / f"block-{block}-attempt-{time.time_ns()}"
                     global_batch = 8 * microbatch
                     steps = 5 + request["measured_examples_per_block"] // global_batch
-                    command = [str(binary), "training-probe", "--output", str(attempt),
+                    command = [str(binary), "training-probe", "--output", str(attempt), "--vocabulary", str(vocabulary),
                                "--microbatch", str(microbatch), "--global-batch", str(global_batch),
                                "--steps", str(steps), "--timeout", "180"]
                     with (output / f"{attempt.name}.log").open("x") as log:
@@ -101,7 +110,7 @@ def main():
                     result = {"status": "passed" if child.returncode == 0 else "failed", "attempt": str(attempt),
                               "exit_code": child.returncode, "elapsed_seconds": time.monotonic() - started}
                     if child.returncode == 0:
-                        result["metrics"] = summarize(attempt, microbatch, global_batch, steps)
+                        result["metrics"] = summarize(attempt, microbatch, global_batch, steps, vocabulary_sha256, vocabulary_size)
                     runtime.write(receipt, result)
                 break
             except BlockingIOError as error:

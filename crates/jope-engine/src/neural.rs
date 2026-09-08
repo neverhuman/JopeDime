@@ -972,6 +972,7 @@ pub fn training_probe(
     rank: usize,
     world: usize,
     directory: &Path,
+    vocabulary_path: &Path,
     microbatch: usize,
     global_batch: usize,
     steps: usize,
@@ -984,13 +985,17 @@ pub fn training_probe(
     let comm = Nccl::init(rank, world, &directory.join("nccl.id"))?;
     let device = Device::Cuda(rank);
     let vs = nn::VarStore::new(device);
-    let c = Config::regression(1103);
+    let vocabulary: crate::grammar::Vocab = read_json(vocabulary_path)?;
+    let vocabulary_sha256 = file_hash(vocabulary_path)?;
+    let vocabulary_size = vocabulary.tokens.len() as i64;
+    ensure!(vocabulary_size > 3, "probe vocabulary needs reserved and program tokens");
+    let c = Config::regression(vocabulary_size);
     let model = Policy::new(vs.root(), c)?;
     let mut optimizer = AdamW::new(1e-4, 0.01);
     tch::manual_seed((SEED + rank as u64) as i64);
     let dataset = Tensor::randn([microbatch as i64, 1536], (Kind::Float, device));
     let target = Tensor::randn([microbatch as i64, 512], (Kind::Float, device));
-    let tokens = Tensor::randint(1100, [microbatch as i64, 128], (Kind::Int64, device)) + 3;
+    let tokens = Tensor::randint(vocabulary_size - 3, [microbatch as i64, 128], (Kind::Int64, device)) + 3;
     let pad = Tensor::ones([microbatch as i64, 128], (Kind::Bool, device));
     let started = Instant::now();
     let mut times = Vec::new();
@@ -1004,7 +1009,7 @@ pub fn training_probe(
             let logits = logits.narrow(1, 1, 127).to_kind(Kind::Float);
             let labels = tokens.narrow(1, 1, 127);
             let nll = logits
-                .reshape([-1, 1103])
+                .reshape([-1, vocabulary_size])
                 .cross_entropy_for_logits(&labels.reshape([-1]));
             let mut loss = nll
                 + rewards.square().mean(Kind::Float) * 0.01
@@ -1080,6 +1085,6 @@ pub fn training_probe(
     }
     write_json(
         &directory.join(format!("complete-{rank}.json")),
-        &serde_json::json!({"rank":rank,"world":world,"steps":steps,"parameter_sha256":hex::encode(hasher.finalize()),"microbatch":microbatch,"global_batch":global_batch,"seconds":started.elapsed().as_secs_f64(),"step_seconds":times,"eligible_checkpoint":false}),
+        &serde_json::json!({"rank":rank,"world":world,"steps":steps,"parameter_sha256":hex::encode(hasher.finalize()),"microbatch":microbatch,"global_batch":global_batch,"seconds":started.elapsed().as_secs_f64(),"step_seconds":times,"vocabulary_sha256":vocabulary_sha256,"vocabulary_size":vocabulary_size,"eligible_checkpoint":false}),
     )
 }

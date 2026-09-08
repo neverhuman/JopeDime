@@ -613,8 +613,9 @@ pub fn probe_accumulation(world: usize, microbatch: usize, global_batch: usize) 
     Ok(global_batch / local_total)
 }
 
-pub fn training_probe(output: &Path, microbatch: usize, global_batch: usize, steps: usize, timeout: u64) -> Result<()> {
+pub fn training_probe(output: &Path, vocabulary: &Path, microbatch: usize, global_batch: usize, steps: usize, timeout: u64) -> Result<()> {
     probe_accumulation(8, microbatch, global_batch)?;
+    let vocabulary_sha256 = file_hash(vocabulary)?;
     ensure!(steps > 5 && timeout > 0, "probe needs five warmup steps and measured steps");
     ensure!(!output.exists(), "qualification directory exists");
     fs::create_dir_all(output)?;
@@ -633,6 +634,8 @@ pub fn training_probe(output: &Path, microbatch: usize, global_batch: usize, ste
             .arg(&executable)
             .args(["training-probe-rank", "--directory"])
             .arg(output)
+            .arg("--vocabulary")
+            .arg(vocabulary)
             .arg("--rank")
             .arg(rank.to_string())
             .args(["--world", "8", "--microbatch"])
@@ -681,7 +684,7 @@ pub fn training_probe(output: &Path, microbatch: usize, global_batch: usize, ste
         let mut hashes = std::collections::BTreeSet::new();
         for rank in 0..8 {
             let r: serde_json::Value = read_json(&output.join(format!("complete-{rank}.json")))?;
-            ensure!(r["steps"] == steps && r["global_batch"] == global_batch && r["microbatch"] == microbatch, "rank probe specification mismatch");
+            ensure!(r["steps"] == steps && r["global_batch"] == global_batch && r["microbatch"] == microbatch && r["vocabulary_sha256"] == vocabulary_sha256, "rank probe specification mismatch");
             hashes.insert(r["parameter_sha256"].as_str().unwrap_or("").to_string());
         }
         ensure!(
@@ -700,7 +703,7 @@ pub fn training_probe(output: &Path, microbatch: usize, global_batch: usize, ste
     }
     write_json(
         &output.join("training-qualification.json"),
-        &serde_json::json!({"passed":result.is_ok(),"world":8,"steps":steps,"warmup_steps":5,"microbatch":microbatch,"global_batch":global_batch,"seconds":started.elapsed().as_secs_f64(),"failure":result.as_ref().err().map(|e|format!("{e:#}")),"eligible_checkpoint":false,"scope":"numerical architecture throughput; learning quality and real-corpus throughput require separate qualification"}),
+        &serde_json::json!({"passed":result.is_ok(),"world":8,"steps":steps,"warmup_steps":5,"microbatch":microbatch,"global_batch":global_batch,"vocabulary_sha256":vocabulary_sha256,"seconds":started.elapsed().as_secs_f64(),"failure":result.as_ref().err().map(|e|format!("{e:#}")),"eligible_checkpoint":false,"scope":"numerical architecture throughput; learning quality and real-corpus throughput require separate qualification"}),
     )?;
     result
 }

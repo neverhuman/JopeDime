@@ -495,6 +495,8 @@ enum Cmd {
     TrainingProbe {
         #[arg(long)]
         output: PathBuf,
+        #[arg(long)]
+        vocabulary: PathBuf,
         #[arg(long, default_value_t = 64)]
         microbatch: usize,
         #[arg(long, default_value_t = 2048)]
@@ -509,6 +511,8 @@ enum Cmd {
     TrainingProbeRank {
         #[arg(long)]
         directory: PathBuf,
+        #[arg(long)]
+        vocabulary: PathBuf,
         #[arg(long)]
         rank: usize,
         #[arg(long)]
@@ -923,20 +927,22 @@ fn main() -> Result<()> {
         #[cfg(feature = "neural")]
         Cmd::TrainingProbe {
             output,
+            vocabulary,
             microbatch,
             global_batch,
             steps,
             timeout,
-        } => jope_parallel::controller::training_probe(&output, microbatch, global_batch, steps, timeout)?,
+        } => jope_parallel::controller::training_probe(&output, &vocabulary, microbatch, global_batch, steps, timeout)?,
         #[cfg(feature = "neural")]
         Cmd::TrainingProbeRank {
             directory,
+            vocabulary,
             rank,
             world,
             microbatch,
             global_batch,
             steps,
-        } => jope_parallel::neural::training_probe(rank, world, &directory, microbatch, global_batch, steps)?,
+        } => jope_parallel::neural::training_probe(rank, world, &directory, &vocabulary, microbatch, global_batch, steps)?,
         #[cfg(feature = "neural")]
         Cmd::NcclProbe {
             directory,

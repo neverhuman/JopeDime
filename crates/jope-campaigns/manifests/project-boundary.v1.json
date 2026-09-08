@@ -36,7 +36,9 @@
     "REALTIME_AGENT_CHAT.md"
   ],
   "archived_roots": [
-    "docs/archive/legacy-flywheel"
+    "docs/archive/legacy-flywheel",
+    "docs/audits",
+    "docs/paper"
   ],
   "jope_flywheel_runtime_roots": [
     {
@@ -120,6 +122,10 @@
     "compile_time_seed_inputs": [
       "seeds/generation-zero.txt",
       "seeds/generation-zero-binary.txt"
+    ],
+    "reference_evidence_roots": [
+      "docs/audits",
+      "docs/paper"
     ]
   }
 }

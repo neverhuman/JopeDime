@@ -36,6 +36,7 @@ SELF_DECLARATION_PATHS = {
     Path("manifests/legacy-flywheel-inventory.v1.json"),
     Path("scripts/project_boundary_check.py"),
     Path("scripts/test_project_boundary_check.py"),
+    Path("parallel/assets/source/jope-dime/scripts/test_project_boundary_check.py"),
 }
 IGNORED_PARTS = {".git", "target", "__pycache__", ".claude"}
 
