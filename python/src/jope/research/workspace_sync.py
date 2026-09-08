@@ -211,6 +211,7 @@ class Mirror:
             store.write_json(path, index)
             completed.add((node, name))
         remaining = [row for row in todo if (row[1], row[2]) not in completed]
+        store.write_json(path, index)
         index_id = self.rpc('receipt', remote=True, value=index)
         if index_id != store.identity(index):
             raise ValueError('Durable provenance index mirror differs')

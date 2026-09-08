@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -192,6 +193,16 @@ class WorkspaceSafetyTests(unittest.TestCase):
             with patch.object(mirror, 'health', return_value=changed):
                 with self.assertRaises(RuntimeError):
                     mirror.healthy()
+
+    def test_zero_bulk_window_persists_the_verifiable_empty_index(self):
+        mirror = Mirror.__new__(Mirror)
+        mirror.state = self.state
+        inventories = {'local': {'files': {}, 'pending': {}, 'root': str(self.root)}}
+        with patch.object(mirror, 'rpc', side_effect=lambda op, **kw: store.identity(kw['value'])):
+            result = mirror.durable(inventories, time.monotonic())
+        index = json.loads((self.state / 'durable-index.json').read_text())
+        self.assertEqual(index['files'], {})
+        self.assertEqual(result['index_sha256'], store.identity(index))
 
 
 if __name__ == '__main__':
