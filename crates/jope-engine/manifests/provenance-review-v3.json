@@ -1,0 +1,58 @@
+[
+  {
+    "key": "rdatasets:Ecdat/Caschool",
+    "admission": "approved",
+    "family": "rdatasets-ecdat-caschool",
+    "reason": "Observed district expenditures, school resources and pupil characteristics from 420 California elementary-school districts in 1998\u20131999, sourced to the California Department of Education and Stock-Watson supplements. This decision covers observational origin; review-v3.json retains the preparation restriction and immutable validation assignment.",
+    "evidence": [
+      {
+        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v3/Ecdat_Caschool.html",
+        "sha256": "7cba3e708a15baf9cce523531db053c20ac2e638daa5dcc0a3db6afb053d039c",
+        "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/Ecdat/Caschool.html",
+        "finding": "Observed district expenditures, school resources and pupil characteristics from 420 California elementary-school districts in 1998\u20131999, sourced to the California Department of Education and Stock-Watson supplements."
+      }
+    ]
+  },
+  {
+    "key": "rdatasets:Ecdat/OFP",
+    "admission": "approved",
+    "family": "rdatasets-ecdat-ofp",
+    "reason": "Observed family incomes and medical-service use for 4,406 elderly NMES participants, documented by Deb and Trivedi (1997) and the original survey archive. This decision covers observational origin; review-v3.json retains the preparation restriction and immutable validation assignment.",
+    "evidence": [
+      {
+        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v3/Ecdat_OFP.html",
+        "sha256": "0f4896c8859c85e826acbb8e917a80661b814efa3b12cd3fda0886b72db87adc",
+        "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/Ecdat/OFP.html",
+        "finding": "Observed family incomes and medical-service use for 4,406 elderly NMES participants, documented by Deb and Trivedi (1997) and the original survey archive."
+      }
+    ]
+  },
+  {
+    "key": "rdatasets:AER/Municipalities",
+    "admission": "approved",
+    "family": "rdatasets-aer-municipalities",
+    "reason": "Observed revenues, expenditures and grants for 265 Swedish municipalities during 1979\u20131987, gathered by Statistics Sweden and distributed with Dahlberg and Johansson (2000). This decision covers observational origin; review-v3.json retains the preparation restriction and immutable validation assignment.",
+    "evidence": [
+      {
+        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v3/AER_Municipalities.html",
+        "sha256": "4d10b7a636a936d418955a75a1a7d0ffb6db005cd458f0aa1e71028e2bf71328",
+        "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/AER/Municipalities.html",
+        "finding": "Observed revenues, expenditures and grants for 265 Swedish municipalities during 1979\u20131987, gathered by Statistics Sweden and distributed with Dahlberg and Johansson (2000)."
+      }
+    ]
+  },
+  {
+    "key": "rdatasets:DAAG/frogs",
+    "admission": "approved",
+    "family": "rdatasets-daag-frogs",
+    "reason": "Observed southern corroboree frog-site characteristics and spring climate summaries from the Snowy Mountains study documented in Hunter (2000). This decision covers observational origin; review-v3.json retains the preparation restriction and immutable validation assignment.",
+    "evidence": [
+      {
+        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v3/DAAG_frogs.html",
+        "sha256": "9ab355089044a097abef872731d7f4c6fc35b3abe5c075ef56c3933a2e210c29",
+        "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/DAAG/frogs.html",
+        "finding": "Observed southern corroboree frog-site characteristics and spring climate summaries from the Snowy Mountains study documented in Hunter (2000)."
+      }
+    ]
+  }
+]

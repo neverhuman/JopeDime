@@ -1,0 +1,16 @@
+{
+  "schema": "parallel.opportunistic_proposals_spec.v1",
+  "cycle": "runs/regression-campaign64-qualification-v1/cycle-0000",
+  "corpus": "corpus/cohort64-qualification-v1",
+  "corpus_sha256": "1ed78e35890c725e074cd806a754ae74caa62a3a07c1d11813921d02398ea582",
+  "checkpoint": "runs/regression-campaign64-qualification-v1/cycle-0000/train-1/checkpoints/step-3000",
+  "checkpoint_sha256": "915d8771b21e4a6b143a3ecee2588840250e0c52eae7501f12cc4cbd1737cd25",
+  "executable": "bin/jope-parallel-neural-v44",
+  "executable_sha256": "8cf130d8b2a31b0b95eba00aa74666e27a9a773181027230fd6f9440613e9b30",
+  "output": "runs/gp-reviewed3/neural-breadth-v44",
+  "cut_start": 2,
+  "cut_end": 200,
+  "chunk_cuts": 8,
+  "block_seconds": 60,
+  "service_seconds": 1200
+}

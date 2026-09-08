@@ -1,0 +1,28 @@
+[Unit]
+Description=JOPE continued neural to adaptive GP to neural cycle on new saved cuts
+After=jope-parallel-monitor.service jope-parallel-gp.service
+Requires=jope-parallel-monitor.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/jope-dime/parallel
+ExecStart=/home/ubuntu/jope-dime/parallel/bin/jope-parallel-neural-v35 --root /home/ubuntu/jope-dime/parallel cycle --corpus /home/ubuntu/jope-dime/parallel/corpus/qualification-v3 --output /home/ubuntu/jope-dime/parallel/runs/regression-cycle-2 --contexts /home/ubuntu/jope-dime/parallel/data/encodings/contexts-union-v2.json --initialize /home/ubuntu/jope-dime/parallel/runs/regression-cycle-1/train-2/checkpoints/step-300 --observations /home/ubuntu/jope-dime/parallel/runs/regression-cycle-1 --cut-start 100 --cuts 2 --steps 300 --qualification
+Environment=JOPE_GP_EXECUTABLE=/home/ubuntu/jope-dime/parallel/bin/jope-parallel-cpu-v35
+Environment=OMP_NUM_THREADS=2
+Environment=RAYON_NUM_THREADS=2
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+Restart=on-failure
+RestartSec=20
+MemoryHigh=96G
+MemoryMax=128G
+MemorySwapMax=0
+TasksMax=512
+CPUAccounting=true
+MemoryAccounting=true
+KillMode=control-group
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

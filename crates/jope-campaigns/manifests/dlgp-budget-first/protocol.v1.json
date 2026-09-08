@@ -1,0 +1,133 @@
+{
+  "schema": "JopeDlgpBudgetFirstProtocol.v1",
+  "campaign_id": "jope-dlgp-budget-first-7of22",
+  "claim_target": {
+    "development_robust_wins": 7,
+    "development_denominator": 22,
+    "development_label": "no test read during search, benchmark-adaptive across rounds",
+    "confirmation_label": "protocol frozen before campaign test opening"
+  },
+  "round2_evidence": {
+    "payload_sha256": "62d250dd6d9600b526ec9513eaa44bfd01b007b060feaf6622d02daec4cd92f1",
+    "verdict_sha256": "c0bc540567bfe6b2af0eec162bdc7431523968151e1df2372fbf609298940eac",
+    "score_cache_sha256": "c6dfcfb855c8eccbf528048c8c9be4555853be42e53f113028327979b59cdc12",
+    "comparator_snapshot_sha256": "bc0e9de53768486dc5424e5aebfac35c5ab3cb361d2bea9abeb5ce521ce3c1db",
+    "source_retention_until": "2026-09-06",
+    "result_count": 88,
+    "score_cell_count": 440,
+    "test_csv_read": false
+  },
+  "cohorts": {
+    "development": [
+      "1a803b27c2400dc4",
+      "21fbfe8b53dbcd60",
+      "24713c7f7bfa7807",
+      "43b4cc3ab0ebbd97",
+      "471f11cc2d38853a",
+      "4f68d277d770477f",
+      "55b144de19659467",
+      "55f06d147bcc2a32",
+      "5f91a00bd3b66742",
+      "7af85a04de0c7018",
+      "860e5558f732f638",
+      "aebf5d861a8365b4",
+      "b1f909fcfceeef4b",
+      "b5beff4a53fa12c0",
+      "b78d323566930bd7",
+      "bd49e740a79bcb6c",
+      "c32fa09b48fb2f27",
+      "c7d815714ca52bce",
+      "c8f90fc9cc5364be",
+      "e5a3a7b3668a1cc2",
+      "f0e7eb3d790df37d",
+      "f8536dfeef471c2f"
+    ],
+    "confirmation": [
+      "019de5d76a718163",
+      "047e62b52a3f4ede",
+      "13b5df533e59a626",
+      "17a4542ee4fb9e44",
+      "1cb97b1d7314d43d",
+      "30ef3eaa6d2971a9",
+      "3305a3ad973fb227",
+      "3baa7e37fc1f7861",
+      "3f781a51af45387e",
+      "542e75bc0cfdd1bf",
+      "693890aae9dc860b",
+      "79e600bc5fcd5da7",
+      "ab0239b9ef0ba28e",
+      "b253fbfae8460dc1",
+      "cf5e74b4e9594944",
+      "d2daf53412ab18dc",
+      "dee1fc8e9afd81c9",
+      "e1c1db5260d0894e",
+      "ee56a1015e344c11",
+      "fe3cc716a05d036f"
+    ]
+  },
+  "existing_wins": [
+    "21fbfe8b53dbcd60",
+    "471f11cc2d38853a",
+    "7af85a04de0c7018"
+  ],
+  "frontier_losses": [
+    "24713c7f7bfa7807",
+    "4f68d277d770477f",
+    "b5beff4a53fa12c0",
+    "c32fa09b48fb2f27",
+    "c7d815714ca52bce",
+    "f0e7eb3d790df37d",
+    "f8536dfeef471c2f"
+  ],
+  "budget_ladder": {
+    "development_seeds": [101, 202],
+    "confirmation_seeds": [303, 404],
+    "rungs": [1000, 2000, 5000, 10000],
+    "stage1_max_search_evaluations": 200000,
+    "continue_to_10000": {
+      "minimum_folds_improved_by_0_1_percent": 4,
+      "or_archive_top20_jaccard_below": 0.8,
+      "and_cv7_not_worse_than_percent": 0.5
+    }
+  },
+  "best5_screen": {
+    "datasets": ["4f68d277d770477f", "b5beff4a53fa12c0"],
+    "arms": 6,
+    "seeds": [101, 202],
+    "jobs": 24,
+    "logical_operations_per_job": 1100,
+    "max_promoted_arms": 1,
+    "max_sealed_regression_percent": 0.5
+  },
+  "residual_screen": {
+    "datasets": [
+      "24713c7f7bfa7807",
+      "b5beff4a53fa12c0",
+      "c32fa09b48fb2f27",
+      "c7d815714ca52bce"
+    ],
+    "gp_evaluations": 2000,
+    "seeds": [101, 202],
+    "paired_lcb": 0.9,
+    "minimum_positive_lcb_datasets": 3,
+    "maximum_dataset_regression_percent": 1.0,
+    "minimum_sealed_median_improvement_percent": 1.0
+  },
+  "license_tracks": {
+    "production_compatible": ["catboost", "lightgbm", "xgboost", "gp_control"],
+    "research_only": ["tabfm", "tabpfn", "tabicl", "tabdpt"]
+  },
+  "test_access_policy": "search_train_metadata_only_sealed_finalizer_owns_test",
+  "disk_policy": {
+    "hard_floor_micros": 20000,
+    "warning_micros": 50000
+  },
+  "launch_blockers": [
+    "exact_proposal_checkpoint",
+    "fresh_evaluator_evidence",
+    "fresh_supply_evidence",
+    "reviewed_acknowledgement",
+    "real_scq",
+    "project_weight_drift_guard"
+  ]
+}

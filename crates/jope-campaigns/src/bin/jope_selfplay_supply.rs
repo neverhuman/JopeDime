@@ -4,8 +4,14 @@
 //! bounded reserve of current-checkpoint manifests ahead of the queue keeper by
 //! invoking only the Rust `jope_selfplay_wave` planner/sanitizer/builder.
 
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
+use jope_dime_regressor::dime_runtime_contracts::{
+    append_infrastructure_attempt, digest_label, load_or_rebuild_recovery_projection,
+    matching_drain_intent, save_recovery_projection, terminal_classification,
+    DimeInfrastructureAttemptV1, DimeNamedDigestV1, DimeRecoveryProjectionV1, DimeRoleV1,
+    DimeScientificPayloadV1, DimeTerminalClassV1, DimeTerminalEvidenceV1,
+};
 use jope_dime_regressor::selfplay_runtime::{
     atomic_json, checkpoint_epoch, now_ms, sha256_bytes, sha256_file, DEFAULT_ROOT, DEFAULT_SCQ,
 };
@@ -36,6 +42,9 @@ const COHORT_CONTEXT_MIGRATION_SCHEMA: &str = "CohortContextMigrationReceipt.v1"
 const COHORT_CONTEXT_EXCLUSION_SCHEMA: &str = "CohortContextExclusionReceipt.v1";
 const ERROR_BACKOFF_MAX_SECONDS: u64 = 120;
 const MIN_USEFUL_WORK: usize = 6_144;
+const CANDIDATE_EVALUATIONS_PER_WAVE: usize = DATASETS_PER_WAVE * CANDIDATES_PER_DATASET;
+const MIN_CANDIDATE_EVALUATION_WORK: usize = 8 * CANDIDATE_EVALUATIONS_PER_WAVE;
+const MIN_CANDIDATE_RESERVE: usize = 2 * CANDIDATE_EVALUATIONS_PER_WAVE;
 const MIN_COMPLETE_RESERVE_WAVES: usize = 2;
 
 #[derive(Parser, Debug)]
@@ -65,6 +74,12 @@ struct Args {
     /// Minimum queued/starting/dispatching plus checkpoint-valid ready work.
     #[arg(long, default_value_t = MIN_USEFUL_WORK)]
     useful_work_min: usize,
+    /// Canonical runway floor measured in candidate evaluations, not jobs.
+    #[arg(long, default_value_t = MIN_CANDIDATE_EVALUATION_WORK)]
+    candidate_work_min: usize,
+    /// Protected ready reserve measured in candidate evaluations.
+    #[arg(long, default_value_t = MIN_CANDIDATE_RESERVE)]
+    candidate_reserve_min: usize,
     /// Newest complete waves protected from scheduler admission.
     #[arg(long, default_value_t = MIN_COMPLETE_RESERVE_WAVES)]
     min_complete_reserve_waves: usize,
@@ -74,8 +89,8 @@ struct Args {
     /// Exactly one wave is built before waiting for keeper acknowledgment.
     #[arg(long, default_value_t = 1)]
     max_builds_per_cycle: usize,
-    /// Kept at 100 normally; values below 25 could overshoot the hard cap.
-    #[arg(long, default_value_t = 100)]
+    /// Production default is 50. A matched 25-vs-50 experiment remains gated.
+    #[arg(long, default_value_t = 50)]
     max_candidates_per_manifest: usize,
     #[arg(long, default_value_t = 30)]
     queue_status_max_age_seconds: u64,
@@ -198,6 +213,7 @@ struct QueueStatus {
     admission_manifests: usize,
     validated_ready: usize,
     useful_work: usize,
+    candidate_evaluation_work: u64,
     unclaimed_current_checkpoint_manifests: usize,
 }
 
@@ -207,6 +223,7 @@ struct KeeperAdmissionWave {
     summary_sha256: String,
     manifest_count: usize,
     unclaimed_manifests: usize,
+    candidate_evaluation_count: u64,
     complete: bool,
 }
 
@@ -230,8 +247,8 @@ struct ReadyWave {
 struct SupplyDecision {
     below_floor: bool,
     overloaded: bool,
-    useful_work: usize,
-    useful_work_target: usize,
+    candidate_evaluation_work: usize,
+    candidate_evaluation_work_target: usize,
     estimated_manifests_per_wave: usize,
     target_feasible: bool,
     builds_planned: usize,
@@ -241,8 +258,9 @@ struct SupplyDecision {
 struct PerformanceMeasurements {
     generated_at_ms: u128,
     p95_jobs_per_minute: f64,
+    p95_candidate_evaluations_per_minute: f64,
     proposer_to_ready_minutes: f64,
-    useful_work_target: usize,
+    candidate_evaluation_work_target: usize,
 }
 
 #[derive(Debug, Serialize)]
@@ -269,6 +287,7 @@ struct CycleReport {
     useful_work_target: usize,
     useful_work_target_formula: &'static str,
     p95_jobs_per_minute: Option<f64>,
+    p95_candidate_evaluations_per_minute: Option<f64>,
     proposer_to_ready_minutes: Option<f64>,
     performance_generated_at_ms: Option<u128>,
     performance_fresh: bool,
@@ -292,6 +311,11 @@ struct CycleReport {
     minimum_complete_reserve_waves: usize,
     protected_reserve_waves: Vec<KeeperAdmissionWave>,
     useful_work: usize,
+    candidate_work_min: usize,
+    candidate_reserve_min: usize,
+    candidate_evaluation_work: usize,
+    candidate_evaluation_work_target: usize,
+    protected_candidate_evaluations: usize,
     target_feasible: bool,
     critical_infeasibility_reason: Option<String>,
     projected_jobs_before_build: usize,
@@ -526,71 +550,358 @@ impl PersistedSupplyState {
         self.validate(&self.wave, &self.checkpoint_sha256)
     }
 
-    fn retry_proposer(&mut self, root: &Path) -> Result<()> {
+    fn retry_proposer(
+        &mut self,
+        root: &Path,
+        terminal_state: &str,
+        observed_at_ms: u128,
+    ) -> Result<ProposerRetryDisposition> {
         if self.stage != PersistedSupplyStage::SubmitCohortProposer {
             bail!("cohort proposer retry is allowed only in its submitted stage");
         }
-        if self.proposal_attempt >= 5 {
-            bail!("cohort proposer retry budget exhausted");
-        }
-        let current = self
-            .proposal_job_id
-            .as_deref()
-            .context("cohort proposer retry lacks a job identity")?;
-        let base = current
-            .rsplit_once("-retry")
-            .filter(|(_, suffix)| suffix.bytes().all(|byte| byte.is_ascii_digit()))
-            .map(|(base, _)| base)
-            .unwrap_or(current)
-            .to_owned();
-        self.proposal_attempt += 1;
-        let job_identity = format!("{base}-retry{}", self.proposal_attempt);
         let prior = self
             .runtime_pinned_attempts
             .last()
             .cloned()
             .context("cohort proposer retry lacks its pinned original spec")?;
         prior.validate()?;
-        let prior_body = fs::read_to_string(&prior.immutable_spec_path)?;
-        let replacement = format!("id = {}", toml_quote(&job_identity)?);
-        let mut replaced = false;
-        let body = prior_body
-            .lines()
-            .map(|line| {
-                if !replaced && line.starts_with("id = ") {
-                    replaced = true;
-                    replacement.as_str()
-                } else {
-                    line
-                }
-            })
-            .collect::<Vec<_>>()
-            .join("\n");
-        if !replaced {
-            bail!("pinned cohort proposer spec lacks a job identity");
+        let scientific_payload = proposer_scientific_payload(self, &prior)?;
+        let mut projection = proposer_recovery_projection(root, self, &scientific_payload)?;
+        let replayed_receipt = self.proposal_job_id.as_deref()
+            != Some(projection.current_job_identity.as_str());
+        reconcile_proposer_projection(root, self, &projection)?;
+        if replayed_receipt {
+            self.revision = self.revision.saturating_add(1);
+            self.validate(&self.wave, &self.checkpoint_sha256)?;
+            return Ok(ProposerRetryDisposition::Retried);
         }
-        let directory = root.join("specs/cohort-propose");
-        fs::create_dir_all(&directory)?;
-        let spec = directory.join(format!("{job_identity}.toml"));
-        if spec.is_file() {
-            if fs::read_to_string(&spec)? != body {
-                bail!("immutable cohort proposer retry spec drift");
-            }
+        if projection.scientific_failures >= 5 {
+            return Ok(ProposerRetryDisposition::ScientificCircuitOpen);
+        }
+        if projection.retry_pending_submission {
+            return Ok(ProposerRetryDisposition::Backoff);
+        }
+        if projection.submitted_at_ms > 0 && observed_at_ms < projection.retry_not_before_ms {
+            return Ok(ProposerRetryDisposition::Backoff);
+        }
+        if let Some(drain) = matching_drain_intent(
+            root,
+            DimeRoleV1::CohortProposer,
+            &scientific_payload,
+            observed_at_ms,
+        )? {
+            append_supply_event(
+                root,
+                "intentional_drain_honored",
+                &json!({
+                    "job_id": self.proposal_job_id,
+                    "attempt": self.proposal_attempt,
+                    "drain_receipt_sha256": drain.content_sha256,
+                    "scientific_payload_sha256": scientific_payload.identity_sha256()?,
+                }),
+            )?;
+            return Ok(ProposerRetryDisposition::Drained);
+        }
+        let current = projection.current_job_identity.clone();
+        ensure!(
+            self.proposal_job_id.as_deref() == Some(current.as_str()),
+            "primary proposer state is not reconciled with its recovery projection"
+        );
+        let scientific = if terminal_state == "failed" {
+            scientific_failure_receipt(root, &current, &scientific_payload)?
         } else {
-            fs::write(&spec, &body)?;
+            None
+        };
+        let terminal_class = terminal_classification(terminal_state, scientific.as_deref())?;
+        let current_attempt_number = projection.current_attempt_number;
+        let base = current
+            .rsplit_once("-infra")
+            .filter(|(_, suffix)| suffix.bytes().all(|byte| byte.is_ascii_digit()))
+            .map(|(base, _)| base)
+            .or_else(|| {
+                current
+                    .rsplit_once("-retry")
+                    .filter(|(_, suffix)| suffix.bytes().all(|byte| byte.is_ascii_digit()))
+                    .map(|(base, _)| base)
+            })
+            .unwrap_or(&current)
+            .to_owned();
+        let next_attempt_number = current_attempt_number
+            .checked_add(1)
+            .context("cohort proposer infrastructure attempt overflow")?;
+        let next_job_identity = format!("{base}-infra{next_attempt_number:06}");
+        let scientific_failures = projection
+            .scientific_failures
+            .saturating_add(u32::from(terminal_class == DimeTerminalClassV1::ScientificFailure));
+        let retry_allowed = scientific_failures < 5;
+        let evidence_sha256 = scientific.unwrap_or_else(|| {
+            sha256_bytes(
+                format!(
+                    "dime-proposer-terminal-v1\0{}\0{}\0{}",
+                    current, terminal_state, prior.immutable_spec_sha256
+                )
+                .as_bytes(),
+            )
+        });
+        let recent_cancellations = projection
+            .foreign_cancellation_timestamps_ms
+            .iter()
+            .rev()
+            .take_while(|timestamp| observed_at_ms.saturating_sub(**timestamp) <= 10 * 60 * 1_000)
+            .count()
+            + usize::from(terminal_state == "cancelled");
+        let backoff_ms = if recent_cancellations >= 3 {
+            15 * 60 * 1_000
+        } else {
+            jope_dime_regressor::dime_runtime_contracts::retry_backoff_ms(current_attempt_number)
+        };
+        let retry_not_before_ms = observed_at_ms.saturating_add(backoff_ms);
+        let receipt = DimeInfrastructureAttemptV1::new_terminal(
+            DimeRoleV1::CohortProposer,
+            scientific_payload,
+            current_attempt_number,
+            current.clone(),
+            retry_allowed.then_some(next_job_identity.clone()),
+            projection.last_attempt_receipt_sha256.clone(),
+            prior
+                .immutable_spec_path
+                .metadata()
+                .and_then(|metadata| metadata.modified())
+                .ok()
+                .and_then(|time| time.duration_since(std::time::UNIX_EPOCH).ok())
+                .map_or(1, |duration| duration.as_millis()),
+            retry_not_before_ms,
+            DimeTerminalEvidenceV1 {
+                terminal_state: terminal_state.to_owned(),
+                class: terminal_class,
+                evidence_sha256,
+                observed_at_ms,
+                foreign_cancellation: terminal_state == "cancelled",
+            },
+        )?;
+        append_infrastructure_attempt(root, &receipt)?;
+        projection.apply_receipt(&receipt)?;
+        let contention_alarm_open = projection.refresh_contention_alarm(observed_at_ms)?;
+        save_recovery_projection(root, &projection)?;
+        if contention_alarm_open {
+            append_supply_event(
+                root,
+                "foreign_cancellation_contention_alarm",
+                &json!({
+                    "severity": "prominent",
+                    "job_id": current,
+                    "scientific_payload_sha256": projection.scientific_payload_sha256,
+                    "retry_mode": "capped_half_open",
+                    "retry_not_before_ms": projection.retry_not_before_ms,
+                }),
+            )?;
         }
-        let pinned = runtime_pinned_intent_from_spec(&spec, self.proposal_attempt)?;
-        if pinned.runtime_bundle_sha256 != prior.runtime_bundle_sha256
-            || pinned.catalog_snapshot_sha256 != prior.catalog_snapshot_sha256
-            || pinned.proposer_inputs != prior.proposer_inputs
-        {
-            bail!("cohort proposer retry changed its pinned bundle or inputs");
+        if !retry_allowed {
+            append_supply_event(
+                root,
+                "scientific_failure_circuit_open",
+                &json!({
+                    "job_id": current,
+                    "scientific_failures": projection.scientific_failures,
+                    "attempt_receipt_sha256": receipt.content_sha256,
+                }),
+            )?;
+            return Ok(ProposerRetryDisposition::ScientificCircuitOpen);
         }
-        self.runtime_pinned_attempts.push(pinned);
-        self.proposal_job_id = Some(job_identity);
+        reconcile_proposer_projection(root, self, &projection)?;
         self.revision += 1;
-        self.validate(&self.wave, &self.checkpoint_sha256)
+        self.validate(&self.wave, &self.checkpoint_sha256)?;
+        append_supply_event(
+            root,
+            if terminal_state == "cancelled" {
+                "foreign_cancellation_recovered"
+            } else {
+                "infrastructure_attempt_recovered"
+            },
+            &json!({
+                "prior_job_id": current,
+                "next_job_id": self.proposal_job_id,
+                "infrastructure_attempt": projection.current_attempt_number,
+                "scientific_failures": projection.scientific_failures,
+                "foreign_cancellations": projection.foreign_cancellation_timestamps_ms.len(),
+                "attempt_receipt_sha256": receipt.content_sha256,
+                "retry_not_before_ms": retry_not_before_ms,
+                "contention_alarm_open": contention_alarm_open,
+            }),
+        )?;
+        Ok(ProposerRetryDisposition::Retried)
     }
+}
+
+fn reconcile_proposer_projection(
+    root: &Path,
+    state: &mut PersistedSupplyState,
+    projection: &DimeRecoveryProjectionV1,
+) -> Result<()> {
+    let desired_attempt = u32::try_from(projection.current_attempt_number.saturating_sub(1))
+        .context("proposer recovery attempt overflows primary schema")?;
+    if state.proposal_attempt == desired_attempt
+        && state.proposal_job_id.as_deref() == Some(projection.current_job_identity.as_str())
+    {
+        return Ok(());
+    }
+    ensure!(
+        desired_attempt == state.proposal_attempt.saturating_add(1),
+        "proposer recovery projection is not the next rollback-compatible attempt"
+    );
+    let prior = state
+        .runtime_pinned_attempts
+        .last()
+        .cloned()
+        .context("proposer recovery lacks a pinned prior intent")?;
+    let job_identity = projection.current_job_identity.clone();
+    let prior_body = fs::read_to_string(&prior.immutable_spec_path)?;
+    let replacement = format!("id = {}", toml_quote(&job_identity)?);
+    let mut replaced = false;
+    let body = prior_body
+        .lines()
+        .map(|line| {
+            if !replaced && line.starts_with("id = ") {
+                replaced = true;
+                replacement.as_str()
+            } else {
+                line
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    if !replaced {
+        bail!("pinned cohort proposer spec lacks a job identity");
+    }
+    let directory = root.join("specs/cohort-propose");
+    fs::create_dir_all(&directory)?;
+    let spec = directory.join(format!("{job_identity}.toml"));
+    if spec.is_file() {
+        if fs::read_to_string(&spec)? != body {
+            bail!("immutable cohort proposer retry spec drift");
+        }
+    } else {
+        fs::write(&spec, &body)?;
+    }
+    let pinned = runtime_pinned_intent_from_spec(&spec, desired_attempt)?;
+    if pinned.runtime_bundle_sha256 != prior.runtime_bundle_sha256
+        || pinned.catalog_snapshot_sha256 != prior.catalog_snapshot_sha256
+        || pinned.proposer_inputs != prior.proposer_inputs
+    {
+        bail!("cohort proposer retry changed its pinned bundle or inputs");
+    }
+    state.runtime_pinned_attempts.push(pinned);
+    state.proposal_attempt = desired_attempt;
+    state.proposal_job_id = Some(job_identity);
+    Ok(())
+}
+
+fn proposer_recovery_projection(
+    root: &Path,
+    state: &PersistedSupplyState,
+    payload: &DimeScientificPayloadV1,
+) -> Result<DimeRecoveryProjectionV1> {
+    let initial_job = state
+        .runtime_pinned_attempts
+        .first()
+        .map(|intent| intent.job_identity.as_str())
+        .context("proposer recovery has no initial pinned identity")?;
+    load_or_rebuild_recovery_projection(root, DimeRoleV1::CohortProposer, payload, initial_job)
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ProposerRetryDisposition {
+    Retried,
+    Backoff,
+    Drained,
+    ScientificCircuitOpen,
+}
+
+fn proposer_scientific_payload(
+    state: &PersistedSupplyState,
+    pinned: &RuntimePinnedIntentV1,
+) -> Result<DimeScientificPayloadV1> {
+    pinned.validate()?;
+    let parent_intent_sha256 = sha256_bytes(&serde_json::to_vec(&json!({
+        "domain": "dime-cohort-proposer-parent-intent-v1",
+        "wave": state.wave,
+        "checkpoint_sha256": state.checkpoint_sha256,
+        "cohort_sha256": state.cohort_sha256,
+        "catalog_sha256": state.catalog_sha256,
+        "decoder_configuration_sha256": state.decoder_configuration_sha256,
+        "seed": state.seed,
+        "proposal_reservoir_per_context": state.proposal_reservoir_per_context,
+    }))?);
+    let binary_sha256 = pinned
+        .proposer_inputs
+        .iter()
+        .find(|input| input.name == "generator")
+        .map(|input| input.sha256.clone())
+        .context("pinned proposer has no generator digest")?;
+    let mut inputs = pinned
+        .proposer_inputs
+        .iter()
+        .map(|input| DimeNamedDigestV1 {
+            name: input.name.clone(),
+            sha256: input.sha256.clone(),
+        })
+        .collect::<Vec<_>>();
+    inputs.sort_by(|left, right| left.name.cmp(&right.name));
+    let payload = DimeScientificPayloadV1 {
+        parent_intent_sha256,
+        runtime_bundle_sha256: pinned.runtime_bundle_sha256.clone(),
+        binary_sha256,
+        configuration_sha256: state.decoder_configuration_sha256.clone(),
+        train_data_sha256: state.cohort_sha256.clone(),
+        protocol_sha256: digest_label("jope-cohort-proposer-protocol-v1"),
+        metric_sha256: digest_label("jope-proposal-validity-metric-v1"),
+        seed: state.seed,
+        inputs,
+    };
+    payload.validate()?;
+    Ok(payload)
+}
+
+fn scientific_failure_receipt(
+    root: &Path,
+    job_identity: &str,
+    payload: &DimeScientificPayloadV1,
+) -> Result<Option<String>> {
+    let path = root
+        .join("ops/dime-scientific-failures")
+        .join(format!("{job_identity}.json"));
+    if !path.is_file() {
+        return Ok(None);
+    }
+    let value: Value = serde_json::from_slice(&fs::read(&path)?)?;
+    let evidence_sha256 = value
+        .get("evidence_sha256")
+        .and_then(Value::as_str)
+        .context("scientific failure receipt lacks evidence")?;
+    validate_sha256(evidence_sha256)?;
+    ensure!(
+        value.get("schema").and_then(Value::as_str) == Some("DimeScientificFailure.v1")
+            && value.get("job_identity").and_then(Value::as_str) == Some(job_identity)
+            && value
+                .get("scientific_payload_sha256")
+                .and_then(Value::as_str)
+                == Some(payload.identity_sha256()?.as_str())
+            && value.get("deterministic").and_then(Value::as_bool) == Some(true),
+        "scientific failure receipt is not hash-bound to this proposer intent"
+    );
+    Ok(Some(evidence_sha256.to_owned()))
+}
+
+fn append_supply_event(root: &Path, kind: &str, detail: &Value) -> Result<()> {
+    append_event(
+        &root.join("ops/micro-wave-supply-events.v1.jsonl"),
+        &json!({
+            "schema": "JopeMicroWaveSupplyEvent.v1",
+            "generated_at_ms": now_ms(),
+            "kind": kind,
+            "detail": detail,
+        }),
+    )
 }
 
 struct SingleInstanceLock {
@@ -734,6 +1045,14 @@ fn validate_args(args: &Args) -> Result<()> {
     if args.useful_work_min < MIN_USEFUL_WORK {
         bail!("useful work minimum must be at least {MIN_USEFUL_WORK}");
     }
+    if args.candidate_work_min < MIN_CANDIDATE_EVALUATION_WORK
+        || args.candidate_reserve_min < MIN_CANDIDATE_RESERVE
+        || args.candidate_reserve_min > args.candidate_work_min
+    {
+        bail!(
+            "candidate work must preserve at least eight waves of runway and two protected waves"
+        );
+    }
     if args.min_complete_reserve_waves < MIN_COMPLETE_RESERVE_WAVES
         || args.min_complete_reserve_waves > args.max_overlap_waves
     {
@@ -779,6 +1098,10 @@ fn performance_measurements(args: &Args) -> Result<PerformanceMeasurements> {
                 .map(|per_second| per_second * 60.0)
         })
         .context("p95 jobs-per-minute measurement is absent")?;
+    let p95_candidate_evaluations_per_minute = value
+        .get("p95_candidate_evaluations_per_minute")
+        .and_then(Value::as_f64)
+        .context("p95 candidate-evaluations-per-minute measurement is absent")?;
     let proposer_to_ready_minutes = value
         .get("proposer_to_ready_minutes_p95")
         .and_then(Value::as_f64)
@@ -790,8 +1113,10 @@ fn performance_measurements(args: &Args) -> Result<PerformanceMeasurements> {
         })
         .context("p95 proposer-to-ready measurement is absent")?;
     if !p95_jobs_per_minute.is_finite()
+        || !p95_candidate_evaluations_per_minute.is_finite()
         || !proposer_to_ready_minutes.is_finite()
         || p95_jobs_per_minute <= 0.0
+        || p95_candidate_evaluations_per_minute <= 0.0
         || proposer_to_ready_minutes <= 0.0
         || value
             .get("proposer_samples")
@@ -801,13 +1126,18 @@ fn performance_measurements(args: &Args) -> Result<PerformanceMeasurements> {
     {
         bail!("supply performance measurements are missing or invalid");
     }
-    let burn_runway = (120.0 * p95_jobs_per_minute).ceil() as usize;
-    let lead_time_runway = (1.5 * proposer_to_ready_minutes * p95_jobs_per_minute).ceil() as usize;
+    let burn_runway = (120.0 * p95_candidate_evaluations_per_minute).ceil() as usize;
+    let lead_time_runway =
+        (1.5 * proposer_to_ready_minutes * p95_candidate_evaluations_per_minute).ceil() as usize;
     Ok(PerformanceMeasurements {
         generated_at_ms,
         p95_jobs_per_minute,
+        p95_candidate_evaluations_per_minute,
         proposer_to_ready_minutes,
-        useful_work_target: args.useful_work_min.max(burn_runway).max(lead_time_runway),
+        candidate_evaluation_work_target: args
+            .candidate_work_min
+            .max(burn_runway)
+            .max(lead_time_runway),
     })
 }
 
@@ -862,29 +1192,62 @@ fn cycle(args: &Args) -> Result<CycleReport> {
         .queued_starting
         .checked_add(status.dispatching)
         .context("queue depth overflow")?;
+    let dynamic_queue_target = usize::try_from(status.queued_target)
+        .context("keeper queue target is negative or overflows usize")?;
+    ensure!(
+        (2_048..=4_096).contains(&dynamic_queue_target)
+            && status.queued_hard_cap == args.queued_hard_cap as i64,
+        "keeper queue target/hard-cap differs from the canonical dynamic policy"
+    );
+    let dynamic_ready_reserve = dynamic_queue_target
+        .checked_add(2 * manifests_per_wave(args.max_candidates_per_manifest))
+        .context("dynamic ready-reserve target overflow")?;
     if queue_depth > args.queued_hard_cap {
         bail!("current queued+dispatching depth exceeds the configured hard cap");
     }
     let ready_before = status.validated_ready;
+    let candidate_evaluation_work = usize::try_from(status.candidate_evaluation_work)
+        .context("queue candidate-evaluation work overflows usize")?;
+    let protected_candidate_evaluations = status
+        .protected_reserve_waves
+        .iter()
+        .map(|wave| wave.candidate_evaluation_count)
+        .try_fold(0_u64, u64::checked_add)
+        .context("protected candidate-evaluation work overflow")?;
+    let protected_candidate_evaluations = usize::try_from(protected_candidate_evaluations)
+        .context("protected candidate-evaluation work overflows usize")?;
     let decision = supply_decision(
         queue_depth,
-        ready_before,
-        status.reserve_manifests,
+        candidate_evaluation_work,
+        protected_candidate_evaluations,
         waves.len(),
         status.complete_reserve_waves,
-        args.queue_floor,
-        args.queued_target,
-        performance.useful_work_target,
+        dynamic_queue_target,
+        dynamic_queue_target,
+        performance.candidate_evaluation_work_target,
         args.queued_hard_cap,
-        args.ready_reserve_min,
+        args.candidate_reserve_min,
         args.min_complete_reserve_waves,
         args.max_overlap_waves,
         args.max_builds_per_cycle,
         args.max_candidates_per_manifest,
     );
     let mut completed = Vec::new();
-    let builds_planned = if pending_ack.is_none() && decision.target_feasible {
-        decision.builds_planned.min(1)
+    let current_checkpoint_manifests = queue_depth.saturating_add(ready_before);
+    let manifest_reserve_builds = dynamic_ready_reserve
+        .saturating_sub(current_checkpoint_manifests)
+        .div_ceil(manifests_per_wave(args.max_candidates_per_manifest))
+        .min(args.max_overlap_waves.saturating_sub(waves.len()));
+    let manifest_target_feasible = dynamic_ready_reserve
+        <= args.queued_hard_cap.saturating_add(
+            args.max_overlap_waves
+                .saturating_mul(manifests_per_wave(args.max_candidates_per_manifest)),
+        );
+    let builds_planned = if pending_ack.is_none()
+        && decision.target_feasible
+        && manifest_target_feasible
+    {
+        decision.builds_planned.max(manifest_reserve_builds).min(1)
     } else {
         0
     };
@@ -902,8 +1265,10 @@ fn cycle(args: &Args) -> Result<CycleReport> {
         }
     }
     let runway_compliant = decision.target_feasible
-        && decision.useful_work >= decision.useful_work_target
-        && status.reserve_manifests >= args.ready_reserve_min
+        && manifest_target_feasible
+        && current_checkpoint_manifests >= dynamic_ready_reserve
+        && decision.candidate_evaluation_work >= decision.candidate_evaluation_work_target
+        && protected_candidate_evaluations >= args.candidate_reserve_min
         && status.complete_reserve_waves >= args.min_complete_reserve_waves;
     let report = CycleReport {
         schema: "JopeMicroWaveSupplyStatus.v2",
@@ -911,15 +1276,17 @@ fn cycle(args: &Args) -> Result<CycleReport> {
         mode: if args.build { "build" } else { "audit" },
         active_checkpoint_sha256: inputs.checkpoint_sha256,
         checkpoint_epoch: epoch,
-        queue_floor: args.queue_floor,
-        queued_target: args.queued_target,
+        queue_floor: dynamic_queue_target,
+        queued_target: dynamic_queue_target,
         queued_hard_cap: args.queued_hard_cap,
-        ready_reserve_min: args.ready_reserve_min,
+        ready_reserve_min: dynamic_ready_reserve,
         useful_work_min: args.useful_work_min,
-        useful_work_target: performance.useful_work_target,
-        useful_work_target_formula:
-            "max(6144,ceil(120*p95_jobs_per_minute),ceil(1.5*proposer_to_ready_minutes*p95_jobs_per_minute))",
+        useful_work_target: args.useful_work_min,
+        useful_work_target_formula: "legacy_job_count_only_not_used_for_capacity_decisions",
         p95_jobs_per_minute: Some(performance.p95_jobs_per_minute),
+        p95_candidate_evaluations_per_minute: Some(
+            performance.p95_candidate_evaluations_per_minute,
+        ),
         proposer_to_ready_minutes: Some(performance.proposer_to_ready_minutes),
         performance_generated_at_ms: Some(performance.generated_at_ms),
         performance_fresh: true,
@@ -942,18 +1309,30 @@ fn cycle(args: &Args) -> Result<CycleReport> {
         complete_reserve_waves: status.complete_reserve_waves,
         minimum_complete_reserve_waves: args.min_complete_reserve_waves,
         protected_reserve_waves: status.protected_reserve_waves.clone(),
-        useful_work: decision.useful_work,
-        target_feasible: decision.target_feasible,
-        critical_infeasibility_reason: (!decision.target_feasible).then(|| {
-            format!(
-                "eight_overlap_waves_cannot_meet_useful_work_target:{}",
-                performance.useful_work_target
-            )
-        }),
-        projected_jobs_before_build: decision.useful_work,
+        useful_work: status.useful_work,
+        candidate_work_min: args.candidate_work_min,
+        candidate_reserve_min: args.candidate_reserve_min,
+        candidate_evaluation_work: decision.candidate_evaluation_work,
+        candidate_evaluation_work_target: decision.candidate_evaluation_work_target,
+        protected_candidate_evaluations,
+        target_feasible: decision.target_feasible && manifest_target_feasible,
+        critical_infeasibility_reason: if !decision.target_feasible {
+            Some(format!(
+                "eight_overlap_waves_cannot_meet_candidate_work_target:{}",
+                performance.candidate_evaluation_work_target
+            ))
+        } else if !manifest_target_feasible {
+            Some(format!(
+                "overlap_bound_cannot_meet_dynamic_manifest_reserve:{}",
+                dynamic_ready_reserve
+            ))
+        } else {
+            None
+        },
+        projected_jobs_before_build: status.useful_work,
         // A built wave is deliberately not counted until a newer keeper
         // status acknowledges it in the bounded admission set.
-        projected_jobs_after_build: decision.useful_work,
+        projected_jobs_after_build: status.useful_work,
         max_overlap_waves: args.max_overlap_waves,
         builds_planned,
         builds_completed: completed,
@@ -964,12 +1343,16 @@ fn cycle(args: &Args) -> Result<CycleReport> {
         hold_reason: (!runway_compliant).then(|| {
             if !decision.target_feasible {
                 "useful_work_target_infeasible_with_eight_overlap_waves".to_owned()
+            } else if !manifest_target_feasible {
+                "dynamic_manifest_reserve_infeasible_with_overlap_bound".to_owned()
+            } else if current_checkpoint_manifests < dynamic_ready_reserve {
+                "current_checkpoint_manifests_below_dynamic_target_plus_two_waves".to_owned()
             } else if status.complete_reserve_waves < args.min_complete_reserve_waves {
                 "complete_reserve_waves_below_minimum".to_owned()
-            } else if status.reserve_manifests < args.ready_reserve_min {
-                "ready_reserve_below_minimum".to_owned()
+            } else if protected_candidate_evaluations < args.candidate_reserve_min {
+                "candidate_evaluation_reserve_below_minimum".to_owned()
             } else {
-                "useful_work_below_dynamic_target".to_owned()
+                "candidate_evaluation_work_below_dynamic_target".to_owned()
             }
         }),
     };
@@ -991,23 +1374,29 @@ fn held_report(
     let active = status.active_checkpoint_sha256.clone().unwrap_or_default();
     let epoch = status.checkpoint_epoch.clone().unwrap_or_default();
     let queue_depth = status.queued_starting.saturating_add(status.dispatching);
+    let dynamic_queue_target = usize::try_from(status.queued_target)
+        .ok()
+        .filter(|target| (2_048..=4_096).contains(target))
+        .unwrap_or(args.queued_target);
+    let dynamic_ready_reserve = dynamic_queue_target.saturating_add(
+        2 * manifests_per_wave(args.max_candidates_per_manifest),
+    );
     CycleReport {
         schema: "JopeMicroWaveSupplyStatus.v2",
         generated_at_ms: now_ms(),
         mode: if args.build { "build" } else { "audit" },
         active_checkpoint_sha256: active,
         checkpoint_epoch: epoch,
-        queue_floor: args.queue_floor,
-        queued_target: args.queued_target,
+        queue_floor: dynamic_queue_target,
+        queued_target: dynamic_queue_target,
         queued_hard_cap: args.queued_hard_cap,
-        ready_reserve_min: args.ready_reserve_min,
+        ready_reserve_min: dynamic_ready_reserve,
         useful_work_min: args.useful_work_min,
-        useful_work_target: performance
-            .map(|value| value.useful_work_target)
-            .unwrap_or(args.useful_work_min),
-        useful_work_target_formula:
-            "max(6144,ceil(120*p95_jobs_per_minute),ceil(1.5*proposer_to_ready_minutes*p95_jobs_per_minute))",
+        useful_work_target: args.useful_work_min,
+        useful_work_target_formula: "legacy_job_count_only_not_used_for_capacity_decisions",
         p95_jobs_per_minute: performance.map(|value| value.p95_jobs_per_minute),
+        p95_candidate_evaluations_per_minute: performance
+            .map(|value| value.p95_candidate_evaluations_per_minute),
         proposer_to_ready_minutes: performance.map(|value| value.proposer_to_ready_minutes),
         performance_generated_at_ms: performance.map(|value| value.generated_at_ms),
         performance_fresh: performance.is_some(),
@@ -1018,8 +1407,8 @@ fn held_report(
         queued_starting: status.queued_starting,
         dispatching: status.dispatching,
         queue_depth,
-        below_floor: queue_depth < args.queue_floor,
-        overloaded: queue_depth > args.queued_target,
+        below_floor: queue_depth < dynamic_queue_target,
+        overloaded: queue_depth > dynamic_queue_target,
         current_ready_waves: Vec::new(),
         ready_manifests: status.validated_ready,
         validated_ready: status.validated_ready,
@@ -1031,12 +1420,21 @@ fn held_report(
         minimum_complete_reserve_waves: args.min_complete_reserve_waves,
         protected_reserve_waves: status.protected_reserve_waves.clone(),
         useful_work: status.useful_work,
+        candidate_work_min: args.candidate_work_min,
+        candidate_reserve_min: args.candidate_reserve_min,
+        candidate_evaluation_work: status.candidate_evaluation_work as usize,
+        candidate_evaluation_work_target: performance
+            .map(|value| value.candidate_evaluation_work_target)
+            .unwrap_or(args.candidate_work_min),
+        protected_candidate_evaluations: status
+            .protected_reserve_waves
+            .iter()
+            .map(|wave| wave.candidate_evaluation_count as usize)
+            .sum(),
         target_feasible: false,
         critical_infeasibility_reason: explicit_reason.clone(),
-        projected_jobs_before_build: queue_depth
-            .saturating_add(status.validated_ready),
-        projected_jobs_after_build: queue_depth
-            .saturating_add(status.validated_ready),
+        projected_jobs_before_build: queue_depth.saturating_add(status.validated_ready),
+        projected_jobs_after_build: queue_depth.saturating_add(status.validated_ready),
         max_overlap_waves: args.max_overlap_waves,
         builds_planned: 0,
         builds_completed: Vec::new(),
@@ -1044,16 +1442,18 @@ fn held_report(
         awaiting_keeper_ack_since_ms: None,
         keeper_status_generated_at_ms: status.generated_at_ms,
         admission_allowed: false,
-        hold_reason: explicit_reason.or_else(|| status
-            .error
-            .clone()
-            .or_else(|| status.fail_closed_reason.clone())
-            .or_else(|| {
-                status
-                    .degraded
-                    .then(|| "queue keeper is degraded".to_owned())
-            })
-            .or_else(|| Some("queue admission is held".to_owned()))),
+        hold_reason: explicit_reason.or_else(|| {
+            status
+                .error
+                .clone()
+                .or_else(|| status.fail_closed_reason.clone())
+                .or_else(|| {
+                    status
+                        .degraded
+                        .then(|| "queue keeper is degraded".to_owned())
+                })
+                .or_else(|| Some("queue admission is held".to_owned()))
+        }),
     }
 }
 
@@ -1088,6 +1488,19 @@ fn load_queue_status(args: &Args) -> Result<QueueStatus> {
         .saturating_add(status.validated_ready);
     if useful_work != status.useful_work {
         bail!("queue keeper useful-work aggregate drift");
+    }
+    if (status.useful_work == 0) != (status.candidate_evaluation_work == 0)
+        || status.candidate_evaluation_work < status.useful_work as u64
+    {
+        bail!("queue keeper candidate-evaluation work aggregate drift");
+    }
+    if status
+        .admission_waves
+        .iter()
+        .chain(status.protected_reserve_waves.iter())
+        .any(|wave| wave.unclaimed_manifests == 0 || wave.candidate_evaluation_count == 0)
+    {
+        bail!("queue keeper wave lacks candidate-evaluation work");
     }
     let admission = status
         .admission_waves
@@ -1501,37 +1914,38 @@ fn manifests_per_wave(max_candidates_per_manifest: usize) -> usize {
 #[allow(clippy::too_many_arguments)]
 fn supply_decision(
     queue_depth: usize,
-    validated_ready: usize,
-    reserve_manifests: usize,
+    candidate_evaluation_work: usize,
+    protected_candidate_evaluations: usize,
     current_ready_waves: usize,
     complete_ready_waves: usize,
     queue_floor: usize,
     queued_target: usize,
-    useful_work_target: usize,
+    candidate_evaluation_work_target: usize,
     queued_hard_cap: usize,
-    ready_reserve_min: usize,
+    candidate_reserve_min: usize,
     min_complete_reserve_waves: usize,
     max_overlap_waves: usize,
     max_builds_per_cycle: usize,
     max_candidates_per_manifest: usize,
 ) -> SupplyDecision {
-    let useful_work = queue_depth.saturating_add(validated_ready);
     let estimated_manifests_per_wave = manifests_per_wave(max_candidates_per_manifest);
-    let useful_work_deficit = useful_work_target.saturating_sub(useful_work);
-    let reserve_deficit = ready_reserve_min.saturating_sub(reserve_manifests);
-    let desired_manifests = useful_work_deficit.max(reserve_deficit);
-    let waves_for_deficit = desired_manifests.div_ceil(estimated_manifests_per_wave);
+    let candidate_work_deficit =
+        candidate_evaluation_work_target.saturating_sub(candidate_evaluation_work);
+    let reserve_deficit = candidate_reserve_min.saturating_sub(protected_candidate_evaluations);
+    let desired_candidate_evaluations = candidate_work_deficit.max(reserve_deficit);
+    let waves_for_deficit = desired_candidate_evaluations.div_ceil(CANDIDATE_EVALUATIONS_PER_WAVE);
     let waves_for_complete_reserve =
         min_complete_reserve_waves.saturating_sub(complete_ready_waves);
     let overlap_slots = max_overlap_waves.saturating_sub(current_ready_waves);
-    let maximum_useful_work = queued_hard_cap
-        .saturating_add(max_overlap_waves.saturating_mul(estimated_manifests_per_wave));
-    let target_feasible = useful_work_target <= maximum_useful_work;
+    let maximum_candidate_work = queued_hard_cap
+        .saturating_mul(max_candidates_per_manifest)
+        .saturating_add(max_overlap_waves.saturating_mul(CANDIDATE_EVALUATIONS_PER_WAVE));
+    let target_feasible = candidate_evaluation_work_target <= maximum_candidate_work;
     SupplyDecision {
         below_floor: queue_depth < queue_floor,
         overloaded: queue_depth > queued_target,
-        useful_work,
-        useful_work_target,
+        candidate_evaluation_work,
+        candidate_evaluation_work_target,
         estimated_manifests_per_wave,
         target_feasible,
         builds_planned: waves_for_deficit
@@ -1911,6 +2325,7 @@ fn append_spec_input(
     Ok(())
 }
 
+#[cfg(test)]
 fn normalized_proposer_spec(body: &str) -> String {
     body.lines()
         .map(|line| {
@@ -1949,6 +2364,7 @@ fn proposer_env_path(body: &str, key: &str) -> Result<PathBuf> {
     Ok(PathBuf::from(value))
 }
 
+#[cfg(test)]
 fn validate_proposer_runtime(existing_body: &str, expected_body: &str, args: &Args) -> Result<()> {
     if existing_body.contains("/home/ubuntu/jope-prime")
         || expected_body.contains("/home/ubuntu/jope-prime")
@@ -2509,6 +2925,7 @@ fn render_cohort_proposer_spec(
 /// package` (`import jope`). Those exclude a node that genuinely cannot run the
 /// job -- e.g. xbabe0, which has a free GPU but no runtime bundle -- on real
 /// capability rather than on an accident of file placement.
+#[cfg(test)]
 fn proposer_placement_pin_lines(_args: &Args) -> Result<Vec<String>> {
     Ok(Vec::new())
 }
@@ -3094,6 +3511,18 @@ fn build_next_wave(args: &Args, inputs: &CheckpointInputs) -> Result<Option<Buil
                     ) => {}
                 Some(existing) => bail!("{job_id}: proposer is terminal in state {existing}"),
             }
+            let payload = proposer_scientific_payload(
+                &state,
+                state
+                    .runtime_pinned_attempts
+                    .last()
+                    .context("initial proposer lacks a pinned intent")?,
+            )?;
+            let mut projection = proposer_recovery_projection(&args.root, &state, &payload)?;
+            if projection.submitted_at_ms == 0 {
+                projection.record_initial_submission(job_id, now_ms())?;
+                save_recovery_projection(&args.root, &projection)?;
+            }
             state.advance(PersistedSupplyStage::SubmitCohortProposer)?;
             persist_supply_state(&args.root, &state)?;
             ensure_cohort_lookahead(args, inputs, &waves_root, 3)?;
@@ -3111,7 +3540,50 @@ fn build_next_wave(args: &Args, inputs: &CheckpointInputs) -> Result<Option<Buil
                 sha256_file(&inputs.proposals_pointer)?,
             )
         } else {
-            let mut job_id = state
+            let payload = proposer_scientific_payload(
+                &state,
+                state
+                    .runtime_pinned_attempts
+                    .last()
+                    .context("submitted proposer lacks a pinned intent")?,
+            )?;
+            let mut projection = proposer_recovery_projection(&args.root, &state, &payload)?;
+            if state.proposal_job_id.as_deref() != Some(projection.current_job_identity.as_str()) {
+                reconcile_proposer_projection(&args.root, &mut state, &projection)?;
+                state.revision = state.revision.saturating_add(1);
+                persist_supply_state(&args.root, &state)?;
+                ensure_cohort_lookahead(args, inputs, &waves_root, 3)?;
+                return Ok(None);
+            }
+            if projection.retry_pending_submission {
+                if now_ms() < projection.retry_not_before_ms {
+                    ensure_cohort_lookahead(args, inputs, &waves_root, 3)?;
+                    return Ok(None);
+                }
+                let spec = resolve_pinned_proposer_spec(args, inputs, &mut state)?;
+                let job_id = state
+                    .proposal_job_id
+                    .clone()
+                    .context("pending proposer retry lacks a job identity")?;
+                match proposer_job_state(args, &job_id)?.as_deref() {
+                    None => {
+                        if !scq_check_submit(args, &spec)? {
+                            return Ok(None);
+                        }
+                    }
+                    Some(
+                        "completed" | "queued" | "starting" | "dispatching" | "running" | "held",
+                    ) => {}
+                    Some(other) => {
+                        bail!("{job_id}: pending proposer retry is terminal in state {other}")
+                    }
+                }
+                projection.mark_submitted(&job_id, now_ms())?;
+                save_recovery_projection(&args.root, &projection)?;
+                ensure_cohort_lookahead(args, inputs, &waves_root, 3)?;
+                return Ok(None);
+            }
+            let job_id = state
                 .proposal_job_id
                 .clone()
                 .context("cohort proposer job id is absent")?;
@@ -3124,36 +3596,29 @@ fn build_next_wave(args: &Args, inputs: &CheckpointInputs) -> Result<Option<Buil
                     ensure_cohort_lookahead(args, inputs, &waves_root, 3)?;
                     return Ok(None);
                 }
-                Some(_) => {
-                    state.retry_proposer(&args.root)?;
-                    persist_supply_state(&args.root, &state)?;
-                    job_id = state
-                        .proposal_job_id
-                        .clone()
-                        .context("retried proposer lacks a job identity")?;
-                    let spec = resolve_pinned_proposer_spec(args, inputs, &mut state)?;
-                    match proposer_job_state(args, &job_id)?.as_deref() {
-                        None => {
-                            if !scq_check_submit(args, &spec)? {
-                                return Ok(None);
-                            }
-                        }
-                        Some(
-                            "completed" | "queued" | "starting" | "dispatching" | "running"
-                            | "held",
-                        ) => {}
-                        Some(other) => {
-                            bail!("{job_id}: retried proposer is terminal in state {other}")
+                Some(terminal_state) => {
+                    match state.retry_proposer(&args.root, terminal_state, now_ms())? {
+                        ProposerRetryDisposition::Retried | ProposerRetryDisposition::Backoff => {}
+                        ProposerRetryDisposition::Drained
+                        | ProposerRetryDisposition::ScientificCircuitOpen => {
+                            persist_supply_state(&args.root, &state)?;
+                            return Ok(None);
                         }
                     }
+                    persist_supply_state(&args.root, &state)?;
                     ensure_cohort_lookahead(args, inputs, &waves_root, 3)?;
                     return Ok(None);
                 }
                 None => {
-                    let spec = resolve_pinned_proposer_spec(args, inputs, &mut state)?;
-                    if !scq_check_submit(args, &spec)? {
-                        return Ok(None);
+                    match state.retry_proposer(&args.root, "vanished", now_ms())? {
+                        ProposerRetryDisposition::Retried | ProposerRetryDisposition::Backoff => {}
+                        ProposerRetryDisposition::Drained
+                        | ProposerRetryDisposition::ScientificCircuitOpen => {
+                            persist_supply_state(&args.root, &state)?;
+                            return Ok(None);
+                        }
                     }
+                    persist_supply_state(&args.root, &state)?;
                     ensure_cohort_lookahead(args, inputs, &waves_root, 3)?;
                     return Ok(None);
                 }
@@ -3388,10 +3853,12 @@ mod tests {
             queued_hard_cap: 4_096,
             ready_reserve_min: 2_048,
             useful_work_min: MIN_USEFUL_WORK,
+            candidate_work_min: MIN_CANDIDATE_EVALUATION_WORK,
+            candidate_reserve_min: MIN_CANDIDATE_RESERVE,
             min_complete_reserve_waves: MIN_COMPLETE_RESERVE_WAVES,
             max_overlap_waves: 8,
             max_builds_per_cycle: 1,
-            max_candidates_per_manifest: 100,
+            max_candidates_per_manifest: 50,
             queue_status_max_age_seconds: 30,
             performance_max_age_seconds: 300,
             scq: PathBuf::from("/unused-scq"),
@@ -3414,37 +3881,37 @@ mod tests {
     #[test]
     fn decision_builds_to_target_with_bounded_overlap() {
         let decision = supply_decision(
-            2_048, 3_072, 1_536, 4, 2, 2_048, 2_048, 6_144, 4_096, 2_048, 2, 8, 1, 50,
+            2_048, 240_000, 65_536, 4, 2, 2_048, 2_048, 262_144, 4_096, 65_536, 2, 8, 1, 50,
         );
         assert!(!decision.below_floor);
         assert!(!decision.overloaded);
-        assert_eq!(decision.useful_work, 5_120);
+        assert_eq!(decision.candidate_evaluation_work, 240_000);
         assert_eq!(decision.estimated_manifests_per_wave, 768);
         assert_eq!(decision.builds_planned, 1);
 
         // Scheduler occupancy at the hard cap never prevents building ready
         // reserve; the cap applies only to queued/starting/dispatching jobs.
         let scheduler_capped = supply_decision(
-            4_096, 0, 0, 0, 0, 2_048, 2_048, 6_144, 4_096, 2_048, 2, 8, 1, 50,
+            4_096, 204_800, 0, 0, 0, 2_048, 2_048, 262_144, 4_096, 65_536, 2, 8, 1, 50,
         );
         assert!(scheduler_capped.overloaded);
         assert_eq!(scheduler_capped.builds_planned, 1);
 
         let complete_reserve_deficit = supply_decision(
-            2_048, 4_096, 2_048, 3, 1, 2_048, 2_048, 6_144, 4_096, 2_048, 2, 8, 1, 50,
+            2_048, 262_144, 32_768, 3, 1, 2_048, 2_048, 262_144, 4_096, 65_536, 2, 8, 1, 50,
         );
-        assert_eq!(complete_reserve_deficit.useful_work, 6_144);
+        assert_eq!(complete_reserve_deficit.candidate_evaluation_work, 262_144);
         assert_eq!(complete_reserve_deficit.builds_planned, 1);
 
         let infeasible = supply_decision(
-            0, 0, 0, 0, 0, 2_048, 2_048, 20_000, 4_096, 2_048, 2, 8, 1, 50,
+            0, 0, 0, 0, 0, 2_048, 2_048, 500_000, 4_096, 65_536, 2, 8, 1, 50,
         );
         assert!(!infeasible.target_feasible);
         assert_eq!(infeasible.builds_planned, 0);
     }
 
     #[test]
-    fn useful_work_target_has_a_6144_floor_and_increases_dynamically() {
+    fn candidate_work_target_has_an_eight_wave_floor_and_increases_dynamically() {
         let directory = tempdir().unwrap();
         let args = audit_args(directory.path());
         let path = directory.path().join("ops/supply-performance.v1.json");
@@ -3454,14 +3921,17 @@ mod tests {
                 "schema": "SupplyPerformance.v1",
                 "generated_at_ms": now_ms(),
                 "p95_jobs_per_minute": 10.0,
+                "p95_candidate_evaluations_per_minute": 100.0,
                 "proposer_to_ready_minutes_p95": 60.0,
                 "proposer_samples": 4,
             }),
         )
         .unwrap();
         assert_eq!(
-            performance_measurements(&args).unwrap().useful_work_target,
-            6_144
+            performance_measurements(&args)
+                .unwrap()
+                .candidate_evaluation_work_target,
+            262_144
         );
 
         atomic_json(
@@ -3470,14 +3940,17 @@ mod tests {
                 "schema": "SupplyPerformance.v1",
                 "generated_at_ms": now_ms(),
                 "p95_jobs_per_minute": 60.0,
+                "p95_candidate_evaluations_per_minute": 3_000.0,
                 "proposer_to_ready_minutes_p95": 60.0,
                 "proposer_samples": 4,
             }),
         )
         .unwrap();
         assert_eq!(
-            performance_measurements(&args).unwrap().useful_work_target,
-            7_200
+            performance_measurements(&args)
+                .unwrap()
+                .candidate_evaluation_work_target,
+            360_000
         );
     }
 
@@ -3782,11 +4255,16 @@ mod tests {
             "runtime_pinned_attempts": [pinned]
         }))
         .unwrap();
-        state.retry_proposer(directory.path()).unwrap();
+        assert_eq!(
+            state
+                .retry_proposer(directory.path(), "cancelled", now_ms())
+                .unwrap(),
+            ProposerRetryDisposition::Retried
+        );
         assert_eq!(state.proposal_attempt, 1);
         assert_eq!(
             state.proposal_job_id.as_deref(),
-            Some("cohort-proposer-retry1")
+            Some("cohort-proposer-infra000002")
         );
         assert_eq!(state.revision, 2);
         assert_eq!(state.cohort_sha256, "a".repeat(64));
@@ -3799,6 +4277,70 @@ mod tests {
             state.runtime_pinned_attempts[0].proposer_inputs,
             state.runtime_pinned_attempts[1].proposer_inputs
         );
+        let payload = proposer_scientific_payload(&state, &state.runtime_pinned_attempts[0]).unwrap();
+        let projection = proposer_recovery_projection(directory.path(), &state, &payload).unwrap();
+        assert_eq!(projection.scientific_failures, 0);
+        assert_eq!(projection.foreign_cancellation_timestamps_ms.len(), 1);
+        assert!(projection.retry_pending_submission);
+        let primary = serde_json::to_string(&state).unwrap();
+        for forbidden in [
+            "scientific_failures",
+            "foreign_cancellations",
+            "retry_pending_submission",
+            "proposal_submitted_at_ms",
+            "next_retry_not_before_ms",
+        ] {
+            assert!(!primary.contains(forbidden));
+        }
+    }
+
+    #[test]
+    fn retry_five_foreign_cancellation_recovers_as_attempt_seven() {
+        let directory = tempdir().unwrap();
+        let original_spec = pinned_test_spec(directory.path(), "cohort-proposer");
+        let pinned = runtime_pinned_intent_from_spec(&original_spec, 0).unwrap();
+        let mut state: PersistedSupplyState = serde_json::from_value(json!({
+            "schema": "CohortSupplyState.v2",
+            "wave": "strict-wave-000190",
+            "checkpoint_sha256": "c".repeat(64),
+            "cohort": "/tmp/cohort.json",
+            "cohort_sha256": "a".repeat(64),
+            "catalog_sha256": "b".repeat(64),
+            "decoder_configuration_sha256": "d".repeat(64),
+            "seed": 20260726,
+            "stage": "submit_cohort_proposer",
+            "revision": 1,
+            "recovery_accounting_only": false,
+            "proposal_job_id": "cohort-proposer",
+            "runtime_pinned_attempts": [pinned]
+        }))
+        .unwrap();
+        let mut observed = now_ms();
+        for _ in 0..=5 {
+            state
+                .retry_proposer(directory.path(), "cancelled", observed)
+                .unwrap();
+            let payload =
+                proposer_scientific_payload(&state, state.runtime_pinned_attempts.last().unwrap())
+                    .unwrap();
+            let mut projection =
+                proposer_recovery_projection(directory.path(), &state, &payload).unwrap();
+            projection
+                .mark_submitted(&projection.current_job_identity.clone(), projection.retry_not_before_ms)
+                .unwrap();
+            observed = projection.retry_not_before_ms;
+            save_recovery_projection(directory.path(), &projection).unwrap();
+        }
+        assert_eq!(state.proposal_attempt, 6);
+        assert_eq!(
+            state.proposal_job_id.as_deref(),
+            Some("cohort-proposer-infra000007")
+        );
+        assert_eq!(state.runtime_pinned_attempts.len(), 7);
+        assert!(state.runtime_pinned_attempts.windows(2).all(|pair| {
+            pair[0].runtime_bundle_sha256 == pair[1].runtime_bundle_sha256
+                && pair[0].proposer_inputs == pair[1].proposer_inputs
+        }));
     }
 
     #[test]
@@ -3923,6 +4465,7 @@ mod tests {
                 summary_sha256: ready[0].summary_sha256.clone(),
                 manifest_count: 384,
                 unclaimed_manifests: ready[0].unclaimed_manifests,
+                candidate_evaluation_count: 25_600,
                 complete: false,
             }],
             protected_reserve_waves: Vec::new(),
@@ -3933,6 +4476,7 @@ mod tests {
             admission_manifests: 300,
             validated_ready: 300,
             useful_work: 300,
+            candidate_evaluation_work: 25_600,
             unclaimed_current_checkpoint_manifests: 300,
         };
         assert!(validate_keeper_admission(
@@ -3975,6 +4519,7 @@ mod tests {
                 summary_sha256: ready[0].summary_sha256.clone(),
                 manifest_count: 384,
                 unclaimed_manifests: 300,
+                candidate_evaluation_count: 25_600,
                 complete: false,
             }],
             protected_reserve_waves: Vec::new(),
@@ -3985,6 +4530,7 @@ mod tests {
             admission_manifests: 300,
             validated_ready: 300,
             useful_work: 300,
+            candidate_evaluation_work: 25_600,
             unclaimed_current_checkpoint_manifests: 300,
         };
         assert!(validate_keeper_admission(&status, &ready, directory.path(), None, 8).is_ok());
@@ -4028,6 +4574,7 @@ mod tests {
                 summary_sha256: "a".repeat(64),
                 manifest_count: 384,
                 unclaimed_manifests: 384,
+                candidate_evaluation_count: 32_768,
                 complete: true,
             }],
             complete_current_checkpoint_waves: 1,
@@ -4037,6 +4584,7 @@ mod tests {
             admission_manifests: 0,
             validated_ready: 384,
             useful_work: 384,
+            candidate_evaluation_work: 32_768,
             unclaimed_current_checkpoint_manifests: 384,
         };
         let inputs = CheckpointInputs {
@@ -4308,6 +4856,7 @@ mod tests {
                     "summary_sha256": summary_sha256,
                     "manifest_count": 1,
                     "unclaimed_manifests": 1,
+                    "candidate_evaluation_count": 50,
                     "complete": true
                 }],
                 "protected_reserve_waves": [],
@@ -4318,6 +4867,7 @@ mod tests {
                 "admission_manifests": 1,
                 "validated_ready": 1,
                 "useful_work": 951,
+                "candidate_evaluation_work": 47_550,
                 "unclaimed_current_checkpoint_manifests": 1
             }),
         )
@@ -4377,6 +4927,7 @@ mod tests {
                 "admission_manifests": 0,
                 "validated_ready": 0,
                 "useful_work": 0,
+                "candidate_evaluation_work": 0,
                 "unclaimed_current_checkpoint_manifests": 0
             }),
         )

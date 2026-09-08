@@ -1,0 +1,103 @@
+{
+  "schema": "workspace.sync-config.v1",
+  "merge_host": "xbabe2",
+  "bandwidth_kib_s": 8192,
+  "local": {
+    "name": "xbabe2",
+    "root": "/home/ubuntu/jope-dime",
+    "state": "/home/ubuntu/jope-dime-mirror",
+    "durable_roots": {
+      "custody": {
+        "path": "/home/ubuntu/jope-dime-recovery/20260908",
+        "prune_roots": [
+          "build-root",
+          "build-parallel",
+          "restored.git",
+          "remote-restored",
+          "packaged-build-root",
+          "packaged-build-parallel"
+        ]
+      }
+    }
+  },
+  "remote": {
+    "name": "gpu",
+    "host": "ubuntu@158.101.20.226",
+    "key": "~/.ssh/lambda_cloud_a100_20260907_ed25519",
+    "root": "/home/ubuntu/jope-dime",
+    "state": "/home/ubuntu/jope-dime-mirror",
+    "durable_roots": {
+      "custody": {
+        "path": "/home/ubuntu/jope-dime-recovery/20260908",
+        "prune_roots": [
+          "build-root",
+          "build-parallel",
+          "restored.git",
+          "remote-restored",
+          "packaged-build-root",
+          "packaged-build-parallel"
+        ]
+      }
+    }
+  },
+  "policy": {
+    "source_roots": [
+      "Cargo.toml",
+      "Cargo.lock",
+      ".gitignore",
+      "rust-toolchain.toml",
+      "README.md",
+      "ROADMAP.md",
+      "src",
+      "scripts",
+      "tests",
+      "vendor",
+      "fixtures",
+      "mcp",
+      "reference",
+      "manifests",
+      "systemd",
+      "campaigns",
+      "docs",
+      "parallel/Cargo.toml",
+      "parallel/Cargo.lock",
+      "parallel/.gitignore",
+      "parallel/rust-toolchain.toml",
+      "parallel/README.md",
+      "parallel/build.rs",
+      "parallel/src",
+      "parallel/tools",
+      "parallel/tests",
+      "parallel/native",
+      "parallel/examples",
+      "parallel/systemd",
+      "parallel/manifests",
+      "parallel/assets/source",
+      "parallel/assets/grammar",
+      "seeds/generation-zero.txt",
+      "seeds/generation-zero-binary.txt"
+    ],
+    "dependency_roots": [
+      "vendor",
+      "parallel/assets/source",
+      "parallel/assets/grammar",
+      "seeds/generation-zero.txt",
+      "seeds/generation-zero-binary.txt"
+    ],
+    "mutable_roots": [
+      "parallel/manifests/generated",
+      "parallel/native/hyperion-host/target",
+      "docs/paper/internal",
+      "docs/paper/tools/target"
+    ]
+  },
+  "external_dependencies_pending": [
+    "sotarena gitlink e5db30a07c093661c8f6940d3e22192511f8388b",
+    "sotarena-refresh gitlink acf77fe401a99b5c420b7687d42a825f8d3151d5",
+    "/home/ubuntu/jope-flywheel",
+    "/home/ubuntu/jope-prime",
+    "/home/ubuntu/smart_cluster",
+    "model/toolchain references require qualification"
+  ],
+  "runtime_activation_allowed": false
+}

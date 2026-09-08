@@ -42,6 +42,8 @@ class BundleFixture:
         self.bundle = root / self.digest
         self.binary = self.bundle / "runtime/bin/worker"
         self.unit = self.bundle / "runtime/systemd/worker.service"
+        self.inactive_unit = self.bundle / "runtime/systemd/inactive.service"
+        self.timer = self.bundle / "runtime/systemd/worker.timer"
         self.binary.parent.mkdir(parents=True)
         self.unit.parent.mkdir(parents=True)
         self.binary.write_bytes(b"worker-binary")
@@ -53,10 +55,23 @@ class BundleFixture:
             f"ExecStart={current_binary} \\\n  --runtime-path {self.bundle.parent}/current/runtime/bin\n"
         )
         self.unit.chmod(0o644)
+        self.inactive_unit.write_text(
+            "[Service]\n"
+            f"ExecStart={current_binary} --inactive\n"
+        )
+        self.inactive_unit.chmod(0o644)
+        self.timer.write_text(
+            "[Timer]\n"
+            "OnUnitActiveSec=60s\n"
+            "Unit=worker.service\n"
+        )
+        self.timer.chmod(0o644)
         inventory = []
         for target, path in (
             ("runtime/bin/worker", self.binary),
             ("runtime/systemd/worker.service", self.unit),
+            ("runtime/systemd/inactive.service", self.inactive_unit),
+            ("runtime/systemd/worker.timer", self.timer),
         ):
             inventory.append(
                 {
@@ -74,7 +89,13 @@ class BundleFixture:
                     "binary": "worker",
                     "owner": "test",
                     "active": True,
-                }
+                },
+                {
+                    "unit": "inactive.service",
+                    "binary": "worker",
+                    "owner": "test-inactive",
+                    "active": False,
+                },
             ],
         }
         self.services = root / "services.json"
@@ -336,6 +357,10 @@ class AbsolutePathAuditTests(unittest.TestCase):
             )
             self.assertTrue(report["healthy"], report["findings"])
             self.assertEqual(report["schema"], "JopeAbsolutePathAudit.v1")
+            self.assertEqual(
+                report["complete_systemd_artifacts"],
+                ["inactive.service", "worker.service", "worker.timer"],
+            )
             output = root / "receipts/path-audit.json"
             audit_mod.atomic_json(output, report)
             self.assertEqual(json.loads(output.read_text())["healthy"], True)

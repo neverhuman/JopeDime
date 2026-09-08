@@ -401,7 +401,14 @@ fn py_map_src(n: usize, source: &str, expr: &MathAst) -> String {
         lines.push(format!("    if len(row) <= {maxc}:"));
         lines.push("        return 0.0".to_string());
     }
-    lines.push(format!("    value = {}", expr.to_python()));
+    if features.funcs.contains(&crate::mathexpr::MathFunc::Clip) {
+        lines.push("    try:".to_string());
+        lines.push(format!("        value = {}", expr.to_python()));
+        lines.push("    except ArithmeticError:".to_string());
+        lines.push("        return 0.0".to_string());
+    } else {
+        lines.push(format!("    value = {}", expr.to_python()));
+    }
     lines.push("    if math.isfinite(value):".to_string());
     lines.push("        return _clamp(value, -1e12, 1e12)".to_string());
     lines.push("    return 0.0".to_string());
@@ -438,7 +445,14 @@ fn py_derive_src(n: usize, source: &str, expr: &MathAst) -> String {
             lines.push(format!("    if len(row) <= {maxc}:"));
             lines.push("        return 0.0".to_string());
         }
-        lines.push(format!("    value = {}", expr.to_python()));
+        if features.funcs.contains(&crate::mathexpr::MathFunc::Clip) {
+            lines.push("    try:".to_string());
+            lines.push(format!("        value = {}", expr.to_python()));
+            lines.push("    except ArithmeticError:".to_string());
+            lines.push("        return 0.0".to_string());
+        } else {
+            lines.push(format!("    value = {}", expr.to_python()));
+        }
         lines.push("    if math.isfinite(value):".to_string());
         lines.push("        return _clamp(value, -1e12, 1e12)".to_string());
         lines.push("    return 0.0".to_string());
@@ -475,7 +489,14 @@ fn py_expression_fn(source: &str, expr: &MathAst) -> String {
         lines.push(format!("    if len(row) <= {maxc}:"));
         lines.push("        return 0.0".to_string());
     }
-    lines.push(format!("    value = {}", expr.to_python()));
+    if features.funcs.contains(&crate::mathexpr::MathFunc::Clip) {
+        lines.push("    try:".to_string());
+        lines.push(format!("        value = {}", expr.to_python()));
+        lines.push("    except ArithmeticError:".to_string());
+        lines.push("        return 0.0".to_string());
+    } else {
+        lines.push(format!("    value = {}", expr.to_python()));
+    }
     lines.push("    if math.isfinite(value):".to_string());
     lines.push("        return _clamp(value, -1e12, 1e12)".to_string());
     lines.push("    return 0.0".to_string());
@@ -507,7 +528,13 @@ fn rs_map_src(n: usize, source: &str, expr: &MathAst) -> String {
     if !features.uses_x {
         lines.push("    let _ = x;".to_string());
     }
-    lines.push(format!("    let value = {};", expr.to_rust()));
+    if features.funcs.contains(&crate::mathexpr::MathFunc::Clip) {
+        lines.push("    let mut math_failed = false;".to_string());
+        lines.push(format!("    let value = {};", expr.to_rust()));
+        lines.push("    if math_failed { return 0.0; }".to_string());
+    } else {
+        lines.push(format!("    let value = {};", expr.to_rust()));
+    }
     lines.push("    if value.is_finite() {".to_string());
     lines.push("        value.clamp(-1e12, 1e12)".to_string());
     lines.push("    } else {".to_string());
@@ -554,7 +581,13 @@ fn rs_derive_src(n: usize, source: &str, expr: &MathAst) -> String {
         } else if features.vars.is_empty() {
             lines.push("    let _ = row;".to_string());
         }
-        lines.push(format!("    let value = {};", expr.to_rust()));
+        if features.funcs.contains(&crate::mathexpr::MathFunc::Clip) {
+            lines.push("    let mut math_failed = false;".to_string());
+            lines.push(format!("    let value = {};", expr.to_rust()));
+            lines.push("    if math_failed { return 0.0; }".to_string());
+        } else {
+            lines.push(format!("    let value = {};", expr.to_rust()));
+        }
         lines.push("    if value.is_finite() {".to_string());
         lines.push("        value.clamp(-1e12, 1e12)".to_string());
         lines.push("    } else {".to_string());
@@ -604,7 +637,13 @@ fn rs_expression_fn(source: &str, expr: &MathAst) -> String {
     if features.max_col.is_none() && features.vars.is_empty() {
         lines.push("    let _ = row;".to_string());
     }
-    lines.push(format!("    let value = {};", expr.to_rust()));
+    if features.funcs.contains(&crate::mathexpr::MathFunc::Clip) {
+        lines.push("    let mut math_failed = false;".to_string());
+        lines.push(format!("    let value = {};", expr.to_rust()));
+        lines.push("    if math_failed { return 0.0; }".to_string());
+    } else {
+        lines.push(format!("    let value = {};", expr.to_rust()));
+    }
     lines.push("    if value.is_finite() {".to_string());
     lines.push("        value.clamp(-1e12, 1e12)".to_string());
     lines.push("    } else {".to_string());

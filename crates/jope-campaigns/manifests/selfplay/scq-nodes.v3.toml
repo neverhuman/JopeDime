@@ -6,10 +6,18 @@ poll_ms = 2000
 telemetry_ms = 1000
 
 [[node]]
+name = "xbabe0"
+reserved_gpus = 0
+allow_disk_critical_launch = true
+cpu_job_slot_multiplier = 1.0
+gpu_companion_core_reserve = 4
+
+[[node]]
 name = "xbabe1"
 reserved_gpus = 0
 allow_disk_critical_launch = true
 cpu_job_slot_multiplier = 1.0
+gpu_companion_core_reserve = 4
 
 [[node]]
 name = "xbabe2"
@@ -17,14 +25,17 @@ local = true
 reserved_gpus = 0
 allow_disk_critical_launch = true
 cpu_job_slot_multiplier = 1.0
+gpu_companion_core_reserve = 4
 
 [[node]]
 name = "xbabe3"
 reserved_gpus = 0
 allow_disk_critical_launch = true
 cpu_job_slot_multiplier = 1.0
+gpu_companion_core_reserve = 4
 
 [[node]]
 name = "xbabe4"
 reserved_gpus = 0
 cpu_job_slot_multiplier = 2.0
+gpu_companion_core_reserve = 0

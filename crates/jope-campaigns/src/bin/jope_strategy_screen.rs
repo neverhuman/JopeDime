@@ -643,6 +643,63 @@ enum EvalFailure {
     Unparseable,
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+struct EvalFailureCounts {
+    spawn: usize,
+    timeout: usize,
+    crashed: usize,
+    unparseable: usize,
+    invalid_oof: usize,
+}
+
+impl EvalFailureCounts {
+    fn record(&mut self, failure: EvalFailure) {
+        match failure {
+            EvalFailure::Spawn => self.spawn += 1,
+            EvalFailure::Timeout => self.timeout += 1,
+            EvalFailure::Crashed => self.crashed += 1,
+            EvalFailure::Unparseable => self.unparseable += 1,
+        }
+    }
+
+    fn merge(&mut self, other: Self) {
+        self.spawn += other.spawn;
+        self.timeout += other.timeout;
+        self.crashed += other.crashed;
+        self.unparseable += other.unparseable;
+        self.invalid_oof += other.invalid_oof;
+    }
+
+    fn total(self) -> usize {
+        self.spawn + self.timeout + self.crashed + self.unparseable + self.invalid_oof
+    }
+}
+
+fn strict_generation_completion(
+    generation: usize,
+    invalid_members: usize,
+    failures: EvalFailureCounts,
+) -> Result<(), String> {
+    if invalid_members == 0 {
+        return Ok(());
+    }
+    Err(format!(
+        "generation {generation} contains {invalid_members} members without complete pooled-OOF fitness; fold failures: spawn={}, timeout={}, crashed={}, unparseable={}, invalid_oof={}",
+        failures.spawn,
+        failures.timeout,
+        failures.crashed,
+        failures.unparseable,
+        failures.invalid_oof,
+    ))
+}
+
+fn eval_timeout_seconds() -> u64 {
+    std::env::var("JSS_EVAL_TIMEOUT_SECS")
+        .ok()
+        .and_then(|value| value.parse::<u64>().ok())
+        .unwrap_or(30)
+}
+
 /// Parent mode: run one evaluation in a killable child with a hard deadline
 /// (campaign parity: golden42 enforced a 30 s per-candidate timeout at the
 /// worker level). Returns the child's raw stdout.
@@ -654,10 +711,7 @@ fn run_eval_child(
     want_pred: bool,
 ) -> Result<String, EvalFailure> {
     use std::io::Write;
-    let timeout = std::env::var("JSS_EVAL_TIMEOUT_SECS")
-        .ok()
-        .and_then(|v| v.parse::<u64>().ok())
-        .unwrap_or(30);
+    let timeout = eval_timeout_seconds();
     let exe = std::env::current_exe().map_err(|_| EvalFailure::Spawn)?;
     let mut child = std::process::Command::new(exe)
         .arg("eval-one")
@@ -983,7 +1037,7 @@ fn run_strategy(
                         .collect()
                 })
                 .collect();
-            let outcomes: Vec<Option<f64>> = population
+            let outcomes: Vec<(Option<f64>, EvalFailureCounts)> = population
                 .par_iter()
                 .map(|member| {
                     let predictions: Vec<Result<Vec<f64>, EvalFailure>> = (0..folds.len())
@@ -996,19 +1050,33 @@ fn run_strategy(
                             )
                         })
                         .collect();
+                    let mut failures = EvalFailureCounts::default();
+                    for failure in predictions
+                        .iter()
+                        .filter_map(|result| result.as_ref().err())
+                    {
+                        failures.record(*failure);
+                    }
                     let prediction_views: Vec<Option<&[f64]>> = predictions
                         .iter()
                         .map(|result| result.as_ref().ok().map(Vec::as_slice))
                         .collect();
-                    complete_pooled_oof_r2(y, &folds, &prediction_views)
+                    let fitness = complete_pooled_oof_r2(y, &folds, &prediction_views);
+                    if fitness.is_none() && failures.total() == 0 {
+                        failures.invalid_oof = 1;
+                    }
+                    (fitness, failures)
                 })
                 .collect();
-            invalid_members = replace_generation_outcomes(&mut population, outcomes);
-            if invalid_members == population.len() {
-                return Err(format!(
-                    "generation {generation} produced no complete member fitness"
-                ));
+            let mut failures = EvalFailureCounts::default();
+            for (_, member_failures) in &outcomes {
+                failures.merge(*member_failures);
             }
+            invalid_members = replace_generation_outcomes(
+                &mut population,
+                outcomes.into_iter().map(|(fitness, _)| fitness).collect(),
+            );
+            strict_generation_completion(generation, invalid_members, failures)?;
             evaluations += population.len() * folds.len();
         // V1 replay: fresh split(s) or CV folds append to member history.
         } else if config.budget.cv_fitness > 0 {
@@ -1711,6 +1779,8 @@ fn run(config_path: &str, train_path: &str, output_path: &str) -> Result<(), Str
                 "required_search_folds": config.budget.cv_fitness,
                 "required_final_folds": config.final_cv_folds,
                 "complete_predictions_required": true,
+                "fail_on_incomplete_candidate": true,
+                "candidate_timeout_seconds": eval_timeout_seconds(),
             }))
         } else {
             None
@@ -2010,6 +2080,23 @@ mod tests {
         let mut population = vec![invalid, valid];
         rank(&mut population);
         assert_eq!(population[0].semantic, "valid");
+    }
+
+    #[test]
+    fn strict_generation_aborts_on_one_missing_candidate_with_failure_telemetry() {
+        let failures = EvalFailureCounts {
+            timeout: 1,
+            ..EvalFailureCounts::default()
+        };
+        let error = strict_generation_completion(21, 1, failures).unwrap_err();
+        assert!(error.contains("generation 21"), "{error}");
+        assert!(error.contains("timeout=1"), "{error}");
+        assert!(error.contains("invalid_oof=0"), "{error}");
+    }
+
+    #[test]
+    fn strict_generation_accepts_complete_candidate_coverage() {
+        strict_generation_completion(3, 0, EvalFailureCounts::default()).unwrap();
     }
 
     #[test]

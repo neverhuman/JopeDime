@@ -72,6 +72,8 @@ struct AggregateMetrics {
     context_gaps: Vec<(CanaryContextClass, f64)>,
     candidate_pairwise_gaps: Vec<f64>,
     gp_pairwise_gaps: Vec<f64>,
+    candidate_context_comparison_gaps: Vec<f64>,
+    gp_context_comparison_gaps: Vec<f64>,
     /// Contexts excluded from the order-statistic lift estimate because the two
     /// arms returned UNEQUAL numbers of valid scores. Zipping sorted survivor
     /// vectors of unequal length silently truncates to the shorter one -- so a
@@ -717,7 +719,9 @@ fn ensure_proposals(
     }
 }
 
-fn catalog_entries(root: &Path) -> Result<(Value, BTreeMap<(Task, String), Value>)> {
+type CatalogEntries = BTreeMap<(Task, String), Value>;
+
+fn catalog_entries(root: &Path) -> Result<(Value, CatalogEntries)> {
     let pointer = read_json(&root.join("catalog/current.json"))?;
     let catalog = read_json(Path::new(
         pointer
@@ -1084,6 +1088,22 @@ fn mean(values: &[f64]) -> f64 {
     }
 }
 
+/// Registered shadow-screen lower bound over independent context clusters.
+/// Candidate rows within one context are correlated, so the uncertainty unit
+/// is the context mean rather than the individual proposal comparison.
+fn registered_context_lower_bound(values: &[f64]) -> f64 {
+    if values.len() < 2 || values.iter().any(|value| !value.is_finite()) {
+        return -2.0;
+    }
+    let center = mean(values);
+    let variance = values
+        .iter()
+        .map(|value| (value - center).powi(2))
+        .sum::<f64>()
+        / (values.len() - 1) as f64;
+    (center - 1.96 * (variance / values.len() as f64).sqrt()).clamp(-2.0, 2.0)
+}
+
 fn dataset_slices(
     train: &Path,
     task: Task,
@@ -1389,22 +1409,26 @@ fn summarize(
         // arm's validity field, and letting them also shrink this vector let a
         // candidate's failures raise its measured lift (epoch-06 lane 05).
         if candidate_sorted.len() == accepted_sorted.len() {
-            aggregate.candidate_pairwise_gaps.extend(
-                candidate_sorted
-                    .iter()
-                    .zip(&accepted_sorted)
-                    .map(|(candidate, accepted)| candidate - accepted),
-            );
+            let gaps = candidate_sorted
+                .iter()
+                .zip(&accepted_sorted)
+                .map(|(candidate, accepted)| candidate - accepted)
+                .collect::<Vec<_>>();
+            aggregate
+                .candidate_context_comparison_gaps
+                .push(mean(&gaps));
+            aggregate.candidate_pairwise_gaps.extend(gaps);
         } else {
             aggregate.incomplete_accepted_contexts += 1;
         }
         if candidate_sorted.len() == gp_sorted.len() {
-            aggregate.gp_pairwise_gaps.extend(
-                candidate_sorted
-                    .iter()
-                    .zip(&gp_sorted)
-                    .map(|(candidate, gp)| candidate - gp),
-            );
+            let gaps = candidate_sorted
+                .iter()
+                .zip(&gp_sorted)
+                .map(|(candidate, gp)| candidate - gp)
+                .collect::<Vec<_>>();
+            aggregate.gp_context_comparison_gaps.push(mean(&gaps));
+            aggregate.gp_pairwise_gaps.extend(gaps);
         } else {
             aggregate.incomplete_gp_contexts += 1;
         }
@@ -1466,6 +1490,9 @@ fn summarize(
     let gp_validity = validity(&aggregate.gp);
     let pairwise_lift = mean(&aggregate.candidate_pairwise_gaps);
     let gp_lift = mean(&aggregate.gp_pairwise_gaps);
+    let accepted_lower_bound =
+        registered_context_lower_bound(&aggregate.candidate_context_comparison_gaps);
+    let gp_lower_bound = registered_context_lower_bound(&aggregate.gp_context_comparison_gaps);
     let latency_ratio =
         mean(&aggregate.candidate.runtimes) / mean(&aggregate.accepted.runtimes).max(1e-9);
     let failure_rate_increase = (1.0 - candidate_validity) - (1.0 - accepted_validity);
@@ -1510,6 +1537,7 @@ fn summarize(
             "novelty": novelty,
             "win_rate": aggregate.strict_wins as f64 / contexts.len().max(1) as f64,
             "pairwise_lift": pairwise_lift,
+            "pairwise_lift_lower_bound": accepted_lower_bound,
             "stability": stability,
             "efficiency": efficiency,
             "latency_ratio": latency_ratio,
@@ -1518,7 +1546,9 @@ fn summarize(
         "candidate_vs_gp": {
             "validity": candidate_validity.min(gp_validity),
             "pairwise_lift": gp_lift,
+            "pairwise_lift_lower_bound": gp_lower_bound,
         },
+        "comparison_lower_bound_method": "context_cluster_normal_95_v1",
         // Contexts whose arms returned unequal valid counts: their gaps are
         // EXCLUDED from the lift means above rather than silently truncated to
         // the shorter survivor vector. A reviewer reading pairwise_lift must be
@@ -2087,6 +2117,13 @@ mod tests {
         let metrics = lane_metrics(&requested, &scores);
         assert_eq!(metrics.requested, 8);
         assert_eq!(metrics.valid, 7);
+    }
+
+    #[test]
+    fn registered_lower_bound_uses_contexts_as_independent_units() {
+        assert_eq!(registered_context_lower_bound(&[0.1]), -2.0);
+        assert!(registered_context_lower_bound(&[0.1; 16]) > 0.0);
+        assert!(registered_context_lower_bound(&[-0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,]) < 0.1);
     }
 
     #[test]

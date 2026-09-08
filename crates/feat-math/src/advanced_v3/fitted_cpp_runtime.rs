@@ -38,6 +38,8 @@ const RUNTIME_LIBRARY: &[u8] =
 #[serde(deny_unknown_fields)]
 struct CodecMetadata {
     schema: String,
+    #[serde(default = "legacy_emitter_revision")]
+    emitter_revision: u32,
     artifact_schema: String,
     task_sha256: String,
     schema_sha256: String,
@@ -50,6 +52,10 @@ struct CodecMetadata {
     runtime_library_sha256: String,
     runtime_flags_sha256: String,
     compiler: String,
+}
+
+fn legacy_emitter_revision() -> u32 {
+    1
 }
 
 #[derive(Clone, Debug)]
@@ -258,7 +264,17 @@ impl FittedCppRuntime {
     }
 
     pub fn load(&self, codec: &[u8]) -> Result<FittedCppModel> {
-        decode(codec)?;
+        let decoded = decode(codec)?;
+        // Decode historical containers, but never dlopen an artifact emitted
+        // before the whole-expression bounds/domain repair. Regenerate from
+        // the embedded fitted model without refitting or changing old bytes.
+        let upgraded;
+        let codec = if decoded.emitter_revision < 2 {
+            upgraded = encode_fitted_cpp17(&decoded.model)?;
+            upgraded.bytes.as_slice()
+        } else {
+            codec
+        };
         let sequence = TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
         let codec_sha256 = sha256_hex(codec);
         let directory = self.work_root.join(format!(
@@ -351,6 +367,7 @@ pub(super) fn encode_artifact(
     let (model_library, compiler) = compile_model_library(artifact.source.as_bytes())?;
     let metadata = CodecMetadata {
         schema: "jope-dime.fitted-model-codec.v2".to_string(),
+        emitter_revision: 2,
         artifact_schema: model.artifact_schema.clone(),
         task_sha256: model.task_sha256.clone(),
         schema_sha256: model.schema_sha256.clone(),
@@ -398,8 +415,11 @@ pub(super) fn encode_artifact(
     })
 }
 
-#[derive(Debug, PartialEq, Eq)]
-struct DecodedCodec;
+#[derive(Debug)]
+struct DecodedCodec {
+    model: BoundModel,
+    emitter_revision: u32,
+}
 
 fn decode(bytes: &[u8]) -> Result<DecodedCodec> {
     if bytes.len() < HEADER_LEN + CHECKSUM_LEN || bytes.len() > MAX_CODEC_LEN {
@@ -442,6 +462,7 @@ fn decode(bytes: &[u8]) -> Result<DecodedCodec> {
     let library_at = source_at + source_len;
     let metadata: CodecMetadata = serde_json::from_slice(&bytes[metadata_at..model_at])?;
     if metadata.schema != "jope-dime.fitted-model-codec.v2"
+        || !(1..=2).contains(&metadata.emitter_revision)
         || metadata.runtime_flags_sha256 != text_hash(&FLAGS.join(" "))
         || metadata.runtime_source_sha256 != text_hash(RUNTIME_SOURCE)
         || metadata.runtime_library_sha256 != sha256_hex(RUNTIME_LIBRARY)
@@ -468,7 +489,14 @@ fn decode(bytes: &[u8]) -> Result<DecodedCodec> {
     if sha256_hex(&model_library) != metadata.model_library_sha256 {
         bail!("fitted codec model library hash mismatch");
     }
-    Ok(DecodedCodec)
+    // The source must correspond to the admitted model, not merely carry a
+    // self-consistent hash. Old revisions are re-emitted by load above.
+    if metadata.emitter_revision == 2
+        && emit_fitted_cpp17(&model)?.source_sha256 != metadata.source_sha256
+    {
+        bail!("fitted codec source does not match the current emitter");
+    }
+    Ok(DecodedCodec { model, emitter_revision: metadata.emitter_revision })
 }
 
 fn compile_model_library(source: &[u8]) -> Result<(Vec<u8>, String)> {
@@ -690,6 +718,41 @@ mod tests {
     }
 
     #[test]
+    fn historical_unsafe_expression_library_is_regenerated_before_loading() {
+        let genome = GenomeIr::parse("(sym raw \"c9+1\")").unwrap();
+        let model = crate::fit_legacy_numeric_bound(&genome, &vec![vec![1.,2.],vec![2.,3.]], &[0.,1.]).unwrap();
+        let mut artifact = emit_fitted_cpp17(&model).unwrap();
+        let GenomeIr::Symbolic { expr, .. } = genome else { unreachable!() };
+        artifact.source = artifact.source.replace(&expr.to_cpp17(false).unwrap(), "(row[9]+1.0)");
+        artifact.source_sha256 = text_hash(&artifact.source);
+        let encoded = encode_artifact(&model, &artifact).unwrap();
+        let old_metadata_len = read_u64(&encoded.bytes, 24).unwrap() as usize;
+        let old_payload_at = HEADER_LEN + old_metadata_len;
+        let mut metadata: serde_json::Value = serde_json::from_slice(&encoded.bytes[HEADER_LEN..old_payload_at]).unwrap();
+        let old_library_hash = metadata["model_library_sha256"].as_str().unwrap().to_string();
+        metadata.as_object_mut().unwrap().remove("emitter_revision");
+        let metadata = serde_json::to_vec(&metadata).unwrap();
+        let mut historical = encoded.bytes[..HEADER_LEN].to_vec();
+        historical.extend(&metadata);
+        historical.extend(&encoded.bytes[old_payload_at..encoded.bytes.len()-CHECKSUM_LEN]);
+        let total = (historical.len()+CHECKSUM_LEN) as u64;
+        historical[16..24].copy_from_slice(&total.to_le_bytes());
+        historical[24..32].copy_from_slice(&(metadata.len() as u64).to_le_bytes());
+        let checksum = Sha256::digest(&historical);
+        historical.extend(checksum);
+        assert_eq!(decode(&historical).unwrap().emitter_revision, 1);
+        let original = historical.clone();
+        let root = std::env::temp_dir().join(format!("kernel-codec-upgrade-{}", std::process::id()));
+        let runtime = FittedCppRuntime::new(&root).unwrap();
+        let loaded = runtime.load(&historical).unwrap();
+        assert_ne!(sha256_hex(&fs::read(loaded.directory.join("model.so")).unwrap()), old_library_hash);
+        assert_eq!(loaded.predict(&EncodedTable::from_numeric_rows(&[vec![1.,2.]]).unwrap()).unwrap(), vec![0.0]);
+        assert_eq!(historical, original);
+        drop(loaded); drop(runtime);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn safe_runtime_matches_bound_predictions() {
         let (model, test) = fixture();
         let codec = encode_fitted_cpp17(&model).unwrap();
@@ -697,7 +760,8 @@ mod tests {
         assert_eq!(codec.sha256, repeated.sha256);
         assert_eq!(codec.bytes, repeated.bytes);
         let decoded = decode(&codec.bytes).unwrap();
-        assert_eq!(decoded, DecodedCodec);
+        assert_eq!(decoded.emitter_revision, 2);
+        assert_eq!(decoded.model.genome_sha256, model.genome_sha256);
         let encoded = EncodedTable::from_bound_model(&model, &test).unwrap();
         let root = std::env::temp_dir().join(format!("fitted-cpp-runtime-{}", std::process::id()));
         let runtime = FittedCppRuntime::new(&root).unwrap();

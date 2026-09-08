@@ -1,0 +1,14 @@
+{
+  "binary": "bin/hyperion-v5-reference",
+  "binary_sha256": "5e6e434fe08b8a654361eaeac381cbf9e683044fdce5635b236b3178efad7d6b",
+  "weights": "assets/models/hyperion-v5-armB/model.safetensors",
+  "weights_sha256": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+  "config": "assets/models/hyperion-v5-armB/manifest.json",
+  "config_sha256": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+  "source_manifest": "manifests/generated/source-hyperion.json",
+  "source_manifest_sha256": "919ff4570889c3e6a37ce12dcf641b216d6345d5df0a4e20f240566fa63c4d3a",
+  "loader": "assets/runtime/hyperion-glibc/ld-linux-x86-64.so.2",
+  "loader_sha256": "cd4df4f3c7b83673d61189bf2eaebd33ca4f2853ab9772b8a25e025ef99b1e81",
+  "runtime_manifest": "manifests/generated/hyperion-runtime-files.json",
+  "runtime_manifest_sha256": "e36d1d9e4fa6279481a9d94c642f2552013b204b75d9bfcc350a49fb55bd3ffc"
+}

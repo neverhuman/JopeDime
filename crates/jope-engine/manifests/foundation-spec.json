@@ -1,0 +1,8 @@
+{
+  "module": "assets/foundation-export-v1/foundation.pt",
+  "module_sha256": "87bae6a223a022119e4101564d6ee3674b831d09756f70379eed8f429a70b60e",
+  "sampling": "assets/foundation-export-v1/sampling.json",
+  "sampling_sha256": "a26bd186484fd01af463bc2eb3d46d76383288e9dc426c314403fe9817b5b634",
+  "parity": "assets/foundation-export-v1/parity.json",
+  "parity_sha256": "56fd2d5b0c4737f93e0e9c4f25ce80a940d44273eb0d1581b366ed291edb6d03"
+}

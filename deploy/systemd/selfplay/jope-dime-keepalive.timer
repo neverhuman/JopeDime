@@ -1,0 +1,11 @@
+[Unit]
+Description=DIME reconciliation keepalive
+
+[Timer]
+OnBootSec=60
+OnUnitInactiveSec=120
+AccuracySec=5
+Persistent=true
+
+[Install]
+WantedBy=timers.target

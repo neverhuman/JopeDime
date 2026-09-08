@@ -225,13 +225,9 @@ fn finite_f64(value: &Value, field: &str) -> Result<f64> {
 /// Per-task authority metric (R1/D2); must agree with
 /// `crate::task::TaskKind::primary_metric`.
 fn expected_authority_metric(task: &str) -> Result<&'static str> {
-    match task {
-        "regression" => Ok("r2"),
-        "binary" => Ok("auc"),
-        "timeseries" => Ok("negative_mase"),
-        "multiclass" => Ok("macro_f1"),
-        _ => bail!("unsupported task {task}"),
-    }
+    Task::parse(task)
+        .map(Task::primary_metric)
+        .ok_or_else(|| anyhow::anyhow!("unsupported task {task}"))
 }
 
 fn authority(value: &Value, task: &str, receipt: bool) -> Result<Authority> {

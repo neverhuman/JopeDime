@@ -1,0 +1,90 @@
+# Prime is an independent, shadow-mode fork. Legacy inputs are never written.
+[legacy]
+access = "read_only"
+root = "/home/ubuntu/jope"
+warm_start_checkpoint = "/home/ubuntu/jope/runs/self_play_v33/gen31.pt"
+jain_binary_reference = "/home/ubuntu/jain_small/target/release/jain"
+regression_dataset_root = "/home/ubuntu/remote_super/quant/regression"
+binary_dataset_root = "/home/ubuntu/remote_super/quant/binary"
+newmath_winners_dir = "/home/ubuntu/jmath/artifacts/newmath/winners"
+hyperion_binary_candidates = [
+  "/home/ubuntu/remote_super/quant/models/.cluster/hyp3_vs/hyp3_vs_cuda_20260704T0228Z/bin/hyperion_vs",
+  "/home/ubuntu/remote_super/super_cluster/hyp30_vs/hyp30_vs_20260704T062139Z/bin/hyperion_vs",
+  "/home/ubuntu/jain_small/target/release/hyperion_vs",
+]
+hyperion_weights = "/home/ubuntu/hyperion/weights/v5_armB/model.safetensors"
+hyperion_manifest = "/home/ubuntu/hyperion/weights/v5_armB/manifest.json"
+validation_benchmark_root = "/home/ubuntu/autoR_bench_zeroshotsuper"
+fable_root = "/home/ubuntu/autoR_bench_fable"
+nomad_root = "/home/ubuntu/nomad"
+quant_models_root = "/home/ubuntu/remote_super/quant/models"
+foundation_fusion_python = "/home/ubuntu/remote_super/fable_god/chimera_regression/python"
+target_maker_exporter = "/home/ubuntu/target_maker/scripts/export_target_vs_all.py"
+target_encoder_model = "/home/ubuntu/target_runs/full_rich_instance_20260705_070543/best.pt"
+validation_dataset_manifest = "/home/ubuntu/jope/runs/self_play_v33/validation_datasets_self_play_v33.json"
+active_training_corpus = "/home/ubuntu/jope/data/processed/active_v3_dual_20260706/active_rows.jsonl"
+signature_manifest = "/home/ubuntu/jope/data/processed/active_v3_dual_20260706/split_manifest.json"
+standardization = "/home/ubuntu/jope/data/processed/active_v3_dual_20260706/standardization.json"
+active_vocabulary = "/home/ubuntu/jope/data/processed/active_v3_dual_20260706/active_vocab.json"
+newmath_binary = "/home/ubuntu/jmath/target/release/newmath"
+newmath_concepts = "/home/ubuntu/jmath/target/newmath/concepts.jsonl"
+newmath_survivors = "/home/ubuntu/jmath/target/newmath/state/survivor_pool.jsonl"
+
+[prime]
+root = "/home/ubuntu/jope-prime"
+registry_snapshot = "registry/operator_registry.json"
+generation31_vocab_snapshot = "registry/compatibility/gen31_policy_v3_vocab.json"
+arena_suite_manifest = "registry/compatibility/prime_arena_suites_v1.json"
+artifacts = "prime/artifacts"
+runs = "prime/runs"
+cache = "prime/cache"
+ssh_control_dir = "prime/cache/ssh"
+checkpoints = "prime/checkpoints"
+models = "prime/models"
+jain_binary = "rust/target/release/jain"
+gpu_cache = "prime/cache/battle-gpu"
+mode = "shadow"
+
+[remote]
+# Durable per-node paths on worker hosts. MUST NOT live under /tmp: all three
+# nodes carry systemd-tmpfiles "D /tmp 1777 root root 30d", which destroys
+# /tmp at every boot (this vaporized every deployed release at the 2026-07-12
+# 23:13 UTC reboot and left scqd's recovered jobs ENOENT-looping). /home and
+# /tmp are the same filesystem on all three nodes, so this costs zero space.
+# Persistent outputs are still copied back below prime.runs/cache.
+scratch_root = "/home/ubuntu/jope-scratch"
+
+[league]
+bind = "0.0.0.0:9781"
+coordinator_url = "http://xbabe2:9781"
+token_env = "JOPE_LEAGUE_TOKEN"
+scq_bin = "/home/ubuntu/smart_cluster/target/release/scq"
+scq_nodes_config = "/home/ubuntu/smart_cluster/etc/nodes.toml"
+arena_cpu_lanes = 24
+gp_cpu_lanes = 96
+gp_permanent_lanes = 8
+gp_lane_cpu_lanes = 12
+gp_burst_lanes = 2
+gp_burst_cpu_lanes = 12
+gpu_admission_slots = 2
+# Operational FastCuda rollout gate. Keep empty until the corrected Stage-0
+# matrix certifies xbabe3; no other host is accepted by the loader.
+jain_gpu_screen_hosts = []
+bootstrap_rows = 71225
+bootstrap_train_rows = 69056
+bootstrap_sealed_rows = 2169
+bootstrap_train_datasets = 2090
+bootstrap_corpus_sha256 = "d4ca4e1d23b251a02efa8ce57d1541b6c6cecc5ec256f709876d066d5a07f1fb"
+bootstrap_corpus_bytes = 2786756492
+warm_start_sha256 = "6a20443443d4d7edc75aa18ef2825c3f240ea92b02f09573c6f53c41e76f60d0"
+warm_start_bytes = 108951019
+authority_cutover_hours = 24
+authority_min_challengers = 10
+trainer_python = "python3"
+
+[evaluation]
+discovery_backend = "auto"
+promotion_backend = "exact_f64"
+user_artifact = "portable_python"
+max_width = 512
+cuda_tf32 = false

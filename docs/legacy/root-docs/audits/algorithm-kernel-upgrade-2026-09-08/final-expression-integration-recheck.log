@@ -1,0 +1,29 @@
+   Compiling feat-math v0.1.0 (/home/ubuntu/jope-dime/vendor/feat-math)
+warning: variable does not need to be mutable
+    --> vendor/feat-math/src/ops.rs:1885:17
+     |
+1885 |             let mut pick_center = |rng: &mut Pcg32, forced: usize| -> f64 {
+     |                 ----^^^^^^^^^^^
+     |                 |
+     |                 help: remove this `mut`
+     |
+     = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: `feat-math` (lib test) generated 1 warning (run `cargo fix --lib -p feat-math --tests` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.05s
+     Running unittests src/lib.rs (/tmp/jope-kernel-upgrade-target/debug/deps/feat_math-ca5349ab32482e6a)
+
+running 10 tests
+test ops::tests::impute_fills_zeros_and_appends_indicators ... ok
+test ops::tests::map_and_derive_round_trip_expressions ... ok
+test ops::tests::sigmoid_norm_row_and_diff_stats_values ... ok
+test ops::tests::polar_lag_roll_shapes_and_values ... ok
+test ops::tests::nystrom_landmarks_are_deterministic_train_rows ... ok
+test ops::tests::fft_mag_and_row_spectral_are_finite ... ok
+test ops::tests::scalar_batch_functions_evaluate_with_guarded_semantics ... ok
+test ops::tests::svd_project_is_deterministic_and_orthonormal ... ok
+test ops::tests::svd_pipeline_cv_smoke ... ok
+test ops::tests::every_op_survives_near_constant_columns ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 261 filtered out; finished in 0.20s
+

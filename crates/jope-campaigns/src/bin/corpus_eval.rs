@@ -13,17 +13,15 @@
 //! mirrors `binary_cv::evaluate_test_adaptive_binary` (advanced-v3 raw string
 //! table + fit_table/predict_table with TaskSpec binary/RocAuc).
 //!
-//! Timeout semantics (documented tradeoff): each candidate is evaluated on a
-//! dedicated OS thread while the dispatching rayon worker blocks on
-//! `recv_timeout`. On expiry the candidate is receipted as `failure:"timeout"`
-//! and the evaluation thread is abandoned (it keeps burning one core until the
-//! process exits — acceptable for single-shard worker processes, which exit
-//! right after the shard completes). Timeout is therefore wall-clock accurate
-//! for receipts but only best-effort for CPU reclamation.
+//! Timeout semantics: each candidate is evaluated by a private `eval-one`
+//! child in its own process group. On expiry the parent sends SIGTERM, waits a
+//! fixed grace period, sends SIGKILL if necessary, and reaps the group before
+//! the scheduling slot is reused. A child may never publish a receipt.
 //!
 //! Modes:
 //!   corpus_eval --manifest <shard.json> --output-dir <dir> [--threads N]
 //!               [--timeout-seconds 300]
+//!   corpus_eval eval-one --manifest <shard.json> --candidate-index N --result <path>
 //!   corpus_eval validate-manifest --manifest <shard.json>
 //!   corpus_eval rewrite-binary-heads --winners-dir <dir> \
 //!               --heads logit_ridge,gam_boost,tab_boost --output <jsonl>
@@ -38,6 +36,7 @@ use feat_math::{
     auc, fit_predict, fit_table, logloss, multiclass_accuracy, r2, rmse, ColumnSpec, DataSchema,
     Objective, RawTable, RowSemantics, Rows, TaskSpec,
 };
+use jope_dime_regressor::task::Task;
 use jope_dime_regressor::timeseries::{
     make_direct_forecast_rows, make_direct_reduction, make_forecast_features,
     make_supervised_reduction, read_timeseries_csv_bytes, score_timeseries,
@@ -46,12 +45,14 @@ use jope_dime_regressor::timeseries::{
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+#[cfg(unix)]
+use std::os::unix::process::CommandExt;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::path::{Path, PathBuf};
-use std::process::Command;
-use std::sync::{mpsc, Arc};
+use std::process::{Command, Stdio};
+use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use std::{env, fs, thread};
+use std::{env, fs};
 
 const SHARD_SCHEMA: &str = "JopeFlywheelCorpusEvalShard.v1";
 /// v2 differs from v1 only by the REQUIRED `reduction.version` pin on
@@ -260,6 +261,152 @@ struct MulticlassEvidence {
     probabilities: Vec<Vec<f64>>,
 }
 
+/// The private `eval-one` wire format deliberately contains only the
+/// candidate outcome.  The parent remains the sole writer of receipts and
+/// prediction artifacts, so a killed child can never publish a partial
+/// receipt.
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+enum EvalOneWire {
+    Score {
+        score: f64,
+        secondary: f64,
+        balanced_accuracy: Option<f64>,
+        timeseries_metrics: Option<TimeSeriesMetricsWire>,
+        predictions: Vec<f64>,
+        classes: Option<Vec<i64>>,
+        probabilities: Option<Vec<Vec<f64>>>,
+    },
+    Fail {
+        class: String,
+        message: String,
+    },
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct TimeSeriesMetricsWire {
+    mase: f64,
+    rmse: f64,
+    mse: f64,
+    mae: f64,
+    smape: f64,
+    wape: f64,
+    prediction_min: f64,
+    prediction_max: f64,
+    target_min: f64,
+    target_max: f64,
+    mase_denominator: f64,
+}
+
+impl From<&TimeSeriesMetrics> for TimeSeriesMetricsWire {
+    fn from(metrics: &TimeSeriesMetrics) -> Self {
+        Self {
+            mase: metrics.mase,
+            rmse: metrics.rmse,
+            mse: metrics.mse,
+            mae: metrics.mae,
+            smape: metrics.smape,
+            wape: metrics.wape,
+            prediction_min: metrics.prediction_min,
+            prediction_max: metrics.prediction_max,
+            target_min: metrics.target_min,
+            target_max: metrics.target_max,
+            mase_denominator: metrics.mase_denominator,
+        }
+    }
+}
+
+impl From<TimeSeriesMetricsWire> for TimeSeriesMetrics {
+    fn from(metrics: TimeSeriesMetricsWire) -> Self {
+        Self {
+            mase: metrics.mase,
+            rmse: metrics.rmse,
+            mse: metrics.mse,
+            mae: metrics.mae,
+            smape: metrics.smape,
+            wape: metrics.wape,
+            prediction_min: metrics.prediction_min,
+            prediction_max: metrics.prediction_max,
+            target_min: metrics.target_min,
+            target_max: metrics.target_max,
+            mase_denominator: metrics.mase_denominator,
+        }
+    }
+}
+
+impl From<Outcome> for EvalOneWire {
+    fn from(outcome: Outcome) -> Self {
+        match outcome {
+            Outcome::Score {
+                score,
+                secondary,
+                balanced_accuracy,
+                timeseries_metrics,
+                predictions,
+                multiclass,
+            } => Self::Score {
+                score,
+                secondary,
+                balanced_accuracy,
+                timeseries_metrics: timeseries_metrics.as_ref().map(Into::into),
+                predictions,
+                classes: multiclass.as_ref().map(|value| value.classes.clone()),
+                probabilities: multiclass.map(|value| value.probabilities),
+            },
+            Outcome::Fail { class, message } => Self::Fail {
+                class: class.to_owned(),
+                message,
+            },
+        }
+    }
+}
+
+impl TryFrom<EvalOneWire> for Outcome {
+    type Error = String;
+
+    fn try_from(wire: EvalOneWire) -> Result<Self, Self::Error> {
+        match wire {
+            EvalOneWire::Score {
+                score,
+                secondary,
+                balanced_accuracy,
+                timeseries_metrics,
+                predictions,
+                classes,
+                probabilities,
+            } => {
+                let multiclass = match (classes, probabilities) {
+                    (None, None) => None,
+                    (Some(classes), Some(probabilities)) => Some(MulticlassEvidence {
+                        classes,
+                        probabilities,
+                    }),
+                    _ => return Err("eval-one score has incomplete multiclass evidence".into()),
+                };
+                Ok(Self::Score {
+                    score,
+                    secondary,
+                    balanced_accuracy,
+                    timeseries_metrics: timeseries_metrics.map(Into::into),
+                    predictions,
+                    multiclass,
+                })
+            }
+            EvalOneWire::Fail { class, message } => {
+                let class = match class.as_str() {
+                    "panic" => "panic",
+                    "nonfinite" => "nonfinite",
+                    "timeout" => "timeout",
+                    "fit" => "fit",
+                    "parse" => "parse",
+                    _ => return Err(format!("eval-one returned unknown failure class {class}")),
+                };
+                Ok(Self::Fail { class, message })
+            }
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // shared helpers
 // ---------------------------------------------------------------------------
@@ -323,18 +470,20 @@ fn short_hostname() -> String {
         .unwrap_or_else(|| "unknown".to_string())
 }
 
-/// Headerless numeric CSV, LAST column = target. Mirrors jope-dime's
+/// Numeric CSV with an optional first header row, LAST column = target. Mirrors jope-dime's
 /// `data::read_csv_text_core(IndicatorMode::None)` exactly: trimmed fields,
 /// `str::parse::<f64>`, non-finite features silently become 0.0, targets must
 /// be finite, constant width enforced.
 fn read_numeric_csv(text: &str, source: &str) -> Result<Data> {
     let (mut x, mut y, mut features) = (Vec::new(), Vec::new(), None);
+    let mut records_seen = 0usize;
     for (line_no, line) in text.lines().enumerate() {
         let line = line.trim();
         if line.is_empty() {
             continue;
         }
-        let mut values = line
+        records_seen += 1;
+        let values = line
             .split(',')
             .map(|field| {
                 field
@@ -342,7 +491,12 @@ fn read_numeric_csv(text: &str, source: &str) -> Result<Data> {
                     .parse::<f64>()
                     .with_context(|| format!("{source}:{} invalid numeric field", line_no + 1))
             })
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<Result<Vec<_>>>();
+        let mut values = match values {
+            Ok(values) => values,
+            Err(_) if records_seen == 1 => continue,
+            Err(error) => return Err(error),
+        };
         if values.len() < 2 {
             bail!(
                 "{source}:{} needs at least one feature and one target",
@@ -505,13 +659,7 @@ fn raw_table_named(headers: &[String], rows: &[Vec<f64>]) -> Result<RawTable> {
 /// Per-task authority metric (R1/D2); must agree with
 /// `jope_dime_regressor::task::TaskKind::primary_metric`.
 fn task_metric(task: &str) -> Option<&'static str> {
-    match task {
-        "regression" => Some("r2"),
-        "binary" => Some("auc"),
-        "timeseries" => Some("negative_mase"),
-        "multiclass" => Some("macro_f1"),
-        _ => None,
-    }
+    Task::parse(task).map(Task::primary_metric)
 }
 
 fn secondary_metric(task: &str) -> &'static str {
@@ -1162,36 +1310,320 @@ fn evaluate_timeseries_v2(candidate: &ShardCandidate, data: &TimeSeriesData) -> 
     }
 }
 
-/// Run `eval_fn` on a dedicated thread with a wall-clock deadline; panics
-/// become `failure:"panic"`, deadline expiry becomes `failure:"timeout"` (the
-/// abandoned thread is documented in the module header).
+/// Put a child in its own process group.  `eval-one` is intentionally a
+/// private protocol: it reads the pinned manifest, evaluates exactly one
+/// candidate, and writes one small JSON outcome.  The parent owns receipt
+/// publication and therefore never ingests a child-owned partial artifact.
+fn spawn_eval_one(
+    manifest: &Path,
+    candidate_index: usize,
+    result: &Path,
+) -> Result<std::process::Child> {
+    let executable = env::current_exe().context("resolve corpus_eval executable")?;
+    let mut command = Command::new(executable);
+    command
+        .arg("eval-one")
+        .arg("--manifest")
+        .arg(manifest)
+        .arg("--candidate-index")
+        .arg(candidate_index.to_string())
+        .arg("--result")
+        .arg(result)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    #[cfg(unix)]
+    unsafe {
+        command.pre_exec(|| {
+            if libc::setsid() < 0 {
+                return Err(std::io::Error::last_os_error());
+            }
+            let parent = libc::getppid();
+            if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGTERM) != 0 {
+                return Err(std::io::Error::last_os_error());
+            }
+            if libc::getppid() != parent {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::BrokenPipe,
+                    "corpus_eval parent exited during eval-one spawn",
+                ));
+            }
+            Ok(())
+        });
+    }
+    command
+        .spawn()
+        .with_context(|| format!("spawn eval-one candidate {candidate_index}"))
+}
+
+fn process_group_exists(pid: libc::pid_t) -> Result<bool> {
+    #[cfg(unix)]
+    unsafe {
+        if libc::kill(-pid, 0) == 0 {
+            return Ok(true);
+        }
+        let error = std::io::Error::last_os_error();
+        if error.raw_os_error() == Some(libc::ESRCH) {
+            return Ok(false);
+        }
+        return Err(error).context("probe eval-one process group");
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = pid;
+        Ok(false)
+    }
+}
+
+fn wait_for_process_group_exit(pid: libc::pid_t, grace: Duration) -> Result<bool> {
+    let deadline = Instant::now() + grace;
+    loop {
+        if !process_group_exists(pid)? {
+            return Ok(true);
+        }
+        if Instant::now() >= deadline {
+            return Ok(false);
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    }
+}
+
+fn terminate_process_group(child: &mut std::process::Child, grace: Duration) -> Result<()> {
+    let pid = child.id() as libc::pid_t;
+    #[cfg(unix)]
+    unsafe {
+        // The child is a session leader created by setsid, so its PID is its
+        // process-group ID. A negative kill reaches descendants as well.
+        if libc::kill(-pid, libc::SIGTERM) != 0 && *libc::__errno_location() != libc::ESRCH {
+            return Err(std::io::Error::last_os_error()).context("terminate eval-one group");
+        }
+    }
+    let deadline = Instant::now() + grace;
+    let mut leader_reaped = false;
+    while Instant::now() < deadline {
+        if !leader_reaped && child.try_wait()?.is_some() {
+            leader_reaped = true;
+        }
+        if leader_reaped && !process_group_exists(pid)? {
+            return Ok(());
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    #[cfg(unix)]
+    unsafe {
+        if libc::kill(-pid, libc::SIGKILL) != 0 && *libc::__errno_location() != libc::ESRCH {
+            return Err(std::io::Error::last_os_error()).context("kill eval-one group");
+        }
+    }
+    if !leader_reaped {
+        child.wait().context("reap eval-one process group")?;
+    }
+    if !wait_for_process_group_exit(pid, grace)? {
+        bail!("eval-one process group survived SIGKILL grace period");
+    }
+    Ok(())
+}
+
 fn run_with_timeout(
-    eval_fn: impl FnOnce() -> Outcome + Send + 'static,
+    manifest: &Path,
+    candidate_index: usize,
+    result: &Path,
     timeout: Duration,
-) -> Outcome {
-    let (tx, rx) = mpsc::channel();
-    thread::spawn(move || {
-        let result = catch_unwind(AssertUnwindSafe(eval_fn));
-        let _ = tx.send(result);
-    });
-    match rx.recv_timeout(timeout) {
-        Ok(Ok(outcome)) => outcome,
-        Ok(Err(panic)) => {
-            let message = panic
-                .downcast_ref::<&str>()
-                .map(|s| s.to_string())
-                .or_else(|| panic.downcast_ref::<String>().cloned())
-                .unwrap_or_else(|| "opaque panic payload".to_string());
-            Outcome::Fail {
+) -> Result<Outcome> {
+    let started = Instant::now();
+    let mut child = match spawn_eval_one(manifest, candidate_index, result) {
+        Ok(child) => child,
+        Err(error) => {
+            return Ok(Outcome::Fail {
                 class: "panic",
-                message,
+                message: format!("{error:#}"),
+            });
+        }
+    };
+    let pid = child.id() as libc::pid_t;
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                if !wait_for_process_group_exit(pid, Duration::from_millis(250))? {
+                    return Err(anyhow::anyhow!(
+                        "eval-one process group survived after leader exit"
+                    ));
+                }
+                if !status.success() {
+                    return Ok(Outcome::Fail {
+                        class: "panic",
+                        message: format!("eval-one exited with {status}"),
+                    });
+                }
+                let bytes = match fs::read(result) {
+                    Ok(bytes) => bytes,
+                    Err(error) => {
+                        return Ok(Outcome::Fail {
+                            class: "panic",
+                            message: format!("eval-one result is missing: {error}"),
+                        });
+                    }
+                };
+                return Ok(
+                    match serde_json::from_slice::<EvalOneWire>(&bytes)
+                        .map_err(|error| error.to_string())
+                        .and_then(Outcome::try_from)
+                    {
+                        Ok(outcome) => outcome,
+                        Err(error) => Outcome::Fail {
+                            class: "panic",
+                            message: format!("invalid eval-one result: {error}"),
+                        },
+                    },
+                );
+            }
+            Ok(None) if started.elapsed() >= timeout => {
+                let message = format!("exceeded {} second wall-clock budget", timeout.as_secs());
+                terminate_process_group(&mut child, Duration::from_millis(250)).with_context(
+                    || format!("cleanup timed-out eval-one candidate {candidate_index}"),
+                )?;
+                return Ok(Outcome::Fail {
+                    class: "timeout",
+                    message,
+                });
+            }
+            Ok(None) => std::thread::sleep(Duration::from_millis(10)),
+            Err(error) => {
+                terminate_process_group(&mut child, Duration::from_millis(250)).with_context(
+                    || format!("cleanup after polling eval-one candidate {candidate_index}"),
+                )?;
+                return Ok(Outcome::Fail {
+                    class: "panic",
+                    message: format!("poll eval-one: {error}"),
+                });
             }
         }
-        Err(_) => Outcome::Fail {
-            class: "timeout",
-            message: format!("exceeded {} second wall-clock budget", timeout.as_secs()),
-        },
     }
+}
+
+fn evaluate_one_manifest(shard: &Shard, candidate_index: usize) -> Result<Outcome> {
+    let candidate = shard
+        .candidates
+        .get(candidate_index)
+        .context("candidate index is outside the shard")?;
+    let reduction_version = resolve_reduction(shard)?;
+    if shard.task == "timeseries" {
+        let data = load_timeseries_shard_data(shard)?;
+        let result = catch_unwind(AssertUnwindSafe(|| match reduction_version {
+            ReductionVersion::V1 => evaluate_timeseries(candidate, &data),
+            ReductionVersion::V2 => evaluate_timeseries_v2(candidate, &data),
+        }));
+        return Ok(match result {
+            Ok(outcome) => outcome,
+            Err(panic) => Outcome::Fail {
+                class: "panic",
+                message: panic_message(panic),
+            },
+        });
+    }
+
+    let mut train = load_pinned_csv(&shard.train_csv, &shard.train_sha256, "train")?;
+    let mut test = load_pinned_csv(&shard.test_csv, &shard.test_sha256, "test")?;
+    if train.features != test.features {
+        bail!(
+            "train/test feature widths differ ({} vs {})",
+            train.features,
+            test.features
+        );
+    }
+    let mut multiclass_context = None;
+    let dataset_failure = if shard.task == "binary" {
+        validate_binary_targets(&train.y, "train")
+            .or_else(|| validate_binary_targets(&test.y, "test"))
+    } else if shard.task == "multiclass" {
+        let meta_path = shard
+            .meta_json
+            .as_deref()
+            .context("multiclass shard manifest must pin meta_json")?;
+        let meta_sha256 = shard
+            .meta_sha256
+            .as_deref()
+            .context("multiclass shard manifest must pin meta_sha256")?;
+        let meta = load_pinned_json(meta_path, meta_sha256, "meta")?;
+        match decode_multiclass_splits(&train.y, &test.y, &meta) {
+            Ok(decoded) => {
+                train.y = decoded.train;
+                test.y = decoded.test;
+                multiclass_context = Some(decoded.context);
+                None
+            }
+            Err(error) => Some(error),
+        }
+    } else {
+        None
+    };
+    if let Some(message) = dataset_failure {
+        return Ok(Outcome::Fail {
+            class: "fit",
+            message,
+        });
+    }
+    let tables = if matches!(shard.task.as_str(), "binary" | "multiclass") {
+        Some((
+            raw_table(train.features, &train.x)?,
+            raw_table(test.features, &test.x)?,
+        ))
+    } else {
+        None
+    };
+    let outcome = catch_unwind(AssertUnwindSafe(|| match tables {
+        None => evaluate_regression(candidate, &train, &test),
+        Some((train_table, test_table)) if shard.task == "multiclass" => evaluate_multiclass(
+            candidate,
+            &train_table,
+            &train.y,
+            &test_table,
+            &test.y,
+            train.features,
+            multiclass_context
+                .as_ref()
+                .expect("validated multiclass context"),
+        ),
+        Some((train_table, test_table)) => evaluate_binary(
+            candidate,
+            &train_table,
+            &train.y,
+            &test_table,
+            &test.y,
+            train.features,
+        ),
+    }));
+    Ok(match outcome {
+        Ok(outcome) => outcome,
+        Err(panic) => Outcome::Fail {
+            class: "panic",
+            message: panic_message(panic),
+        },
+    })
+}
+
+fn panic_message(panic: Box<dyn std::any::Any + Send>) -> String {
+    panic
+        .downcast_ref::<&str>()
+        .map(|value| (*value).to_owned())
+        .or_else(|| panic.downcast_ref::<String>().cloned())
+        .unwrap_or_else(|| "opaque panic payload".into())
+}
+
+fn run_eval_one(manifest: &Path, candidate_index: usize, result: &Path) -> Result<()> {
+    let bytes = fs::read(manifest).with_context(|| format!("read {}", manifest.display()))?;
+    let shard: Shard = serde_json::from_slice(&bytes).context("parse shard manifest")?;
+    if task_metric(&shard.task).is_none() {
+        bail!("unsupported task '{}'", shard.task);
+    }
+    let outcome = evaluate_one_manifest(&shard, candidate_index)?;
+    let wire: EvalOneWire = outcome.into();
+    let encoded = serde_json::to_vec(&wire).context("encode eval-one result")?;
+    if result.exists() {
+        bail!("refusing to replace eval-one result {}", result.display());
+    }
+    fs::write(result, encoded)
+        .with_context(|| format!("write eval-one result {}", result.display()))
 }
 
 // ---------------------------------------------------------------------------
@@ -1203,13 +1635,15 @@ fn run_eval(manifest: &Path, output_dir: &Path, threads: usize, timeout: Duratio
         fs::read(manifest).with_context(|| format!("read {}", manifest.display()))?;
     let manifest_sha256 = sha256_hex(&manifest_bytes);
     let shard: Shard = serde_json::from_slice(&manifest_bytes).context("parse shard manifest")?;
-    let reduction_version = resolve_reduction(&shard)?;
+    resolve_reduction(&shard)?;
     if task_metric(&shard.task).is_none() {
         bail!("unsupported task '{}'", shard.task);
     }
     let authority = Arc::new(resolve_authority(&shard)?);
     let reduction_stamp = shard.reduction.as_ref().map(|spec| spec.version.clone());
     let node = short_hostname();
+    let eval_one_root = output_dir.join(format!(".eval-one-{}", std::process::id()));
+    fs::create_dir_all(&eval_one_root)?;
     let receipt = |c: &ShardCandidate, sha: String, outcome: Outcome, runtime: f64| {
         let bytes = match &outcome {
             Outcome::Score { predictions, .. } => Some(prediction_bytes(predictions)),
@@ -1376,162 +1810,25 @@ fn run_eval(manifest: &Path, output_dir: &Path, threads: usize, timeout: Duratio
         computed
     };
 
-    let receipts: Vec<Receipt> = if shard.task == "timeseries" {
-        let data = Arc::new(load_timeseries_shard_data(&shard)?);
-        let pool = rayon::ThreadPoolBuilder::new()
-            .num_threads(threads)
-            .build()?;
-        pool.install(|| {
-            use rayon::prelude::*;
-            shard
-                .candidates
-                .par_iter()
-                .map(|c| {
-                    let sha = semantic_sha(c);
-                    let started = Instant::now();
-                    let candidate = c.clone();
-                    let data = Arc::clone(&data);
-                    let outcome = run_with_timeout(
-                        move || match reduction_version {
-                            ReductionVersion::V1 => evaluate_timeseries(&candidate, &data),
-                            ReductionVersion::V2 => evaluate_timeseries_v2(&candidate, &data),
-                        },
-                        timeout,
-                    );
-                    receipt(c, sha, outcome, started.elapsed().as_secs_f64())
-                })
-                .collect()
-        })
-    } else {
-        let mut train = load_pinned_csv(&shard.train_csv, &shard.train_sha256, "train")?;
-        let mut test = load_pinned_csv(&shard.test_csv, &shard.test_sha256, "test")?;
-        if train.features != test.features {
-            bail!(
-                "train/test feature widths differ ({} vs {})",
-                train.features,
-                test.features
-            );
-        }
-        // Binary dataset admission: targets bitwise 0.0/1.0 with both classes
-        // present, else every candidate gets a dataset-level failure receipt.
-        let mut multiclass_context = None;
-        let dataset_failure = if shard.task == "binary" {
-            validate_binary_targets(&train.y, "train")
-                .or_else(|| validate_binary_targets(&test.y, "test"))
-        } else if shard.task == "multiclass" {
-            let decoded =
-                (|| -> Result<DecodedMulticlassSplits, String> {
-                    let meta_path = shard.meta_json.as_deref().ok_or_else(|| {
-                        "multiclass shard manifest must pin meta_json".to_string()
-                    })?;
-                    let meta_sha256 = shard.meta_sha256.as_deref().ok_or_else(|| {
-                        "multiclass shard manifest must pin meta_sha256".to_string()
-                    })?;
-                    let meta = load_pinned_json(meta_path, meta_sha256, "meta")
-                        .map_err(|error| format!("{error:#}"))?;
-                    decode_multiclass_splits(&train.y, &test.y, &meta)
-                })();
-            match decoded {
-                Ok(decoded) => {
-                    train.y = decoded.train;
-                    test.y = decoded.test;
-                    multiclass_context = Some(decoded.context);
-                    None
-                }
-                Err(error) => Some(error),
-            }
-        } else {
-            None
-        };
-        if let Some(message) = dataset_failure {
-            shard
-                .candidates
-                .iter()
-                .map(|c| {
-                    let sha = semantic_sha(c);
-                    receipt(
-                        c,
-                        sha,
-                        Outcome::Fail {
-                            class: "fit",
-                            message: message.clone(),
-                        },
-                        0.0,
-                    )
-                })
-                .collect()
-        } else {
-            // Binary string tables are built once per shard and shared (identical
-            // bytes to a per-candidate build, so bit-parity is unaffected).
-            let tables = if matches!(shard.task.as_str(), "binary" | "multiclass") {
-                Some((
-                    Arc::new(raw_table(train.features, &train.x)?),
-                    Arc::new(raw_table(test.features, &test.x)?),
-                ))
-            } else {
-                None
-            };
-            let train = Arc::new(train);
-            let test = Arc::new(test);
-            let multiclass_context = multiclass_context.map(Arc::new);
-            let pool = rayon::ThreadPoolBuilder::new()
-                .num_threads(threads)
-                .build()?;
-            let multiclass_task = shard.task == "multiclass";
-            pool.install(|| {
-                use rayon::prelude::*;
-                shard
-                    .candidates
-                    .par_iter()
-                    .map(|c| {
-                        let sha = semantic_sha(c);
-                        let started = Instant::now();
-                        let candidate = c.clone();
-                        let (train, test) = (Arc::clone(&train), Arc::clone(&test));
-                        let multiclass_context = multiclass_context.as_ref().map(Arc::clone);
-                        let outcome = match &tables {
-                            None => run_with_timeout(
-                                move || evaluate_regression(&candidate, &train, &test),
-                                timeout,
-                            ),
-                            Some((train_table, test_table)) => {
-                                let (train_table, test_table) =
-                                    (Arc::clone(train_table), Arc::clone(test_table));
-                                run_with_timeout(
-                                    move || {
-                                        if multiclass_task {
-                                            evaluate_multiclass(
-                                                &candidate,
-                                                &train_table,
-                                                &train.y,
-                                                &test_table,
-                                                &test.y,
-                                                train.features,
-                                                multiclass_context
-                                                    .as_deref()
-                                                    .expect("validated multiclass context"),
-                                            )
-                                        } else {
-                                            evaluate_binary(
-                                                &candidate,
-                                                &train_table,
-                                                &train.y,
-                                                &test_table,
-                                                &test.y,
-                                                train.features,
-                                            )
-                                        }
-                                    },
-                                    timeout,
-                                )
-                            }
-                        };
-                        receipt(c, sha, outcome, started.elapsed().as_secs_f64())
-                    })
-                    .collect()
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(threads)
+        .build()?;
+    let receipts: Vec<Receipt> = pool.install(|| {
+        use rayon::prelude::*;
+        shard
+            .candidates
+            .par_iter()
+            .enumerate()
+            .map(|(candidate_index, c)| {
+                let sha = semantic_sha(c);
+                let started = Instant::now();
+                let result = eval_one_root.join(format!("{candidate_index:08}.json"));
+                let outcome = run_with_timeout(manifest, candidate_index, &result, timeout)?;
+                let _ = fs::remove_file(result);
+                Ok(receipt(c, sha, outcome, started.elapsed().as_secs_f64()))
             })
-        }
-    };
+            .collect::<Result<Vec<_>>>()
+    })?;
 
     fs::create_dir_all(output_dir)?;
     let prediction_dir = output_dir.join("predictions");
@@ -1998,6 +2295,15 @@ fn flag_value(args: &[String], flag: &str) -> Option<String> {
 
 fn main() -> Result<()> {
     let args = env::args().skip(1).collect::<Vec<_>>();
+    if args.first().map(String::as_str) == Some("eval-one") {
+        let manifest = flag_value(&args, "--manifest").context("--manifest is required")?;
+        let candidate_index = flag_value(&args, "--candidate-index")
+            .context("--candidate-index is required")?
+            .parse::<usize>()
+            .context("--candidate-index must be an integer")?;
+        let result = flag_value(&args, "--result").context("--result is required")?;
+        return run_eval_one(Path::new(&manifest), candidate_index, Path::new(&result));
+    }
     if args.first().map(String::as_str) == Some("validate-manifest") {
         let manifest = flag_value(&args, "--manifest").context("--manifest is required")?;
         validate_manifest(Path::new(&manifest))?;
@@ -2043,6 +2349,14 @@ mod tests {
     use super::*;
 
     #[test]
+    fn numeric_csv_accepts_one_header_and_rejects_later_malformed_rows() {
+        let data = read_numeric_csv("feature,target\n1.0,2.0\n3.0,4.0\n", "fixture").unwrap();
+        assert_eq!(data.x, vec![vec![1.0], vec![3.0]]);
+        assert_eq!(data.y, vec![2.0, 4.0]);
+        assert!(read_numeric_csv("feature,target\n1.0,nope\n", "fixture").is_err());
+    }
+
+    #[test]
     fn metric_maps_agree_with_task_authority() {
         use jope_dime_regressor::task::TaskKind;
         for kind in [
@@ -2058,6 +2372,28 @@ mod tests {
         assert_eq!(secondary_metric("timeseries"), "mase");
         assert_eq!(secondary_metric("binary"), "logloss");
         assert_eq!(secondary_metric("regression"), "rmse");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn repeated_timeout_cleanup_leaves_no_process_group() {
+        for _ in 0..50 {
+            let mut command = Command::new("sh");
+            command.args(["-c", "sleep 30 & wait"]);
+            unsafe {
+                command.pre_exec(|| {
+                    if libc::setsid() < 0 {
+                        return Err(std::io::Error::last_os_error());
+                    }
+                    Ok(())
+                });
+            }
+            let mut child = command.spawn().expect("spawn timeout fixture");
+            let pid = child.id() as libc::pid_t;
+            terminate_process_group(&mut child, Duration::from_millis(50))
+                .expect("terminate and reap timeout fixture");
+            assert!(!process_group_exists(pid).expect("probe timeout fixture group"));
+        }
     }
 
     #[test]

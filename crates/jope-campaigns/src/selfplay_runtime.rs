@@ -212,13 +212,9 @@ pub fn run(command: &Path, arguments: &[String]) -> Result<Output> {
 /// metric instead of keeping their own copy — `evaluation_protocol_sha256` validates
 /// against this exact function, so any private duplicate is a latent fail-closed bug.
 pub fn expected_evaluation_metric(task: &str) -> Result<&'static str> {
-    match task {
-        "regression" => Ok("r2"),
-        "binary" => Ok("auc"),
-        "timeseries" => Ok("negative_mase"),
-        "multiclass" => Ok("macro_f1"),
-        _ => bail!("unsupported evaluation task"),
-    }
+    crate::task::Task::parse(task)
+        .map(crate::task::Task::primary_metric)
+        .ok_or_else(|| anyhow::anyhow!("unsupported evaluation task"))
 }
 
 pub fn evaluation_protocol_sha256(

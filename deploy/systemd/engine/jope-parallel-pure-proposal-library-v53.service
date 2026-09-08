@@ -1,0 +1,27 @@
+[Unit]
+Description=Bounded verified pure-policy proposal library during campaign GP waits
+After=jope-parallel-monitor.service jope-parallel-gp.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/jope-dime/parallel
+ExecStartPre=/usr/bin/sha256sum --check /home/ubuntu/jope-dime/parallel/manifests/opportunistic-proposals-v53.sha256
+ExecStart=/usr/bin/python3 /home/ubuntu/jope-dime/parallel/tools/opportunistic_proposals_v2.py --root /home/ubuntu/jope-dime/parallel --spec /home/ubuntu/jope-dime/parallel/manifests/opportunistic-proposals-v53.json
+Environment=OMP_NUM_THREADS=2
+Environment=RAYON_NUM_THREADS=2
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+CPUAffinity=60 61
+AllowedCPUs=0-7 60-69
+CPUQuota=1800%
+MemoryHigh=64G
+MemoryMax=96G
+MemorySwapMax=0
+TasksMax=256
+RuntimeMaxSec=20min
+KillMode=control-group
+TimeoutStopSec=10
+Restart=no
+StandardOutput=append:/home/ubuntu/jope-dime/parallel/runs/proposal-library-v53.log
+StandardError=append:/home/ubuntu/jope-dime/parallel/runs/proposal-library-v53.log

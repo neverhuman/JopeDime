@@ -1,0 +1,482 @@
+{
+  "all_collapsed_cell_digests_identical": true,
+  "all_output_files_byte_identical": true,
+  "all_sweep_tensor_digests_identical": true,
+  "claim": "two independent seeded CUDA reconstructions are byte-identical",
+  "dataset_count": 20,
+  "datasets": [
+    {
+      "collapsed_cell_c_order_sha256": "17d76be5e352b9c41114f61c5f6bdb588cb5bd4e76c8761ae62b8ed65916d5e9",
+      "dataset_id": "019de5d76a718163",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "3370276e1d41b89803b00778dd7f87514b5cfff89ce16fdc65dedddb4d2a186e",
+          "shape": [
+            24,
+            2
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "04d0346e927533d33fbd0ead82136048d428ae06b7568b78f2585e2cb597b73c",
+          "shape": [
+            120,
+            2
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "fe5cbfdc63421b44324f96d02d945e421e41c7e147728552f9c4e30b3d19e1be"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "4d637a83259a567d4d2acb10b755a53cfde9ae65a824ad9c6585fef8576247c2",
+      "dataset_id": "047e62b52a3f4ede",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "07c2f706decd3d3e63cf5dfbd7f971ba7bde46028d4d1697101e0a19d47a4f7d",
+          "shape": [
+            40,
+            12
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "74a8d9e0b4b0b03dc4aaa34b3c6c649eb7a0c399db7a036f5218eefa795851de",
+          "shape": [
+            195,
+            12
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "0d09f00e5b8577cc9c279ba97f72e3e2cbed973601421f0f4bd95dfb130d68c8"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "29cf3f60e9ecc765af852ee8e32c36677edcb9232bb281d3f88eef6fc7123a4f",
+      "dataset_id": "13b5df533e59a626",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "430fbe5fd0714c9a6fc7e6ec287eb9abf29f4b83f53a66f82b2f1c136a8fd537",
+          "shape": [
+            21,
+            19
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "7d6a8f1212a6c10f67725cbed64bb484380622929eaa4dd81e16589fb7e970a5",
+          "shape": [
+            105,
+            19
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "65d487156f16ab2d163c59b7cd8bce6901254af8f88c7950350ae3d100585f1f"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "c97243c2cd4c4e5d4af04dd73e4235be5b35ecc362fe73d83b24e7d2f9ab8424",
+      "dataset_id": "17a4542ee4fb9e44",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "e35e400211a50262682ecc03acf0695761ff5c82fdf4545049f4ed40ffbd4247",
+          "shape": [
+            32,
+            9
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "6d28b29394605a6c0dd9e6406fa0671429beb3fb0a12f9edf5f420286dfa7f1e",
+          "shape": [
+            157,
+            9
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "32a772427913b0465a4fa8dd655120bf8003e8acaf5e0c47863e0e759f15d0c7"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "8b01d0afeb85c30a1aacbc47813bc86e0c62f38115514042853ed973f5833a17",
+      "dataset_id": "1cb97b1d7314d43d",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "cde9aac816c317f499e61d8f1572ca1e2b7bfe3ec54c7c8d9cf318638a229f7b",
+          "shape": [
+            34,
+            10
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "9f6f07e3f62d455c864c50b2d44c95d1aa8a518f1c96795872226310de11ebe7",
+          "shape": [
+            166,
+            10
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "95709aac0fecaf7d7a1bb4be19b7befa5099698edd8a39db9512d936e79a6b64"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "6d7f54686d709e6c0cc470444498709053986a80f04f8547a7bd2523d245d937",
+      "dataset_id": "30ef3eaa6d2971a9",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "e17b383290a815bb6ed0656a8cb99f0f7aba07e693e3509902552650ae11b759",
+          "shape": [
+            22,
+            30
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "f1672e04ef9c04a14cd7693c533e51b770671aeddb362d3f74044af4f5f440f1",
+          "shape": [
+            109,
+            30
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "52a6794d19ab0f20392c5a48dae30bb87a97a8600026a5eeda0523239250189f"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "ce73fa331ddc8104918982cfc2e6b4b305fa0c092685e2575ee27615abd11c33",
+      "dataset_id": "3305a3ad973fb227",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "07f6ecd09fae6be5132156666c4669f57bee0216bc462ca95d4335c95118d56e",
+          "shape": [
+            40,
+            2
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "f1c0a5d23003c83247a1992ed7019a1968fc3bc57bfad30bd9fb8b009b58f932",
+          "shape": [
+            200,
+            2
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "694f1de1ece9ccdc2790c778b98089b320be169978577d7e49f18fc779eeaf33"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "e311727df0667a5f55f5f84f7870ff5cee47b4c0c581cfb38e7d881cd1abf3f3",
+      "dataset_id": "3baa7e37fc1f7861",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "d072964bf8f104a6f9945fdab6fdf5ef8280910be99e4f2ae6e1bbf41d3e9e75",
+          "shape": [
+            54,
+            4
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "11d8197e045a6cd076607f642e8e06e5ad09604cd273dc49e2122e2e814530de",
+          "shape": [
+            269,
+            4
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "2c2eb76d3e208ef660e08fdb79c8e17a803857448749a0493856caf0f77f3d5b"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "9316b2a1142dc1718d4cfd8b2d51e881fde130fc8c29c25e55dafb8257387c73",
+      "dataset_id": "3f781a51af45387e",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "afccb887285648b64531255496e69d2f02aac413b283a8f4da33833b68ad5bbe",
+          "shape": [
+            46,
+            3
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "2a751911e8dc18eaf875dff90f6b2058b6cad68c1fc500cd7c4d80c483d852f0",
+          "shape": [
+            228,
+            3
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "cca2c8f9afec3cf9de976c4a2363877c584ab576e66d40ba120747d28a881090"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "85c7fc12d5c2ab283af43ba118c0bc8bfdbe91f88cd88d904fe1644877c0312b",
+      "dataset_id": "542e75bc0cfdd1bf",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "dd5d3813c89a7f46f2ac2487e21b5ac04c5bea9c694142d5459e36b1c1f6bde4",
+          "shape": [
+            8,
+            17
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "924be3a8872437f5178c56cc5c85f0e5525a7a600856df719e0d89d9c095ec1e",
+          "shape": [
+            37,
+            17
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "1030463b06454cd24faee02875b714ea240032b64a0d9e99e5364a3e61188997"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "c581ff17d0a352c70cb3e82d245309a226937d6968905841c7dbca7199a13b17",
+      "dataset_id": "693890aae9dc860b",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "5603a330c4d27f5702747cc929ca9642896fc97ca181579ad55898ab1db5f2f8",
+          "shape": [
+            41,
+            1
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "72e8307236f49fab1be9f7543b9aebf7458568152f4b2d8c032238a7cf6ea572",
+          "shape": [
+            202,
+            1
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "fd42b8d2ac6adc65ee01b19dea8ef7cc67030eba8f3894190fed39b3edeac334"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "e6cd7aa1c2d4ca651f24e7cd0778259425c2d272dec4abcae7104197012c0219",
+      "dataset_id": "79e600bc5fcd5da7",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "1188c64d4e5bbc6471ce70ab1be54758fe901063b478859ec2f23842cfee41ac",
+          "shape": [
+            36,
+            3
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "bb43f2a05a063a73e04ca7f4e7e89a06675296dd1a89f8c4f50967b280484668",
+          "shape": [
+            180,
+            3
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "35c0d7c85df1198ef9d9e75a7bf23a272463f72fd0859fe849ff4f6c939b9de1"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "9ee02418877e7d57ce2bb0047999499cae6fb8c4fc92a15d7dbc137f5e78d12d",
+      "dataset_id": "ab0239b9ef0ba28e",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "a940c1fd0256293984be807562ccdc9837b87764eb4f17bdaa1b7bc84fd7906a",
+          "shape": [
+            6,
+            1040
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "04703ddc466f03109ab076b03994c5251ac9045d4b664362be30d692a3b4fed8",
+          "shape": [
+            28,
+            1040
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "3a97932011ee08e29212b4dcfe8a6724d9d91cccaebd051cade3980665bbf256"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "aa233bb6f93316f7ca5db090d326e70985f1ef889774df8bba3421a8da59a261",
+      "dataset_id": "b253fbfae8460dc1",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "374cccb5b830c9f86bd092378fb54433f492cf5aacb672ce953461fe69275539",
+          "shape": [
+            9,
+            7
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "b314ab517e3d78949c8783757984037e06c397474124d2e06dbc9e578009630a",
+          "shape": [
+            43,
+            7
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "952e11d43cfc56ed4314bfc0c013a99e41eb342dc2b6178892df9467097a825e"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "5704d905b14bd23e0c2ee4d4335b8e26735b41852cc65950aa794e7899648d0a",
+      "dataset_id": "cf5e74b4e9594944",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "7190c1e5378800cf0108d300d79cde081b8812ad873569bfd9cf896a69059e4b",
+          "shape": [
+            3,
+            569
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "259b95999aa67f12448bf7ad85247107028888382b77cd29b9cff8d30c07014f",
+          "shape": [
+            10,
+            569
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "ae5df06fccf0cd869cba4219e8a559c1a7fe2a15c7f1a75e4f4be1bc54864b29"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "20a35982e45efe6be602048f0c32bf593e46b85b3a479c12463f605dc07c8bf5",
+      "dataset_id": "d2daf53412ab18dc",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "a7f6ff43f8337b854a26f47f26815ea6db5f670c3453011b1353b173e900413f",
+          "shape": [
+            51,
+            18
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "37f8b346acfb18b4fdcf09b4ff81d8b0e1c636d88c19e4b7e4550bd5fe3e970a",
+          "shape": [
+            255,
+            18
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "38feb1811fb900e2d1c8b30ccb65b469f55a96c414056702579345a42f3799e7"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "c90914c77b415b614f1ac3924b152f695efe6acf9213b5213a850b7d60b8f23c",
+      "dataset_id": "dee1fc8e9afd81c9",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "f651a0b4b7163257620f6c2c1e9dcae33a83327d2ac0a19a00f31010a5469a35",
+          "shape": [
+            26,
+            8
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "63ae15e85e6dcd9525b8fceedd64b3bddfb431202009d82d54c67f607efcbb05",
+          "shape": [
+            129,
+            8
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "8518c97229823adbea16a35612b6f71f31ac40d14c189f55ec7bb5283eba50e5"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "5dd552cabc1a9a3a511f7817e5d9a1d205a95113de822dd19c32553a07496358",
+      "dataset_id": "e1c1db5260d0894e",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "891ed84319e70820eddb02c0075dd72e0486096614e1ec01128f1fdd59632e29",
+          "shape": [
+            17,
+            10
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "3b0a2bea598337d47549e7ec6755ba8bb1b28ab684a188510ee24481e9dd067c",
+          "shape": [
+            83,
+            10
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "b0f311705690aafbabfe62c6c0ff5fa378410f67dd6da3a48ba8e3d56a1443ab"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "8f350d68b85aa6d0e606486ae3378c6c4e147c58465ec3cbd96ec5fda808bb76",
+      "dataset_id": "ee56a1015e344c11",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "80f53a67f2b78d7d7dd069b611c666a7d421378968257305d45f91863e0b706c",
+          "shape": [
+            21,
+            4
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "bdfb68bbebdc984d2e6a81102582ca06b740f02c1e327ea88089931f33d87f6a",
+          "shape": [
+            104,
+            4
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "53a243eb3f599e6a14060b6ad111aebe62bdb3f0a19af8d4a721e015950f0679"
+    },
+    {
+      "collapsed_cell_c_order_sha256": "7f86b9c1c9db968b7b0f4a359ee6d737ef410c5ea50a24138a9b1914dae2fa09",
+      "dataset_id": "fe3cc716a05d036f",
+      "outputs": {
+        "test": {
+          "byte_identical": true,
+          "sha256": "f1621fc40d6bd8ec1ff42173d8be102469164ddac3b838b9d1e7b43e9be77407",
+          "shape": [
+            40,
+            2
+          ]
+        },
+        "train": {
+          "byte_identical": true,
+          "sha256": "c729da0bfef2f5a3452bd8678135635ba373677e1aad31ecef34d17c1ad8fe32",
+          "shape": [
+            200,
+            2
+          ]
+        }
+      },
+      "sweep_tensor_c_order_sha256": "bd68aff8b72f25c40a3863db5daee797fde8c5fc0033d2d305932cea9021893a"
+    }
+  ],
+  "generation_manifests": {
+    "first": {
+      "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/manifest.json",
+      "sha256": "39bf8e0eee56f05c3bf4c947b7374cc29bd360f29fbea0801d7d05c10875f29b"
+    },
+    "second": {
+      "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run2/manifest.json",
+      "sha256": "40dcd518b0039e8c048c28695462157517f98d8ba896d2172c678b0bcda7f805"
+    }
+  },
+  "output_file_count": 40,
+  "schema": "HyperionOldPythonVsReplayVerification.v1",
+  "status": "complete"
+}

@@ -24,7 +24,12 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use zip::ZipArchive;
 
-pub const TASKS: [&str; 4] = ["regression", "binary", "timeseries", "multiclass"];
+pub const TASKS: [&str; 4] = [
+    crate::task::Task::ALL[0].as_str(),
+    crate::task::Task::ALL[1].as_str(),
+    crate::task::Task::ALL[2].as_str(),
+    crate::task::Task::ALL[3].as_str(),
+];
 pub const REQUIRED_ENCODINGS: [&str; 3] =
     ["hyperion3train128dim.vs", "train3.vs", "train_target.vs"];
 pub const OPTIONAL_ENCODINGS: [&str; 1] = ["hyperion3train.vs"];

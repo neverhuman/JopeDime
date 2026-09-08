@@ -1,8 +1,8 @@
+pub use crate::task::Task;
 use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest as _, Sha256};
 use std::fmt::{Display, Formatter};
-use std::str::FromStr;
 
 pub const ACCEPTED_BY_TASK_SCHEMA: &str = "AcceptedByTask.v2";
 pub const EVALUATION_KEY_SCHEMA: &str = "EvaluationKey.v2";
@@ -46,116 +46,6 @@ pub const TRAINER_INTENT_V3_SCHEMA: &str = "TrainerIntent.v3";
 pub const SHADOW_CHECKPOINT_SCHEMA: &str = "ShadowCheckpoint.v1";
 pub const SHADOW_BATTLE_SUMMARY_SCHEMA: &str = "ShadowBattleSummary.v1";
 pub const FLYWHEEL_LIVENESS_SCHEMA: &str = "FlywheelLiveness.v1";
-
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum Task {
-    Binary,
-    Regression,
-    Timeseries,
-    Multiclass,
-}
-
-impl Task {
-    /// Every wire task, legacy tasks first (order is load-bearing for the
-    /// `find`-style scans that historically probed `[Regression, Binary]`).
-    pub const ALL: [Task; 4] = [
-        Task::Regression,
-        Task::Binary,
-        Task::Timeseries,
-        Task::Multiclass,
-    ];
-
-    /// The 8-slot alternation cycle (D6): R,B,R,B,TS,R,B,MC. With only
-    /// regression/binary eligible the starvation-skip reproduces the legacy
-    /// strict R,B alternation exactly.
-    pub const ROTATION_CYCLE: [Task; 8] = [
-        Task::Regression,
-        Task::Binary,
-        Task::Regression,
-        Task::Binary,
-        Task::Timeseries,
-        Task::Regression,
-        Task::Binary,
-        Task::Multiclass,
-    ];
-
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Self::Binary => "binary",
-            Self::Regression => "regression",
-            Self::Timeseries => "timeseries",
-            Self::Multiclass => "multiclass",
-        }
-    }
-
-    /// On-disk corpus directory for this task (D1): the multiclass corpus
-    /// keeps its legacy `multi_label` directory name; every other task's
-    /// directory matches its wire name.
-    pub fn corpus_dir_name(self) -> &'static str {
-        crate::task::TaskKind::from(self).corpus_dir_name()
-    }
-
-    /// Starting at slot `position` of [`Task::ROTATION_CYCLE`], return the
-    /// first eligible task scanning forward (wrapping), plus the slot index
-    /// immediately after the chosen slot. Ineligible tasks are skipped
-    /// (starvation-skip). If NO task is eligible the slot at `position` is
-    /// returned unconditionally, so the successor can never deadlock.
-    pub fn rotation_successor(position: usize, eligible: impl Fn(Task) -> bool) -> (Task, usize) {
-        let length = Self::ROTATION_CYCLE.len();
-        for offset in 0..length {
-            let slot = (position + offset) % length;
-            let task = Self::ROTATION_CYCLE[slot];
-            if eligible(task) {
-                return (task, (slot + 1) % length);
-            }
-        }
-        let slot = position % length;
-        (Self::ROTATION_CYCLE[slot], (slot + 1) % length)
-    }
-}
-
-impl From<crate::task::TaskKind> for Task {
-    fn from(kind: crate::task::TaskKind) -> Self {
-        match kind {
-            crate::task::TaskKind::Regression => Self::Regression,
-            crate::task::TaskKind::Binary => Self::Binary,
-            crate::task::TaskKind::Timeseries => Self::Timeseries,
-            crate::task::TaskKind::Multiclass => Self::Multiclass,
-        }
-    }
-}
-
-impl From<Task> for crate::task::TaskKind {
-    fn from(task: Task) -> Self {
-        match task {
-            Task::Regression => Self::Regression,
-            Task::Binary => Self::Binary,
-            Task::Timeseries => Self::Timeseries,
-            Task::Multiclass => Self::Multiclass,
-        }
-    }
-}
-
-impl Display for Task {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str(self.as_str())
-    }
-}
-
-impl FromStr for Task {
-    type Err = anyhow::Error;
-
-    fn from_str(value: &str) -> Result<Self> {
-        match value {
-            "binary" => Ok(Self::Binary),
-            "regression" => Ok(Self::Regression),
-            "timeseries" => Ok(Self::Timeseries),
-            "multiclass" => Ok(Self::Multiclass),
-            _ => bail!("task must be regression, binary, timeseries, or multiclass"),
-        }
-    }
-}
 
 #[derive(Clone, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(transparent)]

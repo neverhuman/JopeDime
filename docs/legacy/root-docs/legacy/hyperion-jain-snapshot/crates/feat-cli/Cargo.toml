@@ -1,0 +1,41 @@
+[package]
+name = "feat-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "jain — CLI driving the 100%-Rust CatBoost feature-engineering pipeline"
+
+[[bin]]
+name = "jain"
+path = "src/main.rs"
+
+[[bin]]
+name = "jain-entrypoint"
+path = "src/bin/jain-entrypoint.rs"
+
+[features]
+default = ["catboost", "xgboost", "lightgbm"]
+ci-smoke = ["feat-core/ci-smoke"]
+catboost = ["feat-core/catboost"]
+xgboost = ["feat-core/xgboost"]
+lightgbm = ["feat-core/lightgbm"]
+starforge-cpu = ["feat-core/starforge-cpu"]
+starforge-cuda = ["feat-core/starforge-cuda", "starforge-cpu"]
+hyperion-cpu = ["feat-core/hyperion-cpu"]
+hyperion-cuda = ["feat-core/hyperion-cuda", "hyperion-cpu"]
+
+[dependencies]
+feat-core = { path = "../feat-core" }
+feat-math = { path = "../feat-math" }
+feat-report = { path = "../feat-report" }
+feat-tui = { path = "../feat-tui" }
+battle-gpu = { path = "../battle-gpu" }
+clap.workspace = true
+anyhow.workspace = true
+crossbeam-channel.workspace = true
+rayon.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+signal-hook = "0.3"
+tiny_http = "0.12"

@@ -1,8 +1,28 @@
 use anyhow::{bail, Context, Result};
+mod compiled;
+mod evolution;
+mod exact;
+pub use compiled::CompiledMathExpr;
+pub use evolution::{ExpressionEdit, ExpressionScope};
 
 const MAX_NODES: usize = 64;
 const MAX_DEPTH: usize = 16;
 const MAX_ABS: f64 = 1.0e12;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MathEvalError {
+    InvalidClipBounds,
+}
+
+impl std::fmt::Display for MathEvalError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::InvalidClipBounds => f.write_str("clip: both bounds evaluated to NaN"),
+        }
+    }
+}
+
+impl std::error::Error for MathEvalError {}
 
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct MathExpr {
@@ -10,7 +30,7 @@ pub struct MathExpr {
 }
 
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
-enum Expr {
+pub enum Expr {
     Const(f64),
     Var(Var),
     Unary(UnOp, Box<Expr>),
@@ -18,8 +38,10 @@ enum Expr {
     Call(Func, Vec<Expr>),
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-enum Var {
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
+pub enum Var {
     X,
     Col(usize),
     RowMean,
@@ -32,12 +54,12 @@ enum Var {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-enum UnOp {
+pub enum UnOp {
     Neg,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-enum BinOp {
+pub enum BinOp {
     Add,
     Sub,
     Mul,
@@ -45,8 +67,10 @@ enum BinOp {
     Pow,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-enum Func {
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
+pub enum Func {
     Abs,
     Sqrt,
     Log1p,
@@ -84,6 +108,88 @@ enum Tok {
 }
 
 impl MathExpr {
+    pub fn ast(&self) -> &Expr {
+        &self.root
+    }
+
+    /// Readable source preserving finite literal values and operator order.
+    /// Use the program binary codec for structural identity and nonfinite bits.
+    pub fn to_source(&self) -> crate::kernel::Result<String> {
+        self.check_structure(MAX_NODES, MAX_DEPTH)
+            .map_err(|e| crate::kernel::Error::Resource(e.to_string()))?;
+        fn render(expr: &Expr) -> crate::kernel::Result<String> {
+            Ok(match expr {
+                Expr::Const(v) if v.is_finite() => format!("{v:?}"),
+                Expr::Const(_) => {
+                    return Err(crate::kernel::Error::Domain(
+                        "nonfinite literal requires the typed codec".into(),
+                    ))
+                }
+                Expr::Var(v) => match v {
+                    Var::X => "x".into(),
+                    Var::Col(i) => format!("c{i}"),
+                    Var::RowMean => "row_mean".into(),
+                    Var::RowSum => "row_sum".into(),
+                    Var::RowL1 => "row_l1".into(),
+                    Var::RowL2 => "row_l2".into(),
+                    Var::RowMin => "row_min".into(),
+                    Var::RowMax => "row_max".into(),
+                    Var::RowStd => "row_std".into(),
+                },
+                Expr::Unary(UnOp::Neg, a) => format!("(-{})", render(a)?),
+                Expr::Binary(op, a, b) => {
+                    let symbol = match op {
+                        BinOp::Add => '+',
+                        BinOp::Sub => '-',
+                        BinOp::Mul => '*',
+                        BinOp::Div => '/',
+                        BinOp::Pow => '^',
+                    };
+                    format!("({}{}{})", render(a)?, symbol, render(b)?)
+                }
+                Expr::Call(func, args) => format!(
+                    "{}({})",
+                    format!("{func:?}").to_lowercase(),
+                    args.iter()
+                        .map(render)
+                        .collect::<crate::kernel::Result<Vec<_>>>()?
+                        .join(",")
+                ),
+            })
+        }
+        render(&self.root)
+    }
+
+    pub fn from_ast(root: Expr) -> Result<Self> {
+        let expression = Self { root };
+        expression.check_structure(MAX_NODES, MAX_DEPTH)?;
+        Ok(expression)
+    }
+
+    fn check_structure(&self, max_nodes: usize, max_depth: usize) -> Result<()> {
+        let mut pending = vec![(&self.root, 1)];
+        let mut nodes = 0;
+        while let Some((node, depth)) = pending.pop() {
+            nodes += 1;
+            if nodes > max_nodes || depth > max_depth {
+                bail!("math expression exceeds node/depth limits");
+            }
+            match node {
+                Expr::Unary(_, child) => pending.push((child, depth + 1)),
+                Expr::Binary(_, a, b) => {
+                    pending.push((b, depth + 1));
+                    pending.push((a, depth + 1));
+                }
+                Expr::Call(func, args) => {
+                    validate_arity(*func, args.len())?;
+                    pending.extend(args.iter().map(|arg| (arg, depth + 1)));
+                }
+                _ => {}
+            }
+        }
+        Ok(())
+    }
+
     pub fn parse(src: &str) -> Result<Self> {
         let toks = lex(src)?;
         let mut parser = Parser {
@@ -117,7 +223,51 @@ impl MathExpr {
     /// `row`, `row_len`, and (for elementwise maps) `x`, plus the `m_*`
     /// arithmetic helpers that mirror this evaluator's guards.
     pub(crate) fn to_cpp17(&self, elementwise: bool) -> Result<String> {
-        expr_to_cpp17(&self.root, elementwise)
+        let mut columns = Vec::new();
+        let mut uses_x = false;
+        references(&self.root, &mut columns, &mut uses_x);
+        if uses_x && !elementwise {
+            return Ok("0.0".to_string());
+        }
+        let body = expr_to_cpp17(&self.root, elementwise)?;
+        // Failure belongs to the complete expression, including when a parent
+        // such as min/sign would otherwise mask a NaN from a failed child.
+        let body = format!(
+            "([&](){{try{{return {body};}}catch(const MathDomainError&){{return 0.0;}}}}())"
+        );
+        Ok(match columns.iter().max() {
+            Some(index) => format!("(row_len>{index}?{body}:0.0)"),
+            None => body,
+        })
+    }
+
+    /// Width requirements are checked by new admission; legacy callers retain
+    /// the historical whole-expression zero fallback at runtime.
+    pub fn validate_columns(&self, width: usize, elementwise: bool) -> Result<()> {
+        let mut columns = Vec::new();
+        let mut uses_x = false;
+        references(&self.root, &mut columns, &mut uses_x);
+        if uses_x && !elementwise {
+            bail!("variable x is only valid in map expressions");
+        }
+        if let Some(index) = columns.into_iter().find(|index| *index >= width) {
+            bail!("column index {index} out of bounds for width {width}");
+        }
+        Ok(())
+    }
+}
+
+fn references(expr: &Expr, columns: &mut Vec<usize>, uses_x: &mut bool) {
+    match expr {
+        Expr::Var(Var::Col(index)) => columns.push(*index),
+        Expr::Var(Var::X) => *uses_x = true,
+        Expr::Unary(_, child) => references(child, columns, uses_x),
+        Expr::Binary(_, a, b) => {
+            references(a, columns, uses_x);
+            references(b, columns, uses_x);
+        }
+        Expr::Call(_, args) => args.iter().for_each(|arg| references(arg, columns, uses_x)),
+        _ => {}
     }
 }
 
@@ -522,105 +672,123 @@ fn compute_expr(expr: &Expr, ctx: &EvalContext<'_>) -> Result<f64> {
         Expr::Binary(op, left, right) => {
             let a = compute_expr(left, ctx)?;
             let b = compute_expr(right, ctx)?;
-            Ok(match op {
-                BinOp::Add => a + b,
-                BinOp::Sub => a - b,
-                BinOp::Mul => a * b,
-                BinOp::Div => {
-                    if b.abs() < 1e-12 {
-                        0.0
-                    } else {
-                        a / b
-                    }
-                }
-                BinOp::Pow => a.powf(b.clamp(-8.0, 8.0)),
-            })
+            Ok(compute_binary(*op, a, b))
         }
         Expr::Call(func, args) => {
-            let values: Result<Vec<f64>> = args.iter().map(|arg| compute_expr(arg, ctx)).collect();
-            let values = values?;
-            Ok(match func {
-                Func::Abs => values[0].abs(),
-                Func::Sqrt => values[0].max(0.0).sqrt(),
-                Func::Log1p => {
-                    if values[0] <= -1.0 {
-                        0.0
-                    } else {
-                        values[0].ln_1p()
-                    }
-                }
-                Func::Sin => values[0].sin(),
-                Func::Cos => values[0].cos(),
-                Func::Tanh => values[0].tanh(),
-                Func::Sigmoid => 1.0 / (1.0 + (-values[0].clamp(-30.0, 30.0)).exp()),
-                Func::Min => values[0].min(values[1]),
-                Func::Max => values[0].max(values[1]),
-                Func::Clip => values[0].clamp(values[1].min(values[2]), values[1].max(values[2])),
-                // 1.0 exactly when a > c, else 0.0; a NaN operand makes the
-                // strict comparison false, so the indicator is 0.0.
-                Func::Step => {
-                    if values[0] > values[1] {
-                        1.0
-                    } else {
-                        0.0
-                    }
-                }
-                // Argument clipped to [-30, 30] so exp stays finite in both
-                // artifact languages (mirrors sigmoid's guard).
-                Func::Exp => values[0].clamp(-30.0, 30.0).exp(),
-                // Natural log, 0.0 at or below 1e-300 (mirrors log1p's
-                // invalid-argument policy).
-                Func::Log => {
-                    if values[0] <= 1e-300 {
-                        0.0
-                    } else {
-                        values[0].ln()
-                    }
-                }
-                Func::Asinh => crate::ops::asinh_stable(values[0]),
-                Func::Atan => values[0].atan(),
-                // Abramowitz-Stegun 7.1.26 rational approximation, identical
-                // arithmetic in the emitted twins (Rust std has no erf).
-                Func::Erf => {
-                    let v = values[0];
-                    let a = v.abs();
-                    let s = if v > 0.0 {
-                        1.0
-                    } else if v < 0.0 {
-                        -1.0
-                    } else {
-                        0.0
-                    };
-                    let t = 1.0 / (1.0 + 0.3275911 * a);
-                    let poly = t
-                        * (0.254829592
-                            + t * (-0.284496736
-                                + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429))));
-                    s * (1.0 - poly * (-(a * a)).exp())
-                }
-                // NaN compares false on both branches, so sign(NaN) = 0.0.
-                Func::Sign => {
-                    if values[0] > 0.0 {
-                        1.0
-                    } else if values[0] < 0.0 {
-                        -1.0
-                    } else {
-                        0.0
-                    }
-                }
-                Func::Floor => values[0].floor(),
-                // Half-away-from-zero via the explicit branch formula shared
-                // by all three implementations (Python's builtin is banker's).
-                Func::Round => {
-                    if values[0] >= 0.0 {
-                        (values[0] + 0.5).floor()
-                    } else {
-                        (values[0] - 0.5).ceil()
-                    }
-                }
-            })
+            validate_arity(*func, args.len())?;
+            let mut values = [0.0; 3];
+            for (slot, arg) in values.iter_mut().zip(args) {
+                *slot = compute_expr(arg, ctx)?;
+            }
+            compute_func(*func, values)
         }
     }
+}
+
+fn compute_binary(op: BinOp, a: f64, b: f64) -> f64 {
+    match op {
+        BinOp::Add => a + b,
+        BinOp::Sub => a - b,
+        BinOp::Mul => a * b,
+        BinOp::Div => {
+            if b.abs() < 1e-12 {
+                0.0
+            } else {
+                a / b
+            }
+        }
+        BinOp::Pow => a.powf(b.clamp(-8.0, 8.0)),
+    }
+}
+
+fn compute_func(func: Func, values: [f64; 3]) -> Result<f64> {
+    Ok(match func {
+        Func::Abs => values[0].abs(),
+        Func::Sqrt => values[0].max(0.0).sqrt(),
+        Func::Log1p => {
+            if values[0] <= -1.0 {
+                0.0
+            } else {
+                values[0].ln_1p()
+            }
+        }
+        Func::Sin => values[0].sin(),
+        Func::Cos => values[0].cos(),
+        Func::Tanh => values[0].tanh(),
+        Func::Sigmoid => 1.0 / (1.0 + (-values[0].clamp(-30.0, 30.0)).exp()),
+        Func::Min => values[0].min(values[1]),
+        Func::Max => values[0].max(values[1]),
+        Func::Clip => {
+            let lo = values[1].min(values[2]);
+            let hi = values[1].max(values[2]);
+            if lo.is_nan() || hi.is_nan() {
+                return Err(MathEvalError::InvalidClipBounds.into());
+            }
+            values[0].clamp(lo, hi)
+        }
+        // 1.0 exactly when a > c, else 0.0; a NaN operand makes the
+        // strict comparison false, so the indicator is 0.0.
+        Func::Step => {
+            if values[0] > values[1] {
+                1.0
+            } else {
+                0.0
+            }
+        }
+        // Argument clipped to [-30, 30] so exp stays finite in both
+        // artifact languages (mirrors sigmoid's guard).
+        Func::Exp => values[0].clamp(-30.0, 30.0).exp(),
+        // Natural log, 0.0 at or below 1e-300 (mirrors log1p's
+        // invalid-argument policy).
+        Func::Log => {
+            if values[0] <= 1e-300 {
+                0.0
+            } else {
+                values[0].ln()
+            }
+        }
+        Func::Asinh => crate::ops::asinh_stable(values[0]),
+        Func::Atan => values[0].atan(),
+        // Abramowitz-Stegun 7.1.26 rational approximation, identical
+        // arithmetic in the emitted twins (Rust std has no erf).
+        Func::Erf => {
+            let v = values[0];
+            let a = v.abs();
+            let s = if v > 0.0 {
+                1.0
+            } else if v < 0.0 {
+                -1.0
+            } else {
+                0.0
+            };
+            let t = 1.0 / (1.0 + 0.3275911 * a);
+            let poly = t
+                * (0.254829592
+                    + t * (-0.284496736
+                        + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429))));
+            s * (1.0 - poly * (-(a * a)).exp())
+        }
+        // NaN compares false on both branches, so sign(NaN) = 0.0.
+        Func::Sign => {
+            if values[0] > 0.0 {
+                1.0
+            } else if values[0] < 0.0 {
+                -1.0
+            } else {
+                0.0
+            }
+        }
+        Func::Floor => values[0].floor(),
+        // Half-away-from-zero via the explicit branch formula shared
+        // by all three implementations (Python's builtin is banker's).
+        Func::Round => {
+            if values[0] >= 0.0 {
+                (values[0] + 0.5).floor()
+            } else {
+                (values[0] - 0.5).ceil()
+            }
+        }
+    })
 }
 
 fn eval_var(var: Var, ctx: &EvalContext<'_>) -> Result<f64> {
@@ -686,6 +854,30 @@ fn depth(expr: &Expr) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn invalid_clip_bounds_are_a_structured_whole_expression_failure() {
+        for source in [
+            "clip(1,(-1)^0.5,(-1)^0.5)",
+            "min(clip(1,(-1)^0.5,(-1)^0.5),7)+1",
+        ] {
+            let expr = MathExpr::parse(source).unwrap();
+            let error = expr.eval_row(&[]).unwrap_err();
+            assert_eq!(
+                error.downcast_ref::<MathEvalError>(),
+                Some(&MathEvalError::InvalidClipBounds)
+            );
+            assert_eq!(expr.eval_row(&[]).unwrap_or(0.0), 0.0);
+        }
+        // A single NaN bound retains Rust minNum/maxNum legacy semantics.
+        assert_eq!(
+            MathExpr::parse("clip(1,(-1)^0.5,3)")
+                .unwrap()
+                .eval_row(&[])
+                .unwrap(),
+            3.0
+        );
+    }
 
     #[test]
     fn evaluates_elementwise_expression() {

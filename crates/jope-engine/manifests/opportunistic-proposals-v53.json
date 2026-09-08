@@ -1,0 +1,19 @@
+{
+  "schema": "parallel.opportunistic_proposals_spec.v2",
+  "cycle": "runs/regression-campaign64-qualification-v1/cycle-0001",
+  "corpus": "runs/regression-campaign64-qualification-v1/cycle-0000/corpus-2",
+  "corpus_sha256": "4d936bf7ea6890cb4c0a7008a663813afc38c4e71eb04884d5fef1b713f3d99a",
+  "checkpoint": "runs/regression-campaign64-qualification-v1/cycle-0001/train-1/checkpoints/step-3000",
+  "checkpoint_sha256": "104a90f824495c60e66bd638f89ccd5b22f3ab5d1fcdca2d446f934ac8fd7605",
+  "executable": "bin/jope-parallel-neural-v53",
+  "executable_sha256": "817e50b9554d8a62bd7b071eb9ef8f244c1823264a61bcffc1708e206deef076",
+  "output": "runs/gp-reviewed3/pure-neural-breadth-v53",
+  "cut_start": 2,
+  "cut_end": 200,
+  "chunk_cuts": 8,
+  "block_seconds": 60,
+  "service_seconds": 1200,
+  "pool_validator_sha256": "f738dd469f0fe116ae177b197ce63d7aca1575144aec8e1c13aa6ed7b51a077f",
+  "pure_prediction_protocol": "training_context_neural_pool_v1",
+  "gp_assembly_protocol": "preserve_shared_tail_dedup_v1"
+}

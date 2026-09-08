@@ -1,0 +1,377 @@
+{
+  "copy_policy": "preflight all 40; O_EXCL create; hash verify; rollback new files on failure",
+  "dataset_count": 20,
+  "files": [
+    {
+      "dataset_id": "019de5d76a718163",
+      "relative_path": "019de5d76a718163/train3.vs.orig.v2",
+      "sha256": "f58eff55e30545cabeb84af55c5851b78444ed8aa0134cf1094a961833147a59",
+      "shape": [
+        120,
+        2
+      ]
+    },
+    {
+      "dataset_id": "019de5d76a718163",
+      "relative_path": "019de5d76a718163/test3.vs.orig.v2",
+      "sha256": "d11af422dbe25a66b0ff218ed1415787b0440c61fea35c326bcdda6c4990aa6c",
+      "shape": [
+        24,
+        2
+      ]
+    },
+    {
+      "dataset_id": "047e62b52a3f4ede",
+      "relative_path": "047e62b52a3f4ede/train3.vs.orig.v2",
+      "sha256": "da4e300255f2a7c6cb3e15333a900ecc6af1751ea1df2a3b38d066c29a96b46b",
+      "shape": [
+        195,
+        12
+      ]
+    },
+    {
+      "dataset_id": "047e62b52a3f4ede",
+      "relative_path": "047e62b52a3f4ede/test3.vs.orig.v2",
+      "sha256": "ae4ffd5f70512879f1fdbdf433c23f340eef9a35c707de8df3c509937583d47c",
+      "shape": [
+        40,
+        12
+      ]
+    },
+    {
+      "dataset_id": "13b5df533e59a626",
+      "relative_path": "13b5df533e59a626/train3.vs.orig.v2",
+      "sha256": "07ce7d3cf6da586557fc0536a1b194737c459530ee31510f0e7c9a5725a74bdb",
+      "shape": [
+        105,
+        19
+      ]
+    },
+    {
+      "dataset_id": "13b5df533e59a626",
+      "relative_path": "13b5df533e59a626/test3.vs.orig.v2",
+      "sha256": "49b16381abbd6ca254c4562f31eb2cbb3306014613165e91d352ee8eed369ef8",
+      "shape": [
+        21,
+        19
+      ]
+    },
+    {
+      "dataset_id": "17a4542ee4fb9e44",
+      "relative_path": "17a4542ee4fb9e44/train3.vs.orig.v2",
+      "sha256": "7529d1e287a36092bcaed8af76333ca1da8819b5d54f3352d3bf0209ca952cd0",
+      "shape": [
+        157,
+        9
+      ]
+    },
+    {
+      "dataset_id": "17a4542ee4fb9e44",
+      "relative_path": "17a4542ee4fb9e44/test3.vs.orig.v2",
+      "sha256": "ac5d9f6565cc14385d6e338fbf1757597ae503b61a9dac47f30d177b173b718c",
+      "shape": [
+        32,
+        9
+      ]
+    },
+    {
+      "dataset_id": "1cb97b1d7314d43d",
+      "relative_path": "1cb97b1d7314d43d/train3.vs.orig.v2",
+      "sha256": "8ad8afa68e4a0d2479c5af702c5da67ccca185bafa3baf2126a89374af78b479",
+      "shape": [
+        166,
+        10
+      ]
+    },
+    {
+      "dataset_id": "1cb97b1d7314d43d",
+      "relative_path": "1cb97b1d7314d43d/test3.vs.orig.v2",
+      "sha256": "ee8d46e0b77bb3998558aba283813fbd9703dc63b793de5c371f4d00f21c9945",
+      "shape": [
+        34,
+        10
+      ]
+    },
+    {
+      "dataset_id": "30ef3eaa6d2971a9",
+      "relative_path": "30ef3eaa6d2971a9/train3.vs.orig.v2",
+      "sha256": "f449efe88d6478fff354a0aa05a2fbaa0ad6cfee16caa059238630f063917f56",
+      "shape": [
+        109,
+        30
+      ]
+    },
+    {
+      "dataset_id": "30ef3eaa6d2971a9",
+      "relative_path": "30ef3eaa6d2971a9/test3.vs.orig.v2",
+      "sha256": "f6b2e09e91d93bde8c32eeb903d61399386a97a73e43cbab1f559863da8cef1e",
+      "shape": [
+        22,
+        30
+      ]
+    },
+    {
+      "dataset_id": "3305a3ad973fb227",
+      "relative_path": "3305a3ad973fb227/train3.vs.orig.v2",
+      "sha256": "f85a714b2cf7902af7f2809009b07f23229b92d03cfe895af6b74543e7184bd2",
+      "shape": [
+        200,
+        2
+      ]
+    },
+    {
+      "dataset_id": "3305a3ad973fb227",
+      "relative_path": "3305a3ad973fb227/test3.vs.orig.v2",
+      "sha256": "b4c323772317b8b38cab29e306fc0c32ed845c6d4a806c93e7c4962c8fc4f346",
+      "shape": [
+        40,
+        2
+      ]
+    },
+    {
+      "dataset_id": "3baa7e37fc1f7861",
+      "relative_path": "3baa7e37fc1f7861/train3.vs.orig.v2",
+      "sha256": "7d3cce21dd3da56b6ba9c88f1934d93621a344cdba4e9a4180bcdb0c6d30fd29",
+      "shape": [
+        269,
+        4
+      ]
+    },
+    {
+      "dataset_id": "3baa7e37fc1f7861",
+      "relative_path": "3baa7e37fc1f7861/test3.vs.orig.v2",
+      "sha256": "30e3462f26d83b59d2a8e619ff903721fd00beb0a00988925e632e97de7a0f86",
+      "shape": [
+        54,
+        4
+      ]
+    },
+    {
+      "dataset_id": "3f781a51af45387e",
+      "relative_path": "3f781a51af45387e/train3.vs.orig.v2",
+      "sha256": "98b05c9c6419d4407940b42253b816e347e3dc48b7aaf4dd11c4302a6e115f42",
+      "shape": [
+        228,
+        3
+      ]
+    },
+    {
+      "dataset_id": "3f781a51af45387e",
+      "relative_path": "3f781a51af45387e/test3.vs.orig.v2",
+      "sha256": "ae9da4e4ea40b3798821a6f1988e920f0fb9b3799157019ee1d5175d581ab124",
+      "shape": [
+        46,
+        3
+      ]
+    },
+    {
+      "dataset_id": "542e75bc0cfdd1bf",
+      "relative_path": "542e75bc0cfdd1bf/train3.vs.orig.v2",
+      "sha256": "78bfc8c465ff16ff6cbe8f951bef2bdd81c7d6f65adadfda4e5cc77af2fef2a6",
+      "shape": [
+        37,
+        17
+      ]
+    },
+    {
+      "dataset_id": "542e75bc0cfdd1bf",
+      "relative_path": "542e75bc0cfdd1bf/test3.vs.orig.v2",
+      "sha256": "3031e45e04d75168043b1239e838efab58be2503020dc3316520e166ab4dfaa4",
+      "shape": [
+        8,
+        17
+      ]
+    },
+    {
+      "dataset_id": "693890aae9dc860b",
+      "relative_path": "693890aae9dc860b/train3.vs.orig.v2",
+      "sha256": "f45b0123fd08567288682c18282fa128f9833718e7947afc635d91909a3fc753",
+      "shape": [
+        202,
+        1
+      ]
+    },
+    {
+      "dataset_id": "693890aae9dc860b",
+      "relative_path": "693890aae9dc860b/test3.vs.orig.v2",
+      "sha256": "f015a20c9990346c092fc1bf26172df6fc0b17a9672fe0a22c17253688d0671e",
+      "shape": [
+        41,
+        1
+      ]
+    },
+    {
+      "dataset_id": "79e600bc5fcd5da7",
+      "relative_path": "79e600bc5fcd5da7/train3.vs.orig.v2",
+      "sha256": "68ed4253e39e6372c351c1e272fad6e789faf92301fd48a29c24bf75b31eeb75",
+      "shape": [
+        180,
+        3
+      ]
+    },
+    {
+      "dataset_id": "79e600bc5fcd5da7",
+      "relative_path": "79e600bc5fcd5da7/test3.vs.orig.v2",
+      "sha256": "bf6989e422014ed21c48be29ea7839978fe2e676160066ed9e327de8b971ec9a",
+      "shape": [
+        36,
+        3
+      ]
+    },
+    {
+      "dataset_id": "ab0239b9ef0ba28e",
+      "relative_path": "ab0239b9ef0ba28e/train3.vs.orig.v2",
+      "sha256": "8e553f41ad6ddc57acef3ce06fab53126bb2289b37ee663775885609af4bf238",
+      "shape": [
+        28,
+        1040
+      ]
+    },
+    {
+      "dataset_id": "ab0239b9ef0ba28e",
+      "relative_path": "ab0239b9ef0ba28e/test3.vs.orig.v2",
+      "sha256": "6741f0deb8d0fecd4b0b6dcd55cc064e879a45758e0f6a177df1ea83589129e8",
+      "shape": [
+        6,
+        1040
+      ]
+    },
+    {
+      "dataset_id": "b253fbfae8460dc1",
+      "relative_path": "b253fbfae8460dc1/train3.vs.orig.v2",
+      "sha256": "16181511bd3d49b9430187337e0a16bdc6490d92ad764e12dc2ac4caea020c1e",
+      "shape": [
+        43,
+        7
+      ]
+    },
+    {
+      "dataset_id": "b253fbfae8460dc1",
+      "relative_path": "b253fbfae8460dc1/test3.vs.orig.v2",
+      "sha256": "533d2a27f22451051fb3b0f5edcab74ca7d5a7b0fd3cd93bdefc72266ed15e32",
+      "shape": [
+        9,
+        7
+      ]
+    },
+    {
+      "dataset_id": "cf5e74b4e9594944",
+      "relative_path": "cf5e74b4e9594944/train3.vs.orig.v2",
+      "sha256": "4cf9517b629fe2a2f03c2c2363b856536c0ab4e8ded9f234ae66ebb447695639",
+      "shape": [
+        10,
+        569
+      ]
+    },
+    {
+      "dataset_id": "cf5e74b4e9594944",
+      "relative_path": "cf5e74b4e9594944/test3.vs.orig.v2",
+      "sha256": "987219dfc53a355250f83f17915b15cdb879d97fff89265323de5bfb4cfb7187",
+      "shape": [
+        3,
+        569
+      ]
+    },
+    {
+      "dataset_id": "d2daf53412ab18dc",
+      "relative_path": "d2daf53412ab18dc/train3.vs.orig.v2",
+      "sha256": "d47d815d59c4848310224b8ed9202aa3f4871b5ff3fd4604945609221aa11921",
+      "shape": [
+        255,
+        18
+      ]
+    },
+    {
+      "dataset_id": "d2daf53412ab18dc",
+      "relative_path": "d2daf53412ab18dc/test3.vs.orig.v2",
+      "sha256": "448f8398c73c68aaafb4b5f8a76fbe859fd09bfda20268e40e735e402bfac0fe",
+      "shape": [
+        51,
+        18
+      ]
+    },
+    {
+      "dataset_id": "dee1fc8e9afd81c9",
+      "relative_path": "dee1fc8e9afd81c9/train3.vs.orig.v2",
+      "sha256": "baf8cc0579ae9730498d070cf58565e4a393b295920d441d731765205a2fe3b2",
+      "shape": [
+        129,
+        8
+      ]
+    },
+    {
+      "dataset_id": "dee1fc8e9afd81c9",
+      "relative_path": "dee1fc8e9afd81c9/test3.vs.orig.v2",
+      "sha256": "9800f7740856cdb2401f17364eedba21cb765e4329358e77d3931bf251f87289",
+      "shape": [
+        26,
+        8
+      ]
+    },
+    {
+      "dataset_id": "e1c1db5260d0894e",
+      "relative_path": "e1c1db5260d0894e/train3.vs.orig.v2",
+      "sha256": "d7cb4ce2f159596f03be00ac19af119a1745f33c0c3c02137a15a83d79248fdd",
+      "shape": [
+        83,
+        10
+      ]
+    },
+    {
+      "dataset_id": "e1c1db5260d0894e",
+      "relative_path": "e1c1db5260d0894e/test3.vs.orig.v2",
+      "sha256": "d5348ec364472cf20ca3d502ae1cf26f64641b797fd046e3620c20fc1258414e",
+      "shape": [
+        17,
+        10
+      ]
+    },
+    {
+      "dataset_id": "ee56a1015e344c11",
+      "relative_path": "ee56a1015e344c11/train3.vs.orig.v2",
+      "sha256": "b061da5100f60c24a03037258659906edf1f9c8e5c0054453829418d782d27f3",
+      "shape": [
+        104,
+        4
+      ]
+    },
+    {
+      "dataset_id": "ee56a1015e344c11",
+      "relative_path": "ee56a1015e344c11/test3.vs.orig.v2",
+      "sha256": "ec28e05da2bd5b2e674de88e58fb35d0a6435b31ce58cee16c9fa5706050dc87",
+      "shape": [
+        21,
+        4
+      ]
+    },
+    {
+      "dataset_id": "fe3cc716a05d036f",
+      "relative_path": "fe3cc716a05d036f/train3.vs.orig.v2",
+      "sha256": "2ce5c9a066df6ed7b06c781b374c6a9230eecddf2e5cf72c0e1b4efde28ae7f0",
+      "shape": [
+        200,
+        2
+      ]
+    },
+    {
+      "dataset_id": "fe3cc716a05d036f",
+      "relative_path": "fe3cc716a05d036f/test3.vs.orig.v2",
+      "sha256": "e5e2063a04f4a7e560243cee583a2e701c05adc40565d2537d9885661d16d31f",
+      "shape": [
+        40,
+        2
+      ]
+    }
+  ],
+  "generation_receipt": {
+    "path": "/home/ubuntu/jope-dime/manifests/hyperion-orig-v2-20260809/generation.v1.json",
+    "sha256": "2a4f9d6a127c8ee625eec1e27411b17808763220166b23311c90e6fbc2cf8673"
+  },
+  "installed_root": "/home/ubuntu/jope-dime/sotarena/data/tabular-regression-v1",
+  "installer_sha256": "6d2f00eb7e0d3442ba49a7b8cc982f44231f659da07cd0d58fde1513d9ac0e83",
+  "output_file_count": 40,
+  "preinstall_existing_output_count": 0,
+  "schema": "HyperionLatestModelOldSemanticsInstallation.v1",
+  "source_root": "/home/ubuntu/jope-dime/artifacts/hyperion-orig-v2-scq/fetched-v4/results/data",
+  "status": "complete"
+}

@@ -12,6 +12,7 @@ use std::thread;
 use std::time::Duration;
 
 const MIN_USEFUL_WORK_TARGET: usize = 6_144;
+const MIN_CANDIDATE_EVALUATION_WORK_TARGET: usize = 8 * 128 * 256;
 const STALE_CONTROL_MS: u128 = 2 * 60 * 1_000;
 const IDLE_GPU_MS: u128 = 5 * 60 * 1_000;
 
@@ -76,11 +77,12 @@ fn disk_used_percent(path: &Path) -> Result<u8> {
     let status = unsafe { status.assume_init() };
     let blocks = status.f_blocks as u128;
     let available = status.f_bavail as u128;
-    Ok(if blocks == 0 {
-        0
-    } else {
-        (((blocks.saturating_sub(available)) * 100) / blocks).min(100) as u8
-    })
+    let used_percent = blocks
+        .saturating_sub(available)
+        .saturating_mul(100)
+        .checked_div(blocks)
+        .unwrap_or(0);
+    Ok(used_percent.min(100) as u8)
 }
 
 fn dynamic_target(p95_jobs_per_minute: f64, proposer_to_ready_minutes_p95: f64) -> usize {
@@ -89,6 +91,19 @@ fn dynamic_target(p95_jobs_per_minute: f64, proposer_to_ready_minutes_p95: f64) 
         .max(
             (1.5 * p95_jobs_per_minute.max(0.0) * proposer_to_ready_minutes_p95.max(0.0)).ceil()
                 as usize,
+        )
+}
+
+fn candidate_dynamic_target(
+    p95_candidate_evaluations_per_minute: f64,
+    proposer_to_ready_minutes_p95: f64,
+) -> usize {
+    MIN_CANDIDATE_EVALUATION_WORK_TARGET
+        .max((120.0 * p95_candidate_evaluations_per_minute.max(0.0)).ceil() as usize)
+        .max(
+            (1.5 * p95_candidate_evaluations_per_minute.max(0.0)
+                * proposer_to_ready_minutes_p95.max(0.0))
+            .ceil() as usize,
         )
 }
 
@@ -115,6 +130,11 @@ fn modified_ms(path: &Path) -> Option<u128> {
 fn observed_supply_performance(root: &Path, queue: &Value) -> Value {
     let burn = queue
         .get("p95_60m_jobs_per_minute")
+        .and_then(Value::as_f64)
+        .filter(|value| value.is_finite() && *value > 0.0)
+        .unwrap_or_default();
+    let candidate_burn = queue
+        .get("p95_60m_candidate_evaluations_per_minute")
         .and_then(Value::as_f64)
         .filter(|value| value.is_finite() && *value > 0.0)
         .unwrap_or_default();
@@ -146,6 +166,7 @@ fn observed_supply_performance(root: &Path, queue: &Value) -> Value {
         "schema": "SupplyPerformance.v1",
         "generated_at_ms": now_ms(),
         "p95_jobs_per_minute": burn,
+        "p95_candidate_evaluations_per_minute": candidate_burn,
         "evaluator_burn_per_second_p95": burn / 60.0,
         "proposer_to_ready_minutes_p95": proposer / 60.0,
         "proposer_to_ready_seconds_p95": proposer,
@@ -191,11 +212,20 @@ fn cycle(root: &Path, scq: &Path) -> Result<Value> {
         .get("p95_jobs_per_minute")
         .and_then(Value::as_f64)
         .unwrap_or_default();
+    let candidate_burn = performance
+        .get("p95_candidate_evaluations_per_minute")
+        .and_then(Value::as_f64)
+        .unwrap_or_default();
     let proposer_time = performance
         .get("proposer_to_ready_minutes_p95")
         .and_then(Value::as_f64)
         .unwrap_or_default();
-    let target = dynamic_target(burn, proposer_time);
+    let legacy_job_target = dynamic_target(burn, proposer_time);
+    let candidate_target = candidate_dynamic_target(candidate_burn, proposer_time);
+    let candidate_evaluation_work = queue
+        .get("candidate_evaluation_work")
+        .and_then(Value::as_u64)
+        .unwrap_or_default() as usize;
     let labels = ingest
         .get("exact_rows_total")
         .or_else(|| ingest.get("watermark"))
@@ -232,7 +262,7 @@ fn cycle(root: &Path, scq: &Path) -> Result<Value> {
         .saturating_add(starting)
         .saturating_add(dispatching)
         .saturating_add(ready);
-    let proposer_eligible = useful_work < target;
+    let proposer_eligible = candidate_evaluation_work < candidate_target;
     let proposer_active = supply
         .get("builds_planned")
         .and_then(Value::as_u64)
@@ -301,7 +331,7 @@ fn cycle(root: &Path, scq: &Path) -> Result<Value> {
     if encoder_eligible && !encoder_active && encoder_age > IDLE_GPU_MS {
         alarms.push("eligible_encoder_gpu_idle_over_five_minutes".to_owned());
     }
-    if useful_work < target
+    if candidate_evaluation_work < candidate_target
         || supply.get("target_feasible").and_then(Value::as_bool) != Some(true)
         || supply
             .get("complete_reserve_waves")
@@ -339,9 +369,13 @@ fn cycle(root: &Path, scq: &Path) -> Result<Value> {
         "queue_depth": queued.saturating_add(starting).saturating_add(dispatching),
         "ready_reserve": ready,
         "useful_work": useful_work,
-        "dynamic_target": target,
-        "target_formula": "max(6144,ceil(120*p95_jobs_per_minute),ceil(1.5*p95_proposer_to_ready_minutes*p95_jobs_per_minute))",
+        "dynamic_target": legacy_job_target,
+        "target_formula": "legacy_job_count_only_not_used_for_capacity_decisions",
+        "candidate_evaluation_work": candidate_evaluation_work,
+        "candidate_evaluation_dynamic_target": candidate_target,
+        "candidate_target_formula": "max(262144,ceil(120*p95_candidate_evaluations_per_minute),ceil(1.5*p95_proposer_to_ready_minutes*p95_candidate_evaluations_per_minute))",
         "p95_jobs_per_minute": burn,
+        "p95_candidate_evaluations_per_minute": candidate_burn,
         "p95_proposer_to_ready_minutes": proposer_time,
         "ingestion_lag_labels": 0,
         "corpus_lag_labels": labels.saturating_sub(corpus_watermark),

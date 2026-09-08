@@ -214,7 +214,9 @@ pub fn emit(genome: &GenomeIr, opts: &EmitOptions) -> Result<Emitted> {
         genome_sha256: sha256_hex(&canonical),
         dsl: canonical,
         flavor,
-        emitter_version: EMITTER_VERSION,
+        emitter_version: if crate::spec::helper_set(&plan).contains(&crate::spec::Helper::MathClip) {
+            "feat-math-clip-safety-v2"
+        } else { EMITTER_VERSION },
         py_sha256: sha256_hex(&python),
         rs_sha256: sha256_hex(&rust),
     })?;

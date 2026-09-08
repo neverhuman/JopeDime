@@ -57,7 +57,7 @@ pub struct QueueTargets {
     pub p95_jobs_per_minute: f64,
 }
 
-/// Calculate the nearest-rank p95 while preserving the fixed queue policy.
+/// Calculate the nearest-rank p95 and the work-conserving queue horizon.
 pub fn dynamic_queue_targets(
     jobs_per_minute: &[f64],
     effective_cluster_slots: i64,
@@ -76,8 +76,9 @@ pub fn dynamic_queue_targets(
         let rank = ((0.95 * values.len() as f64).ceil() as usize).max(1);
         values[rank - 1]
     };
+    let slot_horizon = ((i128::from(effective_cluster_slots) * 5 + 3) / 4).min(4_096) as i64;
     Ok(QueueTargets {
-        target: 2_048,
+        target: slot_horizon.max(2_048),
         hard_cap: 4_096,
         p95_jobs_per_minute: p95,
     })
@@ -918,6 +919,8 @@ mod tests {
                 p95_jobs_per_minute: 1_000.0,
             }
         );
+        assert_eq!(dynamic_queue_targets(&[], 2_000).unwrap().target, 2_500);
+        assert_eq!(dynamic_queue_targets(&[], 4_000).unwrap().target, 4_096);
         let values = (1..=20).map(f64::from).collect::<Vec<_>>();
         assert_eq!(
             dynamic_queue_targets(&values, 0)

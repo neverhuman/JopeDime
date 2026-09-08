@@ -1,0 +1,1726 @@
+{
+  "authorities": {
+    "generator": {
+      "mtime_ns": 1786316717000000000,
+      "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/scripts/reconstruct_latest_hyperion_old_semantics.py",
+      "sha256": "f279a936cf914dcecf197a0207ded11213d5124c176e0e3e713d45066ecec2ac",
+      "size_bytes": 28140
+    },
+    "jain_core": {
+      "files": {
+        "crates/feat-core/src/hyperion.rs": {
+          "mtime_ns": 1785402570000000000,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/jain-core/crates/feat-core/src/hyperion.rs",
+          "sha256": "483d8f6a75b7b47391a8ce9da13c22d37a708624bc87161434c36073af53d3cd",
+          "size_bytes": 77533
+        },
+        "crates/feat-core/src/hyperion_v7/backend.rs": {
+          "mtime_ns": 1785146684000000000,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/jain-core/crates/feat-core/src/hyperion_v7/backend.rs",
+          "sha256": "63a2ec015a2f9e24a538f99c61dafd1c964436d090053f12b5a0bd97f29c82b4",
+          "size_bytes": 13148
+        },
+        "crates/feat-core/src/hyperion_v7/model.rs": {
+          "mtime_ns": 1784789311000000000,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/jain-core/crates/feat-core/src/hyperion_v7/model.rs",
+          "sha256": "6be397226338c9afca425e1214df912d186d2b7bbc7a84e996e043dbf53086ef",
+          "size_bytes": 8031
+        },
+        "crates/feat-core/src/hyperion_v7/sweep/driver.rs": {
+          "mtime_ns": 1783493795000000000,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/jain-core/crates/feat-core/src/hyperion_v7/sweep/driver.rs",
+          "sha256": "b853226cb9ffbad735c614403077645ae4aa2684309c21a8a6218107cd58c808",
+          "size_bytes": 18462
+        }
+      },
+      "git_head": "a029dbe5aa7a4da7b6f5aa1c5e93f73e3e207bc6",
+      "repository": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/jain-core"
+    },
+    "manifest": {
+      "mtime_ns": 1784192195000000000,
+      "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/hyperion_v5_arm_b.manifest.json",
+      "sha256": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+      "size_bytes": 264
+    },
+    "manifest_content": {
+      "dim": 128,
+      "emb_dim": 128,
+      "heads": 4,
+      "layers": 4,
+      "max_patch": 16,
+      "min_patch": 2,
+      "n_bands": 4,
+      "pad_u8": 128,
+      "q_high": 99.0,
+      "q_low": 1.0,
+      "quant_scale": 3.0,
+      "seed": 0,
+      "step": 0,
+      "version": "v7",
+      "ws_list": [
+        4,
+        7,
+        11,
+        15
+      ]
+    },
+    "python_model_sources": {
+      "config.py": {
+        "authority": "xbabe1:/home/ubuntu/seed_data_cache/Hyperion_Entanglement/hyperion_v5_modules/config.py",
+        "bytes": 2470,
+        "sha256": "c960a40dd517f4af3cd40cb6214de8dd88f66e53fcf36fcc2c1d83b34a20cd47"
+      },
+      "model.py": {
+        "authority": "xbabe1:/home/ubuntu/seed_data_cache/Hyperion_Entanglement/hyperion_v5_modules/model.py",
+        "bytes": 7880,
+        "sha256": "31e095d483013689307da7a191ed54b0e3c1ffafdf66d9779c4fd467a3fd180a"
+      }
+    },
+    "weights": {
+      "mtime_ns": 1784192195000000000,
+      "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/hyperion_v5_arm_b.safetensors",
+      "sha256": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+      "size_bytes": 6650692
+    }
+  },
+  "claim": "old sweep semantics with Jain latest pinned Hyperion model; exploratory transductive feature encoding",
+  "dataset_count": 20,
+  "dataset_order": [
+    "019de5d76a718163",
+    "047e62b52a3f4ede",
+    "13b5df533e59a626",
+    "17a4542ee4fb9e44",
+    "1cb97b1d7314d43d",
+    "30ef3eaa6d2971a9",
+    "3305a3ad973fb227",
+    "3baa7e37fc1f7861",
+    "3f781a51af45387e",
+    "542e75bc0cfdd1bf",
+    "693890aae9dc860b",
+    "79e600bc5fcd5da7",
+    "ab0239b9ef0ba28e",
+    "b253fbfae8460dc1",
+    "cf5e74b4e9594944",
+    "d2daf53412ab18dc",
+    "dee1fc8e9afd81c9",
+    "e1c1db5260d0894e",
+    "ee56a1015e344c11",
+    "fe3cc716a05d036f"
+  ],
+  "datasets": [
+    {
+      "campaign_index": 0,
+      "collapsed_cell_c_order_sha256": "ccc2d15f98000ebfc43ef799712890bebef9b0e4c9f64c1f31469e9ff02c3433",
+      "dataset_id": "019de5d76a718163",
+      "elapsed_seconds": 14.987513,
+      "inputs": {
+        "joint_feature_sha256": "29654bc9a760331072fa72dbe208b81ec2ded3725686b354fa5a12abc8b8952b",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          144,
+          2
+        ],
+        "test": {
+          "columns_including_target": 3,
+          "feature_columns": 2,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/019de5d76a718163/test.csv",
+          "rows": 24,
+          "sha256": "3c3880fd9922845c3b37d1ccdaeab314f03427fa630206845f6a4c30aca621be",
+          "target_column_index": 2,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 3,
+          "feature_columns": 2,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/019de5d76a718163/train.csv",
+          "rows": 120,
+          "sha256": "51bcd78adab1e89b6970e1db59b982d4faf751e6383d0c6b9b6dd58b027ad59b",
+          "target_column_index": 2,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.575831413269043,
+          "mean": 1.9203771352767944,
+          "min": -0.9747058749198914,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/019de5d76a718163/test3.vs.orig.v2",
+          "sha256": "d11af422dbe25a66b0ff218ed1415787b0440c61fea35c326bcdda6c4990aa6c",
+          "shape": [
+            24,
+            2
+          ],
+          "std": 0.7382358908653259
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.8034496307373047,
+          "mean": 1.9950222969055176,
+          "min": -2.5536975860595703,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/019de5d76a718163/train3.vs.orig.v2",
+          "sha256": "f58eff55e30545cabeb84af55c5851b78444ed8aa0134cf1094a961833147a59",
+          "shape": [
+            120,
+            2
+          ],
+          "std": 0.5703430771827698
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "4a8853c604a58712ee0983d3e1f086e489e2c597062aacca4a2400966762c947",
+        "dtype": "float32",
+        "finite": true,
+        "max": 3.865234375,
+        "mean": 1.982581615447998,
+        "min": -3.380859375,
+        "shape": [
+          100,
+          4,
+          144,
+          2
+        ],
+        "std": 0.7151874899864197
+      }
+    },
+    {
+      "campaign_index": 1,
+      "collapsed_cell_c_order_sha256": "9750d0c8c0aa734f799ce0a4213d6c065e915d794acc8044045dc492a53b54bf",
+      "dataset_id": "047e62b52a3f4ede",
+      "elapsed_seconds": 13.029779,
+      "inputs": {
+        "joint_feature_sha256": "d7b1f36987b32f023c76415ec2a45a03f6cd1565def5dd4356c654e3bbe9214e",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          235,
+          12
+        ],
+        "test": {
+          "columns_including_target": 13,
+          "feature_columns": 12,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/047e62b52a3f4ede/test.csv",
+          "rows": 40,
+          "sha256": "db81d97c1bbcf243835ad680fc963705167fd8b461ede2adb7f747762b9e613d",
+          "target_column_index": 12,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 13,
+          "feature_columns": 12,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/047e62b52a3f4ede/train.csv",
+          "rows": 195,
+          "sha256": "f6efbbe844d2a00256435487f60174353502afee158f74044419464e91e30d9d",
+          "target_column_index": 12,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.9704785346984863,
+          "mean": 2.034599542617798,
+          "min": -2.4644887447357178,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/047e62b52a3f4ede/test3.vs.orig.v2",
+          "sha256": "ae4ffd5f70512879f1fdbdf433c23f340eef9a35c707de8df3c509937583d47c",
+          "shape": [
+            40,
+            12
+          ],
+          "std": 0.6359115242958069
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.9360668659210205,
+          "mean": 2.004138231277466,
+          "min": -4.733832836151123,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/047e62b52a3f4ede/train3.vs.orig.v2",
+          "sha256": "da4e300255f2a7c6cb3e15333a900ecc6af1751ea1df2a3b38d066c29a96b46b",
+          "shape": [
+            195,
+            12
+          ],
+          "std": 0.7021182775497437
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "615f4a901171b330ac8b30aef323ae22eae12694da543f6ee82b468e481d02f8",
+        "dtype": "float32",
+        "finite": true,
+        "max": 4.1611328125,
+        "mean": 2.0093231201171875,
+        "min": -6.248046875,
+        "shape": [
+          100,
+          4,
+          235,
+          12
+        ],
+        "std": 0.8954276442527771
+      }
+    },
+    {
+      "campaign_index": 2,
+      "collapsed_cell_c_order_sha256": "7ffe2319cbedebede7bf5a154c32674226f3d5411daa775595fe243dda1fd73e",
+      "dataset_id": "13b5df533e59a626",
+      "elapsed_seconds": 12.074188,
+      "inputs": {
+        "joint_feature_sha256": "c4ecccd0bc673975285bae262d59cab5f7105aaeeaf18da1fcc46af99bad79ba",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          126,
+          19
+        ],
+        "test": {
+          "columns_including_target": 20,
+          "feature_columns": 19,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/13b5df533e59a626/test.csv",
+          "rows": 21,
+          "sha256": "8ddc474338429731b8514e0fbd84eb2c8beff11d6cc2d1f0ddbe479cc44b3118",
+          "target_column_index": 19,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 20,
+          "feature_columns": 19,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/13b5df533e59a626/train.csv",
+          "rows": 105,
+          "sha256": "daf84f20781471da155254c054101936ceb9860a06ceb7edc2590dd8886828bd",
+          "target_column_index": 19,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.4760730266571045,
+          "mean": 1.6707181930541992,
+          "min": -3.1745386123657227,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/13b5df533e59a626/test3.vs.orig.v2",
+          "sha256": "49b16381abbd6ca254c4562f31eb2cbb3306014613165e91d352ee8eed369ef8",
+          "shape": [
+            21,
+            19
+          ],
+          "std": 0.873372495174408
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.5362095832824707,
+          "mean": 1.8176705837249756,
+          "min": -3.044185161590576,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/13b5df533e59a626/train3.vs.orig.v2",
+          "sha256": "07ce7d3cf6da586557fc0536a1b194737c459530ee31510f0e7c9a5725a74bdb",
+          "shape": [
+            105,
+            19
+          ],
+          "std": 0.5379920601844788
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "a2421ffe21ae4212402c5bbc00ea320043f621104448986bb70a72f92de9d236",
+        "dtype": "float32",
+        "finite": true,
+        "max": 4.1328125,
+        "mean": 1.7931787967681885,
+        "min": -5.10546875,
+        "shape": [
+          100,
+          4,
+          126,
+          19
+        ],
+        "std": 0.8090229034423828
+      }
+    },
+    {
+      "campaign_index": 3,
+      "collapsed_cell_c_order_sha256": "eabcb35759b30ca56d001dcc8274afac421ae425b3a9b3cd2b395f0fce720a3e",
+      "dataset_id": "17a4542ee4fb9e44",
+      "elapsed_seconds": 13.725445,
+      "inputs": {
+        "joint_feature_sha256": "4acaa663106b5be12f773179f6b5bc8fcbd502075e267639711bd771552d3ff0",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          189,
+          9
+        ],
+        "test": {
+          "columns_including_target": 10,
+          "feature_columns": 9,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/17a4542ee4fb9e44/test.csv",
+          "rows": 32,
+          "sha256": "13018564259808725908cdab0529791cd2d43d03d388554aedb9b0361079be40",
+          "target_column_index": 9,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 10,
+          "feature_columns": 9,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/17a4542ee4fb9e44/train.csv",
+          "rows": 157,
+          "sha256": "abb8c42e2d352809c36a1e335d565d5a315b9789bafc70ff0a680c6f36dd1c28",
+          "target_column_index": 9,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.562202215194702,
+          "mean": 1.7436727285385132,
+          "min": -3.173518180847168,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/17a4542ee4fb9e44/test3.vs.orig.v2",
+          "sha256": "ac5d9f6565cc14385d6e338fbf1757597ae503b61a9dac47f30d177b173b718c",
+          "shape": [
+            32,
+            9
+          ],
+          "std": 0.7932517528533936
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.554011344909668,
+          "mean": 1.8121931552886963,
+          "min": -3.191787004470825,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/17a4542ee4fb9e44/train3.vs.orig.v2",
+          "sha256": "7529d1e287a36092bcaed8af76333ca1da8819b5d54f3352d3bf0209ca952cd0",
+          "shape": [
+            157,
+            9
+          ],
+          "std": 0.5188677906990051
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "b2e3602f47c41af90fe95d6fcdb0ac6bda7ac58c4ad1ce9cf3dfb5d661ba4048",
+        "dtype": "float32",
+        "finite": true,
+        "max": 4.177734375,
+        "mean": 1.8005917072296143,
+        "min": -4.6328125,
+        "shape": [
+          100,
+          4,
+          189,
+          9
+        ],
+        "std": 0.7745314836502075
+      }
+    },
+    {
+      "campaign_index": 4,
+      "collapsed_cell_c_order_sha256": "4376f49ca3e976fb5fd488ec66669739b61698a788c2ce37276974de08f0b931",
+      "dataset_id": "1cb97b1d7314d43d",
+      "elapsed_seconds": 14.756287,
+      "inputs": {
+        "joint_feature_sha256": "ad12cbe57529d08c60239f076d0435854ce55e3a69301f26696ac29de7d4ec54",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          200,
+          10
+        ],
+        "test": {
+          "columns_including_target": 11,
+          "feature_columns": 10,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/1cb97b1d7314d43d/test.csv",
+          "rows": 34,
+          "sha256": "ebf1425f8097b11ec54dc67e8a9af9d486a8d9a0083c6b98cef7bc493fba70ea",
+          "target_column_index": 10,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 11,
+          "feature_columns": 10,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/1cb97b1d7314d43d/train.csv",
+          "rows": 166,
+          "sha256": "12cebdca583ad0d7316e1963e0c1d7c2eda9efe1b9585a00a49364b570bb52e5",
+          "target_column_index": 10,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.0468993186950684,
+          "mean": 1.665610432624817,
+          "min": -1.0191291570663452,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/1cb97b1d7314d43d/test3.vs.orig.v2",
+          "sha256": "ee8d46e0b77bb3998558aba283813fbd9703dc63b793de5c371f4d00f21c9945",
+          "shape": [
+            34,
+            10
+          ],
+          "std": 0.6794038414955139
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.4492053985595703,
+          "mean": 1.8666749000549316,
+          "min": -3.4390857219696045,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/1cb97b1d7314d43d/train3.vs.orig.v2",
+          "sha256": "8ad8afa68e4a0d2479c5af702c5da67ccca185bafa3baf2126a89374af78b479",
+          "shape": [
+            166,
+            10
+          ],
+          "std": 0.4984453618526459
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "c53dced708f7c9118ce559c8da3d486c11a30f4a5383793cfb71ee5805d4f62f",
+        "dtype": "float32",
+        "finite": true,
+        "max": 4.0234375,
+        "mean": 1.8324944972991943,
+        "min": -4.630859375,
+        "shape": [
+          100,
+          4,
+          200,
+          10
+        ],
+        "std": 0.6944697499275208
+      }
+    },
+    {
+      "campaign_index": 5,
+      "collapsed_cell_c_order_sha256": "fe0bd8e7dc7abb2b3f2d3acc82c821d75ed51bd23fdf12bcd7df69256dd97646",
+      "dataset_id": "30ef3eaa6d2971a9",
+      "elapsed_seconds": 14.232204,
+      "inputs": {
+        "joint_feature_sha256": "3bed1736396e25f3d717fa8b3a80b8ea6cd6c0d74c89f120136f59ea5e6e0405",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          131,
+          30
+        ],
+        "test": {
+          "columns_including_target": 31,
+          "feature_columns": 30,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/30ef3eaa6d2971a9/test.csv",
+          "rows": 22,
+          "sha256": "d7ef01a3237bc304d2f3b15c1f034babe03de34f4e0410b6eb1492e1bad1cf7b",
+          "target_column_index": 30,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 31,
+          "feature_columns": 30,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/30ef3eaa6d2971a9/train.csv",
+          "rows": 109,
+          "sha256": "53e723ca42438573f0e9e4584e1004d5c777b02b852dae9f67e60951134b63e5",
+          "target_column_index": 30,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.243009090423584,
+          "mean": 1.8017001152038574,
+          "min": -0.904205322265625,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/30ef3eaa6d2971a9/test3.vs.orig.v2",
+          "sha256": "f6b2e09e91d93bde8c32eeb903d61399386a97a73e43cbab1f559863da8cef1e",
+          "shape": [
+            22,
+            30
+          ],
+          "std": 0.6081640720367432
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.6025452613830566,
+          "mean": 1.8024482727050781,
+          "min": -2.1838173866271973,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/30ef3eaa6d2971a9/train3.vs.orig.v2",
+          "sha256": "f449efe88d6478fff354a0aa05a2fbaa0ad6cfee16caa059238630f063917f56",
+          "shape": [
+            109,
+            30
+          ],
+          "std": 0.6082190275192261
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "62bcb39ceb2c74ce813925a05d07b45a01bde0986df20947a1fa8ba68e3652b9",
+        "dtype": "float32",
+        "finite": true,
+        "max": 4.025390625,
+        "mean": 1.8023234605789185,
+        "min": -5.591796875,
+        "shape": [
+          100,
+          4,
+          131,
+          30
+        ],
+        "std": 0.8734586238861084
+      }
+    },
+    {
+      "campaign_index": 6,
+      "collapsed_cell_c_order_sha256": "451425c9f63ac09c4fa5e8af6806931f34c9c9bed9ce689d56b4230bc923ade3",
+      "dataset_id": "3305a3ad973fb227",
+      "elapsed_seconds": 13.1144,
+      "inputs": {
+        "joint_feature_sha256": "7634160be58f0f3e66130dfd935cd900207a516bf5c6c337d56e49353efbd9c0",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          240,
+          2
+        ],
+        "test": {
+          "columns_including_target": 3,
+          "feature_columns": 2,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/3305a3ad973fb227/test.csv",
+          "rows": 40,
+          "sha256": "832bb2073eaaca40477b8c4cf17844203a946869d97ea17e0fe19687fb8844dd",
+          "target_column_index": 2,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 3,
+          "feature_columns": 2,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/3305a3ad973fb227/train.csv",
+          "rows": 200,
+          "sha256": "638c6593584f5c0d38a98827e59bea2fec1ffc7dc7a811f7cfa6f19c8cc00dad",
+          "target_column_index": 2,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.7886767387390137,
+          "mean": 1.8885005712509155,
+          "min": -3.0499634742736816,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/3305a3ad973fb227/test3.vs.orig.v2",
+          "sha256": "b4c323772317b8b38cab29e306fc0c32ed845c6d4a806c93e7c4962c8fc4f346",
+          "shape": [
+            40,
+            2
+          ],
+          "std": 0.9644135236740112
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.7046191692352295,
+          "mean": 2.018347978591919,
+          "min": -0.9166128635406494,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/3305a3ad973fb227/train3.vs.orig.v2",
+          "sha256": "f85a714b2cf7902af7f2809009b07f23229b92d03cfe895af6b74543e7184bd2",
+          "shape": [
+            200,
+            2
+          ],
+          "std": 0.437044233083725
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "7ffcc492344410c7e2acd63783a86e73874c762750be0eb9b71686122b428eaf",
+        "dtype": "float32",
+        "finite": true,
+        "max": 4.125,
+        "mean": 1.9967067241668701,
+        "min": -4.32421875,
+        "shape": [
+          100,
+          4,
+          240,
+          2
+        ],
+        "std": 0.6782125234603882
+      }
+    },
+    {
+      "campaign_index": 7,
+      "collapsed_cell_c_order_sha256": "150241378828460b1eb3b7241a37bc5e7dd890a4e30de17486efb504311fe205",
+      "dataset_id": "3baa7e37fc1f7861",
+      "elapsed_seconds": 11.677205,
+      "inputs": {
+        "joint_feature_sha256": "d3ecea36f941d33b801c20a065a4893fb32eaaf0c52080d6a286a3a7c1c2f1ea",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          323,
+          4
+        ],
+        "test": {
+          "columns_including_target": 5,
+          "feature_columns": 4,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/3baa7e37fc1f7861/test.csv",
+          "rows": 54,
+          "sha256": "3fd03a9fc1ce7d56c51b0b55b4b8763e2e5d8050d41ba06dbcc59a43654057ad",
+          "target_column_index": 4,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 5,
+          "feature_columns": 4,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/3baa7e37fc1f7861/train.csv",
+          "rows": 269,
+          "sha256": "d4c16304ff999b49535e953b98521ded91604e04d6e905b28a5dbd4c62b0fec5",
+          "target_column_index": 4,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.783329963684082,
+          "mean": 1.8368170261383057,
+          "min": -2.3160881996154785,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/3baa7e37fc1f7861/test3.vs.orig.v2",
+          "sha256": "30e3462f26d83b59d2a8e619ff903721fd00beb0a00988925e632e97de7a0f86",
+          "shape": [
+            54,
+            4
+          ],
+          "std": 0.6598021984100342
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.933051824569702,
+          "mean": 1.900326132774353,
+          "min": -2.494633674621582,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/3baa7e37fc1f7861/train3.vs.orig.v2",
+          "sha256": "7d3cce21dd3da56b6ba9c88f1934d93621a344cdba4e9a4180bcdb0c6d30fd29",
+          "shape": [
+            269,
+            4
+          ],
+          "std": 0.49749451875686646
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "2e010779464326771567299125631c5123ff8b0f5590337a4fbec7c353d6b3fb",
+        "dtype": "float32",
+        "finite": true,
+        "max": 4.068359375,
+        "mean": 1.8897085189819336,
+        "min": -3.984375,
+        "shape": [
+          100,
+          4,
+          323,
+          4
+        ],
+        "std": 0.6981889009475708
+      }
+    },
+    {
+      "campaign_index": 8,
+      "collapsed_cell_c_order_sha256": "59c73d789561499923edbb67f719068a325652f49d7c34ec0a7d3453d74c7c3b",
+      "dataset_id": "3f781a51af45387e",
+      "elapsed_seconds": 11.506995,
+      "inputs": {
+        "joint_feature_sha256": "21f68efeaa563af5a3d6c3638a7bb23b9f5be6c385a0f0a598584cc267ea44d6",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          274,
+          3
+        ],
+        "test": {
+          "columns_including_target": 4,
+          "feature_columns": 3,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/3f781a51af45387e/test.csv",
+          "rows": 46,
+          "sha256": "70ea053fba7399996f05da58ff56797ec4affa4a641eeb1cd8ac47dc98d334b3",
+          "target_column_index": 3,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 4,
+          "feature_columns": 3,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/3f781a51af45387e/train.csv",
+          "rows": 228,
+          "sha256": "0cf0e55c14f03a1f28d4cd74c222ff05ccc17f72ca0ee34293b369fe8dac52cc",
+          "target_column_index": 3,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.846522331237793,
+          "mean": 1.9459130764007568,
+          "min": -1.537172794342041,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/3f781a51af45387e/test3.vs.orig.v2",
+          "sha256": "ae9da4e4ea40b3798821a6f1988e920f0fb9b3799157019ee1d5175d581ab124",
+          "shape": [
+            46,
+            3
+          ],
+          "std": 0.7026912569999695
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.911623477935791,
+          "mean": 1.973432183265686,
+          "min": -3.7653565406799316,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/3f781a51af45387e/train3.vs.orig.v2",
+          "sha256": "98b05c9c6419d4407940b42253b816e347e3dc48b7aaf4dd11c4302a6e115f42",
+          "shape": [
+            228,
+            3
+          ],
+          "std": 0.5933710932731628
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "917fcacb4ddd0ee43aca78a13a5595943ca2dac459c8293e7e252230195963c0",
+        "dtype": "float32",
+        "finite": true,
+        "max": 4.0126953125,
+        "mean": 1.968812346458435,
+        "min": -5.73046875,
+        "shape": [
+          100,
+          4,
+          274,
+          3
+        ],
+        "std": 0.7621189951896667
+      }
+    },
+    {
+      "campaign_index": 9,
+      "collapsed_cell_c_order_sha256": "ce2c064f2c70996aadbf6b836d072cbefee3363143c44f0b0d21a0889ead260b",
+      "dataset_id": "542e75bc0cfdd1bf",
+      "elapsed_seconds": 12.447864,
+      "inputs": {
+        "joint_feature_sha256": "89e143f14b4ea26d0e3986fbcfb617545749ee11f2a9d34e181e714dbd21bca2",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          45,
+          17
+        ],
+        "test": {
+          "columns_including_target": 18,
+          "feature_columns": 17,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/542e75bc0cfdd1bf/test.csv",
+          "rows": 8,
+          "sha256": "9e04446fc36c649dc3f72502ca62f565ec78e5aa329a7ab07dd97a7e5eaf99ff",
+          "target_column_index": 17,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 18,
+          "feature_columns": 17,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/542e75bc0cfdd1bf/train.csv",
+          "rows": 37,
+          "sha256": "f0d6ae95f8b160407d4aa1ec77b6e5e355cbe26bd688362baa2287a8c48f683b",
+          "target_column_index": 17,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.237739324569702,
+          "mean": 1.812632441520691,
+          "min": -0.776561439037323,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/542e75bc0cfdd1bf/test3.vs.orig.v2",
+          "sha256": "3031e45e04d75168043b1239e838efab58be2503020dc3316520e166ab4dfaa4",
+          "shape": [
+            8,
+            17
+          ],
+          "std": 0.4393637478351593
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.245509624481201,
+          "mean": 1.7408559322357178,
+          "min": -1.069732904434204,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/542e75bc0cfdd1bf/train3.vs.orig.v2",
+          "sha256": "78bfc8c465ff16ff6cbe8f951bef2bdd81c7d6f65adadfda4e5cc77af2fef2a6",
+          "shape": [
+            37,
+            17
+          ],
+          "std": 0.5724339485168457
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "dfdb8e9c58cbae1f51f4e3edf767f9f9d2429f591c9046ccc0b344a077d9a014",
+        "dtype": "float32",
+        "finite": true,
+        "max": 3.728515625,
+        "mean": 1.753616213798523,
+        "min": -2.873046875,
+        "shape": [
+          100,
+          4,
+          45,
+          17
+        ],
+        "std": 0.7159414291381836
+      }
+    },
+    {
+      "campaign_index": 10,
+      "collapsed_cell_c_order_sha256": "3badfe0dc38fda508d03062189479a1b5c1194a7f18b20d6472a3d94c31c51ad",
+      "dataset_id": "693890aae9dc860b",
+      "elapsed_seconds": 12.663924,
+      "inputs": {
+        "joint_feature_sha256": "bd04f0142f52eef800b7b4cf4d587c7ebf039a8c4dc660c437bf9767169ad09a",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          243,
+          1
+        ],
+        "test": {
+          "columns_including_target": 2,
+          "feature_columns": 1,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/693890aae9dc860b/test.csv",
+          "rows": 41,
+          "sha256": "03bb6c0b0abdf033f3318dbd30eaa04cd45e85820413e0ff80b52e31f4259186",
+          "target_column_index": 1,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 2,
+          "feature_columns": 1,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/693890aae9dc860b/train.csv",
+          "rows": 202,
+          "sha256": "0a9dc81f52ea843bbfbbd2fabd9ff1e7c78e5d025ad21b4de4be9aa59d5497dd",
+          "target_column_index": 1,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 3.202089786529541,
+          "mean": 2.343778371810913,
+          "min": 1.0549232959747314,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/693890aae9dc860b/test3.vs.orig.v2",
+          "sha256": "f015a20c9990346c092fc1bf26172df6fc0b17a9672fe0a22c17253688d0671e",
+          "shape": [
+            41,
+            1
+          ],
+          "std": 0.4731462597846985
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 3.293879508972168,
+          "mean": 2.336092472076416,
+          "min": -2.414024591445923,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/693890aae9dc860b/train3.vs.orig.v2",
+          "sha256": "f45b0123fd08567288682c18282fa128f9833718e7947afc635d91909a3fc753",
+          "shape": [
+            202,
+            1
+          ],
+          "std": 0.6176271438598633
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "df67ab9d31117c76edcfb155e63583259f8e7c6461c9aefda58b067199cf7ae2",
+        "dtype": "float32",
+        "finite": true,
+        "max": 3.685546875,
+        "mean": 2.3373889923095703,
+        "min": -3.15234375,
+        "shape": [
+          100,
+          4,
+          243,
+          1
+        ],
+        "std": 0.6507236957550049
+      }
+    },
+    {
+      "campaign_index": 11,
+      "collapsed_cell_c_order_sha256": "cf7c6df5fcfcd042b00f9b0e88ef421895cdd1f70fe6d6e6e05f3318e4290dce",
+      "dataset_id": "79e600bc5fcd5da7",
+      "elapsed_seconds": 12.800805,
+      "inputs": {
+        "joint_feature_sha256": "2c9f08a62d9a7eb0c732cdc5d5200fe8d38a64fceb62bb181453803356837dd4",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          216,
+          3
+        ],
+        "test": {
+          "columns_including_target": 4,
+          "feature_columns": 3,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/79e600bc5fcd5da7/test.csv",
+          "rows": 36,
+          "sha256": "0622e041bc3258a108bd70f73847e2681ea0cdb81cdb4bf5cae14805a0c69e28",
+          "target_column_index": 3,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 4,
+          "feature_columns": 3,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/79e600bc5fcd5da7/train.csv",
+          "rows": 180,
+          "sha256": "24dda7eb3c3cfaf211d94f35b95806a5ef2d983f361575d912bb708ca83e58a1",
+          "target_column_index": 3,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.624511480331421,
+          "mean": 1.7813475131988525,
+          "min": -1.2788163423538208,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/79e600bc5fcd5da7/test3.vs.orig.v2",
+          "sha256": "bf6989e422014ed21c48be29ea7839978fe2e676160066ed9e327de8b971ec9a",
+          "shape": [
+            36,
+            3
+          ],
+          "std": 0.7370757460594177
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.6712658405303955,
+          "mean": 1.941120982170105,
+          "min": -3.1941826343536377,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/79e600bc5fcd5da7/train3.vs.orig.v2",
+          "sha256": "68ed4253e39e6372c351c1e272fad6e789faf92301fd48a29c24bf75b31eeb75",
+          "shape": [
+            180,
+            3
+          ],
+          "std": 0.5259920954704285
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "059df40670006ba73f95a69c540a8f2b68f206093d69d787d7a3de65826f84f3",
+        "dtype": "float32",
+        "finite": true,
+        "max": 4.01953125,
+        "mean": 1.9144917726516724,
+        "min": -4.705078125,
+        "shape": [
+          100,
+          4,
+          216,
+          3
+        ],
+        "std": 0.7200424075126648
+      }
+    },
+    {
+      "campaign_index": 12,
+      "collapsed_cell_c_order_sha256": "b5dbf28469994ac2ed3a550cb62d718c91e56a850d8a3ac58bcb4d7399057f50",
+      "dataset_id": "ab0239b9ef0ba28e",
+      "elapsed_seconds": 25.318257,
+      "inputs": {
+        "joint_feature_sha256": "4ae827eb95f31f2f0f0551c26182adbfa6b1995f0335846362222bd8ec428428",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          34,
+          1040
+        ],
+        "test": {
+          "columns_including_target": 1041,
+          "feature_columns": 1040,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/ab0239b9ef0ba28e/test.csv",
+          "rows": 6,
+          "sha256": "a96000f1a12738cc744b635caca8fedd22e849922e5d6d5f63dac82a8e3029c1",
+          "target_column_index": 1040,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 1041,
+          "feature_columns": 1040,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/ab0239b9ef0ba28e/train.csv",
+          "rows": 28,
+          "sha256": "708cb744064657fe9e267097e71d9d5131ba66a06c54207e4bd894ee3432013a",
+          "target_column_index": 1040,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.3956458568573,
+          "mean": 1.7832372188568115,
+          "min": -1.020797848701477,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/ab0239b9ef0ba28e/test3.vs.orig.v2",
+          "sha256": "6741f0deb8d0fecd4b0b6dcd55cc064e879a45758e0f6a177df1ea83589129e8",
+          "shape": [
+            6,
+            1040
+          ],
+          "std": 0.5387013554573059
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.401773691177368,
+          "mean": 1.7757530212402344,
+          "min": -1.3759502172470093,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/ab0239b9ef0ba28e/train3.vs.orig.v2",
+          "sha256": "8e553f41ad6ddc57acef3ce06fab53126bb2289b37ee663775885609af4bf238",
+          "shape": [
+            28,
+            1040
+          ],
+          "std": 0.5908262133598328
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "1141dc3956e4358bd4e5b850bdd9a05218469088fc9477a98926a65a084d6c24",
+        "dtype": "float32",
+        "finite": true,
+        "max": 4.22265625,
+        "mean": 1.7770726680755615,
+        "min": -5.123046875,
+        "shape": [
+          100,
+          4,
+          34,
+          1040
+        ],
+        "std": 0.7561794519424438
+      }
+    },
+    {
+      "campaign_index": 13,
+      "collapsed_cell_c_order_sha256": "8773059d002752345c6379f7ae1e25eaaa790cbf55c0b1390dfb1389c989eb1a",
+      "dataset_id": "b253fbfae8460dc1",
+      "elapsed_seconds": 15.031026,
+      "inputs": {
+        "joint_feature_sha256": "2d7b09b5843e51b7a8babe3e1a5179e8278f5a0c4520d15259e5933dd7f711ab",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          52,
+          7
+        ],
+        "test": {
+          "columns_including_target": 8,
+          "feature_columns": 7,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/b253fbfae8460dc1/test.csv",
+          "rows": 9,
+          "sha256": "15b570f690fca04746947f1b307a6af86abeeb0ca960bc5bc9fbf30ab9c29de6",
+          "target_column_index": 7,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 8,
+          "feature_columns": 7,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/b253fbfae8460dc1/train.csv",
+          "rows": 43,
+          "sha256": "130daab3e850eb95658f904f759dd6c4113963474d3552ca6508d98e71548aff",
+          "target_column_index": 7,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.3914971351623535,
+          "mean": 1.8904082775115967,
+          "min": 1.156869888305664,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/b253fbfae8460dc1/test3.vs.orig.v2",
+          "sha256": "533d2a27f22451051fb3b0f5edcab74ca7d5a7b0fd3cd93bdefc72266ed15e32",
+          "shape": [
+            9,
+            7
+          ],
+          "std": 0.19316530227661133
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.46506404876709,
+          "mean": 1.7825424671173096,
+          "min": -1.689144492149353,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/b253fbfae8460dc1/train3.vs.orig.v2",
+          "sha256": "16181511bd3d49b9430187337e0a16bdc6490d92ad764e12dc2ac4caea020c1e",
+          "shape": [
+            43,
+            7
+          ],
+          "std": 0.5473219752311707
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "198e213ca2f891815363cf07319dc2a8c4ab37ada56a4073329d016b02a20c86",
+        "dtype": "float32",
+        "finite": true,
+        "max": 3.9716796875,
+        "mean": 1.8012113571166992,
+        "min": -4.37890625,
+        "shape": [
+          100,
+          4,
+          52,
+          7
+        ],
+        "std": 0.7028875350952148
+      }
+    },
+    {
+      "campaign_index": 14,
+      "collapsed_cell_c_order_sha256": "69f44f4495aff672892f4acf3b43bc25a674fc9bc4be3a14e83114cec51e2a4c",
+      "dataset_id": "cf5e74b4e9594944",
+      "elapsed_seconds": 14.768078,
+      "inputs": {
+        "joint_feature_sha256": "16ce77f177723409eaf800af4f0c8a9bcb7dfa124c897a7b85981d97b2ff3dc5",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          13,
+          569
+        ],
+        "test": {
+          "columns_including_target": 570,
+          "feature_columns": 569,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/cf5e74b4e9594944/test.csv",
+          "rows": 3,
+          "sha256": "7db0822f1cb7868d17979d77b3cd6026ced380dce95ca695363fe8cc465e7ad2",
+          "target_column_index": 569,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 570,
+          "feature_columns": 569,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/cf5e74b4e9594944/train.csv",
+          "rows": 10,
+          "sha256": "448561065e46696f52695daa363d3b273d67f119c198e5315c1c5e3a88798bfd",
+          "target_column_index": 569,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.0545566082000732,
+          "mean": 1.616556167602539,
+          "min": -1.0599565505981445,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/cf5e74b4e9594944/test3.vs.orig.v2",
+          "sha256": "987219dfc53a355250f83f17915b15cdb879d97fff89265323de5bfb4cfb7187",
+          "shape": [
+            3,
+            569
+          ],
+          "std": 0.753714919090271
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.0568556785583496,
+          "mean": 1.39492928981781,
+          "min": -1.1248753070831299,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/cf5e74b4e9594944/train3.vs.orig.v2",
+          "sha256": "4cf9517b629fe2a2f03c2c2363b856536c0ab4e8ded9f234ae66ebb447695639",
+          "shape": [
+            10,
+            569
+          ],
+          "std": 0.9036458730697632
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "bec1b715fa92c8d0a76ab12acd65f07e6b424183a8dafc6f1c72ee22b543dd6b",
+        "dtype": "float32",
+        "finite": true,
+        "max": 4.1875,
+        "mean": 1.4460729360580444,
+        "min": -4.576171875,
+        "shape": [
+          100,
+          4,
+          13,
+          569
+        ],
+        "std": 0.9831548929214478
+      }
+    },
+    {
+      "campaign_index": 15,
+      "collapsed_cell_c_order_sha256": "2b70bbe76a729ace17848b116a77bd4cb6b1803add0c592e885fd7436db7be8c",
+      "dataset_id": "d2daf53412ab18dc",
+      "elapsed_seconds": 13.594638,
+      "inputs": {
+        "joint_feature_sha256": "422adbb8a180cc5999a054ea2b0c749c2d737d6030453ed5d70f28d975410568",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          306,
+          18
+        ],
+        "test": {
+          "columns_including_target": 19,
+          "feature_columns": 18,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/d2daf53412ab18dc/test.csv",
+          "rows": 51,
+          "sha256": "11e74707f870729d3bde09a2a833182cef2d5fb332085d19552b49173455bc35",
+          "target_column_index": 18,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 19,
+          "feature_columns": 18,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/d2daf53412ab18dc/train.csv",
+          "rows": 255,
+          "sha256": "b4df46c6d4c67b71d930800196dfae14d46b40a107469a5ca29cb6836bcff883",
+          "target_column_index": 18,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.3149161338806152,
+          "mean": 1.6815178394317627,
+          "min": -3.487194776535034,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/d2daf53412ab18dc/test3.vs.orig.v2",
+          "sha256": "448f8398c73c68aaafb4b5f8a76fbe859fd09bfda20268e40e735e402bfac0fe",
+          "shape": [
+            51,
+            18
+          ],
+          "std": 0.6120906472206116
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.608644962310791,
+          "mean": 1.8471264839172363,
+          "min": -3.2741565704345703,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/d2daf53412ab18dc/train3.vs.orig.v2",
+          "sha256": "d47d815d59c4848310224b8ed9202aa3f4871b5ff3fd4604945609221aa11921",
+          "shape": [
+            255,
+            18
+          ],
+          "std": 0.4787609577178955
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "69827a328369278fa4d7d58927bf6fa34a80b27c13cd52a3b37f19545693bafe",
+        "dtype": "float32",
+        "finite": true,
+        "max": 4.1123046875,
+        "mean": 1.8195252418518066,
+        "min": -5.771484375,
+        "shape": [
+          100,
+          4,
+          306,
+          18
+        ],
+        "std": 0.7364708185195923
+      }
+    },
+    {
+      "campaign_index": 16,
+      "collapsed_cell_c_order_sha256": "1050a5cdeb82a093d60ee1574097eb1cd52bb49229f326db461e7b214f553aa7",
+      "dataset_id": "dee1fc8e9afd81c9",
+      "elapsed_seconds": 13.775304,
+      "inputs": {
+        "joint_feature_sha256": "62cb68b04ff5908d0caa470a7299669e0e44fbd0d8076102e897c8eba7649ca3",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          155,
+          8
+        ],
+        "test": {
+          "columns_including_target": 9,
+          "feature_columns": 8,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/dee1fc8e9afd81c9/test.csv",
+          "rows": 26,
+          "sha256": "5b2ff1c591d014656d4610b92cdd209e934c00b3217bb79fafc74dcef3a0e9e6",
+          "target_column_index": 8,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 9,
+          "feature_columns": 8,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/dee1fc8e9afd81c9/train.csv",
+          "rows": 129,
+          "sha256": "301a7df114759e50110e097979ece2046f6ec12a347f4af6a48b2deea8a6243d",
+          "target_column_index": 8,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.289360284805298,
+          "mean": 1.7103276252746582,
+          "min": -1.33522367477417,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/dee1fc8e9afd81c9/test3.vs.orig.v2",
+          "sha256": "9800f7740856cdb2401f17364eedba21cb765e4329358e77d3931bf251f87289",
+          "shape": [
+            26,
+            8
+          ],
+          "std": 0.6891356706619263
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.5071332454681396,
+          "mean": 1.8368849754333496,
+          "min": -1.942123532295227,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/dee1fc8e9afd81c9/train3.vs.orig.v2",
+          "sha256": "baf8cc0579ae9730498d070cf58565e4a393b295920d441d731765205a2fe3b2",
+          "shape": [
+            129,
+            8
+          ],
+          "std": 0.41375765204429626
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "a8b92be635c17aa1e4af51983828fc1bc3340ab4f72f7b2f90ebe9eb26ab5b1f",
+        "dtype": "float32",
+        "finite": true,
+        "max": 3.9970703125,
+        "mean": 1.8156558275222778,
+        "min": -4.796875,
+        "shape": [
+          100,
+          4,
+          155,
+          8
+        ],
+        "std": 0.698574423789978
+      }
+    },
+    {
+      "campaign_index": 17,
+      "collapsed_cell_c_order_sha256": "57f1816231f584fa5092d6bbe245d63637ef87b3df25ec8cee9d5ad31bef4eff",
+      "dataset_id": "e1c1db5260d0894e",
+      "elapsed_seconds": 14.156412,
+      "inputs": {
+        "joint_feature_sha256": "27e3ac20f4ee1249144acf69cf2e306971320792b49f24afd38db901fd64b663",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          100,
+          10
+        ],
+        "test": {
+          "columns_including_target": 11,
+          "feature_columns": 10,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/e1c1db5260d0894e/test.csv",
+          "rows": 17,
+          "sha256": "647caeb8b7301dcded97d0dd62d8ffffa2d376dcd60e7db83ef2ad02c47c2271",
+          "target_column_index": 10,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 11,
+          "feature_columns": 10,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/e1c1db5260d0894e/train.csv",
+          "rows": 83,
+          "sha256": "bfc6a2802fb867d5d63b1a5b3d8171616914c8e12756e532112bc41497fb67a1",
+          "target_column_index": 10,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.3200957775115967,
+          "mean": 1.6761894226074219,
+          "min": -3.1478002071380615,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/e1c1db5260d0894e/test3.vs.orig.v2",
+          "sha256": "d5348ec364472cf20ca3d502ae1cf26f64641b797fd046e3620c20fc1258414e",
+          "shape": [
+            17,
+            10
+          ],
+          "std": 0.8974221348762512
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.3981897830963135,
+          "mean": 1.7815332412719727,
+          "min": -3.1733124256134033,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/e1c1db5260d0894e/train3.vs.orig.v2",
+          "sha256": "d7cb4ce2f159596f03be00ac19af119a1745f33c0c3c02137a15a83d79248fdd",
+          "shape": [
+            83,
+            10
+          ],
+          "std": 0.5868046879768372
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "147f46dc400bb375b0086c9607374a08a07b96899d9681f5007c1281100d6184",
+        "dtype": "float32",
+        "finite": true,
+        "max": 4.076171875,
+        "mean": 1.7636250257492065,
+        "min": -4.611328125,
+        "shape": [
+          100,
+          4,
+          100,
+          10
+        ],
+        "std": 0.8169758319854736
+      }
+    },
+    {
+      "campaign_index": 18,
+      "collapsed_cell_c_order_sha256": "f50d8e335485302d24364412d9c3cd2f51b6e4e920eb6556a370b322bc3b4ea1",
+      "dataset_id": "ee56a1015e344c11",
+      "elapsed_seconds": 14.156588,
+      "inputs": {
+        "joint_feature_sha256": "2873305f9b090113156d57232cb566672125012071af7cc6f6055bd274c64a2c",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          125,
+          4
+        ],
+        "test": {
+          "columns_including_target": 5,
+          "feature_columns": 4,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/ee56a1015e344c11/test.csv",
+          "rows": 21,
+          "sha256": "1879fd389b06e5e85d6b6445f00b16e2f5e5c605457462ac688086c07c2a8c59",
+          "target_column_index": 4,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 5,
+          "feature_columns": 4,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/ee56a1015e344c11/train.csv",
+          "rows": 104,
+          "sha256": "c2901b2480d859f03539855ca1c350507538dd7a16f3cb54d1c698c634fb9d89",
+          "target_column_index": 4,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.2037863731384277,
+          "mean": 1.725078821182251,
+          "min": -1.2702665328979492,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/ee56a1015e344c11/test3.vs.orig.v2",
+          "sha256": "ec28e05da2bd5b2e674de88e58fb35d0a6435b31ce58cee16c9fa5706050dc87",
+          "shape": [
+            21,
+            4
+          ],
+          "std": 0.7532649636268616
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.527225971221924,
+          "mean": 1.8766059875488281,
+          "min": -1.27724027633667,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/ee56a1015e344c11/train3.vs.orig.v2",
+          "sha256": "b061da5100f60c24a03037258659906edf1f9c8e5c0054453829418d782d27f3",
+          "shape": [
+            104,
+            4
+          ],
+          "std": 0.4624548554420471
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "5b0aaa941189385e459146ce02205e1e4ca061102491cee244444b2327f2ad29",
+        "dtype": "float32",
+        "finite": true,
+        "max": 3.9091796875,
+        "mean": 1.8511492013931274,
+        "min": -3.9013671875,
+        "shape": [
+          100,
+          4,
+          125,
+          4
+        ],
+        "std": 0.6884595155715942
+      }
+    },
+    {
+      "campaign_index": 19,
+      "collapsed_cell_c_order_sha256": "03e1b9eae050d1603fed9e88aa880903b401ad587f85a4c88bc45a1b6f90f99e",
+      "dataset_id": "fe3cc716a05d036f",
+      "elapsed_seconds": 11.008153,
+      "inputs": {
+        "joint_feature_sha256": "7bbb1bfcb4ac7b59bcfcaf3b1aafd1ceadec1db309fc0e7688733f2c01ccb6ae",
+        "joint_order": "train rows then test rows",
+        "joint_shape": [
+          240,
+          2
+        ],
+        "test": {
+          "columns_including_target": 3,
+          "feature_columns": 2,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/fe3cc716a05d036f/test.csv",
+          "rows": 40,
+          "sha256": "cf3b11943d8717aeb70e2c8e42cfc9aeb2a23c568d777925b99198dba28ff405",
+          "target_column_index": 2,
+          "target_policy": "excluded before joint matrix construction"
+        },
+        "train": {
+          "columns_including_target": 3,
+          "feature_columns": 2,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/fe3cc716a05d036f/train.csv",
+          "rows": 200,
+          "sha256": "1f8bd42f24a840a08e51609b1dc6f92d1cd5a33d35f0ac6345857a1bc473de05",
+          "target_column_index": 2,
+          "target_policy": "excluded before joint matrix construction"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.7542614936828613,
+          "mean": 1.9448257684707642,
+          "min": -0.8970049023628235,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/fe3cc716a05d036f/test3.vs.orig.v2",
+          "sha256": "e5e2063a04f4a7e560243cee583a2e701c05adc40565d2537d9885661d16d31f",
+          "shape": [
+            40,
+            2
+          ],
+          "std": 0.710881233215332
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 2.780250310897827,
+          "mean": 2.006218671798706,
+          "min": -3.4936370849609375,
+          "path": "/home/ubuntu/smart_cluster/var/runs/hyperion-orig-v2-generate-20260809-v4/attempts/0/work/sotarena/data/tabular-regression-v1/fe3cc716a05d036f/train3.vs.orig.v2",
+          "sha256": "2ce5c9a066df6ed7b06c781b374c6a9230eecddf2e5cf72c0e1b4efde28ae7f0",
+          "shape": [
+            200,
+            2
+          ],
+          "std": 0.5462982058525085
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "708854e05838630e8ec9613f5e2010b10d687253d8956e9b7861bf1879b7e786",
+        "dtype": "float32",
+        "finite": true,
+        "max": 3.88671875,
+        "mean": 1.9959864616394043,
+        "min": -5.158203125,
+        "shape": [
+          100,
+          4,
+          240,
+          2
+        ],
+        "std": 0.6970839500427246
+      }
+    }
+  ],
+  "diagnosed_current_pipeline_differences": [
+    "hyperion_vs emits an exact per-column rank grid, not raw learned cell logits",
+    "hyperion_vs defaults to 3 sweeps rather than the old 100",
+    "current sweep 0 is identity; the old method shuffles every sweep",
+    "current train and test matrices are encoded separately; the old lift experiment encoded them jointly",
+    "current tiling has one origin and fixed neutral padding; the old method uses two shifted origins and sampled row/column padding",
+    "current default windows are 4/7/11/15; the old experiment used 3/6/9/12",
+    "current cell artifact applies sigmoid then column percentiles; the old artifact collapsed raw h_real logits"
+  ],
+  "elapsed_seconds": 278.843085,
+  "environment": {
+    "cuda_capability": [
+      8,
+      6
+    ],
+    "cuda_device": "NVIDIA GeForce RTX 3090",
+    "cuda_runtime": "12.8",
+    "cuda_visible_devices": "GPU-2857566c-23c5-293a-df02-7c66a7571ac4",
+    "hostname": "xbabe3",
+    "numpy": "1.26.4",
+    "pandas": "2.1.4",
+    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+    "torch": "2.7.0"
+  },
+  "generated_at_utc": "2026-08-09T23:31:56Z",
+  "load_diagnostics": {
+    "checkpoint_tensor_count": 119,
+    "forward_used": "_rowcol + cell_mlp + h_real only",
+    "missing_keys": [
+      "h_col.bias",
+      "h_col.weight",
+      "h_row.bias",
+      "h_row.weight"
+    ],
+    "missing_keys_affect_real_head": false,
+    "model_tensor_count": 123,
+    "unexpected_keys": []
+  },
+  "output_file_count": 40,
+  "parameters": {
+    "base_sweep_seed": 42,
+    "batch_size": 4096,
+    "cell_output": "raw h_real logits; no sigmoid and no percentile postprocessing",
+    "collapse": "mean two shifts per scale, mean four scales per sweep, then mean all sweeps",
+    "cuda_amp": true,
+    "global_cuda_padding_seed": 42,
+    "global_padding_rng_scope": "one continuous CUDA RNG stream over the frozen dataset order",
+    "joint_train_test_features": true,
+    "latest_model_preprocessing": "rank values robust-quantized at joint 1/99 percentiles to uint8, then mapped to [-3,3]",
+    "output_format": "headerless comma-separated float32, 9 significant digits",
+    "overwrite_policy": "exclusive creation",
+    "rank_normalization": "torch argsort(argsort(column)) + 1, divided by joint N and multiplied by 100",
+    "shifts": [
+      [
+        0,
+        0
+      ],
+      [
+        1,
+        1
+      ]
+    ],
+    "sweep_seed_stride": 777,
+    "sweeps": 100,
+    "target_used_by_encoder": false,
+    "windows": [
+      3,
+      6,
+      9,
+      12
+    ]
+  },
+  "schema": "HyperionLatestModelOldSemanticsReconstruction.v1",
+  "status": "complete"
+}

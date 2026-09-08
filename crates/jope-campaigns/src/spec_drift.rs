@@ -452,7 +452,10 @@ fn strip_comments(src: &str, is_py: bool) -> Vec<String> {
 /// Rust `#[cfg(test)]` modules assert against these same literals, so scanning
 /// them yields phantom render sites. Cut the file at the test module.
 fn cut_test_module(src: &str) -> &str {
-    for marker in ["\n#[cfg(test)]", "\nmod tests"] {
+    // Test-only helper functions may live beside production renderers. Only
+    // cut at the actual test module; cutting at the first `#[cfg(test)]`
+    // silently hid every production renderer below such a helper.
+    for marker in ["\n#[cfg(test)]\nmod tests", "\nmod tests"] {
         if let Some(i) = src.find(marker) {
             return &src[..i];
         }

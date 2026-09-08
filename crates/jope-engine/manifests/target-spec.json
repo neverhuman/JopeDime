@@ -1,0 +1,8 @@
+{
+  "module": "assets/target-export-cuda-v1/target.pt",
+  "module_sha256": "14fbc78dcf51a63dd765eca27f99d1a94ef559f586433ba66af048bcb0cda593",
+  "sampling": "assets/target-export-cuda-v1/sampling.json",
+  "sampling_sha256": "dec8e830341867516ea232345197aa364818b8166a2ba9aeed91ee20d9cf55bf",
+  "parity": "assets/target-export-cuda-v1/parity.json",
+  "parity_sha256": "50bb7c864aa94bf3759f1edb8cb064ca9f74a64df6c4bdadc378ed66cb7629a1"
+}

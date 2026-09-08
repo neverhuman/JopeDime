@@ -14,10 +14,15 @@ use jope_dime_regressor::selfplay_runtime::{
     sha256_bytes, sha256_file, DEFAULT_EVALUATOR, DEFAULT_ROOT, DEFAULT_RUNNER, DEFAULT_SCQ,
 };
 use jope_dime_regressor::spec_policy::EVAL;
+use jope_dime_regressor::task::Task;
+use jope_dime_regressor::task_preflight::{
+    preflight_task_manifest, GeneratedOperatorRegistry, TaskPreflightDisposition,
+    TaskPreflightOutcomeV1, TaskPreflightRequest,
+};
 use rayon::prelude::*;
 use rayon::ThreadPoolBuilder;
 use rusqlite::{params, Connection, OptionalExtension, Transaction, TransactionBehavior};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fs::{self, File, OpenOptions};
@@ -48,6 +53,8 @@ const INFRA_FAILURES: &[&str] = &[
 const ACTIVE_JOB_STATES: &[&str] = &["queued", "starting", "dispatching", "running", "held"];
 const QUEUE_STATES: &[&str] = &["queued", "starting"];
 const TERMINAL_STATES: &[&str] = &["completed", "failed", "cancelled"];
+const REGRESSION_SCREENING_COST_THRESHOLD: u64 = 30;
+const REGRESSION_SCREENING_BUDGET_SECONDS: u64 = 30;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -71,6 +78,10 @@ struct Args {
     /// Portable evaluator runner (must not invoke Python).
     #[arg(long, default_value = DEFAULT_RUNNER)]
     runner: PathBuf,
+    /// Generated operator/task registry. Defaults to the active immutable
+    /// runtime bundle and is unreadable => admission closed.
+    #[arg(long)]
+    operator_registry: Option<PathBuf>,
     /// Run one cycle and exit.
     #[arg(long)]
     once: bool,
@@ -179,6 +190,7 @@ struct AdmissionWave {
     summary_sha256: String,
     manifest_count: usize,
     unclaimed_manifests: usize,
+    candidate_evaluation_count: u64,
     complete: bool,
 }
 
@@ -205,6 +217,8 @@ struct CycleReport {
     queued_target: i64,
     queued_hard_cap: i64,
     p95_60m_jobs_per_minute: f64,
+    p95_60m_candidate_evaluations_per_minute: f64,
+    candidate_throughput_estimator: &'static str,
     queued: usize,
     starting: usize,
     queued_starting: usize,
@@ -217,10 +231,22 @@ struct CycleReport {
     launch_ready: usize,
     validated_ready: usize,
     useful_work: usize,
+    queued_candidate_evaluations: u64,
+    starting_candidate_evaluations: u64,
+    dispatching_candidate_evaluations: u64,
+    validated_ready_candidate_evaluations: u64,
+    candidate_evaluation_work: u64,
     launch_ready_deferred_by_horizon: usize,
     manifests_unclaimed: usize,
     manifests_validated: usize,
     manifest_validation_failures: usize,
+    preflight_accepted: usize,
+    preflight_permanent_rejections: usize,
+    preflight_bounded_screenings: usize,
+    candidate_evaluations_preflighted: u64,
+    candidate_evaluations_avoided: u64,
+    predicted_cpu_seconds_preflighted: u64,
+    predicted_cpu_seconds_avoided: u64,
     pair_reservation_conflicts: usize,
     prepared: usize,
     infrastructure_retries_prepared: usize,
@@ -237,6 +263,13 @@ struct PrepareOutcome {
     unclaimed: usize,
     validated: usize,
     validation_failures: usize,
+    preflight_accepted: usize,
+    preflight_permanent_rejections: usize,
+    preflight_bounded_screenings: usize,
+    candidate_evaluations_preflighted: u64,
+    candidate_evaluations_avoided: u64,
+    predicted_cpu_seconds_preflighted: u64,
+    predicted_cpu_seconds_avoided: u64,
     reservation_conflicts: usize,
     prepared: usize,
 }
@@ -248,6 +281,27 @@ impl PrepareOutcome {
         self.validation_failures = self
             .validation_failures
             .saturating_add(other.validation_failures);
+        self.preflight_accepted = self
+            .preflight_accepted
+            .saturating_add(other.preflight_accepted);
+        self.preflight_permanent_rejections = self
+            .preflight_permanent_rejections
+            .saturating_add(other.preflight_permanent_rejections);
+        self.preflight_bounded_screenings = self
+            .preflight_bounded_screenings
+            .saturating_add(other.preflight_bounded_screenings);
+        self.candidate_evaluations_preflighted = self
+            .candidate_evaluations_preflighted
+            .saturating_add(other.candidate_evaluations_preflighted);
+        self.candidate_evaluations_avoided = self
+            .candidate_evaluations_avoided
+            .saturating_add(other.candidate_evaluations_avoided);
+        self.predicted_cpu_seconds_preflighted = self
+            .predicted_cpu_seconds_preflighted
+            .saturating_add(other.predicted_cpu_seconds_preflighted);
+        self.predicted_cpu_seconds_avoided = self
+            .predicted_cpu_seconds_avoided
+            .saturating_add(other.predicted_cpu_seconds_avoided);
         self.reservation_conflicts = self
             .reservation_conflicts
             .saturating_add(other.reservation_conflicts);
@@ -263,6 +317,7 @@ struct Keeper {
     manifest_cache: HashMap<(PathBuf, String), ValidManifest>,
     reservation_cache: HashMap<(String, Option<String>, Option<String>), String>,
     terminal_seen: HashSet<String>,
+    operator_registry: GeneratedOperatorRegistry,
 }
 
 fn bounded_validation_budget(unclaimed: usize, admission_limit: usize) -> usize {
@@ -323,6 +378,18 @@ impl Keeper {
         let pairs = Connection::open(args.root.join("ops/pair-registry.sqlite"))?;
         pairs.busy_timeout(Duration::from_secs(60))?;
         let pair_schema = inspect_pair_schema(&pairs)?;
+        let operator_registry_path = args.operator_registry.clone().unwrap_or_else(|| {
+            args.root
+                .join("runtime-bundles/current/registry/operator_registry.json")
+        });
+        let operator_registry = GeneratedOperatorRegistry::from_bytes(
+            &fs::read(&operator_registry_path).with_context(|| {
+                format!(
+                    "read generated operator registry {}",
+                    operator_registry_path.display()
+                )
+            })?,
+        )?;
         Ok(Self {
             args,
             backlog,
@@ -331,6 +398,7 @@ impl Keeper {
             manifest_cache: HashMap::new(),
             reservation_cache: HashMap::new(),
             terminal_seen,
+            operator_registry,
         })
     }
 
@@ -456,6 +524,16 @@ impl Keeper {
             .iter()
             .filter(|job| useful.contains(&job.id) && job.state == "held")
             .count();
+        let candidates_in_state = |state: &str| -> u64 {
+            jobs.iter()
+                .filter(|job| useful.contains(&job.id) && job.state == state)
+                .filter_map(|job| manifests.get(&job.id))
+                .map(|manifest| manifest.pairs.len() as u64)
+                .sum()
+        };
+        let mut queued_candidate_evaluations = candidates_in_state("queued");
+        let starting_candidate_evaluations = candidates_in_state("starting");
+        let dispatching_candidate_evaluations = candidates_in_state("dispatching");
 
         // 2026-08-01 incident: a host CPU-overload episode (load ~194 on
         // xbabe2) made the scheduler guard-hold ~996 jope-selfplay-eval jobs
@@ -593,11 +671,12 @@ impl Keeper {
             .min(self.args.max_submit_per_cycle)
             .min(ready.len())
             .min((targets.hard_cap as usize).saturating_sub(queued_starting));
-        let (submitted, submission_failures) = if self.args.submit && submit_count > 0 {
-            self.submit_claims(&ready[..submit_count])?
-        } else {
-            (0, 0)
-        };
+        let (submitted, submission_failures, submitted_candidate_evaluations) =
+            if self.args.submit && submit_count > 0 {
+                self.submit_claims(&ready[..submit_count])?
+            } else {
+                (0, 0, 0)
+            };
         let report_claims = load_claims(&self.backlog)?;
         let report_rejected = load_rejected_manifests(&self.backlog)?;
         let wave_inventory = current_admission_waves(
@@ -629,20 +708,43 @@ impl Keeper {
             .iter()
             .map(|wave| wave.unclaimed_manifests)
             .sum();
+        let unclaimed_candidate_evaluations = admission_waves
+            .iter()
+            .chain(protected_reserve_waves.iter())
+            .map(|wave| wave.candidate_evaluation_count)
+            .sum::<u64>();
         let unclaimed_current_checkpoint_manifests =
             admission_manifests.saturating_add(reserve_manifests);
         let launch_ready = ready.len().saturating_sub(submitted);
+        let launch_ready_candidate_evaluations = ready
+            .iter()
+            .map(|row| row.manifest.pairs.len() as u64)
+            .sum::<u64>()
+            .saturating_sub(submitted_candidate_evaluations);
         let validated_ready = unclaimed_current_checkpoint_manifests.saturating_add(launch_ready);
+        let validated_ready_candidate_evaluations =
+            unclaimed_candidate_evaluations.saturating_add(launch_ready_candidate_evaluations);
         // Successful submissions happened after the scheduler snapshot above.
         // Count them as queued immediately so the published identity remains
         // `queued + starting + dispatching + validated_ready` without a
         // one-cycle hole that could trigger an unnecessary reserve build.
         let queued = queued.saturating_add(submitted);
+        queued_candidate_evaluations =
+            queued_candidate_evaluations.saturating_add(submitted_candidate_evaluations);
         let queued_starting = queued.saturating_add(starting);
         let useful_work = queued
             .saturating_add(starting)
             .saturating_add(dispatching)
             .saturating_add(validated_ready);
+        let candidate_evaluation_work = queued_candidate_evaluations
+            .saturating_add(starting_candidate_evaluations)
+            .saturating_add(dispatching_candidate_evaluations)
+            .saturating_add(validated_ready_candidate_evaluations);
+        let candidates_per_manifest = if useful_work == 0 {
+            0.0
+        } else {
+            candidate_evaluation_work as f64 / useful_work as f64
+        };
 
         Ok(CycleReport {
             schema: "JopeSelfplayQueueKeeper.v3",
@@ -666,6 +768,10 @@ impl Keeper {
             queued_target: targets.target,
             queued_hard_cap: targets.hard_cap,
             p95_60m_jobs_per_minute: targets.p95_jobs_per_minute,
+            p95_60m_candidate_evaluations_per_minute: targets.p95_jobs_per_minute
+                * candidates_per_manifest,
+            candidate_throughput_estimator:
+                "p95_job_completions_times_current_candidate_evaluations_per_useful_manifest",
             queued,
             starting,
             queued_starting,
@@ -678,10 +784,22 @@ impl Keeper {
             launch_ready,
             validated_ready,
             useful_work,
+            queued_candidate_evaluations,
+            starting_candidate_evaluations,
+            dispatching_candidate_evaluations,
+            validated_ready_candidate_evaluations,
+            candidate_evaluation_work,
             launch_ready_deferred_by_horizon: deferred,
             manifests_unclaimed: prepare.unclaimed,
             manifests_validated: prepare.validated,
             manifest_validation_failures: prepare.validation_failures,
+            preflight_accepted: prepare.preflight_accepted,
+            preflight_permanent_rejections: prepare.preflight_permanent_rejections,
+            preflight_bounded_screenings: prepare.preflight_bounded_screenings,
+            candidate_evaluations_preflighted: prepare.candidate_evaluations_preflighted,
+            candidate_evaluations_avoided: prepare.candidate_evaluations_avoided,
+            predicted_cpu_seconds_preflighted: prepare.predicted_cpu_seconds_preflighted,
+            predicted_cpu_seconds_avoided: prepare.predicted_cpu_seconds_avoided,
             pair_reservation_conflicts: prepare.reservation_conflicts,
             prepared: prepare.prepared,
             infrastructure_retries_prepared: retries,
@@ -960,6 +1078,7 @@ impl Keeper {
             .num_threads(32)
             .thread_name(|index| format!("jope-manifest-validate-{index}"))
             .build()?;
+        let operator_registry = &self.operator_registry;
         let validation_results = validation_pool.install(|| {
             candidate_paths
                 .par_iter()
@@ -967,13 +1086,55 @@ impl Keeper {
                 .map(|path| {
                     let manifest = match validate_manifest(path, checkpoint_sha256, epoch, wave) {
                         Ok(manifest) => manifest,
-                        Err(error) => return (path.clone(), Err(error), true),
+                        Err(error) => return (path.clone(), Err(error), true, None),
                     };
+                    let mut preflight = match preflight_manifest(operator_registry, &manifest, None)
+                    {
+                        Ok(outcome) => outcome,
+                        Err(error) => return (path.clone(), Err(error), true, None),
+                    };
+                    if preflight.disposition == TaskPreflightDisposition::PermanentRejection {
+                        let reason = format!("task preflight rejected: {:?}", preflight.reasons);
+                        return (
+                            path.clone(),
+                            Err(anyhow::anyhow!(reason)),
+                            true,
+                            Some(preflight),
+                        );
+                    }
+                    if preflight.disposition == TaskPreflightDisposition::BoundedScreening {
+                        if let Err(error) = bounded_regression_screening(&self.args.evaluator, path)
+                        {
+                            preflight = match TaskPreflightOutcomeV1::failed_regression_screening(
+                                &preflight,
+                                REGRESSION_SCREENING_BUDGET_SECONDS,
+                            ) {
+                                Ok(outcome) => outcome,
+                                Err(outcome_error) => {
+                                    return (
+                                        path.clone(),
+                                        Err(outcome_error),
+                                        true,
+                                        Some(preflight),
+                                    )
+                                }
+                            };
+                            return (path.clone(), Err(error), true, Some(preflight));
+                        }
+                        preflight = match preflight_manifest(
+                            operator_registry,
+                            &manifest,
+                            Some(REGRESSION_SCREENING_BUDGET_SECONDS),
+                        ) {
+                            Ok(outcome) => outcome,
+                            Err(error) => return (path.clone(), Err(error), true, Some(preflight)),
+                        };
+                    }
                     match validate_with_evaluator(&self.args.evaluator, path) {
-                        Ok(()) => (path.clone(), Ok(manifest), false),
+                        Ok(()) => (path.clone(), Ok(manifest), false, Some(preflight)),
                         Err(error) => {
                             let permanent = evaluator_failure_is_permanent(&error);
-                            (path.clone(), Err(error), permanent)
+                            (path.clone(), Err(error), permanent, Some(preflight))
                         }
                     }
                 })
@@ -981,10 +1142,41 @@ impl Keeper {
         });
         let validation_failures = validation_results
             .iter()
-            .filter(|(_, result, _)| result.is_err())
+            .filter(|(_, result, _, _)| result.is_err())
             .count();
         let validated = validation_results.len().saturating_sub(validation_failures);
-        for (path, result, permanent) in &validation_results {
+        let mut preflight_accepted = 0;
+        let mut preflight_permanent_rejections = 0;
+        let mut preflight_bounded_screenings = 0;
+        let mut candidate_evaluations_preflighted = 0_u64;
+        let mut candidate_evaluations_avoided = 0_u64;
+        let mut predicted_cpu_seconds_preflighted = 0_u64;
+        let mut predicted_cpu_seconds_avoided = 0_u64;
+        for (path, result, permanent, preflight) in &validation_results {
+            if let Some(preflight) = preflight {
+                record_preflight_receipt(&self.backlog, path, preflight)?;
+                match preflight.disposition {
+                    TaskPreflightDisposition::Accepted => preflight_accepted += 1,
+                    TaskPreflightDisposition::PermanentRejection => {
+                        preflight_permanent_rejections += 1
+                    }
+                    TaskPreflightDisposition::BoundedScreening => {}
+                    TaskPreflightDisposition::RetryableFailure => {}
+                }
+                preflight_bounded_screenings +=
+                    usize::from(preflight.bounded_screening_budget_seconds.is_some());
+                candidate_evaluations_preflighted = candidate_evaluations_preflighted
+                    .saturating_add(preflight.requested_work.candidate_evaluation_count);
+                candidate_evaluations_avoided = candidate_evaluations_avoided.saturating_add(
+                    preflight
+                        .estimated_compute_avoided
+                        .candidate_evaluation_count,
+                );
+                predicted_cpu_seconds_preflighted = predicted_cpu_seconds_preflighted
+                    .saturating_add(preflight.requested_work.predicted_cpu_seconds);
+                predicted_cpu_seconds_avoided = predicted_cpu_seconds_avoided
+                    .saturating_add(preflight.estimated_compute_avoided.predicted_cpu_seconds);
+            }
             if *permanent {
                 let error = result
                     .as_ref()
@@ -999,7 +1191,7 @@ impl Keeper {
         }
         let mut manifests = validation_results
             .into_iter()
-            .filter_map(|(_, result, _)| result.ok())
+            .filter_map(|(_, result, _, _)| result.ok())
             .collect::<Vec<_>>();
         manifests.sort_by(|left, right| left.path.cmp(&right.path));
 
@@ -1112,6 +1304,13 @@ impl Keeper {
             unclaimed,
             validated,
             validation_failures,
+            preflight_accepted,
+            preflight_permanent_rejections,
+            preflight_bounded_screenings,
+            candidate_evaluations_preflighted,
+            candidate_evaluations_avoided,
+            predicted_cpu_seconds_preflighted,
+            predicted_cpu_seconds_avoided,
             reservation_conflicts,
             prepared,
         })
@@ -1215,7 +1414,7 @@ impl Keeper {
         Ok(())
     }
 
-    fn submit_claims(&mut self, claims: &[ReadyClaim]) -> Result<(usize, usize)> {
+    fn submit_claims(&mut self, claims: &[ReadyClaim]) -> Result<(usize, usize, u64)> {
         {
             let tx = self
                 .backlog
@@ -1249,6 +1448,7 @@ impl Keeper {
             .collect::<Vec<_>>();
         let mut submitted = 0;
         let mut failed = 0;
+        let mut submitted_candidate_evaluations = 0_u64;
         let accepted_rows = outcomes
             .iter()
             .filter(|(_, accepted, _, _)| *accepted)
@@ -1258,6 +1458,8 @@ impl Keeper {
         for (row, accepted, transient, detail) in outcomes {
             if accepted {
                 submitted += 1;
+                submitted_candidate_evaluations =
+                    submitted_candidate_evaluations.saturating_add(row.manifest.pairs.len() as u64);
             } else {
                 failed += 1;
                 self.backlog.execute(
@@ -1289,7 +1491,7 @@ impl Keeper {
                 )?;
             }
         }
-        Ok((submitted, failed))
+        Ok((submitted, failed, submitted_candidate_evaluations))
     }
 
     fn prepare_infrastructure_retries(
@@ -1587,6 +1789,9 @@ fn empty_report(
         queued_target: targets.target,
         queued_hard_cap: targets.hard_cap,
         p95_60m_jobs_per_minute: targets.p95_jobs_per_minute,
+        p95_60m_candidate_evaluations_per_minute: 0.0,
+        candidate_throughput_estimator:
+            "p95_job_completions_times_current_candidate_evaluations_per_useful_manifest",
         queued: 0,
         starting: 0,
         queued_starting: 0,
@@ -1599,10 +1804,22 @@ fn empty_report(
         launch_ready: 0,
         validated_ready: 0,
         useful_work: 0,
+        queued_candidate_evaluations: 0,
+        starting_candidate_evaluations: 0,
+        dispatching_candidate_evaluations: 0,
+        validated_ready_candidate_evaluations: 0,
+        candidate_evaluation_work: 0,
         launch_ready_deferred_by_horizon: 0,
         manifests_unclaimed: 0,
         manifests_validated: 0,
         manifest_validation_failures: 0,
+        preflight_accepted: 0,
+        preflight_permanent_rejections: 0,
+        preflight_bounded_screenings: 0,
+        candidate_evaluations_preflighted: 0,
+        candidate_evaluations_avoided: 0,
+        predicted_cpu_seconds_preflighted: 0,
+        predicted_cpu_seconds_avoided: 0,
         pair_reservation_conflicts: 0,
         prepared: 0,
         infrastructure_retries_prepared: 0,
@@ -1659,6 +1876,19 @@ fn initialize_backlog(connection: &Connection) -> Result<()> {
           reason TEXT NOT NULL,
           updated_at_ms INTEGER NOT NULL
         ) WITHOUT ROWID;
+        CREATE TABLE IF NOT EXISTS task_preflight_receipts(
+          manifest TEXT PRIMARY KEY,
+          manifest_sha256 TEXT NOT NULL,
+          outcome_sha256 TEXT NOT NULL UNIQUE,
+          disposition TEXT NOT NULL,
+          task TEXT NOT NULL,
+          candidate_evaluations INTEGER NOT NULL,
+          predicted_cpu_seconds INTEGER NOT NULL,
+          candidate_evaluations_avoided INTEGER NOT NULL,
+          predicted_cpu_seconds_avoided INTEGER NOT NULL,
+          outcome_json TEXT NOT NULL,
+          created_at_ms INTEGER NOT NULL
+        ) WITHOUT ROWID;
         CREATE TABLE IF NOT EXISTS keeper_attempts(
           id INTEGER PRIMARY KEY,
           task TEXT NOT NULL,
@@ -1699,7 +1929,7 @@ fn initialize_backlog(connection: &Connection) -> Result<()> {
             .join(" ")
             .to_ascii_lowercase()
     };
-    if existing.as_deref().map(|sql| normalized(sql)) != Some(normalized(ACTIVE_INDEX_SQL)) {
+    if existing.as_deref().map(normalized) != Some(normalized(ACTIVE_INDEX_SQL)) {
         connection.execute_batch(
             "DROP INDEX IF EXISTS keeper_one_active_attempt;
              CREATE UNIQUE INDEX keeper_one_active_attempt
@@ -1812,6 +2042,53 @@ fn reject_manifest(
             now_ms() as i64
         ],
     )?;
+    Ok(())
+}
+
+fn record_preflight_receipt(
+    connection: &Connection,
+    path: &Path,
+    outcome: &TaskPreflightOutcomeV1,
+) -> Result<()> {
+    outcome.validate()?;
+    let outcome_sha256 = outcome.digest()?;
+    let manifest_sha256 = sha256_file(path)?;
+    let disposition = serde_json::to_value(outcome.disposition)?
+        .as_str()
+        .context("task-preflight disposition is not a string")?
+        .to_owned();
+    let outcome_json = serde_json::to_string(outcome)?;
+    let inserted = connection.execute(
+        "INSERT OR IGNORE INTO task_preflight_receipts(
+           manifest,manifest_sha256,outcome_sha256,disposition,task,
+           candidate_evaluations,predicted_cpu_seconds,
+           candidate_evaluations_avoided,predicted_cpu_seconds_avoided,
+           outcome_json,created_at_ms) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+        params![
+            path.to_string_lossy(),
+            manifest_sha256,
+            outcome_sha256,
+            disposition,
+            outcome.task.as_str(),
+            i64::try_from(outcome.requested_work.candidate_evaluation_count)?,
+            i64::try_from(outcome.requested_work.predicted_cpu_seconds)?,
+            i64::try_from(outcome.estimated_compute_avoided.candidate_evaluation_count)?,
+            i64::try_from(outcome.estimated_compute_avoided.predicted_cpu_seconds)?,
+            outcome_json,
+            now_ms() as i64,
+        ],
+    )?;
+    if inserted == 0 {
+        let existing: (String, String) = connection.query_row(
+            "SELECT manifest_sha256,outcome_sha256 FROM task_preflight_receipts WHERE manifest=?",
+            [path.to_string_lossy().as_ref()],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )?;
+        ensure!(
+            existing == (manifest_sha256, outcome_sha256),
+            "append-only task-preflight receipt identity drift"
+        );
+    }
     Ok(())
 }
 
@@ -1994,22 +2271,42 @@ fn current_admission_waves(
             .filter(|path| path.extension().and_then(|value| value.to_str()) == Some("json"))
             .collect::<Vec<_>>();
         let manifest_count = manifest_paths.len();
-        let unclaimed_manifests = manifest_paths
+        let unclaimed_paths = manifest_paths
             .iter()
             .filter(|path| !claimed.contains(path.as_path()))
             .filter(|path| !rejected.contains(*path))
-            .count();
+            .collect::<Vec<_>>();
+        let unclaimed_manifests = unclaimed_paths.len();
+        let candidate_evaluation_count = unclaimed_paths
+            .into_iter()
+            .map(|path| manifest_candidate_count(path))
+            .collect::<Result<Vec<_>>>()?
+            .into_iter()
+            .try_fold(0_u64, u64::checked_add)
+            .context("wave candidate-evaluation count overflow")?;
         if unclaimed_manifests > 0 {
             admission.push(AdmissionWave {
                 wave: wave.wave.clone(),
                 summary_sha256: wave.summary_sha256.clone(),
                 manifest_count,
                 unclaimed_manifests,
+                candidate_evaluation_count,
                 complete: unclaimed_manifests == manifest_count,
             });
         }
     }
     Ok(admission)
+}
+
+fn manifest_candidate_count(path: &Path) -> Result<u64> {
+    let value = read_json(path)?;
+    let count = value
+        .get("candidates")
+        .and_then(Value::as_array)
+        .map(Vec::len)
+        .context("wave manifest lacks candidate-evaluation work")?;
+    ensure!(count > 0, "wave manifest has no candidate-evaluation work");
+    Ok(count as u64)
 }
 
 /// Keep the newest two byte-complete waves outside scheduler admission. Older
@@ -2063,13 +2360,7 @@ fn manifest_wave(path: &Path) -> Result<String> {
 /// Per-task authority metric (R1/D2); must agree with
 /// `jope_dime_regressor::task::TaskKind::primary_metric`.
 fn expected_manifest_metric(task: &str) -> Option<&'static str> {
-    match task {
-        "regression" => Some("r2"),
-        "binary" => Some("auc"),
-        "timeseries" => Some("negative_mase"),
-        "multiclass" => Some("macro_f1"),
-        _ => None,
-    }
+    Task::parse(task).map(Task::primary_metric)
 }
 
 fn validate_manifest(
@@ -2213,6 +2504,71 @@ fn validate_manifest(
         pairs,
         value,
     })
+}
+
+fn preflight_manifest(
+    registry: &GeneratedOperatorRegistry,
+    manifest: &ValidManifest,
+    bounded_screening_budget_seconds: Option<u64>,
+) -> Result<TaskPreflightOutcomeV1> {
+    let task_name = manifest
+        .value
+        .get("task")
+        .and_then(Value::as_str)
+        .context("manifest task is absent during preflight")?;
+    let task = Task::parse(task_name).context("manifest task is unknown during preflight")?;
+    let genomes = manifest
+        .value
+        .get("candidates")
+        .and_then(Value::as_array)
+        .context("manifest candidates are absent during preflight")?
+        .iter()
+        .map(|candidate| {
+            candidate
+                .get("canonical_genome")
+                .and_then(Value::as_str)
+                .map(str::to_owned)
+                .context("candidate genome is absent during preflight")
+        })
+        .collect::<Result<Vec<_>>>()?;
+    let width = |field: &str| -> Result<Option<u32>> {
+        manifest
+            .value
+            .get(field)
+            .map(|value| {
+                value
+                    .as_u64()
+                    .context("manifest width field is not an unsigned integer")
+                    .and_then(|value| u32::try_from(value).context("manifest width overflows u32"))
+            })
+            .transpose()
+    };
+    let multiclass_metadata_complete = task != Task::Multiclass
+        || (manifest
+            .value
+            .get("meta_json")
+            .and_then(Value::as_str)
+            .is_some_and(|value| !value.trim().is_empty())
+            && manifest
+                .value
+                .get("meta_sha256")
+                .and_then(Value::as_str)
+                .is_some_and(is_sha256));
+    preflight_task_manifest(
+        registry,
+        &TaskPreflightRequest {
+            task,
+            canonical_genomes: &genomes,
+            feature_width: width("feature_width")?,
+            mask_width: width("mask_width")?,
+            observed_minimum_row_width: width("observed_minimum_row_width")?,
+            required_minimum_row_width: width("required_minimum_row_width")?,
+            multiclass_metadata_complete,
+            release_a_only: true,
+            regression_screening_cost_threshold: REGRESSION_SCREENING_COST_THRESHOLD,
+            bounded_screening_budget_seconds,
+        },
+    )
 }
 
 fn load_terminal_seen(connection: &Connection) -> Result<HashSet<String>> {
@@ -2778,6 +3134,99 @@ fn validate_with_evaluator(evaluator: &Path, manifest: &Path) -> Result<()> {
     Ok(())
 }
 
+fn bounded_regression_screening(evaluator: &Path, manifest: &Path) -> Result<()> {
+    let manifest_sha256 = sha256_file(manifest)?;
+    let output_dir = std::env::temp_dir().join(format!(
+        "jope-task-preflight-{}-{}-{}",
+        &manifest_sha256[..16],
+        std::process::id(),
+        now_ms()
+    ));
+    fs::create_dir(&output_dir)
+        .with_context(|| format!("create bounded screening output {}", output_dir.display()))?;
+    let result = (|| -> Result<()> {
+        let output = Command::new("/usr/bin/timeout")
+            .args(["--signal=KILL", "--kill-after=5s"])
+            .arg(format!("{REGRESSION_SCREENING_BUDGET_SECONDS}s"))
+            .arg(evaluator)
+            .arg("--manifest")
+            .arg(manifest)
+            .arg("--output-dir")
+            .arg(&output_dir)
+            .args(["--threads", "1", "--timeout-seconds", "5"])
+            .output()
+            .with_context(|| format!("run bounded regression screening {}", evaluator.display()))?;
+        if !output.status.success() {
+            let message = String::from_utf8_lossy(if output.stderr.is_empty() {
+                &output.stdout
+            } else {
+                &output.stderr
+            });
+            bail!(
+                "bounded regression screening rejected {}: {}",
+                manifest.display(),
+                message.trim()
+            );
+        }
+        validate_bounded_screening_receipts(&output_dir)
+    })();
+    let cleanup = fs::remove_dir_all(&output_dir)
+        .with_context(|| format!("remove bounded screening output {}", output_dir.display()));
+    match (result, cleanup) {
+        (Err(error), _) => Err(error),
+        (Ok(()), Err(error)) => Err(error),
+        (Ok(()), Ok(())) => Ok(()),
+    }
+}
+
+#[derive(Deserialize)]
+struct BoundedScreeningReceipt {
+    valid: bool,
+    failure: Option<String>,
+}
+
+fn validate_bounded_screening_receipts(output_dir: &Path) -> Result<()> {
+    let mut receipt_paths = fs::read_dir(output_dir)
+        .with_context(|| format!("read bounded screening output {}", output_dir.display()))?
+        .map(|entry| entry.map(|entry| entry.path()))
+        .collect::<std::io::Result<Vec<_>>>()?;
+    receipt_paths.retain(|path| {
+        path.file_name()
+            .and_then(|name| name.to_str())
+            .is_some_and(|name| name.ends_with(".receipts.jsonl"))
+    });
+    ensure!(
+        receipt_paths.len() == 1,
+        "bounded regression screening emitted {} receipt files",
+        receipt_paths.len()
+    );
+    let bytes = fs::read(&receipt_paths[0])
+        .with_context(|| format!("read screening receipts {}", receipt_paths[0].display()))?;
+    let mut receipt_count = 0_usize;
+    for (index, line) in bytes.split(|byte| *byte == b'\n').enumerate() {
+        if line.is_empty() {
+            continue;
+        }
+        receipt_count += 1;
+        let receipt: BoundedScreeningReceipt = serde_json::from_slice(line)
+            .with_context(|| format!("decode bounded screening receipt line {}", index + 1))?;
+        ensure!(
+            receipt.valid,
+            "bounded regression screening candidate failed: {}",
+            receipt.failure.as_deref().unwrap_or("unknown")
+        );
+        ensure!(
+            receipt.failure.is_none(),
+            "bounded regression screening valid receipt carries a failure"
+        );
+    }
+    ensure!(
+        receipt_count > 0,
+        "bounded regression screening emitted no candidate receipts"
+    );
+    Ok(())
+}
+
 fn evaluator_failure_is_permanent(error: &anyhow::Error) -> bool {
     format!("{error:#}").contains("Rust evaluator rejected")
 }
@@ -3219,11 +3668,104 @@ mod tests {
         })
     }
 
+    fn generated_registry() -> GeneratedOperatorRegistry {
+        GeneratedOperatorRegistry::from_bytes(
+            br#"{
+              "registry_version":"generated-v1",
+              "registry_hash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "maximum_output_columns":512,
+              "operators":[
+                {"id":0,"name":"ridge","role":"head","regression":true,"estimated_cost":2,
+                 "lifecycle":{"parseable":true,"quarantined":false,"deprecated":false}}
+              ]
+            }"#,
+        )
+        .unwrap()
+    }
+
     #[test]
-    fn queue_policy_is_fixed_and_held_is_not_a_queue_state() {
+    fn generated_registry_preflight_runs_before_reservation() {
+        let root = tempdir().unwrap();
+        let path = root.path().join("manifest.json");
+        fs::write(&path, b"manifest").unwrap();
+        let mut manifest = ValidManifest {
+            path,
+            sha256: "b".repeat(64),
+            generated_at_ms: 1,
+            pairs: Vec::new(),
+            value: manifest_value("strict-wave-000001", "epoch"),
+        };
+        let accepted = preflight_manifest(&generated_registry(), &manifest, None).unwrap();
+        assert_eq!(accepted.disposition, TaskPreflightDisposition::Accepted);
+
+        manifest.value["task"] = json!("binary");
+        let rejected = preflight_manifest(&generated_registry(), &manifest, None).unwrap();
+        assert_eq!(
+            rejected.disposition,
+            TaskPreflightDisposition::PermanentRejection
+        );
+        assert_eq!(rejected.estimated_compute_avoided, rejected.requested_work);
+    }
+
+    #[test]
+    fn typed_preflight_receipts_are_append_only() {
+        let root = tempdir().unwrap();
+        let connection = Connection::open_in_memory().unwrap();
+        initialize_backlog(&connection).unwrap();
+        let path = root.path().join("manifest.json");
+        fs::write(&path, b"manifest").unwrap();
+        let manifest = ValidManifest {
+            path: path.clone(),
+            sha256: sha256_file(&path).unwrap(),
+            generated_at_ms: 1,
+            pairs: Vec::new(),
+            value: manifest_value("strict-wave-000001", "epoch"),
+        };
+        let accepted = preflight_manifest(&generated_registry(), &manifest, None).unwrap();
+        record_preflight_receipt(&connection, &path, &accepted).unwrap();
+        record_preflight_receipt(&connection, &path, &accepted).unwrap();
+        let count: i64 = connection
+            .query_row("SELECT COUNT(*) FROM task_preflight_receipts", [], |row| {
+                row.get(0)
+            })
+            .unwrap();
+        assert_eq!(count, 1);
+
+        let rejected = TaskPreflightOutcomeV1::failed_regression_screening(
+            &accepted,
+            REGRESSION_SCREENING_BUDGET_SECONDS,
+        )
+        .unwrap();
+        assert!(record_preflight_receipt(&connection, &path, &rejected).is_err());
+    }
+
+    #[test]
+    fn bounded_screening_requires_valid_candidate_receipts() {
+        let root = tempdir().unwrap();
+        let receipts = root.path().join("dataset.receipts.jsonl");
+        fs::write(
+            &receipts,
+            b"{\"schema\":\"receipt\",\"valid\":true,\"failure\":null}\n",
+        )
+        .unwrap();
+        validate_bounded_screening_receipts(root.path()).unwrap();
+
+        fs::write(&receipts, b"{\"valid\":false,\"failure\":\"timeout\"}\n").unwrap();
+        assert!(validate_bounded_screening_receipts(root.path())
+            .unwrap_err()
+            .to_string()
+            .contains("timeout"));
+    }
+
+    #[test]
+    fn queue_policy_has_a_dynamic_slot_horizon_and_held_is_not_a_queue_state() {
         let targets = dynamic_queue_targets(&[20.0, 30.0, 40.0], 200).unwrap();
         assert_eq!(targets.target, 2_048);
         assert_eq!(targets.hard_cap, 4_096);
+        assert_eq!(
+            dynamic_queue_targets(&[20.0], 2_000).unwrap().target,
+            2_500
+        );
         assert!(QUEUE_STATES.contains(&"queued"));
         assert!(QUEUE_STATES.contains(&"starting"));
         assert!(!QUEUE_STATES.contains(&"held"));
@@ -3327,8 +3869,8 @@ mod tests {
             .join("waves/strict-wave-000002/manifests/second.json");
         fs::create_dir_all(first.parent().unwrap()).unwrap();
         fs::create_dir_all(second.parent().unwrap()).unwrap();
-        fs::write(&first, b"{}").unwrap();
-        fs::write(&second, b"{}").unwrap();
+        fs::write(&first, br#"{"candidates":[{},{}]}"#).unwrap();
+        fs::write(&second, br#"{"candidates":[{},{},{}]}"#).unwrap();
         let waves = vec![
             MicroWave {
                 wave: "strict-wave-000001".into(),
@@ -3357,6 +3899,7 @@ mod tests {
         assert_eq!(admission.len(), 1);
         assert_eq!(admission[0].wave, "strict-wave-000002");
         assert_eq!(admission[0].unclaimed_manifests, 1);
+        assert_eq!(admission[0].candidate_evaluation_count, 3);
         let rejected = BTreeSet::from([second]);
         assert!(
             current_admission_waves(root.path(), &waves, &claims, &rejected)
@@ -3372,6 +3915,7 @@ mod tests {
             summary_sha256: format!("{index:064x}"),
             manifest_count: 10,
             unclaimed_manifests: unclaimed,
+            candidate_evaluation_count: (unclaimed * 50) as u64,
             complete,
         };
         let (admission, reserve) = partition_protected_reserve(vec![

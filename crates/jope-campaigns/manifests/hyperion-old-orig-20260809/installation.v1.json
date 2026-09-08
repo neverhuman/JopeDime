@@ -1,0 +1,521 @@
+{
+  "claim": "all installed outputs match the byte-identical CUDA replay",
+  "copy_overwrite_policy": "rsync --ignore-existing",
+  "dataset_count": 20,
+  "datasets": [
+    {
+      "dataset_id": "019de5d76a718163",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "019de5d76a718163/test3.vs.orig",
+          "sha256": "3370276e1d41b89803b00778dd7f87514b5cfff89ce16fdc65dedddb4d2a186e",
+          "shape": [
+            24,
+            2
+          ],
+          "value_count": 48
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "019de5d76a718163/train3.vs.orig",
+          "sha256": "04d0346e927533d33fbd0ead82136048d428ae06b7568b78f2585e2cb597b73c",
+          "shape": [
+            120,
+            2
+          ],
+          "value_count": 240
+        }
+      }
+    },
+    {
+      "dataset_id": "047e62b52a3f4ede",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "047e62b52a3f4ede/test3.vs.orig",
+          "sha256": "07c2f706decd3d3e63cf5dfbd7f971ba7bde46028d4d1697101e0a19d47a4f7d",
+          "shape": [
+            40,
+            12
+          ],
+          "value_count": 480
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "047e62b52a3f4ede/train3.vs.orig",
+          "sha256": "74a8d9e0b4b0b03dc4aaa34b3c6c649eb7a0c399db7a036f5218eefa795851de",
+          "shape": [
+            195,
+            12
+          ],
+          "value_count": 2340
+        }
+      }
+    },
+    {
+      "dataset_id": "13b5df533e59a626",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "13b5df533e59a626/test3.vs.orig",
+          "sha256": "430fbe5fd0714c9a6fc7e6ec287eb9abf29f4b83f53a66f82b2f1c136a8fd537",
+          "shape": [
+            21,
+            19
+          ],
+          "value_count": 399
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "13b5df533e59a626/train3.vs.orig",
+          "sha256": "7d6a8f1212a6c10f67725cbed64bb484380622929eaa4dd81e16589fb7e970a5",
+          "shape": [
+            105,
+            19
+          ],
+          "value_count": 1995
+        }
+      }
+    },
+    {
+      "dataset_id": "17a4542ee4fb9e44",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "17a4542ee4fb9e44/test3.vs.orig",
+          "sha256": "e35e400211a50262682ecc03acf0695761ff5c82fdf4545049f4ed40ffbd4247",
+          "shape": [
+            32,
+            9
+          ],
+          "value_count": 288
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "17a4542ee4fb9e44/train3.vs.orig",
+          "sha256": "6d28b29394605a6c0dd9e6406fa0671429beb3fb0a12f9edf5f420286dfa7f1e",
+          "shape": [
+            157,
+            9
+          ],
+          "value_count": 1413
+        }
+      }
+    },
+    {
+      "dataset_id": "1cb97b1d7314d43d",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "1cb97b1d7314d43d/test3.vs.orig",
+          "sha256": "cde9aac816c317f499e61d8f1572ca1e2b7bfe3ec54c7c8d9cf318638a229f7b",
+          "shape": [
+            34,
+            10
+          ],
+          "value_count": 340
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "1cb97b1d7314d43d/train3.vs.orig",
+          "sha256": "9f6f07e3f62d455c864c50b2d44c95d1aa8a518f1c96795872226310de11ebe7",
+          "shape": [
+            166,
+            10
+          ],
+          "value_count": 1660
+        }
+      }
+    },
+    {
+      "dataset_id": "30ef3eaa6d2971a9",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "30ef3eaa6d2971a9/test3.vs.orig",
+          "sha256": "e17b383290a815bb6ed0656a8cb99f0f7aba07e693e3509902552650ae11b759",
+          "shape": [
+            22,
+            30
+          ],
+          "value_count": 660
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "30ef3eaa6d2971a9/train3.vs.orig",
+          "sha256": "f1672e04ef9c04a14cd7693c533e51b770671aeddb362d3f74044af4f5f440f1",
+          "shape": [
+            109,
+            30
+          ],
+          "value_count": 3270
+        }
+      }
+    },
+    {
+      "dataset_id": "3305a3ad973fb227",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "3305a3ad973fb227/test3.vs.orig",
+          "sha256": "07f6ecd09fae6be5132156666c4669f57bee0216bc462ca95d4335c95118d56e",
+          "shape": [
+            40,
+            2
+          ],
+          "value_count": 80
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "3305a3ad973fb227/train3.vs.orig",
+          "sha256": "f1c0a5d23003c83247a1992ed7019a1968fc3bc57bfad30bd9fb8b009b58f932",
+          "shape": [
+            200,
+            2
+          ],
+          "value_count": 400
+        }
+      }
+    },
+    {
+      "dataset_id": "3baa7e37fc1f7861",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "3baa7e37fc1f7861/test3.vs.orig",
+          "sha256": "d072964bf8f104a6f9945fdab6fdf5ef8280910be99e4f2ae6e1bbf41d3e9e75",
+          "shape": [
+            54,
+            4
+          ],
+          "value_count": 216
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "3baa7e37fc1f7861/train3.vs.orig",
+          "sha256": "11d8197e045a6cd076607f642e8e06e5ad09604cd273dc49e2122e2e814530de",
+          "shape": [
+            269,
+            4
+          ],
+          "value_count": 1076
+        }
+      }
+    },
+    {
+      "dataset_id": "3f781a51af45387e",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "3f781a51af45387e/test3.vs.orig",
+          "sha256": "afccb887285648b64531255496e69d2f02aac413b283a8f4da33833b68ad5bbe",
+          "shape": [
+            46,
+            3
+          ],
+          "value_count": 138
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "3f781a51af45387e/train3.vs.orig",
+          "sha256": "2a751911e8dc18eaf875dff90f6b2058b6cad68c1fc500cd7c4d80c483d852f0",
+          "shape": [
+            228,
+            3
+          ],
+          "value_count": 684
+        }
+      }
+    },
+    {
+      "dataset_id": "542e75bc0cfdd1bf",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "542e75bc0cfdd1bf/test3.vs.orig",
+          "sha256": "dd5d3813c89a7f46f2ac2487e21b5ac04c5bea9c694142d5459e36b1c1f6bde4",
+          "shape": [
+            8,
+            17
+          ],
+          "value_count": 136
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "542e75bc0cfdd1bf/train3.vs.orig",
+          "sha256": "924be3a8872437f5178c56cc5c85f0e5525a7a600856df719e0d89d9c095ec1e",
+          "shape": [
+            37,
+            17
+          ],
+          "value_count": 629
+        }
+      }
+    },
+    {
+      "dataset_id": "693890aae9dc860b",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "693890aae9dc860b/test3.vs.orig",
+          "sha256": "5603a330c4d27f5702747cc929ca9642896fc97ca181579ad55898ab1db5f2f8",
+          "shape": [
+            41,
+            1
+          ],
+          "value_count": 41
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "693890aae9dc860b/train3.vs.orig",
+          "sha256": "72e8307236f49fab1be9f7543b9aebf7458568152f4b2d8c032238a7cf6ea572",
+          "shape": [
+            202,
+            1
+          ],
+          "value_count": 202
+        }
+      }
+    },
+    {
+      "dataset_id": "79e600bc5fcd5da7",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "79e600bc5fcd5da7/test3.vs.orig",
+          "sha256": "1188c64d4e5bbc6471ce70ab1be54758fe901063b478859ec2f23842cfee41ac",
+          "shape": [
+            36,
+            3
+          ],
+          "value_count": 108
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "79e600bc5fcd5da7/train3.vs.orig",
+          "sha256": "bb43f2a05a063a73e04ca7f4e7e89a06675296dd1a89f8c4f50967b280484668",
+          "shape": [
+            180,
+            3
+          ],
+          "value_count": 540
+        }
+      }
+    },
+    {
+      "dataset_id": "ab0239b9ef0ba28e",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "ab0239b9ef0ba28e/test3.vs.orig",
+          "sha256": "a940c1fd0256293984be807562ccdc9837b87764eb4f17bdaa1b7bc84fd7906a",
+          "shape": [
+            6,
+            1040
+          ],
+          "value_count": 6240
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "ab0239b9ef0ba28e/train3.vs.orig",
+          "sha256": "04703ddc466f03109ab076b03994c5251ac9045d4b664362be30d692a3b4fed8",
+          "shape": [
+            28,
+            1040
+          ],
+          "value_count": 29120
+        }
+      }
+    },
+    {
+      "dataset_id": "b253fbfae8460dc1",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "b253fbfae8460dc1/test3.vs.orig",
+          "sha256": "374cccb5b830c9f86bd092378fb54433f492cf5aacb672ce953461fe69275539",
+          "shape": [
+            9,
+            7
+          ],
+          "value_count": 63
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "b253fbfae8460dc1/train3.vs.orig",
+          "sha256": "b314ab517e3d78949c8783757984037e06c397474124d2e06dbc9e578009630a",
+          "shape": [
+            43,
+            7
+          ],
+          "value_count": 301
+        }
+      }
+    },
+    {
+      "dataset_id": "cf5e74b4e9594944",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "cf5e74b4e9594944/test3.vs.orig",
+          "sha256": "7190c1e5378800cf0108d300d79cde081b8812ad873569bfd9cf896a69059e4b",
+          "shape": [
+            3,
+            569
+          ],
+          "value_count": 1707
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "cf5e74b4e9594944/train3.vs.orig",
+          "sha256": "259b95999aa67f12448bf7ad85247107028888382b77cd29b9cff8d30c07014f",
+          "shape": [
+            10,
+            569
+          ],
+          "value_count": 5690
+        }
+      }
+    },
+    {
+      "dataset_id": "d2daf53412ab18dc",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "d2daf53412ab18dc/test3.vs.orig",
+          "sha256": "a7f6ff43f8337b854a26f47f26815ea6db5f670c3453011b1353b173e900413f",
+          "shape": [
+            51,
+            18
+          ],
+          "value_count": 918
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "d2daf53412ab18dc/train3.vs.orig",
+          "sha256": "37f8b346acfb18b4fdcf09b4ff81d8b0e1c636d88c19e4b7e4550bd5fe3e970a",
+          "shape": [
+            255,
+            18
+          ],
+          "value_count": 4590
+        }
+      }
+    },
+    {
+      "dataset_id": "dee1fc8e9afd81c9",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "dee1fc8e9afd81c9/test3.vs.orig",
+          "sha256": "f651a0b4b7163257620f6c2c1e9dcae33a83327d2ac0a19a00f31010a5469a35",
+          "shape": [
+            26,
+            8
+          ],
+          "value_count": 208
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "dee1fc8e9afd81c9/train3.vs.orig",
+          "sha256": "63ae15e85e6dcd9525b8fceedd64b3bddfb431202009d82d54c67f607efcbb05",
+          "shape": [
+            129,
+            8
+          ],
+          "value_count": 1032
+        }
+      }
+    },
+    {
+      "dataset_id": "e1c1db5260d0894e",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "e1c1db5260d0894e/test3.vs.orig",
+          "sha256": "891ed84319e70820eddb02c0075dd72e0486096614e1ec01128f1fdd59632e29",
+          "shape": [
+            17,
+            10
+          ],
+          "value_count": 170
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "e1c1db5260d0894e/train3.vs.orig",
+          "sha256": "3b0a2bea598337d47549e7ec6755ba8bb1b28ab684a188510ee24481e9dd067c",
+          "shape": [
+            83,
+            10
+          ],
+          "value_count": 830
+        }
+      }
+    },
+    {
+      "dataset_id": "ee56a1015e344c11",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "ee56a1015e344c11/test3.vs.orig",
+          "sha256": "80f53a67f2b78d7d7dd069b611c666a7d421378968257305d45f91863e0b706c",
+          "shape": [
+            21,
+            4
+          ],
+          "value_count": 84
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "ee56a1015e344c11/train3.vs.orig",
+          "sha256": "bdfb68bbebdc984d2e6a81102582ca06b740f02c1e327ea88089931f33d87f6a",
+          "shape": [
+            104,
+            4
+          ],
+          "value_count": 416
+        }
+      }
+    },
+    {
+      "dataset_id": "fe3cc716a05d036f",
+      "outputs": {
+        "test": {
+          "finite": true,
+          "relative_path": "fe3cc716a05d036f/test3.vs.orig",
+          "sha256": "f1621fc40d6bd8ec1ff42173d8be102469164ddac3b838b9d1e7b43e9be77407",
+          "shape": [
+            40,
+            2
+          ],
+          "value_count": 80
+        },
+        "train": {
+          "finite": true,
+          "relative_path": "fe3cc716a05d036f/train3.vs.orig",
+          "sha256": "c729da0bfef2f5a3452bd8678135635ba373677e1aad31ecef34d17c1ad8fe32",
+          "shape": [
+            200,
+            2
+          ],
+          "value_count": 400
+        }
+      }
+    }
+  ],
+  "installed_root": "/home/ubuntu/jope-dime/sotarena/data/tabular-regression-v1",
+  "output_file_count": 40,
+  "preinstall_existing_output_count": 0,
+  "schema": "HyperionOldPythonVsInstallation.v1",
+  "source_generation_manifest": {
+    "path": "/home/ubuntu/jope-dime/manifests/hyperion-old-orig-20260809/generation-run1.v1.json",
+    "sha256": "39bf8e0eee56f05c3bf4c947b7374cc29bd360f29fbea0801d7d05c10875f29b"
+  },
+  "source_replay_verification": {
+    "path": "/home/ubuntu/jope-dime/manifests/hyperion-old-orig-20260809/replay-verification.v1.json",
+    "sha256": "79b443c0abd1b06ae8c7b64f27137d9a9dbadde706ec98bc0bb4b4629e02b5b7"
+  },
+  "status": "complete",
+  "verification_script_sha256": "5c5fcf9bf6e81f973dd1088b2e62601f3bd30cd3e1ac81dcc4e81cbdd3bf691e"
+}

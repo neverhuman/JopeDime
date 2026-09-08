@@ -244,7 +244,10 @@ fn helper_src(h: Helper) -> &'static str {
         Helper::MathClip => {
             r#"def _clip(value, a, b):
     """Clip value to the interval spanned by a and b."""
-    return _clamp(value, _fmin(a, b), _fmax(a, b))"#
+    lo, hi = _fmin(a, b), _fmax(a, b)
+    if math.isnan(lo) or math.isnan(hi):
+        raise ArithmeticError("invalid clip bounds")
+    return _clamp(value, lo, hi)"#
         }
         Helper::Asinh => {
             r#"def _asinh(v):
@@ -1669,7 +1672,14 @@ fn map_src(n: usize, source: &str, expr: &crate::mathexpr::MathAst) -> String {
         lines.push(format!("    if len(row) <= {maxc}:"));
         lines.push("        return 0.0".to_string());
     }
-    lines.push(format!("    value = {}", expr.to_python()));
+    if features.funcs.contains(&crate::mathexpr::MathFunc::Clip) {
+        lines.push("    try:".to_string());
+        lines.push(format!("        value = {}", expr.to_python()));
+        lines.push("    except ArithmeticError:".to_string());
+        lines.push("        return 0.0".to_string());
+    } else {
+        lines.push(format!("    value = {}", expr.to_python()));
+    }
     lines.push("    if math.isfinite(value):".to_string());
     lines.push("        return _clamp(value, -1e12, 1e12)".to_string());
     lines.push("    return 0.0".to_string());
@@ -1706,7 +1716,14 @@ fn derive_src(n: usize, source: &str, expr: &crate::mathexpr::MathAst) -> String
             lines.push(format!("    if len(row) <= {maxc}:"));
             lines.push("        return 0.0".to_string());
         }
+        if features.funcs.contains(&crate::mathexpr::MathFunc::Clip) {
+        lines.push("    try:".to_string());
+        lines.push(format!("        value = {}", expr.to_python()));
+        lines.push("    except ArithmeticError:".to_string());
+        lines.push("        return 0.0".to_string());
+    } else {
         lines.push(format!("    value = {}", expr.to_python()));
+    }
         lines.push("    if math.isfinite(value):".to_string());
         lines.push("        return _clamp(value, -1e12, 1e12)".to_string());
         lines.push("    return 0.0".to_string());
@@ -4159,7 +4176,14 @@ fn expression_fn(source: &str, expr: &crate::mathexpr::MathAst) -> String {
         lines.push(format!("    if len(row) <= {maxc}:"));
         lines.push("        return 0.0".to_string());
     }
-    lines.push(format!("    value = {}", expr.to_python()));
+    if features.funcs.contains(&crate::mathexpr::MathFunc::Clip) {
+        lines.push("    try:".to_string());
+        lines.push(format!("        value = {}", expr.to_python()));
+        lines.push("    except ArithmeticError:".to_string());
+        lines.push("        return 0.0".to_string());
+    } else {
+        lines.push(format!("    value = {}", expr.to_python()));
+    }
     lines.push("    if math.isfinite(value):".to_string());
     lines.push("        return _clamp(value, -1e12, 1e12)".to_string());
     lines.push("    return 0.0".to_string());

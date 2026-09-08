@@ -198,8 +198,11 @@ fn m_sigmoid(value: f64) -> f64 {
         }
         Helper::MathClip => {
             r#"/// Clip value to the interval spanned by a and b.
-fn m_clip(value: f64, a: f64, b: f64) -> f64 {
-    value.clamp(a.min(b), a.max(b))
+fn m_clip(value: f64, a: f64, b: f64, failed: &mut bool) -> f64 {
+    let lo = a.min(b);
+    let hi = a.max(b);
+    if lo.is_nan() || hi.is_nan() { *failed = true; return 0.0; }
+    value.clamp(lo, hi)
 }"#
         }
         Helper::Asinh => {
@@ -2242,7 +2245,13 @@ fn map_src(n: usize, source: &str, expr: &crate::mathexpr::MathAst) -> String {
     if !features.uses_x {
         lines.push("    let _ = x;".to_string());
     }
-    lines.push(format!("    let value = {};", expr.to_rust()));
+    if features.funcs.contains(&crate::mathexpr::MathFunc::Clip) {
+        lines.push("    let mut math_failed = false;".to_string());
+        lines.push(format!("    let value = {};", expr.to_rust()));
+        lines.push("    if math_failed { return 0.0; }".to_string());
+    } else {
+        lines.push(format!("    let value = {};", expr.to_rust()));
+    }
     lines.push("    if value.is_finite() {".to_string());
     lines.push("        value.clamp(-1e12, 1e12)".to_string());
     lines.push("    } else {".to_string());
@@ -2289,7 +2298,13 @@ fn derive_src(n: usize, source: &str, expr: &crate::mathexpr::MathAst) -> String
         } else if features.vars.is_empty() {
             lines.push("    let _ = row;".to_string());
         }
+        if features.funcs.contains(&crate::mathexpr::MathFunc::Clip) {
+        lines.push("    let mut math_failed = false;".to_string());
         lines.push(format!("    let value = {};", expr.to_rust()));
+        lines.push("    if math_failed { return 0.0; }".to_string());
+    } else {
+        lines.push(format!("    let value = {};", expr.to_rust()));
+    }
         lines.push("    if value.is_finite() {".to_string());
         lines.push("        value.clamp(-1e12, 1e12)".to_string());
         lines.push("    } else {".to_string());
@@ -5613,7 +5628,13 @@ fn expression_fn(source: &str, expr: &crate::mathexpr::MathAst) -> String {
     if features.max_col.is_none() && features.vars.is_empty() {
         lines.push("    let _ = row;".to_string());
     }
-    lines.push(format!("    let value = {};", expr.to_rust()));
+    if features.funcs.contains(&crate::mathexpr::MathFunc::Clip) {
+        lines.push("    let mut math_failed = false;".to_string());
+        lines.push(format!("    let value = {};", expr.to_rust()));
+        lines.push("    if math_failed { return 0.0; }".to_string());
+    } else {
+        lines.push(format!("    let value = {};", expr.to_rust()));
+    }
     lines.push("    if value.is_finite() {".to_string());
     lines.push("        value.clamp(-1e12, 1e12)".to_string());
     lines.push("    } else {".to_string());

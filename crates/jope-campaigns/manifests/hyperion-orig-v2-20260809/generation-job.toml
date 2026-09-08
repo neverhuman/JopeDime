@@ -1,0 +1,37 @@
+[job]
+id = "hyperion-orig-v2-generate-20260809-v4"
+project = "hyperion-orig-v2"
+tier = "normal"
+command = "/bin/bash"
+args = ["-lc", "set -euo pipefail; v2_work=$SCQ_ATTEMPT_DIR/work; v2_results={output:results}; mkdir \"$v2_work\"; tar -xf {input:bundle} -C \"$v2_work\"; export PYTHONPATH=$v2_work/vendor${PYTHONPATH:+:$PYTHONPATH}; python3 \"$v2_work/scripts/reconstruct_latest_hyperion_old_semantics.py\" --data-root \"$v2_work/sotarena/data/tabular-regression-v1\" --weights \"$v2_work/hyperion_v5_arm_b.safetensors\" --manifest \"$v2_work/hyperion_v5_arm_b.manifest.json\" --jain-core \"$v2_work/jain-core\" --jain-core-head a029dbe5aa7a4da7b6f5aa1c5e93f73e3e207bc6 --receipt \"$v2_results/generation-receipt.json\" --batch-size 4096; for d in 019de5d76a718163 047e62b52a3f4ede 13b5df533e59a626 17a4542ee4fb9e44 1cb97b1d7314d43d 30ef3eaa6d2971a9 3305a3ad973fb227 3baa7e37fc1f7861 3f781a51af45387e 542e75bc0cfdd1bf 693890aae9dc860b 79e600bc5fcd5da7 ab0239b9ef0ba28e b253fbfae8460dc1 cf5e74b4e9594944 d2daf53412ab18dc dee1fc8e9afd81c9 e1c1db5260d0894e ee56a1015e344c11 fe3cc716a05d036f; do mkdir -p \"$v2_results/data/$d\"; cp \"$v2_work/sotarena/data/tabular-regression-v1/$d/train3.vs.orig.v2\" \"$v2_work/sotarena/data/tabular-regression-v1/$d/test3.vs.orig.v2\" \"$v2_results/data/$d/\"; done"]
+
+[resource]
+gpus_per_task = 1
+cpus_reserved = 2
+omp_threads = 2
+ram_gb = 16
+placement = "single_node"
+
+[dependencies]
+python = "python3"
+python_imports = ["numpy", "pandas", "torch"]
+
+[preempt]
+preemptible = true
+checkpoint = "none"
+resume = "rerun"
+
+[limits]
+max_runtime_hours = 2
+max_restarts = 1
+
+[[input]]
+name = "bundle"
+source = "/home/ubuntu/jope-dime/artifacts/hyperion-orig-v2-scq/bundle.tar"
+target = "bundle.tar"
+sha256 = "762febc4b4734fda87fca6ee0b163179d0c3a46083b22b6c11021a23bbcda201"
+
+[[output]]
+name = "results"
+source = "results"
+directory = true

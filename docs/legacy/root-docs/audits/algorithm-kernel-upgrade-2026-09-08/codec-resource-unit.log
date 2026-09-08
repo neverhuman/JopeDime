@@ -1,0 +1,20 @@
+   Compiling feat-math v0.1.0 (/home/ubuntu/jope-dime/vendor/feat-math)
+warning: variable does not need to be mutable
+    --> vendor/feat-math/src/ops.rs:1873:17
+     |
+1873 |             let mut pick_center = |rng: &mut Pcg32, forced: usize| -> f64 {
+     |                 ----^^^^^^^^^^^
+     |                 |
+     |                 help: remove this `mut`
+     |
+     = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: `feat-math` (lib test) generated 1 warning (run `cargo fix --lib -p feat-math --tests` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.71s
+     Running unittests src/lib.rs (/tmp/jope-kernel-upgrade-target/debug/deps/feat_math-ca5349ab32482e6a)
+
+running 1 test
+test kernel::codec::tests::writer_rejects_growth_before_exceeding_budget ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 270 filtered out; finished in 0.02s
+

@@ -6,7 +6,17 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::recovery_contracts::{RollbackCapsuleV1, ROLLBACK_RUNTIME_BUNDLE_SHA256};
+use jope_dime_regressor::dime_activation::{
+    abort_activation_transaction, execute_activation_transaction, ActivationLock,
+    ActivationOperationV1, ActivationRequest, DimeCandidateReviewGateV1,
+    DimeExternalActivationGateV1, SystemdUserHost,
+};
+use jope_dime_regressor::encoder_v2_identity::ArtifactIdentity;
+use jope_dime_regressor::recovery_contracts::{
+    classify_rollback_capsule_schema, RollbackBaselineDerivationV1, RollbackBundleFileV2,
+    RollbackCapsuleV2, RollbackSystemdArtifactV2, RollbackUnitTransformationV1,
+    IMMUTABLE_FLYWHEEL_ROOT, ROLLBACK_BASELINE_DERIVATION_SCHEMA, ROLLBACK_RUNTIME_BUNDLE_SHA256,
+};
 use jope_dime_regressor::selfplay_data::canonical_json_sha256;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -14,8 +24,8 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, File};
 use std::io::{BufReader, Read, Write};
-use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const DEFAULT_SOURCE: &str = "/home/ubuntu/jope-dime";
@@ -25,6 +35,21 @@ const PRIME_SOURCE_BUNDLE_SHA256: &str =
 // tree, but those are separate authorities. Never derive one identity from
 // the other.
 const ROLLBACK_BUNDLE_SHA256: &str = ROLLBACK_RUNTIME_BUNDLE_SHA256;
+const SUPERSEDED_STAGING_BUNDLE_SHA256: &str =
+    "412c5ed5560222842e41dbd479e673cf99cd293cc965f01504bb38c1a4dd7372";
+const HISTORICAL_ROLLBACK_PARENT_SHA256: &str =
+    "9521ffcef11159339f314cb26430739d5472a54e1b521a868bd9ccb08acf6bd4";
+const REVIEWED_ROLLBACK_UNIT_COMMIT: &str = "7e1d0429021ab11e8ec63141669f352d32eebe38";
+const ROLLBACK_WORKING_DIRECTORY_FROM: &str = "/home/ubuntu/jope-dime";
+const ROLLBACK_REBASE_UNITS: &[&str] = &[
+    "jope-selfplay-controller.service",
+    "jope-selfplay-corpus-freezer.service",
+    "jope-selfplay-freshness.service",
+    "jope-selfplay-ingestion.service",
+    "jope-selfplay-reserve.service",
+    "jope-selfplay-watchdog.service",
+    "jope-testonly-monitor.service",
+];
 const DEFAULT_PRIME: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/9521ffcef11159339f314cb26430739d5472a54e1b521a868bd9ccb08acf6bd4/pytorch";
 const ACTIVE_BUNDLE_PYTORCH_ROOT: &str =
     "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch";
@@ -33,6 +58,9 @@ const DEFAULT_RUNNER: &str = "/home/ubuntu/jope-flywheel/scripts/fweval_runner.s
 const DEFAULT_SCQ_PROJECTS: &str = "/home/ubuntu/smart_cluster/etc/projects.toml";
 const DEFAULT_OUTPUT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles";
 const DEFAULT_SERVICE_MANIFEST: &str = "manifests/selfplay/service-manifest.v3.json";
+const DEFAULT_USER_UNIT_ROOT: &str = "/home/ubuntu/.config/systemd/user";
+const DEFAULT_ACTIVATION_TRANSACTION_ROOT: &str =
+    "/home/ubuntu/jope-flywheel/test_exact_gen0/ops/dime-activation";
 
 /// GPU nodes that can host bundle-pinned GPU jobs (cohort proposer, trainer).
 /// Their scq specs pin `[env] PYTHONPATH` and a smoke test to the bundle path
@@ -145,11 +173,9 @@ struct Args {
         conflicts_with_all = ["activate", "activate_existing", "verify_existing"]
     )]
     synchronize_existing: Option<String>,
-    /// Explicit reciprocal review acknowledgements required for activation.
-    #[arg(long)]
-    codex_ack_reviewed: bool,
-    #[arg(long)]
-    claude_ack_reviewed: bool,
+    /// Content-addressed independent candidate review and test evidence.
+    #[arg(long, value_name = "PATH")]
+    candidate_review_gate: Option<PathBuf>,
     /// Composite runtime/unit rollback authority required for activation.
     #[arg(long, value_name = "PATH")]
     rollback_capsule: Option<PathBuf>,
@@ -165,6 +191,43 @@ struct Args {
         ]
     )]
     verify_rollback_capsule: Option<PathBuf>,
+    /// Build the strict unit-only rollback baseline from the historical parent.
+    #[arg(long, conflicts_with_all = [
+        "activate", "activate_existing", "verify_existing", "synchronize_existing",
+        "verify_rollback_capsule", "prepare_evaluator_retention"
+    ])]
+    derive_rollback_baseline: bool,
+    /// Idempotently retain all referenced evaluators without activating a bundle.
+    #[arg(
+        long,
+        value_name = "SHA256",
+        conflicts_with_all = [
+            "activate", "activate_existing", "verify_existing", "synchronize_existing",
+            "verify_rollback_capsule", "derive_rollback_baseline"
+        ]
+    )]
+    prepare_evaluator_retention: Option<String>,
+    /// Fresh external proof of SCQ companion-core support and cancellation ownership.
+    #[arg(long, value_name = "PATH")]
+    external_activation_gate: Option<PathBuf>,
+    #[arg(long, default_value = DEFAULT_USER_UNIT_ROOT)]
+    user_unit_root: PathBuf,
+    #[arg(long, default_value = DEFAULT_ACTIVATION_TRANSACTION_ROOT)]
+    activation_transaction_root: PathBuf,
+    /// Capsule-gated rollback of runtime, DIME units, and service state only.
+    #[arg(long, conflicts_with_all = [
+        "activate", "activate_existing", "verify_existing", "synchronize_existing",
+        "verify_rollback_capsule", "derive_rollback_baseline", "prepare_evaluator_retention",
+        "abort_activation_transaction"
+    ])]
+    rollback_to_baseline: bool,
+    /// Restore exact DIME activation preimages after an interrupted transaction.
+    #[arg(long, value_name = "PATH", conflicts_with_all = [
+        "activate", "activate_existing", "verify_existing", "synchronize_existing",
+        "verify_rollback_capsule", "derive_rollback_baseline", "prepare_evaluator_retention",
+        "rollback_to_baseline"
+    ])]
+    abort_activation_transaction: Option<PathBuf>,
 }
 
 #[derive(Clone, Debug)]
@@ -217,31 +280,69 @@ struct ServiceRow {
 
 fn main() -> Result<()> {
     let args = Args::parse();
+    if let Some(transaction_root) = &args.abort_activation_transaction {
+        let _lock =
+            ActivationLock::acquire(&args.activation_transaction_root.join("activation.lock"))?;
+        let mut host = SystemdUserHost;
+        let transaction = abort_activation_transaction(
+            &args.output_root,
+            &args.user_unit_root,
+            transaction_root,
+            &mut host,
+        )?;
+        println!("{}", serde_json::to_string(&transaction)?);
+        return Ok(());
+    }
+    if args.rollback_to_baseline {
+        let (capsule, evidence_root) = load_activation_rollback_capsule(&args)?;
+        let manifest = verify_intrinsic_existing(&args.output_root, ROLLBACK_BUNDLE_SHA256)?;
+        activate_manifest(
+            &args,
+            &manifest,
+            &capsule,
+            &evidence_root,
+            ActivationOperationV1::Rollback,
+        )?;
+        println!("{}", serde_json::to_string(&manifest)?);
+        return Ok(());
+    }
+    if args.derive_rollback_baseline {
+        let derivation = derive_rollback_baseline(&args.source, &args.output_root)?;
+        println!("{}", serde_json::to_string(&derivation)?);
+        return Ok(());
+    }
+    if let Some(bundle_sha256) = &args.prepare_evaluator_retention {
+        require_bundle_sha256(bundle_sha256)?;
+        verify_intrinsic_existing(&args.output_root, bundle_sha256)?;
+        let retention = retain_evaluators(&args.output_root, bundle_sha256)?;
+        println!("{}", serde_json::to_string(&retention)?);
+        return Ok(());
+    }
     if let Some(path) = &args.verify_rollback_capsule {
-        let capsule: RollbackCapsuleV1 = serde_json::from_reader(
+        let value: Value = serde_json::from_reader(
             File::open(path)
                 .with_context(|| format!("open rollback capsule {}", path.display()))?,
         )?;
+        ensure!(
+            classify_rollback_capsule_schema(&value)? == "authorizing-v2",
+            "JopeRollbackCapsule.v1 is historical evidence and can never authorize activation"
+        );
+        let capsule: RollbackCapsuleV2 = serde_json::from_value(value)?;
         let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis() as u64;
-        let digest = verify_rollback_capsule(&args.output_root, &capsule, now)?;
+        let evidence_root = path.parent().unwrap_or_else(|| Path::new("."));
+        let digest = verify_rollback_capsule(&args.output_root, evidence_root, &capsule, now)?;
         println!(
             "{}",
             serde_json::to_string(&json!({
-                "schema": "JopeRollbackCapsuleVerification.v1",
+                "schema": "JopeRollbackCapsuleVerification.v2",
                 "rollback_capsule_sha256": digest,
                 "runtime_bundle_sha256": capsule.runtime_bundle_sha256,
-                "unit_overlay_sha256": capsule.unit_overlay_sha256,
+                "systemd_closure_sha256": capsule.systemd_closure_canonical_json_sha256,
                 "verified": true,
                 "pointer_changed": false,
             }))?
         );
         return Ok(());
-    }
-    if args.activate || args.activate_existing.is_some() || args.synchronize_existing.is_some() {
-        ensure!(
-            args.codex_ack_reviewed && args.claude_ack_reviewed,
-            "bundle activation requires explicit Codex and Claude review acknowledgements"
-        );
     }
     if let Some(bundle_sha256) = args
         .verify_existing
@@ -261,19 +362,7 @@ fn main() -> Result<()> {
             File::open(&manifest_path)
                 .with_context(|| format!("open staged bundle {}", manifest_path.display()))?,
         )?;
-        let rollback_capsule_sha256 = if bundle_sha256 == ROLLBACK_BUNDLE_SHA256 {
-            let capsule = load_activation_rollback_capsule(&args)?;
-            let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis() as u64;
-            Some(verify_rollback_capsule(&args.output_root, &capsule, now)?)
-        } else {
-            verify_existing(
-                manifest_path
-                    .parent()
-                    .context("staged bundle manifest has no parent")?,
-                &manifest,
-            )?;
-            None
-        };
+        verify_intrinsic_existing(&args.output_root, bundle_sha256)?;
         if args.verify_existing.is_some() {
             println!(
                 "{}",
@@ -281,19 +370,21 @@ fn main() -> Result<()> {
                     "schema": "JopeBundleVerification.v1",
                     "bundle_sha256": bundle_sha256,
                     "verified": true,
-                    "rollback_service_unit_closure_verified": rollback_capsule_sha256.is_some(),
-                    "rollback_capsule_sha256": rollback_capsule_sha256,
+                    "rollback_authorization_checked": false,
                     "pointer_changed": false,
                 }))?
             );
             return Ok(());
         }
         if args.synchronize_existing.is_some() {
-            let receipt = sync_bundle_to_gpu_nodes(&args.output_root, bundle_sha256, &manifest)?;
+            let mut receipt =
+                sync_bundle_to_gpu_nodes(&args.output_root, bundle_sha256, &manifest)?;
             ensure!(
                 receipt.get("complete").and_then(Value::as_bool) == Some(true),
                 "bundle synchronization is incomplete"
             );
+            receipt["fresh_live_probe"] =
+                fresh_live_bundle_probe(&args.output_root, bundle_sha256, &manifest)?;
             let receipt_path = args
                 .output_root
                 .join("synchronization")
@@ -302,39 +393,71 @@ fn main() -> Result<()> {
             println!("{}", serde_json::to_string(&receipt)?);
             return Ok(());
         }
-        let capsule = load_activation_rollback_capsule(&args)?;
-        activate_manifest(&args.output_root, &manifest, &capsule)?;
+        let (capsule, evidence_root) = load_activation_rollback_capsule(&args)?;
+        activate_manifest(
+            &args,
+            &manifest,
+            &capsule,
+            &evidence_root,
+            ActivationOperationV1::Activate,
+        )?;
         println!("{}", serde_json::to_string(&manifest)?);
         return Ok(());
     }
     let manifest = build(&args)?;
     if args.activate {
-        let capsule = load_activation_rollback_capsule(&args)?;
-        activate_manifest(&args.output_root, &manifest, &capsule)?;
+        let (capsule, evidence_root) = load_activation_rollback_capsule(&args)?;
+        activate_manifest(
+            &args,
+            &manifest,
+            &capsule,
+            &evidence_root,
+            ActivationOperationV1::Activate,
+        )?;
     }
     println!("{}", serde_json::to_string(&manifest)?);
     Ok(())
 }
 
-fn load_activation_rollback_capsule(args: &Args) -> Result<RollbackCapsuleV1> {
+fn load_activation_rollback_capsule(args: &Args) -> Result<(RollbackCapsuleV2, PathBuf)> {
     let path = args
         .rollback_capsule
         .as_ref()
         .context("activation requires --rollback-capsule")?;
-    serde_json::from_reader(
+    let value: Value = serde_json::from_reader(
         File::open(path).with_context(|| format!("open rollback capsule {}", path.display()))?,
     )
-    .context("decode rollback capsule")
+    .context("decode rollback capsule")?;
+    ensure!(
+        classify_rollback_capsule_schema(&value)? == "authorizing-v2",
+        "JopeRollbackCapsule.v1 is historical evidence and can never authorize activation"
+    );
+    Ok((
+        serde_json::from_value(value)?,
+        path.parent()
+            .unwrap_or_else(|| Path::new("."))
+            .to_path_buf(),
+    ))
 }
 
 fn activate_manifest(
-    output_root: &Path,
+    args: &Args,
     manifest: &Value,
-    rollback_capsule: &RollbackCapsuleV1,
+    rollback_capsule: &RollbackCapsuleV2,
+    evidence_root: &Path,
+    operation: ActivationOperationV1,
 ) -> Result<()> {
+    let output_root = &args.output_root;
     let bundle_sha256 = manifest["bundle_sha256"].as_str().context("bundle hash")?;
+    validate_activation_target(operation, bundle_sha256)?;
     let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis() as u64;
-    let rollback_capsule_sha256 = verify_rollback_capsule(output_root, rollback_capsule, now)?;
+    let candidate_review_gate_sha256 = if operation == ActivationOperationV1::Activate {
+        Some(verify_candidate_review_gate(args, manifest, now)?)
+    } else {
+        None
+    };
+    let rollback_capsule_sha256 =
+        verify_rollback_capsule(output_root, evidence_root, rollback_capsule, now)?;
     let rollback_path = output_root.join(ROLLBACK_BUNDLE_SHA256).join("bundle.json");
     let rollback_manifest: Value = serde_json::from_reader(
         File::open(&rollback_path)
@@ -345,6 +468,7 @@ fn activate_manifest(
             .parent()
             .context("rollback manifest has no bundle directory")?,
         &rollback_manifest,
+        ROLLBACK_BUNDLE_SHA256,
     )?;
     let rollback_synchronization =
         sync_bundle_to_gpu_nodes(output_root, ROLLBACK_BUNDLE_SHA256, &rollback_manifest)?;
@@ -355,10 +479,13 @@ fn activate_manifest(
             == Some(true),
         "rollback bundle is not verified on all five nodes"
     );
+    let rollback_live_probe =
+        fresh_live_bundle_probe(output_root, ROLLBACK_BUNDLE_SHA256, &rollback_manifest)?;
     // Refuse to advance any activation pointer until the bundle exists on
     // every GPU node — a locally-activated, unsynced bundle killed wave
     // production on 2026-08-03 (see GPU_SYNC_NODES).
     let synchronization = sync_bundle_to_gpu_nodes(output_root, bundle_sha256, manifest)?;
+    let candidate_live_probe = fresh_live_bundle_probe(output_root, bundle_sha256, manifest)?;
     let synchronization_path = output_root
         .join("synchronization")
         .join(format!("{bundle_sha256}.v1.json"));
@@ -371,6 +498,24 @@ fn activate_manifest(
             == Some(true),
         "evaluator retention is incomplete"
     );
+    let external_gate_sha256 = if operation == ActivationOperationV1::Activate {
+        let path = args
+            .external_activation_gate
+            .as_ref()
+            .context("forward DIME activation requires --external-activation-gate")?;
+        let gate: DimeExternalActivationGateV1 = serde_json::from_reader(
+            File::open(path)
+                .with_context(|| format!("open external activation gate {}", path.display()))?,
+        )?;
+        gate.validate_at(path.parent().unwrap_or_else(|| Path::new(".")), now)?;
+        ensure!(
+            gate.candidate_bundle_sha256 == bundle_sha256,
+            "external activation gate is bound to another candidate"
+        );
+        Some(sha256_file(path)?)
+    } else {
+        None
+    };
     let manifest_path = output_root.join(bundle_sha256).join("bundle.json");
     let pointer = json!({
         "schema": "JopeSelfplayRuntimeBundlePointer.v2",
@@ -382,12 +527,97 @@ fn activate_manifest(
         "synchronized_nodes": GPU_SYNC_NODES,
         "rollback_bundle_sha256": ROLLBACK_BUNDLE_SHA256,
         "rollback_capsule_sha256": rollback_capsule_sha256,
-        "rollback_unit_overlay_sha256": rollback_capsule.unit_overlay_sha256,
+        "rollback_systemd_closure_sha256": rollback_capsule.systemd_closure_canonical_json_sha256,
         "rollback_synchronization": rollback_synchronization,
+        "rollback_fresh_live_probe": rollback_live_probe,
+        "candidate_fresh_live_probe": candidate_live_probe,
+        "candidate_review_gate_sha256": candidate_review_gate_sha256,
+        "external_activation_gate_sha256": external_gate_sha256,
         "runtime": "rust",
     });
-    atomic_json(&output_root.join("active.json"), &pointer)?;
-    activate_current_bundle(output_root, bundle_sha256)
+    let operation_name = match operation {
+        ActivationOperationV1::Activate => "activate",
+        ActivationOperationV1::Rollback => "rollback",
+    };
+    let transaction_root = args.activation_transaction_root.join(format!(
+        "{operation_name}-{bundle_sha256}-{}",
+        &rollback_capsule_sha256[..12]
+    ));
+    let _lock = ActivationLock::acquire(&args.activation_transaction_root.join("activation.lock"))?;
+    let request = ActivationRequest {
+        output_root,
+        user_unit_root: &args.user_unit_root,
+        transaction_root: &transaction_root,
+        candidate_bundle_sha256: bundle_sha256,
+        rollback_capsule_sha256: &rollback_capsule_sha256,
+        candidate_review_gate_sha256: candidate_review_gate_sha256.as_deref(),
+        external_gate_sha256: external_gate_sha256.as_deref(),
+        active_document: pointer,
+        operation,
+    };
+    let mut host = SystemdUserHost;
+    let transaction = execute_activation_transaction(&request, &mut host, None)?;
+    ensure!(
+        transaction.stage == jope_dime_regressor::dime_activation::ActivationStageV1::Complete,
+        "DIME activation transaction did not complete"
+    );
+    Ok(())
+}
+
+fn verify_candidate_review_gate(args: &Args, manifest: &Value, now_unix_ms: u64) -> Result<String> {
+    let path = args
+        .candidate_review_gate
+        .as_ref()
+        .context("forward activation requires --candidate-review-gate")?;
+    let gate: DimeCandidateReviewGateV1 = serde_json::from_reader(
+        File::open(path)
+            .with_context(|| format!("open candidate review gate {}", path.display()))?,
+    )?;
+    gate.validate_at(path.parent().unwrap_or_else(|| Path::new(".")), now_unix_ms)?;
+    let bundle_sha256 = manifest
+        .get("bundle_sha256")
+        .and_then(Value::as_str)
+        .context("candidate manifest lacks bundle identity")?;
+    let integration_commit = manifest
+        .get("integration_commit")
+        .and_then(Value::as_str)
+        .context("candidate manifest lacks integration commit")?;
+    let manifest_path = args.output_root.join(bundle_sha256).join("bundle.json");
+    ensure!(
+        gate.candidate_bundle_sha256 == bundle_sha256
+            && gate.integration_commit == integration_commit
+            && gate.bundle_manifest_file_sha256 == sha256_file(&manifest_path)?
+            && gate.bundle_manifest_canonical_json_sha256 == canonical_json_sha256(manifest)?,
+        "candidate review gate is bound to different manifest bytes or provenance"
+    );
+    let object = format!("{integration_commit}^{{commit}}");
+    let reachable = Command::new("git")
+        .arg("-C")
+        .arg(&args.source)
+        .args(["cat-file", "-e", &object])
+        .output()
+        .with_context(|| format!("check reviewed integration commit {integration_commit}"))?;
+    ensure!(
+        reachable.status.success(),
+        "reviewed integration commit is not reachable: {}",
+        String::from_utf8_lossy(&reachable.stderr).trim()
+    );
+    sha256_file(path)
+}
+
+fn validate_activation_target(operation: ActivationOperationV1, bundle_sha256: &str) -> Result<()> {
+    if operation == ActivationOperationV1::Rollback {
+        ensure!(
+            bundle_sha256 == ROLLBACK_BUNDLE_SHA256,
+            "explicit rollback target is not the pinned baseline"
+        );
+    } else {
+        ensure!(
+            bundle_sha256 != SUPERSEDED_STAGING_BUNDLE_SHA256,
+            "412c5ed5 is retained historical staging evidence and is never activatable"
+        );
+    }
+    Ok(())
 }
 
 fn collect_evaluator_digests(value: &Value, output: &mut BTreeSet<String>) {
@@ -471,10 +701,18 @@ fn evaluator_reference_index(root: &Path) -> Result<BTreeMap<String, BTreeSet<St
 /// Retain every evaluator still available in a content-addressed vault before
 /// advancing the active bundle pointer. Hard links make later bundle cleanup
 /// safe without copying or changing the evaluator bytes.
-fn retain_evaluators(output_root: &Path, active_bundle_sha256: &str) -> Result<Value> {
+fn retain_evaluators(output_root: &Path, prepared_bundle_sha256: &str) -> Result<Value> {
     let root = output_root
         .parent()
         .context("runtime bundle root has no flywheel parent")?;
+    let current_target = fs::read_link(output_root.join("current"))
+        .context("evaluator retention requires the live current-bundle symlink")?;
+    let active_bundle_sha256 = current_target
+        .file_name()
+        .and_then(|name| name.to_str())
+        .context("current-bundle symlink has no content identity")?;
+    require_bundle_sha256(active_bundle_sha256)?;
+    require_bundle_sha256(prepared_bundle_sha256)?;
     let vault = root.join("training/evaluator-vault");
     fs::create_dir_all(&vault)?;
     let mut retained = BTreeMap::<String, BTreeSet<String>>::new();
@@ -517,8 +755,11 @@ fn retain_evaluators(output_root: &Path, active_bundle_sha256: &str) -> Result<V
     ensure!(
         retained
             .values()
-            .any(|bundles| bundles.contains(active_bundle_sha256)),
-        "active bundle does not retain runtime/bin/corpus_eval"
+            .any(|bundles| bundles.contains(prepared_bundle_sha256))
+            && retained
+                .values()
+                .any(|bundles| bundles.contains(active_bundle_sha256)),
+        "live or prepared bundle does not retain runtime/bin/corpus_eval"
     );
     let references = evaluator_reference_index(root)?;
     let referenced = references
@@ -536,6 +777,7 @@ fn retain_evaluators(output_root: &Path, active_bundle_sha256: &str) -> Result<V
         "schema": "JopeEvaluatorRetentionIndex.v1",
         "generated_at_ms": generated_at_ms,
         "active_bundle_sha256": active_bundle_sha256,
+        "prepared_for_bundle_sha256": prepared_bundle_sha256,
         "vault": vault,
         "retained": retained.into_iter().map(|(evaluator_sha256, bundle_sha256)| {
             let path = root.join("training/evaluator-vault").join(&evaluator_sha256).join("corpus_eval");
@@ -551,10 +793,20 @@ fn retain_evaluators(output_root: &Path, active_bundle_sha256: &str) -> Result<V
         "all_referenced_evaluators_retained": all_referenced_evaluators_retained,
         "cleanup_policy": "vault hard links are outside runtime-bundle cleanup scope",
     });
-    atomic_json(
-        &root.join("training/evaluator-retention-index.v1.json"),
-        &index,
-    )?;
+    let index_path = root.join("training/evaluator-retention-index.v1.json");
+    if index_path.is_file() {
+        let existing: Value = serde_json::from_reader(File::open(&index_path)?)?;
+        let stable = |mut value: Value| {
+            if let Some(object) = value.as_object_mut() {
+                object.remove("generated_at_ms");
+            }
+            value
+        };
+        if stable(existing.clone()) == stable(index.clone()) {
+            return Ok(existing);
+        }
+    }
+    atomic_json(&index_path, &index)?;
     Ok(index)
 }
 
@@ -746,6 +998,7 @@ fn sources(
         "manifests/selfplay/freshness-mcp-runtime.v2.json",
         "manifests/selfplay/causal-shadow.v2.json",
         "manifests/selfplay/proposal-selection-policy.v1.json",
+        "manifests/dlgp-budget-first/protocol.v1.json",
     ] {
         add(
             &mut selected,
@@ -971,6 +1224,12 @@ fn validate_python_candidate(
 fn validate_systemd_unit(contents: &str) -> Result<()> {
     for line in systemd_logical_lines(contents)? {
         let line = line.trim();
+        if let Some(working_directory) = line.strip_prefix("WorkingDirectory=") {
+            ensure!(
+                working_directory == IMMUTABLE_FLYWHEEL_ROOT,
+                "systemd WorkingDirectory is not the canonical immutable flywheel root"
+            );
+        }
         if line.starts_with("ExecStart=")
             || line.starts_with("ExecStartPre=")
             || line.starts_with("ExecStartPost=")
@@ -1174,6 +1433,194 @@ fn sync_bundle_to_gpu_nodes(
     }))
 }
 
+fn node_command(
+    node: &str,
+    local_hostname: &str,
+    program: &str,
+    arguments: &[String],
+) -> Result<std::process::Output> {
+    let mut command = if node_is_local(node, local_hostname) {
+        Command::new(program)
+    } else {
+        let mut command = Command::new("ssh");
+        command.args(["-o", "BatchMode=yes", node, program]);
+        command
+    };
+    command.args(arguments);
+    command
+        .output()
+        .with_context(|| format!("run fresh activation probe on {node}: {program}"))
+}
+
+/// Repeat a fresh, verifier-challenged live probe during activation. This does
+/// not consume the capsule's supplied node receipts and therefore cannot turn
+/// a stale or fabricated receipt into live-node authority.
+fn fresh_live_bundle_probe(
+    output_root: &Path,
+    bundle_sha256: &str,
+    manifest: &Value,
+) -> Result<Value> {
+    let started_at_ms = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
+    let challenge_nonce_sha256 = sha256_bytes(
+        format!(
+            "jope-live-activation-probe-v2\0{bundle_sha256}\0{started_at_ms}\0{}",
+            std::process::id()
+        )
+        .as_bytes(),
+    );
+    let root = output_root.join(bundle_sha256);
+    let expected = manifest
+        .get("files")
+        .and_then(Value::as_array)
+        .context("bundle manifest lacks live-probe inventory")?
+        .iter()
+        .map(|row| {
+            Ok((
+                row.get("target")
+                    .and_then(Value::as_str)
+                    .context("live-probe target is absent")?
+                    .to_owned(),
+                row.get("sha256")
+                    .and_then(Value::as_str)
+                    .context("live-probe digest is absent")?
+                    .to_owned(),
+                row.get("bytes")
+                    .and_then(Value::as_u64)
+                    .context("live-probe size is absent")?,
+            ))
+        })
+        .collect::<Result<Vec<_>>>()?;
+    let systemd = expected
+        .iter()
+        .filter(|(target, _, _)| {
+            target.starts_with("runtime/systemd/")
+                && (target.ends_with(".service") || target.ends_with(".timer"))
+        })
+        .map(|(target, digest, bytes)| json!({"target": target, "sha256": digest, "bytes": bytes}))
+        .collect::<Vec<_>>();
+    ensure!(
+        !systemd.is_empty(),
+        "live probe found no bundled systemd artifacts"
+    );
+    let manifest_file_sha256 = sha256_file(&root.join("bundle.json"))?;
+    let manifest_canonical_json_sha256 = canonical_json_sha256(manifest)?;
+    let hostname = local_hostname()?;
+    let paths = expected
+        .iter()
+        .map(|(target, _, _)| root.join(target).display().to_string())
+        .chain(std::iter::once(
+            root.join("bundle.json").display().to_string(),
+        ))
+        .collect::<Vec<_>>();
+    let mut receipts = Vec::new();
+    for node in GPU_SYNC_NODES {
+        let node_started_at_ms = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
+        let observed_hostname = node_command(node, &hostname, "hostname", &[])?;
+        ensure!(
+            observed_hostname.status.success(),
+            "fresh hostname probe failed on {node}"
+        );
+        let observed_hostname = String::from_utf8(observed_hostname.stdout)?
+            .trim()
+            .to_owned();
+        ensure!(
+            observed_hostname.split('.').next() == Some(*node),
+            "fresh activation probe observed the wrong hostname for {node}"
+        );
+        let hashes = node_command(node, &hostname, "sha256sum", &paths)?;
+        ensure!(
+            hashes.status.success(),
+            "fresh bundle hash probe failed on {node}"
+        );
+        let observed = String::from_utf8(hashes.stdout.clone())?
+            .lines()
+            .filter_map(|line| line.split_whitespace().next().map(str::to_owned))
+            .collect::<Vec<_>>();
+        ensure!(
+            observed.len() == expected.len() + 1
+                && observed
+                    .iter()
+                    .zip(expected.iter())
+                    .all(|(actual, (_, digest, _))| actual == digest)
+                && observed.last().map(String::as_str) == Some(manifest_file_sha256.as_str()),
+            "fresh activation probe found incomplete or altered bytes on {node}"
+        );
+        let tool_path = "/usr/bin/sha256sum".to_owned();
+        let tool_hash = node_command(
+            node,
+            &hostname,
+            "sha256sum",
+            std::slice::from_ref(&tool_path),
+        )?;
+        ensure!(
+            tool_hash.status.success(),
+            "fresh probe tool hash failed on {node}"
+        );
+        let tool_sha256 = String::from_utf8(tool_hash.stdout.clone())?
+            .split_whitespace()
+            .next()
+            .context("fresh probe tool digest is absent")?
+            .to_owned();
+        require_bundle_sha256(&tool_sha256)?;
+        let version = node_command(node, &hostname, "sha256sum", &["--version".to_owned()])?;
+        ensure!(
+            version.status.success(),
+            "fresh probe tool version failed on {node}"
+        );
+        let version_text = String::from_utf8(version.stdout.clone())?;
+        let raw_output_sha256 = sha256_bytes(
+            &[
+                observed_hostname.as_bytes(),
+                &hashes.stdout,
+                &hashes.stderr,
+                &tool_hash.stdout,
+                &version.stdout,
+            ]
+            .concat(),
+        );
+        receipts.push(json!({
+            "node": node,
+            "observed_hostname": observed_hostname,
+            "challenge_nonce_sha256": challenge_nonce_sha256,
+            "runtime_bundle_sha256": bundle_sha256,
+            "bundle_manifest_file_sha256": manifest_file_sha256,
+            "bundle_manifest_canonical_json_sha256": manifest_canonical_json_sha256,
+            "complete_file_inventory": expected.iter().map(|(target, digest, bytes)| {
+                json!({"target": target, "sha256": digest, "bytes": bytes})
+            }).collect::<Vec<_>>(),
+            "complete_systemd_artifact_inventory": systemd,
+            "tool": {
+                "path": tool_path,
+                "executable_sha256": tool_sha256,
+                "version": version_text.lines().next().unwrap_or_default(),
+            },
+            "started_at_unix_ms": node_started_at_ms,
+            "finished_at_unix_ms": SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis(),
+            "raw_output_sha256": raw_output_sha256,
+        }));
+    }
+    ensure!(
+        receipts.len() == GPU_SYNC_NODES.len(),
+        "fresh five-node probe is incomplete"
+    );
+    let receipt = json!({
+        "schema": "JopeLiveBundleProbe.v2",
+        "challenge_nonce_sha256": challenge_nonce_sha256,
+        "runtime_bundle_sha256": bundle_sha256,
+        "generated_at_unix_ms": SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis(),
+        "receipts": receipts,
+    });
+    let path = output_root
+        .join("activation-probes")
+        .join(format!("{bundle_sha256}-{challenge_nonce_sha256}.v2.json"));
+    atomic_json(&path, &receipt)?;
+    Ok(json!({
+        "receipt": path,
+        "receipt_file_sha256": sha256_file(&path)?,
+        "challenge_nonce_sha256": challenge_nonce_sha256,
+    }))
+}
+
 fn local_hostname() -> Result<String> {
     let output = std::process::Command::new("hostname")
         .output()
@@ -1193,34 +1640,6 @@ fn local_hostname() -> Result<String> {
 
 fn node_is_local(node: &str, hostname: &str) -> bool {
     hostname.split('.').next() == Some(node)
-}
-
-fn activate_current_bundle(output_root: &Path, bundle_sha256: &str) -> Result<()> {
-    ensure!(
-        output_root
-            .join(bundle_sha256)
-            .join("bundle.json")
-            .is_file(),
-        "cannot activate an absent runtime bundle"
-    );
-    let current = output_root.join("current");
-    if current.exists() && !current.is_symlink() {
-        bail!(
-            "runtime bundle current path is not an atomic symlink: {}",
-            current.display()
-        );
-    }
-    let temporary = output_root.join(format!(".current.tmp-{}", std::process::id()));
-    if temporary.exists() || temporary.is_symlink() {
-        fs::remove_file(&temporary)?;
-    }
-    symlink(bundle_sha256, &temporary)?;
-    fs::rename(&temporary, &current)?;
-    ensure!(
-        current.join("bundle.json").is_file(),
-        "activated runtime bundle symlink is broken"
-    );
-    Ok(())
 }
 
 fn validate_no_python_runtime(contents: &str) -> Result<()> {
@@ -1357,10 +1776,441 @@ fn inventory_identity(inventory: &[InventoryRow]) -> Result<String> {
     Ok(sha256_bytes(&serde_json::to_vec(&rows)?))
 }
 
-fn verify_rollback_candidate(root: &Path, manifest: &Value) -> Result<()> {
+fn require_bundle_sha256(value: &str) -> Result<()> {
     ensure!(
-        manifest.get("bundle_sha256").and_then(Value::as_str) == Some(ROLLBACK_BUNDLE_SHA256)
-            && root.file_name().and_then(|name| name.to_str()) == Some(ROLLBACK_BUNDLE_SHA256),
+        value.len() == 64
+            && value
+                .bytes()
+                .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte)),
+        "bundle identity is not a lowercase SHA-256"
+    );
+    Ok(())
+}
+
+fn manifest_inventory_identity(rows: &[Value]) -> Result<String> {
+    let identity_rows = rows
+        .iter()
+        .map(|row| {
+            json!({
+                "target": row.get("target").cloned().unwrap_or(Value::Null),
+                "sha256": row.get("sha256").cloned().unwrap_or(Value::Null),
+                "bytes": row.get("bytes").cloned().unwrap_or(Value::Null),
+                "python_role": row.get("python_role").cloned().unwrap_or(Value::Null),
+            })
+        })
+        .collect::<Vec<_>>();
+    Ok(sha256_bytes(&serde_json::to_vec(&identity_rows)?))
+}
+
+fn rollback_derivation_path(output_root: &Path, bundle_sha256: &str) -> PathBuf {
+    output_root
+        .join("rollback-derivations")
+        .join(format!("{bundle_sha256}.v1.json"))
+}
+
+fn verify_intrinsic_existing(output_root: &Path, bundle_sha256: &str) -> Result<Value> {
+    require_bundle_sha256(bundle_sha256)?;
+    let root = output_root.join(bundle_sha256);
+    let path = root.join("bundle.json");
+    let manifest: Value = serde_json::from_reader(
+        File::open(&path).with_context(|| format!("open staged bundle {}", path.display()))?,
+    )?;
+    if manifest
+        .get("clean_detached_source")
+        .and_then(Value::as_bool)
+        == Some(true)
+    {
+        verify_existing(&root, &manifest)?;
+    } else {
+        ensure!(
+            bundle_sha256 == HISTORICAL_ROLLBACK_PARENT_SHA256
+                || rollback_derivation_path(output_root, bundle_sha256).is_file(),
+            "legacy-provenance bundle is neither the historical rollback parent nor a strict derivation"
+        );
+        verify_rollback_candidate(&root, &manifest, bundle_sha256)?;
+        let rows = manifest
+            .get("files")
+            .and_then(Value::as_array)
+            .context("legacy bundle lacks file inventory")?;
+        ensure!(
+            manifest_inventory_identity(rows)? == bundle_sha256,
+            "legacy bundle inventory identity drift"
+        );
+        if bundle_sha256 != HISTORICAL_ROLLBACK_PARENT_SHA256 {
+            verify_rollback_derivation(output_root, bundle_sha256)?;
+        }
+    }
+    Ok(manifest)
+}
+
+fn rollback_bundle_files(manifest: &Value) -> Result<Vec<RollbackBundleFileV2>> {
+    let mut files = manifest
+        .get("files")
+        .and_then(Value::as_array)
+        .context("rollback bundle lacks file inventory")?
+        .iter()
+        .map(|row| {
+            Ok(RollbackBundleFileV2 {
+                target: row
+                    .get("target")
+                    .and_then(Value::as_str)
+                    .context("rollback file target is absent")?
+                    .to_owned(),
+                bytes: row
+                    .get("bytes")
+                    .and_then(Value::as_u64)
+                    .context("rollback file size is absent")?,
+                sha256: row
+                    .get("sha256")
+                    .and_then(Value::as_str)
+                    .context("rollback file digest is absent")?
+                    .to_owned(),
+            })
+        })
+        .collect::<Result<Vec<_>>>()?;
+    files.sort_by(|left, right| left.target.cmp(&right.target));
+    ensure!(
+        files.windows(2).all(|pair| pair[0].target < pair[1].target),
+        "rollback file inventory is duplicated"
+    );
+    Ok(files)
+}
+
+fn parse_systemd_artifact(
+    root: &Path,
+    target: &str,
+    expected_sha256: &str,
+) -> Result<RollbackSystemdArtifactV2> {
+    let unit = Path::new(target)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .context("systemd target has no unit name")?
+        .to_owned();
+    let kind = if unit.ends_with(".service") {
+        "service"
+    } else if unit.ends_with(".timer") {
+        "timer"
+    } else {
+        bail!("unsupported systemd artifact: {unit}")
+    };
+    let contents = fs::read_to_string(root.join(target))?;
+    ensure!(
+        sha256_bytes(contents.as_bytes()) == expected_sha256,
+        "systemd artifact digest differs from bundle inventory: {unit}"
+    );
+    let logical = systemd_logical_lines(&contents)?;
+    let exec_start_argv = if kind == "service" {
+        let line = logical
+            .iter()
+            .find_map(|line| line.trim().strip_prefix("ExecStart="))
+            .with_context(|| format!("rollback service has no ExecStart: {unit}"))?;
+        line.split_ascii_whitespace()
+            .map(|argument| argument.trim_matches(['\'', '"']).to_owned())
+            .collect::<Vec<_>>()
+    } else {
+        Vec::new()
+    };
+    let working_directory = logical
+        .iter()
+        .find_map(|line| line.trim().strip_prefix("WorkingDirectory="))
+        .map(str::to_owned);
+    let mut artifact = RollbackSystemdArtifactV2 {
+        unit,
+        kind: kind.to_owned(),
+        bundled_target: target.to_owned(),
+        unit_file_sha256: expected_sha256.to_owned(),
+        resolved_effective_unit_sha256: String::new(),
+        exec_start_argv,
+        working_directory,
+        drop_ins: Vec::<ArtifactIdentity>::new(),
+    };
+    artifact.resolved_effective_unit_sha256 = artifact.computed_effective_unit_sha256()?;
+    Ok(artifact)
+}
+
+fn systemd_closure(root: &Path, manifest: &Value) -> Result<Vec<RollbackSystemdArtifactV2>> {
+    let mut artifacts = manifest
+        .get("files")
+        .and_then(Value::as_array)
+        .context("rollback bundle lacks file inventory")?
+        .iter()
+        .filter_map(|row| {
+            let target = row.get("target")?.as_str()?;
+            (target.starts_with("runtime/systemd/")
+                && (target.ends_with(".service") || target.ends_with(".timer")))
+            .then_some((target, row.get("sha256")?.as_str()?))
+        })
+        .map(|(target, digest)| parse_systemd_artifact(root, target, digest))
+        .collect::<Result<Vec<_>>>()?;
+    artifacts.sort_by(|left, right| left.unit.cmp(&right.unit));
+    ensure!(
+        artifacts.windows(2).all(|pair| pair[0].unit < pair[1].unit),
+        "rollback systemd inventory is duplicated"
+    );
+    Ok(artifacts)
+}
+
+fn unchanged_inventory_root(rows: &[Value], changed: &BTreeSet<String>) -> Result<String> {
+    canonical_json_sha256(&Value::Array(
+        rows.iter()
+            .filter(|row| {
+                row.get("target")
+                    .and_then(Value::as_str)
+                    .is_some_and(|target| !changed.contains(target))
+            })
+            .cloned()
+            .collect(),
+    ))
+}
+
+fn git_blob(source: &Path, commit: &str, path: &str) -> Result<Vec<u8>> {
+    let output = std::process::Command::new("git")
+        .arg("-C")
+        .arg(source)
+        .arg("show")
+        .arg(format!("{commit}:{path}"))
+        .output()
+        .with_context(|| format!("read reviewed source {commit}:{path}"))?;
+    ensure!(
+        output.status.success(),
+        "reviewed source is unreachable: {}",
+        String::from_utf8_lossy(&output.stderr).trim()
+    );
+    Ok(output.stdout)
+}
+
+fn transform_rollback_unit(unit: &str, before: &[u8], reviewed: &[u8]) -> Result<Vec<u8>> {
+    let before_text = String::from_utf8(before.to_vec())?;
+    let from_line = format!("WorkingDirectory={ROLLBACK_WORKING_DIRECTORY_FROM}");
+    let to_line = format!("WorkingDirectory={IMMUTABLE_FLYWHEEL_ROOT}");
+    ensure!(
+        before_text
+            .lines()
+            .filter(|line| *line == from_line)
+            .count()
+            == 1,
+        "rollback parent unit does not contain exactly one permitted line: {unit}"
+    );
+    let reviewed_text = String::from_utf8(reviewed.to_vec())?;
+    ensure!(
+        reviewed_text.lines().any(|line| line == to_line),
+        "reviewed source does not contain the canonical WorkingDirectory: {unit}"
+    );
+    Ok(before_text.replacen(&from_line, &to_line, 1).into_bytes())
+}
+
+fn derive_rollback_baseline(
+    source: &Path,
+    output_root: &Path,
+) -> Result<RollbackBaselineDerivationV1> {
+    let parent_root = output_root.join(HISTORICAL_ROLLBACK_PARENT_SHA256);
+    let mut manifest = verify_intrinsic_existing(output_root, HISTORICAL_ROLLBACK_PARENT_SHA256)?;
+    let parent_manifest_path = parent_root.join("bundle.json");
+    let parent_manifest_file_sha256 = sha256_file(&parent_manifest_path)?;
+    let parent_manifest_canonical_json_sha256 = canonical_json_sha256(&manifest)?;
+    let rows = manifest
+        .get("files")
+        .and_then(Value::as_array)
+        .context("rollback parent has no file inventory")?
+        .clone();
+    let changed_targets = ROLLBACK_REBASE_UNITS
+        .iter()
+        .map(|unit| format!("runtime/systemd/{unit}"))
+        .collect::<BTreeSet<_>>();
+    ensure!(
+        changed_targets.len() == 7,
+        "rollback rebase unit allowlist is not exactly seven"
+    );
+
+    let staging = output_root.join(format!(".rollback-rebase.tmp-{}", std::process::id()));
+    ensure!(
+        !staging.exists(),
+        "rollback rebase staging directory already exists"
+    );
+    fs::create_dir_all(&staging)?;
+    let result = (|| -> Result<RollbackBaselineDerivationV1> {
+        let mut transformations = Vec::new();
+        for row in &rows {
+            let target = row
+                .get("target")
+                .and_then(Value::as_str)
+                .context("rollback parent row lacks target")?;
+            let destination = staging.join(target);
+            if let Some(parent) = destination.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            fs::copy(parent_root.join(target), &destination)?;
+        }
+        let manifest_rows = manifest
+            .get_mut("files")
+            .and_then(Value::as_array_mut)
+            .context("rollback parent file inventory is not mutable")?;
+        for unit in ROLLBACK_REBASE_UNITS {
+            let target = format!("runtime/systemd/{unit}");
+            let path = staging.join(&target);
+            let before = fs::read(&path)?;
+            let reviewed = git_blob(
+                source,
+                REVIEWED_ROLLBACK_UNIT_COMMIT,
+                &format!("systemd/{unit}"),
+            )?;
+            let after = transform_rollback_unit(unit, &before, &reviewed)?;
+            fs::write(&path, &after)?;
+            let before_sha256 = sha256_bytes(&before);
+            let after_sha256 = sha256_bytes(&after);
+            let manifest_row = manifest_rows
+                .iter_mut()
+                .find(|row| row.get("target").and_then(Value::as_str) == Some(target.as_str()))
+                .with_context(|| format!("rollback parent inventory omits {target}"))?;
+            ensure!(
+                manifest_row.get("sha256").and_then(Value::as_str) == Some(before_sha256.as_str()),
+                "rollback parent unit inventory drift: {unit}"
+            );
+            manifest_row["sha256"] = Value::String(after_sha256.clone());
+            manifest_row["bytes"] = Value::from(after.len() as u64);
+            transformations.push(RollbackUnitTransformationV1 {
+                target,
+                before_sha256,
+                after_sha256,
+                reviewed_source_sha256: sha256_bytes(&reviewed),
+                from: ROLLBACK_WORKING_DIRECTORY_FROM.to_owned(),
+                to: IMMUTABLE_FLYWHEEL_ROOT.to_owned(),
+            });
+        }
+        transformations.sort_by(|left, right| left.target.cmp(&right.target));
+        let derived_bundle_sha256 = manifest_inventory_identity(manifest_rows)?;
+        manifest["bundle_sha256"] = Value::String(derived_bundle_sha256.clone());
+        atomic_json(&staging.join("bundle.json"), &manifest)?;
+        let final_root = output_root.join(&derived_bundle_sha256);
+        if final_root.exists() {
+            let existing = verify_intrinsic_existing(output_root, &derived_bundle_sha256)?;
+            ensure!(
+                existing == manifest,
+                "existing derived rollback bundle manifest drift"
+            );
+            fs::remove_dir_all(&staging)?;
+        } else {
+            fs::rename(&staging, &final_root)?;
+        }
+        let derivation = RollbackBaselineDerivationV1 {
+            schema: ROLLBACK_BASELINE_DERIVATION_SCHEMA.to_owned(),
+            parent_bundle_sha256: HISTORICAL_ROLLBACK_PARENT_SHA256.to_owned(),
+            derived_bundle_sha256: derived_bundle_sha256.clone(),
+            parent_manifest_file_sha256,
+            parent_manifest_canonical_json_sha256,
+            reviewed_source_commit: REVIEWED_ROLLBACK_UNIT_COMMIT.to_owned(),
+            transformations,
+            unchanged_inventory_root_sha256: unchanged_inventory_root(&rows, &changed_targets)?,
+        };
+        derivation.validate()?;
+        atomic_json(
+            &rollback_derivation_path(output_root, &derived_bundle_sha256),
+            &serde_json::to_value(&derivation)?,
+        )?;
+        verify_rollback_derivation(output_root, &derived_bundle_sha256)?;
+        Ok(derivation)
+    })();
+    if result.is_err() && staging.exists() {
+        fs::remove_dir_all(&staging)?;
+    }
+    result
+}
+
+fn verify_rollback_derivation(output_root: &Path, derived_bundle_sha256: &str) -> Result<()> {
+    let derivation_path = rollback_derivation_path(output_root, derived_bundle_sha256);
+    let derivation: RollbackBaselineDerivationV1 = serde_json::from_reader(
+        File::open(&derivation_path)
+            .with_context(|| format!("open rollback derivation {}", derivation_path.display()))?,
+    )?;
+    derivation.validate()?;
+    ensure!(
+        derivation.derived_bundle_sha256 == derived_bundle_sha256,
+        "rollback derivation output identity mismatch"
+    );
+    let parent_root = output_root.join(&derivation.parent_bundle_sha256);
+    let derived_root = output_root.join(derived_bundle_sha256);
+    let parent_manifest_path = parent_root.join("bundle.json");
+    let parent_manifest: Value = serde_json::from_reader(File::open(&parent_manifest_path)?)?;
+    let derived_manifest: Value =
+        serde_json::from_reader(File::open(derived_root.join("bundle.json"))?)?;
+    ensure!(
+        sha256_file(&parent_manifest_path)? == derivation.parent_manifest_file_sha256
+            && canonical_json_sha256(&parent_manifest)?
+                == derivation.parent_manifest_canonical_json_sha256,
+        "rollback derivation parent manifest drift"
+    );
+    let changed = derivation
+        .transformations
+        .iter()
+        .map(|row| row.target.clone())
+        .collect::<BTreeSet<_>>();
+    let parent_rows = parent_manifest
+        .get("files")
+        .and_then(Value::as_array)
+        .context("rollback parent lacks files")?;
+    let derived_rows = derived_manifest
+        .get("files")
+        .and_then(Value::as_array)
+        .context("derived rollback lacks files")?;
+    ensure!(
+        parent_rows.len() == derived_rows.len()
+            && unchanged_inventory_root(parent_rows, &changed)?
+                == derivation.unchanged_inventory_root_sha256,
+        "rollback derivation inventory shape/root drift"
+    );
+    for (parent, derived) in parent_rows.iter().zip(derived_rows) {
+        let target = parent
+            .get("target")
+            .and_then(Value::as_str)
+            .context("rollback parent target is absent")?;
+        ensure!(
+            derived.get("target").and_then(Value::as_str) == Some(target),
+            "rollback derivation reordered or replaced an inventory target"
+        );
+        if !changed.contains(target) {
+            ensure!(
+                parent == derived,
+                "rollback derivation changed a non-unit manifest row: {target}"
+            );
+            ensure!(
+                sha256_file(&parent_root.join(target))? == sha256_file(&derived_root.join(target))?,
+                "rollback derivation changed non-unit bytes: {target}"
+            );
+            continue;
+        }
+        let transformation = derivation
+            .transformations
+            .iter()
+            .find(|row| row.target == target)
+            .context("rollback derivation changed an unrecorded target")?;
+        let before = fs::read(parent_root.join(target))?;
+        let after = fs::read(derived_root.join(target))?;
+        ensure!(
+            sha256_bytes(&before) == transformation.before_sha256
+                && sha256_bytes(&after) == transformation.after_sha256,
+            "rollback derivation unit digest drift: {target}"
+        );
+        let expected = String::from_utf8(before)?.replacen(
+            &format!("WorkingDirectory={}", transformation.from),
+            &format!("WorkingDirectory={}", transformation.to),
+            1,
+        );
+        ensure!(
+            expected.as_bytes() == after.as_slice(),
+            "rollback derivation made a change other than the permitted WorkingDirectory replacement"
+        );
+    }
+    ensure!(
+        manifest_inventory_identity(derived_rows)? == derived_bundle_sha256,
+        "derived rollback bundle identity drift"
+    );
+    Ok(())
+}
+
+fn verify_rollback_candidate(root: &Path, manifest: &Value, expected_sha256: &str) -> Result<()> {
+    ensure!(
+        manifest.get("bundle_sha256").and_then(Value::as_str) == Some(expected_sha256)
+            && root.file_name().and_then(|name| name.to_str()) == Some(expected_sha256),
         "rollback candidate identity drift"
     );
     let rows = manifest
@@ -1392,7 +2242,7 @@ fn verify_rollback_candidate(root: &Path, manifest: &Value) -> Result<()> {
             .context("rollback bundle lacks service manifest")?,
     )?;
     validate_service_manifest(&service)?;
-    for row in service.services.iter().filter(|row| row.active) {
+    for row in &service.services {
         ensure!(
             targets.contains(format!("runtime/bin/{}", row.binary).as_str())
                 && targets.contains(format!("runtime/systemd/{}", row.unit).as_str()),
@@ -1409,46 +2259,75 @@ fn verify_rollback_candidate(root: &Path, manifest: &Value) -> Result<()> {
 
 fn verify_rollback_capsule(
     output_root: &Path,
-    capsule: &RollbackCapsuleV1,
+    evidence_root: &Path,
+    capsule: &RollbackCapsuleV2,
     now_unix_ms: u64,
 ) -> Result<String> {
-    // These checks are intentionally independent: the old runtime bytes are
-    // verified from their own manifest, while the corrected complete unit
-    // inventory is verified from its own canonical overlay digest.
-    capsule.validate_at(now_unix_ms)?;
+    capsule.validate_evidence_at(evidence_root, now_unix_ms)?;
     let runtime_root = output_root.join(&capsule.runtime_bundle_sha256);
     let runtime_manifest_path = runtime_root.join("bundle.json");
     ensure!(
-        sha256_file(&runtime_manifest_path)? == capsule.runtime_bundle_manifest_sha256,
+        sha256_file(&runtime_manifest_path)? == capsule.runtime_bundle_manifest_file_sha256,
         "rollback runtime manifest digest mismatch"
     );
     let runtime_manifest: Value = serde_json::from_reader(File::open(&runtime_manifest_path)?)?;
-    verify_rollback_candidate(&runtime_root, &runtime_manifest)?;
+    ensure!(
+        canonical_json_sha256(&runtime_manifest)?
+            == capsule.runtime_bundle_manifest_canonical_json_sha256,
+        "rollback runtime manifest canonical digest mismatch"
+    );
+    verify_rollback_candidate(
+        &runtime_root,
+        &runtime_manifest,
+        &capsule.runtime_bundle_sha256,
+    )?;
 
     let service_value = runtime_manifest
         .get("service_manifest")
         .cloned()
         .context("rollback runtime lacks service manifest")?;
     ensure!(
-        canonical_json_sha256(&service_value)? == capsule.service_manifest_sha256,
-        "rollback service manifest digest mismatch"
+        canonical_json_sha256(&service_value)?
+            == capsule.embedded_service_manifest_canonical_json_sha256,
+        "rollback embedded service manifest canonical digest mismatch"
     );
     let service: ServiceManifest = serde_json::from_value(service_value)?;
+    let service_target = "runtime/manifests/selfplay/service-manifest.v3.json";
+    let service_path = runtime_root.join(service_target);
+    ensure!(
+        sha256_file(&service_path)? == capsule.embedded_service_manifest_file_sha256
+            && runtime_manifest
+                .get("service_manifest_sha256")
+                .and_then(Value::as_str)
+                == Some(capsule.embedded_service_manifest_file_sha256.as_str()),
+        "rollback service-manifest raw-file digest mismatch"
+    );
     let expected_units = service
         .services
         .iter()
         .map(|row| row.unit.as_str())
         .collect::<BTreeSet<_>>();
-    let overlay_units = capsule
-        .units
+    let capsule_services = capsule
+        .systemd_closure
         .iter()
+        .filter(|row| row.kind == "service")
         .map(|row| row.unit.as_str())
         .collect::<BTreeSet<_>>();
     ensure!(
-        overlay_units == expected_units,
-        "rollback unit overlay does not contain the complete service inventory"
+        capsule_services == expected_units,
+        "rollback systemd closure does not contain the complete service inventory"
     );
-    capsule.digest_at(now_unix_ms)
+    let actual_files = rollback_bundle_files(&runtime_manifest)?;
+    ensure!(
+        actual_files == capsule.files,
+        "rollback capsule file inventory differs from the bundle manifest"
+    );
+    let actual_systemd = systemd_closure(&runtime_root, &runtime_manifest)?;
+    ensure!(
+        actual_systemd == capsule.systemd_closure,
+        "rollback capsule systemd closure differs from bundled unit bytes"
+    );
+    capsule.digest_at(evidence_root, now_unix_ms)
 }
 
 fn verify_existing(root: &Path, manifest: &Value) -> Result<()> {
@@ -1827,6 +2706,10 @@ mod tests {
             "[Service]\nExecStart=/home/ubuntu/jope-dime/target-promotion/release/jope_selfplay_promotion\n"
         )
         .is_err());
+        assert!(validate_systemd_unit(
+            "[Service]\nWorkingDirectory=/home/ubuntu/jope-dime\nExecStart=/runtime/bin/tool\n"
+        )
+        .is_err());
     }
 
     #[test]
@@ -1968,7 +2851,61 @@ mod tests {
     fn rollback_identity_mismatch_is_rejected_before_activation() {
         let temporary = tempfile::tempdir().unwrap();
         let manifest = json!({"bundle_sha256": "b".repeat(64)});
-        assert!(verify_rollback_candidate(temporary.path(), &manifest).is_err());
+        assert!(
+            verify_rollback_candidate(temporary.path(), &manifest, ROLLBACK_BUNDLE_SHA256).is_err()
+        );
+    }
+
+    #[test]
+    fn superseded_staging_bundle_is_verifiable_but_never_activatable() {
+        assert!(validate_activation_target(
+            ActivationOperationV1::Activate,
+            SUPERSEDED_STAGING_BUNDLE_SHA256
+        )
+        .is_err());
+        assert!(validate_activation_target(
+            ActivationOperationV1::Rollback,
+            SUPERSEDED_STAGING_BUNDLE_SHA256
+        )
+        .is_err());
+        validate_activation_target(ActivationOperationV1::Rollback, ROLLBACK_BUNDLE_SHA256)
+            .unwrap();
+    }
+
+    #[test]
+    fn rollback_rebase_is_exactly_the_seven_working_directory_replacements() {
+        assert_eq!(ROLLBACK_REBASE_UNITS.len(), 7);
+        assert_eq!(
+            ROLLBACK_REBASE_UNITS.iter().collect::<BTreeSet<_>>().len(),
+            7
+        );
+        let before = format!(
+            "[Unit]\nDescription=unchanged\n[Service]\nWorkingDirectory={ROLLBACK_WORKING_DIRECTORY_FROM}\nExecStart=/runtime/bin/tool --unchanged\n"
+        );
+        let reviewed = format!(
+            "[Unit]\nDescription=reviewed-but-not-copied\n[Service]\nWorkingDirectory={IMMUTABLE_FLYWHEEL_ROOT}\nExecStart=/different/tool\n"
+        );
+        for unit in ROLLBACK_REBASE_UNITS {
+            let after = transform_rollback_unit(unit, before.as_bytes(), reviewed.as_bytes())
+                .expect("strict unit transformation");
+            let expected = before.replacen(
+                &format!("WorkingDirectory={ROLLBACK_WORKING_DIRECTORY_FROM}"),
+                &format!("WorkingDirectory={IMMUTABLE_FLYWHEEL_ROOT}"),
+                1,
+            );
+            assert_eq!(after, expected.as_bytes());
+            assert!(String::from_utf8(after)
+                .unwrap()
+                .contains("ExecStart=/runtime/bin/tool --unchanged"));
+        }
+
+        let no_source_line = b"[Service]\nExecStart=/runtime/bin/tool\n";
+        assert!(transform_rollback_unit(
+            ROLLBACK_REBASE_UNITS[0],
+            no_source_line,
+            reviewed.as_bytes()
+        )
+        .is_err());
     }
 
     #[test]
@@ -1986,6 +2923,7 @@ mod tests {
             fs::create_dir_all(evaluator.parent().unwrap()).unwrap();
             fs::write(&evaluator, bytes).unwrap();
         }
+        std::os::unix::fs::symlink(&active, bundles.join("current")).unwrap();
         let missing = "c".repeat(64);
         atomic_json(
             &root.join("ops/causal-pair-repair-state.v1.json"),
@@ -1996,7 +2934,11 @@ mod tests {
         )
         .unwrap();
         let index = retain_evaluators(&bundles, &active).unwrap();
+        let replayed = retain_evaluators(&bundles, &active).unwrap();
+        assert_eq!(replayed, index);
         assert_eq!(index["schema"], "JopeEvaluatorRetentionIndex.v1");
+        assert_eq!(index["active_bundle_sha256"], active);
+        assert_eq!(index["prepared_for_bundle_sha256"], active);
         assert_eq!(index["all_referenced_evaluators_retained"], false);
         assert_eq!(index["unavailable_referenced_evaluator_sha256"][0], missing);
         for (bundle, bytes) in [

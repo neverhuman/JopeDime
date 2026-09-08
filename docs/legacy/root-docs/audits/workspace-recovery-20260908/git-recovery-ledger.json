@@ -1,0 +1,462 @@
+{
+  "commits": [
+    {
+      "commit": "029f3234a1772b3f994f9460e81eb52ae0c296cb",
+      "subject": "index on main: a08ceda Relocate unmanifested Python-exec systemd unit out of bundler scan path",
+      "paths": [],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "06f4309ac4cac345204ec974fbac9b4d874a40d1",
+      "subject": "untracked files on worktree-agent-ac80bd62eeb49d660: a099fd1 feat-math Stage 1: multiclass task plumbing (TaskKind::Multiclass, MacroF1, guards)",
+      "paths": [],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "244edf193b7f2d934168a15646aaf45f6cd9c210",
+      "subject": "On worktree-agent-ac80bd62eeb49d660: verify-freeze",
+      "paths": [],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "39c46fc44f23d6d0c4ff4f4253c6eb5ba1b3efd6",
+      "subject": "On worktree-agent-ac80bd62eeb49d660: stage1-verify",
+      "paths": [],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "3ca063ac0385732dc79b93dbeca44b5b46a054b5",
+      "subject": "index on main: b9aebc8 A2: recipe-identity-scoped plateau + RecipeChangeDirective.v1 operator bridge",
+      "paths": [],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "646b699a7683a42a72438eba6538445e9676ab4a",
+      "subject": "On agent/continuous-selfplay-winner-refresh: parallel-session multiclass60 WIP snapshot 2026-07-31",
+      "paths": [],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "7494123c2a2dac4613f6b5f6f76142b8ce0e35d2",
+      "subject": "WIP on main: b9aebc8 A2: recipe-identity-scoped plateau + RecipeChangeDirective.v1 operator bridge",
+      "paths": [],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "8b2fd5f7aa4a93a49194147a5ee701b59dc3233a",
+      "subject": "untracked files on worktree-agent-ac80bd62eeb49d660: dcff909 Merge branch 'worktree-agent-a35c9b3abeabb83ec'",
+      "paths": [],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "941cc0ca4673fc4e4bce3e70dbff2bc8cba90f0d",
+      "subject": "Phase 6: gate rollout on five-node path closure",
+      "paths": [
+        "docs/PHASE6_ENCODER_V2_OPTIONAL_TASK_LIFT.md"
+      ],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "98219bf26cdf2644308edb963275c245f508076f",
+      "subject": "Phase 5: restore frozen Binary42 reports",
+      "paths": [
+        "fixtures/binary42-historical-reports/v1/5a4e21c520a20dd3/tabfm_classifier.json",
+        "fixtures/binary42-historical-reports/v1/fcd74a7f31328927/tabfm_ensemble_classifier.json",
+        "fixtures/binary42-historical-reports/v1/manifest.v1.json"
+      ],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "9aee506c10b6ba8d9ffa3f8af0a98c7572316ea6",
+      "subject": "index on worktree-agent-ac80bd62eeb49d660: dcff909 Merge branch 'worktree-agent-a35c9b3abeabb83ec'",
+      "paths": [],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "9c46b0d550b923ba5e799afd4bd2cef1f06e4dbc",
+      "subject": "index on main: a08ceda Relocate unmanifested Python-exec systemd unit out of bundler scan path",
+      "paths": [],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "9c6fc3280ae76f34dcfbd12e18b49444b1eebd0d",
+      "subject": "index on main: b9aebc8 A2: recipe-identity-scoped plateau + RecipeChangeDirective.v1 operator bridge",
+      "paths": [],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "b763b03335343049406680a2600b5ca8f2d17bc5",
+      "subject": "WIP on main: b9aebc8 A2: recipe-identity-scoped plateau + RecipeChangeDirective.v1 operator bridge",
+      "paths": [],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "b8c868c1b8fbd074713044b995685234bf130f6d",
+      "subject": "Proposer probes for the jope-prime operator registry",
+      "paths": [
+        "REALTIME_AGENT_CHAT.md",
+        "src/bin/jope_selfplay_supply.rs"
+      ],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "cabb23c42e66f528ed71afb43fa459a4dfecf798",
+      "subject": "WIP on main: b9aebc8 A2: recipe-identity-scoped plateau + RecipeChangeDirective.v1 operator bridge",
+      "paths": [],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "d2816b1f8d221ee732a1f0adc21887d35351b26f",
+      "subject": "Phase 5: allow bundle-local Python unit inputs",
+      "paths": [
+        "src/bin/jope_selfplay_bundle.rs"
+      ],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "e32e03b42b8b267f943741358f0adc5e32701426",
+      "subject": "index on worktree-agent-ac80bd62eeb49d660: a099fd1 feat-math Stage 1: multiclass task plumbing (TaskKind::Multiclass, MacroF1, guards)",
+      "paths": [],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "e574ae3d00b3d6041f17c14b3b9704610ab339bf",
+      "subject": "WIP on main: a08ceda Relocate unmanifested Python-exec systemd unit out of bundler scan path",
+      "paths": [],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "e606348e1cbc26b05fa9027ccaa487c2a882d016",
+      "subject": "index on main: b9aebc8 A2: recipe-identity-scoped plateau + RecipeChangeDirective.v1 operator bridge",
+      "paths": [],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    },
+    {
+      "commit": "f03848a6ab23c6f9a87d398464fc8dbe6f4bca52",
+      "subject": "Phase 5: qualify frozen scientific test inputs",
+      "paths": [
+        "src/commands/train_only_study.rs",
+        "src/golden42_v3.rs",
+        "src/test_adaptive/binary42.rs"
+      ],
+      "disposition": "unresolved",
+      "reason": "Recovered under refs/recovery/20260908; restored bundle verified. Semantic merge requires review; current source retained."
+    }
+  ],
+  "branches": [
+    {
+      "ref": "refs/heads/codex/aspfm-multiclass-dl-v3",
+      "commit": "4cb802e3c3a5b4b715df4fc550f94f19343dea6d",
+      "patch_unique": [
+        "399df44778de712769f9d8dad14dd6c03f1156ba",
+        "60024007d0b3989a6fcc1bdcbc5ae34a43db09b7",
+        "9a63b3719f993d7f9ee8eb2c71e846f569b8f0de",
+        "1c3c5d448ec55f2bb7f908fabfc3743cfe4ce893",
+        "80631271c00438ab42cba7b6c959b2b6af950c71",
+        "87ce53174c927bf7e80b9dd175fa451d0b7ddefb",
+        "4cb802e3c3a5b4b715df4fc550f94f19343dea6d"
+      ],
+      "already_incorporated": [],
+      "disposition": "unresolved",
+      "reason": "Patch identity comparison against current HEAD; no whole-branch merge performed.",
+      "candidates": [
+        {
+          "commit": "399df44778de712769f9d8dad14dd6c03f1156ba",
+          "patch_sha256": "6f7857d811cfe97a7eab8ca5a3a763163bb9fec8e332cdf029974567fc4bbfd8",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/399df44778de712769f9d8dad14dd6c03f1156ba.patch",
+          "subject": "Add private multiclass210 empirical-ceiling campaign",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "60024007d0b3989a6fcc1bdcbc5ae34a43db09b7",
+          "patch_sha256": "7649272b153ce3d9dbf53a7b8a083f9a71e82d8644ed0d549dabef9fdda87989",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/60024007d0b3989a6fcc1bdcbc5ae34a43db09b7.patch",
+          "subject": "Stabilize multiclass context runtime binding",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "9a63b3719f993d7f9ee8eb2c71e846f569b8f0de",
+          "patch_sha256": "ecca2ae7e0dcdd846790baa7d33e5542ec6b644741cbc0039ba87cfc7383d9f8",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/9a63b3719f993d7f9ee8eb2c71e846f569b8f0de.patch",
+          "subject": "Freeze multiclass inputs before async work",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "1c3c5d448ec55f2bb7f908fabfc3743cfe4ce893",
+          "patch_sha256": "461d359762f06b38f80d8c152af0211ca4a31db93ddda3316727d2bd260df776",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/1c3c5d448ec55f2bb7f908fabfc3743cfe4ce893.patch",
+          "subject": "Update proposal policy regression fixture",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "80631271c00438ab42cba7b6c959b2b6af950c71",
+          "patch_sha256": "b321463a6463b60bb92e399ac704be49494c7f4c56ecdb2f215f23775fbf39d9",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/80631271c00438ab42cba7b6c959b2b6af950c71.patch",
+          "subject": "Validate frozen multiclass inputs on resume",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "87ce53174c927bf7e80b9dd175fa451d0b7ddefb",
+          "patch_sha256": "adca11a9752cdcec3e31f2e5a91e2b8d2c4341c805197b3673305e6fefae7790",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/87ce53174c927bf7e80b9dd175fa451d0b7ddefb.patch",
+          "subject": "Keep pre-async submitter evidence stable",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "4cb802e3c3a5b4b715df4fc550f94f19343dea6d",
+          "patch_sha256": "f75d4869b800f8907b5aac1de9351c003d1758897022f6e66de2aa72fe353bcc",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/4cb802e3c3a5b4b715df4fc550f94f19343dea6d.patch",
+          "subject": "Preserve full catalog during multiclass extension",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        }
+      ]
+    },
+    {
+      "ref": "refs/heads/four-task-closure",
+      "commit": "8a68066174dc8b8659e275b767d714e55b54042a",
+      "patch_unique": [
+        "606b4ee4dfd3538c038312d93d22d81a4930b3ec",
+        "ab9ff01080b269c844b2f9ee6107c169278af143",
+        "0763e1c9d95ce93e01d9af21863f294251c7da8b",
+        "ba9a9efa582ab0bd736b3c11daa40ce635a14103",
+        "b06a7799b89cad03c4a7fd4593e34e482708ec67",
+        "a71dff4ecbda3608333db2a73fce2ddaf59e6bd4",
+        "8a68066174dc8b8659e275b767d714e55b54042a"
+      ],
+      "already_incorporated": [
+        "e9ff300f064fc0dfc12798f36fc213ac7116e0d0"
+      ],
+      "disposition": "unresolved",
+      "reason": "Patch identity comparison against current HEAD; no whole-branch merge performed.",
+      "candidates": [
+        {
+          "commit": "606b4ee4dfd3538c038312d93d22d81a4930b3ec",
+          "patch_sha256": "ec9b5a47d0e48b904af0dd1d1c32d75fa6566d1f9f76846ba82e843009d9a111",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/606b4ee4dfd3538c038312d93d22d81a4930b3ec.patch",
+          "subject": "Drain the multiclass encode backlog with an amortized expert load",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "ab9ff01080b269c844b2f9ee6107c169278af143",
+          "patch_sha256": "83e7be869156e3291f7d7601cbbbae8b97b8e3a4cf37e1843671e8a968237049",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/ab9ff01080b269c844b2f9ee6107c169278af143.patch",
+          "subject": "chat: drain running at ~60s/dataset; throttled for loop health",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "0763e1c9d95ce93e01d9af21863f294251c7da8b",
+          "patch_sha256": "f93e87c9270989a174d993cd466fb16eaeb3907a2ce0c7708207b25cf62761e4",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/0763e1c9d95ce93e01d9af21863f294251c7da8b.patch",
+          "subject": "chat: drain moves to scq weight 1.0; xbabe4 launch-blocked",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "ba9a9efa582ab0bd736b3c11daa40ce635a14103",
+          "patch_sha256": "0d2d210423ca49d473553ec15c5102eb9459e711102546b7534da8ce7897f44e",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/ba9a9efa582ab0bd736b3c11daa40ce635a14103.patch",
+          "subject": "chat: drain queued at weight 1.0; cluster saturated by the flywheel",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "b06a7799b89cad03c4a7fd4593e34e482708ec67",
+          "patch_sha256": "0eabafd2698808d5d343b68b5ab4bea3d1ed5572a653453783aabae6a6128f87",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/b06a7799b89cad03c4a7fd4593e34e482708ec67.patch",
+          "subject": "chat: acknowledge the V1 freeze and disclose artifacts created under it",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "a71dff4ecbda3608333db2a73fce2ddaf59e6bd4",
+          "patch_sha256": "1e28040d481196fc0e9cdc71e372f9c937a5acd72b179680787d2344df69cc41",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/a71dff4ecbda3608333db2a73fce2ddaf59e6bd4.patch",
+          "subject": "chat: taking the WorkingDirectory repair (7 units, not 3)",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "8a68066174dc8b8659e275b767d714e55b54042a",
+          "patch_sha256": "045f86cc4ffb9cf3b0c851160960b05e77ac99003732046cbd622c02f5a3aa42",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/8a68066174dc8b8659e275b767d714e55b54042a.patch",
+          "subject": "chat: WorkingDirectory repair landed; two questions still open",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        }
+      ]
+    },
+    {
+      "ref": "refs/heads/main",
+      "commit": "b9aebc881f7a3f1d8da376ecdf7d863804d75be1",
+      "patch_unique": [],
+      "already_incorporated": [],
+      "disposition": "already_incorporated",
+      "reason": "Patch identity comparison against current HEAD; no whole-branch merge performed."
+    },
+    {
+      "ref": "refs/heads/phase5-recovery-candidate-8a4214c",
+      "commit": "991bedcb3d5bc0f7705fa3f9d34966e1ee2feae0",
+      "patch_unique": [],
+      "already_incorporated": [],
+      "disposition": "already_incorporated",
+      "reason": "Patch identity comparison against current HEAD; no whole-branch merge performed."
+    },
+    {
+      "ref": "refs/heads/worktree-agent-a15e4e9427248f17e",
+      "commit": "3bd7f449b9d6914ee81c9681d0a9abd6123e6b5d",
+      "patch_unique": [
+        "a099fd18721843b0c0e6a4ccb1118b452b55aedd",
+        "807eba99fea5b5952ee3d4fe42d65c17262e2c9d",
+        "62cef717a376bdafc3735950ee87c0340b5a4456",
+        "aa599c9a04cc11d7675313a6638e3e7a082f24a6",
+        "666b7223e6105471a0890dd9ce67c6c60dc9f79a",
+        "3bd7f449b9d6914ee81c9681d0a9abd6123e6b5d"
+      ],
+      "already_incorporated": [],
+      "disposition": "unresolved",
+      "reason": "Patch identity comparison against current HEAD; no whole-branch merge performed.",
+      "candidates": [
+        {
+          "commit": "a099fd18721843b0c0e6a4ccb1118b452b55aedd",
+          "patch_sha256": "c326db7a9f8a00cd9b320af3a6a81278e45cace75134d0ead3e71bf1b730e925",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/a099fd18721843b0c0e6a4ccb1118b452b55aedd.patch",
+          "subject": "feat-math Stage 1: multiclass task plumbing (TaskKind::Multiclass, MacroF1, guards)",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "807eba99fea5b5952ee3d4fe42d65c17262e2c9d",
+          "patch_sha256": "6d35b20a51e248ec1b17b495a9f1b7094275fd8b610b0840b0802514f8ac1a19",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/807eba99fea5b5952ee3d4fe42d65c17262e2c9d.patch",
+          "subject": "feat-math Stage 2: ovr_ridge head + 3-language emit + multiclass parity gate",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "62cef717a376bdafc3735950ee87c0340b5a4456",
+          "patch_sha256": "2baa3fbf494ca9dd65e886233c04c361ec9267d7d55858412ab3baf2f35d83d7",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/62cef717a376bdafc3735950ee87c0340b5a4456.patch",
+          "subject": "corpus_eval Stage 3: multiclass eval lane (fail-closed K pin + descale + macro-F1)",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "aa599c9a04cc11d7675313a6638e3e7a082f24a6",
+          "patch_sha256": "990296cae2cc1150118d33db9465b468cf2d9a146c4c1027dadbaad6c9bafc1c",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/aa599c9a04cc11d7675313a6638e3e7a082f24a6.patch",
+          "subject": "feat-math Stage 4: Gauss-Seidel OvR member fitter + smoke canonical pins",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "666b7223e6105471a0890dd9ce67c6c60dc9f79a",
+          "patch_sha256": "ce10420bb91d4bf2e8f925e3a8610318c594a6ef3e3d51405ce8be9d8d5fc6a5",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/666b7223e6105471a0890dd9ce67c6c60dc9f79a.patch",
+          "subject": "Receipt.v2: additive multiclass probability evidence from OvR member scores",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "3bd7f449b9d6914ee81c9681d0a9abd6123e6b5d",
+          "patch_sha256": "0a1dbdb0637b42183f5e4af13aa1429c85a59726cdea27e1a48a5ead2fbbe292",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/3bd7f449b9d6914ee81c9681d0a9abd6123e6b5d.patch",
+          "subject": "Multiclass60 campaign lane: driver + CLI rebased onto the M1 engine",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        }
+      ]
+    },
+    {
+      "ref": "refs/heads/worktree-agent-a35c9b3abeabb83ec",
+      "commit": "8d18c51ea1cdd41120d03dd49c660c03f851ce55",
+      "patch_unique": [],
+      "already_incorporated": [],
+      "disposition": "already_incorporated",
+      "reason": "Patch identity comparison against current HEAD; no whole-branch merge performed."
+    },
+    {
+      "ref": "refs/heads/worktree-agent-ac80bd62eeb49d660",
+      "commit": "aa599c9a04cc11d7675313a6638e3e7a082f24a6",
+      "patch_unique": [
+        "a099fd18721843b0c0e6a4ccb1118b452b55aedd",
+        "807eba99fea5b5952ee3d4fe42d65c17262e2c9d",
+        "62cef717a376bdafc3735950ee87c0340b5a4456",
+        "aa599c9a04cc11d7675313a6638e3e7a082f24a6"
+      ],
+      "already_incorporated": [],
+      "disposition": "unresolved",
+      "reason": "Patch identity comparison against current HEAD; no whole-branch merge performed.",
+      "candidates": [
+        {
+          "commit": "a099fd18721843b0c0e6a4ccb1118b452b55aedd",
+          "patch_sha256": "c326db7a9f8a00cd9b320af3a6a81278e45cace75134d0ead3e71bf1b730e925",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/a099fd18721843b0c0e6a4ccb1118b452b55aedd.patch",
+          "subject": "feat-math Stage 1: multiclass task plumbing (TaskKind::Multiclass, MacroF1, guards)",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "807eba99fea5b5952ee3d4fe42d65c17262e2c9d",
+          "patch_sha256": "6d35b20a51e248ec1b17b495a9f1b7094275fd8b610b0840b0802514f8ac1a19",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/807eba99fea5b5952ee3d4fe42d65c17262e2c9d.patch",
+          "subject": "feat-math Stage 2: ovr_ridge head + 3-language emit + multiclass parity gate",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "62cef717a376bdafc3735950ee87c0340b5a4456",
+          "patch_sha256": "2baa3fbf494ca9dd65e886233c04c361ec9267d7d55858412ab3baf2f35d83d7",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/62cef717a376bdafc3735950ee87c0340b5a4456.patch",
+          "subject": "corpus_eval Stage 3: multiclass eval lane (fail-closed K pin + descale + macro-F1)",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        },
+        {
+          "commit": "aa599c9a04cc11d7675313a6638e3e7a082f24a6",
+          "patch_sha256": "990296cae2cc1150118d33db9465b468cf2d9a146c4c1027dadbaad6c9bafc1c",
+          "patch": "/home/ubuntu/jope-dime-recovery/20260908/branch-diffs/aa599c9a04cc11d7675313a6638e3e7a082f24a6.patch",
+          "subject": "feat-math Stage 4: Gauss-Seidel OvR member fitter + smoke canonical pins",
+          "disposition": "unresolved",
+          "reason": "Preserved with source identity; automatic historical-branch merge prohibited. Requires behavior-specific compatibility review."
+        }
+      ]
+    },
+    {
+      "ref": "refs/heads/worktree-agent-ae4180a7c7b7d1047",
+      "commit": "215dfe0e4df99fe41fac4394d17827f7c260f5f2",
+      "patch_unique": [],
+      "already_incorporated": [],
+      "disposition": "already_incorporated",
+      "reason": "Patch identity comparison against current HEAD; no whole-branch merge performed."
+    }
+  ]
+}

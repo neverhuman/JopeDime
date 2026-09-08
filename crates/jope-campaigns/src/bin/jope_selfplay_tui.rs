@@ -171,12 +171,15 @@ struct Args {
     /// the plots are verified unattended.
     #[arg(long)]
     dump_dl_json: bool,
+    /// One-shot compact unified flywheel + budget-campaign status for monitors.
+    #[arg(long)]
+    dump_unified_json: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 enum Tab {
-    Overview,
     #[default]
+    Overview,
     GpuDl,
     Gameplay,
     Dl,
@@ -199,6 +202,12 @@ struct RawSources {
     queue: Option<Value>,
     freshness: Option<Value>,
     supply: Option<Value>,
+    supply_breaker: Option<Value>,
+    trainer_controller: Option<Value>,
+    proposer_state: Option<Value>,
+    gpu_admission: Option<Value>,
+    utilization: Option<Value>,
+    campaign: Option<Value>,
     proposal_summary: Option<Value>,
     trainer_fallback: Option<Value>,
     flywheel: Option<Value>,
@@ -300,6 +309,26 @@ struct LearningSummary {
 }
 
 #[derive(Clone, Debug, Default)]
+struct CampaignSummary {
+    stage: String,
+    gate_state: String,
+    robust_wins: u64,
+    robust_target: u64,
+    robust_denominator: u64,
+    trajectories_complete: u64,
+    trajectories_total: u64,
+    evaluations_used: u64,
+    evaluations_cap: u64,
+    current_rung: String,
+    seed_agreement: String,
+    active_jobs: u64,
+    license_track: String,
+    test_opening_state: String,
+    last_advanced_at_ms: u128,
+    blockers: Vec<String>,
+}
+
+#[derive(Clone, Debug, Default)]
 struct WaveSummary {
     active_wave: String,
     admission_waves: usize,
@@ -323,6 +352,9 @@ struct GpuRow {
     model_hint: String,
     status: String,
     owner_job: Option<String>,
+    role: String,
+    attempt: u64,
+    admission_reason: String,
     util_pct: f64,
     mem_used_mb: u64,
     mem_total_mb: u64,
@@ -568,6 +600,16 @@ struct Dashboard {
     nodes: Vec<NodeRow>,
     families: Vec<FamilyRow>,
     queue: QueueSummary,
+    top_state: String,
+    why_idle: String,
+    campaign: CampaignSummary,
+    supply_circuit_open: bool,
+    supply_circuit_error: String,
+    foreign_cancellations: u64,
+    stranded_trainer: bool,
+    stranded_proposer: bool,
+    priority_drift: bool,
+    stale_critical_source: bool,
     learning: LearningSummary,
     wave: WaveSummary,
     gpus: Vec<GpuRow>,
@@ -618,6 +660,9 @@ fn main() -> Result<()> {
     }
     if args.dump_dl_json {
         return dump_dl_json(&args);
+    }
+    if args.dump_unified_json {
+        return dump_unified_json(&args);
     }
     // Populate the GPU/trainer/watchdog collectors before entering the
     // alternate screen. Previously the first frame always said "no GPU
@@ -778,6 +823,76 @@ fn dump_dl_json(args: &Args) -> Result<()> {
     Ok(())
 }
 
+fn dump_unified_json(args: &Args) -> Result<()> {
+    let raw = collect_sources(args);
+    let mut slow = SlowState::new();
+    collect_slow_sources(args, &raw, &mut slow);
+    let dashboard = build_dashboard(&raw, &slow.view());
+    let payload = json!({
+        "schema": "JopeDimeUnifiedCockpit.v1",
+        "collected_at_ms": dashboard.collected_at_ms as u64,
+        "state": dashboard.top_state,
+        "blocking_banner": blocked_banner(&dashboard),
+        "why_idle": dashboard.why_idle,
+        "last_advanced_at_ms": dashboard.campaign.last_advanced_at_ms as u64,
+        "campaign": {
+            "robust_wins": dashboard.campaign.robust_wins,
+            "robust_target": dashboard.campaign.robust_target,
+            "robust_denominator": dashboard.campaign.robust_denominator,
+            "stage": dashboard.campaign.stage,
+            "gate_state": dashboard.campaign.gate_state,
+            "current_rung": dashboard.campaign.current_rung,
+            "trajectories": [dashboard.campaign.trajectories_complete, dashboard.campaign.trajectories_total],
+            "evaluations": [dashboard.campaign.evaluations_used, dashboard.campaign.evaluations_cap],
+            "active_jobs": dashboard.campaign.active_jobs,
+            "seed_agreement": dashboard.campaign.seed_agreement,
+            "license_track": dashboard.campaign.license_track,
+            "test_opening_state": dashboard.campaign.test_opening_state,
+            "blockers": dashboard.campaign.blockers,
+        },
+        "flywheel": {
+            "queue": {
+                "target": dashboard.queue.target,
+                "depth": dashboard.queue.useful_depth,
+                "ready_reserve": dashboard.wave.ready_manifests,
+                "running": dashboard.queue.running,
+                "throughput_per_minute": dashboard.cluster.throughput_per_minute,
+            },
+            "supply_circuit_open": dashboard.supply_circuit_open,
+            "foreign_cancellations": dashboard.foreign_cancellations,
+            "trainer": {
+                "job": dashboard.learning.trainer,
+                "state": dashboard.learning.trainer_state,
+                "labels": dashboard.learning.labels,
+                "frozen_watermark": dashboard.learning.frozen_watermark,
+                "checkpoint": dashboard.learning.checkpoint,
+            },
+            "nodes": dashboard.nodes.iter().map(|node| json!({
+                "node": node.node,
+                "allocated_slots": node.running_slots,
+                "slot_target": node.slot_target,
+                "cpu_busy_pct": node.cpu_busy_pct,
+            })).collect::<Vec<_>>(),
+            "gpus": dashboard.gpus.iter().map(|gpu| json!({
+                "node": gpu.node,
+                "role": if gpu.role.is_empty() { Value::Null } else { json!(gpu.role) },
+                "owner": gpu.owner_job,
+                "attempt": (gpu.attempt > 0).then_some(gpu.attempt),
+                "util_pct": gpu.util_pct,
+                "status": gpu.status,
+                "reason": if gpu.admission_reason.is_empty() {
+                    gpu.owner_job.is_none().then_some(dashboard.why_idle.as_str())
+                } else {
+                    Some(gpu.admission_reason.as_str())
+                },
+            })).collect::<Vec<_>>(),
+        },
+        "sources": [dashboard.sources_healthy, dashboard.sources_total],
+    });
+    println!("{}", serde_json::to_string(&payload)?);
+    Ok(())
+}
+
 fn run_terminal(shared: &Arc<RwLock<Dashboard>>, refresh_ms: u64) -> Result<()> {
     let _session = TerminalSession::enter()?;
     let backend = CrosstermBackend::new(io::stdout());
@@ -883,6 +998,44 @@ fn collect_sources(args: &Args) -> RawSources {
     raw.supply = read_json_source(
         &args.root.join("ops/micro-wave-supply-v2.json"),
         "supply",
+        true,
+        &mut raw.source_states,
+    );
+    raw.supply_breaker = read_json_source(
+        &args
+            .root
+            .join("ops/cohort-supply-circuit-breaker.v1.json"),
+        "supply-breaker",
+        true,
+        &mut raw.source_states,
+    );
+    raw.trainer_controller = read_json_source(
+        &args.root.join("ops/task-learning-controller.v2.json"),
+        "trainer-controller",
+        true,
+        &mut raw.source_states,
+    );
+    raw.proposer_state = read_newest_json(
+        &args.root.join("ops/cohort-supply-state-v2"),
+        &mut raw.source_states,
+    );
+    raw.gpu_admission = read_json_source(
+        &args.root.join("ops/gpu-lane-admission/status.v1.json"),
+        "gpu-admission",
+        true,
+        &mut raw.source_states,
+    );
+    raw.utilization = read_json_source(
+        &args.root.join("ops/utilization-supervisor-v1.json"),
+        "utilization-supervisor",
+        true,
+        &mut raw.source_states,
+    );
+    raw.campaign = read_json_source(
+        &args
+            .root
+            .join("ops/dlgp-budget-campaign-status.v1.json"),
+        "budget-campaign",
         true,
         &mut raw.source_states,
     );
@@ -1015,6 +1168,23 @@ fn read_json_source(
             None
         }
     }
+}
+
+fn read_newest_json(directory: &Path, states: &mut Vec<SourceState>) -> Option<Value> {
+    if !directory.is_dir() {
+        return None;
+    }
+    let newest = fs::read_dir(directory)
+        .ok()?
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.path().extension().and_then(|value| value.to_str()) == Some("json"))
+        .max_by_key(|entry| {
+            entry
+                .metadata()
+                .and_then(|metadata| metadata.modified())
+                .ok()
+        })?;
+    read_json_source(&newest.path(), "proposer-intent", false, states)
 }
 
 fn load_scq_snapshot(scq: &Path) -> Result<Value> {
@@ -1411,6 +1581,9 @@ fn parse_gpus(scq: &Value, jobs: &[(String, String, PathBuf, bool)]) -> Vec<GpuR
                 model_hint,
                 status,
                 owner_job,
+                role: String::new(),
+                attempt: 0,
+                admission_reason: String::new(),
                 util_pct: f64_at(gpu, &["util_pct"]).unwrap_or(0.0),
                 mem_used_mb: u64_at(gpu, &["mem_used_mb"]).unwrap_or(0),
                 mem_total_mb: u64_at(gpu, &["mem_total_mb"]).unwrap_or(0),
@@ -2796,6 +2969,33 @@ fn build_dashboard(raw: &RawSources, slow: &SlowView) -> Dashboard {
     dashboard.cluster = aggregate_cluster(scq, &dashboard.nodes);
     dashboard.families = parse_families(scq);
     dashboard.queue = parse_queue(raw, scq, &dashboard.families);
+    dashboard.campaign = parse_campaign(raw.campaign.as_ref());
+    enrich_gpu_admission(&mut dashboard.gpus, raw.gpu_admission.as_ref());
+    dashboard.supply_circuit_open = raw
+        .supply_breaker
+        .as_ref()
+        .and_then(|value| bool_at(value, &["open"]))
+        .unwrap_or(false);
+    dashboard.supply_circuit_error = raw
+        .supply_breaker
+        .as_ref()
+        .and_then(|value| string_at(value, &["error"]))
+        .unwrap_or("-")
+        .to_owned();
+    let proposer_foreign_cancellations = raw
+        .proposer_state
+        .as_ref()
+        .and_then(|value| u64_at(value, &["foreign_cancellations"]))
+        .unwrap_or(0);
+    let campaign_foreign_cancellations = dashboard
+        .campaign
+        .blockers
+        .iter()
+        .any(|blocker| blocker.contains("repeated foreign campaign cancellations"))
+        .then_some(2)
+        .unwrap_or(0);
+    dashboard.foreign_cancellations =
+        proposer_foreign_cancellations.max(campaign_foreign_cancellations);
     dashboard.learning = parse_learning(raw, scq);
     if let Some(watchdog) = dashboard.watchdog.as_ref() {
         dashboard.learning.labels = watchdog.labels;
@@ -2816,6 +3016,61 @@ fn build_dashboard(raw: &RawSources, slow: &SlowView) -> Dashboard {
         }
     }
     dashboard.wave = parse_wave(raw);
+    let active_job = |job_id: &str| {
+        scq.get("jobs")
+            .and_then(Value::as_array)
+            .is_some_and(|jobs| {
+                jobs.iter().any(|job| {
+                    string_at(job, &["id"]) == Some(job_id)
+                        && string_at(job, &["state"]).is_some_and(|state| {
+                            matches!(
+                                state,
+                                "queued"
+                                    | "starting"
+                                    | "dispatching"
+                                    | "running"
+                                    | "held"
+                                    | "preempting"
+                            )
+                        })
+                })
+            })
+    };
+    dashboard.stranded_trainer = raw
+        .trainer_controller
+        .as_ref()
+        .and_then(|value| string_at(value, &["action"]))
+        .is_some_and(|action| {
+            action.contains("pending")
+                || action.contains("failed")
+                || action.contains("backoff")
+                || action.contains("circuit_open")
+        })
+        && dashboard.learning.trainer != "-"
+        && !active_job(&dashboard.learning.trainer);
+    dashboard.stranded_proposer = raw.proposer_state.as_ref().is_some_and(|value| {
+        string_at(value, &["stage"]) == Some("submit_cohort_proposer")
+            && string_at(value, &["proposal_job_id"]).is_some_and(|job| !active_job(job))
+            && !bool_at(value, &["retry_pending_submission"]).unwrap_or(false)
+    });
+    dashboard.priority_drift = dashboard
+        .campaign
+        .blockers
+        .iter()
+        .any(|blocker| blocker.contains("priority"));
+    dashboard.stale_critical_source = raw.source_states.iter().any(|source| {
+        !source.healthy
+            && matches!(
+                source.name.as_str(),
+                "scq"
+                    | "queue-v3"
+                    | "supply"
+                    | "supply-breaker"
+                    | "trainer-controller"
+                    | "utilization-supervisor"
+                    | "budget-campaign"
+            )
+    });
     dashboard.events = parse_events(scq, &raw.local_events);
     dashboard.failures = parse_failures(scq);
     dashboard.alerts = collect_alerts(raw, scq, &dashboard);
@@ -2843,7 +3098,102 @@ fn build_dashboard(raw: &RawSources, slow: &SlowView) -> Dashboard {
             ));
         }
     }
+    dashboard.why_idle = why_idle_chain(&dashboard);
+    dashboard.top_state = cockpit_state(&dashboard).to_owned();
     dashboard
+}
+
+fn parse_campaign(value: Option<&Value>) -> CampaignSummary {
+    let value = value.unwrap_or(&Value::Null);
+    let rung_counts = value.get("rung_counts").unwrap_or(&Value::Null);
+    let active_progress = value
+        .get("active_jobs")
+        .and_then(Value::as_array)
+        .and_then(|jobs| jobs.first())
+        .and_then(|job| u64_at(job, &["progress_evaluations"]));
+    let current_rung = active_progress
+        .map(|progress| match progress {
+            0..=999 => "1000",
+            1_000..=1_999 => "2000",
+            2_000..=4_999 => "5000",
+            _ => "10000",
+        })
+        .or_else(|| {
+            ["10000", "5000", "2000", "1000"]
+                .into_iter()
+                .find(|rung| u64_at(rung_counts, &[*rung]).unwrap_or(0) > 0)
+        })
+        .unwrap_or("-")
+        .to_owned();
+    CampaignSummary {
+        stage: string_at(value, &["stage"]).unwrap_or("unavailable").to_owned(),
+        gate_state: string_at(value, &["gate_state"])
+            .unwrap_or("launch_gates_blocked")
+            .to_owned(),
+        robust_wins: u64_at(value, &["robust_wins"]).unwrap_or(0),
+        robust_target: u64_at(value, &["robust_wins_target"]).unwrap_or(7),
+        robust_denominator: u64_at(value, &["robust_wins_denominator"]).unwrap_or(22),
+        trajectories_complete: u64_at(value, &["completed_trajectory_count"]).unwrap_or(0),
+        trajectories_total: u64_at(value, &["trajectory_count"]).unwrap_or(0),
+        evaluations_used: u64_at(value, &["evaluations_used"]).unwrap_or(0),
+        evaluations_cap: u64_at(value, &["evaluations_cap"]).unwrap_or(200_000),
+        current_rung,
+        seed_agreement: string_at(value, &["seed_agreement"])
+            .unwrap_or("unavailable")
+            .to_owned(),
+        active_jobs: value
+            .get("active_jobs")
+            .and_then(Value::as_array)
+            .map_or(0, |jobs| jobs.len() as u64),
+        license_track: string_at(value, &["license_track"])
+            .unwrap_or("separate")
+            .to_owned(),
+        test_opening_state: string_at(value, &["test_opening_state"])
+            .unwrap_or("sealed")
+            .to_owned(),
+        last_advanced_at_ms: u64_at(value, &["last_advanced_at_ms"])
+            .map(u128::from)
+            .unwrap_or(0),
+        blockers: value
+            .get("blockers")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_str)
+            .map(str::to_owned)
+            .collect(),
+    }
+}
+
+fn infrastructure_attempt_number(job_identity: &str) -> u64 {
+    job_identity
+        .rsplit_once("-infra")
+        .and_then(|(_, suffix)| suffix.parse::<u64>().ok())
+        .unwrap_or(1)
+}
+
+fn enrich_gpu_admission(gpus: &mut Vec<GpuRow>, value: Option<&Value>) {
+    let Some(states) = value
+        .and_then(|value| value.get("states"))
+        .and_then(Value::as_object)
+    else {
+        return;
+    };
+    for (role, state) in states {
+        let Some(node) = string_at(state, &["target_node"]) else {
+            continue;
+        };
+        let job_identity = string_at(state, &["immutable_job_identity"]).unwrap_or("-");
+        let stage = string_at(state, &["stage"]).unwrap_or("unknown");
+        let reason = string_at(state, &["dependency_failure"])
+            .or_else(|| string_at(state, &["last_capacity_backoff"]))
+            .unwrap_or(stage);
+        if let Some(gpu) = gpus.iter_mut().find(|gpu| gpu.node == node) {
+            gpu.role = role.clone();
+            gpu.attempt = infrastructure_attempt_number(job_identity);
+            gpu.admission_reason = reason.to_owned();
+        }
+    }
 }
 
 fn parse_nodes(scq: &Value) -> Vec<NodeRow> {
@@ -3297,6 +3647,56 @@ fn add_stale_source_alert(
 /// active condition, or None when work flows normally.
 fn blocked_banner(dashboard: &Dashboard) -> Option<String> {
     let queue = &dashboard.queue;
+    let below_floor_without_ready = queue.target > 0
+        && queue.useful_depth < queue.target
+        && dashboard.wave.ready_manifests == 0;
+    if dashboard.supply_circuit_open && below_floor_without_ready {
+        return Some(format!(
+            "DIME BLOCKED — SUPPLY CIRCUIT OPEN ({}) + queue {}/{} with ZERO ready work",
+            short(&dashboard.supply_circuit_error, 72),
+            queue.useful_depth,
+            queue.target
+        ));
+    }
+    if dashboard.supply_circuit_open {
+        return Some(format!(
+            "DIME BLOCKED — SUPPLY CIRCUIT OPEN: {}",
+            short(&dashboard.supply_circuit_error, 100)
+        ));
+    }
+    if dashboard.stranded_trainer || dashboard.stranded_proposer {
+        return Some(format!(
+            "DIME BLOCKED — stranded frozen intent: {}{}",
+            if dashboard.stranded_trainer {
+                "TRAINER"
+            } else {
+                ""
+            },
+            if dashboard.stranded_proposer {
+                " PROPOSER"
+            } else {
+                ""
+            }
+        ));
+    }
+    if dashboard.foreign_cancellations >= 2 {
+        return Some(format!(
+            "DIME BLOCKED — {} repeated FOREIGN proposer cancellations (scientific retries unchanged)",
+            dashboard.foreign_cancellations
+        ));
+    }
+    if dashboard.priority_drift {
+        return Some("DIME BLOCKED — project priority drift; launch remains fail-closed".to_owned());
+    }
+    if dashboard.stale_critical_source {
+        return Some("DIME BLOCKED — one or more critical canonical status sources are stale or absent".to_owned());
+    }
+    if below_floor_without_ready {
+        return Some(format!(
+            "DIME STARVED — queue {}/{} below floor with ZERO ready frozen work",
+            queue.useful_depth, queue.target
+        ));
+    }
     // Sticky guard-holds: lots held, almost nothing of ours running.
     if queue.held >= 32 && queue.running < queue.held / 4 {
         return Some(format!(
@@ -3312,6 +3712,34 @@ fn blocked_banner(dashboard: &Dashboard) -> Option<String> {
         return Some(format!(
             "SCQ STALLED — {waiting} jobs waiting, ZERO running"
         ));
+    }
+    let dime_waiting = dashboard
+        .families
+        .iter()
+        .filter(|family| family.family.starts_with("jope"))
+        .map(|family| family.queued + family.starting + family.dispatching)
+        .sum::<u64>();
+    let dime_running = dashboard
+        .families
+        .iter()
+        .filter(|family| family.family.starts_with("jope"))
+        .map(|family| family.running)
+        .sum::<u64>();
+    if dime_waiting > 0 && dime_running == 0 {
+        return Some(format!(
+            "DIME STARVED — {dime_waiting} runnable DIME jobs with ZERO running"
+        ));
+    }
+    if dime_waiting > 0 {
+        if let Some(node) = dashboard.nodes.iter().find(|node| {
+            node.state == "up" && node.cpu_busy_pct.is_some_and(|value| value < 25.0)
+        }) {
+            return Some(format!(
+                "DIME STARVED — runnable backlog while {} remains at {:.1}% CPU",
+                node.node,
+                node.cpu_busy_pct.unwrap_or(0.0)
+            ));
+        }
     }
     // Critical starvation alarms from the alarm files (the collector inserts
     // them into `alerts` as "ALARM[severity] name: ..." rows). These two are
@@ -3329,6 +3757,74 @@ fn blocked_banner(dashboard: &Dashboard) -> Option<String> {
         .iter()
         .find(|alert| alert.starts_with("SCQ: "))
         .map(|alert| format!("{alert} — scheduler is degraded"))
+}
+
+fn why_idle_chain(dashboard: &Dashboard) -> String {
+    if let Some(blocker) = blocked_banner(dashboard) {
+        return format!("WHY IDLE → {blocker}");
+    }
+    if dashboard.campaign.gate_state != "runnable"
+        && dashboard.campaign.gate_state != "complete"
+        && dashboard.queue.useful_depth == 0
+        && dashboard.wave.ready_manifests == 0
+    {
+        return format!(
+            "WHY IDLE → NO ELIGIBLE FROZEN WORK → campaign {}",
+            dashboard.campaign.gate_state
+        );
+    }
+    if dashboard.gpus.iter().any(|gpu| gpu.owner_job.is_none())
+        && dashboard.trainers.is_empty()
+        && dashboard.campaign.active_jobs == 0
+    {
+        return "WHY IDLE → NO ELIGIBLE FROZEN WORK".to_owned();
+    }
+    "WHY IDLE → resources are owned or scientifically authorized work is running".to_owned()
+}
+
+fn cockpit_state(dashboard: &Dashboard) -> &'static str {
+    if dashboard.supply_circuit_open
+        || dashboard.stranded_trainer
+        || dashboard.stranded_proposer
+        || dashboard.foreign_cancellations >= 2
+        || dashboard.priority_drift
+        || dashboard.stale_critical_source
+    {
+        return "BLOCKED";
+    }
+    let dime_waiting = dashboard
+        .families
+        .iter()
+        .filter(|family| family.family.starts_with("jope"))
+        .map(|family| family.queued + family.starting + family.dispatching)
+        .sum::<u64>();
+    if (dashboard.queue.target > 0
+        && dashboard.queue.useful_depth < dashboard.queue.target
+        && dashboard.wave.ready_manifests == 0)
+        || (dime_waiting > 0 && dashboard.queue.running == 0)
+    {
+        return "STARVED";
+    }
+    let advanced_recently = dashboard.campaign.last_advanced_at_ms > 0
+        && dashboard
+            .collected_at_ms
+            .saturating_sub(dashboard.campaign.last_advanced_at_ms)
+            <= 120_000;
+    if advanced_recently || dashboard.cluster.throughput_per_minute > 0 {
+        return "CLIMBING";
+    }
+    if dashboard.queue.running > 0
+        || dashboard.campaign.active_jobs > 0
+        || dashboard.gpus.iter().any(|gpu| gpu.owner_job.is_some())
+    {
+        return "RUNNING";
+    }
+    if dashboard.campaign.gate_state != "runnable"
+        && dashboard.campaign.gate_state != "complete"
+    {
+        return "GATED";
+    }
+    "RUNNING"
 }
 
 fn render(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms: u64, ui: UiState) {
@@ -3692,10 +4188,21 @@ fn render_gpu_tab(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms: u64,
         } else {
             Color::DarkGray
         };
+        let ownership = if gpu.role.is_empty() {
+            gpu.owner_job.as_deref().unwrap_or(&gpu.status).to_owned()
+        } else {
+            format!(
+                "{}#{} {} [{}]",
+                gpu.role,
+                gpu.attempt,
+                gpu.owner_job.as_deref().unwrap_or("idle"),
+                gpu.admission_reason
+            )
+        };
         Row::new(vec![
             Cell::from(gpu.node.clone()),
             Cell::from(format!("{}?", gpu.model_hint)),
-            Cell::from(short(gpu.owner_job.as_deref().unwrap_or(&gpu.status), 40)),
+            Cell::from(short(&ownership, 40)),
             Cell::from(format!("{:.0}%", gpu.util_pct)),
             Cell::from(format!("{}/{}", gpu.mem_used_mb, gpu.mem_total_mb)),
             Cell::from(format!("{}C", gpu.temp_c)),
@@ -4463,9 +4970,7 @@ fn render_loss_chart(
         None => "no live trainer".to_owned(),
     };
     let title = format!(
-        " LOSS — {} gen(s) · {:.0} epochs · {}{} ",
-        series.marks.len(),
-        series.total_epochs,
+        " HISTORICAL LOSS • {}{} ",
         live_label,
         stale_suffix(
             dashboard.collected_at_ms,
@@ -4614,7 +5119,7 @@ fn render_pairwise_chart(frame: &mut Frame<'_>, series: &DlSeries, area: Rect) {
         Chart::new(datasets)
             .block(
                 Block::default()
-                    .title(" VAL PAIRWISE-WIN — all generations (should climb) ")
+                    .title(" HISTORICAL VAL PAIRWISE-WIN — all generations ")
                     .borders(Borders::ALL),
             )
             .x_axis(
@@ -4959,6 +5464,12 @@ fn render_dl_global(frame: &mut Frame<'_>, dashboard: &Dashboard, area: Rect) {
 }
 
 fn render_header(frame: &mut Frame<'_>, dashboard: &Dashboard, area: Rect) {
+    let state_color = match dashboard.top_state.as_str() {
+        "BLOCKED" | "STARVED" => Color::Red,
+        "GATED" => Color::Yellow,
+        "CLIMBING" => Color::Green,
+        _ => Color::Cyan,
+    };
     let health = if dashboard.alerts.is_empty() {
         Span::styled(
             " HEALTHY ",
@@ -4972,21 +5483,29 @@ fn render_header(frame: &mut Frame<'_>, dashboard: &Dashboard, area: Rect) {
     };
     let title = Line::from(vec![
         Span::styled(
-            " JOPE REAL-TIME SELF-PLAY ",
+            " DIME UNIFIED COCKPIT ",
             Style::default()
                 .fg(Color::Cyan)
                 .add_modifier(Modifier::BOLD),
         ),
+        Span::styled(
+            format!(" {} ", dashboard.top_state),
+            Style::default()
+                .fg(Color::White)
+                .bg(state_color)
+                .add_modifier(Modifier::BOLD),
+        ),
         health,
         Span::raw(format!(
-            "  SCQ epoch {}  sources {}/{}  collected {}",
+            " SCQ {} src {}/{} {} • {}",
             dashboard
                 .scq_epoch
                 .map(|value| value.to_string())
                 .unwrap_or_else(|| "-".to_owned()),
             dashboard.sources_healthy,
             dashboard.sources_total,
-            clock_string(dashboard.collected_at_ms)
+            clock_string(dashboard.collected_at_ms),
+            short(&dashboard.why_idle, 72),
         )),
     ]);
     frame.render_widget(
@@ -5019,30 +5538,39 @@ fn render_global(frame: &mut Frame<'_>, dashboard: &Dashboard, area: Rect) {
     );
     frame.render_widget(
         Paragraph::new(format!(
-            "PSI cpu {:.2}  mem {:.2}  io {:.2}\nthroughput {}/min  failed {}",
-            dashboard.cluster.psi_cpu10,
-            dashboard.cluster.psi_mem10,
-            dashboard.cluster.psi_io10,
-            dashboard.cluster.throughput_per_minute,
-            dashboard.cluster.jobs_failed
+            "robust {}/{} of {}  {} / rung {}\nevals {}/{}  traj {}/{}  seeds {}",
+            dashboard.campaign.robust_wins,
+            dashboard.campaign.robust_target,
+            dashboard.campaign.robust_denominator,
+            dashboard.campaign.stage,
+            dashboard.campaign.current_rung,
+            dashboard.campaign.evaluations_used,
+            dashboard.campaign.evaluations_cap,
+            dashboard.campaign.trajectories_complete,
+            dashboard.campaign.trajectories_total,
+            dashboard.campaign.seed_agreement,
         ))
         .block(
             Block::default()
-                .title(" Pressure / failures ")
+                .title(format!(
+                    " ≥7/22 BUDGET CAMPAIGN • {} • test {} ",
+                    dashboard.campaign.license_track, dashboard.campaign.test_opening_state
+                ))
                 .borders(Borders::ALL),
         ),
         columns[1],
     );
     frame.render_widget(
         Paragraph::new(format!(
-            "nodes {}/{}  cores {}/{}\nslots {}/{}  RAM avail {} GiB",
+            "nodes {}/{}  cores {}/{}\nslots {}/{} RAM {}G flow {}/m",
             dashboard.cluster.nodes_up,
             dashboard.cluster.nodes_total,
             dashboard.cluster.effective_cores,
             dashboard.cluster.physical_cores,
             dashboard.cluster.running_slots,
             dashboard.cluster.slot_target,
-            dashboard.cluster.memory_available_gb
+            dashboard.cluster.memory_available_gb,
+            dashboard.cluster.throughput_per_minute,
         ))
         .block(Block::default().title(" Capacity ").borders(Borders::ALL)),
         columns[2],
@@ -5353,7 +5881,7 @@ fn render_compact_gpu_dl(
     let now = dashboard.collected_at_ms;
     let mut lines = vec![Line::from(vec![
         Span::styled(
-            "DEEP LEARNING • LIVE",
+            format!("DIME GPU/DL • {}", dashboard.top_state),
             Style::default()
                 .fg(Color::Cyan)
                 .add_modifier(Modifier::BOLD),
@@ -5365,6 +5893,7 @@ fn render_compact_gpu_dl(
             clock_string(now)
         )),
     ])];
+    lines.push(Line::from(dashboard.why_idle.clone()));
 
     if dashboard.accepted_tasks.is_empty() {
         lines.push(Line::from("fronts: accepted-by-task unavailable"));
@@ -5413,6 +5942,18 @@ fn render_compact_gpu_dl(
     } else {
         lines.extend(dashboard.gpus.iter().map(|gpu| {
             let active = gpu.owner_job.is_some();
+            let role = if gpu.role.is_empty() {
+                String::new()
+            } else {
+                format!("{}#{} ", gpu.role, gpu.attempt)
+            };
+            let reason = if gpu.admission_reason.is_empty() {
+                gpu.owner_job
+                    .as_deref()
+                    .unwrap_or(dashboard.why_idle.as_str())
+            } else {
+                gpu.admission_reason.as_str()
+            };
             Line::from(vec![
                 Span::styled(
                     format!(
@@ -5426,7 +5967,7 @@ fn render_compact_gpu_dl(
                     }),
                 ),
                 Span::raw(short(
-                    gpu.owner_job.as_deref().unwrap_or(&gpu.status),
+                    &format!("{role}{} — {reason}", gpu.owner_job.as_deref().unwrap_or("idle")),
                     area.width.saturating_sub(42) as usize,
                 )),
             ])
@@ -5517,7 +6058,22 @@ fn render_compact(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms: u64,
         .collect::<Vec<_>>()
         .join(" | ");
     let mut lines = vec![
-        Line::from("JOPE SELF-PLAY • read-only Rust TUI"),
+        Line::from(format!(
+            "DIME UNIFIED • {} • read-only",
+            dashboard.top_state
+        )),
+        Line::from(format!(
+            "campaign robust {}/{} of {} • {} rung {} • evals {}/{} • seeds {}",
+            dashboard.campaign.robust_wins,
+            dashboard.campaign.robust_target,
+            dashboard.campaign.robust_denominator,
+            dashboard.campaign.stage,
+            dashboard.campaign.current_rung,
+            dashboard.campaign.evaluations_used,
+            dashboard.campaign.evaluations_cap,
+            dashboard.campaign.seed_agreement,
+        )),
+        Line::from(dashboard.why_idle.clone()),
         Line::from(format!(
             "CPU {:.1}% (target 80 / guard 95) PSI {}/{}/{}",
             dashboard.cluster.cpu_busy_pct,
@@ -5899,6 +6455,33 @@ mod tests {
             supply: Some(json!({
                 "ready_manifests":300,"awaiting_keeper_ack":null
             })),
+            supply_breaker: Some(json!({
+                "schema":"JopeSelfplaySupplyCircuitBreaker.v1",
+                "open":false,"error":null
+            })),
+            trainer_controller: Some(json!({
+                "schema":"JopeTaskLearningController.v2",
+                "action":"active_trainer_preserved"
+            })),
+            proposer_state: None,
+            gpu_admission: Some(json!({
+                "schema":"JopeGpuLaneAdmissionStatus.v1",
+                "state":"admitted"
+            })),
+            utilization: Some(json!({
+                "schema":"JopeUtilizationSupervisor.v1",
+                "state":"healthy"
+            })),
+            campaign: Some(json!({
+                "schema":"JopeDlgpBudgetCampaignStatus.v1",
+                "stage":"stage_0_reproduction",
+                "gate_state":"stage_0_reproduction",
+                "trajectory_count":22,"completed_trajectory_count":0,
+                "rung_counts":{},"evaluations_used":0,"evaluations_cap":200000,
+                "robust_wins":0,"robust_wins_target":7,"robust_wins_denominator":22,
+                "seed_agreement":"pending","license_track":"separate",
+                "test_opening_state":"sealed","blockers":[]
+            })),
             proposal_summary: Some(json!({
                 "model_checkpoint_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "counts":{"regression":640,"binary":640},"proposal_validity":1.0
@@ -5939,10 +6522,10 @@ mod tests {
     }
 
     #[test]
-    fn compact_terminal_defaults_to_live_deep_learning_and_honors_the_tab() {
+    fn compact_terminal_defaults_to_unified_overview_and_honors_the_gpu_tab() {
         use ratatui::backend::TestBackend;
 
-        assert_eq!(UiState::default().tab, Tab::GpuDl);
+        assert_eq!(UiState::default().tab, Tab::Overview);
         let job_id = "jope-selfplay-train-004731939-c-r000035";
         let dashboard = Dashboard {
             collected_at_ms: 10_000,
@@ -5998,7 +6581,17 @@ mod tests {
         let backend = TestBackend::new(80, 24);
         let mut terminal = Terminal::new(backend).unwrap();
         terminal
-            .draw(|frame| render(frame, &dashboard, 250, UiState::default()))
+            .draw(|frame| {
+                render(
+                    frame,
+                    &dashboard,
+                    250,
+                    UiState {
+                        tab: Tab::GpuDl,
+                        ..UiState::default()
+                    },
+                )
+            })
             .unwrap();
         let rendered = terminal
             .backend()
@@ -6007,7 +6600,7 @@ mod tests {
             .iter()
             .map(|cell| cell.symbol())
             .collect::<String>();
-        assert!(rendered.contains("DEEP LEARNING • LIVE"), "{rendered}");
+        assert!(rendered.contains("DIME GPU/DL"), "{rendered}");
         assert!(rendered.contains(job_id), "{rendered}");
         assert!(rendered.contains("epoch 1/24 batch 35/86"), "{rendered}");
         assert!(rendered.contains("binary"), "{rendered}");
@@ -6050,6 +6643,25 @@ mod tests {
             .iter()
             .any(|row| row.node == "xbabe5" && row.state == "absent"));
         assert_eq!(dashboard.learning.trainer_state, "running");
+    }
+
+    #[test]
+    fn open_supply_breaker_and_zero_ready_queue_is_highest_severity() {
+        let mut raw = fixture();
+        raw.queue.as_mut().unwrap()["queued_starting"] = json!(0);
+        raw.queue.as_mut().unwrap()["queued_target"] = json!(2048);
+        raw.supply.as_mut().unwrap()["ready_manifests"] = json!(0);
+        raw.supply_breaker = Some(json!({
+            "schema":"JopeSelfplaySupplyCircuitBreaker.v1",
+            "open":true,
+            "error":"retry-5 proposer cancellation"
+        }));
+        let dashboard = build_dashboard(&raw, &SlowView::default());
+        let banner = blocked_banner(&dashboard).expect("blocking banner");
+        assert_eq!(dashboard.top_state, "BLOCKED");
+        assert!(banner.contains("SUPPLY CIRCUIT OPEN"), "{banner}");
+        assert!(banner.contains("ZERO ready work"), "{banner}");
+        assert!(dashboard.why_idle.starts_with("WHY IDLE"));
     }
 
     #[test]
@@ -6110,6 +6722,29 @@ mod tests {
         assert_eq!(gpus[0].owner_job.as_deref(), Some("jope-selfplay-train-1"));
         assert_eq!(gpus[0].model_hint, "3090");
         assert_eq!(gpus[1].owner_job, None);
+    }
+
+    #[test]
+    fn gpu_admission_adds_role_attempt_and_idle_reason() {
+        let mut gpus = vec![GpuRow {
+            node: "xbabe2".to_owned(),
+            status: "free".to_owned(),
+            ..GpuRow::default()
+        }];
+        let admission = json!({
+            "states": {
+                "alternating_trainer": {
+                    "target_node":"xbabe2",
+                    "immutable_job_identity":"trainer-frozen-infra000006",
+                    "stage":"waiting_for_capacity",
+                    "last_capacity_backoff":"four companion CPU cores unavailable"
+                }
+            }
+        });
+        enrich_gpu_admission(&mut gpus, Some(&admission));
+        assert_eq!(gpus[0].role, "alternating_trainer");
+        assert_eq!(gpus[0].attempt, 6);
+        assert!(gpus[0].admission_reason.contains("companion CPU"));
     }
 
     #[test]

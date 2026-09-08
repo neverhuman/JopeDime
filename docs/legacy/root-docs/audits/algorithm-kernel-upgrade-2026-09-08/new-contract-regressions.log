@@ -1,0 +1,41 @@
+   Compiling feat-math v0.1.0 (/home/ubuntu/jope-dime/vendor/feat-math)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.81s
+     Running tests/kernel_codec.rs (/tmp/jope-kernel-upgrade-target/debug/deps/kernel_codec-20e6079086f4e2bc)
+
+running 4 tests
+test malformed_counts_and_duplicate_parameters_are_rejected ... ok
+test every_parameter_type_and_ieee_payload_is_preserved ... ok
+test legacy_import_is_lossless_even_when_historical_text_is_not ... ok
+test oversized_parameter_encoding_fails_with_a_resource_error ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/kernel_expression.rs (/tmp/jope-kernel-upgrade-target/debug/deps/kernel_expression-2e2179353a34877b)
+
+running 4 tests
+test compiled_operations_preserve_protected_math_and_error_boundaries ... ok
+test new_entrypoints_recheck_deserialized_ast_structure ... ok
+test local_constant_fitting_recovers_a_linear_formula_with_a_hard_evaluation_budget ... ok
+test one_hundred_thousand_expression_children_pass_scope_and_execution_parity ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 19.71s
+
+     Running tests/kernel_pipeline.rs (/tmp/jope-kernel-upgrade-target/debug/deps/kernel_pipeline-9e46acf3315e7e0a)
+
+running 3 tests
+test downstream_columns_are_checked_after_width_changes ... ok
+test structurally_valid_modern_children_execute_on_their_actual_task ... ok
+test one_hundred_thousand_pipeline_children_preserve_target_and_modern_learner_slots ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.43s
+
+     Running tests/legacy_v2_freeze.rs (/tmp/jope-kernel-upgrade-target/debug/deps/legacy_v2_freeze-b78ba11739a0a47a)
+
+running 4 tests
+test regenerate_legacy_v2_freeze ... ignored, prints reviewed constants for an explicitly acknowledged fixture update
+test legacy_v2_parser_errors_rng_and_folds_are_frozen ... ok
+test legacy_v2_reference_files_match_the_takeover_snapshot ... ok
+test legacy_v2_genomes_predictions_and_emissions_are_frozen ... ok
+
+test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.05s
+

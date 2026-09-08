@@ -1,0 +1,11 @@
+[Unit]
+Description=DIME budget-first DLGP campaign reconciliation
+After=jope-utilization-supervisor.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/ubuntu/jope-flywheel/test_exact_gen0
+ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_dlgp_budget_supervisor --once --submit --protocol /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/manifests/dlgp-budget-first/protocol.v1.json
+
+[Install]
+WantedBy=default.target

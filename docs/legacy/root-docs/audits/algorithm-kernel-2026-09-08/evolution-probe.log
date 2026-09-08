@@ -1,0 +1,22 @@
+gp_evolution_probe
+legacy-v1 first invalid seed=3: (pipe X (standardize) (target kind=log1p) (ridge)); target: transform must be the first stage; target
+legacy-v1 invalid 2248/10000
+legacy-v2 first invalid seed=3: (pipe X (standardize) (target kind=log1p) (ridge)); target: transform must be the first stage; target
+legacy-v2 invalid 1947/10000
+legacy crossover first invalid seed=8: (pipe X (target kind=log1p) (target kind=log1p) (standardize) (ridge)); target: transform must be the first stage; target
+legacy crossover invalid 2271/10000
+V3 first invalid seed=12: (pipe X (blom append=true) (quantile_bins append=true bins=25) (target kind=log1p) (pair_prod append=true topk=16) (elasticnet alpha=0.0010012 l1_ratio=0.09375316848524005 sweeps=60)); target: transform must be the first stage; target
+V3 mutation invalid 141/10000
+V3 crossover first invalid seed=26: (pipe X (winsor_clip q=0.0050052000000000004) (target kind=log1p) (quantile_bins append=true bins=32) (blom append=true) (pair_prod append=true topk=17) (elasticnet alpha=0.0010013 l1_ratio=0.09375316848524005 sweeps=60)); target: transform must be the first stage; target
+V3 crossover invalid 346/10000
+V3 accepted child max stages=101 (no bound)
+map-only parent parameter-jitter changed 0/1000
+V3 invalid fit seed=19: Some(target transform must be the first stage)
+
+gp_evolution_probe_heads
+logit_ridge: invalid=9293; unchanged=707; unique structurally head-valid=0
+tab_boost: invalid=9293; unchanged=707; unique structurally head-valid=0
+extra_trees: invalid=9293; unchanged=707; unique structurally head-valid=0
+gam_boost: invalid=9293; unchanged=707; unique structurally head-valid=0
+pls: invalid=9293; unchanged=707; unique structurally head-valid=0
+logistic: invalid=0; unchanged=5692; unique structurally head-valid=658

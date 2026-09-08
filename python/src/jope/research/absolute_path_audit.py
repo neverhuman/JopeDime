@@ -300,10 +300,10 @@ def load_services(path: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
         manifest = json.load(handle)
     if manifest.get("schema") != "JopeSelfplayServiceManifest.v3":
         raise ValueError("unsupported service manifest schema")
-    active = [row for row in manifest.get("services", []) if row.get("active") is True]
-    if not active:
-        raise ValueError("service manifest has no active units")
-    return manifest, active
+    services = manifest.get("services", [])
+    if not services:
+        raise ValueError("service manifest has no units")
+    return manifest, services
 
 
 def classify(use: PathUse, bundle_root: Path) -> tuple[str | None, str | None]:
@@ -529,7 +529,7 @@ def audit(
     started_ms = int(time.time() * 1000)
     findings: list[dict[str, Any]] = []
     manifest, inventory = load_bundle(bundle_root)
-    service_manifest, active_services = load_services(service_manifest_path)
+    service_manifest, services = load_services(service_manifest_path)
     service_manifest_sha256 = sha256_file(service_manifest_path)
     declared_service_sha256 = manifest.get("service_manifest_sha256")
     if (
@@ -542,29 +542,38 @@ def audit(
         and manifest["service_manifest"] != service_manifest
     ):
         raise ValueError("service manifest content does not match the bundled inventory")
-    active_units = {row["unit"] for row in active_services}
+    service_units = {row["unit"] for row in services}
+    bundled_systemd_units = {
+        Path(target).name
+        for target in inventory
+        if target.startswith("runtime/systemd/")
+        and target.endswith((".service", ".timer"))
+    }
+    if not service_units.issubset(bundled_systemd_units):
+        raise ValueError("service manifest references a unit absent from the bundle")
+    complete_units = bundled_systemd_units
 
     if units:
         unit_by_name = {path.name: path for path in units}
-        if set(unit_by_name) != active_units:
-            missing = sorted(active_units - set(unit_by_name))
-            extra = sorted(set(unit_by_name) - active_units)
+        if set(unit_by_name) != complete_units:
+            missing = sorted(complete_units - set(unit_by_name))
+            extra = sorted(set(unit_by_name) - complete_units)
             findings.append(
                 _finding(
-                    "active_unit_inventory_mismatch",
-                    "provided units do not exactly match the active service manifest",
+                    "complete_unit_inventory_mismatch",
+                    "provided units do not exactly match every bundled service and timer",
                     missing=missing,
                     extra=extra,
                 )
             )
     else:
         unit_by_name = {
-            name: bundle_root / "runtime/systemd" / name for name in active_units
+            name: bundle_root / "runtime/systemd" / name for name in complete_units
         }
 
     uses: list[PathUse] = []
-    for row in active_services:
-        unit_path = unit_by_name.get(row["unit"])
+    for unit_name in sorted(complete_units):
+        unit_path = unit_by_name.get(unit_name)
         if unit_path is None:
             continue
         try:
@@ -573,9 +582,25 @@ def audit(
             findings.append(
                 _finding("unit_parse_failed", str(error), source=str(unit_path))
             )
+        try:
+            uses.append(
+                path_use(
+                    str(unit_path),
+                    source=service_manifest_path,
+                    field="bundled_systemd_asset",
+                    scope="bundle_sync_all_nodes",
+                    bundle_root=bundle_root,
+                )
+            )
+        except ValueError as error:
+            findings.append(_finding("invalid_path", str(error)))
+
+    for row in services:
+        unit_path = unit_by_name.get(row["unit"])
+        if unit_path is None:
+            continue
         for asset, field in (
-            (unit_path, "active_unit_asset"),
-            (bundle_root / "runtime/bin" / row["binary"], "active_binary_asset"),
+            (bundle_root / "runtime/bin" / row["binary"], "service_binary_asset"),
         ):
             try:
                 uses.append(
@@ -585,7 +610,7 @@ def audit(
                         field=field,
                         scope="bundle_sync_all_nodes",
                         bundle_root=bundle_root,
-                        executable=field == "active_binary_asset",
+                        executable=True,
                     )
                 )
             except ValueError as error:
@@ -783,7 +808,7 @@ def audit(
         "bundle_manifest_sha256": sha256_file(bundle_root / "bundle.json"),
         "service_manifest": str(service_manifest_path),
         "service_manifest_sha256": service_manifest_sha256,
-        "active_units": sorted(active_units),
+        "complete_systemd_artifacts": sorted(complete_units),
         "specs": [str(path) for path in specs],
         "required_nodes": nodes,
         "control_node": control_node,

@@ -1,0 +1,127 @@
+{
+  "schema": "HyperionOldPythonForensicProvenance.v1",
+  "status": "complete",
+  "authority": {
+    "host": "xbabe1",
+    "root": "/home/ubuntu/seed_data_cache/Hyperion_Entanglement"
+  },
+  "conclusion": {
+    "exact_byte_recovery_possible": false,
+    "selected_claim": "best-evidence deterministic reconstruction of old Python semantics",
+    "must_not_be_called": "byte-exact January replay"
+  },
+  "historical_writer": {
+    "path": "/home/ubuntu/seed_data_cache/Hyperion_Entanglement/process_regression_embeddings_100.py",
+    "sha256": "b5f03a771c6b71650c6030294bd45bf4e833fd4102f8b54d4cc9427d91215b24",
+    "birth_utc": "2026-01-30T11:43:17Z",
+    "current_mtime_utc": "2026-01-31T09:44:51Z",
+    "first_batch_artifact_utc": "2026-01-30T11:46:35Z",
+    "facebook_artifact_utc": "2026-01-30T12:47:44Z",
+    "artifact_layout": "float32 NPY (100,4,N,D), not NPZ"
+  },
+  "inference_model": {
+    "path": "/home/ubuntu/seed_data_cache/Hyperion_Entanglement/Hyperion_Entanglement_v6.py",
+    "sha256": "44d8653c9984ba297b0a72af99e96bd6c60d1199d49994bbcecb09b1c7d9cc96",
+    "mtime_utc": "2026-01-28T21:59:38Z",
+    "pre_cache_pyc_sha256": "8a70ebb556a0ae4bd0667ae9cde25b6272527d3ddb7a9eef69934a83ed800af2",
+    "forward_signature": "(x,m,p_val)"
+  },
+  "checkpoint": {
+    "path": "/home/ubuntu/seed_data_cache/Hyperion_Entanglement/runs/hyperion_v6_20260127_083701/ckpt_10.pt",
+    "sha256": "cce25e793f9d970bc9d6fbc4a1af9e2412a640712114f715afa95546369425c5",
+    "payload_keys": [
+      "cfg",
+      "model",
+      "step"
+    ],
+    "step": 10,
+    "model_tensor_count": 523,
+    "saved_rng_state": false,
+    "writer_model_load": {
+      "strict": false,
+      "missing_key_count": 30,
+      "unexpected_key_count": 33,
+      "live_randomly_initialized_keys_present": true
+    }
+  },
+  "training_architecture_only": {
+    "path": "/home/ubuntu/seed_data_cache/Hyperion_Entanglement/hyperion_v5_modules/model.py",
+    "sha256": "31e095d483013689307da7a191ed54b0e3c1ffafdf66d9779c4fd467a3fd180a",
+    "strict_checkpoint_load": true,
+    "forward_signature": "(x,m,p_id,p_val)",
+    "compatible_with_historical_writer": false
+  },
+  "requested_script_identities": {
+    "analyze_100_sweeps_autotune.py": "fcd4b169b5ec4339c275cd5aba9ca7dfa35803adc8cda4c5466388620adc6989",
+    "reproduce_facebook_sweep_lift.py": "9974f998989a097d5f935e318c4cfbf6486714e9d61c4128ef35b846b90065e5",
+    "catboost_sweep_lift_benchmark.py": "ca540106693292bdb5462a8181b309e207feb6f483bdfffbb1eb36b2add975e4"
+  },
+  "pre_cache_corroboration": {
+    "benchmark_r1000.py": "2b56686539ad305cb086c023c3c3867b14ce1a5c042402d304ac88f86de336c3",
+    "process_r1000_batch.py": "686d5da1baf9b7d3961ce02b0d79f2f3b97bc6aa008c69845de62f6f519690da",
+    "finding": "both select v6_083701/ckpt_last; benchmark_live.log records the partial-load fallback before cache generation"
+  },
+  "checkpoint_screen": {
+    "eligible_checkpoint_count": 135,
+    "rank_scale_count": 2,
+    "configuration_count": 270,
+    "cached_facebook_tensor_sha256": "10c3fda1d9d6b50e740af2f0a75cc06c7de416925f4c03043688874a360f8150",
+    "winner": {
+      "checkpoint_sha256": "cce25e793f9d970bc9d6fbc4a1af9e2412a640712114f715afa95546369425c5",
+      "rank_scale": 100,
+      "global_seed": 42,
+      "sweep_zero_mean_absolute_difference": 0.0244836839714,
+      "sweep_zero_rmse": 0.0292310584952,
+      "sweep_zero_correlation": 0.951343924995,
+      "array_equal": false
+    },
+    "bounded_seed_screen": {
+      "inclusive_range": [
+        0,
+        63
+      ],
+      "best_seed": 42,
+      "scale_three_mean_absolute_difference": 0.0229101362116,
+      "next_seed": 17,
+      "next_scale_three_mean_absolute_difference": 0.0294603553583
+    }
+  },
+  "reconstruction_recipe": {
+    "global_seed": 42,
+    "rank_scale": 100,
+    "sweeps": 100,
+    "sweep_seed": "42 + sweep_index * 777",
+    "windows": [
+      3,
+      6,
+      9,
+      12
+    ],
+    "shifts": [
+      [
+        0,
+        0
+      ],
+      [
+        1,
+        1
+      ]
+    ],
+    "cuda_amp": true,
+    "padding_rng": "global CUDA RNG seeded explicitly for reconstruction",
+    "feature_semantics": "concatenate train then test features, jointly encode without labels, split output rows afterward",
+    "collapse": "mean four scales per sweep, then mean all 100 sweeps",
+    "output_names": [
+      "train3.vs.orig",
+      "test3.vs.orig"
+    ]
+  },
+  "irrecoverable_evidence": [
+    "the writer was edited after artifact generation and no pre-edit writer or writer PYC survives",
+    "30 live inference parameters are initialized from unsaved CPU RNG",
+    "padding uses unsaved global CUDA RNG",
+    "the checkpoint stores no RNG or generator state",
+    "no launch command or environment receipt survives",
+    "no tested checkpoint/rank configuration matches the cached tensor"
+  ]
+}

@@ -1,0 +1,1748 @@
+{
+  "authorities": {
+    "checkpoint": {
+      "mtime_ns": 1769503031033418357,
+      "path": "/home/ubuntu/seed_data_cache/Hyperion_Entanglement/runs/hyperion_v6_20260127_083701/ckpt_10.pt",
+      "sha256": "cce25e793f9d970bc9d6fbc4a1af9e2412a640712114f715afa95546369425c5",
+      "size_bytes": 242752937
+    },
+    "files": {
+      "Hyperion_Entanglement_v6.py": {
+        "mtime_ns": 1769637578570401389,
+        "path": "/home/ubuntu/seed_data_cache/Hyperion_Entanglement/Hyperion_Entanglement_v6.py",
+        "sha256": "44d8653c9984ba297b0a72af99e96bd6c60d1199d49994bbcecb09b1c7d9cc96",
+        "size_bytes": 43912
+      },
+      "analyze_100_sweeps_autotune.py": {
+        "mtime_ns": 1769852009456303299,
+        "path": "/home/ubuntu/seed_data_cache/Hyperion_Entanglement/analyze_100_sweeps_autotune.py",
+        "sha256": "fcd4b169b5ec4339c275cd5aba9ca7dfa35803adc8cda4c5466388620adc6989",
+        "size_bytes": 8996
+      },
+      "catboost_sweep_lift_benchmark.py": {
+        "mtime_ns": 1783483202940044952,
+        "path": "/home/ubuntu/seed_data_cache/Hyperion_Entanglement/catboost_sweep_lift_benchmark.py",
+        "sha256": "ca540106693292bdb5462a8181b309e207feb6f483bdfffbb1eb36b2add975e4",
+        "size_bytes": 14615
+      },
+      "process_regression_embeddings_100.py": {
+        "mtime_ns": 1769852691554430183,
+        "path": "/home/ubuntu/seed_data_cache/Hyperion_Entanglement/process_regression_embeddings_100.py",
+        "sha256": "b5f03a771c6b71650c6030294bd45bf4e833fd4102f8b54d4cc9427d91215b24",
+        "size_bytes": 10853
+      },
+      "reproduce_facebook_sweep_lift.py": {
+        "mtime_ns": 1783486690393598378,
+        "path": "/home/ubuntu/seed_data_cache/Hyperion_Entanglement/reproduce_facebook_sweep_lift.py",
+        "sha256": "9974f998989a097d5f935e318c4cfbf6486714e9d61c4128ef35b846b90065e5",
+        "size_bytes": 32696
+      }
+    }
+  },
+  "claim": "deterministic reconstruction of old Python semantics; not byte-exact January replay",
+  "dataset_count": 20,
+  "dataset_order": [
+    "019de5d76a718163",
+    "047e62b52a3f4ede",
+    "13b5df533e59a626",
+    "17a4542ee4fb9e44",
+    "1cb97b1d7314d43d",
+    "30ef3eaa6d2971a9",
+    "3305a3ad973fb227",
+    "3baa7e37fc1f7861",
+    "3f781a51af45387e",
+    "542e75bc0cfdd1bf",
+    "693890aae9dc860b",
+    "79e600bc5fcd5da7",
+    "ab0239b9ef0ba28e",
+    "b253fbfae8460dc1",
+    "cf5e74b4e9594944",
+    "d2daf53412ab18dc",
+    "dee1fc8e9afd81c9",
+    "e1c1db5260d0894e",
+    "ee56a1015e344c11",
+    "fe3cc716a05d036f"
+  ],
+  "datasets": [
+    {
+      "campaign_index": 0,
+      "collapsed_cell_c_order_sha256": "17d76be5e352b9c41114f61c5f6bdb588cb5bd4e76c8761ae62b8ed65916d5e9",
+      "dataset_id": "019de5d76a718163",
+      "elapsed_seconds": 30.227844,
+      "inputs": {
+        "joint_feature_sha256": "29654bc9a760331072fa72dbe208b81ec2ded3725686b354fa5a12abc8b8952b",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          144,
+          2
+        ],
+        "test": {
+          "columns_including_target": 3,
+          "feature_columns": 2,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/019de5d76a718163/test.csv",
+          "rows": 24,
+          "sha256": "3c3880fd9922845c3b37d1ccdaeab314f03427fa630206845f6a4c30aca621be",
+          "target_column_index": 2,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 3,
+          "feature_columns": 2,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/019de5d76a718163/train.csv",
+          "rows": 120,
+          "sha256": "51bcd78adab1e89b6970e1db59b982d4faf751e6383d0c6b9b6dd58b027ad59b",
+          "target_column_index": 2,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.012420599348843098,
+          "mean": -0.09118890017271042,
+          "min": -0.24774399399757385,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/019de5d76a718163/test3.vs.orig",
+          "sha256": "3370276e1d41b89803b00778dd7f87514b5cfff89ce16fdc65dedddb4d2a186e",
+          "shape": [
+            24,
+            2
+          ],
+          "std": 0.08273623138666153
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.020262299105525017,
+          "mean": -0.0855436846613884,
+          "min": -0.24366271495819092,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/019de5d76a718163/train3.vs.orig",
+          "sha256": "04d0346e927533d33fbd0ead82136048d428ae06b7568b78f2585e2cb597b73c",
+          "shape": [
+            120,
+            2
+          ],
+          "std": 0.07802385836839676
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "fe5cbfdc63421b44324f96d02d945e421e41c7e147728552f9c4e30b3d19e1be",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.0508575439453125,
+        "mean": -0.08648455888032913,
+        "min": -0.2823486328125,
+        "shape": [
+          100,
+          4,
+          144,
+          2
+        ],
+        "std": 0.07947826385498047
+      }
+    },
+    {
+      "campaign_index": 1,
+      "collapsed_cell_c_order_sha256": "4d637a83259a567d4d2acb10b755a53cfde9ae65a824ad9c6585fef8576247c2",
+      "dataset_id": "047e62b52a3f4ede",
+      "elapsed_seconds": 29.183193,
+      "inputs": {
+        "joint_feature_sha256": "d7b1f36987b32f023c76415ec2a45a03f6cd1565def5dd4356c654e3bbe9214e",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          235,
+          12
+        ],
+        "test": {
+          "columns_including_target": 13,
+          "feature_columns": 12,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/047e62b52a3f4ede/test.csv",
+          "rows": 40,
+          "sha256": "db81d97c1bbcf243835ad680fc963705167fd8b461ede2adb7f747762b9e613d",
+          "target_column_index": 12,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 13,
+          "feature_columns": 12,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/047e62b52a3f4ede/train.csv",
+          "rows": 195,
+          "sha256": "f6efbbe844d2a00256435487f60174353502afee158f74044419464e91e30d9d",
+          "target_column_index": 12,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.021108003333210945,
+          "mean": -0.08886011689901352,
+          "min": -0.23610855638980865,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/047e62b52a3f4ede/test3.vs.orig",
+          "sha256": "07c2f706decd3d3e63cf5dfbd7f971ba7bde46028d4d1697101e0a19d47a4f7d",
+          "shape": [
+            40,
+            12
+          ],
+          "std": 0.07832925766706467
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.022200150415301323,
+          "mean": -0.08571621030569077,
+          "min": -0.24218231439590454,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/047e62b52a3f4ede/train3.vs.orig",
+          "sha256": "74a8d9e0b4b0b03dc4aaa34b3c6c649eb7a0c399db7a036f5218eefa795851de",
+          "shape": [
+            195,
+            12
+          ],
+          "std": 0.07726186513900757
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "0d09f00e5b8577cc9c279ba97f72e3e2cbed973601421f0f4bd95dfb130d68c8",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.0523223876953125,
+        "mean": -0.08625134080648422,
+        "min": -0.2784423828125,
+        "shape": [
+          100,
+          4,
+          235,
+          12
+        ],
+        "std": 0.07844113558530807
+      }
+    },
+    {
+      "campaign_index": 2,
+      "collapsed_cell_c_order_sha256": "29cf3f60e9ecc765af852ee8e32c36677edcb9232bb281d3f88eef6fc7123a4f",
+      "dataset_id": "13b5df533e59a626",
+      "elapsed_seconds": 28.692656,
+      "inputs": {
+        "joint_feature_sha256": "c4ecccd0bc673975285bae262d59cab5f7105aaeeaf18da1fcc46af99bad79ba",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          126,
+          19
+        ],
+        "test": {
+          "columns_including_target": 20,
+          "feature_columns": 19,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/13b5df533e59a626/test.csv",
+          "rows": 21,
+          "sha256": "8ddc474338429731b8514e0fbd84eb2c8beff11d6cc2d1f0ddbe479cc44b3118",
+          "target_column_index": 19,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 20,
+          "feature_columns": 19,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/13b5df533e59a626/train.csv",
+          "rows": 105,
+          "sha256": "daf84f20781471da155254c054101936ceb9860a06ceb7edc2590dd8886828bd",
+          "target_column_index": 19,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.016015686094760895,
+          "mean": -0.1577000766992569,
+          "min": -0.25409257411956787,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/13b5df533e59a626/test3.vs.orig",
+          "sha256": "430fbe5fd0714c9a6fc7e6ec287eb9abf29f4b83f53a66f82b2f1c136a8fd537",
+          "shape": [
+            21,
+            19
+          ],
+          "std": 0.07097916305065155
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.017405394464731216,
+          "mean": -0.09311158210039139,
+          "min": -0.25787749886512756,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/13b5df533e59a626/train3.vs.orig",
+          "sha256": "7d6a8f1212a6c10f67725cbed64bb484380622929eaa4dd81e16589fb7e970a5",
+          "shape": [
+            105,
+            19
+          ],
+          "std": 0.07466395199298859
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "65d487156f16ab2d163c59b7cd8bce6901254af8f88c7950350ae3d100585f1f",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.0481414794921875,
+        "mean": -0.10387632250785828,
+        "min": -0.2861328125,
+        "shape": [
+          100,
+          4,
+          126,
+          19
+        ],
+        "std": 0.07912058383226395
+      }
+    },
+    {
+      "campaign_index": 3,
+      "collapsed_cell_c_order_sha256": "c97243c2cd4c4e5d4af04dd73e4235be5b35ecc362fe73d83b24e7d2f9ab8424",
+      "dataset_id": "17a4542ee4fb9e44",
+      "elapsed_seconds": 28.302948,
+      "inputs": {
+        "joint_feature_sha256": "4acaa663106b5be12f773179f6b5bc8fcbd502075e267639711bd771552d3ff0",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          189,
+          9
+        ],
+        "test": {
+          "columns_including_target": 10,
+          "feature_columns": 9,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/17a4542ee4fb9e44/test.csv",
+          "rows": 32,
+          "sha256": "13018564259808725908cdab0529791cd2d43d03d388554aedb9b0361079be40",
+          "target_column_index": 9,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 10,
+          "feature_columns": 9,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/17a4542ee4fb9e44/train.csv",
+          "rows": 157,
+          "sha256": "abb8c42e2d352809c36a1e335d565d5a315b9789bafc70ff0a680c6f36dd1c28",
+          "target_column_index": 9,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.016138270497322083,
+          "mean": -0.1538519263267517,
+          "min": -0.2524855136871338,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/17a4542ee4fb9e44/test3.vs.orig",
+          "sha256": "e35e400211a50262682ecc03acf0695761ff5c82fdf4545049f4ed40ffbd4247",
+          "shape": [
+            32,
+            9
+          ],
+          "std": 0.06445027142763138
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.018300781026482582,
+          "mean": -0.09173339605331421,
+          "min": -0.2585469186306,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/17a4542ee4fb9e44/train3.vs.orig",
+          "sha256": "6d28b29394605a6c0dd9e6406fa0671429beb3fb0a12f9edf5f420286dfa7f1e",
+          "shape": [
+            157,
+            9
+          ],
+          "std": 0.07596806436777115
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "32a772427913b0465a4fa8dd655120bf8003e8acaf5e0c47863e0e759f15d0c7",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.044464111328125,
+        "mean": -0.10225081443786621,
+        "min": -0.2840576171875,
+        "shape": [
+          100,
+          4,
+          189,
+          9
+        ],
+        "std": 0.07887830585241318
+      }
+    },
+    {
+      "campaign_index": 4,
+      "collapsed_cell_c_order_sha256": "8b01d0afeb85c30a1aacbc47813bc86e0c62f38115514042853ed973f5833a17",
+      "dataset_id": "1cb97b1d7314d43d",
+      "elapsed_seconds": 28.924576,
+      "inputs": {
+        "joint_feature_sha256": "ad12cbe57529d08c60239f076d0435854ce55e3a69301f26696ac29de7d4ec54",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          200,
+          10
+        ],
+        "test": {
+          "columns_including_target": 11,
+          "feature_columns": 10,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/1cb97b1d7314d43d/test.csv",
+          "rows": 34,
+          "sha256": "ebf1425f8097b11ec54dc67e8a9af9d486a8d9a0083c6b98cef7bc493fba70ea",
+          "target_column_index": 10,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 11,
+          "feature_columns": 10,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/1cb97b1d7314d43d/train.csv",
+          "rows": 166,
+          "sha256": "12cebdca583ad0d7316e1963e0c1d7c2eda9efe1b9585a00a49364b570bb52e5",
+          "target_column_index": 10,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": -0.024556150659918785,
+          "mean": -0.1382291615009308,
+          "min": -0.25593385100364685,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/1cb97b1d7314d43d/test3.vs.orig",
+          "sha256": "cde9aac816c317f499e61d8f1572ca1e2b7bfe3ec54c7c8d9cf318638a229f7b",
+          "shape": [
+            34,
+            10
+          ],
+          "std": 0.0830007866024971
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.01552808191627264,
+          "mean": -0.09813309460878372,
+          "min": -0.24319946765899658,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/1cb97b1d7314d43d/train3.vs.orig",
+          "sha256": "9f6f07e3f62d455c864c50b2d44c95d1aa8a518f1c96795872226310de11ebe7",
+          "shape": [
+            166,
+            10
+          ],
+          "std": 0.07518583536148071
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "95709aac0fecaf7d7a1bb4be19b7befa5099698edd8a39db9512d936e79a6b64",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.0474853515625,
+        "mean": -0.10494942218065262,
+        "min": -0.2833251953125,
+        "shape": [
+          100,
+          4,
+          200,
+          10
+        ],
+        "std": 0.07897592335939407
+      }
+    },
+    {
+      "campaign_index": 5,
+      "collapsed_cell_c_order_sha256": "6d7f54686d709e6c0cc470444498709053986a80f04f8547a7bd2523d245d937",
+      "dataset_id": "30ef3eaa6d2971a9",
+      "elapsed_seconds": 35.116447,
+      "inputs": {
+        "joint_feature_sha256": "3bed1736396e25f3d717fa8b3a80b8ea6cd6c0d74c89f120136f59ea5e6e0405",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          131,
+          30
+        ],
+        "test": {
+          "columns_including_target": 31,
+          "feature_columns": 30,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/30ef3eaa6d2971a9/test.csv",
+          "rows": 22,
+          "sha256": "d7ef01a3237bc304d2f3b15c1f034babe03de34f4e0410b6eb1492e1bad1cf7b",
+          "target_column_index": 30,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 31,
+          "feature_columns": 30,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/30ef3eaa6d2971a9/train.csv",
+          "rows": 109,
+          "sha256": "53e723ca42438573f0e9e4584e1004d5c777b02b852dae9f67e60951134b63e5",
+          "target_column_index": 30,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.016427868977189064,
+          "mean": -0.15679290890693665,
+          "min": -0.2521275281906128,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/30ef3eaa6d2971a9/test3.vs.orig",
+          "sha256": "e17b383290a815bb6ed0656a8cb99f0f7aba07e693e3509902552650ae11b759",
+          "shape": [
+            22,
+            30
+          ],
+          "std": 0.06970825791358948
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.018997488543391228,
+          "mean": -0.08762098848819733,
+          "min": -0.25593870878219604,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/30ef3eaa6d2971a9/train3.vs.orig",
+          "sha256": "f1672e04ef9c04a14cd7693c533e51b770671aeddb362d3f74044af4f5f440f1",
+          "shape": [
+            109,
+            30
+          ],
+          "std": 0.07442373037338257
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "52a6794d19ab0f20392c5a48dae30bb87a97a8600026a5eeda0523239250189f",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.0585174560546875,
+        "mean": -0.09923765808343887,
+        "min": -0.28662109375,
+        "shape": [
+          100,
+          4,
+          131,
+          30
+        ],
+        "std": 0.07946804910898209
+      }
+    },
+    {
+      "campaign_index": 6,
+      "collapsed_cell_c_order_sha256": "ce73fa331ddc8104918982cfc2e6b4b305fa0c092685e2575ee27615abd11c33",
+      "dataset_id": "3305a3ad973fb227",
+      "elapsed_seconds": 35.335069,
+      "inputs": {
+        "joint_feature_sha256": "7634160be58f0f3e66130dfd935cd900207a516bf5c6c337d56e49353efbd9c0",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          240,
+          2
+        ],
+        "test": {
+          "columns_including_target": 3,
+          "feature_columns": 2,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/3305a3ad973fb227/test.csv",
+          "rows": 40,
+          "sha256": "832bb2073eaaca40477b8c4cf17844203a946869d97ea17e0fe19687fb8844dd",
+          "target_column_index": 2,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 3,
+          "feature_columns": 2,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/3305a3ad973fb227/train.csv",
+          "rows": 200,
+          "sha256": "638c6593584f5c0d38a98827e59bea2fec1ffc7dc7a811f7cfa6f19c8cc00dad",
+          "target_column_index": 2,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.0052810837514698505,
+          "mean": -0.11089158058166504,
+          "min": -0.248291477560997,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/3305a3ad973fb227/test3.vs.orig",
+          "sha256": "07f6ecd09fae6be5132156666c4669f57bee0216bc462ca95d4335c95118d56e",
+          "shape": [
+            40,
+            2
+          ],
+          "std": 0.07902390509843826
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.02050035260617733,
+          "mean": -0.08337503671646118,
+          "min": -0.24739700555801392,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/3305a3ad973fb227/train3.vs.orig",
+          "sha256": "f1c0a5d23003c83247a1992ed7019a1968fc3bc57bfad30bd9fb8b009b58f932",
+          "shape": [
+            200,
+            2
+          ],
+          "std": 0.07843316346406937
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "694f1de1ece9ccdc2790c778b98089b320be169978577d7e49f18fc779eeaf33",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.0552825927734375,
+        "mean": -0.08796112984418869,
+        "min": -0.2889404296875,
+        "shape": [
+          100,
+          4,
+          240,
+          2
+        ],
+        "std": 0.07992527633905411
+      }
+    },
+    {
+      "campaign_index": 7,
+      "collapsed_cell_c_order_sha256": "e311727df0667a5f55f5f84f7870ff5cee47b4c0c581cfb38e7d881cd1abf3f3",
+      "dataset_id": "3baa7e37fc1f7861",
+      "elapsed_seconds": 29.752679,
+      "inputs": {
+        "joint_feature_sha256": "d3ecea36f941d33b801c20a065a4893fb32eaaf0c52080d6a286a3a7c1c2f1ea",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          323,
+          4
+        ],
+        "test": {
+          "columns_including_target": 5,
+          "feature_columns": 4,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/3baa7e37fc1f7861/test.csv",
+          "rows": 54,
+          "sha256": "3fd03a9fc1ce7d56c51b0b55b4b8763e2e5d8050d41ba06dbcc59a43654057ad",
+          "target_column_index": 4,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 5,
+          "feature_columns": 4,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/3baa7e37fc1f7861/train.csv",
+          "rows": 269,
+          "sha256": "d4c16304ff999b49535e953b98521ded91604e04d6e905b28a5dbd4c62b0fec5",
+          "target_column_index": 4,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.016417406499385834,
+          "mean": -0.09785885363817215,
+          "min": -0.25379180908203125,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/3baa7e37fc1f7861/test3.vs.orig",
+          "sha256": "d072964bf8f104a6f9945fdab6fdf5ef8280910be99e4f2ae6e1bbf41d3e9e75",
+          "shape": [
+            54,
+            4
+          ],
+          "std": 0.08226127922534943
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.01867273449897766,
+          "mean": -0.09633874148130417,
+          "min": -0.2548432946205139,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/3baa7e37fc1f7861/train3.vs.orig",
+          "sha256": "11d8197e045a6cd076607f642e8e06e5ad09604cd273dc49e2122e2e814530de",
+          "shape": [
+            269,
+            4
+          ],
+          "std": 0.07856357097625732
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "2c2eb76d3e208ef660e08fdb79c8e17a803857448749a0493856caf0f77f3d5b",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.049041748046875,
+        "mean": -0.09659288078546524,
+        "min": -0.28369140625,
+        "shape": [
+          100,
+          4,
+          323,
+          4
+        ],
+        "std": 0.07995807379484177
+      }
+    },
+    {
+      "campaign_index": 8,
+      "collapsed_cell_c_order_sha256": "9316b2a1142dc1718d4cfd8b2d51e881fde130fc8c29c25e55dafb8257387c73",
+      "dataset_id": "3f781a51af45387e",
+      "elapsed_seconds": 30.161135,
+      "inputs": {
+        "joint_feature_sha256": "21f68efeaa563af5a3d6c3638a7bb23b9f5be6c385a0f0a598584cc267ea44d6",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          274,
+          3
+        ],
+        "test": {
+          "columns_including_target": 4,
+          "feature_columns": 3,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/3f781a51af45387e/test.csv",
+          "rows": 46,
+          "sha256": "70ea053fba7399996f05da58ff56797ec4affa4a641eeb1cd8ac47dc98d334b3",
+          "target_column_index": 3,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 4,
+          "feature_columns": 3,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/3f781a51af45387e/train.csv",
+          "rows": 228,
+          "sha256": "0cf0e55c14f03a1f28d4cd74c222ff05ccc17f72ca0ee34293b369fe8dac52cc",
+          "target_column_index": 3,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.01562498603016138,
+          "mean": -0.09577516466379166,
+          "min": -0.24636611342430115,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/3f781a51af45387e/test3.vs.orig",
+          "sha256": "afccb887285648b64531255496e69d2f02aac413b283a8f4da33833b68ad5bbe",
+          "shape": [
+            46,
+            3
+          ],
+          "std": 0.08203734457492828
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.019632613286376,
+          "mean": -0.08901798725128174,
+          "min": -0.24293655157089233,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/3f781a51af45387e/train3.vs.orig",
+          "sha256": "2a751911e8dc18eaf875dff90f6b2058b6cad68c1fc500cd7c4d80c483d852f0",
+          "shape": [
+            228,
+            3
+          ],
+          "std": 0.07776353508234024
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "cca2c8f9afec3cf9de976c4a2363877c584ab576e66d40ba120747d28a881090",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.0461883544921875,
+        "mean": -0.09015239775180817,
+        "min": -0.280029296875,
+        "shape": [
+          100,
+          4,
+          274,
+          3
+        ],
+        "std": 0.07921978831291199
+      }
+    },
+    {
+      "campaign_index": 9,
+      "collapsed_cell_c_order_sha256": "85c7fc12d5c2ab283af43ba118c0bc8bfdbe91f88cd88d904fe1644877c0312b",
+      "dataset_id": "542e75bc0cfdd1bf",
+      "elapsed_seconds": 30.149832,
+      "inputs": {
+        "joint_feature_sha256": "89e143f14b4ea26d0e3986fbcfb617545749ee11f2a9d34e181e714dbd21bca2",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          45,
+          17
+        ],
+        "test": {
+          "columns_including_target": 18,
+          "feature_columns": 17,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/542e75bc0cfdd1bf/test.csv",
+          "rows": 8,
+          "sha256": "9e04446fc36c649dc3f72502ca62f565ec78e5aa329a7ab07dd97a7e5eaf99ff",
+          "target_column_index": 17,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 18,
+          "feature_columns": 17,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/542e75bc0cfdd1bf/train.csv",
+          "rows": 37,
+          "sha256": "f0d6ae95f8b160407d4aa1ec77b6e5e355cbe26bd688362baa2287a8c48f683b",
+          "target_column_index": 17,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.005599698051810265,
+          "mean": -0.1326335221529007,
+          "min": -0.2596034109592438,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/542e75bc0cfdd1bf/test3.vs.orig",
+          "sha256": "dd5d3813c89a7f46f2ac2487e21b5ac04c5bea9c694142d5459e36b1c1f6bde4",
+          "shape": [
+            8,
+            17
+          ],
+          "std": 0.0785164088010788
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.006884319707751274,
+          "mean": -0.10770541429519653,
+          "min": -0.2623440623283386,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/542e75bc0cfdd1bf/train3.vs.orig",
+          "sha256": "924be3a8872437f5178c56cc5c85f0e5525a7a600856df719e0d89d9c095ec1e",
+          "shape": [
+            37,
+            17
+          ],
+          "std": 0.07796754688024521
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "1030463b06454cd24faee02875b714ea240032b64a0d9e99e5364a3e61188997",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.0410919189453125,
+        "mean": -0.1121370792388916,
+        "min": -0.287109375,
+        "shape": [
+          100,
+          4,
+          45,
+          17
+        ],
+        "std": 0.07984145730733871
+      }
+    },
+    {
+      "campaign_index": 10,
+      "collapsed_cell_c_order_sha256": "c581ff17d0a352c70cb3e82d245309a226937d6968905841c7dbca7199a13b17",
+      "dataset_id": "693890aae9dc860b",
+      "elapsed_seconds": 29.367133,
+      "inputs": {
+        "joint_feature_sha256": "bd04f0142f52eef800b7b4cf4d587c7ebf039a8c4dc660c437bf9767169ad09a",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          243,
+          1
+        ],
+        "test": {
+          "columns_including_target": 2,
+          "feature_columns": 1,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/693890aae9dc860b/test.csv",
+          "rows": 41,
+          "sha256": "03bb6c0b0abdf033f3318dbd30eaa04cd45e85820413e0ff80b52e31f4259186",
+          "target_column_index": 1,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 2,
+          "feature_columns": 1,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/693890aae9dc860b/train.csv",
+          "rows": 202,
+          "sha256": "0a9dc81f52ea843bbfbbd2fabd9ff1e7c78e5d025ad21b4de4be9aa59d5497dd",
+          "target_column_index": 1,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.036202434450387955,
+          "mean": -0.06399362534284592,
+          "min": -0.2147047370672226,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/693890aae9dc860b/test3.vs.orig",
+          "sha256": "5603a330c4d27f5702747cc929ca9642896fc97ca181579ad55898ab1db5f2f8",
+          "shape": [
+            41,
+            1
+          ],
+          "std": 0.08260879665613174
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.039281006902456284,
+          "mean": -0.06161617115139961,
+          "min": -0.22069931030273438,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/693890aae9dc860b/train3.vs.orig",
+          "sha256": "72e8307236f49fab1be9f7543b9aebf7458568152f4b2d8c032238a7cf6ea572",
+          "shape": [
+            202,
+            1
+          ],
+          "std": 0.08069954812526703
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "fd42b8d2ac6adc65ee01b19dea8ef7cc67030eba8f3894190fed39b3edeac334",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.061859130859375,
+        "mean": -0.06201730668544769,
+        "min": -0.2552490234375,
+        "shape": [
+          100,
+          4,
+          243,
+          1
+        ],
+        "std": 0.08150393515825272
+      }
+    },
+    {
+      "campaign_index": 11,
+      "collapsed_cell_c_order_sha256": "e6cd7aa1c2d4ca651f24e7cd0778259425c2d272dec4abcae7104197012c0219",
+      "dataset_id": "79e600bc5fcd5da7",
+      "elapsed_seconds": 30.561243,
+      "inputs": {
+        "joint_feature_sha256": "2c9f08a62d9a7eb0c732cdc5d5200fe8d38a64fceb62bb181453803356837dd4",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          216,
+          3
+        ],
+        "test": {
+          "columns_including_target": 4,
+          "feature_columns": 3,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/79e600bc5fcd5da7/test.csv",
+          "rows": 36,
+          "sha256": "0622e041bc3258a108bd70f73847e2681ea0cdb81cdb4bf5cae14805a0c69e28",
+          "target_column_index": 3,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 4,
+          "feature_columns": 3,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/79e600bc5fcd5da7/train.csv",
+          "rows": 180,
+          "sha256": "24dda7eb3c3cfaf211d94f35b95806a5ef2d983f361575d912bb708ca83e58a1",
+          "target_column_index": 3,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.0025312441866844893,
+          "mean": -0.11536268144845963,
+          "min": -0.25208571553230286,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/79e600bc5fcd5da7/test3.vs.orig",
+          "sha256": "1188c64d4e5bbc6471ce70ab1be54758fe901063b478859ec2f23842cfee41ac",
+          "shape": [
+            36,
+            3
+          ],
+          "std": 0.08220676332712173
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.018446553498506546,
+          "mean": -0.09174353629350662,
+          "min": -0.2492382824420929,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/79e600bc5fcd5da7/train3.vs.orig",
+          "sha256": "bb43f2a05a063a73e04ca7f4e7e89a06675296dd1a89f8c4f50967b280484668",
+          "shape": [
+            180,
+            3
+          ],
+          "std": 0.07710005342960358
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "35c0d7c85df1198ef9d9e75a7bf23a272463f72fd0859fe849ff4f6c939b9de1",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.0452423095703125,
+        "mean": -0.09568006545305252,
+        "min": -0.2861328125,
+        "shape": [
+          100,
+          4,
+          216,
+          3
+        ],
+        "std": 0.0791516825556755
+      }
+    },
+    {
+      "campaign_index": 12,
+      "collapsed_cell_c_order_sha256": "9ee02418877e7d57ce2bb0047999499cae6fb8c4fc92a15d7dbc137f5e78d12d",
+      "dataset_id": "ab0239b9ef0ba28e",
+      "elapsed_seconds": 41.690905,
+      "inputs": {
+        "joint_feature_sha256": "4ae827eb95f31f2f0f0551c26182adbfa6b1995f0335846362222bd8ec428428",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          34,
+          1040
+        ],
+        "test": {
+          "columns_including_target": 1041,
+          "feature_columns": 1040,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/ab0239b9ef0ba28e/test.csv",
+          "rows": 6,
+          "sha256": "a96000f1a12738cc744b635caca8fedd22e849922e5d6d5f63dac82a8e3029c1",
+          "target_column_index": 1040,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 1041,
+          "feature_columns": 1040,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/ab0239b9ef0ba28e/train.csv",
+          "rows": 28,
+          "sha256": "708cb744064657fe9e267097e71d9d5131ba66a06c54207e4bd894ee3432013a",
+          "target_column_index": 1040,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.00404408760368824,
+          "mean": -0.12417752295732498,
+          "min": -0.2595626711845398,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/ab0239b9ef0ba28e/test3.vs.orig",
+          "sha256": "a940c1fd0256293984be807562ccdc9837b87764eb4f17bdaa1b7bc84fd7906a",
+          "shape": [
+            6,
+            1040
+          ],
+          "std": 0.0785098746418953
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.004324726294726133,
+          "mean": -0.10645299404859543,
+          "min": -0.26123809814453125,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/ab0239b9ef0ba28e/train3.vs.orig",
+          "sha256": "04703ddc466f03109ab076b03994c5251ac9045d4b664362be30d692a3b4fed8",
+          "shape": [
+            28,
+            1040
+          ],
+          "std": 0.07852204144001007
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "3a97932011ee08e29212b4dcfe8a6724d9d91cccaebd051cade3980665bbf256",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.04486083984375,
+        "mean": -0.10958084464073181,
+        "min": -0.29541015625,
+        "shape": [
+          100,
+          4,
+          34,
+          1040
+        ],
+        "std": 0.079961858689785
+      }
+    },
+    {
+      "campaign_index": 13,
+      "collapsed_cell_c_order_sha256": "aa233bb6f93316f7ca5db090d326e70985f1ef889774df8bba3421a8da59a261",
+      "dataset_id": "b253fbfae8460dc1",
+      "elapsed_seconds": 29.170894,
+      "inputs": {
+        "joint_feature_sha256": "2d7b09b5843e51b7a8babe3e1a5179e8278f5a0c4520d15259e5933dd7f711ab",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          52,
+          7
+        ],
+        "test": {
+          "columns_including_target": 8,
+          "feature_columns": 7,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/b253fbfae8460dc1/test.csv",
+          "rows": 9,
+          "sha256": "15b570f690fca04746947f1b307a6af86abeeb0ca960bc5bc9fbf30ab9c29de6",
+          "target_column_index": 7,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 8,
+          "feature_columns": 7,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/b253fbfae8460dc1/train.csv",
+          "rows": 43,
+          "sha256": "130daab3e850eb95658f904f759dd6c4113963474d3552ca6508d98e71548aff",
+          "target_column_index": 7,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": -0.0014366779942065477,
+          "mean": -0.11402330547571182,
+          "min": -0.2512602210044861,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/b253fbfae8460dc1/test3.vs.orig",
+          "sha256": "374cccb5b830c9f86bd092378fb54433f492cf5aacb672ce953461fe69275539",
+          "shape": [
+            9,
+            7
+          ],
+          "std": 0.08883675187826157
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.009868604131042957,
+          "mean": -0.10497287660837173,
+          "min": -0.2586929202079773,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/b253fbfae8460dc1/train3.vs.orig",
+          "sha256": "b314ab517e3d78949c8783757984037e06c397474124d2e06dbc9e578009630a",
+          "shape": [
+            43,
+            7
+          ],
+          "std": 0.07674890756607056
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "952e11d43cfc56ed4314bfc0c013a99e41eb342dc2b6178892df9467097a825e",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.0420989990234375,
+        "mean": -0.1065393015742302,
+        "min": -0.2880859375,
+        "shape": [
+          100,
+          4,
+          52,
+          7
+        ],
+        "std": 0.08006016910076141
+      }
+    },
+    {
+      "campaign_index": 14,
+      "collapsed_cell_c_order_sha256": "5704d905b14bd23e0c2ee4d4335b8e26735b41852cc65950aa794e7899648d0a",
+      "dataset_id": "cf5e74b4e9594944",
+      "elapsed_seconds": 29.874873,
+      "inputs": {
+        "joint_feature_sha256": "16ce77f177723409eaf800af4f0c8a9bcb7dfa124c897a7b85981d97b2ff3dc5",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          13,
+          569
+        ],
+        "test": {
+          "columns_including_target": 570,
+          "feature_columns": 569,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/cf5e74b4e9594944/test.csv",
+          "rows": 3,
+          "sha256": "7db0822f1cb7868d17979d77b3cd6026ced380dce95ca695363fe8cc465e7ad2",
+          "target_column_index": 569,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 570,
+          "feature_columns": 569,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/cf5e74b4e9594944/train.csv",
+          "rows": 10,
+          "sha256": "448561065e46696f52695daa363d3b273d67f119c198e5315c1c5e3a88798bfd",
+          "target_column_index": 569,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.000940833066124469,
+          "mean": -0.11853465437889099,
+          "min": -0.25655242800712585,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/cf5e74b4e9594944/test3.vs.orig",
+          "sha256": "7190c1e5378800cf0108d300d79cde081b8812ad873569bfd9cf896a69059e4b",
+          "shape": [
+            3,
+            569
+          ],
+          "std": 0.07247819751501083
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.001016377005726099,
+          "mean": -0.1127755269408226,
+          "min": -0.25840988755226135,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/cf5e74b4e9594944/train3.vs.orig",
+          "sha256": "259b95999aa67f12448bf7ad85247107028888382b77cd29b9cff8d30c07014f",
+          "shape": [
+            10,
+            569
+          ],
+          "std": 0.0829419270157814
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "ae5df06fccf0cd869cba4219e8a559c1a7fe2a15c7f1a75e4f4be1bc54864b29",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.0500946044921875,
+        "mean": -0.11410455405712128,
+        "min": -0.2867431640625,
+        "shape": [
+          100,
+          4,
+          13,
+          569
+        ],
+        "std": 0.08161067217588425
+      }
+    },
+    {
+      "campaign_index": 15,
+      "collapsed_cell_c_order_sha256": "20a35982e45efe6be602048f0c32bf593e46b85b3a479c12463f605dc07c8bf5",
+      "dataset_id": "d2daf53412ab18dc",
+      "elapsed_seconds": 30.676481,
+      "inputs": {
+        "joint_feature_sha256": "422adbb8a180cc5999a054ea2b0c749c2d737d6030453ed5d70f28d975410568",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          306,
+          18
+        ],
+        "test": {
+          "columns_including_target": 19,
+          "feature_columns": 18,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/d2daf53412ab18dc/test.csv",
+          "rows": 51,
+          "sha256": "11e74707f870729d3bde09a2a833182cef2d5fb332085d19552b49173455bc35",
+          "target_column_index": 18,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 19,
+          "feature_columns": 18,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/d2daf53412ab18dc/train.csv",
+          "rows": 255,
+          "sha256": "b4df46c6d4c67b71d930800196dfae14d46b40a107469a5ca29cb6836bcff883",
+          "target_column_index": 18,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.017289645969867706,
+          "mean": -0.15562409162521362,
+          "min": -0.2502099573612213,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/d2daf53412ab18dc/test3.vs.orig",
+          "sha256": "a7f6ff43f8337b854a26f47f26815ea6db5f670c3453011b1353b173e900413f",
+          "shape": [
+            51,
+            18
+          ],
+          "std": 0.08480916917324066
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.019894113764166832,
+          "mean": -0.089374840259552,
+          "min": -0.2595495581626892,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/d2daf53412ab18dc/train3.vs.orig",
+          "sha256": "37f8b346acfb18b4fdcf09b4ff81d8b0e1c636d88c19e4b7e4550bd5fe3e970a",
+          "shape": [
+            255,
+            18
+          ],
+          "std": 0.07127828896045685
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "38feb1811fb900e2d1c8b30ccb65b469f55a96c414056702579345a42f3799e7",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.0567474365234375,
+        "mean": -0.1004163846373558,
+        "min": -0.2891845703125,
+        "shape": [
+          100,
+          4,
+          306,
+          18
+        ],
+        "std": 0.07891854643821716
+      }
+    },
+    {
+      "campaign_index": 16,
+      "collapsed_cell_c_order_sha256": "c90914c77b415b614f1ac3924b152f695efe6acf9213b5213a850b7d60b8f23c",
+      "dataset_id": "dee1fc8e9afd81c9",
+      "elapsed_seconds": 29.69449,
+      "inputs": {
+        "joint_feature_sha256": "62cb68b04ff5908d0caa470a7299669e0e44fbd0d8076102e897c8eba7649ca3",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          155,
+          8
+        ],
+        "test": {
+          "columns_including_target": 9,
+          "feature_columns": 8,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/dee1fc8e9afd81c9/test.csv",
+          "rows": 26,
+          "sha256": "5b2ff1c591d014656d4610b92cdd209e934c00b3217bb79fafc74dcef3a0e9e6",
+          "target_column_index": 8,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 9,
+          "feature_columns": 8,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/dee1fc8e9afd81c9/train.csv",
+          "rows": 129,
+          "sha256": "301a7df114759e50110e097979ece2046f6ec12a347f4af6a48b2deea8a6243d",
+          "target_column_index": 8,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.00030229613184928894,
+          "mean": -0.12414547801017761,
+          "min": -0.2556683421134949,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/dee1fc8e9afd81c9/test3.vs.orig",
+          "sha256": "f651a0b4b7163257620f6c2c1e9dcae33a83327d2ac0a19a00f31010a5469a35",
+          "shape": [
+            26,
+            8
+          ],
+          "std": 0.07341034710407257
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.016628064215183258,
+          "mean": -0.09853515774011612,
+          "min": -0.2589700222015381,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/dee1fc8e9afd81c9/train3.vs.orig",
+          "sha256": "63ae15e85e6dcd9525b8fceedd64b3bddfb431202009d82d54c67f607efcbb05",
+          "shape": [
+            129,
+            8
+          ],
+          "std": 0.07804076373577118
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "8518c97229823adbea16a35612b6f71f31ac40d14c189f55ec7bb5283eba50e5",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.0453948974609375,
+        "mean": -0.10283108800649643,
+        "min": -0.283203125,
+        "shape": [
+          100,
+          4,
+          155,
+          8
+        ],
+        "std": 0.07892145216464996
+      }
+    },
+    {
+      "campaign_index": 17,
+      "collapsed_cell_c_order_sha256": "5dd552cabc1a9a3a511f7817e5d9a1d205a95113de822dd19c32553a07496358",
+      "dataset_id": "e1c1db5260d0894e",
+      "elapsed_seconds": 28.727441,
+      "inputs": {
+        "joint_feature_sha256": "27e3ac20f4ee1249144acf69cf2e306971320792b49f24afd38db901fd64b663",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          100,
+          10
+        ],
+        "test": {
+          "columns_including_target": 11,
+          "feature_columns": 10,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/e1c1db5260d0894e/test.csv",
+          "rows": 17,
+          "sha256": "647caeb8b7301dcded97d0dd62d8ffffa2d376dcd60e7db83ef2ad02c47c2271",
+          "target_column_index": 10,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 11,
+          "feature_columns": 10,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/e1c1db5260d0894e/train.csv",
+          "rows": 83,
+          "sha256": "bfc6a2802fb867d5d63b1a5b3d8171616914c8e12756e532112bc41497fb67a1",
+          "target_column_index": 10,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.016289344057440758,
+          "mean": -0.1064324751496315,
+          "min": -0.2563035488128662,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/e1c1db5260d0894e/test3.vs.orig",
+          "sha256": "891ed84319e70820eddb02c0075dd72e0486096614e1ec01128f1fdd59632e29",
+          "shape": [
+            17,
+            10
+          ],
+          "std": 0.07831616699695587
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.014706478454172611,
+          "mean": -0.10631725192070007,
+          "min": -0.25673964619636536,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/e1c1db5260d0894e/train3.vs.orig",
+          "sha256": "3b0a2bea598337d47549e7ec6755ba8bb1b28ab684a188510ee24481e9dd067c",
+          "shape": [
+            83,
+            10
+          ],
+          "std": 0.07808323949575424
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "b0f311705690aafbabfe62c6c0ff5fa378410f67dd6da3a48ba8e3d56a1443ab",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.045806884765625,
+        "mean": -0.10633683949708939,
+        "min": -0.283935546875,
+        "shape": [
+          100,
+          4,
+          100,
+          10
+        ],
+        "std": 0.079339399933815
+      }
+    },
+    {
+      "campaign_index": 18,
+      "collapsed_cell_c_order_sha256": "8f350d68b85aa6d0e606486ae3378c6c4e147c58465ec3cbd96ec5fda808bb76",
+      "dataset_id": "ee56a1015e344c11",
+      "elapsed_seconds": 29.226556,
+      "inputs": {
+        "joint_feature_sha256": "2873305f9b090113156d57232cb566672125012071af7cc6f6055bd274c64a2c",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          125,
+          4
+        ],
+        "test": {
+          "columns_including_target": 5,
+          "feature_columns": 4,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/ee56a1015e344c11/test.csv",
+          "rows": 21,
+          "sha256": "1879fd389b06e5e85d6b6445f00b16e2f5e5c605457462ac688086c07c2a8c59",
+          "target_column_index": 4,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 5,
+          "feature_columns": 4,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/ee56a1015e344c11/train.csv",
+          "rows": 104,
+          "sha256": "c2901b2480d859f03539855ca1c350507538dd7a16f3cb54d1c698c634fb9d89",
+          "target_column_index": 4,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": -0.00207301857881248,
+          "mean": -0.12981587648391724,
+          "min": -0.2560763657093048,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/ee56a1015e344c11/test3.vs.orig",
+          "sha256": "80f53a67f2b78d7d7dd069b611c666a7d421378968257305d45f91863e0b706c",
+          "shape": [
+            21,
+            4
+          ],
+          "std": 0.0811815932393074
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.01663910783827305,
+          "mean": -0.09842764586210251,
+          "min": -0.25342071056365967,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/ee56a1015e344c11/train3.vs.orig",
+          "sha256": "bdfb68bbebdc984d2e6a81102582ca06b740f02c1e327ea88089931f33d87f6a",
+          "shape": [
+            104,
+            4
+          ],
+          "std": 0.07718242704868317
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "53a243eb3f599e6a14060b6ad111aebe62bdb3f0a19af8d4a721e015950f0679",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.0483551025390625,
+        "mean": -0.10370086133480072,
+        "min": -0.2803955078125,
+        "shape": [
+          100,
+          4,
+          125,
+          4
+        ],
+        "std": 0.07956363260746002
+      }
+    },
+    {
+      "campaign_index": 19,
+      "collapsed_cell_c_order_sha256": "7f86b9c1c9db968b7b0f4a359ee6d737ef410c5ea50a24138a9b1914dae2fa09",
+      "dataset_id": "fe3cc716a05d036f",
+      "elapsed_seconds": 29.166261,
+      "inputs": {
+        "joint_feature_sha256": "7bbb1bfcb4ac7b59bcfcaf3b1aafd1ceadec1db309fc0e7688733f2c01ccb6ae",
+        "joint_order": "all train feature rows, then all test feature rows",
+        "joint_shape": [
+          240,
+          2
+        ],
+        "test": {
+          "columns_including_target": 3,
+          "feature_columns": 2,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/fe3cc716a05d036f/test.csv",
+          "rows": 40,
+          "sha256": "cf3b11943d8717aeb70e2c8e42cfc9aeb2a23c568d777925b99198dba28ff405",
+          "target_column_index": 2,
+          "target_policy": "excluded before any encoder call"
+        },
+        "train": {
+          "columns_including_target": 3,
+          "feature_columns": 2,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/inputs/fe3cc716a05d036f/train.csv",
+          "rows": 200,
+          "sha256": "1f8bd42f24a840a08e51609b1dc6f92d1cd5a33d35f0ac6345857a1bc473de05",
+          "target_column_index": 2,
+          "target_policy": "excluded before any encoder call"
+        }
+      },
+      "outputs": {
+        "test": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.011601599864661694,
+          "mean": -0.0881512314081192,
+          "min": -0.24654358625411987,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/fe3cc716a05d036f/test3.vs.orig",
+          "sha256": "f1621fc40d6bd8ec1ff42173d8be102469164ddac3b838b9d1e7b43e9be77407",
+          "shape": [
+            40,
+            2
+          ],
+          "std": 0.0769861713051796
+        },
+        "train": {
+          "dtype": "float32",
+          "finite": true,
+          "max": 0.021805698052048683,
+          "mean": -0.08536134660243988,
+          "min": -0.24066223204135895,
+          "path": "/home/ubuntu/hyperion-old-orig-20260809.6GhMm5/run1/fe3cc716a05d036f/train3.vs.orig",
+          "sha256": "c729da0bfef2f5a3452bd8678135635ba373677e1aad31ecef34d17c1ad8fe32",
+          "shape": [
+            200,
+            2
+          ],
+          "std": 0.07922534644603729
+        }
+      },
+      "sweep_tensor": {
+        "c_order_sha256": "bd68aff8b72f25c40a3863db5daee797fde8c5fc0033d2d305932cea9021893a",
+        "dtype": "float32",
+        "finite": true,
+        "max": 0.0498199462890625,
+        "mean": -0.0858263373374939,
+        "min": -0.2823486328125,
+        "shape": [
+          100,
+          4,
+          240,
+          2
+        ],
+        "std": 0.07947184890508652
+      }
+    }
+  ],
+  "elapsed_seconds": 614.16206,
+  "environment": {
+    "cuda_capability": [
+      8,
+      9
+    ],
+    "cuda_device": "NVIDIA GeForce RTX 4090",
+    "cuda_runtime": "12.8",
+    "cuda_visible_devices": "0",
+    "float32_matmul_precision": "high",
+    "hostname": "xbabe1",
+    "numpy": "2.3.5",
+    "pandas": "3.0.0",
+    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+    "torch": "2.7.0+cu128",
+    "visible_cuda_device_count": 1
+  },
+  "generated_at_utc": "2026-08-09T20:57:45Z",
+  "known_irrecoverable_gap": {
+    "exact_replay_possible": false,
+    "reasons": [
+      "the likely legacy checkpoint leaves live model keys randomly initialized",
+      "the January writer did not seed or record global Torch/CUDA initialization RNG",
+      "padding used unrecorded global CUDA RNG state",
+      "the writer was edited after cache creation and no pre-edit snapshot survives"
+    ]
+  },
+  "load_diagnostics": {
+    "checkpoint_model_key_count": 523,
+    "ckpt_path": "/home/ubuntu/seed_data_cache/Hyperion_Entanglement/runs/hyperion_v6_20260127_083701/ckpt_10.pt",
+    "ckpt_sha256": "cce25e793f9d970bc9d6fbc4a1af9e2412a640712114f715afa95546369425c5",
+    "load_strict": false,
+    "missing_key_count": 30,
+    "missing_keys": [
+      "input_proj.0.weight",
+      "input_proj.0.bias",
+      "input_proj.2.weight",
+      "input_proj.2.bias",
+      "row_pool.mlp.0.weight",
+      "row_pool.mlp.0.bias",
+      "row_pool.mlp.2.weight",
+      "row_pool.mlp.2.bias",
+      "col_pool.mlp.0.weight",
+      "col_pool.mlp.0.bias",
+      "col_pool.mlp.2.weight",
+      "col_pool.mlp.2.bias",
+      "emb_head.common.weight",
+      "emb_head.common.bias",
+      "emb_head.heads.0.0.weight",
+      "emb_head.heads.0.0.bias",
+      "emb_head.heads.0.2.weight",
+      "emb_head.heads.0.2.bias",
+      "emb_head.heads.1.0.weight",
+      "emb_head.heads.1.0.bias",
+      "emb_head.heads.1.2.weight",
+      "emb_head.heads.1.2.bias",
+      "emb_head.heads.2.0.weight",
+      "emb_head.heads.2.0.bias",
+      "emb_head.heads.2.2.weight",
+      "emb_head.heads.2.2.bias",
+      "emb_head.heads.3.0.weight",
+      "emb_head.heads.3.0.bias",
+      "emb_head.heads.3.2.weight",
+      "emb_head.heads.3.2.bias"
+    ],
+    "unexpected_key_count": 33,
+    "unexpected_keys": [
+      "val.0.weight",
+      "val.0.bias",
+      "val.2.weight",
+      "val.2.bias",
+      "scale_emb.weight",
+      "row_pool.proj.0.weight",
+      "row_pool.proj.0.bias",
+      "row_pool.proj.2.weight",
+      "row_pool.proj.2.bias",
+      "col_pool.proj.0.weight",
+      "col_pool.proj.0.bias",
+      "col_pool.proj.2.weight",
+      "col_pool.proj.2.bias",
+      "emb_head.shared.0.weight",
+      "emb_head.shared.0.bias",
+      "emb_head.shared.2.weight",
+      "emb_head.shared.2.bias",
+      "emb_head.bands.0.0.weight",
+      "emb_head.bands.0.0.bias",
+      "emb_head.bands.0.2.weight",
+      "emb_head.bands.0.2.bias",
+      "emb_head.bands.1.0.weight",
+      "emb_head.bands.1.0.bias",
+      "emb_head.bands.1.2.weight",
+      "emb_head.bands.1.2.bias",
+      "emb_head.bands.2.0.weight",
+      "emb_head.bands.2.0.bias",
+      "emb_head.bands.2.2.weight",
+      "emb_head.bands.2.2.bias",
+      "emb_head.bands.3.0.weight",
+      "emb_head.bands.3.0.bias",
+      "emb_head.bands.3.2.weight",
+      "emb_head.bands.3.2.bias"
+    ]
+  },
+  "output_file_count": 40,
+  "parameters": {
+    "base_sweep_seed": 42,
+    "batch_size": 4096,
+    "checkpoint_load_strict": false,
+    "collapse": "mean four scales per sweep, then mean all 100 sweeps",
+    "cuda_amp": true,
+    "global_reconstruction_seed": 42,
+    "joint_order": "train rows then test rows",
+    "joint_train_test_features": true,
+    "nan_feature_policy": "fill with zero before float32 conversion",
+    "output_format": "headerless comma-separated float32, 9 significant digits",
+    "overwrite_policy": "exclusive creation; refuse existing output",
+    "padding_rng": "original global CUDA RNG",
+    "rank_normalization": "(argsort(argsort(column)) + 1) / N * 100",
+    "rank_scale": 100,
+    "shifts": [
+      [
+        0,
+        0
+      ],
+      [
+        1,
+        1
+      ]
+    ],
+    "sweep_seed_stride": 777,
+    "sweeps": 100,
+    "target_used_by_encoder": false,
+    "windows": [
+      3,
+      6,
+      9,
+      12
+    ]
+  },
+  "schema": "HyperionOldPythonVsReconstruction.v1",
+  "status": "complete"
+}

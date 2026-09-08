@@ -69,7 +69,7 @@ struct Args {
     idle_core_pct: f64,
     /// Queued+dispatching jobs below this is "under-supplied": the cluster is
     /// coasting on in-flight work with nothing behind it.
-    #[arg(long, default_value_t = 64)]
+    #[arg(long, default_value_t = 2048)]
     queue_floor_jobs: u64,
     /// Consecutive IDLE cycles before escalating to the owner.
     #[arg(long, default_value_t = 5)]
@@ -940,7 +940,7 @@ fn judge(args: &Args, util: &Utilization, work: &WorkOnDisk, stages: &[Stage]) -
         util.scq_reachable && util.core_pct() >= args.idle_core_pct
     };
     let producers_ok = stages.iter().all(|stage| stage.health.healthy());
-    let under_supplied = util.queue_depth() < args.queue_floor_jobs;
+    let under_supplied = util.queue_depth() < effective_queue_target(args, util);
     if !busy {
         return if work.total() > 0 {
             Verdict::Idle
@@ -957,6 +957,11 @@ fn judge(args: &Args, util: &Utilization, work: &WorkOnDisk, stages: &[Stage]) -
         return Verdict::Degraded;
     }
     Verdict::Ok
+}
+
+fn effective_queue_target(args: &Args, util: &Utilization) -> u64 {
+    let slot_target = util.slots_total.saturating_mul(5).saturating_add(3) / 4;
+    args.queue_floor_jobs.max(slot_target).min(4096)
 }
 
 // ---------------------------------------------------------------------------
@@ -1552,7 +1557,8 @@ fn main() -> Result<()> {
         "summary": summary,
         "objective": {
             "idle_core_pct": args.idle_core_pct,
-            "queue_floor_jobs": args.queue_floor_jobs,
+            "queue_floor_jobs": effective_queue_target(&args, &util),
+            "configured_queue_floor_jobs": args.queue_floor_jobs,
             "escalate_idle_cycles": args.escalate_idle_cycles,
             "escalate_degraded_cycles": args.escalate_degraded_cycles,
             "max_actions_per_hour": args.max_actions_per_hour,

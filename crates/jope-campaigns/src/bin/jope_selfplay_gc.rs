@@ -151,7 +151,7 @@ fn evaluate_gates(
 
 fn ssh_target(node: &str) -> Result<Vec<String>> {
     match node {
-        "xbabe1" | "xbabe3" => Ok(vec![
+        "xbabe0" | "xbabe1" | "xbabe3" => Ok(vec![
             "ssh".into(),
             "-o".into(),
             "ConnectTimeout=10".into(),
@@ -232,21 +232,21 @@ fn run_capture_bytes(program: &str, args: &[String], stdin: Option<&str>) -> Res
 fn enumerate_dirs(node: &str, runs_root: &str) -> Result<Vec<DirEntryInfo>> {
     if node == LOCAL_NODE {
         let mut rows = Vec::new();
-        for entry in std::fs::read_dir(runs_root)?.flatten() {
-            let Ok(file_type) = entry.file_type() else {
-                continue;
-            };
+        for entry in std::fs::read_dir(runs_root)? {
+            let entry = entry.context("read local run-directory entry")?;
+            let file_type = entry.file_type().context("read local run-directory type")?;
             if !file_type.is_dir() {
                 continue;
             }
             let name = entry.file_name().to_string_lossy().into_owned();
             let mtime_ms = entry
                 .metadata()
-                .ok()
-                .and_then(|m| m.modified().ok())
-                .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-                .map(|d| d.as_millis() as u64)
-                .unwrap_or(0);
+                .context("read local run-directory metadata")?
+                .modified()
+                .context("read local run-directory mtime")?
+                .duration_since(UNIX_EPOCH)
+                .context("local run-directory mtime predates Unix epoch")?
+                .as_millis() as u64;
             rows.push(DirEntryInfo { name, mtime_ms });
         }
         return Ok(rows);
@@ -259,12 +259,16 @@ fn enumerate_dirs(node: &str, runs_root: &str) -> Result<Vec<DirEntryInfo>> {
     args.push(script);
     let stdout = run_capture(&target[0], &args, None)?;
     let mut rows = Vec::new();
-    for line in stdout.lines() {
-        let mut parts = line.splitn(2, ' ');
-        let (Some(ts), Some(name)) = (parts.next(), parts.next()) else {
-            continue;
-        };
-        let secs: f64 = ts.parse().unwrap_or(0.0);
+    for (line_number, line) in stdout.lines().enumerate() {
+        let (ts, name) = line.split_once(' ').with_context(|| {
+            format!("malformed remote directory row at line {}", line_number + 1)
+        })?;
+        let secs: f64 = ts.parse().with_context(|| {
+            format!("invalid remote directory mtime at line {}", line_number + 1)
+        })?;
+        if !secs.is_finite() || secs < 0.0 || !sane_name(name) {
+            bail!("unsafe remote directory row at line {}", line_number + 1);
+        }
         rows.push(DirEntryInfo {
             name: name.to_string(),
             mtime_ms: (secs * 1000.0) as u64,
@@ -273,32 +277,44 @@ fn enumerate_dirs(node: &str, runs_root: &str) -> Result<Vec<DirEntryInfo>> {
     Ok(rows)
 }
 
-fn scq_job_states() -> HashMap<String, String> {
+fn parse_scq_job_states(stdout: &[u8]) -> Result<HashMap<String, String>> {
     let mut map = HashMap::new();
-    let Ok(output) = Command::new(SCQ).args(["--json", "ls"]).output() else {
-        return map;
-    };
-    if !output.status.success() {
-        return map;
-    }
-    let Ok(value) = serde_json::from_slice::<Value>(&output.stdout) else {
-        return map;
-    };
+    let value = serde_json::from_slice::<Value>(stdout).context("decode SCQ job-state JSON")?;
     let jobs = value
         .pointer("/Jobs/jobs")
         .or_else(|| value.get("jobs"))
         .and_then(Value::as_array)
-        .cloned()
-        .unwrap_or_default();
+        .context("SCQ job-state JSON has no jobs array")?;
     for job in jobs {
-        if let (Some(id), Some(state)) = (
-            job.get("id").and_then(Value::as_str),
-            job.get("state").and_then(Value::as_str),
-        ) {
-            map.insert(id.to_string(), state.to_string());
+        let id = job
+            .get("id")
+            .and_then(Value::as_str)
+            .filter(|value| !value.is_empty())
+            .context("SCQ job is missing a non-empty id")?;
+        let state = job
+            .get("state")
+            .and_then(Value::as_str)
+            .filter(|value| !value.is_empty())
+            .context("SCQ job is missing a non-empty state")?;
+        if map.insert(id.to_string(), state.to_string()).is_some() {
+            bail!("SCQ job-state JSON repeats job id {id}");
         }
     }
-    map
+    Ok(map)
+}
+
+fn scq_job_states() -> Result<HashMap<String, String>> {
+    let output = Command::new(SCQ)
+        .args(["--json", "ls"])
+        .output()
+        .context("execute SCQ job-state query")?;
+    if !output.status.success() {
+        bail!(
+            "SCQ job-state query failed: {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        );
+    }
+    parse_scq_job_states(&output.stdout)
 }
 
 /// Look up which of `names` are durably ingested. Falls back to the empty set
@@ -368,7 +384,7 @@ fn build_runs_plan(
         .take(keep_newest)
         .map(|d| d.name.clone())
         .collect();
-    let states = scq_job_states();
+    let states = scq_job_states()?;
     let names: Vec<String> = dirs.iter().map(|d| d.name.clone()).collect();
     let ingested = ingested_set(root, &names);
     let receipts_root = root.join("receipts");
@@ -1053,6 +1069,30 @@ mod tests {
             .expect("pruned with receipts deletable");
         assert!(pruned.contains(&"scheduler:pruned".to_string()));
         assert!(pruned.contains(&"evidence:receipts_fetched".to_string()));
+    }
+
+    #[test]
+    fn scq_state_parser_is_typed_and_fail_closed() {
+        let states =
+            parse_scq_job_states(br#"{"Jobs":{"jobs":[{"id":"jte-a","state":"completed"}]}}"#)
+                .unwrap();
+        assert_eq!(states.get("jte-a").map(String::as_str), Some("completed"));
+        assert!(parse_scq_job_states(b"not-json").is_err());
+        assert!(parse_scq_job_states(br#"{}"#).is_err());
+        assert!(parse_scq_job_states(br#"{"jobs":[{"id":"jte-a"}]}"#).is_err());
+        assert!(parse_scq_job_states(
+            br#"{"jobs":[{"id":"jte-a","state":"failed"},{"id":"jte-a","state":"failed"}]}"#
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn ssh_topology_includes_xbabe0_but_not_the_local_node() {
+        let target = ssh_target("xbabe0").unwrap();
+        assert_eq!(target.first().map(String::as_str), Some("ssh"));
+        assert_eq!(target.last().map(String::as_str), Some("xbabe0"));
+        assert!(ssh_target(LOCAL_NODE).is_err());
+        assert!(ssh_target("unknown").is_err());
     }
 
     #[test]

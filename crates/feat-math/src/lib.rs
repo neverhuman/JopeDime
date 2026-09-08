@@ -23,6 +23,7 @@ pub mod genome;
 pub mod gpr;
 pub mod heads;
 pub mod krr;
+pub mod kernel;
 pub mod ksmooth;
 pub mod math_expr;
 pub mod members;

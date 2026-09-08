@@ -7,6 +7,7 @@
     "jope_causal_pair_repair",
     "jope_capacity",
     "jope_compile_cache",
+    "jope_dlgp_budget_supervisor",
     "jope_effective_unit_audit",
     "jope_encoder_supervisor",
     "jope_encoder_v2_capacity",
@@ -74,6 +75,12 @@
       "unit": "jope-gpu-lane-admission.service",
       "binary": "jope_gpu_lane_admission",
       "owner": "gpu_lane_capacity",
+      "active": true
+    },
+    {
+      "unit": "jope-dlgp-budget-supervisor.service",
+      "binary": "jope_dlgp_budget_supervisor",
+      "owner": "budget_first_campaign_reconciliation",
       "active": true
     },
     {
@@ -164,6 +171,12 @@
       "unit": "jope-training-history.service",
       "binary": "jope_training_history",
       "owner": "training_history",
+      "active": true
+    },
+    {
+      "unit": "jope-utilization-supervisor.service",
+      "binary": "jope_utilization_supervisor",
+      "owner": "dime_capacity_reconciliation",
       "active": true
     },
     {

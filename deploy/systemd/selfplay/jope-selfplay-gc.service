@@ -3,9 +3,9 @@ Description=JOPE self-play GC: run-dir + receipts fall-off once evidence is inde
 
 [Service]
 Type=oneshot
-ExecStart=/bin/sh -c '\
+ExecStart=/bin/sh -ec '\
   G=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_selfplay_gc; \
-  $G runs --node xbabe1 --execute || true; \
-  $G runs --node xbabe2 --execute || true; \
-  $G runs --node xbabe3 --execute || true; \
-  $G receipts --execute || true'
+  $G runs --node xbabe1 --execute; \
+  $G runs --node xbabe2 --execute; \
+  $G runs --node xbabe3 --execute; \
+  $G receipts --execute'

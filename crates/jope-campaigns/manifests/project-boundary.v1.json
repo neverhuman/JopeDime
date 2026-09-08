@@ -5,12 +5,15 @@
     "source_control": ".",
     "runtime_state": "/home/ubuntu/jope-flywheel/test_exact_gen0",
     "legacy_workspace": "/home/ubuntu/flywheel",
-    "independent_project": "/home/ubuntu/jope-slime"
+    "independent_project": "/home/ubuntu/jope-slime",
+    "merge_host": "xbabe2",
+    "canonical_workspace": "/home/ubuntu/jope-dime"
   },
   "active_source_roots": [
     "src",
     "scripts",
     "tests",
+    "fixtures",
     "mcp",
     "reference",
     "sotarena",
@@ -20,7 +23,11 @@
     "systemd",
     "campaigns",
     "Cargo.toml",
-    "Cargo.lock"
+    "Cargo.lock",
+    "parallel",
+    "rust-toolchain.toml",
+    "seeds/generation-zero.txt",
+    "seeds/generation-zero-binary.txt"
   ],
   "documentation_roots": [
     "docs",
@@ -89,5 +96,30 @@
     "/home/ubuntu/jope-slime",
     "/home/ubuntu/flywheel"
   ],
-  "allowed_prose_exchange": "documented lessons only in documentation_roots; no source, service, runtime artifact, evidence, checkpoint, dataset, or model-state dependency"
+  "allowed_prose_exchange": "documented lessons only in documentation_roots; no source, service, runtime artifact, evidence, checkpoint, dataset, or model-state dependency",
+  "workspace_sync_manifest": "manifests/workspace-sync.v1.json",
+  "source_dependencies": {
+    "authoritative_kernel": "vendor/feat-math",
+    "generated_development_mirror": "parallel/assets/source/jope-dime/vendor/feat-math",
+    "recovered_conversion_sources": [
+      "parallel/assets/source/fable_god",
+      "parallel/assets/source/target_maker"
+    ],
+    "packaged_native_inputs": [
+      "parallel/native",
+      "parallel/assets/grammar",
+      "parallel/assets/source/hyperion-jain"
+    ],
+    "unavailable_gitlink": {
+      "path": "sotarena-refresh",
+      "object": "acf77fe401a99b5c420b7687d42a825f8d3151d5",
+      "status": "unavailable in root and sotarena object stores; original gitlink preserved"
+    },
+    "model_references": "parallel/manifests/*-spec.json; hash verification required before use",
+    "native_toolchain": "Rust 1.97.1 pinned; neural build additionally requires its qualified CUDA/LibTorch environment",
+    "compile_time_seed_inputs": [
+      "seeds/generation-zero.txt",
+      "seeds/generation-zero-binary.txt"
+    ]
+  }
 }

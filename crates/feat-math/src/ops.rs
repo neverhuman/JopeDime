@@ -1149,19 +1149,27 @@ pub fn apply_op(op: &FittedOp, x: &Rows) -> Rows {
             })
             .collect(),
         // Elementwise with row context: out[i][j] = expr(x = r[j], row = r).
-        FittedOp::MapExpr { expr, .. } => x
-            .iter()
-            .map(|r| {
-                r.iter()
-                    .map(|v| expr.eval_element(*v, r).unwrap_or(0.0))
-                    .collect()
-            })
-            .collect(),
+        FittedOp::MapExpr { expr, .. } => match expr.compile() {
+            Ok(compiled) if compiled.uses_row_summaries() => {
+                x.iter().map(|r| compiled.map_row(r)).collect()
+            }
+            // The same-source benchmark finds no benefit for simple formulas
+            // without row reductions. Retain their direct execution path.
+            Ok(_) => x
+                .iter()
+                .map(|r| r.iter().map(|v| expr.eval_element(*v, r).unwrap_or(0.0)).collect())
+                .collect(),
+            Err(_) => x.iter().map(|r| vec![0.0; r.len()]).collect(),
+        },
         // One derived column per row: out[i] = [expr(row = r)].
-        FittedOp::DeriveExpr { expr, .. } => x
-            .iter()
-            .map(|r| vec![expr.eval_row(r).unwrap_or(0.0)])
-            .collect(),
+        FittedOp::DeriveExpr { expr, .. } => match expr.compile() {
+            Ok(compiled) if compiled.uses_row_summaries() => x
+                .iter()
+                .map(|r| vec![compiled.eval_row(r).unwrap_or(0.0)])
+                .collect(),
+            Ok(_) => x.iter().map(|r| vec![expr.eval_row(r).unwrap_or(0.0)]).collect(),
+            Err(_) => vec![vec![0.0]; x.len()],
+        },
         FittedOp::Symlog { c, .. } => x
             .iter()
             .map(|r| r.iter().map(|v| asinh_stable(v / c)).collect())

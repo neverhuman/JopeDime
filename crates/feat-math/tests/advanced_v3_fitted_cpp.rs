@@ -24,6 +24,28 @@ fn task() -> TaskSpec {
     TaskSpec::regression(Objective::Rmse).unwrap()
 }
 
+#[test]
+fn audit_expression_failures_match_rust_under_sanitizers() {
+    let train: Vec<Vec<f64>> = (0..10).map(|i| vec![i as f64 * 0.25, i as f64 - 2.0]).collect();
+    let y = [0.1, 0.4, 0.2, 0.9, 1.1, 1.6, 1.4, 2.1, 2.4, 2.9];
+    for (index, source) in [
+        "(sym raw \"c9+1\")",
+        "(sym raw \"min(clip(1,(-1)^0.5,(-1)^0.5),7)+1\")",
+        "(pipe X (map expr=\"c9+1\") (ridge))",
+        "(pipe X (derive expr=\"c9+1\") (ridge))",
+        "(pipe X (map expr=\"min(clip(1,(-1)^0.5,(-1)^0.5),7)+1\") (ridge))",
+    ].iter().enumerate() {
+        let genome = GenomeIr::parse(source).unwrap();
+        let model = fit_legacy_numeric_bound(&genome, &train, &y).unwrap();
+        let expected: Vec<_> = fit(&genome, &train, &y).unwrap().predict(&vec![vec![0.125,-1.5], vec![0.0,2.5], vec![2.125,6.5]]).into_iter().map(f64::to_bits).collect();
+        let artifact = emit_fitted_cpp17(&model).unwrap();
+        let directory = std::env::temp_dir().join(format!("kernel-expression-safety-{}-{index}", std::process::id()));
+        std::fs::create_dir_all(&directory).unwrap();
+        assert_eq!(compile_and_run(&artifact.source, &directory, true), expected, "{source}");
+        std::fs::remove_dir_all(directory).unwrap();
+    }
+}
+
 fn compile_and_run(source: &str, directory: &Path, sanitizer: bool) -> Vec<u64> {
     compile_typed(
         source,

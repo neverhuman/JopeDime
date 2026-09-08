@@ -1,0 +1,50 @@
+{
+  "schema": "JopeStateFreeze.v1",
+  "timestamp_utc": "2026-08-06T15:55:49Z",
+  "head": "4c5e68922192ed98a97231f3737926f159c0115e",
+  "branch": "phase5-recovery-candidate-8a4214c",
+  "staged": [],
+  "unstaged": [
+    {"path": "scripts/__pycache__/test_exact_packed_corpus.cpython-312.pyc", "sha256": "fc2c59b26077eb787ae4f7810d27b074e74b543990725fcc3bbb688f560aa437"},
+    {"path": "sotarena", "git_head": "e5db30a07c093661c8f6940d3e22192511f8388b", "git_tree": "1ae3d687813f180c7668cf3d395fcfcd4a5866ee", "status_sha256": "4237508c0519518fb2269d700ece3f8db84f16f89445eb109b4ef0f9975cc671", "dirty_files": [
+      {"path": "sotarena/dashboard.py", "sha256": "a8cd0bd0a92aa74f191c1037ead67fd82a3e9724cf2f4f385ac5a6c063767b85"},
+      {"path": "tests/test_verify_workflow.py", "sha256": "b7c9a76c2bfddcaed835c00123940d77d9c440f8edebdc6cef5105acf9148271"}
+    ]},
+    {"path": "src/bin/corpus_eval.rs", "sha256": "81078b88b16a2f7263e790b22bfac508ea90bfb5ae1e8ea1cb3e837581bc5d3c"},
+    {"path": "src/bin/jope_selfplay_promotion.rs", "sha256": "bc2fcd5002abc2e4af31d98ad0b410404f3f78716fcd965ad76ce98ee9d84cbb"},
+    {"path": "src/bin/jope_selfplay_queue.rs", "sha256": "47692e45d8cf1dc3644553640010ad583a7ed30ae5b832b1c542dc7ae76bf552"},
+    {"path": "src/encoder_v2_authority.rs", "sha256": "2e67a34ff1cd42c6409f72c750c5d2b2a033b84955d25b252bf6689f63278103"},
+    {"path": "src/four_task.rs", "sha256": "0dd37e9084c058c86b3387082a5d60fb6ae2d40d47cd54e3933e3711896df05d"},
+    {"path": "src/lib.rs", "sha256": "62a1dfd8838440addb6f52bf908462cc8c6019edd81627e13946da8b2d88f7df"},
+    {"path": "src/selfplay_expansion.rs", "sha256": "e1414ebb853e03d2454f09a7d28a3fecd3a7c8a97c27f6fb0a896710d779eec0"},
+    {"path": "src/selfplay_ingest.rs", "sha256": "2c8e04de35101eb90bb5e9e68dd4cb4f02bc037bf1e705275faa9e5086381d9d"},
+    {"path": "src/selfplay_runtime.rs", "sha256": "4c353a4fd4b79fe9bbc2aa9b4c98be094aa104a1d5c6483d6863ad2ce24f750a"},
+    {"path": "src/selfplay_shadow/contracts.rs", "sha256": "34381ed1359446febebde45583af42a8e9342fcc0d8116db1c6b110e3114603e"},
+    {"path": "src/task.rs", "sha256": "4a77883ee567cb72d9d9348bb2bf1bed01c75d60a85b5e474c07b2236dcee88d"},
+    {"path": "src/task_rating.rs", "sha256": "fcd1124cf6410e45deed4b9e59207324a1c7c36be889c30935c1a9c60a41f8c5"}
+  ],
+  "untracked": [
+    {"path": ".claude/", "inventory_sha256": "aaec7da715e57990afe4818caaf9c6fdbf169a5786db6c16f9c870e4cee2f2d5", "preserve": true},
+    {"path": "docs/UNIFIED_V3_PROGRAM.md", "sha256": "8590d4eedcc7e170d928f5996d359b1cc7fe02b37b6cf1194e5f8a4e56809236"},
+    {"path": "manifests/advanced-v3/task-graph.v3.json", "sha256": "6a9b5c0b0e59f2b4be297a4ecff55cfabbd44f9169fb032eadeb18ea025ae532"},
+    {"path": "manifests/advanced-v3/work-ledger.v3.jsonl", "sha256": "094513daffccb4947fe8415470cabb24b4f3a1aeb05bb1b53f5ea95d5db239e1"},
+    {"path": "manifests/epoch6/JopeExternalFixtureIndex.v1.json", "sha256": "68a3194900946c6f41db1903fe0f2ff82eac8de62de9dbdd426560415ea8cd0e"},
+    {"path": "manifests/epoch6/JopeTaskSemantics.v1.json", "sha256": "d158798880758dafcce9241226a1585015c4a95c29c2c2a830fdd888fa1b5422"},
+    {"path": "scripts/external_fixture_index.py", "sha256": "043e22c6241ab2912038ff007927f874155ae5c83fe716dedba224eba0253d1c"},
+    {"path": "scripts/jope_task_semantics.py", "sha256": "35bd5ebb8d406a322ada62b6e7f0a5492ae0bf7c227e6d5b492b9c84e43d21b0"},
+    {"path": "scripts/test_validate_unified_v3.py", "sha256": "5cf0f03bf6aee1e7dbf5fe2e8514df93a89a16dd96a840d99c48ab110de7472"},
+    {"path": "scripts/validate_unified_v3.py", "sha256": "499597c732e3bebf8d2cf34d08b52d9538a4fbde017217827e8d9c5b25c13505"},
+    {"path": "src/epoch6.rs", "sha256": "c252cfff6b5635b23489f38f6104519f61e1725d4754b25a62b644e658b190c2"},
+    {"path": "tests/epoch6_foundation.rs", "sha256": "b2aff041c2b1fd102138e17d1a31892dc820c95f8228a210630731423ff275b1"},
+    {"path": "tests/test_external_fixture_index.py", "sha256": "4769e125ddb0749263e057ee163e0d5ec7b80ab9514824174d703e39faeefcf8"},
+    {"path": "tests/test_task_semantics.py", "sha256": "ca5671d90f1a8329d97ce12027b038b12c4c9b4979deac35e557d59d120e14ac"}
+  ],
+  "active_local_jope_systemd_units": [],
+  "protected_job_ids": [
+    "jope-mc272-49216e83297f2137-replay-8e46e83a52bc-xbabe1-a0-r1",
+    "jope-mc272-6ccd8081c3dc6750-replay-2c06dbacafb8-xbabe1-a0-r1",
+    "jope-mc272-6ca29ca4ac258f84-replay-2f21ec15861e-xbabe1-a0-r1",
+    "jpr-encode3-20260806"
+  ],
+  "live_action_performed": false
+}

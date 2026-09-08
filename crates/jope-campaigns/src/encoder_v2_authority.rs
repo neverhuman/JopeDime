@@ -1,6 +1,7 @@
 //! Preregistered benchmark, optional-task, and lift authorities for Encoder V2.
 
 use crate::selfplay_data::canonical_json_sha256;
+use crate::task::Task;
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
@@ -40,17 +41,15 @@ fn validate_status(generated: u64, budget: u64, inputs: &[String]) -> Result<()>
 }
 
 fn valid_task(task: &str) -> bool {
-    matches!(task, "regression" | "binary" | "multiclass" | "timeseries")
+    Task::parse(task).is_some()
 }
 
 fn task_rank(task: &str) -> Option<u8> {
-    match task {
-        "regression" => Some(0),
-        "binary" => Some(1),
-        "multiclass" => Some(2),
-        "timeseries" => Some(3),
-        _ => None,
-    }
+    let task = Task::parse(task)?;
+    Task::CANONICAL_ORDER
+        .iter()
+        .position(|candidate| *candidate == task)
+        .map(|index| index as u8)
 }
 
 fn benchmark_dataset_precedes(left: &BenchmarkDataset, right: &BenchmarkDataset) -> bool {

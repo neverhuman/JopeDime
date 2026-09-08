@@ -36,6 +36,7 @@ pub struct FittedCppArtifact {
 #[derive(Serialize)]
 struct Codec<'a> {
     schema: &'static str,
+    emitter_revision: u32,
     schema_sha256: &'a str,
     vocabulary_sha256: &'a str,
     columns: Vec<CodecColumn<'a>>,
@@ -224,6 +225,7 @@ pub fn emit_fitted_cpp17(model: &BoundModel) -> Result<FittedCppArtifact> {
     supports_fitted_cpp17(model)?;
     let codec = serde_json::to_string(&Codec {
         schema: "jope-dime.fitted-cpp-typed-table.v1",
+        emitter_revision: 2,
         schema_sha256: &model.schema_sha256,
         vocabulary_sha256: &model.vocabulary_sha256,
         columns: model
@@ -366,7 +368,7 @@ fn f64_matrix(values: &[Vec<f64>]) -> String {
     )
 }
 
-const PRELUDE: &str = r#"// jope-dime fitted-cpp-typed-table-v1
+const PRELUDE: &str = r#"// jope-dime fitted-cpp-typed-table-v1 emitter-revision=2
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
@@ -379,6 +381,7 @@ using V = std::vector<double>;
 using U = std::vector<std::size_t>;
 using M = std::vector<V>;
 using B = std::vector<std::uint64_t>;
+struct MathDomainError {};
 [[maybe_unused]] static double f64_from_bits(std::uint64_t bits) noexcept { double value; std::memcpy(&value,&bits,sizeof(value)); return value; }
 [[maybe_unused]] static double clampv(double value,double lo,double hi) noexcept { if(value<lo)return lo; if(value>hi)return hi; return value; }
 [[maybe_unused]] static double finitev(double value) noexcept { return std::isfinite(value)?value:0.0; }
@@ -437,7 +440,7 @@ using Key = std::vector<KCell>;
 [[maybe_unused]] static double m_cos(double value){return std::cos(value);}
 [[maybe_unused]] static double m_tanh(double value){return std::tanh(value);}
 [[maybe_unused]] static double m_sigmoid(double value){return 1.0/(1.0+std::exp(-clampv(value,-30.0,30.0)));}
-[[maybe_unused]] static double m_clip(double value,double a,double b){return clampv(value,std::fmin(a,b),std::fmax(a,b));}
+[[maybe_unused]] static double m_clip(double value,double a,double b){double lo=std::fmin(a,b),hi=std::fmax(a,b);if(std::isnan(lo)||std::isnan(hi))throw MathDomainError{};return clampv(value,lo,hi);}
 [[maybe_unused]] static double m_exp(double value){return std::exp(clampv(value,-30.0,30.0));}
 [[maybe_unused]] static double m_log(double value){return value<=1e-300?0.0:std::log(value);}
 [[maybe_unused]] static double m_asinh(double value){double a=std::abs(value),s=value>0.0?1.0:(value<0.0?-1.0:0.0);return s*std::log(a+std::sqrt(value*value+1.0));}
@@ -963,11 +966,11 @@ fn emit_legacy_op(body: &mut String, op: &FittedOp) -> Result<()> {
         FittedOp::Spline { knots, .. } => format!("const M knots={};for(std::size_t j=0;j<std::min(x.size(),knots.size());++j){{const V& xi=knots[j];const std::size_t n=xi.size();const double v=x[j];if(xi[n-1]-xi[0]<1e-9){{g.push_back(v);continue;}}g.push_back(v);const double pl=std::max(v-xi[n-1],0.0),pk=std::max(v-xi[n-2],0.0);const double dlast=(pk*pk*pk-pl*pl*pl)/std::max(xi[n-1]-xi[n-2],1e-9);for(std::size_t q=0;q<n-2;++q){{const double pt=std::max(v-xi[q],0.0);const double d=(pt*pt*pt-pl*pl*pl)/std::max(xi[n-1]-xi[q],1e-9);g.push_back(d-dlast);}}}}", f64_matrix(knots)),
         FittedOp::MapExpr { expr, .. } => {
             let expression = expr.to_cpp17(true)?;
-            format!("const double* row=x.data();const std::size_t row_len=x.size();for(double element:x){{double x=element;g.push_back(math_safe({expression}));}}")
+            format!("const double* row=x.data();const std::size_t row_len=x.size();(void)row;(void)row_len;for(double element:x){{double x=element;(void)x;g.push_back(math_safe({expression}));}}")
         }
         FittedOp::DeriveExpr { expr, .. } => {
             let expression = expr.to_cpp17(false)?;
-            format!("const double* row=x.data();const std::size_t row_len=x.size();g.push_back(math_safe({expression}));")
+            format!("const double* row=x.data();const std::size_t row_len=x.size();(void)row;(void)row_len;g.push_back(math_safe({expression}));")
         }
     };
     body.push_str(&format!(

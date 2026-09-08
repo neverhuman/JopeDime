@@ -1,0 +1,36 @@
+    Checking feat-math v0.1.0 (/tmp/jope-kernel-releases/kernel-v1-6a464377bc6f6f6fb25dee91997f0675bd6db4bf90ca86744baf24860f9d8e42/source/assets/source/jope-dime/vendor/feat-math)
+    Checking jope-parallel v0.1.0 (/tmp/jope-kernel-releases/kernel-v1-6a464377bc6f6f6fb25dee91997f0675bd6db4bf90ca86744baf24860f9d8e42/source)
+warning: unused import: `PathBuf`
+ --> src/checkpoint_recovery.rs:7:28
+  |
+7 | use std::{fs, path::{Path, PathBuf}, time::{SystemTime, UNIX_EPOCH}};
+  |                            ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: struct `DeadlineGuard` is never constructed
+  --> src/campaign.rs:27:19
+   |
+27 | pub(crate) struct DeadlineGuard(u64);
+   |                   ^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `new` is never used
+  --> src/campaign.rs:29:19
+   |
+28 | impl DeadlineGuard {
+   | ------------------ associated function in this implementation
+29 |     pub(crate) fn new(deadline: u64) -> Self {
+   |                   ^^^
+
+warning: method `start` is never used
+  --> src/campaign.rs:59:8
+   |
+58 | impl CutStrategy {
+   | ---------------- method in this implementation
+59 |     fn start(&self, starts: &[usize], sequence: usize) -> usize {
+   |        ^^^^^
+
+warning: `jope-parallel` (lib) generated 4 warnings (run `cargo fix --lib -p jope-parallel` to apply 1 suggestion)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 8.48s

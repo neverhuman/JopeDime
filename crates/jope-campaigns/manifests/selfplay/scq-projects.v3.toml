@@ -71,3 +71,10 @@ max_gpus = 1
 max_tier = "normal"
 weight = 1.0
 max_gpus = 5
+
+# Temporary isolated best-five DL+GP regression campaign. The project owns
+# fresh identities and never consumes the partial jope-strategy-screen state.
+[projects.jope-dlgp-best5]
+max_tier = "normal"
+weight = 10.0
+max_gpus = 1

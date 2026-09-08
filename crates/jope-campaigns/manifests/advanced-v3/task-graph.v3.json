@@ -1,0 +1,88 @@
+{
+  "schema": "jope-dime.unified-program-task-graph.v3",
+  "program": "Unified Recovery, Encoder V2, and Five-Pillar Search V3",
+  "authority": "successor",
+  "states": ["queued", "in_progress", "review", "verified", "blocked", "archived"],
+  "migration": {
+    "frozen_v2_graph": {
+      "path": "manifests/advanced-v3/task-graph.v2.json",
+      "sha256": "df24d4f072145c46be1019c4e79d1032370842d2c6e19c889577c896b4be73b8"
+    },
+    "frozen_v2_ledger": {
+      "path": "manifests/advanced-v3/work-ledger.v2.jsonl",
+      "sha256": "ee677075071d7a70359110ba973f2768717d23aaca3c154da26ef5f02117e9f9",
+      "last_sequence": 54,
+      "last_entry_sha256": "e08e9d656ca81ac59465a7e358df39debec832e17ec4836cb1a198325b05037b"
+    },
+    "frozen_roadmap": {
+      "path": "ROADMAP.md",
+      "sha256": "a6fe0a0a04777c2328ec001bbe78b1d5906ffbadfa857cccc5b8fe77025dfd2d"
+    },
+    "source_commit": "7ff7e54c0f8546d9b1fb6ad8f98abb3a4791c08e",
+    "verification_handoff_commit": "90b2f8d3f2b9ba75f8901251c363c93fa85c5121",
+    "phase5_recovery_evidence": {
+      "implementation_commit": "7ff7e54c0f8546d9b1fb6ad8f98abb3a4791c08e",
+      "verification_record_commit": "90b2f8d3f2b9ba75f8901251c363c93fa85c5121",
+      "runtime_bundle_sha256": "9521ffcef11159339f314cb26430739d5472a54e1b521a868bd9ccb08acf6bd4"
+    },
+    "workspace_handoff": [
+      {
+        "path": "scripts/__pycache__/test_exact_packed_corpus.cpython-312.pyc",
+        "state": "modified_preexisting",
+        "policy": "preserve_unchanged"
+      },
+      {
+        "path": "sotarena",
+        "state": "dirty_submodule",
+        "commit": "e5db30a07c093661c8f6940d3e22192511f8388b",
+        "tree": "1ae3d687813f180c7668cf3d395fcfcd4a5866ee",
+        "policy": "preserve_unchanged"
+      },
+      {
+        "path": ".claude/",
+        "state": "untracked_live_directory",
+        "policy": "preserve_unchanged"
+      },
+      {
+        "path": "src/bin/jope_selfplay_wave.rs",
+        "state": "optional_floor_handoff_integrated_before_v3",
+        "sha256": "aced212993ea48a8c27e04346363d757437ca06be01d89a09b95bf039fdd217e",
+        "last_change_commit": "8de0be3828cc1e9b5300ca64f94cbe433c3b3f2b",
+        "policy": "intent_subsumed_by_central_semantics; do_not_import_local_task_table"
+      }
+    ],
+    "old_task_count": 89,
+    "old_to_canonical_milestone": {
+      "G-00": "U0-AUTHORITY", "G-01": "U0-AUTHORITY", "G-02": "U0-AUTHORITY", "G-03": "U0-AUTHORITY", "G-04": "U0-AUTHORITY",
+      "K-00": "U5-COMPILE", "K-01": "U5-COMPILE", "K-02": "U5-COMPILE", "K-10": "U5-COMPILE", "K-11": "U5-COMPILE", "K-12": "U5-COMPILE", "K-13": "U5-COMPILE", "K-14": "U5-COMPILE", "K-15": "U5-COMPILE", "K-20": "U4-SCIENCE", "K-21": "U4-SCIENCE", "K-30": "U5-COMPILE", "K-31": "U5-COMPILE", "K-32": "U5-COMPILE", "K-40": "U5-COMPILE", "K-41": "U5-COMPILE", "K-42": "U5-COMPILE", "K-43": "U5-COMPILE", "K-44": "U5-COMPILE", "K-50": "U5-COMPILE", "K-51": "U5-COMPILE", "K-52": "U5-COMPILE", "K-53": "U5-COMPILE", "K-54": "U5-COMPILE",
+      "S-10": "U4-SCIENCE", "S-11": "U4-SCIENCE", "S-20": "U4-SCIENCE", "S-21": "U4-SCIENCE", "S-22": "U4-SCIENCE", "S-23": "U4-SCIENCE", "S-24": "U4-SCIENCE", "S-25": "U4-SCIENCE", "S-26": "U4-SCIENCE",
+      "A-10": "U6-CPU", "A-11": "U6-CPU", "A-12": "U6-CPU", "A-13": "U6-CPU", "A-14": "U6-CPU", "A-15": "U9A-GPU",
+      "V-10": "U1-FOUNDATION", "V-20": "U5-COMPILE", "V-30": "U5-COMPILE", "V-40": "U5-COMPILE", "V-50": "U5-COMPILE", "V-60": "U4-SCIENCE", "V-70": "U6-CPU", "V-80": "U7-RELEASE-A", "V-81": "U7-RELEASE-A",
+      "B-10": "U6-CPU", "B-11": "U6-CPU", "B-12": "U6-CPU", "B-13": "U9A-GPU", "B-14": "U4-SCIENCE", "B-15": "U7-RELEASE-A", "B-16": "U9B-HYPERION",
+      "R-10": "U7-RELEASE-A", "R-11": "U7-RELEASE-A", "R-12": "U7-RELEASE-A", "R-13": "U7-RELEASE-A", "R-14": "U7-RELEASE-A", "R-15": "U7-RELEASE-A",
+      "REC-00": "U0-AUTHORITY", "M0-CANON": "U0-AUTHORITY", "M1-EVIDENCE": "U4-SCIENCE", "M2-TYPED": "U5-COMPILE", "M3-EXEC": "U6-CPU", "M4-BREADTH": "U10-OPTIONAL-TASKS", "M5-QUALITY": "U7-RELEASE-A", "M6-HYPERION": "U9B-HYPERION", "M7-ACCEL": "U9A-GPU", "M8-PACKAGE": "U7-RELEASE-A",
+      "P-00": "U0-AUTHORITY", "P-1A": "U5-COMPILE", "P-1B": "U5-COMPILE", "P-0A": "U5-COMPILE", "P-1C": "U5-COMPILE", "P-1D": "U5-COMPILE", "FCPP-00": "U5-COMPILE", "SCQ80": "U0-AUTHORITY", "P-2": "U4-SCIENCE", "P-3": "U6-CPU", "P-4": "U5-COMPILE", "P-5": "U9A-GPU", "P-6": "U9B-HYPERION"
+    }
+  },
+  "frozen_capability_policy": {
+    "scq80": {"classification": "test_adaptive", "benchmark_valid": false, "release_evidence": false, "terminal_action": "archive_after_integrity_audit"},
+    "cpp17": {"first_release_required": false, "lane": "isolated_optional"},
+    "es2020": {"first_release_required": false, "lane": "isolated_optional"},
+    "gpu": {"first_release_required": false, "lane": "independent_additive"},
+    "hyperion": {"first_release_required": false, "lane": "independent_additive"}
+  },
+  "milestones": [
+    {"id":"U0-AUTHORITY","phase":"0","state":"in_progress","optional":false,"depends_on":[],"title":"Freeze V2 history, materialize external fixtures, and establish the V3 authority","exit_gate":"clean inventory, verified external fixture index, reproducible snapshot, and valid migration genesis"},
+    {"id":"U1-FOUNDATION","phase":"1","state":"queued","optional":false,"depends_on":["U0-AUTHORITY"],"title":"Land exhaustive task semantics, replay, artifact, supply, and pipeline-edge contracts","exit_gate":"synthetic 128, 192, and 256 waves pass end to end"},
+    {"id":"U2-RECOVERY","phase":"2","state":"queued","optional":false,"depends_on":["U1-FOUNDATION"],"title":"Productionize quarantine, rollback, evaluator CAS, resident Encoder V2, and privileged publication","exit_gate":"focused, full, Golden, release, and five-node candidate/rollback verification"},
+    {"id":"U3-CUTOVER","phase":"3","state":"queued","optional":false,"depends_on":["U2-RECOVERY"],"title":"Perform the staged recovery cutover","exit_gate":"effective-unit audit green and 86400-second continuity receipt sealed"},
+    {"id":"U4-SCIENCE","phase":"4","state":"queued","optional":false,"depends_on":["U1-FOUNDATION"],"title":"Deliver Search V3 scientific evidence, replay verification, and no-forgetting selection","exit_gate":"schedule-independent replay, 95-percent top-five recall, and no forgetting"},
+    {"id":"U5-COMPILE","phase":"5","state":"queued","optional":false,"depends_on":["U4-SCIENCE"],"title":"Deliver typed compilation and selected-only Rust/Python export","exit_gate":"million-proposal validity and 100 byte-identical model-bundle rebuilds"},
+    {"id":"U6-CPU","phase":"6","state":"queued","optional":false,"depends_on":["U5-COMPILE"],"title":"Deliver deterministic hardware-neutral CPU execution","exit_gate":"1.6x CV throughput with allocation, copy, RSS, and I/O gates"},
+    {"id":"U7-RELEASE-A","phase":"7","state":"queued","optional":false,"depends_on":["U3-CUTOVER","U6-CPU"],"title":"Release CPU regression/binary Search V3 shadow","exit_gate":"six-hour shadow, 512 successful objects/evaluations, benchmark, and lift reports"},
+    {"id":"U8-CANARY","phase":"8","state":"queued","optional":false,"depends_on":["U7-RELEASE-A"],"title":"Run one bounded CPU canary","exit_gate":"at most 32 datasets, one catalog import, and one shadow-training observation"},
+    {"id":"U9A-GPU","phase":"9A","state":"queued","optional":true,"depends_on":["U7-RELEASE-A"],"title":"Qualify an optional strict GPU executor","exit_gate":"exact parity and 2x eligible throughput"},
+    {"id":"U9B-HYPERION","phase":"9B","state":"queued","optional":true,"depends_on":["U7-RELEASE-A"],"title":"Qualify optional fold-train-only Hyperion guidance","exit_gate":"leakage, negative-control, size, cost, and quality gates"},
+    {"id":"U10-OPTIONAL-TASKS","phase":"10","state":"queued","optional":true,"depends_on":["U8-CANARY"],"title":"Activate multiclass and timeseries independently","exit_gate":"separate readiness, comparator, evaluator, head, shadow, and canary receipts per task"}
+  ]
+}

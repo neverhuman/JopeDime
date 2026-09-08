@@ -1,8 +1,7 @@
 //! Parser + code generators for the scalar math-expression grammar.
 //!
-//! This is a faithful re-implementation of the grammar accepted by
-//! `crate::math_expr::MathExpr::parse` (that type keeps its AST
-//! private, so we re-parse the source text). Both code generators mirror
+//! A compatibility adapter over `crate::math_expr`'s single AST and parser.
+//! Both code generators mirror
 //! `MathExpr::eval` exactly, including every guard:
 //!   - division: |denominator| < 1e-12  => 0.0
 //!   - pow: exponent clamped to [-8, 8], C `pow` semantics (NaN/inf preserved)
@@ -26,65 +25,10 @@
 //! whole-row context) aborts the whole expression to 0.0, matching
 //! `eval_row(...).unwrap_or(0.0)` upstream.
 
-use anyhow::{bail, Context, Result};
+use anyhow::Result;
 use std::collections::BTreeSet;
-
-const MAX_NODES: usize = 64;
-const MAX_DEPTH: usize = 16;
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MathAst {
-    Const(f64),
-    Var(MathVar),
-    Neg(Box<MathAst>),
-    Bin(MathBinOp, Box<MathAst>, Box<MathAst>),
-    Call(MathFunc, Vec<MathAst>),
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum MathVar {
-    X,
-    Col(usize),
-    RowMean,
-    RowSum,
-    RowL1,
-    RowL2,
-    RowMin,
-    RowMax,
-    RowStd,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum MathBinOp {
-    Add,
-    Sub,
-    Mul,
-    Div,
-    Pow,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum MathFunc {
-    Abs,
-    Sqrt,
-    Log1p,
-    Sin,
-    Cos,
-    Tanh,
-    Sigmoid,
-    Min,
-    Max,
-    Clip,
-    Step,
-    Exp,
-    Log,
-    Asinh,
-    Atan,
-    Erf,
-    Sign,
-    Floor,
-    Round,
-}
+pub use crate::math_expr::{Expr as MathAst, Var as MathVar, BinOp as MathBinOp, Func as MathFunc};
+use crate::math_expr::{MathExpr, UnOp};
 
 /// Features of a parsed expression that drive helper selection and guards.
 #[derive(Clone, Debug, Default)]
@@ -99,22 +43,7 @@ pub struct ExprFeatures {
 
 impl MathAst {
     pub fn parse(src: &str) -> Result<MathAst> {
-        let toks = lex(src)?;
-        let mut parser = Parser {
-            toks: &toks,
-            pos: 0,
-        };
-        let root = parser.parse_expr()?;
-        parser.expect_end()?;
-        let nodes = count_nodes(&root);
-        if nodes > MAX_NODES {
-            bail!("math expression has {nodes} nodes, max is {MAX_NODES}");
-        }
-        let d = depth(&root);
-        if d > MAX_DEPTH {
-            bail!("math expression depth {d} exceeds max {MAX_DEPTH}");
-        }
-        Ok(root)
+        Ok(MathExpr::parse(src)?.ast().clone())
     }
 
     pub fn features(&self) -> ExprFeatures {
@@ -138,8 +67,8 @@ impl MathAst {
                 MathVar::RowMax => "_row_max(row)".to_string(),
                 MathVar::RowStd => "_row_std(row)".to_string(),
             },
-            MathAst::Neg(a) => format!("(-{})", a.to_python()),
-            MathAst::Bin(op, a, b) => {
+            MathAst::Unary(UnOp::Neg, a) => format!("(-{})", a.to_python()),
+            MathAst::Binary(op, a, b) => {
                 let (a, b) = (a.to_python(), b.to_python());
                 match op {
                     MathBinOp::Add => format!("({a} + {b})"),
@@ -193,8 +122,8 @@ impl MathAst {
                 MathVar::RowMax => "row_max(row)".to_string(),
                 MathVar::RowStd => "row_std(row)".to_string(),
             },
-            MathAst::Neg(a) => format!("(-{})", a.to_rust()),
-            MathAst::Bin(op, a, b) => {
+            MathAst::Unary(UnOp::Neg, a) => format!("(-{})", a.to_rust()),
+            MathAst::Binary(op, a, b) => {
                 let (a, b) = (a.to_rust(), b.to_rust());
                 match op {
                     MathBinOp::Add => format!("({a} + {b})"),
@@ -216,7 +145,7 @@ impl MathAst {
                     MathFunc::Sigmoid => format!("m_sigmoid({})", a[0]),
                     MathFunc::Min => format!("({}).min({})", a[0], a[1]),
                     MathFunc::Max => format!("({}).max({})", a[0], a[1]),
-                    MathFunc::Clip => format!("m_clip({}, {}, {})", a[0], a[1], a[2]),
+                    MathFunc::Clip => format!("m_clip({}, {}, {}, &mut math_failed)", a[0], a[1], a[2]),
                     // Explicit hard indicator — no `*1e15` clip trick.
                     MathFunc::Step => format!("(if {} > {} {{ 1.0 }} else {{ 0.0 }})", a[0], a[1]),
                     MathFunc::Exp => format!("m_exp({})", a[0]),
@@ -262,8 +191,8 @@ impl MathAst {
                 MathVar::RowMax => "row_max(row, row_len)".to_string(),
                 MathVar::RowStd => "row_std(row, row_len)".to_string(),
             },
-            MathAst::Neg(a) => format!("(-{})", a.to_cpp(portable)),
-            MathAst::Bin(op, a, b) => {
+            MathAst::Unary(UnOp::Neg, a) => format!("(-{})", a.to_cpp(portable)),
+            MathAst::Binary(op, a, b) => {
                 let (a, b) = (a.to_cpp(portable), b.to_cpp(portable));
                 match op {
                     MathBinOp::Add => format!("({a} + {b})"),
@@ -330,7 +259,7 @@ impl MathAst {
         if !matches!((lo, hi), (MathAst::Const(l), MathAst::Const(h)) if *l == 0.0 && *h == 1.0) {
             return None;
         }
-        let MathAst::Bin(MathBinOp::Mul, a, b) = inner else {
+        let MathAst::Binary(MathBinOp::Mul, a, b) = inner else {
             return None;
         };
         // The scale can sit on either side of the product.
@@ -340,7 +269,7 @@ impl MathAst {
             }
             _ => return None,
         };
-        if let MathAst::Bin(MathBinOp::Sub, lhs, rhs) = diff {
+        if let MathAst::Binary(MathBinOp::Sub, lhs, rhs) = diff {
             Some((lhs, rhs))
         } else {
             None
@@ -361,8 +290,8 @@ fn collect(e: &MathAst, f: &mut ExprFeatures) {
                 _ => {}
             }
         }
-        MathAst::Neg(a) => collect(a, f),
-        MathAst::Bin(op, a, b) => {
+        MathAst::Unary(UnOp::Neg, a) => collect(a, f),
+        MathAst::Binary(op, a, b) => {
             match op {
                 MathBinOp::Div => f.uses_div = true,
                 MathBinOp::Pow => f.uses_pow = true,
@@ -382,373 +311,6 @@ fn collect(e: &MathAst, f: &mut ExprFeatures) {
 
 // ------------------------------- lexer/parser -------------------------------
 // A line-by-line port of newmath-core math_expr.rs so acceptance matches.
-
-#[derive(Clone, Debug, PartialEq)]
-enum Tok {
-    Num(f64),
-    Ident(String),
-    Plus,
-    Minus,
-    Star,
-    Slash,
-    Caret,
-    LParen,
-    RParen,
-    Comma,
-    End,
-}
-
-fn lex(src: &str) -> Result<Vec<Tok>> {
-    let mut toks = Vec::new();
-    let mut chars = src.char_indices().peekable();
-    while let Some((idx, ch)) = chars.peek().copied() {
-        match ch {
-            c if c.is_whitespace() => {
-                chars.next();
-            }
-            '+' => {
-                toks.push(Tok::Plus);
-                chars.next();
-            }
-            '-' => {
-                toks.push(Tok::Minus);
-                chars.next();
-            }
-            '*' => {
-                toks.push(Tok::Star);
-                chars.next();
-            }
-            '/' => {
-                toks.push(Tok::Slash);
-                chars.next();
-            }
-            '^' => {
-                toks.push(Tok::Caret);
-                chars.next();
-            }
-            '(' => {
-                toks.push(Tok::LParen);
-                chars.next();
-            }
-            ')' => {
-                toks.push(Tok::RParen);
-                chars.next();
-            }
-            ',' => {
-                toks.push(Tok::Comma);
-                chars.next();
-            }
-            c if c.is_ascii_digit() || c == '.' => {
-                let start = idx;
-                let mut end = idx + ch.len_utf8();
-                chars.next();
-                while let Some((j, c)) = chars.peek().copied() {
-                    if c.is_ascii_digit()
-                        || c == '.'
-                        || c == 'e'
-                        || c == 'E'
-                        || ((c == '+' || c == '-') && j > start && exponent_sign_allowed(src, j))
-                    {
-                        end = j + c.len_utf8();
-                        chars.next();
-                    } else {
-                        break;
-                    }
-                }
-                let raw = &src[start..end];
-                let value = raw
-                    .parse::<f64>()
-                    .with_context(|| format!("invalid numeric literal '{raw}'"))?;
-                if !value.is_finite() {
-                    bail!("non-finite numeric literal '{raw}'");
-                }
-                toks.push(Tok::Num(value));
-            }
-            c if c.is_ascii_alphabetic() || c == '_' => {
-                let start = idx;
-                let mut end = idx + ch.len_utf8();
-                chars.next();
-                while let Some((j, c)) = chars.peek().copied() {
-                    if c.is_ascii_alphanumeric() || c == '_' {
-                        end = j + c.len_utf8();
-                        chars.next();
-                    } else {
-                        break;
-                    }
-                }
-                toks.push(Tok::Ident(src[start..end].to_ascii_lowercase()));
-            }
-            _ => bail!("unexpected character '{ch}' in math expression"),
-        }
-    }
-    toks.push(Tok::End);
-    Ok(toks)
-}
-
-fn exponent_sign_allowed(src: &str, idx: usize) -> bool {
-    src[..idx]
-        .chars()
-        .last()
-        .map(|c| c == 'e' || c == 'E')
-        .unwrap_or(false)
-}
-
-struct Parser<'a> {
-    toks: &'a [Tok],
-    pos: usize,
-}
-
-impl<'a> Parser<'a> {
-    fn parse_expr(&mut self) -> Result<MathAst> {
-        self.parse_add()
-    }
-
-    fn parse_add(&mut self) -> Result<MathAst> {
-        let mut expr = self.parse_mul()?;
-        loop {
-            match self.peek() {
-                Tok::Plus => {
-                    self.pos += 1;
-                    expr =
-                        MathAst::Bin(MathBinOp::Add, Box::new(expr), Box::new(self.parse_mul()?));
-                }
-                Tok::Minus => {
-                    self.pos += 1;
-                    expr =
-                        MathAst::Bin(MathBinOp::Sub, Box::new(expr), Box::new(self.parse_mul()?));
-                }
-                _ => return Ok(expr),
-            }
-        }
-    }
-
-    fn parse_mul(&mut self) -> Result<MathAst> {
-        let mut expr = self.parse_pow()?;
-        loop {
-            match self.peek() {
-                Tok::Star => {
-                    self.pos += 1;
-                    expr =
-                        MathAst::Bin(MathBinOp::Mul, Box::new(expr), Box::new(self.parse_pow()?));
-                }
-                Tok::Slash => {
-                    self.pos += 1;
-                    expr =
-                        MathAst::Bin(MathBinOp::Div, Box::new(expr), Box::new(self.parse_pow()?));
-                }
-                _ => return Ok(expr),
-            }
-        }
-    }
-
-    fn parse_pow(&mut self) -> Result<MathAst> {
-        let expr = self.parse_unary()?;
-        if matches!(self.peek(), Tok::Caret) {
-            self.pos += 1;
-            Ok(MathAst::Bin(
-                MathBinOp::Pow,
-                Box::new(expr),
-                Box::new(self.parse_pow()?),
-            ))
-        } else {
-            Ok(expr)
-        }
-    }
-
-    fn parse_unary(&mut self) -> Result<MathAst> {
-        match self.peek() {
-            Tok::Plus => {
-                self.pos += 1;
-                self.parse_unary()
-            }
-            Tok::Minus => {
-                self.pos += 1;
-                Ok(MathAst::Neg(Box::new(self.parse_unary()?)))
-            }
-            _ => self.parse_primary(),
-        }
-    }
-
-    fn parse_primary(&mut self) -> Result<MathAst> {
-        match self.peek().clone() {
-            Tok::Num(v) => {
-                self.pos += 1;
-                Ok(MathAst::Const(v))
-            }
-            Tok::Ident(name) => {
-                self.pos += 1;
-                if matches!(self.peek(), Tok::LParen) {
-                    self.pos += 1;
-                    let args = self.parse_args()?;
-                    if name == "col" {
-                        return parse_col_call(&args);
-                    }
-                    let func = parse_func(&name)?;
-                    validate_arity(func, args.len())?;
-                    Ok(MathAst::Call(func, args))
-                } else {
-                    Ok(MathAst::Var(parse_var(&name)?))
-                }
-            }
-            Tok::LParen => {
-                self.pos += 1;
-                let expr = self.parse_expr()?;
-                self.expect_rparen()?;
-                Ok(expr)
-            }
-            other => bail!("expected expression, got {:?}", other),
-        }
-    }
-
-    fn parse_args(&mut self) -> Result<Vec<MathAst>> {
-        let mut args = Vec::new();
-        if matches!(self.peek(), Tok::RParen) {
-            self.pos += 1;
-            return Ok(args);
-        }
-        loop {
-            args.push(self.parse_expr()?);
-            match self.peek() {
-                Tok::Comma => self.pos += 1,
-                Tok::RParen => {
-                    self.pos += 1;
-                    return Ok(args);
-                }
-                other => bail!("expected ',' or ')', got {:?}", other),
-            }
-        }
-    }
-
-    fn expect_rparen(&mut self) -> Result<()> {
-        match self.peek() {
-            Tok::RParen => {
-                self.pos += 1;
-                Ok(())
-            }
-            other => bail!("expected ')', got {:?}", other),
-        }
-    }
-
-    fn expect_end(&self) -> Result<()> {
-        if matches!(self.peek(), Tok::End) {
-            Ok(())
-        } else {
-            bail!("trailing tokens in math expression")
-        }
-    }
-
-    fn peek(&self) -> &Tok {
-        self.toks.get(self.pos).unwrap_or(&Tok::End)
-    }
-}
-
-fn parse_col_call(args: &[MathAst]) -> Result<MathAst> {
-    if args.len() != 1 {
-        bail!("col() expects exactly one argument");
-    }
-    match args[0] {
-        MathAst::Const(v) if v >= 0.0 && (v - v.round()).abs() < 1e-12 => {
-            Ok(MathAst::Var(MathVar::Col(v as usize)))
-        }
-        _ => bail!("col() expects a non-negative integer literal"),
-    }
-}
-
-fn parse_var(name: &str) -> Result<MathVar> {
-    match name {
-        "x" => Ok(MathVar::X),
-        "row_mean" | "mean" => Ok(MathVar::RowMean),
-        "row_sum" => Ok(MathVar::RowSum),
-        "row_l1" => Ok(MathVar::RowL1),
-        "row_l2" | "row_norm" => Ok(MathVar::RowL2),
-        "row_min" => Ok(MathVar::RowMin),
-        "row_max" => Ok(MathVar::RowMax),
-        "row_std" => Ok(MathVar::RowStd),
-        _ if name.starts_with('c')
-            && name.len() > 1
-            && name[1..].chars().all(|c| c.is_ascii_digit()) =>
-        {
-            Ok(MathVar::Col(name[1..].parse()?))
-        }
-        _ if name.starts_with("col")
-            && name.len() > 3
-            && name[3..].chars().all(|c| c.is_ascii_digit()) =>
-        {
-            Ok(MathVar::Col(name[3..].parse()?))
-        }
-        _ => bail!("unknown math variable '{name}'"),
-    }
-}
-
-fn parse_func(name: &str) -> Result<MathFunc> {
-    match name {
-        "abs" => Ok(MathFunc::Abs),
-        "sqrt" => Ok(MathFunc::Sqrt),
-        "log1p" => Ok(MathFunc::Log1p),
-        "sin" => Ok(MathFunc::Sin),
-        "cos" => Ok(MathFunc::Cos),
-        "tanh" => Ok(MathFunc::Tanh),
-        "sigmoid" => Ok(MathFunc::Sigmoid),
-        "min" => Ok(MathFunc::Min),
-        "max" => Ok(MathFunc::Max),
-        "clip" => Ok(MathFunc::Clip),
-        "step" => Ok(MathFunc::Step),
-        "exp" => Ok(MathFunc::Exp),
-        "log" => Ok(MathFunc::Log),
-        "asinh" => Ok(MathFunc::Asinh),
-        "atan" => Ok(MathFunc::Atan),
-        "erf" => Ok(MathFunc::Erf),
-        "sign" => Ok(MathFunc::Sign),
-        "floor" => Ok(MathFunc::Floor),
-        "round" => Ok(MathFunc::Round),
-        _ => bail!("unsupported math function '{name}'"),
-    }
-}
-
-fn validate_arity(func: MathFunc, len: usize) -> Result<()> {
-    let ok = match func {
-        MathFunc::Abs
-        | MathFunc::Sqrt
-        | MathFunc::Log1p
-        | MathFunc::Sin
-        | MathFunc::Cos
-        | MathFunc::Tanh
-        | MathFunc::Sigmoid
-        | MathFunc::Exp
-        | MathFunc::Log
-        | MathFunc::Asinh
-        | MathFunc::Atan
-        | MathFunc::Erf
-        | MathFunc::Sign
-        | MathFunc::Floor
-        | MathFunc::Round => len == 1,
-        MathFunc::Min | MathFunc::Max | MathFunc::Step => len == 2,
-        MathFunc::Clip => len == 3,
-    };
-    if ok {
-        Ok(())
-    } else {
-        bail!("{func:?} received {len} arguments")
-    }
-}
-
-fn count_nodes(expr: &MathAst) -> usize {
-    match expr {
-        MathAst::Const(_) | MathAst::Var(_) => 1,
-        MathAst::Neg(child) => 1 + count_nodes(child),
-        MathAst::Bin(_, left, right) => 1 + count_nodes(left) + count_nodes(right),
-        MathAst::Call(_, args) => 1 + args.iter().map(count_nodes).sum::<usize>(),
-    }
-}
-
-fn depth(expr: &MathAst) -> usize {
-    match expr {
-        MathAst::Const(_) | MathAst::Var(_) => 1,
-        MathAst::Neg(child) => 1 + depth(child),
-        MathAst::Bin(_, left, right) => 1 + depth(left).max(depth(right)),
-        MathAst::Call(_, args) => 1 + args.iter().map(depth).max().unwrap_or(0),
-    }
-}
 
 #[cfg(test)]
 mod tests {

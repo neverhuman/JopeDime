@@ -44,33 +44,34 @@ pub struct TaskMetricContract {
 }
 
 pub fn task_metric_contract(task: Task) -> TaskMetricContract {
+    let semantics = task.semantics();
     match task {
         Task::Regression => TaskMetricContract {
             task,
-            primary_metric: "r2",
+            primary_metric: semantics.primary_metric.as_str(),
             primary_display: "R²",
-            native_error: "rmse",
+            native_error: semantics.native_error_metric.as_str(),
             native_error_aggregation: NativeErrorAggregation::PerContextOnly,
         },
         Task::Binary => TaskMetricContract {
             task,
-            primary_metric: "auc",
+            primary_metric: semantics.primary_metric.as_str(),
             primary_display: "AUC",
-            native_error: "log_loss",
+            native_error: semantics.native_error_metric.as_str(),
             native_error_aggregation: NativeErrorAggregation::FamilyBalancedDistribution,
         },
         Task::Multiclass => TaskMetricContract {
             task,
-            primary_metric: "macro_f1",
+            primary_metric: semantics.primary_metric.as_str(),
             primary_display: "macro-F1",
-            native_error: "one_minus_macro_f1",
+            native_error: semantics.native_error_metric.as_str(),
             native_error_aggregation: NativeErrorAggregation::FamilyBalancedDistribution,
         },
         Task::Timeseries => TaskMetricContract {
             task,
-            primary_metric: "negative_mase",
+            primary_metric: semantics.primary_metric.as_str(),
             primary_display: "MASE",
-            native_error: "mase",
+            native_error: semantics.native_error_metric.as_str(),
             native_error_aggregation: NativeErrorAggregation::FamilyBalancedDistribution,
         },
     }
@@ -79,21 +80,11 @@ pub fn task_metric_contract(task: Task) -> TaskMetricContract {
 /// Shared rating/learning utility. Invalidity is handled by the caller and is
 /// always -1; finite task scores are bounded before any subtraction.
 pub fn bounded_task_utility(task: Task, score: f64) -> Result<f64> {
-    ensure!(score.is_finite(), "task score is not finite");
-    let utility = match task {
-        Task::Timeseries => score + 1.0,
-        _ => score,
-    };
-    Ok(utility.clamp(-1.0, 1.0))
+    Ok(crate::task::normalize_reward(task, score)?.get())
 }
 
 pub fn operational_loss(task: Task, score: f64) -> Result<f64> {
-    ensure!(score.is_finite(), "task score is not finite");
-    Ok(match task {
-        Task::Regression => 1.0 - score.clamp(-1.0, 1.0),
-        Task::Binary | Task::Multiclass => 1.0 - score.clamp(-1.0, 1.0),
-        Task::Timeseries => -score,
-    })
+    crate::task::operational_loss(task, score)
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]

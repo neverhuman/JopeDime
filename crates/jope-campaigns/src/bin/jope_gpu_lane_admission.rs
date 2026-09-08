@@ -19,8 +19,8 @@ use std::process::Command;
 use std::thread;
 use std::time::{Duration, Instant};
 
-const EVALUATOR_PROJECT: &str = "jope-selfplay-eval";
 const SENTINEL_SCHEMA: &str = "GpuLanePauseSentinel.v1";
+const ARBITRATION_STATUS_MAX_AGE_MS: u128 = 2 * 60 * 1_000;
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
 enum RoleArg {
@@ -69,7 +69,6 @@ struct Args {
 #[derive(Clone, Debug, Deserialize)]
 struct SchedulerJob {
     id: String,
-    project: String,
     state: String,
 }
 
@@ -79,6 +78,22 @@ struct NodeCapacity {
     up: bool,
     gpus_free: u64,
     free_core_budget: i64,
+    #[serde(default)]
+    gpu_companion_core_reserve: u64,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct GpuArbitrationEvidence {
+    candidate_evaluation_work: u64,
+    candidate_evaluation_work_target: u64,
+    protected_complete_waves: u64,
+}
+
+impl GpuArbitrationEvidence {
+    fn runway_low(self) -> bool {
+        self.candidate_evaluation_work < self.candidate_evaluation_work_target
+            || self.protected_complete_waves < 2
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -97,6 +112,7 @@ struct PauseSentinel {
 }
 
 impl PauseSentinel {
+    #[cfg(test)]
     fn new(roles: Vec<GpuLaneRole>) -> Self {
         let timestamp = now_ms();
         Self {
@@ -242,42 +258,40 @@ fn cycle(args: &Args) -> Result<()> {
             save_state(&args.root, state)?;
         }
     }
-
-    if states.values().all(|state| {
-        matches!(
-            state.stage,
-            GpuAdmissionStage::Submitted | GpuAdmissionStage::DependencyFailed
-        )
-    }) {
-        if sentinel_path(&args.root).is_file() {
-            recover_orphan_sentinel(args, &jobs)?;
-        }
-        for state in states.values_mut() {
-            if state.stage == GpuAdmissionStage::Submitted {
-                if state.held_evaluator_ids != state.released_evaluator_ids {
-                    state.released_evaluator_ids = archived_exact_release(&args.root, state)?
-                        .with_context(|| {
-                            format!(
-                                "submitted {} admission has no exact archived release receipt",
-                                state.role.as_str()
-                            )
-                        })?;
-                }
-                state.stage = GpuAdmissionStage::Complete;
+    // Old deployments may have crashed inside the former evaluator-hold
+    // transaction. Recover those exact IDs first; new admissions never create
+    // a pause sentinel or hold evaluator work.
+    if sentinel_path(&args.root).is_file() {
+        recover_orphan_sentinel(args, &jobs)?;
+    }
+    for state in states.values_mut() {
+        if state.stage == GpuAdmissionStage::Submitted {
+            if state.held_evaluator_ids != state.released_evaluator_ids {
+                state.released_evaluator_ids = archived_exact_release(&args.root, state)?
+                    .with_context(|| {
+                        format!(
+                            "submitted {} admission has no exact archived release receipt",
+                            state.role.as_str()
+                        )
+                    })?;
             }
+            state.stage = GpuAdmissionStage::Complete;
+            state.recovery_disposition = RecoveryDisposition::NothingToRecover;
             state.updated_at_ms = now_ms();
-            state.recover();
             save_state(&args.root, state)?;
             archive_request(&args.root, state)?;
+        } else if state.stage == GpuAdmissionStage::DependencyFailed {
+            archive_request(&args.root, state)?;
         }
-        return publish_status(args, &states, &nodes, false);
     }
 
     let mut roles = Vec::new();
     for state in states.values_mut() {
         if matches!(
             state.stage,
-            GpuAdmissionStage::Submitted | GpuAdmissionStage::DependencyFailed
+            GpuAdmissionStage::Submitted
+                | GpuAdmissionStage::Complete
+                | GpuAdmissionStage::DependencyFailed
         ) {
             continue;
         }
@@ -290,84 +304,61 @@ fn cycle(args: &Args) -> Result<()> {
             state.stage = GpuAdmissionStage::WaitingForCapacity;
             state.recovery_disposition = RecoveryDisposition::ResumeCapacityWait;
             state.last_capacity_backoff = Some(format!(
-                "{}: up={} free_gpus={} free_core_budget={} requires 1 GPU + 4 cores",
-                capacity.node, capacity.up, capacity.gpus_free, capacity.free_core_budget
+                "{}: up={} free_gpus={} free_core_budget={} companion_reserve={} requires 1 GPU + 4 reserved cores",
+                capacity.node,
+                capacity.up,
+                capacity.gpus_free,
+                capacity.free_core_budget,
+                capacity.gpu_companion_core_reserve,
             ));
             state.updated_at_ms = now_ms();
             save_state(&args.root, state)?;
         }
     }
     if roles.is_empty() {
-        if sentinel_path(&args.root).is_file() {
-            recover_orphan_sentinel(args, &jobs)?;
+        return publish_status(args, &states, &nodes, false);
+    }
+
+    let evidence = load_arbitration_evidence(&args.root)?;
+    let selected_roles = select_gpu_roles(&states, &roles, evidence);
+    if selected_roles.is_empty() {
+        for role in roles {
+            let state = states.get_mut(&role).expect("role came from active states");
+            state.stage = GpuAdmissionStage::WaitingForCapacity;
+            state.recovery_disposition = RecoveryDisposition::ResumeCapacityWait;
+            state.last_capacity_backoff = Some(if evidence.runway_low() {
+                "scientific runway is low; awaiting a cohort-proposer request".to_owned()
+            } else {
+                "no GPU role is scientifically eligible".to_owned()
+            });
+            state.updated_at_ms = now_ms();
+            save_state(&args.root, state)?;
         }
         return publish_status(args, &states, &nodes, false);
     }
 
-    let mut sentinel = load_or_create_sentinel(&args.root, roles)?;
-    recover_inflight(args, &mut sentinel, &jobs)?;
-    for state in states.values_mut() {
-        if sentinel.roles.contains(&state.role) && state.stage == GpuAdmissionStage::Requested {
-            state.stage = GpuAdmissionStage::QueuePaused;
-            state.recovery_disposition = RecoveryDisposition::ResumeHolding;
-            state.updated_at_ms = now_ms();
-            save_state(&args.root, state)?;
-        }
-    }
-    hold_queued_evaluators(args, &mut sentinel, &jobs)?;
-    for state in states.values_mut() {
-        if !sentinel.roles.contains(&state.role) {
-            continue;
-        }
-        state.held_evaluator_ids = sentinel.held_evaluator_ids.clone();
-        if !matches!(
-            state.stage,
-            GpuAdmissionStage::Submitted | GpuAdmissionStage::DependencyFailed
-        ) {
-            state.stage = GpuAdmissionStage::WaitingForCapacity;
-            state.recovery_disposition = RecoveryDisposition::ResumeCapacityWait;
-        }
-        state.updated_at_ms = now_ms();
-        save_state(&args.root, state)?;
-    }
-
-    for state in states.values_mut() {
-        if !sentinel.roles.contains(&state.role) {
-            continue;
-        }
-        if matches!(
-            state.stage,
-            GpuAdmissionStage::Submitted | GpuAdmissionStage::DependencyFailed
-        ) {
-            continue;
-        }
-        let capacity = nodes
-            .get(&state.target_node)
-            .with_context(|| format!("target node {} is absent", state.target_node))?;
-        if !capacity.up
-            || capacity.gpus_free < state.resource_reservation.gpus as u64
-            || capacity.free_core_budget < state.resource_reservation.companion_cpu_cores as i64
-        {
-            state.last_capacity_backoff = Some(format!(
-                "{}: up={} free_gpus={} free_core_budget={} requires 1 GPU + 4 cores",
-                capacity.node, capacity.up, capacity.gpus_free, capacity.free_core_budget
-            ));
-            state.updated_at_ms = now_ms();
-            save_state(&args.root, state)?;
-            continue;
-        }
+    // Roles are pinned to independent GPUs/nodes. Low runway changes order so
+    // the proposer is checked first, but it never suppresses a ready trainer or
+    // encoder on another available resource.
+    for selected_role in selected_roles {
+        let state = states
+            .get_mut(&selected_role)
+            .expect("selected GPU role came from active states");
         match validate_and_submit(args, state, &jobs) {
             Ok(true) => {
-                state.stage = GpuAdmissionStage::Submitted;
-                state.recovery_disposition = RecoveryDisposition::ConfirmSubmissionThenRelease;
+                state.stage = GpuAdmissionStage::Complete;
+                state.recovery_disposition = RecoveryDisposition::NothingToRecover;
                 state.last_capacity_backoff = None;
                 state.updated_at_ms = now_ms();
                 save_state(&args.root, state)?;
                 append_event(&args.root, "gpu_spec_submitted", state)?;
+                archive_request(&args.root, state)?;
             }
             Ok(false) => {
+                state.stage = GpuAdmissionStage::WaitingForCapacity;
+                state.recovery_disposition = RecoveryDisposition::ResumeCapacityWait;
                 state.last_capacity_backoff =
-                    Some("capacity changed during dependency verification; retrying".to_owned());
+                    Some("reserved companion capacity changed during verification".to_owned());
                 state.updated_at_ms = now_ms();
                 save_state(&args.root, state)?;
             }
@@ -378,40 +369,93 @@ fn cycle(args: &Args) -> Result<()> {
                 state.updated_at_ms = now_ms();
                 save_state(&args.root, state)?;
                 append_event(&args.root, "dependency_failed", state)?;
-            }
-        }
-    }
-
-    // The pause is a narrow crash-safe submit transaction, never a capacity
-    // wait. Release exactly what this transaction held even when capacity
-    // changed between the inventory read and SCQ's dependency check.
-    release_exact_evaluators(args, &mut sentinel)?;
-    for role in &sentinel.roles {
-        if let Some(state) = states.get_mut(role) {
-            state.released_evaluator_ids = sentinel.released_evaluator_ids.clone();
-            if state.stage == GpuAdmissionStage::Submitted {
-                state.stage = GpuAdmissionStage::Complete;
-            }
-            state.updated_at_ms = now_ms();
-            state.recover();
-            state.validate()?;
-            save_state(&args.root, state)?;
-            if matches!(
-                state.stage,
-                GpuAdmissionStage::Complete | GpuAdmissionStage::DependencyFailed
-            ) {
                 archive_request(&args.root, state)?;
             }
         }
     }
-    archive_sentinel(&args.root, &sentinel)?;
     publish_status(args, &states, &nodes, false)
 }
 
 fn capacity_available(state: &GpuLaneAdmissionV1, capacity: &NodeCapacity) -> bool {
     capacity.up
         && capacity.gpus_free >= state.resource_reservation.gpus as u64
+        && capacity.gpu_companion_core_reserve
+            >= state.resource_reservation.companion_cpu_cores as u64
         && capacity.free_core_budget >= state.resource_reservation.companion_cpu_cores as i64
+}
+
+fn load_arbitration_evidence(root: &Path) -> Result<GpuArbitrationEvidence> {
+    let path = root.join("ops/micro-wave-supply-v2.json");
+    let value =
+        read_json(&path).with_context(|| format!("read GPU arbitration {}", path.display()))?;
+    ensure!(
+        value.get("schema").and_then(Value::as_str) == Some("JopeMicroWaveSupplyStatus.v2"),
+        "GPU arbitration supply status is off schema"
+    );
+    let generated_at_ms = value
+        .get("generated_at_ms")
+        .and_then(Value::as_u64)
+        .map(u128::from)
+        .context("GPU arbitration supply status lacks a timestamp")?;
+    ensure!(
+        now_ms().saturating_sub(generated_at_ms) <= ARBITRATION_STATUS_MAX_AGE_MS,
+        "GPU arbitration supply status is stale"
+    );
+    ensure!(
+        value.get("performance_fresh").and_then(Value::as_bool) == Some(true),
+        "GPU arbitration supply performance is stale"
+    );
+    let evidence = GpuArbitrationEvidence {
+        candidate_evaluation_work: value
+            .get("candidate_evaluation_work")
+            .and_then(Value::as_u64)
+            .context("GPU arbitration lacks candidate work")?,
+        candidate_evaluation_work_target: value
+            .get("candidate_evaluation_work_target")
+            .and_then(Value::as_u64)
+            .filter(|value| *value > 0)
+            .context("GPU arbitration lacks a candidate-work target")?,
+        protected_complete_waves: value
+            .get("complete_reserve_waves")
+            .and_then(Value::as_u64)
+            .context("GPU arbitration lacks protected-wave evidence")?,
+    };
+    Ok(evidence)
+}
+
+fn select_gpu_roles(
+    states: &BTreeMap<GpuLaneRole, GpuLaneAdmissionV1>,
+    capacity_ready: &[GpuLaneRole],
+    evidence: GpuArbitrationEvidence,
+) -> Vec<GpuLaneRole> {
+    let pending = |role| {
+        states.get(&role).is_some_and(|state| {
+            !matches!(
+                state.stage,
+                GpuAdmissionStage::Submitted
+                    | GpuAdmissionStage::Complete
+                    | GpuAdmissionStage::DependencyFailed
+            )
+        })
+    };
+    let ready = |role| capacity_ready.contains(&role);
+    let order = if evidence.runway_low() {
+        [
+            GpuLaneRole::CohortProposer,
+            GpuLaneRole::AlternatingTrainer,
+            GpuLaneRole::BreadthEncoder,
+        ]
+    } else {
+        [
+            GpuLaneRole::AlternatingTrainer,
+            GpuLaneRole::CohortProposer,
+            GpuLaneRole::BreadthEncoder,
+        ]
+    };
+    order
+        .into_iter()
+        .filter(|role| pending(*role) && ready(*role))
+        .collect()
 }
 
 fn load_active_states(root: &Path) -> Result<BTreeMap<GpuLaneRole, GpuLaneAdmissionV1>> {
@@ -456,22 +500,6 @@ fn load_active_states(root: &Path) -> Result<BTreeMap<GpuLaneRole, GpuLaneAdmiss
     Ok(output)
 }
 
-fn load_or_create_sentinel(root: &Path, mut roles: Vec<GpuLaneRole>) -> Result<PauseSentinel> {
-    roles.sort();
-    roles.dedup();
-    let path = sentinel_path(root);
-    let mut sentinel = if path.is_file() {
-        serde_json::from_value(read_json(&path)?)?
-    } else {
-        PauseSentinel::new(roles.clone())
-    };
-    sentinel.validate()?;
-    sentinel.roles = roles;
-    sentinel.updated_at_ms = now_ms();
-    save_sentinel(root, &sentinel)?;
-    Ok(sentinel)
-}
-
 fn recover_inflight(
     args: &Args,
     sentinel: &mut PauseSentinel,
@@ -498,38 +526,6 @@ fn recover_inflight(
         save_sentinel(&args.root, sentinel)?;
     }
     Ok(())
-}
-
-fn hold_queued_evaluators(
-    args: &Args,
-    sentinel: &mut PauseSentinel,
-    jobs: &[SchedulerJob],
-) -> Result<()> {
-    let already = sentinel
-        .held_evaluator_ids
-        .iter()
-        .map(String::as_str)
-        .collect::<BTreeSet<_>>();
-    let ids = jobs
-        .iter()
-        .filter(|job| job.project == EVALUATOR_PROJECT && job.state == "queued")
-        .map(|job| job.id.clone())
-        .filter(|id| !already.contains(id.as_str()))
-        .collect::<Vec<_>>();
-    for id in ids {
-        sentinel.hold_inflight_id = Some(id.clone());
-        sentinel.updated_at_ms = now_ms();
-        save_sentinel(&args.root, sentinel)?;
-        let output = Command::new(&args.scq).args(["hold", &id]).output()?;
-        if output.status.success() {
-            sentinel.held_evaluator_ids.push(id);
-            sentinel.held_evaluator_ids.sort();
-        }
-        sentinel.hold_inflight_id = None;
-        sentinel.updated_at_ms = now_ms();
-        save_sentinel(&args.root, sentinel)?;
-    }
-    sentinel.validate()
 }
 
 fn release_exact_evaluators(args: &Args, sentinel: &mut PauseSentinel) -> Result<()> {
@@ -753,6 +749,9 @@ fn publish_status(
         "schema": "GpuLaneAdmissionStatus.v1",
         "generated_at_ms": now_ms(),
         "pause_active": pause_active,
+        "evaluator_holds_enabled": false,
+        "gpu_companion_core_reserve_required": 4,
+        "arbitration_order": ["cohort_proposer_first_when_runway_low", "independent_ready_roles_concurrent", "no_cross_node_suppression"],
         "retry_interval_ms": GPU_ADMISSION_RETRY_MS,
         "states": states,
         "nodes": nodes,
@@ -797,15 +796,19 @@ fn append_event<T: Serialize>(root: &Path, kind: &str, detail: &T) -> Result<()>
 mod tests {
     use super::*;
 
-    fn request() -> GpuLaneAdmissionV1 {
+    fn request_for(role: GpuLaneRole) -> GpuLaneAdmissionV1 {
         GpuLaneAdmissionV1::new(
-            GpuLaneRole::CohortProposer,
+            role,
             "/tmp/spec".into(),
             Sha256Digest::parse("a".repeat(64)).unwrap(),
-            "proposer-job".to_owned(),
+            format!("{}-job", role.as_str()),
             1,
         )
         .unwrap()
+    }
+
+    fn request() -> GpuLaneAdmissionV1 {
+        request_for(GpuLaneRole::CohortProposer)
     }
 
     #[test]
@@ -817,18 +820,21 @@ mod tests {
                 up: false,
                 gpus_free: 1,
                 free_core_budget: 4,
+                gpu_companion_core_reserve: 4,
             },
             NodeCapacity {
                 node: "xbabe1".to_owned(),
                 up: true,
                 gpus_free: 0,
                 free_core_budget: 4,
+                gpu_companion_core_reserve: 4,
             },
             NodeCapacity {
                 node: "xbabe1".to_owned(),
                 up: true,
                 gpus_free: 1,
                 free_core_budget: 3,
+                gpu_companion_core_reserve: 4,
             },
         ] {
             assert!(!capacity_available(&state, &capacity));
@@ -840,6 +846,17 @@ mod tests {
                 up: true,
                 gpus_free: 1,
                 free_core_budget: 4,
+                gpu_companion_core_reserve: 4,
+            }
+        ));
+        assert!(!capacity_available(
+            &state,
+            &NodeCapacity {
+                node: "xbabe1".to_owned(),
+                up: true,
+                gpus_free: 1,
+                free_core_budget: 4,
+                gpu_companion_core_reserve: 0,
             }
         ));
     }
@@ -878,5 +895,84 @@ mod tests {
             state.held_evaluator_ids
         );
         fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn low_runway_prioritizes_proposer_without_freezing_independent_roles() {
+        let mut states = BTreeMap::new();
+        for role in [
+            GpuLaneRole::CohortProposer,
+            GpuLaneRole::AlternatingTrainer,
+            GpuLaneRole::BreadthEncoder,
+        ] {
+            states.insert(role, request_for(role));
+        }
+        let ready = states.keys().copied().collect::<Vec<_>>();
+        let low = GpuArbitrationEvidence {
+            candidate_evaluation_work: 100,
+            candidate_evaluation_work_target: 200,
+            protected_complete_waves: 1,
+        };
+        assert_eq!(
+            select_gpu_roles(&states, &ready, low),
+            vec![
+                GpuLaneRole::CohortProposer,
+                GpuLaneRole::AlternatingTrainer,
+                GpuLaneRole::BreadthEncoder,
+            ]
+        );
+
+        let green = GpuArbitrationEvidence {
+            candidate_evaluation_work: 200,
+            candidate_evaluation_work_target: 200,
+            protected_complete_waves: 2,
+        };
+        assert_eq!(
+            select_gpu_roles(&states, &ready, green),
+            vec![
+                GpuLaneRole::AlternatingTrainer,
+                GpuLaneRole::CohortProposer,
+                GpuLaneRole::BreadthEncoder,
+            ]
+        );
+        states.remove(&GpuLaneRole::AlternatingTrainer);
+        assert_eq!(
+            select_gpu_roles(&states, &ready, green),
+            vec![GpuLaneRole::CohortProposer, GpuLaneRole::BreadthEncoder]
+        );
+        states.remove(&GpuLaneRole::CohortProposer);
+        assert_eq!(
+            select_gpu_roles(&states, &ready, low),
+            vec![GpuLaneRole::BreadthEncoder]
+        );
+    }
+
+    #[test]
+    fn node_policy_reserves_four_gpu_only_companion_cores() {
+        let policy = include_str!("../../manifests/selfplay/scq-nodes.v3.toml");
+        let assignment = |section: &str, key: &str| {
+            section
+                .lines()
+                .find_map(|line| line.trim().strip_prefix(&format!("{key} = ")))
+                .unwrap()
+                .trim_matches('"')
+                .to_owned()
+        };
+        let reserves = policy
+            .split("[[node]]")
+            .skip(1)
+            .map(|section| {
+                (
+                    assignment(section, "name"),
+                    assignment(section, "gpu_companion_core_reserve")
+                        .parse::<i64>()
+                        .unwrap(),
+                )
+            })
+            .collect::<BTreeMap<_, _>>();
+        for node in ["xbabe0", "xbabe1", "xbabe2", "xbabe3"] {
+            assert_eq!(reserves.get(node), Some(&4));
+        }
+        assert_eq!(reserves.get("xbabe4"), Some(&0));
     }
 }

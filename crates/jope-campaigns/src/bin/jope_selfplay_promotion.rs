@@ -22,6 +22,7 @@ use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
 use jope_dime_regressor::selfplay_expansion::TASKS;
 use jope_dime_regressor::spec_policy::{PROPOSE, TRAINER};
+use jope_dime_regressor::task::Task;
 use rusqlite::{params, Connection, OptionalExtension};
 use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
@@ -560,13 +561,9 @@ impl ActionJournal {
 /// Per-task authority metric (R1/D2); must agree with
 /// `jope_dime_regressor::task::TaskKind::primary_metric`.
 fn expected_catalog_metric(task: &str) -> Result<&'static str> {
-    match task {
-        "regression" => Ok("r2"),
-        "binary" => Ok("auc"),
-        "timeseries" => Ok("negative_mase"),
-        "multiclass" => Ok("macro_f1"),
-        _ => bail!("catalog contains unsupported task {task}"),
-    }
+    Task::parse(task)
+        .map(Task::primary_metric)
+        .ok_or_else(|| anyhow!("catalog contains unsupported task {task}"))
 }
 
 fn declared_catalog_counts(manifest: &Value) -> BTreeMap<String, i64> {

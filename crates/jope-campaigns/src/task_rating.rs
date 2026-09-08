@@ -275,12 +275,8 @@ fn fit_bradley_terry(
 }
 
 fn task_metric(task: Task) -> (&'static str, &'static str) {
-    match task {
-        Task::Regression => ("r2", "clamp(r2,-1,1)"),
-        Task::Binary => ("auc", "clamp(auc,-1,1)"),
-        Task::Multiclass => ("macro_f1", "clamp(macro_f1,-1,1)"),
-        Task::Timeseries => ("negative_mase", "clamp(negative_mase+1,-1,1)"),
-    }
+    let semantics = task.semantics();
+    (semantics.primary_metric.as_str(), task.reward_expression())
 }
 
 fn deterministic_index(

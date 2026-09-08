@@ -2,6 +2,13 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
+use jope_dime_regressor::dime_runtime_contracts::{
+    append_infrastructure_attempt, digest_label, ensure_same_scientific_payload,
+    infrastructure_attempts, load_or_rebuild_recovery_projection, matching_drain_intent,
+    save_recovery_projection, terminal_classification, DimeInfrastructureAttemptV1, DimeNamedDigestV1,
+    DimeRecoveryProjectionV1, DimeRoleV1, DimeScientificPayloadV1, DimeTerminalClassV1,
+    DimeTerminalEvidenceV1,
+};
 use jope_dime_regressor::selfplay_runtime::{
     atomic_json, now_ms, read_json, scq_json, sha256_bytes, sha256_file, DEFAULT_ROOT, DEFAULT_SCQ,
 };
@@ -318,22 +325,66 @@ fn cycle(args: &Args) -> Result<Value> {
         .collect::<BTreeMap<_, _>>();
     let jobs = scheduler_jobs(&scq_json(&args.scq, &["ls"])?)?;
 
-    if let Some(intent) = state.intent.clone() {
-        if audited_terminal_retry(&args.root, &intent, &jobs)? {
-            state.intent = None;
-            state.alternation.next_task = Some(intent.trainer.task);
+    if let Some(mut intent) = state.intent.clone() {
+        let payload = trainer_scientific_payload(&intent)?;
+        let initial_job_identity = trainer_initial_job_identity(
+            &intent.trainer.immutable_job_identity,
+            &args.root,
+            &payload,
+        )?;
+        let mut recovery = load_or_rebuild_recovery_projection(
+            &args.root,
+            DimeRoleV1::AlternatingTrainer,
+            &payload,
+            &initial_job_identity,
+        )?;
+        if intent.trainer.immutable_job_identity != recovery.current_job_identity {
+            intent = reconcile_trainer_projection(args, &intent, &recovery, &payload)?;
+            state.intent = Some(intent.clone());
             state.updated_at_ms = now_ms();
             save_state(&state_path, &state)?;
-            append_event(
-                &args.root,
-                "trainer_terminal_failure_audited",
-                &json!({
-                    "job_id": intent.trainer.immutable_job_identity,
-                    "task": intent.trainer.task,
-                    "retry_from_accepted": true,
-                }),
-            )?;
-        } else if jobs.iter().any(|job| {
+            return Ok(status(
+                args,
+                &state,
+                &accepted,
+                &corpus,
+                "trainer_attempt_receipt_replayed",
+                Some("the append-only attempt receipt restored its recorded next identity"),
+            ));
+        }
+        if recovery.retry_pending_submission {
+            if now_ms() < recovery.retry_not_before_ms {
+                return Ok(status(
+                    args,
+                    &state,
+                    &accepted,
+                    &corpus,
+                    "trainer_infrastructure_retry_backoff",
+                    Some("the receipt-bound retry is waiting for its recorded backoff"),
+                ));
+            }
+            let action = if args.submit {
+                let action = submit_or_register(
+                    args,
+                    &intent.spec_path,
+                    &intent.trainer.immutable_job_identity,
+                )?;
+                recovery.mark_submitted(&intent.trainer.immutable_job_identity, now_ms())?;
+                save_recovery_projection(&args.root, &recovery)?;
+                action
+            } else {
+                "trainer_infrastructure_retry_audited"
+            };
+            return Ok(status(
+                args,
+                &state,
+                &accepted,
+                &corpus,
+                action,
+                Some("retry remains bound to the same scientific payload"),
+            ));
+        }
+        if jobs.iter().any(|job| {
             job.id == intent.trainer.immutable_job_identity
                 && job.project == PROJECT
                 && ACTIVE_STATES.contains(&job.state.as_str())
@@ -365,14 +416,32 @@ fn cycle(args: &Args) -> Result<Value> {
                 "waiting_for_gpu_admission",
                 None,
             ));
+        } else if let Some(terminal_state) = trainer_terminal_state(&intent, &jobs, now_ms()) {
+            let disposition = recover_trainer_intent(
+                args,
+                &mut state,
+                &intent,
+                terminal_state,
+                now_ms(),
+            )?;
+            state.updated_at_ms = now_ms();
+            save_state(&state_path, &state)?;
+            return Ok(status(
+                args,
+                &state,
+                &accepted,
+                &corpus,
+                disposition.action,
+                disposition.note.as_deref(),
+            ));
         } else {
             return Ok(status(
                 args,
                 &state,
                 &accepted,
                 &corpus,
-                "trainer_result_pending_or_failed",
-                Some("intent remains immutable until an output or operator-audited terminal failure exists"),
+                "trainer_result_pending",
+                Some("frozen trainer intent is within the scheduler appearance grace period"),
             ));
         }
     }
@@ -554,12 +623,20 @@ fn cycle(args: &Args) -> Result<Value> {
         recipe: Some(recipe),
     };
     intent.validate()?;
-    state.intent = Some(ActiveIntent {
+    let active_intent = ActiveIntent {
         trainer: intent.clone(),
         spec_path: spec_path.clone(),
         output_name,
         warm_start_path,
-    });
+    };
+    let scientific_payload = trainer_scientific_payload(&active_intent)?;
+    let mut recovery = load_or_rebuild_recovery_projection(
+        &args.root,
+        DimeRoleV1::AlternatingTrainer,
+        &scientific_payload,
+        &job_id,
+    )?;
+    state.intent = Some(active_intent);
     state.sequence = state.sequence.saturating_add(1);
     state.updated_at_ms = now_ms();
     save_state(&state_path, &state)?;
@@ -573,7 +650,10 @@ fn cycle(args: &Args) -> Result<Value> {
     append_event(&args.root, "trainer_intent_created", &intent)?;
 
     let action = if args.submit {
-        submit_or_register(args, &spec_path, &job_id)?
+        let action = submit_or_register(args, &spec_path, &job_id)?;
+        recovery.record_initial_submission(&job_id, now_ms())?;
+        save_recovery_projection(&args.root, &recovery)?;
+        action
     } else {
         "audit_intent_only"
     };
@@ -590,52 +670,428 @@ fn is_task_trainer_job_id(job_id: &str) -> bool {
     .any(|prefix| job_id.starts_with(prefix))
 }
 
-fn audited_terminal_retry(
+fn trainer_spec_inputs(spec: &Path) -> Result<Vec<DimeNamedDigestV1>> {
+    let body = fs::read_to_string(spec)?;
+    let mut inputs = Vec::new();
+    let mut name: Option<String> = None;
+    let mut sha256: Option<String> = None;
+    let flush = |name: &mut Option<String>,
+                 sha256: &mut Option<String>,
+                 inputs: &mut Vec<DimeNamedDigestV1>|
+     -> Result<()> {
+        if name.is_none() && sha256.is_none() {
+            return Ok(());
+        }
+        let input = DimeNamedDigestV1 {
+            name: name.take().context("trainer input name is absent")?,
+            sha256: sha256.take().context("trainer input digest is absent")?,
+        };
+        inputs.push(input);
+        Ok(())
+    };
+    let parse = |line: &str, key: &str| -> Option<String> {
+        serde_json::from_str(line.trim().strip_prefix(&format!("{key} = "))?).ok()
+    };
+    let mut in_input = false;
+    for line in body.lines() {
+        if line.trim() == "[[input]]" {
+            if in_input {
+                flush(&mut name, &mut sha256, &mut inputs)?;
+            }
+            in_input = true;
+        } else if in_input {
+            if line.trim().starts_with('[') {
+                flush(&mut name, &mut sha256, &mut inputs)?;
+                in_input = false;
+            } else if let Some(value) = parse(line, "name") {
+                name = Some(value);
+            } else if let Some(value) = parse(line, "sha256") {
+                sha256 = Some(value);
+            }
+        }
+    }
+    if in_input {
+        flush(&mut name, &mut sha256, &mut inputs)?;
+    }
+    inputs.sort_by(|left, right| left.name.cmp(&right.name));
+    Ok(inputs)
+}
+
+fn trainer_scientific_payload(intent: &ActiveIntent) -> Result<DimeScientificPayloadV1> {
+    let mut inputs = trainer_spec_inputs(&intent.spec_path)?;
+    let binary_sha256 = inputs
+        .iter()
+        .find(|input| input.name == "script")
+        .map(|input| input.sha256.clone())
+        .context("trainer intent has no script input")?;
+    let recipe = intent.trainer.recipe.as_ref().unwrap_or(&Value::Null);
+    let configuration_sha256 = sha256_bytes(&serde_json::to_vec(&json!({
+        "task": intent.trainer.task,
+        "mode": intent.trainer.mode,
+        "recipe": recipe,
+    }))?);
+    let parent_intent_sha256 = sha256_bytes(&serde_json::to_vec(&json!({
+        "domain": "dime-trainer-scientific-intent-v1",
+        "task": intent.trainer.task,
+        "mode": intent.trainer.mode,
+        "accepted_parent_checkpoint_sha256": intent.trainer.accepted_parent_checkpoint_sha256,
+        "shadow_parent_checkpoint_sha256": intent.trainer.shadow_parent_checkpoint_sha256,
+        "warm_start_checkpoint_sha256": intent.trainer.warm_start_checkpoint_sha256,
+        "corpus_identity_sha256": intent.trainer.corpus_identity_sha256,
+        "corpus_watermark": intent.trainer.corpus_watermark,
+        "seed": intent.trainer.seed,
+        "runtime_bundle_sha256": intent.trainer.runtime_bundle_sha256,
+        "catalog_binding_sha256": intent.trainer.catalog_binding_sha256,
+        "recipe": recipe,
+    }))?);
+    if inputs.is_empty() {
+        inputs.push(DimeNamedDigestV1 {
+            name: "legacy_spec".to_owned(),
+            sha256: intent.trainer.immutable_spec_sha256.as_str().to_owned(),
+        });
+    }
+    let payload = DimeScientificPayloadV1 {
+        parent_intent_sha256,
+        runtime_bundle_sha256: intent
+            .trainer
+            .runtime_bundle_sha256
+            .as_ref()
+            .map(|value| value.as_str().to_owned())
+            .unwrap_or_else(|| digest_label("legacy-unbound-trainer-runtime")),
+        binary_sha256,
+        configuration_sha256,
+        train_data_sha256: intent.trainer.corpus_identity_sha256.as_str().to_owned(),
+        protocol_sha256: digest_label("jope-task-trainer-protocol-v3"),
+        metric_sha256: digest_label("jope-conditional-pairwise-trainer-metric-v1"),
+        seed: intent.trainer.seed,
+        inputs,
+    };
+    payload.validate()?;
+    Ok(payload)
+}
+
+fn trainer_initial_job_identity(
+    current_job_identity: &str,
+    root: &Path,
+    payload: &DimeScientificPayloadV1,
+) -> Result<String> {
+    if let Some(first) = infrastructure_attempts(
+        root,
+        DimeRoleV1::AlternatingTrainer,
+        &payload.identity_sha256()?,
+    )?
+    .first()
+    {
+        return Ok(first.job_identity.clone());
+    }
+    Ok(current_job_identity
+        .rsplit_once("-infra")
+        .filter(|(_, suffix)| !suffix.is_empty() && suffix.bytes().all(|byte| byte.is_ascii_digit()))
+        .map_or(current_job_identity, |(base, _)| base)
+        .to_owned())
+}
+
+fn trainer_terminal_state<'a>(
+    intent: &ActiveIntent,
+    jobs: &'a [SchedulerJob],
+    observed_at_ms: u128,
+) -> Option<&'a str> {
+    match jobs
+        .iter()
+        .find(|job| job.id == intent.trainer.immutable_job_identity)
+    {
+        Some(job)
+            if matches!(
+                job.state.as_str(),
+                "failed" | "cancelled" | "preempted" | "lost" | "finished"
+            ) => Some(job.state.as_str()),
+        Some(_) => None,
+        None
+            if observed_at_ms.saturating_sub(intent.trainer.created_at_ms)
+                >= 60_u128 * 1_000 =>
+        {
+            Some("vanished")
+        }
+        None => None,
+    }
+}
+
+fn trainer_scientific_failure_receipt(
     root: &Path,
     intent: &ActiveIntent,
-    jobs: &[SchedulerJob],
-) -> Result<bool> {
-    // A job the scheduler LOST is terminal too, and it is the case that actually
-    // strands the loop. `scq ls` lists terminal states (a completed job is still
-    // there), so a job missing from the listing entirely has no record, no run
-    // directory and no result -- it can never reach "failed"/"cancelled", so
-    // requiring one of those states made the recovery audit unreachable and the
-    // intent immortal. That is how shadow-regression-008145630-s000011 stranded
-    // the regression lane on 2026-08-04: dispatched, one cycle of
-    // `active_trainer_preserved`, then gone with nothing to audit.
-    //
-    // This does NOT self-release: the operator audit file below is still
-    // required, and it must be bound to this exact job id and spec digest. That
-    // gate also covers the benign race where a just-submitted job has not yet
-    // appeared in the listing -- no operator will have audited a job that is
-    // seconds old.
-    let listed = jobs
-        .iter()
-        .find(|job| job.id == intent.trainer.immutable_job_identity);
-    let terminal = match listed {
-        Some(job) => matches!(job.state.as_str(), "failed" | "cancelled"),
-        None => true,
-    };
-    if !terminal {
-        return Ok(false);
-    }
+    payload: &DimeScientificPayloadV1,
+) -> Result<Option<String>> {
     let path = root
-        .join("ops/trainer-recovery-audits")
+        .join("ops/dime-scientific-failures")
         .join(format!("{}.json", intent.trainer.immutable_job_identity));
     if !path.is_file() {
-        return Ok(false);
+        return Ok(None);
     }
-    let audit = read_json(&path)?;
+    let value = read_json(&path)?;
+    let payload_sha256 = payload.identity_sha256()?;
+    let evidence = value
+        .get("evidence_sha256")
+        .and_then(Value::as_str)
+        .context("trainer scientific failure receipt lacks evidence")?;
+    Sha256Digest::parse(evidence.to_owned())?;
     ensure!(
-        audit.get("schema").and_then(Value::as_str) == Some("TrainerRecoveryAudit.v1")
-            && audit.get("job_id").and_then(Value::as_str)
+        value.get("schema").and_then(Value::as_str) == Some("DimeScientificFailure.v1")
+            && value.get("job_identity").and_then(Value::as_str)
                 == Some(intent.trainer.immutable_job_identity.as_str())
-            && audit.get("immutable_spec_sha256").and_then(Value::as_str)
-                == Some(intent.trainer.immutable_spec_sha256.as_str())
-            && audit.get("disposition").and_then(Value::as_str) == Some("retry_from_accepted"),
-        "trainer recovery audit is not bound to the immutable failed intent"
+            && value
+                .get("scientific_payload_sha256")
+                .and_then(Value::as_str)
+                == Some(payload_sha256.as_str())
+            && value.get("deterministic").and_then(Value::as_bool) == Some(true),
+        "trainer scientific failure receipt is not bound to the frozen intent"
     );
-    Ok(true)
+    Ok(Some(evidence.to_owned()))
+}
+
+struct TrainerRecoveryDisposition {
+    action: &'static str,
+    note: Option<String>,
+}
+
+fn recover_trainer_intent(
+    args: &Args,
+    state: &mut ControllerState,
+    intent: &ActiveIntent,
+    terminal_state: &str,
+    observed_at_ms: u128,
+) -> Result<TrainerRecoveryDisposition> {
+    let payload = trainer_scientific_payload(intent)?;
+    payload.validate()?;
+    let initial_job_identity = trainer_initial_job_identity(
+        &intent.trainer.immutable_job_identity,
+        &args.root,
+        &payload,
+    )?;
+    let mut projection = load_or_rebuild_recovery_projection(
+        &args.root,
+        DimeRoleV1::AlternatingTrainer,
+        &payload,
+        &initial_job_identity,
+    )?;
+    if intent.trainer.immutable_job_identity != projection.current_job_identity {
+        let next = reconcile_trainer_projection(args, intent, &projection, &payload)?;
+        state.intent = Some(next);
+        return Ok(TrainerRecoveryDisposition {
+            action: "trainer_attempt_receipt_replayed",
+            note: Some("the existing append-only receipt restored its recorded next identity".to_owned()),
+        });
+    }
+    if projection.scientific_failures >= 5 {
+        return Ok(TrainerRecoveryDisposition {
+            action: "trainer_scientific_failure_circuit_open",
+            note: Some("five hash-bound deterministic failures require scientific review".to_owned()),
+        });
+    }
+    if let Some(drain) = matching_drain_intent(
+        &args.root,
+        DimeRoleV1::AlternatingTrainer,
+        &payload,
+        observed_at_ms,
+    )? {
+        append_event(
+            &args.root,
+            "trainer_intentional_drain_honored",
+            &json!({
+                "job_id": intent.trainer.immutable_job_identity,
+                "drain_receipt_sha256": drain.content_sha256,
+                "scientific_payload_sha256": payload.identity_sha256()?,
+            }),
+        )?;
+        return Ok(TrainerRecoveryDisposition {
+            action: "intentional_drain_honored",
+            note: Some("hash-bound DIME drain suppresses infrastructure recovery".to_owned()),
+        });
+    }
+    if projection.submitted_at_ms > 0 && observed_at_ms < projection.retry_not_before_ms {
+        return Ok(TrainerRecoveryDisposition {
+            action: "trainer_infrastructure_retry_backoff",
+            note: Some(format!(
+                "retry is bound to the frozen intent and due in {}s",
+                projection.retry_not_before_ms.saturating_sub(observed_at_ms) / 1_000
+            )),
+        });
+    }
+    let scientific = if terminal_state == "failed" {
+        trainer_scientific_failure_receipt(&args.root, intent, &payload)?
+    } else {
+        None
+    };
+    let terminal_class = terminal_classification(terminal_state, scientific.as_deref())?;
+    let scientific_failures = projection
+        .scientific_failures
+        .saturating_add(u32::from(terminal_class == DimeTerminalClassV1::ScientificFailure));
+    let retry_allowed = scientific_failures < 5;
+    let next_attempt = projection
+        .current_attempt_number
+        .checked_add(1)
+        .context("trainer infrastructure attempt overflow")?;
+    let current_job = &intent.trainer.immutable_job_identity;
+    let base = current_job
+        .rsplit_once("-infra")
+        .filter(|(_, suffix)| suffix.bytes().all(|byte| byte.is_ascii_digit()))
+        .map(|(base, _)| base)
+        .unwrap_or(current_job);
+    let next_job = format!("{base}-infra{next_attempt:06}");
+    let evidence_sha256 = scientific.clone().unwrap_or_else(|| {
+        sha256_bytes(
+            format!(
+                "dime-trainer-terminal-v1\0{}\0{}\0{}",
+                current_job, terminal_state, intent.trainer.immutable_spec_sha256
+            )
+            .as_bytes(),
+        )
+    });
+    let recent_cancellations = projection
+        .foreign_cancellation_timestamps_ms
+        .iter()
+        .rev()
+        .take_while(|timestamp| observed_at_ms.saturating_sub(**timestamp) <= 10 * 60 * 1_000)
+        .count()
+        + usize::from(terminal_state == "cancelled");
+    let backoff_ms = if recent_cancellations >= 3 {
+        15 * 60 * 1_000
+    } else {
+        jope_dime_regressor::dime_runtime_contracts::retry_backoff_ms(
+            projection.current_attempt_number,
+        )
+    };
+    let retry_not_before_ms = observed_at_ms.saturating_add(backoff_ms);
+    let receipt = DimeInfrastructureAttemptV1::new_terminal(
+        DimeRoleV1::AlternatingTrainer,
+        payload.clone(),
+        projection.current_attempt_number,
+        current_job.clone(),
+        retry_allowed.then_some(next_job.clone()),
+        projection.last_attempt_receipt_sha256.clone(),
+        intent.trainer.created_at_ms.max(1),
+        retry_not_before_ms,
+        DimeTerminalEvidenceV1 {
+            terminal_state: terminal_state.to_owned(),
+            class: terminal_class,
+            evidence_sha256,
+            observed_at_ms,
+            foreign_cancellation: terminal_state == "cancelled",
+        },
+    )?;
+    append_infrastructure_attempt(&args.root, &receipt)?;
+    projection.apply_receipt(&receipt)?;
+    let contention_alarm_open = projection.refresh_contention_alarm(observed_at_ms)?;
+    save_recovery_projection(&args.root, &projection)?;
+    if contention_alarm_open {
+        append_event(
+            &args.root,
+            "trainer_foreign_cancellation_contention_alarm",
+            &json!({
+                "severity": "prominent",
+                "job_id": current_job,
+                "scientific_payload_sha256": projection.scientific_payload_sha256,
+                "retry_mode": "capped_half_open",
+                "retry_not_before_ms": projection.retry_not_before_ms,
+            }),
+        )?;
+    }
+    if !retry_allowed {
+        append_event(
+            &args.root,
+            "trainer_scientific_failure_circuit_open",
+            &json!({
+                "job_id": current_job,
+                "scientific_failures": projection.scientific_failures,
+                "attempt_receipt_sha256": receipt.content_sha256,
+            }),
+        )?;
+        return Ok(TrainerRecoveryDisposition {
+            action: "trainer_scientific_failure_circuit_open",
+            note: Some("five hash-bound deterministic failures require scientific review".to_owned()),
+        });
+    }
+    let next = reconcile_trainer_projection(args, intent, &projection, &payload)?;
+    state.intent = Some(next.clone());
+    state.updated_at_ms = observed_at_ms;
+    save_state(
+        &args.root.join("training/task-learning-controller.v2.json"),
+        state,
+    )?;
+    let submission = "trainer_infrastructure_retry_audited";
+    append_event(
+        &args.root,
+        if terminal_state == "cancelled" {
+            "trainer_foreign_cancellation_recovered"
+        } else {
+            "trainer_infrastructure_attempt_recovered"
+        },
+        &json!({
+            "prior_job_id": current_job,
+            "next_job_id": next_job,
+            "infrastructure_attempt": next_attempt,
+            "scientific_payload_sha256": payload.identity_sha256()?,
+            "attempt_receipt_sha256": receipt.content_sha256,
+            "submission": submission,
+            "retry_not_before_ms": projection.retry_not_before_ms,
+            "contention_alarm_open": contention_alarm_open,
+        }),
+    )?;
+    Ok(TrainerRecoveryDisposition {
+        action: submission,
+        note: Some("fresh job identity preserves corpus, parent, seed, recipe, and all staged input hashes".to_owned()),
+    })
+}
+
+fn reconcile_trainer_projection(
+    args: &Args,
+    intent: &ActiveIntent,
+    projection: &DimeRecoveryProjectionV1,
+    payload: &DimeScientificPayloadV1,
+) -> Result<ActiveIntent> {
+    if intent.trainer.immutable_job_identity == projection.current_job_identity {
+        return Ok(intent.clone());
+    }
+    ensure!(
+        projection.retry_pending_submission,
+        "trainer recovery projection changed identity without a pending retry"
+    );
+    let next_job = &projection.current_job_identity;
+    let original = fs::read_to_string(&intent.spec_path)?;
+    let replacement = format!("id = {}", serde_json::to_string(next_job)?);
+    let mut replaced = false;
+    let body = original
+        .lines()
+        .map(|line| {
+            if !replaced && line.starts_with("id = ") {
+                replaced = true;
+                replacement.as_str()
+            } else {
+                line
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    ensure!(replaced, "trainer retry spec has no immutable job identity");
+    let spec_path = args
+        .root
+        .join("specs/task-learning")
+        .join(format!("{next_job}.toml"));
+    write_immutable(&spec_path, body.as_bytes())?;
+    let mut next = intent.clone();
+    next.trainer.immutable_job_identity = next_job.clone();
+    next.trainer.immutable_spec_sha256 = Sha256Digest::parse(sha256_bytes(body.as_bytes()))?;
+    next.trainer.created_at_ms = projection.retry_not_before_ms.max(1);
+    next.spec_path = spec_path;
+    let observed_payload = trainer_scientific_payload(&next)?;
+    ensure_same_scientific_payload(payload, &observed_payload)?;
+    atomic_json(
+        &args
+            .root
+            .join("training/trainer-intents")
+            .join(format!("{next_job}.v3.json")),
+        &serde_json::to_value(&next.trainer)?,
+    )?;
+    Ok(next)
 }
 
 fn shadow_canary_warm_start_eligible(
@@ -681,58 +1137,20 @@ fn shadow_canary_warm_start_eligible(
     Ok(shadow_summary_eligible(&summary))
 }
 
-/// The candidate validity bar for one canary: the absolute 0.99 floor whenever the
-/// environment is healthy, otherwise the incumbent's own validity.
-///
-/// `accepted_validity` and `gp_validity` describe the INCUMBENT and the GP lane, not the
-/// challenger. Gating on them absolutely deadlocked the lane: 5 of the 8 canaries taken
-/// against `fbcd5459` reported an environment below 0.99, so no candidate could promote
-/// however good it was — and a degraded environment is exactly when a new checkpoint is
-/// most needed. They are now reported diagnostics. The challenger must still be no worse
-/// than the incumbent, and must still clear 0.99 whenever the incumbent does.
-fn candidate_validity_floor(accepted_validity: f64) -> f64 {
-    accepted_validity.min(0.99)
-}
-
-/// Canary lift floor: a candidate must not be worse than its parent.
-const MINIMUM_CANARY_LIFT: f64 = -0.005;
-
-/// Screening backstop on proposed-genome evaluation cost. A candidate whose proposals
-/// are pathologically expensive cannot screen through on a large lift alone.
-const MAXIMUM_CANARY_LATENCY_RATIO: f64 = 4.0;
-
-/// Does a candidate's advantage justify the evaluation compute its proposals spend?
-///
-/// `latency_ratio` is NOT wall-clock or contention: `jope_canary_executor.rs:976-996`
-/// builds it from the canary evaluation receipts' `runtime_seconds` per proposed genome,
-/// and both lanes are evaluated in the same batch. It is how much more expensive the
-/// candidate's proposals are to fit and score, which at a fixed budget is directly fewer
-/// candidates evaluated per wave.
-///
-/// A flat `latency_ratio <= 1.25` answered that with a magic number, and it rejected
-/// `8cadebd2` — +0.1748 lift over its parent, +0.0698 over GP, every other criterion
-/// clean — for costing 1.73x. The honest form needs no threshold: a candidate that is no
-/// more expensive than its parent keeps the existing "not worse" contract, and a
-/// candidate that spends MORE has to actually win, not merely avoid regressing. The
-/// backstop then refuses a pathologically expensive candidate on any lift at all.
-fn canary_compute_trade_ok(pairwise_lift: f64, latency_ratio: f64) -> bool {
-    if !latency_ratio.is_finite() || latency_ratio <= 0.0 || !pairwise_lift.is_finite() {
-        return false;
-    }
-    if latency_ratio > MAXIMUM_CANARY_LATENCY_RATIO {
-        return false;
-    }
-    latency_ratio <= 1.0 || pairwise_lift > 0.0
-}
+const MINIMUM_CANARY_VALIDITY: f64 = 0.99;
+const MAXIMUM_CANARY_LATENCY_RATIO: f64 = 1.25;
+const SHADOW_COMPARISON_LOWER_BOUND_METHOD: &str = "context_cluster_normal_95_v1";
 
 fn shadow_summary_eligible(summary: &Value) -> bool {
     let metric = summary.get("candidate_vs_accepted").unwrap_or(&Value::Null);
-    let accepted_validity = summary.get("accepted_validity").and_then(Value::as_f64);
     summary
         .get("contexts")
         .and_then(Value::as_array)
         .is_some_and(|contexts| contexts.len() == 16)
-        && accepted_validity.is_some_and(f64::is_finite)
+        && summary
+            .get("accepted_validity")
+            .and_then(Value::as_f64)
+            .is_some_and(f64::is_finite)
         && summary
             .get("gp_validity")
             .and_then(Value::as_f64)
@@ -740,14 +1158,20 @@ fn shadow_summary_eligible(summary: &Value) -> bool {
         && metric
             .get("validity")
             .and_then(Value::as_f64)
-            .zip(accepted_validity)
-            .is_some_and(|(candidate, accepted)| candidate >= candidate_validity_floor(accepted))
+            .is_some_and(|candidate| candidate >= MINIMUM_CANARY_VALIDITY)
         && metric
-            .get("pairwise_lift")
+            .get("pairwise_lift_lower_bound")
             .and_then(Value::as_f64)
-            .zip(metric.get("latency_ratio").and_then(Value::as_f64))
-            .is_some_and(|(lift, latency_ratio)| {
-                lift >= MINIMUM_CANARY_LIFT && canary_compute_trade_ok(lift, latency_ratio)
+            .is_some_and(|lower| lower.is_finite() && lower > 0.0)
+        && summary
+            .pointer("/candidate_vs_gp/pairwise_lift_lower_bound")
+            .and_then(Value::as_f64)
+            .is_some_and(|lower| lower.is_finite() && lower > 0.0)
+        && metric
+            .get("latency_ratio")
+            .and_then(Value::as_f64)
+            .is_some_and(|ratio| {
+                ratio.is_finite() && ratio > 0.0 && ratio <= MAXIMUM_CANARY_LATENCY_RATIO
             })
         && metric
             .get("stability")
@@ -757,6 +1181,14 @@ fn shadow_summary_eligible(summary: &Value) -> bool {
             .get("replay_verification_complete")
             .and_then(Value::as_bool)
             == Some(true)
+        && summary
+            .get("matched_comparisons_complete")
+            .and_then(Value::as_bool)
+            == Some(true)
+        && summary
+            .get("comparison_lower_bound_method")
+            .and_then(Value::as_str)
+            == Some(SHADOW_COMPARISON_LOWER_BOUND_METHOD)
 }
 
 /// Keys in a trainer recipe that vary run-to-run without changing what the
@@ -3276,12 +3708,16 @@ mod tests {
                 "accepted_validity": 1.0,
                 "gp_validity": 1.0,
                 "replay_verification_complete": true,
+                "matched_comparisons_complete": true,
+                "comparison_lower_bound_method": SHADOW_COMPARISON_LOWER_BOUND_METHOD,
                 "candidate_vs_accepted": {
                     "validity": validity,
                     "pairwise_lift": 0.0,
+                    "pairwise_lift_lower_bound": 0.01,
                     "latency_ratio": 1.0,
                     "stability": 1.0
-                }
+                },
+                "candidate_vs_gp": {"pairwise_lift_lower_bound": 0.01}
             })
         };
         atomic_json(&path, &summary(1.0)).unwrap();
@@ -3295,71 +3731,59 @@ mod tests {
     }
 
     #[test]
-    fn a_degraded_environment_does_not_deadlock_the_shadow_gate() {
-        // 5 of the 8 canaries taken against fbcd5459 reported accepted/gp validity below
-        // 0.99. Under the old absolute bar no candidate could promote while the
-        // environment was degraded, which is exactly when a new checkpoint is needed.
+    fn validity_is_a_hard_shadow_gate_even_in_a_degraded_environment() {
         let environment = |accepted: f64, candidate_validity: f64| {
             json!({
                 "contexts": vec![json!({"context": "x"}); 16],
                 "accepted_validity": accepted,
                 "gp_validity": accepted,
                 "replay_verification_complete": true,
+                "matched_comparisons_complete": true,
+                "comparison_lower_bound_method": SHADOW_COMPARISON_LOWER_BOUND_METHOD,
                 "candidate_vs_accepted": {
                     "validity": candidate_validity,
-                    "pairwise_lift": 0.0,
+                    "pairwise_lift": 0.01,
+                    "pairwise_lift_lower_bound": 0.001,
                     "latency_ratio": 1.0,
                     "stability": 1.0
-                }
+                },
+                "candidate_vs_gp": {"pairwise_lift_lower_bound": 0.001}
             })
         };
-        // Degraded environment: matching the incumbent is enough.
-        assert!(shadow_summary_eligible(&environment(0.875, 0.875)));
-        // Degraded environment: strictly worse than the incumbent still fails.
+        assert!(!shadow_summary_eligible(&environment(0.875, 0.875)));
         assert!(!shadow_summary_eligible(&environment(0.875, 0.8125)));
-        // Healthy environment: the absolute 0.99 floor still applies.
         assert!(!shadow_summary_eligible(&environment(1.0, 0.9766)));
         assert!(shadow_summary_eligible(&environment(1.0, 0.99)));
-        // The environment fields must still be present and finite.
         let mut missing = environment(1.0, 1.0);
         missing.as_object_mut().unwrap().remove("gp_validity");
         assert!(!shadow_summary_eligible(&missing));
     }
 
     #[test]
-    fn the_canary_screen_charges_lift_for_its_own_evaluation_cost() {
-        let canary = |pairwise_lift: f64, latency_ratio: f64| {
+    fn shadow_gate_hard_blocks_latency_and_nonpositive_lower_bounds() {
+        let canary = |accepted_lower: f64, gp_lower: f64, latency_ratio: f64| {
             json!({
                 "contexts": vec![json!({"context": "x"}); 16],
                 "accepted_validity": 1.0,
                 "gp_validity": 1.0,
                 "replay_verification_complete": true,
+                "matched_comparisons_complete": true,
+                "comparison_lower_bound_method": SHADOW_COMPARISON_LOWER_BOUND_METHOD,
                 "candidate_vs_accepted": {
                     "validity": 1.0,
-                    "pairwise_lift": pairwise_lift,
+                    "pairwise_lift": accepted_lower,
+                    "pairwise_lift_lower_bound": accepted_lower,
                     "latency_ratio": latency_ratio,
                     "stability": 1.0
-                }
+                },
+                "candidate_vs_gp": {"pairwise_lift_lower_bound": gp_lower}
             })
         };
-        // 8cadebd2: +0.1748 lift at 1.73x cost. It spends more and it wins, so it trades.
-        assert!(shadow_summary_eligible(&canary(0.1748, 1.7303)));
-        // The existing "not worse" contract survives when cost does not increase:
-        // a flat 0.0 lift at parity still screens through, as it did before.
-        assert!(shadow_summary_eligible(&canary(0.0, 1.0)));
-        assert!(shadow_summary_eligible(&canary(-0.004, 0.9)));
-        // But a candidate that spends MORE must actually win, not merely not-regress.
-        assert!(!shadow_summary_eligible(&canary(0.0, 1.0001)));
-        assert!(!shadow_summary_eligible(&canary(-0.004, 3.0)));
-        // A deficit is never excused by being cheap.
-        assert!(!shadow_summary_eligible(&canary(-0.02, 0.1)));
-        // The backstop refuses a pathologically expensive candidate on any lift.
-        assert!(!canary_compute_trade_ok(5.0, 4.5));
-        assert!(canary_compute_trade_ok(5.0, 3.9));
-        // Non-finite or non-positive inputs are refused, never divided by.
-        assert!(!canary_compute_trade_ok(1.0, 0.0));
-        assert!(!canary_compute_trade_ok(1.0, f64::NAN));
-        assert!(!canary_compute_trade_ok(f64::NAN, 1.0));
+        assert!(shadow_summary_eligible(&canary(0.01, 0.01, 1.25)));
+        assert!(!shadow_summary_eligible(&canary(0.01, 0.01, 1.2501)));
+        assert!(!shadow_summary_eligible(&canary(0.0, 0.01, 1.0)));
+        assert!(!shadow_summary_eligible(&canary(0.01, 0.0, 1.0)));
+        assert!(!shadow_summary_eligible(&canary(0.01, 0.01, f64::NAN)));
     }
 
     #[test]
@@ -3471,7 +3895,15 @@ mod tests {
         .unwrap();
     }
 
-    fn recovery_intent(job: &str, spec: &Sha256Digest) -> ActiveIntent {
+    fn recovery_intent(root: &Path, job: &str) -> ActiveIntent {
+        let spec_path = root.join(format!("{job}.toml"));
+        let body = format!(
+            "[job]\nid = {}\n\n[[input]]\nname = \"script\"\nsource = \"/frozen/script\"\ntarget = \"script\"\nsha256 = \"{}\"\n",
+            serde_json::to_string(job).unwrap(),
+            "d".repeat(64),
+        );
+        fs::write(&spec_path, &body).unwrap();
+        let spec = Sha256Digest::parse(sha256_bytes(body.as_bytes())).unwrap();
         ActiveIntent {
             trainer: TrainerIntentV2 {
                 schema: "JopeSelfplayTrainerIntent.v2".to_owned(),
@@ -3484,7 +3916,7 @@ mod tests {
                 corpus_watermark: 1,
                 seed: 1,
                 immutable_job_identity: job.to_owned(),
-                immutable_spec_sha256: spec.clone(),
+                immutable_spec_sha256: spec,
                 created_at_ms: 1,
                 runtime_bundle_path: None,
                 runtime_bundle_sha256: None,
@@ -3492,60 +3924,79 @@ mod tests {
                 catalog_binding_sha256: None,
                 recipe: None,
             },
-            spec_path: PathBuf::new(),
+            spec_path,
             output_name: "out".to_owned(),
             warm_start_path: PathBuf::new(),
         }
     }
 
-    fn write_recovery_audit(root: &Path, job: &str, spec: &Sha256Digest) {
-        let directory = root.join("ops/trainer-recovery-audits");
-        fs::create_dir_all(&directory).unwrap();
-        atomic_json(
-            &directory.join(format!("{job}.json")),
-            &json!({
-                "schema": "TrainerRecoveryAudit.v1",
-                "job_id": job,
-                "immutable_spec_sha256": spec,
-                "disposition": "retry_from_accepted"
-            }),
-        )
-        .unwrap();
-    }
-
-    /// A trainer job the scheduler LOSES must still be recoverable by operator
-    /// audit. `scq ls` lists terminal states, so a job absent from it entirely
-    /// has no record, no run directory and no result — it can never reach
-    /// "failed"/"cancelled". Requiring one of those states made the audit path
-    /// unreachable and stranded the regression lane on 2026-08-04.
     #[test]
-    fn a_vanished_trainer_job_is_recoverable_by_operator_audit() {
+    fn a_vanished_trainer_retries_the_same_frozen_science_automatically() {
         let directory = tempdir().unwrap();
         let root = directory.path();
-        let spec = Sha256Digest::parse("d".repeat(64)).unwrap();
-        let intent = recovery_intent("vanished-job", &spec);
+        let intent = recovery_intent(root, "vanished-job");
+        assert_eq!(
+            trainer_terminal_state(&intent, &[], 60_001),
+            Some("vanished")
+        );
 
-        // Absent from the listing, with no audit: still held (never self-releases).
-        assert!(!audited_terminal_retry(root, &intent, &[]).unwrap());
-
-        // Absent from the listing, with a bound audit: released.
-        write_recovery_audit(root, "vanished-job", &spec);
-        assert!(audited_terminal_retry(root, &intent, &[]).unwrap());
-
-        // A job still RUNNING is not terminal, audit present or not.
         let running = [SchedulerJob {
             id: "vanished-job".to_owned(),
             project: PROJECT.to_owned(),
             state: "running".to_owned(),
         }];
-        assert!(!audited_terminal_retry(root, &intent, &running).unwrap());
+        assert_eq!(trainer_terminal_state(&intent, &running, 60_001), None);
 
-        // An audit bound to a different spec digest must not release this intent.
-        let other = recovery_intent(
-            "vanished-job",
-            &Sha256Digest::parse("e".repeat(64)).unwrap(),
+        let args = Args {
+            root: root.to_owned(),
+            scq: PathBuf::from("/bin/false"),
+            runs_root: root.join("runs"),
+            trainer_script: root.join("trainer"),
+            common_script: root.join("common"),
+            packed_script: root.join("packed"),
+            prime_source: root.join("prime"),
+            submit: false,
+            once: true,
+            interval_seconds: 1,
+            seed_base: 1,
+        };
+        let original_payload = trainer_scientific_payload(&intent).unwrap();
+        let original_corpus = intent.trainer.corpus_identity_sha256.clone();
+        let original_seed = intent.trainer.seed;
+        let original_recipe = intent.trainer.recipe.clone();
+        let mut state = ControllerState::default();
+        state.intent = Some(intent.clone());
+        let disposition =
+            recover_trainer_intent(&args, &mut state, &intent, "vanished", 60_001).unwrap();
+        assert_eq!(disposition.action, "trainer_infrastructure_retry_audited");
+        let recovered = state.intent.unwrap();
+        assert_eq!(recovered.trainer.corpus_identity_sha256, original_corpus);
+        assert_eq!(recovered.trainer.seed, original_seed);
+        assert_eq!(recovered.trainer.recipe, original_recipe);
+        assert_eq!(
+            recovered.trainer.immutable_job_identity,
+            "vanished-job-infra000002"
         );
-        assert!(audited_terminal_retry(root, &other, &[]).is_err());
+        let projection = load_or_rebuild_recovery_projection(
+            root,
+            DimeRoleV1::AlternatingTrainer,
+            &original_payload,
+            "vanished-job",
+        )
+        .unwrap();
+        assert_eq!(projection.current_attempt_number, 2);
+        assert_eq!(projection.scientific_payload, original_payload);
+        assert!(projection.retry_pending_submission);
+        let primary = serde_json::to_string(&recovered).unwrap();
+        for forbidden in [
+            "scientific_payload",
+            "infrastructure_attempt",
+            "scientific_failures",
+            "foreign_cancellations",
+            "next_retry_not_before_ms",
+        ] {
+            assert!(!primary.contains(forbidden));
+        }
     }
 
     fn write_passing_summary(root: &Path, parent: &Sha256Digest, candidate: &str, created: u64) {
@@ -3564,14 +4015,18 @@ mod tests {
                 "accepted_validity": 1.0,
                 "gp_validity": 1.0,
                 "replay_verification_complete": true,
+                "matched_comparisons_complete": true,
+                "comparison_lower_bound_method": SHADOW_COMPARISON_LOWER_BOUND_METHOD,
                 "candidate_vs_accepted": {
                     "validity": 1.0,
                     "pairwise_lift": 0.1748,
+                    "pairwise_lift_lower_bound": 0.01,
                     "latency_ratio": 0.9,
                     "stability": 1.0
                 },
                 "candidate_vs_gp": {
-                    "pairwise_lift": 0.0698
+                    "pairwise_lift": 0.0698,
+                    "pairwise_lift_lower_bound": 0.01
                 }
             }),
         )
