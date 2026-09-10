@@ -29,6 +29,8 @@ pub struct FoldInput {
     x: Rows,
     y: Vec<f64>,
     identity: Key,
+    row_ids: Vec<usize>,
+    assignment: Vec<usize>,
 }
 impl FoldInput {
     pub fn new(
@@ -77,6 +79,8 @@ impl FoldInput {
             x,
             y,
             identity: h.finalize().into(),
+            row_ids,
+            assignment,
         })
     }
     pub fn features(&self) -> &Rows {
@@ -85,6 +89,8 @@ impl FoldInput {
     pub fn labels(&self) -> &[f64] {
         &self.y
     }
+    pub fn row_ids(&self) -> &[usize] { &self.row_ids }
+    pub fn assignment(&self) -> &[usize] { &self.assignment }
     pub fn identity(&self) -> Key {
         self.identity
     }
@@ -132,6 +138,8 @@ pub struct Stats {
     pub accounted_payload: usize,
     pub peak_accounted_payload: usize,
     pub retained_allocations: usize,
+    pub fold_prepare_ns: u64,
+    pub prediction_ns: u64,
     pub fit_ns: u64,
     pub train_apply_ns: u64,
     pub repeated_ns: u64,

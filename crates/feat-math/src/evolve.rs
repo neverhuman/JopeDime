@@ -281,6 +281,7 @@ mod gpu_screen_tests {
             gpu_screen: gpu,
             gpu_screen_policy: policy,
             rung0_exact_surrogate_scope_sha256: dedup_scope,
+            stage_reuse: None,
         };
         let mut state = RaceState {
             memo: HashMap::new(),
@@ -2575,6 +2576,7 @@ fn score_rung(
     budget_started: Instant,
     overall_budget: f64,
     obs: &dyn Observer,
+    stage_reuse: Option<&StageReuseRun>,
 ) -> Option<Vec<f64>> {
     let prepared = if rung == 0 {
         search_surrogate(g)
@@ -2589,6 +2591,7 @@ fn score_rung(
         {
             return None;
         }
+        let prepare_start = stage_reuse.map(|_| Instant::now());
         let (mut xtr, mut ytr, mut xte, mut yte) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
         for (pos, &r) in rows.iter().enumerate() {
             if assign[pos] == fold {
@@ -2599,16 +2602,21 @@ fn score_rung(
                 ytr.push(y[r]);
             }
         }
+        if let (Some(reuse), Some(start)) = (stage_reuse, prepare_start) { reuse.cache.measure(|s|s.fold_prepare_ns += crate::stage_cache_v2::nanos(start)); }
         if xte.is_empty() || xtr.is_empty() {
             return None;
         }
-        let m = model::fit(&genome, &xtr, &ytr).ok()?;
+        let m = if let Some(reuse) = stage_reuse.filter(|_| rung > 0) {
+            model::fit_with_verified_stage_cache(&genome, &reuse.inputs[rung][fold], &reuse.cache).ok()?
+        } else { model::fit(&genome, &xtr, &ytr).ok()? };
         if elapsed_budget_exhausted(budget_started.elapsed().as_secs_f64(), overall_budget)
             || obs.is_cancelled()
         {
             return None;
         }
+        let predict_start = stage_reuse.map(|_|Instant::now());
         let pred = m.predict(&xte);
+        if let (Some(reuse), Some(start)) = (stage_reuse, predict_start) { reuse.cache.measure(|s|s.prediction_ns += crate::stage_cache_v2::nanos(start)); }
         let s = metric(&yte, &pred);
         if !s.is_finite() {
             return None;
@@ -2638,6 +2646,7 @@ struct RungCtx<'data, 'backend> {
     gpu_screen_policy: Option<GpuRidgeScorePolicy>,
     /// Content identity of every fold-relevant rung-0 input. None keeps reuse off.
     rung0_exact_surrogate_scope_sha256: Option<[u8; 32]>,
+    stage_reuse: Option<&'data StageReuseRun>,
 }
 
 #[derive(Clone, Debug)]
@@ -2862,6 +2871,7 @@ fn evaluate_rung_chunk(
                         ctx.t0,
                         overall_budget,
                         obs,
+                        ctx.stage_reuse,
                     )
                 })
                 .collect();
@@ -2891,6 +2901,7 @@ fn evaluate_rung_chunk(
                         ctx.t0,
                         overall_budget,
                         obs,
+                        ctx.stage_reuse,
                     )
                 })
                 .collect();
@@ -3625,6 +3636,7 @@ fn eval_rung0_gpu_wave<'chunk>(
                         ctx.t0,
                         overall_budget,
                         obs,
+                        ctx.stage_reuse,
                     )),
                 })
                 .collect::<Vec<_>>();
@@ -3892,6 +3904,7 @@ pub fn evolve_lite_race_with_exact_initial_population(
         None,
         None,
         Some(parsed),
+        None,
     ))
 }
 
@@ -3961,7 +3974,62 @@ pub fn evolve_lite_race_with_gpu_policy_and_exact_surrogate_dedup<'backend>(
         gpu_screen_policy,
         exact_surrogate_dedup,
         None,
+        None,
     )
+}
+
+/// Opt-in CPU stage reuse. Historical entry points always leave this absent.
+/// The caller must pin the evaluator source (including research adapters).
+#[derive(Clone, Copy, Debug)]
+pub struct StageReuseOptions {
+    pub mode: crate::stage_cache_v2::Mode,
+    pub byte_cap: usize,
+    pub evaluator_source: [u8; 32],
+}
+struct StageReuseRun {
+    inputs: [Vec<crate::stage_cache_v2::FoldInput>; 3],
+    cache: crate::stage_cache_v2::VerifiedStageCache,
+    preparation_ns: u64,
+}
+impl StageReuseRun {
+    fn new(x: &Rows, y: &[f64], seed: u64, options: StageReuseOptions) -> Result<Self, String> {
+        let start = Instant::now();
+        let n = x.len().min(y.len()); let perm = permute_indices(n, seed);
+        let mut inputs: [Vec<_>;3] = std::array::from_fn(|_| Vec::new());
+        for rung in 1..3 {
+            let rows = &perm[..n.min(RACE_RUNG_ROWS[rung])];
+            let assignments = fold_assign(rows.len(), RACE_RUNG_FOLDS[rung], if rung == 1 {"invent_r1"} else {"invent_r2"});
+            for fold in 0..RACE_RUNG_FOLDS[rung] {
+                let ids: Vec<_> = rows.iter().zip(&assignments).filter(|(_,f)| **f != fold).map(|(&r,_)|r).collect();
+                inputs[rung].push(crate::stage_cache_v2::FoldInput::new(
+                    ids.iter().map(|&r| x[r].clone()).collect(), ids.iter().map(|&r|y[r]).collect(),
+                    ids, assignments.clone(), RACE_RUNG_FOLDS[rung], fold, options.evaluator_source,
+                ).map_err(|e|e.to_string())?);
+            }
+        }
+        Ok(Self { inputs, cache: crate::stage_cache_v2::VerifiedStageCache::new(options.mode, options.byte_cap), preparation_ns: crate::stage_cache_v2::nanos(start) })
+    }
+}
+#[derive(Clone, Debug, serde::Serialize)]
+pub struct StageReuseReceipt {
+    pub preparation_ns: u64,
+    pub cache: crate::stage_cache_v2::Stats,
+    pub fold_identities: [Vec<[u8;32]>;3],
+}
+/// Additive entry point; None delegates to the unchanged CPU search. No GPU,
+/// initial-population, screening, RNG or promotion policy changes are made.
+pub fn evolve_lite_race_with_stage_reuse(
+    x: &Rows, y: &[f64], metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+    cfg: &EvolveConfig, obs: &dyn Observer,
+    exact_surrogate_dedup: Option<Rung0ExactSurrogateDedupPolicy>,
+    options: Option<StageReuseOptions>,
+) -> (RaceOutcome, Option<StageReuseReceipt>) {
+    // Invalid/empty folds retain ordinary fitting/failure semantics.
+    let reuse = options.and_then(|o| StageReuseRun::new(x, y, cfg.seed, o).ok());
+    let outcome = evolve_lite_race_impl(x,y,metric,cfg,obs,None,None,exact_surrogate_dedup,None,reuse.as_ref());
+    let receipt = reuse.as_ref().map(|r|StageReuseReceipt { preparation_ns:r.preparation_ns,
+        cache:r.cache.stats(), fold_identities:std::array::from_fn(|i|r.inputs[i].iter().map(|f|f.identity()).collect()) });
+    (outcome, receipt)
 }
 
 #[allow(clippy::too_many_arguments, clippy::unnecessary_unwrap)]
@@ -3975,6 +4043,7 @@ fn evolve_lite_race_impl<'backend>(
     gpu_screen_policy: Option<GpuRidgeScorePolicy>,
     exact_surrogate_dedup: Option<Rung0ExactSurrogateDedupPolicy>,
     exact_initial_population: Option<Vec<DslExpr>>,
+    stage_reuse: Option<&StageReuseRun>,
 ) -> RaceOutcome {
     let t0 = Instant::now();
     let mut rng = Pcg32::new(cfg.seed, 0x5EED);
@@ -4028,6 +4097,7 @@ fn evolve_lite_race_impl<'backend>(
         gpu_screen,
         gpu_screen_policy,
         rung0_exact_surrogate_scope_sha256,
+        stage_reuse,
     };
 
     let gen_vocab = generation_vocab(cfg);
@@ -4103,6 +4173,7 @@ fn evolve_lite_race_impl<'backend>(
     let mut target_hit = false;
 
     'gens: for gen in 0..cfg.gens.max(1) {
+        if let Some(reuse) = stage_reuse { reuse.cache.begin_generation(gen as u64); }
         if obs.is_cancelled() {
             break;
         }
