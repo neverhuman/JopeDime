@@ -36,6 +36,7 @@ pub mod rng;
 pub mod router_policy;
 pub mod stack;
 pub mod stage_cache;
+pub mod stage_cache_v2;
 pub mod target_transform;
 
 // Standalone-code emitters (genome -> full Python + full Rust).

@@ -2,12 +2,11 @@
 //! their train-pass output blocks across genome evaluations that share a
 //! pipeline prefix on the same CV fold.
 //!
-//! The input block to stage i is fully determined by (train-data identity,
-//! fold plan, fold, target-stage canonical text, canonical stages 0..i-1), so
-//! a chain hash over canonical stage text is a sound content address — no
-//! data hashing is needed, and a cache hit reproduces bit-identical results
-//! because it returns the output of the identical computation. The cache is
-//! therefore invisible in every score, prediction, and receipt.
+//! Historical API: callers must bind context_tag to all data, labels, row
+//! order, fold assignments and evaluator semantics, and must ensure stages
+//! have no distinct typed values with the same legacy printed text. This API
+//! cannot enforce those obligations. Its cap is a post-sweep resident estimate,
+//! not a retained-allocation ceiling. New integrations use stage_cache_v2.
 
 use crate::dsl::Stage;
 use crate::ops::FittedOp;

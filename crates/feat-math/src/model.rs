@@ -116,9 +116,9 @@ pub fn fit(genome: &GenomeIr, x: &Rows, y: &[f64]) -> Result<Model> {
     }
 }
 
-/// `fit` with a stage-prefix cache: bit-identical to `fit` (the cache key
-/// pins the entire computation, so a hit substitutes the output of the
-/// identical work), but shared transform prefixes across genomes on the same
+/// Historical cache API: parity requires the caller obligations documented in
+/// `stage_cache`. Prefer `fit_with_verified_stage_cache` for new integrations.
+/// Shared transform prefixes across genomes on the same
 /// fold are fitted once. Target transforms and heads are always fitted
 /// per-call; only transform stages and their TRAIN-pass blocks are cached.
 /// Non-pipeline genomes delegate to plain `fit`.
@@ -170,6 +170,60 @@ pub fn fit_with_stage_cache(
         cur = block;
     }
     let head = Box::new(fit_head(&head_stage, &cur, y_eff)?);
+    Ok(Model::Pipeline { target, ops, head })
+}
+
+/// Fit only the immutable data used to compute the verified cache identity.
+/// Target transforms and heads are fitted on every call; hits retain TRAIN
+/// outputs, and ordinary Model::predict still uses prediction-pass semantics.
+pub fn fit_with_verified_stage_cache(
+    genome: &GenomeIr,
+    input: &crate::stage_cache_v2::FoldInput,
+    cache: &crate::stage_cache_v2::VerifiedStageCache,
+) -> Result<Model> {
+    use crate::stage_cache_v2::{extend, nanos, supported};
+    use std::time::Instant;
+    let x = input.features(); let y = input.labels();
+    let GenomeIr::Pipeline(dsl) = genome else { return fit(genome, x, y); };
+    let (target_stage, rest) = split_target(&dsl.stages)?;
+    let (stages, head_stage) = split_stages(rest);
+    if stages.iter().any(|s| !supported(s)) {
+        cache.measure(|s| s.unsupported += 1);
+        return fit(genome, x, y);
+    }
+    // Codec failures cannot turn an otherwise valid ordinary fit into failure.
+    let start = Instant::now();
+    let keys = (|| -> Result<Vec<_>> {
+        let mut key = input.root(target_stage)?;
+        stages.iter().map(|stage| { key = extend(key, stage)?; Ok(key) }).collect()
+    })();
+    cache.measure(|s| s.key_ns += nanos(start));
+    let Ok(keys) = keys else { return fit(genome, x, y); };
+    let start = Instant::now();
+    let target = target_stage.map(|s| fit_target(s, y)).transpose()?;
+    let y_owned = target.as_ref().map(|t| t.forward_all(y));
+    let y_eff = y_owned.as_deref().unwrap_or(y);
+    cache.measure(|s| s.target_ns += nanos(start));
+    let mut initial = x.clone(); sanitize(&mut initial);
+    let mut held = None;
+    let mut ops = Vec::with_capacity(stages.len());
+    for (stage, key) in stages.iter().zip(keys) {
+        let payload = if let Some(hit) = cache.get(key) { hit } else {
+            let cur = held.as_ref().map_or(&initial, |p: &std::sync::Arc<crate::stage_cache_v2::Payload>| &p.block);
+            let start = Instant::now();
+            let fitted = fit_op(stage, cur, y_eff)?;
+            let fit_ns = nanos(start); let start = Instant::now();
+            let block = apply_op_train(&fitted, cur);
+            cache.record_stage(key, fit_ns, nanos(start));
+            cache.insert(key, fitted, block)
+        };
+        ops.push(payload.fitted.clone());
+        held = Some(payload);
+    }
+    let cur = held.as_ref().map_or(&initial, |p| &p.block);
+    let start = Instant::now();
+    let head = Box::new(fit_head(&head_stage, cur, y_eff)?);
+    cache.measure(|s| s.head_ns += nanos(start));
     Ok(Model::Pipeline { target, ops, head })
 }
 
