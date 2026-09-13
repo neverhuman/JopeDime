@@ -475,9 +475,11 @@ class PreregistrationTests(unittest.TestCase):
         # F9 (replay concentration, held-66000 diagnosis) is pre-registered with its parent, both read-out panels
         # and the three verdicts; it can select the next block's sampler but never release the hold by itself.
         self.assertEqual(f['F9']['parent']['step'], 63000)
-        self.assertEqual([p['name'] for p in f['F9']['readout_panels']], ['frozen', 'reserved'])
-        self.assertEqual(sorted(f['F9']['verdicts']), ['concentration_causal', 'concentration_not_causal', 'inconclusive'])
-        self.assertIn('never releases', f['F9']['hold_rule'])
+        self.assertEqual(f['F9']['protocol_sha256_prefix'], 'd8d57069')
+        self.assertEqual([p['name'] for p in f['F9']['readout_panels']], ['reserved', 'old_frozen'])
+        self.assertEqual(f['F9']['thresholds'], dict(reserved_delta_max=-0.005, old_panel_tolerance=0.005, interval=0.95, resamples=10000))
+        self.assertEqual(sorted(f['F9']['verdicts']), ['inconclusive', 'repair_signal'])
+        self.assertIn('cannot release', f['F9']['hold_rule'])
         self.assertEqual(f['F1']['secondary']['win_rate_delta'], 0.13)
         self.assertEqual(f['F1']['honest_expectation'], 'inconclusive_underpowered')
         self.assertEqual(f['F2']['guards']['g_nll'], 'max(0.005, 2 * p90 rel|delta sequence_nll|)')
