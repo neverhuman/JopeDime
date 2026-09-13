@@ -14,6 +14,11 @@ PREREGISTRATION.md (falsifiers.F9.thresholds; geometry from
 falsifiers.F9.readout_panels); no constant in this file is a threshold.
 --preregistration-sha256 pins the block. A `parent` sidecar (the protocol's
 shared-parent diagnostic) may be supplied per panel; it is reported, never paired.
+--bridge-certificate supplies root's frozen parallel.original_monitor_numerical_bridge.v1
+receipts (one per certified legacy.json, original-parent-old.json beside each):
+they are verified and recorded under legacy_comparability; the sidecar's own
+external_879_numerical_bridge_qualified flag is reported as emitted, never rewritten,
+and no certificate changes the A/B statistic.
 
 Numerical bridge (SCHEMA.md of concentration-monitor-metrics-v1): the legacy
 ranking_bt is the mean of eight per-batch values, each the f32 dense
@@ -65,8 +70,8 @@ from resume_expired_cycle import read, require, sha
 SCHEMA = 'parallel.flywheel_f9_readout.v2'
 INPUT_SCHEMA = 'parallel.panel_group_metrics.v2'
 LEGACY_SCHEMA = 'parallel.frozen_monitoring.v1'
-CERTIFICATE_SCHEMA = 'parallel.native_monitor_bridge_certificate.v1'
-GROUPS_FILE, LEGACY_FILE = 'groups.json', 'legacy.json'
+CERTIFICATE_SCHEMA = 'parallel.original_monitor_numerical_bridge.v1'
+GROUPS_FILE, LEGACY_FILE, ORIGINAL_RECEIPT_FILE = 'groups.json', 'legacy.json', 'original-parent-old.json'
 ARMS = ('A', 'B')
 PARENT = 'parent'
 PANELS = ('reserved', 'old_frozen')
@@ -377,42 +382,74 @@ def validate_input(path):
                 undefined_draws=[g['draw_index'] for g in groups if not g['bt_defined']])
 
 
+def binding_object(value, name, where):
+    """The certificate's original / emitter binding object (executable, checkpoint, corpus, panel; final_tests_opened false)."""
+    candidates = (value.get(name + '_binding'), (value.get('bindings') or {}).get(name) if isinstance(value.get('bindings'), dict) else None, value.get(name))
+    binding = next((c for c in candidates if isinstance(c, dict) and 'executable_sha256' in c), None)
+    require(binding is not None, where + ': no %s binding object (%s_binding, bindings.%s or %s with executable_sha256)' % (name, name, name, name))
+    require(all(hex64(binding.get(k)) for k in LEGACY_BINDING), where + ': %s binding lacks 64-hex ' % name + ', '.join(LEGACY_BINDING))
+    require(binding.get('final_tests_opened') is False, where + ': %s binding final_tests_opened is not false' % name)
+    return {k: binding[k] for k in LEGACY_BINDING}
+
+
 def validate_certificate(path, inputs, block):
-    """An authenticated native bridge certificate (root's monitor-owner receipt): names exactly one input by the sha256 of
-    its legacy.json, binds the original frozen monitor (pre-registered prefix) and the emitter executable, the same
-    checkpoint/corpus/panel, and attests the four legacy metrics agree within 1e-6. The sidecar's own
+    """Root's frozen native bridge certificate (parallel.original_monitor_numerical_bridge.v1): names exactly one input by the
+    sha256 of its legacy.json (and its groups.json), carries per-metric original / emitter values with their absolute
+    difference within tolerance <= 1e-6, passed true, training_updates 0, science_execution false, and original / emitter
+    binding objects on the input's checkpoint, corpus and panel, the original executable carrying the pre-registered
+    frozen-monitor prefix. original-parent-old.json beside it (the original binary's frozen_monitoring.v1 receipt) must
+    hash to original_sha256 and carry the certified original values. The sidecar's own
     external_879_numerical_bridge_qualified flag is never rewritten; the certificate is recorded beside it."""
     path = Path(path)
     where = str(path)
     value = read(path)
     require(isinstance(value, dict) and value.get('schema') == CERTIFICATE_SCHEMA, where + ': schema is not ' + CERTIFICATE_SCHEMA)
-    require(value.get('final_tests_opened') is False, where + ': final_tests_opened is not false')
-    for key in ('original_executable_sha256', 'emitter_executable_sha256', 'original_receipt_sha256', 'emitter_legacy_sha256'):
+    require(value.get('final_tests_opened') is not True, where + ': final_tests_opened is true')
+    require(value.get('passed') is True, where + ': certificate_not_passed (passed is not true)')
+    require(value.get('training_updates') == 0, where + ': training_updates is not 0')
+    require(value.get('science_execution') is False, where + ': science_execution is not false')
+    require('parent_files_before_after' in value, where + ': parent_files_before_after missing')
+    for key in ('original_sha256', 'emitter_legacy_sha256', 'emitter_groups_sha256'):
         require(hex64(value.get(key)), where + ': %s is not a 64-hex digest' % key)
-    prefix = readout_panel(block, 'old_frozen').get('monitor_executable_sha256_prefix')
-    require(isinstance(prefix, str) and prefix and value['original_executable_sha256'].startswith(prefix),
-            where + ': original_executable_sha256 does not start with the pre-registered frozen monitor prefix %r' % prefix)
-    binding = value.get('binding')
-    require(isinstance(binding, dict) and all(hex64(binding.get(k)) for k in ('checkpoint_sha256', 'corpus_sha256', 'panel_sha256')),
-            where + ': binding lacks 64-hex checkpoint_sha256, corpus_sha256, panel_sha256')
     require(finite(value.get('tolerance')) and 0 < value['tolerance'] <= BRIDGE_TOLERANCE, where + ': tolerance is not in (0, %g]' % BRIDGE_TOLERANCE)
-    differences = value.get('abs_diff')
-    require(isinstance(differences, dict) and all(finite(differences.get(m)) for m in LEGACY_METRICS), where + ': abs_diff lacks finite ' + ', '.join(LEGACY_METRICS))
-    exceeding = sorted(m for m in LEGACY_METRICS if differences[m] > value['tolerance'])
-    require(value.get('within_tolerance') is True and not exceeding,
-            where + ': certificate_not_within_tolerance (within_tolerance=%r; exceeding %s)' % (value.get('within_tolerance'), exceeding))
+    deltas = value.get('deltas')
+    require(isinstance(deltas, dict) and all(isinstance(deltas.get(m), dict) and all(finite(deltas[m].get(k)) for k in ('original', 'emitter', 'absolute_difference'))
+                                             for m in LEGACY_METRICS), where + ': deltas lack finite original/emitter/absolute_difference for ' + ', '.join(LEGACY_METRICS))
+    for m in LEGACY_METRICS:
+        require(abs(abs(deltas[m]['original'] - deltas[m]['emitter']) - deltas[m]['absolute_difference']) <= 1e-12,
+                where + ': deltas.%s.absolute_difference is not |original - emitter|' % m)
+    exceeding = sorted(m for m in LEGACY_METRICS if deltas[m]['absolute_difference'] > value['tolerance'])
+    require(not exceeding, where + ': certificate_not_within_tolerance (%s exceed %g)' % (exceeding, value['tolerance']))
     matches = [i for i in inputs if i['legacy']['sha256'] == value['emitter_legacy_sha256']]
     require(len(matches) == 1, '%s: certificate matches %d inputs by emitter_legacy_sha256; exactly one required' % (where, len(matches)))
     match = matches[0]
-    require(value['emitter_executable_sha256'] == match['value']['executable_sha256'],
-            where + ': emitter_executable_sha256 differs from the certified input\'s executable_sha256')
+    require(value['emitter_groups_sha256'] == match['sha256'], where + ': emitter_groups_sha256 differs from the certified input\'s groups.json')
+    disagreeing = sorted(m for m in LEGACY_METRICS if abs(deltas[m]['emitter'] - match['legacy']['values'][m]) > 1e-12)
+    require(not disagreeing, where + ': deltas.%s.emitter differ from the certified legacy.json values' % disagreeing)
+    original, emitter = binding_object(value, 'original', where), binding_object(value, 'emitter', where)
+    prefix = readout_panel(block, 'old_frozen').get('monitor_executable_sha256_prefix')
+    require(isinstance(prefix, str) and prefix and original['executable_sha256'].startswith(prefix),
+            where + ': original binding executable_sha256 does not start with the pre-registered frozen monitor prefix %r' % prefix)
     expected = dict(checkpoint_sha256=match['value']['checkpoint_sha256'], corpus_sha256=match['value']['panel']['corpus_sha256'],
                     panel_sha256=match['value']['panel']['panel_sha256'])
-    require({k: binding[k] for k in expected} == expected, where + ': certificate binding differs from the certified input (%s)' % match['path'])
+    require(emitter['executable_sha256'] == match['value']['executable_sha256'], where + ': emitter binding executable_sha256 differs from the certified input')
+    for name, binding in (('original', original), ('emitter', emitter)):
+        require({k: binding[k] for k in expected} == expected, where + ': %s binding checkpoint/corpus/panel differ from the certified input (%s)' % (name, match['path']))
+    original_path = path.parent / ORIGINAL_RECEIPT_FILE
+    require(original_path.is_file(), where + ': %s is missing beside the certificate' % ORIGINAL_RECEIPT_FILE)
+    require(sha(original_path) == value['original_sha256'], where + ': %s does not hash to original_sha256' % ORIGINAL_RECEIPT_FILE)
+    original_receipt = read(original_path)
+    require(isinstance(original_receipt, dict) and original_receipt.get('schema') == LEGACY_SCHEMA and original_receipt.get('final_tests_opened') is False,
+            where + ': %s is not a %s receipt with final_tests_opened false' % (ORIGINAL_RECEIPT_FILE, LEGACY_SCHEMA))
+    original_binding = original_receipt.get('binding')
+    require(isinstance(original_binding, dict) and {k: original_binding.get(k) for k in LEGACY_BINDING} == original,
+            where + ': %s binding differs from the certificate\'s original binding' % ORIGINAL_RECEIPT_FILE)
+    mismatching = sorted(m for m in LEGACY_METRICS if not finite(original_receipt.get(m)) or abs(original_receipt[m] - deltas[m]['original']) > 1e-12)
+    require(not mismatching, where + ': %s values %s differ from deltas.<metric>.original' % (ORIGINAL_RECEIPT_FILE, mismatching))
     return dict(path=where, sha256=sha(path), certified_input=match['path'], arm=match['value']['arm'], panel=match['value']['panel']['name'],
-                original_executable_sha256=value['original_executable_sha256'], original_receipt_sha256=value['original_receipt_sha256'],
-                emitter_executable_sha256=value['emitter_executable_sha256'], abs_diff={m: differences[m] for m in LEGACY_METRICS},
-                tolerance=value['tolerance'], within_tolerance=True)
+                original_receipt=dict(path=str(original_path), sha256=value['original_sha256'], executable_sha256=original['executable_sha256']),
+                emitter_executable_sha256=emitter['executable_sha256'], deltas={m: dict(deltas[m]) for m in LEGACY_METRICS},
+                tolerance=value['tolerance'], passed=True, training_updates=0, science_execution=False)
 
 
 def assemble(inputs):

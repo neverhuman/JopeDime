@@ -457,11 +457,27 @@ class Legacy(unittest.TestCase):
             self.assertIn('final_tests_opened is not false', str(caught.exception))
 
 
-def certificate(value, legacy_sha, **overrides):
-    binding = dict(checkpoint_sha256=value['checkpoint_sha256'], corpus_sha256=value['panel']['corpus_sha256'], panel_sha256=value['panel']['panel_sha256'])
-    doc = dict(schema=readout.CERTIFICATE_SCHEMA, original_executable_sha256=padded('87995977'), emitter_executable_sha256=value['executable_sha256'],
-               binding=binding, original_receipt_sha256=padded('0e0e0e0e'), emitter_legacy_sha256=legacy_sha,
-               abs_diff={m: 1e-8 for m in readout.LEGACY_METRICS}, tolerance=1e-6, within_tolerance=True, final_tests_opened=False)
+ORIGINAL_EXECUTABLE = padded('87995977')
+
+
+def original_receipt(value, offset=3e-8):
+    """The original 879 binary's frozen_monitoring.v1 receipt: the emitter's numbers plus a sub-tolerance offset."""
+    binding = dict(checkpoint_sha256=value['checkpoint_sha256'], corpus_sha256=value['panel']['corpus_sha256'],
+                   panel_sha256=value['panel']['panel_sha256'], executable_sha256=ORIGINAL_EXECUTABLE)
+    return dict(schema=readout.LEGACY_SCHEMA, binding=binding, checkpoint='parent', evaluated_step=63000, timestamp=1789290000,
+                **{m: value['legacy_aggregate'][m] + offset for m in readout.LEGACY_METRICS}, sampled_examples=2048, final_tests_opened=False)
+
+
+def certificate(folder, value, legacy_sha, groups_sha, original_sha, offset=3e-8, **overrides):
+    """parallel.original_monitor_numerical_bridge.v1 as root froze it (07:56 UTC), written beside original-parent-old.json."""
+    shared = dict(checkpoint_sha256=value['checkpoint_sha256'], corpus_sha256=value['panel']['corpus_sha256'], panel_sha256=value['panel']['panel_sha256'],
+                  final_tests_opened=False)
+    doc = dict(schema=readout.CERTIFICATE_SCHEMA, passed=True, tolerance=1e-6,
+               deltas={m: dict(original=value['legacy_aggregate'][m] + offset, emitter=value['legacy_aggregate'][m], absolute_difference=abs(offset))
+                       for m in readout.LEGACY_METRICS},
+               original_sha256=original_sha, emitter_legacy_sha256=legacy_sha, emitter_groups_sha256=groups_sha,
+               original_binding=dict(shared, executable_sha256=ORIGINAL_EXECUTABLE), emitter_binding=dict(shared, executable_sha256=value['executable_sha256']),
+               parent_files_before_after=dict(unchanged=True), training_updates=0, science_execution=False)
     doc.update(overrides)
     return doc
 
@@ -473,8 +489,13 @@ class Certificates(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             folders = write(directory, table)
             legacy_sha = sha(Path(directory) / 'old_frozen-A' / readout.LEGACY_FILE)
-            good = Path(directory) / 'certificate-old-A.json'
-            atomic(good, certificate(table[key], legacy_sha))
+            groups_sha = sha(Path(directory) / 'old_frozen-A' / readout.GROUPS_FILE)
+            bridge = Path(directory) / 'bridge'
+            bridge.mkdir()
+            atomic(bridge / readout.ORIGINAL_RECEIPT_FILE, original_receipt(table[key]))
+            original_sha = sha(bridge / readout.ORIGINAL_RECEIPT_FILE)
+            good = bridge / 'certificate.json'
+            atomic(good, certificate(bridge, table[key], legacy_sha, groups_sha, original_sha))
             registration = readout.preregistration(PREREGISTRATION)
             inputs = [readout.validate_input(p) for p in folders]
             receipt = readout.evaluate(inputs, registration, [good])
@@ -485,29 +506,53 @@ class Certificates(unittest.TestCase):
             self.assertEqual(len(comparability['certificates']), 1)
             row = comparability['certificates'][0]
             self.assertEqual((row['arm'], row['panel'], row['sha256'], row['certified_input']), ('A', 'old_frozen', sha(good), inputs[0]['path']))
-            self.assertTrue(row['within_tolerance'])
+            self.assertEqual((row['passed'], row['training_updates'], row['science_execution']), (True, 0, False))
+            self.assertEqual(row['original_receipt'], dict(path=str(bridge / readout.ORIGINAL_RECEIPT_FILE), sha256=original_sha, executable_sha256=ORIGINAL_EXECUTABLE))
+            self.assertAlmostEqual(row['deltas']['ranking_bt']['absolute_difference'], 3e-8, places=15)
             self.assertEqual(comparability['certified_inputs'], [inputs[0]['path']])
             self.assertEqual(len(comparability['uncertified_inputs']), 3)
             self.assertFalse(comparability['all_inputs_certified'])
             without = readout.evaluate(inputs, registration)
             self.assertEqual(without['legacy_comparability']['certificates'], [])
             self.assertEqual(without['verdict_inputs'], receipt['verdict_inputs'])   # the certificate never changes the A/B statistic
+            base = certificate(bridge, table[key], legacy_sha, groups_sha, original_sha)
+            wide = dict(base['deltas'], ranking_bt=dict(original=base['deltas']['ranking_bt']['emitter'] + 2e-6, emitter=base['deltas']['ranking_bt']['emitter'],
+                                                      absolute_difference=2e-6))
             for name, overrides, fragment in (
                     ('orphan', dict(emitter_legacy_sha256=padded('cccc0003')), 'matches 0 inputs'),
-                    ('wide', dict(abs_diff=dict(certificate(table[key], legacy_sha)['abs_diff'], ranking_bt=2e-6)), 'certificate_not_within_tolerance'),
-                    ('claimed', dict(within_tolerance=False), 'certificate_not_within_tolerance'),
-                    ('foreign', dict(original_executable_sha256=padded('deadbeef')), 'pre-registered frozen monitor prefix'),
-                    ('emitter', dict(emitter_executable_sha256=padded('0bad0bad')), 'emitter_executable_sha256 differs'),
-                    ('binding', dict(binding=dict(certificate(table[key], legacy_sha)['binding'], panel_sha256=padded('0bad0bad'))), 'certificate binding differs'),
+                    ('groups', dict(emitter_groups_sha256=padded('cccc0004')), 'emitter_groups_sha256 differs'),
+                    ('wide', dict(deltas=wide), 'certificate_not_within_tolerance'),
+                    ('failed', dict(passed=False), 'certificate_not_passed'),
+                    ('trained', dict(training_updates=1), 'training_updates is not 0'),
+                    ('science', dict(science_execution=True), 'science_execution is not false'),
+                    ('foreign', dict(original_binding=dict(base['original_binding'], executable_sha256=padded('deadbeef'))), 'pre-registered frozen monitor prefix'),
+                    ('emitter', dict(emitter_binding=dict(base['emitter_binding'], executable_sha256=padded('0bad0bad'))), 'emitter binding executable_sha256 differs'),
+                    ('binding', dict(emitter_binding=dict(base['emitter_binding'], panel_sha256=padded('0bad0bad'))), 'emitter binding checkpoint/corpus/panel differ'),
+                    ('opened', dict(original_binding=dict(base['original_binding'], final_tests_opened=True)), 'original binding final_tests_opened is not false'),
                     ('loose', dict(tolerance=1e-3), 'tolerance is not in'),
-                    ('opened', dict(final_tests_opened=True), 'final_tests_opened is not false')):
-                bad = Path(directory) / ('certificate-%s.json' % name)
-                atomic(bad, certificate(table[key], legacy_sha, **overrides))
+                    ('arith', dict(deltas=dict(base['deltas'], sequence_nll=dict(base['deltas']['sequence_nll'], absolute_difference=1e-9))), 'is not |original - emitter|'),
+                    ('lying', dict(deltas=dict(base['deltas'], runtime_huber=dict(original=0.5 + 3e-8, emitter=0.5, absolute_difference=3e-8))), 'differ from the certified legacy.json values'),
+                    ('unhashed', dict(original_sha256=padded('0e0e0e0e')), 'does not hash to original_sha256')):
+                bad = bridge / ('certificate-%s.json' % name)
+                atomic(bad, certificate(bridge, table[key], legacy_sha, groups_sha, original_sha, **overrides))
                 with self.assertRaises(RuntimeError, msg=name) as caught:
                     readout.evaluate(inputs, registration, [bad])
                 self.assertIn(fragment, str(caught.exception), name)
-            twice = Path(directory) / 'certificate-twice.json'
-            atomic(twice, certificate(table[key], legacy_sha))
+            elsewhere = Path(directory) / 'elsewhere'
+            elsewhere.mkdir()
+            atomic(elsewhere / 'certificate.json', base)
+            with self.assertRaises(RuntimeError) as caught:
+                readout.evaluate(inputs, registration, [elsewhere / 'certificate.json'])
+            self.assertIn('original-parent-old.json is missing beside the certificate', str(caught.exception))
+            drifted = Path(directory) / 'drifted'
+            drifted.mkdir()
+            atomic(drifted / readout.ORIGINAL_RECEIPT_FILE, original_receipt(table[key], offset=5e-8))   # hashes differently and disagrees
+            atomic(drifted / 'certificate.json', dict(base, original_sha256=sha(drifted / readout.ORIGINAL_RECEIPT_FILE)))
+            with self.assertRaises(RuntimeError) as caught:
+                readout.evaluate(inputs, registration, [drifted / 'certificate.json'])
+            self.assertIn('differ from deltas.<metric>.original', str(caught.exception))
+            twice = bridge / 'certificate-twice.json'
+            atomic(twice, base)
             with self.assertRaises(RuntimeError) as caught:
                 readout.evaluate(inputs, registration, [good, twice])
             self.assertIn('two bridge certificates name one input', str(caught.exception))
