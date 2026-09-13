@@ -45,7 +45,8 @@ from resume_expired_cycle import require, sha
 SCHEMA = 'parallel.cut_champion.v1'
 STATE_SCHEMA = 'parallel.champion_git_state.v1'
 RECEIPT_SCHEMA = 'parallel.champion_git_receipt.v1'
-FEED_SCHEMA = 'parallel.champion_git_feed.v1'
+FEED_SCHEMA = 'parallel.champion_git_feed.v2'
+FEED_JOIN_RULE = 'a running search is committed <commit> only when its output observations.json path equals an event source and the observation_sha256 matches; a coarse (dataset, cut, partition) join is UNVERIFIED'
 CLAIM = 'local record high on the adaptive cut-heldout teacher; not a held-out win, not an independent evaluation, not a serving promotion'
 PUBLISHABLE_PARTITIONS = ('meta_train', 'meta_validation')
 HEX64 = re.compile(r'^[0-9a-f]{64}$')
@@ -342,7 +343,16 @@ def scan(store, evaluator=None, vocabulary=None, all_evaluators=False):
     return rows
 
 
-def status_table(rows, state, filters=()):
+def event_provenance(event, published):
+    """The exact producer of one high mark: the search output that produced it, the observation and program digests, the commit."""
+    value = event.get('value') or {}
+    observation = value.get('observation') or {}
+    return dict(sha256=event['sha256'], source=value.get('source'), observation_sha256=value.get('observation_sha256'), program_sha256=observation.get('program_sha256'),
+                rmse_original_units=value.get('rmse_original_units'), improvement_number=value.get('improvement_number'), timestamp=value.get('timestamp'),
+                commit=(published.get(event['sha256']) or {}).get('commit'), invalid=event.get('error'))
+
+
+def status_table(rows, state, filters=(), provenance=False):
     published = state.get('published', {}) if state else {}
     verified_head = state.get('verified_head') if state else None
     out = []
@@ -351,25 +361,33 @@ def status_table(rows, state, filters=()):
             continue
         committed = sum(1 for s in r['event_shas'] if s in published)
         last_committed = next((published[s]['commit'] for s in reversed(r['event_shas']) if s in published), None)
-        out.append(dict(identity_key=r['identity_key'], family=r['family'], dataset=r['dataset'], cut=r['cut'], partition=r['partition'], prepared_sha256=r.get('prepared_sha256'),
-                        rmse=r['rmse_original_units'], improvements=r['improvement_number'], events=r['events'], committed_events=committed, uncommitted_events=r['events'] - committed,
-                        last_event=r['last_event'], last_commit=last_committed, current_event=r['event_shas'][-1] if r['event_shas'] else None,
-                        pushed='verified' if (verified_head and committed == r['events'] and state['remote'].get('status') == 'verified') else 'no',
-                        invalid=len(r['invalid'])))
+        row = dict(identity_key=r['identity_key'], family=r['family'], dataset=r['dataset'], cut=r['cut'], partition=r['partition'], prepared_sha256=r.get('prepared_sha256'),
+                   rmse=r['rmse_original_units'], improvements=r['improvement_number'], events=r['events'], committed_events=committed, uncommitted_events=r['events'] - committed,
+                   last_event=r['last_event'], last_commit=last_committed, current_event=r['event_shas'][-1] if r['event_shas'] else None,
+                   pushed='verified' if (verified_head and committed == r['events'] and state['remote'].get('status') == 'verified') else 'no',
+                   invalid=len(r['invalid']))
+        if provenance:
+            history = [event_provenance(e, published) for e in r['chain']]
+            row['history'] = history
+            row['current'] = history[-1] if history else None
+        out.append(row)
     return out
 
 
 def write_feed(path, rows, state, evaluator, head, receipt=None):
-    """Atomic console feed (parallel.champion_git_feed.v1): per identity the git state of its high marks, keyed for a join on (dataset, cut, partition).
+    """Atomic console feed (parallel.champion_git_feed.v2): per identity the git state of its high marks with exact provenance.
 
-    Consumers (the native console's per-worker git column) join a running search's dataset/cut/partition to a row and show
-    committed / uncommitted events, the last commit and whether the remote has verified it. Overwritten on every sync.
+    A (dataset, cut, partition) join proves nothing about a running search; each row therefore carries `history` — every
+    high-mark event with the `source` observations.json that produced it, its observation and program digests and its
+    champion-git commit — and `current`, the latest of them. The console labels a search `committed <commit>` only when
+    the search's own output path equals an event's `source` and the observation digest matches; otherwise it is
+    UNVERIFIED. Overwritten on every sync.
     """
-    table = status_table(rows, state)
+    table = status_table(rows, state, provenance=True)
     feed = dict(schema=FEED_SCHEMA, at=time.time(), head=head, evaluator_sha256=evaluator, remote=(state or {}).get('remote'), last_sync=receipt,
                 identities=len(table), events=sum(r['events'] for r in table), committed_events=sum(r['committed_events'] for r in table),
                 uncommitted_events=sum(r['uncommitted_events'] for r in table), rows=sorted(table, key=lambda r: (r['family'] or '', r['dataset'] or '', r['cut'] if r['cut'] is not None else -1)),
-                claim=CLAIM, final_tests_opened=False)
+                join_rule=FEED_JOIN_RULE, claim=CLAIM, final_tests_opened=False)
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name('.%s.%d.partial' % (path.name, os.getpid()))

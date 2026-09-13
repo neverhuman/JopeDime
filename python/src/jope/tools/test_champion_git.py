@@ -149,6 +149,14 @@ class ChampionGitTests(unittest.TestCase):
         self.assertEqual(ds1['current_event'], cg.load_state(self.repo)['identities'][ds1['identity_key']]['current'])
         self.assertEqual([r['dataset'] for r in after['rows']], ['ds1', 'ds2'])   # sorted by family, dataset, cut
         self.assertFalse(list(feed.parent.glob('.*.partial')))
+        # exact provenance per event: the producing search output, observation and program digests, and the commit
+        self.assertEqual(len(ds1['history']), 3)
+        self.assertEqual([h['improvement_number'] for h in ds1['history']], [0, 1, 2])
+        self.assertTrue(all(h['source'] == 'runs/x/learning/generation-000001/neural/ds1/cut-0/search/observations.json' and h['commit'] and h['invalid'] is None for h in ds1['history']))
+        self.assertEqual(ds1['current']['program_sha256'], hashlib.sha256(b'genome ds1 2').hexdigest())
+        self.assertEqual((ds1['current']['sha256'], ds1['current']['rmse_original_units'], ds1['current']['commit']), (ds1['current_event'], 0.7, ds1['last_commit']))
+        self.assertIn('UNVERIFIED', after['join_rule'])
+        self.assertIsNone(before['rows'][0]['current']['commit'])   # before any sync nothing is committed
 
     def test_push_states_without_remote_or_credentials(self):
         cg.main(['sync', '--root', str(self.root), '--manifest', self.manifest, '--repo', str(self.repo)])
