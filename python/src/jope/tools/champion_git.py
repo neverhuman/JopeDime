@@ -189,8 +189,62 @@ def write_event(repo, event, key, base):
     return [str(base / 'events' / event['sha256'] / 'champion.json'), str(base / 'identity.json'), str(base / 'current.json')]
 
 
-def commit_event(repo, event, key, base):
+def prepared_view_for(root, event):
+    """The prepared view directory of a champion, resolved through its source ledger's generation jobs.json (the job whose
+    output directory prefixes the source path); None when the generation or job cannot be found."""
+    source = str(event['value'].get('source') or '')
+    marker = source.find('/generation-')
+    if marker < 0:
+        return None
+    end = source.find('/', marker + 1)
+    generation_dir = Path(root) / source[:end] if end > 0 else None
+    jobs_path = generation_dir / 'jobs.json' if generation_dir else None
+    if not jobs_path or not jobs_path.is_file():
+        return None
+    try:
+        jobs = json.loads(jobs_path.read_bytes()).get('jobs') or []
+    except (OSError, ValueError):
+        return None
+    for job in jobs:
+        output = job.get('output')
+        if isinstance(output, str) and source.startswith(output) and job.get('prepared_sha256') == event['value']['identity'].get('prepared_sha256'):
+            return job.get('prepared')
+    return None
+
+
+def export_event(root, repo, event, export_binary, timeout=600):
+    """Run the champion export binary for one event into programs/<program sha>/<event sha>/ inside the repository; returns the
+    receipt summary (never raises: an export failure is recorded, the champion record is still committed)."""
+    program = ((event['value'].get('observation') or {}).get('program_sha256')) or 'unknown'
+    target = Path(repo) / 'programs' / program / event['sha256']
+    if (target / 'export.json').is_file():
+        return dict(status='present', path=str(target.relative_to(repo)))
+    prepared = prepared_view_for(root, event)
+    if prepared is None:
+        return dict(status='unresolved_prepared_view')
+    if target.exists():
+        return dict(status='partial_export_present', path=str(target.relative_to(repo)))
+    command = [str(export_binary), '--root', str(root), '--event', str(event['path']), '--prepared', prepared, '--output', str(target)]
+    try:
+        run = subprocess.run(command, capture_output=True, text=True, timeout=timeout, env=dict(os.environ, OMP_NUM_THREADS='1'))
+    except (OSError, subprocess.SubprocessError) as error:
+        return dict(status='export_error', error=str(error)[:300])
+    parity = None
+    if (target / 'parity.json').is_file():
+        try:
+            parity = json.loads((target / 'parity.json').read_bytes()).get('status')
+        except ValueError:
+            parity = None
+    return dict(status='exported' if run.returncode == 0 else 'parity_failed', exit=run.returncode, parity=parity, path=str(target.relative_to(repo)),
+                stderr=run.stderr[-300:] if run.returncode != 0 else None)
+
+
+def commit_event(repo, event, key, base, export=None):
     paths = write_event(repo, event, key, base)
+    if export and export.get('path') and export.get('status') in ('exported', 'parity_failed', 'present'):
+        for name in ('predict.py', 'predict.rs', 'predict.cpp', 'predict.js', 'export.json', 'parity.json', 'artifact-manifest.json'):
+            if (repo / export['path'] / name).is_file():
+                paths.append(str(Path(export['path']) / name))
     add = git(repo, 'add', '--', *paths)
     require(add.returncode == 0, 'git add failed: ' + add.stderr.strip())
     identity = event['value']['identity']
@@ -301,13 +355,13 @@ def status_table(rows, state, filters=()):
     return out
 
 
-def sync(root, store, repo, remote, branch, credentials, evaluator, vocabulary, all_evaluators, limit, receipts):
+def sync(root, store, repo, remote, branch, credentials, evaluator, vocabulary, all_evaluators, limit, receipts, export_binary=None, export_limit=None):
     repo = ensure_repo(repo)
     lock = open(repo / '.champion-git.lock', 'a')
     fcntl.flock(lock, fcntl.LOCK_EX)
     state = load_state(repo)
     rows = scan(store, evaluator, vocabulary, all_evaluators)
-    committed, skipped, errors = [], [], []
+    committed, skipped, errors, exports, exports_run = [], [], [], [], 0
     for r in rows:
         for event in r['chain']:
             if event['sha256'] in state['published']:
@@ -319,8 +373,13 @@ def sync(root, store, repo, remote, branch, credentials, evaluator, vocabulary, 
                 skipped.append(event['sha256'])
                 continue
             key, base = record_layout(event)
-            head = commit_event(repo, event, key, base)
-            state['published'][event['sha256']] = dict(commit=head, identity=key, at=time.time())
+            export = None
+            if export_binary and (export_limit is None or exports_run < export_limit):
+                export = export_event(root, repo, event, export_binary)
+                exports_run += export.get('status') in ('exported', 'parity_failed')
+                exports.append(dict(event=event['sha256'], **{k: v for k, v in export.items() if k != 'stderr'}))
+            head = commit_event(repo, event, key, base, export)
+            state['published'][event['sha256']] = dict(commit=head, identity=key, at=time.time(), export=(export or {}).get('status'))
             state['identities'][key] = dict(events=state['identities'].get(key, {}).get('events', 0) + 1, current=event['sha256'])
             committed.append(dict(identity=key, event=event['sha256'], commit=head, rmse=event['value']['rmse_original_units']))
     index_rows = [dict(identity_key=r['identity_key'], family=r['family'], dataset=r['dataset'], cut=r['cut'], partition=r['partition'],
@@ -334,7 +393,8 @@ def sync(root, store, repo, remote, branch, credentials, evaluator, vocabulary, 
     receipt = dict(schema=RECEIPT_SCHEMA, at=time.time(), root=str(root), store=str(store), repo=str(repo), head=head, remote=remote, branch=branch,
                    credentials_path=str(credentials) if credentials else None, evaluator_sha256=None if all_evaluators else evaluator,
                    identities=len(rows), events_total=sum(r['events'] for r in rows), committed=len(committed), skipped_by_limit=len(skipped),
-                   invalid_events=errors[:20], invalid_count=len(errors), push=remote_state, claim=CLAIM, final_tests_opened=False)
+                   invalid_events=errors[:20], invalid_count=len(errors), exports=exports, export_binary=str(export_binary) if export_binary else None,
+                   push=remote_state, claim=CLAIM, final_tests_opened=False)
     if receipts:
         Path(receipts).mkdir(parents=True, exist_ok=True)
         stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
@@ -356,6 +416,8 @@ def main(argv=None):
     parser.add_argument('--all-evaluators', action='store_true', help='include identities of every evaluator (default: the live one)')
     parser.add_argument('--limit', type=int, help='sync: at most this many new event commits per run')
     parser.add_argument('--receipts', help='sync: directory for immutable run receipts')
+    parser.add_argument('--export-binary', help='sync: champion_export binary; emitted code + parity receipt are committed beside each new event')
+    parser.add_argument('--export-limit', type=int, help='sync: at most this many exports per run (a parity run fits and executes Python)')
     parser.add_argument('--filter', action='append', default=[], help='status: dataset or family substring (repeatable)')
     parser.add_argument('--json', action='store_true')
     args = parser.parse_args(argv)
@@ -380,9 +442,10 @@ def main(argv=None):
                                                                              (state or {}).get('remote', {}).get('status', 'no repository')))
         return rows
     require(args.repo, 'sync requires --repo')
-    receipt, committed = sync(root, store, Path(args.repo), args.remote, args.branch, args.credentials, evaluator, vocabulary, args.all_evaluators, args.limit, args.receipts)
+    receipt, committed = sync(root, store, Path(args.repo), args.remote, args.branch, args.credentials, evaluator, vocabulary, args.all_evaluators, args.limit, args.receipts,
+                              args.export_binary, args.export_limit)
     print(json.dumps(dict(head=receipt['head'], committed=receipt['committed'], identities=receipt['identities'], events_total=receipt['events_total'],
-                          invalid=receipt['invalid_count'], push=receipt['push']['status'], push_error=receipt['push'].get('last_error')), sort_keys=True))
+                          invalid=receipt['invalid_count'], exports=len(receipt['exports']), push=receipt['push']['status'], push_error=receipt['push'].get('last_error')), sort_keys=True))
     return receipt
 
 

@@ -108,6 +108,32 @@ class ChampionGitTests(unittest.TestCase):
         self.assertEqual((receipt['committed'], receipt['invalid_count']), (3, 1))
         self.assertIn('do not hash to the file name', receipt['invalid_events'][0]['error'])
 
+    def test_export_binary_output_is_committed_beside_the_event(self):
+        # the source ledger's generation jobs.json resolves the prepared view; a fake exporter writes the artifacts
+        generation = self.root / 'runs/x/learning/generation-000001'
+        generation.mkdir(parents=True)
+        jobs = [dict(output='runs/x/learning/generation-000001/neural/%s/cut-%d/search' % (d, c), prepared='data/prepared/views/%s' % d, prepared_sha256='c' * 64)
+                for d, c in (('ds1', 0), ('ds2', 1), ('ds4', 0))]
+        (generation / 'jobs.json').write_text(json.dumps(dict(jobs=jobs)))
+        fake = self.root / 'fake-export.sh'
+        fake.write_text('#!/bin/sh\nout=""\nwhile [ $# -gt 0 ]; do if [ "$1" = "--output" ]; then out="$2"; fi; shift; done\n'
+                        'mkdir -p "$out" && echo "print(1)" > "$out/predict.py" && echo \'{"schema":"parallel.champion_export.v1"}\' > "$out/export.json" '
+                        '&& echo \'{"status":"pass"}\' > "$out/parity.json" && exit 0\n')
+        os.chmod(fake, 0o755)
+        receipt = cg.main(['sync', '--root', str(self.root), '--manifest', self.manifest, '--repo', str(self.repo), '--export-binary', str(fake), '--export-limit', '2'])
+        self.assertEqual(receipt['committed'], 4)
+        statuses = [e['status'] for e in receipt['exports']]
+        self.assertEqual(statuses.count('exported'), 2)   # export limit honoured; the other events are still committed
+        tracked = subprocess.run(['git', '-C', str(self.repo), 'ls-files', 'programs'], capture_output=True, text=True).stdout.split()
+        self.assertEqual(len([t for t in tracked if t.endswith('predict.py')]), 2)
+        self.assertTrue(all(t.startswith('programs/') for t in tracked))
+        state = cg.load_state(self.repo)
+        self.assertEqual(sorted(str(v.get('export')) for v in state['published'].values()), ['None', 'None', 'exported', 'exported'])
+        # a later run exports the remaining events once and never re-exports a present one
+        again = cg.main(['sync', '--root', str(self.root), '--manifest', self.manifest, '--repo', str(self.repo), '--export-binary', str(fake)])
+        self.assertEqual((again['committed'], len(again['exports'])), (0, 0))   # exports only accompany new event commits
+        self.assertIsNone(cg.prepared_view_for(self.root, dict(value=dict(source='elsewhere/observations.json', identity={}))))
+
     def test_push_states_without_remote_or_credentials(self):
         cg.main(['sync', '--root', str(self.root), '--manifest', self.manifest, '--repo', str(self.repo)])
         state = cg.load_state(self.repo)
