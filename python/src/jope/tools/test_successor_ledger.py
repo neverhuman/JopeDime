@@ -839,6 +839,83 @@ class PlanningTests(FixtureCase):
         self.assertEqual([e['episode_id'] for e in other['episodes']], [e['episode_id'] for e in plan['episodes']])
         self.assertEqual(other['selection'], plan['selection'])
 
+    def test_plan_from_jobs_plans_a_generation_from_its_jobs_file(self):
+        prepared_doc = json.loads((self.root / PREPARED_REL / 'prepared.json').read_bytes())
+        partition = prepared_doc['meta_partition']
+        jobs = []
+        for arm in sl.ARMS:
+            jobs.append(dict(prepared=PREPARED_REL, prepared_sha256=self.prepared_sha, cut=0, output=str(Path(self.searches[arm]).parent),
+                             seeds=self.seeds[arm], seeds_sha256=digest((self.root / self.seeds[arm]).read_bytes()), generation=GENERATION,
+                             rng_seed=20260912, parent_checkpoint='run/checkpoint', parent_checkpoint_sha256=self.identity['producing_checkpoint_sha256']))
+        # a second context whose preparation is not clean: listed as inadmissible, never planned, never in the subset
+        unclean = dict(prepared_doc, clean_evaluation=False, dataset='unclean-copy')
+        unclean_dir = self.root / 'data/prepared/views-expanded-20/unclean00000000'
+        unclean_dir.mkdir(parents=True)
+        (unclean_dir / 'prepared.json').write_bytes(encoded(unclean))
+        unclean_sha = digest(encoded(unclean))
+        jobs.append(dict(jobs[0], prepared='data/prepared/views-expanded-20/unclean00000000', prepared_sha256=unclean_sha,
+                         seeds='run/generation-000073/neural/unclean00000000/cut-0/seeds.json', output='run/generation-000073/neural/unclean00000000/cut-0/search'))
+        jobs_path = self.root / 'run/generation-000073/jobs.json'
+        jobs_path.write_bytes(encoded(dict(schema='parallel.gp_jobs.v1', qualification=False, vocabulary='vocab', jobs=jobs)))
+        excluded = self.identity['excluded_families']
+        # one-step: byte-identical to the explicit plan_generation call
+        ledger = self.ledger()
+        summary = ledger.plan_from_jobs(GENERATION, 'run/generation-000073/jobs.json', excluded, partition=partition)
+        self.assertEqual(summary['schema'], 'parallel.successor_plan_summary.v1')
+        self.assertEqual(summary['contexts'], dict(total=2, admissible=1, visited=1, planned=1, by_partition={partition: 2}))
+        self.assertEqual(summary['inadmissible'], [dict(context_key=unclean_sha + ':0', dataset='unclean-copy', family=prepared_doc['family'],
+                                                        reasons=['clean_evaluation is not true'])])
+        self.assertEqual(summary['counts'], dict(candidate=64, control_generic=8, control_shuffled=8, gp_final=3, replicate_panel=8))
+        self.assertEqual((summary['episodes_inserted'], summary['episodes_planned'], summary['protocol'], summary['tierb']), (91, 91, sl.PROTOCOL_V3, None))
+        self.assertEqual(summary['inserted_by_context'], {self.prepared_sha + ':0': 91})
+        # the background is the generic arm's generic_comparison seeds (Codex's qualify_dispatch rule), not the fixture's wider list
+        explicit = self.ledger('successor-explicit').plan_generation(GENERATION, self.seeds['neural'], self.seeds['generic'], self.seeds['shuffled'],
+                                                                     self.searches, PREPARED_REL, list(dict.fromkeys(self.generic[:80])), self.defaults)
+        self.assertEqual(summary['plans'][0]['receipt_sha256'], explicit['receipt_sha256'])
+        self.assertEqual(summary['plans'][0]['searches'], ['generic', 'neural', 'shuffled'])
+        self.assertEqual(summary['jobs']['sha256'], digest(jobs_path.read_bytes()))
+        summary_path = self.root / 'successor/plans/generation-73/summary.onestep.json'
+        self.assertEqual(digest(summary_path.read_bytes()), summary['summary_sha256'])
+        again = ledger.plan_from_jobs(GENERATION, 'run/generation-000073/jobs.json', excluded, partition=partition)
+        self.assertEqual((again['episodes_inserted'], again['episodes_planned'], again['summary_sha256']), (0, 91, summary['summary_sha256']))   # idempotent
+        self.assertEqual(digest(summary_path.read_bytes()), summary['summary_sha256'])
+        self.assertNotIn('episodes_inserted', json.loads(summary_path.read_bytes()))   # the immutable summary carries no per-call counter
+        with self.assertRaisesRegex(ValueError, 'Immutable artifact changed'):   # one summary per (generation, protocol) and ledger
+            ledger.plan_from_jobs(GENERATION, 'run/generation-000073/jobs.json', excluded, partition='no_such_partition')
+        empty = self.ledger('successor-empty').plan_from_jobs(GENERATION, 'run/generation-000073/jobs.json', excluded, partition='no_such_partition')
+        self.assertEqual((empty['contexts']['admissible'], empty['contexts']['planned'], empty['episodes_inserted']), (0, 0, 0))
+        self.assertEqual([i['reasons'] for i in empty['inadmissible']],
+                         [["partition 'meta_train' is not no_such_partition"], ["partition 'meta_train' is not no_such_partition", 'clean_evaluation is not true']])
+        # an excluded family is inadmissible too, and a refusal inside plan_generation is a recorded skip
+        family_excluded = self.ledger('successor-family').plan_from_jobs(GENERATION, 'run/generation-000073/jobs.json', excluded + [prepared_doc['family']], partition=partition)
+        self.assertEqual((family_excluded['contexts']['admissible'], family_excluded['contexts']['planned']), (0, 0))
+        self.assertIn("family %r is excluded" % prepared_doc['family'], family_excluded['inadmissible'][0]['reasons'])
+        with self.assertRaisesRegex(ValueError, 'generation 72 is not 73'):
+            bad = dict(jobs[0], generation=72)
+            (self.root / 'run/generation-000073/jobs-bad.json').write_bytes(encoded(dict(jobs=[bad])))
+            ledger.plan_from_jobs(GENERATION, 'run/generation-000073/jobs-bad.json', excluded, partition=partition)
+        with self.assertRaisesRegex(ValueError, 'second neural job'):
+            (self.root / 'run/generation-000073/jobs-dup.json').write_bytes(encoded(dict(jobs=[jobs[0], jobs[0]])))
+            ledger.plan_from_jobs(GENERATION, 'run/generation-000073/jobs-dup.json', excluded, partition=partition)
+        # Tier-B: every arm needs admitted row-0 evidence for its top-3; the single context is inside any subset of <= 32
+        for arm in ('generic', 'shuffled'):
+            directory = self.root / 'run/generation-000073' / arm / '55e9dfc7a86361d7/cut-0'
+            doc = json.loads((directory / 'seeds.json').read_bytes())
+            observations = [dict(origin=c['origin'], program_sha256=digest(c['genome'].encode()), genome=c['genome'], initial_seed_slot=i,
+                                 failure=None, metrics=dict(rmse=0.9 - 0.002 * i, units='cut_normalized_target')) for i, c in enumerate(doc['candidates'])]
+            (directory / 'search/observations.json').write_bytes(encoded(observations))
+        tierb = self.ledger('successor-tierb').plan_from_jobs(GENERATION, 'run/generation-000073/jobs.json', excluded, protocol=TIERB, partition=partition, limit=5)
+        self.assertEqual(tierb['counts'], dict(candidate=3, control_generic=3, control_shuffled=3))
+        self.assertEqual((tierb['episodes_inserted'], tierb['protocol']), (9, TIERB))
+        self.assertEqual(tierb['tierb'], dict(subset=[self.prepared_sha + ':0'], subset_size=32, universe=1,
+                                              universe_sha256=digest(encoded([self.prepared_sha + ':0'])), limit=5))
+        self.assertTrue((self.root / ('successor-tierb/plans/generation-73/summary.%s.json' % TIERB)).is_file())
+        self.assertTrue((self.root / ('successor-tierb/plans/generation-73/%s:0.%s.json' % (self.prepared_sha, TIERB))).is_file())
+        for episode in self.ledger('successor-tierb').pending_bundle()['jobs']:
+            identity = json.loads((self.root / episode['continuation']['identity']).read_bytes())
+            self.assertEqual((identity['protocol'], identity['evaluations'], identity['generation']), (TIERB, 24, GENERATION))
+            self.assertIn(identity['seed_arm'], sl.ARMS)
+
     def test_tierb_plan_top3_per_arm_on_the_rotating_subset(self):
         # every arm's search ledger carries admitted row-0 RMSE so each arm's top-3 seeds can be ranked
         for arm in ('generic', 'shuffled'):

@@ -63,7 +63,10 @@ import experiment_runtime as runtime
 from successor_targets import spearman
 
 HERE = Path(__file__).resolve().parent
-LANE = Path(os.environ.get('JOPE_SEED_DISPATCH_LANE', HERE.parent / 'recovery/eight-a100-20260912/experiments/seed-dispatch'))
+# The seed-dispatch lane modules (Codex's dispatch.py / run_episode.py byte-for-byte, continuation.py with the additive
+# arm/role/seed_origin/replicate/protocol/generation/select plan() keywords) are vendored under tools/seed_dispatch so the
+# ledger and its tests run from a checkout; JOPE_SEED_DISPATCH_LANE points at another lane copy (provenance in PROVENANCE.md).
+LANE = Path(os.environ.get('JOPE_SEED_DISPATCH_LANE', HERE / 'seed_dispatch'))
 HEX64 = re.compile(r'^[0-9a-f]{64}$')
 
 PROTOCOL_V2 = 'parallel.seed_continuation.qualification.v2'
@@ -90,6 +93,7 @@ PRIORITY = ('candidate', 'control_generic', 'control_shuffled', 'gp_final', 'rep
 TERMINAL = ('completed', 'failed', 'deadline', 'superseded')
 ROW_SCHEMA = 'parallel.seed_value.v1'
 PLAN_SCHEMA = 'parallel.successor_plan.v1'
+PLAN_SUMMARY_SCHEMA = 'parallel.successor_plan_summary.v1'
 VERIFY_SCHEMA = 'parallel.successor_episode_verification.v1'
 BUNDLE_SCHEMA = 'parallel.successor_bundle.v1'
 BUNDLES_SCHEMA = 'parallel.successor_bundles.v1'
@@ -914,6 +918,113 @@ class Ledger(Dispatcher):
         receipt_sha = immutable(plans / ('%s.%s.json' % (context_key, protocol)), receipt)
         return dict(receipt, receipt_sha256=receipt_sha, inserted=inserted)
 
+    def plan_from_jobs(self, generation, jobs_path, excluded_families, protocol=None, limit=None, partition='meta_train'):
+        """Plan every context of one live generation from its jobs.json (the recovery run's parallel.gp_jobs layout).
+
+        Each job row names its arm by the seeds path segment (/neural/, /generic/, /shuffled/), the prepared dataset,
+        cut, search output, seeds population, rng_seed and parent checkpoint. Per context (prepared_sha256:cut) the
+        three arms' seeds and search.json receipts feed plan_generation; identity defaults come from the neural job;
+        the generic background is the union of generic_comparison genomes over the generic-arm seeds of that prepared
+        dataset (all cuts, Codex's qualify_dispatch rule). Only contexts of `partition` are planned; for a Tier-B
+        protocol only the generation's rotating subset (tierb_subset over that partition) is visited, in subset order;
+        `limit` truncates that order. Writes plans/generation-<g>/summary.<protocol>.json (immutable).
+        """
+        require(type(generation) is int and generation >= 0, 'generation must be a nonnegative integer')
+        require(protocol is None or is_tierb(protocol), 'protocol must be None (one-step v3) or one of ' + ', '.join(TIERB_PROTOCOLS))
+        require(limit is None or (type(limit) is int and limit >= 1), 'limit must be a positive integer')
+        require(isinstance(excluded_families, list) and all(isinstance(f, str) for f in excluded_families), 'excluded_families must be a list of strings')
+        jobs_file = within(self.root, jobs_path)
+        doc = json.loads(jobs_file.read_bytes())
+        rows = doc.get('jobs') if isinstance(doc, dict) else None
+        require(isinstance(rows, list) and rows, 'jobs.json lists no jobs: ' + self.relative(jobs_file))
+        contexts = {}
+        for index, job in enumerate(rows):
+            where = '%s jobs[%d]' % (self.relative(jobs_file), index)
+            require(job.get('generation') == generation, where + ': generation %r is not %d' % (job.get('generation'), generation))
+            for key in ('prepared', 'prepared_sha256', 'seeds', 'output', 'parent_checkpoint', 'parent_checkpoint_sha256'):
+                require(isinstance(job.get(key), str) and job[key], where + ': %s missing' % key)
+            require(type(job.get('cut')) is int and type(job.get('rng_seed')) is int, where + ': cut / rng_seed are not integers')
+            arms = [arm for arm in ARMS if '/%s/' % arm in job['seeds']]
+            require(len(arms) == 1, where + ': seeds path names no single arm: ' + job['seeds'])
+            key = '%s:%d' % (job['prepared_sha256'], job['cut'])
+            entry = contexts.setdefault(key, dict(prepared=job['prepared'], prepared_sha256=job['prepared_sha256'], cut=job['cut'], arms={}))
+            require(entry['prepared'] == job['prepared'], where + ': prepared path differs from an earlier job of ' + key)
+            require(arms[0] not in entry['arms'], where + ': second %s job for context %s' % (arms[0], key))
+            entry['arms'][arms[0]] = job
+        # The rotating subset is drawn over ADMISSIBLE contexts only (the lane's plan() admission: regression task, the
+        # requested partition, family not excluded, clean_evaluation true); the rest are listed, never silently dropped.
+        partitions, universe, inadmissible = {}, [], []
+        normalize = lambda family: family.removeprefix('rdatasets-')
+        for key in sorted(contexts):
+            entry = contexts[key]
+            prepared_bytes = (within(self.root, entry['prepared']) / 'prepared.json').read_bytes()
+            require(digest(prepared_bytes) == entry['prepared_sha256'], 'prepared.json of %s does not hash to the jobs.json prepared_sha256' % key)
+            prepared_doc = json.loads(prepared_bytes)
+            partitions[key] = prepared_doc.get('meta_partition')
+            reasons = []
+            if prepared_doc.get('task') != 'regression':
+                reasons.append('task %r is not regression' % prepared_doc.get('task'))
+            if partition is not None and partitions[key] != partition:
+                reasons.append('partition %r is not %s' % (partitions[key], partition))
+            if any(normalize(prepared_doc.get('family', '')) == normalize(f) for f in excluded_families):
+                reasons.append('family %r is excluded' % prepared_doc.get('family'))
+            if not prepared_doc.get('clean_evaluation'):
+                reasons.append('clean_evaluation is not true')
+            if reasons:
+                inadmissible.append(dict(context_key=key, dataset=prepared_doc.get('dataset'), family=prepared_doc.get('family'), reasons=reasons))
+            else:
+                universe.append(key)
+        backgrounds = {}
+        for key, entry in contexts.items():
+            generic_job = entry['arms'].get('generic')
+            if generic_job is None:
+                continue
+            seeds = json.loads(within(self.root, generic_job['seeds']).read_bytes())
+            backgrounds.setdefault(entry['prepared_sha256'], []).extend(c['genome'] for c in seeds.get('candidates', []) if c.get('origin') == 'generic_comparison')
+        subset = tierb_subset(universe, generation) if protocol is not None and universe else None
+        order = list(subset) if subset is not None else list(universe)
+        selected = order[:limit] if limit is not None else order
+        receipts, skipped, counts, inserted = [], [], {}, {}
+        for key in selected:
+            entry = contexts[key]
+            neural = entry['arms'].get('neural')
+            if neural is None:
+                skipped.append(dict(context_key=key, reason='neural job absent'))
+                continue
+            background = list(dict.fromkeys(backgrounds.get(entry['prepared_sha256'], [])))
+            if len(background) < 80:
+                skipped.append(dict(context_key=key, reason='generic background below 80 distinct genomes', genomes=len(background)))
+                continue
+            defaults = dict(excluded_families=list(excluded_families), rng_seed=neural['rng_seed'], parent_checkpoint=neural['parent_checkpoint'],
+                            parent_checkpoint_sha256=neural['parent_checkpoint_sha256'])
+            searches = {arm: self.relative(within(self.root, job['output']) / 'search.json') for arm, job in entry['arms'].items()
+                        if (within(self.root, job['output']) / 'search.json').is_file()}
+            try:
+                result = self.plan_generation(generation, neural['seeds'], (entry['arms'].get('generic') or {}).get('seeds'),
+                                              (entry['arms'].get('shuffled') or {}).get('seeds'), searches, entry['prepared'], background, defaults,
+                                              protocol=protocol, tierb_contexts=universe if protocol is not None else None)
+            except ValueError as refusal:   # a lane/plan refusal of one context is recorded, never a generation-wide abort
+                skipped.append(dict(context_key=key, reason='plan_refused', detail=str(refusal)))
+                continue
+            for role, n in result['counts'].items():
+                counts[role] = counts.get(role, 0) + n
+            inserted[key] = result['inserted']
+            receipts.append(dict(context_key=key, dataset=result['dataset'], family=result['family'], partition=result['partition'],
+                                 receipt_sha256=result['receipt_sha256'], counts=result['counts'], skipped=result['skipped'], searches=sorted(searches)))
+        # The summary is a pure function of the inputs (immutable, reproducible); how many rows this call inserted is returned beside it.
+        summary = dict(schema=PLAN_SUMMARY_SCHEMA, generation=generation, jobs=dict(path=self.relative(jobs_file), sha256=sha(jobs_file), rows=len(rows)),
+                       protocol=protocol if protocol is not None else DEFAULTS['protocol'], partition=partition, excluded_families=sorted(excluded_families),
+                       evaluator_sha256=self.identity['evaluator_sha256'], continuation_evaluator_sha256=self.continuation_evaluator_sha256,
+                       contexts=dict(total=len(contexts), admissible=len(universe), visited=len(selected), planned=len(receipts),
+                                     by_partition={p: sum(1 for k in contexts if partitions[k] == p) for p in sorted(set(partitions.values()), key=str)}),
+                       inadmissible=inadmissible,
+                       tierb=None if subset is None else dict(subset=subset, subset_size=TIERB_SUBSET, universe=len(universe),
+                                                              universe_sha256=digest(encoded(sorted(universe))), limit=limit),
+                       counts=counts, episodes_planned=sum(counts.values()), plans=receipts, skipped=skipped, final_tests_opened=False)
+        plans = self.directory / 'plans' / ('generation-%d' % generation)
+        summary_sha = immutable(plans / ('summary.%s.json' % (protocol if protocol is not None else 'onestep')), summary)
+        return dict(summary, summary_sha256=summary_sha, episodes_inserted=sum(inserted.values()), inserted_by_context=inserted)
+
     def insert(self, generation, context_key, prepared_dir, prepared_sha, cut, defaults, planned, emissions):
         inserted = 0
         with self.db:
@@ -1343,7 +1454,12 @@ def main():
                         help='continuation evaluator digest; must equal the manifest-derived continuation binding '
                              '(continuation_source_admission configuration) or, without one, be a manifest-bound digest')
     parser.add_argument('--generation', type=int, required=True)
-    parser.add_argument('action', choices=('ingest', 'export', 'bundle', 'economics', 'info', 'supersede', 'pending', 'next-outcome'))
+    parser.add_argument('action', choices=('ingest', 'export', 'bundle', 'economics', 'info', 'supersede', 'pending', 'next-outcome', 'plan-generation'))
+    parser.add_argument('--jobs', help='plan-generation: the generation jobs.json within root (default <run-output>/generation-%06d/jobs.json)')
+    parser.add_argument('--protocol', choices=TIERB_PROTOCOLS, help='plan-generation: Tier-B cap variant; default plans the one-step v3 roles')
+    parser.add_argument('--limit', type=int, help='plan-generation: plan at most this many contexts (subset order)')
+    parser.add_argument('--partition', default='meta_train', help='plan-generation: meta partition of the contexts to plan (default meta_train)')
+    parser.add_argument('--excluded-families', help='plan-generation: comma-separated families; default the manifest withdrawn_families')
     parser.add_argument('--episode', action='append', default=[], help='ingest: episode directory within root (repeatable)')
     parser.add_argument('--arm', choices=ARMS, help='ingest: binding for episodes planned outside this ledger (v2 identities)')
     parser.add_argument('--role', choices=PRIORITY)
@@ -1365,6 +1481,13 @@ def main():
                                           seed_origin=args.seed_origin, seed_rmse=seed_rmse) for episode in args.episode]
     elif args.action == 'export':
         result = ledger.export(args.generation)
+    elif args.action == 'plan-generation':
+        jobs = args.jobs if args.jobs else str(Path(args.run_output) / ('generation-%06d' % args.generation) / 'jobs.json')
+        if args.excluded_families is not None:
+            excluded = [f for f in args.excluded_families.split(',') if f]
+        else:
+            excluded = json.loads(within(ledger.root, args.manifest).read_bytes()).get('withdrawn_families') or []
+        result = ledger.plan_from_jobs(args.generation, jobs, list(excluded), protocol=args.protocol, limit=args.limit, partition=args.partition)
     elif args.action == 'next-outcome':
         result = ledger.next_outcome(args.generation, quality_report=args.quality_report, outcome=args.outcome)
     elif args.action == 'bundle':
