@@ -970,5 +970,92 @@ class PlanningTests(FixtureCase):
             ledger.export(GENERATION)
 
 
+class ContinuationEvaluatorTests(FixtureCase):
+    """A dual-identity manifest binds the ordinary evaluator (cpu_executable) and a continuation evaluator named by the
+    seed driver's admission configuration; continuation episodes verify against the latter, never an operator digest."""
+
+    def dual_manifest(self, name='dual-manifest.json', configuration=None, declared_sha=True):
+        (self.root / 'bin/jope-seed-dispatch').write_bytes(b'continuation evaluator fixture bytes')
+        continuation = sl.sha(self.root / 'bin/jope-seed-dispatch')
+        config = configuration if configuration is not None else dict(evaluator='bin/jope-seed-dispatch', evaluator_sha256=continuation)
+        (self.root / 'admission-config.json').write_bytes(encoded(config))
+        admission = dict(configuration='admission-config.json')
+        if declared_sha:
+            admission['configuration_sha256'] = sl.sha(self.root / 'admission-config.json')
+        (self.root / name).write_bytes(encoded(dict(
+            schema='parallel.continuous_learning.v1', cpu_executable='bin/gp-native-v5', vocabulary_sha256=self.vocabulary, output='fixture',
+            bindings={'bin/gp-native-v5': self.bound, 'bin/jope-seed-dispatch': continuation}, continuation_source_admission=admission)))
+        return name, continuation
+
+    def continuation_copy(self, source, generation_dir, rng_seed, continuation):
+        def rewrite(rows, receipt):
+            for row in rows:
+                row['evaluator_sha256'] = continuation
+                row['resource_protocol'] = sl.RESOURCE_PROTOCOL
+            receipt['evaluator_sha256'] = continuation
+        return self.derive(source, generation_dir, rng_seed, rewrite, identity_updates=dict(evaluator_sha256=continuation))
+
+    def test_continuation_evaluator_is_derived_from_the_manifest_admission_configuration(self):
+        manifest, continuation = self.dual_manifest()
+        self.assertNotEqual(continuation, self.bound)
+        ledger = Ledger(self.root, 'dual', 'fixture-run', 'fixture', manifest, vocabulary=self.vocabulary)
+        self.assertEqual(ledger.identity['evaluator_sha256'], self.bound)
+        self.assertEqual(ledger.identity['continuation_evaluator_sha256'], continuation)
+        self.assertEqual(ledger.continuation_evaluator_sha256, continuation)
+        source = ledger.evaluator_binding['continuation_evaluator_source']
+        self.assertEqual((source['kind'], source['evaluator'], source['binary_present']), ('continuation_source_admission', 'bin/jope-seed-dispatch', True))
+        # An episode evaluated by the continuation binary verifies (row 0 bit-equal to its admitted RMSE); one carrying the
+        # ordinary evaluator is a continuation episode too and is refused against the continuation binding.
+        dest, _, rows = self.continuation_copy(self.episodes[0], self.root / 'fixture/continuation', 7000, continuation)
+        result = ledger.ingest_completed(dest, generation=GENERATION, arm='neural', role='candidate', replicate=0, seed_origin='neural_policy',
+                                         seed_rmse=sl.admitted_rmse(rows[:1]))
+        self.assertTrue(result['verified'], result['reasons'])
+        self.assertTrue(result['row0_label_verified'])
+        ordinary, _, rows = self.verified_copy(self.episodes[1], self.root / 'fixture/ordinary', 7001)
+        result = ledger.ingest_completed(ordinary, generation=GENERATION, arm='neural', role='candidate', replicate=0, seed_origin='neural_policy',
+                                         seed_rmse=sl.admitted_rmse(rows[:1]))
+        self.assertFalse(result['verified'])
+        self.assertIn('identity_evaluator_mismatch: ' + self.bound, result['reasons'])
+        self.assertIn('evaluator_mismatch: ' + self.bound, result['reasons'])
+        export = ledger.export(GENERATION)
+        document = json.loads(Path(export['path']).read_bytes())
+        self.assertEqual((document['evaluator_sha256'], document['continuation_evaluator_sha256']), (self.bound, continuation))
+        self.assertEqual({r['verified'] for r in document['rows']}, {True, False})
+        # verify_episode itself: without a continuation binding the ordinary evaluator is expected of continuation rows.
+        expected = dict(evaluator_sha256=self.bound, resource_protocol=sl.RESOURCE_PROTOCOL, protocols=sl.PROTOCOLS, partition='meta_train')
+        self.assertEqual(verify_episode(ordinary, expected)['expected_evaluator_sha256'], self.bound)
+        self.assertEqual(verify_episode(ordinary, dict(expected, continuation_evaluator_sha256=continuation))['expected_evaluator_sha256'], continuation)
+        # The explicit digest must equal the derived binding; without a derivable one it must be manifest-bound; a
+        # single-evaluator manifest keeps its identity bytes (no continuation key) and its default binding.
+        with self.assertRaisesRegex(ValueError, 'contradicts the manifest-derived'):
+            Ledger(self.root, 'dual-explicit', 'fixture-run', 'fixture', manifest, vocabulary=self.vocabulary, continuation_evaluator=self.bound)
+        self.assertEqual(Ledger(self.root, 'dual-explicit', 'fixture-run', 'fixture', manifest, vocabulary=self.vocabulary,
+                                continuation_evaluator=continuation).identity['continuation_evaluator_sha256'], continuation)
+        with self.assertRaisesRegex(ValueError, 'not a manifest-bound digest'):
+            self.ledger('explicit-foreign', continuation_evaluator=FOREIGN)
+        with self.assertRaisesRegex(ValueError, '64-hex'):
+            self.ledger('explicit-short', continuation_evaluator='abc')
+        explicit = self.ledger('explicit-bound', continuation_evaluator=self.bound)
+        self.assertNotIn('continuation_evaluator_sha256', explicit.identity)
+        self.assertEqual(explicit.evaluator_binding['continuation_evaluator_source']['kind'], 'explicit')
+        plain = self.ledger()
+        self.assertNotIn('continuation_evaluator_sha256', plain.identity)
+        self.assertEqual(plain.continuation_evaluator_sha256, self.bound)
+        self.assertEqual(plain.evaluator_binding['continuation_evaluator_source']['kind'], 'cpu_executable')
+        # Fail closed: an admission configuration whose evaluator the manifest does not bind, a configuration whose bytes
+        # drifted from the declared digest, and a continuation binary that differs from its binding are all refused.
+        unbound, _ = self.dual_manifest('unbound-manifest.json', configuration=dict(evaluator='bin/jope-seed-dispatch', evaluator_sha256=FOREIGN))
+        with self.assertRaisesRegex(ValueError, 'not bound by the manifest'):
+            Ledger(self.root, 'unbound', 'fixture-run', 'fixture', unbound, vocabulary=self.vocabulary)
+        drifted, _ = self.dual_manifest('drifted-manifest.json')
+        (self.root / 'admission-config.json').write_bytes(encoded(dict(evaluator='bin/jope-seed-dispatch', evaluator_sha256=continuation, note='drift')))
+        with self.assertRaisesRegex(ValueError, 'configuration differs from the manifest binding'):
+            Ledger(self.root, 'drifted', 'fixture-run', 'fixture', drifted, vocabulary=self.vocabulary)
+        stale, _ = self.dual_manifest('stale-binary-manifest.json')
+        (self.root / 'bin/jope-seed-dispatch').write_bytes(b'rebuilt continuation evaluator')
+        with self.assertRaisesRegex(ValueError, 'continuation evaluator on disk differs'):
+            Ledger(self.root, 'stale-binary', 'fixture-run', 'fixture', stale, vocabulary=self.vocabulary)
+
+
 if __name__ == '__main__':
     unittest.main()

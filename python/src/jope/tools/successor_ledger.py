@@ -22,7 +22,14 @@ which passed verify_episode (evaluator/continuation/partition/resource-protocol/
 
 Admission identity (plan D4): the evaluator is manifest['bindings'][manifest['cpu_executable']]
 (cross-checked against the binary on disk when present); the resource protocol is pinned to
-single_candidate_2s_8gib_v1 unless an explicit, journaled override is given. Row-0 evidence is
+single_candidate_2s_8gib_v1 unless an explicit, journaled override is given. Continuation episodes
+run by the dual-identity GP supervisor are evaluated by the CONTINUATION evaluator: the manifest's
+continuation_source_admission.configuration (the seed driver's admission config, hash-checked)
+names evaluator/evaluator_sha256 and the manifest must bind that path to that digest; identities
+and rows carrying a continuation_protocol are verified against it (an explicit
+--continuation-evaluator must equal it, or, without a derivable one, be a manifest-bound digest),
+ordinary identities keep bindings[cpu_executable]; without any continuation binding the two
+coincide. Row-0 evidence is
 mandatory (F5): an episode is verified only when its seed's admitted RMSE is known (from the arm's
 search observations at plan time, or --seed-rmse at ingest) and row 0 reproduces it bit-exactly;
 episodes without that evidence stay unverified ('row0_label_unverified') and never reach a bundle.
@@ -270,8 +277,45 @@ def load_seed_rmse(root, path):
     return dict(document)
 
 
-def manifest_evaluator(root, manifest_path):
-    """bindings[cpu_executable] of the manifest, cross-checked against the binary on disk when present (gp_queue_gc pattern)."""
+def continuation_evaluator_binding(root, manifest, bindings, explicit=None):
+    """The continuation evaluator bound by the manifest: (sha256, source) or (None, None) when the manifest carries none.
+
+    Derived from manifest['continuation_source_admission']['configuration'] (the seed driver's admission config within
+    root, hash-checked against configuration_sha256 when declared): its evaluator/evaluator_sha256 must be bound by the
+    manifest's bindings (and by the binary on disk when present). An explicit 64-hex must equal the derived digest, or,
+    when the manifest declares no readable admission configuration, be one of the manifest's bound digests.
+    """
+    require(explicit is None or (isinstance(explicit, str) and HEX64.match(explicit)), 'continuation evaluator must be a 64-hex sha256')
+    admission = manifest.get('continuation_source_admission')
+    configuration = admission.get('configuration') if isinstance(admission, dict) else None
+    if isinstance(configuration, str) and configuration and within(root, configuration).is_file():
+        config_path = within(root, configuration)
+        declared = admission.get('configuration_sha256')
+        require(declared is None or sha(config_path) == declared,
+                'continuation admission configuration differs from the manifest binding: ' + configuration)
+        config = json.loads(config_path.read_bytes())
+        executable, bound = config.get('evaluator'), config.get('evaluator_sha256')
+        require(isinstance(executable, str) and isinstance(bound, str) and HEX64.match(bound) and bindings.get(executable) == bound,
+                'continuation admission configuration evaluator is not bound by the manifest: ' + str(executable))
+        binary = within(root, executable)
+        if binary.is_file():
+            require(sha(binary) == bound, 'continuation evaluator on disk differs from the manifest binding: ' + executable)
+        require(explicit is None or explicit == bound, 'explicit continuation evaluator contradicts the manifest-derived binding ' + bound)
+        return bound, dict(kind='continuation_source_admission', configuration=configuration, configuration_sha256=sha(config_path),
+                           evaluator=executable, binary_present=binary.is_file())
+    if explicit is not None:
+        executable = next((k for k, v in bindings.items() if v == explicit), None)
+        require(executable is not None, 'explicit continuation evaluator is not a manifest-bound digest: ' + explicit)
+        return explicit, dict(kind='explicit', configuration=None, configuration_sha256=None, evaluator=executable, binary_present=None)
+    return None, None
+
+
+def manifest_evaluator(root, manifest_path, continuation_evaluator=None):
+    """bindings[cpu_executable] of the manifest, cross-checked against the binary on disk when present (gp_queue_gc pattern).
+
+    continuation_evaluator_sha256 is the manifest's continuation evaluator (continuation_evaluator_binding), defaulting to
+    bindings[cpu_executable] when the manifest binds none; continuation_evaluator_source says which.
+    """
     manifest_path = within(root, manifest_path)
     manifest = json.loads(manifest_path.read_bytes())
     executable = manifest.get('cpu_executable')
@@ -284,8 +328,13 @@ def manifest_evaluator(root, manifest_path):
     on_disk = binary.is_file()
     if on_disk:
         require(sha(binary) == bound, 'cpu_executable on disk differs from the manifest binding: ' + executable)
+    continuation, source = continuation_evaluator_binding(root, manifest, bindings, continuation_evaluator)
     return dict(manifest_path=str(manifest_path.relative_to(root)), manifest_sha256=sha(manifest_path), cpu_executable=executable,
-                evaluator_sha256=bound, binary_present=on_disk, vocabulary_sha256=manifest.get('vocabulary_sha256'))
+                evaluator_sha256=bound, binary_present=on_disk, vocabulary_sha256=manifest.get('vocabulary_sha256'),
+                continuation_evaluator_sha256=continuation if continuation is not None else bound,
+                continuation_evaluator_source=source if source is not None else dict(kind='cpu_executable', configuration=None,
+                                                                                     configuration_sha256=None, evaluator=executable,
+                                                                                     binary_present=on_disk))
 
 
 def seed_value(identity, rows, summary=None):
@@ -333,14 +382,16 @@ def verify_episode(episode_dir, expected):
     """Self-contained admission check of one episode directory; collects every reason instead of raising.
 
     expected: evaluator_sha256, resource_protocol, protocols, partition ('meta_train'), optional
-    vocabulary_sha256 and seed_rmse ({parent_program_sha256: admitted row-0 rmse} for F5).
+    vocabulary_sha256, seed_rmse ({parent_program_sha256: admitted row-0 rmse} for F5) and
+    continuation_evaluator_sha256 (the evaluator expected of receipts/rows that carry a continuation_protocol;
+    absent or None -> evaluator_sha256). expected_evaluator_sha256 in the result names the digest applied.
     """
     directory = Path(episode_dir)
     reasons = []
     out = dict(schema=VERIFY_SCHEMA, episode_dir=str(directory), verified=False, reasons=reasons, rows=None, episode_id=None,
                context_key=None, observations_sha256=None, search_sha256=None, completed_at=None, driver_sha256=None,
                row0_label_verified=None, admitted_seed_rmse=None, seed_unmeasured=False, evaluator_sha256=None,
-               resource_protocol=None, protocol=None, termination_reason=None)
+               resource_protocol=None, protocol=None, termination_reason=None, expected_evaluator_sha256=None)
     try:
         identity_bytes = (directory / 'identity.json').read_bytes()
         identity = json.loads(identity_bytes)
@@ -362,7 +413,11 @@ def verify_episode(episode_dir, expected):
     out.update(rows=rows, observations_sha256=receipt.get('observations_sha256'), search_sha256=sha(search / 'search.json'),
                completed_at=receipt.get('completed_at'), driver_sha256=receipt.get('search_driver_sha256'),
                evaluator_sha256=receipt.get('evaluator_sha256'), resource_protocol=rows[0].get('resource_protocol') if rows else None)
-    evaluator = expected['evaluator_sha256']
+    # Receipts/rows carrying a continuation_protocol were produced by the continuation evaluator when the manifest binds
+    # one (ordinary identities keep bindings[cpu_executable]); without a continuation binding the two coincide.
+    continuation_bound = receipt.get('continuation_protocol') is not None or any(r.get('continuation_protocol') is not None for r in rows)
+    evaluator = (expected.get('continuation_evaluator_sha256') or expected['evaluator_sha256']) if continuation_bound else expected['evaluator_sha256']
+    out['expected_evaluator_sha256'] = evaluator
     partition = expected.get('partition', 'meta_train')
     protocol = identity.get('protocol')
     tierb = is_tierb(protocol)
@@ -529,16 +584,20 @@ class Ledger(Dispatcher):
     """Dispatcher over successor/ledger.sqlite with roles, controls, replicates, seed values and bundles."""
 
     def __init__(self, root, directory, run_identity, run_output, manifest, *, vocabulary=None,
-                 allow_resource_protocol=None, protocols=PROTOCOLS):
+                 allow_resource_protocol=None, protocols=PROTOCOLS, continuation_evaluator=None):
         # Mirrors Dispatcher.__init__ (dispatch.py) but opens ledger.sqlite with the D2 schema. The evaluator
         # identity is manifest bindings[cpu_executable] (D4), never an operator-typed digest; `vocabulary` is a
         # path within root (hashed) or a 64-hex identity, defaulting to the manifest's vocabulary_sha256.
+        # Continuation episodes verify against the manifest's continuation evaluator (continuation_evaluator_binding);
+        # `continuation_evaluator` is only ever a manifest-bound digest. The ledger identity names it only when it
+        # differs from bindings[cpu_executable], so ledgers of a single-evaluator manifest keep their identity bytes.
         self.root = Path(root).resolve()
         self.directory = within(self.root, directory)
         self.directory.mkdir(parents=True, exist_ok=True)
         self.run_output = within(self.root, run_output)
-        self.evaluator_binding = manifest_evaluator(self.root, manifest)
+        self.evaluator_binding = manifest_evaluator(self.root, manifest, continuation_evaluator=continuation_evaluator)
         evaluator_sha = self.evaluator_binding['evaluator_sha256']
+        self.continuation_evaluator_sha256 = self.evaluator_binding['continuation_evaluator_sha256']
         self.evaluator = self.root / self.evaluator_binding['cpu_executable'] if self.evaluator_binding['binary_present'] else None
         self.vocabulary, vocabulary_sha = self.binding(vocabulary if vocabulary is not None else self.evaluator_binding['vocabulary_sha256'])
         require(vocabulary_sha is not None, 'vocabulary identity required: manifest vocabulary_sha256 or an explicit path/digest')
@@ -557,6 +616,8 @@ class Ledger(Dispatcher):
         identity = dict(run_identity=run_identity, run_output=str(self.run_output), vocabulary_sha256=vocabulary_sha,
                         evaluator_sha256=evaluator_sha, resource_protocol=resource_protocol, protocols=list(self.protocols),
                         ledger='parallel.successor_ledger.v1')
+        if self.continuation_evaluator_sha256 != evaluator_sha:
+            identity['continuation_evaluator_sha256'] = self.continuation_evaluator_sha256
         with self.db:
             self.db.execute("INSERT OR IGNORE INTO metadata VALUES('identity',?)", (json.dumps(identity, sort_keys=True),))
             existing = self.db.execute("SELECT value FROM metadata WHERE key='identity'").fetchone()
@@ -944,7 +1005,8 @@ class Ledger(Dispatcher):
         evidence = {identity['parent_program_sha256']: planned_evidence} if planned_evidence is not None else {}
         evidence.update(seed_rmse or {})
         expected = dict(evaluator_sha256=self.identity['evaluator_sha256'], resource_protocol=self.resource_protocol, protocols=self.protocols,
-                        partition='meta_train', vocabulary_sha256=self.identity['vocabulary_sha256'], seed_rmse=evidence)
+                        partition='meta_train', vocabulary_sha256=self.identity['vocabulary_sha256'], seed_rmse=evidence,
+                        continuation_evaluator_sha256=self.continuation_evaluator_sha256)
         verification = verify_episode(directory, expected)
         rows = verification.pop('rows')
         summary = json.loads((directory / 'result.json').read_bytes()) if (directory / 'result.json').is_file() else None
@@ -1062,7 +1124,7 @@ class Ledger(Dispatcher):
         counts['by_protocol'] = {p: {k: r['pooled'][k] for k in ('candidates', 'measured', 'incomplete', 'finite_children', 'better', 'tied', 'worse', 'flips')}
                                  for p, r in info['by_protocol'].items()}
         document = dict(schema=ROW_SCHEMA, generation=generation, protocol=CREDIT_PROTOCOL, protocols=sorted({r['protocol'] for r in rows}),
-                        evaluator_sha256=self.identity['evaluator_sha256'],
+                        evaluator_sha256=self.identity['evaluator_sha256'], continuation_evaluator_sha256=self.continuation_evaluator_sha256,
                         resource_protocol=self.resource_protocol, contexts=sorted({r['context_key'] for r in rows}), rows=rows, counts=counts,
                         final_tests_opened=False)
         path = self.directory / ('seed-values-%d.json' % generation)
@@ -1115,7 +1177,8 @@ class Ledger(Dispatcher):
         document = dict(schema=NEXT_OUTCOME_SCHEMA, generation=generation, next_generation=following, outcome=outcome, source=source,
                         rows=records, counts=dict(seeds=len(seeds), joined=len(records), unjoined=len(seeds) - len(records),
                                                   contexts=len({s[0] for s in seeds}), joined_contexts=len({r['context_key'] for r in records})),
-                        credit_protocol=CREDIT_PROTOCOL, evaluator_sha256=self.identity['evaluator_sha256'], final_tests_opened=False)
+                        credit_protocol=CREDIT_PROTOCOL, evaluator_sha256=self.identity['evaluator_sha256'],
+                        continuation_evaluator_sha256=self.continuation_evaluator_sha256, final_tests_opened=False)
         name = 'next-outcome-%d.json' % generation if outcome == 'best_initial' else 'next-outcome-%d-%s.json' % (generation, outcome)
         path = self.directory / name
         return dict(document, path=str(path), sha256=immutable(path, document))
@@ -1276,6 +1339,9 @@ def main():
     parser.add_argument('--vocabulary', help='path within root or 64-hex sha (default: manifest vocabulary_sha256)')
     parser.add_argument('--allow-resource-protocol', metavar='PROTOCOL',
                         help='explicit, journaled override of the pinned ' + RESOURCE_PROTOCOL + ' resource protocol')
+    parser.add_argument('--continuation-evaluator', metavar='SHA256',
+                        help='continuation evaluator digest; must equal the manifest-derived continuation binding '
+                             '(continuation_source_admission configuration) or, without one, be a manifest-bound digest')
     parser.add_argument('--generation', type=int, required=True)
     parser.add_argument('action', choices=('ingest', 'export', 'bundle', 'economics', 'info', 'supersede', 'pending', 'next-outcome'))
     parser.add_argument('--episode', action='append', default=[], help='ingest: episode directory within root (repeatable)')
@@ -1291,7 +1357,7 @@ def main():
     parser.add_argument('--outcome', choices=NEXT_OUTCOMES, default='best_initial')
     args = parser.parse_args()
     ledger = Ledger(args.root, args.directory, args.run_identity, args.run_output, args.manifest, vocabulary=args.vocabulary,
-                    allow_resource_protocol=args.allow_resource_protocol)
+                    allow_resource_protocol=args.allow_resource_protocol, continuation_evaluator=args.continuation_evaluator)
     if args.action == 'ingest':
         require(args.episode, 'ingest requires at least one --episode')
         seed_rmse = load_seed_rmse(ledger.root, args.seed_rmse) if args.seed_rmse else None
