@@ -134,6 +134,22 @@ class ChampionGitTests(unittest.TestCase):
         self.assertEqual((again['committed'], len(again['exports'])), (0, 0))   # exports only accompany new event commits
         self.assertIsNone(cg.prepared_view_for(self.root, dict(value=dict(source='elsewhere/observations.json', identity={}))))
 
+    def test_feed_reports_per_identity_git_state_for_the_console(self):
+        feed = self.root / 'runs/x/successor/scoreboard/champion-git.json'
+        cg.main(['status', '--root', str(self.root), '--manifest', self.manifest, '--feed', str(feed), '--json'])
+        before = json.loads(feed.read_bytes())
+        self.assertEqual((before['schema'], before['identities'], before['events'], before['committed_events'], before['head']), (cg.FEED_SCHEMA, 2, 4, 0, None))
+        cg.main(['sync', '--root', str(self.root), '--manifest', self.manifest, '--repo', str(self.repo), '--feed', str(feed)])
+        after = json.loads(feed.read_bytes())
+        self.assertEqual((after['committed_events'], after['uncommitted_events'], after['last_sync']['committed'], after['last_sync']['push']), (4, 0, 4, 'no_remote'))
+        ds1 = next(r for r in after['rows'] if r['dataset'] == 'ds1')
+        self.assertEqual((ds1['events'], ds1['committed_events'], ds1['cut'], ds1['partition'], ds1['pushed'], len(ds1['identity_key'])), (3, 3, 0, 'meta_train', 'no', 64))
+        log = subprocess.run(['git', '-C', str(self.repo), 'log', '--format=%H %s'], capture_output=True, text=True).stdout.splitlines()
+        self.assertIn('family-ds1/ds1 cut 0 rmse 0.7 (#2)', next(line for line in log if line.startswith(ds1['last_commit'])))
+        self.assertEqual(ds1['current_event'], cg.load_state(self.repo)['identities'][ds1['identity_key']]['current'])
+        self.assertEqual([r['dataset'] for r in after['rows']], ['ds1', 'ds2'])   # sorted by family, dataset, cut
+        self.assertFalse(list(feed.parent.glob('.*.partial')))
+
     def test_push_states_without_remote_or_credentials(self):
         cg.main(['sync', '--root', str(self.root), '--manifest', self.manifest, '--repo', str(self.repo)])
         state = cg.load_state(self.repo)

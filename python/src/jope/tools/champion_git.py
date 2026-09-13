@@ -45,6 +45,7 @@ from resume_expired_cycle import require, sha
 SCHEMA = 'parallel.cut_champion.v1'
 STATE_SCHEMA = 'parallel.champion_git_state.v1'
 RECEIPT_SCHEMA = 'parallel.champion_git_receipt.v1'
+FEED_SCHEMA = 'parallel.champion_git_feed.v1'
 CLAIM = 'local record high on the adaptive cut-heldout teacher; not a held-out win, not an independent evaluation, not a serving promotion'
 PUBLISHABLE_PARTITIONS = ('meta_train', 'meta_validation')
 HEX64 = re.compile(r'^[0-9a-f]{64}$')
@@ -333,7 +334,8 @@ def scan(store, evaluator=None, vocabulary=None, all_evaluators=False):
         events = identity_chain(directory)
         latest = events[-1] if events else None
         rows.append(dict(identity_key=key, directory=directory, dataset=identity.get('dataset'), family=identity.get('family'), partition=identity.get('partition'),
-                         cut=identity.get('cut'), evaluator_sha256=identity.get('evaluator_sha256'), rmse_original_units=current.get('rmse_original_units'),
+                         cut=identity.get('cut'), evaluator_sha256=identity.get('evaluator_sha256'), prepared_sha256=identity.get('prepared_sha256'),
+                         rmse_original_units=current.get('rmse_original_units'),
                          improvement_number=current.get('improvement_number'), events=len(events), event_shas=[e['sha256'] for e in events],
                          last_event=latest['value'].get('timestamp') if latest and 'value' in latest else None, chain=events,
                          invalid=[e['sha256'] for e in events if 'error' in e]))
@@ -348,14 +350,35 @@ def status_table(rows, state, filters=()):
         if filters and not any(f in (r['dataset'] or '') or f in (r['family'] or '') for f in filters):
             continue
         committed = sum(1 for s in r['event_shas'] if s in published)
-        out.append(dict(family=r['family'], dataset=r['dataset'], cut=r['cut'], partition=r['partition'], rmse=r['rmse_original_units'],
-                        improvements=r['improvement_number'], events=r['events'], committed_events=committed, uncommitted_events=r['events'] - committed,
-                        last_event=r['last_event'], pushed='verified' if (verified_head and committed == r['events'] and state['remote'].get('status') == 'verified') else 'no',
+        last_committed = next((published[s]['commit'] for s in reversed(r['event_shas']) if s in published), None)
+        out.append(dict(identity_key=r['identity_key'], family=r['family'], dataset=r['dataset'], cut=r['cut'], partition=r['partition'], prepared_sha256=r.get('prepared_sha256'),
+                        rmse=r['rmse_original_units'], improvements=r['improvement_number'], events=r['events'], committed_events=committed, uncommitted_events=r['events'] - committed,
+                        last_event=r['last_event'], last_commit=last_committed, current_event=r['event_shas'][-1] if r['event_shas'] else None,
+                        pushed='verified' if (verified_head and committed == r['events'] and state['remote'].get('status') == 'verified') else 'no',
                         invalid=len(r['invalid'])))
     return out
 
 
-def sync(root, store, repo, remote, branch, credentials, evaluator, vocabulary, all_evaluators, limit, receipts, export_binary=None, export_limit=None):
+def write_feed(path, rows, state, evaluator, head, receipt=None):
+    """Atomic console feed (parallel.champion_git_feed.v1): per identity the git state of its high marks, keyed for a join on (dataset, cut, partition).
+
+    Consumers (the native console's per-worker git column) join a running search's dataset/cut/partition to a row and show
+    committed / uncommitted events, the last commit and whether the remote has verified it. Overwritten on every sync.
+    """
+    table = status_table(rows, state)
+    feed = dict(schema=FEED_SCHEMA, at=time.time(), head=head, evaluator_sha256=evaluator, remote=(state or {}).get('remote'), last_sync=receipt,
+                identities=len(table), events=sum(r['events'] for r in table), committed_events=sum(r['committed_events'] for r in table),
+                uncommitted_events=sum(r['uncommitted_events'] for r in table), rows=sorted(table, key=lambda r: (r['family'] or '', r['dataset'] or '', r['cut'] if r['cut'] is not None else -1)),
+                claim=CLAIM, final_tests_opened=False)
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name('.%s.%d.partial' % (path.name, os.getpid()))
+    temporary.write_bytes(json.dumps(feed, sort_keys=True).encode())
+    os.replace(temporary, path)
+    return feed
+
+
+def sync(root, store, repo, remote, branch, credentials, evaluator, vocabulary, all_evaluators, limit, receipts, export_binary=None, export_limit=None, feed=None):
     repo = ensure_repo(repo)
     lock = open(repo / '.champion-git.lock', 'a')
     fcntl.flock(lock, fcntl.LOCK_EX)
@@ -399,6 +422,8 @@ def sync(root, store, repo, remote, branch, credentials, evaluator, vocabulary, 
         Path(receipts).mkdir(parents=True, exist_ok=True)
         stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
         (Path(receipts) / ('champion-git-%s-%s.json' % (stamp, (head or 'none')[:12]))).write_bytes(json.dumps(receipt, sort_keys=True, indent=1).encode())
+    if feed:
+        write_feed(feed, rows, state, evaluator, head, dict(at=receipt['at'], committed=len(committed), invalid_count=len(errors), push=remote_state.get('status')))
     fcntl.flock(lock, fcntl.LOCK_UN)
     return receipt, committed
 
@@ -419,6 +444,7 @@ def main(argv=None):
     parser.add_argument('--export-binary', help='sync: champion_export binary; emitted code + parity receipt are committed beside each new event')
     parser.add_argument('--export-limit', type=int, help='sync: at most this many exports per run (a parity run fits and executes Python)')
     parser.add_argument('--filter', action='append', default=[], help='status: dataset or family substring (repeatable)')
+    parser.add_argument('--feed', help='atomic parallel.champion_git_feed.v1 for the console (written by status and by every sync)')
     parser.add_argument('--json', action='store_true')
     args = parser.parse_args(argv)
     root = args.root.resolve()
@@ -429,7 +455,10 @@ def main(argv=None):
         evaluator, vocabulary = live_evaluator(root, args.manifest)
     if args.action == 'status':
         state = load_state(args.repo) if args.repo and state_path(args.repo).is_file() else None
-        rows = status_table(scan(store, evaluator, vocabulary, args.all_evaluators), state, args.filter)
+        scanned = scan(store, evaluator, vocabulary, args.all_evaluators)
+        if args.feed:
+            write_feed(args.feed, scanned, state, evaluator, git(Path(args.repo), 'rev-parse', 'HEAD').stdout.strip() or None if state else None)
+        rows = status_table(scanned, state, args.filter)
         if args.json:
             print(json.dumps(dict(evaluator_sha256=evaluator, repo=args.repo, remote_status=(state or {}).get('remote'), rows=rows), sort_keys=True))
         else:
@@ -443,7 +472,7 @@ def main(argv=None):
         return rows
     require(args.repo, 'sync requires --repo')
     receipt, committed = sync(root, store, Path(args.repo), args.remote, args.branch, args.credentials, evaluator, vocabulary, args.all_evaluators, args.limit, args.receipts,
-                              args.export_binary, args.export_limit)
+                              args.export_binary, args.export_limit, args.feed)
     print(json.dumps(dict(head=receipt['head'], committed=receipt['committed'], identities=receipt['identities'], events_total=receipt['events_total'],
                           invalid=receipt['invalid_count'], exports=len(receipt['exports']), push=receipt['push']['status'], push_error=receipt['push'].get('last_error')), sort_keys=True))
     return receipt
