@@ -256,6 +256,8 @@ def verify_lineage(identity, rows):
         elif not isinstance(parents, list) or len(parents) not in (1, 2) or any(p not in seen for p in parents):
             reasons.append('%s: row %d parents %s are not all earlier lineage members' % (LINEAGE_VIOLATION, index, parents))
         else:
+            if len(set(parents)) != len(parents):
+                reasons.append('duplicate_parents: row %d names one member twice %s' % (index, parents))
             pool = tierb_parent_pool(evaluated)
             outside = [p for p in parents if p not in pool]
             if outside:

@@ -579,6 +579,13 @@ class TierBTests(FixtureCase):
         self.assertTrue(any(r.startswith('crossover_before_two_descendants: row 2') for r in early))
         self.assertFalse(any(r.startswith('parent_outside_top4') for r in early))
 
+        def duplicate_parents(rows, receipt):
+            best = rows[1]['program_sha256']
+            rows[6].update(genetic_parents=[best, best], genetic_operator='crossover')   # after several descendants, one member twice
+        duplicate = reasons('duplicate', mutate=duplicate_parents)
+        self.assertTrue(any(r.startswith('duplicate_parents: row 6') for r in duplicate))
+        self.assertFalse(any(r.startswith('crossover_before_two_descendants') for r in duplicate))
+
         def base_rule_rows(rows, receipt):
             for row in rows:
                 row['continuation_protocol'] = 'bounded_seed_lineage_v3'
