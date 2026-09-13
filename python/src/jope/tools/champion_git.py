@@ -68,7 +68,10 @@ def load_event(path):
     value = json.loads(data)
     require(isinstance(value, dict) and value.get('schema') == SCHEMA, '%s: schema is not %s' % (path, SCHEMA))
     name = path.name[len('event-'):-len('.json')]
-    require(HEX64.match(name) and digest(data) == name, '%s: event bytes do not hash to the file name' % path)
+    # champions.rs names an event by sha256(serde_json::to_vec(champion)): compact json in struct field order, which the
+    # pretty-printed file preserves; re-serializing the parsed document compactly in file order reproduces those bytes.
+    ordered = json.dumps(value, separators=(',', ':'), ensure_ascii=False).encode()
+    require(HEX64.match(name) and (digest(ordered) == name or digest(data) == name), '%s: event bytes do not hash to the file name' % path)
     identity = value.get('identity')
     require(isinstance(identity, dict) and all(isinstance(identity.get(k), (str, int)) for k in
                                                 ('dataset', 'family', 'partition', 'cut', 'prepared_sha256', 'evaluator_sha256', 'vocabulary_sha256')),
