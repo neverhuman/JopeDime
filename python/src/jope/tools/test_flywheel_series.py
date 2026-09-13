@@ -284,6 +284,46 @@ class SeriesProducer(unittest.TestCase):
             self.assertEqual(row['codegen'], 'pending')
             self.assertIn('discoveries_per_hour', row['unavailable'])
 
+    def test_best_initial_arm_is_derived_from_each_arms_ledger_and_cached(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = build_run(directory)
+            report_path = root / 'run/generation-000000/quality-report.json'
+            report = series.read(report_path)
+            initial = {}
+            for row in report['rows']:
+                initial[row['output']] = row.pop('best_initial_arm')   # live reports predate the producer of this key
+                ledger = root / row['output'] / 'observations.json'
+                ledger.parent.mkdir(parents=True, exist_ok=True)
+                # slots 0..63 carry the initial population (one failed slot, one worse slot); slot 70 is a later GP fit and must not count
+                atomic(ledger, [dict(initial_seed_slot=0, failure=None, metrics=dict(rmse=initial[row['output']] * 1.5, units='original_target')),
+                                dict(initial_seed_slot=1, failure=None, metrics=dict(rmse=initial[row['output']], units='original_target')),
+                                dict(initial_seed_slot=2, failure='timeout', metrics=None),
+                                dict(initial_seed_slot=70, failure=None, metrics=dict(rmse=initial[row['output']] * 0.1, units='original_target'))])
+            atomic(report_path, report)
+            manifest, baseline = series.read(root / 'manifest.json'), series.baseline_receipt(root / 'baseline.json')
+            cache = root / 'run/successor/scoreboard/derived'
+            plain = series.generation_rows(root, root / 'run', manifest, baseline)[0]
+            self.assertIn('missing_values', json.dumps(plain['matched']['train']['seed_only']))
+            self.assertEqual(plain['best_initial_arm_derived']['counts'], {'observations_ledger': 3 * (HELDOUT + TRAIN)})   # derived even without a cache dir
+            row = series.generation_rows(root, root / 'run', manifest, baseline, cache_dir=cache)[0]
+            train = row['matched']['train']['seed_only']
+            self.assertEqual((train['wins'] + train['ties'] + train['losses'], train['n_pairs']), (TRAIN, TRAIN))
+            self.assertEqual(row['best_initial_arm_derived']['counts'], {'observations_ledger': 3 * (HELDOUT + TRAIN)})
+            self.assertIn('never imputed', row['best_initial_arm_derived']['rule'])
+            self.assertEqual(row['matched']['val']['seed_only']['n_pairs'], HELDOUT)
+            cached = series.read(cache / 'initial-arm-generation-000000.json')
+            self.assertEqual((cached['schema'], cached['report_sha256'], len(cached['values'])), (series.DERIVED_SCHEMA, sha(report_path), 3 * (HELDOUT + TRAIN)))
+            self.assertEqual(cached['values'][report['rows'][0]['output']]['value'], initial[report['rows'][0]['output']])
+            # the cache is reused as long as the report sha matches, and ignored when it does not
+            for ledger in root.glob('run/generation-000000/*/*/cut-0/search/observations.json'):
+                ledger.unlink()
+            again = series.generation_rows(root, root / 'run', manifest, baseline, cache_dir=cache)[0]
+            self.assertEqual(again['matched']['train']['seed_only']['n_pairs'], TRAIN)
+            stale = dict(cached, report_sha256='0' * 64)
+            atomic(cache / 'initial-arm-generation-000000.json', stale)
+            without = series.generation_rows(root, root / 'run', manifest, baseline, cache_dir=cache)[0]
+            self.assertEqual(without['best_initial_arm_derived']['counts'], {'ledger_missing': 3 * (HELDOUT + TRAIN)})
+
     def test_generation_without_replay_snapshots_says_so(self):
         with tempfile.TemporaryDirectory() as directory:
             root = build_run(directory, episodes=False, blocks=False, replay_policy=False)

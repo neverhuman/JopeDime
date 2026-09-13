@@ -189,7 +189,62 @@ def render_generations(run, width):
     for number, w, t, l, rate, vw, vt, vl, done in recent:
         lines.append('   %-5d %-18s %-8s %-22s %-8s' % (number, '%d/%d/%d' % (w, t, l), ('%.2f' % rate) if rate is not None else '-', '%d/%d/%d' % (vw, vt, vl), fmt_time(done)))
     cum = [sum(r[i] for r in val_rows[-10:]) for i in range(3)]
-    lines.append('   held-out trailing-10 W/T/L %d/%d/%d (final level, underpowered n=16 per generation; seed-only rows come from the scoreboard producer)' % tuple(cum))
+    lines.append('   held-out trailing-10 W/T/L %d/%d/%d (final level, underpowered n=16 per generation)' % tuple(cum))
+    lines += render_seed_only(run, width)
+    return lines
+
+
+def series_generation_rows(run):
+    """Generation rows of the scoreboard producer (successor/scoreboard/flywheel-series.jsonl), newest per generation."""
+    path = run / 'successor/scoreboard/flywheel-series.jsonl'
+    rows = {}
+    if not path.is_file():
+        return []
+    try:
+        with open(path, 'rb') as stream:
+            for raw in stream:
+                try:
+                    row = json.loads(raw)
+                except ValueError:
+                    continue
+                if row.get('kind') == 'generation' and isinstance(row.get('generation'), int):
+                    rows[row['generation']] = row
+    except OSError:
+        return []
+    return [rows[n] for n in sorted(rows)]
+
+
+def wtl_text(block):
+    if not isinstance(block, dict) or not isinstance(block.get('wins'), int):
+        return '-'
+    n = block['wins'] + block.get('ties', 0) + block.get('losses', 0)
+    return '%d/%d/%d%s' % (block['wins'], block.get('ties', 0), block.get('losses', 0), (' (%.2f)' % (block['wins'] / n)) if n else '')
+
+
+def render_seed_only(run, width):
+    rows = series_generation_rows(run)
+    if not rows:
+        return ['   SEED-ONLY (the scoreboard row that matters: best initial fit of each arm, no shared tail): scoreboard producer has not run yet']
+    lines = ['   SEED-ONLY neural vs generic (best_initial_arm per search; flywheel_series.py; source of the F1 falsifier)']
+    lines.append('   %-5s %-22s %-22s %-40s' % ('gen', 'train W/T/L (rate)', 'held-out W/T/L (rate)', 'held-out trailing-10 W/T/L  mean ln-ratio [CI90]'))
+    rates = []
+    for row in rows:
+        matched = row.get('matched') or {}
+        train = (matched.get('train') or {}).get('seed_only')
+        val = (matched.get('val') or {}).get('seed_only')
+        trailing = (matched.get('val') or {}).get('trailing10')
+        if isinstance(train, dict) and isinstance(train.get('wins'), int):
+            n = train['wins'] + train.get('ties', 0) + train.get('losses', 0)
+            rates.append(train['wins'] / n if n else None)
+        else:
+            rates.append(None)
+        if row is rows[-1] or len(rows) - rows.index(row) <= 8:
+            ci = trailing.get('ci90') if isinstance(trailing, dict) else None
+            mean = trailing.get('mean_log_ratio') if isinstance(trailing, dict) else None
+            text = '%s  %s %s' % (wtl_text(trailing), ('%+.3f' % mean) if isinstance(mean, (int, float)) else '-',
+                                  ('[%+.3f, %+.3f]' % tuple(ci)) if isinstance(ci, list) and len(ci) == 2 else '')
+            lines.append('   %-5d %-22s %-22s %-40s' % (row['generation'], wtl_text(train), wtl_text(val), text))
+    lines.append('   training-cut seed-only neural win rate per generation %s  (baseline receipt: training 1230/0/10, held-out 60/0/100 +0.020 [-0.015,+0.055])' % sparkline(rates, width - 110))
     return lines
 
 

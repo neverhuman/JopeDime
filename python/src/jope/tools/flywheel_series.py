@@ -21,7 +21,7 @@ import statistics
 import time
 
 from promotion_gate import canonical
-from resume_expired_cycle import require, sha
+from resume_expired_cycle import atomic, require, sha
 
 try:
     import flywheel_metrics
@@ -333,15 +333,65 @@ def numbered_rows(report, number):
     return [dict(r, generation=r.get('generation', number)) for r in report.get('rows') or [] if isinstance(r, dict)]
 
 
-def generation_rows(root, run, manifest, baseline, window=WINDOW):
+DERIVED_SCHEMA = 'parallel.flywheel_derived_initial_arm.v1'
+DERIVE_RULE = ('best_initial_arm = the best original-target score over the arm\'s own initial population (slots 0..63, any origin), '
+               'failures skipped, read from the row\'s own observation ledger (flywheel_baseline.derive_best_initial_arm); never imputed')
+
+
+def derived_initial_arms(root, entry, cache_dir):
+    """best_initial_arm per quality row of one generation, derived exactly as the baseline receipt derived it and cached per
+    report sha (the derivation reads every arm's observations.json once); rows already carrying the key are left alone."""
+    report_sha = entry['report_sha256']
+    cache_path = (Path(cache_dir) / ('initial-arm-%s.json' % entry['directory'].name)) if cache_dir else None
+    if cache_path is not None and cache_path.is_file():
+        cached = load(cache_path)
+        if isinstance(cached, dict) and cached.get('schema') == DERIVED_SCHEMA and cached.get('report_sha256') == report_sha:
+            return cached
+    import flywheel_baseline
+    values, counts = {}, {}
+    for row in entry['report'].get('rows') or []:
+        if not isinstance(row, dict) or not isinstance(row.get('output'), str):
+            continue
+        if 'best_initial_arm' in row:
+            counts['already_present'] = counts.get('already_present', 0) + 1
+            continue
+        value, source = flywheel_baseline.derive_best_initial_arm(root, row)
+        counts[source] = counts.get(source, 0) + 1
+        values[row['output']] = dict(value=value, source=source)
+    derived = dict(schema=DERIVED_SCHEMA, generation=entry['directory'].name, report_sha256=report_sha, jobs_sha256=entry['jobs_sha256'],
+                   rule=DERIVE_RULE, counts=counts, values=values, final_tests_opened=False)
+    if cache_path is not None:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        atomic(cache_path, derived)
+    return derived
+
+
+def apply_derived(rows, derived):
+    out = []
+    for row in rows:
+        if 'best_initial_arm' not in row and isinstance(row.get('output'), str):
+            hit = (derived.get('values') or {}).get(row['output'])
+            if hit and hit.get('source') == 'observations_ledger':
+                row = dict(row, best_initial_arm=hit['value'])
+        out.append(row)
+    return out
+
+
+def generation_rows(root, run, manifest, baseline, window=WINDOW, cache_dir=None, generations_from=None):
     reports = quality_reports(run)
     snapshots = replay_snapshots(run)
+    derived = {}
+    wanted = [n for n in sorted(reports) if generations_from is None or n >= generations_from - window + 1]
+    for number in wanted:
+        derived[number] = derived_initial_arms(root, reports[number], cache_dir)
     rows = []
     for number in sorted(reports):
+        if generations_from is not None and number < generations_from:
+            continue
         entry = reports[number]
-        quality = numbered_rows(entry['report'], number)
+        quality = apply_derived(numbered_rows(entry['report'], number), derived[number])
         window_numbers = [n for n in sorted(reports) if number - window < n <= number]
-        pooled = [r for n in window_numbers for r in numbered_rows(reports[n]['report'], n)]
+        pooled = [r for n in window_numbers for r in apply_derived(numbered_rows(reports[n]['report'], n), derived.get(n) or derived_initial_arms(root, reports[n], cache_dir))]
         evaluators = {r.get('evaluator_sha256') for r in quality if isinstance(r.get('evaluator_sha256'), str)}
         evaluator = next(iter(evaluators)) if len(evaluators) == 1 else ('mixed' if evaluators else None)
         segment = run_segment(root, manifest, checkpoint=entry['spec'].get('checkpoint'), evaluator_sha256=evaluator)
@@ -372,6 +422,7 @@ def generation_rows(root, run, manifest, baseline, window=WINDOW):
              gp_improves_on_seed=improves,
              best_final_origin=dict(Counter(str(r.get('best_final_origin')) for r in quality)),
              diversity=diversity, snapshots=[name for name, _ in snapshots], regression_signature=signature,
+             best_initial_arm_derived=dict(counts=derived[number].get('counts'), rule=DERIVE_RULE),
              discoveries_per_hour=None, unavailable=dict(unavailable, discoveries_per_hour='no producer in this ship'),
              report_sha256=entry['report_sha256'], jobs_sha256=entry['jobs_sha256'], codegen='pending',
              baseline_comparable=(evaluator is not None and evaluator == baseline['segment'].get('evaluator_sha256')),
@@ -618,7 +669,7 @@ def publish_latest(path, manifest_sha, baseline, series, brake, verdict):
     return value
 
 
-def produce(root, manifest_path, baseline_path, series, latest, successor=None, window=WINDOW):
+def produce(root, manifest_path, baseline_path, series, latest, successor=None, window=WINDOW, derived_cache=None, generations_from=None):
     root = Path(root).resolve()
     manifest_path = resolve(root, manifest_path)
     manifest = read(manifest_path)
@@ -626,7 +677,10 @@ def produce(root, manifest_path, baseline_path, series, latest, successor=None, 
     run = root / manifest['output']
     successor = resolve(root, successor) if successor else run / 'successor'
     baseline = baseline_receipt(resolve(root, baseline_path))
-    rows = monitor_rows(root, run, manifest, baseline) + generation_rows(root, run, manifest, baseline, window)
+    # best_initial_arm derivations are cached per generation under the successor namespace (the only place this
+    # producer writes besides the series and latest files); --generations-from bounds the reads of a routine run.
+    cache_dir = resolve(root, derived_cache) if derived_cache else successor / 'scoreboard' / 'derived'
+    rows = monitor_rows(root, run, manifest, baseline) + generation_rows(root, run, manifest, baseline, window, cache_dir, generations_from)
     rows += block_rows(run) + episode_rows(root, manifest, successor)
     brake_row, brake = brake_rows(run)
     verdicts, verdict = verdict_rows(successor)
@@ -644,13 +698,15 @@ def main():
     parser.add_argument('--latest', type=Path, help='default runs/flywheel-latest.json under --root')
     parser.add_argument('--successor', type=Path, help='default <run>/successor')
     parser.add_argument('--window', type=int, default=WINDOW)
+    parser.add_argument('--derived-cache', type=Path, help='per-generation best_initial_arm derivation cache (default <successor>/scoreboard/derived)')
+    parser.add_argument('--generations-from', type=int, help='only produce generation rows numbered >= this (derivations for the trailing window are still read)')
     args = parser.parse_args()
     root = args.root.resolve()
     manifest = read(resolve(root, args.manifest))
     run = root / manifest['output']
     series = resolve(root, args.series) if args.series else run / 'flywheel-series.jsonl'
     latest = resolve(root, args.latest) if args.latest else root / 'runs/flywheel-latest.json'
-    fresh = produce(root, args.manifest, args.baseline, series, latest, args.successor, args.window)
+    fresh = produce(root, args.manifest, args.baseline, series, latest, args.successor, args.window, args.derived_cache, args.generations_from)
     print(json.dumps(dict(appended=len(fresh), kinds=dict(Counter(r['kind'] for r in fresh)), series=str(series),
                           latest=str(latest), flywheel_metrics='available' if flywheel_metrics else 'unavailable')))
 
