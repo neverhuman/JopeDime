@@ -382,24 +382,25 @@ def validate_input(path):
                 undefined_draws=[g['draw_index'] for g in groups if not g['bt_defined']])
 
 
-def binding_object(value, name, where):
-    """The certificate's original / emitter binding object (executable, checkpoint, corpus, panel; final_tests_opened false)."""
-    candidates = (value.get(name + '_binding'), (value.get('bindings') or {}).get(name) if isinstance(value.get('bindings'), dict) else None, value.get(name))
-    binding = next((c for c in candidates if isinstance(c, dict) and 'executable_sha256' in c), None)
-    require(binding is not None, where + ': no %s binding object (%s_binding, bindings.%s or %s with executable_sha256)' % (name, name, name, name))
-    require(all(hex64(binding.get(k)) for k in LEGACY_BINDING), where + ': %s binding lacks 64-hex ' % name + ', '.join(LEGACY_BINDING))
-    require(binding.get('final_tests_opened') is False, where + ': %s binding final_tests_opened is not false' % name)
+def optional_binding(value, name, where):
+    """A certificate may carry original_binding / emitter_binding objects; when present they must be well-formed and are cross-checked."""
+    binding = value.get(name + '_binding')
+    if binding is None:
+        return None
+    require(isinstance(binding, dict) and all(hex64(binding.get(k)) for k in LEGACY_BINDING), where + ': %s_binding lacks 64-hex ' % name + ', '.join(LEGACY_BINDING))
+    require(binding.get('final_tests_opened') is not True, where + ': %s_binding final_tests_opened is true' % name)
     return {k: binding[k] for k in LEGACY_BINDING}
 
 
 def validate_certificate(path, inputs, block):
     """Root's frozen native bridge certificate (parallel.original_monitor_numerical_bridge.v1): names exactly one input by the
     sha256 of its legacy.json (and its groups.json), carries per-metric original / emitter values with their absolute
-    difference within tolerance <= 1e-6, passed true, training_updates 0, science_execution false, and original / emitter
-    binding objects on the input's checkpoint, corpus and panel, the original executable carrying the pre-registered
-    frozen-monitor prefix. original-parent-old.json beside it (the original binary's frozen_monitoring.v1 receipt) must
-    hash to original_sha256 and carry the certified original values. The sidecar's own
-    external_879_numerical_bridge_qualified flag is never rewritten; the certificate is recorded beside it."""
+    difference within tolerance <= 1e-6, passed true, training_updates 0, science_execution false and no improvement
+    claim. original-parent-old.json beside it (the original binary's frozen_monitoring.v1 receipt) must hash to
+    original_sha256, carry the certified original values and a binding on the input's checkpoint, corpus and panel whose
+    executable carries the pre-registered frozen-monitor prefix; the emitter binding is the certified input's own
+    (sidecar and legacy.json, already equal). Optional original_binding / emitter_binding objects in the certificate must
+    agree. The sidecar's external_879_numerical_bridge_qualified flag is never rewritten; the certificate is recorded beside it."""
     path = Path(path)
     where = str(path)
     value = read(path)
@@ -408,6 +409,7 @@ def validate_certificate(path, inputs, block):
     require(value.get('passed') is True, where + ': certificate_not_passed (passed is not true)')
     require(value.get('training_updates') == 0, where + ': training_updates is not 0')
     require(value.get('science_execution') is False, where + ': science_execution is not false')
+    require(value.get('improvement_claim') is not True, where + ': improvement_claim is true (a bridge certificate claims no improvement)')
     require('parent_files_before_after' in value, where + ': parent_files_before_after missing')
     for key in ('original_sha256', 'emitter_legacy_sha256', 'emitter_groups_sha256'):
         require(hex64(value.get(key)), where + ': %s is not a 64-hex digest' % key)
@@ -426,30 +428,33 @@ def validate_certificate(path, inputs, block):
     require(value['emitter_groups_sha256'] == match['sha256'], where + ': emitter_groups_sha256 differs from the certified input\'s groups.json')
     disagreeing = sorted(m for m in LEGACY_METRICS if abs(deltas[m]['emitter'] - match['legacy']['values'][m]) > 1e-12)
     require(not disagreeing, where + ': deltas.%s.emitter differ from the certified legacy.json values' % disagreeing)
-    original, emitter = binding_object(value, 'original', where), binding_object(value, 'emitter', where)
-    prefix = readout_panel(block, 'old_frozen').get('monitor_executable_sha256_prefix')
-    require(isinstance(prefix, str) and prefix and original['executable_sha256'].startswith(prefix),
-            where + ': original binding executable_sha256 does not start with the pre-registered frozen monitor prefix %r' % prefix)
-    expected = dict(checkpoint_sha256=match['value']['checkpoint_sha256'], corpus_sha256=match['value']['panel']['corpus_sha256'],
-                    panel_sha256=match['value']['panel']['panel_sha256'])
-    require(emitter['executable_sha256'] == match['value']['executable_sha256'], where + ': emitter binding executable_sha256 differs from the certified input')
-    for name, binding in (('original', original), ('emitter', emitter)):
-        require({k: binding[k] for k in expected} == expected, where + ': %s binding checkpoint/corpus/panel differ from the certified input (%s)' % (name, match['path']))
+    emitter = dict(checkpoint_sha256=match['value']['checkpoint_sha256'], corpus_sha256=match['value']['panel']['corpus_sha256'],
+                   panel_sha256=match['value']['panel']['panel_sha256'], executable_sha256=match['value']['executable_sha256'])
+    expected = {k: emitter[k] for k in ('checkpoint_sha256', 'corpus_sha256', 'panel_sha256')}
     original_path = path.parent / ORIGINAL_RECEIPT_FILE
     require(original_path.is_file(), where + ': %s is missing beside the certificate' % ORIGINAL_RECEIPT_FILE)
     require(sha(original_path) == value['original_sha256'], where + ': %s does not hash to original_sha256' % ORIGINAL_RECEIPT_FILE)
     original_receipt = read(original_path)
     require(isinstance(original_receipt, dict) and original_receipt.get('schema') == LEGACY_SCHEMA and original_receipt.get('final_tests_opened') is False,
             where + ': %s is not a %s receipt with final_tests_opened false' % (ORIGINAL_RECEIPT_FILE, LEGACY_SCHEMA))
-    original_binding = original_receipt.get('binding')
-    require(isinstance(original_binding, dict) and {k: original_binding.get(k) for k in LEGACY_BINDING} == original,
-            where + ': %s binding differs from the certificate\'s original binding' % ORIGINAL_RECEIPT_FILE)
+    original = original_receipt.get('binding')
+    require(isinstance(original, dict) and all(hex64(original.get(k)) for k in LEGACY_BINDING),
+            where + ': %s binding lacks 64-hex ' % ORIGINAL_RECEIPT_FILE + ', '.join(LEGACY_BINDING))
+    original = {k: original[k] for k in LEGACY_BINDING}
+    prefix = readout_panel(block, 'old_frozen').get('monitor_executable_sha256_prefix')
+    require(isinstance(prefix, str) and prefix and original['executable_sha256'].startswith(prefix),
+            where + ': %s executable_sha256 does not start with the pre-registered frozen monitor prefix %r' % (ORIGINAL_RECEIPT_FILE, prefix))
+    require({k: original[k] for k in expected} == expected, where + ': %s binding checkpoint/corpus/panel differ from the certified input (%s)' % (ORIGINAL_RECEIPT_FILE, match['path']))
     mismatching = sorted(m for m in LEGACY_METRICS if not finite(original_receipt.get(m)) or abs(original_receipt[m] - deltas[m]['original']) > 1e-12)
     require(not mismatching, where + ': %s values %s differ from deltas.<metric>.original' % (ORIGINAL_RECEIPT_FILE, mismatching))
+    for name, binding, known in (('original', optional_binding(value, 'original', where), original), ('emitter', optional_binding(value, 'emitter', where), emitter)):
+        require(binding is None or binding == known, where + ': %s_binding differs from the %s' % (name, ORIGINAL_RECEIPT_FILE if name == 'original' else 'certified input'))
+    identities = {name: sha(path.parent / name) for name in ('original-identity.json', 'emitter-identity.json') if (path.parent / name).is_file()}
     return dict(path=where, sha256=sha(path), certified_input=match['path'], arm=match['value']['arm'], panel=match['value']['panel']['name'],
-                original_receipt=dict(path=str(original_path), sha256=value['original_sha256'], executable_sha256=original['executable_sha256']),
-                emitter_executable_sha256=emitter['executable_sha256'], deltas={m: dict(deltas[m]) for m in LEGACY_METRICS},
-                tolerance=value['tolerance'], passed=True, training_updates=0, science_execution=False)
+                original_receipt=dict(path=str(original_path), sha256=value['original_sha256'], binding=original),
+                emitter_binding=emitter, deltas={m: dict(deltas[m]) for m in LEGACY_METRICS}, tolerance=value['tolerance'],
+                passed=True, training_updates=0, science_execution=False, improvement_claim=value.get('improvement_claim'),
+                attempts=value.get('attempts'), identity_files=identities)
 
 
 def assemble(inputs):
@@ -673,6 +678,36 @@ def evaluate(inputs, registration, certificate_paths=()):
                 bridge_rule=BRIDGE_RULE, undefined_rule=UNDEFINED_RULE, interpretation=INTERPRETATION, hold_rule=HOLD_RULE, final_tests_opened=False)
 
 
+VALIDATION_SCHEMA = 'parallel.flywheel_f9_validation.v1'
+
+
+def validation(inputs, registration, certificate_paths=()):
+    """Every input and certificate check of the read-out, without assembling arms or judging: the receipt for a lone
+    parent sidecar (or any subset) so a real emitter output is authenticated before the arms exist."""
+    block = registration['block']
+    certificates = sorted((validate_certificate(path, inputs, block) for path in certificate_paths), key=lambda c: (c['panel'], c['arm']))
+    certified = {c['certified_input'] for c in certificates}
+    require(len(certified) == len(certificates), 'two bridge certificates name one input')
+    rows = []
+    for item in sorted(inputs, key=lambda i: (i['value']['panel']['name'], i['value']['arm'])):
+        entry = readout_panel(block, item['value']['panel']['name'])
+        prefixes = [dict(field=field, expected_prefix=entry.get(key), observed=observed, matches=observed.startswith(entry[key]))
+                    for field, key, observed in (('panel_sha256', 'panel_sha256_prefix', item['value']['panel']['panel_sha256']),
+                                                 ('corpus_sha256', 'corpus_sha256_prefix', item['value']['panel']['corpus_sha256']),
+                                                 ('executable_sha256', 'monitor_executable_sha256_prefix', item['value']['executable_sha256']))
+                    if isinstance(entry.get(key), str) and entry.get(key)]
+        rows.append(dict(arm_summary(item), arm=item['value']['arm'], panel=item['value']['panel']['name'], legacy_aggregate=dict(item['value']['legacy_aggregate']),
+                         bridge=dict(max_batch_abs_diff=item['bridge']['max_batch_abs_diff'], aggregate_abs_diff=item['bridge']['aggregate_abs_diff'],
+                                     within_1e_6=item['bridge']['within_1e-6'], raw_bt_ratio_mean_of_batches=item['bridge']['raw_bt_ratio_mean_of_batches'],
+                                     mean_of_defined_draw_ranking_bt=item['bridge']['mean_of_defined_draw_ranking_bt']),
+                         repeated_draw_positions=item['repeated_draws'], preregistered_prefixes=prefixes,
+                         distinct_contexts_match_preregistration=(item['distinct_contexts'] == entry['distinct_contexts'])
+                         if type(entry.get('distinct_contexts')) is int else None, certified=item['path'] in certified))
+    return dict(schema=VALIDATION_SCHEMA, preregistration_sha256=registration['sha256'], inputs=rows, certificates=certificates,
+                bridge_rule=BRIDGE_RULE, undefined_rule=UNDEFINED_RULE, legacy_comparability=LEGACY_COMPARABILITY,
+                note='validation only: no arms assembled, no statistic, no verdict', final_tests_opened=False)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--preregistration', type=Path, required=True, help='PREREGISTRATION.md carrying the fenced json block')
@@ -683,15 +718,22 @@ def main(argv=None):
                         help='authenticated %s receipts (one per certified legacy.json); recorded beside the sidecar flag, never substituted for it' % CERTIFICATE_SCHEMA)
     parser.add_argument('--output', type=Path, help='immutable %s receipt (required unless --dry-run)' % SCHEMA)
     parser.add_argument('--dry-run', action='store_true', help='print the receipt without writing it')
+    parser.add_argument('--validate-only', action='store_true',
+                        help='authenticate the inputs and certificates only (any subset, e.g. a lone parent sidecar): %s, no verdict' % VALIDATION_SCHEMA)
     args = parser.parse_args(argv)
     require(args.output is not None or args.dry_run, '--output is required unless --dry-run')
     registration = preregistration(args.preregistration, args.preregistration_sha256)
-    receipt = evaluate([validate_input(path) for path in args.inputs], registration, args.bridge_certificate)
+    inputs = [validate_input(path) for path in args.inputs]
+    receipt = validation(inputs, registration, args.bridge_certificate) if args.validate_only else evaluate(inputs, registration, args.bridge_certificate)
     if args.dry_run:
         print(json.dumps(receipt, sort_keys=True))
         return receipt
     args.output.parent.mkdir(parents=True, exist_ok=True)
     receipt_sha = promotion_gate.immutable(args.output, receipt)
+    if args.validate_only:
+        print(json.dumps(dict(receipt=str(args.output), sha256=receipt_sha, schema=VALIDATION_SCHEMA, inputs=[(r['panel'], r['arm']) for r in receipt['inputs']],
+                              certified=[c['certified_input'] for c in receipt['certificates']])))
+        return receipt
     print(json.dumps(dict(receipt=str(args.output), sha256=receipt_sha, verdict=receipt['verdict'], reason=receipt['reason'],
                           reserved_delta=receipt['verdict_inputs']['reserved_delta'], reserved_ci95=receipt['verdict_inputs']['reserved_ci95'],
                           old_panel_delta=receipt['verdict_inputs']['old_panel_delta'], panels=sorted(receipt['panels']))))

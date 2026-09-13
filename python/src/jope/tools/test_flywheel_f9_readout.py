@@ -469,14 +469,12 @@ def original_receipt(value, offset=3e-8):
 
 
 def certificate(folder, value, legacy_sha, groups_sha, original_sha, offset=3e-8, **overrides):
-    """parallel.original_monitor_numerical_bridge.v1 as root froze it (07:56 UTC), written beside original-parent-old.json."""
-    shared = dict(checkpoint_sha256=value['checkpoint_sha256'], corpus_sha256=value['panel']['corpus_sha256'], panel_sha256=value['panel']['panel_sha256'],
-                  final_tests_opened=False)
-    doc = dict(schema=readout.CERTIFICATE_SCHEMA, passed=True, tolerance=1e-6,
+    """parallel.original_monitor_numerical_bridge.v1 as root produced it (08:02 UTC): no binding objects inside; the original
+    binding is original-parent-old.json's, the emitter binding the sidecar's."""
+    doc = dict(schema=readout.CERTIFICATE_SCHEMA, passed=True, tolerance=1e-6, attempts=1, improvement_claim=False,
                deltas={m: dict(original=value['legacy_aggregate'][m] + offset, emitter=value['legacy_aggregate'][m], absolute_difference=abs(offset))
                        for m in readout.LEGACY_METRICS},
                original_sha256=original_sha, emitter_legacy_sha256=legacy_sha, emitter_groups_sha256=groups_sha,
-               original_binding=dict(shared, executable_sha256=ORIGINAL_EXECUTABLE), emitter_binding=dict(shared, executable_sha256=value['executable_sha256']),
                parent_files_before_after=dict(unchanged=True), training_updates=0, science_execution=False)
     doc.update(overrides)
     return doc
@@ -506,8 +504,11 @@ class Certificates(unittest.TestCase):
             self.assertEqual(len(comparability['certificates']), 1)
             row = comparability['certificates'][0]
             self.assertEqual((row['arm'], row['panel'], row['sha256'], row['certified_input']), ('A', 'old_frozen', sha(good), inputs[0]['path']))
-            self.assertEqual((row['passed'], row['training_updates'], row['science_execution']), (True, 0, False))
-            self.assertEqual(row['original_receipt'], dict(path=str(bridge / readout.ORIGINAL_RECEIPT_FILE), sha256=original_sha, executable_sha256=ORIGINAL_EXECUTABLE))
+            self.assertEqual((row['passed'], row['training_updates'], row['science_execution'], row['improvement_claim']), (True, 0, False, False))
+            self.assertEqual(row['original_receipt'], dict(path=str(bridge / readout.ORIGINAL_RECEIPT_FILE), sha256=original_sha,
+                                                           binding=original_receipt(table[key])['binding']))
+            self.assertEqual(row['emitter_binding']['executable_sha256'], EXECUTABLE)
+            self.assertEqual(row['identity_files'], {})
             self.assertAlmostEqual(row['deltas']['ranking_bt']['absolute_difference'], 3e-8, places=15)
             self.assertEqual(comparability['certified_inputs'], [inputs[0]['path']])
             self.assertEqual(len(comparability['uncertified_inputs']), 3)
@@ -525,10 +526,10 @@ class Certificates(unittest.TestCase):
                     ('failed', dict(passed=False), 'certificate_not_passed'),
                     ('trained', dict(training_updates=1), 'training_updates is not 0'),
                     ('science', dict(science_execution=True), 'science_execution is not false'),
-                    ('foreign', dict(original_binding=dict(base['original_binding'], executable_sha256=padded('deadbeef'))), 'pre-registered frozen monitor prefix'),
-                    ('emitter', dict(emitter_binding=dict(base['emitter_binding'], executable_sha256=padded('0bad0bad'))), 'emitter binding executable_sha256 differs'),
-                    ('binding', dict(emitter_binding=dict(base['emitter_binding'], panel_sha256=padded('0bad0bad'))), 'emitter binding checkpoint/corpus/panel differ'),
-                    ('opened', dict(original_binding=dict(base['original_binding'], final_tests_opened=True)), 'original binding final_tests_opened is not false'),
+                    ('claiming', dict(improvement_claim=True), 'improvement_claim is true'),
+                    ('emitter', dict(emitter_binding=dict(checkpoint_sha256=table[key]['checkpoint_sha256'], corpus_sha256=table[key]['panel']['corpus_sha256'],
+                                                          panel_sha256=table[key]['panel']['panel_sha256'], executable_sha256=padded('0bad0bad'))),
+                     'emitter_binding differs from the certified input'),
                     ('loose', dict(tolerance=1e-3), 'tolerance is not in'),
                     ('arith', dict(deltas=dict(base['deltas'], sequence_nll=dict(base['deltas']['sequence_nll'], absolute_difference=1e-9))), 'is not |original - emitter|'),
                     ('lying', dict(deltas=dict(base['deltas'], runtime_huber=dict(original=0.5 + 3e-8, emitter=0.5, absolute_difference=3e-8))), 'differ from the certified legacy.json values'),
@@ -544,18 +545,50 @@ class Certificates(unittest.TestCase):
             with self.assertRaises(RuntimeError) as caught:
                 readout.evaluate(inputs, registration, [elsewhere / 'certificate.json'])
             self.assertIn('original-parent-old.json is missing beside the certificate', str(caught.exception))
-            drifted = Path(directory) / 'drifted'
-            drifted.mkdir()
-            atomic(drifted / readout.ORIGINAL_RECEIPT_FILE, original_receipt(table[key], offset=5e-8))   # hashes differently and disagrees
-            atomic(drifted / 'certificate.json', dict(base, original_sha256=sha(drifted / readout.ORIGINAL_RECEIPT_FILE)))
-            with self.assertRaises(RuntimeError) as caught:
-                readout.evaluate(inputs, registration, [drifted / 'certificate.json'])
-            self.assertIn('differ from deltas.<metric>.original', str(caught.exception))
+            for name, receipt_overrides, fragment in (
+                    ('drifted', dict(offset=5e-8), 'differ from deltas.<metric>.original'),
+                    ('foreign', dict(executable=padded('deadbeef')), 'pre-registered frozen monitor prefix'),
+                    ('binding', dict(panel=padded('0bad0bad')), 'binding checkpoint/corpus/panel differ from the certified input'),
+                    ('opened', dict(opened=True), 'final_tests_opened false')):
+                folder = Path(directory) / name
+                folder.mkdir()
+                doc = original_receipt(table[key], offset=receipt_overrides.get('offset', 3e-8))
+                doc['binding']['executable_sha256'] = receipt_overrides.get('executable', doc['binding']['executable_sha256'])
+                doc['binding']['panel_sha256'] = receipt_overrides.get('panel', doc['binding']['panel_sha256'])
+                doc['final_tests_opened'] = receipt_overrides.get('opened', False)
+                atomic(folder / readout.ORIGINAL_RECEIPT_FILE, doc)
+                atomic(folder / 'certificate.json', dict(base, original_sha256=sha(folder / readout.ORIGINAL_RECEIPT_FILE)))   # re-hashed: the receipt itself is wrong
+                with self.assertRaises(RuntimeError, msg=name) as caught:
+                    readout.evaluate(inputs, registration, [folder / 'certificate.json'])
+                self.assertIn(fragment, str(caught.exception), name)
             twice = bridge / 'certificate-twice.json'
             atomic(twice, base)
             with self.assertRaises(RuntimeError) as caught:
                 readout.evaluate(inputs, registration, [good, twice])
             self.assertIn('two bridge certificates name one input', str(caught.exception))
+            # validate-only: a lone parent sidecar plus its certificate is authenticated without arms, statistic or verdict
+            parent_table = {('parent', 'old_frozen'): sidecar('parent', 'old_frozen', 0.03, 0.0)}
+            (Path(directory) / 'lone').mkdir()
+            parent_folder = write(Path(directory) / 'lone', parent_table)[0]
+            parent_input = readout.validate_input(parent_folder)
+            parent_bridge = Path(directory) / 'lone-bridge'
+            parent_bridge.mkdir()
+            atomic(parent_bridge / readout.ORIGINAL_RECEIPT_FILE, original_receipt(parent_table[('parent', 'old_frozen')]))
+            atomic(parent_bridge / 'bridge-result.json', certificate(parent_bridge, parent_table[('parent', 'old_frozen')], sha(parent_folder / readout.LEGACY_FILE),
+                                                                     sha(parent_folder / readout.GROUPS_FILE), sha(parent_bridge / readout.ORIGINAL_RECEIPT_FILE)))
+            with self.assertRaises(RuntimeError) as caught:
+                readout.evaluate([parent_input], registration, [parent_bridge / 'bridge-result.json'])
+            self.assertIn('parent sidecar but no arm', str(caught.exception))
+            validated = readout.main(['--preregistration', str(PREREGISTRATION), '--inputs', str(parent_folder), '--bridge-certificate',
+                                      str(parent_bridge / 'bridge-result.json'), '--validate-only', '--dry-run'])
+            self.assertEqual(validated['schema'], readout.VALIDATION_SCHEMA)
+            self.assertEqual([(r['panel'], r['arm'], r['certified'], r['distinct_contexts']) for r in validated['inputs']], [('old_frozen', 'parent', True, 226)])
+            self.assertTrue(validated['inputs'][0]['bridge']['within_1e_6'])
+            self.assertEqual([c['arm'] for c in validated['certificates']], ['parent'])
+            self.assertNotIn('verdict', validated)
+            validation_output = Path(directory) / 'receipts' / 'validation.json'
+            readout.main(['--preregistration', str(PREREGISTRATION), '--inputs', str(parent_folder), '--validate-only', '--output', str(validation_output)])
+            self.assertEqual(json.loads(validation_output.read_bytes())['certificates'], [])
             output = Path(directory) / 'receipts' / 'f9.json'
             argv = ['--preregistration', str(PREREGISTRATION), '--inputs', *map(str, folders), '--bridge-certificate', str(good), '--output', str(output)]
             self.assertEqual(readout.main(argv)['legacy_comparability']['certified_inputs'], [inputs[0]['path']])
