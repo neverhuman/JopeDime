@@ -457,6 +457,65 @@ class Legacy(unittest.TestCase):
             self.assertIn('final_tests_opened is not false', str(caught.exception))
 
 
+def certificate(value, legacy_sha, **overrides):
+    binding = dict(checkpoint_sha256=value['checkpoint_sha256'], corpus_sha256=value['panel']['corpus_sha256'], panel_sha256=value['panel']['panel_sha256'])
+    doc = dict(schema=readout.CERTIFICATE_SCHEMA, original_executable_sha256=padded('87995977'), emitter_executable_sha256=value['executable_sha256'],
+               binding=binding, original_receipt_sha256=padded('0e0e0e0e'), emitter_legacy_sha256=legacy_sha,
+               abs_diff={m: 1e-8 for m in readout.LEGACY_METRICS}, tolerance=1e-6, within_tolerance=True, final_tests_opened=False)
+    doc.update(overrides)
+    return doc
+
+
+class Certificates(unittest.TestCase):
+    def test_bridge_certificate_is_recorded_beside_the_sidecar_flag_never_substituted(self):
+        table = files(reserved=REPAIR)
+        key = ('A', 'old_frozen')
+        with tempfile.TemporaryDirectory() as directory:
+            folders = write(directory, table)
+            legacy_sha = sha(Path(directory) / 'old_frozen-A' / readout.LEGACY_FILE)
+            good = Path(directory) / 'certificate-old-A.json'
+            atomic(good, certificate(table[key], legacy_sha))
+            registration = readout.preregistration(PREREGISTRATION)
+            inputs = [readout.validate_input(p) for p in folders]
+            receipt = readout.evaluate(inputs, registration, [good])
+            self.assertEqual(receipt['verdict'], 'repair_signal')
+            self.assertIs(receipt['external_879_numerical_bridge_qualified'], False)   # the sidecar flag is reported as emitted
+            comparability = receipt['legacy_comparability']
+            self.assertEqual(comparability['rule'], readout.LEGACY_COMPARABILITY)
+            self.assertEqual(len(comparability['certificates']), 1)
+            row = comparability['certificates'][0]
+            self.assertEqual((row['arm'], row['panel'], row['sha256'], row['certified_input']), ('A', 'old_frozen', sha(good), inputs[0]['path']))
+            self.assertTrue(row['within_tolerance'])
+            self.assertEqual(comparability['certified_inputs'], [inputs[0]['path']])
+            self.assertEqual(len(comparability['uncertified_inputs']), 3)
+            self.assertFalse(comparability['all_inputs_certified'])
+            without = readout.evaluate(inputs, registration)
+            self.assertEqual(without['legacy_comparability']['certificates'], [])
+            self.assertEqual(without['verdict_inputs'], receipt['verdict_inputs'])   # the certificate never changes the A/B statistic
+            for name, overrides, fragment in (
+                    ('orphan', dict(emitter_legacy_sha256=padded('cccc0003')), 'matches 0 inputs'),
+                    ('wide', dict(abs_diff=dict(certificate(table[key], legacy_sha)['abs_diff'], ranking_bt=2e-6)), 'certificate_not_within_tolerance'),
+                    ('claimed', dict(within_tolerance=False), 'certificate_not_within_tolerance'),
+                    ('foreign', dict(original_executable_sha256=padded('deadbeef')), 'pre-registered frozen monitor prefix'),
+                    ('emitter', dict(emitter_executable_sha256=padded('0bad0bad')), 'emitter_executable_sha256 differs'),
+                    ('binding', dict(binding=dict(certificate(table[key], legacy_sha)['binding'], panel_sha256=padded('0bad0bad'))), 'certificate binding differs'),
+                    ('loose', dict(tolerance=1e-3), 'tolerance is not in'),
+                    ('opened', dict(final_tests_opened=True), 'final_tests_opened is not false')):
+                bad = Path(directory) / ('certificate-%s.json' % name)
+                atomic(bad, certificate(table[key], legacy_sha, **overrides))
+                with self.assertRaises(RuntimeError, msg=name) as caught:
+                    readout.evaluate(inputs, registration, [bad])
+                self.assertIn(fragment, str(caught.exception), name)
+            twice = Path(directory) / 'certificate-twice.json'
+            atomic(twice, certificate(table[key], legacy_sha))
+            with self.assertRaises(RuntimeError) as caught:
+                readout.evaluate(inputs, registration, [good, twice])
+            self.assertIn('two bridge certificates name one input', str(caught.exception))
+            output = Path(directory) / 'receipts' / 'f9.json'
+            argv = ['--preregistration', str(PREREGISTRATION), '--inputs', *map(str, folders), '--bridge-certificate', str(good), '--output', str(output)]
+            self.assertEqual(readout.main(argv)['legacy_comparability']['certified_inputs'], [inputs[0]['path']])
+
+
 class Preregistration(unittest.TestCase):
     def test_thresholds_come_from_the_real_block(self):
         registration = readout.preregistration(PREREGISTRATION)

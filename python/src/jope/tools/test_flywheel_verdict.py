@@ -367,6 +367,76 @@ class Outcomes(unittest.TestCase):
             self.assertEqual(f4['generations'], 5)
 
 
+REAL_F4_RECEIPT = TOOLS.parent / 'recovery/eight-a100-20260912/successor/f4-information-test-2026-09-13.json'
+
+
+def f4_receipt(**overrides):
+    doc = dict(schema=verdict.F4_RECEIPT_SCHEMA, final_tests_opened=False, inputs=dict(generations=[1, 2, 3, 4, 5]),
+               p_flip=dict(value=0.2, pairs=1000, flips=200, floor=0.10, per_generation={str(g): dict(value=0.2, pairs=200, flips=40) for g in range(1, 6)}),
+               a_own=dict(coefficient=0.15, ci90=dict(low=0.05, high=0.3, resamples=2000), n_contexts=124, n_rows=5000),
+               conditional_contrast=dict(contexts=0, cells=0, reason='no controls'), counts=dict(ingested=5000, verified=4000, unverified=1000))
+    doc.update(overrides)
+    return doc
+
+
+class F4Receipt(unittest.TestCase):
+    def test_the_real_receipt_makes_the_measured_failure_explicit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = scenario_root(directory, smarter_rows())
+            registration = verdict.preregistration(root / 'PREREGISTRATION.md')
+            result = verdict.evaluate(series.series_rows(root / 'flywheel-series.jsonl'), root / 'baseline.json', registration, 10, 0, f4_receipt=REAL_F4_RECEIPT)
+            f4 = result['falsifiers']['F4']
+            self.assertEqual((f4['status'], f4['source'], f4['receipt']['sha256']), ('fail', 'receipt', sha(REAL_F4_RECEIPT)))
+            self.assertEqual(f4['reason'], 'P_flip below floor 0.1; A_own CI straddles 0')
+            self.assertAlmostEqual(f4['p_flip'], 0.0471, places=4)
+            self.assertEqual((f4['p_flip_pairs'], f4['p_flip_flips']), (205254, 9671))
+            self.assertLess(f4['a_own_ci'][0], 0)
+            self.assertGreater(f4['a_own_ci'][1], 0)
+            self.assertEqual((f4['a_own_n_contexts'], f4['generation_list'], f4['conditional_contrast']['contexts']), (124, [0, 1, 2, 3], 0))
+            self.assertEqual(f4['p_flip_series'][0][0], 0)
+            self.assertEqual(result['statuses']['F4'], 'fail')
+            # F4 is the consumption gate, not an outcome clause (outcome_rule): the verdict outcome is unchanged, the failure explicit.
+            without = verdict.evaluate(series.series_rows(root / 'flywheel-series.jsonl'), root / 'baseline.json', registration, 10, 0)
+            self.assertEqual(without['falsifiers']['F4']['status'], 'pass')   # the series rows alone would have said pass
+            self.assertEqual(without['outcome'], result['outcome'])
+            self.assertNotIn('source', without['falsifiers']['F4'])
+
+    def test_synthetic_receipts_pass_fail_and_refuse(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = scenario_root(directory, smarter_rows())
+            registration = verdict.preregistration(root / 'PREREGISTRATION.md')
+            rows = series.series_rows(root / 'flywheel-series.jsonl')
+
+            def judge(doc):
+                path = root / 'f4.json'
+                path.write_text(json.dumps(doc))
+                return verdict.evaluate(rows, root / 'baseline.json', registration, 10, 0, f4_receipt=path)['falsifiers']['F4']
+            passing = judge(f4_receipt())
+            self.assertEqual((passing['status'], passing['reason'], passing['insufficient_generations']), ('pass', 'P_flip meets floor 0.1; A_own CI excludes 0', False))
+            self.assertEqual(passing['a_own_ci'], [0.05, 0.3])
+            short = judge(f4_receipt(inputs=dict(generations=[1, 2])))
+            self.assertEqual(short['status'], 'fail')
+            self.assertIn('measured on 2 generation(s), 5 required', short['reason'])
+            self.assertTrue(short['insufficient_generations'])
+            straddle = judge(f4_receipt(a_own=dict(coefficient=0.01, ci90=dict(low=-0.1, high=0.1, resamples=2000))))
+            self.assertEqual((straddle['status'], straddle['reason']), ('fail', 'P_flip meets floor 0.1; A_own CI straddles 0'))
+            missing = judge(f4_receipt(a_own=dict(reason='no next-generation outcomes')))
+            self.assertEqual((missing['status'], missing['reason'], missing['a_own_ci']), ('fail', 'P_flip meets floor 0.1; A_own CI unavailable', None))
+            # a receipt judged against another floor, or of another schema, refuses the whole verdict (never a quiet not_evaluable)
+            with self.assertRaises(RuntimeError) as caught:
+                judge(f4_receipt(p_flip=dict(f4_receipt()['p_flip'], floor=0.05)))
+            self.assertIn('differs from the pre-registered 0.1', str(caught.exception))
+            with self.assertRaises(RuntimeError) as caught:
+                judge(dict(f4_receipt(), schema='other'))
+            self.assertIn('schema is not', str(caught.exception))
+            command = [sys.executable, str(TOOLS / 'flywheel_verdict.py'), '--preregistration', str(root / 'PREREGISTRATION.md'), '--series',
+                       str(root / 'flywheel-series.jsonl'), '--baseline', str(root / 'baseline.json'), '--generation', '10', '--since-generation', '0',
+                       '--f4-receipt', str(REAL_F4_RECEIPT), '--dry-run']
+            dry = subprocess.run(command, text=True, capture_output=True)
+            self.assertEqual(dry.returncode, 0, dry.stderr)
+            self.assertEqual(json.loads(dry.stdout)['statuses']['F4'], 'fail')
+
+
 class Cli(unittest.TestCase):
     def test_writes_immutable_receipt_and_dry_run(self):
         with tempfile.TemporaryDirectory() as directory:

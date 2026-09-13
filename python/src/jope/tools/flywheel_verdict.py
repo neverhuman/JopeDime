@@ -295,6 +295,49 @@ def f4_information(rows, block, generation, origin=0):
                 p_flip_series=[(r['generation'], r['successor']['p_flip']) for r in measured], generations=len(measured))
 
 
+F4_RECEIPT_SCHEMA = 'parallel.successor_f4_information_test.v1'
+
+
+def f4_from_receipt(path, block):
+    """F4 from an immutable successor F4 information-test receipt (successor ledger driver): the measured P_flip and the
+    A_own cluster-bootstrap interval are copied verbatim and re-judged against the block's floors (the receipt's own
+    pass flags are never trusted; its floor must equal the block's). A pass additionally needs at least
+    falsifiers.F4.minimum_generations measured generations; a fail is a fail on any number of generations."""
+    floor, minimum = threshold(block, 'f4_p_flip'), threshold(block, 'f4_generations')
+    path = Path(path)
+    value = read(path)
+    require(isinstance(value, dict) and value.get('schema') == F4_RECEIPT_SCHEMA, '%s: schema is not %s' % (path, F4_RECEIPT_SCHEMA))
+    require(value.get('final_tests_opened') is False, '%s: final_tests_opened is not false' % path)
+    p_flip, a_own = value.get('p_flip') or {}, value.get('a_own') or {}
+    require(finite(p_flip.get('value')) and type(p_flip.get('pairs')) is int and type(p_flip.get('flips')) is int, '%s: p_flip lacks value/pairs/flips' % path)
+    require(finite(p_flip.get('floor')) and abs(p_flip['floor'] - floor) < 1e-12,
+            '%s: receipt P_flip floor %r differs from the pre-registered %r' % (path, p_flip.get('floor'), floor))
+    ci = ci_bounds(a_own.get('ci90'))
+    coefficient = a_own.get('coefficient') if finite(a_own.get('coefficient')) else None
+    generations = value.get('inputs', {}).get('generations')
+    generations = [g for g in generations if type(g) is int] if isinstance(generations, list) else []
+    per_generation = p_flip.get('per_generation') if isinstance(p_flip.get('per_generation'), dict) else {}
+    a = ci is not None and not (ci[0] <= 0 <= ci[1])
+    p_flip_ok = p_flip['value'] >= floor
+    enough = len(generations) >= minimum
+    status = 'pass' if p_flip_ok and a and enough else 'fail'
+    reason = 'P_flip %s floor %s; A_own CI %s' % ('meets' if p_flip_ok else 'below', floor,
+                                                 'excludes 0' if a else ('straddles 0' if ci is not None else 'unavailable'))
+    if p_flip_ok and a and not enough:
+        reason += '; measured on %d generation(s), %d required for a pass' % (len(generations), minimum)
+    contrast = value.get('conditional_contrast') or {}
+    return dict(falsifier='F4', status=status, evaluable=True, reason=reason, source='receipt', receipt=dict(path=str(path), sha256=sha(path)),
+                p_flip=p_flip['value'], p_flip_min=floor, p_flip_pairs=p_flip['pairs'], p_flip_flips=p_flip['flips'],
+                a_own_coefficient=coefficient, a_own_ci=ci, a_own_ci_source=a_own.get('ci90'), a_own_n_contexts=a_own.get('n_contexts'),
+                a_own_n_rows=a_own.get('n_rows'), generations=len(generations), generation_list=generations, minimum_generations=minimum,
+                insufficient_generations=not enough,
+                p_flip_series=[(int(g), per_generation[g]['value']) for g in sorted(per_generation, key=lambda g: int(g))
+                               if isinstance(per_generation[g], dict) and finite(per_generation[g].get('value'))],
+                conditional_contrast=dict(contexts=contrast.get('contexts'), cells=contrast.get('cells'), reason=contrast.get('reason'))
+                if isinstance(contrast, dict) else None,
+                counts={k: (value.get('counts') or {}).get(k) for k in ('completed_with_generation', 'ingested', 'verified', 'unverified')})
+
+
 def f5_identity(rows):
     result = flywheel_brake.evaluate_f5(rows)
     if not result['evaluable']:
@@ -412,7 +455,7 @@ def outcome(f, block, generation):
     return 'inconclusive_underpowered', inputs
 
 
-def evaluate(rows, receipt_path, registration, generation, since_generation=None):
+def evaluate(rows, receipt_path, registration, generation, since_generation=None, f4_receipt=None):
     block = registration['block']
     generations = threshold(block, 'generations')
     require(isinstance(generations, list) and generation in generations,
@@ -422,10 +465,13 @@ def evaluate(rows, receipt_path, registration, generation, since_generation=None
     origin, origin_source = origin_generation(receipt, since_generation)
     run_generation = origin + generation
     considered = [r['generation'] for r in rows if type(r.get('generation')) is int and origin < r['generation'] <= run_generation]
+    # F4 comes from the immutable information-test receipt when one is given (the measured numbers verbatim); otherwise
+    # from the series rows' successor block.
+    f4 = guarded('F4', f4_from_receipt, f4_receipt, block) if f4_receipt is not None else guarded('F4', f4_information, rows, block, generation, origin)
     falsifiers = dict(F1=guarded('F1', f1_heldout, rows, receipt, block, generation, origin),
                       F2=guarded('F2', f2_brake, rows, baseline, block),
                       F3=guarded('F3', f3_diversity, rows, baseline, block),
-                      F4=guarded('F4', f4_information, rows, block, generation, origin),
+                      F4=f4,
                       F5=f5_identity(rows), F6=f6_bridge(rows), F7=f7_consumption(rows),
                       F8=guarded('F8', f8_critic, rows, baseline, block))
     for name in ('F2', 'F3'):
@@ -458,12 +504,13 @@ def main():
     parser.add_argument('--generation', type=int, required=True, help='pre-registered verdict generation (5, 10 or 20), counted from the origin')
     parser.add_argument('--since-generation', type=int, help='origin: the last pre-change run generation (default: baseline generation_range.last)')
     parser.add_argument('--output', type=Path, help='default <series dir>/successor/verdicts/generation-<G>.json')
+    parser.add_argument('--f4-receipt', type=Path, help='immutable %s receipt; F4 is then judged from its measured numbers' % F4_RECEIPT_SCHEMA)
     parser.add_argument('--dry-run', action='store_true', help='print the verdict without writing it')
     args = parser.parse_args()
     registration = preregistration(args.preregistration, args.preregistration_sha256)
     rows = series_rows(args.series)
     require(rows, 'flywheel series is empty or missing: ' + str(args.series))
-    verdict = evaluate(rows, args.baseline, registration, args.generation, args.since_generation)
+    verdict = evaluate(rows, args.baseline, registration, args.generation, args.since_generation, f4_receipt=args.f4_receipt)
     output = args.output or args.series.resolve().parent / 'successor' / 'verdicts' / ('generation-%d.json' % args.generation)
     if args.dry_run:
         print(json.dumps(verdict, sort_keys=True))

@@ -65,6 +65,7 @@ from resume_expired_cycle import read, require, sha
 SCHEMA = 'parallel.flywheel_f9_readout.v2'
 INPUT_SCHEMA = 'parallel.panel_group_metrics.v2'
 LEGACY_SCHEMA = 'parallel.frozen_monitoring.v1'
+CERTIFICATE_SCHEMA = 'parallel.native_monitor_bridge_certificate.v1'
 GROUPS_FILE, LEGACY_FILE = 'groups.json', 'legacy.json'
 ARMS = ('A', 'B')
 PARENT = 'parent'
@@ -376,6 +377,44 @@ def validate_input(path):
                 undefined_draws=[g['draw_index'] for g in groups if not g['bt_defined']])
 
 
+def validate_certificate(path, inputs, block):
+    """An authenticated native bridge certificate (root's monitor-owner receipt): names exactly one input by the sha256 of
+    its legacy.json, binds the original frozen monitor (pre-registered prefix) and the emitter executable, the same
+    checkpoint/corpus/panel, and attests the four legacy metrics agree within 1e-6. The sidecar's own
+    external_879_numerical_bridge_qualified flag is never rewritten; the certificate is recorded beside it."""
+    path = Path(path)
+    where = str(path)
+    value = read(path)
+    require(isinstance(value, dict) and value.get('schema') == CERTIFICATE_SCHEMA, where + ': schema is not ' + CERTIFICATE_SCHEMA)
+    require(value.get('final_tests_opened') is False, where + ': final_tests_opened is not false')
+    for key in ('original_executable_sha256', 'emitter_executable_sha256', 'original_receipt_sha256', 'emitter_legacy_sha256'):
+        require(hex64(value.get(key)), where + ': %s is not a 64-hex digest' % key)
+    prefix = readout_panel(block, 'old_frozen').get('monitor_executable_sha256_prefix')
+    require(isinstance(prefix, str) and prefix and value['original_executable_sha256'].startswith(prefix),
+            where + ': original_executable_sha256 does not start with the pre-registered frozen monitor prefix %r' % prefix)
+    binding = value.get('binding')
+    require(isinstance(binding, dict) and all(hex64(binding.get(k)) for k in ('checkpoint_sha256', 'corpus_sha256', 'panel_sha256')),
+            where + ': binding lacks 64-hex checkpoint_sha256, corpus_sha256, panel_sha256')
+    require(finite(value.get('tolerance')) and 0 < value['tolerance'] <= BRIDGE_TOLERANCE, where + ': tolerance is not in (0, %g]' % BRIDGE_TOLERANCE)
+    differences = value.get('abs_diff')
+    require(isinstance(differences, dict) and all(finite(differences.get(m)) for m in LEGACY_METRICS), where + ': abs_diff lacks finite ' + ', '.join(LEGACY_METRICS))
+    exceeding = sorted(m for m in LEGACY_METRICS if differences[m] > value['tolerance'])
+    require(value.get('within_tolerance') is True and not exceeding,
+            where + ': certificate_not_within_tolerance (within_tolerance=%r; exceeding %s)' % (value.get('within_tolerance'), exceeding))
+    matches = [i for i in inputs if i['legacy']['sha256'] == value['emitter_legacy_sha256']]
+    require(len(matches) == 1, '%s: certificate matches %d inputs by emitter_legacy_sha256; exactly one required' % (where, len(matches)))
+    match = matches[0]
+    require(value['emitter_executable_sha256'] == match['value']['executable_sha256'],
+            where + ': emitter_executable_sha256 differs from the certified input\'s executable_sha256')
+    expected = dict(checkpoint_sha256=match['value']['checkpoint_sha256'], corpus_sha256=match['value']['panel']['corpus_sha256'],
+                    panel_sha256=match['value']['panel']['panel_sha256'])
+    require({k: binding[k] for k in expected} == expected, where + ': certificate binding differs from the certified input (%s)' % match['path'])
+    return dict(path=where, sha256=sha(path), certified_input=match['path'], arm=match['value']['arm'], panel=match['value']['panel']['name'],
+                original_executable_sha256=value['original_executable_sha256'], original_receipt_sha256=value['original_receipt_sha256'],
+                emitter_executable_sha256=value['emitter_executable_sha256'], abs_diff={m: differences[m] for m in LEGACY_METRICS},
+                tolerance=value['tolerance'], within_tolerance=True)
+
+
 def assemble(inputs):
     """One sidecar per (arm, panel); shared digests identical; each panel carries both arms on one binding with identical draws."""
     require(inputs, 'no inputs')
@@ -565,7 +604,7 @@ def decide(panels, policy):
     return 'inconclusive', 'no_demonstrated_repair', '%s: %s; %s' % (reserved_text, '; '.join(why), old_text), inputs
 
 
-def evaluate(inputs, registration):
+def evaluate(inputs, registration, certificate_paths=()):
     block = registration['block']
     policy = thresholds(block)
     rules = lookup(block, 'falsifiers.F9.verdicts')
@@ -577,6 +616,12 @@ def evaluate(inputs, registration):
     require(verdict in VERDICTS, 'unknown verdict')
     ordered = sorted(inputs, key=lambda item: (item['value']['panel']['name'], item['value']['arm']))
     qualified = all(item['value']['external_879_numerical_bridge_qualified'] for item in inputs)
+    certificates = sorted((validate_certificate(path, inputs, block) for path in certificate_paths), key=lambda c: (c['panel'], c['arm']))
+    certified = {c['certified_input'] for c in certificates}
+    require(len(certified) == len(certificates), 'two bridge certificates name one input')
+    comparability = dict(rule=LEGACY_COMPARABILITY, sidecar_flag_all_true=qualified, certificates=certificates,
+                         certified_inputs=sorted(certified), uncertified_inputs=[i['path'] for i in ordered if i['path'] not in certified],
+                         all_inputs_certified=bool(inputs) and all(i['path'] in certified for i in inputs))
     return dict(schema=SCHEMA, preregistration_sha256=registration['sha256'],
                 # The --preregistration-sha256 pin is a refusal gate, not receipt content: a pinned retry must reproduce identical bytes.
                 preregistration={k: registration.get(k) for k in ('path', 'document_sha256', 'block_bytes_sha256', 'reader')},
@@ -587,7 +632,7 @@ def evaluate(inputs, registration):
                              executable_sha256=item['value']['executable_sha256'], sampled_examples=item['value']['sampled_examples'],
                              draws=len(item['groups']), distinct_contexts=item['distinct_contexts']) for item in ordered],
                 panels=panels, verdict=verdict, reason=reason, reason_detail=detail, verdict_inputs=verdict_inputs, verdict_rules=rules,
-                external_879_numerical_bridge_qualified=qualified, legacy_comparability=LEGACY_COMPARABILITY, statistic=STATISTIC,
+                external_879_numerical_bridge_qualified=qualified, legacy_comparability=comparability, statistic=STATISTIC,
                 bridge_rule=BRIDGE_RULE, undefined_rule=UNDEFINED_RULE, interpretation=INTERPRETATION, hold_rule=HOLD_RULE, final_tests_opened=False)
 
 
@@ -597,12 +642,14 @@ def main(argv=None):
     parser.add_argument('--preregistration-sha256', help='refuse unless the block digest (canonical json or block text) equals this')
     parser.add_argument('--inputs', type=Path, nargs='+', required=True,
                         help='parallel.panel_group_metrics.v2 sidecar directories (groups.json + legacy.json) or groups.json paths, one per (arm, panel)')
+    parser.add_argument('--bridge-certificate', type=Path, nargs='*', default=[],
+                        help='authenticated %s receipts (one per certified legacy.json); recorded beside the sidecar flag, never substituted for it' % CERTIFICATE_SCHEMA)
     parser.add_argument('--output', type=Path, help='immutable %s receipt (required unless --dry-run)' % SCHEMA)
     parser.add_argument('--dry-run', action='store_true', help='print the receipt without writing it')
     args = parser.parse_args(argv)
     require(args.output is not None or args.dry_run, '--output is required unless --dry-run')
     registration = preregistration(args.preregistration, args.preregistration_sha256)
-    receipt = evaluate([validate_input(path) for path in args.inputs], registration)
+    receipt = evaluate([validate_input(path) for path in args.inputs], registration, args.bridge_certificate)
     if args.dry_run:
         print(json.dumps(receipt, sort_keys=True))
         return receipt
