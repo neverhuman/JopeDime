@@ -85,6 +85,12 @@ class HoldReleaseReadoutTests(unittest.TestCase):
         self.assertEqual(status['status'], 'pending')
         self.assertTrue(status['learning_checkpoint']['is_rejected'])
         self.assertEqual((status['manifest']['automatic_training'], status['deviations'], status['revisions_after_verdict']), (True, [], []))
+        self.journal.append(journal_line(timestamp=480.0, event='operator_pause_committed', reason='F11 first post-release monitor rejected', evidence='successor/decisions/pause/receipt.json',
+                                         training_restart_authorized=False, control_sha256='e' * 64))
+        self.write_journal()
+        status = self.verify()
+        self.assertEqual((status['status'], status['controller_stops_after_verdict'][0]['event'], status['controller_stops_after_verdict'][0]['training_restart_authorized']),
+                         ('paused', 'operator_pause_committed', False))
         disabled = self.write_manifest(10, automatic_training=False)
         self.journal.append(journal_line(timestamp=500.0, event='manifest_revision_committed', new_manifest_sha256=disabled['sha256'], receipt='runs/x/review/manifest-migration-v10.json'))
         self.write_journal()

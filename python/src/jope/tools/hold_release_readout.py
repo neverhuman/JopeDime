@@ -107,7 +107,10 @@ def verify_rollback(root, run, readout_path):
         if kind == 'manifest_revision_committed':
             revisions.append(dict(timestamp=event.get('timestamp'), new_manifest_sha256=event.get('new_manifest_sha256'), receipt=event.get('receipt')))
         elif kind == 'controller_stopped':
-            stops.append(dict(timestamp=event.get('timestamp'), resumable=event.get('resumable')))
+            stops.append(dict(timestamp=event.get('timestamp'), event=kind, resumable=event.get('resumable')))
+        elif kind == 'operator_pause_committed':
+            stops.append(dict(timestamp=event.get('timestamp'), event=kind, reason=event.get('reason'), evidence=event.get('evidence'),
+                              training_restart_authorized=event.get('training_restart_authorized'), control_sha256=event.get('control_sha256')))
         elif kind == 'stage_started' and event.get('kind') == 'train':
             parent = next((arg for arg in event.get('command') or [] if isinstance(arg, str) and '/checkpoints/step-' in arg), None)
             parent_sha = checkpoint_sha(root, parent)
@@ -115,10 +118,13 @@ def verify_rollback(root, run, readout_path):
             trains.append(row)
             if parent_sha != target:
                 deviations.append(dict(row, rule='f11_deviation: a block trained from a checkpoint other than the re-parent target after the rollback verdict'))
+    paused = any(s['event'] == 'operator_pause_committed' and s.get('training_restart_authorized') is False for s in stops)
     if learning_sha == target:
         status = 'reparented'
     elif automatic is False:
         status = 'training_disabled'
+    elif paused:
+        status = 'paused'   # the operator pause holds training, but the manifest still authorizes it: the revision is still owed
     else:
         status = 'pending'
     return dict(schema=VERIFICATION_SCHEMA, status=status, readout=dict(path=str(readout_path), sha256=sha(readout_path)), rejected_checkpoint_sha256=rejected,
@@ -126,7 +132,7 @@ def verify_rollback(root, run, readout_path):
                 learning_corpus=state.get('learning_corpus'), manifest=dict(path=(manifest or {}).get('path'), sha256=state.get('manifest_sha256'), automatic_training=automatic),
                 guard={k: ((state.get('training_diagnostic') or {}).get(k)) for k in ('consecutive_rejections', 'held', 'last_step')},
                 revisions_after_verdict=revisions, controller_stops_after_verdict=stops, train_stages_after_verdict=trains, deviations=deviations,
-                rule='F11: rollback is complete when learning_checkpoint is the re-parent target; until then automatic_training must be false; any train stage from another checkpoint after the verdict is an f11_deviation',
+                rule='F11: rollback is complete when learning_checkpoint is the re-parent target; until then automatic_training must be false (an operator pause with training_restart_authorized false is the interim stop); any train stage from another checkpoint after the verdict is an f11_deviation',
                 final_tests_opened=False)
 
 
