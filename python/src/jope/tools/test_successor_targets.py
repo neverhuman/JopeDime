@@ -12,6 +12,9 @@ from resume_expired_cycle import atomic, sha
 
 EVALUATOR = '9' * 64
 CHECKPOINT = 'c' * 64
+ONESTEP = 'onestep_forced_mutation_v2'
+TIERB = 'bounded_seed_lineage_v3_cap2s'
+TIERB4 = 'bounded_seed_lineage_v3_cap4s'
 
 
 def digest(data):
@@ -58,11 +61,12 @@ def corpus(root, contexts):
     return path
 
 
-def row(ctx, role, program, r0, child, arm='neural', replicate=0, replicate_pair=None, status='measured', evaluator=EVALUATOR, partition='meta_train'):
+def row(ctx, role, program, r0, child, arm='neural', replicate=0, replicate_pair=None, status='measured', evaluator=EVALUATOR, partition='meta_train',
+        protocol=ONESTEP):
     key = '%s:%d' % (ctx['prepared'], ctx['cut'])
-    identity = digest(('%s|%s|%s|%d' % (key, role, program, replicate)).encode())
+    identity = digest(('%s|%s|%s|%d|%s' % (key, role, program, replicate, protocol)).encode())
     return dict(schema='parallel.seed_value.v1', generation=73, dataset='ds-' + ctx['prepared'], family=ctx['family'], prepared_sha256=ctx['prepared'],
-                cut=ctx['cut'], context_key=key, episode_id=identity, identity_sha256=identity, protocol='onestep_forced_mutation_v2', role=role,
+                cut=ctx['cut'], context_key=key, episode_id=identity, identity_sha256=identity, protocol=protocol, role=role,
                 arm=arm, replicate=replicate, seed_origin='generic_comparison' if arm == 'generic' else 'neural_policy',
                 seed_program_sha256=digest(program.encode()), seed_genome=program, producing_checkpoint_sha256=CHECKPOINT, evaluator_sha256=evaluator,
                 driver_sha256=None, r0=r0, child=dict(program_sha256='x' * 64, rmse=child, failure=None if child is not None else 'candidate_or_view_timeout',
@@ -86,6 +90,33 @@ def scenario(ctx, improvement=0.25, controls=4, panel=3, spread=0.001, candidate
     for i in range(candidates + 1, candidates + 1 + controls):
         name = 'program-%s-%d' % (ctx['prepared'], i)
         rows.append(row(ctx, 'control_generic', name, programs[name], programs[name] + 0.3, arm='generic'))
+    return rows
+
+
+def tierb_row(ctx, role, program, r0, lineage, protocol=TIERB, arm='neural', status='measured', termination='budget_exhausted', attempted=23):
+    """A Tier-B export row as successor_ledger writes it: child = best descendant, S_rmse = S_lineage = min(r0, best)."""
+    finite_lineage = [x for x in lineage if x is not None]
+    best = min(finite_lineage) if finite_lineage else None
+    r = row(ctx, role, program, r0, best, arm=arm, status=status, protocol=protocol)
+    r['child'].update(genetic_operator='mutation' if best is not None else None, failure=None if best is not None else 'no_descendant_measured')
+    r.update(attempted_descendants=attempted, successful_descendants=len(finite_lineage), termination_reason=termination, lineage_size=1 + len(finite_lineage))
+    return r
+
+
+def tierb_scenario(ctx, protocol=TIERB):
+    """Top-3 seeds per arm: neural candidates 1..3 (seed 3's lineage overtakes seeds 1 and 2: two flips of three pairs),
+    generic controls 13..15 (best descendant r0 - 0.05), shuffled controls 16..18 (no better descendant: S = r0)."""
+    programs = dict(ctx['programs'])
+    rows = []
+    for k, gain in ((1, 0.3), (2, 0.15), (3, 0.9)):
+        name = 'program-%s-%d' % (ctx['prepared'], k)
+        rows.append(tierb_row(ctx, 'candidate', name, programs[name], [programs[name] + 0.1, programs[name] - gain, None], protocol=protocol))
+    for k in (13, 14, 15):
+        name = 'program-%s-%d' % (ctx['prepared'], k)
+        rows.append(tierb_row(ctx, 'control_generic', name, programs[name], [programs[name] + 0.2, programs[name] - 0.05], protocol=protocol, arm='generic'))
+    for k in (16, 17, 18):
+        name = 'program-%s-%d' % (ctx['prepared'], k)
+        rows.append(tierb_row(ctx, 'control_shuffled', name, programs[name], [programs[name] + 0.3], protocol=protocol, arm='shuffled'))
     return rows
 
 
@@ -301,6 +332,128 @@ class TargetsTests(unittest.TestCase):
                                         rows=[dict(context_key=k[0], seed_program_sha256=k[1], outcome=v) for k, v in outcomes.items()])))
         from_file = st.build(self.corpus, self.export(rows), next_outcome=listed)
         self.assertEqual(from_file['info_test']['a_own'], info['a_own'])
+
+    def test_tierb_rows_are_grouped_per_protocol_with_per_protocol_info_tests(self):
+        rows = scenario(self.c0) + tierb_scenario(self.c0)
+        block = st.build(self.corpus, self.export(rows), evaluator_sha256=EVALUATOR)
+        baseline = st.build(self.corpus, self.export(scenario(self.c0), name='onestep.json'), evaluator_sha256=EVALUATOR)
+        # the existing keys keep the one-step result: groups, values, tie floors, per-context info, info tests, A_ctx
+        for key in ('groups', 'values', 'floors', 'roles', 'arms', 'eps', 'tie_fraction', 'contexts', 'refused', 'label_mismatches'):
+            self.assertEqual(block[key], baseline[key], key)
+        self.assertEqual({k: v for k, v in block['info_test'].items() if k != 'by_protocol'}, {k: v for k, v in baseline['info_test'].items() if k != 'by_protocol'})
+        self.assertEqual({k: v for k, v in block['a_ctx'].items() if k != 'by_protocol'}, {k: v for k, v in baseline['a_ctx'].items() if k != 'by_protocol'})
+        self.assertEqual((block['protocol'], block['protocols']), (ONESTEP, [TIERB, ONESTEP]))
+        self.assertEqual(block['group_protocols'], {str(i): ONESTEP for i in range(len(block['groups']))})
+        self.assertEqual((block['info_test']['p_flip_flips'], block['info_test']['p_flip_pairs']), (5, 66))
+        self.assertEqual(block['info_test']['by_protocol'][ONESTEP]['p_flip'], block['info_test']['p_flip'])
+        # the Tier-B info tests: three candidates, seed 3's lineage overtakes seeds 1 and 2 -> 2 flips of 3 non-tie pairs
+        tierb = block['info_test']['by_protocol'][TIERB]
+        self.assertEqual((tierb['p_flip_flips'], tierb['p_flip_pairs']), (2, 3))
+        self.assertAlmostEqual(tierb['p_flip'], 2 / 3)
+        self.assertTrue(tierb['passed_a'])
+        self.assertFalse(tierb['passed_b'])
+        self.assertFalse(tierb['passed'])
+        self.assertEqual(tierb['a_own']['reason'], 'next_outcome_unavailable')
+        self.assertEqual(tierb['credited_statuses'], ['measured', 'incomplete'])
+        self.assertEqual((tierb['contexts'], tierb['measured_rows'], tierb['incomplete_rows']), (1, 9, 0))
+        self.assertEqual(tierb['conditional_contrast']['control_role'], 'control_generic')
+        # tie floors are per (context, protocol): Tier-B has no replicate panel and uses the floor alone, never the one-step eps
+        space = block['by_protocol'][TIERB]
+        self.assertEqual(space['eps'], {'p0:0': st.EPS_FLOOR})
+        self.assertTrue(space['eps_source']['p0:0'].startswith('floor_only'))
+        self.assertEqual(block['by_protocol'][ONESTEP]['eps_source'], {'p0:0': 'replicate_panel'})
+        self.assertEqual(block['by_protocol'][ONESTEP]['contexts'], block['contexts'])
+        self.assertEqual(space['counts'], dict(contexts=0, groups=0, measured_rows=9, incomplete_rows=0, refused_contexts=0))
+        self.assertEqual(space['tie_fraction']['p0:0']['pairs'], 36)
+        # A_ctx for Tier-B: value(S_lineage) - median over the context's control_generic Tier-B seeds (never the one-step controls)
+        median = median_of(self.c0)
+        programs = dict(self.c0['programs'])
+        a_ctx = block['a_ctx']['by_protocol'][TIERB]
+        controls = sorted(st.value(programs['program-p0-%d' % k] - 0.05, median) for k in (13, 14, 15))
+        self.assertAlmostEqual(a_ctx['control_median_by_context']['p0:0'], controls[1])
+        self.assertNotAlmostEqual(a_ctx['control_median_by_context']['p0:0'], block['a_ctx']['control_median_by_context']['p0:0'])
+        self.assertEqual(a_ctx['n_by_arm'], dict(neural=3, generic=3, shuffled=3))
+        neural = sorted(st.value(s, median) - controls[1] for s in (1.1 - 0.3, 1.2 - 0.15, 1.3 - 0.9))
+        self.assertAlmostEqual(a_ctx['by_arm']['neural'], neural[1])
+        self.assertAlmostEqual(a_ctx['by_arm']['generic'], 0.0)
+        self.assertEqual(space['contexts']['p0:0']['a_ctx_control_median'], a_ctx['control_median_by_context']['p0:0'])
+        # A_own = value(S_lineage) - value(r0) is still diagnostic: the Tier-B rank regression runs per protocol on next outcomes
+        three = context('p3')
+        corpus_dir = corpus(self.root / 'three', [self.c0, self.c1, three])
+        rows = tierb_scenario(self.c0) + tierb_scenario(self.c1) + tierb_scenario(three) + scenario(self.c0)
+        outcomes = {}
+        for r in rows:
+            if r['role'] == 'candidate' and r['protocol'] == TIERB:
+                a_own = st.value(r['S_rmse'], median) - st.value(r['r0'], median)
+                outcomes[(r['context_key'], r['seed_program_sha256'])] = 10.0 * a_own - 0.05 * r['r0']
+        block = st.build(corpus_dir, self.export(rows, name='three.json'), next_outcome=outcomes)
+        tierb = block['info_test']['by_protocol'][TIERB]
+        self.assertEqual((tierb['a_own']['n_rows'], tierb['a_own']['n_contexts']), (9, 3))
+        self.assertIsNotNone(tierb['a_own']['coefficient'])
+        self.assertEqual((tierb['p_flip_flips'], tierb['p_flip_pairs']), (6, 9))
+        self.assertEqual(block['info_test']['a_own']['n_contexts'], 1)   # the one-step regression sees only the p0 one-step seeds it shares
+
+    def test_block_consumes_one_protocol_and_tags_every_group(self):
+        rows = scenario(self.c0) + tierb_scenario(self.c0) + tierb_scenario(self.c1)
+        block = st.build(self.corpus, self.export(rows), protocol=TIERB)
+        self.assertEqual((block['protocol'], block['protocols']), (TIERB, [TIERB, ONESTEP]))
+        self.assertEqual(set(block['group_protocols'].values()), {TIERB})
+        self.assertEqual((block['counts']['contexts'], block['counts']['groups'], block['counts']['incomplete_groups']), (2, 2, 2))
+        for index, group in enumerate(block['groups']):
+            self.assertEqual((len(group), len(set(group))), (8, 8))
+            self.assertEqual(block['roles'][str(group[0])], 'champion')
+            values = [block['values'][str(r)] for r in group[1:]]
+            self.assertEqual(values, sorted(values, reverse=True))
+            self.assertEqual(block['floors'][str(index)], st.EPS_FLOOR)
+        median = median_of(self.c0)
+        self.assertEqual(block['groups'][0][1], 3)                                   # program-p0-3: lineage best 0.4
+        self.assertAlmostEqual(block['values']['3'], st.value(1.3 - 0.9, median))
+        self.assertAlmostEqual(block['values']['1'], st.value(1.1 - 0.3, median))    # S_lineage, never the seed's one-step S (0.85)
+        self.assertEqual((block['roles']['3'], block['arms']['3'], block['roles']['13'], block['arms']['13']), ('candidate', 'neural', 'control_generic', 'generic'))
+        self.assertEqual(block['info_test']['p_flip_pairs'], 66)                    # existing keys: the one-step result
+        self.assertEqual(block['counts']['by_protocol'][ONESTEP]['groups'], 0)
+        self.assertEqual(block['counts']['by_protocol'][TIERB], dict(contexts=2, groups=2, measured_rows=18, incomplete_rows=0, refused_contexts=0))
+        self.assertEqual(block['refused'], [])
+        with self.assertRaisesRegex(ValueError, 'no credited rows of protocol ' + TIERB4):
+            st.build(self.corpus, self.export(rows, name='four.json'), protocol=TIERB4)
+        with self.assertRaisesRegex(ValueError, 'unknown consumption protocol'):
+            st.build(self.corpus, self.export(rows), protocol='bounded_seed_lineage_v3')
+        with self.assertRaisesRegex(ValueError, 'unknown seed-value protocol'):
+            st.build(self.corpus, self.export(rows + [row(self.c1, 'candidate', 'program-p1-1', 1.1, 1.0, protocol='other_v9')], name='alien.json'))
+        sys.argv = ['successor_targets', '--corpus', str(self.corpus), '--export', str(self.export(rows, name='cli.json')),
+                    '--output', str(self.root / 'policy/tierb.json'), '--protocol', TIERB]
+        st.main()
+        self.assertEqual(json.loads((self.root / 'policy/tierb.json').read_bytes())['group_protocols'], block['group_protocols'])
+
+    def test_cap_variants_never_mix_inside_a_context(self):
+        rows = tierb_scenario(self.c0) + tierb_scenario(self.c0, protocol=TIERB4) + tierb_scenario(self.c1)
+        block = st.build(self.corpus, self.export(rows), protocol=TIERB)
+        refusal = dict(context_key='p0:0', reason='tierb_cap_variants_mixed: %s, %s' % (TIERB, TIERB4))
+        self.assertEqual(block['by_protocol'][TIERB]['refused'], [refusal])
+        self.assertEqual(block['by_protocol'][TIERB4]['refused'], [refusal])
+        self.assertEqual((block['counts']['refused_contexts'], block['counts']['contexts']), (2, 1))
+        self.assertEqual(set(block['group_protocols'].values()), {TIERB})
+        self.assertEqual(list(block['by_protocol'][TIERB]['contexts']), ['p1:0'])
+        self.assertEqual(block['info_test']['by_protocol'][TIERB]['p_flip_pairs'], 3)   # p1 only
+        self.assertEqual(block['refused'], [])                                          # the one-step namespace is empty here
+        with self.assertRaisesRegex(ValueError, 'no context produced a consumable group: tierb_cap_variants_mixed'):
+            st.build(self.corpus, self.export(rows, name='four.json'), protocol=TIERB4)
+        with self.assertRaisesRegex(ValueError, 'no context produced a consumable group: tierb_cap_variants_mixed'):
+            st.build(self.corpus, self.export(tierb_scenario(self.c0) + tierb_scenario(self.c0, protocol=TIERB4), name='mixed.json'), protocol=TIERB)
+
+    def test_incomplete_tierb_rows_are_credited_and_counted(self):
+        rows = tierb_scenario(self.c0)
+        truncated = next(r for r in rows if r['seed_genome'] == 'program-p0-2')
+        truncated.update(status='incomplete', termination_reason='episode_timeout', attempted_descendants=8)
+        block = st.build(self.corpus, self.export(rows), protocol=TIERB)
+        self.assertEqual((block['counts']['measured_rows'], block['counts']['incomplete_rows']), (9, 1))
+        self.assertEqual(block['info_test']['by_protocol'][TIERB]['incomplete_rows'], 1)
+        self.assertEqual(block['info_test']['by_protocol'][TIERB]['p_flip_pairs'], 3)
+        self.assertIn(2, block['groups'][0])                                            # program-p0-2 consumed for what it measured
+        stale = scenario(self.c0)
+        stale[0]['status'] = 'incomplete'                                               # one-step rows have no incomplete status
+        block = st.build(self.corpus, self.export(stale, name='stale.json'))
+        self.assertEqual((block['counts']['measured_rows'], block['counts']['incomplete_rows']), (len(stale) - 1, 0))
 
     def test_cli_writes_immutable_block_or_refusal(self):
         export = self.export(scenario(self.c0))

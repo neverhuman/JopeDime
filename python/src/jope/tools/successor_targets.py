@@ -15,6 +15,16 @@ finite pairs, floored at 0.002); a context without a replicate panel is 'unavail
 than 2 non-tie pairs dropped; at most 8 groups per context). Refusals: corpus/evaluator mismatch,
 non-meta_train records, tie_fraction > 0.7 (per context), no usable eps anywhere.
 
+Protocols (one-step onestep_forced_mutation_v2; Tier-B bounded_seed_lineage_v3_cap2s / _cap4s) are never mixed:
+records are grouped by (context, protocol), the tie floor is per (context, protocol) (Tier-B without a Tier-B
+replicate panel uses the 0.002 floor alone, never the one-step panel's eps), and the info tests (P_flip, the A_own
+regression, the conditional contrast) are computed per protocol under info_test.by_protocol while the existing
+keys keep the one-step result. The block consumes one protocol's groups (`protocol`, default one-step; values are
+one S per record id) and every group carries its protocol; a context carrying both cap variants is refused for
+Tier-B. For Tier-B, S = S_lineage (the export's S_rmse), A_own = value(S_lineage) - value(r0) (diagnostic) and
+A_ctx is taken against the context's control_generic Tier-B median; Tier-B rows of status 'incomplete' (outer
+timeout) are credited for what they measured and counted.
+
 The block is attached to policy['seed_values'] by the runtime after membership.bind and before
 replay_policy.immutable; the policy schema string stays parallel.replay_policy.v2 and the deployed
 trainer ignores the key. Nothing here writes labels, training state or serving state.
@@ -37,6 +47,8 @@ EXPORT_SCHEMA = 'parallel.seed_value.v1'
 REFUSAL_SCHEMA = 'parallel.seed_values_refusal.v1'
 NEXT_OUTCOME_SCHEMA = 'parallel.successor_next_outcome.v1'
 PROTOCOL = 'onestep_forced_mutation_v2'
+TIERB_PROTOCOLS = ('bounded_seed_lineage_v3_cap2s', 'bounded_seed_lineage_v3_cap4s')
+PROTOCOLS = (PROTOCOL,) + TIERB_PROTOCOLS
 TIE_RULE = 'abs(dS_value) <= eps_c'
 ROLE_PRIORITY = ('candidate', 'control_generic', 'control_shuffled', 'gp_final')
 CONTROL_ROLES = ('control_generic', 'control_shuffled')
@@ -297,6 +309,50 @@ def a_ctx_report(by_context_entries):
                 contexts_with_control=len(references), contexts_without_control=without)
 
 
+def is_tierb(protocol):
+    return protocol in TIERB_PROTOCOLS
+
+
+def credited_statuses(protocol):
+    return ('measured', 'incomplete') if is_tierb(protocol) else ('measured',)
+
+
+def credited(row):
+    """A row carrying a seed value: measured (Tier-B: or incomplete, credited for what it measured) with finite r0 and S."""
+    return row.get('status') in credited_statuses(row.get('protocol') or PROTOCOL) and finite(row.get('r0')) and finite(row.get('S_rmse'))
+
+
+def namespace():
+    """Per-protocol accumulator: tie floors, per-context info, refusals and the info-test inputs of one protocol."""
+    return dict(eps={}, eps_source={}, tie_fraction={}, contexts={}, refused=[], flips=0, nontie=0, regression={}, contrast_entries={},
+                counts=dict(contexts=0, groups=0, measured_rows=0, incomplete_rows=0, refused_contexts=0))
+
+
+def info_for(space, outcomes, control_role):
+    """Information tests of one protocol: P_flip over non-tie candidate pairs (a), the A_own rank-regression coefficient
+    on next-generation outcomes with a cluster bootstrap over contexts (b), the conditional contrast (c)."""
+    flips, nontie = space['flips'], space['nontie']
+    p_flip_value = flips / nontie if nontie else None
+    passed_a = p_flip_value is not None and p_flip_value >= P_FLIP_FLOOR
+    regression = space['regression']
+    a_own = dict(coefficient=None, ci90=None, n_rows=0, n_contexts=len(regression), reason=None)
+    if outcomes is None:
+        a_own['reason'] = 'next_outcome_unavailable'
+    else:
+        pooled = [s for samples in regression.values() for s in samples]
+        a_own['n_rows'] = len(pooled)
+        a_own['coefficient'] = rank_regression_coefficient(pooled)
+        a_own['ci90'] = cluster_bootstrap(regression, rank_regression_coefficient)
+        if a_own['coefficient'] is None or a_own['ci90'] is None:
+            a_own['reason'] = 'insufficient rows or clusters for the rank regression'
+    passed_b = a_own['ci90'] is not None and (a_own['ci90']['low'] > 0 or a_own['ci90']['high'] < 0)
+    return dict(p_flip=p_flip_value, p_flip_flips=flips, p_flip_pairs=nontie, p_flip_floor=P_FLIP_FLOOR,
+                a_own_ci=a_own['ci90'], a_own=a_own, passed_a=passed_a, passed_b=passed_b, passed=bool(passed_a and passed_b),
+                conditional_contrast=conditional_contrast(space['contrast_entries'], control_role),
+                contexts=len(space['contrast_entries']), measured_rows=space['counts']['measured_rows'],
+                incomplete_rows=space['counts']['incomplete_rows'])
+
+
 def conditional_contrast(by_context, control_role):
     """E[S_value | neural, r0 decile] - E[S_value | control, r0 decile] within context, pooled with a cluster bootstrap."""
     cells = {}
@@ -324,9 +380,15 @@ def conditional_contrast(by_context, control_role):
 
 
 def build(corpus_dir, seed_values_export_path, control_role='control_generic', *, evaluator_sha256=None,
-          corpus_sha256=None, next_outcome=None, per_context_cap=PER_CONTEXT_CAP):
-    """Policy block parallel.seed_values.v1; raises ValueError with the refusal reason when it cannot be built."""
+          corpus_sha256=None, next_outcome=None, per_context_cap=PER_CONTEXT_CAP, protocol=PROTOCOL):
+    """Policy block parallel.seed_values.v1; raises ValueError with the refusal reason when it cannot be built.
+
+    Records are grouped by (context, protocol): protocols never mix inside a comparison group, its tie floor or an
+    info test. The block consumes the groups of `protocol` (one S per record id); eps/tie_fraction/contexts/refused/
+    a_ctx/info_test keep the one-step result under the existing keys and carry every protocol under by_protocol.
+    """
     require(control_role in CONTROL_ROLES, 'control role must be control_generic or control_shuffled')
+    require(protocol in PROTOCOLS, 'unknown consumption protocol: ' + str(protocol))
     export_path = Path(seed_values_export_path)
     export = read(export_path)
     require(export.get('schema') == EXPORT_SCHEMA, 'seed-value export schema mismatch: ' + str(export.get('schema')))
@@ -341,36 +403,56 @@ def build(corpus_dir, seed_values_export_path, control_role='control_generic', *
     require(corpus_sha256 is None or corpus_sha256 == bound_corpus, 'corpus mismatch: bound ' + bound_corpus + ' expected ' + str(corpus_sha256))
     index, contexts = corpus_contexts(corpus)
     outcomes = load_next_outcome(next_outcome)
-    measured = [r for r in rows if r.get('status') == 'measured' and finite(r.get('r0')) and finite(r.get('S_rmse'))]
+    protocols = sorted({r.get('protocol') or PROTOCOL for r in rows})
+    unknown = [p for p in protocols if p not in PROTOCOLS]
+    require(not unknown, 'unknown seed-value protocol(s): ' + ', '.join(unknown))
+    measured = [r for r in rows if credited(r)]
     require(measured, 'export carries no measured seed values')
     require(all(r.get('partition', 'meta_train') == 'meta_train' for r in rows), 'non-meta_train seed-value rows are never consumed')
-    by_context = {}
+    by_group = {}
     for row in measured:
-        by_context.setdefault(row['context_key'], []).append(row)
-    refused, eps_by, ties_by, groups, values, roles, arms, floors = [], {}, {}, [], {}, {}, {}, {}
+        by_group.setdefault((row.get('protocol') or PROTOCOL, row['context_key']), []).append(row)
+    # Cap variants are never compared with each other: a context carrying both is refused for Tier-B.
+    tierb_by_context = {}
+    for group_protocol, context_key in by_group:
+        if is_tierb(group_protocol):
+            tierb_by_context.setdefault(context_key, set()).add(group_protocol)
+    mixed = {k: sorted(v) for k, v in tierb_by_context.items() if len(v) > 1}
+    spaces = {}
+    groups, values, roles, arms, floors, group_protocols = [], {}, {}, {}, {}, {}
     counts = dict(contexts=0, groups=0, ties_excluded=0, refused_contexts=0, unjoined_rows=0, measured_rows=len(measured),
-                  eligible_rows=0, dropped_groups=0, incomplete_groups=0, duplicate_records=0, label_mismatch_rows=0)
+                  eligible_rows=0, dropped_groups=0, incomplete_groups=0, duplicate_records=0, label_mismatch_rows=0,
+                  incomplete_rows=sum(r.get('status') == 'incomplete' for r in measured), by_protocol={})
     label_mismatches = []
-    flips = nontie = 0
-    per_context_info, regression, contrast_entries = {}, {}, {}
-    for context_key in sorted(by_context):
-        entries_raw = by_context[context_key]
+    for group_protocol, context_key in sorted(by_group, key=lambda k: (k[0] != PROTOCOL, k[0], k[1])):
+        space = spaces.setdefault(group_protocol, namespace())
+        consumed = group_protocol == protocol
+        entries_raw = by_group[(group_protocol, context_key)]
+        space['counts']['measured_rows'] += len(entries_raw)
+        space['counts']['incomplete_rows'] += sum(r.get('status') == 'incomplete' for r in entries_raw)
+        if context_key in mixed:
+            space['refused'].append(dict(context_key=context_key, reason='tierb_cap_variants_mixed: ' + ', '.join(mixed[context_key])))
+            continue
         prepared, cut = entries_raw[0]['prepared_sha256'], entries_raw[0]['cut']
         candidates = contexts.get((prepared, cut))
         if not candidates:
-            refused.append(dict(context_key=context_key, reason='context_not_in_corpus'))
+            space['refused'].append(dict(context_key=context_key, reason='context_not_in_corpus'))
             continue
         for candidate in candidates:
             require(candidate['partition'] == 'meta_train', 'non-meta_train corpus group for ' + context_key)
         group = next((c for c in candidates if c['family'] == entries_raw[0]['family']), None)
         if group is None:
-            refused.append(dict(context_key=context_key, reason='family_mismatch'))
+            space['refused'].append(dict(context_key=context_key, reason='family_mismatch'))
             continue
         median = context_median(group['programs'])
-        eps = eps_for(entries_raw, median)
+        eps, eps_source = eps_for(entries_raw, median), 'replicate_panel'
         if eps is None:
-            refused.append(dict(context_key=context_key, reason='eps_unavailable: no finite replicate pair'))
-            continue
+            if is_tierb(group_protocol):
+                # No Tier-B replicate panel is planned: the floor alone is the Tier-B tie rule (never the one-step panel's eps).
+                eps, eps_source = EPS_FLOOR, 'floor_only: no Tier-B replicate pair in the context'
+            else:
+                space['refused'].append(dict(context_key=context_key, reason='eps_unavailable: no finite replicate pair'))
+                continue
         entries = []
         for row in entries_raw:
             if row['role'] not in ROLE_PRIORITY or row.get('replicate', 0) != 0:
@@ -380,28 +462,32 @@ def build(corpus_dir, seed_values_export_path, control_role='control_generic', *
             if joined is not None and joined['rmse'] != row['r0']:
                 # F5 at consumption: the seed's own row-0 RMSE must be bit-equal to its corpus label.
                 counts['label_mismatch_rows'] = counts.get('label_mismatch_rows', 0) + 1
-                label_mismatches.append(dict(context_key=context_key, seed_program_sha256=row['seed_program_sha256'], r0=row['r0'], label=joined['rmse']))
+                label_mismatches.append(dict(context_key=context_key, seed_program_sha256=row['seed_program_sha256'], r0=row['r0'], label=joined['rmse'],
+                                             protocol=group_protocol))
                 joined = None
-            entries.append(dict(record=None if joined is None else joined['record'], role=row['role'], arm=row['arm'],
+            entries.append(dict(record=None if joined is None else joined['record'], role=row['role'], arm=row['arm'], protocol=group_protocol,
                                 r0=row['r0'], S_rmse=row['S_rmse'], S_value=s_value, r0_value=r0_value, A_own=s_value - r0_value,
                                 seed=row['seed_program_sha256']))
         fraction, ties, total = tie_fraction(entries, eps)
-        eps_by[context_key] = eps
-        ties_by[context_key] = dict(tie_fraction=fraction, ties=ties, pairs=total)
+        space['eps'][context_key] = eps
+        space['eps_source'][context_key] = eps_source
+        space['tie_fraction'][context_key] = dict(tie_fraction=fraction, ties=ties, pairs=total)
         candidate_entries = [e for e in entries if e['role'] == 'candidate']
         context_flips, context_nontie = p_flip(candidate_entries, eps)
-        flips += context_flips
-        nontie += context_nontie
-        per_context_info[context_key] = dict(candidates=len(candidate_entries), flips=context_flips, nontie_pairs=context_nontie, eps=eps,
-                                             tie_fraction=fraction, median_rmse=median)
+        space['flips'] += context_flips
+        space['nontie'] += context_nontie
+        space['contexts'][context_key] = dict(candidates=len(candidate_entries), flips=context_flips, nontie_pairs=context_nontie, eps=eps,
+                                              tie_fraction=fraction, median_rmse=median)
         if outcomes is not None:
             samples = [(outcomes[(context_key, e['seed'])], e['r0'], e['A_own']) for e in candidate_entries if (context_key, e['seed']) in outcomes]
             if samples:
-                regression[context_key] = samples
-        contrast_entries[context_key] = entries
+                space['regression'][context_key] = samples
+        space['contrast_entries'][context_key] = entries
         if fraction is not None and fraction > TIE_REFUSAL:
-            refused.append(dict(context_key=context_key, reason='tie_fraction %.3f > %.1f' % (fraction, TIE_REFUSAL)))
+            space['refused'].append(dict(context_key=context_key, reason='tie_fraction %.3f > %.1f' % (fraction, TIE_REFUSAL)))
             continue
+        if not consumed:
+            continue   # info tests only: the block's groups come from the consumed protocol
         joined_entries = [e for e in entries if e['record'] is not None]
         counts['unjoined_rows'] += len(entries) - len(joined_entries)
         champion_program = min(group['programs'].items(), key=lambda item: (item[1]['rmse'], item[1]['record']))
@@ -420,49 +506,56 @@ def build(corpus_dir, seed_values_export_path, control_role='control_generic', *
         counts['dropped_groups'] += dropped
         counts['incomplete_groups'] += incomplete
         if not context_groups:
-            refused.append(dict(context_key=context_key, reason='no group with two non-tie pairs'))
+            space['refused'].append(dict(context_key=context_key, reason='no group with two non-tie pairs'))
             continue
         counts['contexts'] += 1
+        space['counts']['contexts'] += 1
         for members in context_groups:
+            require(all(m['protocol'] == group_protocol for m in members[1:]), 'group mixes protocols: ' + context_key)
             floors[str(len(groups))] = eps
+            group_protocols[str(len(groups))] = group_protocol
             groups.append([m['record'] for m in members])
+            space['counts']['groups'] += 1
             for member in members:
                 values[str(member['record'])] = member['S_value']
                 roles[str(member['record'])] = member['role']
                 arms[str(member['record'])] = member['arm']
-    require(eps_by, 'replicate panel unavailable in every context: eps_c cannot be derived; refusing to build seed values')
+    # Without a tie floor anywhere nothing is consumable; a cap-variant mixing refusal is the more specific reason and wins below.
+    require(any(space['eps'] for space in spaces.values()) or mixed,
+            'replicate panel unavailable in every context: eps_c cannot be derived; refusing to build seed values')
     counts['groups'] = len(groups)
-    counts['refused_contexts'] = len(refused)
-    require(groups, 'no context produced a consumable group: ' + '; '.join(r['reason'] for r in refused[:5]))
-    p_flip_value = flips / nontie if nontie else None
-    passed_a = p_flip_value is not None and p_flip_value >= P_FLIP_FLOOR
-    a_own = dict(coefficient=None, ci90=None, n_rows=0, n_contexts=len(regression), reason=None)
-    if outcomes is None:
-        a_own['reason'] = 'next_outcome_unavailable'
-    else:
-        pooled = [s for samples in regression.values() for s in samples]
-        a_own['n_rows'] = len(pooled)
-        a_own['coefficient'] = rank_regression_coefficient(pooled)
-        a_own['ci90'] = cluster_bootstrap(regression, rank_regression_coefficient)
-        if a_own['coefficient'] is None or a_own['ci90'] is None:
-            a_own['reason'] = 'insufficient rows or clusters for the rank regression'
-    passed_b = a_own['ci90'] is not None and (a_own['ci90']['low'] > 0 or a_own['ci90']['high'] < 0)
+    counts['refused_contexts'] = sum(len(space['refused']) for space in spaces.values())
+    consumed_space = spaces.get(protocol) or namespace()
+    require(groups, 'no context produced a consumable group: ' + '; '.join(
+        [r['reason'] for r in consumed_space['refused'][:5]] or ['no credited rows of protocol ' + protocol]))
     generation = export.get('generation')
-    a_ctx = a_ctx_report(contrast_entries)
-    for context_key, reference in a_ctx['control_median_by_context'].items():
-        per_context_info[context_key]['a_ctx_control_median'] = reference
-    return dict(schema=SCHEMA, corpus_sha256=bound_corpus, evaluator_sha256=evaluators[0], protocol=PROTOCOL,
+    info_by_protocol, a_ctx_by_protocol = {}, {}
+    for space_protocol, space in sorted(spaces.items()):
+        info_by_protocol[space_protocol] = dict(info_for(space, outcomes, control_role), credited_statuses=list(credited_statuses(space_protocol)))
+        report = a_ctx_report(space['contrast_entries'])
+        for context_key, reference in report['control_median_by_context'].items():
+            space['contexts'][context_key]['a_ctx_control_median'] = reference
+        a_ctx_by_protocol[space_protocol] = report
+        counts['by_protocol'][space_protocol] = dict(space['counts'], refused_contexts=len(space['refused']))
+    onestep = spaces.get(PROTOCOL) or namespace()
+    info_test = dict(info_by_protocol.get(PROTOCOL) or info_for(onestep, outcomes, control_role), by_protocol=info_by_protocol)
+    a_ctx = dict(a_ctx_by_protocol.get(PROTOCOL) or a_ctx_report({}), by_protocol=a_ctx_by_protocol)
+    return dict(schema=SCHEMA, corpus_sha256=bound_corpus, evaluator_sha256=evaluators[0], protocol=protocol, protocols=protocols,
                 generation=generation, tie_rule=TIE_RULE, groups=groups, values=values, floors=floors, roles=roles, arms=arms,
-                per_context_cap=per_context_cap, group_size=GROUP_SIZE, counts=counts, refused=refused, label_mismatches=label_mismatches[:16],
+                group_protocols=group_protocols,
+                per_context_cap=per_context_cap, group_size=GROUP_SIZE, counts=counts, refused=onestep['refused'], label_mismatches=label_mismatches[:16],
                 seed_values_export_sha256=sha(export_path), control_role=control_role, a_ctx=a_ctx,
-                eps=eps_by, tie_fraction=ties_by, contexts=per_context_info,
-                info_test=dict(p_flip=p_flip_value, p_flip_flips=flips, p_flip_pairs=nontie, p_flip_floor=P_FLIP_FLOOR,
-                               a_own_ci=a_own['ci90'], a_own=a_own, passed_a=passed_a, passed_b=passed_b,
-                               passed=bool(passed_a and passed_b),
-                               conditional_contrast=conditional_contrast(contrast_entries, control_role)),
+                eps=onestep['eps'], tie_fraction=onestep['tie_fraction'], contexts=onestep['contexts'],
+                by_protocol={p: dict(eps=s['eps'], eps_source=s['eps_source'], tie_fraction=s['tie_fraction'], contexts=s['contexts'],
+                                     refused=s['refused'], counts=counts['by_protocol'][p]) for p, s in sorted(spaces.items())},
+                info_test=info_test,
                 value_definition='1/(1 + x/median_c); median_c = median labels.jsonl rmse_cut_normalized of the context',
                 a_own_definition='value(S) - value(r0); diagnostic only, never a weight',
                 a_ctx_definition=a_ctx['definition'],
+                tierb_definition='S = S_lineage = min finite RMSE over the seed and its lineage descendants (the export S_rmse); '
+                                 'A_own = value(S_lineage) - value(r0), diagnostic only; A_ctx = value(S_lineage) - median over the '
+                                 'context\'s control_generic Tier-B seeds of value(S_lineage); tie floor per (context, protocol), '
+                                 'never the one-step panel; status incomplete credited for what it measured',
                 bootstrap=dict(resamples=RESAMPLES, seed=BOOTSTRAP_SEED, alpha=ALPHA, clusters='contexts'),
                 final_tests_opened=False)
 
@@ -482,11 +575,12 @@ def main():
     parser.add_argument('--evaluator-sha256')
     parser.add_argument('--corpus-sha256')
     parser.add_argument('--next-outcome', type=Path)
+    parser.add_argument('--protocol', default=PROTOCOL, choices=PROTOCOLS, help='protocol whose groups the block consumes (info tests run per protocol)')
     parser.add_argument('--refusal-output', type=Path, help='where to record the refusal reason (never immutable)')
     args = parser.parse_args()
     try:
         block = build(args.corpus, args.export, args.control_role, evaluator_sha256=args.evaluator_sha256,
-                      corpus_sha256=args.corpus_sha256, next_outcome=args.next_outcome)
+                      corpus_sha256=args.corpus_sha256, next_outcome=args.next_outcome, protocol=args.protocol)
     except (ValueError, RuntimeError, KeyError, OSError) as error:
         body = refusal(error, args.corpus, args.export)
         if args.refusal_output:

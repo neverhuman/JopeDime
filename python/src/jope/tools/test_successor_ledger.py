@@ -25,6 +25,9 @@ FOREIGN = 'f' * 64
 GENERATION = 73
 CODEX_RESERVED_CORE_SECONDS = 45.96471887000371   # qualification-all64/economics.json
 EVALUATOR_BYTES = b'frozen evaluator fixture bytes'
+ONESTEP = 'onestep_forced_mutation_v2'
+TIERB = 'bounded_seed_lineage_v3_cap2s'
+TIERB4 = 'bounded_seed_lineage_v3_cap4s'
 
 
 class FixtureCase(unittest.TestCase):
@@ -478,6 +481,230 @@ class RealFixtureTests(FixtureCase):
             ledger.next_outcome(GENERATION, outcome='other')
 
 
+class TierBTests(FixtureCase):
+    """Tier-B (bounded_seed_lineage_v3) episodes synthesized from a real seed row: 24-fit lineages, violations, incompletes, overruns."""
+
+    def tierb_episode(self, source, generation_dir, rng_seed, *, protocol=TIERB, descendants=23, timeout_at=7, violation_at=None,
+                      termination='budget_exhausted', result=True, arm='neural', role='candidate', seed_origin='neural_policy',
+                      generation=GENERATION, mutate=None):
+        """Row 0 is the real seed row (rebound to the manifest evaluator and the cap's resource protocol); descendants are
+        lineage members bred from the top-4 evaluated members (mutations, a crossover every third fit), one timeout."""
+        budget = sl.tierb_budget(protocol)
+        identity = json.loads((source / 'identity.json').read_bytes())
+        identity.update(rng_seed=rng_seed, protocol=protocol, evaluator_sha256=self.bound, seed_arm=arm, role=role, replicate=0,
+                        seed_origin=seed_origin, generation=generation, **budget)
+        identity_bytes = encoded(identity)
+        episode_id = digest(identity_bytes)
+        template = json.loads((source / 'search/observations.json').read_bytes())[0]
+        self.assertIsNotNone(sl.rmse_of(template))
+        seed_rmse = template['metrics']['rmse']
+        rows, evaluated = [dict(template)], [(seed_rmse, template['program_sha256'])]
+        for index in range(1, descendants + 1):
+            genome = '%s ;; lineage-%d' % (template['genome'], index)
+            program = digest(genome.encode())
+            pool = sorted(evaluated)[:sl.TIERB_PARENT_POOL]
+            if index % 3 == 0 and len(pool) >= 2:
+                parents, operator = [pool[0][1], pool[1][1]], 'crossover'
+            else:
+                parents, operator = [pool[index % len(pool)][1]], 'mutation'
+            if violation_at == index:
+                parents = [FOREIGN]
+            row = dict(template, genome=genome, program_sha256=program, genetic_parents=parents, genetic_operator=operator,
+                       initial_seed_slot=None, origin='gp_evolution')
+            if index == timeout_at:
+                row.update(failure='candidate_or_view_timeout', metrics=None)
+            else:
+                rmse = seed_rmse * (0.8 + 0.03 * ((index * 7) % 11))
+                row['metrics'] = dict(template['metrics'], rmse=rmse)
+                evaluated.append((rmse, program))
+            rows.append(row)
+        for index, row in enumerate(rows):
+            row.update(rng_seed=rng_seed, continuation_sha256=episode_id, continuation_protocol=protocol, evaluator_sha256=self.bound,
+                       resource_protocol=budget['resource_protocol'], evaluation_index=index)
+        receipt = json.loads((source / 'search/search.json').read_bytes())
+        if mutate:
+            mutate(rows, receipt)
+        for row in rows:
+            row['evaluation_identity_sha256'] = digest(canonical({k: row[k] for k in IDENTITY_KEYS}))
+        observations = encoded(rows)
+        best = min(((r['metrics']['rmse'] * r['target_scale'], r['genome']) for r in rows if sl.rmse_of(r) is not None), default=(None, None))
+        receipt.update(rng_seed=rng_seed, continuation_sha256=episode_id, continuation_protocol=protocol, evaluator_sha256=self.bound,
+                       observations_sha256=digest(observations), completed_evaluations=len(rows), unique_programs=len(rows),
+                       best_validation_rmse=best[0], best_program=best[1])
+        dest = generation_dir / episode_id
+        (dest / 'search').mkdir(parents=True)
+        (dest / 'identity.json').write_bytes(identity_bytes)
+        shutil.copy(source / 'seeds.json', dest / 'seeds.json')
+        (dest / 'manifest.json').write_bytes(encoded(dict(schema='parallel.seed_experiment.v2', continuation_identity_sha256=episode_id, final_tests_opened=False)))
+        (dest / 'search/observations.json').write_bytes(observations)
+        (dest / 'search/search.json').write_bytes(encoded(receipt))
+        if result:
+            measured = sum(sl.rmse_of(r) is not None for r in rows[1:])
+            (dest / 'result.json').write_bytes(encoded(dict(status='measured', attempted_fits=len(rows), attempted_descendants=len(rows) - 1,
+                                                            successful_descendants=measured, termination_reason=termination,
+                                                            elapsed_seconds=0.75 * len(rows), identity_sha256=episode_id, final_tests_opened=False)))
+        return dest, identity, rows
+
+    def seed_evidence(self, source):
+        return sl.admitted_rmse(json.loads((source / 'search/observations.json').read_bytes())[:1])
+
+    def test_valid_lineage_episode_is_verified_credited_and_bundled(self):
+        ledger = self.ledger()
+        source = self.episodes[0]
+        rows0 = json.loads((source / 'search/observations.json').read_bytes())
+        seed_rmse = self.seed_evidence(source)
+        episode, identity, rows = self.tierb_episode(source, self.root / 'fixture/tierb', 7001)
+        self.assertEqual((identity['protocol'], identity['evaluations'], identity['candidate_seconds'], identity['seconds'], identity['resource_protocol']),
+                         (TIERB, 24, 2, 54, 'single_candidate_2s_8gib_v1'))
+        self.assertEqual(len(rows), 24)
+        self.assertEqual({r['genetic_operator'] for r in rows[1:]}, {'mutation', 'crossover'})
+        self.assertEqual(sum(len(r['genetic_parents']) == 2 for r in rows[1:]), 7)
+        self.assertEqual(sum(r['failure'] is not None for r in rows), 1)
+        result = ledger.ingest_completed(episode, seed_rmse=seed_rmse)   # bindings come from the v3 identity (seed_arm/role/generation)
+        self.assertTrue(result['verified'], result['reasons'])
+        self.assertEqual((result['protocol'], result['role'], result['arm'], result['generation'], result['status']), (TIERB, 'candidate', 'neural', GENERATION, 'completed'))
+        self.assertEqual((result['attempted_descendants'], result['successful_descendants'], result['termination_reason'], result['lineage_size']),
+                         (23, 22, 'budget_exhausted', 23))
+        finite = [sl.rmse_of(r) for r in rows if sl.rmse_of(r) is not None]
+        self.assertEqual(len(finite), 23)
+        self.assertEqual(result['S_rmse'], min(finite))                    # S_lineage over seed + descendants
+        self.assertLess(result['S_rmse'], result['r0'])
+        self.assertEqual(result['r0'], rows0[0]['metrics']['rmse'])       # F5: row 0 reproduces the admitted label
+        self.assertIs(result['row0_label_verified'], True)
+        self.assertEqual((result['measurement_status'], result['flip']), ('measured', 1))
+        best = min((sl.rmse_of(r), i, r) for i, r in enumerate(rows[1:]) if sl.rmse_of(r) is not None)
+        self.assertEqual((result['child']['program_sha256'], result['child']['rmse'], result['child']['failure']), (best[2]['program_sha256'], best[0], None))
+        # the same seed's one-step episode of the same generation is a distinct seed value: protocol is part of the key
+        onestep, _, _ = self.verified_copy(source, self.root / 'fixture/tierb-onestep', 7002)
+        again = ledger.ingest_completed(onestep, generation=GENERATION, arm='neural', role='candidate', replicate=0, seed_origin='neural_policy', seed_rmse=seed_rmse)
+        self.assertTrue(again['verified'], again['reasons'])
+        self.assertEqual((again['protocol'], again['attempted_descendants'], again['successful_descendants'], again['termination_reason'], again['lineage_size']),
+                         (ONESTEP, 1, 1, None, 2))
+        self.assertEqual(again['S_rmse'], min(again['r0'], again['child']['rmse']))
+        self.assertEqual(ledger.db.execute('SELECT count(*) FROM seed_values').fetchone()[0], 2)
+        self.assertEqual(ledger.db.execute("SELECT count(*) FROM events WHERE status='seed_value_duplicate_role'").fetchone()[0], 0)
+        self.assertEqual(sorted(r[0] for r in ledger.db.execute('SELECT protocol FROM seed_values')), [TIERB, ONESTEP])
+        stored = ledger.db.execute('SELECT attempted_descendants,successful_descendants,termination_reason,lineage_size,S_rmse FROM seed_values WHERE protocol=?', (TIERB,)).fetchone()
+        self.assertEqual(tuple(stored), (23, 22, 'budget_exhausted', 23, result['S_rmse']))
+        # export rows carry the protocol fields; the one-step row keeps one-step semantics
+        export = json.loads(Path(ledger.export(GENERATION)['path']).read_bytes())
+        self.assertEqual(export['protocols'], [TIERB, ONESTEP])
+        by_protocol = {r['protocol']: r for r in export['rows']}
+        for key in ('protocol', 'attempted_descendants', 'successful_descendants', 'termination_reason', 'S_rmse', 'lineage_size'):
+            self.assertIn(key, by_protocol[TIERB])
+            self.assertIn(key, by_protocol[ONESTEP])
+        self.assertEqual((by_protocol[TIERB]['attempted_descendants'], by_protocol[TIERB]['successful_descendants'], by_protocol[TIERB]['termination_reason'],
+                          by_protocol[TIERB]['lineage_size'], by_protocol[TIERB]['status'], by_protocol[TIERB]['S_rmse']), (23, 22, 'budget_exhausted', 23, 'measured', result['S_rmse']))
+        self.assertEqual((by_protocol[ONESTEP]['attempted_descendants'], by_protocol[ONESTEP]['successful_descendants'], by_protocol[ONESTEP]['termination_reason'],
+                          by_protocol[ONESTEP]['lineage_size'], by_protocol[ONESTEP]['status']), (1, 1, None, 2, 'measured'))
+        self.assertEqual(export['counts']['by_status'], dict(measured=2))
+        self.assertEqual(export['counts']['by_protocol'][TIERB], dict(candidates=1, measured=1, incomplete=0, finite_children=1, better=1, tied=0, worse=0, flips=1))
+        self.assertEqual(export['counts']['by_protocol'][ONESTEP], dict(candidates=1, measured=1, incomplete=0, finite_children=1, better=0, tied=0, worse=1, flips=0))
+        self.assertEqual((export['counts']['better'], export['counts']['worse']), (0, 1))   # existing keys stay one-step
+        info = ledger.info_report(GENERATION)
+        self.assertEqual(set(info['by_protocol']), {TIERB, ONESTEP})
+        self.assertEqual((info['pooled']['candidates'], info['by_protocol'][TIERB]['pooled']['candidates']), (1, 1))
+        self.assertEqual(info['by_protocol'][TIERB]['credited_statuses'], ['measured', 'incomplete'])
+        # the lineage rows enter the bundle as their own rows beside the one-step pair
+        bundle = ledger.bundle(GENERATION)
+        entry = bundle['bundles'][0]
+        self.assertEqual((entry['verified'], entry['admitted'], entry['unverified']), (2, True, []))
+        receipt = json.loads((self.root / 'successor/bundles/generation-73' / entry['context_key'] / 'search.json').read_bytes())
+        self.assertEqual(receipt['completed_evaluations'], 26)
+        self.assertEqual(receipt['bundle']['protocols'], [TIERB, ONESTEP])
+        self.assertEqual({e['protocol']: e['rows'] for e in receipt['bundle']['episodes']}, {TIERB: 24, ONESTEP: 2})
+        sources = json.loads((self.root / 'successor/admitted-sources.json').read_bytes())
+        self.assertEqual(sources['sources'], [entry['path']])
+        economics = ledger.economics(GENERATION)
+        self.assertEqual((economics['attempted_fits'], economics['successful_fits'], economics['timeouts']), (26, 25, 1))
+
+    def test_lineage_violation_is_excluded_from_bundles_and_credit(self):
+        ledger = self.ledger()
+        source = self.episodes[0]
+        episode, _, rows = self.tierb_episode(source, self.root / 'fixture/tierb', 7003, violation_at=5)
+        self.assertEqual(rows[5]['genetic_parents'], [FOREIGN])
+        result = ledger.ingest_completed(episode, seed_rmse=self.seed_evidence(source))
+        self.assertFalse(result['verified'])
+        self.assertEqual(len(result['reasons']), 1)
+        self.assertTrue(result['reasons'][0].startswith('lineage_violation: row 5 parents'), result['reasons'])
+        self.assertIn(FOREIGN, result['reasons'][0])
+        self.assertEqual(result['measurement_status'], 'measured')   # measured, never credited: excluded below
+        bundle = ledger.bundle(GENERATION)
+        entry = bundle['bundles'][0]
+        self.assertEqual((entry['verified'], entry['admitted'], entry['reasons'], entry['path']), (0, False, ['lineage_violation'], None))
+        self.assertEqual(entry['unverified'][0]['episode_id'], episode.name)
+        sources = json.loads((self.root / 'successor/admitted-sources.json').read_bytes())
+        self.assertEqual((sources['sources'], sources['excluded'][0]['reasons']), ([], ['lineage_violation']))
+        export = json.loads(Path(ledger.export(GENERATION)['path']).read_bytes())
+        self.assertIs(export['rows'][0]['verified'], False)
+        self.assertEqual(export['rows'][0]['verification_reasons'][0].split(':')[0], 'lineage_violation')
+        # an immigrant (no parents) and a seed row that is not the seed are violations too
+        def immigrant(rows, receipt):
+            rows[9]['genetic_parents'] = []
+        stray, _, _ = self.tierb_episode(source, self.root / 'fixture/tierb', 7009, mutate=immigrant)
+        self.assertEqual([r.split(':')[0] for r in ledger.ingest_completed(stray, seed_rmse=self.seed_evidence(source))['reasons']], ['lineage_violation'])
+
+        def not_the_seed(rows, receipt):
+            rows[0]['initial_seed_slot'] = 3
+        wrong, _, _ = self.tierb_episode(source, self.root / 'fixture/tierb', 7010, mutate=not_the_seed)
+        self.assertTrue(any(r.startswith('row0_not_the_seed') for r in ledger.ingest_completed(wrong, seed_rmse=self.seed_evidence(source))['reasons']))
+
+    def test_incomplete_episode_is_retained_and_credited_for_what_it_measured(self):
+        ledger = self.ledger()
+        source = self.episodes[0]
+        seed_rmse = self.seed_evidence(source)
+        episode, _, rows = self.tierb_episode(source, self.root / 'fixture/tierb', 7004, descendants=8, timeout_at=None, termination='episode_timeout')
+        result = ledger.ingest_completed(episode, seed_rmse=seed_rmse)
+        self.assertTrue(result['verified'], result['reasons'])
+        self.assertEqual((result['attempted_descendants'], result['successful_descendants'], result['termination_reason'], result['measurement_status'], result['status']),
+                         (8, 8, 'episode_timeout', 'incomplete', 'completed'))
+        self.assertEqual(result['S_rmse'], min(sl.rmse_of(r) for r in rows))
+        # without result.json the termination is unknown: still verified, still incomplete (matched shuffled arm, same rule)
+        unknown, _, _ = self.tierb_episode(source, self.root / 'fixture/tierb', 7005, descendants=8, timeout_at=None, result=False,
+                                           arm='shuffled', role='control_shuffled')
+        second = ledger.ingest_completed(unknown, seed_rmse=seed_rmse)
+        self.assertTrue(second['verified'], second['reasons'])
+        self.assertEqual((second['termination_reason'], second['measurement_status'], second['arm'], second['role']), ('unknown', 'incomplete', 'shuffled', 'control_shuffled'))
+        export = json.loads(Path(ledger.export(GENERATION)['path']).read_bytes())
+        self.assertEqual(export['counts']['by_status'], dict(incomplete=2))
+        self.assertEqual(export['counts']['by_protocol'][TIERB]['incomplete'], 1)   # candidate role only
+        self.assertEqual({r['termination_reason'] for r in export['rows']}, {'episode_timeout', 'unknown'})
+        self.assertTrue(all(r['status'] == 'incomplete' and r['attempted_descendants'] == 8 for r in export['rows']))
+        self.assertEqual(ledger.bundle(GENERATION)['admitted'], 1)   # retained: its measured rows are real fits
+
+    def test_budget_overrun_and_cap_variant_drift_are_refused(self):
+        ledger = self.ledger()
+        source = self.episodes[0]
+        seed_rmse = self.seed_evidence(source)
+        overrun, _, _ = self.tierb_episode(source, self.root / 'fixture/tierb', 7006, descendants=24)
+        result = ledger.ingest_completed(overrun, seed_rmse=seed_rmse)
+        self.assertFalse(result['verified'])
+        self.assertEqual(result['reasons'], ['budget_exceeded: 25 attempted fits > 24', 'termination_inconsistent: budget_exhausted with 25 attempted fits'])
+        self.assertEqual(result['attempted_descendants'], 24)
+        self.assertEqual(ledger.bundle(GENERATION)['admitted'], 0)
+
+        def rows_2s(rows, receipt):
+            for row in rows:
+                row['resource_protocol'] = sl.RESOURCE_PROTOCOL
+        drifted, identity, _ = self.tierb_episode(source, self.root / 'fixture/tierb', 7007, protocol=TIERB4, mutate=rows_2s)
+        self.assertEqual((identity['candidate_seconds'], identity['seconds'], identity['resource_protocol']), (4, 102, 'single_candidate_4s_8gib_v1'))
+        drift = ledger.ingest_completed(drifted, seed_rmse=seed_rmse)
+        self.assertFalse(drift['verified'])
+        self.assertEqual(len(drift['reasons']), 24)
+        self.assertTrue(all(r.endswith('resource_protocol: ' + sl.RESOURCE_PROTOCOL) for r in drift['reasons']), drift['reasons'][:2])
+        clean, _, _ = self.tierb_episode(source, self.root / 'fixture/tierb', 7008, protocol=TIERB4)
+        self.assertTrue(ledger.ingest_completed(clean, seed_rmse=seed_rmse)['verified'])
+        # an unknown protocol string is refused at the identity
+        alien, _, _ = self.tierb_episode(source, self.root / 'fixture/tierb', 7011)
+        alien_identity = json.loads((alien / 'identity.json').read_bytes())
+        alien_identity['protocol'] = 'bounded_seed_lineage_v3'
+        alien_dir = self.root / 'fixture/tierb-alien' / digest(encoded(alien_identity))
+        shutil.copytree(alien, alien_dir)
+        (alien_dir / 'identity.json').write_bytes(encoded(alien_identity))
+        verification = verify_episode(alien_dir, dict(evaluator_sha256=self.bound, resource_protocol=sl.RESOURCE_PROTOCOL))
+        self.assertIn('identity_protocol: bounded_seed_lineage_v3', verification['reasons'])
+
+
 class PlanningTests(FixtureCase):
     def setUp(self):
         super().setUp()
@@ -611,6 +838,104 @@ class PlanningTests(FixtureCase):
         other = self.plan(self.ledger('successor-b'))
         self.assertEqual([e['episode_id'] for e in other['episodes']], [e['episode_id'] for e in plan['episodes']])
         self.assertEqual(other['selection'], plan['selection'])
+
+    def test_tierb_plan_top3_per_arm_on_the_rotating_subset(self):
+        # every arm's search ledger carries admitted row-0 RMSE so each arm's top-3 seeds can be ranked
+        for arm in ('generic', 'shuffled'):
+            directory = self.root / 'run/generation-000073' / arm / '55e9dfc7a86361d7/cut-0'
+            doc = json.loads((directory / 'seeds.json').read_bytes())
+            observations = [dict(origin=c['origin'], program_sha256=digest(c['genome'].encode()), genome=c['genome'], initial_seed_slot=i,
+                                 failure=None, metrics=dict(rmse=0.9 - 0.002 * i, units='cut_normalized_target')) for i, c in enumerate(doc['candidates'])]
+            (directory / 'search/observations.json').write_bytes(encoded(observations))
+        context_key = self.prepared_sha + ':0'
+
+        def tierb_plan(ledger, protocol, universe, defaults=None):
+            return ledger.plan_generation(GENERATION, self.seeds['neural'], self.seeds['generic'], self.seeds['shuffled'], self.searches,
+                                          PREPARED_REL, self.generic, defaults or self.defaults, protocol=protocol, tierb_contexts=universe)
+        ledger = self.ledger()
+        with self.assertRaisesRegex(ValueError, 'tierb_contexts'):
+            tierb_plan(ledger, TIERB, None)
+        with self.assertRaisesRegex(ValueError, 'protocol must be'):
+            tierb_plan(ledger, 'bounded_seed_lineage_v3', [context_key])
+        with self.assertRaisesRegex(ValueError, 'include ' + context_key):
+            tierb_plan(ledger, TIERB, ['%064x:0' % 1])
+        # rotation rule: the 32 smallest sha256(prepared:cut:g:'tierb'); a universe of 32 lower-ranked contexts excludes this one
+        ours = sl.tierb_context_rank(self.prepared_sha, 0, GENERATION)
+        below, index = [], 1
+        while len(below) < 32:
+            key = '%064x:0' % index
+            if sl.tierb_context_rank(key[:64], 0, GENERATION) < ours:
+                below.append(key)
+            index += 1
+        subset = sl.tierb_subset([context_key] + below, GENERATION)
+        self.assertEqual(len(subset), 32)
+        self.assertNotIn(context_key, subset)
+        self.assertEqual(subset, sorted(subset, key=lambda k: sl.tierb_context_rank(k[:64], 0, GENERATION)))
+        excluded = tierb_plan(self.ledger('successor-excluded'), TIERB, [context_key] + below)
+        self.assertFalse(excluded['tierb']['selected'])
+        self.assertEqual((excluded['inserted'], excluded['counts'], excluded['episodes'], excluded['tierb']['subset']), (0, {}, [], subset))
+        self.assertEqual(excluded['skipped'][0]['reason'], 'tierb_subset_excluded')
+        self.assertEqual((excluded['tierb']['universe'], excluded['tierb']['subset_size'], excluded['tierb']['top_seeds']), (33, 32, 3))
+        # a universe of 21 contexts: every context is in the subset; the plan holds the top-3 seeds of each arm
+        universe = [context_key] + below[:20]
+        plan = tierb_plan(ledger, TIERB, universe)
+        self.assertEqual(plan['schema'], 'parallel.successor_plan.v1')
+        self.assertTrue(plan['tierb']['selected'])
+        self.assertEqual(plan['tierb']['subset'], sl.tierb_subset(universe, GENERATION))
+        self.assertEqual(plan['tierb']['universe'], 21)
+        self.assertIn('smallest sha256(prepared_sha256:cut:generation:', plan['tierb']['rotation_rule'])
+        self.assertEqual(plan['tierb']['budget'], dict(evaluations=24, candidate_seconds=2, seconds=54, resource_protocol='single_candidate_2s_8gib_v1'))
+        self.assertEqual((plan['tierb']['base'], plan['tierb']['parent_pool'], plan['tierb']['terminations']),
+                         ('bounded_seed_lineage_v3', 4, ['budget_exhausted', 'episode_timeout', 'seed_failed', 'lineage_exhausted']))
+        self.assertEqual(plan['counts'], dict(candidate=3, control_generic=3, control_shuffled=3))
+        self.assertEqual(plan['inserted'], 9)
+        self.assertEqual((plan['protocol'], plan['credit_protocol'], plan['resource_protocol']), (TIERB, TIERB, 'single_candidate_2s_8gib_v1'))
+        self.assertEqual(plan['row0_evidence']['episodes_without_evidence'], 0)
+        by_role = {}
+        for episode in plan['episodes']:
+            by_role.setdefault(episode['role'], []).append(episode)
+        for arm, role, population in (('neural', 'candidate', self.population),
+                                      ('generic', 'control_generic', json.loads((self.root / self.seeds['generic']).read_bytes())),
+                                      ('shuffled', 'control_shuffled', json.loads((self.root / self.seeds['shuffled']).read_bytes()))):
+            observations = self.root / 'run/generation-000073' / arm / '55e9dfc7a86361d7/cut-0/search/observations.json'
+            admitted = sl.admitted_rmse(json.loads(observations.read_bytes()))
+            pool = sl.seed_genomes(population, sl.SEED_ORIGIN_BY_ARM[arm])
+            expected = [sha for _, sha in sorted((admitted[digest(g.encode())], digest(g.encode())) for g in pool if digest(g.encode()) in admitted)[:3]]
+            self.assertEqual(plan['selection'][role]['chosen'], expected)                           # rank order
+            self.assertEqual(sorted(e['parent_program_sha256'] for e in by_role[role]), sorted(expected))   # episodes follow slot order
+            self.assertEqual({e['arm'] for e in by_role[role]}, {arm})
+        payloads = {r['id']: json.loads(r['payload']) for r in ledger.db.execute('SELECT id, payload FROM episodes')}
+        for episode in plan['episodes']:
+            identity = json.loads((self.root / 'successor/episodes' / episode['episode_id'] / 'identity.json').read_bytes())
+            self.assertEqual(digest(encoded(identity)), episode['episode_id'])
+            self.assertEqual((identity['protocol'], identity['evaluations'], identity['candidate_seconds'], identity['seconds'], identity['resource_protocol']),
+                             (TIERB, 24, 2, 54, 'single_candidate_2s_8gib_v1'))
+            self.assertEqual((identity['rng_seed'], identity['seed_arm'], identity['role'], identity['replicate'], identity['generation'], identity['evaluator_sha256']),
+                             (20260912, episode['arm'], episode['role'], 0, GENERATION, self.bound))
+            seeds = json.loads((self.root / 'successor/episodes' / episode['episode_id'] / 'seeds.json').read_bytes())
+            self.assertEqual((len(seeds['candidates']), seeds['candidates'][0]['origin']), (80, episode['seed_origin']))
+            self.assertIsNotNone(payloads[episode['episode_id']]['extra']['admitted_rmse'])
+        self.assertTrue((self.root / 'successor/plans/generation-73' / (context_key + '.' + TIERB + '.json')).is_file())
+        again = tierb_plan(ledger, TIERB, universe)
+        self.assertEqual((again['inserted'], again['receipt_sha256']), (0, plan['receipt_sha256']))
+        # the cap-4s variant rebinds exactly candidate_seconds / seconds / resource_protocol and gets its own identities
+        four = tierb_plan(ledger, TIERB4, universe)
+        self.assertEqual((four['counts'], four['inserted']), (plan['counts'], 9))
+        self.assertEqual({e['episode_id'] for e in four['episodes']} & {e['episode_id'] for e in plan['episodes']}, set())
+        self.assertEqual([e['parent_program_sha256'] for e in four['episodes']], [e['parent_program_sha256'] for e in plan['episodes']])
+        identity4 = json.loads((self.root / 'successor/episodes' / four['episodes'][0]['episode_id'] / 'identity.json').read_bytes())
+        identity2 = json.loads((self.root / 'successor/episodes' / plan['episodes'][0]['episode_id'] / 'identity.json').read_bytes())
+        self.assertEqual((identity4['protocol'], identity4['evaluations'], identity4['candidate_seconds'], identity4['seconds'], identity4['resource_protocol']),
+                         (TIERB4, 24, 4, 102, 'single_candidate_4s_8gib_v1'))
+        self.assertEqual({k: v for k, v in identity4.items() if k not in ('protocol', 'candidate_seconds', 'seconds', 'resource_protocol')},
+                         {k: v for k, v in identity2.items() if k not in ('protocol', 'candidate_seconds', 'seconds', 'resource_protocol')})
+        # the one-step plan coexists in the same ledger with its own receipt and 91 more pending episodes
+        onestep = self.plan(ledger)
+        self.assertEqual(onestep['inserted'], 91)
+        self.assertEqual(ledger.db.execute("SELECT count(*) FROM episodes WHERE status='pending'").fetchone()[0], 109)
+        self.assertEqual(ledger.db.execute("SELECT count(*) FROM episodes WHERE status='pending' AND role='candidate'").fetchone()[0], 70)
+        with self.assertRaisesRegex(ValueError, 'contradict'):
+            tierb_plan(self.ledger('successor-contradict'), TIERB, universe, dict(self.defaults, evaluations=2))
 
     def test_supersede_is_terminal(self):
         ledger = self.ledger()

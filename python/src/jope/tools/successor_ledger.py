@@ -27,6 +27,18 @@ mandatory (F5): an episode is verified only when its seed's admitted RMSE is kno
 search observations at plan time, or --seed-rmse at ingest) and row 0 reproduces it bit-exactly;
 episodes without that evidence stay unverified ('row0_label_unverified') and never reach a bundle.
 next_outcome(generation) joins generation g's candidate seeds to generation g+1 outcomes for F4(b).
+
+Tier-B (protocol bounded_seed_lineage_v3, cap variants _cap2s / _cap4s, never mixed inside a comparison group):
+gen-0 is the seed alone (row 0; F5 row-0 equality), every later fit is a mutation of a lineage member or a crossover
+of two evaluated lineage members (no immigrants, no unevaluated donors), budget 24 attempted fits (seed + 23; failures
+consume budget), identity evaluations 24 / candidate_seconds cap / seconds 24*cap+6 / single_candidate_{cap}s_8gib_v1.
+verify_episode checks row 0 is the seed, every descendant's genetic_parents are program_sha256 values of earlier rows
+of the same episode (else 'lineage_violation': excluded from bundles and credit), and attempted fits <= 24. Credit is
+S_lineage = min finite RMSE over seed + descendants (S_rmse of the export row); every descendant keeps its own row.
+termination_reason comes from result.json ({budget_exhausted, episode_timeout, seed_failed, lineage_exhausted}); an
+episode ended by the outer timeout, or without a known termination, is status 'incomplete' (retained, never resumed,
+credited only for what it measured). plan_generation(protocol=...) plans the top-3 admitted seeds per arm on the
+rotating 32-context subset (smallest sha256(prepared:cut:g:'tierb')), matched arms under the same rng derivation.
 """
 import argparse
 import hashlib
@@ -49,7 +61,18 @@ HEX64 = re.compile(r'^[0-9a-f]{64}$')
 
 PROTOCOL_V2 = 'parallel.seed_continuation.qualification.v2'
 PROTOCOL_V3 = 'parallel.seed_continuation.qualification.v3'
-PROTOCOLS = (PROTOCOL_V2, PROTOCOL_V3)
+ONESTEP_PROTOCOLS = (PROTOCOL_V2, PROTOCOL_V3)
+TIERB_BASE = 'bounded_seed_lineage_v3'
+TIERB_CAP_SECONDS = {'bounded_seed_lineage_v3_cap2s': 2, 'bounded_seed_lineage_v3_cap4s': 4}
+TIERB_PROTOCOLS = tuple(TIERB_CAP_SECONDS)
+PROTOCOLS = ONESTEP_PROTOCOLS + TIERB_PROTOCOLS
+TIERB_BUDGET = 24
+TIERB_PARENT_POOL = 4
+TIERB_TERMINATIONS = ('budget_exhausted', 'episode_timeout', 'seed_failed', 'lineage_exhausted')
+TIERB_SUBSET = 32
+TIERB_TOP_SEEDS = 3
+TIERB_SALT = 'tierb'
+LINEAGE_VIOLATION = 'lineage_violation'
 RESOURCE_PROTOCOL = 'single_candidate_2s_8gib_v1'
 EVALUATOR_PROTOCOL = 'featmath_training_fold_normalized_v1'
 CREDIT_PROTOCOL = 'onestep_forced_mutation_v2'
@@ -83,9 +106,11 @@ CREATE TABLE IF NOT EXISTS episodes(id TEXT PRIMARY KEY,payload TEXT NOT NULL,st
 CREATE TABLE IF NOT EXISTS emissions(generation INTEGER,population_sha TEXT,slot INTEGER,episode TEXT,status TEXT,PRIMARY KEY(generation,population_sha,slot));
 CREATE TABLE IF NOT EXISTS events(sequence INTEGER PRIMARY KEY AUTOINCREMENT,episode TEXT,status TEXT,at REAL,detail TEXT);
 CREATE TABLE IF NOT EXISTS seed_values(generation INTEGER,context_key TEXT,arm TEXT,role TEXT,parent_program_sha256 TEXT,replicate INTEGER,
+    protocol TEXT NOT NULL DEFAULT 'onestep_forced_mutation_v2',
     own_rmse REAL,child_program_sha256 TEXT,child_rmse REAL,child_failure TEXT,flip INTEGER,S_rmse REAL,
+    attempted_descendants INTEGER,successful_descendants INTEGER,termination_reason TEXT,lineage_size INTEGER,
     seed_beats_incumbent INTEGER,child_beats_incumbent INTEGER,episode TEXT,verified INTEGER,detail TEXT,
-    PRIMARY KEY(generation,context_key,arm,parent_program_sha256,replicate));
+    PRIMARY KEY(generation,context_key,arm,parent_program_sha256,replicate,protocol));
 CREATE TABLE IF NOT EXISTS economics(generation INTEGER PRIMARY KEY,tier TEXT,reserved_core_seconds REAL,attempted_fits INTEGER,
     successful_fits INTEGER,unique_fits_per_core_second REAL,timeouts INTEGER,failures INTEGER,superseded INTEGER,
     completed_within_generation INTEGER,receipt TEXT);
@@ -136,6 +161,86 @@ def replicate_rng(context_key, generation, parent_sha256, replicate=1):
     return int.from_bytes(hashlib.sha256(f'{context_key}:{generation}:{parent_sha256}:{replicate}'.encode()).digest()[:8], 'little')
 
 
+def is_tierb(protocol):
+    return protocol in TIERB_CAP_SECONDS
+
+
+def credit_protocol_of(identity_protocol):
+    """Credit protocol of an export row: the Tier-B cap variant itself, else the one-step credit protocol."""
+    return identity_protocol if is_tierb(identity_protocol) else CREDIT_PROTOCOL
+
+
+def credited_statuses(protocol):
+    """Tier-B episodes ended by the outer timeout are 'incomplete' and credited for what they measured."""
+    return ('measured', 'incomplete') if is_tierb(protocol) else ('measured',)
+
+
+def tierb_budget(protocol):
+    """Identity budget of a Tier-B cap variant: 24 attempted fits, candidate cap, episode ceiling 24*cap + 6 s."""
+    cap = TIERB_CAP_SECONDS[protocol]
+    return dict(evaluations=TIERB_BUDGET, candidate_seconds=cap, seconds=TIERB_BUDGET * cap + 6,
+                resource_protocol='single_candidate_%ds_8gib_v1' % cap)
+
+
+def tierb_context_rank(prepared_sha256, cut, generation):
+    """Rotation key of a context: sha256(prepared:cut:generation:'tierb'); the subset is the 32 smallest."""
+    return hashlib.sha256(f'{prepared_sha256}:{cut}:{generation}:{TIERB_SALT}'.encode()).hexdigest()
+
+
+def tierb_subset(context_keys, generation, size=TIERB_SUBSET):
+    """The rotating Tier-B subset of a generation: `size` context keys (prepared_sha256:cut) of smallest rank."""
+    keyed = sorted((tierb_context_rank(*key.rsplit(':', 1), generation), key) for key in dict.fromkeys(context_keys))
+    return [key for _, key in keyed[:size]]
+
+
+def rebind_tierb(episodes, protocol):
+    """Codex's continuation.plan() pins candidate_seconds 2 and the 2 s resource protocol; a Tier-B identity rebinds
+    exactly those two fields to its cap variant and recomputes the episode id (identity bytes -> id)."""
+    budget = tierb_budget(protocol)
+    out = []
+    for episode in episodes:
+        identity = dict(episode['identity'])
+        require(identity['protocol'] == protocol and identity['evaluations'] == budget['evaluations'] and identity['seconds'] == budget['seconds'],
+                'Tier-B identity budget drift')
+        identity.update(candidate_seconds=budget['candidate_seconds'], resource_protocol=budget['resource_protocol'])
+        out.append(dict(episode, identity=identity, episode_id=digest(encoded(identity))))
+    return out
+
+
+def verify_lineage(identity, rows):
+    """Tier-B lineage rule over one episode's rows; returns verification reasons (empty = valid).
+
+    Row 0 is the seed (program == parent, no genetic parents, initial_seed_slot 0); every later row is a mutation (one
+    parent) or a crossover (two parents) whose parents are all program_sha256 values of earlier rows of the same episode
+    (else 'lineage_violation'); programs never repeat; attempted fits (failures included) never exceed the 24 budget.
+    """
+    reasons, seen = [], set()
+    parent = identity.get('parent_program_sha256')
+    for index, row in enumerate(rows):
+        prefix = 'row%d_' % index
+        program, parents = row.get('program_sha256'), row.get('genetic_parents')
+        if not isinstance(row.get('genome'), str) or digest(row['genome'].encode()) != program:
+            reasons.append(prefix + 'program_bytes_mismatch')
+        if program in seen:
+            reasons.append(prefix + 'repeated_fit')
+        if row.get('evaluation_index') != index:
+            reasons.append(prefix + 'evaluation_order')
+        if index == 0:
+            if program != parent or parents != [] or row.get('initial_seed_slot') != 0:
+                reasons.append('row0_not_the_seed: program %s parents %s initial_seed_slot %s' % (program, parents, row.get('initial_seed_slot')))
+        elif not isinstance(parents, list) or len(parents) not in (1, 2) or any(p not in seen for p in parents):
+            reasons.append('%s: row %d parents %s are not all earlier lineage members' % (LINEAGE_VIOLATION, index, parents))
+        seen.add(program)
+    if len(rows) > TIERB_BUDGET:
+        reasons.append('budget_exceeded: %d attempted fits > %d' % (len(rows), TIERB_BUDGET))
+    return reasons
+
+
+def seed_genomes(doc, origin):
+    """Unique-byte genomes of one seed origin in slot order."""
+    return list(dict.fromkeys(c['genome'] for c in doc['candidates'] if c.get('origin') == origin and isinstance(c.get('genome'), str) and c['genome']))
+
+
 def rmse_of(row):
     if not row or row.get('failure') is not None or not isinstance(row.get('metrics'), dict):
         return None
@@ -183,21 +288,45 @@ def manifest_evaluator(root, manifest_path):
                 evaluator_sha256=bound, binary_present=on_disk, vocabulary_sha256=manifest.get('vocabulary_sha256'))
 
 
-def seed_value(identity, rows):
-    """r0, child outcome, flip and S = min(r0, r_child) (failed/absent child -> r0); never rewrites a label."""
+def seed_value(identity, rows, summary=None):
+    """Per-episode credit; never rewrites a label.
+
+    One-step: r0, the forced child, flip = 1[r_child < r0], S = min(r0, r_child) (failed/absent child -> r0).
+    Tier-B: `child` is the best measured lineage descendant, flip = 1[best < r0], S = S_lineage = min finite RMSE over
+    seed + descendants; attempted/successful descendants are counted from the rows (failures consume budget);
+    termination_reason comes from result.json (`summary`), else 'unknown'; an episode ended by the outer timeout or
+    without a known termination is status 'incomplete' (credited only for what it measured).
+    """
+    protocol = credit_protocol_of(identity.get('protocol'))
+    tierb = is_tierb(protocol)
     row0 = rows[0] if rows else None
-    row1 = rows[1] if len(rows) > 1 else None
-    child = dict(program_sha256=row1.get('program_sha256') if row1 else None, rmse=rmse_of(row1),
-                 failure=(row1.get('failure') if row1 else 'child_unstarted'), genetic_operator=row1.get('genetic_operator') if row1 else None)
+    descendants = list(rows[1:])
+    scored = [(rmse_of(r), i, r) for i, r in enumerate(descendants) if rmse_of(r) is not None]
+    if tierb:
+        best = min(scored, key=lambda s: (s[0], s[1])) if scored else None
+        row1 = best[2] if best else None
+        failure = None if best else ('no_descendant_measured' if descendants else 'child_unstarted')
+    else:
+        row1 = descendants[0] if descendants else None
+        failure = row1.get('failure') if row1 else 'child_unstarted'
+    child = dict(program_sha256=row1.get('program_sha256') if row1 else None, rmse=rmse_of(row1), failure=failure,
+                 genetic_operator=row1.get('genetic_operator') if row1 else None)
     if row1 and child['rmse'] is None and child['failure'] is None:
         child['failure'] = 'child_unmeasured'
     r0 = rmse_of(row0)
+    termination = None
+    if tierb:
+        declared = (summary or {}).get('termination_reason') if isinstance(summary, dict) else None
+        termination = declared if declared in TIERB_TERMINATIONS else 'unknown'
+    binding = dict(protocol=protocol, attempted_descendants=len(descendants), successful_descendants=len(scored),
+                   lineage_size=int(r0 is not None) + len(scored), termination_reason=termination, parent=identity['parent_program_sha256'])
     if r0 is None:
         return dict(r0=None, child=child, flip=None, S_rmse=None, status='failed',
-                    failure=(row0.get('failure') if row0 else None) or 'seed_unmeasured', parent=identity['parent_program_sha256'])
+                    failure=(row0.get('failure') if row0 else None) or 'seed_unmeasured', **binding)
     flip = 1 if child['rmse'] is not None and child['rmse'] < r0 else 0
+    status = 'incomplete' if tierb and termination in ('episode_timeout', 'unknown') else 'measured'
     return dict(r0=r0, child=child, flip=flip, S_rmse=min(r0, child['rmse']) if child['rmse'] is not None else r0,
-                status='measured', failure=None, parent=identity['parent_program_sha256'])
+                status=status, failure=None, **binding)
 
 
 def verify_episode(episode_dir, expected):
@@ -211,7 +340,7 @@ def verify_episode(episode_dir, expected):
     out = dict(schema=VERIFY_SCHEMA, episode_dir=str(directory), verified=False, reasons=reasons, rows=None, episode_id=None,
                context_key=None, observations_sha256=None, search_sha256=None, completed_at=None, driver_sha256=None,
                row0_label_verified=None, admitted_seed_rmse=None, seed_unmeasured=False, evaluator_sha256=None,
-               resource_protocol=None, protocol=None)
+               resource_protocol=None, protocol=None, termination_reason=None)
     try:
         identity_bytes = (directory / 'identity.json').read_bytes()
         identity = json.loads(identity_bytes)
@@ -235,9 +364,27 @@ def verify_episode(episode_dir, expected):
                evaluator_sha256=receipt.get('evaluator_sha256'), resource_protocol=rows[0].get('resource_protocol') if rows else None)
     evaluator = expected['evaluator_sha256']
     partition = expected.get('partition', 'meta_train')
+    protocol = identity.get('protocol')
+    tierb = is_tierb(protocol)
+    if tierb:
+        # A cap variant binds its own budget and resource protocol; rows may carry the cap variant or the base rule id.
+        budget = tierb_budget(protocol)
+        resource = budget['resource_protocol']
+        budget_ok = all(identity.get(k) == v for k, v in budget.items() if k != 'resource_protocol')
+        budget_reason = 'identity budget must pin evaluations %d / candidate_seconds %d / seconds %d' % (
+            budget['evaluations'], budget['candidate_seconds'], budget['seconds'])
+        identity_resource_ok = identity.get('resource_protocol') == resource
+        continuation_protocols = (protocol, TIERB_BASE)
+    else:
+        resource = expected['resource_protocol']
+        budget_ok = identity.get('evaluations') == 2 and identity.get('candidate_seconds') == 2
+        budget_reason = 'identity budget must pin evaluations 2 / candidate_seconds 2'
+        # v2 identities (seed-continuation-v2) carry no resource_protocol; v3 binds it. Rows are always checked below.
+        identity_resource_ok = 'resource_protocol' not in identity or identity['resource_protocol'] == resource
+        continuation_protocols = (CONTINUATION_PROTOCOL,)
     checks = [
         (receipt.get('schema') == SEARCH_SCHEMA, 'search_schema: ' + str(receipt.get('schema'))),
-        (identity.get('protocol') in expected.get('protocols', PROTOCOLS), 'identity_protocol: ' + str(identity.get('protocol'))),
+        (protocol in expected.get('protocols', PROTOCOLS), 'identity_protocol: ' + str(protocol)),
         (identity.get('final_tests_opened') is False and receipt.get('final_tests_opened') is False, 'final_tests_opened must be false'),
         (identity.get('partition') == partition, 'identity_partition: ' + str(identity.get('partition'))),
         (identity.get('evaluator_sha256') == evaluator, 'identity_evaluator_mismatch: ' + str(identity.get('evaluator_sha256'))),
@@ -245,10 +392,8 @@ def verify_episode(episode_dir, expected):
         (receipt.get('evaluator_protocol') == EVALUATOR_PROTOCOL, 'evaluator_protocol: ' + str(receipt.get('evaluator_protocol'))),
         (receipt.get('continuation_sha256') == episode_id, 'receipt_continuation_mismatch'),
         (finite(receipt.get('completed_at')), 'completed_at absent or nonfinite'),
-        (identity.get('evaluations') == 2 and identity.get('candidate_seconds') == 2, 'identity budget must pin evaluations 2 / candidate_seconds 2'),
-        # v2 identities (seed-continuation-v2) carry no resource_protocol; v3 binds it. Rows are always checked below.
-        ('resource_protocol' not in identity or identity['resource_protocol'] == expected['resource_protocol'],
-         'identity_resource_protocol: ' + str(identity.get('resource_protocol'))),
+        (budget_ok, budget_reason),
+        (identity_resource_ok, 'identity_resource_protocol: ' + str(identity.get('resource_protocol'))),
         (bool(rows), 'no observation rows'),
     ]
     if expected.get('vocabulary_sha256') is not None:
@@ -257,10 +402,10 @@ def verify_episode(episode_dir, expected):
         prefix = 'row%d_' % index
         checks += [
             (row.get('evaluator_sha256') == evaluator, prefix + 'evaluator_mismatch: ' + str(row.get('evaluator_sha256'))),
-            (row.get('resource_protocol') == expected['resource_protocol'], prefix + 'resource_protocol: ' + str(row.get('resource_protocol'))),
+            (row.get('resource_protocol') == resource, prefix + 'resource_protocol: ' + str(row.get('resource_protocol'))),
             (row.get('partition') == partition, prefix + 'partition: ' + str(row.get('partition'))),
             (row.get('continuation_sha256') == episode_id, prefix + 'continuation_mismatch'),
-            (row.get('continuation_protocol') == CONTINUATION_PROTOCOL, prefix + 'continuation_protocol'),
+            (row.get('continuation_protocol') in continuation_protocols, prefix + 'continuation_protocol: ' + str(row.get('continuation_protocol'))),
             (row.get('metric_units') == 'cut_normalized_target', prefix + 'metric_units'),
             (row.get('evaluator_protocol') == EVALUATOR_PROTOCOL, prefix + 'evaluator_protocol'),
             ('failure' in row, prefix + 'explicit outcome absent'),
@@ -276,10 +421,28 @@ def verify_episode(episode_dir, expected):
     for ok, reason in checks:
         if not ok:
             reasons.append(reason)
-    try:
-        summarize(identity, episode_id, rows)
-    except (ValueError, KeyError, TypeError) as error:
-        reasons.append('lineage: ' + str(error))
+    if tierb:
+        reasons.extend(verify_lineage(identity, rows))
+        # termination_reason is bound by result.json when present; absence is not a verification failure (the episode
+        # is then 'incomplete'), an unknown or inconsistent value is.
+        if (directory / 'result.json').is_file():
+            try:
+                termination = json.loads((directory / 'result.json').read_bytes()).get('termination_reason')
+            except (OSError, ValueError, AttributeError) as error:
+                reasons.append('result_unreadable: ' + str(error))
+            else:
+                out['termination_reason'] = termination
+                if termination not in TIERB_TERMINATIONS:
+                    reasons.append('termination_reason_invalid: ' + str(termination))
+                elif termination == 'budget_exhausted' and len(rows) != TIERB_BUDGET:
+                    reasons.append('termination_inconsistent: budget_exhausted with %d attempted fits' % len(rows))
+                elif termination == 'seed_failed' and rmse_of(rows[0] if rows else None) is not None:
+                    reasons.append('termination_inconsistent: seed_failed with a measured seed')
+    else:
+        try:
+            summarize(identity, episode_id, rows)
+        except (ValueError, KeyError, TypeError) as error:
+            reasons.append('lineage: ' + str(error))
     # F5 (mandatory): row 0 must reproduce the seed's admitted RMSE bit-exactly. True = equal, False = measured
     # and different (a mismatch), None = not verifiable (no admitted value supplied, or seed row unmeasured);
     # anything but True leaves the episode unverified.
@@ -302,16 +465,30 @@ def verify_episode(episode_dir, expected):
 
 
 def describe(rows, tie=EXACT_TIE):
-    """Descriptive statistics of export rows (candidate role, replicate 0); exact-tie rule, no eps."""
-    contexts = {}
+    """Descriptive statistics of export rows (candidate role, replicate 0) per protocol; exact-tie rule, no eps.
+
+    contexts/pooled keep the one-step protocol (unchanged keys); by_protocol carries every protocol present, Tier-B
+    included (credited rows are status measured or incomplete; child = the best lineage descendant).
+    """
+    grouped = {}
     for row in rows:
         if row.get('role') == 'candidate' and row.get('replicate', 0) == 0:
-            contexts.setdefault(row['context_key'], []).append(row)
-    pooled = dict(candidates=0, measured=0, finite_children=0, better=0, tied=0, worse=0, flips=0,
+            grouped.setdefault(row.get('protocol') or CREDIT_PROTOCOL, {}).setdefault(row['context_key'], []).append(row)
+    by_protocol = {protocol: describe_protocol(protocol, contexts, tie) for protocol, contexts in sorted(grouped.items())}
+    onestep = by_protocol.get(CREDIT_PROTOCOL) or describe_protocol(CREDIT_PROTOCOL, {}, tie)
+    return dict(schema=INFO_SCHEMA, tie_rule='exact: |d| <= %g (no replicate floor)' % tie, protocol=CREDIT_PROTOCOL,
+                contexts=onestep['contexts'], pooled=onestep['pooled'], by_protocol=by_protocol,
+                improvement_definition='ln(r0 / r_child) over finite parent/child pairs (Tier-B: r_child = best lineage descendant)',
+                final_tests_opened=False)
+
+
+def describe_protocol(protocol, contexts, tie=EXACT_TIE):
+    statuses = credited_statuses(protocol)
+    pooled = dict(candidates=0, measured=0, incomplete=0, finite_children=0, better=0, tied=0, worse=0, flips=0,
                   p_flip_flips=0, p_flip_pairs=0, p_flip_finite_flips=0, p_flip_finite_pairs=0)
     report = {}
     for context_key, group in sorted(contexts.items()):
-        measured = [r for r in group if r.get('status') == 'measured' and finite(r.get('r0'))]
+        measured = [r for r in group if r.get('status') in statuses and finite(r.get('r0'))]
         finite_rows = [r for r in measured if finite(r['child'].get('rmse'))]
         better = sum(r['child']['rmse'] < r['r0'] for r in finite_rows)
         tied = sum(r['child']['rmse'] == r['r0'] for r in finite_rows)
@@ -320,7 +497,8 @@ def describe(rows, tie=EXACT_TIE):
         flips_finite, pairs_finite = flip_pairs(finite_rows, tie)
         best_parent = min((r['r0'] for r in measured), default=None)
         best_child = min((r['child']['rmse'] for r in finite_rows), default=None)
-        entry = dict(candidates=len(group), measured=len(measured), finite_children=len(finite_rows), better=better, tied=tied, worse=worse,
+        entry = dict(candidates=len(group), measured=len(measured), incomplete=sum(r.get('status') == 'incomplete' for r in measured),
+                     finite_children=len(finite_rows), better=better, tied=tied, worse=worse,
                      flips=sum(r.get('flip') or 0 for r in measured),
                      spearman_r0_log_improvement=spearman([r['r0'] for r in finite_rows], [math.log(r['r0'] / r['child']['rmse']) for r in finite_rows]),
                      p_flip=(flips_all / pairs_all if pairs_all else None), p_flip_flips=flips_all, p_flip_pairs=pairs_all,
@@ -332,8 +510,7 @@ def describe(rows, tie=EXACT_TIE):
             pooled[key] += entry[key]
     pooled['p_flip'] = pooled['p_flip_flips'] / pooled['p_flip_pairs'] if pooled['p_flip_pairs'] else None
     pooled['p_flip_finite'] = pooled['p_flip_finite_flips'] / pooled['p_flip_finite_pairs'] if pooled['p_flip_finite_pairs'] else None
-    return dict(schema=INFO_SCHEMA, tie_rule='exact: |d| <= %g (no replicate floor)' % tie, contexts=report, pooled=pooled,
-                improvement_definition='ln(r0 / r_child) over finite parent/child pairs', final_tests_opened=False)
+    return dict(protocol=protocol, credited_statuses=list(statuses), contexts=report, pooled=pooled)
 
 
 def flip_pairs(rows, tie):
@@ -441,15 +618,28 @@ class Ledger(Dispatcher):
 
     # ----------------------------------------------------------------------------- planning
     def plan_generation(self, generation, neural_seeds_json, generic_seeds_json, shuffled_seeds_json, search_best_by_arm,
-                        prepared, generic_background, identity_defaults):
-        """Plan every role for one (generation, context); writes immutable episode inputs and pending rows."""
+                        prepared, generic_background, identity_defaults, protocol=None, tierb_contexts=None):
+        """Plan every role for one (generation, context); writes immutable episode inputs and pending rows.
+
+        protocol None plans the one-step v3 roles (candidate/controls/gp_final/replicate_panel). A Tier-B cap variant
+        plans instead the top-3 admitted seeds per arm under bounded_seed_lineage_v3 when the context lies in the
+        rotating 32-context subset of `tierb_contexts` (every context key of the generation); its receipt is written
+        beside the one-step receipt as <context_key>.<protocol>.json.
+        """
         require(type(generation) is int and generation >= 0, 'generation must be a nonnegative integer')
+        require(protocol is None or is_tierb(protocol), 'protocol must be None (one-step v3) or one of ' + ', '.join(TIERB_PROTOCOLS))
         defaults = dict(DEFAULTS)
         defaults.update(identity_defaults)
         for key in ('excluded_families', 'rng_seed', 'parent_checkpoint', 'parent_checkpoint_sha256'):
             require(key in defaults, 'identity_defaults requires ' + key)
-        require(defaults['evaluations'] == 2 and defaults['candidate_seconds'] == 2 and defaults['seconds'] == 6,
-                'protocol pins evaluations 2, candidate_seconds 2, seconds 6')
+        if protocol is None:
+            require(defaults['evaluations'] == 2 and defaults['candidate_seconds'] == 2 and defaults['seconds'] == 6,
+                    'protocol pins evaluations 2, candidate_seconds 2, seconds 6')
+        else:
+            budget = tierb_budget(protocol)
+            for key, value in budget.items():
+                require(identity_defaults.get(key, value) == value, 'Tier-B identity_defaults contradict the protocol budget on ' + key)
+            defaults.update(budget, protocol=protocol)
         prepared_dir = within(self.root, prepared)
         prepared_bytes = (prepared_dir / 'prepared.json').read_bytes()
         prepared_sha, prepared_doc = digest(prepared_bytes), json.loads(prepared_bytes)
@@ -488,11 +678,13 @@ class Ledger(Dispatcher):
                       vocabulary_sha=self.identity['vocabulary_sha256'], excluded_families=defaults['excluded_families'],
                       evaluations=defaults['evaluations'], seconds=defaults['seconds'], candidate_seconds=defaults['candidate_seconds'],
                       protocol=defaults['protocol'], generation=generation)
+        if protocol is not None:
+            return self.plan_tierb(generation, protocol, tierb_contexts, dict(
+                populations=populations, prepared_dir=prepared_dir, prepared_doc=prepared_doc, prepared_sha=prepared_sha, cut=cut,
+                context_key=context_key, background=background, defaults=defaults, common=dict(common, candidate_seconds=2),
+                admitted_by_arm=admitted_by_arm, admitted_sources=admitted_sources, evidence=evidence))
         planned, skipped, selection = [], [], {}
-
-        def genomes(doc, origin):
-            return list(dict.fromkeys(c['genome'] for c in doc['candidates'] if c.get('origin') == origin and isinstance(c.get('genome'), str) and c['genome']))
-
+        genomes = seed_genomes
         # candidates: every unique-byte neural emission, capped in slot order
         neural = populations['neural']
         unique = genomes(neural['doc'], 'neural_policy')
@@ -593,6 +785,74 @@ class Ledger(Dispatcher):
         receipt_sha = immutable(plans / (context_key + '.json'), receipt)
         return dict(receipt, receipt_sha256=receipt_sha, inserted=inserted)
 
+    def plan_tierb(self, generation, protocol, tierb_contexts, state):
+        """Tier-B roles of one context: the top-3 seeds per arm by admitted row-0 RMSE (neural -> candidate, generic ->
+        control_generic, shuffled -> control_shuffled), one bounded_seed_lineage episode each under the one-step rng
+        derivation, only when the context lies in the generation's rotating 32-context subset."""
+        require(tierb_contexts is not None, 'Tier-B planning requires tierb_contexts: every context key (prepared_sha256:cut) of the generation')
+        universe = tierb_contexts if isinstance(tierb_contexts, list) else json.loads(within(self.root, tierb_contexts).read_bytes())
+        universe = list(dict.fromkeys(universe))
+        context_key, populations, defaults, evidence = state['context_key'], state['populations'], state['defaults'], state['evidence']
+        require(all(isinstance(k, str) and k.count(':') == 1 for k in universe) and context_key in universe,
+                'tierb_contexts must list context keys prepared_sha256:cut and include ' + context_key)
+        budget = tierb_budget(protocol)
+        subset = tierb_subset(universe, generation)
+        selected = context_key in subset
+        planned, skipped, selection = [], [], {}
+        if not selected:
+            skipped.append(dict(role='*', reason='tierb_subset_excluded', rank=tierb_context_rank(state['prepared_sha'], state['cut'], generation)))
+        for arm, role in (('neural', 'candidate'), ('generic', 'control_generic'), ('shuffled', 'control_shuffled')):
+            if not selected:
+                break
+            population = populations.get(arm)
+            if population is None:
+                skipped.append(dict(role=role, reason=arm + ' seeds absent'))
+                continue
+            origin = SEED_ORIGIN_BY_ARM[arm]
+            admitted = state['admitted_by_arm'].get(arm, {})
+            pool = seed_genomes(population['doc'], origin)
+            ranked = sorted((admitted[digest(g.encode())], digest(g.encode()), g) for g in pool if digest(g.encode()) in admitted)
+            chosen = [g for _, _, g in ranked[:TIERB_TOP_SEEDS]]
+            selection[role] = dict(pool=len(pool), with_evidence=len(ranked), chosen=[digest(g.encode()) for g in chosen],
+                                   rule='top-%d by admitted row-0 RMSE, ties by program sha256' % TIERB_TOP_SEEDS)
+            if not chosen:
+                skipped.append(dict(role=role, reason='no ' + origin + ' seed with admitted row-0 RMSE'))
+                continue
+            result = plan(population['doc'], state['prepared_doc'], state['background'], population_sha=population['sha'], rng_seed=defaults['rng_seed'],
+                          arm=arm, role=role, seed_origin=origin, replicate=0, select=chosen, **state['common'])
+            for episode in rebind_tierb(result['episodes'], protocol):
+                planned.append(dict(episode=episode, role=role, arm=arm, replicate=0, seed_origin=origin,
+                                    source=population['path'], source_sha256=population['sha'],
+                                    extra=evidence(arm, episode['identity']['parent_program_sha256'])))
+        inserted = self.insert(generation, context_key, state['prepared_dir'], state['prepared_sha'], state['cut'], defaults, planned,
+                               dict(population_sha=populations['neural']['sha'], rows=[]))
+        counts = {}
+        for item in planned:
+            counts[item['role']] = counts.get(item['role'], 0) + 1
+        prepared_doc = state['prepared_doc']
+        receipt = dict(schema=PLAN_SCHEMA, generation=generation, context_key=context_key, prepared_sha256=state['prepared_sha'], cut=state['cut'],
+                       dataset=prepared_doc['dataset'], family=prepared_doc['family'], partition=prepared_doc['meta_partition'],
+                       protocol=protocol, credit_protocol=protocol, resource_protocol=budget['resource_protocol'],
+                       evaluator_sha256=self.identity['evaluator_sha256'], producing_checkpoint_sha256=populations['neural']['doc']['checkpoint_sha256'],
+                       episodes=[dict(episode_id=i['episode']['episode_id'], role=i['role'], arm=i['arm'], replicate=i['replicate'],
+                                      seed_origin=i['seed_origin'], parent_program_sha256=i['episode']['identity']['parent_program_sha256'],
+                                      rng_seed=i['episode']['identity']['rng_seed'], priority=PRIORITY.index(i['role']), protocol=protocol) for i in planned],
+                       counts=counts, selection=selection, skipped=skipped,
+                       sources={arm: dict(path=p['path'], sha256=p['sha']) for arm, p in populations.items()},
+                       row0_evidence=dict(sources=state['admitted_sources'], episodes_with_evidence=len(planned), episodes_without_evidence=0),
+                       tierb=dict(base=TIERB_BASE, cap_seconds=budget['candidate_seconds'], budget=dict(budget), parent_pool=TIERB_PARENT_POOL,
+                                  terminations=list(TIERB_TERMINATIONS), top_seeds=TIERB_TOP_SEEDS, subset_size=TIERB_SUBSET,
+                                  subset=subset, selected=selected, universe=len(universe), universe_sha256=digest(encoded(sorted(universe))),
+                                  rotation_rule='the %d context keys of the generation with the smallest sha256(prepared_sha256:cut:generation:%r); '
+                                                'the generation term rotates the subset' % (TIERB_SUBSET, TIERB_SALT),
+                                  seed_rule='top-%d seeds per arm by admitted row-0 RMSE (arm search observations); seeds without '
+                                            'admitted evidence are never ranked' % TIERB_TOP_SEEDS,
+                                  rng_rule='identity_defaults rng_seed for every arm (same derivation as the one-step arms)'),
+                       final_tests_opened=False)
+        plans = self.directory / 'plans' / ('generation-%d' % generation)
+        receipt_sha = immutable(plans / ('%s.%s.json' % (context_key, protocol)), receipt)
+        return dict(receipt, receipt_sha256=receipt_sha, inserted=inserted)
+
     def insert(self, generation, context_key, prepared_dir, prepared_sha, cut, defaults, planned, emissions):
         inserted = 0
         with self.db:
@@ -688,7 +948,7 @@ class Ledger(Dispatcher):
         verification = verify_episode(directory, expected)
         rows = verification.pop('rows')
         summary = json.loads((directory / 'result.json').read_bytes()) if (directory / 'result.json').is_file() else None
-        measurement = seed_value(identity, rows or [])
+        measurement = seed_value(identity, rows or [], summary)
         fits = dict(attempted=len(rows or []), successful=sum(rmse_of(r) is not None for r in rows or []),
                     timeouts=sum((r.get('failure') or '') == 'candidate_or_view_timeout' for r in rows or []),
                     other_failures=sum(r.get('failure') is not None and r.get('failure') != 'candidate_or_view_timeout' for r in rows or []),
@@ -712,17 +972,24 @@ class Ledger(Dispatcher):
                       observations_sha256=verification['observations_sha256'], search_sha256=verification['search_sha256'],
                       completed_at=verification['completed_at'], driver_sha256=verification['driver_sha256'],
                       row0_label_verified=verification['row0_label_verified'], rows=len(rows or []), elapsed_seconds=successor['elapsed_seconds'])
-        key = (binding['generation'], context_key, binding['arm'], identity['parent_program_sha256'], binding['replicate'])
-        existing = self.db.execute('SELECT episode FROM seed_values WHERE generation=? AND context_key=? AND arm=? AND parent_program_sha256=? AND replicate=?', key).fetchone()
+        protocol = measurement['protocol']
+        key = (binding['generation'], context_key, binding['arm'], identity['parent_program_sha256'], binding['replicate'], protocol)
+        existing = self.db.execute('SELECT episode FROM seed_values WHERE generation=? AND context_key=? AND arm=? AND parent_program_sha256=? '
+                                   'AND replicate=? AND protocol=?', key).fetchone()
         if existing is not None and existing[0] != episode_id:
             self.event(episode_id, 'seed_value_duplicate_role', dict(kept=existing[0]))
         else:
             with self.db:
                 self.db.execute(
-                    'INSERT OR REPLACE INTO seed_values VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                    'INSERT OR REPLACE INTO seed_values(generation,context_key,arm,role,parent_program_sha256,replicate,protocol,'
+                    'own_rmse,child_program_sha256,child_rmse,child_failure,flip,S_rmse,'
+                    'attempted_descendants,successful_descendants,termination_reason,lineage_size,'
+                    'seed_beats_incumbent,child_beats_incumbent,episode,verified,detail) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
                     key[:3] + (binding['role'],) + key[3:] + (
                         measurement['r0'], measurement['child']['program_sha256'], measurement['child']['rmse'], measurement['child']['failure'],
                         measurement['flip'], measurement['S_rmse'],
+                        measurement['attempted_descendants'], measurement['successful_descendants'], measurement['termination_reason'],
+                        measurement['lineage_size'],
                         None if incumbent_rmse is None or measurement['r0'] is None else int(measurement['r0'] < incumbent_rmse),
                         None if incumbent_rmse is None or measurement['child']['rmse'] is None else int(measurement['child']['rmse'] < incumbent_rmse),
                         episode_id, int(verification['verified']), json.dumps(detail, sort_keys=True)))
@@ -730,7 +997,9 @@ class Ledger(Dispatcher):
                     reasons=verification['reasons'], r0=measurement['r0'], child=measurement['child'], flip=measurement['flip'],
                     S_rmse=measurement['S_rmse'], measurement_status=measurement['status'], completed_at=verification['completed_at'],
                     observations_sha256=verification['observations_sha256'], search_sha256=verification['search_sha256'],
-                    row0_label_verified=verification['row0_label_verified'], **binding)
+                    row0_label_verified=verification['row0_label_verified'], protocol=protocol,
+                    attempted_descendants=measurement['attempted_descendants'], successful_descendants=measurement['successful_descendants'],
+                    termination_reason=measurement['termination_reason'], lineage_size=measurement['lineage_size'], **binding)
 
     # ----------------------------------------------------------------------------- outputs
     def export_rows(self, generation):
@@ -744,20 +1013,23 @@ class Ledger(Dispatcher):
             successor = result.get('successor') if isinstance(result, dict) else None
             measurement = (successor or {}).get('measurement') or {}
             verification = (successor or {}).get('verification') or {}
-            if measurement.get('status') == 'measured':
-                status = 'measured'
+            if measurement.get('status') in ('measured', 'incomplete'):
+                status = measurement['status']
             elif record['status'] in ('deadline', 'superseded'):
                 status = record['status']
             else:
                 status = 'failed'
+            protocol = measurement.get('protocol') or credit_protocol_of(identity.get('protocol'))
             rows.append(dict(schema=ROW_SCHEMA, generation=generation, dataset=identity['dataset'], family=identity['family'],
                              prepared_sha256=identity['prepared_sha256'], cut=identity['cut'], context_key=record['context_key'],
-                             episode_id=record['id'], identity_sha256=record['id'], protocol=CREDIT_PROTOCOL, role=record['role'], arm=record['arm'],
+                             episode_id=record['id'], identity_sha256=record['id'], protocol=protocol, role=record['role'], arm=record['arm'],
                              replicate=record['replicate'], seed_origin=record['seed_origin'], seed_program_sha256=identity['parent_program_sha256'],
                              seed_genome=(successor or {}).get('seed_genome'), producing_checkpoint_sha256=identity['producing_checkpoint_sha256'],
                              evaluator_sha256=identity['evaluator_sha256'], driver_sha256=verification.get('driver_sha256'),
                              r0=measurement.get('r0'), child=measurement.get('child') or dict(program_sha256=None, rmse=None, failure=None, genetic_operator=None),
                              flip=measurement.get('flip'), S_rmse=measurement.get('S_rmse'), replicate_pair=None, status=status,
+                             attempted_descendants=measurement.get('attempted_descendants'), successful_descendants=measurement.get('successful_descendants'),
+                             termination_reason=measurement.get('termination_reason'), lineage_size=measurement.get('lineage_size'),
                              episode_status=record['status'], failure=measurement.get('failure'), verified=verification.get('verified'),
                              row0_label_verified=verification.get('row0_label_verified'),
                              admitted_seed_rmse=verification.get('admitted_seed_rmse'),
@@ -765,7 +1037,7 @@ class Ledger(Dispatcher):
                              partition=identity['partition'], completed_at=verification.get('completed_at')))
         pairs = {}
         for row in rows:
-            pairs.setdefault((row['context_key'], row['arm'], row['seed_program_sha256']), {})[row['replicate']] = row
+            pairs.setdefault((row['context_key'], row['arm'], row['seed_program_sha256'], row['protocol']), {})[row['replicate']] = row
         for members in pairs.values():
             if 0 in members and 1 in members:
                 pair = dict(child_rmse_rep0=members[0]['child']['rmse'], child_rmse_rep1=members[1]['child']['rmse'])
@@ -787,7 +1059,10 @@ class Ledger(Dispatcher):
             counts['by_status'][row['status']] = counts['by_status'].get(row['status'], 0) + 1
             counts['by_role'][row['role']] = counts['by_role'].get(row['role'], 0) + 1
         counts.update({k: info['pooled'][k] for k in ('measured', 'finite_children', 'better', 'tied', 'worse', 'flips')})
-        document = dict(schema=ROW_SCHEMA, generation=generation, protocol=CREDIT_PROTOCOL, evaluator_sha256=self.identity['evaluator_sha256'],
+        counts['by_protocol'] = {p: {k: r['pooled'][k] for k in ('candidates', 'measured', 'incomplete', 'finite_children', 'better', 'tied', 'worse', 'flips')}
+                                 for p, r in info['by_protocol'].items()}
+        document = dict(schema=ROW_SCHEMA, generation=generation, protocol=CREDIT_PROTOCOL, protocols=sorted({r['protocol'] for r in rows}),
+                        evaluator_sha256=self.identity['evaluator_sha256'],
                         resource_protocol=self.resource_protocol, contexts=sorted({r['context_key'] for r in rows}), rows=rows, counts=counts,
                         final_tests_opened=False)
         path = self.directory / ('seed-values-%d.json' % generation)
@@ -807,7 +1082,7 @@ class Ledger(Dispatcher):
         require(outcome in NEXT_OUTCOMES, 'outcome must be one of ' + ', '.join(NEXT_OUTCOMES))
         following = generation + 1
         seeds = sorted({(r['context_key'], r['seed_program_sha256'], r['prepared_sha256'], r['cut']) for r in self.export_rows(generation)
-                        if r['role'] == 'candidate' and r['replicate'] == 0 and r['status'] == 'measured'})
+                        if r['role'] == 'candidate' and r['replicate'] == 0 and r['status'] == 'measured' and r['protocol'] == CREDIT_PROTOCOL})
         require(seeds, 'generation %s has no measured candidate seeds' % generation)
         records, source = [], None
         if outcome == 'best_initial':
@@ -830,7 +1105,7 @@ class Ledger(Dispatcher):
                           definition='-best_initial_neural_seed of the neural arm at generation %d (higher = better), shared by every seed of the context' % following)
         else:
             rows = self.db.execute('SELECT context_key,parent_program_sha256,child_beats_incumbent FROM seed_values '
-                                   'WHERE generation=? AND replicate=0 AND child_beats_incumbent IS NOT NULL', (following,))
+                                   'WHERE generation=? AND replicate=0 AND protocol=? AND child_beats_incumbent IS NOT NULL', (following, CREDIT_PROTOCOL))
             by_seed = {(r[0], r[1]): float(r[2]) for r in rows}
             for context_key, seed, _, _ in seeds:
                 if (context_key, seed) in by_seed:
@@ -882,10 +1157,12 @@ class Ledger(Dispatcher):
                     require(sha(output / 'observations.json') == successor['verification']['observations_sha256']
                             and sha(output / 'search.json') == successor['verification']['search_sha256'],
                             'episode source changed after ingest: ' + record['id'])
-                    rows.extend(read_rows(output))
+                    episode_rows = read_rows(output)
+                    rows.extend(episode_rows)
                     provenance.append(dict(path=self.relative(output), observations_sha256=successor['verification']['observations_sha256'],
                                            search_sha256=successor['verification']['search_sha256'], continuation_sha256=record['id'],
-                                           role=record['role'], arm=record['arm']))
+                                           role=record['role'], arm=record['arm'], protocol=credit_protocol_of(identity.get('protocol')),
+                                           rows=len(episode_rows)))
                 measured = [(r['metrics']['rmse'] * r['target_scale'], r['genome']) for r in rows if rmse_of(r) is not None and finite(r.get('target_scale'))]
                 best = min(measured, default=None)
                 directory = self.directory / 'bundles' / ('generation-%d' % generation) / context_key
@@ -900,7 +1177,8 @@ class Ledger(Dispatcher):
                                final_tests_opened=False,
                                bundle=dict(schema=BUNDLE_SCHEMA, generation=generation, context_key=context_key, episodes=provenance,
                                            unverified_episodes=len(unverified), failed_unmeasured_episodes=len(failed),
-                                           row0_label_verified=True, credit_protocol=CREDIT_PROTOCOL))
+                                           row0_label_verified=True, credit_protocol=CREDIT_PROTOCOL,
+                                           protocols=sorted({p['protocol'] for p in provenance})))
                 entry.update(path=self.relative(directory / 'observations.json'), observations_sha256=observations_sha,
                              search_sha256=immutable(directory / 'search.json', receipt), rows=len(rows))
             with self.db:
