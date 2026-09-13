@@ -162,12 +162,22 @@ def main(argv=None):
         rows = latest_by(series_rows(args.series), 'generation', 'generation')
         require(rows, 'series carries no generation rows')
         generation = max(rows)
-    receipt = build(root, run, args.manifest, args.baseline, args.series, generation, args.verdict)
     args.output.mkdir(parents=True, exist_ok=True)
     path = args.output / ('generation-%06d.json' % generation)
-    digest = promotion_gate.immutable(path, receipt)
+    fresh = build(root, run, args.manifest, args.baseline, args.series, generation, args.verdict)
+    if path.is_file():
+        # The per-generation receipt is immutable; a later run of the same generation only refreshes the live rows
+        # (high marks, learning, publication) in latest.json and keeps the receipt's scoreboard rows and digest.
+        receipt = read(path)
+        require(receipt.get('schema') == SCHEMA and receipt.get('generation') == generation, 'existing receipt %s is not this generation\'s' % path)
+        digest = sha(path)
+        live = dict(receipt['rows'], high_marks=fresh['rows']['high_marks'], learning=fresh['rows']['learning'], publication=fresh['rows']['publication'])
+        latest = dict(receipt, rows=live, schema=LATEST_SCHEMA, receipt=dict(path=str(path), sha256=digest), timestamp=time.time(), live_rows=['high_marks', 'learning', 'publication'])
+    else:
+        receipt = fresh
+        digest = promotion_gate.immutable(path, receipt)
+        latest = dict(receipt, schema=LATEST_SCHEMA, receipt=dict(path=str(path), sha256=digest), timestamp=time.time(), live_rows=[])
     if args.latest:
-        latest = dict(receipt, schema=LATEST_SCHEMA, receipt=dict(path=str(path), sha256=digest), timestamp=time.time())
         atomic(args.latest, latest)
     print(json.dumps(dict(receipt=str(path), sha256=digest, generation=generation, primary=receipt['rows']['primary_heldout']['trailing10'],
                           training=receipt['rows']['training_win_rate']['seed_only'], high_marks_per_hour=receipt['rows']['high_marks']['per_hour_24h'])))

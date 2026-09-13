@@ -82,10 +82,12 @@ class Headline(unittest.TestCase):
         digest = sha(path)
         self.assertEqual(json.loads(latest.read_bytes())['schema'], headline.LATEST_SCHEMA)
         self.assertEqual(json.loads(latest.read_bytes())['receipt']['sha256'], digest)
-        # the receipt embeds a generation timestamp, so a re-run must not change the immutable file: it refuses instead
-        with self.assertRaises(RuntimeError):
-            headline.main(argv)
+        # the receipt is immutable: a re-run keeps its bytes and only refreshes the live rows of latest.json
+        headline.main(argv)
         self.assertEqual(sha(path), digest)
+        refreshed = json.loads(latest.read_bytes())
+        self.assertEqual((refreshed['receipt']['sha256'], refreshed['live_rows']), (digest, ['high_marks', 'learning', 'publication']))
+        self.assertEqual(refreshed['rows']['primary_heldout']['seed_only']['wins'], 8)
         verdict = self.run / 'verdict.json'
         atomic(verdict, dict(schema='parallel.flywheel_verdict.v1', outcome='smarter_confirmed'))
         confirmed = headline.build(self.root, self.run, self.root / 'manifest.json', self.root / 'baseline.json', self.series, 30, verdict)
