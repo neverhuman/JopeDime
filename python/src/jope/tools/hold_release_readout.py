@@ -74,9 +74,25 @@ def checkpoint_sha(root, path):
 
 
 def active_manifest(root, run, manifest_sha256):
-    """The manifest file the controller is running (state.manifest_sha256), found by digest under the run directory."""
-    for candidate in sorted(run.glob('recovery-manifest-v*.json')):
-        if sha(candidate) == manifest_sha256:
+    """The manifest file the controller is running (state.manifest_sha256), found by digest: the journal's revision receipts
+    name it first (manifest_revision_committed.receipt -> migration receipt), then any *manifest*.json under the run."""
+    candidates = []
+    journal = run / 'learning/journal.jsonl'
+    if journal.is_file():
+        for event in journal_events(journal):
+            if event.get('event') == 'manifest_revision_committed' and event.get('new_manifest_sha256') == manifest_sha256 and isinstance(event.get('receipt'), str):
+                receipt_path = root / event['receipt']
+                if receipt_path.is_file():
+                    receipt = read(receipt_path)
+                    for key in ('manifest', 'new_manifest', 'path', 'output'):
+                        value = receipt.get(key)
+                        if isinstance(value, dict):
+                            value = value.get('path')
+                        if isinstance(value, str):
+                            candidates.append(root / value)
+    candidates += sorted(run.glob('recovery-manifest-v*.json')) + sorted(run.glob('*manifest*.json')) + sorted(run.glob('*/*manifest*.json'))
+    for candidate in candidates:
+        if candidate.is_file() and candidate.stat().st_size < 4_000_000 and sha(candidate) == manifest_sha256:
             return dict(path=str(candidate.relative_to(root)), sha256=manifest_sha256, value=read(candidate))
     return None
 
@@ -99,13 +115,23 @@ def verify_rollback(root, run, readout_path):
     learning_sha = checkpoint_sha(root, learning)
     manifest = active_manifest(root, run, state.get('manifest_sha256'))
     automatic = (manifest or {}).get('value', {}).get('automatic_training') if manifest else None
+    automatic_source = 'manifest' if manifest else None
     revisions, stops, deviations, trains = [], [], [], []
     for event in journal_events(run / 'learning/journal.jsonl'):
         if float(event.get('timestamp') or 0) <= verdict_at:
             continue
         kind = event.get('event')
         if kind == 'manifest_revision_committed':
-            revisions.append(dict(timestamp=event.get('timestamp'), new_manifest_sha256=event.get('new_manifest_sha256'), receipt=event.get('receipt')))
+            row = dict(timestamp=event.get('timestamp'), new_manifest_sha256=event.get('new_manifest_sha256'), receipt=event.get('receipt'))
+            receipt_path = root / event['receipt'] if isinstance(event.get('receipt'), str) else None
+            if receipt_path and receipt_path.is_file():
+                receipt = read(receipt_path)
+                row.update(receipt_sha256=sha(receipt_path), schema=receipt.get('schema'), training_disabled=receipt.get('training_disabled'),
+                           learning_head_reparented=receipt.get('learning_head_reparented'), rejected_checkpoint_sha256=receipt.get('rejected_checkpoint_sha256'))
+                # The migration receipt is the revision's own statement; it stands in when the manifest file is not locatable.
+                if event.get('new_manifest_sha256') == state.get('manifest_sha256') and manifest is None and receipt.get('training_disabled') is True:
+                    automatic, automatic_source = False, 'migration receipt ' + str(event['receipt'])
+            revisions.append(row)
         elif kind == 'controller_stopped':
             stops.append(dict(timestamp=event.get('timestamp'), event=kind, resumable=event.get('resumable')))
         elif kind == 'operator_pause_committed':
@@ -129,7 +155,7 @@ def verify_rollback(root, run, readout_path):
         status = 'pending'
     return dict(schema=VERIFICATION_SCHEMA, status=status, readout=dict(path=str(readout_path), sha256=sha(readout_path)), rejected_checkpoint_sha256=rejected,
                 reparent_target_sha256=target, learning_checkpoint=dict(path=learning, sha256=learning_sha, is_target=learning_sha == target, is_rejected=learning_sha == rejected),
-                learning_corpus=state.get('learning_corpus'), manifest=dict(path=(manifest or {}).get('path'), sha256=state.get('manifest_sha256'), automatic_training=automatic),
+                learning_corpus=state.get('learning_corpus'), manifest=dict(path=(manifest or {}).get('path'), sha256=state.get('manifest_sha256'), automatic_training=automatic, automatic_training_source=automatic_source),
                 guard={k: ((state.get('training_diagnostic') or {}).get(k)) for k in ('consecutive_rejections', 'held', 'last_step')},
                 revisions_after_verdict=revisions, controller_stops_after_verdict=stops, train_stages_after_verdict=trains, deviations=deviations,
                 rule='F11: rollback is complete when learning_checkpoint is the re-parent target; until then automatic_training must be false (an operator pause with training_restart_authorized false is the interim stop); any train stage from another checkpoint after the verdict is an f11_deviation',
