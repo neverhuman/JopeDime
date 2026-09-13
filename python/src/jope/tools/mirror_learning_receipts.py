@@ -21,6 +21,9 @@ from pathlib import Path
 MANIFEST_SCHEMA = 'parallel.learning_receipt_mirror.v1'
 CYCLE_FILES = ('train-2/complete.json', 'train-2/initialization.json', 'train-2/run.json', 'train-2/latest.json', 'train-2/step-window.json')
 METRICS_TAIL_LINES = 200
+STUB_ABOVE_BYTES = 1_000_000   # larger files (checkpoint state.json embeds the replay membership) are mirrored as digest stubs
+STUB_KEYS = ('schema', 'step', 'world', 'global_batch', 'microbatch', 'model_sha256', 'optimizer_sha256', 'optimizer_metadata_sha256', 'config_sha256', 'parameter_sha256',
+             'corpus_sha256', 'vocabulary_sha256', 'sampler_id', 'ranking_backward', 'runtime_objective', 'seed', 'kind', 'checkpoint', 'timestamp', 'final_tests_opened')
 FORBIDDEN_SUFFIXES = ('.ot', '.bin', '.sqlite', '.sqlite-wal', '.sqlite-shm')
 
 
@@ -61,6 +64,29 @@ print(json.dumps(out))
     return json.loads(result.stdout)
 
 
+def fetch_stub(node, key, node_root, relative):
+    """Digest stub of a large JSON receipt: sha256, bytes and its small top-level fields (never the bulk maps)."""
+    script = (
+        'import hashlib, json, sys\n'
+        'p = %r; keys = %r\n'
+        'd = open(p, "rb").read()\n'
+        'stub = dict(schema="parallel.receipt_stub.v1", path=%r, sha256=hashlib.sha256(d).hexdigest(), bytes=len(d))\n'
+        'try:\n'
+        '    v = json.loads(d)\n'
+        '    if isinstance(v, dict):\n'
+        '        stub["fields"] = {k: v[k] for k in keys if k in v and (not isinstance(v[k], (dict, list)) or len(json.dumps(v[k])) < 400)}\n'
+        '        init = v.get("initialization")\n'
+        '        if isinstance(init, dict):\n'
+        '            stub["initialization"] = {k: init[k] for k in init if not isinstance(init[k], (dict, list)) or len(json.dumps(init[k])) < 400}\n'
+        'except ValueError:\n'
+        '    pass\n'
+        'sys.stdout.write(json.dumps(stub, sort_keys=True, indent=1))\n') % (os.path.join(node_root, relative), STUB_KEYS, relative)
+    result = remote_python(node, key, script)
+    if result.returncode != 0:
+        raise RuntimeError('stub fetch failed for %s: %s' % (relative, result.stderr[-200:]))
+    return result.stdout.encode(), json.loads(result.stdout)['sha256']
+
+
 def fetch(node, key, node_root, relative, tail_lines=None):
     if tail_lines:
         script = 'import hashlib,sys; p=%r; d=open(p,"rb").read(); lines=d.splitlines(True); sys.stdout.buffer.write(b"".join(lines[-%d:])); sys.stderr.write(hashlib.sha256(d).hexdigest())' % (os.path.join(node_root, relative), tail_lines)
@@ -86,19 +112,22 @@ def pull(node, key, node_root, run, mirror):
         if relative.endswith(FORBIDDEN_SUFFIXES):
             continue
         tail = METRICS_TAIL_LINES if relative.endswith('metrics.jsonl') else None
+        stub = entry['bytes'] > STUB_ABOVE_BYTES and not tail
         known = manifest['files'].get(relative)
         if known and not tail and known.get('bytes') == entry['bytes'] and known.get('mtime') == entry['mtime']:
             unchanged.append(relative)
             continue
-        data, full_sha = fetch(node, key, node_root, relative, tail)
-        target = mirror / (relative + ('.tail' if tail else ''))
+        data, full_sha = fetch_stub(node, key, node_root, relative) if stub else fetch(node, key, node_root, relative, tail)
+        # Mirrored under the run-relative path (never a `runs/` component: the repository ignores that directory name).
+        inside = relative[len(run) + 1:] if relative.startswith(run + '/') else relative.replace('runs/', 'run-', 1)
+        target = mirror / (inside + ('.tail' if tail else '.stub.json' if stub else ''))
         digest = sha256(data)
         if known and known.get('sha256') != digest and not tail and not relative.endswith('latest.json') and not relative.endswith('run.json'):
             refused.append(dict(path=relative, mirrored=known.get('sha256'), node=digest))
             continue
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(data)
-        manifest['files'][relative] = dict(sha256=digest, bytes=entry['bytes'], mtime=entry['mtime'], tail_lines=tail, full_sha256=full_sha, mirrored=str(target.relative_to(mirror)))
+        manifest['files'][relative] = dict(sha256=digest, bytes=entry['bytes'], mtime=entry['mtime'], tail_lines=tail, stub=stub, full_sha256=full_sha, mirrored=str(target.relative_to(mirror)))
         pulled.append(relative)
     manifest_path.write_bytes(json.dumps(manifest, sort_keys=True, indent=1).encode())
     if refused:
