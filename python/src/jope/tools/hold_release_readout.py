@@ -92,7 +92,7 @@ def active_manifest(root, run, manifest_sha256):
                             candidates.append(root / value)
     candidates += sorted(run.glob('recovery-manifest-v*.json')) + sorted(run.glob('*manifest*.json')) + sorted(run.glob('*/*manifest*.json'))
     for candidate in candidates:
-        if candidate.is_file() and candidate.stat().st_size < 4_000_000 and sha(candidate) == manifest_sha256:
+        if candidate.is_file() and candidate.stat().st_size < (64 << 20) and sha(candidate) == manifest_sha256:   # live manifests are ~6 MB
             return dict(path=str(candidate.relative_to(root)), sha256=manifest_sha256, value=read(candidate))
     return None
 

@@ -68,6 +68,14 @@ class Headline(unittest.TestCase):
         self.assertEqual(rows['publication']['status'], 'no_repository')
         self.assertEqual(receipt['claims']['independent_improvement'], 'not_established')
         self.assertIs(receipt['final_tests_opened'], False)
+        self.assertEqual(receipt['generation_row']['proposer']['label'], None)   # no journal in the fixture yet
+        with open(self.run / 'learning/journal.jsonl', 'w') as stream:
+            stream.write(json.dumps(dict(timestamp=1.0, event='diagnostic_accepted', checkpoint_sha256='c' * 64)) + '\n')
+            stream.write(json.dumps(dict(timestamp=2.0, event='diagnostic_rejected', checkpoint_sha256='c' * 64)) + '\n')
+            stream.write(json.dumps(dict(timestamp=3.0, event='diagnostic_rejected', checkpoint_sha256='z' * 64)) + '\n')
+        proposer = headline.build(self.root, self.run, self.root / 'manifest.json', self.root / 'baseline.json', self.series, 31)['generation_row']['proposer']
+        self.assertEqual((proposer['label'], proposer['verdict'], proposer['verdict_at']), ('rejected_lineage', 'diagnostic_rejected', 2.0))   # the last verdict wins
+        self.assertEqual(headline.proposer_status(self.run, 'q' * 64)['label'], 'unmonitored')
         with self.assertRaises(RuntimeError):
             headline.build(self.root, self.run, self.root / 'manifest.json', self.root / 'baseline.json', self.series, 99)
 

@@ -97,6 +97,29 @@ def publication_state(run):
                 last_error=(remote.get('last_error') or '')[:120] or None, note='an attempted push is not a published milestone')
 
 
+def proposer_status(run, checkpoint_sha256):
+    """The frozen-panel verdict of the checkpoint that proposed a generation, from the controller journal.
+
+    A generation proposed by a `diagnostic_rejected` checkpoint is labelled `rejected_lineage` (its rows are the state of
+    record but not evidence for the recipe); an accepted proposer is `accepted`; a checkpoint never monitored (the
+    serving/pre-release proposer) is `unmonitored`; without a journal the label is null.
+    """
+    journal = Path(run) / 'learning/journal.jsonl'
+    if not isinstance(checkpoint_sha256, str) or not journal.is_file():
+        return dict(checkpoint_sha256=checkpoint_sha256, verdict=None, label=None, source=None)
+    verdict, at = None, None
+    with open(journal, 'rb') as stream:
+        for raw in stream:
+            try:
+                event = json.loads(raw)
+            except ValueError:
+                continue
+            if event.get('event') in ('diagnostic_accepted', 'diagnostic_rejected') and event.get('checkpoint_sha256') == checkpoint_sha256:
+                verdict, at = event['event'], event.get('timestamp')   # the last verdict for the checkpoint wins (re-monitoring)
+    label = {'diagnostic_rejected': 'rejected_lineage', 'diagnostic_accepted': 'accepted', None: 'unmonitored'}[verdict]
+    return dict(checkpoint_sha256=checkpoint_sha256, verdict=verdict, verdict_at=at, label=label, source='learning/journal.jsonl diagnostic events')
+
+
 def build(root, run, manifest_path, baseline_path, series_path, generation, verdict_path=None):
     root, run = Path(root), Path(run)
     manifest = read(manifest_path)
@@ -130,13 +153,15 @@ def build(root, run, manifest_path, baseline_path, series_path, generation, verd
                     learning_checkpoint=progress.get('last_committed_checkpoint'), serving_checkpoint=progress.get('serving_checkpoint'), serving_status=progress.get('serving_status'),
                     gpu_task_occupancy=(progress.get('gpu_occupancy') or {}).get('task_occupancy'), source='learning/progress.json')
     now = time.time()
+    proposer = proposer_status(run, row.get('checkpoint_sha256'))
     verdict = read(verdict_path) if verdict_path and Path(verdict_path).is_file() else None
     claims = dict(CLAIMS)
     if isinstance(verdict, dict) and verdict.get('outcome') == 'smarter_confirmed':
         claims['independent_improvement'] = 'established_by_verdict:' + sha(verdict_path)
     return dict(schema=SCHEMA, generation=generation, generated_at=now, run_identity=manifest.get('run_identity'), manifest_sha256=sha(manifest_path),
                 evaluator_sha256=evaluator, baseline=dict(path=str(baseline_path), sha256=sha(baseline_path)), series=dict(path=str(series_path), sha256=sha(series_path)),
-                generation_row=dict(id=row.get('id'), checkpoint_sha256=row.get('checkpoint_sha256'), report_sha256=row.get('report_sha256'), timestamp=row.get('timestamp')),
+                generation_row=dict(id=row.get('id'), checkpoint_sha256=row.get('checkpoint_sha256'), report_sha256=row.get('report_sha256'), timestamp=row.get('timestamp'),
+                                    proposer=proposer),
                 rows=dict(primary_heldout=primary, training_win_rate=training, frozen_panel=frozen, high_marks=high_marks(root, evaluator, now), learning=learning,
                           publication=publication_state(run)),
                 verdict=dict(path=str(verdict_path), sha256=sha(verdict_path), outcome=verdict.get('outcome')) if isinstance(verdict, dict) else None,
