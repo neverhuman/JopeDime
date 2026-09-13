@@ -548,6 +548,49 @@ class TierBTests(FixtureCase):
     def seed_evidence(self, source):
         return sl.admitted_rmse(json.loads((source / 'search/observations.json').read_bytes())[:1])
 
+    def test_lineage_rules_top4_operator_crossover_timing_and_declared_counts(self):
+        source = self.episodes[0]
+        expected = dict(evaluator_sha256=self.bound, resource_protocol=sl.RESOURCE_PROTOCOL, seed_rmse=self.seed_evidence(source))
+
+        def reasons(name, mutate=None, result_override=None, **kwargs):
+            episode, _, rows = self.tierb_episode(source, self.root / ('fixture/tierb-' + name), 7100, mutate=mutate, **kwargs)
+            if result_override is not None:
+                result = json.loads((episode / 'result.json').read_bytes())
+                result.update(result_override)
+                (episode / 'result.json').write_bytes(encoded(result))
+            return verify_episode(episode, expected)['reasons']
+        self.assertEqual(reasons('valid'), [])
+
+        def outside_top4(rows, receipt):
+            # row 12's parent becomes the worst finite-evaluated member so far, which cannot be in the top-4 of 11 evaluated rows
+            evaluated = sorted((sl.rmse_of(r), r['program_sha256']) for r in rows[:12] if sl.rmse_of(r) is not None)
+            rows[12].update(genetic_parents=[evaluated[-1][1]], genetic_operator='mutation')
+        found = [r for r in reasons('top4', mutate=outside_top4) if r.startswith('parent_outside_top4')]
+        self.assertEqual(len(found), 1)
+        self.assertIn('row 12', found[0])
+
+        def wrong_operator(rows, receipt):
+            rows[2]['genetic_operator'] = 'crossover'   # one parent
+        self.assertTrue(any(r.startswith('operator_mismatch: row 2') for r in reasons('operator', mutate=wrong_operator)))
+
+        def early_crossover(rows, receipt):
+            rows[2].update(genetic_parents=[rows[0]['program_sha256'], rows[1]['program_sha256']], genetic_operator='crossover')
+        early = reasons('early', mutate=early_crossover)
+        self.assertTrue(any(r.startswith('crossover_before_two_descendants: row 2') for r in early))
+        self.assertFalse(any(r.startswith('parent_outside_top4') for r in early))
+
+        def base_rule_rows(rows, receipt):
+            for row in rows:
+                row['continuation_protocol'] = 'bounded_seed_lineage_v3'
+        self.assertIn('row0_continuation_protocol: bounded_seed_lineage_v3', reasons('base', mutate=base_rule_rows))
+        counts = reasons('counts', result_override=dict(successful_descendants=99))
+        self.assertTrue(any(r.startswith('result_counts_mismatch: declared attempted/successful 23/99, rows show 23/22') for r in counts))
+        # the fixture's row-0 source evaluator, when named, must be the ordinary evaluator
+        episode, identity, rows = self.tierb_episode(source, self.root / 'fixture/tierb-source', 7101)
+        identity['row0_source_evaluator_sha256'] = 'e' * 64
+        (episode / 'identity.json').write_bytes(encoded(identity))
+        self.assertTrue(any(r.startswith('identity_row0_source_evaluator_mismatch') for r in verify_episode(episode, expected)['reasons']))
+
     def test_valid_lineage_episode_is_verified_credited_and_bundled(self):
         ledger = self.ledger()
         source = self.episodes[0]
@@ -904,9 +947,12 @@ class PlanningTests(FixtureCase):
             observations = [dict(origin=c['origin'], program_sha256=digest(c['genome'].encode()), genome=c['genome'], initial_seed_slot=i,
                                  failure=None, metrics=dict(rmse=0.9 - 0.002 * i, units='cut_normalized_target')) for i, c in enumerate(doc['candidates'])]
             (directory / 'search/observations.json').write_bytes(encoded(observations))
-        tierb = self.ledger('successor-tierb').plan_from_jobs(GENERATION, 'run/generation-000073/jobs.json', excluded, protocol=TIERB, partition=partition, limit=5)
+        tierb = self.ledger('successor-tierb').plan_from_jobs(GENERATION, 'run/generation-000073/jobs.json', excluded, protocol=TIERB, partition=partition, limit=5,
+                                                              execution_evaluator=self.bound)
         self.assertEqual(tierb['counts'], dict(candidate=3, control_generic=3, control_shuffled=3))
-        self.assertEqual((tierb['episodes_inserted'], tierb['protocol']), (9, TIERB))
+        self.assertEqual((tierb['episodes_inserted'], tierb['protocol'], tierb['execution_evaluator_sha256']), (9, TIERB, self.bound))
+        with self.assertRaisesRegex(ValueError, 'requires execution_evaluator'):
+            self.ledger('successor-tierb-none').plan_from_jobs(GENERATION, 'run/generation-000073/jobs.json', excluded, protocol=TIERB, partition=partition)
         self.assertEqual(tierb['tierb'], dict(subset=[self.prepared_sha + ':0'], subset_size=32, universe=1,
                                               universe_sha256=digest(encoded([self.prepared_sha + ':0'])), limit=5))
         self.assertTrue((self.root / ('successor-tierb/plans/generation-73/summary.%s.json' % TIERB)).is_file())
@@ -915,6 +961,10 @@ class PlanningTests(FixtureCase):
             identity = json.loads((self.root / episode['continuation']['identity']).read_bytes())
             self.assertEqual((identity['protocol'], identity['evaluations'], identity['generation']), (TIERB, 24, GENERATION))
             self.assertIn(identity['seed_arm'], sl.ARMS)
+            self.assertEqual((identity['evaluator_sha256'], identity['row0_source_evaluator_sha256']), (self.bound, self.bound))
+        plan_receipt = json.loads((self.root / ('successor-tierb/plans/generation-73/%s:0.%s.json' % (self.prepared_sha, TIERB))).read_bytes())
+        self.assertEqual((plan_receipt['evaluator_sha256'], plan_receipt['row0_source_evaluator_sha256']), (self.bound, self.bound))
+        self.assertIn('executing the episode', plan_receipt['evaluator_rule'])
 
     def test_tierb_plan_top3_per_arm_on_the_rotating_subset(self):
         # every arm's search ledger carries admitted row-0 RMSE so each arm's top-3 seeds can be ranked
@@ -926,10 +976,20 @@ class PlanningTests(FixtureCase):
             (directory / 'search/observations.json').write_bytes(encoded(observations))
         context_key = self.prepared_sha + ':0'
 
-        def tierb_plan(ledger, protocol, universe, defaults=None):
+        def tierb_plan(ledger, protocol, universe, defaults=None, execution_evaluator=None):
             return ledger.plan_generation(GENERATION, self.seeds['neural'], self.seeds['generic'], self.seeds['shuffled'], self.searches,
-                                          PREPARED_REL, self.generic, defaults or self.defaults, protocol=protocol, tierb_contexts=universe)
+                                          PREPARED_REL, self.generic, defaults or self.defaults, protocol=protocol, tierb_contexts=universe,
+                                          execution_evaluator=self.bound if execution_evaluator is None else execution_evaluator)
         ledger = self.ledger()
+        # the executing binary's digest is mandatory for Tier-B and must be bound by the manifest; it becomes identity.evaluator_sha256
+        with self.assertRaisesRegex(ValueError, 'requires execution_evaluator'):
+            ledger.plan_generation(GENERATION, self.seeds['neural'], self.seeds['generic'], self.seeds['shuffled'], self.searches,
+                                   PREPARED_REL, self.generic, self.defaults, protocol=TIERB, tierb_contexts=[context_key])
+        with self.assertRaisesRegex(ValueError, 'not bound by the manifest'):
+            tierb_plan(ledger, TIERB, [context_key], execution_evaluator='f' * 64)
+        with self.assertRaisesRegex(ValueError, 'Tier-B plans only'):
+            ledger.plan_generation(GENERATION, self.seeds['neural'], self.seeds['generic'], self.seeds['shuffled'], self.searches,
+                                   PREPARED_REL, self.generic, self.defaults, execution_evaluator=self.bound)
         with self.assertRaisesRegex(ValueError, 'tierb_contexts'):
             tierb_plan(ledger, TIERB, None)
         with self.assertRaisesRegex(ValueError, 'protocol must be'):

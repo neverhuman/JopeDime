@@ -218,15 +218,29 @@ def rebind_tierb(episodes, protocol):
     return out
 
 
+TIERB_OPERATORS = {1: 'mutation', 2: 'crossover'}
+TIERB_CROSSOVER_AFTER = 2
+
+
+def tierb_parent_pool(evaluated):
+    """The top-4 finite-evaluated lineage members (by RMSE, ties by program sha256) a new fit may draw its parents from."""
+    ranked = sorted(evaluated.items(), key=lambda item: (item[1], item[0]))
+    return [program for program, _ in ranked[:TIERB_PARENT_POOL]]
+
+
 def verify_lineage(identity, rows):
     """Tier-B lineage rule over one episode's rows; returns verification reasons (empty = valid).
 
-    Row 0 is the seed (program == parent, no genetic parents, initial_seed_slot 0); every later row is a mutation (one
-    parent) or a crossover (two parents) whose parents are all program_sha256 values of earlier rows of the same episode
-    (else 'lineage_violation'); programs never repeat; attempted fits (failures included) never exceed the 24 budget.
+    Row 0 is the seed (program == parent, no genetic parents, initial_seed_slot 0). Every later row is a `mutation` (one
+    parent) or a `crossover` (two parents): its parents are program_sha256 values of EARLIER rows of the same episode
+    that were finite-evaluated and lie in the top-4 of those by RMSE at the time of the fit (else 'lineage_violation' /
+    'parent_outside_top4'), the row's genetic_operator names the operation of its parent count ('operator_mismatch'), and a
+    crossover is legal only once at least two descendants have been finite-evaluated ('crossover_before_two_descendants').
+    Programs never repeat; attempted fits (failures included) never exceed the 24 budget.
     """
-    reasons, seen = [], set()
+    reasons, seen, evaluated = [], set(), {}
     parent = identity.get('parent_program_sha256')
+    evaluated_descendants = 0
     for index, row in enumerate(rows):
         prefix = 'row%d_' % index
         program, parents = row.get('program_sha256'), row.get('genetic_parents')
@@ -241,6 +255,23 @@ def verify_lineage(identity, rows):
                 reasons.append('row0_not_the_seed: program %s parents %s initial_seed_slot %s' % (program, parents, row.get('initial_seed_slot')))
         elif not isinstance(parents, list) or len(parents) not in (1, 2) or any(p not in seen for p in parents):
             reasons.append('%s: row %d parents %s are not all earlier lineage members' % (LINEAGE_VIOLATION, index, parents))
+        else:
+            pool = tierb_parent_pool(evaluated)
+            outside = [p for p in parents if p not in pool]
+            if outside:
+                reasons.append('%s: row %d parents %s are not in the top-%d finite-evaluated members %s'
+                               % ('parent_outside_top4', index, outside, TIERB_PARENT_POOL, pool))
+            operator = row.get('genetic_operator')
+            if operator != TIERB_OPERATORS[len(parents)]:
+                reasons.append('operator_mismatch: row %d has %d parent(s) but genetic_operator %r (expected %r)'
+                               % (index, len(parents), operator, TIERB_OPERATORS[len(parents)]))
+            if len(parents) == 2 and evaluated_descendants < TIERB_CROSSOVER_AFTER:
+                reasons.append('crossover_before_two_descendants: row %d is a crossover after %d finite-evaluated descendant(s)' % (index, evaluated_descendants))
+        score = rmse_of(row)
+        if score is not None and program not in evaluated:
+            evaluated[program] = score
+            if index > 0:
+                evaluated_descendants += 1
         seen.add(program)
     if len(rows) > TIERB_BUDGET:
         reasons.append('budget_exceeded: %d attempted fits > %d' % (len(rows), TIERB_BUDGET))
@@ -335,6 +366,7 @@ def manifest_evaluator(root, manifest_path, continuation_evaluator=None):
     continuation, source = continuation_evaluator_binding(root, manifest, bindings, continuation_evaluator)
     return dict(manifest_path=str(manifest_path.relative_to(root)), manifest_sha256=sha(manifest_path), cpu_executable=executable,
                 evaluator_sha256=bound, binary_present=on_disk, vocabulary_sha256=manifest.get('vocabulary_sha256'),
+                bound_digests=sorted({v for v in bindings.values() if isinstance(v, str) and HEX64.match(v)}),
                 continuation_evaluator_sha256=continuation if continuation is not None else bound,
                 continuation_evaluator_source=source if source is not None else dict(kind='cpu_executable', configuration=None,
                                                                                      configuration_sha256=None, evaluator=executable,
@@ -433,7 +465,7 @@ def verify_episode(episode_dir, expected):
         budget_reason = 'identity budget must pin evaluations %d / candidate_seconds %d / seconds %d' % (
             budget['evaluations'], budget['candidate_seconds'], budget['seconds'])
         identity_resource_ok = identity.get('resource_protocol') == resource
-        continuation_protocols = (protocol, TIERB_BASE)
+        continuation_protocols = (protocol,)   # rows carry the exact cap variant, never the base rule id
     else:
         resource = expected['resource_protocol']
         budget_ok = identity.get('evaluations') == 2 and identity.get('candidate_seconds') == 2
@@ -447,6 +479,9 @@ def verify_episode(episode_dir, expected):
         (identity.get('final_tests_opened') is False and receipt.get('final_tests_opened') is False, 'final_tests_opened must be false'),
         (identity.get('partition') == partition, 'identity_partition: ' + str(identity.get('partition'))),
         (identity.get('evaluator_sha256') == evaluator, 'identity_evaluator_mismatch: ' + str(identity.get('evaluator_sha256'))),
+        # A Tier-B identity may name the ordinary evaluator whose admitted row-0 label the seed reproduces; it must be that one.
+        (identity.get('row0_source_evaluator_sha256') in (None, expected['evaluator_sha256']),
+         'identity_row0_source_evaluator_mismatch: ' + str(identity.get('row0_source_evaluator_sha256'))),
         (receipt.get('evaluator_sha256') == evaluator, 'evaluator_mismatch: ' + str(receipt.get('evaluator_sha256'))),
         (receipt.get('evaluator_protocol') == EVALUATOR_PROTOCOL, 'evaluator_protocol: ' + str(receipt.get('evaluator_protocol'))),
         (receipt.get('continuation_sha256') == episode_id, 'receipt_continuation_mismatch'),
@@ -486,7 +521,8 @@ def verify_episode(episode_dir, expected):
         # is then 'incomplete'), an unknown or inconsistent value is.
         if (directory / 'result.json').is_file():
             try:
-                termination = json.loads((directory / 'result.json').read_bytes()).get('termination_reason')
+                result = json.loads((directory / 'result.json').read_bytes())
+                termination = result.get('termination_reason')
             except (OSError, ValueError, AttributeError) as error:
                 reasons.append('result_unreadable: ' + str(error))
             else:
@@ -497,6 +533,12 @@ def verify_episode(episode_dir, expected):
                     reasons.append('termination_inconsistent: budget_exhausted with %d attempted fits' % len(rows))
                 elif termination == 'seed_failed' and rmse_of(rows[0] if rows else None) is not None:
                     reasons.append('termination_inconsistent: seed_failed with a measured seed')
+                # The declared counts must equal what the rows show: attempted = rows - 1, successful = finite descendants.
+                attempted, successful = max(len(rows) - 1, 0), sum(1 for row in rows[1:] if rmse_of(row) is not None)
+                declared = (result.get('attempted_descendants'), result.get('successful_descendants'))
+                if declared != (attempted, successful):
+                    reasons.append('result_counts_mismatch: declared attempted/successful %s/%s, rows show %d/%d'
+                                   % (declared[0], declared[1], attempted, successful))
     else:
         try:
             summarize(identity, episode_id, rows)
@@ -683,16 +725,24 @@ class Ledger(Dispatcher):
 
     # ----------------------------------------------------------------------------- planning
     def plan_generation(self, generation, neural_seeds_json, generic_seeds_json, shuffled_seeds_json, search_best_by_arm,
-                        prepared, generic_background, identity_defaults, protocol=None, tierb_contexts=None):
+                        prepared, generic_background, identity_defaults, protocol=None, tierb_contexts=None, execution_evaluator=None):
         """Plan every role for one (generation, context); writes immutable episode inputs and pending rows.
 
         protocol None plans the one-step v3 roles (candidate/controls/gp_final/replicate_panel). A Tier-B cap variant
         plans instead the top-3 admitted seeds per arm under bounded_seed_lineage_v3 when the context lies in the
         rotating 32-context subset of `tierb_contexts` (every context key of the generation); its receipt is written
-        beside the one-step receipt as <context_key>.<protocol>.json.
+        beside the one-step receipt as <context_key>.<protocol>.json. A Tier-B plan binds `execution_evaluator` (the
+        digest of the binary that will run the episode; must be bound by the manifest) as identity.evaluator_sha256 and
+        the ledger's ordinary evaluator as identity.row0_source_evaluator_sha256 (the label the F5 row-0 check reproduces).
         """
         require(type(generation) is int and generation >= 0, 'generation must be a nonnegative integer')
         require(protocol is None or is_tierb(protocol), 'protocol must be None (one-step v3) or one of ' + ', '.join(TIERB_PROTOCOLS))
+        require(execution_evaluator is None or protocol is not None, 'execution_evaluator applies to Tier-B plans only')
+        if protocol is not None:
+            require(isinstance(execution_evaluator, str) and HEX64.match(execution_evaluator),
+                    'a Tier-B plan requires execution_evaluator: the 64-hex digest of the binary that will execute the episodes')
+            require(execution_evaluator in self.evaluator_binding['bound_digests'],
+                    'execution_evaluator %s... is not bound by the manifest %s' % (execution_evaluator[:12], self.evaluator_binding['manifest_path']))
         defaults = dict(DEFAULTS)
         defaults.update(identity_defaults)
         for key in ('excluded_families', 'rng_seed', 'parent_checkpoint', 'parent_checkpoint_sha256'):
@@ -746,8 +796,9 @@ class Ledger(Dispatcher):
         if protocol is not None:
             return self.plan_tierb(generation, protocol, tierb_contexts, dict(
                 populations=populations, prepared_dir=prepared_dir, prepared_doc=prepared_doc, prepared_sha=prepared_sha, cut=cut,
-                context_key=context_key, background=background, defaults=defaults, common=dict(common, candidate_seconds=2),
-                admitted_by_arm=admitted_by_arm, admitted_sources=admitted_sources, evidence=evidence))
+                context_key=context_key, background=background, defaults=defaults,
+                common=dict(common, candidate_seconds=2, evaluator_sha=execution_evaluator, row0_source_evaluator_sha=self.identity['evaluator_sha256']),
+                execution_evaluator=execution_evaluator, admitted_by_arm=admitted_by_arm, admitted_sources=admitted_sources, evidence=evidence))
         planned, skipped, selection = [], [], {}
         genomes = seed_genomes
         # candidates: every unique-byte neural emission, capped in slot order
@@ -898,7 +949,10 @@ class Ledger(Dispatcher):
         receipt = dict(schema=PLAN_SCHEMA, generation=generation, context_key=context_key, prepared_sha256=state['prepared_sha'], cut=state['cut'],
                        dataset=prepared_doc['dataset'], family=prepared_doc['family'], partition=prepared_doc['meta_partition'],
                        protocol=protocol, credit_protocol=protocol, resource_protocol=budget['resource_protocol'],
-                       evaluator_sha256=self.identity['evaluator_sha256'], producing_checkpoint_sha256=populations['neural']['doc']['checkpoint_sha256'],
+                       evaluator_sha256=state['execution_evaluator'], row0_source_evaluator_sha256=self.identity['evaluator_sha256'],
+                       evaluator_rule='identity.evaluator_sha256 = the manifest-bound digest of the binary executing the episode; '
+                                      'identity.row0_source_evaluator_sha256 = the ordinary evaluator whose admitted row-0 label the seed reproduces (F5)',
+                       producing_checkpoint_sha256=populations['neural']['doc']['checkpoint_sha256'],
                        episodes=[dict(episode_id=i['episode']['episode_id'], role=i['role'], arm=i['arm'], replicate=i['replicate'],
                                       seed_origin=i['seed_origin'], parent_program_sha256=i['episode']['identity']['parent_program_sha256'],
                                       rng_seed=i['episode']['identity']['rng_seed'], priority=PRIORITY.index(i['role']), protocol=protocol) for i in planned],
@@ -918,7 +972,7 @@ class Ledger(Dispatcher):
         receipt_sha = immutable(plans / ('%s.%s.json' % (context_key, protocol)), receipt)
         return dict(receipt, receipt_sha256=receipt_sha, inserted=inserted)
 
-    def plan_from_jobs(self, generation, jobs_path, excluded_families, protocol=None, limit=None, partition='meta_train'):
+    def plan_from_jobs(self, generation, jobs_path, excluded_families, protocol=None, limit=None, partition='meta_train', execution_evaluator=None):
         """Plan every context of one live generation from its jobs.json (the recovery run's parallel.gp_jobs layout).
 
         Each job row names its arm by the seeds path segment (/neural/, /generic/, /shuffled/), the prepared dataset,
@@ -932,6 +986,14 @@ class Ledger(Dispatcher):
         require(type(generation) is int and generation >= 0, 'generation must be a nonnegative integer')
         require(protocol is None or is_tierb(protocol), 'protocol must be None (one-step v3) or one of ' + ', '.join(TIERB_PROTOCOLS))
         require(limit is None or (type(limit) is int and limit >= 1), 'limit must be a positive integer')
+        # The execution evaluator is a generation-level input: validated here so a missing or unbound digest refuses the plan
+        # outright instead of surfacing as a per-context skip.
+        require(execution_evaluator is None or protocol is not None, 'execution_evaluator applies to Tier-B plans only')
+        if protocol is not None:
+            require(isinstance(execution_evaluator, str) and HEX64.match(execution_evaluator),
+                    'a Tier-B plan requires execution_evaluator: the 64-hex digest of the binary that will execute the episodes')
+            require(execution_evaluator in self.evaluator_binding['bound_digests'],
+                    'execution_evaluator %s... is not bound by the manifest %s' % (execution_evaluator[:12], self.evaluator_binding['manifest_path']))
         require(isinstance(excluded_families, list) and all(isinstance(f, str) for f in excluded_families), 'excluded_families must be a list of strings')
         jobs_file = within(self.root, jobs_path)
         doc = json.loads(jobs_file.read_bytes())
@@ -1002,7 +1064,8 @@ class Ledger(Dispatcher):
             try:
                 result = self.plan_generation(generation, neural['seeds'], (entry['arms'].get('generic') or {}).get('seeds'),
                                               (entry['arms'].get('shuffled') or {}).get('seeds'), searches, entry['prepared'], background, defaults,
-                                              protocol=protocol, tierb_contexts=universe if protocol is not None else None)
+                                              protocol=protocol, tierb_contexts=universe if protocol is not None else None,
+                                              execution_evaluator=execution_evaluator)
             except ValueError as refusal:   # a lane/plan refusal of one context is recorded, never a generation-wide abort
                 skipped.append(dict(context_key=key, reason='plan_refused', detail=str(refusal)))
                 continue
@@ -1015,6 +1078,7 @@ class Ledger(Dispatcher):
         summary = dict(schema=PLAN_SUMMARY_SCHEMA, generation=generation, jobs=dict(path=self.relative(jobs_file), sha256=sha(jobs_file), rows=len(rows)),
                        protocol=protocol if protocol is not None else DEFAULTS['protocol'], partition=partition, excluded_families=sorted(excluded_families),
                        evaluator_sha256=self.identity['evaluator_sha256'], continuation_evaluator_sha256=self.continuation_evaluator_sha256,
+                       execution_evaluator_sha256=execution_evaluator,
                        contexts=dict(total=len(contexts), admissible=len(universe), visited=len(selected), planned=len(receipts),
                                      by_partition={p: sum(1 for k in contexts if partitions[k] == p) for p in sorted(set(partitions.values()), key=str)}),
                        inadmissible=inadmissible,
@@ -1460,6 +1524,8 @@ def main():
     parser.add_argument('--limit', type=int, help='plan-generation: plan at most this many contexts (subset order)')
     parser.add_argument('--partition', default='meta_train', help='plan-generation: meta partition of the contexts to plan (default meta_train)')
     parser.add_argument('--excluded-families', help='plan-generation: comma-separated families; default the manifest withdrawn_families')
+    parser.add_argument('--execution-evaluator', metavar='SHA256',
+                        help='plan-generation (Tier-B, required): manifest-bound digest of the binary that will execute the episodes')
     parser.add_argument('--episode', action='append', default=[], help='ingest: episode directory within root (repeatable)')
     parser.add_argument('--arm', choices=ARMS, help='ingest: binding for episodes planned outside this ledger (v2 identities)')
     parser.add_argument('--role', choices=PRIORITY)
@@ -1487,7 +1553,8 @@ def main():
             excluded = [f for f in args.excluded_families.split(',') if f]
         else:
             excluded = json.loads(within(ledger.root, args.manifest).read_bytes()).get('withdrawn_families') or []
-        result = ledger.plan_from_jobs(args.generation, jobs, list(excluded), protocol=args.protocol, limit=args.limit, partition=args.partition)
+        result = ledger.plan_from_jobs(args.generation, jobs, list(excluded), protocol=args.protocol, limit=args.limit, partition=args.partition,
+                                       execution_evaluator=args.execution_evaluator)
     elif args.action == 'next-outcome':
         result = ledger.next_outcome(args.generation, quality_report=args.quality_report, outcome=args.outcome)
     elif args.action == 'bundle':

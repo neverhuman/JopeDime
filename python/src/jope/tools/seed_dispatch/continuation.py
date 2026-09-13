@@ -23,10 +23,14 @@ PROTOCOL_V3 = "parallel.seed_continuation.qualification.v3"
 def plan(population, prepared, generic, *, prepared_sha, population_sha, generic_sha,
          evaluator_sha, vocabulary_sha, excluded_families, evaluations=2, seconds=6, rng_seed=1, candidate_seconds=2,
          arm=None, role=None, seed_origin="neural_policy", replicate=0,
-         protocol=PROTOCOL_V2, generation=None, select=None):
+         protocol=PROTOCOL_V2, generation=None, select=None, row0_source_evaluator_sha=None):
     # Successor-ledger extension: with the defaults the identity is byte-identical to v2.
     # arm/role/replicate/seed_origin/generation bind the episode role (v3 identity); select limits
-    # episodes to the listed genomes or program digests. Never rewrites fitness or labels.
+    # episodes to the listed genomes or program digests; row0_source_evaluator_sha (Tier-B) records the
+    # evaluator whose admitted row-0 label the seed reproduces when evaluator_sha names a different
+    # executing binary. Never rewrites fitness or labels.
+    if row0_source_evaluator_sha is not None and arm is None:
+        raise ValueError("A row-0 source evaluator binding requires an arm")
     if seed_origin not in SEED_ORIGINS:
         raise ValueError("Seed origin must be neural_policy or generic_comparison")
     if arm is not None and (arm not in ARMS or role not in ROLES or replicate not in (0, 1)):
@@ -88,6 +92,8 @@ def plan(population, prepared, generic, *, prepared_sha, population_sha, generic
                 identity.update(seed_arm=arm, role=role, replicate=replicate, seed_origin=seed_origin)
                 if generation is not None:
                     identity["generation"] = generation
+                if row0_source_evaluator_sha is not None:
+                    identity["row0_source_evaluator_sha256"] = row0_source_evaluator_sha
             episode_id = digest(encoded(identity))
             identities[genome] = episode_id
             episodes.append(dict(episode_id=episode_id, identity=identity, seeds=seed_population,
