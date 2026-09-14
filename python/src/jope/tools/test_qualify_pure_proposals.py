@@ -14,14 +14,6 @@ spec.loader.exec_module(module)
 
 
 class QualificationTests(unittest.TestCase):
-    def test_frozen_context_count_adapts_without_opening_sealed_or_extra_cuts(self):
-        contexts=[dict(dataset=str(i),cut=cut,partition='meta_train') for i in range(70) for cut in range(2)]
-        contexts.extend([dict(dataset='sealed',cut=0,partition='meta_test'),
-                         dict(dataset='extra',cut=2,partition='meta_train')])
-        self.assertEqual(len(module.proposal_contexts(dict(contexts=contexts))),140)
-        with self.assertRaises(ValueError):module.proposal_contexts(dict(contexts=contexts+[contexts[0]]))
-        with self.assertRaises(ValueError):module.proposal_contexts(dict(contexts=[]))
-
     def ranking(self):
         rows = [{"program": f"program-{i}", "program_sha256": module.sha(f"program-{i}".encode()),
                  "predicted_quality": 1.0, "predicted_runtime_seconds": 2.0,

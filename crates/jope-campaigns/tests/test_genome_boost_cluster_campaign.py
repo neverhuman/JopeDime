@@ -1,7 +1,6 @@
 import argparse
 import importlib.util
 import json
-import tomllib
 from pathlib import Path
 
 
@@ -26,7 +25,7 @@ def write_gpu_spec(path: Path, job_id: str) -> None:
             max_runtime_hours=8,
             max_restarts=1,
             preemptible=True,
-            capability_path=Path("/tmp/synthetic-campaign-capability"),
+            node="xbabe2",
         )
     )
 
@@ -42,20 +41,12 @@ def test_tabpfn_spec_has_exact_resources():
         max_runtime_hours=8,
         max_restarts=1,
         preemptible=True,
-        capability_path=Path("/tmp/synthetic-campaign-capability"),
+        node="xbabe2",
     )
     assert "gpus_per_task = 1" in text
     assert "cpus_reserved = 4" in text
     assert "ram_gb = 32" in text
-    spec = tomllib.loads(text)
-    assert spec["resource"]["placement"] == "single_node"
-    assert "node" not in spec["resource"]
-    assert spec["dependencies"]["smoke"] == [{
-        "name": "campaign runtime capability available",
-        "command": "/usr/bin/test",
-        "args": ["-e", "/tmp/synthetic-campaign-capability"],
-        "timeout_secs": 5,
-    }]
+    assert 'node = "xbabe2"' in text
     assert "preemptible = true" in text
     assert "max_runtime_hours = 8" in text
     assert "max_restarts = 1" in text

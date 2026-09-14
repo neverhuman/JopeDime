@@ -1,4 +1,0 @@
-{"request": "/home/ubuntu/jope-dime/parallel/assets/sampling-reviewed4-v1/request.json", "jobs": 300, "target_new_lengths": 10, "foundation_new_lengths": 10, "foundation_new_shapes": 60, "rank": 3, "world_size": 8}
-/usr/lib/python3/dist-packages/scipy/__init__.py:146: UserWarning: A NumPy version >=1.17.3 and <1.25.0 is required for this version of SciPy (detected version 1.26.4
-  warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
-{"passed": true, "rank": 3, "target_tests": 3, "foundation_tests": 8}

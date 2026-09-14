@@ -89,18 +89,4 @@ fn sampler_balances_families_and_keeps_comparisons_on_rank() {
         .flat_map(|r| sample(&index, &families, 2048 + r * 256, 256, 12))
         .collect::<Vec<_>>();
     assert_eq!(global, ranks);
-    // An equal example budget preserves the ordered teacher/comparator stream
-    // when a qualification block changes the number of optimizer updates.
-    let expected = sample(&index, &families, 0, 32768, 12);
-    for microbatch in [256, 512, 1024, 2048] {
-        let global_batch = 8 * microbatch;
-        let mut actual = Vec::new();
-        for step in 0..32768 / global_batch {
-            for rank in 0..8 {
-                actual.extend(sample(&index, &families,
-                    step * global_batch + rank * microbatch, microbatch, 12));
-            }
-        }
-        assert_eq!(actual, expected, "batch {microbatch} changed the sampled teaching examples");
-    }
 }

@@ -2649,7 +2649,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "unavailable: real-data parity must reuse original registry model artifacts; legacy refits are disallowed"]
     fn target_campaign_v3_fit_preserves_frozen_near_winner_bits() {
         std::thread::Builder::new()
             .name("golden42-v3-frozen-near-winner".to_string())

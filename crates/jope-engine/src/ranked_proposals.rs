@@ -261,12 +261,11 @@ fn sample(
         .view([1, 2048])
         .repeat([batch as i64, 1])
         .to_device(device);
-    let task_id = vocab.task_id("regression")?;
     let mut sequences = vec![
         vec![
             1usize,
             vocab.engine_ids["featmath"],
-            task_id
+            vocab.task_ids["regression"]
         ];
         batch
     ];
@@ -274,7 +273,7 @@ fn sample(
         .map(|_| {
             let mut state = State::default();
             state.advance(vocab, vocab.engine_ids["featmath"]).unwrap();
-            state.advance(vocab, task_id).unwrap();
+            state.advance(vocab, vocab.task_ids["regression"]).unwrap();
             state
         })
         .collect::<Vec<_>>();
@@ -597,7 +596,6 @@ pub fn assemble(root: &Path, manifest_path: &Path) -> Result<()> {
                 tail.push(SeedCandidate {
                     genome: champion.genome().into(),
                     origin: "incumbent_cut_teacher".into(),
-                    policy_logprob: None,
                 });
             }
         }
@@ -622,8 +620,7 @@ pub fn assemble(root: &Path, manifest_path: &Path) -> Result<()> {
                     tail.push(SeedCandidate {
                         genome: genome.clone(),
                         origin: "retained_cut_teacher".into(),
-                    policy_logprob: None,
-                });
+                    });
                 }
             }
         }
@@ -646,7 +643,6 @@ pub fn assemble(root: &Path, manifest_path: &Path) -> Result<()> {
                         "random_exploration"
                     }
                     .into(),
-                    policy_logprob: None,
                 });
             }
         }
@@ -665,8 +661,7 @@ pub fn assemble(root: &Path, manifest_path: &Path) -> Result<()> {
                     Ok(SeedCandidate {
                         genome: p.as_str().context("program text absent")?.into(),
                         origin: "neural_policy".into(),
-                    policy_logprob: None,
-                })
+                    })
                 })
                 .collect::<Result<Vec<_>>>()?;
             let mut assembly = proposal_population::assemble(&pure, &tail, &vocab, overlap_seed)?;
@@ -714,7 +709,6 @@ pub fn assemble(root: &Path, manifest_path: &Path) -> Result<()> {
 }
 
 pub fn run(root: &Path, manifest_path: &Path, rank: usize, world: usize) -> Result<()> {
-    crate::task_contract::require_qualified_gpu_experiment("propose-ranked")?;
     let canonical_root = root.canonicalize()?;
     let root = canonical_root.as_path();
     ensure!(

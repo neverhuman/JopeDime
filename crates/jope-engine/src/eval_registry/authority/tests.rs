@@ -84,7 +84,6 @@ impl Fixture {
                     },
                 )
                 .unwrap();
-            f.open().activate_synthetic_for_test().unwrap();
         }
         f
     }
@@ -245,8 +244,8 @@ fn concurrent_104_requests_authorize_exactly_one_synthetic_start() {
     );
     let a = fixture.open();
     assert_eq!(
-        a.checkpoint.seq, 5,
-        "coverage, explicit synthetic activation, claim, authorize, consume only"
+        a.checkpoint.seq, 4,
+        "coverage, claim, authorize, consume only"
     );
     assert_eq!(
         state(fixture.open().lookup(&fit(), &request()).unwrap()),
@@ -407,44 +406,32 @@ fn history_import_requires_every_source_and_matches_partial_programs() {
     assert!(state(a.claim(&fit(), &request()).unwrap()).contains("unresolved"));
 }
 
-// Own the original Child through readiness failures and assertion unwinding.
-// Its guard drops before the caller's fixture can remove registry storage.
-struct SyntheticChild(std::process::Child);
-impl Drop for SyntheticChild {
-    fn drop(&mut self) {
-        let _ = self.0.kill();
-        let _ = self.0.wait();
-    }
-}
-
 fn run_child(
     fixture: &Fixture,
     mode: &str,
 ) -> (Authority, VerifiedFit, StartToken, ObservedCompletion) {
     let (mut a, f, c) = fixture.claim();
     let handshake = fixture._temp.path().join("start.json");
-    let mut child = SyntheticChild(
-        Command::new(std::env::current_exe().unwrap())
-            .args([
-                "--exact",
-                "eval_registry::authority::tests::synthetic_executor",
-                "--ignored",
-                "--nocapture",
-            ])
-            .env("JOPE_SYNTHETIC_AUTHORITY", &fixture.root)
-            .env("JOPE_SYNTHETIC_WITNESS", &fixture.witness)
-            .env("JOPE_SYNTHETIC_HANDSHAKE", &handshake)
-            .env("JOPE_SYNTHETIC_MODE", mode)
-            .stdout(Stdio::null())
-            .stderr(Stdio::inherit())
-            .spawn()
-            .unwrap(),
-    );
+    let mut child = Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "eval_registry::authority::tests::synthetic_executor",
+            "--ignored",
+            "--nocapture",
+        ])
+        .env("JOPE_SYNTHETIC_AUTHORITY", &fixture.root)
+        .env("JOPE_SYNTHETIC_WITNESS", &fixture.witness)
+        .env("JOPE_SYNTHETIC_HANDSHAKE", &handshake)
+        .env("JOPE_SYNTHETIC_MODE", mode)
+        .stdout(Stdio::null())
+        .stderr(Stdio::inherit())
+        .spawn()
+        .unwrap();
     let start = a
         .authorize_with_deadline(
             &f,
             &c,
-            &ProcessIdentity::read(child.0.id()).unwrap(),
+            &ProcessIdentity::read(child.id()).unwrap(),
             Duration::from_secs(30),
         )
         .unwrap();
@@ -458,7 +445,7 @@ fn run_child(
         std::thread::sleep(Duration::from_millis(1));
     }
     let observed = ObservedCompletion::wait(
-        &mut child.0,
+        &mut child,
         &start,
         Duration::from_secs(if mode == "timeout" { 1 } else { 30 }),
     )
@@ -553,13 +540,7 @@ fn failed_exit_signal_and_timeout_cannot_be_cleared_by_result_files() {
 
 #[test]
 fn valid_sqlite_with_deleted_safety_rows_is_corruption() {
-    for table in [
-        "entries",
-        "coverage",
-        "exclusions",
-        "scope_training",
-        "numerical_guards",
-    ] {
+    for table in ["entries", "coverage", "exclusions", "scope_training"] {
         let fixture = Fixture::new(true);
         let (mut a, f, _) = fixture.claim();
         a.import_exclusion(&HistoricalExclusion {
@@ -583,503 +564,4 @@ fn valid_sqlite_with_deleted_safety_rows_is_corruption() {
             "restart failed to detect {table} deletion"
         );
     }
-}
-
-#[test]
-fn new_binary_or_runtime_is_not_numerical_novelty() {
-    let fixture = Fixture::new(true);
-    let (mut authority, fit, _) = fixture.claim();
-    for (exe, runtime) in [
-        (
-            hash(b"UI-only rebuild"),
-            fit.identity.runtime_sha256.clone(),
-        ),
-        (
-            fit.identity.executable_sha256.clone(),
-            hash(b"new runtime label"),
-        ),
-    ] {
-        let alias = VerifiedFit::from_verified_runtime(
-            &fit.identity.canonical_program,
-            fit.x.clone(),
-            fit.y.clone(),
-            fit.preprocessing.clone(),
-            fit.feature_view.clone(),
-            fit.identity.fit_seed,
-            exe,
-            runtime,
-            &contract(),
-        )
-        .unwrap();
-        assert_ne!(alias.key, fit.key);
-        assert!(state(authority.claim(&alias, &request()).unwrap()).contains("same numerical work"));
-    }
-}
-
-#[test]
-fn expired_start_and_execution_custody_remain_unavailable() {
-    let fixture = Fixture::new(true);
-    let (mut authority, fit, claim) = fixture.claim();
-    let start = authority
-        .authorize_with_deadline(
-            &fit,
-            &claim,
-            &ProcessIdentity::current().unwrap(),
-            Duration::from_millis(20),
-        )
-        .unwrap();
-    // Synthetic custody isolates deadline behavior from expensive runtime hashes.
-    // No numerical start is consumed or executed by this fixture.
-    let custody = ExecutionCustody {
-        start: start.clone(),
-        lock: FileLock::acquire(&fixture.root.join("custody").join(fit.key()), true, true).unwrap(),
-    };
-    while monotonic_ns().unwrap() < start.deadline_monotonic_ns {
-        std::thread::sleep(Duration::from_millis(1));
-    }
-    assert!(custody
-        .verify()
-        .unwrap_err()
-        .to_string()
-        .contains("deadline expired"));
-    assert!(authority
-        .consume_start(&fit, &start)
-        .err()
-        .unwrap()
-        .to_string()
-        .contains("deadline expired"));
-    assert_eq!(
-        state(authority.lookup(&fit, &request()).unwrap()),
-        "authorized"
-    );
-}
-
-#[test]
-fn synthetic_child_is_reaped_before_fixture_cleanup_on_panic() {
-    let mut process = None;
-    let mut path = None;
-    let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let temp = tempfile::tempdir().unwrap();
-        path = Some(temp.path().to_path_buf());
-        let child = SyntheticChild(Command::new("/bin/sleep").arg("60").spawn().unwrap());
-        process = Some(ProcessIdentity::read(child.0.id()).unwrap());
-        panic!("injected synthetic readiness failure");
-    }));
-    assert!(outcome.is_err());
-    let original = process.unwrap();
-    assert_ne!(ProcessIdentity::read(original.pid).ok(), Some(original));
-    assert!(!path.unwrap().exists());
-}
-
-fn staged_history_fixture(fixture: &Fixture) -> HistoryInventory {
-    let history = fixture._temp.path().join("staged-history");
-    fs::create_dir(&history).unwrap();
-    let fence = fixture._temp.path().join("staged-fence");
-    fs::write(&fence, b"original synthetic fence bytes").unwrap();
-    let mut inventory = HistoryInventory {
-        scope: "synthetic".into(),
-        source_roots: vec![history.clone()],
-        files: BTreeMap::new(),
-        occurrences: vec![],
-        legacy_fence_receipt: fence,
-        legacy_fence_sha256: hash(b"original synthetic fence bytes"),
-    };
-    for i in 0..3 {
-        let source = history.join(format!("occurrence-{i}.json"));
-        let bytes = format!("original synthetic historical occurrence {i}");
-        fs::write(&source, &bytes).unwrap();
-        let sha = hash(bytes.as_bytes());
-        inventory.files.insert(source, sha.clone());
-        inventory.occurrences.push(HistoricalExclusion {
-            scope: "synthetic".into(),
-            canonical_program: None,
-            training_sha256: Some(ZERO.into()),
-            evidence_sha256: sha,
-            reason: "original synthetic unusable completion".into(),
-        });
-    }
-    inventory
-}
-
-#[test]
-fn history_batches_resume_without_activating_and_require_every_occurrence() {
-    let fixture = Fixture::new(false);
-    let inventory = staged_history_fixture(&fixture);
-    let mut authority = fixture.open();
-    let stage = authority.history_stage(&inventory).unwrap();
-    let sequence = authority.checkpoint.seq;
-    assert_eq!(authority.history_stage(&inventory).unwrap(), stage);
-    assert_eq!(authority.checkpoint.seq, sequence);
-    assert!(state(authority.claim(&fit(), &request()).unwrap()).contains("coverage"));
-    assert!(authority.history_commit_coverage(&stage).is_err());
-    let first = HistoryBatch {
-        stage_sha256: stage.clone(),
-        start: 0,
-        end: 1,
-    };
-    let batch = authority.history_import_batch(&first).unwrap();
-    let sequence = authority.checkpoint.seq;
-    assert_eq!(authority.history_import_batch(&first).unwrap(), batch);
-    assert_eq!(authority.checkpoint.seq, sequence);
-    assert!(authority
-        .history_import_batch(&HistoryBatch {
-            stage_sha256: stage.clone(),
-            start: 0,
-            end: 2
-        })
-        .is_err());
-    assert!(authority.history_commit_coverage(&stage).is_err());
-    drop(authority);
-    let mut authority = fixture.open();
-    authority
-        .history_import_batch(&HistoryBatch {
-            stage_sha256: stage.clone(),
-            start: 1,
-            end: 3,
-        })
-        .unwrap();
-    assert_eq!(authority.history_commit_coverage(&stage).unwrap(), stage);
-    let sequence = authority.checkpoint.seq;
-    authority.history_commit_coverage(&stage).unwrap();
-    assert_eq!(authority.checkpoint.seq, sequence);
-    assert!(state(authority.claim(&fit(), &request()).unwrap()).contains("inactive"));
-    for capability in [
-        "synthetic_qualification",
-        "regression_collection",
-        "regression_training",
-        "regression_promotion",
-    ] {
-        assert!(authority
-            .namespace_activate("synthetic", capability)
-            .unwrap_err()
-            .to_string()
-            .contains("unavailable"));
-    }
-    assert_eq!(
-        authority.checkpoint.seq, sequence,
-        "activation refusal must not journal"
-    );
-    assert_eq!(
-        authority
-            .db
-            .query_row("SELECT count(*) FROM entries", [], |r| r.get::<_, u64>(0))
-            .unwrap(),
-        0
-    );
-}
-
-#[test]
-fn retained_history_corruption_blocks_batch_and_coverage() {
-    let fixture = Fixture::new(false);
-    let inventory = staged_history_fixture(&fixture);
-    let mut authority = fixture.open();
-    let stage = authority.history_stage(&inventory).unwrap();
-    authority
-        .history_import_batch(&HistoryBatch {
-            stage_sha256: stage.clone(),
-            start: 0,
-            end: 3,
-        })
-        .unwrap();
-    let evidence = &inventory.occurrences[1].evidence_sha256;
-    fs::remove_file(fixture.root.join("objects").join(evidence)).unwrap();
-    assert!(authority
-        .history_import_batch(&HistoryBatch {
-            stage_sha256: stage.clone(),
-            start: 0,
-            end: 3
-        })
-        .is_err());
-    assert!(authority.history_commit_coverage(&stage).is_err());
-    assert!(state(authority.claim(&fit(), &request()).unwrap()).contains("coverage"));
-}
-
-#[test]
-fn deactivation_rechecks_authorization_and_start_consumption() {
-    let fixture = Fixture::new(true);
-    let (mut authority, fit, claim) = fixture.claim();
-    authority.namespace_deactivate("synthetic").unwrap();
-    assert!(authority
-        .authorize(&fit, &claim, &ProcessIdentity::current().unwrap())
-        .unwrap_err()
-        .to_string()
-        .contains("inactive"));
-    authority.activate_synthetic_for_test().unwrap();
-    let start = authority
-        .authorize(&fit, &claim, &ProcessIdentity::current().unwrap())
-        .unwrap();
-    authority.namespace_deactivate("synthetic").unwrap();
-    assert!(authority.consume_start(&fit, &start).is_err());
-    assert_eq!(
-        authority
-            .db
-            .query_row(
-                "SELECT count(*) FROM entries WHERE state='running'",
-                [],
-                |r| r.get::<_, u64>(0)
-            )
-            .unwrap(),
-        0
-    );
-}
-
-#[test]
-fn witnessed_journal_replay_preserves_unknown_start_and_epoch_does_not_activate() {
-    let fixture = Fixture::new(true);
-    {
-        fixture
-            .open()
-            .db
-            .execute_batch("PRAGMA wal_checkpoint(TRUNCATE)")
-            .unwrap();
-    }
-    let old_database = fs::read(fixture.root.join("registry.sqlite")).unwrap();
-    let start = {
-        let (mut authority, fit, claim) = fixture.claim();
-        let start = authority
-            .authorize_with_deadline(
-                &fit,
-                &claim,
-                &ProcessIdentity::current().unwrap(),
-                Duration::from_secs(120),
-            )
-            .unwrap();
-        authority
-            .db
-            .execute_batch("PRAGMA wal_checkpoint(TRUNCATE)")
-            .unwrap();
-        start
-    };
-    fs::write(fixture.root.join("registry.sqlite"), old_database).unwrap();
-    assert!(Authority::open(&fixture.root, &fixture.witness).is_err());
-    let inspection = Authority::recovery_inspect(&fixture.root, &fixture.witness).unwrap();
-    assert!(
-        inspection["journal"]["seq"].as_u64().unwrap()
-            > inspection["database"]["seq"].as_u64().unwrap()
-    );
-    let replay = Authority::recovery_replay(&fixture.root, &fixture.witness).unwrap();
-    assert_eq!(replay["unresolved_original_work"][0]["state"], "authorized");
-    assert!(
-        Authority::open(&fixture.root, &fixture.witness).is_err(),
-        "replay cannot remove recovery hold"
-    );
-    let report = Authority::recovery_reconcile(&fixture.root, &fixture.witness).unwrap();
-    Authority::recovery_commit_epoch(&fixture.root, &fixture.witness, &report).unwrap();
-    let mut authority = fixture.open();
-    assert_eq!(
-        state(authority.lookup(&fit(), &request()).unwrap()),
-        "authorized"
-    );
-    assert!(
-        authority.consume_start(&fit(), &start).is_err(),
-        "prior activation must not survive new epoch"
-    );
-    assert!(state(
-        authority
-            .claim(
-                &fit_program("(pipe X (standard_scale) (ridge))"),
-                &request()
-            )
-            .unwrap()
-    )
-    .contains("inactive"));
-    authority.activate_synthetic_for_test().unwrap();
-    assert!(
-        authority
-            .consume_start(&fit(), &start)
-            .err()
-            .unwrap()
-            .to_string()
-            .contains("prior recovery epoch"),
-        "reactivation cannot resurrect a prior-epoch token"
-    );
-    assert!(
-        authority.require_reconciled_service_start().is_err(),
-        "original unknown work remains unavailable"
-    );
-}
-
-#[test]
-fn recovery_replay_refuses_missing_or_unacknowledged_journal_tails() {
-    for missing_tail in [false, true] {
-        let fixture = Fixture::new(true);
-        let old_journal = fs::read(fixture.root.join("dispatch.jsonl")).unwrap();
-        let old_witness = fs::read(&fixture.witness).unwrap();
-        {
-            let (mut authority, fit, claim) = fixture.claim();
-            authority
-                .authorize(&fit, &claim, &ProcessIdentity::current().unwrap())
-                .unwrap();
-        }
-        if missing_tail {
-            fs::write(fixture.root.join("dispatch.jsonl"), old_journal).unwrap();
-        } else {
-            fs::remove_file(&fixture.witness).unwrap();
-            fs::write(&fixture.witness, old_witness).unwrap();
-        }
-        assert!(Authority::recovery_replay(&fixture.root, &fixture.witness).is_err());
-        assert!(Authority::recovery_reconcile(&fixture.root, &fixture.witness).is_err());
-        assert!(Authority::open(&fixture.root, &fixture.witness).is_err());
-    }
-}
-
-#[test]
-fn recovery_epoch_requires_current_retained_reconciliation_evidence() {
-    let fixture = Fixture::new(true);
-    let mut authority = fixture.open();
-    let forged = authority
-        .store_blob(
-            &encoded(
-                &json!({"verified":true,"schema":"parallel.authority_recovery_inspection.v1"}),
-            )
-            .unwrap(),
-        )
-        .unwrap();
-    let report = Authority::recovery_reconcile(&fixture.root, &fixture.witness).unwrap();
-    assert!(
-        authority.claim(&fit(), &request()).is_err(),
-        "already-open client must respect durable recovery hold"
-    );
-    assert!(Authority::recovery_commit_epoch(&fixture.root, &fixture.witness, &forged).is_err());
-    Authority::recovery_commit_epoch(&fixture.root, &fixture.witness, &report).unwrap();
-    assert!(Authority::recovery_commit_epoch(&fixture.root, &fixture.witness, &report).is_err());
-    let mut authority = fixture.open();
-    assert!(state(authority.claim(&fit(), &request()).unwrap()).contains("inactive"));
-}
-
-#[test]
-fn recovery_inspection_exposes_index_corruption_and_missing_original_model() {
-    let fixture = Fixture::new(true);
-    let (mut authority, fit, _, observed) = run_child(&fixture, "success");
-    let completion = authority
-        .complete_observed(
-            &fit,
-            observed,
-            ExecutionOutcome::Success,
-            b"original synthetic output",
-            Some(b"original synthetic model"),
-            None,
-            None,
-        )
-        .unwrap();
-    let model = authority
-        .completion(&completion)
-        .unwrap()
-        .model_sha256
-        .unwrap();
-    fs::remove_file(fixture.root.join("objects").join(model)).unwrap();
-    let inspection = Authority::recovery_inspect(&fixture.root, &fixture.witness).unwrap();
-    assert!(!inspection["retained_artifact_errors"]
-        .as_array()
-        .unwrap()
-        .is_empty());
-    assert!(Authority::recovery_reconcile(&fixture.root, &fixture.witness).is_err());
-    drop(authority);
-    let db = Connection::open(fixture.root.join("registry.sqlite")).unwrap();
-    db.execute("DELETE FROM numerical_guards", []).unwrap();
-    drop(db);
-    let inspection = Authority::recovery_inspect(&fixture.root, &fixture.witness).unwrap();
-    assert!(inspection["indexed_state_error"]
-        .as_str()
-        .unwrap()
-        .contains("journal"));
-}
-
-#[test]
-fn pending_history_suspends_prior_coverage_and_old_claims_cannot_cross_epochs() {
-    let fixture = Fixture::new(true);
-    let (mut authority, fit, claim) = fixture.claim();
-    let inventory = staged_history_fixture(&fixture);
-    let stage = authority.history_stage(&inventory).unwrap();
-    assert!(state(authority.claim(&fit, &request()).unwrap()).contains("import incomplete"));
-    assert!(authority
-        .authorize(&fit, &claim, &ProcessIdentity::current().unwrap())
-        .is_err());
-    authority
-        .history_import_batch(&HistoryBatch {
-            stage_sha256: stage.clone(),
-            start: 0,
-            end: 3,
-        })
-        .unwrap();
-    authority.history_commit_coverage(&stage).unwrap();
-    assert!(authority
-        .authorize(&fit, &claim, &ProcessIdentity::current().unwrap())
-        .is_err());
-    drop(authority);
-    let report = Authority::recovery_reconcile(&fixture.root, &fixture.witness).unwrap();
-    Authority::recovery_commit_epoch(&fixture.root, &fixture.witness, &report).unwrap();
-    let mut authority = fixture.open();
-    authority.activate_synthetic_for_test().unwrap();
-    assert!(authority
-        .authorize(&fit, &claim, &ProcessIdentity::current().unwrap())
-        .unwrap_err()
-        .to_string()
-        .contains("prior recovery epoch"));
-}
-
-#[test]
-fn replay_preserves_same_key_database_only_unknown_evidence() {
-    let fixture = Fixture::new(true);
-    let (authority, fit, _) = fixture.claim();
-    let original = "database-only unknown authorization token";
-    authority
-        .db
-        .execute(
-            "UPDATE entries SET state='authorized',start_json=? WHERE key=?",
-            params![original, fit.key],
-        )
-        .unwrap();
-    drop(authority);
-    let before = Connection::open(&fixture.root.join("registry.sqlite")).unwrap();
-    let row = Authority::state_row(&before, "entries", &fit.key).unwrap();
-    drop(before);
-    let report = Authority::recovery_inspect(&fixture.root, &fixture.witness).unwrap();
-    assert!(report["database_checkpoint_state_error"]
-        .as_str()
-        .unwrap()
-        .contains("conflicts"));
-    assert!(Authority::recovery_replay(&fixture.root, &fixture.witness).is_err());
-    let after = Connection::open(&fixture.root.join("registry.sqlite")).unwrap();
-    assert_eq!(
-        Authority::state_row(&after, "entries", &fit.key).unwrap(),
-        row
-    );
-    assert!(
-        !fixture.root.join("recovery.pending").exists(),
-        "conflict refusal must precede mutation"
-    );
-}
-
-#[test]
-fn recommitting_old_coverage_cannot_resurrect_prior_activation() {
-    let fixture = Fixture::new(false);
-    let first = staged_history_fixture(&fixture);
-    let mut authority = fixture.open();
-    let first_sha = authority.import_history(&first).unwrap();
-    authority.activate_synthetic_for_test().unwrap();
-    assert_eq!(
-        state(authority.lookup(&fit(), &request()).unwrap()),
-        "unseen: explicit claim required"
-    );
-    let mut second = first.clone();
-    second.occurrences[0].reason = "second reviewed historical disposition".into();
-    let second_sha = authority.import_history(&second).unwrap();
-    assert_ne!(first_sha, second_sha);
-    assert!(state(authority.lookup(&fit(), &request()).unwrap()).contains("inactive"));
-    authority.history_commit_coverage(&first_sha).unwrap();
-    drop(authority);
-    let mut authority = fixture.open();
-    assert!(state(authority.claim(&fit(), &request()).unwrap()).contains("inactive"));
-    assert_eq!(
-        authority
-            .db
-            .query_row(
-                "SELECT state FROM activations WHERE scope='synthetic'",
-                [],
-                |r| r.get::<_, String>(0)
-            )
-            .unwrap(),
-        "inactive"
-    );
 }

@@ -1,8 +1,0 @@
-{
-  "report": "docs/audits/worldclass-redteam-20260911/precision-addendum.md",
-  "sha256": "42b18b3e414345f247e95203053a8925b57ace3583c6c72f82cf998174997ce2",
-  "main_sha256": "7473d75920b892d38072e750ca450837eb4cda0d2723c08aebaa44e0e219dbb6",
-  "native_runtime_source_sha256": "03c1f0b3d198bf5d9732d9559b0526e2ff2622b2beeedfb12c6e6086a00774dc",
-  "source_binding_verified": true,
-  "new_numerical_jobs": 0
-}

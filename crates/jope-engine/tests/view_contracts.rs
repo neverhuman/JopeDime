@@ -38,73 +38,27 @@ fn one_evaluation_budget_runs_the_incumbent_before_neural_candidates() {
     for seed in 0..10000 {
         let raw = feat_math::evolve::random_canonical_pipeline(seed, 6);
         if let Ok(program) = vocab.project_proposal(&raw) {
-            if seen.insert(program.clone()) {
-                programs.push(program);
-            }
+            if seen.insert(program.clone()) { programs.push(program); }
         }
-        if programs.len() == 79 {
-            break;
-        }
+        if programs.len() == 79 { break; }
     }
     assert_eq!(programs.len(), 79);
     programs.insert(64, champion.clone());
     let p: Prepared = read_json(&prepared.join("prepared.json")).unwrap();
     let seeds = temp.path().join("seeds.json");
-    write_json(
-        &seeds,
-        &jope_parallel::gp::SeedPopulation {
-            schema: "parallel.seed_population.v1".into(),
-            prepared_sha256: file_hash(&prepared.join("prepared.json")).unwrap(),
-            cut: 0,
-            training_sha256: p.cuts[0].training_sha256.clone(),
-            context_sha256: "0".repeat(64),
-            checkpoint_sha256: "1".repeat(64),
-            candidates: programs
-                .into_iter()
-                .enumerate()
-                .map(|(i, genome)| jope_parallel::gp::SeedCandidate {
-                    genome,
-                    origin: if i == 64 {
-                        "incumbent_cut_teacher"
-                    } else {
-                        "neural_policy"
-                    }
-                    .into(),
-                    policy_logprob: None,
-                })
-                .collect(),
-        },
-    )
-    .unwrap();
+    write_json(&seeds, &jope_parallel::gp::SeedPopulation {
+        schema:"parallel.seed_population.v1".into(), prepared_sha256:file_hash(&prepared.join("prepared.json")).unwrap(),
+        cut:0, training_sha256:p.cuts[0].training_sha256.clone(), context_sha256:"0".repeat(64),
+        checkpoint_sha256:"1".repeat(64), candidates:programs.into_iter().enumerate().map(|(i,genome)|
+            jope_parallel::gp::SeedCandidate { genome, origin:if i==64 {"incumbent_cut_teacher"} else {"neural_policy"}.into() }).collect(),
+    }).unwrap();
     let output = temp.path().join("teacher-first-search");
     let result = std::process::Command::new(env!("CARGO_BIN_EXE_jope-parallel"))
-        .env("JOPE_CPU_EVALUATOR", env!("CARGO_BIN_EXE_jope-parallel"))
-        .arg("--root")
-        .arg(temp.path())
-        .args(["search", "--prepared"])
-        .arg(&prepared)
-        .args(["--cut", "0", "--output"])
-        .arg(&output)
-        .args([
-            "--evaluations",
-            "1",
-            "--seconds",
-            "90",
-            "--qualification",
-            "--seeds",
-        ])
-        .arg(&seeds)
-        .arg("--vocabulary")
-        .arg(&vocabulary)
-        .output()
-        .unwrap();
-    assert!(
-        result.status.success(),
-        "{}",
-        String::from_utf8_lossy(&result.stderr)
-    );
-    let observations: Vec<serde_json::Value> =
-        read_json(&output.join("observations.json")).unwrap();
+        .args(["search", "--prepared"]).arg(&prepared).args(["--cut","0","--output"]).arg(&output)
+        .args(["--evaluations","1","--seconds","90","--qualification","--seeds"]).arg(&seeds)
+        .arg("--vocabulary").arg(&vocabulary).output().unwrap();
+    assert!(result.status.success(), "{}", String::from_utf8_lossy(&result.stderr));
+    let observations:Vec<serde_json::Value> = read_json(&output.join("observations.json")).unwrap();
     assert_eq!(observations.len(), 1);
     assert_eq!(observations[0]["origin"], "incumbent_cut_teacher");
     assert_eq!(observations[0]["initial_seed_slot"], 64);
@@ -310,9 +264,6 @@ fn gp_resumes_its_ledger_without_repeating_completed_evaluations() {
     let out = temp.path().join("search");
     let run = |count: &str| {
         Command::new(env!("CARGO_BIN_EXE_jope-parallel"))
-            .env("JOPE_CPU_EVALUATOR", env!("CARGO_BIN_EXE_jope-parallel"))
-            .arg("--root")
-            .arg(temp.path())
             .arg("search")
             .arg("--prepared")
             .arg(&p)
@@ -339,26 +290,27 @@ fn gp_resumes_its_ledger_without_repeating_completed_evaluations() {
     let original: Vec<serde_json::Value> = read_json(&out.join("observations.json")).unwrap();
     assert_eq!(original.len(), 2);
     fs::remove_file(out.join("search.json")).unwrap();
-    let second = run("2");
+    let second = run("3");
     assert!(
         second.status.success(),
         "{}",
         String::from_utf8_lossy(&second.stderr)
     );
     let resumed: Vec<serde_json::Value> = read_json(&out.join("observations.json")).unwrap();
-    assert_eq!(resumed, original);
+    assert_eq!(resumed.len(), 3);
+    assert_eq!(&resumed[..2], &original);
+    assert_eq!(resumed[2]["evaluation_index"], 2);
     assert!(
         original[1]["completed_search_seconds"].as_f64().unwrap()
             >= original[0]["completed_search_seconds"].as_f64().unwrap()
     );
-    fs::remove_file(out.join("search.json")).unwrap();
-    let changed = run("3");
-    assert!(!changed.status.success());
-    assert!(String::from_utf8_lossy(&changed.stderr)
-        .contains("accepted search artifact root or request changed"));
+    assert!(
+        resumed[2]["completed_search_seconds"].as_f64().unwrap()
+            >= original[1]["completed_search_seconds"].as_f64().unwrap() + 30.0
+    );
     assert_eq!(
-        read_json::<Vec<serde_json::Value>>(&out.join("observations.json")).unwrap(),
-        original
+        resumed[2]["search_clock_accuracy"],
+        "conservative_resume_offset"
     );
 }
 
@@ -368,9 +320,6 @@ fn clock_search(
     evaluations: &str,
 ) -> std::process::Output {
     Command::new(env!("CARGO_BIN_EXE_jope-parallel"))
-        .env("JOPE_CPU_EVALUATOR", env!("CARGO_BIN_EXE_jope-parallel"))
-        .arg("--root")
-        .arg(workspace_root(prepared).unwrap())
         .args([
             "search",
             "--cut",
@@ -410,7 +359,7 @@ fn gp_resume_restores_time_from_a_journal_ahead_of_progress_without_new_budget()
     progress["wall_seconds"] = json!(0.0);
     write_json(&output.join("progress.json"), &progress).unwrap();
     fs::remove_file(output.join("search.json")).unwrap();
-    let resumed = clock_search(&prepared, &output, "2");
+    let resumed = clock_search(&prepared, &output, "3");
     assert!(
         resumed.status.success(),
         "{}",
@@ -443,16 +392,21 @@ fn gp_legacy_resume_preserves_rows_and_declares_inexact_wall_prefix() {
         }
     }
     write_json(&output.join("observations.json"), &original).unwrap();
-    fs::remove_file(output.join("observations.jsonl")).unwrap();
     fs::remove_file(output.join("search.json")).unwrap();
-    let resumed = clock_search(&prepared, &output, "2");
+    let resumed = clock_search(&prepared, &output, "3");
     assert!(
         resumed.status.success(),
         "{}",
         String::from_utf8_lossy(&resumed.stderr)
     );
     let saved: Vec<serde_json::Value> = read_json(&output.join("observations.json")).unwrap();
-    assert_eq!(saved, original);
+    assert_eq!(saved.len(), 3);
+    assert_eq!(saved[..2], original);
+    assert!(saved[2]["completed_search_seconds"].as_f64().unwrap() >= 30.0);
+    assert_eq!(
+        saved[2]["search_clock_accuracy"],
+        "conservative_resume_with_legacy_prefix"
+    );
     let summary: serde_json::Value = read_json(&output.join("search.json")).unwrap();
     assert_eq!(
         summary["search_clock"]["legacy_observations_without_clock"],
@@ -474,16 +428,8 @@ fn gp_resume_rejects_a_nonmonotonic_durable_search_clock() {
     observations[0]["completed_search_seconds"] = json!(20.0);
     observations[1]["completed_search_seconds"] = json!(10.0);
     write_json(&output.join("observations.json"), &observations).unwrap();
-    fs::write(
-        output.join("observations.jsonl"),
-        observations
-            .iter()
-            .map(|row| format!("{row}\n"))
-            .collect::<String>(),
-    )
-    .unwrap();
     fs::remove_file(output.join("search.json")).unwrap();
-    let resumed = clock_search(&prepared, &output, "2");
+    let resumed = clock_search(&prepared, &output, "3");
     assert!(!resumed.status.success());
     assert!(String::from_utf8_lossy(&resumed.stderr).contains("not monotonic"));
     assert!(!output.join("search.json").exists());
@@ -535,7 +481,6 @@ fn gp_service_restores_all_durable_progress_before_dispatch_and_new_priority_adm
     // progress must be correct even before a single worker can be dispatched.
     let mut child = Running(
         Command::new(env!("CARGO_BIN_EXE_jope-parallel"))
-            .env("JOPE_CPU_EVALUATOR", env!("CARGO_BIN_EXE_jope-parallel"))
             .arg("--root")
             .arg(root)
             .args(["gp-service", "--workers", "1", "--threads", "1"])
@@ -597,10 +542,7 @@ fn qualification_only_preparation_never_enters_strict_gp_search() {
     write_json(&prepared.join("prepared.json"), &p).unwrap();
     let run = |qualification: bool| {
         let mut command = Command::new(env!("CARGO_BIN_EXE_jope-parallel"));
-        command.env("JOPE_CPU_EVALUATOR", env!("CARGO_BIN_EXE_jope-parallel"));
         command
-            .arg("--root")
-            .arg(temp.path())
             .args([
                 "search",
                 "--cut",
@@ -643,9 +585,6 @@ fn projected_gp_candidates_are_exactly_representable_unique_and_durable() {
     let output = temp.path().join("projected-search");
     let vocabulary = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/grammar/featmath.json");
     let result = Command::new(env!("CARGO_BIN_EXE_jope-parallel"))
-        .env("JOPE_CPU_EVALUATOR", env!("CARGO_BIN_EXE_jope-parallel"))
-        .arg("--root")
-        .arg(temp.path())
         .args([
             "search",
             "--cut",
@@ -753,7 +692,7 @@ fn repeated_folds_are_reproducible_distinct_and_pointer_only() {
 }
 
 #[test]
-fn gp_journal_preserves_a_torn_tail_and_requires_reconciliation() {
+fn gp_journal_discards_only_a_torn_final_record() {
     let t = tempfile::tempdir().unwrap();
     let p = t.path().join("observations.jsonl");
     fs::write(
@@ -761,110 +700,51 @@ fn gp_journal_preserves_a_torn_tail_and_requires_reconciliation() {
         b"{\"evaluation_index\":0}\n{\"evaluation_index\":1}\n{\"evaluation_",
     )
     .unwrap();
-    let original = fs::read(&p).unwrap();
-    assert!(jope_parallel::gp::read_journal(&p)
-        .unwrap_err()
-        .to_string()
-        .contains("reconciliation"));
-    assert_eq!(fs::read(&p).unwrap(), original);
-    fs::write(&p, b"{\"evaluation_index\":0}\n{\"evaluation_index\":1}\n").unwrap();
     let records = jope_parallel::gp::read_journal(&p).unwrap();
     assert_eq!(records.len(), 2);
     assert_eq!(records[1]["evaluation_index"], 1);
     assert!(fs::read(&p).unwrap().ends_with(b"\n"));
     fs::write(&p, b"{broken}\n").unwrap();
     assert!(jope_parallel::gp::read_journal(&p).is_err());
-    assert_eq!(fs::read(&p).unwrap(), b"{broken}\n");
 }
 
 #[test]
 fn experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits() {
-    for boundary in [
-        "candidate_intent",
-        "candidate_metric",
-        "observation_journal",
-        "observation_progress",
-        "observations_snapshot",
-        "search_summary",
-    ] {
+    for boundary in ["candidate_intent", "candidate_metric", "observation_journal",
+                     "observation_progress", "observations_snapshot", "search_summary"] {
         let (temp, prepared) = fixture();
         let experiment = temp.path().join("experiment");
         fs::create_dir_all(&experiment).unwrap();
-        write_json(
-            &experiment.join("manifest.json"),
-            &json!({"schema":"parallel.seed_experiment.v2"}),
-        )
-        .unwrap();
+        write_json(&experiment.join("manifest.json"), &json!({"schema":"parallel.seed_experiment.v2"})).unwrap();
         let output = experiment.join("search");
         let command = || {
             let mut c = Command::new(env!("CARGO_BIN_EXE_jope-parallel"));
-            c.env("JOPE_CPU_EVALUATOR", env!("CARGO_BIN_EXE_jope-parallel"));
-            c.arg("--root")
-                .arg(temp.path())
-                .args([
-                    "search",
-                    "--cut",
-                    "0",
-                    "--evaluations",
-                    "3",
-                    "--seconds",
-                    "180",
-                    "--qualification",
-                ])
-                .arg("--prepared")
-                .arg(&prepared)
-                .arg("--output")
-                .arg(&output)
-                .env("JOPE_EXPERIMENT_DIR", &experiment)
-                .env("OMP_NUM_THREADS", "1")
-                .env("RAYON_NUM_THREADS", "1");
+            c.args(["search", "--cut", "0", "--evaluations", "3", "--seconds", "180", "--qualification"])
+                .arg("--prepared").arg(&prepared).arg("--output").arg(&output)
+                .env("JOPE_EXPERIMENT_DIR", &experiment).env("OMP_NUM_THREADS", "1").env("RAYON_NUM_THREADS", "1");
             c
         };
-        let failed = command()
-            .env("JOPE_EXPERIMENT_CRASH_AFTER", boundary)
-            .output()
-            .unwrap();
-        assert!(
-            !failed.status.success(),
-            "failpoint was not reached: {boundary}"
-        );
+        let failed = command().env("JOPE_EXPERIMENT_CRASH_AFTER", boundary).output().unwrap();
+        assert!(!failed.status.success(), "failpoint was not reached: {boundary}");
         let before = if output.join("observations.jsonl").exists() {
             jope_parallel::gp::read_journal(&output.join("observations.jsonl")).unwrap()
-        } else {
-            vec![]
-        };
+        } else { vec![] };
         let metric: Option<serde_json::Value> = if boundary == "candidate_metric" {
             Some(read_json(&output.join("candidate-0.json")).unwrap())
-        } else {
-            None
-        };
+        } else { None };
         if !output.join("search.json").exists() {
             let resumed = command().output().unwrap();
-            assert!(
-                resumed.status.success(),
-                "{boundary}: {}",
-                String::from_utf8_lossy(&resumed.stderr)
-            );
+            assert!(resumed.status.success(), "{boundary}: {}", String::from_utf8_lossy(&resumed.stderr));
         }
         let after: Vec<serde_json::Value> = read_json(&output.join("observations.json")).unwrap();
         assert_eq!(after.len(), 3, "{boundary}");
-        assert_eq!(
-            after[..before.len()],
-            before,
-            "committed observations changed at {boundary}"
-        );
+        assert_eq!(after[..before.len()], before, "committed observations changed at {boundary}");
         if let Some(metric) = metric {
             assert_eq!(after[0]["metrics"], metric);
             assert_eq!(after[0]["recovered_completed_artifact"], true);
         }
-        let counters = after
-            .iter()
-            .map(|r| r["proposal_attempts"].as_u64().unwrap())
-            .collect::<Vec<_>>();
-        assert!(
-            counters.windows(2).all(|w| w[0] < w[1]),
-            "RNG counter did not advance: {boundary}"
-        );
+        let counters = after.iter().map(|r| r["proposal_attempts"].as_u64().unwrap()).collect::<Vec<_>>();
+        assert!(counters.windows(2).all(|w| w[0] < w[1]), "RNG counter did not advance: {boundary}");
     }
 }
 
@@ -872,36 +752,11 @@ fn experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_
 fn matched_search_seed_is_recorded_and_cannot_change_on_resume() {
     let (temp, prepared) = fixture();
     let output = temp.path().join("seeded");
-    let run = |seed: &str| {
-        Command::new(env!("CARGO_BIN_EXE_jope-parallel"))
-            .env("JOPE_CPU_EVALUATOR", env!("CARGO_BIN_EXE_jope-parallel"))
-            .arg("--root")
-            .arg(temp.path())
-            .args([
-                "search",
-                "--cut",
-                "0",
-                "--evaluations",
-                "2",
-                "--seconds",
-                "180",
-                "--qualification",
-                "--rng-seed",
-                seed,
-            ])
-            .arg("--prepared")
-            .arg(&prepared)
-            .arg("--output")
-            .arg(&output)
-            .output()
-            .unwrap()
-    };
+    let run = |seed: &str| Command::new(env!("CARGO_BIN_EXE_jope-parallel"))
+        .args(["search", "--cut", "0", "--evaluations", "2", "--seconds", "180", "--qualification", "--rng-seed", seed])
+        .arg("--prepared").arg(&prepared).arg("--output").arg(&output).output().unwrap();
     let initial = run("20260908");
-    assert!(
-        initial.status.success(),
-        "{}",
-        String::from_utf8_lossy(&initial.stderr)
-    );
+    assert!(initial.status.success(), "{}", String::from_utf8_lossy(&initial.stderr));
     let search: serde_json::Value = read_json(&output.join("search.json")).unwrap();
     assert_eq!(search["rng_seed"], 20260908);
     let rows: Vec<serde_json::Value> = read_json(&output.join("observations.json")).unwrap();

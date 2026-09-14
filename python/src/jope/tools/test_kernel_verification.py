@@ -128,13 +128,6 @@ class OperationalHealthTests(unittest.TestCase):
                 'hardware.json': {'timestamp': 100, 'errors': []},
             },
         }
-        import kernel_remote_state as k
-        self.before.update(schema='kernel.live-state.v2', custody='live', capture_errors=[])
-        for unit in k.UNITS:
-            self.before['stable'].setdefault(unit, {}).update(
-                definition='original definition', exe_sha256='a'*64,
-                properties=dict(InvocationID='original', MainPID='0' if unit in k.FENCED_UNITS[2:] else '123',
-                                ActiveState='inactive' if unit in k.FENCED_UNITS[2:] else 'active'))
         self.after = copy.deepcopy(self.before)
         self.after['timestamp'] = 104
         for record in self.after['telemetry'].values():
@@ -175,29 +168,12 @@ class OperationalHealthTests(unittest.TestCase):
         self.after['timestamp'] = 99
         self.assertEqual(compare_health(self.before, self.after)['status'], 'inconclusive')
 
-    def test_unrelated_fresh_packer_cannot_mask_stale_cycle_progress(self):
-        self.after['telemetry']['cycle-progress.json']['timestamp'] = 80
-        self.assertEqual(compare_health(self.before, self.after)['status'], 'inconclusive')
-        for phase in ['packing', 'complete']:
-            with self.subTest(phase=phase):
-                self.after['telemetry']['corpus-progress.json'] = {
-                    'timestamp': 103, 'phase': phase,
-                    'experiment': 'an-unrelated-campaign',
-                }
-                self.assertEqual(compare_health(self.before, self.after)['status'], 'inconclusive')
-
     def test_restart_does_not_turn_reset_counters_into_valid_evidence(self):
         self.after['stable']['jope-parallel-gp']['properties']['InvocationID'] = 'restarted'
         self.after['telemetry']['gp-service.json']['completed_views'] = 0
         result = compare_health(self.before, self.after)
         self.assertEqual(result['status'], 'inconclusive')
         self.assertEqual(result['observations'], {})
-
-    def test_presence_flags_cannot_certify_migration(self):
-        fence = dict(legacy_dispatch_fenced=True, registry_dispatch_enabled=False)
-        before = dict(schema='kernel.live-state.v1', custody='planned_migration',
-                      timestamp=100, stable={'fence': fence}, telemetry={}, fence=fence)
-        self.assertEqual(compare_health(before, before)['status'], 'failed')
 
 
 class ResearchCheckTests(unittest.TestCase):

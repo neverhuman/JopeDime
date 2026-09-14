@@ -1,6 +1,6 @@
 //! Freeze a pure training-context prediction, then assemble the adaptive GP population.
 use crate::{
-    corpus::ContextRow,
+    corpus::{ContextRow, Index},
     gp::{SeedCandidate, SeedPopulation},
     grammar::{State, Vocab},
     manifest::*,
@@ -15,6 +15,7 @@ use serde_json::{json, Value};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
+    io::{BufRead, BufReader},
     path::Path,
 };
 use tch::{nn, Device, Kind, Tensor};
@@ -30,34 +31,14 @@ pub fn rank(
     cut_start: usize,
     shuffled: bool,
 ) -> Result<()> {
-    crate::task_contract::require_original_gpu_grant("proposal-rank")?;
-    let task = crate::gpu_worker::Task::Proposal { corpus:corpus.into(), checkpoint:checkpoint.into(),
-        output:output.into(), world, cuts, cut_start, shuffled };
-    let (_lease, _contract) = crate::gpu_worker::verify_proposal_launch(root, &task)?;
-    if crate::gpu_worker::enabled() {
-        return crate::gpu_worker::submit(
-            root,
-            rank,
-            crate::gpu_worker::Task::Proposal {
-                corpus: corpus.into(),
-                checkpoint: checkpoint.into(),
-                output: output.into(),
-                world,
-                cuts,
-                cut_start,
-                shuffled,
-            },
-        );
-    }
-    crate::gpu_worker::require_accepted_task(root, &task)?;
     ensure!(
         rank < world && world <= 8 && cuts > 0,
         "invalid proposal worker topology"
     );
-    crate::neural::configure_runtime();
-    let index = crate::teaching_store::read_index(root, corpus)?;
-    let run: Value = read_json(&output.join("run.json"))?;
-    let proposal_seed = run["proposal_seed"].as_u64().unwrap_or(SEED);
+    tch::set_num_threads(2);
+    tch::set_num_interop_threads(1);
+    tch::jit::set_graph_executor_optimize(false);
+    let index: Index = read_json(&corpus.join("index.json"))?;
     let state: Value = read_json(&checkpoint.join("state.json"))?;
     ensure!(
         file_hash(&checkpoint.join("model.ot"))? == state["model_sha256"]
@@ -66,6 +47,12 @@ pub fn rank(
             && state["autocast_cache_lifetime"] == "scoped_v2"
             && file_hash(&corpus.join("vocabulary.json"))? == state["vocabulary_sha256"],
         "proposal checkpoint identity mismatch"
+    );
+    let provenance: Value = read_json(&corpus.join("provenance.json"))?;
+    ensure!(
+        file_hash(&corpus.join("labels.jsonl"))? == provenance["labels_sha256"]
+            && provenance["index_sha256"] == state["corpus_sha256"],
+        "retained program labels changed"
     );
     let vocab: Vocab = read_json(&corpus.join("vocabulary.json"))?;
     let config: Config = read_json(&checkpoint.join("config.json"))?;
@@ -77,32 +64,21 @@ pub fn rank(
     let mut vs = nn::VarStore::new(device);
     let model = Policy::new(vs.root(), config)?;
     vs.load(checkpoint.join("model.ot"))?;
-    let programs = crate::teaching_store::teacher_programs(root, corpus, &index, 10)?;
-    let selection_path = output
-        .parent()
-        .context("proposal parent absent")?
-        .join("coverage-selection.json");
-    let selected = if let Some(expected) = run["coverage_selection_sha256"].as_str() {
-        ensure!(
-            file_hash(&selection_path)? == expected,
-            "proposal coverage selection changed"
+    let mut programs = BTreeMap::<usize, String>::new();
+    for line in BufReader::new(fs::File::open(corpus.join("labels.jsonl"))?).lines() {
+        let value: Value = serde_json::from_str(&line?)?;
+        programs.insert(
+            value["record"].as_u64().context("record ID")? as usize,
+            value["program"].as_str().context("program")?.to_string(),
         );
-        crate::service::coverage::selected_indices(&selection_path, corpus, &index.contexts)?
-    } else {
-        ensure!(!selection_path.exists(), "unbound coverage selection");
-        index
-            .contexts
-            .iter()
-            .enumerate()
-            .filter(|(_, c)| {
-                c.partition != "meta_test" && c.cut >= cut_start && c.cut - cut_start < cuts
-            })
-            .map(|(i, _)| i)
-            .collect()
-    };
-    let jobs = selected
+    }
+    let jobs = index
+        .contexts
         .iter()
-        .map(|&i| (i, &index.contexts[i]))
+        .enumerate()
+        .filter(|(_, c)| {
+            c.partition != "meta_test" && c.cut >= cut_start && c.cut - cut_start < cuts
+        })
         .collect::<Vec<_>>();
     let donors = index
         .contexts
@@ -133,8 +109,6 @@ pub fn rank(
             && champion_snapshot.request["checkpoint_sha256"] == checkpoint_sha
             && champion_snapshot.request["cuts"] == cuts
             && champion_snapshot.request["cut_start"] == cut_start
-            && champion_snapshot.request["coverage_selection_sha256"]
-                == run["coverage_selection_sha256"]
             && champion_snapshot.vocabulary_sha256 == state["vocabulary_sha256"],
         "proposal champion snapshot changed"
     );
@@ -284,7 +258,6 @@ pub fn rank(
                 output: destination.join("search").strip_prefix(root)?.to_path_buf(),
                 seeds: Some(seeds.strip_prefix(root)?.to_path_buf()),
                 seeds_sha256: Some(file_hash(&seeds)?),
-                ..Default::default()
             });
             write_json(
                 &output.join(format!("rank-{rank}.json")),
@@ -292,14 +265,119 @@ pub fn rank(
             )?;
             continue;
         }
-        let pure_fallback_seed =
-            crate::training::mix(proposal_seed ^ j as u64 ^ 0x707572655f66696c);
-        let (candidates, attempted, valid, duplicate, neural) = pure_pool(
-            &model,
+        tch::manual_seed(crate::training::mix(SEED ^ j as u64) as i64);
+        let batch = 128usize;
+        let contexts = Tensor::from_slice(&values)
+            .view([1, 2048])
+            .repeat([batch as i64, 1])
+            .to_device(device);
+        let mut candidates = Vec::new();
+        let mut pure_seen = BTreeSet::new();
+        let mut attempted = 0usize;
+        let mut valid = 0usize;
+        let mut duplicate = 0usize;
+        for _round in 0..8 {
+            let mut sequences = vec![
+                vec![
+                    1usize,
+                    vocab.engine_ids["featmath"],
+                    vocab.task_ids["regression"]
+                ];
+                batch
+            ];
+            let mut states = (0..batch)
+                .map(|_| {
+                    let mut s = State::default();
+                    s.advance(&vocab, vocab.engine_ids["featmath"]).unwrap();
+                    s.advance(&vocab, vocab.task_ids["regression"]).unwrap();
+                    s
+                })
+                .collect::<Vec<_>>();
+            for _ in 3..128 {
+                if states.iter().all(State::done) {
+                    break;
+                }
+                let length = sequences[0].len();
+                let tokens = Tensor::from_slice(
+                    &sequences
+                        .iter()
+                        .flat_map(|s| s.iter().map(|&t| t as i64))
+                        .collect::<Vec<_>>(),
+                )
+                .view([batch as i64, length as i64])
+                .to_device(device);
+                let pad = tokens.ne(0);
+                let mut legal = vec![0u8; batch * vocab.tokens.len()];
+                for (i, s) in states.iter().enumerate() {
+                    let ids = if s.done() { vec![0] } else { s.legal(&vocab) };
+                    for id in ids {
+                        legal[i * vocab.tokens.len() + id] = 1;
+                    }
+                }
+                let legal = Tensor::from_slice(&legal)
+                    .view([batch as i64, vocab.tokens.len() as i64])
+                    .to_kind(Kind::Bool)
+                    .to_device(device);
+                let next = tch::no_grad(|| -> Result<Vec<i64>> {
+                    let _guard = Bf16::enter();
+                    let (logits, _, _, _, _) = model.forward(
+                        &contexts.narrow(1, 0, 1536),
+                        &contexts.narrow(1, 1536, 512),
+                        &tokens,
+                        &pad,
+                        false,
+                    )?;
+                    let logits = logits
+                        .select(1, length as i64)
+                        .to_kind(Kind::Float)
+                        .masked_fill(&legal.logical_not(), f64::NEG_INFINITY);
+                    let next = (logits / 1.0)
+                        .softmax(-1, Kind::Float)
+                        .multinomial(1, false);
+                    Ok(Vec::<i64>::try_from(
+                        next.to_device(Device::Cpu).flatten(0, -1),
+                    )?)
+                })?;
+                for i in 0..batch {
+                    if !states[i].done() {
+                        states[i].advance(&vocab, next[i] as usize)?;
+                    }
+                    sequences[i].push(next[i] as usize);
+                }
+            }
+            attempted += batch;
+            for (mut sequence, s) in sequences.into_iter().zip(states) {
+                if !s.done() {
+                    continue;
+                }
+                sequence.truncate(
+                    sequence
+                        .iter()
+                        .position(|&t| t == 2)
+                        .context("EOS absent")?
+                        + 1,
+                );
+                let Ok(genome) = vocab.decode(&sequence) else {
+                    continue;
+                };
+                if feat_math::GenomeIr::parse(&genome).is_err() {
+                    continue;
+                }
+                valid += 1;
+                if !proposal_population::push_pure(&mut candidates, &mut pure_seen, genome) {
+                    duplicate += 1;
+                }
+            }
+            if candidates.len() == 64 {
+                break;
+            }
+        }
+        let neural = candidates.len();
+        let pure_fallback_seed = crate::training::mix(SEED ^ j as u64 ^ 0x707572655f66696c);
+        proposal_population::fill_pure(
+            &mut candidates,
+            &mut pure_seen,
             &vocab,
-            &values,
-            device,
-            crate::training::mix(proposal_seed ^ j as u64),
             pure_fallback_seed,
         )?;
         let bindings = crate::proposal_ranking::Bindings {
@@ -344,7 +422,7 @@ pub fn rank(
             &destination.join("pure-ranking.json"),
             &json!({
                 "schema":"parallel.pure_neural_ranking.v1","protocol":PURE_PROTOCOL,
-                "ranking":pure_ranking,"sampling_seed":crate::training::mix(proposal_seed ^ j as u64),
+                "ranking":pure_ranking,"sampling_seed":crate::training::mix(SEED ^ j as u64),
                 "fallback_seed":pure_fallback_seed,"attempted":attempted,"valid":valid,
                 "within_neural_duplicates":duplicate,"unique_neural":neural,
                 "teacher_population_consulted":false,
@@ -371,13 +449,13 @@ pub fn rank(
 
         // Adaptive teachers enter only after the pure prediction is frozen.
         let mut seen = BTreeSet::new();
-        let mut random_seed = proposal_seed.wrapping_add(j as u64 * 100003);
+        let mut random_seed = SEED + j as u64 * 100003;
         let mut insert_random = |candidates: &mut Vec<SeedCandidate>,
                                  seen: &mut BTreeSet<String>,
                                  origin: &str|
          -> Result<()> {
             for _ in 0..10000 {
-                random_seed = random_seed.wrapping_add(1);
+                random_seed += 1;
                 let raw = feat_math::evolve::random_canonical_pipeline(random_seed, 6);
                 let Ok(genome) = vocab.project_proposal(&raw) else {
                     continue;
@@ -386,7 +464,6 @@ pub fn rank(
                     candidates.push(SeedCandidate {
                         genome,
                         origin: origin.into(),
-                        policy_logprob: None,
                     });
                     return Ok(());
                 }
@@ -417,40 +494,24 @@ pub fn rank(
                 retained.push(SeedCandidate {
                     genome: champion.genome().into(),
                     origin: "incumbent_cut_teacher".into(),
-                    policy_logprob: None,
                 });
                 incumbent_evidence.push(json!({"identity":champion.identity,"observation_sha256":champion.observation_sha256,
                     "source":champion.source,"evaluator_matches_current":champion.identity.evaluator_sha256 == champion_snapshot.evaluator_sha256,
                     "reevaluation_required":true,"score_transferred":false}));
             }
         }
-        if let Some(leaders) = programs.get(context_id) {
-            for genome in leaders {
+        if let Some(group) = index.groups.iter().find(|g| g.context == *context_id) {
+            for id in &group.records {
                 if retained.len() == 10 {
                     break;
                 }
+                let genome = &programs[id];
                 if seen.insert(genome.clone()) {
                     retained.push(SeedCandidate {
                         genome: genome.clone(),
                         origin: "retained_cut_teacher".into(),
-                        policy_logprob: None,
                     });
                 }
-            }
-        }
-        for champion in &champion_snapshot.entries {
-            if retained.len() >= 16 {
-                break;
-            }
-            if champion.identity.family != c.family || champion.identity.cut == c.cut {
-                continue;
-            }
-            if seen.insert(champion.genome().into()) {
-                retained.push(SeedCandidate {
-                    genome: champion.genome().into(),
-                    origin: "same_family_cross_cut_teacher".into(),
-                    policy_logprob: None,
-                });
             }
         }
         while retained.len() < 10 {
@@ -464,7 +525,7 @@ pub fn rank(
             &pure_candidates,
             &retained,
             &vocab,
-            crate::training::mix(proposal_seed ^ j as u64 ^ 0x67705f6f7665726c),
+            crate::training::mix(SEED ^ j as u64 ^ 0x67705f6f7665726c),
         )?;
         let mut assembly_receipt = serde_json::to_value(&assembly)?;
         assembly_receipt["pure_ranking_sha256"] = pure_ranking_sha.clone().into();
@@ -524,12 +585,6 @@ pub fn rank(
             by_genome.is_empty() && candidates.len() == 64,
             "GP ranked pool identity changed"
         );
-        let scores: Vec<f64> = gp_ranking
-            .selected()
-            .iter()
-            .map(|p| p.predicted_quality)
-            .collect();
-        crate::gp::attach_policy_logprobs(&mut candidates, &scores)?;
         let gp_neural = candidates
             .iter()
             .filter(|c| c.origin == "neural_policy")
@@ -558,7 +613,7 @@ pub fn rank(
                 "gp_ranking_sha256":file_hash(&destination.join("gp-ranking.json"))?,
                 "gp_population_assembly_sha256":file_hash(&destination.join("gp-population-assembly.json"))?,
                 "teacher_overlaps":assembly.overlaps,"overlap_refills":assembly.refills,
-                "selection_id":gp_ranking.selection_id,"seed":crate::training::mix(proposal_seed^j as u64),"final_tests_opened":false}),
+                "selection_id":gp_ranking.selection_id,"seed":crate::training::mix(SEED^j as u64),"final_tests_opened":false}),
         )?;
         generated_jobs.push(GpJob {
             prepared: c.prepared.clone(),
@@ -567,7 +622,6 @@ pub fn rank(
             output: destination.join("search").strip_prefix(root)?.to_path_buf(),
             seeds: Some(seeds.strip_prefix(root)?.to_path_buf()),
             seeds_sha256: Some(file_hash(&seeds)?),
-            ..Default::default()
         });
         write_json(
             &output.join(format!("rank-{rank}.json")),
@@ -593,143 +647,4 @@ pub fn rank(
         &json!({"rank":rank,"world":world,"seconds":started.elapsed().as_secs_f64()}),
     )?;
     Ok(())
-}
-
-pub fn proposal_prefix(vocab: &Vocab, task: &str) -> Result<Vec<usize>> {
-    Ok(vec![1, vocab.engine_ids["featmath"], vocab.task_id(task)?])
-}
-
-/// Shared unchanged pure-v4 sampler for production and isolated qualification.
-pub fn pure_pool(
-    model: &Policy,
-    vocab: &Vocab,
-    values: &[f32],
-    device: Device,
-    sampling_seed: u64,
-    pure_fallback_seed: u64,
-) -> Result<(Vec<SeedCandidate>, usize, usize, usize, usize)> {
-    pure_pool_for_task(
-        model,
-        vocab,
-        values,
-        device,
-        sampling_seed,
-        pure_fallback_seed,
-        "regression",
-    )
-}
-
-pub fn pure_pool_for_task(
-    model: &Policy,
-    vocab: &Vocab,
-    values: &[f32],
-    device: Device,
-    sampling_seed: u64,
-    pure_fallback_seed: u64,
-    task: &str,
-) -> Result<(Vec<SeedCandidate>, usize, usize, usize, usize)> {
-    tch::manual_seed(sampling_seed as i64);
-    let batch = 128usize;
-    let contexts = Tensor::from_slice(&values)
-        .view([1, 2048])
-        .repeat([batch as i64, 1])
-        .to_device(device);
-    let mut candidates = Vec::new();
-    let mut pure_seen = BTreeSet::new();
-    let mut attempted = 0usize;
-    let mut valid = 0usize;
-    let mut duplicate = 0usize;
-    for _round in 0..8 {
-        let task_id = vocab.task_id(task)?;
-        let mut sequences = vec![vec![1usize, vocab.engine_ids["featmath"], task_id]; batch];
-        let mut states = (0..batch)
-            .map(|_| {
-                let mut s = State::default();
-                s.advance(&vocab, vocab.engine_ids["featmath"]).unwrap();
-                s.advance(&vocab, task_id).unwrap();
-                s
-            })
-            .collect::<Vec<_>>();
-        for _ in 3..128 {
-            if states.iter().all(State::done) {
-                break;
-            }
-            let length = sequences[0].len();
-            let tokens = Tensor::from_slice(
-                &sequences
-                    .iter()
-                    .flat_map(|s| s.iter().map(|&t| t as i64))
-                    .collect::<Vec<_>>(),
-            )
-            .view([batch as i64, length as i64])
-            .to_device(device);
-            let pad = tokens.ne(0);
-            let mut legal = vec![0u8; batch * vocab.tokens.len()];
-            for (i, s) in states.iter().enumerate() {
-                let ids = if s.done() { vec![0] } else { s.legal(&vocab) };
-                for id in ids {
-                    legal[i * vocab.tokens.len() + id] = 1;
-                }
-            }
-            let legal = Tensor::from_slice(&legal)
-                .view([batch as i64, vocab.tokens.len() as i64])
-                .to_kind(Kind::Bool)
-                .to_device(device);
-            let next = tch::no_grad(|| -> Result<Vec<i64>> {
-                let _guard = Bf16::enter();
-                let (logits, _, _, _, _) = model.forward(
-                    &contexts.narrow(1, 0, 1536),
-                    &contexts.narrow(1, 1536, 512),
-                    &tokens,
-                    &pad,
-                    false,
-                )?;
-                let logits = logits
-                    .select(1, length as i64)
-                    .to_kind(Kind::Float)
-                    .masked_fill(&legal.logical_not(), f64::NEG_INFINITY);
-                let next = (logits / 1.0)
-                    .softmax(-1, Kind::Float)
-                    .multinomial(1, false);
-                Ok(Vec::<i64>::try_from(
-                    next.to_device(Device::Cpu).flatten(0, -1),
-                )?)
-            })?;
-            for i in 0..batch {
-                if !states[i].done() {
-                    states[i].advance(&vocab, next[i] as usize)?;
-                }
-                sequences[i].push(next[i] as usize);
-            }
-        }
-        attempted += batch;
-        for (mut sequence, s) in sequences.into_iter().zip(states) {
-            if !s.done() {
-                continue;
-            }
-            sequence.truncate(
-                sequence
-                    .iter()
-                    .position(|&t| t == 2)
-                    .context("EOS absent")?
-                    + 1,
-            );
-            let Ok(genome) = vocab.decode(&sequence) else {
-                continue;
-            };
-            if feat_math::GenomeIr::parse(&genome).is_err() {
-                continue;
-            }
-            valid += 1;
-            if !proposal_population::push_pure(&mut candidates, &mut pure_seen, genome) {
-                duplicate += 1;
-            }
-        }
-        if candidates.len() == 64 {
-            break;
-        }
-    }
-    let neural = candidates.len();
-    proposal_population::fill_pure(&mut candidates, &mut pure_seen, &vocab, pure_fallback_seed)?;
-    Ok((candidates, attempted, valid, duplicate, neural))
 }

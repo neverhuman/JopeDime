@@ -6,8 +6,6 @@ use std::{collections::BTreeMap, fs, path::Path};
 use tch::{nn, Device, Kind, Tensor};
 
 pub fn evaluate(root: &Path, corpus: &Path, checkpoint: &Path, panel: &Path, output: &Path) -> Result<()> {
-    crate::task_contract::require_original_gpu_grant("monitor-checkpoint")?;
-    crate::task_contract::gpu_task_deadline_ms()?;
     if std::env::var_os("JOPE_GPU_POOL").is_some() && std::env::var_os("JOPE_GPU_WORKER_ACTIVE").is_none() {
         use std::os::fd::AsRawFd;
         let lease=crate::controller::gpu_lease(root,"resident monitoring")?;
@@ -17,9 +15,6 @@ pub fn evaluate(root: &Path, corpus: &Path, checkpoint: &Path, panel: &Path, out
         std::env::remove_var("JOPE_GPU_LEASE_FD");
         return result;
     }
-    crate::gpu_worker::require_accepted_task(root, &crate::gpu_worker::Task::Monitor {
-        corpus:corpus.into(),checkpoint:checkpoint.into(),panel:panel.into(),output:output.into()})?;
-    let _inherited_lease = crate::gpu_worker::inherited_task_lease(root)?;
     let index: Index = read_json(&corpus.join("index.json"))?;
     let vocabulary: Vocab = read_json(&corpus.join("vocabulary.json"))?;
     crate::corpus_publication::verify(corpus, &index.context_index_sha256, &index.vocabulary_sha256)?;

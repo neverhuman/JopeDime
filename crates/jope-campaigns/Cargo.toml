@@ -30,7 +30,6 @@ tempfile = "3"
 
 [features]
 gpu = ["dep:battle-gpu"]
-gpr-scratch-reuse = ["feat-math/gpr-scratch-reuse"]
 
 [workspace]
 resolver = "2"

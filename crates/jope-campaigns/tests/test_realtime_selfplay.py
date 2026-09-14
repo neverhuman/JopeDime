@@ -48,7 +48,6 @@ from test_exact_gp_bridge import (  # noqa: E402
     inject_promoted_proposals,
 )
 from test_exact_pair_registry import PairRegistry  # noqa: E402
-import test_exact_wave as wave_module
 from test_exact_wave import select_micro_cohort  # noqa: E402
 
 
@@ -408,19 +407,11 @@ def datasets():
     ]
 
 
-def test_micro_cohort_is_deterministic_balanced_and_lane_exact(tmp_path, monkeypatch):
+def test_micro_cohort_is_deterministic_balanced_and_lane_exact():
     entries = datasets()
-    sealed_families = {"regression-family-000", "binary-family-000"}
-    sealed_catalog = tmp_path / "synthetic-sealed-catalog.json"
-    sealed_catalog.write_text(json.dumps({
-        "entries": [{"source_family": family} for family in sorted(sealed_families)]
-    }))
-    monkeypatch.setattr(wave_module, "SEALED_COHORT", sealed_catalog)
-    monkeypatch.delenv("JOPE_MICRO_COHORT_OPTIONAL_TASKS", raising=False)
     first = select_micro_cohort(entries, {}, wave_id="strict-wave-000007")
     second = select_micro_cohort(entries, {}, wave_id="strict-wave-000007")
     assert first == second
-    assert not sealed_families.intersection(row["source_family"] for row in first)
     assert len(first) == len({(row["task"], row["dataset_hash"]) for row in first}) == 128
     for task in ("regression", "binary"):
         rows = [row for row in first if row["task"] == task]

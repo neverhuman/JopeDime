@@ -23,94 +23,7 @@ pub struct Predictor {
     pub feature_count: usize,
     pub preprocessing: Preprocessing,
     pub model: Model,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub fit_completion: Option<serde_json::Value>,
 }
-
-fn cpu_evaluator_binding(value: Option<std::ffi::OsString>) -> Result<std::path::PathBuf> {
-    use std::os::unix::fs::PermissionsExt;
-    let path = value
-        .map(std::path::PathBuf::from)
-        .context("explicit JOPE_CPU_EVALUATOR binding required; evaluator unavailable")?;
-    ensure!(path.is_absolute(), "CPU evaluator path must be absolute");
-    let metadata = fs::metadata(&path).context("CPU evaluator executable unavailable")?;
-    ensure!(
-        metadata.is_file() && metadata.permissions().mode() & 0o111 != 0,
-        "CPU evaluator must be an executable regular file"
-    );
-    Ok(path.canonicalize()?)
-}
-
-#[cfg(test)]
-mod cpu_evaluator_tests {
-    use super::*;
-
-    #[test]
-    fn explicit_evaluator_has_no_current_executable_fallback() {
-        assert!(cpu_evaluator_binding(None).is_err());
-        assert!(cpu_evaluator_binding(Some("relative-executable".into())).is_err());
-        let executable = std::env::current_exe().unwrap();
-        assert_eq!(
-            cpu_evaluator_binding(Some(executable.clone().into_os_string())).unwrap(),
-            executable.canonicalize().unwrap()
-        );
-        let directory = tempfile::tempdir().unwrap();
-        assert!(cpu_evaluator_binding(Some(directory.path().as_os_str().into())).is_err());
-        let plain = directory.path().join("not-executable");
-        fs::write(&plain, b"not an executable").unwrap();
-        assert!(cpu_evaluator_binding(Some(plain.into_os_string())).is_err());
-    }
-}
-fn raw_feature_view(training: &str, preprocessing: &[u8]) -> Result<Vec<u8>> {
-    Ok(serde_json::to_vec(
-        &json!({"protocol":"raw_training_fold_v1",
-        "training_sha256":training,"preprocessing_sha256":hash(preprocessing)}),
-    )?)
-}
-fn relative_artifact(root: &Path, path: &Path) -> Result<serde_json::Value> {
-    let absolute = path.canonicalize()?;
-    let root = root.canonicalize()?;
-    let relative = absolute
-        .strip_prefix(&root)
-        .context("original fit artifact outside workspace")?;
-    Ok(json!({"path":relative,"sha256":file_hash(&absolute)?}))
-}
-fn relative_existing_reference(
-    root: &Path,
-    reference: &serde_json::Value,
-) -> Result<serde_json::Value> {
-    let path = Path::new(
-        reference["path"]
-            .as_str()
-            .context("original fit reference missing")?,
-    );
-    let result = relative_artifact(
-        root,
-        &if path.is_absolute() {
-            path.to_path_buf()
-        } else {
-            root.join(path)
-        },
-    )?;
-    ensure!(
-        result["sha256"] == reference["sha256"],
-        "original fit reference changed"
-    );
-    Ok(result)
-}
-
-fn search_artifact_path(root: &Path, path: &Path) -> Result<std::path::PathBuf> {
-    let absolute = if path.is_absolute() {
-        path.to_path_buf()
-    } else {
-        std::env::current_dir()?.join(path)
-    };
-    let relative = absolute
-        .strip_prefix(root)
-        .context("search artifact outside declared root")?;
-    resolve(root, relative)
-}
-
 pub fn fit(train: &Path, genome: &str, output: &Path) -> Result<()> {
     ensure!(!output.exists(), "fitted predictor already exists");
     let table = Table::read(train, &serde_json::Value::Null)?;
@@ -119,10 +32,7 @@ pub fn fit(train: &Path, genome: &str, output: &Path) -> Result<()> {
     let transformed = pp.transform(&table.rows)?;
     let (x, y) = xy(&transformed);
     let g = GenomeIr::parse(genome)?;
-    let preprocessing = serde_json::to_vec_pretty(&pp)?;
-    let feature_view = raw_feature_view(&hash(&csv_bytes(&transformed)?), &preprocessing)?;
-    let fitted =
-        crate::fit_boundary::fit(&g.canonical(), x, y, preprocessing, feature_view, output)?;
+    let model = feat_math::fit(&g, &x, &y)?;
     let p = Predictor {
         schema: "parallel.predictor.v1".into(),
         task: "regression".into(),
@@ -130,8 +40,7 @@ pub fn fit(train: &Path, genome: &str, output: &Path) -> Result<()> {
         training_sha256: file_hash(train)?,
         feature_count: table.width - 1,
         preprocessing: pp,
-        model: fitted.model,
-        fit_completion: Some(fitted.completion),
+        model,
     };
     write_json(output, &p)
 }
@@ -158,16 +67,7 @@ pub fn fit_view(prepared: &Path, cut: usize, genome: &str, output: &Path) -> Res
     let table = crate::prepare::load_view(prepared, cut, true)?;
     let (x, y) = xy(&table);
     let g = GenomeIr::parse(genome)?;
-    let preprocessing_bytes = fs::read(&preprocessing_path)?;
-    let feature_view = raw_feature_view(&c.training_sha256, &preprocessing_bytes)?;
-    let fitted = crate::fit_boundary::fit(
-        &g.canonical(),
-        x,
-        y,
-        preprocessing_bytes,
-        feature_view,
-        output,
-    )?;
+    let model = feat_math::fit(&g, &x, &y)?;
     write_json(
         output,
         &Predictor {
@@ -177,8 +77,7 @@ pub fn fit_view(prepared: &Path, cut: usize, genome: &str, output: &Path) -> Res
             training_sha256: c.training_sha256.clone(),
             feature_count: table[0].len() - 1,
             preprocessing,
-            model: fitted.model,
-            fit_completion: Some(fitted.completion),
+            model,
         },
     )
 }
@@ -214,10 +113,6 @@ pub fn fit_view_isolated(
         .env("OMP_NUM_THREADS", "1")
         .env("OPENBLAS_NUM_THREADS", "1")
         .env("MKL_NUM_THREADS", "1")
-        .env(
-            "JOPE_FIT_DEADLINE_MONOTONIC_NS",
-            crate::fit_boundary::deadline_after(Duration::from_secs(30))?.to_string(),
-        )
         .stdout(Stdio::from(log.try_clone()?))
         .stderr(Stdio::from(log));
     unsafe {
@@ -329,9 +224,23 @@ pub fn predict(model: &Path, features: &Path, output: &Path) -> Result<()> {
     atomic_write(output, &csv_bytes(&rows)?)
 }
 pub fn metrics(actual: &[f64], predicted: &[f64]) -> Result<serde_json::Value> {
-    let mut row = crate::task_contract::score_predictions("regression", actual, predicted, None)?;
-    row["units"] = json!("original_target");
-    Ok(row)
+    ensure!(
+        !actual.is_empty()
+            && actual.len() == predicted.len()
+            && actual.iter().chain(predicted).all(|x| x.is_finite()),
+        "invalid metric inputs"
+    );
+    let n = actual.len() as f64;
+    let mean = actual.iter().sum::<f64>() / n;
+    let sse = actual
+        .iter()
+        .zip(predicted)
+        .map(|(a, b)| (a - b).powi(2))
+        .sum::<f64>();
+    let sst = actual.iter().map(|a| (a - mean).powi(2)).sum::<f64>();
+    Ok(
+        json!({"rmse":(sse/n).sqrt(),"mae":actual.iter().zip(predicted).map(|(a,b)|(a-b).abs()).sum::<f64>()/n,"r2":if sst>0.0{Some(1.0-sse/sst)}else{None},"r2_status":if sst>0.0{"defined"}else{"undefined_constant_target"},"rows":actual.len(),"units":"original_target"}),
+    )
 }
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -404,28 +313,12 @@ pub fn score(model: &Path, test: &Path, receipt: &Path, output: &Path) -> Result
 pub fn evaluate(train: &Path, validation: &Path, genome: &Path, output: &Path) -> Result<()> {
     let tr = Table::numeric(train)?;
     let va = Table::numeric(validation)?;
-    evaluate_tables(
-        &tr,
-        &va,
-        genome,
-        output,
-        "regression",
-        None,
-        br#"{"schema":"parallel.identity_preprocessing.v1"}"#,
-    )
+    evaluate_tables(&tr, &va, genome, output)
 }
 pub fn evaluate_view(prepared: &Path, cut: usize, genome: &Path, output: &Path) -> Result<()> {
-    let p: crate::prepare::Prepared = crate::manifest::read_json(&prepared.join("prepared.json"))?;
-    crate::task_contract::require_task(&p.task)?;
     let tr = crate::prepare::load_view(prepared, cut, true)?;
     let va = crate::prepare::load_view(prepared, cut, false)?;
-    let mase = if p.task == "timeseries" {
-        Some(naive_mase_denominator(&tr)?)
-    } else {
-        None
-    };
-    let preprocessing = fs::read(prepared.join(format!("cut-{cut}/preprocessing.json")))?;
-    evaluate_tables(&tr, &va, genome, output, &p.task, mase, &preprocessing)
+    evaluate_tables(&tr, &va, genome, output)
 }
 /// Sealed anonymous RAM file, shared with isolated candidate processes. No cut
 /// CSVs or numeric cut copies are written to persistent storage.
@@ -466,14 +359,6 @@ pub fn memory_view(tr: &[Vec<f64>], va: &[Vec<f64>]) -> Result<fs::File> {
     Ok(file)
 }
 pub fn evaluate_memory(fd: i32, genome: &Path, output: &Path) -> Result<()> {
-    evaluate_prepared_memory(fd, genome, output, None)
-}
-pub fn evaluate_prepared_memory(
-    fd: i32,
-    genome: &Path,
-    output: &Path,
-    prepared: Option<(&Path, usize)>,
-) -> Result<()> {
     use std::io::{Read, Seek, SeekFrom};
     use std::os::fd::FromRawFd;
     ensure!(fd >= 3, "invalid inherited memory descriptor");
@@ -514,47 +399,13 @@ pub fn evaluate_prepared_memory(
         })
         .collect::<Vec<_>>();
     drop(bytes);
-    let preprocessing = if let Some((prepared, cut)) = prepared {
-        let p: Prepared = read_json(&prepared.join("prepared.json"))?;
-        crate::task_contract::require_task(&p.task)?;
-        let c = p
-            .cuts
-            .iter()
-            .find(|c| c.index == cut)
-            .context("unknown in-memory cut")?;
-        ensure!(
-            hash(&csv_bytes(&rows[..dims[0]])?) == c.training_sha256
-                && hash(&csv_bytes(&rows[dims[0]..])?) == c.validation_sha256,
-            "sealed memory differs from prepared cut"
-        );
-        let bytes = fs::read(prepared.join(format!("cut-{cut}/preprocessing.json")))?;
-        ensure!(
-            hash(&bytes) == c.preprocessing_sha256,
-            "sealed fit preprocessing changed"
-        );
-        bytes
-    } else {
-        br#"{"schema":"parallel.identity_preprocessing.v1"}"#.to_vec()
-    };
-    evaluate_tables(
-        &rows[..dims[0]],
-        &rows[dims[0]..],
-        genome,
-        output,
-        "regression",
-        None,
-        &preprocessing,
-    )
+    evaluate_tables(&rows[..dims[0]], &rows[dims[0]..], genome, output)
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SeedCandidate {
     pub genome: String,
     pub origin: String,
-    // Historical files called this policy_logprob, but it is a normalized
-    // critic rank weight, never a behavior/selection propensity for replay.
-    #[serde(default, rename = "rank_log_weight", alias = "policy_logprob", skip_serializing_if = "Option::is_none")]
-    pub policy_logprob: Option<f64>,
 }
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SeedPopulation {
@@ -567,33 +418,7 @@ pub struct SeedPopulation {
     pub candidates: Vec<SeedCandidate>,
 }
 
-/// Softmax log-weights on ranked genomes, never seed-list order.
-pub fn attach_policy_logprobs(candidates: &mut [SeedCandidate], scores: &[f64]) -> Result<()> {
-    ensure!(candidates.len() == scores.len(), "policy logprob alignment");
-    let logprobs = crate::eval_registry::logprob_from_scores(scores)?;
-    for (candidate, logprob) in candidates.iter_mut().zip(logprobs) {
-        candidate.policy_logprob = Some(logprob);
-    }
-    Ok(())
-}
-
-/// Clean-completion-v2: a stray result.json must not clear a failed/timeout worker.
-pub fn take_clean_result(failure: &mut Option<String>, result_exists: bool) -> bool {
-    if failure.is_some() {
-        return false;
-    }
-    if !result_exists {
-        *failure = Some("missing_result".into());
-        return false;
-    }
-    true
-}
-
-fn initial_execution_order(
-    population: Option<&SeedPopulation>,
-    size: usize,
-    teacher_first: bool,
-) -> Vec<usize> {
+fn initial_execution_order(population: Option<&SeedPopulation>, size: usize, teacher_first: bool) -> Vec<usize> {
     let mut order = (0..size).collect::<Vec<_>>();
     if teacher_first {
         if let Some(population) = population {
@@ -606,412 +431,18 @@ fn initial_execution_order(
     }
     order
 }
-
-// Version every new search and attempt. Historical requests without this
-// protocol remain retained and cannot be resumed under different random draws.
-const RANDOM_PROTOCOL: &str = "parallel.gp_random_streams.v2";
-
-fn random_word(seed: u64, attempt: u64, stream: &str) -> u64 {
-    use sha2::{Digest, Sha256};
-    let mut digest = Sha256::new();
-    digest.update(RANDOM_PROTOCOL.as_bytes());
-    digest.update(seed.to_le_bytes());
-    digest.update(attempt.to_le_bytes());
-    digest.update(stream.as_bytes());
-    u64::from_le_bytes(digest.finalize()[..8].try_into().unwrap())
-}
-
-fn unit_quantile(word: u64) -> f64 {
-    // Exactly representable, half-open [0, 1); a seed itself is never a draw.
-    (word >> 11) as f64 * (1.0 / 9007199254740992.0)
-}
-
-fn execution_accounting(observations: &[serde_json::Value]) -> serde_json::Value {
-    let mut recorded_starts = 0;
-    let mut reuse = 0;
-    let mut unknown = 0;
-    for row in observations {
-        let metrics = &row["metrics"];
-        match (
-            metrics["physical_fit_starts"].as_u64(),
-            metrics["evaluation_origin"].as_str(),
-        ) {
-            (Some(1), Some("execution")) => recorded_starts += 1,
-            (Some(0), Some("reuse")) => reuse += 1,
-            _ => unknown += 1,
-        }
-    }
-    json!({"logical_slots":observations.len(),"recorded_physical_fit_starts":recorded_starts,
-        "physical_fit_starts":if unknown == 0 {Some(recorded_starts)} else {None},
-        "reused_completions":reuse,"unknown_start_outcomes":unknown,
-        "failed_or_unavailable":observations.iter().filter(|row|
-            !row["failure"].is_null() || !row["metrics"].is_object()).count()})
-}
-
-/// Prefer stronger survivors. Policy weights apply to *ranked* genomes, never
-/// to seed-population order: those are different programs after the first evals.
-fn policy_weighted_parent(
-    keep: usize,
-    random_draw: u64,
-    supplied: Option<&SeedPopulation>,
-    ranked_genomes: Option<&[String]>,
-) -> usize {
-    if keep == 0 {
-        return 0;
-    }
-    if let (Some(population), Some(genomes)) = (supplied, ranked_genomes) {
-        let mut by_genome = std::collections::BTreeMap::<&str, f64>::new();
-        for candidate in &population.candidates {
-            if let Some(logprob) = candidate.policy_logprob {
-                by_genome.insert(candidate.genome.as_str(), logprob);
-            }
-        }
-        // Offspring often have no policy score. A missing score is not an opinion
-        // of zero: zero is the TOP of the log-probability range and would outweigh
-        // every scored survivor. Impute the minimum observed score instead, so an
-        // unscored offspring stays eligible at the weight of the least likely
-        // scored survivor and steering survives past the first evolved child that
-        // enters the elite pool. A non-finite score is corruption rather than
-        // absence and still collapses the whole pool to the uniform draw.
-        let mut observed = Vec::with_capacity(keep);
-        let mut corrupt = false;
-        for genome in genomes.iter().take(keep) {
-            match by_genome.get(genome.as_str()).copied() {
-                Some(value) if value.is_finite() => observed.push(Some(value)),
-                Some(_) => {
-                    corrupt = true;
-                    break;
-                }
-                None => observed.push(None),
-            }
-        }
-        let floor = observed
-            .iter()
-            .flatten()
-            .copied()
-            .fold(f64::INFINITY, f64::min);
-        let scores = if corrupt || observed.len() != keep || !floor.is_finite() {
-            None
-        } else {
-            Some(
-                observed
-                    .iter()
-                    .map(|value| value.unwrap_or(floor))
-                    .collect::<Vec<_>>(),
-            )
-        };
-        if let Some(scores) = scores.filter(|scores| scores.len() == keep) {
-            let maximum = scores.iter().copied().fold(f64::NEG_INFINITY, f64::max);
-            let mut acc = 0.0;
-            let mut weights = Vec::with_capacity(keep);
-            for (i, score) in scores.iter().enumerate() {
-                let w = (score - maximum).exp().max(1e-6);
-                acc += w;
-                weights.push((i, acc));
-            }
-            if acc > 0.0 {
-                let pick = unit_quantile(random_draw) * acc;
-                return weights
-                    .iter()
-                    .find(|(_, c)| pick < *c)
-                    .map(|(i, _)| *i)
-                    .unwrap_or(keep - 1);
-            }
-        }
-    }
-    // Missing policy scores, or scores that cannot be aligned to ranked
-    // survivors, use the independently seeded uniform parent draw.
-    (random_draw % keep as u64) as usize
-}
-
-#[cfg(test)]
-mod parent_selection_tests {
-    use super::{policy_weighted_parent, SeedCandidate, SeedPopulation};
-
-    fn population(logprobs: &[Option<f64>]) -> SeedPopulation {
-        SeedPopulation {
-            schema: "t".into(),
-            prepared_sha256: String::new(),
-            cut: 0,
-            training_sha256: String::new(),
-            context_sha256: String::new(),
-            checkpoint_sha256: String::new(),
-            candidates: logprobs
-                .iter()
-                .map(|p| SeedCandidate {
-                    genome: "g".into(),
-                    origin: "neural_policy".into(),
-                    policy_logprob: *p,
-                })
-                .collect(),
-        }
-    }
-
-    #[test]
-    fn unmatched_seeds_keep_uniform_parent() {
-        assert_eq!(policy_weighted_parent(10, 7, None, None), 7);
-        let pop = population(&[None; 10]);
-        assert_eq!(policy_weighted_parent(10, 7, Some(&pop), None), 7);
-    }
-
-    #[test]
-    fn historical_and_failed_slots_never_invent_physical_starts() {
-        use serde_json::json;
-        let original = json!({"metrics":{"physical_fit_starts":1,"evaluation_origin":"execution"}});
-        let reused = json!({"metrics":{"physical_fit_starts":0,"evaluation_origin":"reuse"}});
-        let known = super::execution_accounting(&[original.clone(), reused.clone()]);
-        assert_eq!(known["logical_slots"], 2);
-        assert_eq!(known["physical_fit_starts"], 1);
-        assert_eq!(known["reused_completions"], 1);
-        let mixed = super::execution_accounting(&[
-            original,
-            reused,
-            json!({"failure":"lost_worker_reply"}),
-            json!({"metrics":{"rmse":0.}}),
-        ]);
-        assert_eq!(mixed["logical_slots"], 4);
-        assert_eq!(mixed["recorded_physical_fit_starts"], 1);
-        assert!(mixed["physical_fit_starts"].is_null());
-        assert_eq!(mixed["unknown_start_outcomes"], 2);
-    }
-
-    #[test]
-    fn rank_weights_do_not_emit_behavior_probability_claims() {
-        let old = serde_json::json!({"genome":"(pipe X (ridge))","origin":"fixture","policy_logprob":-2.5});
-        let candidate: SeedCandidate = serde_json::from_value(old).unwrap();
-        let saved = serde_json::to_value(&candidate).unwrap();
-        assert_eq!(saved["rank_log_weight"], -2.5);
-        assert!(saved.get("policy_logprob").is_none());
-        let restored: SeedCandidate = serde_json::from_value(saved).unwrap();
-        assert_eq!(restored.policy_logprob, candidate.policy_logprob);
-        let duplicate = serde_json::json!({"genome":"g","origin":"fixture","rank_log_weight":-1.,"policy_logprob":-2.});
-        assert!(serde_json::from_value::<SeedCandidate>(duplicate).is_err());
-    }
-
-    #[test]
-    fn policy_scores_weight_ranked_genomes_not_seed_order() {
-        let mut pop = population(&[Some(10.0), Some(0.0), Some(0.0)]);
-        pop.candidates[0].genome = "a".into();
-        pop.candidates[1].genome = "b".into();
-        pop.candidates[2].genome = "c".into();
-        let aligned = vec!["a".into(), "b".into(), "c".into()];
-        assert_eq!(
-            policy_weighted_parent(3, u64::MAX / 2, Some(&pop), Some(&aligned)),
-            0
-        );
-        // Ranked order is not seed order. Weight the ranked genomes.
-        let ranked = vec!["b".into(), "c".into(), "a".into()];
-        assert_eq!(
-            policy_weighted_parent(3, u64::MAX / 2, Some(&pop), Some(&ranked)),
-            2
-        );
-        // Scores without a ranked alignment must not index the wrong array.
-        assert_eq!(policy_weighted_parent(3, 7, Some(&pop), None), 7 % 3);
-    }
-
-    #[test]
-    fn nonfinite_scores_fall_back_for_the_whole_pool() {
-        let genomes: Vec<String> = vec!["a".into(), "b".into(), "offspring".into()];
-        let mut pop = population(&[Some(-50.), Some(-49.), None]);
-        for (candidate, genome) in pop.candidates.iter_mut().zip(&genomes) {
-            candidate.genome = genome.clone();
-        }
-        // Corruption, not absence: refuse to steer on it.
-        for bad in [Some(f64::NAN), Some(f64::INFINITY), Some(f64::NEG_INFINITY)] {
-            pop.candidates[2].policy_logprob = bad;
-            for attempt in 0..1000 {
-                let draw = super::random_word(8129661450841087504, attempt, "left_parent");
-                assert_eq!(
-                    policy_weighted_parent(3, draw, Some(&pop), Some(&genomes)),
-                    policy_weighted_parent(3, draw, None, None)
-                );
-            }
-        }
-    }
-
-    #[test]
-    fn unscored_offspring_keep_steering_alive_at_the_floor() {
-        // Regression test for the defect that silently disabled policy steering
-        // after the first evolved child entered the elite pool: one unscored
-        // genome used to collapse the entire survivor pool to the uniform draw.
-        let genomes: Vec<String> = vec!["a".into(), "b".into(), "offspring".into()];
-        let mut pop = population(&[Some(-1.), Some(-9.), None]);
-        for (candidate, genome) in pop.candidates.iter_mut().zip(&genomes) {
-            candidate.genome = genome.clone();
-        }
-        pop.candidates[2].policy_logprob = None;
-        let mut counts = [0usize; 3];
-        let mut differs_from_uniform = 0;
-        for attempt in 0..5000 {
-            let draw = super::random_word(8129661450841087504, attempt, "left_parent");
-            let parent = policy_weighted_parent(3, draw, Some(&pop), Some(&genomes));
-            counts[parent] += 1;
-            if parent != policy_weighted_parent(3, draw, None, None) {
-                differs_from_uniform += 1;
-            }
-        }
-        // Steering is live: the pool is no longer the uniform draw.
-        assert!(differs_from_uniform > 0, "steering collapsed to uniform");
-        // The strongly scored survivor dominates the weakly scored one.
-        assert!(
-            counts[0] > counts[1],
-            "policy score ignored: {counts:?}"
-        );
-        // The unscored offspring is imputed at the floor, so it is reachable but
-        // never preferred over the best scored survivor.
-        assert!(counts[0] > counts[2], "offspring outweighed the best parent");
-    }
-
-    #[test]
-    fn seeded_draws_cover_parents_and_operators_independently() {
-        let mut counts = [[0usize; 3]; 10];
-        let mut quantiles = std::collections::BTreeSet::new();
-        let mut pop = population(&[Some(1000.); 10]);
-        let genomes: Vec<String> = (0..10).map(|i| format!("g{i}")).collect();
-        for (candidate, genome) in pop.candidates.iter_mut().zip(&genomes) {
-            candidate.genome = genome.clone();
-        }
-        for attempt in 0..10000 {
-            let draw = super::random_word(8129661450841087504, attempt, "left_parent");
-            assert_eq!(
-                draw,
-                super::random_word(8129661450841087504, attempt, "left_parent")
-            );
-            assert_ne!(
-                draw,
-                super::random_word(8129661450841087504, attempt, "right_parent")
-            );
-            let quantile = super::unit_quantile(draw);
-            assert!((0.0..1.0).contains(&quantile));
-            quantiles.insert(quantile.to_bits());
-            let parent = policy_weighted_parent(10, draw, Some(&pop), Some(&genomes));
-            let operator = super::random_word(8129661450841087504, attempt, "operator") % 16;
-            counts[parent][if operator < 2 {
-                0
-            } else if operator < 9 {
-                1
-            } else {
-                2
-            }] += 1;
-        }
-        assert_eq!(quantiles.len(), 10000);
-        assert_eq!(super::unit_quantile(0), 0.);
-        assert!(super::unit_quantile(u64::MAX) < 1.);
-        // Wide deterministic bounds detect the former constant quantile and
-        // parent/operator parity coupling without a flaky stochastic test.
-        for row in counts {
-            assert!((850..1150).contains(&row.iter().sum::<usize>()));
-            assert!((80..175).contains(&row[0]));
-            assert!((330..550).contains(&row[1]));
-            assert!((330..550).contains(&row[2]));
-        }
-    }
-
-    #[test]
-    fn stray_result_does_not_clear_worker_failure() {
-        let mut failure = Some("worker_exit:1".into());
-        assert!(!super::take_clean_result(&mut failure, true));
-        assert_eq!(failure.as_deref(), Some("worker_exit:1"));
-        let mut ok = None;
-        assert!(super::take_clean_result(&mut ok, true));
-        assert!(ok.is_none());
-        let mut missing = None;
-        assert!(!super::take_clean_result(&mut missing, false));
-        assert_eq!(missing.as_deref(), Some("missing_result"));
-    }
-
-    #[test]
-    fn logprobs_follow_ranking_scores_not_seed_order() {
-        let mut candidates = vec![
-            SeedCandidate {
-                genome: "worse".into(),
-                origin: "neural_policy".into(),
-                policy_logprob: None,
-            },
-            SeedCandidate {
-                genome: "best".into(),
-                origin: "neural_policy".into(),
-                policy_logprob: None,
-            },
-        ];
-        super::attach_policy_logprobs(&mut candidates, &[0.1, 2.0]).unwrap();
-        assert!(candidates[1].policy_logprob.unwrap() > candidates[0].policy_logprob.unwrap());
-    }
-}
-fn naive_mase_denominator(train: &[Vec<f64>]) -> Result<f64> {
-    ensure!(
-        train.len() >= 2,
-        "timeseries MASE needs at least two training rows"
-    );
-    let mut abs = 0.0;
-    for pair in train.windows(2) {
-        abs += (pair[1].last().context("empty row")? - pair[0].last().context("empty row")?).abs();
-    }
-    let denom = abs / (train.len() - 1) as f64;
-    ensure!(
-        denom.is_finite() && denom > 0.0,
-        "invalid naive MASE denominator"
-    );
-    Ok(denom)
-}
-
-fn evaluate_tables(
-    tr: &[Vec<f64>],
-    va: &[Vec<f64>],
-    genome: &Path,
-    output: &Path,
-    task: &str,
-    mase_denominator: Option<f64>,
-    preprocessing: &[u8],
-) -> Result<()> {
-    crate::task_contract::require_task(task)?;
+fn evaluate_tables(tr: &[Vec<f64>], va: &[Vec<f64>], genome: &Path, output: &Path) -> Result<()> {
     tchless_threads();
     let (x, y) = xy(&tr);
     let (vx, vy) = xy(&va);
     let g = GenomeIr::parse(&fs::read_to_string(genome)?)?;
     let start = Instant::now();
-    let feature_view = raw_feature_view(&hash(&csv_bytes(tr)?), preprocessing)?;
-    let fitted = crate::fit_boundary::fit(
-        &g.canonical(),
-        x,
-        y,
-        preprocessing.to_vec(),
-        feature_view,
-        output,
-    )?;
-    let pred = fitted.model.predict(&vx);
-    let mut m = if task == "regression" {
-        let mut row = metrics(&vy, &pred)?;
-        row["units"] = json!("cut_normalized_target");
-        row
-    } else {
-        crate::task_contract::score_predictions(task, &vy, &pred, mase_denominator)?
-    };
-    m["task"] = json!(task);
-    m["primary_metric"] = json!(crate::task_contract::primary_metric(task)?);
+    let model = feat_math::fit(&g, &x, &y)?;
+    let pred = model.predict(&vx);
+    let mut m = metrics(&vy, &pred)?;
+    m["units"] = json!("cut_normalized_target");
     m["seconds"] = json!(start.elapsed().as_secs_f64());
     m["semantic_sha256"] = json!(hash(&serde_json::to_vec(&pred)?));
-    // Produce the baseline from the very same authorized cut arrays. This is
-    // a new diagnostic; historical results without it stay unavailable.
-    let training_mean = tr.iter().map(|row| row[row.len() - 1]).sum::<f64>() / tr.len() as f64;
-    let baseline = metrics(&vy, &vec![training_mean; vy.len()]);
-    if let Some(baseline) = baseline
-        .ok()
-        .filter(|row| row["rmse"].as_f64().is_some_and(f64::is_finite))
-    {
-        m["baseline_evidence"] = json!({"schema":"parallel.cut_baseline.v1",
-            "rule":"training_target_mean_on_scoring_rows","units":"cut_normalized_target",
-            "rmse":baseline["rmse"],"training_target_mean":training_mean,
-            "training_rows":tr.len(),"scoring_rows":va.len(),
-            "training_sha256":hash(&csv_bytes(tr)?),"scoring_sha256":hash(&csv_bytes(va)?),
-            "preprocessing_sha256":hash(preprocessing)});
-    } else {
-        m["baseline_status"] = json!("nonfinite baseline; ratios unavailable");
-    }
-    m["fit_completion"] = fitted.completion;
-    m["fitted_model"] = fitted.model_reference;
-    m["evaluation_origin"] = json!(if fitted.reused { "reuse" } else { "execution" });
-    m["physical_fit_starts"] = json!(usize::from(!fitted.reused));
     write_json(output, &m)
 }
 fn tchless_threads() {
@@ -1025,29 +456,29 @@ fn tchless_threads() {
         .build_global();
 }
 
-/// Read complete records without changing original evidence. A torn tail is an
-/// unavailable outcome requiring reconciliation, never permission to retry.
+/// Read only complete, fsynced records. A torn final write can be retried;
+/// malformed complete lines are corruption and stop the job.
 pub fn read_journal(path: &Path) -> Result<Vec<serde_json::Value>> {
     let bytes = fs::read(path)?;
     let end = bytes.iter().rposition(|&b| b == b'\n').map_or(0, |i| i + 1);
-    ensure!(
-        end == bytes.len(),
-        "incomplete GP journal; original bytes retained for reconciliation"
-    );
     let records = bytes[..end]
         .split(|&b| b == b'\n')
         .filter(|s| !s.is_empty())
         .map(serde_json::from_slice)
         .collect::<std::result::Result<Vec<_>, _>>()?;
+    if end != bytes.len() {
+        fs::OpenOptions::new()
+            .write(true)
+            .open(path)?
+            .set_len(end as u64)?;
+    }
     Ok(records)
 }
 
 fn experiment_failpoint(name: &str, isolated: bool) {
     // Only explicitly isolated experiments can exercise crash recovery gates.
     if isolated && std::env::var("JOPE_EXPERIMENT_CRASH_AFTER").ok().as_deref() == Some(name) {
-        unsafe {
-            libc::raise(libc::SIGKILL);
-        }
+        unsafe { libc::raise(libc::SIGKILL); }
     }
 }
 
@@ -1074,38 +505,17 @@ pub fn search(
 pub fn verify_experiment_output(output: &Path, experiment: &Path) -> Result<()> {
     let experiment = experiment.canonicalize()?;
     let manifest: serde_json::Value = read_json(&experiment.join("manifest.json"))?;
-    ensure!(
-        manifest["schema"] == "parallel.seed_experiment.v1"
-            || manifest["schema"] == "parallel.seed_experiment.v2",
-        "experiment manifest absent or unsupported"
-    );
-    ensure!(
-        output.is_absolute()
-            && output.starts_with(&experiment)
-            && !output
-                .components()
-                .any(|c| matches!(c, std::path::Component::ParentDir)),
-        "experiment output must remain inside its directory"
-    );
-    let ancestor = output
-        .ancestors()
-        .find(|p| p.exists())
-        .context("output ancestor absent")?;
-    for path in output
-        .ancestors()
-        .take_while(|p| p.starts_with(&experiment))
-    {
+    ensure!(manifest["schema"] == "parallel.seed_experiment.v1" || manifest["schema"] == "parallel.seed_experiment.v2", "experiment manifest absent or unsupported");
+    ensure!(output.is_absolute() && output.starts_with(&experiment)
+        && !output.components().any(|c| matches!(c, std::path::Component::ParentDir)),
+        "experiment output must remain inside its directory");
+    let ancestor = output.ancestors().find(|p| p.exists()).context("output ancestor absent")?;
+    for path in output.ancestors().take_while(|p| p.starts_with(&experiment)) {
         if let Ok(metadata) = fs::symlink_metadata(path) {
-            ensure!(
-                !metadata.file_type().is_symlink(),
-                "experiment output symlink rejected"
-            );
+            ensure!(!metadata.file_type().is_symlink(), "experiment output symlink rejected");
         }
     }
-    ensure!(
-        ancestor.canonicalize()?.starts_with(&experiment),
-        "experiment output symlink escapes its directory"
-    );
+    ensure!(ancestor.canonicalize()?.starts_with(&experiment), "experiment output symlink escapes its directory");
     Ok(())
 }
 
@@ -1119,17 +529,7 @@ pub fn search_seeded(
     seeds: Option<&Path>,
     vocabulary: Option<&Path>,
 ) -> Result<()> {
-    search_seeded_with_rng(
-        prepared,
-        cut,
-        output,
-        evaluations,
-        seconds,
-        qualification,
-        seeds,
-        vocabulary,
-        SEED,
-    )
+    search_seeded_with_rng(prepared, cut, output, evaluations, seconds, qualification, seeds, vocabulary, SEED)
 }
 
 pub fn search_seeded_with_rng(
@@ -1143,66 +543,14 @@ pub fn search_seeded_with_rng(
     vocabulary: Option<&Path>,
     rng_seed: u64,
 ) -> Result<()> {
-    let artifact_root = crate::prepare::workspace_root(prepared)?;
-    search_seeded_with_rng_in_root(
-        &artifact_root,
-        prepared,
-        cut,
-        output,
-        evaluations,
-        seconds,
-        qualification,
-        seeds,
-        vocabulary,
-        rng_seed,
-    )
-}
-
-/// Resolve the declared custody root before accepting any search or creating
-/// candidate intents. CLI callers must pass their --root explicitly; a copied
-/// preparation need not contain a Cargo workspace just to retain its receipts.
-pub fn search_seeded_with_rng_in_root(
-    artifact_root: &Path,
-    prepared: &Path,
-    cut: usize,
-    output: &Path,
-    evaluations: usize,
-    seconds: u64,
-    qualification: bool,
-    seeds: Option<&Path>,
-    vocabulary: Option<&Path>,
-    rng_seed: u64,
-) -> Result<()> {
     let start = Instant::now();
-    let completion_root = artifact_root
-        .canonicalize()
-        .context("search artifact root unavailable")?;
-    ensure!(
-        completion_root.is_dir(),
-        "search artifact root must be a directory"
-    );
-    let prepared_path = search_artifact_path(&completion_root, prepared)?;
-    let output_path = search_artifact_path(&completion_root, output)?;
-    let authority_path = std::env::var_os("JOPE_FIT_AUTHORITY")
-        .map(|path| search_artifact_path(&completion_root, Path::new(&path)))
-        .transpose()
-        .context("fit authority artifacts must share the declared search root")?;
-    // A neural search process may rank candidates, but CPU fits use the
-    // explicitly bound authority evaluator. Authority still verifies its loaded
-    // executable and mappings before releasing a start token.
-    let executable = cpu_evaluator_binding(std::env::var_os("JOPE_CPU_EVALUATOR"))?;
-    let prepared = prepared_path.as_path();
-    let output = output_path.as_path();
     let experiment = std::env::var_os("JOPE_EXPERIMENT_DIR").map(std::path::PathBuf::from);
     if let Some(directory) = &experiment {
         verify_experiment_output(output, directory)?;
-        ensure!(
-            qualification && evaluations <= 200 && seconds <= 180,
-            "isolated comparison requires qualification and 200-evaluation / 180-second limits"
-        );
+        ensure!(qualification && evaluations <= 200 && seconds <= 180,
+            "isolated comparison requires qualification and 200-evaluation / 180-second limits");
     }
     let p: Prepared = read_json(&prepared.join("prepared.json"))?;
-    crate::task_contract::require_task(&p.task)?;
     ensure!(
         p.schema == "parallel.prepared.v1"
             && (p.clean_evaluation || (qualification && p.qualification_only && p.clean_status == "raw_training_reconstructed_qualification_only"))
@@ -1210,8 +558,8 @@ pub fn search_seeded_with_rng_in_root(
         "reconstructed cut preparation is required; limited evaluation needs explicit qualification admission"
     );
     ensure!(
-        p.meta_partition == "meta_train" || qualification,
-        "bootstrap/search training observations require meta-training families"
+        p.task == "regression" && (p.meta_partition == "meta_train" || qualification),
+        "bootstrap/search training observations require meta-training regression families"
     );
     let c = p
         .cuts
@@ -1293,30 +641,10 @@ pub fn search_seeded_with_rng_in_root(
             population.push(g);
         }
     }
+    let executable = std::env::current_exe()?;
     let prepared_sha = file_hash(&prepared.join("prepared.json"))?;
     let evaluator_sha = file_hash(&executable)?;
-    let champion_root = if p.storage.is_some() && experiment.is_none() {
-        Some(completion_root.clone())
-    } else {
-        None
-    };
-    let request_path = output.join("search-request.json");
-    let request = json!({"schema":"parallel.search_request.v1", "artifact_root":completion_root,
-        "fit_authority":authority_path,
-        "prepared":prepared.strip_prefix(&completion_root)?, "output":output.strip_prefix(&completion_root)?,
-        "prepared_sha256":prepared_sha,"evaluator_sha256":evaluator_sha,"cut":cut,
-        "training_sha256":c.training_sha256,"validation_sha256":c.validation_sha256,
-        "preprocessing_sha256":c.preprocessing_sha256,"seeds_sha256":seeds_sha256,
-        "vocabulary_sha256":vocabulary_sha256,"evaluations":evaluations,"seconds":seconds,
-        "qualification":qualification,"rng_seed":rng_seed,"random_protocol":RANDOM_PROTOCOL});
-    if request_path.exists() {
-        ensure!(
-            read_json::<serde_json::Value>(&request_path)? == request,
-            "accepted search artifact root or request changed"
-        );
-    } else {
-        write_json(&request_path, &request)?;
-    }
+    let champion_root = if p.storage.is_some() && experiment.is_none() { Some(crate::prepare::workspace_root(prepared)?) } else { None };
     let journal_path = output.join("observations.jsonl");
     let mut observations: Vec<serde_json::Value> = if journal_path.exists() {
         read_journal(&journal_path)?
@@ -1369,17 +697,9 @@ pub fn search_seeded_with_rng_in_root(
     let mut rejected_proposals = 0u64;
     // Existing journals retain their original slot order on recovery. New
     // searches protect known teachers from being starved by 64 slow neural fits.
-    let teacher_first = !resuming
-        || read_json::<serde_json::Value>(&output.join("progress.json"))?
-            ["execution_order_protocol"]
-            == "teacher_first_v1";
-    let execution_order =
-        initial_execution_order(supplied.as_ref(), population.len(), teacher_first);
-    let execution_protocol = if teacher_first {
-        "teacher_first_v1"
-    } else {
-        "legacy_seed_order_v1"
-    };
+    let teacher_first = !resuming || read_json::<serde_json::Value>(&output.join("progress.json"))?["execution_order_protocol"] == "teacher_first_v1";
+    let execution_order = initial_execution_order(supplied.as_ref(), population.len(), teacher_first);
+    let execution_protocol = if teacher_first { "teacher_first_v1" } else { "legacy_seed_order_v1" };
     let previous_seconds = if resuming {
         let progress: serde_json::Value = read_json(&output.join("progress.json"))?;
         ensure!(
@@ -1390,10 +710,8 @@ pub fn search_seeded_with_rng_in_root(
             progress["seeds_sha256"] == json!(seeds_sha256),
             "resume neural seed identity mismatch"
         );
-        ensure!(
-            progress["rng_seed"].as_u64().unwrap_or(SEED) == rng_seed,
-            "resume RNG seed mismatch"
-        );
+        ensure!(progress["rng_seed"].as_u64().unwrap_or(SEED) == rng_seed,
+            "resume RNG seed mismatch");
         proposal_attempts = progress["proposal_attempts"]
             .as_u64()
             .unwrap_or(observations.len() as u64);
@@ -1410,12 +728,8 @@ pub fn search_seeded_with_rng_in_root(
         0.0
     };
     if let Some(last) = observations.last() {
-        proposal_attempts = last["proposal_attempts"]
-            .as_u64()
-            .unwrap_or(proposal_attempts);
-        rejected_proposals = last["rejected_proposals"]
-            .as_u64()
-            .unwrap_or(rejected_proposals);
+        proposal_attempts = last["proposal_attempts"].as_u64().unwrap_or(proposal_attempts);
+        rejected_proposals = last["rejected_proposals"].as_u64().unwrap_or(rejected_proposals);
     }
     let clock_accuracy = if legacy_clock_rows > 0 {
         "conservative_resume_with_legacy_prefix"
@@ -1476,57 +790,20 @@ pub fn search_seeded_with_rng_in_root(
         let attempt_path = output.join(format!("candidate-{i}.attempt.json"));
         let saved_attempt: Option<serde_json::Value> = if attempt_path.exists() {
             let a: serde_json::Value = read_json(&attempt_path)?;
-            ensure!(
-                a["prepared_sha256"] == prepared_sha
-                    && a["evaluator_sha256"] == evaluator_sha
-                    && a["cut"] == cut
-                    && a["evaluation_index"] == i
-                    && a["seeds_sha256"] == json!(seeds_sha256)
-                    && a["vocabulary_sha256"] == json!(vocabulary_sha256)
-                    && a["evaluations"] == evaluations
-                    && a["seconds"] == seconds
-                    && a["rng_seed"] == rng_seed
-                    && a["random_protocol"] == RANDOM_PROTOCOL,
-                "incomplete candidate identity mismatch"
-            );
+            ensure!(a["prepared_sha256"] == prepared_sha && a["evaluator_sha256"] == evaluator_sha
+                && a["cut"] == cut && a["evaluation_index"] == i
+                && a["seeds_sha256"] == json!(seeds_sha256) && a["vocabulary_sha256"] == json!(vocabulary_sha256)
+                && a["evaluations"] == evaluations && a["seconds"] == seconds && a["rng_seed"] == rng_seed,
+                "incomplete candidate identity mismatch");
             Some(a)
-        } else {
-            None
-        };
+        } else { None };
         let (raw_genome, genome, initial_proposal) = if let Some(a) = &saved_attempt {
-            proposal_attempts = a["proposal_attempts"]
-                .as_u64()
-                .context("missing proposal counter")?;
-            rejected_proposals = a["rejected_proposals"]
-                .as_u64()
-                .context("missing rejection counter")?;
-            ensure!(
-                a["random_streams"]
-                    == json!({
-                "operator":random_word(rng_seed,proposal_attempts,"operator"),
-                "left_parent":random_word(rng_seed,proposal_attempts,"left_parent"),
-                "right_parent":random_word(rng_seed,proposal_attempts,"right_parent"),
-                "variation":random_word(rng_seed,proposal_attempts,"variation")}),
-                "original candidate random streams changed"
-            );
-            let genome = a["genome"]
-                .as_str()
-                .context("missing candidate genome")?
-                .to_string();
-            ensure!(
-                evaluated_programs.insert(GenomeIr::parse(&genome)?.canonical()),
-                "pending candidate already committed"
-            );
-            (
-                a["raw_genome"]
-                    .as_str()
-                    .context("missing raw genome")?
-                    .to_string(),
-                genome,
-                a["initial_proposal"]
-                    .as_bool()
-                    .context("missing candidate origin")?,
-            )
+            proposal_attempts = a["proposal_attempts"].as_u64().context("missing proposal counter")?;
+            rejected_proposals = a["rejected_proposals"].as_u64().context("missing rejection counter")?;
+            let genome = a["genome"].as_str().context("missing candidate genome")?.to_string();
+            ensure!(evaluated_programs.insert(GenomeIr::parse(&genome)?.canonical()), "pending candidate already committed");
+            (a["raw_genome"].as_str().context("missing raw genome")?.to_string(), genome,
+             a["initial_proposal"].as_bool().context("missing candidate origin")?)
         } else {
             let mut selected = None;
             for attempt in 0..10000 {
@@ -1535,36 +812,21 @@ pub fn search_seeded_with_rng_in_root(
                 }
                 proposal_attempts += 1;
                 let initial = attempt == 0 && i < population.len();
-                let proposal_seed = random_word(rng_seed, proposal_attempts, "variation");
-                let operator = random_word(rng_seed, proposal_attempts, "operator") % 16;
+                let proposal_seed = rng_seed.wrapping_add(proposal_attempts);
                 let raw = if initial {
                     population[execution_order[i]].clone()
                 } else {
                     let keep = ranked.len().min(10);
-                    if keep == 0 || operator < 2 {
+                    if keep == 0 || proposal_attempts % 8 == 0 {
                         feat_math::evolve::random_canonical_pipeline(proposal_seed, 6)
                     } else {
-                        let ranked_genomes: Vec<String> = ranked
-                            .iter()
-                            .take(keep)
-                            .map(|(_, genome)| genome.clone())
-                            .collect();
-                        let left = &ranked[policy_weighted_parent(
-                            keep,
-                            random_word(rng_seed, proposal_attempts, "left_parent"),
-                            supplied.as_ref(),
-                            Some(ranked_genomes.as_slice()),
-                        )]
-                        .1;
-                        let child = if operator < 9 {
+                        let left = &ranked[proposal_attempts as usize % keep].1;
+                        let child = if proposal_attempts % 2 == 0 {
                             feat_math::evolve::mutate_canonical_pipeline(left, proposal_seed, 6)
                         } else {
                             feat_math::evolve::crossover_canonical_pipelines(
                                 left,
-                                &ranked[(random_word(rng_seed, proposal_attempts, "right_parent")
-                                    % keep as u64)
-                                    as usize]
-                                    .1,
+                                &ranked[(proposal_attempts as usize + 1) % keep].1,
                                 proposal_seed,
                                 6,
                             )
@@ -1592,268 +854,85 @@ pub fn search_seeded_with_rng_in_root(
             selected
         };
         let genome_path = output.join(format!("candidate-{i}.dsl"));
-        let mut candidate_identity = json!({"program_sha256":hash(genome.as_bytes()),
-            "family":p.family,"partition":p.meta_partition,"prepared_sha256":prepared_sha,"cut":cut,
-            "training_sha256":c.training_sha256,"validation_sha256":c.validation_sha256,
-            "evaluator_sha256":evaluator_sha,"evaluator_protocol":crate::label_admission::PROTOCOL,
-            "preprocessing_sha256":c.preprocessing_sha256,"target_scale":pp.target_scale,
-            "metric_units":"cut_normalized_target","vocabulary_sha256":vocabulary_sha256,
-            "feature_view_sha256":crate::label_admission::raw_view(&c.training_sha256,&c.preprocessing_sha256),
-            "evaluation_seed":0,"resource_protocol":crate::label_admission::RESOURCE});
-        candidate_identity["evaluation_identity_sha256"] = json!(hash(&serde_json::to_vec(
-            &crate::label_admission::identity(&candidate_identity)
-        )?));
         if saved_attempt.is_some() {
-            ensure!(
-                fs::read(&genome_path)? == genome.as_bytes(),
-                "pending candidate program changed"
-            );
+            ensure!(fs::read(&genome_path)? == genome.as_bytes(), "pending candidate program changed");
         } else {
             atomic_write(&genome_path, genome.as_bytes())?;
-            write_json(
-                &attempt_path,
-                &json!({"prepared_sha256":prepared_sha,"evaluator_sha256":evaluator_sha,
+            write_json(&attempt_path, &json!({"prepared_sha256":prepared_sha,"evaluator_sha256":evaluator_sha,
                 "cut":cut,"evaluation_index":i,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,
                 "evaluations":evaluations,"seconds":seconds,"raw_genome":raw_genome,"genome":genome,
-                "program_sha256":candidate_identity["program_sha256"],"evaluation_identity_sha256":candidate_identity["evaluation_identity_sha256"],
-                "initial_proposal":initial_proposal,"rng_seed":rng_seed,"random_protocol":RANDOM_PROTOCOL,
-                "random_streams":{"operator":random_word(rng_seed,proposal_attempts,"operator"),
-                    "left_parent":random_word(rng_seed,proposal_attempts,"left_parent"),
-                    "right_parent":random_word(rng_seed,proposal_attempts,"right_parent"),
-                    "variation":random_word(rng_seed,proposal_attempts,"variation")},
-                "proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals}),
-            )?;
+                "initial_proposal":initial_proposal,"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals}))?;
         }
         let result_path = output.join(format!("candidate-{i}.json"));
         experiment_failpoint("candidate_intent", experiment.is_some());
-        let completion_path = output.join(format!("candidate-{i}.completion.json"));
-        let saved_completion: Option<serde_json::Value> =
-            if saved_attempt.is_some() && completion_path.exists() {
-                Some(read_json(&completion_path)?)
-            } else {
-                None
-            };
-        let recovered_metric = saved_completion.is_some();
+        let recovered_metric = saved_attempt.is_some() && result_path.exists();
         let begun = Instant::now();
-        let deadline_seconds = (seconds as f64 - start.elapsed().as_secs_f64() - previous_seconds)
-            .min(30.)
-            .max(0.001);
-        let deadline_monotonic_ns =
-            crate::fit_boundary::deadline_after(Duration::from_secs_f64(deadline_seconds))?;
         let mut failure = None;
-        let mut exit_code = None;
-        let mut exit_signal = None;
-        let mut exit_observed = false;
-        let mut deadline_exceeded = false;
-        if let Some(completion) = &saved_completion {
-            failure = completion["failure"].as_str().map(String::from);
-        } else if saved_attempt.is_some() {
-            // An intent/result is not an observed successful exit. It might
-            // already have fitted; never dispatch this candidate again.
-            failure = Some("unknown_original_execution_without_completion".into());
-        } else {
-            let log = fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(output.join(format!("candidate-{i}.log")))?;
-            let mut command = Command::new(&executable);
-            use std::os::fd::AsRawFd;
-            command
-                .args(["evaluate-memory", "--fd"])
-                .arg(memory.as_raw_fd().to_string())
-                .arg("--prepared")
-                .arg(prepared)
-                .arg("--cut")
-                .arg(cut.to_string())
-                .arg("--genome")
-                .arg(&genome_path)
-                .arg("--output")
-                .arg(&result_path)
-                .env(
-                    "JOPE_FIT_DEADLINE_MONOTONIC_NS",
-                    deadline_monotonic_ns.to_string(),
-                )
-                .env(
-                    "OMP_NUM_THREADS",
-                    std::env::var("OMP_NUM_THREADS").unwrap_or_else(|_| "1".into()),
-                )
-                .env("OPENBLAS_NUM_THREADS", "1")
-                .env("MKL_NUM_THREADS", "1")
-                .env(
-                    "RAYON_NUM_THREADS",
-                    std::env::var("RAYON_NUM_THREADS").unwrap_or_else(|_| "1".into()),
-                )
-                .stdout(Stdio::from(log.try_clone()?))
-                .stderr(Stdio::from(log));
-            use std::os::unix::process::CommandExt;
-            let controller_pid = std::process::id();
-            unsafe {
-                command.pre_exec(move || {
-                    if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL) != 0
-                        || libc::getppid() as u32 != controller_pid
-                    {
-                        return Err(std::io::Error::other("evaluator lost controller"));
-                    }
-                    let limit = libc::rlimit {
-                        rlim_cur: 8 * 1024 * 1024 * 1024,
-                        rlim_max: 8 * 1024 * 1024 * 1024,
-                    };
-                    if libc::setrlimit(libc::RLIMIT_AS, &limit) != 0 {
-                        return Err(std::io::Error::last_os_error());
-                    }
-                    Ok(())
-                });
-            }
-            let mut child = command.spawn()?;
-            loop {
-                if let Some(status) = child.try_wait()? {
-                    use std::os::unix::process::ExitStatusExt;
-                    exit_observed = true;
-                    exit_code = status.code();
-                    exit_signal = status.signal();
-                    deadline_exceeded = begun.elapsed().as_secs_f64() > deadline_seconds;
-                    if deadline_exceeded {
-                        failure = Some("candidate_or_view_timeout".into());
-                    } else if !status.success() {
-                        failure = Some(format!("worker_exit:{status}"));
-                    }
-                    break;
+        if !recovered_metric {
+        let log = fs::OpenOptions::new().create(true).append(true).open(output.join(format!("candidate-{i}.log")))?;
+        let mut command = Command::new(&executable);
+        use std::os::fd::AsRawFd;
+        command
+            .args(["evaluate-memory", "--fd"])
+            .arg(memory.as_raw_fd().to_string())
+            .arg("--genome")
+            .arg(&genome_path)
+            .arg("--output")
+            .arg(&result_path)
+            .env(
+                "OMP_NUM_THREADS",
+                std::env::var("OMP_NUM_THREADS").unwrap_or_else(|_| "4".into()),
+            )
+            .env("OPENBLAS_NUM_THREADS", "1")
+            .env("MKL_NUM_THREADS", "1")
+            .env(
+                "RAYON_NUM_THREADS",
+                std::env::var("RAYON_NUM_THREADS").unwrap_or_else(|_| "4".into()),
+            )
+            .stdout(Stdio::from(log.try_clone()?))
+            .stderr(Stdio::from(log));
+        use std::os::unix::process::CommandExt;
+        let controller_pid = std::process::id();
+        unsafe {
+            command.pre_exec(move || {
+                if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL) != 0 || libc::getppid() as u32 != controller_pid {
+                    return Err(std::io::Error::other("evaluator lost controller"));
                 }
-                if begun.elapsed().as_secs_f64() >= deadline_seconds {
-                    child.kill()?;
-                    let status = child.wait()?;
-                    use std::os::unix::process::ExitStatusExt;
-                    exit_observed = true;
-                    exit_code = status.code();
-                    exit_signal = status.signal();
-                    deadline_exceeded = true;
-                    failure = Some("candidate_or_view_timeout".into());
-                    break;
+                let limit = libc::rlimit {
+                    rlim_cur: 8 * 1024 * 1024 * 1024,
+                    rlim_max: 8 * 1024 * 1024 * 1024,
+                };
+                if libc::setrlimit(libc::RLIMIT_AS, &limit) != 0 {
+                    return Err(std::io::Error::last_os_error());
                 }
-                std::thread::sleep(Duration::from_millis(2));
-            }
-        }
-        let result: Option<serde_json::Value> =
-            if take_clean_result(&mut failure, result_path.exists()) {
-                Some(read_json(&result_path)?)
-            } else {
-                None
-            };
-        let measured_runtime = if let Some(completion) = &saved_completion {
-            completion["runtime_seconds"].as_f64()
-        } else if saved_attempt.is_some() {
-            None
-        } else {
-            Some(begun.elapsed().as_secs_f64())
-        };
-        let completion_reference = if completion_path.exists() {
-            Some(relative_artifact(&completion_root, &completion_path)?)
-        } else if saved_attempt.is_none() {
-            let mut completion = candidate_identity.clone();
-            completion["schema"] = json!(crate::label_admission::COMPLETION_SCHEMA);
-            completion["attempt"] = relative_artifact(&completion_root, &attempt_path)?;
-            completion["exit_observed"] = json!(exit_observed);
-            completion["exit_code"] = json!(exit_code);
-            completion["signal"] = json!(exit_signal);
-            completion["deadline_seconds"] = json!(deadline_seconds);
-            completion["deadline_exceeded"] = json!(deadline_exceeded);
-            completion["runtime_seconds"] = json!(measured_runtime);
-            completion["failure"] = json!(failure);
-            let log_path = output.join(format!("candidate-{i}.log"));
-            if log_path.exists() {
-                fs::File::open(&log_path)?.sync_all()?;
-                completion["worker_log"] = relative_artifact(&completion_root, &log_path)?;
-            }
-            completion["outcome"] = json!(if failure.is_none() {
-                "success"
-            } else if deadline_exceeded {
-                "timeout"
-            } else {
-                "infrastructure_failure"
+                Ok(())
             });
-            completion["output"] = if result.is_some() {
-                relative_artifact(&completion_root, &result_path)?
-            } else {
-                serde_json::Value::Null
-            };
-            if let Some(r) = &result {
-                completion["fit_completion"] =
-                    relative_existing_reference(&completion_root, &r["fit_completion"])?;
-                completion["model"] =
-                    relative_existing_reference(&completion_root, &r["fitted_model"])?;
-            } else {
-                let terminal_path = result_path.with_extension("fit-outcome.json");
-                if terminal_path.exists() {
-                    let terminal: serde_json::Value = read_json(&terminal_path)?;
-                    completion["fit_completion"] =
-                        relative_existing_reference(&completion_root, &terminal["fit_completion"])?;
-                    if !deadline_exceeded && terminal["outcome"] == "deterministic_failure" {
-                        completion["outcome"] = json!("fit_failure");
-                    }
-                    completion["original_fit_outcome"] = terminal["outcome"].clone();
+        }
+        let mut child = command.spawn()?;
+        loop {
+            if let Some(status) = child.try_wait()? {
+                if !status.success() {
+                    failure = Some(format!("worker_exit:{status}"));
                 }
+                break;
             }
-            write_json(&completion_path, &completion)?;
-            experiment_failpoint("candidate_completion", experiment.is_some());
-            Some(relative_artifact(&completion_root, &completion_path)?)
+            if begun.elapsed() >= Duration::from_secs(30)
+                || start.elapsed().as_secs_f64() + previous_seconds >= seconds as f64
+            {
+                let _ = child.kill();
+                let _ = child.wait();
+                failure = Some("candidate_or_view_timeout".into());
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(2));
+        }
+        }
+        let result: Option<serde_json::Value> = if failure.is_none() || result_path.exists() {
+            failure = None;
+            Some(read_json(&result_path)?)
         } else {
             None
         };
-        if recovered_metric {
-            let mut recovered = candidate_identity.clone();
-            recovered["clean_completion"] = json!(completion_reference);
-            recovered["failure"] = json!(failure);
-            recovered["metrics"] = json!(result);
-            recovered["runtime_seconds"] = json!(measured_runtime);
-            let completion = saved_completion
-                .as_ref()
-                .context("original completion absent")?;
-            ensure!(
-                completion["schema"] == crate::label_admission::COMPLETION_SCHEMA
-                    && completion["attempt"] == relative_artifact(&completion_root, &attempt_path)?,
-                "recovered completion attempt changed"
-            );
-            for key in [
-                "evaluation_identity_sha256",
-                "program_sha256",
-                "evaluator_sha256",
-            ] {
-                ensure!(
-                    completion[key] == candidate_identity[key],
-                    "recovered completion identity changed: {key}"
-                );
-            }
-            if completion["fit_completion"].is_object() {
-                let native = crate::label_admission::artifact(
-                    &completion_root,
-                    &completion["fit_completion"],
-                )?;
-                recovered["numerical_runtime_seconds"] = native["elapsed_seconds"].clone();
-                crate::label_admission::validate_completion(&completion_root, &recovered)?;
-            } else {
-                // A denied dispatch has no numerical receipt and cannot pass
-                // quality admission. It can still recover its original failure.
-                ensure!(
-                    result.is_none()
-                        && failure.as_ref().is_some_and(|s| !s.is_empty())
-                        && (completion["outcome"] == "infrastructure_failure"
-                            || completion["outcome"] == "timeout")
-                        && completion["exit_observed"] == true
-                        && (completion["exit_code"]
-                            .as_i64()
-                            .is_some_and(|code| code != 0)
-                            || completion["signal"]
-                                .as_i64()
-                                .is_some_and(|signal| signal > 0)
-                            || completion["deadline_exceeded"] == true),
-                    "recovered failure lacks original non-success process evidence"
-                );
-                crate::label_admission::artifact_bytes(
-                    &completion_root,
-                    &completion["worker_log"],
-                )?;
-            }
-        }
         if let Some(r) = &result {
             experiment_failpoint("candidate_metric", experiment.is_some());
             let rmse = r["rmse"].as_f64().context("invalid evaluator RMSE")? * pp.target_scale;
@@ -1865,21 +944,13 @@ pub fn search_seeded_with_rng_in_root(
                 ranked.push((rmse, genome.clone()));
                 ranked.sort_by(|a, b| a.0.total_cmp(&b.0));
                 ranked.truncate(80);
-                if i + 1 == 200 {
-                    let _ = write_json(
-                        &output.join("rerank-200.json"),
-                        &json!({"schema":"parallel.gp_rerank.v1","evaluation_index":200,
-                            "survivors":ranked.len(),"order":"validation_rmse_then_policy",
-                            "parent_checkpoint_used":supplied.as_ref().map(|s|&s.checkpoint_sha256)}),
-                    );
-                }
             }
         }
         use std::io::Read;
         let mut diagnostic = Vec::new();
-        if let Ok(log) = fs::File::open(output.join(format!("candidate-{i}.log"))) {
-            log.take(8192).read_to_end(&mut diagnostic)?;
-        }
+        fs::File::open(output.join(format!("candidate-{i}.log")))?
+            .take(8192)
+            .read_to_end(&mut diagnostic)?;
         let diagnostic = String::from_utf8_lossy(&diagnostic).to_string();
         let origin = if initial_proposal {
             supplied
@@ -1889,37 +960,7 @@ pub fn search_seeded_with_rng_in_root(
         } else {
             "gp_evolution"
         };
-        let observation = json!({"schema":"parallel.gp_observation.v1","dataset":p.dataset,"family":p.family,"partition":p.meta_partition,"cut":cut,"prepared_sha256":prepared_sha,"training_sha256":c.training_sha256,"validation_sha256":c.validation_sha256,"genome":genome,"program_sha256":file_hash(&genome_path)?,"evaluator_sha256":evaluator_sha,"evaluation_bias":"adaptive_cut_heldout_teacher","family_partition_frozen":p.family_partition_frozen,"qualification":qualification,"independent_evaluation":false,"target_access":"cut heldout optimized repeatedly; original final test sealed","origin":origin,"initial_seed_slot":if initial_proposal{Some(execution_order[i])}else{None},"execution_order_protocol":execution_protocol,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"proposal_before_projection":if raw_genome!=genome{Some(&raw_genome)}else{None},"evaluation_index":i,"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,"recovered_completed_artifact":recovered_metric,"runtime_seconds":measured_runtime,"completed_search_seconds":start.elapsed().as_secs_f64()+previous_seconds,"search_clock":SEARCH_CLOCK,"search_clock_accuracy":clock_accuracy,"failure":failure,"worker_diagnostic":diagnostic,"metrics":result,"target_scale":pp.target_scale});
-        let mut observation = observation;
-        observation["task"] = json!("regression");
-        observation["clean_completion"] = json!(completion_reference);
-        if let Some(reference) = &completion_reference {
-            let completion = crate::label_admission::artifact(&completion_root, reference)?;
-            if completion["fit_completion"].is_object() {
-                let native = crate::label_admission::artifact(
-                    &completion_root,
-                    &completion["fit_completion"],
-                )?;
-                observation["numerical_runtime_seconds"] = native["elapsed_seconds"].clone();
-                observation["fit_outcome"] = native["outcome"].clone();
-            }
-        }
-        observation["evaluation_origin"] = result
-            .as_ref()
-            .map(|r| r["evaluation_origin"].clone())
-            .unwrap_or(serde_json::Value::Null);
-        observation["evaluator_protocol"] = json!(crate::label_admission::PROTOCOL);
-        observation["resource_protocol"] = json!(crate::label_admission::RESOURCE);
-        observation["preprocessing_sha256"] = json!(c.preprocessing_sha256);
-        observation["metric_units"] = json!("cut_normalized_target");
-        observation["evaluation_seed"] = json!(0);
-        observation["feature_view_sha256"] = json!(crate::label_admission::raw_view(
-            &c.training_sha256,
-            &c.preprocessing_sha256
-        ));
-        observation["evaluation_identity_sha256"] = json!(hash(&serde_json::to_vec(
-            &crate::label_admission::identity(&observation)
-        )?));
+        let observation = json!({"schema":"parallel.gp_observation.v1","dataset":p.dataset,"family":p.family,"partition":p.meta_partition,"cut":cut,"prepared_sha256":prepared_sha,"training_sha256":c.training_sha256,"validation_sha256":c.validation_sha256,"genome":genome,"program_sha256":file_hash(&genome_path)?,"evaluator_sha256":evaluator_sha,"evaluation_bias":"adaptive_cut_heldout_teacher","family_partition_frozen":p.family_partition_frozen,"qualification":qualification,"independent_evaluation":false,"target_access":"cut heldout optimized repeatedly; original final test sealed","origin":origin,"initial_seed_slot":if initial_proposal{Some(execution_order[i])}else{None},"execution_order_protocol":execution_protocol,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"proposal_before_projection":if raw_genome!=genome{Some(&raw_genome)}else{None},"evaluation_index":i,"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,"recovered_completed_artifact":recovered_metric,"runtime_seconds":if recovered_metric {result.as_ref().and_then(|r| r["seconds"].as_f64()).unwrap_or(0.0)} else {begun.elapsed().as_secs_f64()},"completed_search_seconds":start.elapsed().as_secs_f64()+previous_seconds,"search_clock":SEARCH_CLOCK,"search_clock_accuracy":clock_accuracy,"failure":failure,"worker_diagnostic":diagnostic,"metrics":result,"target_scale":pp.target_scale});
         use std::io::Write;
         let mut line = serde_json::to_vec(&observation)?;
         line.push(b'\n');
@@ -1935,24 +976,26 @@ pub fn search_seeded_with_rng_in_root(
             &json!({"prepared_sha256":prepared_sha,"cut":cut,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"execution_order_protocol":execution_protocol,"execution_order":execution_order,"wall_seconds":start.elapsed().as_secs_f64()+previous_seconds,"search_clock":clock,"evaluations":observations.len(),"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,"best_validation_rmse":ranked.first().map(|x|x.0),"timestamp":crate::telemetry::now()}),
         )?;
         experiment_failpoint("observation_progress", experiment.is_some());
-        // Original attempts, programs, outputs and completions are durable
-        // admission/recovery evidence. Artifact eviction never permits refits.
+        for path in [
+            &genome_path,
+            &result_path,
+            &attempt_path,
+            &output.join(format!("candidate-{i}.log")),
+        ] {
+            if path.exists() {
+                fs::remove_file(path)?;
+            }
+        }
     }
     write_json(&output.join("observations.json"), &observations)?;
     experiment_failpoint("observations_snapshot", experiment.is_some());
     drop(journal);
     // Retain the durable journal until search publication; restart must never lose committed work.
-    let observations_sha256 = file_hash(&output.join("observations.json"))?;
-    let successful_measurements = observations
-        .iter()
-        .filter(|row| row["failure"].is_null() && row["metrics"].is_object())
-        .count();
-    let search_request = relative_artifact(&completion_root, &request_path)?;
     write_json(
         &output.join("search.json"),
-        &json!({"schema":"parallel.search.v1","search_request":search_request,"search_id":file_hash(&request_path)?,"random_protocol":RANDOM_PROTOCOL,"execution_accounting":execution_accounting(&observations),"terminal":true,"successful_measurements":successful_measurements,"failed_or_unavailable_measurements":observations.len()-successful_measurements,"observations_sha256":observations_sha256,"completed_at":crate::telemetry::now(),"evaluator_sha256":evaluator_sha,"evaluator_protocol":crate::label_admission::PROTOCOL,"vocabulary_sha256":vocabulary_sha256,"prepared_sha256":prepared_sha,"cut":cut,"completed_evaluations":observations.len(),"wall_seconds":start.elapsed().as_secs_f64()+previous_seconds,"search_clock":clock,"execution_order_protocol":execution_protocol,"execution_order":execution_order,"resumed":resuming,"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,"unique_programs":evaluated_programs.len(),"best_validation_rmse":ranked.first().map(|x|x.0),"best_program":ranked.first().map(|x|&x.1),"seed_population_supplied":supplied.is_some(),"neural_seeded":neural_seeded,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"final_tests_opened":false}),
+        &json!({"schema":"parallel.search.v1","completed_evaluations":observations.len(),"wall_seconds":start.elapsed().as_secs_f64()+previous_seconds,"search_clock":clock,"execution_order_protocol":execution_protocol,"execution_order":execution_order,"resumed":resuming,"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,"unique_programs":evaluated_programs.len(),"best_validation_rmse":ranked.first().map(|x|x.0),"best_program":ranked.first().map(|x|&x.1),"seed_population_supplied":supplied.is_some(),"neural_seeded":neural_seeded,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"final_tests_opened":false}),
     )?;
     experiment_failpoint("search_summary", experiment.is_some());
-    // Keep the original journal after publication for historical reconciliation.
+    fs::remove_file(&journal_path)?;
     Ok(())
 }

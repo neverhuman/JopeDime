@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
+sys.path.insert(0, "/home/ubuntu/jope-prime/src")
 
 import test_exact_service as service_module  # noqa: E402
 import test_exact_backlog as backlog_module  # noqa: E402
@@ -454,8 +455,7 @@ def test_deployment_explicitly_restarts_already_active_services():
     assert '["systemctl", "--user", "restart", *UNITS]' in source
 
 
-def test_checkpoint_vocab_compatibility_requires_an_exact_fitting_prefix(monkeypatch):
-    monkeypatch.syspath_prepend("/home/ubuntu/jope-prime/src")
+def test_checkpoint_vocab_compatibility_requires_an_exact_fitting_prefix():
     from jope.policy.model_v3 import _validate_action_vocab_compatibility
 
     _validate_action_vocab_compatibility(["PAD", "BOS"], ["PAD", "BOS", "EOS"], 3)

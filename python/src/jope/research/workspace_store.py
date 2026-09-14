@@ -11,7 +11,6 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import shutil
-import sqlite3
 import stat
 import tempfile
 import time
@@ -80,39 +79,21 @@ def secret(name, prefix=b''):
             or re.search(br'^-----BEGIN (?:OPENSSH |RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----\r?$', prefix, re.M) is not None)
 
 
-def ensure_capacity(path, additional_bytes):
-    if type(additional_bytes) is not int or additional_bytes < 0:
-        raise ValueError('Invalid capacity reservation')
-    fs = os.statvfs(path)
-    total, free = fs.f_blocks * fs.f_frsize, fs.f_bavail * fs.f_frsize
-    reserve = max(250 * 1024**3, (total + 9) // 10)
-    if free < reserve + additional_bytes:
-        raise OSError('Destination reserve would be crossed: shortfall=' + str(reserve + additional_bytes - free))
-    return {'filesystem_bytes': total, 'free_bytes': free, 'required_reserve_bytes': reserve}
-
-
-def stable_hash(root, name, copy_to=None, capacity_root=None, reject_live_database=False):
+def stable_hash(root, name, copy_to=None):
     h = hashlib.sha256()
     with opened(root, name) as (stream, current):
         before = os.fstat(stream.fileno())
-        remaining = before.st_size
         first = True
         for block in iter(lambda: stream.read(1024 * 1024), b''):
             if first and secret(name, block):
                 raise ValueError('Secret excluded: ' + name)
-            if first and reject_live_database and (Path(name).suffix in DATABASE_SUFFIXES or block.startswith(b'SQLite format 3\0')):
-                raise ValueError('Application snapshot required; live SQLite bytes cannot enter ordinary custody')
             first = False
             h.update(block)
             if copy_to is not None:
-                if capacity_root is not None:
-                    ensure_capacity(capacity_root, remaining)
                 copy_to.write(block)
-                remaining -= len(block)
         if signature(before) != signature(os.fstat(stream.fileno())) or signature(before) != signature(current()):
             raise ValueError('File changed during hashing: ' + name)
     return {'sha256': h.hexdigest(), 'size': before.st_size,
-            'mode': stat.S_IMODE(before.st_mode),
             'executable': bool(before.st_mode & 0o111), 'uid': before.st_uid, 'gid': before.st_gid,
             'observed_signature': signature(before)}
 
@@ -178,66 +159,19 @@ def publish_object(state, incoming, record):
     return str(dest)
 
 
-def seal(root, name, state, expected=None, reject_live_database=False):
+def seal(root, name, state, expected=None):
     """Preserve one observed version; failure leaves no published object."""
     folder = directory(Path(state) / 'incoming')
     fd, temporary = tempfile.mkstemp(prefix='seal-', dir=folder)
     try:
         with os.fdopen(fd, 'wb') as output:
-            record = stable_hash(root, name, output, capacity_root=folder, reject_live_database=reject_live_database)
+            record = stable_hash(root, name, output)
             output.flush()
             os.fsync(output.fileno())
         if expected and any(record[k] != expected[k] for k in ('sha256', 'size')):
             raise ValueError('Source changed since inventory: ' + name)
         publish_object(state, temporary, record)
         return record
-    finally:
-        if os.path.exists(temporary):
-            os.unlink(temporary)
-
-
-def sqlite_snapshot(root, name, state, seconds=30):
-    raise ValueError('Pathname SQLite capture requires an owned application connection; use sqlite_snapshot_connection')
-
-
-def sqlite_snapshot_connection(connection, application_identity, state, seconds=30):
-    """Online database custody only; journal/witness recovery is a separate gate.
-
-    See https://www.sqlite.org/backup.html. Never copy a live database's bare
-    inode or confuse SQLite integrity with complete application restoration.
-    """
-    if type(seconds) not in (int, float) or not 0 < seconds <= 300:
-        raise ValueError('Bounded SQLite snapshot deadline required')
-    if not isinstance(connection, sqlite3.Connection) or not application_identity:
-        raise ValueError('Original application connection and identity required')
-    folder = directory(Path(state) / 'incoming')
-    fd, temporary = tempfile.mkstemp(prefix='sqlite-', dir=folder)
-    os.close(fd)
-    deadline = time.monotonic() + seconds
-    def progress(status, remaining, total):
-        if time.monotonic() >= deadline:
-            raise TimeoutError('SQLite snapshot deadline exceeded')
-        ensure_capacity(folder, remaining * page_size)
-    try:
-        page_size = connection.execute('PRAGMA page_size').fetchone()[0]
-        ensure_capacity(folder, page_size * connection.execute('PRAGMA page_count').fetchone()[0])
-        with contextlib.closing(sqlite3.connect(temporary)) as dest:
-            connection.backup(dest, pages=256, progress=progress, sleep=0.01)
-            if dest.execute('PRAGMA integrity_check').fetchall() != [('ok',)]:
-                raise ValueError('SQLite backup integrity check failed')
-            schema = dest.execute("SELECT type,name,tbl_name,sql FROM sqlite_master ORDER BY type,name").fetchall()
-            user_version = dest.execute('PRAGMA user_version').fetchone()[0]
-            dest.commit()
-        record = stable_hash(folder, Path(temporary).name)
-        publish_object(state, temporary, record)
-        receipt = {'schema': 'workspace.sqlite-snapshot.v1', 'application_identity': application_identity,
-                   'application_identity_verified': False, 'object': record, 'sqlite_schema_sha256': identity(schema),
-                   'user_version': user_version, 'captured_at': time.time(),
-                   'application_recovery_verified': False,
-                   'pending': ['application watermarks', 'journal and independent witness reconciliation'],
-                   'activation_allowed': False}
-        write_json(Path(state) / 'receipts' / (identity(receipt) + '.json'), receipt)
-        return receipt
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)
@@ -284,7 +218,6 @@ def inventory(root, policy, source_only=False):
             relative(base)
         path = root / base
         if not os.path.lexists(path):
-            pending[base] = {'reason': 'declared_root_missing'}
             continue
         if path.is_symlink():
             pending[base] = {'reason': 'symlink', 'target': os.readlink(path)}
@@ -292,10 +225,7 @@ def inventory(root, policy, source_only=False):
         if path.is_file():
             walks = [(path.parent, [], [path.name])]
         else:
-            def walk_error(error):
-                name = os.path.relpath(error.filename, root)
-                pending[name] = {'reason': 'unvisited_directory', 'error': str(error)}
-            walks = os.walk(path, followlinks=False, onerror=walk_error)
+            walks = os.walk(path, followlinks=False)
         for parent, dirs, names in walks:
             kept = []
             for d in sorted(dirs):
@@ -330,7 +260,6 @@ def inventory(root, policy, source_only=False):
                     if source_only and kind not in ('source', 'dependency'):
                         continue
                     rec = {'class': kind, 'state': action, 'size': info.st_size,
-                           'mode': stat.S_IMODE(info.st_mode),
                            'executable': bool(info.st_mode & 0o111), 'uid': info.st_uid, 'gid': info.st_gid,
                            'observed_signature': signature(info)}
                     if action == 'application_snapshot_required':
@@ -343,13 +272,12 @@ def inventory(root, policy, source_only=False):
                 except (OSError, ValueError) as error:
                     pending[name] = {'reason': str(error)}
     return {'schema': 'workspace.inventory.v1', 'root': str(root), 'timestamp': time.time(),
-            'files': files, 'excluded': excluded, 'pending': pending, 'source_only': source_only,
-            'complete': not pending}
+            'files': files, 'excluded': excluded, 'pending': pending, 'source_only': source_only}
 
 
-def source_snapshot(root, policy, state, owner, capture_pending=False):
+def source_snapshot(root, policy, state, owner):
     before = inventory(root, policy, source_only=True)
-    if before['pending'] and not capture_pending:
+    if before['pending']:
         raise ValueError('Source inventory incomplete: ' + repr(before['pending']))
     records = {}
     for name, row in before['files'].items():
@@ -357,16 +285,12 @@ def source_snapshot(root, policy, state, owner, capture_pending=False):
             verify_object(state, row)
         else:
             seal(root, name, state, row)
-        records[name] = {k: row[k] for k in ('sha256', 'size', 'mode', 'executable', 'uid', 'gid', 'class')}
+        records[name] = {k: row[k] for k in ('sha256', 'size', 'executable', 'uid', 'gid', 'class')}
     after = inventory(root, policy, source_only=True)
-    if (before['files'] != after['files'] or before['excluded'] != after['excluded']
-            or before['pending'] != after['pending']):
+    if before['files'] != after['files'] or before['excluded'] != after['excluded'] or after['pending']:
         raise ValueError('Source changed while snapshotting')
     manifest = {'schema': 'workspace.manifest.v1', 'kind': 'source_snapshot', 'owner': owner,
                 'provenance': {'root': str(root)}, 'files': records, 'activation_allowed': False}
-    if capture_pending:
-        manifest['coverage'] = {'complete': not after['pending'], 'pending': after['pending'],
-                                'declared_roots': policy['source_roots'], 'excluded': after['excluded']}
     manifest['generation'] = identity(manifest)
     target = Path(state) / 'manifests' / (manifest['generation'] + '.json')
     if target.exists():
@@ -387,7 +311,7 @@ def inventory_step(root, policy, state, seconds=15):
     key = identity({'root': str(root), 'policy': policy})
     path = Path(state) / 'scans' / (key + '.json')
     progress = json.loads(path.read_text()) if path.exists() else None
-    if progress is None or not progress['queue']:
+    if progress is None or progress['complete']:
         progress = {'schema': 'workspace.inventory.v1', 'root': str(root),
                     'timestamp': time.time(), 'files': {}, 'pending': {}, 'excluded': {},
                     'source_only': False, 'queue': [''], 'complete': False}
@@ -413,7 +337,6 @@ def inventory_step(root, policy, state, seconds=15):
                     prefix = stream.read(4096)
                 kind, action = classify(name, prefix, policy)
                 rec = {'class': kind, 'state': action, 'size': info.st_size,
-                       'mode': stat.S_IMODE(info.st_mode),
                        'executable': bool(info.st_mode & 0o111), 'uid': info.st_uid, 'gid': info.st_gid,
                        'observed_signature': signature(info)}
                 if kind == 'machine_local':
@@ -424,8 +347,7 @@ def inventory_step(root, policy, state, seconds=15):
                     progress['files'][name] = rec
         except (OSError, ValueError) as error:
             progress['pending'][name] = {'reason': str(error)}
-    progress['traversal_complete'] = not progress['queue']
-    progress['complete'] = progress['traversal_complete'] and not progress['pending']
+    progress['complete'] = not progress['queue']
     progress['observed_at'] = time.time()
     write_json(path, progress)
     result = {k: v for k, v in progress.items() if k != 'queue'}
@@ -435,26 +357,15 @@ def inventory_step(root, policy, state, seconds=15):
 
 
 def validate_manifest(manifest):
-    empty_observed = (manifest.get('files') == {} and isinstance(manifest.get('coverage'), dict)
-                      and manifest['coverage'].get('complete') is False
-                      and bool(manifest['coverage'].get('pending')))
     if (manifest.get('schema') != 'workspace.manifest.v1' or manifest.get('activation_allowed') is not False
-            or manifest.get('kind') != 'source_snapshot' or (not manifest.get('files') and not empty_observed)
+            or manifest.get('kind') != 'source_snapshot' or not manifest.get('files')
             or identity({k: v for k, v in manifest.items() if k != 'generation'}) != manifest.get('generation')):
         raise ValueError('Manifest identity failure')
-    if 'coverage' in manifest:
-        coverage = manifest['coverage']
-        if (type(coverage.get('pending')) is not dict
-                or coverage.get('complete') is not (not coverage['pending'])
-                or type(coverage.get('declared_roots')) is not list):
-            raise ValueError('Invalid source coverage')
     for name, rec in manifest['files'].items():
         relative(name)
         object_path('.', rec['sha256'])
         if type(rec['size']) is not int or rec['size'] < 0 or type(rec['executable']) is not bool:
             raise ValueError('Invalid file record')
-        if 'mode' in rec and (type(rec['mode']) is not int or not 0 <= rec['mode'] <= 0o7777):
-            raise ValueError('Invalid original file mode')
 
 
 def verify_generation(state, manifest):
@@ -484,12 +395,10 @@ def materialize(state, manifest):
     directory(final.parent)
     if final.exists() or final.is_symlink():
         return verify_generation(state, manifest)
-    ensure_capacity(final.parent, sum(row['size'] for row in manifest['files'].values()))
     temporary = Path(tempfile.mkdtemp(prefix='.generation-', dir=final.parent))
     try:
         for name, rec in manifest['files'].items():
             verify_object(state, rec)
-            ensure_capacity(final.parent, rec['size'])
             dest = temporary / relative(name)
             dest.parent.mkdir(parents=True, exist_ok=True)
             # Separate inode: changing permissions must not mutate shared objects.
@@ -520,41 +429,14 @@ def dispatch(request):
     op = request['op']
     state = request['state']
     directory(state)
-    if op in ('inventory_page', 'inventory_capture', 'inventory_ack', 'inventory_status'):
-        from workspace_inventory import Inventory
-        key = identity({'root': os.path.abspath(request['root']), 'policy': request['policy'], 'owner': request['owner']})
-        index = Inventory(Path(state) / 'scans-indexed' / (key + '.sqlite'),
-                          {'workspace': request['root']}, request['owner'], request['policy'])
-        try:
-            if op == 'inventory_page':
-                index.mirror_advance(request.get('seconds', 2))
-                return index.mirror_page(request.get('limit', 64), request.get('byte_limit', 262144))
-            if op == 'inventory_capture':
-                return index.mirror_capture(state, request['page_id'], request['version'])
-            if op == 'inventory_ack':
-                return index.mirror_acknowledge(state, request['page_id'], request['receipt_sha256'])
-            return index.mirror_summary()
-        finally:
-            index.close()
     if op == 'inventory':
         return inventory(request['root'], request['policy'], request.get('source_only', False))
     if op == 'inventory_step':
         return inventory_step(request['root'], request['policy'], state, request.get('seconds', 15))
-    if op == 'capacity':
-        usage = shutil.disk_usage(state)
-        return {'filesystem_bytes': usage.total, 'free_bytes': usage.free,
-                'required_reserve_bytes': max(250 * 1024**3, (usage.total + 9) // 10),
-                'observed_at': time.time(), 'state': state}
     if op == 'snapshot':
         return source_snapshot(request['root'], request['policy'], state, request['owner'])
-    if op == 'snapshot_observed':
-        return source_snapshot(request['root'], request['policy'], state, request['owner'], capture_pending=True)
     if op == 'seal':
         return seal(request['root'], request['name'], state, request.get('expected'))
-    if op == 'hash':
-        return stable_hash(request['root'], request['name'])
-    if op == 'sqlite_snapshot':
-        return sqlite_snapshot(request['root'], request['name'], state, request.get('seconds', 30))
     if op == 'has':
         result = []
         for row in request['records']:

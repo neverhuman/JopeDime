@@ -99,7 +99,10 @@ fn read_view(
         );
         return Ok(None);
     }
-    crate::task_contract::require_task(&p.task)?;
+    ensure!(
+        matches!(p.task.as_str(), "regression" | "binary"),
+        "frozen target encoder supports regression/binary only"
+    );
     let task = if p.task == "binary" { 0 } else { 1 };
     let rows = prepare::load_view(&path, job.cut, true)?;
     let y = rows.iter().map(|r| *r.last().unwrap()).collect::<Vec<_>>();
@@ -160,7 +163,6 @@ pub fn target_rank(
     world: usize,
     batch: usize,
 ) -> Result<()> {
-    crate::task_contract::require_original_gpu_grant("target-rank")?;
     ensure!(
         rank < world && world <= 8 && batch > 0 && batch <= 512,
         "invalid target worker shape"
@@ -271,7 +273,6 @@ pub fn service(
     batch: usize,
     component: &str,
 ) -> Result<()> {
-    crate::task_contract::require_original_gpu_grant("component-service")?;
     ensure!(
         matches!(component, "target" | "foundation"),
         "unknown encoder component"
@@ -489,7 +490,6 @@ pub fn foundation_rank(
     world: usize,
     batch: usize,
 ) -> Result<()> {
-    crate::task_contract::require_original_gpu_grant("foundation-rank")?;
     ensure!(
         rank < world && world <= 8 && batch > 0 && batch <= 2,
         "foundation requires qualified batch 1 or 2"

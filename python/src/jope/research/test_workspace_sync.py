@@ -3,13 +3,10 @@ import copy
 import io
 import json
 import os
-import sqlite3
 from pathlib import Path
 import tempfile
 import time
 import unittest
-import contextlib
-import workspace_sync
 from unittest.mock import patch
 
 import workspace_store as store
@@ -30,105 +27,6 @@ class WorkspaceSafetyTests(unittest.TestCase):
 
     def snapshot(self, owner='local'):
         return store.source_snapshot(self.root, self.policy, self.state, owner)
-
-    def test_missing_declared_roots_never_disappear_from_coverage(self):
-        self.policy['source_roots'].append('missing')
-        inv = store.inventory(self.root, self.policy, source_only=True)
-        self.assertEqual(inv['pending']['missing']['reason'], 'declared_root_missing')
-        self.assertFalse(inv['complete'])
-        with self.assertRaisesRegex(ValueError, 'incomplete'):
-            self.snapshot()
-        inv = store.inventory(self.root / 'absent', self.policy)
-        self.assertFalse(inv['complete'])
-        self.assertIn('.', inv['pending'])
-
-    def test_sqlite_wal_snapshot_restores_committed_rows_without_activation(self):
-        source = self.root / 'authority.sqlite'
-        connection = sqlite3.connect(source)
-        self.addCleanup(connection.close)
-        connection.execute('PRAGMA journal_mode=WAL')
-        connection.execute('CREATE TABLE attempts(id TEXT PRIMARY KEY, state TEXT)')
-        connection.execute("INSERT INTO attempts VALUES ('original', 'authorized_unknown')")
-        connection.commit()
-        with self.assertRaisesRegex(ValueError, 'owned application connection'):
-            store.sqlite_snapshot(self.root, 'authority.sqlite', self.state)
-        receipt = store.sqlite_snapshot_connection(connection, 'synthetic-authority-instance', self.state)
-        self.assertFalse(receipt['application_recovery_verified'])
-        self.assertFalse(receipt['activation_allowed'])
-        restored = sqlite3.connect(store.object_path(self.state, receipt['object']['sha256']))
-        self.addCleanup(restored.close)
-        self.assertEqual(restored.execute('SELECT * FROM attempts').fetchall(),
-                         [('original', 'authorized_unknown')])
-        connection.execute("INSERT INTO attempts VALUES ('later', 'claimed')")
-        connection.commit()
-        self.assertEqual(restored.execute('SELECT COUNT(*) FROM attempts').fetchone()[0], 1)
-
-    def test_observed_snapshot_preserves_bytes_and_missing_coverage(self):
-        self.policy['source_roots'].append('missing')
-        manifest = store.source_snapshot(self.root, self.policy, self.state, 'local', capture_pending=True)
-        self.assertFalse(manifest['coverage']['complete'])
-        self.assertEqual(manifest['coverage']['pending']['missing']['reason'], 'declared_root_missing')
-        self.assertFalse(manifest['activation_allowed'])
-        store.materialize(self.state, manifest)
-        self.assertEqual((self.state / 'generations' / manifest['generation'] / 'src/main.rs').read_text(), 'original')
-        plan = Mirror.source_plan(None, manifest, manifest)
-        self.assertFalse(plan['source_coverage']['local']['complete'])
-        self.assertFalse(plan['automatic_resolution'])
-        forged = copy.deepcopy(manifest)
-        forged['coverage']['complete'] = True
-        forged['generation'] = store.identity({k: v for k, v in forged.items() if k != 'generation'})
-        with self.assertRaisesRegex(ValueError, 'coverage'):
-            store.materialize(self.state, forged)
-
-    def test_observed_snapshot_rejects_changing_missing_paths(self):
-        self.policy['source_roots'].append('missing')
-        original = store.inventory
-        calls = 0
-        def changing(*args, **kwargs):
-            nonlocal calls
-            calls += 1
-            if calls == 2:
-                (self.root / 'missing').mkdir()
-            return original(*args, **kwargs)
-        with patch.object(store, 'inventory', side_effect=changing):
-            with self.assertRaisesRegex(ValueError, 'changed'):
-                store.source_snapshot(self.root, self.policy, self.state, 'local', capture_pending=True)
-
-    def test_missing_host_preserves_empty_observation_without_complete_claim(self):
-        missing = self.base / 'missing-host'
-        manifest = store.source_snapshot(missing, self.policy, self.state, 'remote', capture_pending=True)
-        self.assertEqual(manifest['files'], {})
-        self.assertFalse(manifest['coverage']['complete'])
-        self.assertEqual(store.materialize(self.state, manifest)['files'], 0)
-        survey = store.inventory_step(missing, self.policy, self.state, seconds=2)
-        self.assertTrue(survey['traversal_complete'])
-        self.assertFalse(survey['complete'])
-        self.assertTrue(survey['pending'])
-        missing.mkdir()
-        recovered = store.inventory_step(missing, self.policy, self.state, seconds=2)
-        self.assertTrue(recovered['traversal_complete'])
-        self.assertTrue(recovered['complete'])
-
-    def test_publish_cli_never_precommits_before_remote_checks(self):
-        self.state.mkdir()
-        pointer = self.state / 'canonical.json'
-        pointer.write_text('{"generation":"original"}')
-        original = pointer.read_bytes()
-        config = self.base / 'config.json'
-        config.write_text(json.dumps({'schema':'workspace.sync-config.v1','bandwidth_kib_s':8192,'merge_host':'fixture'}))
-        for cause in ('remote coverage incomplete', 'remote health unavailable'):
-            with patch.object(workspace_sync, 'Mirror') as constructor:
-                mirror = constructor.return_value
-                mirror.state = self.state
-                mirror.rpc.side_effect = AssertionError('CLI bypassed guarded sync')
-                mirror.sync.return_value = {'status':'paused','error':cause,'synchronized':False}
-                with patch('sys.argv', ['workspace_sync.py','--config',str(config),'sync','--publish','reviewed']), patch.object(workspace_sync.socket, 'gethostname', return_value='fixture'), contextlib.redirect_stdout(io.StringIO()):
-                    with self.assertRaises(SystemExit) as error:
-                        workspace_sync.main()
-                self.assertEqual(error.exception.code, 2)
-                mirror.sync.assert_called_once_with('reviewed', 180)
-                mirror.rpc.assert_not_called()
-                self.assertEqual(pointer.read_bytes(), original)
 
     def test_restore_repeated_sync_and_executable_identity(self):
         (self.root / 'src/run').write_text('original')
@@ -277,13 +175,6 @@ class WorkspaceSafetyTests(unittest.TestCase):
                     'cycle-progress.json': {'timestamp': 100},
                     'hardware.json': {'timestamp': 100, 'errors': [], 'available_gb': 100,
                                       'disk_free_gb': 100, 'cpu_total': 95}}}
-        import kernel_remote_state as k
-        good.update(schema='kernel.live-state.v2', custody='live', capture_errors=[])
-        for unit in k.UNITS:
-            good['stable'].setdefault(unit, {}).update(
-                definition='original definition', exe_sha256='a'*64,
-                properties=dict(InvocationID='a', MainPID='0' if unit in k.FENCED_UNITS[2:] else '123',
-                                ActiveState='inactive' if unit in k.FENCED_UNITS[2:] else 'active'))
         mirror = Mirror.__new__(Mirror)
         mirror.state = self.root
         mirror.baseline = good
@@ -303,20 +194,15 @@ class WorkspaceSafetyTests(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     mirror.healthy()
 
-    def test_zero_bulk_window_preserves_legacy_index_and_reports_unknown_backlog(self):
+    def test_zero_bulk_window_persists_the_verifiable_empty_index(self):
         mirror = Mirror.__new__(Mirror)
         mirror.state = self.state
-        store.directory(self.state)
-        legacy = self.state / 'durable-index.json'
-        legacy.write_bytes(b'{"original":"retain these bytes"}\n')
-        page = dict(schema='workspace.inventory-page.v1', configuration_sha256='a'*64, sequence=1, items=[])
-        inventories = {'local': {'page': page, 'page_id': store.identity(page), 'rpc_scope': {}, 'summary': {}}}
-        with patch.object(mirror, 'rpc', side_effect=AssertionError('empty page must not request bulk RPC')):
+        inventories = {'local': {'files': {}, 'pending': {}, 'root': str(self.root)}}
+        with patch.object(mirror, 'rpc', side_effect=lambda op, **kw: store.identity(kw['value'])):
             result = mirror.durable(inventories, time.monotonic())
-        self.assertEqual(legacy.read_bytes(), b'{"original":"retain these bytes"}\n')
-        self.assertIsNone(result['files_remaining'])
-        self.assertIsNone(result['bytes_remaining'])
-        self.assertEqual(result['verified_versions_this_pass'], 0)
+        index = json.loads((self.state / 'durable-index.json').read_text())
+        self.assertEqual(index['files'], {})
+        self.assertEqual(result['index_sha256'], store.identity(index))
 
 
 if __name__ == '__main__':

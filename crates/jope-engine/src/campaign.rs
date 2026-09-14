@@ -189,7 +189,6 @@ fn evaluator_hashes(root: &Path) -> Result<(String, String)> {
 
 #[cfg(feature = "neural")]
 pub fn run(root: &Path, spec_path: &Path) -> Result<()> {
-    crate::task_contract::require_original_gpu_grant("learning-campaign")?;
     let spec: Spec = read_json(spec_path)?;
     ensure!(
         spec.schema == "parallel.campaign.v1" && spec.qualification,

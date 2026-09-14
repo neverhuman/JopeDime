@@ -12,9 +12,9 @@ import tempfile
 import workspace_store as store
 
 ROOT = Path(__file__).resolve().parents[1]
-FILES = ('scripts/workspace_sync.py', 'scripts/workspace_store.py', 'scripts/workspace_inventory.py',
+FILES = ('scripts/workspace_sync.py', 'scripts/workspace_store.py',
          'parallel/tools/kernel_remote_state.py', 'parallel/tools/kernel_bundle.py',
-         'parallel/tools/kernel_release.py', 'manifests/workspace-sync.v1.json', 'manifests/workspace-sync.v2.json')
+         'parallel/tools/kernel_release.py', 'manifests/workspace-sync.v1.json')
 
 
 def install():

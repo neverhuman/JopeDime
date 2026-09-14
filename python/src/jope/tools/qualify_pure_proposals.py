@@ -88,28 +88,12 @@ def kill_owned_tree(process):
             except FileNotFoundError:
                 pass
         return result
-    owned=descendants(process.pid) + [process.pid]
-    identities={}
-    for pid in owned:
-        try:
-            fields=Path(f'/proc/{pid}/stat').read_text().rsplit(')',1)[1].split()
-            identities[pid]=fields[19]
-        except FileNotFoundError:pass
-    for pid in owned:
+    for pid in descendants(process.pid) + [process.pid]:
         try:
             os.kill(pid, signal.SIGKILL)
         except ProcessLookupError:
             pass
     process.wait(timeout=10)
-    deadline=time.monotonic()+10
-    while identities:
-        for pid,birth in list(identities.items()):
-            try:fields=Path(f'/proc/{pid}/stat').read_text().rsplit(')',1)[1].split()
-            except FileNotFoundError:identities.pop(pid);continue
-            if fields[19]!=birth or fields[0] in ('Z','X'):identities.pop(pid)
-        if identities:
-            if time.monotonic()>=deadline:raise RuntimeError('owned proposal ranks did not exit after kill')
-            time.sleep(.01)
 
 
 def run_command(command, log, deadline, expected_success=True, timeout=None):
@@ -269,14 +253,6 @@ def validate_pool(root, path, job, context, checkpoint_sha, vocabulary_sha, snap
             "population_genomes_sha256":sha(compact([c["genome"] for c in candidates]))}
 
 
-def proposal_contexts(index):
-    selected=[c for c in index['contexts'] if c['partition'] in ('meta_train','meta_validation') and 0<=c['cut']<2]
-    contexts={(c['dataset'],c['cut']):c for c in selected}
-    if not contexts or len(contexts)!=len(selected):
-        raise ValueError('empty or duplicate frozen proposal contexts')
-    return contexts
-
-
 def validate_run(root, output, index, checkpoint_sha, vocabulary_sha, max_seq):
     run, done = read(output / "run.json"), read(output / "complete.json")
     for value in [run, done]:
@@ -289,10 +265,10 @@ def validate_run(root, output, index, checkpoint_sha, vocabulary_sha, max_seq):
     snapshot = output.parent / "champion-snapshot.json"
     if not (read(output.parent / "champion-snapshot-binding.json")["sha256"] == digest(snapshot) == run["champion_snapshot_sha256"]):
         raise ValueError("qualification check failed: read(output.parent / 'champion-snapshot-binding.json')['sha256'] == digest(snapshot) == run['champion_snapshot_sha256']")
-    contexts = proposal_contexts(index)
+    contexts = {(c["dataset"], c["cut"]): c for c in index["contexts"] if c["partition"] != "meta_test" and c["cut"] < 2}
     jobs = read(output / "jobs.json")["jobs"]
-    if not (len(jobs) == done["jobs"] == len(contexts)):
-        raise ValueError("proposal jobs differ from the frozen corpus context panel")
+    if not (len(jobs) == done["jobs"] == len(contexts) == 112):
+        raise ValueError("qualification check failed: len(jobs) == done['jobs'] == len(contexts) == 112")
     reports = {}
     for job in jobs:
         destination = inside(root, job["output"]).parent
@@ -318,10 +294,9 @@ def main(args):
     if not (digest(binary) == args.binary_sha256):
         raise ValueError('qualification check failed: digest(binary) == args.binary_sha256')
     state = read(checkpoint / "state.json")
-    if not (state["step"] == args.expected_step and args.expected_step>0 and state["final_tests_opened"] is False):
-        raise ValueError("checkpoint step differs from the requested frozen checkpoint")
+    if not (state["step"] == 3000 and state["final_tests_opened"] is False):
+        raise ValueError("qualification check failed: state['step'] == 3000 and state['final_tests_opened'] is False")
     index = read(corpus / "index.json")
-    views=len(proposal_contexts(index))
     if not (digest(corpus / "index.json") == state["corpus_sha256"]):
         raise ValueError("qualification check failed: digest(corpus / 'index.json') == state['corpus_sha256']")
     if not (digest(corpus / "vocabulary.json") == state["vocabulary_sha256"]):
@@ -337,8 +312,7 @@ def main(args):
     binding = {"binary":str(binary.relative_to(root)), "binary_sha256":args.binary_sha256,
                "driver_sha256":digest(Path(__file__)), "corpus_sha256":state["corpus_sha256"],
                "checkpoint_sha256":checkpoint_sha, "checkpoint_model_sha256":state["model_sha256"],
-               "protocols":PROTOCOLS, "world":8, "views":views, "checkpoint_step":args.expected_step,
-               "cuts":2, "cut_start":0, "deadline_seconds":300}
+               "protocols":PROTOCOLS, "world":8, "views":112, "cuts":2, "cut_start":0, "deadline_seconds":300}
     write(output / "binding.json", binding)
     command = lambda dest: [str(binary), "--root", str(root), "propose", "--corpus", str(corpus),
                            "--checkpoint", str(checkpoint), "--output", str(dest), "--cuts", "2", "--cut-start", "0"]
@@ -409,12 +383,12 @@ def main(args):
             raise ValueError("qualification check failed: digest(checkpoint / 'state.json') == checkpoint_sha and digest(checkpoint / 'model.ot') == state['model_sha256']")
         receipt = {"schema":"parallel.pure_proposal_gpu_qualification.v1", "passed":True, "binding":binding,
                    "runs":{"A":first, "B":second, "A_resume":resumed, "legacy_C":rejected},
-                   "pure_ranking_bytes_identical":views, "pure_best_bytes_identical":views,
+                   "pure_ranking_bytes_identical":112, "pure_best_bytes_identical":112,
                    "removed_teacher_entries":len(snapshot_a["entries"]),
                    "gp_populations_changed":sum(p["gp_population_changed"] for p in comparisons),
                    "teacher_overlaps_A":sum(p["overlaps"] for p in first_reports.values()),
                    "teacher_overlaps_B":sum(p["overlaps"] for p in second_reports.values()),
-                   "population_64_10_6_and_unique80_passed":2*views, "legacy_gpu_lease_held":held,
+                   "population_64_10_6_and_unique80_passed":224, "legacy_gpu_lease_held":held,
                    "saved_pool_resume_bytes_unchanged":True, "legacy_rejected_without_output_mutation":True,
                    "checkpoint_unchanged":True, "comparisons_sha256":digest(output / "comparisons.json"),
                    "seconds":time.monotonic()-begun, "gp_jobs_admitted":0, "gp_evaluations":0,
@@ -433,5 +407,4 @@ if __name__ == "__main__":
     for name in ["root", "binary", "corpus", "checkpoint", "output", "legacy-output"]:
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--binary-sha256", required=True)
-    parser.add_argument("--expected-step",type=int,default=3000)
     main(parser.parse_args())

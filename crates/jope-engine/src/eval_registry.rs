@@ -1,11 +1,6 @@
 //! Durable native fit authority. Normal startup never creates storage.
 //! Deployment also requires every numerical entry point and reviewed history.
 mod authority;
-pub mod funding;
-pub mod funding_config;
-pub mod query;
-pub mod witness;
-pub mod service;
 use anyhow::{ensure, Result};
 pub use authority::*;
 

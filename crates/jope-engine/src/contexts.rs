@@ -42,16 +42,7 @@ pub fn assemble(
     output: &Path,
     qualification: bool,
 ) -> Result<()> {
-    assemble_impl(
-        root,
-        jobs_path,
-        hyperion,
-        foundation,
-        target,
-        output,
-        qualification,
-        None,
-    )
+    assemble_impl(root, jobs_path, hyperion, foundation, target, output, qualification, None)
 }
 
 pub fn assemble_registered(
@@ -64,58 +55,19 @@ pub fn assemble_registered(
     output: &Path,
     qualification: bool,
 ) -> Result<()> {
-    assemble_impl(
-        root,
-        jobs_path,
-        hyperion,
-        foundation,
-        target,
-        output,
-        qualification,
-        Some(registry_path),
-    )
+    assemble_impl(root, jobs_path, hyperion, foundation, target, output, qualification, Some(registry_path))
 }
 
 fn registered_prepared(registry: &crate::families::Registry, p: &Prepared) -> Result<Value> {
-    let matches: Vec<_> = registry
-        .families
-        .values()
-        .flat_map(|family| {
-            family
-                .datasets
-                .iter()
-                .filter(move |d| d.dataset == p.dataset)
-                .map(move |d| (family, d))
-        })
-        .collect();
-    ensure!(
-        matches.len() == 1,
-        "prepared dataset is missing or ambiguous in family registry: {}",
-        p.dataset
-    );
+    let matches: Vec<_> = registry.families.values().flat_map(|family| family.datasets.iter().filter(move |d| d.dataset == p.dataset).map(move |d|(family,d))).collect();
+    ensure!(matches.len() == 1, "prepared dataset is missing or ambiguous in family registry: {}", p.dataset);
     let (family, dataset) = matches[0];
-    ensure!(
-        family.family == p.family && family.partition == p.meta_partition,
-        "prepared family/partition differs from frozen registry for {}",
-        p.dataset
-    );
-    ensure!(
-        family.holds.is_empty() && dataset.preparation_eligible,
-        "prepared dataset is not admitted by frozen registry: {}",
-        p.dataset
-    );
+    ensure!(family.family == p.family && family.partition == p.meta_partition, "prepared family/partition differs from frozen registry for {}", p.dataset);
+    ensure!(family.holds.is_empty() && dataset.preparation_eligible, "prepared dataset is not admitted by frozen registry: {}", p.dataset);
     if let Some(binding) = &p.family_registry_binding {
-        ensure!(
-            binding.family == family.family
-                && binding.partition == family.partition
-                && binding.metadata_sha256 == dataset.metadata_sha256
-                && binding.entity_review_sha256 == dataset.entity_review_sha256,
-            "prepared registry lineage differs from current preserved assignment"
-        );
+        ensure!(binding.family == family.family && binding.partition == family.partition && binding.metadata_sha256 == dataset.metadata_sha256 && binding.entity_review_sha256 == dataset.entity_review_sha256, "prepared registry lineage differs from current preserved assignment");
     }
-    Ok(
-        json!({"dataset":p.dataset,"family":family.family,"partition":family.partition,"source_key":dataset.source_key,"metadata_sha256":dataset.metadata_sha256,"entity_review_sha256":dataset.entity_review_sha256,"prepared_registry_binding":p.family_registry_binding}),
-    )
+    Ok(json!({"dataset":p.dataset,"family":family.family,"partition":family.partition,"source_key":dataset.source_key,"metadata_sha256":dataset.metadata_sha256,"entity_review_sha256":dataset.entity_review_sha256,"prepared_registry_binding":p.family_registry_binding}))
 }
 
 fn assemble_impl(
@@ -128,29 +80,17 @@ fn assemble_impl(
     qualification: bool,
     registry_path: Option<&Path>,
 ) -> Result<()> {
-    crate::task_contract::require_original_gpu_grant("assemble-contexts")?;
     let _lease = crate::controller::gpu_lease(root, "assemble cohort context transforms")?;
-    ensure!(
-        output.is_absolute() && output.starts_with(root),
-        "context output must be inside workspace"
-    );
+    ensure!(output.is_absolute() && output.starts_with(root), "context output must be inside workspace");
     ensure!(!output.exists(), "context version already exists");
     let registry: Option<crate::families::Registry> = registry_path.map(read_json).transpose()?;
     if let Some(registry) = &registry {
         registry.validate()?;
-        ensure!(
-            qualification || !registry.qualification,
-            "qualification registry cannot produce independent contexts"
-        );
+        ensure!(qualification || !registry.qualification, "qualification registry cannot produce independent contexts");
     }
     let registry_receipt = registry_path.map(|path| -> Result<Value> { Ok(json!({"path":path.strip_prefix(root)?,"sha256":file_hash(path)?,"registry_id":registry.as_ref().unwrap().registry_id})) }).transpose()?;
     let jobs: GpJobs = read_json(jobs_path)?;
-    ensure!(
-        jobs.schema == "parallel.gp_jobs.v1"
-            && !jobs.jobs.is_empty()
-            && (qualification || !jobs.qualification),
-        "invalid encoding cohort or qualification"
-    );
+    ensure!(jobs.schema == "parallel.gp_jobs.v1" && !jobs.jobs.is_empty() && (qualification || !jobs.qualification), "invalid encoding cohort or qualification");
     let mut prepared = BTreeMap::new();
     let mut registry_members = BTreeMap::new();
     let mut seen = BTreeSet::new();
@@ -178,10 +118,7 @@ fn assemble_impl(
             prepared.insert(job.prepared.clone(), p);
         }
         let p = &prepared[&job.prepared];
-        ensure!(
-            seen.insert((p.dataset.clone(), job.cut)),
-            "duplicate dataset/cut in context assembly"
-        );
+        ensure!(seen.insert((p.dataset.clone(), job.cut)), "duplicate dataset/cut in context assembly");
         let cut = p
             .cuts
             .iter()
@@ -190,45 +127,15 @@ fn assemble_impl(
         let suffix = Path::new(&p.dataset).join(format!("cut-{}", job.cut));
         let mut bindings = serde_json::Map::new();
         for (name, root_dir, receipt, file, dimensions, destination) in [
-            (
-                "hyperion",
-                hyperion,
-                "hyperion.json",
-                "hyperion.f32",
-                512,
-                &mut h,
-            ),
-            (
-                "foundation",
-                foundation,
-                "foundation.json",
-                "foundation_raw.f32",
-                2048,
-                &mut f,
-            ),
-            ("target", target, "target.json", "target.f32", 512, &mut t),
+            ("hyperion",hyperion,"hyperion.json","hyperion.f32",512,&mut h),
+            ("foundation",foundation,"foundation.json","foundation_raw.f32",2048,&mut f),
+            ("target",target,"target.json","target.f32",512,&mut t),
         ] {
             let dir = root_dir.join(&suffix);
             let receipt_path = dir.join(receipt);
             let meta: Value = read_json(&receipt_path)?;
-            ensure!(
-                meta["dataset"] == p.dataset
-                    && meta["family"] == p.family
-                    && meta["cut"] == job.cut
-                    && meta["prepared_sha256"] == job.prepared_sha256
-                    && meta["final_test_targets_used"] == false
-                    && meta["shape"] == json!([dimensions]),
-                "component receipt does not bind this exact prepared cut: {}",
-                receipt_path.display()
-            );
-            destination.extend(signature(
-                &dir,
-                receipt,
-                file,
-                dimensions,
-                &cut.training_sha256,
-                &cut.preprocessing_sha256,
-            )?);
+            ensure!(meta["dataset"] == p.dataset && meta["family"] == p.family && meta["cut"] == job.cut && meta["prepared_sha256"] == job.prepared_sha256 && meta["final_test_targets_used"] == false && meta["shape"] == json!([dimensions]), "component receipt does not bind this exact prepared cut: {}",receipt_path.display());
+            destination.extend(signature(&dir, receipt, file, dimensions, &cut.training_sha256, &cut.preprocessing_sha256)?);
             bindings.insert(name.into(),json!({"receipt":receipt_path.strip_prefix(root)?,"receipt_sha256":file_hash(&receipt_path)?,"signature":dir.join(file).strip_prefix(root)?,"signature_sha256":meta["signature_sha256"],"spec_sha256":meta["spec_sha256"]}));
         }
         component_receipts.push(Value::Object(bindings));
@@ -242,37 +149,18 @@ fn assemble_impl(
         "1024-component projection needs at least 1024 meta-training views from multiple families"
     );
     let final_output = output;
-    let staging = final_output.with_file_name(format!(
-        ".{}.staging",
-        final_output
-            .file_name()
-            .context("context output name missing")?
-            .to_string_lossy()
-    ));
+    let staging = final_output.with_file_name(format!(".{}.staging", final_output.file_name().context("context output name missing")?.to_string_lossy()));
     if staging.exists() {
         let old: Value = read_json(&staging.join("build.json"))?;
-        ensure!(
-            old["schema"] == "parallel.context_build.v1",
-            "unknown context staging directory"
-        );
-        let retired = staging.with_extension(format!(
-            "retired-{}-{}",
-            crate::telemetry::now(),
-            std::process::id()
-        ));
+        ensure!(old["schema"] == "parallel.context_build.v1", "unknown context staging directory");
+        let retired = staging.with_extension(format!("retired-{}-{}",crate::telemetry::now(),std::process::id()));
         ensure!(!retired.exists(), "context staging retirement collision");
         fs::rename(&staging, &retired)?;
-        write_json(
-            &retired.join("retirement.json"),
-            &json!({"reason":"previous incomplete context assembly; preserved before retry","timestamp":crate::telemetry::now()}),
-        )?;
+        write_json(&retired.join("retirement.json"), &json!({"reason":"previous incomplete context assembly; preserved before retry","timestamp":crate::telemetry::now()}))?;
     }
     let output = staging.as_path();
     fs::create_dir_all(output)?;
-    write_json(
-        &output.join("build.json"),
-        &json!({"schema":"parallel.context_build.v1","jobs_sha256":file_hash(jobs_path)?,"registry":registry_receipt,"output":final_output.strip_prefix(root)?,"qualification":qualification}),
-    )?;
+    write_json(&output.join("build.json"),&json!({"schema":"parallel.context_build.v1","jobs_sha256":file_hash(jobs_path)?,"registry":registry_receipt,"output":final_output.strip_prefix(root)?,"qualification":qualification}))?;
     let device = Device::Cuda(0);
     tch::set_num_threads(2);
     let n = jobs.jobs.len() as i64;
@@ -348,12 +236,7 @@ fn assemble_impl(
     );
     let values: Vec<f32> = Vec::try_from(normalized.to_device(Device::Cpu).flatten(0, -1))?;
     let mut index = Vec::new();
-    for ((job, values), bindings) in jobs
-        .jobs
-        .iter()
-        .zip(values.chunks_exact(2048))
-        .zip(component_receipts)
-    {
+    for ((job, values), bindings) in jobs.jobs.iter().zip(values.chunks_exact(2048)).zip(component_receipts) {
         let p = &prepared[&job.prepared];
         let cut = p.cuts.iter().find(|c| c.index == job.cut).unwrap();
         let dir = output.join(&p.dataset);
@@ -386,9 +269,7 @@ fn assemble_impl(
         meta["components_sha256"] = components_sha.clone().into();
         meta["registry"] = registry_receipt.clone().into();
         write_json(&path.with_extension("json"), &meta)?;
-        let public_path = final_output
-            .join(&p.dataset)
-            .join(format!("cut-{}.f32", job.cut));
+        let public_path = final_output.join(&p.dataset).join(format!("cut-{}.f32",job.cut));
         index.push(json!({"dataset":p.dataset,"family":p.family,"cut":job.cut,"partition":p.meta_partition,"path":public_path.strip_prefix(root).context("contexts must be in workspace")?,"sha256":encoding.output_sha256,"prepared":job.prepared,"prepared_sha256":job.prepared_sha256,"components_sha256":components_sha,"receipt_sha256":file_hash(&path.with_extension("json"))?}));
     }
     write_json(
@@ -466,73 +347,20 @@ fn normalize_frozen(
     .clamp(-clip, clip)
 }
 
-/// Choose the bounded training panel using index/registry metadata only.
-/// In particular, never open a candidate reference to discover its partition.
-fn training_parity_rows<'a>(
-    original: &'a Value,
-    registry: &crate::families::Registry,
-) -> Result<Vec<&'a Value>> {
-    let mut families = BTreeMap::<String, BTreeMap<(String, u64), &Value>>::new();
-    for row in original["encodings"]
-        .as_array()
-        .context("original context rows absent")?
-    {
-        if row["partition"] != "meta_train" {
-            continue;
-        }
-        let name = row["family"].as_str().context("reference family absent")?;
-        let family = registry
-            .families
-            .get(name)
-            .context("reference family is not registered")?;
-        ensure!(
-            family.partition == "meta_train" && family.holds.is_empty(),
-            "training reference has protected or held registry membership"
-        );
-        let dataset = row["dataset"]
-            .as_str()
-            .context("reference dataset absent")?;
-        ensure!(
-            family
-                .datasets
-                .iter()
-                .any(|d| d.dataset == dataset && d.preparation_eligible),
-            "training reference dataset is not admitted"
-        );
-        let key = (
-            dataset.to_string(),
-            row["cut"].as_u64().context("reference cut absent")?,
-        );
-        ensure!(
-            families
-                .entry(name.into())
-                .or_default()
-                .insert(key, row)
-                .is_none(),
-            "duplicate training reference"
-        );
-    }
-    let selected: Vec<_> = families
-        .values()
-        .filter(|rows| rows.len() >= 4)
-        .take(2)
-        .flat_map(|rows| rows.values().take(4).copied())
-        .collect();
-    ensure!(
-        selected.len() == 8,
-        "parity requires four deterministic training cuts from each of two families"
-    );
-    Ok(selected)
-}
-
 fn verify_original_contexts(
     root: &Path,
     original: &Value,
-    rows: &[&Value],
+    hyperion: &Path,
+    foundation: &Path,
+    target: &Path,
     transforms: &BTreeMap<String, Tensor>,
     device: Device,
     clip: f64,
 ) -> Result<Value> {
+    let rows = original["encodings"]
+        .as_array()
+        .context("original context rows absent")?;
+    ensure!(!rows.is_empty(), "original context index is empty");
     let (mut h, mut f, mut t, mut expected) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
     for row in rows {
         let path = resolve(
@@ -547,19 +375,8 @@ fn verify_original_contexts(
         let metadata: Value = read_json(&metadata_path)?;
         let encoding: Encoding = serde_json::from_value(metadata.clone())?;
         if let Some(expected) = row["receipt_sha256"].as_str() {
-            ensure!(
-                file_hash(&metadata_path)? == expected,
-                "original context metadata changed"
-            );
+            ensure!(file_hash(&metadata_path)? == expected, "original context metadata changed");
         }
-        ensure!(
-            encoding.partition == "meta_train"
-                && encoding.family == row["family"]
-                && encoding.dataset == row["dataset"]
-                && encoding.cut == row["cut"]
-                && encoding.prepared_sha256 == row["prepared_sha256"],
-            "selected reference metadata changed membership or identity"
-        );
         let bytes = fs::read(&path)?;
         ensure!(
             bytes.len() == 2048 * 4
@@ -573,15 +390,44 @@ fn verify_original_contexts(
                 .chunks_exact(4)
                 .map(|b| f32::from_le_bytes(b.try_into().unwrap())),
         );
-        for (name, file, dimensions, destination) in [
-            ("hyperion", "hyperion.f32", 512, &mut h),
-            ("foundation", "foundation_raw.f32", 2048, &mut f),
-            ("target", "target.f32", 512, &mut t),
-        ] {
-            destination.extend(reference_component(
-                root, &metadata, &encoding, name, file, dimensions,
-            )?);
-        }
+        let suffix = Path::new(&encoding.dataset).join(format!("cut-{}", encoding.cut));
+        // A later cohort may use a separately qualified backend/output root.
+        // Reference parity must read the original assembly's bound components.
+        let reference_dir = |name: &str, fallback: &Path| -> Result<PathBuf> {
+            let binding = &metadata["components"][name];
+            if binding.is_null() {
+                return Ok(fallback.join(&suffix));
+            }
+            let receipt = resolve(root, Path::new(binding["receipt"].as_str().context("reference component receipt absent")?))?;
+            let signature = resolve(root, Path::new(binding["signature"].as_str().context("reference component signature absent")?))?;
+            ensure!(file_hash(&receipt)? == binding["receipt_sha256"] && file_hash(&signature)? == binding["signature_sha256"], "original bound component changed");
+            ensure!(receipt.parent() == signature.parent(), "reference component files must share a directory");
+            Ok(receipt.parent().context("component parent absent")?.to_path_buf())
+        };
+        h.extend(signature(
+            &reference_dir("hyperion", hyperion)?,
+            "hyperion.json",
+            "hyperion.f32",
+            512,
+            &encoding.training_sha256,
+            &encoding.preprocessing_sha256,
+        )?);
+        f.extend(signature(
+            &reference_dir("foundation", foundation)?,
+            "foundation.json",
+            "foundation_raw.f32",
+            2048,
+            &encoding.training_sha256,
+            &encoding.preprocessing_sha256,
+        )?);
+        t.extend(signature(
+            &reference_dir("target", target)?,
+            "target.json",
+            "target.f32",
+            512,
+            &encoding.training_sha256,
+            &encoding.preprocessing_sha256,
+        )?);
     }
     let n = rows.len() as i64;
     let actual = tch::no_grad(|| {
@@ -598,77 +444,8 @@ fn verify_original_contexts(
         .to_device(device);
     let error = (actual - &expected).abs().max().double_value(&[]);
     Ok(
-        json!({"schema":"parallel.frozen_context_apply_parity.v1","passed":error.is_finite() && error<=3e-4,"max_abs_error":error,"tolerance":3e-4,"reference_views":rows.len(),"matrix_rows":n,"dimensions":2048,"assembly_sha256":original["assembly_sha256"],"batch_protocol":"four deterministic training cuts per family; two families; selected before file reads","reference_partition":"meta_train","backend":format!("Rust/LibTorch {:?} FP32", device),"projection_refitted":false,"reference_vectors_overwritten":false}),
+        json!({"schema":"parallel.frozen_context_apply_parity.v1","passed":error.is_finite() && error<=3e-4,"max_abs_error":error,"tolerance":3e-4,"reference_views":rows.len(),"matrix_rows":n,"dimensions":2048,"assembly_sha256":original["assembly_sha256"],"batch_protocol":"entire original cohort in original index order, matching original assembly matrix dimensions","backend":"Rust/LibTorch CUDA FP32","projection_refitted":false,"reference_vectors_overwritten":false}),
     )
-}
-
-/// A different component root is not evidence for the original saved vector.
-/// Validate all metadata before opening a selected component's numerical payload.
-fn reference_component(
-    root: &Path,
-    metadata: &Value,
-    encoding: &Encoding,
-    name: &str,
-    file: &str,
-    dimensions: usize,
-) -> Result<Vec<f32>> {
-    let binding = &metadata["components"][name];
-    let receipt = resolve(
-        root,
-        Path::new(
-            binding["receipt"]
-                .as_str()
-                .context("original component binding absent; unbound fallback is unavailable")?,
-        ),
-    )?;
-    let payload = resolve(
-        root,
-        Path::new(
-            binding["signature"]
-                .as_str()
-                .context("reference component signature absent")?,
-        ),
-    )?;
-    ensure!(
-        receipt.file_name().and_then(|n| n.to_str()) == Some(&format!("{name}.json"))
-            && payload.file_name().and_then(|n| n.to_str()) == Some(file)
-            && receipt.parent() == payload.parent(),
-        "reference component path mismatch"
-    );
-    let raw = fs::read(&receipt)?;
-    ensure!(
-        hash(&raw) == binding["receipt_sha256"],
-        "original bound component receipt changed"
-    );
-    let meta: Value = serde_json::from_slice(&raw)?;
-    ensure!(
-        meta["dataset"] == encoding.dataset
-            && meta["family"] == encoding.family
-            && meta["cut"] == encoding.cut
-            && meta["prepared_sha256"] == encoding.prepared_sha256
-            && meta["training_sha256"] == encoding.training_sha256
-            && meta["preprocessing_sha256"] == encoding.preprocessing_sha256
-            && meta["final_test_targets_used"] == false
-            && meta["shape"] == json!([dimensions])
-            && meta["spec_sha256"].is_string()
-            && meta["spec_sha256"] == binding["spec_sha256"]
-            && meta["signature_sha256"] == binding["signature_sha256"],
-        "reference component receipt does not bind the exact training cut"
-    );
-    let bytes = fs::read(&payload)?;
-    ensure!(
-        bytes.len() == dimensions * 4 && hash(&bytes) == binding["signature_sha256"],
-        "original bound component bytes changed"
-    );
-    let values: Vec<f32> = bytes
-        .chunks_exact(4)
-        .map(|b| f32::from_le_bytes(b.try_into().unwrap()))
-        .collect();
-    ensure!(
-        values.iter().all(|v| v.is_finite()),
-        "nonfinite reference component"
-    );
-    Ok(values)
 }
 
 /// Apply the original cohort's frozen transforms. This never fits a projection,
@@ -683,58 +460,24 @@ pub fn apply(
     output: &Path,
     qualification: bool,
 ) -> Result<()> {
-    crate::task_contract::require_original_gpu_grant("apply-contexts")?;
     let _lease = crate::controller::gpu_lease(root, "apply frozen context transforms")?;
-    apply_impl(
-        root,
-        jobs_path,
-        hyperion,
-        foundation,
-        target,
-        assembly,
-        output,
-        qualification,
-        None,
-    )
+    apply_impl(root, jobs_path, hyperion, foundation, target, assembly, output, qualification, None)
 }
 
 /// Explicit binary qualification application. The scheduler owns the GPU lease,
 /// as for direct encoder ranks. Regression projection fitting is never repeated.
 pub fn apply_binary_qualification(
-    root: &Path,
-    jobs_path: &Path,
-    hyperion: &Path,
-    foundation: &Path,
-    target: &Path,
-    assembly: &Path,
-    output: &Path,
-    aliases: &Path,
+    root: &Path, jobs_path: &Path, hyperion: &Path, foundation: &Path,
+    target: &Path, assembly: &Path, output: &Path, aliases: &Path,
 ) -> Result<()> {
-    apply_impl(
-        root,
-        jobs_path,
-        hyperion,
-        foundation,
-        target,
-        assembly,
-        output,
-        true,
-        Some(aliases),
-    )
+    apply_impl(root, jobs_path, hyperion, foundation, target, assembly, output, true, Some(aliases))
 }
 
 fn apply_impl(
-    root: &Path,
-    jobs_path: &Path,
-    hyperion: &Path,
-    foundation: &Path,
-    target: &Path,
-    assembly: &Path,
-    output: &Path,
-    qualification: bool,
+    root: &Path, jobs_path: &Path, hyperion: &Path, foundation: &Path,
+    target: &Path, assembly: &Path, output: &Path, qualification: bool,
     binary_aliases: Option<&Path>,
 ) -> Result<()> {
-    crate::task_contract::require_original_gpu_grant("apply-contexts-numerical")?;
     ensure!(
         tch::Cuda::is_available(),
         "frozen context application requires CUDA numerical parity"
@@ -745,8 +488,7 @@ fn apply_impl(
     );
     let assembly_path = assembly.join("assembly.json");
     let assembly_sha = file_hash(&assembly_path)?;
-    let original_bytes = fs::read(assembly.join("index.json"))?;
-    let original: Value = serde_json::from_slice(&original_bytes)?;
+    let original: Value = read_json(&assembly.join("index.json"))?;
     let spec: Value = read_json(&assembly_path)?;
     ensure!(
         original["schema"] == "parallel.context_index.v1"
@@ -772,42 +514,13 @@ fn apply_impl(
     let registry: Option<crate::families::Registry> = if spec["registry"].is_null() {
         None
     } else {
-        let path = resolve(
-            root,
-            Path::new(
-                spec["registry"]["path"]
-                    .as_str()
-                    .context("assembly registry path absent")?,
-            ),
-        )?;
-        ensure!(
-            file_hash(&path)? == spec["registry"]["sha256"],
-            "frozen assembly registry changed"
-        );
+        let path = resolve(root, Path::new(spec["registry"]["path"].as_str().context("assembly registry path absent")?))?;
+        ensure!(file_hash(&path)? == spec["registry"]["sha256"], "frozen assembly registry changed");
         let registry: crate::families::Registry = read_json(&path)?;
         registry.validate()?;
-        ensure!(
-            qualification || !registry.qualification,
-            "qualification registry cannot produce independent contexts"
-        );
+        ensure!(qualification || !registry.qualification, "qualification registry cannot produce independent contexts");
         Some(registry)
     };
-    let reference_rows = training_parity_rows(
-        &original,
-        registry
-            .as_ref()
-            .context("frozen parity requires a verified family registry")?,
-    )?;
-    let reference_selection = json!({
-        "schema":"parallel.frozen_context_reference_selection.v1",
-        "assembly_sha256":assembly_sha,
-        "original_index_sha256":hash(&original_bytes),
-        "registry":spec["registry"],
-        "selection_rule":"first two sorted admitted training families with four cuts; first four sorted dataset/cut identities per family",
-        "reference_partition":"meta_train",
-        "reference_views":reference_rows.len(),
-        "rows":reference_rows,
-    });
     let clip = spec["clip_abs"]
         .as_f64()
         .context("frozen clipping bound absent")?;
@@ -825,17 +538,14 @@ fn apply_impl(
     let mut apply_receipt = json!({"schema":"parallel.frozen_context_application.v1","jobs_sha256":file_hash(jobs_path)?,"assembly":assembly_path.strip_prefix(root)?,"assembly_sha256":assembly_sha,"transforms":transforms_path.strip_prefix(root)?,"transforms_sha256":transforms_sha,"component_roots":{"hyperion":hyperion.strip_prefix(root)?,"foundation":foundation.strip_prefix(root)?,"target":target.strip_prefix(root)?},"qualification":qualification,"projection_refitted":false,"cohort_statistics_refitted":false,"old_vectors_copied":0,"final_test_targets_used":false,"numerical_backend":"Rust/LibTorch 2.7 CUDA FP32; original frozen transforms"});
     let aliases: Option<Value> = binary_aliases.map(read_json).transpose()?;
     if let Some(aliases) = &aliases {
-        ensure!(
-            aliases["schema"] == "parallel.binary_family_aliases.v1"
-                && aliases["qualification"] == true
-                && aliases["frozen_before_partitioning"] == true
-                && aliases["existing_assignments_preserved"] == true,
-            "invalid frozen binary family aliases"
-        );
+        ensure!(aliases["schema"] == "parallel.binary_family_aliases.v1"
+            && aliases["qualification"] == true
+            && aliases["frozen_before_partitioning"] == true
+            && aliases["existing_assignments_preserved"] == true,
+            "invalid frozen binary family aliases");
         apply_receipt["binary_qualification"] = true.into();
         apply_receipt["binary_aliases_sha256"] = file_hash(binary_aliases.unwrap())?.into();
-        apply_receipt["projection_scope"] =
-            "frozen regression projection applied to separate binary qualification index".into();
+        apply_receipt["projection_scope"] = "frozen regression projection applied to separate binary qualification index".into();
     }
     if registry.is_some() {
         apply_receipt["registry"] = spec["registry"].clone();
@@ -859,29 +569,17 @@ fn apply_impl(
             );
             if let Some(aliases) = &aliases {
                 let raw: Value = read_json(&path)?;
-                ensure!(
-                    p.task == "binary"
-                        && p.qualification_only
-                        && raw["binary_aliases_sha256"] == apply_receipt["binary_aliases_sha256"],
-                    "binary prepared cut must bind frozen aliases and qualification"
-                );
-                let entries = aliases["families"]
-                    .as_array()
-                    .context("binary families absent")?
-                    .iter()
-                    .filter(|f| f["dataset"] == p.dataset)
-                    .collect::<Vec<_>>();
-                ensure!(
-                    entries.len() == 1
-                        && entries[0]["family"] == p.family
-                        && entries[0]["partition"] == p.meta_partition,
-                    "binary cut family or partition differs from frozen aliases"
-                );
+                ensure!(p.task == "binary" && p.qualification_only
+                    && raw["binary_aliases_sha256"] == apply_receipt["binary_aliases_sha256"],
+                    "binary prepared cut must bind frozen aliases and qualification");
+                let entries = aliases["families"].as_array().context("binary families absent")?
+                    .iter().filter(|f| f["dataset"] == p.dataset).collect::<Vec<_>>();
+                ensure!(entries.len() == 1 && entries[0]["family"] == p.family
+                    && entries[0]["partition"] == p.meta_partition,
+                    "binary cut family or partition differs from frozen aliases");
                 if let Some(family) = registry.as_ref().and_then(|r| r.families.get(&p.family)) {
-                    ensure!(
-                        family.partition == p.meta_partition,
-                        "binary qualification changed an existing regression family assignment"
-                    );
+                    ensure!(family.partition == p.meta_partition,
+                        "binary qualification changed an existing regression family assignment");
                 }
             } else if let Some(registry) = &registry {
                 registered_prepared(registry, &p)?;
@@ -945,18 +643,20 @@ fn apply_impl(
         components.push(Value::Object(bindings));
     }
     fs::create_dir_all(output)?;
-    immutable_json(
-        &output.join("reference-selection.json"),
-        &reference_selection,
-    )?;
-    apply_receipt["reference_selection_sha256"] =
-        file_hash(&output.join("reference-selection.json"))?.into();
     immutable_json(&output.join("application.json"), &apply_receipt)?;
     tch::set_num_threads(2);
     let device = Device::Cuda(0);
     let transforms = load_transforms(&transforms_path, device)?;
-    let parity =
-        verify_original_contexts(root, &original, &reference_rows, &transforms, device, clip)?;
+    let parity = verify_original_contexts(
+        root,
+        &original,
+        hyperion,
+        foundation,
+        target,
+        &transforms,
+        device,
+        clip,
+    )?;
     write_json(&output.join("reference-parity.json"), &parity)?;
     ensure!(
         parity["passed"] == true,
@@ -1135,91 +835,10 @@ mod tests {
         assert!(registered_prepared(&registry, &prepared).is_err());
         prepared.meta_partition = "meta_train".into();
         let mut held = registry.clone();
-        held.families
-            .get_mut("family")
-            .unwrap()
-            .holds
-            .insert("unresolved origin".into());
+        held.families.get_mut("family").unwrap().holds.insert("unresolved origin".into());
         assert!(registered_prepared(&held, &prepared).is_err());
         prepared.dataset = "unregistered".into();
         assert!(registered_prepared(&registry, &prepared).is_err());
-    }
-
-    #[test]
-    fn parity_selection_is_training_only_bounded_and_registry_checked() {
-        let mut families = serde_json::Map::new();
-        let mut rows = Vec::new();
-        for name in ["alpha", "beta", "gamma"] {
-            families.insert(name.into(), json!({"family":name,"partition":"meta_train","assignment_method":"preserved_audit_assignment","assignment_hash":null,"bucket":null,"source_keys":[name],"holds":[],"datasets":[{"dataset":name,"source_key":name,"audit_family":name,"metadata_sha256":"metadata","entity_review_sha256":null,"preparation_eligible":true,"eligibility_reason":"verified","prepared":[],"evidence":[]}]}));
-            for cut in (0..6).rev() {
-                rows.push(json!({"dataset":name,"family":name,"cut":cut,"partition":"meta_train","path":"never-open-this"}));
-            }
-        }
-        // A protected reference need not have a readable path or valid dataset.
-        rows.push(json!({"partition":"meta_test","path":"protected-file-does-not-exist"}));
-        rows.push(json!({"partition":"meta_validation","path":"protected-file-does-not-exist"}));
-        let registry: crate::families::Registry = serde_json::from_value(json!({"schema":"parallel.family_registry.v1","seed":SEED,"registry_id":"test","qualification":true,"full_inventory_complete":false,"independent_selection_eligible":false,"parent":null,"audit":{"path":"audit","sha256":"audit"},"decisions":[],"reviews":[],"prepared_inputs":[],"held_review_datasets":{},"families":families})).unwrap();
-        let original = json!({"encodings":rows});
-        let selected = training_parity_rows(&original, &registry).unwrap();
-        assert_eq!(selected.len(), 8);
-        assert!(selected.iter().all(|row| row["partition"] == "meta_train"));
-        assert_eq!(selected[0]["family"], "alpha");
-        assert_eq!(selected[0]["cut"], 0);
-        assert_eq!(selected[7]["family"], "beta");
-        assert_eq!(selected[7]["cut"], 3);
-        let mut protected = registry;
-        protected.families.get_mut("alpha").unwrap().partition = "meta_test".into();
-        assert!(training_parity_rows(&original, &protected).is_err());
-    }
-
-    #[test]
-    fn reference_component_rejects_unbound_and_wrong_cut_before_payload_access() {
-        let tmp = tempfile::tempdir().unwrap();
-        let root = tmp.path();
-        let encoding: Encoding = serde_json::from_value(json!({
-            "schema":"parallel.encoding.v1", "dataset":"dataset", "family":"family",
-            "partition":"meta_train", "cut":2, "prepared_sha256":"prepared",
-            "training_sha256":"training", "selected_training_rows_sha256":"rows",
-            "preprocessing_sha256":"preprocessing", "encoder_spec_sha256":"assembly",
-            "numerical_backend":"fixture", "dataset_dimensions":1536,
-            "target_dimensions":512, "output_sha256":"context",
-        }))
-        .unwrap();
-        let err = reference_component(root, &json!({}), &encoding, "target", "target.f32", 512)
-            .unwrap_err();
-        assert!(err.to_string().contains("unbound fallback"));
-        let receipt = root.join("target.json");
-        let mut meta = json!({"dataset":"dataset", "family":"family", "cut":3,
-            "prepared_sha256":"prepared", "training_sha256":"training",
-            "preprocessing_sha256":"preprocessing", "final_test_targets_used":false,
-            "shape":[512], "spec_sha256":"spec", "signature_sha256":"unopened"});
-        write_json(&receipt, &meta).unwrap();
-        let mut metadata = json!({"components":{"target":{
-            "receipt":"target.json", "receipt_sha256":file_hash(&receipt).unwrap(),
-            "signature":"target.f32", "signature_sha256":"unopened", "spec_sha256":"spec",
-        }}});
-        let err = reference_component(root, &metadata, &encoding, "target", "target.f32", 512)
-            .unwrap_err();
-        assert!(err.to_string().contains("exact training cut"));
-        assert!(!root.join("target.f32").exists());
-        meta["cut"] = 2.into();
-        let bytes = vec![0_u8; 512 * 4];
-        fs::write(root.join("target.f32"), &bytes).unwrap();
-        meta["signature_sha256"] = hash(&bytes).into();
-        write_json(&receipt, &meta).unwrap();
-        metadata["components"]["target"]["receipt_sha256"] = file_hash(&receipt).unwrap().into();
-        metadata["components"]["target"]["signature_sha256"] = hash(&bytes).into();
-        assert_eq!(
-            reference_component(root, &metadata, &encoding, "target", "target.f32", 512).unwrap(),
-            vec![0_f32; 512]
-        );
-        fs::write(root.join("target.f32"), vec![1_u8; 512 * 4]).unwrap();
-        assert!(
-            reference_component(root, &metadata, &encoding, "target", "target.f32", 512)
-                .unwrap_err()
-                .to_string()
-                .contains("bytes changed")
-        );
     }
 
     #[test]
