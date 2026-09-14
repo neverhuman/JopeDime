@@ -50,7 +50,7 @@ SPEC = {
     'node-source': dict(base=NODE_ROOT, root='.', kind='roots', roots=('src', 'tools', 'tests', 'examples', 'docs', 'systemd', 'Cargo.toml', 'Cargo.lock', 'build.rs', 'README.md')),
     'node-release': dict(base=NODE_ROOT, root='.', kind='roots', roots=('bin', 'native', 'builds', 'releases', 'manifests'), exclude=('/target/',)),
     'node-home': dict(base='/home/ubuntu', root='.', kind='roots', roots=('prepare_native_v8/src', 'prepare_native_v8/Cargo.toml', 'prepare_native_v8/Cargo.lock'), globs=('*.py', '*.sh', '*.out', '*.log')),
-    'lane-store': dict(base='/', root='home/ubuntu/jope-dime-mirror', kind='tree'),
+    'kernel-mirror': dict(base='/', root='home/ubuntu/jope-dime-mirror', kind='tree'),   # Codex's kernel work mirror on the node (formerly mislabelled lane-store)
     'recovery-20260908': dict(base='/', root='home/ubuntu/jope-dime-recovery', kind='tree'),
     'corpus': dict(base=NODE_ROOT, root='corpus', kind='tree'),
     'assets': dict(base=NODE_ROOT, root='assets', kind='tree'),
@@ -59,7 +59,13 @@ SPEC = {
     'runs-census': dict(base=NODE_ROOT, root='runs', kind='roots', census_only=True,
                         roots=('continuous-learning-v2-20260909', 'flywheel-20260909', 'regression-campaign64-qualification-v1', 'train-check-8', 'registry-integration-20260910',
                                'all-gap-closure-20260911', 'continuous-health-20260909', 'gp-reviewed3', 'gp-expanded', 'parity', 'continuous-packer-qualification-20260909')),
-    'recovery-run-census': dict(base=NODE_ROOT, root=RUN, kind='roots', census_only=True, roots=('learning/snapshots', 'learning/cycles', 'review', 'experiments', 'proposal-compat')),
+    'recovery-run-census': dict(base=NODE_ROOT, root=RUN, kind='roots', census_only=True, roots=('learning/snapshots', 'learning/cycles')),
+    # owner decision D-H (2026-09-14): every run root <= 20 GB is copied; the live recovery run's review/experiments/proposal-compat trees too
+    'runs-small': dict(base=NODE_ROOT, root='runs', kind='sized_roots', max_bytes=20 << 30, skip=('eight-a100-recovery-20260912', 'continuous-learning-v2-20260909', 'flywheel-20260909', 'regression-campaign64-qualification-v1', 'champions', 'dataset-inclusion-20260909'),
+                       exclude=('/target/', '/.conversion-venv/', '/debug/deps/', '/release/deps/', '/incremental/', '/.fingerprint/', '/debug/build/', '/release/build/')),
+    'recovery-review': dict(base=NODE_ROOT, root=RUN + '/review', kind='tree', exclude=('/target/', '/debug/deps/', '/release/deps/', '/incremental/', '/.fingerprint/', '/debug/build/', '/release/build/')),
+    'recovery-experiments': dict(base=NODE_ROOT, root=RUN + '/experiments', kind='tree', exclude=('/target/', '/debug/deps/', '/release/deps/', '/incremental/', '/.fingerprint/', '/debug/build/', '/release/build/')),
+    'proposal-compat': dict(base=NODE_ROOT, root=RUN + '/proposal-compat', kind='tree', exclude=('/target/',)),
 }
 
 CENSUS_SCRIPT = r'''
@@ -89,6 +95,29 @@ if kind == 'champions':
 elif kind == 'globs':
     for g in spec['globs']:
         paths.extend(p for p in glob.glob(os.path.join(root, g)) if os.path.isfile(p) and not os.path.islink(p))
+elif kind == 'sized_roots':
+    # every top-level entry under root whose total regular-file bytes are <= max_bytes (computed here), minus the skip list
+    exclude = tuple(spec.get('exclude') or ()); skip = set(spec.get('skip') or ()); chosen = []
+    with os.scandir(root) as it:
+        entries = sorted(e.name for e in it if not e.is_symlink())
+    for name in entries:
+        if name in skip: continue
+        start = os.path.join(root, name)
+        if os.path.isfile(start):
+            chosen.append(start); continue
+        total = 0; found = []
+        for dirpath, dirnames, filenames in os.walk(start):
+            dirnames[:] = [d for d in dirnames if not os.path.islink(os.path.join(dirpath, d))]
+            for f in filenames:
+                p = os.path.join(dirpath, f)
+                if os.path.islink(p) or any(x in p for x in exclude): continue
+                try: total += os.stat(p).st_size
+                except OSError: continue
+                found.append(p)
+                if total > spec['max_bytes']: break
+            if total > spec['max_bytes']: break
+        if total <= spec['max_bytes']: chosen.extend(found)
+    paths.extend(chosen)
 elif kind == 'roots':
     exclude = tuple(spec.get('exclude') or ())
     for g in spec.get('globs') or ():

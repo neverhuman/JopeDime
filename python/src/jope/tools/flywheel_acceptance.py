@@ -30,7 +30,7 @@ LATEST_SCHEMA = 'parallel.flywheel_acceptance_latest.v1'
 GATES = ('LOOP', 'CADENCE', 'THROUGHPUT', 'SCIENCE', 'PUBLICATION', 'SYNC_TRUST', 'TUI')
 # every mirror class whose newest receipt is evidence (the first three bound SYNC_TRUST freshness; the rest are the 2026-09-14 migration classes)
 MIRROR_CLASSES = ('receipts', 'champion-git', 'champions', 'weights', 'dataset', 'prepared', 'contexts', 'teaching-corpus', 'results', 'observations', 'node-source', 'node-release', 'node-home',
-                  'lane-store', 'recovery-20260908', 'corpus', 'assets', 'kernel-work', 'runs-census', 'recovery-run-census')
+                  'kernel-mirror', 'recovery-20260908', 'corpus', 'assets', 'kernel-work', 'runs-census', 'recovery-run-census')
 GATE_RULES = dict(
     LOOP='rollback reparented (learning head == re-parent target, no f11_deviation); progress.automatic_training == manifest; once training is enabled a train commit + monitor verdict within the newest 3 generations and >= 2 connected lineage transitions',
     CADENCE='every generation older than the newest two has all its searches and a quality report; no generation older than 90 min without a report',

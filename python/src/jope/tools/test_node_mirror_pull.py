@@ -98,3 +98,19 @@ class CensusOnly(unittest.TestCase):
             self.assertEqual((receipt['pulled'], receipt['indexed']), (0, 1))
             self.assertFalse((root / 'census-test' / 'runs/big/a.bin').exists())
 
+
+class SizedRoots(unittest.TestCase):
+    def test_census_script_picks_roots_under_the_size_cap(self):
+        import json, subprocess, sys, tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as tmp:
+            runs = Path(tmp) / 'parallel/runs'
+            (runs / 'small').mkdir(parents=True); (runs / 'big').mkdir(); (runs / 'skipped').mkdir(); (runs / 'small/target').mkdir()
+            (runs / 'small/a.json').write_bytes(b'x' * 10); (runs / 'small/target/build.o').write_bytes(b'y' * 5)
+            (runs / 'big/blob.bin').write_bytes(b'z' * 200); (runs / 'skipped/k.json').write_bytes(b'k')
+            (runs / 'loose.txt').write_bytes(b'l')
+            spec = dict(base=str(Path(tmp) / 'parallel'), root='runs', kind='sized_roots', max_bytes=100, skip=('skipped',), exclude=('/target/',))
+            out = subprocess.run([sys.executable, '-'], input=node_mirror_pull.CENSUS_SCRIPT % dict(spec=spec), capture_output=True, text=True, check=True).stdout
+            paths = sorted(r['path'] for r in json.loads(out)['rows'])
+            self.assertEqual(paths, ['runs/loose.txt', 'runs/small/a.json'])   # big root over the cap, skipped root, build artifact all excluded
+
