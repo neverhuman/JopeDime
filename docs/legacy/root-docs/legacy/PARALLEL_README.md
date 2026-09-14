@@ -95,3 +95,14 @@ rtk proxy env LIBTORCH_USE_PYTORCH=1 CXX=g++ CARGO_BUILD_JOBS=8 cargo build --re
 The bounded `campaign --spec PATH` controller chains resumable qualification cycles with an immutable admission/deadline schedule and family-coverage checks. The source includes `systemd/jope-parallel-campaign.service`; it must point at a verified corpus, complete saved contexts, and the qualified executable before launch. It does not authorize independent final-test scoring.
 
 Run these commands in `parallel/` on the target node. Full runtime, data, and asset transfers use SHA-256 manifests and resumable disjoint streams. Do not transfer environments, build directories, credentials, or copied cut tables.
+
+## Recovery console (native, live) — `tui-recovery.sh`
+
+`rtk proxy /home/ubuntu/jope-dime/parallel/tools/tui-recovery.sh` attaches **read-only** to the live native recovery console
+(tmux session `jope-recovery` on the console unit's private socket) after verifying that exactly one renderer pane is
+alive, that it belongs to `jope-eight-a100-console.service`, and that its frame is fresh. Verbs: `check` (verify only, prints
+pane/unit/frame age), `console` (default; detach with `C-b d`, keys are not delivered so `q` is harmless), `plots` (runs the
+reviewed `flywheel_plots.py` in your own ssh tty after a sha256 match; it never creates a window in the supervised session),
+`dashboard` (attaches to the native dashboard once its `live-v1` receipt says passed). Flags: `--interactive` (keys delivered;
+`q` closes the renderer and the supervisor restarts it in ~5 s), `--plain-ssh`. `tui-remote.sh` (the Sept-9 observer +
+plots window) is unchanged and root-owned.
