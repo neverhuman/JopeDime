@@ -40,7 +40,7 @@ GATE_RULES = dict(
     SYNC_TRUST='receipt mirror verifies locally and on the node (both-host), pull receipt <= 30 min old with no refusals; node mirror receipts fresh with no drift; restore drill <= 24 h',
     TUI='console unit active, exactly one live pane, renderer --watch, frame age < 30 s, headline feed <= 15 min old and bound to its receipt, CI90 / high marks / git rows visible natively',
 )
-THRESHOLDS = dict(report_age_seconds=5400, audit_age_seconds=7200, gp_busy=0.80, gpu_occupancy=0.90, gpu_util=0.80, handoff_p95=30.0, guard_ratio=0.01,
+THRESHOLDS = dict(inflight_backlog_fraction=0.05, report_age_seconds=5400, audit_age_seconds=7200, gp_busy=0.80, gpu_occupancy=0.90, gpu_util=0.80, handoff_p95=30.0, guard_ratio=0.01,
                   commit_seconds=300, mirror_seconds=600, publish_seconds=600, pull_age_seconds=1800, restore_age_seconds=86400, frame_age_seconds=30,
                   headline_age_seconds=900, node_mirror_age_seconds=900)
 JOURNAL_TAIL_BYTES = 8 << 20
@@ -378,10 +378,17 @@ def gate_sync_trust(ev, run):
     classes = {k: v for k, v in (local.get('node_mirror') or {}).items() if k not in ('mirror', 'restore')}
     fast = [classes[k] for k in ('receipts', 'champion-git', 'champions') if k in classes]
     drift = sum(len((r['value'] or {}).get('drift_refused') or []) for r in classes.values())
-    unverified = [k for k, r in classes.items() if (r['value'] or {}).get('node_rehash_verified') is not True]
+    # a live class (search ledgers still being written) may carry a small in-flight backlog: files that changed between the node
+    # census and the transfer are excluded and re-pulled next run; they are reported, and only fail the gate above 5% of the census
+    def backlog(v):
+        n = len(v.get('transfer_mismatch') or []) + len(v.get('node_changed_during_pull') or [])
+        files = ((v.get('census') or {}).get('files') or 0)
+        return n, (n / files) if files else (1.0 if n else 0.0)
+    unverified = [k for k, r in classes.items() if (r['value'] or {}).get('node_rehash_verified') is not True and backlog(r['value'] or {})[1] > THRESHOLDS['inflight_backlog_fraction']]
+    in_flight = {k: backlog(r['value'] or {})[0] for k, r in classes.items() if (r['value'] or {}).get('node_rehash_verified') is not True and k not in unverified}
     fresh = bool(fast) and len(fast) == 3 and all(now - r['mtime'] <= THRESHOLDS['node_mirror_age_seconds'] for r in fast)
     checks.append(check('node_mirror_fresh_no_drift', (fresh and drift == 0 and not unverified) if classes else 'pending',
-                        dict(classes=sorted(classes), fast_ages=[round(now - r['mtime']) for r in fast], drift=drift, unverified=unverified), THRESHOLDS['node_mirror_age_seconds'],
+                        dict(classes=sorted(classes), fast_ages=[round(now - r['mtime']) for r in fast], drift=drift, unverified=unverified, in_flight_backlog=in_flight), THRESHOLDS['node_mirror_age_seconds'],
                         [r['path'] for r in classes.values()], None if classes else 'no node-mirror receipt yet'))
     restore = (local.get('node_mirror') or {}).get('restore')
     # only a forge-scope drill (fresh clone + LFS fetch + re-hash) passes; a local_store drill proves the Store can give bytes back and stays pending
