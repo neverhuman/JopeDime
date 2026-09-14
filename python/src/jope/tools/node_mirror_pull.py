@@ -59,7 +59,7 @@ SPEC = {
     'runs-census': dict(base=NODE_ROOT, root='runs', kind='roots', census_only=True,
                         roots=('continuous-learning-v2-20260909', 'flywheel-20260909', 'regression-campaign64-qualification-v1', 'train-check-8', 'registry-integration-20260910',
                                'all-gap-closure-20260911', 'continuous-health-20260909', 'gp-reviewed3', 'gp-expanded', 'parity', 'continuous-packer-qualification-20260909')),
-    'recovery-run-census': dict(base=NODE_ROOT, root=RUN, kind='roots', census_only=True, roots=('learning/snapshots', 'learning/cycles')),
+    'recovery-run-census': dict(base=NODE_ROOT, root=RUN, kind='roots', census_only=True, roots=('learning/snapshot-*', 'learning/cycle-*')),   # packed corpora (99 GB) and training cycles incl. the 69 GB cycle-0 metrics ledger
     # owner decision D-H (2026-09-14): every run root <= 20 GB is copied; the live recovery run's review/experiments/proposal-compat trees too
     'runs-small': dict(base=NODE_ROOT, root='runs', kind='sized_roots', max_bytes=20 << 30, skip=('eight-a100-recovery-20260912', 'continuous-learning-v2-20260909', 'flywheel-20260909', 'regression-campaign64-qualification-v1', 'champions', 'dataset-inclusion-20260909'),
                        exclude=('/target/', '/.conversion-venv/', '/debug/deps/', '/release/deps/', '/incremental/', '/.fingerprint/', '/debug/build/', '/release/build/')),
@@ -123,7 +123,7 @@ elif kind == 'roots':
     for g in spec.get('globs') or ():
         paths.extend(p for p in glob.glob(os.path.join(root, g)) if os.path.isfile(p) and not os.path.islink(p))
     for r in spec['roots']:
-        start = os.path.join(root, r)
+      for start in (sorted(glob.glob(os.path.join(root, r))) if any(c in r for c in '*?[') else [os.path.join(root, r)]):   # roots may be globs (learning/cycle-*)
         if os.path.isfile(start) and not os.path.islink(start):
             paths.append(start); continue
         for dirpath, dirnames, filenames in os.walk(start):
@@ -142,10 +142,12 @@ else:
             paths.append(p)
 rows = []; unreadable = []
 for p in sorted(paths):
-    st = os.stat(p)
     try:
+        st = os.stat(p)
+        if not os.path.isfile(p):
+            unreadable.append(os.path.relpath(p, base)); continue   # sockets, fifos, devices: listed, never hashed or transferred
         h = digest(p)
-    except PermissionError:
+    except OSError:
         unreadable.append(os.path.relpath(p, base)); continue   # root-owned artifacts (perf.data ...) are listed, never transferred
     rows.append(dict(path=os.path.relpath(p, base), bytes=st.st_size, mtime=st.st_mtime, sha256=h))
     st2 = os.stat(p)

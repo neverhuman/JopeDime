@@ -114,3 +114,19 @@ class SizedRoots(unittest.TestCase):
             paths = sorted(r['path'] for r in json.loads(out)['rows'])
             self.assertEqual(paths, ['runs/loose.txt', 'runs/small/a.json'])   # big root over the cap, skipped root, build artifact all excluded
 
+
+class RootsGlobs(unittest.TestCase):
+    def test_roots_accept_globs_and_skip_sockets(self):
+        import json, socket, subprocess, sys, tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as tmp:
+            run = Path(tmp) / 'parallel/runs/r/learning'
+            (run / 'cycle-000001/train').mkdir(parents=True); (run / 'snapshot-000002').mkdir(); (run / 'other').mkdir()
+            (run / 'cycle-000001/train/metrics.jsonl').write_bytes(b'm'); (run / 'snapshot-000002/corpus.bin').write_bytes(b'c'); (run / 'other/x').write_bytes(b'x')
+            sock = socket.socket(socket.AF_UNIX); sock.bind(str(run / 'cycle-000001/rank-0.sock'))
+            spec = dict(base=str(Path(tmp) / 'parallel'), root='runs/r', kind='roots', roots=('learning/cycle-*', 'learning/snapshot-*'), census_only=True)
+            out = json.loads(subprocess.run([sys.executable, '-'], input=node_mirror_pull.CENSUS_SCRIPT % dict(spec=spec), capture_output=True, text=True, check=True).stdout)
+            sock.close()
+            self.assertEqual(sorted(r['path'] for r in out['rows']), ['runs/r/learning/cycle-000001/train/metrics.jsonl', 'runs/r/learning/snapshot-000002/corpus.bin'])
+            self.assertEqual(out['unreadable'], ['runs/r/learning/cycle-000001/rank-0.sock'])
+
