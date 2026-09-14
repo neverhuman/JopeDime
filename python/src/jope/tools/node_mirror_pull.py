@@ -289,7 +289,7 @@ def verify_champion_git(mirror_dir):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--root', type=Path, default=Path('/home/ubuntu/jope-node-mirror'))
+    parser.add_argument('--root', type=Path, default=Path('/home/ubuntu/jain-split/jain-datasets/materialized/a100-node-mirror'))   # real path; /home/ubuntu/jope-node-mirror is a symlink (receipt writer refuses symlinks)
     parser.add_argument('--class', dest='classes', action='append', choices=sorted(SPEC), required=True)
     parser.add_argument('--node', default=NODE)
     parser.add_argument('--key', default=KEY)
