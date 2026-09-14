@@ -1,0 +1,146 @@
+{
+  "path": "/home/ubuntu/jope-dime/parallel/runs/flywheel-20260909/native-v5-cpu/source/parallel/src/gp.rs",
+  "sha256": "29d3452f775f91851b1cc906bf2dd188be76c85b052309f46abc583523892f02",
+  "lines": [
+    {
+      "line": 805,
+      "text": "            (a[\"raw_genome\"].as_str().context(\"missing raw genome\")?.to_string(), genome,"
+    },
+    {
+      "line": 806,
+      "text": "             a[\"initial_proposal\"].as_bool().context(\"missing candidate origin\")?)"
+    },
+    {
+      "line": 807,
+      "text": "        } else {"
+    },
+    {
+      "line": 808,
+      "text": "            let mut selected = None;"
+    },
+    {
+      "line": 809,
+      "text": "            for attempt in 0..10000 {"
+    },
+    {
+      "line": 810,
+      "text": "                if start.elapsed().as_secs_f64() + previous_seconds >= seconds as f64 {"
+    },
+    {
+      "line": 811,
+      "text": "                    break;"
+    },
+    {
+      "line": 812,
+      "text": "                }"
+    },
+    {
+      "line": 813,
+      "text": "                proposal_attempts += 1;"
+    },
+    {
+      "line": 814,
+      "text": "                let initial = attempt == 0 && i < population.len();"
+    },
+    {
+      "line": 815,
+      "text": "                let proposal_seed = rng_seed.wrapping_add(proposal_attempts);"
+    },
+    {
+      "line": 816,
+      "text": "                let raw = if initial {"
+    },
+    {
+      "line": 817,
+      "text": "                    population[execution_order[i]].clone()"
+    },
+    {
+      "line": 818,
+      "text": "                } else {"
+    },
+    {
+      "line": 819,
+      "text": "                    let keep = ranked.len().min(10);"
+    },
+    {
+      "line": 820,
+      "text": "                    if keep == 0 || proposal_attempts % 8 == 0 {"
+    },
+    {
+      "line": 821,
+      "text": "                        feat_math::evolve::random_canonical_pipeline(proposal_seed, 6)"
+    },
+    {
+      "line": 822,
+      "text": "                    } else {"
+    },
+    {
+      "line": 823,
+      "text": "                        let left = &ranked[proposal_attempts as usize % keep].1;"
+    },
+    {
+      "line": 824,
+      "text": "                        let child = if proposal_attempts % 2 == 0 {"
+    },
+    {
+      "line": 825,
+      "text": "                            feat_math::evolve::mutate_canonical_pipeline(left, proposal_seed, 6)"
+    },
+    {
+      "line": 826,
+      "text": "                        } else {"
+    },
+    {
+      "line": 827,
+      "text": "                            feat_math::evolve::crossover_canonical_pipelines("
+    },
+    {
+      "line": 828,
+      "text": "                                left,"
+    },
+    {
+      "line": 829,
+      "text": "                                &ranked[(proposal_attempts as usize + 1) % keep].1,"
+    },
+    {
+      "line": 830,
+      "text": "                                proposal_seed,"
+    },
+    {
+      "line": 831,
+      "text": "                                6,"
+    },
+    {
+      "line": 832,
+      "text": "                            )"
+    },
+    {
+      "line": 833,
+      "text": "                        };"
+    },
+    {
+      "line": 834,
+      "text": "                        child.map_err(anyhow::Error::msg)?"
+    },
+    {
+      "line": 835,
+      "text": "                    }"
+    },
+    {
+      "line": 836,
+      "text": "                };"
+    },
+    {
+      "line": 837,
+      "text": "                let projected = if let Some(v) = &vocab {"
+    },
+    {
+      "line": 838,
+      "text": "                    v.project_proposal(&raw)"
+    },
+    {
+      "line": 839,
+      "text": "                } else {"
+    }
+  ]
+}

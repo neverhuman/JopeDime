@@ -1,0 +1,166 @@
+{
+  "schema": "jope.redteam-report-verification.v1",
+  "checked_at": "2026-09-11T12:53:54.507041+00:00",
+  "passed": true,
+  "checks": [
+    {
+      "name": "active partition arithmetic",
+      "passed": true,
+      "detail": {
+        "datasets": 80,
+        "eligible_rows": 8016,
+        "families": 80,
+        "partitions": {
+          "meta_test": 878,
+          "meta_train": 6962,
+          "meta_validation": 1054
+        },
+        "rows": 8894
+      }
+    },
+    {
+      "name": "active geometry denominator",
+      "passed": true,
+      "detail": {
+        "contexts": 8894,
+        "median": 275.0,
+        "above1000": 10
+      }
+    },
+    {
+      "name": "empty bounded eligible expansion",
+      "passed": true,
+      "detail": {
+        "component_metadata_complete": 10,
+        "cuts": 2695,
+        "metadata_eligible_additions": 0,
+        "outside_retained_indexes": 2695,
+        "prepares": 539,
+        "registered_eligible": 0,
+        "tasks": {
+          "binary": 505,
+          "multiclass": 350,
+          "regression": 1425,
+          "timeseries": 415
+        }
+      }
+    },
+    {
+      "name": "declared repeated coverage",
+      "passed": true,
+      "detail": {
+        "declared": 28560,
+        "distinct": 140
+      }
+    },
+    {
+      "name": "training reset census",
+      "passed": true,
+      "detail": {
+        "blocks": 108,
+        "parent_count": 62,
+        "corpora": 108,
+        "optimizer_reset_blocks": 108
+      }
+    },
+    {
+      "name": "nominal presentation arithmetic",
+      "passed": true,
+      "detail": {
+        "steps": 324000,
+        "presentations": 663552000
+      }
+    },
+    {
+      "name": "step/controller scope arithmetic",
+      "passed": true,
+      "detail": {
+        "controller_seconds": 25206.182613975,
+        "measured_step_fraction": 0.7937107076547916,
+        "not_gpu_arithmetic_occupancy": true
+      }
+    },
+    {
+      "name": "paired endpoint counts",
+      "passed": true,
+      "detail": {
+        "rows": 420,
+        "groups": 140,
+        "search_summary_matches": 420,
+        "native_admission_verified": false
+      }
+    },
+    {
+      "name": "adaptive wins/ties/losses",
+      "passed": true,
+      "detail": {
+        "train": [
+          1,
+          120,
+          3
+        ],
+        "development": [
+          0,
+          16,
+          0
+        ]
+      }
+    },
+    {
+      "name": "paired CSV row count",
+      "passed": true,
+      "detail": {
+        "rows": 280
+      }
+    },
+    {
+      "name": "action dependency graph",
+      "passed": true,
+      "detail": {
+        "actions": 34,
+        "errors": []
+      }
+    },
+    {
+      "name": "status separation",
+      "passed": true,
+      "detail": {
+        "overall_complete": false
+      }
+    },
+    {
+      "name": "local artifact links",
+      "passed": true,
+      "detail": {
+        "references": 180,
+        "missing": []
+      }
+    },
+    {
+      "name": "footnote definitions",
+      "passed": true,
+      "detail": {
+        "errors": []
+      }
+    },
+    {
+      "name": "frozen primary promotion rule",
+      "passed": true,
+      "detail": {
+        "rule": "mean improvement >=1%; confidence lower bound >0; three primary references"
+      }
+    },
+    {
+      "name": "artifact manifest emitted",
+      "passed": true,
+      "detail": {
+        "files": 60,
+        "bytes": 46201264
+      }
+    }
+  ],
+  "application_tests_run": false,
+  "fits_or_benchmarks_run": false,
+  "scientific_objective_qualified": false,
+  "evidence_index_sha256": "96c0b6db2439bb384ea0e8af5c24c91474228f458ea26bb9e8d24c9abf1c782b"
+}

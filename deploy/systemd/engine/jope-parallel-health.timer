@@ -1,0 +1,11 @@
+[Unit]
+Description=Observe JOPE continuous learning every minute
+
+[Timer]
+OnBootSec=30
+OnUnitInactiveSec=60
+AccuracySec=5
+Unit=jope-parallel-health.service
+
+[Install]
+WantedBy=timers.target

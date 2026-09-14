@@ -1,0 +1,121 @@
+{
+  "schema": "parallel.component_parity_shard.v1",
+  "rank": 0,
+  "world_size": 8,
+  "request_sha256": "b7266fdf99b831a3ab8e048f153ae9ec01103fdf5afdee86c6cd26e95256325a",
+  "passed": true,
+  "target_tests": [
+    {
+      "length": 285,
+      "task": 1,
+      "kind": "random",
+      "max_abs_error": 1.043081283569336e-07,
+      "passed": true
+    },
+    {
+      "length": 285,
+      "task": 1,
+      "kind": "constant",
+      "max_abs_error": 5.960464477539063e-08,
+      "passed": true
+    },
+    {
+      "length": 285,
+      "task": 1,
+      "kind": "endpoints",
+      "max_abs_error": 1.1920928955078125e-07,
+      "passed": true
+    },
+    {
+      "length": 802,
+      "task": 1,
+      "kind": "random",
+      "max_abs_error": 1.6391277313232422e-07,
+      "passed": true
+    },
+    {
+      "length": 802,
+      "task": 1,
+      "kind": "constant",
+      "max_abs_error": 5.960464477539063e-08,
+      "passed": true
+    },
+    {
+      "length": 802,
+      "task": 1,
+      "kind": "endpoints",
+      "max_abs_error": 7.450580596923828e-08,
+      "passed": true
+    }
+  ],
+  "foundation_tests": [
+    {
+      "context": 199,
+      "query": 67,
+      "width": 15,
+      "batch": 1,
+      "max_abs_error": 0.0,
+      "passed": true
+    },
+    {
+      "context": 204,
+      "query": 68,
+      "width": 15,
+      "batch": 1,
+      "max_abs_error": 0.0,
+      "passed": true
+    },
+    {
+      "context": 207,
+      "query": 70,
+      "width": 15,
+      "batch": 1,
+      "max_abs_error": 0.0,
+      "passed": true
+    },
+    {
+      "context": 210,
+      "query": 71,
+      "width": 15,
+      "batch": 1,
+      "max_abs_error": 0.0,
+      "passed": true
+    },
+    {
+      "context": 213,
+      "query": 72,
+      "width": 15,
+      "batch": 1,
+      "max_abs_error": 0.0,
+      "passed": true
+    },
+    {
+      "context": 218,
+      "query": 73,
+      "width": 15,
+      "batch": 1,
+      "max_abs_error": 0.0,
+      "passed": true
+    },
+    {
+      "context": 598,
+      "query": 200,
+      "width": 4,
+      "batch": 1,
+      "max_abs_error": 0.0,
+      "passed": true
+    },
+    {
+      "context": 601,
+      "query": 201,
+      "width": 4,
+      "batch": 1,
+      "max_abs_error": 0.0,
+      "passed": true
+    }
+  ],
+  "cuda_work_required": true,
+  "torch_version": "2.7.0",
+  "cuda_version": "12.8",
+  "device_name": "NVIDIA A100-SXM4-40GB"
+}

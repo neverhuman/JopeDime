@@ -1,0 +1,1209 @@
+{
+  "all_gap_closure_summary": "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json",
+  "automatic_training_release": false,
+  "created_at": "2026-09-11T12:48:29.626782+00:00",
+  "implementation_summary": "../../../parallel/runs/recovery-execution-20260911/implementation-summary.json",
+  "items": [
+    {
+      "acceptance": "All project references classified; missing/unreadable/unvisited/unresolved remain explicit.",
+      "action": "Freeze local/remote raw-root mappings, source dependencies, executables, overrides, descendants, Git and application snapshots.",
+      "closed": false,
+      "depends_on": [],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "evidence/runtime.json",
+        "../../../parallel/runs/recovery-execution-20260911/contain-resume-result.json",
+        "../../../parallel/runs/recovery-performance-implementation-20260911/implementation-summary.json",
+        "RECOVERY_EXECUTION_20260911.md",
+        "../../../parallel/runs/recovery-execution-20260911/implementation-summary.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "R01",
+      "implementation_status": "bounded_source_and_runtime_custody_extended",
+      "owner": "root",
+      "priority": "P0",
+      "problem": "Loaded release and full inventory remain incomplete",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "existing_partial",
+          "scientific_status": "not qualified",
+          "verification_status": "open; audit finding verified only to cited scope"
+        },
+        {
+          "closed": false,
+          "deployment_status": "not deployed by 20260911 implementation tranche",
+          "implementation_status": "bounded_current_runtime_capture",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T20:03:38.063456+00:00",
+          "verification_status": "local/remote executable/process/funding paths observed; complete inventory and custody remain open"
+        },
+        {
+          "closed": false,
+          "deployment_status": "numerical runtime unchanged",
+          "implementation_status": "bounded_runtime_and_source_inventory",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "Source closure, loaded processes and canonical paths captured; full route/library/raw custody remains open"
+        }
+      ],
+      "verification_status": "435 remote original source files captured; immutable engineering tranches verified on both hosts; full route/raw/library custody remains open"
+    },
+    {
+      "acceptance": "Unauthorized invocations have zero numerical starts; duplicate clients yield at most one authorized start.",
+      "action": "Close root, parallel, vendor, retained binary and test fit routes; independently witness starts and retain original outcomes.",
+      "closed": false,
+      "depends_on": [
+        "R01"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "authority-gp.md",
+        "authority-gp/findings.json",
+        "authority-gp/remote-parent-selection.json",
+        "RECOVERY_EXECUTION_20260911.md",
+        "../../../parallel/runs/recovery-execution-20260911/implementation-summary.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "R02",
+      "implementation_status": "public_native_gpu_execution_hold_and_authority_cli_pinning",
+      "owner": "authority",
+      "priority": "P0",
+      "problem": "Every numerical launch route is not yet under authority",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "existing_partial",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T20:03:38.063456+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        },
+        {
+          "closed": false,
+          "deployment_status": "execution source not deployed",
+          "implementation_status": "partial_native_boundary_hardened",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "Explicit CPU binding and authority/CLI tests pass; complete root/vendor/retained route fence remains open"
+        }
+      ],
+      "verification_status": "23 public GPU routes reject before CUDA; CPU authority CLI fault tests pass in release; positive native grant and OS/direct-library custody unfinished"
+    },
+    {
+      "acceptance": "Missing witness, stale restore, missing model and deadline all fail closed; original completions recovered.",
+      "action": "Complete native history/recovery and retained-model query with hard deadline; keep coverage and epochs separate from activation.",
+      "closed": false,
+      "depends_on": [
+        "R02"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "authority-gp.md",
+        "authority-gp/findings.json",
+        "authority-gp/remote-parent-selection.json",
+        "../../../parallel/runs/recovery-performance-implementation-20260911/implementation-summary.json",
+        "RECOVERY_EXECUTION_20260911.md",
+        "../../../parallel/runs/recovery-execution-20260911/implementation-summary.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "R03",
+      "implementation_status": "pinned_witness_ack_retrieval_and_original_query_retrieval",
+      "owner": "authority",
+      "priority": "P0",
+      "problem": "History, recovery and query operations are unfinished",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "partial_unqualified",
+          "scientific_status": "not qualified",
+          "verification_status": "open; audit finding verified only to cited scope"
+        },
+        {
+          "closed": false,
+          "deployment_status": "not deployed by 20260911 implementation tranche",
+          "implementation_status": "partial_source_implemented",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T20:03:38.063456+00:00",
+          "verification_status": "nine private query contracts and six original private service query tests pass; production authority/recovery activation remains blocked"
+        },
+        {
+          "closed": false,
+          "deployment_status": "execution source not deployed",
+          "implementation_status": "query_deadline_hardened",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "Nine query and eighteen service tests pass; production query access rejects; hard deadlines across blocking I/O and original history/recovery/witness qualification remain open"
+        }
+      ],
+      "verification_status": "original-expiry query retrieval passed; complete recovery epoch, containment and reusable historical completion adapters unfinished"
+    },
+    {
+      "acceptance": "Complete manifests and conflict resolution. Preserve lineage limitations. Enforce aggregate 64 MiB/s initial and 8 MiB/s background; reserve max(250 GiB, 10%).",
+      "action": "Freeze manifests and tranches; independently verify raw and protected copies; restore applications with both-host acknowledgment.",
+      "closed": false,
+      "depends_on": [
+        "R01"
+      ],
+      "deployment_status": "maintenance mirror successor installed; see original live receipts, full sync uncertified",
+      "evidence": [
+        "evidence/runtime.json",
+        "../../../parallel/runs/recovery-execution-20260911/contain-resume-result.json",
+        "RECOVERY_EXECUTION_20260911.md",
+        "../../../parallel/runs/recovery-execution-20260911/implementation-summary.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "R04",
+      "implementation_status": "bounded_indexed_backfill_with_partial_source_custody",
+      "owner": "root",
+      "priority": "P0",
+      "problem": "Synchronization and transfer lineage are not certified",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "existing_partial",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T20:03:38.063456+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        },
+        {
+          "closed": false,
+          "deployment_status": "mirror maintenance controller installed; synchronization uncertified",
+          "implementation_status": "mirror_effective_fence_verifier_corrected",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "Exact loaded conditions and campaign-own fence verified; bounded sync fails on missing campaigns root"
+        }
+      ],
+      "verification_status": "53 remote tests; livebatchpass96versions/1170985transferbytes/160unattempteddeferred in366.04sec. Older38and30versionpasses preserved. Complete synchronization unqualified; no controlledspeedupclaim."
+    },
+    {
+      "acceptance": "No missing/expired funding start; ambiguous consumption remains charged/unavailable pending reconciliation.",
+      "action": "Locate/reconcile authorization, domain, original journal and current balances; bind every request to a canonical reservation.",
+      "closed": false,
+      "depends_on": [],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "learning-hpc.md",
+        "learning-derived-summary.json",
+        "learning-monitor-budget-metadata.json",
+        "../../../parallel/runs/recovery-performance-implementation-20260911/implementation-summary.json",
+        "RECOVERY_EXECUTION_20260911.md",
+        "../../../parallel/runs/recovery-execution-20260911/implementation-summary.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "R05",
+      "implementation_status": "ten_original_files_recovered_and_hash_verified",
+      "owner": "root",
+      "priority": "P0",
+      "problem": "Canonical funding balance cannot be certified",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "existing_partial",
+          "scientific_status": "not qualified",
+          "verification_status": "open; audit finding verified only to cited scope"
+        },
+        {
+          "closed": false,
+          "deployment_status": "not deployed by 20260911 implementation tranche",
+          "implementation_status": "funding_blocker_reconfirmed",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T20:03:38.063456+00:00",
+          "verification_status": "configured canonical authorization/domain/journal/balance absent on both hosts; no production funding verifier or balance assumed"
+        },
+        {
+          "closed": false,
+          "deployment_status": "no grant created; no production funding enabled",
+          "implementation_status": "original_legacy_snapshots_reconciled_read_only",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "Independent source-bound join preserves 20 origins / 47 names / 48 versions; canonical authorization/domain/journal/budget absent on both hosts"
+        }
+      ],
+      "verification_status": "47-row legacy budget and four original completion joins verified; canonical authorization and full additive charge/balance proof not recovered"
+    },
+    {
+      "acceptance": "Unmocked synthetic end-to-end chain qualifies; no hash-only fabricated execution evidence.",
+      "action": "Implement original selection, query, search-access, monitoring and aggregation with independent verifiers.",
+      "closed": false,
+      "depends_on": [
+        "R02",
+        "R03",
+        "R05"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "../../../parallel/tools/promotion_gate.py",
+        "learning-monitor-budget-metadata.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "R06",
+      "implementation_status": "diagnostic_identity_and_reference_read_guards",
+      "owner": "authority",
+      "priority": "P0",
+      "problem": "Original scientific producer chain is unavailable",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "partial_unqualified",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        }
+      ],
+      "verification_status": "metadata-first selection, exact-read hashes and conflict quarantine tested; original independent producer/verifier graph unfinished"
+    },
+    {
+      "acceptance": "Exact resume matches the qualified uninterrupted trajectory. Every task requires its new step increment. Preserve all 108 historical resets.",
+      "action": "Separate serving head, experiment head and task. Bind parent completion, model, optimizer, corpus, objective, RNG, sampler and committed steps.",
+      "closed": false,
+      "depends_on": [
+        "R02",
+        "R05"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "learning-hpc.md",
+        "learning-derived-summary.json",
+        "learning-monitor-budget-metadata.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "R07",
+      "implementation_status": "resume_identity_partition_and_optimizer_step_validation",
+      "owner": "scheduler",
+      "priority": "P0",
+      "problem": "Optimizer continuity is confused with weight initialization",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "partial_unqualified",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        }
+      ],
+      "verification_status": "optimizer tensor and metadata recovered; sampler/RNG/objective/partition continuity and numerical exact-resume equivalence unresolved"
+    },
+    {
+      "acceptance": "All-rank readiness and failure recovery pass before client switch. Rollback also reconciles and drains. Delete no durable history.",
+      "action": "Release supervisor, client and worker together with durable acceptance and process birth identity. Snapshot and drain all eight ranks under an exclusive lease.",
+      "closed": false,
+      "depends_on": [
+        "R01",
+        "R07"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "learning-hpc.md",
+        "learning-derived-summary.json",
+        "learning-monitor-budget-metadata.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "R08",
+      "implementation_status": "resident_input_closure_deadline_cache_epoch_recovery_guards",
+      "owner": "scheduler",
+      "priority": "P0",
+      "problem": "Resident replacement lacks full release qualification",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "partial_unqualified",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        }
+      ],
+      "verification_status": "resident21tests and23publicrouteholds tested; live pool unchanged; full positive all-rank release qualification missing"
+    },
+    {
+      "acceptance": "Retain an original final result for every target. The interrupted 8-pass/1-fail query run is not a passing release.",
+      "action": "Complete the frozen root library and 56-binary CPU/neural/runtime matrix, formatting, lint and exact fixtures; obtain Tuiwright and Bullet UI evidence.",
+      "closed": false,
+      "depends_on": [
+        "R02",
+        "R03",
+        "R06",
+        "R08",
+        "H09"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "authority-gp.md",
+        "authority-gp/findings.json",
+        "authority-gp/remote-parent-selection.json",
+        "../../../parallel/runs/recovery-performance-implementation-20260911/implementation-summary.json",
+        "RECOVERY_EXECUTION_20260911.md",
+        "../../../parallel/runs/recovery-execution-20260911/implementation-summary.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "R09",
+      "implementation_status": "remote_cpu_neural_and56_root_binary_builds",
+      "owner": "root",
+      "priority": "P0",
+      "problem": "Full release and UI verification are incomplete",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "not_verified",
+          "scientific_status": "not qualified",
+          "verification_status": "open; audit finding verified only to cited scope"
+        },
+        {
+          "closed": false,
+          "deployment_status": "not deployed by 20260911 implementation tranche",
+          "implementation_status": "partial_source_verified",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T20:03:38.063456+00:00",
+          "verification_status": "final listed local tests, CPU target compilation, root all-target check, scoped formatting and Clippy pass; full numerical/neural/deployed UI matrix incomplete"
+        },
+        {
+          "closed": false,
+          "deployment_status": "mirror maintenance only; execution source undeployed",
+          "implementation_status": "integrated_cpu_source_checks_pass",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "129 Python + 121 Rust tests pass with 4 ignored; CPU compilation/lint/root 56 binary check pass; neural/exact/UI/full runtime gates open"
+        }
+      ],
+      "verification_status": "56 root binaries built and hashed; focused suites passed; formatting/strict lint and integrated UI/runtime qualification remain incomplete"
+    },
+    {
+      "acceptance": "At most 16 canary slots; reconcile every outcome before expansion within 104 aggregate slots. Preserve automatic training hold.",
+      "action": "Import final history delta, reconcile witness and exclusions, commit recovery epoch, explicitly activate scopes, then run a reserved canary.",
+      "closed": false,
+      "depends_on": [
+        "R03",
+        "R04",
+        "R05",
+        "R09"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "evidence/runtime.json",
+        "../../../parallel/runs/recovery-execution-20260911/contain-resume-result.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "R10",
+      "implementation_status": "explicit_execution_hold_preserved",
+      "owner": "root",
+      "priority": "P0",
+      "problem": "Collection recovery cannot yet be activated",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "not_qualified",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        }
+      ],
+      "verification_status": "no production collection activation; funding, native grant and history/recovery gates remain unresolved"
+    },
+    {
+      "acceptance": "Report an empty queue until complete new identities qualify. Neither 1,930 receipt groups nor ten metadata-compatible cuts constitute admission.",
+      "action": "Extend the bounded metadata census to the indexed full inventory and native membership/dependency verification.",
+      "closed": false,
+      "depends_on": [
+        "R01"
+      ],
+      "deployment_status": "no dataset publication",
+      "evidence": [
+        "data-folds.md",
+        "data-folds-evidence/metadata-census.json",
+        "RECOVERY_EXECUTION_20260911.md",
+        "../../../parallel/runs/recovery-execution-20260911/implementation-summary.json"
+      ],
+      "id": "D01",
+      "implementation_status": "census_semantics_corrected",
+      "owner": "admission",
+      "priority": "P1",
+      "problem": "Expansion backlog counts conflate incompatible metadata with eligibility",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "existing_partial",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T20:03:38.063456+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        }
+      ],
+      "verification_status": "2695 metadata rows; zero metadata-declared eligible additions; native component/membership qualification unavailable; queue empty"
+    },
+    {
+      "acceptance": "Two CPU threads; bounded manifest; finite unchanged dimensions; 3e-4 parity; exact dependencies and durable publication. No sealed reads.",
+      "action": "Resolve the actual helper. Select eight training cuts across two families before file opening; validate registry, aliases, component bytes, transformations and runtime.",
+      "closed": false,
+      "depends_on": [
+        "D01"
+      ],
+      "deployment_status": "no component activation",
+      "evidence": [
+        "data-folds.md",
+        "data-folds-evidence/metadata-census.json",
+        "RECOVERY_EXECUTION_20260911.md",
+        "../../../parallel/runs/recovery-execution-20260911/implementation-summary.json"
+      ],
+      "id": "D02",
+      "implementation_status": "component_identity_and_preselection_hardened",
+      "owner": "admission",
+      "priority": "P1",
+      "problem": "Composition provenance and CPU helper identity unresolved",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "partial_unqualified",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T20:03:38.063456+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        }
+      ],
+      "verification_status": "Training-only eight-cut/two-family selection implemented before reference reads; native CUDA parity not executed"
+    },
+    {
+      "acceptance": "Preserve existing memberships and ten sealed families. Native publication verification precedes activation. Interrupted publication recovers.",
+      "action": "Remove sorted-tail and Boolean execution authority. Publish an immutable successor by reference; apply seed-20260907 80/20 growth only to new eligible components.",
+      "closed": false,
+      "depends_on": [
+        "D02"
+      ],
+      "deployment_status": "no successor index published",
+      "evidence": [
+        "data-folds.md",
+        "data-folds-evidence/metadata-census.json",
+        "RECOVERY_EXECUTION_20260911.md",
+        "../../../parallel/runs/recovery-execution-20260911/implementation-summary.json"
+      ],
+      "id": "D03",
+      "implementation_status": "publication_alias_and_membership_checks_hardened",
+      "owner": "admission",
+      "priority": "P1",
+      "problem": "New context publication and partitions need native verification",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "partial_unqualified",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T20:03:38.063456+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        }
+      ],
+      "verification_status": "Python contracts pass; native membership/publication recovery and new 80/20 partition qualification open"
+    },
+    {
+      "acceptance": "Expose training coverage of 124/6,962. Prevent starvation and herd dispatch. Apply failure cooldown and unknown-outcome exclusion. Preserve frozen panels.",
+      "action": "Use hierarchical family/dataset/cut deficit-aware roulette with unique strict commits, in-flight counts and real PRNG streams.",
+      "closed": false,
+      "depends_on": [
+        "D01",
+        "R10"
+      ],
+      "deployment_status": "mirrored engineering source; numerical runtime unchanged",
+      "evidence": [
+        "data-folds.md",
+        "data-folds-evidence/metadata-census.json",
+        "RECOVERY_EXECUTION_20260911.md",
+        "../../../parallel/runs/recovery-execution-20260911/implementation-summary.json",
+        "ALL_GAP_CLOSURE_20260911.md"
+      ],
+      "id": "D04",
+      "implementation_status": "bounded_persistent_proposal_metadata_inventory_and_refill_thresholds",
+      "owner": "scheduler",
+      "priority": "P1",
+      "problem": "Collection repeats cuts0/1 instead of covering eligible contexts",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "proposed",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T20:03:38.063456+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        },
+        {
+          "closed": false,
+          "deployment_status": "new collection withheld",
+          "implementation_status": "durable_coverage_selection_implemented",
+          "scientific_status": "not qualified",
+          "verification_status": "Atomic reservations and corrected in-flight weighting verified on metadata; independent strict census producer/importer missing"
+        }
+      ],
+      "verification_status": "48 remote queue tests passed; booleans/native-invalid metadata rejected, prefix scans advance. Actual coverage-commit/admission/funding joins and runnable producer remain unavailable."
+    },
+    {
+      "acceptance": "No demonstrated source-family or test leakage. Resolve or explicitly retain task-label and entity-metadata uncertainty.",
+      "action": "Audit family aliases, source overlap, temporal roles, grouped folds and training-only transforms; preserve ordinary five-fold and rolling-origin semantics.",
+      "closed": false,
+      "depends_on": [
+        "D01"
+      ],
+      "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+      "evidence": [
+        "data-folds.md",
+        "data-folds-evidence/metadata-census.json"
+      ],
+      "id": "D05",
+      "implementation_status": "existing_partial",
+      "owner": "admission",
+      "priority": "P1",
+      "problem": "Metadata disjointness is not leakage qualification",
+      "scientific_status": "not qualified",
+      "verification_status": "open; audit finding verified only to cited scope"
+    },
+    {
+      "acceptance": "Compare identical objective/corpus identities. Do not report 50/50 comparison groups as 50% fresh programs or inactive heads as active losses.",
+      "action": "Freeze all five terms. Report ablation loss, gradient norms and reachability, actual committed fresh programs and distinct support.",
+      "closed": false,
+      "depends_on": [
+        "R07"
+      ],
+      "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+      "evidence": [
+        "learning-hpc.md",
+        "learning-derived-summary.json",
+        "learning-monitor-budget-metadata.json"
+      ],
+      "id": "M01",
+      "implementation_status": "proposed",
+      "owner": "scheduler",
+      "priority": "P1",
+      "problem": "Five-term objective and actual exposure are incompletely observable",
+      "scientific_status": "not qualified",
+      "verification_status": "open; audit finding verified only to cited scope"
+    },
+    {
+      "acceptance": "Allocation comparisons preserve the objective or declare a new lineage. Meaningful gradient-equivalence fixtures pass.",
+      "action": "Audit global weight denominators across microbatches, ranks and accumulated gradients.",
+      "closed": false,
+      "depends_on": [
+        "M01"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "learning-hpc.md",
+        "learning-derived-summary.json",
+        "learning-monitor-budget-metadata.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "M02",
+      "implementation_status": "existing_partition_identity_frozen",
+      "owner": "scheduler",
+      "priority": "P1",
+      "problem": "World size can change effective weighted objective",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "proposed",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        }
+      ],
+      "verification_status": "world/micro/global/accumulation normalization identity validated; partition-invariant objective not implemented or qualified"
+    },
+    {
+      "acceptance": "Demonstrate direct selection benefit without diagnostic regression. Source existence alone does not qualify the architecture.",
+      "action": "After the required support/replay experiment, compare a compact order-aware encoder with the current encoder using fixed admitted training data.",
+      "closed": false,
+      "depends_on": [
+        "R06",
+        "M01",
+        "M02"
+      ],
+      "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+      "evidence": [
+        "learning-hpc.md",
+        "learning-derived-summary.json",
+        "learning-monitor-budget-metadata.json"
+      ],
+      "id": "M03",
+      "implementation_status": "local_experiment_not_deployed",
+      "owner": "scheduler",
+      "priority": "P2",
+      "problem": "Reward/runtime mean pooling loses program order",
+      "scientific_status": "not qualified",
+      "verification_status": "open; audit finding verified only to cited scope"
+    },
+    {
+      "acceptance": "Retain independent original exposure, completion and cost evidence. Do not run identical nominal conditions or fabricate fresh support.",
+      "action": "Use a strict corpus, distinguishable conditions, the selected three seeds, compatible recovery optimizer, batch 2,048, 1,000 new steps and 300-second caps.",
+      "closed": false,
+      "depends_on": [
+        "R06",
+        "R07",
+        "R08",
+        "D03",
+        "M01"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "learning-hpc.md",
+        "learning-derived-summary.json",
+        "learning-monitor-budget-metadata.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "M04",
+      "implementation_status": "invented_learning_matrix_retired",
+      "owner": "scheduler",
+      "priority": "P1",
+      "problem": "Required support/replay comparison has no verified final outcome",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "not_qualified",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        }
+      ],
+      "verification_status": "unrecovered selected3seed study returns unavailable before sideeffects; original4arm and retry manifests retained, no replacement conditions invented"
+    },
+    {
+      "acceptance": "Pure fixtures cover small/large seeds, partial maps and reorderings; demonstrate deterministic replay and valid categorical frequencies.",
+      "action": "Separate operator and parent random streams. Fix raw-seed quantiles and partial-score fallback while preserving legacy identities.",
+      "closed": false,
+      "depends_on": [
+        "R02"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "authority-gp.md",
+        "authority-gp/findings.json",
+        "authority-gp/remote-parent-selection.json",
+        "../../../parallel/runs/recovery-performance-implementation-20260911/implementation-summary.json",
+        "RECOVERY_EXECUTION_20260911.md",
+        "../../../parallel/runs/recovery-execution-20260911/implementation-summary.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "G01",
+      "implementation_status": "critic_rank_weight_named_and_parent_rng_regressions_retained",
+      "owner": "authority",
+      "priority": "P1",
+      "problem": "Parent selection has deterministic coupling and unreleased RNG defect",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "partial_unqualified",
+          "scientific_status": "not qualified",
+          "verification_status": "open; audit finding verified only to cited scope"
+        },
+        {
+          "closed": false,
+          "deployment_status": "not deployed by 20260911 implementation tranche",
+          "implementation_status": "source_implemented_not_deployed",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T20:03:38.063456+00:00",
+          "verification_status": "versioned independent draw streams and missing-score fallback pass deterministic distribution tests"
+        },
+        {
+          "closed": false,
+          "deployment_status": "execution source undeployed",
+          "implementation_status": "inherited_rng_correction_integrated",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "Seven parent-selection fixtures pass in frozen CPU release; production search comparison unavailable"
+        }
+      ],
+      "verification_status": "13 prior focused parent/task library checks; deployed RNG/selection qualification incomplete"
+    },
+    {
+      "acceptance": "Every declared reachable cell has witnesses. Strict parser fixtures pass; projection collisions remain visible and unsupported cells unavailable.",
+      "action": "Freeze an operation/parameter matrix covering parse, canonicalize, execute, emit, encode, sample, mutate, crossover and deployed support.",
+      "closed": false,
+      "depends_on": [
+        "R01"
+      ],
+      "deployment_status": "not deployed by 20260911 implementation tranche",
+      "evidence": [
+        "authority-gp.md",
+        "authority-gp/findings.json",
+        "authority-gp/remote-parent-selection.json",
+        "../../../parallel/runs/recovery-performance-implementation-20260911/implementation-summary.json"
+      ],
+      "id": "G02",
+      "implementation_status": "parser_subset_implemented",
+      "owner": "authority",
+      "priority": "P1",
+      "problem": "Grammar capability exceeds measured deployed reachability",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "proposed",
+          "scientific_status": "not qualified",
+          "verification_status": "open; audit finding verified only to cited scope"
+        }
+      ],
+      "verification_status": "strict symbolic parser fixtures pass; capability matrix and deployed support still incomplete"
+    },
+    {
+      "acceptance": "Retain pre-outcome selection receipts, matched resource limits, failures and missing slots. Use family-aware uncertainty intervals.",
+      "action": "Separate common-pool ranking, pure generation, shuffled conditioning, retained teacher and final GP endpoints with explicitly funded controls.",
+      "closed": false,
+      "depends_on": [
+        "R06",
+        "R05"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "evidence/paired-diagnostic.json",
+        "evidence/diagnostic-verification.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "G03",
+      "implementation_status": "diagnostic_evidence_identity_and_independence_guards",
+      "owner": "authority",
+      "priority": "P1",
+      "problem": "Pure selection/generation/conditioning evidence is missing",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "not_qualified",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        }
+      ],
+      "verification_status": "descriptive helpers cannot certify independent flywheel; original common-pool and downstream search comparisons unavailable"
+    },
+    {
+      "acceptance": "Independently verify original-unit RMSE, training-mean baseline, skill and separately labeled ordinary R\u00b2. Preserve valid zero errors and unavailable ratios.",
+      "action": "Version search/controller/GP identities, arm, seed, checkpoint, slots, starts, reuse, failures, unknowns and deadline; emit actual-cut baseline.",
+      "closed": false,
+      "depends_on": [
+        "R06"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "evidence/paired-diagnostic.json",
+        "evidence/diagnostic-verification.json",
+        "../../../parallel/runs/recovery-performance-implementation-20260911/implementation-summary.json",
+        "RECOVERY_EXECUTION_20260911.md",
+        "../../../parallel/runs/recovery-execution-20260911/implementation-summary.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "G04",
+      "implementation_status": "pipeline_observes_expiring_process_bound_activity",
+      "owner": "root",
+      "priority": "P1",
+      "problem": "GP status lacks complete identity/baseline units",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "existing_partial",
+          "scientific_status": "not qualified",
+          "verification_status": "open; audit finding verified only to cited scope"
+        },
+        {
+          "closed": false,
+          "deployment_status": "not deployed by 20260911 implementation tranche",
+          "implementation_status": "partial_source_implemented",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T20:03:38.063456+00:00",
+          "verification_status": "heartbeat, stale UI, original-unit ratio and unknown start accounting tests pass; complete scientific status and independent baseline qualification remain open"
+        },
+        {
+          "closed": false,
+          "deployment_status": "execution status stack undeployed",
+          "implementation_status": "inherited_status_contracts_integrated",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "Heartbeat/dashboard/Python units and baseline fixtures pass; actual observer/controller stack not qualified"
+        }
+      ],
+      "verification_status": "neural pipeline heartbeat test passed; baseline and status behavior still require full deployed observer/UI qualification"
+    },
+    {
+      "acceptance": "Join rows, width, head and cache state. Classify unknown intervals. Do not equate wall seconds with core-seconds or retain unsupported occupancy claims.",
+      "action": "Measure queue, start, decode, transform, fit, predict and commit boundaries plus CPU time, GPU intervals, allocated-node wall and provider price.",
+      "closed": false,
+      "depends_on": [
+        "R05"
+      ],
+      "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+      "evidence": [
+        "learning-hpc.md",
+        "learning-derived-summary.json",
+        "learning-monitor-budget-metadata.json"
+      ],
+      "id": "H01",
+      "implementation_status": "existing_partial",
+      "owner": "scheduler",
+      "priority": "P1",
+      "problem": "Full task timing and compute charges are incomplete",
+      "scientific_status": "not qualified",
+      "verification_status": "open; audit finding verified only to cited scope"
+    },
+    {
+      "acceptance": "Exact parity. Proposed gate: at least 10% median full-task gain and no more than 5% p95 regression. Update source and runtime identity.",
+      "action": "Qualify checked immutable views and scratch-buffer reuse while preserving arithmetic; compare permitted synthetic inputs and retained original outputs.",
+      "closed": false,
+      "depends_on": [
+        "R02",
+        "R09",
+        "H01"
+      ],
+      "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+      "evidence": [
+        "precision-layout.md",
+        "authority-gp/precision-layout-findings.json"
+      ],
+      "id": "H02",
+      "implementation_status": "proposed",
+      "owner": "authority",
+      "priority": "P1",
+      "problem": "Flat input is redundantly copied into nested rows",
+      "scientific_status": "not qualified",
+      "verification_status": "open; audit finding verified only to cited scope"
+    },
+    {
+      "acceptance": "Exact outputs; no fold, target or runtime cache collisions. Qualify concurrent memory use and reference counts.",
+      "action": "Integrate immutable prefix, bin and scratch reuse through authority, with complete dependency keys and a real peak-memory guard.",
+      "closed": false,
+      "depends_on": [
+        "H02"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "precision-layout.md",
+        "authority-gp/precision-layout-findings.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "H03",
+      "implementation_status": "composite_gpr_scratch_feature_and_shared_host_cache_hardcap",
+      "owner": "authority",
+      "priority": "P1",
+      "problem": "Compatible stage/bin work is recomputed; cache peak guard incomplete",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "existing_api_not_integrated",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        }
+      ],
+      "verification_status": "four source-copy/feature modes passed exact synthetic GPR fixtures; no full-task speed gate; shared-host epoch cap is not device/RSS bound"
+    },
+    {
+      "acceptance": "A changed-corpus fixture proves incremental reuse. Rank loss and partial activation recover. No history deletion.",
+      "action": "Implement device caching by immutable shard with old-plus-new peak checks and all-rank activation/recovery.",
+      "closed": false,
+      "depends_on": [
+        "R08"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "learning-hpc.md",
+        "learning-derived-summary.json",
+        "learning-monitor-budget-metadata.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "H04",
+      "implementation_status": "immutable_artifact_closure_and_cache_epoch_custody",
+      "owner": "scheduler",
+      "priority": "P1",
+      "problem": "Changing corpus invalidates whole device cache",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "partial_unqualified",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        }
+      ],
+      "verification_status": "request-derived shard identities and sealed-byte tests pass; stable GPU shard indirection/peak staging remains incomplete"
+    },
+    {
+      "acceptance": "Proposed pilot: at least 99% top-ten recall, no champion miss and at least 1.25\u00d7 total-time gain, with uncertainty reported. Authorize and fund every start.",
+      "action": "Qualify a separate screening namespace: static rejection/reuse, same-row FP32 screen, then unchanged full-f64 finalists. Test row fidelity later.",
+      "closed": false,
+      "depends_on": [
+        "R02",
+        "R05",
+        "G03",
+        "H01",
+        "H03"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "PRECISION_DESIGN.md",
+        "precision-addendum.md",
+        "../../../parallel/runs/recovery-performance-implementation-20260911/implementation-summary.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "H05",
+      "implementation_status": "metadata_first_screen_planning_and_evidence_quarantine",
+      "owner": "authority",
+      "priority": "P2",
+      "problem": "Approximate screens have no qualified runtime or accuracy contract",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "proposed",
+          "scientific_status": "not qualified",
+          "verification_status": "open; audit finding verified only to cited scope"
+        },
+        {
+          "closed": false,
+          "deployment_status": "not deployed by 20260911 implementation tranche",
+          "implementation_status": "contract_correction_only",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "fixture v2 corrects axes/retention and rejects head census as pilot readiness; no numerical screen or qualified stratum"
+        }
+      ],
+      "verification_status": "16context/64candidate helper contract and audit selection tested; screening arithmetic, independent references and prospective cost qualification unavailable"
+    },
+    {
+      "acceptance": "Meet the required numerical contract. Include startup, transfers, queue and finalists; do not select using kernel-only timing.",
+      "action": "Keep the failed CUDA prototype excluded. Fund a separate large/batched/resident crossover study only if measured cost justifies it.",
+      "closed": false,
+      "depends_on": [
+        "H01",
+        "H05"
+      ],
+      "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+      "evidence": [
+        "evidence/retained-results.json"
+      ],
+      "id": "H06",
+      "implementation_status": "prototype_failed_qualification",
+      "owner": "scheduler",
+      "priority": "P2",
+      "problem": "CUDA GPR is slower and not parity-qualified",
+      "scientific_status": "not qualified",
+      "verification_status": "open; audit finding verified only to cited scope"
+    },
+    {
+      "acceptance": "Improve useful queue completion, quality and latency at total allocated-node cost. Do not credit idle paid GPUs as savings.",
+      "action": "Begin with qualified eight-GPU sequential execution. Test other allocations only with disjoint device leases, isolated communicators and compatible reductions.",
+      "closed": false,
+      "depends_on": [
+        "R08",
+        "M02",
+        "H01"
+      ],
+      "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+      "evidence": [
+        "learning-hpc.md",
+        "learning-derived-summary.json",
+        "learning-monitor-budget-metadata.json"
+      ],
+      "id": "H07",
+      "implementation_status": "not_qualified",
+      "owner": "scheduler",
+      "priority": "P2",
+      "problem": "Alternative GPU allocations lack isolation/objective proof",
+      "scientific_status": "not qualified",
+      "verification_status": "open; audit finding verified only to cited scope"
+    },
+    {
+      "acceptance": "Pass original release checks; amortize compiler startup. No implicit fast-math or numerical identity changes.",
+      "action": "Use Cargo timings and a frozen CPU-only release closure. Test selective PGO/ThinLTO or small C++/CUDA kernels only for measured hotspots.",
+      "closed": false,
+      "depends_on": [
+        "R01",
+        "H01"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "precision-layout.md",
+        "authority-gp/precision-layout-findings.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "H08",
+      "implementation_status": "source_bound_rust_release_builds_and_default_off_gpr_change",
+      "owner": "root",
+      "priority": "P2",
+      "problem": "Build/native port choices are not tied to measured bottlenecks",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "proposed",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        }
+      ],
+      "verification_status": "root56binary optimized build passed; no C++/CUDA/performance crossover or full-task acceleration claim"
+    },
+    {
+      "acceptance": "Mean gain at least 1% and confidence lower bound above zero against required primary references. Preserve diagnostic, failure and final-GP protections. P1 and P2 each yield subsequent original discoveries.",
+      "action": "Nominate at most one challenger from training evidence; complete the unchanged reference panel; mirror accepted decisions before predecessor-checked serving publication.",
+      "closed": false,
+      "depends_on": [
+        "R06",
+        "M04",
+        "G03",
+        "G04"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "../../../parallel/tools/promotion_gate.py",
+        "learning-monitor-budget-metadata.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "S01",
+      "implementation_status": "scientific_claims_remain_rejected_without_original_evidence",
+      "owner": "root",
+      "priority": "P0",
+      "problem": "No accepted challenger or two-cycle scientific completion",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "not_scientifically_qualified",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        }
+      ],
+      "verification_status": "no acceptedP1/P2 or attributable subsequent discoveries; all scientific thresholds remain in force"
+    },
+    {
+      "acceptance": "Account 3,600 seconds and 28,800 GPU-seconds; at least 90% useful occupancy, required handoff bound and original progress receipts. No filler work.",
+      "action": "Require reservation, deadline, output and reconciliation for every task. Preserve selected scheduling order and complete interval/cost ledgers.",
+      "closed": false,
+      "depends_on": [
+        "R10",
+        "H01",
+        "H04"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "learning-hpc.md",
+        "learning-derived-summary.json",
+        "learning-monitor-budget-metadata.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "S02",
+      "implementation_status": "useful_hour_taxonomy_and_false_credit_rejection",
+      "owner": "root",
+      "priority": "P1",
+      "problem": "Useful hour and unattended progress not demonstrated",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "no audit-phase deployment; see cited retained/current runtime",
+          "implementation_status": "not_scientifically_qualified",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "open; audit finding verified only to cited scope"
+        }
+      ],
+      "verification_status": "no accepted useful-hour original reservation/device/output join; latest hardware sample all8GPUs0percent; occupancy target unachieved"
+    },
+    {
+      "acceptance": "Retain original complete task timings and charges. No token starts before its witness acknowledgment. Identity caching rejects stale process birth, executable or mappings. Qualify the reserved canary rate before deployment.",
+      "action": "Measure runtime hashing, lock wait, database/journal durability, witness acknowledgment and completion across bounded synthetic tasks. Test qualified immutable caching or durable group commits only where justified.",
+      "closed": false,
+      "depends_on": [
+        "R02",
+        "R05",
+        "H01"
+      ],
+      "deployment_status": "engineering source mirrored; numerical runtime unchanged",
+      "evidence": [
+        "precision-layout.md",
+        "authority-gp/head-hotspot-source.json",
+        "RECOVERY_EXECUTION_20260911.md",
+        "../../../parallel/runs/recovery-execution-20260911/implementation-summary.json",
+        "ALL_GAP_CLOSURE_20260911.md",
+        "../../../parallel/runs/all-gap-closure-20260911/implementation-summary.json"
+      ],
+      "id": "H09",
+      "implementation_status": "debug_runtime_hashing_overhead_exposed",
+      "owner": "authority",
+      "priority": "P0",
+      "problem": "New execution custody overhead lacks full throughput qualification",
+      "scientific_status": "not qualified",
+      "status_history": [
+        {
+          "closed": false,
+          "deployment_status": "not deployed by audit",
+          "implementation_status": "source_present_performance_unverified",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T20:03:38.063456+00:00",
+          "verification_status": "open; source review only"
+        },
+        {
+          "closed": false,
+          "deployment_status": "execution source undeployed",
+          "implementation_status": "cpu_runtime_binding_hardened",
+          "scientific_status": "not qualified",
+          "superseded_at": "2026-09-11T22:01:19.015193+00:00",
+          "verification_status": "Explicit CPU evaluator prevents inherited neural executable selection; complete durable full-task overhead benchmark unavailable"
+        }
+      ],
+      "verification_status": "debug deadline failures retained; optimized public routes pass original30sec cap; hashing/locks/fsync/witness full throughput accounting unfinished"
+    }
+  ],
+  "overall_scientific_objective_complete": false,
+  "schema": "jope.redteam-action-register.v1",
+  "scope": "Cumulative audit and implemented recovery tranches; production numerical experiments remain gated",
+  "source_report": "REPORT.md",
+  "supplements": "../../../parallel/runs/registry-integration-20260910/issues.json",
+  "updated_at": "2026-09-11T22:01:19.015193+00:00"
+}

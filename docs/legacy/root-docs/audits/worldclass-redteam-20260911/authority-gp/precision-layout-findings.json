@@ -1,0 +1,48 @@
+{
+  "schema": "jope.worldclass_redteam.precision_layout.v1",
+  "captured_at": "2026-09-11T12:41:02.639995+00:00",
+  "source_hashes": {
+    "vendor/feat-math/src/lib.rs": "ea6b9bbe5fe268bcf9e4758d5dcd39e2690336682bd4048ab18b2d846bc7697b",
+    "vendor/feat-math/src/model.rs": "9e7bd2383f2c30085638fdc0e2499541ca88902f5ea00e5c7dcd8b83a76b05b3",
+    "vendor/feat-math/src/ops.rs": "8bb80c7919f0cee99a779079dacc7fff93b2e784377b5585bc80a42245a00fe3",
+    "vendor/feat-math/src/heads.rs": "711b03acbce336f07666db1a44086416499c70d69b395d1f860ef7dd1dbb7710",
+    "vendor/feat-math/src/gpr.rs": "bdc7eb04d1e4d0309be9622072be92f015212ddd1d8a7a0175afdc5f5df9c858",
+    "vendor/feat-math/src/krr.rs": "be44f72ee153e5cdb8e441f69778a4b2d0d24cb85807a2d7cb016eb9cb040917",
+    "vendor/feat-math/src/stage_cache.rs": "3b9a6d3ff230cfcc73fc94293af645fe913abdc707991d15e152beacb4c0a156",
+    "vendor/feat-math/src/advanced_v3/feature_block.rs": "d3ee0b3b6eb754ef7b2befc7aa9ee43adaa221d7db39fe0d92423214bcea056b",
+    "vendor/feat-math/src/advanced_v3/grammar.rs": "259efe0aa9642ac2db00d59bb07f2cb3e11ca2cdea9e957dd7389783a85313a3",
+    "vendor/feat-math/src/advanced_v3/interfaces.rs": "fdd83e556b25bfdff8365c7909ab3d45f5785a07265d68fec58922f01a879134",
+    "vendor/feat-math/src/advanced_v3/fitted_cpp_runtime.rs": "32e6851ca126925dc3bd88c9ed161c04c81f5625ce8e49656bb0afb31bf16146",
+    "parallel/src/gp.rs": "56ffa4e9ca9761c73ff441178d6fa2b8f34eff2d601b8de83d16af03cf318419",
+    "parallel/src/eval_registry/authority.rs": "f432ea253bacf25e1c58dd2c8bb0cdac7e499edeffa90f6a96671592988d1dc3",
+    "parallel/src/fit_boundary.rs": "867fe2c7d70df287509d91782429e7ea0ae42c5add4d7b44f08432b18d291392",
+    "vendor/feat-math/src/boost2.rs": "ec959293ea73bf67e18f6121457a8c85d78bade018952d1bef561edbff9ccc55"
+  },
+  "root_embedded_vendor_equal": {
+    "lib.rs": true,
+    "model.rs": true,
+    "ops.rs": true,
+    "heads.rs": true,
+    "stage_cache.rs": true,
+    "advanced_v3/feature_block.rs": true,
+    "advanced_v3/grammar.rs": true,
+    "advanced_v3/fitted_cpp_runtime.rs": true
+  },
+  "report_sha256": "129d741ff9b4eef8e486144dd4bae6c7822bd6b761feb523e3ac75d700bb4650",
+  "benchmarks_run": false,
+  "numerical_jobs_run": false,
+  "protected_data_opened": false,
+  "implementation_edited": false,
+  "findings": [
+    "Nested f64 input/transform allocation is real but speedup from flat layout is unmeasured.",
+    "Histogram bins and kernel matrices already have compact/flat representations.",
+    "Sparse feature metadata still accompanies dense Rows.",
+    "Stage cache exists but current parallel fit path does not call it; cap is not true peak resident memory.",
+    "New representation and precision both require explicit identity/custody treatment.",
+    "Retained native-v5 uses rank cycling coupled to operator parity, not uniform random parent selection.",
+    "Exact-split histgbm2 sorts once per fit; default500 rounds, actual cap1000, patience50 early stopping.",
+    "Composite GPR allocates three scratch vectors per term/off-diagonal-pair/step; dedicated literal-rbf GPR is separate.",
+    "Current authority rehashes executable mappings and serializes durable witness/journal commits; throughput qualification mandatory but overhead unmeasured."
+  ],
+  "head_hotspot_evidence": "head-hotspot-source.json"
+}

@@ -1,0 +1,31 @@
+Implementation remains incomplete. This pass advances recovery engineering and loss reporting; it does not establish a funded execution loop, an independently qualified model, or a learned flywheel.
+
+Changes implemented in the working source:
+
+- Funding register, reserve, and preflight now carry the original transport deadline into authority file-lock acquisition. Register/reserve validate the deadline again before mutation; preflight rechecks after validation. A private signed fixture covers held locks, already-expired uncontended requests, no journal mutation, and a subsequent valid preflight. No reservation can acquire new numerical authority through this change.
+- The engineering runner uses an explicit workload environment and records all of it, including external Cargo target paths. It rejects unlisted environment overrides, source bytecode caches (including manifested caches), target traversal, indirect target paths, and output paths outside dedicated build directories.
+- Before spawning, the runner durably publishes an exclusive accepted-attempt record with unknown outcome. Terminal records bind that original acceptance. Spawn failure, interruption, timeout/signal races, and unreaped children have explicit outcomes. An accepted unknown blocks a different task label in the same stage as well as replay. Publication uses fsync and atomic exclusive linking; failed attempts remain retained.
+- Training and validation report the previously missing context-free BT term plus weighted values for all five existing terms. Training identifies stability/loss-log-variance placeholders as inactive and records gradient clipping. The objective remains sequence + 0.25 BT + 0.10 listwise + 0.10 runtime + 0.05 context-free BT. Per-term gradient norms/conflict, valid pair/list counts, and partition-invariant normalization are still outstanding. Added scalar/telemetry overhead has not been benchmarked.
+- Receipt mirroring includes accepted-attempt records, so a crash-preserved acceptance is not omitted simply because it lacks its own log file.
+
+Verification executed exclusively on the designated eight-A100 host:
+
+| Check | Result | Original evidence |
+| --- | --- | --- |
+| Funding unit, witness, IPC, and task-contract tests | 28 passed | [source07 funding receipt](../../../parallel/runs/final-run-recovery-20260911/tranche-07/gpu-funding-tranche07.json) |
+| Runner adversarial tests | 13 passed | [source08 runner receipt](../../../parallel/runs/final-run-recovery-20260911/tranche-08/gpu-runner-tranche08.json) |
+| Neural compilation, all targets | Passed with existing warnings | [source08 neural receipt](../../../parallel/runs/final-run-recovery-20260911/tranche-08/gpu-neural-check-tranche08.json) |
+| First runner attempt | Failed build-target boundary fixture; retained, successor fixed dedicated-parent validation | [source07 failed runner receipt](../../../parallel/runs/final-run-recovery-20260911/tranche-07/gpu-runner-tranche07.json) |
+| Previous sanitizer fixture suite | Original 900-second timeout retained | [source06 original receipt](../../../parallel/runs/final-run-recovery-20260911/tranche-06/gpu-fitted-abi-gcc133-tranche06.json) |
+| Minimal sanitizer startup control | Compiled; execution repeatedly emitted AddressSanitizer:DEADLYSIGNAL and expired after 10 seconds | [control receipt](../../../parallel/runs/final-run-recovery-20260911/tranche-08/sanitizer-control-execute-tranche08.json) |
+| Unchanged sanitizer fail-closed fixture, separately extracted from frozen source | Compiled; execution returned zero | [fixture receipt](../../../parallel/runs/final-run-recovery-20260911/tranche-08/sanitizer-fixture-execute-tranche08.json) |
+
+The sanitizer diagnostic used the isolated GCC 13.3 compiler, address/undefined instrumentation and ASAN_OPTIONS=verbosity=1, with separately retained compilation, execution, and library-resolution receipts. No instrumentation was removed. The control failure prevents sanitizer qualification despite the successful fixture. Compiler identity and diagnostic source hashes are retained in the setup log; this is not complete loaded-library custody or a diagnosis of the startup failure's root cause.
+
+The source08 closure is `c5cef7012f5f94d162a1048af3c55e2df5355efa17ddbffab346ac294f564fe9`. The [review delta](../../../parallel/runs/final-run-recovery-20260911/implementation-tranche08.patch) compares seven touched files against source06, preserving the large pre-existing uncommitted workspace changes. Both source snapshots contain 1,182 verified files. They are engineering snapshots, not a protected immutable-source final release. Whole-source lint/format qualification, compiler/linker/library closure, final immutable execution, the root 56-binary release matrix, and UI qualification remain outstanding.
+
+The [bounded funding recheck](../../../parallel/runs/final-run-recovery-20260911/funding-path-observation-tranche08.json) found authorization.json, domain.json, journal.jsonl, and budget.json absent at the four named canonical paths on both hosts. This is not a whole-workspace absence census. No original authority, complete historical consumption denominator, or remaining balance was inferred or created.
+
+Production was not activated; the existing pool and serving policy were not replaced. Witnessed terminal funding accounting and positive resident/nested admission are still unimplemented prerequisites. Independent registry/selection/outcome production, strict-commit census import, the recovered support/replay study, model/loss/search comparisons, performance qualification, canary operation, useful-hour proof, and P1/P2 discovery qualification remain outstanding. These tests do not supply those outcomes.
+
+Completed original receipt custody: the [first archive verification](../../../parallel/runs/final-run-recovery-20260911/completed-receipt-custody-tranche08-20260912.json) verified 80 files; the [successor including sanitizer diagnostics](../../../parallel/runs/final-run-recovery-20260911/completed-receipt-custody-sanitizer-tranche08-20260912.json) verified 105 files. Both transfers used the shared lock and 8 MiB/s limit with the free-space reserve. This is receipt/artifact custody only; application restoration and whole-workspace synchronization are not certified.

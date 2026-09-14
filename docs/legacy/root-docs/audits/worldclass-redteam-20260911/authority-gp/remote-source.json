@@ -1,0 +1,214 @@
+{
+  "captured_at": "2026-09-11T12:27:19.672870+00:00",
+  "remote_host": "158.101.20.226",
+  "files": [
+    {
+      "path": "/home/ubuntu/jope-dime/parallel/runs/flywheel-20260909/native-v5-cpu/source/parallel/src/gp.rs",
+      "exists": true,
+      "sha256": "29d3452f775f91851b1cc906bf2dd188be76c85b052309f46abc583523892f02",
+      "bytes": 44174,
+      "matches_build_manifest": true,
+      "relevant_lines": [
+        {
+          "line": 35,
+          "text": "    let model = feat_math::fit(&g, &x, &y)?;"
+        },
+        {
+          "line": 70,
+          "text": "    let model = feat_math::fit(&g, &x, &y)?;"
+        },
+        {
+          "line": 222,
+          "text": "        .map(|y| vec![y * p.preprocessing.target_scale + p.preprocessing.target_mean])"
+        },
+        {
+          "line": 305,
+          "text": "        .map(|v| v * p.preprocessing.target_scale + p.preprocessing.target_mean)"
+        },
+        {
+          "line": 434,
+          "text": "fn evaluate_tables(tr: &[Vec<f64>], va: &[Vec<f64>], genome: &Path, output: &Path) -> Result<()> {"
+        },
+        {
+          "line": 440,
+          "text": "    let model = feat_math::fit(&g, &x, &y)?;"
+        },
+        {
+          "line": 626,
+          "text": "        let raw = feat_math::evolve::random_canonical_pipeline(seed, 6);"
+        },
+        {
+          "line": 767,
+          "text": "                    r[\"rmse\"].as_f64().context(\"missing RMSE\")? * pp.target_scale,"
+        },
+        {
+          "line": 821,
+          "text": "                        feat_math::evolve::random_canonical_pipeline(proposal_seed, 6)"
+        },
+        {
+          "line": 825,
+          "text": "                            feat_math::evolve::mutate_canonical_pipeline(left, proposal_seed, 6)"
+        },
+        {
+          "line": 827,
+          "text": "                            feat_math::evolve::crossover_canonical_pipelines("
+        },
+        {
+          "line": 938,
+          "text": "            let rmse = r[\"rmse\"].as_f64().context(\"invalid evaluator RMSE\")? * pp.target_scale;"
+        },
+        {
+          "line": 963,
+          "text": "        let observation = json!({\"schema\":\"parallel.gp_observation.v1\",\"dataset\":p.dataset,\"family\":p.family,\"partition\":p.meta_partition,\"cut\":cut,\"prepared_sha256\":prepared_sha,\"training_sha256\":c.training_sha256,\"validation_sha256\":c.validation_sha256,\"genome\":genome,\"program_sha256\":file_hash(&genome_path)?,\"evaluator_sha256\":evaluator_sha,\"evaluation_bias\":\"adaptive_cut_heldout_teacher\",\"family_partition_frozen\":p.family_partition_frozen,\"qualification\":qualification,\"independent_evaluation\":false,\"target_access\":\"cut heldout optimized repeatedly; original final test sealed\",\"origin\":origin,\"initial_seed_slot\":if initial_proposal{Some(execution_order[i])}else{None},\"execution_order_protocol\":execution_protocol,\"seeds_sha256\":seeds_sha256,\"vocabulary_sha256\":vocabulary_sha256,\"proposal_before_projection\":if raw_genome!=genome{Some(&raw_genome)}else{None},\"evaluation_index\":i,\"rng_seed\":rng_seed,\"proposal_attempts\":proposal_attempts,\"rejected_proposals\":rejected_proposals,\"recovered_completed_artifact\":recovered_metric,\"runtime_seconds\":if recovered_metric {result.as_ref().and_then(|r| r[\"seconds\"].as_f64()).unwrap_or(0.0)} else {begun.elapsed().as_secs_f64()},\"completed_search_seconds\":start.elapsed().as_secs_f64()+previous_seconds,\"search_clock\":SEARCH_CLOCK,\"search_clock_accuracy\":clock_accuracy,\"failure\":failure,\"worker_diagnostic\":diagnostic,\"metrics\":result,\"target_scale\":pp.target_scale});"
+        },
+        {
+          "line": 984,
+          "text": "            &json!({\"prepared_sha256\":prepared_sha,\"cut\":cut,\"seeds_sha256\":seeds_sha256,\"vocabulary_sha256\":vocabulary_sha256,\"execution_order_protocol\":execution_protocol,\"execution_order\":execution_order,\"wall_seconds\":start.elapsed().as_secs_f64()+previous_seconds,\"search_clock\":clock,\"evaluations\":observations.len(),\"rng_seed\":rng_seed,\"proposal_attempts\":proposal_attempts,\"rejected_proposals\":rejected_proposals,\"best_validation_rmse\":ranked.first().map(|x|x.0),\"timestamp\":crate::telemetry::now()}),"
+        },
+        {
+          "line": 1005,
+          "text": "        &json!({\"schema\":\"parallel.search.v1\",\"observations_sha256\":observations_sha256,\"completed_at\":crate::telemetry::now(),\"evaluator_sha256\":evaluator_sha,\"evaluator_protocol\":crate::label_admission::PROTOCOL,\"prepared_sha256\":prepared_sha,\"cut\":cut,\"completed_evaluations\":observations.len(),\"wall_seconds\":start.elapsed().as_secs_f64()+previous_seconds,\"search_clock\":clock,\"execution_order_protocol\":execution_protocol,\"execution_order\":execution_order,\"resumed\":resuming,\"rng_seed\":rng_seed,\"proposal_attempts\":proposal_attempts,\"rejected_proposals\":rejected_proposals,\"unique_programs\":evaluated_programs.len(),\"best_validation_rmse\":ranked.first().map(|x|x.0),\"best_program\":ranked.first().map(|x|&x.1),\"seed_population_supplied\":supplied.is_some(),\"neural_seeded\":neural_seeded,\"seeds_sha256\":seeds_sha256,\"vocabulary_sha256\":vocabulary_sha256,\"final_tests_opened\":false}),"
+        }
+      ]
+    },
+    {
+      "path": "/home/ubuntu/jope-dime/parallel/runs/flywheel-20260909/native-v5-cpu/source/parallel/src/service.rs",
+      "exists": true,
+      "sha256": "9fb88b5f3c53f29a1b9ca8cc64d7077799845f9f77d170e383240cca9a05bba4",
+      "bytes": 22727,
+      "matches_build_manifest": true,
+      "relevant_lines": [
+        {
+          "line": 412,
+          "text": "                active_rows.push(serde_json::json!({\"slot\":slot_index,\"pid\":child.id(),\"dataset\":j.prepared.file_name().unwrap_or_default().to_string_lossy(),\"cut\":j.cut,\"evaluations\":n,\"best_rmse\":progress[\"best_validation_rmse\"],\"elapsed_seconds\":progress[\"wall_seconds\"]}));"
+        }
+      ]
+    },
+    {
+      "path": "/home/ubuntu/jope-dime/parallel/runs/flywheel-20260909/native-v5-cpu/source/parallel/src/grammar.rs",
+      "exists": true,
+      "sha256": "1a2955b95323dd92e9324d54c4673198d20172676f04cc61a913dae482c19910",
+      "bytes": 24695,
+      "matches_build_manifest": true,
+      "relevant_lines": []
+    },
+    {
+      "path": "/home/ubuntu/jope-dime/parallel/runs/flywheel-20260909/native-v5-cpu/source/parallel/src/fit_boundary.rs",
+      "exists": false
+    },
+    {
+      "path": "/home/ubuntu/jope-dime/parallel/runs/flywheel-20260909/native-v5-cpu/source/parallel/Cargo.toml",
+      "exists": true,
+      "sha256": "788c59bc6788dcad69c08dbac6aa559b1487f56eda9744d46b88db8897492eaf",
+      "bytes": 983,
+      "matches_build_manifest": true
+    },
+    {
+      "path": "/home/ubuntu/jope-dime/parallel/runs/flywheel-20260909/native-v5-cpu/source/parallel/assets/grammar/featmath.json",
+      "exists": true,
+      "sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+      "bytes": 74785,
+      "matches_build_manifest": true
+    }
+  ],
+  "binary": {
+    "path": "/home/ubuntu/jope-dime/parallel/runs/flywheel-20260909/native-v5-cpu/target-bin/jope-parallel-native",
+    "sha256": "974e93830b51413187ccb0ac19d1dc878b84a6246a2d0981419feb12d38b7dc2",
+    "matches_target_build": true
+  },
+  "target_build": {
+    "bindings": {
+      "jope-parallel-native": "974e93830b51413187ccb0ac19d1dc878b84a6246a2d0981419feb12d38b7dc2"
+    },
+    "driver_sha256": "6360cbd314b98b224e48b291fd9b74ec31cdc206e3a2df06dd7bff0b0f07c716",
+    "final_tests_opened": false,
+    "receipts": [
+      {
+        "command": [
+          "/home/ubuntu/.cargo/bin/cargo",
+          "+1.90.0",
+          "clean",
+          "--release",
+          "-p",
+          "jope-parallel",
+          "--offline",
+          "--locked",
+          "--manifest-path",
+          "/home/ubuntu/jope-dime/parallel/runs/flywheel-20260909/native-v5-cpu/source/parallel/Cargo.toml"
+        ],
+        "exit_code": 0,
+        "seconds": 1.0154284880045452
+      },
+      {
+        "command": [
+          "/home/ubuntu/.cargo/bin/cargo",
+          "+1.90.0",
+          "build",
+          "--release",
+          "--bin",
+          "jope-parallel",
+          "--offline",
+          "--locked",
+          "--manifest-path",
+          "/home/ubuntu/jope-dime/parallel/runs/flywheel-20260909/native-v5-cpu/source/parallel/Cargo.toml",
+          "-j",
+          "2"
+        ],
+        "exit_code": 0,
+        "seconds": 160.22469324800477
+      },
+      {
+        "command": [
+          "/home/ubuntu/.cargo/bin/cargo",
+          "+1.90.0",
+          "test",
+          "--release",
+          "--test",
+          "corpus_incremental",
+          "--test",
+          "gp_contracts",
+          "--test",
+          "gp_admission",
+          "--test",
+          "service_continuous",
+          "--test",
+          "sealed_storage",
+          "--offline",
+          "--locked",
+          "--manifest-path",
+          "/home/ubuntu/jope-dime/parallel/runs/flywheel-20260909/native-v5-cpu/source/parallel/Cargo.toml",
+          "-j",
+          "2"
+        ],
+        "exit_code": 0,
+        "seconds": 132.76948823499697
+      },
+      {
+        "command": [
+          "/home/ubuntu/.cargo/bin/cargo",
+          "+1.90.0",
+          "test",
+          "--release",
+          "--lib",
+          "--offline",
+          "--locked",
+          "--manifest-path",
+          "/home/ubuntu/jope-dime/parallel/runs/flywheel-20260909/native-v5-cpu/source/parallel/Cargo.toml",
+          "-j",
+          "2",
+          "--",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "seconds": 23.04956294099975
+      }
+    ],
+    "seconds": 317.0886920569974,
+    "source_sha256": "95babc96f20c0b34e1da17f77c2d01c526adb5b299ae8671960d80847afa752f",
+    "status": "passed"
+  },
+  "units": {
+    "jope-parallel-gp-next": "Restart=no\nMainPID=0\nActiveState=failed\nSubState=failed\nInvocationID=3319f67ff3244f69a3e56e521e886cd7\n",
+    "jope-parallel-gp": "Restart=no\nMainPID=0\nActiveState=failed\nSubState=failed\nInvocationID=7ed423d004544369a3c2993bf9d40a97\n"
+  }
+}

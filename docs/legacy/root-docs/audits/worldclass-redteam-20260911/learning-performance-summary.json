@@ -1,0 +1,1111 @@
+{
+  "runs/flywheel-20260909/resident-qualification-v1/complete.json": {
+    "cold8": {
+      "wall_seconds": 338.85006609799893,
+      "world": 8,
+      "optimizer_steps": 128,
+      "attempts": 1,
+      "rank_seconds_max": 12.105999115,
+      "cache_hits": 0
+    },
+    "monitor-0": {},
+    "monitor-1": {},
+    "recover2": {
+      "wall_seconds": 121.0528475980027,
+      "world": 2,
+      "optimizer_steps": 128,
+      "attempts": 2,
+      "rank_seconds_max": 12.621056507,
+      "cache_hits": 0
+    },
+    "reference8": {
+      "wall_seconds": 40.39690015200176,
+      "world": 8,
+      "optimizer_steps": 128,
+      "attempts": 1,
+      "rank_seconds_max": 12.633218162,
+      "cache_hits": 0
+    },
+    "warm2": {
+      "wall_seconds": 25.68165105299704,
+      "world": 2,
+      "optimizer_steps": 128,
+      "attempts": 1,
+      "rank_seconds_max": 23.166106639,
+      "cache_hits": 2
+    },
+    "warm4": {
+      "wall_seconds": 18.52055507699697,
+      "world": 4,
+      "optimizer_steps": 128,
+      "attempts": 1,
+      "rank_seconds_max": 15.635476563,
+      "cache_hits": 4
+    },
+    "warm8": {
+      "wall_seconds": 15.161982967001677,
+      "world": 8,
+      "optimizer_steps": 128,
+      "attempts": 1,
+      "rank_seconds_max": 11.774788062,
+      "cache_hits": 8
+    }
+  },
+  "runs/flywheel-20260909/resident-qualification-v2/complete.json": {
+    "cold8": {
+      "wall_seconds": 50.316936649003765,
+      "world": 8,
+      "optimizer_steps": 128,
+      "attempts": 1,
+      "rank_seconds_max": 13.265566461,
+      "cache_hits": 0
+    },
+    "monitor-0": {},
+    "monitor-1": {},
+    "recover2": {
+      "wall_seconds": 46.816960570002266,
+      "world": 2,
+      "optimizer_steps": 128,
+      "attempts": 2,
+      "rank_seconds_max": 13.18206991,
+      "cache_hits": 0
+    },
+    "reference8": {
+      "wall_seconds": 40.92418503799854,
+      "world": 8,
+      "optimizer_steps": 128,
+      "attempts": 1,
+      "rank_seconds_max": 13.148917096,
+      "cache_hits": 0
+    },
+    "warm2": {
+      "wall_seconds": 26.46166809800343,
+      "world": 2,
+      "optimizer_steps": 128,
+      "attempts": 1,
+      "rank_seconds_max": 23.929867773,
+      "cache_hits": 2
+    },
+    "warm4": {
+      "wall_seconds": 19.28390675200353,
+      "world": 4,
+      "optimizer_steps": 128,
+      "attempts": 1,
+      "rank_seconds_max": 16.405163526,
+      "cache_hits": 4
+    },
+    "warm8": {
+      "wall_seconds": 15.933670801001426,
+      "world": 8,
+      "optimizer_steps": 128,
+      "attempts": 1,
+      "rank_seconds_max": 12.406957806,
+      "cache_hits": 8
+    }
+  },
+  "controller_attempts": {
+    "passed": [
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000000/train-2/launch-1788959425-85367-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 232.775875632
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000001/train-2/launch-1788959785-170050-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 234.963886173
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000002/train-2/launch-1788960221-310302-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 234.446185108
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000003/train-2/launch-1788960704-422336-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 235.253060138
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000004/train-2/launch-1788961382-613799-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 235.89148413
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000005/train-2/launch-1788961763-701202-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 236.317611149
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000006/train-2/launch-1788962256-844689-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 230.458349623
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000007/train-2/launch-1788962726-950953-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 233.103049341
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000008/train-2/launch-1788963386-1134881-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 236.834811426
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000009/train-2/launch-1788963783-1223841-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 236.328715634
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000010/train-2/launch-1788964274-1373967-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 228.221896586
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000011/train-2/launch-1788964759-1482877-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 236.890907891
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000012/train-2/launch-1788965381-1653658-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 240.417716284
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000013/train-2/launch-1788965775-1737006-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 235.331138327
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000014/train-2/launch-1788966288-1888239-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 232.774785649
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000015/train-2/launch-1788966796-2009168-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 238.918830028
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000016/train-2/launch-1788967309-2142539-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 234.802846124
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000017/train-2/launch-1788967817-2255260-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 238.014323589
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000018/train-2/launch-1788968346-2411613-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 233.519817194
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000019/train-2/launch-1788968804-2516781-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 236.600841634
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000020/train-2/launch-1788969329-2649894-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 237.753526491
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000021/train-2/launch-1788969854-2772342-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 238.364370943
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000022/train-2/launch-1788970400-2933906-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 230.402633119
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000023/train-2/launch-1788970833-3027976-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 239.778276506
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000024/train-2/launch-1788971368-3164843-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 238.785210194
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000025/train-2/launch-1788971898-3295317-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 237.83271577
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000026/train-2/launch-1788972424-3446609-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 232.253801467
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000027/train-2/launch-1788972865-3541812-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 240.727838624
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000028/train-2/launch-1788973416-3688476-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 235.817661706
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000029/train-2/launch-1788973914-3800655-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 239.117016173
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000030/train-2/launch-1788974428-3953376-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 236.32727483
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000031/train-2/launch-1788974958-4081322-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 241.894640975
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000032/train-2/launch-1788975485-37515-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 240.382574495
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000033/train-2/launch-1788975972-147299-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 239.907055913
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000034/train-2/launch-1788976480-294947-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 233.115610001
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000035/train-2/launch-1788976974-405207-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 241.674594326
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000036/train-2/launch-1788977530-562123-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 240.12250406
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000037/train-2/launch-1788977999-660655-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 240.325236622
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000038/train-2/launch-1788978499-806338-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 235.424045066
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000039/train-2/launch-1788978995-919641-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 241.621236727
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000040/train-2/launch-1788979546-1074661-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 240.974745753
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000041/train-2/launch-1788979992-1173925-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 240.453390256
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000042/train-2/launch-1788980529-1327277-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 236.211592182
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000043/train-2/launch-1788981055-1452310-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 240.370300796
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000044/train-2/launch-1788981548-1587877-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 241.75777609
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000045/train-2/launch-1788982014-1694321-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 240.453180477
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000046/train-2/launch-1788982589-1854874-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 234.52512624
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000047/train-2/launch-1788983034-1949727-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 242.211337717
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000048/train-2/launch-1788983601-2105915-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 242.104511213
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000049/train-2/launch-1788984083-2215431-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 241.76299659
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000050/train-2/launch-1788984617-2367171-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 234.654104432
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000051/train-2/launch-1788985112-2479466-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 243.549987173
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000052/train-2/launch-1788985671-2635623-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 241.211327541
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000053/train-2/launch-1788986166-2747515-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 242.432543041
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000054/train-2/launch-1788986670-2888724-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 234.052787393
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000055/train-2/launch-1788987117-2981907-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 242.931662128
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000056/train-2/launch-1788987704-3144446-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 242.895250303
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000057/train-2/launch-1788988157-3242844-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 242.387248605
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000058/train-2/launch-1788988730-3405579-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 236.888005313
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000059/train-2/launch-1788989209-3507271-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 243.744134915
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000060/train-2/launch-1788990404-3862130-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 233.257687303
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000061/train-2/launch-1788991339-3978044-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 202.817427913
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000062/train-2/launch-1788991966-3983131-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 200.221820392
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000063/train-2/launch-1788992728-4140461-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 232.083789464
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000064/train-2/launch-1788993294-95889-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 235.867322407
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000065/train-2/launch-1788993881-247653-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 237.074475404
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000066/train-2/launch-1788994496-399603-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 238.092386535
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000067/train-2/launch-1788995103-562614-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 236.867282411
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000068/train-2/launch-1788998051-1316126-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 236.9937223
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000069/train-2/launch-1788998448-1425487-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 237.219230208
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000070/train-2/launch-1788998941-1553047-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 238.708703465
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000071/train-2/launch-1788999433-1673408-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 239.372107134
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000072/train-2/launch-1788999929-1800195-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 239.743404137
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000073/train-2/launch-1789000400-1921911-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 241.557113261
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000074/train-2/launch-1789001106-2101968-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 239.366441941
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000075/train-2/launch-1789001484-2200888-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 237.838782078
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000076/train-2/launch-1789001996-2343090-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 238.94353282
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000077/train-2/launch-1789002487-2461608-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 239.116558362
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000078/train-2/launch-1789002976-2598657-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 240.575873595
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000079/train-2/launch-1789003523-2741599-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 239.254284405
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000080/train-2/launch-1789003975-2865061-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 242.026396808
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000081/train-2/launch-1789004550-3006357-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 241.423245693
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000082/train-2/launch-1789041541-4027806-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 225.659956266
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000083/train-2/launch-1789041796-4086553-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 216.236919384
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000084/train-2/launch-1789042041-4157691-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 218.193421353
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000085/train-2/launch-1789042276-26305-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 215.662236735
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000086/train-2/launch-1789042504-95425-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 223.007157183
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000087/train-2/launch-1789042742-150979-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 216.445779178
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000088/train-2/launch-1789042967-203957-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 216.457597867
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000089/train-2/launch-1789043232-280083-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 217.208856359
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000090/train-2/launch-1789043470-349751-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 217.914204064
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000091/train-2/launch-1789043882-451950-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 218.263152899
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000092/train-2/launch-1789044140-519482-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 217.020497928
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000093/train-2/launch-1789044577-637819-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 216.820516331
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000094/train-2/launch-1789044846-702280-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 217.802127238
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000095/train-2/launch-1789045087-769826-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 218.086470988
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000096/train-2/launch-1789045359-849508-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 216.154443464
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000097/train-2/launch-1789045608-916991-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 216.978894319
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000098/train-2/launch-1789045876-991564-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 218.729078484
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000099/train-2/launch-1789046124-1058413-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 218.783255833
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000100/train-2/launch-1789046372-1123865-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 220.081098745
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000101/train-2/launch-1789046628-1185664-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 230.641483059
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000102/train-2/launch-1789046877-1252965-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 251.19013166
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000103/train-2/launch-1789047150-1331902-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 218.744734041
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000104/train-2/launch-1789047387-1387912-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 219.216610919
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000105/train-2/launch-1789047683-1475298-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 223.371439472
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000106/train-2/launch-1789047944-1550022-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 230.147658177
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000107/train-2/launch-1789048214-1617081-0/controller.json",
+        "attempt": 0,
+        "failure": null,
+        "passed": true,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 249.877340167
+      }
+    ],
+    "failed": [
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000105/train-2/launch-1789047625-1457755-0/controller.json",
+        "attempt": 0,
+        "failure": "rank 0 failed: exit status: 1",
+        "passed": false,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 30.552277253
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000105/train-2/launch-1789047656-1457755-1/controller.json",
+        "attempt": 1,
+        "failure": "rank 0 failed: exit status: 1",
+        "passed": false,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 0.969295878
+      },
+      {
+        "path": "runs/continuous-learning-v2-20260909/cycle-000105/train-2/launch-1789047657-1457755-2/controller.json",
+        "attempt": 2,
+        "failure": "rank 1 failed: exit status: 1",
+        "passed": false,
+        "rank_failure_injected": false,
+        "resumed": false,
+        "seconds": 1.093552306
+      }
+    ]
+  }
+}

@@ -1,0 +1,1 @@
+{"schema": "parallel.component_parity_progress.v1", "timestamp": 1788836884, "request_sha256": "b7266fdf99b831a3ab8e048f153ae9ec01103fdf5afdee86c6cd26e95256325a", "rank": 2, "world_size": 8, "phase": "passed", "target_completed": 3, "target_total": 3, "foundation_completed": 8, "foundation_total": 8}

@@ -1,0 +1,22 @@
+[Unit]
+Description=JOPE continuous learning health and quality observer
+After=jope-parallel-campaign.service jope-parallel-gp.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/home/ubuntu/jope-dime/parallel
+ExecStartPre=/usr/bin/sha256sum --check runs/continuous-health-20260909/source/SHA256SUMS
+ExecStart=/usr/bin/python3 -B runs/continuous-health-20260909/source/continuous_status.py --root /home/ubuntu/jope-dime/parallel --manifest /home/ubuntu/jope-dime/parallel/runs/continuous-recovery-20260909/continuous-manifest-v3.json --baseline /home/ubuntu/jope-dime/parallel/runs/continuous-learning-20260909/monitoring/c2f229c9b8c582e11e0e62ec011a9ccb066820fbcee5e2da9d0ad5d63780160e.json --output /home/ubuntu/jope-dime/parallel/runs/continuous-health-20260909/status
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/ubuntu/jope-dime/parallel/runs/continuous-health-20260909/status
+PrivateTmp=true
+NoNewPrivileges=true
+MemoryMax=256M
+TasksMax=32
+CPUQuota=25%
+CPUAffinity=60 61
+Nice=15
+IOWeight=10
+TimeoutStartSec=45

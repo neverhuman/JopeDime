@@ -1,0 +1,82 @@
+{
+  "schema": "parallel.flywheel_source_binding.v1",
+  "bundle_sha256": "f4bc1b1dbea3e0a53a91792d321b080250621e270e42255bbdb97d69225742db",
+  "timestamp": 1788920651,
+  "published": false,
+  "workspace_sync_publish": false,
+  "production_binaries_replaced": false,
+  "corpus_rs_owned_by": "corpus collaborator; this overlay does not include corpus.rs",
+  "activation": "node-native rebuild at campaign boundary only; v44 stays",
+  "files": [
+    {
+      "path": "parallel/src/queue.rs",
+      "sha256": "09be6647cc10e784ab9facff57dd0a3143791f22dd78afe303964780b9b042f6",
+      "bytes": 13536
+    },
+    {
+      "path": "parallel/src/gp.rs",
+      "sha256": "52a186d18e28814b207b98742cf18694b03d6816ad3d9dc4bfec118de95e1e66",
+      "bytes": 43443
+    },
+    {
+      "path": "parallel/src/pipeline.rs",
+      "sha256": "e1adc5fc7d8745915c9f7286a2f9adf697f628a07eded2d6af27cd3902512f5b",
+      "bytes": 36315
+    },
+    {
+      "path": "parallel/src/main.rs",
+      "sha256": "0db1e715a29910da3977053719b7aeb5374d14a6b27a43de8f0194014a426739",
+      "bytes": 29287
+    },
+    {
+      "path": "parallel/src/dashboard.rs",
+      "sha256": "9775b8e488d040db5321adb36b83932101d4730db636e4dfd804009ff0d6f643",
+      "bytes": 93997
+    },
+    {
+      "path": "parallel/src/training.rs",
+      "sha256": "091444332734185ba923b7244ae7c6140bfdb6fdc73541de8cd145f7cf1d743f",
+      "bytes": 34974
+    },
+    {
+      "path": "parallel/tools/kernel_remote_state.py",
+      "sha256": "e64a40ea19366cb2543a0bce65001ca4662b1b0333c197f04e49f98f02816a21",
+      "bytes": 8116
+    },
+    {
+      "path": "parallel/tools/campaign_bound_jobs.py",
+      "sha256": "fd567b0b8d9811d3898d695efc0d2755fcc429169ed7e13c99aa4cd8ec8b1eac",
+      "bytes": 2150
+    },
+    {
+      "path": "parallel/tools/diagnose_val_vs_corpus.py",
+      "sha256": "12dfc9ee2c3a26df0165ed1c2fb8ae7890605a75d4298479d7f1be126b6a1a85",
+      "bytes": 3099
+    },
+    {
+      "path": "parallel/tests/queue.rs",
+      "sha256": "13e8e6deb22e199aedf20ec7b6a2fb2c96cd2a47009417abe45c76921e11dee4",
+      "bytes": 8847
+    },
+    {
+      "path": "parallel/tests/corpus_progress.rs",
+      "sha256": "4736b6b8d2f5c61cc7c12a9dcef0b53c863d70ee40c0a3e21de00f5695d67525",
+      "bytes": 8360
+    },
+    {
+      "path": "parallel/tests/dashboard.rs",
+      "sha256": "0636a1a6122dacd580f1578d6f9af4ce545a3f621f7e2fe6967780dc0ebb40b6",
+      "bytes": 42141
+    },
+    {
+      "path": "parallel/tests/gp_contracts.rs",
+      "sha256": "7e93bac8731025f8dffb461f5f1e0be1ac994577d72962dac9bd6f40f84c29ea",
+      "bytes": 8301
+    }
+  ],
+  "review_status": "rejected_and_superseded",
+  "activation_allowed": false,
+  "review_report": "parallel/runs/progress-review-20260908/flywheel-overlay-redteam/REPORT.md",
+  "safe_replacement_binding": "/home/ubuntu/jope-dime/parallel/runs/progress-review-20260908/verification-final/resumed-history-source-binding.json",
+  "reason": "Exact campaign identity bypass, unrelated health substitution, dropped observation provenance, and unbound training continuation. Original sources preserved in review evidence; do not publish this overlay."
+}

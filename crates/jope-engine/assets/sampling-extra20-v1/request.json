@@ -1,0 +1,78 @@
+{
+  "schema": "parallel.component_sampling_extension.v1",
+  "jobs_sha256": "3fa34f7b0d6bf8958eb778c5b7283027858c3a3febdf9e9b0e58231faeeb7085",
+  "jobs": 3500,
+  "source_specs": {
+    "target": {
+      "module": "assets/target-export-cuda-v1/target.pt",
+      "module_sha256": "14fbc78dcf51a63dd765eca27f99d1a94ef559f586433ba66af048bcb0cda593",
+      "sampling": "assets/target-export-cuda-v1/sampling.json",
+      "sampling_sha256": "dec8e830341867516ea232345197aa364818b8166a2ba9aeed91ee20d9cf55bf",
+      "parity": "assets/target-export-cuda-v1/parity.json",
+      "parity_sha256": "50bb7c864aa94bf3759f1edb8cb064ca9f74a64df6c4bdadc378ed66cb7629a1"
+    },
+    "foundation": {
+      "module": "assets/foundation-export-v1/foundation.pt",
+      "module_sha256": "87bae6a223a022119e4101564d6ee3674b831d09756f70379eed8f429a70b60e",
+      "sampling": "assets/foundation-export-v1/sampling.json",
+      "sampling_sha256": "a26bd186484fd01af463bc2eb3d46d76383288e9dc426c314403fe9817b5b634",
+      "parity": "assets/foundation-export-v1/parity.json",
+      "parity_sha256": "56fd2d5b0c4737f93e0e9c4f25ce80a940d44273eb0d1581b366ed291edb6d03"
+    }
+  },
+  "target_new_lengths": [
+    [
+      1,
+      227
+    ],
+    [
+      1,
+      229
+    ]
+  ],
+  "foundation_new_lengths": [
+    227,
+    229
+  ],
+  "foundation_new_shapes": [
+    [
+      170,
+      57,
+      7,
+      1
+    ],
+    [
+      170,
+      57,
+      7,
+      2
+    ],
+    [
+      171,
+      58,
+      7,
+      1
+    ],
+    [
+      171,
+      58,
+      7,
+      2
+    ]
+  ],
+  "target_sampler_reference": "target_maker.data.sample_indices + stable_seed; target_maker.encode._window_indices",
+  "foundation_sampler_reference": "numpy PCG64 seed 20260707 permutation; existing context/query rule",
+  "sampler_reference_passed": true,
+  "numpy_version": "1.26.4",
+  "module_weights_reused": true,
+  "copied_vector_bytes": 0,
+  "sampling_sha256": {
+    "target": "210ff889c971f8be749e89442fc4433eb2102c9b59106e0b688be821b48e22b2",
+    "foundation": "db8094233118a8d475634c19277da3930b2eaae6a60775fe4d2f0f34534bc7d3"
+  },
+  "source_sha256": {
+    "assets/source/target_maker/target_maker/data.py": "e20c00a8c2ce5894e2ad7dab9b48e05c353a4736aba471e6d481b7c0931bf0fd",
+    "assets/source/target_maker/target_maker/encode.py": "ce4161f5d7d10dd4e1bd442050b6c03af0432e792037279ffbf08375204c89ca",
+    "tools/extend_component_sampling.py": "a3cbc6443adf0e1faacb4540be9bdfd76cee4aebd36d978fac465c056602cb46"
+  }
+}

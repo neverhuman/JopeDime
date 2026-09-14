@@ -1,0 +1,55 @@
+//! Append-only advanced-v3 table and task boundary.
+//!
+//! This module intentionally does not change the legacy numeric-matrix API.
+//! A v3 model owns its fitted raw-table encoder, task contract, and schema
+//! hashes; legacy `model::fit` and `transpile::emit` continue down their
+//! historical paths byte-for-byte.
+
+mod calibration;
+mod csv;
+mod emit;
+mod evolution;
+mod feature_block;
+mod fitted_cpp;
+mod fitted_cpp_runtime;
+mod grammar;
+mod heads;
+mod input;
+pub(crate) mod interfaces;
+mod pipeline;
+mod profile;
+mod schema;
+mod transforms;
+mod types;
+
+pub use csv::RawTable;
+pub use emit::{emit_bound, BoundEmitted};
+pub use evolution::{
+    crossover_candidates, deterministic_seed_enumeration, initial_population, mutate_candidate,
+    next_generation, V3Archive, V3Candidate, V3EvolutionConfig, V3ScoredCandidate,
+};
+pub use feature_block::{
+    FeatureBlock, FeatureLineage, FeatureOrigin, FeatureRole, FeatureWidths,
+    MAX_GENERATED_DENSE_WIDTH,
+};
+pub use fitted_cpp::{emit_fitted_cpp17, supports_fitted_cpp17, FittedCppArtifact};
+pub use fitted_cpp_runtime::{
+    encode_fitted_cpp17, validate_fitted_cpp_codec, EncodedTable, FittedCppError, FittedCppModel,
+    FittedCppRuntime, FittedModelCodec,
+};
+pub use heads::MULTICLASS_MAX_TRANSFORMED_FEATURES;
+pub use pipeline::{
+    fit_legacy_numeric_bound, fit_table, predict_labels_table, predict_multiclass_table,
+    predict_probabilities_table, predict_table, validate_v3_genome, BoundModel,
+    MulticlassPrediction,
+};
+pub use schema::{ColumnKind, ColumnSpec, DataSchema, RowSemantics};
+pub use types::{
+    balanced_accuracy_at, macro_f1, multiclass_accuracy, stratified_fold_assignments, Objective,
+    TaskKind, TaskSpec, ARTIFACT_SCHEMA,
+};
+
+#[cfg(test)]
+use input::{FittedInput, InputConfig};
+#[cfg(test)]
+mod tests;

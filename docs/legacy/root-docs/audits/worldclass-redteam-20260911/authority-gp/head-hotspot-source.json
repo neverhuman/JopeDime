@@ -1,0 +1,487 @@
+{
+  "captured_at": "2026-09-11T12:51:20.302641+00:00",
+  "release": "native-v5-cpu",
+  "binary_sha256_from_independently_verified_previous_capture": "974e93830b51413187ccb0ac19d1dc878b84a6246a2d0981419feb12d38b7dc2",
+  "files": [
+    {
+      "path": "/home/ubuntu/jope-dime/parallel/runs/flywheel-20260909/native-v5-cpu/source/parallel/assets/source/jope-dime/vendor/feat-math/src/boost2.rs",
+      "sha256": "ec959293ea73bf67e18f6121457a8c85d78bade018952d1bef561edbff9ccc55",
+      "matches_build_manifest": true,
+      "lines": [
+        {
+          "line": 34,
+          "text": "pub const DEFAULT_LEAVES: usize = 31;"
+        },
+        {
+          "line": 35,
+          "text": "pub const DEFAULT_LR: f64 = 0.05;"
+        },
+        {
+          "line": 36,
+          "text": "/// Bag count default; sized so the emitted pure-Python twin stays inside its"
+        },
+        {
+          "line": 37,
+          "text": "/// training budget (measured in battle-transpile golden tests)."
+        },
+        {
+          "line": 38,
+          "text": "pub const DEFAULT_BAGS: usize = 3;"
+        },
+        {
+          "line": 39,
+          "text": ""
+        },
+        {
+          "line": 40,
+          "text": "pub const MIN_LEAF: usize = 3;"
+        },
+        {
+          "line": 41,
+          "text": "pub const LAMBDA: f64 = 1.0;"
+        },
+        {
+          "line": 42,
+          "text": "pub const SUBSAMPLE: f64 = 0.7;"
+        },
+        {
+          "line": 43,
+          "text": "pub const PATIENCE: usize = 50;"
+        },
+        {
+          "line": 44,
+          "text": "/// Default (and historical hard cap on) boosting rounds; the `rounds` param"
+        },
+        {
+          "line": 45,
+          "text": "/// can now raise this to `ROUNDS_CAP`."
+        },
+        {
+          "line": 46,
+          "text": "pub const MAX_ROUNDS: usize = 500;"
+        },
+        {
+          "line": 47,
+          "text": "/// Hard cap on the searchable `rounds` parameter."
+        },
+        {
+          "line": 48,
+          "text": "pub const ROUNDS_CAP: usize = 1000;"
+        },
+        {
+          "line": 49,
+          "text": "pub const MAX_FEATURES: usize = 256;"
+        },
+        {
+          "line": 50,
+          "text": "/// PCG32 stream id for the per-bag row-subsampling generator."
+        },
+        {
+          "line": 207,
+          "text": "        // Pre-sort feature indices once; ties break on the row index so the"
+        },
+        {
+          "line": 208,
+          "text": "        // order matches a stable value sort in every implementation."
+        },
+        {
+          "line": 209,
+          "text": "        let order: Vec<Vec<usize>> = (0..n_feat)"
+        },
+        {
+          "line": 210,
+          "text": "            .map(|f| {"
+        },
+        {
+          "line": 211,
+          "text": "                let mut idx: Vec<usize> = (0..n_tr).collect();"
+        },
+        {
+          "line": 212,
+          "text": "                idx.sort_by(|&a, &b| {"
+        },
+        {
+          "line": 213,
+          "text": "                    if xtr[a][f] < xtr[b][f] {"
+        },
+        {
+          "line": 214,
+          "text": "                        std::cmp::Ordering::Less"
+        },
+        {
+          "line": 215,
+          "text": "                    } else if xtr[a][f] > xtr[b][f] {"
+        },
+        {
+          "line": 216,
+          "text": "                        std::cmp::Ordering::Greater"
+        },
+        {
+          "line": 217,
+          "text": "                    } else {"
+        },
+        {
+          "line": 218,
+          "text": "                        a.cmp(&b)"
+        },
+        {
+          "line": 219,
+          "text": "                    }"
+        },
+        {
+          "line": 220,
+          "text": "                });"
+        },
+        {
+          "line": 221,
+          "text": "                idx"
+        },
+        {
+          "line": 222,
+          "text": "            })"
+        },
+        {
+          "line": 223,
+          "text": "            .collect();"
+        },
+        {
+          "line": 224,
+          "text": "        let mut bags: Vec<Vec<BoostTree>> = Vec::with_capacity(cfg.bags);"
+        },
+        {
+          "line": 330,
+          "text": "    x: &Rows,"
+        },
+        {
+          "line": 331,
+          "text": "    order: &[Vec<usize>],"
+        },
+        {
+          "line": 332,
+          "text": "    grad: &[f64],"
+        },
+        {
+          "line": 333,
+          "text": "    in_sample: &[bool],"
+        },
+        {
+          "line": 334,
+          "text": "    col_ok: &[bool],"
+        },
+        {
+          "line": 335,
+          "text": "    n_feat: usize,"
+        },
+        {
+          "line": 336,
+          "text": "    max_leaves: usize,"
+        },
+        {
+          "line": 337,
+          "text": "    min_leaf: usize,"
+        },
+        {
+          "line": 338,
+          "text": ") -> BoostTree {"
+        },
+        {
+          "line": 339,
+          "text": "    let mut lists: Vec<Vec<usize>> = Vec::with_capacity(n_feat);"
+        },
+        {
+          "line": 340,
+          "text": "    for feature_order in order.iter().take(n_feat) {"
+        },
+        {
+          "line": 341,
+          "text": "        lists.push("
+        },
+        {
+          "line": 342,
+          "text": "            feature_order"
+        },
+        {
+          "line": 343,
+          "text": "                .iter()"
+        },
+        {
+          "line": 344,
+          "text": "                .copied()"
+        },
+        {
+          "line": 345,
+          "text": "                .filter(|&i| in_sample[i])"
+        },
+        {
+          "line": 346,
+          "text": "                .collect(),"
+        },
+        {
+          "line": 347,
+          "text": "        );"
+        },
+        {
+          "line": 348,
+          "text": "    }"
+        },
+        {
+          "line": 349,
+          "text": "    let mut g = 0.0;"
+        },
+        {
+          "line": 380,
+          "text": "        let rec = pool.remove(pick);"
+        },
+        {
+          "line": 381,
+          "text": "        let feat = rec.feature;"
+        },
+        {
+          "line": 382,
+          "text": "        let thr = rec.threshold;"
+        },
+        {
+          "line": 383,
+          "text": "        let mut left_lists: Vec<Vec<usize>> = Vec::with_capacity(n_feat);"
+        },
+        {
+          "line": 384,
+          "text": "        let mut right_lists: Vec<Vec<usize>> = Vec::with_capacity(n_feat);"
+        },
+        {
+          "line": 385,
+          "text": "        for f in 0..n_feat {"
+        },
+        {
+          "line": 386,
+          "text": "            let mut l = Vec::new();"
+        },
+        {
+          "line": 387,
+          "text": "            let mut r = Vec::new();"
+        },
+        {
+          "line": 388,
+          "text": "            for &i in &rec.lists[f] {"
+        },
+        {
+          "line": 389,
+          "text": "                if x[i][feat] <= thr {"
+        },
+        {
+          "line": 390,
+          "text": "                    l.push(i);"
+        },
+        {
+          "line": 391,
+          "text": "                } else {"
+        },
+        {
+          "line": 392,
+          "text": "                    r.push(i);"
+        },
+        {
+          "line": 393,
+          "text": "                }"
+        },
+        {
+          "line": 394,
+          "text": "            }"
+        },
+        {
+          "line": 395,
+          "text": "            left_lists.push(l);"
+        },
+        {
+          "line": 396,
+          "text": "            right_lists.push(r);"
+        },
+        {
+          "line": 397,
+          "text": "        }"
+        },
+        {
+          "line": 398,
+          "text": "        // Child sums are recomputed over the feature-0 ordering so every"
+        },
+        {
+          "line": 399,
+          "text": "        // implementation accumulates in the same sequence."
+        }
+      ],
+      "matches_current_root_vendor": true
+    },
+    {
+      "path": "/home/ubuntu/jope-dime/parallel/runs/flywheel-20260909/native-v5-cpu/source/parallel/assets/source/jope-dime/vendor/feat-math/src/gpr.rs",
+      "sha256": "bdc7eb04d1e4d0309be9622072be92f015212ddd1d8a7a0175afdc5f5df9c858",
+      "matches_build_manifest": true,
+      "lines": [
+        {
+          "line": 670,
+          "text": "                }"
+        },
+        {
+          "line": 671,
+          "text": "                for j in (i + 1)..mo {"
+        },
+        {
+          "line": 672,
+          "text": "                    let wij = alpha[i] * alpha[j] - kinv[i * mo + j];"
+        },
+        {
+          "line": 673,
+          "text": "                    let mut off = 0usize;"
+        },
+        {
+          "line": 674,
+          "text": "                    for (t, term) in spec.iter().enumerate() {"
+        },
+        {
+          "line": 675,
+          "text": "                        let amp = off;"
+        },
+        {
+          "line": 676,
+          "text": "                        let nf = term.len();"
+        },
+        {
+          "line": 677,
+          "text": "                        let mut r2s = vec![0.0f64; nf];"
+        },
+        {
+          "line": 678,
+          "text": "                        let mut s2s = vec![0.0f64; nf];"
+        },
+        {
+          "line": 679,
+          "text": "                        let mut psums = vec![0.0f64; nf];"
+        },
+        {
+          "line": 680,
+          "text": "                        let mut val = dec.sf2[t];"
+        },
+        {
+          "line": 681,
+          "text": "                        for (f, prim) in term.iter().enumerate() {"
+        }
+      ],
+      "matches_current_root_vendor": true
+    },
+    {
+      "path": "/home/ubuntu/jope-dime/parallel/runs/flywheel-20260909/native-v5-cpu/source/parallel/assets/source/jope-dime/vendor/feat-math/src/heads.rs",
+      "sha256": "711b03acbce336f07666db1a44086416499c70d69b395d1f860ef7dd1dbb7710",
+      "matches_build_manifest": true,
+      "lines": [
+        {
+          "line": 90,
+          "text": "        \"gpr\" => {"
+        },
+        {
+          "line": 91,
+          "text": "            let m = stage.get_usize(\"m\", crate::gpr::DEFAULT_M).clamp(50, 2000);"
+        },
+        {
+          "line": 92,
+          "text": "            let steps = stage"
+        },
+        {
+          "line": 93,
+          "text": "                .get_usize(\"steps\", crate::gpr::DEFAULT_STEPS)"
+        },
+        {
+          "line": 94,
+          "text": "                .clamp(1, 200);"
+        },
+        {
+          "line": 95,
+          "text": "            let kernel_src = match stage.params.get(\"kernel\") {"
+        },
+        {
+          "line": 96,
+          "text": "                Some(ParamValue::Str(s)) => s.as_str(),"
+        },
+        {
+          "line": 97,
+          "text": "                _ => \"rbf\","
+        },
+        {
+          "line": 98,
+          "text": "            };"
+        },
+        {
+          "line": 99,
+          "text": "            // kernel=\"rbf\" (or absent) keeps the dedicated ARD path so compatibility"
+        },
+        {
+          "line": 100,
+          "text": "            // genomes stay bit-identical; any other expression uses the"
+        },
+        {
+          "line": 101,
+          "text": "            // composite-kernel engine."
+        },
+        {
+          "line": 102,
+          "text": "            if kernel_src == \"rbf\" {"
+        },
+        {
+          "line": 103,
+          "text": "                Ok(FittedHead::Gpr(GprModel::fit(x, y, m, steps)))"
+        },
+        {
+          "line": 104,
+          "text": "            } else {"
+        },
+        {
+          "line": 105,
+          "text": "                let spec = match parse_kernel(kernel_src) {"
+        },
+        {
+          "line": 106,
+          "text": "                    Ok(spec) => spec,"
+        },
+        {
+          "line": 107,
+          "text": "                    Err(e) => bail!(\"gpr kernel: {e}\"),"
+        },
+        {
+          "line": 108,
+          "text": "                };"
+        },
+        {
+          "line": 109,
+          "text": "                Ok(FittedHead::GprKernel(GprKernelModel::fit("
+        },
+        {
+          "line": 110,
+          "text": "                    x, y, m, steps, &spec,"
+        },
+        {
+          "line": 111,
+          "text": "                )))"
+        },
+        {
+          "line": 112,
+          "text": "            }"
+        },
+        {
+          "line": 113,
+          "text": "        }"
+        },
+        {
+          "line": 114,
+          "text": "        \"ksmooth\" => Ok(FittedHead::Ksmooth(KsmoothModel::fit("
+        },
+        {
+          "line": 115,
+          "text": "            x,"
+        },
+        {
+          "line": 116,
+          "text": "            y,"
+        }
+      ],
+      "matches_current_root_vendor": true
+    }
+  ]
+}

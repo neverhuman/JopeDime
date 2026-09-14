@@ -1,0 +1,74 @@
+{
+  "docs/audits/worldclass-redteam-20260911/evidence/learning-native-v3/neural.rs": {
+    "remote_path": "runs/flywheel-20260909/native-v3/source/parallel/src/neural.rs",
+    "sha256": "0ad270f6d4afe77f474c0aadef7a13109024d380b11d7923b1479397152d67ba",
+    "build_source_binding_verified": true
+  },
+  "docs/audits/worldclass-redteam-20260911/evidence/learning-native-v3/training.rs": {
+    "remote_path": "runs/flywheel-20260909/native-v3/source/parallel/src/training.rs",
+    "sha256": "4bd74f36d9d64aa5407a4afb4a3cef7dd408d6bb4907ad75682ddbf1dd6134ab",
+    "build_source_binding_verified": true
+  },
+  "docs/audits/worldclass-redteam-20260911/evidence/learning-native-v3/controller.rs": {
+    "remote_path": "runs/flywheel-20260909/native-v3/source/parallel/src/controller.rs",
+    "sha256": "589ef8073637e4f0a7999c2dce1ca2e2492821bb431477bcb4e2af0165ad505b",
+    "build_source_binding_verified": true
+  },
+  "docs/audits/worldclass-redteam-20260911/evidence/learning-native-v3/gpu_worker.rs": {
+    "remote_path": "runs/flywheel-20260909/native-v3/source/parallel/src/gpu_worker.rs",
+    "sha256": "dbd0cb182515fff15235e5f3486a8c2c3e09d872923598b99a387125dc019c40",
+    "build_source_binding_verified": true
+  },
+  "docs/audits/worldclass-redteam-20260911/evidence/learning-native-v3/teaching_store.rs": {
+    "remote_path": "runs/flywheel-20260909/native-v3/source/parallel/src/teaching_store.rs",
+    "sha256": "d4b238ee4cd4be69639895cda47a1d0bf1e7878a68b40f77781a47a2db5ef5bc",
+    "build_source_binding_verified": true
+  },
+  "docs/audits/worldclass-redteam-20260911/evidence/learning-native-v3/controller-deployed.py": {
+    "path": "runs/flywheel-utilization-20260911/runtime/tools/continuous_learning.py",
+    "sha256": "98b9a40ed6fbb3aafc45fae794e0a9b44647966adc25d48ed8a724e9cc971343",
+    "bytes": 56477
+  },
+  "docs/audits/worldclass-redteam-20260911/evidence/learning-native-v3/controller-previous.py": {
+    "path": "runs/flywheel-20260909/controller-integrated-v2/source/continuous_learning.py",
+    "sha256": "ab1c05061be2f2c4c8ec0cf2909e5ad62cff8712dea49385a035351680ed886a",
+    "bytes": 46490
+  },
+  "docs/audits/worldclass-redteam-20260911/evidence/learning-native-v3/resident-supervisor-deployed.py": {
+    "path": "runs/flywheel-20260909/controller-integrated-v2/source/resident_gpu_pool.py",
+    "sha256": "e0a140757b5f7d517f910772817304a5e506b5dde692b004274158e60dbd57dc",
+    "bytes": 4781
+  },
+  "parallel/src/neural.rs": {
+    "sha256": "34cde3c9c8eda1c8c3566b21faa358dcf1dc08cefe341f493390de46605c75e4",
+    "scope": "local dirty source; not deployed or qualified by this audit"
+  },
+  "parallel/src/training.rs": {
+    "sha256": "fcb2a34b2232eb532daa358c40825b9331857fcc122a4077f7f5c000f65009da",
+    "scope": "local dirty source; not deployed or qualified by this audit"
+  },
+  "parallel/src/controller.rs": {
+    "sha256": "ce1c4c0bf6026c6269d4de237b881ae8200cd03b9147f2890010d8608c517da5",
+    "scope": "local dirty source; not deployed or qualified by this audit"
+  },
+  "parallel/src/resident_protocol.rs": {
+    "sha256": "c63888556d0e43dcfbfb83472a1de36f76bf0a8daf4d79e1c224e088485716a2",
+    "scope": "local dirty source; not deployed or qualified by this audit"
+  },
+  "parallel/src/gpu_worker.rs": {
+    "sha256": "328c242b89b2c768b4fff035d135033c00f2e1ac6b28c807b8dd3fd3051cace7",
+    "scope": "local dirty source; not deployed or qualified by this audit"
+  },
+  "parallel/tools/continuous_learning.py": {
+    "sha256": "ad08246b8f1ddde14ee545c44f8b71676aecc6ba2012a701774f6c6961a370ca",
+    "scope": "local dirty source; not deployed or qualified by this audit"
+  },
+  "parallel/tools/replay_policy.py": {
+    "sha256": "5bcd95f7921207808b12e089f27e561c301a6a689d818ddf383c2e1c14c51e81",
+    "scope": "local dirty source; not deployed or qualified by this audit"
+  },
+  "parallel/tools/training_contract.py": {
+    "sha256": "1e3241e2b5da42ff3ab9c90b7b510e92d7aa28241ad8bdddc1f95ad32d8ea570",
+    "scope": "local dirty source; not deployed or qualified by this audit"
+  }
+}

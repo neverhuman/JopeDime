@@ -1,0 +1,18 @@
+[Unit]
+Description=JOPE persistent full-history console
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/jope-dime/parallel
+ExecStart=/usr/bin/python3 /home/ubuntu/jope-dime/parallel/tools/tui-session.py
+Restart=always
+RestartSec=3
+KillMode=control-group
+Environment=TERM=xterm-256color
+CPUAffinity=60 61 122 123
+MemoryMax=2G
+
+[Install]
+WantedBy=multi-user.target

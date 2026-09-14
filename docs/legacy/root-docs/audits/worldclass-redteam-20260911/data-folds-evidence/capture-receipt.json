@@ -1,0 +1,6 @@
+{
+  "exit": 0,
+  "finished_at": 1789129594.7177854,
+  "remote_read_only": true,
+  "command": "ssh explicit key ubuntu@158.101.20.226 python3 -"
+}

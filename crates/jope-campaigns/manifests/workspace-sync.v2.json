@@ -1,0 +1,79 @@
+{
+  "schema": "workspace.sync-config.v2",
+  "merge_host": "xbabe2",
+  "runtime_activation_allowed": false,
+  "transfer_limits": {
+    "initial_bytes_per_second": 67108864,
+    "background_bytes_per_second": 8388608,
+    "aggregate_directions": true
+  },
+  "capacity_policy": {
+    "reserve_floor_bytes": 268435456000,
+    "reserve_filesystem_fraction": 0.1,
+    "durable_history_deletion_allowed": false
+  },
+  "policy": {
+    "source_roots": [],
+    "exclusions": "machine-local credentials, caches, sockets, PID/process state only; application DBs require snapshots"
+  },
+  "verification_policy": {
+    "initial_all_content_hashed_on_both_hosts": true,
+    "unresolved_reference_policy": "incomplete",
+    "snapshot_application_recovery": "separate required receipt",
+    "canonical_conflicts": "preserve both until resolution"
+  },
+  "project_references_pending": [
+    "referenced dependency roots and acquisition closure",
+    "sotarena gitlink and absent remote Git history",
+    "external release/runtime dependencies"
+  ],
+  "adapters": {
+    "sqlite": "backup-api plus application journal/witness reconciliation required",
+    "checkpoint": "all-rank model optimizer RNG sampler corpus snapshots required"
+  },
+  "controller_sources": {
+    "scripts/workspace_inventory.py": "64f45ea58d6eec9af464e8a77daf1399c397fbef52ad1f8d9d5824168fcb3699",
+    "scripts/workspace_store.py": "ee5f52428062617d880f157cb0f53d836eaf37eba1d8b29009a41c90036600f6",
+    "scripts/workspace_sync.py": "d61abc8c24c9cefa2bbe1a39d9431e831264934cae440a6920ecf2acbc6f6d58",
+    "parallel/tools/kernel_remote_state.py": "36a7d57a0d42002ac9353e9e7627573ceab5afef9dbadde733ca9d47edfa8042"
+  },
+  "local": {
+    "name": "xbabe2",
+    "roots": {
+      "project": "/home/ubuntu/jope-dime",
+      "raw_quant": "/home/ubuntu/remote_super/quant",
+      "provenance": "/home/ubuntu/hyper/data",
+      "recovery": "/home/ubuntu/jope-dime-recovery"
+    }
+  },
+  "remote": {
+    "name": "gpu",
+    "roots": {
+      "project": "/home/ubuntu/jope-dime",
+      "raw_quant": "/home/ubuntu/quant",
+      "provenance": "/home/ubuntu/hyper/data",
+      "recovery": "/home/ubuntu/jope-dime-recovery"
+    },
+    "ssh_host": "ubuntu@158.101.20.226"
+  },
+  "root_mapping_corrections": [
+    {
+      "logical_root": "raw_quant",
+      "host": "remote",
+      "prior_path": "/home/ubuntu/remote_super/quant",
+      "actual_path": "/home/ubuntu/quant",
+      "evidence": [
+        "parallel/runs/flywheel-redteam-20260910/data/remote-raw-hash-plan.json",
+        "parallel/runs/mirror-recovery-implementation-20260911/references/remote-raw-roots.jsonl"
+      ],
+      "prior_configuration_sha256": "50ff51e6ae92ccde1bb8134defec26478004d0ad4fb72742dcfbf8a8cb09c7f8",
+      "prior_inventory_retained": true
+    }
+  ],
+  "controller_binding_predecessor_sha256": "78fe902731a4e64a953d1a103e9a4c8fcc004e727b2b609da7a1f14bb37af76b",
+  "partial_custody_policy": {
+    "available_sources_may_be_preserved": true,
+    "missing_paths_remain_unresolved": true,
+    "canonical_publication_requires_both_host_complete_coverage": true
+  }
+}
