@@ -1,0 +1,18 @@
+{
+ "cadence_seconds": 300,
+ "final_tests_opened": false,
+ "manifest": "runs/eight-a100-recovery-20260912/recovery-manifest-f11-disabled-v1.json",
+ "owner_signoff": "2026-09-14 D-E: one Codex-activated timer for the Python read-outs",
+ "schema": "parallel.research_readouts_binding.v1",
+ "tools": {
+  "champion_git.py": "2a359700706d90a3d8ec6eb07c40d80d663d4bb82f25dce1098b639650bce34a",
+  "continuous_quality_report.py": "c8e26ec08735138f2285c5b7591ec00bfe7ffea7a004e9d88c46cb378a209f6b",
+  "flywheel_baseline.py": "aefb975dff503c07e1d48febaa6747e0a605781c7a3883975f6f0f47b790d3e1",
+  "flywheel_headline.py": "21e65681954641ebb474b6a50c3d78e6d5876ba639c4c9067ebe16e5f26988dc",
+  "flywheel_metrics.py": "87c3456c47998ed785020148148ff8aa4d89f729040ace0f1f2d90a17f35c97e",
+  "flywheel_series.py": "fb4295421317cc33cf06aa277aef0acbbb24d75d4bb5c2e508865abe50c24cd7",
+  "hold_release_readout.py": "16b0f86c7b99095f4a0afe12c499060b32aded2a4608025e04395ead0b001e5e",
+  "promotion_gate.py": "0444a2fb10c1e5a9c9fda2d34fe567b2e81cdc014e3a17a9a80a5b46e5541b99",
+  "resume_expired_cycle.py": "18b93d9f08b1af21e343b1337bf2a6193f02f79a4c75ec164e4ae4c7f983789a"
+ }
+}
