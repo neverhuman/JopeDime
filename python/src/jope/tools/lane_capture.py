@@ -24,7 +24,7 @@ import promotion_gate
 from resume_expired_cycle import atomic, read, sha
 
 SCHEMA = 'parallel.lane_capture_receipt.v1'
-MIRROR = Path('/home/ubuntu/jope-node-mirror')
+MIRROR = Path('/home/ubuntu/jain-split/jain-datasets/materialized/a100-node-mirror')   # real path (symlink at /home/ubuntu/jope-node-mirror)
 STORE = Path('/home/ubuntu/jain-split/jain-datasets/.staging/a100-store')
 BIN_DIR = MIRROR / 'bin'
 NODE_ROOT = '/home/ubuntu/jope-dime/parallel'

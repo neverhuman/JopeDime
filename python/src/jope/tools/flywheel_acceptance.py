@@ -499,7 +499,7 @@ def main(argv=None):
     parser.add_argument('--key', default=str(Path.home() / '.ssh/lambda_cloud_a100_20260907_ed25519'))
     parser.add_argument('--node-root', default='/home/ubuntu/jope-dime/parallel')
     parser.add_argument('--mirror', type=Path, default=Path('/home/ubuntu/jope-dime/parallel/recovery/eight-a100-20260912'))
-    parser.add_argument('--node-mirror', type=Path, default=Path('/home/ubuntu/jope-node-mirror'))
+    parser.add_argument('--node-mirror', type=Path, default=Path('/home/ubuntu/jain-split/jain-datasets/materialized/a100-node-mirror'))   # real path; /home/ubuntu/jope-node-mirror is a symlink
     parser.add_argument('--repo', type=Path, default=Path('/home/ubuntu/jope-dime'))
     parser.add_argument('--credentials', default=str(Path.home() / '.git-credentials'))
     parser.add_argument('--output', type=Path, default=Path('/home/ubuntu/jope-dime/parallel/recovery/eight-a100-20260912/successor/acceptance'))
