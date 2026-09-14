@@ -172,6 +172,10 @@ def collect_local(root, mirror_dir, node_mirror, repo, credentials):
             for p in sorted((receipts / 'lane').glob('*.json'), key=lambda p: p.stat().st_mtime):
                 value = read(p)
                 cls = value.get('class')
+                if value.get('schema') == 'jain.champion_capture_receipt.v1':   # the champion stream receipt carries identity counts, not a class
+                    cls = 'champion-events'
+                    value = dict(value, units=value.get('identities'), counts=dict(captured=value.get('captured', 0), already_bound=value.get('already_bound', 0), failed=value.get('failed', 0),
+                                                                                    refused_partition=value.get('refused_partition', 0)))
                 if cls:
                     out['lane'][cls] = dict(path=str(p), mtime=p.stat().st_mtime, value=value)
                     out['files'][str(p)] = dict(host='xbabe2', sha256=sha(p), bytes=p.stat().st_size, mtime=p.stat().st_mtime)

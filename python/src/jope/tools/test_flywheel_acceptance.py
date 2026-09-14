@@ -169,3 +169,17 @@ class PullReceiptRule(unittest.TestCase):
             names = {c['name']: c for c in receipt['gates']['SYNC_TRUST']['checks']}
             self.assertEqual(names['pull_receipt_fresh']['status'], 'fail')
 
+
+class ChampionStreamReceipt(unittest.TestCase):
+    def test_champion_stream_receipt_is_a_lane_class(self):
+        import tempfile, json, os
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as tmp:
+            lane = Path(tmp) / 'receipts/lane'; lane.mkdir(parents=True)
+            (lane / '20260914T100000Z-champion-events-abc.json').write_text(json.dumps(dict(schema='jain.champion_capture_receipt.v1', identities=5, captured=3, already_bound=1, refused_partition=0, failed=1, captured_bytes=99, at=1.0)))
+            (lane / '20260914T100001Z-prepared-abc.json').write_text(json.dumps({'class': 'prepared', 'units': 2, 'counts': {'captured': 2}, 'captured_bytes': 10, 'at': 2.0}))
+            local = fa.collect_local(Path(tmp) / 'root', Path(tmp) / 'mirror', Path(tmp), Path(tmp) / 'norepo', None)
+            self.assertEqual(sorted(local['lane']), ['champion-events', 'prepared'])
+            m = fa.migration(dict(local=local))
+            self.assertEqual((m['lane_classes']['champion-events']['units'], m['lane_classes']['champion-events']['captured'], m['lane_failed']), (5, 3, 1))
+
