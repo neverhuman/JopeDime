@@ -2,11 +2,23 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
-from gpu_batch_probe import summarize
+from gpu_batch_probe import summarize, sample_gpu
 
 
 class BatchProbeTests(unittest.TestCase):
+    def test_telemetry_capture_runs_through_owned_process_wrapper(self):
+        with tempfile.TemporaryDirectory() as directory:
+            executable = Path(directory) / "nvidia-smi"
+            executable.write_text("#!/usr/bin/python3\nimport sys\nprint('0, 80, 8192, 40960, 250')\nprint('diagnostic', file=sys.stderr)\n")
+            executable.chmod(0o700)
+            with patch("gpu_batch_probe.runtime.child_env", return_value={"PATH": directory}):
+                result = sample_gpu()
+            self.assertEqual(result.returncode, 0)
+            self.assertEqual(result.stdout.strip(), "0, 80, 8192, 40960, 250")
+            self.assertEqual(result.stderr.strip(), "diagnostic")
+
     def fixture(self, root):
         for rank in range(8):
             (root / f"complete-{rank}.json").write_text(json.dumps({"rank": rank, "world": 8,

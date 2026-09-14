@@ -5,6 +5,11 @@ edition.workspace = true
 license.workspace = true
 description = "Vendored new-math engine: pipeline-genome DSL interpreter, dual Python/Rust code emitters, and evolutionary invention"
 
+[features]
+default = []
+# Requires exact parity and funded full-task performance qualification before use.
+gpr-scratch-reuse = []
+
 [dependencies]
 anyhow.workspace = true
 serde.workspace = true

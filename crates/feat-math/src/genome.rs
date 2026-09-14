@@ -87,12 +87,24 @@ impl GenomeIr {
             }));
         }
         if let Some(rest) = trimmed.strip_prefix("(sym ") {
-            let rest = rest.strip_suffix(')').unwrap_or(rest).trim();
+            let Some(rest) = rest.strip_suffix(')') else {
+                bail!("symbolic genome requires a closing delimiter");
+            };
+            let rest = rest.trim();
             let (mode, expr_src) = match rest.split_once(' ') {
                 Some((m, e)) => (m, e.trim()),
                 None => bail!("symbolic genome must be (sym <affine|raw> \"expr\")"),
             };
-            let expr_src = expr_src.trim_matches('"');
+            if !matches!(mode, "affine" | "raw") {
+                bail!("symbolic mode must be affine or raw");
+            }
+            let Some(expr_src) = expr_src.strip_prefix('"').and_then(|s| s.strip_suffix('"'))
+            else {
+                bail!("symbolic expression must have exactly one pair of quotes");
+            };
+            if expr_src.contains('"') {
+                bail!("unexpected quote in symbolic expression");
+            }
             let expr = MathExpr::parse(expr_src)?;
             return Ok(GenomeIr::Symbolic {
                 source: expr_src.to_string(),
@@ -134,6 +146,25 @@ impl GenomeIr {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn symbolic_wire_form_rejects_unknown_modes_and_incomplete_delimiters() {
+        for source in [
+            "(sym bogus \"col(0)\")",
+            "(sym affine \"col(0)\"",
+            "(sym raw col(0))",
+            "(sym raw \"col(0))",
+            "(sym raw col(0)\")",
+            "(sym raw \"\"col(0)\"\")",
+            "(sym raw \"col(0)\") trailing",
+        ] {
+            assert!(GenomeIr::parse(source).is_err(), "accepted {source}");
+        }
+        for mode in ["raw", "affine"] {
+            let source = format!("(sym {mode} \"col(0)\")");
+            assert_eq!(GenomeIr::parse(&source).unwrap().canonical(), source);
+        }
+    }
 
     #[test]
     fn portfolio_form_parses_and_canonicalizes_order_preserving() {

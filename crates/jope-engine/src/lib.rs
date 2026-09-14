@@ -1,11 +1,15 @@
 pub mod audit;
 pub mod champions;
 pub mod checkpoint_recovery;
+pub mod runtime_custody;
+pub mod training_exposure;
 pub mod controller;
 pub mod dashboard;
+pub mod learning_history;
 pub mod encoding;
 pub mod families;
 pub mod gp;
+pub mod fit_boundary;
 pub mod proposal_population;
 pub mod manifest;
 #[cfg(feature = "neural")]
@@ -14,6 +18,8 @@ pub mod operations;
 pub mod prepare;
 pub mod queue;
 pub mod service;
+pub mod qualification_slots;
+pub mod tournament;
 pub mod snapshot;
 pub mod telemetry;
 pub mod transport;
@@ -27,6 +33,13 @@ pub mod components;
 pub mod contexts;
 
 pub mod corpus;
+pub mod corpus_publication;
+pub mod teaching_store;
+pub mod task_contract;
+pub mod eval_registry;
+pub mod label_admission;
+#[cfg(feature = "neural")]
+pub mod gpu_worker;
 pub mod grammar;
 #[cfg(feature = "neural")]
 pub mod pipeline;
@@ -42,3 +55,8 @@ pub mod training;
 pub mod auxiliary_training;
 
 pub mod campaign;
+
+#[cfg(feature = "neural")]
+pub mod monitoring;
+
+pub mod sealed_storage;

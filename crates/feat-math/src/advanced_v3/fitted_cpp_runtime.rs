@@ -15,7 +15,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
+use std::rc::Rc;
 
 const MAGIC: &[u8; 8] = b"JDFCPP3\0";
 const VERSION: u16 = 2;
@@ -149,12 +149,14 @@ pub struct FittedCppError {
 #[derive(Clone)]
 pub struct FittedCppRuntime {
     work_root: PathBuf,
-    api: Arc<RuntimeApi>,
+    // Loaded native handles are confined to their owning thread. Neither the
+    // runtime nor its models promise cross-thread access to the C++ ABI.
+    api: Rc<RuntimeApi>,
 }
 
 pub struct FittedCppModel {
     model: *mut c_void,
-    api: Arc<RuntimeApi>,
+    api: Rc<RuntimeApi>,
     directory: PathBuf,
 }
 
@@ -231,9 +233,9 @@ impl RuntimeApi {
         };
         Ok(Self {
             library: handle,
-            load: unsafe { std::mem::transmute(load) },
-            predict: unsafe { std::mem::transmute(predict) },
-            free: unsafe { std::mem::transmute(free) },
+            load: unsafe { std::mem::transmute::<*mut c_void, RuntimeLoad>(load) },
+            predict: unsafe { std::mem::transmute::<*mut c_void, RuntimePredict>(predict) },
+            free: unsafe { std::mem::transmute::<*mut c_void, RuntimeFree>(free) },
         })
     }
 }
@@ -259,7 +261,7 @@ impl FittedCppRuntime {
         } else if sha256_hex(&fs::read(&runtime_path)?) != runtime_sha256 {
             bail!("existing fitted C++ runtime image has the wrong hash");
         }
-        let api = Arc::new(unsafe { RuntimeApi::open(&runtime_path)? });
+        let api = Rc::new(unsafe { RuntimeApi::open(&runtime_path)? });
         Ok(Self { work_root, api })
     }
 
@@ -303,7 +305,7 @@ impl FittedCppRuntime {
         }
         Ok(FittedCppModel {
             model,
-            api: Arc::clone(&self.api),
+            api: Rc::clone(&self.api),
             directory,
         })
     }

@@ -234,10 +234,16 @@ fn publish_impl(root: &Path, contexts_path: &Path, vocabulary: &Path, sources: &
         ensure!(file_hash(&executable)? == expected["evaluator_sha256"], "admission evaluator changed");
     }
     ensure!(vocab.tokens.len() < u16::MAX as usize, "vocabulary too large");
-    let semantic_dependencies_sha256 = hash(concat!(include_str!("corpus.rs"), include_str!("grammar.rs"),
+    // The loaded packer binds transitive parser/native dependencies as well as
+    // these reviewable source inputs. Any changed implementation gets a lineage.
+    let packer_executable_sha256 = file_hash(Path::new("/proc/self/exe"))?;
+    let semantic_sources = concat!(include_str!("corpus.rs"), include_str!("grammar.rs"),
         include_str!("teaching_store.rs"), include_str!("task_contract.rs"), include_str!("prepare.rs"),
         include_str!("encoding.rs"), include_str!("manifest.rs"), include_str!("label_admission.rs"),
-        include_str!("eval_registry.rs"), include_str!("eval_registry/authority.rs")).as_bytes());
+        include_str!("eval_registry.rs"), include_str!("eval_registry/authority.rs"),
+        include_str!("eval_registry/service.rs"), include_str!("fit_boundary.rs"));
+    let semantic_dependencies_sha256 = hash(&serde_json::to_vec(&(
+        hash(semantic_sources.as_bytes()), packer_executable_sha256))?);
     let binding = hash(&serde_json::to_vec(&(hash(&context_bytes), hash(&vocab_bytes), qualification,
         policy, &expected, &semantic_dependencies_sha256))?);
     let mut prepared = BTreeMap::new(); let mut by_cut = BTreeMap::new();

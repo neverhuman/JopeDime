@@ -176,6 +176,93 @@ impl Layer {
         h + ff.dropout(self.dropout, train)
     }
 }
+
+/// Isolated experimental program encoder. Production Policy does not construct
+/// this module: a separately qualified reranker must opt in with a new artifact.
+/// The existing vocabulary is retained; policy parameters are never shared.
+pub struct OrderAwareRewardEncoder {
+    token: nn::Embedding,
+    position: nn::Embedding,
+    layers: Vec<Layer>,
+    norm: nn::LayerNorm,
+    vocabulary_size: i64,
+    max_seq: i64,
+}
+
+impl OrderAwareRewardEncoder {
+    pub const VERSION: &'static str = "parallel.reward_program_attention_2x256x4.v1";
+
+    pub fn new(p: nn::Path, vocabulary_size: i64, max_seq: i64) -> Result<Self> {
+        ensure!(
+            vocabulary_size > 2 && max_seq > 1,
+            "invalid experimental reward encoder shape"
+        );
+        let mut config = Config::regression(vocabulary_size);
+        config.width = 256;
+        config.heads = 4;
+        config.ffn = 1024;
+        config.layers = 2;
+        config.max_seq = max_seq;
+        let result = Self {
+            token: nn::embedding(
+                &p / "token",
+                vocabulary_size,
+                256,
+                nn::EmbeddingConfig {
+                    padding_idx: 0,
+                    ..Default::default()
+                },
+            ),
+            position: nn::embedding(&p / "position", max_seq, 256, Default::default()),
+            layers: (0..2)
+                .map(|i| Layer::new(&p / "layers" / i.to_string(), &config))
+                .collect(),
+            norm: nn::layer_norm(&p / "norm", vec![256], Default::default()),
+            vocabulary_size,
+            max_seq,
+        };
+        tch::no_grad(|| {
+            let _ = result.token.ws.get(0).zero_();
+        });
+        Ok(result)
+    }
+
+    pub fn forward(&self, tokens: &Tensor, present: &Tensor, train: bool) -> Result<Tensor> {
+        let (batch, length) = tokens.size2()?;
+        ensure!(
+            batch > 0
+                && length > 0
+                && length <= self.max_seq
+                && tokens.kind() == Kind::Int64
+                && present.kind() == Kind::Bool
+                && present.size() == tokens.size()
+                && present.device() == tokens.device(),
+            "experimental reward token/mask shape changed"
+        );
+        ensure!(
+            tokens.min().int64_value(&[]) >= 0
+                && tokens.max().int64_value(&[]) < self.vocabulary_size,
+            "experimental reward token outside vocabulary"
+        );
+        ensure!(
+            present.any_dim(1, false).all().int64_value(&[]) != 0,
+            "experimental reward program is empty"
+        );
+        let position = Tensor::arange(length, (Kind::Int64, tokens.device())).unsqueeze(0);
+        let mut encoded = self.token.forward(tokens) + self.position.forward(&position);
+        // Full program attention; every query sees only present keys.
+        let allowed = present.unsqueeze(1).unsqueeze(1);
+        for layer in &self.layers {
+            encoded = layer.forward(&encoded, &allowed, train);
+        }
+        let mask = present.to_kind(Kind::Float).unsqueeze(-1);
+        Ok(
+            (self.norm.forward(&encoded) * &mask).sum_dim_intlist(&[1i64][..], false, Kind::Float)
+                / mask.sum_dim_intlist(&[1i64][..], false, Kind::Float),
+        )
+    }
+}
+
 pub struct Policy {
     pub config: Config,
     encoder: nn::SequentialT,
@@ -488,6 +575,128 @@ pub fn sequence_nll(
     let weights = weights.clamp_min(0.0);
     Ok((per_row * &weights).sum(Kind::Float) / weights.sum(Kind::Float).clamp_min(1e-8))
 }
+/// Per-row log-probability of the supervised token sequence under the policy:
+/// the pad-masked SUM of grammar-masked token log-probs, with no label
+/// smoothing and no length normalisation. This is the quantity a preference
+/// objective compares between the live policy and a frozen reference.
+/// `sequence_nll` deliberately applies both smoothing and length normalisation
+/// and must not be reused for it.
+pub fn sequence_logprob(
+    logits: &Tensor,
+    targets: &Tensor,
+    legal: &Tensor,
+    pad: &Tensor,
+) -> Result<Tensor> {
+    ensure!(
+        legal
+            .gather(-1, &targets.unsqueeze(-1), false)
+            .squeeze_dim(-1)
+            .logical_or(&pad.logical_not())
+            .all()
+            .int64_value(&[])
+            != 0,
+        "illegal supervision token"
+    );
+    let logp = logits
+        .to_kind(Kind::Float)
+        .masked_fill(&legal.logical_not(), f64::NEG_INFINITY)
+        .log_softmax(-1, Kind::Float)
+        .gather(-1, &targets.unsqueeze(-1), false)
+        .squeeze_dim(-1)
+        .masked_fill(&pad.logical_not(), 0.0);
+    Ok(logp.sum_dim_intlist(&[-1i64][..], false, Kind::Float))
+}
+
+/// Ordered preference pairs inside each comparison group: the group's best
+/// program against every other member, plus each adjacent pair in value order
+/// (where the champion-margin information lives). Pairs whose value gap is
+/// zero, non-finite, or below `min_gap_fraction` of the group's median
+/// non-zero gap are skipped and counted, so a preference objective does not
+/// train on fold noise. Uniform pair weight: the |Δvalue| weighting used by the
+/// critic's ranking losses is intentionally not reused here.
+pub fn preference_pairs(
+    values: &[f64],
+    groups: &[String],
+    min_gap_fraction: f64,
+) -> (Vec<i64>, Vec<i64>, usize) {
+    let mut grouped: BTreeMap<&str, Vec<usize>> = BTreeMap::new();
+    for (i, g) in groups.iter().enumerate() {
+        grouped.entry(g).or_default().push(i);
+    }
+    let mut winners = Vec::new();
+    let mut losers = Vec::new();
+    let mut skipped = 0usize;
+    for ids in grouped.values() {
+        let mut ordered: Vec<usize> = ids
+            .iter()
+            .copied()
+            .filter(|&i| values[i].is_finite())
+            .collect();
+        // Best first; ties break on the row index so the order is stable.
+        ordered.sort_by(|&a, &b| values[b].total_cmp(&values[a]).then(a.cmp(&b)));
+        if ordered.len() < 2 {
+            continue;
+        }
+        let mut gaps: Vec<f64> = ordered
+            .windows(2)
+            .map(|w| values[w[0]] - values[w[1]])
+            .filter(|g| *g > 0.0)
+            .collect();
+        gaps.sort_by(|a, b| a.total_cmp(b));
+        let floor = if gaps.is_empty() {
+            0.0
+        } else {
+            gaps[gaps.len() / 2] * min_gap_fraction
+        };
+        let mut push = |w: usize, l: usize| {
+            let gap = values[w] - values[l];
+            if gap > 0.0 && gap >= floor {
+                winners.push(w as i64);
+                losers.push(l as i64);
+            } else {
+                skipped += 1;
+            }
+        };
+        let best = ordered[0];
+        for &l in &ordered[1..] {
+            push(best, l);
+        }
+        // Adjacent pairs; (best, second) is already covered above.
+        for pair in ordered.windows(2).skip(1) {
+            push(pair[0], pair[1]);
+        }
+    }
+    (winners, losers, skipped)
+}
+
+/// Direct preference optimisation (Rafailov et al. 2023) over ordered pairs:
+/// `-log sigmoid(beta * ((lp_w - ref_w) - (lp_l - ref_l)))`, mean over pairs.
+/// The reference log-probabilities are constants, so the gradient lands only
+/// on the live policy's own sequence probabilities — the decoder, not the
+/// critic. Returns a connected zero when there are no pairs.
+pub fn preference_dpo(
+    logp: &Tensor,
+    logp_ref: &Tensor,
+    winners: &[i64],
+    losers: &[i64],
+    beta: f64,
+) -> Result<Tensor> {
+    ensure!(winners.len() == losers.len(), "preference pair mismatch");
+    ensure!(
+        logp.size() == logp_ref.size(),
+        "preference log-probability shape mismatch"
+    );
+    if winners.is_empty() {
+        return Ok(logp.sum(Kind::Float) * 0.0);
+    }
+    let device = logp.device();
+    let w = Tensor::from_slice(winners).to_device(device);
+    let l = Tensor::from_slice(losers).to_device(device);
+    let margin = logp - logp_ref;
+    let diff = margin.index_select(0, &w) - margin.index_select(0, &l);
+    Ok(-(diff * beta).log_sigmoid().mean(Kind::Float))
+}
+
 pub fn ranking(
     reward: &Tensor,
     values: &[f64],
@@ -607,6 +816,39 @@ pub struct AdamW {
     backend: String,
 }
 impl AdamW {
+    pub fn validate_parameters(&self, vs: &nn::VarStore) -> Result<()> {
+        let parameters = vs
+            .variables()
+            .into_iter()
+            .filter(|(_, p)| p.requires_grad())
+            .collect::<BTreeMap<_, _>>();
+        ensure!(
+            self.step > 0
+                && self.lr == 1e-4
+                && self.decay == 0.01
+                && self.moments.len() == parameters.len(),
+            "optimizer warm-start configuration/parameter count mismatch"
+        );
+        for (name, p) in parameters {
+            let (m, v) = self
+                .moments
+                .get(&name)
+                .context("optimizer parameter missing")?;
+            ensure!(
+                m.size() == p.size()
+                    && v.size() == p.size()
+                    && m.kind() == Kind::Float
+                    && v.kind() == Kind::Float,
+                "optimizer warm-start shape or dtype mismatch: {name}"
+            );
+            ensure!(
+                m.isfinite().all().int64_value(&[]) == 1
+                    && v.isfinite().all().int64_value(&[]) == 1,
+                "nonfinite optimizer state: {name}"
+            );
+        }
+        Ok(())
+    }
     pub fn new(lr: f64, decay: f64) -> Self {
         Self {
             step: 0,
@@ -854,6 +1096,7 @@ impl Drop for Bf16 {
 }
 
 pub fn nccl_probe(rank: usize, world: usize, directory: &Path) -> Result<()> {
+    crate::task_contract::require_qualified_gpu_experiment("nccl-probe")?;
     tch::set_num_threads(2);
     tch::set_num_interop_threads(1);
     let comm = Nccl::init(rank, world, &directory.join("nccl.id"))?;
@@ -977,8 +1220,12 @@ pub fn training_probe(
     global_batch: usize,
     steps: usize,
 ) -> Result<()> {
+    crate::task_contract::require_qualified_gpu_experiment("training-probe-rank")?;
     let accumulation = crate::controller::probe_accumulation(world, microbatch, global_batch)?;
-    ensure!(rank < world && steps > 5, "invalid throughput probe rank or steps");
+    ensure!(
+        rank < world && steps > 5,
+        "invalid throughput probe rank or steps"
+    );
     tch::set_num_threads(2);
     tch::set_num_interop_threads(1);
     tch::manual_seed(SEED as i64);
@@ -988,14 +1235,21 @@ pub fn training_probe(
     let vocabulary: crate::grammar::Vocab = read_json(vocabulary_path)?;
     let vocabulary_sha256 = file_hash(vocabulary_path)?;
     let vocabulary_size = vocabulary.tokens.len() as i64;
-    ensure!(vocabulary_size > 3, "probe vocabulary needs reserved and program tokens");
+    ensure!(
+        vocabulary_size > 3,
+        "probe vocabulary needs reserved and program tokens"
+    );
     let c = Config::regression(vocabulary_size);
     let model = Policy::new(vs.root(), c)?;
     let mut optimizer = AdamW::new(1e-4, 0.01);
     tch::manual_seed((SEED + rank as u64) as i64);
     let dataset = Tensor::randn([microbatch as i64, 1536], (Kind::Float, device));
     let target = Tensor::randn([microbatch as i64, 512], (Kind::Float, device));
-    let tokens = Tensor::randint(vocabulary_size - 3, [microbatch as i64, 128], (Kind::Int64, device)) + 3;
+    let tokens = Tensor::randint(
+        vocabulary_size - 3,
+        [microbatch as i64, 128],
+        (Kind::Int64, device),
+    ) + 3;
     let pad = Tensor::ones([microbatch as i64, 128], (Kind::Bool, device));
     let started = Instant::now();
     let mut times = Vec::new();
@@ -1087,4 +1341,13 @@ pub fn training_probe(
         &directory.join(format!("complete-{rank}.json")),
         &serde_json::json!({"rank":rank,"world":world,"steps":steps,"parameter_sha256":hex::encode(hasher.finalize()),"microbatch":microbatch,"global_batch":global_batch,"seconds":started.elapsed().as_secs_f64(),"step_seconds":times,"vocabulary_sha256":vocabulary_sha256,"vocabulary_size":vocabulary_size,"eligible_checkpoint":false}),
     )
+}
+/// LibTorch interop configuration may be set only before the first task.
+pub fn configure_runtime() {
+    static INIT: std::sync::Once = std::sync::Once::new();
+    INIT.call_once(|| {
+        tch::set_num_threads(2);
+        tch::set_num_interop_threads(1);
+        tch::jit::set_graph_executor_optimize(false);
+    });
 }

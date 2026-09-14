@@ -1,45 +1,24 @@
-//! Mandatory numerical boundary shared by all supported GP fitting commands.
+//! Mandatory numerical boundary shared by supported GP fitting commands.
 //!
-//! Each public operation either retrieves an original model or supervises one
-//! executor that consumes a durable authority token against sealed input bytes.
-//! Deployment remains gated on historical coverage and target qualification.
+//! Only the long-lived authority may start and supervise a numerical executor.
+//! Clients carry sealed inputs and receive references to its original receipt.
+use crate::{
+    eval_registry::{service, *},
+    manifest::*,
+};
 use anyhow::{bail, ensure, Context, Result};
-use crate::{eval_registry::*, manifest::*};
 use feat_math::Model;
-use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::{fs::{self, File, OpenOptions}, io::{BufRead, Read, Seek, SeekFrom, Write},
-    os::{fd::{AsRawFd, FromRawFd}, unix::process::CommandExt}, path::{Path, PathBuf},
-    process::{Child, Command, Stdio}, time::{Duration, Instant}};
-
-#[derive(Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Inputs {
-    program: String,
-    x: Vec<Vec<f64>>,
-    y: Vec<f64>,
-    preprocessing: Vec<u8>,
-    feature_view: Vec<u8>,
-}
-
-fn contract() -> NumericalContract {
-    NumericalContract { protocol: "featmath_fixed_seed0_f64_single_thread_v1".into(),
-        precision: "f64".into(), omp_threads: 1, rayon_threads: 1, blas_threads: 1, mkl_threads: 1 }
-}
-
-impl Inputs {
-    fn verify(&self) -> Result<VerifiedFit> {
-        VerifiedFit::for_current_executor(&self.program, self.x.clone(), self.y.clone(),
-            self.preprocessing.clone(), self.feature_view.clone(), 0, &contract())
-    }
-}
-
-fn authority_paths() -> Result<(PathBuf, PathBuf)> {
-    Ok((std::env::var_os("JOPE_FIT_AUTHORITY").map(PathBuf::from)
-            .context("mandatory fit authority unavailable: fitting is fenced")?,
-        std::env::var_os("JOPE_FIT_WITNESS").map(PathBuf::from)
-            .context("independent fit high-water witness unavailable: fitting is fenced")?))
-}
+use std::{
+    fs::{File, OpenOptions},
+    io::Write,
+    path::{Path, PathBuf},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    time::Duration,
+};
 
 pub struct RegisteredModel {
     pub model: Model,
@@ -48,198 +27,194 @@ pub struct RegisteredModel {
     pub reused: bool,
 }
 
-fn artifact_reference(path: &Path) -> Result<Value> {
-    Ok(json!({"path":path.canonicalize()?, "sha256":file_hash(path)?}))
+/// Same-host absolute execution deadline; request provenance, never fit identity.
+pub fn deadline_after(duration: Duration) -> Result<u64> {
+    let mut time = libc::timespec {
+        tv_sec: 0,
+        tv_nsec: 0,
+    };
+    ensure!(
+        unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut time) } == 0,
+        "monotonic execution clock unavailable"
+    );
+    let now = (time.tv_sec as u64)
+        .checked_mul(1_000_000_000)
+        .and_then(|s| s.checked_add(time.tv_nsec as u64))
+        .context("execution clock overflow")?;
+    now.checked_add(duration.as_nanos().try_into()?)
+        .context("execution deadline overflow")
 }
 
-fn retained(authority: &mut Authority, root: &Path, completion: &str, reused: bool, destination: &Path) -> Result<RegisteredModel> {
-    let receipt = authority.verify_committed_completion(completion)?;
-    if receipt.outcome != ExecutionOutcome::Success {
-        let path = destination.with_extension("fit-outcome.json");
-        let value = json!({"schema":"parallel.fit_terminal_reference.v1",
-            "fit_completion":artifact_reference(&root.join("objects").join(completion))?,
-            "outcome":receipt.outcome,"numerical_runtime_seconds":receipt.elapsed_seconds,
-            "evaluation_origin":if reused { "reuse" } else { "execution" }});
-        if path.exists() { ensure!(read_json::<Value>(&path)? == value, "original terminal fit reference changed"); }
-        else { write_json(&path, &value)?; }
-    }
-    ensure!(receipt.outcome == ExecutionOutcome::Success, "original fit has terminal non-success outcome");
-    let model = authority.model_for_completion(completion)?;
-    Ok(RegisteredModel { model: serde_json::from_slice(&model)?,
-        completion: artifact_reference(&root.join("objects").join(completion))?,
-        model_reference: artifact_reference(&root.join("objects").join(receipt.model_sha256.context("original model unavailable")?))?,
-        reused })
+fn reference(path: &Path, digest: &str) -> Result<Value> {
+    ensure!(
+        file_hash(path)? == digest,
+        "original authority artifact changed"
+    );
+    Ok(json!({"path":path.canonicalize()?, "sha256":digest}))
 }
 
-struct OwnedChild(Child);
-impl Drop for OwnedChild {
-    fn drop(&mut self) {
-        if self.0.try_wait().ok().flatten().is_none() {
-            let _ = self.0.kill();
-            let _ = self.0.wait();
-        }
-    }
-}
-
-fn sealed(bytes: &[u8]) -> Result<File> {
-    let name = std::ffi::CString::new("jope-fit-input")?;
-    let fd = unsafe { libc::memfd_create(name.as_ptr(), libc::MFD_ALLOW_SEALING) };
-    ensure!(fd >= 3, "sealed fit descriptor unavailable");
-    let mut file = unsafe { File::from_raw_fd(fd) };
-    file.write_all(bytes)?;
-    file.seek(SeekFrom::Start(0))?;
-    let seals = libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL;
-    ensure!(unsafe { libc::fcntl(fd, libc::F_ADD_SEALS, seals) } == 0, "fit inputs could not be sealed");
-    Ok(file)
-}
-
-fn readiness(stream: &mut impl Read, fd: i32, timeout: Duration) -> Result<Value> {
-    let flags = unsafe { libc::fcntl(fd, libc::F_GETFL) };
-    ensure!(flags >= 0 && unsafe { libc::fcntl(fd, libc::F_SETFL, flags | libc::O_NONBLOCK) } == 0,
-        "executor readiness could not be bounded");
-    let deadline = Instant::now() + timeout;
-    let mut bytes = Vec::new();
-    loop {
-        ensure!(Instant::now() < deadline, "executor readiness deadline exceeded; claimed work stays unavailable");
-        let mut poll = libc::pollfd { fd, events: libc::POLLIN, revents: 0 };
-        let milliseconds = deadline.saturating_duration_since(Instant::now()).as_millis().clamp(1, 100) as i32;
-        let n = unsafe { libc::poll(&mut poll, 1, milliseconds) };
-        if n < 0 {
-            let error = std::io::Error::last_os_error();
-            if error.kind() == std::io::ErrorKind::Interrupted { continue; }
-            return Err(error.into());
-        }
-        if n == 0 { continue; }
-        let mut block = [0u8; 4096];
-        match stream.read(&mut block) {
-            Ok(0) => bail!("executor exited before complete readiness"),
-            Ok(count) => {
-                bytes.extend_from_slice(&block[..count]);
-                ensure!(bytes.len() <= 64 * 1024, "executor readiness exceeds protocol limit");
-                if let Some(end) = bytes.iter().position(|b| *b == b'\n') {
-                    return Ok(serde_json::from_slice(&bytes[..end])?);
-                }
-            }
-            Err(error) if matches!(error.kind(), std::io::ErrorKind::WouldBlock | std::io::ErrorKind::Interrupted) => {},
-            Err(error) => return Err(error.into()),
-        }
-    }
-}
-
-/// The only supported route to a new physical feat_math fit. An existing entry
-/// without an original successful model is unavailable, never a fresh claim.
-pub fn fit(program: &str, x: Vec<Vec<f64>>, y: Vec<f64>, preprocessing: Vec<u8>,
-    feature_view: Vec<u8>, destination: &Path) -> Result<RegisteredModel> {
-    let (root, witness) = authority_paths()?;
-    let mut authority = Authority::open(&root, &witness)?;
-    let inputs = Inputs { program: program.into(), x, y, preprocessing, feature_view };
-    let fit = inputs.verify()?;
+/// No direct-child or empty-registry fallback is available when IPC is absent.
+pub fn fit(
+    program: &str,
+    x: Vec<Vec<f64>>,
+    y: Vec<f64>,
+    preprocessing: Vec<u8>,
+    feature_view: Vec<u8>,
+    destination: &Path,
+) -> Result<RegisteredModel> {
+    let socket = std::env::var_os("JOPE_FIT_SERVICE_SOCKET")
+        .map(PathBuf::from)
+        .context("mandatory fit authority service unavailable: fitting is fenced")?;
+    let deadline = match std::env::var("JOPE_FIT_DEADLINE_MONOTONIC_NS") {
+        Ok(value) => value
+            .parse::<u64>()
+            .context("invalid inherited execution deadline")?,
+        Err(std::env::VarError::NotPresent) => deadline_after(Duration::from_secs(30))?,
+        Err(error) => return Err(error.into()),
+    };
+    ensure!(
+        deadline > deadline_after(Duration::ZERO)?,
+        "original request deadline expired before fitting"
+    );
     let request = RequestProvenance {
         scope: std::env::var("JOPE_FIT_SCOPE").context("fit access scope unavailable")?,
-        task_id: destination.to_string_lossy().to_string(),
-        details: json!({"entry_point":"registered_fit", "destination":destination}),
+        task_id: destination.to_string_lossy().into_owned(),
+        details: json!({"entry_point":"registered_fit", "destination":destination,
+            "deadline_monotonic_ns":deadline}),
     };
-    let claim = match authority.claim(&fit, &request)? {
-        ClaimOutcome::Claimed(claim) => claim,
-        ClaimOutcome::Existing { state, completion_sha256: Some(completion), .. } if state == "completed" || state == "terminal_failure" =>
-            return retained(&mut authority, &root, &completion, true, destination),
-        other => bail!("fit unavailable; no automatic retry: {other:?}"),
-    };
-    let descriptor = sealed(&serde_json::to_vec(&inputs)?)?;
-    let output = destination.with_extension(format!("fit-{}.json", claim.claim_token));
-    ensure!(!output.exists(), "original fit output already exists");
-    fs::create_dir_all(output.parent().context("fit destination has no parent")?)?;
-    let mut command = Command::new(std::env::current_exe()?);
-    command.args(["registry-fit", "--fd"]).arg(descriptor.as_raw_fd().to_string())
-        .arg("--output").arg(&output).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::inherit());
-    let parent = std::process::id();
-    unsafe {
-        command.pre_exec(move || {
-            if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL) != 0 || libc::getppid() as u32 != parent {
-                return Err(std::io::Error::other("fit executor lost original supervisor"));
-            }
-            let limit = libc::rlimit { rlim_cur: 8 * 1024 * 1024 * 1024, rlim_max: 8 * 1024 * 1024 * 1024 };
-            if libc::setrlimit(libc::RLIMIT_AS, &limit) != 0 { return Err(std::io::Error::last_os_error()); }
-            Ok(())
-        });
+    let result = service::submit(
+        &socket,
+        &service::ServiceInputs {
+            program: program.into(),
+            x,
+            y,
+            preprocessing,
+            feature_view,
+        },
+        request,
+    )?;
+    let completion = reference(&result.completion_path, &result.completion_sha256)?;
+    if result.receipt.outcome != ExecutionOutcome::Success {
+        let path = destination.with_extension("fit-outcome.json");
+        let value = json!({"schema":"parallel.fit_terminal_reference.v1",
+            "fit_completion":completion,"outcome":result.receipt.outcome,
+            "numerical_runtime_seconds":result.receipt.elapsed_seconds,
+            "evaluation_origin":if result.reused { "reuse" } else { "execution" }});
+        if path.exists() {
+            ensure!(
+                read_json::<Value>(&path)? == value,
+                "original terminal fit reference changed"
+            );
+        } else {
+            write_json(&path, &value)?;
+        }
+        bail!("original fit has terminal non-success outcome");
     }
-    let mut child = OwnedChild(command.spawn()?);
-    let mut ready = child.0.stdout.take().context("executor readiness pipe missing")?;
-    let fd = ready.as_raw_fd();
-    let ready = readiness(&mut ready, fd, Duration::from_secs(30))?;
-    ensure!(ready["fit_key"] == fit.key(), "actual executor input/runtime identity differs");
-    let process = ProcessIdentity::read(child.0.id())?;
-    ensure!(ready["process"] == serde_json::to_value(&process)?, "executor readiness custody differs");
-    let start = authority.authorize(&fit, &claim, &process)?;
-    let mut input = child.0.stdin.take().context("executor authorization pipe missing")?;
-    input.write_all(&serde_json::to_vec(&start)?)?;
-    input.write_all(b"\n")?;
-    drop(input);
-    let observed = ObservedCompletion::wait(&mut child.0, &start, Duration::from_secs(30))?;
-    let bytes = fs::read(&output).unwrap_or_default();
-    let result: Value = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
-    let (outcome, model) = match result["status"].as_str() {
-        Some("success") => (ExecutionOutcome::Success, Some(serde_json::to_vec(&result["model"])?)),
-        Some("deterministic_failure") => (ExecutionOutcome::DeterministicFailure, None),
-        _ => (ExecutionOutcome::InfrastructureFailure, None),
-    };
-    let completion = authority.complete_observed(&fit, observed, outcome, &bytes, model.as_deref(), None, None)?;
-    retained(&mut authority, &root, &completion, false, destination)
+    Ok(RegisteredModel {
+        model: serde_json::from_slice(&result.model_bytes()?)?,
+        completion,
+        model_reference: reference(
+            result
+                .model_path
+                .as_deref()
+                .context("original model unavailable")?,
+            result
+                .model_sha256
+                .as_deref()
+                .context("original model identity unavailable")?,
+        )?,
+        reused: result.reused,
+    })
 }
 
-/// Private CLI executor. No caller-supplied JSON identity grants permission:
-/// arrays, program, executable and loaded runtime are verified here again.
-pub fn execute(fd: i32, output: &Path) -> Result<()> {
-    let (root, witness) = authority_paths()?;
-    ensure!(fd >= 3 && !output.exists(), "invalid executor input/output custody");
-    let seals = libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL;
-    ensure!(unsafe { libc::fcntl(fd, libc::F_GET_SEALS) } & seals == seals, "fit input is not fully sealed");
-    let copy = unsafe { libc::dup(fd) };
-    ensure!(copy >= 3, "fit input descriptor missing");
-    let mut file = unsafe { File::from_raw_fd(copy) };
-    ensure!(file.metadata()?.len() <= 2 * 1024 * 1024 * 1024, "fit input exceeds resource contract");
-    file.seek(SeekFrom::Start(0))?;
-    let inputs: Inputs = serde_json::from_reader(file)?;
-    let fit = inputs.verify()?;
-    let mut authority = Authority::open(&root, &witness)?;
-    println!("{}", json!({"fit_key":fit.key(),"process":ProcessIdentity::current()?}));
-    std::io::stdout().flush()?;
-    let mut line = String::new();
-    std::io::stdin().lock().take(64 * 1024).read_line(&mut line)?;
-    let start: StartToken = serde_json::from_str(&line)?;
-    let custody = authority.consume_start(&fit, &start)?;
-    custody.verify()?;
+/// The retired public token route never opens storage or starts numerical work.
+pub fn execute(_fd: i32, _output: &Path) -> Result<()> {
+    bail!("direct registry-fit is retired; original service-owned executor custody is required")
+}
+
+/// Hidden worker entry point: the authority owns its original child, consumes
+/// the kernel-authenticated start token and retains custody through observed exit.
+pub fn execute_service() -> Result<()> {
+    let (fit, permit, output) = service::await_start_from_environment()?;
+    ensure!(!output.exists(), "original fit output already exists");
+    permit.verify()?;
     let genome = feat_math::GenomeIr::parse(&fit.identity().canonical_program)?;
     let (x, y) = fit.training();
     let result = match feat_math::fit(&genome, x, y) {
-        Ok(model) => json!({"status":"success","model":model}),
-        Err(error) => json!({"status":"deterministic_failure","error":format!("{error:#}")}),
+        Ok(model) => json!({"status":"success", "model":model}),
+        Err(error) => json!({"status":"deterministic_failure", "error":format!("{error:#}")}),
     };
-    custody.verify()?;
-    let mut artifact = OpenOptions::new().write(true).create_new(true).open(output)?;
+    permit.verify()?;
+    let mut artifact = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&output)?;
     artifact.write_all(&serde_json::to_vec(&result)?)?;
     artifact.sync_all()?;
     File::open(output.parent().context("executor artifact parent absent")?)?.sync_all()?;
     Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn sealed_inputs_reject_modification_and_truncation() {
-        let file = sealed(b"owned numeric bytes").unwrap();
-        assert_eq!(unsafe { libc::ftruncate(file.as_raw_fd(), 0) }, -1);
-        assert_eq!(unsafe { libc::write(file.as_raw_fd(), b"x".as_ptr().cast(), 1) }, -1);
+static STOP_REQUESTED: AtomicBool = AtomicBool::new(false);
+extern "C" fn request_stop(_signal: i32) {
+    STOP_REQUESTED.store(true, Ordering::SeqCst);
+}
+
+pub fn serve(
+    authority: PathBuf,
+    witness: PathBuf,
+    socket: PathBuf,
+    workers: usize,
+    event_witness_config: &Path,
+    event_witness_config_sha256: &str,
+    funding_config: Option<&Path>,
+) -> Result<()> {
+    let evaluator = std::env::var_os("JOPE_CPU_EVALUATOR")
+        .map(PathBuf::from)
+        .context("explicit JOPE_CPU_EVALUATOR binding required; CPU evaluator unavailable")?;
+    let witness_config = crate::eval_registry::witness::WitnessClientConfig::from_file(
+        event_witness_config,
+        event_witness_config_sha256,
+    )?;
+    let mut config =
+        service::ServiceConfig::regression(authority, witness, socket, evaluator, workers);
+    config.event_witness = Some(witness_config);
+    config.funding_config = funding_config.map(Path::to_path_buf);
+    let instance = service::Service::bind(config)?;
+    let stop = Arc::new(AtomicBool::new(false));
+    let finished = AtomicBool::new(false);
+    STOP_REQUESTED.store(false, Ordering::SeqCst);
+    let previous_term = unsafe {
+        libc::signal(
+            libc::SIGTERM,
+            request_stop as *const () as libc::sighandler_t,
+        )
+    };
+    let previous_int = unsafe {
+        libc::signal(
+            libc::SIGINT,
+            request_stop as *const () as libc::sighandler_t,
+        )
+    };
+    let result = std::thread::scope(|threads| {
+        let signal_stop = stop.clone();
+        let finished_ref = &finished;
+        threads.spawn(move || {
+            while !finished_ref.load(Ordering::SeqCst) {
+                if STOP_REQUESTED.load(Ordering::SeqCst) {
+                    signal_stop.store(true, Ordering::SeqCst);
+                }
+                std::thread::sleep(Duration::from_millis(20));
+            }
+        });
+        let result = instance.run(stop);
+        finished.store(true, Ordering::SeqCst);
+        result
+    });
+    unsafe {
+        libc::signal(libc::SIGTERM, previous_term);
+        libc::signal(libc::SIGINT, previous_int);
     }
-    #[test]
-    fn partial_readiness_does_not_reset_or_escape_deadline() {
-        let (mut reader, mut writer) = std::os::unix::net::UnixStream::pair().unwrap();
-        writer.write_all(b"{\"partial\":").unwrap();
-        let began = Instant::now();
-        let fd = reader.as_raw_fd();
-        assert!(readiness(&mut reader, fd, Duration::from_millis(20)).unwrap_err()
-            .to_string().contains("deadline"));
-        assert!(began.elapsed() < Duration::from_secs(1));
-    }
+    println!("{}", serde_json::to_string(&result?)?);
+    Ok(())
 }

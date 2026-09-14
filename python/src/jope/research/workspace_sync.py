@@ -42,6 +42,7 @@ class Mirror:
                     '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=2',
                     '-i', str(Path(self.remote['key']).expanduser()), self.remote['host']]
         self.worker = Path(__file__).with_name('workspace_store.py').read_text()
+        self.inventory_worker = Path(__file__).with_name('workspace_inventory.py').read_text()
         self.health_source = (ROOT / 'parallel/tools/kernel_remote_state.py').read_text()
         self.baseline = None
 
@@ -52,11 +53,21 @@ class Mirror:
         request.update(values)
         if not remote:
             return store.dispatch(request)
-        code = self.worker + '\nprint(json.dumps(dispatch(json.loads(' + repr(json.dumps(request)) + '))))\n'
+        # Execute the exact controller-bound indexed implementation, never an
+        # unrelated installed module on the remote host.
+        code = 'import sys, types, json\n'
+        for name, source in (('workspace_store', self.worker), ('workspace_inventory', self.inventory_worker)):
+            code += ('module = types.ModuleType(' + repr(name) + ')\n'
+                     'module.__file__ = ' + repr(self.remote['root'] + '/scripts/' + name + '.py') + '\n'
+                     'sys.modules[' + repr(name) + '] = module\n'
+                     'exec(' + repr(source) + ', module.__dict__)\n')
+        code += 'print(json.dumps(sys.modules["workspace_store"].dispatch(json.loads(' + repr(json.dumps(request)) + '))))\n'
         result = subprocess.run(self.ssh + ['nice -n 15 ionice -c 3 python3 -'],
                                 input=code, text=True, capture_output=True, timeout=180)
         if result.returncode:
             raise RuntimeError('Remote worker failed: ' + result.stderr[-2000:])
+        if op in ('inventory_page', 'inventory_capture', 'inventory_ack', 'inventory_status') and len(result.stdout.encode()) > 524288:
+            raise RuntimeError('Indexed inventory RPC exceeded its bounded response')
         return json.loads(result.stdout)
 
     def health(self):
@@ -78,19 +89,29 @@ class Mirror:
             value = hardware.get(field)
             if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
                 raise RuntimeError('Resource evidence unavailable: ' + field)
-        if hardware['available_gb'] < 4 or hardware['disk_free_gb'] < 10:
+        if hardware['available_gb'] < 4:
             raise RuntimeError('Bulk paused: remote memory or disk reserve reached')
-        if shutil.disk_usage(self.state).free < 10 * 1024**3:
+        local_space = shutil.disk_usage(self.state)
+        if local_space.free < max(250 * 1024**3, (local_space.total + 9) // 10):
             raise RuntimeError('Bulk paused: local disk reserve reached')
         return current
 
     def transfer(self, records, from_remote=False, deadline=None):
         """Sequential transfers provide one aggregate bandwidth limit in both directions."""
+        if deadline is not None and time.monotonic() >= deadline:
+            raise BulkWindowEnded('Backfill window ended before transfer preparation')
         present = set(self.rpc('has', remote=not from_remote, records=records))
         missing = {rec['sha256']: rec for rec in records if rec['sha256'] not in present}
         records = list(missing.values())
         if records:
             self.healthy()
+            # This reservation covers this immutable transfer batch only. It
+            # cannot establish capacity for an unknown full-project backlog.
+            space = self.rpc('capacity', remote=not from_remote)
+            required = space['required_reserve_bytes'] + 3 * sum(r['size'] for r in records)
+            required += 2 * 1024**3  # Bounded batch metadata and growth headroom.
+            if space['free_bytes'] < required:
+                raise RuntimeError('Transfer batch capacity shortfall: ' + str(required - space['free_bytes']))
             dest = self.rpc('prepare_transfer', remote=not from_remote, records=records) + '/'
             source_state = self.remote['state'] if from_remote else self.config['local']['state']
             source = str(Path(source_state) / 'objects') + '/'
@@ -108,8 +129,13 @@ class Mirror:
                        '--bwlimit=' + str(self.config['bandwidth_kib_s']),
                        '--rsync-path=nice -n 15 ionice -c 3 rsync',
                        '-e', shlex.join(self.ssh[:-1]), source, dest]
-            process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, start_new_session=True)
+            process = None
             try:
+                # Hash/capacity/health RPCs can consume the remaining window.
+                # They must not authorize a new transport after its deadline.
+                if deadline is not None and time.monotonic() >= deadline:
+                    raise BulkWindowEnded('Backfill window ended before starting transfer')
+                process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, start_new_session=True)
                 while True:
                     try:
                         _, error = process.communicate(timeout=20)
@@ -123,7 +149,7 @@ class Mirror:
                 self.healthy()
                 self.rpc('publish_many', remote=not from_remote, records=records)
             finally:
-                if process.poll() is None:
+                if process is not None and process.poll() is None:
                     os.killpg(process.pid, __import__('signal').SIGTERM)
                     try:
                         process.communicate(timeout=10)
@@ -134,8 +160,8 @@ class Mirror:
         return sum(rec['size'] for rec in records)
 
     def snapshots(self):
-        local = self.rpc('snapshot')
-        remote = self.rpc('snapshot', remote=True)
+        local = self.rpc('snapshot_observed')
+        remote = self.rpc('snapshot_observed', remote=True)
         store.write_json(self.state / 'incoming-source.json', {'local': local, 'remote': remote, 'timestamp': time.time()})
         return local, remote
 
@@ -144,85 +170,155 @@ class Mirror:
         for path in sorted(local['files'].keys() | remote['files'].keys()):
             left, right = local['files'].get(path), remote['files'].get(path)
             def key(row):
-                return None if row is None else (row['sha256'], row['size'], row['executable'])
+                return None if row is None else (row['sha256'], row['size'], row['executable'], row.get('mode'))
             if key(left) != key(right):
                 rows.append({'path': path, 'local': left, 'remote': right,
                              'status': 'conflict' if left and right else 'local_only' if left else 'remote_only'})
         return {'schema': 'workspace.plan.v1', 'merge_host': 'xbabe2',
                 'local_snapshot': local['generation'], 'remote_snapshot': remote['generation'],
+                'source_coverage': {name: manifest.get('coverage', {'complete': False, 'pending': {'unknown': {'reason': 'legacy_snapshot'}}})
+                                    for name, manifest in (('local', local), ('remote', remote))},
                 'candidates': rows, 'automatic_resolution': False}
 
     def inventory(self, incremental=False):
+        # Both CLI inventory and timer ticks use the indexed page boundary.
+        # The old JSON catalogs remain untouched as historical custody.
         result = {}
-        operation = 'inventory_step' if incremental else 'inventory'
         for node in ('local', 'remote'):
-            result[node] = self.rpc(operation, remote=node == 'remote')
-            store.write_json(self.state / ('inventory-' + node + '.json'), result[node])
+            scopes = [(node, {})]
             for label, spec in self.config[node].get('durable_roots', {}).items():
-                key = node + '/' + label
-                result[key] = self.rpc(operation, remote=node == 'remote', root=spec['path'],
-                                       policy={'source_roots': [], 'prune_roots': spec.get('prune_roots', [])})
-                store.write_json(self.state / ('inventory-' + node + '-' + label + '.json'), result[key])
+                scopes.append((node + '/' + label, dict(root=spec['path'],
+                    policy={'source_roots': [], 'prune_roots': spec.get('prune_roots', [])})))
+            for key, scope in scopes:
+                page = self.rpc('inventory_page', remote=node == 'remote', **scope)
+                result[key] = dict(page, rpc_scope=scope)
+                store.write_json(self.state / ('inventory-page-' + key.replace('/', '-') + '.json'), page)
         return result
 
-    def durable(self, inventories, deadline):
-        path = self.state / 'durable-index.json'
-        index = json.loads(path.read_text()) if path.exists() else {'schema': 'workspace.durable-index.v1', 'files': {}, 'history': {}}
-        todo = []
-        for node, inv in inventories.items():
-            for name, row in inv['files'].items():
-                if row['class'] in ('source', 'dependency'):
-                    continue
-                key = node + ':' + name
-                old = index['files'].get(key)
-                if old and old['observed_signature'] == row['observed_signature']:
-                    continue
-                todo.append((row['size'], node, name, row))
-        # Small manifests, reports and receipts precede large historical archives.
-        todo.sort(key=lambda x: (x[0], x[1], x[2]))
-        completed, moved = set(), 0
-        for _, node, name, observed in todo:
+    @staticmethod
+    def capture_batches(items):
+        """Bound metadata groups; large originals retain a single-file attempt."""
+        batch, size = [], 0
+        for item in items:
+            item_size = item.get('record', {}).get('size', 0)
+            if batch and (item.get('retry_individually') or len(batch) == 8 or size + item_size > 8 * 1024**2):
+                yield batch
+                batch, size = [], 0
+            if item.get('retry_individually'):
+                yield [item]
+                continue
+            batch.append(item)
+            size += item_size
+        if batch:
+            yield batch
+
+    def capture_batch(self, items, page_id, scope, from_remote, deadline):
+        outcomes = [dict(version=item['version'], status='deferred',
+                         reason='bounded backfill window ended', attempted=False) for item in items]
+        if time.monotonic() >= deadline:
+            return 0, outcomes
+        self.healthy()
+        captured, moved = [], 0
+        errors = (OSError, ValueError, RuntimeError, BulkWindowEnded, subprocess.TimeoutExpired)
+        for item, outcome in zip(items, outcomes):
             if time.monotonic() >= deadline:
                 break
-            self.healthy()
+            outcome['attempted'] = True
+            try:
+                record = self.rpc('inventory_capture', remote=from_remote,
+                                  page_id=page_id, version=item['version'], **scope)
+                captured.append((outcome, record))
+            except errors as error:
+                outcome['reason'] = str(error)[:1024]
+        if captured and time.monotonic() < deadline:
+            records = [record for _, record in captured]
+            try:
+                # One capacity reservation and rate-limited transfer serves the
+                # group. Individual capture failures retain their own reason.
+                moved = self.transfer(records, from_remote=from_remote, deadline=deadline)
+                present = []
+                expected = {record['sha256'] for record in records}
+                for remote in (False, True):
+                    response = self.rpc('has', remote=remote, records=records)
+                    if (not isinstance(response, list) or len(response) > len(records)
+                            or any(not isinstance(value, str) or value not in expected for value in response)):
+                        raise ValueError('Invalid batched original object verification')
+                    present.append(set(response))
+                for outcome, record in captured:
+                    if all(record['sha256'] in values for values in present):
+                        outcome.update(status='verified_on_both_hosts', record=record)
+                        outcome.pop('reason')
+                    else:
+                        outcome['reason'] = 'Original captured object is not verified on both hosts'
+            except errors as error:
+                for outcome, _ in captured:
+                    outcome['reason'] = str(error)[:1024]
+        # A failed group health observation prevents all page acknowledgment;
+        # the original page and any sealed/partially transferred bytes survive.
+        self.healthy()
+        return moved, outcomes
+
+    def durable(self, inventories, deadline):
+        moved, verified, deferred = 0, 0, 0
+        attempted_deferred, unattempted_deferred = 0, 0
+        summaries, receipts = {}, []
+        names = list(inventories)
+        cursor_path = self.state / 'backfill-scope-cursor.json'
+        cursor = json.loads(cursor_path.read_text()).get('next') if cursor_path.exists() else None
+        if cursor in names:
+            offset = names.index(cursor)
+            names = names[offset:] + names[:offset]
+        if names:
+            # Rotation is scheduling state only: it never acknowledges a page.
+            # Persist before capture so one slow origin cannot starve all others.
+            store.write_json(cursor_path, {'schema': 'workspace.backfill-cursor.v1', 'next': names[1 % len(names)]})
+        for node in names:
+            envelope = inventories[node]
+            page = envelope['page']
+            page_id = envelope['page_id']
+            if store.identity(page) != page_id:
+                raise ValueError('Inventory page identity differs')
+            scope = envelope['rpc_scope']
             from_remote = node.split('/')[0] == 'remote'
-            try:
-                rec = self.rpc('seal', remote=from_remote, name=name, root=inventories[node]['root'])
-            except (OSError, ValueError, RuntimeError) as error:
-                index.setdefault('pending', {})[node + ':' + name] = {'reason': str(error), 'observed_at': time.time()}
-                store.write_json(path, index)
-                continue
-            # If an active file changed since discovery, retain the captured bytes
-            # but defer any coverage assertion to the next inventory.
-            if rec['observed_signature'] != observed['observed_signature']:
-                continue
-            try:
-                moved += self.transfer([rec], from_remote=from_remote, deadline=deadline)
-            except BulkWindowEnded:
-                break
-            key = node + ':' + name
-            old = index['files'].get(key)
-            if old:
-                index['history'].setdefault(key, []).append(old)
-            index['files'][key] = dict(rec, verified_at=time.time(),
-                                      application_consistency='unqualified_byte_snapshot',
-                                      resumable=False, provenance={'node': node, 'path': name})
-            index.setdefault('pending', {}).pop(key, None)
-            store.write_json(path, index)
-            completed.add((node, name))
-        remaining = [row for row in todo if (row[1], row[2]) not in completed]
-        store.write_json(path, index)
-        index_id = self.rpc('receipt', remote=True, value=index)
-        if index_id != store.identity(index):
-            raise ValueError('Durable provenance index mirror differs')
-        store.write_json(self.state / 'receipts' / (index_id + '.json'), index)
-        return {'files_remaining': len(remaining), 'bytes_remaining': sum(x[0] for x in remaining),
-                'verified_versions': len(index['files']), 'transferred_bytes': moved,
-                'index_sha256': index_id,
-                'application_consistency': 'pending application receipts; byte snapshots are not resumable checkpoints',
-                'pending_live_files': sum(len(v['pending']) for v in inventories.values()),
-                'pending_capture_errors': len(index.get('pending', {})),
-                'excluded_git_requires_custody': True}
+            outcomes = []
+            for batch in self.capture_batches(page['items']):
+                batch_moved, batch_outcomes = self.capture_batch(batch, page_id, scope, from_remote, deadline)
+                moved += batch_moved
+                verified += sum(item['status'] == 'verified_on_both_hosts' for item in batch_outcomes)
+                deferred += sum(item['status'] == 'deferred' for item in batch_outcomes)
+                attempted_deferred += sum(item['status'] == 'deferred' and item['attempted'] for item in batch_outcomes)
+                unattempted_deferred += sum(item['status'] == 'deferred' and not item['attempted'] for item in batch_outcomes)
+                outcomes.extend(batch_outcomes)
+            if outcomes:
+                receipt = dict(schema='workspace.inventory-page-custody.v1', page_id=page_id,
+                               configuration_sha256=page['configuration_sha256'], origin=node,
+                               outcomes=outcomes, application_consistency='unqualified_byte_snapshot',
+                               resumable=False, activation_allowed=False)
+                # Receipt bytes use the same object-transfer limiter and lock as
+                # payload bytes. A lost acknowledgment leaves the original page
+                # and captured objects reusable without resealing changing files.
+                path = self.state / 'receipts' / ('page-' + store.identity(receipt) + '.json')
+                if not path.exists():
+                    store.write_json(path, receipt)
+                elif json.loads(path.read_text()) != receipt:
+                    raise ValueError('Page custody receipt collision')
+                record = store.seal(self.state, path.relative_to(self.state).as_posix(), self.state)
+                moved += self.transfer([record])
+                summary = self.rpc('inventory_ack', remote=from_remote, page_id=page_id,
+                                   receipt_sha256=record['sha256'], **scope)
+                receipts.append(dict(origin=node, page_id=page_id, receipt_sha256=record['sha256']))
+            else:
+                summary = envelope['summary']
+            summaries[node] = summary
+        return dict(files_remaining=None, bytes_remaining=None,
+                    backlog_coverage='unknown; page counts are not a project denominator',
+                    verified_versions_this_pass=verified, deferred_versions_this_pass=deferred,
+                    attempted_deferred_versions_this_pass=attempted_deferred,
+                    unattempted_deferred_versions_this_pass=unattempted_deferred,
+                    transferred_bytes=moved, page_receipts=receipts, indexed_status=summaries,
+                    legacy_custody='existing scans and durable-index.json retained unchanged; not imported',
+                    application_consistency='pending application receipts; byte snapshots are not resumable checkpoints',
+                    excluded_git_requires_custody=True)
 
     def sync(self, publish=None, bulk_seconds=180):
         receipt_dir = store.directory(self.state / 'receipts' / (time.strftime('%Y%m%dT%H%M%SZ', time.gmtime()) + '-' + uuid.uuid4().hex[:8]))
@@ -252,6 +348,7 @@ class Mirror:
             store.write_json(self.state / 'plan.json', plan)
             receipt['source_candidates'] = len(plan['candidates'])
             receipt['source_conflicts'] = sum(x['status'] == 'conflict' for x in plan['candidates'])
+            receipt['source_coverage'] = plan['source_coverage']
             # Custody both source snapshots on both hosts, including remote edits.
             for manifest, origin_remote in ((remote, True), (local, False)):
                 self.transfer(list(manifest['files'].values()), from_remote=origin_remote)
@@ -259,6 +356,8 @@ class Mirror:
                 self.rpc('materialize', remote=True, manifest=manifest)
             pointer = self.state / 'canonical.json'
             if publish:
+                if not all(row['complete'] for row in plan['source_coverage'].values()):
+                    raise ValueError('Canonical publication requires complete source coverage on both hosts')
                 if publish != local['generation']:
                     raise ValueError('Publish requires the current reviewed local snapshot identity; run plan first')
                 store.write_json(pointer, {'generation': publish, 'published_at': time.time(),
@@ -274,10 +373,7 @@ class Mirror:
                 receipt['source_parity'] = 'pending explicit publication'
             inventories = self.inventory(incremental=True)
             receipt['artifacts'] = self.durable(inventories, time.monotonic() + bulk_seconds)
-            receipt['inventory_coverage'] = {k: {'complete': v.get('complete', True),
-                                                'unvisited_paths': v.get('unvisited_paths', 0),
-                                                'unvisited_bytes': v.get('unvisited_bytes'),
-                                                'survey_started': v['timestamp']}
+            receipt['inventory_coverage'] = {k: dict(v['summary'], complete=False)
                                              for k, v in inventories.items()}
             after = self.healthy()
             store.write_json(receipt_dir / 'after.json', after)
@@ -285,8 +381,10 @@ class Mirror:
             receipt['health'] = compare_health(self.baseline, after)
             receipt['runtime_version'] = {k: {'exe': v['exe'], 'sha256': v['exe_sha256'],
                                              'invocation': v['properties']['InvocationID']}
-                                          for k, v in after['stable'].items() if k.startswith('jope-parallel-')}
+                                          for k, v in after['stable'].items() if k.startswith('jope-parallel-') and 'exe' in v}
             receipt['status'] = 'source_verified_backfill_pending' if canonical else 'snapshots_verified_publication_pending'
+            if not all(row['complete'] for row in plan['source_coverage'].values()):
+                receipt['status'] = 'observed_sources_preserved_coverage_incomplete'
             # Completion is deliberately stricter than transport success. Application
             # snapshots, external roots and historical gitlinks have separate gates.
             receipt['synchronized'] = False
@@ -297,7 +395,7 @@ class Mirror:
                 store.write_json(receipt_dir / 'after.json', after)
                 receipt['runtime_version'] = {k: {'exe': v['exe'], 'sha256': v['exe_sha256'],
                                                   'invocation': v['properties']['InvocationID']}
-                                              for k, v in after['stable'].items() if k.startswith('jope-parallel-')}
+                                              for k, v in after['stable'].items() if k.startswith('jope-parallel-') and 'exe' in v}
                 if self.baseline:
                     receipt['preservation'] = compare(self.baseline, after)
                     receipt['health'] = compare_health(self.baseline, after)
@@ -350,8 +448,7 @@ def main():
             return
         if args.command == 'inventory':
             inventories = mirror.inventory()
-            result = {k: {'files': len(v['files']), 'bytes': sum(x['size'] for x in v['files'].values()),
-                          'pending': len(v['pending']), 'excluded': len(v['excluded'])} for k, v in inventories.items()}
+            result = {k: v['summary'] for k, v in inventories.items()}
         elif args.command == 'plan':
             mirror.baseline = mirror.healthy()
             snapshots = mirror.snapshots()
@@ -365,30 +462,17 @@ def main():
             result = {k: mirror.rpc('verify', remote=k == 'remote', manifest=canonical) for k in ('local', 'remote')}
             result['durable_coverage'] = 'consult status; source verification alone does not establish durable parity'
             if args.durable:
-                index = json.loads((mirror.state / 'durable-index.json').read_text())
-                records = {r['sha256']: r for r in index['files'].values()}
-                for history in index['history'].values():
-                    for row in history:
-                        records[row['sha256']] = row
-                result['durable_objects_verified'] = {}
-                for node in ('local', 'remote'):
-                    found = mirror.rpc('has', remote=node == 'remote', records=list(records.values()))
-                    if set(found) != set(records):
-                        raise ValueError('Durable object coverage incomplete on ' + node)
-                    result['durable_objects_verified'][node] = len(found)
+                # The legacy JSON denominator can be hundreds of megabytes.
+                # Retain it without an unbounded read/RPC or a page-sized claim
+                # that all historical durable objects have been reverified.
+                result['durable_verification'] = dict(status='unavailable',
+                    reason='complete legacy and indexed custody boundary has not been reconciled',
+                    page_receipts='consult bounded mirror status', synchronized=False)
         else:
             if args.bulk_seconds < 0:
                 raise ValueError('Bulk duration must be nonnegative')
-            if args.publish:
-                # Local publication can complete while remote preservation evidence
-                # is unavailable. The timer stages this exact generation when safe.
-                manifest = mirror.rpc('snapshot')
-                if manifest['generation'] != args.publish:
-                    raise ValueError('Source changed since the reviewed publication identity')
-                mirror.rpc('materialize', manifest=manifest)
-                store.write_json(mirror.state / 'canonical.json',
-                                 {'generation': args.publish, 'manifest': manifest,
-                                  'merge_host': 'xbabe2', 'published_at': time.time()})
+            # Publication belongs to sync after both-host health, observed
+            # coverage and custody checks. The CLI must not pre-publish it.
             result = mirror.sync(args.publish, args.bulk_seconds)
         print(json.dumps(result, indent=2))
         if result.get('status') == 'paused':

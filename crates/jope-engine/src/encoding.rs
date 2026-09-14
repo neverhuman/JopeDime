@@ -80,6 +80,7 @@ pub fn encode(
     output: &Path,
     gpu: usize,
 ) -> Result<Encoding> {
+    crate::task_contract::require_original_gpu_grant("encode-cut")?;
     use tch::{CModule, Device, Kind, Tensor};
     let p: Prepared = read_json(&prepared.join("prepared.json"))?;
     ensure!(

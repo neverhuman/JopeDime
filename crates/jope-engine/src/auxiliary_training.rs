@@ -374,6 +374,7 @@ fn run(
             None,
             Some(frozen),
             Some(stop),
+            None,
         );
         if let Err(error) = result {
             write_json(

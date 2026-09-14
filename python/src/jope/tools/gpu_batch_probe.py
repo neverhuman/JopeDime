@@ -36,6 +36,12 @@ def summarize(directory, microbatch, global_batch, steps, vocabulary_sha256, voc
             "median_step_seconds": statistics.median(times), "eligible_checkpoint": False}
 
 
+def sample_gpu():
+    return runtime.run(["nvidia-smi", "--query-gpu=index,utilization.gpu,memory.used,memory.total,power.draw",
+                        "--format=csv,noheader,nounits"], timeout=3, env=runtime.child_env(),
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True)
@@ -97,8 +103,7 @@ def main():
                             if reason: raise BlockingIOError(reason)
                             if time.monotonic() - started > 200: raise subprocess.TimeoutExpired(command, 200)
                             if time.monotonic() - sampled >= 2:
-                                sample = runtime.run(["nvidia-smi", "--query-gpu=index,utilization.gpu,memory.used,memory.total,power.draw",
-                                    "--format=csv,noheader,nounits"], timeout=3, env=runtime.child_env(), capture_output=True, text=True)
+                                sample = sample_gpu()
                                 samples.append({"timestamp": time.time(), "exit_code": sample.returncode,
                                                 "csv": sample.stdout, "error": sample.stderr})
                                 runtime.write(output / f"{attempt.name}-gpu.json", samples)

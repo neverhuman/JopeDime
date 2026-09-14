@@ -24,8 +24,28 @@ use std::{
     time::{Duration, Instant},
 };
 
-const SCHEMA: &str = "parallel.fit_authority.v2";
+#[path = "authority/funding.rs"]
+mod funding_admission;
+
+const SCHEMA: &str = "parallel.fit_authority.v5";
+const LEGACY_SCHEMA: &str = "parallel.fit_authority.v4";
 const ZERO: &str = "0000000000000000000000000000000000000000000000000000000000000000";
+const STATE_TABLES: &[&str] = &[
+    "entries",
+    "coverage",
+    "exclusions",
+    "numerical_guards",
+    "history_stages",
+    "history_batches",
+    "activations",
+    "recovery_epochs",
+    "queries",
+    "authorization_witness",
+    "funding_authorizations",
+    "funding_reservations",
+    "funding_participants",
+    "funding_witness",
+];
 
 fn hash(bytes: &[u8]) -> String {
     hex::encode(Sha256::digest(bytes))
@@ -103,6 +123,16 @@ pub struct FitIdentity {
     pub numerical_contract_sha256: String,
 }
 
+/// A different executable/runtime does not itself authorize identical math.
+fn numerical_work_key(identity: &FitIdentity) -> Result<String> {
+    Ok(hash(&encoded(
+        &json!({"schema":"parallel.numerical_work_guard.v1",
+        "program":identity.canonical_program,"training":identity.training_sha256,
+        "preprocessing":identity.preprocessing_sha256,"feature_view":identity.feature_view_sha256,
+        "fit_seed":identity.fit_seed,"numerical_contract":identity.numerical_contract_sha256}),
+    )?))
+}
+
 /// Numerical thread/backend/precision choices belong here. Wall deadlines,
 /// admission policy, generation, proposal seeds and search paths do not.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -151,7 +181,7 @@ pub fn numerical_contract_sha256(c: &NumericalContract) -> Result<String> {
 pub fn current_runtime_digest(contract: &NumericalContract) -> Result<String> {
     process_runtime_digest(std::process::id(), contract)
 }
-fn process_runtime_digest(pid: u32, contract: &NumericalContract) -> Result<String> {
+pub(super) fn process_runtime_digest(pid: u32, contract: &NumericalContract) -> Result<String> {
     contract.validate()?;
     let mut paths = BTreeSet::new();
     for line in fs::read_to_string(format!("/proc/{pid}/maps"))?.lines() {
@@ -247,7 +277,7 @@ impl VerifiedFit {
         )
     }
 
-    fn from_verified_runtime(
+    pub(super) fn from_verified_runtime(
         program: &str,
         x: Vec<Vec<f64>>,
         y: Vec<f64>,
@@ -343,7 +373,7 @@ pub fn ordered_training_sha256(x: &[Vec<f64>], y: &[f64]) -> Result<String> {
     }
     Ok(hex::encode(h.finalize()))
 }
-fn monotonic_ns() -> Result<u64> {
+pub(super) fn monotonic_ns() -> Result<u64> {
     let mut ts = libc::timespec {
         tv_sec: 0,
         tv_nsec: 0,
@@ -476,6 +506,32 @@ struct StateRow {
     row: Value,
 }
 
+/// Durable query outputs, identified by outer immutable blob hashes.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct QueryRecord {
+    pub request_sha256: String,
+    pub predictions_sha256: String,
+    pub metrics_sha256: String,
+    pub receipt_sha256: String,
+    pub completion_sha256: String,
+    pub model_sha256: String,
+    pub query_key: String,
+}
+pub(super) enum QueryClaim {
+    Accepted,
+    Existing(QueryRecord),
+}
+
+struct RecoveryEvidence {
+    journal: Checkpoint,
+    database: Checkpoint,
+    witness: Checkpoint,
+    database_on_chain: bool,
+    database_expected: Option<BTreeMap<(String, String), Value>>,
+    expected: BTreeMap<(String, String), Value>,
+}
+
 /// Every non-null partial field is a constraint. Omitted fields are wildcards,
 /// so a historical program-only exclusion also matches richer future requests.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -520,6 +576,16 @@ pub struct HistoryInventory {
     pub legacy_fence_sha256: String,
 }
 
+/// A batch refers to an immutable staged inventory. Offsets are occurrence
+/// offsets, not counts of unique fits or numerical work saved.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct HistoryBatch {
+    pub stage_sha256: String,
+    pub start: usize,
+    pub end: usize,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Claim {
     pub fit_key: String,
@@ -553,6 +619,9 @@ struct FileLock {
 }
 impl FileLock {
     fn acquire(path: &Path, exclusive: bool, create: bool) -> Result<Self> {
+        Self::acquire_until(path, exclusive, create, None)
+    }
+    fn acquire_until(path: &Path, exclusive: bool, create: bool, absolute_deadline: Option<u64>) -> Result<Self> {
         let file = OpenOptions::new()
             .read(true)
             .write(true)
@@ -562,6 +631,9 @@ impl FileLock {
             .open(path)?;
         let deadline = Instant::now() + Duration::from_secs(10);
         loop {
+            if let Some(end) = absolute_deadline {
+                ensure!(monotonic_ns()? < end, "authority lock admission deadline elapsed");
+            }
             let operation = if exclusive {
                 libc::LOCK_EX
             } else {
@@ -615,6 +687,10 @@ pub struct ExecutionCustody {
 }
 impl ExecutionCustody {
     pub fn verify(&self) -> Result<()> {
+        ensure!(
+            monotonic_ns()? < self.start.deadline_monotonic_ns,
+            "original execution custody deadline expired"
+        );
         self.lock.verify()?;
         ensure!(
             ProcessIdentity::current()? == self.start.executor,
@@ -625,6 +701,44 @@ impl ExecutionCustody {
     pub fn start(&self) -> &StartToken {
         &self.start
     }
+}
+
+pub(super) struct SupervisedCustody {
+    lock: FileLock,
+}
+impl SupervisedCustody {
+    pub(super) fn fd(&self) -> i32 {
+        self.lock.file.as_raw_fd()
+    }
+    pub(super) fn identity(&self) -> Result<(u64, u64)> {
+        self.lock.verify()?;
+        let m = self.lock.file.metadata()?;
+        Ok((m.dev(), m.ino()))
+    }
+}
+/// Authenticate kernel credentials and original process incarnation, not a PID
+/// field supplied in JSON. Scope authorization is checked separately.
+pub(super) fn authenticated_peer(
+    stream: &std::os::unix::net::UnixStream,
+) -> Result<ProcessIdentity> {
+    let mut credential: libc::ucred = unsafe { std::mem::zeroed() };
+    let mut length = std::mem::size_of::<libc::ucred>() as libc::socklen_t;
+    ensure!(
+        unsafe {
+            libc::getsockopt(
+                stream.as_raw_fd(),
+                libc::SOL_SOCKET,
+                libc::SO_PEERCRED,
+                (&mut credential as *mut libc::ucred).cast(),
+                &mut length,
+            )
+        } == 0
+            && length as usize == std::mem::size_of::<libc::ucred>()
+            && credential.pid > 0
+            && credential.uid == unsafe { libc::geteuid() },
+        "unapproved local authority peer"
+    );
+    ProcessIdentity::read(credential.pid as u32)
 }
 
 /// Private status fields prevent a JSON `exit_success=true` from authorizing a
@@ -641,6 +755,74 @@ impl ObservedCompletion {
     /// Call before releasing the executor's descriptor/start handshake. Timeout
     /// cleanup kills the original child and reaps it; descendant reconciliation
     /// remains the resource supervisor's responsibility.
+    pub(super) fn wait_owned_group(
+        child: &mut Child,
+        start: &StartToken,
+        deadline: Duration,
+    ) -> Result<Self> {
+        ensure!(
+            !deadline.is_zero()
+                && child.id() == start.executor.pid
+                && ProcessIdentity::read(child.id())? == start.executor,
+            "original group observation custody changed"
+        );
+        ensure!(
+            unsafe { libc::getpgid(child.id() as i32) } == child.id() as i32,
+            "original child is not its owned process group leader"
+        );
+        ensure!(
+            start.deadline_monotonic_ns > start.authorized_monotonic_ns,
+            "invalid original group deadline"
+        );
+        let effective = start
+            .deadline_monotonic_ns
+            .min(monotonic_ns()?.saturating_add(deadline.as_nanos().try_into()?));
+        let mut timed_out;
+        let status = loop {
+            let mut info: libc::siginfo_t = unsafe { std::mem::zeroed() };
+            let result = unsafe {
+                libc::waitid(
+                    libc::P_PID,
+                    child.id(),
+                    &mut info,
+                    libc::WEXITED | libc::WNOHANG | libc::WNOWAIT,
+                )
+            };
+            if result < 0 {
+                let error = std::io::Error::last_os_error();
+                if error.kind() == std::io::ErrorKind::Interrupted {
+                    continue;
+                }
+                return Err(error.into());
+            }
+            let exited = unsafe { info.si_pid() } == child.id() as i32;
+            if exited || monotonic_ns()? >= effective {
+                timed_out = !exited;
+                // Keep the original child unreaped until its group is killed.
+                // Its PID/group cannot yet belong to an unrelated process.
+                let killed = unsafe { libc::kill(-(child.id() as i32), libc::SIGKILL) };
+                ensure!(
+                    killed == 0
+                        || std::io::Error::last_os_error().raw_os_error() == Some(libc::ESRCH),
+                    "owned group cleanup failed"
+                );
+                break child.wait()?;
+            }
+            std::thread::sleep(Duration::from_millis(1));
+        };
+        let elapsed_seconds =
+            monotonic_ns()?.saturating_sub(start.authorized_monotonic_ns) as f64 / 1e9;
+        let deadline_seconds = (effective - start.authorized_monotonic_ns) as f64 / 1e9;
+        timed_out |= elapsed_seconds > deadline_seconds;
+        Ok(Self {
+            start: start.clone(),
+            exit_code: status.code(),
+            signal: status.signal(),
+            elapsed_seconds,
+            deadline_seconds,
+            timed_out,
+        })
+    }
     pub fn wait(child: &mut Child, start: &StartToken, deadline: Duration) -> Result<Self> {
         ensure!(!deadline.is_zero(), "deadline must be positive");
         ensure!(
@@ -797,6 +979,9 @@ pub struct Authority {
     checkpoint: Checkpoint,
     manifest_sha: String,
     data_version: i64,
+    recovery_mode: bool,
+    event_witness: Option<super::witness::WitnessClient>,
+    funding_installation: Option<super::funding_config::InstalledFunding>,
     #[cfg(test)]
     failpoint: Option<&'static str>,
 }
@@ -851,14 +1036,25 @@ impl Authority {
         let db = Connection::open(root.join("registry.sqlite"))?;
         db.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;
             CREATE TABLE meta(instance TEXT PRIMARY KEY,seq INTEGER NOT NULL,tip TEXT NOT NULL,length INTEGER NOT NULL) WITHOUT ROWID;
-            CREATE TABLE entries(key TEXT PRIMARY KEY,identity_json TEXT NOT NULL,state TEXT NOT NULL,claim_token TEXT NOT NULL,owner_json TEXT NOT NULL,scope TEXT NOT NULL,task_id TEXT NOT NULL,start_json TEXT,completion_sha TEXT) WITHOUT ROWID;
+            CREATE TABLE entries(key TEXT PRIMARY KEY,identity_json TEXT NOT NULL,state TEXT NOT NULL,claim_token TEXT NOT NULL,owner_json TEXT NOT NULL,scope TEXT NOT NULL,task_id TEXT NOT NULL,start_json TEXT,completion_sha TEXT,epoch TEXT NOT NULL) WITHOUT ROWID;
             CREATE TABLE coverage(scope TEXT PRIMARY KEY,inventory_sha TEXT NOT NULL) WITHOUT ROWID;
+            CREATE TABLE history_stages(id TEXT PRIMARY KEY,scope TEXT NOT NULL,inventory_sha TEXT NOT NULL,status TEXT NOT NULL) WITHOUT ROWID;
+            CREATE TABLE history_batches(id TEXT PRIMARY KEY,stage_sha TEXT NOT NULL,start_offset TEXT NOT NULL,end_offset TEXT NOT NULL) WITHOUT ROWID;
+            CREATE TABLE activations(scope TEXT PRIMARY KEY,capability TEXT NOT NULL,epoch TEXT NOT NULL,coverage_sha TEXT NOT NULL,state TEXT NOT NULL,evidence_sha TEXT NOT NULL) WITHOUT ROWID;
+            CREATE TABLE recovery_epochs(id TEXT PRIMARY KEY,epoch TEXT NOT NULL,parent_epoch TEXT NOT NULL,journal_tip TEXT NOT NULL,report_sha TEXT NOT NULL) WITHOUT ROWID;
+            CREATE TABLE authorization_witness(fit_key TEXT PRIMARY KEY,event_sha TEXT NOT NULL,request_sha TEXT NOT NULL,ack_sha TEXT NOT NULL,policy_sha TEXT NOT NULL) WITHOUT ROWID;
+            CREATE TABLE funding_authorizations(id TEXT PRIMARY KEY,domain_id TEXT NOT NULL UNIQUE,evidence_sha TEXT NOT NULL,json TEXT NOT NULL) WITHOUT ROWID;
+            CREATE TABLE funding_reservations(id TEXT PRIMARY KEY,authorization_id TEXT NOT NULL,task_sha256 TEXT NOT NULL,json TEXT NOT NULL,state TEXT NOT NULL,start_json TEXT,UNIQUE(authorization_id,task_sha256)) WITHOUT ROWID;
+            CREATE TABLE funding_participants(id TEXT PRIMARY KEY,reservation_id TEXT NOT NULL,slot TEXT NOT NULL,json TEXT NOT NULL,UNIQUE(reservation_id,slot)) WITHOUT ROWID;
+            CREATE TABLE funding_witness(event_key TEXT PRIMARY KEY,event_sha TEXT NOT NULL,request_sha TEXT NOT NULL,ack_sha TEXT NOT NULL,policy_sha TEXT NOT NULL) WITHOUT ROWID;
+            CREATE TABLE queries(key TEXT PRIMARY KEY,request_sha TEXT NOT NULL,scope TEXT NOT NULL,task_id TEXT NOT NULL,access_sha TEXT NOT NULL,state TEXT NOT NULL,producer_json TEXT NOT NULL,epoch TEXT NOT NULL,record_sha TEXT) WITHOUT ROWID;
+            CREATE TABLE numerical_guards(work_key TEXT PRIMARY KEY,fit_key TEXT NOT NULL) WITHOUT ROWID;
             CREATE TABLE scope_training(scope TEXT NOT NULL,training TEXT NOT NULL,PRIMARY KEY(scope,training)) WITHOUT ROWID;
             CREATE INDEX scope_training_hash ON scope_training(training);
             CREATE TABLE exclusions(id TEXT PRIMARY KEY,scope TEXT NOT NULL,program TEXT,training TEXT,evidence_sha TEXT NOT NULL,reason TEXT NOT NULL) WITHOUT ROWID;
             CREATE INDEX exclusions_match ON exclusions(scope,program,training);
             CREATE TABLE requests(id INTEGER PRIMARY KEY,key TEXT NOT NULL,provenance_json TEXT NOT NULL);
-            PRAGMA user_version=2;")?;
+            PRAGMA user_version=5;")?;
         for scope in &manifest.scopes {
             for training in &scope.training_sha256 {
                 db.execute(
@@ -885,19 +1081,46 @@ impl Authority {
         Ok(())
     }
 
+    /// The independent transport is configured explicitly, never inferred from
+    /// the legacy local watermark. This attaches no execution capability.
+    pub fn attach_event_witness(
+        &mut self,
+        config: super::witness::WitnessClientConfig,
+    ) -> Result<()> {
+        let client = super::witness::WitnessClient::new(config)?;
+        let epoch: String=self.db.query_row("SELECT COALESCE((SELECT epoch FROM recovery_epochs WHERE id='current'),instance) FROM meta",[],|r|r.get(0))?;
+        ensure!(
+            client.policy().authority_instance == self.manifest.instance
+                && client.policy().authority_epoch == epoch,
+            "event witness is bound to another authority/epoch"
+        );
+        self.event_witness = Some(client);
+        Ok(())
+    }
+
     pub fn open(root: &Path, witness: &Path) -> Result<Self> {
+        Self::open_storage(root, witness, false)
+    }
+
+    // Recovery may inspect divergent watermarks, but never uses this handle to
+    // dispatch. Normal open always requires complete reconciliation.
+    fn open_storage(root: &Path, witness: &Path, recovery: bool) -> Result<Self> {
         ensure!(
             !fs::symlink_metadata(root)?.file_type().is_symlink(),
             "authority root is a symlink"
         );
         let root = fs::canonicalize(root)?;
+        ensure!(
+            recovery || !root.join("recovery.pending").exists(),
+            "recovery epoch not committed: dispatch blocked"
+        );
         regular(witness)?;
         let witness = fs::canonicalize(witness)?;
         let manifest_bytes = fs::read(root.join("authority.json"))?;
         regular(&root.join("authority.json"))?;
         let manifest: Manifest = serde_json::from_slice(&manifest_bytes)?;
         ensure!(
-            manifest.schema == SCHEMA
+            matches!(manifest.schema.as_str(), SCHEMA | LEGACY_SCHEMA)
                 && manifest.witness_path == witness
                 && !witness.starts_with(&root),
             "authority/witness binding changed"
@@ -912,7 +1135,8 @@ impl Authority {
         )?;
         db.busy_timeout(Duration::from_secs(10))?;
         ensure!(
-            db.query_row("PRAGMA user_version", [], |r| r.get::<_, u32>(0))? == 2,
+            db.query_row("PRAGMA user_version", [], |r| r.get::<_, u32>(0))?
+                == if manifest.schema == SCHEMA { 5 } else { 4 },
             "wrong registry schema"
         );
         ensure!(
@@ -941,16 +1165,25 @@ impl Authority {
             checkpoint: initial,
             manifest_sha: hash(&manifest_bytes),
             data_version: 0,
+            recovery_mode: recovery,
+            event_witness: None,
+            funding_installation: None,
             #[cfg(test)]
             failpoint: None,
         };
-        authority.verify_tail()?;
-        authority.verify_full_state()?;
+        if !recovery {
+            authority.verify_tail()?;
+            authority.verify_full_state()?;
+        }
         drop(lock);
         Ok(authority)
     }
 
     fn storage_identity(&self) -> Result<()> {
+        ensure!(
+            self.recovery_mode || !self.root.join("recovery.pending").exists(),
+            "recovery epoch not committed: dispatch blocked"
+        );
         ensure!(
             identity(&self.root.join("registry.sqlite"))? == self.db_inode,
             "registry database missing/replaced"
@@ -1045,11 +1278,31 @@ impl Authority {
         self.checkpoint = checkpoint;
         Ok(())
     }
+    // Reading a retained v4 authority never creates funding tables or changes
+    // its journal. Funding admission requires an explicitly initialized v5 store.
+    fn state_tables(&self) -> impl Iterator<Item = &'static str> + '_ {
+        STATE_TABLES.iter().copied().filter(|table| {
+            self.manifest.schema == SCHEMA || !table.starts_with("funding_")
+        })
+    }
+
+    fn require_funding_schema(&self) -> Result<()> {
+        ensure!(self.manifest.schema == SCHEMA,
+            "funding admission requires an explicitly initialized v5 authority; retained v4 storage is unchanged");
+        Ok(())
+    }
+
     fn table_key(table: &str) -> Result<&'static str> {
         match table {
-            "entries" => Ok("key"),
+            "entries" | "queries" => Ok("key"),
+            "authorization_witness" => Ok("fit_key"),
+            "funding_authorizations" | "funding_reservations" | "funding_participants" => Ok("id"),
+            "funding_witness" => Ok("event_key"),
             "exclusions" => Ok("id"),
             "coverage" => Ok("scope"),
+            "numerical_guards" => Ok("work_key"),
+            "history_stages" | "history_batches" | "recovery_epochs" => Ok("id"),
+            "activations" => Ok("scope"),
             _ => anyhow::bail!("unknown authority state table"),
         }
     }
@@ -1084,13 +1337,17 @@ impl Authority {
     fn effects(db: &Connection, kind: &str, payload: &Value) -> Result<Vec<StateRow>> {
         let mut keys = Vec::new();
         match kind {
-            "claim" => keys.push((
-                "entries",
-                payload["claim"]["fit_key"]
-                    .as_str()
-                    .context("claim key missing")?
-                    .to_string(),
-            )),
+            "claim" => {
+                keys.push((
+                    "entries",
+                    payload["claim"]["fit_key"]
+                        .as_str()
+                        .context("claim key missing")?
+                        .to_string(),
+                ));
+                let identity: FitIdentity = serde_json::from_value(payload["identity"].clone())?;
+                keys.push(("numerical_guards", numerical_work_key(&identity)?));
+            }
             "authorize" => keys.push((
                 "entries",
                 payload["fit_key"]
@@ -1117,6 +1374,88 @@ impl Authority {
                     keys.push(("exclusions", hash(&encoded(&e)?)));
                 }
             }
+            "history_stage" => keys.push((
+                "history_stages",
+                payload["stage_sha256"]
+                    .as_str()
+                    .context("missing stage")?
+                    .into(),
+            )),
+            "history_import_batch" => {
+                keys.push((
+                    "history_batches",
+                    payload["batch_sha256"]
+                        .as_str()
+                        .context("missing batch")?
+                        .into(),
+                ));
+                for value in payload["exclusions"]
+                    .as_array()
+                    .context("missing exclusions")?
+                {
+                    let exclusion: HistoricalExclusion = serde_json::from_value(value.clone())?;
+                    keys.push(("exclusions", hash(&encoded(&exclusion)?)));
+                }
+            }
+            "history_commit_coverage" => {
+                keys.push((
+                    "history_stages",
+                    payload["stage_sha256"]
+                        .as_str()
+                        .context("missing stage")?
+                        .into(),
+                ));
+                keys.push((
+                    "coverage",
+                    payload["scope"].as_str().context("missing scope")?.into(),
+                ));
+                let scope = payload["scope"].as_str().context("missing scope")?;
+                let exists: bool = db.query_row(
+                    "SELECT EXISTS(SELECT 1 FROM activations WHERE scope=?)",
+                    [scope],
+                    |r| r.get(0),
+                )?;
+                if exists {
+                    keys.push(("activations", scope.to_string()));
+                }
+            }
+            "witness_ack" => keys.push((
+                "authorization_witness",
+                payload["fit_key"]
+                    .as_str()
+                    .context("witness fit key missing")?
+                    .into(),
+            )),
+            "query_accept" | "query_complete" => keys.push((
+                "queries",
+                payload["key"].as_str().context("query key missing")?.into(),
+            )),
+            "recovery_commit_epoch" => keys.push(("recovery_epochs", "current".into())),
+            "namespace_deactivate" => keys.push((
+                "activations",
+                payload["scope"].as_str().context("missing scope")?.into(),
+            )),
+            "funding_authorize" => keys.push((
+                "funding_authorizations",
+                payload["authorization_id"].as_str().context("funding authorization absent")?.into(),
+            )),
+            "funding_reserve" | "funding_start" => keys.push((
+                "funding_reservations",
+                payload["reservation_id"].as_str().context("funding reservation absent")?.into(),
+            )),
+            "funding_participant" => keys.push((
+                "funding_participants",
+                payload["participant_id"].as_str().context("funding participant absent")?.into(),
+            )),
+            "funding_witness_ack" => keys.push((
+                "funding_witness",
+                payload["event_key"].as_str().context("funding witness event absent")?.into(),
+            )),
+            #[cfg(test)]
+            "synthetic_test_activation" => keys.push((
+                "activations",
+                payload["scope"].as_str().context("missing scope")?.into(),
+            )),
             #[cfg(test)]
             "synthetic_test_coverage" => keys.push(("coverage", "synthetic".into())),
             _ => anyhow::bail!("unrecognized authority mutation"),
@@ -1143,7 +1482,7 @@ impl Authority {
             }
         }
         let mut actual = BTreeMap::new();
-        for table in ["entries", "coverage", "exclusions"] {
+        for table in self.state_tables() {
             let column = Self::table_key(table)?;
             let mut statement = self.db.prepare(&format!("SELECT {column} FROM {table}"))?;
             let keys = statement.query_map([], |r| r.get::<_, String>(0))?;
@@ -1195,7 +1534,19 @@ impl Authority {
         payload: &Value,
         f: impl FnOnce(&Connection) -> Result<(T, bool)>,
     ) -> Result<T> {
-        let _lock = FileLock::acquire(&self.root.join("authority.lock"), true, false)?;
+        let deadline = if matches!(kind, "funding_authorize" | "funding_reserve" | "funding_start" | "funding_participant") {
+            Some(payload["admission_deadline_monotonic_ns"].as_u64().context("funding admission deadline absent")?)
+        } else { None };
+        let _lock = FileLock::acquire_until(&self.root.join("authority.lock"), true, false, deadline)?;
+        self.mutation_under_lock(kind, payload, f)
+    }
+
+    fn mutation_under_lock<T>(
+        &mut self,
+        kind: &str,
+        payload: &Value,
+        f: impl FnOnce(&Connection) -> Result<(T, bool)>,
+    ) -> Result<T> {
         self.verify_tail()?;
         self.db.execute_batch("BEGIN IMMEDIATE")?;
         let result = (|| {
@@ -1214,7 +1565,27 @@ impl Authority {
                 payload: payload.clone(),
                 effects: Self::effects(&self.db, kind, payload)?,
             };
+            // Production cannot release any new token without the independent
+            // event witness, even if a future activation verifier is added.
+            #[cfg(not(test))]
+            ensure!(
+                !matches!(kind, "authorize" | "funding_start" | "funding_participant") || self.event_witness.is_some(),
+                "independent fit-start event witness unavailable"
+            );
             let bytes = encoded(&event)?;
+            // Reject invalid/oversized original witness requests before their
+            // start is journaled. A transport failure after that point remains
+            // ambiguous and cannot be retried as fresh work.
+            if matches!(kind, "authorize" | "funding_start" | "funding_participant") {
+                if let Some(client) = &self.event_witness {
+                    client.request(&bytes)?;
+                }
+            }
+            if matches!(kind, "funding_start" | "funding_participant") {
+                ensure!(monotonic_ns()? < payload["admission_deadline_monotonic_ns"].as_u64()
+                    .context("funding admission deadline absent")?,
+                    "funding admission expired before start journal");
+            }
             let mut journal = OpenOptions::new()
                 .append(true)
                 .custom_flags(libc::O_NOFOLLOW)
@@ -1227,12 +1598,70 @@ impl Authority {
                 self.failpoint != Some("after_journal"),
                 "injected witness disk failure after durable journal"
             );
-            let next = Checkpoint {
+            let mut next = Checkpoint {
                 instance: self.manifest.instance.clone(),
                 seq: event.seq,
                 tip: hash(&bytes),
                 length: self.checkpoint.length + bytes.len() as u64 + 1,
             };
+            if matches!(kind, "authorize" | "funding_start" | "funding_participant") {
+                if let Some(client) = &self.event_witness {
+                    let ack = if kind == "authorize" { client.record(&bytes)? } else {
+                        client.record_until(&bytes, payload["admission_deadline_monotonic_ns"].as_u64()
+                            .context("funding admission deadline absent")?)?
+                    };
+                    let request = client.request(&bytes)?;
+                    ack.verify(client.policy(), &request)?;
+                    let event_sha = self.store_blob(&bytes)?;
+                    let request_sha = self.store_blob(&encoded(&request)?)?;
+                    let ack_sha = self.store_blob(&encoded(&ack)?)?;
+                    let policy_sha = self.store_blob(&encoded(client.policy())?)?;
+                    let is_fit = kind == "authorize";
+                    let key_field = if is_fit { "fit_key" } else { "event_key" };
+                    let witness_key = payload[key_field]
+                        .as_str()
+                        .context("original witness key absent")?;
+                    self.db.execute(
+                        if is_fit { "INSERT INTO authorization_witness VALUES(?,?,?,?,?)" }
+                            else { "INSERT INTO funding_witness VALUES(?,?,?,?,?)" },
+                        params![witness_key, event_sha, request_sha, ack_sha, policy_sha],
+                    )?;
+                    let ack_kind = if is_fit { "witness_ack" } else { "funding_witness_ack" };
+                    let mut payload = json!({"event_sha256":event_sha,"ack_sha256":ack_sha,"policy_sha256":policy_sha});
+                    payload[key_field] = json!(witness_key);
+                    let retained = Event {
+                        instance: self.manifest.instance.clone(),
+                        seq: next.seq + 1,
+                        previous: next.tip.clone(),
+                        kind: ack_kind.into(),
+                        effects: Self::effects(&self.db, ack_kind, &payload)?,
+                        payload,
+                    };
+                    let retained = encoded(&retained)?;
+                    journal.write_all(&retained)?;
+                    journal.write_all(b"\n")?;
+                    journal.sync_all()?;
+                    next.seq += 1;
+                    next.tip = hash(&retained);
+                    next.length += retained.len() as u64 + 1;
+                    let deadline = if is_fit {
+                        let start: StartToken = serde_json::from_str(
+                        event.effects[0].row["start_json"]
+                            .as_str()
+                            .context("original start absent")?,
+                        )?;
+                        start.deadline_monotonic_ns
+                    } else {
+                        let original: super::funding::FundingEvent = serde_json::from_value(event.payload["original"].clone())?;
+                        original.demand.deadline_monotonic_ns.min(event.payload["admission_deadline_monotonic_ns"].as_u64()
+                            .context("funding admission deadline absent")?)
+                    };
+                    ensure!(
+                        monotonic_ns()? < deadline,
+                        "original authorization expired while committing witness ACK"
+                    );
+                }
+            }
             let temporary = self
                 .witness
                 .with_extension(format!("pending-{}", random_token()?));
@@ -1293,10 +1722,51 @@ impl Authority {
         if !covered {
             return Ok(Some("historical coverage unavailable".into()));
         }
+        let importing: bool = db.query_row(
+            "SELECT EXISTS(SELECT 1 FROM history_stages WHERE scope=? AND status!='covered')",
+            [scope],
+            |r| r.get(0),
+        )?;
+        if importing {
+            return Ok(Some("historical coverage import incomplete".into()));
+        }
         let reason=db.query_row("SELECT reason FROM exclusions WHERE (program IS NULL OR program=?) AND (training IS NULL OR training=?) AND (program IS NOT NULL OR training IS NOT NULL OR scope IN (SELECT scope FROM scope_training WHERE training=?)) LIMIT 1",
             params![fit.canonical_program,fit.training_sha256,fit.training_sha256],|r|r.get::<_,String>(0)).optional()?;
         Ok(reason)
     }
+
+    fn activation_block(db: &Connection, scope: &str) -> Result<Option<String>> {
+        let active: bool = db.query_row(
+            "SELECT EXISTS(SELECT 1 FROM activations a JOIN coverage c ON c.scope=a.scope \
+             WHERE a.scope=? AND a.state='active' AND a.coverage_sha=c.inventory_sha \
+             AND a.epoch=COALESCE((SELECT epoch FROM recovery_epochs WHERE id='current'), \
+             (SELECT instance FROM meta)) AND a.capability='synthetic_qualification')",
+            [scope],
+            |r| r.get(0),
+        )?;
+        // Production capabilities have no verifier yet. An arbitrary row (even
+        // with matching hashes) must not enable production dispatch.
+        #[cfg(test)]
+        if active && (scope == "synthetic" || scope.starts_with("synthetic-")) {
+            return Ok(None);
+        }
+        let _ = active;
+        Ok(Some(
+            "namespace capability inactive: explicit verified activation required".into(),
+        ))
+    }
+    fn require_original_epoch(db: &Connection, fit_key: &str) -> Result<()> {
+        let (original,current): (String,String) = db.query_row(
+            "SELECT epoch,COALESCE((SELECT epoch FROM recovery_epochs WHERE id='current'),(SELECT instance FROM meta)) FROM entries WHERE key=?",
+            [fit_key], |r| Ok((r.get(0)?,r.get(1)?)),
+        )?;
+        ensure!(
+            original == current,
+            "original claim/start belongs to a prior recovery epoch; unavailable for execution"
+        );
+        Ok(())
+    }
+
     pub fn lookup(
         &mut self,
         fit: &VerifiedFit,
@@ -1335,6 +1805,23 @@ impl Authority {
                 completion_sha256,
             });
         }
+        let prior: Option<String> = db
+            .query_row(
+                "SELECT fit_key FROM numerical_guards WHERE work_key=?",
+                [numerical_work_key(&fit.identity)?],
+                |r| r.get(0),
+            )
+            .optional()?;
+        if let Some(prior) = prior {
+            return Ok(ClaimOutcome::Blocked {
+                reason: format!(
+                    "same numerical work already seen under another executable/runtime: {prior}"
+                ),
+            });
+        }
+        if let Some(reason) = Self::activation_block(db, scope)? {
+            return Ok(ClaimOutcome::Blocked { reason });
+        }
         Ok(ClaimOutcome::Blocked {
             reason: "unseen: explicit claim required".into(),
         })
@@ -1363,8 +1850,9 @@ impl Authority {
                 ClaimOutcome::Blocked{ref reason} if reason=="unseen: explicit claim required"=>{},
                 other=>return Ok((other,false)),
             }
-            db.execute("INSERT INTO entries(key,identity_json,state,claim_token,owner_json,scope,task_id) VALUES(?,?,'claimed',?,?,?,?)",
+            db.execute("INSERT INTO entries(key,identity_json,state,claim_token,owner_json,scope,task_id,epoch) VALUES(?,?,'claimed',?,?,?,?,COALESCE((SELECT epoch FROM recovery_epochs WHERE id='current'),(SELECT instance FROM meta)))",
                 params![fit.key,serde_json::to_string(&fit.identity)?,claim.claim_token,serde_json::to_string(&owner)?,request.scope,request.task_id])?;
+            db.execute("INSERT INTO numerical_guards VALUES(?,?)",params![numerical_work_key(&fit.identity)?,fit.key])?;
             db.execute("INSERT INTO requests(key,provenance_json) VALUES(?,?)",params![fit.key,serde_json::to_string(request)?])?;
             Ok((ClaimOutcome::Claimed(claim.clone()),true))
         })
@@ -1397,6 +1885,7 @@ impl Authority {
         let token = random_token()?;
         let payload = json!({"fit_key":fit.key,"claim_token":claim.claim_token,"token":token,"executor":executor});
         self.mutation("authorize", &payload, |db| {
+            Self::require_original_epoch(db, &fit.key)?;
             let (owner, scope, task, state, stored_claim): (
                 String,
                 String,
@@ -1417,6 +1906,10 @@ impl Authority {
             ensure!(
                 Self::history_block(db, &scope, &fit.identity)?.is_none(),
                 "historical exclusion blocks authorization"
+            );
+            ensure!(
+                Self::activation_block(db, &scope)?.is_none(),
+                "namespace inactive at authorization"
             );
             let start = StartToken {
                 fit_key: fit.key.clone(),
@@ -1456,7 +1949,12 @@ impl Authority {
         );
         let lock = FileLock::acquire(&self.root.join("custody").join(&fit.key), true, true)?;
         let payload = json!({"start":start,"identity":fit.identity});
+        ensure!(
+            monotonic_ns()? < start.deadline_monotonic_ns,
+            "original start deadline expired during verification"
+        );
         self.mutation("consume_start", &payload, |db| {
+            Self::require_original_epoch(db, &fit.key)?;
             let (state, stored, scope): (String, Option<String>, String) = db.query_row(
                 "SELECT state,start_json,scope FROM entries WHERE key=?",
                 [&fit.key],
@@ -1470,6 +1968,14 @@ impl Authority {
                 Self::history_block(db, &scope, &fit.identity)?.is_none(),
                 "historical exclusion blocks start"
             );
+            ensure!(
+                Self::activation_block(db, &scope)?.is_none(),
+                "namespace inactive at start consumption"
+            );
+            ensure!(
+                monotonic_ns()? < start.deadline_monotonic_ns,
+                "original start deadline expired while acquiring authority"
+            );
             db.execute("UPDATE entries SET state='running' WHERE key=?", [&fit.key])?;
             Ok(())
         })?;
@@ -1477,6 +1983,71 @@ impl Authority {
             start: start.clone(),
             lock,
         })
+    }
+
+    /// Private peer adapter: only the service owning the original Child can
+    /// consume its token. Retain returned custody through the observed exit.
+    pub(super) fn consume_owned_child_start(
+        &mut self,
+        fit: &VerifiedFit,
+        start: &StartToken,
+        child: &Child,
+        stream: &std::os::unix::net::UnixStream,
+    ) -> Result<SupervisedCustody> {
+        let peer = authenticated_peer(stream)?;
+        ensure!(
+            peer == start.executor
+                && peer.pid == child.id()
+                && ProcessIdentity::read(child.id())? == peer,
+            "start peer is not the service-owned original child"
+        );
+        ensure!(
+            start.fit_key == fit.key && monotonic_ns()? < start.deadline_monotonic_ns,
+            "owned child fit/deadline changed"
+        );
+        let lock = FileLock::acquire(&self.root.join("custody").join(&fit.key), true, true)?;
+        self.mutation(
+            "consume_start",
+            &json!({"start":start,"identity":fit.identity}),
+            |db| {
+                Self::require_original_epoch(db, &fit.key)?;
+                let (state, stored, scope): (String, Option<String>, String) = db.query_row(
+                    "SELECT state,start_json,scope FROM entries WHERE key=?",
+                    [&fit.key],
+                    |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+                )?;
+                ensure!(
+                    state == "authorized"
+                        && stored.as_deref() == Some(&serde_json::to_string(start)?),
+                    "supervised token already consumed or unknown"
+                );
+                ensure!(
+                    Self::history_block(db, &scope, &fit.identity)?.is_none(),
+                    "historical exclusion blocks supervised start"
+                );
+                ensure!(
+                    Self::activation_block(db, &scope)?.is_none(),
+                    "namespace inactive at supervised start consumption"
+                );
+                db.execute("UPDATE entries SET state='running' WHERE key=?", [&fit.key])?;
+                Ok(())
+            },
+        )?;
+        Ok(SupervisedCustody { lock })
+    }
+    pub(super) fn require_reconciled_service_start(&mut self) -> Result<()> {
+        let _lock = FileLock::acquire(&self.root.join("authority.lock"), false, false)?;
+        self.verify_tail()?;
+        let unresolved: u64 = self.db.query_row(
+            "SELECT COUNT(*) FROM entries WHERE state IN ('claimed','authorized','running')",
+            [],
+            |r| r.get(0),
+        )?;
+        ensure!(
+            unresolved == 0,
+            "original claimed/authorized/running tasks require reconciliation before service restart"
+        );
+        Ok(())
     }
 
     pub fn import_exclusion(&mut self, exclusion: &HistoricalExclusion) -> Result<String> {
@@ -1508,9 +2079,9 @@ impl Authority {
             },
         )
     }
-    /// Validate every declared source byte outside the writer section; publish
-    /// all exclusions and coverage together in one durable import transaction.
-    pub fn import_history(&mut self, inventory: &HistoryInventory) -> Result<String> {
+    /// Capture original bytes into immutable custody. Staging never publishes
+    /// coverage or grants dispatch, and identical retransmission is idempotent.
+    pub fn history_stage(&mut self, inventory: &HistoryInventory) -> Result<String> {
         ensure!(
             !inventory.source_roots.is_empty()
                 && !inventory.files.is_empty()
@@ -1530,6 +2101,13 @@ impl Authority {
                     == inventory.legacy_fence_sha256,
             "legacy fence receipt absent/changed"
         );
+        regular(&inventory.legacy_fence_receipt)?;
+        let fence = fs::read(&inventory.legacy_fence_receipt)?;
+        ensure!(
+            hash(&fence) == inventory.legacy_fence_sha256,
+            "fence changed during capture"
+        );
+        self.store_blob(&fence)?;
         let mut discovered = BTreeSet::new();
         for root in &inventory.source_roots {
             for entry in walkdir::WalkDir::new(root).follow_links(false) {
@@ -1578,30 +2156,773 @@ impl Authority {
         }
         let bytes = encoded(inventory)?;
         let sha = self.store_blob(&bytes)?;
-        self.mutation(
-            "history_coverage",
-            &json!({"inventory_sha256":sha,"inventory":inventory}),
+        self.mutation_checked(
+            "history_stage",
+            &json!({"stage_sha256":sha,"inventory":inventory}),
             |db| {
-                for e in &inventory.occurrences {
-                    db.execute(
-                        "INSERT OR IGNORE INTO exclusions VALUES(?,?,?,?,?,?)",
-                        params![
-                            hash(&encoded(e)?),
-                            e.scope,
-                            e.canonical_program,
-                            e.training_sha256,
-                            e.evidence_sha256,
-                            e.reason
-                        ],
-                    )?;
+                let existing: Option<String> = db
+                    .query_row(
+                        "SELECT inventory_sha FROM history_stages WHERE id=?",
+                        [&sha],
+                        |r| r.get(0),
+                    )
+                    .optional()?;
+                if let Some(existing) = existing {
+                    ensure!(existing == sha, "staged inventory identity changed");
+                    return Ok((sha.clone(), false));
                 }
                 db.execute(
-                    "INSERT INTO coverage VALUES(?,?)",
-                    params![inventory.scope, sha],
+                    "INSERT INTO history_stages VALUES(?,?,?,'staged')",
+                    params![sha, inventory.scope, sha],
                 )?;
-                Ok(sha.clone())
+                Ok((sha.clone(), true))
             },
         )
+    }
+
+    fn staged_inventory(&self, stage_sha256: &str) -> Result<HistoryInventory> {
+        let inventory: HistoryInventory = serde_json::from_slice(&self.read_blob(stage_sha256)?)?;
+        let stored: String = self
+            .db
+            .query_row(
+                "SELECT inventory_sha FROM history_stages WHERE id=?",
+                [stage_sha256],
+                |r| r.get(0),
+            )
+            .context("history stage not committed")?;
+        ensure!(stored == stage_sha256, "history stage identity changed");
+        self.read_blob(&inventory.legacy_fence_sha256)?;
+        Ok(inventory)
+    }
+
+    /// Commit a bounded range of original occurrences. Repeating the identical
+    /// batch is a no-op; overlaps and out-of-range offsets are rejected.
+    pub fn history_import_batch(&mut self, batch: &HistoryBatch) -> Result<String> {
+        self.verify_tail()?;
+        let inventory = self.staged_inventory(&batch.stage_sha256)?;
+        ensure!(
+            batch.start < batch.end
+                && batch.end <= inventory.occurrences.len()
+                && batch.end - batch.start <= 4096,
+            "invalid or oversized history batch"
+        );
+        let exclusions = &inventory.occurrences[batch.start..batch.end];
+        for exclusion in exclusions {
+            exclusion.validate()?;
+            self.read_blob(&exclusion.evidence_sha256)?;
+        }
+        let batch_sha = self.store_blob(&encoded(batch)?)?;
+        self.mutation_checked("history_import_batch",
+            &json!({"batch_sha256":batch_sha,"batch":batch,"exclusions":exclusions}), |db| {
+                let exists: bool = db.query_row("SELECT EXISTS(SELECT 1 FROM history_batches WHERE id=?)",
+                    [&batch_sha], |r| r.get(0))?;
+                if exists { return Ok((batch_sha.clone(), false)); }
+                let overlap: bool = db.query_row(
+                    "SELECT EXISTS(SELECT 1 FROM history_batches WHERE stage_sha=? AND CAST(start_offset AS INTEGER)<? AND CAST(end_offset AS INTEGER)>?)",
+                    params![batch.stage_sha256,batch.end as i64,batch.start as i64], |r| r.get(0))?;
+                ensure!(!overlap, "history batch overlaps an original committed occurrence");
+                for e in exclusions {
+                    db.execute("INSERT OR IGNORE INTO exclusions VALUES(?,?,?,?,?,?)", params![
+                        hash(&encoded(e)?),e.scope,e.canonical_program,e.training_sha256,e.evidence_sha256,e.reason])?;
+                }
+                db.execute("INSERT INTO history_batches VALUES(?,?,?,?)", params![
+                    batch_sha,batch.stage_sha256,batch.start.to_string(),batch.end.to_string()])?;
+                Ok((batch_sha.clone(), true))
+            })
+    }
+
+    pub fn history_commit_coverage(&mut self, stage_sha256: &str) -> Result<String> {
+        self.verify_tail()?;
+        let inventory = self.staged_inventory(stage_sha256)?;
+        for sha in inventory.files.values() {
+            self.read_blob(sha)?;
+        }
+        self.mutation_checked("history_commit_coverage",
+            &json!({"stage_sha256":stage_sha256,"scope":inventory.scope}), |db| {
+                let mut statement = db.prepare("SELECT start_offset,end_offset FROM history_batches WHERE stage_sha=? ORDER BY CAST(start_offset AS INTEGER)")?;
+                let ranges = statement.query_map([stage_sha256], |r| Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?)))?;
+                let mut covered = 0usize;
+                for range in ranges {
+                    let (start,end) = range?;
+                    ensure!(start.parse::<usize>()? == covered, "history occurrence coverage gap or overlap");
+                    covered = end.parse()?;
+                }
+                ensure!(covered == inventory.occurrences.len(), "history occurrence coverage incomplete");
+                let prior: Option<String> = db.query_row("SELECT inventory_sha FROM coverage WHERE scope=?",
+                    [&inventory.scope], |r| r.get(0)).optional()?;
+                if prior.as_deref() == Some(stage_sha256) { return Ok((stage_sha256.to_string(),false)); }
+                db.execute("INSERT INTO coverage VALUES(?,?) ON CONFLICT(scope) DO UPDATE SET inventory_sha=excluded.inventory_sha",
+                    params![inventory.scope,stage_sha256])?;
+                db.execute("UPDATE history_stages SET status='covered' WHERE id=?", [stage_sha256])?;
+                db.execute("UPDATE activations SET state='inactive' WHERE scope=?", [&inventory.scope])?;
+                Ok((stage_sha256.to_string(),true))
+            })
+    }
+
+    /// Compatibility import retains the three durable phases. Coverage is
+    /// evidence only and cannot activate any execution capability.
+    pub fn import_history(&mut self, inventory: &HistoryInventory) -> Result<String> {
+        let stage = self.history_stage(inventory)?;
+        for start in (0..inventory.occurrences.len()).step_by(4096) {
+            self.history_import_batch(&HistoryBatch {
+                stage_sha256: stage.clone(),
+                start,
+                end: (start + 4096).min(inventory.occurrences.len()),
+            })?;
+        }
+        self.history_commit_coverage(&stage)
+    }
+
+    /// Production activation is intentionally unavailable until the independent
+    /// event witness and original release/boundary/reservation verifiers exist.
+    /// Declared hashes or a caller's Boolean must never stand in for those gates.
+    pub fn namespace_activate(&mut self, scope: &str, capability: &str) -> Result<String> {
+        let _lock = FileLock::acquire(&self.root.join("authority.lock"), false, false)?;
+        self.verify_tail()?;
+        ensure!(
+            self.manifest.scopes.iter().any(|s| s.scope == scope),
+            "unknown activation scope"
+        );
+        ensure!(
+            [
+                "synthetic_qualification",
+                "regression_collection",
+                "regression_training",
+                "regression_promotion"
+            ]
+            .contains(&capability),
+            "unsupported activation capability"
+        );
+        anyhow::bail!("namespace activation unavailable: independent authorization-event witness, qualified release, full synchronization boundary and funded capability verifiers are not implemented")
+    }
+
+    pub fn namespace_deactivate(&mut self, scope: &str) -> Result<()> {
+        self.mutation_checked("namespace_deactivate", &json!({"scope":scope}), |db| {
+            let changed = db.execute(
+                "UPDATE activations SET state='inactive' WHERE scope=? AND state='active'",
+                [scope],
+            )?;
+            Ok(((), changed != 0))
+        })
+    }
+
+    #[cfg(test)]
+    pub(crate) fn activate_synthetic_for_test(&mut self) -> Result<()> {
+        ensure!(
+            self.manifest.scopes.iter().all(|s| s.scope == "synthetic"),
+            "test-only synthetic authority required"
+        );
+        let evidence =
+            self.store_blob(b"test-only synthetic activation, no production qualification")?;
+        self.mutation("synthetic_test_activation", &json!({"scope":"synthetic","evidence_sha":evidence}), |db| {
+            let coverage: String = db.query_row("SELECT inventory_sha FROM coverage WHERE scope='synthetic'", [], |r| r.get(0))?;
+            let epoch: String = db.query_row("SELECT COALESCE((SELECT epoch FROM recovery_epochs WHERE id='current'),instance) FROM meta", [], |r| r.get(0))?;
+            db.execute("INSERT INTO activations VALUES('synthetic','synthetic_qualification',?,?,'active',?) ON CONFLICT(scope) DO UPDATE SET epoch=excluded.epoch,coverage_sha=excluded.coverage_sha,state=excluded.state,evidence_sha=excluded.evidence_sha",
+                params![epoch,coverage,evidence])?;
+            Ok(())
+        })
+    }
+
+    fn recovery_evidence(&self) -> Result<RecoveryEvidence> {
+        self.storage_identity()?;
+        let database = self
+            .db
+            .query_row("SELECT instance,seq,tip,length FROM meta", [], |r| {
+                Ok(Checkpoint {
+                    instance: r.get(0)?,
+                    seq: r.get(1)?,
+                    tip: r.get(2)?,
+                    length: r.get(3)?,
+                })
+            })?;
+        let mut journal = Checkpoint {
+            instance: self.manifest.instance.clone(),
+            seq: 0,
+            tip: ZERO.into(),
+            length: 0,
+        };
+        let mut database_on_chain = database == journal;
+        let mut database_expected = if database_on_chain {
+            Some(BTreeMap::new())
+        } else {
+            None
+        };
+        let mut expected = BTreeMap::new();
+        let mut reader = BufReader::new(File::open(self.root.join("dispatch.jsonl"))?);
+        loop {
+            let mut line = Vec::new();
+            let length = reader.read_until(b'\n', &mut line)?;
+            if length == 0 {
+                break;
+            }
+            ensure!(
+                line.pop() == Some(b'\n'),
+                "torn original journal: recovery unavailable"
+            );
+            let event: Event = serde_json::from_slice(&line)?;
+            ensure!(
+                event.instance == journal.instance
+                    && event.seq == journal.seq + 1
+                    && event.previous == journal.tip,
+                "original journal chain changed: recovery unavailable"
+            );
+            for row in event.effects {
+                Self::table_key(&row.table)?;
+                expected.insert((row.table, row.key), row.row);
+            }
+            journal.seq = event.seq;
+            journal.tip = hash(&line);
+            journal.length += length as u64;
+            database_on_chain |= database == journal;
+            if database == journal {
+                database_expected = Some(expected.clone());
+            }
+        }
+        regular(&self.witness)?;
+        let witness: Checkpoint = serde_json::from_slice(&fs::read(&self.witness)?)?;
+        Ok(RecoveryEvidence {
+            journal,
+            database,
+            witness,
+            database_on_chain,
+            database_expected,
+            expected,
+        })
+    }
+
+    fn recovery_report(&self, evidence: &RecoveryEvidence) -> Result<Value> {
+        let unresolved: Vec<Value> = evidence
+            .expected
+            .iter()
+            .filter_map(|((table, key), row)| {
+                if table == "entries"
+                    && matches!(
+                        row["state"].as_str(),
+                        Some("claimed" | "authorized" | "running")
+                    )
+                {
+                    Some(
+                        json!({"fit_key":key,"scope":row["scope"],"state":row["state"],"authority_epoch":row["epoch"],
+                    "disposition":"unavailable; original execution may not be repeated"}),
+                    )
+                } else {
+                    None
+                }
+            })
+            .collect();
+        let mut blockers = Vec::new();
+        if evidence.journal != evidence.witness {
+            blockers.push("original journal and witness watermarks disagree");
+        }
+        if !evidence.database_on_chain {
+            blockers.push("database watermark is not in retained journal");
+        }
+        if evidence.database != evidence.journal {
+            blockers.push("database requires original journal replay");
+        }
+        if self.root.join("recovery.pending").exists() {
+            blockers.push("recovery epoch not committed");
+        }
+        let indexed_state_error = self.verify_full_state().err().map(|e| e.to_string());
+        let database_checkpoint_state_error = self
+            .verify_database_checkpoint(evidence)
+            .err()
+            .map(|e| e.to_string());
+        let retained_artifact_errors = self.recovery_artifact_errors(evidence);
+        if indexed_state_error.is_some() {
+            blockers.push("indexed safety state differs from original retained journal");
+        }
+        if database_checkpoint_state_error.is_some() {
+            blockers
+                .push("database contains safety state inconsistent with its original checkpoint");
+        }
+        if !retained_artifact_errors.is_empty() {
+            blockers.push("original committed artifact bytes unavailable or inconsistent");
+        }
+        blockers.push("independent witness recovery reconciliation and production activation verifiers unavailable");
+        Ok(json!({"schema":"parallel.authority_recovery_inspection.v1",
+            "authority_instance":self.manifest.instance,"authority_manifest_sha256":self.manifest_sha,
+            "inspector_executable_sha256":hash(&fs::read("/proc/self/exe")?),
+            "database":evidence.database,"journal":evidence.journal,"witness":evidence.witness,
+            "unresolved_original_work":unresolved,
+            "unresolved_original_funding":evidence.expected.iter().filter_map(|((table,key),row)| {
+                if table != "funding_reservations" || row["state"] != "started" { return None; }
+                let original = row["start_json"].as_str().and_then(|s| serde_json::from_str::<Value>(s).ok());
+                let event_key = original.as_ref().and_then(|v| v["event_key"].as_str());
+                let witnessed = event_key.is_some_and(|event_key| evidence.expected.contains_key(&("funding_witness".into(),event_key.into())));
+                Some(json!({"reservation_id":key,"task_sha256":row["task_sha256"],
+                    "independent_start_ack_retained":witnessed,
+                    "disposition":"original allocation remains occupied; terminal evidence/reconciliation required; never replay"}))
+            }).collect::<Vec<_>>(),
+            "unresolved_original_queries":evidence.expected.iter().filter_map(|((table,key),row)|
+                (table == "queries" && row["state"] == "accepted").then(|| json!({"task_key":key,"request_sha256":row["request_sha"],
+                    "epoch":row["epoch"],"disposition":"unavailable; original accepted query cannot be repeated"}))).collect::<Vec<_>>(),
+            "indexed_state_error":indexed_state_error,
+            "database_checkpoint_state_error":database_checkpoint_state_error,
+            "retained_artifact_errors":retained_artifact_errors,"blockers":blockers}))
+    }
+
+    fn recovery_artifact_errors(&self, evidence: &RecoveryEvidence) -> Vec<String> {
+        let mut errors = Vec::new();
+        for ((table, key), row) in &evidence.expected {
+            let result = (|| -> Result<()> {
+                if table == "entries"
+                    && matches!(
+                        row["state"].as_str(),
+                        Some("completed" | "terminal_failure")
+                    )
+                {
+                    let receipt = self.completion(
+                        row["completion_sha"]
+                            .as_str()
+                            .context("original completion absent")?,
+                    )?;
+                    let start: StartToken = serde_json::from_str(
+                        row["start_json"]
+                            .as_str()
+                            .context("original start absent")?,
+                    )?;
+                    ensure!(
+                        receipt.authority_instance == self.manifest.instance
+                            && receipt.fit_key == *key
+                            && receipt.attempt_token == start.token
+                            && receipt.process == start.executor
+                            && receipt.task_id == start.task_id,
+                        "original completion custody mismatch"
+                    );
+                    self.read_blob(&receipt.output_sha256)?;
+                    for sha in [
+                        &receipt.model_sha256,
+                        &receipt.predictions_sha256,
+                        &receipt.metrics_sha256,
+                    ]
+                    .into_iter()
+                    .flatten()
+                    {
+                        self.read_blob(sha)?;
+                    }
+                } else if table == "authorization_witness" || table == "funding_witness" {
+                    let policy: super::witness::WitnessPolicy = serde_json::from_slice(
+                        &self.read_blob(
+                            row["policy_sha"]
+                                .as_str()
+                                .context("witness policy absent")?,
+                        )?,
+                    )?;
+                    let request: super::witness::SignedRequest = serde_json::from_slice(
+                        &self.read_blob(
+                            row["request_sha"]
+                                .as_str()
+                                .context("witness request absent")?,
+                        )?,
+                    )?;
+                    let ack: super::witness::SignedAck = serde_json::from_slice(
+                        &self.read_blob(row["ack_sha"].as_str().context("witness ACK absent")?)?,
+                    )?;
+                    ack.verify(&policy, &request)?;
+                    let event_bytes = self.read_blob(
+                        row["event_sha"]
+                            .as_str()
+                            .context("original witnessed event absent")?,
+                    )?;
+                    ensure!(
+                        ack.body.event_sha256 == hash(&event_bytes)
+                            && policy.authority_instance == self.manifest.instance,
+                        "witness original authority event mismatch"
+                    );
+                    let event: Event = serde_json::from_slice(&event_bytes)?;
+                    ensure!(
+                        event.payload[if table == "authorization_witness" { "fit_key" } else { "event_key" }] == *key,
+                        "witness original fit key mismatch"
+                    );
+                } else if table == "queries" {
+                    let inputs: super::query::QueryInputs = serde_json::from_slice(
+                        &self.read_blob(
+                            row["request_sha"]
+                                .as_str()
+                                .context("original query descriptor absent")?,
+                        )?,
+                    )?;
+                    ensure!(
+                        Self::query_task_key(&inputs)? == *key
+                            && inputs.scope == row["scope"]
+                            && inputs.task_id == row["task_id"]
+                            && inputs.access_receipt_sha256 == row["access_sha"],
+                        "query acceptance identity mismatch"
+                    );
+                    if row["state"] == "completed" {
+                        let record: QueryRecord = serde_json::from_slice(
+                            &self.read_blob(
+                                row["record_sha"]
+                                    .as_str()
+                                    .context("original query record absent")?,
+                            )?,
+                        )?;
+                        let receipt = self.verify_query_artifacts(&inputs, &record)?;
+                        ensure!(
+                            serde_json::to_string(&receipt.producer_process)?
+                                == row["producer_json"],
+                            "query original producer mismatch"
+                        );
+                        let entry = evidence
+                            .expected
+                            .get(&("entries".into(), receipt.fit_key.clone()))
+                            .context("query original fit record absent")?;
+                        ensure!(
+                            entry["completion_sha"] == inputs.completion_sha256,
+                            "query original completion is not committed"
+                        );
+                    } else {
+                        ensure!(
+                            row["state"] == "accepted" && row["record_sha"].is_null(),
+                            "invalid unknown query state"
+                        );
+                    }
+                } else if table == "history_stages" {
+                    let inventory: HistoryInventory =
+                        serde_json::from_slice(&self.read_blob(key)?)?;
+                    self.read_blob(&inventory.legacy_fence_sha256)?;
+                    for sha in inventory.files.values() {
+                        self.read_blob(sha)?;
+                    }
+                }
+                Ok(())
+            })();
+            if let Err(error) = result {
+                errors.push(format!("{table}/{key}: {error}"));
+            }
+        }
+        errors
+    }
+
+    fn verify_database_checkpoint(&self, evidence: &RecoveryEvidence) -> Result<()> {
+        let expected = evidence
+            .database_expected
+            .as_ref()
+            .context("database checkpoint absent from retained original journal")?;
+        let mut count = 0usize;
+        for table in self.state_tables() {
+            let column = Self::table_key(table)?;
+            let mut statement = self.db.prepare(&format!("SELECT {column} FROM {table}"))?;
+            for key in statement.query_map([], |r| r.get::<_, String>(0))? {
+                let key = key?;
+                let actual = Self::state_row(&self.db, table, &key)?;
+                ensure!(expected.get(&(table.to_string(),key.clone())) == Some(&actual),
+                    "database safety row {table}/{key} conflicts with its retained checkpoint; preserve original evidence for reconciliation");
+                count += 1;
+            }
+        }
+        ensure!(
+            count == expected.len(),
+            "database safety rows missing at original checkpoint; external reconciliation required"
+        );
+        Ok(())
+    }
+
+    /// Read-only inspection works when ordinary open refuses a stale restore.
+    /// A watermark match is reported as such, never as independent recovery proof.
+    pub fn recovery_inspect(root: &Path, witness: &Path) -> Result<Value> {
+        let authority = Self::open_storage(root, witness, true)?;
+        let _lock = FileLock::acquire(&authority.root.join("authority.lock"), false, false)?;
+        authority.recovery_report(&authority.recovery_evidence()?)
+    }
+
+    fn hold_recovery(&self) -> Result<()> {
+        let bytes = encoded(&json!({"schema":"parallel.authority_recovery_hold.v1",
+            "authority_instance":self.manifest.instance,"authority_manifest_sha256":self.manifest_sha}))?;
+        let path = self.root.join("recovery.pending");
+        if path.exists() {
+            regular(&path)?;
+            ensure!(fs::read(&path)? == bytes, "recovery hold identity changed");
+        } else {
+            create_immutable(&path, &bytes)?;
+        }
+        Ok(())
+    }
+
+    /// Restore indexed postimages only when the complete original journal ends
+    /// at the retained witness. Missing tails, extra database work, or a witness
+    /// behind the journal cannot be repaired by guessing. No process is started.
+    pub fn recovery_replay(root: &Path, witness: &Path) -> Result<Value> {
+        let authority = Self::open_storage(root, witness, true)?;
+        let _lock = FileLock::acquire(&authority.root.join("authority.lock"), true, false)?;
+        let evidence = authority.recovery_evidence()?;
+        ensure!(evidence.database_on_chain && evidence.journal == evidence.witness,
+            "recovery requires complete original journal and matching witness; missing or ambiguous tails remain blocked");
+        // Compare full postimages at the database's own checkpoint. Checking
+        // keys alone would discard a same-key DB-only authorization or token.
+        authority.verify_database_checkpoint(&evidence)?;
+        authority.hold_recovery()?;
+        authority.db.execute_batch("BEGIN IMMEDIATE")?;
+        let replay = (|| -> Result<()> {
+            for ((table, key), row) in &evidence.expected {
+                let column = Self::table_key(table)?;
+                let stmt = authority.db.prepare(&format!("SELECT * FROM {table}"))?;
+                let columns: Vec<String> =
+                    stmt.column_names().iter().map(|s| s.to_string()).collect();
+                let object = row.as_object().context("original postimage is not a row")?;
+                ensure!(
+                    object.len() == columns.len()
+                        && object.get(column).and_then(Value::as_str) == Some(key),
+                    "original postimage schema or key mismatch"
+                );
+                let values: Vec<rusqlite::types::Value> = columns
+                    .iter()
+                    .map(|column| -> Result<_> {
+                        match object
+                            .get(column)
+                            .context("original postimage column absent")?
+                        {
+                            Value::String(value) => Ok(rusqlite::types::Value::Text(value.clone())),
+                            Value::Null => Ok(rusqlite::types::Value::Null),
+                            _ => anyhow::bail!("invalid original postimage value"),
+                        }
+                    })
+                    .collect::<Result<_>>()?;
+                let placeholders = vec!["?"; columns.len()].join(",");
+                authority.db.execute(
+                    &format!(
+                        "INSERT OR REPLACE INTO {table} ({}) VALUES ({placeholders})",
+                        columns.join(",")
+                    ),
+                    rusqlite::params_from_iter(values),
+                )?;
+            }
+            authority.db.execute(
+                "UPDATE meta SET seq=?,tip=?,length=?",
+                params![
+                    evidence.journal.seq,
+                    evidence.journal.tip,
+                    evidence.journal.length
+                ],
+            )?;
+            authority.verify_full_state()?;
+            authority.db.execute_batch("COMMIT")?;
+            Ok(())
+        })();
+        if replay.is_err() {
+            let _ = authority.db.execute_batch("ROLLBACK");
+        }
+        replay?;
+        authority.recovery_report(&authority.recovery_evidence()?)
+    }
+
+    /// Retain a source-bound reconciliation report. Original unresolved work
+    /// remains in its original state and unavailable; this does not dispatch or
+    /// assert an independently witnessed restoration.
+    pub fn recovery_reconcile(root: &Path, witness: &Path) -> Result<String> {
+        let mut authority = Self::open_storage(root, witness, true)?;
+        let _lock = FileLock::acquire(&authority.root.join("authority.lock"), true, false)?;
+        authority.verify_tail()?;
+        authority.verify_full_state()?;
+        let evidence = authority.recovery_evidence()?;
+        ensure!(
+            authority.recovery_artifact_errors(&evidence).is_empty(),
+            "original committed artifact recovery incomplete"
+        );
+        authority.hold_recovery()?;
+        let report = authority.recovery_report(&evidence)?;
+        authority.store_blob(&encoded(&report)?)
+    }
+
+    /// A new epoch invalidates every previous activation. Committing it adopts
+    /// no unknown completion and enables no namespace. A separate activation
+    /// operation must still satisfy its own currently unavailable verifiers.
+    pub fn recovery_commit_epoch(
+        root: &Path,
+        witness: &Path,
+        report_sha256: &str,
+    ) -> Result<String> {
+        let mut authority = Self::open_storage(root, witness, true)?;
+        let _lock = FileLock::acquire(&authority.root.join("authority.lock"), true, false)?;
+        authority.verify_tail()?;
+        authority.verify_full_state()?;
+        ensure!(
+            authority
+                .recovery_artifact_errors(&authority.recovery_evidence()?)
+                .is_empty(),
+            "original committed artifact recovery incomplete"
+        );
+        ensure!(
+            authority.root.join("recovery.pending").exists(),
+            "reconciliation hold missing"
+        );
+        authority.hold_recovery()?;
+        let report: Value = serde_json::from_slice(&authority.read_blob(report_sha256)?)?;
+        ensure!(
+            report == authority.recovery_report(&authority.recovery_evidence()?)?,
+            "recovery report is stale or not bound to original current evidence"
+        );
+        let epoch = random_token()?;
+        let parent: String = authority.db.query_row("SELECT COALESCE((SELECT epoch FROM recovery_epochs WHERE id='current'),instance) FROM meta", [], |r| r.get(0))?;
+        let tip = authority.checkpoint.tip.clone();
+        authority.mutation_under_lock("recovery_commit_epoch", &json!({"epoch":epoch,"parent_epoch":parent,
+            "journal_tip":tip,"report_sha256":report_sha256}), |db| {
+                db.execute("INSERT INTO recovery_epochs VALUES('current',?,?,?,?) ON CONFLICT(id) DO UPDATE SET epoch=excluded.epoch,parent_epoch=excluded.parent_epoch,journal_tip=excluded.journal_tip,report_sha=excluded.report_sha",
+                    params![epoch,parent,tip,report_sha256])?;
+                Ok(((),true))
+            })?;
+        fs::remove_file(authority.root.join("recovery.pending"))?;
+        sync_dir(&authority.root)?;
+        Ok(epoch)
+    }
+
+    fn query_task_key(inputs: &super::query::QueryInputs) -> Result<String> {
+        ensure!(
+            !inputs.scope.trim().is_empty()
+                && !inputs.task_id.trim().is_empty()
+                && valid_sha(&inputs.access_receipt_sha256),
+            "query logical task identity absent"
+        );
+        Ok(hash(&encoded(
+            &json!({"schema":"parallel.query_task.v1", "scope":inputs.scope,
+            "task_id":inputs.task_id,"access_receipt_sha256":inputs.access_receipt_sha256}),
+        )?))
+    }
+
+    /// The access capability binds this exact descriptor independently of fit
+    /// eligibility. Acceptance is durable before prediction and can occur once.
+    pub(super) fn prepare_query(
+        &mut self,
+        inputs: &super::query::QueryInputs,
+        access: &super::query::VerifiedQueryAccess,
+    ) -> Result<QueryClaim> {
+        access.verify(inputs)?;
+        let original = self.verify_record_in_scope(&inputs.completion_sha256, &inputs.scope)?;
+        ensure!(
+            original.outcome == ExecutionOutcome::Success,
+            "original model did not succeed"
+        );
+        let key = Self::query_task_key(inputs)?;
+        let request_sha = self.store_blob(&encoded(inputs)?)?;
+        let producer = serde_json::to_string(&ProcessIdentity::current()?)?;
+        let existing = self.mutation_checked("query_accept", &json!({"key":key,
+            "request_sha256":request_sha,"producer":producer}), |db| {
+            let prior: Option<(String,String,Option<String>)> = db.query_row(
+                "SELECT request_sha,state,record_sha FROM queries WHERE key=?", [&key],
+                |r| Ok((r.get(0)?,r.get(1)?,r.get(2)?))).optional()?;
+            if let Some((request,state,record)) = prior {
+                ensure!(request == request_sha, "query task descriptor changed, including original deadline");
+                ensure!(state == "completed", "query already accepted: original outcome unavailable; evaluation cannot repeat");
+                return Ok((Some(record.context("committed query record absent")?),false));
+            }
+            let epoch: String = db.query_row("SELECT COALESCE((SELECT epoch FROM recovery_epochs WHERE id='current'),instance) FROM meta", [], |r| r.get(0))?;
+            db.execute("INSERT INTO queries VALUES(?,?,?,?,?,'accepted',?,?,NULL)",
+                params![key,request_sha,inputs.scope,inputs.task_id,inputs.access_receipt_sha256,producer,epoch])?;
+            Ok((None,true))
+        })?;
+        match existing {
+            Some(record) => {
+                let record: QueryRecord = serde_json::from_slice(&self.read_blob(&record)?)?;
+                self.verify_query_artifacts(inputs, &record)?;
+                Ok(QueryClaim::Existing(record))
+            }
+            None => Ok(QueryClaim::Accepted),
+        }
+    }
+
+    fn verify_query_artifacts(
+        &self,
+        inputs: &super::query::QueryInputs,
+        record: &QueryRecord,
+    ) -> Result<super::query::QueryReceipt> {
+        ensure!(
+            record.request_sha256 == inputs.descriptor_sha256()?
+                && record.completion_sha256 == inputs.completion_sha256,
+            "query record request/original completion changed"
+        );
+        let original = self.read_blob(&record.completion_sha256)?;
+        let model = self.read_blob(&record.model_sha256)?;
+        let receipt_bytes = self.read_blob(&record.receipt_sha256)?;
+        super::query::verify_artifacts(
+            &original,
+            &model,
+            inputs,
+            &receipt_bytes,
+            &self.read_blob(&record.predictions_sha256)?,
+            &self.read_blob(&record.metrics_sha256)?,
+        )?;
+        let receipt: super::query::QueryReceipt = serde_json::from_slice(&receipt_bytes)?;
+        ensure!(
+            receipt.authority_instance == self.manifest.instance
+                && receipt.query_key == record.query_key
+                && receipt.model_sha256 == record.model_sha256,
+            "query record producer/original authority changed"
+        );
+        Ok(receipt)
+    }
+
+    /// Original-result retrieval has no accept, predict, completion or mutation
+    /// path. An expired execution deadline cannot prevent reading its evidence.
+    pub(super) fn retrieve_query(
+        &mut self,
+        inputs: &super::query::QueryInputs,
+        access: &super::query::VerifiedQueryAccess,
+    ) -> Result<QueryRecord> {
+        access.verify(inputs)?;
+        self.verify_record_in_scope(&inputs.completion_sha256, &inputs.scope)?;
+        let key = Self::query_task_key(inputs)?;
+        let _lock = FileLock::acquire(&self.root.join("authority.lock"), false, false)?;
+        self.verify_tail()?;
+        let (request, state, record): (String, String, Option<String>) = self
+            .db
+            .query_row(
+                "SELECT request_sha,state,record_sha FROM queries WHERE key=?",
+                [&key],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+            )
+            .context("original query was never accepted; retrieval cannot evaluate")?;
+        ensure!(
+            request == inputs.descriptor_sha256()?,
+            "original query descriptor changed"
+        );
+        ensure!(
+            state == "completed",
+            "original query outcome unavailable; retrieval cannot evaluate"
+        );
+        let record: QueryRecord = serde_json::from_slice(
+            &self.read_blob(&record.context("original query completion record absent")?)?,
+        )?;
+        self.verify_query_artifacts(inputs, &record)?;
+        Ok(record)
+    }
+
+    /// Only opaque scorer output can be published. A lost accepted response or
+    /// failed score cannot be converted into a new evaluation by this API.
+    pub(super) fn commit_query(
+        &mut self,
+        inputs: &super::query::QueryInputs,
+        artifacts: &super::query::QueryArtifacts,
+    ) -> Result<QueryRecord> {
+        self.verify_record_in_scope(&inputs.completion_sha256, &inputs.scope)?;
+        let key = Self::query_task_key(inputs)?;
+        let receipt = artifacts.receipt();
+        let record = QueryRecord {
+            request_sha256: self.store_blob(artifacts.request_bytes())?,
+            predictions_sha256: self.store_blob(artifacts.predictions_bytes())?,
+            metrics_sha256: self.store_blob(artifacts.metrics_bytes())?,
+            receipt_sha256: self.store_blob(artifacts.receipt_bytes())?,
+            completion_sha256: inputs.completion_sha256.clone(),
+            model_sha256: receipt.model_sha256.clone(),
+            query_key: receipt.query_key.clone(),
+        };
+        self.verify_query_artifacts(inputs, &record)?;
+        let record_sha = self.store_blob(&encoded(&record)?)?;
+        self.mutation_checked("query_complete",&json!({"key":key,"record_sha256":record_sha}),|db| {
+            let (request,state,producer,prior): (String,String,String,Option<String>) = db.query_row(
+                "SELECT request_sha,state,producer_json,record_sha FROM queries WHERE key=?",[&key],
+                |r|Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?)))?;
+            ensure!(request == record.request_sha256 && producer == serde_json::to_string(&receipt.producer_process)?,
+                "query original acceptance/producer mismatch");
+            if state == "completed" {
+                ensure!(prior.as_deref() == Some(&record_sha),"conflicting original query completion");
+                return Ok(((),false));
+            }
+            ensure!(state == "accepted", "query has no original acceptance");
+            db.execute("UPDATE queries SET state='completed',record_sha=? WHERE key=?",params![record_sha,key])?;
+            Ok(((),true))
+        })?;
+        Ok(record)
     }
 
     fn store_blob(&self, bytes: &[u8]) -> Result<String> {
@@ -1631,6 +2952,21 @@ impl Authority {
     /// Trusted consumers supply the approved authority paths, not paths nominated
     /// by a result. This proves the receipt is the committed original execution.
     pub fn verify_committed_completion(&mut self, sha: &str) -> Result<CompletionReceipt> {
+        let receipt = self.verify_committed_record(sha)?;
+        self.read_blob(&receipt.output_sha256)?;
+        for h in [
+            &receipt.model_sha256,
+            &receipt.predictions_sha256,
+            &receipt.metrics_sha256,
+        ]
+        .into_iter()
+        .flatten()
+        {
+            self.read_blob(h)?;
+        }
+        Ok(receipt)
+    }
+    pub(super) fn verify_committed_record(&mut self, sha: &str) -> Result<CompletionReceipt> {
         let receipt = self.completion(sha)?;
         ensure!(
             receipt.authority_instance == self.manifest.instance,
@@ -1655,18 +2991,28 @@ impl Authority {
             "receipt original process custody mismatch"
         );
         drop(_lock);
-        // Large immutable artifact validation is outside the writer/read lock.
-        self.read_blob(&receipt.output_sha256)?;
-        for h in [
-            &receipt.model_sha256,
-            &receipt.predictions_sha256,
-            &receipt.metrics_sha256,
-        ]
-        .into_iter()
-        .flatten()
-        {
-            self.read_blob(h)?;
-        }
+        Ok(receipt)
+    }
+    pub(super) fn verify_record_in_scope(
+        &mut self,
+        sha: &str,
+        scope: &str,
+    ) -> Result<CompletionReceipt> {
+        let receipt = self.verify_committed_record(sha)?;
+        let policy = self
+            .manifest
+            .scopes
+            .iter()
+            .find(|p| p.scope == scope)
+            .context("completion access scope denied")?;
+        ensure!(
+            policy.training_sha256.contains(&receipt.training_sha256)
+                && policy
+                    .numerical_contract_sha256
+                    .contains(&receipt.fit_identity.numerical_contract_sha256)
+                && policy.fit_seeds.contains(&receipt.fit_identity.fit_seed),
+            "completion numerical identity outside approved scope"
+        );
         Ok(receipt)
     }
     pub fn completion(&self, sha: &str) -> Result<CompletionReceipt> {
@@ -1693,60 +3039,24 @@ impl Authority {
         predictions: Option<&[u8]>,
         metrics: Option<&[u8]>,
     ) -> Result<String> {
-        ensure!(
-            observed.start.fit_key == fit.key,
-            "original attempt identity mismatch"
-        );
-        let outcome = if observed.timed_out {
-            ExecutionOutcome::Timeout
-        } else if observed.exit_code != Some(0) || observed.signal.is_some() {
-            ExecutionOutcome::InfrastructureFailure
-        } else {
-            requested_outcome
-        };
-        if outcome == ExecutionOutcome::Success {
-            ensure!(
-                model.is_some_and(|v| !v.is_empty()),
-                "successful fit completion missing retained model"
-            );
-        }
-        let mut receipt = CompletionReceipt {
-            schema: "parallel.fit_completion.v2".into(),
-            authority_instance: self.manifest.instance.clone(),
-            fit_key: fit.key.clone(),
-            attempt_token: observed.start.token.clone(),
-            process: observed.start.executor.clone(),
-            task_id: observed.start.task_id.clone(),
-            fit_identity: fit.identity.clone(),
-            executable_sha256: fit.identity.executable_sha256.clone(),
-            program_sha256: fit.identity.program_sha256.clone(),
-            training_sha256: fit.identity.training_sha256.clone(),
-            outcome,
-            observed_exit_code: observed.exit_code,
-            observed_signal: observed.signal,
-            elapsed_seconds: Some(observed.elapsed_seconds),
-            deadline_seconds: observed.deadline_seconds,
-            output_sha256: self.store_blob(output)?,
-            model_sha256: None,
-            predictions_sha256: None,
-            metrics_sha256: None,
-            clean_completion_sha256: String::new(),
-        };
-        if receipt.outcome == ExecutionOutcome::Success {
-            receipt.model_sha256 = Some(self.store_blob(model.context("model required")?)?);
-            receipt.predictions_sha256 = predictions.map(|b| self.store_blob(b)).transpose()?;
-            receipt.metrics_sha256 = metrics.map(|b| self.store_blob(b)).transpose()?;
-        }
-        receipt.clean_completion_sha256 = completion_digest(&receipt)?;
-        let bytes = encoded(&receipt)?;
-        verify_completion_receipt(&bytes)?;
-        let sha = self.store_blob(&bytes)?;
-        self.commit_original_completion(fit, &observed.start, &sha)?;
+        let (start, sha) = prepare_observed_completion(
+            &self.root,
+            &self.manifest.instance,
+            fit,
+            observed,
+            requested_outcome,
+            output,
+            model,
+            predictions,
+            metrics,
+        )?;
+        self.commit_original_completion(fit, &start, &sha)?;
         Ok(sha)
     }
+
     /// Idempotently adopts the original immutable completion after a lost reply.
     /// It cannot create a result from a caller's exit assertion or restart a fit.
-    fn commit_original_completion(
+    pub(super) fn commit_original_completion(
         &mut self,
         fit: &VerifiedFit,
         start: &StartToken,
@@ -1798,6 +3108,80 @@ impl Authority {
             },
         )
     }
+}
+
+/// Prepare large immutable artifacts outside the long-lived authority mutex.
+pub(super) fn prepare_observed_completion(
+    root: &Path,
+    instance: &str,
+    fit: &VerifiedFit,
+    observed: ObservedCompletion,
+    requested_outcome: ExecutionOutcome,
+    output: &[u8],
+    model: Option<&[u8]>,
+    predictions: Option<&[u8]>,
+    metrics: Option<&[u8]>,
+) -> Result<(StartToken, String)> {
+    ensure!(
+        observed.start.fit_key == fit.key,
+        "original attempt identity mismatch"
+    );
+    let outcome = if observed.timed_out {
+        ExecutionOutcome::Timeout
+    } else if observed.exit_code != Some(0) || observed.signal.is_some() {
+        ExecutionOutcome::InfrastructureFailure
+    } else {
+        requested_outcome
+    };
+    if outcome == ExecutionOutcome::Success {
+        ensure!(
+            model.is_some_and(|v| !v.is_empty()),
+            "successful fit completion missing retained model"
+        );
+    }
+    let mut receipt = CompletionReceipt {
+        schema: "parallel.fit_completion.v2".into(),
+        authority_instance: instance.to_string(),
+        fit_key: fit.key.clone(),
+        attempt_token: observed.start.token.clone(),
+        process: observed.start.executor.clone(),
+        task_id: observed.start.task_id.clone(),
+        fit_identity: fit.identity.clone(),
+        executable_sha256: fit.identity.executable_sha256.clone(),
+        program_sha256: fit.identity.program_sha256.clone(),
+        training_sha256: fit.identity.training_sha256.clone(),
+        outcome,
+        observed_exit_code: observed.exit_code,
+        observed_signal: observed.signal,
+        elapsed_seconds: Some(observed.elapsed_seconds),
+        deadline_seconds: observed.deadline_seconds,
+        output_sha256: store_blob_at(root, output)?,
+        model_sha256: None,
+        predictions_sha256: None,
+        metrics_sha256: None,
+        clean_completion_sha256: String::new(),
+    };
+    if receipt.outcome == ExecutionOutcome::Success {
+        receipt.model_sha256 = Some(store_blob_at(root, model.context("model required")?)?);
+        receipt.predictions_sha256 = predictions.map(|b| store_blob_at(root, b)).transpose()?;
+        receipt.metrics_sha256 = metrics.map(|b| store_blob_at(root, b)).transpose()?;
+    }
+    receipt.clean_completion_sha256 = completion_digest(&receipt)?;
+    let bytes = encoded(&receipt)?;
+    verify_completion_receipt(&bytes)?;
+    let sha = store_blob_at(root, &bytes)?;
+    Ok((observed.start, sha))
+}
+fn store_blob_at(root: &Path, bytes: &[u8]) -> Result<String> {
+    let sha = hash(bytes);
+    let path = root.join("objects").join(&sha);
+    if path.exists() {
+        regular(&path)?;
+        ensure!(fs::read(&path)? == bytes, "immutable artifact collision");
+    } else {
+        create_immutable(&path, bytes)?;
+    }
+    Ok(sha)
 }
 
 /// Explicitly synthetic crate-unit-test fixture; absent from production builds.
@@ -1871,6 +3255,7 @@ pub(crate) fn synthetic_completion_for_test(
                 Ok(())
             },
         )?;
+        authority.activate_synthetic_for_test()?;
     }
     let mut authority = Authority::open(root, witness)?;
     let request = RequestProvenance {

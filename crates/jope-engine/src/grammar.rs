@@ -405,15 +405,19 @@ impl Vocab {
         let tokens = self.encode(&pipeline.to_string())?;
         self.decode(&tokens)
     }
+    pub fn task_id(&self, task: &str) -> Result<usize> {
+        crate::task_contract::require_task(task)?;
+        Ok(*self.task_ids.get(task).with_context(|| format!("{task} absent"))?)
+    }
     pub fn encode(&self, genome: &str) -> Result<Vec<usize>> {
+        self.encode_for_task(genome, "regression")
+    }
+    pub fn encode_for_task(&self, genome: &str, task: &str) -> Result<Vec<usize>> {
         let pipeline = parse_dsl(genome)?;
         let mut tokens = vec![
             1,
             *self.engine_ids.get("featmath").context("featmath absent")?,
-            *self
-                .task_ids
-                .get("regression")
-                .context("regression absent")?,
+            self.task_id(task)?,
         ];
         for stage in &pipeline.stages {
             let op = self
@@ -676,4 +680,25 @@ fn parse_expr_tokens(text: &str, table: &Expr) -> Result<Vec<usize>> {
     let ids = parser.read(0)?;
     ensure!(parser.at == lexical.len(), "trailing expression text");
     Ok(ids)
+}
+
+#[cfg(test)]
+mod task_encode_tests {
+    use super::*;
+    use crate::manifest::read_json;
+    use std::path::Path;
+
+    #[test]
+    fn encode_for_task_emits_the_requested_task_token() {
+        let vocab: Vocab =
+            read_json(&Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/grammar/featmath.json"))
+                .unwrap();
+        let genome = "(pipe X (ridge))";
+        let regression = vocab.encode(genome).unwrap();
+        let binary = vocab.encode_for_task(genome, "binary").unwrap();
+        assert_eq!(regression[2], vocab.task_id("regression").unwrap());
+        assert_eq!(binary[2], vocab.task_id("binary").unwrap());
+        assert_ne!(regression[2], binary[2]);
+        assert_eq!(&regression[3..], &binary[3..]);
+    }
 }
