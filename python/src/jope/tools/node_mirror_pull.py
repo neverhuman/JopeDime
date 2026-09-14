@@ -220,8 +220,10 @@ def main(argv=None):
     args = parser.parse_args(argv)
     for cls in args.classes:
         receipt = pull(args.root, cls, args.node, args.key, args.bwlimit)
-        print(json.dumps({k: receipt[k] for k in ('class', 'pulled', 'pulled_bytes', 'unchanged', 'drift_refused', 'transfer_mismatch', 'node_changed_during_pull', 'node_rehash_verified', 'seconds', 'receipt_path')
-                          | ({'git': receipt['git']} if 'git' in receipt else {}) | ({'census': receipt['census']})}, default=str))
+        summary = {k: receipt[k] for k in ('class', 'pulled', 'pulled_bytes', 'unchanged', 'drift_refused', 'transfer_mismatch', 'node_changed_during_pull', 'node_rehash_verified', 'seconds', 'receipt_path', 'census')}
+        if 'git' in receipt:
+            summary['git'] = receipt['git']
+        print(json.dumps(summary, default=str))
 
 
 if __name__ == '__main__':
