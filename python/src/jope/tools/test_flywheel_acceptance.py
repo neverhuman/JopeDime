@@ -185,14 +185,14 @@ class ChampionStreamReceipt(unittest.TestCase):
 
 
 class InFlightBacklog(unittest.TestCase):
-    def test_small_inflight_backlog_is_reported_not_failed_but_drift_still_fails(self):
+    def test_inflight_backlog_is_reported_and_fails_final_acceptance(self):
         import tempfile
         with tempfile.TemporaryDirectory() as tmp:
             ev = passing_evidence(Path(tmp))
             ev['local']['node_mirror']['observations'] = dict(path='/m/receipts/mirror/x-observations-y.json', mtime=NOW - 50, value=dict(drift_refused=[], node_rehash_verified=False, transfer_mismatch=['a', 'b'], node_changed_during_pull=[], census=dict(files=1000, bytes=1)))
             receipt = fa.evaluate(ev, RUN, since_generation=44)
             check = {c['name']: c for c in receipt['gates']['SYNC_TRUST']['checks']}['node_mirror_fresh_no_drift']
-            self.assertEqual((check['status'], check['value']['unverified'], check['value']['in_flight_backlog']), ('pass', [], {'observations': 2}))
+            self.assertEqual((check['status'], check['value']['unverified']), ('fail', ['observations']))   # final acceptance: no omission allowance (Codex/owner 12:45); the backlog is reported
             ev['local']['node_mirror']['observations']['value']['transfer_mismatch'] = ['x'] * 100   # 10% of the census: not an in-flight backlog
             receipt = fa.evaluate(ev, RUN, since_generation=44)
             check = {c['name']: c for c in receipt['gates']['SYNC_TRUST']['checks']}['node_mirror_fresh_no_drift']

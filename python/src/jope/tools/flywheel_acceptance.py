@@ -40,7 +40,7 @@ GATE_RULES = dict(
     SYNC_TRUST='receipt mirror verifies locally and on the node (both-host), pull receipt <= 30 min old with no refusals; node mirror receipts fresh with no drift; restore drill <= 24 h',
     TUI='console unit active, exactly one live pane, renderer --watch, frame age < 30 s, headline feed <= 15 min old and bound to its receipt, CI90 / high marks / git rows visible natively',
 )
-THRESHOLDS = dict(inflight_backlog_fraction=0.05, report_age_seconds=5400, audit_age_seconds=7200, gp_busy=0.80, gpu_occupancy=0.90, gpu_util=0.80, handoff_p95=30.0, guard_ratio=0.01,
+THRESHOLDS = dict(inflight_backlog_fraction=0.0, report_age_seconds=5400, audit_age_seconds=7200, gp_busy=0.80, gpu_occupancy=0.90, gpu_util=0.80, handoff_p95=30.0, guard_ratio=0.01,
                   commit_seconds=300, mirror_seconds=600, publish_seconds=600, pull_age_seconds=1800, restore_age_seconds=86400, frame_age_seconds=30,
                   headline_age_seconds=900, node_mirror_age_seconds=900)
 JOURNAL_TAIL_BYTES = 8 << 20
