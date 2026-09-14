@@ -58,7 +58,7 @@ class MirrorLearningReceipts(unittest.TestCase):
     def test_run_globs_cover_the_research_receipts(self):
         for needed in ('successor/scoreboard/headline/*.json', 'successor/verdicts/*.json', 'successor/acceptance/*.json', 'health/summary.json'):
             self.assertIn(needed, m.RUN_GLOBS)
-        self.assertTrue(m.mutable('x/successor/scoreboard/champion-git.json') and not m.mutable('x/learning/monitoring/a.json'))
+        self.assertTrue(m.mutable('x/successor/scoreboard/champion-git.json') and m.mutable('x/successor/decisions/f11-rollback-status.json') and not m.mutable('x/learning/monitoring/a.json'))
 
 
 if __name__ == '__main__':

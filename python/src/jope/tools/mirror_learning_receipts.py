@@ -32,7 +32,8 @@ RUN_GLOBS = ('learning/monitoring/*.json', 'successor/decisions/*.json', 'succes
              'successor/scoreboard/champion-git.json', 'successor/scoreboard/flywheel-series.jsonl', 'successor/verdicts/*.json', 'successor/acceptance/*.json',
              'successor/champion-git/receipts/*.json', 'review/measured-performance-audit-latest.json', 'health/summary.json')
 # Live feeds and the append-only series may legitimately change between pulls; everything else is an immutable receipt.
-MUTABLE_BASENAMES = ('latest.json', 'run.json', 'champion-git.json', 'summary.json', 'measured-performance-audit-latest.json', 'flywheel-series.jsonl')
+MUTABLE_BASENAMES = ('latest.json', 'run.json', 'champion-git.json', 'summary.json', 'measured-performance-audit-latest.json', 'flywheel-series.jsonl',
+                     'f11-rollback-status.json')   # the rollback status is a live verification feed, rewritten by hold_release_readout.py
 NODE_VERIFY_LIMIT_BYTES = 1 << 20   # both-host verification re-hashes mirrored files up to this size on the node
 METRICS_TAIL_LINES = 200
 TAIL_WINDOW_BYTES = 4 << 20   # the tail is cut from at most this many trailing bytes
