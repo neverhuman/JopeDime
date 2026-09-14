@@ -156,12 +156,20 @@ def collect_local(root, mirror_dir, node_mirror, repo, credentials):
         out['files'][str(pull)] = dict(host='xbabe2', sha256=sha(pull), bytes=pull.stat().st_size, mtime=pull.stat().st_mtime)
     receipts = Path(node_mirror) / 'receipts'
     if receipts.is_dir():
-        for cls in ('mirror', 'champion-git', 'restore'):
-            newest = sorted((receipts / cls).glob('*.json'), key=lambda p: p.stat().st_mtime) if (receipts / cls).is_dir() else []
+        # mirror receipts live under receipts/mirror/<utc>-<class>-<sha12>.json (one per class per run); restore drills under receipts/restore/
+        for cls in ('receipts', 'champion-git', 'champions', 'weights', 'dataset'):
+            newest = sorted((receipts / 'mirror').glob('*-%s-*.json' % cls), key=lambda p: p.stat().st_mtime) if (receipts / 'mirror').is_dir() else []
             if newest:
                 p = newest[-1]
                 out['node_mirror'][cls] = dict(path=str(p), mtime=p.stat().st_mtime, value=read(p))
                 out['files'][str(p)] = dict(host='xbabe2', sha256=sha(p), bytes=p.stat().st_size, mtime=p.stat().st_mtime)
+        if out['node_mirror']:
+            out['node_mirror']['mirror'] = min(out['node_mirror'].values(), key=lambda r: r['mtime'])   # the oldest class receipt bounds freshness
+        restore = sorted((receipts / 'restore').glob('*.json'), key=lambda p: p.stat().st_mtime) if (receipts / 'restore').is_dir() else []
+        if restore:
+            p = restore[-1]
+            out['node_mirror']['restore'] = dict(path=str(p), mtime=p.stat().st_mtime, value=read(p))
+            out['files'][str(p)] = dict(host='xbabe2', sha256=sha(p), bytes=p.stat().st_size, mtime=p.stat().st_mtime)
     try:
         head = subprocess.run(['git', '-C', str(repo), 'rev-parse', 'workspace-canonical'], capture_output=True, text=True, timeout=30).stdout.strip()
         remotes = subprocess.run(['git', '-C', str(repo), 'remote'], capture_output=True, text=True, timeout=30).stdout.split()
@@ -346,9 +354,14 @@ def gate_sync_trust(ev, run):
     checks.append(check('node_rehash_matches', (not mismatched) if expected else 'pending', dict(checked=len(expected), mismatched=mismatched[:10]), 0, [f'{run}/learning/monitoring', f'{run}/successor']))
     pull = local.get('pull')
     checks.append(check('pull_receipt_fresh', (now - pull['at'] <= THRESHOLDS['pull_age_seconds'] and pull.get('refused') == []) if pull else 'pending', (now - pull['at']) if pull else None, THRESHOLDS['pull_age_seconds'], [str(Path(ev['mirror_dir']) / 'learning-receipts/last-pull.json')]))
-    nm = (local.get('node_mirror') or {}).get('mirror')
-    drift = (nm or {}).get('value', {}).get('drift_refused') if nm else None
-    checks.append(check('node_mirror_fresh_no_drift', (now - nm['mtime'] <= THRESHOLDS['node_mirror_age_seconds'] and not drift) if nm else 'pending', dict(age=(now - nm['mtime']) if nm else None, drift=len(drift or [])), THRESHOLDS['node_mirror_age_seconds'], [nm['path']] if nm else [], None if nm else 'no node-mirror receipt yet'))
+    classes = {k: v for k, v in (local.get('node_mirror') or {}).items() if k not in ('mirror', 'restore')}
+    fast = [classes[k] for k in ('receipts', 'champion-git', 'champions') if k in classes]
+    drift = sum(len((r['value'] or {}).get('drift_refused') or []) for r in classes.values())
+    unverified = [k for k, r in classes.items() if (r['value'] or {}).get('node_rehash_verified') is not True]
+    fresh = bool(fast) and len(fast) == 3 and all(now - r['mtime'] <= THRESHOLDS['node_mirror_age_seconds'] for r in fast)
+    checks.append(check('node_mirror_fresh_no_drift', (fresh and drift == 0 and not unverified) if classes else 'pending',
+                        dict(classes=sorted(classes), fast_ages=[round(now - r['mtime']) for r in fast], drift=drift, unverified=unverified), THRESHOLDS['node_mirror_age_seconds'],
+                        [r['path'] for r in classes.values()], None if classes else 'no node-mirror receipt yet'))
     restore = (local.get('node_mirror') or {}).get('restore')
     checks.append(check('restore_drill', (now - restore['mtime'] <= THRESHOLDS['restore_age_seconds'] and restore['value'].get('passed') is True) if restore else 'pending', (now - restore['mtime']) if restore else None, THRESHOLDS['restore_age_seconds'], [restore['path']] if restore else [], None if restore else 'no restore drill yet'))
     return gate(checks)

@@ -43,7 +43,8 @@ def passing_evidence(tmp):
                 console=dict(unit='ActiveState=active\nMainPID=1\nInvocationID=x', panes='jope-recovery\t0\t123\n', frame='RECOVERY\nFrame generated at epoch %.3f\nHeld-out: 8W/0T/8L [CI90 -0.03, 0.04]\nLocal records: 2 / 1h\nSlot Dataset Git status\n' % (NOW - 3)))
     mirror_dir = Path(tmp) / 'mirror'
     local = dict(mirror=dict(files=3, mismatched=[], manifest_sha256='q' * 64, rehash_expected={'a.json': 'a' * 64}), pull=dict(at=NOW - 100, refused=[]),
-                 node_mirror=dict(mirror=dict(path='/m/receipts/mirror/x.json', mtime=NOW - 100, value=dict(drift_refused=[])), **{'champion-git': dict(path='/m/receipts/champion-git/x.json', mtime=NOW - 100, value={})},
+                 node_mirror=dict(**{k: dict(path='/m/receipts/mirror/x-%s-y.json' % k, mtime=NOW - 100, value=dict(drift_refused=[], node_rehash_verified=True)) for k in ('receipts', 'champion-git', 'champions')},
+                                  mirror=dict(path='/m/receipts/mirror/x-receipts-y.json', mtime=NOW - 100, value=dict(drift_refused=[])),
                                   restore=dict(path='/m/receipts/restore/x.json', mtime=NOW - 1000, value=dict(passed=True))),
                  git=dict(head='abc', remotes=['forge'], remote_head='abc'), credentials=dict(exists=True, mode_0600=True, owner_ok=True), files={str(mirror_dir / 'learning-receipts/MANIFEST.json'): dict(host='xbabe2', sha256='q' * 64, bytes=1, mtime=NOW)})
     return dict(node=node, local=local, node_root='/root', node_name='n', mirror_dir=str(mirror_dir))
