@@ -10,6 +10,7 @@ changes any state; root implements the revision.
 """
 import argparse
 import json
+import os
 from pathlib import Path
 
 import promotion_gate
@@ -19,9 +20,54 @@ SCHEMA = 'parallel.hold_release_readout.v1'
 DECISION_SCHEMA = 'parallel.hold_release_decision.v1'
 
 
+TAIL_BYTES = 8 << 20   # default bounded window over the controller journal (the live one is 2.8 GB)
+
+
 def journal_events(path):
     with open(path, 'rb') as stream:
         for raw in stream:
+            try:
+                yield json.loads(raw)
+            except ValueError:
+                continue
+
+
+def journal_offset(path, max_bytes=TAIL_BYTES, since=None):
+    """Byte offset where a bounded tail read of the journal starts.
+
+    The window is the last `max_bytes` of the file; when `since` (a timestamp) is given the window doubles until the
+    first complete line inside it is not newer than `since` (or the whole file is covered), so callers that need "every
+    event after T" read exactly enough and never the whole 2.8 GB by default.
+    """
+    size = os.path.getsize(path)
+    window = max(1, int(max_bytes))
+    while True:
+        offset = max(0, size - window)
+        if since is None or offset == 0:
+            return offset
+        with open(path, 'rb') as stream:
+            stream.seek(offset)
+            stream.readline()   # partial line
+            first = stream.readline()
+        try:
+            stamp = float((json.loads(first) or {}).get('timestamp') or 0)
+        except (ValueError, TypeError):
+            stamp = float('inf')   # unreadable head: widen
+        if stamp <= since:
+            return offset
+        window *= 2
+
+
+def journal_tail(path, max_bytes=TAIL_BYTES, since=None):
+    """Yield the parsed events of the bounded tail (complete lines only; the first partial line is dropped)."""
+    offset = journal_offset(path, max_bytes, since)
+    with open(path, 'rb') as stream:
+        stream.seek(offset)
+        if offset > 0:
+            stream.readline()
+        for raw in stream:
+            if not raw.endswith(b'\n'):
+                break   # a line still being written
             try:
                 yield json.loads(raw)
             except ValueError:
@@ -73,13 +119,14 @@ def checkpoint_sha(root, path):
     return sha(state) if state.is_file() else None
 
 
-def active_manifest(root, run, manifest_sha256):
+def active_manifest(root, run, manifest_sha256, since=None):
     """The manifest file the controller is running (state.manifest_sha256), found by digest: the journal's revision receipts
-    name it first (manifest_revision_committed.receipt -> migration receipt), then any *manifest*.json under the run."""
+    name it first (manifest_revision_committed.receipt -> migration receipt), then any *manifest*.json under the run.
+    With `since`, only the bounded journal tail back to that timestamp is read (revisions are recent by construction)."""
     candidates = []
     journal = run / 'learning/journal.jsonl'
     if journal.is_file():
-        for event in journal_events(journal):
+        for event in (journal_tail(journal, since=since) if since is not None else journal_events(journal)):
             if event.get('event') == 'manifest_revision_committed' and event.get('new_manifest_sha256') == manifest_sha256 and isinstance(event.get('receipt'), str):
                 receipt_path = root / event['receipt']
                 if receipt_path.is_file():
@@ -113,11 +160,13 @@ def verify_rollback(root, run, readout_path):
     state = read(run / 'learning/state.json')
     learning = state.get('learning_checkpoint')
     learning_sha = checkpoint_sha(root, learning)
-    manifest = active_manifest(root, run, state.get('manifest_sha256'))
+    manifest = active_manifest(root, run, state.get('manifest_sha256'), since=verdict_at)
     automatic = (manifest or {}).get('value', {}).get('automatic_training') if manifest else None
     automatic_source = 'manifest' if manifest else None
     revisions, stops, deviations, trains = [], [], [], []
-    for event in journal_events(run / 'learning/journal.jsonl'):
+    journal = run / 'learning/journal.jsonl'
+    window_bytes = os.path.getsize(journal) - journal_offset(journal, since=verdict_at)   # bounded: back to the verdict, not the whole file
+    for event in journal_tail(journal, since=verdict_at):
         if float(event.get('timestamp') or 0) <= verdict_at:
             continue
         kind = event.get('event')
@@ -158,6 +207,7 @@ def verify_rollback(root, run, readout_path):
                 learning_corpus=state.get('learning_corpus'), manifest=dict(path=(manifest or {}).get('path'), sha256=state.get('manifest_sha256'), automatic_training=automatic, automatic_training_source=automatic_source),
                 guard={k: ((state.get('training_diagnostic') or {}).get(k)) for k in ('consecutive_rejections', 'held', 'last_step')},
                 revisions_after_verdict=revisions, controller_stops_after_verdict=stops, train_stages_after_verdict=trains, deviations=deviations,
+                journal_window_bytes=window_bytes,
                 rule='F11: rollback is complete when learning_checkpoint is the re-parent target; until then automatic_training must be false (an operator pause with training_restart_authorized false is the interim stop); any train stage from another checkpoint after the verdict is an f11_deviation',
                 final_tests_opened=False)
 

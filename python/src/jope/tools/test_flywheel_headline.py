@@ -6,6 +6,7 @@ import time
 import unittest
 
 import flywheel_headline as headline
+import hold_release_readout
 from resume_expired_cycle import atomic, sha
 
 
@@ -65,6 +66,10 @@ class Headline(unittest.TestCase):
         self.assertEqual((rows['high_marks']['events_24h'], rows['high_marks']['events_1h'], rows['high_marks']['identities'], rows['high_marks']['all_time']), (2, 1, 2, 3))
         self.assertEqual(rows['high_marks']['by_partition'], dict(meta_train=2, meta_validation=0))   # meta_test and foreign evaluators never counted
         self.assertEqual((rows['learning']['hold'], rows['learning']['completed_training_blocks']), (True, 21))
+        self.assertEqual(rows['learning']['rollback'], dict(status='no_readout'))   # never null-as-ok
+        guard = rows['frozen_panel'][-1]['guard']
+        self.assertEqual(sorted(guard), ['baseline_ranking_bt', 'exceeds_guard', 'guard_bt', 'maximum_relative_regression', 'verdict', 'verdict_at'])
+        self.assertIsNone(guard['exceeds_guard'])   # no baseline/ratio in the fixture -> unknown, not false
         self.assertEqual(rows['publication']['status'], 'no_repository')
         self.assertEqual(receipt['claims']['independent_improvement'], 'not_established')
         self.assertIs(receipt['final_tests_opened'], False)
@@ -94,12 +99,36 @@ class Headline(unittest.TestCase):
         headline.main(argv)
         self.assertEqual(sha(path), digest)
         refreshed = json.loads(latest.read_bytes())
-        self.assertEqual((refreshed['receipt']['sha256'], refreshed['live_rows']), (digest, ['high_marks', 'learning', 'publication']))
+        self.assertEqual((refreshed['receipt']['sha256'], refreshed['live_rows']), (digest, list(headline.LIVE_ROWS)))
+        self.assertIn('frozen_panel', refreshed['live_rows'])
         self.assertEqual(refreshed['rows']['primary_heldout']['seed_only']['wins'], 8)
         verdict = self.run / 'verdict.json'
         atomic(verdict, dict(schema='parallel.flywheel_verdict.v1', outcome='smarter_confirmed'))
         confirmed = headline.build(self.root, self.run, self.root / 'manifest.json', self.root / 'baseline.json', self.series, 30, verdict)
         self.assertTrue(confirmed['claims']['independent_improvement'].startswith('established_by_verdict:'))
+
+    def test_guard_and_rollback_from_live_state(self):
+        atomic(self.run / 'learning/progress.json', dict(phase='paused', automatic_training=False, training_diagnostic=dict(held=False, baseline_ranking_bt=0.50), training_hold_reason='x',
+                                                         completed_training_blocks=22, training_growth=dict(eligible=False), last_committed_checkpoint='l/step-69000',
+                                                         serving_checkpoint='s/step-3000', serving_status='provisional_unqualified', gpu_occupancy=dict(task_occupancy=0.0)))
+        atomic(self.root / 'manifest.json', dict(run_identity='fixture', cpu_executable='bin/gp', bindings={'bin/gp': 'e' * 64}, vocabulary_sha256='v' * 64,
+                                                 training_diagnostic_guard=dict(maximum_relative_regression=0.01)))
+        with open(self.run / 'learning/journal.jsonl', 'w') as stream:
+            stream.write(json.dumps(dict(timestamp=1.0, event='diagnostic_rejected', checkpoint_sha256='k6000')) + '\n')
+        receipt = headline.build(self.root, self.run, self.root / 'manifest.json', self.root / 'baseline.json', self.series, 31)
+        guard = receipt['rows']['frozen_panel'][-1]['guard']   # step 6000: bt 0.516 > 0.50 * 1.01
+        self.assertEqual((guard['verdict'], guard['exceeds_guard']), ('diagnostic_rejected', True))
+        self.assertAlmostEqual(guard['guard_bt'], 0.505)
+        self.assertEqual(receipt['rows']['frozen_panel'][0]['guard']['verdict'], 'unmonitored')   # whole journal read, no verdict for step 3000
+        # a decided rollback read-out makes the learning row carry the live verification
+        readout = self.run / 'successor/decisions/f11-first-monitor-readout.json'
+        readout.parent.mkdir(parents=True, exist_ok=True)
+        atomic(readout, dict(schema=hold_release_readout.SCHEMA, status='decided', outcome='rollback_required', verdict=dict(timestamp=1.0, checkpoint_sha256='k6000'),
+                             reparent_to=dict(checkpoint_sha256='t' * 64), final_tests_opened=False))
+        atomic(self.run / 'learning/state.json', dict(learning_checkpoint='l/step-69000', manifest_sha256='m' * 64, training_diagnostic=dict(consecutive_rejections=1, held=False)))
+        rollback = headline.build(self.root, self.run, self.root / 'manifest.json', self.root / 'baseline.json', self.series, 31)['rows']['learning']['rollback']
+        self.assertEqual((rollback['status'], rollback['reparent_target_sha256'], rollback['deviations']), ('pending', 't' * 64, 0))
+        self.assertIsNotNone(rollback['journal_window_bytes'])
 
 
 if __name__ == '__main__':
