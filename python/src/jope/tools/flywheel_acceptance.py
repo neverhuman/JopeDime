@@ -28,6 +28,9 @@ from resume_expired_cycle import atomic, read, require, sha
 SCHEMA = 'parallel.flywheel_acceptance.v1'
 LATEST_SCHEMA = 'parallel.flywheel_acceptance_latest.v1'
 GATES = ('LOOP', 'CADENCE', 'THROUGHPUT', 'SCIENCE', 'PUBLICATION', 'SYNC_TRUST', 'TUI')
+# every mirror class whose newest receipt is evidence (the first three bound SYNC_TRUST freshness; the rest are the 2026-09-14 migration classes)
+MIRROR_CLASSES = ('receipts', 'champion-git', 'champions', 'weights', 'dataset', 'prepared', 'contexts', 'teaching-corpus', 'results', 'observations', 'node-source', 'node-release', 'node-home',
+                  'lane-store', 'recovery-20260908', 'corpus', 'assets', 'kernel-work', 'runs-census', 'recovery-run-census')
 GATE_RULES = dict(
     LOOP='rollback reparented (learning head == re-parent target, no f11_deviation); progress.automatic_training == manifest; once training is enabled a train commit + monitor verdict within the newest 3 generations and >= 2 connected lineage transitions',
     CADENCE='every generation older than the newest two has all its searches and a quality report; no generation older than 90 min without a report',
@@ -157,12 +160,21 @@ def collect_local(root, mirror_dir, node_mirror, repo, credentials):
     receipts = Path(node_mirror) / 'receipts'
     if receipts.is_dir():
         # mirror receipts live under receipts/mirror/<utc>-<class>-<sha12>.json (one per class per run); restore drills under receipts/restore/
-        for cls in ('receipts', 'champion-git', 'champions', 'weights', 'dataset'):
+        for cls in MIRROR_CLASSES:
             newest = sorted((receipts / 'mirror').glob('*-%s-*.json' % cls), key=lambda p: p.stat().st_mtime) if (receipts / 'mirror').is_dir() else []
             if newest:
                 p = newest[-1]
                 out['node_mirror'][cls] = dict(path=str(p), mtime=p.stat().st_mtime, value=read(p))
                 out['files'][str(p)] = dict(host='xbabe2', sha256=sha(p), bytes=p.stat().st_size, mtime=p.stat().st_mtime)
+        # lane import receipts (captures into the jain-datasets Store): newest per class under receipts/lane/<utc>-<class>[-<sha12>].json
+        out['lane'] = {}
+        if (receipts / 'lane').is_dir():
+            for p in sorted((receipts / 'lane').glob('*.json'), key=lambda p: p.stat().st_mtime):
+                value = read(p)
+                cls = value.get('class')
+                if cls:
+                    out['lane'][cls] = dict(path=str(p), mtime=p.stat().st_mtime, value=value)
+                    out['files'][str(p)] = dict(host='xbabe2', sha256=sha(p), bytes=p.stat().st_size, mtime=p.stat().st_mtime)
         if out['node_mirror']:
             out['node_mirror']['mirror'] = min(out['node_mirror'].values(), key=lambda r: r['mtime'])   # the oldest class receipt bounds freshness
         restore = sorted((receipts / 'restore').glob('*.json'), key=lambda p: p.stat().st_mtime) if (receipts / 'restore').is_dir() else []
@@ -353,6 +365,11 @@ def gate_sync_trust(ev, run):
     mismatched = [rel for rel, digest in expected.items() if rehash.get(rel) is not None and rehash[rel] != digest]
     checks.append(check('node_rehash_matches', (not mismatched) if expected else 'pending', dict(checked=len(expected), mismatched=mismatched[:10]), 0, [f'{run}/learning/monitoring', f'{run}/successor']))
     pull = local.get('pull')
+    # the Rust receipts-class mirror receipt (both-host verified, no drift) is an equivalent pull receipt; the fresher of the two counts
+    rust_receipts = ((local.get('node_mirror') or {}).get('receipts') or {})
+    rv = rust_receipts.get('value') or {}
+    if rust_receipts and rv.get('node_rehash_verified') is True and (rv.get('drift_refused') or []) == [] and (not pull or rv.get('at', 0) > pull.get('at', 0)):
+        pull = dict(at=rv.get('at'), refused=[], source=rust_receipts.get('path'))
     checks.append(check('pull_receipt_fresh', (now - pull['at'] <= THRESHOLDS['pull_age_seconds'] and pull.get('refused') == []) if pull else 'pending', (now - pull['at']) if pull else None, THRESHOLDS['pull_age_seconds'], [str(Path(ev['mirror_dir']) / 'learning-receipts/last-pull.json')]))
     classes = {k: v for k, v in (local.get('node_mirror') or {}).items() if k not in ('mirror', 'restore')}
     fast = [classes[k] for k in ('receipts', 'champion-git', 'champions') if k in classes]
@@ -363,7 +380,9 @@ def gate_sync_trust(ev, run):
                         dict(classes=sorted(classes), fast_ages=[round(now - r['mtime']) for r in fast], drift=drift, unverified=unverified), THRESHOLDS['node_mirror_age_seconds'],
                         [r['path'] for r in classes.values()], None if classes else 'no node-mirror receipt yet'))
     restore = (local.get('node_mirror') or {}).get('restore')
-    checks.append(check('restore_drill', (now - restore['mtime'] <= THRESHOLDS['restore_age_seconds'] and restore['value'].get('passed') is True) if restore else 'pending', (now - restore['mtime']) if restore else None, THRESHOLDS['restore_age_seconds'], [restore['path']] if restore else [], None if restore else 'no restore drill yet'))
+    # only a forge-scope drill (fresh clone + LFS fetch + re-hash) passes; a local_store drill proves the Store can give bytes back and stays pending
+    forge_scope = bool(restore) and (restore['value'].get('scope') or 'forge') == 'forge'
+    checks.append(check('restore_drill', (now - restore['mtime'] <= THRESHOLDS['restore_age_seconds'] and restore['value'].get('passed') is True) if (restore and forge_scope) else 'pending', (now - restore['mtime']) if restore else None, THRESHOLDS['restore_age_seconds'], [restore['path']] if restore else [], None if restore else 'no restore drill yet'))
     return gate(checks)
 
 
@@ -408,6 +427,32 @@ def screaming(ev, run):
     return dict(numbers=numbers, targets=targets, met=met, note='green only when every target is met on fresh evidence (Codex §5)')
 
 
+def migration(ev):
+    """Informational (not a gate): what the xbabe2 mirror and the lane Store hold, per class, from their newest receipts."""
+    local = ev.get('local') or {}
+    mirror = {}
+    for cls, r in (local.get('node_mirror') or {}).items():
+        if cls in ('mirror', 'restore'):
+            continue
+        v = r.get('value') or {}
+        mirror[cls] = dict(files=(v.get('census') or {}).get('files'), bytes=(v.get('census') or {}).get('bytes'), verified=v.get('node_rehash_verified') is True and not v.get('drift_refused'),
+                           census_only=bool(v.get('census_only')), at=v.get('at'))
+    lane = {}
+    for cls, r in (local.get('lane') or {}).items():
+        v = r.get('value') or {}
+        counts = v.get('counts') or {}
+        lane[cls] = dict(units=v.get('units'), captured=counts.get('captured', 0), already_bound=counts.get('already_bound', 0), failed=counts.get('failed', 0), captured_bytes=v.get('captured_bytes'), at=v.get('at'))
+    git = local.get('git') or {}
+    restore = (local.get('node_mirror') or {}).get('restore')
+    drill = None
+    if restore:
+        v = restore.get('value') or {}
+        drill = dict(scope=v.get('scope') or 'forge', passed=v.get('passed') is True, sample=v.get('sample'), acknowledged=v.get('acknowledged'), mismatches=v.get('mismatches'), at=v.get('at'))
+    return dict(mirror_classes=mirror, lane_classes=lane, restore_drill=drill, mirror_verified_bytes=sum(m['bytes'] or 0 for m in mirror.values() if m['verified'] and not m['census_only']),
+                lane_units_captured=sum(l['captured'] + l['already_bound'] for l in lane.values()), lane_failed=sum(l['failed'] for l in lane.values()),
+                code_published=bool(git.get('remote_head')) and git.get('remote_head') == git.get('head'), note='informational; publication to the forge is gated in PUBLICATION')
+
+
 def evaluate(ev, run, since_generation=None):
     gates = dict(LOOP=gate_loop(ev, run), CADENCE=gate_cadence(ev, run), THROUGHPUT=gate_throughput(ev, run), SCIENCE=gate_science(ev, run, since_generation),
                  PUBLICATION=gate_publication(ev, run), SYNC_TRUST=gate_sync_trust(ev, run), TUI=gate_tui(ev, run))
@@ -418,7 +463,7 @@ def evaluate(ev, run, since_generation=None):
     evidence.update({p: dict(v) for p, v in (ev['local'].get('files') or {}).items()})
     require(not any(p.endswith('.md') for p in evidence), 'narration is never evidence')
     return dict(schema=SCHEMA, at=ev['node']['now'], run=run, node=ev.get('node_name'), verdict='approved' if not failing else 'not_approved', failing=failing,
-                gates=gates, rules=GATE_RULES, thresholds=THRESHOLDS, screaming=screaming(ev, run), since_generation=since_generation,
+                gates=gates, rules=GATE_RULES, thresholds=THRESHOLDS, screaming=screaming(ev, run), migration=migration(ev), since_generation=since_generation,
                 journal_window_bytes=(ev['node'].get('journal') or {}).get('window'), evidence=evidence, final_tests_opened=False)
 
 

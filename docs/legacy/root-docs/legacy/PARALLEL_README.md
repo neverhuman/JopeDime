@@ -106,3 +106,25 @@ reviewed `flywheel_plots.py` in your own ssh tty after a sha256 match; it never 
 `dashboard` (attaches to the native dashboard once its `live-v1` receipt says passed). Flags: `--interactive` (keys delivered;
 `q` closes the renderer and the supervisor restarts it in ~5 s), `--plain-ssh`. `tui-remote.sh` (the Sept-9 observer +
 plots window) is unchanged and root-owned.
+
+## Migration to xbabe2 and the jain-split lane (2026-09-14)
+
+The node keeps no git; xbabe2 is the durable mirror and the only publisher. `tools/node_mirror_pull.py` (interim Python one-shot)
+and the Rust `jain-datasets mirror pull` (crate `~/jain-split/jain-datasets/tools`, binary pinned under
+`/home/ubuntu/jope-node-mirror/bin/`, driven by `tools/node-mirror.sh fast|bulk` and the `jope-node-mirror-{fast,bulk}` user
+timers) mirror one class at a time with a node census, `rsync --checksum`, local re-hash, drift refusal, atomic install, node
+re-hash and an immutable receipt under `/home/ubuntu/jope-node-mirror/receipts/mirror/`. Classes: `champions`, `champion-git`,
+`receipts`, `weights`, `dataset` (`/home/ubuntu/quant`), `prepared` (splits), `contexts` and `teaching-corpus` (encodings),
+`results` (per-generation GP results: seeds, ranking, best-predicted, search, progress, quality reports), `observations`
+(the search ledgers), `node-source`, `node-release`, `node-home`, `lane-store` (the node's dataset-lane Store),
+`recovery-20260908`, `corpus`, `assets`, `kernel-work`; `runs-census` and `recovery-run-census` index the run roots that are
+too large to copy without an owner decision (sha256 index only, `census_only: true` in the receipt).
+
+Mirrored classes enter the lane Store `~/jain-split/jain-datasets/.staging/a100-store` as captures — one per unit (prepared
+view, quant dataset, GP cut result, champion identity, node-only root) — with `jain-datasets capture-mirror` (native) or the
+interim `tools/lane_capture.py` (which also imports the >5 MB xbabe2 binaries listed in
+`recovery/eight-a100-20260912/inventory/xbabe2-untracked-binaries-20260914.json`); receipts under `receipts/lane/`. The Store
+publishes to `veox/jain-datasets` `updates/a100` once the forge grant exists. Code publishes with `tools/code_publish.sh
+[remote] [extra branches...]` (receipted; `wip/xbabe2-working-tree-20260914` = the dirty working tree as found,
+`archive/research-untracked-20260914` = the research job trees). `~/jain-split/jope-dime` is a symlink to this checkout
+(the family forbids copied repo folders).

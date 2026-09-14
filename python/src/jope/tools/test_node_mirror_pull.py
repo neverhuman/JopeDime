@@ -75,3 +75,26 @@ class NodeMirrorPull(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+import node_mirror_pull
+
+
+class CensusOnly(unittest.TestCase):
+    def test_census_only_indexes_without_transfer(self):
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / 'mirror'
+            rows = [dict(path='runs/big/a.bin', bytes=3, mtime=1.0, sha256='a' * 64)]
+            calls = []
+            node_mirror_pull.SPEC['census-test'] = dict(base='/node', root='runs', kind='roots', roots=('big',), census_only=True)
+            try:
+                receipt = node_mirror_pull.pull(root, 'census-test', census_fn=lambda n, k, s: dict(rows=rows), transfer_fn=lambda *a: calls.append(a), rehash_fn=lambda *a: {}, tool_path=node_mirror_pull.__file__)
+            finally:
+                del node_mirror_pull.SPEC['census-test']
+            self.assertEqual(calls, [])
+            self.assertTrue(receipt['census_only'])
+            self.assertEqual((receipt['pulled'], receipt['indexed']), (0, 1))
+            self.assertFalse((root / 'census-test' / 'runs/big/a.bin').exists())
+

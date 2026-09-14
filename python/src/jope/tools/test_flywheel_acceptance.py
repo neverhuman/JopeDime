@@ -45,7 +45,7 @@ def passing_evidence(tmp):
     local = dict(mirror=dict(files=3, mismatched=[], manifest_sha256='q' * 64, rehash_expected={'a.json': 'a' * 64}), pull=dict(at=NOW - 100, refused=[]),
                  node_mirror=dict(**{k: dict(path='/m/receipts/mirror/x-%s-y.json' % k, mtime=NOW - 100, value=dict(drift_refused=[], node_rehash_verified=True)) for k in ('receipts', 'champion-git', 'champions')},
                                   mirror=dict(path='/m/receipts/mirror/x-receipts-y.json', mtime=NOW - 100, value=dict(drift_refused=[])),
-                                  restore=dict(path='/m/receipts/restore/x.json', mtime=NOW - 1000, value=dict(passed=True))),
+                                  restore=dict(path='/m/receipts/restore/x.json', mtime=NOW - 1000, value=dict(passed=True, scope='forge'))),
                  git=dict(head='abc', remotes=['forge'], remote_head='abc'), credentials=dict(exists=True, mode_0600=True, owner_ok=True), files={str(mirror_dir / 'learning-receipts/MANIFEST.json'): dict(host='xbabe2', sha256='q' * 64, bytes=1, mtime=NOW)})
     return dict(node=node, local=local, node_root='/root', node_name='n', mirror_dir=str(mirror_dir))
 
@@ -122,3 +122,50 @@ class Acceptance(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class MigrationBlock(unittest.TestCase):
+    def test_migration_block_reports_mirror_and_lane_receipts(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            ev = passing_evidence(Path(tmp))
+            ev['local']['node_mirror']['prepared'] = dict(path='/m/receipts/mirror/x-prepared-y.json', mtime=NOW - 50, value=dict(drift_refused=[], node_rehash_verified=True, census=dict(files=10, bytes=1000), at=NOW - 60))
+            ev['local']['node_mirror']['runs-census'] = dict(path='/m/receipts/mirror/x-runs-census-y.json', mtime=NOW - 50, value=dict(drift_refused=[], node_rehash_verified=True, census_only=True, census=dict(files=5, bytes=5000), at=NOW - 60))
+            ev['local']['lane'] = dict(prepared=dict(path='/m/receipts/lane/x-prepared.json', mtime=NOW - 40, value=dict(units=3, counts=dict(captured=2, already_bound=1), captured_bytes=700, at=NOW - 45)))
+            receipt = fa.evaluate(ev, RUN, since_generation=44)
+            m = receipt['migration']
+            self.assertEqual((m['mirror_classes']['prepared']['verified'], m['mirror_classes']['runs-census']['census_only']), (True, True))
+            self.assertNotIn(5000, [m['mirror_verified_bytes']])   # census-only bytes are never counted as mirrored
+            self.assertEqual((m['lane_units_captured'], m['lane_failed'], m['lane_classes']['prepared']['captured_bytes']), (3, 0, 700))
+            self.assertIn('code_published', m)
+            self.assertEqual(receipt['verdict'], 'approved')   # informational block never changes the gates
+
+
+class RestoreScope(unittest.TestCase):
+    def test_local_store_drill_stays_pending(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            ev = passing_evidence(Path(tmp))
+            ev['local']['node_mirror']['restore']['value'] = dict(passed=True, scope='local_store', sample=12, acknowledged=100, mismatches=0)
+            receipt = fa.evaluate(ev, RUN, since_generation=44)   # local_store drill stays pending: SYNC_TRUST cannot pass on it
+            names = {c['name']: c for c in receipt['gates']['SYNC_TRUST']['checks']}
+            self.assertEqual(names['restore_drill']['status'], 'pending')
+            self.assertIn('SYNC_TRUST', receipt['failing'])
+            self.assertEqual(receipt['migration']['restore_drill']['scope'], 'local_store')
+
+
+class PullReceiptRule(unittest.TestCase):
+    def test_rust_receipts_class_counts_as_pull(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            ev = passing_evidence(Path(tmp))
+            ev['local']['pull'] = dict(at=NOW - 100000, refused=[])   # stale Python pull receipt
+            ev['local']['node_mirror']['receipts']['value'].update(at=NOW - 60, node_rehash_verified=True, drift_refused=[])
+            receipt = fa.evaluate(ev, RUN, since_generation=44)
+            names = {c['name']: c for c in receipt['gates']['SYNC_TRUST']['checks']}
+            self.assertEqual(names['pull_receipt_fresh']['status'], 'pass')
+            ev['local']['node_mirror']['receipts']['value'].update(drift_refused=[dict(path='x')])   # a drifted Rust receipt never substitutes
+            receipt = fa.evaluate(ev, RUN, since_generation=44)
+            names = {c['name']: c for c in receipt['gates']['SYNC_TRUST']['checks']}
+            self.assertEqual(names['pull_receipt_fresh']['status'], 'fail')
+

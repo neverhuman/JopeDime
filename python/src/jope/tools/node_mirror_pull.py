@@ -29,7 +29,7 @@ NODE = 'ubuntu@158.101.20.226'
 KEY = str(Path.home() / '.ssh/lambda_cloud_a100_20260907_ed25519')
 NODE_ROOT = '/home/ubuntu/jope-dime/parallel'
 RUN = 'runs/eight-a100-recovery-20260912'
-MUTABLE_BASENAMES = ('current.json', 'f11-rollback-status.json', 'latest.json', 'champion-git.json', '.champion-git-state.json', 'HEAD', 'ORIG_HEAD', 'index', 'packed-refs', 'config', 'main')
+MUTABLE_BASENAMES = ('current.json', 'f11-rollback-status.json', 'latest.json', 'champion-git.json', '.champion-git-state.json', 'HEAD', 'ORIG_HEAD', 'FETCH_HEAD', 'COMMIT_EDITMSG', 'description', 'index', 'packed-refs', 'config', 'main')
 # class -> (base directory on the node the paths are relative to, walk root under that base, rules)
 SPEC = {
     'champions': dict(base=NODE_ROOT, root='runs/champions', kind='champions'),
@@ -37,6 +37,29 @@ SPEC = {
     'receipts': dict(base=NODE_ROOT, root=RUN, kind='globs', globs=('learning/monitoring/*.json', 'successor/decisions/*.json', 'successor/scoreboard/headline/*.json', 'successor/verdicts/*.json', 'successor/acceptance/*.json')),
     'weights': dict(base=NODE_ROOT, root=RUN + '/learning', kind='globs', globs=('cycle-*/train-2/checkpoints/step-*/state.json', 'cycle-*/train-2/checkpoints/step-*/model.ot', 'cycle-*/train-2/checkpoints/step-*/optimizer.ot', 'cycle-*/train-2/checkpoints/step-*/optimizer.json', 'cycle-*/train-2/checkpoints/step-*/config.json')),
     'dataset': dict(base='/', root='home/ubuntu/quant', kind='tree'),
+    # owner instruction 2026-09-14: encodings, splits and per-dataset/split GP results are migrated too
+    'prepared': dict(base=NODE_ROOT, root='data/prepared', kind='tree'),
+    'contexts': dict(base=NODE_ROOT, root='runs/dataset-inclusion-20260909/correction-final', kind='tree'),
+    'teaching-corpus': dict(base=NODE_ROOT, root='runs/dataset-inclusion-20260909/teaching-corpus', kind='tree'),
+    'results': dict(base=NODE_ROOT, root=RUN + '/learning', kind='globs', globs=('generation-*/generation.json', 'generation-*/jobs.json', 'generation-*/quality-report.json', 'generation-*/champion-snapshot.json',
+                                                                            'generation-*/*/complete.json', 'generation-*/*/run.json', 'generation-*/*/jobs.json',
+                                                                            'generation-*/*/*/cut-*/seeds.json', 'generation-*/*/*/cut-*/ranking.json', 'generation-*/*/*/cut-*/best-predicted.json', 'generation-*/*/*/cut-*/generation.json',
+                                                                            'generation-*/*/*/cut-*/search/search.json', 'generation-*/*/*/cut-*/search/progress.json')),
+    'observations': dict(base=NODE_ROOT, root=RUN + '/learning', kind='globs', globs=('generation-*/*/*/cut-*/search/observations.json',)),
+    # code and stores that exist ONLY on the node (no git there): source, deployed executables/manifests, the dataset-lane store, home scripts
+    'node-source': dict(base=NODE_ROOT, root='.', kind='roots', roots=('src', 'tools', 'tests', 'examples', 'docs', 'systemd', 'Cargo.toml', 'Cargo.lock', 'build.rs', 'README.md')),
+    'node-release': dict(base=NODE_ROOT, root='.', kind='roots', roots=('bin', 'native', 'builds', 'releases', 'manifests'), exclude=('/target/',)),
+    'node-home': dict(base='/home/ubuntu', root='.', kind='roots', roots=('prepare_native_v8/src', 'prepare_native_v8/Cargo.toml', 'prepare_native_v8/Cargo.lock'), globs=('*.py', '*.sh', '*.out', '*.log')),
+    'lane-store': dict(base='/', root='home/ubuntu/jope-dime-mirror', kind='tree'),
+    'recovery-20260908': dict(base='/', root='home/ubuntu/jope-dime-recovery', kind='tree'),
+    'corpus': dict(base=NODE_ROOT, root='corpus', kind='tree'),
+    'assets': dict(base=NODE_ROOT, root='assets', kind='tree'),
+    'kernel-work': dict(base=NODE_ROOT, root='.', kind='roots', roots=('kernel-work', 'kernel-work-evidence')),
+    # census-only classes (sha256 index + receipt, no transfer): the run roots too large to copy without an owner decision
+    'runs-census': dict(base=NODE_ROOT, root='runs', kind='roots', census_only=True,
+                        roots=('continuous-learning-v2-20260909', 'flywheel-20260909', 'regression-campaign64-qualification-v1', 'train-check-8', 'registry-integration-20260910',
+                               'all-gap-closure-20260911', 'continuous-health-20260909', 'gp-reviewed3', 'gp-expanded', 'parity', 'continuous-packer-qualification-20260909')),
+    'recovery-run-census': dict(base=NODE_ROOT, root=RUN, kind='roots', census_only=True, roots=('learning/snapshots', 'learning/cycles', 'review', 'experiments', 'proposal-compat')),
 }
 
 CENSUS_SCRIPT = r'''
@@ -66,6 +89,20 @@ if kind == 'champions':
 elif kind == 'globs':
     for g in spec['globs']:
         paths.extend(p for p in glob.glob(os.path.join(root, g)) if os.path.isfile(p) and not os.path.islink(p))
+elif kind == 'roots':
+    exclude = tuple(spec.get('exclude') or ())
+    for g in spec.get('globs') or ():
+        paths.extend(p for p in glob.glob(os.path.join(root, g)) if os.path.isfile(p) and not os.path.islink(p))
+    for r in spec['roots']:
+        start = os.path.join(root, r)
+        if os.path.isfile(start) and not os.path.islink(start):
+            paths.append(start); continue
+        for dirpath, dirnames, filenames in os.walk(start):
+            dirnames[:] = [d for d in dirnames if not os.path.islink(os.path.join(dirpath, d))]
+            for name in filenames:
+                p = os.path.join(dirpath, name)
+                if os.path.islink(p) or any(x in p for x in exclude): continue
+                paths.append(p)
 else:
     exclude = tuple(spec.get('exclude') or ())
     for dirpath, dirnames, filenames in os.walk(root):
@@ -74,13 +111,17 @@ else:
             p = os.path.join(dirpath, name)
             if os.path.islink(p) or any(x in p for x in exclude): continue
             paths.append(p)
-rows = []
+rows = []; unreadable = []
 for p in sorted(paths):
     st = os.stat(p)
-    rows.append(dict(path=os.path.relpath(p, base), bytes=st.st_size, mtime=st.st_mtime, sha256=digest(p)))
+    try:
+        h = digest(p)
+    except PermissionError:
+        unreadable.append(os.path.relpath(p, base)); continue   # root-owned artifacts (perf.data ...) are listed, never transferred
+    rows.append(dict(path=os.path.relpath(p, base), bytes=st.st_size, mtime=st.st_mtime, sha256=h))
     st2 = os.stat(p)
     if (st2.st_size, st2.st_mtime) != (st.st_size, st.st_mtime): rows[-1]['unstable'] = True
-sys.stdout.write(json.dumps(dict(rows=rows, skipped_meta_test=skipped, root=root)))
+sys.stdout.write(json.dumps(dict(rows=rows, skipped_meta_test=skipped, root=root, unreadable=unreadable)))
 '''
 
 REHASH_SCRIPT = r'''
@@ -119,7 +160,8 @@ def rehash_node(node, key, base, paths):
 def transfer(node, key, base, paths, destination, bwlimit):
     destination.mkdir(parents=True, exist_ok=True)
     listing = '\n'.join(paths) + '\n'
-    result = subprocess.run(['rsync', '-a', '--checksum', '--partial', '--files-from=-', '--bwlimit=%d' % bwlimit, '-e', 'ssh -o BatchMode=yes -i ' + key,
+    # --chmod=Du+w: staged directories must stay writable so the atomic move out of .incoming works for read-only build trees (node-release builds/*)
+    result = subprocess.run(['rsync', '-a', '--checksum', '--partial', '--chmod=Du+w', '--files-from=-', '--bwlimit=%d' % bwlimit, '-e', 'ssh -o BatchMode=yes -i ' + key,
                              '%s:%s/' % (node, base.rstrip('/') or '/'), str(destination) + '/'], input=listing, capture_output=True, text=True, timeout=6 * 3600)
     require(result.returncode == 0, 'rsync failed: ' + result.stderr[-400:])
 
@@ -147,7 +189,7 @@ def pull(root, cls, node=NODE, key=KEY, bwlimit=8192, census_fn=census, transfer
     for r in rows:
         have = index.get(r['path'])
         target = root / cls / r['path']
-        if have == r['sha256'] and target.is_file():
+        if have == r['sha256'] and (target.is_file() or spec.get('census_only')):
             unchanged += 1
             continue
         if have is not None and have != r['sha256'] and not mutable(r['path']):
@@ -156,6 +198,10 @@ def pull(root, cls, node=NODE, key=KEY, bwlimit=8192, census_fn=census, transfer
         wanted.append(r)
     incoming = root / ('.incoming-%s' % uuid.uuid4().hex[:12])
     pulled, transfer_mismatch, node_changed = [], [], []
+    if spec.get('census_only'):
+        for r in wanted:   # census-only: the index records the node digest without a local copy (receipt says so)
+            index[r['path']] = r['sha256']
+        wanted = []
     if wanted:
         transfer_fn(node, key, spec['base'], [r['path'] for r in wanted], incoming, bwlimit)
         verified_by_node = rehash_fn(node, key, spec['base'], [r['path'] for r in wanted])
@@ -183,9 +229,9 @@ def pull(root, cls, node=NODE, key=KEY, bwlimit=8192, census_fn=census, transfer
     atomic(index_path, index)
     newest = max((r['mtime'] for r in rows), default=None)
     receipt = dict(schema=SCHEMA, **{'class': cls}, node=node, base=spec['base'], root=spec['root'], at=time.time(), seconds=time.time() - started,
-                   census=dict(files=len(rows), bytes=sum(r['bytes'] for r in rows), unstable=unstable, skipped_meta_test=snapshot.get('skipped_meta_test', 0)),
+                   census=dict(files=len(rows), bytes=sum(r['bytes'] for r in rows), unstable=unstable, skipped_meta_test=snapshot.get('skipped_meta_test', 0), unreadable=snapshot.get('unreadable', [])),
                    pulled=len(pulled), pulled_bytes=sum(r['bytes'] for r in pulled), unchanged=unchanged, drift_refused=drift, transfer_mismatch=transfer_mismatch,
-                   node_changed_during_pull=node_changed, node_rehash_verified=not node_changed and not transfer_mismatch, indexed=len(index),
+                   node_changed_during_pull=node_changed, node_rehash_verified=not node_changed and not transfer_mismatch, indexed=len(index), census_only=bool(spec.get('census_only')),
                    lag_seconds=(time.time() - newest) if newest else None, mirror_root=str(root / cls), tool_sha256=sha(tool_path or __file__), final_tests_opened=False)
     if cls == 'champion-git':
         receipt['git'] = verify_champion_git(root / cls / spec['root'])
