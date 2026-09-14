@@ -34,7 +34,7 @@ MUTABLE_BASENAMES = ('current.json', 'f11-rollback-status.json', 'latest.json', 
 SPEC = {
     'champions': dict(base=NODE_ROOT, root='runs/champions', kind='champions'),
     'champion-git': dict(base=NODE_ROOT, root=RUN + '/successor/champion-git', kind='tree', exclude=('/repo/programs/', '/repo/champions/', '/repo/index.json')),
-    'receipts': dict(base=NODE_ROOT, root=RUN, kind='globs', globs=('learning/monitoring/*.json', 'successor/decisions/*.json', 'successor/scoreboard/headline/*.json', 'successor/verdicts/*.json', 'successor/acceptance/*.json')),
+    'receipts': dict(base=NODE_ROOT, root=RUN, kind='globs', globs=('learning/monitoring/*.json', 'successor/decisions/*.json', 'successor/scoreboard/headline/*.json', 'successor/verdicts/*.json', 'successor/acceptance/*.json', 'recovery-manifest-*.json', 'review/manifest-migration-*.json')),
     'weights': dict(base=NODE_ROOT, root=RUN + '/learning', kind='globs', globs=('cycle-*/train-2/checkpoints/step-*/state.json', 'cycle-*/train-2/checkpoints/step-*/model.ot', 'cycle-*/train-2/checkpoints/step-*/optimizer.ot', 'cycle-*/train-2/checkpoints/step-*/optimizer.json', 'cycle-*/train-2/checkpoints/step-*/config.json')),
     'dataset': dict(base='/', root='home/ubuntu/quant', kind='tree'),
     # owner instruction 2026-09-14: encodings, splits and per-dataset/split GP results are migrated too
