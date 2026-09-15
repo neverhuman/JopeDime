@@ -3,8 +3,22 @@
 //! The ACK key is held only by the witness. The authority key cannot produce an
 //! ACK. Signed immutable segments are the durable record; the index is rebuilt
 //! from verified segments. Deployment and namespace activation are separate.
+pub use super::native_scq::policy::{NativeGrant, NativeWitnessTrust, SignedNativeGrant};
+mod epochs;
+mod native_grants;
 use anyhow::{ensure, Context, Result};
 use ed25519_dalek::{Signature, Signer, SigningKey, VerifyingKey};
+pub use epochs::{
+    serve_stdio_epoch_transition, validate_native_grant_request_for_epoch, verify_epoch_chain,
+    EpochTransitionMode, HistoricalBudgetAccounting, SignedWitnessEpochTransition,
+    SignedWitnessEpochTransitionAck, WitnessEpochProof, WitnessEpochTransitionAckBody,
+    WitnessEpochTransitionBody,
+};
+pub use native_grants::{
+    serve_stdio_add_native_grant, verify_native_grant_proof, AddNativeGrantAckBody,
+    AddNativeGrantBody, NativeGrantArtifact, NativeGrantDelegation, NativeGrantProof,
+    NativeGrantRole, SignedAddNativeGrant, SignedAddNativeGrantAck, ADD_NATIVE_GRANT_DOMAIN,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -59,10 +73,12 @@ fn sign(key: &SigningKey, tag: &str, value: &impl Serialize) -> Result<String> {
     Ok(hex::encode(key.sign(&domain(tag, value)?).to_bytes()))
 }
 fn checked_file(path: &Path) -> Result<File> {
-    Ok(OpenOptions::new()
+    let file = OpenOptions::new()
         .read(true)
-        .custom_flags(libc::O_NOFOLLOW | libc::O_CLOEXEC)
-        .open(path)?)
+        .custom_flags(libc::O_NOFOLLOW | libc::O_CLOEXEC | libc::O_NONBLOCK)
+        .open(path)?;
+    ensure!(file.metadata()?.is_file(), "regular witness file required");
+    Ok(file)
 }
 fn private_key(path: &Path) -> Result<SigningKey> {
     let mut file = checked_file(path)?;
@@ -106,20 +122,79 @@ fn publish(path: &Path, data: &[u8]) -> Result<()> {
 pub fn source_sha256() -> String {
     source_set_digest(&[
         ("witness.rs", include_bytes!("witness.rs")),
+        ("witness/epochs.rs", include_bytes!("witness/epochs.rs")),
+        ("native_review.rs", include_bytes!("../native_review.rs")),
+        (
+            "witness/native_grants.rs",
+            include_bytes!("witness/native_grants.rs"),
+        ),
+        (
+            "native_persistence.rs",
+            include_bytes!("../native_persistence.rs"),
+        ),
+        ("native_scq.rs", include_bytes!("native_scq.rs")),
+        (
+            "native_scq/policy.rs",
+            include_bytes!("native_scq/policy.rs"),
+        ),
         ("funding.rs", include_bytes!("funding.rs")),
     ])
 }
 pub fn authority_source_sha256() -> String {
     source_set_digest(&[
+        ("witness.rs", include_bytes!("witness.rs")),
+        ("witness/epochs.rs", include_bytes!("witness/epochs.rs")),
+        (
+            "witness/native_grants.rs",
+            include_bytes!("witness/native_grants.rs"),
+        ),
+        (
+            "native_persistence.rs",
+            include_bytes!("../native_persistence.rs"),
+        ),
         ("authority.rs", include_bytes!("authority.rs")),
-        ("authority/funding.rs", include_bytes!("authority/funding.rs")),
+        (
+            "authority/history_aggregate.rs",
+            include_bytes!("authority/history_aggregate.rs"),
+        ),
+        (
+            "authority/native_scopes.rs",
+            include_bytes!("authority/native_scopes.rs"),
+        ),
+        (
+            "authority/native_recovery.rs",
+            include_bytes!("authority/native_recovery.rs"),
+        ),
+        ("native_review.rs", include_bytes!("../native_review.rs")),
+        ("native_scq.rs", include_bytes!("native_scq.rs")),
+        (
+            "native_scq/policy.rs",
+            include_bytes!("native_scq/policy.rs"),
+        ),
+        (
+            "service/native_scq.rs",
+            include_bytes!("service/native_scq.rs"),
+        ),
+        (
+            "authority/funding.rs",
+            include_bytes!("authority/funding.rs"),
+        ),
         ("funding.rs", include_bytes!("funding.rs")),
         ("funding_config.rs", include_bytes!("funding_config.rs")),
         ("service.rs", include_bytes!("service.rs")),
-        ("service/funding_ipc.rs", include_bytes!("service/funding_ipc.rs")),
+        (
+            "service/funding_ipc.rs",
+            include_bytes!("service/funding_ipc.rs"),
+        ),
         ("query.rs", include_bytes!("query.rs")),
-        ("service/query_worker.rs", include_bytes!("service/query_worker.rs")),
-        ("runtime_custody.rs", include_bytes!("../runtime_custody.rs")),
+        (
+            "service/query_worker.rs",
+            include_bytes!("service/query_worker.rs"),
+        ),
+        (
+            "runtime_custody.rs",
+            include_bytes!("../runtime_custody.rs"),
+        ),
     ])
 }
 fn source_set_digest(sources: &[(&str, &[u8])]) -> String {
@@ -137,6 +212,10 @@ fn source_set_digest(sources: &[(&str, &[u8])]) -> String {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct WitnessPolicy {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub native_grant_delegation: Option<NativeGrantDelegation>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub native_fit_trust: Option<NativeWitnessTrust>,
     pub schema: String,
     pub witness_instance: String,
     pub authority_instance: String,
@@ -160,7 +239,7 @@ impl WitnessPolicy {
     pub fn sha256(&self) -> Result<String> {
         Ok(sha(&bytes(self)?))
     }
-    fn validate(&self) -> Result<()> {
+    pub(crate) fn validate(&self) -> Result<()> {
         ensure!(
             self.schema == "parallel.fit_event_witness_policy.v1",
             "unsupported witness policy"
@@ -187,10 +266,12 @@ impl WitnessPolicy {
             "authority and ACK keys must be independent"
         );
         if let Some(trust) = &self.funding_trust {
-            ensure!(trust.authority_instance == self.authority_instance
-                && trust.authority_epoch == self.authority_epoch
-                && trust.authority_executable_sha256 == self.authority_executable_sha256,
-                "funding witness trust differs from pinned authority");
+            ensure!(
+                trust.authority_instance == self.authority_instance
+                    && trust.authority_epoch == self.authority_epoch
+                    && trust.authority_executable_sha256 == self.authority_executable_sha256,
+                "funding witness trust differs from pinned authority"
+            );
         }
         ensure!(
             !self.ssh_host_alias.is_empty()
@@ -206,12 +287,17 @@ impl WitnessPolicy {
                     .all(|c| c.is_ascii_alphanumeric() || b"@._-".contains(&c)),
             "invalid pinned SSH host binding"
         );
+        if let Some(delegation) = &self.native_grant_delegation {
+            delegation.validate(self)?;
+        }
         Ok(())
     }
 }
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RequestBody {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    epoch_proofs: Vec<WitnessEpochProof>,
     schema: String,
     policy_sha256: String,
     event: Vec<u8>,
@@ -285,6 +371,13 @@ struct EventIdentity {
     deadline: u64,
 }
 fn event_identity(policy: &WitnessPolicy, event: &[u8]) -> Result<EventIdentity> {
+    event_identity_effective(policy, policy, event)
+}
+fn event_identity_effective(
+    base: &WitnessPolicy,
+    policy: &WitnessPolicy,
+    event: &[u8],
+) -> Result<EventIdentity> {
     ensure!(
         !event.is_empty() && event.len() < MAX_FRAME / 2,
         "invalid authorization event size"
@@ -294,43 +387,88 @@ fn event_identity(policy: &WitnessPolicy, event: &[u8]) -> Result<EventIdentity>
         value.instance == policy.authority_instance
             && value.seq > 0
             && valid_hash(&value.previous)
-            && matches!(value.kind.as_str(), "authorize" | "funding_start" | "funding_participant")
+            && matches!(
+                value.kind.as_str(),
+                "authorize" | "funding_start" | "funding_participant"
+            )
             && value.effects.len() == 1,
         "not an original authorization event"
     );
     let effect = &value.effects[0];
     let row = &effect.row;
     if value.kind != "authorize" {
-        let trust = policy.funding_trust.as_ref().context("funding witness trust not installed")?;
-        let original: super::funding::FundingEvent = serde_json::from_value(value.payload["original"].clone())?;
-        let (event_key, deadline) = super::funding::validate_witness_event(trust, &original,
-            &policy.authority_instance, &policy.authority_epoch)?;
-        let admission_deadline = value.payload["admission_deadline_monotonic_ns"].as_u64()
+        let trust = policy
+            .funding_trust
+            .as_ref()
+            .context("funding witness trust not installed")?;
+        let original: super::funding::FundingEvent =
+            serde_json::from_value(value.payload["original"].clone())?;
+        let (event_key, deadline) = super::funding::validate_witness_event(
+            trust,
+            &original,
+            &policy.authority_instance,
+            &policy.authority_epoch,
+        )?;
+        let admission_deadline = value.payload["admission_deadline_monotonic_ns"]
+            .as_u64()
             .context("original funding admission deadline absent")?;
-        ensure!(original.claimed_monotonic_ns < admission_deadline && admission_deadline <= deadline,
-            "funding admission deadline is outside original task window");
-        ensure!(value.payload["event_key"] == event_key
-            && value.payload["reservation_id"] == original.reservation_id(), "funding journal key mismatch");
+        ensure!(
+            original.claimed_monotonic_ns < admission_deadline && admission_deadline <= deadline,
+            "funding admission deadline is outside original task window"
+        );
+        ensure!(
+            value.payload["event_key"] == event_key
+                && value.payload["reservation_id"] == original.reservation_id(),
+            "funding journal key mismatch"
+        );
         match original.participant_slot {
             None => {
-                let reservation: super::funding::SignedReservation = serde_json::from_str(row["json"].as_str().context("signed reservation absent")?)?;
-                let stored: super::funding::FundingEvent = serde_json::from_str(row["start_json"].as_str().context("original funding start absent")?)?;
-                ensure!(value.kind == "funding_start" && effect.table == "funding_reservations"
-                    && effect.key == original.reservation_id() && row["id"] == effect.key && row["state"] == "started"
-                    && row["task_sha256"] == original.demand.task_sha256 && reservation == original.reservation
-                    && row["authorization_id"] == super::funding::digest(&original.authorization.body)?
-                    && stored == original, "funding start postimage differs from original");
+                let reservation: super::funding::SignedReservation = serde_json::from_str(
+                    row["json"].as_str().context("signed reservation absent")?,
+                )?;
+                let stored: super::funding::FundingEvent = serde_json::from_str(
+                    row["start_json"]
+                        .as_str()
+                        .context("original funding start absent")?,
+                )?;
+                ensure!(
+                    value.kind == "funding_start"
+                        && effect.table == "funding_reservations"
+                        && effect.key == original.reservation_id()
+                        && row["id"] == effect.key
+                        && row["state"] == "started"
+                        && row["task_sha256"] == original.demand.task_sha256
+                        && reservation == original.reservation
+                        && row["authorization_id"]
+                            == super::funding::digest(&original.authorization.body)?
+                        && stored == original,
+                    "funding start postimage differs from original"
+                );
             }
             Some(slot) => {
                 let id = original.participant_id()?;
-                let stored: super::funding::FundingEvent = serde_json::from_str(row["json"].as_str().context("original funding participant absent")?)?;
-                ensure!(value.kind == "funding_participant" && effect.table == "funding_participants"
-                    && effect.key == id && row["id"] == id && value.payload["participant_id"] == id
-                    && row["reservation_id"] == original.reservation_id() && row["slot"] == slot.to_string()
-                    && stored == original, "funding participant postimage differs from original");
+                let stored: super::funding::FundingEvent = serde_json::from_str(
+                    row["json"]
+                        .as_str()
+                        .context("original funding participant absent")?,
+                )?;
+                ensure!(
+                    value.kind == "funding_participant"
+                        && effect.table == "funding_participants"
+                        && effect.key == id
+                        && row["id"] == id
+                        && value.payload["participant_id"] == id
+                        && row["reservation_id"] == original.reservation_id()
+                        && row["slot"] == slot.to_string()
+                        && stored == original,
+                    "funding participant postimage differs from original"
+                );
             }
         }
-        return Ok(EventIdentity { seq:value.seq, deadline:admission_deadline });
+        return Ok(EventIdentity {
+            seq: value.seq,
+            deadline: admission_deadline,
+        });
     }
     ensure!(
         effect.table == "entries"
@@ -349,6 +487,28 @@ fn event_identity(policy: &WitnessPolicy, event: &[u8]) -> Result<EventIdentity>
             .as_str()
             .context("original fit identity absent")?,
     )?;
+    if let Some(native) = value.payload.get("native_fit") {
+        let delegated;
+        let trust = if let Some(value) = native.get("native_grant_proof").filter(|v| !v.is_null()) {
+            let proof: NativeGrantProof = serde_json::from_value(value.clone())?;
+            delegated = verify_native_grant_proof(base, &proof)?;
+            ensure!(
+                verify_epoch_chain(base, &proof.epoch_proofs)?.sha256()? == policy.sha256()?,
+                "native grant epoch differs from event epoch"
+            );
+            ensure!(
+                native["signed_grant"] == serde_json::to_value(&proof.request.body.signed_grant)?,
+                "native event grant differs from witnessed delegation"
+            );
+            &delegated
+        } else {
+            policy
+                .native_fit_trust
+                .as_ref()
+                .context("native witness trust unavailable")?
+        };
+        super::native_scq::verify_witness_event(trust, native, &identity, &start, policy)?;
+    }
     ensure!(
         start.fit_key == effect.key
             && sha(&bytes(&identity)?) == effect.key
@@ -366,8 +526,9 @@ fn event_identity(policy: &WitnessPolicy, event: &[u8]) -> Result<EventIdentity>
         deadline: start.deadline_monotonic_ns,
     })
 }
-fn verify_request(policy: &WitnessPolicy, request: &SignedRequest) -> Result<EventIdentity> {
-    policy.validate()?;
+fn verify_request(base: &WitnessPolicy, request: &SignedRequest) -> Result<EventIdentity> {
+    let effective = verify_epoch_chain(base, &request.body.epoch_proofs)?;
+    let policy = &effective;
     ensure!(
         request.body.schema == "parallel.fit_event_witness_request.v1"
             && request.body.policy_sha256 == policy.sha256()?,
@@ -379,11 +540,14 @@ fn verify_request(policy: &WitnessPolicy, request: &SignedRequest) -> Result<Eve
         &request.body,
         &request.signature,
     )?;
-    event_identity(policy, &request.body.event)
+    event_identity_effective(base, policy, &request.body.event)
 }
 impl SignedAck {
     pub fn verify(&self, policy: &WitnessPolicy, request: &SignedRequest) -> Result<()> {
         let event = verify_request(policy, request)?;
+        let base = policy;
+        let effective = verify_epoch_chain(base, &request.body.epoch_proofs)?;
+        let policy = &effective;
         ensure!(
             self.body.schema == "parallel.fit_event_witness_ack.v1"
                 && self.body.policy_sha256 == policy.sha256()?
@@ -398,6 +562,20 @@ impl SignedAck {
                 && valid_hash(&self.body.committed_record_core_sha256),
             "witness ACK does not bind exact original authorization"
         );
+        let original: OriginalEvent = serde_json::from_slice(&request.body.event)?;
+        if let Some(value) = original
+            .payload
+            .get("native_fit")
+            .and_then(|v| v.get("native_grant_proof"))
+            .filter(|v| !v.is_null())
+        {
+            let proof: NativeGrantProof = serde_json::from_value(value.clone())?;
+            verify_native_grant_proof(base, &proof)?;
+            ensure!(
+                proof.ack.body.witness_sequence < self.body.witness_sequence,
+                "native grant update does not precede authorization ACK"
+            );
+        }
         verify(
             &policy.witness_public_key,
             "parallel.fit_event_witness.ack.v1",
@@ -412,9 +590,11 @@ impl SignedAck {
 pub struct WitnessStore {
     root: PathBuf,
     policy: WitnessPolicy,
-    signing: SigningKey,
+    signing: Option<SigningKey>,
     _lease: File,
     records: BTreeMap<u64, (String, SignedAck, String)>,
+    native_grants: native_grants::NativeGrantState,
+    epoch_proofs: Vec<WitnessEpochProof>,
     sequence: u64,
     tip: String,
     root_identity: (u64, u64),
@@ -423,6 +603,94 @@ pub struct WitnessStore {
     read_only: bool,
 }
 impl WitnessStore {
+    /// Verify a frozen public copy without access to an ACK key or the original executable.
+    /// Original signed records, exact head and immutable policy remain mandatory.
+    pub fn verify_public_history(root: &Path, policy: &WitnessPolicy) -> Result<Value> {
+        Self::verify_public_history_with_acks(root, policy, &[])
+    }
+    /// Exact membership; extra committed witness-before-local-ACK events remain.
+    pub fn verify_public_history_with_acks(
+        root: &Path,
+        policy: &WitnessPolicy,
+        required: &[SignedAck],
+    ) -> Result<Value> {
+        ensure!(
+            required.len() <= 100_000 && bytes(&required)?.len() <= 64 * 1024 * 1024,
+            "public witness membership bound"
+        );
+        policy.validate()?;
+        ensure!(
+            root.is_absolute() && fs::canonicalize(root)? == root,
+            "public witness snapshot must be physical"
+        );
+        ensure!(
+            read(&root.join("policy.json"))? == bytes(policy)?,
+            "public witness original policy changed"
+        );
+        let lease = checked_file(&root.join("lease"))?;
+        ensure!(
+            unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_SH | libc::LOCK_NB) } == 0,
+            "public witness snapshot still has an active writer"
+        );
+        let identity = |p: &Path| -> Result<(u64, u64)> {
+            let m = fs::symlink_metadata(p)?;
+            ensure!(
+                !m.file_type().is_symlink(),
+                "public witness snapshot symlink"
+            );
+            Ok((m.dev(), m.ino()))
+        };
+        let head = read(&root.join("head.json"))?;
+        let mut store = Self {
+            root: root.into(),
+            policy: policy.clone(),
+            signing: None,
+            _lease: lease,
+            records: BTreeMap::new(),
+            native_grants: native_grants::NativeGrantState::default(),
+            epoch_proofs: Vec::new(),
+            sequence: 0,
+            tip: ZERO.into(),
+            root_identity: identity(root)?,
+            segment_identity: identity(&root.join("segments"))?,
+            lease_identity: identity(&root.join("lease"))?,
+            read_only: true,
+        };
+        store.replay()?;
+        store.verify_custody()?;
+        let expected: Head = serde_json::from_slice(&head)?;
+        ensure!(
+            expected.sequence == store.sequence
+                && expected.sha256 == store.tip
+                && read(&root.join("head.json"))? == head,
+            "public witness snapshot is incomplete or changed during verification"
+        );
+        let mut required_sequences = std::collections::BTreeSet::new();
+        for ack in required {
+            ensure!(
+                required_sequences.insert(ack.body.authority_sequence),
+                "duplicate required original ACK"
+            );
+            let (_, original, _) = store
+                .records
+                .get(&ack.body.authority_sequence)
+                .context("public witness snapshot omits original authority ACK")?;
+            ensure!(
+                original == ack,
+                "public witness ACK differs from original authority receipt"
+            );
+        }
+        Ok(
+            serde_json::json!({"schema":"parallel.public_witness_history_verification.v1",
+            "policy_sha256":policy.sha256()?,"authority_instance":policy.authority_instance,
+            "authority_epoch":policy.authority_epoch,"witness_instance":policy.witness_instance,
+            "sequence":store.sequence,"tip_sha256":store.tip,"head_sha256":sha(&head),
+            "original_authorization_events":store.records.len(),
+            "required_ack_count":required.len(),"required_acks_sha256":sha(&bytes(&required)?),
+            "effective_policy_sha256":store.effective_policy().sha256()?,"epoch_proofs":store.epoch_proofs,"epoch_status":store.epoch_status()?,"private_key_accessed":false,
+            "new_acknowledgement_issued":false}),
+        )
+    }
     pub fn initialize(root: &Path, policy: &WitnessPolicy) -> Result<()> {
         policy.validate()?;
         ensure!(!root.exists(), "witness already exists");
@@ -453,7 +721,29 @@ impl WitnessStore {
         key_path: &Path,
         read_only: bool,
     ) -> Result<Self> {
+        Self::open_mode_transition(root, policy, key_path, read_only, None)
+    }
+    fn open_mode_transition(
+        root: &Path,
+        policy: &WitnessPolicy,
+        key_path: &Path,
+        read_only: bool,
+        transition: Option<&SignedWitnessEpochTransition>,
+    ) -> Result<Self> {
         policy.validate()?;
+        if let Some(request) = transition {
+            crate::native_review::require_signer(&request.authorization_public_key)?;
+            verify(
+                &request.authorization_public_key,
+                "parallel.witness_epoch_transition.v1",
+                &request.body,
+                &request.signature,
+            )?;
+            ensure!(
+                request.body.immutable_base_policy_sha256 == policy.sha256()?,
+                "transition immutable base differs"
+            );
+        }
         ensure!(
             !fs::symlink_metadata(root)?.file_type().is_symlink(),
             "witness root symlink"
@@ -468,11 +758,7 @@ impl WitnessStore {
             read(&root.join("policy.json"))? == bytes(policy)?,
             "witness policy changed"
         );
-        ensure!(
-            sha(&fs::read("/proc/self/exe")?) == policy.witness_executable_sha256
-                && source_sha256() == policy.witness_source_sha256,
-            "unapproved loaded witness executable/source"
-        );
+
         let signing = private_key(&key_path)?;
         ensure!(
             hex::encode(signing.verifying_key().to_bytes()) == policy.witness_public_key,
@@ -493,17 +779,46 @@ impl WitnessStore {
         let mut store = Self {
             root,
             policy: policy.clone(),
-            signing,
+            signing: Some(signing),
             _lease: lease,
             records: BTreeMap::new(),
+            native_grants: native_grants::NativeGrantState::default(),
+            epoch_proofs: Vec::new(),
             sequence: 0,
             tip: ZERO.into(),
             root_identity,
             segment_identity,
             lease_identity,
-            read_only,
+            read_only: true,
         };
         store.replay()?;
+        let runtime = if let Some(request) = transition {
+            if let Some(original) = store.epoch_proofs.iter().find(|p| {
+                p.epoch_transition.body.next_policy.authority_epoch
+                    == request.body.next_policy.authority_epoch
+            }) {
+                ensure!(
+                    bytes(&original.epoch_transition)? == bytes(request)?,
+                    "conflicting transition runtime retry"
+                );
+                store.effective_policy()
+            } else {
+                store.check_epoch_next(request, super::native_scq::policy::now_ms()?)?;
+                &request.body.next_policy
+            }
+        } else {
+            store.effective_policy()
+        };
+        ensure!(
+            sha(&fs::read("/proc/self/exe")?) == runtime.witness_executable_sha256
+                && source_sha256() == runtime.witness_source_sha256,
+            "unapproved effective witness executable/source"
+        );
+        store.read_only = read_only;
+        let head: Head = serde_json::from_slice(&read(&store.root.join("head.json"))?)?;
+        if !read_only && head.sequence != store.sequence {
+            store.publish_head()?;
+        }
         Ok(store)
     }
     fn replay(&mut self) -> Result<()> {
@@ -514,9 +829,14 @@ impl WitnessStore {
             "witness segment custody changed"
         );
         let head: Head = serde_json::from_slice(&read(&self.root.join("head.json"))?)?;
-        let mut paths = fs::read_dir(&directory)?
-            .map(|e| e.map(|e| e.path()))
-            .collect::<std::io::Result<Vec<_>>>()?;
+        let mut paths = Vec::new();
+        for entry in fs::read_dir(&directory)? {
+            ensure!(
+                paths.len() < 1_000_000,
+                "witness history segment count bound"
+            );
+            paths.push(entry?.path());
+        }
         paths.sort();
         let mut matched = head.sequence == 0 && head.sha256 == ZERO;
         for path in paths {
@@ -526,7 +846,34 @@ impl WitnessStore {
                 "unresolved witness segment/gap"
             );
             let data = read(&path)?;
+            let shape: Value = serde_json::from_slice(&data)?;
+            if shape.get("epoch_transition").is_some() {
+                self.replay_epoch_transition(serde_json::from_slice(&data)?, sha(&data))?;
+                if head.sequence == self.sequence {
+                    ensure!(
+                        head.sha256 == self.tip,
+                        "witness committed epoch head changed"
+                    );
+                    matched = true;
+                }
+                continue;
+            }
+            if shape.get("request").is_some() {
+                self.replay_native_grant(serde_json::from_slice(&data)?, sha(&data))?;
+                if head.sequence == self.sequence {
+                    ensure!(
+                        head.sha256 == self.tip,
+                        "witness committed grant head changed"
+                    );
+                    matched = true;
+                }
+                continue;
+            }
             let record: Record = serde_json::from_slice(&data)?;
+            ensure!(
+                bytes(&record.core.request.body.epoch_proofs)? == bytes(&self.epoch_proofs)?,
+                "authorization epoch not active at original journal position"
+            );
             let event = verify_request(&self.policy, &record.core.request)?;
             record.ack.verify(&self.policy, &record.core.request)?;
             ensure!(
@@ -544,6 +891,10 @@ impl WitnessStore {
                     .is_none_or(|(seq, _)| event.seq > *seq),
                 "replayed/conflicting authority sequence"
             );
+            let work =
+                self.native_grants
+                    .check_work(&self.policy, &record.core.request, self.sequence)?;
+            self.native_grants.commit_work(work, event.seq);
             self.sequence = record.core.sequence;
             self.tip = sha(&data);
             self.records.insert(
@@ -634,23 +985,31 @@ impl WitnessStore {
             return Ok(ack.clone());
         }
         ensure!(
+            bytes(&request.body.epoch_proofs)? == bytes(&self.epoch_proofs)?,
+            "new authorization uses stale epoch"
+        );
+        ensure!(
             self.records
                 .last_key_value()
                 .is_none_or(|(seq, _)| event.seq > *seq),
             "out-of-order original authorization"
         );
+        let work = self
+            .native_grants
+            .check_work(&self.policy, request, self.sequence)?;
         let core = RecordCore {
             schema: "parallel.fit_event_witness_record.v1".into(),
             sequence: self.sequence + 1,
             previous: self.tip.clone(),
             request: request.clone(),
         };
+        let effective = self.effective_policy();
         let body = AckBody {
             schema: "parallel.fit_event_witness_ack.v1".into(),
-            policy_sha256: self.policy.sha256()?,
-            witness_instance: self.policy.witness_instance.clone(),
-            authority_instance: self.policy.authority_instance.clone(),
-            authority_epoch: self.policy.authority_epoch.clone(),
+            policy_sha256: effective.sha256()?,
+            witness_instance: effective.witness_instance.clone(),
+            authority_instance: effective.authority_instance.clone(),
+            authority_epoch: effective.authority_epoch.clone(),
             authority_sequence: event.seq,
             event_sha256: sha(&request.body.event),
             request_sha256: sha(&bytes(request)?),
@@ -659,7 +1018,13 @@ impl WitnessStore {
             committed_record_core_sha256: sha(&bytes(&core)?),
         };
         let ack = SignedAck {
-            signature: sign(&self.signing, "parallel.fit_event_witness.ack.v1", &body)?,
+            signature: sign(
+                self.signing
+                    .as_ref()
+                    .context("public witness verifier cannot sign")?,
+                "parallel.fit_event_witness.ack.v1",
+                &body,
+            )?,
             body,
         };
         let record = Record {
@@ -674,6 +1039,7 @@ impl WitnessStore {
                 .join(format!("{:020}.json", record.core.sequence)),
             &data,
         )?;
+        self.native_grants.commit_work(work, event.seq);
         self.sequence = record.core.sequence;
         self.tip = sha(&data);
         self.records.insert(
@@ -704,7 +1070,73 @@ impl WitnessStore {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct PinnedSshIdentity {
+    pub path: PathBuf,
+    pub sha256: String,
+}
+impl PinnedSshIdentity {
+    fn open(&self) -> Result<File> {
+        ensure!(
+            self.path.is_absolute() && valid_hash(&self.sha256),
+            "invalid pinned SSH identity"
+        );
+        for ancestor in self.path.ancestors() {
+            ensure!(
+                !fs::symlink_metadata(ancestor)?.file_type().is_symlink(),
+                "SSH identity ancestry is a symlink"
+            );
+        }
+        let mut file = OpenOptions::new()
+            .read(true)
+            .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK | libc::O_CLOEXEC)
+            .open(&self.path)?;
+        let metadata = file.metadata()?;
+        ensure!(
+            metadata.is_file()
+                && metadata.uid() == unsafe { libc::geteuid() }
+                && metadata.mode() & 0o077 == 0
+                && metadata.len() <= 16384,
+            "SSH identity must be bounded private owner-only regular file"
+        );
+        let mut contents = Vec::new();
+        Read::by_ref(&mut file)
+            .take(16385)
+            .read_to_end(&mut contents)?;
+        let after = file.metadata()?;
+        ensure!(
+            contents.len() as u64 == metadata.len()
+                && sha(&contents) == self.sha256
+                && metadata.mtime() == after.mtime()
+                && metadata.mtime_nsec() == after.mtime_nsec()
+                && metadata.ctime() == after.ctime()
+                && metadata.ctime_nsec() == after.ctime_nsec(),
+            "pinned SSH identity bytes changed"
+        );
+        Ok(file)
+    }
+}
+fn bind_ssh_identity(command: &mut Command, identity: &PinnedSshIdentity) -> Result<File> {
+    use std::os::fd::AsRawFd;
+    let file = identity.open()?;
+    // SSH reopens this authority-owned descriptor, not the replaceable configured pathname.
+    // The caller retains it until SSH exits. CLOEXEC prevents descriptor inheritance.
+    command
+        .arg("-i")
+        .arg(format!(
+            "/proc/{}/fd/{}",
+            std::process::id(),
+            file.as_raw_fd()
+        ))
+        .args(["-o", "IdentitiesOnly=yes", "-o", "IdentityAgent=none"]);
+    Ok(file)
+}
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct WitnessClientConfig {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub epoch_proofs: Vec<WitnessEpochProof>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ssh_identity: Option<PinnedSshIdentity>,
     pub policy: WitnessPolicy,
     pub authority_key: PathBuf,
     pub known_hosts: PathBuf,
@@ -720,6 +1152,12 @@ impl WitnessClientConfig {
     /// Load the exact reviewed public transport configuration. Merely knowing a
     /// policy digest cannot replace the actual pinned keys and executable checks.
     pub fn from_file(path: &Path, expected_sha256: &str) -> Result<Self> {
+        let config = Self::from_transport_file(path, expected_sha256)?;
+        WitnessClient::new(config.clone())?;
+        Ok(config)
+    }
+    /// Root provisioners use transport custody without impersonating the authority.
+    pub fn from_transport_file(path: &Path, expected_sha256: &str) -> Result<Self> {
         ensure!(
             path.is_absolute(),
             "event witness configuration must be absolute"
@@ -740,58 +1178,142 @@ impl WitnessClientConfig {
             "event witness configuration changed"
         );
         let config: Self = serde_json::from_slice(&data)?;
-        // Validate loaded authority identity, key ownership, pinned hosts and
-        // remote paths before the service is allowed to open authority storage.
-        WitnessClient::new(config.clone())?;
+        validate_transport_config(&config)?;
         Ok(config)
     }
 }
+fn validate_transport_config(config: &WitnessClientConfig) -> Result<()> {
+    let effective = verify_epoch_chain(&config.policy, &config.epoch_proofs)?;
+    ensure!(
+        (effective.native_fit_trust.is_none() && effective.native_grant_delegation.is_none())
+            || config.ssh_identity.is_some(),
+        "native witness requires an explicitly pinned SSH identity"
+    );
+    if let Some(identity) = &config.ssh_identity {
+        let _ = identity.open()?;
+    }
+    ensure!(
+        sha(&read(&config.known_hosts)?) == config.policy.ssh_known_hosts_sha256,
+        "pinned SSH host file changed"
+    );
+    for path in [
+        &config.remote_executable,
+        &config.remote_root,
+        &config.remote_policy,
+        &config.remote_ack_key,
+    ] {
+        let value = path.to_str().context("non-UTF8 remote custody path")?;
+        ensure!(
+            value.starts_with('/')
+                && value
+                    .bytes()
+                    .all(|c| c.is_ascii_alphanumeric() || b"/._-".contains(&c)),
+            "unsafe remote custody path"
+        );
+    }
+    Ok(())
+}
+/// Validate the complete signed request before any durable root provisioner intent.
+pub fn validate_native_grant_request(
+    policy: &WitnessPolicy,
+    request: &SignedAddNativeGrant,
+) -> Result<NativeWitnessTrust> {
+    native_grants::validate_update(policy, request)
+}
+/// Sends an independently signed update using the same pinned deadline-bounded
+/// transport, without opening the ordinary authority signing key.
+pub fn add_native_grant_remote(
+    config: &WitnessClientConfig,
+    request: &SignedAddNativeGrant,
+    deadline_monotonic_ns: u64,
+) -> Result<NativeGrantProof> {
+    validate_transport_config(config)?;
+    validate_native_grant_request_for_epoch(&config.policy, &config.epoch_proofs, request)?;
+    let proof: NativeGrantProof = WitnessClient::exchange_config(
+        config,
+        request,
+        deadline_monotonic_ns,
+        "registry-witness-add-native-grant",
+    )?;
+    verify_native_grant_proof(&config.policy, &proof)?;
+    ensure!(
+        bytes(&proof.epoch_proofs)? == bytes(&config.epoch_proofs)?,
+        "witness grant epoch chain differs"
+    );
+    ensure!(
+        bytes(&proof.request)? == bytes(request)?,
+        "witness returned a different native grant request"
+    );
+    remaining(deadline_monotonic_ns)?;
+    Ok(proof)
+}
+/// Deliver one independently signed transition; this transport owns no signing key.
+pub fn epoch_transition_remote(
+    config: &WitnessClientConfig,
+    request: &SignedWitnessEpochTransition,
+    deadline_monotonic_ns: u64,
+) -> Result<WitnessEpochProof> {
+    validate_transport_config(config)?;
+    let previous = verify_epoch_chain(&config.policy, &config.epoch_proofs)?;
+    epochs::validate_transition(
+        &config.policy,
+        &previous,
+        request,
+        request.body.not_before_unix_ms,
+    )?;
+    let proof: WitnessEpochProof = WitnessClient::exchange_config(
+        config,
+        request,
+        deadline_monotonic_ns,
+        "registry-witness-epoch-transition",
+    )?;
+    ensure!(
+        bytes(&proof.epoch_transition)? == bytes(request)?,
+        "witness returned different original epoch transition"
+    );
+    let mut chain = config.epoch_proofs.clone();
+    chain.push(proof.clone());
+    verify_epoch_chain(&config.policy, &chain)?;
+    remaining(deadline_monotonic_ns)?;
+    Ok(proof)
+}
 pub struct WitnessClient {
+    effective: WitnessPolicy,
     config: WitnessClientConfig,
     signing: SigningKey,
 }
 impl WitnessClient {
     pub fn new(config: WitnessClientConfig) -> Result<Self> {
-        config.policy.validate()?;
+        validate_transport_config(&config)?;
+        let effective = verify_epoch_chain(&config.policy, &config.epoch_proofs)?;
         ensure!(
-            sha(&fs::read("/proc/self/exe")?) == config.policy.authority_executable_sha256
-                && authority_source_sha256() == config.policy.authority_source_sha256,
+            sha(&fs::read("/proc/self/exe")?) == effective.authority_executable_sha256
+                && authority_source_sha256() == effective.authority_source_sha256,
             "unapproved loaded authority witness producer"
         );
-        ensure!(
-            sha(&read(&config.known_hosts)?) == config.policy.ssh_known_hosts_sha256,
-            "pinned SSH host file changed"
-        );
-        for path in [
-            &config.remote_executable,
-            &config.remote_root,
-            &config.remote_policy,
-            &config.remote_ack_key,
-        ] {
-            let value = path.to_str().context("non-UTF8 remote custody path")?;
-            ensure!(
-                value.starts_with('/')
-                    && value
-                        .bytes()
-                        .all(|c| c.is_ascii_alphanumeric() || b"/._-".contains(&c)),
-                "unsafe remote custody path"
-            );
-        }
         let signing = private_key(&config.authority_key)?;
         ensure!(
             hex::encode(signing.verifying_key().to_bytes()) == config.policy.authority_public_key,
             "wrong authority witness signing key"
         );
-        Ok(Self { config, signing })
+        Ok(Self {
+            config,
+            signing,
+            effective,
+        })
     }
     pub fn policy(&self) -> &WitnessPolicy {
+        &self.effective
+    }
+    pub fn base_policy(&self) -> &WitnessPolicy {
         &self.config.policy
     }
     pub fn request(&self, event: &[u8]) -> Result<SignedRequest> {
-        event_identity(&self.config.policy, event)?;
+        event_identity_effective(&self.config.policy, &self.effective, event)?;
         let body = RequestBody {
+            epoch_proofs: self.config.epoch_proofs.clone(),
             schema: "parallel.fit_event_witness_request.v1".into(),
-            policy_sha256: self.config.policy.sha256()?,
+            policy_sha256: self.effective.sha256()?,
             event: event.to_vec(),
         };
         let request = SignedRequest {
@@ -802,23 +1324,28 @@ impl WitnessClient {
             )?,
             body,
         };
-        ensure!(bytes(&request)?.len() <= MAX_FRAME, "original witness request exceeds transport bound");
+        ensure!(
+            bytes(&request)?.len() <= MAX_FRAME,
+            "original witness request exceeds transport bound"
+        );
         Ok(request)
     }
     /// No reconnect or implicit retry. A lost response leaves original authority
     /// evidence unknown. An operator may retrieve the exact original ACK later.
     pub fn record(&self, event: &[u8]) -> Result<SignedAck> {
-        let identity = event_identity(&self.config.policy, event)?;
+        let identity = event_identity_effective(&self.config.policy, &self.effective, event)?;
         self.record_until(event, identity.deadline)
     }
     /// A shorter caller deadline bounds the original acknowledgment operation;
     /// it never rewrites the signed task deadline or permits a later retry.
     pub fn record_until(&self, event: &[u8], deadline: u64) -> Result<SignedAck> {
-        let identity = event_identity(&self.config.policy, event)?;
-        ensure!(deadline <= identity.deadline, "witness transport exceeds original admission deadline");
+        let identity = event_identity_effective(&self.config.policy, &self.effective, event)?;
+        ensure!(
+            deadline <= identity.deadline,
+            "witness transport exceeds original admission deadline"
+        );
         let request = self.request(event)?;
-        let ack: SignedAck =
-            self.exchange(&request, deadline, "registry-witness-request")?;
+        let ack: SignedAck = self.exchange(&request, deadline, "registry-witness-request")?;
         ack.verify(&self.config.policy, &request)?;
         Ok(ack)
     }
@@ -839,12 +1366,23 @@ impl WitnessClient {
         deadline: u64,
         operation: &str,
     ) -> Result<T> {
+        Self::exchange_config(&self.config, request, deadline, operation)
+    }
+    fn exchange_config<
+        T: serde::de::DeserializeOwned + Send + 'static,
+        R: Serialize + Clone + Send + 'static,
+    >(
+        config: &WitnessClientConfig,
+        request: &R,
+        deadline: u64,
+        operation: &str,
+    ) -> Result<T> {
         ensure!(
-            sha(&read(&self.config.known_hosts)?) == self.config.policy.ssh_known_hosts_sha256,
+            sha(&read(&config.known_hosts)?) == config.policy.ssh_known_hosts_sha256,
             "pinned SSH custody changed"
         );
         #[cfg(test)]
-        if let Some(socket) = &self.config.local_socket {
+        if let Some(socket) = &config.local_socket {
             let mut stream = std::os::unix::net::UnixStream::connect(socket)?;
             stream.set_read_timeout(Some(remaining(deadline)?))?;
             stream.set_write_timeout(Some(remaining(deadline)?))?;
@@ -854,6 +1392,11 @@ impl WitnessClient {
             return Ok(reply);
         }
         let mut command = Command::new("/usr/bin/ssh");
+        let _ssh_identity = config
+            .ssh_identity
+            .as_ref()
+            .map(|identity| bind_ssh_identity(&mut command, identity))
+            .transpose()?;
         command
             .args([
                 "-F",
@@ -875,22 +1418,19 @@ impl WitnessClient {
             .arg("-o")
             .arg(format!(
                 "UserKnownHostsFile={}",
-                self.config.known_hosts.display()
+                config.known_hosts.display()
             ))
             .arg("-o")
-            .arg(format!(
-                "HostKeyAlias={}",
-                self.config.policy.ssh_host_alias
-            ))
+            .arg(format!("HostKeyAlias={}", config.policy.ssh_host_alias))
             .arg("--")
-            .arg(&self.config.policy.ssh_destination)
+            .arg(&config.policy.ssh_destination)
             .arg(format!(
                 "{} {} --root {} --policy {} --key {}",
-                self.config.remote_executable.display(),
+                config.remote_executable.display(),
                 operation,
-                self.config.remote_root.display(),
-                self.config.remote_policy.display(),
-                self.config.remote_ack_key.display()
+                config.remote_root.display(),
+                config.remote_policy.display(),
+                config.remote_ack_key.display()
             ))
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -918,7 +1458,7 @@ impl WitnessClient {
             .stderr
             .take()
             .context("witness transport stderr absent")?;
-        let request = request.clone();
+        let request = (*request).clone();
         let send = std::thread::spawn(move || write_frame(input, &request));
         let receive = std::thread::spawn(move || read_frame::<T>(output));
         let stderr = std::thread::spawn(move || {
@@ -1015,6 +1555,6 @@ pub fn serve_stdio_get_ack(root: &Path, policy_path: &Path, key_path: &Path) -> 
     write_frame(std::io::stdout().lock(), &store.get_ack(&request)?)
 }
 #[cfg(test)]
-mod tests;
-#[cfg(test)]
 pub(crate) mod funding_tests;
+#[cfg(test)]
+mod tests;

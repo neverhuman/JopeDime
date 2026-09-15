@@ -7,7 +7,10 @@ use std::{env, path::Path};
 
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
-    ensure!(args.len() == 3, "usage: archive_compatibility VOCABULARY PROGRAMS_JSON");
+    ensure!(
+        args.len() == 3,
+        "usage: archive_compatibility VOCABULARY PROGRAMS_JSON"
+    );
     let vocab: Vocab = read_json(Path::new(&args[1]))?;
     let programs: Vec<String> = read_json(Path::new(&args[2]))?;
     let rows: Vec<Value> = programs.iter().map(|program| {

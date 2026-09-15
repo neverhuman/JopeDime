@@ -1,27 +1,28 @@
 pub mod audit;
 pub mod champions;
 pub mod checkpoint_recovery;
-pub mod runtime_custody;
-pub mod training_exposure;
 pub mod controller;
 pub mod dashboard;
-pub mod learning_history;
 pub mod encoding;
 pub mod families;
-pub mod gp;
 pub mod fit_boundary;
-pub mod proposal_population;
+pub mod gp;
+pub mod learning_history;
 pub mod manifest;
+pub mod native_graph;
 #[cfg(feature = "neural")]
 pub mod neural;
 pub mod operations;
 pub mod prepare;
-pub mod queue;
-pub mod service;
+pub mod proposal_population;
 pub mod qualification_slots;
-pub mod tournament;
+pub mod queue;
+pub mod runtime_custody;
+pub mod service;
 pub mod snapshot;
 pub mod telemetry;
+pub mod tournament;
+pub mod training_exposure;
 pub mod transport;
 
 pub mod hyperion;
@@ -32,27 +33,27 @@ pub mod components;
 #[cfg(feature = "neural")]
 pub mod contexts;
 
+#[cfg(feature = "neural")]
+pub mod auxiliary_training;
 pub mod corpus;
 pub mod corpus_publication;
-pub mod teaching_store;
-pub mod task_contract;
 pub mod eval_registry;
-pub mod label_admission;
 #[cfg(feature = "neural")]
 pub mod gpu_worker;
 pub mod grammar;
+pub mod label_admission;
 #[cfg(feature = "neural")]
 pub mod pipeline;
 #[cfg(feature = "neural")]
-pub mod proposals;
-#[cfg(feature = "neural")]
 pub mod proposal_ranking;
 #[cfg(feature = "neural")]
+pub mod proposals;
+#[cfg(feature = "neural")]
 pub mod ranked_proposals;
+pub mod task_contract;
+pub mod teaching_store;
 #[cfg(feature = "neural")]
 pub mod training;
-#[cfg(feature = "neural")]
-pub mod auxiliary_training;
 
 pub mod campaign;
 
@@ -60,3 +61,23 @@ pub mod campaign;
 pub mod monitoring;
 
 pub mod sealed_storage;
+
+pub mod resident_protocol;
+pub mod smartcluster_worker;
+
+pub mod native_genome;
+pub mod native_loop;
+
+pub mod continuation_corpus;
+
+pub mod native_observer;
+
+mod native_persistence;
+
+pub(crate) mod native_review;
+
+pub mod native_provisioner;
+
+pub mod preparation_overlay;
+
+pub(crate) mod native_input_cache;

@@ -291,8 +291,11 @@ fn canonical_metadata_wins_over_earlier_acquisition_stubs() {
 fn growth_fixture(f: &Fixture, parent_path: &Path) -> (PathBuf, PathBuf, String) {
     let root = f.dir.path();
     fs::create_dir_all(root.join("tools")).unwrap();
-    fs::copy(Path::new(env!("CARGO_MANIFEST_DIR")).join("tools/family_growth_policy.py"),
-        root.join("tools/family_growth_policy.py")).unwrap();
+    fs::copy(
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tools/family_growth_policy.py"),
+        root.join("tools/family_growth_policy.py"),
+    )
+    .unwrap();
     let script = r#"
 import json,sys
 from pathlib import Path
@@ -311,12 +314,25 @@ f.put('growth-assignment.json',f.assign([cid,'new-alias']))
 print(cid)
 "#;
     let output = std::process::Command::new("/usr/bin/python3")
-        .args(["-B", "-c", script]).arg(root).arg(parent_path)
-        .env("PYTHONPATH", Path::new(env!("CARGO_MANIFEST_DIR")).join("tools"))
-        .output().unwrap();
-    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
-    (root.join("parent.json"), root.join("growth-assignment.json"),
-        String::from_utf8(output.stdout).unwrap().trim().to_owned())
+        .args(["-B", "-c", script])
+        .arg(root)
+        .arg(parent_path)
+        .env(
+            "PYTHONPATH",
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("tools"),
+        )
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    (
+        root.join("parent.json"),
+        root.join("growth-assignment.json"),
+        String::from_utf8(output.stdout).unwrap().trim().to_owned(),
+    )
 }
 
 #[test]
@@ -327,14 +343,19 @@ fn authenticated_component_growth_preserves_panels_and_is_membership_only() {
     let output = f.dir.path().join("grown.json");
     let grown = families::freeze_growth(&parent, &assignment, &output).unwrap();
     for (family, prior) in &before.families {
-        assert_eq!(serde_json::to_value(&grown.families[family]).unwrap(), serde_json::to_value(prior).unwrap());
+        assert_eq!(
+            serde_json::to_value(&grown.families[family]).unwrap(),
+            serde_json::to_value(prior).unwrap()
+        );
     }
     let new = &grown.families[&component];
     assert_eq!(new.partition, "development_validation");
     assert_eq!(new.assignment_method, "stable_sha256_component_v2");
     assert!(new.datasets.is_empty());
-    assert_eq!(grown.quota_report()["remaining_families_by_partition"],
-        before.quota_report()["remaining_families_by_partition"]);
+    assert_eq!(
+        grown.quota_report()["remaining_families_by_partition"],
+        before.quota_report()["remaining_families_by_partition"]
+    );
     assert!(families::binding(&output, "new", "new-alias", &component).is_err());
     let mut forged = grown.clone();
     forged.families.get_mut(&component).unwrap().partition = "meta_test".into();
@@ -347,7 +368,12 @@ fn authenticated_component_growth_preserves_panels_and_is_membership_only() {
     assert!(forged.validate().is_err());
     let mut forged = grown.clone();
     let dataset = before.families["family-a"].datasets[0].clone();
-    forged.families.get_mut(&component).unwrap().datasets.push(dataset);
+    forged
+        .families
+        .get_mut(&component)
+        .unwrap()
+        .datasets
+        .push(dataset);
     assert!(forged.validate().is_err());
 }
 
@@ -359,16 +385,33 @@ fn component_growth_refuses_forged_summaries_changed_helper_and_stale_parent() {
     let mut value: Value = read_json(&assignment).unwrap();
     value["n_test"] = json!(1);
     write_json(&assignment, &value).unwrap();
-    assert!(families::freeze_growth(&parent, &assignment, &f.dir.path().join("forged.json")).is_err());
+    assert!(
+        families::freeze_growth(&parent, &assignment, &f.dir.path().join("forged.json")).is_err()
+    );
     value["n_test"] = json!(0);
     write_json(&assignment, &value).unwrap();
-    fs::write(f.dir.path().join("tools/family_growth_policy.py"), "print('forged')").unwrap();
-    assert!(families::freeze_growth(&parent, &assignment, &f.dir.path().join("helper-changed.json")).is_err());
-    fs::copy(Path::new(env!("CARGO_MANIFEST_DIR")).join("tools/family_growth_policy.py"),
-        f.dir.path().join("tools/family_growth_policy.py")).unwrap();
+    fs::write(
+        f.dir.path().join("tools/family_growth_policy.py"),
+        "print('forged')",
+    )
+    .unwrap();
+    assert!(families::freeze_growth(
+        &parent,
+        &assignment,
+        &f.dir.path().join("helper-changed.json")
+    )
+    .is_err());
+    fs::copy(
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tools/family_growth_policy.py"),
+        f.dir.path().join("tools/family_growth_policy.py"),
+    )
+    .unwrap();
     let mut stale: Value = read_json(&parent).unwrap();
     stale["registry_id"] = json!("changed");
     let stale_path = f.dir.path().join("stale-parent.json");
     write_json(&stale_path, &stale).unwrap();
-    assert!(families::freeze_growth(&stale_path, &assignment, &f.dir.path().join("stale.json")).is_err());
+    assert!(
+        families::freeze_growth(&stale_path, &assignment, &f.dir.path().join("stale.json"))
+            .is_err()
+    );
 }

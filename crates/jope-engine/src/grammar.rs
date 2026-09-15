@@ -407,7 +407,10 @@ impl Vocab {
     }
     pub fn task_id(&self, task: &str) -> Result<usize> {
         crate::task_contract::require_task(task)?;
-        Ok(*self.task_ids.get(task).with_context(|| format!("{task} absent"))?)
+        Ok(*self
+            .task_ids
+            .get(task)
+            .with_context(|| format!("{task} absent"))?)
     }
     pub fn encode(&self, genome: &str) -> Result<Vec<usize>> {
         self.encode_for_task(genome, "regression")
@@ -689,16 +692,21 @@ mod task_encode_tests {
     use std::path::Path;
 
     #[test]
-    fn encode_for_task_emits_the_requested_task_token() {
+    fn encode_for_task_emits_regression_and_rejects_unqualified_tasks() {
         let vocab: Vocab =
             read_json(&Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/grammar/featmath.json"))
                 .unwrap();
         let genome = "(pipe X (ridge))";
         let regression = vocab.encode(genome).unwrap();
-        let binary = vocab.encode_for_task(genome, "binary").unwrap();
         assert_eq!(regression[2], vocab.task_id("regression").unwrap());
-        assert_eq!(binary[2], vocab.task_id("binary").unwrap());
-        assert_ne!(regression[2], binary[2]);
-        assert_eq!(&regression[3..], &binary[3..]);
+        assert_eq!(
+            regression,
+            vocab.encode_for_task(genome, "regression").unwrap()
+        );
+        assert!(vocab
+            .encode_for_task(genome, "binary")
+            .unwrap_err()
+            .to_string()
+            .contains("regression only"));
     }
 }

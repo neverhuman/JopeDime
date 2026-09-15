@@ -183,26 +183,49 @@ pub struct Records {
 impl Records {
     pub fn open(path: &Path, count: usize) -> Result<Self> {
         let file = fs::File::open(path)?;
-        Self::from_file(file,count)
+        Self::from_file(file, count)
     }
     /// Hash the bytes actually copied into sealed shared storage. A subsequent
     /// source mutation cannot change training inputs or cause mmap SIGBUS.
     pub fn open_verified(path: &Path, count: usize, expected: &str) -> Result<Self> {
-        use std::{io::{Read,Write}, os::fd::{AsRawFd,FromRawFd}};
-        use sha2::{Digest,Sha256};
-        if let Some(file) = crate::sealed_storage::shared(path,expected,count * RECORD_BYTES)? {
-            return Self::from_file(file,count);
+        use sha2::{Digest, Sha256};
+        use std::{
+            io::{Read, Write},
+            os::fd::{AsRawFd, FromRawFd},
+        };
+        if let Some(file) = crate::sealed_storage::shared(path, expected, count * RECORD_BYTES)? {
+            return Self::from_file(file, count);
         }
-        let fd = unsafe {libc::memfd_create(c"jope-teaching-records".as_ptr(),libc::MFD_CLOEXEC | libc::MFD_ALLOW_SEALING)};
-        ensure!(fd >= 0,"cannot create sealed teaching storage");
-        let mut sealed = unsafe {fs::File::from_raw_fd(fd)};
-        let mut source = fs::File::open(path)?; let mut digest = Sha256::new(); let mut buffer = vec![0u8;1024*1024];
-        loop { let n = source.read(&mut buffer)?; if n == 0 {break;}
-            digest.update(&buffer[..n]); sealed.write_all(&buffer[..n])?; }
-        ensure!(hex::encode(digest.finalize()) == expected,"record content changed during verification");
-        let seals = libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL;
-        ensure!(unsafe {libc::fcntl(sealed.as_raw_fd(),libc::F_ADD_SEALS,seals)} == 0,"cannot seal teaching storage");
-        Self::from_file(sealed,count)
+        let fd = unsafe {
+            libc::memfd_create(
+                c"jope-teaching-records".as_ptr(),
+                libc::MFD_CLOEXEC | libc::MFD_ALLOW_SEALING,
+            )
+        };
+        ensure!(fd >= 0, "cannot create sealed teaching storage");
+        let mut sealed = unsafe { fs::File::from_raw_fd(fd) };
+        let mut source = fs::File::open(path)?;
+        let mut digest = Sha256::new();
+        let mut buffer = vec![0u8; 1024 * 1024];
+        loop {
+            let n = source.read(&mut buffer)?;
+            if n == 0 {
+                break;
+            }
+            digest.update(&buffer[..n]);
+            sealed.write_all(&buffer[..n])?;
+        }
+        ensure!(
+            hex::encode(digest.finalize()) == expected,
+            "record content changed during verification"
+        );
+        let seals =
+            libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL;
+        ensure!(
+            unsafe { libc::fcntl(sealed.as_raw_fd(), libc::F_ADD_SEALS, seals) } == 0,
+            "cannot seal teaching storage"
+        );
+        Self::from_file(sealed, count)
     }
     fn from_file(file: fs::File, count: usize) -> Result<Self> {
         use std::os::fd::AsRawFd;
@@ -222,10 +245,7 @@ impl Records {
             )
         };
         ensure!(ptr != libc::MAP_FAILED, "mmap failed");
-        Ok(Self {
-            ptr,
-            len,
-        })
+        Ok(Self { ptr, len })
     }
     pub fn get(&self, i: usize) -> Record {
         assert!((i + 1) * RECORD_BYTES <= self.len);
@@ -288,22 +308,41 @@ struct LedgerCache {
 
 impl LedgerCache {
     fn open(root: &Path, path: &Path, output: &Path, observations: &[PathBuf]) -> Result<Self> {
-        let relative = if path.is_absolute() { path.strip_prefix(root)? } else { path };
+        let relative = if path.is_absolute() {
+            path.strip_prefix(root)?
+        } else {
+            path
+        };
         crate::manifest::relative(relative)?;
-        ensure!(relative.starts_with("runs") && relative.components().count() >= 3,
-            "corpus cache must be a private directory below runs/<experiment>");
+        ensure!(
+            relative.starts_with("runs") && relative.components().count() >= 3,
+            "corpus cache must be a private directory below runs/<experiment>"
+        );
         let path = resolve(root, relative)?;
-        let absolute = |p: &Path| if p.is_absolute() { p.to_path_buf() } else { root.join(p) };
+        let absolute = |p: &Path| {
+            if p.is_absolute() {
+                p.to_path_buf()
+            } else {
+                root.join(p)
+            }
+        };
         let output = absolute(output);
-        ensure!(!path.starts_with(&output) && !output.starts_with(&path),
-            "corpus cache overlaps corpus output");
+        ensure!(
+            !path.starts_with(&output) && !output.starts_with(&path),
+            "corpus cache overlaps corpus output"
+        );
         for source in observations {
             let source = absolute(source);
-            ensure!(!path.starts_with(&source) && !source.starts_with(&path),
-                "corpus cache overlaps observation roots");
+            ensure!(
+                !path.starts_with(&source) && !source.starts_with(&path),
+                "corpus cache overlaps observation roots"
+            );
         }
         fs::create_dir_all(&path)?;
-        Ok(Self { root: root.to_path_buf(), relative: relative.to_path_buf() })
+        Ok(Self {
+            root: root.to_path_buf(),
+            relative: relative.to_path_buf(),
+        })
     }
 
     fn entry(&self, binding: &LedgerBinding) -> Result<PathBuf> {
@@ -311,66 +350,131 @@ impl LedgerCache {
         resolve(&self.root, &self.relative.join(key))
     }
 
-    fn load(&self, binding: &LedgerBinding, contexts: &[ContextRow], vocab: &Vocab) -> Result<Option<Contribution>> {
+    fn load(
+        &self,
+        binding: &LedgerBinding,
+        contexts: &[ContextRow],
+        vocab: &Vocab,
+    ) -> Result<Option<Contribution>> {
         let entry = self.entry(binding)?;
-        if !entry.exists() { return Ok(None); }
+        if !entry.exists() {
+            return Ok(None);
+        }
         let relative = entry.strip_prefix(self.root.canonicalize()?)?;
         let manifest_path = resolve(&self.root, &relative.join("manifest.json"))?;
         let manifest: ContributionManifest = read_json(&manifest_path)
             .with_context(|| format!("invalid corpus cache manifest: {}", entry.display()))?;
-        ensure!(manifest.schema == "parallel.corpus_scan_contribution.v1" && manifest.binding == *binding,
-            "corpus cache binding mismatch: {}", entry.display());
+        ensure!(
+            manifest.schema == "parallel.corpus_scan_contribution.v1"
+                && manifest.binding == *binding,
+            "corpus cache binding mismatch: {}",
+            entry.display()
+        );
         let payload = fs::read(resolve(&self.root, &relative.join("contribution.json"))?)?;
-        ensure!(hash(&payload) == manifest.contribution_sha256,
-            "corpus cache contribution digest mismatch: {}", entry.display());
+        ensure!(
+            hash(&payload) == manifest.contribution_sha256,
+            "corpus cache contribution digest mismatch: {}",
+            entry.display()
+        );
         let contribution: Contribution = serde_json::from_slice(&payload)
             .with_context(|| format!("invalid corpus cache contribution: {}", entry.display()))?;
-        let seen = contribution.counts.get("observations_seen").copied().unwrap_or(0);
-        let rejected = contribution.counts.iter().filter(|(key, _)| key.as_str() != "observations_seen")
+        let seen = contribution
+            .counts
+            .get("observations_seen")
+            .copied()
+            .unwrap_or(0);
+        let rejected = contribution
+            .counts
+            .iter()
+            .filter(|(key, _)| key.as_str() != "observations_seen")
             .try_fold(0usize, |total, (key, n)| -> Result<usize> {
-                ensure!(matches!(key.as_str(), "no_matching_context" | "meta_test_withheld" | "failed_program"
-                    | "sequence_too_long" | "duplicate_program_cut")
-                    || key.starts_with("unrepresentable:"), "invalid corpus cache counter");
-                total.checked_add(*n).context("corpus cache counter overflow")
+                ensure!(
+                    matches!(
+                        key.as_str(),
+                        "no_matching_context"
+                            | "meta_test_withheld"
+                            | "failed_program"
+                            | "sequence_too_long"
+                            | "duplicate_program_cut"
+                    ) || key.starts_with("unrepresentable:"),
+                    "invalid corpus cache counter"
+                );
+                total
+                    .checked_add(*n)
+                    .context("corpus cache counter overflow")
             })?;
         let mut accepted = 0usize;
         for (&context, programs) in &contribution.selected {
-            ensure!(context < contexts.len() && contexts[context].partition != "meta_test",
-                "invalid corpus cache context");
-            accepted = accepted.checked_add(programs.len()).context("corpus cache record overflow")?;
+            ensure!(
+                context < contexts.len() && contexts[context].partition != "meta_test",
+                "invalid corpus cache context"
+            );
+            accepted = accepted
+                .checked_add(programs.len())
+                .context("corpus cache record overflow")?;
             for (genome, (tokens, rmse, runtime, _)) in programs {
-                ensure!(!genome.is_empty() && !tokens.is_empty() && tokens.len() <= SEQUENCE
-                    && tokens.iter().all(|&token| token < vocab.tokens.len())
-                    && rmse.is_finite() && *rmse >= 0.0 && runtime.is_finite() && *runtime >= 0.0,
-                    "invalid corpus cache label");
+                ensure!(
+                    !genome.is_empty()
+                        && !tokens.is_empty()
+                        && tokens.len() <= SEQUENCE
+                        && tokens.iter().all(|&token| token < vocab.tokens.len())
+                        && rmse.is_finite()
+                        && *rmse >= 0.0
+                        && runtime.is_finite()
+                        && *runtime >= 0.0,
+                    "invalid corpus cache label"
+                );
             }
         }
-        ensure!(rejected.checked_add(accepted).is_some_and(|n| n <= seen),
-            "corpus cache observation counts disagree");
+        ensure!(
+            rejected.checked_add(accepted).is_some_and(|n| n <= seen),
+            "corpus cache observation counts disagree"
+        );
         Ok(Some(contribution))
     }
 
-    fn publish(&self, binding: &LedgerBinding, contribution: &Contribution,
-        progress: &mut impl FnMut(&str, usize, Option<usize>) -> Result<()>) -> Result<()> {
+    fn publish(
+        &self,
+        binding: &LedgerBinding,
+        contribution: &Contribution,
+        progress: &mut impl FnMut(&str, usize, Option<usize>) -> Result<()>,
+    ) -> Result<()> {
         use std::sync::atomic::{AtomicU64, Ordering};
         static SERIAL: AtomicU64 = AtomicU64::new(0);
         let entry = self.entry(binding)?;
         let parent = entry.parent().context("cache parent absent")?;
-        let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_nanos();
-        let temporary = parent.join(format!(".partial-{}-{stamp}-{}", std::process::id(), SERIAL.fetch_add(1, Ordering::Relaxed)));
+        let stamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)?
+            .as_nanos();
+        let temporary = parent.join(format!(
+            ".partial-{}-{stamp}-{}",
+            std::process::id(),
+            SERIAL.fetch_add(1, Ordering::Relaxed)
+        ));
         fs::create_dir(&temporary)?;
         let result = (|| -> Result<()> {
             let payload = serde_json::to_vec(contribution)?;
-            let mut file = fs::OpenOptions::new().write(true).create_new(true).open(temporary.join("contribution.json"))?;
+            let mut file = fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(temporary.join("contribution.json"))?;
             file.write_all(&payload)?;
             file.sync_all()?;
-            let seen = contribution.counts.get("observations_seen").copied().unwrap_or(0);
+            let seen = contribution
+                .counts
+                .get("observations_seen")
+                .copied()
+                .unwrap_or(0);
             progress("cache payload durable", seen, None)?;
             let manifest = ContributionManifest {
-                schema: "parallel.corpus_scan_contribution.v1".into(), binding: binding.clone(),
+                schema: "parallel.corpus_scan_contribution.v1".into(),
+                binding: binding.clone(),
                 contribution_sha256: hash(&payload),
             };
-            let mut file = fs::OpenOptions::new().write(true).create_new(true).open(temporary.join("manifest.json"))?;
+            let mut file = fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(temporary.join("manifest.json"))?;
             file.write_all(&serde_json::to_vec(&manifest)?)?;
             file.sync_all()?;
             progress("cache manifest durable", seen, None)?;
@@ -383,31 +487,47 @@ impl LedgerCache {
             progress("cache entry committed", seen, None)?;
             Ok(())
         })();
-        if result.is_err() && temporary.exists() { let _ = fs::remove_dir_all(&temporary); }
+        if result.is_err() && temporary.exists() {
+            let _ = fs::remove_dir_all(&temporary);
+        }
         result
     }
 }
 
 pub(crate) fn scan_ledger(
-    rows: Vec<Value>, path: &Path, by_cut: &BTreeMap<(String, usize), usize>,
-    contexts: &[ContextRow], prepared: &BTreeMap<PathBuf, Prepared>, vocab: &Vocab,
-    qualification: bool, token_cache: &mut TokenCache,
+    rows: Vec<Value>,
+    path: &Path,
+    by_cut: &BTreeMap<(String, usize), usize>,
+    contexts: &[ContextRow],
+    prepared: &BTreeMap<PathBuf, Prepared>,
+    vocab: &Vocab,
+    qualification: bool,
+    token_cache: &mut TokenCache,
 ) -> Result<Contribution> {
     let mut contribution = Contribution::default();
     for o in rows {
         crate::campaign::check_deadline()?;
-        *contribution.counts.entry("observations_seen".into()).or_default() += 1;
+        *contribution
+            .counts
+            .entry("observations_seen".into())
+            .or_default() += 1;
         let key = (
             o["dataset"].as_str().unwrap_or("").to_string(),
             o["cut"].as_u64().unwrap_or(u64::MAX) as usize,
         );
         let Some(&context) = by_cut.get(&key) else {
-            *contribution.counts.entry("no_matching_context".into()).or_default() += 1;
+            *contribution
+                .counts
+                .entry("no_matching_context".into())
+                .or_default() += 1;
             continue;
         };
         let c = &contexts[context];
         if c.partition == "meta_test" {
-            *contribution.counts.entry("meta_test_withheld".into()).or_default() += 1;
+            *contribution
+                .counts
+                .entry("meta_test_withheld".into())
+                .or_default() += 1;
             continue;
         }
         let p = &prepared[&c.prepared];
@@ -425,23 +545,25 @@ pub(crate) fn scan_ledger(
             path.display()
         );
         ensure!(
-            qualification
-                || (o["family_partition_frozen"] == true && o["qualification"] == false),
+            qualification || (o["family_partition_frozen"] == true && o["qualification"] == false),
             "provisional observation in clean corpus"
         );
         if !o["failure"].is_null() {
-            *contribution.counts.entry("failed_program".into()).or_default() += 1;
+            *contribution
+                .counts
+                .entry("failed_program".into())
+                .or_default() += 1;
             continue;
         }
         let task = o["task"].as_str().unwrap_or("regression");
         crate::task_contract::require_task(task)?;
         let rmse = crate::task_contract::observation_primary(&o["metrics"])?;
-        let runtime = o.get("numerical_runtime_seconds").unwrap_or(&o["runtime_seconds"])
-            .as_f64().context("runtime absent")?;
-        ensure!(
-            runtime.is_finite() && runtime >= 0.0,
-            "invalid score"
-        );
+        let runtime = o
+            .get("numerical_runtime_seconds")
+            .unwrap_or(&o["runtime_seconds"])
+            .as_f64()
+            .context("runtime absent")?;
+        ensure!(runtime.is_finite() && runtime >= 0.0, "invalid score");
         let genome = o["genome"].as_str().context("genome absent")?;
         ensure!(
             hash(genome.as_bytes()) == o["program_sha256"],
@@ -449,11 +571,15 @@ pub(crate) fn scan_ledger(
         );
         // Validate every observation before skipping duplicates. The
         // first score/runtime/bias for this exact program and cut wins.
-        if contribution.selected
+        if contribution
+            .selected
             .get(&context)
             .is_some_and(|rows| rows.contains_key(genome))
         {
-            *contribution.counts.entry("duplicate_program_cut".into()).or_default() += 1;
+            *contribution
+                .counts
+                .entry("duplicate_program_cut".into())
+                .or_default() += 1;
             continue;
         }
         let tokens = match token_cache.encode_for_task(&vocab, genome, task) {
@@ -486,7 +612,15 @@ pub fn build(
     output: &Path,
     qualification: bool,
 ) -> Result<()> {
-    build_observed(root, contexts_path, vocab_path, observations, output, qualification, |_, _, _| Ok(()))
+    build_observed(
+        root,
+        contexts_path,
+        vocab_path,
+        observations,
+        output,
+        qualification,
+        |_, _, _| Ok(()),
+    )
 }
 
 /// Observation affects telemetry only; corpus bytes and admission rules are shared.
@@ -499,7 +633,17 @@ pub fn build_observed(
     qualification: bool,
     progress: impl FnMut(&str, usize, Option<usize>) -> Result<()>,
 ) -> Result<()> {
-    build_impl(root, contexts_path, vocab_path, observations, output, qualification, None, progress).map(|_| ())
+    build_impl(
+        root,
+        contexts_path,
+        vocab_path,
+        observations,
+        output,
+        qualification,
+        None,
+        progress,
+    )
+    .map(|_| ())
 }
 
 /// Reuse validated ledger contributions in a private cache under `root/runs`.
@@ -507,18 +651,37 @@ pub fn build_observed(
 /// tokenization, not source I/O. This never changes corpus bytes or provenance.
 /// The caller retains responsibility for atomic publication of `output`.
 pub fn build_observed_cached(
-    root: &Path, contexts_path: &Path, vocab_path: &Path, observations: &[PathBuf],
-    output: &Path, qualification: bool, cache_path: &Path,
+    root: &Path,
+    contexts_path: &Path,
+    vocab_path: &Path,
+    observations: &[PathBuf],
+    output: &Path,
+    qualification: bool,
+    cache_path: &Path,
     progress: impl FnMut(&str, usize, Option<usize>) -> Result<()>,
 ) -> Result<ScanCacheStats> {
     ensure!(qualification, "production corpus requires teaching_store::publish_admitted and a frozen admission manifest");
     let cache = LedgerCache::open(root, cache_path, output, observations)?;
-    build_impl(root, contexts_path, vocab_path, observations, output, qualification, Some(cache), progress)
+    build_impl(
+        root,
+        contexts_path,
+        vocab_path,
+        observations,
+        output,
+        qualification,
+        Some(cache),
+        progress,
+    )
 }
 
 fn build_impl(
-    root: &Path, contexts_path: &Path, vocab_path: &Path, observations: &[PathBuf],
-    output: &Path, qualification: bool, cache: Option<LedgerCache>,
+    root: &Path,
+    contexts_path: &Path,
+    vocab_path: &Path,
+    observations: &[PathBuf],
+    output: &Path,
+    qualification: bool,
+    cache: Option<LedgerCache>,
     mut progress: impl FnMut(&str, usize, Option<usize>) -> Result<()>,
 ) -> Result<ScanCacheStats> {
     crate::campaign::check_deadline()?;
@@ -538,7 +701,17 @@ fn build_impl(
     let vocab: Vocab = serde_json::from_slice(&vocab_bytes)?;
     // Bind validation/tokenization implementation as well as all data inputs.
     let scan_policy = hash(&serde_json::to_vec(&(
-        hash(concat!(include_str!("corpus.rs"), include_str!("grammar.rs"), include_str!("task_contract.rs"), include_str!("prepare.rs"), include_str!("encoding.rs"), include_str!("manifest.rs")).as_bytes()),
+        hash(
+            concat!(
+                include_str!("corpus.rs"),
+                include_str!("grammar.rs"),
+                include_str!("task_contract.rs"),
+                include_str!("prepare.rs"),
+                include_str!("encoding.rs"),
+                include_str!("manifest.rs")
+            )
+            .as_bytes(),
+        ),
         file_hash(Path::new("/proc/self/exe"))?,
     ))?);
     ensure!(
@@ -610,7 +783,10 @@ fn build_impl(
                     qualification,
                     source_path: relative_path.to_path_buf(),
                     source_sha256: source_sha.clone(),
-                    search_sha256: file_hash(&resolve(root, &relative_path.with_file_name("search.json"))?)?,
+                    search_sha256: file_hash(&resolve(
+                        root,
+                        &relative_path.with_file_name("search.json"),
+                    )?)?,
                 };
                 hashing_ns += hashing_started.elapsed().as_nanos() as u64;
                 let parsing_started = std::time::Instant::now();
@@ -620,10 +796,22 @@ fn build_impl(
                     (source_sha, contribution)
                 } else {
                     let bytes = fs::read(&safe_path)?;
-                    ensure!(hash(&bytes) == source_sha, "observation ledger changed during cache scan: {}", path.display());
+                    ensure!(
+                        hash(&bytes) == source_sha,
+                        "observation ledger changed during cache scan: {}",
+                        path.display()
+                    );
                     let rows: Vec<Value> = serde_json::from_slice(&bytes)?;
-                    let contribution = scan_ledger(rows, &path, &by_cut, &contexts, &prepared,
-                        &vocab, qualification, &mut token_cache)?;
+                    let contribution = scan_ledger(
+                        rows,
+                        &path,
+                        &by_cut,
+                        &contexts,
+                        &prepared,
+                        &vocab,
+                        qualification,
+                        &mut token_cache,
+                    )?;
                     cache_stats.ledgers_parsed += 1;
                     cache.publish(&binding, &contribution, &mut progress)?;
                     cache_stats.entries_committed += 1;
@@ -635,8 +823,16 @@ fn build_impl(
                 let bytes = fs::read(&path)?;
                 let rows: Vec<Value> = serde_json::from_slice(&bytes)?;
                 cache_stats.ledgers_parsed += 1;
-                let contribution = scan_ledger(rows, &path, &by_cut, &contexts, &prepared,
-                    &vocab, qualification, &mut token_cache)?;
+                let contribution = scan_ledger(
+                    rows,
+                    &path,
+                    &by_cut,
+                    &contexts,
+                    &prepared,
+                    &vocab,
+                    qualification,
+                    &mut token_cache,
+                )?;
                 parsing_ns += parsing_started.elapsed().as_nanos() as u64;
                 let hashing_started = std::time::Instant::now();
                 let source_sha = hash(&bytes);
@@ -663,7 +859,11 @@ fn build_impl(
                 }
             }
             merging_ns += merging_started.elapsed().as_nanos() as u64;
-            progress("observations scanned", counts.get("observations_seen").copied().unwrap_or(0), None)?;
+            progress(
+                "observations scanned",
+                counts.get("observations_seen").copied().unwrap_or(0),
+                None,
+            )?;
         }
     }
     let writing_started = std::time::Instant::now();
@@ -753,8 +953,10 @@ fn build_impl(
         count > 0 && training_families.len() >= 2,
         "insufficient teaching corpus"
     );
-    ensure!(file_hash(contexts_path)? == contexts_sha && file_hash(vocab_path)? == vocab_sha,
-        "corpus context or vocabulary changed during build");
+    ensure!(
+        file_hash(contexts_path)? == contexts_sha && file_hash(vocab_path)? == vocab_sha,
+        "corpus context or vocabulary changed during build"
+    );
     fs::write(output.join("vocabulary.json"), &vocab_bytes)?;
     let index = Index {
         schema: "parallel.teaching_corpus.v1".into(),
@@ -777,12 +979,15 @@ fn build_impl(
         "{}",
         json!({"records":count,"groups":index.groups.len(),"training_families":training_families.len(),"grammar_states":index.legal_sets.len(),"counts":counts})
     );
-    write_json(&output.join("packing-timing.json"), &json!({
-        "schema":"parallel.packing_timing.v1","source_hashing_ns":hashing_ns,
-        "source_read_parse_cache_ns":parsing_ns,"merging_ns":merging_ns,
-        "packing_writing_verification_ns":writing_started.elapsed().as_nanos() as u64,
-        "source_content_verified":true,"mtime_used_as_identity":false,
-        "timings_excluded_from_corpus_identity":true
-    }))?;
+    write_json(
+        &output.join("packing-timing.json"),
+        &json!({
+            "schema":"parallel.packing_timing.v1","source_hashing_ns":hashing_ns,
+            "source_read_parse_cache_ns":parsing_ns,"merging_ns":merging_ns,
+            "packing_writing_verification_ns":writing_started.elapsed().as_nanos() as u64,
+            "source_content_verified":true,"mtime_used_as_identity":false,
+            "timings_excluded_from_corpus_identity":true
+        }),
+    )?;
     Ok(cache_stats)
 }

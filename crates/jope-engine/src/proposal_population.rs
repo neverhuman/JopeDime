@@ -20,8 +20,8 @@ pub fn push_pure(
         pool.push(SeedCandidate {
             genome,
             origin: "neural_policy".into(),
-                    policy_logprob: None,
-                });
+            policy_logprob: None,
+        });
     }
     true
 }
@@ -44,8 +44,8 @@ pub fn fill_pure(
             pool.push(SeedCandidate {
                 genome,
                 origin: "neural_rejection_fallback".into(),
-                    policy_logprob: None,
-                });
+                policy_logprob: None,
+            });
         }
     }
     anyhow::bail!("unable to complete independent pure neural pool")
@@ -160,9 +160,11 @@ pub fn assemble(
                 generator_seed,
                 origin: origin.clone(),
             });
-            neural_slots.push(SeedCandidate { genome, origin,
-                    policy_logprob: None,
-                });
+            neural_slots.push(SeedCandidate {
+                genome,
+                origin,
+                policy_logprob: None,
+            });
         }
     }
     ensure!(
@@ -368,8 +370,8 @@ mod tests {
         changed[0] = SeedCandidate {
             genome: winner.clone(),
             origin: "incumbent_cut_teacher".into(),
-                    policy_logprob: None,
-                };
+            policy_logprob: None,
+        };
         let b = assemble(&pure, &changed, &vocab, 555).unwrap();
         assert_eq!(before, serde_json::to_vec(&pure).unwrap());
         assert_eq!(pure[0].genome, winner);

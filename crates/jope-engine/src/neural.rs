@@ -1351,3 +1351,49 @@ pub fn configure_runtime() {
         tch::jit::set_graph_executor_optimize(false);
     });
 }
+
+#[cfg(test)]
+mod native_runtime_qualification {
+    use super::*;
+    #[test]
+    fn cpu_optimizer_restore_completes_original_window_identically() -> Result<()> {
+        tch::set_num_threads(1);
+        let dir = tempfile::tempdir()?;
+        let uninterrupted = nn::VarStore::new(Device::Cpu);
+        let p = uninterrupted
+            .root()
+            .var("weight", &[4], nn::Init::Const(0.25));
+        let mut optimizer = AdamW::new(1e-4, 0.01);
+        for _ in 0..3 {
+            p.square().sum(Kind::Float).backward();
+            optimizer.update(&uninterrupted)?;
+        }
+        uninterrupted.save(dir.path().join("model.ot"))?;
+        optimizer.save(&dir.path().join("optimizer.ot"))?;
+        let original_target = optimizer.step + 3;
+        let mut restored = nn::VarStore::new(Device::Cpu);
+        let restored_p = restored.root().var("weight", &[4], nn::Init::Const(0.0));
+        restored.load(dir.path().join("model.ot"))?;
+        let mut recovered = AdamW::load(&dir.path().join("optimizer.ot"), Device::Cpu)?;
+        recovered.validate_parameters(&restored)?;
+        while optimizer.step < original_target {
+            p.square().sum(Kind::Float).backward();
+            optimizer.update(&uninterrupted)?;
+        }
+        while recovered.step < original_target {
+            restored_p.square().sum(Kind::Float).backward();
+            recovered.update(&restored)?;
+        }
+        assert_eq!(recovered.step, original_target);
+        assert!(p.equal(&restored_p));
+        for (name, (m, v)) in &optimizer.moments {
+            let (rm, rv) = &recovered.moments[name];
+            assert!(m.equal(rm) && v.equal(rv));
+        }
+        let mut corrupt = fs::read(dir.path().join("optimizer.ot"))?;
+        corrupt[0] ^= 1;
+        fs::write(dir.path().join("optimizer.ot"), corrupt)?;
+        assert!(AdamW::load(&dir.path().join("optimizer.ot"), Device::Cpu).is_err());
+        Ok(())
+    }
+}

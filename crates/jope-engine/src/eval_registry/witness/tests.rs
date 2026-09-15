@@ -71,6 +71,8 @@ impl Fixture {
             ssh_known_hosts_sha256: sha(&read(&known_hosts).unwrap()),
             ssh_host_alias: "synthetic".into(),
             ssh_destination: "synthetic".into(),
+            native_fit_trust: None,
+            native_grant_delegation: None,
             funding_trust: None,
         };
         WitnessStore::initialize(&root, &policy).unwrap();
@@ -88,6 +90,8 @@ impl Fixture {
     }
     fn config(&self) -> WitnessClientConfig {
         WitnessClientConfig {
+            epoch_proofs: Vec::new(),
+            ssh_identity: None,
             policy: self.policy.clone(),
             authority_key: self.authority_key.clone(),
             known_hosts: self.known_hosts.clone(),
@@ -466,4 +470,288 @@ fn bounded_frames_reject_oversized_and_truncated_payloads() {
     let got: SignedRequest = read_frame(&mut b).unwrap();
     sender.join().unwrap().unwrap();
     verify_request(&f.policy, &got).unwrap();
+}
+
+#[test]
+fn native_witness_requires_exact_signed_grant_and_original_child_bindings() {
+    use crate::eval_registry::native_scq::policy::{
+        NativeGrant, NativeWitnessTrust, SignedNativeGrant, SIGNATURE_DOMAIN,
+    };
+    use ed25519_dalek::Signer;
+    use jain_smartcluster::{
+        AttemptNumber, FenceToken, FencedAttempt, JobId, TrustedFitChildPlacement,
+    };
+    let f = Fixture::new();
+    let mut event: Value = serde_json::from_slice(&f.event).unwrap();
+    let row = &event["effects"][0]["row"];
+    let identity: crate::eval_registry::FitIdentity =
+        serde_json::from_str(row["identity_json"].as_str().unwrap()).unwrap();
+    let start: crate::eval_registry::StartToken =
+        serde_json::from_str(row["start_json"].as_str().unwrap()).unwrap();
+    let digest = sha(b"synthetic native manifest");
+    let descriptor = sha(b"synthetic sealed descriptor");
+    let prerequisite = sha(b"synthetic no numerical authorization");
+    let grant:NativeGrant=serde_json::from_value(json!({
+        "schema":"jope.smartcluster_fit_grant.v1","root":f._temp.path(),"authority_root":f.authority,"witness":f.watermark,
+        "authority_instance":f.policy.authority_instance,"authority_epoch":f.policy.authority_epoch,"authority_manifest_sha256":prerequisite,
+        "capability":"synthetic_qualification","scope":"synthetic","tenant":"qualification","project":"native-fit",
+        "daemon_socket":"/run/synthetic/socket","cgroup_root":"/sys/fs/cgroup/synthetic","daemon_uid":1000,"daemon_executable_sha256":prerequisite,
+        "authority_executable_sha256":f.policy.authority_executable_sha256,"evaluator_executable_sha256":identity.executable_sha256,
+        "allowed_runtime_sha256":[identity.runtime_sha256],"witness_public_key":f.policy.witness_public_key,
+        "decision_receipt_sha256":prerequisite,"release_receipt_sha256":prerequisite,"coverage_receipt_sha256":prerequisite,
+        "approved_task_sha256":[digest],"period_start_unix_ms":1,"period_end_unix_ms":100,"max_candidates_per_task":1,"max_fit_ms":30000,
+        "numerical_contract_sha256":identity.numerical_contract_sha256,"training_sha256":[identity.training_sha256],"fit_seed":identity.fit_seed
+    })).unwrap();
+    let key = SigningKey::from_bytes(&[73; 32]);
+    let body = serde_json::to_vec(&grant).unwrap();
+    let mut message = SIGNATURE_DOMAIN.to_vec();
+    message.extend(&body);
+    let signed = SignedNativeGrant {
+        body: grant,
+        signature: hex::encode(key.sign(&message).to_bytes()),
+    };
+    let trust = NativeWitnessTrust {
+        authorization_public_key: hex::encode(key.verifying_key().as_bytes()),
+        grant_sha256: sha(&body),
+    };
+    let attempt = |fence| {
+        FencedAttempt::new(
+            JobId::new(),
+            AttemptNumber::new(1).unwrap(),
+            FenceToken::new(fence).unwrap(),
+        )
+    };
+    let authority = attempt(1);
+    let target = attempt(2);
+    let mut placement = TrustedFitChildPlacement {
+        schema: "jope.smartcluster_fit_placement.v1".into(),
+        authority_attempt: authority,
+        target_attempt: target,
+        child_pid: start.executor.pid,
+        child_birth_ticks: start.executor.birth_ticks,
+        child_boot_id: start.executor.boot_id.clone(),
+        child_executable_sha256: identity.executable_sha256.clone(),
+        task_manifest_sha256: digest.clone(),
+        descriptor_sha256: descriptor.clone(),
+        candidate_index: 0,
+        cgroup_path: PathBuf::from(format!(
+            "/sys/fs/cgroup/synthetic/scq-{}-attempt-{}-fence-{}",
+            target.job_id, target.number, target.fence
+        )),
+        receipt_sha256: String::new(),
+    };
+    let mut value = serde_json::to_value(&placement).unwrap();
+    value.as_object_mut().unwrap().remove("receipt_sha256");
+    placement.receipt_sha256 = sha(&serde_json::to_vec(&value).unwrap());
+    let native = json!({"schema":"jope.native_fit_authorization.v1","signed_grant":signed,"authorized_unix_ms":2,"provenance":{"scope":"synthetic","task_id":start.task_id},"target_attempt":target,"authority_attempt":authority,"task_manifest_sha256":digest,"descriptor_sha256":descriptor,"candidate_index":0,"fit_key":start.fit_key,"deadline_monotonic_ns":start.deadline_monotonic_ns,"placement":placement});
+    event["payload"]["native_fit"] = native.clone();
+    assert!(event_identity(&f.policy, &serde_json::to_vec(&event).unwrap()).is_err());
+    let mut policy = f.policy.clone();
+    policy.native_fit_trust = Some(trust);
+    event_identity(&policy, &serde_json::to_vec(&event).unwrap()).unwrap();
+    for (field, value) in [
+        ("candidate_index", json!(1)),
+        ("descriptor_sha256", json!(sha(b"changed"))),
+        ("schema", json!("caller-approved")),
+        ("authorized_unix_ms", json!(100)),
+    ] {
+        let mut changed = event.clone();
+        changed["payload"]["native_fit"][field] = value;
+        assert!(
+            event_identity(&policy, &serde_json::to_vec(&changed).unwrap()).is_err(),
+            "accepted conflicting {field}"
+        );
+    }
+    let mut changed = event.clone();
+    changed["payload"]["native_fit"]["signed_grant"]["body"]["max_candidates_per_task"] = json!(2);
+    assert!(event_identity(&policy, &serde_json::to_vec(&changed).unwrap()).is_err());
+    let mut changed = event;
+    changed["payload"]["native_fit"]["placement"]["child_birth_ticks"] =
+        json!(start.executor.birth_ticks + 1);
+    assert!(event_identity(&policy, &serde_json::to_vec(&changed).unwrap()).is_err());
+}
+
+#[test]
+fn pinned_ssh_identity_refuses_mutation_permissions_symlinks_and_fifo() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("transport-key");
+    fs::write(
+        &path,
+        b"synthetic transport key bytes, never an authorization",
+    )
+    .unwrap();
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
+    let identity = PinnedSshIdentity {
+        path: path.clone(),
+        sha256: sha(&fs::read(&path).unwrap()),
+    };
+    assert!(identity.open().is_ok());
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o640)).unwrap();
+    assert!(identity.open().is_err());
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
+    fs::write(&path, b"changed").unwrap();
+    assert!(identity.open().is_err());
+    let alias = dir.path().join("alias");
+    std::os::unix::fs::symlink(&path, &alias).unwrap();
+    assert!(PinnedSshIdentity {
+        path: alias,
+        sha256: sha(b"changed")
+    }
+    .open()
+    .is_err());
+    fs::remove_file(&path).unwrap();
+    let raw = std::ffi::CString::new(path.to_str().unwrap()).unwrap();
+    assert_eq!(unsafe { libc::mkfifo(raw.as_ptr(), 0o600) }, 0);
+    assert!(identity.open().is_err());
+}
+
+#[test]
+fn pinned_ssh_transport_uses_original_descriptor_and_disables_agent() {
+    use std::os::fd::AsRawFd;
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("transport-key");
+    fs::write(&path, b"original fixture key").unwrap();
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
+    let identity = PinnedSshIdentity {
+        path: path.clone(),
+        sha256: sha(b"original fixture key"),
+    };
+    let mut command = Command::new("/usr/bin/ssh");
+    let retained = bind_ssh_identity(&mut command, &identity).unwrap();
+    let descriptor_path = format!("/proc/{}/fd/{}", std::process::id(), retained.as_raw_fd());
+    let args: Vec<_> = command
+        .get_args()
+        .map(|s| s.to_string_lossy().into_owned())
+        .collect();
+    assert_eq!(
+        args,
+        vec![
+            "-i",
+            &descriptor_path,
+            "-o",
+            "IdentitiesOnly=yes",
+            "-o",
+            "IdentityAgent=none"
+        ]
+    );
+    fs::rename(&path, dir.path().join("retained")).unwrap();
+    fs::write(&path, b"replacement fixture key").unwrap();
+    assert_eq!(fs::read(&descriptor_path).unwrap(), b"original fixture key");
+    assert!(identity.open().is_err());
+    assert_ne!(
+        unsafe { libc::fcntl(retained.as_raw_fd(), libc::F_GETFD) } & libc::FD_CLOEXEC,
+        0
+    );
+}
+
+#[test]
+fn legacy_witness_config_omits_identity_but_native_requires_pin() {
+    let fixture = Fixture::new();
+    let config = fixture.config();
+    let encoded = serde_json::to_value(&config).unwrap();
+    assert!(encoded.get("ssh_identity").is_none());
+    let mut restored: WitnessClientConfig = serde_json::from_value(encoded).unwrap();
+    assert!(restored.ssh_identity.is_none());
+    restored.policy.native_fit_trust = Some(NativeWitnessTrust {
+        authorization_public_key: restored.policy.authority_public_key.clone(),
+        grant_sha256: "a".repeat(64),
+    });
+    assert!(WitnessClient::new(restored)
+        .err()
+        .unwrap()
+        .to_string()
+        .contains("explicitly pinned SSH identity"));
+}
+
+#[test]
+fn witness_global_numerical_guard_survives_reopen_and_changed_authority_sequence() {
+    let f = Fixture::new();
+    let original = f.request();
+    let ack = f.store().record_authorization(&original).unwrap();
+    let mut repeated: Value = serde_json::from_slice(&f.event).unwrap();
+    repeated["seq"] = serde_json::json!(ack.body.authority_sequence + 1);
+    let repeated = f
+        .client()
+        .request(&serde_json::to_vec(&repeated).unwrap())
+        .unwrap();
+    let mut store = f.store();
+    assert!(store
+        .record_authorization(&repeated)
+        .unwrap_err()
+        .to_string()
+        .contains("numerical work already witnessed"));
+    assert_eq!(store.record_authorization(&original).unwrap(), ack);
+    assert_eq!(store.sequence, 1);
+}
+
+#[test]
+fn public_history_verifies_without_private_keys_and_refuses_live_or_torn_state() {
+    let f = Fixture::new();
+    let request = f.request();
+    let mut store = f.store();
+    store.record_authorization(&request).unwrap();
+    assert!(
+        WitnessStore::verify_public_history(&f.root, &f.policy).is_err(),
+        "a live writer lease cannot be relabelled a frozen snapshot"
+    );
+    drop(store);
+    fs::remove_file(&f.ack_key).unwrap();
+    fs::remove_file(&f.authority_key).unwrap();
+    let before = fs::read(f.root.join("head.json")).unwrap();
+    let verified = WitnessStore::verify_public_history(&f.root, &f.policy).unwrap();
+    assert_eq!(verified["private_key_accessed"], false);
+    assert_eq!(verified["new_acknowledgement_issued"], false);
+    assert_eq!(fs::read(f.root.join("head.json")).unwrap(), before);
+    let first = fs::read_dir(f.root.join("segments"))
+        .unwrap()
+        .next()
+        .unwrap()
+        .unwrap()
+        .path();
+    fs::remove_file(first).unwrap();
+    assert!(
+        WitnessStore::verify_public_history(&f.root, &f.policy).is_err(),
+        "a committed missing original event must not verify"
+    );
+}
+
+#[test]
+fn public_snapshot_requires_exact_original_authority_ack_membership() {
+    let f = Fixture::new();
+    let request = f.request();
+    let ack = f.store().record_authorization(&request).unwrap();
+    let result =
+        WitnessStore::verify_public_history_with_acks(&f.root, &f.policy, &[ack.clone()]).unwrap();
+    assert_eq!(result["required_ack_count"], 1);
+    let mut absent = ack.clone();
+    absent.body.authority_sequence += 1;
+    assert!(WitnessStore::verify_public_history_with_acks(&f.root, &f.policy, &[absent]).is_err());
+    let mut conflicting = ack;
+    conflicting.body.event_sha256 = sha(b"different original event");
+    assert!(
+        WitnessStore::verify_public_history_with_acks(&f.root, &f.policy, &[conflicting]).is_err()
+    );
+}
+#[test]
+fn witness_lease_fifo_refuses_without_waiting_for_writer() {
+    let t = tempfile::tempdir().unwrap();
+    let path = t.path().join("lease");
+    let c = std::ffi::CString::new(path.as_os_str().as_encoded_bytes()).unwrap();
+    assert_eq!(unsafe { libc::mkfifo(c.as_ptr(), 0o600) }, 0);
+    assert!(checked_file(&path).is_err());
+}
+
+#[test]
+fn transport_only_loader_never_opens_authority_key_or_claims_authority_runtime() {
+    let fixture = Fixture::new();
+    let mut config = fixture.config();
+    config.authority_key = fixture.root.join("absent-authority-secret");
+    config.policy.authority_executable_sha256 = sha(b"different authority producer");
+    let bytes = serde_json::to_vec(&config).unwrap();
+    let path = fixture.root.join("transport-only.json");
+    fs::write(&path, &bytes).unwrap();
+    let loaded = WitnessClientConfig::from_transport_file(&path, &sha(&bytes)).unwrap();
+    assert!(!loaded.authority_key.exists());
+    assert!(WitnessClientConfig::from_file(&path, &sha(&bytes)).is_err());
+    assert!(WitnessClientConfig::from_transport_file(&path, &sha(b"changed config")).is_err());
 }

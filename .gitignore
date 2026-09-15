@@ -17,3 +17,6 @@ sotarena-refresh/results/
 sotarena-refresh/releases/
 sotarena-refresh/reports/
 ratchet-hotfix-*/
+
+# Materialized original accepted checkpoint graph; preserved through Datasets.
+/parallel/recovery/xbabe2-migration-20260914/accepted60000-restored/

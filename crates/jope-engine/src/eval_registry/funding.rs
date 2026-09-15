@@ -32,7 +32,10 @@ pub fn digest(value: &impl Serialize) -> Result<String> {
 }
 
 fn hash_valid(value: &str) -> bool {
-    value.len() == 64 && value.bytes().all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
+    value.len() == 64
+        && value
+            .bytes()
+            .all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
         && value.bytes().any(|c| c != b'0')
 }
 
@@ -49,7 +52,9 @@ fn signed_bytes(tag: &str, body: &impl Serialize) -> Result<Vec<u8>> {
 
 fn verify_signature(public: &str, tag: &str, body: &impl Serialize, signature: &str) -> Result<()> {
     ensure!(hash_valid(public), "invalid installed funding public key");
-    let raw: [u8; 32] = hex::decode(public)?.try_into().map_err(|_| anyhow::anyhow!("funding key length"))?;
+    let raw: [u8; 32] = hex::decode(public)?
+        .try_into()
+        .map_err(|_| anyhow::anyhow!("funding key length"))?;
     let key = VerifyingKey::from_bytes(&raw)?;
     ensure!(!key.is_weak(), "weak funding public key");
     let raw = hex::decode(signature)?;
@@ -177,14 +182,24 @@ pub struct FundingClock {
 
 impl FundingClock {
     pub fn current() -> Result<Self> {
-        let unix_ms = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis().try_into()?;
+        let unix_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)?
+            .as_millis()
+            .try_into()?;
         let mut value: libc::timespec = unsafe { std::mem::zeroed() };
-        ensure!(unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut value) } == 0,
-            "funding monotonic clock unavailable");
+        ensure!(
+            unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut value) } == 0,
+            "funding monotonic clock unavailable"
+        );
         let seconds: u64 = value.tv_sec.try_into()?;
         let nanos: u64 = value.tv_nsec.try_into()?;
-        Ok(Self { unix_ms, monotonic_ns: seconds.checked_mul(1_000_000_000).and_then(|n| n.checked_add(nanos))
-            .context("funding clock overflow")? })
+        Ok(Self {
+            unix_ms,
+            monotonic_ns: seconds
+                .checked_mul(1_000_000_000)
+                .and_then(|n| n.checked_add(nanos))
+                .context("funding clock overflow")?,
+        })
     }
 }
 
@@ -208,11 +223,21 @@ pub struct VerifiedReservation {
 }
 
 impl VerifiedReservation {
-    pub fn authorization(&self) -> &SignedAuthorization { &self.authorization }
-    pub fn reservation(&self) -> &SignedReservation { &self.reservation }
-    pub fn demand(&self) -> &TaskDemand { &self.reservation.body.demand }
-    pub fn authorization_id(&self) -> Result<String> { digest(&self.authorization.body) }
-    pub fn reservation_id(&self) -> &str { &self.reservation.body.reservation_id }
+    pub fn authorization(&self) -> &SignedAuthorization {
+        &self.authorization
+    }
+    pub fn reservation(&self) -> &SignedReservation {
+        &self.reservation
+    }
+    pub fn demand(&self) -> &TaskDemand {
+        &self.reservation.body.demand
+    }
+    pub fn authorization_id(&self) -> Result<String> {
+        digest(&self.authorization.body)
+    }
+    pub fn reservation_id(&self) -> &str {
+        &self.reservation.body.reservation_id
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -230,9 +255,14 @@ pub struct FundingEvent {
 }
 
 impl FundingEvent {
-    pub fn reservation_id(&self) -> &str { &self.reservation.body.reservation_id }
+    pub fn reservation_id(&self) -> &str {
+        &self.reservation.body.reservation_id
+    }
     pub fn participant_id(&self) -> Result<String> {
-        participant_id(self.reservation_id(), self.participant_slot.context("rank slot absent")?)
+        participant_id(
+            self.reservation_id(),
+            self.participant_slot.context("rank slot absent")?,
+        )
     }
 }
 
@@ -246,89 +276,202 @@ pub struct FundingReceipt {
     pub policy_sha256: String,
 }
 
-pub fn verify_authorization(trust: &FundingTrust, authorization: &SignedAuthorization,
-    clock: FundingClock) -> Result<String> {
-    ensure!(trust.schema == "parallel.funding_trust.v1" && text_valid(&trust.domain_id)
-        && text_valid(&trust.authority_instance) && text_valid(&trust.authority_epoch)
-        && hash_valid(&trust.authority_manifest_sha256) && hash_valid(&trust.authority_executable_sha256)
-        && text_valid(&trust.host_id) && text_valid(&trust.boot_id), "installed funding trust invalid");
+pub fn verify_authorization(
+    trust: &FundingTrust,
+    authorization: &SignedAuthorization,
+    clock: FundingClock,
+) -> Result<String> {
+    ensure!(
+        trust.schema == "parallel.funding_trust.v1"
+            && text_valid(&trust.domain_id)
+            && text_valid(&trust.authority_instance)
+            && text_valid(&trust.authority_epoch)
+            && hash_valid(&trust.authority_manifest_sha256)
+            && hash_valid(&trust.authority_executable_sha256)
+            && text_valid(&trust.host_id)
+            && text_valid(&trust.boot_id),
+        "installed funding trust invalid"
+    );
     let body = &authorization.body;
-    ensure!(body.approved_task_sha256.len() <= MAX_APPROVED_TASKS
-        && serde_json::to_vec(body)?.len() <= MAX_AUTHORIZATION_BYTES,
-        "funding authorization exceeds bounded witness input limits");
-    ensure!(body.schema == "parallel.funding_authorization.v1" && body.domain_id == trust.domain_id
-        && text_valid(&body.scope), "funding authorization domain/scope mismatch");
+    ensure!(
+        body.approved_task_sha256.len() <= MAX_APPROVED_TASKS
+            && serde_json::to_vec(body)?.len() <= MAX_AUTHORIZATION_BYTES,
+        "funding authorization exceeds bounded witness input limits"
+    );
+    ensure!(
+        body.schema == "parallel.funding_authorization.v1"
+            && body.domain_id == trust.domain_id
+            && text_valid(&body.scope),
+        "funding authorization domain/scope mismatch"
+    );
     let id = digest(body)?;
-    ensure!(hash_valid(&trust.authorization_sha256) && id == trust.authorization_sha256,
-        "funding authorization is not the independently pinned decision");
-    verify_signature(&trust.authorization_public_key, AUTH_TAG, body, &authorization.signature)?;
-    ensure!(body.reservation_public_key == trust.reservation_public_key
-        && hash_valid(&body.reservation_public_key), "funding reservation delegation mismatch");
-    ensure!(hash_valid(&body.authority_evidence_sha256) && hash_valid(&body.historical_reconciliation_sha256)
-        && hash_valid(&body.release_prerequisites_sha256) && !body.approved_task_sha256.is_empty()
-        && body.approved_task_sha256.iter().all(|id| hash_valid(id)),
-        "original authority/accounting/prerequisite evidence or frozen task list missing");
-    ensure!(body.period_start_unix_ms <= clock.unix_ms && clock.unix_ms < body.period_end_unix_ms,
-        "funding accounting period unavailable or elapsed");
-    ensure!(body.period_start_unix_ms < body.period_end_unix_ms
-        && body.historical_core_ms <= body.core_ms && body.historical_node_ms <= body.node_ms
-        && (body.core_ms > 0 || body.node_ms > 0)
-        && body.max_concurrent_cpu_searches <= 104, "invalid funding ceilings/history");
-    ensure!(body.allocation.cpu_cores > 0 && body.allocation.host_memory_bytes > 0
-        && body.allocation.gpu_memory_bytes_per_device > 0
-        && !body.allocation.gpu_devices.is_empty() && body.allocation.gpu_devices.len() <= 8
-        && body.allocation.gpu_devices.iter().all(|&device| device < 8)
-        && body.allocation.gpu_devices.iter().copied().collect::<BTreeSet<_>>().len() == body.allocation.gpu_devices.len(),
-        "invalid independently authorized host allocation");
-    ensure!(!body.capabilities.is_empty() && body.capabilities.iter().all(|s| text_valid(s)),
-        "funding capabilities missing");
+    ensure!(
+        hash_valid(&trust.authorization_sha256) && id == trust.authorization_sha256,
+        "funding authorization is not the independently pinned decision"
+    );
+    verify_signature(
+        &trust.authorization_public_key,
+        AUTH_TAG,
+        body,
+        &authorization.signature,
+    )?;
+    ensure!(
+        body.reservation_public_key == trust.reservation_public_key
+            && hash_valid(&body.reservation_public_key),
+        "funding reservation delegation mismatch"
+    );
+    ensure!(
+        hash_valid(&body.authority_evidence_sha256)
+            && hash_valid(&body.historical_reconciliation_sha256)
+            && hash_valid(&body.release_prerequisites_sha256)
+            && !body.approved_task_sha256.is_empty()
+            && body.approved_task_sha256.iter().all(|id| hash_valid(id)),
+        "original authority/accounting/prerequisite evidence or frozen task list missing"
+    );
+    ensure!(
+        body.period_start_unix_ms <= clock.unix_ms && clock.unix_ms < body.period_end_unix_ms,
+        "funding accounting period unavailable or elapsed"
+    );
+    ensure!(
+        body.period_start_unix_ms < body.period_end_unix_ms
+            && body.historical_core_ms <= body.core_ms
+            && body.historical_node_ms <= body.node_ms
+            && (body.core_ms > 0 || body.node_ms > 0)
+            && body.max_concurrent_cpu_searches <= 104,
+        "invalid funding ceilings/history"
+    );
+    ensure!(
+        body.allocation.cpu_cores > 0
+            && body.allocation.host_memory_bytes > 0
+            && body.allocation.gpu_memory_bytes_per_device > 0
+            && !body.allocation.gpu_devices.is_empty()
+            && body.allocation.gpu_devices.len() <= 8
+            && body.allocation.gpu_devices.iter().all(|&device| device < 8)
+            && body
+                .allocation
+                .gpu_devices
+                .iter()
+                .copied()
+                .collect::<BTreeSet<_>>()
+                .len()
+                == body.allocation.gpu_devices.len(),
+        "invalid independently authorized host allocation"
+    );
+    ensure!(
+        !body.capabilities.is_empty() && body.capabilities.iter().all(|s| text_valid(s)),
+        "funding capabilities missing"
+    );
     Ok(id)
 }
 
-pub fn verify_reservation(trust: &FundingTrust, authorization: &SignedAuthorization,
-    reservation: &SignedReservation, demand: &TaskDemand, clock: FundingClock) -> Result<VerifiedReservation> {
+pub fn verify_reservation(
+    trust: &FundingTrust,
+    authorization: &SignedAuthorization,
+    reservation: &SignedReservation,
+    demand: &TaskDemand,
+    clock: FundingClock,
+) -> Result<VerifiedReservation> {
     let authorization_id = verify_authorization(trust, authorization, clock)?;
     let body = &reservation.body;
-    ensure!(body.schema == "parallel.task_reservation.v1" && hash_valid(&body.reservation_id)
-        && body.authorization_sha256 == authorization_id && body.domain_id == trust.domain_id
-        && body.authority_instance == trust.authority_instance && body.authority_epoch == trust.authority_epoch
-        && body.authority_manifest_sha256 == trust.authority_manifest_sha256
-        && body.authority_executable_sha256 == trust.authority_executable_sha256,
-        "reservation original domain/authority/epoch mismatch");
-    verify_signature(&trust.reservation_public_key, RESERVATION_TAG, body, &reservation.signature)?;
-    ensure!(&body.demand == demand, "actual task/deadline/runtime/resource demand differs from signed reservation");
-    ensure!(hash_valid(&demand.task_sha256) && hash_valid(&demand.executable_sha256)
-        && hash_valid(&demand.runtime_sha256) && demand.host_id == trust.host_id
-        && demand.boot_id == trust.boot_id && authorization.body.capabilities.contains(&demand.capability)
-        && authorization.body.approved_task_sha256.contains(&demand.task_sha256),
-        "task identity/host/boot/capability not funded");
-    ensure!(body.not_before_unix_ms >= authorization.body.period_start_unix_ms
-        && body.not_before_unix_ms <= clock.unix_ms && clock.unix_ms < demand.deadline_unix_ms
-        && demand.deadline_unix_ms <= authorization.body.period_end_unix_ms
-        && clock.monotonic_ns < demand.deadline_monotonic_ns,
-        "original funding task window elapsed or changed");
-    let window = demand.deadline_unix_ms.checked_sub(body.not_before_unix_ms).context("invalid task window")?;
+    ensure!(
+        body.schema == "parallel.task_reservation.v1"
+            && hash_valid(&body.reservation_id)
+            && body.authorization_sha256 == authorization_id
+            && body.domain_id == trust.domain_id
+            && body.authority_instance == trust.authority_instance
+            && body.authority_epoch == trust.authority_epoch
+            && body.authority_manifest_sha256 == trust.authority_manifest_sha256
+            && body.authority_executable_sha256 == trust.authority_executable_sha256,
+        "reservation original domain/authority/epoch mismatch"
+    );
+    verify_signature(
+        &trust.reservation_public_key,
+        RESERVATION_TAG,
+        body,
+        &reservation.signature,
+    )?;
+    ensure!(
+        &body.demand == demand,
+        "actual task/deadline/runtime/resource demand differs from signed reservation"
+    );
+    ensure!(
+        hash_valid(&demand.task_sha256)
+            && hash_valid(&demand.executable_sha256)
+            && hash_valid(&demand.runtime_sha256)
+            && demand.host_id == trust.host_id
+            && demand.boot_id == trust.boot_id
+            && authorization.body.capabilities.contains(&demand.capability)
+            && authorization
+                .body
+                .approved_task_sha256
+                .contains(&demand.task_sha256),
+        "task identity/host/boot/capability not funded"
+    );
+    ensure!(
+        body.not_before_unix_ms >= authorization.body.period_start_unix_ms
+            && body.not_before_unix_ms <= clock.unix_ms
+            && clock.unix_ms < demand.deadline_unix_ms
+            && demand.deadline_unix_ms <= authorization.body.period_end_unix_ms
+            && clock.monotonic_ns < demand.deadline_monotonic_ns,
+        "original funding task window elapsed or changed"
+    );
+    let window = demand
+        .deadline_unix_ms
+        .checked_sub(body.not_before_unix_ms)
+        .context("invalid task window")?;
     let remaining_ns = demand.deadline_monotonic_ns - clock.monotonic_ns;
-    ensure!(remaining_ns <= window.checked_mul(1_000_000).context("task window overflow")?,
-        "monotonic task deadline exceeds original reserved window");
+    ensure!(
+        remaining_ns
+            <= window
+                .checked_mul(1_000_000)
+                .context("task window overflow")?,
+        "monotonic task deadline exceeds original reserved window"
+    );
     let caps = &demand.resources;
-    ensure!([1, 2, 4, 8].contains(&caps.world) && caps.gpus == caps.world && caps.cpu_cores > 0
-        && caps.host_memory_bytes > 0 && caps.gpu_memory_bytes_per_rank > 0
-        && caps.cpu_searches <= authorization.body.max_concurrent_cpu_searches
-        && caps.gpu_devices.len() == caps.world as usize
-        && caps.gpu_devices.iter().copied().collect::<BTreeSet<_>>().len() == caps.gpu_devices.len()
-        && caps.gpu_devices.iter().all(|device| authorization.body.allocation.gpu_devices.contains(device))
-        && caps.cpu_cores <= authorization.body.allocation.cpu_cores
-        && caps.host_memory_bytes <= authorization.body.allocation.host_memory_bytes
-        && caps.gpu_memory_bytes_per_rank <= authorization.body.allocation.gpu_memory_bytes_per_device,
-        "invalid native task resource caps");
-    ensure!(body.participant_slots == (0..caps.world).collect::<Vec<_>>(),
-        "original participant slots do not exactly cover the declared world");
-    let core_ceiling = window.checked_mul(u64::from(caps.cpu_cores)).context("core reservation overflow")?;
-    ensure!(body.core_ms >= core_ceiling && body.node_ms >= window
-        && body.core_ms <= authorization.body.core_ms && body.node_ms <= authorization.body.node_ms,
-        "task reservation does not cover its full original resource/window ceiling");
-    Ok(VerifiedReservation { authorization: authorization.clone(), reservation: reservation.clone() })
+    ensure!(
+        [1, 2, 4, 8].contains(&caps.world)
+            && caps.gpus == caps.world
+            && caps.cpu_cores > 0
+            && caps.host_memory_bytes > 0
+            && caps.gpu_memory_bytes_per_rank > 0
+            && caps.cpu_searches <= authorization.body.max_concurrent_cpu_searches
+            && caps.gpu_devices.len() == caps.world as usize
+            && caps
+                .gpu_devices
+                .iter()
+                .copied()
+                .collect::<BTreeSet<_>>()
+                .len()
+                == caps.gpu_devices.len()
+            && caps.gpu_devices.iter().all(|device| authorization
+                .body
+                .allocation
+                .gpu_devices
+                .contains(device))
+            && caps.cpu_cores <= authorization.body.allocation.cpu_cores
+            && caps.host_memory_bytes <= authorization.body.allocation.host_memory_bytes
+            && caps.gpu_memory_bytes_per_rank
+                <= authorization.body.allocation.gpu_memory_bytes_per_device,
+        "invalid native task resource caps"
+    );
+    ensure!(
+        body.participant_slots == (0..caps.world).collect::<Vec<_>>(),
+        "original participant slots do not exactly cover the declared world"
+    );
+    let core_ceiling = window
+        .checked_mul(u64::from(caps.cpu_cores))
+        .context("core reservation overflow")?;
+    ensure!(
+        body.core_ms >= core_ceiling
+            && body.node_ms >= window
+            && body.core_ms <= authorization.body.core_ms
+            && body.node_ms <= authorization.body.node_ms,
+        "task reservation does not cover its full original resource/window ceiling"
+    );
+    Ok(VerifiedReservation {
+        authorization: authorization.clone(),
+        reservation: reservation.clone(),
+    })
 }
 
 /// Authority signing only: the caller must possess the installed delegated key;
@@ -339,27 +482,54 @@ pub fn sign_reservation(body: TaskReservation, key: &SigningKey) -> Result<Signe
 }
 
 fn transaction_required(db: &Connection) -> Result<()> {
-    ensure!(!db.is_autocommit(), "funding mutation requires the original authority transaction");
+    ensure!(
+        !db.is_autocommit(),
+        "funding mutation requires the original authority transaction"
+    );
     Ok(())
 }
 
-pub fn register_authorization(db: &Connection, trust: &FundingTrust,
-    authorization: &SignedAuthorization, clock: FundingClock) -> Result<String> {
+pub fn register_authorization(
+    db: &Connection,
+    trust: &FundingTrust,
+    authorization: &SignedAuthorization,
+    clock: FundingClock,
+) -> Result<String> {
     transaction_required(db)?;
     let id = verify_authorization(trust, authorization, clock)?;
-    let existing: Option<String> = db.query_row("SELECT id FROM funding_authorizations WHERE domain_id=?",
-        [&authorization.body.domain_id], |row| row.get(0)).optional()?;
-    ensure!(existing.is_none(), "funding domain already registered; reset/reissue forbidden");
-    db.execute("INSERT INTO funding_authorizations VALUES(?,?,?,?)", params![id,
-        authorization.body.domain_id, authorization.body.authority_evidence_sha256, serde_json::to_string(authorization)?])?;
+    let existing: Option<String> = db
+        .query_row(
+            "SELECT id FROM funding_authorizations WHERE domain_id=?",
+            [&authorization.body.domain_id],
+            |row| row.get(0),
+        )
+        .optional()?;
+    ensure!(
+        existing.is_none(),
+        "funding domain already registered; reset/reissue forbidden"
+    );
+    db.execute(
+        "INSERT INTO funding_authorizations VALUES(?,?,?,?)",
+        params![
+            id,
+            authorization.body.domain_id,
+            authorization.body.authority_evidence_sha256,
+            serde_json::to_string(authorization)?
+        ],
+    )?;
     Ok(id)
 }
 
 fn stored_authorization(db: &Connection, verified: &VerifiedReservation) -> Result<()> {
-    let bytes: String = db.query_row("SELECT json FROM funding_authorizations WHERE id=?",
-        [verified.authorization_id()?], |row| row.get(0))?;
-    ensure!(serde_json::from_str::<SignedAuthorization>(&bytes)? == verified.authorization,
-        "original registered funding authorization differs");
+    let bytes: String = db.query_row(
+        "SELECT json FROM funding_authorizations WHERE id=?",
+        [verified.authorization_id()?],
+        |row| row.get(0),
+    )?;
+    ensure!(
+        serde_json::from_str::<SignedAuthorization>(&bytes)? == verified.authorization,
+        "original registered funding authorization differs"
+    );
     Ok(())
 }
 
@@ -369,47 +539,89 @@ pub fn reserve(db: &Connection, verified: &VerifiedReservation) -> Result<String
     let auth = &verified.authorization.body;
     let mut core = auth.historical_core_ms;
     let mut node = auth.historical_node_ms;
-    let mut statement = db.prepare("SELECT json FROM funding_reservations WHERE authorization_id=?")?;
-    let rows = statement.query_map([verified.authorization_id()?], |row| row.get::<_, String>(0))?;
+    let mut statement =
+        db.prepare("SELECT json FROM funding_reservations WHERE authorization_id=?")?;
+    let rows = statement.query_map([verified.authorization_id()?], |row| {
+        row.get::<_, String>(0)
+    })?;
     for row in rows {
         let old: SignedReservation = serde_json::from_str(&row?)?;
-        core = core.checked_add(old.body.core_ms).context("funding core charge overflow")?;
-        node = node.checked_add(old.body.node_ms).context("funding node charge overflow")?;
+        core = core
+            .checked_add(old.body.core_ms)
+            .context("funding core charge overflow")?;
+        node = node
+            .checked_add(old.body.node_ms)
+            .context("funding node charge overflow")?;
     }
     let body = &verified.reservation.body;
-    ensure!(core.checked_add(body.core_ms).is_some_and(|sum| sum <= auth.core_ms)
-        && node.checked_add(body.node_ms).is_some_and(|sum| sum <= auth.node_ms), "original funding ceiling exhausted");
-    db.execute("INSERT INTO funding_reservations VALUES(?,?,?,?,?,NULL)", params![body.reservation_id,
-        verified.authorization_id()?, body.demand.task_sha256, serde_json::to_string(&verified.reservation)?, "reserved"])?;
+    ensure!(
+        core.checked_add(body.core_ms)
+            .is_some_and(|sum| sum <= auth.core_ms)
+            && node
+                .checked_add(body.node_ms)
+                .is_some_and(|sum| sum <= auth.node_ms),
+        "original funding ceiling exhausted"
+    );
+    db.execute(
+        "INSERT INTO funding_reservations VALUES(?,?,?,?,?,NULL)",
+        params![
+            body.reservation_id,
+            verified.authorization_id()?,
+            body.demand.task_sha256,
+            serde_json::to_string(&verified.reservation)?,
+            "reserved"
+        ],
+    )?;
     Ok(body.reservation_id.clone())
 }
 
-fn original_reservation(db: &Connection, verified: &VerifiedReservation) -> Result<(String, Option<String>)> {
+fn original_reservation(
+    db: &Connection,
+    verified: &VerifiedReservation,
+) -> Result<(String, Option<String>)> {
     stored_authorization(db, verified)?;
     let (json, state, start): (String, String, Option<String>) = db.query_row(
-        "SELECT json,state,start_json FROM funding_reservations WHERE id=?", [verified.reservation_id()],
-        |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?;
-    ensure!(serde_json::from_str::<SignedReservation>(&json)? == verified.reservation,
-        "original registered reservation differs");
+        "SELECT json,state,start_json FROM funding_reservations WHERE id=?",
+        [verified.reservation_id()],
+        |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+    )?;
+    ensure!(
+        serde_json::from_str::<SignedReservation>(&json)? == verified.reservation,
+        "original registered reservation differs"
+    );
     Ok((state, start))
 }
 
 pub fn preflight(db: &Connection, verified: &VerifiedReservation) -> Result<()> {
     let (state, _) = original_reservation(db, verified)?;
-    ensure!(state == "reserved", "original task start already consumed or unavailable");
+    ensure!(
+        state == "reserved",
+        "original task start already consumed or unavailable"
+    );
     Ok(())
 }
 
-fn execution_valid(verified: &VerifiedReservation, execution: &ExecutionClaim, clock: FundingClock) -> Result<()> {
+fn execution_valid(
+    verified: &VerifiedReservation,
+    execution: &ExecutionClaim,
+    clock: FundingClock,
+) -> Result<()> {
     let demand = verified.demand();
-    ensure!(execution.process.boot_id == demand.boot_id && execution.process.pid > 0
-        && execution.process.birth_ticks > 0 && execution.executable_sha256 == demand.executable_sha256
-        && execution.runtime_sha256 == demand.runtime_sha256
-        && execution.request_sha256 == demand.task_sha256,
-        "authenticated execution custody does not match the original funded task");
-    ensure!(clock.unix_ms >= verified.reservation.body.not_before_unix_ms
-        && clock.unix_ms < demand.deadline_unix_ms && clock.monotonic_ns < demand.deadline_monotonic_ns,
-        "original task deadline elapsed before funding consumption");
+    ensure!(
+        execution.process.boot_id == demand.boot_id
+            && execution.process.pid > 0
+            && execution.process.birth_ticks > 0
+            && execution.executable_sha256 == demand.executable_sha256
+            && execution.runtime_sha256 == demand.runtime_sha256
+            && execution.request_sha256 == demand.task_sha256,
+        "authenticated execution custody does not match the original funded task"
+    );
+    ensure!(
+        clock.unix_ms >= verified.reservation.body.not_before_unix_ms
+            && clock.unix_ms < demand.deadline_unix_ms
+            && clock.monotonic_ns < demand.deadline_monotonic_ns,
+        "original task deadline elapsed before funding consumption"
+    );
     Ok(())
 }
 
@@ -417,19 +629,35 @@ pub fn participant_id(reservation_id: &str, slot: u32) -> Result<String> {
     digest(&("parallel.funding_participant.v1", reservation_id, slot))
 }
 
-pub fn event(verified: &VerifiedReservation, execution: &ExecutionClaim, participant_slot: Option<u32>, clock: FundingClock) -> Result<FundingEvent> {
+pub fn event(
+    verified: &VerifiedReservation,
+    execution: &ExecutionClaim,
+    participant_slot: Option<u32>,
+    clock: FundingClock,
+) -> Result<FundingEvent> {
     let event_key = match participant_slot {
         Some(slot) => participant_id(verified.reservation_id(), slot)?,
         None => digest(&("parallel.funding_start.v1", verified.reservation_id()))?,
     };
-    Ok(FundingEvent { schema: "parallel.funding_event.v1".into(), event_key,
-        authorization: verified.authorization.clone(), reservation: verified.reservation.clone(),
-        demand: verified.demand().clone(), execution: execution.clone(), participant_slot,
-        claimed_unix_ms: clock.unix_ms, claimed_monotonic_ns: clock.monotonic_ns })
+    Ok(FundingEvent {
+        schema: "parallel.funding_event.v1".into(),
+        event_key,
+        authorization: verified.authorization.clone(),
+        reservation: verified.reservation.clone(),
+        demand: verified.demand().clone(),
+        execution: execution.clone(),
+        participant_slot,
+        claimed_unix_ms: clock.unix_ms,
+        claimed_monotonic_ns: clock.monotonic_ns,
+    })
 }
 
-pub fn consume_start(db: &Connection, verified: &VerifiedReservation,
-    execution: &ExecutionClaim, clock: FundingClock) -> Result<FundingEvent> {
+pub fn consume_start(
+    db: &Connection,
+    verified: &VerifiedReservation,
+    execution: &ExecutionClaim,
+    clock: FundingClock,
+) -> Result<FundingEvent> {
     transaction_required(db)?;
     execution_valid(verified, execution, clock)?;
     preflight(db, verified)?;
@@ -446,9 +674,11 @@ pub fn consume_start(db: &Connection, verified: &VerifiedReservation,
 fn concurrent_admission(db: &Connection, verified: &VerifiedReservation) -> Result<()> {
     let caps = &verified.demand().resources;
     let allocation = &verified.authorization.body.allocation;
-    let (mut cores, mut memory, mut searches) = (caps.cpu_cores, caps.host_memory_bytes, caps.cpu_searches);
+    let (mut cores, mut memory, mut searches) =
+        (caps.cpu_cores, caps.host_memory_bytes, caps.cpu_searches);
     let requested: BTreeSet<u32> = caps.gpu_devices.iter().copied().collect();
-    let mut statement = db.prepare("SELECT json FROM funding_reservations WHERE state='started'")?;
+    let mut statement =
+        db.prepare("SELECT json FROM funding_reservations WHERE state='started'")?;
     let rows = statement.query_map([], |row| row.get::<_, String>(0))?;
     for row in rows {
         let old: SignedReservation = serde_json::from_str(&row?)?;
@@ -457,42 +687,91 @@ fn concurrent_admission(db: &Connection, verified: &VerifiedReservation) -> Resu
         }
         // A host reboot is not evidence that the original allocation/attempt
         // was independently reconciled. It cannot silently release custody.
-        ensure!(old.body.demand.boot_id == verified.demand().boot_id, "unreconciled funding allocation from an earlier host boot");
+        ensure!(
+            old.body.demand.boot_id == verified.demand().boot_id,
+            "unreconciled funding allocation from an earlier host boot"
+        );
         let old_caps = &old.body.demand.resources;
-        ensure!(old_caps.gpu_devices.iter().all(|id| !requested.contains(id)), "funded GPU allocation already occupied");
-        cores = cores.checked_add(old_caps.cpu_cores).context("concurrent CPU allocation overflow")?;
-        memory = memory.checked_add(old_caps.host_memory_bytes).context("concurrent host memory overflow")?;
-        searches = searches.checked_add(old_caps.cpu_searches).context("concurrent search allocation overflow")?;
+        ensure!(
+            old_caps
+                .gpu_devices
+                .iter()
+                .all(|id| !requested.contains(id)),
+            "funded GPU allocation already occupied"
+        );
+        cores = cores
+            .checked_add(old_caps.cpu_cores)
+            .context("concurrent CPU allocation overflow")?;
+        memory = memory
+            .checked_add(old_caps.host_memory_bytes)
+            .context("concurrent host memory overflow")?;
+        searches = searches
+            .checked_add(old_caps.cpu_searches)
+            .context("concurrent search allocation overflow")?;
     }
-    ensure!(cores <= allocation.cpu_cores && memory <= allocation.host_memory_bytes
-        && searches <= verified.authorization.body.max_concurrent_cpu_searches,
-        "funded concurrent host allocation exhausted");
+    ensure!(
+        cores <= allocation.cpu_cores
+            && memory <= allocation.host_memory_bytes
+            && searches <= verified.authorization.body.max_concurrent_cpu_searches,
+        "funded concurrent host allocation exhausted"
+    );
     Ok(())
 }
 
-pub fn claim_participant(db: &Connection, verified: &VerifiedReservation, slot: u32,
-    execution: &ExecutionClaim, clock: FundingClock) -> Result<FundingEvent> {
+pub fn claim_participant(
+    db: &Connection,
+    verified: &VerifiedReservation,
+    slot: u32,
+    execution: &ExecutionClaim,
+    clock: FundingClock,
+) -> Result<FundingEvent> {
     transaction_required(db)?;
     execution_valid(verified, execution, clock)?;
-    ensure!(verified.reservation.body.participant_slots.contains(&slot), "undeclared funding participant slot");
+    ensure!(
+        verified.reservation.body.participant_slots.contains(&slot),
+        "undeclared funding participant slot"
+    );
     let (state, start) = original_reservation(db, verified)?;
-    ensure!(state == "started" && start.is_some(), "participant cannot precede the original task start");
-    let start: FundingEvent = serde_json::from_str(start.as_deref().context("original task start absent")?)?;
-    ensure!(start.reservation == verified.reservation && start.participant_slot.is_none(),
-        "participant original supervisor start mismatch");
+    ensure!(
+        state == "started" && start.is_some(),
+        "participant cannot precede the original task start"
+    );
+    let start: FundingEvent =
+        serde_json::from_str(start.as_deref().context("original task start absent")?)?;
+    ensure!(
+        start.reservation == verified.reservation && start.participant_slot.is_none(),
+        "participant original supervisor start mismatch"
+    );
     // A start whose witness response was lost cannot release any rank.
-    ensure!(db.query_row("SELECT EXISTS(SELECT 1 FROM funding_witness WHERE event_key=?)",
-        [&start.event_key], |row| row.get::<_, bool>(0))?, "original task start has no retained independent witness ACK");
-    let mut statement = db.prepare("SELECT json FROM funding_participants WHERE reservation_id=?")?;
-    let originals = statement.query_map([verified.reservation_id()], |row| row.get::<_, String>(0))?;
+    ensure!(
+        db.query_row(
+            "SELECT EXISTS(SELECT 1 FROM funding_witness WHERE event_key=?)",
+            [&start.event_key],
+            |row| row.get::<_, bool>(0)
+        )?,
+        "original task start has no retained independent witness ACK"
+    );
+    let mut statement =
+        db.prepare("SELECT json FROM funding_participants WHERE reservation_id=?")?;
+    let originals =
+        statement.query_map([verified.reservation_id()], |row| row.get::<_, String>(0))?;
     for original in originals {
         let original: FundingEvent = serde_json::from_str(&original?)?;
-        ensure!(original.execution.process != execution.process,
-            "original participant process already consumed a rank slot");
+        ensure!(
+            original.execution.process != execution.process,
+            "original participant process already consumed a rank slot"
+        );
     }
     let event = event(verified, execution, Some(slot), clock)?;
-    db.execute("INSERT INTO funding_participants VALUES(?,?,?,?)", params![event.participant_id()?,
-        verified.reservation_id(), slot.to_string(), serde_json::to_string(&event)?])?;
+    db.execute(
+        "INSERT INTO funding_participants VALUES(?,?,?,?)",
+        params![
+            event.participant_id()?,
+            verified.reservation_id(),
+            slot.to_string(),
+            serde_json::to_string(&event)?
+        ],
+    )?;
     Ok(event)
 }
 
@@ -500,8 +779,19 @@ pub fn claim_participant(db: &Connection, verified: &VerifiedReservation, slot: 
 /// observed execution identity. This is suitable for the existing witness's
 /// strict funding-event branch; it does not accept arbitrary journal payloads.
 pub fn verify_event(trust: &FundingTrust, value: &FundingEvent, clock: FundingClock) -> Result<()> {
-    validate_witness_event(trust, value, &trust.authority_instance, &trust.authority_epoch)?;
-    let verified = verify_reservation(trust, &value.authorization, &value.reservation, &value.demand, clock)?;
+    validate_witness_event(
+        trust,
+        value,
+        &trust.authority_instance,
+        &trust.authority_epoch,
+    )?;
+    let verified = verify_reservation(
+        trust,
+        &value.authorization,
+        &value.reservation,
+        &value.demand,
+        clock,
+    )?;
     execution_valid(&verified, &value.execution, clock)
 }
 
@@ -509,19 +799,42 @@ pub fn verify_event(trust: &FundingTrust, value: &FundingEvent, clock: FundingCl
 /// retrieval of a previously committed ACK after the original deadline without
 /// restamping it or authorizing another start. New witness writes must separately
 /// enforce the returned original monotonic deadline on their transport path.
-pub fn validate_witness_event(trust: &FundingTrust, value: &FundingEvent,
-    authority_instance: &str, authority_epoch: &str) -> Result<(String, u64)> {
-    ensure!(trust.authority_instance == authority_instance && trust.authority_epoch == authority_epoch,
-        "funding witness authority instance/epoch mismatch");
-    ensure!(value.schema == "parallel.funding_event.v1", "unsupported funding event");
-    let clock = FundingClock { unix_ms: value.claimed_unix_ms, monotonic_ns: value.claimed_monotonic_ns };
-    let verified = verify_reservation(trust, &value.authorization, &value.reservation, &value.demand, clock)?;
+pub fn validate_witness_event(
+    trust: &FundingTrust,
+    value: &FundingEvent,
+    authority_instance: &str,
+    authority_epoch: &str,
+) -> Result<(String, u64)> {
+    ensure!(
+        trust.authority_instance == authority_instance && trust.authority_epoch == authority_epoch,
+        "funding witness authority instance/epoch mismatch"
+    );
+    ensure!(
+        value.schema == "parallel.funding_event.v1",
+        "unsupported funding event"
+    );
+    let clock = FundingClock {
+        unix_ms: value.claimed_unix_ms,
+        monotonic_ns: value.claimed_monotonic_ns,
+    };
+    let verified = verify_reservation(
+        trust,
+        &value.authorization,
+        &value.reservation,
+        &value.demand,
+        clock,
+    )?;
     execution_valid(&verified, &value.execution, clock)?;
     if let Some(slot) = value.participant_slot {
-        ensure!(value.reservation.body.participant_slots.contains(&slot), "funding event participant outside reservation");
+        ensure!(
+            value.reservation.body.participant_slots.contains(&slot),
+            "funding event participant outside reservation"
+        );
     }
-    ensure!(event(&verified, &value.execution, value.participant_slot, clock)? == *value,
-        "funding event original identity changed");
+    ensure!(
+        event(&verified, &value.execution, value.participant_slot, clock)? == *value,
+        "funding event original identity changed"
+    );
     Ok((value.event_key.clone(), value.demand.deadline_monotonic_ns))
 }
 

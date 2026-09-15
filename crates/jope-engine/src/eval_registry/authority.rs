@@ -26,10 +26,22 @@ use std::{
 
 #[path = "authority/funding.rs"]
 mod funding_admission;
+#[path = "authority/history_aggregate.rs"]
+pub mod history_aggregate;
+#[path = "authority/native_recovery.rs"]
+pub mod native_recovery;
+
+#[path = "authority/native_scopes.rs"]
+mod native_scopes;
+pub use native_scopes::{NativeScopeRegistrationBody, SignedNativeScopeRegistration};
 
 const SCHEMA: &str = "parallel.fit_authority.v5";
+const NATIVE_SCHEMA: &str = "parallel.fit_authority.v6";
 const LEGACY_SCHEMA: &str = "parallel.fit_authority.v4";
 const ZERO: &str = "0000000000000000000000000000000000000000000000000000000000000000";
+const HISTORY_LOOKUP_INDEX_SQL: &str =
+    "CREATE INDEX IF NOT EXISTS exclusions_global_match ON exclusions(program,training)";
+const HISTORY_LOOKUP_SQL: &str = "SELECT reason FROM exclusions WHERE (program IS NULL OR program=?) AND (training IS NULL OR training=?) AND (program IS NOT NULL OR training IS NOT NULL OR scope IN (SELECT scope FROM scope_training WHERE training=?)) LIMIT 1";
 const STATE_TABLES: &[&str] = &[
     "entries",
     "coverage",
@@ -45,6 +57,10 @@ const STATE_TABLES: &[&str] = &[
     "funding_reservations",
     "funding_participants",
     "funding_witness",
+    "native_tasks",
+    "native_slots",
+    "native_scopes",
+    "scope_training",
 ];
 
 fn hash(bytes: &[u8]) -> String {
@@ -506,6 +522,84 @@ struct StateRow {
     row: Value,
 }
 
+/// Disposable verification index, never an authoritative store or recovery
+/// source. The page limit bounds SQLite pages, not total process memory.
+struct StateDigests {
+    db: Connection,
+}
+impl StateDigests {
+    fn new() -> Result<Self> {
+        Self::with_page_limit(1_048_576)
+    }
+
+    fn with_page_limit(pages: u32) -> Result<Self> {
+        ensure!(
+            pages > 0 && pages <= 1_048_576,
+            "invalid verification page bound"
+        );
+        let db = Connection::open_in_memory()?;
+        db.execute_batch("PRAGMA page_size=4096; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA temp_store=MEMORY; PRAGMA cache_size=-65536;")?;
+        db.pragma_update(None, "max_page_count", pages)?;
+        ensure!(
+            db.pragma_query_value(None, "page_size", |r| r.get::<_, u32>(0))? == 4096
+                && db.pragma_query_value(None, "max_page_count", |r| r.get::<_, u32>(0))? == pages,
+            "verification SQLite page bound unavailable"
+        );
+        db.execute_batch("CREATE TABLE latest (state_table TEXT NOT NULL, state_key TEXT NOT NULL, digest BLOB NOT NULL CHECK(length(digest)=32), PRIMARY KEY(state_table,state_key)) WITHOUT ROWID;")?;
+        Ok(Self { db })
+    }
+
+    fn insert(&self, row: &StateRow) -> Result<()> {
+        Authority::table_key(&row.table)?;
+        let digest = Sha256::digest(encoded(&row.row)?);
+        self.db.prepare_cached("INSERT INTO latest VALUES(?,?,?) ON CONFLICT(state_table,state_key) DO UPDATE SET digest=excluded.digest")?
+            .execute(params![row.table, row.key, digest.as_slice()])?;
+        Ok(())
+    }
+
+    fn consume(&self, table: &str, key: &str, row: &Value) -> Result<()> {
+        let digest = Sha256::digest(encoded(row)?);
+        let removed = self
+            .db
+            .prepare_cached("DELETE FROM latest WHERE state_table=? AND state_key=? AND digest=?")?
+            .execute(params![table, key, digest.as_slice()])?;
+        ensure!(
+            removed == 1,
+            "indexed authority state differs from retained journal"
+        );
+        Ok(())
+    }
+
+    fn ensure_empty(&self) -> Result<()> {
+        ensure!(
+            !self
+                .db
+                .query_row("SELECT EXISTS(SELECT 1 FROM latest)", [], |r| r
+                    .get::<_, bool>(0))?,
+            "indexed authority state differs from retained journal"
+        );
+        Ok(())
+    }
+
+    fn verify_subset(&self, authority: &Authority) -> Result<()> {
+        let mut statement = self
+            .db
+            .prepare("SELECT state_table,state_key,digest FROM latest")?;
+        let mut rows = statement.query([])?;
+        while let Some(row) = rows.next()? {
+            let table: String = row.get(0)?;
+            let key: String = row.get(1)?;
+            let expected: Vec<u8> = row.get(2)?;
+            let actual = Authority::state_row(&authority.db, &table, &key)?;
+            ensure!(
+                Sha256::digest(encoded(&actual)?).as_slice() == expected.as_slice(),
+                "journal/index state mismatch"
+            );
+        }
+        Ok(())
+    }
+}
+
 /// Durable query outputs, identified by outer immutable blob hashes.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -528,8 +622,244 @@ struct RecoveryEvidence {
     database: Checkpoint,
     witness: Checkpoint,
     database_on_chain: bool,
-    database_expected: Option<BTreeMap<(String, String), Value>>,
-    expected: BTreeMap<(String, String), Value>,
+    expected: RecoveryRows,
+}
+
+const MAX_AUTHORITY_EVENT_BYTES: u64 = 64 << 20;
+
+struct RecoveryReportRows {
+    rows: Vec<Value>,
+    count: u64,
+    digest: Sha256,
+}
+impl RecoveryReportRows {
+    fn new() -> Self {
+        Self {
+            rows: Vec::new(),
+            count: 0,
+            digest: Sha256::new(),
+        }
+    }
+    fn push(&mut self, row: Value) -> Result<()> {
+        let bytes = encoded(&row)?;
+        self.digest.update((bytes.len() as u64).to_le_bytes());
+        self.digest.update(bytes);
+        self.count += 1;
+        if self.rows.len() < 1024 {
+            self.rows.push(row);
+        }
+        Ok(())
+    }
+    fn summary(&self) -> Value {
+        json!({"total":self.count,"displayed":self.rows.len(),"truncated":self.count > self.rows.len() as u64,"ordered_records_sha256":hex::encode(self.digest.clone().finalize()),"order":"original latest-postimage journal order","all_original_records_retained":true})
+    }
+}
+
+fn read_event_line(reader: &mut impl BufRead) -> Result<Vec<u8>> {
+    let mut line = Vec::new();
+    reader
+        .take(MAX_AUTHORITY_EVENT_BYTES + 1)
+        .read_until(b'\n', &mut line)?;
+    ensure!(
+        line.len() as u64 <= MAX_AUTHORITY_EVENT_BYTES,
+        "original authority journal event exceeds verification bound; retain original bytes"
+    );
+    ensure!(
+        line.is_empty() || line.last() == Some(&b'\n'),
+        "torn original authority journal"
+    );
+    Ok(line)
+}
+
+/// Latest values remain in the original journal. This disposable index stores
+/// only hashes and original locations, including the original DB watermark.
+struct RecoveryRows {
+    db: Connection,
+    journal: PathBuf,
+    length: u64,
+    journal_sha256: String,
+}
+impl RecoveryRows {
+    fn new(journal: PathBuf) -> Result<Self> {
+        let index = StateDigests::new()?;
+        index.db.execute_batch("DROP TABLE latest; CREATE TABLE latest (state_table TEXT NOT NULL, state_key TEXT NOT NULL, digest BLOB NOT NULL CHECK(length(digest)=32), event_offset INTEGER NOT NULL, effect_index INTEGER NOT NULL, db_digest BLOB CHECK(db_digest IS NULL OR length(db_digest)=32), db_offset INTEGER, db_index INTEGER, PRIMARY KEY(state_table,state_key)) WITHOUT ROWID;")?;
+        Ok(Self {
+            db: index.db,
+            journal,
+            length: 0,
+            journal_sha256: String::new(),
+        })
+    }
+
+    fn insert(
+        &self,
+        row: &StateRow,
+        offset: u64,
+        index: usize,
+        before_database: bool,
+    ) -> Result<()> {
+        Authority::table_key(&row.table)?;
+        let digest = Sha256::digest(encoded(&row.row)?);
+        let db_digest = before_database.then_some(digest.as_slice());
+        self.db.prepare_cached("INSERT INTO latest VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(state_table,state_key) DO UPDATE SET digest=excluded.digest,event_offset=excluded.event_offset,effect_index=excluded.effect_index,db_digest=COALESCE(excluded.db_digest,latest.db_digest),db_offset=COALESCE(excluded.db_offset,latest.db_offset),db_index=COALESCE(excluded.db_index,latest.db_index)")?
+            .execute(params![row.table,row.key,digest.as_slice(),offset,index as u64,db_digest,before_database.then_some(offset),before_database.then_some(index as u64)])?;
+        Ok(())
+    }
+
+    fn contains(&self, table: &str, key: &str) -> Result<bool> {
+        Ok(self.db.query_row(
+            "SELECT EXISTS(SELECT 1 FROM latest WHERE state_table=? AND state_key=?)",
+            params![table, key],
+            |r| r.get(0),
+        )?)
+    }
+
+    fn contains_table(&self, table: &str) -> Result<bool> {
+        Ok(self.db.query_row(
+            "SELECT EXISTS(SELECT 1 FROM latest WHERE state_table=?)",
+            [table],
+            |r| r.get(0),
+        )?)
+    }
+
+    fn verify_original_journal(&self) -> Result<()> {
+        let mut file = File::open(&self.journal)?;
+        ensure!(
+            file.metadata()?.len() == self.length,
+            "original journal length changed"
+        );
+        let mut digest = Sha256::new();
+        let mut bytes = 0u64;
+        let mut buffer = [0u8; 64 * 1024];
+        loop {
+            let n = file.read(&mut buffer)?;
+            if n == 0 {
+                break;
+            }
+            bytes += n as u64;
+            ensure!(bytes <= self.length, "original journal grew");
+            digest.update(&buffer[..n]);
+        }
+        ensure!(
+            bytes == self.length && hex::encode(digest.finalize()) == self.journal_sha256,
+            "complete original journal bytes changed"
+        );
+        Ok(())
+    }
+
+    fn get(&self, table: &str, key: &str) -> Result<Option<Value>> {
+        let locator: Option<(Vec<u8>,u64,usize)> = self.db.query_row("SELECT digest,event_offset,effect_index FROM latest WHERE state_table=? AND state_key=?", params![table,key], |r| Ok((r.get(0)?,r.get(1)?,r.get(2)?))).optional()?;
+        let Some((digest, offset, index)) = locator else {
+            return Ok(None);
+        };
+        let mut reader = BufReader::new(File::open(&self.journal)?);
+        reader.seek(SeekFrom::Start(offset))?;
+        let line = read_event_line(&mut reader)?;
+        ensure!(
+            offset + line.len() as u64 <= self.length,
+            "original journal locator exceeds verified history"
+        );
+        let event: Event = serde_json::from_slice(&line)?;
+        let row = event
+            .effects
+            .into_iter()
+            .nth(index)
+            .context("original journal postimage absent")?;
+        ensure!(
+            row.table == table
+                && row.key == key
+                && Sha256::digest(encoded(&row.row)?).as_slice() == digest.as_slice(),
+            "original journal postimage changed"
+        );
+        self.verify_original_journal()?;
+        Ok(Some(row.row))
+    }
+
+    fn iter(&self) -> Result<RecoveredRows<'_>> {
+        let file = File::open(&self.journal)?;
+        ensure!(
+            file.metadata()?.len() == self.length,
+            "original journal length changed"
+        );
+        Ok(RecoveredRows {
+            source: self,
+            reader: BufReader::new(file.take(self.length)),
+            offset: 0,
+            event_offset: 0,
+            effects: Vec::new().into_iter().enumerate(),
+            yielded: 0,
+            digest: Sha256::new(),
+            done: false,
+        })
+    }
+}
+
+struct RecoveredRows<'a> {
+    source: &'a RecoveryRows,
+    reader: BufReader<std::io::Take<File>>,
+    offset: u64,
+    event_offset: u64,
+    effects: std::iter::Enumerate<std::vec::IntoIter<StateRow>>,
+    yielded: u64,
+    digest: Sha256,
+    done: bool,
+}
+impl Iterator for RecoveredRows<'_> {
+    type Item = Result<((String, String), Value)>;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.done {
+            return None;
+        }
+        let result = (|| -> Result<Option<((String, String), Value)>> {
+            loop {
+                if let Some((index, row)) = self.effects.next() {
+                    let expected: Option<Vec<u8>> = self.source.db.query_row("SELECT digest FROM latest WHERE state_table=? AND state_key=? AND event_offset=? AND effect_index=?",params![row.table,row.key,self.event_offset,index as u64],|r|r.get(0)).optional()?;
+                    if let Some(expected) = expected {
+                        ensure!(
+                            Sha256::digest(encoded(&row.row)?).as_slice() == expected.as_slice(),
+                            "original journal postimage changed"
+                        );
+                        self.yielded += 1;
+                        return Ok(Some(((row.table, row.key), row.row)));
+                    }
+                    continue;
+                }
+                let line = read_event_line(&mut self.reader)?;
+                if line.is_empty() {
+                    let count: u64 =
+                        self.source
+                            .db
+                            .query_row("SELECT count(*) FROM latest", [], |r| r.get(0))?;
+                    ensure!(
+                        self.yielded == count
+                            && self.reader.get_ref().get_ref().metadata()?.len()
+                                == self.source.length
+                            && self.offset == self.source.length
+                            && hex::encode(self.digest.clone().finalize())
+                                == self.source.journal_sha256,
+                        "original journal latest postimages omitted"
+                    );
+                    return Ok(None);
+                }
+                self.digest.update(&line);
+                self.event_offset = self.offset;
+                self.offset += line.len() as u64;
+                let event: Event = serde_json::from_slice(&line)?;
+                self.effects = event.effects.into_iter().enumerate();
+            }
+        })();
+        match result {
+            Ok(Some(row)) => Some(Ok(row)),
+            Ok(None) => {
+                self.done = true;
+                None
+            }
+            Err(e) => {
+                self.done = true;
+                Some(Err(e))
+            }
+        }
+    }
 }
 
 /// Every non-null partial field is a constraint. Omitted fields are wildcards,
@@ -621,7 +951,12 @@ impl FileLock {
     fn acquire(path: &Path, exclusive: bool, create: bool) -> Result<Self> {
         Self::acquire_until(path, exclusive, create, None)
     }
-    fn acquire_until(path: &Path, exclusive: bool, create: bool, absolute_deadline: Option<u64>) -> Result<Self> {
+    fn acquire_until(
+        path: &Path,
+        exclusive: bool,
+        create: bool,
+        absolute_deadline: Option<u64>,
+    ) -> Result<Self> {
         let file = OpenOptions::new()
             .read(true)
             .write(true)
@@ -632,7 +967,10 @@ impl FileLock {
         let deadline = Instant::now() + Duration::from_secs(10);
         loop {
             if let Some(end) = absolute_deadline {
-                ensure!(monotonic_ns()? < end, "authority lock admission deadline elapsed");
+                ensure!(
+                    monotonic_ns()? < end,
+                    "authority lock admission deadline elapsed"
+                );
             }
             let operation = if exclusive {
                 libc::LOCK_EX
@@ -990,6 +1328,18 @@ impl Authority {
     /// Creates a new, disabled authority. Existing paths always fail. The witness
     /// must be independently retained outside the registry directory/backup set.
     pub fn initialize(root: &Path, witness: &Path, scopes: Vec<ScopePolicy>) -> Result<()> {
+        Self::initialize_schema(root, witness, scopes, SCHEMA)
+    }
+    /// Explicit new native store; never migrates or overwrites retained v4/v5.
+    pub fn initialize_native(root: &Path, witness: &Path, scopes: Vec<ScopePolicy>) -> Result<()> {
+        Self::initialize_schema(root, witness, scopes, NATIVE_SCHEMA)
+    }
+    fn initialize_schema(
+        root: &Path,
+        witness: &Path,
+        scopes: Vec<ScopePolicy>,
+        schema: &str,
+    ) -> Result<()> {
         ensure!(!scopes.is_empty(), "scope policy required");
         let mut names = BTreeSet::new();
         for scope in &scopes {
@@ -1016,7 +1366,7 @@ impl Authority {
         fs::create_dir(&root)?;
         fs::set_permissions(&root, fs::Permissions::from_mode(0o700))?;
         let manifest = Manifest {
-            schema: SCHEMA.into(),
+            schema: schema.into(),
             instance: random_token()?,
             scopes,
             witness_path: witness.clone(),
@@ -1055,6 +1405,10 @@ impl Authority {
             CREATE INDEX exclusions_match ON exclusions(scope,program,training);
             CREATE TABLE requests(id INTEGER PRIMARY KEY,key TEXT NOT NULL,provenance_json TEXT NOT NULL);
             PRAGMA user_version=5;")?;
+        Self::create_history_lookup_index(&db)?;
+        if schema == NATIVE_SCHEMA {
+            db.execute_batch("CREATE TABLE native_tasks(id TEXT PRIMARY KEY,json TEXT NOT NULL) WITHOUT ROWID; CREATE TABLE native_slots(id TEXT PRIMARY KEY,task_id TEXT NOT NULL,candidate TEXT NOT NULL,json TEXT NOT NULL,UNIQUE(task_id,candidate)) WITHOUT ROWID; PRAGMA user_version=6;")?;
+        }
         for scope in &manifest.scopes {
             for training in &scope.training_sha256 {
                 db.execute(
@@ -1120,8 +1474,10 @@ impl Authority {
         regular(&root.join("authority.json"))?;
         let manifest: Manifest = serde_json::from_slice(&manifest_bytes)?;
         ensure!(
-            matches!(manifest.schema.as_str(), SCHEMA | LEGACY_SCHEMA)
-                && manifest.witness_path == witness
+            matches!(
+                manifest.schema.as_str(),
+                SCHEMA | LEGACY_SCHEMA | NATIVE_SCHEMA
+            ) && manifest.witness_path == witness
                 && !witness.starts_with(&root),
             "authority/witness binding changed"
         );
@@ -1136,7 +1492,11 @@ impl Authority {
         db.busy_timeout(Duration::from_secs(10))?;
         ensure!(
             db.query_row("PRAGMA user_version", [], |r| r.get::<_, u32>(0))?
-                == if manifest.schema == SCHEMA { 5 } else { 4 },
+                == match manifest.schema.as_str() {
+                    NATIVE_SCHEMA => 6,
+                    SCHEMA => 5,
+                    _ => 4,
+                },
             "wrong registry schema"
         );
         ensure!(
@@ -1214,6 +1574,11 @@ impl Authority {
     /// bytes only, then compare BOTH retained witness and SQLite checkpoint.
     fn verify_tail(&mut self) -> Result<()> {
         self.storage_identity()?;
+        let snapshot = if self.db.is_autocommit() {
+            Some(self.db.unchecked_transaction()?)
+        } else {
+            None
+        };
         let file = File::open(self.root.join("dispatch.jsonl"))?;
         ensure!(
             file.metadata()?.len() >= self.checkpoint.length,
@@ -1222,10 +1587,10 @@ impl Authority {
         let mut reader = BufReader::new(file);
         reader.seek(SeekFrom::Start(self.checkpoint.length))?;
         let mut checkpoint = self.checkpoint.clone();
-        let mut effects = BTreeMap::new();
+        let effects = StateDigests::new()?;
         loop {
-            let mut line = Vec::new();
-            let n = reader.read_until(b'\n', &mut line)?;
+            let mut line = read_event_line(&mut reader)?;
+            let n = line.len();
             if n == 0 {
                 break;
             }
@@ -1238,8 +1603,9 @@ impl Authority {
                     && event.previous == checkpoint.tip,
                 "journal chain changed"
             );
+            self.verify_native_scope_event(&event)?;
             for effect in event.effects {
-                effects.insert((effect.table.clone(), effect.key.clone()), effect);
+                effects.insert(&effect)?;
             }
             checkpoint.seq = event.seq;
             checkpoint.tip = hash(&line);
@@ -1262,18 +1628,11 @@ impl Authority {
             "unreconciled authority history/restore: dispatch blocked"
         );
         let version: i64 = self.db.query_row("PRAGMA data_version", [], |r| r.get(0))?;
-        if version != self.data_version
-            && self.checkpoint.seq == checkpoint.seq
-            && self.data_version != 0
-        {
+        if version != self.data_version && self.data_version != 0 {
             self.verify_full_state()?;
         }
-        for effect in effects.values() {
-            ensure!(
-                Self::state_row(&self.db, &effect.table, &effect.key)? == effect.row,
-                "journal/index state mismatch"
-            );
-        }
+        effects.verify_subset(self)?;
+        drop(snapshot);
         self.data_version = version;
         self.checkpoint = checkpoint;
         Ok(())
@@ -1282,12 +1641,15 @@ impl Authority {
     // its journal. Funding admission requires an explicitly initialized v5 store.
     fn state_tables(&self) -> impl Iterator<Item = &'static str> + '_ {
         STATE_TABLES.iter().copied().filter(|table| {
-            self.manifest.schema == SCHEMA || !table.starts_with("funding_")
+            (self.manifest.schema != LEGACY_SCHEMA || !table.starts_with("funding_"))
+                && (self.manifest.schema == NATIVE_SCHEMA || !table.starts_with("native_"))
+                && (!matches!(*table, "native_scopes" | "scope_training")
+                    || (self.manifest.schema == NATIVE_SCHEMA && self.native_scope_table_exists()))
         })
     }
 
     fn require_funding_schema(&self) -> Result<()> {
-        ensure!(self.manifest.schema == SCHEMA,
+        ensure!(matches!(self.manifest.schema.as_str(), SCHEMA | NATIVE_SCHEMA),
             "funding admission requires an explicitly initialized v5 authority; retained v4 storage is unchanged");
         Ok(())
     }
@@ -1298,8 +1660,9 @@ impl Authority {
             "authorization_witness" => Ok("fit_key"),
             "funding_authorizations" | "funding_reservations" | "funding_participants" => Ok("id"),
             "funding_witness" => Ok("event_key"),
+            "native_tasks" | "native_slots" => Ok("id"),
             "exclusions" => Ok("id"),
-            "coverage" => Ok("scope"),
+            "coverage" | "native_scopes" | "scope_training" => Ok("scope"),
             "numerical_guards" => Ok("work_key"),
             "history_stages" | "history_batches" | "recovery_epochs" => Ok("id"),
             "activations" => Ok("scope"),
@@ -1308,6 +1671,9 @@ impl Authority {
     }
     fn state_row(db: &Connection, table: &str, key: &str) -> Result<Value> {
         let column = Self::table_key(table)?;
+        if table == "scope_training" {
+            return Self::scope_training_postimage(db, key);
+        }
         let mut stmt = db.prepare(&format!("SELECT * FROM {table} WHERE {column}=?"))?;
         let names: Vec<String> = stmt.column_names().iter().map(|s| s.to_string()).collect();
         let row = stmt.query_row([key], |r| {
@@ -1337,6 +1703,14 @@ impl Authority {
     fn effects(db: &Connection, kind: &str, payload: &Value) -> Result<Vec<StateRow>> {
         let mut keys = Vec::new();
         match kind {
+            "native_scope_register" => {
+                let scope = payload["scope"]
+                    .as_str()
+                    .context("registered scope absent")?
+                    .to_owned();
+                keys.push(("native_scopes", scope.clone()));
+                keys.push(("scope_training", scope));
+            }
             "claim" => {
                 keys.push((
                     "entries",
@@ -1347,6 +1721,22 @@ impl Authority {
                 ));
                 let identity: FitIdentity = serde_json::from_value(payload["identity"].clone())?;
                 keys.push(("numerical_guards", numerical_work_key(&identity)?));
+            }
+            "native_reserve" => {
+                keys.push((
+                    "native_tasks",
+                    payload["task_id"]
+                        .as_str()
+                        .context("native task key")?
+                        .to_owned(),
+                ));
+                keys.push((
+                    "native_slots",
+                    payload["slot_id"]
+                        .as_str()
+                        .context("native slot key")?
+                        .to_owned(),
+                ));
             }
             "authorize" => keys.push((
                 "entries",
@@ -1397,6 +1787,36 @@ impl Authority {
                     keys.push(("exclusions", hash(&encoded(&exclusion)?)));
                 }
             }
+            "history_commit_aggregate_coverage" => {
+                let stages = payload["stage_sha256"]
+                    .as_array()
+                    .context("aggregate stages absent")?;
+                ensure!(
+                    !stages.is_empty() && stages.len() <= 4096,
+                    "aggregate stages bound"
+                );
+                for stage in stages {
+                    let sha = stage.as_str().context("aggregate stage identity absent")?;
+                    ensure!(valid_sha(sha), "aggregate stage hash invalid");
+                    keys.push(("history_stages", sha.to_owned()));
+                }
+                let scope = payload["scope"]
+                    .as_str()
+                    .context("aggregate scope absent")?;
+                ensure!(
+                    payload["aggregate_sha256"].as_str().is_some_and(valid_sha),
+                    "aggregate receipt hash invalid"
+                );
+                keys.push(("coverage", scope.to_owned()));
+                let exists: bool = db.query_row(
+                    "SELECT EXISTS(SELECT 1 FROM activations WHERE scope=?)",
+                    [scope],
+                    |r| r.get(0),
+                )?;
+                if exists {
+                    keys.push(("activations", scope.to_owned()));
+                }
+            }
             "history_commit_coverage" => {
                 keys.push((
                     "history_stages",
@@ -1430,26 +1850,40 @@ impl Authority {
                 "queries",
                 payload["key"].as_str().context("query key missing")?.into(),
             )),
-            "recovery_commit_epoch" => keys.push(("recovery_epochs", "current".into())),
+            "recovery_commit_epoch" | "native_recovery_commit_held_epoch" => {
+                keys.push(("recovery_epochs", "current".into()))
+            }
             "namespace_deactivate" => keys.push((
                 "activations",
                 payload["scope"].as_str().context("missing scope")?.into(),
             )),
             "funding_authorize" => keys.push((
                 "funding_authorizations",
-                payload["authorization_id"].as_str().context("funding authorization absent")?.into(),
+                payload["authorization_id"]
+                    .as_str()
+                    .context("funding authorization absent")?
+                    .into(),
             )),
             "funding_reserve" | "funding_start" => keys.push((
                 "funding_reservations",
-                payload["reservation_id"].as_str().context("funding reservation absent")?.into(),
+                payload["reservation_id"]
+                    .as_str()
+                    .context("funding reservation absent")?
+                    .into(),
             )),
             "funding_participant" => keys.push((
                 "funding_participants",
-                payload["participant_id"].as_str().context("funding participant absent")?.into(),
+                payload["participant_id"]
+                    .as_str()
+                    .context("funding participant absent")?
+                    .into(),
             )),
             "funding_witness_ack" => keys.push((
                 "funding_witness",
-                payload["event_key"].as_str().context("funding witness event absent")?.into(),
+                payload["event_key"]
+                    .as_str()
+                    .context("funding witness event absent")?
+                    .into(),
             )),
             #[cfg(test)]
             "synthetic_test_activation" => keys.push((
@@ -1473,34 +1907,69 @@ impl Authority {
     /// Replay immutable postimages once at startup, proving SQLite's indexed
     /// safety state is the state actually committed in the retained journal.
     fn verify_full_state(&self) -> Result<()> {
-        let mut expected: BTreeMap<(String, String), Value> = BTreeMap::new();
-        for line in BufReader::new(File::open(self.root.join("dispatch.jsonl"))?).lines() {
-            let event: Event = serde_json::from_str(&line?)?;
+        let _snapshot = if self.db.is_autocommit() {
+            Some(self.db.unchecked_transaction()?)
+        } else {
+            None
+        };
+        let expected = StateDigests::new()?;
+        let mut checkpoint = Checkpoint {
+            instance: self.manifest.instance.clone(),
+            seq: 0,
+            tip: ZERO.into(),
+            length: 0,
+        };
+        let mut reader = BufReader::new(File::open(self.root.join("dispatch.jsonl"))?);
+        loop {
+            let line = read_event_line(&mut reader)?;
+            if line.is_empty() {
+                break;
+            }
+            let event: Event = serde_json::from_slice(&line)?;
+            ensure!(
+                event.instance == checkpoint.instance
+                    && event.seq == checkpoint.seq + 1
+                    && event.previous == checkpoint.tip,
+                "original full-state journal chain changed"
+            );
+            checkpoint.seq = event.seq;
+            checkpoint.tip = hash(&line[..line.len() - 1]);
+            checkpoint.length += line.len() as u64;
+            self.verify_native_scope_event(&event)?;
             for row in event.effects {
-                Self::table_key(&row.table)?;
-                expected.insert((row.table, row.key), row.row);
+                expected.insert(&row)?;
             }
         }
-        let mut actual = BTreeMap::new();
+        let database: Checkpoint =
+            self.db
+                .query_row("SELECT instance,seq,tip,length FROM meta", [], |r| {
+                    Ok(Checkpoint {
+                        instance: r.get(0)?,
+                        seq: r.get(1)?,
+                        tip: r.get(2)?,
+                        length: r.get(3)?,
+                    })
+                })?;
+        regular(&self.witness)?;
+        let witness: Checkpoint = serde_json::from_slice(&fs::read(&self.witness)?)?;
+        ensure!(
+            checkpoint == database && checkpoint == witness,
+            "full-state original journal/database/witness checkpoint mismatch"
+        );
         for table in self.state_tables() {
             let column = Self::table_key(table)?;
-            let mut statement = self.db.prepare(&format!("SELECT {column} FROM {table}"))?;
+            let mut statement = self
+                .db
+                .prepare(&Self::scope_state_keys_sql(table, column))?;
             let keys = statement.query_map([], |r| r.get::<_, String>(0))?;
             for key in keys {
                 let key = key?;
-                actual.insert(
-                    (table.to_string(), key.clone()),
-                    Self::state_row(&self.db, table, &key)?,
-                );
+                expected.consume(table, &key, &Self::state_row(&self.db, table, &key)?)?;
             }
         }
-        ensure!(
-            expected == actual,
-            "indexed authority state differs from retained journal"
-        );
-        let expected: BTreeSet<_> = self
-            .manifest
-            .scopes
+        expected.ensure_empty()?;
+        let scopes = self.all_retained_scopes()?;
+        let expected: BTreeSet<_> = scopes
             .iter()
             .flat_map(|s| {
                 s.training_sha256
@@ -1534,10 +2003,20 @@ impl Authority {
         payload: &Value,
         f: impl FnOnce(&Connection) -> Result<(T, bool)>,
     ) -> Result<T> {
-        let deadline = if matches!(kind, "funding_authorize" | "funding_reserve" | "funding_start" | "funding_participant") {
-            Some(payload["admission_deadline_monotonic_ns"].as_u64().context("funding admission deadline absent")?)
-        } else { None };
-        let _lock = FileLock::acquire_until(&self.root.join("authority.lock"), true, false, deadline)?;
+        let deadline = if matches!(
+            kind,
+            "funding_authorize" | "funding_reserve" | "funding_start" | "funding_participant"
+        ) {
+            Some(
+                payload["admission_deadline_monotonic_ns"]
+                    .as_u64()
+                    .context("funding admission deadline absent")?,
+            )
+        } else {
+            None
+        };
+        let _lock =
+            FileLock::acquire_until(&self.root.join("authority.lock"), true, false, deadline)?;
         self.mutation_under_lock(kind, payload, f)
     }
 
@@ -1569,7 +2048,8 @@ impl Authority {
             // event witness, even if a future activation verifier is added.
             #[cfg(not(test))]
             ensure!(
-                !matches!(kind, "authorize" | "funding_start" | "funding_participant") || self.event_witness.is_some(),
+                !matches!(kind, "authorize" | "funding_start" | "funding_participant")
+                    || self.event_witness.is_some(),
                 "independent fit-start event witness unavailable"
             );
             let bytes = encoded(&event)?;
@@ -1582,9 +2062,13 @@ impl Authority {
                 }
             }
             if matches!(kind, "funding_start" | "funding_participant") {
-                ensure!(monotonic_ns()? < payload["admission_deadline_monotonic_ns"].as_u64()
-                    .context("funding admission deadline absent")?,
-                    "funding admission expired before start journal");
+                ensure!(
+                    monotonic_ns()?
+                        < payload["admission_deadline_monotonic_ns"]
+                            .as_u64()
+                            .context("funding admission deadline absent")?,
+                    "funding admission expired before start journal"
+                );
             }
             let mut journal = OpenOptions::new()
                 .append(true)
@@ -1606,27 +2090,40 @@ impl Authority {
             };
             if matches!(kind, "authorize" | "funding_start" | "funding_participant") {
                 if let Some(client) = &self.event_witness {
-                    let ack = if kind == "authorize" { client.record(&bytes)? } else {
-                        client.record_until(&bytes, payload["admission_deadline_monotonic_ns"].as_u64()
-                            .context("funding admission deadline absent")?)?
+                    let ack = if kind == "authorize" {
+                        client.record(&bytes)?
+                    } else {
+                        client.record_until(
+                            &bytes,
+                            payload["admission_deadline_monotonic_ns"]
+                                .as_u64()
+                                .context("funding admission deadline absent")?,
+                        )?
                     };
                     let request = client.request(&bytes)?;
-                    ack.verify(client.policy(), &request)?;
+                    ack.verify(client.base_policy(), &request)?;
                     let event_sha = self.store_blob(&bytes)?;
                     let request_sha = self.store_blob(&encoded(&request)?)?;
                     let ack_sha = self.store_blob(&encoded(&ack)?)?;
-                    let policy_sha = self.store_blob(&encoded(client.policy())?)?;
+                    let policy_sha = self.store_blob(&encoded(client.base_policy())?)?;
                     let is_fit = kind == "authorize";
                     let key_field = if is_fit { "fit_key" } else { "event_key" };
                     let witness_key = payload[key_field]
                         .as_str()
                         .context("original witness key absent")?;
                     self.db.execute(
-                        if is_fit { "INSERT INTO authorization_witness VALUES(?,?,?,?,?)" }
-                            else { "INSERT INTO funding_witness VALUES(?,?,?,?,?)" },
+                        if is_fit {
+                            "INSERT INTO authorization_witness VALUES(?,?,?,?,?)"
+                        } else {
+                            "INSERT INTO funding_witness VALUES(?,?,?,?,?)"
+                        },
                         params![witness_key, event_sha, request_sha, ack_sha, policy_sha],
                     )?;
-                    let ack_kind = if is_fit { "witness_ack" } else { "funding_witness_ack" };
+                    let ack_kind = if is_fit {
+                        "witness_ack"
+                    } else {
+                        "funding_witness_ack"
+                    };
                     let mut payload = json!({"event_sha256":event_sha,"ack_sha256":ack_sha,"policy_sha256":policy_sha});
                     payload[key_field] = json!(witness_key);
                     let retained = Event {
@@ -1646,15 +2143,19 @@ impl Authority {
                     next.length += retained.len() as u64 + 1;
                     let deadline = if is_fit {
                         let start: StartToken = serde_json::from_str(
-                        event.effects[0].row["start_json"]
-                            .as_str()
-                            .context("original start absent")?,
+                            event.effects[0].row["start_json"]
+                                .as_str()
+                                .context("original start absent")?,
                         )?;
                         start.deadline_monotonic_ns
                     } else {
-                        let original: super::funding::FundingEvent = serde_json::from_value(event.payload["original"].clone())?;
-                        original.demand.deadline_monotonic_ns.min(event.payload["admission_deadline_monotonic_ns"].as_u64()
-                            .context("funding admission deadline absent")?)
+                        let original: super::funding::FundingEvent =
+                            serde_json::from_value(event.payload["original"].clone())?;
+                        original.demand.deadline_monotonic_ns.min(
+                            event.payload["admission_deadline_monotonic_ns"]
+                                .as_u64()
+                                .context("funding admission deadline absent")?,
+                        )
                     };
                     ensure!(
                         monotonic_ns()? < deadline,
@@ -1687,16 +2188,13 @@ impl Authority {
         result
     }
 
-    fn scope(&self, fit: &VerifiedFit, request: &RequestProvenance) -> Result<()> {
+    fn scope(&self, fit: &VerifiedFit, request: &RequestProvenance, native: bool) -> Result<()> {
         ensure!(
             !request.task_id.is_empty() && request.details.is_object(),
             "missing task provenance"
         );
         let scope = self
-            .manifest
-            .scopes
-            .iter()
-            .find(|v| v.scope == request.scope)
+            .retained_scope(&request.scope, native)?
             .context("scope denied")?;
         ensure!(
             scope
@@ -1730,8 +2228,17 @@ impl Authority {
         if importing {
             return Ok(Some("historical coverage import incomplete".into()));
         }
-        let reason=db.query_row("SELECT reason FROM exclusions WHERE (program IS NULL OR program=?) AND (training IS NULL OR training=?) AND (program IS NOT NULL OR training IS NOT NULL OR scope IN (SELECT scope FROM scope_training WHERE training=?)) LIMIT 1",
-            params![fit.canonical_program,fit.training_sha256,fit.training_sha256],|r|r.get::<_,String>(0)).optional()?;
+        let reason = db
+            .query_row(
+                HISTORY_LOOKUP_SQL,
+                params![
+                    fit.canonical_program,
+                    fit.training_sha256,
+                    fit.training_sha256
+                ],
+                |r| r.get::<_, String>(0),
+            )
+            .optional()?;
         Ok(reason)
     }
 
@@ -1772,12 +2279,25 @@ impl Authority {
         fit: &VerifiedFit,
         request: &RequestProvenance,
     ) -> Result<ClaimOutcome> {
-        self.scope(fit, request)?;
+        self.lookup_admission(fit, request, None)
+    }
+    fn lookup_admission(
+        &mut self,
+        fit: &VerifiedFit,
+        request: &RequestProvenance,
+        native: Option<&super::native_scq::NativeAdmission>,
+    ) -> Result<ClaimOutcome> {
+        self.scope(fit, request, native.is_some())?;
         let _lock = FileLock::acquire(&self.root.join("authority.lock"), false, false)?;
         self.verify_tail()?;
-        Self::lookup_row(&self.db, fit, &request.scope)
+        Self::lookup_row_admission(&self.db, fit, &request.scope, native)
     }
-    fn lookup_row(db: &Connection, fit: &VerifiedFit, scope: &str) -> Result<ClaimOutcome> {
+    fn lookup_row_admission(
+        db: &Connection,
+        fit: &VerifiedFit,
+        scope: &str,
+        native: Option<&super::native_scq::NativeAdmission>,
+    ) -> Result<ClaimOutcome> {
         if let Some(reason) = Self::history_block(db, scope, &fit.identity)? {
             return Ok(ClaimOutcome::Blocked { reason });
         }
@@ -1819,7 +2339,12 @@ impl Authority {
                 ),
             });
         }
-        if let Some(reason) = Self::activation_block(db, scope)? {
+        if let Some(proof) = native {
+            ensure!(
+                proof.scope() == scope && proof.fit_key == fit.key(),
+                "native proof differs from fit scope"
+            );
+        } else if let Some(reason) = Self::activation_block(db, scope)? {
             return Ok(ClaimOutcome::Blocked { reason });
         }
         Ok(ClaimOutcome::Blocked {
@@ -1831,8 +2356,16 @@ impl Authority {
         fit: &VerifiedFit,
         request: &RequestProvenance,
     ) -> Result<ClaimOutcome> {
-        self.scope(fit, request)?;
-        match self.lookup(fit, request)? {
+        self.claim_admission(fit, request, None)
+    }
+    fn claim_admission(
+        &mut self,
+        fit: &VerifiedFit,
+        request: &RequestProvenance,
+        native: Option<&super::native_scq::NativeAdmission>,
+    ) -> Result<ClaimOutcome> {
+        self.scope(fit, request, native.is_some())?;
+        match self.lookup_admission(fit, request, native)? {
             ClaimOutcome::Blocked { ref reason } if reason == "unseen: explicit claim required" => {
             }
             other => return Ok(other),
@@ -1845,7 +2378,7 @@ impl Authority {
         let payload =
             json!({"claim":claim,"identity":fit.identity,"request":request,"owner":owner});
         self.mutation_checked("claim",&payload,|db| {
-            let existing=Self::lookup_row(db,fit,&request.scope)?;
+            let existing=Self::lookup_row_admission(db,fit,&request.scope,native)?;
             match existing {
                 ClaimOutcome::Blocked{ref reason} if reason=="unseen: explicit claim required"=>{},
                 other=>return Ok((other,false)),
@@ -1872,18 +2405,38 @@ impl Authority {
         executor: &ProcessIdentity,
         deadline: Duration,
     ) -> Result<StartToken> {
+        self.authorize_with_deadline_admission(fit, claim, executor, deadline, None)
+    }
+    fn authorize_with_deadline_admission(
+        &mut self,
+        fit: &VerifiedFit,
+        claim: &Claim,
+        executor: &ProcessIdentity,
+        deadline: Duration,
+        native: Option<&super::native_scq::NativeAdmission>,
+    ) -> Result<StartToken> {
         ensure!(!deadline.is_zero(), "zero dispatch deadline");
         let authorized_monotonic_ns = monotonic_ns()?;
         let deadline_monotonic_ns = authorized_monotonic_ns
             .checked_add(deadline.as_nanos().try_into()?)
             .context("dispatch deadline overflow")?;
+        let deadline_monotonic_ns = native.map_or(deadline_monotonic_ns, |p| {
+            deadline_monotonic_ns.min(p.deadline_monotonic_ns)
+        });
+        ensure!(
+            deadline_monotonic_ns > authorized_monotonic_ns,
+            "native original slot expired"
+        );
         ensure!(
             claim.fit_key == fit.key && ProcessIdentity::read(executor.pid)? == *executor,
             "invalid executor binding"
         );
         let current = ProcessIdentity::current()?;
         let token = random_token()?;
-        let payload = json!({"fit_key":fit.key,"claim_token":claim.claim_token,"token":token,"executor":executor});
+        let mut payload = json!({"fit_key":fit.key,"claim_token":claim.claim_token,"token":token,"executor":executor});
+        if let Some(native) = native {
+            payload["native_fit"] = native.event()?;
+        }
         self.mutation("authorize", &payload, |db| {
             Self::require_original_epoch(db, &fit.key)?;
             let (owner, scope, task, state, stored_claim): (
@@ -1908,7 +2461,7 @@ impl Authority {
                 "historical exclusion blocks authorization"
             );
             ensure!(
-                Self::activation_block(db, &scope)?.is_none(),
+                native.is_some() || Self::activation_block(db, &scope)?.is_none(),
                 "namespace inactive at authorization"
             );
             let start = StartToken {
@@ -1994,6 +2547,16 @@ impl Authority {
         child: &Child,
         stream: &std::os::unix::net::UnixStream,
     ) -> Result<SupervisedCustody> {
+        self.consume_owned_child_start_admission(fit, start, child, stream, None)
+    }
+    fn consume_owned_child_start_admission(
+        &mut self,
+        fit: &VerifiedFit,
+        start: &StartToken,
+        child: &Child,
+        stream: &std::os::unix::net::UnixStream,
+        native: Option<&super::native_scq::NativeAdmission>,
+    ) -> Result<SupervisedCustody> {
         let peer = authenticated_peer(stream)?;
         ensure!(
             peer == start.executor
@@ -2026,7 +2589,7 @@ impl Authority {
                     "historical exclusion blocks supervised start"
                 );
                 ensure!(
-                    Self::activation_block(db, &scope)?.is_none(),
+                    native.is_some() || Self::activation_block(db, &scope)?.is_none(),
                     "namespace inactive at supervised start consumption"
                 );
                 db.execute("UPDATE entries SET state='running' WHERE key=?", [&fit.key])?;
@@ -2035,6 +2598,230 @@ impl Authority {
         )?;
         Ok(SupervisedCustody { lock })
     }
+    /// Native admission requires explicitly initialized v6 storage. Older stores
+    /// and all legacy activation routes remain byte-preserved and held.
+    pub(super) fn claim_native(
+        &mut self,
+        fit: &VerifiedFit,
+        native: &mut super::native_scq::NativeAdmission,
+    ) -> Result<ClaimOutcome> {
+        native.revalidate()?;
+        ensure!(
+            self.manifest.schema == NATIVE_SCHEMA,
+            "native fits require explicitly initialized v6 authority; legacy stores unchanged"
+        );
+        ensure!(
+            self.manifest.instance == native.authority_instance()
+                && self.manifest_sha == native.authority_manifest_sha256(),
+            "native grant binds another authority"
+        );
+        let epoch:String=self.db.query_row("SELECT COALESCE((SELECT epoch FROM recovery_epochs WHERE id='current'),(SELECT instance FROM meta))",[],|r|r.get(0))?;
+        ensure!(
+            epoch == native.authority_epoch(),
+            "native grant authority epoch changed"
+        );
+        let coverage: String = self.db.query_row(
+            "SELECT inventory_sha FROM coverage WHERE scope=?",
+            [native.scope()],
+            |r| r.get(0),
+        )?;
+        ensure!(
+            coverage == native.coverage_sha256(),
+            "native complete coverage receipt differs"
+        );
+        self.scope(fit, &native.provenance(), true)?;
+        let task = native.task_record();
+        let slot = native.slot_record();
+        let task_id = native.task_key.clone();
+        let slot_id = native.slot_key.clone();
+        let original = self.reserve_native_candidate(&task_id, &slot_id, &task, &slot)?;
+        native.reserve_deadline(&original)?;
+        // Completion reuse does not create a fresh numerical claim or deadline.
+        self.claim_admission(fit, &native.provenance(), Some(native))
+    }
+    fn reserve_native_candidate(
+        &mut self,
+        task_id: &str,
+        slot_id: &str,
+        task: &Value,
+        slot: &Value,
+    ) -> Result<Value> {
+        ensure!(
+            self.manifest.schema == NATIVE_SCHEMA,
+            "native reservation requires v6"
+        );
+        let budget = task["budget"]
+            .as_u64()
+            .filter(|n| (1..=1000).contains(n))
+            .context("native task budget invalid")?;
+        let candidate = slot["candidate_index"]
+            .as_u64()
+            .filter(|n| *n < budget)
+            .context("native candidate outside budget")?;
+        let payload = json!({"task_id":task_id,"slot_id":slot_id,"task":task,"slot":slot});
+        self.mutation_checked("native_reserve", &payload, |db| {
+            let current: Option<String> = db
+                .query_row(
+                    "SELECT json FROM native_tasks WHERE id=?",
+                    [&task_id],
+                    |r| r.get(0),
+                )
+                .optional()?;
+            if let Some(current) = current {
+                ensure!(
+                    serde_json::from_str::<Value>(&current)? == *task,
+                    "native task identity/budget changed"
+                );
+            } else {
+                db.execute(
+                    "INSERT INTO native_tasks VALUES(?,?)",
+                    params![task_id, serde_json::to_string(&task)?],
+                )?;
+            }
+            let prior: Option<String> = db
+                .query_row(
+                    "SELECT json FROM native_slots WHERE id=?",
+                    [&slot_id],
+                    |r| r.get(0),
+                )
+                .optional()?;
+            if let Some(prior) = prior {
+                let prior: Value = serde_json::from_str(&prior)?;
+                for field in [
+                    "task_key",
+                    "candidate_index",
+                    "fit_key",
+                    "descriptor_sha256",
+                    "boot_id",
+                ] {
+                    ensure!(
+                        prior[field] == slot[field],
+                        "conflicting original native fit slot"
+                    );
+                }
+                return Ok((prior, false));
+            }
+            let count: u64 = db.query_row(
+                "SELECT COUNT(*) FROM native_slots WHERE task_id=?",
+                [&task_id],
+                |r| r.get(0),
+            )?;
+            ensure!(
+                count < budget && candidate < budget,
+                "native candidate budget exhausted"
+            );
+            db.execute(
+                "INSERT INTO native_slots VALUES(?,?,?,?)",
+                params![
+                    slot_id,
+                    task_id,
+                    candidate.to_string(),
+                    serde_json::to_string(&slot)?
+                ],
+            )?;
+            Ok((slot.clone(), true))
+        })
+    }
+    fn verify_native_reservation(&self, native: &super::native_scq::NativeAdmission) -> Result<()> {
+        ensure!(
+            self.manifest.schema == NATIVE_SCHEMA
+                && self.manifest.instance == native.authority_instance()
+                && self.manifest_sha == native.authority_manifest_sha256(),
+            "native authority changed"
+        );
+        let epoch:String=self.db.query_row("SELECT COALESCE((SELECT epoch FROM recovery_epochs WHERE id='current'),(SELECT instance FROM meta))",[],|r|r.get(0))?;
+        ensure!(
+            epoch == native.authority_epoch(),
+            "native authority epoch changed"
+        );
+        let task: String = self.db.query_row(
+            "SELECT json FROM native_tasks WHERE id=?",
+            [&native.task_key],
+            |r| r.get(0),
+        )?;
+        let slot: String = self.db.query_row(
+            "SELECT json FROM native_slots WHERE id=?",
+            [&native.slot_key],
+            |r| r.get(0),
+        )?;
+        let slot: Value = serde_json::from_str(&slot)?;
+        ensure!(
+            serde_json::from_str::<Value>(&task)? == native.task_record(),
+            "native task reservation changed"
+        );
+        let expected = native.slot_record();
+        for field in [
+            "task_key",
+            "candidate_index",
+            "fit_key",
+            "descriptor_sha256",
+            "boot_id",
+        ] {
+            ensure!(
+                slot[field] == expected[field],
+                "native slot reservation changed"
+            );
+        }
+        ensure!(
+            native.deadline_monotonic_ns
+                <= slot["deadline_monotonic_ns"]
+                    .as_u64()
+                    .context("native slot original deadline absent")?,
+            "native slot deadline renewed"
+        );
+        Ok(())
+    }
+    pub(super) fn authorize_native(
+        &mut self,
+        fit: &VerifiedFit,
+        claim: &Claim,
+        executor: &ProcessIdentity,
+        deadline: Duration,
+        native: &super::native_scq::NativeAdmission,
+    ) -> Result<StartToken> {
+        native.revalidate()?;
+        self.verify_native_reservation(native)?;
+        let remaining = native
+            .deadline_monotonic_ns
+            .checked_sub(monotonic_ns()?)
+            .context("original native slot deadline expired")?;
+        self.authorize_with_deadline_admission(
+            fit,
+            claim,
+            executor,
+            deadline.min(Duration::from_nanos(remaining)),
+            Some(native),
+        )
+    }
+    pub(super) fn consume_native_owned_child_start(
+        &mut self,
+        fit: &VerifiedFit,
+        start: &StartToken,
+        child: &Child,
+        stream: &std::os::unix::net::UnixStream,
+        native: &super::native_scq::NativeAdmission,
+    ) -> Result<SupervisedCustody> {
+        native.revalidate()?;
+        self.verify_native_reservation(native)?;
+        let placement = native
+            .placement
+            .as_ref()
+            .context("native child placement absent")?;
+        super::native_scq::verify_placement(
+            placement,
+            &start.executor,
+            native.target,
+            &native.task_sha256,
+            &native.descriptor_sha256,
+            native.candidate_index,
+        )?;
+        ensure!(
+            start.deadline_monotonic_ns <= native.deadline_monotonic_ns,
+            "start exceeds original native slot deadline"
+        );
+        self.consume_owned_child_start_admission(fit, start, child, stream, Some(native))
+    }
+
     pub(super) fn require_reconciled_service_start(&mut self) -> Result<()> {
         let _lock = FileLock::acquire(&self.root.join("authority.lock"), false, false)?;
         self.verify_tail()?;
@@ -2043,10 +2830,9 @@ impl Authority {
             [],
             |r| r.get(0),
         )?;
-        ensure!(
-            unresolved == 0,
-            "original claimed/authorized/running tasks require reconciliation before service restart"
-        );
+        if unresolved != 0 {
+            self.native_held_start_allowed().context("original claimed/authorized/running tasks require reconciliation before service restart")?;
+        }
         Ok(())
     }
 
@@ -2089,10 +2875,7 @@ impl Authority {
             "empty history is not production coverage"
         );
         ensure!(
-            self.manifest
-                .scopes
-                .iter()
-                .any(|s| s.scope == inventory.scope),
+            self.retained_scope(&inventory.scope, true)?.is_some(),
             "unknown inventory scope"
         );
         ensure!(
@@ -2198,6 +2981,7 @@ impl Authority {
     /// Commit a bounded range of original occurrences. Repeating the identical
     /// batch is a no-op; overlaps and out-of-range offsets are rejected.
     pub fn history_import_batch(&mut self, batch: &HistoryBatch) -> Result<String> {
+        let _lock = FileLock::acquire(&self.root.join("authority.lock"), true, false)?;
         self.verify_tail()?;
         let inventory = self.staged_inventory(&batch.stage_sha256)?;
         ensure!(
@@ -2207,12 +2991,17 @@ impl Authority {
             "invalid or oversized history batch"
         );
         let exclusions = &inventory.occurrences[batch.start..batch.end];
+        let mut verified_evidence = BTreeSet::new();
         for exclusion in exclusions {
             exclusion.validate()?;
-            self.read_blob(&exclusion.evidence_sha256)?;
+            // Evidence is immutable and hash-checked. Deduplicate only within
+            // this bounded batch; every retry must verify its evidence again.
+            if verified_evidence.insert(&exclusion.evidence_sha256) {
+                self.read_blob(&exclusion.evidence_sha256)?;
+            }
         }
         let batch_sha = self.store_blob(&encoded(batch)?)?;
-        self.mutation_checked("history_import_batch",
+        self.mutation_under_lock("history_import_batch",
             &json!({"batch_sha256":batch_sha,"batch":batch,"exclusions":exclusions}), |db| {
                 let exists: bool = db.query_row("SELECT EXISTS(SELECT 1 FROM history_batches WHERE id=?)",
                     [&batch_sha], |r| r.get(0))?;
@@ -2229,6 +3018,46 @@ impl Authority {
                     batch_sha,batch.stage_sha256,batch.start.to_string(),batch.end.to_string()])?;
                 Ok((batch_sha.clone(), true))
             })
+    }
+
+    fn create_history_lookup_index(db: &Connection) -> Result<()> {
+        db.execute_batch(HISTORY_LOOKUP_INDEX_SQL)?;
+        let table: String = db.query_row("SELECT tbl_name FROM sqlite_master WHERE type='index' AND name='exclusions_global_match'",[],|r|r.get(0))?;
+        let columns = db
+            .prepare("PRAGMA index_info(exclusions_global_match)")?
+            .query_map([], |r| r.get::<_, String>(2))?
+            .collect::<std::result::Result<Vec<_>, _>>()?;
+        let valid:bool=db.query_row("SELECT EXISTS(SELECT 1 FROM pragma_index_list('exclusions') WHERE name='exclusions_global_match' AND \"unique\"=0 AND partial=0)",[],|r|r.get(0))?;
+        ensure!(
+            table == "exclusions" && columns == ["program", "training"] && valid,
+            "historical lookup index has conflicting definition"
+        );
+        Ok(())
+    }
+
+    /// Explicit maintenance of a derived lookup index; never called by open or
+    /// numerical admission. Original rows, journal and witness stay unchanged.
+    pub fn prepare_history_lookup_index(&mut self) -> Result<Value> {
+        let _lock = FileLock::acquire(&self.root.join("authority.lock"), true, false)?;
+        self.verify_tail()?;
+        self.verify_full_state()?;
+        let original = self.checkpoint.clone();
+        let existed:bool=self.db.query_row("SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='index' AND name='exclusions_global_match')",[],|r|r.get(0))?;
+        self.db.execute_batch("BEGIN IMMEDIATE")?;
+        let result = Self::create_history_lookup_index(&self.db);
+        if result.is_err() {
+            let _ = self.db.execute_batch("ROLLBACK");
+        }
+        result?;
+        self.db.execute_batch("COMMIT")?;
+        self.verify_tail()?;
+        ensure!(
+            self.checkpoint == original,
+            "history lookup maintenance changed authority checkpoint"
+        );
+        Ok(
+            json!({"schema":"jope.history_lookup_index_maintenance.v1","authority_instance":self.manifest.instance,"authority_manifest_sha256":self.manifest_sha,"checkpoint":original,"index":"exclusions_global_match","columns":["program","training"],"already_present":existed,"sql_sha256":hash(HISTORY_LOOKUP_INDEX_SQL.as_bytes()),"original_rows_and_history_unchanged":true,"admission_activated":false}),
+        )
     }
 
     pub fn history_commit_coverage(&mut self, stage_sha256: &str) -> Result<String> {
@@ -2342,19 +3171,16 @@ impl Authority {
             length: 0,
         };
         let mut database_on_chain = database == journal;
-        let mut database_expected = if database_on_chain {
-            Some(BTreeMap::new())
-        } else {
-            None
-        };
-        let mut expected = BTreeMap::new();
+        let mut expected = RecoveryRows::new(self.root.join("dispatch.jsonl"))?;
+        let mut original_digest = Sha256::new();
         let mut reader = BufReader::new(File::open(self.root.join("dispatch.jsonl"))?);
         loop {
-            let mut line = Vec::new();
-            let length = reader.read_until(b'\n', &mut line)?;
+            let mut line = read_event_line(&mut reader)?;
+            let length = line.len();
             if length == 0 {
                 break;
             }
+            original_digest.update(&line);
             ensure!(
                 line.pop() == Some(b'\n'),
                 "torn original journal: recovery unavailable"
@@ -2366,50 +3192,55 @@ impl Authority {
                     && event.previous == journal.tip,
                 "original journal chain changed: recovery unavailable"
             );
-            for row in event.effects {
-                Self::table_key(&row.table)?;
-                expected.insert((row.table, row.key), row.row);
+            self.verify_native_scope_event(&event)?;
+            for (index, row) in event.effects.into_iter().enumerate() {
+                expected.insert(&row, journal.length, index, event.seq <= database.seq)?;
             }
             journal.seq = event.seq;
             journal.tip = hash(&line);
             journal.length += length as u64;
             database_on_chain |= database == journal;
-            if database == journal {
-                database_expected = Some(expected.clone());
-            }
         }
         regular(&self.witness)?;
         let witness: Checkpoint = serde_json::from_slice(&fs::read(&self.witness)?)?;
+        expected.length = journal.length;
+        expected.journal_sha256 = hex::encode(original_digest.finalize());
         Ok(RecoveryEvidence {
             journal,
             database,
             witness,
             database_on_chain,
-            database_expected,
             expected,
         })
     }
 
     fn recovery_report(&self, evidence: &RecoveryEvidence) -> Result<Value> {
-        let unresolved: Vec<Value> = evidence
-            .expected
-            .iter()
-            .filter_map(|((table, key), row)| {
-                if table == "entries"
-                    && matches!(
-                        row["state"].as_str(),
-                        Some("claimed" | "authorized" | "running")
-                    )
-                {
-                    Some(
-                        json!({"fit_key":key,"scope":row["scope"],"state":row["state"],"authority_epoch":row["epoch"],
-                    "disposition":"unavailable; original execution may not be repeated"}),
-                    )
-                } else {
-                    None
-                }
-            })
-            .collect();
+        let mut unresolved = RecoveryReportRows::new();
+        let mut unresolved_funding = RecoveryReportRows::new();
+        let mut unresolved_queries = RecoveryReportRows::new();
+        for item in evidence.expected.iter()? {
+            let ((table, key), row) = item?;
+            if table == "entries"
+                && matches!(
+                    row["state"].as_str(),
+                    Some("claimed" | "authorized" | "running")
+                )
+            {
+                unresolved.push(json!({"fit_key":key,"scope":row["scope"],"state":row["state"],"authority_epoch":row["epoch"],"disposition":"unavailable; original execution may not be repeated"}))?;
+            } else if table == "funding_reservations" && row["state"] == "started" {
+                let original = row["start_json"]
+                    .as_str()
+                    .and_then(|s| serde_json::from_str::<Value>(s).ok());
+                let event_key = original.as_ref().and_then(|v| v["event_key"].as_str());
+                let witnessed = match event_key {
+                    Some(key) => evidence.expected.contains("funding_witness", key)?,
+                    None => false,
+                };
+                unresolved_funding.push(json!({"reservation_id":key,"task_sha256":row["task_sha256"],"independent_start_ack_retained":witnessed,"disposition":"original allocation remains occupied; terminal evidence/reconciliation required; never replay"}))?;
+            } else if table == "queries" && row["state"] == "accepted" {
+                unresolved_queries.push(json!({"task_key":key,"request_sha256":row["request_sha"],"epoch":row["epoch"],"disposition":"unavailable; original accepted query cannot be repeated"}))?;
+            }
+        }
         let mut blockers = Vec::new();
         if evidence.journal != evidence.witness {
             blockers.push("original journal and witness watermarks disagree");
@@ -2428,7 +3259,7 @@ impl Authority {
             .verify_database_checkpoint(evidence)
             .err()
             .map(|e| e.to_string());
-        let retained_artifact_errors = self.recovery_artifact_errors(evidence);
+        let retained_artifact_errors = self.recovery_artifact_errors(evidence)?;
         if indexed_state_error.is_some() {
             blockers.push("indexed safety state differs from original retained journal");
         }
@@ -2439,32 +3270,30 @@ impl Authority {
         if !retained_artifact_errors.is_empty() {
             blockers.push("original committed artifact bytes unavailable or inconsistent");
         }
-        blockers.push("independent witness recovery reconciliation and production activation verifiers unavailable");
+        if self.manifest.schema != NATIVE_SCHEMA {
+            blockers.push("independent witness recovery reconciliation and production activation verifiers unavailable");
+        }
         Ok(json!({"schema":"parallel.authority_recovery_inspection.v1",
             "authority_instance":self.manifest.instance,"authority_manifest_sha256":self.manifest_sha,
             "inspector_executable_sha256":hash(&fs::read("/proc/self/exe")?),
             "database":evidence.database,"journal":evidence.journal,"witness":evidence.witness,
-            "unresolved_original_work":unresolved,
-            "unresolved_original_funding":evidence.expected.iter().filter_map(|((table,key),row)| {
-                if table != "funding_reservations" || row["state"] != "started" { return None; }
-                let original = row["start_json"].as_str().and_then(|s| serde_json::from_str::<Value>(s).ok());
-                let event_key = original.as_ref().and_then(|v| v["event_key"].as_str());
-                let witnessed = event_key.is_some_and(|event_key| evidence.expected.contains_key(&("funding_witness".into(),event_key.into())));
-                Some(json!({"reservation_id":key,"task_sha256":row["task_sha256"],
-                    "independent_start_ack_retained":witnessed,
-                    "disposition":"original allocation remains occupied; terminal evidence/reconciliation required; never replay"}))
-            }).collect::<Vec<_>>(),
-            "unresolved_original_queries":evidence.expected.iter().filter_map(|((table,key),row)|
-                (table == "queries" && row["state"] == "accepted").then(|| json!({"task_key":key,"request_sha256":row["request_sha"],
-                    "epoch":row["epoch"],"disposition":"unavailable; original accepted query cannot be repeated"}))).collect::<Vec<_>>(),
+            "unresolved_original_work":unresolved.rows,
+            "unresolved_original_work_summary":unresolved.summary(),
+            "unresolved_original_funding":unresolved_funding.rows,
+            "unresolved_original_funding_summary":unresolved_funding.summary(),
+            "unresolved_original_queries":unresolved_queries.rows,
+            "unresolved_original_queries_summary":unresolved_queries.summary(),
             "indexed_state_error":indexed_state_error,
             "database_checkpoint_state_error":database_checkpoint_state_error,
             "retained_artifact_errors":retained_artifact_errors,"blockers":blockers}))
     }
 
-    fn recovery_artifact_errors(&self, evidence: &RecoveryEvidence) -> Vec<String> {
+    fn recovery_artifact_errors(&self, evidence: &RecoveryEvidence) -> Result<Vec<String>> {
         let mut errors = Vec::new();
-        for ((table, key), row) in &evidence.expected {
+        let mut all_errors = RecoveryReportRows::new();
+        for item in evidence.expected.iter()? {
+            let ((table, key), row) = item?;
+            let (table, key, row) = (table.as_str(), key.as_str(), &row);
             let result = (|| -> Result<()> {
                 if table == "entries"
                     && matches!(
@@ -2532,7 +3361,11 @@ impl Authority {
                     );
                     let event: Event = serde_json::from_slice(&event_bytes)?;
                     ensure!(
-                        event.payload[if table == "authorization_witness" { "fit_key" } else { "event_key" }] == *key,
+                        event.payload[if table == "authorization_witness" {
+                            "fit_key"
+                        } else {
+                            "event_key"
+                        }] == *key,
                         "witness original fit key mismatch"
                     );
                 } else if table == "queries" {
@@ -2566,7 +3399,7 @@ impl Authority {
                         );
                         let entry = evidence
                             .expected
-                            .get(&("entries".into(), receipt.fit_key.clone()))
+                            .get("entries", &receipt.fit_key)?
                             .context("query original fit record absent")?;
                         ensure!(
                             entry["completion_sha"] == inputs.completion_sha256,
@@ -2578,6 +3411,28 @@ impl Authority {
                             "invalid unknown query state"
                         );
                     }
+                } else if table == "coverage" {
+                    let sha = row["inventory_sha"]
+                        .as_str()
+                        .context("coverage identity absent")?;
+                    let path = self.root.join("objects").join(sha);
+                    // Legacy coverage remains its original staged inventory.
+                    // Aggregate receipts are bounded and carry their original schema.
+                    if fs::metadata(&path)?.len() <= 4 << 20 {
+                        let value: Value = serde_json::from_slice(&self.read_blob(sha)?)?;
+                        if value["schema"] == "jope.history_aggregate_receipt.v1" {
+                            self.verify_history_aggregate_receipt(sha)?;
+                        }
+                    }
+                } else if table == "native_scopes" {
+                    let signed: SignedNativeScopeRegistration = serde_json::from_slice(
+                        &self.read_blob(
+                            row["registration_sha"]
+                                .as_str()
+                                .context("scope receipt absent")?,
+                        )?,
+                    )?;
+                    self.verify_scope_registration_evidence(&signed)?;
                 } else if table == "history_stages" {
                     let inventory: HistoryInventory =
                         serde_json::from_slice(&self.read_blob(key)?)?;
@@ -2589,31 +3444,48 @@ impl Authority {
                 Ok(())
             })();
             if let Err(error) = result {
-                errors.push(format!("{table}/{key}: {error}"));
+                let message = format!("{table}/{key}: {error}");
+                all_errors.push(json!(message))?;
+                if errors.len() < 1024 {
+                    errors.push(message);
+                }
             }
         }
-        errors
+        if all_errors.count > errors.len() as u64 {
+            errors.push(format!(
+                "additional original artifact errors retained; {}",
+                all_errors.summary()
+            ));
+        }
+        Ok(errors)
     }
 
     fn verify_database_checkpoint(&self, evidence: &RecoveryEvidence) -> Result<()> {
-        let expected = evidence
-            .database_expected
-            .as_ref()
-            .context("database checkpoint absent from retained original journal")?;
-        let mut count = 0usize;
+        ensure!(
+            evidence.database_on_chain,
+            "database checkpoint absent from retained original journal"
+        );
+        let mut count = 0u64;
         for table in self.state_tables() {
             let column = Self::table_key(table)?;
-            let mut statement = self.db.prepare(&format!("SELECT {column} FROM {table}"))?;
+            let mut statement = self
+                .db
+                .prepare(&Self::scope_state_keys_sql(table, column))?;
             for key in statement.query_map([], |r| r.get::<_, String>(0))? {
                 let key = key?;
                 let actual = Self::state_row(&self.db, table, &key)?;
-                ensure!(expected.get(&(table.to_string(),key.clone())) == Some(&actual),
-                    "database safety row {table}/{key} conflicts with its retained checkpoint; preserve original evidence for reconciliation");
+                let expected: Option<Vec<u8>> = evidence.expected.db.query_row("SELECT db_digest FROM latest WHERE state_table=? AND state_key=? AND db_digest IS NOT NULL",params![table,key],|r|r.get(0)).optional()?;
+                ensure!(expected.as_deref() == Some(Sha256::digest(encoded(&actual)?).as_slice()), "database safety row {table}/{key} conflicts with its retained checkpoint; preserve original evidence for reconciliation");
                 count += 1;
             }
         }
+        let expected_count: u64 = evidence.expected.db.query_row(
+            "SELECT count(*) FROM latest WHERE db_digest IS NOT NULL",
+            [],
+            |r| r.get(0),
+        )?;
         ensure!(
-            count == expected.len(),
+            count == expected_count,
             "database safety rows missing at original checkpoint; external reconciliation required"
         );
         Ok(())
@@ -2655,7 +3527,20 @@ impl Authority {
         authority.hold_recovery()?;
         authority.db.execute_batch("BEGIN IMMEDIATE")?;
         let replay = (|| -> Result<()> {
-            for ((table, key), row) in &evidence.expected {
+            if evidence.expected.contains_table("native_scopes")? {
+                ensure!(
+                    authority.manifest.schema == NATIVE_SCHEMA,
+                    "native scope effects in legacy store"
+                );
+                authority.db.execute_batch(native_scopes::TABLE_SQL)?;
+            }
+            for item in evidence.expected.iter()? {
+                let ((table, key), row) = item?;
+                let (table, key, row) = (table.as_str(), key.as_str(), &row);
+                if table == "scope_training" {
+                    Self::replay_scope_training(&authority.db, key, row)?;
+                    continue;
+                }
                 let column = Self::table_key(table)?;
                 let stmt = authority.db.prepare(&format!("SELECT * FROM {table}"))?;
                 let columns: Vec<String> =
@@ -2696,6 +3581,7 @@ impl Authority {
                     evidence.journal.length
                 ],
             )?;
+            Self::create_history_lookup_index(&authority.db)?;
             authority.verify_full_state()?;
             authority.db.execute_batch("COMMIT")?;
             Ok(())
@@ -2704,6 +3590,7 @@ impl Authority {
             let _ = authority.db.execute_batch("ROLLBACK");
         }
         replay?;
+        drop(evidence);
         authority.recovery_report(&authority.recovery_evidence()?)
     }
 
@@ -2717,7 +3604,7 @@ impl Authority {
         authority.verify_full_state()?;
         let evidence = authority.recovery_evidence()?;
         ensure!(
-            authority.recovery_artifact_errors(&evidence).is_empty(),
+            authority.recovery_artifact_errors(&evidence)?.is_empty(),
             "original committed artifact recovery incomplete"
         );
         authority.hold_recovery()?;
@@ -2739,7 +3626,7 @@ impl Authority {
         authority.verify_full_state()?;
         ensure!(
             authority
-                .recovery_artifact_errors(&authority.recovery_evidence()?)
+                .recovery_artifact_errors(&authority.recovery_evidence()?)?
                 .is_empty(),
             "original committed artifact recovery incomplete"
         );
@@ -3244,14 +4131,14 @@ pub(crate) fn synthetic_completion_for_test(
             }],
         )?;
         let mut authority = Authority::open(root, witness)?;
+        let coverage = authority.store_blob(&encoded(&json!({
+            "schema":"jope.synthetic_coverage_fixture.v1", "synthetic_only":true
+        }))?)?;
         authority.mutation(
             "synthetic_test_coverage",
             &json!({"synthetic_only":true}),
             |db| {
-                db.execute(
-                    "INSERT INTO coverage VALUES('synthetic',?)",
-                    [hash(b"synthetic admitted-store fixture")],
-                )?;
+                db.execute("INSERT INTO coverage VALUES('synthetic',?)", [coverage])?;
                 Ok(())
             },
         )?;

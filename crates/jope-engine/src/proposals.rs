@@ -31,8 +31,15 @@ pub fn rank(
     shuffled: bool,
 ) -> Result<()> {
     crate::task_contract::require_original_gpu_grant("proposal-rank")?;
-    let task = crate::gpu_worker::Task::Proposal { corpus:corpus.into(), checkpoint:checkpoint.into(),
-        output:output.into(), world, cuts, cut_start, shuffled };
+    let task = crate::gpu_worker::Task::Proposal {
+        corpus: corpus.into(),
+        checkpoint: checkpoint.into(),
+        output: output.into(),
+        world,
+        cuts,
+        cut_start,
+        shuffled,
+    };
     let (_lease, _contract) = crate::gpu_worker::verify_proposal_launch(root, &task)?;
     if crate::gpu_worker::enabled() {
         return crate::gpu_worker::submit(
@@ -50,6 +57,70 @@ pub fn rank(
         );
     }
     crate::gpu_worker::require_accepted_task(root, &task)?;
+    rank_impl(
+        root, corpus, checkpoint, output, rank, world, cuts, cut_start, shuffled, None,
+    )
+}
+
+pub(crate) fn smartcluster_rank(
+    task: &crate::smartcluster_worker::VerifiedTask,
+    receipt: &Path,
+) -> Result<()> {
+    let crate::smartcluster_worker::Operation::Proposal {
+        corpus,
+        checkpoint,
+        output,
+        cuts,
+        cut_start,
+        shuffled,
+        champion_snapshot,
+        preparation_overlay,
+    } = task.operation()
+    else {
+        anyhow::bail!("proposal operation required")
+    };
+    ensure!(
+        !task.stop().load(std::sync::atomic::Ordering::Acquire),
+        "native control already lost"
+    );
+    let root = task.root();
+    let output = resolve(root, output)?;
+    unsafe {
+        std::env::set_var("JOPE_CHAMPION_SNAPSHOT", resolve(root, champion_snapshot)?);
+    }
+    rank_impl(
+        root,
+        &resolve(root, corpus)?,
+        &resolve(root, checkpoint)?,
+        &output,
+        0,
+        1,
+        *cuts,
+        *cut_start,
+        *shuffled,
+        preparation_overlay
+            .as_ref()
+            .map(|a| (a, task.manifest().run.as_str())),
+    )?;
+    let result: Value = read_json(&output.join("complete-0.json"))?;
+    write_json(
+        receipt,
+        &serde_json::json!({"schema":"jope.smartcluster_proposal_completion.v1","numerical_receipt":result,"artifacts":crate::smartcluster_worker::hash_directory(&output)?}),
+    )
+}
+
+fn rank_impl(
+    root: &Path,
+    corpus: &Path,
+    checkpoint: &Path,
+    output: &Path,
+    rank: usize,
+    world: usize,
+    cuts: usize,
+    cut_start: usize,
+    shuffled: bool,
+    overlay: Option<(&crate::native_graph::Artifact, &str)>,
+) -> Result<()> {
     ensure!(
         rank < world && world <= 8 && cuts > 0,
         "invalid proposal worker topology"
@@ -87,6 +158,14 @@ pub fn rank(
             file_hash(&selection_path)? == expected,
             "proposal coverage selection changed"
         );
+        if overlay.is_some() {
+            let selection: Value = read_json(&selection_path)?;
+            ensure!(
+                selection["request"]["preparation_overlay"]
+                    == serde_json::to_value(overlay.map(|(a, _)| a))?,
+                "proposal operation and selected overlay differ"
+            );
+        }
         crate::service::coverage::selected_indices(&selection_path, corpus, &index.contexts)?
     } else {
         ensure!(!selection_path.exists(), "unbound coverage selection");
@@ -100,6 +179,18 @@ pub fn rank(
             .map(|(i, _)| i)
             .collect()
     };
+    let allowed = overlay
+        .map(|(a, run)| crate::preparation_overlay::load(root, a, run))
+        .transpose()?;
+    if let Some(v) = &allowed {
+        for &i in &selected {
+            let c = &index.contexts[i];
+            let p: crate::prepare::Prepared =
+                read_json(&resolve(root, &c.prepared)?.join("prepared.json"))?;
+            v.verify_context(root, c, &p)?;
+        }
+    }
+    let allowed_views = allowed.as_ref().map(|v| v.views());
     let jobs = selected
         .iter()
         .map(|&i| (i, &index.contexts[i]))
@@ -107,8 +198,20 @@ pub fn rank(
     let donors = index
         .contexts
         .iter()
-        .filter(|c| c.partition == "meta_train")
+        .filter(|c| {
+            c.partition == "meta_train"
+                && allowed_views
+                    .as_ref()
+                    .is_none_or(|v| v.contains(&(c.dataset.clone(), c.cut)))
+        })
         .collect::<Vec<_>>();
+    if let Some(v) = &allowed {
+        for c in &donors {
+            let p: crate::prepare::Prepared =
+                read_json(&resolve(root, &c.prepared)?.join("prepared.json"))?;
+            v.verify_context(root, c, &p)?;
+        }
+    }
     let mut donor_order = (0..donors.len()).collect::<Vec<_>>();
     donor_order.sort_by_key(|&i| crate::training::mix(SEED ^ i as u64 ^ 0x61626c617465));
     ensure!(donors.len() >= jobs.len(), "shuffled donor pool too small");
@@ -294,13 +397,15 @@ pub fn rank(
         }
         let pure_fallback_seed =
             crate::training::mix(proposal_seed ^ j as u64 ^ 0x707572655f66696c);
-        let (candidates, attempted, valid, duplicate, neural) = pure_pool(
+        let (candidates, attempted, valid, duplicate, neural) = pure_pool_impl(
             &model,
             &vocab,
             &values,
             device,
             crate::training::mix(proposal_seed ^ j as u64),
             pure_fallback_seed,
+            "regression",
+            Some((&destination.join("all-valid-neural.json"), shuffled)),
         )?;
         let bindings = crate::proposal_ranking::Bindings {
             checkpoint_sha256: checkpoint_sha.clone(),
@@ -628,6 +733,28 @@ pub fn pure_pool_for_task(
     pure_fallback_seed: u64,
     task: &str,
 ) -> Result<(Vec<SeedCandidate>, usize, usize, usize, usize)> {
+    pure_pool_impl(
+        model,
+        vocab,
+        values,
+        device,
+        sampling_seed,
+        pure_fallback_seed,
+        task,
+        None,
+    )
+}
+
+fn pure_pool_impl(
+    model: &Policy,
+    vocab: &Vocab,
+    values: &[f32],
+    device: Device,
+    sampling_seed: u64,
+    pure_fallback_seed: u64,
+    task: &str,
+    capture: Option<(&Path, bool)>,
+) -> Result<(Vec<SeedCandidate>, usize, usize, usize, usize)> {
     tch::manual_seed(sampling_seed as i64);
     let batch = 128usize;
     let contexts = Tensor::from_slice(&values)
@@ -639,7 +766,8 @@ pub fn pure_pool_for_task(
     let mut attempted = 0usize;
     let mut valid = 0usize;
     let mut duplicate = 0usize;
-    for _round in 0..8 {
+    let mut all_valid = Vec::new();
+    for round in 0..8 {
         let task_id = vocab.task_id(task)?;
         let mut sequences = vec![vec![1usize, vocab.engine_ids["featmath"], task_id]; batch];
         let mut states = (0..batch)
@@ -703,7 +831,7 @@ pub fn pure_pool_for_task(
             }
         }
         attempted += batch;
-        for (mut sequence, s) in sequences.into_iter().zip(states) {
+        for (slot, (mut sequence, s)) in sequences.into_iter().zip(states).enumerate() {
             if !s.done() {
                 continue;
             }
@@ -721,6 +849,10 @@ pub fn pure_pool_for_task(
                 continue;
             }
             valid += 1;
+            if capture.is_some() {
+                all_valid.push(json!({"round":round,"slot":slot,"genome":genome,
+                    "program_sha256":hash(genome.as_bytes())}));
+            }
             if !proposal_population::push_pure(&mut candidates, &mut pure_seen, genome) {
                 duplicate += 1;
             }
@@ -728,6 +860,14 @@ pub fn pure_pool_for_task(
         if candidates.len() == 64 {
             break;
         }
+    }
+    if let Some((path, shuffled)) = capture {
+        crate::smartcluster_worker::write_immutable_record(
+            path,
+            &json!({"schema":"jope.all_valid_neural.v1","sampling_seed":sampling_seed,
+                "attempted":attempted,"valid":valid,"within_neural_duplicates":duplicate,"arm":if shuffled {"shuffled"} else {"model"},
+                "rows":all_valid,"final_tests_opened":false}),
+        )?;
     }
     let neural = candidates.len();
     proposal_population::fill_pure(&mut candidates, &mut pure_seen, &vocab, pure_fallback_seed)?;

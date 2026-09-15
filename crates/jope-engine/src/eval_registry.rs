@@ -3,9 +3,10 @@
 mod authority;
 pub mod funding;
 pub mod funding_config;
+pub(crate) mod native_scq;
 pub mod query;
-pub mod witness;
 pub mod service;
+pub mod witness;
 use anyhow::{ensure, Result};
 pub use authority::*;
 

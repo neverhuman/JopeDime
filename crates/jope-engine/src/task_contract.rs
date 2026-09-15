@@ -22,33 +22,55 @@ pub struct CommonTaskDescriptor {
 /// Version the existing partition-dependent objective; changing the partition
 /// is an explicit experiment, not an exact-resume optimization.
 pub fn training_partition(world: usize, micro: usize, global: usize) -> Result<Value> {
-    ensure!([1, 2, 4, 8].contains(&world) && micro > 0 && global > 0
-        && micro.checked_mul(world).is_some_and(|batch| global % batch == 0),
-        "invalid training partition");
-    Ok(json!({"schema":"parallel.training_partition.v1","world":world,
+    ensure!(
+        [1, 2, 4, 8].contains(&world)
+            && micro > 0
+            && global > 0
+            && micro
+                .checked_mul(world)
+                .is_some_and(|batch| global % batch == 0),
+        "invalid training partition"
+    );
+    Ok(
+        json!({"schema":"parallel.training_partition.v1","world":world,
         "microbatch":micro,"global_batch":global,"accumulation":global / (world * micro),
         "rng":"mix_seed_local_step_rank_microbatch_v1",
         "normalization":"microbatch_weighted_means_rank_mean_v1",
-        "autocast":"scoped_bf16_fp32_master_v2"}))
+        "autocast":"scoped_bf16_fp32_master_v2"}),
+    )
 }
 
 /// CPU-only gate; call before creating a CUDA device, tensor or communicator.
 pub fn verify_resume_metadata(state: &Value, expected: &Value, optimizer: &Value) -> Result<()> {
-    for (field, value) in expected.as_object().context("resume expectation must be an object")? {
-        ensure!(!value.is_null() && state.get(field) == Some(value), "resume metadata changed: {field}");
+    for (field, value) in expected
+        .as_object()
+        .context("resume expectation must be an object")?
+    {
+        ensure!(
+            !value.is_null() && state.get(field) == Some(value),
+            "resume metadata changed: {field}"
+        );
     }
-    ensure!(state["step"].as_u64().is_some() && optimizer["step"] == state["step"]
-        && optimizer["sha256"] == state["optimizer_sha256"], "resume optimizer/model identity mismatch");
+    ensure!(
+        state["step"].as_u64().is_some()
+            && optimizer["step"] == state["step"]
+            && optimizer["sha256"] == state["optimizer_sha256"],
+        "resume optimizer/model identity mismatch"
+    );
     Ok(())
 }
 
 /// An original caller-bound deadline is required; this does not grant funding.
 pub fn gpu_task_deadline_ms() -> Result<u64> {
-    let now: u64 = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?
-        .as_millis().try_into()?;
+    let now: u64 = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)?
+        .as_millis()
+        .try_into()?;
     let deadline = match std::env::var("JOPE_GPU_TASK_DEADLINE_MS") {
         Ok(value) => value.parse()?,
-        Err(std::env::VarError::NotPresent) => anyhow::bail!("GPU task requires its original absolute deadline"),
+        Err(std::env::VarError::NotPresent) => {
+            anyhow::bail!("GPU task requires its original absolute deadline")
+        }
         Err(error) => return Err(error.into()),
     };
     ensure!(deadline > now, "GPU task absolute deadline elapsed");
@@ -64,7 +86,9 @@ pub fn require_qualified_gpu_experiment(route: &str) -> Result<()> {
 /// Shared dispatch hold, not a positive grant verifier. No caller-controlled
 /// environment, lease, manifest or Boolean can release numerical work here.
 pub fn require_original_gpu_grant(route: &str) -> Result<()> {
-    anyhow::bail!("{route}: original native GPU grant verifier unavailable; numerical dispatch is held")
+    anyhow::bail!(
+        "{route}: original native GPU grant verifier unavailable; numerical dispatch is held"
+    )
 }
 
 /// Grant-only gate for a qualified native task. The opaque admission can only
@@ -82,9 +106,11 @@ pub fn verify_gpu_task_grant(
     expected_capability: &str,
 ) -> Result<()> {
     admission.check_current(descriptor, participant_slot)?;
-    ensure!(!expected_capability.is_empty()
-        && admission.receipt().event.demand.capability == expected_capability,
-        "original GPU grant does not authorize this native task capability");
+    ensure!(
+        !expected_capability.is_empty()
+            && admission.receipt().event.demand.capability == expected_capability,
+        "original GPU grant does not authorize this native task capability"
+    );
     verify_resident_funding_demand(descriptor, &admission.receipt().event.demand)?;
     Ok(())
 }
@@ -97,19 +123,35 @@ pub fn verify_resident_funding_demand(
     demand: &crate::eval_registry::funding::TaskDemand,
 ) -> Result<()> {
     let common: CommonTaskDescriptor = serde_json::from_value(descriptor.clone())?;
-    ensure!(common.schema == "parallel.resident_common_task.v1"
-        && common.executable_sha256 == demand.executable_sha256
-        && common.deadline_unix_ms == demand.deadline_unix_ms,
-        "native task executable/deadline differs from its signed funding demand");
+    ensure!(
+        common.schema == "parallel.resident_common_task.v1"
+            && common.executable_sha256 == demand.executable_sha256
+            && common.deadline_unix_ms == demand.deadline_unix_ms,
+        "native task executable/deadline differs from its signed funding demand"
+    );
     let (capability, world) = match common.task["kind"].as_str() {
-        Some("Train") => ("regression_training", common.task["world"].as_u64().context("training world absent")?),
-        Some("Proposal") => ("regression_proposals", common.task["world"].as_u64().context("proposal world absent")?),
+        Some("Train") => (
+            "regression_training",
+            common.task["world"]
+                .as_u64()
+                .context("training world absent")?,
+        ),
+        Some("Proposal") => (
+            "regression_proposals",
+            common.task["world"]
+                .as_u64()
+                .context("proposal world absent")?,
+        ),
         Some("Monitor") => ("regression_monitoring", 1),
         _ => anyhow::bail!("native task kind has no qualified funding-demand binding"),
     };
-    ensure!(demand.capability == capability && u64::from(demand.resources.world) == world
-        && u64::from(demand.resources.gpus) == world && demand.resources.gpu_devices.len() as u64 == world,
-        "native task kind/world differs from its signed resource allowance");
+    ensure!(
+        demand.capability == capability
+            && u64::from(demand.resources.world) == world
+            && u64::from(demand.resources.gpus) == world
+            && demand.resources.gpu_devices.len() as u64 == world,
+        "native task kind/world differs from its signed resource allowance"
+    );
     Ok(())
 }
 
@@ -120,7 +162,10 @@ pub fn supported_task(task: &str) -> bool {
 
 pub fn require_task(task: &str) -> Result<()> {
     ensure!(supported_task(task), "unsupported task {task}");
-    ensure!(task == "regression", "task {task} is not qualified for parallel execution or teaching; regression only");
+    ensure!(
+        task == "regression",
+        "task {task} is not qualified for parallel execution or teaching; regression only"
+    );
     Ok(())
 }
 
@@ -160,18 +205,41 @@ pub fn observation_primary(metrics: &Value) -> Result<f64> {
         require_task(task.as_str().context("invalid metric task")?)?;
     }
     if let Some(metric) = metrics.get("primary_metric") {
-        ensure!(metric.as_str() == Some("rmse"), "non-RMSE primary is not qualified");
+        ensure!(
+            metric.as_str() == Some("rmse"),
+            "non-RMSE primary is not qualified"
+        );
     }
     if let Some(units) = metrics.get("units") {
-        ensure!(matches!(units.as_str(), Some("original_target" | "cut_normalized_target")), "non-regression metric units are not qualified");
+        ensure!(
+            matches!(
+                units.as_str(),
+                Some("original_target" | "cut_normalized_target")
+            ),
+            "non-regression metric units are not qualified"
+        );
     }
-    ensure!(["logloss", "auc", "brier", "accuracy", "mase", "mase_denominator"].iter().all(|field| metrics.get(*field).is_none()),
-        "non-regression metric evidence is not qualified");
+    ensure!(
+        [
+            "logloss",
+            "auc",
+            "brier",
+            "accuracy",
+            "mase",
+            "mase_denominator"
+        ]
+        .iter()
+        .all(|field| metrics.get(*field).is_none()),
+        "non-regression metric evidence is not qualified"
+    );
     let rmse = metrics["rmse"].as_f64().context("RMSE absent")?;
     ensure!(rmse.is_finite() && rmse >= 0.0, "invalid score");
     if let Some(primary) = metrics.get("primary") {
         let value = primary.as_f64().context("invalid primary")?;
-        ensure!(value.is_finite() && value >= 0.0 && value == rmse, "primary disagrees with RMSE");
+        ensure!(
+            value.is_finite() && value >= 0.0 && value == rmse,
+            "primary disagrees with RMSE"
+        );
     }
     Ok(rmse)
 }
@@ -291,26 +359,39 @@ mod tests {
     fn native_world_and_kind_cannot_outgrow_signed_funding() {
         use crate::eval_registry::funding::{ResourceCaps, TaskDemand};
         let mut demand = TaskDemand {
-            task_sha256:"a".repeat(64), capability:"regression_training".into(),
-            host_id:"synthetic-host".into(), boot_id:"synthetic-boot".into(),
-            executable_sha256:"b".repeat(64), runtime_sha256:"c".repeat(64),
-            deadline_unix_ms:1000, deadline_monotonic_ns:1_000_000_000,
-            resources:ResourceCaps { cpu_cores:8,gpus:4,world:4,host_memory_bytes:1024,
-                gpu_memory_bytes_per_rank:1024,cpu_searches:0,gpu_devices:vec![0,1,2,3] },
+            task_sha256: "a".repeat(64),
+            capability: "regression_training".into(),
+            host_id: "synthetic-host".into(),
+            boot_id: "synthetic-boot".into(),
+            executable_sha256: "b".repeat(64),
+            runtime_sha256: "c".repeat(64),
+            deadline_unix_ms: 1000,
+            deadline_monotonic_ns: 1_000_000_000,
+            resources: ResourceCaps {
+                cpu_cores: 8,
+                gpus: 4,
+                world: 4,
+                host_memory_bytes: 1024,
+                gpu_memory_bytes_per_rank: 1024,
+                cpu_searches: 0,
+                gpu_devices: vec![0, 1, 2, 3],
+            },
         };
         let descriptor = serde_json::json!({"schema":"parallel.resident_common_task.v1",
             "root":"/private-fixture","task":{"kind":"Train","world":8},
             "environment":{},"input_artifacts":{},"executable_sha256":"b".repeat(64),
             "deadline_unix_ms":1000});
         assert!(super::verify_resident_funding_demand(&descriptor, &demand).is_err());
-        demand.resources.world=8; demand.resources.gpus=8; demand.resources.gpu_devices=(0..8).collect();
+        demand.resources.world = 8;
+        demand.resources.gpus = 8;
+        demand.resources.gpu_devices = (0..8).collect();
         super::verify_resident_funding_demand(&descriptor, &demand).unwrap();
         for field in ["kind", "deadline", "executable"] {
-            let mut changed=descriptor.clone();
+            let mut changed = descriptor.clone();
             match field {
-                "kind" => changed["task"]["kind"]=serde_json::json!("Proposal"),
-                "deadline" => changed["deadline_unix_ms"]=serde_json::json!(1001),
-                _ => changed["executable_sha256"]=serde_json::json!("d".repeat(64)),
+                "kind" => changed["task"]["kind"] = serde_json::json!("Proposal"),
+                "deadline" => changed["deadline_unix_ms"] = serde_json::json!(1001),
+                _ => changed["executable_sha256"] = serde_json::json!("d".repeat(64)),
             }
             assert!(super::verify_resident_funding_demand(&changed, &demand).is_err());
         }

@@ -445,6 +445,8 @@ pub fn rank_with_policy(
         2048,
         false,
         policy,
+        None,
+        false,
     )
 }
 
@@ -518,7 +520,233 @@ pub fn qualify_batch_rank(
         global_batch,
         true,
         None,
+        None,
+        false,
     )
+}
+
+/// SmartCluster's opaque process-local admission is distinct from legacy funding.
+pub(crate) fn smartcluster_rank(
+    task: &crate::smartcluster_worker::VerifiedTask,
+    receipt: &Path,
+) -> Result<()> {
+    use crate::smartcluster_worker::Operation;
+    let Operation::Train {
+        corpus,
+        run,
+        launch,
+        micro,
+        checkpoint_steps,
+        initialize,
+        replay_policy,
+        initial_optimizer_step,
+        requested_step_increment,
+        target_optimizer_step,
+    } = task.operation()
+    else {
+        anyhow::bail!("training operation required")
+    };
+    ensure!(
+        !task.stop().load(std::sync::atomic::Ordering::Acquire),
+        "native control already lost"
+    );
+    ensure!(
+        initial_optimizer_step.checked_add(*requested_step_increment)
+            == Some(*target_optimizer_step),
+        "original training target changed"
+    );
+    let root = task.root();
+    let corpus = resolve(root, corpus)?;
+    let run = resolve(root, run)?;
+    let launch_root = resolve(root, launch)?;
+    let initial = resolve(root, initialize)?;
+    let policy_path = resolve(root, replay_policy)?;
+    let parent: Value = read_json(&initial.join("state.json"))?;
+    ensure!(
+        parent["step"] == *initial_optimizer_step
+            && file_hash(&initial.join("model.ot"))? == parent["model_sha256"]
+            && file_hash(&initial.join("optimizer.ot"))? == parent["optimizer_sha256"],
+        "original checkpoint model/optimizer changed"
+    );
+    let policy: Value = read_json(&policy_path)?;
+    ensure!(
+        policy["optimizer"] == "carry",
+        "native continuation must preserve optimizer bytes"
+    );
+    let corpus_index: Value = read_json(&corpus.join("index.json"))?;
+    let native_continuation = corpus_index["qualification"] == false;
+    if native_continuation {
+        verify_native_training_eligibility(task, &policy)?;
+    }
+    let original = json!({"schema":"jope.smartcluster_optimizer_window.v1","initial_optimizer_step":initial_optimizer_step,"requested_step_increment":requested_step_increment,"target_optimizer_step":target_optimizer_step,"parent_state_sha256":file_hash(&initial.join("state.json"))?,"corpus_sha256":file_hash(&corpus.join("index.json"))?,"policy_sha256":file_hash(&policy_path)?,"microbatch":micro,"global_batch":2048});
+    fs::create_dir_all(&run)?;
+    fs::create_dir_all(&launch_root)?;
+    let window = run.join("smartcluster-window.json");
+    if window.exists() {
+        ensure!(
+            read_json::<Value>(&window)? == original,
+            "original native optimizer window changed"
+        );
+    } else {
+        crate::smartcluster_worker::write_immutable_record(&window, &original)?;
+    }
+    if task.recovering() {
+        crate::checkpoint_recovery::reconcile(root, &run)?;
+    }
+    let launch = native_attempt_launch(&launch_root, task.attempt(), &original)?;
+    let resume = task.recovering() && run.join("latest.json").exists();
+    if resume {
+        let latest: Value = read_json(&run.join("latest.json"))?;
+        let checkpoint = resolve(
+            root,
+            Path::new(
+                latest["checkpoint"]
+                    .as_str()
+                    .context("recovery checkpoint absent")?,
+            ),
+        )?;
+        ensure!(
+            file_hash(&checkpoint.join("state.json"))? == latest["state_sha256"],
+            "recovery state changed"
+        );
+        let state: Value = read_json(&checkpoint.join("state.json"))?;
+        let step = state["step"]
+            .as_u64()
+            .context("recovery optimizer step absent")?;
+        ensure!(
+            step >= *initial_optimizer_step && step <= *target_optimizer_step,
+            "recovery outside original optimizer window"
+        );
+        write_json(&launch.join("resume-input.json"), &latest)?;
+    }
+    rank_impl(
+        root,
+        &corpus,
+        &run,
+        &launch,
+        0,
+        1,
+        *micro,
+        (*requested_step_increment).try_into()?,
+        *checkpoint_steps,
+        resume,
+        if resume { None } else { Some(initialize) },
+        2048,
+        false,
+        Some(&policy_path),
+        Some(task.stop()),
+        native_continuation,
+    )?;
+    let complete: Value = read_json(&launch.join("complete-0.json"))?;
+    ensure!(
+        complete["steps"] == *target_optimizer_step,
+        "training did not finish original target"
+    );
+    write_json(
+        receipt,
+        &json!({"schema":"jope.smartcluster_training_completion.v1","window":original,"numerical_receipt":complete,"latest":read_json::<Value>(&run.join("latest.json"))?}),
+    )
+}
+
+/// NCCL rendezvous and rank receipts belong to one actual native allocation.
+/// Preserve the original logical optimizer window and every old launch verbatim.
+fn native_attempt_launch(
+    root: &Path,
+    attempt: jain_smartcluster::FencedAttempt,
+    window: &Value,
+) -> Result<std::path::PathBuf> {
+    let launch = root.join(format!(
+        "native-{}-attempt-{}-fence-{}",
+        attempt.job_id,
+        attempt.number.get(),
+        attempt.fence.get()
+    ));
+    fs::create_dir(&launch)
+        .context("native training allocation launch already exists or cannot be created")?;
+    fs::File::open(root)?.sync_all()?;
+    crate::smartcluster_worker::write_immutable_record(
+        &launch.join("native-attempt.json"),
+        &json!({"schema":"jope.native_training_launch.v1","attempt":attempt,"original_window_sha256":hash(&serde_json::to_vec(window)?)}),
+    )?;
+    Ok(launch)
+}
+
+/// This path is reachable only through the authenticated native worker. Legacy
+/// rank entry points retain their original explicitly-qualified-corpus gate.
+fn verify_native_training_eligibility(
+    task: &crate::smartcluster_worker::VerifiedTask,
+    policy: &Value,
+) -> Result<()> {
+    use crate::{
+        native_graph::Artifact,
+        native_loop::{Request, Role},
+        smartcluster_worker::Operation,
+    };
+    let Operation::Train {
+        corpus,
+        initialize,
+        initial_optimizer_step,
+        requested_step_increment,
+        target_optimizer_step,
+        ..
+    } = task.operation()
+    else {
+        anyhow::bail!("native Train required")
+    };
+    let root = task.root();
+    let manifest = task.manifest();
+    let corpus = Artifact {
+        path: corpus.join("index.json"),
+        sha256: file_hash(&resolve(root, corpus)?.join("index.json"))?,
+    };
+    let parent = Artifact {
+        path: initialize.join("state.json"),
+        sha256: file_hash(&resolve(root, initialize)?.join("state.json"))?,
+    };
+    ensure!(
+        manifest.parent_checkpoint_sha256.as_deref() == Some(parent.sha256.as_str())
+            && manifest.corpus_sha256.as_deref() == Some(corpus.sha256.as_str()),
+        "native training parent/corpus manifest differs"
+    );
+    let index: Value = crate::native_genome::load_corpus_index(root, &corpus)?;
+    ensure!(
+        index["qualification"] == false
+            && index["label_policy"] == "strict_continuation_midrank_v1",
+        "unqualified corpus is not native verified continuation targets"
+    );
+    let evidence = &policy["eligibility_evidence"];
+    ensure!(
+        evidence["schema"] == "jope.native_continuation_eligibility.v1",
+        "native eligibility evidence absent"
+    );
+    let parameters = json!({"checkpoint":parent,"corpus":corpus,"initial_step":initial_optimizer_step,
+        "requested_increment":requested_step_increment,"target_step":target_optimizer_step,"global_batch":2048});
+    ensure!(
+        evidence["original_window"] == parameters,
+        "native replay original window differs"
+    );
+    let scientific: Artifact = serde_json::from_value(evidence["scientific_policy"].clone())?;
+    let request = Request {
+        schema: "jope.native_loop_request.v1".into(),
+        run: manifest.run.clone(),
+        generation: manifest.generation,
+        id: manifest.task_id.clone(),
+        role: Role::Train,
+        parameters,
+        predecessors: serde_json::from_value(evidence["verified_corpus_dependencies"].clone())?,
+    };
+    let expected = crate::native_loop::materialize::training_eligibility(
+        root,
+        &corpus,
+        &parent,
+        &scientific,
+        &request,
+    )?;
+    ensure!(
+        *policy == expected,
+        "native replay differs from complete verified target reconstruction"
+    );
+    Ok(())
 }
 
 fn rank_impl(
@@ -536,6 +764,8 @@ fn rank_impl(
     global_batch: usize,
     batch_qualification: bool,
     replay_policy: Option<&Path>,
+    native_stop: Option<&std::sync::atomic::AtomicBool>,
+    verified_native_continuation: bool,
 ) -> Result<()> {
     ensure!(
         [1, 2, 4, 8].contains(&world)
@@ -571,7 +801,7 @@ fn rank_impl(
     ensure!(
         ["parallel.teaching_corpus.v1", crate::teaching_store::SCHEMA]
             .contains(&index.schema.as_str())
-            && index.qualification,
+            && (index.qualification || (native_stop.is_some() && verified_native_continuation)),
         "training currently requires explicitly qualified real corpus"
     );
     ensure!(
@@ -1223,7 +1453,10 @@ fn rank_impl(
             comm.reduce(&mut totals)?;
             let totals: Vec<f32> = Vec::try_from(totals.to_device(Device::Cpu))?;
             // Every rank votes on every step; only rank zero contributes the wall-clock trigger.
-            let due = (step + 1) % checkpoint_steps == 0
+            let native_checkpoint =
+                native_stop.is_some_and(|stop| stop.load(std::sync::atomic::Ordering::Acquire));
+            let due = native_checkpoint
+                || (step + 1) % checkpoint_steps == 0
                 || (step + 1) % epoch_steps == 0
                 || step + 1 == steps
                 || (rank == 0 && last_checkpoint.elapsed().as_secs() >= 540);
@@ -1332,6 +1565,13 @@ fn rank_impl(
                 last_live_write = Instant::now();
             }
             telemetry_seconds += telemetry_started.elapsed().as_secs_f64();
+            if native_checkpoint && step + 1 < steps {
+                ensure!(checkpoint_due, "native recovery lacks committed checkpoint");
+                anyhow::bail!(
+                    "native control lost: checkpoint committed at original optimizer step {}",
+                    step + 1
+                );
+            }
         }
         let mut complete = json!({"rank":rank,"world":world,"steps":optimizer.step,"parameter_sha256":parameter_hash(&vs)?,"seconds":started.elapsed().as_secs_f64(),"executed_steps":optimizer.step as usize-initial_step,"end_to_end_examples_per_second":(optimizer.step as usize-initial_step) as f64*global_batch as f64/started.elapsed().as_secs_f64(),"telemetry_seconds":telemetry_seconds,"coordination_seconds":coordination_seconds,"checkpoint_seconds":checkpoint_seconds,"measured_step_seconds":measured_step_seconds,"corpus_sha256":corpus_hash});
         complete["resident_tensor_cache_hit"] = json!(resident_cache_hit);
@@ -1415,5 +1655,36 @@ mod sampler_id_tests {
             active_sampler_id(Some(&json!({"search_beating":true}))),
             SEARCH_BEATING_SAMPLER_ID
         );
+    }
+}
+
+#[cfg(test)]
+mod native_launch_tests {
+    use super::*;
+    #[test]
+    fn new_fence_preserves_original_rendezvous_and_optimizer_window() {
+        let t = tempfile::tempdir().unwrap();
+        let job = jain_smartcluster::JobId::new();
+        let first = jain_smartcluster::FencedAttempt {
+            job_id: job,
+            number: jain_smartcluster::AttemptNumber::new(1).unwrap(),
+            fence: jain_smartcluster::FenceToken::new(24).unwrap(),
+        };
+        let second = jain_smartcluster::FencedAttempt {
+            job_id: job,
+            number: jain_smartcluster::AttemptNumber::new(2).unwrap(),
+            fence: jain_smartcluster::FenceToken::new(25).unwrap(),
+        };
+        let window = json!({"initial_optimizer_step":60000,"requested_step_increment":100,"target_optimizer_step":60100});
+        let a = native_attempt_launch(t.path(), first, &window).unwrap();
+        fs::write(a.join("nccl.id"), b"old rendezvous").unwrap();
+        let b = native_attempt_launch(t.path(), second, &window).unwrap();
+        assert_ne!(a, b);
+        assert!(!b.join("nccl.id").exists());
+        assert_eq!(fs::read(a.join("nccl.id")).unwrap(), b"old rendezvous");
+        let old: Value = read_json(&a.join("native-attempt.json")).unwrap();
+        let new: Value = read_json(&b.join("native-attempt.json")).unwrap();
+        assert_eq!(old["original_window_sha256"], new["original_window_sha256"]);
+        assert!(native_attempt_launch(t.path(), first, &window).is_err());
     }
 }

@@ -520,26 +520,45 @@ pub(crate) fn train_controlled(
         let p: serde_json::Value = read_json(path)?;
         let index: serde_json::Value = read_json(&corpus.join("index.json"))?;
         if p["schema"] == crate::checkpoint_recovery::CONTINUATION_SCHEMA {
-            crate::checkpoint_recovery::verify_continuation(root,&p,&file_hash(&corpus.join("index.json"))?,
-                index["vocabulary_sha256"].as_str().context("continuation vocabulary absent")?,
-                world,micro,2048,steps)?;
+            crate::checkpoint_recovery::verify_continuation(
+                root,
+                &p,
+                &file_hash(&corpus.join("index.json"))?,
+                index["vocabulary_sha256"]
+                    .as_str()
+                    .context("continuation vocabulary absent")?,
+                world,
+                micro,
+                2048,
+                steps,
+            )?;
             if !resume {
-                let parent = initialize.context("continuation requires its original parent checkpoint")?;
-                let parent = resolve(root,if parent.is_absolute() {parent.strip_prefix(root)?} else {parent})?;
-                ensure!(file_hash(&parent.join("state.json"))? == p["parent_checkpoint_sha256"],
-                    "continuation initialization differs from recovered parent");
+                let parent =
+                    initialize.context("continuation requires its original parent checkpoint")?;
+                let parent = resolve(
+                    root,
+                    if parent.is_absolute() {
+                        parent.strip_prefix(root)?
+                    } else {
+                        parent
+                    },
+                )?;
+                ensure!(
+                    file_hash(&parent.join("state.json"))? == p["parent_checkpoint_sha256"],
+                    "continuation initialization differs from recovered parent"
+                );
             }
         }
-        if let Some(p) = crate::checkpoint_recovery::continuation_replay(root,&p)? {
-        ensure!(
-            p["schema"] == "parallel.replay_policy.v2"
-                && p["eligible"] == true
-                && p["final_tests_opened"] == false
-                && p["corpus_sha256"] == file_hash(&corpus.join("index.json"))?
-                && index["label_policy"] == "strict_midrank_v4"
-                && index["admission_policy"].is_object(),
-            "training policy requires a matching strictly admitted corpus"
-        );
+        if let Some(p) = crate::checkpoint_recovery::continuation_replay(root, &p)? {
+            ensure!(
+                p["schema"] == "parallel.replay_policy.v2"
+                    && p["eligible"] == true
+                    && p["final_tests_opened"] == false
+                    && p["corpus_sha256"] == file_hash(&corpus.join("index.json"))?
+                    && index["label_policy"] == "strict_midrank_v4"
+                    && index["admission_policy"].is_object(),
+                "training policy requires a matching strictly admitted corpus"
+            );
         }
     }
     ensure!(
@@ -606,11 +625,22 @@ pub(crate) fn train_controlled(
     let inherited_deadline = crate::task_contract::gpu_task_deadline_ms()?;
     let task_deadline = if resume {
         read_json::<serde_json::Value>(&output.join("run.json"))?["deadline_unix_ms"]
-            .as_u64().context("legacy training run lacks its original absolute deadline")?
-    } else { inherited_deadline };
-    ensure!(task_deadline == inherited_deadline, "resume task deadline differs from its original run");
-    let now_ms = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis();
-    ensure!(task_deadline as u128 > now_ms, "original training task deadline elapsed");
+            .as_u64()
+            .context("legacy training run lacks its original absolute deadline")?
+    } else {
+        inherited_deadline
+    };
+    ensure!(
+        task_deadline == inherited_deadline,
+        "resume task deadline differs from its original run"
+    );
+    let now_ms = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)?
+        .as_millis();
+    ensure!(
+        task_deadline as u128 > now_ms,
+        "original training task deadline elapsed"
+    );
     spec["deadline_unix_ms"] = serde_json::json!(task_deadline);
     spec["execution_partition"] = crate::task_contract::training_partition(world, micro, 2048)?;
     #[cfg(feature = "neural")]
@@ -619,8 +649,11 @@ pub(crate) fn train_controlled(
     }
     spec["initialization_sha256"] = serde_json::json!(initialization_sha);
     spec["replay_policy_sha256"] = serde_json::json!(policy_sha);
-    spec["training_policy_schema"] = policy.as_ref().map(|path| read_json::<serde_json::Value>(path)
-        .map(|value| value["schema"].clone())).transpose()?.unwrap_or(serde_json::Value::Null);
+    spec["training_policy_schema"] = policy
+        .as_ref()
+        .map(|path| read_json::<serde_json::Value>(path).map(|value| value["schema"].clone()))
+        .transpose()?
+        .unwrap_or(serde_json::Value::Null);
     spec["step_window"] = step_window.clone();
     if resume {
         let old: serde_json::Value = read_json(&output.join("run.json"))?;
@@ -754,8 +787,13 @@ pub(crate) fn train_controlled(
         let result = (|| -> Result<()> {
             loop {
                 check_cancel(stop)?;
-                ensure!(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis()
-                    < task_deadline as u128, "training task absolute deadline elapsed");
+                ensure!(
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)?
+                        .as_millis()
+                        < task_deadline as u128,
+                    "training task absolute deadline elapsed"
+                );
                 let mut complete = true;
                 for (rank, child) in children.0.iter_mut().enumerate() {
                     let receipt: serde_json::Value =
@@ -1164,7 +1202,9 @@ mod proposal_protocol_tests {
         assert!(error
             .to_string()
             .contains("original native GPU grant verifier unavailable"));
-        assert!(verify_proposal_protocol(&output, true).unwrap_err().to_string()
+        assert!(verify_proposal_protocol(&output, true)
+            .unwrap_err()
+            .to_string()
             .contains("proposal prediction protocol changed"));
         assert!(!root.join("champion-snapshot.json").exists());
         assert!(!root.join("runs/encoding-service.lock").exists());

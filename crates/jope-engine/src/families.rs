@@ -112,7 +112,11 @@ pub fn stable_assignment(family: &str) -> (String, u64, String) {
 pub fn stable_component_assignment(component: &str) -> (String, u64, String) {
     let digest = hash(format!("{SEED}:component:{component}").as_bytes());
     let bucket = u64::from_str_radix(&digest[..16], 16).expect("SHA256 prefix") % 1_000_000;
-    let partition = if bucket < 800_000 { "meta_train" } else { "development_validation" };
+    let partition = if bucket < 800_000 {
+        "meta_train"
+    } else {
+        "development_validation"
+    };
     (digest, bucket, partition.into())
 }
 
@@ -120,16 +124,28 @@ pub fn stable_component_assignment(component: &str) -> (String, u64, String) {
 /// Its exact source is embedded in the compiled release; a replaced helper
 /// cannot authorize a component. Isolated Python uses only the standard library.
 fn verified_growth(binding: &FileBinding) -> Result<Value> {
-    ensure!(file_hash(&binding.path)? == binding.sha256, "growth receipt changed");
+    ensure!(
+        file_hash(&binding.path)? == binding.sha256,
+        "growth receipt changed"
+    );
     let request: Value = read_json(&binding.path)?;
     let root = Path::new(field(&request, "root")?).canonicalize()?;
     let helper = root.join("tools/family_growth_policy.py");
-    ensure!(file_hash(&helper)? == hash(include_bytes!("../tools/family_growth_policy.py")),
-        "growth verifier differs from compiled release");
+    ensure!(
+        file_hash(&helper)? == hash(include_bytes!("../tools/family_growth_policy.py")),
+        "growth verifier differs from compiled release"
+    );
     let output = Command::new("/usr/bin/python3")
-        .args(["-I", "-B"]).arg(helper).arg("--verify").arg(&binding.path).output()?;
-    ensure!(output.status.success(), "original growth evidence verification failed: {}",
-        String::from_utf8_lossy(&output.stderr));
+        .args(["-I", "-B"])
+        .arg(helper)
+        .arg("--verify")
+        .arg(&binding.path)
+        .output()?;
+    ensure!(
+        output.status.success(),
+        "original growth evidence verification failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     let verified: Value = serde_json::from_slice(&output.stdout)?;
     ensure!(verified == request, "growth verifier result changed");
     Ok(verified)
@@ -148,24 +164,43 @@ impl Registry {
             let receipt = verified_growth(binding)?;
             let prior: FileBinding = serde_json::from_value(receipt["parent_registry"].clone())?;
             let root = Path::new(field(&receipt, "root")?);
-            let path = if prior.path.is_absolute() { prior.path.clone() } else { root.join(&prior.path) };
+            let path = if prior.path.is_absolute() {
+                prior.path.clone()
+            } else {
+                root.join(&prior.path)
+            };
             ensure!(file_hash(&path)? == prior.sha256, "growth parent changed");
             let parent: Registry = read_json(&path)?;
             for (name, old) in &parent.families {
-                let new = self.families.get(name).context("growth removed historical family")?;
-                ensure!(new.partition == old.partition && new.assignment_method == old.assignment_method
-                    && new.assignment_hash == old.assignment_hash && new.bucket == old.bucket
-                    && old.source_keys.is_subset(&new.source_keys) && old.holds.is_subset(&new.holds),
-                    "growth changed protected historical membership");
+                let new = self
+                    .families
+                    .get(name)
+                    .context("growth removed historical family")?;
+                ensure!(
+                    new.partition == old.partition
+                        && new.assignment_method == old.assignment_method
+                        && new.assignment_hash == old.assignment_hash
+                        && new.bucket == old.bucket
+                        && old.source_keys.is_subset(&new.source_keys)
+                        && old.holds.is_subset(&new.holds),
+                    "growth changed protected historical membership"
+                );
                 for dataset in &old.datasets {
                     let old_value = serde_json::to_value(dataset)?;
-                    ensure!(new.datasets.iter().any(|d| serde_json::to_value(d).ok().as_ref() == Some(&old_value)),
-                        "growth changed historical dataset evidence");
+                    ensure!(
+                        new.datasets
+                            .iter()
+                            .any(|d| serde_json::to_value(d).ok().as_ref() == Some(&old_value)),
+                        "growth changed historical dataset evidence"
+                    );
                 }
             }
             for row in receipt["rows"].as_array().context("growth rows missing")? {
                 let family = field(row, "family")?.to_owned();
-                ensure!(grown.insert(family, row.clone()).is_none(), "duplicate component growth assignment");
+                ensure!(
+                    grown.insert(family, row.clone()).is_none(),
+                    "duplicate component growth assignment"
+                );
             }
         }
         let mut datasets = BTreeSet::new();
@@ -173,7 +208,13 @@ impl Registry {
         for (key, f) in &self.families {
             ensure!(key == &f.family && !key.is_empty(), "family key mismatch");
             ensure!(
-                ["meta_train", "meta_validation", "meta_test", "development_validation"].contains(&f.partition.as_str()),
+                [
+                    "meta_train",
+                    "meta_validation",
+                    "meta_test",
+                    "development_validation"
+                ]
+                .contains(&f.partition.as_str()),
                 "invalid family partition"
             );
             if f.assignment_method == "stable_sha256_bucket_v1" {
@@ -185,17 +226,29 @@ impl Registry {
                     "changed stable family assignment"
                 );
             } else if f.assignment_method == "stable_sha256_component_v2" {
-                ensure!(f.datasets.is_empty(), "growth membership has not qualified preparation");
-                let row = grown.remove(key).context("component lacks authenticated growth evidence")?;
+                ensure!(
+                    f.datasets.is_empty(),
+                    "growth membership has not qualified preparation"
+                );
+                let row = grown
+                    .remove(key)
+                    .context("component lacks authenticated growth evidence")?;
                 let (digest, bucket, partition) = stable_component_assignment(key);
                 let aliases: BTreeSet<String> = serde_json::from_value(row["aliases"].clone())?;
-                ensure!(f.assignment_hash.as_ref() == Some(&digest) && f.bucket == Some(bucket)
-                    && f.partition == partition && row["partition"] == partition
-                    && row["assignment_hash"] == digest && row["bucket"] == bucket
-                    && aliases == f.source_keys, "changed component assignment or aliases");
+                ensure!(
+                    f.assignment_hash.as_ref() == Some(&digest)
+                        && f.bucket == Some(bucket)
+                        && f.partition == partition
+                        && row["partition"] == partition
+                        && row["assignment_hash"] == digest
+                        && row["bucket"] == bucket
+                        && aliases == f.source_keys,
+                    "changed component assignment or aliases"
+                );
             } else {
                 ensure!(
-                    f.assignment_method == "preserved_audit_assignment" && f.partition != "development_validation",
+                    f.assignment_method == "preserved_audit_assignment"
+                        && f.partition != "development_validation",
                     "unknown assignment method"
                 );
             }
@@ -329,47 +382,79 @@ pub fn binding(
 /// Publish membership only. New components have no prepared datasets, context
 /// permissions or dispatch authority. The development reserve is deliberately
 /// distinct from the existing eight-family meta_validation panel.
-pub fn freeze_growth(parent_path: &Path, assignment_path: &Path, output: &Path) -> Result<Registry> {
-    let directory = output.parent().context("growth output requires directory")?;
+pub fn freeze_growth(
+    parent_path: &Path,
+    assignment_path: &Path,
+    output: &Path,
+) -> Result<Registry> {
+    let directory = output
+        .parent()
+        .context("growth output requires directory")?;
     fs::create_dir_all(directory)?;
-    let lock = OpenOptions::new().create(true).truncate(false).write(true)
+    let lock = OpenOptions::new()
+        .create(true)
+        .truncate(false)
+        .write(true)
         .open(output.with_extension("lock"))?;
-    ensure!(unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
-        "growth output locked");
+    ensure!(
+        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+        "growth output locked"
+    );
     ensure!(!output.exists(), "immutable growth registry already exists");
     let binding = FileBinding::new(assignment_path)?;
     let receipt = verified_growth(&binding)?;
     let mut registry: Registry = read_json(parent_path)?;
     registry.validate()?;
     let parent = FileBinding::new(parent_path)?;
-    ensure!(receipt["parent_registry"]["sha256"] == parent.sha256, "growth uses a stale parent registry");
-    ensure!(receipt["execution_eligible"] == false && receipt["runtime_closure_qualified"] == false,
-        "growth cannot authorize execution");
+    ensure!(
+        receipt["parent_registry"]["sha256"] == parent.sha256,
+        "growth uses a stale parent registry"
+    );
+    ensure!(
+        receipt["execution_eligible"] == false && receipt["runtime_closure_qualified"] == false,
+        "growth cannot authorize execution"
+    );
     let root = Path::new(field(&receipt, "root")?);
     let graph_ref: FileBinding = serde_json::from_value(receipt["graph"].clone())?;
     let graph: Value = read_json(&root.join(graph_ref.path))?;
-    let quarantined: BTreeSet<String> = serde_json::from_value(receipt["quarantined_components"].clone())?;
-    for component in graph["components"].as_array().context("growth graph components missing")? {
+    let quarantined: BTreeSet<String> =
+        serde_json::from_value(receipt["quarantined_components"].clone())?;
+    for component in graph["components"]
+        .as_array()
+        .context("growth graph components missing")?
+    {
         let cid = field(component, "component_id")?;
         if quarantined.contains(cid) {
             let aliases: BTreeSet<String> = serde_json::from_value(component["aliases"].clone())?;
             for family in registry.families.values_mut() {
                 if aliases.contains(&family.family) || !aliases.is_disjoint(&family.source_keys) {
-                    family.holds.insert(format!("alias_merge_crosses_frozen_partitions:{cid}"));
+                    family
+                        .holds
+                        .insert(format!("alias_merge_crosses_frozen_partitions:{cid}"));
                 }
             }
         }
     }
     for row in receipt["rows"].as_array().context("growth rows missing")? {
         let name = field(row, "component_id")?.to_owned();
-        ensure!(!registry.families.contains_key(&name), "growth would replace an existing component");
+        ensure!(
+            !registry.families.contains_key(&name),
+            "growth would replace an existing component"
+        );
         let (digest, bucket, partition) = stable_component_assignment(&name);
-        registry.families.insert(name.clone(), FamilyAssignment {
-            family: name, partition, assignment_method: "stable_sha256_component_v2".into(),
-            assignment_hash: Some(digest), bucket: Some(bucket),
-            source_keys: serde_json::from_value(row["aliases"].clone())?,
-            datasets: vec![], holds: BTreeSet::new(),
-        });
+        registry.families.insert(
+            name.clone(),
+            FamilyAssignment {
+                family: name,
+                partition,
+                assignment_method: "stable_sha256_component_v2".into(),
+                assignment_hash: Some(digest),
+                bucket: Some(bucket),
+                source_keys: serde_json::from_value(row["aliases"].clone())?,
+                datasets: vec![],
+                holds: BTreeSet::new(),
+            },
+        );
     }
     registry.parent = Some(parent);
     registry.growth.push(binding);

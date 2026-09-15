@@ -1,5 +1,10 @@
 //! Matched generic/retained population for a frozen neural tournament.
-use crate::{manifest::*, gp::{SeedCandidate, SeedPopulation}, grammar::Vocab, service::{GpJob, GpJobs}};
+use crate::{
+    gp::{SeedCandidate, SeedPopulation},
+    grammar::Vocab,
+    manifest::*,
+    service::{GpJob, GpJobs},
+};
 use anyhow::{ensure, Context, Result};
 use std::{collections::BTreeSet, fs, path::Path};
 
@@ -68,4 +73,3 @@ pub fn baseline(root: &Path, neural: &GpJobs, vocab: &Vocab, output: &Path) -> R
     write_json(&output.join("jobs.json"), &result)?;
     Ok(result)
 }
-

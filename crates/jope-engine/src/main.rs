@@ -18,8 +18,10 @@ enum Cmd {
     Doctor,
     #[cfg(feature = "neural")]
     GpuWorker {
-        #[arg(long)] pool: PathBuf,
-        #[arg(long)] rank: usize,
+        #[arg(long)]
+        pool: PathBuf,
+        #[arg(long)]
+        rank: usize,
     },
     #[cfg(feature = "neural")]
     ProposeRanked {
@@ -49,13 +51,20 @@ enum Cmd {
     },
     #[cfg(feature = "neural")]
     ApplyBinaryContexts {
-        #[arg(long)] jobs: PathBuf,
-        #[arg(long)] hyperion: PathBuf,
-        #[arg(long)] foundation: PathBuf,
-        #[arg(long)] target: PathBuf,
-        #[arg(long)] assembly: PathBuf,
-        #[arg(long)] output: PathBuf,
-        #[arg(long)] aliases: PathBuf,
+        #[arg(long)]
+        jobs: PathBuf,
+        #[arg(long)]
+        hyperion: PathBuf,
+        #[arg(long)]
+        foundation: PathBuf,
+        #[arg(long)]
+        target: PathBuf,
+        #[arg(long)]
+        assembly: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        aliases: PathBuf,
     },
     #[cfg(feature = "neural")]
     Propose {
@@ -165,10 +174,14 @@ enum Cmd {
     },
     #[cfg(feature = "neural")]
     MonitorCheckpoint {
-        #[arg(long)] corpus: PathBuf,
-        #[arg(long)] checkpoint: PathBuf,
-        #[arg(long)] panel: PathBuf,
-        #[arg(long)] output: PathBuf,
+        #[arg(long)]
+        corpus: PathBuf,
+        #[arg(long)]
+        checkpoint: PathBuf,
+        #[arg(long)]
+        panel: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
     },
     BuildCorpus {
         /// Publish immutable group shards through this private append-only store.
@@ -199,13 +212,18 @@ enum Cmd {
         qualification: bool,
     },
     ExportTeachingCorpus {
-        #[arg(long)] corpus: PathBuf,
-        #[arg(long)] output: PathBuf,
+        #[arg(long)]
+        corpus: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
     },
     ComparisonBaseline {
-        #[arg(long)] jobs: PathBuf,
-        #[arg(long)] vocabulary: PathBuf,
-        #[arg(long)] output: PathBuf,
+        #[arg(long)]
+        jobs: PathBuf,
+        #[arg(long)]
+        vocabulary: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
     },
     Enqueue {
         #[arg(long)]
@@ -354,25 +372,58 @@ enum Cmd {
     },
     #[command(hide = true)]
     VerifyFitCompletion {
-        #[arg(long)] authority: PathBuf,
-        #[arg(long)] witness: PathBuf,
-        #[arg(long)] completion_sha256: String,
-        #[arg(long)] authority_instance: String,
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
+        #[arg(long)]
+        completion_sha256: String,
+        #[arg(long)]
+        authority_instance: String,
     },
     #[command(hide = true)]
     RegistryFit {
-        #[arg(long)] fd: i32,
-        #[arg(long)] output: PathBuf,
+        #[arg(long)]
+        fd: i32,
+        #[arg(long)]
+        output: PathBuf,
     },
+    /// Initialize new held native-fit storage; existing authorities are never overwritten.
+    RegistryInitializeNative {
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
+        #[arg(long)]
+        scopes: PathBuf,
+    },
+    /// Initialize an empty independent witness store from reviewed public policy.
+    RegistryWitnessInitialize {
+        #[arg(long)]
+        witness_root: PathBuf,
+        #[arg(long)]
+        policy: PathBuf,
+    },
+    /// Observe this loaded CPU executable and numerical runtime without authorizing work.
+    RegistryInspectRuntime,
     /// Own all physical regression fits through one durable native authority.
     RegistryAuthority {
-        #[arg(long)] authority: PathBuf,
-        #[arg(long)] witness: PathBuf,
-        #[arg(long)] socket: PathBuf,
-        #[arg(long, default_value_t = 104)] workers: usize,
-        #[arg(long)] event_witness_config: PathBuf,
-        #[arg(long)] event_witness_config_sha256: String,
-        #[arg(long)] funding_config: Option<PathBuf>,
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
+        #[arg(long)]
+        socket: PathBuf,
+        #[arg(long, default_value_t = 104)]
+        workers: usize,
+        #[arg(long)]
+        event_witness_config: PathBuf,
+        #[arg(long)]
+        event_witness_config_sha256: String,
+        #[arg(long)]
+        funding_config: Option<PathBuf>,
+        #[arg(long)]
+        native_fit_policy: Option<PathBuf>,
     },
     /// Transport a typed funding request through the protected native client.
     FundingRequest {
@@ -381,76 +432,188 @@ enum Cmd {
     },
     /// Score a retained committed model with separately authorized query access.
     QueryEvaluate {
-        #[arg(long)] authority: PathBuf,
-        #[arg(long)] witness: PathBuf,
-        #[arg(long)] socket: PathBuf,
-        #[arg(long)] request: PathBuf,
-        #[arg(long)] output: PathBuf,
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
+        #[arg(long)]
+        socket: PathBuf,
+        #[arg(long)]
+        request: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
     },
     /// Retrieve an original query result without extending its execution deadline.
     QueryRetrieve {
-        #[arg(long)] authority: PathBuf,
-        #[arg(long)] witness: PathBuf,
-        #[arg(long)] socket: PathBuf,
-        #[arg(long)] request: PathBuf,
-        #[arg(long)] output: PathBuf,
-        #[arg(long)] deadline_monotonic_ns: u64,
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
+        #[arg(long)]
+        socket: PathBuf,
+        #[arg(long)]
+        request: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        deadline_monotonic_ns: u64,
+    },
+    /// Verify the original public witness ledger without accessing either signing key.
+    RegistryWitnessInspect {
+        #[arg(long)]
+        root: PathBuf,
+        #[arg(long)]
+        policy: PathBuf,
+        #[arg(long)]
+        policy_sha256: String,
     },
     /// Retain one authenticated independent witness request from standard input.
     RegistryWitnessRequest {
-        #[arg(long)] root: PathBuf,
-        #[arg(long)] policy: PathBuf,
-        #[arg(long)] key: PathBuf,
+        #[arg(long)]
+        root: PathBuf,
+        #[arg(long)]
+        policy: PathBuf,
+        #[arg(long)]
+        key: PathBuf,
+    },
+    /// Append one independently provisioned exact native grant to the original witness ledger.
+    RegistryWitnessAddNativeGrant {
+        #[arg(long)]
+        root: PathBuf,
+        #[arg(long)]
+        policy: PathBuf,
+        #[arg(long)]
+        key: PathBuf,
+    },
+    /// Append an independently reviewed epoch transition to the original witness ledger.
+    RegistryWitnessEpochTransition {
+        #[arg(long)]
+        root: PathBuf,
+        #[arg(long)]
+        policy: PathBuf,
+        #[arg(long)]
+        key: PathBuf,
     },
     /// Retrieve an original witness acknowledgment without recording another event.
     RegistryWitnessGetAck {
-        #[arg(long)] root: PathBuf,
-        #[arg(long)] policy: PathBuf,
-        #[arg(long)] key: PathBuf,
+        #[arg(long)]
+        root: PathBuf,
+        #[arg(long)]
+        policy: PathBuf,
+        #[arg(long)]
+        key: PathBuf,
     },
     /// Capture a reviewed inventory without publishing coverage or enabling fits.
     HistoryStage {
-        #[arg(long)] authority: PathBuf,
-        #[arg(long)] witness: PathBuf,
-        #[arg(long)] inventory: PathBuf,
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
+        #[arg(long)]
+        inventory: PathBuf,
     },
     HistoryImportBatch {
-        #[arg(long)] authority: PathBuf,
-        #[arg(long)] witness: PathBuf,
-        #[arg(long)] batch: PathBuf,
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
+        #[arg(long)]
+        batch: PathBuf,
+    },
+    /// Explicitly prepare the derived global historical lookup index; no admission.
+    HistoryPrepareLookupIndex {
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
     },
     HistoryCommitCoverage {
-        #[arg(long)] authority: PathBuf,
-        #[arg(long)] witness: PathBuf,
-        #[arg(long)] stage_sha256: String,
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
+        #[arg(long)]
+        stage_sha256: String,
+    },
+    /// Inspect signed preparation identities and the original authority head without issuing authorization.
+    NativeScopeInspect {
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
+        #[arg(long)]
+        root: PathBuf,
+        #[arg(long)]
+        overlay: PathBuf,
+        #[arg(long)]
+        overlay_sha256: String,
+        #[arg(long)]
+        run: String,
+    },
+    NativeScopeRegister {
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
+        #[arg(long)]
+        registration: PathBuf,
+        #[arg(long)]
+        registration_sha256: String,
+    },
+    /// Commit complete original namespace coverage from independently reviewed aggregate evidence.
+    HistoryCommitAggregateCoverage {
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
+        #[arg(long)]
+        aggregate: PathBuf,
+        #[arg(long)]
+        aggregate_sha256: String,
     },
     RecoveryInspect {
-        #[arg(long)] authority: PathBuf,
-        #[arg(long)] witness: PathBuf,
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
     },
     RecoveryReplay {
-        #[arg(long)] authority: PathBuf,
-        #[arg(long)] witness: PathBuf,
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
     },
     RecoveryReconcile {
-        #[arg(long)] authority: PathBuf,
-        #[arg(long)] witness: PathBuf,
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
     },
     RecoveryCommitEpoch {
-        #[arg(long)] authority: PathBuf,
-        #[arg(long)] witness: PathBuf,
-        #[arg(long)] report_sha256: String,
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
+        #[arg(long)]
+        report_sha256: String,
     },
     NamespaceActivate {
-        #[arg(long)] authority: PathBuf,
-        #[arg(long)] witness: PathBuf,
-        #[arg(long)] scope: String,
-        #[arg(long)] capability: String,
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
+        #[arg(long)]
+        scope: String,
+        #[arg(long)]
+        capability: String,
     },
     NamespaceDeactivate {
-        #[arg(long)] authority: PathBuf,
-        #[arg(long)] witness: PathBuf,
-        #[arg(long)] scope: String,
+        #[arg(long)]
+        authority: PathBuf,
+        #[arg(long)]
+        witness: PathBuf,
+        #[arg(long)]
+        scope: String,
     },
     #[command(hide = true)]
     RegistryServiceFit,
@@ -464,8 +627,10 @@ enum Cmd {
         genome: PathBuf,
         #[arg(long)]
         output: PathBuf,
-        #[arg(long, requires = "cut")] prepared: Option<PathBuf>,
-        #[arg(long, requires = "prepared")] cut: Option<usize>,
+        #[arg(long, requires = "cut")]
+        prepared: Option<PathBuf>,
+        #[arg(long, requires = "prepared")]
+        cut: Option<usize>,
     },
     HyperionService {
         #[arg(long)]
@@ -497,10 +662,14 @@ enum Cmd {
         output: PathBuf,
     },
     FitView {
-        #[arg(long)] prepared:PathBuf,
-        #[arg(long)] cut:usize,
-        #[arg(long)] genome:String,
-        #[arg(long)] output:PathBuf,
+        #[arg(long)]
+        prepared: PathBuf,
+        #[arg(long)]
+        cut: usize,
+        #[arg(long)]
+        genome: String,
+        #[arg(long)]
+        output: PathBuf,
     },
     Predict {
         #[arg(long)]
@@ -761,126 +930,498 @@ enum Cmd {
 fn write_query_result(path: &std::path::Path, result: &impl serde::Serialize) -> Result<()> {
     use std::io::Write;
     let bytes = serde_json::to_vec_pretty(result)?;
-    let mut output = std::fs::OpenOptions::new().write(true).create_new(true).open(path)?;
+    let mut output = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(path)?;
     output.write_all(&bytes)?;
     output.sync_all()?;
-    std::fs::File::open(path.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(std::path::Path::new(".")))?.sync_all()?;
+    std::fs::File::open(
+        path.parent()
+            .filter(|p| !p.as_os_str().is_empty())
+            .unwrap_or(std::path::Path::new(".")),
+    )?
+    .sync_all()?;
     Ok(())
 }
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Cmd::VerifyFitCompletion { authority, witness, completion_sha256, authority_instance } => {
+        Cmd::VerifyFitCompletion {
+            authority,
+            witness,
+            completion_sha256,
+            authority_instance,
+        } => {
             let mut registry = jope_parallel::eval_registry::Authority::open(&authority, &witness)?;
             let completion = registry.verify_committed_completion(&completion_sha256)?;
-            anyhow::ensure!(completion.authority_instance == authority_instance, "unapproved fit authority instance");
+            anyhow::ensure!(
+                completion.authority_instance == authority_instance,
+                "unapproved fit authority instance"
+            );
             println!("{}", serde_json::to_string(&completion)?);
         }
         Cmd::RegistryFit { fd, output } => jope_parallel::fit_boundary::execute(fd, &output)?,
-        Cmd::RegistryAuthority { authority, witness, socket, workers, event_witness_config, event_witness_config_sha256, funding_config } =>
-            jope_parallel::fit_boundary::serve(authority, witness, socket, workers, &event_witness_config, &event_witness_config_sha256, funding_config.as_deref())?,
+        Cmd::RegistryInitializeNative {
+            authority,
+            witness,
+            scopes,
+        } => {
+            let scopes: Vec<jope_parallel::eval_registry::ScopePolicy> =
+                jope_parallel::manifest::read_json(&scopes)?;
+            jope_parallel::eval_registry::Authority::initialize_native(
+                &authority, &witness, scopes,
+            )?;
+        }
+        Cmd::RegistryWitnessInitialize {
+            witness_root,
+            policy,
+        } => {
+            anyhow::ensure!(
+                witness_root.is_absolute() && policy.is_absolute(),
+                "witness initialization requires absolute custody paths"
+            );
+            let policy: jope_parallel::eval_registry::witness::WitnessPolicy =
+                jope_parallel::manifest::read_json(&policy)?;
+            jope_parallel::eval_registry::witness::WitnessStore::initialize(
+                &witness_root,
+                &policy,
+            )?;
+        }
+        Cmd::RegistryInspectRuntime => {
+            anyhow::ensure!(
+                !cfg!(feature = "neural"),
+                "fit authority runtime inspection requires the CPU-only executable"
+            );
+            let contract = jope_parallel::eval_registry::NumericalContract {
+                protocol: "featmath_fixed_seed0_f64_single_thread_v1".into(),
+                precision: "f64".into(),
+                omp_threads: 1,
+                rayon_threads: 1,
+                blas_threads: 1,
+                mkl_threads: 1,
+            };
+            let identity = jope_parallel::eval_registry::ProcessIdentity::current()?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "schema": "parallel.fit_runtime_observation.v1",
+                    "process": identity,
+                    "executable_sha256": jope_parallel::manifest::file_hash(
+                        std::path::Path::new("/proc/self/exe")
+                    )?,
+                    "authority_source_sha256": jope_parallel::eval_registry::witness::authority_source_sha256(),
+                    "witness_source_sha256": jope_parallel::eval_registry::witness::source_sha256(),
+                    "runtime_sha256": jope_parallel::eval_registry::current_runtime_digest(&contract)?,
+                    "numerical_contract_sha256": jope_parallel::eval_registry::numerical_contract_sha256(&contract)?,
+                    "contract": contract,
+                    "execution_authority": false,
+                    "numerical_execution": false
+                }))?
+            );
+        }
+        Cmd::RegistryAuthority {
+            authority,
+            witness,
+            socket,
+            workers,
+            event_witness_config,
+            event_witness_config_sha256,
+            funding_config,
+            native_fit_policy,
+        } => jope_parallel::fit_boundary::serve_with_native_policy(
+            authority,
+            witness,
+            socket,
+            workers,
+            &event_witness_config,
+            &event_witness_config_sha256,
+            funding_config.as_deref(),
+            native_fit_policy.as_deref(),
+        )?,
         Cmd::FundingRequest { config } => {
             use std::io::Read;
             let mut bytes = Vec::new();
-            std::io::stdin().take(8 * 1024 * 1024 + 1).read_to_end(&mut bytes)?;
-            anyhow::ensure!(bytes.len() <= 8 * 1024 * 1024, "funding stdin exceeds bound");
-            let request: jope_parallel::eval_registry::service::FundingRequest = serde_json::from_slice(&bytes)?;
+            std::io::stdin()
+                .take(8 * 1024 * 1024 + 1)
+                .read_to_end(&mut bytes)?;
+            anyhow::ensure!(
+                bytes.len() <= 8 * 1024 * 1024,
+                "funding stdin exceeds bound"
+            );
+            let request: jope_parallel::eval_registry::service::FundingRequest =
+                serde_json::from_slice(&bytes)?;
             let reply = jope_parallel::eval_registry::service::funding_request(&config, &request)?;
             println!("{}", serde_json::to_string(&reply)?);
         }
-        Cmd::QueryEvaluate { authority, witness, socket, request, output } => {
+        Cmd::QueryEvaluate {
+            authority,
+            witness,
+            socket,
+            request,
+            output,
+        } => {
             anyhow::ensure!(!output.exists(), "query output reference already exists");
             let inputs = jope_parallel::manifest::read_json(&request)?;
-            let result = jope_parallel::eval_registry::service::query_evaluate(&socket, &authority, &witness, &inputs)?;
+            let result = jope_parallel::eval_registry::service::query_evaluate(
+                &socket, &authority, &witness, &inputs,
+            )?;
             write_query_result(&output, &result)?;
             println!("{}", serde_json::to_string(&result)?);
         }
-        Cmd::QueryRetrieve { authority, witness, socket, request, output, deadline_monotonic_ns } => {
+        Cmd::QueryRetrieve {
+            authority,
+            witness,
+            socket,
+            request,
+            output,
+            deadline_monotonic_ns,
+        } => {
             anyhow::ensure!(!output.exists(), "query output reference already exists");
             let inputs = jope_parallel::manifest::read_json(&request)?;
-            let result = jope_parallel::eval_registry::service::query_retrieve(&socket, &authority, &witness, &inputs, deadline_monotonic_ns)?;
+            let result = jope_parallel::eval_registry::service::query_retrieve(
+                &socket,
+                &authority,
+                &witness,
+                &inputs,
+                deadline_monotonic_ns,
+            )?;
             write_query_result(&output, &result)?;
             println!("{}", serde_json::to_string(&result)?);
         }
-        Cmd::RegistryWitnessRequest { root, policy, key } =>
-            jope_parallel::eval_registry::witness::serve_stdio(&root, &policy, &key)?,
-        Cmd::RegistryWitnessGetAck { root, policy, key } =>
-            jope_parallel::eval_registry::witness::serve_stdio_get_ack(&root, &policy, &key)?,
-        Cmd::HistoryStage { authority, witness, inventory } => {
+        Cmd::RegistryWitnessInspect {
+            root,
+            policy,
+            policy_sha256,
+        } => {
+            use std::{io::Read, os::unix::fs::OpenOptionsExt};
+            let file = std::fs::OpenOptions::new()
+                .read(true)
+                .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
+                .open(&policy)?;
+            anyhow::ensure!(
+                file.metadata()?.is_file() && file.metadata()?.len() <= 4 * 1024 * 1024,
+                "bounded regular witness policy required"
+            );
+            let mut bytes = Vec::new();
+            file.take(4 * 1024 * 1024 + 1).read_to_end(&mut bytes)?;
+            anyhow::ensure!(
+                bytes.len() <= 4 * 1024 * 1024
+                    && jope_parallel::manifest::hash(&bytes) == policy_sha256,
+                "original witness policy changed"
+            );
+            let policy = serde_json::from_slice(&bytes)?;
+            let result =
+                jope_parallel::eval_registry::witness::WitnessStore::verify_public_history(
+                    &root, &policy,
+                )?;
+            println!("{}", serde_json::to_string(&result)?);
+        }
+        Cmd::RegistryWitnessRequest { root, policy, key } => {
+            jope_parallel::eval_registry::witness::serve_stdio(&root, &policy, &key)?
+        }
+        Cmd::RegistryWitnessAddNativeGrant { root, policy, key } => {
+            jope_parallel::eval_registry::witness::serve_stdio_add_native_grant(
+                &root, &policy, &key,
+            )?
+        }
+        Cmd::RegistryWitnessEpochTransition { root, policy, key } => {
+            jope_parallel::eval_registry::witness::serve_stdio_epoch_transition(
+                &root, &policy, &key,
+            )?
+        }
+        Cmd::RegistryWitnessGetAck { root, policy, key } => {
+            jope_parallel::eval_registry::witness::serve_stdio_get_ack(&root, &policy, &key)?
+        }
+        Cmd::HistoryStage {
+            authority,
+            witness,
+            inventory,
+        } => {
             let inventory = jope_parallel::manifest::read_json(&inventory)?;
             let mut registry = jope_parallel::eval_registry::Authority::open(&authority, &witness)?;
             println!("{}", registry.history_stage(&inventory)?);
         }
-        Cmd::HistoryImportBatch { authority, witness, batch } => {
+        Cmd::HistoryImportBatch {
+            authority,
+            witness,
+            batch,
+        } => {
             let batch = jope_parallel::manifest::read_json(&batch)?;
             let mut registry = jope_parallel::eval_registry::Authority::open(&authority, &witness)?;
             println!("{}", registry.history_import_batch(&batch)?);
         }
-        Cmd::HistoryCommitCoverage { authority, witness, stage_sha256 } => {
+        Cmd::HistoryCommitCoverage {
+            authority,
+            witness,
+            stage_sha256,
+        } => {
             let mut registry = jope_parallel::eval_registry::Authority::open(&authority, &witness)?;
             println!("{}", registry.history_commit_coverage(&stage_sha256)?);
         }
+        Cmd::HistoryPrepareLookupIndex { authority, witness } => {
+            let mut registry = jope_parallel::eval_registry::Authority::open(&authority, &witness)?;
+            println!("{}", registry.prepare_history_lookup_index()?);
+        }
+        Cmd::NativeScopeInspect {
+            authority,
+            witness,
+            root,
+            overlay,
+            overlay_sha256,
+            run,
+        } => {
+            let mut registry = jope_parallel::eval_registry::Authority::open(&authority, &witness)?;
+            println!(
+                "{}",
+                registry.native_scope_inspect(
+                    &root,
+                    &jope_parallel::native_graph::Artifact {
+                        path: overlay,
+                        sha256: overlay_sha256
+                    },
+                    &run
+                )?
+            );
+        }
+        Cmd::NativeScopeRegister {
+            authority,
+            witness,
+            registration,
+            registration_sha256,
+        } => {
+            use std::io::Read;
+            use std::os::unix::fs::OpenOptionsExt;
+            let file = std::fs::OpenOptions::new()
+                .read(true)
+                .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
+                .open(&registration)?;
+            anyhow::ensure!(
+                file.metadata()?.is_file() && file.metadata()?.len() <= 1024 * 1024,
+                "bounded regular scope registration required"
+            );
+            let mut bytes = Vec::new();
+            file.take(1024 * 1024 + 1).read_to_end(&mut bytes)?;
+            anyhow::ensure!(
+                bytes.len() <= 1024 * 1024
+                    && jope_parallel::manifest::hash(&bytes) == registration_sha256,
+                "scope registration changed"
+            );
+            let signed = serde_json::from_slice(&bytes)?;
+            let mut registry = jope_parallel::eval_registry::Authority::open(&authority, &witness)?;
+            println!("{}", registry.register_native_scope(&signed)?);
+        }
+        Cmd::HistoryCommitAggregateCoverage {
+            authority,
+            witness,
+            aggregate,
+            aggregate_sha256,
+        } => {
+            use std::{io::Read, os::unix::fs::OpenOptionsExt};
+            let file = std::fs::OpenOptions::new()
+                .read(true)
+                .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
+                .open(&aggregate)?;
+            anyhow::ensure!(
+                file.metadata()?.is_file() && file.metadata()?.len() <= 4 * 1024 * 1024,
+                "bounded regular aggregate required"
+            );
+            let mut bytes = Vec::new();
+            file.take(4 * 1024 * 1024 + 1).read_to_end(&mut bytes)?;
+            anyhow::ensure!(
+                bytes.len() <= 4 * 1024 * 1024
+                    && jope_parallel::manifest::hash(&bytes) == aggregate_sha256,
+                "aggregate input changed"
+            );
+            let aggregate = serde_json::from_slice(&bytes)?;
+            let mut registry = jope_parallel::eval_registry::Authority::open(&authority, &witness)?;
+            println!(
+                "{}",
+                registry.history_commit_aggregate_coverage(&aggregate)?
+            );
+        }
         Cmd::RecoveryInspect { authority, witness } => {
-            let report = jope_parallel::eval_registry::Authority::recovery_inspect(&authority, &witness)?;
+            let report =
+                jope_parallel::eval_registry::Authority::recovery_inspect(&authority, &witness)?;
             println!("{}", serde_json::to_string_pretty(&report)?);
         }
         Cmd::RecoveryReplay { authority, witness } => {
-            let report = jope_parallel::eval_registry::Authority::recovery_replay(&authority, &witness)?;
+            let report =
+                jope_parallel::eval_registry::Authority::recovery_replay(&authority, &witness)?;
             println!("{}", serde_json::to_string_pretty(&report)?);
         }
         Cmd::RecoveryReconcile { authority, witness } => {
-            println!("{}", jope_parallel::eval_registry::Authority::recovery_reconcile(&authority, &witness)?);
+            println!(
+                "{}",
+                jope_parallel::eval_registry::Authority::recovery_reconcile(&authority, &witness)?
+            );
         }
-        Cmd::RecoveryCommitEpoch { authority, witness, report_sha256 } => {
-            println!("{}", jope_parallel::eval_registry::Authority::recovery_commit_epoch(&authority, &witness, &report_sha256)?);
+        Cmd::RecoveryCommitEpoch {
+            authority,
+            witness,
+            report_sha256,
+        } => {
+            println!(
+                "{}",
+                jope_parallel::eval_registry::Authority::recovery_commit_epoch(
+                    &authority,
+                    &witness,
+                    &report_sha256
+                )?
+            );
         }
-        Cmd::NamespaceActivate { authority, witness, scope, capability } => {
+        Cmd::NamespaceActivate {
+            authority,
+            witness,
+            scope,
+            capability,
+        } => {
             let mut registry = jope_parallel::eval_registry::Authority::open(&authority, &witness)?;
             println!("{}", registry.namespace_activate(&scope, &capability)?);
         }
-        Cmd::NamespaceDeactivate { authority, witness, scope } => {
-            jope_parallel::eval_registry::Authority::open(&authority, &witness)?.namespace_deactivate(&scope)?;
+        Cmd::NamespaceDeactivate {
+            authority,
+            witness,
+            scope,
+        } => {
+            jope_parallel::eval_registry::Authority::open(&authority, &witness)?
+                .namespace_deactivate(&scope)?;
         }
         Cmd::RegistryServiceFit => jope_parallel::fit_boundary::execute_service()?,
         Cmd::RegistryServiceQuery => jope_parallel::eval_registry::service::execute_query_worker()?,
-        Cmd::CompareSeeds { manifest, workers, prefix, seconds, downstream } => {
+        Cmd::CompareSeeds {
+            manifest,
+            workers,
+            prefix,
+            seconds,
+            downstream,
+        } => {
             use std::os::unix::process::CommandExt;
             let mut command = std::process::Command::new("python3");
-            command.arg(cli.root.join("tools/seed_experiment.py")).arg("--root").arg(&cli.root)
-                .arg("compare").arg("--manifest").arg(manifest)
-                .arg("--workers").arg(workers.to_string()).arg("--prefix").arg(prefix.to_string())
-                .arg("--seconds").arg(seconds.to_string());
-            if downstream { command.arg("--downstream"); }
+            command
+                .arg(cli.root.join("tools/seed_experiment.py"))
+                .arg("--root")
+                .arg(&cli.root)
+                .arg("compare")
+                .arg("--manifest")
+                .arg(manifest)
+                .arg("--workers")
+                .arg(workers.to_string())
+                .arg("--prefix")
+                .arg(prefix.to_string())
+                .arg("--seconds")
+                .arg(seconds.to_string());
+            if downstream {
+                command.arg("--downstream");
+            }
             return Err(command.exec().into());
-        },
+        }
         #[cfg(feature = "neural")]
-        Cmd::ApplyBinaryContexts { jobs, hyperion, foundation, target, assembly, output, aliases } =>
-            jope_parallel::contexts::apply_binary_qualification(&cli.root, &jobs, &hyperion, &foundation, &target, &assembly, &output, &aliases)?,
-        Cmd::Enqueue { jobs, contexts, campaign_contexts } => {
-            println!("{} new GP jobs admitted with verified saved contexts",
-                jope_parallel::queue::enqueue_bound(&cli.root, &jobs, &contexts, campaign_contexts.as_deref())?);
-        },
-        Cmd::CampaignCoverage { campaign, union, output, gp_root } => {
+        Cmd::ApplyBinaryContexts {
+            jobs,
+            hyperion,
+            foundation,
+            target,
+            assembly,
+            output,
+            aliases,
+        } => jope_parallel::contexts::apply_binary_qualification(
+            &cli.root,
+            &jobs,
+            &hyperion,
+            &foundation,
+            &target,
+            &assembly,
+            &output,
+            &aliases,
+        )?,
+        Cmd::Enqueue {
+            jobs,
+            contexts,
+            campaign_contexts,
+        } => {
+            println!(
+                "{} new GP jobs admitted with verified saved contexts",
+                jope_parallel::queue::enqueue_bound(
+                    &cli.root,
+                    &jobs,
+                    &contexts,
+                    campaign_contexts.as_deref()
+                )?
+            );
+        }
+        Cmd::CampaignCoverage {
+            campaign,
+            union,
+            output,
+            gp_root,
+        } => {
             let roots: Vec<_> = gp_root.iter().map(|p| cli.root.join(p)).collect();
             let refs: Vec<_> = roots.iter().map(|p| p.as_path()).collect();
-            println!("{}", serde_json::to_string_pretty(&jope_parallel::queue::write_coverage(
-                &cli.root, &campaign, &union, &refs, &output)?)?);
-        },
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&jope_parallel::queue::write_coverage(
+                    &cli.root, &campaign, &union, &refs, &output
+                )?)?
+            );
+        }
         #[cfg(feature = "neural")]
-        Cmd::ApplyContexts { jobs, hyperion, foundation, target, assembly, output, qualification } =>
-            jope_parallel::contexts::apply(&cli.root, &jobs, &hyperion, &foundation, &target, &assembly, &output, qualification)?,
+        Cmd::ApplyContexts {
+            jobs,
+            hyperion,
+            foundation,
+            target,
+            assembly,
+            output,
+            qualification,
+        } => jope_parallel::contexts::apply(
+            &cli.root,
+            &jobs,
+            &hyperion,
+            &foundation,
+            &target,
+            &assembly,
+            &output,
+            qualification,
+        )?,
         #[cfg(feature = "neural")]
-        Cmd::UnionContexts { indexes, output } =>
-            jope_parallel::contexts::union(&cli.root, &indexes, &output)?,
+        Cmd::UnionContexts { indexes, output } => {
+            jope_parallel::contexts::union(&cli.root, &indexes, &output)?
+        }
         #[cfg(feature = "neural")]
-        Cmd::AssembleContexts { jobs, hyperion, foundation, target, output, registry, qualification } => {
+        Cmd::AssembleContexts {
+            jobs,
+            hyperion,
+            foundation,
+            target,
+            output,
+            registry,
+            qualification,
+        } => {
             if let Some(registry) = registry {
-                jope_parallel::contexts::assemble_registered(&cli.root, &jobs, &hyperion, &foundation, &target, &registry, &output, qualification)?;
+                jope_parallel::contexts::assemble_registered(
+                    &cli.root,
+                    &jobs,
+                    &hyperion,
+                    &foundation,
+                    &target,
+                    &registry,
+                    &output,
+                    qualification,
+                )?;
             } else {
-                jope_parallel::contexts::assemble(&cli.root, &jobs, &hyperion, &foundation, &target, &output, qualification)?;
+                jope_parallel::contexts::assemble(
+                    &cli.root,
+                    &jobs,
+                    &hyperion,
+                    &foundation,
+                    &target,
+                    &output,
+                    qualification,
+                )?;
             }
-        },
+        }
 
         #[cfg(feature = "neural")]
         Cmd::FoundationService {
@@ -956,9 +1497,18 @@ fn main() -> Result<()> {
             genome,
             output,
         } => jope_parallel::gp::evaluate_view(&prepared, cut, &genome, &output)?,
-        Cmd::EvaluateMemory { fd, genome, output, prepared, cut } => {
-            jope_parallel::gp::evaluate_prepared_memory(fd, &genome, &output, prepared.as_deref().zip(cut))?
-        }
+        Cmd::EvaluateMemory {
+            fd,
+            genome,
+            output,
+            prepared,
+            cut,
+        } => jope_parallel::gp::evaluate_prepared_memory(
+            fd,
+            &genome,
+            &output,
+            prepared.as_deref().zip(cut),
+        )?,
         #[cfg(feature = "neural")]
         Cmd::Train {
             corpus,
@@ -1012,15 +1562,36 @@ fn main() -> Result<()> {
             replay_policy.as_deref(),
         )?,
         #[cfg(feature = "neural")]
-        Cmd::QualifyBatchRank { corpus, output, launch, rank, microbatch, global_batch, steps, initialize } =>
-            jope_parallel::training::qualify_batch_rank(&cli.root, &corpus, &output, &launch,
-                rank, microbatch, global_batch, steps, &initialize)?,
+        Cmd::QualifyBatchRank {
+            corpus,
+            output,
+            launch,
+            rank,
+            microbatch,
+            global_batch,
+            steps,
+            initialize,
+        } => jope_parallel::training::qualify_batch_rank(
+            &cli.root,
+            &corpus,
+            &output,
+            &launch,
+            rank,
+            microbatch,
+            global_batch,
+            steps,
+            &initialize,
+        )?,
         #[cfg(feature = "neural")]
-        Cmd::ProposeRanked { manifest, rank, world } =>
-            jope_parallel::ranked_proposals::run(&cli.root, &manifest, rank, world)?,
+        Cmd::ProposeRanked {
+            manifest,
+            rank,
+            world,
+        } => jope_parallel::ranked_proposals::run(&cli.root, &manifest, rank, world)?,
         #[cfg(feature = "neural")]
-        Cmd::AssembleRanked { manifest } =>
-            jope_parallel::ranked_proposals::assemble(&cli.root, &manifest)?,
+        Cmd::AssembleRanked { manifest } => {
+            jope_parallel::ranked_proposals::assemble(&cli.root, &manifest)?
+        }
         #[cfg(feature = "neural")]
         Cmd::Propose {
             generation_manifest,
@@ -1062,13 +1633,37 @@ fn main() -> Result<()> {
             shuffled,
         )?,
         #[cfg(feature = "neural")]
-        Cmd::MonitorCheckpoint { corpus, checkpoint, panel, output } =>
-            jope_parallel::monitoring::evaluate(&cli.root, &corpus, &checkpoint, &panel, &output)?,
-        Cmd::ComparisonBaseline { jobs, vocabulary, output } => {
-            jope_parallel::tournament::baseline(&cli.root, &jope_parallel::manifest::read_json(&jobs)?,
-                &jope_parallel::manifest::read_json(&vocabulary)?, &output)?;
-        },
-        Cmd::BuildCorpus { contexts, vocabulary, mut observations, observation_manifest, output, qualification, scan_cache, progress, teaching_store, label_policy, admission_manifest } => {
+        Cmd::MonitorCheckpoint {
+            corpus,
+            checkpoint,
+            panel,
+            output,
+        } => jope_parallel::monitoring::evaluate(&cli.root, &corpus, &checkpoint, &panel, &output)?,
+        Cmd::ComparisonBaseline {
+            jobs,
+            vocabulary,
+            output,
+        } => {
+            jope_parallel::tournament::baseline(
+                &cli.root,
+                &jope_parallel::manifest::read_json(&jobs)?,
+                &jope_parallel::manifest::read_json(&vocabulary)?,
+                &output,
+            )?;
+        }
+        Cmd::BuildCorpus {
+            contexts,
+            vocabulary,
+            mut observations,
+            observation_manifest,
+            output,
+            qualification,
+            scan_cache,
+            progress,
+            teaching_store,
+            label_policy,
+            admission_manifest,
+        } => {
             if let Some(path) = observation_manifest {
                 observations.extend(jope_parallel::manifest::read_json::<Vec<PathBuf>>(&path)?);
             }
@@ -1076,19 +1671,57 @@ fn main() -> Result<()> {
                 serde_json::json!({"schema":"parallel.corpus_progress.v1","phase":"packing","output":output,"complete":false}))).transpose()?;
             if let Some(store) = teaching_store {
                 if let Some(admission) = admission_manifest {
-                    anyhow::ensure!(label_policy == "strict_midrank_v4", "admission manifest requires strict policy");
-                    jope_parallel::teaching_store::publish_admitted(&cli.root,&contexts,&vocabulary,&observations,
-                        &output,&store,qualification,&admission,|operation,done,total|
-                            heartbeat.as_ref().map_or(Ok(()),|h|h.advance(operation,done,total)))?;
+                    anyhow::ensure!(
+                        label_policy == "strict_midrank_v4",
+                        "admission manifest requires strict policy"
+                    );
+                    jope_parallel::teaching_store::publish_admitted(
+                        &cli.root,
+                        &contexts,
+                        &vocabulary,
+                        &observations,
+                        &output,
+                        &store,
+                        qualification,
+                        &admission,
+                        |operation, done, total| {
+                            heartbeat
+                                .as_ref()
+                                .map_or(Ok(()), |h| h.advance(operation, done, total))
+                        },
+                    )?;
                 } else {
-                jope_parallel::teaching_store::publish(&cli.root, &contexts, &vocabulary, &observations,
-                    &output, &store, qualification, &label_policy, |operation, done, total|
-                        heartbeat.as_ref().map_or(Ok(()), |h| h.advance(operation, done, total)))?;
+                    jope_parallel::teaching_store::publish(
+                        &cli.root,
+                        &contexts,
+                        &vocabulary,
+                        &observations,
+                        &output,
+                        &store,
+                        qualification,
+                        &label_policy,
+                        |operation, done, total| {
+                            heartbeat
+                                .as_ref()
+                                .map_or(Ok(()), |h| h.advance(operation, done, total))
+                        },
+                    )?;
                 }
             } else {
-                anyhow::ensure!(label_policy == "reference_v1", "label-policy changes require a separate teaching store");
-                jope_parallel::corpus_publication::build(&cli.root, &contexts, &vocabulary, &observations,
-                    &output, qualification, scan_cache.as_deref(), heartbeat.as_ref())?;
+                anyhow::ensure!(
+                    label_policy == "reference_v1",
+                    "label-policy changes require a separate teaching store"
+                );
+                jope_parallel::corpus_publication::build(
+                    &cli.root,
+                    &contexts,
+                    &vocabulary,
+                    &observations,
+                    &output,
+                    qualification,
+                    scan_cache.as_deref(),
+                    heartbeat.as_ref(),
+                )?;
             }
             if let Some(h) = heartbeat {
                 h.advance("verified corpus published", 1, Some(1))?;
@@ -1100,17 +1733,24 @@ fn main() -> Result<()> {
                 receipt["timestamp"] = jope_parallel::telemetry::now().into();
                 jope_parallel::manifest::write_json(path, &receipt)?;
             }
-        },
-        Cmd::ExportTeachingCorpus { corpus, output } => jope_parallel::teaching_store::export(&cli.root, &corpus, &output)?,
+        }
+        Cmd::ExportTeachingCorpus { corpus, output } => {
+            jope_parallel::teaching_store::export(&cli.root, &corpus, &output)?
+        }
         Cmd::Doctor => println!("{}", serde_json::to_string_pretty(&operations::doctor())?),
         #[cfg(feature = "neural")]
-        Cmd::GpuWorker { pool, rank } => jope_parallel::gpu_worker::serve(&cli.root,&pool,rank)?,
+        Cmd::GpuWorker { pool, rank } => jope_parallel::gpu_worker::serve(&cli.root, &pool, rank)?,
         Cmd::Fit {
             train,
             genome,
             output,
         } => jope_parallel::gp::fit(&train, &genome, &output)?,
-        Cmd::FitView {prepared,cut,genome,output} => jope_parallel::gp::fit_view(&prepared,cut,&genome,&output)?,
+        Cmd::FitView {
+            prepared,
+            cut,
+            genome,
+            output,
+        } => jope_parallel::gp::fit_view(&prepared, cut, &genome, &output)?,
         Cmd::Predict {
             model,
             features,
@@ -1126,7 +1766,18 @@ fn main() -> Result<()> {
             prepared,
             cut,
             output,
-        } => jope_parallel::gp::search_seeded_with_rng_in_root(&cli.root, &prepared, cut, &output, 80, 600, false, None, None, jope_parallel::manifest::SEED)?,
+        } => jope_parallel::gp::search_seeded_with_rng_in_root(
+            &cli.root,
+            &prepared,
+            cut,
+            &output,
+            80,
+            600,
+            false,
+            None,
+            None,
+            jope_parallel::manifest::SEED,
+        )?,
         Cmd::Search {
             prepared,
             cut,
@@ -1154,7 +1805,13 @@ fn main() -> Result<()> {
             manifest,
             workers,
             threads,
-        } => jope_parallel::service::run_with_wait(&cli.root, &manifest, workers, threads, wait_for_work)?,
+        } => jope_parallel::service::run_with_wait(
+            &cli.root,
+            &manifest,
+            workers,
+            threads,
+            wait_for_work,
+        )?,
         Cmd::EvaluateWorker {
             train,
             validation,
@@ -1170,9 +1827,26 @@ fn main() -> Result<()> {
             let m = snapshot::create(&source, &label, &include, &output)?;
             println!("snapshotted {} source files", m.files.len());
         }
-        Cmd::FreezeFamilies { audit, prepared, review, decisions, parent, output } => {
-            let registry = jope_parallel::families::freeze(&audit, &prepared, &review, &decisions, parent.as_deref(), &output)?;
-            println!("{}", serde_json::to_string_pretty(&registry.quota_report())?);
+        Cmd::FreezeFamilies {
+            audit,
+            prepared,
+            review,
+            decisions,
+            parent,
+            output,
+        } => {
+            let registry = jope_parallel::families::freeze(
+                &audit,
+                &prepared,
+                &review,
+                &decisions,
+                parent.as_deref(),
+                &output,
+            )?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&registry.quota_report())?
+            );
         }
         Cmd::Audit {
             source,
@@ -1195,7 +1869,16 @@ fn main() -> Result<()> {
             family_registry,
             entity_review,
         } => {
-            let p = prepare::run_with_admission(&audit, &dataset, &output, archive_legacy, qualification, &backing_manifest, family_registry.as_deref(), entity_review.as_deref())?;
+            let p = prepare::run_with_admission(
+                &audit,
+                &dataset,
+                &output,
+                archive_legacy,
+                qualification,
+                &backing_manifest,
+                family_registry.as_deref(),
+                entity_review.as_deref(),
+            )?;
             println!(
                 "{}",
                 serde_json::json!({"dataset":p.dataset,"rows":p.rows_total,"cuts":p.cuts.len(),"clean_evaluation":p.clean_evaluation,"family_partition_frozen":p.family_partition_frozen,"manifest":output.join("prepared.json")})
@@ -1252,7 +1935,14 @@ fn main() -> Result<()> {
             global_batch,
             steps,
             timeout,
-        } => jope_parallel::controller::training_probe(&output, &vocabulary, microbatch, global_batch, steps, timeout)?,
+        } => jope_parallel::controller::training_probe(
+            &output,
+            &vocabulary,
+            microbatch,
+            global_batch,
+            steps,
+            timeout,
+        )?,
         #[cfg(feature = "neural")]
         Cmd::TrainingProbeRank {
             directory,
@@ -1262,7 +1952,15 @@ fn main() -> Result<()> {
             microbatch,
             global_batch,
             steps,
-        } => jope_parallel::neural::training_probe(rank, world, &directory, &vocabulary, microbatch, global_batch, steps)?,
+        } => jope_parallel::neural::training_probe(
+            rank,
+            world,
+            &directory,
+            &vocabulary,
+            microbatch,
+            global_batch,
+            steps,
+        )?,
         #[cfg(feature = "neural")]
         Cmd::NcclProbe {
             directory,
@@ -1273,8 +1971,19 @@ fn main() -> Result<()> {
             "{}",
             serde_json::to_string_pretty(&operations::status(&cli.root)?)?
         ),
-        Cmd::Tui { experiment_manifest } => jope_parallel::dashboard::run_with_manifest(&cli.root, experiment_manifest.as_deref())?,
-        Cmd::LearningHistory => println!("{}", serde_json::to_string_pretty(&jope_parallel::learning_history::Cache::default().refresh(&cli.root).report())?),
+        Cmd::Tui {
+            experiment_manifest,
+        } => {
+            jope_parallel::dashboard::run_with_manifest(&cli.root, experiment_manifest.as_deref())?
+        }
+        Cmd::LearningHistory => println!(
+            "{}",
+            serde_json::to_string_pretty(
+                &jope_parallel::learning_history::Cache::default()
+                    .refresh(&cli.root)
+                    .report()
+            )?
+        ),
         Cmd::Monitor => jope_parallel::telemetry::monitor(&cli.root)?,
         Cmd::PilotGate => operations::pilot_gate(&cli.root)?,
         #[cfg(feature = "neural")]
@@ -1290,7 +1999,18 @@ fn main() -> Result<()> {
             initialize,
             observations,
             qualification,
-        } => jope_parallel::pipeline::run(&cli.root, &corpus, &output, steps, cuts, cut_start, contexts.as_deref(), initialize.as_deref(), &observations, qualification)?,
+        } => jope_parallel::pipeline::run(
+            &cli.root,
+            &corpus,
+            &output,
+            steps,
+            cuts,
+            cut_start,
+            contexts.as_deref(),
+            initialize.as_deref(),
+            &observations,
+            qualification,
+        )?,
     }
     Ok(())
 }

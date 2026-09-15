@@ -262,14 +262,7 @@ fn sample(
         .repeat([batch as i64, 1])
         .to_device(device);
     let task_id = vocab.task_id("regression")?;
-    let mut sequences = vec![
-        vec![
-            1usize,
-            vocab.engine_ids["featmath"],
-            task_id
-        ];
-        batch
-    ];
+    let mut sequences = vec![vec![1usize, vocab.engine_ids["featmath"], task_id]; batch];
     let mut states = (0..batch)
         .map(|_| {
             let mut state = State::default();
@@ -482,7 +475,10 @@ pub fn assemble(root: &Path, manifest_path: &Path) -> Result<()> {
     let manifest_path = path(root, manifest_path);
     let m: Manifest = read_json(&manifest_path)?;
     ensure!(
-        matches!(m.schema.as_str(), "parallel.seed_experiment.v1" | "parallel.seed_experiment.v2"),
+        matches!(
+            m.schema.as_str(),
+            "parallel.seed_experiment.v1" | "parallel.seed_experiment.v2"
+        ),
         "invalid seed experiment manifest"
     );
     let manifest_sha = file_hash(&manifest_path)?;
@@ -622,8 +618,8 @@ pub fn assemble(root: &Path, manifest_path: &Path) -> Result<()> {
                     tail.push(SeedCandidate {
                         genome: genome.clone(),
                         origin: "retained_cut_teacher".into(),
-                    policy_logprob: None,
-                });
+                        policy_logprob: None,
+                    });
                 }
             }
         }
@@ -665,8 +661,8 @@ pub fn assemble(root: &Path, manifest_path: &Path) -> Result<()> {
                     Ok(SeedCandidate {
                         genome: p.as_str().context("program text absent")?.into(),
                         origin: "neural_policy".into(),
-                    policy_logprob: None,
-                })
+                        policy_logprob: None,
+                    })
                 })
                 .collect::<Result<Vec<_>>>()?;
             let mut assembly = proposal_population::assemble(&pure, &tail, &vocab, overlap_seed)?;
@@ -727,7 +723,11 @@ pub fn run(root: &Path, manifest_path: &Path, rank: usize, world: usize) -> Resu
     let manifest_path = path(root, manifest_path);
     let m: Manifest = read_json(&manifest_path)?;
     ensure!(
-        matches!(m.schema.as_str(), "parallel.seed_experiment.v1" | "parallel.seed_experiment.v2") && !m.views.is_empty() && !m.artifacts.is_empty(),
+        matches!(
+            m.schema.as_str(),
+            "parallel.seed_experiment.v1" | "parallel.seed_experiment.v2"
+        ) && !m.views.is_empty()
+            && !m.artifacts.is_empty(),
         "invalid seed experiment manifest"
     );
     let manifest_sha = file_hash(&manifest_path)?;

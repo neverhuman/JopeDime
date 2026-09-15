@@ -95,6 +95,8 @@ pub fn witness_configuration(root: &Path, instance: &str) -> (PathBuf, String) {
         ssh_known_hosts_sha256: file_hash(&hosts).unwrap(),
         ssh_host_alias: "synthetic-no-transport".into(),
         ssh_destination: "synthetic.invalid".into(),
+        native_fit_trust: None,
+        native_grant_delegation: None,
         funding_trust: None,
     };
     let path = root.join("synthetic-witness-config.json");

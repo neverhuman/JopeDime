@@ -55,7 +55,10 @@ fn write(path: &PathBuf, text: &str) -> Result<String> {
 fn csv_rows(rows: &[Vec<f64>], drop_last: bool) -> String {
     let mut out = String::new();
     for row in rows {
-        let cells: Vec<String> = row[..row.len() - usize::from(drop_last)].iter().map(|v| format!("{v:?}")).collect();
+        let cells: Vec<String> = row[..row.len() - usize::from(drop_last)]
+            .iter()
+            .map(|v| format!("{v:?}"))
+            .collect();
         out.push_str(&cells.join(","));
         out.push('\n');
     }
@@ -64,7 +67,13 @@ fn csv_rows(rows: &[Vec<f64>], drop_last: bool) -> String {
 
 fn rmse(actual: &[f64], predicted: &[f64]) -> f64 {
     let n = actual.len().max(1) as f64;
-    (actual.iter().zip(predicted).map(|(a, p)| (a - p) * (a - p)).sum::<f64>() / n).sqrt()
+    (actual
+        .iter()
+        .zip(predicted)
+        .map(|(a, p)| (a - p) * (a - p))
+        .sum::<f64>()
+        / n)
+        .sqrt()
 }
 
 fn main() -> Result<()> {
@@ -74,7 +83,11 @@ fn main() -> Result<()> {
     let event_path = resolve(&root, &args.event)?;
     let prepared = resolve(&root, &args.prepared)?;
     let output = resolve(&root, &args.output)?;
-    ensure!(!output.exists(), "output exists; exports are immutable ({})", output.display());
+    ensure!(
+        !output.exists(),
+        "output exists; exports are immutable ({})",
+        output.display()
+    );
     let event_bytes = fs::read(&event_path)?;
     let champion: Champion = serde_json::from_slice(&event_bytes)?;
     champion.validate()?;
@@ -84,7 +97,10 @@ fn main() -> Result<()> {
         "event file name does not match its content hash"
     );
     ensure!(
-        matches!(champion.identity.partition.as_str(), "meta_train" | "meta_validation"),
+        matches!(
+            champion.identity.partition.as_str(),
+            "meta_train" | "meta_validation"
+        ),
         "only meta_train / meta_validation champions are exported"
     );
     ensure!(
@@ -92,11 +108,17 @@ fn main() -> Result<()> {
         "prepared view does not hash to the champion identity"
     );
     let p: Prepared = read_json(&prepared.join("prepared.json"))?;
-    ensure!(p.task == "regression", "regression champions only in this export");
+    ensure!(
+        p.task == "regression",
+        "regression champions only in this export"
+    );
     let cut = champion.identity.cut;
     let genome = champion.genome().to_owned();
     let program_sha = hash(genome.as_bytes());
-    ensure!(champion.observation["program_sha256"] == program_sha, "genome bytes do not hash to program_sha256");
+    ensure!(
+        champion.observation["program_sha256"] == program_sha,
+        "genome bytes do not hash to program_sha256"
+    );
     fs::create_dir_all(&output)?;
 
     // 1. Emit every supported rung.
@@ -110,13 +132,25 @@ fn main() -> Result<()> {
             let py = write(&output.join("predict.py"), &emitted.python)?;
             let rs = write(&output.join("predict.rs"), &emitted.rust)?;
             write(&output.join("artifact-manifest.json"), &emitted.manifest)?;
-            rungs.insert("python".into(), json!({"status":"emitted","sha256":py,"tokens":emitted.py_tokens}));
-            rungs.insert("rust".into(), json!({"status":"emitted","sha256":rs,"tokens":emitted.rs_tokens}));
+            rungs.insert(
+                "python".into(),
+                json!({"status":"emitted","sha256":py,"tokens":emitted.py_tokens}),
+            );
+            rungs.insert(
+                "rust".into(),
+                json!({"status":"emitted","sha256":rs,"tokens":emitted.rs_tokens}),
+            );
             (Some(py), Some(rs))
         }
         Err(missing) => {
-            rungs.insert("python".into(), json!({"status":"unsupported","missing":missing}));
-            rungs.insert("rust".into(), json!({"status":"unsupported","missing":missing}));
+            rungs.insert(
+                "python".into(),
+                json!({"status":"unsupported","missing":missing}),
+            );
+            rungs.insert(
+                "rust".into(),
+                json!({"status":"unsupported","missing":missing}),
+            );
             (None, None)
         }
     };
@@ -127,7 +161,10 @@ fn main() -> Result<()> {
             rungs.insert("cpp17".into(), json!({"status":"emitted","sha256":sha,"math_policy":cpp.math_policy,"executed":false}));
         }
         Err(missing) => {
-            rungs.insert("cpp17".into(), json!({"status":"unsupported","missing":missing}));
+            rungs.insert(
+                "cpp17".into(),
+                json!({"status":"unsupported","missing":missing}),
+            );
         }
     }
     match transpile::supports_javascript(&ir) {
@@ -137,7 +174,10 @@ fn main() -> Result<()> {
             rungs.insert("javascript".into(), json!({"status":"emitted","sha256":sha,"math_policy":js.math_policy,"executed":false,"reason":"no JavaScript runtime on the node"}));
         }
         Err(missing) => {
-            rungs.insert("javascript".into(), json!({"status":"unsupported","missing":missing}));
+            rungs.insert(
+                "javascript".into(),
+                json!({"status":"unsupported","missing":missing}),
+            );
         }
     }
 
@@ -147,17 +187,27 @@ fn main() -> Result<()> {
     let model: gp::Predictor = read_json(&model_path)?;
     let train = load_view(&prepared, cut, true)?;
     let validation = load_view(&prepared, cut, false)?;
-    let x_val: Vec<Vec<f64>> = validation.iter().map(|r| r[..r.len() - 1].to_vec()).collect();
+    let x_val: Vec<Vec<f64>> = validation
+        .iter()
+        .map(|r| r[..r.len() - 1].to_vec())
+        .collect();
     let y_val: Vec<f64> = validation.iter().map(|r| r[r.len() - 1]).collect();
     let native = model.model.predict(&x_val);
     let semantic_sha = hash(&serde_json::to_vec(&native)?);
-    let observed = champion.observation["metrics"]["rmse"].as_f64().context("observation rmse")?;
-    let target_scale = champion.observation["target_scale"].as_f64().context("target_scale")?;
+    let observed = champion.observation["metrics"]["rmse"]
+        .as_f64()
+        .context("observation rmse")?;
+    let target_scale = champion.observation["target_scale"]
+        .as_f64()
+        .context("target_scale")?;
     let native_rmse = rmse(&y_val, &native);
-    let semantic_ok = champion.observation["metrics"]["semantic_sha256"].as_str().map(|s| s == semantic_sha);
+    let semantic_ok = champion.observation["metrics"]["semantic_sha256"]
+        .as_str()
+        .map(|s| s == semantic_sha);
     let native_ok = (native_rmse - observed).abs() <= TOLERANCE * observed.max(1.0);
     ensure!(
-        (native_rmse * target_scale - champion.rmse_original_units).abs() <= TOLERANCE * champion.rmse_original_units.max(1.0),
+        (native_rmse * target_scale - champion.rmse_original_units).abs()
+            <= TOLERANCE * champion.rmse_original_units.max(1.0),
         "native replay RMSE in original units differs from the champion record"
     );
 
@@ -182,17 +232,41 @@ fn main() -> Result<()> {
             python = json!({"status":"failed","exit":run.status.code(),"stderr":String::from_utf8_lossy(&run.stderr).chars().take(2000).collect::<String>()});
         } else {
             let text = fs::read_to_string(&pred_csv)?;
-            let predictions: Vec<f64> = text.lines().filter(|l| !l.trim().is_empty()).map(|l| l.trim().parse::<f64>()).collect::<std::result::Result<_, _>>()?;
-            ensure!(predictions.len() == native.len(), "emitted python produced {} predictions for {} rows", predictions.len(), native.len());
-            let max_abs = predictions.iter().zip(&native).map(|(a, b)| (a - b).abs()).fold(0.0_f64, f64::max);
-            let elementwise = predictions.iter().zip(&native).all(|(a, b)| (a - b).abs() <= TOLERANCE * b.abs().max(1.0));
+            let predictions: Vec<f64> = text
+                .lines()
+                .filter(|l| !l.trim().is_empty())
+                .map(|l| l.trim().parse::<f64>())
+                .collect::<std::result::Result<_, _>>()?;
+            ensure!(
+                predictions.len() == native.len(),
+                "emitted python produced {} predictions for {} rows",
+                predictions.len(),
+                native.len()
+            );
+            let max_abs = predictions
+                .iter()
+                .zip(&native)
+                .map(|(a, b)| (a - b).abs())
+                .fold(0.0_f64, f64::max);
+            let elementwise = predictions
+                .iter()
+                .zip(&native)
+                .all(|(a, b)| (a - b).abs() <= TOLERANCE * b.abs().max(1.0));
             let py_rmse = rmse(&y_val, &predictions);
             let rmse_ok = (py_rmse - native_rmse).abs() <= TOLERANCE * native_rmse.max(1.0);
             python = json!({"status": if elementwise && rmse_ok {"pass"} else {"fail"}, "rows":predictions.len(), "max_abs_difference":max_abs,
                             "rmse":py_rmse, "native_rmse":native_rmse, "elementwise_within_tolerance":elementwise, "rmse_within_tolerance":rmse_ok});
         }
     }
-    let parity_status = if native_ok && semantic_ok != Some(false) && python["status"] != "fail" && python["status"] != "failed" { "pass" } else { "fail" };
+    let parity_status = if native_ok
+        && semantic_ok != Some(false)
+        && python["status"] != "fail"
+        && python["status"] != "failed"
+    {
+        "pass"
+    } else {
+        "fail"
+    };
     let parity = json!({"schema":PARITY_SCHEMA,"status":parity_status,"tolerance":TOLERANCE,"native":{"status": if native_ok {"pass"} else {"fail"},"rmse_normalized":native_rmse,
         "observation_rmse_normalized":observed,"rmse_original_units":native_rmse*target_scale,"champion_rmse_original_units":champion.rmse_original_units,
         "semantic_sha256":semantic_sha,"observation_semantic_sha256":champion.observation["metrics"]["semantic_sha256"],"semantic_equal":semantic_ok,

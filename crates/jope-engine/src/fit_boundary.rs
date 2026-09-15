@@ -82,17 +82,44 @@ pub fn fit(
         details: json!({"entry_point":"registered_fit", "destination":destination,
             "deadline_monotonic_ns":deadline}),
     };
-    let result = service::submit(
-        &socket,
-        &service::ServiceInputs {
-            program: program.into(),
-            x,
-            y,
-            preprocessing,
-            feature_view,
-        },
-        request,
-    )?;
+    let inputs = service::ServiceInputs {
+        program: program.into(),
+        x,
+        y,
+        preprocessing,
+        feature_view,
+    };
+    let result = if let Ok(job) = std::env::var("SCQ_JOB_ID") {
+        let filename = destination
+            .file_name()
+            .and_then(|v| v.to_str())
+            .context("native candidate destination")?;
+        let candidate_index = filename
+            .strip_prefix("candidate-")
+            .and_then(|v| v.strip_suffix(".json"))
+            .context("native candidate identity absent")?
+            .parse()?;
+        let native = crate::eval_registry::native_scq::NativeRequest {
+            job_id: job.parse()?,
+            candidate_index,
+            descriptor_sha256: crate::eval_registry::native_scq::policy::hash(&serde_json::to_vec(
+                &inputs,
+            )?),
+            deadline_monotonic_ns: deadline,
+            destination: destination.to_path_buf(),
+        };
+        service::submit_native(
+            &socket,
+            &PathBuf::from(
+                std::env::var_os("JOPE_FIT_AUTHORITY").context("native authority root absent")?,
+            ),
+            &PathBuf::from(std::env::var_os("JOPE_FIT_WITNESS").context("native witness absent")?),
+            &inputs,
+            native,
+        )?
+    } else {
+        service::submit(&socket, &inputs, request)?
+    };
     let completion = reference(&result.completion_path, &result.completion_sha256)?;
     if result.receipt.outcome != ExecutionOutcome::Success {
         let path = destination.with_extension("fit-outcome.json");
@@ -169,6 +196,36 @@ pub fn serve(
     event_witness_config_sha256: &str,
     funding_config: Option<&Path>,
 ) -> Result<()> {
+    serve_with_native_policy(
+        authority,
+        witness,
+        socket,
+        workers,
+        event_witness_config,
+        event_witness_config_sha256,
+        funding_config,
+        None,
+    )
+}
+pub fn serve_with_native_policy(
+    authority: PathBuf,
+    witness: PathBuf,
+    socket: PathBuf,
+    workers: usize,
+    event_witness_config: &Path,
+    event_witness_config_sha256: &str,
+    funding_config: Option<&Path>,
+    native_fit_policy: Option<&Path>,
+) -> Result<()> {
+    if let Ok(value) = std::env::var("SCQ_CONTROL_FD") {
+        let fd: i32 = value.parse()?;
+        let flags = unsafe { libc::fcntl(fd, libc::F_GETFD) };
+        ensure!(
+            flags >= 0 && unsafe { libc::fcntl(fd, libc::F_SETFD, flags | libc::FD_CLOEXEC) } == 0,
+            "native controller control descriptor unavailable"
+        );
+    }
+
     let evaluator = std::env::var_os("JOPE_CPU_EVALUATOR")
         .map(PathBuf::from)
         .context("explicit JOPE_CPU_EVALUATOR binding required; CPU evaluator unavailable")?;
@@ -180,6 +237,7 @@ pub fn serve(
         service::ServiceConfig::regression(authority, witness, socket, evaluator, workers);
     config.event_witness = Some(witness_config);
     config.funding_config = funding_config.map(Path::to_path_buf);
+    config.native_fit_policy = native_fit_policy.map(Path::to_path_buf);
     let instance = service::Service::bind(config)?;
     let stop = Arc::new(AtomicBool::new(false));
     let finished = AtomicBool::new(false);

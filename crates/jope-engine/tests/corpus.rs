@@ -75,8 +75,15 @@ fn sampler_balances_families_and_keeps_comparisons_on_rank() {
             .find(|g| g.records.contains(&ids[0]))
             .unwrap();
         assert!(ids.iter().all(|id| g.records.contains(id)));
-        assert_eq!(ids[0], g.records[0], "every comparison must include its best observed teacher");
-        assert_eq!(ids.iter().collect::<std::collections::BTreeSet<_>>().len(),8,"comparators must be distinct");
+        assert_eq!(
+            ids[0], g.records[0],
+            "every comparison must include its best observed teacher"
+        );
+        assert_eq!(
+            ids.iter().collect::<std::collections::BTreeSet<_>>().len(),
+            8,
+            "comparators must be distinct"
+        );
         *counts.entry(g.family.clone()).or_default() += 1;
         assert_eq!(ids, sample(&index, &families, serial, 8, 12));
     }
@@ -97,10 +104,18 @@ fn sampler_balances_families_and_keeps_comparisons_on_rank() {
         let mut actual = Vec::new();
         for step in 0..32768 / global_batch {
             for rank in 0..8 {
-                actual.extend(sample(&index, &families,
-                    step * global_batch + rank * microbatch, microbatch, 12));
+                actual.extend(sample(
+                    &index,
+                    &families,
+                    step * global_batch + rank * microbatch,
+                    microbatch,
+                    12,
+                ));
             }
         }
-        assert_eq!(actual, expected, "batch {microbatch} changed the sampled teaching examples");
+        assert_eq!(
+            actual, expected,
+            "batch {microbatch} changed the sampled teaching examples"
+        );
     }
 }

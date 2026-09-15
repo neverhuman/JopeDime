@@ -1,6 +1,6 @@
 //! Synthetic process/socket tests; these do not initialize CUDA or qualify NCCL.
-use jope_parallel::manifest;
 use jope_parallel::checkpoint_recovery;
+use jope_parallel::manifest;
 use jope_parallel::sealed_storage;
 use jope_parallel::task_contract;
 #[path = "../src/resident_protocol.rs"]
@@ -32,7 +32,11 @@ fn manifest_request(root: &std::path::Path) -> Value {
     fs::create_dir_all(root.join("corpus")).unwrap();
     fs::create_dir_all(root.join("run")).unwrap();
     write_json(&root.join("run/run.json"), &json!({"schema":"test"})).unwrap();
-    write_json(&root.join("corpus/vocabulary.json"), &json!({"tokens":["original"]})).unwrap();
+    write_json(
+        &root.join("corpus/vocabulary.json"),
+        &json!({"tokens":["original"]}),
+    )
+    .unwrap();
     fs::write(root.join("corpus/records.bin"), b"original records").unwrap();
     write_json(&root.join("corpus/index.json"), &json!({"schema":"parallel.teaching_corpus.v1",
         "vocabulary_sha256":manifest::file_hash(&root.join("corpus/vocabulary.json")).unwrap(),
@@ -48,8 +52,15 @@ fn frozen_input_manifest_change_rejects_without_authorizing_dispatch() {
     let path = d.path().join("run/request.json");
     let deadline = now_ms().unwrap() + 60_000;
     let saved = freeze_request(&path, q.clone(), deadline).unwrap();
-    assert_eq!(freeze_request(&path, q.clone(), deadline + 10_000).unwrap(), saved);
-    write_json(&d.path().join("corpus/index.json"), &json!({"schema":"changed"})).unwrap();
+    assert_eq!(
+        freeze_request(&path, q.clone(), deadline + 10_000).unwrap(),
+        saved
+    );
+    write_json(
+        &d.path().join("corpus/index.json"),
+        &json!({"schema":"changed"}),
+    )
+    .unwrap();
     assert!(freeze_request(&path, q, deadline).is_err());
     assert!(verify_request_inputs(&saved).is_err());
     assert!(!d.path().join("dispatches").exists());
@@ -62,10 +73,17 @@ fn funding_common_task_is_rank_invariant_and_binds_inputs_and_original_deadline(
     let deadline = now_ms().unwrap() + 60_000;
     let saved = freeze_request(&d.path().join("request.json"), q, deadline).unwrap();
     let first = serde_json::to_value(common_task_descriptor(&saved).unwrap()).unwrap();
-    let mut other_rank = saved.clone(); other_rank["rank"] = json!(7);
-    assert_eq!(first, serde_json::to_value(common_task_descriptor(&other_rank).unwrap()).unwrap());
+    let mut other_rank = saved.clone();
+    other_rank["rank"] = json!(7);
+    assert_eq!(
+        first,
+        serde_json::to_value(common_task_descriptor(&other_rank).unwrap()).unwrap()
+    );
     other_rank["deadline_unix_ms"] = json!(deadline + 1);
-    assert_ne!(first, serde_json::to_value(common_task_descriptor(&other_rank).unwrap()).unwrap());
+    assert_ne!(
+        first,
+        serde_json::to_value(common_task_descriptor(&other_rank).unwrap()).unwrap()
+    );
     assert!(first.get("rank").is_none() && first.get("reservation").is_none());
     fs::write(d.path().join("corpus/records.bin"), b"changed records").unwrap();
     assert!(common_task_descriptor(&saved).is_err());
@@ -90,8 +108,16 @@ fn unchanged_manifest_cannot_hide_mutated_payload_on_reuse_or_fresh_capture() {
 fn supplied_subset_cannot_omit_required_input_artifacts() {
     let d = tempfile::tempdir().unwrap();
     let q = manifest_request(d.path());
-    let mut saved = freeze_request(&d.path().join("request.json"), q, now_ms().unwrap() + 60_000).unwrap();
-    saved["input_artifacts"].as_object_mut().unwrap().remove("corpus/records.bin");
+    let mut saved = freeze_request(
+        &d.path().join("request.json"),
+        q,
+        now_ms().unwrap() + 60_000,
+    )
+    .unwrap();
+    saved["input_artifacts"]
+        .as_object_mut()
+        .unwrap()
+        .remove("corpus/records.bin");
     assert!(verify_request_inputs(&saved).is_err());
 }
 
@@ -101,11 +127,15 @@ fn checkpoint_fixture(root: &std::path::Path, name: &str) -> String {
     for filename in ["model.ot", "optimizer.ot", "optimizer.json", "config.json"] {
         fs::write(cp.join(filename), format!("{name}:{filename}")).unwrap();
     }
-    write_json(&cp.join("state.json"), &json!({
+    write_json(
+        &cp.join("state.json"),
+        &json!({
         "model_sha256":manifest::file_hash(&cp.join("model.ot")).unwrap(),
         "optimizer_sha256":manifest::file_hash(&cp.join("optimizer.ot")).unwrap(),
         "optimizer_metadata_sha256":manifest::file_hash(&cp.join("optimizer.json")).unwrap(),
-        "config_sha256":manifest::file_hash(&cp.join("config.json")).unwrap()})).unwrap();
+        "config_sha256":manifest::file_hash(&cp.join("config.json")).unwrap()}),
+    )
+    .unwrap();
     manifest::file_hash(&cp.join("state.json")).unwrap()
 }
 
@@ -118,16 +148,29 @@ fn resume_uses_frozen_selection_while_latest_may_advance() {
     let first = json!({"checkpoint":"checkpoint-a","state_sha256":first_sha});
     let second = json!({"checkpoint":"checkpoint-b","state_sha256":second_sha});
     fs::create_dir_all(d.path().join("run/launch")).unwrap();
-    write_json(&d.path().join("run/initialization.json"), &json!({"kind":"fresh"})).unwrap();
+    write_json(
+        &d.path().join("run/initialization.json"),
+        &json!({"kind":"fresh"}),
+    )
+    .unwrap();
     write_json(&d.path().join("run/launch/resume-input.json"), &first).unwrap();
     write_json(&d.path().join("run/latest.json"), &first).unwrap();
     q["task"]["resume"] = json!(true);
     q["task"]["launch"] = json!(d.path().join("run/launch"));
-    let saved = freeze_request(&d.path().join("request.json"), q, now_ms().unwrap() + 60_000).unwrap();
+    let saved = freeze_request(
+        &d.path().join("request.json"),
+        q,
+        now_ms().unwrap() + 60_000,
+    )
+    .unwrap();
     write_json(&d.path().join("run/latest.json"), &second).unwrap();
     verify_request_inputs(&saved).unwrap();
-    assert!(saved["input_artifacts"].get("checkpoint-a/state.json").is_some());
-    assert!(saved["input_artifacts"].get("checkpoint-b/state.json").is_none());
+    assert!(saved["input_artifacts"]
+        .get("checkpoint-a/state.json")
+        .is_some());
+    assert!(saved["input_artifacts"]
+        .get("checkpoint-b/state.json")
+        .is_none());
     write_json(&d.path().join("run/launch/resume-input.json"), &second).unwrap();
     assert!(verify_request_inputs(&saved).is_err());
 }
@@ -138,25 +181,48 @@ fn proposal_run_seed_champion_and_teacher_labels_are_required_inputs() {
     let mut q = manifest_request(d.path());
     checkpoint_fixture(d.path(), "checkpoint");
     fs::write(d.path().join("corpus/labels.jsonl"), b"teacher labels").unwrap();
-    write_json(&d.path().join("corpus/provenance.json"), &json!({
-        "labels_sha256":manifest::file_hash(&d.path().join("corpus/labels.jsonl")).unwrap()})).unwrap();
+    write_json(
+        &d.path().join("corpus/provenance.json"),
+        &json!({
+        "labels_sha256":manifest::file_hash(&d.path().join("corpus/labels.jsonl")).unwrap()}),
+    )
+    .unwrap();
     fs::create_dir_all(d.path().join("proposal")).unwrap();
-    write_json(&d.path().join("champions.json"), &json!({"metadata":"same","genome":"first"})).unwrap();
+    write_json(
+        &d.path().join("champions.json"),
+        &json!({"metadata":"same","genome":"first"}),
+    )
+    .unwrap();
     let spec = json!({"proposal_seed":17,
         "champion_snapshot_sha256":manifest::file_hash(&d.path().join("champions.json")).unwrap()});
     write_json(&d.path().join("proposal/run.json"), &spec).unwrap();
     q["task"] = json!({"kind":"Proposal","corpus":d.path().join("corpus"),
         "checkpoint":"checkpoint","output":"proposal"});
     q["env"] = json!({"JOPE_CHAMPION_SNAPSHOT":"champions.json"});
-    let saved = freeze_request(&d.path().join("request.json"), q, now_ms().unwrap() + 60_000).unwrap();
-    for path in ["proposal/run.json", "champions.json", "corpus/labels.jsonl", "corpus/provenance.json"] {
+    let saved = freeze_request(
+        &d.path().join("request.json"),
+        q,
+        now_ms().unwrap() + 60_000,
+    )
+    .unwrap();
+    for path in [
+        "proposal/run.json",
+        "champions.json",
+        "corpus/labels.jsonl",
+        "corpus/provenance.json",
+    ] {
         assert!(saved["input_artifacts"].get(path).is_some());
     }
-    let mut changed = spec.clone(); changed["proposal_seed"] = json!(18);
+    let mut changed = spec.clone();
+    changed["proposal_seed"] = json!(18);
     write_json(&d.path().join("proposal/run.json"), &changed).unwrap();
     assert!(verify_request_inputs(&saved).is_err());
     write_json(&d.path().join("proposal/run.json"), &spec).unwrap();
-    write_json(&d.path().join("champions.json"), &json!({"metadata":"same","genome":"second"})).unwrap();
+    write_json(
+        &d.path().join("champions.json"),
+        &json!({"metadata":"same","genome":"second"}),
+    )
+    .unwrap();
     assert!(verify_request_inputs(&saved).is_err());
 }
 
@@ -190,7 +256,9 @@ fn partial_ipc_message_does_not_renew_absolute_deadline() {
     let (mut client, mut server) = UnixStream::pair().unwrap();
     let producer = std::thread::spawn(move || {
         for _ in 0..10 {
-            if server.write_all(b"x").is_err() { break; }
+            if server.write_all(b"x").is_err() {
+                break;
+            }
             std::thread::sleep(Duration::from_millis(10));
         }
     });

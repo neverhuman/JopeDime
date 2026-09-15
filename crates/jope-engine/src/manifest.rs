@@ -13,6 +13,9 @@ pub fn hash(bytes: &[u8]) -> String {
     hex::encode(Sha256::digest(bytes))
 }
 pub fn file_hash(path: &Path) -> Result<String> {
+    if let Some(result) = crate::native_input_cache::hash_if_bound(path) {
+        return result;
+    }
     let mut file = File::open(path).with_context(|| format!("open {}", path.display()))?;
     let mut state = Sha256::new();
     let mut buffer = vec![0; 1024 * 1024];

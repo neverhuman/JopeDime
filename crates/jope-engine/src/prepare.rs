@@ -430,8 +430,10 @@ pub fn folds_with_seed(
                     .iter()
                     .map(|&i| rows[i].last().unwrap())
                     .collect::<BTreeSet<_>>();
-                ensure!(all == heldout_labels,
-                    "insufficient_class_groups: every held-out fold must contain every class");
+                ensure!(
+                    all == heldout_labels,
+                    "insufficient_class_groups: every held-out fold must contain every class"
+                );
             }
             Ok((train, val))
         })
@@ -488,10 +490,14 @@ pub fn reconstruct_numeric(train: &Table, m: &Value) -> Result<(Table, Value)> {
 /// Classification reconstruction replays the recorded source-label encoding
 /// and class-to-code mapping before verifying every historical training row.
 pub fn reconstruct_classification(train: &Table, m: &Value) -> Result<(Table, Value)> {
-    ensure!(m["target_scaling"]["mode"] == "classification",
-        "classification needs a recorded label mapping");
-    ensure!(m["target_scaling"]["scaled_code_formula"] == "code / max(1, n_classes - 1)",
-        "unsupported historical classification formula");
+    ensure!(
+        m["target_scaling"]["mode"] == "classification",
+        "classification needs a recorded label mapping"
+    );
+    ensure!(
+        m["target_scaling"]["scaled_code_formula"] == "code / max(1, n_classes - 1)",
+        "unsupported historical classification formula"
+    );
     reconstruct_recorded(train, m, true)
 }
 
@@ -499,23 +505,44 @@ fn historical_class(target: &str, m: &Value) -> Result<f64> {
     let source = &m["target_source_encoding"];
     let value = match source["kind"].as_str() {
         Some("numeric") => target.parse::<f64>().context("invalid original class")?,
-        Some("categorical_codes") => source["mapping"][target].as_f64()
+        Some("categorical_codes") => source["mapping"][target]
+            .as_f64()
             .context("class absent from original source mapping")?,
         _ => anyhow::bail!("unsupported original class encoding"),
     };
     ensure!(value.is_finite(), "nonfinite original class");
-    let classes = m["target_scaling"]["class_to_code"].as_object()
+    let classes = m["target_scaling"]["class_to_code"]
+        .as_object()
         .context("historical class-to-code mapping absent")?;
-    let hits = classes.iter().filter(|(label, _)|
-        label.parse::<f64>().is_ok_and(|v| v == value)).collect::<Vec<_>>();
-    ensure!(hits.len() == 1, "original class mapping is absent or ambiguous");
-    let count = m["target_scaling"]["n_classes"].as_u64()
+    let hits = classes
+        .iter()
+        .filter(|(label, _)| label.parse::<f64>().is_ok_and(|v| v == value))
+        .collect::<Vec<_>>();
+    ensure!(
+        hits.len() == 1,
+        "original class mapping is absent or ambiguous"
+    );
+    let count = m["target_scaling"]["n_classes"]
+        .as_u64()
         .context("historical class count absent")?;
-    ensure!(count >= 2 && classes.len() == count as usize, "invalid historical classes");
-    let codes = classes.values().map(Value::as_u64).collect::<Option<BTreeSet<_>>>()
+    ensure!(
+        count >= 2 && classes.len() == count as usize,
+        "invalid historical classes"
+    );
+    let codes = classes
+        .values()
+        .map(Value::as_u64)
+        .collect::<Option<BTreeSet<_>>>()
         .context("invalid historical class codes")?;
-    ensure!(codes == (0..count).collect(), "class codes must be contiguous and unique");
-    Ok(hits[0].1.as_f64().context("invalid historical class code")? / (count - 1) as f64)
+    ensure!(
+        codes == (0..count).collect(),
+        "class codes must be contiguous and unique"
+    );
+    Ok(hits[0]
+        .1
+        .as_f64()
+        .context("invalid historical class code")?
+        / (count - 1) as f64)
 }
 
 fn reconstruct_recorded(train: &Table, m: &Value, classification: bool) -> Result<(Table, Value)> {
@@ -600,10 +627,20 @@ fn reconstruct_recorded(train: &Table, m: &Value, classification: bool) -> Resul
             })
             .collect::<Result<Vec<_>>>()?
     };
-    let ylo = if classification { 0.0 } else { m["target_scaling"]["min"]
-        .as_f64().context("unknown target scaling")? };
-    let yhi = if classification { 1.0 } else { m["target_scaling"]["max"]
-        .as_f64().context("unknown target scaling")? };
+    let ylo = if classification {
+        0.0
+    } else {
+        m["target_scaling"]["min"]
+            .as_f64()
+            .context("unknown target scaling")?
+    };
+    let yhi = if classification {
+        1.0
+    } else {
+        m["target_scaling"]["max"]
+            .as_f64()
+            .context("unknown target scaling")?
+    };
     ensure!(yhi > ylo, "constant legacy target");
     fn key(row: &[f64]) -> i64 {
         (row[0] * 10000.0).floor() as i64
@@ -614,10 +651,14 @@ fn reconstruct_recorded(train: &Table, m: &Value, classification: bool) -> Resul
         let mut raw = Vec::new();
         let mut encoded = Vec::new();
         let target = &record[target_index];
-        let y = if classification { historical_class(target.trim(), m)? } else { match target.parse::<f64>() {
-            Ok(y) if y.is_finite() => y,
-            _ => continue,
-        }};
+        let y = if classification {
+            historical_class(target.trim(), m)?
+        } else {
+            match target.parse::<f64>() {
+                Ok(y) if y.is_finite() => y,
+                _ => continue,
+            }
+        };
         for (j, &pos) in positions.iter().enumerate() {
             let name = names[j].as_str().context("feature name")?;
             let encoding = &m["feature_encodings"][name];
@@ -939,8 +980,10 @@ pub fn run_with_admission(
         .files
         .iter()
         .find(|f| f.source == d.source_dir.join("test.csv"));
-    ensure!(test_identity.is_some() || (qualification && d.task == "binary"),
-        "audited final-test hash absent; final targets remain sealed");
+    ensure!(
+        test_identity.is_some() || (qualification && d.task == "binary"),
+        "audited final-test hash absent; final targets remain sealed"
+    );
     let reconstruction = if matches!(d.task.as_str(), "binary" | "multiclass") {
         reconstruct_classification(&original, &m)
     } else {
@@ -952,7 +995,8 @@ pub fn run_with_admission(
     };
     // The reconstructed cut can be used for training. Final-test preprocessing
     // must be reconstructed and qualified separately before a score is claimed.
-    let clean = reconstruction_receipt.is_some() && d.split_feature_overlap == 0 && test_identity.is_some();
+    let clean =
+        reconstruction_receipt.is_some() && d.split_feature_overlap == 0 && test_identity.is_some();
     ensure!(clean||allow_legacy||(qualification && reconstruction_receipt.is_some()),"backing-source row mapping/preprocessing reconstruction required; original-test overlap requires explicit qualification");
     let (ti, ei) = cap_indices(train.rows.len(), test.rows, &d.task, &train.rows)?;
     let receipt = reconstruction_receipt
@@ -1106,6 +1150,24 @@ pub fn workspace_root(prepared: &Path) -> Result<std::path::PathBuf> {
         .context("prepared view must be inside the parallel workspace")
 }
 pub fn load_view(prepared: &Path, cut: usize, training: bool) -> Result<Vec<Vec<f64>>> {
+    load_view_with_root(None, prepared, cut, training)
+}
+/// Resolve pointer payloads against the explicitly authenticated data root.
+/// Relocated historical metadata keeps its original relative source identities.
+pub fn load_view_in_root(
+    root: &Path,
+    prepared: &Path,
+    cut: usize,
+    training: bool,
+) -> Result<Vec<Vec<f64>>> {
+    load_view_with_root(Some(root), prepared, cut, training)
+}
+fn load_view_with_root(
+    root: Option<&Path>,
+    prepared: &Path,
+    cut: usize,
+    training: bool,
+) -> Result<Vec<Vec<f64>>> {
     let p: Prepared = read_json(&prepared.join("prepared.json"))?;
     let c = p
         .cuts
@@ -1124,7 +1186,10 @@ pub fn load_view(prepared: &Path, cut: usize, training: bool) -> Result<Vec<Vec<
         } else {
             &c.validation_indices
         };
-        let raw = load_raw_view(prepared, source, indices)?;
+        let raw = match root {
+            Some(root) => load_raw_view_in_root(root, source, indices)?,
+            None => load_raw_view(prepared, source, indices)?,
+        };
         let pp: Preprocessing = read_json(&pp_path)?;
         pp.transform(&raw)?
     } else {
@@ -1150,8 +1215,14 @@ pub fn load_raw_view(
     source: &ViewSource,
     indices: &[usize],
 ) -> Result<Vec<Vec<String>>> {
-    let root = workspace_root(prepared)?;
-    let path = resolve(&root, &source.source)?;
+    load_raw_view_in_root(&workspace_root(prepared)?, source, indices)
+}
+pub fn load_raw_view_in_root(
+    root: &Path,
+    source: &ViewSource,
+    indices: &[usize],
+) -> Result<Vec<Vec<String>>> {
+    let path = resolve(root, &source.source)?;
     ensure!(
         file_hash(&path)? == source.source_sha256,
         "backing table changed"
@@ -1404,5 +1475,38 @@ mod grouping_review_tests {
         .unwrap_err()
         .to_string()
         .contains("input features"));
+    }
+    #[test]
+    fn explicit_backing_root_preserves_original_rows_and_refuses_fallback() {
+        let parent = tempfile::tempdir().unwrap();
+        let source = parent.path().join("source");
+        let restored = source.join("recovery/restored");
+        fs::create_dir_all(source.join("manifests")).unwrap();
+        fs::write(source.join("Cargo.toml"), b"source marker").unwrap();
+        fs::create_dir_all(&restored).unwrap();
+        let original = b"x,target\n1,10\n2,20\n3,30\n";
+        fs::write(source.join("table.csv"), original).unwrap();
+        let view = ViewSource {
+            source: "table.csv".into(),
+            source_sha256: hash(original),
+            feature_columns: vec!["x".into()],
+            target_column: "target".into(),
+            original_training_row_map: vec![2, 0],
+        };
+        // An outer checkout has valid bytes, but cannot satisfy the explicit relocated root.
+        assert!(load_raw_view_in_root(&restored, &view, &[0, 1]).is_err());
+        fs::write(restored.join("table.csv"), original).unwrap();
+        assert_eq!(
+            load_raw_view_in_root(&restored, &view, &[0, 1]).unwrap(),
+            vec![
+                vec!["3".to_string(), "30".to_string()],
+                vec!["1".to_string(), "10".to_string()]
+            ]
+        );
+        fs::write(restored.join("table.csv"), b"x,target\n1,99\n").unwrap();
+        assert!(load_raw_view_in_root(&restored, &view, &[0]).is_err());
+        fs::remove_file(restored.join("table.csv")).unwrap();
+        std::os::unix::fs::symlink(source.join("table.csv"), restored.join("table.csv")).unwrap();
+        assert!(load_raw_view_in_root(&restored, &view, &[0]).is_err());
     }
 }

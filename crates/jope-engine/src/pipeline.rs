@@ -46,23 +46,48 @@ fn check_gp_health(
 pub(crate) use crate::corpus_publication::verify as verify_corpus;
 
 fn build_corpus_atomic(
-    root: &Path, contexts: &Path, vocab: &Path, observations: &[PathBuf],
-    output: &Path, heartbeat: Option<&StageHeartbeat>,
+    root: &Path,
+    contexts: &Path,
+    vocab: &Path,
+    observations: &[PathBuf],
+    output: &Path,
+    heartbeat: Option<&StageHeartbeat>,
 ) -> Result<()> {
-    crate::corpus_publication::build(root, contexts, vocab, observations, output, true,
-        Some(&corpus_cache_path(root, output)?), heartbeat)
+    crate::corpus_publication::build(
+        root,
+        contexts,
+        vocab,
+        observations,
+        output,
+        true,
+        Some(&corpus_cache_path(root, output)?),
+        heartbeat,
+    )
 }
 
 /// Reuse across cycles in one campaign, with an isolated sibling for standalone
 /// cycles. The corpus API verifies namespace separation and all artifact hashes.
 fn corpus_cache_path(root: &Path, corpus_output: &Path) -> Result<PathBuf> {
-    let cycle = corpus_output.parent().context("corpus cycle directory absent")?;
+    let cycle = corpus_output
+        .parent()
+        .context("corpus cycle directory absent")?;
     let parent = cycle.parent().context("corpus campaign directory absent")?;
-    let namespace = if cycle.file_name().is_some_and(|n|n.to_string_lossy().starts_with("cycle-"))
-        && parent != root.join("runs") { parent } else { cycle };
-    let relative = namespace.strip_prefix(root).context("corpus cache outside workspace")?;
-    ensure!(relative.starts_with("runs") && relative.components().count() >= 2,
-        "corpus cache requires a private campaign namespace");
+    let namespace = if cycle
+        .file_name()
+        .is_some_and(|n| n.to_string_lossy().starts_with("cycle-"))
+        && parent != root.join("runs")
+    {
+        parent
+    } else {
+        cycle
+    };
+    let relative = namespace
+        .strip_prefix(root)
+        .context("corpus cache outside workspace")?;
+    ensure!(
+        relative.starts_with("runs") && relative.components().count() >= 2,
+        "corpus cache requires a private campaign namespace"
+    );
     Ok(namespace.join("corpus-scan-cache"))
 }
 
@@ -72,19 +97,32 @@ mod corpus_cache_tests {
 
     #[test]
     fn cache_is_shared_by_campaign_cycles_and_isolated_for_other_runs() {
-        let root=Path::new("/workspace");
-        let path=|s:&str|corpus_cache_path(root,&root.join(s)).unwrap();
-        assert_eq!(path("runs/campaign/cycle-0000/corpus-2"),path("runs/campaign/cycle-0001/corpus-2"));
-        assert_ne!(path("runs/campaign/cycle-0000/corpus-2"),path("runs/campaign/expansion/cycle-0000/corpus-2"));
-        assert_eq!(path("runs/standalone/corpus-2"),root.join("runs/standalone/corpus-scan-cache"));
-        assert_eq!(path("runs/cycle-0000/corpus-2"),root.join("runs/cycle-0000/corpus-scan-cache"));
-        assert!(corpus_cache_path(root,&root.join("data/corpus-2")).is_err());
+        let root = Path::new("/workspace");
+        let path = |s: &str| corpus_cache_path(root, &root.join(s)).unwrap();
+        assert_eq!(
+            path("runs/campaign/cycle-0000/corpus-2"),
+            path("runs/campaign/cycle-0001/corpus-2")
+        );
+        assert_ne!(
+            path("runs/campaign/cycle-0000/corpus-2"),
+            path("runs/campaign/expansion/cycle-0000/corpus-2")
+        );
+        assert_eq!(
+            path("runs/standalone/corpus-2"),
+            root.join("runs/standalone/corpus-scan-cache")
+        );
+        assert_eq!(
+            path("runs/cycle-0000/corpus-2"),
+            root.join("runs/cycle-0000/corpus-scan-cache")
+        );
+        assert!(corpus_cache_path(root, &root.join("data/corpus-2")).is_err());
     }
 
     #[test]
     fn pending_jobs_require_current_process_bound_activity() {
         let pending = vec![PathBuf::from("runs/pending")];
-        let recent_unbound = json!({"timestamp":100,"expires_at":110,"last_progress_at":100,"phase":"running"});
+        let recent_unbound =
+            json!({"timestamp":100,"expires_at":110,"last_progress_at":100,"phase":"running"});
         assert!(check_gp_health(&recent_unbound, &pending, Duration::ZERO, 101).is_err());
         assert!(check_gp_health(&Value::Null, &pending, Duration::from_secs(9), 100).is_ok());
         assert!(check_gp_health(&Value::Null, &pending, Duration::from_secs(10), 100).is_err());
@@ -95,24 +133,30 @@ mod corpus_cache_tests {
         let saved: Value = read_json(&path).unwrap();
         let timestamp = saved["timestamp"].as_u64().unwrap();
         assert!(check_gp_health(&saved, &pending, Duration::from_secs(30), timestamp + 9).is_ok());
-        assert!(check_gp_health(&saved, &pending, Duration::from_secs(30), timestamp + 10).is_err());
+        assert!(
+            check_gp_health(&saved, &pending, Duration::from_secs(30), timestamp + 10).is_err()
+        );
         heartbeat.finish().unwrap();
     }
 
     #[test]
     fn atomic_campaign_pack_creates_private_cache_and_preserves_full_artifacts() {
-        let temporary=tempfile::tempdir().unwrap();let root=temporary.path();
-        let vocab=Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/grammar/featmath.json");
-        let mut contexts=Vec::new();let mut observations=Vec::new();
-        for family in ["a","b"] {
-            let prepared=root.join(family);
+        let temporary = tempfile::tempdir().unwrap();
+        let root = temporary.path();
+        let vocab = Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/grammar/featmath.json");
+        let mut contexts = Vec::new();
+        let mut observations = Vec::new();
+        for family in ["a", "b"] {
+            let prepared = root.join(family);
             write_json(&prepared.join("prepared.json"),&json!({"schema":"parallel.prepared.v1","dataset":family,"family":family,
                 "task":"regression","meta_partition":"meta_train","seed":17,"clean_evaluation":true,"clean_status":"fixture",
                 "original_train_sha256":"original","original_test_sha256":"sealed","selected_train_indices":[0,1],
                 "selected_test_indices":[],"target_last":true,"rows_total":2,"cuts":[{"index":0,"train_indices":[0],
                 "validation_indices":[1],"training_sha256":"train","validation_sha256":"validation","preprocessing_sha256":"preprocessing"}]})).unwrap();
-            let prepared_sha=file_hash(&prepared.join("prepared.json")).unwrap();let vector=prepared.join("context.bin");
-            fs::write(&vector,b"saved fixture context").unwrap();let vector_sha=file_hash(&vector).unwrap();
+            let prepared_sha = file_hash(&prepared.join("prepared.json")).unwrap();
+            let vector = prepared.join("context.bin");
+            fs::write(&vector, b"saved fixture context").unwrap();
+            let vector_sha = file_hash(&vector).unwrap();
             write_json(&vector.with_extension("json"),&json!({"schema":"parallel.encoding.v1","dataset":family,"family":family,
                 "partition":"meta_train","cut":0,"prepared_sha256":prepared_sha,"training_sha256":"train",
                 "selected_training_rows_sha256":"rows","preprocessing_sha256":"preprocessing","encoder_spec_sha256":"assembly",
@@ -120,30 +164,65 @@ mod corpus_cache_tests {
             contexts.push(json!({"dataset":family,"family":family,"cut":0,"partition":"meta_train","path":vector.strip_prefix(root).unwrap(),
                 "sha256":vector_sha,"prepared":family,"prepared_sha256":prepared_sha}));
             // Misleading directory names must not filter valid row identities.
-            let source=root.join(format!("observations/not-{family}/cut-999"));
+            let source = root.join(format!("observations/not-{family}/cut-999"));
             let rows=["standardize","robust_scale","norm_row","row_stats","rank","blom","sigmoid","step"].iter().enumerate().map(|(n,t)|{
                 let genome=format!("(pipe X ({t}) (ridge))");json!({"dataset":family,"family":family,"cut":0,"partition":"meta_train",
                     "training_sha256":"train","validation_sha256":"validation","genome":genome,"program_sha256":hash(genome.as_bytes()),
                     "metrics":{"rmse":n as f64+1.},"runtime_seconds":0.1,"evaluation_bias":"fixture","failure":null})}).collect::<Vec<_>>();
-            write_json(&source.join("observations.json"),&rows).unwrap();write_json(&source.join("search.json"),&json!({})).unwrap();observations.push(source);
+            write_json(&source.join("observations.json"), &rows).unwrap();
+            write_json(&source.join("search.json"), &json!({})).unwrap();
+            observations.push(source);
         }
-        let index=root.join("contexts.json");write_json(&index,&json!({"schema":"parallel.context_index.v1","qualification":true,"assembly_sha256":"assembly","encodings":contexts})).unwrap();
-        let full=root.join("full");corpus::build(root,&index,&vocab,&observations,&full,true).unwrap();
-        let first=root.join("runs/campaign/cycle-0000/corpus-2");let second=root.join("runs/campaign/cycle-0001/corpus-2");
-        fs::create_dir_all(first.parent().unwrap()).unwrap();fs::create_dir_all(second.parent().unwrap()).unwrap();
-        build_corpus_atomic(root,&index,&vocab,&observations,&first,None).unwrap();
-        let cache=corpus_cache_path(root,&first).unwrap();assert!(cache.is_dir());
-        let inventory=||walkdir::WalkDir::new(&cache).into_iter().map(|e|e.unwrap().into_path()).filter(|p|p.is_file()).map(|p|{let sha=file_hash(&p).unwrap();(p,sha)}).collect::<BTreeMap<_,_>>();
-        let before=inventory();assert!(!before.is_empty());
-        build_corpus_atomic(root,&index,&vocab,&observations,&second,None).unwrap();assert_eq!(before,inventory());
-        for name in ["records.bin","labels.jsonl","index.json","provenance.json","vocabulary.json"] {
-            assert_eq!(fs::read(full.join(name)).unwrap(),fs::read(first.join(name)).unwrap());
-            assert_eq!(fs::read(full.join(name)).unwrap(),fs::read(second.join(name)).unwrap());
+        let index = root.join("contexts.json");
+        write_json(&index,&json!({"schema":"parallel.context_index.v1","qualification":true,"assembly_sha256":"assembly","encodings":contexts})).unwrap();
+        let full = root.join("full");
+        corpus::build(root, &index, &vocab, &observations, &full, true).unwrap();
+        let first = root.join("runs/campaign/cycle-0000/corpus-2");
+        let second = root.join("runs/campaign/cycle-0001/corpus-2");
+        fs::create_dir_all(first.parent().unwrap()).unwrap();
+        fs::create_dir_all(second.parent().unwrap()).unwrap();
+        build_corpus_atomic(root, &index, &vocab, &observations, &first, None).unwrap();
+        let cache = corpus_cache_path(root, &first).unwrap();
+        assert!(cache.is_dir());
+        let inventory = || {
+            walkdir::WalkDir::new(&cache)
+                .into_iter()
+                .map(|e| e.unwrap().into_path())
+                .filter(|p| p.is_file())
+                .map(|p| {
+                    let sha = file_hash(&p).unwrap();
+                    (p, sha)
+                })
+                .collect::<BTreeMap<_, _>>()
+        };
+        let before = inventory();
+        assert!(!before.is_empty());
+        build_corpus_atomic(root, &index, &vocab, &observations, &second, None).unwrap();
+        assert_eq!(before, inventory());
+        for name in [
+            "records.bin",
+            "labels.jsonl",
+            "index.json",
+            "provenance.json",
+            "vocabulary.json",
+        ] {
+            assert_eq!(
+                fs::read(full.join(name)).unwrap(),
+                fs::read(first.join(name)).unwrap()
+            );
+            assert_eq!(
+                fs::read(full.join(name)).unwrap(),
+                fs::read(second.join(name)).unwrap()
+            );
         }
-        assert!(!root.join("runs/corpus-progress.json").exists());assert!(!second.with_file_name(".corpus-2.staging").exists());
-        fs::write(second.join("records.bin"),b"corrupt committed output").unwrap();
-        assert!(build_corpus_atomic(root,&index,&vocab,&observations,&second,None).is_err());
-        assert_eq!(fs::read(second.join("records.bin")).unwrap(),b"corrupt committed output");
+        assert!(!root.join("runs/corpus-progress.json").exists());
+        assert!(!second.with_file_name(".corpus-2.staging").exists());
+        fs::write(second.join("records.bin"), b"corrupt committed output").unwrap();
+        assert!(build_corpus_atomic(root, &index, &vocab, &observations, &second, None).is_err());
+        assert_eq!(
+            fs::read(second.join("records.bin")).unwrap(),
+            b"corrupt committed output"
+        );
     }
 }
 
@@ -506,10 +585,19 @@ pub fn run(
     let mut comparisons = Vec::new();
     let mut predictor_exports = Vec::new();
     let mut family_ratios = BTreeMap::<String, Vec<f64>>::new();
-    progress(root, "Fit and save predictors", (total*2,total*2), (all_total,all_total), (0,steps), false,
-        "CPU fitting and export; liveness is separate from committed predictor receipts.")?;
-    let export_heartbeat = StageHeartbeat::start(&root.join("runs/cycle-progress.json"),
-        read_json(&root.join("runs/cycle-progress.json"))?)?;
+    progress(
+        root,
+        "Fit and save predictors",
+        (total * 2, total * 2),
+        (all_total, all_total),
+        (0, steps),
+        false,
+        "CPU fitting and export; liveness is separate from committed predictor receipts.",
+    )?;
+    let export_heartbeat = StageHeartbeat::start(
+        &root.join("runs/cycle-progress.json"),
+        read_json(&root.join("runs/cycle-progress.json"))?,
+    )?;
     export_heartbeat.advance("predictor receipts committed", 0, Some(neural.jobs.len()))?;
     for i in 0..neural.jobs.len() {
         crate::campaign::check_deadline()?;
@@ -554,7 +642,11 @@ pub fn run(
             &output.join("predictor-exports.json"),
             &json!({"schema":"parallel.predictor_exports.v1","exports":predictor_exports,"completed":predictor_exports.len(),"total":neural.jobs.len(),"evaluator_sha256":executable_sha,"final_tests_opened":false,"qualification":true,"failures_block_retraining":false}),
         )?;
-        export_heartbeat.advance("predictor receipts committed", predictor_exports.len(), Some(neural.jobs.len()))?;
+        export_heartbeat.advance(
+            "predictor receipts committed",
+            predictor_exports.len(),
+            Some(neural.jobs.len()),
+        )?;
     }
     export_heartbeat.finish()?;
     write_json(
@@ -582,8 +674,10 @@ pub fn run(
     .collect::<Vec<_>>();
     observation_roots.extend([proposal_dir, generic_dir, shuffled_dir]);
     observation_roots.extend(extra_observations.iter().cloned());
-    let packing_heartbeat = StageHeartbeat::start(&root.join("runs/cycle-progress.json"),
-        read_json(&root.join("runs/cycle-progress.json"))?)?;
+    let packing_heartbeat = StageHeartbeat::start(
+        &root.join("runs/cycle-progress.json"),
+        read_json(&root.join("runs/cycle-progress.json"))?,
+    )?;
     build_corpus_atomic(
         root,
         contexts_path,

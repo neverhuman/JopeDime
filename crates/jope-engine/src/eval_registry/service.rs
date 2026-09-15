@@ -37,7 +37,11 @@ use std::{
 mod query_worker;
 pub use query_worker::execute_query_worker;
 mod funding_ipc;
-pub use funding_ipc::{funding_admission, funding_request, FundingRequest, VerifiedFundingAdmission};
+mod native_scq;
+pub use funding_ipc::{
+    funding_admission, funding_request, FundingRequest, VerifiedFundingAdmission,
+};
+pub(crate) use native_scq::submit as submit_native;
 
 const MAX_FRAME: usize = 65536;
 const SEALS: i32 = libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL;
@@ -102,6 +106,7 @@ pub struct ServiceConfig {
     pub max_descriptor_bytes: u64,
     pub event_witness: Option<super::witness::WitnessClientConfig>,
     pub funding_config: Option<PathBuf>,
+    pub native_fit_policy: Option<PathBuf>,
     #[cfg(test)]
     funding_fixture: Option<super::funding_config::InstalledFunding>,
     #[cfg(test)]
@@ -148,6 +153,7 @@ impl ServiceConfig {
             max_descriptor_bytes: 2 * 1024 * 1024 * 1024,
             event_witness: None,
             funding_config: None,
+            native_fit_policy: None,
             #[cfg(test)]
             funding_fixture: None,
             #[cfg(test)]
@@ -224,6 +230,9 @@ pub struct ServiceStats {
 #[derive(Serialize, Deserialize)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 enum Request {
+    SubmitNative {
+        request: super::native_scq::NativeRequest,
+    },
     Funding {
         descriptor_sha256: String,
         deadline_monotonic_ns: u64,
@@ -272,6 +281,8 @@ struct WorkerLaunch {
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Permission {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    native_placement: Option<jain_smartcluster::TrustedFitChildPlacement>,
     start: StartToken,
     custody_device: u64,
     custody_inode: u64,
@@ -283,6 +294,7 @@ struct Pending {
     send: SyncSender<(UnixStream, String)>,
 }
 struct State {
+    native_fit_policy: Option<Arc<super::native_scq::policy::InstalledPolicy>>,
     funding_installation: Option<super::funding_config::InstalledFunding>,
     funding_active: AtomicUsize,
     authority: Mutex<Authority>,
@@ -433,10 +445,28 @@ impl Service {
             authority.attach_event_witness(witness)?;
         }
         #[cfg(test)]
-        ensure!(config.funding_fixture.is_none() || config.funding_config.is_none(),
-            "private funding fixture cannot override an installed configuration");
-        let funding_installation = config.funding_config.as_deref()
-            .map(super::funding_config::InstalledFunding::load).transpose()?;
+        ensure!(
+            config.funding_fixture.is_none() || config.funding_config.is_none(),
+            "private funding fixture cannot override an installed configuration"
+        );
+        let native_fit_policy = config
+            .native_fit_policy
+            .as_deref()
+            .map(super::native_scq::policy::InstalledPolicy::load)
+            .transpose()?
+            .map(Arc::new);
+        if let Some(policy) = &native_fit_policy {
+            ensure!(
+                policy.signed.body.authority_root == config.authority_root
+                    && policy.signed.body.witness == config.witness,
+                "native installed grant binds another authority/witness path"
+            );
+        }
+        let funding_installation = config
+            .funding_config
+            .as_deref()
+            .map(super::funding_config::InstalledFunding::load)
+            .transpose()?;
         #[cfg(test)]
         let funding_installation = funding_installation.or_else(|| config.funding_fixture.clone());
         if let Some(installation) = &funding_installation {
@@ -478,6 +508,7 @@ impl Service {
         )?;
         let state = Arc::new(State {
             funding_installation,
+            native_fit_policy,
             funding_active: AtomicUsize::new(0),
             authority: Mutex::new(authority),
             lease: lease.clone(),
@@ -628,9 +659,21 @@ fn remaining_request(deadline: u64) -> Result<Duration> {
 fn connection(state: &Arc<State>, stream: &mut UnixStream, stopping: bool) -> Result<()> {
     let peer = authenticated_peer(stream)?;
     match receive_json::<Request>(stream, Duration::from_secs(5))? {
-        Request::Funding { descriptor_sha256, deadline_monotonic_ns } => {
+        Request::SubmitNative { request } => {
+            native_scq::connection(state, stream, &peer, request, stopping)?
+        }
+        Request::Funding {
+            descriptor_sha256,
+            deadline_monotonic_ns,
+        } => {
             ensure!(!stopping, "authority draining: funding unavailable");
-            funding_ipc::serve_request(state, stream, &peer, &descriptor_sha256, deadline_monotonic_ns)?;
+            funding_ipc::serve_request(
+                state,
+                stream,
+                &peer,
+                &descriptor_sha256,
+                deadline_monotonic_ns,
+            )?;
         }
         Request::Submit {
             provenance,
@@ -680,7 +723,7 @@ fn connection(state: &Arc<State>, stream: &mut UnixStream, stopping: bool) -> Re
             };
             let result = match claim {
                 ClaimOutcome::Claimed(claim) => {
-                    supervise(state, &fit, &inputs, &input, &claim, request_deadline)?
+                    supervise(state, &fit, &inputs, &input, &claim, request_deadline, None)?
                 }
                 ClaimOutcome::Existing {
                     state: status,
@@ -935,6 +978,7 @@ fn supervise(
     input: &File,
     claim: &Claim,
     request_deadline: u64,
+    mut native: Option<&mut super::native_scq::NativeAdmission>,
 ) -> Result<ServiceResult> {
     remaining_request(request_deadline)?;
     {
@@ -951,6 +995,7 @@ fn supervise(
     let parent = std::process::id();
     let mut command = Command::new(&state.config.worker_executable);
     command
+        .env_remove("SCQ_CONTROL_FD")
         .args(&state.config.worker_arguments)
         .env("JOPE_SERVICE_INPUT_FD", fd.to_string())
         .env("JOPE_SERVICE_TICKET", &ticket)
@@ -1001,6 +1046,33 @@ fn supervise(
         process: process.clone(),
         reaped: false,
     };
+    if let Some(proof) = native.as_deref_mut() {
+        ensure!(
+            unsafe { libc::kill(process.pid as i32, libc::SIGSTOP) } == 0,
+            "cannot stop original native child"
+        );
+        let until = Instant::now()
+            + remaining_request(request_deadline)?.min(state.config.handshake_timeout);
+        loop {
+            ensure!(
+                ProcessIdentity::read(process.pid)? == process,
+                "native child birth changed before placement"
+            );
+            let status = fs::read_to_string(format!("/proc/{}/status", process.pid))?;
+            if status.lines().any(|line| {
+                line.starts_with("State:") && line.split_whitespace().nth(1) == Some("T")
+            }) {
+                break;
+            }
+            ensure!(Instant::now() < until, "native child stop gate timeout");
+            std::thread::sleep(Duration::from_millis(2));
+        }
+        proof.attach_child(&process)?;
+        ensure!(
+            unsafe { libc::kill(process.pid as i32, libc::SIGCONT) } == 0,
+            "cannot release placed original child"
+        );
+    }
     state.worker_spawns.fetch_add(1, Ordering::SeqCst);
     let (sender, receiver) = sync_channel(1);
     lock(&state.pending)?.insert(
@@ -1061,16 +1133,30 @@ fn supervise(
         let _dispatch = state.dispatch_gate()?;
         let remaining = remaining_request(request_deadline)?.min(state.config.fit_deadline);
         let mut authority = lock(&state.authority)?;
-        let start = authority.authorize_with_deadline(&actual, claim, &process, remaining)?;
+        let start = if let Some(proof) = native.as_deref() {
+            authority.authorize_native(&actual, claim, &process, remaining, proof)?
+        } else {
+            authority.authorize_with_deadline(&actual, claim, &process, remaining)?
+        };
         remaining_request(request_deadline)?;
         state.lease.verify()?;
         check_socket(&state.identity, &state.config.socket)?;
-        let custody =
-            authority.consume_owned_child_start(&actual, &start, &original.child, &worker)?;
+        let custody = if let Some(proof) = native.as_deref() {
+            authority.consume_native_owned_child_start(
+                &actual,
+                &start,
+                &original.child,
+                &worker,
+                proof,
+            )?
+        } else {
+            authority.consume_owned_child_start(&actual, &start, &original.child, &worker)?
+        };
         (start, custody)
     };
     let (device, inode) = custody.identity()?;
     let permission = Permission {
+        native_placement: native.as_deref().and_then(|p| p.placement.clone()),
         start: start.clone(),
         custody_device: device,
         custody_inode: inode,
@@ -1192,6 +1278,16 @@ pub struct WorkerPermit {
 }
 impl WorkerPermit {
     pub fn verify(&self) -> Result<()> {
+        if let Some(p) = &self.permission.native_placement {
+            super::native_scq::verify_placement(
+                p,
+                &self.permission.start.executor,
+                p.target_attempt,
+                &p.task_manifest_sha256,
+                &p.descriptor_sha256,
+                p.candidate_index,
+            )?;
+        }
         ensure!(
             super::authority::monotonic_ns()? < self.permission.start.deadline_monotonic_ns,
             "original worker start deadline expired"
@@ -1950,7 +2046,7 @@ fn receive_fd(stream: &UnixStream, timeout: Duration) -> Result<OwnedFd> {
     }
 }
 
-#[cfg(test)]
-mod tests;
 #[cfg(all(test, not(feature = "neural")))]
 mod funding_tests;
+#[cfg(test)]
+mod tests;

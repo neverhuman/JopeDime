@@ -71,15 +71,21 @@ impl Fixture {
         if covered {
             // This test-only insert is deliberately not exposed as an empty
             // production-history API. Real import requires evidence and files.
-            f.open()
+            let mut authority = f.open();
+            let coverage = authority
+                .store_blob(
+                    &encoded(&json!({
+                        "schema":"jope.synthetic_coverage_fixture.v1", "synthetic_only":true
+                    }))
+                    .unwrap(),
+                )
+                .unwrap();
+            authority
                 .mutation(
                     "synthetic_test_coverage",
                     &json!({"synthetic_only":true}),
                     |db| {
-                        db.execute(
-                            "INSERT INTO coverage VALUES('synthetic',?)",
-                            [hash(b"explicit synthetic fixture")],
-                        )?;
+                        db.execute("INSERT INTO coverage VALUES('synthetic',?)", [coverage])?;
                         Ok(())
                     },
                 )
@@ -769,6 +775,452 @@ fn history_batches_resume_without_activating_and_require_every_occurrence() {
 }
 
 #[test]
+fn history_batch_shared_evidence_is_read_once_and_rechecked_on_retry() {
+    use std::io::Read;
+    use std::os::fd::{AsRawFd, FromRawFd};
+    use std::os::unix::ffi::OsStrExt;
+
+    let fixture = Fixture::new(false);
+    let mut inventory = staged_history_fixture(&fixture);
+    let original = inventory.occurrences[0].clone();
+    let other_evidence = inventory.occurrences[1..].to_vec();
+    inventory.occurrences = (0..64)
+        .map(|i| HistoricalExclusion {
+            reason: format!("separate original occurrence {i}"),
+            ..original.clone()
+        })
+        .collect();
+    inventory.occurrences.extend(other_evidence);
+    let mut authority = fixture.open();
+    let stage = authority.history_stage(&inventory).unwrap();
+    let evidence = fixture.root.join("objects").join(&original.evidence_sha256);
+    // Observe real opens, not a timing threshold or a replacement verifier.
+    // OPEN and CLOSE events alternate, so inotify cannot coalesce repeated opens.
+    let fd = unsafe { libc::inotify_init1(libc::IN_NONBLOCK | libc::IN_CLOEXEC) };
+    assert!(fd >= 0);
+    let mut events = unsafe { std::fs::File::from_raw_fd(fd) };
+    let path = std::ffi::CString::new(evidence.as_os_str().as_bytes()).unwrap();
+    assert!(
+        unsafe {
+            libc::inotify_add_watch(
+                events.as_raw_fd(),
+                path.as_ptr(),
+                libc::IN_OPEN | libc::IN_CLOSE_NOWRITE,
+            )
+        } >= 0
+    );
+    let batch = HistoryBatch {
+        stage_sha256: stage,
+        start: 0,
+        end: inventory.occurrences.len(),
+    };
+    let result = authority.history_import_batch(&batch).unwrap();
+    let mut bytes = [0u8; 8192];
+    let n = events.read(&mut bytes).unwrap();
+    let mut offset = 0;
+    let mut opens = 0;
+    while offset < n {
+        let mask = u32::from_ne_bytes(bytes[offset + 4..offset + 8].try_into().unwrap());
+        let length = u32::from_ne_bytes(bytes[offset + 12..offset + 16].try_into().unwrap());
+        assert_eq!(mask & libc::IN_Q_OVERFLOW, 0);
+        opens += usize::from(mask & libc::IN_OPEN != 0);
+        offset += 16 + length as usize;
+    }
+    assert_eq!(
+        opens, 1,
+        "one physical verification per distinct batch evidence"
+    );
+    assert_eq!(
+        authority
+            .db
+            .query_row("SELECT count(*) FROM exclusions", [], |r| r
+                .get::<_, u64>(0))
+            .unwrap(),
+        66
+    );
+    let sequence = authority.checkpoint.seq;
+    assert_eq!(authority.history_import_batch(&batch).unwrap(), result);
+    assert_eq!(authority.checkpoint.seq, sequence);
+    fs::set_permissions(&evidence, fs::Permissions::from_mode(0o600)).unwrap();
+    fs::write(&evidence, b"corrupted original shared evidence").unwrap();
+    fs::set_permissions(&evidence, fs::Permissions::from_mode(0o444)).unwrap();
+    assert!(authority.history_import_batch(&batch).is_err());
+    assert_eq!(authority.checkpoint.seq, sequence);
+    assert_eq!(
+        authority
+            .db
+            .query_row("SELECT count(*) FROM history_batches", [], |r| r
+                .get::<_, u64>(0))
+            .unwrap(),
+        1
+    );
+    assert_eq!(
+        authority
+            .db
+            .query_row("SELECT count(*) FROM entries", [], |r| r.get::<_, u64>(0))
+            .unwrap(),
+        0
+    );
+}
+
+#[test]
+fn historical_global_lookup_index_preserves_absent_present_and_null_guard_semantics() {
+    let db = Connection::open_in_memory().unwrap();
+    db.execute_batch("CREATE TABLE exclusions(id TEXT PRIMARY KEY,scope TEXT NOT NULL,program TEXT,training TEXT,evidence_sha TEXT NOT NULL,reason TEXT NOT NULL) WITHOUT ROWID; CREATE INDEX exclusions_match ON exclusions(scope,program,training); CREATE TABLE scope_training(scope TEXT,training TEXT); CREATE INDEX scope_training_hash ON scope_training(training); INSERT INTO scope_training VALUES('selected','selected-training');").unwrap();
+    for (id, scope, program, training) in [
+        ("program", "elsewhere", Some("blocked"), None),
+        ("training", "elsewhere", None, Some("blocked-training")),
+        ("wild", "selected", None, None),
+        ("joint", "elsewhere", Some("joint"), Some("joint-training")),
+    ] {
+        db.execute(
+            "INSERT INTO exclusions VALUES(?,?,?,?,?,?)",
+            params![id, scope, program, training, ZERO, id],
+        )
+        .unwrap();
+    }
+    for i in 0..10_000 {
+        db.execute(
+            "INSERT INTO exclusions VALUES(?,?,?,?,?,?)",
+            params![
+                format!("filler-{i}"),
+                "elsewhere",
+                format!("other-program-{i}"),
+                Option::<String>::None,
+                ZERO,
+                "retained"
+            ],
+        )
+        .unwrap();
+    }
+    let cases = [
+        ("absent", "other", false),
+        ("blocked", "other", true),
+        ("absent", "blocked-training", true),
+        ("absent", "selected-training", true),
+        ("joint", "joint-training", true),
+        ("joint", "other", false),
+    ];
+    let all = HISTORY_LOOKUP_SQL.replace(" LIMIT 1", "");
+    let lookup = |sql: &str, program: &str, training: &str| {
+        db.prepare(sql)
+            .unwrap()
+            .query_map(params![program, training, training], |r| {
+                r.get::<_, String>(0)
+            })
+            .unwrap()
+            .collect::<std::result::Result<BTreeSet<_>, _>>()
+            .unwrap()
+    };
+    let before: Vec<_> = cases.iter().map(|(p, t, _)| lookup(&all, p, t)).collect();
+    Authority::create_history_lookup_index(&db).unwrap();
+    for ((program, training, blocked), original) in cases.iter().zip(before) {
+        assert_eq!(lookup(&all, program, training), original);
+        assert_eq!(
+            !lookup(HISTORY_LOOKUP_SQL, program, training).is_empty(),
+            *blocked
+        );
+        let plans: Vec<String> = db
+            .prepare(&format!("EXPLAIN QUERY PLAN {HISTORY_LOOKUP_SQL}"))
+            .unwrap()
+            .query_map(params![program, training, training], |r| r.get(3))
+            .unwrap()
+            .collect::<std::result::Result<_, _>>()
+            .unwrap();
+        assert!(
+            plans.iter().any(|p| p.contains("exclusions_global_match")),
+            "{plans:?}"
+        );
+        assert!(
+            !plans.iter().any(|p| p.contains("SCAN exclusions")),
+            "{plans:?}"
+        );
+    }
+}
+
+#[test]
+fn history_lookup_maintenance_is_explicit_idempotent_and_preserves_original_journal() {
+    let fixture = Fixture::new(false);
+    let mut authority = fixture.open();
+    authority
+        .db
+        .execute_batch("DROP INDEX exclusions_global_match")
+        .unwrap();
+    drop(authority);
+    let mut authority = fixture.open();
+    assert!(
+        !authority
+            .db
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE name='exclusions_global_match')",
+                [],
+                |r| r.get::<_, bool>(0)
+            )
+            .unwrap(),
+        "ordinary open must not change original schema"
+    );
+    let journal = fs::read(fixture.root.join("dispatch.jsonl")).unwrap();
+    let witness = fs::read(&fixture.witness).unwrap();
+    assert_eq!(
+        authority.prepare_history_lookup_index().unwrap()["already_present"],
+        false
+    );
+    assert_eq!(
+        authority.prepare_history_lookup_index().unwrap()["already_present"],
+        true
+    );
+    assert_eq!(
+        fs::read(fixture.root.join("dispatch.jsonl")).unwrap(),
+        journal
+    );
+    assert_eq!(fs::read(&fixture.witness).unwrap(), witness);
+    authority.db.execute_batch("DROP INDEX exclusions_global_match; CREATE INDEX exclusions_global_match ON exclusions(scope)").unwrap();
+    assert!(
+        authority.prepare_history_lookup_index().is_err(),
+        "conflicting index cannot be silently adopted"
+    );
+}
+
+#[test]
+fn external_index_tamper_is_detected_even_when_another_valid_event_advanced() {
+    let fixture = Fixture::new(false);
+    let inventory = staged_history_fixture(&fixture);
+    let mut authority = fixture.open();
+    authority.import_history(&inventory).unwrap();
+    let mut next = inventory.clone();
+    next.occurrences[0].reason.push_str(" next retained stage");
+    fixture.open().history_stage(&next).unwrap();
+    let db = Connection::open(fixture.root.join("registry.sqlite")).unwrap();
+    db.execute(
+        "UPDATE exclusions SET reason='unrelated external tamper'",
+        [],
+    )
+    .unwrap();
+    assert!(authority.verify_tail().is_err());
+}
+
+#[test]
+fn full_state_rejects_matching_journal_and_index_tamper_with_unchanged_watermarks() {
+    let fixture = Fixture::new(false);
+    let inventory = staged_history_fixture(&fixture);
+    let mut authority = fixture.open();
+    authority.import_history(&inventory).unwrap();
+    let path = fixture.root.join("dispatch.jsonl");
+    let original = fs::read(&path).unwrap();
+    let mut changed = Vec::new();
+    let mut victim = None;
+    for line in original.split_inclusive(|b| *b == b'\n') {
+        let mut event: Event = serde_json::from_slice(line).unwrap();
+        if victim.is_none() {
+            if let Some(row) = event.effects.iter_mut().find(|r| r.table == "exclusions") {
+                let reason = row.row["reason"].as_str().unwrap();
+                let mut replacement = reason.to_owned();
+                replacement.replace_range(replacement.len() - 1.., "X");
+                row.row["reason"] = json!(replacement);
+                victim = Some((row.key.clone(), replacement));
+                let bytes = encoded(&event).unwrap();
+                assert_eq!(bytes.len() + 1, line.len());
+                changed.extend(bytes);
+                changed.push(b'\n');
+                continue;
+            }
+        }
+        changed.extend_from_slice(line);
+    }
+    let (key, reason) = victim.unwrap();
+    assert_eq!(changed.len(), original.len());
+    fs::write(&path, changed).unwrap();
+    let db = Connection::open(fixture.root.join("registry.sqlite")).unwrap();
+    db.execute(
+        "UPDATE exclusions SET reason=? WHERE id=?",
+        params![reason, key],
+    )
+    .unwrap();
+    assert!(
+        authority.verify_tail().is_err(),
+        "matching altered postimages cannot repair the original hash chain"
+    );
+}
+
+#[test]
+fn state_digest_map_preserves_latest_rows_and_rejects_missing_extra_and_tampered_rows() {
+    let index = StateDigests::new().unwrap();
+    let mut row = StateRow {
+        table: "exclusions".into(),
+        key: "original-key".into(),
+        row: json!({"value":"old","nullable":null}),
+    };
+    index.insert(&row).unwrap();
+    row.row["value"] = json!("latest");
+    index.insert(&row).unwrap();
+    assert!(
+        index.ensure_empty().is_err(),
+        "missing indexed row must fail"
+    );
+    assert!(index.consume("exclusions", "extra-key", &row.row).is_err());
+    assert!(index
+        .consume(
+            "exclusions",
+            &row.key,
+            &json!({"value":"old","nullable":null})
+        )
+        .is_err());
+    assert!(
+        index
+            .consume("exclusions", &row.key, &json!({"value":"latest"}))
+            .is_err(),
+        "complete postimage includes null fields"
+    );
+    index.consume("exclusions", &row.key, &row.row).unwrap();
+    index.ensure_empty().unwrap();
+    assert!(index.consume("exclusions", &row.key, &row.row).is_err());
+    row.table = "unreviewed_table".into();
+    assert!(index.insert(&row).is_err());
+}
+
+#[test]
+fn state_digest_map_exhaustion_fails_without_disk_fallback() {
+    let index = StateDigests::with_page_limit(2).unwrap();
+    let row = StateRow {
+        table: "exclusions".into(),
+        key: "x".repeat(32 * 1024),
+        row: json!({"original":true}),
+    };
+    let file: String = index
+        .db
+        .query_row(
+            "SELECT file FROM pragma_database_list WHERE name='main'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert!(file.is_empty());
+    assert_eq!(
+        index
+            .db
+            .pragma_query_value(None, "max_page_count", |r| r.get::<_, u64>(0))
+            .unwrap(),
+        2
+    );
+    assert!(index.insert(&row).is_err());
+    // SQLITE_FULL may invalidate this disposable journal-OFF database. The
+    // verifier propagates the error and discards it; never reuse it afterward.
+}
+
+#[test]
+fn recovery_locator_retains_original_watermark_and_latest_postimage() {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("original.jsonl");
+    let first = Event {
+        instance: "fixture".into(),
+        seq: 1,
+        previous: ZERO.into(),
+        kind: "fixture".into(),
+        payload: json!({}),
+        effects: vec![StateRow {
+            table: "exclusions".into(),
+            key: "a".into(),
+            row: json!({"version":"old"}),
+        }],
+    };
+    let second = Event {
+        instance: "fixture".into(),
+        seq: 2,
+        previous: hash(&encoded(&first).unwrap()),
+        kind: "fixture".into(),
+        payload: json!({}),
+        effects: vec![
+            StateRow {
+                table: "exclusions".into(),
+                key: "a".into(),
+                row: json!({"version":"new"}),
+            },
+            StateRow {
+                table: "exclusions".into(),
+                key: "b".into(),
+                row: json!({"version":"only"}),
+            },
+        ],
+    };
+    let mut bytes = encoded(&first).unwrap();
+    bytes.push(b'\n');
+    let offset = bytes.len() as u64;
+    bytes.extend(encoded(&second).unwrap());
+    bytes.push(b'\n');
+    fs::write(&path, &bytes).unwrap();
+    let mut rows = RecoveryRows::new(path.clone()).unwrap();
+    rows.insert(&first.effects[0], 0, 0, true).unwrap();
+    rows.insert(&second.effects[0], offset, 0, false).unwrap();
+    rows.insert(&second.effects[1], offset, 1, false).unwrap();
+    rows.length = bytes.len() as u64;
+    rows.journal_sha256 = hash(&bytes);
+    assert_eq!(
+        rows.get("exclusions", "a").unwrap(),
+        Some(json!({"version":"new"}))
+    );
+    let old: Vec<u8> = rows
+        .db
+        .query_row(
+            "SELECT db_digest FROM latest WHERE state_key='a'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(
+        old,
+        Sha256::digest(encoded(&first.effects[0].row).unwrap()).as_slice()
+    );
+    let yielded = rows.iter().unwrap().collect::<Result<Vec<_>>>().unwrap();
+    assert_eq!(yielded.len(), 2);
+    assert_eq!(yielded[0].1, json!({"version":"new"}));
+    assert!(rows.get("exclusions", "absent").unwrap().is_none());
+    let original = bytes.clone();
+    let walk = rows.iter().unwrap();
+    let mut appended = original.clone();
+    appended.extend_from_slice(b"{}\n");
+    fs::write(&path, appended).unwrap();
+    assert!(
+        walk.collect::<Result<Vec<_>>>().is_err(),
+        "append after iterator construction must be refused"
+    );
+    fs::write(&path, &original).unwrap();
+    let superseded = String::from_utf8(bytes.clone())
+        .unwrap()
+        .replace("old", "bad");
+    fs::write(&path, superseded).unwrap();
+    assert!(
+        rows.get("exclusions", "a").is_err(),
+        "unchanged latest row cannot conceal superseded journal mutation"
+    );
+    assert!(rows.iter().unwrap().collect::<Result<Vec<_>>>().is_err());
+    fs::write(&path, original).unwrap();
+    let changed = String::from_utf8(bytes).unwrap().replace("new", "bad");
+    fs::write(&path, changed).unwrap();
+    assert!(rows.get("exclusions", "a").is_err());
+    assert!(rows.iter().unwrap().collect::<Result<Vec<_>>>().is_err());
+}
+
+#[test]
+fn recovery_report_bounds_display_without_losing_count_or_digest() {
+    let mut rows = RecoveryReportRows::new();
+    let mut expected = Sha256::new();
+    for i in 0..1100 {
+        let row = json!({"original":i});
+        let bytes = encoded(&row).unwrap();
+        expected.update((bytes.len() as u64).to_le_bytes());
+        expected.update(bytes);
+        rows.push(row).unwrap();
+    }
+    assert_eq!(rows.rows.len(), 1024);
+    assert_eq!(rows.summary()["total"], 1100);
+    assert_eq!(rows.summary()["truncated"], true);
+    assert_eq!(
+        rows.summary()["ordered_records_sha256"],
+        hex::encode(expected.finalize())
+    );
+}
+
+#[test]
 fn retained_history_corruption_blocks_batch_and_coverage() {
     let fixture = Fixture::new(false);
     let inventory = staged_history_fixture(&fixture);
@@ -1082,4 +1534,119 @@ fn recommitting_old_coverage_cannot_resurrect_prior_activation() {
             .unwrap(),
         "inactive"
     );
+}
+
+#[test]
+fn native_v6_initialization_preserves_legacy_stores_and_legacy_admission_hold() {
+    let directory = tempfile::tempdir().unwrap();
+    let scopes = vec![ScopePolicy {
+        scope: "synthetic".into(),
+        training_sha256: vec![fit().identity.training_sha256.clone()],
+        numerical_contract_sha256: vec![numerical_contract_sha256(&contract()).unwrap()],
+        fit_seeds: vec![42],
+    }];
+    let legacy = directory.path().join("legacy");
+    let legacy_witness = directory.path().join("legacy-witness");
+    Authority::initialize(&legacy, &legacy_witness, scopes.clone()).unwrap();
+    let before = fs::read(legacy.join("authority.json")).unwrap();
+    assert!(Authority::initialize_native(&legacy, &legacy_witness, scopes.clone()).is_err());
+    assert_eq!(before, fs::read(legacy.join("authority.json")).unwrap());
+    let legacy_store = Authority::open(&legacy, &legacy_witness).unwrap();
+    assert_eq!(legacy_store.manifest.schema, SCHEMA);
+    assert!(!legacy_store
+        .state_tables()
+        .any(|table| table == "native_slots"));
+    drop(legacy_store);
+    let native = directory.path().join("native");
+    let witness = directory.path().join("native-witness");
+    Authority::initialize_native(&native, &witness, scopes).unwrap();
+    let mut store = Authority::open(&native, &witness).unwrap();
+    assert_eq!(store.manifest.schema, NATIVE_SCHEMA);
+    assert!(store.state_tables().any(|table| table == "native_slots"));
+    assert!(matches!(
+        store.claim(&fit(), &request()).unwrap(),
+        ClaimOutcome::Blocked { .. }
+    ));
+    assert_eq!(
+        store
+            .db
+            .query_row("SELECT COUNT(*) FROM entries", [], |r| r.get::<_, u64>(0))
+            .unwrap(),
+        0
+    );
+    drop(store);
+    assert_eq!(
+        Authority::open(&native, &witness).unwrap().manifest.schema,
+        NATIVE_SCHEMA
+    );
+}
+
+#[test]
+fn native_candidate_ledger_reopens_without_renewing_deadline_or_budget() {
+    let directory = tempfile::tempdir().unwrap();
+    let root = directory.path().join("authority");
+    let witness = directory.path().join("witness");
+    Authority::initialize_native(
+        &root,
+        &witness,
+        vec![ScopePolicy {
+            scope: "ledger-only-no-fit".into(),
+            training_sha256: vec!["1".repeat(64)],
+            numerical_contract_sha256: vec!["2".repeat(64)],
+            fit_seeds: vec![0],
+        }],
+    )
+    .unwrap();
+    let task = json!({"budget":1,"task_manifest_sha256":hash(b"task"),"deadline_unix_ms":1000});
+    let slot = json!({"task_key":"task","candidate_index":0,"fit_key":hash(b"fit"),"descriptor_sha256":hash(b"descriptor"),"boot_id":"original-boot","deadline_monotonic_ns":500});
+    let mut authority = Authority::open(&root, &witness).unwrap();
+    assert_eq!(
+        authority
+            .reserve_native_candidate("task", "slot", &task, &slot)
+            .unwrap(),
+        slot
+    );
+    drop(authority);
+    let mut authority = Authority::open(&root, &witness).unwrap();
+    let mut later = slot.clone();
+    later["deadline_monotonic_ns"] = json!(99999);
+    assert_eq!(
+        authority
+            .reserve_native_candidate("task", "slot", &task, &later)
+            .unwrap(),
+        slot
+    );
+    let mut conflict = slot.clone();
+    conflict["descriptor_sha256"] = json!(hash(b"different descriptor"));
+    assert!(authority
+        .reserve_native_candidate("task", "slot", &task, &conflict)
+        .is_err());
+    let mut reboot = slot.clone();
+    reboot["boot_id"] = json!("new-boot");
+    assert!(authority
+        .reserve_native_candidate("task", "slot", &task, &reboot)
+        .is_err());
+    let mut second = slot.clone();
+    second["candidate_index"] = json!(1);
+    assert!(authority
+        .reserve_native_candidate("task", "slot-2", &task, &second)
+        .is_err());
+    assert!(authority
+        .reserve_native_candidate("task", "another-slot-for-same-candidate", &task, &slot)
+        .is_err());
+    let mut changed = task.clone();
+    changed["budget"] = json!(2);
+    assert!(authority
+        .reserve_native_candidate("task", "slot", &changed, &slot)
+        .is_err());
+    assert_eq!(
+        authority
+            .db
+            .query_row("SELECT COUNT(*) FROM native_slots", [], |r| r
+                .get::<_, u64>(0))
+            .unwrap(),
+        1
+    );
+    drop(authority);
+    assert!(Authority::open(&root, &witness).is_ok());
 }

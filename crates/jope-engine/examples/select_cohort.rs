@@ -368,22 +368,38 @@ fn freeze(root: &Path, registry_path: &Path, paths: &[PathBuf], output: &Path) -
 }
 
 fn assembly_path(root: &Path, index: &Value) -> Result<PathBuf> {
-    let expected = index["assembly_sha256"].as_str().context("assembly identity absent")?;
+    let expected = index["assembly_sha256"]
+        .as_str()
+        .context("assembly identity absent")?;
     let mut pending = vec![(index.clone(), 0usize)];
     let mut found = None;
     while let Some((current, depth)) = pending.pop() {
-        ensure!(depth < 8 && current["assembly_sha256"] == expected,
-            "context source assembly mismatch or recursive sources");
+        ensure!(
+            depth < 8 && current["assembly_sha256"] == expected,
+            "context source assembly mismatch or recursive sources"
+        );
         if let Some(path) = current["assembly"].as_str() {
             let path = PathBuf::from(path);
-            ensure!(file_hash(&resolve(root, &path)?)? == expected, "context assembly changed");
+            ensure!(
+                file_hash(&resolve(root, &path)?)? == expected,
+                "context assembly changed"
+            );
             found = Some(path);
         } else {
-            let sources = current["sources"].as_array().context("context assembly binding absent")?;
+            let sources = current["sources"]
+                .as_array()
+                .context("context assembly binding absent")?;
             ensure!(!sources.is_empty(), "empty context sources");
             for source in sources {
-                let path = PathBuf::from(source["path"].as_str().context("source index path absent")?);
-                ensure!(file_hash(&resolve(root, &path)?)? == source["sha256"], "source context index changed");
+                let path = PathBuf::from(
+                    source["path"]
+                        .as_str()
+                        .context("source index path absent")?,
+                );
+                ensure!(
+                    file_hash(&resolve(root, &path)?)? == source["sha256"],
+                    "source context index changed"
+                );
                 pending.push((read_json(&resolve(root, &path)?)?, depth + 1));
             }
         }

@@ -6,7 +6,7 @@ use rayon::prelude::*;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 
-fn verify(prepared: &Path) -> Result<Value> {
+fn verify(root: Option<&Path>, prepared: &Path) -> Result<Value> {
     let p: Prepared = read_json(&prepared.join("prepared.json"))?;
     ensure!(
         p.target_last && p.rows_total <= ROW_LIMIT,
@@ -15,14 +15,22 @@ fn verify(prepared: &Path) -> Result<Value> {
     ensure!(p.storage.is_some(), "verification requires pointer storage");
     let mut cuts = Vec::new();
     for cut in &p.cuts {
-        let training = load_view(prepared, cut.index, true)?;
-        let validation = load_view(prepared, cut.index, false)?;
+        let training = match root {
+            Some(root) => load_view_in_root(root, prepared, cut.index, true)?,
+            None => load_view(prepared, cut.index, true)?,
+        };
+        let validation = match root {
+            Some(root) => load_view_in_root(root, prepared, cut.index, false)?,
+            None => load_view(prepared, cut.index, false)?,
+        };
         ensure!(!training.is_empty() && !validation.is_empty(), "empty cut");
         cuts.push(json!({"cut":cut.index,"training_rows":training.len(),"validation_rows":validation.len(),"training_sha256":cut.training_sha256,"validation_sha256":cut.validation_sha256}));
     }
     for entry in walkdir::WalkDir::new(prepared) {
-        ensure!(!entry?.path().extension().is_some_and(|ext| ext == "csv"),
-            "cut contains copied CSV payload");
+        ensure!(
+            !entry?.path().extension().is_some_and(|ext| ext == "csv"),
+            "cut contains copied CSV payload"
+        );
     }
     Ok(
         json!({"dataset":p.dataset,"prepared":prepared,"prepared_sha256":file_hash(&prepared.join("prepared.json"))?,"family":p.family,"partition":p.meta_partition,"cuts":cuts,"passed":true,"original_final_test_csv_opened":false,"copied_dataset_bytes":0}),
@@ -35,8 +43,8 @@ fn main() -> Result<()> {
         .map(PathBuf::from)
         .collect::<Vec<_>>();
     ensure!(
-        args.len() == 2,
-        "usage: verify_prepared PREPARED_COHORT_DIR OUTPUT_JSON"
+        [2, 3].contains(&args.len()),
+        "usage: verify_prepared PREPARED_COHORT_DIR OUTPUT_JSON [EXPLICIT_DATA_ROOT]"
     );
     ensure!(
         !args[1].exists(),
@@ -52,7 +60,10 @@ fn main() -> Result<()> {
     let datasets = pool.install(|| {
         paths
             .par_iter()
-            .map(|path| verify(path).with_context(|| format!("verify {}", path.display())))
+            .map(|path| {
+                verify(args.get(2).map(PathBuf::as_path), path)
+                    .with_context(|| format!("verify {}", path.display()))
+            })
             .collect::<Result<Vec<_>>>()
     })?;
     let cuts = datasets

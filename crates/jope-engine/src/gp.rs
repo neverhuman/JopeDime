@@ -61,7 +61,7 @@ mod cpu_evaluator_tests {
         assert!(cpu_evaluator_binding(Some(plain.into_os_string())).is_err());
     }
 }
-fn raw_feature_view(training: &str, preprocessing: &[u8]) -> Result<Vec<u8>> {
+pub(crate) fn raw_feature_view(training: &str, preprocessing: &[u8]) -> Result<Vec<u8>> {
     Ok(serde_json::to_vec(
         &json!({"protocol":"raw_training_fold_v1",
         "training_sha256":training,"preprocessing_sha256":hash(preprocessing)}),
@@ -417,6 +417,7 @@ pub fn evaluate(train: &Path, validation: &Path, genome: &Path, output: &Path) -
 pub fn evaluate_view(prepared: &Path, cut: usize, genome: &Path, output: &Path) -> Result<()> {
     let p: crate::prepare::Prepared = crate::manifest::read_json(&prepared.join("prepared.json"))?;
     crate::task_contract::require_task(&p.task)?;
+
     let tr = crate::prepare::load_view(prepared, cut, true)?;
     let va = crate::prepare::load_view(prepared, cut, false)?;
     let mase = if p.task == "timeseries" {
@@ -553,7 +554,12 @@ pub struct SeedCandidate {
     pub origin: String,
     // Historical files called this policy_logprob, but it is a normalized
     // critic rank weight, never a behavior/selection propensity for replay.
-    #[serde(default, rename = "rank_log_weight", alias = "policy_logprob", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        rename = "rank_log_weight",
+        alias = "policy_logprob",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub policy_logprob: Option<f64>,
 }
 #[derive(Clone, Serialize, Deserialize)]
@@ -853,13 +859,13 @@ mod parent_selection_tests {
         // Steering is live: the pool is no longer the uniform draw.
         assert!(differs_from_uniform > 0, "steering collapsed to uniform");
         // The strongly scored survivor dominates the weakly scored one.
-        assert!(
-            counts[0] > counts[1],
-            "policy score ignored: {counts:?}"
-        );
+        assert!(counts[0] > counts[1], "policy score ignored: {counts:?}");
         // The unscored offspring is imputed at the floor, so it is reachable but
         // never preferred over the best scored survivor.
-        assert!(counts[0] > counts[2], "offspring outweighed the best parent");
+        assert!(
+            counts[0] > counts[2],
+            "offspring outweighed the best parent"
+        );
     }
 
     #[test]
@@ -1173,7 +1179,100 @@ pub fn search_seeded_with_rng_in_root(
     vocabulary: Option<&Path>,
     rng_seed: u64,
 ) -> Result<()> {
-    let start = Instant::now();
+    search_inner(
+        artifact_root,
+        prepared,
+        cut,
+        output,
+        evaluations,
+        seconds,
+        qualification,
+        seeds,
+        vocabulary,
+        rng_seed,
+        None,
+    )
+}
+
+/// Called only after native worker and fit authority validate the immutable genome task.
+pub(crate) fn search_native_genome(
+    root: &Path,
+    reference: &crate::native_graph::Artifact,
+    task: &crate::native_genome::GenomeTask,
+    candidate: &crate::native_genome::Candidate,
+    parent_row: Option<&serde_json::Value>,
+) -> Result<()> {
+    task.validate()?;
+    search_inner(
+        root,
+        &resolve(root, &candidate.context.prepared)?,
+        candidate.context.cut,
+        &resolve(root, &task.output)?,
+        task.evaluations,
+        task.seconds,
+        task.qualification,
+        None,
+        Some(&resolve(root, &task.vocabulary.path)?),
+        task.rng_seed,
+        Some((reference, task, candidate, parent_row)),
+    )
+}
+
+/// Metadata only: exact legacy GP initial population before fit admission or numerical work.
+pub fn metadata_initial_population(rng_seed: u64) -> Result<Vec<String>> {
+    let mut population = vec!["(pipe X (ridge))".to_owned()];
+    let mut seen = population.iter().cloned().collect();
+    fill_initial_population(&mut population, &mut seen, rng_seed, None)?;
+    Ok(population)
+}
+fn fill_initial_population(
+    population: &mut Vec<String>,
+    seen: &mut BTreeSet<String>,
+    rng_seed: u64,
+    vocab: Option<&crate::grammar::Vocab>,
+) -> Result<()> {
+    let mut seed = rng_seed;
+    while population.len() < 80 {
+        let raw = feat_math::evolve::random_canonical_pipeline(seed, 6);
+        seed = seed.wrapping_add(1);
+        let g = if let Some(v) = vocab {
+            match v.project_proposal(&raw) {
+                Ok(g) => g,
+                Err(_) => continue,
+            }
+        } else {
+            raw
+        };
+        ensure!(
+            seed.wrapping_sub(rng_seed) < 100000,
+            "unable to construct diverse grammar population"
+        );
+        if seen.insert(g.clone()) {
+            population.push(g);
+        }
+    }
+    Ok(())
+}
+
+fn search_inner(
+    artifact_root: &Path,
+    prepared: &Path,
+    cut: usize,
+    output: &Path,
+    evaluations: usize,
+    seconds: u64,
+    qualification: bool,
+    seeds: Option<&Path>,
+    vocabulary: Option<&Path>,
+    rng_seed: u64,
+    native: Option<(
+        &crate::native_graph::Artifact,
+        &crate::native_genome::GenomeTask,
+        &crate::native_genome::Candidate,
+        Option<&serde_json::Value>,
+    )>,
+) -> Result<()> {
+    let lifecycle_start = Instant::now();
     let completion_root = artifact_root
         .canonicalize()
         .context("search artifact root unavailable")?;
@@ -1203,16 +1302,33 @@ pub fn search_seeded_with_rng_in_root(
     }
     let p: Prepared = read_json(&prepared.join("prepared.json"))?;
     crate::task_contract::require_task(&p.task)?;
+    let native_overlay = if let Some((_, task, candidate, _)) = native {
+        if let Some(overlay) = &task.preparation_overlay {
+            ensure!(!qualification, "overlay cannot admit qualification search");
+            crate::preparation_overlay::verify(&completion_root, overlay, candidate, &p)?;
+            true
+        } else {
+            false
+        }
+    } else {
+        false
+    };
     ensure!(
         p.schema == "parallel.prepared.v1"
             && (p.clean_evaluation || (qualification && p.qualification_only && p.clean_status == "raw_training_reconstructed_qualification_only"))
-            && (p.family_partition_frozen || qualification),
+            && (p.family_partition_frozen || qualification || native_overlay),
         "reconstructed cut preparation is required; limited evaluation needs explicit qualification admission"
     );
     ensure!(
         p.meta_partition == "meta_train" || qualification,
         "bootstrap/search training observations require meta-training families"
     );
+    // Signed input verification is lifecycle overhead, outside the numerical budget.
+    let start = if native.is_some() {
+        Instant::now()
+    } else {
+        lifecycle_start
+    };
     let c = p
         .cuts
         .iter()
@@ -1220,8 +1336,8 @@ pub fn search_seeded_with_rng_in_root(
         .context("unknown cut")?;
     let dir = prepared.join(format!("cut-{cut}"));
     let memory = memory_view(
-        &crate::prepare::load_view(prepared, cut, true)?,
-        &crate::prepare::load_view(prepared, cut, false)?,
+        &crate::prepare::load_view_in_root(&completion_root, prepared, cut, true)?,
+        &crate::prepare::load_view_in_root(&completion_root, prepared, cut, false)?,
     )?;
     ensure!(
         evaluations > 0 && evaluations <= 1000 && seconds > 0 && seconds <= 600,
@@ -1267,31 +1383,22 @@ pub fn search_seeded_with_rng_in_root(
                 .collect::<Vec<_>>()
         })
         .unwrap_or_else(|| vec!["(pipe X (ridge))".to_string()]);
+    if let Some((_, task, candidate, _)) = native {
+        // Direct means precisely one declared genotype. Continuation starts from
+        // its original measured parent and spends its budget on new variation.
+        population = match task.stage {
+            crate::native_genome::Stage::Direct => vec![candidate.genome.clone()],
+            crate::native_genome::Stage::Continuation => Vec::new(),
+        };
+    }
     let mut seen = BTreeSet::new();
     seen.extend(population.iter().cloned());
     ensure!(
         seen.len() == population.len(),
         "duplicate initial proposals"
     );
-    let mut seed = rng_seed;
-    while population.len() < 80 {
-        let raw = feat_math::evolve::random_canonical_pipeline(seed, 6);
-        seed = seed.wrapping_add(1);
-        let g = if let Some(v) = &vocab {
-            match v.project_proposal(&raw) {
-                Ok(g) => g,
-                Err(_) => continue,
-            }
-        } else {
-            raw
-        };
-        ensure!(
-            seed.wrapping_sub(rng_seed) < 100000,
-            "unable to construct diverse grammar population"
-        );
-        if seen.insert(g.clone()) {
-            population.push(g);
-        }
+    if native.is_none() {
+        fill_initial_population(&mut population, &mut seen, rng_seed, vocab.as_ref())?;
     }
     let prepared_sha = file_hash(&prepared.join("prepared.json"))?;
     let evaluator_sha = file_hash(&executable)?;
@@ -1301,7 +1408,7 @@ pub fn search_seeded_with_rng_in_root(
         None
     };
     let request_path = output.join("search-request.json");
-    let request = json!({"schema":"parallel.search_request.v1", "artifact_root":completion_root,
+    let mut request = json!({"schema":"parallel.search_request.v1", "artifact_root":completion_root,
         "fit_authority":authority_path,
         "prepared":prepared.strip_prefix(&completion_root)?, "output":output.strip_prefix(&completion_root)?,
         "prepared_sha256":prepared_sha,"evaluator_sha256":evaluator_sha,"cut":cut,
@@ -1309,6 +1416,10 @@ pub fn search_seeded_with_rng_in_root(
         "preprocessing_sha256":c.preprocessing_sha256,"seeds_sha256":seeds_sha256,
         "vocabulary_sha256":vocabulary_sha256,"evaluations":evaluations,"seconds":seconds,
         "qualification":qualification,"rng_seed":rng_seed,"random_protocol":RANDOM_PROTOCOL});
+    if let Some((reference, task, _, _)) = native {
+        request["native_genome_task"] = serde_json::to_value(reference)?;
+        request["native_genome_stage"] = serde_json::to_value(task.stage)?;
+    }
     if request_path.exists() {
         ensure!(
             read_json::<serde_json::Value>(&request_path)? == request,
@@ -1364,6 +1475,22 @@ pub fn search_seeded_with_rng_in_root(
     }
     let mut journal = fs::OpenOptions::new().append(true).open(&journal_path)?;
     let mut ranked: Vec<(f64, String)> = Vec::new();
+    if let Some((_, task, candidate, Some(parent))) = native {
+        ensure!(
+            task.stage == crate::native_genome::Stage::Continuation,
+            "direct native search cannot carry a parent score"
+        );
+        if parent["failure"].is_null() {
+            let rmse = parent["metrics"]["rmse"]
+                .as_f64()
+                .context("original parent RMSE absent")?;
+            ensure!(
+                rmse.is_finite() && rmse >= 0.,
+                "original parent score invalid"
+            );
+            ranked.push((rmse * pp.target_scale, candidate.genome.clone()));
+        }
+    }
     let mut semantic = BTreeSet::new();
     let mut proposal_attempts = 0u64;
     let mut rejected_proposals = 0u64;
@@ -1426,6 +1553,11 @@ pub fn search_seeded_with_rng_in_root(
     };
     let clock = json!({"schema":SEARCH_CLOCK,"definition":"monotonic active process elapsed from search entry through completed observation; excludes process downtime; resumed searches add a conservative 30-second allowance for unobserved interrupted work","accuracy":clock_accuracy,"resume_offset_seconds":previous_seconds,"resume_unobserved_allowance_seconds":if resuming {30.0} else {0.0},"legacy_observations_without_clock":legacy_clock_rows,"exact_wall_prefix_available":!resuming && legacy_clock_rows==0});
     let mut evaluated_programs = BTreeSet::new();
+    if let Some((_, task, candidate, _)) = native {
+        if task.stage == crate::native_genome::Stage::Continuation {
+            evaluated_programs.insert(candidate.genome.clone());
+        }
+    }
     for (index, o) in observations.iter().enumerate() {
         ensure!(
             o["prepared_sha256"] == prepared_sha
@@ -1465,7 +1597,7 @@ pub fn search_seeded_with_rng_in_root(
     // resumes that have already consumed their entire search budget.
     write_json(
         &output.join("progress.json"),
-        &json!({"prepared_sha256":prepared_sha,"cut":cut,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"execution_order_protocol":execution_protocol,"execution_order":execution_order,"wall_seconds":start.elapsed().as_secs_f64()+previous_seconds,"search_clock":clock,"evaluations":observations.len(),"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals}),
+        &json!({"prepared_sha256":prepared_sha,"cut":cut,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"execution_order_protocol":execution_protocol,"execution_order":execution_order,"wall_seconds":start.elapsed().as_secs_f64()+previous_seconds,"lifecycle_seconds":lifecycle_start.elapsed().as_secs_f64(),"search_clock":clock,"evaluations":observations.len(),"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals}),
     )?;
     for i in observations.len()..evaluations {
         if start.elapsed().as_secs_f64() + previous_seconds >= seconds as f64 {
@@ -1541,7 +1673,16 @@ pub fn search_seeded_with_rng_in_root(
                     population[execution_order[i]].clone()
                 } else {
                     let keep = ranked.len().min(10);
-                    if keep == 0 || operator < 2 {
+                    if keep == 0 && native.is_some() {
+                        let (_, _, candidate, _) =
+                            native.context("native continuation parent absent")?;
+                        feat_math::evolve::mutate_canonical_pipeline(
+                            &candidate.genome,
+                            proposal_seed,
+                            6,
+                        )
+                        .map_err(anyhow::Error::msg)?
+                    } else if keep == 0 || operator < 2 {
                         feat_math::evolve::random_canonical_pipeline(proposal_seed, 6)
                     } else {
                         let ranked_genomes: Vec<String> = ranked
@@ -1881,7 +2022,14 @@ pub fn search_seeded_with_rng_in_root(
             log.take(8192).read_to_end(&mut diagnostic)?;
         }
         let diagnostic = String::from_utf8_lossy(&diagnostic).to_string();
-        let origin = if initial_proposal {
+        let origin = if let Some((_, task, _, _)) = native {
+            match task.stage {
+                crate::native_genome::Stage::Direct => "native_genome_direct_v1",
+                crate::native_genome::Stage::Continuation => {
+                    "native_budgeted_seeded_continuation_v1"
+                }
+            }
+        } else if initial_proposal {
             supplied
                 .as_ref()
                 .map(|s| s.candidates[execution_order[i]].origin.as_str())
@@ -1891,6 +2039,12 @@ pub fn search_seeded_with_rng_in_root(
         };
         let observation = json!({"schema":"parallel.gp_observation.v1","dataset":p.dataset,"family":p.family,"partition":p.meta_partition,"cut":cut,"prepared_sha256":prepared_sha,"training_sha256":c.training_sha256,"validation_sha256":c.validation_sha256,"genome":genome,"program_sha256":file_hash(&genome_path)?,"evaluator_sha256":evaluator_sha,"evaluation_bias":"adaptive_cut_heldout_teacher","family_partition_frozen":p.family_partition_frozen,"qualification":qualification,"independent_evaluation":false,"target_access":"cut heldout optimized repeatedly; original final test sealed","origin":origin,"initial_seed_slot":if initial_proposal{Some(execution_order[i])}else{None},"execution_order_protocol":execution_protocol,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"proposal_before_projection":if raw_genome!=genome{Some(&raw_genome)}else{None},"evaluation_index":i,"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,"recovered_completed_artifact":recovered_metric,"runtime_seconds":measured_runtime,"completed_search_seconds":start.elapsed().as_secs_f64()+previous_seconds,"search_clock":SEARCH_CLOCK,"search_clock_accuracy":clock_accuracy,"failure":failure,"worker_diagnostic":diagnostic,"metrics":result,"target_scale":pp.target_scale});
         let mut observation = observation;
+        if let Some((reference, task, candidate, _)) = native {
+            observation["native_genome_task"] = serde_json::to_value(reference)?;
+            observation["native_candidate"] = serde_json::to_value(&task.candidate)?;
+            observation["comparison_arm"] = serde_json::to_value(candidate.arm)?;
+            observation["continuation_parent"] = serde_json::to_value(&task.direct_parent)?;
+        }
         observation["task"] = json!("regression");
         observation["clean_completion"] = json!(completion_reference);
         if let Some(reference) = &completion_reference {
@@ -1923,16 +2077,18 @@ pub fn search_seeded_with_rng_in_root(
         use std::io::Write;
         let mut line = serde_json::to_vec(&observation)?;
         line.push(b'\n');
+        // A journaled observation is acknowledged work. Commit a strict winner
+        // first so recovery cannot skip a journal row whose winner was lost.
+        if let Some(root) = &champion_root {
+            crate::champions::record(root, &observation, &output.join("observations.jsonl"))?;
+        }
         journal.write_all(&line)?;
         journal.sync_data()?;
         experiment_failpoint("observation_journal", experiment.is_some());
-        if let Some(root) = &champion_root {
-            crate::champions::record(root, &observation, &output.join("observations.json"))?;
-        }
         observations.push(observation);
         write_json(
             &output.join("progress.json"),
-            &json!({"prepared_sha256":prepared_sha,"cut":cut,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"execution_order_protocol":execution_protocol,"execution_order":execution_order,"wall_seconds":start.elapsed().as_secs_f64()+previous_seconds,"search_clock":clock,"evaluations":observations.len(),"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,"best_validation_rmse":ranked.first().map(|x|x.0),"timestamp":crate::telemetry::now()}),
+            &json!({"prepared_sha256":prepared_sha,"cut":cut,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"execution_order_protocol":execution_protocol,"execution_order":execution_order,"wall_seconds":start.elapsed().as_secs_f64()+previous_seconds,"lifecycle_seconds":lifecycle_start.elapsed().as_secs_f64(),"search_clock":clock,"evaluations":observations.len(),"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,"best_validation_rmse":ranked.first().map(|x|x.0),"timestamp":crate::telemetry::now()}),
         )?;
         experiment_failpoint("observation_progress", experiment.is_some());
         // Original attempts, programs, outputs and completions are durable
@@ -1950,7 +2106,7 @@ pub fn search_seeded_with_rng_in_root(
     let search_request = relative_artifact(&completion_root, &request_path)?;
     write_json(
         &output.join("search.json"),
-        &json!({"schema":"parallel.search.v1","search_request":search_request,"search_id":file_hash(&request_path)?,"random_protocol":RANDOM_PROTOCOL,"execution_accounting":execution_accounting(&observations),"terminal":true,"successful_measurements":successful_measurements,"failed_or_unavailable_measurements":observations.len()-successful_measurements,"observations_sha256":observations_sha256,"completed_at":crate::telemetry::now(),"evaluator_sha256":evaluator_sha,"evaluator_protocol":crate::label_admission::PROTOCOL,"vocabulary_sha256":vocabulary_sha256,"prepared_sha256":prepared_sha,"cut":cut,"completed_evaluations":observations.len(),"wall_seconds":start.elapsed().as_secs_f64()+previous_seconds,"search_clock":clock,"execution_order_protocol":execution_protocol,"execution_order":execution_order,"resumed":resuming,"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,"unique_programs":evaluated_programs.len(),"best_validation_rmse":ranked.first().map(|x|x.0),"best_program":ranked.first().map(|x|&x.1),"seed_population_supplied":supplied.is_some(),"neural_seeded":neural_seeded,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"final_tests_opened":false}),
+        &json!({"schema":"parallel.search.v1","search_request":search_request,"search_id":file_hash(&request_path)?,"random_protocol":RANDOM_PROTOCOL,"execution_accounting":execution_accounting(&observations),"terminal":true,"successful_measurements":successful_measurements,"failed_or_unavailable_measurements":observations.len()-successful_measurements,"observations_sha256":observations_sha256,"completed_at":crate::telemetry::now(),"evaluator_sha256":evaluator_sha,"evaluator_protocol":crate::label_admission::PROTOCOL,"vocabulary_sha256":vocabulary_sha256,"prepared_sha256":prepared_sha,"cut":cut,"completed_evaluations":observations.len(),"wall_seconds":start.elapsed().as_secs_f64()+previous_seconds,"lifecycle_seconds":lifecycle_start.elapsed().as_secs_f64(),"search_clock":clock,"execution_order_protocol":execution_protocol,"execution_order":execution_order,"resumed":resuming,"rng_seed":rng_seed,"proposal_attempts":proposal_attempts,"rejected_proposals":rejected_proposals,"unique_programs":evaluated_programs.len().saturating_sub(usize::from(native.is_some_and(|(_, task, _, _)| task.stage == crate::native_genome::Stage::Continuation))),"inherited_parent_excluded":native.is_some_and(|(_, task, _, _)| task.stage == crate::native_genome::Stage::Continuation),"best_validation_rmse":ranked.first().map(|x|x.0),"best_program":ranked.first().map(|x|&x.1),"seed_population_supplied":supplied.is_some(),"neural_seeded":neural_seeded,"seeds_sha256":seeds_sha256,"vocabulary_sha256":vocabulary_sha256,"final_tests_opened":false}),
     )?;
     experiment_failpoint("search_summary", experiment.is_some());
     // Keep the original journal after publication for historical reconciliation.

@@ -39,29 +39,40 @@ pub(crate) fn deadline_watchdog() -> Result<TaskDeadline> {
 /// Canonical JSON bytes of this value, hashed by the authority itself, bind
 /// the common signed demand. Per-rank request IDs remain separate receipts.
 pub fn frozen_task_descriptor(request: &Value) -> Result<Value> {
-    Ok(serde_json::to_value(protocol::common_task_descriptor(request)?)?)
+    Ok(serde_json::to_value(protocol::common_task_descriptor(
+        request,
+    )?)?)
 }
 impl TaskDeadline {
     fn start(deadline: u64) -> Result<Self> {
         let window = protocol::remaining(deadline)?;
-        let end = std::time::Instant::now().checked_add(window).context("task deadline overflow")?;
+        let end = std::time::Instant::now()
+            .checked_add(window)
+            .context("task deadline overflow")?;
         let done = Arc::new(AtomicBool::new(false));
         let observed = Arc::clone(&done);
         let thread = std::thread::spawn(move || {
             while !observed.load(Ordering::Acquire) {
                 if std::time::Instant::now() >= end || protocol::remaining(deadline).is_err() {
-                    unsafe { libc::_exit(76); }
+                    unsafe {
+                        libc::_exit(76);
+                    }
                 }
                 std::thread::sleep(std::time::Duration::from_millis(20));
             }
         });
-        Ok(Self { done, thread: Some(thread) })
+        Ok(Self {
+            done,
+            thread: Some(thread),
+        })
     }
 }
 impl Drop for TaskDeadline {
     fn drop(&mut self) {
         self.done.store(true, Ordering::Release);
-        if let Some(thread) = self.thread.take() { let _ = thread.join(); }
+        if let Some(thread) = self.thread.take() {
+            let _ = thread.join();
+        }
     }
 }
 
@@ -70,10 +81,18 @@ impl Drop for TaskDeadline {
 pub fn require_accepted_task(root: &Path, task: &Task) -> Result<()> {
     ACCEPTED_REQUEST.with(|active| {
         let active = active.borrow();
-        let request = active.as_ref().context("GPU task lacks verified resident acceptance")?;
-        ensure!(request["root"] == json!(root) && request["task"] == serde_json::to_value(task)?,
-            "accepted resident task identity changed");
-        protocol::remaining(request["deadline_unix_ms"].as_u64().context("accepted deadline absent")?)?;
+        let request = active
+            .as_ref()
+            .context("GPU task lacks verified resident acceptance")?;
+        ensure!(
+            request["root"] == json!(root) && request["task"] == serde_json::to_value(task)?,
+            "accepted resident task identity changed"
+        );
+        protocol::remaining(
+            request["deadline_unix_ms"]
+                .as_u64()
+                .context("accepted deadline absent")?,
+        )?;
         protocol::verify_request_inputs(request)
     })
 }
@@ -173,38 +192,62 @@ pub fn enabled() -> bool {
 }
 
 pub fn inherit_lease(command: &mut std::process::Command, lease: &fs::File) -> Result<()> {
-        ensure!(
-            unsafe { libc::fcntl(lease.as_raw_fd(), libc::F_SETFD, 0) } == 0,
-            "cannot inherit GPU lease"
-        );
-        command.env("JOPE_GPU_LEASE_FD", lease.as_raw_fd().to_string());
+    ensure!(
+        unsafe { libc::fcntl(lease.as_raw_fd(), libc::F_SETFD, 0) } == 0,
+        "cannot inherit GPU lease"
+    );
+    command.env("JOPE_GPU_LEASE_FD", lease.as_raw_fd().to_string());
     Ok(())
 }
 
 /// Public train-rank must carry the controller's lease and immutable run
 /// identity before it can initialize CUDA or contact a resident worker.
-pub fn verify_training_launch(root: &Path, corpus: &Path, run: &Path, launch: &Path,
-    world: usize, micro: usize, steps: usize, resume: bool,
-    initialize: Option<&Path>, policy: Option<&Path>) -> Result<fs::File> {
+pub fn verify_training_launch(
+    root: &Path,
+    corpus: &Path,
+    run: &Path,
+    launch: &Path,
+    world: usize,
+    micro: usize,
+    steps: usize,
+    resume: bool,
+    initialize: Option<&Path>,
+    policy: Option<&Path>,
+) -> Result<fs::File> {
     let lease = inherited_task_lease(root)?;
     let spec: Value = read_json(&run.join("run.json"))?;
     let path_hash = |path: &Path| -> Result<String> {
-        file_hash(&resolve(root, if path.is_absolute() { path.strip_prefix(root)? } else { path })?)
+        file_hash(&resolve(
+            root,
+            if path.is_absolute() {
+                path.strip_prefix(root)?
+            } else {
+                path
+            },
+        )?)
     };
     let policy_sha = policy.map(path_hash).transpose()?;
-    let initialization_sha = initialize.map(|path| path_hash(&path.join("state.json"))).transpose()?;
+    let initialization_sha = initialize
+        .map(|path| path_hash(&path.join("state.json")))
+        .transpose()?;
     let deadline = protocol::inherited_deadline()?;
-    ensure!(spec["schema"] == "parallel.training_run.v1"
-        && spec["corpus_sha256"] == file_hash(&corpus.join("index.json"))?
-        && spec["executable_sha256"] == file_hash(Path::new("/proc/self/exe"))?
-        && spec["execution_partition"] == crate::task_contract::training_partition(world, micro, 2048)?
-        && spec["step_window"]["requested_step_increment"] == steps
-        && spec["replay_policy_sha256"] == json!(policy_sha)
-        && (resume || spec["initialization_sha256"] == json!(initialization_sha))
-        && spec["deadline_unix_ms"] == deadline,
-        "train-rank controller contract changed");
-    protocol::input_artifacts(root, &json!({"kind":"Train", "corpus":corpus, "run":run,
-        "launch":launch, "resume":resume, "initialize":initialize, "replay_policy":policy}))?;
+    ensure!(
+        spec["schema"] == "parallel.training_run.v1"
+            && spec["corpus_sha256"] == file_hash(&corpus.join("index.json"))?
+            && spec["executable_sha256"] == file_hash(Path::new("/proc/self/exe"))?
+            && spec["execution_partition"]
+                == crate::task_contract::training_partition(world, micro, 2048)?
+            && spec["step_window"]["requested_step_increment"] == steps
+            && spec["replay_policy_sha256"] == json!(policy_sha)
+            && (resume || spec["initialization_sha256"] == json!(initialization_sha))
+            && spec["deadline_unix_ms"] == deadline,
+        "train-rank controller contract changed"
+    );
+    protocol::input_artifacts(
+        root,
+        &json!({"kind":"Train", "corpus":corpus, "run":run,
+        "launch":launch, "resume":resume, "initialize":initialize, "replay_policy":policy}),
+    )?;
     protocol::remaining(deadline)?;
     Ok(lease)
 }
@@ -215,36 +258,58 @@ pub fn inherited_task_lease(root: &Path) -> Result<fs::File> {
     use std::os::fd::FromRawFd;
     let key = if std::env::var_os("JOPE_GPU_WORKER_ACTIVE").is_some() {
         "JOPE_GPU_WORKER_LEASE_FD"
-    } else { "JOPE_GPU_LEASE_FD" };
-    let descriptor: i32 = std::env::var(key).context("GPU rank requires its inherited controller lease")?.parse()?;
+    } else {
+        "JOPE_GPU_LEASE_FD"
+    };
+    let descriptor: i32 = std::env::var(key)
+        .context("GPU rank requires its inherited controller lease")?
+        .parse()?;
     let copied = unsafe { libc::dup(descriptor) };
     ensure!(copied >= 0, "training lease is unavailable");
     let lease = unsafe { fs::File::from_raw_fd(copied) };
     let actual = lease.metadata()?;
     let expected = root.join("runs/encoding-service.lock").metadata()?;
-    ensure!(actual.dev() == expected.dev() && actual.ino() == expected.ino()
-        && unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
-        "training lease identity changed");
+    ensure!(
+        actual.dev() == expected.dev()
+            && actual.ino() == expected.ino()
+            && unsafe { libc::flock(lease.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+        "training lease identity changed"
+    );
     Ok(lease)
 }
 
 pub fn verify_proposal_launch(root: &Path, task: &Task) -> Result<(fs::File, Value)> {
     let lease = inherited_task_lease(root)?;
-    let Task::Proposal { corpus, checkpoint, output, world, cuts, cut_start, shuffled } = task else {
+    let Task::Proposal {
+        corpus,
+        checkpoint,
+        output,
+        world,
+        cuts,
+        cut_start,
+        shuffled,
+    } = task
+    else {
         anyhow::bail!("proposal controller task required")
     };
     let spec: Value = read_json(&output.join("run.json"))?;
     let deadline = protocol::inherited_deadline()?;
-    let champion = PathBuf::from(std::env::var_os("JOPE_CHAMPION_SNAPSHOT").context("champion snapshot absent")?);
-    ensure!(spec["schema"] == "parallel.proposal_run.v1"
-        && spec["deadline_unix_ms"] == deadline
-        && spec["executable_sha256"] == file_hash(Path::new("/proc/self/exe"))?
-        && spec["corpus_sha256"] == file_hash(&corpus.join("index.json"))?
-        && spec["checkpoint_sha256"] == file_hash(&checkpoint.join("state.json"))?
-        && spec["champion_snapshot_sha256"] == file_hash(&champion)?
-        && spec["world"] == *world && spec["cuts"] == *cuts
-        && spec["cut_start"].as_u64().unwrap_or(0) == *cut_start as u64
-        && spec["shuffled"] == *shuffled, "proposal controller contract changed");
+    let champion = PathBuf::from(
+        std::env::var_os("JOPE_CHAMPION_SNAPSHOT").context("champion snapshot absent")?,
+    );
+    ensure!(
+        spec["schema"] == "parallel.proposal_run.v1"
+            && spec["deadline_unix_ms"] == deadline
+            && spec["executable_sha256"] == file_hash(Path::new("/proc/self/exe"))?
+            && spec["corpus_sha256"] == file_hash(&corpus.join("index.json"))?
+            && spec["checkpoint_sha256"] == file_hash(&checkpoint.join("state.json"))?
+            && spec["champion_snapshot_sha256"] == file_hash(&champion)?
+            && spec["world"] == *world
+            && spec["cuts"] == *cuts
+            && spec["cut_start"].as_u64().unwrap_or(0) == *cut_start as u64
+            && spec["shuffled"] == *shuffled,
+        "proposal controller contract changed"
+    );
     Ok((lease, spec))
 }
 
@@ -266,18 +331,25 @@ pub fn submit(root: &Path, rank: usize, task: Task) -> Result<()> {
     let request = json!({"root":root,"rank":rank,"task":task,"env":env,
         "executable_sha256":executable});
     let request = protocol::freeze_request(
-        &task.receipt(rank).with_extension("resident-request.json"), request,
-        protocol::inherited_deadline()?)?;
-    let deadline = request["deadline_unix_ms"].as_u64().context("task deadline absent")?;
+        &task.receipt(rank).with_extension("resident-request.json"),
+        request,
+        protocol::inherited_deadline()?,
+    )?;
+    let deadline = request["deadline_unix_ms"]
+        .as_u64()
+        .context("task deadline absent")?;
     protocol::verify_request_inputs(&request)?;
     // Original durable completion can be adopted even after its worker died.
     if protocol::committed(&pool, &request, &task.receipt(rank))?.is_some() {
         return Ok(());
     }
     protocol::ensure_undispatched(&pool, &request)?;
-    let mut stream =
-        protocol::connect_rank(&pool, rank, &executable,
-            protocol::remaining(deadline)?.min(std::time::Duration::from_secs(30)))?;
+    let mut stream = protocol::connect_rank(
+        &pool,
+        rank,
+        &executable,
+        protocol::remaining(deadline)?.min(std::time::Duration::from_secs(30)),
+    )?;
     stream.set_read_timeout(Some(protocol::remaining(deadline)?))?;
     stream.set_write_timeout(Some(protocol::remaining(deadline)?))?;
     protocol::verify_request_inputs(&request)?;
@@ -365,7 +437,9 @@ pub fn serve(root: &Path, pool: &Path, rank: usize) -> Result<()> {
             peer.uid == unsafe { libc::geteuid() },
             "resident task peer rejected"
         );
-        let handshake_deadline = protocol::now_ms()?.checked_add(30_000).context("handshake deadline overflow")?;
+        let handshake_deadline = protocol::now_ms()?
+            .checked_add(30_000)
+            .context("handshake deadline overflow")?;
         stream.set_read_timeout(Some(protocol::remaining(handshake_deadline)?))?;
         let lease = receive_fd(&stream)?;
         let file = fs::File::from(lease);
@@ -386,7 +460,9 @@ pub fn serve(root: &Path, pool: &Path, rank: usize) -> Result<()> {
                 && request["executable_sha256"] == executable_sha,
             "resident task root/rank/executable identity changed"
         );
-        let deadline = request["deadline_unix_ms"].as_u64().context("resident deadline absent")?;
+        let deadline = request["deadline_unix_ms"]
+            .as_u64()
+            .context("resident deadline absent")?;
         // Start before artifact verification and acceptance fsync. The monotonic
         // bound cannot be renewed by a wall-clock rollback during this task.
         let _deadline = TaskDeadline::start(deadline)?;
@@ -430,7 +506,9 @@ pub fn serve(root: &Path, pool: &Path, rank: usize) -> Result<()> {
                 if protocol::remaining(deadline).is_err() {
                     // A stuck collective cannot suppress the task watchdog.
                     // Acceptance remains unknown until the supervisor reconciles it.
-                    unsafe { libc::_exit(76); }
+                    unsafe {
+                        libc::_exit(76);
+                    }
                 }
                 let mut poll = libc::pollfd {
                     fd: watching.as_raw_fd(),

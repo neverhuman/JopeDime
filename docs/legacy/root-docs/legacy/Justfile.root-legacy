@@ -1,0 +1,8 @@
+# CPU qualification runs without a CUDA installation. The neural release also
+# requires the recorded SDK build and native GPU qualification receipts.
+required:
+    cargo fmt --manifest-path parallel/Cargo.toml --all -- --check
+    env OMP_NUM_THREADS=1 RAYON_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 cargo test --manifest-path parallel/Cargo.toml --locked --lib -- --test-threads=4
+
+fast:
+    cargo check --manifest-path parallel/Cargo.toml --locked --all-targets

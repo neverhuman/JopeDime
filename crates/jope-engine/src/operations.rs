@@ -21,15 +21,18 @@ pub fn doctor() -> Value {
 }
 pub fn status(root: &Path) -> Result<Value> {
     let run = crate::dashboard::campaign(root);
-    let hardware: Value=read_json(&root.join("runs/hardware.json")).unwrap_or_default();
-    let gp: Value=read_json(&root.join("runs/gp-service.json")).unwrap_or_default();
-    let neural: Value=read_json(&root.join("runs/neural-service.json")).unwrap_or_default();
-    let encoding: Value=read_json(&root.join("runs/encoding-service.json")).unwrap_or_default();
-    let count=|key:&str|gp[key].as_u64().unwrap_or(0);
-    let total=count("completed_views")+count("failed_views")+count("active")+count("queued");
-    Ok(json!({"schema":"parallel.status.v2","run":run,"hardware":hardware,
+    let hardware: Value = read_json(&root.join("runs/hardware.json")).unwrap_or_default();
+    let gp: Value = read_json(&root.join("runs/gp-service.json")).unwrap_or_default();
+    let neural: Value = read_json(&root.join("runs/neural-service.json")).unwrap_or_default();
+    let encoding: Value = read_json(&root.join("runs/encoding-service.json")).unwrap_or_default();
+    let count = |key: &str| gp[key].as_u64().unwrap_or(0);
+    let total =
+        count("completed_views") + count("failed_views") + count("active") + count("queued");
+    Ok(
+        json!({"schema":"parallel.status.v2","run":run,"hardware":hardware,
         "gp":{"active":gp["active"],"queued":gp["queued"],"completed":gp["completed_views"],"failed":gp["failed_views"],"total":total,"completed_percent":if total>0{Some(100.0*count("completed_views") as f64/total as f64)}else{None},"evaluations_per_second":gp["evaluations_per_second"],"timestamp":gp["timestamp"]},
-        "neural":neural,"encoding":encoding,"unix_seconds":SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs()}))
+        "neural":neural,"encoding":encoding,"unix_seconds":SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs()}),
+    )
 }
 pub fn pilot_gate(root: &Path) -> Result<()> {
     let required = [

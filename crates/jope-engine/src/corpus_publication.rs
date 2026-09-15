@@ -1,14 +1,21 @@
 //! Atomic CPU corpus publication with resumable, hash-verified staging.
-use crate::{corpus, manifest::*, telemetry::{now, StageHeartbeat}};
+use crate::{
+    corpus,
+    manifest::*,
+    telemetry::{now, StageHeartbeat},
+};
 use anyhow::{ensure, Context, Result};
 use serde_json::{json, Value};
-use std::{fs, path::{Path, PathBuf}};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 pub fn verify(path: &Path, contexts_sha: &str, vocabulary_sha: &str) -> Result<()> {
     let index: corpus::Index = read_json(&path.join("index.json"))?;
     let provenance: Value = read_json(&path.join("provenance.json"))?;
     ensure!(
-        index.schema == "parallel.teaching_corpus.v1"  ,
+        index.schema == "parallel.teaching_corpus.v1",
         "unrecognized qualification corpus"
     );
     ensure!(
@@ -58,33 +65,54 @@ fn retire_partial(path: &Path, reason: &str) -> Result<()> {
 }
 
 pub fn build(
-    root: &Path, contexts: &Path, vocab: &Path, observations: &[PathBuf],
-    output: &Path, qualification: bool, cache: Option<&Path>, heartbeat: Option<&StageHeartbeat>,
+    root: &Path,
+    contexts: &Path,
+    vocab: &Path,
+    observations: &[PathBuf],
+    output: &Path,
+    qualification: bool,
+    cache: Option<&Path>,
+    heartbeat: Option<&StageHeartbeat>,
 ) -> Result<()> {
     crate::campaign::check_deadline()?;
     let contexts_sha = file_hash(contexts)?;
     let vocab_sha = file_hash(vocab)?;
     fs::create_dir_all(output.parent().context("corpus parent absent")?)?;
-    let name = output.file_name().context("corpus name absent")?.to_string_lossy();
+    let name = output
+        .file_name()
+        .context("corpus name absent")?
+        .to_string_lossy();
     use std::os::fd::AsRawFd;
-    let lock = fs::OpenOptions::new().create(true).truncate(false).write(true)
+    let lock = fs::OpenOptions::new()
+        .create(true)
+        .truncate(false)
+        .write(true)
         .open(output.with_file_name(format!(".{name}.lock")))?;
-    ensure!(unsafe {libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB)} == 0,
-        "another packer owns this corpus publication");
+    ensure!(
+        unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
+        "another packer owns this corpus publication"
+    );
     let request = json!({"schema":"parallel.corpus_publication.v1", "contexts_sha256":contexts_sha,
         "vocabulary_sha256":vocab_sha,"observations":observations,"qualification":qualification});
     let verified = |path: &Path| -> Result<()> {
         verify(path, &contexts_sha, &vocab_sha)?;
-        ensure!(read_json::<Value>(&path.join("publication.json"))? == request,
-            "corpus publication inputs changed");
-        ensure!(read_json::<corpus::Index>(&path.join("index.json"))?.qualification == qualification,
-            "corpus qualification changed");
+        ensure!(
+            read_json::<Value>(&path.join("publication.json"))? == request,
+            "corpus publication inputs changed"
+        );
+        ensure!(
+            read_json::<corpus::Index>(&path.join("index.json"))?.qualification == qualification,
+            "corpus qualification changed"
+        );
         Ok(())
     };
     if output.join("provenance.json").exists() {
         return verified(output);
     }
-    retire_partial(output, "Interrupted final publication; preserve before rebuilding")?;
+    retire_partial(
+        output,
+        "Interrupted final publication; preserve before rebuilding",
+    )?;
     let staging = output.with_file_name(format!(".{name}.staging"));
     if staging.exists() {
         if let Err(error) = verified(&staging) {
@@ -92,17 +120,43 @@ pub fn build(
         }
     }
     if !staging.exists() {
-        let mut progress = |operation: &str, done, total| heartbeat.map_or(Ok(()), |h| h.advance(operation, done, total));
+        let mut progress = |operation: &str, done, total| {
+            heartbeat.map_or(Ok(()), |h| h.advance(operation, done, total))
+        };
         let result = if let Some(cache) = cache {
-            corpus::build_observed_cached(root, contexts, vocab, observations, &staging, qualification, cache, &mut progress).map(|_| ())
+            corpus::build_observed_cached(
+                root,
+                contexts,
+                vocab,
+                observations,
+                &staging,
+                qualification,
+                cache,
+                &mut progress,
+            )
+            .map(|_| ())
         } else {
-            corpus::build_observed(root, contexts, vocab, observations, &staging, qualification, &mut progress)
+            corpus::build_observed(
+                root,
+                contexts,
+                vocab,
+                observations,
+                &staging,
+                qualification,
+                &mut progress,
+            )
         };
         if let Err(error) = result {
             let reason = format!("Corpus staging build failed: {error:#}");
             retire_partial(&staging, &reason)?;
-            write_json(&output.with_file_name(format!("{name}-build-failure-{}-{}.json",now(),std::process::id())),
-                &json!({"timestamp":now(),"failure":reason,"request":request,"resumable":true}))?;
+            write_json(
+                &output.with_file_name(format!(
+                    "{name}-build-failure-{}-{}.json",
+                    now(),
+                    std::process::id()
+                )),
+                &json!({"timestamp":now(),"failure":reason,"request":request,"resumable":true}),
+            )?;
             return Err(error);
         }
         write_json(&staging.join("publication.json"), &request)?;
