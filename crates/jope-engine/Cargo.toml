@@ -23,7 +23,7 @@ sha2 = "0.10"
 [dependencies]
 nix = { version = "0.29", features = ["signal", "process"] }
 tempfile = "3"
-jain-smartcluster = { path = "../../jain-smartcluster/crates/jain-smartcluster" }
+jain-smartcluster = { git = "https://git.neverhuman.org/git/veox/jain-smartcluster.git", rev = "715128f8653c30c8fda6e8fdf08ab3d4f4540310" }
 postcard = { version = "1", features = ["use-std"] }
 tokio = { version = "1", features = ["rt", "net", "time"] }
 anyhow = "1"

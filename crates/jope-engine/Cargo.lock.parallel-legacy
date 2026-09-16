@@ -835,6 +835,7 @@ checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 [[package]]
 name = "jain-smartcluster"
 version = "8.0.0"
+source = "git+https://git.neverhuman.org/git/veox/jain-smartcluster.git?rev=715128f8653c30c8fda6e8fdf08ab3d4f4540310#715128f8653c30c8fda6e8fdf08ab3d4f4540310"
 dependencies = [
  "async-trait",
  "futures-core",
@@ -851,6 +852,7 @@ dependencies = [
 [[package]]
 name = "jain-smartcluster-core"
 version = "8.0.0"
+source = "git+https://git.neverhuman.org/git/veox/jain-smartcluster.git?rev=715128f8653c30c8fda6e8fdf08ab3d4f4540310#715128f8653c30c8fda6e8fdf08ab3d4f4540310"
 dependencies = [
  "serde",
  "thiserror 2.0.20",
