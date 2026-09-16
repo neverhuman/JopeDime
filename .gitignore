@@ -20,3 +20,11 @@ ratchet-hotfix-*/
 
 # Materialized original accepted checkpoint graph; preserved through Datasets.
 /parallel/recovery/xbabe2-migration-20260914/accepted60000-restored/
+
+# Untracked run/research dumps — never stage (C0 / SYSTEM-PAYLOAD).
+__pycache__/
+*.pyc
+/research/move42-seal/
+/research/real-panel/
+/parallel/recovery/eight-a100-20260912/
+/parallel/kernel-work-evidence/
