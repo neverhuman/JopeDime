@@ -42,6 +42,7 @@ pub mod eval_registry;
 #[cfg(feature = "neural")]
 pub mod gpu_worker;
 pub mod grammar;
+pub mod jain_vocabulary;
 pub mod label_admission;
 #[cfg(feature = "neural")]
 pub mod pipeline;

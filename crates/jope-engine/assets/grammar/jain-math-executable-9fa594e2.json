@@ -1,0 +1,389 @@
+{
+  "schema": "parallel.jain_math_executable_ops.v1",
+  "engine": "featmath",
+  "admission_rule": "feat_math::registry::operator(name) is Some(d) && d.lifecycle.executable && !d.lifecycle.quarantined (jain-core crates/feat-core/src/jope_invention.rs admit() at a348ef8)",
+  "provenance": {
+    "repository": "https://git.neverhuman.org/git/veox/jain-math.git",
+    "rev": "9fa594e2eedb1916cc0e1ef4038c79adeccd6832",
+    "registry_path": "crates/feat-math/src/registry.rs",
+    "operators_table_line": 443,
+    "operator_lookup_line": 1298,
+    "registry_version": "jain-prime-featmath-registry-v1",
+    "registry_hash": "8173b07f37fde39bdc8bbf2dfe2e496aa5ccaeb4e0274843c235ec1fc6972c62"
+  },
+  "executable": [
+    {
+      "id": 0,
+      "name": "target",
+      "role": "target",
+      "lifecycle": "compatibility",
+      "registry_line": 444
+    },
+    {
+      "id": 2,
+      "name": "standardize",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 476
+    },
+    {
+      "id": 3,
+      "name": "norm_features",
+      "role": "transform",
+      "lifecycle": "compatibility",
+      "registry_line": 492
+    },
+    {
+      "id": 4,
+      "name": "robust_scale",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 508
+    },
+    {
+      "id": 5,
+      "name": "rank",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 524
+    },
+    {
+      "id": 6,
+      "name": "blom",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 540
+    },
+    {
+      "id": 7,
+      "name": "quantile_bins",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 556
+    },
+    {
+      "id": 8,
+      "name": "bin_onehot",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 572
+    },
+    {
+      "id": 9,
+      "name": "hinge",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 588
+    },
+    {
+      "id": 10,
+      "name": "winsor_clip",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 604
+    },
+    {
+      "id": 11,
+      "name": "winsor_moments",
+      "role": "transform",
+      "lifecycle": "compatibility",
+      "registry_line": 620
+    },
+    {
+      "id": 12,
+      "name": "cheb",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 636
+    },
+    {
+      "id": 13,
+      "name": "poly_interact",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 652
+    },
+    {
+      "id": 14,
+      "name": "rff_cos",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 668
+    },
+    {
+      "id": 15,
+      "name": "rff_sin",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 684
+    },
+    {
+      "id": 16,
+      "name": "rand_proj",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 700
+    },
+    {
+      "id": 17,
+      "name": "landmark_dist",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 716
+    },
+    {
+      "id": 18,
+      "name": "oblique_hinge",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 732
+    },
+    {
+      "id": 19,
+      "name": "row_stats",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 748
+    },
+    {
+      "id": 20,
+      "name": "pair_prod",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 764
+    },
+    {
+      "id": 21,
+      "name": "target_bin_encode",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 780
+    },
+    {
+      "id": 22,
+      "name": "sigmoid",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 796
+    },
+    {
+      "id": 23,
+      "name": "step",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 812
+    },
+    {
+      "id": 24,
+      "name": "norm_row",
+      "role": "transform",
+      "lifecycle": "compatibility",
+      "registry_line": 828
+    },
+    {
+      "id": 25,
+      "name": "polar",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 844
+    },
+    {
+      "id": 26,
+      "name": "lag",
+      "role": "transform",
+      "lifecycle": "compatibility",
+      "registry_line": 860
+    },
+    {
+      "id": 27,
+      "name": "roll",
+      "role": "transform",
+      "lifecycle": "compatibility",
+      "registry_line": 876
+    },
+    {
+      "id": 28,
+      "name": "fft_mag",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 892
+    },
+    {
+      "id": 29,
+      "name": "row_spectral",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 908
+    },
+    {
+      "id": 30,
+      "name": "row_diff_stats",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 924
+    },
+    {
+      "id": 31,
+      "name": "svd_project",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 940
+    },
+    {
+      "id": 32,
+      "name": "nystrom",
+      "role": "transform",
+      "lifecycle": "generatable",
+      "registry_line": 956
+    },
+    {
+      "id": 33,
+      "name": "map",
+      "role": "transform",
+      "lifecycle": "compatibility",
+      "registry_line": 972
+    },
+    {
+      "id": 34,
+      "name": "derive",
+      "role": "transform",
+      "lifecycle": "compatibility",
+      "registry_line": 988
+    },
+    {
+      "id": 35,
+      "name": "ridge",
+      "role": "head",
+      "lifecycle": "generatable",
+      "registry_line": 1004
+    },
+    {
+      "id": 36,
+      "name": "logistic",
+      "role": "head",
+      "lifecycle": "compatibility",
+      "registry_line": 1020
+    },
+    {
+      "id": 37,
+      "name": "elasticnet",
+      "role": "head",
+      "lifecycle": "generatable",
+      "registry_line": 1036
+    },
+    {
+      "id": 38,
+      "name": "histgbm",
+      "role": "head",
+      "lifecycle": "generatable",
+      "registry_line": 1052
+    },
+    {
+      "id": 39,
+      "name": "gbm",
+      "role": "head",
+      "lifecycle": "compatibility",
+      "registry_line": 1068
+    },
+    {
+      "id": 40,
+      "name": "ensemble",
+      "role": "head",
+      "lifecycle": "generatable",
+      "registry_line": 1084
+    },
+    {
+      "id": 41,
+      "name": "ensemble_ridge_gbm",
+      "role": "head",
+      "lifecycle": "compatibility",
+      "registry_line": 1100
+    },
+    {
+      "id": 42,
+      "name": "histgbm2",
+      "role": "head",
+      "lifecycle": "generatable",
+      "registry_line": 1116
+    },
+    {
+      "id": 43,
+      "name": "krr",
+      "role": "head",
+      "lifecycle": "generatable",
+      "registry_line": 1132
+    },
+    {
+      "id": 44,
+      "name": "gpr",
+      "role": "head",
+      "lifecycle": "generatable",
+      "registry_line": 1148
+    },
+    {
+      "id": 45,
+      "name": "ksmooth",
+      "role": "head",
+      "lifecycle": "generatable",
+      "registry_line": 1164
+    },
+    {
+      "id": 46,
+      "name": "stack",
+      "role": "head",
+      "lifecycle": "generatable",
+      "registry_line": 1180
+    }
+  ],
+  "not_executable": [
+    {
+      "id": 1,
+      "name": "bag",
+      "role": "directive",
+      "lifecycle": "quarantined",
+      "registry_line": 460
+    },
+    {
+      "id": 47,
+      "name": "rff_orthogonal",
+      "role": "transform",
+      "lifecycle": "quarantined",
+      "registry_line": 1196
+    },
+    {
+      "id": 48,
+      "name": "rff_halton",
+      "role": "transform",
+      "lifecycle": "quarantined",
+      "registry_line": 1212
+    },
+    {
+      "id": 49,
+      "name": "nystrom_leverage",
+      "role": "transform",
+      "lifecycle": "quarantined",
+      "registry_line": 1228
+    },
+    {
+      "id": 50,
+      "name": "fastfood_rbf",
+      "role": "transform",
+      "lifecycle": "quarantined",
+      "registry_line": 1244
+    },
+    {
+      "id": 51,
+      "name": "count_sketch",
+      "role": "transform",
+      "lifecycle": "quarantined",
+      "registry_line": 1260
+    },
+    {
+      "id": 52,
+      "name": "tensor_sketch",
+      "role": "transform",
+      "lifecycle": "quarantined",
+      "registry_line": 1276
+    }
+  ]
+}
