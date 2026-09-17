@@ -32,6 +32,7 @@ pub struct ExecutableOps {
     pub engine: String,
     pub provenance: Provenance,
     pub executable: Vec<RegistryOp>,
+    pub not_executable: Vec<RegistryOp>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -46,6 +47,7 @@ pub struct Provenance {
 pub struct RegistryOp {
     pub name: String,
     pub role: String,
+    pub lifecycle: String,
 }
 
 impl ExecutableOps {
@@ -61,6 +63,32 @@ impl ExecutableOps {
             "executable op list must pin a full jain-math revision"
         );
         ensure!(!list.executable.is_empty(), "executable op list is empty");
+        // Executable means executable and not quarantined in the registry:
+        // only the `generatable` and `compatibility` lifecycles qualify.
+        for op in &list.executable {
+            ensure!(
+                matches!(op.lifecycle.as_str(), "generatable" | "compatibility"),
+                "op {} is listed executable with lifecycle {}",
+                op.name,
+                op.lifecycle
+            );
+        }
+        for op in &list.not_executable {
+            ensure!(
+                op.lifecycle == "quarantined",
+                "op {} is listed not executable with lifecycle {}",
+                op.name,
+                op.lifecycle
+            );
+        }
+        let mut seen = BTreeSet::new();
+        for op in list.executable.iter().chain(&list.not_executable) {
+            ensure!(
+                seen.insert(op.name.as_str()),
+                "op {} is listed more than once",
+                op.name
+            );
+        }
         Ok(list)
     }
 
@@ -320,19 +348,63 @@ mod tests {
                 .project_proposal(&format!("(pipe X (standardize) ({head}))"))
                 .is_err());
         }
-        // The sampling automaton never offers a removed op.
+        // For every task, the replay automaton never offers a removed op, and
+        // its Stage masks still offer a head.
         let base: Vocab = read_json(&asset(BASE_VOCABULARY)).unwrap();
-        let tokens = base.encode("(pipe X (standardize) (ridge))").unwrap();
-        let masks = vocab.replay(&tokens).unwrap();
-        assert!(masks
+        let program = "(pipe X (standardize) (ridge))";
+        let ridge = vocab.ops.values().find(|op| op.name == "ridge").unwrap();
+        let mut base_offered_removed = BTreeSet::new();
+        assert_eq!(vocab.tasks.len(), 4);
+        let regression = base.encode(program).unwrap();
+        assert_eq!(regression, vocab.encode(program).unwrap());
+        for task in &vocab.tasks {
+            // `encode_for_task` admits only regression (task_contract), so
+            // swap the task token (tokens[2]) to replay the other tasks.
+            let mut tokens = regression.clone();
+            tokens[2] = vocab.task_ids[task];
+            assert_eq!(tokens[2], base.task_ids[task]);
+            let masks = vocab.replay(&tokens).unwrap();
+            assert!(
+                masks
+                    .iter()
+                    .flatten()
+                    .filter(|id| base.ops.contains_key(id))
+                    .all(|id| vocab.ops.contains_key(id)),
+                "{task}: removed op offered"
+            );
+            // masks[i] is the legal set for tokens[i + 1]; tokens[3] is the
+            // first stage and the ridge token is chosen in a Stage phase.
+            let ridge_at = tokens.iter().position(|&t| t == ridge.token_id).unwrap();
+            for stage_mask in [&masks[2], &masks[ridge_at - 1]] {
+                assert!(
+                    stage_mask
+                        .iter()
+                        .any(|id| vocab.engine_heads[ENGINE].contains(id)),
+                    "{task}: Stage mask offers no head"
+                );
+            }
+            assert!(masks[ridge_at - 1].contains(&ridge.token_id));
+            for mask in base.replay(&tokens).unwrap() {
+                base_offered_removed.extend(
+                    mask.into_iter()
+                        .filter(|id| base.ops.contains_key(id) && !vocab.ops.contains_key(id)),
+                );
+            }
+        }
+        // The base grammar does offer the removed heads on these replays, so
+        // the check above is not vacuous.
+        let offered: BTreeSet<&str> = base_offered_removed
             .iter()
-            .flatten()
-            .filter(|id| base.ops.contains_key(id))
-            .all(|id| vocab.ops.contains_key(id)));
-        assert_eq!(
-            tokens,
-            vocab.encode("(pipe X (standardize) (ridge))").unwrap()
-        );
+            .map(|id| base.ops[id].name.as_str())
+            .collect();
+        for head in [
+            "extra_trees",
+            "logit_ridge",
+            "multiclass_ridge",
+            "tab_boost",
+        ] {
+            assert!(offered.contains(head), "{head} never offered by base");
+        }
     }
 
     #[test]
@@ -346,6 +418,52 @@ mod tests {
         assert!(derive_restricted_vocabulary(&base, &serde_json::to_vec(&list).unwrap()).is_err());
         let mut list: Value = serde_json::from_slice(&read(EXECUTABLE_OPS)).unwrap();
         list["schema"] = Value::String("other".into());
+        assert!(derive_restricted_vocabulary(&base, &serde_json::to_vec(&list).unwrap()).is_err());
+
+        // A quarantined op moved into `executable` is rejected, whether it
+        // stays in `not_executable` or is removed from it.
+        let original: Value = serde_json::from_slice(&read(EXECUTABLE_OPS)).unwrap();
+        let quarantined = original["not_executable"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|op| op["name"] == "rff_orthogonal")
+            .unwrap()
+            .clone();
+        let mut list = original.clone();
+        list["executable"]
+            .as_array_mut()
+            .unwrap()
+            .push(quarantined.clone());
+        let err = derive_restricted_vocabulary(&base, &serde_json::to_vec(&list).unwrap())
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("lifecycle quarantined"), "{err}");
+        list["not_executable"]
+            .as_array_mut()
+            .unwrap()
+            .retain(|op| op["name"] != "rff_orthogonal");
+        assert!(derive_restricted_vocabulary(&base, &serde_json::to_vec(&list).unwrap()).is_err());
+
+        // Relabelling it does not help: the name is then listed twice.
+        let mut list = original.clone();
+        let mut relabelled = quarantined;
+        relabelled["lifecycle"] = Value::String("generatable".into());
+        list["executable"].as_array_mut().unwrap().push(relabelled);
+        let err = derive_restricted_vocabulary(&base, &serde_json::to_vec(&list).unwrap())
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("more than once"), "{err}");
+
+        // A not-executable entry must be quarantined, and lifecycle is required.
+        let mut list = original.clone();
+        list["not_executable"][0]["lifecycle"] = Value::String("compatibility".into());
+        assert!(derive_restricted_vocabulary(&base, &serde_json::to_vec(&list).unwrap()).is_err());
+        let mut list = original;
+        list["executable"][0]
+            .as_object_mut()
+            .unwrap()
+            .remove("lifecycle");
         assert!(derive_restricted_vocabulary(&base, &serde_json::to_vec(&list).unwrap()).is_err());
     }
 }

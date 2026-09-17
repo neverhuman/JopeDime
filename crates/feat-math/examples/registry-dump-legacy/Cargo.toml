@@ -1,0 +1,15 @@
+# Dev-only tool: regenerates parallel/assets/grammar/jain-math-executable-9fa594e2.json
+# from jain-math's feat-math registry. Its own workspace, so the parallel
+# build and `just required` never compile it or depend on jain-math.
+[package]
+name = "jain-math-registry-dump"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dependencies]
+feat-math = { git = "https://git.neverhuman.org/git/veox/jain-math.git", rev = "9fa594e2eedb1916cc0e1ef4038c79adeccd6832" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
