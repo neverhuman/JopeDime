@@ -1,4 +1,5 @@
 pub mod audit;
+pub mod build_receipt;
 pub mod champions;
 pub mod checkpoint_recovery;
 pub mod controller;

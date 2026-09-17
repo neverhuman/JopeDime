@@ -17,3 +17,7 @@ clippy:
 
 test:
     env OMP_NUM_THREADS=1 RAYON_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 cargo test --workspace --locked --manifest-path parallel/Cargo.toml -- --test-threads=4
+
+# Not in `required`: glibc<=2.36 kernel-v1 evaluator build (docker, network none) + receipt
+kernel-v1-product-build out:
+    ops/ci/kernel-v1-product-build.sh {{out}}

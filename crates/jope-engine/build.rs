@@ -12,25 +12,20 @@ fn main() {
         "JOPE_CUDART_SONAME",
         "JOPE_NCCL_SONAME",
         "CXX",
-        "PYTHON",
     ] {
         println!("cargo:rerun-if-env-changed={key}");
     }
-    let (torch, abi) = if let Ok(torch) = std::env::var("LIBTORCH") {
-        (
-            torch,
-            std::env::var("LIBTORCH_CXX11_ABI").expect("explicit SDK requires LIBTORCH_CXX11_ABI"),
-        )
-    } else {
-        let python = std::env::var("PYTHON").unwrap_or_else(|_| "python3".into());
-        let output = std::process::Command::new(python).args(["-c", "import torch,os; print(os.path.dirname(torch.__file__)); print(int(torch._C._GLIBCXX_USE_CXX11_ABI))"]).output().expect("Python torch discovery");
-        assert!(output.status.success(), "PyTorch discovery failed");
-        let text = String::from_utf8(output.stdout).unwrap();
-        let mut lines = text.lines();
-        (
-            lines.next().unwrap().to_owned(),
-            lines.next().unwrap().to_owned(),
-        )
+    // The build never invokes Python: the neural SDK is named explicitly.
+    let (torch, abi) = match (
+        std::env::var("LIBTORCH"),
+        std::env::var("LIBTORCH_CXX11_ABI"),
+    ) {
+        (Ok(torch), Ok(abi)) if !torch.is_empty() => (torch, abi),
+        _ => panic!(
+            "the `neural` feature requires an explicit LibTorch SDK: set LIBTORCH to the \
+             LibTorch root (containing include/ and lib/) and LIBTORCH_CXX11_ABI to 0 or 1; \
+             the build does not discover PyTorch through Python"
+        ),
     };
     assert!(abi == "0" || abi == "1", "invalid LibTorch C++ ABI");
     let cuda = std::env::var("CUDA_HOME").unwrap_or_else(|_| "/usr/local/cuda".into());

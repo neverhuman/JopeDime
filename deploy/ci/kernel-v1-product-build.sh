@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# Glibc-bounded CPU build of the kernel-v1 product evaluator lineage.
+#
+# Usage: ops/ci/kernel-v1-product-build.sh OUT_DIR
+#
+# The frozen kernel-v1 source (parallel/releases/kernel-v1-8aa0affbf…/source)
+# is built inside a glibc-2.35 builder image so the binary runs on the
+# Debian bookworm appliance (glibc 2.36). Phases:
+#
+#   1. fetch   (host, network): `cargo fetch --locked` of the release's exact
+#              Cargo.lock into OUT_DIR/cargo-home. This is the only step that
+#              touches the network. Set KERNEL_V1_SEED_CARGO_HOME to an existing
+#              CARGO_HOME (e.g. ~/.cargo) to copy its registry index + .crate
+#              cache first, so an already-populated host needs no download.
+#   2. build   (docker --network none): the source is mounted read-only,
+#              copied to OUT_DIR/work/src, and built with
+#              `cargo build --release --offline --locked --bin jope-parallel`
+#              against the mounted CARGO_HOME. Runs as the invoking uid.
+#   3. receipt (host): `jope-build-receipt` (built from this checkout) writes
+#              a jope.product_evaluator_build.v1 receipt binding the git tree
+#              of the release source, the builder's `rustc -vV`, and the
+#              binary's ELF facts, and fails unless the binary needs at most
+#              GLIBC_${KERNEL_V1_MAX_GLIBC:-2.36} and links no libcuda/libtorch.
+#
+# No Python is invoked. Not part of `just required`.
+set -euo pipefail
+
+out=${1:?usage: kernel-v1-product-build.sh OUT_DIR}
+repo=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+lineage=kernel-v1-8aa0affbf24ca68b4d6ca039ca8fbd9bffa22e3c44c1c327bf81b733a596809a
+source_dir=$repo/parallel/releases/$lineage/source
+image=${KERNEL_V1_BUILDER_IMAGE:-jeryu-builder:rust1.95-glibc2.35}
+jobs=${KERNEL_V1_JOBS:-16}
+max_glibc=${KERNEL_V1_MAX_GLIBC:-2.36}
+
+[[ -f $source_dir/Cargo.lock ]] || { echo "missing $source_dir/Cargo.lock" >&2; exit 1; }
+if [[ -n $(git -C "$repo" status --porcelain -- "$source_dir") ]]; then
+    echo "release source differs from HEAD; refusing to build" >&2
+    exit 1
+fi
+
+mkdir -p "$out"
+out=$(cd "$out" && pwd)
+stamp=$(date -u +%Y%m%dT%H%M%SZ)
+run=$out/run-$stamp
+cargo_home=$out/cargo-home
+mkdir -p "$run/work" "$cargo_home"
+
+# 1. fetch (network allowed; host toolchain only resolves/downloads crates).
+if [[ -n ${KERNEL_V1_SEED_CARGO_HOME:-} && ! -d $cargo_home/registry ]]; then
+    mkdir -p "$cargo_home/registry"
+    cp -a "$KERNEL_V1_SEED_CARGO_HOME/registry/index" "$KERNEL_V1_SEED_CARGO_HOME/registry/cache" \
+        "$cargo_home/registry/"
+fi
+CARGO_HOME=$cargo_home cargo fetch --locked --manifest-path "$source_dir/Cargo.toml"
+
+# 2. build (no network, read-only source, glibc-2.35 userland).
+build_cmd="cargo build --release --offline --locked --bin jope-parallel -j $jobs"
+image_id=$(docker image inspect --format '{{.Id}}' "$image")
+docker run --rm --network none \
+    --user "$(id -u):$(id -g)" \
+    -e HOME=/work -e CARGO_HOME=/cargo-home -e CARGO_TARGET_DIR=/work/target \
+    -e CARGO_NET_OFFLINE=true \
+    -v "$source_dir:/src:ro" \
+    -v "$cargo_home:/cargo-home" \
+    -v "$run/work:/work" \
+    "$image" \
+    bash -euc "
+        cp -r /src /work/src
+        cd /work/src
+        rustc -vV > /work/rustc-vV.txt
+        (ldd --version | head -n1) > /work/builder-libc.txt
+        $build_cmd
+    " 2>&1 | tee "$run/build.log"
+
+binary=$run/work/target/release/jope-parallel
+[[ -x $binary ]] || { echo "build produced no binary" >&2; exit 1; }
+# The copy that was built must equal the git-tracked source it is receipted as.
+diff -r "$source_dir" "$run/work/src" >/dev/null
+
+# 3. receipt + bounds (host Rust tool from this checkout, no network).
+cargo run --quiet --locked --offline --manifest-path "$repo/parallel/Cargo.toml" \
+    -j "$jobs" --bin jope-build-receipt -- \
+    --binary "$binary" \
+    --source-dir "$source_dir" \
+    --output "$run/receipt.json" \
+    --lineage "$lineage" \
+    --rustc-vv "$run/work/rustc-vV.txt" \
+    --command "docker run --network none $image ($(cat "$run/work/builder-libc.txt")): $build_cmd" \
+    --builder-image "$image@$image_id" \
+    --max-glibc "$max_glibc" \
+    --forbid-gpu-libraries >/dev/null
+
+echo "binary:  $binary"
+echo "sha256:  $(sha256sum "$binary" | cut -d' ' -f1)"
+echo "receipt: $run/receipt.json"

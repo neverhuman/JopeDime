@@ -85,12 +85,39 @@ Do not overwrite an executable used by active GP workers. Deploy each new execut
 
 ## Build and checks
 
-The standalone workspace requires Rust 1.90 or newer. The neural feature uses `tch 0.20.0` and the installed PyTorch/LibTorch 2.7.0. Native Hyperion has its own Cargo workspace and pinned source/weight manifests. One-time Python conversion scripts export the frozen models; production inference and training run in Rust.
+The standalone workspace requires Rust 1.90 or newer. The default build is CPU-only and needs no LibTorch or CUDA; `just required` (rustfmt check plus `cargo test --locked --lib`) runs this configuration. The build never runs Python.
+
+The `neural` feature uses `tch =0.26.0` (its `torch-sys` expects LibTorch 2.13.0). You must name the SDK explicitly:
+
+- `LIBTORCH`: the LibTorch root, containing `include/` and `lib/`.
+- `LIBTORCH_CXX11_ABI`: `0` or `1`, matching how that LibTorch was built.
+
+If either variable is missing, `build.rs` stops with an error. It does not fall back to discovering PyTorch through Python. Do not set `LIBTORCH_USE_PYTORCH`, because it makes `torch-sys` call Python.
+
+The CUDA and NCCL locations come from `CUDA_HOME`, `JOPE_NCCL_INCLUDE`, `JOPE_CUDA_LIBRARY_PATH`, `JOPE_CUDART_SONAME` and `JOPE_NCCL_SONAME`.
+
+Native Hyperion has its own Cargo workspace and pinned source/weight manifests. The frozen models were exported once by Python conversion scripts. Production inference and training run in Rust.
 
 ```bash
 rtk proxy env CARGO_BUILD_JOBS=4 cargo test --test dashboard
-rtk proxy env LIBTORCH_USE_PYTORCH=1 CXX=g++ CARGO_BUILD_JOBS=8 cargo build --release --features neural
+rtk proxy env LIBTORCH=/opt/libtorch LIBTORCH_CXX11_ABI=1 CXX=g++ CARGO_BUILD_JOBS=8 cargo build --release --features neural
 ```
+
+`jope-build-receipt --binary PATH --source-dir DIR --output PATH [--lineage NAME] [--rustc-vv FILE] [--max-glibc 2.36] [--forbid-gpu-libraries]` writes a `jope.product_evaluator_build.v1` receipt. The receipt records:
+
+- the git commit and tree of the source directory;
+- the SHA-256 of `Cargo.toml` and `Cargo.lock`;
+- the output of `rustc -vV`;
+- the binary's SHA-256 and size;
+- the highest `GLIBC_*` version the binary requires, read from its ELF version-requirement section;
+- its `NEEDED` libraries;
+- whether any of those libraries is libcuda, libtorch or libc10.
+
+`just kernel-v1-product-build OUT` (`../ops/ci/kernel-v1-product-build.sh`) builds the product evaluator from `releases/kernel-v1-8aa0affbf…/source`. It is separate from `required`. The script runs in three stages:
+
+1. **Fetch.** On the host, `cargo fetch --locked` downloads the pinned crates into `OUT/cargo-home`. This is the only stage that uses the network. To reuse an existing registry, set `KERNEL_V1_SEED_CARGO_HOME`.
+2. **Build.** The build runs in `jeryu-builder:rust1.95-glibc2.35` with `docker run --network none`. The container mounts the source read-only and copies it into `OUT/run-*/work`. It then runs `cargo build --release --offline --locked --bin jope-parallel`.
+3. **Receipt.** The script writes the receipt to `OUT/run-*/receipt.json`. The run fails if the binary requires anything newer than `GLIBC_2.36` (Debian bookworm) or links CUDA or LibTorch.
 
 The bounded `campaign --spec PATH` controller chains resumable qualification cycles with an immutable admission/deadline schedule and family-coverage checks. The source includes `systemd/jope-parallel-campaign.service`; it must point at a verified corpus, complete saved contexts, and the qualified executable before launch. It does not authorize independent final-test scoring.
 
