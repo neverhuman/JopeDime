@@ -20,7 +20,17 @@
 #              a jope.product_evaluator_build.v1 receipt binding the git tree
 #              of the release source, the builder's `rustc -vV`, and the
 #              binary's ELF facts, and fails unless the binary needs at most
-#              GLIBC_${KERNEL_V1_MAX_GLIBC:-2.36} and links no libcuda/libtorch.
+#              GLIBC_${KERNEL_V1_MAX_GLIBC:-2.36} and links no CUDA/LibTorch library.
+#              The limits and the verdict are recorded under `bounds`; a
+#              rejected build still leaves a receipt with `passed: false`.
+#
+# Toolchain override: the builder image sets RUSTUP_TOOLCHAIN (1.95.0 for the
+# default image), which takes precedence over the release source's
+# rust-toolchain.toml (channel 1.97.1); the rustc that actually ran is the
+# image's. The image is kept as is: its glibc-2.35 userland is what bounds
+# the binary. The receipt's `toolchain` object records the file channel, the
+# builder's RUSTUP_TOOLCHAIN, the actual `rustc -vV` release, and
+# `matches_file`, so the override is explicit rather than silent.
 #
 # No Python is invoked. Not part of `just required`.
 set -euo pipefail
@@ -69,6 +79,7 @@ docker run --rm --network none \
         cp -r /src /work/src
         cd /work/src
         rustc -vV > /work/rustc-vV.txt
+        printf '%s\n' "\${RUSTUP_TOOLCHAIN-}" > /work/rustup-toolchain.txt
         (ldd --version | head -n1) > /work/builder-libc.txt
         $build_cmd
     " 2>&1 | tee "$run/build.log"
@@ -86,6 +97,8 @@ cargo run --quiet --locked --offline --manifest-path "$repo/parallel/Cargo.toml"
     --output "$run/receipt.json" \
     --lineage "$lineage" \
     --rustc-vv "$run/work/rustc-vV.txt" \
+    --rustup-toolchain "$run/work/rustup-toolchain.txt" \
+    --profile release \
     --command "docker run --network none $image ($(cat "$run/work/builder-libc.txt")): $build_cmd" \
     --builder-image "$image@$image_id" \
     --max-glibc "$max_glibc" \

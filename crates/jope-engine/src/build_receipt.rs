@@ -22,8 +22,10 @@ const DT_NEEDED: u64 = 1;
 /// Dynamic-linking facts read from an ELF64 image.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ElfDynamic {
-    /// `DT_NEEDED` entries in file order.
-    pub needed: Vec<String>,
+    /// `DT_NEEDED` entries in file order; `None` when the image has no
+    /// `SHT_DYNAMIC` section (static, or section headers stripped), so a
+    /// missing section is never mistaken for "links nothing".
+    pub needed: Option<Vec<String>>,
     /// Every `(library, version)` pair in the version-requirement section.
     pub version_requirements: Vec<(String, String)>,
 }
@@ -39,13 +41,17 @@ impl ElfDynamic {
             .map(|(_, v)| v.clone())
     }
 
-    /// `DT_NEEDED` entries that name a CUDA or LibTorch library.
-    pub fn gpu_needed(&self) -> Vec<String> {
-        self.needed
-            .iter()
-            .filter(|n| is_gpu_library(n))
-            .cloned()
-            .collect()
+    /// `DT_NEEDED` entries that name a CUDA or LibTorch library; `None`
+    /// when the dynamic section is absent (nothing could be checked).
+    pub fn gpu_needed(&self) -> Option<Vec<String>> {
+        let needed = self.needed.as_ref()?;
+        Some(
+            needed
+                .iter()
+                .filter(|n| is_gpu_library(n))
+                .cloned()
+                .collect(),
+        )
     }
 }
 
@@ -55,9 +61,39 @@ pub fn glibc_version(tag: &str) -> Option<Vec<u32>> {
     rest.split('.').map(|p| p.parse::<u32>().ok()).collect()
 }
 
+/// Name prefixes (lowercase) of CUDA, NVIDIA runtime and LibTorch libraries.
+/// The CUDA names are listed individually rather than as a bare `libcu`
+/// prefix, which would also match unrelated `libcurl`/`libcups`.
+const GPU_LIBRARY_PREFIXES: &[&str] = &[
+    "libcuda",
+    "libcudart",
+    "libcudnn",
+    "libcublas",
+    "libcurand",
+    "libcusparse",
+    "libcufft",
+    "libcusolver",
+    "libcupti",
+    "libcufile",
+    "libcutensor",
+    "libnpp",
+    "libnvjpeg",
+    "libnccl",
+    "libnvrtc",
+    "libnvjitlink",
+    "libnvtoolsext",
+    "libnvidia",
+    "libtorch",
+    "libc10",
+];
+
 pub fn is_gpu_library(name: &str) -> bool {
     let n = name.to_ascii_lowercase();
-    n.starts_with("libcuda") || n.starts_with("libtorch") || n.starts_with("libc10")
+    GPU_LIBRARY_PREFIXES.iter().any(|p| n.starts_with(p))
+}
+
+fn add(a: usize, b: usize) -> Result<usize> {
+    a.checked_add(b).context("ELF offset overflow")
 }
 
 fn slice(data: &[u8], offset: u64, len: u64) -> Result<&[u8]> {
@@ -70,17 +106,17 @@ fn slice(data: &[u8], offset: u64, len: u64) -> Result<&[u8]> {
 }
 fn u16_at(d: &[u8], o: usize) -> Result<u16> {
     Ok(u16::from_le_bytes(
-        d.get(o..o + 2).context("ELF truncated")?.try_into()?,
+        d.get(o..add(o, 2)?).context("ELF truncated")?.try_into()?,
     ))
 }
 fn u32_at(d: &[u8], o: usize) -> Result<u32> {
     Ok(u32::from_le_bytes(
-        d.get(o..o + 4).context("ELF truncated")?.try_into()?,
+        d.get(o..add(o, 4)?).context("ELF truncated")?.try_into()?,
     ))
 }
 fn u64_at(d: &[u8], o: usize) -> Result<u64> {
     Ok(u64::from_le_bytes(
-        d.get(o..o + 8).context("ELF truncated")?.try_into()?,
+        d.get(o..add(o, 8)?).context("ELF truncated")?.try_into()?,
     ))
 }
 fn c_str(table: &[u8], offset: u32) -> Result<String> {
@@ -119,7 +155,11 @@ pub fn parse_elf_dynamic(data: &[u8]) -> Result<ElfDynamic> {
     );
     let mut sections = Vec::new();
     for i in 0..shnum {
-        let h = slice(data, shoff + i * shentsize, 64)?;
+        let at = i
+            .checked_mul(shentsize)
+            .and_then(|o| o.checked_add(shoff))
+            .context("section header offset overflow")?;
+        let h = slice(data, at, 64)?;
         sections.push(Section {
             kind: u32_at(h, 4)?,
             offset: u64_at(h, 24)?,
@@ -135,13 +175,14 @@ pub fn parse_elf_dynamic(data: &[u8]) -> Result<ElfDynamic> {
         ensure!(s.kind == SHT_STRTAB, "section link is not a string table");
         slice(data, s.offset, s.size)
     };
-    let mut needed = Vec::new();
+    let mut needed: Option<Vec<String>> = None;
     let mut version_requirements = Vec::new();
     for s in &sections {
         match s.kind {
             SHT_DYNAMIC => {
                 let strings = strtab(s.link)?;
                 let body = slice(data, s.offset, s.size)?;
+                let needed = needed.get_or_insert_with(Vec::new);
                 for entry in body.chunks_exact(16) {
                     let tag = u64_at(entry, 0)?;
                     if tag == DT_NULL {
@@ -157,23 +198,23 @@ pub fn parse_elf_dynamic(data: &[u8]) -> Result<ElfDynamic> {
                 let body = slice(data, s.offset, s.size)?;
                 let mut at = 0usize;
                 for _ in 0..s.info {
-                    let count = u16_at(body, at + 2)?;
-                    let file = c_str(strings, u32_at(body, at + 4)?)?;
-                    let mut aux = at + u32_at(body, at + 8)? as usize;
+                    let count = u16_at(body, add(at, 2)?)?;
+                    let file = c_str(strings, u32_at(body, add(at, 4)?)?)?;
+                    let mut aux = add(at, u32_at(body, add(at, 8)?)? as usize)?;
                     for _ in 0..count {
-                        let name = c_str(strings, u32_at(body, aux + 8)?)?;
+                        let name = c_str(strings, u32_at(body, add(aux, 8)?)?)?;
                         version_requirements.push((file.clone(), name));
-                        let next = u32_at(body, aux + 12)? as usize;
+                        let next = u32_at(body, add(aux, 12)?)? as usize;
                         if next == 0 {
                             break;
                         }
-                        aux += next;
+                        aux = add(aux, next)?;
                     }
-                    let next = u32_at(body, at + 12)? as usize;
+                    let next = u32_at(body, add(at, 12)?)? as usize;
                     if next == 0 {
                         break;
                     }
-                    at += next;
+                    at = add(at, next)?;
                 }
             }
             _ => {}
@@ -254,8 +295,71 @@ pub struct ReceiptInput<'a> {
     /// Captured `rustc -vV` of the toolchain that built the binary. When
     /// absent, the local `rustc -vV` is recorded.
     pub rustc_vv: Option<String>,
+    /// The builder's `RUSTUP_TOOLCHAIN` (empty or `None` when unset). It
+    /// overrides the source's `rust-toolchain.toml`. When `rustc_vv` is
+    /// absent, the local environment's value is recorded instead.
+    pub rustup_toolchain: Option<&'a str>,
     pub command: Option<&'a str>,
     pub builder_image: Option<&'a str>,
+    /// Cargo profile the binary was built with, e.g. `release`.
+    pub profile: &'a str,
+    /// Cargo features enabled for the build (empty for the default set).
+    pub features: &'a [String],
+}
+
+/// The `channel` of a `rust-toolchain.toml` `[toolchain]` table.
+pub fn toolchain_file_channel(text: &str) -> Option<String> {
+    let mut in_toolchain = false;
+    for line in text.lines() {
+        let line = line.split('#').next().unwrap_or("").trim();
+        if line.starts_with('[') {
+            in_toolchain = line == "[toolchain]";
+            continue;
+        }
+        if !in_toolchain {
+            continue;
+        }
+        if let Some((key, value)) = line.split_once('=') {
+            if key.trim() == "channel" {
+                let value = value.trim();
+                let unquoted = value
+                    .strip_prefix('"')
+                    .and_then(|v| v.strip_suffix('"'))
+                    .or_else(|| value.strip_prefix('\'').and_then(|v| v.strip_suffix('\'')))?;
+                return Some(unquoted.to_owned());
+            }
+        }
+    }
+    None
+}
+
+/// Requested (`rust-toolchain.toml`) versus actual (`rustc -vV`) toolchain.
+/// A builder `RUSTUP_TOOLCHAIN` silently wins over the file, so both sides
+/// and the override are recorded and `matches_file` makes a mismatch visible.
+pub fn toolchain_record(
+    source_dir: &Path,
+    rustc_vv: &str,
+    rustup_toolchain: Option<&str>,
+) -> Value {
+    let file = source_dir.join("rust-toolchain.toml");
+    let channel = std::fs::read_to_string(&file)
+        .ok()
+        .and_then(|t| toolchain_file_channel(&t));
+    let release = rustc_vv
+        .lines()
+        .find_map(|l| l.strip_prefix("release: "))
+        .map(str::trim);
+    let override_ = rustup_toolchain.filter(|s| !s.is_empty());
+    json!({
+        "file": file.is_file().then_some("rust-toolchain.toml"),
+        "file_channel": channel,
+        "rustup_toolchain_override": override_,
+        "rustc_release": release,
+        "matches_file": match (&channel, release) {
+            (Some(c), Some(r)) => Value::Bool(c == r),
+            _ => Value::Null,
+        },
+    })
 }
 
 pub fn build_receipt(input: &ReceiptInput) -> Result<Value> {
@@ -269,10 +373,17 @@ pub fn build_receipt(input: &ReceiptInput) -> Result<Value> {
             &std::fs::read(&path).with_context(|| format!("read {}", path.display()))?,
         ))
     };
-    let rustc = match &input.rustc_vv {
-        Some(text) => text.clone(),
-        None => run("rustc", &["-vV"], Some(input.source_dir))
-            .context("rustc -vV failed; pass the captured output instead")?,
+    let local_override;
+    let (rustc, rustup_toolchain) = match &input.rustc_vv {
+        Some(text) => (text.clone(), input.rustup_toolchain),
+        None => {
+            local_override = std::env::var("RUSTUP_TOOLCHAIN").ok();
+            (
+                run("rustc", &["-vV"], Some(input.source_dir))
+                    .context("rustc -vV failed; pass the captured output instead")?,
+                local_override.as_deref(),
+            )
+        }
     };
     if !input.source_dir.is_dir() {
         bail!(
@@ -294,21 +405,25 @@ pub fn build_receipt(input: &ReceiptInput) -> Result<Value> {
         "command": input.command,
         "builder_image": input.builder_image,
         "rustc": rustc.lines().collect::<Vec<_>>(),
+        "toolchain": toolchain_record(input.source_dir, &rustc, rustup_toolchain),
+        "features": input.features,
+        "profile": input.profile,
         "binary_path": input.binary.display().to_string(),
         "binary_sha256": sha256_hex(&binary),
         "bytes": binary.len(),
         "glibc_max_needed": elf.max_glibc(),
         "needed": elf.needed,
-        "links_cuda_or_torch": !gpu.is_empty(),
+        "links_cuda_or_torch": gpu.as_ref().map(|g| !g.is_empty()),
         "gpu_needed": gpu,
         "host": run("uname", &["-n"], None),
         "built_at": utc_timestamp(secs),
     }))
 }
 
-/// Enforces deployment bounds on a written receipt: the binary's GLIBC
+/// Enforces deployment bounds on a receipt: the binary's GLIBC
 /// requirement must not exceed `max_glibc` (e.g. `2.36`), and with
-/// `forbid_gpu` no NEEDED entry may name libcuda/libtorch/libc10.
+/// `forbid_gpu` no NEEDED entry may name a CUDA/NVIDIA/LibTorch library.
+/// A receipt without a dynamic section (`links_cuda_or_torch: null`) fails.
 pub fn check_bounds(receipt: &Value, max_glibc: Option<&str>, forbid_gpu: bool) -> Result<()> {
     if let Some(bound) = max_glibc {
         let limit = glibc_version(&format!("GLIBC_{bound}"))
@@ -326,11 +441,25 @@ pub fn check_bounds(receipt: &Value, max_glibc: Option<&str>, forbid_gpu: bool) 
     if forbid_gpu {
         ensure!(
             receipt["links_cuda_or_torch"] == Value::Bool(false),
-            "binary links CUDA/LibTorch: {}",
+            "binary links CUDA/LibTorch or has no dynamic section: {}",
             receipt["gpu_needed"]
         );
     }
     Ok(())
+}
+
+/// Runs [`check_bounds`] and records the checked limits and the verdict in
+/// the receipt as `bounds`, so a rejected build's receipt is
+/// distinguishable from a passing one. Returns the check's result.
+pub fn apply_bounds(receipt: &mut Value, max_glibc: Option<&str>, forbid_gpu: bool) -> Result<()> {
+    let result = check_bounds(receipt, max_glibc, forbid_gpu);
+    receipt["bounds"] = json!({
+        "max_glibc": max_glibc,
+        "forbid_gpu_libraries": forbid_gpu,
+        "passed": result.is_ok(),
+        "error": result.as_ref().err().map(|e| format!("{e:#}")),
+    });
+    result
 }
 
 #[cfg(test)]
@@ -418,7 +547,7 @@ mod tests {
         image[4] = 2;
         image[5] = 1;
         image[6] = 1;
-        let mut place = |image: &mut Vec<u8>, body: &[u8]| {
+        let place = |image: &mut Vec<u8>, body: &[u8]| {
             let at = image.len() as u64;
             image.extend_from_slice(body);
             at
@@ -450,8 +579,8 @@ mod tests {
     fn synthetic_elf_needed_and_glibc_bound() {
         let elf = parse_elf_dynamic(&synthetic_elf()).unwrap();
         assert_eq!(
-            elf.needed,
-            ["libm.so.6", "libc.so.6", "libtorch_cuda.so"],
+            elf.needed.as_ref().unwrap(),
+            &["libm.so.6", "libc.so.6", "libtorch_cuda.so"],
             "stops at DT_NULL"
         );
         assert_eq!(elf.version_requirements.len(), 5);
@@ -461,7 +590,7 @@ mod tests {
         );
         // Numeric, not lexical: 2.34 > 2.27 > 2.17 > 2.9; PRIVATE ignored.
         assert_eq!(elf.max_glibc().as_deref(), Some("GLIBC_2.34"));
-        assert_eq!(elf.gpu_needed(), ["libtorch_cuda.so"]);
+        assert_eq!(elf.gpu_needed().unwrap(), ["libtorch_cuda.so"]);
     }
 
     #[test]
@@ -484,10 +613,17 @@ mod tests {
             return;
         }
         let elf = parse_elf_dynamic(&bytes).unwrap();
-        assert!(elf.needed.iter().any(|n| n == "libc.so.6"), "{elf:?}");
+        assert!(
+            elf.needed
+                .as_ref()
+                .unwrap()
+                .iter()
+                .any(|n| n == "libc.so.6"),
+            "{elf:?}"
+        );
         let max = elf.max_glibc().expect("glibc requirement");
         assert!(glibc_version(&max).unwrap() >= vec![2, 2], "{max}");
-        assert!(elf.gpu_needed().is_empty());
+        assert!(elf.gpu_needed().unwrap().is_empty());
     }
 
     #[test]
@@ -499,6 +635,120 @@ mod tests {
         assert!(is_gpu_library("libcuda.so.1"));
         assert!(is_gpu_library("libtorch_cpu.so"));
         assert!(!is_gpu_library("libc.so.6"));
+        for gpu in [
+            "libcublasLt.so.12",
+            "libcublas.so.12",
+            "libcudnn.so.9",
+            "libcudart.so.12",
+            "libnccl.so.2",
+            "libnvrtc.so.12",
+            "libcurand.so.10",
+            "libcusparse.so.12",
+            "libcufft.so.11",
+            "libcusolver.so.11",
+            "libnvJitLink.so.12",
+            "libnvToolsExt.so.1",
+            "libc10_cuda.so",
+        ] {
+            assert!(is_gpu_library(gpu), "{gpu}");
+        }
+        for cpu in [
+            "libcurl.so.4",
+            "libcups.so.2",
+            "libcrypt.so.1",
+            "libgcc_s.so.1",
+            "libm.so.6",
+            "ld-linux-x86-64.so.2",
+        ] {
+            assert!(!is_gpu_library(cpu), "{cpu}");
+        }
+    }
+
+    #[test]
+    fn hostile_header_offsets_error_instead_of_overflowing() {
+        let mut image = synthetic_elf();
+        image[0x28..0x30].copy_from_slice(&u64::MAX.to_le_bytes());
+        assert!(parse_elf_dynamic(&image).is_err());
+        let mut image = synthetic_elf();
+        image[0x28..0x30].copy_from_slice(&(u64::MAX - 70).to_le_bytes());
+        assert!(parse_elf_dynamic(&image).is_err());
+    }
+
+    #[test]
+    fn missing_dynamic_section_is_unknown_not_clean() {
+        let mut image = synthetic_elf();
+        let shoff = u64::from_le_bytes(image[0x28..0x30].try_into().unwrap()) as usize;
+        // Section 2 is SHT_DYNAMIC; demote it to SHT_NULL.
+        image[shoff + 2 * 64 + 4..shoff + 2 * 64 + 8].copy_from_slice(&0u32.to_le_bytes());
+        let elf = parse_elf_dynamic(&image).unwrap();
+        assert_eq!(elf.needed, None);
+        assert_eq!(elf.gpu_needed(), None);
+        // Section headers stripped entirely.
+        let mut stripped = synthetic_elf();
+        stripped[0x3c..0x3e].copy_from_slice(&0u16.to_le_bytes());
+        assert_eq!(parse_elf_dynamic(&stripped).unwrap().needed, None);
+        // A receipt carrying that state cannot pass --forbid-gpu-libraries.
+        let receipt = json!({"glibc_max_needed": "GLIBC_2.34", "links_cuda_or_torch": null, "gpu_needed": null});
+        assert!(check_bounds(&receipt, None, true).is_err());
+        check_bounds(&receipt, Some("2.36"), false).unwrap();
+    }
+
+    #[test]
+    fn bounds_verdict_is_recorded_in_receipt() {
+        let mut pass = json!({"glibc_max_needed": "GLIBC_2.34", "links_cuda_or_torch": false, "gpu_needed": []});
+        apply_bounds(&mut pass, Some("2.36"), true).unwrap();
+        assert_eq!(
+            pass["bounds"],
+            json!({"max_glibc": "2.36", "forbid_gpu_libraries": true, "passed": true, "error": null})
+        );
+        let mut fail = json!({"glibc_max_needed": "GLIBC_2.39", "links_cuda_or_torch": false, "gpu_needed": []});
+        let err = apply_bounds(&mut fail, Some("2.36"), true).unwrap_err();
+        assert_eq!(fail["bounds"]["passed"], false);
+        assert_eq!(fail["bounds"]["max_glibc"], "2.36");
+        assert_eq!(fail["bounds"]["error"], format!("{err:#}"));
+        assert!(err.to_string().contains("GLIBC_2.39"));
+        let mut unbounded = json!({"glibc_max_needed": "GLIBC_2.39"});
+        apply_bounds(&mut unbounded, None, false).unwrap();
+        assert_eq!(unbounded["bounds"]["max_glibc"], Value::Null);
+        assert_eq!(unbounded["bounds"]["passed"], true);
+    }
+
+    #[test]
+    fn toolchain_file_channel_parses_toolchain_table() {
+        let text = "[toolchain]\nchannel = \"1.97.1\"\nprofile = \"minimal\"\n";
+        assert_eq!(toolchain_file_channel(text).as_deref(), Some("1.97.1"));
+        let commented = "# pinned\n[other]\nchannel = \"x\"\n[toolchain]\n channel='stable' # c\n";
+        assert_eq!(toolchain_file_channel(commented).as_deref(), Some("stable"));
+        assert_eq!(toolchain_file_channel("[other]\nchannel = \"x\"\n"), None);
+        assert_eq!(toolchain_file_channel(""), None);
+    }
+
+    #[test]
+    fn toolchain_record_exposes_rustup_override() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(
+            dir.path().join("rust-toolchain.toml"),
+            "[toolchain]\nchannel = \"1.97.1\"\n",
+        )
+        .unwrap();
+        let vv = "rustc 1.95.0 (abc 2026-01-01)\nbinary: rustc\nrelease: 1.95.0\n";
+        assert_eq!(
+            toolchain_record(dir.path(), vv, Some("1.95.0")),
+            json!({
+                "file": "rust-toolchain.toml",
+                "file_channel": "1.97.1",
+                "rustup_toolchain_override": "1.95.0",
+                "rustc_release": "1.95.0",
+                "matches_file": false,
+            })
+        );
+        let honoured = toolchain_record(dir.path(), "release: 1.97.1\n", Some(""));
+        assert_eq!(honoured["matches_file"], true);
+        assert_eq!(honoured["rustup_toolchain_override"], Value::Null);
+        let empty = tempfile::tempdir().unwrap();
+        let none = toolchain_record(empty.path(), vv, None);
+        assert_eq!(none["file"], Value::Null);
+        assert_eq!(none["matches_file"], Value::Null);
     }
 
     #[test]
