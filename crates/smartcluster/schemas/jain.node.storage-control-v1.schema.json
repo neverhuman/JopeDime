@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "jain.node.storage-control/v1",
+  "title": "Signed JainNode closed storage control request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["session_id", "sequence", "deadline_ms", "body", "signature"],
+  "properties": {
+    "session_id": {"$ref": "#/$defs/identifier"},
+    "sequence": {"type": "integer", "minimum": 1},
+    "deadline_ms": {"type": "integer", "minimum": 1},
+    "body": {
+      "oneOf": [
+        {"$ref": "#/$defs/beginWrite"},
+        {"$ref": "#/$defs/writeChunk"},
+        {"$ref": "#/$defs/commitWrite"},
+        {"$ref": "#/$defs/read"}
+      ]
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "issuer", "key_id", "public_key", "signature"],
+      "properties": {
+        "authority": {"const": "storage_control"},
+        "issuer": {"$ref": "#/$defs/identifier"},
+        "key_id": {"$ref": "#/$defs/identifier"},
+        "public_key": {"$ref": "#/$defs/digest"},
+        "signature": {
+          "type": "array",
+          "minItems": 64,
+          "maxItems": 64,
+          "items": {"type": "integer", "minimum": 0, "maximum": 255}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "decimalBytes": {"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"},
+    "digest": {
+      "type": "array",
+      "minItems": 32,
+      "maxItems": 32,
+      "items": {"type": "integer", "minimum": 0, "maximum": 255}
+    },
+    "fragmentKind": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["replica"], "properties": {"replica": {"type": "integer", "minimum": 0, "maximum": 1}}},
+        {"type": "object", "additionalProperties": false, "required": ["data"], "properties": {"data": {"type": "integer", "minimum": 0, "maximum": 3}}},
+        {"type": "object", "additionalProperties": false, "required": ["recovery"], "properties": {"recovery": {"const": 0}}}
+      ]
+    },
+    "beginWrite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["begin_write"],
+      "properties": {
+        "begin_write": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["transfer_id", "project_id", "object_id", "manifest_digest", "fragment_index", "fragment_kind", "failure_domain", "topology_digest", "expected_bytes", "expected_sha256"],
+          "properties": {
+            "transfer_id": {"$ref": "#/$defs/identifier"},
+            "project_id": {"$ref": "#/$defs/identifier"},
+            "object_id": {"$ref": "#/$defs/digest"},
+            "manifest_digest": {"$ref": "#/$defs/digest"},
+            "fragment_index": {"type": "integer", "minimum": 0, "maximum": 4},
+            "fragment_kind": {"$ref": "#/$defs/fragmentKind"},
+            "failure_domain": {"$ref": "#/$defs/identifier"},
+            "topology_digest": {"$ref": "#/$defs/digest"},
+            "expected_bytes": {"$ref": "#/$defs/decimalBytes"},
+            "expected_sha256": {"$ref": "#/$defs/digest"}
+          }
+        }
+      }
+    },
+    "writeChunk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["write_chunk"],
+      "properties": {
+        "write_chunk": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["transfer_id", "offset", "bytes", "sha256"],
+          "properties": {
+            "transfer_id": {"$ref": "#/$defs/identifier"},
+            "offset": {"$ref": "#/$defs/decimalBytes"},
+            "bytes": {"type": "array", "minItems": 1, "maxItems": 262160, "items": {"type": "integer", "minimum": 0, "maximum": 255}},
+            "sha256": {"$ref": "#/$defs/digest"}
+          }
+        }
+      }
+    },
+    "commitWrite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit_write"],
+      "properties": {
+        "commit_write": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["transfer_id"],
+          "properties": {"transfer_id": {"$ref": "#/$defs/identifier"}}
+        }
+      }
+    },
+    "read": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["read"],
+      "properties": {
+        "read": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["transfer_id", "project_id", "object_id", "manifest_digest", "fragment_index", "fragment_kind", "expected_sha256", "expected_bytes", "offset", "maximum_bytes"],
+          "properties": {
+            "transfer_id": {"$ref": "#/$defs/identifier"},
+            "project_id": {"$ref": "#/$defs/identifier"},
+            "object_id": {"$ref": "#/$defs/digest"},
+            "manifest_digest": {"$ref": "#/$defs/digest"},
+            "fragment_index": {"type": "integer", "minimum": 0, "maximum": 4},
+            "fragment_kind": {"$ref": "#/$defs/fragmentKind"},
+            "expected_sha256": {"$ref": "#/$defs/digest"},
+            "expected_bytes": {"$ref": "#/$defs/decimalBytes"},
+            "offset": {"$ref": "#/$defs/decimalBytes"},
+            "maximum_bytes": {"type": "integer", "minimum": 1, "maximum": 262160}
+          }
+        }
+      }
+    }
+  }
+}

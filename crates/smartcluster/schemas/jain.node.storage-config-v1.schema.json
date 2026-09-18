@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "jain.node.storage-config/v1",
+  "title": "JainNode storage configuration v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "deployment_id", "node_id", "staging_parent", "volumes", "projects"],
+  "properties": {
+    "schema": {"const": "jain.node.storage-config/v1"},
+    "deployment_id": {"$ref": "#/$defs/identifier"},
+    "node_id": {"$ref": "#/$defs/identifier"},
+    "staging_parent": {"$ref": "#/$defs/absolutePath"},
+    "volumes": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["root", "filesystem_uuid", "failure_domain"],
+        "properties": {
+          "root": {"$ref": "#/$defs/absolutePath"},
+          "filesystem_uuid": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "failure_domain": {"$ref": "#/$defs/identifier"}
+        }
+      }
+    },
+    "projects": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["project_id", "dedup_key_path", "active_kek_version", "kek_files"],
+        "properties": {
+          "project_id": {"$ref": "#/$defs/identifier"},
+          "dedup_key_path": {"$ref": "#/$defs/absolutePath"},
+          "active_kek_version": {"type": "integer", "minimum": 1, "maximum": 4294967295},
+          "kek_files": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 16,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["version", "path"],
+              "properties": {
+                "version": {"type": "integer", "minimum": 1, "maximum": 4294967295},
+                "path": {"$ref": "#/$defs/absolutePath"}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "absolutePath": {"type": "string", "pattern": "^/", "minLength": 2, "maxLength": 4096}
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "jain.appliance-role/v2",
+  "title": "Signed Jain appliance role v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["payload", "bindings", "signature"],
+  "properties": {
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema", "release", "status", "formal_ga", "image_digest", "role", "node_id",
+        "session_id", "profile", "provision", "compute_slots", "storage_enabled", "services",
+        "state_root", "qualification_receipt", "control", "node_key_id", "node_public_key",
+        "node_private_key", "hub_issuer", "hub_public_key", "image_issuer", "image_public_key",
+        "max_inflight"
+      ],
+      "properties": {
+        "schema": {"const": "jain.appliance-role/v2"},
+        "release": {"const": "9.0.0-appliance.1"},
+        "status": {"const": "candidate"},
+        "formal_ga": {"const": false},
+        "image_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "role": {"enum": ["all-in-one", "edge-hub", "compute-node", "follower-compute-node", "witness-storage-node"]},
+        "node_id": {"$ref": "#/$defs/identifier"},
+        "session_id": {"$ref": "#/$defs/identifier"},
+        "profile": {"enum": ["cpu", "gpu", "storage_only"]},
+        "provision": {"type": ["string", "null"], "enum": ["code_runner", "smartcluster_compute", "dedicated_inference", null]},
+        "compute_slots": {"type": "integer", "minimum": 0, "maximum": 65535},
+        "storage_enabled": {"type": "boolean"},
+        "services": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["jainnode", "scqd"],
+          "properties": {"jainnode": {"const": true}, "scqd": {"const": false}}
+        },
+        "state_root": {"$ref": "#/$defs/absolutePath"},
+        "qualification_receipt": {"$ref": "#/$defs/absolutePath"},
+        "control": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["hub_address", "server_name", "ca_certificate", "client_certificate", "client_private_key", "connect_timeout_ms", "frame_timeout_ms"],
+          "properties": {
+            "hub_address": {"type": "string", "minLength": 1, "maxLength": 256},
+            "server_name": {"type": "string", "minLength": 1, "maxLength": 253},
+            "ca_certificate": {"$ref": "#/$defs/absolutePath"},
+            "client_certificate": {"$ref": "#/$defs/absolutePath"},
+            "client_private_key": {"$ref": "#/$defs/absolutePath"},
+            "connect_timeout_ms": {"type": "integer", "minimum": 1, "maximum": 300000},
+            "frame_timeout_ms": {"type": "integer", "minimum": 1, "maximum": 300000}
+          }
+        },
+        "node_key_id": {"$ref": "#/$defs/identifier"},
+        "node_public_key": {"$ref": "#/$defs/digest"},
+        "node_private_key": {"$ref": "#/$defs/absolutePath"},
+        "hub_issuer": {"$ref": "#/$defs/identifier"},
+        "hub_public_key": {"$ref": "#/$defs/digest"},
+        "image_issuer": {"$ref": "#/$defs/identifier"},
+        "image_public_key": {"$ref": "#/$defs/digest"},
+        "max_inflight": {"type": "integer", "minimum": 0, "maximum": 4294967295}
+      }
+    },
+    "bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["storage_config_path", "storage_config_sha256", "docker_socket", "isolation_broker_socket"],
+      "properties": {
+        "storage_config_path": {"$ref": "#/$defs/absolutePath"},
+        "storage_config_sha256": {"$ref": "#/$defs/digest"},
+        "docker_socket": {"$ref": "#/$defs/absolutePath"},
+        "isolation_broker_socket": {"$ref": "#/$defs/absolutePath"}
+      }
+    },
+    "signature": {"type": "string", "pattern": "^[0-9a-f]{128}$"}
+  },
+  "$defs": {
+    "identifier": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "absolutePath": {"type": "string", "pattern": "^/", "minLength": 2, "maxLength": 4096},
+    "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

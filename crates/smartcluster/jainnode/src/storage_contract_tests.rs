@@ -276,15 +276,15 @@ fn storage_frames_are_durable_outbound_records() {
 #[test]
 fn storage_contract_schemas_are_closed_and_json_bytes_are_decimal_strings() {
     let telemetry_schema: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../schemas/jain.node.storage-telemetry-v1.schema.json"
+        "../../schemas/jain.node.storage-telemetry-v1.schema.json"
     ))
     .unwrap();
     let receipt_schema: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../schemas/jain.storage-fragment-receipt-v1.schema.json"
+        "../../schemas/jain.storage-fragment-receipt-v1.schema.json"
     ))
     .unwrap();
     let control_schema: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../schemas/jain.node.storage-control-v1.schema.json"
+        "../../schemas/jain.node.storage-control-v1.schema.json"
     ))
     .unwrap();
     for (schema, id) in [

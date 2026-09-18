@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "jain.node.storage-telemetry/v1",
+  "title": "Signed JainNode storage telemetry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["facts", "signature"],
+  "properties": {
+    "facts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "node_id", "session_id", "revision", "observation"],
+      "properties": {
+        "version": {"const": 1},
+        "node_id": {"$ref": "#/$defs/identifier"},
+        "session_id": {"$ref": "#/$defs/identifier"},
+        "revision": {"type": "integer", "minimum": 1},
+        "observation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["lease_id", "lease_expires_at_ms", "observed_at_ms", "topology_digest", "storage_capable", "compute_capable", "volumes", "io", "fragment_health", "compute"],
+          "properties": {
+            "lease_id": {"$ref": "#/$defs/identifier"},
+            "lease_expires_at_ms": {"type": "integer", "minimum": 1},
+            "observed_at_ms": {"type": "integer", "minimum": 1},
+            "topology_digest": {"$ref": "#/$defs/digest"},
+            "storage_capable": {"const": true},
+            "compute_capable": {"type": "boolean"},
+            "volumes": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 64,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["failure_domain", "capacity_bytes", "used_bytes"],
+                "properties": {
+                  "failure_domain": {"$ref": "#/$defs/identifier"},
+                  "capacity_bytes": {"$ref": "#/$defs/decimalBytes"},
+                  "used_bytes": {"$ref": "#/$defs/decimalBytes"}
+                }
+              }
+            },
+            "io": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["read_bytes_total", "write_bytes_total", "read_operations_total", "write_operations_total"],
+              "properties": {
+                "read_bytes_total": {"$ref": "#/$defs/decimalBytes"},
+                "write_bytes_total": {"$ref": "#/$defs/decimalBytes"},
+                "read_operations_total": {"type": "integer", "minimum": 0},
+                "write_operations_total": {"type": "integer", "minimum": 0}
+              }
+            },
+            "fragment_health": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["healthy_fragments", "missing_fragments", "corrupt_fragments", "underprotected_objects"],
+              "properties": {
+                "healthy_fragments": {"type": "integer", "minimum": 0},
+                "missing_fragments": {"type": "integer", "minimum": 0},
+                "corrupt_fragments": {"type": "integer", "minimum": 0},
+                "underprotected_objects": {"type": "integer", "minimum": 0}
+              }
+            },
+            "compute": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["slots_total", "slots_busy", "completed_execution_receipt_digest"],
+              "properties": {
+                "slots_total": {"type": "integer", "minimum": 0, "maximum": 4294967295},
+                "slots_busy": {"type": "integer", "minimum": 0, "maximum": 4294967295},
+                "completed_execution_receipt_digest": {
+                  "oneOf": [{"type": "null"}, {"$ref": "#/$defs/digest"}]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "signature": {"$ref": "#/$defs/signature"}
+  },
+  "$defs": {
+    "identifier": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "decimalBytes": {"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"},
+    "digest": {
+      "type": "array",
+      "minItems": 32,
+      "maxItems": 32,
+      "items": {"type": "integer", "minimum": 0, "maximum": 255}
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "issuer", "key_id", "public_key", "signature"],
+      "properties": {
+        "authority": {"const": "node_storage_telemetry"},
+        "issuer": {"$ref": "#/$defs/identifier"},
+        "key_id": {"$ref": "#/$defs/identifier"},
+        "public_key": {"$ref": "#/$defs/digest"},
+        "signature": {
+          "type": "array",
+          "minItems": 64,
+          "maxItems": 64,
+          "items": {"type": "integer", "minimum": 0, "maximum": 255}
+        }
+      }
+    }
+  }
+}

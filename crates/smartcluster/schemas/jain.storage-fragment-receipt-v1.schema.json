@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "jain.storage-fragment-receipt/v1",
+  "title": "Signed JainNode storage fragment receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["facts", "signature"],
+  "properties": {
+    "facts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "project_id", "object_id", "manifest_digest", "fragment_index", "fragment_kind", "node_id", "session_id", "failure_domain", "topology_digest", "fragment_sha256", "fragment_bytes", "fsync_completed_at_ms"],
+      "properties": {
+        "version": {"const": 1},
+        "project_id": {"$ref": "#/$defs/identifier"},
+        "object_id": {"$ref": "#/$defs/digest"},
+        "manifest_digest": {"$ref": "#/$defs/digest"},
+        "fragment_index": {"type": "integer", "minimum": 0, "maximum": 4},
+        "fragment_kind": {
+          "oneOf": [
+            {"type": "object", "additionalProperties": false, "required": ["replica"], "properties": {"replica": {"type": "integer", "minimum": 0, "maximum": 1}}},
+            {"type": "object", "additionalProperties": false, "required": ["data"], "properties": {"data": {"type": "integer", "minimum": 0, "maximum": 3}}},
+            {"type": "object", "additionalProperties": false, "required": ["recovery"], "properties": {"recovery": {"const": 0}}}
+          ]
+        },
+        "node_id": {"$ref": "#/$defs/identifier"},
+        "session_id": {"$ref": "#/$defs/identifier"},
+        "failure_domain": {"$ref": "#/$defs/identifier"},
+        "topology_digest": {"$ref": "#/$defs/digest"},
+        "fragment_sha256": {"$ref": "#/$defs/digest"},
+        "fragment_bytes": {"$ref": "#/$defs/decimalBytes"},
+        "fsync_completed_at_ms": {"type": "integer", "minimum": 1}
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "issuer", "key_id", "public_key", "signature"],
+      "properties": {
+        "authority": {"const": "storage_fragment_receipt"},
+        "issuer": {"$ref": "#/$defs/identifier"},
+        "key_id": {"$ref": "#/$defs/identifier"},
+        "public_key": {"$ref": "#/$defs/digest"},
+        "signature": {
+          "type": "array",
+          "minItems": 64,
+          "maxItems": 64,
+          "items": {"type": "integer", "minimum": 0, "maximum": 255}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "decimalBytes": {"type": "string", "pattern": "^[1-9][0-9]{0,19}$"},
+    "digest": {
+      "type": "array",
+      "minItems": 32,
+      "maxItems": 32,
+      "items": {"type": "integer", "minimum": 0, "maximum": 255}
+    }
+  }
+}

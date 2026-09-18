@@ -182,7 +182,7 @@ fn legacy_v1_signature_bytes_remain_frozen_and_cannot_authorize_execution() {
 #[test]
 fn v2_signature_has_a_frozen_domain_separated_vector() {
     let schema: Value = serde_json::from_str(include_str!(
-        "../../../schemas/jain.appliance-role-v2.schema.json"
+        "../../schemas/jain.appliance-role-v2.schema.json"
     ))
     .unwrap();
     assert_eq!(schema["$id"], "jain.appliance-role/v2");

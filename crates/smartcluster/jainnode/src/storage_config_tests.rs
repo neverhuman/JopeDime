@@ -65,7 +65,7 @@ fn write_config(path: &Path, document: &Value) {
 #[test]
 fn closed_config_loads_key_paths_without_serializing_secret_bytes() {
     let schema: Value = serde_json::from_str(include_str!(
-        "../../../schemas/jain.node.storage-config-v1.schema.json"
+        "../../schemas/jain.node.storage-config-v1.schema.json"
     ))
     .unwrap();
     assert_eq!(schema["$id"], "jain.node.storage-config/v1");
