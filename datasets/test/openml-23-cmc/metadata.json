@@ -1,0 +1,67 @@
+{
+  "schema": "jope.dataset-catalog/v1",
+  "id": "c32fa09b48fb2f27",
+  "dataset_hash": "c32fa09b48fb2f27",
+  "canonical_sha256": "c32fa09b48fb2f27d36e90e470770423993d5e7385d93c46de563f1691dfe067",
+  "display_name": "cmc",
+  "task": "regression",
+  "origin": "real",
+  "shape": {
+    "rows": 1473,
+    "features": 9,
+    "categorical_features": 0,
+    "columns": 10
+  },
+  "target": {
+    "name": "target",
+    "index": -1,
+    "type": "numeric"
+  },
+  "files": {
+    "train": {
+      "sha256": "24dfcad2c2ecbfde5e70e87729971353a1b6f9e583ef7b1d7b8960871a63ad04",
+      "bytes": 54134,
+      "rows": 1000,
+      "columns": 10,
+      "has_header": false
+    },
+    "test": {
+      "sha256": "c5902e424cb49c248935831ba687f43e86fe4929463011fa0b2bba8ef64b69d6",
+      "bytes": 25793,
+      "rows": 473,
+      "columns": 10,
+      "has_header": false
+    }
+  },
+  "split": {
+    "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "seed": 3256518550,
+    "train_rows": 1000,
+    "test_rows": 473
+  },
+  "provenance": {
+    "platform": "openml",
+    "dataset_id": "23",
+    "url": "https://www.openml.org/d/23",
+    "retrieved_at": "2026-06-27T23:54:04+00:00",
+    "dedupe_fingerprint": "2cd1951d0eb4fb9970cb405c42aab07562bd9383",
+    "citation": "Lim, T.-S. (1999). Contraceptive Method Choice [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C59W2D",
+    "license": {
+      "spdx": "CC-BY-4.0",
+      "status": "recorded",
+      "evidence_url": "https://archive.ics.uci.edu/dataset/30/contraceptive+method+choice",
+      "text_sha256": "d5967fb757f7844d8b0dbe5ee697f3215a24b3c30ba72136a49e082ca7c97953",
+      "note": "source_license was blank at acquisition; OpenML lists licence 'Public' with original_data_url https://archive.ics.uci.edu/ml/datasets/Contraceptive+Method+Choice; the UCI dataset page states CC BY 4.0"
+    }
+  },
+  "collections": [
+    "test-10"
+  ],
+  "aliases": [],
+  "ingest": {
+    "source": "repo",
+    "relpath": "datasets/test/openml-23-cmc",
+    "ingested_at": "2026-09-18T20:28:53Z",
+    "tool_version": "jope-datasets/0.1.0"
+  }
+}

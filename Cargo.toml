@@ -6,6 +6,7 @@ members = [
   "crates/jope-engine",
   "crates/jope-campaigns",
   "crates/jope-cli",
+  "crates/jope-datasets",
   "crates/jope-encoders",
   "crates/numpy-pcg64",
   "crates/smartcluster/jain-smartcluster-core",

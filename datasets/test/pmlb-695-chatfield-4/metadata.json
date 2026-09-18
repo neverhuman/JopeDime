@@ -1,0 +1,67 @@
+{
+  "schema": "jope.dataset-catalog/v1",
+  "id": "047e62b52a3f4ede",
+  "dataset_hash": "047e62b52a3f4ede",
+  "canonical_sha256": "047e62b52a3f4ede2f48e684262ce2775bf984d552149be67fd9f99f0067a48b",
+  "display_name": "695_chatfield_4",
+  "task": "regression",
+  "origin": "real",
+  "shape": {
+    "rows": 235,
+    "features": 12,
+    "categorical_features": 0,
+    "columns": 13
+  },
+  "target": {
+    "name": "target",
+    "index": -1,
+    "type": "numeric"
+  },
+  "files": {
+    "train": {
+      "sha256": "f6efbbe844d2a00256435487f60174353502afee158f74044419464e91e30d9d",
+      "bytes": 30133,
+      "rows": 195,
+      "columns": 13,
+      "has_header": false
+    },
+    "test": {
+      "sha256": "db81d97c1bbcf243835ad680fc963705167fd8b461ede2adb7f747762b9e613d",
+      "bytes": 6267,
+      "rows": 40,
+      "columns": 13,
+      "has_header": false
+    }
+  },
+  "split": {
+    "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "seed": 88819128,
+    "train_rows": 195,
+    "test_rows": 40
+  },
+  "provenance": {
+    "platform": "pmlb",
+    "dataset_id": "695_chatfield_4",
+    "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/695_chatfield_4/695_chatfield_4.tsv.gz",
+    "retrieved_at": "2026-06-27T23:54:41+00:00",
+    "dedupe_fingerprint": "71bfa87ec3aabfa406783f0415a152d0f3a5f086",
+    "citation": "Olson, R. S., La Cava, W., Orzechowski, P., Urbanowicz, R. J., & Moore, J. H. (2017). PMLB: a large benchmark suite for machine learning evaluation and comparison. BioData Mining, 10, 36.",
+    "license": {
+      "spdx": "MIT",
+      "status": "recorded",
+      "evidence_url": "https://github.com/EpistasisLab/pmlb/blob/master/LICENSE",
+      "text_sha256": "93d3194e4da379865763015d598d6da742098dc03fdf719f62d339a43e910770",
+      "note": "source_license: MIT (PMLB); the PMLB repository LICENSE (MIT, Epistasis Lab at UPenn) covers the dataset files"
+    }
+  },
+  "collections": [
+    "test-10"
+  ],
+  "aliases": [],
+  "ingest": {
+    "source": "repo",
+    "relpath": "datasets/test/pmlb-695-chatfield-4",
+    "ingested_at": "2026-09-18T20:28:53Z",
+    "tool_version": "jope-datasets/0.1.0"
+  }
+}

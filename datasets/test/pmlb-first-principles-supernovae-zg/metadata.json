@@ -1,0 +1,67 @@
+{
+  "schema": "jope.dataset-catalog/v1",
+  "id": "693890aae9dc860b",
+  "dataset_hash": "693890aae9dc860b",
+  "canonical_sha256": "693890aae9dc860bf163d1ed3d3d5444f7af074dbebb4d32c7bcc887e65cdb54",
+  "display_name": "first_principles_supernovae_zg",
+  "task": "regression",
+  "origin": "real",
+  "shape": {
+    "rows": 243,
+    "features": 1,
+    "categorical_features": 0,
+    "columns": 2
+  },
+  "target": {
+    "name": "target",
+    "index": -1,
+    "type": "numeric"
+  },
+  "files": {
+    "train": {
+      "sha256": "0a9dc81f52ea843bbfbbd2fabd9ff1e7c78e5d025ad21b4de4be9aa59d5497dd",
+      "bytes": 4943,
+      "rows": 202,
+      "columns": 2,
+      "has_header": false
+    },
+    "test": {
+      "sha256": "03bb6c0b0abdf033f3318dbd30eaa04cd45e85820413e0ff80b52e31f4259186",
+      "bytes": 1012,
+      "rows": 41,
+      "columns": 2,
+      "has_header": false
+    }
+  },
+  "split": {
+    "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "seed": 1745729447,
+    "train_rows": 202,
+    "test_rows": 41
+  },
+  "provenance": {
+    "platform": "pmlb",
+    "dataset_id": "first_principles_supernovae_zg",
+    "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/first_principles_supernovae_zg/first_principles_supernovae_zg.tsv.gz",
+    "retrieved_at": "2026-06-27T23:54:41+00:00",
+    "dedupe_fingerprint": "11a81593e3ad9c334c3e88ffa3311ebfb5636b51",
+    "citation": "Olson, R. S., La Cava, W., Orzechowski, P., Urbanowicz, R. J., & Moore, J. H. (2017). PMLB: a large benchmark suite for machine learning evaluation and comparison. BioData Mining, 10, 36.",
+    "license": {
+      "spdx": "MIT",
+      "status": "recorded",
+      "evidence_url": "https://github.com/EpistasisLab/pmlb/blob/master/LICENSE",
+      "text_sha256": "ba0cafefdbfcee26c1f653b4167c68d0a108d28cd91794c0449ae5c1b24dfc1b",
+      "note": "source_license: MIT (PMLB); the PMLB repository LICENSE (MIT, Epistasis Lab at UPenn) covers the dataset files"
+    }
+  },
+  "collections": [
+    "test-10"
+  ],
+  "aliases": [],
+  "ingest": {
+    "source": "repo",
+    "relpath": "datasets/test/pmlb-first-principles-supernovae-zg",
+    "ingested_at": "2026-09-18T20:28:53Z",
+    "tool_version": "jope-datasets/0.1.0"
+  }
+}

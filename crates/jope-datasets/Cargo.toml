@@ -1,0 +1,37 @@
+[package]
+name = "jope-datasets"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "JOPE-Dime dataset catalog: ingest, fetch, verify and link content-addressed datasets"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "jope-datasets"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+futures-util.workspace = true
+hex.workspace = true
+object_store = { version = "0.13", features = ["aws"] }
+schemars = "1"
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+regex = "1"
+url = "2"
+walkdir = "2"
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true
