@@ -72,6 +72,16 @@ fn quantile(sorted: &[f64], q: f64) -> f64 {
 /// A = L L^T in place, invert the lower-triangular L, then form A^{-1} = L^{-T}
 /// L^{-1}. The 1e-6 pivot floor matches `cholesky_solve`.
 fn chol_inverse(mut a: Vec<f64>, m: usize) -> Vec<f64> {
+    let mut linv = vec![0.0f64; m * m];
+    let mut inv = vec![0.0f64; m * m];
+    chol_inverse_into(&mut a, &mut linv, &mut inv, m);
+    inv
+}
+
+/// The same computation as `chol_inverse`, writing into caller-owned buffers so
+/// a hot loop can reuse them. `a` is factored in place; `linv` and `inv` are
+/// zeroed first, matching a fresh allocation, then fully rewritten.
+fn chol_inverse_into(a: &mut [f64], linv: &mut [f64], inv: &mut [f64], m: usize) {
     for i in 0..m {
         for j in 0..=i {
             let mut s = a[i * m + j];
@@ -85,7 +95,8 @@ fn chol_inverse(mut a: Vec<f64>, m: usize) -> Vec<f64> {
             }
         }
     }
-    let mut linv = vec![0.0f64; m * m];
+    linv.fill(0.0);
+    inv.fill(0.0);
     for i in 0..m {
         linv[i * m + i] = 1.0 / a[i * m + i];
         for j in 0..i {
@@ -96,7 +107,6 @@ fn chol_inverse(mut a: Vec<f64>, m: usize) -> Vec<f64> {
             linv[i * m + j] = s / a[i * m + i];
         }
     }
-    let mut inv = vec![0.0f64; m * m];
     for i in 0..m {
         for j in 0..=i {
             let mut s = 0.0;
@@ -107,11 +117,24 @@ fn chol_inverse(mut a: Vec<f64>, m: usize) -> Vec<f64> {
             inv[j * m + i] = s;
         }
     }
-    inv
 }
 
 impl GprModel {
     pub fn fit(x: &Rows, y: &[f64], m: usize, steps: usize) -> GprModel {
+        Self::fit_impl::<{ cfg!(feature = "gpr-scratch-reuse") }>(x, y, m, steps)
+    }
+
+    // Keep both allocation paths available in one test binary, the same
+    // contract as `GprKernelModel::fit_impl`. The opt-in only changes scratch
+    // ownership and re-reads cached pairwise differences; every floating-point
+    // operation keeps its operand order, so the two paths are bit-identical
+    // (see `plain_scratch_reuse_is_bit_identical`).
+    fn fit_impl<const REUSE_SCRATCH: bool>(
+        x: &Rows,
+        y: &[f64],
+        m: usize,
+        steps: usize,
+    ) -> GprModel {
         let n = x.len().min(y.len());
         let p = if x.is_empty() { 0 } else { x[0].len() };
         let (means, scales) = std_fit(x);
@@ -175,72 +198,214 @@ impl GprModel {
 
         // Gradient ascent on the log marginal likelihood over the optimization
         // subset (the first `opt_size` inducing rows).
-        for _ in 0..steps {
+        if REUSE_SCRATCH {
+            // Every buffer is allocated once and reused across steps. Only
+            // `inv_ls2` changes between steps, so the pairwise differences
+            // `z[i][d] - z[j][d]` (i < j, in exactly the loop order below) are
+            // computed once and re-read: `diff` is the same f64 in every pass,
+            // and both `diff * diff * inv_ls2[d]` and
+            // `c * diff * diff * inv_ls2[d]` keep their operand order.
+            const DIFF_CACHE_MAX: usize = 8_000_000;
             let mo = opt_size;
-            let ls_cur: Vec<f64> = log_ls.iter().map(|u| u.exp()).collect();
-            let inv_ls2: Vec<f64> = ls_cur.iter().map(|l| 1.0 / (l * l)).collect();
-            let sf2 = (2.0 * log_sf).exp();
-            let sn2 = (2.0 * log_sn).exp();
-            // Signal kernel K (kept for the gradient) and Ky = K + sn2 I.
+            let pairs = mo * mo.saturating_sub(1) / 2;
+            let diff_cache: Option<Vec<f64>> = if pairs
+                .checked_mul(p)
+                .map_or(false, |cells| cells <= DIFF_CACHE_MAX)
+            {
+                let mut dz = Vec::with_capacity(pairs * p);
+                for i in 0..mo {
+                    for j in (i + 1)..mo {
+                        for d in 0..p {
+                            dz.push(z[i][d] - z[j][d]);
+                        }
+                    }
+                }
+                Some(dz)
+            } else {
+                None
+            };
+            let mut inv_ls2 = vec![0.0f64; p];
             let mut kmat = vec![0.0f64; mo * mo];
-            for i in 0..mo {
-                kmat[i * mo + i] = sf2;
-                for j in (i + 1)..mo {
-                    let mut r2 = 0.0;
-                    for d in 0..p {
-                        let diff = z[i][d] - z[j][d];
-                        r2 += diff * diff * inv_ls2[d];
-                    }
-                    let v = sf2 * (-0.5 * r2).exp();
-                    kmat[i * mo + j] = v;
-                    kmat[j * mo + i] = v;
-                }
-            }
-            let mut a = kmat.clone();
-            for i in 0..mo {
-                a[i * mo + i] += sn2;
-            }
-            let kinv = chol_inverse(a, mo);
+            let mut a = vec![0.0f64; mo * mo];
+            let mut linv = vec![0.0f64; mo * mo];
+            let mut kinv = vec![0.0f64; mo * mo];
             let mut alpha = vec![0.0f64; mo];
-            for i in 0..mo {
-                let mut s = 0.0;
-                for j in 0..mo {
-                    s += kinv[i * mo + j] * yc[j];
-                }
-                alpha[i] = s;
-            }
-            // Gradients from W = alpha alpha^T - Ky^{-1} (used implicitly).
-            let mut g_sf = 0.0;
-            let mut g_sn = 0.0;
             let mut g_ls = vec![0.0f64; p];
-            for i in 0..mo {
-                let wii = alpha[i] * alpha[i] - kinv[i * mo + i];
-                g_sf += wii * kmat[i * mo + i];
-                g_sn += wii;
-                for j in (i + 1)..mo {
-                    let wij = alpha[i] * alpha[j] - kinv[i * mo + j];
-                    let kij = kmat[i * mo + j];
-                    g_sf += 2.0 * wij * kij;
-                    let c = wij * kij;
-                    for d in 0..p {
-                        let diff = z[i][d] - z[j][d];
-                        g_ls[d] += c * diff * diff * inv_ls2[d];
+            for _ in 0..steps {
+                for d in 0..p {
+                    let l = log_ls[d].exp();
+                    inv_ls2[d] = 1.0 / (l * l);
+                }
+                let sf2 = (2.0 * log_sf).exp();
+                let sn2 = (2.0 * log_sn).exp();
+                // K (kept for the gradient) and Ky = K + sn2 I written together;
+                // the diagonal is the same single addition as cloning K and
+                // adding sn2 afterwards.
+                if let Some(dz) = &diff_cache {
+                    let mut q = 0usize;
+                    for i in 0..mo {
+                        kmat[i * mo + i] = sf2;
+                        a[i * mo + i] = sf2 + sn2;
+                        for j in (i + 1)..mo {
+                            let row = &dz[q * p..(q + 1) * p];
+                            let mut r2 = 0.0;
+                            for d in 0..p {
+                                let diff = row[d];
+                                r2 += diff * diff * inv_ls2[d];
+                            }
+                            let v = sf2 * (-0.5 * r2).exp();
+                            kmat[i * mo + j] = v;
+                            kmat[j * mo + i] = v;
+                            a[i * mo + j] = v;
+                            a[j * mo + i] = v;
+                            q += 1;
+                        }
+                    }
+                } else {
+                    for i in 0..mo {
+                        kmat[i * mo + i] = sf2;
+                        a[i * mo + i] = sf2 + sn2;
+                        for j in (i + 1)..mo {
+                            let mut r2 = 0.0;
+                            for d in 0..p {
+                                let diff = z[i][d] - z[j][d];
+                                r2 += diff * diff * inv_ls2[d];
+                            }
+                            let v = sf2 * (-0.5 * r2).exp();
+                            kmat[i * mo + j] = v;
+                            kmat[j * mo + i] = v;
+                            a[i * mo + j] = v;
+                            a[j * mo + i] = v;
+                        }
                     }
                 }
+                chol_inverse_into(&mut a, &mut linv, &mut kinv, mo);
+                for i in 0..mo {
+                    let mut s = 0.0;
+                    for j in 0..mo {
+                        s += kinv[i * mo + j] * yc[j];
+                    }
+                    alpha[i] = s;
+                }
+                // Gradients from W = alpha alpha^T - Ky^{-1} (used implicitly).
+                let mut g_sf = 0.0;
+                let mut g_sn = 0.0;
+                g_ls.fill(0.0);
+                if let Some(dz) = &diff_cache {
+                    let mut q = 0usize;
+                    for i in 0..mo {
+                        let wii = alpha[i] * alpha[i] - kinv[i * mo + i];
+                        g_sf += wii * kmat[i * mo + i];
+                        g_sn += wii;
+                        for j in (i + 1)..mo {
+                            let wij = alpha[i] * alpha[j] - kinv[i * mo + j];
+                            let kij = kmat[i * mo + j];
+                            g_sf += 2.0 * wij * kij;
+                            let c = wij * kij;
+                            let row = &dz[q * p..(q + 1) * p];
+                            for d in 0..p {
+                                let diff = row[d];
+                                g_ls[d] += c * diff * diff * inv_ls2[d];
+                            }
+                            q += 1;
+                        }
+                    }
+                } else {
+                    for i in 0..mo {
+                        let wii = alpha[i] * alpha[i] - kinv[i * mo + i];
+                        g_sf += wii * kmat[i * mo + i];
+                        g_sn += wii;
+                        for j in (i + 1)..mo {
+                            let wij = alpha[i] * alpha[j] - kinv[i * mo + j];
+                            let kij = kmat[i * mo + j];
+                            g_sf += 2.0 * wij * kij;
+                            let c = wij * kij;
+                            for d in 0..p {
+                                let diff = z[i][d] - z[j][d];
+                                g_ls[d] += c * diff * diff * inv_ls2[d];
+                            }
+                        }
+                    }
+                }
+                g_sn *= sn2;
+                let scale = LR / mo as f64;
+                for d in 0..p {
+                    let step = (scale * g_ls[d]).clamp(-0.5, 0.5);
+                    log_ls[d] = (log_ls[d] + step).clamp(-6.0, 6.0);
+                }
+                let step_sf = (scale * g_sf).clamp(-0.5, 0.5);
+                log_sf = (log_sf + step_sf).clamp(-15.0, 15.0);
+                let step_sn = (scale * g_sn).clamp(-0.5, 0.5);
+                log_sn = (log_sn + step_sn).clamp(log_sf - 6.0, log_sf);
             }
-            g_sn *= sn2;
-            let scale = LR / mo as f64;
-            for d in 0..p {
-                let step = (scale * g_ls[d]).clamp(-0.5, 0.5);
-                log_ls[d] = (log_ls[d] + step).clamp(-6.0, 6.0);
+        } else {
+            for _ in 0..steps {
+                let mo = opt_size;
+                let ls_cur: Vec<f64> = log_ls.iter().map(|u| u.exp()).collect();
+                let inv_ls2: Vec<f64> = ls_cur.iter().map(|l| 1.0 / (l * l)).collect();
+                let sf2 = (2.0 * log_sf).exp();
+                let sn2 = (2.0 * log_sn).exp();
+                // Signal kernel K (kept for the gradient) and Ky = K + sn2 I.
+                let mut kmat = vec![0.0f64; mo * mo];
+                for i in 0..mo {
+                    kmat[i * mo + i] = sf2;
+                    for j in (i + 1)..mo {
+                        let mut r2 = 0.0;
+                        for d in 0..p {
+                            let diff = z[i][d] - z[j][d];
+                            r2 += diff * diff * inv_ls2[d];
+                        }
+                        let v = sf2 * (-0.5 * r2).exp();
+                        kmat[i * mo + j] = v;
+                        kmat[j * mo + i] = v;
+                    }
+                }
+                let mut a = kmat.clone();
+                for i in 0..mo {
+                    a[i * mo + i] += sn2;
+                }
+                let kinv = chol_inverse(a, mo);
+                let mut alpha = vec![0.0f64; mo];
+                for i in 0..mo {
+                    let mut s = 0.0;
+                    for j in 0..mo {
+                        s += kinv[i * mo + j] * yc[j];
+                    }
+                    alpha[i] = s;
+                }
+                // Gradients from W = alpha alpha^T - Ky^{-1} (used implicitly).
+                let mut g_sf = 0.0;
+                let mut g_sn = 0.0;
+                let mut g_ls = vec![0.0f64; p];
+                for i in 0..mo {
+                    let wii = alpha[i] * alpha[i] - kinv[i * mo + i];
+                    g_sf += wii * kmat[i * mo + i];
+                    g_sn += wii;
+                    for j in (i + 1)..mo {
+                        let wij = alpha[i] * alpha[j] - kinv[i * mo + j];
+                        let kij = kmat[i * mo + j];
+                        g_sf += 2.0 * wij * kij;
+                        let c = wij * kij;
+                        for d in 0..p {
+                            let diff = z[i][d] - z[j][d];
+                            g_ls[d] += c * diff * diff * inv_ls2[d];
+                        }
+                    }
+                }
+                g_sn *= sn2;
+                let scale = LR / mo as f64;
+                for d in 0..p {
+                    let step = (scale * g_ls[d]).clamp(-0.5, 0.5);
+                    log_ls[d] = (log_ls[d] + step).clamp(-6.0, 6.0);
+                }
+                let step_sf = (scale * g_sf).clamp(-0.5, 0.5);
+                log_sf = (log_sf + step_sf).clamp(-15.0, 15.0);
+                // Floor the noise at exp(-6) of the signal std: this jitter keeps Ky
+                // well-conditioned, so the gradient cannot overflow (and prediction
+                // stays stable) even under an aggressive step.
+                let step_sn = (scale * g_sn).clamp(-0.5, 0.5);
+                log_sn = (log_sn + step_sn).clamp(log_sf - 6.0, log_sf);
             }
-            let step_sf = (scale * g_sf).clamp(-0.5, 0.5);
-            log_sf = (log_sf + step_sf).clamp(-15.0, 15.0);
-            // Floor the noise at exp(-6) of the signal std: this jitter keeps Ky
-            // well-conditioned, so the gradient cannot overflow (and prediction
-            // stays stable) even under an aggressive step.
-            let step_sn = (scale * g_sn).clamp(-0.5, 0.5);
-            log_sn = (log_sn + step_sn).clamp(log_sf - 6.0, log_sf);
         }
 
         // Predictive coefficients on the full inducing basis.
@@ -512,6 +677,18 @@ pub struct GprKernelModel {
 
 impl GprKernelModel {
     pub fn fit(x: &Rows, y: &[f64], m: usize, steps: usize, spec: &KernelSpec) -> GprKernelModel {
+        Self::fit_impl::<{ cfg!(feature = "gpr-scratch-reuse") }>(x, y, m, steps, spec)
+    }
+
+    // Keep both allocation paths available in one test binary. The opt-in only
+    // changes scratch ownership; every floating-point operation stays in order.
+    fn fit_impl<const REUSE_SCRATCH: bool>(
+        x: &Rows,
+        y: &[f64],
+        m: usize,
+        steps: usize,
+        spec: &KernelSpec,
+    ) -> GprKernelModel {
         let n = x.len().min(y.len());
         let p = if x.is_empty() { 0 } else { x[0].len() };
         let (means, scales) = std_fit(x);
@@ -620,6 +797,18 @@ impl GprKernelModel {
         let noise_idx = theta.len();
         theta.push((0.1 * sy).max(1e-6).ln());
 
+        // Size from the supplied spec, not the parser's primitive limit: callers
+        // can construct KernelSpec directly. With the feature off these vectors
+        // are empty and the historical per-term allocations below remain.
+        let scratch_size = if REUSE_SCRATCH {
+            spec.iter().map(Vec::len).max().unwrap_or(0)
+        } else {
+            0
+        };
+        let mut scratch_r2s = vec![0.0f64; scratch_size];
+        let mut scratch_s2s = vec![0.0f64; scratch_size];
+        let mut scratch_psums = vec![0.0f64; scratch_size];
+
         // Gradient ascent on the log marginal likelihood over the optimization
         // subset; dK/dtheta comes from W = alpha alpha^T - Ky^{-1} as in the
         // plain head, with per-term/per-factor chain rules.
@@ -674,9 +863,22 @@ impl GprKernelModel {
                     for (t, term) in spec.iter().enumerate() {
                         let amp = off;
                         let nf = term.len();
-                        let mut r2s = vec![0.0f64; nf];
-                        let mut s2s = vec![0.0f64; nf];
-                        let mut psums = vec![0.0f64; nf];
+                        let local_size = if REUSE_SCRATCH { 0 } else { nf };
+                        let mut local_r2s = vec![0.0f64; local_size];
+                        let mut local_s2s = vec![0.0f64; local_size];
+                        let mut local_psums = vec![0.0f64; local_size];
+                        let (r2s, s2s, psums) = if REUSE_SCRATCH {
+                            (
+                                &mut scratch_r2s[..nf],
+                                &mut scratch_s2s[..nf],
+                                &mut scratch_psums[..nf],
+                            )
+                        } else {
+                            (&mut local_r2s[..], &mut local_s2s[..], &mut local_psums[..])
+                        };
+                        // Rq reads only r2s[f], and Periodic only s2s[f] and
+                        // psums[f]; each is assigned below before its gradient
+                        // read. Other factors never read retained scratch.
                         let mut val = dec.sf2[t];
                         for (f, prim) in term.iter().enumerate() {
                             match prim {
@@ -999,6 +1201,114 @@ mod tests {
         }
     }
 
+    fn assert_composite_scratch_parity(
+        x: &Rows,
+        y: &[f64],
+        m: usize,
+        steps: usize,
+        spec: &KernelSpec,
+    ) {
+        let historical = GprKernelModel::fit_impl::<false>(x, y, m, steps, spec);
+        let reused = GprKernelModel::fit_impl::<true>(x, y, m, steps, spec);
+        let public = GprKernelModel::fit(x, y, m, steps, spec);
+        // Serialized model equality covers every coefficient and its shape,
+        // including signed zero. Reject nonfinite values rather than allowing
+        // serde_json's nonfinite-to-null representation to hide a difference.
+        for model in [&historical, &reused, &public] {
+            assert!(model
+                .means
+                .iter()
+                .chain(&model.scales)
+                .chain(model.basis.iter().flatten())
+                .chain(&model.alpha)
+                .chain(&model.theta)
+                .chain(std::iter::once(&model.y_mean))
+                .all(|v| v.is_finite()));
+        }
+        let expected = serde_json::to_vec(&historical).unwrap();
+        assert_eq!(expected, serde_json::to_vec(&reused).unwrap(), "{spec:?}");
+        assert_eq!(expected, serde_json::to_vec(&public).unwrap(), "{spec:?}");
+        let mut queries = x.clone();
+        if let Some(row) = x.first() {
+            queries.push(row.iter().map(|v| v + 0.125).collect());
+            queries.push(vec![-0.0; row.len()]);
+        }
+        let prediction_bits = |model: &GprKernelModel| {
+            model
+                .predict(&queries)
+                .into_iter()
+                .map(|v| {
+                    assert!(v.is_finite());
+                    v.to_bits()
+                })
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(prediction_bits(&historical), prediction_bits(&reused));
+        assert_eq!(prediction_bits(&historical), prediction_bits(&public));
+    }
+
+    #[test]
+    fn composite_scratch_reuse_matches_historical_model_and_prediction_bits() {
+        let mut specs: Vec<KernelSpec> = [
+            "rbf",
+            "rq",
+            "periodic",
+            "linear",
+            "rbf*periodic",
+            "rq*periodic",
+            "periodic+rq*linear",
+            "rq*linear+periodic",
+            "periodic*rq*periodic",
+        ]
+        .iter()
+        .map(|src| parse_kernel(src).unwrap())
+        .collect();
+        // The public type permits longer terms than the textual parser. Also
+        // exercise different factor types in reused slots between unequal terms.
+        specs.push(vec![
+            vec![
+                KernelPrim::Periodic,
+                KernelPrim::Rq,
+                KernelPrim::Periodic,
+                KernelPrim::Linear,
+            ],
+            vec![KernelPrim::Rq],
+        ]);
+        for width in [1, 3] {
+            let x: Rows = (0..18)
+                .map(|i| {
+                    (0..width)
+                        .map(|d| {
+                            if d == 2 {
+                                1.0 // Constant feature exercises standardization.
+                            } else {
+                                ((i * (d + 3) % 19) as f64 - 9.0) / 7.0
+                            }
+                        })
+                        .collect()
+                })
+                .collect();
+            let y: Vec<f64> = x.iter().map(|row| row[0] * row[0] - 0.5 * row[0]).collect();
+            for spec in &specs {
+                // Zero-step, subset-basis, repeated-step and full-basis paths;
+                // at most 18 rows/basis entries and three optimization steps.
+                for (m, steps) in [(8, 0), (8, 3), (18, 2)] {
+                    assert_composite_scratch_parity(&x, &y, m, steps, spec);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn composite_scratch_reuse_preserves_constant_fallbacks() {
+        let spec = parse_kernel("rq*periodic+linear").unwrap();
+        for (n, width) in [(1, 1), (6, 1), (18, 0)] {
+            let x: Rows = (0..n).map(|i| vec![i as f64; width]).collect();
+            let y: Vec<f64> = (0..n).map(|i| i as f64).collect();
+            assert_composite_scratch_parity(&x, &y, 8, 3, &spec);
+        }
+    }
+
     #[test]
     fn linear_kernel_nails_a_linear_target() {
         // Pure Bayesian-linear-regression check: kernel="linear" on a noiseless
@@ -1072,5 +1382,56 @@ mod tests {
         let m = GprKernelModel::fit(&x, &y, DEFAULT_M, DEFAULT_STEPS, &spec);
         assert!(m.basis.is_empty());
         assert!(m.predict(&x).iter().all(|v| (*v - 2.5).abs() < 1e-12));
+    }
+
+    fn assert_plain_scratch_parity(x: &Rows, y: &[f64], m: usize, steps: usize) {
+        let historical = GprModel::fit_impl::<false>(x, y, m, steps);
+        let reused = GprModel::fit_impl::<true>(x, y, m, steps);
+        let bits = |v: &[f64]| v.iter().map(|f| f.to_bits()).collect::<Vec<u64>>();
+        assert_eq!(bits(&historical.means), bits(&reused.means));
+        assert_eq!(bits(&historical.scales), bits(&reused.scales));
+        assert_eq!(bits(&historical.alpha), bits(&reused.alpha));
+        assert_eq!(bits(&historical.ls), bits(&reused.ls));
+        assert_eq!(historical.sf2.to_bits(), reused.sf2.to_bits());
+        assert_eq!(historical.y_mean.to_bits(), reused.y_mean.to_bits());
+        assert_eq!(historical.basis.len(), reused.basis.len());
+        for (a, b) in historical.basis.iter().zip(&reused.basis) {
+            assert_eq!(bits(a), bits(b));
+        }
+        assert_eq!(bits(&historical.predict(x)), bits(&reused.predict(x)));
+    }
+
+    #[test]
+    fn plain_scratch_reuse_is_bit_identical() {
+        // Zero-step, subset-basis, repeated-step, full-basis and beyond-OPT_CAP
+        // paths; the constant feature at d == 2 exercises standardization.
+        for width in [1, 3, 7] {
+            let x: Rows = (0..300)
+                .map(|i| {
+                    (0..width)
+                        .map(|d| {
+                            if d == 2 {
+                                1.0
+                            } else {
+                                ((i * (d + 3) % 19) as f64 - 9.0) / 7.0
+                            }
+                        })
+                        .collect()
+                })
+                .collect();
+            let y: Vec<f64> = x.iter().map(|row| row[0] * row[0] - 0.5 * row[0]).collect();
+            for (m, steps) in [(8, 0), (8, 3), (18, 2), (64, 5), (300, 3)] {
+                assert_plain_scratch_parity(&x, &y, m, steps);
+            }
+        }
+    }
+
+    #[test]
+    fn plain_scratch_reuse_preserves_constant_fallbacks() {
+        for (n, width) in [(1, 1), (6, 1), (18, 0)] {
+            let x: Rows = (0..n).map(|i| vec![i as f64; width]).collect();
+            let y: Vec<f64> = (0..n).map(|i| i as f64).collect();
+            assert_plain_scratch_parity(&x, &y, 8, 3);
+        }
     }
 }

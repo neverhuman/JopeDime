@@ -14,6 +14,7 @@
 //! are out-of-fold by construction in honest CV.
 
 // DSL + interpreter (the execution engine).
+pub mod registry;
 pub mod advanced_v3;
 pub mod boost2;
 pub mod dsl;
