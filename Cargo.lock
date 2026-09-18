@@ -2239,6 +2239,8 @@ dependencies = [
  "clap",
  "feat-math",
  "hyperion",
+ "jope-datasets",
+ "jope-models",
  "rustix 1.1.4",
  "serde",
  "serde_json",
@@ -2287,6 +2289,20 @@ dependencies = [
  "sha2",
  "tempfile",
  "zip 2.4.2",
+]
+
+[[package]]
+name = "jope-models"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "futures-util",
+ "jope-datasets",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
 ]
 
 [[package]]

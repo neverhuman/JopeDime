@@ -1,0 +1,30 @@
+[package]
+name = "jope-models"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "JOPE-Dime model bundles: fetch, verify, publish and locate content-addressed weights"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "jope-models"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+futures-util.workspace = true
+jope-datasets = { path = "../jope-datasets" }
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true
