@@ -1,0 +1,15 @@
+[Unit]
+Description=Smart-v3 CPU eleven-job-v4 SCQ reconciler
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=@JOPE_HOME@
+ExecStart=/usr/bin/python3 @JOPE_HOME@/python/src/jope/research/smart_v3_cpu_scq.py run --poll-seconds 60
+Restart=always
+RestartSec=15
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,6 @@
+[Unit]
+Description=JOPE self-play health alarm scan (read-only, writes ops/health-alarms.v1.json)
+
+[Service]
+Type=oneshot
+ExecStart=@JOPE_BUNDLE@/jope_selfplay_alarms

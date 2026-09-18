@@ -1,0 +1,18 @@
+[Unit]
+Description=JOPE parallel hardware telemetry
+After=network.target
+
+[Service]
+Type=simple
+User=@JOPE_USER@
+WorkingDirectory=@JOPE_STATE@
+ExecStart=@JOPE_BUNDLE@/jope-parallel-tui-v27 --root @JOPE_STATE@ monitor
+Restart=on-failure
+RestartSec=3
+MemoryMax=1G
+TasksMax=32
+CPUAffinity=60 61
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target

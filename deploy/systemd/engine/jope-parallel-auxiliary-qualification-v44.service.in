@@ -1,0 +1,24 @@
+[Unit]
+Description=JOPE eight-GPU auxiliary optimizer continuation qualification
+After=jope-parallel-monitor.service jope-parallel-gp.service
+Requires=jope-parallel-monitor.service jope-parallel-gp.service
+
+[Service]
+Type=oneshot
+User=@JOPE_USER@
+WorkingDirectory=@JOPE_STATE@
+ExecStart=@JOPE_BUNDLE@/jope-parallel-qualify-auxiliary-v44 --root @JOPE_STATE@ --corpus @JOPE_STATE@/corpus/cohort64-qualification-v1 --checkpoint @JOPE_STATE@/runs/parity/a100-v44-recovery/uninterrupted/checkpoints/step-30 --output @JOPE_STATE@/runs/parity/auxiliary-v44 --executable @JOPE_BUNDLE@/jope-parallel-neural-v44
+Environment=OMP_NUM_THREADS=2
+Environment=RAYON_NUM_THREADS=2
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+CPUAffinity=60 61 122 123
+TimeoutStartSec=300
+MemoryHigh=96G
+MemoryMax=128G
+MemorySwapMax=0
+TasksMax=256
+CPUAccounting=true
+MemoryAccounting=true
+KillMode=control-group
+TimeoutStopSec=15

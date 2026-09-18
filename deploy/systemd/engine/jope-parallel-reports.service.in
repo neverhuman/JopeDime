@@ -1,0 +1,22 @@
+[Unit]
+Description=JOPE measured self-play cycle reports
+After=jope-parallel-campaign.service
+StartLimitIntervalSec=600
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=@JOPE_USER@
+WorkingDirectory=@JOPE_STATE@
+ExecStart=/usr/bin/python3 @JOPE_HOME@/python/src/jope/tools/watch_campaign_reports.py --root @JOPE_STATE@ --spec @JOPE_STATE@/manifests/generated/campaign64-qualification-v1.json
+CPUAffinity=123
+CPUQuota=100%
+MemoryMax=8G
+MemorySwapMax=0
+Restart=on-failure
+RestartSec=60
+KillMode=control-group
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

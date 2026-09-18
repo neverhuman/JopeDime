@@ -1,0 +1,13 @@
+[Unit]
+Description=JOPE Rust checkpoint freshness authority and Unix socket
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=@JOPE_STATE@/legacy/test_exact_gen0
+ExecStart=@JOPE_BUNDLE@/jope_selfplay_freshness --auto-retire-stale
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

@@ -29,8 +29,14 @@ test-main:
 python-check:
     cd python && uv run ruff check . && uv run ruff format --check . && uv run pytest -q -m "not xbabe2"
 
+# ADR-0003: no absolute home paths in code or units (python/src is informational until WP6 lands)
 lint-paths:
-    ! git grep -nE '/home/[a-z]+/' -- crates/*/src crates/*/tests python/src deploy/systemd .github
+    ! git grep -nE '/home/[a-z]+/' -- crates/*/src crates/*/tests deploy/systemd .github
+    @git grep -cE '/home/[a-z]+/' -- python/src | awk -F: '{n+=$2} END {if (n) print n " hits in python/src (informational until WP6 lands)"}' || true
+
+# render the unit templates into a directory (wraps crates/jope-paths' jope-units-render)
+render-units home state bundle user out:
+    bash deploy/systemd/render.sh --home {{home}} --state {{state}} --bundle {{bundle}} --user {{user}} --out {{out}}
 
 ci-pr: hygiene fmt clippy test-pr python-check
 

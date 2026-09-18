@@ -1,0 +1,12 @@
+[Unit]
+Description=JOPE retired watchdog compatibility audit (Rust)
+After=default.target
+Conflicts=jope-selfplay-queue.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=@JOPE_STATE@/legacy/test_exact_gen0
+ExecStart=@JOPE_BUNDLE@/jope_selfplay_queue --once
+
+[Install]
+WantedBy=

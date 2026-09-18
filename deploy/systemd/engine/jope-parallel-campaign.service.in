@@ -1,0 +1,32 @@
+[Unit]
+Description=JOPE bounded regression qualification campaign on a frozen 64-family cohort
+After=jope-parallel-monitor.service jope-parallel-gp.service
+Requires=jope-parallel-monitor.service jope-parallel-gp.service
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=@JOPE_USER@
+WorkingDirectory=@JOPE_STATE@
+ExecStart=@JOPE_BUNDLE@/jope-parallel-neural-v44 --root @JOPE_STATE@ campaign --spec @JOPE_STATE@/manifests/generated/campaign64-qualification-v1.json
+Environment=JOPE_GP_EXECUTABLE=@JOPE_BUNDLE@/jope-parallel-cpu-v44
+Environment=OMP_NUM_THREADS=2
+Environment=RAYON_NUM_THREADS=2
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+CPUAffinity=60 61 122 123
+Restart=on-failure
+RestartSec=20
+RuntimeMaxSec=24h
+MemoryHigh=96G
+MemoryMax=128G
+MemorySwapMax=0
+TasksMax=512
+CPUAccounting=true
+MemoryAccounting=true
+KillMode=control-group
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

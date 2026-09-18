@@ -1,7 +1,0 @@
-[Unit]
-Description=Retired whole-catalog proposer audit (cohort proposer is owned by supply)
-
-[Service]
-Type=oneshot
-WorkingDirectory=/home/ubuntu/jope-flywheel/test_exact_gen0
-ExecStart=/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_selfplay_propose_driver --root /home/ubuntu/jope-flywheel/test_exact_gen0 --dry-run

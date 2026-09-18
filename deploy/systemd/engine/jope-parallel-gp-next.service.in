@@ -1,0 +1,34 @@
+[Unit]
+Description=JOPE next-identity GP dispatcher (not the fenced legacy unit)
+After=jope-parallel-monitor.service
+Wants=jope-parallel-monitor.service
+Conflicts=jope-parallel-gp.service
+
+[Service]
+Type=simple
+ExecCondition=/usr/bin/false
+# Removed only by the qualified native authority handoff.
+User=@JOPE_USER@
+WorkingDirectory=@JOPE_STATE@
+Environment=LD_LIBRARY_PATH=/usr/lib/python3/dist-packages/torch/lib
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+Environment=OMP_NUM_THREADS=1
+Environment=RAYON_NUM_THREADS=1
+ExecStart=@JOPE_STATE@/runs/flywheel-20260909/native-v5-cpu/target-bin/jope-parallel-native --root @JOPE_STATE@ gp-service --manifest @JOPE_STATE@/manifests/generated/gp-expanded-vocabulary-jobs.json --workers 104 --threads 1 --wait-for-work
+Restart=no
+RestartSec=10
+RuntimeMaxSec=infinity
+MemoryHigh=900G
+MemoryMax=1100G
+MemorySwapMax=0
+TasksMax=2048
+CPUAccounting=true
+MemoryAccounting=true
+Nice=5
+KillMode=control-group
+TimeoutStopSec=30
+CPUAffinity=8-59 70-121
+
+[Install]
+WantedBy=multi-user.target

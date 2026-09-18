@@ -1,0 +1,13 @@
+[Unit]
+Description=JOPE Rust self-play receipt ingestion and index rebuilding
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=@JOPE_STATE@/legacy/test_exact_gen0
+ExecStart=@JOPE_BUNDLE@/jope_selfplay_status reconcile --fetch-completed --limit 100
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

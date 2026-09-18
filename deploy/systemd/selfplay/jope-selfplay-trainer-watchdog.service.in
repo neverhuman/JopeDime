@@ -1,0 +1,14 @@
+[Unit]
+Description=JOPE task-aware alternating shadow and strictly gated production trainer
+After=jope-selfplay-ingestion.service jope-causal-evidence.service jope-gpu-lane-admission.service
+Wants=jope-selfplay-ingestion.service jope-causal-evidence.service jope-gpu-lane-admission.service
+
+[Service]
+Type=simple
+WorkingDirectory=@JOPE_STATE@/legacy/test_exact_gen0
+ExecStart=@JOPE_BUNDLE@/jope_task_learning_controller --submit --interval-seconds 30 --trainer-script @JOPE_STATE@/legacy/test_exact_gen0/runtime-bundles/current/pytorch/training/test_exact_train.py --common-script @JOPE_STATE@/legacy/test_exact_gen0/runtime-bundles/current/pytorch/shared/test_exact_common.py --packed-script @JOPE_STATE@/legacy/test_exact_gen0/runtime-bundles/current/pytorch/training/test_exact_packed_corpus.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
