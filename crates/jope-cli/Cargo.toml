@@ -10,3 +10,11 @@ description = "JOPE-Dime command-line interface"
 [[bin]]
 name = "jope"
 path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+jope-datasets = { path = "../jope-datasets" }
+jope-models = { path = "../jope-models" }
+
+[lints]
+workspace = true
