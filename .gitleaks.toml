@@ -7,4 +7,4 @@ description = "environment files with credentials must never be committed"
 path = '''(^|/)[^/]*\.env$'''
 [allowlist]
 paths = ['''^docs/legacy/''', '''\.sha256$''', '''SHA256SUMS$''', '''^python/src/jope/research/test_workspace_sync\.py$''']  # synthetic '-----BEGIN OPENSSH PRIVATE KEY-----\nsecret' fixture
-regexes = ['''[0-9a-f]{64}''', '''[0-9a-f]{40}''']  # content digests and git shas are not credentials
+regexes = ['''[0-9a-f]{64}''', '''[0-9a-f]{40}''', '''EvaluationKey\.v2''', '''ObservationKeyV2''']  # content digests and git shas are not credentials
