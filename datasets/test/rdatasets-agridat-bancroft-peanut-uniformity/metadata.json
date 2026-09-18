@@ -1,0 +1,67 @@
+{
+  "schema": "jope.dataset-catalog/v1",
+  "id": "79e600bc5fcd5da7",
+  "dataset_hash": "79e600bc5fcd5da7",
+  "canonical_sha256": "79e600bc5fcd5da708a9de9040f59dc48d9f495a6505106712f6be2cc7928171",
+  "display_name": "Uniformity trial of peanuts",
+  "task": "regression",
+  "origin": "real",
+  "shape": {
+    "rows": 216,
+    "features": 3,
+    "categorical_features": 0,
+    "columns": 4
+  },
+  "target": {
+    "name": "target",
+    "index": -1,
+    "type": "numeric"
+  },
+  "files": {
+    "train": {
+      "sha256": "24dda7eb3c3cfaf211d94f35b95806a5ef2d983f361575d912bb708ca83e58a1",
+      "bytes": 5988,
+      "rows": 180,
+      "columns": 4,
+      "has_header": false
+    },
+    "test": {
+      "sha256": "0622e041bc3258a108bd70f73847e2681ea0cdb81cdb4bf5cae14805a0c69e28",
+      "bytes": 1232,
+      "rows": 36,
+      "columns": 4,
+      "has_header": false
+    }
+  },
+  "split": {
+    "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "seed": 2027104177,
+    "train_rows": 180,
+    "test_rows": 36
+  },
+  "provenance": {
+    "platform": "rdatasets",
+    "dataset_id": "agridat/bancroft.peanut.uniformity",
+    "url": "https://vincentarelbundock.github.io/Rdatasets/csv/agridat/bancroft.peanut.uniformity.csv",
+    "retrieved_at": "2026-06-27T23:51:55+00:00",
+    "dedupe_fingerprint": "eea86a810ed36d530361c23bead80d6ec79bd835",
+    "citation": "Wright, K. (2025). agridat: Agricultural Datasets. R package version 1.26. https://kwstat.github.io/agridat/ ; served by Rdatasets (Arel-Bundock, V.), https://vincentarelbundock.github.io/Rdatasets/",
+    "license": {
+      "spdx": "MIT",
+      "status": "recorded",
+      "evidence_url": "https://cran.r-project.org/web/packages/agridat/DESCRIPTION",
+      "text_sha256": "bbbd0245b08a973774b0832cad03a1f8b9ac4e1bf4a49844263533a12de91b4a",
+      "note": "source_license: GPL (R package agridat) as recorded at acquisition; the CRAN DESCRIPTION of agridat 1.26 states 'License: MIT + file LICENSE' (LICENSE: YEAR 2025, COPYRIGHT HOLDER agridat authors), which is what is recorded here"
+    }
+  },
+  "collections": [
+    "test-10"
+  ],
+  "aliases": [],
+  "ingest": {
+    "source": "repo",
+    "relpath": "datasets/test/rdatasets-agridat-bancroft-peanut-uniformity",
+    "ingested_at": "2026-09-18T20:28:53Z",
+    "tool_version": "jope-datasets/0.1.0"
+  }
+}

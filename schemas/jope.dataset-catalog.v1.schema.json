@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://veox.ai/schemas/jope.dataset-catalog.v1.schema.json",
+  "title": "jope.dataset-catalog/v1",
+  "description": "One catalog row per dataset. Extends the SOTArena dataset registry row (required id, task, target, files, split) with content addressing: dataset_hash is the first 16 hex digits of canonical_sha256, and every files.*.sha256 is the blob key under blobs/sha256/ in the datasets bucket.",
+  "type": "object",
+  "required": [
+    "schema",
+    "id",
+    "dataset_hash",
+    "canonical_sha256",
+    "task",
+    "origin",
+    "shape",
+    "target",
+    "files",
+    "split",
+    "provenance",
+    "collections",
+    "aliases"
+  ],
+  "properties": {
+    "schema": { "const": "jope.dataset-catalog/v1" },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+$",
+      "description": "Registry identifier; the directory name of the dataset (the 16-hex dataset_hash, optionally prefixed synth_)."
+    },
+    "dataset_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{16}$",
+      "description": "canonical_sha256[:16]; the identity used by JOPE_REGISTRY/<dataset_hash>/."
+    },
+    "canonical_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "meta.json.sha256: sha256 of the canonical source table (hash_algorithm sha256:first16)."
+    },
+    "display_name": { "type": ["string", "null"] },
+    "task": {
+      "type": "string",
+      "enum": ["regression", "binary", "multiclass", "multi_label", "timeseries"]
+    },
+    "origin": { "type": "string", "enum": ["real", "synthetic"] },
+    "shape": { "$ref": "#/$defs/shape" },
+    "target": { "$ref": "#/$defs/target" },
+    "files": { "$ref": "#/$defs/files" },
+    "split": { "$ref": "#/$defs/split" },
+    "provenance": { "$ref": "#/$defs/provenance" },
+    "generator": {
+      "anyOf": [{ "$ref": "#/$defs/generator" }, { "type": "null" }],
+      "description": "Required when origin == synthetic; must be absent or null otherwise."
+    },
+    "collections": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" },
+      "uniqueItems": true
+    },
+    "aliases": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/alias" },
+      "description": "Other locations whose files carry the same sha256 (duplicate copies)."
+    },
+    "ingest": { "anyOf": [{ "$ref": "#/$defs/ingest" }, { "type": "null" }] }
+  },
+  "additionalProperties": false,
+  "if": { "properties": { "origin": { "const": "synthetic" } }, "required": ["origin"] },
+  "then": { "required": ["generator"], "properties": { "generator": { "$ref": "#/$defs/generator" } } },
+  "else": { "properties": { "generator": { "type": "null" } } },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "shape": {
+      "type": "object",
+      "required": ["rows", "features", "categorical_features", "columns"],
+      "properties": {
+        "rows": { "type": "integer", "minimum": 0, "description": "train rows + test rows" },
+        "features": { "type": "integer", "minimum": 0 },
+        "categorical_features": { "type": "integer", "minimum": 0 },
+        "columns": { "type": "integer", "minimum": 0, "description": "features + 1 (the target is the last column)" }
+      },
+      "additionalProperties": false
+    },
+    "target": {
+      "type": "object",
+      "required": ["name", "index", "type"],
+      "properties": {
+        "name": { "type": "string" },
+        "index": { "type": "integer", "const": -1 },
+        "type": { "type": "string", "enum": ["numeric", "binary", "multiclass", "multi_label"] }
+      },
+      "additionalProperties": false
+    },
+    "file": {
+      "type": "object",
+      "required": ["sha256", "bytes"],
+      "properties": {
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "rows": { "type": ["integer", "null"], "minimum": 0 },
+        "columns": { "type": ["integer", "null"], "minimum": 0 },
+        "has_header": { "enum": [false, null] }
+      },
+      "additionalProperties": false
+    },
+    "files": {
+      "type": "object",
+      "required": ["train", "test"],
+      "properties": {
+        "train": { "$ref": "#/$defs/file" },
+        "test": { "$ref": "#/$defs/file" },
+        "meta": { "anyOf": [{ "$ref": "#/$defs/file" }, { "type": "null" }] }
+      },
+      "additionalProperties": false
+    },
+    "split": {
+      "type": "object",
+      "required": ["method", "train_rows", "test_rows"],
+      "properties": {
+        "method": { "type": "string" },
+        "seed": { "type": ["integer", "null"], "minimum": 0 },
+        "train_rows": { "type": "integer", "minimum": 0 },
+        "test_rows": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "license": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "spdx": {
+          "type": ["string", "null"],
+          "description": "SPDX license expression, or a LicenseRef-* identifier (e.g. LicenseRef-US-Gov-Public-Domain)."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["recorded", "unknown", "restricted"],
+          "description": "recorded requires spdx and evidence_url; unknown is legal only in private collections; restricted never in a public collection."
+        },
+        "evidence_url": { "type": ["string", "null"] },
+        "text_sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "note": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["license"],
+      "properties": {
+        "platform": { "type": ["string", "null"] },
+        "dataset_id": { "type": ["string", "null"] },
+        "url": { "type": ["string", "null"] },
+        "retrieved_at": { "type": ["string", "null"] },
+        "dedupe_fingerprint": { "type": ["string", "null"] },
+        "citation": { "type": ["string", "null"] },
+        "license": { "$ref": "#/$defs/license" }
+      },
+      "additionalProperties": false
+    },
+    "generator": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "seed": { "type": ["integer", "null"], "minimum": 0 },
+        "attempt_seed": { "type": ["integer", "null"], "minimum": 0 },
+        "recipe_sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "script_sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] }
+      },
+      "additionalProperties": false
+    },
+    "alias": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "description": "Relative path of the duplicate file below the ingest source root." },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "source": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "ingest": {
+      "type": "object",
+      "required": ["source", "relpath", "ingested_at", "tool_version"],
+      "properties": {
+        "source": { "type": "string", "enum": ["quant", "mirror", "hyper", "repo", "link"] },
+        "relpath": { "type": "string" },
+        "ingested_at": { "type": "string" },
+        "tool_version": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

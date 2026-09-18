@@ -1,0 +1,67 @@
+{
+  "schema": "jope.dataset-catalog/v1",
+  "id": "30ef3eaa6d2971a9",
+  "dataset_hash": "30ef3eaa6d2971a9",
+  "canonical_sha256": "30ef3eaa6d2971a9d9073a534ccf4f9fbd780245e0575eff139e2b490102490e",
+  "display_name": "barium",
+  "task": "regression",
+  "origin": "real",
+  "shape": {
+    "rows": 131,
+    "features": 30,
+    "categorical_features": 0,
+    "columns": 31
+  },
+  "target": {
+    "name": "target",
+    "index": -1,
+    "type": "numeric"
+  },
+  "files": {
+    "train": {
+      "sha256": "53e723ca42438573f0e9e4584e1004d5c777b02b852dae9f67e60951134b63e5",
+      "bytes": 18531,
+      "rows": 109,
+      "columns": 31,
+      "has_header": false
+    },
+    "test": {
+      "sha256": "d7ef01a3237bc304d2f3b15c1f034babe03de34f4e0410b6eb1492e1bad1cf7b",
+      "bytes": 3773,
+      "rows": 22,
+      "columns": 31,
+      "has_header": false
+    }
+  },
+  "split": {
+    "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "seed": 836376999,
+    "train_rows": 109,
+    "test_rows": 22
+  },
+  "provenance": {
+    "platform": "rdatasets",
+    "dataset_id": "wooldridge/barium",
+    "url": "https://vincentarelbundock.github.io/Rdatasets/csv/wooldridge/barium.csv",
+    "retrieved_at": "2026-06-27T23:54:41+00:00",
+    "dedupe_fingerprint": "6cb6a9b02f15cb18096a13fa629934e3578649a5",
+    "citation": "Shea, J. M. (2025). wooldridge: 115 Data Sets from 'Introductory Econometrics: A Modern Approach, 7e' by Jeffrey M. Wooldridge. R package version 1.4-7. https://justinmshea.github.io/wooldridge/ ; served by Rdatasets (Arel-Bundock, V.)",
+    "license": {
+      "spdx": "GPL-3.0-only",
+      "status": "recorded",
+      "evidence_url": "https://cran.r-project.org/web/packages/wooldridge/DESCRIPTION",
+      "text_sha256": "fc8c49c9f6bb32042845405f48bb53308b26b458d799c1dc1ae0d638d7e1e32a",
+      "note": "source_license: GPL (R package wooldridge); the CRAN DESCRIPTION of wooldridge 1.4-7 states 'License: GPL-3'"
+    }
+  },
+  "collections": [
+    "test-10"
+  ],
+  "aliases": [],
+  "ingest": {
+    "source": "repo",
+    "relpath": "datasets/test/rdatasets-wooldridge-barium",
+    "ingested_at": "2026-09-18T20:28:53Z",
+    "tool_version": "jope-datasets/0.1.0"
+  }
+}

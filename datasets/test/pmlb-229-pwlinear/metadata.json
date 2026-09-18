@@ -1,0 +1,67 @@
+{
+  "schema": "jope.dataset-catalog/v1",
+  "id": "1cb97b1d7314d43d",
+  "dataset_hash": "1cb97b1d7314d43d",
+  "canonical_sha256": "1cb97b1d7314d43dee07a1f78f16d74ea27faa0653fd135dfe0084ada3369517",
+  "display_name": "229_pwLinear",
+  "task": "regression",
+  "origin": "real",
+  "shape": {
+    "rows": 200,
+    "features": 10,
+    "categorical_features": 0,
+    "columns": 11
+  },
+  "target": {
+    "name": "target",
+    "index": -1,
+    "type": "numeric"
+  },
+  "files": {
+    "train": {
+      "sha256": "12cebdca583ad0d7316e1963e0c1d7c2eda9efe1b9585a00a49364b570bb52e5",
+      "bytes": 6251,
+      "rows": 166,
+      "columns": 11,
+      "has_header": false
+    },
+    "test": {
+      "sha256": "ebf1425f8097b11ec54dc67e8a9af9d486a8d9a0083c6b98cef7bc493fba70ea",
+      "bytes": 1262,
+      "rows": 34,
+      "columns": 11,
+      "has_header": false
+    }
+  },
+  "split": {
+    "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "seed": 495737872,
+    "train_rows": 166,
+    "test_rows": 34
+  },
+  "provenance": {
+    "platform": "pmlb",
+    "dataset_id": "229_pwLinear",
+    "url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/229_pwLinear/229_pwLinear.tsv.gz",
+    "retrieved_at": "2026-06-27T23:54:41+00:00",
+    "dedupe_fingerprint": "63fc6e6b6814bd40d8b23649cd6217ad7df591c4",
+    "citation": "Olson, R. S., La Cava, W., Orzechowski, P., Urbanowicz, R. J., & Moore, J. H. (2017). PMLB: a large benchmark suite for machine learning evaluation and comparison. BioData Mining, 10, 36.",
+    "license": {
+      "spdx": "MIT",
+      "status": "recorded",
+      "evidence_url": "https://github.com/EpistasisLab/pmlb/blob/master/LICENSE",
+      "text_sha256": "fcd6079bbc43242c88c66a2b6d8bcfe6cf6590208a8d0e88f032764556230acf",
+      "note": "source_license: MIT (PMLB); the PMLB repository LICENSE (MIT, Epistasis Lab at UPenn) covers the dataset files"
+    }
+  },
+  "collections": [
+    "test-10"
+  ],
+  "aliases": [],
+  "ingest": {
+    "source": "repo",
+    "relpath": "datasets/test/pmlb-229-pwlinear",
+    "ingested_at": "2026-09-18T20:28:53Z",
+    "tool_version": "jope-datasets/0.1.0"
+  }
+}

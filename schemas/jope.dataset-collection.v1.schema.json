@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://veox.ai/schemas/jope.dataset-collection.v1.schema.json",
+  "title": "jope.dataset-collection/v1",
+  "description": "A named, versioned, write-once list of catalog rows (by id). Public collections may only contain members whose license status is recorded.",
+  "type": "object",
+  "required": ["schema", "name", "version", "visibility", "task", "members", "policy", "members_sha256"],
+  "properties": {
+    "schema": { "const": "jope.dataset-collection/v1" },
+    "name": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" },
+    "version": { "type": "integer", "minimum": 1 },
+    "visibility": { "type": "string", "enum": ["public", "private"] },
+    "task": {
+      "type": "string",
+      "enum": ["regression", "binary", "multiclass", "multi_label", "timeseries", "mixed"]
+    },
+    "description": { "type": ["string", "null"] },
+    "created_at": { "type": ["string", "null"] },
+    "members": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" },
+      "uniqueItems": true,
+      "description": "Catalog row ids, in collection order."
+    },
+    "policy": { "$ref": "#/$defs/policy" },
+    "members_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "sha256 of the members joined by a newline, with a trailing newline."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "policy": {
+      "type": "object",
+      "required": ["license_required", "allowed_spdx"],
+      "properties": {
+        "license_required": { "type": "boolean" },
+        "allowed_spdx": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Empty means any recorded SPDX expression is acceptable."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

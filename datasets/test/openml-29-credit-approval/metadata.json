@@ -1,0 +1,67 @@
+{
+  "schema": "jope.dataset-catalog/v1",
+  "id": "b5beff4a53fa12c0",
+  "dataset_hash": "b5beff4a53fa12c0",
+  "canonical_sha256": "b5beff4a53fa12c03a4958b92d0757b9fc5031ec90e1bc5f9d51edfe4e832623",
+  "display_name": "credit-approval",
+  "task": "regression",
+  "origin": "real",
+  "shape": {
+    "rows": 690,
+    "features": 15,
+    "categorical_features": 0,
+    "columns": 16
+  },
+  "target": {
+    "name": "target",
+    "index": -1,
+    "type": "numeric"
+  },
+  "files": {
+    "train": {
+      "sha256": "54a7427165c1af7b660ec6d93a1dc2dcc6e8c418bfd76a4309e3cd5be6b4d6ec",
+      "bytes": 54569,
+      "rows": 575,
+      "columns": 16,
+      "has_header": false
+    },
+    "test": {
+      "sha256": "db24e77e70a8536249c28a5584d84b563ef49d12559aa24be777f321aea45653",
+      "bytes": 11078,
+      "rows": 115,
+      "columns": 16,
+      "has_header": false
+    }
+  },
+  "split": {
+    "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "seed": 3029063751,
+    "train_rows": 575,
+    "test_rows": 115
+  },
+  "provenance": {
+    "platform": "openml",
+    "dataset_id": "29",
+    "url": "https://www.openml.org/d/29",
+    "retrieved_at": "2026-06-27T23:15:06+00:00",
+    "dedupe_fingerprint": "0fe8708f4399152b661f2a9a287612eb2d18c0c0",
+    "citation": "Quinlan, J. R. (1987). Credit Approval [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5FS30",
+    "license": {
+      "spdx": "CC-BY-4.0",
+      "status": "recorded",
+      "evidence_url": "https://archive.ics.uci.edu/dataset/27/credit+approval",
+      "text_sha256": "b96cb9cacd0b4e779383fb0359b78432d67f7def0d45d57dbff2bac1f3352c71",
+      "note": "source_license was blank at acquisition; OpenML lists licence 'Public' with original_data_url https://archive.ics.uci.edu/ml/datasets/credit+approval; the UCI dataset page states CC BY 4.0"
+    }
+  },
+  "collections": [
+    "test-10"
+  ],
+  "aliases": [],
+  "ingest": {
+    "source": "repo",
+    "relpath": "datasets/test/openml-29-credit-approval",
+    "ingested_at": "2026-09-18T20:28:53Z",
+    "tool_version": "jope-datasets/0.1.0"
+  }
+}

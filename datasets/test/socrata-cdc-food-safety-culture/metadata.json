@@ -1,0 +1,67 @@
+{
+  "schema": "jope.dataset-catalog/v1",
+  "id": "43b4cc3ab0ebbd97",
+  "dataset_hash": "43b4cc3ab0ebbd97",
+  "canonical_sha256": "43b4cc3ab0ebbd97405ea7eab86f851be1ee76369c815e8777289316da114f6f",
+  "display_name": "Development of an Empirically Derived Measure of Food Safety Culture in Restaurants",
+  "task": "regression",
+  "origin": "real",
+  "shape": {
+    "rows": 579,
+    "features": 39,
+    "categorical_features": 0,
+    "columns": 40
+  },
+  "target": {
+    "name": "target",
+    "index": -1,
+    "type": "numeric"
+  },
+  "files": {
+    "train": {
+      "sha256": "aee617254b8f278a2b8f0dd9c1bdff04e72d6c07c0cbde5841451cea461ec015",
+      "bytes": 82874,
+      "rows": 482,
+      "columns": 40,
+      "has_header": false
+    },
+    "test": {
+      "sha256": "cd1216d1d5f1bf4a4a6f4c4cd167ffbed4efa7552ef8adddc5de1028d578929f",
+      "bytes": 16375,
+      "rows": 97,
+      "columns": 40,
+      "has_header": false
+    }
+  },
+  "split": {
+    "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "seed": 1115810615,
+    "train_rows": 482,
+    "test_rows": 97
+  },
+  "provenance": {
+    "platform": "socrata",
+    "dataset_id": "37nu-tuw8",
+    "url": "https://data.cdc.gov/resource/37nu-tuw8.csv",
+    "retrieved_at": "2026-06-27T23:26:43+00:00",
+    "dedupe_fingerprint": "a3cff1ca12465acb9d2324efbd7dcd66c4c1fb17",
+    "citation": "Centers for Disease Control and Prevention. Development of an Empirically Derived Measure of Food Safety Culture in Restaurants [Dataset]. data.cdc.gov, 37nu-tuw8. https://data.cdc.gov/d/37nu-tuw8",
+    "license": {
+      "spdx": "LicenseRef-US-Gov-Public-Domain",
+      "status": "recorded",
+      "evidence_url": "https://data.cdc.gov/d/37nu-tuw8",
+      "text_sha256": "0518bb8447b9e67b439403a470084c9136f0027c4b4040d6d6f8c67e43dbd8d5",
+      "note": "source_license was blank at acquisition; data.cdc.gov metadata records license 'Public Domain U.S. Government' (licenseId USGOV_WORKS, terms https://www.usa.gov/government-works), attribution Centers for Disease Control and Prevention"
+    }
+  },
+  "collections": [
+    "test-10"
+  ],
+  "aliases": [],
+  "ingest": {
+    "source": "repo",
+    "relpath": "datasets/test/socrata-cdc-food-safety-culture",
+    "ingested_at": "2026-09-18T20:28:53Z",
+    "tool_version": "jope-datasets/0.1.0"
+  }
+}
