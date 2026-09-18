@@ -12,6 +12,7 @@ use std::time::Instant;
 use crate::commands::exact_cv::{self, ValidatedFreeze, ORIGINAL_GENERATIONS};
 use crate::core::require_core_plan;
 use crate::data::{read_binary_csv, read_regression_csv};
+use jope_dime_regressor::paths;
 
 mod aggressive;
 mod args;
@@ -28,7 +29,9 @@ mod score_corpus;
 mod task;
 mod test_adaptive;
 
-const REGISTRY: &str = "/home/ubuntu/remote_super/quant/regression";
+jope_paths::once_str!(
+    fn registry_str => paths::jope_registry()
+);
 const PANEL_SHA256: &str = "b86c8ea5f5ab1051e8aafb4368f8dabdcfd8c740c63eaa1d086ddb72fae0ba75";
 const PANEL_ANALYSIS_SHA256: &str =
     "0117abb32d547b134706e210376f2e6f437b706b2a12edb6d9302d74d4749282";
@@ -107,7 +110,7 @@ const DATASETS: &[&str] = &[
 struct Cli {
     #[command(subcommand)]
     command: Command,
-    #[arg(long, global = true, default_value = REGISTRY)]
+    #[arg(long, global = true, env = "JOPE_REGISTRY", default_value = registry_str())]
     registry: PathBuf,
     #[arg(long, global = true, default_value = "grok4p5-42")]
     panel_id: String,
@@ -152,22 +155,22 @@ enum Command {
         study_root: PathBuf,
         #[arg(
             long,
-            default_value = "/home/ubuntu/jope-flywheel/test_exact_gen0/training/accepted-by-task.json"
+            default_value_os_t = paths::flywheel_root().join("training/accepted-by-task.json")
         )]
         checkpoint_pointer: PathBuf,
         #[arg(
             long,
-            default_value = "/home/ubuntu/jope-flywheel/training/round1/rotation-inputs.v1.json"
+            default_value_os_t = paths::flywheel_training_root().join("round1/rotation-inputs.v1.json")
         )]
         checkpoint_provenance: PathBuf,
         #[arg(
             long,
-            default_value = "/home/ubuntu/jope-flywheel/test_exact_gen0/catalog/current.json"
+            default_value_os_t = paths::catalog_pointer()
         )]
         catalog_pointer: PathBuf,
         #[arg(
             long,
-            default_value = "/home/ubuntu/jope-flywheel/test_exact_gen0/corpus/strict-test-exact.sqlite"
+            default_value_os_t = paths::corpus_db()
         )]
         observation_db: PathBuf,
         #[arg(long)]
@@ -178,7 +181,11 @@ enum Command {
         python: PathBuf,
         #[arg(long, default_value = "cuda")]
         proposal_device: String,
-        #[arg(long, default_value = "/home/ubuntu/sotarena")]
+        #[arg(
+            long,
+            env = "SOTARENA_REPORTER_ROOT",
+            default_value_os_t = paths::sotarena_reporter_root()
+        )]
         sotarena_root: PathBuf,
         #[arg(long, default_value_t = 8)]
         workers: usize,
@@ -206,7 +213,11 @@ enum Command {
         run_id: String,
         #[arg(long, default_value = "runs/train-only-studies")]
         study_root: PathBuf,
-        #[arg(long, default_value = "/home/ubuntu/sotarena")]
+        #[arg(
+            long,
+            env = "SOTARENA_REPORTER_ROOT",
+            default_value_os_t = paths::sotarena_reporter_root()
+        )]
         sotarena_root: PathBuf,
         #[arg(long, default_value_t = 8)]
         workers: usize,
@@ -218,7 +229,11 @@ enum Command {
         run_id: String,
         #[arg(long, default_value = "runs/train-only-studies")]
         study_root: PathBuf,
-        #[arg(long, default_value = "/home/ubuntu/sotarena")]
+        #[arg(
+            long,
+            env = "SOTARENA_REPORTER_ROOT",
+            default_value_os_t = paths::sotarena_reporter_root()
+        )]
         sotarena_root: PathBuf,
         #[arg(long, default_value_t = 8)]
         workers: usize,
@@ -230,7 +245,11 @@ enum Command {
         run_id: String,
         #[arg(long, default_value = "runs/train-only-studies")]
         study_root: PathBuf,
-        #[arg(long, default_value = "/home/ubuntu/sotarena")]
+        #[arg(
+            long,
+            env = "SOTARENA_REPORTER_ROOT",
+            default_value_os_t = paths::sotarena_reporter_root()
+        )]
         sotarena_root: PathBuf,
         #[arg(long, default_value_t = 8)]
         workers: usize,
@@ -242,7 +261,11 @@ enum Command {
         run_id: String,
         #[arg(long, default_value = "runs/train-only-studies")]
         study_root: PathBuf,
-        #[arg(long, default_value = "/home/ubuntu/sotarena")]
+        #[arg(
+            long,
+            env = "SOTARENA_REPORTER_ROOT",
+            default_value_os_t = paths::sotarena_reporter_root()
+        )]
         sotarena_root: PathBuf,
         #[arg(long)]
         parent_run: Option<PathBuf>,
@@ -262,7 +285,11 @@ enum Command {
         run_id: String,
         #[arg(long, default_value = "runs/train-only-studies")]
         study_root: PathBuf,
-        #[arg(long, default_value = "/home/ubuntu/sotarena")]
+        #[arg(
+            long,
+            env = "SOTARENA_REPORTER_ROOT",
+            default_value_os_t = paths::sotarena_reporter_root()
+        )]
         sotarena_root: PathBuf,
         #[arg(long, value_enum)]
         arm: Option<TrainOnlyRedteamArm>,
@@ -280,7 +307,11 @@ enum Command {
         run_id: String,
         #[arg(long, default_value = "runs/train-only-studies")]
         study_root: PathBuf,
-        #[arg(long, default_value = "/home/ubuntu/sotarena")]
+        #[arg(
+            long,
+            env = "SOTARENA_REPORTER_ROOT",
+            default_value_os_t = paths::sotarena_reporter_root()
+        )]
         sotarena_root: PathBuf,
         #[arg(long, default_value_t = 8)]
         workers: usize,
@@ -292,7 +323,11 @@ enum Command {
         run_id: String,
         #[arg(long, default_value = "runs/train-only-studies")]
         study_root: PathBuf,
-        #[arg(long, default_value = "/home/ubuntu/sotarena")]
+        #[arg(
+            long,
+            env = "SOTARENA_REPORTER_ROOT",
+            default_value_os_t = paths::sotarena_reporter_root()
+        )]
         sotarena_root: PathBuf,
         #[arg(long, default_value_t = 8)]
         workers: usize,
@@ -304,7 +339,11 @@ enum Command {
         run_id: String,
         #[arg(long, default_value = "runs/train-only-studies")]
         study_root: PathBuf,
-        #[arg(long, default_value = "/home/ubuntu/sotarena")]
+        #[arg(
+            long,
+            env = "SOTARENA_REPORTER_ROOT",
+            default_value_os_t = paths::sotarena_reporter_root()
+        )]
         sotarena_root: PathBuf,
         #[arg(long, default_value_t = 2)]
         workers: usize,
@@ -316,7 +355,11 @@ enum Command {
         run_id: String,
         #[arg(long, default_value = "runs/train-only-studies")]
         study_root: PathBuf,
-        #[arg(long, default_value = "/home/ubuntu/sotarena")]
+        #[arg(
+            long,
+            env = "SOTARENA_REPORTER_ROOT",
+            default_value_os_t = paths::sotarena_reporter_root()
+        )]
         sotarena_root: PathBuf,
         #[arg(long, default_value_t = 8)]
         workers: usize,
@@ -372,16 +415,16 @@ enum Command {
     PlanMulticlassTestAdaptive {
         #[arg(long, default_value = "multiclass272-test-adaptive-union43-gen20-v2")]
         run_id: String,
-        #[arg(long, default_value = "/home/ubuntu/jope-dime/campaigns/test-adaptive")]
+        #[arg(long, default_value_os_t = paths::test_adaptive_root())]
         campaign_root: PathBuf,
         #[arg(
             long,
-            default_value = "/home/ubuntu/remote_super/quant/releases/mc-union-runnable272-v5/manifest.json"
+            default_value_os_t = paths::quant_root().join("releases/mc-union-runnable272-v5/manifest.json")
         )]
         corpus_manifest: PathBuf,
         #[arg(
             long,
-            default_value = "/home/ubuntu/jope-dime/campaigns/test-adaptive/comparators/post-coverage-v2"
+            default_value_os_t = paths::test_adaptive_root().join("comparators/post-coverage-v2")
         )]
         comparator_root: PathBuf,
         #[arg(long, default_value = "seeds/generation-zero.txt")]
@@ -396,7 +439,7 @@ enum Command {
     RunMulticlassTestAdaptiveAll {
         #[arg(long, default_value = "multiclass272-test-adaptive-union43-gen20-v2")]
         run_id: String,
-        #[arg(long, default_value = "/home/ubuntu/jope-dime/campaigns/test-adaptive")]
+        #[arg(long, default_value_os_t = paths::test_adaptive_root())]
         campaign_root: PathBuf,
         #[arg(long)]
         resume: bool,
@@ -406,7 +449,7 @@ enum Command {
     ValidateMulticlassTestAdaptiveAll {
         #[arg(long, default_value = "multiclass272-test-adaptive-union43-gen20-v2")]
         run_id: String,
-        #[arg(long, default_value = "/home/ubuntu/jope-dime/campaigns/test-adaptive")]
+        #[arg(long, default_value_os_t = paths::test_adaptive_root())]
         campaign_root: PathBuf,
     },
     /// Run or resume all 42 benchmark-invalid TimeSeries42 held-out-test-adaptive shards.
@@ -472,7 +515,7 @@ enum Command {
         output_dir: PathBuf,
         #[arg(
             long,
-            default_value = "/home/ubuntu/jope-dime/target/release/corpus_eval"
+            default_value_os_t = paths::corpus_eval_binary()
         )]
         corpus_eval: PathBuf,
         #[arg(long, default_value_t = 300)]

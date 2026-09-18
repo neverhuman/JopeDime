@@ -2,10 +2,11 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
+use jope_dime_regressor::paths;
 use jope_dime_regressor::selfplay_ingest::ingest_receipt_with_manifest;
 use jope_dime_regressor::selfplay_runtime::{
-    atomic_json, checkpoint_epoch, evaluation_protocol_sha256, expected_evaluation_metric, now_ms,
-    read_json, sha256_bytes, sha256_file, DEFAULT_ROOT, DEFAULT_SCQ,
+    atomic_json, checkpoint_epoch, default_root_str, default_scq_str, evaluation_protocol_sha256,
+    expected_evaluation_metric, now_ms, read_json, sha256_bytes, sha256_file,
 };
 use jope_dime_regressor::selfplay_shadow::{
     evaluate_task_promotion_v3, CanaryContextClass, CanaryContextV2, CanaryIntentV2, CanaryMode,
@@ -31,13 +32,13 @@ const ACTIVE_STATES: &[&str] = &["queued", "starting", "dispatching", "running",
 #[derive(Parser, Debug)]
 #[command(name = "jope-canary-executor")]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
-    #[arg(long, default_value = DEFAULT_SCQ)]
+    #[arg(long, default_value = default_scq_str())]
     scq: PathBuf,
     #[arg(
         long,
-        default_value = "/home/ubuntu/jope-flywheel/scripts/fweval_runner.sh"
+        default_value_os_t = paths::fweval_runner()
     )]
     runner: PathBuf,
     #[arg(long)]

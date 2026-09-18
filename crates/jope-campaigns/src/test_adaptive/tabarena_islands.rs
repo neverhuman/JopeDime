@@ -1,10 +1,16 @@
 use super::*;
 use feat_math::advanced_v3::RawTable;
+use jope_dime_regressor::paths;
 
-const SOURCE_ROOT: &str = "/home/ubuntu/tabArenaLite/data/tabarena-lite-v0.1/datasets/regression";
-const CANONICAL_SCORES: &str =
-    "/home/ubuntu/tabArenaLite/artifacts/leaderboard-20260723/canonical_scores.csv";
-const LOCAL_RESULTS: &str = "/home/ubuntu/tabArenaLite/results";
+jope_paths::once_str!(
+    fn source_root_str => paths::legacy_tree("tabArenaLite").join("data/tabarena-lite-v0.1/datasets/regression")
+);
+jope_paths::once_str!(
+    fn canonical_scores_str => paths::legacy_tree("tabArenaLite").join("artifacts/leaderboard-20260723/canonical_scores.csv")
+);
+jope_paths::once_str!(
+    fn local_results_str => paths::legacy_tree("tabArenaLite").join("results")
+);
 const MANIFEST_SCHEMA: &str = "JopeTabArenaLiteIslandManifest.v1";
 const CHECKPOINT_SCHEMA: &str = "JopeTabArenaLiteIslandCheckpoint.v1";
 const RESULT_SCHEMA: &str = "JopeTabArenaLiteIslandResult.v1";
@@ -284,13 +290,13 @@ fn collect_canonical_leaders(
 fn collect_local_leaders() -> Result<(HashMap<String, (f64, BTreeSet<String>)>, Vec<ArtifactHash>)>
 {
     let mut leaders = HashMap::<String, (f64, BTreeSet<String>)>::new();
-    let canonical = fs::read_to_string(CANONICAL_SCORES)?;
+    let canonical = fs::read_to_string(canonical_scores_str())?;
     collect_canonical_leaders(&canonical, &mut leaders)?;
     let mut artifacts = vec![ArtifactHash {
-        file: CANONICAL_SCORES.to_string(),
-        sha256: sha256_file(Path::new(CANONICAL_SCORES))?,
+        file: canonical_scores_str().to_string(),
+        sha256: sha256_file(Path::new(canonical_scores_str()))?,
     }];
-    let results_root = Path::new(LOCAL_RESULTS);
+    let results_root = Path::new(local_results_str());
     let mut paths = Vec::new();
     for model in fs::read_dir(results_root)? {
         let model = model?.path();
@@ -388,7 +394,7 @@ fn update_leader(
 
 fn prepare_datasets(run_id: &str) -> Result<(Vec<EncodedDataset>, Vec<ArtifactHash>)> {
     let (leaders, artifacts) = collect_local_leaders()?;
-    let source_root = Path::new(SOURCE_ROOT);
+    let source_root = Path::new(source_root_str());
     let mut sources = fs::read_dir(source_root)?
         .map(|entry| Ok(entry?.path()))
         .collect::<Result<Vec<_>>>()?;
@@ -1435,8 +1441,8 @@ fn expected_manifest(
         schema: MANIFEST_SCHEMA.to_string(),
         benchmark_valid: false,
         run_id: run_id.to_string(),
-        source_root: SOURCE_ROOT.to_string(),
-        canonical_scores_sha256: sha256_file(Path::new(CANONICAL_SCORES)).unwrap(),
+        source_root: source_root_str().to_string(),
+        canonical_scores_sha256: sha256_file(Path::new(canonical_scores_str())).unwrap(),
         local_leader_artifacts,
         release_binary_sha256: release_binary_sha256.to_string(),
         scq_binary_sha256: scq_binary_sha256.to_string(),

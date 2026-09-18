@@ -9,7 +9,7 @@ use clap::Parser;
 use jope_dime_regressor::four_task::JopeFourTaskTelemetryV1;
 use jope_dime_regressor::recovery_contracts::RecoveryContinuityObservationV1;
 use jope_dime_regressor::selfplay_ingest;
-use jope_dime_regressor::selfplay_runtime::{atomic_json, now_ms, sha256_file, DEFAULT_ROOT};
+use jope_dime_regressor::selfplay_runtime::{atomic_json, default_root_str, now_ms, sha256_file};
 use jope_dime_regressor::selfplay_shadow::{
     Task, TaskPromotionEvaluationV3, TaskPromotionObservationSetV3,
 };
@@ -113,7 +113,7 @@ const RECOVERY_COMPONENTS: &[RecoveryComponent] = &[
 #[derive(Parser, Debug)]
 #[command(name = "jope-reporting")]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
     #[arg(long, default_value_t = 30)]
     interval_seconds: u64,

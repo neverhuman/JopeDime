@@ -2,8 +2,9 @@
 
 use anyhow::{ensure, Context, Result};
 use clap::Parser;
+use jope_dime_regressor::paths;
 use jope_dime_regressor::selfplay_runtime::{
-    atomic_json, now_ms, read_json, sha256_bytes, sha256_file, DEFAULT_ROOT,
+    atomic_json, default_root_str, now_ms, read_json, sha256_bytes, sha256_file,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -23,13 +24,13 @@ const FORBIDDEN_EXECSTART: &[&str] = &["/target/", "/build/"];
 #[derive(Parser, Debug)]
 #[command(name = "jope-effective-unit-audit")]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
     #[arg(long, default_value = "/usr/bin/systemctl")]
     systemctl: PathBuf,
     #[arg(long)]
     output: Option<PathBuf>,
-    #[arg(long, default_value = "/home/ubuntu/smart_cluster/etc/projects.toml")]
+    #[arg(long, default_value_os_t = paths::scq_projects())]
     scq_projects_active: PathBuf,
 }
 
@@ -472,7 +473,11 @@ mod tests {
     #[test]
     fn mutable_or_overridden_execstart_fails_closed() {
         let root = Path::new("/srv/flywheel");
-        let show = "FragmentPath=/units/queue.service\nDropInPaths=/override.conf\nExecStart=/home/ubuntu/jope-dime/target/release/jope_selfplay_queue\nActiveState=active\nSubState=running\n";
+        let show = format!(
+            "FragmentPath=/units/queue.service\nDropInPaths=/override.conf\nExecStart={}/target/release/jope_selfplay_queue\nActiveState=active\nSubState=running\n",
+            paths::jope_home().display()
+        );
+        let show = show.as_str();
         let cat = format!("{show}# /override.conf\n[Service]\nExecStart=/tmp/override\n");
         let audit = inspect_unit(&row(), root, show, &cat);
         assert!(!audit.healthy);

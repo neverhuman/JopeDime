@@ -6,8 +6,10 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
+use jope_dime_regressor::paths;
 use jope_dime_regressor::selfplay_runtime::{
-    atomic_json, now_ms, read_json, scq_json, sha256_bytes, sha256_file, DEFAULT_ROOT, DEFAULT_SCQ,
+    atomic_json, default_root_str, default_scq_str, now_ms, read_json, scq_json, sha256_bytes,
+    sha256_file,
 };
 use jope_dime_regressor::spec_policy::TRAINER;
 use serde::{Deserialize, Serialize};
@@ -37,13 +39,24 @@ const LIVE_STATES: &[&str] = &[
     "preempting",
     "held",
 ];
-const DEFAULT_TRAINER: &str = "/home/ubuntu/jope-dime/scripts/test_exact_train.py";
-const DEFAULT_COMMON: &str = "/home/ubuntu/jope-dime/scripts/test_exact_common.py";
-const DEFAULT_PACKER: &str = "/home/ubuntu/jope-dime/scripts/test_exact_packed_corpus.py";
-const DEFAULT_PRIME: &str =
-    "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch";
-const LEGACY_CHECKPOINT_ROOT: &str = "/home/ubuntu/jope-flywheel/training/round1/checkpoints";
-const DEFAULT_RUNS_ROOT: &str = "/home/ubuntu/smart_cluster/var/runs";
+jope_paths::once_str!(
+    fn default_trainer_str => paths::research_script("test_exact_train.py")
+);
+jope_paths::once_str!(
+    fn default_common_str => paths::research_script("test_exact_common.py")
+);
+jope_paths::once_str!(
+    fn default_packer_str => paths::research_script("test_exact_packed_corpus.py")
+);
+jope_paths::once_str!(
+    fn default_prime_str => paths::runtime_bundle_pytorch()
+);
+jope_paths::once_str!(
+    fn legacy_checkpoint_root_str => paths::legacy_checkpoints_root()
+);
+jope_paths::once_str!(
+    fn default_runs_root_str => paths::scq_runs_root()
+);
 /// Prefixes of the trainer run directories whose `train-result.json` forms the
 /// warm-start lineage. SCQ prunes finished jobs from `ls` long before the run
 /// directory is collected (GC only touches `jte-`/`jcv-`), so the filesystem —
@@ -125,9 +138,9 @@ const LINEAGE_RESCAN_MS: u128 = 60_000;
     about = "Keep exactly one priority-10 xbabe2 PyTorch trainer continuously present"
 )]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
-    #[arg(long, default_value = DEFAULT_SCQ)]
+    #[arg(long, default_value = default_scq_str())]
     scq: PathBuf,
     /// Permit SCQ check/submit. Without this flag the watchdog is audit-only.
     #[arg(long)]
@@ -144,15 +157,15 @@ struct Args {
     label_pointer: Option<PathBuf>,
     #[arg(long)]
     corpus_pointer: Option<PathBuf>,
-    #[arg(long, default_value = DEFAULT_TRAINER)]
+    #[arg(long, default_value = default_trainer_str())]
     trainer_script: PathBuf,
-    #[arg(long, default_value = DEFAULT_COMMON)]
+    #[arg(long, default_value = default_common_str())]
     common_script: PathBuf,
-    #[arg(long, default_value = DEFAULT_PACKER)]
+    #[arg(long, default_value = default_packer_str())]
     packed_script: PathBuf,
-    #[arg(long, default_value = DEFAULT_PRIME)]
+    #[arg(long, default_value = default_prime_str())]
     prime_source: PathBuf,
-    #[arg(long, default_value = DEFAULT_RUNS_ROOT)]
+    #[arg(long, default_value = default_runs_root_str())]
     runs_root: PathBuf,
     /// Resolve the warm-start checkpoint, print the decision as JSON and exit.
     /// Takes no lock and writes nothing: safe to run against the live root while
@@ -1203,7 +1216,8 @@ fn checkpoint_candidates(root: &Path, lineage: &[LineageRun]) -> Vec<Checkpoint>
     if let Ok(value) = read_json(&root.join("proposals/current.json")) {
         if value.get("legacy_adopted").and_then(Value::as_bool) == Some(true) {
             if let Ok(digest) = required_sha256(&value, "checkpoint_sha256") {
-                let path = PathBuf::from(LEGACY_CHECKPOINT_ROOT).join(format!("{digest}.model.pt"));
+                let path =
+                    PathBuf::from(legacy_checkpoint_root_str()).join(format!("{digest}.model.pt"));
                 if let Ok(checkpoint) = probe_checkpoint(path, digest, "original_anchor".to_owned())
                 {
                     candidates.push(checkpoint);

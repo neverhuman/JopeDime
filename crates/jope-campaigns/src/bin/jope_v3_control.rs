@@ -3,7 +3,7 @@
 use anyhow::{ensure, Context, Result};
 use clap::{Parser, Subcommand};
 use jope_dime_regressor::selfplay_runtime::{
-    atomic_json, now_ms, read_json, sha256_file, DEFAULT_ROOT,
+    atomic_json, default_root_str, now_ms, read_json, sha256_file,
 };
 #[cfg(test)]
 use jope_dime_regressor::selfplay_shadow::PromotionObservationV3;
@@ -25,7 +25,7 @@ use std::path::{Path, PathBuf};
     about = "Open immutable evidence epochs and validate v3 promotion authorities"
 )]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
     #[command(subcommand)]
     command: Command,

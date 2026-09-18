@@ -22,13 +22,18 @@
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use jope_dime_regressor::paths;
 use jope_dime_regressor::training_history::{self as th, SourceReader};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
-const DEFAULT_ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
-const DEFAULT_RUNS_ROOT: &str = "/home/ubuntu/smart_cluster/var/runs";
+jope_paths::once_str!(
+    fn default_root_str => paths::flywheel_root()
+);
+jope_paths::once_str!(
+    fn default_runs_root_str => paths::scq_runs_root()
+);
 const LOCAL_NODE: &str = th::LOCAL_NODE;
 /// Remote sweep is ON by default, because a trainer landing on xbabe1 or xbabe3
 /// must not depend on anyone remembering to pass a flag.
@@ -54,9 +59,9 @@ struct Args {
 enum Cmd {
     /// Sync every trainer run's metrics into the archive and rebuild the index.
     Capture {
-        #[arg(long, default_value = DEFAULT_ROOT)]
+        #[arg(long, default_value = default_root_str())]
         root: String,
-        #[arg(long, default_value = DEFAULT_RUNS_ROOT)]
+        #[arg(long, default_value = default_runs_root_str())]
         runs_root: String,
         #[arg(long, default_value = LOCAL_NODE)]
         node: String,
@@ -68,7 +73,7 @@ enum Cmd {
         #[arg(long, default_value_t = false)]
         no_remote: bool,
         /// Runs root on the remote nodes.
-        #[arg(long, default_value = DEFAULT_RUNS_ROOT)]
+        #[arg(long, default_value = default_runs_root_str())]
         remote_runs_root: String,
         #[arg(long, default_value_t = th::SSH_DEADLINE_SECS)]
         ssh_deadline_secs: u64,
@@ -79,14 +84,14 @@ enum Cmd {
     },
     /// Print the archive summary (no writes).
     Status {
-        #[arg(long, default_value = DEFAULT_ROOT)]
+        #[arg(long, default_value = default_root_str())]
         root: String,
     },
     /// Exit non-zero if any live run directory holds rows the archive lacks.
     Verify {
-        #[arg(long, default_value = DEFAULT_ROOT)]
+        #[arg(long, default_value = default_root_str())]
         root: String,
-        #[arg(long, default_value = DEFAULT_RUNS_ROOT)]
+        #[arg(long, default_value = default_runs_root_str())]
         runs_root: String,
     },
 }

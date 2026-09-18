@@ -22,6 +22,7 @@
 
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
+use jope_dime_regressor::paths;
 use jope_dime_regressor::training_history as th;
 use rusqlite::{Connection, OpenFlags};
 use serde_json::{json, Value};
@@ -31,9 +32,15 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-const SCQ: &str = "/home/ubuntu/smart_cluster/target/release/scq";
-const DEFAULT_ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
-const DEFAULT_RUNS_ROOT: &str = "/home/ubuntu/smart_cluster/var/runs";
+jope_paths::once_str!(
+    fn scq_str => paths::scq_binary()
+);
+jope_paths::once_str!(
+    fn default_root_str => paths::flywheel_root()
+);
+jope_paths::once_str!(
+    fn default_runs_root_str => paths::scq_runs_root()
+);
 const LOCAL_NODE: &str = "xbabe2";
 const TERMINAL_STATES: [&str; 3] = ["completed", "failed", "cancelled"];
 const SAMPLE_FOR_SIZE: usize = 200;
@@ -60,7 +67,7 @@ enum Cmd {
     Runs {
         #[arg(long)]
         node: String,
-        #[arg(long, default_value = DEFAULT_RUNS_ROOT)]
+        #[arg(long, default_value = default_runs_root_str())]
         runs_root: String,
         #[arg(long, default_value_t = 24)]
         min_age_hours: u64,
@@ -68,14 +75,14 @@ enum Cmd {
         keep_newest: usize,
         #[arg(long, default_value = "jte-")]
         prefix: String,
-        #[arg(long, default_value = DEFAULT_ROOT)]
+        #[arg(long, default_value = default_root_str())]
         root: String,
         #[arg(long)]
         execute: bool,
     },
     /// Garbage-collect fetched receipts directories on the controller.
     Receipts {
-        #[arg(long, default_value = DEFAULT_ROOT)]
+        #[arg(long, default_value = default_root_str())]
         root: String,
         #[arg(long, default_value_t = 48)]
         min_age_hours: u64,
@@ -304,7 +311,7 @@ fn parse_scq_job_states(stdout: &[u8]) -> Result<HashMap<String, String>> {
 }
 
 fn scq_job_states() -> Result<HashMap<String, String>> {
-    let output = Command::new(SCQ)
+    let output = Command::new(scq_str())
         .args(["--json", "ls"])
         .output()
         .context("execute SCQ job-state query")?;

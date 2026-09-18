@@ -2237,7 +2237,8 @@ fn expanded_cache_progress(catalog: &Value) -> Result<Value> {
     let mut result = Map::new();
     for task in crate::selfplay_expansion::TASKS {
         let path = PathBuf::from(format!(
-            "/home/ubuntu/jope-flywheel/encodings/{task}-expanded"
+            "{}/{task}-expanded",
+            crate::paths::flywheel_encodings_root().display()
         ));
         let completed = completed_cache_count(&path)?;
         result.insert(

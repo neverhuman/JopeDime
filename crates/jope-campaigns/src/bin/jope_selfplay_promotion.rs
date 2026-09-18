@@ -20,6 +20,7 @@
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
+use jope_dime_regressor::paths;
 use jope_dime_regressor::selfplay_expansion::TASKS;
 use jope_dime_regressor::spec_policy::{PROPOSE, TRAINER};
 use jope_dime_regressor::task::Task;
@@ -35,15 +36,30 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
-const SCQ: &str = "/home/ubuntu/smart_cluster/target/release/scq";
-const RUNS_ROOT: &str = "/home/ubuntu/smart_cluster/var/runs";
-const SCRIPTS: &str = "/home/ubuntu/jope-dime/scripts";
-const PROPOSAL_SELECTION_POLICY: &str =
-    "/home/ubuntu/jope-dime/manifests/selfplay/proposal-selection-policy.v1.json";
-const PRIME_SRC: &str = "/home/ubuntu/jope-prime/src";
-const EVALUATOR: &str = "/home/ubuntu/jope-dime/target/release/corpus_eval";
-const WARM: &str = "/home/ubuntu/jope-flywheel/training/round1/checkpoints/fbcd5459f2c18f6cd5e4c23eef76a508a91d653a82f27c6ea41bcee8cafa2592.model.pt";
+jope_paths::once_str!(
+    fn root_str => paths::flywheel_root()
+);
+jope_paths::once_str!(
+    fn scq_str => paths::scq_binary()
+);
+jope_paths::once_str!(
+    fn runs_root_str => paths::scq_runs_root()
+);
+jope_paths::once_str!(
+    fn scripts_str => paths::research_scripts_root()
+);
+jope_paths::once_str!(
+    fn proposal_selection_policy_str => paths::campaign_manifest("selfplay/proposal-selection-policy.v1.json")
+);
+jope_paths::once_str!(
+    fn prime_src_str => paths::python_src()
+);
+jope_paths::once_str!(
+    fn evaluator_str => paths::corpus_eval_binary()
+);
+jope_paths::once_str!(
+    fn warm_str => paths::legacy_checkpoints_root().join("fbcd5459f2c18f6cd5e4c23eef76a508a91d653a82f27c6ea41bcee8cafa2592.model.pt")
+);
 const WARM_SHA: &str = "fbcd5459f2c18f6cd5e4c23eef76a508a91d653a82f27c6ea41bcee8cafa2592";
 const CATALOG_STRIDE_BYTES: u64 = 2_048 * 4;
 const LABEL_THRESHOLD: i64 = 50_000;
@@ -68,9 +84,10 @@ const PYTHON_PHASES: [&str; 3] = [
     "evaluate_frozen_gate",
 ];
 
-const PY_SHIM: &str = r#"
+/// The shim inserts the scripts root at run time (`@SCRIPTS@`), see [`py_shim`].
+const PY_SHIM_TEMPLATE: &str = r#"
 import json, sys
-sys.path.insert(0, "/home/ubuntu/jope-dime/scripts")
+sys.path.insert(0, "@SCRIPTS@")
 import test_exact_controller as c
 name = sys.argv[1]
 if name == "milestone_status":
@@ -85,6 +102,12 @@ else:
     except c.PendingAction as error:
         print(json.dumps({"__pending__": str(error)}, sort_keys=True))
 "#;
+
+/// [`PY_SHIM_TEMPLATE`] with the scripts root resolved once per process.
+fn py_shim() -> &'static str {
+    static CELL: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    CELL.get_or_init(|| PY_SHIM_TEMPLATE.replace("@SCRIPTS@", scripts_str()))
+}
 
 // ---------------------------------------------------------------------------
 // CPython-compatible JSON serialization
@@ -810,7 +833,7 @@ fn run_command(program: &str, args: &[&str]) -> Result<(i32, String, String)> {
 }
 
 fn scq_json(args: &[&str]) -> Result<Value> {
-    let (code, stdout, stderr) = run_command(SCQ, args)?;
+    let (code, stdout, stderr) = run_command(scq_str(), args)?;
     if code != 0 {
         bail!(
             "{}",
@@ -854,7 +877,7 @@ fn job_state<'j>(jobs: &'j BTreeMap<String, Value>, job_id: &str) -> Option<&'j 
 
 /// `scq check` then `scq submit`, tolerating an already-submitted job.
 fn check_and_submit(spec: &str) -> Result<()> {
-    let (code, stdout, stderr) = run_command(SCQ, &["check", spec])?;
+    let (code, stdout, stderr) = run_command(scq_str(), &["check", spec])?;
     if code != 0 {
         bail!(
             "{}",
@@ -865,7 +888,7 @@ fn check_and_submit(spec: &str) -> Result<()> {
             }
         );
     }
-    let (code, stdout, stderr) = run_command(SCQ, &["submit", spec])?;
+    let (code, stdout, stderr) = run_command(scq_str(), &["submit", spec])?;
     let detail = if stderr.trim().is_empty() {
         stdout.trim()
     } else {
@@ -879,7 +902,7 @@ fn check_and_submit(spec: &str) -> Result<()> {
 
 /// Locate outputs for a job the scheduler has already pruned from its records.
 fn pruned_job_outputs(job_id: &str) -> Option<PathBuf> {
-    let attempts = Path::new(RUNS_ROOT).join(job_id).join("attempts");
+    let attempts = Path::new(runs_root_str()).join(job_id).join("attempts");
     if !attempts.is_dir() {
         return None;
     }
@@ -915,7 +938,7 @@ fn fetch_job_output(job_id: &str, destination: &Path) -> Result<PathBuf> {
     let temporary = destination.with_file_name(format!(".{name}.fetch-{}", std::process::id()));
     fs::create_dir_all(&temporary)?;
     let (code, stdout, stderr) = run_command(
-        SCQ,
+        scq_str(),
         &["fetch", job_id, "--output", &temporary.to_string_lossy()],
     )?;
     if code != 0 {
@@ -947,9 +970,16 @@ fn python_handler(name: &str, request: &Value, root: &Path) -> Result<Value> {
     ));
     fs::write(&request_path, py_dumps(request, PyStyle::Default)?)?;
     let output = Command::new("/usr/bin/python3")
-        .args(["-c", PY_SHIM, name, &request_path.to_string_lossy()])
-        .current_dir(SCRIPTS)
-        .env("PYTHONPATH", format!("{PRIME_SRC}:{SCRIPTS}"))
+        .args(["-c", py_shim(), name, &request_path.to_string_lossy()])
+        .current_dir(scripts_str())
+        .env(
+            "PYTHONPATH",
+            format!(
+                "{prime_src_str}:{scripts_str}",
+                scripts_str = scripts_str(),
+                prime_src_str = prime_src_str()
+            ),
+        )
         .output()
         .context("spawn python shim")?;
     let _ = fs::remove_file(&request_path);
@@ -979,9 +1009,16 @@ fn python_handler(name: &str, request: &Value, root: &Path) -> Result<Value> {
 
 fn milestone_status(checkpoint_sha256: &str) -> Result<Value> {
     let output = Command::new("/usr/bin/python3")
-        .args(["-c", PY_SHIM, "milestone_status", checkpoint_sha256])
-        .current_dir(SCRIPTS)
-        .env("PYTHONPATH", format!("{PRIME_SRC}:{SCRIPTS}"))
+        .args(["-c", py_shim(), "milestone_status", checkpoint_sha256])
+        .current_dir(scripts_str())
+        .env(
+            "PYTHONPATH",
+            format!(
+                "{prime_src_str}:{scripts_str}",
+                scripts_str = scripts_str(),
+                prime_src_str = prime_src_str()
+            ),
+        )
         .output()
         .context("spawn milestone shim")?;
     if !output.status.success() {
@@ -1055,8 +1092,8 @@ fn render_checkpoint_proposal_spec(
     let pointer = read_json(&pointer_path)?;
     let catalog = PathBuf::from(get_str(&pointer, "catalog")?);
     let data = PathBuf::from(get_str(&pointer, "data")?);
-    let script = Path::new(SCRIPTS).join("test_exact_dl_generate.py");
-    let common = Path::new(SCRIPTS).join("test_exact_common.py");
+    let script = Path::new(scripts_str()).join("test_exact_dl_generate.py");
+    let common = Path::new(scripts_str()).join("test_exact_common.py");
     let checkpoint_hash = sha256_file(checkpoint)?;
     let cohort_hash = match cohort {
         Some(path) => Some(sha256_file(path)?),
@@ -1112,7 +1149,11 @@ fn render_checkpoint_proposal_spec(
     lines.push(String::new());
     lines.extend([
         "[env]".to_owned(),
-        format!("PYTHONPATH = \"{PRIME_SRC}:{SCRIPTS}\""),
+        format!(
+            "PYTHONPATH = \"{prime_src_str}:{scripts_str}\"",
+            scripts_str = scripts_str(),
+            prime_src_str = prime_src_str()
+        ),
         format!("OMP_NUM_THREADS = \"{}\"", PROPOSE.omp_threads),
         String::new(),
         "[preempt]".to_owned(),
@@ -1148,7 +1189,7 @@ fn render_checkpoint_proposal_spec(
         ),
         (
             "selection_policy".into(),
-            PathBuf::from(PROPOSAL_SELECTION_POLICY),
+            PathBuf::from(proposal_selection_policy_str()),
             "scripts/proposal-selection-policy.v1.json".into(),
         ),
         (
@@ -1216,9 +1257,9 @@ fn render_trainer_spec(
     }
     let job_id = format!("jope-selfplay-train-{watermark:09}-{recipe}");
     let spec = root.join("specs").join(format!("{job_id}.toml"));
-    let script = Path::new(SCRIPTS).join("test_exact_train.py");
-    let common = Path::new(SCRIPTS).join("test_exact_common.py");
-    let train_source = Path::new(PRIME_SRC).join("jope/policy/train_v3.py");
+    let script = Path::new(scripts_str()).join("test_exact_train.py");
+    let common = Path::new(scripts_str()).join("test_exact_common.py");
+    let train_source = Path::new(prime_src_str()).join("jope/policy/train_v3.py");
     let output_name = format!("watermark-{watermark:09}");
     let (warm, warm_hash) = accepted_checkpoint()?;
     let mut inputs: Vec<(String, PathBuf, String)> = vec![
@@ -1234,7 +1275,7 @@ fn render_trainer_spec(
         ),
         (
             "packed_source".into(),
-            Path::new(SCRIPTS).join("test_exact_packed_corpus.py"),
+            Path::new(scripts_str()).join("test_exact_packed_corpus.py"),
             "scripts/test_exact_packed_corpus.py".into(),
         ),
         (
@@ -1318,7 +1359,11 @@ fn render_trainer_spec(
     lines.push(String::new());
     lines.extend([
         "[env]".to_owned(),
-        format!("PYTHONPATH = \"{PRIME_SRC}:{SCRIPTS}\""),
+        format!(
+            "PYTHONPATH = \"{prime_src_str}:{scripts_str}\"",
+            scripts_str = scripts_str(),
+            prime_src_str = prime_src_str()
+        ),
         format!("OMP_NUM_THREADS = \"{}\"", TRAINER.omp_threads),
         String::new(),
         "[preempt]".to_owned(),
@@ -1362,8 +1407,8 @@ fn render_trainer_spec(
 /// warm-start bootstrap, always against the production root).
 fn accepted_checkpoint() -> Result<(PathBuf, String)> {
     for pointer in [
-        Path::new(ROOT).join("training/learning.json"),
-        Path::new(ROOT).join("training/accepted.json"),
+        Path::new(root_str()).join("training/learning.json"),
+        Path::new(root_str()).join("training/accepted.json"),
     ] {
         if !pointer.is_file() {
             continue;
@@ -1376,7 +1421,7 @@ fn accepted_checkpoint() -> Result<(PathBuf, String)> {
         }
         bail!("accepted checkpoint pointer failed content verification");
     }
-    Ok((PathBuf::from(WARM), WARM_SHA.to_owned()))
+    Ok((PathBuf::from(warm_str()), WARM_SHA.to_owned()))
 }
 
 // ---------------------------------------------------------------------------
@@ -1475,7 +1520,7 @@ fn handle_fetch_candidate_checkpoints(request: &Value, root: &Path) -> Result<Va
                 Some(source) => copy_tree(source, &temporary.join("outputs"))?,
                 None => {
                     let (code, stdout, stderr) = run_command(
-                        SCQ,
+                        scq_str(),
                         &["fetch", job_id, "--output", &temporary.to_string_lossy()],
                     )?;
                     if code != 0 {
@@ -2858,7 +2903,7 @@ impl Controller {
     fn open(root: &Path) -> Result<Self> {
         Ok(Self {
             root: root.to_path_buf(),
-            production: root == Path::new(ROOT),
+            production: root == Path::new(root_str()),
             journal: ActionJournal::open(root)?,
             state_path: root.join("ops/flywheel-state.json"),
         })
@@ -3090,7 +3135,7 @@ fn live_snapshot(root: &Path) -> Result<Value> {
         "catalog_sha256": pointer["catalog_sha256"],
         "catalog_entries": catalog["entries"],
         "catalog_counts": authority["task_counts"],
-        "evaluator_sha256": sha256_file(Path::new(EVALUATOR))?,
+        "evaluator_sha256": sha256_file(Path::new(evaluator_str()))?,
     }))
 }
 
@@ -3098,7 +3143,7 @@ fn live_snapshot(root: &Path) -> Result<Value> {
 #[command(name = "jope-selfplay-promotion")]
 #[command(about = "Native checkpoint tournament and promotion controller")]
 struct Args {
-    #[arg(long, default_value = ROOT)]
+    #[arg(long, default_value = root_str())]
     root: PathBuf,
     /// Seconds to wait before re-polling a phase that reported `pending`.
     /// A pending phase is a healthy wait on external work, not a failure, so it

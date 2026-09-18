@@ -36,6 +36,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
+use jope_dime_regressor::paths;
 use jope_dime_regressor::selfplay_expansion::TASKS;
 use jope_dime_regressor::spec_policy::EVAL;
 use serde::{Deserialize, Serialize};
@@ -52,7 +53,7 @@ const PROJECT: &str = "wsm5-sealed-zeroshot";
 #[derive(Parser)]
 #[command(about = "Zero-shot evaluation of the frozen sealed cohort (read-only on the cohort)")]
 struct Args {
-    #[arg(long, default_value = "/home/ubuntu/jope-flywheel/test_exact_gen0")]
+    #[arg(long, default_value_os_t = paths::flywheel_root())]
     root: PathBuf,
     #[command(subcommand)]
     command: Command,
@@ -78,7 +79,7 @@ enum Command {
         /// Shard runner script to stage into each job.
         #[arg(
             long,
-            default_value = "/home/ubuntu/jope-flywheel/scripts/fweval_runner.sh"
+            default_value_os_t = paths::fweval_runner()
         )]
         runner: PathBuf,
         /// Skip sealed datasets that already carry observations in the corpus.
@@ -97,10 +98,10 @@ enum Command {
         #[arg(long)]
         plan: PathBuf,
         /// SCQ run root holding job outputs.
-        #[arg(long, default_value = "/home/ubuntu/smart_cluster/var/runs")]
+        #[arg(long, default_value_os_t = paths::scq_runs_root())]
         runs: PathBuf,
         /// SCQ CLI, used to fetch outputs from the node a job actually ran on.
-        #[arg(long, default_value = "/home/ubuntu/smart_cluster/target/release/scq")]
+        #[arg(long, default_value_os_t = paths::scq_binary())]
         scq: PathBuf,
         #[arg(long)]
         out: PathBuf,

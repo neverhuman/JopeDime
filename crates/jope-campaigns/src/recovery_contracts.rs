@@ -5,6 +5,7 @@
 //! runtime bundle and a separately content-addressed unit overlay.
 
 use crate::encoder_v2_identity::ArtifactIdentity;
+use crate::paths;
 use crate::selfplay_data::canonical_json_sha256;
 use crate::selfplay_runtime::sha256_bytes;
 use anyhow::{ensure, Context, Result};
@@ -31,9 +32,12 @@ pub const ROLLBACK_STATE_COMPATIBILITY_SCHEMA: &str = "JopeRollbackStateCompatib
 pub const RECOVERY_CONTINUITY_OBSERVATION_SCHEMA: &str = "JopeRecoveryContinuityObservation.v1";
 pub const ROLLBACK_RUNTIME_BUNDLE_SHA256: &str =
     "9521ffcef11159339f314cb26430739d5472a54e1b521a868bd9ccb08acf6bd4";
-pub const IMMUTABLE_FLYWHEEL_ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
-pub const RUNTIME_CURRENT_ROOT: &str =
-    "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current";
+jope_paths::once_str!(
+    pub fn immutable_flywheel_root_str => paths::flywheel_root()
+);
+jope_paths::once_str!(
+    pub fn runtime_current_root_str => paths::runtime_bundle_current()
+);
 pub const REQUIRED_NODES: [&str; 5] = ["xbabe0", "xbabe1", "xbabe2", "xbabe3", "xbabe4"];
 pub const CONTINUITY_SERVICES: [&str; 7] = [
     "freezer",
@@ -714,7 +718,10 @@ impl RollbackUnitIdentity {
         let executable = &self.exec_start_argv[0];
         require_absolute_normalized(executable, "rollback ExecStart")?;
         ensure!(
-            executable.starts_with(&format!("{RUNTIME_CURRENT_ROOT}/runtime/bin/")),
+            executable.starts_with(&format!(
+                "{runtime_current_root_str}/runtime/bin/",
+                runtime_current_root_str = runtime_current_root_str()
+            )),
             "rollback ExecStart is not bundle-pinned: {executable}"
         );
         ensure!(
@@ -727,7 +734,10 @@ impl RollbackUnitIdentity {
             if argument.ends_with(".py") {
                 require_absolute_normalized(argument, "rollback Python argument")?;
                 ensure!(
-                    argument.starts_with(&format!("{RUNTIME_CURRENT_ROOT}/pytorch/")),
+                    argument.starts_with(&format!(
+                        "{runtime_current_root_str}/pytorch/",
+                        runtime_current_root_str = runtime_current_root_str()
+                    )),
                     "rollback unit references Python outside the bundled PyTorch boundary"
                 );
             }
@@ -739,7 +749,7 @@ impl RollbackUnitIdentity {
             );
         }
         ensure!(
-            self.working_directory == IMMUTABLE_FLYWHEEL_ROOT,
+            self.working_directory == immutable_flywheel_root_str(),
             "rollback WorkingDirectory is mutable or noncanonical"
         );
         let mut drop_in_paths = BTreeSet::new();
@@ -1119,7 +1129,7 @@ impl RollbackSystemdArtifactV2 {
             );
             if let Some(working_directory) = &self.working_directory {
                 ensure!(
-                    working_directory == IMMUTABLE_FLYWHEEL_ROOT,
+                    working_directory == immutable_flywheel_root_str(),
                     "rollback WorkingDirectory is mutable or noncanonical"
                 );
             }
@@ -1529,7 +1539,7 @@ impl RollbackCapsuleV2 {
             .context("isolated install command has no executable")?;
         require_absolute_normalized(installer_path, "isolated installer path")?;
         let installer_relative = Path::new(installer_path)
-            .strip_prefix(Path::new(IMMUTABLE_FLYWHEEL_ROOT).join("runtime-bundles"))
+            .strip_prefix(Path::new(immutable_flywheel_root_str()).join("runtime-bundles"))
             .context("isolated installer is outside the content-addressed runtime root")?;
         let installer_parts = installer_relative
             .components()
@@ -1788,8 +1798,8 @@ impl RollbackBaselineDerivationV1 {
             )?;
             ensure!(
                 targets.insert(row.target.as_str())
-                    && row.from == "/home/ubuntu/jope-dime"
-                    && row.to == IMMUTABLE_FLYWHEEL_ROOT
+                    && row.from == jope_paths::to_string(&crate::paths::jope_home())
+                    && row.to == immutable_flywheel_root_str()
                     && row.before_sha256 != row.after_sha256,
                 "rollback derivation transformation is duplicated or noncanonical"
             );
@@ -1844,9 +1854,10 @@ mod rollback_v2_tests {
                 unit_file_sha256: digest(&format!("service-{index}")),
                 resolved_effective_unit_sha256: String::new(),
                 exec_start_argv: vec![format!(
-                    "{RUNTIME_CURRENT_ROOT}/runtime/bin/service-{index}"
+                    "{runtime_current_root_str}/runtime/bin/service-{index}",
+                    runtime_current_root_str = runtime_current_root_str()
                 )],
-                working_directory: Some(IMMUTABLE_FLYWHEEL_ROOT.to_owned()),
+                working_directory: Some(immutable_flywheel_root_str().to_owned()),
                 drop_ins: Vec::new(),
             };
             row.resolved_effective_unit_sha256 = row.computed_effective_unit_sha256().unwrap();
@@ -1951,7 +1962,7 @@ mod rollback_v2_tests {
                 runtime_bundle_sha256: ROLLBACK_RUNTIME_BUNDLE_SHA256.to_owned(),
                 installer_argv: vec![
                     format!(
-                        "{IMMUTABLE_FLYWHEEL_ROOT}/runtime-bundles/{ROLLBACK_RUNTIME_BUNDLE_SHA256}/runtime/bin/jope_selfplay_bundle"
+                        "{immutable_flywheel_root_str}/runtime-bundles/{ROLLBACK_RUNTIME_BUNDLE_SHA256}/runtime/bin/jope_selfplay_bundle", immutable_flywheel_root_str = immutable_flywheel_root_str()
                     ),
                     "--install-units".to_owned()
                 ],

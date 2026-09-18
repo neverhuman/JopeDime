@@ -106,8 +106,28 @@ impl Family {
 pub struct SmokeProbe {
     pub name: &'static str,
     pub command: &'static str,
-    pub args: &'static [&'static str],
+    pub args: &'static [ProbeArg],
     pub timeout_secs: u32,
+}
+
+/// One probe argument: a literal, or a path relative to the lineage-A
+/// self-play tree (`crate::paths::flywheel_root()`), resolved when the spec is
+/// rendered so the policy tables stay `const`.
+#[derive(Clone, Copy, Debug)]
+pub enum ProbeArg {
+    Literal(&'static str),
+    UnderFlywheelRoot(&'static str),
+}
+
+impl ProbeArg {
+    pub fn render(&self) -> String {
+        match self {
+            Self::Literal(value) => (*value).to_owned(),
+            Self::UnderFlywheelRoot(relative) => {
+                jope_paths::to_string(&crate::paths::flywheel_root().join(relative))
+            }
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -172,7 +192,7 @@ impl FamilyPolicy {
             let args = p
                 .args
                 .iter()
-                .map(|a| format!("\"{a}\""))
+                .map(|a| format!("\"{}\"", a.render()))
                 .collect::<Vec<_>>()
                 .join(", ");
             let _ = write!(
@@ -211,8 +231,8 @@ pub const PROBE_PRIME_POLICY_SRC: SmokeProbe = SmokeProbe {
     name: "runtime bundle JOPE policy present",
     command: "/usr/bin/test",
     args: &[
-        "-f",
-        "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch/jope/policy/model_v3.py",
+        ProbeArg::Literal("-f"),
+        ProbeArg::UnderFlywheelRoot("runtime-bundles/current/pytorch/jope/policy/model_v3.py"),
     ],
     timeout_secs: 5,
 };
@@ -237,8 +257,8 @@ pub const PROBE_FLYWHEEL_ROOT_XBABE2_ONLY: SmokeProbe = SmokeProbe {
     name: "flywheel live root present",
     command: "/usr/bin/test",
     args: &[
-        "-f",
-        "/home/ubuntu/jope-flywheel/test_exact_gen0/catalog/current.json",
+        ProbeArg::Literal("-f"),
+        ProbeArg::UnderFlywheelRoot("catalog/current.json"),
     ],
     timeout_secs: 5,
 };
@@ -367,7 +387,7 @@ pub fn policy_json() -> String {
                 let args = s
                     .args
                     .iter()
-                    .map(|a| format!("\"{a}\""))
+                    .map(|a| format!("\"{}\"", a.render()))
                     .collect::<Vec<_>>()
                     .join(", ");
                 format!(
@@ -523,7 +543,7 @@ mod tests {
         for f in Family::all() {
             for s in policy(f).smoke {
                 assert!(
-                    !s.args.iter().any(|a| a.contains("/etc/hostname")),
+                    !s.args.iter().any(|a| a.render().contains("/etc/hostname")),
                     "{}: probe '{}' reads /etc/hostname -- probe a capability instead",
                     f.as_str(),
                     s.name

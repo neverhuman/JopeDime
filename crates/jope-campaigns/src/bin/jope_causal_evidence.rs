@@ -4,7 +4,7 @@ use anyhow::{ensure, Context, Result};
 use clap::Parser;
 use jope_dime_regressor::selfplay_ingest::{ingest_receipt_with_manifest_connection, open_corpus};
 use jope_dime_regressor::selfplay_runtime::{
-    atomic_json, now_ms, read_json, sha256_bytes, sha256_file, DEFAULT_ROOT,
+    atomic_json, default_root_str, now_ms, read_json, sha256_bytes, sha256_file,
 };
 use jope_dime_regressor::selfplay_shadow::{
     build_causal_evidence_ledger_v2, build_causal_evidence_ledger_v3, CausalEvaluationReceiptV2,
@@ -30,7 +30,7 @@ const HISTORICAL_REGRESSION_LOWER_BOUND: usize = 776;
     about = "Build CausalEvidenceLedger.v2 from append-only raw receipts"
 )]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
     #[arg(long)]
     once: bool,

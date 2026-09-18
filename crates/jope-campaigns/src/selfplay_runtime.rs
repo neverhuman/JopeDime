@@ -1,5 +1,6 @@
 //! Shared filesystem, provenance, and scheduler primitives for self-play.
 
+use crate::paths;
 use anyhow::{bail, Context, Result};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
@@ -9,10 +10,18 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-pub const DEFAULT_ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
-pub const DEFAULT_SCQ: &str = "/home/ubuntu/smart_cluster/target/release/scq";
-pub const DEFAULT_EVALUATOR: &str = "/home/ubuntu/jope-dime/target/release/corpus_eval";
-pub const DEFAULT_RUNNER: &str = "/home/ubuntu/jope-flywheel/scripts/fweval_runner.sh";
+jope_paths::once_str!(
+    pub fn default_root_str => paths::flywheel_root()
+);
+jope_paths::once_str!(
+    pub fn default_scq_str => paths::scq_binary()
+);
+jope_paths::once_str!(
+    pub fn default_evaluator_str => paths::corpus_eval_binary()
+);
+jope_paths::once_str!(
+    pub fn default_runner_str => paths::fweval_runner()
+);
 
 pub fn now_ms() -> u128 {
     SystemTime::now()
@@ -112,9 +121,7 @@ pub fn active_checkpoint(root: &Path) -> Result<Option<(String, String)>> {
                 .get("checkpoint_sha256")
                 .and_then(Value::as_str)
                 .context("legacy proposal pointer lacks checkpoint_sha256")?;
-            let checkpoint = PathBuf::from(format!(
-                "/home/ubuntu/jope-flywheel/training/round1/checkpoints/{digest}.model.pt"
-            ));
+            let checkpoint = paths::legacy_checkpoints_root().join(format!("{digest}.model.pt"));
             if checkpoint.is_file() && sha256_file(&checkpoint)? == digest {
                 return Ok(Some((digest.to_owned(), checkpoint_epoch(digest)?)));
             }

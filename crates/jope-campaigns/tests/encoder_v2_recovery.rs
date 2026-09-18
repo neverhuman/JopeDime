@@ -21,12 +21,13 @@ use jope_dime_regressor::encoder_v2_store::{EncoderV2Store, PublishOutcome, Publ
 use jope_dime_regressor::encoder_v2_worker::{
     plan_chunks, ChunkMode, EncoderWorkItem, ResidentWorkerProgress,
 };
+use jope_dime_regressor::paths;
 use jope_dime_regressor::recovery_contracts::{
-    relocate_v1_quarantine, MutableScriptObservation, QuarantineFileIdentity,
-    QuarantinePolicyFlags, QuarantinedEncodingTree, ReferenceExclusionProof, RollbackCapsuleV1,
-    RollbackNodeReceipt, RollbackUnitIdentity, V1EncodingQuarantineV1, IMMUTABLE_FLYWHEEL_ROOT,
-    REQUIRED_NODES, ROLLBACK_CAPSULE_SCHEMA, ROLLBACK_RUNTIME_BUNDLE_SHA256, RUNTIME_CURRENT_ROOT,
-    V1_QUARANTINE_SCHEMA,
+    immutable_flywheel_root_str, relocate_v1_quarantine, runtime_current_root_str,
+    MutableScriptObservation, QuarantineFileIdentity, QuarantinePolicyFlags,
+    QuarantinedEncodingTree, ReferenceExclusionProof, RollbackCapsuleV1, RollbackNodeReceipt,
+    RollbackUnitIdentity, V1EncodingQuarantineV1, REQUIRED_NODES, ROLLBACK_CAPSULE_SCHEMA,
+    ROLLBACK_RUNTIME_BUNDLE_SHA256, V1_QUARANTINE_SCHEMA,
 };
 use jope_dime_regressor::selfplay_data::canonical_json_sha256;
 use serde_json::{json, Value};
@@ -509,16 +510,28 @@ fn quarantine() -> V1EncodingQuarantineV1 {
                 script_name: "multiclass_drain.py".to_owned(),
                 sha256: digest(212),
                 observed_paths: vec![
-                    "xbabe1:/home/ubuntu/jope-dime/scripts/multiclass_drain.py".to_owned(),
-                    "xbabe3:/home/ubuntu/jope-dime/scripts/multiclass_drain.py".to_owned(),
+                    format!(
+                        "xbabe1:{}",
+                        paths::research_script("multiclass_drain.py").display()
+                    ),
+                    format!(
+                        "xbabe3:{}",
+                        paths::research_script("multiclass_drain.py").display()
+                    ),
                 ],
             },
             MutableScriptObservation {
                 script_name: "test_exact_expansion.py".to_owned(),
                 sha256: digest(213),
                 observed_paths: vec![
-                    "xbabe1:/home/ubuntu/jope-dime/scripts/test_exact_expansion.py".to_owned(),
-                    "xbabe3:/home/ubuntu/jope-dime/scripts/test_exact_expansion.py".to_owned(),
+                    format!(
+                        "xbabe1:{}",
+                        paths::research_script("test_exact_expansion.py").display()
+                    ),
+                    format!(
+                        "xbabe3:{}",
+                        paths::research_script("test_exact_expansion.py").display()
+                    ),
                 ],
             },
         ],
@@ -621,8 +634,11 @@ fn rollback_unit(name: &str, evaluator: bool, byte: u8) -> RollbackUnitIdentity 
         unit: format!("{name}.service"),
         unit_file_sha256: digest(byte),
         resolved_effective_unit_sha256: digest(byte + 1),
-        exec_start_argv: vec![format!("{RUNTIME_CURRENT_ROOT}/runtime/bin/{name}")],
-        working_directory: IMMUTABLE_FLYWHEEL_ROOT.to_owned(),
+        exec_start_argv: vec![format!(
+            "{runtime_current_root_str}/runtime/bin/{name}",
+            runtime_current_root_str = runtime_current_root_str()
+        )],
+        working_directory: immutable_flywheel_root_str().to_owned(),
         drop_ins: Vec::new(),
         evaluator,
     }

@@ -5,12 +5,14 @@ use clap::Parser;
 use jope_dime_regressor::dime_runtime_contracts::{
     append_infrastructure_attempt, digest_label, ensure_same_scientific_payload,
     infrastructure_attempts, load_or_rebuild_recovery_projection, matching_drain_intent,
-    save_recovery_projection, terminal_classification, DimeInfrastructureAttemptV1, DimeNamedDigestV1,
-    DimeRecoveryProjectionV1, DimeRoleV1, DimeScientificPayloadV1, DimeTerminalClassV1,
-    DimeTerminalEvidenceV1,
+    save_recovery_projection, terminal_classification, DimeInfrastructureAttemptV1,
+    DimeNamedDigestV1, DimeRecoveryProjectionV1, DimeRoleV1, DimeScientificPayloadV1,
+    DimeTerminalClassV1, DimeTerminalEvidenceV1,
 };
+use jope_dime_regressor::paths;
 use jope_dime_regressor::selfplay_runtime::{
-    atomic_json, now_ms, read_json, scq_json, sha256_bytes, sha256_file, DEFAULT_ROOT, DEFAULT_SCQ,
+    atomic_json, default_root_str, default_scq_str, now_ms, read_json, scq_json, sha256_bytes,
+    sha256_file,
 };
 use jope_dime_regressor::selfplay_shadow::{
     deterministic_canary_contexts, validate_panel_consumption, CanaryContextV2,
@@ -36,12 +38,21 @@ use std::time::Duration;
 
 const PROJECT: &str = "jope-selfplay-train";
 const STATE_SCHEMA: &str = "TaskLearningControllerState.v2";
-const DEFAULT_RUNS_ROOT: &str = "/home/ubuntu/smart_cluster/var/runs";
-const DEFAULT_TRAINER: &str = "/home/ubuntu/jope-dime/scripts/test_exact_train.py";
-const DEFAULT_COMMON: &str = "/home/ubuntu/jope-dime/scripts/test_exact_common.py";
-const DEFAULT_PACKER: &str = "/home/ubuntu/jope-dime/scripts/test_exact_packed_corpus.py";
-const DEFAULT_PRIME: &str =
-    "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch";
+jope_paths::once_str!(
+    fn default_runs_root_str => paths::scq_runs_root()
+);
+jope_paths::once_str!(
+    fn default_trainer_str => paths::research_script("test_exact_train.py")
+);
+jope_paths::once_str!(
+    fn default_common_str => paths::research_script("test_exact_common.py")
+);
+jope_paths::once_str!(
+    fn default_packer_str => paths::research_script("test_exact_packed_corpus.py")
+);
+jope_paths::once_str!(
+    fn default_prime_str => paths::runtime_bundle_pytorch()
+);
 const ACTIVE_STATES: &[&str] = &[
     "queued",
     "starting",
@@ -57,19 +68,19 @@ const ACTIVE_STATES: &[&str] = &[
     about = "Alternate quarantined task trainers and preempt with strictly gated production"
 )]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
-    #[arg(long, default_value = DEFAULT_SCQ)]
+    #[arg(long, default_value = default_scq_str())]
     scq: PathBuf,
-    #[arg(long, default_value = DEFAULT_RUNS_ROOT)]
+    #[arg(long, default_value = default_runs_root_str())]
     runs_root: PathBuf,
-    #[arg(long, default_value = DEFAULT_TRAINER)]
+    #[arg(long, default_value = default_trainer_str())]
     trainer_script: PathBuf,
-    #[arg(long, default_value = DEFAULT_COMMON)]
+    #[arg(long, default_value = default_common_str())]
     common_script: PathBuf,
-    #[arg(long, default_value = DEFAULT_PACKER)]
+    #[arg(long, default_value = default_packer_str())]
     packed_script: PathBuf,
-    #[arg(long, default_value = DEFAULT_PRIME)]
+    #[arg(long, default_value = default_prime_str())]
     prime_source: PathBuf,
     #[arg(long)]
     submit: bool,
@@ -417,13 +428,8 @@ fn cycle(args: &Args) -> Result<Value> {
                 None,
             ));
         } else if let Some(terminal_state) = trainer_terminal_state(&intent, &jobs, now_ms()) {
-            let disposition = recover_trainer_intent(
-                args,
-                &mut state,
-                &intent,
-                terminal_state,
-                now_ms(),
-            )?;
+            let disposition =
+                recover_trainer_intent(args, &mut state, &intent, terminal_state, now_ms())?;
             state.updated_at_ms = now_ms();
             save_state(&state_path, &state)?;
             return Ok(status(
@@ -786,7 +792,9 @@ fn trainer_initial_job_identity(
     }
     Ok(current_job_identity
         .rsplit_once("-infra")
-        .filter(|(_, suffix)| !suffix.is_empty() && suffix.bytes().all(|byte| byte.is_ascii_digit()))
+        .filter(|(_, suffix)| {
+            !suffix.is_empty() && suffix.bytes().all(|byte| byte.is_ascii_digit())
+        })
         .map_or(current_job_identity, |(base, _)| base)
         .to_owned())
 }
@@ -804,12 +812,12 @@ fn trainer_terminal_state<'a>(
             if matches!(
                 job.state.as_str(),
                 "failed" | "cancelled" | "preempted" | "lost" | "finished"
-            ) => Some(job.state.as_str()),
-        Some(_) => None,
-        None
-            if observed_at_ms.saturating_sub(intent.trainer.created_at_ms)
-                >= 60_u128 * 1_000 =>
+            ) =>
         {
+            Some(job.state.as_str())
+        }
+        Some(_) => None,
+        None if observed_at_ms.saturating_sub(intent.trainer.created_at_ms) >= 60_u128 * 1_000 => {
             Some("vanished")
         }
         None => None,
@@ -862,11 +870,8 @@ fn recover_trainer_intent(
 ) -> Result<TrainerRecoveryDisposition> {
     let payload = trainer_scientific_payload(intent)?;
     payload.validate()?;
-    let initial_job_identity = trainer_initial_job_identity(
-        &intent.trainer.immutable_job_identity,
-        &args.root,
-        &payload,
-    )?;
+    let initial_job_identity =
+        trainer_initial_job_identity(&intent.trainer.immutable_job_identity, &args.root, &payload)?;
     let mut projection = load_or_rebuild_recovery_projection(
         &args.root,
         DimeRoleV1::AlternatingTrainer,
@@ -878,13 +883,17 @@ fn recover_trainer_intent(
         state.intent = Some(next);
         return Ok(TrainerRecoveryDisposition {
             action: "trainer_attempt_receipt_replayed",
-            note: Some("the existing append-only receipt restored its recorded next identity".to_owned()),
+            note: Some(
+                "the existing append-only receipt restored its recorded next identity".to_owned(),
+            ),
         });
     }
     if projection.scientific_failures >= 5 {
         return Ok(TrainerRecoveryDisposition {
             action: "trainer_scientific_failure_circuit_open",
-            note: Some("five hash-bound deterministic failures require scientific review".to_owned()),
+            note: Some(
+                "five hash-bound deterministic failures require scientific review".to_owned(),
+            ),
         });
     }
     if let Some(drain) = matching_drain_intent(
@@ -912,7 +921,10 @@ fn recover_trainer_intent(
             action: "trainer_infrastructure_retry_backoff",
             note: Some(format!(
                 "retry is bound to the frozen intent and due in {}s",
-                projection.retry_not_before_ms.saturating_sub(observed_at_ms) / 1_000
+                projection
+                    .retry_not_before_ms
+                    .saturating_sub(observed_at_ms)
+                    / 1_000
             )),
         });
     }
@@ -922,9 +934,9 @@ fn recover_trainer_intent(
         None
     };
     let terminal_class = terminal_classification(terminal_state, scientific.as_deref())?;
-    let scientific_failures = projection
-        .scientific_failures
-        .saturating_add(u32::from(terminal_class == DimeTerminalClassV1::ScientificFailure));
+    let scientific_failures = projection.scientific_failures.saturating_add(u32::from(
+        terminal_class == DimeTerminalClassV1::ScientificFailure,
+    ));
     let retry_allowed = scientific_failures < 5;
     let next_attempt = projection
         .current_attempt_number
@@ -1007,7 +1019,9 @@ fn recover_trainer_intent(
         )?;
         return Ok(TrainerRecoveryDisposition {
             action: "trainer_scientific_failure_circuit_open",
-            note: Some("five hash-bound deterministic failures require scientific review".to_owned()),
+            note: Some(
+                "five hash-bound deterministic failures require scientific review".to_owned(),
+            ),
         });
     }
     let next = reconcile_trainer_projection(args, intent, &projection, &payload)?;

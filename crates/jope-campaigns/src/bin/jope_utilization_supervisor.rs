@@ -36,6 +36,7 @@
 
 use anyhow::{Context, Result};
 use clap::Parser;
+use jope_dime_regressor::paths;
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
 use std::fs;
@@ -44,8 +45,12 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
-const SCQ: &str = "/home/ubuntu/smart_cluster/target/release/scq";
+jope_paths::once_str!(
+    fn root_str => paths::flywheel_root()
+);
+jope_paths::once_str!(
+    fn scq_str => paths::scq_binary()
+);
 const SCQ_SNAPSHOT_TIMEOUT_SECS: &str = "30";
 const HOUR_MS: u64 = 3_600_000;
 
@@ -56,9 +61,9 @@ const HOUR_MS: u64 = 3_600_000;
 #[derive(Parser, Debug)]
 #[command(about = "Detect, diagnose, repair and escalate an under-utilized cluster")]
 struct Args {
-    #[arg(long, default_value = ROOT)]
+    #[arg(long, default_value = root_str())]
     root: PathBuf,
-    #[arg(long, default_value = SCQ)]
+    #[arg(long, default_value = scq_str())]
     scq: PathBuf,
 
     /// Core-budget occupancy (%) below which the cluster counts as IDLE.
@@ -597,7 +602,7 @@ fn diagnose(args: &Args, util: &Utilization, work: &WorkOnDisk) -> Vec<Stage> {
                 .clone()
                 .unwrap_or_else(|| "unreachable".into()),
             receipt: "scq --json snapshot".into(),
-            // scqd lives under /home/ubuntu/remote_super/smart_cluster and is
+            // scqd lives in the scheduler checkout (JOPE_SCQ_ROOT) and is
             // not ours to restart. Escalate; do not improvise on the scheduler.
             repair: None,
         }

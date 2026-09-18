@@ -23,6 +23,7 @@
 
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
+use jope_dime_regressor::paths;
 use rusqlite::{params, Connection};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
@@ -32,18 +33,26 @@ use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const ARCHIVE_ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0/training/history";
-const SCQ_RUNS: &str = "/home/ubuntu/smart_cluster/var/runs";
-const SCQ_EVENTS: &str = "/home/ubuntu/smart_cluster/var/events.jsonl";
-const SPECS_DIR: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0/specs";
+jope_paths::once_str!(
+    fn archive_root_str => paths::flywheel_root().join("training/history")
+);
+jope_paths::once_str!(
+    fn scq_runs_str => paths::scq_runs_root()
+);
+jope_paths::once_str!(
+    fn scq_events_str => paths::scq_events()
+);
+jope_paths::once_str!(
+    fn specs_dir_str => paths::flywheel_root().join("specs")
+);
 
-/// mtime of /home/ubuntu/jope-prime/src/jope/policy/train_v3.py after the
+/// mtime of `<python_src>/jope/policy/train_v3.py` after the
 /// validation-metric fix (policy_v3_validation_metrics was calling
 /// model.reward_stats without task_types, so on a fused-head checkpoint every
 /// BINARY validation row was scored by the REGRESSION reward heads).
 ///
 /// This boundary is wall-clock, not spec-pinned, because every trainer spec
-/// sets PYTHONPATH=/home/ubuntu/jope-prime/src — the executed validation code is
+/// sets PYTHONPATH to the live Python source tree — the executed validation code is
 /// whatever was live when the process started, NOT the `provenance/train_v3.py`
 /// copy staged into the run's inputs. Runs that STARTED before this instant
 /// carry the pre-fix definition of val_conditional_advantage,
@@ -226,7 +235,7 @@ CREATE TABLE IF NOT EXISTS gap (
 )]
 struct Cli {
     /// Archive root (contains db/).
-    #[arg(long, default_value = ARCHIVE_ROOT)]
+    #[arg(long, default_value = archive_root_str())]
     root: PathBuf,
     #[command(subcommand)]
     cmd: Cmd,
@@ -391,7 +400,7 @@ fn discover_scq(root: &Path) -> Result<Vec<SourceSpec>> {
     }
 
     // (b) live scq run dirs (authoritative while they exist; may hold newer rows)
-    let scq = Path::new(SCQ_RUNS);
+    let scq = Path::new(scq_runs_str());
     if scq.is_dir() {
         for run in fs::read_dir(scq)? {
             let run = run?;
@@ -655,7 +664,7 @@ fn parse_ts_ms(ts: &str) -> Option<i64> {
 
 fn scq_timings() -> Result<BTreeMap<String, ScqTiming>> {
     let mut out: BTreeMap<String, ScqTiming> = BTreeMap::new();
-    let path = Path::new(SCQ_EVENTS);
+    let path = Path::new(scq_events_str());
     if !path.is_file() {
         return Ok(out);
     }
@@ -712,7 +721,7 @@ struct SpecInfo {
 
 fn read_spec(run_id: &str) -> SpecInfo {
     let mut info = SpecInfo::default();
-    let p = PathBuf::from(SPECS_DIR).join(format!("{run_id}.toml"));
+    let p = PathBuf::from(specs_dir_str()).join(format!("{run_id}.toml"));
     let txt = match fs::read_to_string(&p) {
         Ok(t) => t,
         Err(_) => return info,
@@ -764,7 +773,7 @@ fn read_spec(run_id: &str) -> SpecInfo {
 
 /// "warm-started 130/152 tensors from <path>"
 fn read_warm_start(run_id: &str, attempt: i64) -> Option<(i64, i64, String)> {
-    let p = PathBuf::from(SCQ_RUNS)
+    let p = PathBuf::from(scq_runs_str())
         .join(run_id)
         .join("attempts")
         .join(attempt.to_string())
@@ -1116,7 +1125,7 @@ fn ingest(root: &Path, dry_run: bool) -> Result<()> {
                         // run directory (which the GC prunes); for imported lanes it is
                         // the path the bytes were mirrored from.
                         let live = if sp.lane == "scq" {
-                            Path::new(SCQ_RUNS).join(&sp.run_id).is_dir()
+                            Path::new(scq_runs_str()).join(&sp.run_id).is_dir()
                         } else {
                             sp.origin
                                 .split_once(':')
@@ -1270,7 +1279,7 @@ fn ingest(root: &Path, dry_run: bool) -> Result<()> {
                 "metric_definition_change",
                 "validation metrics: binary rows were scored by the REGRESSION heads before this point",
                 "policy_v3_validation_metrics called model.reward_stats(z, token_ids, pad_mask) with no task_types, so _binary_task_mask defaulted every row to regression. Training was correct; MEASUREMENT was wrong. val_conditional_advantage, val_conditional_score and val_binary_pairwise_win_accuracy are NOT comparable across this line.",
-                "jope-prime/src/jope/policy/train_v3.py mtime 2026-07-27T21:27:52Z. Runs a-g3 and a-g7 have byte-identical specs (diff = the job id line only: same train_v3.py provenance sha 358acf21..., same test_exact_train.py bc2652da..., same corpus snapshot-001805437-full_consolidation, same warm-start ff95a336...); a-g3 started 19:58:24Z and reports val_conditional_advantage -0.0602..-0.0869, a-g7 started 21:43:31Z and reports +0.0314..+0.0390. Every spec sets PYTHONPATH=/home/ubuntu/jope-prime/src so the executed validation code is the LIVE file, not the staged provenance copy.",
+                "jope-prime/src/jope/policy/train_v3.py mtime 2026-07-27T21:27:52Z. Runs a-g3 and a-g7 have byte-identical specs (diff = the job id line only: same train_v3.py provenance sha 358acf21..., same test_exact_train.py bc2652da..., same corpus snapshot-001805437-full_consolidation, same warm-start ff95a336...); a-g3 started 19:58:24Z and reports val_conditional_advantage -0.0602..-0.0869, a-g7 started 21:43:31Z and reports +0.0314..+0.0390. Every spec sets PYTHONPATH=~/jope-prime/src so the executed validation code is the LIVE file, not the staged provenance copy.",
             ),
             (
                 "equal-quota-sampler",

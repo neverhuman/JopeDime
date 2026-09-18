@@ -17,8 +17,10 @@ use jope_dime_regressor::dime_runtime_contracts::{
 use jope_dime_regressor::jope_dlgp_best5::{
     FROZEN_CHECKPOINT_SHA256, STAGE1_MAX_SEARCH_EVALUATIONS,
 };
+use jope_dime_regressor::paths;
 use jope_dime_regressor::selfplay_runtime::{
-    atomic_json, now_ms, read_json, scq_json, sha256_bytes, sha256_file, DEFAULT_ROOT, DEFAULT_SCQ,
+    atomic_json, default_root_str, default_scq_str, now_ms, read_json, scq_json, sha256_bytes,
+    sha256_file,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -29,8 +31,9 @@ use std::process::Command;
 use std::thread;
 use std::time::Duration;
 
-const DEFAULT_PROTOCOL: &str =
-    "/home/ubuntu/jope-dime/manifests/dlgp-budget-first/protocol.v1.json";
+jope_paths::once_str!(
+    fn default_protocol_str => paths::campaign_manifest("dlgp-budget-first/protocol.v1.json")
+);
 const PROJECT: &str = "jope-dlgp-budget-first";
 
 #[derive(Parser, Debug)]
@@ -39,13 +42,13 @@ const PROJECT: &str = "jope-dlgp-budget-first";
     about = "Reconcile and resume only frozen budget-first DLGP trajectories"
 )]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
-    #[arg(long, default_value = DEFAULT_PROTOCOL)]
+    #[arg(long, default_value = default_protocol_str())]
     protocol: PathBuf,
     #[arg(long)]
     campaign_root: Option<PathBuf>,
-    #[arg(long, default_value = DEFAULT_SCQ)]
+    #[arg(long, default_value = default_scq_str())]
     scq: PathBuf,
     #[arg(long)]
     submit: bool,
