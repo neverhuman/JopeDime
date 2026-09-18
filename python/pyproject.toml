@@ -67,7 +67,6 @@ ignore = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
 markers = [
   "xbabe2: needs the xbabe2 host (GPU, local state plane, SCQ); never runs on hosted runners",
 ]
