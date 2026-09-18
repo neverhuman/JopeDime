@@ -981,6 +981,24 @@ fn selfplay_unit_templates_in(source: &Path) -> PathBuf {
     source.join("deploy/systemd/selfplay")
 }
 
+/// Templates that live next to the self-play units but are not bundle
+/// content: `install_workspace_sync.py` installs the xbabe2 mirror units as
+/// system units (`/etc/systemd/system`) from the checkout, they run a Python
+/// interpreter directly and work out of the mirror, so the bundle boundary
+/// (`validate_systemd_unit`) does not apply to them.
+const HOST_INSTALLED_UNITS: [&str; 2] =
+    ["jope-workspace-sync.service", "jope-workspace-sync.timer"];
+
+fn is_host_installed_unit(path: &Path) -> bool {
+    path.file_name()
+        .and_then(|name| name.to_str())
+        .is_some_and(|name| {
+            HOST_INSTALLED_UNITS
+                .iter()
+                .any(|unit| name == *unit || name == format!("{unit}.in"))
+        })
+}
+
 /// The placeholder values a bundle's units are rendered with: the state tree
 /// the services work in and the `current` bundle's binaries (the activation
 /// symlink every unit follows), so a rendered unit never names a specific
@@ -1015,8 +1033,11 @@ fn render_unit_templates(source: &Path, dir: &Path) -> Result<PathBuf> {
     }
     let out = dir.join("systemd");
     fs::create_dir_all(&out)?;
-    jope_paths::systemd::render_tree(&templates, &out, &unit_roots())
+    let rendered = jope_paths::systemd::render_tree(&templates, &out, &unit_roots())
         .map_err(|error| anyhow::anyhow!("render unit templates: {error}"))?;
+    for unit in rendered.iter().filter(|unit| is_host_installed_unit(unit)) {
+        fs::remove_file(unit)?;
+    }
     Ok(out)
 }
 
@@ -2860,7 +2881,7 @@ mod tests {
             let Some(unit) = name.strip_suffix(".in") else {
                 continue;
             };
-            if !unit.ends_with(".service") {
+            if !unit.ends_with(".service") || is_host_installed_unit(&path) {
                 continue;
             }
             seen += 1;
