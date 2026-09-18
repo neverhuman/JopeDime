@@ -1,28 +1,29 @@
 //! Runtime-resolved roots (ADR-0003).
 //!
-//! Every absolute `/home/<user>/…` path the historical tree hard-coded is
+//! Every absolute home-directory path the historical tree hard-coded is
 //! replaced by one of five roots, each resolved **at call time, environment
-//! first**. Nothing here is cached, so a test may override a variable, call a
+//! first**. Historical values below are written `~/…`, where `~` is the
+//! `ubuntu` account's home on the xbabe hosts (the README spells them out). Nothing here is cached, so a test may override a variable, call a
 //! resolver, and restore it (serialise such tests with a mutex: the process
 //! environment is shared). Call sites that want a `&'static str` once per
 //! process use [`once_str!`].
 //!
 //! | Resolver | Variable | Default | Historical value it replaces |
 //! |---|---|---|---|
-//! | [`jope_home`] | `JOPE_HOME` | nearest ancestor of the current directory, then of the executable, holding a [`HOME_MARKER`] file; else the current directory | `/home/ubuntu/jope-dime` (the source checkout: assets, manifests, seeds, `python/`) |
-//! | [`jope_state`] | `JOPE_STATE` | `$XDG_STATE_HOME/jope`, else `$HOME/.local/state/jope`, else `<jope_home>/state` | `/home/ubuntu/jope-flywheel/test_exact_gen0` and every other mutable tree (runs, queues, sqlite, pointers, logs); the restored `parallel/` tree lives here, lineage-A material under `legacy/` |
-//! | [`jope_registry`] | `JOPE_REGISTRY` | `<jope_home>/datasets/by-id` | `/home/ubuntu/remote_super/quant/regression` (dataset ids resolve to directories under it) |
+//! | [`jope_home`] | `JOPE_HOME` | nearest ancestor of the current directory, then of the executable, holding a [`HOME_MARKER`] file; else the current directory | `~/jope-dime` (the source checkout: assets, manifests, seeds, `python/`) |
+//! | [`jope_state`] | `JOPE_STATE` | `$XDG_STATE_HOME/jope`, else `$HOME/.local/state/jope`, else `<jope_home>/state` | `~/jope-flywheel/test_exact_gen0` and every other mutable tree (runs, queues, sqlite, pointers, logs); the restored `parallel/` tree lives here, lineage-A material under `legacy/` |
+//! | [`jope_registry`] | `JOPE_REGISTRY` | `<jope_home>/datasets/by-id` | `~/remote_super/quant/regression` (dataset ids resolve to directories under it) |
 //! | [`sotarena_root`] | `SOTARENA_ROOT` | `<jope_home>/benchmarks/sotarena` | the nested `sotarena` benchmark clone |
-//! | [`sotarena_reporter_root`] | `SOTARENA_REPORTER_ROOT` | `<jope_state>/arena` | `/home/ubuntu/sotarena`, the Rust Elo-reporter repo the campaign CLIs read leaderboards from (a different tree from the benchmark clone) |
+//! | [`sotarena_reporter_root`] | `SOTARENA_REPORTER_ROOT` | `<jope_state>/arena` | `~/sotarena`, the Rust Elo-reporter repo the campaign CLIs read leaderboards from (a different tree from the benchmark clone) |
 //!
 //! Two derived locations exist because the historical tree used them as roots
 //! of their own:
 //!
 //! | Resolver | Variable | Default | Historical value it replaces |
 //! |---|---|---|---|
-//! | [`scq_root`] | `JOPE_SCQ_ROOT` | `<jope_state>/scq` | `/home/ubuntu/smart_cluster` (the scheduler checkout: `target/release/scq`, `var/runs`, `etc/projects.toml` keep their relative layout under it) |
-//! | [`quant_root`] | — | parent of [`jope_registry`] | `/home/ubuntu/remote_super/quant` (the dataset tree whose `regression/` child is the registry) |
-//! | [`legacy_root`] | — | `<jope_state>/legacy` | `/home/ubuntu/jope-flywheel` and the other retired per-host trees (`test_exact_gen0/`, `training/`, `encodings/` keep their names under it) |
+//! | [`scq_root`] | `JOPE_SCQ_ROOT` | `<jope_state>/scq` | `~/smart_cluster` (the scheduler checkout: `target/release/scq`, `var/runs`, `etc/projects.toml` keep their relative layout under it) |
+//! | [`quant_root`] | — | parent of [`jope_registry`] | `~/remote_super/quant` (the dataset tree whose `regression/` child is the registry) |
+//! | [`legacy_root`] | — | `<jope_state>/legacy` | `~/jope-flywheel` and the other retired per-host trees (`test_exact_gen0/`, `training/`, `encodings/` keep their names under it) |
 //!
 //! Environment values are taken verbatim when non-empty; relative values are
 //! not resolved against anything (systemd and shells hand over absolute paths).
@@ -75,7 +76,7 @@ fn find_marker(start: &Path) -> Option<PathBuf> {
 /// `JOPE_HOME` when set; otherwise the nearest ancestor of the current
 /// directory, then of the running executable's directory, that contains a
 /// [`HOME_MARKER`]; otherwise the current directory. Replaces
-/// `/home/ubuntu/jope-dime`.
+/// `~/jope-dime`.
 pub fn jope_home() -> PathBuf {
     if let Some(home) = env_path(var::JOPE_HOME) {
         return home;
@@ -97,7 +98,7 @@ pub fn jope_home() -> PathBuf {
 ///
 /// `JOPE_STATE` when set; otherwise `$XDG_STATE_HOME/jope` when that variable
 /// is an absolute path (the XDG rule), otherwise `$HOME/.local/state/jope`,
-/// otherwise `<jope_home>/state`. Replaces `/home/ubuntu/jope-flywheel/test_exact_gen0`
+/// otherwise `<jope_home>/state`. Replaces `~/jope-flywheel/test_exact_gen0`
 /// (now [`legacy_root`]`/test_exact_gen0`) and every other mutable tree.
 pub fn jope_state() -> PathBuf {
     if let Some(state) = env_path(var::JOPE_STATE) {
@@ -115,7 +116,7 @@ pub fn jope_state() -> PathBuf {
 /// The dataset registry: `<registry>/<dataset id>/…`.
 ///
 /// `JOPE_REGISTRY` when set, otherwise `<jope_home>/datasets/by-id`. Replaces
-/// `/home/ubuntu/remote_super/quant/regression`.
+/// `~/remote_super/quant/regression`.
 pub fn jope_registry() -> PathBuf {
     env_path(var::JOPE_REGISTRY).unwrap_or_else(|| jope_home().join("datasets/by-id"))
 }
@@ -131,7 +132,7 @@ pub fn sotarena_root() -> PathBuf {
 /// The Elo reporter's data root (leaderboards, scans, reports).
 ///
 /// `SOTARENA_REPORTER_ROOT` when set, otherwise `<jope_state>/arena`. Replaces
-/// `/home/ubuntu/sotarena` — the Rust Elo-reporter repo, which is not the
+/// `~/sotarena` — the Rust Elo-reporter repo, which is not the
 /// benchmark clone above (B20).
 pub fn sotarena_reporter_root() -> PathBuf {
     env_path(var::SOTARENA_REPORTER_ROOT).unwrap_or_else(|| jope_state().join("arena"))
@@ -140,7 +141,7 @@ pub fn sotarena_reporter_root() -> PathBuf {
 /// The scheduler checkout the self-play control plane drives (`scq`).
 ///
 /// `JOPE_SCQ_ROOT` when set, otherwise `<jope_state>/scq`. Replaces
-/// `/home/ubuntu/smart_cluster`; the relative layout beneath it
+/// `~/smart_cluster`; the relative layout beneath it
 /// (`target/release/scq`, `var/runs`, `var/scqd.sock`, `var/events.jsonl`,
 /// `etc/projects.toml`) is unchanged so an operator can point the variable at
 /// an existing checkout.
@@ -150,7 +151,7 @@ pub fn scq_root() -> PathBuf {
 
 /// The dataset tree that contains the registry: the parent of
 /// [`jope_registry`] (the registry itself when it has no parent). Replaces
-/// `/home/ubuntu/remote_super/quant`, whose `regression/` child was the
+/// `~/remote_super/quant`, whose `regression/` child was the
 /// registry and whose siblings (`timeseries/`, `multi_label/`, `releases/`,
 /// `campaigns/`) the campaign CLIs still address relative to it.
 pub fn quant_root() -> PathBuf {
@@ -163,7 +164,7 @@ pub fn quant_root() -> PathBuf {
 
 /// Retired per-host trees, kept by name under `<jope_state>/legacy`
 /// (`test_exact_gen0/`, `training/`, `encodings/`, `scripts/`, …). Replaces
-/// `/home/ubuntu/jope-flywheel` and the other single-host roots.
+/// `~/jope-flywheel` and the other single-host roots.
 pub fn legacy_root() -> PathBuf {
     jope_state().join("legacy")
 }
@@ -279,8 +280,8 @@ mod tests {
     #[test]
     fn home_prefers_the_environment() {
         let _scope = EnvScope::new();
-        env::set_var(var::JOPE_HOME, "/opt/jope/home");
-        assert_eq!(jope_home(), PathBuf::from("/opt/jope/home"));
+        env::set_var(var::JOPE_HOME, "/opt/jope/checkout");
+        assert_eq!(jope_home(), PathBuf::from("/opt/jope/checkout"));
         env::set_var(var::JOPE_HOME, "");
         assert_ne!(jope_home(), PathBuf::from(""), "an empty value is unset");
     }
@@ -321,34 +322,34 @@ mod tests {
         env::remove_var(var::JOPE_STATE);
 
         env::set_var("XDG_STATE_HOME", "/xdg/state");
-        env::set_var("HOME", "/home/someone");
+        env::set_var("HOME", "/users/someone");
         assert_eq!(jope_state(), PathBuf::from("/xdg/state/jope"));
 
         env::set_var("XDG_STATE_HOME", "relative/ignored");
         assert_eq!(
             jope_state(),
-            PathBuf::from("/home/someone/.local/state/jope")
+            PathBuf::from("/users/someone/.local/state/jope")
         );
 
         env::remove_var("XDG_STATE_HOME");
         env::remove_var("HOME");
-        env::set_var(var::JOPE_HOME, "/opt/jope/home");
-        assert_eq!(jope_state(), PathBuf::from("/opt/jope/home/state"));
+        env::set_var(var::JOPE_HOME, "/opt/jope/checkout");
+        assert_eq!(jope_state(), PathBuf::from("/opt/jope/checkout/state"));
     }
 
     #[test]
     fn registry_and_arena_roots_follow_home_and_state() {
         let _scope = EnvScope::new();
-        env::set_var(var::JOPE_HOME, "/opt/jope/home");
+        env::set_var(var::JOPE_HOME, "/opt/jope/checkout");
         env::set_var(var::JOPE_STATE, "/var/lib/jope");
         assert_eq!(
             jope_registry(),
-            PathBuf::from("/opt/jope/home/datasets/by-id")
+            PathBuf::from("/opt/jope/checkout/datasets/by-id")
         );
-        assert_eq!(quant_root(), PathBuf::from("/opt/jope/home/datasets"));
+        assert_eq!(quant_root(), PathBuf::from("/opt/jope/checkout/datasets"));
         assert_eq!(
             sotarena_root(),
-            PathBuf::from("/opt/jope/home/benchmarks/sotarena")
+            PathBuf::from("/opt/jope/checkout/benchmarks/sotarena")
         );
         assert_eq!(
             sotarena_reporter_root(),
