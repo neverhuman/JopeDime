@@ -31,6 +31,10 @@ cargo run --locked --bin jope
 just required
 ```
 
+The required lane is `ops/ci/required.sh` (path audit, `rustfmt`, locked tests,
+`jope` version). GitHub Actions YAML lives at `ops/ci/github-ci.yml` until a
+token with the `workflow` scope can copy it to `.github/workflows/ci.yml`.
+
 ## Layout (target)
 
 | Path | Role |
