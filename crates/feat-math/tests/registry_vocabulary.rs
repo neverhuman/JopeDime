@@ -13,8 +13,10 @@ fn grammar_dir() -> PathBuf {
 
 fn read_json(name: &str) -> Value {
     let path = grammar_dir().join(name);
-    serde_json::from_str(&std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{}: {e}", path.display())))
-        .unwrap_or_else(|e| panic!("{}: {e}", path.display()))
+    serde_json::from_str(
+        &std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{}: {e}", path.display())),
+    )
+    .unwrap_or_else(|e| panic!("{}: {e}", path.display()))
 }
 
 #[test]
@@ -26,10 +28,20 @@ fn restricted_vocabulary_ops_are_executable_in_the_registry() {
         if op["engine"] != "featmath" || op["generate"] != true {
             continue;
         }
-        let name = op["name"].as_str().unwrap_or_else(|| panic!("op {token} has no name"));
-        let descriptor = operator(name).unwrap_or_else(|| panic!("vocabulary op {name} (token {token}) is not in the registry"));
-        assert!(descriptor.lifecycle.executable, "vocabulary op {name} is not executable in the registry");
-        assert!(!descriptor.lifecycle.quarantined, "vocabulary op {name} is quarantined in the registry");
+        let name = op["name"]
+            .as_str()
+            .unwrap_or_else(|| panic!("op {token} has no name"));
+        let descriptor = operator(name).unwrap_or_else(|| {
+            panic!("vocabulary op {name} (token {token}) is not in the registry")
+        });
+        assert!(
+            descriptor.lifecycle.executable,
+            "vocabulary op {name} is not executable in the registry"
+        );
+        assert!(
+            !descriptor.lifecycle.quarantined,
+            "vocabulary op {name} is quarantined in the registry"
+        );
         checked += 1;
     }
     assert!(checked >= 40, "expected the restricted vocabulary to carry dozens of generatable featmath ops, saw {checked}");
@@ -61,6 +73,13 @@ fn executable_snapshot_matches_the_registry() {
         .map(|d| d.name.to_owned())
         .collect();
     assert_eq!(snapshot_exec, registry_exec, "executable set drifted: regenerate the snapshot with `cargo run -p feat-math --example registry_dump`");
-    assert_eq!(snapshot_not, registry_not, "non-executable set drifted: regenerate the snapshot");
-    assert_eq!(snapshot["provenance"]["registry_hash"], feat_math::registry::registry_hash(), "registry hash drifted");
+    assert_eq!(
+        snapshot_not, registry_not,
+        "non-executable set drifted: regenerate the snapshot"
+    );
+    assert_eq!(
+        snapshot["provenance"]["registry_hash"],
+        feat_math::registry::registry_hash(),
+        "registry hash drifted"
+    );
 }

@@ -45,14 +45,19 @@ struct Entry {
 /// This crate's directory and the provenance recorded in the committed snapshot.
 fn feat_math_checkout() -> (PathBuf, Provenance) {
     let crate_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let snapshot_path = crate_dir.join("../jope-engine/assets/grammar/jain-math-executable-9fa594e2.json");
-    let snapshot: Value = serde_json::from_str(&std::fs::read_to_string(&snapshot_path).expect("committed snapshot"))
-        .expect("snapshot parses");
+    let snapshot_path =
+        crate_dir.join("../jope-engine/assets/grammar/jain-math-executable-9fa594e2.json");
+    let snapshot: Value =
+        serde_json::from_str(&std::fs::read_to_string(&snapshot_path).expect("committed snapshot"))
+            .expect("snapshot parses");
     let p = &snapshot["provenance"];
     let provenance = Provenance {
         repository: p["repository"].as_str().expect("repository").to_owned(),
         rev: p["rev"].as_str().expect("rev").to_owned(),
-        registry_path: p["registry_path"].as_str().expect("registry_path").to_owned(),
+        registry_path: p["registry_path"]
+            .as_str()
+            .expect("registry_path")
+            .to_owned(),
         operators_table_line: 0,
         operator_lookup_line: 0,
         registry_version: REGISTRY_VERSION,

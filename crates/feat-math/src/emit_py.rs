@@ -1717,13 +1717,13 @@ fn derive_src(n: usize, source: &str, expr: &crate::mathexpr::MathAst) -> String
             lines.push("        return 0.0".to_string());
         }
         if features.funcs.contains(&crate::mathexpr::MathFunc::Clip) {
-        lines.push("    try:".to_string());
-        lines.push(format!("        value = {}", expr.to_python()));
-        lines.push("    except ArithmeticError:".to_string());
-        lines.push("        return 0.0".to_string());
-    } else {
-        lines.push(format!("    value = {}", expr.to_python()));
-    }
+            lines.push("    try:".to_string());
+            lines.push(format!("        value = {}", expr.to_python()));
+            lines.push("    except ArithmeticError:".to_string());
+            lines.push("        return 0.0".to_string());
+        } else {
+            lines.push(format!("    value = {}", expr.to_python()));
+        }
         lines.push("    if math.isfinite(value):".to_string());
         lines.push("        return _clamp(value, -1e12, 1e12)".to_string());
         lines.push("    return 0.0".to_string());

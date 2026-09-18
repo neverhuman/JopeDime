@@ -25,10 +25,10 @@
 //! whole-row context) aborts the whole expression to 0.0, matching
 //! `eval_row(...).unwrap_or(0.0)` upstream.
 
+pub use crate::math_expr::{BinOp as MathBinOp, Expr as MathAst, Func as MathFunc, Var as MathVar};
+use crate::math_expr::{MathExpr, UnOp};
 use anyhow::Result;
 use std::collections::BTreeSet;
-pub use crate::math_expr::{Expr as MathAst, Var as MathVar, BinOp as MathBinOp, Func as MathFunc};
-use crate::math_expr::{MathExpr, UnOp};
 
 /// Features of a parsed expression that drive helper selection and guards.
 #[derive(Clone, Debug, Default)]
@@ -145,7 +145,9 @@ impl MathAst {
                     MathFunc::Sigmoid => format!("m_sigmoid({})", a[0]),
                     MathFunc::Min => format!("({}).min({})", a[0], a[1]),
                     MathFunc::Max => format!("({}).max({})", a[0], a[1]),
-                    MathFunc::Clip => format!("m_clip({}, {}, {}, &mut math_failed)", a[0], a[1], a[2]),
+                    MathFunc::Clip => {
+                        format!("m_clip({}, {}, {}, &mut math_failed)", a[0], a[1], a[2])
+                    }
                     // Explicit hard indicator — no `*1e15` clip trick.
                     MathFunc::Step => format!("(if {} > {} {{ 1.0 }} else {{ 0.0 }})", a[0], a[1]),
                     MathFunc::Exp => format!("m_exp({})", a[0]),

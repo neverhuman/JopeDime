@@ -26,7 +26,9 @@ fn task() -> TaskSpec {
 
 #[test]
 fn audit_expression_failures_match_rust_under_sanitizers() {
-    let train: Vec<Vec<f64>> = (0..10).map(|i| vec![i as f64 * 0.25, i as f64 - 2.0]).collect();
+    let train: Vec<Vec<f64>> = (0..10)
+        .map(|i| vec![i as f64 * 0.25, i as f64 - 2.0])
+        .collect();
     let y = [0.1, 0.4, 0.2, 0.9, 1.1, 1.6, 1.4, 2.1, 2.4, 2.9];
     for (index, source) in [
         "(sym raw \"c9+1\")",
@@ -34,14 +36,29 @@ fn audit_expression_failures_match_rust_under_sanitizers() {
         "(pipe X (map expr=\"c9+1\") (ridge))",
         "(pipe X (derive expr=\"c9+1\") (ridge))",
         "(pipe X (map expr=\"min(clip(1,(-1)^0.5,(-1)^0.5),7)+1\") (ridge))",
-    ].iter().enumerate() {
+    ]
+    .iter()
+    .enumerate()
+    {
         let genome = GenomeIr::parse(source).unwrap();
         let model = fit_legacy_numeric_bound(&genome, &train, &y).unwrap();
-        let expected: Vec<_> = fit(&genome, &train, &y).unwrap().predict(&vec![vec![0.125,-1.5], vec![0.0,2.5], vec![2.125,6.5]]).into_iter().map(f64::to_bits).collect();
+        let expected: Vec<_> = fit(&genome, &train, &y)
+            .unwrap()
+            .predict(&vec![vec![0.125, -1.5], vec![0.0, 2.5], vec![2.125, 6.5]])
+            .into_iter()
+            .map(f64::to_bits)
+            .collect();
         let artifact = emit_fitted_cpp17(&model).unwrap();
-        let directory = std::env::temp_dir().join(format!("kernel-expression-safety-{}-{index}", std::process::id()));
+        let directory = std::env::temp_dir().join(format!(
+            "kernel-expression-safety-{}-{index}",
+            std::process::id()
+        ));
         std::fs::create_dir_all(&directory).unwrap();
-        assert_eq!(compile_and_run(&artifact.source, &directory, true), expected, "{source}");
+        assert_eq!(
+            compile_and_run(&artifact.source, &directory, true),
+            expected,
+            "{source}"
+        );
         std::fs::remove_dir_all(directory).unwrap();
     }
 }
@@ -104,9 +121,8 @@ int main(){{
         cells = values.len()
     );
     std::fs::write(&cpp, format!("{source}\n{driver}")).unwrap();
-    let mut command = Command::new("g++");
+    let mut command = feat_math::cxx::command(None);
     command.args([
-        "-std=c++17",
         "-O2",
         "-ffp-contract=off",
         "-fno-fast-math",
@@ -141,12 +157,10 @@ int main(){{
 
 #[test]
 fn fitted_numeric_pipeline_is_deterministic_strict_and_bit_exact() {
-    assert!(Command::new("g++")
-        .arg("--version")
-        .output()
-        .unwrap()
-        .status
-        .success());
+    assert!(
+        feat_math::cxx::version().is_ok(),
+        "a C++ compiler (CXX, default g++) is required"
+    );
     let genome = GenomeIr::parse(
         "(pipe X (input numeric=median missing=indicator categorical=hybrid) (standardize) (ridge lambda_frac=0.02))",
     )

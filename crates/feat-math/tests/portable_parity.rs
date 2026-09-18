@@ -121,6 +121,11 @@ fn portable_all_helper_backends_match_bits() {
     let rust_bin = work.join("portable_ref_rs");
     let cpp_bin = work.join("portable_ref_cpp");
     let cpp20_bin = work.join("portable_ref_cpp20");
+    // JOPE_CXX_MARCH applies to every C++ backend; the standard is pinned per backend (the matrix).
+    let march_flags: Vec<OsString> = feat_math::cxx::march_flag(None)
+        .into_iter()
+        .map(OsString::from)
+        .collect();
     let pycache = work.join("pycache");
     let backends = vec![
         PortableBackend {
@@ -141,16 +146,20 @@ fn portable_all_helper_backends_match_bits() {
             language: "C++17",
             source: cpp_source.clone(),
             build: PortableCommand::new(
-                "g++",
-                vec![
-                    "-O3".into(),
-                    "-ffp-contract=off".into(),
-                    "-fno-fast-math".into(),
-                    "-std=c++17".into(),
-                    "-o".into(),
-                    cpp_bin.as_os_str().to_owned(),
-                    cpp_source.as_os_str().to_owned(),
-                ],
+                feat_math::cxx::compiler(),
+                march_flags
+                    .iter()
+                    .cloned()
+                    .chain([
+                        "-O3".into(),
+                        "-ffp-contract=off".into(),
+                        "-fno-fast-math".into(),
+                        "-std=c++17".into(),
+                        "-o".into(),
+                        cpp_bin.as_os_str().to_owned(),
+                        cpp_source.as_os_str().to_owned(),
+                    ])
+                    .collect(),
             ),
             run: PortableCommand::new(cpp_bin.as_os_str().to_owned(), Vec::new()),
         },
@@ -160,16 +169,20 @@ fn portable_all_helper_backends_match_bits() {
             language: "C++20",
             source: cpp_source.clone(),
             build: PortableCommand::new(
-                "g++",
-                vec![
-                    "-O3".into(),
-                    "-ffp-contract=off".into(),
-                    "-fno-fast-math".into(),
-                    "-std=c++20".into(),
-                    "-o".into(),
-                    cpp20_bin.as_os_str().to_owned(),
-                    cpp_source.as_os_str().to_owned(),
-                ],
+                feat_math::cxx::compiler(),
+                march_flags
+                    .iter()
+                    .cloned()
+                    .chain([
+                        "-O3".into(),
+                        "-ffp-contract=off".into(),
+                        "-fno-fast-math".into(),
+                        "-std=c++20".into(),
+                        "-o".into(),
+                        cpp20_bin.as_os_str().to_owned(),
+                        cpp_source.as_os_str().to_owned(),
+                    ])
+                    .collect(),
             ),
             run: PortableCommand::new(cpp20_bin.as_os_str().to_owned(), Vec::new()),
         },

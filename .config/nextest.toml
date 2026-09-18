@@ -15,3 +15,6 @@ path = "junit.xml"
 [profile.main]
 slow-timeout = { period = "600s", terminate-after = 2 }
 fail-fast = false
+
+[profile.main.junit]
+path = "junit-main.xml"

@@ -1157,7 +1157,11 @@ pub fn apply_op(op: &FittedOp, x: &Rows) -> Rows {
             // without row reductions. Retain their direct execution path.
             Ok(_) => x
                 .iter()
-                .map(|r| r.iter().map(|v| expr.eval_element(*v, r).unwrap_or(0.0)).collect())
+                .map(|r| {
+                    r.iter()
+                        .map(|v| expr.eval_element(*v, r).unwrap_or(0.0))
+                        .collect()
+                })
                 .collect(),
             Err(_) => x.iter().map(|r| vec![0.0; r.len()]).collect(),
         },
@@ -1167,7 +1171,10 @@ pub fn apply_op(op: &FittedOp, x: &Rows) -> Rows {
                 .iter()
                 .map(|r| vec![compiled.eval_row(r).unwrap_or(0.0)])
                 .collect(),
-            Ok(_) => x.iter().map(|r| vec![expr.eval_row(r).unwrap_or(0.0)]).collect(),
+            Ok(_) => x
+                .iter()
+                .map(|r| vec![expr.eval_row(r).unwrap_or(0.0)])
+                .collect(),
             Err(_) => vec![vec![0.0]; x.len()],
         },
         FittedOp::Symlog { c, .. } => x

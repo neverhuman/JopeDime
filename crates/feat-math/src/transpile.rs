@@ -214,9 +214,12 @@ pub fn emit(genome: &GenomeIr, opts: &EmitOptions) -> Result<Emitted> {
         genome_sha256: sha256_hex(&canonical),
         dsl: canonical,
         flavor,
-        emitter_version: if crate::spec::helper_set(&plan).contains(&crate::spec::Helper::MathClip) {
+        emitter_version: if crate::spec::helper_set(&plan).contains(&crate::spec::Helper::MathClip)
+        {
             "feat-math-clip-safety-v2"
-        } else { EMITTER_VERSION },
+        } else {
+            EMITTER_VERSION
+        },
         py_sha256: sha256_hex(&python),
         rs_sha256: sha256_hex(&rust),
     })?;
@@ -534,8 +537,8 @@ mod math_policy_tests {
         ];
         for (profile, extra_flags) in profiles {
             let binary_path = dir.join(format!("model-{profile}"));
-            let compile = Command::new("g++")
-                .args(["-std=c++17", "-ffp-contract=off", "-fno-fast-math"])
+            let compile = crate::cxx::command(None)
+                .args(["-ffp-contract=off", "-fno-fast-math"])
                 .args(extra_flags)
                 .arg(&source_path)
                 .arg("-o")
@@ -609,9 +612,8 @@ mod math_policy_tests {
         let source_path = dir.join("model.cpp");
         let library_path = dir.join("libmodel.so");
         fs::write(&source_path, source).expect("write generated C++17 source");
-        let compile = Command::new("g++")
+        let compile = crate::cxx::command(None)
             .args([
-                "-std=c++17",
                 "-O2",
                 "-ffp-contract=off",
                 "-fno-fast-math",
@@ -745,9 +747,8 @@ mod math_policy_tests {
             let source_path = dir.join(format!("model-{case_index}.cpp"));
             let binary_path = dir.join(format!("model-{case_index}"));
             fs::write(&source_path, driver).expect("write generated C++17 corpus source");
-            let compile = Command::new("g++")
+            let compile = crate::cxx::command(None)
                 .args([
-                    "-std=c++17",
                     "-O2",
                     "-ffp-contract=off",
                     "-fno-fast-math",
@@ -867,9 +868,8 @@ mod math_policy_tests {
         let source_path = dir.join("model.cpp");
         let binary_path = dir.join("model");
         fs::write(&source_path, driver).expect("write Portable C++17 source");
-        let compile = Command::new("g++")
+        let compile = crate::cxx::command(None)
             .args([
-                "-std=c++17",
                 "-O2",
                 "-ffp-contract=off",
                 "-fno-fast-math",
@@ -1001,8 +1001,8 @@ mod math_policy_tests {
             let source_path = dir.join(format!("case-{case_index}.cpp"));
             let binary_path = dir.join(format!("case-{case_index}"));
             fs::write(&source_path, driver).expect("write C++17 corpus source");
-            let compile = Command::new("g++")
-                .args(["-std=c++17", "-O2", "-ffp-contract=off", "-fno-fast-math"])
+            let compile = crate::cxx::command(None)
+                .args(["-O2", "-ffp-contract=off", "-fno-fast-math"])
                 .arg(&source_path)
                 .arg("-o")
                 .arg(&binary_path)
@@ -1153,8 +1153,8 @@ mod math_policy_tests {
         let source_path = dir.join(format!("case-{case_index}.cpp"));
         let binary_path = dir.join(format!("case-{case_index}"));
         fs::write(&source_path, driver).expect("write generated C++17 parity source");
-        let compile = Command::new("g++")
-            .args(["-std=c++17", "-O2", "-ffp-contract=off", "-fno-fast-math"])
+        let compile = crate::cxx::command(None)
+            .args(["-O2", "-ffp-contract=off", "-fno-fast-math"])
             .arg(&source_path)
             .arg("-o")
             .arg(&binary_path)

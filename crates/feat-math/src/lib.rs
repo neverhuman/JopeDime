@@ -14,17 +14,17 @@
 //! are out-of-fold by construction in honest CV.
 
 // DSL + interpreter (the execution engine).
-pub mod registry;
 pub mod advanced_v3;
 pub mod boost2;
+pub mod cxx;
 pub mod dsl;
 pub mod folds;
 pub mod full_rust;
 pub mod genome;
 pub mod gpr;
 pub mod heads;
-pub mod krr;
 pub mod kernel;
+pub mod krr;
 pub mod ksmooth;
 pub mod math_expr;
 pub mod members;
@@ -33,6 +33,7 @@ pub mod model;
 pub mod ops;
 pub mod portable_math;
 pub mod portfolio;
+pub mod registry;
 pub mod rng;
 pub mod router_policy;
 pub mod stack;

@@ -10,7 +10,10 @@ fn main() {
     // make the result deterministic, the target ISA only changes speed. JOPE_CXX_MARCH opts in to
     // a native ISA (the historical value was znver2).
     let cxx = std::env::var("CXX").unwrap_or_else(|_| "g++".to_owned());
-    let march = format!("-march={}", std::env::var("JOPE_CXX_MARCH").unwrap_or_else(|_| "x86-64-v2".to_owned()));
+    let march = format!(
+        "-march={}",
+        std::env::var("JOPE_CXX_MARCH").unwrap_or_else(|_| "x86-64-v2".to_owned())
+    );
     let output = PathBuf::from(std::env::var_os("OUT_DIR").expect("OUT_DIR is set"))
         .join("libjope_fitted_runtime.so");
     let result = Command::new(&cxx)

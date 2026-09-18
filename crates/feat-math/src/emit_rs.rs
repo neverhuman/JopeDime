@@ -2299,12 +2299,12 @@ fn derive_src(n: usize, source: &str, expr: &crate::mathexpr::MathAst) -> String
             lines.push("    let _ = row;".to_string());
         }
         if features.funcs.contains(&crate::mathexpr::MathFunc::Clip) {
-        lines.push("    let mut math_failed = false;".to_string());
-        lines.push(format!("    let value = {};", expr.to_rust()));
-        lines.push("    if math_failed { return 0.0; }".to_string());
-    } else {
-        lines.push(format!("    let value = {};", expr.to_rust()));
-    }
+            lines.push("    let mut math_failed = false;".to_string());
+            lines.push(format!("    let value = {};", expr.to_rust()));
+            lines.push("    if math_failed { return 0.0; }".to_string());
+        } else {
+            lines.push(format!("    let value = {};", expr.to_rust()));
+        }
         lines.push("    if value.is_finite() {".to_string());
         lines.push("        value.clamp(-1e12, 1e12)".to_string());
         lines.push("    } else {".to_string());

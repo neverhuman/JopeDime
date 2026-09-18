@@ -14,21 +14,20 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::rc::Rc;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 const MAGIC: &[u8; 8] = b"JDFCPP3\0";
 const VERSION: u16 = 2;
 const HEADER_LEN: usize = 8 + 2 + 2 + 4 + 8 + 8 + 8 + 8 + 8;
 const CHECKSUM_LEN: usize = 32;
 const MAX_CODEC_LEN: usize = 512 * 1024 * 1024;
-const FLAGS: &[&str] = &[
-    "-std=c++17",
-    "-O3",
-    "-march=znver2",
-    "-ffp-contract=off",
-    "-fno-fast-math",
-];
+/// Compile flags of every fitted model image (`crate::cxx::fitted_flags`), resolved once per process
+/// because the joined string is part of the codec identity (`runtime_flags_sha256`).
+fn compile_flags() -> &'static [String] {
+    static FLAGS: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
+    FLAGS.get_or_init(|| crate::cxx::fitted_flags().unwrap_or_else(|error| panic!("{error}")))
+}
 static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 const RUNTIME_SOURCE: &str = include_str!("../../cpp/fitted_runtime.cpp");
 const RUNTIME_LIBRARY: &[u8] =
@@ -380,7 +379,7 @@ pub(super) fn encode_artifact(
         model_library_sha256: sha256_hex(&model_library),
         runtime_source_sha256: text_hash(RUNTIME_SOURCE),
         runtime_library_sha256: sha256_hex(RUNTIME_LIBRARY),
-        runtime_flags_sha256: text_hash(&FLAGS.join(" ")),
+        runtime_flags_sha256: text_hash(&compile_flags().join(" ")),
         compiler,
     };
     let metadata_json = serde_json::to_vec(&metadata)?;
@@ -465,7 +464,7 @@ fn decode(bytes: &[u8]) -> Result<DecodedCodec> {
     let metadata: CodecMetadata = serde_json::from_slice(&bytes[metadata_at..model_at])?;
     if metadata.schema != "jope-dime.fitted-model-codec.v2"
         || !(1..=2).contains(&metadata.emitter_revision)
-        || metadata.runtime_flags_sha256 != text_hash(&FLAGS.join(" "))
+        || metadata.runtime_flags_sha256 != text_hash(&compile_flags().join(" "))
         || metadata.runtime_source_sha256 != text_hash(RUNTIME_SOURCE)
         || metadata.runtime_library_sha256 != sha256_hex(RUNTIME_LIBRARY)
         || metadata.compiler.is_empty()
@@ -498,22 +497,14 @@ fn decode(bytes: &[u8]) -> Result<DecodedCodec> {
     {
         bail!("fitted codec source does not match the current emitter");
     }
-    Ok(DecodedCodec { model, emitter_revision: metadata.emitter_revision })
+    Ok(DecodedCodec {
+        model,
+        emitter_revision: metadata.emitter_revision,
+    })
 }
 
 fn compile_model_library(source: &[u8]) -> Result<(Vec<u8>, String)> {
-    let version = Command::new("g++")
-        .arg("--version")
-        .output()
-        .context("query fitted C++ compiler version")?;
-    if !version.status.success() {
-        bail!("g++ --version failed before fitted model compilation");
-    }
-    let compiler = String::from_utf8(version.stdout)?
-        .lines()
-        .next()
-        .unwrap_or_default()
-        .to_string();
+    let compiler = crate::cxx::version().context("query fitted C++ compiler version")?;
     if !compiler.contains("13.3") {
         bail!("fitted model compilation requires g++ 13.3, found {compiler:?}");
     }
@@ -525,8 +516,8 @@ fn compile_model_library(source: &[u8]) -> Result<(Vec<u8>, String)> {
     fs::create_dir(&directory)
         .with_context(|| format!("create model compilation directory {}", directory.display()))?;
     let library = directory.join("model.so");
-    let mut child = Command::new("g++")
-        .args(FLAGS)
+    let mut child = Command::new(crate::cxx::compiler())
+        .args(compile_flags())
         .args([
             "-shared",
             "-fPIC",
@@ -722,35 +713,55 @@ mod tests {
     #[test]
     fn historical_unsafe_expression_library_is_regenerated_before_loading() {
         let genome = GenomeIr::parse("(sym raw \"c9+1\")").unwrap();
-        let model = crate::fit_legacy_numeric_bound(&genome, &vec![vec![1.,2.],vec![2.,3.]], &[0.,1.]).unwrap();
+        let model =
+            crate::fit_legacy_numeric_bound(&genome, &vec![vec![1., 2.], vec![2., 3.]], &[0., 1.])
+                .unwrap();
         let mut artifact = emit_fitted_cpp17(&model).unwrap();
-        let GenomeIr::Symbolic { expr, .. } = genome else { unreachable!() };
-        artifact.source = artifact.source.replace(&expr.to_cpp17(false).unwrap(), "(row[9]+1.0)");
+        let GenomeIr::Symbolic { expr, .. } = genome else {
+            unreachable!()
+        };
+        artifact.source = artifact
+            .source
+            .replace(&expr.to_cpp17(false).unwrap(), "(row[9]+1.0)");
         artifact.source_sha256 = text_hash(&artifact.source);
         let encoded = encode_artifact(&model, &artifact).unwrap();
         let old_metadata_len = read_u64(&encoded.bytes, 24).unwrap() as usize;
         let old_payload_at = HEADER_LEN + old_metadata_len;
-        let mut metadata: serde_json::Value = serde_json::from_slice(&encoded.bytes[HEADER_LEN..old_payload_at]).unwrap();
-        let old_library_hash = metadata["model_library_sha256"].as_str().unwrap().to_string();
+        let mut metadata: serde_json::Value =
+            serde_json::from_slice(&encoded.bytes[HEADER_LEN..old_payload_at]).unwrap();
+        let old_library_hash = metadata["model_library_sha256"]
+            .as_str()
+            .unwrap()
+            .to_string();
         metadata.as_object_mut().unwrap().remove("emitter_revision");
         let metadata = serde_json::to_vec(&metadata).unwrap();
         let mut historical = encoded.bytes[..HEADER_LEN].to_vec();
         historical.extend(&metadata);
-        historical.extend(&encoded.bytes[old_payload_at..encoded.bytes.len()-CHECKSUM_LEN]);
-        let total = (historical.len()+CHECKSUM_LEN) as u64;
+        historical.extend(&encoded.bytes[old_payload_at..encoded.bytes.len() - CHECKSUM_LEN]);
+        let total = (historical.len() + CHECKSUM_LEN) as u64;
         historical[16..24].copy_from_slice(&total.to_le_bytes());
         historical[24..32].copy_from_slice(&(metadata.len() as u64).to_le_bytes());
         let checksum = Sha256::digest(&historical);
         historical.extend(checksum);
         assert_eq!(decode(&historical).unwrap().emitter_revision, 1);
         let original = historical.clone();
-        let root = std::env::temp_dir().join(format!("kernel-codec-upgrade-{}", std::process::id()));
+        let root =
+            std::env::temp_dir().join(format!("kernel-codec-upgrade-{}", std::process::id()));
         let runtime = FittedCppRuntime::new(&root).unwrap();
         let loaded = runtime.load(&historical).unwrap();
-        assert_ne!(sha256_hex(&fs::read(loaded.directory.join("model.so")).unwrap()), old_library_hash);
-        assert_eq!(loaded.predict(&EncodedTable::from_numeric_rows(&[vec![1.,2.]]).unwrap()).unwrap(), vec![0.0]);
+        assert_ne!(
+            sha256_hex(&fs::read(loaded.directory.join("model.so")).unwrap()),
+            old_library_hash
+        );
+        assert_eq!(
+            loaded
+                .predict(&EncodedTable::from_numeric_rows(&[vec![1., 2.]]).unwrap())
+                .unwrap(),
+            vec![0.0]
+        );
         assert_eq!(historical, original);
-        drop(loaded); drop(runtime);
+        drop(loaded);
+        drop(runtime);
         fs::remove_dir_all(root).unwrap();
     }
 
@@ -848,9 +859,8 @@ int main() {
 "#,
         )
         .unwrap();
-        let compiled = Command::new("g++")
+        let compiled = crate::cxx::command(None)
             .args([
-                "-std=c++17",
                 "-O1",
                 "-ffp-contract=off",
                 "-fno-fast-math",
