@@ -1,0 +1,5 @@
+{
+  "schema": "JopeDimeKnownEvaluatorIdentities.v1",
+  "note": "ADR-0004. Append-only. Each row is an identity a shipped jope-dime build recorded in JopeDimeEvaluatorIdentity.v1 receipts; receipts carrying one of these identities validate under this build. Rows are added only with the receipt path that proves the identity existed.",
+  "identities": []
+}

@@ -63,11 +63,19 @@ impl EvaluatorIdentityV1 {
             b"vendored-feat-math.GenomeIr+fit+Model::predict.v1",
         );
         let expected_lock = hex::encode(Sha256::digest(include_bytes!("../../../Cargo.lock")));
-        if self.implementation_sha256 != current_implementation_sha256()
-            || self.dsl_abi_sha256 != expected_dsl
-            || self.cargo_lock_sha256 != expected_lock
-        {
-            bail!("evaluator implementation, DSL ABI, or Cargo.lock identity does not match this build");
+        if self.dsl_abi_sha256 != expected_dsl {
+            bail!("evaluator DSL ABI identity does not match this build");
+        }
+        let is_current = self.implementation_sha256 == current_implementation_sha256()
+            && self.cargo_lock_sha256 == expected_lock;
+        // ADR-0004: a receipt written by an earlier build stays valid under the identity it recorded,
+        // provided that identity is in the committed table of known evaluator implementations. Only
+        // *producing* a receipt requires the current identity (see `current()` callers).
+        if !is_current && !known_evaluator_identity(&self.implementation_sha256, &self.cargo_lock_sha256) {
+            bail!(
+                "evaluator implementation/Cargo.lock identity matches neither this build nor a known historical \
+                 evaluator (crates/jope-campaigns/known-evaluator-identities.json)"
+            );
         }
         Ok(())
     }
@@ -82,6 +90,33 @@ impl EvaluatorIdentityV1 {
         hash.str("cargo_lock_sha256", &self.cargo_lock_sha256);
         Ok(hash.finish())
     }
+}
+
+/// Known historical evaluator identities (ADR-0004). Each entry is an
+/// `{implementation_sha256, cargo_lock_sha256}` pair a shipped build reported in
+/// `JopeDimeEvaluatorIdentity.v1` receipts; the table is append-only and reviewed.
+fn known_evaluator_identity(implementation_sha256: &str, cargo_lock_sha256: &str) -> bool {
+    static TABLE: OnceLock<Vec<(String, String)>> = OnceLock::new();
+    let table = TABLE.get_or_init(|| {
+        let raw: serde_json::Value =
+            serde_json::from_str(include_str!("../known-evaluator-identities.json")).expect("known-evaluator-identities.json parses");
+        raw["identities"]
+            .as_array()
+            .map(|rows| {
+                rows.iter()
+                    .filter_map(|row| {
+                        Some((
+                            row["implementation_sha256"].as_str()?.to_owned(),
+                            row["cargo_lock_sha256"].as_str()?.to_owned(),
+                        ))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
+    });
+    table
+        .iter()
+        .any(|(implementation, lock)| implementation == implementation_sha256 && lock == cargo_lock_sha256)
 }
 
 fn current_implementation_sha256() -> String {
