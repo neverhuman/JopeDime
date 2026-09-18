@@ -1,3 +1,6 @@
+/// ADR-0003 runtime roots (`JOPE_HOME`, `JOPE_STATE`, `JOPE_REGISTRY`, …).
+pub use jope_paths as paths;
+
 pub mod audit;
 pub mod build_receipt;
 pub mod champions;

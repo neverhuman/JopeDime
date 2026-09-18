@@ -1737,6 +1737,7 @@ dependencies = [
  "crossterm 0.28.1",
  "feat-math",
  "hex",
+ "jope-paths",
  "libc",
  "memmap2",
  "ratatui",
@@ -1762,6 +1763,7 @@ dependencies = [
  "feat-math",
  "hex",
  "jain-smartcluster",
+ "jope-paths",
  "libc",
  "nix 0.29.0",
  "postcard",
@@ -1776,6 +1778,10 @@ dependencies = [
  "tokio",
  "walkdir",
 ]
+
+[[package]]
+name = "jope-paths"
+version = "0.1.0"
 
 [[package]]
 name = "js-sys"

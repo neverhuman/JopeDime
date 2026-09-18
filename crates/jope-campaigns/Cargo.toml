@@ -12,6 +12,7 @@ clap = { version = "4", features = ["derive"] }
 crossterm = "=0.28.1"
 feat-math = { path = "../feat-math" }
 hex = "0.4"
+jope-paths = { path = "../jope-paths" }
 libc = "0.2"
 memmap2 = "0.9"
 ratatui = "=0.29.0"
