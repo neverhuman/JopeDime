@@ -1,0 +1,12 @@
+[package]
+name = "numpy-pcg64"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Bit-exact Rust port of numpy 1.26 SeedSequence/PCG64/Generator integer sampling and the frozen jope-dime sampling recipes"
+publish = false
+
+[dependencies]
+
+[dev-dependencies]
+serde_json = { workspace = true }

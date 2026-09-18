@@ -1,0 +1,36 @@
+{
+  "schema": "jain.starforge-novel-input-oracle-lock/v1",
+  "fixture": {
+    "path": "novel_input_oracle.v1.json",
+    "sha256": "67f3a66d619639aa793e07871bf2a4ab15ac55cb7b8ad7be3914546dd148515e"
+  },
+  "request_sha256": "3edf7f695068e0ad82454e47a7e50fe8eb5c2be871e244b046b21943bafc7211",
+  "generator": {
+    "corrected_sha256": "c507488b1e1164b38d6f23e9439e6134fb61f6e43ba4f718ba3ec22e61c7fb0c",
+    "predecessor_sha256": "117c9709dffa0b41135f11b33854c08c0df8526b091bd71c6c012c5aa85290b6",
+    "correction": "Load the hash-bound JOPE release source after evicting mutable jope modules; emit logical module identities."
+  },
+  "references": {
+    "python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118",
+    "jope-prime/scripts/encode_external.py": "2216efde7270ad5b862a7ef73e1bee4e3729d3373499174d548397b1b258ab94",
+    "jope-prime/releases/76aa503df60b405afd5aff049adce1c6f7e8819ea812981236d900bdb36ed6e5/src/jope/encoders/foundation.py": "551137f5e0ee2f56c0bd182a385480a0686ce7689a5ea8cf5dee7a801de8d9f0",
+    "remote_super/fable_god/chimera_regression/python/fusion/experts.py": "1edcdb276a55c618f202a837108c77a86122ba2d617c6d0444d004ae60c10bbc",
+    "remote_super/fable_god/python/elo_finetune/model_io.py": "5e142384c871f4df8e59271e5998524ea1806e8a8ea2f240ea9a8190d8e28805",
+    "remote_super/fable_god/python/elo_finetune/paths.py": "3db03efb5ca67fcc5a898fc9bbc83fb1e4053fd6e98338b8836b39d3ca3c8cc7",
+    "remote_super/fable_god/provenance/regressor_source/starlight_core_regressor_train.py": "71dbbce7c0c498917f4bfb57e674177c8240ce7b428decceea20dad0e3c259e9",
+    "remote_super/fable_god/weights/starlight_config.json": "4acacec8c148702e07147452e3e13dad586bd40f90878a3bbac8355753978acb",
+    "remote_super/fable_god/weights/starlight_core_regressor.safetensors": "f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+    "target_maker/target_maker/data.py": "e20c00a8c2ce5894e2ad7dab9b48e05c353a4736aba471e6d481b7c0931bf0fd",
+    "target_maker/target_maker/encode.py": "ce4161f5d7d10dd4e1bd442050b6c03af0432e792037279ffbf08375204c89ca",
+    "target_maker/target_maker/fused.py": "fee6643c70e475374576b74cc54ce1e94b614de35a4fad53f5a7b1c170bfa040",
+    "target_maker/target_maker/model.py": "5e7c715b938e3c0bdc336ee2a287abfc10d9e79107a574abb23834879c033800",
+    "target_maker/target_maker/classical.py": "9f4b5edbe3d6fe0161ae414ba68b0a162ffb094b9477e42f14fcf4ca508abd0c",
+    "target-maker/fused-monster-smoke-real-20260705/final.bundle/manifest.json": "753173e523d074836fb96b4de9a84dba42263035228ca1ca0214f24e981a3969",
+    "target-maker/fused-monster-smoke-real-20260705/final.bundle/fused_vectorizer.joblib": "89d7dc820724d21d600894a218aea40a94a236854b57caec5c9bfc6ea23768e1",
+    "target-maker/fused-monster-smoke-real-20260705/final.bundle/models/ensemble.joblib": "ba23e068a0a475dd42d1bcad0e01d718524b623084aba862ead025738ca241d2",
+    "target-maker/fused-monster-smoke-real-20260705/final.bundle/models/sgd_logistic.joblib": "98c74bf52a5e19e797862bc1d0800d0d4323e3a72ed343f7bf79e8ecc81bab60",
+    "target-maker/fused-monster-smoke-real-20260705/final.bundle/neural/best.pt": "1ede5d1cc444a04fbb710c96a9cdacbdb3f03a6f692757a9907f2a8c8498c467",
+    "target-maker/fused-monster-smoke-real-20260705/final.bundle/neural/final.pt": "5cf038910a7f3584b1fa960ccfcc02b71ee3f89fdcf98420f3d887dd56c9fa8a",
+    "target-maker/fused-monster-smoke-real-20260705/final.bundle/scorers/meta_scorer.joblib": "ba6345d98ea77df01e3c3e19132ac45935dc5061009e112402609ee8a4a6acfa"
+  }
+}

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1083  # the container script below is a heredoc whose \${VAR} escapes are expanded inside the container
 # Glibc-bounded CPU build of the kernel-v1 product evaluator lineage.
 #
 # Usage: ops/ci/kernel-v1-product-build.sh OUT_DIR
@@ -79,7 +80,6 @@ docker run --rm --network none \
         cp -r /src /work/src
         cd /work/src
         rustc -vV > /work/rustc-vV.txt
-        # shellcheck disable=SC1083  # literal ${RUSTUP_TOOLCHAIN-} is expanded inside the container, not here
         printf '%s\n' "\${RUSTUP_TOOLCHAIN-}" > /work/rustup-toolchain.txt
         (ldd --version | head -n1) > /work/builder-libc.txt
         $build_cmd
