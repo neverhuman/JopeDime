@@ -1,0 +1,4 @@
+# Bundles the main/nightly lanes fetch (jope models fetch reads this file); one bundle id per line.
+policy-step-60000
+jope-prime-gen31-v2
+hyperion-v7
