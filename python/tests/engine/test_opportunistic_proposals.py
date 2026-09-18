@@ -1,5 +1,4 @@
 import ctypes
-import importlib.util
 import json
 import os
 from pathlib import Path
@@ -9,10 +8,8 @@ import tempfile
 import time
 import unittest
 
-source = Path(__file__).resolve().parents[1] / "tools/opportunistic_proposals.py"
-spec = importlib.util.spec_from_file_location("proposal_library", source)
-library = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(library)
+from jope.tools import opportunistic_proposals as library
+
 
 
 class ProposalLibraryTests(unittest.TestCase):

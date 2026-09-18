@@ -4,12 +4,14 @@ import importlib.util
 import json
 from pathlib import Path
 
+import jope.research
+
 import numpy as np
 import pandas as pd
 import pytest
 
 
-SCRIPT = Path(__file__).parents[1] / "scripts" / "golden46_execution.py"
+SCRIPT = Path(jope.research.__file__).parent / "golden46_execution.py"
 SPEC = importlib.util.spec_from_file_location("golden46_execution", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
 execution = importlib.util.module_from_spec(SPEC)
@@ -83,6 +85,7 @@ def run_isolated(
     return worker_test, prediction, report["metrics"]["rmse"]
 
 
+@pytest.mark.xbabe2  # imports cluster_model_queue/model_zoo from /home/ubuntu/remote_super (old state plane)
 def test_test_target_changes_only_controller_score(tmp_path: Path) -> None:
     dataset_id = "masked"
     canonical = tmp_path / "canonical"
@@ -110,6 +113,7 @@ def test_test_target_changes_only_controller_score(tmp_path: Path) -> None:
     assert np.all(masked.iloc[:, -1].to_numpy() == execution.DUMMY_TEST_TARGET)
 
 
+@pytest.mark.xbabe2  # imports cluster_model_queue/model_zoo from /home/ubuntu/remote_super (old state plane)
 def test_controller_rejects_prediction_or_report_changes(tmp_path: Path) -> None:
     dataset_id = "tamper"
     canonical = tmp_path / "canonical"

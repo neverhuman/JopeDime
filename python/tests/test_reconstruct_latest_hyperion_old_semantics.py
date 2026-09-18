@@ -3,12 +3,13 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
+import jope.research
+
 import numpy as np
 
 
 SCRIPT = (
-    Path(__file__).resolve().parents[1]
-    / "scripts"
+    Path(jope.research.__file__).parent
     / "reconstruct_latest_hyperion_old_semantics.py"
 )
 SPEC = importlib.util.spec_from_file_location("hyperion_old_v2", SCRIPT)

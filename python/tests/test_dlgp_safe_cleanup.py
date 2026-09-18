@@ -4,12 +4,13 @@ import os
 import time
 from pathlib import Path
 
+import jope.research
+
 import pytest
 
 
-ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
-    "dlgp_safe_cleanup", ROOT / "scripts/dlgp_safe_cleanup.py"
+    "dlgp_safe_cleanup", Path(jope.research.__file__).parent / "dlgp_safe_cleanup.py"
 )
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None

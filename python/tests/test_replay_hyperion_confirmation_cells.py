@@ -4,11 +4,12 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import jope.research
+
 import pytest
 
 
-SCRIPTS = Path(__file__).parents[1] / "scripts"
-sys.path.insert(0, str(SCRIPTS))
+SCRIPTS = Path(jope.research.__file__).parent
 SPEC = importlib.util.spec_from_file_location(
     "replay_hyperion_confirmation_cells",
     SCRIPTS / "replay_hyperion_confirmation_cells.py",

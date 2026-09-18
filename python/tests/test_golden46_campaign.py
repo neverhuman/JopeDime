@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
+import jope.research
+import pytest
 
-SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
-if str(SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS))
+
+SCRIPTS = Path(jope.research.__file__).parent
 
 import golden46_cluster_campaign as cluster  # noqa: E402
 import golden46_historical_receipts as historical  # noqa: E402
@@ -26,6 +26,7 @@ def test_historical_aspfm_receipt_is_terminal_without_a_score(tmp_path: Path) ->
     assert stored == receipt
 
 
+@pytest.mark.xbabe2  # imports the quant model zoo from /home/ubuntu/remote_super (old state plane)
 def test_full_zts_registered_gpu_methods_are_all_frozen_ineligible() -> None:
     assert cluster.eligible_methods("ZTS", {"gpu", "gpu_heavy"}) == []
     assert len(cluster.eligible_methods("ZTS", {"cpu", "cpu_light"})) == 96

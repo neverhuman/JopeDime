@@ -3,12 +3,10 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
-import sys
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 
 from test_exact_adaptive import (  # noqa: E402
     attach_ranking_labels,
@@ -655,7 +653,7 @@ def test_compile_cache_is_dataset_fitted_and_finalists_are_bounded():
 
 def test_xbabe4_slot_target_ramp_and_three_sample_rollback():
     policy = (
-        Path(__file__).parents[1] / "manifests" / "selfplay" / "scq-nodes.v3.toml"
+        Path(__file__).parents[2] / "crates" / "jope-campaigns" / "manifests" / "selfplay" / "scq-nodes.v3.toml"
     )
     assert validate_selfplay_policy(policy)["nodes"]["xbabe4"][
         "cpu_job_slot_multiplier"

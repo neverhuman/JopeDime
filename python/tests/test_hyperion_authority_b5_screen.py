@@ -4,11 +4,12 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import jope.research
+
 import pytest
 
 
-SCRIPTS = Path(__file__).parents[1] / "scripts"
-sys.path.insert(0, str(SCRIPTS))
+SCRIPTS = Path(jope.research.__file__).parent
 SPEC = importlib.util.spec_from_file_location(
     "hyperion_authority_b5_screen", SCRIPTS / "hyperion_authority_b5_screen.py"
 )

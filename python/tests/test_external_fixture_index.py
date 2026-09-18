@@ -3,16 +3,14 @@ import hashlib
 import json
 from pathlib import Path
 import stat
-import sys
 
 import pytest
 
-ROOT = Path(__file__).parents[1]
-sys.path.insert(0, str(ROOT / "scripts"))
 
 import external_fixture_index as fixtures  # noqa: E402
 
 
+@pytest.mark.xbabe2  # needs the benchmarks/sotarena clone at e5db30a0 (B18: pin unfetchable, submodule absent from the port tree)
 def test_index_is_path_free_and_structurally_complete():
     index = fixtures.read_index()
     fixtures.validate_index(index)
@@ -27,6 +25,7 @@ def test_index_is_path_free_and_structurally_complete():
     assert b"/home/" not in fixtures.canonical_bytes(index)
 
 
+@pytest.mark.xbabe2  # needs the benchmarks/sotarena clone at e5db30a0 (B18: pin unfetchable, submodule absent from the port tree)
 def test_complete_verification_fails_closed_on_missing_binary_splits():
     with pytest.raises(
         fixtures.FixtureError, match="46 external fixture files remain unresolved"
@@ -34,6 +33,7 @@ def test_complete_verification_fails_closed_on_missing_binary_splits():
         fixtures.validate_index(fixtures.read_index(), require_complete=True)
 
 
+@pytest.mark.xbabe2  # needs the benchmarks/sotarena clone at e5db30a0 (B18: pin unfetchable, submodule absent from the port tree)
 def test_workspace_profile_materializes_committed_read_only_bytes(tmp_path):
     destination = tmp_path / "fixtures"
     receipt = fixtures.materialize(
@@ -60,6 +60,7 @@ def test_one_field_mutation_is_rejected():
         fixtures.validate_index(index)
 
 
+@pytest.mark.xbabe2  # recovers the exact-46 fixtures from /home/ubuntu/sotarena_old
 def test_qualified_local_recovery_imports_exact_46_into_temporary_cas(tmp_path):
     source_root = Path("/home/ubuntu/sotarena_old")
     assert source_root.is_dir(), "the frozen local-recovery observation is absent"

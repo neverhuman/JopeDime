@@ -28,10 +28,7 @@ model problem for a day.
 from __future__ import annotations
 
 import json
-import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 
 from test_exact_train import (  # noqa: E402
     SPLIT_MEDIAN_RATIO_MAX,

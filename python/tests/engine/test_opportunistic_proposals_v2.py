@@ -1,5 +1,4 @@
 import ctypes
-import importlib.util
 import json
 import os
 from pathlib import Path
@@ -9,12 +8,9 @@ import tempfile
 import time
 import unittest
 
-source = Path(__file__).resolve().parents[1] / "tools/opportunistic_proposals_v2.py"
-sys.path.insert(0, str(source.parent))
-import test_report_cycle as fixture_module
-spec = importlib.util.spec_from_file_location("proposal_library", source)
-library = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(library)
+from jope.tools import opportunistic_proposals_v2 as library
+from jope.tools import test_report_cycle as fixture_module
+
 
 
 class ProposalLibraryTests(unittest.TestCase):
@@ -77,7 +73,7 @@ class ProposalLibraryTests(unittest.TestCase):
                     'corpus_sha256': library.digest(corpus/'index.json'),
                     'checkpoint_sha256': library.digest(checkpoint/'state.json'),
                     'executable_sha256': library.digest(executable),
-                    'pool_validator_sha256': library.digest(source.parent/'proposal_pool_v2.py'),
+                    'pool_validator_sha256': library.digest(Path(library.__file__).parent/'proposal_pool_v2.py'),
                     'pure_prediction_protocol': library.PURE_PROTOCOL, 'gp_assembly_protocol': library.ASSEMBLY_PROTOCOL}
             library.write(root/'spec.json', spec)
             handlers = {sig: signal.getsignal(sig) for sig in (signal.SIGTERM, signal.SIGINT)}

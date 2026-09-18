@@ -2,20 +2,18 @@ from __future__ import annotations
 
 import hashlib
 import json
-import sys
 from pathlib import Path
 
 import pytest
 
 
-ROOT = Path(__file__).parents[1]
-sys.path.insert(0, str(ROOT / "scripts"))
+ROOT = Path(__file__).parents[2]
 
 import jope_task_semantics as generated  # noqa: E402
 
 
 def test_generated_python_view_matches_exact_embedded_rust_artifact():
-    artifact = ROOT / "manifests/epoch6/JopeTaskSemantics.v1.json"
+    artifact = ROOT / "crates/jope-campaigns/manifests/epoch6/JopeTaskSemantics.v1.json"
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == (
         generated.RUST_TASK_SEMANTICS_SHA256
     )
