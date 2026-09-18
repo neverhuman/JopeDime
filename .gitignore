@@ -1,0 +1,6 @@
+/target
+**/*.env
+aws.env
+gh.env
+*.passphrase
+.DS_Store
