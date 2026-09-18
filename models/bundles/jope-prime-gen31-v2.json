@@ -1,0 +1,470 @@
+{
+  "schema": "jope.model-bundle/v2",
+  "bundle_id": "jope-prime-gen31-v2",
+  "policy_version": "policy_v3.2",
+  "source_checkpoint": "runs/self_play_v33/gen31.pt",
+  "source_checkpoint_sha256": "6a20443443d4d7edc75aa18ef2825c3f240ea92b02f09573c6f53c41e76f60d0",
+  "encoders": {
+    "foundation": {
+      "artifact": "artifacts/starforge/starlight_core_regressor.safetensors",
+      "recipe": "TabPFNv3Reg hidden[512] pooled by mean/std/p10/p90 to 2048 dimensions; never TabICL.",
+      "recipe_sha256": "551137f5e0ee2f56c0bd182a385480a0686ce7689a5ea8cf5dee7a801de8d9f0",
+      "sha256": "f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+      "source_revision": "sha256:551137f5e0ee2f56c0bd182a385480a0686ce7689a5ea8cf5dee7a801de8d9f0",
+      "source_uri": "urn:jain:model-source:sha256:f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+      "version": "foundation_enc.v1.tabpfn"
+    },
+    "hyperion": {
+      "artifact": "artifacts/model-bundle/hyperion_v5_arm_b.safetensors",
+      "recipe": "Exact Hyperion v5 arm B signature encoder and byte-matched runtime manifest.",
+      "recipe_sha256": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+      "sha256": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+      "source_revision": "sha256:ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+      "source_uri": "urn:jain:model-source:sha256:88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+      "version": "hyperion_v5_arm_b"
+    },
+    "target": {
+      "artifact": "artifacts/model-bundle/target_encoder_fused_v1.be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f.safetensors",
+      "recipe": "Fused 512-d target encoder: normalized best[64], final[64], and zero-padded fitted SVD[384] blocks.",
+      "recipe_sha256": "fee6643c70e475374576b74cc54ce1e94b614de35a4fad53f5a7b1c170bfa040",
+      "sha256": "be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f",
+      "source_revision": "sha256:5715a3fd860ad503bfd2ff737cedc5109ee3ffe9653cc7873072084753164cd8",
+      "source_uri": "urn:jain:model-source:sha256:5715a3fd860ad503bfd2ff737cedc5109ee3ffe9653cc7873072084753164cd8",
+      "version": "target_maker_fused_bundle/v1"
+    }
+  },
+  "grammar_sha256": "a455ee2a435cf105d961ff42a397673779ec25a7c06cacf7061b9f1471c9c180",
+  "registry_sha256": "62c7ab26dfcf0f6c0047fe6c9eec192b0440a7080bac92d772c08eed9279c8cb",
+  "vocabulary_sha256": "000128f29eecd6f3345fca2ff2230729c913cc45bc2882cb0e8f962f90b1c40e",
+  "upstream_manifest": "model-bundle.v1.json (jain-starforge artifacts/, sha256 in files[])",
+  "consumers": [
+    "crates/jope-encoders (starforge)",
+    "crates/hyperion (v5 arm B)"
+  ],
+  "files": [
+    {
+      "path": "foundation/tabicl-classifier-v2-chimera-shuffled.safetensors",
+      "sha256": "6006f3818f675e6b734a74321987800cef130be19b53267c039453ea9b57a4d3",
+      "bytes": 110256808,
+      "blob": "blobs/sha256/6006f3818f675e6b734a74321987800cef130be19b53267c039453ea9b57a4d3",
+      "source_key": "staging/starforge-artifacts/foundation/tabicl-classifier-v2-chimera-shuffled.safetensors",
+      "kind": "foundation_classifier",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "artifacts/foundation/tabicl-classifier-v2-chimera-shuffled.safetensors",
+        "component_kind": "model",
+        "sha256": "6006f3818f675e6b734a74321987800cef130be19b53267c039453ea9b57a4d3",
+        "spdx_expression": "LicenseRef-Jain-ThirdParty-Provenance-Pending",
+        "license_class": "restricted",
+        "source_revision": "sha256:6006f3818f675e6b734a74321987800cef130be19b53267c039453ea9b57a4d3",
+        "source_uri": "urn:jain:model-source:sha256:6006f3818f675e6b734a74321987800cef130be19b53267c039453ea9b57a4d3",
+        "redistribution": "prohibited",
+        "model_lineage": "Frozen Jain model-bundle artifact sha256:6006f3818f675e6b734a74321987800cef130be19b53267c039453ea9b57a4d3",
+        "notice_paths": [
+          "docs/notices/third-party-provenance-pending.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": false,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "foundation/tabicl-regressor-v2-20260212.safetensors",
+      "sha256": "90c5952b4e201c265b4444a3694f3d1fc07df3864157ed6361b6c31723413d30",
+      "bytes": 114222828,
+      "blob": "blobs/sha256/90c5952b4e201c265b4444a3694f3d1fc07df3864157ed6361b6c31723413d30",
+      "source_key": "staging/starforge-artifacts/foundation/tabicl-regressor-v2-20260212.safetensors",
+      "kind": "foundation_regressor",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "artifacts/foundation/tabicl-regressor-v2-20260212.safetensors",
+        "component_kind": "model",
+        "sha256": "90c5952b4e201c265b4444a3694f3d1fc07df3864157ed6361b6c31723413d30",
+        "spdx_expression": "LicenseRef-Jain-ThirdParty-Provenance-Pending",
+        "license_class": "restricted",
+        "source_revision": "sha256:90c5952b4e201c265b4444a3694f3d1fc07df3864157ed6361b6c31723413d30",
+        "source_uri": "urn:jain:model-source:sha256:90c5952b4e201c265b4444a3694f3d1fc07df3864157ed6361b6c31723413d30",
+        "redistribution": "prohibited",
+        "model_lineage": "Frozen Jain model-bundle artifact sha256:90c5952b4e201c265b4444a3694f3d1fc07df3864157ed6361b6c31723413d30",
+        "notice_paths": [
+          "docs/notices/third-party-provenance-pending.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": false,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "foundation/tabicl-regressor-v2-chimera-shuffled.manifest.json",
+      "sha256": "54eb38247279f8d310d60fba298ee5c22a5be856eda07edb64c0c0a84fa2db33",
+      "bytes": 527322,
+      "blob": "blobs/sha256/54eb38247279f8d310d60fba298ee5c22a5be856eda07edb64c0c0a84fa2db33",
+      "source_key": "staging/starforge-artifacts/foundation/tabicl-regressor-v2-chimera-shuffled.manifest.json",
+      "kind": "metadata",
+      "license": null
+    },
+    {
+      "path": "foundation/tabicl-regressor-v2-chimera-shuffled.safetensors",
+      "sha256": "544a4573398e2548dc9ac379d53bdb6a5ae58fc5646619ed029227db60528848",
+      "bytes": 114222860,
+      "blob": "blobs/sha256/544a4573398e2548dc9ac379d53bdb6a5ae58fc5646619ed029227db60528848",
+      "source_key": "staging/starforge-artifacts/foundation/tabicl-regressor-v2-chimera-shuffled.safetensors",
+      "kind": "metadata",
+      "license": null
+    },
+    {
+      "path": "model-bundle.v1.json",
+      "sha256": "5e7884ec1c0e0b955a2381d5b69c54beddad9ec66a1980c94ad279d974486d05",
+      "bytes": 22649,
+      "blob": "blobs/sha256/5e7884ec1c0e0b955a2381d5b69c54beddad9ec66a1980c94ad279d974486d05",
+      "source_key": "staging/starforge-artifacts/model-bundle.v1.json",
+      "kind": "metadata",
+      "license": null
+    },
+    {
+      "path": "model-bundle/hyperion_v5_arm_b.manifest.json",
+      "sha256": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+      "bytes": 264,
+      "blob": "blobs/sha256/ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+      "source_key": "staging/starforge-artifacts/model-bundle/hyperion_v5_arm_b.manifest.json",
+      "kind": "hyperion_runtime_manifest",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "artifacts/model-bundle/hyperion_v5_arm_b.manifest.json",
+        "component_kind": "model",
+        "sha256": "ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+        "spdx_expression": "LicenseRef-Jain-Redistributable-Model",
+        "license_class": "eligible_non_open",
+        "source_revision": "sha256:ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+        "source_uri": "urn:jain:model-source:sha256:88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+        "redistribution": "permitted",
+        "model_lineage": "Exact Hyperion v5 arm B checkpoint and byte-matched runtime manifest",
+        "notice_paths": [
+          "docs/notices/target-hyperion-redistribution.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "model-bundle/hyperion_v5_arm_b.safetensors",
+      "sha256": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+      "bytes": 6650692,
+      "blob": "blobs/sha256/88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+      "source_key": "staging/starforge-artifacts/model-bundle/hyperion_v5_arm_b.safetensors",
+      "kind": "hyperion_v5_arm_b",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "artifacts/model-bundle/hyperion_v5_arm_b.safetensors",
+        "component_kind": "model",
+        "sha256": "88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+        "spdx_expression": "LicenseRef-Jain-Redistributable-Model",
+        "license_class": "eligible_non_open",
+        "source_revision": "sha256:ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef",
+        "source_uri": "urn:jain:model-source:sha256:88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be",
+        "redistribution": "permitted",
+        "model_lineage": "Exact Hyperion v5 arm B checkpoint and byte-matched runtime manifest",
+        "notice_paths": [
+          "docs/notices/target-hyperion-redistribution.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "model-bundle/jope_policy.meta.json",
+      "sha256": "fdc79784c3cf217925bfae3d9fd748ded0afa086466230f4a469e17b39eff069",
+      "bytes": 169165,
+      "blob": "blobs/sha256/fdc79784c3cf217925bfae3d9fd748ded0afa086466230f4a469e17b39eff069",
+      "source_key": "staging/starforge-artifacts/model-bundle/jope_policy.meta.json",
+      "kind": "jope_policy_metadata",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "artifacts/model-bundle/jope_policy.meta.json",
+        "component_kind": "model",
+        "sha256": "fdc79784c3cf217925bfae3d9fd748ded0afa086466230f4a469e17b39eff069",
+        "spdx_expression": "LicenseRef-Jain-Internal-Model",
+        "license_class": "eligible_non_open",
+        "source_revision": "sha256:fdc79784c3cf217925bfae3d9fd748ded0afa086466230f4a469e17b39eff069",
+        "source_uri": "urn:jain:model-source:sha256:fdc79784c3cf217925bfae3d9fd748ded0afa086466230f4a469e17b39eff069",
+        "redistribution": "permitted",
+        "model_lineage": "Frozen Jain model-bundle metadata sha256:fdc79784c3cf217925bfae3d9fd748ded0afa086466230f4a469e17b39eff069; binds gen31 source checkpoint sha256:6a20443443d4d7edc75aa18ef2825c3f240ea92b02f09573c6f53c41e76f60d0",
+        "notice_paths": [
+          "docs/notices/jain-governed-models.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "model-bundle/jope_policy.safetensors",
+      "sha256": "2c4c5531c5f1d834653fb1fef8b2b51cfd9d90044ff15cc98b67cd1b5aaae871",
+      "bytes": 108846812,
+      "blob": "blobs/sha256/2c4c5531c5f1d834653fb1fef8b2b51cfd9d90044ff15cc98b67cd1b5aaae871",
+      "source_key": "staging/starforge-artifacts/model-bundle/jope_policy.safetensors",
+      "kind": "jope_policy_gen31",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "artifacts/model-bundle/jope_policy.safetensors",
+        "component_kind": "model",
+        "sha256": "2c4c5531c5f1d834653fb1fef8b2b51cfd9d90044ff15cc98b67cd1b5aaae871",
+        "spdx_expression": "LicenseRef-Jain-Internal-Model",
+        "license_class": "eligible_non_open",
+        "source_revision": "sha256:2c4c5531c5f1d834653fb1fef8b2b51cfd9d90044ff15cc98b67cd1b5aaae871",
+        "source_uri": "urn:jain:model-source:sha256:2c4c5531c5f1d834653fb1fef8b2b51cfd9d90044ff15cc98b67cd1b5aaae871",
+        "redistribution": "permitted",
+        "model_lineage": "Frozen Jain generation-31 inference artifact sha256:2c4c5531c5f1d834653fb1fef8b2b51cfd9d90044ff15cc98b67cd1b5aaae871; exported from source checkpoint sha256:6a20443443d4d7edc75aa18ef2825c3f240ea92b02f09573c6f53c41e76f60d0 with only seven loss_log_vars.* scalars omitted",
+        "notice_paths": [
+          "docs/notices/jain-governed-models.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "model-bundle/operator_registry.json",
+      "sha256": "62c7ab26dfcf0f6c0047fe6c9eec192b0440a7080bac92d772c08eed9279c8cb",
+      "bytes": 76229,
+      "blob": "blobs/sha256/62c7ab26dfcf0f6c0047fe6c9eec192b0440a7080bac92d772c08eed9279c8cb",
+      "source_key": "staging/starforge-artifacts/model-bundle/operator_registry.json",
+      "kind": "jope_operator_registry",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "artifacts/model-bundle/operator_registry.json",
+        "component_kind": "operator_registry",
+        "sha256": "62c7ab26dfcf0f6c0047fe6c9eec192b0440a7080bac92d772c08eed9279c8cb",
+        "spdx_expression": "LicenseRef-Jain-Internal-Model",
+        "license_class": "eligible_non_open",
+        "source_revision": "sha256:62c7ab26dfcf0f6c0047fe6c9eec192b0440a7080bac92d772c08eed9279c8cb",
+        "source_uri": "urn:jain:model-source:sha256:62c7ab26dfcf0f6c0047fe6c9eec192b0440a7080bac92d772c08eed9279c8cb",
+        "redistribution": "permitted",
+        "model_lineage": "Reviewed JOPE proposal registry raw sha256:62c7ab26dfcf0f6c0047fe6c9eec192b0440a7080bac92d772c08eed9279c8cb; semantic registry sha256:81c79a29141421642a067549009c6491ac30cde98e48d7d4480824dbff98a823",
+        "notice_paths": [
+          "docs/notices/jain-governed-models.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "model-bundle/preprocessing.safetensors",
+      "sha256": "dccf526132dc1713f36cae4a0c88058fd73a19df7b349edeb73aef3158788c39",
+      "bytes": 8409600,
+      "blob": "blobs/sha256/dccf526132dc1713f36cae4a0c88058fd73a19df7b349edeb73aef3158788c39",
+      "source_key": "staging/starforge-artifacts/model-bundle/preprocessing.safetensors",
+      "kind": "jope_preprocessing",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "artifacts/model-bundle/preprocessing.safetensors",
+        "component_kind": "model",
+        "sha256": "dccf526132dc1713f36cae4a0c88058fd73a19df7b349edeb73aef3158788c39",
+        "spdx_expression": "LicenseRef-Jain-Internal-Model",
+        "license_class": "eligible_non_open",
+        "source_revision": "sha256:dccf526132dc1713f36cae4a0c88058fd73a19df7b349edeb73aef3158788c39",
+        "source_uri": "urn:jain:model-source:sha256:dccf526132dc1713f36cae4a0c88058fd73a19df7b349edeb73aef3158788c39",
+        "redistribution": "permitted",
+        "model_lineage": "Frozen Jain model-bundle artifact sha256:dccf526132dc1713f36cae4a0c88058fd73a19df7b349edeb73aef3158788c39",
+        "notice_paths": [
+          "docs/notices/jain-governed-models.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "model-bundle/target_encoder_fused_v1.be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f.safetensors",
+      "sha256": "be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f",
+      "bytes": 78615176,
+      "blob": "blobs/sha256/be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f",
+      "source_key": "staging/starforge-artifacts/model-bundle/target_encoder_fused_v1.be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f.safetensors",
+      "kind": "target_encoder_fused_v1",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "artifacts/model-bundle/target_encoder_fused_v1.be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f.safetensors",
+        "component_kind": "model",
+        "sha256": "be96adc6549a478c6a1759e40ce8c403fa529694b54a74a7d93a6dd56d35a40f",
+        "spdx_expression": "LicenseRef-Jain-Redistributable-Model",
+        "license_class": "eligible_non_open",
+        "source_revision": "sha256:5715a3fd860ad503bfd2ff737cedc5109ee3ffe9653cc7873072084753164cd8",
+        "source_uri": "urn:jain:model-source:sha256:5715a3fd860ad503bfd2ff737cedc5109ee3ffe9653cc7873072084753164cd8",
+        "redistribution": "permitted",
+        "model_lineage": "target_maker fused bundle v1, seed 17; exact source and oracle hashes are recorded in target_encoder_fused_v1.meta.json",
+        "notice_paths": [
+          "docs/notices/target-hyperion-redistribution.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "model-bundle/target_encoder_fused_v1.meta.json",
+      "sha256": "3849615a7c8f9e750d543eb07e02eceb167e648775fe1dd5c041f8cdecfe7043",
+      "bytes": 40915,
+      "blob": "blobs/sha256/3849615a7c8f9e750d543eb07e02eceb167e648775fe1dd5c041f8cdecfe7043",
+      "source_key": "staging/starforge-artifacts/model-bundle/target_encoder_fused_v1.meta.json",
+      "kind": "target_encoder_metadata",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "artifacts/model-bundle/target_encoder_fused_v1.meta.json",
+        "component_kind": "model",
+        "sha256": "3849615a7c8f9e750d543eb07e02eceb167e648775fe1dd5c041f8cdecfe7043",
+        "spdx_expression": "LicenseRef-Jain-Redistributable-Model",
+        "license_class": "eligible_non_open",
+        "source_revision": "sha256:5715a3fd860ad503bfd2ff737cedc5109ee3ffe9653cc7873072084753164cd8",
+        "source_uri": "urn:jain:model-source:sha256:5715a3fd860ad503bfd2ff737cedc5109ee3ffe9653cc7873072084753164cd8",
+        "redistribution": "permitted",
+        "model_lineage": "target_maker fused bundle v1, seed 17; exact source and oracle hashes are recorded in target_encoder_fused_v1.meta.json",
+        "notice_paths": [
+          "docs/notices/target-hyperion-redistribution.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "starforge/chimera_classification_attnfusion.safetensors",
+      "sha256": "1a6d8b008d1b69c4725bb6e5bf094a68c1246073e6f71fa15e1b5e32ae19a488",
+      "bytes": 103304800,
+      "blob": "blobs/sha256/1a6d8b008d1b69c4725bb6e5bf094a68c1246073e6f71fa15e1b5e32ae19a488",
+      "source_key": "staging/starforge-artifacts/starforge/chimera_classification_attnfusion.safetensors",
+      "kind": "starforge_classifier_fusion",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "artifacts/starforge/chimera_classification_attnfusion.safetensors",
+        "component_kind": "model",
+        "sha256": "1a6d8b008d1b69c4725bb6e5bf094a68c1246073e6f71fa15e1b5e32ae19a488",
+        "spdx_expression": "LicenseRef-Jain-Internal-Model",
+        "license_class": "eligible_non_open",
+        "source_revision": "sha256:1a6d8b008d1b69c4725bb6e5bf094a68c1246073e6f71fa15e1b5e32ae19a488",
+        "source_uri": "urn:jain:model-source:sha256:1a6d8b008d1b69c4725bb6e5bf094a68c1246073e6f71fa15e1b5e32ae19a488",
+        "redistribution": "permitted",
+        "model_lineage": "Frozen Jain model-bundle artifact sha256:1a6d8b008d1b69c4725bb6e5bf094a68c1246073e6f71fa15e1b5e32ae19a488",
+        "notice_paths": [
+          "docs/notices/jain-governed-models.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "starforge/chimera_classification_expert_a.safetensors",
+      "sha256": "1a48f7fc920c235c412ebf8dff176e0016e18b02554d8bd339380ea501eb4d7b",
+      "bytes": 212697108,
+      "blob": "blobs/sha256/1a48f7fc920c235c412ebf8dff176e0016e18b02554d8bd339380ea501eb4d7b",
+      "source_key": "staging/starforge-artifacts/starforge/chimera_classification_expert_a.safetensors",
+      "kind": "starforge_classifier_expert",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "artifacts/starforge/chimera_classification_expert_a.safetensors",
+        "component_kind": "model",
+        "sha256": "1a48f7fc920c235c412ebf8dff176e0016e18b02554d8bd339380ea501eb4d7b",
+        "spdx_expression": "LicenseRef-Jain-Internal-Model",
+        "license_class": "eligible_non_open",
+        "source_revision": "sha256:1a48f7fc920c235c412ebf8dff176e0016e18b02554d8bd339380ea501eb4d7b",
+        "source_uri": "urn:jain:model-source:sha256:1a48f7fc920c235c412ebf8dff176e0016e18b02554d8bd339380ea501eb4d7b",
+        "redistribution": "permitted",
+        "model_lineage": "Frozen Jain model-bundle artifact sha256:1a48f7fc920c235c412ebf8dff176e0016e18b02554d8bd339380ea501eb4d7b",
+        "notice_paths": [
+          "docs/notices/jain-governed-models.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "starforge/chimera_stackfusionreg.safetensors",
+      "sha256": "57cdb53ae732a705e6aee7381a6a11e7e82cf357bcd67c46ccfa47b789c7d5d2",
+      "bytes": 4604636,
+      "blob": "blobs/sha256/57cdb53ae732a705e6aee7381a6a11e7e82cf357bcd67c46ccfa47b789c7d5d2",
+      "source_key": "staging/starforge-artifacts/starforge/chimera_stackfusionreg.safetensors",
+      "kind": "starforge_regressor_fusion",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "artifacts/starforge/chimera_stackfusionreg.safetensors",
+        "component_kind": "model",
+        "sha256": "57cdb53ae732a705e6aee7381a6a11e7e82cf357bcd67c46ccfa47b789c7d5d2",
+        "spdx_expression": "LicenseRef-Jain-Internal-Model",
+        "license_class": "eligible_non_open",
+        "source_revision": "sha256:57cdb53ae732a705e6aee7381a6a11e7e82cf357bcd67c46ccfa47b789c7d5d2",
+        "source_uri": "urn:jain:model-source:sha256:57cdb53ae732a705e6aee7381a6a11e7e82cf357bcd67c46ccfa47b789c7d5d2",
+        "redistribution": "permitted",
+        "model_lineage": "Frozen Jain model-bundle artifact sha256:57cdb53ae732a705e6aee7381a6a11e7e82cf357bcd67c46ccfa47b789c7d5d2",
+        "notice_paths": [
+          "docs/notices/jain-governed-models.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "starforge/starlight_core_regressor.safetensors",
+      "sha256": "f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+      "bytes": 233183532,
+      "blob": "blobs/sha256/f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+      "source_key": "staging/starforge-artifacts/starforge/starlight_core_regressor.safetensors",
+      "kind": "starlight_regressor",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "artifacts/starforge/starlight_core_regressor.safetensors",
+        "component_kind": "model",
+        "sha256": "f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+        "spdx_expression": "LicenseRef-Jain-ThirdParty-Provenance-Pending",
+        "license_class": "restricted",
+        "source_revision": "sha256:551137f5e0ee2f56c0bd182a385480a0686ce7689a5ea8cf5dee7a801de8d9f0",
+        "source_uri": "urn:jain:model-source:sha256:f663ae49cc0f1504f07800a69dd6c31ca22fc473f26bbc0684eac25129a04128",
+        "redistribution": "prohibited",
+        "model_lineage": "foundation_enc.v1.tabpfn uses TabPFNv3Reg 512-d hidden states pooled as mean/std/p10/p90 to 2048-d; recipe sha256:551137f5e0ee2f56c0bd182a385480a0686ce7689a5ea8cf5dee7a801de8d9f0",
+        "notice_paths": [
+          "docs/notices/third-party-provenance-pending.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": false,
+          "open_only": false
+        }
+      }
+    }
+  ],
+  "notices": [
+    {
+      "path": "docs/notices/jain-governed-models.txt",
+      "text": "Jain-governed model notice\n\nThese frozen artifacts are governed Jain release inputs. They are eligible for the\ndefault model policy but are not certified as open-source or open-weight models.\nRedistribution is permitted only as part of an approved Jain release bundle.\n"
+    },
+    {
+      "path": "docs/notices/target-hyperion-redistribution.txt",
+      "text": "Target and Hyperion encoder notice\n\nThe release owner has granted redistribution authority for the exact, hash-bound\ntarget and Hyperion encoder artifacts listed in model-bundle.v1.json. They remain\neligible non-open models and are ineligible under the open-only policy.\n"
+    },
+    {
+      "path": "docs/notices/third-party-provenance-pending.txt",
+      "text": "Third-party model provenance pending\n\nLicense and redistribution proof for these frozen third-party foundation artifacts\nhas not been approved. They are fail-closed: restricted, non-redistributable, and\nineligible under both the default and open-only model policies.\n"
+    }
+  ],
+  "published_at": "2026-09-18T20:17:48Z",
+  "published_by": "jepson via profile veox-jepson (account 714044927654)",
+  "bucket": "veox-jopedime-models-use2",
+  "staging_prefix": "staging/starforge-artifacts/",
+  "verification": "every blob: server ChecksumSHA256 (head-object --checksum-mode ENABLED) equals sha256 below; see aws/receipts/publish-*.jsonl"
+}
