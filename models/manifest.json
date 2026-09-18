@@ -1,0 +1,48 @@
+{
+  "schema": "jope.model-index/v1",
+  "bucket": "veox-jopedime-models-use2",
+  "region": "us-east-2",
+  "layout": {
+    "blobs": "blobs/sha256/<sha256>",
+    "manifests": "bundles/<bundle_id>/manifest.json"
+  },
+  "bundles": [
+    {
+      "bundle_id": "hyperion-v7",
+      "manifest": "models/bundles/hyperion-v7.json",
+      "manifest_sha256": "fdaf938fc7f7957c06959f12c130b2bd81cdaef5e5bb2198ba75cf35da1c5233",
+      "s3_key": "bundles/hyperion-v7/manifest.json",
+      "files": 2,
+      "bytes": 246457278,
+      "licenses": [
+        "LicenseRef-Jain-Internal-Model",
+        "none"
+      ]
+    },
+    {
+      "bundle_id": "jope-prime-gen31-v2",
+      "manifest": "models/bundles/jope-prime-gen31-v2.json",
+      "manifest_sha256": "c8d8d13a2f4cb2eeb21eea364c33e14429c84d344e6b50eb38a472173b97b6f2",
+      "s3_key": "bundles/jope-prime-gen31-v2/manifest.json",
+      "files": 17,
+      "bytes": 1095851396,
+      "licenses": [
+        "LicenseRef-Jain-Internal-Model",
+        "LicenseRef-Jain-Redistributable-Model",
+        "LicenseRef-Jain-ThirdParty-Provenance-Pending",
+        "none"
+      ]
+    },
+    {
+      "bundle_id": "policy-step-60000",
+      "manifest": "models/bundles/policy-step-60000.json",
+      "manifest_sha256": "d8e259b26ef8d580ddb99ae5826c9501bcdc0c32045945eef9010926fd796e9e",
+      "s3_key": "bundles/policy-step-60000/manifest.json",
+      "files": 2,
+      "bytes": 119612896,
+      "licenses": [
+        "LicenseRef-Jain-Internal-Model"
+      ]
+    }
+  ]
+}
