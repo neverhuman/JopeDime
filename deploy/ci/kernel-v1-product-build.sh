@@ -79,6 +79,7 @@ docker run --rm --network none \
         cp -r /src /work/src
         cd /work/src
         rustc -vV > /work/rustc-vV.txt
+        # shellcheck disable=SC1083  # literal ${RUSTUP_TOOLCHAIN-} is expanded inside the container, not here
         printf '%s\n' "\${RUSTUP_TOOLCHAIN-}" > /work/rustup-toolchain.txt
         (ldd --version | head -n1) > /work/builder-libc.txt
         $build_cmd
