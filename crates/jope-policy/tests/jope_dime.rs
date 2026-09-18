@@ -29,9 +29,9 @@ use jope_policy::testing::{
     UNBOUND_TEST_STATE_SHA256,
 };
 use jope_policy::{
-    context_sha256, sha256_hex, ACCEPTED_CONFIG_SHA256, ACCEPTED_PARAMETER_SHA256,
-    ACCEPTED_STATE_SHA256, CHECKPOINT_VOCABULARY_SHA256, PRODUCT_VOCABULARY_SHA256,
-    REJECTED_MODEL_SHA256, REJECTED_STATE_SHA256,
+    context_sha256, sha256_hex, ACCEPTED_CONFIG_SHA256, ACCEPTED_MODEL_SHA256,
+    ACCEPTED_PARAMETER_SHA256, ACCEPTED_STATE_SHA256, ACCEPTED_STEP, CHECKPOINT_VOCABULARY_SHA256,
+    PRODUCT_VOCABULARY_SHA256, REJECTED_MODEL_SHA256, REJECTED_STATE_SHA256,
 };
 use serde_json::{json, Value};
 use std::cmp::Ordering;
@@ -202,14 +202,26 @@ fn synthetic_receipt(state: &str, model: &str, step: u64) -> Value {
     })
 }
 
+fn accepted_receipt() -> Value {
+    let mut receipt =
+        synthetic_receipt(ACCEPTED_STATE_SHA256, ACCEPTED_MODEL_SHA256, ACCEPTED_STEP);
+    receipt["checkpoint"]["parameter_sha256"] = json!(ACCEPTED_PARAMETER_SHA256);
+    receipt["checkpoint"]["parameter_sha256_recomputed"] = json!(ACCEPTED_PARAMETER_SHA256);
+    receipt
+}
+
 fn parse_receipt(receipt: &Value) -> anyhow::Result<CheckpointBinding> {
     CheckpointBinding::from_receipt_bytes(&serde_json::to_vec(receipt).unwrap())
 }
 
 #[test]
 fn receipt_binds_the_accepted_checkpoint() {
-    let receipt = synthetic_receipt(ACCEPTED_STATE_SHA256, &digest("model"), 60000);
+    let receipt = accepted_receipt();
     let binding = parse_receipt(&receipt).unwrap();
+    binding.require_accepted_identity().unwrap();
+    assert_eq!(binding.step(), ACCEPTED_STEP);
+    assert_eq!(binding.model_sha256(), ACCEPTED_MODEL_SHA256);
+    assert_eq!(binding.parameter_sha256(), ACCEPTED_PARAMETER_SHA256);
     assert_eq!(binding.tensors().len(), 136);
     assert_eq!(binding.vocabulary_sha256(), CHECKPOINT_VOCABULARY_SHA256);
     assert_eq!(*binding.config(), PolicyConfig::regression(401));
@@ -328,11 +340,39 @@ fn accepted_config_is_pinned() {
         PolicyConfig::regression(401).sha256().unwrap(),
         ACCEPTED_CONFIG_SHA256
     );
-    let receipt = synthetic_receipt(ACCEPTED_STATE_SHA256, &digest("model"), 60000);
+    let receipt = accepted_receipt();
     parse_receipt(&receipt)
         .unwrap()
         .require_accepted_identity()
         .unwrap();
+    // State alone is not enough: step, source model, and parameters are part of the accepted
+    // parent identity and must not be relabelled independently.
+    let mut wrong_step = receipt.clone();
+    wrong_step["checkpoint"]["step"] = json!(59999);
+    assert_refused(
+        parse_receipt(&wrong_step)
+            .unwrap()
+            .require_accepted_identity(),
+        "checkpoint step",
+    );
+    let mut wrong_model = receipt.clone();
+    wrong_model["checkpoint"]["model_sha256"] = json!(digest("other model"));
+    assert_refused(
+        parse_receipt(&wrong_model)
+            .unwrap()
+            .require_accepted_identity(),
+        "model_sha256",
+    );
+    let mut wrong_parameters = receipt.clone();
+    wrong_parameters["checkpoint"]["parameter_sha256"] = json!(digest("other parameters"));
+    wrong_parameters["checkpoint"]["parameter_sha256_recomputed"] =
+        wrong_parameters["checkpoint"]["parameter_sha256"].clone();
+    assert_refused(
+        parse_receipt(&wrong_parameters)
+            .unwrap()
+            .require_accepted_identity(),
+        "checkpoint parameters",
+    );
     // A receipt claiming another config hash is refused, even around the accepted config.
     let mut claimed = receipt.clone();
     claimed["checkpoint"]["config_sha256"] = json!(digest("config"));
@@ -1236,7 +1276,8 @@ fn self_attested_tiny_export(dir: &Path) -> (PathBuf, Value) {
     assert!(loaded.bound_identity().is_none());
     let parameters = loaded.parameter_sha256().unwrap();
     let inventory = serde_json::to_value(loaded.tensor_inventory().unwrap()).unwrap();
-    let mut receipt = synthetic_receipt(ACCEPTED_STATE_SHA256, &digest("model"), 60000);
+    let mut receipt =
+        synthetic_receipt(ACCEPTED_STATE_SHA256, ACCEPTED_MODEL_SHA256, ACCEPTED_STEP);
     receipt["checkpoint"]["config"] = serde_json::to_value(&config).unwrap();
     receipt["checkpoint"]["parameter_sha256"] = json!(parameters);
     receipt["checkpoint"]["parameter_sha256_recomputed"] = json!(parameters);
@@ -1257,12 +1298,7 @@ fn propose_requires_the_accepted_weights_loaded_through_load_bound() {
     };
     let seeds = ProposalSeeds::derive(3);
     // A random-weight model with a real (parsed, accepted-state) binding is refused.
-    let accepted = parse_receipt(&synthetic_receipt(
-        ACCEPTED_STATE_SHA256,
-        &digest("model"),
-        60000,
-    ))
-    .unwrap();
+    let accepted = parse_receipt(&accepted_receipt()).unwrap();
     let random = PolicyModel::random_weights(PolicyConfig::regression(401), 11).unwrap();
     assert!(random.bound_identity().is_none());
     let err = propose(

@@ -132,6 +132,8 @@ pub const ACCEPTED_STATE_SHA256: &str =
 /// `model.ot` sha256 of the accepted step-60000 checkpoint.
 pub const ACCEPTED_MODEL_SHA256: &str =
     "053df4f53b84d2ebe7c14fbf907a149760af3d11de4a57b5ff89be8c2d3e8129";
+/// Training step of the accepted checkpoint.
+pub const ACCEPTED_STEP: u64 = 60000;
 /// jope-dime parameter hash (sorted names + little-endian f32 values) of the accepted
 /// step-60000 weights, as recomputed by `tools/ot-export` (`step-60000.receipt.json`,
 /// `checkpoint.parameter_sha256_recomputed`). `seeds::propose` requires the loaded weights to

@@ -1,6 +1,6 @@
 //! Encodes a small table with the served Hyperion bundle when `HYPERION_V7_WEIGHTS` names its
-//! directory (`model.safetensors` + `manifest.json`). Without the variable the test prints why it
-//! skipped and returns — it is never a silent pass, and the README names the gate.
+//! directory (`model.safetensors` + `manifest.json`). The test is explicitly ignored in the
+//! source-only suite; running it with `--include-ignored` fails if the bundle is unavailable.
 
 use hyperion::data::Matrix;
 use hyperion::hyperion::{
@@ -8,21 +8,14 @@ use hyperion::hyperion::{
     DEFAULT_OUTPUT_DIM, WEIGHTS_DIR_ENV,
 };
 use hyperion::progress::NullSink;
-use std::io::Write;
 use std::time::Instant;
 
 #[test]
+#[ignore = "requires HYPERION_V7_WEIGHTS (served model.safetensors + manifest.json bundle)"]
 fn served_bundle_encodes_a_small_table() {
-    let Some(dir) = std::env::var_os(WEIGHTS_DIR_ENV).filter(|value| !value.is_empty()) else {
-        // Written straight to the process stderr so libtest's output capture cannot hide it: the
-        // skip is visible in a plain `cargo test` run, not only under `--nocapture`.
-        let _ = writeln!(
-            std::io::stderr(),
-            "SKIPPED served_bundle_encodes_a_small_table: {WEIGHTS_DIR_ENV} is not set \
-             (point it at a directory holding model.safetensors + manifest.json)"
-        );
-        return;
-    };
+    let dir = std::env::var_os(WEIGHTS_DIR_ENV)
+        .filter(|value| !value.is_empty())
+        .expect("HYPERION_V7_WEIGHTS must identify model.safetensors + manifest.json");
     let cfg = HyperionConfig {
         mode: HyperionMode::On,
         weights_path: default_weights_path(),

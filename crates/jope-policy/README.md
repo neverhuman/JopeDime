@@ -32,7 +32,7 @@ Weight-bound tests are `#[ignore]`d and read their inputs from the environment
 | `tests/jope_dime.rs` generation replay | `JOPE_DIME_GENERATION_000011` (a jope-dime `generation-000011` results directory) |
 | `tests/jope_dime.rs` end-to-end | the two above + `JOPE_DIME_CONTEXTS` (`contexts-assembly-v2` directory) |
 | `src/jope_embed.rs::reviewed_preprocessing_bundle_loads_with_exact_v1_shapes` | `JAIN_TEST_MODEL_BUNDLE_ROOT` (directory with `preprocessing.safetensors`) |
-| `src/jope_embed.rs::embedding_matches_python_reference` (not ignored; prints `skipping: fixtures missing`) | `JOPE_PARITY_ART_DIR`, `JOPE_PARITY_DATASET_DIR`, `JOPE_PARITY_REF` |
+| `src/jope_embed.rs::embedding_matches_python_reference` (ignored; `--include-ignored` fails if fixtures are missing) | `JOPE_PARITY_ART_DIR`, `JOPE_PARITY_DATASET_DIR`, `JOPE_PARITY_REF` |
 
 ## Provenance (source → destination)
 

@@ -9,7 +9,8 @@ use serde_json::Value;
 
 use super::{
     is_sha256_hex, refuse_rejected_checkpoint, sha256_hex, ACCEPTED_CONFIG_SHA256,
-    ACCEPTED_STATE_SHA256, CHECKPOINT_VOCABULARY_SHA256, REJECTED_STEP,
+    ACCEPTED_MODEL_SHA256, ACCEPTED_PARAMETER_SHA256, ACCEPTED_STATE_SHA256, ACCEPTED_STEP,
+    CHECKPOINT_VOCABULARY_SHA256, REJECTED_STEP,
 };
 
 /// Schema tag written by jain-datasets `tools/ot-export` (plan v2 W4 PR-A).
@@ -283,11 +284,28 @@ impl CheckpointBinding {
         &self.config
     }
 
-    /// Refuse unless this receipt names the accepted step-60000 configuration and vocabulary:
-    /// the claimed `config_sha256` and the hash recomputed from the parsed `checkpoint.config`
-    /// ([`PolicyConfig::sha256`]) must both be [`super::ACCEPTED_CONFIG_SHA256`], and the carried
-    /// vocabulary must be [`super::CHECKPOINT_VOCABULARY_SHA256`].
+    /// Refuse unless this receipt names the complete accepted step-60000 checkpoint identity:
+    /// step, state, source model, parameters, configuration, and vocabulary.
     pub fn require_accepted_identity(&self) -> Result<()> {
+        ensure!(
+            self.step == ACCEPTED_STEP,
+            "refused: checkpoint step {} is not the accepted step-{ACCEPTED_STEP}",
+            self.step
+        );
+        ensure!(
+            self.state_sha256 == ACCEPTED_STATE_SHA256,
+            "refused: checkpoint state {} is not the accepted step-{ACCEPTED_STEP} state",
+            self.state_sha256
+        );
+        ensure!(
+            self.model_sha256 == ACCEPTED_MODEL_SHA256,
+            "refused: checkpoint model_sha256 {} is not the accepted step-{ACCEPTED_STEP} model",
+            self.model_sha256
+        );
+        ensure!(
+            self.parameter_sha256 == ACCEPTED_PARAMETER_SHA256,
+            "refused: checkpoint parameters are not the accepted step-{ACCEPTED_STEP} parameters"
+        );
         ensure!(
             self.config_sha256 == ACCEPTED_CONFIG_SHA256,
             "refused: checkpoint config_sha256 {} is not the accepted step-60000 config",

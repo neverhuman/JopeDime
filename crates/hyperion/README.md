@@ -37,13 +37,13 @@ The served bundle is a directory holding `model.safetensors` + `manifest.json`.
 ### Test gates
 
 `cargo test -p hyperion` runs 51 unit tests (encoder, sweeps, hvc2, router, lease queue) plus the
-two reference-CLI tests without any weights. One test is weight-bound:
+two reference-CLI tests without any weights. One test is weight-bound and explicitly ignored by
+the source-only suite:
 
 - `tests/weights_smoke.rs::served_bundle_encodes_a_small_table` — needs `HYPERION_V7_WEIGHTS`.
-  When unset it prints `SKIPPED served_bundle_encodes_a_small_table: HYPERION_V7_WEIGHTS is not
-  set …` straight to the process stderr (visible in a plain `cargo test`, not only under
-  `--nocapture`) and returns; it never passes silently. With the variable set it encodes a 24×3 table
-  through `fit_transform_pair` (mode `On`, 2 sweeps) and checks the 128-column block.
+  Run it with `--include-ignored`; it fails when the variable or bundle is absent. With the
+  variable set it encodes a 24×3 table through `fit_transform_pair` (mode `On`, 2 sweeps) and
+  checks the 128-column block.
 
 ## Provenance (source → destination)
 
@@ -114,5 +114,5 @@ workspace `exclude` list; this crate replaces it.
 cargo check -p hyperion --all-targets --locked
 cargo check -p hyperion --no-default-features --all-targets --locked
 cargo test  -p hyperion --locked
-HYPERION_V7_WEIGHTS=/path/to/bundle cargo test -p hyperion --locked --test weights_smoke -- --nocapture
+HYPERION_V7_WEIGHTS=/path/to/bundle cargo test -p hyperion --locked --test weights_smoke -- --include-ignored --nocapture
 ```

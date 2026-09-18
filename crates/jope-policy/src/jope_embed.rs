@@ -784,6 +784,7 @@ mod tests {
 
     // Parity vs the Python reference dumped for hash 0014b9dad5725a1e (full rows).
     #[test]
+    #[ignore = "requires reviewed JOPE parity artifacts and reference output"]
     fn embedding_matches_python_reference() {
         let art_buf = std::env::var_os("JOPE_PARITY_ART_DIR")
             .map(std::path::PathBuf::from)
@@ -795,10 +796,15 @@ mod tests {
         let ds = ds_buf.as_path();
         let ref_path =
             std::env::var("JOPE_PARITY_REF").unwrap_or_else(|_| "target/emb_ref.json".into());
-        if !ds.exists() || !std::path::Path::new(&ref_path).exists() {
-            eprintln!("skipping: fixtures missing");
-            return;
-        }
+        assert!(
+            ds.is_dir(),
+            "JOPE parity dataset directory is missing: {}",
+            ds.display()
+        );
+        assert!(
+            std::path::Path::new(&ref_path).is_file(),
+            "JOPE parity reference is missing: {ref_path}"
+        );
         let cfg = load_std_cfg(art).unwrap();
         let proj = load_projection(&cfg.proj_npz).unwrap();
         let (emb, tgt) = jope_embedding(ds, &cfg, &proj, 1.0, 0).unwrap();
