@@ -3,11 +3,13 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
+import jope.research
+
 import numpy as np
 import pytest
 
 
-SCRIPT = Path(__file__).parents[1] / "scripts" / "reconstruct_old_hyperion_vs.py"
+SCRIPT = Path(jope.research.__file__).parent / "reconstruct_old_hyperion_vs.py"
 SPEC = importlib.util.spec_from_file_location("reconstruct_old_hyperion_vs", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
 MODULE = importlib.util.module_from_spec(SPEC)

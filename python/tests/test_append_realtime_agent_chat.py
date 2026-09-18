@@ -1,10 +1,12 @@
 import importlib.util
 from pathlib import Path
+
+import jope.research
 import tempfile
 import unittest
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "append_realtime_agent_chat.py"
+SCRIPT = Path(jope.research.__file__).parent / "append_realtime_agent_chat.py"
 SPEC = importlib.util.spec_from_file_location("append_realtime_agent_chat", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None

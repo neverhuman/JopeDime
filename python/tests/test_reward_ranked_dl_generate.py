@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import importlib.util
-import sys
 from pathlib import Path
+
+import jope.research
 import json
 
 
-SCRIPT_DIR = Path(__file__).resolve().parents[1] / "scripts"
-sys.path.insert(0, str(SCRIPT_DIR))
+SCRIPT_DIR = Path(jope.research.__file__).parent
 SPEC = importlib.util.spec_from_file_location(
     "test_exact_dl_generate", SCRIPT_DIR / "test_exact_dl_generate.py"
 )

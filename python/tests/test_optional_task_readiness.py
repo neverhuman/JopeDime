@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import sqlite3
-import sys
 import time
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 
 from test_exact_train import (  # noqa: E402
     eight_slot_task_weights,

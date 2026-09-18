@@ -4,9 +4,11 @@ import json
 import tomllib
 from pathlib import Path
 
+import jope.research
+
 
 MODULE_PATH = (
-    Path(__file__).resolve().parents[1] / "scripts" / "genome_boost_cluster_campaign.py"
+    Path(jope.research.__file__).parent / "genome_boost_cluster_campaign.py"
 )
 SPEC = importlib.util.spec_from_file_location("genome_boost_cluster_campaign", MODULE_PATH)
 campaign = importlib.util.module_from_spec(SPEC)

@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
+
+import jope.research
+import pytest
 
 import numpy as np
 
 
-SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
-if str(SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS))
+SCRIPTS = Path(jope.research.__file__).parent
 
 import golden46_special_execution as special  # noqa: E402
 
@@ -33,6 +33,7 @@ def test_chimera_blocker_is_unresolved_and_forbids_substitution(tmp_path: Path) 
     assert stored["missing_artifact"]["sha256"] == special.CHIMERA_EXPECTED["sha256"]
 
 
+@pytest.mark.xbabe2  # needs the frozen chimera source/checkpoint under /home/ubuntu/TO_DELETE/jain_small
 def test_chimera_conversion_is_bound_to_frozen_source_identity() -> None:
     identity = special.validate_chimera_artifacts()
     assert identity["source_checkpoint"]["sha256"] == special.CHIMERA_EXPECTED["sha256"]

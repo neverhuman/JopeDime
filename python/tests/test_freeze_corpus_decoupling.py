@@ -19,12 +19,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-import sys
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 
 import test_exact_controller as controller  # noqa: E402
 import test_exact_packed_corpus  # noqa: E402

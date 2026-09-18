@@ -4,13 +4,13 @@ import hashlib
 import json
 import os
 import subprocess
-import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import jope.research
+
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 
 import test_exact_service as service_module  # noqa: E402
 import test_exact_backlog as backlog_module  # noqa: E402
@@ -448,14 +448,13 @@ def test_runtime_bundle_contains_the_complete_prime_python_package():
 
 
 def test_deployment_explicitly_restarts_already_active_services():
-    deploy = (Path(__file__).parents[1] / "scripts" / "deploy_selfplay_bundle.py")
+    deploy = (Path(jope.research.__file__).parent / "deploy_selfplay_bundle.py")
     source = deploy.read_text()
     assert '["systemctl", "--user", "enable", *UNITS]' in source
     assert '["systemctl", "--user", "restart", *UNITS]' in source
 
 
 def test_checkpoint_vocab_compatibility_requires_an_exact_fitting_prefix(monkeypatch):
-    monkeypatch.syspath_prepend("/home/ubuntu/jope-prime/src")
     from jope.policy.model_v3 import _validate_action_vocab_compatibility
 
     _validate_action_vocab_compatibility(["PAD", "BOS"], ["PAD", "BOS", "EOS"], 3)
@@ -631,7 +630,7 @@ def test_new_task_verdicts_are_advisory_until_anchored():
     assert gated["task_verdicts"]["multiclass"]["advisory"] is True
 
 
-PARITY_FIXTURE = Path(__file__).parent / "fixtures" / "conditionality_gate_parity.json"
+PARITY_FIXTURE = Path(__file__).parents[2] / "crates" / "jope-campaigns" / "tests" / "fixtures" / "conditionality_gate_parity.json"
 
 
 def test_conditionality_gate_parity_fixture_matches_python():
@@ -727,7 +726,7 @@ def test_sealed_audit_is_one_shot_and_never_training_eligible(tmp_path):
 
 
 def test_systemd_services_are_independently_restartable():
-    root = Path(__file__).parents[1] / "systemd"
+    root = Path(__file__).parents[2] / "deploy" / "systemd" / "selfplay"
     required = {
         "jope-selfplay-corpus-freezer.service",
         "jope-selfplay-ingestion.service",

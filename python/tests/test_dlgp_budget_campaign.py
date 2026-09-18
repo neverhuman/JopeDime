@@ -1,12 +1,13 @@
 import importlib.util
 from pathlib import Path
 
+import jope.research
+
 import pytest
 
 
-ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
-    "dlgp_budget_campaign", ROOT / "scripts/dlgp_budget_campaign.py"
+    "dlgp_budget_campaign", Path(jope.research.__file__).parent / "dlgp_budget_campaign.py"
 )
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None

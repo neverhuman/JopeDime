@@ -5,12 +5,13 @@ import json
 import sys
 from pathlib import Path
 
+import jope.research
+
 import pytest
 
 
 SCRIPT = (
-    Path(__file__).parents[1]
-    / "scripts"
+    Path(jope.research.__file__).parent
     / "freeze_hyperion_precomputed_cell_coverage.py"
 )
 SPEC = importlib.util.spec_from_file_location("freeze_hyperion_cell", SCRIPT)
