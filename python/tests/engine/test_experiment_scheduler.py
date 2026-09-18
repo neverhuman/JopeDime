@@ -1,13 +1,11 @@
-import importlib.util
 import json
 from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
 
-spec = importlib.util.spec_from_file_location("scheduler", Path(__file__).parents[1] / "tools/experiment_scheduler.py")
-scheduler = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(scheduler)
+from jope.tools import experiment_scheduler as scheduler
+
 
 
 class SchedulerTests(unittest.TestCase):

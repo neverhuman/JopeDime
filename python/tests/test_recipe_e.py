@@ -1,13 +1,13 @@
 from collections import Counter
 import json
 from pathlib import Path
-import sys
+
+import jope.research
 
 import pytest
 
 
-SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
-sys.path.insert(0, str(SCRIPTS))
+SCRIPTS = Path(jope.research.__file__).parent
 
 from test_exact_train import (  # noqa: E402
     RECIPE_E_BATCH_MIX,

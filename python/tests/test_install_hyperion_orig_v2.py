@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts import install_hyperion_orig_v2 as subject
+from jope.research import install_hyperion_orig_v2 as subject
 
 
 def build_fixture(tmp_path: Path) -> tuple[Path, Path, Path]:

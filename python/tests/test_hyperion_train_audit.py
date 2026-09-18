@@ -4,11 +4,13 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import jope.research
+
 import numpy as np
 import pytest
 
 
-MODULE_PATH = Path(__file__).parents[1] / "scripts" / "hyperion_train_audit.py"
+MODULE_PATH = Path(jope.research.__file__).parent / "hyperion_train_audit.py"
 SPEC = importlib.util.spec_from_file_location("hyperion_train_audit", MODULE_PATH)
 assert SPEC and SPEC.loader
 audit = importlib.util.module_from_spec(SPEC)

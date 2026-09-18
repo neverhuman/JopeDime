@@ -21,9 +21,10 @@ import sys
 import urllib.request
 
 
-ROOT = Path(__file__).resolve().parents[1]
-INDEX = ROOT / "manifests" / "epoch6" / "JopeExternalFixtureIndex.v1.json"
-LEGACY_REPO = ROOT / "sotarena"
+ROOT = Path(__file__).resolve().parents[4]  # repository root (python/src/jope/research/ -> repo)
+MANIFESTS = ROOT / "crates" / "jope-campaigns" / "manifests"
+INDEX = MANIFESTS / "epoch6" / "JopeExternalFixtureIndex.v1.json"
+LEGACY_REPO = ROOT / "benchmarks" / "sotarena"
 MODERN_REPO = Path("/home/ubuntu/sotarena")
 REPOSITORY_PATHS = {
     "legacy-sotarena": LEGACY_REPO,
@@ -228,7 +229,7 @@ def build_index() -> dict:
 
     golden = [
         line.strip()
-        for line in (ROOT / "manifests/panel.txt").read_text().splitlines()
+        for line in (MANIFESTS / "panel.txt").read_text().splitlines()
         if line.strip()
     ]
     require(
@@ -246,7 +247,7 @@ def build_index() -> dict:
             entries.append(git_entry(legacy, path, path, "train_only"))
 
     binary_manifest = json.loads(
-        (ROOT / "manifests/binary42-test-adaptive.v1.json").read_text()
+        (MANIFESTS / "binary42-test-adaptive.v1.json").read_text()
     )
     binary = binary_manifest.get("datasets")
     require(
@@ -403,7 +404,7 @@ def stable_double_read(path: Path) -> tuple[bytes, os.stat_result, str]:
 
 
 def frozen_binary_digests() -> dict[str, dict[str, str]]:
-    value = json.loads((ROOT / "manifests/binary42-test-adaptive.v1.json").read_text())
+    value = json.loads((MANIFESTS / "binary42-test-adaptive.v1.json").read_text())
     return {
         row["id"]: {
             "train": row["train_sha256"],

@@ -1,7 +1,6 @@
 import hashlib
 import json
 import random
-import sys
 import tomllib
 from collections import Counter
 from pathlib import Path
@@ -9,7 +8,6 @@ from types import SimpleNamespace
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 
 from test_exact_common import (  # noqa: E402
     SLOT_COUNTS,
@@ -246,7 +244,6 @@ def test_task_valid_rejects_cross_task_heads():
 
 
 def test_fused_policy_batches_are_exactly_75_25():
-    sys.path.insert(0, "/home/ubuntu/jope-prime/src")
     from jope.policy.train_v3 import _grouped_batches
 
     rows = [

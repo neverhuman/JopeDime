@@ -4,11 +4,13 @@ import importlib.util
 import json
 from pathlib import Path
 
+import jope.research
+
 import pytest
 
 
 SCRIPT = (
-    Path(__file__).parents[1] / "scripts" / "verify_old_hyperion_vs_replays.py"
+    Path(jope.research.__file__).parent / "verify_old_hyperion_vs_replays.py"
 )
 SPEC = importlib.util.spec_from_file_location("verify_old_hyperion_vs_replays", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
