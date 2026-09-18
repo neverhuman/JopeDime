@@ -56,6 +56,16 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 ulid = { version = "1", features = ["serde"] }
 zeroize = "1"
 
+# Hashing sits on every authority/witness path (the engine hashes its own ~220 MB debug binary and
+# the worker binary at startup). Unoptimised sha2 made the 30 s readiness deadline of the
+# fit-authority tests unreachable in dev/test builds (docs/parity/test-run-20260918.md); release
+# builds are unaffected.
+[profile.dev.package.sha2]
+opt-level = 3
+
+[profile.dev.package.digest]
+opt-level = 3
+
 [profile.release]
 opt-level = 3
 lto = true
