@@ -1,0 +1,11 @@
+# Minimal cargo-nextest configuration used ONLY by deploy/ci/test-inventory.sh as a fallback when the
+# tree's .config/nextest.toml cannot be loaded (nextest validates every profile's default-filter against
+# the workspace; on main the `pr` filter still names packages that do not exist until wp1/test-timings
+# lands). No filters: the inventory must enumerate every test in the workspace.
+[profile.default]
+slow-timeout = { period = "600s", terminate-after = 2 }
+fail-fast = false
+
+[profile.main]
+slow-timeout = { period = "600s", terminate-after = 2 }
+fail-fast = false

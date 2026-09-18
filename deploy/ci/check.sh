@@ -9,6 +9,8 @@ step "shell syntax + shellcheck"; while IFS= read -r f; do bash -n "$f"; done < 
 step "actionlint"; if command -v actionlint >/dev/null; then actionlint -no-color; else echo "actionlint not installed (skipped locally; CI installs it)"; fi
 step "gitleaks"; if command -v gitleaks >/dev/null; then gitleaks detect --redact --no-banner --config .gitleaks.toml --source . ; else echo "gitleaks not installed (skipped locally; CI installs it)"; fi
 step "no family leftovers"; leftovers=$(git grep -nE 'git\.neverhuman\.org|127\.0\.0\.1:8787' -- crates python deploy .github ':!docs' ':!**/docs/**' ':!crates/jope-engine/assets/grammar/*' | grep -v 'deploy/kernel-v1/source/' || true); if [ -n "$leftovers" ]; then head -20 <<<"$leftovers"; echo "family remotes still referenced above"; fail=1; else echo "ok"; fi
+step "capability parity matrix (docs/parity/capability-matrix.md; source-parsed subcommands, --help cross-check runs in the test lanes)"; if ! bash deploy/ci/parity-matrix.sh --no-build; then fail=1; fi
+step "test inventory (docs/parity/test-inventory.json; Python static scan here, the nextest half runs where the workspace is built)"; if ! bash deploy/ci/test-inventory.sh --no-rust --static-python; then fail=1; fi
 step "no absolute home paths in code"; abs=$(git grep -nE '/home/[a-z]+/' -- crates/*/src crates/*/tests python/src deploy/systemd .github || true); if [ -n "$abs" ]; then head -20 <<<"$abs"; echo "absolute paths above: $(wc -l <<<"$abs") hits (allowed only until WP4 completes)"; else echo "ok"; fi
 step "size caps"; big=$(git ls-files -z | xargs -0 stat -c '%s %n' | awk '$1>5242880{print}' ); if [ -n "$big" ]; then echo "$big"; echo "files over 5 MiB"; fail=1; else echo "ok"; fi
 exit $fail
