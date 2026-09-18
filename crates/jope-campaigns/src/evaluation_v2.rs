@@ -71,7 +71,9 @@ impl EvaluatorIdentityV1 {
         // ADR-0004: a receipt written by an earlier build stays valid under the identity it recorded,
         // provided that identity is in the committed table of known evaluator implementations. Only
         // *producing* a receipt requires the current identity (see `current()` callers).
-        if !is_current && !known_evaluator_identity(&self.implementation_sha256, &self.cargo_lock_sha256) {
+        if !is_current
+            && !known_evaluator_identity(&self.implementation_sha256, &self.cargo_lock_sha256)
+        {
             bail!(
                 "evaluator implementation/Cargo.lock identity matches neither this build nor a known historical \
                  evaluator (crates/jope-campaigns/known-evaluator-identities.json)"
@@ -99,7 +101,8 @@ fn known_evaluator_identity(implementation_sha256: &str, cargo_lock_sha256: &str
     static TABLE: OnceLock<Vec<(String, String)>> = OnceLock::new();
     let table = TABLE.get_or_init(|| {
         let raw: serde_json::Value =
-            serde_json::from_str(include_str!("../known-evaluator-identities.json")).expect("known-evaluator-identities.json parses");
+            serde_json::from_str(include_str!("../known-evaluator-identities.json"))
+                .expect("known-evaluator-identities.json parses");
         raw["identities"]
             .as_array()
             .map(|rows| {
@@ -114,9 +117,9 @@ fn known_evaluator_identity(implementation_sha256: &str, cargo_lock_sha256: &str
             })
             .unwrap_or_default()
     });
-    table
-        .iter()
-        .any(|(implementation, lock)| implementation == implementation_sha256 && lock == cargo_lock_sha256)
+    table.iter().any(|(implementation, lock)| {
+        implementation == implementation_sha256 && lock == cargo_lock_sha256
+    })
 }
 
 fn current_implementation_sha256() -> String {
@@ -141,7 +144,10 @@ fn compute_implementation_sha256() -> String {
             include_bytes!("commands/exact_cv.rs").as_slice(),
         ),
         ("Cargo.toml", include_bytes!("../Cargo.toml").as_slice()),
-        ("Cargo.lock", include_bytes!("../../../Cargo.lock").as_slice()),
+        (
+            "Cargo.lock",
+            include_bytes!("../../../Cargo.lock").as_slice(),
+        ),
         (
             "vendor/feat-math/Cargo.toml",
             include_bytes!("../../feat-math/Cargo.toml").as_slice(),
