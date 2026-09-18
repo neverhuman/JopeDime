@@ -1,0 +1,78 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jope"
+version = "0.1.0"
+description = "JopeDime Python: dataset encoders, the policy transformer trainer, self-play services and research drivers"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+# Derived from an import scan of python/src (WP6, B22), not from the historical jope-prime manifest.
+dependencies = [
+  "numpy>=1.26,<3",
+  "torch>=2.4",
+  "safetensors>=0.4",
+  "pandas>=2.2",
+  "scipy>=1.11",
+  "joblib>=1.4",
+  "pyarrow>=17",
+  "orjson>=3.10",
+  "psutil>=5.9",
+  "rich>=13.7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.6", "mypy>=1.11", "jsonschema>=4.23", "pip-licenses>=5"]
+foundry = ["catboost>=1.2.8", "lightgbm>=4.0", "scikit-learn>=1.4", "xgboost>=2.0"]
+research = ["matplotlib>=3.9", "autogluon.tabular>=1.1; python_version < '3.13'", "tabpfn>=2.0", "tabicl>=0.1"]
+cpu = ["torch>=2.4"]
+cu130 = ["torch>=2.4"]
+
+[project.scripts]
+jope-py = "jope.cli:main"
+
+[tool.uv]
+# torch index per extra: `uv sync --extra cpu` (hosted CI) or `--extra cu130` (xbabe2)
+conflicts = [[{ extra = "cpu" }, { extra = "cu130" }]]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu", extra = "cpu" },
+  { index = "pytorch-cu130", extra = "cu130" },
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/jope"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+extend-exclude = ["src/jope/research", "legacy"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+  "xbabe2: needs the xbabe2 host (GPU, local state plane, SCQ); never runs on hosted runners",
+]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+packages = ["jope"]
