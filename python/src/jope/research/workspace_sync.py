@@ -14,7 +14,6 @@ import shlex
 import shutil
 import socket
 import subprocess
-import sys
 import tempfile
 import time
 import uuid
@@ -22,10 +21,9 @@ import uuid
 import workspace_store as store
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'parallel/tools'))
-from kernel_remote_state import compare, compare_health
-from kernel_bundle import verify_bundle
-from kernel_release import verify_release
+from jope.tools.kernel_bundle import verify_bundle
+from jope.tools.kernel_release import verify_release
+from jope.tools.kernel_remote_state import compare, compare_health
 
 
 class BulkWindowEnded(Exception):
