@@ -1,0 +1,19 @@
+[package]
+name = "jain-smartcluster-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Versioned workload, identity, resource, state, and event contracts for Jain Smartcluster"
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+ulid.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+
+[lints]
+workspace = true
+

@@ -132,7 +132,7 @@ fn verified_growth(binding: &FileBinding) -> Result<Value> {
     let root = Path::new(field(&request, "root")?).canonicalize()?;
     let helper = root.join("tools/family_growth_policy.py");
     ensure!(
-        file_hash(&helper)? == hash(include_bytes!("../tools/family_growth_policy.py")),
+        file_hash(&helper)? == hash(include_bytes!("../policy/family_growth_policy.py")),
         "growth verifier differs from compiled release"
     );
     let output = Command::new("/usr/bin/python3")

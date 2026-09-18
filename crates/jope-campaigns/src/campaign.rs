@@ -2521,7 +2521,7 @@ mod tests {
     fn production_generation_zero_is_pinned_canonical_and_unique() {
         let bytes = include_bytes!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/../../../prime/runs/exact-cv-inputs/faaa420e922e4128.generation-zero.txt"
+            "/seeds/generation-zero.txt"
         ));
         assert_eq!(
             sha256_bytes(bytes),

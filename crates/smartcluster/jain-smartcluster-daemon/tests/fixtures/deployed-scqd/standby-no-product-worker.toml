@@ -1,0 +1,48 @@
+# Sanitized reproduction of the scqd.toml key structure deployed on the xbabe1
+# standby node (July fabric-v2 daemon). Key names and table layout match the
+# deployed file exactly. The UID/GID values match the service accounts on the
+# deployed host (they are not secrets); cluster_id and the other values are
+# illustrative.
+socket_path = "/run/jain-smartcluster/scqd.sock"
+state_path = "/var/lib/jain-smartcluster/scqd.redb"
+event_dir = "/var/lib/jain-smartcluster/events"
+cgroup_root = "/sys/fs/cgroup/jain-smartcluster.slice"
+socket_mode = 432 # 0o660
+embedded = false
+
+[fabric]
+enabled = false
+local_executor = true
+edge_enabled = false
+cluster_id = "node-a-standby"
+artifact_root = "/var/lib/jain-smartcluster/artifacts"
+artifact_key_path = "/var/lib/jain-smartcluster/artifact.key"
+commitment_ttl_ms = 30000
+max_cpu_idle_slots = 1
+max_gpu_idle_slots = 1
+
+[scheduler]
+interactive_cpu_headroom_millicores = 2000
+interactive_ram_headroom_bytes = 4294967296
+interactive_gpu_headroom_per_mille = 0
+recovery_quiet_ms = 2000
+max_running_jobs = 1024
+max_running_jobs_per_tenant = 128
+max_queued_jobs = 10000
+max_queued_jobs_per_tenant = 2500
+tenant_weights = { }
+
+[auth]
+admin_uids = [0]
+system_uids = [995]
+edge_uid = 999
+broker_uid = 994
+web_uid = 996
+web_principal = "jain-web"
+
+[workers]
+jain_worker = "/usr/libexec/jain/jain-worker"
+
+[execution]
+worker_uid = 999
+worker_gid = 987

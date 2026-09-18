@@ -217,7 +217,7 @@ fn execution_query_key(input_key: &str, executable: &str, runtime: &str) -> Resu
         &json!({"schema":"parallel.query_execution_identity.v1",
         "inputs_sha256":input_key,"executable_sha256":executable,"runtime_sha256":runtime,
         "scorer_source_sha256":hash(include_bytes!("query.rs")),
-        "predictor_source_sha256":hash(include_bytes!("../../assets/source/jope-dime/vendor/feat-math/src/model.rs")),
+        "predictor_source_sha256":hash(include_bytes!("../../../feat-math/src/model.rs")),
         "preprocessing_source_sha256":hash(include_bytes!("../prepare.rs"))}),
     )?))
 }
@@ -436,7 +436,7 @@ pub(super) fn score_verified(
         metrics_sha256: hash(&metrics),
         producer_source_sha256: hash(include_bytes!("query.rs")),
         predictor_source_sha256: hash(include_bytes!(
-            "../../assets/source/jope-dime/vendor/feat-math/src/model.rs"
+            "../../../feat-math/src/model.rs"
         )),
         preprocessing_source_sha256: hash(include_bytes!("../prepare.rs")),
         producer_executable_sha256,
@@ -522,7 +522,7 @@ pub fn verify_artifacts(
         receipt.producer_source_sha256 == hash(include_bytes!("query.rs"))
             && receipt.predictor_source_sha256
                 == hash(include_bytes!(
-                    "../../assets/source/jope-dime/vendor/feat-math/src/model.rs"
+                    "../../../feat-math/src/model.rs"
                 ))
             && receipt.preprocessing_source_sha256 == hash(include_bytes!("../prepare.rs"))
             && valid_sha(&receipt.producer_executable_sha256)

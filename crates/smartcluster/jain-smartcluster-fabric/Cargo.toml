@@ -1,0 +1,23 @@
+[package]
+name = "jain-smartcluster-fabric"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Fail-closed Fabric placement and fencing adapter for governed Jain workloads"
+
+[dependencies]
+ed25519-dalek.workspace = true
+nix.workspace = true
+postcard.workspace = true
+serde.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+ulid.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true

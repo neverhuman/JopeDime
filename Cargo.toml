@@ -1,0 +1,67 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/feat-math",
+  "crates/battle-gpu",
+  "crates/jope-engine",
+  "crates/jope-campaigns",
+  "crates/smartcluster/jain-smartcluster-core",
+  "crates/smartcluster/jain-smartcluster",
+  "crates/smartcluster/jain-smartcluster-fabric",
+  "crates/smartcluster/jain-smartcluster-daemon",
+  "crates/smartcluster/jain-worker",
+  "crates/smartcluster/jainnode",
+  "crates/smartcluster/scq",
+]
+exclude = ["crates/hyperion/host", "deploy/kernel-v1/source", "xtools/ot-export"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.96"
+license = "Apache-2.0"
+repository = "https://github.com/veox-ai/JopeDime"
+
+[workspace.dependencies]
+# shared by feat-math / jope-campaigns (former root workspace) and the vendored smartcluster workspace
+anyhow = "1"
+async-trait = "0.1"
+clap = { version = "4", features = ["derive", "env"] }
+crc32fast = "1"
+crossterm = "0.29"
+ed25519-dalek = "2"
+futures-core = "0.3"
+futures-util = "0.3"
+hex = "0.4"
+nix = { version = "0.29", features = ["fs", "process", "signal", "socket", "term", "user"] }
+postcard = { version = "1", default-features = false, features = ["use-std"] }
+proptest = "1"
+rand = "0.8"
+rayon = "1"
+redb = "2"
+rustls = "0.23"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+tempfile = "3"
+thiserror = "2"
+tokio = { version = "1", features = ["fs", "io-std", "io-util", "macros", "net", "process", "rt-multi-thread", "signal", "sync", "time"] }
+tokio-rustls = "0.26"
+toml = "0.8"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+ulid = { version = "1", features = ["serde"] }
+zeroize = "1"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+must_use_candidate = "allow"

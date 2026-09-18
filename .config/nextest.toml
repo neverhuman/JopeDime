@@ -1,0 +1,17 @@
+# Test tiers (plan: CI and testing). Profile `pr` runs on hosted runners; `main` on xbabe2.
+[profile.default]
+slow-timeout = { period = "120s", terminate-after = 3 }
+fail-fast = false
+
+[profile.pr]
+# Slow deadline tests and the campaign/self-play control planes run only on main (docs/parity/test-timings.json).
+default-filter = "not (package(jope-campaigns) | package(jope-selfplay) | test(/eval_registry::(service|authority|witness)::/) | test(/native_strict/))"
+slow-timeout = { period = "120s", terminate-after = 2 }
+fail-fast = false
+
+[profile.pr.junit]
+path = "junit.xml"
+
+[profile.main]
+slow-timeout = { period = "600s", terminate-after = 2 }
+fail-fast = false

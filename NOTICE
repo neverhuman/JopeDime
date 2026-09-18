@@ -1,0 +1,7 @@
+JopeDime — one-shot model routing: dataset → encoders → policy → genetic-programming genome → generated source code.
+Copyright 2026 veox-ai / neverhuman. Licensed under the Apache License, Version 2.0.
+
+This repository was assembled on 2026-09-18 from the jope-dime lineage (jain-split family) with filtered history;
+the complete unfiltered history is archived as a git bundle in the project's S3 archive bucket.
+Third-party model weights and datasets are not distributed in this repository; their licences are recorded in
+models/manifest.json and datasets/manifest.json and printed by `jope models fetch` / `jope datasets fetch`.

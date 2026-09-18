@@ -1,0 +1,10 @@
+title = "JopeDime gitleaks"
+[extend]
+useDefault = true
+[[rules]]
+id = "jope-env-files"
+description = "environment files with credentials must never be committed"
+path = '''(^|/)[^/]*\.env$'''
+[allowlist]
+paths = ['''^docs/legacy/''', '''\.sha256$''', '''SHA256SUMS$''', '''^python/src/jope/research/test_workspace_sync\.py$''']  # synthetic '-----BEGIN OPENSSH PRIVATE KEY-----\nsecret' fixture
+regexes = ['''sha256[:=]\s*[0-9a-f]{64}''']

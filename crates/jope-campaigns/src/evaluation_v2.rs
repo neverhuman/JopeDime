@@ -43,7 +43,7 @@ impl EvaluatorIdentityV1 {
                 "jope-dime/dsl-abi/v1",
                 b"vendored-feat-math.GenomeIr+fit+Model::predict.v1",
             ),
-            cargo_lock_sha256: hex::encode(Sha256::digest(include_bytes!("../Cargo.lock"))),
+            cargo_lock_sha256: hex::encode(Sha256::digest(include_bytes!("../../../Cargo.lock"))),
         };
         value
     }
@@ -62,7 +62,7 @@ impl EvaluatorIdentityV1 {
             "jope-dime/dsl-abi/v1",
             b"vendored-feat-math.GenomeIr+fit+Model::predict.v1",
         );
-        let expected_lock = hex::encode(Sha256::digest(include_bytes!("../Cargo.lock")));
+        let expected_lock = hex::encode(Sha256::digest(include_bytes!("../../../Cargo.lock")));
         if self.implementation_sha256 != current_implementation_sha256()
             || self.dsl_abi_sha256 != expected_dsl
             || self.cargo_lock_sha256 != expected_lock
@@ -106,134 +106,134 @@ fn compute_implementation_sha256() -> String {
             include_bytes!("commands/exact_cv.rs").as_slice(),
         ),
         ("Cargo.toml", include_bytes!("../Cargo.toml").as_slice()),
-        ("Cargo.lock", include_bytes!("../Cargo.lock").as_slice()),
+        ("Cargo.lock", include_bytes!("../../../Cargo.lock").as_slice()),
         (
             "vendor/feat-math/Cargo.toml",
             include_bytes!("../vendor/feat-math/Cargo.toml").as_slice(),
         ),
         (
             "vendor/feat-math/src/advanced_v3.rs",
-            include_bytes!("../vendor/feat-math/src/advanced_v3.rs").as_slice(),
+            include_bytes!("../../feat-math/src/advanced_v3.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/boost2.rs",
-            include_bytes!("../vendor/feat-math/src/boost2.rs").as_slice(),
+            include_bytes!("../../feat-math/src/boost2.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/credit.rs",
-            include_bytes!("../vendor/feat-math/src/credit.rs").as_slice(),
+            include_bytes!("../../feat-math/src/credit.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/dsl.rs",
-            include_bytes!("../vendor/feat-math/src/dsl.rs").as_slice(),
+            include_bytes!("../../feat-math/src/dsl.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/emit_py.rs",
-            include_bytes!("../vendor/feat-math/src/emit_py.rs").as_slice(),
+            include_bytes!("../../feat-math/src/emit_py.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/emit_rs.rs",
-            include_bytes!("../vendor/feat-math/src/emit_rs.rs").as_slice(),
+            include_bytes!("../../feat-math/src/emit_rs.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/evolve.rs",
-            include_bytes!("../vendor/feat-math/src/evolve.rs").as_slice(),
+            include_bytes!("../../feat-math/src/evolve.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/explain.rs",
-            include_bytes!("../vendor/feat-math/src/explain.rs").as_slice(),
+            include_bytes!("../../feat-math/src/explain.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/folds.rs",
-            include_bytes!("../vendor/feat-math/src/folds.rs").as_slice(),
+            include_bytes!("../../feat-math/src/folds.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/full_rust.rs",
-            include_bytes!("../vendor/feat-math/src/full_rust.rs").as_slice(),
+            include_bytes!("../../feat-math/src/full_rust.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/genome.rs",
-            include_bytes!("../vendor/feat-math/src/genome.rs").as_slice(),
+            include_bytes!("../../feat-math/src/genome.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/gpr.rs",
-            include_bytes!("../vendor/feat-math/src/gpr.rs").as_slice(),
+            include_bytes!("../../feat-math/src/gpr.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/heads.rs",
-            include_bytes!("../vendor/feat-math/src/heads.rs").as_slice(),
+            include_bytes!("../../feat-math/src/heads.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/krr.rs",
-            include_bytes!("../vendor/feat-math/src/krr.rs").as_slice(),
+            include_bytes!("../../feat-math/src/krr.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/ksmooth.rs",
-            include_bytes!("../vendor/feat-math/src/ksmooth.rs").as_slice(),
+            include_bytes!("../../feat-math/src/ksmooth.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/lib.rs",
-            include_bytes!("../vendor/feat-math/src/lib.rs").as_slice(),
+            include_bytes!("../../feat-math/src/lib.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/math_expr.rs",
-            include_bytes!("../vendor/feat-math/src/math_expr.rs").as_slice(),
+            include_bytes!("../../feat-math/src/math_expr.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/mathexpr.rs",
-            include_bytes!("../vendor/feat-math/src/mathexpr.rs").as_slice(),
+            include_bytes!("../../feat-math/src/mathexpr.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/members.rs",
-            include_bytes!("../vendor/feat-math/src/members.rs").as_slice(),
+            include_bytes!("../../feat-math/src/members.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/metrics.rs",
-            include_bytes!("../vendor/feat-math/src/metrics.rs").as_slice(),
+            include_bytes!("../../feat-math/src/metrics.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/model.rs",
-            include_bytes!("../vendor/feat-math/src/model.rs").as_slice(),
+            include_bytes!("../../feat-math/src/model.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/ops.rs",
-            include_bytes!("../vendor/feat-math/src/ops.rs").as_slice(),
+            include_bytes!("../../feat-math/src/ops.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/portfolio.rs",
-            include_bytes!("../vendor/feat-math/src/portfolio.rs").as_slice(),
+            include_bytes!("../../feat-math/src/portfolio.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/rng.rs",
-            include_bytes!("../vendor/feat-math/src/rng.rs").as_slice(),
+            include_bytes!("../../feat-math/src/rng.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/router_policy.rs",
-            include_bytes!("../vendor/feat-math/src/router_policy.rs").as_slice(),
+            include_bytes!("../../feat-math/src/router_policy.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/spec.rs",
-            include_bytes!("../vendor/feat-math/src/spec.rs").as_slice(),
+            include_bytes!("../../feat-math/src/spec.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/stack.rs",
-            include_bytes!("../vendor/feat-math/src/stack.rs").as_slice(),
+            include_bytes!("../../feat-math/src/stack.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/stage_cache.rs",
-            include_bytes!("../vendor/feat-math/src/stage_cache.rs").as_slice(),
+            include_bytes!("../../feat-math/src/stage_cache.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/target_transform.rs",
-            include_bytes!("../vendor/feat-math/src/target_transform.rs").as_slice(),
+            include_bytes!("../../feat-math/src/target_transform.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/tokens.rs",
-            include_bytes!("../vendor/feat-math/src/tokens.rs").as_slice(),
+            include_bytes!("../../feat-math/src/tokens.rs").as_slice(),
         ),
         (
             "vendor/feat-math/src/transpile.rs",
-            include_bytes!("../vendor/feat-math/src/transpile.rs").as_slice(),
+            include_bytes!("../../feat-math/src/transpile.rs").as_slice(),
         ),
     ] {
         hash.bytes(name, bytes);

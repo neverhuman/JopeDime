@@ -9,7 +9,7 @@ description = "Frozen 42-dataset jope-dime evolutionary regression campaign"
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 crossterm = "=0.28.1"
-feat-math = { path = "vendor/feat-math" }
+feat-math = { path = "../feat-math" }
 hex = "0.4"
 libc = "0.2"
 memmap2 = "0.9"
@@ -23,7 +23,7 @@ zip = { version = "2", default-features = false, features = ["deflate"] }
 # GPU screening backend (raw CUDA driver FFI). Optional: the default build is
 # dependency-identical; only `--features gpu` links it. The frozen exact-cv
 # lane keeps rejecting GPU flags regardless.
-battle-gpu = { path = "vendor/battle-gpu", optional = true }
+battle-gpu = { path = "../battle-gpu", optional = true }
 
 [dev-dependencies]
 tempfile = "3"
@@ -32,23 +32,3 @@ tempfile = "3"
 gpu = ["dep:battle-gpu"]
 gpr-scratch-reuse = ["feat-math/gpr-scratch-reuse"]
 
-[workspace]
-resolver = "2"
-members = [".", "vendor/feat-math", "vendor/battle-gpu"]
-
-[workspace.package]
-version = "0.1.0"
-edition = "2021"
-license = "Apache-2.0"
-
-[workspace.dependencies]
-anyhow = "1"
-rayon = "1"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-sha2 = "0.10"
-
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1

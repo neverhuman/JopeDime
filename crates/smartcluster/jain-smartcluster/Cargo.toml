@@ -1,0 +1,25 @@
+[package]
+name = "jain-smartcluster"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Async Unix-socket client and WorkloadDispatcher for Jain Smartcluster"
+
+[dependencies]
+async-trait.workspace = true
+futures-core.workspace = true
+jain-smartcluster-core = { path = "../jain-smartcluster-core", version = "8.0.0" }
+nix.workspace = true
+postcard.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

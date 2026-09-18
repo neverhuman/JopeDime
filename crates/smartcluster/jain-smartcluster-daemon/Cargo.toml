@@ -1,0 +1,47 @@
+[package]
+name = "jain-smartcluster-daemon"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Single-node durable workload scheduler and executor for Jain Smartcluster"
+
+[lib]
+name = "jain_smartcluster_daemon"
+path = "src/lib.rs"
+
+[[bin]]
+name = "scqd"
+path = "src/bin/scqd.rs"
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+clap.workspace = true
+crc32fast.workspace = true
+hex.workspace = true
+jain-smartcluster = { path = "../jain-smartcluster", version = "8.0.0" }
+jain-smartcluster-core = { path = "../jain-smartcluster-core", version = "8.0.0" }
+nix.workspace = true
+postcard.workspace = true
+nvml-wrapper = "0.12.1"
+pidfd-util = { version = "0.1.0", default-features = false }
+rand.workspace = true
+redb.workspace = true
+rustix = { version = "1", features = ["process", "termios"] }
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+toml.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+ulid.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true
