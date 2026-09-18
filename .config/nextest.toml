@@ -4,8 +4,8 @@ slow-timeout = { period = "120s", terminate-after = 3 }
 fail-fast = false
 
 [profile.pr]
-# Slow deadline tests and the campaign crate (package jope-dime-regressor until WP5 renames it; jope-selfplay joins when it exists) run only on main (docs/parity/test-timings.json).
-default-filter = "not (package(jope-dime-regressor) | test(/eval_registry::(service|authority|witness)::/) | test(/native_strict/))"
+# Slow deadline tests and the campaign/self-play control planes run only on main (docs/parity/test-timings.json).
+default-filter = "not (package(jope-dime-regressor) | test(=actual_128_192_256_routes_replay_under_retries_and_shuffled_completion) | test(=canceled_cache_commits_resume_without_adopting_partial_contributions) | test(=emit_plan_checks_every_immutable_spec_and_never_submits) | test(=fast_profile_portfolio_head) | test(=golden_portfolio_core) | test(=golden_ridge_gcv_screen_wide) | test(=original_start_and_rank_are_witnessed_retained_and_single_use) | test(=portfolio_noise_target_no_leak) | test(=sharded_interruption_tampering_and_source_order_are_enforced) | test(=sigkill_at_each_cache_durable_boundary_keeps_only_complete_entries) | test(=transfer_ranking_excludes_target_family_and_direct_dl_sources))"
 slow-timeout = { period = "120s", terminate-after = 2 }
 fail-fast = false
 
