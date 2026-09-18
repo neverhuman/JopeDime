@@ -181,7 +181,7 @@ mod tests {
 
     fn roots() -> Roots {
         Roots {
-            home: PathBuf::from("/opt/jope/home"),
+            home: PathBuf::from("/opt/jope/checkout"),
             state: PathBuf::from("/var/lib/jope"),
             bundle: PathBuf::from("/opt/jope/bundle/bin"),
             user: "jope".into(),
@@ -194,7 +194,7 @@ mod tests {
         let out = render(unit, &roots(), Path::new("t.in")).unwrap();
         assert_eq!(
             out,
-            "[Service]\nUser=jope\nWorkingDirectory=/var/lib/jope\nExecStart=/opt/jope/bundle/bin/tool --root /var/lib/jope --spec /opt/jope/home/m.json\n# mail me@example.org, ExecStart=@/bin/x\n"
+            "[Service]\nUser=jope\nWorkingDirectory=/var/lib/jope\nExecStart=/opt/jope/bundle/bin/tool --root /var/lib/jope --spec /opt/jope/checkout/m.json\n# mail me@example.org, ExecStart=@/bin/x\n"
         );
     }
 

@@ -33,7 +33,7 @@ placeholders — `@JOPE_HOME@`, `@JOPE_STATE@`, `@JOPE_BUNDLE@` (the installed
 binaries directory), `@JOPE_USER@`. Render them with
 
 ```
-deploy/systemd/render.sh --home /opt/jope/home --state /var/lib/jope \
+deploy/systemd/render.sh --home /opt/jope/checkout --state /var/lib/jope \
     --bundle /opt/jope/bundle/bin --user jope --out /tmp/units
 ```
 
