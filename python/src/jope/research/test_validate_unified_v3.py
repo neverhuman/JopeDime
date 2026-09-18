@@ -2,14 +2,10 @@ from __future__ import annotations
 
 import copy
 import json
-from pathlib import Path
-import sys
 
 import pytest
 
 
-SCRIPTS = Path(__file__).parent
-sys.path.insert(0, str(SCRIPTS))
 
 import validate_unified_v3 as validator  # noqa: E402
 

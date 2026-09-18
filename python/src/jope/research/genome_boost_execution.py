@@ -55,8 +55,6 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-SCRIPTS_ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(SCRIPTS_ROOT))
 
 from golden46_execution import (  # noqa: E402  (env limits must precede heavy imports)
     atomic_save_npy,

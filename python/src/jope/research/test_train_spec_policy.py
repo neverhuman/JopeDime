@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 import json
-import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
 
 
-SCRIPTS = Path(__file__).resolve().parent
-sys.path.insert(0, str(SCRIPTS))
 
 import jope_spec_policy  # noqa: E402
 import test_exact_train as trainer  # noqa: E402
