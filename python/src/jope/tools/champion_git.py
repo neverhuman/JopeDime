@@ -453,7 +453,7 @@ def main(argv=None):
     parser.add_argument('--manifest', help='continuous manifest within root; the live evaluator is bindings[cpu_executable]')
     parser.add_argument('--store', default='runs/champions', help='champion store within root')
     parser.add_argument('--repo', help='sync: git repository directory (created if absent)')
-    parser.add_argument('--remote', help='sync: remote url (https://git.neverhuman.org/git/<owner>/<repo>.git)')
+    parser.add_argument('--remote', help='sync: remote url (https://<host>/<owner>/<repo>.git)')
     parser.add_argument('--branch', default='main')
     parser.add_argument('--credentials', help='sync: git-credentials file (0600, never read by this tool)')
     parser.add_argument('--all-evaluators', action='store_true', help='include identities of every evaluator (default: the live one)')

@@ -168,7 +168,7 @@ class ChampionGitTests(unittest.TestCase):
         os.chmod(loose, 0o644)
         self.assertEqual(cg.push(self.repo, state, 'https://git.example/x.git', 'main', str(loose))['status'], 'no_credentials')
         self.assertIn('0600', cg.push(self.repo, state, 'https://git.example/x.git', 'main', str(loose))['last_error'])
-        self.assertEqual(cg.scrub('fatal: https://user:token@git.neverhuman.org/x 403'), 'fatal: https://<redacted>@git.neverhuman.org/x 403')
+        self.assertEqual(cg.scrub('fatal: https://user:token@git.example/x 403'), 'fatal: https://<redacted>@git.example/x 403')
 
 
 if __name__ == '__main__':
