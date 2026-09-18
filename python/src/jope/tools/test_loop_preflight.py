@@ -1,7 +1,7 @@
 import json
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
 import loop_preflight as lp
 from resume_expired_cycle import sha

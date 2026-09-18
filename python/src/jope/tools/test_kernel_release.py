@@ -1,9 +1,17 @@
-import json
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
-from kernel_release import HYPERION, KERNEL, dependency_coverage, manifest, stage, sync_mirror, verify_mirror, verify_release
+from kernel_release import (
+    HYPERION,
+    KERNEL,
+    dependency_coverage,
+    manifest,
+    stage,
+    sync_mirror,
+    verify_mirror,
+    verify_release,
+)
 
 
 class KernelReleaseTests(unittest.TestCase):

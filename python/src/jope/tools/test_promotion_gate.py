@@ -1,8 +1,8 @@
 import copy
 import hashlib
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import continuous_learning as controller

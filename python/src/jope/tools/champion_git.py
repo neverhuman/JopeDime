@@ -36,11 +36,10 @@ import os
 import re
 import stat
 import subprocess
-import sys
 import time
 from pathlib import Path
 
-from resume_expired_cycle import require, sha
+from resume_expired_cycle import require
 
 SCHEMA = 'parallel.cut_champion.v1'
 STATE_SCHEMA = 'parallel.champion_git_state.v1'
@@ -438,7 +437,7 @@ def sync(root, store, repo, remote, branch, credentials, evaluator, vocabulary, 
                    push=remote_state, claim=CLAIM, final_tests_opened=False)
     if receipts:
         Path(receipts).mkdir(parents=True, exist_ok=True)
-        stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+        stamp = datetime.datetime.now(datetime.UTC).strftime('%Y%m%dT%H%M%SZ')
         (Path(receipts) / ('champion-git-%s-%s.json' % (stamp, (head or 'none')[:12]))).write_bytes(json.dumps(receipt, sort_keys=True, indent=1).encode())
     if feed:
         write_feed(feed, rows, state, evaluator, head, dict(at=receipt['at'], committed=len(committed), invalid_count=len(errors), push=remote_state.get('status')))
@@ -482,7 +481,7 @@ def main(argv=None):
         else:
             print('%-34s %-18s %3s %-15s %12s %5s %6s %9s %7s %s' % ('family', 'dataset', 'cut', 'partition', 'best rmse', 'impr', 'events', 'uncommit', 'pushed', 'last event (UTC)'))
             for r in rows:
-                when = datetime.datetime.fromtimestamp(r['last_event'], datetime.timezone.utc).strftime('%m-%d %H:%M') if r['last_event'] else '-'
+                when = datetime.datetime.fromtimestamp(r['last_event'], datetime.UTC).strftime('%m-%d %H:%M') if r['last_event'] else '-'
                 print('%-34s %-18s %3s %-15s %12.6g %5s %6d %9d %7s %s' % (r['family'][:34], r['dataset'][:18], r['cut'], r['partition'], r['rmse'] if r['rmse'] is not None else float('nan'),
                                                                         r['improvements'], r['events'], r['uncommitted_events'], r['pushed'], when))
             print('identities %d | events %d | uncommitted %d | remote %s' % (len(rows), sum(r['events'] for r in rows), sum(r['uncommitted_events'] for r in rows),

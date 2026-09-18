@@ -15,8 +15,8 @@ from .data.active import (
     TARGET_SUMMARY_DIM,
     format_param_token,
     format_pipeline_actions,
-    parse_pipeline_actions,
     parse_param_token,
+    parse_pipeline_actions,
 )
 from .grammar import HEADS, TRANSFORMS
 from .schema import EMBEDDING_DIM

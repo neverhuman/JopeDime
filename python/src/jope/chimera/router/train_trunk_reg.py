@@ -9,17 +9,14 @@ Metric = R² (1 - normalized MSE), higher is better — mirrors the classifier's
 from __future__ import annotations
 
 import argparse
-import copy
 import os
 import time
 
 import numpy as np
 import torch
 import torch.distributed as dist
-import torch.nn.functional as F
-
+from python.fusion.cache import list_cache_files, load_cache_packed
 from python.fusion.model import StackFusionReg
-from python.fusion.cache import load_cache_packed, list_cache_files
 
 REG_CACHE = os.path.expanduser("~/fable_god/cache/fusion/reg_packed")
 
@@ -108,7 +105,7 @@ def main():
     opt = torch.optim.AdamW(core.parameters(), lr=args.lr, weight_decay=1e-4)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, args.steps)
     ema = {k: v.detach().clone() for k, v in core.state_dict().items()}
-    best = -1e9; best_r2 = best_win = 0.0; t0 = time.time(); grng = np.random.default_rng(args.seed + 1 + rank)
+    best = -1e9; best_r2 = best_win = 0.0; t0 = time.time()
     for step in range(1, args.steps + 1):
         core.train()
         ds_idx = torch.randint(0, Ptr["n"], (args.batch,), device=dev)

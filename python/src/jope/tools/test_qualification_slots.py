@@ -4,8 +4,8 @@ import unittest
 from pathlib import Path
 
 import experiment_runtime as runtime
-from qualification_slots import acquire,release_stale
-from resume_expired_cycle import atomic,read,sha
+from qualification_slots import acquire, release_stale
+from resume_expired_cycle import atomic, read
 
 
 class SlotTests(unittest.TestCase):

@@ -1,8 +1,9 @@
 """Versioned saved v2 proposal verification; no GP evaluation or data targets read."""
-from collections import Counter
 import hashlib
 import json
 import math
+from collections import Counter
+
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()
@@ -26,7 +27,7 @@ def verify_ranking(ranking, checkpoint, context, vocabulary):
                                       conditioning_context_sha256=context,
                                       vocabulary_sha256=vocabulary)):
         raise ValueError('proposal_pool_v2: artifact validation failed at original line 23')
-    if not (ranking['training_context_only'] is True):
+    if ranking['training_context_only'] is not True:
         raise ValueError('proposal_pool_v2: artifact validation failed at original line 26')
     if not (ranking['heldout_labels_read'] is False and ranking['gp_scores_read'] is False):
         raise ValueError('proposal_pool_v2: artifact validation failed at original line 27')
@@ -85,7 +86,7 @@ def verify_generation(directory, gen, seeds, job, first, read):
         raise ValueError('proposal_pool_v2: artifact validation failed at original line 63')
     if not (gen['pure_unique_neural'] <= 64 and gen['filled_population'] == 80):
         raise ValueError('proposal_pool_v2: artifact validation failed at original line 64')
-    if not (gen['final_tests_opened'] is False):
+    if gen['final_tests_opened'] is not False:
         raise ValueError('proposal_pool_v2: artifact validation failed at original line 65')
     expected = {
         'pure_ranking_sha256': 'pure-ranking.json',
@@ -129,7 +130,7 @@ def verify_generation(directory, gen, seeds, job, first, read):
         raise ValueError('proposal_pool_v2: artifact validation failed at original line 94')
     if not (pure['schema'] == 'parallel.pure_neural_ranking.v1' and pure['protocol'] == PURE_PROTOCOL):
         raise ValueError('proposal_pool_v2: artifact validation failed at original line 95')
-    if not (pure['teacher_population_consulted'] is False):
+    if pure['teacher_population_consulted'] is not False:
         raise ValueError('proposal_pool_v2: artifact validation failed at original line 96')
     if not (pure['sampling_seed'] == gen['seed']):
         raise ValueError('proposal_pool_v2: artifact validation failed at original line 97')

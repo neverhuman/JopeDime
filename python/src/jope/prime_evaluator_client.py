@@ -23,7 +23,6 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-
 PROTOCOL_VERSION = 4
 DEFAULT_MAX_FRAME_SIZE = 64 * 1024 * 1024
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
@@ -602,7 +601,7 @@ class PrimeEvaluatorClient:
         }
         try:
             response = self._exchange(sock, envelope, timeout, self._peer_max_frame_size)
-        except (TimeoutError, socket.timeout) as error:
+        except TimeoutError as error:
             self._close_socket()
             cancel_response = None
             cancel_error = None

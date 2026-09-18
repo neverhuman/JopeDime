@@ -172,7 +172,7 @@ def main(argv=None):
     receipt = dict(schema=SCHEMA, **{'class': args.cls}, store=str(args.store), binary=str(bin_path), binary_sha256=sha(bin_path), mirror_index_sha256=sha(index_path),
                    at=time.time(), seconds=time.time() - started, units=len(groups), counts=counts, captured_bytes=sum(r.get('bytes', 0) for r in results if r['status'] == 'captured'),
                    results=results, final_tests_opened=False)
-    stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+    stamp = datetime.datetime.now(datetime.UTC).strftime('%Y%m%dT%H%M%SZ')
     out = args.mirror / 'receipts' / 'lane' / ('%s-%s.json' % (stamp, args.cls))
     out.parent.mkdir(parents=True, exist_ok=True)
     promotion_gate.immutable(out, receipt)

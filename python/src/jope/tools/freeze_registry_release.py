@@ -3,10 +3,9 @@ import argparse
 import hashlib
 import json
 import os
-from pathlib import Path
 import stat
 import tarfile
-
+from pathlib import Path
 
 ROOTS = ('Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml', 'src', 'tests', 'scripts', 'vendor',
          'manifests', 'seeds', 'systemd',

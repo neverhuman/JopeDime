@@ -1,16 +1,15 @@
 """One durable budget domain; output directories never create funding."""
-from contextlib import contextmanager
 import fcntl
 import hashlib
 import math
-from pathlib import Path
 import time
+from contextlib import contextmanager
+from pathlib import Path
 
 import experiment_runtime as runtime
+from funding_client import NativeFundingClient
 from promotion_gate import canonical, immutable
 from resume_expired_cycle import read, require, sha
-from funding_client import NativeFundingClient
-
 
 # Installation authority location is independent of the loaded source/release
 # path. Moving a reviewed release cannot select another funding domain.

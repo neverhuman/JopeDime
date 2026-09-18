@@ -41,11 +41,10 @@ from typing import Any
 
 from .champion_miner import build_champions
 from .data.active_v3 import robust_score
-from .io import read_jsonl
-from .propose import embedding_from_vs, target_summary_from_vs
-from .schema import TrainingRow
 from .prime_config import load_config
 from .prime_staging import stage_read_only_dataset
+from .propose import embedding_from_vs, target_summary_from_vs
+from .schema import TrainingRow
 
 # Fresh policy-model proposals to seed the GP with (idea: warm-start gen-0 with what the
 # current model thinks is good, not just historical champions). These live in the self-play

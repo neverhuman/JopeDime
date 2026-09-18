@@ -1,23 +1,22 @@
 #!/usr/bin/env python3
 """Execute bounded, source-identified kernel checks without a runtime cutover."""
 import argparse
-from contextlib import nullcontext
 import json
 import os
-from pathlib import Path
-import signal
 import subprocess
 import sys
 import time
 import uuid
+from contextlib import nullcontext
+from pathlib import Path
 
 sys.dont_write_bytecode = True
 
-from kernel_bundle import verify_bundle
-from kernel_release import digest
-import kernel_research_check as research
 import experiment_runtime as runtime
 import experiment_scheduler as scheduler
+import kernel_research_check as research
+from kernel_bundle import verify_bundle
+from kernel_release import digest
 
 
 class Deferred(RuntimeError):

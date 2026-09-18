@@ -2,18 +2,19 @@
 
 from __future__ import annotations
 
-import json
 import hashlib
+import json
 import math
 import os
-import re
 import random
+import re
 import tempfile
 import time
 from collections import defaultdict, deque
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from dataclasses import fields
 from pathlib import Path
-from typing import Any, Callable, Iterable, Iterator, Mapping
+from typing import Any
 
 import torch
 
@@ -39,9 +40,9 @@ from .losses import (
 )
 from .model_v3 import (
     DATASET_BLOCK_RMS,
-    JopePolicyModelV3,
     MODEL_VERSION,
     TARGET_BLOCK_RMS,
+    JopePolicyModelV3,
     precompute_row_artifacts,
     rows_to_policy_v3_batch,
 )
@@ -1485,8 +1486,8 @@ def train_policy_v3_from_jsonl(
     """
     from .ddp import (
         aggregate_scalars,
-        all_reduce_gradients,
         all_ranks_true,
+        all_reduce_gradients,
         barrier,
         configure_cuda_fast_math,
         init_distributed,

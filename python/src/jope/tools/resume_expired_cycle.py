@@ -5,10 +5,10 @@ import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path
 import signal
 import subprocess
 import time
+from pathlib import Path
 
 
 def read(path):

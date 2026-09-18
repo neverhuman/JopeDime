@@ -1,21 +1,19 @@
 #!/usr/bin/env python3
 """Build the frozen source on the target ABI within two existing CPU slots."""
 import fcntl
-import os
-from pathlib import Path
 import shutil
-import subprocess
 import sys
 import time
+from pathlib import Path
 
 
 def main(root,build):
     source=build/'source/parallel'
     sys.path.insert(0,str(source/'tools'))
-    from qualification_budget import Budget
-    from promotion_gate import immutable
-    from resume_expired_cycle import read,require,sha
     import experiment_runtime as runtime
+    from promotion_gate import immutable
+    from qualification_budget import Budget
+    from resume_expired_cycle import read, require, sha
     request=read(build/'build.json')
     for name,digest in request['source_bindings'].items():
         require(sha(build/'source'/name)==digest,'frozen build source changed: '+name)

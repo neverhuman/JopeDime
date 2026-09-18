@@ -1,9 +1,9 @@
 import copy
 import hashlib
 import json
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
 import promotion_tournament as pt
 from resume_expired_cycle import atomic, sha

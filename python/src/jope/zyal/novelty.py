@@ -31,13 +31,13 @@ outcome is rejection -- the whole fitness question is *marginal* lift over that 
 """
 from __future__ import annotations
 
+import ast
 import base64
 import fcntl
 import hashlib
 import json
 import os
 import re
-import ast
 from pathlib import Path
 
 import numpy as np

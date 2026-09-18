@@ -1,14 +1,14 @@
 """Preserve interrupted searches whose evaluator was retired; keep their jobs queued."""
 import argparse
 import os
-from pathlib import Path
 import signal
 import subprocess
 import time
+from pathlib import Path
 
-from gp_emission_handoff import process,same_process,SERVICE
+from gp_emission_handoff import SERVICE, process, same_process
 from promotion_gate import immutable
-from resume_expired_cycle import read,require,sha
+from resume_expired_cycle import read, require, sha
 
 
 def tree(path):

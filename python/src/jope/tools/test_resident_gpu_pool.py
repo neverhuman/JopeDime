@@ -1,6 +1,5 @@
 import fcntl
 import os
-from pathlib import Path
 import signal
 import socket
 import subprocess
@@ -8,11 +7,20 @@ import sys
 import tempfile
 import time
 import unittest
+from pathlib import Path
 from unittest.mock import patch
-import resident_gpu_pool
 
-from resident_gpu_pool import (idle_worker, process_identity, reconcile_startup, worker_matches,
-                               rank_observation, reconcile_tasks, native_request_id, verify_pool_ready)
+import resident_gpu_pool
+from resident_gpu_pool import (
+    idle_worker,
+    native_request_id,
+    process_identity,
+    rank_observation,
+    reconcile_startup,
+    reconcile_tasks,
+    verify_pool_ready,
+    worker_matches,
+)
 from resume_expired_cycle import atomic, read, sha
 
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Publish the optional GPR experiment including failed parity and startup cost."""
 import argparse
-from collections import defaultdict
 import hashlib
 import json
+from collections import defaultdict
 from pathlib import Path
 
 p = argparse.ArgumentParser()

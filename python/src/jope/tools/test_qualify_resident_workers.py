@@ -1,10 +1,10 @@
-from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
-from qualify_resident_workers import verify_refused_attempt, ObservedTask
+from qualify_resident_workers import ObservedTask, verify_refused_attempt
 from resume_expired_cycle import atomic, read, sha
 
 

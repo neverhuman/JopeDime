@@ -19,8 +19,8 @@ import shutil
 from collections import defaultdict
 from pathlib import Path
 
-from .labels import assign_elo  # noqa: F401 (kept for parity with corpus builders)
 from ..policy.losses import rwr_weights
+from .labels import assign_elo  # noqa: F401 (kept for parity with corpus builders)
 
 RUNTIME_CAP_MS = 600_000.0  # 10 min — beyond this treat as censored timeout
 
@@ -49,7 +49,7 @@ def prep_v31_labels(corpus_path: str | Path, *, write: bool = True) -> dict:
 
     n_ranked = 0
     for ds, idxs in by_ds.items():
-        vals = sorted((scores[i] for i in idxs))  # type: ignore[type-var]
+        vals = sorted(scores[i] for i in idxs)  # type: ignore[type-var]
         n = len(idxs)
         for i in idxs:
             s = scores[i]

@@ -63,7 +63,19 @@ extend-exclude = ["src/jope/research", "legacy"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP"]
-ignore = ["E501"]
+# E501: line length is advisory. The others are opinion rules the inherited code violates on purpose
+# or in ways a lint sweep cannot fix without a semantic review (WP6 triage, docs/parity/python-tests-triage.md):
+# B905 zip(strict=) (117 sites), B023 closures over loop variables in the samplers/trainers, B007/B904/E731/E741
+# naming and exception-chaining style, UP031 printf-style formatting (405 sites), UP028/UP042 generator/str-enum rewrites.
+ignore = ["E501", "B905", "B023", "B007", "B904", "E731", "E741", "UP031", "UP028", "UP042"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # re-exports
+# The ops tooling (former parallel/tools) and the chimera trainers are written in the compressed
+# several-statements-per-line style with imports after the environment setup; reformatting them is
+# out of WP6's scope (behaviour must not change).
+"src/jope/tools/**" = ["E701", "E702", "E402", "UP022"]
+"src/jope/chimera/**" = ["E701", "E702", "E402", "UP022"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

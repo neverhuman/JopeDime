@@ -3,9 +3,9 @@
 import argparse
 import json
 import os
-from pathlib import Path
 import statistics
 import time
+from pathlib import Path
 
 
 def read(path):

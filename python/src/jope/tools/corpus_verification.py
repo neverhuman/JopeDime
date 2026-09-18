@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Verify a completed pack outside the scheduler's polling loop."""
 import argparse
-from pathlib import Path
 import time
+from pathlib import Path
 
 import experiment_runtime as runtime
-from promotion_gate import canonical,immutable
-from resume_expired_cycle import read,require,sha
+from promotion_gate import canonical, immutable
+from resume_expired_cycle import read, require, sha
 
 
 def pack_identity(task):

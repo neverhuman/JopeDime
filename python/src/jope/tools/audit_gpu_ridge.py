@@ -6,12 +6,11 @@ explicitly unknown. Eligibility is for a ridge screening problem, never a claim
 that a rounded surrogate score can replace the original program's f64 reward.
 """
 import argparse
-from collections import Counter, defaultdict
 import hashlib
 import json
-from pathlib import Path
 import re
-import statistics
+from collections import Counter, defaultdict
+from pathlib import Path
 
 SAME = set('standardize norm_features robust_scale rank blom quantile_bins winsor_clip winsor_moments target_bin_encode sigmoid step norm_row polar lag roll symlog map'.split())
 HEADS = set('ridge ridge_gcv logistic elasticnet histgbm histgbm2 gbm gpr krr ksmooth ensemble stack ensemble_ridge_gbm portfolio'.split())

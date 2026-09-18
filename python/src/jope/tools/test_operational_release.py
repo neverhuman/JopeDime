@@ -1,14 +1,14 @@
-import unittest
 import signal
-import os
 import subprocess
 import sys
 import tempfile
 import time
+import unittest
 from pathlib import Path
 from unittest.mock import patch
+
 import operational_release as release
-from operational_release import migrate,fallback
+from operational_release import fallback, migrate
 
 
 class OperationalMigrationTests(unittest.TestCase):

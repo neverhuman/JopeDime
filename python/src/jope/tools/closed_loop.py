@@ -1,9 +1,15 @@
 """Closed-loop gates. Never assigns serving. Never launches a live train."""
 from __future__ import annotations
 
-from four_task_campaign import RECOVERY_SHA, isolate
 from flywheel_plan import may_serve, search_beating_training_allowed
-from selfplay_milestones import existence_proof, frozen_diagnostic_pass, specialist_loop, win_rates, world_class
+from four_task_campaign import RECOVERY_SHA, isolate
+from selfplay_milestones import (
+    existence_proof,
+    frozen_diagnostic_pass,
+    specialist_loop,
+    win_rates,
+    world_class,
+)
 
 RECOVERY_NLL = 1.394498497
 RECOVERY_BT = 0.533676382

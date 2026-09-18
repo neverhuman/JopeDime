@@ -14,7 +14,6 @@ from typing import Any
 
 from .contracts import canonical_json_bytes, content_sha256
 
-
 CENTRAL_SCQ_WRAPPER = Path("ops/coordination/submit.sh")
 SCQ_BINARY = Path("/home/ubuntu/super_cluster/scq")
 PREFERRED_NODES = ("xbabe1", "xbabe2", "xbabe3")

@@ -6,10 +6,10 @@ import hashlib
 import json
 import math
 import os
-from pathlib import Path
 import signal
 import subprocess
 import time
+from pathlib import Path
 
 PROTOCOLS = {
     "sampling_protocol": "pure-v4",
@@ -196,7 +196,7 @@ def validate_pool(root, path, job, context, checkpoint_sha, vocabulary_sha, snap
         raise ValueError("qualification check failed: inside(root, job['seeds']) == path / 'seeds.json' and job['seeds_sha256'] == hashes['seeds.json']")
     if not (pure["schema"] == "parallel.pure_neural_ranking.v1" and pure["protocol"] == PROTOCOLS["pure_prediction_protocol"]):
         raise ValueError("qualification check failed: pure['schema'] == 'parallel.pure_neural_ranking.v1' and pure['protocol'] == PROTOCOLS['pure_prediction_protocol']")
-    if not (pure["teacher_population_consulted"] is False):
+    if pure["teacher_population_consulted"] is not False:
         raise ValueError("qualification check failed: pure['teacher_population_consulted'] is False")
     for ranking in [pure["ranking"], gp["ranking"]]:
         validate_ranking(ranking, checkpoint_sha, context["sha256"], vocabulary_sha, max_seq)
@@ -215,7 +215,7 @@ def validate_pool(root, path, job, context, checkpoint_sha, vocabulary_sha, snap
     if not (best["prepared_sha256"] == context["prepared_sha256"] and best["training_context_only_end_to_end"] is True):
         raise ValueError("qualification check failed: best['prepared_sha256'] == context['prepared_sha256'] and best['training_context_only_end_to_end'] is True")
     for field in ["teacher_population_consulted", "gp_scores_used_for_prediction", "heldout_targets_used_for_prediction", "final_tests_opened"]:
-        if not (best[field] is False):
+        if best[field] is not False:
             raise ValueError('qualification check failed: best[field] is False')
     if not (gp["schema"] == "parallel.gp_population_ranking.v1" and gp["protocol"] == PROTOCOLS["gp_assembly_protocol"]):
         raise ValueError("qualification check failed: gp['schema'] == 'parallel.gp_population_ranking.v1' and gp['protocol'] == PROTOCOLS['gp_assembly_protocol']")
@@ -401,7 +401,7 @@ def main(args):
             rejected = run_command(command(c), output / "C-rejected.log", deadline, False, 5)
         finally:
             lock.close()
-        if not ("proposal prediction protocol changed" in (output / "C-rejected.log").read_text()):
+        if "proposal prediction protocol changed" not in (output / "C-rejected.log").read_text():
             raise ValueError("qualification check failed: 'proposal prediction protocol changed' in (output / 'C-rejected.log').read_text()")
         if not (tree_hashes(c.parent) == untouched):
             raise ValueError('qualification check failed: tree_hashes(c.parent) == untouched')

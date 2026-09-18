@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Return to reference packing and standalone workers, retaining newer learning state."""
 import argparse
-from pathlib import Path
 import subprocess
 import time
+from pathlib import Path
 
 import operational_release
 from promotion_gate import immutable
-from resume_expired_cycle import atomic,read,require,sha
+from resume_expired_cycle import atomic, read, require, sha
 
 
 def run(root,deployment):

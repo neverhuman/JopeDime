@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Snapshot compact dashboard inputs, never candidate ledgers, datasets or weights."""
-import argparse,hashlib,json,shutil,time
+import argparse
+import hashlib
+import json
+import time
 from pathlib import Path
+
 p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
 assert not a.output.exists();a.output.mkdir(parents=True)
 files=set()

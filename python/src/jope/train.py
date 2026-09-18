@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from collections import defaultdict
-from dataclasses import dataclass
 import json
 import os
-from pathlib import Path
 import random
 import socket
 import subprocess
 import time
+from collections import defaultdict
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import torch
@@ -26,7 +26,6 @@ from .model import (
     rows_to_batch,
 )
 from .schema import TrainingRow
-
 
 ACTIVE_V2_LOSS_COMPONENTS = [
     "complexity_huber",

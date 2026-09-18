@@ -5,16 +5,15 @@ One cut per native process/rank removes timing-dependent cross-cut coalescing.
 Weights, source rows, sweep seed, patch cap and projection remain frozen.
 """
 import argparse
-import experiment_runtime as runtime
-import experiment_stages as stage_artifacts
 import hashlib
 import json
-import os
-from pathlib import Path
 import signal
 import subprocess
 import time
+from pathlib import Path
 
+import experiment_runtime as runtime
+import experiment_stages as stage_artifacts
 from binary_encode import owned_ranks, serial_job_waves, sha, write
 from binary_reproduce import compare_floats, immutable
 from experiment_scheduler import SPARE_CPUS, admission_reason, spare_lease
@@ -176,7 +175,7 @@ def main():
                 raise ValueError('binary_serial: artifact validation failed at original line 156')
             if not (metadata["signature_sha256"] == sha(directory / "hyperion.f32")):
                 raise ValueError('binary_serial: artifact validation failed at original line 157')
-            if not (metadata["final_test_targets_used"] is False):
+            if metadata["final_test_targets_used"] is not False:
                 raise ValueError('binary_serial: artifact validation failed at original line 158')
             row = rows[prepared["dataset"],job["cut"]]
             if not (sha(root / row["path"]) == row["sha256"]):

@@ -18,7 +18,6 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-import os
 import sqlite3
 import subprocess
 from concurrent.futures import ThreadPoolExecutor

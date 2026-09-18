@@ -1,11 +1,10 @@
 """Bounded dummy-worker canary for isolation, lease ownership and GPU handoff."""
 import argparse
-import json
 import os
-from pathlib import Path
 import signal
 import sys
 import time
+from pathlib import Path
 
 import experiment_runtime as runtime
 from experiment_scheduler import admission_reason, spare_lease

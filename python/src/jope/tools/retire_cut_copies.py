@@ -4,7 +4,10 @@
 Only these implementation-owned diagnostic/preparation directories are eligible.
 Original datasets, pointer recipes, encoder outputs and GP ledgers are preserved.
 """
-import argparse, hashlib, json, os
+import argparse
+import hashlib
+import json
+import os
 from pathlib import Path
 
 parser=argparse.ArgumentParser()

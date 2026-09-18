@@ -17,7 +17,6 @@ from collections.abc import Mapping, Sequence
 from pathlib import PurePosixPath
 from typing import Any
 
-
 BROAD_CATALOG_SCHEMA = "BroadDatasetCatalog.v1"
 PROBE_SLATE_SCHEMA = "ProbeSlate.v1"
 BROAD_RECEIPT_SCHEMA = "BroadEvaluationReceipt.v1"

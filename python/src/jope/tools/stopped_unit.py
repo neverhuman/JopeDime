@@ -1,15 +1,15 @@
 """Stop a committed, SIGSTOPped dispatcher without letting systemd resume it."""
-import os
 import fcntl
-from pathlib import Path
+import os
 import re
 import signal
 import subprocess
 import tempfile
 import time
+from pathlib import Path
 
 from promotion_gate import immutable
-from resume_expired_cycle import read,require,sha
+from resume_expired_cycle import read, require, sha
 
 RUNTIME_ROOT=Path('/run/systemd/system')
 

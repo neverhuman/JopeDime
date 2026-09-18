@@ -1,9 +1,9 @@
 import contextlib
 import io
 import json
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import continuous_learning as c
@@ -168,7 +168,7 @@ class ContinuousLearningTests(unittest.TestCase):
             root=Path(folder); supervisor=self.scheduler(root)
             checkpoint='a'*64
             self.diagnostic(root,supervisor.journal,checkpoint)
-            rows=runtime.journal(supervisor.journal)
+            runtime.journal(supervisor.journal)
             original=c.read(root/(checkpoint+'.json'))
             supervisor.s['candidates']=[dict(checkpoint_sha256=checkpoint,nomination=original['nomination'])]
             supervisor.m['diagnostic_reference']=original['reference']
@@ -210,9 +210,10 @@ class ContinuousLearningTests(unittest.TestCase):
                 self.assertEqual(supervisor.s['consumed_training_snapshots'], [])
 
     def test_new_training_requires_exact_reservation_and_launch_consumes_once(self):
+        import time
+
         from qualification_budget import Budget
         from test_qualification_budget import synthetic_domain
-        import time
         with tempfile.TemporaryDirectory() as folder, synthetic_domain(folder):
             root=Path(folder); supervisor=self.scheduler(root)
             (root/'checkpoint').mkdir(); (root/'corpus').mkdir()

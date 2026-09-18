@@ -7,9 +7,10 @@ import random
 import subprocess
 import threading
 import time
+from collections.abc import Iterable, Iterator
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Iterable, Iterator
+from typing import Any
 
 import numpy as np
 import torch

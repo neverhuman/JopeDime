@@ -24,7 +24,7 @@ import threading
 import time
 
 
-def _worker(bin_path: str, subcommand: str, jobs: "queue.Queue", out_lock: threading.Lock,
+def _worker(bin_path: str, subcommand: str, jobs: queue.Queue, out_lock: threading.Lock,
             default_timeout: float | None) -> None:
     """One persistent bridge process draining rows from the shared queue (lock-step).
 

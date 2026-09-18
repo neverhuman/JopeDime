@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """Admit complete saved proposal chunks only at the protected first-cycle boundary."""
 import argparse
-from experiment_runtime import require
 import fcntl
 import hashlib
 import importlib.util
 import json
 import math
 import os
-from pathlib import Path
 import struct
 import subprocess
 import time
+from pathlib import Path
+
+from experiment_runtime import require
 
 SCHEMA = "parallel.deferred_gp_admission.v1"
 

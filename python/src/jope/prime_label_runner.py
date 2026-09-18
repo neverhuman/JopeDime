@@ -37,8 +37,9 @@ import statistics
 import subprocess
 import sys
 import tempfile
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -47,7 +48,6 @@ from .prime_config import PrimeConfig, load_config
 from .prime_realization import (
     ModelArtifactSource,
     ModelRealizationLabel,
-    append_model_realization_label,
     prime_owned_path,
     realize_model_artifact,
 )
@@ -59,7 +59,7 @@ DEFAULT_HOLDOUT_FRACTION = 0.15
 
 def _per_dataset_seed(dataset_hash: str, split: str) -> int:
     """Deterministic per-(dataset, split) seed — stable across reruns."""
-    digest = hashlib.sha256(f"{dataset_hash}|{split}".encode("utf-8")).hexdigest()
+    digest = hashlib.sha256(f"{dataset_hash}|{split}".encode()).hexdigest()
     return int(digest[:8], 16)
 
 

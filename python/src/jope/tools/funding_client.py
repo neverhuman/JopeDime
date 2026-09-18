@@ -8,10 +8,9 @@ import hashlib
 import json
 import math
 import os
-from pathlib import Path
 import stat
 import subprocess
-
+from pathlib import Path
 
 CONFIG = Path('/etc/jope-dime/funding/client.json')
 MAX_CONFIG_BYTES = 1_048_576

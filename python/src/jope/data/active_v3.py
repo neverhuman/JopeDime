@@ -14,7 +14,6 @@ Differences vs v2:
 
 from __future__ import annotations
 
-import json
 import math
 import random
 from collections import defaultdict
@@ -26,17 +25,17 @@ import numpy as np
 
 from ..engines import DEFAULT_ENGINE, ENGINES, EngineRouter
 from ..eval_ledger import iter_eval_regression_with_ledger
-from ..grammars import GrammarSpec, all_grammars, grammar_for
+from ..grammars import grammar_for
 from ..grammars.sampler import sample_genome_from_spec
 from ..grammars.vocab import build_active_vocab_v3
 from ..io import write_jsonl
 from ..pipeline_text import parse_pipeline_actions
 from ..schema import TrainingRow, normalize_embedding
 from .active import (
-    ACTIVE_TRAIN_TARGET_SIDECAR,
     ACTIVE_TEST_TARGET_SIDECAR,
-    TARGET_SUMMARY_DIM,
+    ACTIVE_TRAIN_TARGET_SIDECAR,
     DEFAULT_QUANT_ROOT,
+    TARGET_SUMMARY_DIM,
     _assign_splits,
     _build_label_summary,
     _build_split_manifest,

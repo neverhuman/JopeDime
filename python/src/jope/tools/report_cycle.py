@@ -6,14 +6,15 @@ use qualified cumulative completion clocks where available. Older or resumed
 ledgers retain conservative timing bounds; they are never called exact.
 """
 import argparse
-from experiment_runtime import require
 import bisect
-from collections import Counter, defaultdict
 import hashlib
 import json
 import math
-from pathlib import Path
 import statistics
+from collections import Counter, defaultdict
+from pathlib import Path
+
+from experiment_runtime import require
 
 ARMS = ('neural', 'generic', 'shuffled')
 PAIRS = (('neural', 'generic'), ('neural', 'shuffled'), ('shuffled', 'generic'))

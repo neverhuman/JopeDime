@@ -4,9 +4,10 @@ import copy
 import hashlib
 import json
 import os
+from collections.abc import Iterable, Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Iterable, Iterator
+from typing import Any
 
 from .engines import DEFAULT_ENGINE, EVALUATOR_VERSIONS, EngineRouter
 from .validator import RustValidator

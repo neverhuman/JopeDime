@@ -11,9 +11,9 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Mapping
-
+from typing import Any
 
 DATASET_SOURCE_FAMILY_MANIFEST_V1 = "DatasetSourceFamilyManifest.v1"
 _DATASET_ID = re.compile(r"^[0-9a-f]{16}$")

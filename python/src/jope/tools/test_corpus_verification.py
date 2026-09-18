@@ -1,18 +1,17 @@
 import hashlib
 import json
-from pathlib import Path
 import struct
 import tempfile
 import time
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import continuous_learning as controller
 import corpus_verification as verification
-from promotion_gate import immutable
-from resume_expired_cycle import atomic,read,sha
-from teaching_manifest import SHARD_FIELDS
 import test_continuous_learning as fixtures
+from resume_expired_cycle import atomic, read, sha
+from teaching_manifest import SHARD_FIELDS
 
 
 class CorpusVerificationTests(unittest.TestCase):

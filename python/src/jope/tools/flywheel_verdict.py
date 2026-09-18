@@ -40,15 +40,15 @@ first existing alternative wins):
 import argparse
 import hashlib
 import json
-from pathlib import Path
 import random
 import re
 import statistics
+from pathlib import Path
 
 import flywheel_brake
 import flywheel_metrics
-from flywheel_series import baseline_receipt, ci_bounds, clean, digest, finite, read, series_rows, usable
 import promotion_gate
+from flywheel_series import baseline_receipt, ci_bounds, clean, digest, finite, read, series_rows, usable
 from resume_expired_cycle import require, sha
 
 try:

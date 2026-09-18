@@ -41,7 +41,7 @@ EVENTS = ("proposed", "scored", "selected")
 
 def gene_id(engine: str, dataset_hash: str, canonical: str) -> str:
     """Stable correlation id for a gene across its lifecycle events."""
-    key = f"{engine}|{dataset_hash}|{canonical}".encode("utf-8")
+    key = f"{engine}|{dataset_hash}|{canonical}".encode()
     return hashlib.sha1(key).hexdigest()[:12]
 
 
@@ -313,7 +313,7 @@ class GeneFeed:
             self._write_meta(force=True)
             self._handle.close()
 
-    def __enter__(self) -> "GeneFeed":
+    def __enter__(self) -> GeneFeed:
         return self
 
     def __exit__(self, *exc: Any) -> None:

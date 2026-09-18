@@ -30,11 +30,11 @@ from typing import Any
 
 import torch
 
+from .data.active_v3 import robust_score
 from .engines import ENGINES, EngineRouter
 from .eval_ledger import iter_eval_regression_with_ledger
 from .gene_feed import GeneFeed
 from .loop import LoopConfig, _refit, _select_candidates
-from .data.active_v3 import robust_score
 from .pipeline_text import format_pipeline_actions
 from .policy.decode import candidate_risk_reason_v3
 from .policy.model_v3 import JopePolicyModelV3

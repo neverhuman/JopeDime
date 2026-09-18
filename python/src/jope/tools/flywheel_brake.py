@@ -14,10 +14,10 @@ when --pause-command is given; otherwise the tool prints what it would run.
 """
 import argparse
 import json
-from pathlib import Path
 import shlex
 import subprocess
 import time
+from pathlib import Path
 
 from flywheel_series import baseline_receipt, clean, digest, finite, load, read, resolve, series_rows
 from resume_expired_cycle import atomic, require, sha

@@ -1,11 +1,11 @@
 """Durable coverage ledger and GP job bundle producer. Owns no execution workers."""
-import hashlib
 import json
 import math
-from pathlib import Path
 import sqlite3
 import time
-from continuation import plan, encoded, digest
+from pathlib import Path
+
+from continuation import digest, encoded, plan
 from run_episode import read_rows, summarize
 
 

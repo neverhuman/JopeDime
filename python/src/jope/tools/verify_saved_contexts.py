@@ -4,9 +4,10 @@ import argparse
 import hashlib
 import json
 import math
-from pathlib import Path
 import struct
 import time
+from pathlib import Path
+
 p=argparse.ArgumentParser()
 p.add_argument('--root',type=Path,required=True)
 p.add_argument('--index',required=True)

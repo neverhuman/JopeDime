@@ -3,9 +3,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import jope.research
 import pytest
 
+import jope.research
 
 SCRIPTS = Path(jope.research.__file__).parent
 

@@ -13,7 +13,16 @@ from pathlib import Path
 
 import successor_ledger as sl
 import successor_targets as st
-from successor_ledger import Ledger, verify_episode, encoded, digest, canonical, IDENTITY_KEYS, replicate_rng, selection_key
+from successor_ledger import (
+    IDENTITY_KEYS,
+    Ledger,
+    canonical,
+    digest,
+    encoded,
+    replicate_rng,
+    selection_key,
+    verify_episode,
+)
 
 PARALLEL = Path(__file__).resolve().parents[1]
 FIXTURE = PARALLEL / 'recovery/eight-a100-20260912/experiments/seed-continuation-v2/qualification-all64'

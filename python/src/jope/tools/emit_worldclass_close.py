@@ -44,7 +44,6 @@ def load(path):
 
 def fence_receipt():
     complete = load(LIVE_FENCE) if LIVE_FENCE.is_file() else {}
-    override = Path("/etc/systemd/system/jope-parallel-gp.service.d/registry-handoff-override.conf")
     observed = {}
     try:
         show = subprocess.check_output(
@@ -274,7 +273,7 @@ def main():
     hold = hold_receipt()
     already, growth_set = ledger_receipts()
     assignment = family_growth_receipt(already, growth_set)
-    successor = successor_receipt(assignment)
+    successor_receipt(assignment)
     cycle = cycle_receipt()
     write("SUMMARY.json", dict(
         schema="parallel.worldclass_close.summary.v1",

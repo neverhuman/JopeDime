@@ -16,9 +16,10 @@ import subprocess
 import sys
 import tempfile
 import time
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import numpy as np
 import psutil
@@ -77,7 +78,7 @@ class ModelArtifactSource:
         backend_provenance: dict[str, Any],
         artifact_hash: str | None = None,
         numerical_tier: str = "exact_f64",
-    ) -> "ModelArtifactSource":
+    ) -> ModelArtifactSource:
         source_sha256 = _hash(source)
         identity = {
             "schema": MODEL_ARTIFACT_SCHEMA,
@@ -126,7 +127,7 @@ class ModelArtifactSource:
         *,
         backend_provenance: dict[str, Any],
         manifest_sha256: str,
-    ) -> "ModelArtifactSource":
+    ) -> ModelArtifactSource:
         """Verify and import one ``battle-portable-artifact-v3`` bundle."""
         computed_manifest_hash = _hash(manifest)
         if not _is_sha256(manifest_sha256) or manifest_sha256 != computed_manifest_hash:

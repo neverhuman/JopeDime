@@ -2,20 +2,19 @@
 """Verify immutable payloads once per server lifetime and lend sealed memfds."""
 import argparse
 import array
-from collections import OrderedDict
 import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path
 import resource
 import socket
 import stat
 import time
 import uuid
+from collections import OrderedDict
+from pathlib import Path
 
 from resume_expired_cycle import atomic, require
-
 
 SEALS = fcntl.F_SEAL_WRITE | fcntl.F_SEAL_GROW | fcntl.F_SEAL_SHRINK | fcntl.F_SEAL_SEAL
 
@@ -127,7 +126,7 @@ def serve(root, pool, limit):
                 next_report = report_cache(cache, pool, next_report, time.monotonic())
                 try:
                     connection, _ = listener.accept()
-                except socket.timeout:
+                except TimeoutError:
                     continue
                 with connection:
                     try:

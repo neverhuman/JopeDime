@@ -1,7 +1,7 @@
 import json
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
 import population_arm_policy as pa
 from resume_expired_cycle import atomic, sha

@@ -1,9 +1,9 @@
 import copy
 import json
-from pathlib import Path
 import statistics
 import tempfile
 import unittest
+from pathlib import Path
 
 import flywheel_baseline
 import flywheel_f9_readout as readout

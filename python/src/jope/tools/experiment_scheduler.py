@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """One spare-CPU allocation shared by qualification comparisons and encoders."""
-from contextlib import contextmanager
 import fcntl
 import json
 import os
-from pathlib import Path
 import time
+from contextlib import contextmanager
+from pathlib import Path
+
 import experiment_runtime as runtime
 
 PHASE = "GP optimizes cut targets for the next teaching corpus"

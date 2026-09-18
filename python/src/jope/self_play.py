@@ -15,12 +15,11 @@ State/telemetry (TUI-tailable, atomic):
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
-import os
 import subprocess
 import time
-import hashlib
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -31,8 +30,8 @@ from .data.active_v3 import robust_score
 from .engines import EngineRouter
 from .eval_ledger import iter_eval_regression_with_ledger
 from .io import read_jsonl
-from .propose import embedding_from_vs, target_summary_from_vs
 from .prime_config import load_config
+from .propose import embedding_from_vs, target_summary_from_vs
 from .schema import TrainingRow
 
 PROJ = load_config().root
@@ -101,7 +100,7 @@ def _proposal_failure_exceeded(failed: int, total: int, threshold: float | None)
 
 
 def _candidate_pool_id(generation: int, dataset_hash: str, engine: str, canonical: str) -> str:
-    raw = f"{generation}|{dataset_hash}|{engine}|{canonical}".encode("utf-8")
+    raw = f"{generation}|{dataset_hash}|{engine}|{canonical}".encode()
     return hashlib.sha1(raw).hexdigest()[:16]
 
 

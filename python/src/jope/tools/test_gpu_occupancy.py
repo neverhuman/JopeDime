@@ -1,4 +1,5 @@
 import unittest
+
 from gpu_occupancy import update
 
 

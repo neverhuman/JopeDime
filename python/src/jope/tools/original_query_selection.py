@@ -9,11 +9,10 @@ import hashlib
 import json
 import math
 import os
-from pathlib import Path, PurePosixPath
 import stat
 import tempfile
 import time
-
+from pathlib import Path, PurePosixPath
 
 SCHEMA = 'parallel.original_query_selection.v1'
 REQUEST_SCHEMA = 'parallel.original_query_selection_request.v1'

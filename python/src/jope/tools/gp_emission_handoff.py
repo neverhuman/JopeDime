@@ -1,16 +1,15 @@
 """Drain committed GP searches before upgrading the identity-emitting service."""
 import argparse
 import os
-from pathlib import Path
 import shlex
 import signal
 import subprocess
 import time
+from pathlib import Path
 
-from promotion_gate import immutable
-from resume_expired_cycle import read,require,sha
 import operational_release
-
+from promotion_gate import immutable
+from resume_expired_cycle import read, require, sha
 
 SERVICE='jope-parallel-gp.service'
 

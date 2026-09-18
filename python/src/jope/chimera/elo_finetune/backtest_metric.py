@@ -24,10 +24,10 @@ import numpy as np
 import torch
 
 from .ckpt import CheckpointManager
+from .elo_meter import outcomes
 from .episodes import list_synth_tasks, prepare_episodes
 from .eval_protocol import ProtocolRunner
-from .fitness_v2 import evaluate, sp_distance_sq
-from .elo_meter import outcomes
+from .fitness_v2 import evaluate
 from .model_io import CONFIG_NAME, default_weights_dir, load_regressor
 from .pack import DEFAULT_PACK_DIR, FablePack, bucket_schedule, collate
 from .paths import import_regressor_train

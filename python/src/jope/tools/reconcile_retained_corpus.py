@@ -3,8 +3,9 @@
 import argparse
 import hashlib
 import json
-from pathlib import Path
 import time
+from pathlib import Path
+
 from resume_expired_cycle import atomic, read, require, sha
 
 

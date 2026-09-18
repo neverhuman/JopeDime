@@ -1,10 +1,9 @@
 """Build an immutable release in private storage during approved spare CPU windows."""
 import argparse
 import json
-from pathlib import Path
 import shutil
-import subprocess
 import time
+from pathlib import Path
 
 import experiment_runtime as runtime
 from experiment_scheduler import spare_lease

@@ -1,10 +1,10 @@
 """Strict current-label boundary for audited historical candidates; no score reuse."""
 import hashlib
-import math
 import json
+import math
 import subprocess
 
-from promotion_gate import artifact, canonical, IDENTITY
+from promotion_gate import IDENTITY, artifact, canonical
 from resume_expired_cycle import require, sha
 
 

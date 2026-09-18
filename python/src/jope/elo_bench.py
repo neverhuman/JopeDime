@@ -14,9 +14,9 @@ headline (held out from both the model and the ladder's own selection).
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
-import hashlib
 import sys
 import time
 from pathlib import Path
@@ -77,13 +77,13 @@ def propose_and_eval(
     log=print,
 ) -> dict[str, list[dict]]:
     """Propose K per dataset with the policy, bridge-evaluate all, return per-dataset rows."""
+    from .data.active_v3 import robust_score
     from .engines import EngineRouter
     from .eval_ledger import iter_eval_regression_with_ledger
     from .policy.decode import propose_v3
     from .policy.model_v3 import load_policy_v3
     from .propose import embedding_from_vs, target_summary_from_vs
     from .self_play import _candidate_pool_record, _proposal_failure_exceeded
-    from .data.active_v3 import robust_score
 
     std = json.loads((Path(art_dir) / "standardization.json").read_text())
     state = torch.load(checkpoint, map_location="cpu", weights_only=False)
@@ -120,7 +120,7 @@ def propose_and_eval(
                     engine = str(cand.get("engine") or "")
                     if not canonical or not engine:
                         continue
-                    raw = f"elo|{h}|{engine}|{canonical}".encode("utf-8")
+                    raw = f"elo|{h}|{engine}|{canonical}".encode()
                     cpid = hashlib.sha1(raw).hexdigest()[:16]
                     row = _candidate_pool_record(
                         generation=-1,
@@ -262,7 +262,7 @@ def _probe_score(row: dict[str, Any]) -> float:
 def ladder_elo(per_ds: dict[str, list[dict]], hashes: list[str], mode: str) -> dict[str, Any]:
     """98-player tournament over `hashes`: incumbents + a jope column (utility = −RMSE)."""
     sys.path.insert(0, str(QUANT_MODELS))
-    from tools.elo import algorithm_matches, compute_elo  # noqa: read-only import
+    from tools.elo import algorithm_matches, compute_elo  # read-only import
 
     lad = _load_ladder()
     hidx = {h: i for i, h in enumerate(lad["hashes"])}

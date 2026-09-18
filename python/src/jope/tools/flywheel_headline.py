@@ -12,7 +12,6 @@ learning/progress.json and the champion git state. Every row names its source an
 writes DIR/generation-<N>.json (parallel.flywheel_headline.v1, immutable) and FILE (parallel.flywheel_latest_headline.v1).
 """
 import argparse
-import datetime
 import glob
 import json
 import os

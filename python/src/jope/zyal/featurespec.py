@@ -46,6 +46,7 @@ import numpy as np
 from jope.genome_perf.features_cost import COST_WEIGHT
 from jope.genome_perf.parse import ParsedGenome, col_refs, parse
 from jope.grammars import FAMILY_LIST_V3, grammar_for
+
 from . import assert_no_forbidden_inputs
 
 __all__ = [

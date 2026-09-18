@@ -1,8 +1,8 @@
 import copy
 import json
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
 import flywheel_acceptance as fa
 from resume_expired_cycle import sha
@@ -172,7 +172,8 @@ class PullReceiptRule(unittest.TestCase):
 
 class ChampionStreamReceipt(unittest.TestCase):
     def test_champion_stream_receipt_is_a_lane_class(self):
-        import tempfile, json, os
+        import json
+        import tempfile
         from pathlib import Path
         with tempfile.TemporaryDirectory() as tmp:
             lane = Path(tmp) / 'receipts/lane'; lane.mkdir(parents=True)

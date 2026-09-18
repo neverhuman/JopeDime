@@ -15,10 +15,9 @@ import re
 import sqlite3
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping, Sequence
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 TAXONOMY = (
     "sequence/flow",
@@ -152,7 +151,7 @@ def file_hash(path: Path) -> str:
 
 
 def utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 def write_append_only_json(

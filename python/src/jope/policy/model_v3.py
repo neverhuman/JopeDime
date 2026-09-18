@@ -13,8 +13,9 @@ Architecture (per the approved plan):
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Sequence
+from typing import Any
 
 import torch
 from torch import nn
@@ -36,7 +37,7 @@ from .losses import (
     self_play_bt_loss,
     stability_bce_term,
 )
-from .tokens import ActionVocab, PAD, encode_actions
+from .tokens import PAD, ActionVocab, encode_actions
 
 MAX_SEQ_LEN = 128
 MODEL_VERSION = "policy_v3.4-split-context"
@@ -1047,8 +1048,8 @@ def _validate_action_vocab_compatibility(
 
 def load_policy_v3(state: dict[str, Any]) -> JopePolicyModelV3:
     """Rebuild a policy_v3 model from a checkpoint payload."""
-    from .tokens import build_action_vocab, build_prime_action_vocab
     from ..grammars.spec import GrammarSpec
+    from .tokens import build_action_vocab, build_prime_action_vocab
 
     specs_json = state.get("grammar_specs")
     if specs_json:

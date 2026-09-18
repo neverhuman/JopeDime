@@ -80,7 +80,7 @@ def chart(values, width, height, marks=None):
 def fmt_time(ts):
     if not ts:
         return '-'
-    return datetime.datetime.fromtimestamp(ts, datetime.timezone.utc).strftime('%m-%d %H:%M')
+    return datetime.datetime.fromtimestamp(ts, datetime.UTC).strftime('%m-%d %H:%M')
 
 
 # ---------------------------------------------------------------- panel 1: frozen panel
@@ -347,7 +347,7 @@ def render_throughput(run, width):
 
 def render(root, run, manifest, width):
     evaluator = live_evaluator(root, manifest)
-    stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+    stamp = datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%d %H:%M:%S UTC')
     lines = ['FLYWHEEL PLOTS  %s  run %s  (read-only viewer; independent model improvement: NOT ESTABLISHED unless a verdict receipt says so)' % (stamp, run.name), '']
     for section in (render_frozen(run, width), render_generations(run, width), render_high_marks(root, run, evaluator, width), render_throughput(run, width)):
         lines += section + ['']

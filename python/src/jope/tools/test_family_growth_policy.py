@@ -7,7 +7,6 @@ import family_growth_policy as g
 
 class GrowthFixture:
     def __init__(self, root, parent=None):
-        import json
         self.root=root
         (root/'manifests').mkdir(exist_ok=True)
         (root/'credentials/provenance-review').mkdir(parents=True,exist_ok=True)
@@ -35,13 +34,15 @@ class GrowthFixture:
         self.sign()
 
     def put(self, name, value):
-        import json,hashlib
+        import hashlib
+        import json
         path=self.root/name
         path.write_text(json.dumps(value,sort_keys=True,separators=(',',':'))+'\n')
         return dict(path=str(path),sha256=hashlib.sha256(path.read_bytes()).hexdigest())
 
     def sign(self):
-        import hashlib,hmac
+        import hashlib
+        import hmac
         ref=self.put('decision.json',self.decision)
         key=(self.root/'credentials/provenance-review/test-reviewer.key').read_bytes()
         ref['signature']=hmac.new(key,('parallel.family_growth.v3:'+ref['sha256']).encode(),hashlib.sha256).hexdigest()

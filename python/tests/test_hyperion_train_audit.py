@@ -4,11 +4,10 @@ import importlib.util
 import sys
 from pathlib import Path
 
-import jope.research
-
 import numpy as np
 import pytest
 
+import jope.research
 
 MODULE_PATH = Path(jope.research.__file__).parent / "hyperion_train_audit.py"
 SPEC = importlib.util.spec_from_file_location("hyperion_train_audit", MODULE_PATH)

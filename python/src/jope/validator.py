@@ -6,9 +6,9 @@ import queue
 import subprocess
 import threading
 import time
-from dataclasses import dataclass, field
+from collections.abc import Callable, Iterable, Iterator
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterable, Iterator
 
 from .prime_config import ssh_control_path
 
@@ -41,8 +41,7 @@ class RustValidator:
             cmd,
             input=payload,
             text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             check=False,
         )
         if proc.returncode != 0:
@@ -70,8 +69,7 @@ class RustValidator:
             self._command("emit"),
             input=payload,
             text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             check=False,
         )
         if proc.returncode != 0:
@@ -89,8 +87,7 @@ class RustValidator:
         proc = subprocess.run(
             self._command("grammar"),
             text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             check=False,
         )
         if proc.returncode != 0:
@@ -190,7 +187,7 @@ class RustValidator:
             "errors": [message],
         }
 
-    def _spawn(self, subcommand: str = "eval-regression") -> "_BridgeProcess":
+    def _spawn(self, subcommand: str = "eval-regression") -> _BridgeProcess:
         return _BridgeProcess(self._command(subcommand))
 
     def _command(self, command: str = "validate") -> list[str]:

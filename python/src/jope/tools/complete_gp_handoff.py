@@ -1,13 +1,13 @@
 """Recover a health launch argument and verify an already activated GP handoff."""
 import argparse
-from pathlib import Path
 import shlex
 import subprocess
 import time
+from pathlib import Path
 
 from activate_promotion_safeguards import verify_effective_launches
 from promotion_gate import immutable
-from resume_expired_cycle import read,require,sha
+from resume_expired_cycle import read, require, sha
 
 
 def main(root,deployment,baseline):

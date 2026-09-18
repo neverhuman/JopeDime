@@ -1,14 +1,24 @@
 import bisect
-from collections import Counter
 import copy
-import json
-from pathlib import Path
-import tempfile
 import itertools
+import json
+import tempfile
 import unittest
+from collections import Counter
+from pathlib import Path
 
-from report_cycle import (ASSEMBLY_PROTOCOL, PURE_PROTOCOL, SELECTION_ID, best_prefix, compact_digest,
-                          digest, family_ratios, search_timing, verify_generation, wall_prefix)
+from report_cycle import (
+    ASSEMBLY_PROTOCOL,
+    PURE_PROTOCOL,
+    SELECTION_ID,
+    best_prefix,
+    compact_digest,
+    digest,
+    family_ratios,
+    search_timing,
+    verify_generation,
+    wall_prefix,
+)
 
 
 class MeasuredReportTests(unittest.TestCase):

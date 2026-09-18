@@ -5,10 +5,9 @@ import json
 import sys
 from pathlib import Path
 
-import jope.research
-
 import pytest
 
+import jope.research
 
 SCRIPT = (
     Path(jope.research.__file__).parent

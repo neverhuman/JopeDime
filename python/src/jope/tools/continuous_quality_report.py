@@ -2,11 +2,13 @@
 """Attribute tournament outcomes to initial seeds, retained teachers and later GP."""
 import argparse
 import math
-from pathlib import Path
 import time
+from pathlib import Path
+
 from cut_baseline import annotate_observation
 from resume_expired_cycle import atomic, read, require, sha
-from scored_family_allowlist import inspect_prepared, quality_rows_on_allowlist, report as allowlist_report
+from scored_family_allowlist import inspect_prepared, quality_rows_on_allowlist
+from scored_family_allowlist import report as allowlist_report
 
 # Origins whose evaluated outcome descends from this search's own population or its GP offspring.
 # Retained teachers/champions are the shared tail across arms (their descendants are not separable).

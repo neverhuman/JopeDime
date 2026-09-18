@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 """Freeze all six rankings on eight GPUs in resumable campaign spare windows."""
 import argparse
-import experiment_runtime as runtime
-import contextlib
 import json
-import os
-from pathlib import Path
 import signal
 import subprocess
 import time
-from experiment_scheduler import admission_reason, spare_lease, SPARE_CPUS
-from seed_experiment import verify, inside, digest, write, seal_rankings
+from pathlib import Path
 
+import experiment_runtime as runtime
+from experiment_scheduler import SPARE_CPUS, admission_reason, spare_lease
+from seed_experiment import digest, inside, seal_rankings, verify, write
 
 stop = runtime.stop
 

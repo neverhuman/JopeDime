@@ -10,13 +10,13 @@ import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path
 import signal
 import subprocess
 import time
 from functools import lru_cache
-from proposal_pool_v2 import PURE_PROTOCOL, ASSEMBLY_PROTOCOL, verify_generation
+from pathlib import Path
 
+from proposal_pool_v2 import ASSEMBLY_PROTOCOL, PURE_PROTOCOL, verify_generation
 
 PHASE = "GP optimizes cut targets for the next teaching corpus"
 
@@ -322,7 +322,7 @@ def run(root, spec_path):
             pool = pools[str(seed_path.parent)]
             assert digest(seed_path) == job["seeds_sha256"] == pool['seeds_sha256']
             assert job['prepared'] == pool['prepared'] and job['prepared_sha256'] == pool['prepared_sha256']
-            assert job['cut'] == pool['cut'] and (root/job['output']).resolve() == seed_path.parent/'search' 
+            assert job['cut'] == pool['cut'] and (root/job['output']).resolve() == seed_path.parent/'search'
         completed.append({"cut_start": start, "cuts": cuts, "pools": len(current),
                           "jobs": str((destination / "jobs.json").relative_to(root)),
                           "jobs_sha256": digest(destination / "jobs.json"), "snapshot_sha256": snapshot_sha})

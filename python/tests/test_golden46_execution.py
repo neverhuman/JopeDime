@@ -4,12 +4,11 @@ import importlib.util
 import json
 from pathlib import Path
 
-import jope.research
-
 import numpy as np
 import pandas as pd
 import pytest
 
+import jope.research
 
 SCRIPT = Path(jope.research.__file__).parent / "golden46_execution.py"
 SPEC = importlib.util.spec_from_file_location("golden46_execution", SCRIPT)

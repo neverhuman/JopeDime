@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Iterable
 from dataclasses import replace
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 from ..pipeline_text import format_param_token, parse_pipeline_actions
 from .families import FAMILY_LIST_V3
@@ -54,7 +55,7 @@ def merge_learned_bins(
 
 
 def observed_param_tokens(
-    rows: Iterable["TrainingRow"],
+    rows: Iterable[TrainingRow],
     spec: GrammarSpec,
     *,
     cap: int = 24,
@@ -88,7 +89,7 @@ def observed_param_tokens(
     }
 
 
-def build_active_vocab_v3(rows: Iterable["TrainingRow"], specs: list[GrammarSpec]) -> dict[str, Any]:
+def build_active_vocab_v3(rows: Iterable[TrainingRow], specs: list[GrammarSpec]) -> dict[str, Any]:
     """Multi-engine vocab artifact with embedded grammar snapshots (learned bins merged)."""
     rows = list(rows)
     engines: dict[str, Any] = {}

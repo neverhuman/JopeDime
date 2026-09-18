@@ -1,7 +1,6 @@
-import json
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
 import checkpoint_ledger as cl
 from resume_expired_cycle import atomic, sha
@@ -23,7 +22,7 @@ class CheckpointLedger(unittest.TestCase):
             files[rel] = dict(sha256=sha(path), bytes=path.stat().st_size, mtime=1.0, stub=stub, full_sha256=full, mirrored=str(path.relative_to(base)), tail_lines=None)
             return sha(path)
         # cycle 0: steps 1000/2000/3000; 3000 monitored. cycle 1: step 6000 unmonitored (orphan), as a stub with a full digest
-        s1 = put(f'{RUN}/learning/cycle-000000/train-2/checkpoints/step-1000/state.json', dict(step=1000, model_sha256='m1'))
+        put(f'{RUN}/learning/cycle-000000/train-2/checkpoints/step-1000/state.json', dict(step=1000, model_sha256='m1'))
         put(f'{RUN}/learning/cycle-000000/train-2/checkpoints/step-2000/state.json', dict(step=2000, model_sha256='m2'))
         s3 = put(f'{RUN}/learning/cycle-000000/train-2/checkpoints/step-3000/state.json', dict(step=3000, model_sha256='m3'))
         put(f'{RUN}/learning/cycle-000001/train-2/checkpoints/step-6000/state.json', dict(schema='parallel.receipt_stub.v1', fields=dict(step=6000, model_sha256='m6')), stub=True, full='f' * 64)

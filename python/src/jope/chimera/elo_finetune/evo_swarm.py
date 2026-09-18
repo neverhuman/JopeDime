@@ -10,7 +10,7 @@ entropy guard against collapse. Also owns per-module-group sigma multipliers
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -111,7 +111,7 @@ class Swarm:
                  success_window=np.array(self.success_window or [(0, 0)]))
 
     @classmethod
-    def load(cls, path: str, n_blocks: int) -> "Swarm":
+    def load(cls, path: str, n_blocks: int) -> Swarm:
         s = cls(n_blocks)
         data = np.load(path)
         s.p, s.v = data["p"], data["v"]

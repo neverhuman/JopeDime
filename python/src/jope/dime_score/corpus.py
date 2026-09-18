@@ -6,8 +6,9 @@ import math
 import os
 import shutil
 from collections import defaultdict
+from collections.abc import Iterator, Sequence
 from pathlib import Path
-from typing import Any, Iterator, Sequence
+from typing import Any
 
 import numpy as np
 

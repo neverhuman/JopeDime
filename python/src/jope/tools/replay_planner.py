@@ -3,8 +3,18 @@ import argparse
 from collections import defaultdict
 from pathlib import Path
 
-from scientific_metadata import (canonical, context, digest, finite, immutable, metadata_bytes,
-                                 program, read_with_digest, reference, sha256_value)
+from scientific_metadata import (
+    canonical,
+    context,
+    digest,
+    finite,
+    immutable,
+    metadata_bytes,
+    program,
+    read_with_digest,
+    reference,
+    sha256_value,
+)
 
 SCHEMA = "parallel.replay_plan.v2"
 TEACHER_ORIGINS = ("incumbent_cut_teacher", "retained_cut_teacher")

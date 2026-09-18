@@ -1,10 +1,10 @@
 import json
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
-from gpu_batch_probe import summarize, sample_gpu
+from gpu_batch_probe import sample_gpu, summarize
 
 
 class BatchProbeTests(unittest.TestCase):
