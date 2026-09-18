@@ -4,8 +4,10 @@
 //! `dataset_hash` (the first 16 hex digits of the canonical sha256 recorded in `meta.json`).
 //! Files are stored once under `blobs/sha256/<64hex>`; a catalog row per dataset points at them.
 
+pub mod blobs;
 pub mod cache;
 pub mod catalog;
+pub mod cli;
 pub mod hash;
 pub mod ingest;
 pub mod meta;
