@@ -12,10 +12,8 @@ isclose(rel=abs=1e-12).
 """
 from __future__ import annotations
 
-import json
 import math
 import sys
-from pathlib import Path
 
 import numpy as np
 
@@ -64,7 +62,7 @@ def _augmented(cand_rmse: dict[str, float], hashes: list[str], name: str):
 def official_elo(cand_rmse: dict[str, float], hashes: list[str], name: str = "cand") -> dict:
     """Exact official path: tools.elo.algorithm_matches + compute_elo (slow)."""
     sys.path.insert(0, str(QUANT_MODELS))
-    from tools.elo import algorithm_matches, compute_elo  # noqa: read-only official import
+    from tools.elo import algorithm_matches, compute_elo  # read-only official import
 
     algos, U_aug, v_aug, rows = _augmented(cand_rmse, hashes, name)
     matches = algorithm_matches(algos, U_aug, v_aug, dataset_indices=rows)

@@ -6,7 +6,6 @@ from pathlib import Path
 
 import jope.research
 
-
 SCRIPT_DIR = Path(jope.research.__file__).parent
 SPEC = importlib.util.spec_from_file_location(
     "test_exact_context_proposals",

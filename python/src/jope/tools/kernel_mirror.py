@@ -2,10 +2,10 @@
 """Mirror an immutable work bundle to an unused namespace; never activate it."""
 import argparse
 import json
-from pathlib import Path
 import shlex
 import subprocess
 import uuid
+from pathlib import Path
 
 from kernel_bundle import verify_bundle
 from kernel_release import digest

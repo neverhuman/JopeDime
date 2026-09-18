@@ -3,11 +3,10 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-import jope.research
-
 import numpy as np
 import pytest
 
+import jope.research
 
 SCRIPT = Path(jope.research.__file__).parent / "reconstruct_old_hyperion_vs.py"
 SPEC = importlib.util.spec_from_file_location("reconstruct_old_hyperion_vs", SCRIPT)

@@ -1,10 +1,9 @@
 import importlib.util
+import tempfile
+import unittest
 from pathlib import Path
 
 import jope.research
-import tempfile
-import unittest
-
 
 SCRIPT = Path(jope.research.__file__).parent / "append_realtime_agent_chat.py"
 SPEC = importlib.util.spec_from_file_location("append_realtime_agent_chat", SCRIPT)

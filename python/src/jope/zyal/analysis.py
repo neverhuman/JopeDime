@@ -45,8 +45,7 @@ from jope.genome_perf import split_of
 from jope.genome_perf.parse import COST_CLASSES, parse
 from jope.grammars import FAMILY_LIST_V3, grammar_for
 
-from . import LeakageError, SCHEMA_VERSION, assert_no_forbidden_inputs
-from . import security
+from . import SCHEMA_VERSION, LeakageError, assert_no_forbidden_inputs, security
 
 # --- Controller-owned limits ---------------------------------------------------------------------
 FINDINGS_BYTE_CAP = 8_192          # the findings payload an agent may return

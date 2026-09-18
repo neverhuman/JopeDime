@@ -58,13 +58,13 @@ import argparse
 import hashlib
 import json
 import math
-from pathlib import Path
 import random
 import re
 import statistics
+from pathlib import Path
 
-from flywheel_verdict import lookup, preregistration
 import promotion_gate
+from flywheel_verdict import lookup, preregistration
 from resume_expired_cycle import read, require, sha
 
 SCHEMA = 'parallel.flywheel_f9_readout.v2'

@@ -5,8 +5,6 @@ import time
 from pathlib import Path
 
 import pytest
-
-
 from test_exact_train import (  # noqa: E402
     eight_slot_task_weights,
     optional_task_training_allowed,

@@ -4,10 +4,10 @@ import hashlib
 import json
 import math
 import os
+from collections.abc import Iterator, Mapping, Sequence
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator, Mapping, Sequence
 
 import numpy as np
 import torch
@@ -34,7 +34,7 @@ class DatasetRecord:
     positives: int | None = None
 
     @classmethod
-    def from_json(cls, row: Mapping[str, object], manifest_dir: Path) -> "DatasetRecord":
+    def from_json(cls, row: Mapping[str, object], manifest_dir: Path) -> DatasetRecord:
         cache_path = Path(str(row["cache_path"]))
         if not cache_path.is_absolute():
             cache_path = manifest_dir / cache_path

@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
 """Fresh real-cut encoding in a separate directory; compare every saved float."""
 import argparse
-import experiment_runtime as runtime
-import experiment_stages as stage_artifacts
 import hashlib
 import json
 import math
-import os
-from pathlib import Path
 import signal
 import struct
 import subprocess
 import time
+from pathlib import Path
 
+import experiment_runtime as runtime
+import experiment_stages as stage_artifacts
 from binary_encode import owned_ranks, sha, write
-from experiment_scheduler import admission_reason, spare_lease, SPARE_CPUS
+from experiment_scheduler import SPARE_CPUS, admission_reason, spare_lease
 
 
 def immutable(path, value):
@@ -66,7 +65,7 @@ def verify(root, experiment, output):
                     raise ValueError('binary_reproduce: artifact validation failed at original line 57')
                 if not (receipt["signature_sha256"] == sha(directory / filename)):
                     raise ValueError('binary_reproduce: artifact validation failed at original line 58')
-                if not (receipt["final_test_targets_used"] is False):
+                if receipt["final_test_targets_used"] is not False:
                     raise ValueError('binary_reproduce: artifact validation failed at original line 59')
             comparisons[component] = compare_floats(original / filename, fresh / filename)
         key = prepared["dataset"], job["cut"]

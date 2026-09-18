@@ -4,7 +4,14 @@ import argparse
 import json
 from pathlib import Path
 
-from .data import TASK_BINARY, TASK_REGRESSION, default_cache_workers, default_roots, load_manifest, prepare_cache
+from .data import (
+    TASK_BINARY,
+    TASK_REGRESSION,
+    default_cache_workers,
+    default_roots,
+    load_manifest,
+    prepare_cache,
+)
 from .encode import encode_file
 from .train import TrainConfig, train
 from .tui import watch
@@ -337,7 +344,13 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"shape": list(embedding.shape), "dtype": str(embedding.dtype)}))
         return 0
     if args.command == "train-fusion":
-        from .fused import DEFAULT_BEST_CHECKPOINT, DEFAULT_FINAL_CHECKPOINT, FusedTrainingConfig, default_fusion_run_dir, train_fusion
+        from .fused import (
+            DEFAULT_BEST_CHECKPOINT,
+            DEFAULT_FINAL_CHECKPOINT,
+            FusedTrainingConfig,
+            default_fusion_run_dir,
+            train_fusion,
+        )
 
         run_dir = args.run_dir or default_fusion_run_dir()
         report = train_fusion(

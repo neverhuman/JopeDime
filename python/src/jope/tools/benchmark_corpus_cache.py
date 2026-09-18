@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 """One-CPU corpus benchmark on pointer-only samples of completed GP ledgers."""
-import argparse, hashlib, json, os, pathlib, resource, signal, subprocess, time
+import argparse
+import hashlib
+import json
+import os
+import pathlib
+import resource
+import signal
+import subprocess
+import time
 
 
 def sha(path):

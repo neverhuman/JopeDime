@@ -7,7 +7,7 @@ import time
 
 import torch
 
-from .data import load_dataset, gate_meta_vector
+from .data import gate_meta_vector, load_dataset
 
 
 def build_cache(dirs, experts, out_dir, device="cuda", log_every=25, max_test=None):
@@ -27,7 +27,6 @@ def build_cache(dirs, experts, out_dir, device="cuda", log_every=25, max_test=No
             outs = [ex.infer(ds) for ex in experts]
         except Exception as e:
             print(f"skip {h}: {type(e).__name__}: {e}", flush=True); continue
-        M = outs[0].hidden.shape[0]
         entry = {
             "hash": h, "task": ds.task,
             "hidden": torch.stack([o.hidden for o in outs], 1),        # (M,E,512)
@@ -63,7 +62,7 @@ def build_cache_packed(bases, experts, out_dir, split="train", max_shards=None,
     """Iterate packed shards, batch same-shape tasks through the frozen experts,
     write one .pt per input shard (many tasks). bases: list like ['real_packed',
     'synthetic_packed']."""
-    from .data import iter_packed_shards, load_packed_shard, group_by_shape, gate_meta_vector
+    from .data import gate_meta_vector, group_by_shape, iter_packed_shards, load_packed_shard
     os.makedirs(out_dir, exist_ok=True)
     shards = []
     for b in bases:

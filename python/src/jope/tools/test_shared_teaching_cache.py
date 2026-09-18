@@ -3,15 +3,15 @@ import hashlib
 import mmap
 import os
 import socket
+import tempfile
 import threading
 import time
-from pathlib import Path
-import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
-from shared_teaching_cache import Cache, SEALS, report_cache, receive_request
 from resident_gpu_pool import idle_worker
+from shared_teaching_cache import SEALS, Cache, receive_request, report_cache
 
 
 class SharedCacheTests(unittest.TestCase):

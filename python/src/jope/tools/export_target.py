@@ -3,12 +3,18 @@
 The saved graph contains all statistics and both frozen neural encoders. Runtime
 sampling uses exported row-index recipes; no Python is needed during encoding.
 """
-import argparse, hashlib, json, math, sys
+import argparse
+import hashlib
+import json
+import math
+import sys
 from pathlib import Path
+
 import numpy as np
 import torch
 from torch import nn
 from torch.nn import functional as F
+
 
 class WindowStats(nn.Module):
     def forward(self, values, lengths, task):
@@ -95,10 +101,10 @@ class FusedGraph(nn.Module):
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--source',type=Path,required=True);p.add_argument('--bundle',type=Path,required=True);p.add_argument('--prepared',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args();sys.path.insert(0,str(a.source))
-    from target_maker.fused import FusedTargetEncoder
     from target_maker.classical import summarize_target_window
-    from target_maker.data import stable_seed,sample_indices
+    from target_maker.data import sample_indices, stable_seed
     from target_maker.encode import _window_indices
+    from target_maker.fused import FusedTargetEncoder
     torch.set_num_threads(2);torch.backends.mha.set_fastpath_enabled(False)
     enc=FusedTargetEncoder(a.bundle,device='cpu');assert enc.window_size==32 and enc.signature_views==2 and not enc.include_cache_profile
     graph=FusedGraph(enc).eval();a.output.mkdir(parents=True,exist_ok=True)

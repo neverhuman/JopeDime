@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Indexed historical candidate inventory; scores remain informational only."""
 import argparse
-from collections import Counter
 import hashlib
 import json
-from pathlib import Path
 import sqlite3
 import subprocess
+from collections import Counter
+from pathlib import Path
 
 from promotion_gate import immutable
 from resume_expired_cycle import read, sha

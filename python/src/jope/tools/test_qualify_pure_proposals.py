@@ -1,12 +1,10 @@
-import copy
 import importlib.util
-import json
-from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import time
 import unittest
+from pathlib import Path
 
 spec = importlib.util.spec_from_file_location("qualification", Path(__file__).with_name("qualify_pure_proposals.py"))
 module = importlib.util.module_from_spec(spec)

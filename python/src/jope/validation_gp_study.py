@@ -8,7 +8,6 @@ then performs exact final refits after robust-CV selection is frozen.
 from __future__ import annotations
 
 import csv
-import hashlib
 import json
 import math
 import shutil
@@ -18,7 +17,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -27,9 +26,9 @@ import numpy as np
 from .data.active_v3 import robust_score
 from .engines import EngineRouter
 from .eval_ledger import iter_eval_regression_with_ledger
-from .propose import embedding_from_vs, target_summary_from_vs
 from .prime_config import load_config
 from .prime_staging import stage_read_only_dataset
+from .propose import embedding_from_vs, target_summary_from_vs
 
 DEFAULT_DATASETS = (
     "ab0239b9ef0ba28e",
@@ -94,7 +93,7 @@ class EventLog:
         ts = time.time()
         row = {
             "ts": ts,
-            "iso": datetime.fromtimestamp(ts, tz=timezone.utc).isoformat(timespec="milliseconds"),
+            "iso": datetime.fromtimestamp(ts, tz=UTC).isoformat(timespec="milliseconds"),
             "dataset": dataset,
             "stage": stage,
             "event": event,
@@ -109,7 +108,7 @@ class ValidationGpStudy:
     def __init__(self, config: StudyConfig) -> None:
         self.cfg = config
         if not self.cfg.study_tag:
-            stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+            stamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             self.cfg.study_tag = f"validation_gp_{stamp}"
         self.prime_config = load_config()
         self.source_root = Path(self.cfg.root)

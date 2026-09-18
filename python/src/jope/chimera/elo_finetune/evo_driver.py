@@ -16,11 +16,16 @@ import time
 from pathlib import Path
 
 import numpy as np
-import torch
 
 from .ckpt import CheckpointManager, save_atomic
-from .evo_blocks import (BlockTable, CandidateSpec, DeltaEngine, MODULE_GROUPS,
-                         delta_to_sparse, sample_mask, save_sparse_delta)
+from .evo_blocks import (
+    BlockTable,
+    CandidateSpec,
+    DeltaEngine,
+    delta_to_sparse,
+    sample_mask,
+    save_sparse_delta,
+)
 from .evo_episodes import episode_specs_guard, episode_specs_narrow
 from .evo_fitness import paired_stats
 from .evo_swarm import Swarm
@@ -90,7 +95,6 @@ class Driver:
 
     # ---- transport ---------------------------------------------------------
     def push_spec(self, name: str, spec: dict, nodes=None) -> None:
-        spec_json = json.dumps(spec)
         target_nodes = list(nodes or self.nodes)
         for shard_ix, node in enumerate(target_nodes):
             s = dict(spec)

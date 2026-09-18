@@ -168,7 +168,7 @@ class ClusterMonitor:
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
 
-    def start(self) -> "ClusterMonitor":
+    def start(self) -> ClusterMonitor:
         if self._thread is None:
             self._thread = threading.Thread(target=self._run, daemon=True)
             self._thread.start()
@@ -177,7 +177,7 @@ class ClusterMonitor:
     def stop(self) -> None:
         self._stop.set()
 
-    def poll_once(self) -> "ClusterMonitor":
+    def poll_once(self) -> ClusterMonitor:
         """Synchronously poll every host once (concurrent). For one-shot renders."""
         results: dict[str, HostState] = {}
         threads = []

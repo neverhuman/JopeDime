@@ -3,11 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import jope.research
+import numpy as np
 import pytest
 
-import numpy as np
-
+import jope.research
 
 SCRIPTS = Path(jope.research.__file__).parent
 

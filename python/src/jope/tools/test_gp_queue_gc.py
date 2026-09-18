@@ -4,16 +4,15 @@ import hashlib
 import io
 import json
 import os
-from pathlib import Path
 import shutil
 import tempfile
 import threading
 import time
 import unittest
+from pathlib import Path
 
 import gp_queue_gc as gc
 from resume_expired_cycle import read, sha
-
 
 FOREIGN = 'f' * 64
 PREPARED = 'data/prepared/views-expanded-20/55e9dfc7a86361d7'

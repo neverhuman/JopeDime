@@ -1,17 +1,17 @@
 """Nominate a replay arm using frozen training-family predicted-best fits."""
 import argparse
-from collections import Counter
-from pathlib import Path
 import statistics
 import time
+from collections import Counter
+from pathlib import Path
 
 from direct_proposal_evaluation import evaluate
-from promotion_gate import artifact,immutable
+from promotion_gate import artifact, immutable
 from qualification_budget import Budget
 from qualification_slots import acquire
-from qualify_regression_gain import gpu_handoff,ranks,ref,verify_trial_inputs
 from qualify_pure_proposals import validate_ranking
-from resume_expired_cycle import read,require,sha
+from qualify_regression_gain import gpu_handoff, ranks, ref, verify_trial_inputs
+from resume_expired_cycle import read, require, sha
 
 
 def select(scores,challengers,baselines):

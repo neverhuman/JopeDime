@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Bounded shadow-controller qualification; production shards are read-only."""
 import argparse
-from pathlib import Path
 import time
+from pathlib import Path
 
 import continuous_learning as controller
 import corpus_verification
 import experiment_runtime as runtime
 from promotion_gate import immutable
 from qualification_budget import Budget
-from resume_expired_cycle import read,require,sha
+from resume_expired_cycle import read, require, sha
 
 
 def shadow(root,output,request):

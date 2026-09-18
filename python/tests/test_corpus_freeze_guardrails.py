@@ -29,7 +29,6 @@ from __future__ import annotations
 
 import json
 
-
 from test_exact_train import (  # noqa: E402
     SPLIT_MEDIAN_RATIO_MAX,
     append_freeze_history,

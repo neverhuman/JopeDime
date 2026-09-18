@@ -14,23 +14,23 @@ five complementary views and is computed only from that view's training rows.
 
 from __future__ import annotations
 
+import csv
+import hashlib
 import json
 import math
 import random
-import csv
-import hashlib
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
-from ..engines import EngineRouter
 from ..contracts import (
     TaskType,
     build_binary_target_summaries,
     build_split_view_manifest,
     freeze_source_family_split,
 )
+from ..engines import EngineRouter
 from ..eval_ledger import iter_eval_regression_with_ledger
 from ..grammars import grammar_for
 from ..grammars.sampler import sample_genome_from_spec

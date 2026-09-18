@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass
-from typing import Mapping
 
 import torch
 from torch import nn
 from torch.nn import functional as F
 
-from .data import PROFILE_DIM, PROFILE_HIST_BINS, TASK_BINARY, TASK_REGRESSION
+from .data import PROFILE_DIM, PROFILE_HIST_BINS
 
 
 @dataclass
@@ -24,7 +24,7 @@ class ModelConfig:
     rich_stats: bool = False
 
     @classmethod
-    def from_mapping(cls, data: Mapping[str, object] | None) -> "ModelConfig":
+    def from_mapping(cls, data: Mapping[str, object] | None) -> ModelConfig:
         if not data:
             return cls()
         known = {field: data[field] for field in cls.__dataclass_fields__ if field in data}

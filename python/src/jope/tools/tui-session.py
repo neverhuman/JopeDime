@@ -3,10 +3,10 @@
 import argparse
 import hashlib
 import os
-from pathlib import Path
 import shlex
 import subprocess
 import time
+from pathlib import Path
 
 ROOT = Path('/home/ubuntu/jope-dime/parallel')
 BINARY = ROOT / 'runs/continuous-observer-v5-solid-20260909/jope-parallel-observer'

@@ -3,10 +3,9 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-import jope.research
-
 import numpy as np
 
+import jope.research
 
 SCRIPT = (
     Path(jope.research.__file__).parent

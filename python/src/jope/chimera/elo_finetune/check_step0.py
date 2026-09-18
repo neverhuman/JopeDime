@@ -26,7 +26,7 @@ import torch
 
 from .eval_protocol import ProtocolRunner
 from .model_io import load_regressor
-from .pack import DEFAULT_PACK_DIR, FablePack, OUR_ALGORITHM
+from .pack import DEFAULT_PACK_DIR, OUR_ALGORITHM, FablePack
 
 
 def main() -> None:

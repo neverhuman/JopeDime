@@ -1,10 +1,10 @@
 """Transient-unit cleanup; never releases another task's control or kernel locks."""
 import argparse
-from pathlib import Path
 import time
+from pathlib import Path
 
 from qualification_slots import release_stale
-from resume_expired_cycle import atomic,read
+from resume_expired_cycle import atomic, read
 
 
 def release(root,output):

@@ -1,8 +1,9 @@
 import hashlib
 import json
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
+
 from inventory_legacy_fits import inventory
 
 

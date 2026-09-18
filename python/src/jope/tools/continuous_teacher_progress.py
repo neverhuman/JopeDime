@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """Current collection gains from committed continuous-generation quality receipts."""
 import argparse
-from collections import Counter
-from pathlib import Path
-import time
+import heapq
 import os
 import threading
-import heapq
+import time
+from collections import Counter
+from pathlib import Path
 
-from resume_expired_cycle import atomic, read, require, sha
-from continuous_status import better, finite, summarize_quality, within
 from continuous_quality_report import search_row
+from continuous_status import better, finite, summarize_quality, within
 from promotion_gate import immutable
+from resume_expired_cycle import atomic, read, require, sha
 
 
 def summarize(reports, now):

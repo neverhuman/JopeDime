@@ -5,7 +5,7 @@ from pathlib import Path
 import candidate_intake
 from promotion_gate import immutable
 from qualify_regression_gain import ref
-from resume_expired_cycle import read,require
+from resume_expired_cycle import read, require
 
 
 def publish(root,manifest,trial_path,nomination_path):

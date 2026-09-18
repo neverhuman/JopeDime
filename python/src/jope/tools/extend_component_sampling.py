@@ -5,12 +5,13 @@
 checks just the new lengths/shapes against the original frozen model source.
 """
 import argparse
-import experiment_runtime as runtime
 import hashlib
 import json
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import experiment_runtime as runtime
 
 
 def load_registries(root, kind, paths):
@@ -67,7 +68,6 @@ def sha(path):
 
 def save(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
-    data = json.dumps(value, indent=2) + '\n'
     if path.exists():
         if not (json.loads(path.read_text()) == value):
             raise ValueError(f'Immutable artifact changed: {path}')
@@ -140,7 +140,7 @@ def main():
     import numpy as np
     source = r / 'assets/source/target_maker'
     sys.path.insert(0, str(source))
-    from target_maker.data import stable_seed, sample_indices
+    from target_maker.data import sample_indices, stable_seed
     from target_maker.encode import _window_indices
 
     jobs = json.loads(a.jobs.read_text())
@@ -156,7 +156,7 @@ def main():
             prepared[key] = json.loads(path.read_text())
         m = prepared[key]
         c = next(c for c in m['cuts'] if c['index'] == job['cut'])
-        if not (m['task'] in ['binary', 'regression']):
+        if m['task'] not in ['binary', 'regression']:
             raise ValueError('sampling validation failed at original line 142')
         n = len(c['train_indices'])
         lengths.add((0 if m['task'] == 'binary' else 1, n))

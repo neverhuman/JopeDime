@@ -5,17 +5,17 @@ Only original backing tables are staged once. Cuts contain references, membershi
 recipes and hashes; original final-test payloads are never opened.
 """
 import argparse
-import experiment_runtime as runtime
 import copy
 import hashlib
 import json
-from pathlib import Path
+import os
 import shutil
 import subprocess
-import os
 import time
 import uuid
+from pathlib import Path
 
+import experiment_runtime as runtime
 from experiment_scheduler import spare_lease
 
 COHORT = [

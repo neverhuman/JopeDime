@@ -21,6 +21,7 @@ from __future__ import annotations
 import numpy as np
 
 from jope.genome_perf.metrics import capture_at_k, paired_bootstrap_delta, per_dataset_spearman
+
 from . import CHAMPION, TIE_BAND
 
 SCREEN_FOLDS = 2

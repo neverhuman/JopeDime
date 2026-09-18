@@ -19,7 +19,7 @@ from pathlib import Path
 import numpy as np
 
 from .elo_meter import SplicedEloMeter
-from .pack import DEFAULT_PACK_DIR, FablePack, OUR_ALGORITHM
+from .pack import DEFAULT_PACK_DIR, OUR_ALGORITHM, FablePack
 
 FABLE_ELO_CANDIDATES = [
     Path("/home/ubuntu/fable_god/rust/target/release/fable-elo"),

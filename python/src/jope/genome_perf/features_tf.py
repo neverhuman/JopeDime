@@ -76,7 +76,7 @@ class SynergyFeatures:
         self.grand_mean = 0.5
         self.n_train = 0
 
-    def fit(self, parses: list[ParsedGenome], y: np.ndarray, train: np.ndarray) -> "SynergyFeatures":
+    def fit(self, parses: list[ParsedGenome], y: np.ndarray, train: np.ndarray) -> SynergyFeatures:
         idx = np.flatnonzero(train)
         self.n_train = len(idx)
         self.grand_mean = float(y[idx].mean()) if len(idx) else 0.5
@@ -194,7 +194,7 @@ class RetrievalFeatures:
         return list(self.names)
 
     def fit(self, dataset: np.ndarray, parses: list[ParsedGenome], y: np.ndarray,
-            train: np.ndarray, emb_by_dataset: dict[str, np.ndarray]) -> "RetrievalFeatures":
+            train: np.ndarray, emb_by_dataset: dict[str, np.ndarray]) -> RetrievalFeatures:
         idx = np.flatnonzero(train)
         skel: dict[str, dict[str, list[float]]] = {}
         head: dict[str, dict[str, list[float]]] = {}

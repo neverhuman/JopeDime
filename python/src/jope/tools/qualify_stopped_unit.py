@@ -3,16 +3,15 @@
 import argparse
 import fcntl
 import os
-from pathlib import Path
 import signal
 import subprocess
-import sys
 import time
+from pathlib import Path
 
+import stopped_unit
 from promotion_gate import immutable
 from qualification_budget import Budget
-from resume_expired_cycle import read,require,sha
-import stopped_unit
+from resume_expired_cycle import read, require, sha
 
 UNITS=('jope-drain-lifecycle-qualification-v1.service','jope-drain-recovery-qualification-v1.service')
 

@@ -55,7 +55,7 @@ class TrainingRow:
         return asdict(self)
 
     @classmethod
-    def from_json(cls, data: dict[str, Any]) -> "TrainingRow":
+    def from_json(cls, data: dict[str, Any]) -> TrainingRow:
         return cls(
             dataset_id=str(data.get("dataset_id", "unknown")),
             source=str(data.get("source", "unknown")),

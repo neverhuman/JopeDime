@@ -10,9 +10,10 @@ ExpertOut fields (per test row, batch B=1 dataset at a time):
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
 import torch
-from dataclasses import dataclass
 
 HID = 512
 
@@ -58,7 +59,7 @@ class TabPFNv3Reg(Expert):
     def __init__(self, device="cuda", full_kv=True):
         import sys
         sys.path.insert(0, "/home/ubuntu/fable_god")
-        from python.elo_finetune.model_io import load_regressor, bucket_centres
+        from python.elo_finetune.model_io import bucket_centres, load_regressor
         self.device = torch.device(device)
         self.model = _freeze(load_regressor(device=device))
         if full_kv:
@@ -111,8 +112,8 @@ class TabICLReg(Expert):
         "/home/ubuntu/jain_small/artifacts/foundation/tabicl-regressor-v2-20260212.safetensors")
 
     def __init__(self, device="cuda"):
-        from tabicl._model.tabicl import TabICL
         from safetensors.torch import load_file
+        from tabicl._model.tabicl import TabICL
         self.device = torch.device(device)
         m = TabICL(max_classes=0, num_quantiles=999, bias_free_ln=True)
         m.load_state_dict(load_file(self.W), strict=True)
@@ -223,8 +224,8 @@ class TabICLCls(Expert):
         "/home/ubuntu/jain_small/artifacts/foundation/tabicl-classifier-v2-20260212.safetensors")
 
     def __init__(self, device="cuda"):
-        from tabicl._model.tabicl import TabICL
         from safetensors.torch import load_file
+        from tabicl._model.tabicl import TabICL
         self.device = torch.device(device)
         m = TabICL(max_classes=10)
         m.load_state_dict(load_file(self.W), strict=True)

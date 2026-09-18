@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 from qualify_teaching_store import prepare_request
-from resume_expired_cycle import atomic,sha
+from resume_expired_cycle import atomic, sha
 
 
 class PackingResumeTests(unittest.TestCase):

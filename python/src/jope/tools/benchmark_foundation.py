@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Qualify larger independent dataset batches and report measured GPU memory."""
-import torch,json,time
+import json
+import time
 from pathlib import Path
+
+import torch
+
 r=Path(__file__).resolve().parents[1];torch.set_num_threads(2);torch._C._set_graph_executor_optimize(False);torch.backends.cuda.matmul.allow_tf32=False
 a=r/'assets/foundation-export-v1';m=torch.jit.load(str(a/'foundation.pt'),map_location='cuda:0').eval();old=json.loads((a/'parity.json').read_text());shapes=sorted({(x['context'],x['query'],x['width']) for x in old['tests']});tests=[]
 with torch.no_grad():

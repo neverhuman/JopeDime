@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 import torch
@@ -14,8 +15,8 @@ from ..schema import normalize_embedding
 from ..selector_calibration import load_selector_calibration, score_candidate_with_calibration
 from ..selector_reranker import load_selector_reranker, score_candidate_with_reranker
 from .automaton import DecoderState
-from .tokens import ActionVocab, BOS, decode_tokens
 from .model_v3 import JopePolicyModelV3, pad_sequences
+from .tokens import BOS, decode_tokens
 
 # Transforms that blow up dimensionality/instability when repeated (risk guard).
 _EXPLOSIVE = {

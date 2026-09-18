@@ -1,15 +1,15 @@
 import copy
 import hashlib
 import json
-from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
-import screen_pilot_select as s
 import scientific_metadata as metadata
+import screen_pilot_select as s
 
 
 def sha(text):

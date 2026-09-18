@@ -1,10 +1,10 @@
 import fcntl
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
 from release_qualification import release
-from resume_expired_cycle import atomic,read
+from resume_expired_cycle import atomic, read
 
 
 class ReleaseTests(unittest.TestCase):

@@ -1,13 +1,13 @@
+import os
 import tempfile
 import unittest
-import os
-from unittest.mock import patch
 from pathlib import Path
+from unittest.mock import patch
 
-from direct_proposal_evaluation import identity,evaluate,finish,reference
+from direct_proposal_evaluation import evaluate, finish, identity, reference
 from promotion_gate import immutable
 from qualification_budget import Budget
-from resume_expired_cycle import atomic,sha,read
+from resume_expired_cycle import atomic, read, sha
 
 
 class IdentityTests(unittest.TestCase):

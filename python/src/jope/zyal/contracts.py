@@ -9,7 +9,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-
 CONTRACT_FIELDS: dict[str, frozenset[str]] = {
     "ZyalArtifactForensicsReceipt.v1": frozenset(
         {

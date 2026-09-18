@@ -23,8 +23,9 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from .io import read_jsonl, write_jsonl
 from .prime_config import load_config

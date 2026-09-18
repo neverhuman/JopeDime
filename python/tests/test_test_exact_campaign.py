@@ -7,8 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-
-
+from test_exact_campaign import offspring_rows, rewrite_binary_candidate  # noqa: E402
 from test_exact_common import (  # noqa: E402
     SLOT_COUNTS,
     authoritative_observations,
@@ -23,7 +22,6 @@ from test_exact_common import (  # noqa: E402
     sha256_text,
     validate_catalog_counts,
 )
-from test_exact_campaign import offspring_rows, rewrite_binary_candidate  # noqa: E402
 from test_exact_wave import mutate, task_valid  # noqa: E402
 
 

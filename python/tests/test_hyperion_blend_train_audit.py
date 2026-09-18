@@ -6,7 +6,6 @@ from pathlib import Path
 
 import jope.research
 
-
 SCRIPTS = Path(jope.research.__file__).parent
 SPEC = importlib.util.spec_from_file_location(
     "hyperion_blend_train_audit", SCRIPTS / "hyperion_blend_train_audit.py"

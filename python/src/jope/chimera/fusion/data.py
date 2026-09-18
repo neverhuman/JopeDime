@@ -81,7 +81,6 @@ def gate_meta_vector(ds) -> np.ndarray:
     m = getattr(ds, "meta", {}) or {}
     if not isinstance(m, dict):                 # some meta.json parse to a bare string
         m = {}
-    tse = m.get("target_source_encoding", {})
     if ds.task != "regression":
         yall = np.concatenate([ds.ytr, ds.yte])
         imbalance = float(min((yall == c).mean() for c in np.unique(yall)))

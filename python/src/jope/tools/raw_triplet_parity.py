@@ -1,8 +1,8 @@
 """Content-addressed real-triplet copy plan. Excludes synthetics and nested extras."""
 from __future__ import annotations
 
-from pathlib import Path
 import re
+from pathlib import Path
 
 TASKS = ("regression", "binary", "multi_label", "timeseries")
 TRIPLET = ("meta.json", "train.csv", "test.csv")

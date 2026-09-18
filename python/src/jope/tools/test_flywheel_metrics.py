@@ -2,10 +2,10 @@
 """flywheel_metrics unit tests: hand-built fixtures plus the real local monitoring receipt."""
 import hashlib
 import math
-from pathlib import Path
 import statistics
 import tempfile
 import unittest
+from pathlib import Path
 
 import continuous_quality_report as q
 import flywheel_metrics as fm

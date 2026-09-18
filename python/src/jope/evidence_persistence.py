@@ -20,14 +20,14 @@ import sys
 import tempfile
 import threading
 from collections import OrderedDict
+from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Iterable, Iterator
+from typing import Any
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-
 
 CANDIDATE_OBSERVATION_V1 = "CandidateObservation.v1"
 HONEST_EVALUATION_V2 = "HonestEvaluation.v2"

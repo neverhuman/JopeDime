@@ -7,11 +7,9 @@ production's stable sorts.
 """
 from __future__ import annotations
 
-import math
-
 import numpy as np
 
-from .table import fit_embedding_pca, project_embedding, within_group_z
+from .table import fit_embedding_pca, project_embedding
 
 PCA_K_H = 16
 PCA_K_T = 8

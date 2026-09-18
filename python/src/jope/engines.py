@@ -14,12 +14,13 @@ import queue
 import re
 import subprocess
 import threading
-from dataclasses import dataclass, field
+from collections.abc import Iterator, Sequence
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Iterable, Iterator, Sequence
+from typing import Any
 
-from .validator import PROJECT_ROOT, RustValidator
 from .prime_config import ssh_control_path
+from .validator import PROJECT_ROOT, RustValidator
 
 ENGINE_FEATMATH = "featmath"
 ENGINE_NEWMATH = "newmath"
@@ -329,7 +330,7 @@ class EngineRouter:
             task = str(row.get("task") or DEFAULT_TASK)
             grouped.setdefault((engine, task), []).append(idx)
 
-        results: "queue.Queue[tuple[int, dict] | Exception | None]" = queue.Queue()
+        results: queue.Queue[tuple[int, dict] | Exception | None] = queue.Queue()
         driver = str(PROJECT_ROOT / "src" / "jope" / "remote_eval_driver.py")
 
         def run_host(engine: str, task: str, host: str, indices: list[int]) -> None:

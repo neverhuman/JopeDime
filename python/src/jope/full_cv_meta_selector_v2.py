@@ -7,9 +7,8 @@ import itertools
 import json
 import math
 import re
-import sys
 import time
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -26,7 +25,6 @@ from .data.vs import dataset_signature_from_vs
 from .elo_bench import ladder_elo, select_bench_datasets
 from .prime_config import load_config
 from .propose import target_summary_from_vs
-
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 _PRIME_CONFIG = load_config()

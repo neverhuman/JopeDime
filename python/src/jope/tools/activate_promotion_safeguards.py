@@ -2,14 +2,13 @@
 """Deploy reviewed supervisor/reporting code after the current durable GPU stage."""
 import argparse
 import json
-from pathlib import Path
 import subprocess
 import time
+from pathlib import Path
 
-from promotion_gate import immutable
 import operational_release
+from promotion_gate import immutable
 from resume_expired_cycle import atomic, read, require, sha
-
 
 OVERRIDE = 'zz-promotion-safeguards.conf'
 SUPERSEDED = {'zzz-flywheel-v2.conf', 'zzzz-flywheel-v3.conf'}

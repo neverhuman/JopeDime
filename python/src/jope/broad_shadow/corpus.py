@@ -14,6 +14,7 @@ from typing import Any
 
 import numpy as np
 
+from .catalog import constrained_semantic_genome_splits
 from .contracts import (
     BROAD_CORPUS_SCHEMA,
     DATASET_EMBEDDING_DIMENSIONS,
@@ -26,8 +27,6 @@ from .contracts import (
     validate_broad_receipt,
     validate_probe_slate,
 )
-from .catalog import constrained_semantic_genome_splits
-
 
 PACK_FILES = {
     "token_ids": ("token_ids.npy", "uint16"),

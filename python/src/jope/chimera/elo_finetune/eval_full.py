@@ -19,7 +19,6 @@ import subprocess
 import time
 from pathlib import Path
 
-import numpy as np
 import torch
 import torch.distributed as dist
 
@@ -27,7 +26,7 @@ from .check_meter_parity import fable_elo_bin, write_extra
 from .ckpt import CheckpointManager
 from .eval_protocol import ProtocolRunner
 from .model_io import CONFIG_NAME, default_weights_dir, load_regressor
-from .pack import DEFAULT_PACK_DIR, FablePack, OUR_ALGORITHM
+from .pack import DEFAULT_PACK_DIR, OUR_ALGORITHM, FablePack
 from .paths import import_regressor_train
 
 

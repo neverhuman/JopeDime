@@ -1,8 +1,8 @@
 """Verify transferred bytes using the sender's manifest before loading tools."""
 import hashlib
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 
 def publish(incoming, final, expected):

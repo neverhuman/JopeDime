@@ -80,7 +80,7 @@ def fit_projection(art_dir: Path, cache_dir: Path) -> Path:
 
 
 class FoundationProjector:
-    _cache: dict[str, "FoundationProjector"] = {}
+    _cache: dict[str, FoundationProjector] = {}
 
     def __init__(self, spec: dict):
         projection = Path(spec["projection_file"])
@@ -96,7 +96,7 @@ class FoundationProjector:
         self.cache_sha256 = dict(spec.get("cache_sha256") or {})
 
     @classmethod
-    def from_spec(cls, spec: dict) -> "FoundationProjector":
+    def from_spec(cls, spec: dict) -> FoundationProjector:
         key = spec["projection_file"]
         if key not in cls._cache:
             cls._cache[key] = cls(spec)

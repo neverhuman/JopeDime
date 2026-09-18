@@ -5,12 +5,12 @@ The legacy four-arm launcher is retired. Original experiment selection and
 optimizer evidence must be recovered before a replacement may execute work.
 """
 import argparse
-from contextlib import contextmanager
 import fcntl
 import json
-from pathlib import Path
 import subprocess
 import time
+from contextlib import contextmanager
+from pathlib import Path
 
 import experiment_runtime as runtime
 from promotion_gate import immutable

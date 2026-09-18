@@ -1,6 +1,4 @@
-from contextlib import ExitStack
 import os
-from pathlib import Path
 import shutil
 import signal
 import subprocess
@@ -8,6 +6,8 @@ import sys
 import tempfile
 import time
 import unittest
+from contextlib import ExitStack
+from pathlib import Path
 from unittest.mock import patch
 
 import stopped_unit as unit

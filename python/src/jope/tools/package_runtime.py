@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """Create an explicit runtime allowlist; data/model transfers use separate manifests."""
-import hashlib,json,sys
+import hashlib
+import json
+import sys
 from pathlib import Path
+
 from kernel_release import runtime_files
+
 root=Path(__file__).resolve().parents[1]
 paths=list(runtime_files(root))
 files=[dict(source=str(p),destination=str(p.relative_to(root)),sha256=hashlib.sha256(p.read_bytes()).hexdigest(),bytes=p.stat().st_size,dataset=None,role='parallel_source') for p in sorted(paths)]

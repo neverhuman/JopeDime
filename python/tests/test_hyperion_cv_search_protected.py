@@ -4,10 +4,9 @@ import importlib.util
 import sys
 from pathlib import Path
 
-import jope.research
-
 import pytest
 
+import jope.research
 
 SCRIPTS = Path(jope.research.__file__).parent
 SPEC = importlib.util.spec_from_file_location(

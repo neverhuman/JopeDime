@@ -1,17 +1,15 @@
 """Recompute both sides of all 80 binary contexts, including every raw component."""
 import argparse
-import hashlib
-import json
-from pathlib import Path
 import signal
 import subprocess
 import time
+from pathlib import Path
 
 import binary_verify as binary
-from binary_encode import serial_job_waves
-from binary_reproduce import compare_floats, immutable
 import experiment_runtime as runtime
 import experiment_stages as stages
+from binary_encode import serial_job_waves
+from binary_reproduce import compare_floats, immutable
 from experiment_scheduler import SPARE_CPUS, admission_reason, spare_lease
 
 
@@ -133,7 +131,7 @@ def main():
     hyperion_spec = root / "manifests/hyperion-reviewed4-safe-spec.json"
     specs = {name: original / "sampling" / f"{name}-spec.json" for name in ("target", "foundation")}
     specs["hyperion"] = hyperion_spec
-    hyperion = binary.read(hyperion_spec)
+    binary.read(hyperion_spec)
     request = {"schema": "parallel.binary_full_replay.v2", "views": 80, "pairs": 80, "raw_components_per_side": 240,
         "original_verified_contexts": verified["context_hashes"],
         "source_experiment": str(original.relative_to(root)), "executable": str(args.binary.relative_to(root)),

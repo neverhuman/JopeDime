@@ -5,9 +5,9 @@ import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path
 import subprocess
 import time
+from pathlib import Path
 
 p = argparse.ArgumentParser()
 p.add_argument('--root', type=Path, required=True)

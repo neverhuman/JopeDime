@@ -9,7 +9,6 @@ from collections.abc import Mapping, Sequence
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
-
 OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models"
 KILO_MODELS_URL = "https://api.kilo.ai/api/gateway/models"
 ALLOWED_PROVIDERS = frozenset({"openrouter", "kilo"})

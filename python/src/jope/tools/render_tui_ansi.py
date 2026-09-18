@@ -2,9 +2,14 @@
 """Render recorded terminal frames, preserving their live timestamps and measured states.
 One-time dependency: pyte==0.8.2 (no effect on the Rust runtime).
 """
-import argparse,hashlib,json,re
+import argparse
+import hashlib
+import json
+import re
 from pathlib import Path
+
 import pyte
+
 p=argparse.ArgumentParser();p.add_argument('capture',type=Path);p.add_argument('output',type=Path);a=p.parse_args()
 manifest=json.loads((a.capture/'frames.json').read_text());raw=(a.capture/manifest['ansi']).read_bytes()
 assert hashlib.sha256(raw).hexdigest()==manifest['ansi_sha256']

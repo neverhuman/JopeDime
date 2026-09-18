@@ -26,12 +26,12 @@ the challenger's favour. Anything malformed is `inconclusive` with reasons; noth
 import argparse
 import json
 import math
-from pathlib import Path
 import re
+from pathlib import Path
 
 import flywheel_metrics
-from flywheel_verdict import lookup, preregistration
 import promotion_gate
+from flywheel_verdict import lookup, preregistration
 from resume_expired_cycle import read, require, sha
 
 SCHEMA = 'parallel.promotion_decision.v2'

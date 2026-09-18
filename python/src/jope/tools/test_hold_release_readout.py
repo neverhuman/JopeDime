@@ -1,8 +1,7 @@
-import hashlib
 import json
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
 import hold_release_readout as hr
 from resume_expired_cycle import atomic, sha

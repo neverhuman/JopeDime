@@ -826,7 +826,7 @@ class Ledger(Dispatcher):
                 skipped.append(dict(role=role, reason=arm + ' seeds absent'))
                 continue
             pool = [g for g in genomes(population['doc'], origin) if digest(g.encode()) not in candidate_shas]
-            keyed = sorted(((selection_key(prepared_sha, cut, generation, arm, digest(g.encode())), g) for g in pool))
+            keyed = sorted((selection_key(prepared_sha, cut, generation, arm, digest(g.encode())), g) for g in pool)
             chosen = [g for _, g in keyed[:defaults['controls']]]
             selection[role] = dict(pool=len(pool), chosen=[digest(g.encode()) for g in chosen], salt=arm)
             if not chosen:

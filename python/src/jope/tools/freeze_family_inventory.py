@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Freeze membership and known contamination limits from preparation metadata."""
 import argparse
-from collections import defaultdict,Counter
-from pathlib import Path
 import time
+from collections import Counter, defaultdict
+from pathlib import Path
 
 from promotion_gate import immutable
-from resume_expired_cycle import read,require,sha
+from resume_expired_cycle import read, require, sha
 
 
 def freeze(root,contexts,output):

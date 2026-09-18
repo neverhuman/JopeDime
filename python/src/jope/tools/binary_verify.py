@@ -6,8 +6,8 @@ import csv
 import hashlib
 import json
 import math
-from pathlib import Path
 import struct
+from pathlib import Path
 
 from experiment_runtime import checked_path, inside, require, write
 

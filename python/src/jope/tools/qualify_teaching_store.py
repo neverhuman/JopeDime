@@ -2,15 +2,14 @@
 """Compare immutable group publication against an existing production reference."""
 import argparse
 import fcntl
-import os
-from pathlib import Path
 import subprocess
 import time
+from pathlib import Path
 
 import experiment_runtime as runtime
 from promotion_gate import immutable
 from qualification_budget import Budget
-from resume_expired_cycle import atomic,read,require,sha
+from resume_expired_cycle import atomic, read, require, sha
 
 
 def prepare_request(root,manifest,binary,output,ceiling,resume=None):

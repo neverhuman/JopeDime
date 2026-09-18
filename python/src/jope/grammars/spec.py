@@ -7,8 +7,9 @@ state. Parity with the Rust bridges is enforced by the grammar handshake + probe
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Iterator, Literal
+from collections.abc import Iterator
+from dataclasses import dataclass
+from typing import Any, Literal
 
 CostClass = Literal["cheap", "medium", "expensive", "extreme", "portfolio"]
 
@@ -31,7 +32,7 @@ class ParamSpec:
         }
 
     @classmethod
-    def from_json(cls, data: dict[str, Any]) -> "ParamSpec":
+    def from_json(cls, data: dict[str, Any]) -> ParamSpec:
         return cls(
             name=str(data["name"]),
             kind=data.get("kind", "str"),
@@ -81,7 +82,7 @@ class OpSpec:
         }
 
     @classmethod
-    def from_json(cls, data: dict[str, Any]) -> "OpSpec":
+    def from_json(cls, data: dict[str, Any]) -> OpSpec:
         return cls(
             name=str(data["name"]),
             role=data.get("role", "transform"),
@@ -134,7 +135,7 @@ class ExprSpec:
         }
 
     @classmethod
-    def from_json(cls, data: dict[str, Any]) -> "ExprSpec":
+    def from_json(cls, data: dict[str, Any]) -> ExprSpec:
         return cls(
             vars_map=tuple(data.get("vars_map") or ("x",)),
             vars_common=tuple(data.get("vars_common") or ()),
@@ -178,7 +179,7 @@ class GrammarSpec:
         }
 
     @classmethod
-    def from_json(cls, data: dict[str, Any]) -> "GrammarSpec":
+    def from_json(cls, data: dict[str, Any]) -> GrammarSpec:
         return cls(
             engine=str(data["engine"]),
             version=str(data.get("version") or "unknown"),
@@ -191,7 +192,7 @@ class GrammarSpec:
             max_expr_stages=int(data.get("max_expr_stages", 3)),
         )
 
-    def with_learned_bins(self, observed: dict[str, dict[str, list[str]]], *, cap: int = 24) -> "GrammarSpec":
+    def with_learned_bins(self, observed: dict[str, dict[str, list[str]]], *, cap: int = 24) -> GrammarSpec:
         """Union observed param tokens (from corpora) into the static bins, capped."""
         from .vocab import merge_learned_bins  # local import to avoid a cycle
 

@@ -8,7 +8,7 @@ import json
 import sys
 from pathlib import Path
 
-from .grammars.prime import GRAMMAR, registry_hash, registry_snapshot_path
+from .grammars.prime import GRAMMAR, registry_snapshot_path
 from .prime_config import load_config
 from .prime_ops import fit_transform
 

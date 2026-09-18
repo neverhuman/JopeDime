@@ -1,11 +1,10 @@
 import json
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from jope.tools import experiment_scheduler as scheduler
-
 
 
 class SchedulerTests(unittest.TestCase):

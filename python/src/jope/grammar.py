@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import random
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 KNOWN_VALID_FALLBACK = "(pipe X (robust_scale) (ridge))"
 

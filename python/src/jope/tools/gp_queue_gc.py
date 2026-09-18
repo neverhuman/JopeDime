@@ -38,11 +38,10 @@ import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path
 import time
+from pathlib import Path
 
 from resume_expired_cycle import read, require, sha
-
 
 DEAD_LETTER_SCHEMA = 'parallel.gp_dead_letter.v1'
 RECEIPT_SCHEMA = 'parallel.gp_queue_gc_receipt.v1'

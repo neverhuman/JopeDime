@@ -1,9 +1,9 @@
 import json
 import os
-from pathlib import Path
 import tempfile
 import time
 import unittest
+from pathlib import Path
 
 import flywheel_headline as headline
 import hold_release_readout
@@ -89,7 +89,7 @@ class Headline(unittest.TestCase):
         latest = self.run / 'successor/scoreboard/latest.json'
         argv = ['--root', str(self.root), '--run', 'runs/run', '--manifest', str(self.root / 'manifest.json'), '--baseline', str(self.root / 'baseline.json'), '--series', str(self.series),
                 '--output', str(output), '--latest', str(latest)]
-        first = headline.main(argv)
+        headline.main(argv)
         path = output / 'generation-000031.json'
         self.assertEqual(json.loads(path.read_bytes())['generation'], 31)
         digest = sha(path)

@@ -3,11 +3,16 @@
 The wrapper removes chunking control flow and the unused prediction head. Its
 output is checked against the original forward for every admitted cut shape.
 """
-import os,sys,json,hashlib
+import hashlib
+import json
+import os
+import sys
 from pathlib import Path
+
 import numpy as np
 import torch
 from torch import nn
+
 
 class HiddenGraph(nn.Module):
     def __init__(self,model):super().__init__();self.model=model

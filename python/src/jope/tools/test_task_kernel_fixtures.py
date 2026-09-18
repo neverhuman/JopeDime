@@ -1,9 +1,9 @@
 """Isolated four-task kernel fixtures. No live queue jobs."""
 import unittest
 
+import promotion_gate as gate
 from four_task_campaign import PRIMARY, isolate
 from scored_family_allowlist import inspect_prepared
-import promotion_gate as gate
 
 
 class TaskKernelFixtures(unittest.TestCase):

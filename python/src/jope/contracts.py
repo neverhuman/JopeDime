@@ -10,9 +10,9 @@ import hashlib
 import json
 import math
 import struct
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Mapping, Sequence
 
 
 def _canonical_hash(value: object) -> str:

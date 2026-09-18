@@ -6,7 +6,6 @@ from pathlib import Path
 
 import jope.research
 
-
 MODULE_PATH = (
     Path(jope.research.__file__).parent / "genome_boost_cluster_campaign.py"
 )

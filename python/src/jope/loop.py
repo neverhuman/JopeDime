@@ -22,23 +22,22 @@ import math
 import os
 import random
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from .gene_feed import GeneFeed
 
-import numpy as np
 import torch
 
 from .data.active_v3 import robust_score
 from .engines import ENGINES, EngineRouter
 from .eval_ledger import iter_eval_regression_with_ledger
 from .grammars.spec import GrammarSpec
-from .io import read_jsonl, write_jsonl
+from .io import read_jsonl
 from .model import _pearson
-from .pipeline_text import format_pipeline_actions, parse_pipeline_actions
+from .pipeline_text import format_pipeline_actions
 from .policy.decode import candidate_risk_reason_v3, sample_sequences
 from .policy.losses import PHASE_B_PROFILE, clamp_log_vars, kg_combine
 from .policy.model_v3 import JopePolicyModelV3, rows_to_policy_v3_batch
@@ -186,7 +185,7 @@ def _loop_iteration(
     loop_rows: list[TrainingRow],
     corpus_rows: list[TrainingRow],
     standardization: dict[str, Any] | None,
-    gene_feed: "GeneFeed | None" = None,
+    gene_feed: GeneFeed | None = None,
 ) -> dict[str, Any]:
     iter_started = time.time()
     rng = random.Random(cfg.seed * 100003 + iteration)

@@ -2,11 +2,11 @@ import copy
 import hashlib
 import json
 import os
-from pathlib import Path
 import re
 import sqlite3
 import tempfile
 import unittest
+from pathlib import Path
 
 import flywheel_baseline as baseline
 import promotion_gate

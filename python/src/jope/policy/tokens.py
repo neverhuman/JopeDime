@@ -14,15 +14,16 @@ Design points (see the plan):
 
 from __future__ import annotations
 
-import math
-import os
-import re
 import copy
 import hashlib
 import json
+import math
+import os
+import re
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from ..grammars.spec import ExprSpec, GrammarSpec
 from ..pipeline_text import format_param_token

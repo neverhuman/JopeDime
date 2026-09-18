@@ -24,8 +24,9 @@ import json
 import math
 import random
 from collections import defaultdict
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from .data.active_v3 import robust_score
 from .engines import EngineRouter

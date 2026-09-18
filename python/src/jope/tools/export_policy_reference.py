@@ -7,12 +7,13 @@ reference parameters, exports them losslessly, and records deterministic forward
 import argparse
 import hashlib
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 from types import SimpleNamespace
 
 import torch
 from safetensors.torch import save_file
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -20,8 +21,8 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     sys.path.insert(0, str(args.reference_source))
+    from jope.policy.losses import masked_sequence_nll, rank_pct_listwise_terms, self_play_bt_loss
     from jope.policy.model_v3 import JopePolicyModelV3
-    from jope.policy.losses import masked_sequence_nll, self_play_bt_loss, rank_pct_listwise_terms
     torch.set_num_threads(2)
     torch.manual_seed(20260907)
     config = dict(dataset_dim=1536,target_dim=512,target_keep_dim=512,width=512,layers=6,heads=4,ffn=2048,vocab_size=37,embedding_rows=293,max_seq=128,dropout=0.1,dataset_rms=1.,target_rms=1.)

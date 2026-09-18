@@ -5,7 +5,6 @@ import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path
 import pty
 import re
 import select
@@ -14,6 +13,8 @@ import struct
 import subprocess
 import termios
 import time
+from pathlib import Path
+
 from experiment_runtime import output_root, require, write
 
 p = argparse.ArgumentParser()

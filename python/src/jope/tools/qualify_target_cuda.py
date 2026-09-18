@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
-import hashlib,json,sys
+import hashlib
+import json
+import sys
 from pathlib import Path
-import torch,numpy as np
+
+import numpy as np
+import torch
 from export_target import FusedGraph
+
 r=Path(__file__).resolve().parents[1];sys.path.insert(0,str(r/'assets/source/target_maker'))
 from target_maker.fused import FusedTargetEncoder
+
 original=r/'assets/target-export-v1';out=r/'assets/target-export-cuda-v1';out.mkdir(parents=True,exist_ok=True)
 # Imported bundle classes require the matching acquisition environment only for
 # this one-time conversion, never for the Rust service.

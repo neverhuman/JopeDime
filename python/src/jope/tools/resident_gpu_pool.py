@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 """Keep bounded CUDA ranks alive and release them for explicit GPU handoffs."""
 import argparse
-from contextlib import contextmanager
 import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path
 import signal
 import stat
-import subprocess
 import sys
 import time
 import uuid
+from contextlib import contextmanager
+from pathlib import Path
 
 import experiment_runtime as runtime
 from resume_expired_cycle import atomic, read, require, sha

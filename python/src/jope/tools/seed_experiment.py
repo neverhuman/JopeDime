@@ -8,18 +8,18 @@ within previously used families, never an independent final-test estimate.
 import argparse
 import collections
 import ctypes
-import fcntl
 import hashlib
 import json
 import math
 import os
-from pathlib import Path
+import re
 import resource
 import shutil
 import signal
 import subprocess
-import re
 import time
+from pathlib import Path
+
 import experiment_runtime as runtime
 
 ARMS = ("current", "larger_pool", "earlier_checkpoint", "shuffled_context", "random", "generic")
@@ -993,7 +993,8 @@ def _compare(args):
 def run_downstream(root, manifest, rows, deadline, workers):
     """Run the existing GP with frozen matching populations and an isolated guard."""
     if manifest.get("schema") == "parallel.seed_experiment.v2":
-        from qualify_matched_v2 import freeze as freeze_matched, run as run_matched
+        from qualify_matched_v2 import freeze as freeze_matched
+        from qualify_matched_v2 import run as run_matched
         output = runtime.output_root(root, manifest["output"])
         destination = output / "matched-v2"
         with runtime.controller(root, destination, "matched"):

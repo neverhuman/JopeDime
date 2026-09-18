@@ -4,10 +4,9 @@ import os
 import time
 from pathlib import Path
 
-import jope.research
-
 import pytest
 
+import jope.research
 
 SPEC = importlib.util.spec_from_file_location(
     "dlgp_safe_cleanup", Path(jope.research.__file__).parent / "dlgp_safe_cleanup.py"
