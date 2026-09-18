@@ -225,9 +225,12 @@ fn check_status_ages(root: &Path, alarms: &mut Alarms) {
 // live check starts enforcing it with no edit here.
 
 jope_paths::once_str!(
-    /// Rust source tree, for deriving consumer field contracts. Overridable with
-    /// `JOPE_SRC_ROOT` so the check can run against a checkout under test.
-    fn src_root_str => paths::jope_home()
+    /// Rust source tree of this crate (`crates/jope-campaigns` under
+    /// `JOPE_HOME`; the crate sat at the checkout root when the consumer
+    /// paths below were written), for deriving consumer field contracts.
+    /// Overridable with `JOPE_SRC_ROOT` so the check can run against a
+    /// checkout under test.
+    fn src_root_str => paths::jope_home().join("crates/jope-campaigns")
 );
 
 /// Consecutive scans a status file may stay broken before the alarm escalates
