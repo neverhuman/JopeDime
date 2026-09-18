@@ -1,0 +1,19 @@
+[Unit]
+Description=JOPE Rust checkpoint-fresh SCQ queue keeper
+After=default.target
+Conflicts=jope-selfplay-reserve.service jope-selfplay-watchdog.service
+Before=jope-selfplay-reserve.service jope-selfplay-watchdog.service
+
+[Service]
+Type=simple
+WorkingDirectory=@JOPE_STATE@/legacy/test_exact_gen0
+ExecStart=@JOPE_BUNDLE@/jope_selfplay_queue --submit --max-submit-per-cycle 1024
+CPUQuota=400%
+CPUWeight=1
+IOWeight=1
+MemoryMax=4G
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,13 @@
+[Unit]
+Description=JOPE joined flywheel liveness and low-watermark alarms
+After=jope-selfplay-queue.service
+
+[Service]
+Type=simple
+WorkingDirectory=@JOPE_STATE@/legacy/test_exact_gen0
+ExecStart=@JOPE_BUNDLE@/jope_flywheel_liveness
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

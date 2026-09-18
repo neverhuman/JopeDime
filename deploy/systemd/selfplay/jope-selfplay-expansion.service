@@ -1,6 +1,0 @@
-[Unit]
-Description=JOPE dataset-unlock expansion cycle (guardrailed; coverage valve paces tranches)
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/flock -n /home/ubuntu/jope-flywheel/test_exact_gen0/ops/expansion-driver.lock /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/runtime/bin/jope_selfplay_expansion_driver run

@@ -1,0 +1,28 @@
+[Unit]
+Description=JOPE adaptive GP teacher data generation
+After=jope-parallel-monitor.service
+Requires=jope-parallel-monitor.service
+
+[Service]
+Type=simple
+User=@JOPE_USER@
+WorkingDirectory=@JOPE_STATE@
+ExecStart=@JOPE_BUNDLE@/jope-parallel-cpu-v44 --root @JOPE_STATE@ gp-service --manifest @JOPE_STATE@/manifests/generated/gp-expanded-vocabulary-jobs.json --workers 104 --threads 1
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+Environment=OMP_NUM_THREADS=1
+Environment=RAYON_NUM_THREADS=1
+Restart=on-failure
+RestartSec=10
+MemoryHigh=900G
+MemoryMax=1100G
+MemorySwapMax=0
+TasksMax=2048
+CPUAccounting=true
+MemoryAccounting=true
+Nice=5
+KillMode=control-group
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

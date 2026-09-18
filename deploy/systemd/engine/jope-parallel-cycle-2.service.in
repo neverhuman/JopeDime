@@ -1,0 +1,28 @@
+[Unit]
+Description=JOPE continued neural to adaptive GP to neural cycle on new saved cuts
+After=jope-parallel-monitor.service jope-parallel-gp.service
+Requires=jope-parallel-monitor.service
+
+[Service]
+Type=simple
+User=@JOPE_USER@
+WorkingDirectory=@JOPE_STATE@
+ExecStart=@JOPE_BUNDLE@/jope-parallel-neural-v35 --root @JOPE_STATE@ cycle --corpus @JOPE_STATE@/corpus/qualification-v3 --output @JOPE_STATE@/runs/regression-cycle-2 --contexts @JOPE_STATE@/data/encodings/contexts-union-v2.json --initialize @JOPE_STATE@/runs/regression-cycle-1/train-2/checkpoints/step-300 --observations @JOPE_STATE@/runs/regression-cycle-1 --cut-start 100 --cuts 2 --steps 300 --qualification
+Environment=JOPE_GP_EXECUTABLE=@JOPE_BUNDLE@/jope-parallel-cpu-v35
+Environment=OMP_NUM_THREADS=2
+Environment=RAYON_NUM_THREADS=2
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+Restart=on-failure
+RestartSec=20
+MemoryHigh=96G
+MemoryMax=128G
+MemorySwapMax=0
+TasksMax=512
+CPUAccounting=true
+MemoryAccounting=true
+KillMode=control-group
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

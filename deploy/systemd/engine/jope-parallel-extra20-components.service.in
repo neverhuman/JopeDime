@@ -1,0 +1,28 @@
+[Unit]
+Description=JOPE target and foundation encodings for additional pointer cuts
+After=jope-parallel-monitor.service
+Requires=jope-parallel-monitor.service
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+Type=oneshot
+User=@JOPE_USER@
+WorkingDirectory=@JOPE_STATE@
+Environment=OMP_NUM_THREADS=2
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+ExecStart=@JOPE_BUNDLE@/jope-parallel-neural-v31 --root @JOPE_STATE@ target-service --jobs @JOPE_STATE@/manifests/generated/gp-extra20-jobs.json --spec @JOPE_HOME@/crates/jope-engine/assets/sampling-extra20-v1/target-spec.json --output @JOPE_STATE@/data/encodings/target-cuts --batch 128
+ExecStart=@JOPE_BUNDLE@/jope-parallel-neural-v31 --root @JOPE_STATE@ foundation-service --jobs @JOPE_STATE@/manifests/generated/gp-extra20-jobs.json --spec @JOPE_HOME@/crates/jope-engine/assets/sampling-extra20-v1/foundation-spec.json --output @JOPE_STATE@/data/encodings/foundation-cuts --batch 2
+MemoryHigh=96G
+MemoryMax=128G
+MemorySwapMax=0
+TasksMax=256
+KillMode=control-group
+TimeoutStartSec=infinity
+TimeoutStopSec=15
+Restart=on-failure
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target

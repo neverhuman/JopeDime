@@ -1,0 +1,24 @@
+[Unit]
+Description=JOPE frozen encodings for indexed real-data cuts
+After=jope-parallel-monitor.service
+Requires=jope-parallel-monitor.service
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+Environment=JAIN_HYPERION_CUDA_MAX_LOAD_RATIO=1000
+User=@JOPE_USER@
+WorkingDirectory=@JOPE_STATE@
+ExecStart=@JOPE_BUNDLE@/jope-parallel-cpu --root @JOPE_STATE@ hyperion-service --jobs @JOPE_STATE@/manifests/generated/gp-expanded-jobs.json --spec @JOPE_HOME@/crates/jope-engine/manifests/hyperion-batch-spec.json --output @JOPE_STATE@/data/encodings/hyperion-batched-cuts
+MemoryHigh=512G
+MemoryMax=640G
+MemorySwapMax=0
+TasksMax=512
+KillMode=control-group
+TimeoutStopSec=10
+Restart=on-failure
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target
