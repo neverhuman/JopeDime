@@ -1,0 +1,255 @@
+{
+  "schema": "jope.sdk-receipt/v1",
+  "purpose": "WP8 precondition (FABLE_GITHUB_PORT_PLAN.md B21): prove that the `neural` feature of crates/jope-engine (package jope-parallel) builds on xbabe2 and pin the LibTorch SDK the self-hosted neural-cuda lane must provision.",
+  "source": {
+    "repo": "JopeDime",
+    "branch": "wp8/neural-receipt",
+    "base_commit": "4235db672fa3b03571ecdba93ffdcdd043fc9d44",
+    "crate": "crates/jope-engine",
+    "package": "jope-parallel",
+    "feature": "neural",
+    "tch": "0.26.0",
+    "torch_sys": "0.26.0",
+    "torch_sys_expects_torch": "2.13.0"
+  },
+  "libtorch": {
+    "version": "2.13.0+cu126",
+    "build_version_file": "libtorch/build-version",
+    "url": "https://download.pytorch.org/libtorch/cu126/libtorch-shared-with-deps-2.13.0%2Bcu126.zip",
+    "filename": "libtorch-shared-with-deps-2.13.0+cu126.zip",
+    "sha256": "08e7277cc2a35bb97082ce6a8dd2365e7c9536363015f4750518f63a905b92ed",
+    "bytes": 817950988,
+    "cxx11_abi": "1",
+    "cuda_flavour": "cu126",
+    "flavour_choice": "torch-sys 0.26.0 pins TORCH_VERSION 2.13.0 and maps cu118/cu121/cu124/cu126/cu128; download.pytorch.org publishes 2.13.0 as cu126 (HTTP 200, 817950988 bytes) and cu130 (HTTP 200, 500687821 bytes) only - cu128 is HTTP 404. The host toolkit is CUDA 12.8 (nvcc 12.8.93, CUDART_VERSION 12080, libcudart.so.12.8.90, NCCL built for CUDA 12), so cu126 is the flavour that shares the host CUDA major; cu130 would pair a CUDA-13 LibTorch with 12.8 headers and a second runtime. Driver 595.99.02 (CUDA 13.2) accepts both.",
+    "bundled_libraries": 13,
+    "not_bundled_since_2_13": [
+      "libcudnn.so.9",
+      "libcusparseLt.so.0",
+      "libcufile.so.0",
+      "libnccl.so.2",
+      "libnvshmem_host.so.3",
+      "libcudart.so.12",
+      "libcublas.so.12",
+      "libcublasLt.so.12",
+      "libcufft.so.11",
+      "libcurand.so.10",
+      "libcusolver.so.11",
+      "libcusparse.so.12",
+      "libnvrtc.so.12",
+      "libcupti.so.12"
+    ],
+    "unpacked_bytes_approx": 1610612736
+  },
+  "companions": [
+    {
+      "package": "nvidia-cudnn-cu12",
+      "version": "9.10.2.21",
+      "provides": [
+        "libcudnn.so.9"
+      ],
+      "pin_source": "torch-2.13.0+cu126 wheel METADATA Requires-Dist",
+      "filename": "nvidia_cudnn_cu12-9.10.2.21-py3-none-manylinux_2_27_x86_64.whl",
+      "url": "https://pypi.nvidia.com/nvidia-cudnn-cu12/nvidia_cudnn_cu12-9.10.2.21-py3-none-manylinux_2_27_x86_64.whl",
+      "sha256": "949452be657fa16687d0930933f032835951ef0892b37d2d53824d1a84dc97a8",
+      "bytes": 706758467
+    },
+    {
+      "package": "nvidia-cusparselt-cu12",
+      "version": "0.7.1",
+      "provides": [
+        "libcusparseLt.so.0"
+      ],
+      "pin_source": "torch-2.13.0+cu126 wheel METADATA Requires-Dist",
+      "filename": "nvidia_cusparselt_cu12-0.7.1-py3-none-manylinux2014_x86_64.whl",
+      "url": "https://pypi.nvidia.com/nvidia-cusparselt-cu12/nvidia_cusparselt_cu12-0.7.1-py3-none-manylinux2014_x86_64.whl",
+      "sha256": "f1bb701d6b930d5a7cea44c19ceb973311500847f81b634d802b7b539dc55623",
+      "bytes": 287193691
+    },
+    {
+      "package": "nvidia-nccl-cu12",
+      "version": "2.29.3",
+      "provides": [
+        "libnccl.so.2",
+        "include/nccl.h"
+      ],
+      "pin_source": "torch-2.13.0+cu126 wheel METADATA Requires-Dist",
+      "filename": "nvidia_nccl_cu12-2.29.3-py3-none-manylinux_2_18_x86_64.whl",
+      "url": "https://pypi.nvidia.com/nvidia-nccl-cu12/nvidia_nccl_cu12-2.29.3-py3-none-manylinux_2_18_x86_64.whl",
+      "sha256": "35ad42e7d5d722a83c36a3a478e281c20a5646383deaf1b9ed1a9ab7d61bed53",
+      "bytes": 289760316
+    },
+    {
+      "package": "nvidia-nvshmem-cu12",
+      "version": "3.4.5",
+      "provides": [
+        "libnvshmem_host.so.3"
+      ],
+      "pin_source": "torch-2.13.0+cu126 wheel METADATA Requires-Dist",
+      "filename": "nvidia_nvshmem_cu12-3.4.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+      "url": "https://pypi.nvidia.com/nvidia-nvshmem-cu12/nvidia_nvshmem_cu12-3.4.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+      "sha256": "042f2500f24c021db8a06c5eec2539027d57460e1c1a762055a6554f72c369bd",
+      "bytes": 139103095
+    },
+    {
+      "package": "nvidia-cufile-cu12",
+      "version": "1.11.1.6",
+      "provides": [
+        "libcufile.so.0"
+      ],
+      "pin_source": "not pinned by torch; newest 1.11.x for CUDA 12 on PyPI",
+      "filename": "nvidia_cufile_cu12-1.11.1.6-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+      "url": "https://pypi.nvidia.com/nvidia-cufile-cu12/nvidia_cufile_cu12-1.11.1.6-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+      "sha256": "cc23469d1c7e52ce6c1d55253273d32c565dd22068647f3aa59b3c6b005bf159",
+      "bytes": 1142103
+    }
+  ],
+  "cuda": {
+    "home": "/usr/lib/cuda",
+    "home_layout": "Ubuntu nvidia-cuda-toolkit: bin/, nvvm/, include/cuda.h (symlink), lib64/stubs only; runtime headers live in /usr/include and libraries in /usr/lib/x86_64-linux-gnu",
+    "nvcc_version": "12.8.93",
+    "nvcc_banner": "Cuda compilation tools, release 12.8, V12.8.93",
+    "cuda_runtime_h": "/usr/include/cuda_runtime.h",
+    "cudart_version_macro": 12080,
+    "library_path": "/usr/lib/x86_64-linux-gnu",
+    "cudart": "libcudart.so.12 -> libcudart.so.12.8.90",
+    "driver_version": "595.99.02",
+    "driver_cuda_version": "13.2",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "gpu_uuid": "GPU-44c63d19-492a-ab46-cc6a-56e12a2ef51b",
+    "compute_capability": "8.6",
+    "gpu_used_by_this_receipt": false
+  },
+  "nccl": {
+    "header": "/tmp/claude-1000/-home-ubuntu-jain-split-jope-dime/c2314a57-ea97-4ae1-b341-06cca252f85d/scratchpad/port/sdk/nvidia/nccl/include/nccl.h",
+    "version": "2.29.3",
+    "library": "/tmp/claude-1000/-home-ubuntu-jain-split-jope-dime/c2314a57-ea97-4ae1-b341-06cca252f85d/scratchpad/port/sdk/nvidia/nccl/lib/libnccl.so.2",
+    "host_nccl": {
+      "header": "/usr/include/nccl.h",
+      "version": "2.26.2",
+      "library": "/usr/lib/x86_64-linux-gnu/libnccl.so.2.26.2",
+      "usable": false,
+      "reason": "libtorch_cuda.so imports 42 ncc* symbols; these 10 are absent from 2.26.2 so linking against the host library fails the linker undefined-symbol check",
+      "missing_symbols": [
+        "ncclAlltoAll",
+        "ncclCommShrink",
+        "ncclCommWindowDeregister",
+        "ncclCommWindowRegister",
+        "ncclDevCommDestroy",
+        "ncclGetLsaMultimemDevicePointer",
+        "ncclGetPeerDevicePointer",
+        "ncclPutSignal",
+        "ncclSignal",
+        "ncclWaitSignal"
+      ]
+    }
+  },
+  "host": {
+    "hostname": "xbabe2",
+    "os": "Ubuntu 24.04.2 LTS",
+    "kernel": "6.8.0-139-generic",
+    "gcc": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)",
+    "cxx_used": "clang++ (build.rs default)",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
+    "toolchain_file": "rust-toolchain.toml channel 1.97.1"
+  },
+  "environment": {
+    "sdk_root": "/tmp/claude-1000/-home-ubuntu-jain-split-jope-dime/c2314a57-ea97-4ae1-b341-06cca252f85d/scratchpad/port/sdk",
+    "note": "deploy/ci/neural-env.sh reproduces this map from JOPE_NEURAL_SDK_ROOT (default /opt/jope-sdk); this receipt was produced from the scratch root above",
+    "LIBTORCH": "/tmp/claude-1000/-home-ubuntu-jain-split-jope-dime/c2314a57-ea97-4ae1-b341-06cca252f85d/scratchpad/port/sdk/libtorch",
+    "LIBTORCH_CXX11_ABI": "1",
+    "CUDA_HOME": "/usr/lib/cuda",
+    "JOPE_NCCL_INCLUDE": "/tmp/claude-1000/-home-ubuntu-jain-split-jope-dime/c2314a57-ea97-4ae1-b341-06cca252f85d/scratchpad/port/sdk/nvidia/nccl/include",
+    "JOPE_CUDA_LIBRARY_PATH": "/tmp/claude-1000/-home-ubuntu-jain-split-jope-dime/c2314a57-ea97-4ae1-b341-06cca252f85d/scratchpad/port/sdk/nvidia/nccl/lib:/tmp/claude-1000/-home-ubuntu-jain-split-jope-dime/c2314a57-ea97-4ae1-b341-06cca252f85d/scratchpad/port/sdk/nvidia/cudnn/lib:/tmp/claude-1000/-home-ubuntu-jain-split-jope-dime/c2314a57-ea97-4ae1-b341-06cca252f85d/scratchpad/port/sdk/nvidia/cusparselt/lib:/tmp/claude-1000/-home-ubuntu-jain-split-jope-dime/c2314a57-ea97-4ae1-b341-06cca252f85d/scratchpad/port/sdk/nvidia/cufile/lib:/tmp/claude-1000/-home-ubuntu-jain-split-jope-dime/c2314a57-ea97-4ae1-b341-06cca252f85d/scratchpad/port/sdk/nvidia/nvshmem/lib:/usr/lib/x86_64-linux-gnu",
+    "JOPE_NCCL_SONAME": "libnccl.so.2",
+    "JOPE_CUDART_SONAME": "libcudart.so.12",
+    "CXX": "clang++",
+    "LD_LIBRARY_PATH": "unset for build and test enumeration; binaries resolve every library through DT_RPATH (build.rs --disable-new-dtags)"
+  },
+  "commands": [
+    {
+      "step": "download-libtorch",
+      "command": "curl -fsSL --retry 3 -C - -o libtorch-shared-with-deps-2.13.0+cu126.zip <libtorch.url>; sha256sum",
+      "exit_code": 0
+    },
+    {
+      "step": "download-companions",
+      "command": "curl -fsSL --retry 5 --retry-all-errors -C - -O <companion urls>; sha256sum -c expected.sha256",
+      "exit_code": 0,
+      "note": "files.pythonhosted.org reset two transfers mid-way (curl 18/56); resumed from pypi.nvidia.com; all five hashes OK"
+    },
+    {
+      "step": "unzip",
+      "command": "unzip -q libtorch zip; unzip -q -o <wheel> nvidia/*/lib/* nvidia/*/include/*",
+      "exit_code": 0
+    },
+    {
+      "step": "cargo-check",
+      "command": "cargo check -p jope-parallel --features neural --locked -j 16",
+      "exit_code": 0,
+      "env_delta": "first pass, before the companion libraries existed: JOPE_NCCL_INCLUDE=/usr/include, JOPE_CUDA_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu, LD_LIBRARY_PATH=<sdk>/libtorch/lib, no SONAME variables; check does not link, so the host NCCL 2.26.2 header sufficed",
+      "log_sha256": "513b835c1b020a31fef544fdbafa345627855e925c50941117b8af1d880c02e3",
+      "warnings": 3,
+      "errors": 0
+    },
+    {
+      "step": "cargo-build",
+      "command": "cargo build -p jope-parallel --features neural --locked -j 16",
+      "exit_code": 0,
+      "env": "environment map above",
+      "log_sha256": "c03077539dd34e202f69f1af19c67086d97f0770d63964bedaa311c21f2a5add",
+      "warnings": 3,
+      "errors": 0,
+      "artifact": "target/debug/jope-parallel (257.7 MB); ldd without LD_LIBRARY_PATH resolves libtorch_cuda/c10_cuda/torch_cpu/c10/torch_nvshmem from <sdk>/libtorch/lib, libnccl.so.2 from <sdk>/nvidia/nccl/lib, libcudnn.so.9/libcusparseLt.so.0/libcufile.so.0/libnvshmem_host.so.3 via libtorch RUNPATH $ORIGIN/../../nvidia/<pkg>/lib, libcudart.so.12 from /usr/lib/x86_64-linux-gnu; nothing not found"
+    },
+    {
+      "step": "cargo-test-list",
+      "command": "cargo test -p jope-parallel --features neural --locked -j 16 -- --list",
+      "exit_code": 0,
+      "env": "environment map above",
+      "log_sha256": "afb66bea28f9b94b015e4db6c28b57c7c554281f43db92d685396bee5f32c954",
+      "log_lines": 749,
+      "note": "enumeration only, no test executed, GPU idle (1 MiB used, 0 %) before and after"
+    }
+  ],
+  "tests": {
+    "enumerated_with_neural": 549,
+    "binaries": 40,
+    "lib_unit_tests": 350,
+    "neural_gated_integration": {
+      "files": 8,
+      "tests": 27,
+      "per_file": {
+        "ablation_ranking": 3,
+        "gpu_entry_guards": 2,
+        "proposal_ranking": 3,
+        "ranked_proposals": 1,
+        "replay_training": 5,
+        "resident_worker": 4,
+        "reward_sequence": 2,
+        "training": 7
+      }
+    },
+    "neural_gated_src_modules": [
+      "campaign.rs",
+      "controller.rs",
+      "encoding.rs",
+      "lib.rs",
+      "main.rs",
+      "proposal_population.rs",
+      "smartcluster_worker.rs"
+    ]
+  },
+  "deviations_from_plan": [
+    "B21/WP8 assumed LibTorch 2.13.0+cu130 and /opt/libtorch: 2.13.0 has no cu128 build and cu130 does not match the host CUDA 12.8 toolkit; the receipt pins cu126 under a JOPE_NEURAL_SDK_ROOT volume (default /opt/jope-sdk).",
+    "B21 assumed JOPE_NCCL_INCLUDE=/usr/include (host NCCL 2.26.2): the header compiles but the host library cannot be linked (10 missing symbols); the wheel NCCL 2.29.3 header and library are used instead.",
+    "LibTorch 2.13 no longer bundles cuDNN/cuSPARSELt/cuFile/NCCL/NVSHMEM; the five pinned nvidia-*-cu12 wheels are part of the SDK (unzipped, no pip/Python).",
+    "CUDA_HOME=/usr/lib/cuda/include holds only cuda.h; cuda_runtime.h resolves from /usr/include through the compiler default search path, not through the build.rs -I flag."
+  ],
+  "code_changes_required": "none - crates/jope-engine/build.rs already accepts every needed override (JOPE_NCCL_INCLUDE, JOPE_CUDA_LIBRARY_PATH as a PATH list, JOPE_NCCL_SONAME, JOPE_CUDART_SONAME)",
+  "result": "build-passed",
+  "produced_at": "2026-09-18T21:01:58Z",
+  "produced_by": "Claude Fable 5.1 on xbabe2, WP8 precondition of FABLE_GITHUB_PORT_PLAN.md"
+}
