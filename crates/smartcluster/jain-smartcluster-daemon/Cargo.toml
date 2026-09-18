@@ -24,7 +24,7 @@ jain-smartcluster = { path = "../jain-smartcluster", version = "8.0.0" }
 jain-smartcluster-core = { path = "../jain-smartcluster-core", version = "8.0.0" }
 nix.workspace = true
 postcard.workspace = true
-nvml-wrapper = "0.12.1"
+nvml-wrapper = "0.13.0"
 pidfd-util = { version = "0.1.0", default-features = false }
 rand.workspace = true
 redb.workspace = true

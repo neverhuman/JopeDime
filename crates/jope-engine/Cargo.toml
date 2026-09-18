@@ -7,7 +7,7 @@ license = "Apache-2.0"
 
 
 [dependencies]
-nix = { version = "0.29", features = ["signal", "process"] }
+nix = { version = "0.31", features = ["signal", "process"] }
 tempfile = "3"
 jain-smartcluster = { path = "../smartcluster/jain-smartcluster" }
 postcard = { version = "1", features = ["use-std"] }
@@ -16,15 +16,15 @@ anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 csv = "1.3"
 hex = "0.4"
-ed25519-dalek = "=2.2.0"
-sha2 = "0.10"
+ed25519-dalek = "=3.0.0"
+sha2 = "0.11"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["float_roundtrip"] }
 walkdir = "2"
 rayon = "1"
-rusqlite = { version = "0.32", features = ["bundled"] }
-ratatui = "=0.29.0"
-crossterm = "=0.28.1"
+rusqlite = { version = "0.40", features = ["bundled"] }
+ratatui = "=0.30.2"
+crossterm = "=0.29.0"
 libc = "0.2"
 feat-math = { path = "../feat-math" }
 tch = { version = "=0.26.0", optional = true }
