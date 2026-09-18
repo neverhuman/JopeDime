@@ -1,0 +1,34 @@
+[package]
+name = "jope-policy"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "jope-dime step-60000 proposal policy on candle: grammar automaton, policy forward, masked decode, ranking and seed populations"
+
+[features]
+default = []
+# feat-core `jope-dime-testing`: untrained weights and unbound helpers. Never enable in a product build.
+testing = []
+# feat-core `jope-dime-cuda`: declared for the GPU lane, build-unverified (see lib.rs).
+cuda = ["candle-core/cuda", "candle-nn/cuda"]
+
+[dependencies]
+anyhow.workspace = true
+rand.workspace = true
+rand_chacha = "0.3"
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+feat-math = { path = "../feat-math" }
+candle-core = { version = "0.11.0", default-features = false }
+candle-nn = { version = "0.11.0", default-features = false }
+# jope_embed reads the foundation projection `.npz` (feat-core line, verbatim).
+zip = { version = "8.6", default-features = false, features = ["deflate"] }
+
+# The port tests need the test-support feature; without it cargo refuses or skips the target
+# visibly instead of compiling an empty test binary.
+[[test]]
+name = "jope_dime"
+required-features = ["testing"]

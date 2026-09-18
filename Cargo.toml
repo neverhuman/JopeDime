@@ -3,6 +3,7 @@ resolver = "2"
 members = [
   "crates/feat-math",
   "crates/hyperion",
+  "crates/jope-policy",
   "crates/battle-gpu",
   "crates/jope-engine",
   "crates/jope-campaigns",
