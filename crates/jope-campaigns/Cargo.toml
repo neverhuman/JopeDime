@@ -8,18 +8,18 @@ description = "Frozen 42-dataset jope-dime evolutionary regression campaign"
 [dependencies]
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
-crossterm = "=0.28.1"
+crossterm = "=0.29.0"
 feat-math = { path = "../feat-math" }
 hex = "0.4"
 libc = "0.2"
 memmap2 = "0.9"
-ratatui = "=0.29.0"
+ratatui = "=0.30.2"
 rayon = "1"
-rusqlite = "0.32"
+rusqlite = "0.40"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["float_roundtrip"] }
-sha2 = "0.10"
-zip = { version = "2", default-features = false, features = ["deflate"] }
+sha2 = "0.11"
+zip = { version = "8", default-features = false, features = ["deflate"] }
 # GPU screening backend (raw CUDA driver FFI). Optional: the default build is
 # dependency-identical; only `--features gpu` links it. The frozen exact-cv
 # lane keeps rejecting GPU flags regardless.
