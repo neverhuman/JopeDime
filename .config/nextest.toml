@@ -4,8 +4,8 @@ slow-timeout = { period = "120s", terminate-after = 3 }
 fail-fast = false
 
 [profile.pr]
-# Slow deadline tests and the campaign/self-play control planes run only on main (docs/parity/test-timings.json).
-default-filter = "not (package(jope-campaigns) | package(jope-selfplay) | test(/eval_registry::(service|authority|witness)::/) | test(/native_strict/))"
+# Slow deadline tests and the campaign crate (package jope-dime-regressor until WP5 renames it; jope-selfplay joins when it exists) run only on main (docs/parity/test-timings.json).
+default-filter = "not (package(jope-dime-regressor) | test(/eval_registry::(service|authority|witness)::/) | test(/native_strict/))"
 slow-timeout = { period = "120s", terminate-after = 2 }
 fail-fast = false
 
