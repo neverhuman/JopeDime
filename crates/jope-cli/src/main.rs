@@ -1,3 +1,7 @@
+//! `jope`: the one command line. Fixture, kernel, champion and router verbs live in this
+//! crate; `jope models …` and `jope datasets …` delegate to the library crates' own clap
+//! commands (no process is spawned).
+
 use anyhow::{ensure, Result};
 use clap::{Parser, Subcommand};
 use jope_cli::{
@@ -11,7 +15,7 @@ use std::{path::PathBuf, process::ExitCode};
 #[command(
     name = "jope",
     version,
-    about = "JOPE-Dime fixtures, encode, fit/emit/search, local champions, and centroid router"
+    about = "JOPE-Dime fixtures, encode, fit/emit/search, local champions, centroid router, model bundles and dataset catalog"
 )]
 struct Cli {
     #[command(subcommand)]
@@ -114,6 +118,10 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// Model bundles: fetch, verify, publish and locate content-addressed weights.
+    Models(jope_models::cli::Cli),
+    /// Dataset catalog: ingest, fetch, verify and link content-addressed datasets.
+    Datasets(jope_datasets::cli::Cli),
 }
 
 fn execute(command: &Command) -> Result<Verification> {
@@ -137,7 +145,11 @@ fn execute(command: &Command) -> Result<Verification> {
         | Command::Search { .. }
         | Command::Champions { .. }
         | Command::TrainStep { .. }
-        | Command::Route { .. } => unreachable!("kernel commands are dispatched separately"),
+        | Command::Route { .. }
+        | Command::Models(_)
+        | Command::Datasets(_) => {
+            unreachable!("kernel, models and datasets commands are dispatched separately")
+        }
     }
 }
 
@@ -173,6 +185,11 @@ fn main() -> ExitCode {
     let Some(command) = Cli::parse().command else {
         println!("jope {}", env!("CARGO_PKG_VERSION"));
         return ExitCode::SUCCESS;
+    };
+    let command = match command {
+        Command::Models(cli) => return jope_models::cli::exec(cli),
+        Command::Datasets(cli) => return jope_datasets::cli::exec(cli),
+        command => command,
     };
     match &command {
         Command::Encode { input, json } => {
@@ -355,6 +372,9 @@ fn main() -> ExitCode {
 
 #[cfg(test)]
 mod tests {
+    use super::Cli;
+    use clap::CommandFactory;
+
     #[test]
     fn version_is_semver() {
         let parts: Vec<_> = env!("CARGO_PKG_VERSION").split('.').collect();
@@ -362,5 +382,32 @@ mod tests {
         assert!(parts
             .iter()
             .all(|part| part.chars().all(|character| character.is_ascii_digit())));
+    }
+
+    #[test]
+    fn umbrella_keeps_every_verb_and_lists_models_and_datasets() {
+        let cmd = Cli::command();
+        let names: Vec<&str> = cmd.get_subcommands().map(|c| c.get_name()).collect();
+        for verb in [
+            "verify-inputs",
+            "generate-fixtures",
+            "encode",
+            "fit",
+            "emit",
+            "search",
+            "champions",
+            "train-step",
+            "route",
+            "models",
+            "datasets",
+        ] {
+            assert!(names.contains(&verb), "{verb} missing from {names:?}");
+        }
+        let models = cmd.find_subcommand("models").unwrap();
+        let verbs: Vec<&str> = models.get_subcommands().map(|c| c.get_name()).collect();
+        assert_eq!(verbs, ["fetch", "verify", "publish", "path"]);
+        let datasets = cmd.find_subcommand("datasets").unwrap();
+        assert!(datasets.find_subcommand("fetch").is_some());
+        Cli::command().debug_assert();
     }
 }
