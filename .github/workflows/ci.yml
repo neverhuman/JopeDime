@@ -28,13 +28,14 @@ jobs:
       - name: Classify changed paths
         id: filter
         env:
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
           rust=true; emitters=true
-          if [ -n "$BASE_REF" ]; then
-            git fetch -q origin "$BASE_REF"
-            changed=$(git diff --name-only "origin/$BASE_REF...HEAD")
+          # The checkout is the pull request's merge ref with full history, so the base commit is
+          # present without another fetch (persist-credentials is off, so a fetch could not auth).
+          if [ -n "$BASE_SHA" ]; then
+            changed=$(git diff --name-only "$BASE_SHA" HEAD)
             printf 'changed files:\n%s\n' "$changed"
             grep -qE '^(crates/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|\.github/workflows/ci\.yml$)' <<<"$changed" || rust=false
             grep -qE '^(crates/feat-math/|datasets/test/|deploy/ci/emitters|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.github/workflows/ci\.yml$)' <<<"$changed" || emitters=false
