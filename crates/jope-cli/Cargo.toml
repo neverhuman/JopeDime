@@ -1,0 +1,11 @@
+[package]
+name = "jope-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "JOPE-Dime command-line interface"
+
+[[bin]]
+name = "jope"
+path = "src/main.rs"
