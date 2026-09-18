@@ -1,4 +1,5 @@
 [package]
+publish = false
 name = "jope-policy"
 version.workspace = true
 edition.workspace = true
