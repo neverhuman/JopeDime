@@ -1,6 +1,7 @@
 //! The local dataset cache: fetch (download + verify + hardlink), link (seed from a local tree)
 //! and verify (re-hash blobs, check links).
 
+use crate::blobs::{link_or_copy, same_file, BlobDir, PARALLEL_GETS};
 use crate::catalog::{CatalogRow, Collection, Ingest, IngestSource, Task};
 use crate::hash::digest_file;
 use crate::meta::{build_row, task_from_meta, Hashed};
@@ -8,12 +9,9 @@ use crate::paths::{now_rfc3339, Cache};
 use crate::store::Store;
 use anyhow::{anyhow, Context, Result};
 use std::collections::BTreeSet;
-use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
-/// Partials above this size are resumed with a ranged GET.
-pub const RESUME_THRESHOLD: u64 = 8 * 1024 * 1024;
-pub const PARALLEL_GETS: usize = 16;
+pub use crate::blobs::RESUME_THRESHOLD;
 
 #[derive(Clone, Debug, Default)]
 pub struct FetchReport {
@@ -43,39 +41,9 @@ pub struct Fetcher<'a> {
     pub store: Option<&'a Store>,
 }
 
-fn same_file(a: &Path, b: &Path) -> bool {
-    match (std::fs::metadata(a), std::fs::metadata(b)) {
-        (Ok(x), Ok(y)) => x.ino() == y.ino() && x.dev() == y.dev(),
-        _ => false,
-    }
-}
-
-/// Hardlink `blob` at `dst` (copy when linking fails, e.g. across devices).
-fn link_or_copy(blob: &Path, dst: &Path) -> Result<()> {
-    if dst.exists() {
-        if same_file(blob, dst) {
-            return Ok(());
-        }
-        std::fs::remove_file(dst)?;
-    }
-    if std::fs::hard_link(blob, dst).is_err() {
-        std::fs::copy(blob, dst)
-            .with_context(|| format!("copy {} -> {}", blob.display(), dst.display()))?;
-    }
-    Ok(())
-}
-
 /// Copy a local file into the blob store under its sha256 (atomic via `.partial`).
 pub fn store_blob(cache: &Cache, src: &Path, sha256: &str) -> Result<PathBuf> {
-    let dest = cache.blob_path(sha256);
-    if dest.is_file() {
-        return Ok(dest);
-    }
-    std::fs::create_dir_all(cache.blobs_dir())?;
-    let partial = cache.blobs_dir().join(format!("{sha256}.partial"));
-    std::fs::copy(src, &partial).with_context(|| format!("copy {}", src.display()))?;
-    std::fs::rename(&partial, &dest)?;
-    Ok(dest)
+    BlobDir::new(cache.blobs_dir()).store_file(src, sha256, false)
 }
 
 /// Write `by-id/<hash>/{train.csv,test.csv,meta.json,manifest.json}` from cached blobs.
@@ -254,25 +222,9 @@ impl Fetcher<'_> {
     }
 
     async fn ensure_blob(&self, sha256: &str, bytes: u64) -> Result<bool> {
-        let dest = self.cache.blob_path(sha256);
-        if let Ok(m) = std::fs::metadata(&dest) {
-            if m.len() == bytes {
-                return Ok(false);
-            }
-            std::fs::remove_file(&dest)?;
-        }
-        let store = self
-            .store
-            .ok_or_else(|| anyhow!("blob {sha256} is not cached and offline"))?;
-        store
-            .download_verified(
-                &format!("blobs/sha256/{sha256}"),
-                &dest,
-                sha256,
-                RESUME_THRESHOLD,
-            )
-            .await?;
-        Ok(true)
+        BlobDir::new(self.cache.blobs_dir())
+            .ensure(self.store, sha256, bytes)
+            .await
     }
 
     /// Fetch every file of every resolved row into the cache and materialize `by-id/`.
@@ -441,40 +393,12 @@ pub fn link_from(
 
 /// Re-hash every blob (or check sizes with `quick`) and check every `by-id/` link.
 pub fn verify_cache(cache: &Cache, quick: bool) -> VerifyReport {
-    let mut report = VerifyReport::default();
-    if let Ok(rd) = std::fs::read_dir(cache.blobs_dir()) {
-        let mut files: Vec<PathBuf> = rd.filter_map(|e| e.ok().map(|e| e.path())).collect();
-        files.sort();
-        for p in files {
-            let name = p
-                .file_name()
-                .map(|s| s.to_string_lossy().into_owned())
-                .unwrap_or_default();
-            if name.ends_with(".partial") {
-                continue;
-            }
-            report.blobs += 1;
-            if name.len() != 64 || !name.bytes().all(|b| b.is_ascii_hexdigit()) {
-                report
-                    .errors
-                    .push(format!("blob {name}: not a sha256 name"));
-                continue;
-            }
-            if quick {
-                if std::fs::metadata(&p).map(|m| m.len()).unwrap_or(0) == 0 {
-                    report.errors.push(format!("blob {name}: empty"));
-                }
-            } else {
-                match digest_file(&p) {
-                    Ok(d) if d.sha256 == name => {}
-                    Ok(d) => report
-                        .errors
-                        .push(format!("blob {name}: content hashes to {}", d.sha256)),
-                    Err(e) => report.errors.push(format!("blob {name}: {e}")),
-                }
-            }
-        }
-    }
+    let blobs = BlobDir::new(cache.blobs_dir()).verify(quick);
+    let mut report = VerifyReport {
+        blobs: blobs.blobs,
+        errors: blobs.errors,
+        ..Default::default()
+    };
     if let Ok(rd) = std::fs::read_dir(cache.registry_dir()) {
         let mut dirs: Vec<PathBuf> = rd
             .filter_map(|e| e.ok().map(|e| e.path()))

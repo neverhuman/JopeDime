@@ -37,8 +37,15 @@ impl Store {
         Store::open(&datasets_url())
     }
 
-    /// Open `s3://bucket[/prefix]`, `file:///dir`, `memory:///` or a bare filesystem path.
+    /// Open `s3://bucket[/prefix]`, `file:///dir`, `memory:///` or a bare filesystem path;
+    /// S3 requests are signed unless `JOPE_DATASETS_ANON=1`.
     pub fn open(url: &str) -> Result<Store> {
+        let anonymous = std::env::var("JOPE_DATASETS_ANON").is_ok_and(|v| v == "1");
+        Store::open_with(url, anonymous)
+    }
+
+    /// [`Store::open`] with an explicit choice of anonymous (unsigned) S3 requests.
+    pub fn open_with(url: &str, anonymous: bool) -> Result<Store> {
         let url_string = if url.contains("://") {
             url.to_string()
         } else {
@@ -56,7 +63,7 @@ impl Store {
                 {
                     builder = builder.with_region("us-east-2");
                 }
-                if std::env::var("JOPE_DATASETS_ANON").is_ok_and(|v| v == "1") {
+                if anonymous {
                     builder = builder.with_skip_signature(true);
                 }
                 let store = builder.build().context("build S3 store")?;
