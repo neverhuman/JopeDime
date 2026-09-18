@@ -49,6 +49,14 @@ fn run_command(language: &str, phase: &str, spec: &PortableCommand) -> Option<Ou
             Some(output)
         }
         Err(error) if error.kind() == ErrorKind::NotFound => {
+            // ADR-0002 §4: CI sets JOPE_PARITY_STRICT=1 so a missing toolchain is a failure, not a
+            // silently skipped backend.
+            if std::env::var_os("JOPE_PARITY_STRICT").is_some_and(|v| v == "1") {
+                panic!(
+                    "portable parity: {language} {phase} tool {:?} is unavailable and JOPE_PARITY_STRICT=1",
+                    spec.program
+                );
+            }
             eprintln!(
                 "portable parity SKIP: {language} {phase} tool {:?} is unavailable",
                 spec.program
@@ -112,6 +120,7 @@ fn portable_all_helper_backends_match_bits() {
 
     let rust_bin = work.join("portable_ref_rs");
     let cpp_bin = work.join("portable_ref_cpp");
+    let cpp20_bin = work.join("portable_ref_cpp20");
     let pycache = work.join("pycache");
     let backends = vec![
         PortableBackend {
@@ -144,6 +153,25 @@ fn portable_all_helper_backends_match_bits() {
                 ],
             ),
             run: PortableCommand::new(cpp_bin.as_os_str().to_owned(), Vec::new()),
+        },
+        // The same emitted C++ must also be a valid C++20 program with identical bits (plan: C++20 is a
+        // compile target, not a separate emitter).
+        PortableBackend {
+            language: "C++20",
+            source: cpp_source.clone(),
+            build: PortableCommand::new(
+                "g++",
+                vec![
+                    "-O3".into(),
+                    "-ffp-contract=off".into(),
+                    "-fno-fast-math".into(),
+                    "-std=c++20".into(),
+                    "-o".into(),
+                    cpp20_bin.as_os_str().to_owned(),
+                    cpp_source.as_os_str().to_owned(),
+                ],
+            ),
+            run: PortableCommand::new(cpp20_bin.as_os_str().to_owned(), Vec::new()),
         },
         PortableBackend {
             language: "Python",
