@@ -11,7 +11,7 @@ set of next tokens; sampling within it makes every decode valid by construction:
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from typing import Sequence
 
 from .tokens import BOS, EOS, ActionVocab, OpInfo
 
@@ -64,7 +64,7 @@ class DecoderState:
         self.expr_stack: list[tuple[int, int]] = []  # (children_remaining, node_depth)
         self.expr_nodes = 0
 
-    def clone(self) -> DecoderState:
+    def clone(self) -> "DecoderState":
         out = DecoderState(self.vocab, strict_cols=self.strict_cols, sampling=self.sampling)
         out.phase = self.phase
         out.engine = self.engine

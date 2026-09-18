@@ -40,7 +40,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 SCRIPTS_ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(SCRIPTS_ROOT))
 
 CAMPAIGN_ID = "genome-boost-20260725-v1"
 DEFAULT_CAMPAIGN_ROOT = Path("/home/ubuntu/remote_super/quant/campaigns") / CAMPAIGN_ID

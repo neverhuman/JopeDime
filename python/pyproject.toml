@@ -59,7 +59,16 @@ packages = ["src/jope"]
 [tool.ruff]
 line-length = 110
 target-version = "py311"
-extend-exclude = ["src/jope/research", "legacy"]
+# research/ drivers are import-checked only; legacy/ is reference. The three grammar sources are pinned by
+# sha256 in crates/jope-engine/assets/grammar/featmath.json (vocab_sha256 8d55fee4...): any byte change,
+# even a lint fix, invalidates the frozen vocabulary the Rust consumers verify, so ruff never touches them.
+extend-exclude = [
+  "src/jope/research",
+  "legacy",
+  "src/jope/grammars/featmath.py",
+  "src/jope/policy/tokens.py",
+  "src/jope/policy/automaton.py",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP"]
