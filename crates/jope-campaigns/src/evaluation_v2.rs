@@ -109,7 +109,7 @@ fn compute_implementation_sha256() -> String {
         ("Cargo.lock", include_bytes!("../../../Cargo.lock").as_slice()),
         (
             "vendor/feat-math/Cargo.toml",
-            include_bytes!("../vendor/feat-math/Cargo.toml").as_slice(),
+            include_bytes!("../../feat-math/Cargo.toml").as_slice(),
         ),
         (
             "vendor/feat-math/src/advanced_v3.rs",

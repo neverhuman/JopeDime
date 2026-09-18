@@ -2714,7 +2714,7 @@ mod tests {
 
     #[test]
     fn systemd_accepts_only_bundle_local_pytorch_scripts() {
-        let watchdog = include_str!("../../systemd/jope-selfplay-trainer-watchdog.service");
+        let watchdog = include_str!("../../../../deploy/systemd/selfplay/jope-selfplay-trainer-watchdog.service");
         validate_systemd_unit(watchdog).unwrap();
 
         let inside = format!(
