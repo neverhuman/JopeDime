@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """Verify the stopped v53 proposal library and summarize its full hardware interval."""
+import json
+import os
+import statistics
+import subprocess
+import time
 from pathlib import Path
-import json, os, statistics, subprocess, time
+
 import opportunistic_proposals_v2 as lib
 
 root = Path.cwd()

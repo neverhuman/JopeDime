@@ -19,8 +19,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .episodes import (Episode, column_as_target, difficulty_bucket,
-                       draw_episode, score_zoo, zoo_r2_best)
+from .episodes import Episode, column_as_target, difficulty_bucket, draw_episode, score_zoo, zoo_r2_best
 from .pack import FablePack
 
 

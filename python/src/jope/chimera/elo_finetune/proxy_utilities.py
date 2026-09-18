@@ -22,7 +22,7 @@ import torch
 
 from .eval_protocol import ProtocolRunner
 from .model_io import load_regressor
-from .pack import DEFAULT_PACK_DIR, FablePack, SPLIT_NAMES, bucket_schedule, collate
+from .pack import DEFAULT_PACK_DIR, SPLIT_NAMES, FablePack, bucket_schedule, collate
 
 
 def main() -> None:

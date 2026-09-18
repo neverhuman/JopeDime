@@ -18,7 +18,6 @@ import json
 import os
 import stat
 import subprocess
-import time
 from pathlib import Path
 
 import mirror_learning_receipts as mirror
@@ -428,7 +427,7 @@ def gate_tui(ev, run):
 
 
 def screaming(ev, run):
-    node = ev['node']; gp = node_json(ev, 'runs/gp-service.json') or {}; audit = (node_json(ev, f'{run}/review/measured-performance-audit-latest.json') or {}).get('rolling_full_hour') or {}
+    gp = node_json(ev, 'runs/gp-service.json') or {}; audit = (node_json(ev, f'{run}/review/measured-performance-audit-latest.json') or {}).get('rolling_full_hour') or {}
     latest = node_json(ev, f'{run}/successor/scoreboard/latest.json') or {}; marks = (latest.get('rows') or {}).get('high_marks') or {}
     numbers = dict(gp_evaluations_per_second=gp.get('evaluations_per_second'), gp_active=gp.get('active'), gp_busy_while_ready=audit.get('allocated_core_utilization_while_ready'),
                    gpu_occupancy=audit.get('occupancy'), gpu_mean_util=audit.get('mean_gpu_utilization_missing_zero'), handoff_p95=audit.get('handoff_p95_sampled_upper_gap_seconds'),
@@ -469,7 +468,7 @@ def evaluate(ev, run, since_generation=None):
                  PUBLICATION=gate_publication(ev, run), SYNC_TRUST=gate_sync_trust(ev, run), TUI=gate_tui(ev, run))
     failing = [name for name in GATES if gates[name]['status'] != 'pass']
     evidence = {}
-    for rel, f in ((ev['node'].get('files') or {})).items():
+    for rel, f in (ev['node'].get('files') or {}).items():
         evidence[rel] = dict(host='node', sha256=f.get('sha256'), bytes=f.get('bytes'), mtime=f.get('mtime'))
     evidence.update({p: dict(v) for p, v in (ev['local'].get('files') or {}).items()})
     require(not any(p.endswith('.md') for p in evidence), 'narration is never evidence')
@@ -480,7 +479,7 @@ def evaluate(ev, run, since_generation=None):
 
 def write_receipt(output, receipt):
     output = Path(output); output.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.datetime.fromtimestamp(receipt['at'], datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+    stamp = datetime.datetime.fromtimestamp(receipt['at'], datetime.UTC).strftime('%Y%m%dT%H%M%SZ')
     path = output / ('acceptance-%s.json' % stamp)
     digest = promotion_gate.immutable(path, receipt)
     atomic(output / 'latest.json', dict(schema=LATEST_SCHEMA, receipt=dict(path=str(path), sha256=digest), verdict=receipt['verdict'], failing=receipt['failing'], at=receipt['at'], final_tests_opened=False))

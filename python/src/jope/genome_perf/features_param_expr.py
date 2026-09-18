@@ -65,8 +65,8 @@ import functools
 import math
 import re
 
-from .parse import ParsedGenome, col_refs, expr_spec, param_bins
 from ..grammars import grammar_for
+from .parse import ParsedGenome, col_refs, expr_spec, param_bins
 
 # Params that widen the feature matrix. Summed (not averaged) because the engine cost and the
 # overfitting surface both scale with the total emitted width, not with any single stage's width.

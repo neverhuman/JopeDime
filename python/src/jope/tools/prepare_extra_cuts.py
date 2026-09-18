@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Ask the Rust preparer for new deterministic cuts; persist only new pointers."""
-import concurrent.futures,hashlib,json,subprocess
+import concurrent.futures
+import hashlib
+import json
+import subprocess
 from pathlib import Path
 
 root=Path(__file__).resolve().parents[1]

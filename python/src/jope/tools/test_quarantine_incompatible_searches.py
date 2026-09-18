@@ -1,10 +1,10 @@
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
-from promotion_gate import immutable
 import quarantine_incompatible_searches as recovery
+from promotion_gate import immutable
 
 
 class RecoveryTests(unittest.TestCase):

@@ -4,16 +4,15 @@ import argparse
 import fcntl
 import hashlib
 import json
-from pathlib import Path
 import resource
 import subprocess
-import sys
 import time
+from pathlib import Path
 
 import experiment_runtime as runtime
 from promotion_gate import immutable
 from qualification_budget import Budget
-from resume_expired_cycle import read,require,sha
+from resume_expired_cycle import read, require, sha
 
 
 def fixture(output):

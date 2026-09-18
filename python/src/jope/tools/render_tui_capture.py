@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """Render actual Ratatui TestBackend cells to portable SVG and PNG artifacts."""
-import argparse,hashlib,html,json
+import argparse
+import hashlib
+import html
+import json
 from pathlib import Path
-from PIL import Image,ImageDraw,ImageFont
+
+from PIL import Image, ImageDraw, ImageFont
+
 p=argparse.ArgumentParser();p.add_argument('directory',type=Path);a=p.parse_args()
 font_path=Path('/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf')
 bold_path=font_path.with_name('DejaVuSansMono-Bold.ttf')

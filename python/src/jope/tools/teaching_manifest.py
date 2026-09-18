@@ -1,7 +1,6 @@
 """Verify the shard catalogue and expose compact contiguous group ranges."""
 import hashlib
 import json
-from pathlib import Path
 import struct
 
 from resume_expired_cycle import read, require, sha

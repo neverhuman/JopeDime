@@ -266,7 +266,7 @@ def pull(root, cls, node=NODE, key=KEY, bwlimit=8192, census_fn=census, transfer
                    lag_seconds=(time.time() - newest) if newest else None, mirror_root=str(root / cls), tool_sha256=sha(tool_path or __file__), final_tests_opened=False)
     if cls == 'champion-git':
         receipt['git'] = verify_champion_git(root / cls / spec['root'])
-    stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+    stamp = datetime.datetime.now(datetime.UTC).strftime('%Y%m%dT%H%M%SZ')
     out = root / 'receipts' / 'mirror' / ('%s-%s-%s.json' % (stamp, cls, hashlib.sha256(json.dumps(receipt, sort_keys=True).encode()).hexdigest()[:12]))
     out.parent.mkdir(parents=True, exist_ok=True)
     receipt['receipt_sha256'] = promotion_gate.immutable(out, receipt)

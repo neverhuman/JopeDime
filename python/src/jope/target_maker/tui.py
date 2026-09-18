@@ -5,8 +5,8 @@ import shutil
 import subprocess
 import time
 from collections import deque
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 from rich.console import Group
 from rich.live import Live

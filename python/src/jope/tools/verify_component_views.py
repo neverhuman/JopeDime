@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 """Reference parity for actual pointer views, including Rust preprocessing."""
-import csv,json,sys,os,hashlib
+import csv
+import json
+import os
+import sys
 from pathlib import Path
-import numpy as np,torch
+
+import numpy as np
+import torch
+
 r=Path(__file__).resolve().parents[1];sys.path.insert(0,str(r/'assets/source/target_maker'));sys.path.insert(0,str(r/'assets/source/fable_god'));os.environ['FABLE_REGRESSOR_SOURCE']=str(r/'assets/source/fable_god/provenance/regressor_source')
-from target_maker.fused import FusedTargetEncoder
 from python.elo_finetune.model_io import load_regressor
-from python.elo_finetune.paths import import_regressor_train
+from target_maker.fused import FusedTargetEncoder
+
 torch.set_num_threads(2);torch._C._set_graph_executor_optimize(False);torch.backends.cuda.matmul.allow_tf32=False
 f=load_regressor(r/'assets/models/starlight/starlight_core_regressor.safetensors',r/'assets/models/starlight/starlight_config.json','cuda')
 for module in f.modules():

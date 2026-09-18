@@ -1,9 +1,7 @@
-from contextlib import contextmanager
-import hashlib
-import json
-from pathlib import Path
 import tempfile
 import unittest
+from contextlib import contextmanager
+from pathlib import Path
 from unittest.mock import patch
 
 import qualify_matched_v2 as q

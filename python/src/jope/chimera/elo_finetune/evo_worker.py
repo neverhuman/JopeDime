@@ -28,7 +28,7 @@ import torch
 from .ckpt import CheckpointManager
 from .eval_protocol import ProtocolRunner
 from .evo_blocks import BlockTable, CandidateSpec, DeltaEngine
-from .evo_episodes import EpisodeProducer, build_episode, _pool_init
+from .evo_episodes import EpisodeProducer
 from .evo_fitness import candidate_margins, grad_arm_delta
 from .model_io import CONFIG_NAME, default_weights_dir
 from .paths import import_regressor_train
@@ -75,7 +75,6 @@ class Worker:
         episodes = self.episodes_for(spec["episode_specs"])
         ep_ids = [f"{e.task}:{e.seed}" for e in episodes]
 
-        cache_key = (spec["gen"], spec["rung"])
         incumbent = candidate_margins(self.runner, episodes)
         results = {"__incumbent__": incumbent}
         sigma_groups = np.array(spec.get("sigma_groups", [1.0] * 5))

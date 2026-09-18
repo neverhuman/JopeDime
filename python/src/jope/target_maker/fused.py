@@ -5,10 +5,10 @@ import math
 import os
 import shutil
 import time
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterable, Mapping, Sequence
 
 import numpy as np
 import torch
@@ -31,8 +31,8 @@ from .classical import (
     _validation_weights,
     build_pair_indices,
     build_retrieval_queries,
-    pair_features,
     pair_feature_names,
+    pair_features,
     retrieval_metrics_from_scores,
     select_window_features,
     summarize_target_window,
@@ -49,8 +49,7 @@ from .data import (
     stable_seed,
 )
 from .encode import encode_values, load_encoder, normalize_task
-from .model import TargetEncoder, build_model_from_checkpoint
-
+from .model import build_model_from_checkpoint
 
 BUNDLE_FORMAT = "target_maker_fused_bundle"
 BUNDLE_VERSION = 1
@@ -133,7 +132,7 @@ def _jsonable_config(cfg: FusedTrainingConfig) -> dict[str, object]:
 
 
 def _utc_stamp() -> str:
-    return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    return datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
 
 
 def default_fusion_run_dir() -> Path:
@@ -1066,7 +1065,7 @@ def _write_bundle_manifest(
     manifest = {
         "format": BUNDLE_FORMAT,
         "version": BUNDLE_VERSION,
-        "created_at_utc": datetime.now(timezone.utc).isoformat(),
+        "created_at_utc": datetime.now(UTC).isoformat(),
         "config": _jsonable_config(cfg),
         "window_size": int(cfg.window_size),
         "signature_views": int(cfg.signature_views),
@@ -1614,13 +1613,13 @@ class FusedTargetEncoder:
     def encode_window_batch(self, windows: Sequence[object], *, batch_size: int = 512) -> _BatchEncoding:
         fused_windows = [
             FusedWindow(
-                dataset_id=str(getattr(window, "dataset_id")),
-                task=int(getattr(window, "task")),
-                original_length=int(getattr(window, "original_length")),
-                effective_count=int(getattr(window, "effective_count")),
-                replacement_fraction=float(getattr(window, "replacement_fraction")),
-                values=np.asarray(getattr(window, "values"), dtype=np.float32),
-                features=np.asarray(getattr(window, "features"), dtype=np.float32),
+                dataset_id=str(window.dataset_id),
+                task=int(window.task),
+                original_length=int(window.original_length),
+                effective_count=int(window.effective_count),
+                replacement_fraction=float(window.replacement_fraction),
+                values=np.asarray(window.values, dtype=np.float32),
+                features=np.asarray(window.features, dtype=np.float32),
             )
             for window in windows
         ]

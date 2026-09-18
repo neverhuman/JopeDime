@@ -3,17 +3,17 @@
 Native children must run under the transient service: path validation alone
 cannot prevent a concurrent rename from redirecting a native output write.
 """
-from contextlib import contextmanager
 import ctypes
 import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path
 import signal
 import subprocess
 import sys
 import uuid
+from contextlib import contextmanager
+from pathlib import Path
 
 
 def require(condition, message="invalid experiment artifact"):

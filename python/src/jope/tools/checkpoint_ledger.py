@@ -10,7 +10,6 @@ the pruner change (`training.rs:328`) is Codex's and rides the next trainer rebu
   checkpoint_ledger.py --mirror parallel/recovery/eight-a100-20260912 --output parallel/recovery/eight-a100-20260912/review/checkpoint-policy-v1/ledger-<utc>.json
 """
 import argparse
-import datetime
 import json
 import re
 from pathlib import Path

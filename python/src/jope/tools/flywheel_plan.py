@@ -5,7 +5,7 @@ import re
 from collections import Counter
 from pathlib import Path
 
-from resume_expired_cycle import read, require, sha
+from resume_expired_cycle import read, sha
 
 RECOVERY_FROZEN = dict(sequence_nll=1.394498497, ranking_bt=0.533676382)
 

@@ -1,14 +1,13 @@
 import hashlib
 import json
 import os
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import original_learning_selection as selection
 import qualify_regression_gain as trial
-
 
 TEXTS = {
     'seed-selection': '- Four conditions × three matched training seeds.\n'

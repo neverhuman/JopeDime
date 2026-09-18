@@ -4,9 +4,9 @@ import argparse
 import hashlib
 import json
 import math
-from pathlib import Path
 import struct
 import time
+from pathlib import Path
 
 
 def sha(path):

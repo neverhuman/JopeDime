@@ -1,16 +1,15 @@
 import ctypes
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import time
 import unittest
+from pathlib import Path
 
 from jope.tools import opportunistic_proposals_v2 as library
 from jope.tools import test_report_cycle as fixture_module
-
 
 
 class ProposalLibraryTests(unittest.TestCase):
@@ -80,7 +79,8 @@ class ProposalLibraryTests(unittest.TestCase):
             try:
                 library.run(root, root/'spec.json')
             finally:
-                for sig, handler in handlers.items(): signal.signal(sig, handler)
+                for sig, handler in handlers.items():
+                    signal.signal(sig, handler)
             progress = library.read(root/'runs/pure-proposal-library.json')
             self.assertEqual(progress['phase'], 'stopped')
             self.assertEqual(progress['planned_seed_pools'], 1)

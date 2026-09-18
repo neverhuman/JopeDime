@@ -2,10 +2,10 @@ import copy
 import hashlib
 import json
 import subprocess
-from unittest.mock import patch
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
+from unittest.mock import patch
 
 import label_admission as admission
 from promotion_gate import canonical, immutable

@@ -5,19 +5,18 @@ import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path
 import signal
 import stat
 import subprocess
 import time
-import struct
-import teaching_manifest
+from pathlib import Path
 
-import experiment_runtime as runtime
-import promotion_gate
-import gpu_occupancy
 import candidate_intake
 import corpus_verification
+import experiment_runtime as runtime
+import gpu_occupancy
+import promotion_gate
+import teaching_manifest
 import training_contract
 from qualification_budget import Budget
 from resume_expired_cycle import atomic, read, require, sha

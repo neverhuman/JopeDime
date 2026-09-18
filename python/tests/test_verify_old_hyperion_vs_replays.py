@@ -4,10 +4,9 @@ import importlib.util
 import json
 from pathlib import Path
 
-import jope.research
-
 import pytest
 
+import jope.research
 
 SCRIPT = (
     Path(jope.research.__file__).parent / "verify_old_hyperion_vs_replays.py"

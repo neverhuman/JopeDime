@@ -6,10 +6,9 @@ import hashlib
 import json
 import math
 import os
-from pathlib import Path
 import subprocess
 import time
-
+from pathlib import Path
 
 METRICS = ('sequence_nll', 'ranking_bt', 'ranking_listwise', 'runtime_huber')
 GP_UNIT = 'jope-parallel-gp.service'

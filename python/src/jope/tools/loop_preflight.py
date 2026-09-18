@@ -16,7 +16,6 @@ import datetime
 import hashlib
 import json
 import os
-import sys
 from pathlib import Path
 
 SCHEMA = 'parallel.loop_preflight.v1'
@@ -207,7 +206,7 @@ def main(argv=None):
     parser.add_argument('--output', type=Path, help='immutable receipt path (parallel.loop_preflight.v1)')
     args = parser.parse_args(argv)
     body = collect(FsTree(args.local_root), args.run) if args.local_root else collect_remote(args.node, args.key, args.node_root, args.run)
-    receipt = dict(schema=SCHEMA, collected_at=datetime.datetime.now(datetime.timezone.utc).isoformat(), node=None if args.local_root else args.node,
+    receipt = dict(schema=SCHEMA, collected_at=datetime.datetime.now(datetime.UTC).isoformat(), node=None if args.local_root else args.node,
                    node_root=str(args.local_root) if args.local_root else args.node_root, final_tests_opened=False, **body)
     if args.output:
         import promotion_gate

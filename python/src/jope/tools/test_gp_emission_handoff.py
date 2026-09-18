@@ -1,14 +1,13 @@
 import os
-from pathlib import Path
 import signal
 import subprocess
 import sys
 import tempfile
 import time
 import unittest
-from unittest.mock import patch
+from pathlib import Path
 
-from gp_emission_handoff import committed,drain,process,resume,same_process,stop_drained
+from gp_emission_handoff import committed, drain, process, resume, same_process, stop_drained
 from promotion_gate import immutable
 from resume_expired_cycle import read
 

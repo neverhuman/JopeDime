@@ -1,10 +1,9 @@
 import importlib.util
 from pathlib import Path
 
-import jope.research
-
 import pytest
 
+import jope.research
 
 SPEC = importlib.util.spec_from_file_location(
     "dlgp_budget_campaign", Path(jope.research.__file__).parent / "dlgp_budget_campaign.py"

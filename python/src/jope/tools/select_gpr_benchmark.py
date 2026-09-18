@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Select immutable real-program pointers for the optional GPR qualification."""
 import argparse
-from collections import defaultdict
 import hashlib
 import json
-from pathlib import Path
 import statistics
+from collections import defaultdict
+from pathlib import Path
+
 from audit_gpu_ridge import stages, width
 
 p = argparse.ArgumentParser()

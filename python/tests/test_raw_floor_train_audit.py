@@ -6,7 +6,6 @@ from pathlib import Path
 
 import jope.research
 
-
 SCRIPTS = Path(jope.research.__file__).parent
 SPEC = importlib.util.spec_from_file_location("raw_floor_train_audit", SCRIPTS / "raw_floor_train_audit.py")
 assert SPEC and SPEC.loader

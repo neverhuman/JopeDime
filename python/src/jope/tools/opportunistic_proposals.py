@@ -5,17 +5,17 @@ No queue writer or evaluator is invoked. Rust owns the all-GPU lease and ranks;
 this wrapper owns their deadline and stops only its own process descendants.
 """
 import argparse
-from experiment_runtime import require
 import ctypes
 import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path
 import signal
 import subprocess
 import time
+from pathlib import Path
 
+from experiment_runtime import require
 
 PHASE = "GP optimizes cut targets for the next teaching corpus"
 

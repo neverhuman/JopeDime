@@ -16,17 +16,17 @@ import argparse
 import hashlib
 import json
 import math
-from pathlib import Path
 import re
 import sqlite3
 import statistics
 import sys
+from pathlib import Path
 
+import continuous_quality_report
 import continuous_status
 import experiment_runtime
 import flywheel_metrics
 import promotion_gate
-import continuous_quality_report
 import resume_expired_cycle
 import scientific_metadata
 import selfplay_milestones

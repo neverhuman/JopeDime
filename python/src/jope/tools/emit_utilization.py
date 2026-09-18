@@ -2,7 +2,6 @@
 """Install next units on the GPU host and emit utilization receipts. Never starts the fenced GP."""
 from __future__ import annotations
 
-import hashlib
 import json
 import subprocess
 import time

@@ -3,9 +3,9 @@ from __future__ import annotations
 import json
 import os
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping
 
 import numpy as np
 import torch
@@ -15,7 +15,6 @@ from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data import DataLoader, DistributedSampler, RandomSampler, SequentialSampler
 
 from .data import (
-    PROFILE_DIM,
     TASK_BINARY,
     TASK_REGRESSION,
     TargetCacheDataset,

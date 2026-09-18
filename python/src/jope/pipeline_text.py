@@ -10,7 +10,8 @@ from __future__ import annotations
 
 import math
 import re
-from typing import TYPE_CHECKING, Any, Sequence
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover
     from .grammars.spec import GrammarSpec
@@ -138,7 +139,7 @@ def format_stage(stage: dict[str, Any]) -> str:
     return "(" + " ".join(parts) + ")"
 
 
-def parse_pipeline_actions(genome: str, spec: "GrammarSpec") -> dict[str, Any]:
+def parse_pipeline_actions(genome: str, spec: GrammarSpec) -> dict[str, Any]:
     """Parse a genome into actions, gated against the given engine grammar."""
     stages = split_pipeline_stages(genome)
     if not stages:
@@ -166,7 +167,7 @@ def format_pipeline_actions(actions: dict[str, Any]) -> str:
     return "(pipe X " + " ".join(format_stage(stage) for stage in stages) + ")"
 
 
-def parse_any(genome: str, specs: Sequence["GrammarSpec"]) -> tuple[str, dict[str, Any]] | None:
+def parse_any(genome: str, specs: Sequence[GrammarSpec]) -> tuple[str, dict[str, Any]] | None:
     """Try engines in order (featmath first for legacy ambiguity); None if none parse."""
     for spec in specs:
         try:

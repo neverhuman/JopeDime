@@ -74,7 +74,7 @@ class SeedExperimentTests(unittest.TestCase):
         views = s.choose_views(index, excluded)
         self.assertEqual(len(views), 16)
         self.assertEqual([r["cut"] for r in views], [3, 5] * 8)
-        excluded.update((f"d0", cut) for cut in range(8))
+        excluded.update(("d0", cut) for cut in range(8))
         with self.assertRaisesRegex(ValueError, "insufficient"):
             s.choose_views(index, excluded)
 

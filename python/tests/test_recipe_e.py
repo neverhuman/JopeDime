@@ -1,14 +1,14 @@
-from collections import Counter
 import json
+from collections import Counter
 from pathlib import Path
-
-import jope.research
 
 import pytest
 
+import jope.research
 
 SCRIPTS = Path(jope.research.__file__).parent
 
+from test_exact_packed_corpus import _write_recipe_e_evidence_index  # noqa: E402
 from test_exact_train import (  # noqa: E402
     RECIPE_E_BATCH_MIX,
     RECIPE_E_LOSS_WEIGHTS,
@@ -17,7 +17,6 @@ from test_exact_train import (  # noqa: E402
     recipe_e_evidence_lane,
     recipe_e_training_trigger,
 )
-from test_exact_packed_corpus import _write_recipe_e_evidence_index  # noqa: E402
 
 
 def test_recipe_e_mix_is_exact_over_five_batches():

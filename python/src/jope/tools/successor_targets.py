@@ -30,7 +30,6 @@ replay_policy.immutable; the policy schema string stays parallel.replay_policy.v
 trainer ignores the key. Nothing here writes labels, training state or serving state.
 """
 import argparse
-import hashlib
 import json
 import math
 import random
@@ -40,7 +39,6 @@ from pathlib import Path
 import replay_policy
 from promotion_gate import immutable
 from resume_expired_cycle import sha
-
 
 SCHEMA = 'parallel.seed_values.v1'
 EXPORT_SCHEMA = 'parallel.seed_value.v1'

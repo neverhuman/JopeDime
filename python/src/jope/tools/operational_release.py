@@ -2,12 +2,11 @@
 import copy
 import os
 import signal
-import subprocess
 import time
 from pathlib import Path
 
-from promotion_gate import artifact,immutable
-from resume_expired_cycle import read,require,sha
+from promotion_gate import artifact
+from resume_expired_cycle import read, require, sha
 
 SETTINGS={'packing_executable','training_executable','monitor_executable','gpu_pool','teaching_store',
           'legacy_export_interval_seconds','progress_timeout_seconds','automatic_training'}

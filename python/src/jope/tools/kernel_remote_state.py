@@ -3,9 +3,9 @@ import hashlib
 import json
 import math
 import os
-from pathlib import Path
 import subprocess
 import time
+from pathlib import Path
 
 UNITS = ('jope-parallel-gp', 'jope-parallel-campaign', 'jope-parallel-monitor',
          'jope-parallel-resident-gpu', 'jope-parallel-reports', 'jope-parallel-console',

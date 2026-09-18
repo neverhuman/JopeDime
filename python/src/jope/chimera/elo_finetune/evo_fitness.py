@@ -93,7 +93,6 @@ def grad_arm_delta(model, engine, mask_blocks: np.ndarray,
                    k_steps: int = 8, batch: int = 16, lr: float = 3e-5) -> dict:
     """Freeze 97%, AdamW the masked 3% on fresh disposable episodes; return
     the sparse delta and restore the model bit-exactly."""
-    from .evo_blocks import delta_to_sparse
 
     table = engine.table
     touched: dict[str, list] = {}

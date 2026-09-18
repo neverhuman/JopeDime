@@ -13,7 +13,13 @@ from .engines import EngineRouter
 from .eval_ledger import EVALUATOR_VERSION, iter_eval_regression_with_ledger
 from .io import read_jsonl
 from .model import JopeActiveModelV2
-from .propose import embedding_from_vs, load_any_model, load_standardization, propose_active_v2, target_summary_from_vs
+from .propose import (
+    embedding_from_vs,
+    load_any_model,
+    load_standardization,
+    propose_active_v2,
+    target_summary_from_vs,
+)
 from .schema import TrainingRow
 from .selector_calibration import load_selector_calibration
 from .status import artifact_freshness

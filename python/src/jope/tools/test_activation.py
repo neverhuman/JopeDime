@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import activate_promotion_safeguards as activate
-from resume_expired_cycle import atomic,read,sha
+from resume_expired_cycle import atomic, read, sha
 
 
 class ActivationRecoveryTests(unittest.TestCase):

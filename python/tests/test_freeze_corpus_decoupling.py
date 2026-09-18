@@ -22,8 +22,6 @@ import json
 from pathlib import Path
 
 import pytest
-
-
 import test_exact_controller as controller  # noqa: E402
 import test_exact_packed_corpus  # noqa: E402
 import test_exact_train  # noqa: E402

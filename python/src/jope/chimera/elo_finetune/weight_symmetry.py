@@ -19,7 +19,6 @@ rebuilt + strict-loaded to verify functional equivalence on real episodes.
 from __future__ import annotations
 
 import json
-import math
 
 import numpy as np
 import torch
@@ -280,7 +279,6 @@ def verify_equivalence(sd0: dict, sd1: dict, views, device="cpu", label="",
     for v in views:
         p0, l0 = predict(m0, v.Xtr, v.ytr, v.Xte, device)
         p1, l1 = predict(m1, v.Xtr, v.ytr, v.Xte, device)
-        rng = max(abs(p0).max(), 1e-9)
         max_pred = max(max_pred, float(np.abs(p1 - p0).max()))
         max_logit = max(max_logit, float((l1 - l0).abs().max()))
     return dict(label=label, max_abs_pred_delta=max_pred,

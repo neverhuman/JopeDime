@@ -3,12 +3,11 @@ import argparse
 import hashlib
 import json
 import os
-from pathlib import Path
 import re
 import stat
+from pathlib import Path
 
 from scientific_metadata import canonical, immutable
-
 
 REPOSITORY = "/home/ubuntu/jope-dime"
 ORIGINALS = {

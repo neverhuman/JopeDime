@@ -1,15 +1,15 @@
 import json
-from contextlib import contextmanager
-from pathlib import Path
 import signal
 import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import contextmanager
+from pathlib import Path
 
-from binary_prepare import freeze_aliases, save
 from binary_encode import owned_ranks, serial_job_waves, stop
-from binary_replay_v2 import commands_for_replay, audit
+from binary_prepare import freeze_aliases, save
+from binary_replay_v2 import audit, commands_for_replay
 from binary_verify import sha
 
 

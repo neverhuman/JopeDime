@@ -8,10 +8,9 @@ import argparse
 import hashlib
 import json
 import os
-from pathlib import Path
 import shutil
 import tempfile
-
+from pathlib import Path
 
 KERNEL = Path('assets/source/jope-dime/vendor/feat-math')
 HYPERION = Path('assets/source/hyperion-jain')

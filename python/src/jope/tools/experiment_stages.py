@@ -1,6 +1,4 @@
 """Output inventories validated before completion publication and resume."""
-import json
-from pathlib import Path
 
 from binary_verify import COMPONENTS, read, sha, vector
 from experiment_runtime import inside, require

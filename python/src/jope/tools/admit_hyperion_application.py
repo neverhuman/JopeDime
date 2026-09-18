@@ -3,8 +3,9 @@
 import argparse
 import hashlib
 import json
-from pathlib import Path
 import time
+from pathlib import Path
+
 p=argparse.ArgumentParser()
 p.add_argument('--root',type=Path,required=True)
 p.add_argument('--jobs',required=True)

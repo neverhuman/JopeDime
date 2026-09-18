@@ -1,7 +1,7 @@
 """No authority installation or numerical execution; negative bridge boundaries."""
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import funding_client

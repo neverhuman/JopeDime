@@ -19,12 +19,12 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 from .prime_config import PrimeConfig, load_config
 from .prime_staging import (

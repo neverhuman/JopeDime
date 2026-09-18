@@ -151,10 +151,10 @@ class StreamView:
         self.meta_path = self.run_dir / "gene_events.jsonl.meta.json"
         self.router = router or EngineRouter()
         self.tailer = JsonlTailer(self.feed_path)
-        self.genes: "OrderedDict[str, Gene]" = OrderedDict()
+        self.genes: OrderedDict[str, Gene] = OrderedDict()
         self.state = StreamState()
         self._seq = 0
-        self._code_cache: "OrderedDict[tuple[str, str, str], dict[str, Any]]" = OrderedDict()
+        self._code_cache: OrderedDict[tuple[str, str, str], dict[str, Any]] = OrderedDict()
         # Live training loss: explicit path, else auto-detect a metrics feed in the run dir.
         # Auto-detected paths are RE-RESOLVED each render so a long-running TUI follows
         # self-play across generations (gen1_train_metrics -> gen2_train_metrics -> ...).

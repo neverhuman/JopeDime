@@ -1,11 +1,9 @@
 import json
-import os
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
 import node_mirror_pull as nm
-from resume_expired_cycle import sha
 
 
 class FakeNode:
@@ -101,7 +99,10 @@ class CensusOnly(unittest.TestCase):
 
 class SizedRoots(unittest.TestCase):
     def test_census_script_picks_roots_under_the_size_cap(self):
-        import json, subprocess, sys, tempfile
+        import json
+        import subprocess
+        import sys
+        import tempfile
         from pathlib import Path
         with tempfile.TemporaryDirectory() as tmp:
             runs = Path(tmp) / 'parallel/runs'
@@ -117,7 +118,11 @@ class SizedRoots(unittest.TestCase):
 
 class RootsGlobs(unittest.TestCase):
     def test_roots_accept_globs_and_skip_sockets(self):
-        import json, socket, subprocess, sys, tempfile
+        import json
+        import socket
+        import subprocess
+        import sys
+        import tempfile
         from pathlib import Path
         with tempfile.TemporaryDirectory() as tmp:
             run = Path(tmp) / 'parallel/runs/r/learning'

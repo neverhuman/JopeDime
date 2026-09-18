@@ -4,9 +4,20 @@ import math
 from pathlib import Path
 
 from head_cost_census import program_head
-from scientific_metadata import (CONTEXT_FIELDS, canonical, context, digest, finite,
-                                 immutable, inside, program, read_with_digest, reference, sha256_value)
-from screen_fixture import GATES, AXES
+from scientific_metadata import (
+    CONTEXT_FIELDS,
+    canonical,
+    context,
+    digest,
+    finite,
+    immutable,
+    inside,
+    program,
+    read_with_digest,
+    reference,
+    sha256_value,
+)
+from screen_fixture import AXES, GATES
 
 SCHEMA = "parallel.screen_pilot_selection.v2"
 N_FAMILIES, CUTS, PROGRAMS, RETAINED, AUDITS = 8, (0, 1), 64, 16, 5

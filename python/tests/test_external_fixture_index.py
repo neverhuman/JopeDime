@@ -1,13 +1,11 @@
 import copy
 import hashlib
 import json
-from pathlib import Path
 import stat
-
-import pytest
-
+from pathlib import Path
 
 import external_fixture_index as fixtures  # noqa: E402
+import pytest
 
 
 @pytest.mark.xbabe2  # needs the benchmarks/sotarena clone at e5db30a0 (B18: pin unfetchable, submodule absent from the port tree)

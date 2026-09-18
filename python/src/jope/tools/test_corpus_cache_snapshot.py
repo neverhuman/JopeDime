@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """Validate duplicate handling against a frozen, real multi-cut corpus sample."""
-import argparse, copy, hashlib, json, os, pathlib, subprocess
+import argparse
+import copy
+import hashlib
+import json
+import os
+import pathlib
+import subprocess
 
 
 def sha(p):

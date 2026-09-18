@@ -3,9 +3,8 @@ import hashlib
 import json
 import math
 import os
-from pathlib import Path
 import tempfile
-
+from pathlib import Path
 
 CONTEXT_FIELDS = ("family", "dataset", "partition", "cut", "prepared_sha256",
                   "training_sha256", "validation_sha256", "preprocessing_sha256",

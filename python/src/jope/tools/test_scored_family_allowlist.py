@@ -1,5 +1,6 @@
 import copy
 import unittest
+
 import scored_family_allowlist as a
 
 PENGUINS_METADATA_SHA256 = "af97e181ae6adda3e1f1b333ca9166a3b6bb920feb1a3569474c9c18d306c980"

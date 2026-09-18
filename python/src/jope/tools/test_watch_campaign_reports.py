@@ -1,8 +1,8 @@
-from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
 from watch_campaign_reports import run_report
 

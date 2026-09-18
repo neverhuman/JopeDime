@@ -9,19 +9,15 @@ descends in-sample, p=3.7e-14), and lr<=1e-8 is a numerical no-op. Run to confir
 from __future__ import annotations
 
 import argparse
-import copy
-import os
 import time
 
 import numpy as np
 import torch
 import torch.nn.functional as F
-from sklearn.metrics import roc_auc_score
-
 from python.fusion import experts as E
+from python.fusion.data import gate_meta_vector, group_by_shape, iter_packed_shards, load_packed_shard
 from python.fusion.model import AttnFusion
-from python.fusion.data import (iter_packed_shards, load_packed_shard, group_by_shape,
-                                gate_meta_vector)
+from sklearn.metrics import roc_auc_score
 
 HID = 512
 
@@ -57,7 +53,6 @@ def icl_forward(icl, grp, dev):
 def build_rows(pfn_lg, pfn_h, icl_lg, icl_h, grp, dev):
     """Assemble fusion inputs (per row, both experts) with grad. Returns
     logits(N,E,2), hidden(N,E,512), gate_meta(N,Dm), conf(N,E,3), y(N), seg(N)."""
-    B = len(grp)
     logits, hidden, conf, ys, segs, gms = [], [], [], [], [], []
     for b, t in enumerate(grp):
         lg = torch.stack([pfn_lg[:, b], icl_lg[:, b]], 1)                # (M,2,2)

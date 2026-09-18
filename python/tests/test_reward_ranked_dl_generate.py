@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 
 import jope.research
-import json
-
 
 SCRIPT_DIR = Path(jope.research.__file__).parent
 SPEC = importlib.util.spec_from_file_location(

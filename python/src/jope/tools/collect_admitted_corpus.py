@@ -1,14 +1,14 @@
 """Freeze successive strict corpora from independently completed native searches."""
 import argparse
 import fcntl
-from pathlib import Path
 import subprocess
 import time
+from pathlib import Path
 
 import experiment_runtime as runtime
 from promotion_gate import immutable
 from qualification_budget import Budget
-from resume_expired_cycle import atomic,read,require,sha
+from resume_expired_cycle import atomic, read, require, sha
 
 
 def completed_sources(root,jobs,expected):

@@ -5,13 +5,13 @@ It does not assert that those sources cover every historical fitting namespace.
 Every occurrence remains seen/unavailable until original execution is verified.
 """
 from __future__ import annotations
+
 import argparse
-from collections import Counter
 import hashlib
 import json
-from pathlib import Path
 import sqlite3
 import time
+from pathlib import Path
 
 
 def digest(data):

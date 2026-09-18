@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 """Resume binary encoders in campaign-approved windows using one spare CPU lease."""
 import argparse
-import experiment_runtime as runtime
-import experiment_stages as stage_artifacts
-from contextlib import contextmanager
 import hashlib
 import json
 import os
-from pathlib import Path
 import signal
 import subprocess
 import time
+from pathlib import Path
 
-from experiment_scheduler import admission_reason, spare_lease, SPARE_CPUS
+import experiment_runtime as runtime
+import experiment_stages as stage_artifacts
+from experiment_scheduler import SPARE_CPUS, admission_reason, spare_lease
 
 
 def sha(path):

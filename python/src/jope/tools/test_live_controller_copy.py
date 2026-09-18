@@ -4,7 +4,6 @@ import unittest
 import flywheel_plan as f
 import selfplay_milestones as m
 
-
 LIVE_COPY = dict(
     campaign="automatic-training-hold-v1",
     manifest_prefix="779dacc4",

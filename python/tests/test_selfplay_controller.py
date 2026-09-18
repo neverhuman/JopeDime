@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-import json
 import hashlib
+import json
 import sqlite3
 import struct
 from pathlib import Path
 
 import numpy as np
 import pytest
-
-
+import test_exact_packed_corpus as packed_corpus  # noqa: E402
+import test_exact_train as exact_train  # noqa: E402
+from migrate_jain_web_cpu import cpu_payload  # noqa: E402
 from test_exact_controller import (  # noqa: E402
     PHASES,
     ActionJournal,
@@ -19,9 +20,6 @@ from test_exact_controller import (  # noqa: E402
     default_handlers,
 )
 from test_exact_packed_corpus import materialize, verify  # noqa: E402
-import test_exact_packed_corpus as packed_corpus  # noqa: E402
-import test_exact_train as exact_train  # noqa: E402
-from migrate_jain_web_cpu import cpu_payload  # noqa: E402
 
 
 def catalog_entries():

@@ -9,7 +9,6 @@ from typing import Any
 
 from .contracts import content_sha256, validate_broad_receipt
 
-
 SELF_PLAY_ROLE_COUNTS = {
     "exploitation": 4,
     "uncertainty": 2,

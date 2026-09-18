@@ -2,13 +2,11 @@
 """Fail-closed, receipt-bound adaptive qualification; never writes serving state."""
 import hashlib
 import math
-from pathlib import Path
 import random
 import statistics
 
 import experiment_runtime as runtime
 from resume_expired_cycle import read, require, sha
-
 
 POLICY = dict(primary_improvement=0.01, nll_regression=0.005,
               ranking_regression=0.01, bootstrap_seed=20260909,

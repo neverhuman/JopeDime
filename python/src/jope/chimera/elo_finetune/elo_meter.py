@@ -19,7 +19,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from .pack import FablePack, OUR_ALGORITHM
+from .pack import OUR_ALGORITHM, FablePack
 
 TIE_EPS = 1e-12
 ELO_ROUNDS = 60

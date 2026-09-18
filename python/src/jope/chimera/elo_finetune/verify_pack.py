@@ -21,7 +21,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .pack import FablePack, SPLIT_NAMES, bucket_schedule, collate
+from .pack import SPLIT_NAMES, FablePack, bucket_schedule, collate
 from .pack_build import ARCHIVE_ROOT, DEFAULT_OUT, build, read_csv_f32, sha256_file
 
 METRIC_ORDER = [

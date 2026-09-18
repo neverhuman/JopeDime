@@ -6,8 +6,7 @@ import sqlite3
 from pathlib import Path
 
 import pytest
-
-
+import test_exact_wave as wave_module
 from test_exact_adaptive import (  # noqa: E402
     attach_ranking_labels,
     evaluate_adaptive,
@@ -46,7 +45,6 @@ from test_exact_gp_bridge import (  # noqa: E402
     inject_promoted_proposals,
 )
 from test_exact_pair_registry import PairRegistry  # noqa: E402
-import test_exact_wave as wave_module
 from test_exact_wave import select_micro_cohort  # noqa: E402
 
 

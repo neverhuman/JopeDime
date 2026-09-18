@@ -1,9 +1,7 @@
-import copy
-import json
-from pathlib import Path
 import struct
 import tempfile
 import unittest
+from pathlib import Path
 
 import binary_verify as b
 import experiment_stages as stages

@@ -1,7 +1,7 @@
 import json
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
 import population_judge as pj
 from resume_expired_cycle import atomic, sha
@@ -103,7 +103,7 @@ class PopulationJudge(unittest.TestCase):
         arms = ['0=' + monitor(self.root, 'a0', 0.518), '1=' + monitor(self.root, 'a1', 0.519)]
         output = self.root / 'judgments' / 'j.json'
         argv = ['--parent', self.parent, '--baseline', str(self.baseline), '--arm', arms[0], '--arm', arms[1], '--cycle', '21', '--output', str(output)]
-        first = pj.main(argv)
+        pj.main(argv)
         self.assertEqual(json.loads(output.read_bytes())['cycle'], 21)
         digest = sha(output)
         pj.main(argv)

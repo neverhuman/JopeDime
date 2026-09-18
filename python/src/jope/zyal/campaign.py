@@ -21,13 +21,13 @@ a run id of `../../../etc` would otherwise let a config file choose where artifa
 """
 from __future__ import annotations
 
-import uuid
 import hashlib
 import json
 import os
 import shutil
 import sqlite3
 import time
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -326,7 +326,7 @@ class CampaignStore:
     def close(self) -> None:
         self.conn.close()
 
-    def __enter__(self) -> "CampaignStore":
+    def __enter__(self) -> CampaignStore:
         return self
 
     def __exit__(self, *exc) -> None:

@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import hashlib
 import stat
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 from .prime_config import PrimeConfig, load_config
-
 
 _OWNED_DIRECTORY_NAMES = ("reports", "outputs")
 

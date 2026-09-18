@@ -1,12 +1,11 @@
-from pathlib import Path
+import hashlib
 import json
 import struct
-import hashlib
 import tempfile
 import unittest
+from pathlib import Path
 
 import replay_policy as replay
-from promotion_gate import immutable
 from resume_expired_cycle import atomic, sha
 from teaching_manifest import SHARD_FIELDS
 

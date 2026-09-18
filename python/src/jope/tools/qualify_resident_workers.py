@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """Matched-batch resident timing and fail-closed acceptance checks; recovery remains a separate gate."""
 import argparse
-from dataclasses import dataclass
 import fcntl
 import math
 import os
-from pathlib import Path
 import subprocess
 import sys
 import time
+from dataclasses import dataclass
+from pathlib import Path
 
 import experiment_runtime as runtime
 from promotion_gate import immutable
 from qualification_budget import Budget
-from qualify_regression_gain import gpu_handoff,require_collection
-from resume_expired_cycle import atomic,read,require,sha
-from resident_gpu_pool import process_identity,reconcile_tasks,verify_pool_ready
+from qualify_regression_gain import gpu_handoff, require_collection
+from resident_gpu_pool import process_identity, reconcile_tasks, verify_pool_ready
+from resume_expired_cycle import atomic, read, require, sha
 
 
 @dataclass

@@ -1,4 +1,5 @@
 import unittest
+
 from nominate_replay_challenger import select
 
 

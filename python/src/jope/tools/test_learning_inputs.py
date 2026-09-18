@@ -2,8 +2,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from qualify_regression_gain import learning_inputs,verify_trial_inputs,monitor_reference
-from resume_expired_cycle import atomic,sha
+from qualify_regression_gain import learning_inputs, monitor_reference, verify_trial_inputs
+from resume_expired_cycle import atomic, sha
 
 
 class LearningAdmissionTests(unittest.TestCase):

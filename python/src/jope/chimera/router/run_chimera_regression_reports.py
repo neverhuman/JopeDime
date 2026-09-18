@@ -17,13 +17,12 @@ import subprocess
 import sys
 import time
 import traceback
-from dataclasses import asdict, dataclass, replace
-from datetime import datetime, timezone
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import numpy as np
-
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATASET_ROOT = Path("/home/ubuntu/quant/regression")
@@ -69,7 +68,7 @@ class WorkItem:
 
 
 def utc_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
 def json_safe(obj: Any) -> Any:
@@ -1160,7 +1159,7 @@ def summarize_reports(
         }
 
     summary_dir = Path(args.summary_dir)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     timestamped = summary_dir / f"{args.summary_prefix}_summary_{stamp}.json"
     latest = summary_dir / f"{args.summary_prefix}_summary_latest.json"
     atomic_write_json(timestamped, summary)

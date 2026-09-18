@@ -1,5 +1,6 @@
 """AZ-2017 specialist loop gates and numeric bars. Serving is never assigned here."""
 from __future__ import annotations
+
 from scientific_metadata import canonical, finite
 
 RECOVERY_NLL = 1.394498497

@@ -1,14 +1,14 @@
 import copy
 import shutil
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import candidate_intake
 import continuous_learning as controller
+from promotion_gate import artifact, sha
 from publish_replay_candidate import publish
-from promotion_gate import artifact,sha
 
 
 class IntakeTests(unittest.TestCase):

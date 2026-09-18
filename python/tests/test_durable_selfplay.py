@@ -7,13 +7,10 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-import jope.research
-
 import pytest
-
-
-import test_exact_service as service_module  # noqa: E402
 import test_exact_backlog as backlog_module  # noqa: E402
+import test_exact_service as service_module  # noqa: E402
+from build_selfplay_bundle import sources as bundle_sources  # noqa: E402
 from test_exact_accept import evaluate_gate  # noqa: E402
 from test_exact_common import (  # noqa: E402
     EXPECTED_METRIC,
@@ -30,13 +27,14 @@ from test_exact_evaluator import (  # noqa: E402
     load_pointer,
     promote_candidate,
 )
-from test_exact_pair_registry import PairRegistry  # noqa: E402
 from test_exact_ingest import local_receipt_dir  # noqa: E402
-from test_exact_service import loaded_bundle, record_starting  # noqa: E402
+from test_exact_pair_registry import PairRegistry  # noqa: E402
 from test_exact_sealed_audit import SealedAuditRegistry  # noqa: E402
+from test_exact_service import loaded_bundle, record_starting  # noqa: E402
 from test_exact_status import service_is_stale  # noqa: E402
 from test_exact_wave import wave_seed  # noqa: E402
-from build_selfplay_bundle import sources as bundle_sources  # noqa: E402
+
+import jope.research
 
 
 def digest(path: Path) -> str:

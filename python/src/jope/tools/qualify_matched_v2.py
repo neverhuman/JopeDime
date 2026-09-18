@@ -1,16 +1,15 @@
 """Frozen three-arm/three-seed blocks; interrupted attempts are diagnostics only."""
 import argparse
 import collections
-import json
-from pathlib import Path
 import signal
 import sys
 import time
+from pathlib import Path
 
-from binary_reproduce import immutable
 import experiment_runtime as runtime
-from experiment_scheduler import admission_reason, spare_lease
 import seed_experiment as s
+from binary_reproduce import immutable
+from experiment_scheduler import admission_reason, spare_lease
 
 SEEDS = (20260907, 20260908, 20260909)
 ARMS = ("pure_first64", "larger_pool", "generic")

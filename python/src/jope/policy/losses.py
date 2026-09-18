@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import math
 from collections import defaultdict
-from typing import Iterable, Mapping
+from collections.abc import Mapping
 
 import torch
 from torch import nn
@@ -180,7 +180,7 @@ def clamp_log_vars(log_vars: nn.ParameterDict, lo: float = -3.0, hi: float = 3.0
 
 def bootstrap_mask(dataset_id: str, engine: str, canonical: str, member: int, *, keep_pct: int = 80) -> bool:
     """Deterministic bootstrap membership — stable across epochs, ranks, and sessions."""
-    digest = hashlib.sha256(f"{dataset_id}|{engine}|{canonical}|{member}".encode("utf-8")).digest()
+    digest = hashlib.sha256(f"{dataset_id}|{engine}|{canonical}|{member}".encode()).digest()
     return int.from_bytes(digest[:4], "big") % 100 < keep_pct
 
 

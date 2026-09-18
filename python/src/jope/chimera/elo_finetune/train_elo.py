@@ -23,7 +23,6 @@ import math
 import os
 import subprocess
 import time
-from contextlib import nullcontext
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -38,7 +37,7 @@ from .eval_protocol import ProtocolRunner
 from .losses import EloLoss, KlAnchor, combined_loss
 from .metrics import JsonlWriter, new_run_id, write_anchors
 from .model_io import load_regressor
-from .pack import DEFAULT_PACK_DIR, FablePack, OUR_ALGORITHM, bucket_schedule, collate
+from .pack import DEFAULT_PACK_DIR, OUR_ALGORITHM, FablePack, bucket_schedule, collate
 from .schedule import PromotionGate, StagePlan, group_multiplier, group_of
 
 

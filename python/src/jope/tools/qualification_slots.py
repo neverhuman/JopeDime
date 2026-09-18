@@ -1,13 +1,12 @@
 """Borrow up to sixteen of the existing GP cores without preempting searches."""
-from contextlib import contextmanager
 import fcntl
-from pathlib import Path
 import time
+from contextlib import contextmanager
+from pathlib import Path
 
 import experiment_runtime as runtime
 from promotion_gate import immutable
 from resume_expired_cycle import atomic, read, require, sha
-
 
 CPUS = tuple(range(8,60)) + tuple(range(70,122))
 

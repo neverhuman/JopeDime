@@ -14,11 +14,11 @@ import hashlib
 import json
 import math
 import os
-from collections import Counter
-from pathlib import Path
 import re
 import statistics
 import time
+from collections import Counter
+from pathlib import Path
 
 from promotion_gate import canonical
 from resume_expired_cycle import atomic, require, sha

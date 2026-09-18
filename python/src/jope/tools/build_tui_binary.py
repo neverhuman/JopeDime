@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """Build one immutable dashboard-only binary and bind actual source bytes before/after."""
-import hashlib,json,os,shutil,subprocess,time
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import time
 from pathlib import Path
+
 root=Path('/home/ubuntu/jope-dime/parallel')
 out=root/'bin/jope-parallel-cpu-v55-tui'
 receipt=root/'runs/parity/tui-v55-build.json'

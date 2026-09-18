@@ -2,14 +2,14 @@
 """Freeze fresh-group replay and lineage-dependent sampling from verified corpora."""
 import argparse
 import hashlib
-import mmap
 import json
 import math
-import teaching_manifest
+import mmap
 from pathlib import Path
 
+import teaching_manifest
 from promotion_gate import canonical, immutable
-from resume_expired_cycle import atomic, read, require, sha
+from resume_expired_cycle import read, require, sha
 
 
 def groups(corpus):

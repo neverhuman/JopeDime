@@ -1,15 +1,14 @@
 import argparse
-from contextlib import contextmanager
 import fcntl
-import json
 import os
-from pathlib import Path
 import signal
 import subprocess
 import sys
 import tempfile
 import time
 import unittest
+from contextlib import contextmanager
+from pathlib import Path
 from unittest.mock import patch
 
 import binary_verify

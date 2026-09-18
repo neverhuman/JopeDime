@@ -12,9 +12,9 @@ import math
 import os
 import random
 import uuid
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
-
+from typing import Any
 
 SPLIT_MANIFEST_V1 = "PrimeDatasetSplitManifest.v1"
 TRAIN_SPLIT = "train"

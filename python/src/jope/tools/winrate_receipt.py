@@ -10,8 +10,8 @@ import math
 from collections import Counter
 from pathlib import Path
 
-from selfplay_milestones import BARS, descriptive_bars, existence_proof, win_rates, world_class
 from scientific_metadata import immutable, metadata_bytes, read, read_with_digest
+from selfplay_milestones import BARS, descriptive_bars, existence_proof, win_rates, world_class
 
 SCHEMA = "parallel.winrate_receipt.v2"
 UNAVAILABLE = "unavailable"
