@@ -1,5 +1,5 @@
 use anyhow::{ensure, Context, Result};
-use feat_core::{
+use hyperion::{
     data::Matrix,
     hyperion::{fit_quantile_bounds, load_settings},
     hyperion_v7::{
@@ -93,7 +93,7 @@ fn encode(
     spec_sha: &str,
     output: &Path,
     model: &Proxy,
-    settings: &feat_core::hyperion::HyperionSweepSettings,
+    settings: &hyperion::hyperion::HyperionSweepSettings,
     budget: &Budget,
 ) -> Result<()> {
     let prepared = resolve(root, &j.prepared)?;
@@ -289,9 +289,13 @@ fn main() -> Result<()> {
         let begun = watchdog_started.load(Ordering::Acquire);
         let elapsed = start.elapsed().as_millis() as u64 + 1;
         if begun != 0 && elapsed.saturating_sub(begun) > 60_000 {
-            let _ = write_json(&watchdog_output.join(format!("failed-rank-{rank}.json")),
-                &json!({"rank":rank,"phase":"failed","reason":"CUDA forward exceeded 60-second useful-progress deadline","timestamp":jope_parallel::telemetry::now()}));
-            eprintln!("rank {rank}: CUDA forward exceeded 60 seconds; durable cut encodings preserved");
+            let _ = write_json(
+                &watchdog_output.join(format!("failed-rank-{rank}.json")),
+                &json!({"rank":rank,"phase":"failed","reason":"CUDA forward exceeded 60-second useful-progress deadline","timestamp":jope_parallel::telemetry::now()}),
+            );
+            eprintln!(
+                "rank {rank}: CUDA forward exceeded 60 seconds; durable cut encodings preserved"
+            );
             std::process::exit(124);
         }
     });
@@ -341,8 +345,10 @@ fn main() -> Result<()> {
             .collect::<Vec<_>>();
         let begun = Instant::now();
         if last.elapsed() >= Duration::from_secs(1) {
-            write_json(&output.join(format!("inflight-rank-{rank}.json")),
-                &json!({"rank":rank,"phase":"CUDA forward","batch":count,"scale":scale,"cells":count*scale*scale,"max_forward_cells":24000,"completed":completed.load(Ordering::Relaxed),"gpu_batches":batches,"timestamp":jope_parallel::telemetry::now()}))?;
+            write_json(
+                &output.join(format!("inflight-rank-{rank}.json")),
+                &json!({"rank":rank,"phase":"CUDA forward","batch":count,"scale":scale,"cells":count*scale*scale,"max_forward_cells":24000,"completed":completed.load(Ordering::Relaxed),"gpu_batches":batches,"timestamp":jope_parallel::telemetry::now()}),
+            )?;
         }
         forward_started_ms.store(start.elapsed().as_millis() as u64 + 1, Ordering::Release);
         let result = model.forward_batch(&x, &m, count, scale);
