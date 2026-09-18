@@ -210,7 +210,7 @@ fn reserved_fabric_uids_cannot_alias_broader_roles() {
 fn files_without_new_tables_keep_defaults() {
     let config = parse(include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/../../smartcluster.example.toml"
+        "/../smartcluster.example.toml"
     )))
     .expect("example parses");
     assert!(!config.fabric.enabled);
@@ -224,7 +224,7 @@ fn files_without_new_tables_keep_defaults() {
 fn omitted_reserved_uids_never_collide() {
     let example = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/../../smartcluster.example.toml"
+        "/../smartcluster.example.toml"
     ));
     for (from, to) in [
         ("web_uid = 994", "web_uid = 993"),

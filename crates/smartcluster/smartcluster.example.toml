@@ -1,0 +1,41 @@
+socket_path = "/run/jain-smartcluster/scqd.sock"
+state_path = "/var/lib/jain-smartcluster/scqd.redb"
+event_dir = "/var/lib/jain-smartcluster/events"
+cgroup_root = "/sys/fs/cgroup/jain-smartcluster.slice"
+socket_mode = 432 # 0o660
+embedded = false
+
+[scheduler]
+interactive_cpu_headroom_millicores = 2000
+interactive_ram_headroom_bytes = 4294967296
+interactive_gpu_headroom_per_mille = 0
+recovery_quiet_ms = 2000
+max_running_jobs = 1024
+max_running_jobs_per_tenant = 128
+max_queued_jobs = 10000
+max_queued_jobs_per_tenant = 2500
+# Relative DRF entitlement. Tenants omitted here use the default weight.
+tenant_weights = { }
+
+[auth]
+admin_uids = [0]
+system_uids = [995]
+web_uid = 994
+web_principal = "jain-web"
+
+[workers]
+jain_worker = "/usr/libexec/jain/jain-worker"
+
+[execution]
+# Deployment packages create this dedicated account; scqd refuses to launch
+# workloads as root when it is itself privileged.
+worker_uid = 993
+worker_gid = 993
+
+[mps]
+# MPS stays disabled unless both paths are explicitly configured. scqd still
+# probes the control daemon and fails closed before advertising GPU sharing.
+control_executable = "/usr/bin/nvidia-cuda-mps-control"
+pipe_directory = "/run/nvidia-mps"
+command_timeout_ms = 1000
+max_control_output_bytes = 1048576

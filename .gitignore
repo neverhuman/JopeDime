@@ -17,3 +17,5 @@ python/dist/
 .bundles/
 *.log
 !docs/parity/*.json
+metadata.err
+check-*.log

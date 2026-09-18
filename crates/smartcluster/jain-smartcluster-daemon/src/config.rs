@@ -552,7 +552,7 @@ mod tests {
     fn example_surface_parses() {
         let config: DaemonConfig = toml::from_str(include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/../../smartcluster.example.toml"
+            "/../smartcluster.example.toml"
         )))
         .expect("example config parses");
         config.validate().expect("example config validates");

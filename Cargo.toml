@@ -5,6 +5,7 @@ members = [
   "crates/battle-gpu",
   "crates/jope-engine",
   "crates/jope-campaigns",
+  "crates/jope-cli",
   "crates/smartcluster/jain-smartcluster-core",
   "crates/smartcluster/jain-smartcluster",
   "crates/smartcluster/jain-smartcluster-fabric",
