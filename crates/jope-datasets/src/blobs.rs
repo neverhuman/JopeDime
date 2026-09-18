@@ -7,6 +7,7 @@ use crate::store::Store;
 use anyhow::{anyhow, Context, Result};
 use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 /// Partials above this size are resumed with a ranged GET.
 pub const RESUME_THRESHOLD: u64 = 8 * 1024 * 1024;
@@ -42,20 +43,47 @@ pub fn same_file(a: &Path, b: &Path) -> bool {
 }
 
 /// Hardlink `blob` at `dst` (copy when linking fails, e.g. across devices).
+///
+/// The link or copy is made under a private temporary name and then renamed over `dst`, so a
+/// concurrent materialiser of the same path can never make this write into — and truncate —
+/// an inode it shares with `blob` (a plain `copy` onto an existing hardlink would).
 pub fn link_or_copy(blob: &Path, dst: &Path) -> Result<()> {
-    if dst.exists() {
-        if same_file(blob, dst) {
-            return Ok(());
-        }
-        std::fs::remove_file(dst)?;
+    if same_file(blob, dst) {
+        return Ok(());
     }
     if let Some(parent) = dst.parent() {
         std::fs::create_dir_all(parent)?;
     }
-    if std::fs::hard_link(blob, dst).is_err() {
-        std::fs::copy(blob, dst)
-            .with_context(|| format!("copy {} -> {}", blob.display(), dst.display()))?;
+    let name = dst
+        .file_name()
+        .map(|s| s.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    static SEQ: AtomicU64 = AtomicU64::new(0);
+    let tmp = dst.with_file_name(format!(
+        ".{name}.{}.{}.linktmp",
+        std::process::id(),
+        SEQ.fetch_add(1, Ordering::Relaxed)
+    ));
+    if std::fs::hard_link(blob, &tmp).is_err() {
+        // `create_new`: the copy only ever writes into a file this call created.
+        let copy = (|| -> std::io::Result<()> {
+            let mut out = std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&tmp)?;
+            std::io::copy(&mut std::fs::File::open(blob)?, &mut out)?;
+            out.sync_all()
+        })();
+        if let Err(e) = copy {
+            let _ = std::fs::remove_file(&tmp);
+            return Err(e).with_context(|| format!("copy {} -> {}", blob.display(), dst.display()));
+        }
     }
+    let renamed = std::fs::rename(&tmp, dst);
+    // POSIX rename is a successful no-op when `tmp` and `dst` already name the same inode (a
+    // concurrent caller linked `dst` first), so the temporary entry is dropped either way.
+    let _ = std::fs::remove_file(&tmp);
+    renamed.with_context(|| format!("rename into {}", dst.display()))?;
     Ok(())
 }
 
@@ -183,6 +211,27 @@ mod tests {
         std::fs::write(&dest, b"tampered").unwrap();
         let v = blobs.verify(false);
         assert_eq!(v.errors.len(), 1, "{:?}", v.errors);
+    }
+
+    #[test]
+    fn concurrent_links_never_truncate_the_shared_inode() {
+        let tmp = tempfile::tempdir().unwrap();
+        let blob = tmp.path().join("blob");
+        let payload = vec![7u8; 1 << 16];
+        std::fs::write(&blob, &payload).unwrap();
+        let dst = tmp.path().join("out").join("linked");
+        std::fs::create_dir_all(dst.parent().unwrap()).unwrap();
+        std::fs::write(&dst, b"stale").unwrap();
+        std::thread::scope(|s| {
+            for _ in 0..16 {
+                s.spawn(|| link_or_copy(&blob, &dst).unwrap());
+            }
+        });
+        assert!(same_file(&blob, &dst));
+        assert_eq!(std::fs::read(&blob).unwrap(), payload);
+        assert!(std::fs::read_dir(dst.parent().unwrap())
+            .unwrap()
+            .all(|e| e.unwrap().file_name() == "linked"));
     }
 
     #[test]
