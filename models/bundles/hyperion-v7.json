@@ -1,0 +1,57 @@
+{
+  "schema": "jope.model-bundle/v2",
+  "bundle_id": "hyperion-v7",
+  "model": "Hyperion v7 dataset signature encoder (dim 512, 8 heads, 12 layers, 6 bands, step 2000)",
+  "source_path": "/home/ubuntu/hyperion/weights/v7 (xbabe2; no other copy existed before this upload)",
+  "consumers": [
+    "crates/hyperion (HYPERION_V7_WEIGHTS)"
+  ],
+  "files": [
+    {
+      "path": "manifest.json",
+      "sha256": "d9bb9b8d4818982dc334ff8ac3c044f0741c641d9a6635af31e606e590f5629d",
+      "bytes": 290,
+      "blob": "blobs/sha256/d9bb9b8d4818982dc334ff8ac3c044f0741c641d9a6635af31e606e590f5629d",
+      "source_key": "staging/hyperion/v7/manifest.json",
+      "kind": "manifest",
+      "license": null
+    },
+    {
+      "path": "model.safetensors",
+      "sha256": "05c17eddc1f83cd557d12763e39240b1ef5aea7de38ca663de24eb373a86e006",
+      "bytes": 246456988,
+      "blob": "blobs/sha256/05c17eddc1f83cd557d12763e39240b1ef5aea7de38ca663de24eb373a86e006",
+      "source_key": "staging/hyperion/v7/model.safetensors",
+      "kind": "model",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "model.safetensors",
+        "component_kind": "model",
+        "sha256": "05c17eddc1f83cd557d12763e39240b1ef5aea7de38ca663de24eb373a86e006",
+        "spdx_expression": "LicenseRef-Jain-Internal-Model",
+        "license_class": "internal",
+        "source_uri": "urn:jain:model-source:sha256:05c17eddc1f83cd557d12763e39240b1ef5aea7de38ca663de24eb373a86e006",
+        "redistribution": "internal",
+        "model_lineage": "Trained by the jope-dime learning loop on jain-owned corpora; inputs carry mixed dataset licences, so the weights stay internal until the licence review (plan: public release checklist).",
+        "notice_paths": [
+          "docs/notices/jain-governed-models.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    }
+  ],
+  "notices": [
+    {
+      "path": "docs/notices/jain-governed-models.txt",
+      "text": "Jain-governed model notice\n\nThese frozen artifacts are governed Jain release inputs. They are eligible for the\ndefault model policy but are not certified as open-source or open-weight models.\nRedistribution is permitted only as part of an approved Jain release bundle.\n"
+    }
+  ],
+  "published_at": "2026-09-18T20:17:48Z",
+  "published_by": "jepson via profile veox-jepson (account 714044927654)",
+  "bucket": "veox-jopedime-models-use2",
+  "staging_prefix": "staging/hyperion/v7/",
+  "verification": "every blob: server ChecksumSHA256 (head-object --checksum-mode ENABLED) equals sha256 below; see aws/receipts/publish-*.jsonl"
+}
