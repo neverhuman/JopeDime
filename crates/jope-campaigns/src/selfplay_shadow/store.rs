@@ -2,6 +2,7 @@ use super::{
     AcceptedByTaskV2, CausalLineage, EvaluationIndex, EvaluationResultV2, LineageStage, Origin,
     Sha256Digest, Task,
 };
+use crate::paths;
 use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -10,8 +11,12 @@ use std::io::Write;
 use std::os::fd::AsRawFd;
 use std::path::{Path, PathBuf};
 
-pub const DEFAULT_SHADOW_ROOT: &str = "/home/ubuntu/ratchet-shadow/causal-v2";
-const PRODUCTION_ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
+jope_paths::once_str!(
+    pub fn default_shadow_root_str => paths::shadow_root()
+);
+jope_paths::once_str!(
+    fn production_root_str => paths::flywheel_root()
+);
 
 #[derive(Clone, Debug)]
 pub struct ShadowPaths {
@@ -22,7 +27,7 @@ impl ShadowPaths {
     pub fn new(root: impl Into<PathBuf>) -> Result<Self> {
         let root = root.into();
         ensure!(
-            root != Path::new(PRODUCTION_ROOT),
+            root != Path::new(production_root_str()),
             "causal v2 cannot write into the production generation-zero root"
         );
         ensure!(root.is_absolute(), "shadow root must be absolute");
@@ -80,7 +85,7 @@ pub fn initialize_shadow(
     let marker = ShadowNamespaceMarker {
         schema: "SelfPlayShadowNamespace.v2".to_owned(),
         namespace: "causal-v2".to_owned(),
-        production_anchor_root: PRODUCTION_ROOT.to_owned(),
+        production_anchor_root: production_root_str().to_owned(),
         production_anchor_read_only: true,
         legacy_outputs_quarantined: true,
         created_at_ms,
@@ -400,7 +405,7 @@ mod tests {
 
     #[test]
     fn namespace_rejects_the_production_root() {
-        assert!(ShadowPaths::new(PRODUCTION_ROOT).is_err());
+        assert!(ShadowPaths::new(production_root_str()).is_err());
     }
 
     #[test]

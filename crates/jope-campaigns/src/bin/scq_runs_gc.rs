@@ -41,6 +41,7 @@ use std::time::{Duration, SystemTime};
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
+use jope_dime_regressor::paths;
 use serde_json::Value;
 
 /// scq job states that mean "this job may still write here". A run directory
@@ -60,9 +61,9 @@ const LIVE_STATES: &[&str] = &[
     about = "Reclaim staged job inputs from smart_cluster/var/runs, keeping receipts."
 )]
 struct Args {
-    #[arg(long, default_value = "/home/ubuntu/smart_cluster/var/runs")]
+    #[arg(long, default_value_os_t = paths::scq_runs_root())]
     runs_root: PathBuf,
-    #[arg(long, default_value = "/home/ubuntu/smart_cluster/target/release/scq")]
+    #[arg(long, default_value_os_t = paths::scq_binary())]
     scq: PathBuf,
     /// Never touch a run directory younger than this. Guards against racing a
     /// job that scq has not yet reported, and against clock skew.
@@ -268,8 +269,7 @@ fn remove_under(root: &Path, target: &Path) -> Result<()> {
         resolved.display(),
         root.display()
     );
-    fs::remove_dir_all(&resolved)
-        .with_context(|| format!("remove {}", resolved.display()))?;
+    fs::remove_dir_all(&resolved).with_context(|| format!("remove {}", resolved.display()))?;
     Ok(())
 }
 

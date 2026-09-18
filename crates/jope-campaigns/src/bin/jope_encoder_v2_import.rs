@@ -7,18 +7,21 @@ use jope_dime_regressor::encoder_v2_execution::{
 };
 use jope_dime_regressor::encoder_v2_identity::{decode_dataset_input, decode_encoder_identity};
 use jope_dime_regressor::encoder_v2_store::{EncoderV2Store, PublishOutcome};
+use jope_dime_regressor::paths;
 use jope_dime_regressor::recovery_contracts::V1EncodingQuarantineV1;
 use serde_json::json;
 use std::fs::{self, File};
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const AUTHORITATIVE_STORE: &str = "/home/ubuntu/jope-flywheel/encodings/expanded-v2";
+jope_paths::once_str!(
+    fn authoritative_store_str => paths::flywheel_encodings_root().join("expanded-v2")
+);
 
 #[derive(Debug, Parser)]
 #[command(name = "jope-encoder-v2-import")]
 struct Args {
-    #[arg(long, default_value = AUTHORITATIVE_STORE)]
+    #[arg(long, default_value = authoritative_store_str())]
     store: PathBuf,
     #[arg(long)]
     transaction_id: String,

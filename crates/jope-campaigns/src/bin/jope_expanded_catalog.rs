@@ -2,6 +2,7 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::{Args, Parser, Subcommand};
+use jope_dime_regressor::paths;
 use jope_dime_regressor::selfplay_expansion::{
     activate_tranche, adaptive_inventory, audit_discover, freeze_sealed, install_sidecars,
     load_inventory_file, materialize_cache, merge_live, select_unactivated_cached, status,
@@ -25,30 +26,30 @@ struct Cli {
 
 #[derive(Clone, Debug, Args)]
 struct PathArgs {
-    #[arg(long, default_value = "/home/ubuntu/remote_super/quant")]
+    #[arg(long, default_value_os_t = paths::quant_root())]
     source_root: PathBuf,
-    #[arg(long, default_value = "/home/ubuntu/quant")]
+    #[arg(long, default_value_os_t = paths::quant_mirror_root())]
     mirror_root: PathBuf,
-    #[arg(long, default_value = "/home/ubuntu/jope-flywheel/encodings")]
+    #[arg(long, default_value_os_t = paths::flywheel_encodings_root())]
     cache_root: PathBuf,
     #[arg(
         long,
-        default_value = "/home/ubuntu/jope-flywheel/test_exact_gen0/catalog/v2"
+        default_value_os_t = paths::flywheel_root().join("catalog/v2")
     )]
     catalog_root: PathBuf,
     #[arg(
         long,
-        default_value = "/home/ubuntu/jope-flywheel/test_exact_gen0/receipts/mirror-conflicts"
+        default_value_os_t = paths::flywheel_root().join("receipts/mirror-conflicts")
     )]
     receipt_root: PathBuf,
     #[arg(
         long,
-        default_value = "/home/ubuntu/jope-flywheel/test_exact_gen0/catalog/private/sealed-expanded-v1.json"
+        default_value_os_t = paths::flywheel_root().join("catalog/private/sealed-expanded-v1.json")
     )]
     sealed_path: PathBuf,
     #[arg(
         long,
-        default_value = "/home/ubuntu/jope-flywheel/encodings/foundation-v1/standardization/sha256/daac224cf7c6d13a1bf74fc3bb7defd36f33bc3f30db35d3e881c16ede976d1f.json"
+        default_value_os_t = paths::flywheel_encodings_root().join("foundation-v1/standardization/sha256/daac224cf7c6d13a1bf74fc3bb7defd36f33bc3f30db35d3e881c16ede976d1f.json")
     )]
     standardization: PathBuf,
 }
@@ -112,7 +113,7 @@ enum Action {
     MergeLive {
         #[arg(
             long,
-            default_value = "/home/ubuntu/jope-flywheel/test_exact_gen0/catalog"
+            default_value_os_t = paths::flywheel_root().join("catalog")
         )]
         live_catalog_root: PathBuf,
         /// Tranche ids to leave out of the merged catalog (selective rollback).

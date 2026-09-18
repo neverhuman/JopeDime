@@ -4,7 +4,7 @@ use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
 use jope_dime_regressor::selfplay_ingest::ingest_receipt_with_manifest;
 use jope_dime_regressor::selfplay_runtime::{
-    atomic_json, now_ms, read_json, sha256_file, DEFAULT_ROOT, DEFAULT_SCQ,
+    atomic_json, default_root_str, default_scq_str, now_ms, read_json, sha256_file,
 };
 use jope_dime_regressor::selfplay_shadow::{CausalLane, PairRepairRequestV1, Sha256Digest, Task};
 use jope_dime_regressor::spec_policy::EVAL;
@@ -31,9 +31,9 @@ const ACTIVE_STATES: &[&str] = &["queued", "starting", "dispatching", "running",
     about = "Rerun only missing or failed causal pair members"
 )]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
-    #[arg(long, default_value = DEFAULT_SCQ)]
+    #[arg(long, default_value = default_scq_str())]
     scq: PathBuf,
     #[arg(long)]
     runner: Option<PathBuf>,

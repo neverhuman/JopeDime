@@ -12,8 +12,10 @@ use jope_dime_regressor::dime_runtime_contracts::{
     DimeInfrastructureAttemptV1, DimeNamedDigestV1, DimeRecoveryProjectionV1, DimeRoleV1,
     DimeScientificPayloadV1, DimeTerminalClassV1, DimeTerminalEvidenceV1,
 };
+use jope_dime_regressor::paths;
 use jope_dime_regressor::selfplay_runtime::{
-    atomic_json, checkpoint_epoch, now_ms, sha256_bytes, sha256_file, DEFAULT_ROOT, DEFAULT_SCQ,
+    atomic_json, checkpoint_epoch, default_root_str, default_scq_str, now_ms, sha256_bytes,
+    sha256_file,
 };
 use rusqlite::{Connection, OpenFlags};
 use serde::{Deserialize, Serialize};
@@ -53,7 +55,7 @@ const MIN_COMPLETE_RESERVE_WAVES: usize = 2;
     about = "Maintain a bounded reserve of immutable current-checkpoint micro-waves"
 )]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
     /// Build waves. Without this flag the supervisor is read-only.
     #[arg(long)]
@@ -96,31 +98,31 @@ struct Args {
     queue_status_max_age_seconds: u64,
     #[arg(long, default_value_t = 300)]
     performance_max_age_seconds: u64,
-    #[arg(long, default_value = DEFAULT_SCQ)]
+    #[arg(long, default_value = default_scq_str())]
     scq: PathBuf,
     #[arg(
         long,
-        default_value = "/home/ubuntu/jope-dime/target/release/jope_selfplay_wave"
+        default_value_os_t = paths::release_binary("jope_selfplay_wave")
     )]
     wave_builder: PathBuf,
     #[arg(
         long,
-        default_value = "/home/ubuntu/jope-dime/scripts/test_exact_context_proposals.py"
+        default_value_os_t = paths::research_script("test_exact_context_proposals.py")
     )]
     proposal_generator: PathBuf,
     #[arg(
         long,
-        default_value = "/home/ubuntu/jope-dime/scripts/test_exact_dl_generate.py"
+        default_value_os_t = paths::research_script("test_exact_dl_generate.py")
     )]
     proposal_legacy_generator: PathBuf,
     #[arg(
         long,
-        default_value = "/home/ubuntu/jope-dime/scripts/test_exact_common.py"
+        default_value_os_t = paths::research_script("test_exact_common.py")
     )]
     proposal_common: PathBuf,
     #[arg(
         long,
-        default_value = "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch"
+        default_value_os_t = paths::runtime_bundle_pytorch()
     )]
     proposal_pythonpath: PathBuf,
     #[arg(long)]
@@ -567,8 +569,8 @@ impl PersistedSupplyState {
         prior.validate()?;
         let scientific_payload = proposer_scientific_payload(self, &prior)?;
         let mut projection = proposer_recovery_projection(root, self, &scientific_payload)?;
-        let replayed_receipt = self.proposal_job_id.as_deref()
-            != Some(projection.current_job_identity.as_str());
+        let replayed_receipt =
+            self.proposal_job_id.as_deref() != Some(projection.current_job_identity.as_str());
         reconcile_proposer_projection(root, self, &projection)?;
         if replayed_receipt {
             self.revision = self.revision.saturating_add(1);
@@ -630,9 +632,9 @@ impl PersistedSupplyState {
             .checked_add(1)
             .context("cohort proposer infrastructure attempt overflow")?;
         let next_job_identity = format!("{base}-infra{next_attempt_number:06}");
-        let scientific_failures = projection
-            .scientific_failures
-            .saturating_add(u32::from(terminal_class == DimeTerminalClassV1::ScientificFailure));
+        let scientific_failures = projection.scientific_failures.saturating_add(u32::from(
+            terminal_class == DimeTerminalClassV1::ScientificFailure,
+        ));
         let retry_allowed = scientific_failures < 5;
         let evidence_sha256 = scientific.unwrap_or_else(|| {
             sha256_bytes(
@@ -1243,14 +1245,12 @@ fn cycle(args: &Args) -> Result<CycleReport> {
             args.max_overlap_waves
                 .saturating_mul(manifests_per_wave(args.max_candidates_per_manifest)),
         );
-    let builds_planned = if pending_ack.is_none()
-        && decision.target_feasible
-        && manifest_target_feasible
-    {
-        decision.builds_planned.max(manifest_reserve_builds).min(1)
-    } else {
-        0
-    };
+    let builds_planned =
+        if pending_ack.is_none() && decision.target_feasible && manifest_target_feasible {
+            decision.builds_planned.max(manifest_reserve_builds).min(1)
+        } else {
+            0
+        };
     if args.build && builds_planned == 1 {
         ensure_native_wave_builder(&args.wave_builder)?;
         assert_checkpoint_unchanged(args, &inputs.checkpoint_sha256)?;
@@ -1378,9 +1378,8 @@ fn held_report(
         .ok()
         .filter(|target| (2_048..=4_096).contains(target))
         .unwrap_or(args.queued_target);
-    let dynamic_ready_reserve = dynamic_queue_target.saturating_add(
-        2 * manifests_per_wave(args.max_candidates_per_manifest),
-    );
+    let dynamic_ready_reserve = dynamic_queue_target
+        .saturating_add(2 * manifests_per_wave(args.max_candidates_per_manifest));
     CycleReport {
         schema: "JopeMicroWaveSupplyStatus.v2",
         generated_at_ms: now_ms(),
@@ -1689,10 +1688,7 @@ fn checkpoint_inputs(args: &Args, status: &QueueStatus) -> Result<CheckpointInpu
                 .join("training/immutable/checkpoints")
                 .join(format!("{active}.model.pt")),
         ),
-        Some(
-            PathBuf::from("/home/ubuntu/jope-flywheel/training/round1/checkpoints")
-                .join(format!("{active}.model.pt")),
-        ),
+        Some(paths::legacy_checkpoints_root().join(format!("{active}.model.pt"))),
     ]
     .into_iter()
     .flatten()
@@ -2366,9 +2362,8 @@ fn proposer_env_path(body: &str, key: &str) -> Result<PathBuf> {
 
 #[cfg(test)]
 fn validate_proposer_runtime(existing_body: &str, expected_body: &str, args: &Args) -> Result<()> {
-    if existing_body.contains("/home/ubuntu/jope-prime")
-        || expected_body.contains("/home/ubuntu/jope-prime")
-    {
+    let prime_checkout = jope_paths::to_string(&paths::python_root());
+    if existing_body.contains(&prime_checkout) || expected_body.contains(&prime_checkout) {
         bail!("cohort proposer spec references the mutable Prime checkout");
     }
     if normalized_proposer_spec(existing_body) != normalized_proposer_spec(expected_body) {
@@ -4092,7 +4087,7 @@ mod tests {
 
         let mutable_checkout = existing.replace(
             &old_runtime.to_string_lossy().to_string(),
-            "/home/ubuntu/jope-prime",
+            &jope_paths::to_string(&paths::python_root()),
         );
         assert!(validate_proposer_runtime(&mutable_checkout, &expected, &args).is_err());
     }
@@ -4277,7 +4272,8 @@ mod tests {
             state.runtime_pinned_attempts[0].proposer_inputs,
             state.runtime_pinned_attempts[1].proposer_inputs
         );
-        let payload = proposer_scientific_payload(&state, &state.runtime_pinned_attempts[0]).unwrap();
+        let payload =
+            proposer_scientific_payload(&state, &state.runtime_pinned_attempts[0]).unwrap();
         let projection = proposer_recovery_projection(directory.path(), &state, &payload).unwrap();
         assert_eq!(projection.scientific_failures, 0);
         assert_eq!(projection.foreign_cancellation_timestamps_ms.len(), 1);
@@ -4326,7 +4322,10 @@ mod tests {
             let mut projection =
                 proposer_recovery_projection(directory.path(), &state, &payload).unwrap();
             projection
-                .mark_submitted(&projection.current_job_identity.clone(), projection.retry_not_before_ms)
+                .mark_submitted(
+                    &projection.current_job_identity.clone(),
+                    projection.retry_not_before_ms,
+                )
                 .unwrap();
             observed = projection.retry_not_before_ms;
             save_recovery_projection(directory.path(), &projection).unwrap();

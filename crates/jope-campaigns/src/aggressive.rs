@@ -5,6 +5,7 @@
 //! cross-language inference timing and an immutable, hash-bound receipt.
 
 use anyhow::{bail, Context, Result};
+use jope_dime_regressor::paths;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::fs;
@@ -159,7 +160,7 @@ pub(crate) fn preflight_contract(output: &Path) -> Result<()> {
         "schema": "JopeGolden42AggressiveContract.v1",
         "benchmark_valid": false,
         "test_adaptive": true,
-        "dataset_panel": "/home/ubuntu/golden42/golden42_foundry/data/panel.json",
+        "dataset_panel": jope_paths::to_string(&paths::legacy_tree("golden42/golden42_foundry/data/panel.json")),
         "baseline_manifest": "manifests/panel-analysis.v1.json",
         "nodes": NODES,
         "workers_per_node": WORKERS_PER_NODE,

@@ -29,7 +29,7 @@ use std::path::PathBuf;
 use std::process::{Command, ExitCode};
 
 use jope_dime_regressor::spec_drift;
-use jope_dime_regressor::spec_policy::{self, Family};
+use jope_dime_regressor::spec_policy::{self, Family, ProbeArg};
 
 fn usage() -> &'static str {
     "jope_spec_drift [--list|--emit-json|--verify-probes|--root <dir>]"
@@ -159,7 +159,9 @@ fn verify_probes() -> ExitCode {
             }
             seen.push(probe.name);
             checked += 1;
-            let status = Command::new(probe.command).args(probe.args).status();
+            let status = Command::new(probe.command)
+                .args(probe.args.iter().map(ProbeArg::render))
+                .status();
             let ok = matches!(&status, Ok(s) if s.success());
             if !ok {
                 failed += 1;
@@ -169,7 +171,12 @@ fn verify_probes() -> ExitCode {
                 if ok { "PASS" } else { "FAIL" },
                 probe.name,
                 probe.command,
-                probe.args.join(" ")
+                probe
+                    .args
+                    .iter()
+                    .map(ProbeArg::render)
+                    .collect::<Vec<_>>()
+                    .join(" ")
             );
             if let Err(e) = &status {
                 println!("         could not execute: {e}");

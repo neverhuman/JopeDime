@@ -20,6 +20,7 @@ use feat_math::{
     encode_fitted_cpp17, fit_legacy_numeric_bound, supports_fitted_cpp17,
     validate_fitted_cpp_codec, BoundModel, EncodedTable, FittedCppRuntime, GenomeIr,
 };
+use jope_dime_regressor::paths;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::VecDeque;
@@ -32,7 +33,9 @@ const RECEIPT_SCHEMA: &str = "jope-dime.genome-boost-features.v1";
 const TRAIN_FEATURES_FILE: &str = "genome-features-train.csv";
 const TEST_FEATURES_FILE: &str = "genome-features-test.csv";
 const RECEIPT_FILE: &str = "genome-features-receipt.v1.json";
-const DEFAULT_REGISTRY: &str = "/home/ubuntu/remote_super/quant/regression";
+jope_paths::once_str!(
+    fn default_registry_str => paths::jope_registry()
+);
 const FEATURE_LINEAGE: &str = "fitted-cpp17 genome predictions: genomes were selected by direct \
      test-RMSE adaptation on this dataset (test-adaptive, benchmark-invalid); each genome is \
      refit on the full train split only, then predicted onto the same train rows (in-sample) \
@@ -176,7 +179,7 @@ fn emit_dataset(
     let registry_root = dataset
         .registry_root
         .clone()
-        .unwrap_or_else(|| PathBuf::from(DEFAULT_REGISTRY));
+        .unwrap_or_else(|| PathBuf::from(default_registry_str()));
     let dataset_root = registry_root.join(&dataset.dataset_hash);
     let train_path = dataset_root.join("train.csv");
     let test_path = dataset_root.join("test.csv");

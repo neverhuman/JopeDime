@@ -42,6 +42,7 @@
 //! replica and prove it), `status` (print the receipt).
 
 use anyhow::{bail, Context, Result};
+use jope_dime_regressor::paths;
 use jope_dime_regressor::training_history as th;
 use rusqlite::Connection;
 use serde_json::{json, Value};
@@ -52,14 +53,18 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
-const ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
+jope_paths::once_str!(
+    fn root_str => paths::flywheel_root()
+);
 const SOURCE_NODE: &str = "xbabe2";
 /// `host:port` pairs. xbabe1 is deliberately absent: it sits at 91% disk with a
 /// load average near 190, and a replica has no business making that worse when
 /// xbabe3 (72%, 257G free) and xbabe4 (4%, 1.9T free) are both available and in
 /// different failure domains — xbabe4 is a separate VM behind its own port.
 const DEFAULT_TARGETS: &str = "xbabe3:22,xbabe4:2224";
-const DEFAULT_REMOTE_ROOT: &str = "/home/ubuntu/jope-replica/test_exact_gen0/training-history";
+jope_paths::once_str!(
+    fn default_remote_root_str => paths::legacy_tree("jope-replica").join("test_exact_gen0/training-history")
+);
 
 const MANIFEST_SCHEMA: &str = "JopeTrainingReplicaManifest.v1";
 const STATUS_SCHEMA: &str = "JopeTrainingReplicaStatus.v1";
@@ -133,11 +138,11 @@ fn targets_from_env() -> Result<Vec<Target>> {
 }
 
 fn remote_root() -> String {
-    std::env::var("JOPE_REPLICA_REMOTE_ROOT").unwrap_or_else(|_| DEFAULT_REMOTE_ROOT.into())
+    std::env::var("JOPE_REPLICA_REMOTE_ROOT").unwrap_or_else(|_| default_remote_root_str().into())
 }
 
 fn root_from_env() -> PathBuf {
-    PathBuf::from(std::env::var("JOPE_ROOT").unwrap_or_else(|_| ROOT.into()))
+    PathBuf::from(std::env::var("JOPE_ROOT").unwrap_or_else(|_| root_str().into()))
 }
 
 /// `<root>/training/replica` — replication working state. Deliberately a

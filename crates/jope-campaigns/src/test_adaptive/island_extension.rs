@@ -4923,8 +4923,8 @@ mod tests {
 
     #[test]
     fn generation_30_populations_reconstruct_deterministically() {
-        let registry = Path::new("/home/ubuntu/remote_super/quant/regression");
-        let (_, specs, _, _) = load_panel_specs(registry).unwrap();
+        let registry = paths::jope_registry();
+        let (_, specs, _, _) = load_panel_specs(&registry).unwrap();
         let spec = specs
             .iter()
             .find(|spec| spec.dataset_hash == "21fbfe8b53dbcd60")

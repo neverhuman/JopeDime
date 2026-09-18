@@ -6,9 +6,10 @@
 
 use anyhow::{bail, Context, Result};
 use clap::Parser;
+use jope_dime_regressor::paths;
 use jope_dime_regressor::selfplay_runtime::{
-    canonical_json_bytes, manifest_epoch, manifest_freshness_scoped, now_ms, scq_json,
-    sha256_bytes, sha256_file, DEFAULT_ROOT, DEFAULT_SCQ,
+    canonical_json_bytes, default_root_str, default_scq_str, manifest_epoch,
+    manifest_freshness_scoped, now_ms, scq_json, sha256_bytes, sha256_file,
 };
 use rayon::prelude::*;
 use rayon::ThreadPoolBuilder;
@@ -40,11 +41,11 @@ const DESIRED_BLOCKER_QUERY: &str = "SELECT p.state,p.manifest_path,p.manifest_s
 #[derive(Parser, Debug)]
 #[command(name = "jope-queue-control")]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
-    #[arg(long, default_value = DEFAULT_SCQ)]
+    #[arg(long, default_value = default_scq_str())]
     scq: PathBuf,
-    #[arg(long, default_value = "/home/ubuntu/smart_cluster/var/scqd.sock")]
+    #[arg(long, default_value_os_t = paths::scq_socket())]
     socket: PathBuf,
     /// Hold only provenance-verified queued/starting legacy jope-testonly work.
     #[arg(long)]
@@ -84,7 +85,7 @@ struct Args {
     export_seed_bank: Option<PathBuf>,
     #[arg(
         long,
-        default_value = "/home/ubuntu/jope-flywheel/test_exact_gen0/corpus/strict-test-exact.sqlite"
+        default_value_os_t = paths::corpus_db()
     )]
     corpus: PathBuf,
     #[arg(long, default_value_t = 512)]

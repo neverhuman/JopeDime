@@ -12,8 +12,8 @@ use jope_dime_regressor::selfplay_core::{
     PressureSample, RampStage, RampState,
 };
 use jope_dime_regressor::selfplay_runtime::{
-    atomic_json, canonical_json_bytes, now_ms, read_json, scq_json, sha256_bytes, sha256_file,
-    DEFAULT_ROOT, DEFAULT_SCQ,
+    atomic_json, canonical_json_bytes, default_root_str, default_scq_str, now_ms, read_json,
+    scq_json, sha256_bytes, sha256_file,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -32,9 +32,9 @@ const HISTORY_LIMIT: usize = 180;
     about = "Audit or apply pressure-gated JOPE CPU slot multipliers"
 )]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
-    #[arg(long, default_value = DEFAULT_SCQ)]
+    #[arg(long, default_value = default_scq_str())]
     scq: PathBuf,
     #[arg(long, default_value = DEFAULT_POLICY)]
     policy: PathBuf,

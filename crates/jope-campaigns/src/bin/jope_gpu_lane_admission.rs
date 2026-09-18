@@ -3,7 +3,7 @@
 use anyhow::{bail, ensure, Context, Result};
 use clap::{Parser, ValueEnum};
 use jope_dime_regressor::selfplay_runtime::{
-    atomic_json, now_ms, read_json, scq_json, sha256_file, DEFAULT_ROOT, DEFAULT_SCQ,
+    atomic_json, default_root_str, default_scq_str, now_ms, read_json, scq_json, sha256_file,
 };
 use jope_dime_regressor::selfplay_shadow::{
     GpuAdmissionStage, GpuLaneAdmissionV1, GpuLaneRole, RecoveryDisposition, Sha256Digest,
@@ -45,9 +45,9 @@ impl From<RoleArg> for GpuLaneRole {
     about = "Persist pause/hold/capacity/submit/release transactions for xbabe1/2/3"
 )]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
-    #[arg(long, default_value = DEFAULT_SCQ)]
+    #[arg(long, default_value = default_scq_str())]
     scq: PathBuf,
     #[arg(long)]
     once: bool,

@@ -1837,14 +1837,17 @@ mod tests {
         // identity only appears in the matching [[input]] block.
         fs::write(
             root.join("specs").join(format!("{run_id}.toml")),
-            concat!(
-                "args = [\"--recipe\", \"c\", \"--warm\", \"{input:checkpoint}\"]\n",
-                "\n[[input]]\nname = \"train\"\n",
-                "source = \"/home/ubuntu/jope-flywheel/test_exact_gen0/training/snapshot-001805437-full_consolidation-eq32v32c128/corpus.train.jsonl\"\n",
-                "sha256 = \"d124ed7b\"\n",
-                "\n[[input]]\nname = \"checkpoint\"\n",
-                "source = \"/x/attempts/0/outputs/training/w/d36274de.model.pt\"\n",
-                "sha256 = \"d36274de99ddf3b12dffd534145b42bfcace1bbd6230bd65cc37288efe3a3bf3\"\n",
+            format!(
+                concat!(
+                    "args = [\"--recipe\", \"c\", \"--warm\", \"{{input:checkpoint}}\"]\n",
+                    "\n[[input]]\nname = \"train\"\n",
+                    "source = \"{flywheel}/training/snapshot-001805437-full_consolidation-eq32v32c128/corpus.train.jsonl\"\n",
+                    "sha256 = \"d124ed7b\"\n",
+                    "\n[[input]]\nname = \"checkpoint\"\n",
+                    "source = \"/x/attempts/0/outputs/training/w/d36274de.model.pt\"\n",
+                    "sha256 = \"d36274de99ddf3b12dffd534145b42bfcace1bbd6230bd65cc37288efe3a3bf3\"\n",
+                ),
+                flywheel = crate::paths::flywheel_root().display()
             ),
         )?;
 
@@ -2106,7 +2109,7 @@ mod tests {
     fn remote_paths_that_could_reach_a_shell_are_refused() {
         let source = RemoteSource {
             node: "xbabe1".into(),
-            runs_root: "/home/ubuntu/smart_cluster/var/runs".into(),
+            runs_root: jope_paths::to_string(&crate::paths::scq_runs_root()).into(),
             relative: "run/../../etc/shadow".into(),
             len: 10,
             deadline_secs: 5,

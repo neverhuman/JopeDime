@@ -5,6 +5,7 @@
 //! Missing train encodings fail closed unless an explicit native Rust encoder is
 //! supplied.  No command in this module invokes Python.
 
+use crate::paths;
 use crate::recovery_contracts::V1EncodingQuarantineV1;
 use crate::selfplay_data::{
     canonical_json_sha256, source_family, CacheIdentity, CatalogEntryIdentity, CatalogIdentity,
@@ -96,16 +97,16 @@ pub struct ExpansionPaths {
 
 impl Default for ExpansionPaths {
     fn default() -> Self {
-        let flywheel = PathBuf::from("/home/ubuntu/jope-flywheel/test_exact_gen0");
+        let flywheel = paths::flywheel_root();
         Self {
-            source_root: PathBuf::from("/home/ubuntu/remote_super/quant"),
-            mirror_root: PathBuf::from("/home/ubuntu/quant"),
-            cache_root: PathBuf::from("/home/ubuntu/jope-flywheel/encodings"),
+            source_root: paths::quant_root(),
+            mirror_root: paths::quant_mirror_root(),
+            cache_root: paths::flywheel_encodings_root(),
             catalog_root: flywheel.join("catalog/v2"),
             receipt_root: flywheel.join("receipts/mirror-conflicts"),
             sealed_path: flywheel.join("catalog/private/sealed-expanded-v1.json"),
-            standardization: PathBuf::from(
-                "/home/ubuntu/jope-flywheel/encodings/foundation-v1/standardization/sha256/daac224cf7c6d13a1bf74fc3bb7defd36f33bc3f30db35d3e881c16ede976d1f.json",
+            standardization: paths::flywheel_encodings_root().join(
+                "foundation-v1/standardization/sha256/daac224cf7c6d13a1bf74fc3bb7defd36f33bc3f30db35d3e881c16ede976d1f.json",
             ),
         }
     }
@@ -1938,8 +1939,8 @@ pub fn write_inventory_file(path: &Path, entries: &[InventoryEntry]) -> Result<V
         .collect::<BTreeMap<_, _>>();
     let mut payload = json!({
         "schema": "JopeExpandedInventory.v2",
-        "authoritative_root": "/home/ubuntu/remote_super/quant",
-        "mirror_root": "/home/ubuntu/quant",
+        "authoritative_root": jope_paths::to_string(&paths::quant_root()),
+        "mirror_root": jope_paths::to_string(&paths::quant_mirror_root()),
         "row_count": entries.len(),
         "task_counts": counts,
         "entries": entries,

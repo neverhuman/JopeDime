@@ -3,7 +3,7 @@
 use anyhow::{ensure, Context, Result};
 use clap::Parser;
 use jope_dime_regressor::selfplay_runtime::{
-    atomic_json, now_ms, read_json, scq_json, DEFAULT_ROOT, DEFAULT_SCQ,
+    atomic_json, default_root_str, default_scq_str, now_ms, read_json, scq_json,
 };
 use serde_json::{json, Value};
 use std::fs;
@@ -19,9 +19,9 @@ const IDLE_GPU_MS: u128 = 5 * 60 * 1_000;
 #[derive(Parser, Debug)]
 #[command(name = "jope-flywheel-liveness")]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
-    #[arg(long, default_value = DEFAULT_SCQ)]
+    #[arg(long, default_value = default_scq_str())]
     scq: PathBuf,
     #[arg(long)]
     once: bool,

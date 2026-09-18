@@ -19,6 +19,7 @@
 
 use anyhow::{Context, Result};
 use clap::Parser;
+use jope_dime_regressor::paths;
 use jope_dime_regressor::selfplay_runtime::{atomic_json, now_ms};
 use rusqlite::Connection;
 use serde_json::{json, Value};
@@ -55,12 +56,12 @@ const SHRINKAGE: f64 = 24.0;
 struct Args {
     #[arg(
         long,
-        default_value = "/home/ubuntu/jope-flywheel/test_exact_gen0/corpus/strict-test-exact.sqlite"
+        default_value_os_t = paths::corpus_db()
     )]
     corpus: PathBuf,
     #[arg(
         long,
-        default_value = "/home/ubuntu/jope-flywheel/test_exact_gen0/ops/task-elo.v1.json"
+        default_value_os_t = paths::flywheel_root().join("ops/task-elo.v1.json")
     )]
     output: PathBuf,
     /// Cap the genome leaderboard published per task.
@@ -91,7 +92,11 @@ fn producer_of(origin_class: &str, candidate_source: &str) -> &'static str {
 /// must always yield the same sample, or ELO stops being replayable.
 fn stride_seed(task: &str, dataset: &str) -> u64 {
     let mut hash = 1469598103934665603u64;
-    for byte in task.bytes().chain(b"/".iter().copied()).chain(dataset.bytes()) {
+    for byte in task
+        .bytes()
+        .chain(b"/".iter().copied())
+        .chain(dataset.bytes())
+    {
         hash ^= byte as u64;
         hash = hash.wrapping_mul(1099511628211);
     }
@@ -138,7 +143,10 @@ impl Rating {
 
 /// One ELO match between two rated entities. `score` is 1 / 0.5 / 0.
 fn play(table: &mut BTreeMap<String, Rating>, left: &str, right: &str, score: f64) {
-    let left_rating = table.entry(left.to_owned()).or_insert_with(Rating::new).value;
+    let left_rating = table
+        .entry(left.to_owned())
+        .or_insert_with(Rating::new)
+        .value;
     let right_rating = table
         .entry(right.to_owned())
         .or_insert_with(Rating::new)
