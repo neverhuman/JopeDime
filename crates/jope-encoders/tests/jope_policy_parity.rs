@@ -1,6 +1,9 @@
 //! Gen31 JOPE policy parity against the frozen PyTorch oracle.
 
 use anyhow::{bail, Result};
+
+#[path = "support/models_root.rs"]
+mod models_root;
 use candle_core::Device;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
@@ -61,8 +64,8 @@ struct DecoderTrace {
     layers: Vec<Vec<f32>>,
 }
 
-fn repo_root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
+fn fixtures() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures")
 }
 
 fn max_abs(actual: &[f32], expected: &[f32]) -> Result<(f32, usize)> {
@@ -122,7 +125,9 @@ fn gen31_policy_matches_frozen_full_oracle() -> Result<()> {
         (1536, 512, 512, 1103)
     );
 
-    let root = repo_root();
+    let Some(root) = models_root::bundle_root("gen31_policy_matches_frozen_full_oracle") else {
+        return Ok(());
+    };
     let bundle = LoadedModelBundle::load(&root)?;
     assert_eq!(bundle.manifest.bundle_id, "jope-prime-gen31-v2");
     assert_eq!(
@@ -141,9 +146,7 @@ fn gen31_policy_matches_frozen_full_oracle() -> Result<()> {
 
     let oracle_context = model.context_from_values(&fixture.z_512)?;
     let trace_bytes =
-        std::fs::read(root.join(
-            "crates/starforge/tests/fixtures/jope_gen31_fastpath_trace_014b93f43dbaa1a4.json",
-        ))?;
+        std::fs::read(fixtures().join("jope_gen31_fastpath_trace_014b93f43dbaa1a4.json"))?;
     assert_eq!(format!("{:x}", Sha256::digest(&trace_bytes)), TRACE_SHA256);
     let trace_fixture: DecoderTrace = serde_json::from_slice(&trace_bytes)?;
     assert_eq!(trace_fixture.schema, "jope-gen31-fastpath-trace/v1");
@@ -257,9 +260,7 @@ fn gen31_policy_matches_frozen_full_oracle() -> Result<()> {
 
 #[test]
 fn gen31_oracle_provenance_binds_governed_bytes() -> Result<()> {
-    let provenance_path = repo_root().join(
-        "crates/starforge/tests/fixtures/jope_gen31_context_014b93f43dbaa1a4.provenance.json",
-    );
+    let provenance_path = fixtures().join("jope_gen31_context_014b93f43dbaa1a4.provenance.json");
     let provenance: serde_json::Value = serde_json::from_slice(&std::fs::read(provenance_path)?)?;
     assert_eq!(
         provenance["schema"],

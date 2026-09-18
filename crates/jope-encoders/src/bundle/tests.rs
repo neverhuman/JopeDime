@@ -1,10 +1,31 @@
 use super::loading::{open_bundle_root, read_manifest, verify_notices};
 use super::*;
 
+#[path = "../../tests/support/models_root.rs"]
+mod models_root;
+
+/// The committed copy of the reviewed `model-bundle.v1.json` (weights are fetched, not shipped).
+fn shipped_manifest_bytes() -> Vec<u8> {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("artifacts/model-bundle.v1.json");
+    std::fs::read(path).expect("read shipped manifest")
+}
+
 fn shipped_manifest() -> ModelBundleV1 {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../artifacts/model-bundle.v1.json");
-    serde_json::from_str(&std::fs::read_to_string(path).expect("read shipped manifest"))
-        .expect("decode shipped manifest")
+    serde_json::from_slice(&shipped_manifest_bytes()).expect("decode shipped manifest")
+}
+
+#[test]
+fn committed_manifest_is_the_reviewed_identity() {
+    assert_eq!(
+        sha256_bytes(&shipped_manifest_bytes()),
+        MODEL_BUNDLE_MANIFEST_SHA256
+    );
+    let manifest = shipped_manifest();
+    manifest
+        .validate_metadata()
+        .expect("committed manifest validates");
+    assert_eq!(manifest.bundle_id, JOPE_BUNDLE_ID);
+    assert_eq!(manifest.files.len(), 14);
 }
 
 #[test]
@@ -72,7 +93,11 @@ fn rejects_duplicate_paths_and_inconsistent_license_policy() {
 
 #[test]
 fn canonical_policy_identities_are_reproducible() {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../");
+    let Some(root) =
+        models_root::bundle_root("bundle::tests::canonical_policy_identities_are_reproducible")
+    else {
+        return;
+    };
     let metadata: JopePolicyMetadata =
         serde_json::from_slice(&std::fs::read(root.join(JOPE_POLICY_METADATA)).unwrap()).unwrap();
     let vocab = sha256_bytes(&canonical_json_bytes(&metadata.vocab).unwrap());
@@ -95,9 +120,12 @@ fn verified_reads_reject_bytes_changed_after_initial_verification() {
         .into_iter()
         .find(|file| file.path == JOPE_POLICY_METADATA)
         .unwrap();
-    let source = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../")
-        .join(JOPE_POLICY_METADATA);
+    let Some(bundle_root) = models_root::bundle_root(
+        "bundle::tests::verified_reads_reject_bytes_changed_after_initial_verification",
+    ) else {
+        return;
+    };
+    let source = bundle_root.join(JOPE_POLICY_METADATA);
     let bytes = std::fs::read(source).unwrap();
     let nonce = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -120,8 +148,13 @@ fn verified_reads_reject_bytes_changed_after_initial_verification() {
 
 #[test]
 fn notice_content_is_checked_against_the_manifest() {
-    let (_, root) =
-        open_bundle_root(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../")).unwrap();
+    let Some(bundle_root) =
+        models_root::bundle_root("bundle::tests::notice_content_is_checked_against_the_manifest")
+    else {
+        return;
+    };
+    let (_, root) = open_bundle_root(&bundle_root).unwrap();
+    assert!(verify_notices(&root, &shipped_manifest()).is_ok());
     let mut manifest = shipped_manifest();
     *manifest
         .notices
@@ -132,9 +165,11 @@ fn notice_content_is_checked_against_the_manifest() {
 
 #[test]
 fn shipped_bundle_is_complete_and_digest_checked() {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../");
-    let manifest_bytes = std::fs::read(root.join("artifacts/model-bundle.v1.json")).unwrap();
-    assert_eq!(sha256_bytes(&manifest_bytes), MODEL_BUNDLE_MANIFEST_SHA256);
+    let Some(root) =
+        models_root::bundle_root("bundle::tests::shipped_bundle_is_complete_and_digest_checked")
+    else {
+        return;
+    };
     let bundle = LoadedModelBundle::load(&root).expect("shipped model bundle");
     assert_eq!(
         bundle.path(JOPE_POLICY_METADATA).unwrap(),

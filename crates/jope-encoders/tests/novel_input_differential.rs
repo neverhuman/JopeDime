@@ -7,6 +7,9 @@
 //! mutable sibling checkout, or controller-local cache.
 
 use anyhow::{bail, Context, Result};
+
+#[path = "support/models_root.rs"]
+mod models_root;
 use candle_core::{DType, Device};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -18,7 +21,6 @@ use starforge::foundation::{
 };
 use starforge::target_encoder::{FusedTargetEncoder, FusedTargetEncoding, TargetTask};
 use std::collections::BTreeMap;
-use std::path::{Path, PathBuf};
 
 const TARGET_BUNDLE: &str = "target-maker/fused-monster-smoke-real-20260705/final.bundle";
 const MAX_ABS: f64 = 1e-5;
@@ -140,10 +142,6 @@ struct TargetOracle {
     classical_component: Vec<f32>,
     #[serde(default)]
     vector: Vec<f32>,
-}
-
-fn repo_root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
 fn generated_rows(count: usize) -> Vec<Vec<f64>> {
@@ -522,7 +520,11 @@ fn runtime_generated_prime_lime_component_differential() -> Result<()> {
         native_cases.insert(expected.name.clone(), native);
     }
 
-    let root = repo_root();
+    let Some(root) =
+        models_root::bundle_root("runtime_generated_prime_lime_component_differential")
+    else {
+        return Ok(());
+    };
     let bundle = LoadedModelBundle::load(&root)?;
     {
         let encoder = StarlightFoundationEncoder::load_bundle(&bundle, Device::Cpu, DType::F32)?;
