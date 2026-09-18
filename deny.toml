@@ -13,6 +13,8 @@ confidence-threshold = 0.9
 [bans]
 multiple-versions = "warn"
 wildcards = "deny"
+# Path dependencies inside the workspace carry no version; that is not a wildcard registry dependency.
+allow-wildcard-paths = true
 
 [sources]
 unknown-registry = "deny"
