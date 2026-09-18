@@ -4,6 +4,9 @@
 //! not prove end-to-end Prime or Lime proposal/prediction parity.
 
 use anyhow::{Context, Result};
+
+#[path = "support/models_root.rs"]
+mod models_root;
 use candle_core::Device;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
@@ -58,8 +61,8 @@ struct FixtureInput {
     values: Vec<f32>,
 }
 
-fn repo_root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
+fn fixtures() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures")
 }
 
 fn parity_metrics(left: &[f32], right: &[f32]) -> (f32, f32, usize) {
@@ -106,7 +109,10 @@ fn assert_exact_f32(label: &str, actual: &[f32], expected: &[f32]) {
 
 #[test]
 fn real_binary_and_regression_fused_target_parity() -> Result<()> {
-    let root = repo_root();
+    let Some(root) = models_root::bundle_root("real_binary_and_regression_fused_target_parity")
+    else {
+        return Ok(());
+    };
     let bundle = LoadedModelBundle::load(&root)?;
     let encoder = &bundle.manifest.encoders["target"];
     assert_eq!(encoder.sha256, TARGET_SHA256);
@@ -172,9 +178,7 @@ fn real_binary_and_regression_fused_target_parity() -> Result<()> {
     );
     let fused_encoder = FusedTargetEncoder::load(&bundle)?;
 
-    let fixture_bytes = std::fs::read(
-        root.join("crates/starforge/tests/fixtures/target_encoder_fused_v1_parity.json"),
-    )?;
+    let fixture_bytes = std::fs::read(fixtures().join("target_encoder_fused_v1_parity.json"))?;
     assert_eq!(
         format!("{:x}", Sha256::digest(&fixture_bytes)),
         PARITY_FIXTURE_SHA256

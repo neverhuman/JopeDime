@@ -1,4 +1,7 @@
 use anyhow::{Context, Result};
+
+#[path = "support/models_root.rs"]
+mod models_root;
 use candle_core::{DType, Device};
 use serde::Deserialize;
 use std::path::PathBuf;
@@ -41,11 +44,11 @@ struct ChimeraClassificationFixture {
 #[test]
 fn predict_single_matches_golden_fixture_when_artifacts_are_provided() -> Result<()> {
     let Some(weights) = std::env::var_os("STARFORGE_WEIGHTS") else {
-        eprintln!("skipping golden parity: STARFORGE_WEIGHTS is not set");
+        models_root::skipped("golden parity", "STARFORGE_WEIGHTS is not set");
         return Ok(());
     };
     let Some(golden) = std::env::var_os("STARFORGE_GOLDEN_JSON") else {
-        eprintln!("skipping golden parity: STARFORGE_GOLDEN_JSON is not set");
+        models_root::skipped("golden parity", "STARFORGE_GOLDEN_JSON is not set");
         return Ok(());
     };
 
@@ -96,11 +99,17 @@ fn predict_single_matches_golden_fixture_when_artifacts_are_provided() -> Result
 #[test]
 fn predict_regression_single_matches_golden_fixture_when_artifacts_are_provided() -> Result<()> {
     let Some(weights) = std::env::var_os("STARFORGE_REGRESSOR_WEIGHTS") else {
-        eprintln!("skipping regression golden parity: STARFORGE_REGRESSOR_WEIGHTS is not set");
+        models_root::skipped(
+            "regression golden parity",
+            "STARFORGE_REGRESSOR_WEIGHTS is not set",
+        );
         return Ok(());
     };
     let Some(golden) = std::env::var_os("STARFORGE_REGRESSOR_GOLDEN_JSON") else {
-        eprintln!("skipping regression golden parity: STARFORGE_REGRESSOR_GOLDEN_JSON is not set");
+        models_root::skipped(
+            "regression golden parity",
+            "STARFORGE_REGRESSOR_GOLDEN_JSON is not set",
+        );
         return Ok(());
     };
 
@@ -130,19 +139,31 @@ fn predict_regression_single_matches_golden_fixture_when_artifacts_are_provided(
 #[test]
 fn predict_chimera_regression_matches_golden_fixture_when_artifacts_are_provided() -> Result<()> {
     let Some(starlight) = std::env::var_os("STARFORGE_REGRESSOR_WEIGHTS") else {
-        eprintln!("skipping Chimera golden parity: STARFORGE_REGRESSOR_WEIGHTS is not set");
+        models_root::skipped(
+            "Chimera golden parity",
+            "STARFORGE_REGRESSOR_WEIGHTS is not set",
+        );
         return Ok(());
     };
     let Some(tabicl) = std::env::var_os("TABICL_REGRESSOR_WEIGHTS") else {
-        eprintln!("skipping Chimera golden parity: TABICL_REGRESSOR_WEIGHTS is not set");
+        models_root::skipped(
+            "Chimera golden parity",
+            "TABICL_REGRESSOR_WEIGHTS is not set",
+        );
         return Ok(());
     };
     let Some(chimera) = std::env::var_os("STARFORGE_CHIMERA_WEIGHTS") else {
-        eprintln!("skipping Chimera golden parity: STARFORGE_CHIMERA_WEIGHTS is not set");
+        models_root::skipped(
+            "Chimera golden parity",
+            "STARFORGE_CHIMERA_WEIGHTS is not set",
+        );
         return Ok(());
     };
     let Some(golden) = std::env::var_os("STARFORGE_CHIMERA_GOLDEN_JSON") else {
-        eprintln!("skipping Chimera golden parity: STARFORGE_CHIMERA_GOLDEN_JSON is not set");
+        models_root::skipped(
+            "Chimera golden parity",
+            "STARFORGE_CHIMERA_GOLDEN_JSON is not set",
+        );
         return Ok(());
     };
 
@@ -178,7 +199,10 @@ fn predict_chimera_regression_matches_golden_fixture_when_artifacts_are_provided
 #[test]
 fn predict_chimera_regression_real_weights_smoke_when_requested() -> Result<()> {
     if std::env::var("STARFORGE_CHIMERA_SMOKE").ok().as_deref() != Some("1") {
-        eprintln!("skipping Chimera real-weight smoke: STARFORGE_CHIMERA_SMOKE=1 is not set");
+        models_root::skipped(
+            "Chimera real-weight smoke",
+            "STARFORGE_CHIMERA_SMOKE=1 is not set",
+        );
         return Ok(());
     }
     let starlight = resolve_repo_path(PathBuf::from(
@@ -228,26 +252,30 @@ fn predict_chimera_regression_real_weights_smoke_when_requested() -> Result<()> 
 #[test]
 fn predict_chimera_classifier_matches_golden_fixture_when_artifacts_are_provided() -> Result<()> {
     let Some(starlight) = std::env::var_os("STARFORGE_CHIMERA_CLASSIFIER_EXPERT_A_WEIGHTS") else {
-        eprintln!(
-            "skipping Chimera classifier golden parity: STARFORGE_CHIMERA_CLASSIFIER_EXPERT_A_WEIGHTS is not set"
+        models_root::skipped(
+            "Chimera classifier golden parity",
+            "STARFORGE_CHIMERA_CLASSIFIER_EXPERT_A_WEIGHTS is not set",
         );
         return Ok(());
     };
     let Some(tabicl) = std::env::var_os("TABICL_CLASSIFIER_WEIGHTS") else {
-        eprintln!(
-            "skipping Chimera classifier golden parity: TABICL_CLASSIFIER_WEIGHTS is not set"
+        models_root::skipped(
+            "Chimera classifier golden parity",
+            "TABICL_CLASSIFIER_WEIGHTS is not set",
         );
         return Ok(());
     };
     let Some(chimera) = std::env::var_os("STARFORGE_CHIMERA_CLASSIFIER_TRUNK_WEIGHTS") else {
-        eprintln!(
-            "skipping Chimera classifier golden parity: STARFORGE_CHIMERA_CLASSIFIER_TRUNK_WEIGHTS is not set"
+        models_root::skipped(
+            "Chimera classifier golden parity",
+            "STARFORGE_CHIMERA_CLASSIFIER_TRUNK_WEIGHTS is not set",
         );
         return Ok(());
     };
     let Some(golden) = std::env::var_os("STARFORGE_CHIMERA_CLASSIFIER_GOLDEN_JSON") else {
-        eprintln!(
-            "skipping Chimera classifier golden parity: STARFORGE_CHIMERA_CLASSIFIER_GOLDEN_JSON is not set"
+        models_root::skipped(
+            "Chimera classifier golden parity",
+            "STARFORGE_CHIMERA_CLASSIFIER_GOLDEN_JSON is not set",
         );
         return Ok(());
     };
@@ -288,8 +316,9 @@ fn predict_chimera_classifier_real_weights_smoke_when_requested() -> Result<()> 
         .as_deref()
         != Some("1")
     {
-        eprintln!(
-            "skipping Chimera classifier real-weight smoke: STARFORGE_CHIMERA_CLASSIFIER_SMOKE=1 is not set"
+        models_root::skipped(
+            "Chimera classifier real-weight smoke",
+            "STARFORGE_CHIMERA_CLASSIFIER_SMOKE=1 is not set",
         );
         return Ok(());
     }
@@ -344,13 +373,18 @@ fn predict_chimera_classifier_real_weights_smoke_when_requested() -> Result<()> 
     Ok(())
 }
 
+/// Relative artifact paths resolve against the `JOPE_MODELS_ROOT` bundle (crate layout), else
+/// against the repository root.
 fn resolve_repo_path(path: PathBuf) -> PathBuf {
     if path.is_absolute() || path.exists() {
         return path;
     }
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .join(path)
+    match models_root::try_bundle_root() {
+        Ok(root) => root.join(path),
+        Err(_) => PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../..")
+            .join(path),
+    }
 }
 
 fn flatten_rows(rows: &[Vec<f32>]) -> Result<(Vec<f32>, usize)> {

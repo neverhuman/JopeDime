@@ -4,6 +4,9 @@
 //! It does not prove end-to-end Prime or Lime proposal/prediction parity.
 
 use anyhow::{bail, Context, Result};
+
+#[path = "support/models_root.rs"]
+mod models_root;
 use candle_core::{DType, Device};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
@@ -71,8 +74,8 @@ struct JopeContextMeta {
     torch: String,
 }
 
-fn repo_root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
+fn fixtures() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures")
 }
 
 fn sha256_path(path: &Path) -> Result<String> {
@@ -122,18 +125,8 @@ fn parity_metrics(actual: &[f32], expected: &[f32]) -> Result<(f32, f32)> {
 
 #[test]
 fn foundation_2048_matches_starlight_reference() -> Result<()> {
-    let root = repo_root();
-    let fixture_path = root.join(concat!(
-        "crates/starforge/tests/fixtures/foundation_",
-        "tab",
-        "pfn_v1_00709.json"
-    ));
-    let source_path = root.join(concat!(
-        "crates/starforge/tests/fixtures/foundation_",
-        "tab",
-        "pfn_v1_00709_train.csv.txt"
-    ));
-    let weights_path = root.join("artifacts/starforge/starlight_core_regressor.safetensors");
+    let fixture_path = fixtures().join(concat!("foundation_", "tab", "pfn_v1_00709.json"));
+    let source_path = fixtures().join(concat!("foundation_", "tab", "pfn_v1_00709_train.csv.txt"));
     let fixture: FoundationFixture = serde_json::from_slice(&std::fs::read(&fixture_path)?)?;
 
     assert_eq!(fixture.schema, "jain.foundation-parity/v1");
@@ -171,6 +164,10 @@ fn foundation_2048_matches_starlight_reference() -> Result<()> {
     );
     assert_eq!(fixture.weights_sha256, WEIGHTS_SHA256);
     assert_eq!(sha256_path(&source_path)?, fixture.source_csv_sha256);
+    let Some(root) = models_root::bundle_root("foundation_2048_matches_starlight_reference") else {
+        return Ok(());
+    };
+    let weights_path = root.join("artifacts/starforge/starlight_core_regressor.safetensors");
     assert_eq!(sha256_path(&weights_path)?, fixture.weights_sha256);
 
     let expected = decode_oracle(&fixture.oracle_f32_le_bits)?;
@@ -255,8 +252,7 @@ fn foundation_2048_matches_starlight_reference() -> Result<()> {
 
 #[test]
 fn committed_gen18_full_context_is_exact_and_complete() -> Result<()> {
-    let path = repo_root()
-        .join("crates/starforge/tests/fixtures/jope_gen18_context_0bfe8ef7abefb869.json");
+    let path = fixtures().join("jope_gen18_context_0bfe8ef7abefb869.json");
     let bytes = std::fs::read(path)?;
     let source_bytes = bytes.strip_suffix(b"\n").unwrap_or(&bytes);
     assert_eq!(
