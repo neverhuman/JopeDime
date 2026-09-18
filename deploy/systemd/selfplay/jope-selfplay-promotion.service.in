@@ -1,0 +1,14 @@
+[Unit]
+Description=JOPE Rust checkpoint tournament and promotion controller
+After=jope-selfplay-freshness.service jope-selfplay-queue.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=@JOPE_STATE@/legacy/test_exact_gen0
+ExecStart=@JOPE_BUNDLE@/jope_selfplay_promotion
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target

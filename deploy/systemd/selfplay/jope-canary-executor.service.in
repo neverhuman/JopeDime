@@ -1,0 +1,13 @@
+[Unit]
+Description=JOPE shadow and production three-lane canary executor
+After=jope-selfplay-queue.service
+
+[Service]
+Type=simple
+WorkingDirectory=@JOPE_STATE@/legacy/test_exact_gen0
+ExecStart=@JOPE_BUNDLE@/jope_canary_executor --runner @JOPE_STATE@/legacy/test_exact_gen0/runtime-bundles/current/runtime/scripts/fweval_runner.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

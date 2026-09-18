@@ -1,0 +1,11 @@
+[Unit]
+Description=JOPE self-play GC: run-dir + receipts fall-off once evidence is indexed (audit plans + receipts in ops/)
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -ec '\
+  G=@JOPE_BUNDLE@/jope_selfplay_gc; \
+  $G runs --node xbabe1 --execute; \
+  $G runs --node xbabe2 --execute; \
+  $G runs --node xbabe3 --execute; \
+  $G receipts --execute'

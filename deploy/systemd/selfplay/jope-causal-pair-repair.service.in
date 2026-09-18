@@ -1,0 +1,14 @@
+[Unit]
+Description=JOPE exact receipt-level causal pair repair executor
+After=jope-causal-evidence.service jope-selfplay-ingestion.service
+Wants=jope-causal-evidence.service jope-selfplay-ingestion.service
+
+[Service]
+Type=simple
+WorkingDirectory=@JOPE_STATE@/legacy/test_exact_gen0
+ExecStart=@JOPE_BUNDLE@/jope_causal_pair_repair
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

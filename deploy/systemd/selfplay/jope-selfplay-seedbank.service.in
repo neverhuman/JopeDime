@@ -1,0 +1,6 @@
+[Unit]
+Description=JOPE robust GP seed-bank export (DL-origin merit merge capped at floor(limit/3) per task; receipts in ops/seed-bank-receipts/)
+
+[Service]
+Type=oneshot
+ExecStart=@JOPE_BUNDLE@/jope_queue_control --export-seed-bank @JOPE_STATE@/legacy/test_exact_gen0/corpus/robust-gp-seed-bank.v1.json --receipt-dir @JOPE_STATE@/legacy/test_exact_gen0/ops/seed-bank-receipts

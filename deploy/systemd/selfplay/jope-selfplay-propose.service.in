@@ -1,0 +1,7 @@
+[Unit]
+Description=Retired whole-catalog proposer audit (cohort proposer is owned by supply)
+
+[Service]
+Type=oneshot
+WorkingDirectory=@JOPE_STATE@/legacy/test_exact_gen0
+ExecStart=@JOPE_BUNDLE@/jope_selfplay_propose_driver --root @JOPE_STATE@/legacy/test_exact_gen0 --dry-run

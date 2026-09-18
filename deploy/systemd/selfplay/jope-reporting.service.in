@@ -1,0 +1,13 @@
+[Unit]
+Description=JOPE native four-task telemetry and terminal-learning reporter
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=@JOPE_STATE@/legacy/test_exact_gen0
+ExecStart=@JOPE_BUNDLE@/jope_reporting --interval-seconds 30
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=DIME utilization supervisor (bounded repair, no scientific mutation)
+After=jope-selfplay-queue.service jope-selfplay-supply.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=@JOPE_STATE@/legacy/test_exact_gen0
+ExecStart=@JOPE_BUNDLE@/jope_utilization_supervisor --queue-floor-jobs 2048
+
+[Install]
+WantedBy=default.target

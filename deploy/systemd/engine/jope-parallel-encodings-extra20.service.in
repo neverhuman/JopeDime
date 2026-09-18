@@ -1,0 +1,33 @@
+[Unit]
+Description=JOPE eight-GPU frozen encodings for 3500 additional pointer cuts
+After=jope-parallel-monitor.service
+Requires=jope-parallel-monitor.service
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=@JOPE_USER@
+WorkingDirectory=@JOPE_STATE@
+ExecStartPre=/usr/bin/sha256sum --check --status manifests/hyperion-concurrent-v30.sha256
+ExecStart=@JOPE_BUNDLE@/jope-parallel-cpu-v30 --root @JOPE_STATE@ hyperion-service --jobs @JOPE_STATE@/manifests/generated/gp-extra20-jobs.json --spec @JOPE_HOME@/crates/jope-engine/manifests/hyperion-concurrent-spec.json --output @JOPE_STATE@/data/encodings/hyperion-batched-cuts
+Environment=JAIN_HYPERION_CUDA_MAX_LOAD_RATIO=1000
+Environment=RAYON_NUM_THREADS=1
+Environment=OMP_NUM_THREADS=1
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+AllowedCPUs=0-7,62-69
+CPUQuota=1600%
+CPUAccounting=true
+MemoryHigh=512G
+MemoryMax=640G
+MemorySwapMax=0
+MemoryAccounting=true
+TasksMax=512
+KillMode=control-group
+TimeoutStopSec=10
+Restart=on-failure
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target
