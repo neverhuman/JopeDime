@@ -8,12 +8,16 @@ use hyperion::hyperion::{
     DEFAULT_OUTPUT_DIM, WEIGHTS_DIR_ENV,
 };
 use hyperion::progress::NullSink;
+use std::io::Write;
 use std::time::Instant;
 
 #[test]
 fn served_bundle_encodes_a_small_table() {
     let Some(dir) = std::env::var_os(WEIGHTS_DIR_ENV).filter(|value| !value.is_empty()) else {
-        eprintln!(
+        // Written straight to the process stderr so libtest's output capture cannot hide it: the
+        // skip is visible in a plain `cargo test` run, not only under `--nocapture`.
+        let _ = writeln!(
+            std::io::stderr(),
             "SKIPPED served_bundle_encodes_a_small_table: {WEIGHTS_DIR_ENV} is not set \
              (point it at a directory holding model.safetensors + manifest.json)"
         );

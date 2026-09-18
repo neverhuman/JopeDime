@@ -41,7 +41,8 @@ two reference-CLI tests without any weights. One test is weight-bound:
 
 - `tests/weights_smoke.rs::served_bundle_encodes_a_small_table` — needs `HYPERION_V7_WEIGHTS`.
   When unset it prints `SKIPPED served_bundle_encodes_a_small_table: HYPERION_V7_WEIGHTS is not
-  set …` and returns; it never passes silently. With the variable set it encodes a 24×3 table
+  set …` straight to the process stderr (visible in a plain `cargo test`, not only under
+  `--nocapture`) and returns; it never passes silently. With the variable set it encodes a 24×3 table
   through `fit_transform_pair` (mode `On`, 2 sweeps) and checks the 128-column block.
 
 ## Provenance (source → destination)
