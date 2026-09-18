@@ -13,5 +13,6 @@ step "capability parity matrix (docs/parity/capability-matrix.md; source-parsed 
 step "test inventory (docs/parity/test-inventory.json; Python static scan here, the nextest half runs where the workspace is built)"; if ! bash deploy/ci/test-inventory.sh --no-rust --static-python; then fail=1; fi
 step "no absolute home paths in code"; abs=$(git grep -nE '/home/[a-z]+/' -- crates/*/src crates/*/tests python/src deploy/systemd .github || true); if [ -n "$abs" ]; then head -20 <<<"$abs"; echo "absolute paths above: $(wc -l <<<"$abs") hits (allowed only until WP4 completes)"; else echo "ok"; fi
 step "manifests (models index ↔ bundle manifests ↔ schema; no weights downloaded)"; if bash deploy/ci/manifests.sh; then echo "ok"; else fail=1; fi
+step "datasets/test (jope-datasets verify --repo)"; if cargo run -q -p jope-datasets --locked -- verify --repo datasets/test; then echo "ok"; else echo "datasets/test verification failed"; fail=1; fi
 step "size caps"; big=$(git ls-files -z | xargs -0 stat -c '%s %n' | awk '$1>5242880{print}' ); if [ -n "$big" ]; then echo "$big"; echo "files over 5 MiB"; fail=1; else echo "ok"; fi
 exit $fail

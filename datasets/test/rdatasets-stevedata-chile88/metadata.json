@@ -1,0 +1,67 @@
+{
+  "schema": "jope.dataset-catalog/v1",
+  "id": "c7d815714ca52bce",
+  "dataset_hash": "c7d815714ca52bce",
+  "canonical_sha256": "c7d815714ca52bce85630b39a3c3eadafcea97ddbedab3788f489423820eb850",
+  "display_name": "Voting Intentions in the 1988 Chilean Plebiscite",
+  "task": "regression",
+  "origin": "real",
+  "shape": {
+    "rows": 1999,
+    "features": 7,
+    "categorical_features": 0,
+    "columns": 8
+  },
+  "target": {
+    "name": "target",
+    "index": -1,
+    "type": "numeric"
+  },
+  "files": {
+    "train": {
+      "sha256": "2cc33f1cf38de2da3edfe69d8ffd4623d84039c22f20755b0dffe8411c698df3",
+      "bytes": 57297,
+      "rows": 1000,
+      "columns": 8,
+      "has_header": false
+    },
+    "test": {
+      "sha256": "07676d6a55c50d6fa535393a14ac5df31751810b7421cb17548d349f891fb039",
+      "bytes": 57403,
+      "rows": 999,
+      "columns": 8,
+      "has_header": false
+    }
+  },
+  "split": {
+    "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "seed": 3337433724,
+    "train_rows": 1000,
+    "test_rows": 999
+  },
+  "provenance": {
+    "platform": "rdatasets",
+    "dataset_id": "stevedata/chile88",
+    "url": "https://vincentarelbundock.github.io/Rdatasets/csv/stevedata/chile88.csv",
+    "retrieved_at": "2026-06-27T23:54:41+00:00",
+    "dedupe_fingerprint": "864906f9bfef55dd9a8afb71450b9e984f34163b",
+    "citation": "Miller, S. (2025). stevedata: Steve's Toy Data for Teaching About a Variety of Methodological, Social, and Political Topics. R package version 1.9.0. https://svmiller.com/stevedata/ ; served by Rdatasets (Arel-Bundock, V.)",
+    "license": {
+      "spdx": "GPL-2.0-only",
+      "status": "recorded",
+      "evidence_url": "https://cran.r-project.org/web/packages/stevedata/DESCRIPTION",
+      "text_sha256": "c8d6d389913b296e719cc353cd952cd56ac3c72f121c702b941568de020c926a",
+      "note": "source_license: GPL (R package stevedata); the CRAN DESCRIPTION of stevedata 1.9.0 states 'License: GPL-2'"
+    }
+  },
+  "collections": [
+    "test-10"
+  ],
+  "aliases": [],
+  "ingest": {
+    "source": "repo",
+    "relpath": "datasets/test/rdatasets-stevedata-chile88",
+    "ingested_at": "2026-09-18T20:28:53Z",
+    "tool_version": "jope-datasets/0.1.0"
+  }
+}

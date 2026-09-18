@@ -1,0 +1,67 @@
+{
+  "schema": "jope.dataset-catalog/v1",
+  "id": "21fbfe8b53dbcd60",
+  "dataset_hash": "21fbfe8b53dbcd60",
+  "canonical_sha256": "21fbfe8b53dbcd605d79486b6b1bf9624b7ab9a4e549fb2b63c74a7344c46460",
+  "display_name": "Parkinsons Telemonitoring",
+  "task": "regression",
+  "origin": "real",
+  "shape": {
+    "rows": 1999,
+    "features": 21,
+    "categorical_features": 0,
+    "columns": 22
+  },
+  "target": {
+    "name": "target",
+    "index": -1,
+    "type": "numeric"
+  },
+  "files": {
+    "train": {
+      "sha256": "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931",
+      "bytes": 259938,
+      "rows": 1000,
+      "columns": 22,
+      "has_header": false
+    },
+    "test": {
+      "sha256": "9786badb9d822cd0dc34b730019c13feff1fd02fe85da61a59c00a27e461f61c",
+      "bytes": 259696,
+      "rows": 999,
+      "columns": 22,
+      "has_header": false
+    }
+  },
+  "split": {
+    "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "seed": 550427014,
+    "train_rows": 1000,
+    "test_rows": 999
+  },
+  "provenance": {
+    "platform": "uci",
+    "dataset_id": "parkinsons-telemonitoring",
+    "url": "https://archive.ics.uci.edu/ml/machine-learning-databases/parkinsons/telemonitoring/parkinsons_updrs.data",
+    "retrieved_at": "2026-06-27T23:24:34+00:00",
+    "dedupe_fingerprint": "a00f17f27e77d9ca8574aff6b711ada7b8b19a91",
+    "citation": "Tsanas, A. & Little, M. (2009). Parkinsons Telemonitoring [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5ZS3N",
+    "license": {
+      "spdx": "CC-BY-4.0",
+      "status": "recorded",
+      "evidence_url": "https://archive.ics.uci.edu/dataset/189/parkinsons+telemonitoring",
+      "text_sha256": "8ff4cb03ec0c352a4c31909dc6587552b1c40cc5ee29bd6510574371d905c253",
+      "note": "source_license was blank at acquisition; the UCI dataset page states the dataset is licensed under a Creative Commons Attribution 4.0 International (CC BY 4.0) license"
+    }
+  },
+  "collections": [
+    "test-10"
+  ],
+  "aliases": [],
+  "ingest": {
+    "source": "repo",
+    "relpath": "datasets/test/uci-parkinsons-telemonitoring",
+    "ingested_at": "2026-09-18T20:28:53Z",
+    "tool_version": "jope-datasets/0.1.0"
+  }
+}
