@@ -6,7 +6,7 @@
     "reason": "Original documentation identifies quarterly economic observations across 17 OECD countries.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/plm_Parity.html",
+        "path": "evidence/plm_Parity.html",
         "sha256": "137d5d9d8516aa6cebd3a0d328eb8fe06f14c83115060cc65dd0f244520d5120",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/plm/Parity.html",
         "finding": "Original documentation identifies quarterly economic observations across 17 OECD countries."
@@ -20,7 +20,7 @@
     "reason": "Original documentation identifies measured wheat yield field trials in Nebraska and a published source.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/agridat_belamkar.augmented.html",
+        "path": "evidence/agridat_belamkar.augmented.html",
         "sha256": "4fdb5030a7575b3a8e9507e686560362b0b35605a231aec168519eade4ce093c",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/belamkar.augmented.html",
         "finding": "Original documentation identifies measured wheat yield field trials in Nebraska and a published source."
@@ -34,7 +34,7 @@
     "reason": "Original documentation identifies hourly measured pollution, traffic emissions and wind speed.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/robustbase_NOxEmissions.html",
+        "path": "evidence/robustbase_NOxEmissions.html",
         "sha256": "a0889e5ab92743037daf6e89cd2df6993cc669bdfc7cdfa23f48b606cc067c27",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/robustbase/NOxEmissions.html",
         "finding": "Original documentation identifies hourly measured pollution, traffic emissions and wind speed."
@@ -48,7 +48,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Gas mileage, horsepower, and other information for 392 vehicles.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/ISLR_Auto.html",
+        "path": "evidence/ISLR_Auto.html",
         "sha256": "acf0094a8cb362ce4f1e2ddb11c94b5d3874d036d6760eebba1e6ef483d015af",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/ISLR/Auto.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Gas mileage, horsepower, and other information for 392 vehicles."
@@ -62,7 +62,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The data contains 5822 real customer records. Each record consists of 86 variables, containing sociodemographic data (variables 1-43) and product ownership (variables 44-86). The sociodemographic data is derived from zip codes. All customers living in areas with the same zip code have the same sociodemographic attributes. Variable 86 ( Pu",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/ISLR_Caravan.html",
+        "path": "evidence/ISLR_Caravan.html",
         "sha256": "131ea1fc4d382bf2e185377cbde6d2db08196309d6e6ec2fb7beaa544a585316",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/ISLR/Caravan.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The data contains 5822 real customer records. Each record consists of 86 variables, containing sociodemographic data (variables 1-43) and product ownership (variables 44-86). The sociodemographic data is derived from zip codes. All customers living in areas with the same zip code have the same sociodemographic attributes. Variable 86 ( Pu"
@@ -76,7 +76,7 @@
     "reason": "Documentation describes generated, simulated, or contrived observations.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/ISLR_Carseats.html",
+        "path": "evidence/ISLR_Carseats.html",
         "sha256": "704cfb54ec9f5fb5a158fb5634a4185488464ee447b79d2dbd5e95b2b39db529",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/ISLR/Carseats.html",
         "finding": "Documentation describes generated, simulated, or contrived observations."
@@ -90,7 +90,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Statistics for a large number of US Colleges from the 1995 issue of US News and World Report.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/ISLR_College.html",
+        "path": "evidence/ISLR_College.html",
         "sha256": "bcdce1f71947e3234d57446ab430f2048da3059142e72e89b46971e7421617bd",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/ISLR/College.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Statistics for a large number of US Colleges from the 1995 issue of US News and World Report."
@@ -104,7 +104,7 @@
     "reason": "Documentation describes generated, simulated, or contrived observations.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/ISLR_Credit.html",
+        "path": "evidence/ISLR_Credit.html",
         "sha256": "3b4722ea38cadb5b3b643ffeafc001a497cbed3f3110c4fb9616790357536c53",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/ISLR/Credit.html",
         "finding": "Documentation describes generated, simulated, or contrived observations."
@@ -118,7 +118,7 @@
     "reason": "Documentation describes generated, simulated, or contrived observations.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/ISLR_Default.html",
+        "path": "evidence/ISLR_Default.html",
         "sha256": "1b1f6cf558d4e124e12074bbbfd8e3d17325f174848d7565601f8e9dbcb69634",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/ISLR/Default.html",
         "finding": "Documentation describes generated, simulated, or contrived observations."
@@ -132,7 +132,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Major League Baseball Data from the 1986 and 1987 seasons.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/ISLR_Hitters.html",
+        "path": "evidence/ISLR_Hitters.html",
         "sha256": "8830c77e2daa4c1e4f87f1233e8ee93d9dadd38c9e799032820233f1d4f2b9c3",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/ISLR/Hitters.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Major League Baseball Data from the 1986 and 1987 seasons."
@@ -146,7 +146,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The data contains 1070 purchases where the customer either purchased Citrus Hill or Minute Maid Orange Juice. A number of characteristics of the customer and product are recorded.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/ISLR_OJ.html",
+        "path": "evidence/ISLR_OJ.html",
         "sha256": "b413d99ee9910522c07fa61a3caaaa2cc0ebb075f0f8f5f85c9f9fd72bdd3827",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/ISLR/OJ.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The data contains 1070 purchases where the customer either purchased Citrus Hill or Minute Maid Orange Juice. A number of characteristics of the customer and product are recorded."
@@ -160,7 +160,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Daily percentage returns for the S&P 500 stock index between 2001 and 2005.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/ISLR_Smarket.html",
+        "path": "evidence/ISLR_Smarket.html",
         "sha256": "33dc9c5d065c2960da1cc40cdd01de01a98a78d41c417927b88e765dbfed8957",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/ISLR/Smarket.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Daily percentage returns for the S&P 500 stock index between 2001 and 2005."
@@ -174,7 +174,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Wage and other data for a group of 3000 male workers in the Mid-Atlantic region.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/ISLR_Wage.html",
+        "path": "evidence/ISLR_Wage.html",
         "sha256": "613bf6e02af672982d62ed45504f591501d23321cc40e4bbfc169cb6906ccf0a",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/ISLR/Wage.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Wage and other data for a group of 3000 male workers in the Mid-Atlantic region."
@@ -188,7 +188,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Weekly percentage returns for the S&P 500 stock index between 1990 and 2010.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/ISLR_Weekly.html",
+        "path": "evidence/ISLR_Weekly.html",
         "sha256": "8e74297415574e0310b69fd21da739478eb4ac14456b8abad3e5ce6e1bba7209",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/ISLR/Weekly.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Weekly percentage returns for the S&P 500 stock index between 1990 and 2010."
@@ -202,7 +202,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Data on patients diagnosed with AIDS in Australia before 1 July 1991.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_Aids2.html",
+        "path": "evidence/MASS_Aids2.html",
         "sha256": "6aa51a4e2ae2ae7ba6b0dc1d0049920f673dafacab290f81e17161686acf0b71",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/Aids2.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Data on patients diagnosed with AIDS in Australia before 1 July 1991."
@@ -216,7 +216,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Data were collected on the concentration of a chemical GAG in the urine of 314 children aged from zero to seventeen years. The aim of the study was to produce a chart to help a paediatrican to assess if a child's GAG concentration is \u2018normal\u2019.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_GAGurine.html",
+        "path": "evidence/MASS_GAGurine.html",
         "sha256": "145376cdf2dab091d7194c45bbfb55efddecc484f865b62fe4ddf53f297e7e33",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/GAGurine.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Data were collected on the concentration of a chemical GAG in the urine of 314 children aged from zero to seventeen years. The aim of the study was to produce a chart to help a paediatrican to assess if a child's GAG concentration is \u2018normal\u2019."
@@ -230,7 +230,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Experiments were performed on children on their ability to differentiate a signal in broad-band noise. The noise was played from a pair of speakers and a signal was added to just one channel; the subject had to turn his/her head to the channel with the added signal. The signal was either coherent (the amplitude of the noise was increased ",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_OME.html",
+        "path": "evidence/MASS_OME.html",
         "sha256": "5166f1a5f7a48a6110aabb3cc8747a8f6db3f899debeed3a2893ee4510fa4505",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/OME.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Experiments were performed on children on their ability to differentiate a signal in broad-band noise. The noise was played from a pair of speakers and a signal was added to just one channel; the subject had to turn his/her head to the channel with the added signal. The signal was either coherent (the amplitude of the noise was increased "
@@ -244,7 +244,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Sitka data frame has 395 rows and 4 columns. It gives repeated measurements on the log-size of 79 Sitka spruce trees, 54 of which were grown in ozone-enriched chambers and 25 were controls. The size was measured five times in 1988, at roughly monthly intervals.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_Sitka.html",
+        "path": "evidence/MASS_Sitka.html",
         "sha256": "5e72f5df02e52add8b0f963627af23609f367546b2c6710750eb3a0fee8054ec",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/Sitka.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Sitka data frame has 395 rows and 4 columns. It gives repeated measurements on the log-size of 79 Sitka spruce trees, 54 of which were grown in ozone-enriched chambers and 25 were controls. The size was measured five times in 1988, at roughly monthly intervals."
@@ -258,7 +258,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Sitka89 data frame has 632 rows and 4 columns. It gives repeated measurements on the log-size of 79 Sitka spruce trees, 54 of which were grown in ozone-enriched chambers and 25 were controls. The size was measured eight times in 1989, at roughly monthly intervals.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_Sitka89.html",
+        "path": "evidence/MASS_Sitka89.html",
         "sha256": "35347bd3c5641500e362f3e528d9a07f7b804f6907061ed59426897461cdd67b",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/Sitka89.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Sitka89 data frame has 632 rows and 4 columns. It gives repeated measurements on the log-size of 79 Sitka spruce trees, 54 of which were grown in ozone-enriched chambers and 25 were controls. The size was measured eight times in 1989, at roughly monthly intervals."
@@ -272,7 +272,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: An experiment was performed in Sweden in 1961\u20132 to assess the effect of a speed limit on the motorway accident rate. The experiment was conducted on 92 days in each year, matched so that day j in 1962 was comparable to day j in 1961. On some days the speed limit was in effect and enforced, while on other days there was no speed limit and ",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_Traffic.html",
+        "path": "evidence/MASS_Traffic.html",
         "sha256": "49a083bb69642d42af3393f1f4056f8b08d08e2bfa601adcc96e2bcece41a989",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/Traffic.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: An experiment was performed in Sweden in 1961\u20132 to assess the effect of a speed limit on the motorway accident rate. The experiment was conducted on 92 days in each year, matched so that day j in 1962 was comparable to day j in 1961. On some days the speed limit was in effect and enforced, while on other days there was no speed limit and "
@@ -286,7 +286,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The birthwt data frame has 189 rows and 10 columns. The data were collected at Baystate Medical Center, Springfield, Mass during 1986.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_birthwt.html",
+        "path": "evidence/MASS_birthwt.html",
         "sha256": "0b668702c408c23cb7ef5e4a6a7f4e2f0196cc3e9cfa25e7c990bf9ab0bae95a",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/birthwt.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The birthwt data frame has 189 rows and 10 columns. The data were collected at Baystate Medical Center, Springfield, Mass during 1986."
@@ -300,7 +300,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The heart and body weights of samples of male and female cats used for digitalis experiments. The cats were all adult, over 2 kg body weight.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_cats.html",
+        "path": "evidence/MASS_cats.html",
         "sha256": "3bd832aee33233e9a8bc920d48092fb4fa63ac01d6ae0323508f92c8e3241069",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/cats.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The heart and body weights of samples of male and female cats used for digitalis experiments. The cats were all adult, over 2 kg body weight."
@@ -314,7 +314,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: A relative performance measure and characteristics of 209 CPUs.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_cpus.html",
+        "path": "evidence/MASS_cpus.html",
         "sha256": "cb4213b9ed408ef1bba43fc36fab1186ddf98af2575b7b776a611d82ccb5e3c6",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/cpus.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: A relative performance measure and characteristics of 209 CPUs."
@@ -328,7 +328,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The crabs data frame has 200 rows and 8 columns, describing 5 morphological measurements on 50 crabs each of two colour forms and both sexes, of the species Leptograpsus variegatus collected at Fremantle, W. Australia.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_crabs.html",
+        "path": "evidence/MASS_crabs.html",
         "sha256": "d6202c1052be927fa13fdbbced63e0d6e940e439bd6e82dcb3ac559008cbe89b",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/crabs.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The crabs data frame has 200 rows and 8 columns, describing 5 morphological measurements on 50 crabs each of two colour forms and both sexes, of the species Leptograpsus variegatus collected at Fremantle, W. Australia."
@@ -342,7 +342,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: A regular time series giving the monthly totals of car drivers in Great Britain killed or seriously injured Jan 1969 to Dec 1984. Compulsory wearing of seat belts was introduced on 31 Jan 1983",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_drivers.html",
+        "path": "evidence/MASS_drivers.html",
         "sha256": "2ef334ec03eca5341523f879740499f271fda2c89faa0a26c5ee0d2eaf615601",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/drivers.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: A regular time series giving the monthly totals of car drivers in Great Britain killed or seriously injured Jan 1969 to Dec 1984. Compulsory wearing of seat belts was introduced on 31 Jan 1983"
@@ -356,7 +356,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Thall and Vail (1990) give a data set on two-week seizure counts for 59 epileptics. The number of seizures was recorded for a baseline period of 8 weeks, and then patients were randomly assigned to a treatment group or a control group. Counts were then recorded for four successive two-week periods. The subject's age is the only covariate.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_epil.html",
+        "path": "evidence/MASS_epil.html",
         "sha256": "09d9e031a1716dd01c360da2a50ea01f625b29efeadda0444bbb5d874d3a2709",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/epil.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Thall and Vail (1990) give a data set on two-week seizure counts for 59 epileptics. The number of seizures was recorded for a baseline period of 8 weeks, and then patients were randomly assigned to a treatment group or a control group. Counts were then recorded for four successive two-week periods. The subject's age is the only covariate."
@@ -370,7 +370,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The fgl data frame has 214 rows and 10 columns. It was collected by B. German on fragments of glass collected in forensic work.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_fgl.html",
+        "path": "evidence/MASS_fgl.html",
         "sha256": "9c6119e87017dc325ef20525c8fff40fdb496c8eaa6bdfa10c527cbf44f6bfcb",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/fgl.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The fgl data frame has 214 rows and 10 columns. It was collected by B. German on fragments of glass collected in forensic work."
@@ -384,7 +384,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: A version of the eruptions data from the \u2018Old Faithful\u2019 geyser in Yellowstone National Park, Wyoming. This version comes from Azzalini and Bowman (1990) and is of continuous measurement from August 1 to August 15, 1985. Some nocturnal duration measurements were coded as 2, 3 or 4 minutes, having originally been described as \u2018short\u2019, \u2018medi",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_geyser.html",
+        "path": "evidence/MASS_geyser.html",
         "sha256": "43b5ee19dfb8771e4ec09ef247849db4c641b397d893c6b1c79c9905adabcaaa",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/geyser.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: A version of the eruptions data from the \u2018Old Faithful\u2019 geyser in Yellowstone National Park, Wyoming. This version comes from Azzalini and Bowman (1990) and is of continuous measurement from August 1 to August 15, 1985. Some nocturnal duration measurements were coded as 2, 3 or 4 minutes, having originally been described as \u2018short\u2019, \u2018medi"
@@ -398,7 +398,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: This dataset was collected on a line transect survey in gilgai territory in New South Wales, Australia. Gilgais are natural gentle depressions in otherwise flat land, and sometimes seem to be regularly distributed. The data collection was stimulated by the question: are these patterns reflected in soil properties? At each of 365 sampling ",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_gilgais.html",
+        "path": "evidence/MASS_gilgais.html",
         "sha256": "e28d95ecc0078a993e7934456a6d875377bcc5e1501b08ef7262338783e9dd2b",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/gilgais.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: This dataset was collected on a line transect survey in gilgai territory in New South Wales, Australia. Gilgais are natural gentle depressions in otherwise flat land, and sometimes seem to be regularly distributed. The data collection was stimulated by the question: are these patterns reflected in soil properties? At each of 365 sampling "
@@ -412,7 +412,7 @@
     "reason": "Physical simulation vs numerical generation/source origin requires further verification.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_mcycle.html",
+        "path": "evidence/MASS_mcycle.html",
         "sha256": "26c6258b7592c96cc57b02ffce8f07d886538159ab6185e51202627781e407a5",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/mcycle.html",
         "finding": "Physical simulation vs numerical generation/source origin requires further verification."
@@ -426,7 +426,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Snijders and Bosker (1999) use as a running example a study of 2287 eighth-grade pupils (aged about 11) in 132 classes in 131 schools in the Netherlands. Only the variables used in our examples are supplied.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_nlschools.html",
+        "path": "evidence/MASS_nlschools.html",
         "sha256": "0625e0f7e951e7398359816d940a97ba25abe6a798ed53c08f1417731351bdd8",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/nlschools.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Snijders and Bosker (1999) use as a running example a study of 2287 eighth-grade pupils (aged about 11) in 132 classes in 131 schools in the Netherlands. Only the variables used in our examples are supplied."
@@ -440,7 +440,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: This data frame contains the responses of 237 Statistics I students at the University of Adelaide to a number of questions.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_survey.html",
+        "path": "evidence/MASS_survey.html",
         "sha256": "78413983fe80ca18af4d6419cb8902bcee7fbe7413f143b49d0caf77252965af",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/survey.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: This data frame contains the responses of 237 Statistics I students at the University of Adelaide to a number of questions."
@@ -454,7 +454,7 @@
     "reason": "Documentation describes generated, simulated, or contrived observations.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_synth.te.html",
+        "path": "evidence/MASS_synth.te.html",
         "sha256": "b9d975cfe071096e3f4388f4e32b394759af2fedd4616db59b64f664b3ee26d4",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/synth.te.html",
         "finding": "Documentation describes generated, simulated, or contrived observations."
@@ -468,7 +468,7 @@
     "reason": "Documentation describes generated, simulated, or contrived observations.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/MASS_synth.tr.html",
+        "path": "evidence/MASS_synth.tr.html",
         "sha256": "b9d975cfe071096e3f4388f4e32b394759af2fedd4616db59b64f664b3ee26d4",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/MASS/synth.tr.html",
         "finding": "Documentation describes generated, simulated, or contrived observations."
@@ -482,7 +482,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Data on police treatment of individuals arrested in Toronto for simple possession of small quantities of marijuana. The data are part of a larger data set featured in a series of articles in the Toronto Star newspaper.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_Arrests.html",
+        "path": "evidence/carData_Arrests.html",
         "sha256": "63c95bc2c97e6d2a9f07ea8a593d2956a09520a0c09b974029dc86fb19ec4124",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/Arrests.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Data on police treatment of individuals arrested in Toronto for simple possession of small quantities of marijuana. The data are part of a larger data set featured in a series of articles in the Toronto Star newspaper."
@@ -496,7 +496,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: These data are drawn from the 1997-2001 British Election Panel Study (BEPS).",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_BEPS.html",
+        "path": "evidence/carData_BEPS.html",
         "sha256": "9f6c7910425d26f80f7c4222d383a810bc55105022adea9c767e1052ece71a04",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/BEPS.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: These data are drawn from the 1997-2001 British Election Panel Study (BEPS)."
@@ -510,7 +510,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Blackmore data frame has 945 rows and 4 columns. Blackmore and Davis's data on exercise histories of 138 teenaged girls hospitalized for eating disorders and 98 control subjects.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_Blackmore.html",
+        "path": "evidence/carData_Blackmore.html",
         "sha256": "c44b5fa142a573d7809d143b74840c77af2ab1f576d5ea4fb2f51ecf03c593b4",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/Blackmore.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Blackmore data frame has 945 rows and 4 columns. Blackmore and Davis's data on exercise histories of 138 teenaged girls hospitalized for eating disorders and 98 control subjects."
@@ -524,7 +524,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Data are drawn from the 2011 Canadian National Election Study, including a question on banning abortion and variables related to the sampling design.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_CES11.html",
+        "path": "evidence/carData_CES11.html",
         "sha256": "8c61188dedb1bd4ccf3502df6988b469a5cf69f9b8f874e782cf7cce4bac56ce",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/CES11.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Data are drawn from the 2011 Canadian National Election Study, including a question on banning abortion and variables related to the sampling design."
@@ -538,7 +538,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Chile data frame has 2700 rows and 8 columns. The data are from a national survey conducted in April and May of 1988 by FLACSO/Chile. There are some missing data.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_Chile.html",
+        "path": "evidence/carData_Chile.html",
         "sha256": "325e1cb144f03a57ef82dbaf898a126c972b301eff51ff5d47468299df16f6f9",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/Chile.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Chile data frame has 2700 rows and 8 columns. The data are from a national survey conducted in April and May of 1988 by FLACSO/Chile. There are some missing data."
@@ -552,7 +552,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Cowles data frame has 1421 rows and 4 columns. These data come from a study of the personality determinants of volunteering for psychological research.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_Cowles.html",
+        "path": "evidence/carData_Cowles.html",
         "sha256": "0c8f68cbb593cacee4fcf8d9e381812cce3eba4894c6d7b1ab1e43df31a62ddc",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/Cowles.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Cowles data frame has 1421 rows and 4 columns. These data come from a study of the personality determinants of volunteering for psychological research."
@@ -566,7 +566,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Davis data frame has 200 rows and 5 columns. The subjects were men and women engaged in regular exercise. There are some missing data.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_Davis.html",
+        "path": "evidence/carData_Davis.html",
         "sha256": "202b3dd5ebfe6db1b5a8288b37804fdb6dfb645bb083c4d219cb291cbd38ea44",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/Davis.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Davis data frame has 200 rows and 5 columns. The subjects were men and women engaged in regular exercise. There are some missing data."
@@ -580,7 +580,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Wolf depredations of livestock on Minnesota farms, 1976-1998.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_Depredations.html",
+        "path": "evidence/carData_Depredations.html",
         "sha256": "14ccd0662435201fc7c69fde721aa8f927cedd336d1c4960136e7855d217c4d8",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/Depredations.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Wolf depredations of livestock on Minnesota farms, 1976-1998."
@@ -594,7 +594,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: This data set illustrates analyis of a multifactor observational study, with response given by subject's score on a vocabulary test, and factors for age group, education level, natality status, gender and year of the survey.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_GSSvocab.html",
+        "path": "evidence/carData_GSSvocab.html",
         "sha256": "985046e78beb5f460e303cdbc3520c38c250b8f564920fce7f3cf92fe03504b6",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/GSSvocab.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: This data set illustrates analyis of a multifactor observational study, with response given by subject's score on a vocabulary test, and factors for age group, education level, natality status, gender and year of the survey."
@@ -608,7 +608,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Subset of data on migraine treatments collected by Tammy Kostecki-Dillon.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_KosteckiDillon.html",
+        "path": "evidence/carData_KosteckiDillon.html",
         "sha256": "a777575d13b9292cf728a100a3256065e05c16a16974b5f6f4045f2237379a13",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/KosteckiDillon.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Subset of data on migraine treatments collected by Tammy Kostecki-Dillon."
@@ -622,7 +622,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Results of nearly all stops made by the Minneapolis Police Department for the year 2017.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_MplsStops.html",
+        "path": "evidence/carData_MplsStops.html",
         "sha256": "4382bf1b2d38f68b264c628aeebaf4bcb986a2973203b3c47566c36e87eaa843",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/MplsStops.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Results of nearly all stops made by the Minneapolis Police Department for the year 2017."
@@ -636,7 +636,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Mroz data frame has 753 rows and 8 columns. The observations, from the Panel Study of Income Dynamics (PSID), are married women.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_Mroz.html",
+        "path": "evidence/carData_Mroz.html",
         "sha256": "923d7404c342ac89ab67e9df71797c4ad86e4c5c61da5346b61fec4c2fa2e67a",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/Mroz.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Mroz data frame has 753 rows and 8 columns. The observations, from the Panel Study of Income Dynamics (PSID), are married women."
@@ -650,7 +650,7 @@
     "reason": "Documentation describes generated, simulated, or contrived observations.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_OBrienKaiserLong.html",
+        "path": "evidence/carData_OBrienKaiserLong.html",
         "sha256": "50030a35148f1aab4f1fe2c2b9844c9dcc36a98cef3153a55de710dc9fa273bb",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/OBrienKaiserLong.html",
         "finding": "Documentation describes generated, simulated, or contrived observations."
@@ -664,7 +664,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Ornstein data frame has 248 rows and 4 columns. The observations are the 248 largest Canadian firms with publicly available information in the mid-1970s. The names of the firms were not available.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_Ornstein.html",
+        "path": "evidence/carData_Ornstein.html",
         "sha256": "2dac162faec4ec360072f8813387138bfa13c2628bda40a268b301c8bded28ce",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/Ornstein.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Ornstein data frame has 248 rows and 4 columns. The observations are the 248 largest Canadian firms with publicly available information in the mid-1970s. The names of the firms were not available."
@@ -678,7 +678,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: This data set is originally from Rossi et al. (1980), and is used as an example in Allison (1995). The data pertain to 432 convicts who were released from Maryland state prisons in the 1970s and who were followed up for one year after release. Half the released convicts were assigned at random to an experimental treatment in which they we",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_Rossi.html",
+        "path": "evidence/carData_Rossi.html",
         "sha256": "7ab398311fb61731fbbc7d4d0215529641a878dfc4e61222d176ad80f292eeb9",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/Rossi.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: This data set is originally from Rossi et al. (1980), and is used as an example in Allison (1995). The data pertain to 432 convicts who were released from Maryland state prisons in the 1970s and who were followed up for one year after release. Half the released convicts were assigned at random to an experimental treatment in which they we"
@@ -692,7 +692,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The SLID data frame has 7425 rows and 5 columns. The data are from the 1994 wave of the Canadian Survey of Labour and Income Dynamics, for the province of Ontario. There are missing data, particularly for wages.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_SLID.html",
+        "path": "evidence/carData_SLID.html",
         "sha256": "98512711b77e4dc5a3513e422813e80057790fffe9d295783f7c82eb1527acd9",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/SLID.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The SLID data frame has 7425 rows and 5 columns. The data are from the 1994 wave of the Canadian Survey of Labour and Income Dynamics, for the province of Ontario. There are missing data, particularly for wages."
@@ -706,7 +706,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The 2008-09 nine-month academic salary for Assistant Professors, Associate Professors and Professors in a college in the U.S. The data were collected as part of the on-going effort of the college's administration to monitor salary differences between male and female faculty members.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_Salaries.html",
+        "path": "evidence/carData_Salaries.html",
         "sha256": "2eafc49c68980dccdf090eada54d4047110148a680f289f8b8d4cff1529c7e92",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/Salaries.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The 2008-09 nine-month academic salary for Assistant Professors, Associate Professors and Professors in a college in the U.S. The data were collected as part of the on-going effort of the college's administration to monitor salary differences between male and female faculty members."
@@ -720,7 +720,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Data on transaction times in branch offices of a large Australian bank.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_Transact.html",
+        "path": "evidence/carData_Transact.html",
         "sha256": "ec00def7df3c4894a053c116fdfc02905c39902f2de82e1a99141cd2932e1ec2",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/Transact.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Data on transaction times in branch offices of a large Australian bank."
@@ -734,7 +734,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: National health, welfare, and education statistics for 213 places, mostly UN members, but also other areas like Hong Kong that are not independent countries.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_UN.html",
+        "path": "evidence/carData_UN.html",
         "sha256": "b5ef84f6e8fcafe1b1b5e0a61981b6e546188e668c0bd2c2b5c0a697409a36a1",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/UN.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: National health, welfare, and education statistics for 213 places, mostly UN members, but also other areas like Hong Kong that are not independent countries."
@@ -748,7 +748,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Social indicators data on 207 nations distributed by the United Nations circa 1998.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_UN98.html",
+        "path": "evidence/carData_UN98.html",
         "sha256": "6b76f479ba38a021a656c15c41c154ffe3882feba50581c886462beed1656b2c",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/UN98.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Social indicators data on 207 nations distributed by the United Nations circa 1998."
@@ -762,7 +762,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Vocab data frame has 30,351 rows and 4 columns. The observations are respondents to U.S. General Social Surveys, 1972-2016.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_Vocab.html",
+        "path": "evidence/carData_Vocab.html",
         "sha256": "8f25b4dd008691065ed3b06b679308d5ab2011ca36aa5b3630027f46ea32bc1e",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/Vocab.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Vocab data frame has 30,351 rows and 4 columns. The observations are respondents to U.S. General Social Surveys, 1972-2016."
@@ -776,7 +776,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Data on whether or not households in Bangladesh changed the wells that they were using.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_Wells.html",
+        "path": "evidence/carData_Wells.html",
         "sha256": "cb0e960a2d17157ca9e00bbdf4433e8963d2ebc42080bf03189f794d46ec2722",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/Wells.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Data on whether or not households in Bangladesh changed the wells that they were using."
@@ -790,7 +790,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Wong data frame has 331 row and 7 columns. The observations are longitudinal data on recovery of IQ after comas of varying duration for 200 subjects.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/carData_Wong.html",
+        "path": "evidence/carData_Wong.html",
         "sha256": "feefeb5f06498882e6cf143621a74cab04c7ab863890fb29ece4249943a1ccf5",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/carData/Wong.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The Wong data frame has 331 row and 7 columns. The observations are longitudinal data on recovery of IQ after comas of varying duration for 200 subjects."
@@ -804,7 +804,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The classic Box & Jenkins airline data. Monthly totals of international airline passengers, 1949 to 1960.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_AirPassengers.html",
+        "path": "evidence/datasets_AirPassengers.html",
         "sha256": "923ad4c8fb7104149cacd023ec39a79017d1b7cd723fed4ebf2d22db6898b6dd",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/AirPassengers.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The classic Box & Jenkins airline data. Monthly totals of international airline passengers, 1949 to 1960."
@@ -818,7 +818,7 @@
     "reason": "Physical simulation vs numerical generation/source origin requires further verification.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_BJsales.html",
+        "path": "evidence/datasets_BJsales.html",
         "sha256": "ff53f7109d3fba33dd17d0263efed3649bf4a3c06c39a5c3639247c746f972d6",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/BJsales.html",
         "finding": "Physical simulation vs numerical generation/source origin requires further verification."
@@ -832,7 +832,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The ChickWeight data frame has 578 rows and 4 columns from an experiment on the effect of diet on early growth of chicks.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_ChickWeight.html",
+        "path": "evidence/datasets_ChickWeight.html",
         "sha256": "5d87518be668500fbc04cf6f57ec418522f35e9a1c5e8d235210eb7fa96d03c9",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/ChickWeight.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The ChickWeight data frame has 578 rows and 4 columns from an experiment on the effect of diet on early growth of chicks."
@@ -846,7 +846,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The DNase data frame has 176 rows and 3 columns of data obtained during development of an ELISA assay for the recombinant protein DNase in rat serum.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_DNase.html",
+        "path": "evidence/datasets_DNase.html",
         "sha256": "e4c36721c1f94a9145a6ff80bc8fd24b335fdc22928f44548392d4e8a5013204",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/DNase.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The DNase data frame has 176 rows and 3 columns of data obtained during development of an ELISA assay for the recombinant protein DNase in rat serum."
@@ -860,7 +860,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Contains the daily closing prices of major European stock indices: Germany DAX (Ibis), Switzerland SMI , France CAC , and UK FTSE . The data are sampled in business time, i.e., weekends and holidays are omitted.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_EuStockMarkets.html",
+        "path": "evidence/datasets_EuStockMarkets.html",
         "sha256": "083cfc73982b69345b63bffe776e4bc630ef0b8768824bdb4b1a0d21dcaa123c",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/EuStockMarkets.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Contains the daily closing prices of major European stock indices: Germany DAX (Ibis), Switzerland SMI , France CAC , and UK FTSE . The data are sampled in business time, i.e., weekends and holidays are omitted."
@@ -874,7 +874,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: UKDriverDeaths is a time series giving the monthly totals of car drivers in Great Britain killed or seriously injured Jan 1969 to Dec 1984. Compulsory wearing of seat belts was introduced on 31 Jan 1983. Seatbelts is more information on the same problem.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_Seatbelts.html",
+        "path": "evidence/datasets_Seatbelts.html",
         "sha256": "8a566737f0baa848302d3ed3d6e6100d205e0ab77471153d57c6f75d6577a395",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/Seatbelts.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: UKDriverDeaths is a time series giving the monthly totals of car drivers in Great Britain killed or seriously injured Jan 1969 to Dec 1984. Compulsory wearing of seat belts was introduced on 31 Jan 1983. Seatbelts is more information on the same problem."
@@ -888,7 +888,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: UKDriverDeaths is a time series giving the monthly totals of car drivers in Great Britain killed or seriously injured Jan 1969 to Dec 1984. Compulsory wearing of seat belts was introduced on 31 Jan 1983. Seatbelts is more information on the same problem.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_UKDriverDeaths.html",
+        "path": "evidence/datasets_UKDriverDeaths.html",
         "sha256": "8a566737f0baa848302d3ed3d6e6100d205e0ab77471153d57c6f75d6577a395",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/UKDriverDeaths.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: UKDriverDeaths is a time series giving the monthly totals of car drivers in Great Britain killed or seriously injured Jan 1969 to Dec 1984. Compulsory wearing of seat belts was introduced on 31 Jan 1983. Seatbelts is more information on the same problem."
@@ -902,7 +902,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Daily air quality measurements in New York, May to September 1973.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_airquality.html",
+        "path": "evidence/datasets_airquality.html",
         "sha256": "bc61ea79ae06284e0975b227662f6e415a726e97111be893ab48a8fd18654c4f",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/airquality.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Daily air quality measurements in New York, May to September 1973."
@@ -916,7 +916,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: This data gives peak accelerations measured at various observation stations for 23 earthquakes in California. The data have been used by various workers to estimate the attenuating affect of distance on ground acceleration.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_attenu.html",
+        "path": "evidence/datasets_attenu.html",
         "sha256": "690e0b657d8233e8fd88596b5a619a3739ef6caad275a0e15c1e40f939eabdd7",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/attenu.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: This data gives peak accelerations measured at various observation stations for 23 earthquakes in California. The data have been used by various workers to estimate the attenuating affect of distance on ground acceleration."
@@ -930,7 +930,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Waiting time between eruptions and the duration of the eruption for the Old Faithful geyser in Yellowstone National Park, Wyoming, USA.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_faithful.html",
+        "path": "evidence/datasets_faithful.html",
         "sha256": "896110bd28a98b71ac3f1fdb22f1ccc9184f1ceb7a5fd54fb37d19b512cf7691",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/faithful.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Waiting time between eruptions and the duration of the eruption for the Old Faithful geyser in Yellowstone National Park, Wyoming, USA."
@@ -944,7 +944,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: This is a matched case-control study dating from before the availability of conditional logistic regression.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_infert.html",
+        "path": "evidence/datasets_infert.html",
         "sha256": "edc77cf3cc61add981ff6081ae583238169a9bad5fad911245465becccfca07d",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/infert.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: This is a matched case-control study dating from before the availability of conditional logistic regression."
@@ -958,7 +958,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: This famous (Fisher's or Anderson's) iris data set gives the measurements in centimeters of the variables sepal length and width and petal length and width, respectively, for 50 flowers from each of 3 species of iris. The species are Iris setosa , versicolor , and virginica .",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_iris.html",
+        "path": "evidence/datasets_iris.html",
         "sha256": "bed05d58cef4c8b3408fb515fbae8e8d995b30a8fef0f69802c13c9910fa00d6",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/iris.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: This famous (Fisher's or Anderson's) iris data set gives the measurements in centimeters of the variables sepal length and width and petal length and width, respectively, for 50 flowers from each of 3 species of iris. The species are Iris setosa , versicolor , and virginica ."
@@ -972,7 +972,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: A time series object containing average air temperatures at Nottingham Castle in degrees Fahrenheit for 20 years.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_nottem.html",
+        "path": "evidence/datasets_nottem.html",
         "sha256": "974b96a465cbd7e71e66f76f0f0a3fe1b1b682ba927d585f110f634912352ec7",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/nottem.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: A time series object containing average air temperatures at Nottingham Castle in degrees Fahrenheit for 20 years."
@@ -986,7 +986,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Data on adult penguins covering three species found on three islands in the Palmer Archipelago, Antarctica, including their size (flipper length, body mass, bill dimensions), and sex. The columns of penguins are a subset of the more extensive penguins_raw data frame, which includes nesting observations and blood isotope data. There are di",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_penguins.html",
+        "path": "evidence/datasets_penguins.html",
         "sha256": "5991020ec002a037cd56ed136228ee282a9ac9ad2f9c2002a88027e4c9cbd79e",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/penguins.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Data on adult penguins covering three species found on three islands in the Palmer Archipelago, Antarctica, including their size (flipper length, body mass, bill dimensions), and sex. The columns of penguins are a subset of the more extensive penguins_raw data frame, which includes nesting observations and blood isotope data. There are di"
@@ -1000,7 +1000,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The data set give the locations of 1000 seismic events of MB > 4.0. The events occurred in a cube near Fiji since 1964.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_quakes.html",
+        "path": "evidence/datasets_quakes.html",
         "sha256": "498a931cf7b70373c37d40d01f9eb4f2269d15d1dd445426c3fbaba93a125597",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/quakes.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: The data set give the locations of 1000 seismic events of MB > 4.0. The events occurred in a cube near Fiji since 1964."
@@ -1014,7 +1014,7 @@
     "reason": "Documentation describes generated, simulated, or contrived observations.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_randu.html",
+        "path": "evidence/datasets_randu.html",
         "sha256": "28da441af079a2575100e723f0fe114c0523539c6c39782d5b6311a2f4856d21",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/randu.html",
         "finding": "Documentation describes generated, simulated, or contrived observations."
@@ -1028,7 +1028,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Monthly numbers of sunspots, as from the World Data Center, aka SIDC . sunspot.month is the version of the data that will occasionally be updated when new counts become available (or the numbers are recalibrated). Note that around 2014\u20132015 there has been an international effort to recalibrate the sunspots numbers; since R 4.5.0 (2025), t",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_sunspot.month.html",
+        "path": "evidence/datasets_sunspot.month.html",
         "sha256": "b3efa933093a8c70c86c15a4a4bf1804a6acf098a9e688a5579726ddb76c769d",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/sunspot.month.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Monthly numbers of sunspots, as from the World Data Center, aka SIDC . sunspot.month is the version of the data that will occasionally be updated when new counts become available (or the numbers are recalibrated). Note that around 2014\u20132015 there has been an international effort to recalibrate the sunspots numbers; since R 4.5.0 (2025), t"
@@ -1042,7 +1042,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Yearly numbers of sunspots from 1700 to 1988 (rounded to one digit). Note that monthly numbers are available as sunspot.month , though starting slightly later.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_sunspot.year.html",
+        "path": "evidence/datasets_sunspot.year.html",
         "sha256": "268a5e03eb988a0a792ca547019900527bd6bd69c9c38d807f1851e19f1afcba",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/sunspot.year.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Yearly numbers of sunspots from 1700 to 1988 (rounded to one digit). Note that monthly numbers are available as sunspot.month , though starting slightly later."
@@ -1056,7 +1056,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Monthly mean relative sunspot numbers from 1749 to 1983. Collected at Swiss Federal Observatory, Zurich until 1960, then Tokyo Astronomical Observatory.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_sunspots.html",
+        "path": "evidence/datasets_sunspots.html",
         "sha256": "a54a7b3848e5fdf9fa56b9086c8c07fa0e0f97ccd4d12c85c4ff3372e787690a",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/sunspots.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Monthly mean relative sunspot numbers from 1749 to 1983. Collected at Swiss Federal Observatory, Zurich until 1960, then Tokyo Astronomical Observatory."
@@ -1070,7 +1070,7 @@
     "reason": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Contains normalized tree-ring widths in dimensionless units.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/datasets_treering.html",
+        "path": "evidence/datasets_treering.html",
         "sha256": "021b8c11b731344bdbad5c1e77e2f130d6b802099f22864b7423fef240cfd5e0",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/datasets/treering.html",
         "finding": "Source documentation identifies recorded measurements, survey responses, transactions or historical observations: Contains normalized tree-ring widths in dimensionless units."
