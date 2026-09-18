@@ -50,12 +50,15 @@
 
 use anyhow::{Context, Result};
 use clap::Parser;
+use jope_dime_regressor::paths;
 use serde_json::{json, Map, Value};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const DEFAULT_ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
+jope_paths::once_str!(
+    fn default_root_str => paths::flywheel_root()
+);
 const RECEIPT_SCHEMA: &str = "JopeOpsHealthCheck.v1";
 const STATE_SCHEMA: &str = "JopeOpsHealthCheckState.v1";
 /// Status documents are all a few KiB. The multi-hundred-KiB `pre-*.json`
@@ -66,7 +69,7 @@ const MAX_STATUS_BYTES: u64 = 1024 * 1024;
 #[command(about = "Fail the unit when a flywheel daemon keeps publishing an error document")]
 struct Args {
     /// Flywheel root.
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
     /// Consecutive scans a file may carry an error/degraded document before
     /// this unit fails. At the 60 s timer cadence, 3 means ~3 minutes.

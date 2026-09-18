@@ -10,6 +10,7 @@ use crossterm::terminal::{
 use jope_dime_regressor::four_task::{
     task_metric_contract, FourTaskTelemetryRow, JopeFourTaskTelemetryV1, FOUR_TASK_ORDER,
 };
+use jope_dime_regressor::paths;
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style};
@@ -31,9 +32,15 @@ use std::sync::{Arc, RwLock};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-const DEFAULT_ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
-const DEFAULT_SCQ: &str = "/home/ubuntu/smart_cluster/target/release/scq";
-const DEFAULT_METRICS_ROOT: &str = "/home/ubuntu/smart_cluster/var/runs";
+jope_paths::once_str!(
+    fn default_root_str => paths::flywheel_root()
+);
+jope_paths::once_str!(
+    fn default_scq_str => paths::scq_binary()
+);
+jope_paths::once_str!(
+    fn default_metrics_root_str => paths::scq_runs_root()
+);
 const DEFAULT_REFRESH_MS: u64 = 250;
 const CPU_TARGET_PCT: f64 = 80.0;
 const CPU_HARD_GUARD_PCT: f64 = 95.0;
@@ -145,10 +152,10 @@ const DAEMON_HEARTBEATS: [(&str, u64); 5] = [
 )]
 struct Args {
     /// Flywheel state root.
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
     /// Native SCQ client.
-    #[arg(long, default_value = DEFAULT_SCQ)]
+    #[arg(long, default_value = default_scq_str())]
     scq: PathBuf,
     /// Terminal redraw and source refresh cadence.
     #[arg(
@@ -158,7 +165,7 @@ struct Args {
     )]
     refresh_ms: u64,
     /// Root of SCQ run directories (trainer progress discovery).
-    #[arg(long, default_value = DEFAULT_METRICS_ROOT)]
+    #[arg(long, default_value = default_metrics_root_str())]
     metrics_root: PathBuf,
     /// OPT-IN: corpus sqlite for point lookups (default: never opened).
     #[arg(long)]
@@ -1002,9 +1009,7 @@ fn collect_sources(args: &Args) -> RawSources {
         &mut raw.source_states,
     );
     raw.supply_breaker = read_json_source(
-        &args
-            .root
-            .join("ops/cohort-supply-circuit-breaker.v1.json"),
+        &args.root.join("ops/cohort-supply-circuit-breaker.v1.json"),
         "supply-breaker",
         true,
         &mut raw.source_states,
@@ -1032,9 +1037,7 @@ fn collect_sources(args: &Args) -> RawSources {
         &mut raw.source_states,
     );
     raw.campaign = read_json_source(
-        &args
-            .root
-            .join("ops/dlgp-budget-campaign-status.v1.json"),
+        &args.root.join("ops/dlgp-budget-campaign-status.v1.json"),
         "budget-campaign",
         true,
         &mut raw.source_states,
@@ -3126,7 +3129,9 @@ fn parse_campaign(value: Option<&Value>) -> CampaignSummary {
         .unwrap_or("-")
         .to_owned();
     CampaignSummary {
-        stage: string_at(value, &["stage"]).unwrap_or("unavailable").to_owned(),
+        stage: string_at(value, &["stage"])
+            .unwrap_or("unavailable")
+            .to_owned(),
         gate_state: string_at(value, &["gate_state"])
             .unwrap_or("launch_gates_blocked")
             .to_owned(),
@@ -3686,10 +3691,15 @@ fn blocked_banner(dashboard: &Dashboard) -> Option<String> {
         ));
     }
     if dashboard.priority_drift {
-        return Some("DIME BLOCKED — project priority drift; launch remains fail-closed".to_owned());
+        return Some(
+            "DIME BLOCKED — project priority drift; launch remains fail-closed".to_owned(),
+        );
     }
     if dashboard.stale_critical_source {
-        return Some("DIME BLOCKED — one or more critical canonical status sources are stale or absent".to_owned());
+        return Some(
+            "DIME BLOCKED — one or more critical canonical status sources are stale or absent"
+                .to_owned(),
+        );
     }
     if below_floor_without_ready {
         return Some(format!(
@@ -3731,9 +3741,11 @@ fn blocked_banner(dashboard: &Dashboard) -> Option<String> {
         ));
     }
     if dime_waiting > 0 {
-        if let Some(node) = dashboard.nodes.iter().find(|node| {
-            node.state == "up" && node.cpu_busy_pct.is_some_and(|value| value < 25.0)
-        }) {
+        if let Some(node) = dashboard
+            .nodes
+            .iter()
+            .find(|node| node.state == "up" && node.cpu_busy_pct.is_some_and(|value| value < 25.0))
+        {
             return Some(format!(
                 "DIME STARVED — runnable backlog while {} remains at {:.1}% CPU",
                 node.node,
@@ -3819,9 +3831,7 @@ fn cockpit_state(dashboard: &Dashboard) -> &'static str {
     {
         return "RUNNING";
     }
-    if dashboard.campaign.gate_state != "runnable"
-        && dashboard.campaign.gate_state != "complete"
-    {
+    if dashboard.campaign.gate_state != "runnable" && dashboard.campaign.gate_state != "complete" {
         return "GATED";
     }
     "RUNNING"
@@ -5967,7 +5977,10 @@ fn render_compact_gpu_dl(
                     }),
                 ),
                 Span::raw(short(
-                    &format!("{role}{} — {reason}", gpu.owner_job.as_deref().unwrap_or("idle")),
+                    &format!(
+                        "{role}{} — {reason}",
+                        gpu.owner_job.as_deref().unwrap_or("idle")
+                    ),
                     area.width.saturating_sub(42) as usize,
                 )),
             ])

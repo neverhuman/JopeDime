@@ -4,6 +4,7 @@
 //! original modules and may read old work, but they cannot construct these
 //! identities without satisfying the validations here.
 
+use crate::paths;
 use crate::selfplay_data::canonical_json_sha256;
 use crate::selfplay_shadow::Sha256Digest;
 use crate::task::{verify_embedded_task_semantics, Task, TASK_SEMANTICS_SHA256};
@@ -31,7 +32,9 @@ pub const PIPELINE_EDGE_SCHEMA: &str = "PipelineEdge.v1";
 pub const WORK_INTENT_SCHEMA: &str = "WorkIntent.v1";
 pub const CONSUMER_HEARTBEAT_SCHEMA: &str = "ConsumerHeartbeat.v1";
 pub const PIPELINE_STATUS_SCHEMA: &str = "JopePipelineStatus.v2";
-pub const GENERAL_ARTIFACT_CAS_ROOT: &str = "/home/ubuntu/jope-flywheel/artifacts-v1";
+jope_paths::once_str!(
+    pub fn general_artifact_cas_root_str => paths::artifact_cas_root()
+);
 
 fn sha256(value: &str, field: &str) -> Result<()> {
     Sha256Digest::parse(value.to_owned())

@@ -1,4 +1,5 @@
 use super::*;
+use jope_dime_regressor::paths;
 use serde_json::json;
 use std::fs::File;
 use std::os::fd::AsRawFd;
@@ -31,9 +32,15 @@ pub(super) const NODES: [&str; 3] = ["xbabe1", "xbabe2", "xbabe3"];
 const GOLDEN46_RUN_ID: &str = "golden46-new3-20260723-v4";
 const GOLDEN46_TRANSFER_RUN_ID: &str = "golden46-new3-20260723-v4-target-family-informed";
 const GOLDEN46_EFFECTIVELY_UNBOUNDED_RUNTIME_HOURS: usize = 876_000;
-const SCQ_BINARY: &str = "/home/ubuntu/smart_cluster/target/release/scq";
-const REMOTE_ROOT: &str = "/home/ubuntu/jope-golden42";
-const NODE_LEASE_ROOT: &str = "/home/ubuntu/jope-golden42-controller-node-leases";
+jope_paths::once_str!(
+    fn scq_binary_str => paths::scq_binary()
+);
+jope_paths::once_str!(
+    fn remote_root_str => paths::legacy_tree("jope-golden42")
+);
+jope_paths::once_str!(
+    fn node_lease_root_str => paths::legacy_tree("jope-golden42-controller-node-leases")
+);
 const NODE_LEASE_SLOTS: usize = 5;
 const ISLAND_START_GENERATION: usize = 20;
 const ISLAND_END_GENERATION: usize = 30;
@@ -110,7 +117,7 @@ struct NodeLease {
 
 impl NodeLease {
     fn acquire(node: &str) -> Result<Self> {
-        Self::acquire_at(Path::new(NODE_LEASE_ROOT), node)
+        Self::acquire_at(Path::new(node_lease_root_str()), node)
     }
 
     fn acquire_at(lock_dir: &Path, node: &str) -> Result<Self> {
@@ -359,7 +366,7 @@ pub(super) fn command_output(mut command: Command, label: &str) -> Result<std::p
 }
 
 pub(super) fn scq_json(args: &[&str]) -> Result<Value> {
-    let mut command = Command::new(SCQ_BINARY);
+    let mut command = Command::new(scq_binary_str());
     command.arg("--json").args(args);
     let output = command_output(command, "scq")?;
     serde_json::from_slice(&output.stdout).context("parse scq JSON")
@@ -501,7 +508,7 @@ fn submit_true(node: &str, suffix: &str) -> Result<(String, String)> {
     );
     let spec_path = std::env::temp_dir().join(format!("{id}.toml"));
     fs::write(&spec_path, spec.as_bytes())?;
-    let mut command = Command::new(SCQ_BINARY);
+    let mut command = Command::new(scq_binary_str());
     command.arg("submit").arg(&spec_path);
     let submit = command_output(command, "pinned SCQ preflight");
     fs::remove_file(&spec_path)?;
@@ -696,11 +703,14 @@ pub(super) fn copy_atomic(
 }
 
 pub(super) fn scq_binary_sha256() -> Result<String> {
-    sha256_file(Path::new(SCQ_BINARY))
+    sha256_file(Path::new(scq_binary_str()))
 }
 
 pub(super) fn remote_bundle_root(release_binary_sha256: &str) -> String {
-    format!("{REMOTE_ROOT}/bundles/{release_binary_sha256}")
+    format!(
+        "{remote_root_str}/bundles/{release_binary_sha256}",
+        remote_root_str = remote_root_str()
+    )
 }
 
 pub(super) fn remote_dataset_root(release_binary_sha256: &str, dataset_hash: &str) -> String {
@@ -722,7 +732,7 @@ pub(super) fn preflight_and_stage(
     let scq_hash = scq_binary_sha256()?;
     let doctor = command_output(
         {
-            let mut command = Command::new(SCQ_BINARY);
+            let mut command = Command::new(scq_binary_str());
             command.arg("doctor");
             command
         },
@@ -947,7 +957,7 @@ fn copy_remote_outputs(node: &str, remote: &str, local: &Path) -> Result<()> {
 }
 
 fn submit_batch_job(manifest: &ScqBatchManifest, spec_path: &Path) -> Result<Value> {
-    let mut command = Command::new(SCQ_BINARY);
+    let mut command = Command::new(scq_binary_str());
     command.arg("submit").arg(spec_path);
     let output = command
         .output()
@@ -1088,7 +1098,10 @@ fn run_batch_flavored(
         bail!("SCQ batch receipt appeared while waiting for its node lease");
     }
     ensure_node_available_after_lease(node)?;
-    let remote_batch_root = format!("{REMOTE_ROOT}/batches/{id}");
+    let remote_batch_root = format!(
+        "{remote_root_str}/batches/{id}",
+        remote_root_str = remote_root_str()
+    );
     let remote_manifest = format!("{remote_batch_root}/manifest.v1.json");
     let remote_output = format!("{remote_batch_root}/outputs");
     let binary = format!("{bundle_root}/jope-dime-regressor");
@@ -2994,11 +3007,12 @@ mod tests {
             active_jobs_on_node(&queue, "xbabe3").unwrap(),
             Vec::<String>::new()
         );
-        let services = "\
-1 scqd /home/ubuntu/smart_cluster/target/release/scqd\n\
-2 scq /home/ubuntu/smart_cluster/target/release/scq controller serve\n\
-3 scq /home/ubuntu/smart_cluster/target/release/scq agent status --node xbabe1\n";
-        assert!(competing_node_processes(services, "xbabe1", "xbabe2", "42").is_empty());
+        let services = format!(
+            "1 scqd {scqd}\n2 scq {scq} controller serve\n3 scq {scq} agent status --node xbabe1\n",
+            scqd = paths::scqd_binary().display(),
+            scq = scq_binary_str(),
+        );
+        assert!(competing_node_processes(&services, "xbabe1", "xbabe2", "42").is_empty());
         assert!(competing_node_processes(
             "2365996 jope-dime-regre /opt/jope-dime-regressor run-golden42-aggressive --resume",
             "xbabe2",

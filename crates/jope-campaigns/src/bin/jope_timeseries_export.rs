@@ -11,10 +11,11 @@
 //! never reads these exports; corpus_eval reduces from the raw corpus itself.
 //!
 //! Usage:
-//!   jope_timeseries_export --registry /home/ubuntu/remote_super/quant/timeseries \
-//!                          --out /home/ubuntu/remote_super/quant/timeseries_reduced_v2
+//!   jope_timeseries_export --registry "$JOPE_REGISTRY/../timeseries" \
+//!                          --out "$JOPE_REGISTRY/../timeseries_reduced_v2"
 
 use anyhow::{bail, Context, Result};
+use jope_dime_regressor::paths;
 use jope_dime_regressor::timeseries::{
     make_direct_forecast_rows, make_direct_reduction, read_timeseries_csv,
     validate_timeseries_data, TimeSeriesManifestSpec, TS_REDUCTION_V2,
@@ -180,8 +181,8 @@ fn carry_synthetic_provenance(source_meta: &Value, out_meta: &mut Value) {
 }
 
 fn main() -> Result<()> {
-    let mut registry = PathBuf::from("/home/ubuntu/remote_super/quant/timeseries");
-    let mut out_root = PathBuf::from("/home/ubuntu/remote_super/quant/timeseries_reduced_v2");
+    let mut registry = paths::quant_root().join("timeseries");
+    let mut out_root = paths::quant_root().join("timeseries_reduced_v2");
     let mut arguments = std::env::args().skip(1);
     while let Some(flag) = arguments.next() {
         let value = arguments.next().context("flag requires a value")?;

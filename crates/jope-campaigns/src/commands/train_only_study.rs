@@ -11,6 +11,7 @@ use feat_math::evolve::{crossover_canonical_pipelines, mutate_canonical_pipeline
 use feat_math::model::fit_with_stage_cache;
 use feat_math::stage_cache::{StageCache, StageCacheCtx, DEFAULT_BYTE_CAP};
 use feat_math::{fit, GenomeIr};
+use jope_dime_regressor::paths;
 use rayon::prelude::*;
 use rayon::ThreadPool;
 use rusqlite::{Connection, OpenFlags};
@@ -41,15 +42,21 @@ pub(crate) const STUDY_DESIGN: &str = "checkpoint_assisted_transfer";
 const CONTEXT_FLOATS: usize = 1536 + 512;
 const CONTEXT_BYTES: usize = CONTEXT_FLOATS * 4;
 const DEFAULT_STUDY_ROOT: &str = "runs/train-only-studies";
-const DEFAULT_SOTARENA_ROOT: &str = "/home/ubuntu/sotarena";
-const DEFAULT_CHECKPOINT_POINTER: &str =
-    "/home/ubuntu/jope-flywheel/test_exact_gen0/training/accepted-by-task.json";
-const DEFAULT_CHECKPOINT_PROVENANCE: &str =
-    "/home/ubuntu/jope-flywheel/training/round1/rotation-inputs.v1.json";
-const DEFAULT_CATALOG_POINTER: &str =
-    "/home/ubuntu/jope-flywheel/test_exact_gen0/catalog/current.json";
-const DEFAULT_OBSERVATION_DB: &str =
-    "/home/ubuntu/jope-flywheel/test_exact_gen0/corpus/strict-test-exact.sqlite";
+jope_paths::once_str!(
+    fn default_sotarena_root_str => paths::sotarena_reporter_root()
+);
+jope_paths::once_str!(
+    fn default_checkpoint_pointer_str => paths::flywheel_root().join("training/accepted-by-task.json")
+);
+jope_paths::once_str!(
+    fn default_checkpoint_provenance_str => paths::flywheel_training_root().join("round1/rotation-inputs.v1.json")
+);
+jope_paths::once_str!(
+    fn default_catalog_pointer_str => paths::catalog_pointer()
+);
+jope_paths::once_str!(
+    fn default_observation_db_str => paths::corpus_db()
+);
 const DEFAULT_PROPOSAL_GENERATOR: &str = "scripts/test_exact_dl_generate.py";
 const MIN_RANKABLE: usize = 30;
 const EXPECTED_ELIGIBLE: usize = 37;
@@ -137,15 +144,15 @@ impl PrepareArgs {
         Self {
             run_id,
             study_root: study_root.unwrap_or_else(|| PathBuf::from(DEFAULT_STUDY_ROOT)),
-            checkpoint_pointer: PathBuf::from(DEFAULT_CHECKPOINT_POINTER),
-            checkpoint_provenance: PathBuf::from(DEFAULT_CHECKPOINT_PROVENANCE),
-            catalog_pointer: PathBuf::from(DEFAULT_CATALOG_POINTER),
-            observation_db: PathBuf::from(DEFAULT_OBSERVATION_DB),
+            checkpoint_pointer: PathBuf::from(default_checkpoint_pointer_str()),
+            checkpoint_provenance: PathBuf::from(default_checkpoint_provenance_str()),
+            catalog_pointer: PathBuf::from(default_catalog_pointer_str()),
+            observation_db: PathBuf::from(default_observation_db_str()),
             dl_proposals: None,
             proposal_generator: PathBuf::from(DEFAULT_PROPOSAL_GENERATOR),
             python: PathBuf::from("python3"),
             proposal_device: "cuda".to_string(),
-            sotarena_root: PathBuf::from(DEFAULT_SOTARENA_ROOT),
+            sotarena_root: PathBuf::from(default_sotarena_root_str()),
             workers: 8,
             smoke: false,
             proposal_manifest_only: false,
@@ -5724,9 +5731,9 @@ mod tests {
         let qualified_root = std::env::var_os("JOPE_TEST_SOTARENA_ROOT").map(PathBuf::from);
         let sotarena_root = qualified_root
             .as_deref()
-            .unwrap_or_else(|| Path::new(DEFAULT_SOTARENA_ROOT));
-        let (_, catalog) =
-            load_catalog(Path::new(DEFAULT_CATALOG_POINTER)).expect("production context catalog");
+            .unwrap_or_else(|| Path::new(default_sotarena_root_str()));
+        let (_, catalog) = load_catalog(Path::new(default_catalog_pointer_str()))
+            .expect("production context catalog");
         let disclosure = CorpusExclusions {
             schema: "fixture".to_string(),
             run_id: "fixture".to_string(),

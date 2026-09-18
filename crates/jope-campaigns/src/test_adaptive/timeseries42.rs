@@ -9,6 +9,7 @@ use feat_math::advanced_v3::validate_v3_genome;
 use feat_math::heads::is_head_op;
 use feat_math::target_transform::is_target_op;
 use feat_math::{ColumnSpec, DataSchema, Objective, RowSemantics, TaskSpec};
+use jope_dime_regressor::paths;
 use jope_dime_regressor::timeseries::{
     direct_feature_names_for, make_supervised_reduction, read_timeseries_csv,
     validate_timeseries_data, ReductionVersion, TimeSeriesManifestSpec,
@@ -20,11 +21,21 @@ use std::os::unix::fs::PermissionsExt;
 use std::process::Stdio;
 use std::sync::{Arc, Mutex, OnceLock};
 
-const REGISTRY: &str = "/home/ubuntu/remote_super/quant/timeseries";
-const OUTPUT_ROOT: &str = "/home/ubuntu/jope-test-adaptive/timeseries42";
-const SCQ_BINARY: &str = "/home/ubuntu/super_cluster/scq";
-const CORPUS_EVAL: &str = "/home/ubuntu/jope-dime/target/release/corpus_eval";
-const SOTARENA_PULL: &str = "/home/ubuntu/sotarena_pull/target/release/sotarena_pull";
+jope_paths::once_str!(
+    fn registry_str => paths::quant_root().join("timeseries")
+);
+jope_paths::once_str!(
+    fn output_root_str => paths::legacy_tree("jope-test-adaptive").join("timeseries42")
+);
+jope_paths::once_str!(
+    fn scq_binary_str => paths::super_cluster_scq_binary()
+);
+jope_paths::once_str!(
+    fn corpus_eval_str => paths::corpus_eval_binary()
+);
+jope_paths::once_str!(
+    fn sotarena_pull_str => paths::legacy_tree("sotarena_pull").join("target/release/sotarena_pull")
+);
 const LEGACY_PROJECT: &str = "jope";
 const FORECAST3_PROJECT: &str = "jope-timeseries-test-adaptive";
 const NODES: [&str; 4] = ["xbabe1", "xbabe2", "xbabe3", "xbabe4"];
@@ -40,24 +51,31 @@ const FULL_RESUME_STAGING_VERIFY_ENV: &str = "JOPE_TIMESERIES42_FULL_RESUME_STAG
 const GENERATIONS: usize = 2;
 const FORECAST3_RUN_ID: &str = "timeseries42-test-adaptive-forecast3-gen20-v2";
 const FORECAST3_GENERATIONS: usize = 20;
-const COVERAGE_COMPARATOR_ROOT: &str =
-    "/home/ubuntu/jope-dime/campaigns/test-adaptive/comparators/post-coverage-v2";
-const COVERAGE_COMPARATOR_SET: &str =
-    "/home/ubuntu/jope-dime/campaigns/test-adaptive/comparators/post-coverage-v2/comparator-set.v2.json";
-const MC_COVERAGE_MANIFEST: &str =
-    "/home/ubuntu/remote_super/quant/releases/mc-union-runnable272-v5/manifest.json";
+jope_paths::once_str!(
+    fn coverage_comparator_root_str => paths::test_adaptive_root().join("comparators/post-coverage-v2")
+);
+jope_paths::once_str!(
+    fn coverage_comparator_set_str => paths::test_adaptive_root().join("comparators/post-coverage-v2/comparator-set.v2.json")
+);
+jope_paths::once_str!(
+    fn mc_coverage_manifest_str => paths::quant_root().join("releases/mc-union-runnable272-v5/manifest.json")
+);
 const MC_COVERAGE_MANIFEST_SHA256: &str =
     "93888beb0d24f7cb7f0def66c88127a6cee6d0606c25c11ddff82161506e4938";
-const MC_COVERAGE_RECEIPT: &str =
-    "/home/ubuntu/remote_super/quant/releases/mc-union-runnable272-v5/receipts/final.json";
-const TS_COVERAGE_MANIFEST: &str =
-    "/home/ubuntu/remote_super/quant/releases/timeseries42-forecast3-v10/manifest.json";
+jope_paths::once_str!(
+    fn mc_coverage_receipt_str => paths::quant_root().join("releases/mc-union-runnable272-v5/receipts/final.json")
+);
+jope_paths::once_str!(
+    fn ts_coverage_manifest_str => paths::quant_root().join("releases/timeseries42-forecast3-v10/manifest.json")
+);
 const TS_COVERAGE_MANIFEST_SHA256: &str =
     "dda881dab5eeebcd7293081df5838062c97cfb5e15b9383776a4a3630f32c06d";
-const TS_COVERAGE_RECEIPT: &str =
-    "/home/ubuntu/remote_super/quant/releases/timeseries42-forecast3-v10/receipts/final.json";
-const TS_BASELINE_RECEIPT: &str =
-    "/home/ubuntu/remote_super/quant/releases/mc272-ts42-coverage-v1/receipts/timeseries-baseline-all21.json";
+jope_paths::once_str!(
+    fn ts_coverage_receipt_str => paths::quant_root().join("releases/timeseries42-forecast3-v10/receipts/final.json")
+);
+jope_paths::once_str!(
+    fn ts_baseline_receipt_str => paths::quant_root().join("releases/mc272-ts42-coverage-v1/receipts/timeseries-baseline-all21.json")
+);
 const GEN30_GENERATIONS: usize = 30;
 const GEN30_START_GENERATION: usize = GENERATIONS;
 const DEFAULT_WINALL_GENERATIONS: usize = 120;
@@ -745,7 +763,7 @@ struct TerminalSummary {
 }
 
 fn campaign_root(run_id: &str) -> PathBuf {
-    Path::new(OUTPUT_ROOT).join(run_id)
+    Path::new(output_root_str()).join(run_id)
 }
 
 fn dataset_root(root: &Path, dataset: &str) -> PathBuf {
@@ -972,7 +990,7 @@ fn validate_coverage_final_receipt(
 }
 
 fn validate_timeseries_baseline_receipt() -> Result<String> {
-    let value: Value = load_json(Path::new(TS_BASELINE_RECEIPT))?;
+    let value: Value = load_json(Path::new(ts_baseline_receipt_str()))?;
     if value.get("schema").and_then(Value::as_str)
         != Some("timeseries42.baseline-all21-final-receipt.v1")
         || value.get("parent_manifest_sha256").and_then(Value::as_str)
@@ -998,13 +1016,13 @@ fn validate_timeseries_baseline_receipt() -> Result<String> {
 fn validate_coverage_binding() -> Result<CoverageBinding> {
     for (path, schema, campaign_id, expected_sha256) in [
         (
-            MC_COVERAGE_MANIFEST,
+            mc_coverage_manifest_str(),
             "multiclass-union-runnable-v5",
             "mc-union-runnable272-v5",
             MC_COVERAGE_MANIFEST_SHA256,
         ),
         (
-            TS_COVERAGE_MANIFEST,
+            ts_coverage_manifest_str(),
             "timeseries42-forecast-campaign-v10",
             "timeseries42-forecast3-v10",
             TS_COVERAGE_MANIFEST_SHA256,
@@ -1019,23 +1037,23 @@ fn validate_coverage_binding() -> Result<CoverageBinding> {
         }
     }
     let multiclass_final_receipt_sha256 = validate_coverage_final_receipt(
-        Path::new(MC_COVERAGE_RECEIPT),
+        Path::new(mc_coverage_receipt_str()),
         "mc-union-runnable272-v5",
         MC_COVERAGE_MANIFEST_SHA256,
         "multiclass",
         11_696,
     )?;
     let timeseries_final_receipt_sha256 = validate_coverage_final_receipt(
-        Path::new(TS_COVERAGE_RECEIPT),
+        Path::new(ts_coverage_receipt_str()),
         "timeseries42-forecast3-v10",
         TS_COVERAGE_MANIFEST_SHA256,
         "timeseries",
         126,
     )?;
     let timeseries_baseline_receipt_sha256 = validate_timeseries_baseline_receipt()?;
-    let set: Value = load_json(Path::new(COVERAGE_COMPARATOR_SET))?;
+    let set: Value = load_json(Path::new(coverage_comparator_set_str()))?;
     if set.get("schema").and_then(Value::as_str) != Some("test-adaptive-comparator-set.v2")
-        || set.get("root").and_then(Value::as_str) != Some(COVERAGE_COMPARATOR_ROOT)
+        || set.get("root").and_then(Value::as_str) != Some(coverage_comparator_root_str())
         || set
             .get("multiclass_coverage_receipt_sha256")
             .and_then(Value::as_str)
@@ -1060,8 +1078,8 @@ fn validate_coverage_binding() -> Result<CoverageBinding> {
         timeseries_manifest_sha256: TS_COVERAGE_MANIFEST_SHA256.to_string(),
         timeseries_final_receipt_sha256,
         timeseries_baseline_receipt_sha256,
-        comparator_root: COVERAGE_COMPARATOR_ROOT.to_string(),
-        comparator_set_path: COVERAGE_COMPARATOR_SET.to_string(),
+        comparator_root: coverage_comparator_root_str().to_string(),
+        comparator_set_path: coverage_comparator_set_str().to_string(),
         comparator_set_sha256,
     })
 }
@@ -1073,7 +1091,7 @@ fn bind_forecast3_comparators(specs: &mut [DatasetSpec], coverage: &CoverageBind
             .copied()
             .filter(|model| !declared_baseline_skip(&spec.dataset_hash, model))
             .collect::<BTreeSet<_>>();
-        let path = Path::new(COVERAGE_COMPARATOR_ROOT)
+        let path = Path::new(coverage_comparator_root_str())
             .join("timeseries")
             .join(&spec.dataset_hash)
             .join("comparator-lock.v2.json");
@@ -1267,9 +1285,9 @@ fn verify_allmodels_baseline(
 }
 
 fn load_dataset_specs(require_allmodels_baseline: bool) -> Result<Vec<DatasetSpec>> {
-    let registry = Path::new(REGISTRY);
+    let registry = Path::new(registry_str());
     let mut dirs = fs::read_dir(registry)
-        .with_context(|| format!("read {REGISTRY}"))?
+        .with_context(|| format!("read {registry_str}", registry_str = registry_str()))?
         .map(|entry| Ok(entry?.path()))
         .collect::<Result<Vec<_>>>()?;
     dirs.retain(|path| path.is_dir());
@@ -1553,7 +1571,7 @@ fn binary_rewrite_sources() -> Result<Vec<CandidateSource>> {
 }
 
 fn sotarena_scan_sources() -> Result<Vec<CandidateSource>> {
-    let root = Path::new("/home/ubuntu/sotarena_pull/out/scans");
+    let root = paths::legacy_tree("sotarena_pull").join("out/scans");
     if !root.exists() {
         return Ok(Vec::new());
     }
@@ -1607,9 +1625,9 @@ fn sotarena_scan_sources() -> Result<Vec<CandidateSource>> {
 
 fn local_flywheel_elite_sources() -> Result<Vec<CandidateSource>> {
     let roots = [
-        Path::new("/home/ubuntu/jope-flywheel/test_exact_gen0/receipts"),
-        Path::new("/home/ubuntu/jope-dime/runs"),
-        Path::new("/home/ubuntu/jope-test-adaptive"),
+        paths::flywheel_root().join("receipts"),
+        paths::runs_root(),
+        paths::legacy_tree("jope-test-adaptive"),
     ];
     let mut receipt_files = Vec::new();
     for root in roots {
@@ -1891,11 +1909,14 @@ fn seed_population_bindings(
 }
 
 fn current_corpus_eval_sha256() -> Result<String> {
-    sha256_file(Path::new(CORPUS_EVAL))
+    sha256_file(Path::new(corpus_eval_str()))
 }
 
 fn remote_bundle_root(release_binary_sha256: &str) -> String {
-    format!("{OUTPUT_ROOT}/bundles/{release_binary_sha256}")
+    format!(
+        "{output_root_str}/bundles/{release_binary_sha256}",
+        output_root_str = output_root_str()
+    )
 }
 
 fn remote_dataset_root(release_binary_sha256: &str, dataset_hash: &str) -> String {
@@ -2164,7 +2185,7 @@ fn stage_campaign(
     if sha256_file(&release_binary)? != release_binary_sha256 {
         bail!("release binary changed before TimeSeries42 staging");
     }
-    let corpus_eval = Path::new(CORPUS_EVAL);
+    let corpus_eval = Path::new(corpus_eval_str());
     if sha256_file(corpus_eval)? != corpus_eval_sha256 {
         bail!("corpus_eval changed before TimeSeries42 staging");
     }
@@ -2507,7 +2528,7 @@ fn corpus_manifest(
 }
 
 fn dataset_protocol_sha256(spec: &DatasetSpec) -> Result<String> {
-    let path = Path::new(COVERAGE_COMPARATOR_ROOT)
+    let path = Path::new(coverage_comparator_root_str())
         .join("timeseries")
         .join(&spec.dataset_hash)
         .join("comparator-lock.v2.json");
@@ -2527,7 +2548,7 @@ fn dataset_protocol_sha256(spec: &DatasetSpec) -> Result<String> {
 }
 
 fn validate_with_corpus_eval(manifest: &Path) -> Result<()> {
-    let output = Command::new(CORPUS_EVAL)
+    let output = Command::new(corpus_eval_str())
         .args(["validate-manifest", "--manifest"])
         .arg(manifest)
         .output()
@@ -2611,7 +2632,7 @@ fn scq_spec(
 fn scq_json(args: &[&str]) -> Result<Value> {
     let output = scq_batch::command_output(
         {
-            let mut command = Command::new(SCQ_BINARY);
+            let mut command = Command::new(scq_binary_str());
             command.arg("--json").args(args);
             command
         },
@@ -2659,7 +2680,7 @@ fn retryable_scq_stall_error(job_id: &str, reason: &str) -> anyhow::Error {
 fn cancel_scq_job(id: &str) -> Result<()> {
     scq_batch::command_output(
         {
-            let mut command = Command::new(SCQ_BINARY);
+            let mut command = Command::new(scq_binary_str());
             command.arg("cancel").arg(id);
             command
         },
@@ -2736,7 +2757,7 @@ fn submit_or_recover(job_id: &str, spec_path: &Path, target_node: &str) -> Resul
     if !exists {
         let result = scq_batch::command_output(
             {
-                let mut command = Command::new(SCQ_BINARY);
+                let mut command = Command::new(scq_binary_str());
                 command.arg("submit").arg(spec_path);
                 command
             },
@@ -2762,7 +2783,7 @@ fn submit_or_recover(job_id: &str, spec_path: &Path, target_node: &str) -> Resul
 fn scq_check(spec: &Path, target_node: &str) -> Result<()> {
     let result = scq_batch::command_output(
         {
-            let mut command = Command::new(SCQ_BINARY);
+            let mut command = Command::new(scq_binary_str());
             command.arg("check").arg(spec);
             command
         },
@@ -2788,7 +2809,7 @@ fn submit_batch(spec_paths: &[PathBuf]) -> Result<()> {
     }
     scq_batch::command_output(
         {
-            let mut command = Command::new(SCQ_BINARY);
+            let mut command = Command::new(scq_binary_str());
             command.arg("submit-batch");
             for spec_path in spec_paths {
                 command.arg(spec_path);
@@ -4643,7 +4664,7 @@ fn initialize(run_id: &str, resume: bool) -> Result<(CampaignManifest, StagingRe
     fs::create_dir_all(&root)?;
     let release_sha256 = current_binary_sha256()?;
     let corpus_eval_sha256 = current_corpus_eval_sha256()?;
-    let scq_binary_sha256 = sha256_file(Path::new(SCQ_BINARY))?;
+    let scq_binary_sha256 = sha256_file(Path::new(scq_binary_str()))?;
     let manifest_path = root.join("campaign.v1.json");
     let expected_config = base_campaign_config(run_id);
     let manifest = if manifest_path.is_file() {
@@ -4661,7 +4682,7 @@ fn initialize(run_id: &str, resume: bool) -> Result<(CampaignManifest, StagingRe
             || manifest.coverage_binding != expected_coverage
             || manifest.release_binary_sha256 != release_sha256
             || manifest.corpus_eval_sha256 != corpus_eval_sha256
-            || manifest.scq_binary != SCQ_BINARY
+            || manifest.scq_binary != scq_binary_str()
             || manifest.scq_binary_sha256 != scq_binary_sha256
             || (is_forecast3_gen20(run_id)
                 && manifest.seed_populations
@@ -4692,11 +4713,11 @@ fn initialize(run_id: &str, resume: bool) -> Result<(CampaignManifest, StagingRe
             base_campaign_sha256: None,
             continuation_start_generation: None,
             continuation_terminal_generation: None,
-            registry_root: REGISTRY.to_string(),
-            output_root: OUTPUT_ROOT.to_string(),
+            registry_root: registry_str().to_string(),
+            output_root: output_root_str().to_string(),
             release_binary_sha256: release_sha256.clone(),
             corpus_eval_sha256: corpus_eval_sha256.clone(),
-            scq_binary: SCQ_BINARY.to_string(),
+            scq_binary: scq_binary_str().to_string(),
             scq_binary_sha256,
             coverage_binding: expected_coverage,
             seed_populations,
@@ -4898,7 +4919,7 @@ fn initialize_gen30(
     fs::create_dir_all(&root)?;
     let release_sha256 = current_binary_sha256()?;
     let corpus_eval_sha256 = current_corpus_eval_sha256()?;
-    let scq_binary_sha256 = sha256_file(Path::new(SCQ_BINARY))?;
+    let scq_binary_sha256 = sha256_file(Path::new(scq_binary_str()))?;
     let manifest_path = root.join("campaign.v1.json");
     let manifest = if manifest_path.is_file() {
         if !resume {
@@ -4933,11 +4954,11 @@ fn initialize_gen30(
             base_campaign_sha256: Some(base.campaign_sha256.clone()),
             continuation_start_generation: Some(GEN30_START_GENERATION),
             continuation_terminal_generation: Some(GEN30_GENERATIONS - 1),
-            registry_root: REGISTRY.to_string(),
-            output_root: OUTPUT_ROOT.to_string(),
+            registry_root: registry_str().to_string(),
+            output_root: output_root_str().to_string(),
             release_binary_sha256: release_sha256.clone(),
             corpus_eval_sha256: corpus_eval_sha256.clone(),
-            scq_binary: SCQ_BINARY.to_string(),
+            scq_binary: scq_binary_str().to_string(),
             scq_binary_sha256,
             coverage_binding: None,
             seed_populations: Vec::new(),
@@ -4987,7 +5008,7 @@ fn initialize_winall(
     fs::create_dir_all(&root)?;
     let release_sha256 = current_binary_sha256()?;
     let corpus_eval_sha256 = current_corpus_eval_sha256()?;
-    let scq_binary_sha256 = sha256_file(Path::new(SCQ_BINARY))?;
+    let scq_binary_sha256 = sha256_file(Path::new(scq_binary_str()))?;
     let manifest_path = root.join("campaign.v1.json");
     let expected_config = CampaignConfig::winall(max_generations, start_generation, lineage_salt);
     let ids = ordered_ids(&winall_specs);
@@ -5023,11 +5044,11 @@ fn initialize_winall(
             base_campaign_sha256: Some(source.campaign_sha256.clone()),
             continuation_start_generation: Some(start_generation),
             continuation_terminal_generation: Some(max_generations - 1),
-            registry_root: REGISTRY.to_string(),
-            output_root: OUTPUT_ROOT.to_string(),
+            registry_root: registry_str().to_string(),
+            output_root: output_root_str().to_string(),
             release_binary_sha256: release_sha256.clone(),
             corpus_eval_sha256: corpus_eval_sha256.clone(),
-            scq_binary: SCQ_BINARY.to_string(),
+            scq_binary: scq_binary_str().to_string(),
             scq_binary_sha256,
             coverage_binding: None,
             seed_populations: Vec::new(),
@@ -5183,7 +5204,7 @@ fn write_ranked_csv(root: &Path, summary: &TerminalSummary) -> Result<()> {
 }
 
 fn run_sotarena_scan(root: &Path) -> Result<String> {
-    let output = Command::new(SOTARENA_PULL)
+    let output = Command::new(sotarena_pull_str())
         .args(["scan", "--task", "timeseries"])
         .output()
         .context("run sotarena_pull scan --task timeseries")?;
@@ -5267,7 +5288,7 @@ fn timeseries_report_value(
             "nodes": NODES,
             "candidate_timeout_seconds": CANDIDATE_TIMEOUT_SECONDS,
             "candidate_threads": SHARD_SIZE,
-            "corpus_eval": CORPUS_EVAL
+            "corpus_eval": corpus_eval_str()
         }
     })
 }
@@ -5343,7 +5364,7 @@ fn write_timeseries_dataset_reports(
                 "prediction_sha256": result.best_prediction_sha256,
             }),
         );
-        let report_path = Path::new(REGISTRY)
+        let report_path = Path::new(registry_str())
             .join(&result.dataset_hash)
             .join("reports")
             .join(JOPE_TIMESERIES_REPORT_FILE);

@@ -6,6 +6,7 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
 use jope_dime_regressor::jope_dlgp_best5::*;
 use jope_dime_regressor::jope_generalized_gp::raw_sha256;
+use jope_dime_regressor::paths;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -88,7 +89,7 @@ enum Command {
         pilot_winner: Option<ArmArg>,
         #[arg(long)]
         spec_root: PathBuf,
-        #[arg(long, default_value = "/home/ubuntu/jope-dime")]
+        #[arg(long, default_value_t = jope_paths::to_string(&paths::jope_home()))]
         workdir: String,
         #[arg(long, default_value = "scq")]
         scq_binary: PathBuf,

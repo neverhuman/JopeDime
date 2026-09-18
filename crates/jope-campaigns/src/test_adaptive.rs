@@ -4,6 +4,7 @@
 //! carry `benchmark_valid: false` and never touch the public registry.
 
 use crate::data::{read_regression_csv, RegressionData};
+use crate::paths;
 use anyhow::{bail, Context, Result};
 use feat_math::full_rust::{canonicalize, crossover_pipelines, mutate_pipeline, CanonicalGenome};
 use feat_math::{GenomeIr, Pcg32};
@@ -51,7 +52,9 @@ pub(crate) use timeseries42::{
 };
 
 const LEGACY_DATASET: &str = "b78d323566930bd7";
-const PANEL_PATH: &str = "/home/ubuntu/golden42/golden42_foundry/data/panel.json";
+jope_paths::once_str!(
+    fn panel_path_str => paths::legacy_tree("golden42").join("golden42_foundry/data/panel.json")
+);
 const LEADER_MANIFEST: &str = "manifests/panel-analysis.v1.json";
 const POPULATION: usize = 60;
 const ELITES: usize = 7;
@@ -909,7 +912,7 @@ fn validate_receipt_report_files(
         let report_path = if raw_path.is_absolute() {
             raw_path.to_path_buf()
         } else {
-            Path::new("/home/ubuntu/remote_super/quant").join(raw_path)
+            paths::quant_root().join(raw_path)
         };
         let observed = sha256_file(&report_path)
             .with_context(|| format!("hash receipt report {}", report_path.display()))?;
@@ -987,7 +990,7 @@ fn select_leader(dataset: &LeaderDataset) -> Result<(Vec<String>, f64)> {
 }
 
 fn load_panel_specs(registry: &Path) -> Result<(PanelFile, Vec<DatasetSpec>, String, String)> {
-    let panel_path = Path::new(PANEL_PATH);
+    let panel_path = Path::new(panel_path_str());
     let panel_bytes = fs::read(panel_path)?;
     let panel: PanelFile = serde_json::from_slice(&panel_bytes)?;
     if panel.schema != "golden42.panel/v1" || panel.dataset_ids.len() != 42 {
@@ -1599,7 +1602,7 @@ fn confirmed_campaign_winner_sources_at(
 
 fn fast30_bank_sources() -> Result<Vec<CandidateSource>> {
     let published =
-        Path::new("/home/ubuntu/quant/regression/reports/jain_regressor_fast30_gen0_seeds.txt");
+        paths::quant_mirror_root().join("regression/reports/jain_regressor_fast30_gen0_seeds.txt");
     let path = if published.is_file() {
         published.to_path_buf()
     } else {
@@ -2140,7 +2143,8 @@ fn stage_bundle(id: &CampaignIdentity, root: &Path) -> Result<(PathBuf, StagingR
 }
 
 fn remote_request_path(request: &CandidateRequest) -> PathBuf {
-    PathBuf::from("/home/ubuntu/jope-test-adaptive/runs")
+    paths::legacy_tree("jope-test-adaptive")
+        .join("runs")
         .join(&request.run_id)
         .join("requests")
         .join(&request.purpose)
@@ -3025,7 +3029,7 @@ fn expected_panel_manifest(
         run_id: run_id.to_string(),
         ordered_dataset_ids: panel.dataset_ids.clone(),
         ordered_cohort_sha256: panel.panel_dataset_sha256.clone(),
-        panel_file: PANEL_PATH.to_string(),
+        panel_file: panel_path_str().to_string(),
         panel_file_sha256,
         leader_manifest: workspace_root()
             .join(LEADER_MANIFEST)

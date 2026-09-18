@@ -11,6 +11,7 @@
 //! jope_expanded_catalog tool; Python is invoked only for torch encoders.
 
 use anyhow::{anyhow, bail, Context, Result};
+use jope_dime_regressor::paths;
 use jope_dime_regressor::recovery_contracts::V1EncodingQuarantineV1;
 use jope_dime_regressor::selfplay_expansion::{corpus_dir_name, TASKS};
 use jope_dime_regressor::selfplay_runtime::{atomic_json, sha256_bytes, sha256_file};
@@ -22,25 +23,39 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-const ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
-const REGISTRY: &str = "/home/ubuntu/remote_super/quant";
-const ENCODINGS: &str = "/home/ubuntu/jope-flywheel/encodings";
-const FOUNDATION: &str = "/home/ubuntu/jope-flywheel/encodings/foundation-v1/datasets";
-const FETCH_BINARY: &str = "/home/ubuntu/jope-flywheel/encodings/_fetch/binary-expansion";
-const SCQ: &str = "/home/ubuntu/smart_cluster/target/release/scq";
-/// Root of the foundation-expert tree, which the encoder imports as
-/// `python.elo_finetune.model_io`.
-///
-/// This is on the job PYTHONPATH because `fusion.experts.TabPFNv3Reg::__init__`
-/// hard-codes `sys.path.insert(0, "/home/ubuntu/fable_god")` -- a root that was
-/// MOVED here, so the import raises ModuleNotFoundError. `encode_external`
-/// catches that and logs "cuda expert load failed; falling back to cpu", and
-/// the CPU fallback calls the same loader and fails identically: the encoder is
-/// dead on both devices while the message blames the device. Bundled
-/// `runner.sh` does `export PYTHONPATH="${JOPE_RUNTIME_PYTHONPATH:?...}"`,
-/// REPLACING the variable rather than extending it, so the root has to be
-/// carried in the spec or no encode job on any node can resolve the expert.
-const FOUNDATION_EXPERT_ROOT: &str = "/home/ubuntu/remote_super/fable_god";
+jope_paths::once_str!(
+    fn root_str => paths::flywheel_root()
+);
+jope_paths::once_str!(
+    fn registry_str => paths::quant_root()
+);
+jope_paths::once_str!(
+    fn encodings_str => paths::flywheel_encodings_root()
+);
+jope_paths::once_str!(
+    fn foundation_str => paths::flywheel_encodings_root().join("foundation-v1/datasets")
+);
+jope_paths::once_str!(
+    fn fetch_binary_str => paths::flywheel_encodings_root().join("_fetch/binary-expansion")
+);
+jope_paths::once_str!(
+    fn scq_str => paths::scq_binary()
+);
+jope_paths::once_str!(
+    /// Root of the foundation-expert tree, which the encoder imports as
+    /// `python.elo_finetune.model_io`.
+    ///
+    /// This is on the job PYTHONPATH because `fusion.experts.TabPFNv3Reg::__init__`
+    /// hard-codes `sys.path.insert(0, "<home>/fable_god")` -- a root that was
+    /// MOVED here, so the import raises ModuleNotFoundError. `encode_external`
+    /// catches that and logs "cuda expert load failed; falling back to cpu", and
+    /// the CPU fallback calls the same loader and fails identically: the encoder is
+    /// dead on both devices while the message blames the device. Bundled
+    /// `runner.sh` does `export PYTHONPATH="${JOPE_RUNTIME_PYTHONPATH:?...}"`,
+    /// REPLACING the variable rather than extending it, so the root has to be
+    /// carried in the spec or no encode job on any node can resolve the expert.
+    fn foundation_expert_root_str => paths::foundation_expert_root()
+);
 const SIDECARS: [&str; 3] = ["hyperion3train128dim.vs", "train3.vs", "train_target.vs"];
 const TRANCHE_CAP: usize = 512;
 const ENCODE_CHUNK: usize = 256;
@@ -166,10 +181,16 @@ fn register_gpu_admission(spec: &Path, job_id: &str) -> Result<()> {
 
 fn scq_check_submit(spec: &Path, job_id: &str) -> Result<EncodeChunkSubmission> {
     let spec_text = spec.to_string_lossy();
-    let check = Command::new(SCQ)
+    let check = Command::new(scq_str())
         .args(["check", spec_text.as_ref()])
         .output()
-        .with_context(|| format!("run {SCQ} check {}", spec.display()))?;
+        .with_context(|| {
+            format!(
+                "run {scq_str} check {}",
+                spec.display(),
+                scq_str = scq_str()
+            )
+        })?;
     let check_message = String::from_utf8_lossy(if check.stderr.is_empty() {
         &check.stdout
     } else {
@@ -191,10 +212,16 @@ fn scq_check_submit(spec: &Path, job_id: &str) -> Result<EncodeChunkSubmission> 
         );
     }
 
-    let submit = Command::new(SCQ)
+    let submit = Command::new(scq_str())
         .args(["submit", spec_text.as_ref()])
         .output()
-        .with_context(|| format!("run {SCQ} submit {}", spec.display()))?;
+        .with_context(|| {
+            format!(
+                "run {scq_str} submit {}",
+                spec.display(),
+                scq_str = scq_str()
+            )
+        })?;
     let submit_message = String::from_utf8_lossy(if submit.stderr.is_empty() {
         &submit.stdout
     } else {
@@ -637,8 +664,8 @@ fn refresh_filesystem_state(conn: &Connection, root: &Path) -> Result<(u64, u64)
     let mut scanned = 0_u64;
     let tx = conn.unchecked_transaction()?;
     for task in TASKS {
-        let reg = Path::new(REGISTRY).join(corpus_dir_name(task));
-        let cache_root = Path::new(ENCODINGS).join(format!("{task}-expanded"));
+        let reg = Path::new(registry_str()).join(corpus_dir_name(task));
+        let cache_root = Path::new(encodings_str()).join(format!("{task}-expanded"));
         // The legacy corpus roots are mandatory; a new task's root may not
         // exist on every host yet and simply contributes no rows.
         if !reg.is_dir() && !matches!(task, "regression" | "binary") {
@@ -661,7 +688,9 @@ fn refresh_filesystem_state(conn: &Connection, root: &Path) -> Result<(u64, u64)
             let sidecars = SIDECARS
                 .iter()
                 .all(|s| dir.join(s).metadata().map(|m| m.len() > 0).unwrap_or(false));
-            let npy = Path::new(FOUNDATION).join(format!("{name}.npy")).is_file();
+            let npy = Path::new(foundation_str())
+                .join(format!("{name}.npy"))
+                .is_file();
             let cached = cache_root
                 .join(&name)
                 .join("cache-manifest.v1.json")
@@ -894,7 +923,7 @@ fn tranche_coverage(conn: &Connection, tranche_catalog: &Path) -> Result<f64> {
 /// read — callers must then assume a job MIGHT be live (never submit a
 /// duplicate, never reclaim a marker) rather than guess.
 fn live_encode_jobs() -> Option<HashSet<String>> {
-    let out = sh(SCQ, &["--json", "ls"]).ok()?;
+    let out = sh(scq_str(), &["--json", "ls"]).ok()?;
     let value = serde_json::from_str::<Value>(&out).ok()?;
     let binding = Vec::new();
     Some(
@@ -944,7 +973,7 @@ fn reclaim_stale_encode_markers(
     // waiting for install_batch to flip sidecars_complete. They must not burn
     // retry budget in that window (submit_encode_chunk skips fetched ids
     // anyway, so re-listing them would be a no-op with a cost).
-    let fetched: HashSet<String> = std::fs::read_dir(Path::new(FETCH_BINARY).join("targets"))
+    let fetched: HashSet<String> = std::fs::read_dir(Path::new(fetch_binary_str()).join("targets"))
         .map(|entries| {
             entries
                 .flatten()
@@ -1003,7 +1032,7 @@ fn reclaim_stale_encode_markers(
 fn submit_encode_chunk(conn: &Connection) -> Result<Option<EncodeChunkSubmission>> {
     // Un-encoded = binary datasets with data but incomplete sidecars, not active,
     // not already present in the fetch dir.
-    let fetched: HashSet<String> = std::fs::read_dir(Path::new(FETCH_BINARY).join("targets"))
+    let fetched: HashSet<String> = std::fs::read_dir(Path::new(fetch_binary_str()).join("targets"))
         .map(|entries| {
             entries
                 .flatten()
@@ -1032,7 +1061,7 @@ fn submit_encode_chunk(conn: &Connection) -> Result<Option<EncodeChunkSubmission
         .max()
         .unwrap_or(1);
     // Rows carry content pins; sha256 via coreutils in batches to stay dependency-free.
-    let registry = Path::new(REGISTRY).join("binary");
+    let registry = Path::new(registry_str()).join("binary");
     let mut digests: BTreeMap<String, String> = BTreeMap::new();
     for chunk in ids.chunks(400) {
         let mut args: Vec<String> = Vec::with_capacity(chunk.len() * 2);
@@ -1074,7 +1103,7 @@ fn submit_encode_chunk(conn: &Connection) -> Result<Option<EncodeChunkSubmission
     let mut out = json!({
         "schema": "EncodingChunk.v2",
         "group": "binary-expansion",
-        "src_root": format!("{REGISTRY}/binary"),
+        "src_root": format!("{registry_str}/binary", registry_str = registry_str()),
         "out_subdir": "binary-expansion",
         "count": ids.len(),
         "ids": rows,
@@ -1111,19 +1140,24 @@ fn submit_encode_chunk(conn: &Connection) -> Result<Option<EncodeChunkSubmission
     out["preemptible"] = json!(true);
     out["reserved_cpu_cores"] = json!(4);
     let listing = format!(
-        "/home/ubuntu/jope-flywheel/encodings/_batch_manifests/breadth-{}-a{attempt}.v2.json",
+        "{}/_batch_manifests/breadth-{}-a{attempt}.v2.json",
+        encodings_str(),
         &chunk_sha256[..16]
     );
     let mut listing_bytes = serde_json::to_vec(&out)?;
     listing_bytes.push(b'\n');
     publish_immutable(Path::new(&listing), &listing_bytes)?;
-    let spec_directory = Path::new(ROOT).join("specs/breadth-encoding");
+    let spec_directory = Path::new(root_str()).join("specs/breadth-encoding");
     std::fs::create_dir_all(&spec_directory)?;
     let spec = spec_directory.join(format!("{job_id}.toml"));
     let pythonpath = runtime_bundle_root()?.join("pytorch");
     // The bundled runtime FIRST so a bundled module always wins, then the
-    // foundation-expert tree. See FOUNDATION_EXPERT_ROOT.
-    let job_pythonpath = format!("{}:{FOUNDATION_EXPERT_ROOT}", pythonpath.to_string_lossy());
+    // foundation-expert tree. See `foundation_expert_root_str`.
+    let job_pythonpath = format!(
+        "{}:{foundation_expert_root_str}",
+        pythonpath.to_string_lossy(),
+        foundation_expert_root_str = foundation_expert_root_str()
+    );
     let mut lines = vec![
         "[job]".to_owned(),
         format!("id = \"{job_id}\""),
@@ -1143,7 +1177,10 @@ fn submit_encode_chunk(conn: &Connection) -> Result<Option<EncodeChunkSubmission
         "[[dependencies.smoke]]".to_owned(),
         "name = \"xbabe3 prime encode environment\"".to_owned(),
         "command = \"/usr/bin/test\"".to_owned(),
-        "args = [\"-f\", \"/home/ubuntu/jope-scratch/binary-expansion/prime_xbabe3.toml\"]".to_owned(),
+        format!(
+            "args = [\"-f\", \"{}\"]",
+            paths::legacy_tree("jope-scratch/binary-expansion/prime_xbabe3.toml").display()
+        ),
         "timeout_secs = 5".to_owned(),
         String::new(),
         "[[dependencies.smoke]]".to_owned(),
@@ -1233,9 +1270,9 @@ fn unpark_exhausted_if_starved(conn: &Connection, log: &mut Vec<Value>) -> Resul
 
 fn fetch_root(task: &str) -> PathBuf {
     if task == "binary" {
-        PathBuf::from(FETCH_BINARY)
+        PathBuf::from(fetch_binary_str())
     } else {
-        PathBuf::from("/home/ubuntu/jope-flywheel/encodings/_fetch/regression-expansion")
+        paths::flywheel_encodings_root().join("_fetch/regression-expansion")
     }
 }
 
@@ -1269,7 +1306,7 @@ fn hash_directory(path: &Path) -> Result<String> {
 }
 
 fn encoding_chunk_listing(job_id: &str) -> Result<Option<Value>> {
-    let directory = Path::new("/home/ubuntu/jope-flywheel/encodings/_batch_manifests");
+    let directory = paths::flywheel_encodings_root().join("_batch_manifests");
     for entry in std::fs::read_dir(directory)?.flatten() {
         let path = entry.path();
         if path.extension().and_then(|value| value.to_str()) != Some("json") {
@@ -1300,7 +1337,7 @@ fn publish_encoding_receipt(receipt: &Value) -> Result<()> {
         .get("job_identity")
         .and_then(Value::as_str)
         .context("encoding receipt lacks job identity")?;
-    let directory = Path::new(ROOT).join("ops/encoding-adoption-v2");
+    let directory = Path::new(root_str()).join("ops/encoding-adoption-v2");
     std::fs::create_dir_all(&directory)?;
     let path = directory.join(format!(
         "{}-a{}-{}.json",
@@ -1322,7 +1359,7 @@ fn publish_encoding_receipt(receipt: &Value) -> Result<()> {
             let mut events = std::fs::OpenOptions::new()
                 .create(true)
                 .append(true)
-                .open(Path::new(ROOT).join("ops/encoding-adoption-v2.jsonl"))?;
+                .open(Path::new(root_str()).join("ops/encoding-adoption-v2.jsonl"))?;
             events.write_all(&bytes)?;
             events.sync_data()?;
         }
@@ -1360,7 +1397,7 @@ fn emit_chunk_adoption_receipts(
         .get("ids")
         .and_then(Value::as_array)
         .context("EncodingChunk.v2 lacks dataset identities")?;
-    let registry = Path::new(REGISTRY).join(task);
+    let registry = Path::new(registry_str()).join(task);
     let mut adopted = 0;
     for row in rows {
         let dataset_id = row
@@ -1421,7 +1458,7 @@ fn emit_chunk_adoption_receipts(
 /// Encoding and fetching are deliberately OUTSIDE the guardrail/valve — the
 /// valve paces catalog admission only, never encode throughput.
 fn reconcile_encode_fetches(log: &mut Vec<Value>) -> Result<()> {
-    let Ok(out) = sh(SCQ, &["--json", "ls"]) else {
+    let Ok(out) = sh(scq_str(), &["--json", "ls"]) else {
         return Ok(());
     };
     let Ok(value) = serde_json::from_str::<Value>(&out) else {
@@ -1463,7 +1500,12 @@ fn reconcile_encode_fetches(log: &mut Vec<Value>) -> Result<()> {
         let tmp = root.join(format!(".fetch-tmp-{id}"));
         let _ = std::fs::remove_dir_all(&tmp);
         std::fs::create_dir_all(&tmp)?;
-        if sh(SCQ, &["fetch", id, "--output", &tmp.to_string_lossy()]).is_err() {
+        if sh(
+            scq_str(),
+            &["fetch", id, "--output", &tmp.to_string_lossy()],
+        )
+        .is_err()
+        {
             let _ = std::fs::remove_dir_all(&tmp);
             continue;
         }
@@ -1585,11 +1627,11 @@ fn prune_tranche(tranche_file: &Path, task: &str) -> Result<Value> {
             .get("dataset_id")
             .and_then(Value::as_str)
             .context("tranche entry lacks dataset_id")?;
-        let cache = Path::new(ENCODINGS)
+        let cache = Path::new(encodings_str())
             .join(format!("{task}-expanded"))
             .join(dataset);
         let mut reason = None;
-        let foundation = Path::new(FOUNDATION).join(format!("{dataset}.npy"));
+        let foundation = Path::new(foundation_str()).join(format!("{dataset}.npy"));
         if !foundation.is_file() || foundation.metadata()?.len() == 0 {
             reason = Some("missing_or_empty_foundation_npy".to_owned());
         } else {
@@ -1699,7 +1741,7 @@ fn install_batch(root: &Path, task: &str, ids: &[String], log: &mut Vec<Value>) 
         if !from.is_file() {
             continue;
         }
-        let published = Path::new(FOUNDATION).join(format!("{id}.npy"));
+        let published = Path::new(foundation_str()).join(format!("{id}.npy"));
         if !published.is_file() {
             bail!(
                 "foundation V1 is immutable and has no object for {id}; keep expansion disabled until Encoder V2 publishes a namespaced object"
@@ -1733,7 +1775,7 @@ fn install_batch(root: &Path, task: &str, ids: &[String], log: &mut Vec<Value>) 
 // ---------------------------------------------------------------------------
 
 fn run_cycle(root: &Path) -> Result<Value> {
-    reject_v1_quarantine_window(Path::new(ENCODINGS))?;
+    reject_v1_quarantine_window(Path::new(encodings_str()))?;
     let conn = open_state_db(root)?;
     let (scanned, _) = refresh_filesystem_state(&conn, root)?;
     let exclusion_receipts_created = emit_encoding_exclusion_receipts(&conn, root)?;
@@ -1748,7 +1790,7 @@ fn run_cycle(root: &Path) -> Result<Value> {
     let coverage_regression = coverage_for('r')?;
     let coverage_binary = coverage_for('b')?;
     let mut log: Vec<Value> = Vec::new();
-    let disk_paths = vec![PathBuf::from("/home/ubuntu"), PathBuf::from(ENCODINGS)];
+    let disk_paths = vec![paths::jope_state(), PathBuf::from(encodings_str())];
     let disk_block = disk_hysteresis_block(root, &disk_paths)?;
     // Encoding is valve-free by design: fetch completed chunk outputs and keep
     // the encode series topped up BEFORE any guardrail/valve consideration.
@@ -1930,7 +1972,7 @@ fn query(root: &Path, dataset: Option<&str>, summary: bool) -> Result<()> {
 
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
-    let root = PathBuf::from(ROOT);
+    let root = PathBuf::from(root_str());
     match args.get(1).map(String::as_str) {
         Some("query") => {
             let dataset = args
@@ -1976,11 +2018,15 @@ mod tests {
     #[test]
     fn encode_job_pythonpath_carries_the_foundation_expert_root() {
         let bundle_pytorch =
-            "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/abc/pytorch";
-        let job_pythonpath = format!("{bundle_pytorch}:{FOUNDATION_EXPERT_ROOT}");
+            jope_paths::to_string(&paths::runtime_bundles_root().join("abc/pytorch"));
+        let bundle_pytorch = bundle_pytorch.as_str();
+        let job_pythonpath = format!(
+            "{bundle_pytorch}:{foundation_expert_root_str}",
+            foundation_expert_root_str = foundation_expert_root_str()
+        );
 
         assert!(
-            job_pythonpath.contains(FOUNDATION_EXPERT_ROOT),
+            job_pythonpath.contains(foundation_expert_root_str()),
             "the expert root must survive into the job environment"
         );
         // Bundled runtime first: a bundled module must win over the loose tree.
@@ -1990,9 +2036,10 @@ mod tests {
         );
         // Colon-joined, because runner.sh exports the value verbatim.
         assert_eq!(job_pythonpath.split(':').count(), 2, "{job_pythonpath}");
-        // The root that vanished must never come back as a literal.
+        // The root that vanished must never come back: the expert tree is the
+        // one shipped inside the checkout, never a loose per-host directory.
         assert!(
-            !job_pythonpath.contains("/home/ubuntu/fable_god"),
+            Path::new(foundation_expert_root_str()).starts_with(paths::jope_home()),
             "the pre-move root is gone; referencing it is how this broke"
         );
     }

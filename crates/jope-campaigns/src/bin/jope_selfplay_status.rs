@@ -2,17 +2,20 @@
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use jope_dime_regressor::paths;
 use jope_dime_regressor::selfplay_ingest;
 use serde_json::{json, Value};
 use std::path::PathBuf;
 
-const DEFAULT_ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
+jope_paths::once_str!(
+    fn default_root_str => paths::flywheel_root()
+);
 
 #[derive(Parser)]
 #[command(name = "jope-selfplay-status")]
 #[command(about = "Native self-play receipt ingestion, indexes, and status v3")]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT, global = true)]
+    #[arg(long, default_value = default_root_str(), global = true)]
     root: PathBuf,
     #[command(subcommand)]
     command: Option<Command>,
@@ -36,9 +39,9 @@ enum Command {
         /// Fetch completed SCQ outputs before local ingestion.
         #[arg(long)]
         fetch_completed: bool,
-        #[arg(long, default_value = "/home/ubuntu/smart_cluster/target/release/scq")]
+        #[arg(long, default_value_os_t = paths::scq_binary())]
         scq: PathBuf,
-        #[arg(long, default_value = "/home/ubuntu/smart_cluster/var/runs")]
+        #[arg(long, default_value_os_t = paths::scq_runs_root())]
         runs_root: PathBuf,
         /// Rebuild full champion/HOF indexes after ingestion. This is
         /// intentionally opt-in because it scans the complete corpus.

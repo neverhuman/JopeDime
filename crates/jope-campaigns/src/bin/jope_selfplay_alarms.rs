@@ -5,16 +5,25 @@
 //! second thing to monitor. Driven by jope-selfplay-alarms.timer (60 s).
 
 use anyhow::Result;
+use jope_dime_regressor::paths;
 use jope_dime_regressor::training_history as th;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
-const SCQ: &str = "/home/ubuntu/smart_cluster/target/release/scq";
-const RUNS_ROOT: &str = "/home/ubuntu/smart_cluster/var/runs";
-const CORPUS: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0/corpus/strict-test-exact.sqlite";
+jope_paths::once_str!(
+    fn root_str => paths::flywheel_root()
+);
+jope_paths::once_str!(
+    fn scq_str => paths::scq_binary()
+);
+jope_paths::once_str!(
+    fn runs_root_str => paths::scq_runs_root()
+);
+jope_paths::once_str!(
+    fn corpus_str => paths::corpus_db()
+);
 
 /// (relative status file, max age seconds) — ages beyond these mean the owning
 /// daemon is dead or wedged even if systemd thinks it is running.
@@ -96,7 +105,11 @@ impl Alarms {
 }
 
 fn scq_json(args: &[&str]) -> Option<Value> {
-    let output = Command::new(SCQ).arg("--json").args(args).output().ok()?;
+    let output = Command::new(scq_str())
+        .arg("--json")
+        .args(args)
+        .output()
+        .ok()?;
     if !output.status.success() {
         return None;
     }
@@ -211,9 +224,11 @@ fn check_status_ages(root: &Path, alarms: &mut Alarms) {
 // consumer's own source file. Add a non-Option field to `QueueStatus` and the
 // live check starts enforcing it with no edit here.
 
-/// Rust source tree, for deriving consumer field contracts. Overridable with
-/// `JOPE_SRC_ROOT` so the check can run against a checkout under test.
-const SRC_ROOT: &str = "/home/ubuntu/jope-dime";
+jope_paths::once_str!(
+    /// Rust source tree, for deriving consumer field contracts. Overridable with
+    /// `JOPE_SRC_ROOT` so the check can run against a checkout under test.
+    fn src_root_str => paths::jope_home()
+);
 
 /// Consecutive scans a status file may stay broken before the alarm escalates
 /// from "this cycle failed" to "this daemon is wedged". The timer is 60 s.
@@ -237,7 +252,7 @@ struct Contract {
     schema: &'static str,
     /// Unit that writes it (for the alarm text — this is who to go look at).
     producer: &'static str,
-    /// `(source file relative to SRC_ROOT, struct name)` of a consumer that
+    /// `(source file relative to src_root_str(), struct name)` of a consumer that
     /// deserializes this file into a strict struct. `None` means every known
     /// consumer reads it as a `serde_json::Value`, so the schema gate is the
     /// whole contract.
@@ -544,7 +559,7 @@ fn truncate(text: &str, limit: usize) -> String {
 /// named failure instead of a silent cluster-wide outage.
 fn check_status_contracts(root: &Path, alarms: &mut Alarms, severity: &str) {
     let source_root =
-        PathBuf::from(std::env::var("JOPE_SRC_ROOT").unwrap_or_else(|_| SRC_ROOT.to_owned()));
+        PathBuf::from(std::env::var("JOPE_SRC_ROOT").unwrap_or_else(|_| src_root_str().to_owned()));
     let state_path = root.join("ops/alarm-contract-state.v1.json");
     let previous = load_contract_state(&state_path);
     let mut next = serde_json::Map::new();
@@ -801,7 +816,7 @@ fn check_scq_and_jobs(alarms: &mut Alarms) {
         // which trained operators to ignore the one alarm that matters when
         // the trainer dies for real.
         let controller_action =
-            std::fs::read(Path::new(ROOT).join("ops/task-learning-controller.v2.json"))
+            std::fs::read(Path::new(root_str()).join("ops/task-learning-controller.v2.json"))
                 .ok()
                 .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok())
                 .and_then(|doc| doc.get("action").and_then(Value::as_str).map(str::to_owned))
@@ -898,7 +913,7 @@ fn check_scq_and_jobs(alarms: &mut Alarms) {
     // "vanished" attempts -> eval queue drained to 1% cluster CPU). The
     // generic status_error_doc warning is not loud enough for a
     // flywheel-stopping state.
-    let supply_doc = Path::new(ROOT).join("ops/micro-wave-supply-v2.json");
+    let supply_doc = Path::new(root_str()).join("ops/micro-wave-supply-v2.json");
     if let Ok(bytes) = std::fs::read(&supply_doc) {
         if let Ok(doc) = serde_json::from_slice::<Value>(&bytes) {
             if doc.get("schema").and_then(Value::as_str) == Some("JopeMicroWaveSupplyError.v1") {
@@ -927,7 +942,7 @@ fn check_scq_and_jobs(alarms: &mut Alarms) {
         }
     }
     // "Self-play never stops": a fresh strict wave must exist (cadence ~9-13 min).
-    let newest_wave_age = std::fs::read_dir(Path::new(ROOT).join("waves"))
+    let newest_wave_age = std::fs::read_dir(Path::new(root_str()).join("waves"))
         .ok()
         .and_then(|entries| {
             entries
@@ -979,7 +994,7 @@ fn check_scq_and_jobs(alarms: &mut Alarms) {
             .get("run_dir")
             .and_then(Value::as_str)
             .map(PathBuf::from)
-            .unwrap_or_else(|| Path::new(RUNS_ROOT).join(id));
+            .unwrap_or_else(|| Path::new(runs_root_str()).join(id));
         if !run_dir.join("attempts").is_dir() {
             continue;
         }
@@ -1824,7 +1839,7 @@ fn check_trainer_intent(root: &Path, alarms: &mut Alarms) {
 }
 
 fn check_corpus_size(alarms: &mut Alarms) {
-    if let Ok(meta) = std::fs::metadata(CORPUS) {
+    if let Ok(meta) = std::fs::metadata(corpus_str()) {
         if meta.len() > CORPUS_WARN_BYTES {
             alarms.push(
                 "corpus_size",
@@ -1978,7 +1993,7 @@ fn parse_args() -> (PathBuf, String) {
         severity = "warning".to_owned();
     }
     (
-        PathBuf::from(root.unwrap_or_else(|| ROOT.to_owned())),
+        PathBuf::from(root.unwrap_or_else(|| root_str().to_owned())),
         severity,
     )
 }
@@ -1997,7 +2012,7 @@ fn main() -> Result<()> {
     check_trainer_intent(&root, &mut alarms);
     check_proposal_deficiency(&root, &mut alarms);
     check_warm_start_guard(&root, &mut alarms);
-    check_training_history(&root, Path::new(RUNS_ROOT), &mut alarms);
+    check_training_history(&root, Path::new(runs_root_str()), &mut alarms);
     check_training_replica(&root, &mut alarms);
 
     let report = json!({
@@ -3196,7 +3211,7 @@ struct Sample {
     /// The live state document at 23:24Z on 2026-07-28, byte for byte, while
     /// the trainer had been unable to submit for 31 minutes and every alarm in
     /// this file was green.
-    const LIVE_BRICKED_INTENT: &str = r#"{"intent":{"checkpoint_mismatch_observations":0,"checkpoint_sha256":"43c64bde25df51e1f3771533b151c82d971cfaf026dada339e400d69950cba40","created_at_ms":1785279187223,"job_id":"jope-selfplay-train-001805437-c-r000025","last_error":"SCQ check rejected trainer: error[input-hash-mismatch]: input 'script' hash mismatch: expected e9f783d94c08274f8dbd1252efe964a5f8e369576ea55c7be43e7d04fd7a521d, got 2733e2da17dcc60a7667713ce70e552604c236bb7243ea4a530e20d09b152492","mode":"continuous_recent_plus_replay","seed":20260751,"sequence":25,"spec":"/home/ubuntu/jope-flywheel/test_exact_gen0/specs/jope-selfplay-train-001805437-c-r000025.toml","spec_sha256":"637280023e1ce5c90895896836cc6adbd2eb9ff52819cc03227e46da88234b1e","watermark":1805437},"last_evidence_watermark":1805437,"max_observed_labels":4683572,"max_observed_snapshot_watermark":1805437,"next_sequence":26,"schema":"JopeContinuousTrainerWatchdogState.v1","updated_at_ms":1785281041552}"#;
+    const LIVE_BRICKED_INTENT: &str = r#"{"intent":{"checkpoint_mismatch_observations":0,"checkpoint_sha256":"43c64bde25df51e1f3771533b151c82d971cfaf026dada339e400d69950cba40","created_at_ms":1785279187223,"job_id":"jope-selfplay-train-001805437-c-r000025","last_error":"SCQ check rejected trainer: error[input-hash-mismatch]: input 'script' hash mismatch: expected e9f783d94c08274f8dbd1252efe964a5f8e369576ea55c7be43e7d04fd7a521d, got 2733e2da17dcc60a7667713ce70e552604c236bb7243ea4a530e20d09b152492","mode":"continuous_recent_plus_replay","seed":20260751,"sequence":25,"spec":"/srv/flywheel/test_exact_gen0/specs/jope-selfplay-train-001805437-c-r000025.toml","spec_sha256":"637280023e1ce5c90895896836cc6adbd2eb9ff52819cc03227e46da88234b1e","watermark":1805437},"last_evidence_watermark":1805437,"max_observed_labels":4683572,"max_observed_snapshot_watermark":1805437,"next_sequence":26,"schema":"JopeContinuousTrainerWatchdogState.v1","updated_at_ms":1785281041552}"#;
 
     fn intent_scan(root: &Path) -> Alarms {
         let mut alarms = Alarms { rows: Vec::new() };

@@ -37,17 +37,24 @@ use std::os::fd::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use jope_dime_regressor::paths;
 use jope_dime_regressor::selfplay_runtime::{
-    atomic_json, now_ms, read_json, sha256_file, DEFAULT_ROOT, DEFAULT_SCQ,
+    atomic_json, default_root_str, default_scq_str, now_ms, read_json, sha256_file,
 };
 use jope_dime_regressor::spec_policy::PROPOSE;
 
-const SCRIPTS: &str = "/home/ubuntu/jope-dime/scripts";
-const PROPOSAL_SELECTION_POLICY: &str =
-    "/home/ubuntu/jope-dime/manifests/selfplay/proposal-selection-policy.v1.json";
-const PRIME_SRC: &str =
-    "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch";
-const CHECKPOINTS: &str = "/home/ubuntu/jope-flywheel/training/round1/checkpoints";
+jope_paths::once_str!(
+    fn scripts_str => paths::research_scripts_root()
+);
+jope_paths::once_str!(
+    fn proposal_selection_policy_str => paths::campaign_manifest("selfplay/proposal-selection-policy.v1.json")
+);
+jope_paths::once_str!(
+    fn prime_src_str => paths::runtime_bundle_pytorch()
+);
+jope_paths::once_str!(
+    fn checkpoints_str => paths::legacy_checkpoints_root()
+);
 const STATE_SCHEMA: &str = "JopeProposeDriver.v1";
 const EVENT_SCHEMA: &str = "JopeProposeDriverEvent.v1";
 /// Initial direct-DL allocation. Future rungs are pointer-bound evidence.
@@ -104,9 +111,9 @@ fn task_tag(task: &str) -> &'static str {
 #[derive(Parser, Debug)]
 #[command(about = "Rebind the DL proposal set to the live catalog, unattended")]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
-    #[arg(long, default_value = DEFAULT_SCQ)]
+    #[arg(long, default_value = default_scq_str())]
     scq: PathBuf,
     /// Plan only: never submit, fetch, or rebind.
     #[arg(long)]
@@ -305,7 +312,7 @@ impl Lane {
 
 /// Resolve a checkpoint artifact for a per-task branch. The promotion gate
 /// publishes into `$R/training/immutable/checkpoints/`; the historical warm
-/// lineage lives in `CHECKPOINTS`. Either is acceptable, both are hash-verified,
+/// lineage lives in `checkpoints_str()`. Either is acceptable, both are hash-verified,
 /// because a propose job that stages the wrong bytes produces a whole
 /// generation of silently mislabelled proposals.
 fn resolve_checkpoint(root: &Path, sha256: &str, declared: Option<&str>) -> Result<PathBuf> {
@@ -317,7 +324,7 @@ fn resolve_checkpoint(root: &Path, sha256: &str, declared: Option<&str>) -> Resu
         root.join("training/immutable/checkpoints")
             .join(format!("{sha256}.model.pt")),
     );
-    candidates.push(PathBuf::from(CHECKPOINTS).join(format!("{sha256}.model.pt")));
+    candidates.push(PathBuf::from(checkpoints_str()).join(format!("{sha256}.model.pt")));
     for candidate in candidates {
         if candidate.is_file() && sha256_file(&candidate)? == sha256 {
             return Ok(candidate);
@@ -462,8 +469,8 @@ fn render_spec(
         job_id.push_str(&format!("-r{attempt}"));
     }
     let pointer = freeze_pointer(root, live)?;
-    let script = Path::new(SCRIPTS).join("test_exact_dl_generate.py");
-    let common = Path::new(SCRIPTS).join("test_exact_common.py");
+    let script = Path::new(scripts_str()).join("test_exact_dl_generate.py");
+    let common = Path::new(scripts_str()).join("test_exact_common.py");
     // `--task` restricts the generation to one branch so the output file carries
     // a single (task, checkpoint) identity. Rendered only for a per-task lane;
     // the combined lane's argv is byte-identical to what it has always been.
@@ -500,7 +507,11 @@ fn render_spec(
         PROPOSE.render_placement_block(),
         String::new(),
         "[env]".to_owned(),
-        format!("PYTHONPATH = \"{PRIME_SRC}:{SCRIPTS}\""),
+        format!(
+            "PYTHONPATH = \"{prime_src_str}:{scripts_str}\"",
+            scripts_str = scripts_str(),
+            prime_src_str = prime_src_str()
+        ),
         format!("OMP_NUM_THREADS = \"{}\"", PROPOSE.omp_threads),
         String::new(),
         "[preempt]".to_owned(),
@@ -519,7 +530,7 @@ fn render_spec(
         ("common", common, "scripts/test_exact_common.py".into()),
         (
             "selection_policy",
-            PathBuf::from(PROPOSAL_SELECTION_POLICY),
+            PathBuf::from(proposal_selection_policy_str()),
             "scripts/proposal-selection-policy.v1.json".into(),
         ),
         ("pointer", pointer, "catalog/current.json".into()),
@@ -930,7 +941,7 @@ fn cycle(args: &Args) -> Result<Value> {
     let binding = read_proposal_binding(root)?;
 
     let checkpoint =
-        PathBuf::from(CHECKPOINTS).join(format!("{}.model.pt", binding.checkpoint_sha256));
+        PathBuf::from(checkpoints_str()).join(format!("{}.model.pt", binding.checkpoint_sha256));
     if !checkpoint.is_file() {
         bail!(
             "accepted checkpoint artifact is absent: {}",
@@ -1274,7 +1285,7 @@ mod tests {
         };
         // Reaching scq would fail; an up-to-date binding must short-circuit
         // before that, which is exactly the "cheap timer tick" property.
-        let checkpoint_dir = Path::new(CHECKPOINTS);
+        let checkpoint_dir = Path::new(checkpoints_str());
         if !checkpoint_dir
             .join(format!("{}.model.pt", "a".repeat(64)))
             .is_file()

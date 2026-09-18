@@ -5,6 +5,7 @@
 //! checkpoint chain while sharing only the complete Rust candidate evaluator.
 
 use super::*;
+use jope_dime_regressor::paths;
 
 const SCHEMA: &str = "JopeGolden42AggressiveManifest.v5";
 const PREFLIGHT_SCHEMA: &str = "JopeGolden42AggressivePreflight.v1";
@@ -20,10 +21,12 @@ const SUMMARY_FILE: &str = "aggressive-summary.v1.json";
 const GOLDEN46_RUN_PREFIX: &str = "golden46-new3-20260723-v4";
 const GOLDEN46_CORRECTED_PARENT_RUN: &str = "golden46-new3-20260723-v2";
 const GOLDEN46_TRANSFER_SUFFIX: &str = "-target-family-informed";
-const GOLDEN46_PANEL_MANIFEST: &str =
-    "/home/ubuntu/remote_super/quant/campaigns/golden46-full42-20260723-v1/manifests/panel46.json";
-const GOLDEN46_LEADER_MANIFEST: &str =
-    "/home/ubuntu/remote_super/quant/campaigns/golden46-full42-20260723-v1/manifests/leaders-new3.json";
+jope_paths::once_str!(
+    fn golden46_panel_manifest_str => paths::quant_root().join("campaigns/golden46-full42-20260723-v1/manifests/panel46.json")
+);
+jope_paths::once_str!(
+    fn golden46_leader_manifest_str => paths::quant_root().join("campaigns/golden46-full42-20260723-v1/manifests/leaders-new3.json")
+);
 const GOLDEN46_CAMPAIGN_ID: &str = "golden46-full42-20260723-v1";
 const GOLDEN46_PANEL_DATASETS: [&str; 4] =
     ["ZTS_small", "a3bd0a400ec4d7f9", "6054656956182296", "ZTS"];
@@ -372,7 +375,8 @@ fn inspect_node(node: &str) -> Result<NodeResources> {
     let swap_total = parse_kib_field(&memory, "SwapTotal:")?;
     let swap_free = parse_kib_field(&memory, "SwapFree:")?;
     let swap_used_bytes = swap_total.saturating_sub(swap_free);
-    let disk = String::from_utf8(ssh(node, &["df", "-Pk", "/home/ubuntu"], "read free disk")?)?;
+    let state = jope_paths::to_string(&paths::jope_state());
+    let disk = String::from_utf8(ssh(node, &["df", "-Pk", &state], "read free disk")?)?;
     let free_kib = disk
         .lines()
         .last()
@@ -441,7 +445,7 @@ fn is_competing_process(
 }
 
 fn preflight() -> Result<PreflightReceipt> {
-    let scq = Path::new("/home/ubuntu/smart_cluster/target/release/scq");
+    let scq = paths::scq_binary();
     let output = Command::new(scq)
         .args(["--json", "ls"])
         .output()
@@ -1928,7 +1932,7 @@ fn remove_csv_header(bytes: &[u8], remove: bool, label: &str) -> Result<Vec<u8>>
 }
 
 fn golden46_panel_value() -> Result<(Value, Vec<u8>, String)> {
-    let path = Path::new(GOLDEN46_PANEL_MANIFEST);
+    let path = Path::new(golden46_panel_manifest_str());
     let bytes = fs::read(path)?;
     let value: Value = serde_json::from_slice(&bytes)?;
     let dataset_ids = value
@@ -2074,7 +2078,7 @@ fn load_golden46_specs(registry: &Path) -> Result<(Vec<DatasetSpec>, String, Str
         bail!("Golden46 evolution view manifest changed");
     }
 
-    let leader_path = Path::new(GOLDEN46_LEADER_MANIFEST);
+    let leader_path = Path::new(golden46_leader_manifest_str());
     let leader_bytes = fs::read(leader_path).with_context(|| {
         format!(
             "Golden46 leaders are not frozen; run scripts/build_golden46_leaders.py after all external baselines resolve: {}",
@@ -2279,9 +2283,9 @@ fn expected_manifest(
         scq_binary_sha256: scq_binary_sha256.to_string(),
         preflight_sha256: preflight_sha256.to_string(),
         staging_sha256: staging_sha256.to_string(),
-        panel_manifest: golden46.map(|_| GOLDEN46_PANEL_MANIFEST.to_string()),
+        panel_manifest: golden46.map(|_| golden46_panel_manifest_str().to_string()),
         panel_manifest_sha256: golden46.map(|binding| binding.panel_sha256.clone()),
-        leader_manifest: golden46.map(|_| GOLDEN46_LEADER_MANIFEST.to_string()),
+        leader_manifest: golden46.map(|_| golden46_leader_manifest_str().to_string()),
         leader_manifest_sha256: golden46.map(|binding| binding.leader_sha256.clone()),
         evolution_view_manifest_sha256: golden46
             .map(|binding| binding.evolution_view_manifest_sha256.clone()),
@@ -2317,9 +2321,9 @@ fn manifest_matches_golden46_bindings(
 ) -> bool {
     match golden46 {
         Some(binding) => {
-            manifest.panel_manifest.as_deref() == Some(GOLDEN46_PANEL_MANIFEST)
+            manifest.panel_manifest.as_deref() == Some(golden46_panel_manifest_str())
                 && manifest.panel_manifest_sha256.as_deref() == Some(binding.panel_sha256.as_str())
-                && manifest.leader_manifest.as_deref() == Some(GOLDEN46_LEADER_MANIFEST)
+                && manifest.leader_manifest.as_deref() == Some(golden46_leader_manifest_str())
                 && manifest.leader_manifest_sha256.as_deref()
                     == Some(binding.leader_sha256.as_str())
                 && manifest.evolution_view_manifest_sha256.as_deref()
@@ -2818,14 +2822,15 @@ mod tests {
             "xbabe2",
             "different-pid",
         ));
+        let scq = jope_paths::to_string(&paths::scq_binary());
         assert!(!is_competing_process(
-            "7 scq /home/ubuntu/smart_cluster/target/release/scq agent status --node xbabe1",
+            &format!("7 scq {scq} agent status --node xbabe1"),
             "xbabe1",
             "xbabe2",
             "42",
         ));
         assert!(!is_competing_process(
-            "8 scq /home/ubuntu/smart_cluster/target/release/scq controller serve",
+            &format!("8 scq {scq} controller serve"),
             "xbabe2",
             "xbabe2",
             "42",

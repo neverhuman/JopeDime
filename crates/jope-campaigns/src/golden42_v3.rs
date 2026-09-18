@@ -6,6 +6,7 @@ use feat_math::{
     DataSchema, EncodedTable, FittedCppRuntime, GenomeIr, Objective, RawTable, RowSemantics,
     TaskSpec, V3Archive, V3Candidate, V3EvolutionConfig, V3ScoredCandidate,
 };
+use jope_dime_regressor::paths;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
@@ -25,7 +26,9 @@ const TEST_SHA256: &str = "89b77683e7c4899d043f6bbad31d291cbae40d90639fc2d161655
 const WINNER_RMSE: f64 = 0.06295124334370077;
 const WORKERS: usize = 80;
 const ADMISSION_RELATIVE: &str = "manifests/advanced-v3/fitted-cpp-v3-admission.v1.json";
-const NODE_LEASE: &str = "/home/ubuntu/jope-golden42-controller-node-leases/xbabe2-v3.lock";
+jope_paths::once_str!(
+    fn node_lease_str => paths::legacy_tree("jope-golden42-controller-node-leases").join("xbabe2-v3.lock")
+);
 const MIN_RAM: u64 = 64 * 1024 * 1024 * 1024;
 const MIN_DISK: u64 = 100 * 1024 * 1024 * 1024;
 const MAX_SWAP: u64 = 1024 * 1024 * 1024;
@@ -509,8 +512,8 @@ pub(crate) fn admit(output: &Path) -> Result<()> {
 }
 
 fn performance_gate() -> Result<PerformanceReceipt> {
-    let registry = Path::new("/home/ubuntu/remote_super/quant/regression");
-    validate_dataset_hashes(registry)?;
+    let registry = paths::jope_registry();
+    validate_dataset_hashes(&registry)?;
     let root = registry.join(DATASET);
     let train = read_regression_csv(&root.join("train.csv"))?;
     let test = read_regression_csv(&root.join("test.csv"))?;
@@ -573,8 +576,8 @@ fn performance_gate() -> Result<PerformanceReceipt> {
 
 fn smoke_gate() -> Result<SmokeReceipt> {
     let started = Instant::now();
-    let registry = Path::new("/home/ubuntu/remote_super/quant/regression");
-    validate_dataset_hashes(registry)?;
+    let registry = paths::jope_registry();
+    validate_dataset_hashes(&registry)?;
     let dataset_root = registry.join(DATASET);
     let test = read_regression_csv(&dataset_root.join("test.csv"))?;
     let release = std::env::current_exe()?;
@@ -597,7 +600,7 @@ fn smoke_gate() -> Result<SmokeReceipt> {
         }
         let mut workers = spawn_workers(
             &release,
-            registry,
+            &registry,
             &root,
             "admission-smoke",
             &dataset_root.join("train.csv"),
@@ -750,7 +753,7 @@ pub(crate) fn run(
         bail!("run root {} already exists; use --resume", root.display());
     }
     fs::create_dir_all(&root)?;
-    let _node_lease = Lease::acquire(Path::new(NODE_LEASE))?;
+    let _node_lease = Lease::acquire(Path::new(node_lease_str()))?;
     let _run_lease = Lease::acquire(&root.join("run.lock"))?;
     wait_for_resources(&root, run_id, 0, 0, 0, 0, 0)?;
     let cpu_ids = choose_cpus(WORKERS)?;
@@ -1651,11 +1654,7 @@ pub(crate) fn validate(run_id: &str) -> Result<()> {
                 .context("winner slot exceeds checkpoint population")?
                 .clone()
         };
-        let test = read_regression_csv(
-            &Path::new("/home/ubuntu/remote_super/quant/regression")
-                .join(DATASET)
-                .join("test.csv"),
-        )?;
+        let test = read_regression_csv(&paths::jope_registry().join(DATASET).join("test.csv"))?;
         let receipt_path = root.join("receipts").join(format!(
             "generation-{:06}/slot-{:03}.v1.json",
             result.generation, result.slot
@@ -2593,11 +2592,11 @@ mod tests {
     }
 
     fn assert_target_campaign_v3_fit_preserves_frozen_near_winner_bits() {
-        let root = Path::new("/home/ubuntu/remote_super/quant/regression").join(DATASET);
+        let root = paths::jope_registry().join(DATASET);
         if !root.join("train.csv").is_file() || !root.join("test.csv").is_file() {
             return;
         }
-        validate_dataset_hashes(Path::new("/home/ubuntu/remote_super/quant/regression")).unwrap();
+        validate_dataset_hashes(&paths::jope_registry()).unwrap();
         let train = read_regression_csv(&root.join("train.csv")).unwrap();
         let test = read_regression_csv(&root.join("test.csv")).unwrap();
         let genome = GenomeIr::parse(NEAR_WINNER).unwrap();

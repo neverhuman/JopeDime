@@ -10,13 +10,16 @@ use std::path::PathBuf;
 mod freshness_protocol;
 
 use freshness_protocol::{socket_request, tools, MCP_PROTOCOL_VERSION, SERVER_VERSION, TOOL_NAMES};
+use jope_dime_regressor::paths;
 
-const DEFAULT_ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
+jope_paths::once_str!(
+    fn default_root_str => paths::flywheel_root()
+);
 
 #[derive(Parser)]
 #[command(name = "jope-selfplay-mcp")]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
     #[arg(long)]
     socket: Option<PathBuf>,

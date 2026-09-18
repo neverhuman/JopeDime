@@ -10,8 +10,8 @@ use jope_dime_regressor::selfplay_core::{
     dynamic_queue_targets, queue_refill_needed, QueueTargets,
 };
 use jope_dime_regressor::selfplay_runtime::{
-    active_checkpoint, atomic_json, now_ms, protocol_for_manifest, read_json, scq_json,
-    sha256_bytes, sha256_file, DEFAULT_EVALUATOR, DEFAULT_ROOT, DEFAULT_RUNNER, DEFAULT_SCQ,
+    active_checkpoint, atomic_json, default_evaluator_str, default_root_str, default_runner_str,
+    default_scq_str, now_ms, protocol_for_manifest, read_json, scq_json, sha256_bytes, sha256_file,
 };
 use jope_dime_regressor::spec_policy::EVAL;
 use jope_dime_regressor::task::Task;
@@ -67,16 +67,16 @@ const REGRESSION_SCREENING_BUDGET_SECONDS: u64 = 30;
 )]
 struct Args {
     /// Flywheel state root.
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
     /// SCQ client binary.
-    #[arg(long, default_value = DEFAULT_SCQ)]
+    #[arg(long, default_value = default_scq_str())]
     scq: PathBuf,
     /// Precompiled Rust corpus evaluator.
-    #[arg(long, default_value = DEFAULT_EVALUATOR)]
+    #[arg(long, default_value = default_evaluator_str())]
     evaluator: PathBuf,
     /// Portable evaluator runner (must not invoke Python).
-    #[arg(long, default_value = DEFAULT_RUNNER)]
+    #[arg(long, default_value = default_runner_str())]
     runner: PathBuf,
     /// Generated operator/task registry. Defaults to the active immutable
     /// runtime bundle and is unreadable => admission closed.
@@ -3762,10 +3762,7 @@ mod tests {
         let targets = dynamic_queue_targets(&[20.0, 30.0, 40.0], 200).unwrap();
         assert_eq!(targets.target, 2_048);
         assert_eq!(targets.hard_cap, 4_096);
-        assert_eq!(
-            dynamic_queue_targets(&[20.0], 2_000).unwrap().target,
-            2_500
-        );
+        assert_eq!(dynamic_queue_targets(&[20.0], 2_000).unwrap().target, 2_500);
         assert!(QUEUE_STATES.contains(&"queued"));
         assert!(QUEUE_STATES.contains(&"starting"));
         assert!(!QUEUE_STATES.contains(&"held"));

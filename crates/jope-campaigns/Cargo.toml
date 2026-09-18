@@ -8,7 +8,7 @@ description = "Frozen 42-dataset jope-dime evolutionary regression campaign"
 
 [dependencies]
 anyhow = "1"
-clap = { version = "4", features = ["derive"] }
+clap = { workspace = true }
 crossterm = "=0.28.1"
 feat-math = { path = "../feat-math" }
 hex = "0.4"

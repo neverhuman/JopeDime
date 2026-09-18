@@ -13,12 +13,14 @@ use feat_math::{
     validate_fitted_cpp_codec, ColumnSpec, DataSchema, EncodedTable, FittedCppRuntime, GenomeIr,
     Objective, RawTable, RowSemantics, TaskSpec,
 };
+use jope_dime_regressor::paths;
 use jope_dime_regressor::selfplay_core::{
     compiled_cache_key, compiled_finalists, exact_parity, family_diverse_panel, CompileCandidate,
     PanelDataset,
 };
 use jope_dime_regressor::selfplay_runtime::{
-    atomic_json, canonical_json_bytes, now_ms, read_json, sha256_bytes, sha256_file, DEFAULT_ROOT,
+    atomic_json, canonical_json_bytes, default_root_str, now_ms, read_json, sha256_bytes,
+    sha256_file,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -34,7 +36,9 @@ const REPLAY_SCHEMA: &str = "JopeCompileReplayReceipt.v1";
 const ARTIFACT_SCHEMA: &str = "JopeCompiledCacheArtifact.v1";
 const OPERATION_SCHEMA: &str = "JopeCompiledCacheOperation.v1";
 const PANEL_SIZE: usize = 32;
-const DEFAULT_EVALUATOR: &str = "/home/ubuntu/jope-dime/target/release/corpus_eval";
+jope_paths::once_str!(
+    fn default_evaluator_str => paths::corpus_eval_binary()
+);
 
 #[derive(Parser, Debug)]
 #[command(
@@ -45,9 +49,9 @@ struct Args {
     /// Immutable compile-economy request.
     #[arg(long)]
     request: PathBuf,
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
-    #[arg(long, default_value = DEFAULT_EVALUATOR)]
+    #[arg(long, default_value = default_evaluator_str())]
     evaluator: PathBuf,
     /// Run the precompiled broad evaluator over the selected 32-dataset panel.
     #[arg(long, conflicts_with = "build")]

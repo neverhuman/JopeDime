@@ -8,6 +8,7 @@ use super::*;
 use feat_math::advanced_v3::validate_v3_genome;
 use feat_math::dsl::{ParamValue, Stage};
 use feat_math::{ColumnSpec, DataSchema, GenomeIr, Objective, RowSemantics, TaskSpec};
+use jope_dime_regressor::paths;
 use serde_json::json;
 
 pub(crate) const RUN_ID: &str = "multiclass272-test-adaptive-union43-gen20-v2";
@@ -17,23 +18,34 @@ const CORPUS_SCHEMA: &str = "multiclass-union-runnable-v5";
 const COMPARATOR_SCHEMA: &str = "test-adaptive-comparator-lock-v2";
 const COMPARATOR_SET_SCHEMA: &str = "test-adaptive-comparator-set.v2";
 const COMPARATOR_SET_FILE: &str = "comparator-set.v2.json";
-const MC_COVERAGE_MANIFEST: &str =
-    "/home/ubuntu/remote_super/quant/releases/mc-union-runnable272-v5/manifest.json";
+jope_paths::once_str!(
+    fn mc_coverage_manifest_str => paths::quant_root().join("releases/mc-union-runnable272-v5/manifest.json")
+);
 const MC_COVERAGE_MANIFEST_SHA256: &str =
     "93888beb0d24f7cb7f0def66c88127a6cee6d0606c25c11ddff82161506e4938";
-const MC_COVERAGE_RECEIPT: &str =
-    "/home/ubuntu/remote_super/quant/releases/mc-union-runnable272-v5/receipts/final.json";
-const TS_COVERAGE_MANIFEST: &str =
-    "/home/ubuntu/remote_super/quant/releases/timeseries42-forecast3-v10/manifest.json";
+jope_paths::once_str!(
+    fn mc_coverage_receipt_str => paths::quant_root().join("releases/mc-union-runnable272-v5/receipts/final.json")
+);
+jope_paths::once_str!(
+    fn ts_coverage_manifest_str => paths::quant_root().join("releases/timeseries42-forecast3-v10/manifest.json")
+);
 const TS_COVERAGE_MANIFEST_SHA256: &str =
     "dda881dab5eeebcd7293081df5838062c97cfb5e15b9383776a4a3630f32c06d";
-const TS_COVERAGE_RECEIPT: &str =
-    "/home/ubuntu/remote_super/quant/releases/timeseries42-forecast3-v10/receipts/final.json";
-const TS_BASELINE_RECEIPT: &str =
-    "/home/ubuntu/remote_super/quant/releases/mc272-ts42-coverage-v1/receipts/timeseries-baseline-all21.json";
-const DATA_ROOT: &str = "/home/ubuntu/remote_super/quant/multi_label";
-const SCQ: &str = "/home/ubuntu/super_cluster/scq";
-const CORPUS_EVAL: &str = "/home/ubuntu/jope-dime/target/release/corpus_eval";
+jope_paths::once_str!(
+    fn ts_coverage_receipt_str => paths::quant_root().join("releases/timeseries42-forecast3-v10/receipts/final.json")
+);
+jope_paths::once_str!(
+    fn ts_baseline_receipt_str => paths::quant_root().join("releases/mc272-ts42-coverage-v1/receipts/timeseries-baseline-all21.json")
+);
+jope_paths::once_str!(
+    fn data_root_str => paths::quant_root().join("multi_label")
+);
+jope_paths::once_str!(
+    fn scq_str => paths::super_cluster_scq_binary()
+);
+jope_paths::once_str!(
+    fn corpus_eval_str => paths::corpus_eval_binary()
+);
 const PROJECT: &str = "jope-multiclass-test-adaptive";
 const JOPE_MULTICLASS_REPORT_FILE: &str = "jope-dime-test-adaptive-union43-gen20-v2.json";
 const POPULATION: usize = 60;
@@ -356,11 +368,12 @@ fn validate_coverage_receipt(
 }
 
 fn coverage_gate(comparator_root: &Path) -> Result<CoverageGate> {
-    let mc_manifest = validate_source_manifest(Path::new(MC_COVERAGE_MANIFEST), CORPUS_SCHEMA)?;
+    let mc_manifest =
+        validate_source_manifest(Path::new(mc_coverage_manifest_str()), CORPUS_SCHEMA)?;
     if required_hash(&mc_manifest, "/manifest_sha256")? != MC_COVERAGE_MANIFEST_SHA256 {
         bail!("multiclass successor manifest pin drift");
     }
-    let ts_manifest = read_value(Path::new(TS_COVERAGE_MANIFEST))?;
+    let ts_manifest = read_value(Path::new(ts_coverage_manifest_str()))?;
     if ts_manifest.get("schema_version").and_then(Value::as_str)
         != Some("timeseries42-forecast-campaign-v10")
         || required_hash(&ts_manifest, "/manifest_sha256")? != TS_COVERAGE_MANIFEST_SHA256
@@ -369,20 +382,20 @@ fn coverage_gate(comparator_root: &Path) -> Result<CoverageGate> {
         bail!("timeseries successor manifest pin drift");
     }
     let multiclass_receipt_sha256 = validate_coverage_receipt(
-        Path::new(MC_COVERAGE_RECEIPT),
+        Path::new(mc_coverage_receipt_str()),
         "mc-union-runnable272-v5",
         MC_COVERAGE_MANIFEST_SHA256,
         "multiclass",
         11_696,
     )?;
     let timeseries_receipt_sha256 = validate_coverage_receipt(
-        Path::new(TS_COVERAGE_RECEIPT),
+        Path::new(ts_coverage_receipt_str()),
         "timeseries42-forecast3-v10",
         TS_COVERAGE_MANIFEST_SHA256,
         "timeseries",
         126,
     )?;
-    let baseline = read_value(Path::new(TS_BASELINE_RECEIPT))?;
+    let baseline = read_value(Path::new(ts_baseline_receipt_str()))?;
     if baseline.get("schema").and_then(Value::as_str)
         != Some("timeseries42.baseline-all21-final-receipt.v1")
         || baseline.get("expected").and_then(Value::as_u64) != Some(882)
@@ -673,7 +686,7 @@ fn bind_frozen_comparator(
         bail!("{dataset_hash} comparator identity drift");
     }
     let protocol_sha256 = required_hash(&comparator, "/protocol_sha256")?;
-    let current_evaluator_sha256 = sha256_file(Path::new(CORPUS_EVAL))?;
+    let current_evaluator_sha256 = sha256_file(Path::new(corpus_eval_str()))?;
     if comparator
         .pointer("/protocol/protocol_sha256")
         .and_then(Value::as_str)
@@ -784,7 +797,9 @@ fn build_plan(
     let gate = coverage_gate(comparator_root)?;
     let corpus = validate_source_manifest(corpus_path, CORPUS_SCHEMA)?;
     let corpus_sha = required_hash(&corpus, "/manifest_sha256")?;
-    if corpus_path != Path::new(MC_COVERAGE_MANIFEST) || corpus_sha != MC_COVERAGE_MANIFEST_SHA256 {
+    if corpus_path != Path::new(mc_coverage_manifest_str())
+        || corpus_sha != MC_COVERAGE_MANIFEST_SHA256
+    {
         bail!("multiclass campaign must use the pinned v5 coverage manifest");
     }
     let rows = corpus
@@ -812,7 +827,7 @@ fn build_plan(
         let entry = entries
             .get(dataset_hash)
             .with_context(|| format!("corpus manifest lacks {dataset_hash}"))?;
-        let root = Path::new(DATA_ROOT).join(dataset_hash);
+        let root = Path::new(data_root_str()).join(dataset_hash);
         let train_path = root.join("train.csv");
         let test_path = root.join("test.csv");
         let meta_path = root.join("meta.json");
@@ -873,11 +888,11 @@ fn build_plan(
         // changes the value emitted when a new plan is generated.
         project_weight: 10,
         project_max_gpus: 0,
-        scq_binary: SCQ.to_string(),
-        scq_binary_sha256: sha256_file(Path::new(SCQ))?,
+        scq_binary: scq_str().to_string(),
+        scq_binary_sha256: sha256_file(Path::new(scq_str()))?,
         release_binary_sha256: current_binary_sha256()?,
-        corpus_eval: CORPUS_EVAL.to_string(),
-        corpus_eval_sha256: sha256_file(Path::new(CORPUS_EVAL))?,
+        corpus_eval: corpus_eval_str().to_string(),
+        corpus_eval_sha256: sha256_file(Path::new(corpus_eval_str()))?,
         corpus_manifest: corpus_path.display().to_string(),
         corpus_manifest_sha256: corpus_sha,
         multiclass_coverage_final_receipt_sha256: gate.multiclass_receipt_sha256,
@@ -925,7 +940,7 @@ pub(crate) fn plan(
         if existing.corpus_manifest != corpus_manifest.display().to_string()
             || existing.comparator_root != comparator_root.display().to_string()
             || existing.seed_catalog_sha256 != seed_sources_sha256(seed_catalog)?
-            || existing.scq_binary != SCQ
+            || existing.scq_binary != scq_str()
         {
             bail!(
                 "immutable multiclass plan input drift at {}",
@@ -967,11 +982,11 @@ fn read_plan(campaign_root: &Path, run_id: &str) -> Result<Plan> {
         || plan.config != Config::fixed()
         || plan.datasets.len() != 272
         || plan.seeds.len() != POPULATION
-        || plan.corpus_eval != CORPUS_EVAL
+        || plan.corpus_eval != corpus_eval_str()
         || plan.release_binary_sha256 != current_binary_sha256()?
-        || plan.scq_binary != SCQ
+        || plan.scq_binary != scq_str()
         || sha256_file(Path::new(&plan.scq_binary))? != plan.scq_binary_sha256
-        || plan.corpus_manifest != MC_COVERAGE_MANIFEST
+        || plan.corpus_manifest != mc_coverage_manifest_str()
         || plan.corpus_manifest_sha256 != MC_COVERAGE_MANIFEST_SHA256
         || plan.multiclass_coverage_final_receipt_sha256 != gate.multiclass_receipt_sha256
         || plan.timeseries_coverage_manifest_sha256 != TS_COVERAGE_MANIFEST_SHA256
@@ -1086,7 +1101,7 @@ fn write_multiclass_terminal_report(
             "replays": ledger.get("replays"),
         },
     });
-    let path = Path::new(DATA_ROOT)
+    let path = Path::new(data_root_str())
         .join(&dataset.dataset_hash)
         .join("reports")
         .join(JOPE_MULTICLASS_REPORT_FILE);
@@ -1271,13 +1286,13 @@ fn render_spec(
         cpus = SHARD_SIZES[shard],
         ram_gb = if attempt >= 2 { 64 } else { 8 },
         evaluator = "{input:evaluator}",
-        evaluator_source = CORPUS_EVAL,
+        evaluator_source = corpus_eval_str(),
         manifest = manifest.display().to_string(),
     )
 }
 
 fn scq_rows() -> Result<BTreeMap<String, Value>> {
-    let output = Command::new(SCQ).arg("ls").arg("--json").output()?;
+    let output = Command::new(scq_str()).arg("ls").arg("--json").output()?;
     if !output.status.success() {
         bail!(
             "scq ls failed: {}",
@@ -1373,7 +1388,7 @@ fn fetch_shard_receipt(
         fs::remove_dir_all(&temporary)?;
     }
     fs::create_dir_all(&temporary)?;
-    let output = Command::new(SCQ)
+    let output = Command::new(scq_str())
         .arg("fetch")
         .arg("--output")
         .arg(&temporary)
@@ -1830,10 +1845,11 @@ fn render_replay_spec(
     .join(", ");
     let role_capability = replay_role_capability(node)?;
     Ok(format!(
-        "[job]\nid = {id:?}\nproject = {PROJECT:?}\ncommand = \"/usr/bin/env\"\nargs = [{evaluator:?}, {args}]\nworkdir = \"/home/ubuntu\"\ntier = \"normal\"\n\n[resource]\ngpus_per_task = 0\ncpus_reserved = 1\nomp_threads = 1\nram_gb = {ram_gb}\ngang_size = 1\nplacement = \"single_node\"\n\n[[dependencies.smoke]]\nname = \"multiclass replay role capability available\"\ncommand = \"/usr/bin/test\"\nargs = [\"-f\", {role_capability:?}]\ntimeout_secs = 5\n\n[[dependencies.smoke]]\nname = \"multiclass evaluator compiler available\"\ncommand = \"/usr/bin/test\"\nargs = [\"-x\", \"/usr/bin/g++\"]\ntimeout_secs = 5\n\n[env]\nOMP_NUM_THREADS = \"1\"\nMKL_NUM_THREADS = \"1\"\nOPENBLAS_NUM_THREADS = \"1\"\n\n[preempt]\npreemptible = false\ncheckpoint = \"none\"\nresume = \"rerun\"\n\n[limits]\nmax_runtime_hours = 1\nmax_restarts = 0\n\n[[input]]\nname = \"evaluator\"\nsource = {evaluator_source:?}\ntarget = \"corpus_eval\"\nsha256 = {evaluator_sha256:?}\n\n[[input]]\nname = \"manifest\"\nsource = {manifest:?}\ntarget = \"manifest.json\"\nsha256 = {manifest_sha256:?}\n\n[[output]]\nname = \"candidate-receipts\"\nsource = \"candidate-receipts\"\ndirectory = true\n",
+        "[job]\nid = {id:?}\nproject = {PROJECT:?}\ncommand = \"/usr/bin/env\"\nargs = [{evaluator:?}, {args}]\nworkdir = {workdir:?}\ntier = \"normal\"\n\n[resource]\ngpus_per_task = 0\ncpus_reserved = 1\nomp_threads = 1\nram_gb = {ram_gb}\ngang_size = 1\nplacement = \"single_node\"\n\n[[dependencies.smoke]]\nname = \"multiclass replay role capability available\"\ncommand = \"/usr/bin/test\"\nargs = [\"-f\", {role_capability:?}]\ntimeout_secs = 5\n\n[[dependencies.smoke]]\nname = \"multiclass evaluator compiler available\"\ncommand = \"/usr/bin/test\"\nargs = [\"-x\", \"/usr/bin/g++\"]\ntimeout_secs = 5\n\n[env]\nOMP_NUM_THREADS = \"1\"\nMKL_NUM_THREADS = \"1\"\nOPENBLAS_NUM_THREADS = \"1\"\n\n[preempt]\npreemptible = false\ncheckpoint = \"none\"\nresume = \"rerun\"\n\n[limits]\nmax_runtime_hours = 1\nmax_restarts = 0\n\n[[input]]\nname = \"evaluator\"\nsource = {evaluator_source:?}\ntarget = \"corpus_eval\"\nsha256 = {evaluator_sha256:?}\n\n[[input]]\nname = \"manifest\"\nsource = {manifest:?}\ntarget = \"manifest.json\"\nsha256 = {manifest_sha256:?}\n\n[[output]]\nname = \"candidate-receipts\"\nsource = \"candidate-receipts\"\ndirectory = true\n",
         ram_gb = if attempt >= 2 { 64 } else { 24 },
         evaluator = "{input:evaluator}",
-        evaluator_source = CORPUS_EVAL,
+        evaluator_source = corpus_eval_str(),
+        workdir = jope_paths::to_string(&paths::jope_state()),
         manifest = manifest.display().to_string(),
     ))
 }
@@ -2215,8 +2231,11 @@ pub(crate) fn run_all(run_id: &str, campaign_root: &Path, resume: bool) -> Resul
         }
         return Ok(());
     }
-    if !Path::new(CORPUS_EVAL).is_file() {
-        bail!("release corpus_eval is missing: {CORPUS_EVAL}");
+    if !Path::new(corpus_eval_str()).is_file() {
+        bail!(
+            "release corpus_eval is missing: {corpus_eval_str}",
+            corpus_eval_str = corpus_eval_str()
+        );
     }
     let rows = scq_rows()?;
     let mut specs = Vec::<PathBuf>::new();
@@ -2288,7 +2307,7 @@ pub(crate) fn run_all(run_id: &str, campaign_root: &Path, resume: bool) -> Resul
                     let spec_path = generation_root
                         .join(format!("shard-{shard}-a{attempt}-r{SPEC_REVISION}.toml"));
                     let rendered = render_spec(
-                        Path::new("/home/ubuntu"),
+                        &paths::jope_state(),
                         dataset,
                         shard,
                         generation,
@@ -2408,7 +2427,7 @@ pub(crate) fn run_all(run_id: &str, campaign_root: &Path, resume: bool) -> Resul
         for spec in &specs {
             let check_failures = &check_failures;
             scope.spawn(move || {
-                let failure = match Command::new(SCQ).arg("check").arg(spec).status() {
+                let failure = match Command::new(scq_str()).arg("check").arg(spec).status() {
                     Ok(status) if status.success() => None,
                     Ok(status) => Some(format!(
                         "scq check failed for {} with {status}",
@@ -2431,7 +2450,7 @@ pub(crate) fn run_all(run_id: &str, campaign_root: &Path, resume: bool) -> Resul
         bail!("{}", check_failures.join("; "));
     }
     if !specs.is_empty() {
-        let status = Command::new(SCQ)
+        let status = Command::new(scq_str())
             .arg("submit-batch")
             .arg("--json")
             .args(&specs)
@@ -3071,7 +3090,7 @@ mod tests {
         let manifest_sha256 = "a".repeat(64);
         let evaluator_sha256 = "b".repeat(64);
         let spec = render_spec(
-            Path::new("/home/ubuntu"),
+            &paths::jope_state(),
             &dataset,
             0,
             0,
@@ -3083,7 +3102,10 @@ mod tests {
         assert!(spec.contains("command = \"/usr/bin/env\""));
         assert!(spec.contains("{input:evaluator}"));
         assert!(spec.contains("{input:manifest}"));
-        assert!(spec.contains(&format!("source = {CORPUS_EVAL:?}")));
+        assert!(spec.contains(&format!(
+            "source = {corpus_eval_str:?}",
+            corpus_eval_str = corpus_eval_str()
+        )));
         assert!(spec.contains(&format!("sha256 = {evaluator_sha256:?}")));
         assert!(spec.contains(&format!("sha256 = {manifest_sha256:?}")));
         assert!(!spec.to_ascii_lowercase().contains("python"));

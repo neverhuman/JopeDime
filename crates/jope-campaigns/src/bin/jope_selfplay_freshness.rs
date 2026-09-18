@@ -31,9 +31,14 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 mod freshness_protocol;
 
 use freshness_protocol::TOOL_NAMES;
+use jope_dime_regressor::paths;
 
-const DEFAULT_ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
-const DEFAULT_SCQ: &str = "/home/ubuntu/smart_cluster/target/release/scq";
+jope_paths::once_str!(
+    fn default_root_str => paths::flywheel_root()
+);
+jope_paths::once_str!(
+    fn default_scq_str => paths::scq_binary()
+);
 const PREVIEW_MAX_AGE_MS: i64 = 5 * 60_000;
 const FIRST_JOB_DEADLINE_MS: i64 = 5 * 60_000;
 const USEFUL_QUEUE_STATES: [&str; 2] = ["queued", "starting"];
@@ -43,11 +48,11 @@ const RETIRABLE_PROJECTS: [&str; 2] = ["jope-selfplay-eval", "jope-testonly"];
 #[derive(Parser)]
 #[command(name = "jope-selfplay-freshness")]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
     #[arg(long)]
     socket: Option<PathBuf>,
-    #[arg(long, default_value = DEFAULT_SCQ)]
+    #[arg(long, default_value = default_scq_str())]
     scq: PathBuf,
     #[arg(long, default_value_t = 5.0)]
     interval: f64,
@@ -417,9 +422,8 @@ impl Supervisor {
                 if !is_sha256(digest) {
                     bail!("legacy proposal checkpoint hash is invalid");
                 }
-                let checkpoint = PathBuf::from(format!(
-                    "/home/ubuntu/jope-flywheel/training/round1/checkpoints/{digest}.model.pt"
-                ));
+                let checkpoint =
+                    paths::legacy_checkpoints_root().join(format!("{digest}.model.pt"));
                 if !checkpoint.is_file() {
                     bail!("legacy-adopted checkpoint artifact is missing");
                 }

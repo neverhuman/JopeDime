@@ -61,6 +61,7 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
+use jope_dime_regressor::paths;
 use jope_dime_regressor::selfplay_runtime::sha256_file;
 use serde_json::{json, Map, Value};
 use std::fs::{self, File, OpenOptions};
@@ -72,7 +73,9 @@ use std::process::{Command, Stdio};
 use std::thread::sleep;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-const DEFAULT_ROOT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0";
+jope_paths::once_str!(
+    fn default_root_str => paths::flywheel_root()
+);
 const STATUS: &str = "ops/corpus-freezer-v1.json";
 const EVENTS: &str = "ops/corpus-freezer-events.v1.jsonl";
 const LOCK: &str = "ops/corpus-freezer.lock";
@@ -94,7 +97,7 @@ const BUILD_TIMEOUT_SECS: u64 = 6 * 3600;
 #[command(name = "jope-selfplay-corpus-freezer")]
 #[command(about = "Advance training/current-corpus.json independently of the promotion tournament")]
 struct Args {
-    #[arg(long, default_value = DEFAULT_ROOT)]
+    #[arg(long, default_value = default_root_str())]
     root: PathBuf,
     /// Compatibility override accepted only when it resolves to the exact
     /// script pinned by this executable's runtime bundle.

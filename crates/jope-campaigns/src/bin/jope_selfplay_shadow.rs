@@ -4,10 +4,10 @@ use anyhow::{ensure, Context, Result};
 use clap::{Parser, Subcommand};
 use jope_dime_regressor::selfplay_shadow::{
     advance_corpus_pointer, append_evaluation_result, append_lineage_transition, atomic_json,
-    build_context_lane, compare_and_swap_accepted_file, initialize_shadow, load_evaluation_index,
-    plan_breadth_cohort, read_json, stage_corpus_shard, AcceptedByTaskV2, AcceptedFront,
-    BreadthDataset, ContextProposalPool, EvaluationKeyV2, EvaluationResultV2, LineageStage,
-    SelfPlayWaveV2, Sha256Digest, ShadowPaths, Task, DEFAULT_SHADOW_ROOT, SHADOW_WAVE_SCHEMA,
+    build_context_lane, compare_and_swap_accepted_file, default_shadow_root_str, initialize_shadow,
+    load_evaluation_index, plan_breadth_cohort, read_json, stage_corpus_shard, AcceptedByTaskV2,
+    AcceptedFront, BreadthDataset, ContextProposalPool, EvaluationKeyV2, EvaluationResultV2,
+    LineageStage, SelfPlayWaveV2, Sha256Digest, ShadowPaths, Task, SHADOW_WAVE_SCHEMA,
 };
 use serde_json::json;
 use std::path::PathBuf;
@@ -19,7 +19,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
     about = "Manage the isolated causal/cache-exact self-play v2 namespace"
 )]
 struct Args {
-    #[arg(long, default_value = DEFAULT_SHADOW_ROOT, global = true)]
+    #[arg(long, default_value = default_shadow_root_str(), global = true)]
     root: PathBuf,
     #[command(subcommand)]
     command: Command,

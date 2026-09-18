@@ -12,10 +12,12 @@ use jope_dime_regressor::dime_activation::{
     DimeExternalActivationGateV1, SystemdUserHost,
 };
 use jope_dime_regressor::encoder_v2_identity::ArtifactIdentity;
+use jope_dime_regressor::paths;
 use jope_dime_regressor::recovery_contracts::{
-    classify_rollback_capsule_schema, RollbackBaselineDerivationV1, RollbackBundleFileV2,
-    RollbackCapsuleV2, RollbackSystemdArtifactV2, RollbackUnitTransformationV1,
-    IMMUTABLE_FLYWHEEL_ROOT, ROLLBACK_BASELINE_DERIVATION_SCHEMA, ROLLBACK_RUNTIME_BUNDLE_SHA256,
+    classify_rollback_capsule_schema, immutable_flywheel_root_str, RollbackBaselineDerivationV1,
+    RollbackBundleFileV2, RollbackCapsuleV2, RollbackSystemdArtifactV2,
+    RollbackUnitTransformationV1, ROLLBACK_BASELINE_DERIVATION_SCHEMA,
+    ROLLBACK_RUNTIME_BUNDLE_SHA256,
 };
 use jope_dime_regressor::selfplay_data::canonical_json_sha256;
 use serde::{Deserialize, Serialize};
@@ -28,7 +30,17 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const DEFAULT_SOURCE: &str = "/home/ubuntu/jope-dime";
+jope_paths::once_str!(
+    fn default_source_str => paths::jope_home()
+);
+jope_paths::once_str!(
+    /// The live Python source tree a unit must never import from.
+    fn python_src_str => paths::python_src()
+);
+jope_paths::once_str!(
+    /// The live self-play scripts a unit must never run from.
+    fn research_scripts_str => paths::research_scripts_root()
+);
 const PRIME_SOURCE_BUNDLE_SHA256: &str =
     "9521ffcef11159339f314cb26430739d5472a54e1b521a868bd9ccb08acf6bd4";
 // The rollback runtime happens to have supplied the immutable Prime support
@@ -40,7 +52,9 @@ const SUPERSEDED_STAGING_BUNDLE_SHA256: &str =
 const HISTORICAL_ROLLBACK_PARENT_SHA256: &str =
     "9521ffcef11159339f314cb26430739d5472a54e1b521a868bd9ccb08acf6bd4";
 const REVIEWED_ROLLBACK_UNIT_COMMIT: &str = "7e1d0429021ab11e8ec63141669f352d32eebe38";
-const ROLLBACK_WORKING_DIRECTORY_FROM: &str = "/home/ubuntu/jope-dime";
+jope_paths::once_str!(
+    fn rollback_working_directory_from_str => paths::jope_home()
+);
 const ROLLBACK_REBASE_UNITS: &[&str] = &[
     "jope-selfplay-controller.service",
     "jope-selfplay-corpus-freezer.service",
@@ -50,17 +64,31 @@ const ROLLBACK_REBASE_UNITS: &[&str] = &[
     "jope-selfplay-watchdog.service",
     "jope-testonly-monitor.service",
 ];
-const DEFAULT_PRIME: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/9521ffcef11159339f314cb26430739d5472a54e1b521a868bd9ccb08acf6bd4/pytorch";
-const ACTIVE_BUNDLE_PYTORCH_ROOT: &str =
-    "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch";
-const DEFAULT_ENCODING_DRIVER: &str = "/home/ubuntu/jope-flywheel/encodings/_driver";
-const DEFAULT_RUNNER: &str = "/home/ubuntu/jope-flywheel/scripts/fweval_runner.sh";
-const DEFAULT_SCQ_PROJECTS: &str = "/home/ubuntu/smart_cluster/etc/projects.toml";
-const DEFAULT_OUTPUT: &str = "/home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles";
+jope_paths::once_str!(
+    fn default_prime_str => paths::runtime_bundles_root().join("9521ffcef11159339f314cb26430739d5472a54e1b521a868bd9ccb08acf6bd4/pytorch")
+);
+jope_paths::once_str!(
+    fn active_bundle_pytorch_root_str => paths::runtime_bundle_pytorch()
+);
+jope_paths::once_str!(
+    fn default_encoding_driver_str => paths::flywheel_encodings_root().join("_driver")
+);
+jope_paths::once_str!(
+    fn default_runner_str => paths::fweval_runner()
+);
+jope_paths::once_str!(
+    fn default_scq_projects_str => paths::scq_projects()
+);
+jope_paths::once_str!(
+    fn default_output_str => paths::runtime_bundles_root()
+);
 const DEFAULT_SERVICE_MANIFEST: &str = "manifests/selfplay/service-manifest.v3.json";
-const DEFAULT_USER_UNIT_ROOT: &str = "/home/ubuntu/.config/systemd/user";
-const DEFAULT_ACTIVATION_TRANSACTION_ROOT: &str =
-    "/home/ubuntu/jope-flywheel/test_exact_gen0/ops/dime-activation";
+jope_paths::once_str!(
+    fn default_user_unit_root_str => paths::user_unit_root()
+);
+jope_paths::once_str!(
+    fn default_activation_transaction_root_str => paths::flywheel_root().join("ops/dime-activation")
+);
 
 /// GPU nodes that can host bundle-pinned GPU jobs (cohort proposer, trainer).
 /// Their scq specs pin `[env] PYTHONPATH` and a smoke test to the bundle path
@@ -137,17 +165,17 @@ const PYTORCH_ALLOWLIST: &[(&str, &str, &str)] = &[
     about = "Build a Rust-first content-addressed self-play runtime bundle"
 )]
 struct Args {
-    #[arg(long, default_value = DEFAULT_SOURCE)]
+    #[arg(long, default_value = default_source_str())]
     source: PathBuf,
-    #[arg(long, default_value = DEFAULT_PRIME)]
+    #[arg(long, default_value = default_prime_str())]
     prime: PathBuf,
-    #[arg(long, default_value = DEFAULT_ENCODING_DRIVER)]
+    #[arg(long, default_value = default_encoding_driver_str())]
     encoding_driver: PathBuf,
-    #[arg(long, default_value = DEFAULT_RUNNER)]
+    #[arg(long, default_value = default_runner_str())]
     runner: PathBuf,
-    #[arg(long, default_value = DEFAULT_SCQ_PROJECTS)]
+    #[arg(long, default_value = default_scq_projects_str())]
     scq_projects: PathBuf,
-    #[arg(long, default_value = DEFAULT_OUTPUT)]
+    #[arg(long, default_value = default_output_str())]
     output_root: PathBuf,
     #[arg(long)]
     service_manifest: Option<PathBuf>,
@@ -210,9 +238,9 @@ struct Args {
     /// Fresh external proof of SCQ companion-core support and cancellation ownership.
     #[arg(long, value_name = "PATH")]
     external_activation_gate: Option<PathBuf>,
-    #[arg(long, default_value = DEFAULT_USER_UNIT_ROOT)]
+    #[arg(long, default_value = default_user_unit_root_str())]
     user_unit_root: PathBuf,
-    #[arg(long, default_value = DEFAULT_ACTIVATION_TRANSACTION_ROOT)]
+    #[arg(long, default_value = default_activation_transaction_root_str())]
     activation_transaction_root: PathBuf,
     /// Capsule-gated rollback of runtime, DIME units, and service state only.
     #[arg(long, conflicts_with_all = [
@@ -831,6 +859,7 @@ fn build(args: &Args) -> Result<Value> {
     let final_dir = args.output_root.join(&identity);
     let manifest_path = final_dir.join("bundle.json");
     if manifest_path.is_file() {
+        let _ = fs::remove_dir_all(rendered_units_dir(args));
         let manifest: Value = serde_json::from_reader(File::open(&manifest_path)?)?;
         verify_existing(&final_dir, &manifest)?;
         return Ok(manifest);
@@ -907,6 +936,7 @@ fn build(args: &Args) -> Result<Value> {
         verify_existing(&final_dir, &manifest)?;
         Ok(manifest)
     })();
+    let _ = fs::remove_dir_all(rendered_units_dir(args));
     if result.is_err() && temporary.exists() {
         fs::remove_dir_all(&temporary)?;
     }
@@ -946,6 +976,50 @@ fn clean_detached_commit(source: &Path) -> Result<String> {
     Ok(commit)
 }
 
+/// Where a source checkout keeps the self-play unit templates.
+fn selfplay_unit_templates_in(source: &Path) -> PathBuf {
+    source.join("deploy/systemd/selfplay")
+}
+
+/// The placeholder values a bundle's units are rendered with: the state tree
+/// the services work in and the `current` bundle's binaries (the activation
+/// symlink every unit follows), so a rendered unit never names a specific
+/// bundle identity.
+fn unit_roots() -> jope_paths::systemd::Roots {
+    jope_paths::systemd::Roots {
+        home: paths::jope_home(),
+        state: paths::jope_state(),
+        bundle: paths::runtime_bundle_current().join("runtime/bin"),
+        user: std::env::var("USER").unwrap_or_else(|_| "root".to_owned()),
+    }
+}
+
+/// Per-process scratch directory the templates are rendered into before they
+/// are copied into the bundle; removed once the bundle is staged.
+fn rendered_units_dir(args: &Args) -> PathBuf {
+    args.output_root
+        .join(format!(".units-rendered.tmp-{}", std::process::id()))
+}
+
+/// Renders `deploy/systemd/selfplay/*.in` into `<dir>/systemd/` so the bundle
+/// carries concrete units (`runtime/systemd/<unit>`), never templates.
+fn render_unit_templates(source: &Path, dir: &Path) -> Result<PathBuf> {
+    let templates = selfplay_unit_templates_in(source);
+    ensure!(
+        templates.is_dir(),
+        "no self-play unit templates at {}",
+        templates.display()
+    );
+    if dir.exists() {
+        fs::remove_dir_all(dir)?;
+    }
+    let out = dir.join("systemd");
+    fs::create_dir_all(&out)?;
+    jope_paths::systemd::render_tree(&templates, &out, &unit_roots())
+        .map_err(|error| anyhow::anyhow!("render unit templates: {error}"))?;
+    Ok(out)
+}
+
 fn sources(
     args: &Args,
     service_manifest: &ServiceManifest,
@@ -976,22 +1050,18 @@ fn sources(
             None,
         );
     }
-    collect_extension(
-        &args.source.join("systemd"),
-        &args.source,
-        "service",
-        "runtime",
-        None,
-        &mut selected,
-    )?;
-    collect_extension(
-        &args.source.join("systemd"),
-        &args.source,
-        "timer",
-        "runtime",
-        None,
-        &mut selected,
-    )?;
+    let rendered_root = rendered_units_dir(args);
+    let rendered_units = render_unit_templates(&args.source, &rendered_root)?;
+    for extension in ["service", "timer"] {
+        collect_extension(
+            &rendered_units,
+            &rendered_root,
+            extension,
+            "runtime",
+            None,
+            &mut selected,
+        )?;
+    }
     for config in [
         "manifests/selfplay/scq-nodes.v3.toml",
         "manifests/selfplay/scq-projects.v3.toml",
@@ -1226,7 +1296,7 @@ fn validate_systemd_unit(contents: &str) -> Result<()> {
         let line = line.trim();
         if let Some(working_directory) = line.strip_prefix("WorkingDirectory=") {
             ensure!(
-                working_directory == IMMUTABLE_FLYWHEEL_ROOT,
+                working_directory == immutable_flywheel_root_str(),
                 "systemd WorkingDirectory is not the canonical immutable flywheel root"
             );
         }
@@ -1239,13 +1309,13 @@ fn validate_systemd_unit(contents: &str) -> Result<()> {
             } else {
                 validate_systemd_python_boundary(line)?;
             }
+            let checkout_target = format!("{}/target/", default_source_str());
             ensure!(
-                !line.contains("/target-") && !line.contains("/home/ubuntu/jope-dime/target/"),
+                !line.contains("/target-") && !line.contains(&checkout_target),
                 "systemd runtime references a mutable or split target directory"
             );
             ensure!(
-                !line.contains("/home/ubuntu/jope-prime/src")
-                    && !line.contains("/home/ubuntu/jope-dime/scripts"),
+                !line.contains(python_src_str()) && !line.contains(research_scripts_str()),
                 "systemd runtime references a live source directory"
             );
         }
@@ -1278,7 +1348,7 @@ fn systemd_logical_lines(contents: &str) -> Result<Vec<String>> {
 }
 
 fn validate_systemd_python_boundary(line: &str) -> Result<()> {
-    let allowed_root = Path::new(ACTIVE_BUNDLE_PYTORCH_ROOT);
+    let allowed_root = Path::new(active_bundle_pytorch_root_str());
     for (index, token) in line.split_ascii_whitespace().enumerate() {
         let value = token
             .split_once('=')
@@ -1319,21 +1389,20 @@ fn validate_systemd_python_boundary(line: &str) -> Result<()> {
 
 fn validate_supply_pytorch_boundary(line: &str) -> Result<()> {
     let normalized = line.to_ascii_lowercase();
+    let pytorch = active_bundle_pytorch_root_str().to_ascii_lowercase();
     ensure!(
         !normalized.contains("/usr/bin/python")
             && !normalized.contains("python3")
-            && normalized.contains(
-                "--proposal-generator /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch/proposals/test_exact_context_proposals.py"
-            )
-            && normalized.contains(
-                "--proposal-legacy-generator /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch/proposals/test_exact_dl_generate.py"
-            )
-            && normalized.contains(
-                "--proposal-common /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch/shared/test_exact_common.py"
-            )
-            && normalized.contains(
-                "--proposal-pythonpath /home/ubuntu/jope-flywheel/test_exact_gen0/runtime-bundles/current/pytorch"
-            ),
+            && normalized.contains(&format!(
+                "--proposal-generator {pytorch}/proposals/test_exact_context_proposals.py"
+            ))
+            && normalized.contains(&format!(
+                "--proposal-legacy-generator {pytorch}/proposals/test_exact_dl_generate.py"
+            ))
+            && normalized.contains(&format!(
+                "--proposal-common {pytorch}/shared/test_exact_common.py"
+            ))
+            && normalized.contains(&format!("--proposal-pythonpath {pytorch}")),
         "supply may name only the bundled PyTorch proposal boundary"
     );
     Ok(())
@@ -1656,8 +1725,11 @@ fn validate_encoding_runner(contents: &str) -> Result<()> {
         normalized.contains("jope_runtime_pythonpath")
             && normalized.contains("jope_encode_external_path")
             && normalized.contains("python3 \"$driver\"")
-            && !normalized.contains("export pythonpath=/home/ubuntu/jope-prime/src")
-            && !normalized.contains("/home/ubuntu/jope-flywheel/encodings/_driver"),
+            && !normalized.contains(&format!(
+                "export pythonpath={}",
+                python_src_str().to_ascii_lowercase()
+            ))
+            && !normalized.contains(&default_encoding_driver_str().to_ascii_lowercase()),
         "encoding launcher escaped the bundled PyTorch boundary"
     );
     Ok(())
@@ -1981,8 +2053,14 @@ fn git_blob(source: &Path, commit: &str, path: &str) -> Result<Vec<u8>> {
 
 fn transform_rollback_unit(unit: &str, before: &[u8], reviewed: &[u8]) -> Result<Vec<u8>> {
     let before_text = String::from_utf8(before.to_vec())?;
-    let from_line = format!("WorkingDirectory={ROLLBACK_WORKING_DIRECTORY_FROM}");
-    let to_line = format!("WorkingDirectory={IMMUTABLE_FLYWHEEL_ROOT}");
+    let from_line = format!(
+        "WorkingDirectory={rollback_working_directory_from_str}",
+        rollback_working_directory_from_str = rollback_working_directory_from_str()
+    );
+    let to_line = format!(
+        "WorkingDirectory={immutable_flywheel_root_str}",
+        immutable_flywheel_root_str = immutable_flywheel_root_str()
+    );
     ensure!(
         before_text
             .lines()
@@ -2073,8 +2151,8 @@ fn derive_rollback_baseline(
                 before_sha256,
                 after_sha256,
                 reviewed_source_sha256: sha256_bytes(&reviewed),
-                from: ROLLBACK_WORKING_DIRECTORY_FROM.to_owned(),
-                to: IMMUTABLE_FLYWHEEL_ROOT.to_owned(),
+                from: rollback_working_directory_from_str().to_owned(),
+                to: immutable_flywheel_root_str().to_owned(),
             });
         }
         transformations.sort_by(|left, right| left.target.cmp(&right.target));
@@ -2702,23 +2780,25 @@ mod tests {
         assert!(validate_systemd_unit(unit).is_err());
         validate_systemd_unit("[Service]\nExecStart=/runtime/bin/jope_selfplay_queue --submit\n")
             .unwrap();
-        assert!(validate_systemd_unit(
-            "[Service]\nExecStart=/home/ubuntu/jope-dime/target-promotion/release/jope_selfplay_promotion\n"
-        )
+        assert!(validate_systemd_unit(&format!(
+            "[Service]\nExecStart={}/target-promotion/release/jope_selfplay_promotion\n",
+            default_source_str()
+        ))
         .is_err());
-        assert!(validate_systemd_unit(
-            "[Service]\nWorkingDirectory=/home/ubuntu/jope-dime\nExecStart=/runtime/bin/tool\n"
-        )
+        assert!(validate_systemd_unit(&format!(
+            "[Service]\nWorkingDirectory={}\nExecStart=/runtime/bin/tool\n",
+            default_source_str()
+        ))
         .is_err());
     }
 
     #[test]
     fn systemd_accepts_only_bundle_local_pytorch_scripts() {
-        let watchdog = include_str!("../../../../deploy/systemd/selfplay/jope-selfplay-trainer-watchdog.service");
-        validate_systemd_unit(watchdog).unwrap();
+        let watchdog = rendered_selfplay_unit("jope-selfplay-trainer-watchdog.service");
+        validate_systemd_unit(&watchdog).unwrap();
 
         let inside = format!(
-            "[Service]\nExecStart=/runtime/bin/controller --trainer-script {ACTIVE_BUNDLE_PYTORCH_ROOT}/training/test_exact_train.py\n"
+            "[Service]\nExecStart=/runtime/bin/controller --trainer-script {active_bundle_pytorch_root_str}/training/test_exact_train.py\n", active_bundle_pytorch_root_str = active_bundle_pytorch_root_str()
         );
         validate_systemd_unit(&inside).unwrap();
 
@@ -2727,12 +2807,12 @@ mod tests {
         assert!(validate_systemd_unit(outside).is_err());
 
         let mixed = format!(
-            "[Service]\nExecStart=/runtime/bin/controller --trainer-script {ACTIVE_BUNDLE_PYTORCH_ROOT}/training/test_exact_train.py --common-script /tmp/common.py\n"
+            "[Service]\nExecStart=/runtime/bin/controller --trainer-script {active_bundle_pytorch_root_str}/training/test_exact_train.py --common-script /tmp/common.py\n", active_bundle_pytorch_root_str = active_bundle_pytorch_root_str()
         );
         assert!(validate_systemd_unit(&mixed).is_err());
 
         let traversal = format!(
-            "[Service]\nExecStart=/runtime/bin/controller --trainer-script {ACTIVE_BUNDLE_PYTORCH_ROOT}/../outside.py\n"
+            "[Service]\nExecStart=/runtime/bin/controller --trainer-script {active_bundle_pytorch_root_str}/../outside.py\n", active_bundle_pytorch_root_str = active_bundle_pytorch_root_str()
         );
         assert!(validate_systemd_unit(&traversal).is_err());
 
@@ -2745,28 +2825,49 @@ mod tests {
         }
 
         let packed = format!(
-            "[Service]\nExecStart=/runtime/bin/controller --pythonpath {ACTIVE_BUNDLE_PYTORCH_ROOT}/training/test_exact_train.py:/tmp/outside.py\n"
+            "[Service]\nExecStart=/runtime/bin/controller --pythonpath {active_bundle_pytorch_root_str}/training/test_exact_train.py:/tmp/outside.py\n", active_bundle_pytorch_root_str = active_bundle_pytorch_root_str()
         );
         assert!(validate_systemd_unit(&packed).is_err());
 
         let direct_script = format!(
-            "[Service]\nExecStart={ACTIVE_BUNDLE_PYTORCH_ROOT}/training/test_exact_train.py\n"
+            "[Service]\nExecStart={active_bundle_pytorch_root_str}/training/test_exact_train.py\n",
+            active_bundle_pytorch_root_str = active_bundle_pytorch_root_str()
         );
         assert!(validate_systemd_unit(&direct_script).is_err());
     }
 
+    fn selfplay_unit_templates() -> PathBuf {
+        selfplay_unit_templates_in(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../.."))
+    }
+
+    /// The tracked unit is a template; render it the way the bundle does.
+    fn rendered_selfplay_unit(unit: &str) -> String {
+        let template = selfplay_unit_templates().join(format!("{unit}.in"));
+        let contents = fs::read_to_string(&template)
+            .unwrap_or_else(|error| panic!("{}: {error}", template.display()));
+        jope_paths::systemd::render(&contents, &unit_roots(), &template).unwrap()
+    }
+
     #[test]
     fn every_tracked_systemd_unit_satisfies_the_runtime_boundary() {
-        let systemd = Path::new(env!("CARGO_MANIFEST_DIR")).join("systemd");
+        let systemd = selfplay_unit_templates();
+        let mut seen = 0;
         for entry in fs::read_dir(&systemd).unwrap() {
             let path = entry.unwrap().path();
-            if path.extension().and_then(|extension| extension.to_str()) != Some("service") {
+            let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+                continue;
+            };
+            let Some(unit) = name.strip_suffix(".in") else {
+                continue;
+            };
+            if !unit.ends_with(".service") {
                 continue;
             }
-            let contents = fs::read_to_string(&path).unwrap();
-            validate_systemd_unit(&contents)
+            seen += 1;
+            validate_systemd_unit(&rendered_selfplay_unit(unit))
                 .unwrap_or_else(|error| panic!("{}: {error:#}", path.display()));
         }
+        assert!(seen > 0, "no unit templates under {}", systemd.display());
     }
 
     #[test]
@@ -2880,17 +2981,23 @@ mod tests {
             7
         );
         let before = format!(
-            "[Unit]\nDescription=unchanged\n[Service]\nWorkingDirectory={ROLLBACK_WORKING_DIRECTORY_FROM}\nExecStart=/runtime/bin/tool --unchanged\n"
+            "[Unit]\nDescription=unchanged\n[Service]\nWorkingDirectory={rollback_working_directory_from_str}\nExecStart=/runtime/bin/tool --unchanged\n", rollback_working_directory_from_str = rollback_working_directory_from_str()
         );
         let reviewed = format!(
-            "[Unit]\nDescription=reviewed-but-not-copied\n[Service]\nWorkingDirectory={IMMUTABLE_FLYWHEEL_ROOT}\nExecStart=/different/tool\n"
+            "[Unit]\nDescription=reviewed-but-not-copied\n[Service]\nWorkingDirectory={immutable_flywheel_root_str}\nExecStart=/different/tool\n", immutable_flywheel_root_str = immutable_flywheel_root_str()
         );
         for unit in ROLLBACK_REBASE_UNITS {
             let after = transform_rollback_unit(unit, before.as_bytes(), reviewed.as_bytes())
                 .expect("strict unit transformation");
             let expected = before.replacen(
-                &format!("WorkingDirectory={ROLLBACK_WORKING_DIRECTORY_FROM}"),
-                &format!("WorkingDirectory={IMMUTABLE_FLYWHEEL_ROOT}"),
+                &format!(
+                    "WorkingDirectory={rollback_working_directory_from_str}",
+                    rollback_working_directory_from_str = rollback_working_directory_from_str()
+                ),
+                &format!(
+                    "WorkingDirectory={immutable_flywheel_root_str}",
+                    immutable_flywheel_root_str = immutable_flywheel_root_str()
+                ),
                 1,
             );
             assert_eq!(after, expected.as_bytes());

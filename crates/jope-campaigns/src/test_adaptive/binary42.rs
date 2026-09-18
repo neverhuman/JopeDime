@@ -12,6 +12,7 @@ use crate::commands::binary_cv::{
 };
 use crate::data::read_binary_csv;
 use feat_math::metrics::auc;
+use jope_dime_regressor::paths;
 use serde_json::json;
 use std::collections::VecDeque;
 use std::os::unix::fs::PermissionsExt;
@@ -19,9 +20,15 @@ use std::sync::{Arc, Mutex};
 
 const COHORT_BYTES: &[u8] = include_bytes!("../../manifests/binary42-test-adaptive.v1.json");
 const BINARY_SEEDS: &[u8] = include_bytes!("../../seeds/generation-zero-binary.txt");
-const SCQ_BINARY: &str = "/home/ubuntu/smart_cluster/target/release/scq";
-const ALL_SCQ_BINARY: &str = "/home/ubuntu/super_cluster/scq";
-const LINUX_REMOTE_ROOT: &str = "/home/ubuntu/jope-test-adaptive";
+jope_paths::once_str!(
+    fn scq_binary_str => paths::scq_binary()
+);
+jope_paths::once_str!(
+    fn all_scq_binary_str => paths::super_cluster_scq_binary()
+);
+jope_paths::once_str!(
+    fn linux_remote_root_str => paths::legacy_tree("jope-test-adaptive")
+);
 const PROJECT: &str = "jope";
 const ILPD: &str = "962a35a53b0803a8";
 const NODES: [&str; 4] = ["xbabe1", "xbabe2", "xbabe3", "xbabe4"];
@@ -1215,7 +1222,7 @@ fn validate_shard_manifest(manifest: &ShardManifest) -> Result<()> {
         || manifest.test_rows != dataset.test_rows
         || manifest.features != dataset.features
         || (manifest.cohort_mode.as_deref() == Some("all")
-            && manifest.scq_binary_path.as_deref() != Some(ALL_SCQ_BINARY))
+            && manifest.scq_binary_path.as_deref() != Some(all_scq_binary_str()))
         || (manifest.cohort_mode.is_none() && manifest.scq_binary_path.is_some())
     {
         bail!("Binary42 shard dataset binding mismatch");
@@ -1630,7 +1637,8 @@ fn remote_bundle_root(node: &str, release_binary_sha256: &str) -> Result<String>
         bail!("unknown Binary42 SCQ node {node}");
     }
     Ok(format!(
-        "{LINUX_REMOTE_ROOT}/bundles/{release_binary_sha256}"
+        "{linux_remote_root_str}/bundles/{release_binary_sha256}",
+        linux_remote_root_str = linux_remote_root_str()
     ))
 }
 
@@ -1735,7 +1743,7 @@ fn submit_canary(node: &str, suffix: &str) -> Result<(String, String)> {
     }
     let submitted = scq_batch::command_output(
         {
-            let mut command = Command::new(SCQ_BINARY);
+            let mut command = Command::new(scq_binary_str());
             command.arg("submit").arg(&spec_path);
             command
         },
@@ -1816,7 +1824,7 @@ fn validate_all_staging(
         || !staging.test_adaptive
         || staging.benchmark_valid
         || staging.release_binary_sha256 != release_binary_sha256
-        || staging.scq_configured_path != ALL_SCQ_BINARY
+        || staging.scq_configured_path != all_scq_binary_str()
         || staging.scq_resolved_path != scq_resolved_path
         || staging.scq_binary_sha256 != scq_binary_sha256
         || staging.nodes.len() != NODES.len()
@@ -1925,7 +1933,7 @@ fn stage_all_campaign(
     }
     let doctor = scq_batch::command_output(
         {
-            let mut command = Command::new(ALL_SCQ_BINARY);
+            let mut command = Command::new(all_scq_binary_str());
             command.arg("doctor");
             command
         },
@@ -1944,7 +1952,7 @@ fn stage_all_campaign(
                 let mut result = None;
                 for attempt in 0..3 {
                     match submit_canary_at(
-                        ALL_SCQ_BINARY,
+                        all_scq_binary_str(),
                         node,
                         &format!("{suffix}-a{attempt}"),
                         cpus,
@@ -2079,7 +2087,7 @@ fn stage_all_campaign(
         test_adaptive: true,
         benchmark_valid: false,
         release_binary_sha256: release_binary_sha256.to_string(),
-        scq_configured_path: ALL_SCQ_BINARY.to_string(),
+        scq_configured_path: all_scq_binary_str().to_string(),
         scq_resolved_path: scq_resolved_path.to_string(),
         scq_binary_sha256: scq_binary_sha256.to_string(),
         doctor_output_sha256,
@@ -2121,7 +2129,7 @@ fn stage_campaign(
     }
     let doctor = scq_batch::command_output(
         {
-            let mut command = Command::new(SCQ_BINARY);
+            let mut command = Command::new(scq_binary_str());
             command.arg("doctor");
             command
         },
@@ -2328,7 +2336,7 @@ fn shard_manifest(
         slots,
         cohort_mode: (!campaign.config.shard_sizes.is_empty()).then(|| "all".to_string()),
         scq_binary_path: (!campaign.config.shard_sizes.is_empty())
-            .then(|| ALL_SCQ_BINARY.to_string()),
+            .then(|| all_scq_binary_str().to_string()),
     };
     manifest.job_id = expected_job_id(&manifest)?;
     Ok(manifest)
@@ -2444,7 +2452,10 @@ fn wait_for_job_at(binary: &str, id: &str) -> Result<Value> {
 }
 
 fn submit_or_recover_job(manifest: &ShardManifest, spec_path: &Path) -> Result<Value> {
-    let scq_binary = manifest.scq_binary_path.as_deref().unwrap_or(SCQ_BINARY);
+    let scq_binary = manifest
+        .scq_binary_path
+        .as_deref()
+        .unwrap_or(scq_binary_str());
     let exists = scq_json_at(scq_binary, &["show", &manifest.job_id])
         .ok()
         .and_then(|show| scq_batch::scq_job(&show, &manifest.job_id).ok().map(|_| ()))
@@ -4305,7 +4316,7 @@ fn initialize_campaign(
     let root = campaign_root(run_id, dataset);
     let campaign_path = root.join("campaign").join("campaign.v1.json");
     let release_binary_sha256 = current_binary_sha256()?;
-    let scq_binary_sha256 = sha256_file(Path::new(SCQ_BINARY))?;
+    let scq_binary_sha256 = sha256_file(Path::new(scq_binary_str()))?;
     let campaign = if campaign_path.exists() {
         if !resume && !root.join("RUN_COMPLETE").exists() {
             bail!("Binary42 campaign already exists; pass --resume");
@@ -4661,8 +4672,12 @@ fn initialize_all_cohort(
         verify_dataset_binding(spec)?;
     }
     let release_binary_sha256 = current_binary_sha256()?;
-    let resolved_scq = fs::canonicalize(ALL_SCQ_BINARY)
-        .with_context(|| format!("resolve Binary42 SCQ path {ALL_SCQ_BINARY}"))?;
+    let resolved_scq = fs::canonicalize(all_scq_binary_str()).with_context(|| {
+        format!(
+            "resolve Binary42 SCQ path {all_scq_binary_str}",
+            all_scq_binary_str = all_scq_binary_str()
+        )
+    })?;
     let scq_resolved_path = resolved_scq.to_string_lossy().into_owned();
     let scq_binary_sha256 = sha256_file(&resolved_scq)?;
     let ordered = admission_order(&cohort);
@@ -4682,7 +4697,7 @@ fn initialize_all_cohort(
             || recorded.run_id != run_id
             || recorded.frozen_cohort_sha256 != cohort_sha256
             || recorded.release_binary_sha256 != release_binary_sha256
-            || recorded.scq_configured_path != ALL_SCQ_BINARY
+            || recorded.scq_configured_path != all_scq_binary_str()
             || recorded.scq_resolved_path != scq_resolved_path
             || recorded.scq_binary_sha256 != scq_binary_sha256
             || recorded.config != AllCohortConfig::fixed()
@@ -4718,7 +4733,7 @@ fn initialize_all_cohort(
             frozen_cohort_file: "binary42-frozen-cohort.v1.json".to_string(),
             frozen_cohort_sha256: cohort_sha256.clone(),
             release_binary_sha256,
-            scq_configured_path: ALL_SCQ_BINARY.to_string(),
+            scq_configured_path: all_scq_binary_str().to_string(),
             scq_resolved_path,
             scq_binary_sha256,
             config: AllCohortConfig::fixed(),
@@ -5656,7 +5671,7 @@ pub(crate) fn validate_all(run_id: &str) -> Result<()> {
     let campaign_bytes = fs::read(&campaign_path)
         .with_context(|| format!("Binary42 all-dataset run {run_id} does not exist"))?;
     let campaign: AllCohortManifest = serde_json::from_slice(&campaign_bytes)?;
-    let resolved_scq = fs::canonicalize(ALL_SCQ_BINARY)?;
+    let resolved_scq = fs::canonicalize(all_scq_binary_str())?;
     let resolved_scq_path = resolved_scq.to_string_lossy().into_owned();
     let ordered = admission_order(&cohort);
     if campaign_bytes != canonical_json(&campaign)?
@@ -5666,7 +5681,7 @@ pub(crate) fn validate_all(run_id: &str) -> Result<()> {
         || campaign.run_id != run_id
         || campaign.frozen_cohort_sha256 != cohort_sha256
         || campaign.release_binary_sha256 != current_binary_sha256()?
-        || campaign.scq_configured_path != ALL_SCQ_BINARY
+        || campaign.scq_configured_path != all_scq_binary_str()
         || campaign.scq_resolved_path != resolved_scq_path
         || campaign.scq_binary_sha256 != sha256_file(&resolved_scq)?
         || campaign.config != AllCohortConfig::fixed()
