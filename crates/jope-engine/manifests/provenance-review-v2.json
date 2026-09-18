@@ -6,7 +6,7 @@
     "reason": "Measured bean height and harvest yield in a replicated field competition trial, documented by Besag and Kempton (1986) and Kempton and Lockwood (1984). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_besag.beans.html",
+        "path": "evidence/review-v2/agridat_besag.beans.html",
         "sha256": "e54ecbfb6e25af03783dd551341f92d82c8a1079d3e7069463c9df5fc00875bf",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/besag.beans.html",
         "finding": "Measured bean height and harvest yield in a replicated field competition trial, documented by Besag and Kempton (1986) and Kempton and Lockwood (1984)."
@@ -20,7 +20,7 @@
     "reason": "Measured barley yields in a Scottish Crop Research Institute split-plot experiment in 1995\u20131996; Durban et al. (2003) describe its field design. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_durban.splitplot.html",
+        "path": "evidence/review-v2/agridat_durban.splitplot.html",
         "sha256": "314d9bf008e6f8c1a41abdb0430b689e20595af5d13bc031aa9d80109ad9bc8a",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/durban.splitplot.html",
         "finding": "Measured barley yields in a Scottish Crop Research Institute split-plot experiment in 1995\u20131996; Durban et al. (2003) describe its field design."
@@ -34,7 +34,7 @@
     "reason": "Oat harvest weights from the Sumskaya experimental station near Kharkov in 1908, transcribed from the published Jegorow/Roemer field table. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_jegorow.oats.uniformity.html",
+        "path": "evidence/review-v2/agridat_jegorow.oats.uniformity.html",
         "sha256": "303b922ab164b008e0fce642e54f24d24b34c1e4c7a7ad8b8c7f51e6f7a69527",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/jegorow.oats.uniformity.html",
         "finding": "Oat harvest weights from the Sumskaya experimental station near Kharkov in 1908, transcribed from the published Jegorow/Roemer field table."
@@ -48,7 +48,7 @@
     "reason": "Iowa fertilizer experiments measured crop yields in 1952\u20131953; the original Heady, Pesek and Brown research bulletin is identified in the package documentation. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_heady.fertilizer.html",
+        "path": "evidence/review-v2/agridat_heady.fertilizer.html",
         "sha256": "f6b572cf9ca0a5fea0862e1a684517ce75cac87dd348b9801af57cd5c33245d1",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/heady.fertilizer.html",
         "finding": "Iowa fertilizer experiments measured crop yields in 1952\u20131953; the original Heady, Pesek and Brown research bulletin is identified in the package documentation."
@@ -62,7 +62,7 @@
     "reason": "Wheat variety field yields measured at El Batan, Mexico, supplied with the Besag and Higdon (1999) spatial analysis data. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_besag.elbatan.html",
+        "path": "evidence/review-v2/agridat_besag.elbatan.html",
         "sha256": "01b9564606a04e310b6c18b69c0137df01bb182bcd41552f9d26f5da18b4caf8",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/besag.elbatan.html",
         "finding": "Wheat variety field yields measured at El Batan, Mexico, supplied with the Besag and Higdon (1999) spatial analysis data."
@@ -76,7 +76,7 @@
     "reason": "Tea harvest observations from a Ceylon experiment spanning 1928\u20131929, published by Eden (1931), aggregate 42 pickings per plot. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_eden.tea.uniformity.html",
+        "path": "evidence/review-v2/agridat_eden.tea.uniformity.html",
         "sha256": "78d52a8130e6be21cfaac72b6c67b59081f35dc2aca844593ed3658eadd8694f",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/eden.tea.uniformity.html",
         "finding": "Tea harvest observations from a Ceylon experiment spanning 1928\u20131929, published by Eden (1931), aggregate 42 pickings per plot."
@@ -90,7 +90,7 @@
     "reason": "Repeated barley harvests from the same Davis, California field plots over ten years, documented by Baker, Huberty and Veihmeyer (1952). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_baker.barley.uniformity.html",
+        "path": "evidence/review-v2/agridat_baker.barley.uniformity.html",
         "sha256": "c63346d92721bdb1d46af8177b8252c888e85554b02360ad45664340cfaf04f0",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/baker.barley.uniformity.html",
         "finding": "Repeated barley harvests from the same Davis, California field plots over ten years, documented by Baker, Huberty and Veihmeyer (1952)."
@@ -104,7 +104,7 @@
     "reason": "Measured barley genotype heights averaged within nine annual field environments at As, Norway, 1974\u20131982; Aastveit and Martens (1986) give the study. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_aastveit.barley.height.html",
+        "path": "evidence/review-v2/agridat_aastveit.barley.height.html",
         "sha256": "8ac4cfdb7af05668f759af1a7a4a65092b215b4b0376804f18eb824dc3f73d87",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/aastveit.barley.height.html",
         "finding": "Measured barley genotype heights averaged within nine annual field environments at As, Norway, 1974\u20131982; Aastveit and Martens (1986) give the study."
@@ -118,7 +118,7 @@
     "reason": "Apple harvest weights from a documented early twentieth-century orchard uniformity experiment; the package identifies the Batchelor field-study sources. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_batchelor.apple.uniformity.html",
+        "path": "evidence/review-v2/agridat_batchelor.apple.uniformity.html",
         "sha256": "e86bfcfc1ca8868265681c6830256b780cd003c519149ddcf7a820837e62e3e0",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/batchelor.apple.uniformity.html",
         "finding": "Apple harvest weights from a documented early twentieth-century orchard uniformity experiment; the package identifies the Batchelor field-study sources."
@@ -132,7 +132,7 @@
     "reason": "Individually weighed cotton harvests from St Vincent in 1940\u20131941, transcribed from the Rothamsted statistical archive. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_hutchinson.cotton.uniformity.html",
+        "path": "evidence/review-v2/agridat_hutchinson.cotton.uniformity.html",
         "sha256": "fec22fa53063b9bb0b3ef74ab28843c729f398d4e9983e72d0f295b5d6c07220",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/hutchinson.cotton.uniformity.html",
         "finding": "Individually weighed cotton harvests from St Vincent in 1940\u20131941, transcribed from the Rothamsted statistical archive."
@@ -146,7 +146,7 @@
     "reason": "Measured corn response to nitrogen at five Minnesota field sites in 2006, supplied by the authors of Hernandez and Mulla (2008). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_hernandez.nitrogen.html",
+        "path": "evidence/review-v2/agridat_hernandez.nitrogen.html",
         "sha256": "a287de0280af0e41804705211c8412c52785826cf14661c277342497d985c4f0",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/hernandez.nitrogen.html",
         "finding": "Measured corn response to nitrogen at five Minnesota field sites in 2006, supplied by the authors of Hernandez and Mulla (2008)."
@@ -160,7 +160,7 @@
     "reason": "Rice yields from the split-split-plot field experiment published by Gomez and Gomez (1984), with nitrogen, management and variety treatments. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_gomez.splitsplit.html",
+        "path": "evidence/review-v2/agridat_gomez.splitsplit.html",
         "sha256": "9f3ca0b6807b4df1cb54d1d933eb6aa61ccd272d8ae08cf30936cb1bfeebcddc",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/gomez.splitsplit.html",
         "finding": "Rice yields from the split-split-plot field experiment published by Gomez and Gomez (1984), with nitrogen, management and variety treatments."
@@ -174,7 +174,7 @@
     "reason": "Sugar beet harvest measurements from historical Russian experimental plots, reproduced from Haritonenko and Roemer source tables. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_haritonenko.sugarbeet.uniformity.html",
+        "path": "evidence/review-v2/agridat_haritonenko.sugarbeet.uniformity.html",
         "sha256": "aebf0e35de83aee02c5acc84082b99b6994001c4769bea10fa593fcb6ba4b6a1",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/haritonenko.sugarbeet.uniformity.html",
         "finding": "Sugar beet harvest measurements from historical Russian experimental plots, reproduced from Haritonenko and Roemer source tables."
@@ -188,7 +188,7 @@
     "reason": "Peanut green-weight yields measured at the Wiregrass Substation in Alabama in 1946, published in Bancroft (1948). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_bancroft.peanut.uniformity.html",
+        "path": "evidence/review-v2/agridat_bancroft.peanut.uniformity.html",
         "sha256": "de0f87bb1b11bade03e650b666692bb6d6d02802b5be4c770b451a638dd0293a",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/bancroft.peanut.uniformity.html",
         "finding": "Peanut green-weight yields measured at the Wiregrass Substation in Alabama in 1946, published in Bancroft (1948)."
@@ -202,7 +202,7 @@
     "reason": "Seed yield averages from replicated rape cultivar trials across nine Manitoba sites and three years, published by Brandle and McVetty (1988). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_brandle.rape.html",
+        "path": "evidence/review-v2/agridat_brandle.rape.html",
         "sha256": "8ec94f49ba18f2bc5e81a3841d0ca193bb85cef8a0301f1d4ab277292d1bd8c5",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/brandle.rape.html",
         "finding": "Seed yield averages from replicated rape cultivar trials across nine Manitoba sites and three years, published by Brandle and McVetty (1988)."
@@ -216,7 +216,7 @@
     "reason": "Repeated diameter measurements of tagged apples on ten trees at Winchester, Virginia, documented in the Byers data used by Schabenberger and Pierce. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_byers.apple.html",
+        "path": "evidence/review-v2/agridat_byers.apple.html",
         "sha256": "d58b7662c65685bf1fc66ff1842c9685934627f763555ede4a220406eefacde1",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/byers.apple.html",
         "finding": "Repeated diameter measurements of tagged apples on ten trees at Winchester, Virginia, documented in the Byers data used by Schabenberger and Pierce."
@@ -230,7 +230,7 @@
     "reason": "Millet plot yields from agricultural uniformity experiments in India during 1933\u20131934, reported by Kadam and Patel (1937). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_kadam.millet.uniformity.html",
+        "path": "evidence/review-v2/agridat_kadam.millet.uniformity.html",
         "sha256": "ec5248dabb18cf3045c935f9bd6f69468b9e779800a601287397e96759b4586e",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/kadam.millet.uniformity.html",
         "finding": "Millet plot yields from agricultural uniformity experiments in India during 1933\u20131934, reported by Kadam and Patel (1937)."
@@ -244,7 +244,7 @@
     "reason": "Measured field-trial yields in a row-column design described in the CIMMYT ASREML guide and CropStat example, supplied with author permission. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_burgueno.rowcol.html",
+        "path": "evidence/review-v2/agridat_burgueno.rowcol.html",
         "sha256": "bd9de4e43fd39f780a18811887ff5f5f4f6a3f5c8488d240ff10e8ae872aac98",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/burgueno.rowcol.html",
         "finding": "Measured field-trial yields in a row-column design described in the CIMMYT ASREML guide and CropStat example, supplied with author permission."
@@ -258,7 +258,7 @@
     "reason": "Maize hybrid yields averaged over replicates at ten Yunnan sites in two years, documented by Fan and colleagues (2007). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_fan.stability.html",
+        "path": "evidence/review-v2/agridat_fan.stability.html",
         "sha256": "1ab394e75b3a945e25cc0b7a96dd254ff3bf40372e37cb457ac3c016f66b3e82",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/fan.stability.html",
         "finding": "Maize hybrid yields averaged over replicates at ten Yunnan sites in two years, documented by Fan and colleagues (2007)."
@@ -272,7 +272,7 @@
     "reason": "Cotton harvests from Egyptian field experiments at Sakha, Gemmeiza and Giza in 1921\u20131923, documented by Bailey and Trought (1926). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_bailey.cotton.uniformity.html",
+        "path": "evidence/review-v2/agridat_bailey.cotton.uniformity.html",
         "sha256": "4595e7ac9547fd3fd173ba97a29943aeb53f0ba76f55356d371536d281fd1dab",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/bailey.cotton.uniformity.html",
         "finding": "Cotton harvests from Egyptian field experiments at Sakha, Gemmeiza and Giza in 1921\u20131923, documented by Bailey and Trought (1926)."
@@ -286,7 +286,7 @@
     "reason": "Harvest weights of several crops grown on the same Trinidad plots in 1939\u20131941, preserved in Bradley thesis tables. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_bradley.multi.uniformity.html",
+        "path": "evidence/review-v2/agridat_bradley.multi.uniformity.html",
         "sha256": "5022a0283b795cd58ebd41dd5a8fe632a0c1e4d0a285824af26f3a5da3710c08",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/bradley.multi.uniformity.html",
         "finding": "Harvest weights of several crops grown on the same Trinidad plots in 1939\u20131941, preserved in Bradley thesis tables."
@@ -300,7 +300,7 @@
     "reason": "Wheat plot harvests from Raya, India in 1939\u20131940, published by Ansari and Sant (1943). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_ansari.wheat.uniformity.html",
+        "path": "evidence/review-v2/agridat_ansari.wheat.uniformity.html",
         "sha256": "c5e9f7a60da0108a04845628b470ff4c0af4e01fb030e795438992cfc5637f38",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/ansari.wheat.uniformity.html",
         "finding": "Wheat plot harvests from Raya, India in 1939\u20131940, published by Ansari and Sant (1943)."
@@ -314,7 +314,7 @@
     "reason": "Drought-tolerant maize hybrid field yields at four Ethiopian sites in 2012, documented by Damesa and colleagues (2017). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_damesa.maize.html",
+        "path": "evidence/review-v2/agridat_damesa.maize.html",
         "sha256": "94c5d8495456ffa7284a5e76a4f7fd3b3f4f1768a0a8817252aa37017aeab2da",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/damesa.maize.html",
         "finding": "Drought-tolerant maize hybrid field yields at four Ethiopian sites in 2012, documented by Damesa and colleagues (2017)."
@@ -328,7 +328,7 @@
     "reason": "Repeated leaf-weight averages measured in soybean plots during 1988\u20131990, published by Davidian and Giltinan (1995). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_davidian.soybean.html",
+        "path": "evidence/review-v2/agridat_davidian.soybean.html",
         "sha256": "a05a9be7a4556ea2dbf0a84d055be24089e70205058e01f1708240667419714b",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/davidian.soybean.html",
         "finding": "Repeated leaf-weight averages measured in soybean plots during 1988\u20131990, published by Davidian and Giltinan (1995)."
@@ -342,7 +342,7 @@
     "reason": "Barley harvest weights from a Manitoba field in 1931, recorded in the Rothamsted archive and a published Goulden subset. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_goulden.barley.uniformity.html",
+        "path": "evidence/review-v2/agridat_goulden.barley.uniformity.html",
         "sha256": "7a42fd9b2205fbf2b5471746e88db90f9b49f7ec88cefac513b09137c8d5c5b7",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/goulden.barley.uniformity.html",
         "finding": "Barley harvest weights from a Manitoba field in 1931, recorded in the Rothamsted archive and a published Goulden subset."
@@ -356,7 +356,7 @@
     "reason": "Rice field yields measured at Chinsurah, Bengal in 1933\u20131934, published by Chakravertti, Bose and Mahalanobis (1936). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_chakravertti.factorial.html",
+        "path": "evidence/review-v2/agridat_chakravertti.factorial.html",
         "sha256": "9d3fd212a01c2d9d833081724ced4a218996a2a99e65c0c236e589d17d0e4df7",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/chakravertti.factorial.html",
         "finding": "Rice field yields measured at Chinsurah, Bengal in 1933\u20131934, published by Chakravertti, Bose and Mahalanobis (1936)."
@@ -370,7 +370,7 @@
     "reason": "Wheat grain and straw harvest records from the long-running Broadbalk experiment at Rothamsted, covering 1852\u20131925 in this table. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_broadbalk.wheat.html",
+        "path": "evidence/review-v2/agridat_broadbalk.wheat.html",
         "sha256": "0af93ff9dab2ed07726637ddbd9c699c27f1381f7130a0ed3a585cae4594bc10",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/broadbalk.wheat.html",
         "finding": "Wheat grain and straw harvest records from the long-running Broadbalk experiment at Rothamsted, covering 1852\u20131925 in this table."
@@ -384,7 +384,7 @@
     "reason": "Row-level cotton yield and height measurements inside replicated plots, published by Christidis (1935). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_christidis.competition.html",
+        "path": "evidence/review-v2/agridat_christidis.competition.html",
         "sha256": "f9cb5bec3996ffe8812257abc34a6a80c4e83c1f5bf53a9afa1b9e302a45c049",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/christidis.competition.html",
         "finding": "Row-level cotton yield and height measurements inside replicated plots, published by Christidis (1935)."
@@ -398,7 +398,7 @@
     "reason": "Oat field-trial yield and test-weight records from Iowa sites in 1997\u20132003, supplied for Edwards and Jannink (2006). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_edwards.oats.html",
+        "path": "evidence/review-v2/agridat_edwards.oats.html",
         "sha256": "0f5bc40428e4d8e0f08944c5f0fa9f62a43e110f93701915e37295aeea3888a0",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/edwards.oats.html",
         "finding": "Oat field-trial yield and test-weight records from Iowa sites in 1997\u20132003, supplied for Edwards and Jannink (2006)."
@@ -412,7 +412,7 @@
     "reason": "Repeated measured weights of cattle in a documented feeding, iron and infection experiment, described by Diggle and colleagues and Lepper and Lewis. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_diggle.cow.html",
+        "path": "evidence/review-v2/agridat_diggle.cow.html",
         "sha256": "b175f7d8fb8c9612ea2a06fc07dde08cb6e5ec30be1d52aaba03901bb443b6d9",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/diggle.cow.html",
         "finding": "Repeated measured weights of cattle in a documented feeding, iron and infection experiment, described by Diggle and colleagues and Lepper and Lewis."
@@ -426,7 +426,7 @@
     "reason": "Groundnut harvest weights from Domira Bay, Nyasaland in 1942\u20131943, transcribed from Rothamsted archival field records. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_ducker.groundnut.uniformity.html",
+        "path": "evidence/review-v2/agridat_ducker.groundnut.uniformity.html",
         "sha256": "c89909cd068703b584d045dadddf5d1f56cb31ed6612725120438f820eaeea57",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/ducker.groundnut.uniformity.html",
         "finding": "Groundnut harvest weights from Domira Bay, Nyasaland in 1942\u20131943, transcribed from Rothamsted archival field records."
@@ -440,7 +440,7 @@
     "reason": "Wheat plot harvests measured at Werribee, Victoria in 1926\u20131927, published by Forster and Vasey (1928). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_forster.wheat.uniformity.html",
+        "path": "evidence/review-v2/agridat_forster.wheat.uniformity.html",
         "sha256": "db08415ca7881f49481ed0444fa687b04f2c230f4468aadc2ebf7745adbb8092",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/forster.wheat.uniformity.html",
         "finding": "Wheat plot harvests measured at Werribee, Victoria in 1926\u20131927, published by Forster and Vasey (1928)."
@@ -454,7 +454,7 @@
     "reason": "Potato harvest weights from a Saskatchewan field trial in 1929, published by Kalamkar (1932). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_kalamkar.potato.uniformity.html",
+        "path": "evidence/review-v2/agridat_kalamkar.potato.uniformity.html",
         "sha256": "13351d0ca4bd4617f181bea7e57ca5e4cd416d6557d62304bd1ae1b8db27fb24",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/kalamkar.potato.uniformity.html",
         "finding": "Potato harvest weights from a Saskatchewan field trial in 1929, published by Kalamkar (1932)."
@@ -468,7 +468,7 @@
     "reason": "Timber volume measurements on a mapped old-growth forest near Eugene, Oregon, published by Johnson and Hixon (1952). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/agridat_johnson.douglasfir.html",
+        "path": "evidence/review-v2/agridat_johnson.douglasfir.html",
         "sha256": "91317d61a695a4d349c95fd72525efd0885b7ccf9d1476f1d581a088a0f32059",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/agridat/johnson.douglasfir.html",
         "finding": "Timber volume measurements on a mapped old-growth forest near Eugene, Oregon, published by Johnson and Hixon (1952)."
@@ -482,7 +482,7 @@
     "reason": "Observed costs, prices and output of US electric power producers in 1970 from Christensen and Greene (1976). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/AER_Electricity1970.html",
+        "path": "evidence/review-v2/AER_Electricity1970.html",
         "sha256": "de674df71c8893c8c49d780384c15012cf875af6849c96e9ff49892c5b3d091c",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/AER/Electricity1970.html",
         "finding": "Observed costs, prices and output of US electric power producers in 1970 from Christensen and Greene (1976)."
@@ -496,7 +496,7 @@
     "reason": "Recorded Netherlands television and radio advertising expenditures from 1978\u20131994, distributed with Franses forecasting references. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/AER_DutchAdvert.html",
+        "path": "evidence/review-v2/AER_DutchAdvert.html",
         "sha256": "d41d6e9e92ec348e29655cf329a2e089db6e9bb2fa24b6c9da24d693f5da0b73",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/AER/DutchAdvert.html",
         "finding": "Recorded Netherlands television and radio advertising expenditures from 1978\u20131994, distributed with Franses forecasting references."
@@ -510,7 +510,7 @@
     "reason": "Library subscription prices and characteristics of 180 economics journals around 2000, linked to Bergstrom research and Stock and Watson supplements. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/AER_Journals.html",
+        "path": "evidence/review-v2/AER_Journals.html",
         "sha256": "6faff7f3c262c71700c71c7f8ebe953ae2d940fec9ee673d55146b346805cd85",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/AER/Journals.html",
         "finding": "Library subscription prices and characteristics of 180 economics journals around 2000, linked to Bergstrom research and Stock and Watson supplements."
@@ -524,7 +524,7 @@
     "reason": "Observed Italian household budget information spanning 1973\u20131992 from Bollino, Perali and Rossi (2000). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/Ecdat_BudgetItaly.html",
+        "path": "evidence/review-v2/Ecdat_BudgetItaly.html",
         "sha256": "902eced78be6e8033b41f94b86be1603a32454c827f46ee2502adb2b1dcc110a",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/Ecdat/BudgetItaly.html",
         "finding": "Observed Italian household budget information spanning 1973\u20131992 from Bollino, Perali and Rossi (2000)."
@@ -538,7 +538,7 @@
     "reason": "Blood, sport and body measurements collected from Australian athletes for Telford and Cunningham (1991). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/DAAG_ais.html",
+        "path": "evidence/review-v2/DAAG_ais.html",
         "sha256": "79616ccff906d8c106099c0a7cd6c0474504c51e3bc1135faf2dfdb29504cabe",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/DAAG/ais.html",
         "finding": "Blood, sport and body measurements collected from Australian athletes for Telford and Cunningham (1991)."
@@ -552,7 +552,7 @@
     "reason": "Measured electrical resistance and apparent juice content of fruit slabs from a physical fruit-ripening study documented by Harker and Maindonald. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/DAAG_fruitohms.html",
+        "path": "evidence/review-v2/DAAG_fruitohms.html",
         "sha256": "bb5b5930085dc29466f6421c45d69b8fa9fc05406d0534920ddcd6297254bf4d",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/DAAG/fruitohms.html",
         "finding": "Measured electrical resistance and apparent juice content of fruit slabs from a physical fruit-ripening study documented by Harker and Maindonald."
@@ -566,7 +566,7 @@
     "reason": "Ultrafiltration rates measured at seven pressures for twenty physical dialyzers, documented by Vonesh and Carter (1992). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/nlme_Dialyzer.html",
+        "path": "evidence/review-v2/nlme_Dialyzer.html",
         "sha256": "c75adbd3b6c8d9817ab0e2a48baefb42e853763c3e35c197daa32b760a857d9b",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/nlme/Dialyzer.html",
         "finding": "Ultrafiltration rates measured at seven pressures for twenty physical dialyzers, documented by Vonesh and Carter (1992)."
@@ -580,7 +580,7 @@
     "reason": "Repeated counts of large ovarian follicles measured in mares across estrus cycles, documented by Pierson and Ginther (1987). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/nlme_Ovary.html",
+        "path": "evidence/review-v2/nlme_Ovary.html",
         "sha256": "5cdc5801435a380800441dcb2126a50cb72fcfb2f71aa76c1b152fa47e64d1c2",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/nlme/Ovary.html",
         "finding": "Repeated counts of large ovarian follicles measured in mares across estrus cycles, documented by Pierson and Ginther (1987)."
@@ -594,7 +594,7 @@
     "reason": "Crack lengths measured on twenty-one metal fatigue test units, digitized from the study figure used by Lu and Meeker (1993). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/nlme_Fatigue.html",
+        "path": "evidence/review-v2/nlme_Fatigue.html",
         "sha256": "837d77c606b0a46231b618492e249f9cb04eaad653bee13ede7b0fe697ceee0b",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/nlme/Fatigue.html",
         "finding": "Crack lengths measured on twenty-one metal fatigue test units, digitized from the study figure used by Lu and Meeker (1993)."
@@ -608,7 +608,7 @@
     "reason": "Observed production, employment, assets and wages for Belgian production units in 1996, documented by Verbeek (2004). Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/Ecdat_Labour.html",
+        "path": "evidence/review-v2/Ecdat_Labour.html",
         "sha256": "dcb378166c496b5f25f03564391026e42041d5c7b9739d68046e88f669c57211",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/Ecdat/Labour.html",
         "finding": "Observed production, employment, assets and wages for Belgian production units in 1996, documented by Verbeek (2004)."
@@ -622,7 +622,7 @@
     "reason": "US monthly macroeconomic observations assembled from identified Federal Reserve FRED series. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/ggplot2_economics.html",
+        "path": "evidence/review-v2/ggplot2_economics.html",
         "sha256": "0e87fbd876df6457ddea76ed66b6b5e590a76cc56af67da9aca6e3b0ffac7713",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/ggplot2/economics.html",
         "finding": "US monthly macroeconomic observations assembled from identified Federal Reserve FRED series."
@@ -636,7 +636,7 @@
     "reason": "Recorded diamond characteristics and US-dollar prices distributed with ggplot2; documentation identifies the measured variables and ranges. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/ggplot2_diamonds.html",
+        "path": "evidence/review-v2/ggplot2_diamonds.html",
         "sha256": "20c2020cbb3cc02cc493db0641b81a8d5a427eaacfc3e2e836b7ed7230cc0842",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/ggplot2/diamonds.html",
         "finding": "Recorded diamond characteristics and US-dollar prices distributed with ggplot2; documentation identifies the measured variables and ranges."
@@ -650,7 +650,7 @@
     "reason": "Measured ice-core carbon dioxide concentrations assembled from EPICA and other cited Antarctic records archived by NOAA. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/DAAG_edcCO2.html",
+        "path": "evidence/review-v2/DAAG_edcCO2.html",
         "sha256": "f0e189b16146beba9a85b5010993eb1f856ac09b3f3fd802f714c814631f4c9b",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/DAAG/edcCO2.html",
         "finding": "Measured ice-core carbon dioxide concentrations assembled from EPICA and other cited Antarctic records archived by NOAA."
@@ -664,7 +664,7 @@
     "reason": "Measurements of captured blue jays supplied by Keith Tarvin; repeated captures were averaged per bird. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/Stat2Data_BlueJays.html",
+        "path": "evidence/review-v2/Stat2Data_BlueJays.html",
         "sha256": "67f029d85d97b9a0b3ccf9e20f7fc8d72cee3c2dd192bf16b15d8f537a0313e6",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/Stat2Data/BlueJays.html",
         "finding": "Measurements of captured blue jays supplied by Keith Tarvin; repeated captures were averaged per bird."
@@ -678,7 +678,7 @@
     "reason": "Recorded annual crime, income and demographic quantities for US states and the District of Columbia in 1977\u20131999, from cited empirical study supplements. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/AER_Guns.html",
+        "path": "evidence/review-v2/AER_Guns.html",
         "sha256": "16ec813dfed7bb83df660b3566c29b68a9301897c3fbc539db097cdb776f99b1",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/AER/Guns.html",
         "finding": "Recorded annual crime, income and demographic quantities for US states and the District of Columbia in 1977\u20131999, from cited empirical study supplements."
@@ -692,7 +692,7 @@
     "reason": "Recorded North Carolina county crime and economic statistics in 1981\u20131987 from Cornwell and Trumbull and Baltagi source archives. Approval is for real-data provenance; pilot restrictions are recorded separately in review-v2.json.",
     "evidence": [
       {
-        "path": "/home/ubuntu/jope-dime/parallel/manifests/evidence/review-v2/Ecdat_Crime.html",
+        "path": "evidence/review-v2/Ecdat_Crime.html",
         "sha256": "663e62d385dc02b3af82615065ec8a38c6064588a74597e1bb5212087e82cba1",
         "source_url": "https://vincentarelbundock.github.io/Rdatasets/doc/Ecdat/Crime.html",
         "finding": "Recorded North Carolina county crime and economic statistics in 1981\u20131987 from Cornwell and Trumbull and Baltagi source archives."

@@ -545,6 +545,21 @@ fn historical_class(target: &str, m: &Value) -> Result<f64> {
         / (count - 1) as f64)
 }
 
+/// Recorded backing sources predate ADR-0003: they name a retired host tree
+/// (`…/hyper/data/<rel>`). The mirror of that tree sits beside the dataset
+/// tree, `<quant_root>/../hyper/data` (historically `remote_super/hyper/data`
+/// next to `remote_super/quant`), so a recorded path that no longer exists is
+/// re-rooted there by the part after its `hyper/data` components.
+fn mirrored_backing_source(recorded: &std::path::Path) -> Option<std::path::PathBuf> {
+    let components: Vec<_> = recorded.components().collect();
+    let index = components
+        .windows(2)
+        .position(|pair| pair[0].as_os_str() == "hyper" && pair[1].as_os_str() == "data")?;
+    let relative: std::path::PathBuf = components[index + 2..].iter().collect();
+    let mirror = jope_paths::quant_root().parent()?.join("hyper/data");
+    Some(mirror.join(relative))
+}
+
 fn reconstruct_recorded(train: &Table, m: &Value, classification: bool) -> Result<(Table, Value)> {
     ensure!(
         classification || m["target_generation"] == "original_numeric_column",
@@ -559,8 +574,8 @@ fn reconstruct_recorded(train: &Table, m: &Value, classification: bool) -> Resul
         .context("missing backing-source path")?;
     let mut source = std::path::PathBuf::from(source);
     if !source.is_file() {
-        if let Ok(rel) = source.strip_prefix("/home/ubuntu/hyper/data") {
-            source = std::path::Path::new("/home/ubuntu/remote_super/hyper/data").join(rel);
+        if let Some(mirrored) = mirrored_backing_source(&source) {
+            source = mirrored;
         }
     }
     let mut reader = csv::Reader::from_path(&source).context("backing source unavailable")?;
@@ -1093,11 +1108,10 @@ pub fn run_with_admission(
             .as_ref()
             .map(|b| b.full_inventory_complete)
             .unwrap_or_else(|| {
-                report.complete
-                    && report
-                        .roots
-                        .iter()
-                        .any(|r| r.ends_with("remote_super/quant"))
+                // The inventory is frozen only when it was taken over the
+                // authoritative dataset tree (JOPE_REGISTRY's parent).
+                let authoritative = jope_paths::quant_root();
+                report.complete && report.roots.iter().any(|r| *r == authoritative)
             }),
         clean_evaluation: clean,
         clean_status: if clean {
