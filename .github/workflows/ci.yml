@@ -12,6 +12,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Path gate: docs-only pull requests run hygiene only; workflow_dispatch runs everything.
+  changes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+      emitters: ${{ steps.filter.outputs.emitters }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Classify changed paths
+        id: filter
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -euo pipefail
+          rust=true; emitters=true
+          if [ -n "$BASE_REF" ]; then
+            git fetch -q origin "$BASE_REF"
+            changed=$(git diff --name-only "origin/$BASE_REF...HEAD")
+            printf 'changed files:\n%s\n' "$changed"
+            grep -qE '^(crates/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|\.github/workflows/ci\.yml$)' <<<"$changed" || rust=false
+            grep -qE '^(crates/feat-math/|datasets/test/|deploy/ci/emitters|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.github/workflows/ci\.yml$)' <<<"$changed" || emitters=false
+          fi
+          echo "rust=$rust" >> "$GITHUB_OUTPUT"
+          echo "emitters=$emitters" >> "$GITHUB_OUTPUT"
+          echo "rust=$rust emitters=$emitters"
+
   hygiene:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -34,3 +65,70 @@ jobs:
         uses: EmbarkStudios/cargo-deny-action@34899fc7ba81ca6268d5947a7a16b4649013fea1 # v2
         with:
           command: check bans licenses sources
+
+  # The whole workspace type-checks on a hosted runner without CUDA, LibTorch or a GPU
+  # (`neural`, `gpu`, `hyperion-cuda` stay off; those lanes are self-hosted, main/nightly only).
+  rust-check:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CARGO_TERM_COLOR: always
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v5
+        with:
+          persist-credentials: false
+      - name: Toolchain (from rust-toolchain.toml)
+        run: rustup show active-toolchain
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: rust-check
+      - name: cargo check --workspace --all-targets --locked
+        run: cargo check --workspace --all-targets --locked
+      - name: "Workspace MSRV (decision 8: at most 1.97.1)"
+        run: |
+          set -euo pipefail
+          cargo metadata --no-deps --locked --format-version 1 > /tmp/metadata.json
+          python3 - <<'PY'
+          import json
+          packages = json.load(open('/tmp/metadata.json'))['packages']
+          versions = sorted({p['rust_version'] for p in packages if p.get('rust_version')})
+          print('rust-version values in the workspace:', versions)
+          assert versions and versions[-1].split('.')[:2] <= ['1', '97'], versions
+          PY
+
+  # Emitted code: the Python/Rust bit-identical pair, the four-language portable genome across
+  # g++/clang++ × C++17/C++20 and node, byte-identical sources and prediction bits against the
+  # committed expectations; plus the strict portable-parity test (no backend may be skipped).
+  emitters:
+    needs: changes
+    if: needs.changes.outputs.emitters == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CARGO_TERM_COLOR: always
+      CARGO_INCREMENTAL: "0"
+      JOPE_PARITY_STRICT: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v5
+        with:
+          persist-credentials: false
+      - name: Toolchain (from rust-toolchain.toml)
+        run: rustup show active-toolchain
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: emitters
+      - name: Compilers on this runner
+        run: |
+          set -euo pipefail
+          for tool in g++ clang++ node python3 rustc; do printf '%s: ' "$tool"; "$tool" --version | head -1; done
+      - name: Emitted-code matrix
+        run: bash deploy/ci/emitters.sh
+      - name: Strict portable parity (Rust, C++17, C++20, Python, JavaScript)
+        run: "cargo test -p feat-math --locked --lib cxx:: --test portable_parity"

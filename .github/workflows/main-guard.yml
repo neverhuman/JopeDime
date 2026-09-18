@@ -1,0 +1,44 @@
+name: main-guard
+
+# Until the organisation is on the Team plan (branch protection on a private repository), this
+# workflow is the guard: every commit that reaches main must belong to a merged pull request.
+# A violation opens an issue and fails the run.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Every commit on main belongs to a merged pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+          PUSHER: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            commits=$AFTER
+          else
+            commits=$(gh api "repos/$REPO/compare/$BEFORE...$AFTER" --jq '.commits[].sha' || echo "$AFTER")
+          fi
+          bad=""
+          for sha in $commits; do
+            merged=$(gh api "repos/$REPO/commits/$sha/pulls" --jq '[.[] | select(.merged_at != null)] | length')
+            if [ "$merged" -eq 0 ]; then bad="$bad $sha"; fi
+          done
+          if [ -n "$bad" ]; then
+            body=$(printf 'Pushed by %s. Commits on main without a merged pull request:%s\n\nLand work through a pull request (ci.yml green) instead of pushing to main.' "$PUSHER" "$bad")
+            gh issue create -R "$REPO" --title "main-guard: commit(s) pushed to main without a merged pull request" --body "$body"
+            echo "$body"; exit 1
+          fi
+          echo "ok: every pushed commit belongs to a merged pull request"
