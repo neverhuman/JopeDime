@@ -1,0 +1,12 @@
+{
+  "schema": "jope.kernel-v1-source/v1",
+  "source": "committed deploy/kernel-v1/source",
+  "source_id": "940d66be9523ddafd282dffc46eac8ab8fc59b2b",
+  "source_id_kind": "git-tree",
+  "lineage": "kernel-v1-8aa0affbf24ca68b4d6ca039ca8fbd9bffa22e3c44c1c327bf81b733a596809a",
+  "builder_image": "jope-kernel-builder:rust1.95-glibc2.35@sha256:72769e402b47c6c5b57cb432b96d94387024940a710cc086811dea0f09c48fed",
+  "rustc": "1.95.0",
+  "builder_libc": "ldd (Ubuntu GLIBC 2.35-0ubuntu3.14) 2.35",
+  "build_seconds": 95,
+  "receipt": "deploy/receipts/kernel-v1-build.json"
+}

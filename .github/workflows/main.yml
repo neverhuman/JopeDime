@@ -1,0 +1,247 @@
+name: main
+
+# Self-hosted lanes on xbabe2 (plan: "CI and testing", main.yml). Runs on every push to main and
+# on demand; never on pull requests (ci.yml has no self-hosted label and no id-token). Every
+# Rust lane sets the numerical pins (the eval registry refuses to run without them) and
+# JOPE_PARITY_STRICT=1; the helper-process variables of the env-gated tests are set by their
+# parent tests (docs/ci.md, "Env gates"). Receipts go to the run's artifacts (30 days) and to
+# s3://veox-jopedime-learning-use2/ci-receipts/<sha>/ through the JopeDimeCiRead OIDC role.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call: # nightly.yml reuses these lanes verbatim
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: main-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  OMP_NUM_THREADS: "1"
+  RAYON_NUM_THREADS: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  JOPE_PARITY_STRICT: "1"
+  AWS_REGION: us-east-2
+  RECEIPTS_BUCKET: veox-jopedime-learning-use2
+
+jobs:
+  # Everything, main tier: ≈ 2,300 tests incl. the 14 slow deadline tests and the campaigns
+  # crate; the no-silent-skip step proves nothing was quietly ignored (deploy/ci/ignored-tests.txt).
+  full-rust:
+    runs-on: [self-hosted, linux, x64, xbabe2-gpu]
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Runner facts
+        run: |
+          set -euo pipefail
+          rustup show active-toolchain; cargo nextest --version; nproc; free -g | head -2
+          nvidia-smi --query-gpu=name,uuid,driver_version,compute_cap --format=csv
+      - name: cargo fmt / clippy (workspace, no neural)
+        run: |
+          set -euo pipefail
+          cargo fmt --all -- --check
+          cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: List every test (nextest, profile main)
+        run: cargo nextest list -P main --workspace --locked --message-format json > target/nextest-list-main.json
+      - name: cargo nextest run -P main --workspace
+        run: cargo nextest run -P main --workspace --locked -j 32 2>&1 | tee target/nextest-run-main.log
+      - name: no-silent-skip
+        if: always()
+        run: python3 deploy/ci/no-silent-skip.py --lane full-rust --list target/nextest-list-main.json --junit target/nextest/main/junit-main.xml --log target/nextest-run-main.log
+      - name: Upload junit + list
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: full-rust-${{ github.sha }}
+          path: |
+            target/nextest/main/junit-main.xml
+            target/nextest-list-main.json
+            target/nextest-run-main.log
+          retention-days: 30
+          if-no-files-found: error
+
+  # The `neural` feature (LibTorch 2.13.0+cu126 from the receipted SDK volume), battle-gpu and
+  # hyperion-cuda, wrapped by deploy/ci/gpu-qualification.sh → jope.cuda-qualification/v1.
+  neural-cuda:
+    runs-on: [self-hosted, linux, x64, xbabe2-gpu]
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Neural SDK environment (deploy/receipts/libtorch.json)
+        run: bash deploy/ci/neural-env.sh >> "$GITHUB_ENV"
+      - name: GPU qualification (clippy + nextest --features neural, battle-gpu, hyperion-cuda)
+        run: bash deploy/ci/gpu-qualification.sh --output target/receipts/cuda-qualification.json
+      - name: Upload receipt
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cuda-qualification-${{ github.sha }}
+          path: |
+            target/receipts/cuda-qualification.json
+            target/cuda-qualification/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Configure AWS (OIDC, JopeDimeCiRead)
+        if: always()
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::714044927654:role/JopeDimeCiRead
+          aws-region: us-east-2
+      - name: Publish receipt to S3
+        if: always()
+        run: aws s3 cp --only-show-errors target/receipts/cuda-qualification.json "s3://$RECEIPTS_BUCKET/ci-receipts/${{ github.sha }}/cuda-qualification.json"
+
+  # Pinned model bundles → the starforge/hyperion parity tests with their weight gates set.
+  encoder-parity:
+    runs-on: [self-hosted, linux, x64, xbabe2-gpu]
+    timeout-minutes: 45
+    env:
+      JOPE_MODELS_ROOT: /var/lib/jope/models
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Configure AWS (OIDC, JopeDimeCiRead)
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::714044927654:role/JopeDimeCiRead
+          aws-region: us-east-2
+      # `jope models fetch --pinned` lands with WP7 (crate jope-models, models/PINNED); until then
+      # this step fails here with cargo's "package ID specification `jope-models` did not match".
+      - name: Fetch pinned model bundles (WP7)
+        continue-on-error: false
+        run: cargo run -q -p jope-models --locked -- fetch --pinned --root "$JOPE_MODELS_ROOT"
+      - name: Export weight gates from the bundles
+        run: |
+          set -euo pipefail
+          # Paths follow models/manifest.json (WP7); every variable must resolve to an existing file.
+          declare -A gates=(
+            [STARFORGE_WEIGHTS]=starforge/classifier/model.safetensors
+            [STARFORGE_GOLDEN_JSON]=crates/jope-encoders/tests/fixtures/starlight_core_binary_golden.json
+            [STARFORGE_REGRESSOR_WEIGHTS]=starforge/regressor/model.safetensors
+            [STARFORGE_REGRESSOR_GOLDEN_JSON]=crates/jope-encoders/tests/fixtures/starlight_core_regressor_golden.json
+            [TABICL_REGRESSOR_WEIGHTS]=tabicl/regressor/model.safetensors
+            [STARFORGE_CHIMERA_WEIGHTS]=starforge/chimera-regressor/model.safetensors
+            [STARFORGE_CHIMERA_GOLDEN_JSON]=starforge/chimera-regressor/golden.json
+            [STARFORGE_CHIMERA_CLASSIFIER_EXPERT_A_WEIGHTS]=starforge/chimera-classifier/expert-a.safetensors
+            [TABICL_CLASSIFIER_WEIGHTS]=tabicl/classifier/model.safetensors
+            [STARFORGE_CHIMERA_CLASSIFIER_TRUNK_WEIGHTS]=starforge/chimera-classifier/trunk.safetensors
+            [STARFORGE_CHIMERA_CLASSIFIER_GOLDEN_JSON]=starforge/chimera-classifier/golden.json
+          )
+          for name in "${!gates[@]}"; do
+            path=${gates[$name]}
+            case $path in crates/*) ;; *) path="$JOPE_MODELS_ROOT/$path" ;; esac
+            [ -f "$path" ] || { echo "weight gate $name: $path is missing (models/manifest.json)"; exit 1; }
+            echo "$name=$path" >> "$GITHUB_ENV"
+          done
+          {
+            echo "STARFORGE_CHIMERA_SMOKE=1"
+            echo "STARFORGE_CHIMERA_CLASSIFIER_SMOKE=1"
+            echo "STARFORGE_CHIMERA_SMOKE_DEVICE=cuda"
+            echo "STARFORGE_CHIMERA_CLASSIFIER_SMOKE_DEVICE=cuda"
+          } >> "$GITHUB_ENV"
+      - name: List encoder tests
+        run: cargo nextest list -P main -p starforge --features cuda --locked --message-format json > target/nextest-list-encoders.json
+      - name: Encoder parity (starforge, cuda)
+        run: cargo nextest run -P main -p starforge --features cuda --locked 2>&1 | tee target/nextest-run-encoders.log
+      - name: no-silent-skip (encoder-parity gates must have run)
+        if: always()
+        run: python3 deploy/ci/no-silent-skip.py --lane encoder-parity --list target/nextest-list-encoders.json --junit target/nextest/main/junit-main.xml --log target/nextest-run-encoders.log
+      - name: Upload junit
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: encoder-parity-${{ github.sha }}
+          path: |
+            target/nextest/main/junit-main.xml
+            target/nextest-list-encoders.json
+            target/nextest-run-encoders.log
+          retention-days: 30
+          if-no-files-found: error
+
+  # One bounded product loop on a committed dataset: encode → proposals → search → emit → compile
+  # → predict → bit-compare (deploy/ci/e2e-smoke.sh; receipt target/e2e/receipt.json).
+  e2e-smoke:
+    runs-on: [self-hosted, linux, x64, xbabe2-gpu]
+    timeout-minutes: 45
+    env:
+      JOPE_MODELS_ROOT: /var/lib/jope/models
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: e2e smoke
+        run: bash deploy/ci/e2e-smoke.sh
+      - name: Upload receipt
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-smoke-${{ github.sha }}
+          path: target/e2e/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Configure AWS (OIDC, JopeDimeCiRead)
+        if: always()
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::714044927654:role/JopeDimeCiRead
+          aws-region: us-east-2
+      - name: Publish receipt to S3
+        if: always()
+        run: aws s3 cp --only-show-errors target/e2e/receipt.json "s3://$RECEIPTS_BUCKET/ci-receipts/${{ github.sha }}/e2e-smoke.json"
+
+  # Glibc-bounded product build of the kernel-v1 lineage inside the checked-in builder image
+  # (docker --network none through the socket proxy of the xbabe2-kernel runner).
+  kernel-v1-build:
+    runs-on: [self-hosted, linux, x64, xbabe2-kernel]
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Builder image present (built by deploy/runner/provision.sh; the proxy denies build)
+        run: docker image inspect --format '{{.Id}}' jope-kernel-builder:rust1.95-glibc2.35
+      - name: kernel-v1 product build
+        run: bash deploy/ci/kernel-v1-product-build.sh --builder-image jope-kernel-builder:rust1.95-glibc2.35 target/kernel-v1
+      - name: Collect receipt
+        run: |
+          set -euo pipefail
+          run=$(find target/kernel-v1 -maxdepth 1 -name 'run-*' -type d | sort | tail -1)
+          mkdir -p target/receipts
+          cp "$run/receipt.json" target/receipts/kernel-v1-build.json
+          cp "$run/source.json" target/receipts/kernel-v1-source.json
+          jq -r '"binary sha256 " + (.binary.sha256 // .artifact.sha256 // "?") + "  passed=" + ((.bounds.passed // .passed // "?")|tostring)' target/receipts/kernel-v1-build.json
+      - name: Upload receipt
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kernel-v1-build-${{ github.sha }}
+          path: target/receipts/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Configure AWS (OIDC, JopeDimeCiRead)
+        if: always()
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::714044927654:role/JopeDimeCiRead
+          aws-region: us-east-2
+      - name: Publish receipts to S3
+        if: always()
+        run: aws s3 cp --only-show-errors --recursive target/receipts/ "s3://$RECEIPTS_BUCKET/ci-receipts/${{ github.sha }}/"

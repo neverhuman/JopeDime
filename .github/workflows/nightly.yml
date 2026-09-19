@@ -1,0 +1,140 @@
+name: nightly
+
+# 06:00 UTC on xbabe2: the main lanes plus the bounded campaign smoke, the C++ parity matrix
+# (-march × compiler × standard, every prediction bit-identical), cargo audit and cargo-sweep.
+# Same permissions, pins and receipt routing as main.yml (docs/ci.md).
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  OMP_NUM_THREADS: "1"
+  RAYON_NUM_THREADS: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  JOPE_PARITY_STRICT: "1"
+  AWS_REGION: us-east-2
+  RECEIPTS_BUCKET: veox-jopedime-learning-use2
+
+jobs:
+  # The main lanes, verbatim, so a nightly failure means the same thing as a main failure.
+  main-lanes:
+    uses: ./.github/workflows/main.yml
+    permissions:
+      contents: read
+      id-token: write
+
+  # One Golden46 panel cell, 200 evaluations, against the committed baseline tolerance. The
+  # campaigns binary is the package jope-dime-regressor (WP5 renames it jope-campaigns and gives
+  # it a `campaign smoke` subcommand); until WP5 lands the command below does not exist, so the
+  # job is continue-on-error and says so in its log — the lane is red-for-real once WP5 lands.
+  campaign-smoke:
+    runs-on: [self-hosted, linux, x64, xbabe2-gpu]
+    timeout-minutes: 60
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Campaign smoke (one Golden46 cell, 200 evaluations)
+        run: |
+          set -euo pipefail
+          pkg=jope-campaigns
+          cargo metadata --no-deps --locked --format-version 1 | jq -e --arg p "$pkg" '.packages[] | select(.name==$p)' >/dev/null \
+            || { pkg=jope-dime-regressor; echo "package jope-campaigns not in the workspace yet (WP5); using $pkg"; }
+          mkdir -p target/campaign-smoke
+          if ! cargo run -q -p "$pkg" --locked -- campaign smoke --help >/dev/null 2>&1; then
+            echo "::warning::'campaign smoke' does not exist in $pkg yet (WP5 adds it); continue-on-error covers this job until then"
+            echo '{"schema":"jope.campaign-smoke/v1","result":"blocked","reason":"campaign smoke subcommand absent (WP5)"}' > target/campaign-smoke/receipt.json
+            exit 1
+          fi
+          cargo run -q -p "$pkg" --locked -- campaign smoke --panel golden46 --cell 0 --evaluations 200 --seed 7 \
+            --baseline assets/campaigns/baseline.json --output target/campaign-smoke
+      - name: Upload receipt
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: campaign-smoke-${{ github.run_id }}
+          path: target/campaign-smoke/
+          retention-days: 30
+          if-no-files-found: warn
+
+  # JOPE_CXX_MARCH ∈ {x86-64-v3, znver2, native} × g++/clang++ × C++17/C++20 through
+  # deploy/ci/emitters.sh: every emitted source and every prediction bit pattern must equal the
+  # committed expectation, so the matrix proves -march does not change a single bit.
+  parity-matrix:
+    runs-on: [self-hosted, linux, x64, xbabe2-gpu]
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        march: [x86-64-v3, znver2, native]
+    env:
+      JOPE_CXX_MARCH: ${{ matrix.march }}
+      EMITTERS_OUT: target/emitters-${{ matrix.march }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Emitted-code matrix (-march=${{ matrix.march }}; g++/clang++ × C++17/C++20 inside)
+        run: bash deploy/ci/emitters.sh
+      - name: Pins equal across the matrix
+        run: |
+          set -euo pipefail
+          # emitters.sh already compared every program's predictions and the committed sha256
+          # expectations; record the digests so the three matrix legs can be diffed by eye.
+          for g in target/emitters-"$JOPE_CXX_MARCH"/*/; do
+            printf '%s predictions %s\n' "$(basename "$g")" "$(sha256sum "$g/predictions.bits" | cut -c1-64)"
+          done | tee "target/emitters-$JOPE_CXX_MARCH/pins.txt"
+      - name: Upload pins
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: parity-matrix-${{ matrix.march }}-${{ github.run_id }}
+          path: target/emitters-${{ matrix.march }}/pins.txt
+          retention-days: 30
+          if-no-files-found: error
+
+  audit:
+    runs-on: [self-hosted, linux, x64, xbabe2-gpu]
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: cargo audit (RustSec advisories, Cargo.lock)
+        run: cargo audit --deny warnings
+      - name: cargo deny (bans, licenses, sources, advisories)
+        run: cargo deny --locked check bans licenses sources advisories
+
+  # Reclaim the shared target volume: artifacts not touched for 7 days.
+  sweep:
+    runs-on: [self-hosted, linux, x64, xbabe2-gpu]
+    timeout-minutes: 15
+    needs: [main-lanes, parity-matrix, audit]
+    if: always()
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: cargo sweep --time 7
+        run: |
+          set -euo pipefail
+          target=$(cargo metadata --no-deps --locked --format-version 1 | jq -r .target_directory)
+          du -sh "$target" || true
+          cargo sweep --time 7 "$target"
+          du -sh "$target" || true
