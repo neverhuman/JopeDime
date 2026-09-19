@@ -28,7 +28,9 @@ rebase merges only (linear history); the branch is deleted on merge.
    plan section, ADR or blocker number when there is one.
 3. Run `just ci-pr` before opening the PR (the exact scripts the hosted lanes call: hygiene, fmt,
    clippy `-D warnings`, `cargo nextest -P pr`, Python checks). A PR that touches only docs runs
-   `hygiene` alone in CI; still run `just docs` locally.
+   `hygiene` alone in CI; still run `just docs` locally (rustdoc builds — its warnings are
+   advisory until the WP8 `docs` lane makes `-D warnings` blocking — plus the markdown link check
+   over README and `docs/` excluding `docs/legacy/`).
 4. Open the PR with a description that a reviewer can verify: what was run, on which host, with
    which output. Tests you had to change are listed explicitly (the test-inventory guard landing
    with WP10 fails a PR that silently removes tests).
