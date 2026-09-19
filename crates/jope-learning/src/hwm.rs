@@ -1,0 +1,1009 @@
+//! The high-water-mark ledger: admission rules, ingest, show, verify and freeze.
+
+use crate::canon::sha256_hex;
+use crate::champion::Champion;
+use crate::ledger::{atomic_write, now_unix, Ledger, LedgerReport};
+use crate::mirror::{Mirror, MirrorReport};
+use crate::record::HwmRecord;
+use crate::state::{PointerKey, State};
+use anyhow::{bail, ensure, Context, Result};
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
+use std::collections::{BTreeMap, BTreeSet};
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::time::Instant;
+
+pub const EVENT_SCHEMA: &str = "jope.hwm-event/v1";
+pub const FREEZE_SCHEMA: &str = "jope.hwm-freeze/v1";
+
+/// A pointer to move: key, new bytes, the bytes it replaces (None = it did not exist).
+pub type PointerUpdate = (PointerKey, Vec<u8>, Option<Vec<u8>>);
+
+/// One record proposed to the ledger with the bytes that become its blob.
+pub struct Candidate {
+    pub record: HwmRecord,
+    pub blob: Vec<u8>,
+    /// True when `prev_event_sha256`/`improvement_number` are copied from the source's own chain
+    /// (champions); false when the ledger assigns them from the record it displaces.
+    pub chain_from_source: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "kebab-case", tag = "outcome", content = "reason")]
+pub enum Decision {
+    Accepted,
+    Rejected(RejectReason),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum RejectReason {
+    /// Same score as the incumbent: the older record stays.
+    Tie,
+    /// Worse than the incumbent under the cut's metric direction.
+    NotBetter,
+    /// An unbound evaluator can never displace a bound one.
+    UnboundCannotDisplaceBound,
+    /// The incumbent was scored under a different metric.
+    MetricMismatch,
+    /// The record failed its structural checks.
+    Invalid,
+}
+
+impl RejectReason {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            RejectReason::Tie => "tie",
+            RejectReason::NotBetter => "not-better",
+            RejectReason::UnboundCannotDisplaceBound => "unbound-cannot-displace-bound",
+            RejectReason::MetricMismatch => "metric-mismatch",
+            RejectReason::Invalid => "invalid",
+        }
+    }
+}
+
+/// The admission rule (`champions.rs:452` + the plan's unbound rule).
+pub fn decide(incumbent: Option<&HwmRecord>, candidate: &HwmRecord) -> Decision {
+    if candidate.validate().is_err() {
+        return Decision::Rejected(RejectReason::Invalid);
+    }
+    let Some(inc) = incumbent else {
+        return Decision::Accepted;
+    };
+    if inc.evaluator.is_bound() && !candidate.evaluator.is_bound() {
+        return Decision::Rejected(RejectReason::UnboundCannotDisplaceBound);
+    }
+    if inc.score.metric != candidate.score.metric {
+        return Decision::Rejected(RejectReason::MetricMismatch);
+    }
+    let dir = candidate.score.metric.direction();
+    if dir.strictly_improves(candidate.score.value, inc.score.value) {
+        Decision::Accepted
+    } else if candidate.score.value == inc.score.value {
+        Decision::Rejected(RejectReason::Tie)
+    } else {
+        Decision::Rejected(RejectReason::NotBetter)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct HwmEvent {
+    pub schema: String,
+    /// Position within the batch.
+    pub seq: u64,
+    pub outcome: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    pub pointer: PointerKey,
+    pub record: HwmRecord,
+    /// The record this one replaced at the pointer (accepted events only).
+    pub displaced_record_sha256: Option<String>,
+    pub ts_unix: u64,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct Reject {
+    pub identity_sha256: String,
+    pub legacy_identity_sha256: Option<String>,
+    pub pointer: String,
+    pub reason: String,
+    pub value: f64,
+    pub incumbent_value: Option<f64>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct IngestReport {
+    pub source: Value,
+    pub candidates: u64,
+    pub accepted: u64,
+    pub rejected: u64,
+    pub pointers_written: u64,
+    pub blobs_written: u64,
+    pub batch: Option<crate::ledger::BatchReceipt>,
+    pub mirror: Option<MirrorReport>,
+    pub rejects: Vec<Reject>,
+    pub seconds: f64,
+}
+
+/// Admit `candidates` in (ts, identity) order, append one sealed batch, then move the pointers.
+pub fn ingest(
+    state: &State,
+    mirror: Option<&Mirror>,
+    mut candidates: Vec<Candidate>,
+    source: Value,
+) -> Result<IngestReport> {
+    let started = Instant::now();
+    let _lock = state.lock("hwm")?;
+    let ledger = Ledger::open(state.root(), "hwm");
+    ledger.require_intact()?;
+    candidates.sort_by(|a, b| {
+        (a.record.ts_unix, &a.record.identity_sha256)
+            .cmp(&(b.record.ts_unix, &b.record.identity_sha256))
+    });
+    let mut on_disk: BTreeMap<PointerKey, Option<HwmRecord>> = BTreeMap::new();
+    let mut current: BTreeMap<PointerKey, HwmRecord> = BTreeMap::new();
+    let mut events = Vec::with_capacity(candidates.len());
+    let mut rejects = Vec::new();
+    let mut blobs_written = 0u64;
+    let mut new_blobs: Vec<(String, Vec<u8>)> = Vec::new();
+    let ts = now_unix();
+    for (seq, mut c) in candidates.into_iter().enumerate() {
+        let blob_sha = sha256_hex(&c.blob);
+        ensure!(
+            c.record.provenance.record_sha256 == blob_sha,
+            "candidate {} record_sha256 {} does not hash its blob {blob_sha}",
+            c.record.identity_sha256,
+            c.record.provenance.record_sha256
+        );
+        if !state.blob_path(&blob_sha).exists() {
+            blobs_written += 1;
+            new_blobs.push((blob_sha.clone(), c.blob.clone()));
+        }
+        state.put_blob(&c.blob)?;
+        let key = PointerKey::of(&c.record);
+        if !on_disk.contains_key(&key) {
+            let r = state.read_pointer(&key)?;
+            if let Some(r) = &r {
+                current.insert(key.clone(), r.clone());
+            }
+            on_disk.insert(key.clone(), r);
+        }
+        let incumbent = current.get(&key);
+        if !c.chain_from_source {
+            match incumbent {
+                Some(inc) => {
+                    c.record.prev_event_sha256 = Some(inc.provenance.record_sha256.clone());
+                    c.record.improvement_number = inc.improvement_number + 1;
+                }
+                None => {
+                    c.record.prev_event_sha256 = None;
+                    c.record.improvement_number = 0;
+                }
+            }
+        }
+        let decision = decide(incumbent, &c.record);
+        let (outcome, reason, displaced) = match &decision {
+            Decision::Accepted => (
+                "accepted",
+                None,
+                incumbent.map(|r| r.provenance.record_sha256.clone()),
+            ),
+            Decision::Rejected(reason) => {
+                rejects.push(Reject {
+                    identity_sha256: c.record.identity_sha256.clone(),
+                    legacy_identity_sha256: c.record.legacy_identity_sha256.clone(),
+                    pointer: key.rel(),
+                    reason: reason.as_str().into(),
+                    value: c.record.score.value,
+                    incumbent_value: incumbent.map(|r| r.score.value),
+                });
+                ("rejected", Some(reason.as_str().to_string()), None)
+            }
+        };
+        let event = HwmEvent {
+            schema: EVENT_SCHEMA.into(),
+            seq: seq as u64,
+            outcome: outcome.into(),
+            reason,
+            pointer: key.clone(),
+            record: c.record.clone(),
+            displaced_record_sha256: displaced,
+            ts_unix: ts,
+        };
+        events.push(serde_json::to_value(&event)?);
+        if decision == Decision::Accepted {
+            current.insert(key, c.record);
+        }
+    }
+    let accepted = events.iter().filter(|e| e["outcome"] == "accepted").count() as u64;
+    let rejected = events.len() as u64 - accepted;
+    let batch = if events.is_empty() {
+        None
+    } else {
+        Some(ledger.append(&events, source.clone())?)
+    };
+    // Pointers move only after their events are durable.
+    let mut pointers_written = 0u64;
+    let mut pointer_updates: Vec<PointerUpdate> = Vec::new();
+    for (key, record) in &current {
+        let before = on_disk.get(key).cloned().flatten();
+        if before.as_ref().map(|r| &r.provenance.record_sha256)
+            == Some(&record.provenance.record_sha256)
+        {
+            continue;
+        }
+        let prev_bytes = before.as_ref().map(pointer_bytes).transpose()?;
+        state.write_pointer(
+            key,
+            record,
+            before.as_ref().map(|r| r.provenance.record_sha256.as_str()),
+        )?;
+        pointers_written += 1;
+        pointer_updates.push((key.clone(), pointer_bytes(record)?, prev_bytes));
+    }
+    let mirror_report = match mirror {
+        Some(m) => Some(push_mirror(
+            m,
+            state,
+            &ledger,
+            &new_blobs,
+            batch.as_ref(),
+            &pointer_updates,
+        )?),
+        None => None,
+    };
+    Ok(IngestReport {
+        source,
+        candidates: events.len() as u64,
+        accepted,
+        rejected,
+        pointers_written,
+        blobs_written,
+        batch,
+        mirror: mirror_report,
+        rejects,
+        seconds: started.elapsed().as_secs_f64(),
+    })
+}
+
+fn pointer_bytes(record: &HwmRecord) -> Result<Vec<u8>> {
+    let mut b = serde_json::to_vec_pretty(record)?;
+    b.push(b'\n');
+    Ok(b)
+}
+
+fn push_mirror(
+    m: &Mirror,
+    state: &State,
+    ledger: &Ledger,
+    blobs: &[(String, Vec<u8>)],
+    batch: Option<&crate::ledger::BatchReceipt>,
+    pointers: &[PointerUpdate],
+) -> Result<MirrorReport> {
+    use jope_datasets::store::PutOutcome;
+    let mut report = MirrorReport {
+        url: m.url.clone(),
+        ..Default::default()
+    };
+    let mut count = |o: PutOutcome| match o {
+        PutOutcome::Created => report.created += 1,
+        PutOutcome::Exists => report.existed += 1,
+    };
+    for (sha, bytes) in blobs {
+        count(m.put_immutable(&State::blob_rel(sha), bytes)?);
+    }
+    if let Some(b) = batch {
+        let rel = format!("{}/ledger/{}", ledger.name(), b.path);
+        count(m.put_immutable(&rel, &fs::read(ledger.root().join(&b.path))?)?);
+        let head_rel = format!("{}/ledger/HEAD.json", ledger.name());
+        let head_bytes = fs::read(ledger.root().join("HEAD.json"))?;
+        let prev = m.get(&head_rel)?;
+        m.put_pointer(&head_rel, &head_bytes, prev.as_deref())?;
+        report.pointers += 1;
+    }
+    for (key, bytes, prev) in pointers {
+        m.put_pointer(&key.rel(), bytes, prev.as_deref())?;
+        report.pointers += 1;
+    }
+    let _ = state;
+    Ok(report)
+}
+
+/// The ledger's events parsed.
+pub fn events(state: &State) -> Result<Vec<HwmEvent>> {
+    Ledger::open(state.root(), "hwm")
+        .events()?
+        .into_iter()
+        .map(|v| serde_json::from_value(v).context("parse hwm event"))
+        .collect()
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct ShowEntry {
+    pub pointer: PointerKey,
+    pub record: HwmRecord,
+}
+
+/// Pointers for a dataset (all tasks unless `task`), optionally one cut. Bound before unbound,
+/// then by score under the metric direction, so the first entry is the dataset's best.
+pub fn show(
+    state: &State,
+    dataset_hash: &str,
+    task: Option<&str>,
+    cut: Option<&str>,
+) -> Result<Vec<ShowEntry>> {
+    let mut out: Vec<ShowEntry> = state
+        .pointers()?
+        .into_iter()
+        .filter(|(k, _)| k.dataset_hash == dataset_hash)
+        .filter(|(k, _)| task.is_none_or(|t| k.task == t))
+        .filter(|(k, _)| cut.is_none_or(|c| k.cut_id == c))
+        .map(|(pointer, record)| ShowEntry { pointer, record })
+        .collect();
+    out.sort_by(|a, b| {
+        b.record
+            .evaluator
+            .is_bound()
+            .cmp(&a.record.evaluator.is_bound())
+            .then_with(|| {
+                let dir = a.record.score.metric.direction();
+                let (x, y) = (a.record.score.value, b.record.score.value);
+                match dir {
+                    crate::metric::Direction::Lower => x.total_cmp(&y),
+                    crate::metric::Direction::Higher => y.total_cmp(&x),
+                }
+            })
+    });
+    Ok(out)
+}
+
+/// The latest ledger event for an identity (`identity_sha256` or the source's legacy key).
+pub fn find_identity(state: &State, id: &str) -> Result<Option<HwmEvent>> {
+    Ok(events(state)?.into_iter().rfind(|e| {
+        e.record.identity_sha256 == id || e.record.legacy_identity_sha256.as_deref() == Some(id)
+    }))
+}
+
+#[derive(Clone, Debug, Serialize, Default)]
+pub struct VerifyReport {
+    pub ledger: LedgerReport,
+    pub events: u64,
+    pub accepted: u64,
+    pub rejected: u64,
+    pub identities: u64,
+    pub pointers_on_disk: u64,
+    pub blobs_checked: u64,
+    pub champion_records: u64,
+    pub champion_chain_links_walked: u64,
+    pub champion_chain_links_unresolved: u64,
+    pub breaks: Vec<VerifyBreak>,
+}
+
+impl VerifyReport {
+    pub fn ok(&self) -> bool {
+        self.breaks.is_empty() && self.ledger.ok()
+    }
+    pub fn total_breaks(&self) -> usize {
+        self.breaks.len() + self.ledger.breaks.len()
+    }
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct VerifyBreak {
+    pub kind: String,
+    pub subject: String,
+    pub detail: String,
+}
+
+/// Walk every chain: the batch chain, the per-pointer ledger chain, on-disk pointers and blobs,
+/// every record's self-consistency, and (with `event_dirs`) each champion's engine chain back to
+/// `improvement_number` 0 through `event-<sha>.json` files.
+pub fn verify(state: &State, event_dirs: &[PathBuf]) -> Result<VerifyReport> {
+    let ledger = Ledger::open(state.root(), "hwm");
+    let mut report = VerifyReport {
+        ledger: ledger.verify()?,
+        ..Default::default()
+    };
+    let mut brk = |kind: &str, subject: String, detail: String| {
+        report.breaks.push(VerifyBreak {
+            kind: kind.into(),
+            subject,
+            detail,
+        });
+    };
+    // Lenient parse: a malformed event is a break, not an abort.
+    let mut events = Vec::new();
+    for (i, v) in ledger.events()?.into_iter().enumerate() {
+        match serde_json::from_value::<HwmEvent>(v) {
+            Ok(e) => events.push(e),
+            Err(err) => brk("event-unparseable", format!("event #{i}"), err.to_string()),
+        }
+    }
+    let mut expected: BTreeMap<PointerKey, HwmRecord> = BTreeMap::new();
+    let mut identities: BTreeSet<String> = BTreeSet::new();
+    let mut chain_cache: BTreeMap<String, Result<Champion, String>> = BTreeMap::new();
+    let mut walked = 0u64;
+    let mut unresolved = 0u64;
+    let mut champion_records = 0u64;
+    let mut blobs_checked = 0u64;
+    for e in &events {
+        report.events += 1;
+        let r = &e.record;
+        let subject = r.identity_sha256.clone();
+        identities.insert(subject.clone());
+        if e.schema != EVENT_SCHEMA {
+            brk("event-schema", subject.clone(), e.schema.clone());
+        }
+        if let Err(err) = r.validate() {
+            brk("record-invalid", subject.clone(), err.to_string());
+        }
+        if PointerKey::of(r) != e.pointer {
+            brk(
+                "pointer-key",
+                subject.clone(),
+                "event pointer != record identity".into(),
+            );
+        }
+        let blob = match state.read_blob(&r.provenance.record_sha256) {
+            Ok(Some(b)) => {
+                blobs_checked += 1;
+                Some(b)
+            }
+            Ok(None) => {
+                brk(
+                    "blob-missing",
+                    subject.clone(),
+                    r.provenance.record_sha256.clone(),
+                );
+                None
+            }
+            Err(err) => {
+                brk("blob-corrupt", subject.clone(), err.to_string());
+                None
+            }
+        };
+        let is_champion = r.provenance.source.starts_with("champions");
+        if is_champion {
+            champion_records += 1;
+            if let Some(blob) = &blob {
+                match Champion::parse(blob) {
+                    Ok(ch) => {
+                        let (w, u) =
+                            verify_champion(&ch, r, event_dirs, &mut chain_cache, &mut |k, d| {
+                                brk(k, subject.clone(), d)
+                            });
+                        walked += w;
+                        unresolved += u;
+                    }
+                    Err(err) => brk("champion-parse", subject.clone(), err.to_string()),
+                }
+            }
+        }
+        match e.outcome.as_str() {
+            "accepted" => {
+                report.accepted += 1;
+                let prev = expected.get(&e.pointer);
+                let prev_sha = prev.map(|p| p.provenance.record_sha256.clone());
+                if e.displaced_record_sha256 != prev_sha {
+                    brk(
+                        "pointer-chain",
+                        subject.clone(),
+                        format!(
+                            "displaced {:?} != previous accepted {:?} at {}",
+                            e.displaced_record_sha256,
+                            prev_sha,
+                            e.pointer.rel()
+                        ),
+                    );
+                }
+                if let Some(p) = prev {
+                    if !r
+                        .score
+                        .metric
+                        .direction()
+                        .strictly_improves(r.score.value, p.score.value)
+                    {
+                        brk(
+                            "non-improvement-accepted",
+                            subject.clone(),
+                            format!("{} vs incumbent {}", r.score.value, p.score.value),
+                        );
+                    }
+                    if p.evaluator.is_bound() && !r.evaluator.is_bound() {
+                        brk("unbound-displaced-bound", subject.clone(), e.pointer.rel());
+                    }
+                    if !is_champion
+                        && (r.prev_event_sha256.as_deref() != Some(&p.provenance.record_sha256)
+                            || r.improvement_number != p.improvement_number + 1)
+                    {
+                        brk(
+                            "record-chain",
+                            subject.clone(),
+                            format!(
+                                "prev {:?}/{} does not continue {}/{}",
+                                r.prev_event_sha256,
+                                r.improvement_number,
+                                p.provenance.record_sha256,
+                                p.improvement_number
+                            ),
+                        );
+                    }
+                } else if !is_champion
+                    && (r.prev_event_sha256.is_some() || r.improvement_number != 0)
+                {
+                    brk(
+                        "record-chain",
+                        subject.clone(),
+                        "first accepted record of a pointer is not improvement 0".into(),
+                    );
+                }
+                expected.insert(e.pointer.clone(), r.clone());
+            }
+            "rejected" => report.rejected += 1,
+            other => brk("event-outcome", subject.clone(), other.to_string()),
+        }
+    }
+    let on_disk = state.pointers()?;
+    report.pointers_on_disk = on_disk.len() as u64;
+    let mut seen = BTreeSet::new();
+    for (key, record) in &on_disk {
+        seen.insert(key.clone());
+        match expected.get(key) {
+            Some(exp) if exp.provenance.record_sha256 == record.provenance.record_sha256 => {}
+            Some(exp) => brk(
+                "pointer-stale",
+                key.rel(),
+                format!(
+                    "disk {} != ledger {}",
+                    record.provenance.record_sha256, exp.provenance.record_sha256
+                ),
+            ),
+            None => brk("pointer-orphan", key.rel(), "no accepted event".into()),
+        }
+    }
+    for key in expected.keys() {
+        if !seen.contains(key) {
+            brk(
+                "pointer-missing",
+                key.rel(),
+                "accepted in ledger, absent on disk".into(),
+            );
+        }
+    }
+    report.identities = identities.len() as u64;
+    report.blobs_checked = blobs_checked;
+    report.champion_records = champion_records;
+    report.champion_chain_links_walked = walked;
+    report.champion_chain_links_unresolved = unresolved;
+    Ok(report)
+}
+
+fn load_event(
+    dirs: &[PathBuf],
+    key: &str,
+    sha: &str,
+    cache: &mut BTreeMap<String, Result<Champion, String>>,
+) -> Result<Champion, String> {
+    if let Some(c) = cache.get(sha) {
+        return c.clone();
+    }
+    let mut result: Result<Champion, String> = Err(format!("event-{sha}.json not found for {key}"));
+    for d in dirs {
+        let p = d.join(key).join(format!("event-{sha}.json"));
+        if p.exists() {
+            result = fs::read(&p)
+                .map_err(|e| e.to_string())
+                .and_then(|b| Champion::parse(&b).map_err(|e| e.to_string()))
+                .and_then(|c| {
+                    let got = c.event_sha256().map_err(|e| e.to_string())?;
+                    if got == sha {
+                        Ok(c)
+                    } else {
+                        Err(format!("{} hashes to {got}, not its name", p.display()))
+                    }
+                });
+            break;
+        }
+    }
+    cache.insert(sha.to_string(), result.clone());
+    result
+}
+
+/// (links walked, links unresolved for lack of event files)
+fn verify_champion(
+    ch: &Champion,
+    r: &HwmRecord,
+    dirs: &[PathBuf],
+    cache: &mut BTreeMap<String, Result<Champion, String>>,
+    brk: &mut dyn FnMut(&str, String),
+) -> (u64, u64) {
+    if let Err(e) = ch.validate() {
+        brk("champion-invalid", e.to_string());
+    }
+    let key = match ch.identity.key() {
+        Ok(k) => k,
+        Err(e) => {
+            brk("champion-key", e.to_string());
+            return (0, 0);
+        }
+    };
+    if r.legacy_identity_sha256.as_deref() != Some(&key) {
+        brk(
+            "legacy-identity",
+            format!(
+                "record {:?} != Identity::key {key}",
+                r.legacy_identity_sha256
+            ),
+        );
+    }
+    if r.sealed != ch.identity.is_sealed() {
+        brk(
+            "sealed-flag",
+            format!(
+                "sealed {} for partition {}",
+                r.sealed, ch.identity.partition
+            ),
+        );
+    }
+    if r.score.value != ch.rmse_original_units
+        || r.prev_event_sha256 != ch.previous_event_sha256
+        || r.improvement_number != ch.improvement_number
+        || r.ts_unix != ch.timestamp
+    {
+        brk(
+            "champion-fields",
+            "score/chain/timestamp differ from the champion".into(),
+        );
+    }
+    if dirs.is_empty() {
+        return (0, u64::from(ch.previous_event_sha256.is_some()));
+    }
+    let mut walked = 0u64;
+    // The record's own event file must hold these exact bytes.
+    match ch.event_sha256() {
+        Ok(own) => {
+            if let Err(e) = load_event(dirs, &key, &own, cache) {
+                brk("champion-own-event", e);
+            }
+        }
+        Err(e) => brk("champion-hash", e.to_string()),
+    }
+    let mut cur = ch.clone();
+    let mut hops = 0u64;
+    while let Some(prev_sha) = cur.previous_event_sha256.clone() {
+        hops += 1;
+        if hops > 10_000 {
+            brk("chain-loop", key.clone());
+            break;
+        }
+        let prev = match load_event(dirs, &key, &prev_sha, cache) {
+            Ok(p) => p,
+            Err(e) => {
+                brk("chain-link", e);
+                break;
+            }
+        };
+        walked += 1;
+        if prev.identity != cur.identity {
+            brk(
+                "chain-identity",
+                format!("event {prev_sha} has another identity"),
+            );
+        }
+        if prev.improvement_number + 1 != cur.improvement_number {
+            brk(
+                "chain-number",
+                format!(
+                    "{} -> {} at {prev_sha}",
+                    prev.improvement_number, cur.improvement_number
+                ),
+            );
+        }
+        if cur.previous_rmse_original_units != Some(prev.rmse_original_units)
+            || cur.rmse_original_units >= prev.rmse_original_units
+        {
+            brk(
+                "chain-score",
+                format!(
+                    "{} did not strictly improve on {} at {prev_sha}",
+                    cur.rmse_original_units, prev.rmse_original_units
+                ),
+            );
+        }
+        if let Err(e) = prev.validate() {
+            brk("chain-event-invalid", format!("{prev_sha}: {e}"));
+        }
+        cur = prev;
+    }
+    if cur.improvement_number != 0 && cur.previous_event_sha256.is_none() {
+        brk(
+            "chain-root",
+            format!("root has improvement_number {}", cur.improvement_number),
+        );
+    }
+    (walked, 0)
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct FreezeEntry {
+    pub pointer: PointerKey,
+    pub identity_sha256: String,
+    pub legacy_identity_sha256: Option<String>,
+    pub record_sha256: String,
+    pub program_sha256: String,
+    pub metric: String,
+    pub value: f64,
+    pub evaluator_sha256: String,
+    pub blob: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct FreezeManifest {
+    pub schema: String,
+    pub ledger_head: Option<crate::ledger::Head>,
+    pub include_unbound: bool,
+    pub pointers: u64,
+    pub included: u64,
+    pub excluded_sealed: u64,
+    pub excluded_unbound: u64,
+    pub ts_unix: u64,
+    pub entries: Vec<FreezeEntry>,
+}
+
+/// A snapshot restricted to HWM winners: every pointer that is not sealed and (unless
+/// `include_unbound`) is replayable, with its blob copied under `<out>/blobs/sha256/`.
+pub fn freeze(state: &State, out: &Path, include_unbound: bool) -> Result<FreezeManifest> {
+    let ledger = Ledger::open(state.root(), "hwm");
+    let head = ledger.head()?;
+    let pointers = state.pointers()?;
+    let mut manifest = FreezeManifest {
+        schema: FREEZE_SCHEMA.into(),
+        ledger_head: head,
+        include_unbound,
+        pointers: pointers.len() as u64,
+        included: 0,
+        excluded_sealed: 0,
+        excluded_unbound: 0,
+        ts_unix: now_unix(),
+        entries: Vec::new(),
+    };
+    fs::create_dir_all(out)?;
+    for (pointer, r) in pointers {
+        if r.sealed {
+            manifest.excluded_sealed += 1;
+            continue;
+        }
+        if !r.replayable && !include_unbound {
+            manifest.excluded_unbound += 1;
+            continue;
+        }
+        let sha = r.provenance.record_sha256.clone();
+        let blob = state
+            .read_blob(&sha)?
+            .with_context(|| format!("blob {sha} missing for {}", pointer.rel()))?;
+        let rel = State::blob_rel(&sha);
+        let dest = out.join(&rel);
+        if !dest.exists() {
+            atomic_write(&dest, &blob)?;
+        }
+        manifest.entries.push(FreezeEntry {
+            pointer,
+            identity_sha256: r.identity_sha256.clone(),
+            legacy_identity_sha256: r.legacy_identity_sha256.clone(),
+            record_sha256: sha,
+            program_sha256: r.genome.program_sha256.clone(),
+            metric: r.score.metric.to_string(),
+            value: r.score.value,
+            evaluator_sha256: r.evaluator.sha256.clone(),
+            blob: rel,
+        });
+        manifest.included += 1;
+    }
+    atomic_write(
+        &out.join("manifest.json"),
+        &serde_json::to_vec_pretty(&manifest)?,
+    )?;
+    Ok(manifest)
+}
+
+/// Directory size and file count (for reports).
+pub fn tree_size(root: &Path) -> Result<(u64, u64)> {
+    let (mut bytes, mut files) = (0u64, 0u64);
+    for e in walkdir::WalkDir::new(root) {
+        let e = e?;
+        if e.file_type().is_file() {
+            bytes += e.metadata()?.len();
+            files += 1;
+        }
+    }
+    Ok((bytes, files))
+}
+
+pub fn source_value(kind: &str, path: &Path, extra: Value) -> Value {
+    let mut v =
+        json!({"kind": kind, "path": path.display().to_string(), "tool": crate::TOOL_VERSION});
+    if let (Some(dst), Some(src)) = (v.as_object_mut(), extra.as_object()) {
+        for (k, val) in src {
+            dst.insert(k.clone(), val.clone());
+        }
+    }
+    v
+}
+
+pub fn fail_if(cond: bool, msg: &str) -> Result<()> {
+    if cond {
+        bail!("{msg}");
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::metric::{Direction, Metric};
+    use crate::record::*;
+
+    pub fn record(
+        dataset: &str,
+        cut: &str,
+        evaluator: &str,
+        metric: Metric,
+        value: f64,
+    ) -> HwmRecord {
+        let identity = HwmIdentity {
+            task: "regression".into(),
+            dataset_hash: dataset.into(),
+            cut_id: crate::canon::sha256_hex(cut.as_bytes()),
+            evaluator_sha256: evaluator.into(),
+            vocabulary_sha256: UNBOUND.into(),
+            protocol: "test".into(),
+        };
+        let dsl = format!("(pipe X (ridge alpha={value}))");
+        let blob = format!("{dataset}/{cut}/{evaluator}/{value}");
+        HwmRecord {
+            schema: HWM_SCHEMA.into(),
+            identity_sha256: identity.sha256().unwrap(),
+            identity,
+            legacy_identity_sha256: None,
+            genome: Genome {
+                program_sha256: crate::canon::sha256_hex(dsl.as_bytes()),
+                dsl,
+                semantic_sha256: None,
+            },
+            score: Score {
+                metric,
+                value,
+                direction: metric.direction(),
+                units: "original_target_units".into(),
+            },
+            cost: Cost::default(),
+            evaluator: Evaluator {
+                sha256: evaluator.into(),
+                version: "test".into(),
+            },
+            benchmark_valid: false,
+            sealed: false,
+            replayable: evaluator != UNBOUND,
+            provenance: Provenance {
+                source: "test".into(),
+                run_id: "run".into(),
+                git_sha: UNBOUND.into(),
+                bundle_id: UNBOUND.into(),
+                record_sha256: crate::canon::sha256_hex(blob.as_bytes()),
+            },
+            prev_event_sha256: None,
+            improvement_number: 0,
+            ts_unix: 1,
+        }
+    }
+
+    const BOUND: &str = "b5ccee8e33af34313c51896f52466f87f2f8544dcb01672e6d6b4832d1ac4393";
+
+    #[test]
+    fn admission_rules() {
+        let inc = record("d", "c", BOUND, Metric::Rmse, 0.5);
+        assert_eq!(decide(None, &inc), Decision::Accepted);
+        assert_eq!(
+            decide(Some(&inc), &record("d", "c", BOUND, Metric::Rmse, 0.4)),
+            Decision::Accepted
+        );
+        assert_eq!(
+            decide(Some(&inc), &record("d", "c", BOUND, Metric::Rmse, 0.5)),
+            Decision::Rejected(RejectReason::Tie)
+        );
+        assert_eq!(
+            decide(Some(&inc), &record("d", "c", BOUND, Metric::Rmse, 0.6)),
+            Decision::Rejected(RejectReason::NotBetter)
+        );
+        // Unbound never displaces bound, even with a better score.
+        assert_eq!(
+            decide(Some(&inc), &record("d", "c", UNBOUND, Metric::Rmse, 0.1)),
+            Decision::Rejected(RejectReason::UnboundCannotDisplaceBound)
+        );
+        // Bound displaces unbound when strictly better; a tie still keeps the older.
+        let unb = record("d", "c", UNBOUND, Metric::R2, 0.8);
+        assert_eq!(
+            decide(Some(&unb), &record("d", "c", BOUND, Metric::R2, 0.9)),
+            Decision::Accepted
+        );
+        assert_eq!(
+            decide(Some(&unb), &record("d", "c", BOUND, Metric::R2, 0.8)),
+            Decision::Rejected(RejectReason::Tie)
+        );
+        assert_eq!(
+            decide(Some(&unb), &record("d", "c", UNBOUND, Metric::R2, 0.7)),
+            Decision::Rejected(RejectReason::NotBetter)
+        );
+        assert_eq!(
+            decide(Some(&unb), &record("d", "c", UNBOUND, Metric::Auc, 0.99)),
+            Decision::Rejected(RejectReason::MetricMismatch)
+        );
+        let mut bad = record("d", "c", BOUND, Metric::Rmse, 0.1);
+        bad.score.direction = Direction::Higher;
+        assert_eq!(
+            decide(None, &bad),
+            Decision::Rejected(RejectReason::Invalid)
+        );
+    }
+
+    #[test]
+    fn ingest_moves_pointers_only_on_strict_improvement_and_logs_rejects() {
+        let dir = tempfile::tempdir().unwrap();
+        let state = State::at(dir.path());
+        let cand = |v: f64, ts: u64| {
+            let mut r = record("d", "c", UNBOUND, Metric::R2, v);
+            r.ts_unix = ts;
+            let blob = format!("d/c/unbound/{v}").into_bytes();
+            Candidate {
+                record: r,
+                blob,
+                chain_from_source: false,
+            }
+        };
+        let rep = ingest(
+            &state,
+            None,
+            vec![cand(0.5, 3), cand(0.7, 1), cand(0.7, 2), cand(0.6, 4)],
+            json!({"kind": "test"}),
+        )
+        .unwrap();
+        // Ordered by ts: 0.7 (accepted, #0), 0.7 (tie), 0.5 (not better), 0.6 (not better).
+        assert_eq!(
+            (rep.accepted, rep.rejected, rep.pointers_written),
+            (1, 3, 1)
+        );
+        assert_eq!(
+            rep.rejects
+                .iter()
+                .map(|r| r.reason.as_str())
+                .collect::<Vec<_>>(),
+            vec!["tie", "not-better", "not-better"]
+        );
+        let key = PointerKey::of(&cand(0.7, 1).record);
+        let cur = state.read_pointer(&key).unwrap().unwrap();
+        assert_eq!((cur.score.value, cur.improvement_number), (0.7, 0));
+        let rep = ingest(&state, None, vec![cand(0.9, 9)], json!({"kind": "test"})).unwrap();
+        assert_eq!((rep.accepted, rep.rejected), (1, 0));
+        let cur = state.read_pointer(&key).unwrap().unwrap();
+        assert_eq!((cur.score.value, cur.improvement_number), (0.9, 1));
+        assert_eq!(
+            cur.prev_event_sha256.as_deref(),
+            Some(crate::canon::sha256_hex(b"d/c/unbound/0.7").as_str())
+        );
+        let v = verify(&state, &[]).unwrap();
+        assert!(v.ok(), "{:?}", v.breaks);
+        assert_eq!(
+            (v.events, v.accepted, v.rejected, v.pointers_on_disk),
+            (5, 2, 3, 1)
+        );
+        // A stale pointer on disk is a break.
+        let stale = cand(0.7, 1).record;
+        let mut bytes = serde_json::to_vec_pretty(&stale).unwrap();
+        bytes.push(b'\n');
+        atomic_write(&state.pointer_path(&key).unwrap(), &bytes).unwrap();
+        let v = verify(&state, &[]).unwrap();
+        assert!(v.breaks.iter().any(|b| b.kind == "pointer-stale"));
+    }
+}

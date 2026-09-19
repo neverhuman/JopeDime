@@ -1,0 +1,37 @@
+[package]
+name = "jope-learning"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "JOPE-Dime learning store: append-only hash-chained high-water-mark and score ledgers, conditional pointers, and the ingest of champions, genebank, lineage-A snapshots and SOTArena results"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "jope-learning"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+hex.workspace = true
+jope-datasets = { path = "../jope-datasets" }
+rusqlite = { version = "0.32", features = ["bundled"] }
+schemars = "1"
+serde.workspace = true
+# float_roundtrip matches jope-engine: champion event hashes are recomputed from re-parsed f64s.
+serde_json = { workspace = true, features = ["float_roundtrip"] }
+sha2.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+ulid.workspace = true
+walkdir = "2"
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true
