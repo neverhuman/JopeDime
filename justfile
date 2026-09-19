@@ -38,3 +38,38 @@ ci-main: ci-pr test-main
 
 # kept for muscle memory: the historical gate name
 required: ci-pr
+
+# set the release version everywhere version-consistency.sh checks (workspace, jope-engine, jope-campaigns, python), refresh the lock, verify
+bump version:
+    sed -i -E '0,/^version = "[^"]+"/s//version = "{{version}}"/' Cargo.toml
+    sed -i -E '0,/^version = "[^"]+"/s//version = "{{version}}"/' crates/jope-engine/Cargo.toml
+    sed -i -E '0,/^version = "[^"]+"/s//version = "{{version}}"/' crates/jope-campaigns/Cargo.toml
+    sed -i -E '0,/^version = "[^"]+"/s//version = "{{version}}"/' python/pyproject.toml
+    cargo update --workspace --offline
+    bash deploy/ci/version-consistency.sh
+    @echo "bumped to {{version}}; commit, then tag v{{version}} to run release.yml"
+
+# documentation checks: rustdoc -D warnings, every relative link in README/docs resolves, cliff.toml renders (git-cliff optional locally)
+docs:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --locked
+    python3 - <<'PY'
+    import os, re, sys
+    files = ["README.md", "CONTRIBUTING.md", "SECURITY.md", "CODE_OF_CONDUCT.md"]
+    for root, _, names in os.walk("docs"):
+        files += [os.path.join(root, n) for n in names if n.endswith(".md")]
+    link = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
+    bad = 0
+    for path in sorted(files):
+        for target in link.findall(open(path, encoding="utf-8").read()):
+            if target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            rel = target.split("#", 1)[0]
+            if not os.path.exists(os.path.normpath(os.path.join(os.path.dirname(path), rel))):
+                print(f"{path}: broken link {target}")
+                bad += 1
+    print(f"{len(files)} markdown files, {bad} broken links")
+    sys.exit(1 if bad else 0)
+    PY
+    if command -v git-cliff >/dev/null; then git cliff --config cliff.toml --unreleased --strip all > /dev/null && echo "cliff.toml ok"; else echo "git-cliff not installed (release.yml installs it)"; fi
