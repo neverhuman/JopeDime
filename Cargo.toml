@@ -12,6 +12,7 @@ members = [
   "crates/jope-datasets",
   "crates/jope-encoders",
   "crates/jope-models",
+  "crates/jope-learning",
   "crates/jope-paths",
   "crates/numpy-pcg64",
   "crates/smartcluster/jain-smartcluster-core",

@@ -1,0 +1,288 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://veox.ai/schemas/jope.hwm.v1.schema.json",
+  "title": "jope.hwm/v1",
+  "description": "One high-water mark: the best program known for an exact cut under an evaluator identity. identity_sha256 = sha256 of the canonical JSON (sorted keys, compact) of {task, dataset_hash, cut_id, evaluator_sha256, vocabulary_sha256, protocol}. Strict improvement only under the metric's direction (r2/oof_r2/auc/macro_f1/negative_mase higher; rmse/logloss/mase lower); ties keep the older record; an unbound evaluator never displaces a bound one. Written to hwm/<task>/<dataset_hash>/<cut_id>/current.json and, as an event, to hwm/ledger/<yyyy>/<mm>/<ulid>.jsonl.",
+  "$defs": {
+    "Cost": {
+      "additionalProperties": false,
+      "properties": {
+        "runtime_seconds": {
+          "default": null,
+          "description": "Fit/evaluate wall seconds of the winning program.",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "search_seconds": {
+          "default": null,
+          "description": "Search wall seconds spent to find it, when recorded.",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "Direction": {
+      "enum": [
+        "higher",
+        "lower"
+      ],
+      "type": "string"
+    },
+    "Evaluator": {
+      "additionalProperties": false,
+      "properties": {
+        "sha256": {
+          "description": "sha256 of the evaluator binary, or `unbound`.",
+          "pattern": "^(unbound|[0-9a-f]{64})$",
+          "type": "string"
+        },
+        "version": {
+          "description": "Free-form version label of the evaluator (binary name, schema or legacy tag).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sha256",
+        "version"
+      ],
+      "type": "object"
+    },
+    "Genome": {
+      "additionalProperties": false,
+      "properties": {
+        "dsl": {
+          "description": "The program in its source DSL.",
+          "type": "string"
+        },
+        "program_sha256": {
+          "description": "sha256 of the DSL bytes.",
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "semantic_sha256": {
+          "description": "Semantic (normalised) hash when the source recorded one.",
+          "pattern": "^[0-9a-f]{64}$",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "dsl",
+        "program_sha256"
+      ],
+      "type": "object"
+    },
+    "HwmIdentity": {
+      "additionalProperties": false,
+      "description": "What `identity_sha256` hashes: the canonical JSON of exactly these six fields.",
+      "properties": {
+        "cut_id": {
+          "description": "Split/fold identity: sha256 of the canonical JSON that names the cut (see docs/learning.md).",
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "dataset_hash": {
+          "description": "Dataset content hash (16 hex for catalogued datasets; legacy sources keep their own ids).",
+          "type": "string"
+        },
+        "evaluator_sha256": {
+          "description": "sha256 of the evaluator binary, or `unbound`.",
+          "pattern": "^(unbound|[0-9a-f]{64})$",
+          "type": "string"
+        },
+        "protocol": {
+          "description": "Scoring protocol the score was measured under.",
+          "type": "string"
+        },
+        "task": {
+          "description": "Learning task (`regression`, `binary`, ...).",
+          "type": "string"
+        },
+        "vocabulary_sha256": {
+          "description": "sha256 of the grammar vocabulary, or `unbound`.",
+          "pattern": "^(unbound|[0-9a-f]{64})$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "task",
+        "dataset_hash",
+        "cut_id",
+        "evaluator_sha256",
+        "vocabulary_sha256",
+        "protocol"
+      ],
+      "type": "object"
+    },
+    "Metric": {
+      "enum": [
+        "r2",
+        "oof_r2",
+        "auc",
+        "macro_f1",
+        "negative_mase",
+        "rmse",
+        "logloss",
+        "mase"
+      ],
+      "type": "string"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "bundle_id": {
+          "description": "Bundle id the record was migrated from, or `unbound`.",
+          "type": "string"
+        },
+        "git_sha": {
+          "description": "git sha of the tree that produced the record, or `unbound` for legacy imports.",
+          "type": "string"
+        },
+        "record_sha256": {
+          "description": "sha256 of the record blob under `blobs/sha256/` (the original bytes for migrated records).",
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "run_id": {
+          "description": "Source-specific run identity (observation path, generation id, track/version, ...).",
+          "type": "string"
+        },
+        "source": {
+          "description": "`champions`, `champions-sealed`, `genebank`, `snapshot-<watermark>`, `sotarena`, ...",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "run_id",
+        "git_sha",
+        "bundle_id",
+        "record_sha256"
+      ],
+      "type": "object"
+    },
+    "Score": {
+      "additionalProperties": false,
+      "properties": {
+        "direction": {
+          "$ref": "#/$defs/Direction",
+          "description": "Redundant with the metric table; recorded so a ledger reader needs no code to rank."
+        },
+        "metric": {
+          "$ref": "#/$defs/Metric"
+        },
+        "units": {
+          "description": "`original_target_units` (rmse in the target's units), `dimensionless` (r2, auc, ...).",
+          "type": "string"
+        },
+        "value": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "required": [
+        "metric",
+        "value",
+        "direction",
+        "units"
+      ],
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "benchmark_valid": {
+      "description": "True only for scores measured under a benchmark protocol (never for HWM search scores).",
+      "type": "boolean"
+    },
+    "cost": {
+      "$ref": "#/$defs/Cost"
+    },
+    "evaluator": {
+      "$ref": "#/$defs/Evaluator"
+    },
+    "genome": {
+      "$ref": "#/$defs/Genome"
+    },
+    "identity": {
+      "$ref": "#/$defs/HwmIdentity"
+    },
+    "identity_sha256": {
+      "description": "sha256 of the canonical JSON of `identity`.",
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "improvement_number": {
+      "description": "0 for the first record of a chain, +1 per strict improvement.",
+      "format": "uint64",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "legacy_identity_sha256": {
+      "description": "The source's own identity key (`parallel.cut_champion.v1`: `Identity::key()`), when one exists.",
+      "pattern": "^[0-9a-f]{64}$",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "prev_event_sha256": {
+      "description": "sha256 of the event/record this one improved on in its chain, null for the first.",
+      "pattern": "^[0-9a-f]{64}$",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "replayable": {
+      "description": "True when the bound evaluator can reproduce the score (`hwm replay`); unbound = false.",
+      "type": "boolean"
+    },
+    "schema": {
+      "description": "Always `jope.hwm/v1`.",
+      "type": "string"
+    },
+    "score": {
+      "$ref": "#/$defs/Score"
+    },
+    "sealed": {
+      "description": "True for sealed (`meta_test`) records: kept, never exported to corpora.",
+      "type": "boolean"
+    },
+    "ts_unix": {
+      "description": "Unix seconds the score was achieved.",
+      "format": "uint64",
+      "minimum": 0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema",
+    "identity",
+    "identity_sha256",
+    "genome",
+    "score",
+    "cost",
+    "evaluator",
+    "benchmark_valid",
+    "sealed",
+    "replayable",
+    "provenance",
+    "prev_event_sha256",
+    "improvement_number",
+    "ts_unix"
+  ],
+  "type": "object"
+}
