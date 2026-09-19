@@ -1,0 +1,11 @@
+[Unit]
+Description=JopeDime runner nightly prune (docker + cargo sweep --time 7)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/jope-runner/prune.sh
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/jope-runner
