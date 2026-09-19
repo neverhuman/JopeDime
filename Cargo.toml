@@ -5,6 +5,7 @@ members = [
   "crates/hyperion",
   "crates/jope-policy",
   "crates/battle-gpu",
+  "crates/jope-arena",
   "crates/jope-engine",
   "crates/jope-campaigns",
   "crates/jope-cli",
