@@ -2,13 +2,13 @@
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use jope_dime_regressor::encoder_v2_execution::{
+use crate::encoder_v2_execution::{
     EncoderAttemptReceiptV2, EncoderExecutionReceiptV2,
 };
-use jope_dime_regressor::encoder_v2_identity::{decode_dataset_input, decode_encoder_identity};
-use jope_dime_regressor::encoder_v2_store::{EncoderV2Store, PublishOutcome};
-use jope_dime_regressor::paths;
-use jope_dime_regressor::recovery_contracts::V1EncodingQuarantineV1;
+use crate::encoder_v2_identity::{decode_dataset_input, decode_encoder_identity};
+use crate::encoder_v2_store::{EncoderV2Store, PublishOutcome};
+use crate::paths;
+use crate::recovery_contracts::V1EncodingQuarantineV1;
 use serde_json::json;
 use std::fs::{self, File};
 use std::path::PathBuf;
@@ -43,8 +43,8 @@ struct Args {
     v1_source_identity: Option<String>,
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     let encoder = decode_encoder_identity(&fs::read(&args.encoder_identity)?)?;
     let input = decode_dataset_input(&fs::read(&args.dataset_input)?)?;
     let execution: EncoderExecutionReceiptV2 = serde_json::from_reader(

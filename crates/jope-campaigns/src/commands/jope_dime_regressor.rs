@@ -12,31 +12,20 @@ use std::time::Instant;
 use crate::commands::exact_cv::{self, ValidatedFreeze, ORIGINAL_GENERATIONS};
 use crate::core::require_core_plan;
 use crate::data::{read_binary_csv, read_regression_csv};
-use jope_dime_regressor::paths;
+use crate::paths;
+use crate::{
+    aggressive, commands, followup, genome_boost, golden42_v3, ratchet, score_corpus, test_adaptive,
+};
 
-mod aggressive;
-mod args;
-mod commands;
-mod core;
-mod data;
-mod evaluation_v2;
-mod followup;
-mod genome_boost;
-mod golden42_v3;
-mod ratchet;
-mod runtime;
-mod score_corpus;
-mod task;
-mod test_adaptive;
 
 jope_paths::once_str!(
     fn registry_str => paths::jope_registry()
 );
-const PANEL_SHA256: &str = "b86c8ea5f5ab1051e8aafb4368f8dabdcfd8c740c63eaa1d086ddb72fae0ba75";
-const PANEL_ANALYSIS_SHA256: &str =
+pub(crate) const PANEL_SHA256: &str = "b86c8ea5f5ab1051e8aafb4368f8dabdcfd8c740c63eaa1d086ddb72fae0ba75";
+pub(crate) const PANEL_ANALYSIS_SHA256: &str =
     "0117abb32d547b134706e210376f2e6f437b706b2a12edb6d9302d74d4749282";
-const SEED_SHA256: &str = "5f097a0017ddc7e92ad5ea8dfadaf783b548e82287d92626dc9d2fa9429b2105";
-const BASE_SEED: u64 = 20260616;
+pub(crate) const SEED_SHA256: &str = "5f097a0017ddc7e92ad5ea8dfadaf783b548e82287d92626dc9d2fa9429b2105";
+pub(crate) const BASE_SEED: u64 = 20260616;
 // --- binary-classification lane (v2-binary; fixture-backed until real datasets land) ---
 const PANEL_BINARY_SHA256: &str =
     "be3e8ff9654e31bbb1015a1e783bb9ba58f86295706dbdbaf137509e0b69d575";
@@ -50,8 +39,8 @@ const BINARY_RESULTS_FILE: &str = "jope-dime-binary-panel-results.v1.json";
 /// campaigns never share offspring streams with the regression lane.
 const BINARY_LANE_TAG: u64 = 0x6a70_6269_6e5f_7631;
 const MODEL: &str = "jope-dime";
-const REPORT_FILE: &str = "jope-dime-regressor.json";
-const PREDICTION_FILE: &str = "jope-dime-regressor.csv";
+pub(crate) const REPORT_FILE: &str = "jope-dime-regressor.json";
+pub(crate) const PREDICTION_FILE: &str = "jope-dime-regressor.csv";
 const BASELINES: &[&str] = &[
     "TabFM ensemble",
     "TabPFNv3",
@@ -60,7 +49,7 @@ const BASELINES: &[&str] = &[
     "OpenAI GPT-5.6-sol",
     "Kimik3",
 ];
-const DATASETS: &[&str] = &[
+pub(crate) const DATASETS: &[&str] = &[
     "019de5d76a718163",
     "047e62b52a3f4ede",
     "13b5df533e59a626",
@@ -829,19 +818,19 @@ enum Command {
 }
 
 #[derive(Debug)]
-struct ScoredDataset {
-    dataset_hash: String,
-    predictions: Vec<f64>,
-    prediction_bytes: Vec<u8>,
-    prediction_sha256: String,
-    report_bytes: Vec<u8>,
-    report_sha256: String,
-    scores: BTreeMap<String, f64>,
-    outcome: Value,
+pub(crate) struct ScoredDataset {
+    pub(crate) dataset_hash: String,
+    pub(crate) predictions: Vec<f64>,
+    pub(crate) prediction_bytes: Vec<u8>,
+    pub(crate) prediction_sha256: String,
+    pub(crate) report_bytes: Vec<u8>,
+    pub(crate) report_sha256: String,
+    pub(crate) scores: BTreeMap<String, f64>,
+    pub(crate) outcome: Value,
 }
 
-fn main() -> Result<()> {
-    let cli = Cli::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let cli = Cli::parse_from(&args);
     if cli.kernel_version == KernelVersion::AdvancedV3 && command_starts_campaign(&cli.command) {
         bail!(
             "advanced-v3 campaign launch is admission-gated; use a fresh run only after the v3 benchmark gate has been recorded (existing manifests remain legacy-v2)"
@@ -1453,25 +1442,25 @@ fn run_root(panel_id: &str) -> PathBuf {
         .join(panel_id)
 }
 
-fn seed_bytes() -> &'static [u8] {
-    include_bytes!("../seeds/generation-zero.txt")
+pub(crate) fn seed_bytes() -> &'static [u8] {
+    include_bytes!("../../seeds/generation-zero.txt")
 }
 
-fn sha256_bytes(bytes: &[u8]) -> String {
+pub(crate) fn sha256_bytes(bytes: &[u8]) -> String {
     hex::encode(Sha256::digest(bytes))
 }
 
-fn hash_file(path: &Path) -> Result<String> {
+pub(crate) fn hash_file(path: &Path) -> Result<String> {
     Ok(sha256_bytes(&fs::read(path)?))
 }
 
-fn canonical_json(value: &Value) -> Result<Vec<u8>> {
+pub(crate) fn canonical_json(value: &Value) -> Result<Vec<u8>> {
     let mut bytes = serde_json::to_vec(value)?;
     bytes.push(b'\n');
     Ok(bytes)
 }
 
-fn dataset_seed(hash: &str) -> Result<u64> {
+pub(crate) fn dataset_seed(hash: &str) -> Result<u64> {
     Ok(BASE_SEED ^ u64::from_str_radix(hash, 16).context("dataset hash is not hexadecimal")?)
 }
 
@@ -1484,7 +1473,7 @@ fn binary_dataset_seed(hash: &str) -> Result<u64> {
 }
 
 fn binary_seed_bytes() -> &'static [u8] {
-    include_bytes!("../seeds/generation-zero-binary.txt")
+    include_bytes!("../../seeds/generation-zero-binary.txt")
 }
 
 /// Pinned binary panel: manifest sha + seed sha verified before any campaign.
@@ -1636,7 +1625,7 @@ fn validate_panel_binary(registry: &Path, panel_id: &str) -> Result<()> {
 /// Round-robin Elo over per-dataset AUC tables: strictly greater AUC wins,
 /// exact ties draw; K=16, initial 1500, datasets in pinned order and pairs in
 /// lexicographic model order (fully deterministic).
-fn binary_elo(per_dataset: &[BTreeMap<String, f64>]) -> BTreeMap<String, f64> {
+pub(crate) fn binary_elo(per_dataset: &[BTreeMap<String, f64>]) -> BTreeMap<String, f64> {
     let mut ratings = BTreeMap::<String, f64>::new();
     for table in per_dataset {
         for model in table.keys() {
@@ -1759,7 +1748,7 @@ fn score_panel_binary(registry: &Path, panel_id: &str) -> Result<()> {
     Ok(())
 }
 
-fn validate_static_inputs() -> Result<()> {
+pub(crate) fn validate_static_inputs() -> Result<()> {
     if sha256_bytes(seed_bytes()) != SEED_SHA256 {
         bail!("seed population hash mismatch");
     }
@@ -1917,7 +1906,7 @@ fn validate_panel(registry: &Path, panel_id: &str) -> Result<()> {
     Ok(())
 }
 
-fn load_baselines() -> Result<BTreeMap<String, BTreeMap<String, f64>>> {
+pub(crate) fn load_baselines() -> Result<BTreeMap<String, BTreeMap<String, f64>>> {
     let path = manifest_dir().join("panel-analysis.v1.json");
     if hash_file(&path)? != PANEL_ANALYSIS_SHA256 {
         bail!("baseline panel SHA-256 mismatch");
@@ -2007,7 +1996,7 @@ fn baseline_comparisons(
     ))
 }
 
-fn score_dataset(
+pub(crate) fn score_dataset(
     registry: &Path,
     hash: &str,
     freeze: &ValidatedFreeze,
@@ -2131,7 +2120,7 @@ fn score_dataset(
     })
 }
 
-fn pairwise_results(scored: &[ScoredDataset]) -> Value {
+pub(crate) fn pairwise_results(scored: &[ScoredDataset]) -> Value {
     let players = players();
     let mut rows = Vec::new();
     for left_index in 0..players.len() {
@@ -2166,7 +2155,7 @@ fn players() -> Vec<&'static str> {
     values
 }
 
-fn elo_standings(scored: &[ScoredDataset]) -> Value {
+pub(crate) fn elo_standings(scored: &[ScoredDataset]) -> Value {
     const K: f64 = 16.0;
     let players = players();
     let mut ratings = players

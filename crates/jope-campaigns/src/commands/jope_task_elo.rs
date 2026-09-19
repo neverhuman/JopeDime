@@ -19,8 +19,8 @@
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use jope_dime_regressor::paths;
-use jope_dime_regressor::selfplay_runtime::{atomic_json, now_ms};
+use crate::paths;
+use crate::selfplay_runtime::{atomic_json, now_ms};
 use rusqlite::Connection;
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
@@ -337,8 +337,8 @@ fn rating_rows(table: &BTreeMap<String, Rating>, limit: Option<usize>) -> Vec<Va
         .collect()
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     let connection = Connection::open_with_flags(
         &args.corpus,
         rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY | rusqlite::OpenFlags::SQLITE_OPEN_URI,

@@ -61,8 +61,8 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::paths;
-use jope_dime_regressor::selfplay_runtime::sha256_file;
+use jope_campaigns::paths;
+use jope_campaigns::selfplay_runtime::sha256_file;
 use serde_json::{json, Map, Value};
 use std::fs::{self, File, OpenOptions};
 use std::io::Write;
@@ -985,8 +985,8 @@ fn prune_packed(args: &Args) -> Value {
     })
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     if args.prune_only {
         println!("{}", prune_snapshots(&args));
         println!("{}", prune_packed(&args));

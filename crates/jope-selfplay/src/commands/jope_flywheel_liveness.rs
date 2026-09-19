@@ -2,7 +2,7 @@
 
 use anyhow::{ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::selfplay_runtime::{
+use jope_campaigns::selfplay_runtime::{
     atomic_json, default_root_str, default_scq_str, now_ms, read_json, scq_json,
 };
 use serde_json::{json, Value};
@@ -415,8 +415,8 @@ fn cycle(root: &Path, scq: &Path) -> Result<Value> {
     }))
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     loop {
         let value = cycle(&args.root, &args.scq).context("build joined flywheel liveness")?;
         atomic_json(&args.root.join("ops/flywheel-liveness.v1.json"), &value)?;

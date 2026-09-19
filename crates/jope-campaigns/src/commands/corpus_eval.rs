@@ -36,8 +36,8 @@ use feat_math::{
     auc, fit_predict, fit_table, logloss, multiclass_accuracy, r2, rmse, ColumnSpec, DataSchema,
     Objective, RawTable, RowSemantics, Rows, TaskSpec,
 };
-use jope_dime_regressor::task::Task;
-use jope_dime_regressor::timeseries::{
+use crate::task::Task;
+use crate::timeseries::{
     make_direct_forecast_rows, make_direct_reduction, make_forecast_features,
     make_supervised_reduction, read_timeseries_csv_bytes, score_timeseries,
     validate_timeseries_data, ReductionVersion, TimeSeriesData, TimeSeriesManifestSpec,
@@ -657,7 +657,7 @@ fn raw_table_named(headers: &[String], rows: &[Vec<f64>]) -> Result<RawTable> {
 }
 
 /// Per-task authority metric (R1/D2); must agree with
-/// `jope_dime_regressor::task::TaskKind::primary_metric`.
+/// `crate::task::TaskKind::primary_metric`.
 fn task_metric(task: &str) -> Option<&'static str> {
     Task::parse(task).map(Task::primary_metric)
 }
@@ -2293,8 +2293,8 @@ fn flag_value(args: &[String], flag: &str) -> Option<String> {
         .and_then(|i| args.get(i + 1).cloned())
 }
 
-fn main() -> Result<()> {
-    let args = env::args().skip(1).collect::<Vec<_>>();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = args.into_iter().skip(1).collect::<Vec<_>>();
     if args.first().map(String::as_str) == Some("eval-one") {
         let manifest = flag_value(&args, "--manifest").context("--manifest is required")?;
         let candidate_index = flag_value(&args, "--candidate-index")
@@ -2358,7 +2358,7 @@ mod tests {
 
     #[test]
     fn metric_maps_agree_with_task_authority() {
-        use jope_dime_regressor::task::TaskKind;
+        use crate::task::TaskKind;
         for kind in [
             TaskKind::Regression,
             TaskKind::Binary,
@@ -2712,7 +2712,7 @@ mod tests {
 
     #[test]
     fn reduction_resolution_fails_closed_across_schema_versions() {
-        use jope_dime_regressor::timeseries::{TS_REDUCTION_V1, TS_REDUCTION_V2};
+        use crate::timeseries::{TS_REDUCTION_V1, TS_REDUCTION_V2};
         // v1 schema: no pin allowed, resolves to V1.
         let plain = shard("timeseries", None);
         assert_eq!(resolve_reduction(&plain).unwrap(), ReductionVersion::V1);

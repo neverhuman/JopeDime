@@ -11,7 +11,7 @@ use feat_math::evolve::{crossover_canonical_pipelines, mutate_canonical_pipeline
 use feat_math::model::fit_with_stage_cache;
 use feat_math::stage_cache::{StageCache, StageCacheCtx, DEFAULT_BYTE_CAP};
 use feat_math::{fit, GenomeIr};
-use jope_dime_regressor::paths;
+use crate::paths;
 use rayon::prelude::*;
 use rayon::ThreadPool;
 use rusqlite::{Connection, OpenFlags};

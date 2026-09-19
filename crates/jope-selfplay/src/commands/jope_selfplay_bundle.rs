@@ -6,20 +6,20 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::dime_activation::{
+use jope_campaigns::dime_activation::{
     abort_activation_transaction, execute_activation_transaction, ActivationLock,
     ActivationOperationV1, ActivationRequest, DimeCandidateReviewGateV1,
     DimeExternalActivationGateV1, SystemdUserHost,
 };
-use jope_dime_regressor::encoder_v2_identity::ArtifactIdentity;
-use jope_dime_regressor::paths;
-use jope_dime_regressor::recovery_contracts::{
+use jope_campaigns::encoder_v2_identity::ArtifactIdentity;
+use jope_campaigns::paths;
+use jope_campaigns::recovery_contracts::{
     classify_rollback_capsule_schema, immutable_flywheel_root_str, RollbackBaselineDerivationV1,
     RollbackBundleFileV2, RollbackCapsuleV2, RollbackSystemdArtifactV2,
     RollbackUnitTransformationV1, ROLLBACK_BASELINE_DERIVATION_SCHEMA,
     ROLLBACK_RUNTIME_BUNDLE_SHA256,
 };
-use jope_dime_regressor::selfplay_data::canonical_json_sha256;
+use jope_campaigns::selfplay_data::canonical_json_sha256;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -306,8 +306,8 @@ struct ServiceRow {
     active: bool,
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     if let Some(transaction_root) = &args.abort_activation_transaction {
         let _lock =
             ActivationLock::acquire(&args.activation_transaction_root.join("activation.lock"))?;
@@ -586,7 +586,7 @@ fn activate_manifest(
     let mut host = SystemdUserHost;
     let transaction = execute_activation_transaction(&request, &mut host, None)?;
     ensure!(
-        transaction.stage == jope_dime_regressor::dime_activation::ActivationStageV1::Complete,
+        transaction.stage == jope_campaigns::dime_activation::ActivationStageV1::Complete,
         "DIME activation transaction did not complete"
     );
     Ok(())
@@ -874,19 +874,29 @@ fn build(args: &Args) -> Result<Value> {
     }
     fs::create_dir(&temporary)?;
     let result = (|| -> Result<Value> {
+        let mut materialized: BTreeMap<&Path, PathBuf> = BTreeMap::new();
         for (candidate, row) in candidates.iter().zip(&inventory) {
             let destination = temporary.join(&row.target);
             ensure_bundle_target(&temporary, &destination)?;
             if let Some(parent) = destination.parent() {
                 fs::create_dir_all(parent)?;
             }
-            fs::copy(&candidate.source, &destination).with_context(|| {
-                format!(
-                    "copy {} to {}",
-                    candidate.source.display(),
-                    destination.display()
-                )
-            })?;
+            // One source under several targets (a program binary under each of
+            // its historical names) is one file in the bundle: hard-link the
+            // repeats to the first copy.
+            let linked = materialized
+                .get(candidate.source.as_path())
+                .is_some_and(|first| fs::hard_link(first, &destination).is_ok());
+            if !linked {
+                fs::copy(&candidate.source, &destination).with_context(|| {
+                    format!(
+                        "copy {} to {}",
+                        candidate.source.display(),
+                        destination.display()
+                    )
+                })?;
+                materialized.insert(candidate.source.as_path(), destination.clone());
+            }
             ensure!(
                 sha256_file(&destination)? == row.sha256,
                 "bundle copy hash mismatch: {}",
@@ -1066,7 +1076,7 @@ fn sources(
     for binary in &service_manifest.binaries {
         add(
             &mut selected,
-            args.source.join("target/release").join(binary),
+            release_binary(&args.source, binary),
             format!("runtime/bin/{binary}"),
             None,
         );
@@ -1195,6 +1205,26 @@ fn sources(
         );
     }
     Ok(selected)
+}
+
+/// The release build of a manifest binary. A file `target/release/<binary>`
+/// wins; otherwise a historical program name resolves to the binary that
+/// carries it (`jope-selfplay` or `jope-campaigns`, argv[0] dispatch —
+/// `deploy/systemd/BINARIES.md`), which the bundle hard-links under the
+/// historical name so the units' `ExecStart=@JOPE_BUNDLE@/<binary>` still run.
+fn release_binary(source: &Path, binary: &str) -> PathBuf {
+    let release = source.join("target/release");
+    let direct = release.join(binary);
+    if direct.is_file() {
+        return direct;
+    }
+    if crate::TABLE.find(binary).is_some() {
+        release.join(crate::TABLE.binary)
+    } else if jope_campaigns::TABLE.find(binary).is_some() {
+        release.join(jope_campaigns::TABLE.binary)
+    } else {
+        direct
+    }
 }
 
 fn add(

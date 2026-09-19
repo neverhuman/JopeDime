@@ -37,11 +37,11 @@ use std::os::fd::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use jope_dime_regressor::paths;
-use jope_dime_regressor::selfplay_runtime::{
+use jope_campaigns::paths;
+use jope_campaigns::selfplay_runtime::{
     atomic_json, default_root_str, default_scq_str, now_ms, read_json, sha256_file,
 };
-use jope_dime_regressor::spec_policy::PROPOSE;
+use jope_campaigns::spec_policy::PROPOSE;
 
 jope_paths::once_str!(
     fn scripts_str => paths::research_scripts_root()
@@ -1190,8 +1190,8 @@ fn run_lane(
     Ok(outcome)
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     let lock_path = args.root.join("ops/propose-driver.lock");
     let Some(_lock) = try_lock(&lock_path)? else {
         println!("{}", json!({"schema": EVENT_SCHEMA, "action": "locked"}));

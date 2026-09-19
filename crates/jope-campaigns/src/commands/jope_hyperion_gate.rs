@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use clap::Parser;
-use jope_dime_regressor::hyperion_gate::{run_gate_command, JopeHyperionTrainOnlyRegistryV2};
-use jope_dime_regressor::jope_dlgp_best5::validate_hyperion_campaign_registry_ids;
+use crate::hyperion_gate::{run_gate_command, JopeHyperionTrainOnlyRegistryV2};
+use crate::jope_dlgp_best5::validate_hyperion_campaign_registry_ids;
 
 #[derive(Debug, Parser)]
 #[command(
@@ -24,8 +24,8 @@ struct Args {
     artifact_root: PathBuf,
 }
 
-fn main() {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> anyhow::Result<()> {
+    let args = Args::parse_from(&args);
     let registry_bytes = match std::fs::read(&args.train_only_registry) {
         Ok(bytes) => bytes,
         Err(error) => {
@@ -67,4 +67,5 @@ fn main() {
             std::process::exit(2);
         }
     }
+    Ok(())
 }

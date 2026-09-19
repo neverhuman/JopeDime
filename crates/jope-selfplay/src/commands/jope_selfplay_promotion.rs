@@ -20,10 +20,10 @@
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::paths;
-use jope_dime_regressor::selfplay_expansion::TASKS;
-use jope_dime_regressor::spec_policy::{PROPOSE, TRAINER};
-use jope_dime_regressor::task::Task;
+use jope_campaigns::paths;
+use jope_campaigns::selfplay_expansion::TASKS;
+use jope_campaigns::spec_policy::{PROPOSE, TRAINER};
+use jope_campaigns::task::Task;
 use rusqlite::{params, Connection, OptionalExtension};
 use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
@@ -582,7 +582,7 @@ impl ActionJournal {
 // ---------------------------------------------------------------------------
 
 /// Per-task authority metric (R1/D2); must agree with
-/// `jope_dime_regressor::task::TaskKind::primary_metric`.
+/// `jope_campaigns::task::TaskKind::primary_metric`.
 fn expected_catalog_metric(task: &str) -> Result<&'static str> {
     Task::parse(task)
         .map(Task::primary_metric)
@@ -3210,8 +3210,8 @@ fn run_task_accept(args: &Args) -> Result<Value> {
     Ok(out)
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     if args.task_accept.is_some() {
         println!("{}", py_dumps(&run_task_accept(&args)?, PyStyle::Pretty)?);
         return Ok(());
@@ -3253,7 +3253,7 @@ mod tests {
 
     #[test]
     fn catalog_metric_map_agrees_with_task_authority() {
-        use jope_dime_regressor::task::TaskKind;
+        use jope_campaigns::task::TaskKind;
         for kind in [
             TaskKind::Regression,
             TaskKind::Binary,

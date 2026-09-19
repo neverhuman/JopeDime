@@ -22,8 +22,8 @@
 
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
-use jope_dime_regressor::paths;
-use jope_dime_regressor::training_history as th;
+use jope_campaigns::paths;
+use jope_campaigns::training_history as th;
 use rusqlite::{Connection, OpenFlags};
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
@@ -999,8 +999,8 @@ fn cmd_receipts(root: &Path, min_age_hours: u64, keep_newest: usize, execute: bo
     Ok(())
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     match args.command {
         Cmd::Runs {
             node,

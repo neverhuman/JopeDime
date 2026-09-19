@@ -1,4 +1,4 @@
-use jope_dime_regressor::router_contracts_v2::*;
+use jope_campaigns::router_contracts_v2::*;
 
 fn hash(byte: u8) -> String {
     (0..32).map(|_| format!("{byte:02x}")).collect()

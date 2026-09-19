@@ -8,12 +8,12 @@
 use anyhow::{bail, ensure, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use feat_math::genome::GenomeIr;
-use jope_dime_regressor::selfplay_data::{
+use crate::selfplay_data::{
     export_gp_seeds, inject_promoted_proposals, GpAncestry, GpPopulationMember, GpProposal,
     GP_INJECTION_SLOTS, GP_SEED_SLOTS,
 };
-use jope_dime_regressor::selfplay_ingest;
-use jope_dime_regressor::selfplay_runtime::{
+use crate::selfplay_ingest;
+use crate::selfplay_runtime::{
     atomic_json, canonical_json_bytes, now_ms, read_json, sha256_bytes, sha256_file,
 };
 use serde::Deserialize;
@@ -1024,8 +1024,8 @@ fn proposal_request(action: &str, args: &ProposalInputs, verified: &VerifiedProp
     })
 }
 
-fn run() -> Result<Value> {
-    match Cli::parse().command {
+fn run(args: Vec<String>) -> Result<Value> {
+    match Cli::parse_from(&args).command {
         Command::Export(args) => {
             let verified = verify_proposals(&args.input)?;
             let value = export_value(&verified, args.input.task, &args.input.dataset);
@@ -1167,8 +1167,8 @@ fn run() -> Result<Value> {
     }
 }
 
-fn main() {
-    match run() {
+pub fn main(args: Vec<String>) -> Result<()> {
+    match run(args) {
         Ok(receipt) => println!(
             "{}",
             serde_json::to_string(&receipt).expect("serialize receipt")
@@ -1178,6 +1178,7 @@ fn main() {
             std::process::exit(1);
         }
     }
+    Ok(())
 }
 
 #[cfg(test)]

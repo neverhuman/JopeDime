@@ -1,5 +1,5 @@
 use super::*;
-use jope_dime_regressor::paths;
+use crate::paths;
 use serde_json::json;
 use std::fs::File;
 use std::os::fd::AsRawFd;

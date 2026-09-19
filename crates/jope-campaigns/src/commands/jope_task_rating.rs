@@ -2,8 +2,8 @@
 
 use anyhow::{ensure, Result};
 use clap::Parser;
-use jope_dime_regressor::selfplay_runtime::{atomic_json, now_ms, read_json, sha256_file};
-use jope_dime_regressor::task_rating::{
+use crate::selfplay_runtime::{atomic_json, now_ms, read_json, sha256_file};
+use crate::task_rating::{
     build_task_rating_snapshot, JopeTaskRatingSnapshotV1, TaskRatingBuildInputV1,
 };
 use std::fs;
@@ -25,8 +25,8 @@ struct Args {
     current_pointer: Option<PathBuf>,
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     let input: TaskRatingBuildInputV1 = serde_json::from_value(read_json(&args.input)?)?;
     let snapshot = build_task_rating_snapshot(input)?;
     if args.output.is_file() {

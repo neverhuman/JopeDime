@@ -26,12 +26,10 @@ use std::process::Command;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-#[path = "../freshness_protocol.rs"]
-#[allow(dead_code)]
-mod freshness_protocol;
+use crate::freshness_protocol;
 
 use freshness_protocol::TOOL_NAMES;
-use jope_dime_regressor::paths;
+use jope_campaigns::paths;
 
 jope_paths::once_str!(
     fn default_root_str => paths::flywheel_root()
@@ -1483,8 +1481,8 @@ impl Supervisor {
     }
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     let audit_only =
         args.audit_only || std::env::var("JOPE_FRESHNESS_AUDIT_ONLY").as_deref() == Ok("1");
     let socket_path = args

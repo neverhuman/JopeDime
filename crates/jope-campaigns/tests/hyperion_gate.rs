@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
 use std::fs;
 
-use jope_dime_regressor::hyperion_gate::*;
-use jope_dime_regressor::jope_generalized_gp::{EvaluatorFreezeV1, FrozenArtifactV1};
-use jope_dime_regressor::search_v3::canonical_sha256;
+use jope_campaigns::hyperion_gate::*;
+use jope_campaigns::jope_generalized_gp::{EvaluatorFreezeV1, FrozenArtifactV1};
+use jope_campaigns::search_v3::canonical_sha256;
 use sha2::{Digest, Sha256};
 
 fn sha256(bytes: &[u8]) -> String {

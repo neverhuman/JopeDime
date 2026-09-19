@@ -688,8 +688,8 @@ fn run_revert(args: &Args, batch_id: &str, receipt_dir: &Path) -> Result<serde_j
     }))
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     let receipt_dir = args
         .receipt_dir
         .clone()

@@ -42,8 +42,8 @@
 //! replica and prove it), `status` (print the receipt).
 
 use anyhow::{bail, Context, Result};
-use jope_dime_regressor::paths;
-use jope_dime_regressor::training_history as th;
+use jope_campaigns::paths;
+use jope_campaigns::training_history as th;
 use rusqlite::Connection;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -1361,8 +1361,8 @@ fn usage() -> ! {
     std::process::exit(2);
 }
 
-fn main() -> Result<()> {
-    let args: Vec<String> = std::env::args().skip(1).collect();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args: Vec<String> = args.into_iter().skip(1).collect();
     let root = root_from_env();
     match args.first().map(String::as_str) {
         Some("replicate") | None => {

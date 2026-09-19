@@ -5,6 +5,7 @@ members = [
   "crates/battle-gpu",
   "crates/jope-engine",
   "crates/jope-campaigns",
+  "crates/jope-selfplay",
   "crates/jope-cli",
   "crates/jope-encoders",
   "crates/jope-paths",

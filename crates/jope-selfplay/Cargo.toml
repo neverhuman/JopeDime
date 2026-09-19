@@ -1,0 +1,27 @@
+[package]
+name = "jope-selfplay"
+publish = false
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "JOPE flywheel control plane: the self-play services, watchdogs and training tools as one binary (argv[0] dispatch)"
+
+[dependencies]
+anyhow = "1"
+clap = { workspace = true }
+crossterm = "=0.28.1"
+feat-math = { path = "../feat-math" }
+hex = "0.4"
+jope-campaigns = { path = "../jope-campaigns" }
+jope-paths = { path = "../jope-paths" }
+libc = "0.2"
+ratatui = "=0.29.0"
+rayon = "1"
+rusqlite = "0.32"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+sha2 = "0.10"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+
+[dev-dependencies]
+tempfile = "3"

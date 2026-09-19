@@ -2,12 +2,12 @@
 
 use anyhow::{ensure, Context, Result};
 use clap::{Parser, Subcommand};
-use jope_dime_regressor::selfplay_runtime::{
+use jope_campaigns::selfplay_runtime::{
     atomic_json, default_root_str, now_ms, read_json, sha256_file,
 };
 #[cfg(test)]
-use jope_dime_regressor::selfplay_shadow::PromotionObservationV3;
-use jope_dime_regressor::selfplay_shadow::{
+use jope_campaigns::selfplay_shadow::PromotionObservationV3;
+use jope_campaigns::selfplay_shadow::{
     build_sealed_panel_pool_v2, ensure_evidence_epoch_immutable, evaluate_task_promotion_v3,
     sealed_zero_prior_use_proof_v2, validate_panel_consumption, CausalEvidenceEpochV1,
     SealedPanelCandidateSetV2, SealedPanelCandidateV2, SealedPanelConsumptionV1,
@@ -345,7 +345,7 @@ fn evaluate_task_promotion(
         evaluation.metrics.contexts,
     ));
     if path.is_file() {
-        let existing: jope_dime_regressor::selfplay_shadow::TaskPromotionEvaluationV3 =
+        let existing: jope_campaigns::selfplay_shadow::TaskPromotionEvaluationV3 =
             serde_json::from_value(read_json(&path)?)?;
         ensure!(
             existing == evaluation,
@@ -364,8 +364,8 @@ fn evaluate_task_promotion(
     }))
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     let result = match args.command {
         Command::OpenEvidenceEpoch { epoch } => open_evidence_epoch(&args.root, &epoch)?,
         Command::ValidateSealedPanelPool { pool } => {
@@ -455,7 +455,7 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use jope_dime_regressor::selfplay_shadow::{
+    use jope_campaigns::selfplay_shadow::{
         EvidenceEpochContextV1, EvidencePreflightCohortV1, CAUSAL_EVIDENCE_EPOCH_SCHEMA,
         EVIDENCE_SLOTS_PER_CONTEXT, PREFLIGHT_COHORTS_REQUIRED, PREFLIGHT_CONTEXTS_PER_COHORT,
     };
@@ -610,7 +610,7 @@ mod tests {
 
     #[test]
     fn external_evaluation_publishes_only_after_consumption_and_family_checks() {
-        use jope_dime_regressor::selfplay_shadow::{
+        use jope_campaigns::selfplay_shadow::{
             DatasetOriginV2, PanelPoolKindV2, SealedPanelEntryV2,
             SEALED_PANEL_CONSUMPTION_V1_SCHEMA, SEALED_PANEL_POOL_V2_SCHEMA,
         };

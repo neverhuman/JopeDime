@@ -11,10 +11,10 @@
 //! jope_expanded_catalog tool; Python is invoked only for torch encoders.
 
 use anyhow::{anyhow, bail, Context, Result};
-use jope_dime_regressor::paths;
-use jope_dime_regressor::recovery_contracts::V1EncodingQuarantineV1;
-use jope_dime_regressor::selfplay_expansion::{corpus_dir_name, TASKS};
-use jope_dime_regressor::selfplay_runtime::{atomic_json, sha256_bytes, sha256_file};
+use jope_campaigns::paths;
+use jope_campaigns::recovery_contracts::V1EncodingQuarantineV1;
+use jope_campaigns::selfplay_expansion::{corpus_dir_name, TASKS};
+use jope_campaigns::selfplay_runtime::{atomic_json, sha256_bytes, sha256_file};
 use rusqlite::Connection;
 use serde::Serialize;
 use serde_json::{json, Value};
@@ -1970,8 +1970,7 @@ fn query(root: &Path, dataset: Option<&str>, summary: bool) -> Result<()> {
     Ok(())
 }
 
-fn main() -> Result<()> {
-    let args: Vec<String> = std::env::args().collect();
+pub fn main(args: Vec<String>) -> Result<()> {
     let root = PathBuf::from(root_str());
     match args.get(1).map(String::as_str) {
         Some("query") => {

@@ -36,9 +36,9 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
-use jope_dime_regressor::paths;
-use jope_dime_regressor::selfplay_expansion::TASKS;
-use jope_dime_regressor::spec_policy::EVAL;
+use crate::paths;
+use crate::selfplay_expansion::TASKS;
+use crate::spec_policy::EVAL;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -768,8 +768,8 @@ fn report(plan_dir: &Path, runs: &Path, scq: &Path, out: &Path) -> Result<Value>
     Ok(brief)
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     let value = match &args.command {
         Command::Plan {
             out,

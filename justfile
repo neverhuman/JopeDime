@@ -38,6 +38,10 @@ lint-paths:
 render-units home state bundle user out:
     bash deploy/systemd/render.sh --home {{home}} --state {{state}} --bundle {{bundle}} --user {{user}} --out {{out}}
 
+# link every historical program name (deploy/systemd/BINARIES.md) to jope-selfplay / jope-campaigns in a bin directory
+install-links bindir:
+    bash deploy/systemd/render.sh --install-symlinks {{bindir}}
+
 ci-pr: hygiene fmt clippy test-pr python-check
 
 ci-main: ci-pr test-main

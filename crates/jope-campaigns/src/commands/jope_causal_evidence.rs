@@ -2,11 +2,11 @@
 
 use anyhow::{ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::selfplay_ingest::{ingest_receipt_with_manifest_connection, open_corpus};
-use jope_dime_regressor::selfplay_runtime::{
+use crate::selfplay_ingest::{ingest_receipt_with_manifest_connection, open_corpus};
+use crate::selfplay_runtime::{
     atomic_json, default_root_str, now_ms, read_json, sha256_bytes, sha256_file,
 };
-use jope_dime_regressor::selfplay_shadow::{
+use crate::selfplay_shadow::{
     build_causal_evidence_ledger_v2, build_causal_evidence_ledger_v3, CausalEvaluationReceiptV2,
     CausalEvidenceEpochV1, CausalEvidenceLedgerV2, CausalEvidenceLedgerV3, CausalLane,
     DlAncestryKind, Sha256Digest, Task, CAUSAL_EVALUATION_RECEIPT_SCHEMA,
@@ -48,8 +48,8 @@ struct WaveState {
     requested_slots: BTreeMap<Task, usize>,
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     if args.backfill_raw_receipts {
         let report = backfill_raw_receipts(&args.root)?;
         atomic_json(
@@ -774,7 +774,7 @@ fn parse_wave(value: &str) -> Option<u64> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use jope_dime_regressor::selfplay_shadow::{
+    use crate::selfplay_shadow::{
         build_causal_evidence_ledger_v2, causal_pair_id, DlAncestryKind, PairRepairRequestV1,
         Sha256Digest, Task,
     };

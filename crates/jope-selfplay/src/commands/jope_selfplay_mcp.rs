@@ -6,11 +6,10 @@ use serde_json::{json, Value};
 use std::io::{self, BufRead, Write};
 use std::path::PathBuf;
 
-#[path = "../freshness_protocol.rs"]
-mod freshness_protocol;
+use crate::freshness_protocol;
 
 use freshness_protocol::{socket_request, tools, MCP_PROTOCOL_VERSION, SERVER_VERSION, TOOL_NAMES};
-use jope_dime_regressor::paths;
+use jope_campaigns::paths;
 
 jope_paths::once_str!(
     fn default_root_str => paths::flywheel_root()
@@ -92,8 +91,8 @@ fn handle(message: &Value, socket_path: &std::path::Path) -> Option<Value> {
     }
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     let socket_path = args
         .socket
         .unwrap_or_else(|| args.root.join("ops/freshness.sock"));

@@ -2,10 +2,10 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::{Parser, ValueEnum};
-use jope_dime_regressor::selfplay_runtime::{
+use jope_campaigns::selfplay_runtime::{
     atomic_json, default_root_str, default_scq_str, now_ms, read_json, scq_json, sha256_file,
 };
-use jope_dime_regressor::selfplay_shadow::{
+use jope_campaigns::selfplay_shadow::{
     GpuAdmissionStage, GpuLaneAdmissionV1, GpuLaneRole, RecoveryDisposition, Sha256Digest,
     GPU_ADMISSION_RETRY_MS,
 };
@@ -159,8 +159,8 @@ impl PauseSentinel {
     }
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     if let Some(role) = args.register_role {
         let spec = args.spec.as_deref().context("--spec is required")?;
         let job_id = args.job_id.as_deref().context("--job-id is required")?;
@@ -949,7 +949,7 @@ mod tests {
 
     #[test]
     fn node_policy_reserves_four_gpu_only_companion_cores() {
-        let policy = include_str!("../../manifests/selfplay/scq-nodes.v3.toml");
+        let policy = include_str!("../../../jope-campaigns/manifests/selfplay/scq-nodes.v3.toml");
         let assignment = |section: &str, key: &str| {
             section
                 .lines()

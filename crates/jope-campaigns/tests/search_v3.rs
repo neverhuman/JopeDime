@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 use std::fs;
 
-use jope_dime_regressor::search_v3::*;
+use jope_campaigns::search_v3::*;
 
 fn digest(value: impl AsRef<str>) -> String {
     canonical_sha256(&value.as_ref()).unwrap()

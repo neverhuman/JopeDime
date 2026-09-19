@@ -2,7 +2,7 @@
 
 use anyhow::{ensure, Context, Result};
 use clap::{Parser, Subcommand};
-use jope_dime_regressor::selfplay_shadow::{
+use jope_campaigns::selfplay_shadow::{
     advance_corpus_pointer, append_evaluation_result, append_lineage_transition, atomic_json,
     build_context_lane, compare_and_swap_accepted_file, default_shadow_root_str, initialize_shadow,
     load_evaluation_index, plan_breadth_cohort, read_json, stage_corpus_shard, AcceptedByTaskV2,
@@ -143,8 +143,8 @@ fn digest(value: String) -> Result<Sha256Digest> {
     Sha256Digest::parse(value)
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     let paths = ShadowPaths::new(args.root)?;
     let output = match args.command {
         Command::Init {

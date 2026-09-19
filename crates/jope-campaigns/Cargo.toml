@@ -1,10 +1,10 @@
 [package]
-name = "jope-dime-regressor"
+name = "jope-campaigns"
 publish = false
 version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
-description = "Frozen 42-dataset jope-dime evolutionary regression campaign"
+description = "JOPE benchmark campaigns (one binary, argv[0] dispatch) and the shared library of the former root crate"
 
 [dependencies]
 anyhow = "1"

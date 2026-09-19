@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Context, Result};
 use clap::{Parser, Subcommand};
-use jope_dime_regressor::search_v3::{
+use crate::search_v3::{
     build_generation_state, canonical_json_bytes, CandidateEvidenceV1, CheckpointStoreV2,
     ConfirmedArchiveV1, SearchCandidatePlanV1, SearchRunContractV3, VerificationMode,
 };
@@ -68,7 +68,7 @@ struct PlanReceipt<'a> {
     contract_sha256: String,
     candidate_plan_sha256: String,
     generation: u32,
-    task: &'a jope_dime_regressor::search_v3::SearchTaskV1,
+    task: &'a crate::search_v3::SearchTaskV1,
     production_qualifiable: bool,
     fold_evaluation_count: u64,
 }
@@ -82,8 +82,8 @@ struct RunReceipt {
     winner_semantic_sha256: String,
 }
 
-fn main() -> Result<()> {
-    match Cli::parse().command {
+pub fn main(args: Vec<String>) -> Result<()> {
+    match Cli::parse_from(&args).command {
         Command::Plan {
             contract,
             candidates,

@@ -2,8 +2,8 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::{Args, Parser, Subcommand};
-use jope_dime_regressor::paths;
-use jope_dime_regressor::selfplay_expansion::{
+use crate::paths;
+use crate::selfplay_expansion::{
     activate_tranche, adaptive_inventory, audit_discover, freeze_sealed, install_sidecars,
     load_inventory_file, materialize_cache, merge_live, select_unactivated_cached, status,
     write_conflict_summary, write_inventory_file, ExpansionPaths, InventoryEntry, TASKS,
@@ -156,8 +156,8 @@ fn print_json(value: &Value) -> Result<()> {
     Ok(())
 }
 
-fn main() -> Result<()> {
-    let cli = Cli::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let cli = Cli::parse_from(&args);
     let paths: ExpansionPaths = cli.paths.into();
     match cli.command {
         Action::Audit {

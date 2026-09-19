@@ -12,7 +12,7 @@ use crate::commands::binary_cv::{
 };
 use crate::data::read_binary_csv;
 use feat_math::metrics::auc;
-use jope_dime_regressor::paths;
+use crate::paths;
 use serde_json::json;
 use std::collections::VecDeque;
 use std::os::unix::fs::PermissionsExt;

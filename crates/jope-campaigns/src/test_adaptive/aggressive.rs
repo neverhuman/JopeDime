@@ -5,7 +5,7 @@
 //! checkpoint chain while sharing only the complete Rust candidate evaluator.
 
 use super::*;
-use jope_dime_regressor::paths;
+use crate::paths;
 
 const SCHEMA: &str = "JopeGolden42AggressiveManifest.v5";
 const PREFLIGHT_SCHEMA: &str = "JopeGolden42AggressivePreflight.v1";

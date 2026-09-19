@@ -1,6 +1,6 @@
-use jope_dime_regressor::epoch6::*;
-use jope_dime_regressor::selfplay_shadow::Task;
-use jope_dime_regressor::task::TASK_SEMANTICS_SHA256;
+use jope_campaigns::epoch6::*;
+use jope_campaigns::selfplay_shadow::Task;
+use jope_campaigns::task::TASK_SEMANTICS_SHA256;
 use std::collections::BTreeMap;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;

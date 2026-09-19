@@ -24,7 +24,7 @@
 //!
 //! A "render site" is any line containing the literal `[resource]` or a call to
 //! the central `render_resource_block()` policy helper in a source file under
-//! `src/bin/` or `scripts/`. Comments and Rust `mod tests` blocks are
+//! `crates/*/src/commands/` or `python/src/jope/research/`. Comments and Rust `mod tests` blocks are
 //! stripped first, because a commented-out `ram_mb = 49152` is documentation,
 //! not a reservation -- an earlier version of this scanner reported exactly that
 //! false positive against `scripts/test_exact_ops.py`.
@@ -87,7 +87,7 @@ impl fmt::Display for DepForm {
 /// One place in the tree that renders an scq job spec.
 #[derive(Clone, Debug)]
 pub struct RenderSite {
-    /// Repo-relative path, e.g. `src/bin/jope_selfplay_promotion.rs`.
+    /// Repo-relative path, e.g. `crates/jope-selfplay/src/commands/jope_selfplay_promotion.rs`.
     pub file: String,
     /// 1-indexed line of the `[resource]` marker.
     pub line: usize,
@@ -124,59 +124,59 @@ impl RenderSite {
 /// appear here; anything else fails as `UnregisteredSite`.
 pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
     (
-        "src/bin/jope_canary_executor.rs",
+        "crates/jope-campaigns/src/commands/jope_canary_executor.rs",
         "ensure_proposals",
         Some(Family::Propose),
     ),
     (
-        "src/bin/jope_canary_executor.rs",
+        "crates/jope-campaigns/src/commands/jope_canary_executor.rs",
         "build_evaluations",
         Some(Family::Eval),
     ),
     (
-        "src/bin/jope_causal_pair_repair.rs",
+        "crates/jope-campaigns/src/commands/jope_causal_pair_repair.rs",
         "render_spec",
         Some(Family::Eval),
     ),
     (
-        "src/bin/jope_task_learning_controller.rs",
+        "crates/jope-selfplay/src/commands/jope_task_learning_controller.rs",
         "render_spec",
         Some(Family::Trainer),
     ),
     (
-        "src/bin/jope_selfplay_promotion.rs",
+        "crates/jope-selfplay/src/commands/jope_selfplay_promotion.rs",
         "render_checkpoint_proposal_spec",
         Some(Family::Propose),
     ),
     (
-        "src/bin/jope_selfplay_promotion.rs",
+        "crates/jope-selfplay/src/commands/jope_selfplay_promotion.rs",
         "render_trainer_spec",
         Some(Family::Trainer),
     ),
     (
-        "src/bin/jope_selfplay_propose_driver.rs",
+        "crates/jope-selfplay/src/commands/jope_selfplay_propose_driver.rs",
         "render_spec",
         Some(Family::Propose),
     ),
     (
-        "src/bin/jope_selfplay_supply.rs",
+        "crates/jope-selfplay/src/commands/jope_selfplay_supply.rs",
         "render_cohort_proposer_spec",
         Some(Family::Propose),
     ),
     (
-        "src/bin/jope_selfplay_expansion_driver.rs",
+        "crates/jope-selfplay/src/commands/jope_selfplay_expansion_driver.rs",
         "submit_encode_chunk",
         Some(Family::Encode),
     ),
     // Codex-owned (do not edit; propose changes in FLYWHEEL_CHAT.md). Scanned
     // read-only so its drift is still visible here.
     (
-        "src/bin/jope_selfplay_queue.rs",
+        "crates/jope-selfplay/src/commands/jope_selfplay_queue.rs",
         "render_spec",
         Some(Family::Eval),
     ),
     (
-        "src/bin/jope_selfplay_trainer_watchdog.rs",
+        "crates/jope-selfplay/src/commands/jope_selfplay_trainer_watchdog.rs",
         "render_spec",
         Some(Family::Trainer),
     ),
@@ -185,46 +185,46 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
     // which is the whole point of that check. CPU eval shape (0 GPU, 1 core,
     // 512 MB), so it is the Eval family.
     (
-        "src/bin/jope_sealed_zeroshot.rs",
+        "crates/jope-campaigns/src/commands/jope_sealed_zeroshot.rs",
         "plan",
         Some(Family::Eval),
     ),
     (
-        "scripts/test_exact_backlog.py",
+        "python/src/jope/research/test_exact_backlog.py",
         "render_spec",
         Some(Family::Eval),
     ),
-    ("scripts/test_exact_canary.py", "render", Some(Family::Eval)),
+    ("python/src/jope/research/test_exact_canary.py", "render", Some(Family::Eval)),
     (
-        "scripts/test_exact_ops.py",
+        "python/src/jope/research/test_exact_ops.py",
         "render_checkpoint_proposal_spec",
         Some(Family::Propose),
     ),
     (
-        "scripts/test_exact_train.py",
+        "python/src/jope/research/test_exact_train.py",
         "render_spec",
         Some(Family::Trainer),
     ),
     (
-        "scripts/test_exact_train.py",
+        "python/src/jope/research/test_exact_train.py",
         "render_resource_block",
         Some(Family::Trainer),
     ),
     // Offline train-only red-team campaign renderer. It is not part of the
     // flywheel families, but its SCQ resource/placement syntax is still
     // audited so a future campaign cannot reintroduce ignored host pins.
-    ("scripts/train_only_redteam_scq.py", "render_spec", None),
+    ("python/src/jope/research/train_only_redteam_scq.py", "render_spec", None),
     // Smart-v3 CPU study dispatcher. It is a frozen, development-only
     // campaign renderer outside the flywheel families, but it still belongs
     // in the registry so its SCQ syntax is audited by the repository test.
-    ("scripts/smart_v3_cpu_scq.py", "render_spec", None),
+    ("python/src/jope/research/smart_v3_cpu_scq.py", "render_spec", None),
     // Offline genome-boost campaign. NOT a flywheel family: it is a manually
     // driven benchmark sweep with its own cadence, so its reservations are not
     // compared against trainer/propose/eval/encode. It IS still checked for the
     // forms scq drops or rejects -- and it currently emits a `[resource] node`
     // pin, which scq refuses outright.
     (
-        "scripts/genome_boost_cluster_campaign.py",
+        "python/src/jope/research/genome_boost_cluster_campaign.py",
         "render_spec",
         None,
     ),
@@ -239,15 +239,15 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
     // subcommands cannot submit as written. Registered here so the pin is
     // REPORTED rather than merely unseen; fixing them is a separate change owned
     // by whoever runs those campaigns.
-    ("src/test_adaptive/binary42.rs", "submit_canary", None),
-    ("src/test_adaptive/binary42.rs", "submit_canary_at", None),
-    ("src/test_adaptive/binary42.rs", "scq_spec", None),
-    ("src/test_adaptive/scq_batch.rs", "submit_true", None),
-    ("src/test_adaptive/scq_batch.rs", "run_batch_flavored", None),
-    ("src/test_adaptive/timeseries42.rs", "scq_spec", None),
-    ("src/test_adaptive/multiclass60.rs", "render_spec", None),
+    ("crates/jope-campaigns/src/test_adaptive/binary42.rs", "submit_canary", None),
+    ("crates/jope-campaigns/src/test_adaptive/binary42.rs", "submit_canary_at", None),
+    ("crates/jope-campaigns/src/test_adaptive/binary42.rs", "scq_spec", None),
+    ("crates/jope-campaigns/src/test_adaptive/scq_batch.rs", "submit_true", None),
+    ("crates/jope-campaigns/src/test_adaptive/scq_batch.rs", "run_batch_flavored", None),
+    ("crates/jope-campaigns/src/test_adaptive/timeseries42.rs", "scq_spec", None),
+    ("crates/jope-campaigns/src/test_adaptive/multiclass60.rs", "render_spec", None),
     (
-        "src/test_adaptive/multiclass60.rs",
+        "crates/jope-campaigns/src/test_adaptive/multiclass60.rs",
         "render_replay_spec",
         None,
     ),
@@ -258,7 +258,7 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
 ///
 /// `src/test_adaptive` is here because omitting it was a REAL hole, not a
 /// hypothetical one: the first version of this list covered only `src/bin` and
-/// `scripts`, and `scan_targets` reads each directory NON-recursively. That hid
+/// `scripts` (today `crates/*/src/commands` and `python/src/jope/research`), and `scan_targets` reads each directory NON-recursively. That hid
 /// five spec render sites in `src/test_adaptive/{scq_batch,binary42}.rs` --
 /// compiled code, reachable from `src/main.rs` CLI subcommands -- every one of
 /// which emits `[resource] node`, the form scq refuses outright ("node is
@@ -268,13 +268,18 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
 /// Verified 2026-07-29 by grepping the tree for `[resource]`: outside these
 /// directories the only remaining hits in `src/` are `spec_policy.rs` and
 /// `spec_drift.rs` themselves (the source of truth, see `EXEMPT_FILES`), and in
-/// `scripts/` there are none below the top level.
-pub const SCAN_DIRS: &[&str] = &["src/bin", "src/test_adaptive", "scripts"];
+/// `python/src/jope/research/` there are none below the top level.
+pub const SCAN_DIRS: &[&str] = &[
+    "crates/jope-campaigns/src/commands",
+    "crates/jope-selfplay/src/commands",
+    "crates/jope-campaigns/src/test_adaptive",
+    "python/src/jope/research",
+];
 
 /// The shared spec builder itself, and its checker. These files necessarily
 /// contain the literals they exist to police, so scanning them yields phantom
 /// render sites. They are the source of truth, not a competing renderer.
-pub const EXEMPT_FILES: &[&str] = &["scripts/jope_spec_policy.py", "src/bin/jope_spec_drift.rs"];
+pub const EXEMPT_FILES: &[&str] = &["python/src/jope/research/jope_spec_policy.py", "crates/jope-campaigns/src/commands/jope_spec_drift.rs"];
 
 #[derive(Clone, Debug)]
 pub enum Finding {
@@ -824,7 +829,7 @@ pub fn audit(sites: &[RenderSite]) -> Vec<Finding> {
 
 /// Repo root, resolved from the crate manifest so the test works from anywhere.
 pub fn repo_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
 #[cfg(test)]
@@ -941,29 +946,29 @@ mod tests {
         );
     }
 
-    /// The checked-in JSON the scripts/ lane reads must match this crate exactly.
+    /// The checked-in JSON the python/src/jope/research lane reads must match this crate exactly.
     /// Without this the Python renderers would silently keep a stale copy of the
     /// numbers -- which is the very failure mode this workstream exists to end.
     ///
     /// Regenerate with:
-    ///   cargo run --release --bin jope_spec_drift -- --emit-json \
-    ///     > scripts/jope-spec-policy.json
+    ///   cargo run --release -p jope-campaigns -- jope_spec_drift --emit-json \
+    ///     > python/src/jope/research/jope-spec-policy.json
     #[test]
     fn checked_in_policy_json_matches_this_module() {
-        let path = repo_root().join("scripts/jope-spec-policy.json");
+        let path = repo_root().join("python/src/jope/research/jope-spec-policy.json");
         let on_disk = std::fs::read_to_string(&path).unwrap_or_else(|e| {
             panic!(
-                "{} is missing ({e}). Regenerate: cargo run --release --bin \
-                 jope_spec_drift -- --emit-json > scripts/jope-spec-policy.json",
+                "{} is missing ({e}). Regenerate: cargo run --release -p jope-campaigns \
+                 -- jope_spec_drift --emit-json > python/src/jope/research/jope-spec-policy.json",
                 path.display()
             )
         });
         assert_eq!(
             on_disk,
             spec_policy::policy_json(),
-            "scripts/jope-spec-policy.json is STALE -- the Python lane is reading \
-             different numbers from the Rust policy. Regenerate: cargo run --release \
-             --bin jope_spec_drift -- --emit-json > scripts/jope-spec-policy.json"
+            "python/src/jope/research/jope-spec-policy.json is STALE -- the Python lane is \
+             reading different numbers from the Rust policy. Regenerate: cargo run --release \
+             -p jope-campaigns -- jope_spec_drift --emit-json > python/src/jope/research/jope-spec-policy.json"
         );
     }
 
@@ -976,7 +981,7 @@ mod tests {
         let s = sites();
         let canary = s
             .iter()
-            .find(|x| x.file == "scripts/test_exact_canary.py")
+            .find(|x| x.file == "python/src/jope/research/test_exact_canary.py")
             .expect("canary render site");
         assert_eq!(
             canary.dep_form,
@@ -992,13 +997,13 @@ mod tests {
         );
 
         let root = tempfile::tempdir().expect("temporary synthetic renderer root");
-        std::fs::create_dir_all(root.path().join("scripts")).unwrap();
+        std::fs::create_dir_all(root.path().join("python/src/jope/research")).unwrap();
         std::fs::write(
-            root.path().join("scripts/test_exact_canary.py"),
+            root.path().join("python/src/jope/research/test_exact_canary.py"),
             "def render():\n    return '''[resource]\nram_mb = 768\n[dependencies]\nsmoke = [{ command = \"/usr/bin/grep\", args = [\"-qx\", \"xbabe2\", \"/etc/hostname\"] }]\n'''\n",
         )
         .unwrap();
-        let synthetic = scan_file(root.path(), "scripts/test_exact_canary.py").unwrap();
+        let synthetic = scan_file(root.path(), "python/src/jope/research/test_exact_canary.py").unwrap();
         let legacy = synthetic.first().expect("synthetic inline smoke site");
         assert_eq!(legacy.dep_form, DepForm::SmokeInline);
         assert!(legacy.probes_etc_hostname);
@@ -1019,7 +1024,7 @@ mod tests {
         let s = sites();
         let site = s
             .iter()
-            .find(|x| x.file == "src/test_adaptive/scq_batch.rs" && x.function == "submit_true")
+            .find(|x| x.file == "crates/jope-campaigns/src/test_adaptive/scq_batch.rs" && x.function == "submit_true")
             .expect("scq_batch::submit_true render site");
         assert_eq!(
             site.params.get("gpus_per_task").map(String::as_str),
@@ -1050,7 +1055,7 @@ mod tests {
     #[test]
     fn both_ram_units_is_a_finding() {
         let site = RenderSite {
-            file: "src/bin/whatever.rs".to_owned(),
+            file: "crates/jope-campaigns/src/commands/whatever.rs".to_owned(),
             line: 1,
             function: "render_spec".to_owned(),
             family: Some(Family::Eval),
@@ -1073,7 +1078,7 @@ mod tests {
     #[test]
     fn audit_rejects_an_unregistered_render_site() {
         let orphan = RenderSite {
-            file: "src/bin/brand_new_thing.rs".to_owned(),
+            file: "crates/jope-campaigns/src/commands/brand_new_thing.rs".to_owned(),
             line: 42,
             function: "render_spec".to_owned(),
             family: Some(Family::Eval),

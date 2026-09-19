@@ -6,16 +6,16 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::selfplay_core::{
+use jope_campaigns::selfplay_core::{
     dynamic_queue_targets, queue_refill_needed, QueueTargets,
 };
-use jope_dime_regressor::selfplay_runtime::{
+use jope_campaigns::selfplay_runtime::{
     active_checkpoint, atomic_json, default_evaluator_str, default_root_str, default_runner_str,
     default_scq_str, now_ms, protocol_for_manifest, read_json, scq_json, sha256_bytes, sha256_file,
 };
-use jope_dime_regressor::spec_policy::EVAL;
-use jope_dime_regressor::task::Task;
-use jope_dime_regressor::task_preflight::{
+use jope_campaigns::spec_policy::EVAL;
+use jope_campaigns::task::Task;
+use jope_campaigns::task_preflight::{
     preflight_task_manifest, GeneratedOperatorRegistry, TaskPreflightDisposition,
     TaskPreflightOutcomeV1, TaskPreflightRequest,
 };
@@ -331,8 +331,8 @@ fn scheduler_job_is_adoptable(job: &SchedulerJob) -> bool {
             || TERMINAL_STATES.contains(&job.state.as_str()))
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     if !(1..=MAX_SUBMISSIONS_PER_CYCLE).contains(&args.max_submit_per_cycle) {
         bail!("--max-submit-per-cycle must be in 1..={MAX_SUBMISSIONS_PER_CYCLE}");
     }
@@ -2358,7 +2358,7 @@ fn manifest_wave(path: &Path) -> Result<String> {
 }
 
 /// Per-task authority metric (R1/D2); must agree with
-/// `jope_dime_regressor::task::TaskKind::primary_metric`.
+/// `jope_campaigns::task::TaskKind::primary_metric`.
 fn expected_manifest_metric(task: &str) -> Option<&'static str> {
     Task::parse(task).map(Task::primary_metric)
 }
@@ -3605,7 +3605,7 @@ mod tests {
 
     #[test]
     fn manifest_metric_map_agrees_with_task_authority() {
-        use jope_dime_regressor::task::TaskKind;
+        use jope_campaigns::task::TaskKind;
         for kind in [
             TaskKind::Regression,
             TaskKind::Binary,
@@ -3629,7 +3629,7 @@ mod tests {
         let genome = "(pipe X (ridge))";
         let train_sha256 = "d".repeat(64);
         let test_sha256 = "e".repeat(64);
-        let protocol_sha256 = jope_dime_regressor::selfplay_runtime::evaluation_protocol_sha256(
+        let protocol_sha256 = jope_campaigns::selfplay_runtime::evaluation_protocol_sha256(
             "regression",
             "r2",
             "test_exact",

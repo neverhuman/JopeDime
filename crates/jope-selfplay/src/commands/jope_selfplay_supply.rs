@@ -6,14 +6,14 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::dime_runtime_contracts::{
+use jope_campaigns::dime_runtime_contracts::{
     append_infrastructure_attempt, digest_label, load_or_rebuild_recovery_projection,
     matching_drain_intent, save_recovery_projection, terminal_classification,
     DimeInfrastructureAttemptV1, DimeNamedDigestV1, DimeRecoveryProjectionV1, DimeRoleV1,
     DimeScientificPayloadV1, DimeTerminalClassV1, DimeTerminalEvidenceV1,
 };
-use jope_dime_regressor::paths;
-use jope_dime_regressor::selfplay_runtime::{
+use jope_campaigns::paths;
+use jope_campaigns::selfplay_runtime::{
     atomic_json, checkpoint_epoch, default_root_str, default_scq_str, now_ms, sha256_bytes,
     sha256_file,
 };
@@ -655,7 +655,7 @@ impl PersistedSupplyState {
         let backoff_ms = if recent_cancellations >= 3 {
             15 * 60 * 1_000
         } else {
-            jope_dime_regressor::dime_runtime_contracts::retry_backoff_ms(current_attempt_number)
+            jope_campaigns::dime_runtime_contracts::retry_backoff_ms(current_attempt_number)
         };
         let retry_not_before_ms = observed_at_ms.saturating_add(backoff_ms);
         let receipt = DimeInfrastructureAttemptV1::new_terminal(
@@ -933,8 +933,8 @@ impl SingleInstanceLock {
     }
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     validate_args(&args)?;
     let _lock = SingleInstanceLock::acquire(&args.root.join("ops/micro-wave-supply-builder.lock"))?;
     let circuit_path = args.root.join("ops/cohort-supply-circuit-breaker.v1.json");

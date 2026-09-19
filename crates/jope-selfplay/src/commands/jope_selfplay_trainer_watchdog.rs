@@ -6,12 +6,12 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::paths;
-use jope_dime_regressor::selfplay_runtime::{
+use jope_campaigns::paths;
+use jope_campaigns::selfplay_runtime::{
     atomic_json, default_root_str, default_scq_str, now_ms, read_json, scq_json, sha256_bytes,
     sha256_file,
 };
-use jope_dime_regressor::spec_policy::TRAINER;
+use jope_campaigns::spec_policy::TRAINER;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::fs::{self, File, OpenOptions};
@@ -496,8 +496,8 @@ impl ProcessLock {
     }
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     if args.explain_checkpoint {
         return explain_checkpoint(&args);
     }

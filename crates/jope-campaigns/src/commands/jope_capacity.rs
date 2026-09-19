@@ -7,11 +7,11 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::selfplay_core::{
+use crate::selfplay_core::{
     node_slot_target, ramp_decision, xbabe2_burn_eligible, BurnSample, PressureBaseline,
     PressureSample, RampStage, RampState,
 };
-use jope_dime_regressor::selfplay_runtime::{
+use crate::selfplay_runtime::{
     atomic_json, canonical_json_bytes, default_root_str, default_scq_str, now_ms, read_json,
     scq_json, sha256_bytes, sha256_file,
 };
@@ -228,8 +228,8 @@ struct Decision {
     compile_cache: Option<Value>,
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     if args.apply
         && args
             .idempotency_key
@@ -844,7 +844,7 @@ fn write_receipt(root: &Path, key: &str, decision: &Value) -> Result<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use jope_dime_regressor::selfplay_core::{unsafe_sample, RAMP_MID_DURATION_MS};
+    use crate::selfplay_core::{unsafe_sample, RAMP_MID_DURATION_MS};
     use tempfile::TempDir;
 
     fn policy() -> &'static str {

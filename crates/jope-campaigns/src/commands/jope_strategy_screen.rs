@@ -16,7 +16,6 @@
 
 use std::collections::HashSet;
 use std::fs;
-use std::process::ExitCode;
 
 use feat_math::full_rust::{
     canonicalize, crossover_pipelines, mutate_pipeline, mutate_pipeline_expanded,
@@ -1880,8 +1879,7 @@ fn arg(args: &[String], flag: &str) -> Option<String> {
         .and_then(|i| args.get(i + 1).cloned())
 }
 
-fn main() -> ExitCode {
-    let args: Vec<String> = std::env::args().collect();
+pub fn main(args: Vec<String>) -> anyhow::Result<()> {
     let outcome = match args.get(1).map(String::as_str) {
         Some("run") => match (
             arg(&args, "--config"),
@@ -1918,10 +1916,10 @@ fn main() -> ExitCode {
         _ => Err("subcommands: run | score".into()),
     };
     match outcome {
-        Ok(()) => ExitCode::SUCCESS,
+        Ok(()) => Ok(()),
         Err(message) => {
             eprintln!("jope_strategy_screen: {message}");
-            ExitCode::FAILURE
+            std::process::exit(1)
         }
     }
 }

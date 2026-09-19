@@ -2,13 +2,13 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::paths;
-use jope_dime_regressor::selfplay_ingest::ingest_receipt_with_manifest;
-use jope_dime_regressor::selfplay_runtime::{
+use crate::paths;
+use crate::selfplay_ingest::ingest_receipt_with_manifest;
+use crate::selfplay_runtime::{
     atomic_json, checkpoint_epoch, default_root_str, default_scq_str, evaluation_protocol_sha256,
     expected_evaluation_metric, now_ms, read_json, sha256_bytes, sha256_file,
 };
-use jope_dime_regressor::selfplay_shadow::{
+use crate::selfplay_shadow::{
     evaluate_task_promotion_v3, CanaryContextClass, CanaryContextV2, CanaryIntentV2, CanaryMode,
     PromotionObservationV3, SealedPanelConsumptionV1, SealedPanelContextFactsV1, SealedPanelPoolV2,
     Sha256Digest, Task, TaskCanaryAcceptanceV2, TaskCanaryMetricsV2,
@@ -16,7 +16,7 @@ use jope_dime_regressor::selfplay_shadow::{
     CANARY_INTENT_SCHEMA, PROMOTION_CONTEXT_STEP, SEALED_PANEL_CONTEXT_FACTS_V1_SCHEMA,
     TASK_CANARY_ACCEPTANCE_V2_SCHEMA, TASK_PROMOTION_OBSERVATION_SET_V3_SCHEMA,
 };
-use jope_dime_regressor::spec_policy::{EVAL, PROPOSE};
+use crate::spec_policy::{EVAL, PROPOSE};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, OpenOptions};
@@ -2008,8 +2008,8 @@ fn transient_capacity_error(message: &str) -> bool {
             || message.contains("no eligible launch-ready node currently"))
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     let mut previous_error = String::new();
     let mut identical_failures = 0_u32;
     loop {

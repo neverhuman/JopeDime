@@ -4,9 +4,9 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
-use jope_dime_regressor::jope_dlgp_best5::*;
-use jope_dime_regressor::jope_generalized_gp::raw_sha256;
-use jope_dime_regressor::paths;
+use crate::jope_dlgp_best5::*;
+use crate::jope_generalized_gp::raw_sha256;
+use crate::paths;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -128,7 +128,7 @@ fn read_json<T: DeserializeOwned>(path: &Path) -> Result<T> {
 
 fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<()> {
     let bytes =
-        jope_dime_regressor::search_v3::canonical_json_bytes(value).map_err(anyhow::Error::msg)?;
+        crate::search_v3::canonical_json_bytes(value).map_err(anyhow::Error::msg)?;
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -161,8 +161,8 @@ fn scq_input(name: &str, source: &Path, target: &str, executable: bool) -> Resul
     })
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     match args.command {
         Command::ProposeAll {
             campaign,

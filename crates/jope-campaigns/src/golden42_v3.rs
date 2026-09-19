@@ -6,7 +6,7 @@ use feat_math::{
     DataSchema, EncodedTable, FittedCppRuntime, GenomeIr, Objective, RawTable, RowSemantics,
     TaskSpec, V3Archive, V3Candidate, V3EvolutionConfig, V3ScoredCandidate,
 };
-use jope_dime_regressor::paths;
+use crate::paths;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};

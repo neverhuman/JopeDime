@@ -3,8 +3,8 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 
 use feat_math::GenomeIr;
-use jope_dime_regressor::jope_dlgp_best5::*;
-use jope_dime_regressor::jope_generalized_gp::{
+use jope_campaigns::jope_dlgp_best5::*;
+use jope_campaigns::jope_generalized_gp::{
     raw_sha256, ArtifactStoreV1, GenomeV1, GpTaskV1, ProposalFreezeV1,
 };
 
@@ -107,7 +107,7 @@ fn campaign() -> CampaignFreezeV1 {
             artifact_path: "/checkpoint/must-exist-at-launch".into(),
             artifact_sha256: FROZEN_CHECKPOINT_SHA256.into(),
             artifact_bytes: 100,
-            regression_head_schema_sha256: jope_dime_regressor::search_v3::canonical_sha256(
+            regression_head_schema_sha256: jope_campaigns::search_v3::canonical_sha256(
                 &regression_heads,
             )
             .unwrap(),
@@ -469,15 +469,15 @@ fn one_inference_and_generation_zero_preserve_exact_64_10_6() {
             values
         });
     assert_eq!(
-        origins[&jope_dime_regressor::jope_generalized_gp::GenomeOriginV1::ModelProposal],
+        origins[&jope_campaigns::jope_generalized_gp::GenomeOriginV1::ModelProposal],
         64
     );
     assert_eq!(
-        origins[&jope_dime_regressor::jope_generalized_gp::GenomeOriginV1::GlobalGene],
+        origins[&jope_campaigns::jope_generalized_gp::GenomeOriginV1::GlobalGene],
         10
     );
     assert_eq!(
-        origins[&jope_dime_regressor::jope_generalized_gp::GenomeOriginV1::DiversitySeed],
+        origins[&jope_campaigns::jope_generalized_gp::GenomeOriginV1::DiversitySeed],
         6
     );
     assert_eq!(
@@ -601,15 +601,15 @@ fn control_uses_semantic_three_fifty_eight_nineteen_schedule() {
         counts
     });
     assert_eq!(
-        origins[&jope_dime_regressor::jope_generalized_gp::GenomeOriginV1::Elite],
+        origins[&jope_campaigns::jope_generalized_gp::GenomeOriginV1::Elite],
         3
     );
     assert_eq!(
-        origins[&jope_dime_regressor::jope_generalized_gp::GenomeOriginV1::Mutation],
+        origins[&jope_campaigns::jope_generalized_gp::GenomeOriginV1::Mutation],
         58
     );
     assert_eq!(
-        origins[&jope_dime_regressor::jope_generalized_gp::GenomeOriginV1::Crossover],
+        origins[&jope_campaigns::jope_generalized_gp::GenomeOriginV1::Crossover],
         19
     );
 }

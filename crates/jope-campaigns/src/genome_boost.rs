@@ -20,7 +20,7 @@ use feat_math::{
     encode_fitted_cpp17, fit_legacy_numeric_bound, supports_fitted_cpp17,
     validate_fitted_cpp_codec, BoundModel, EncodedTable, FittedCppRuntime, GenomeIr,
 };
-use jope_dime_regressor::paths;
+use crate::paths;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::VecDeque;

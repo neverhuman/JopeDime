@@ -6,11 +6,11 @@
 
 use anyhow::{ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::four_task::JopeFourTaskTelemetryV1;
-use jope_dime_regressor::recovery_contracts::RecoveryContinuityObservationV1;
-use jope_dime_regressor::selfplay_ingest;
-use jope_dime_regressor::selfplay_runtime::{atomic_json, default_root_str, now_ms, sha256_file};
-use jope_dime_regressor::selfplay_shadow::{
+use jope_campaigns::four_task::JopeFourTaskTelemetryV1;
+use jope_campaigns::recovery_contracts::RecoveryContinuityObservationV1;
+use jope_campaigns::selfplay_ingest;
+use jope_campaigns::selfplay_runtime::{atomic_json, default_root_str, now_ms, sha256_file};
+use jope_campaigns::selfplay_shadow::{
     Task, TaskPromotionEvaluationV3, TaskPromotionObservationSetV3,
 };
 use serde::Serialize;
@@ -1071,8 +1071,8 @@ fn refresh(root: &Path) -> Result<ReportingStatus> {
     Ok(report)
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     ensure!(
         args.interval_seconds > 0 && args.interval_seconds <= 300,
         "reporting interval must be within 1..=300 seconds"
@@ -1090,7 +1090,7 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use jope_dime_regressor::selfplay_runtime::atomic_json;
+    use jope_campaigns::selfplay_runtime::atomic_json;
     use serde_json::json;
     use tempfile::tempdir;
 

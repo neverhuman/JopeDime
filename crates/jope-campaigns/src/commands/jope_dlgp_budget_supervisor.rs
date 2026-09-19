@@ -7,18 +7,18 @@
 
 use anyhow::{ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::dime_runtime_contracts::{
+use crate::dime_runtime_contracts::{
     append_infrastructure_attempt, infrastructure_attempts, matching_drain_intent,
     retry_backoff_ms, DimeInfrastructureAttemptV1, DimeNamedDigestV1, DimeRoleV1,
     DimeScientificPayloadV1, DimeTerminalClassV1, DimeTerminalEvidenceV1, DlgpActiveJobV1,
     DlgpCampaignGateStateV1, JopeDlgpBudgetCampaignStatusV1,
     JOPE_DLGP_BUDGET_CAMPAIGN_STATUS_SCHEMA,
 };
-use jope_dime_regressor::jope_dlgp_best5::{
+use crate::jope_dlgp_best5::{
     FROZEN_CHECKPOINT_SHA256, STAGE1_MAX_SEARCH_EVALUATIONS,
 };
-use jope_dime_regressor::paths;
-use jope_dime_regressor::selfplay_runtime::{
+use crate::paths;
+use crate::selfplay_runtime::{
     atomic_json, default_root_str, default_scq_str, now_ms, read_json, scq_json, sha256_bytes,
     sha256_file,
 };
@@ -334,8 +334,8 @@ impl CampaignLaunchReceipt {
     }
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     loop {
         let status = match cycle(&args) {
             Ok(status) => status,

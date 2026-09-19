@@ -3,8 +3,8 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
-use jope_dime_regressor::jope_dlgp_best5::*;
-use jope_dime_regressor::jope_generalized_gp::{raw_sha256, ArtifactStoreV1};
+use crate::jope_dlgp_best5::*;
+use crate::jope_generalized_gp::{raw_sha256, ArtifactStoreV1};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use serde_json::json;
@@ -132,8 +132,8 @@ fn fold_sd(values: &[f64]) -> f64 {
         .sqrt()
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     match args.command {
         Command::Freeze { input, output_root } => {
             let source: CampaignSourceV1 = read_json(&input)?;

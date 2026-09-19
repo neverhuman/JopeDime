@@ -5,7 +5,7 @@
 //! cross-language inference timing and an immutable, hash-bound receipt.
 
 use anyhow::{bail, Context, Result};
-use jope_dime_regressor::paths;
+use crate::paths;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::fs;

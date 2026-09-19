@@ -7,10 +7,10 @@ use crossterm::execute;
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
-use jope_dime_regressor::four_task::{
+use jope_campaigns::four_task::{
     task_metric_contract, FourTaskTelemetryRow, JopeFourTaskTelemetryV1, FOUR_TASK_ORDER,
 };
-use jope_dime_regressor::paths;
+use jope_campaigns::paths;
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style};
@@ -660,8 +660,8 @@ impl Drop for TerminalSession {
     }
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     if !args.scq.is_file() {
         bail!("SCQ binary is absent: {}", args.scq.display());
     }
@@ -3881,14 +3881,14 @@ fn footer_line(dashboard: &Dashboard, refresh_ms: u64) -> Paragraph<'static> {
     .style(Style::default().fg(Color::DarkGray))
 }
 
-fn telemetry_count(value: &jope_dime_regressor::four_task::TypedCount) -> String {
+fn telemetry_count(value: &jope_campaigns::four_task::TypedCount) -> String {
     value
         .value
         .map(human_count)
         .unwrap_or_else(|| "N/A".to_owned())
 }
 
-fn telemetry_median(value: &jope_dime_regressor::four_task::TypedDistribution) -> String {
+fn telemetry_median(value: &jope_campaigns::four_task::TypedDistribution) -> String {
     value
         .value
         .as_ref()

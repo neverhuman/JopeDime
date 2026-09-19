@@ -1,4 +1,4 @@
-use jope_dime_regressor::selfplay_shadow::*;
+use jope_campaigns::selfplay_shadow::*;
 use std::collections::BTreeMap;
 use tempfile::tempdir;
 

@@ -26,17 +26,25 @@
 //! resources free, and rejects the submit if none of them pass.
 
 use std::path::PathBuf;
-use std::process::{Command, ExitCode};
+use std::process::Command;
 
-use jope_dime_regressor::spec_drift;
-use jope_dime_regressor::spec_policy::{self, Family, ProbeArg};
+use crate::spec_drift;
+use crate::spec_policy::{self, Family, ProbeArg};
 
 fn usage() -> &'static str {
     "jope_spec_drift [--list|--emit-json|--verify-probes|--root <dir>]"
 }
 
-fn main() -> ExitCode {
-    let args: Vec<String> = std::env::args().skip(1).collect();
+/// The program's `fn main`: exit status 0 on success, 1 on any finding or usage error.
+pub fn main(args: Vec<String>) -> anyhow::Result<()> {
+    match run(args) {
+        0 => Ok(()),
+        code => std::process::exit(i32::from(code)),
+    }
+}
+
+fn run(args: Vec<String>) -> u8 {
+    let args: Vec<String> = args.into_iter().skip(1).collect();
     let mut root: PathBuf = spec_drift::repo_root();
     let mut mode = "audit";
 
@@ -49,7 +57,7 @@ fn main() -> ExitCode {
             "--emit-blocks" => mode = "emit-blocks",
             "-h" | "--help" => {
                 println!("{}", usage());
-                return ExitCode::SUCCESS;
+                return 0;
             }
             "--root" => {
                 i += 1;
@@ -57,13 +65,13 @@ fn main() -> ExitCode {
                     Some(v) => root = PathBuf::from(v),
                     None => {
                         eprintln!("--root needs a directory\n{}", usage());
-                        return ExitCode::FAILURE;
+                        return 1;
                     }
                 }
             }
             other => {
                 eprintln!("unknown argument {other}\n{}", usage());
-                return ExitCode::FAILURE;
+                return 1;
             }
         }
         i += 1;
@@ -71,7 +79,7 @@ fn main() -> ExitCode {
 
     if mode == "emit-json" {
         print!("{}", spec_policy::policy_json());
-        return ExitCode::SUCCESS;
+        return 0;
     }
     if mode == "verify-probes" {
         return verify_probes();
@@ -88,14 +96,14 @@ fn main() -> ExitCode {
                 p.render_placement_block()
             );
         }
-        return ExitCode::SUCCESS;
+        return 0;
     }
 
     let sites = match spec_drift::scan_repo(&root) {
         Ok(s) => s,
         Err(e) => {
             eprintln!("cannot scan {}: {e}", root.display());
-            return ExitCode::FAILURE;
+            return 1;
         }
     };
 
@@ -114,7 +122,7 @@ fn main() -> ExitCode {
             println!("             params {:?}", s.params);
             println!("             placement {}", s.dep_form);
         }
-        return ExitCode::SUCCESS;
+        return 0;
     }
 
     let findings = spec_drift::audit(&sites);
@@ -124,7 +132,7 @@ fn main() -> ExitCode {
              with spec_policy.rs",
             sites.len()
         );
-        return ExitCode::SUCCESS;
+        return 0;
     }
     eprintln!(
         "spec-drift: {} finding(s) across {} render site(s)\n",
@@ -134,7 +142,7 @@ fn main() -> ExitCode {
     for f in &findings {
         eprintln!("{f}\n");
     }
-    ExitCode::FAILURE
+    1
 }
 
 /// Execute every distinct smoke probe on THIS host.
@@ -142,7 +150,7 @@ fn main() -> ExitCode {
 /// A probe is only a capability probe if it passes wherever the capability is
 /// installed. One that passes on a single node is a hostname pin, and it turns a
 /// busy cluster into a submit failure rather than a queue.
-fn verify_probes() -> ExitCode {
+fn verify_probes() -> u8 {
     let host = std::fs::read_to_string("/etc/hostname")
         .map(|s| s.trim().to_owned())
         .unwrap_or_else(|_| "<unknown>".to_owned());
@@ -185,17 +193,17 @@ fn verify_probes() -> ExitCode {
     }
     if checked == 0 {
         println!("  (no smoke probes declared)");
-        return ExitCode::SUCCESS;
+        return 0;
     }
     if failed > 0 {
         eprintln!(
             "\n{failed} of {checked} probe(s) FAIL on {host}. Any GPU job declaring them \
              cannot be submitted when {host} is the only node with free capacity."
         );
-        return ExitCode::FAILURE;
+        return 1;
     }
     println!("\nall {checked} probe(s) pass on {host}");
-    ExitCode::SUCCESS
+    0
 }
 
 /// Compile-time proof that the checker still understands the two forms scq
@@ -203,7 +211,7 @@ fn verify_probes() -> ExitCode {
 /// meaningless.
 #[cfg(test)]
 mod tests {
-    use jope_dime_regressor::spec_drift::DepForm;
+    use crate::spec_drift::DepForm;
 
     #[test]
     fn dep_forms_are_distinguishable() {

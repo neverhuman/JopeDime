@@ -2,8 +2,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 
 use feat_math::GenomeIr;
-use jope_dime_regressor::jope_generalized_gp::*;
-use jope_dime_regressor::search_v3::PredictionObjectV1;
+use jope_campaigns::jope_generalized_gp::*;
+use jope_campaigns::search_v3::PredictionObjectV1;
 use tempfile::TempDir;
 
 fn digest(label: &str) -> String {
@@ -735,7 +735,12 @@ fn prediction_cache_is_arm_free_and_rejects_mismatched_evidence() {
 
 #[test]
 fn operational_adapter_preserves_legacy_shards_and_seals_test_access() {
-    let evaluator_path = env!("CARGO_BIN_EXE_corpus_eval");
+    // `corpus_eval` is a program of the `jope-campaigns` binary, reached the way
+    // a deployment reaches it: through a link named after the program.
+    let evaluator_dir = tempfile::tempdir().unwrap();
+    let evaluator_link = evaluator_dir.path().join("corpus_eval");
+    std::os::unix::fs::symlink(env!("CARGO_BIN_EXE_jope-campaigns"), &evaluator_link).unwrap();
+    let evaluator_path = evaluator_link.to_str().unwrap();
     let evaluator_bytes = fs::read(evaluator_path).unwrap();
     let evaluator = EvaluatorFreezeV1 {
         schema: EvaluatorFreezeV1::SCHEMA.into(),

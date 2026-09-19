@@ -15,8 +15,8 @@
 //!                          --out "$JOPE_REGISTRY/../timeseries_reduced_v2"
 
 use anyhow::{bail, Context, Result};
-use jope_dime_regressor::paths;
-use jope_dime_regressor::timeseries::{
+use crate::paths;
+use crate::timeseries::{
     make_direct_forecast_rows, make_direct_reduction, read_timeseries_csv,
     validate_timeseries_data, TimeSeriesManifestSpec, TS_REDUCTION_V2,
 };
@@ -180,10 +180,10 @@ fn carry_synthetic_provenance(source_meta: &Value, out_meta: &mut Value) {
     }
 }
 
-fn main() -> Result<()> {
+pub fn main(args: Vec<String>) -> Result<()> {
     let mut registry = paths::quant_root().join("timeseries");
     let mut out_root = paths::quant_root().join("timeseries_reduced_v2");
-    let mut arguments = std::env::args().skip(1);
+    let mut arguments = args.into_iter().skip(1);
     while let Some(flag) = arguments.next() {
         let value = arguments.next().context("flag requires a value")?;
         match flag.as_str() {

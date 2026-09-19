@@ -2,11 +2,11 @@ use std::env;
 use std::path::PathBuf;
 
 use clap::Parser;
-use jope_dime_regressor::hyperion_gate::{
+use crate::hyperion_gate::{
     build_registry_cache, freeze_precomputed_train_feature_coverage,
     verify_precomputed_train_feature_coverage, JopeHyperionTrainOnlyRegistryV2,
 };
-use jope_dime_regressor::jope_dlgp_best5::validate_hyperion_campaign_registry_ids;
+use crate::jope_dlgp_best5::validate_hyperion_campaign_registry_ids;
 
 #[derive(Debug, Parser)]
 #[command(
@@ -22,8 +22,8 @@ struct Args {
     dataset_id: Option<String>,
 }
 
-fn main() {
-    let mut raw = env::args().collect::<Vec<_>>();
+pub fn main(args: Vec<String>) -> anyhow::Result<()> {
+    let mut raw = args;
     let operation = raw
         .get(1)
         .filter(|value| matches!(value.as_str(), "freeze-registry" | "build" | "verify"))
@@ -86,4 +86,5 @@ fn main() {
             std::process::exit(2);
         }
     }
+    Ok(())
 }

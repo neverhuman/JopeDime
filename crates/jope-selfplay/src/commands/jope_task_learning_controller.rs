@@ -2,19 +2,19 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::dime_runtime_contracts::{
+use jope_campaigns::dime_runtime_contracts::{
     append_infrastructure_attempt, digest_label, ensure_same_scientific_payload,
     infrastructure_attempts, load_or_rebuild_recovery_projection, matching_drain_intent,
     save_recovery_projection, terminal_classification, DimeInfrastructureAttemptV1,
     DimeNamedDigestV1, DimeRecoveryProjectionV1, DimeRoleV1, DimeScientificPayloadV1,
     DimeTerminalClassV1, DimeTerminalEvidenceV1,
 };
-use jope_dime_regressor::paths;
-use jope_dime_regressor::selfplay_runtime::{
+use jope_campaigns::paths;
+use jope_campaigns::selfplay_runtime::{
     atomic_json, default_root_str, default_scq_str, now_ms, read_json, scq_json, sha256_bytes,
     sha256_file,
 };
-use jope_dime_regressor::selfplay_shadow::{
+use jope_campaigns::selfplay_shadow::{
     deterministic_canary_contexts, validate_panel_consumption, CanaryContextV2,
     CausalEvidenceLedgerV3, PlateauCountedCandidateV1, PlateauDiagnosisV1, PlateauDiagnosisV2,
     PlateauFailureClassV2, PromotionContextScheduleV3, RecipeChangeDirectiveV1,
@@ -24,7 +24,7 @@ use jope_dime_regressor::selfplay_shadow::{
     PLATEAU_DIAGNOSIS_V2_SCHEMA, SEALED_PANEL_CONSUMPTION_V1_SCHEMA, SHADOW_CHECKPOINT_SCHEMA,
     TASK_PROMOTION_EVALUATION_INTENT_V3_SCHEMA, TRAINER_INTENT_V3_SCHEMA,
 };
-use jope_dime_regressor::spec_policy::TRAINER;
+use jope_campaigns::spec_policy::TRAINER;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
@@ -252,8 +252,8 @@ fn trainer_v3_pins(
     Ok((runtime_bundle, runtime_sha, binding_path, binding_sha))
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     loop {
         match cycle(&args) {
             Ok(status) => {
@@ -968,7 +968,7 @@ fn recover_trainer_intent(
     let backoff_ms = if recent_cancellations >= 3 {
         15 * 60 * 1_000
     } else {
-        jope_dime_regressor::dime_runtime_contracts::retry_backoff_ms(
+        jope_campaigns::dime_runtime_contracts::retry_backoff_ms(
             projection.current_attempt_number,
         )
     };
@@ -3269,7 +3269,7 @@ mod tests {
 
     #[test]
     fn promotion_panels_are_consumed_only_when_each_run_is_scheduled() {
-        use jope_dime_regressor::selfplay_shadow::{
+        use jope_campaigns::selfplay_shadow::{
             build_sealed_panel_pool_v2, ClusteredConfidenceBoundsV3, DatasetOriginV2,
             SealedPanelCandidateV2, TaskPromotionMetricsV3,
         };
@@ -3301,7 +3301,7 @@ mod tests {
                 context_facts_sha256: digest(&format!("facts-{index}")),
                 prior_use_index_sha256: digest("prior-use"),
                 zero_prior_use_proof_sha256:
-                    jope_dime_regressor::selfplay_shadow::sealed_zero_prior_use_proof_v2(
+                    jope_campaigns::selfplay_shadow::sealed_zero_prior_use_proof_v2(
                         &Sha256Digest::parse(format!("{index:064x}")).unwrap(),
                         &digest("base-seal"),
                         &digest("catalog"),
@@ -3525,7 +3525,7 @@ mod tests {
 
     #[test]
     fn three_sequential_passes_advance_the_pointer_once() {
-        use jope_dime_regressor::selfplay_shadow::{
+        use jope_campaigns::selfplay_shadow::{
             build_sealed_panel_pool_v2, ClusteredConfidenceBoundsV3, DatasetOriginV2,
             SealedPanelCandidateV2, TaskPromotionMetricsV3,
         };
@@ -3558,7 +3558,7 @@ mod tests {
                     context_facts_sha256: digest(&format!("facts-{index}")),
                     prior_use_index_sha256: digest("prior-use"),
                     zero_prior_use_proof_sha256:
-                        jope_dime_regressor::selfplay_shadow::sealed_zero_prior_use_proof_v2(
+                        jope_campaigns::selfplay_shadow::sealed_zero_prior_use_proof_v2(
                             &Sha256Digest::parse(format!("{index:064x}")).unwrap(),
                             &digest("base-seal"),
                             &digest("catalog"),

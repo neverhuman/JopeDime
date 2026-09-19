@@ -2,11 +2,11 @@
 
 use anyhow::{ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::encoder_v2_capacity::{
+use crate::encoder_v2_capacity::{
     CapacityDecision, EncoderCapacityObservation, CPUS_PER_WORKER, ENCODER_PROJECT,
     MEMORY_BYTES_PER_WORKER,
 };
-use jope_dime_regressor::selfplay_runtime::{atomic_json, sha256_file};
+use crate::selfplay_runtime::{atomic_json, sha256_file};
 use serde_json::json;
 use std::fs::File;
 use std::path::PathBuf;
@@ -23,8 +23,8 @@ struct Args {
     now_unix_ms: Option<u64>,
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     let observation: EncoderCapacityObservation = serde_json::from_reader(
         File::open(&args.observation)
             .with_context(|| format!("open {}", args.observation.display()))?,

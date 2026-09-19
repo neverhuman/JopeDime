@@ -36,7 +36,7 @@
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use jope_dime_regressor::paths;
+use jope_campaigns::paths;
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
 use std::fs;
@@ -1391,8 +1391,8 @@ fn report(args: &Args, hours: f64) -> Result<()> {
 // main cycle
 // ---------------------------------------------------------------------------
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     if let Some(hours) = args.report_hours {
         return report(&args, hours);
     }

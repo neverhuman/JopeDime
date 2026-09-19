@@ -52,9 +52,9 @@ struct Args {
     historical_target: Option<f64>,
 }
 
-fn parse_args() -> Result<Args> {
+fn parse_args(args: Vec<String>) -> Result<Args> {
     let mut values = BTreeMap::new();
-    let mut args = env::args_os().skip(1);
+    let mut args = args.into_iter().map(std::ffi::OsString::from).skip(1);
     while let Some(flag) = args.next() {
         let value = args
             .next()
@@ -683,8 +683,8 @@ fn integrate(replay: &mut Value, receipts: &[Value]) -> Result<()> {
     Ok(())
 }
 
-fn main() -> Result<()> {
-    let args = Arc::new(parse_args()?);
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Arc::new(parse_args(args)?);
     ensure!(args.evaluator.is_file(), "evaluator missing");
     fs::create_dir_all(&args.output)?;
     let replay_bytes = fs::read(&args.replay)?;

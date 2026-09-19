@@ -1,6 +1,6 @@
 use super::*;
 use feat_math::advanced_v3::RawTable;
-use jope_dime_regressor::paths;
+use crate::paths;
 
 jope_paths::once_str!(
     fn source_root_str => paths::legacy_tree("tabArenaLite").join("data/tabarena-lite-v0.1/datasets/regression")

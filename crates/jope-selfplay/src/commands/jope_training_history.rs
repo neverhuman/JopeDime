@@ -22,8 +22,8 @@
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use jope_dime_regressor::paths;
-use jope_dime_regressor::training_history::{self as th, SourceReader};
+use jope_campaigns::paths;
+use jope_campaigns::training_history::{self as th, SourceReader};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
@@ -601,8 +601,8 @@ fn uncovered(root: &Path, runs_root: &Path) -> Vec<Value> {
     behind
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     match args.command {
         Cmd::Capture {
             root,

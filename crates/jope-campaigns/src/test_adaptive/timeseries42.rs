@@ -9,8 +9,8 @@ use feat_math::advanced_v3::validate_v3_genome;
 use feat_math::heads::is_head_op;
 use feat_math::target_transform::is_target_op;
 use feat_math::{ColumnSpec, DataSchema, Objective, RowSemantics, TaskSpec};
-use jope_dime_regressor::paths;
-use jope_dime_regressor::timeseries::{
+use crate::paths;
+use crate::timeseries::{
     direct_feature_names_for, make_supervised_reduction, read_timeseries_csv,
     validate_timeseries_data, ReductionVersion, TimeSeriesManifestSpec,
 };

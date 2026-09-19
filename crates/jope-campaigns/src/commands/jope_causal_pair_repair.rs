@@ -2,12 +2,12 @@
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::selfplay_ingest::ingest_receipt_with_manifest;
-use jope_dime_regressor::selfplay_runtime::{
+use crate::selfplay_ingest::ingest_receipt_with_manifest;
+use crate::selfplay_runtime::{
     atomic_json, default_root_str, default_scq_str, now_ms, read_json, sha256_file,
 };
-use jope_dime_regressor::selfplay_shadow::{CausalLane, PairRepairRequestV1, Sha256Digest, Task};
-use jope_dime_regressor::spec_policy::EVAL;
+use crate::selfplay_shadow::{CausalLane, PairRepairRequestV1, Sha256Digest, Task};
+use crate::spec_policy::EVAL;
 use rusqlite::{Connection, OpenFlags};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -160,8 +160,8 @@ struct EvaluatorBinding {
     sha256: String,
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     ensure!(args.max_inflight > 0, "max inflight must be positive");
     ensure!(
         args.submissions_per_cycle > 0,

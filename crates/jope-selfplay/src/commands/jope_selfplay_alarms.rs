@@ -5,8 +5,8 @@
 //! second thing to monitor. Driven by jope-selfplay-alarms.timer (60 s).
 
 use anyhow::Result;
-use jope_dime_regressor::paths;
-use jope_dime_regressor::training_history as th;
+use jope_campaigns::paths;
+use jope_campaigns::training_history as th;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -225,12 +225,12 @@ fn check_status_ages(root: &Path, alarms: &mut Alarms) {
 // live check starts enforcing it with no edit here.
 
 jope_paths::once_str!(
-    /// Rust source tree of this crate (`crates/jope-campaigns` under
-    /// `JOPE_HOME`; the crate sat at the checkout root when the consumer
-    /// paths below were written), for deriving consumer field contracts.
-    /// Overridable with `JOPE_SRC_ROOT` so the check can run against a
-    /// checkout under test.
-    fn src_root_str => paths::jope_home().join("crates/jope-campaigns")
+    /// Rust source tree of this crate (`crates/jope-selfplay` under
+    /// `JOPE_HOME`; the consumer programs below were `src/commands/*.rs` of the
+    /// root crate before the port and are `src/commands/*.rs` here), for
+    /// deriving consumer field contracts. Overridable with `JOPE_SRC_ROOT` so
+    /// the check can run against a checkout under test.
+    fn src_root_str => paths::jope_home().join("crates/jope-selfplay")
 );
 
 /// Consecutive scans a status file may stay broken before the alarm escalates
@@ -272,7 +272,7 @@ const OPS_CONTRACTS: &[Contract] = &[
         producer: "jope-selfplay-queue.service",
         // jope_selfplay_supply.rs:404-416 load_queue_status(); the struct whose
         // non-Option `queued_target` took supply down with the keeper.
-        consumer: Some(("src/bin/jope_selfplay_supply.rs", "QueueStatus")),
+        consumer: Some(("src/commands/jope_selfplay_supply.rs", "QueueStatus")),
     },
     Contract {
         file: "ops/micro-wave-supply-v2.json",
@@ -291,7 +291,7 @@ const OPS_CONTRACTS: &[Contract] = &[
         schema: "JopeContinuousTrainerWatchdogState.v1",
         producer: "jope-selfplay-trainer-watchdog.service",
         // jope_selfplay_trainer_watchdog.rs:690 load_state().
-        consumer: Some(("src/bin/jope_selfplay_trainer_watchdog.rs", "DurableState")),
+        consumer: Some(("src/commands/jope_selfplay_trainer_watchdog.rs", "DurableState")),
     },
     Contract {
         file: "ops/freshness-status.json",
@@ -306,7 +306,7 @@ const OPS_CONTRACTS: &[Contract] = &[
         // jope_selfplay_freshness.rs:328 — survives a wrong-shaped document
         // only because the struct is #[serde(default)]; the schema gate there
         // runs AFTER the deserialize, so it can never reject one.
-        consumer: Some(("src/bin/jope_selfplay_freshness.rs", "DurableState")),
+        consumer: Some(("src/commands/jope_selfplay_freshness.rs", "DurableState")),
     },
     Contract {
         file: "ops/expansion-driver-v1.json",
@@ -1972,10 +1972,10 @@ fn check_training_replica(root: &Path, alarms: &mut Alarms) {
 /// without paralysing expansion. Flip to `critical` by appending
 /// `--contract-severity critical` to jope-selfplay-alarms.service once the
 /// driver's skip list covers `status_*` / `contract_*`.
-fn parse_args() -> (PathBuf, String) {
+fn parse_args(args: Vec<String>) -> (PathBuf, String) {
     let mut root: Option<String> = None;
     let mut severity = "warning".to_owned();
-    let mut arguments = std::env::args().skip(1);
+    let mut arguments = args.into_iter().skip(1);
     while let Some(argument) = arguments.next() {
         match argument.as_str() {
             "--contract-severity" => {
@@ -2001,8 +2001,8 @@ fn parse_args() -> (PathBuf, String) {
     )
 }
 
-fn main() -> Result<()> {
-    let (root, contract_severity) = parse_args();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let (root, contract_severity) = parse_args(args);
     let mut alarms = Alarms { rows: Vec::new() };
 
     check_status_ages(&root, &mut alarms);
@@ -2149,7 +2149,7 @@ mod tests {
         assert!(row["threshold"]
             .as_str()
             .unwrap()
-            .contains("src/bin/jope_selfplay_supply.rs"));
+            .contains("src/commands/jope_selfplay_supply.rs"));
     }
 
     #[test]
@@ -2253,7 +2253,7 @@ mod tests {
 
     #[test]
     fn the_supply_queue_status_contract_is_derived_from_supplys_own_struct() {
-        let source = live_source("src/bin/jope_selfplay_supply.rs");
+        let source = live_source("src/commands/jope_selfplay_supply.rs");
         let (line, required) = derive_required_fields(&source, "QueueStatus").unwrap();
         assert!(line > 0);
         let by_name: Vec<&str> = required.iter().map(|f| f.name.as_str()).collect();
@@ -2300,8 +2300,8 @@ mod tests {
         // jope_selfplay_trainer_watchdog.rs:691 survive a wrong-shaped
         // document. The contract must agree with serde, not with intent.
         for relative in [
-            "src/bin/jope_selfplay_freshness.rs",
-            "src/bin/jope_selfplay_trainer_watchdog.rs",
+            "src/commands/jope_selfplay_freshness.rs",
+            "src/commands/jope_selfplay_trainer_watchdog.rs",
         ] {
             let source = live_source(relative);
             let (_, required) = derive_required_fields(&source, "DurableState").unwrap();

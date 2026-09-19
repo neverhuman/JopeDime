@@ -2,8 +2,8 @@
 
 use anyhow::{ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::paths;
-use jope_dime_regressor::selfplay_runtime::{
+use jope_campaigns::paths;
+use jope_campaigns::selfplay_runtime::{
     atomic_json, default_root_str, now_ms, read_json, sha256_bytes, sha256_file,
 };
 use serde::{Deserialize, Serialize};
@@ -433,8 +433,8 @@ fn build(args: &Args) -> Result<EffectiveUnitAudit> {
     })
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     let audit = build(&args)?;
     let output = args
         .output

@@ -41,7 +41,7 @@ use std::time::{Duration, SystemTime};
 
 use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::paths;
+use jope_campaigns::paths;
 use serde_json::Value;
 
 /// scq job states that mean "this job may still write here". A run directory
@@ -89,8 +89,8 @@ struct Args {
     dry_run: bool,
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     ensure!(
         args.runs_root.is_dir(),
         "runs root is not a directory: {}",

@@ -1724,11 +1724,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "jope-cli"
-version = "0.1.0"
-
-[[package]]
-name = "jope-dime-regressor"
+name = "jope-campaigns"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -1748,6 +1744,17 @@ dependencies = [
  "sha2",
  "tempfile",
  "zip 2.4.2",
+]
+
+[[package]]
+name = "jope-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "jope-campaigns",
+ "jope-parallel",
+ "jope-selfplay",
 ]
 
 [[package]]
@@ -1782,6 +1789,28 @@ dependencies = [
 [[package]]
 name = "jope-paths"
 version = "0.1.0"
+
+[[package]]
+name = "jope-selfplay"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "crossterm 0.28.1",
+ "feat-math",
+ "hex",
+ "jope-campaigns",
+ "jope-paths",
+ "libc",
+ "ratatui",
+ "rayon",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "zip 2.4.2",
+]
 
 [[package]]
 name = "js-sys"

@@ -9,13 +9,13 @@ use anyhow::{bail, ensure, Context, Result};
 use clap::{Args, Parser, Subcommand};
 use feat_math::evolve::{crossover_canonical_pipelines, mutate_canonical_pipeline_v2};
 use feat_math::genome::GenomeIr;
-use jope_dime_regressor::selfplay_data::{
+use jope_campaigns::selfplay_data::{
     micro_wave_size, select_micro_cohort, validate_dl_slot_rung, validate_wave_composition_with_dl,
     CandidateOrigin, GpProposal, MicroAdmission, MicroDataset, MicroLane, WaveSlot, WaveSlotGroup,
     CHECKPOINT_PROPOSAL_SLOTS, COMMON_WINNER_SLOTS, LOCAL_ELITE_SLOTS, MICRO_TASK_SIZE,
     OFFSPRING_SLOTS, WAVE_SIZE,
 };
-use jope_dime_regressor::selfplay_runtime::{
+use jope_campaigns::selfplay_runtime::{
     atomic_json, canonical_json_bytes, checkpoint_epoch, evaluation_protocol_sha256,
     expected_evaluation_metric, now_ms, read_json, sha256_bytes, sha256_file,
 };
@@ -573,8 +573,8 @@ struct ManifestReceipt {
     candidate_count: usize,
 }
 
-fn main() -> Result<()> {
-    let cli = Cli::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let cli = Cli::parse_from(&args);
     let result = match cli.command {
         Command::FreezeSealed(args) => freeze_sealed(args),
         Command::SanitizeProposals(args) => sanitize_proposals(args),
@@ -770,7 +770,7 @@ fn select_sealed_cohort(catalog: &Catalog, catalog_sha256: &str) -> Result<Froze
     // is deliberate: a hard requirement here would block sealed-cohort generation, and
     // with it the whole loop, on a task that is still filling up.
     for task in ["binary", "regression", "multiclass", "timeseries"] {
-        let target = jope_dime_regressor::selfplay_expansion::sealed_target(task);
+        let target = jope_campaigns::selfplay_expansion::sealed_target(task);
         if target == 0 {
             continue;
         }
@@ -869,13 +869,13 @@ fn validate_frozen_sealed(cohort: &FrozenSealedCohort, catalog_sha256: &str) -> 
     // mandatory; multiclass and timeseries are optional, so an older 512-row sealed
     // cohort (256 + 256, written before either carve-out existed) still validates.
     let mut expected_total = 0usize;
-    for task in jope_dime_regressor::selfplay_expansion::TASKS {
+    for task in jope_campaigns::selfplay_expansion::TASKS {
         let present = cohort
             .entries
             .iter()
             .filter(|entry| entry.task == task)
             .count();
-        let target = jope_dime_regressor::selfplay_expansion::sealed_target(task);
+        let target = jope_campaigns::selfplay_expansion::sealed_target(task);
         if present == 0 && !matches!(task, "regression" | "binary") {
             continue;
         }
@@ -973,7 +973,7 @@ fn freeze_sealed(args: FreezeSealedArgs) -> Result<Value> {
         // carve-outs made it in is the signal that tells an operator whether multiclass and
         // timeseries have enough family-disjoint data yet.
         "datasets": cohort.entries.len(),
-        "task_counts": jope_dime_regressor::selfplay_expansion::TASKS
+        "task_counts": jope_campaigns::selfplay_expansion::TASKS
             .iter()
             .map(|task| {
                 (
@@ -1475,7 +1475,7 @@ fn plan(args: PlanArgs) -> Result<Value> {
         .filter(|task| !task.is_empty())
         .map(str::to_owned)
         .collect::<Vec<_>>();
-    let independent_dataset_counts = jope_dime_regressor::selfplay_expansion::TASKS
+    let independent_dataset_counts = jope_campaigns::selfplay_expansion::TASKS
         .iter()
         .map(|task| {
             (
@@ -1534,7 +1534,7 @@ fn plan(args: PlanArgs) -> Result<Value> {
     // `TASKS` array so the field is deterministic rather than dependent on selection order.
     // Deriving it from `selected` (instead of recomputing eligibility) guarantees the
     // declaration and the rows can never disagree, which is what `validate_cohort` checks.
-    let cohort_tasks = jope_dime_regressor::selfplay_expansion::TASKS
+    let cohort_tasks = jope_campaigns::selfplay_expansion::TASKS
         .iter()
         .filter(|task| selected.iter().any(|row| row.dataset.task == **task))
         .map(|task| (*task).to_owned())
@@ -1684,7 +1684,7 @@ fn dataset_has_feature_columns(train_csv: &Path) -> bool {
 fn admission_summary(
     eligible: &[MicroDataset],
     observed: &HashMap<(String, String), u64>,
-    selected: &[jope_dime_regressor::selfplay_data::SelectedMicroDataset],
+    selected: &[jope_campaigns::selfplay_data::SelectedMicroDataset],
     admission: &MicroAdmission,
 ) -> Value {
     let count = |task: &str, dataset: &str| {
@@ -1790,7 +1790,7 @@ fn validate_cohort(plan: &CohortPlan) -> Result<()> {
     ensure!(
         plan.tasks
             .iter()
-            .all(|task| jope_dime_regressor::selfplay_expansion::TASKS.contains(&task.as_str())),
+            .all(|task| jope_campaigns::selfplay_expansion::TASKS.contains(&task.as_str())),
         "cohort declares an unknown task"
     );
     ensure!(
@@ -3479,7 +3479,7 @@ fn build(args: BuildArgs) -> Result<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use jope_dime_regressor::selfplay_data::{
+    use jope_campaigns::selfplay_data::{
         HARD_UNCERTAIN_SLOTS, LEAST_OBSERVED_SLOTS, MICRO_WAVE_SIZE, STABLE_ANCHOR_SLOTS,
     };
     use tempfile::tempdir;
@@ -3770,7 +3770,7 @@ mod tests {
             catalog_sha256: "a".repeat(64),
             sealed_cohort_sha256: "b".repeat(64),
             // Evaluated before `entries` moves the vec (struct fields evaluate in order).
-            tasks: jope_dime_regressor::selfplay_expansion::TASKS
+            tasks: jope_campaigns::selfplay_expansion::TASKS
                 .iter()
                 .filter(|task| cohort_entries.iter().any(|row| row.task == **task))
                 .map(|task| (*task).to_owned())

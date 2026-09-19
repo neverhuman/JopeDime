@@ -23,7 +23,7 @@
 
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
-use jope_dime_regressor::paths;
+use jope_campaigns::paths;
 use rusqlite::{params, Connection};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
@@ -2376,8 +2376,8 @@ fn tex_escape(s: &str) -> String {
         .replace('#', "\\#")
 }
 
-fn main() -> Result<()> {
-    let cli = Cli::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let cli = Cli::parse_from(&args);
     match cli.cmd {
         Cmd::Ingest { dry_run } => ingest(&cli.root, dry_run),
         Cmd::Verify => cmd_verify(&cli.root),

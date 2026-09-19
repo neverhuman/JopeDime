@@ -50,7 +50,7 @@
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use jope_dime_regressor::paths;
+use jope_campaigns::paths;
 use serde_json::{json, Map, Value};
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -298,8 +298,8 @@ fn evaluate(args: &Args) -> Result<Outcome> {
     Ok(Outcome { receipt, failing })
 }
 
-fn main() {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> anyhow::Result<()> {
+    let args = Args::parse_from(&args);
     let receipt_path = args.root.join("ops/ops-health-check.v1.json");
     let (receipt, failing) = match evaluate(&args) {
         Ok(outcome) => (outcome.receipt, outcome.failing),
@@ -342,6 +342,7 @@ fn main() {
             std::process::exit(1);
         }
     }
+    Ok(())
 }
 
 #[cfg(test)]

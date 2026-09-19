@@ -2,8 +2,8 @@
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use jope_dime_regressor::paths;
-use jope_dime_regressor::selfplay_ingest;
+use jope_campaigns::paths;
+use jope_campaigns::selfplay_ingest;
 use serde_json::{json, Value};
 use std::path::PathBuf;
 
@@ -93,8 +93,8 @@ enum Command {
     },
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     let result: Value = match args.command.unwrap_or(Command::Status) {
         Command::Status => selfplay_ingest::build_status(&args.root)?,
         Command::Ingest {

@@ -13,12 +13,12 @@ use feat_math::{
     validate_fitted_cpp_codec, ColumnSpec, DataSchema, EncodedTable, FittedCppRuntime, GenomeIr,
     Objective, RawTable, RowSemantics, TaskSpec,
 };
-use jope_dime_regressor::paths;
-use jope_dime_regressor::selfplay_core::{
+use crate::paths;
+use crate::selfplay_core::{
     compiled_cache_key, compiled_finalists, exact_parity, family_diverse_panel, CompileCandidate,
     PanelDataset,
 };
-use jope_dime_regressor::selfplay_runtime::{
+use crate::selfplay_runtime::{
     atomic_json, canonical_json_bytes, default_root_str, now_ms, read_json, sha256_bytes,
     sha256_file,
 };
@@ -164,8 +164,8 @@ fn default_panel_seed() -> u64 {
     20_260_726
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     ensure!(
         args.replay_threads > 0,
         "--replay-threads must be greater than zero"

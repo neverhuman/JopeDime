@@ -1,8 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use jope_dime_regressor::hyperion_gate::{FeatureViewKindV1, GateThresholdsV1};
-use jope_dime_regressor::jope_dlgp_best5::*;
-use jope_dime_regressor::jope_generalized_gp::raw_sha256;
+use jope_campaigns::hyperion_gate::{FeatureViewKindV1, GateThresholdsV1};
+use jope_campaigns::jope_dlgp_best5::*;
+use jope_campaigns::jope_generalized_gp::raw_sha256;
 
 fn digest(label: &str) -> String {
     raw_sha256(label.as_bytes())

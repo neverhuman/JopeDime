@@ -4,8 +4,8 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
-use jope_dime_regressor::jope_generalized_gp::*;
-use jope_dime_regressor::search_v3::canonical_sha256;
+use crate::jope_generalized_gp::*;
+use crate::search_v3::canonical_sha256;
 use serde::de::DeserializeOwned;
 use serde_json::json;
 
@@ -311,8 +311,8 @@ fn dry_run(output: &Path) -> Result<()> {
     Ok(())
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     match args.command {
         Command::ValidateFreeze {
             campaign,

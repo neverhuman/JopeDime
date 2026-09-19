@@ -7,16 +7,16 @@
 
 use anyhow::{ensure, Context, Result};
 use clap::Parser;
-use jope_dime_regressor::encoder_v2_execution::{
+use crate::encoder_v2_execution::{
     runtime_artifacts_digest, validate_output_bytes, EncoderAttemptReceiptV2,
     EncoderExecutionReceiptV2, EncoderStageTiming, ObservedEncoderRuntime, ATTEMPT_SCHEMA,
     EXECUTION_SCHEMA,
 };
-use jope_dime_regressor::encoder_v2_identity::{
+use crate::encoder_v2_identity::{
     cache_key, decode_dataset_input, decode_encoder_identity, ArtifactIdentity,
     FoundationDatasetInputV2, FoundationEncoderIdentityV2, OUTPUT_BYTES, OUTPUT_FEATURES,
 };
-use jope_dime_regressor::selfplay_data::canonical_json_sha256;
+use crate::selfplay_data::canonical_json_sha256;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
@@ -209,8 +209,8 @@ impl LandlockRuleset {
     }
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub fn main(args: Vec<String>) -> Result<()> {
+    let args = Args::parse_from(&args);
     if let Err(error) = run(&args) {
         let _ = write_failed_attempt(&args, &error);
         return Err(error);
