@@ -1,0 +1,13 @@
+JopeDime: the search/eval engine, the flywheel control plane and the benchmark campaigns under one command
+
+Usage: jope <COMMAND>
+
+Commands:
+  engine    The search/eval engine: every jope-parallel subcommand, unchanged (`jope engine --root <dir> search …`; `jope engine --help` lists them)
+  selfplay  The flywheel control plane: `jope selfplay <program> …` (`jope selfplay --help` lists the programs)
+  campaign  The benchmark campaigns: `jope campaign <program> …` (`jope campaign --help` lists the programs)
+  help      Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
