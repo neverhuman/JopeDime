@@ -49,7 +49,7 @@ bump version:
     bash deploy/ci/version-consistency.sh
     @echo "bumped to {{version}}; commit, then tag v{{version}} to run release.yml"
 
-# documentation checks: rustdoc -D warnings, every relative link in README/docs resolves, cliff.toml renders (git-cliff optional locally)
+# documentation checks: rustdoc -D warnings, relative links in README/docs (not docs/legacy) resolve, cliff.toml renders (git-cliff optional)
 docs:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -58,6 +58,8 @@ docs:
     import os, re, sys
     files = ["README.md", "CONTRIBUTING.md", "SECURITY.md", "CODE_OF_CONDUCT.md"]
     for root, _, names in os.walk("docs"):
+        if root == "docs/legacy" or root.startswith("docs/legacy/"):
+            continue  # historical documents kept verbatim; excluded from every lint
         files += [os.path.join(root, n) for n in names if n.endswith(".md")]
     link = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
     bad = 0
