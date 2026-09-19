@@ -1,0 +1,84 @@
+# deploy/ci/ignored-tests.txt — the committed allowlist read by deploy/ci/no-silent-skip.py.
+# A test may be absent from a lane's results only if it is listed here. Two kinds of line:
+#
+#   ignored <binary-id> <test-name> <reason>
+#       A #[ignore] test. Either a child fixture that a parent test re-executes with the
+#       env variables in the last column (the parent proves it ran: the parent is a normal
+#       test and must appear in the junit), or a manual/benchmark test with no CI lane.
+#   gated <binary-id> <test-name> <lane> <ENV1,ENV2,...|-> <reason>
+#       A test that returns early ("skipping …") when the named env variables are unset.
+#       It must run for real in exactly one lane: there, no-silent-skip requires the variables
+#       to be set and fails on a skip marker in that test's output; in every other lane its
+#       skip marker is allowed.
+#
+# Binary ids are cargo-nextest's (`<package>` for lib tests, `<package>::<test-file>` for
+# integration tests, `<package>::bin/<name>` for binary tests). Keep in sync with
+# `cargo nextest list -P main --workspace --message-format json` (docs/ci.md, "No silent skip").
+
+# ---- child fixtures re-executed by a parent test (the env variables are set by the parent) ----
+ignored jope-parallel::corpus_incremental cache_kill_child  parent=sigkill_at_each_cache_durable_boundary_keeps_only_complete_entries env=JOPE_CORPUS_KILL_ROOT,JOPE_CORPUS_KILL_BOUNDARY
+ignored jope-parallel::sealed_storage shared_cache_child  parent=shared_cache_* env=JOPE_CACHE_TEST_ROOT,JOPE_CACHE_EXPECT_REJECTION,JOPE_TEACHING_CACHE
+ignored jope-parallel::gpu_entry_guards entry_guard_child  neural-only; parent=entry_guards_* env=JOPE_ENTRY_TEST_ROUTE
+ignored jope-parallel controller::lifetime_tests::parent_death_child  parent=controller lifetime tests
+ignored jope-parallel eval_registry::authority::tests::synthetic_executor  parent=authority tests
+ignored jope-parallel eval_registry::service::tests::synthetic_worker  parent=service tests
+ignored jope-parallel eval_registry::service::tests::synthetic_query_worker  parent=service tests
+ignored jain-smartcluster-daemon::resident_kernel resident_daemon_entry  launched only by the isolated kernel harness
+ignored jain-smartcluster-daemon::resident_kernel resident_fixture_entry  launched only by the isolated kernel harness
+
+# ---- manual, benchmark or fixture-regeneration tests: no CI lane by design ----
+ignored feat-math heads::tests::ridge_gcv_wide_perf  perf probe, --release --ignored --nocapture
+ignored feat-math portfolio::tests::portfolio_timing_700x18  timing probe
+ignored feat-math::bench emitter_speed  benchmark
+ignored feat-math::legacy_v2_freeze regenerate_legacy_v2_freeze  prints constants for an acknowledged fixture update
+ignored jope-dime-regressor::bin/jope-dime-regressor commands::binary_cv::cli_smoke_support::export_binary_fixture_registry  fixture export
+ignored jope-dime-regressor::bin/jope-dime-regressor commands::train_only_study::tests::preparation_completes_without_test_or_baseline_files  legacy v1 strict-firewall fixture
+ignored jope-dime-regressor::bin/jope-dime-regressor golden42_v3::tests::target_campaign_v3_fit_preserves_frozen_near_winner_bits  needs original registry model artifacts; refits disallowed
+ignored jope-parallel training::tests::benchmark_parameter_hash  neural-only; explicit CPU checkpoint-hash benchmark
+ignored jope-parallel::training benchmark_cuda_adamw  neural-only; explicit GPU optimizer benchmark
+ignored jope-parallel::corpus_incremental repeated_ledger_scan_diagnostic  local scan diagnostic
+ignored jope-parallel::corpus_incremental independent_legacy_binary_has_identical_artifact_bytes  needs JOPE_CORPUS_BASELINE_BIN = an independently built pre-cache jope-parallel; no such binary is published (docs/ci.md)
+ignored jope-parallel::dashboard capture_live_dashboard_screens  needs JOPE_PARALLEL_SNAPSHOT_ROOT = a live campaign snapshot with runs/{hardware,gp-service,neural-service}.json; manual review capture (docs/ci.md)
+ignored numpy-pcg64::sampling_golden committed_sampling_files_regenerate_exactly  needs NUMPY_PCG64_SAMPLING_FILES; regeneration check run by hand
+ignored starforge model::tests::roundtrips_real_starforge_weights_if_present  slow: real ~200 MB weights with zstd -19; nightly encoder lane once WP7 publishes the bundle
+ignored jain-smartcluster-daemon gpu::tests::probes_real_mps_control_daemon_when_provisioned  needs an administrator-provisioned NVIDIA MPS control daemon
+ignored jain-smartcluster-daemon::gpu_host real_nvml_inventory_respects_vram_headroom  NVML host lane (smartcluster release acceptance, not JopeDime CI)
+ignored jain-smartcluster-daemon::gpu_host real_nvml_event_monitor_registers_or_fails_closed  NVML event registration
+ignored jain-smartcluster-daemon::linux_cgroup real_delegated_cgroup_controls_are_writable  delegated cgroup-v2 host lane
+ignored jain-smartcluster-daemon::linux_cgroup real_psi_trigger_registers_when_delegated  PSI trigger permissions
+ignored jain-smartcluster-daemon::performance ten_thousand_job_decision_meets_release_budget  release-only scheduler acceptance
+ignored jain-smartcluster-daemon::resident_kernel exclusive_gpu_lease_blocks_competitor_until_recursive_drain  delegated cgroup lane + idle GPU + baseline file
+ignored jain-smartcluster-daemon::resident_kernel resident_two_restarts_hold_nested_descendant_before_new_fence  delegated cgroup-v2 kernel lane
+ignored jain-smartcluster-daemon::resident_kernel resident_ignored_eof_is_bounded_by_checkpoint_allowance  delegated cgroup-v2 kernel lane
+ignored jain-smartcluster-daemon::resident_kernel resident_immediate_dependency_failure_report_is_not_lost  delegated cgroup-v2 kernel lane
+ignored jain-smartcluster-daemon::resident_kernel resident_fsynced_result_before_crash_is_reused_exactly  delegated cgroup-v2 kernel lane
+ignored jain-smartcluster-daemon::resident_kernel graceful_sigterm_waits_for_checkpoint_and_recursive_drain  delegated cgroup-v2 kernel lane
+ignored jain-smartcluster-daemon::resident_kernel fit_child_real_peer_placement_duplicate_and_target_cancellation  delegated cgroup + SCQ_TEST_FIT_FIXTURE
+ignored jain-smartcluster-daemon::soak repeated_event_log_recovery_keeps_monotonic_offsets  scheduled soak lane
+
+# ---- env-gated tests (return early with a "skipping" line when the variables are unset) ----
+# The starforge weights come from the pinned model bundles (`jope models fetch --pinned`, WP7);
+# the encoder-parity lane exports them from JOPE_MODELS_ROOT and is the one lane where these run.
+gated starforge::golden_parity predict_single_matches_golden_fixture_when_artifacts_are_provided encoder-parity STARFORGE_WEIGHTS,STARFORGE_GOLDEN_JSON  starforge classifier weights + golden fixture
+gated starforge::golden_parity predict_regression_single_matches_golden_fixture_when_artifacts_are_provided encoder-parity STARFORGE_REGRESSOR_WEIGHTS,STARFORGE_REGRESSOR_GOLDEN_JSON  starforge regressor weights + golden fixture
+gated starforge::golden_parity predict_chimera_regression_matches_golden_fixture_when_artifacts_are_provided encoder-parity STARFORGE_REGRESSOR_WEIGHTS,TABICL_REGRESSOR_WEIGHTS,STARFORGE_CHIMERA_WEIGHTS,STARFORGE_CHIMERA_GOLDEN_JSON  chimera regressor (starlight + tabicl + chimera head)
+gated starforge::golden_parity predict_chimera_regression_real_weights_smoke_when_requested encoder-parity STARFORGE_CHIMERA_SMOKE,STARFORGE_REGRESSOR_WEIGHTS,TABICL_REGRESSOR_WEIGHTS,STARFORGE_CHIMERA_WEIGHTS  STARFORGE_CHIMERA_SMOKE=1; STARFORGE_CHIMERA_SMOKE_DEVICE=cuda on xbabe2
+gated starforge::golden_parity predict_chimera_classifier_matches_golden_fixture_when_artifacts_are_provided encoder-parity STARFORGE_CHIMERA_CLASSIFIER_EXPERT_A_WEIGHTS,TABICL_CLASSIFIER_WEIGHTS,STARFORGE_CHIMERA_CLASSIFIER_TRUNK_WEIGHTS,STARFORGE_CHIMERA_CLASSIFIER_GOLDEN_JSON  chimera classifier
+gated starforge::golden_parity predict_chimera_classifier_real_weights_smoke_when_requested encoder-parity STARFORGE_CHIMERA_CLASSIFIER_SMOKE,STARFORGE_CHIMERA_CLASSIFIER_EXPERT_A_WEIGHTS,TABICL_CLASSIFIER_WEIGHTS,STARFORGE_CHIMERA_CLASSIFIER_TRUNK_WEIGHTS  STARFORGE_CHIMERA_CLASSIFIER_SMOKE=1; STARFORGE_CHIMERA_CLASSIFIER_SMOKE_DEVICE=cuda on xbabe2
+# JOPE_PARITY_STRICT=1 turns "portable parity SKIP: <tool> unavailable" into a failure; it is set
+# in every Rust lane, so the marker can never appear.
+gated feat-math::portable_parity portable_all_helper_backends_match_bits full-rust JOPE_PARITY_STRICT  g++/clang++/node/python3 must all be present
+# Provenance of the vendored numpy-pcg64 subset against the real jope-dime files needs a clone of
+# the family jope-dime repository (NUMPY_PCG64_JOPE_DIME_GIT) and the jain-datasets/.runtime archive
+# (NUMPY_PCG64_ARCHIVE_ROOT); both live in the archive bucket (git bundles + node-archive-mirror),
+# not on the runner. No CI lane runs it; a maintainer with the archive mirror runs it with
+# NUMPY_PCG64_REQUIRE_SOURCES=1. The "SKIP provenance" line is therefore allowed everywhere.
+gated numpy-pcg64::sampling_golden vendored_subset_matches_its_sources_when_available archive-provenance NUMPY_PCG64_JOPE_DIME_GIT,NUMPY_PCG64_ARCHIVE_ROOT,NUMPY_PCG64_REQUIRE_SOURCES  archive-only sources (docs/ci.md)
+# Hardware gates (env column "-": no variable, the test probes the CUDA device itself). On xbabe2
+# the device exists, so a marker here means the GPU or driver broke; gpu-qualification.sh
+# additionally requires the "battle-gpu test device:" probe line in the battle-gpu log.
+gated battle-gpu tests::gpu_scores_match_cpu_reference_bitwise neural-cuda -  returns early, printing "hardware-gated tests skipped", without a CUDA device
+gated battle-gpu tests::same_wave_twice_is_bit_identical neural-cuda -  same hardware gate
+gated battle-gpu tests::wide_problems_route_to_cpu_and_preserve_order neural-cuda -  same hardware gate
+gated battle-gpu tests::wave_timing_snapshot neural-cuda -  same hardware gate
+gated jope-parallel::training bf16_forward_observes_updated_master_weights neural-cuda -  neural-only; prints "CUDA unavailable: BF16 cache lifetime test skipped"
