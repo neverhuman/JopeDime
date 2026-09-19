@@ -56,8 +56,16 @@ impl Store {
         let parsed = Url::parse(&url_string).with_context(|| format!("parse {url_string}"))?;
         let (inner, prefix): (Box<dyn ObjectStore>, ObjPath) = match parsed.scheme() {
             "s3" | "s3a" => {
-                let mut builder =
-                    object_store::aws::AmazonS3Builder::from_env().with_url(url_string.clone());
+                // object_store's default request timeout is 30 s, which a 200–250 MB blob GET
+                // exceeds on a shared link (seen against the real bucket: "request or response
+                // body error" on the three largest starforge/hyperion blobs); allow up to an
+                // hour per request, keep a short connect timeout.
+                let client_options = object_store::ClientOptions::new()
+                    .with_timeout(std::time::Duration::from_secs(3600))
+                    .with_connect_timeout(std::time::Duration::from_secs(30));
+                let mut builder = object_store::aws::AmazonS3Builder::from_env()
+                    .with_url(url_string.clone())
+                    .with_client_options(client_options);
                 if std::env::var_os("AWS_REGION").is_none()
                     && std::env::var_os("AWS_DEFAULT_REGION").is_none()
                 {
