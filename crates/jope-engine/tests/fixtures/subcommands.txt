@@ -1,0 +1,89 @@
+# jope-parallel subcommands in declaration order (tests/cli_contract.rs). Suffixes: [hidden] = not in --help; [neural] = only with --features neural.
+doctor
+gpu-worker [neural]
+propose-ranked [neural]
+assemble-ranked [neural]
+compare-seeds
+apply-binary-contexts [neural]
+propose [neural]
+propose-rank [hidden] [neural]
+train [neural]
+train-rank [hidden] [neural]
+qualify-batch-rank [hidden] [neural]
+monitor-checkpoint [neural]
+build-corpus
+export-teaching-corpus
+comparison-baseline
+enqueue
+campaign-coverage [hidden]
+assemble-contexts [neural]
+apply-contexts [neural]
+union-contexts [neural]
+foundation-service [neural]
+foundation-rank [hidden] [neural]
+target-service [neural]
+target-rank [hidden] [neural]
+expand-cuts
+index-cuts
+evaluate-view [hidden]
+verify-fit-completion [hidden]
+registry-fit [hidden]
+registry-initialize-native
+registry-witness-initialize
+registry-inspect-runtime
+registry-authority
+funding-request
+query-evaluate
+query-retrieve
+registry-witness-inspect
+registry-witness-request
+registry-witness-add-native-grant
+registry-witness-epoch-transition
+registry-witness-get-ack
+history-stage
+history-import-batch
+history-prepare-lookup-index
+history-commit-coverage
+native-scope-inspect
+native-scope-register
+history-commit-aggregate-coverage
+recovery-inspect
+recovery-replay
+recovery-reconcile
+recovery-commit-epoch
+namespace-activate
+namespace-deactivate
+registry-service-fit [hidden]
+registry-service-query [hidden]
+evaluate-memory [hidden]
+hyperion-service
+hyperion-rank [hidden]
+fit
+fit-view
+predict
+score
+bootstrap
+search
+gp-service
+evaluate-worker [hidden]
+snapshot
+freeze-families
+audit
+prepare
+stage
+transfer
+verify
+policy-parity [neural]
+loss-optimizer-parity [neural]
+encode [neural]
+distributed-probe [neural]
+training-probe [neural]
+training-probe-rank [hidden] [neural]
+nccl-probe [neural]
+status
+tui
+learning-history
+monitor
+pilot-gate
+campaign [neural]
+cycle [neural]

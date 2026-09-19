@@ -2,6 +2,8 @@
 pub use jope_paths as paths;
 
 pub mod audit;
+/// The engine command line (`jope-parallel`), as a library.
+pub mod cli;
 pub mod build_receipt;
 pub mod champions;
 pub mod checkpoint_recovery;
