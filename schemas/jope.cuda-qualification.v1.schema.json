@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/veox-ai/JopeDime/schemas/jope.cuda-qualification.v1.schema.json",
+  "title": "jope.cuda-qualification/v1",
+  "description": "Receipt written by deploy/ci/gpu-qualification.sh for the self-hosted neural-cuda lane: GPU identity before and after, the neural SDK the build linked against, every command with its exit code and log digest, and the skip-marker count (which must be zero for a pass).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "produced_at", "mode", "git", "host", "gpu", "sdk", "steps", "skip_markers", "result"],
+  "properties": {
+    "schema": { "const": "jope.cuda-qualification/v1" },
+    "produced_at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$" },
+    "mode": { "enum": ["run", "dry-run"] },
+    "git": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha", "dirty"],
+      "properties": {
+        "sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "ref": { "type": "string" },
+        "dirty": { "type": "boolean" }
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hostname", "kernel", "rustc", "cargo", "cxx", "nvcc", "in_container"],
+      "properties": {
+        "hostname": { "type": "string" },
+        "kernel": { "type": "string" },
+        "rustc": { "type": "string" },
+        "cargo": { "type": "string" },
+        "cxx": { "type": "string" },
+        "nvcc": { "type": "string" },
+        "in_container": { "type": "boolean" }
+      }
+    },
+    "gpu": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["before", "after", "stable"],
+      "properties": {
+        "before": { "$comment": "read-only nvidia-smi query", "type": "object" },
+        "after": { "type": "object" },
+        "stable": { "type": "boolean", "description": "same uuid, driver and compute capability before and after" }
+      }
+    },
+    "sdk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "available", "receipt", "receipt_sha256", "libtorch_version_expected", "libtorch_version_actual", "libtorch_zip_sha256_expected", "libtorch_cuda_so_sha256", "cuda_home", "nccl_version_expected", "reason"],
+      "properties": {
+        "root": { "type": "string" },
+        "available": { "type": "boolean" },
+        "receipt": { "type": "string" },
+        "receipt_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "libtorch_version_expected": { "type": "string" },
+        "libtorch_version_actual": { "type": "string" },
+        "libtorch_zip_sha256_expected": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "libtorch_cuda_so_sha256": { "type": "string", "pattern": "^([0-9a-f]{64}|)$" },
+        "cuda_home": { "type": "string" },
+        "nccl_version_expected": { "type": "string" },
+        "reason": { "type": "string" }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "command", "status", "exit_code", "seconds", "log", "log_sha256", "skip_markers"],
+        "properties": {
+          "name": { "type": "string" },
+          "command": { "type": "string" },
+          "status": { "enum": ["passed", "failed", "blocked", "not-run"] },
+          "exit_code": { "type": "integer", "minimum": -1, "maximum": 255 },
+          "seconds": { "type": "integer", "minimum": 0 },
+          "log": { "type": "string" },
+          "log_sha256": { "type": "string", "pattern": "^([0-9a-f]{64}|)$" },
+          "skip_markers": { "type": "integer", "minimum": 0 },
+          "warnings": { "type": "integer", "minimum": 0 },
+          "reason": { "type": "string" },
+          "junit": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["tests", "failures", "errors", "path"],
+            "properties": {
+              "tests": { "type": "integer", "minimum": 0 },
+              "failures": { "type": "integer", "minimum": 0 },
+              "errors": { "type": "integer", "minimum": 0 },
+              "path": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "skip_markers": { "type": "integer", "minimum": 0 },
+    "blocked_by": { "type": "array", "items": { "type": "string" } },
+    "result": { "enum": ["passed", "failed", "blocked", "dry-run"] }
+  }
+}
