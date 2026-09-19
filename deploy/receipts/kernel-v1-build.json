@@ -1,0 +1,54 @@
+{
+  "binary_path": "/tmp/claude-1000/-home-ubuntu-jain-split-jope-dime/c2314a57-ea97-4ae1-b341-06cca252f85d/scratchpad/port/kernel-v1-out/run-20260919T002644Z/work/target/release/jope-parallel",
+  "binary_sha256": "0979ce97c183262711f9d8439deac1736238dde1b61b444e7243b3afe961e72f",
+  "bounds": {
+    "error": null,
+    "forbid_gpu_libraries": true,
+    "max_glibc": "2.36",
+    "passed": true
+  },
+  "builder_image": "jope-kernel-builder:rust1.95-glibc2.35@sha256:72769e402b47c6c5b57cb432b96d94387024940a710cc086811dea0f09c48fed",
+  "built_at": "2026-09-19T00:28:19Z",
+  "bytes": 7911840,
+  "cargo_lock_sha256": "3ba03354b56a866493a5021453ea0e375b3beb49ce1046a5b607df26f9473355",
+  "cargo_toml_sha256": "788c59bc6788dcad69c08dbac6aa559b1487f56eda9744d46b88db8897492eaf",
+  "command": "source=committed deploy/kernel-v1/source; docker run --network none jope-kernel-builder:rust1.95-glibc2.35 (ldd (Ubuntu GLIBC 2.35-0ubuntu3.14) 2.35): cargo build --release --offline --locked --bin jope-parallel -j 48",
+  "features": [],
+  "git": {
+    "clean": true,
+    "commit": "560885adf877665a85bd0a5159731fdd68cbcfab",
+    "path": "deploy/kernel-v1/source",
+    "tree": "940d66be9523ddafd282dffc46eac8ab8fc59b2b"
+  },
+  "glibc_max_needed": "GLIBC_2.34",
+  "gpu_needed": [],
+  "host": "xbabe2",
+  "lineage": "kernel-v1-8aa0affbf24ca68b4d6ca039ca8fbd9bffa22e3c44c1c327bf81b733a596809a",
+  "links_cuda_or_torch": false,
+  "needed": [
+    "libgcc_s.so.1",
+    "libm.so.6",
+    "libc.so.6",
+    "ld-linux-x86-64.so.2"
+  ],
+  "profile": "release",
+  "rustc": [
+    "rustc 1.95.0 (59807616e 2026-04-14)",
+    "binary: rustc",
+    "commit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860",
+    "commit-date: 2026-04-14",
+    "host: x86_64-unknown-linux-gnu",
+    "release: 1.95.0",
+    "LLVM version: 22.1.2"
+  ],
+  "schema": "jope.product_evaluator_build.v1",
+  "source_dir": "/tmp/claude-1000/-home-ubuntu-jain-split-jope-dime/c2314a57-ea97-4ae1-b341-06cca252f85d/scratchpad/port/wp8b/deploy/kernel-v1/source",
+  "toolchain": {
+    "file": "rust-toolchain.toml",
+    "file_channel": "1.97.1",
+    "matches_file": false,
+    "rustc_release": "1.95.0",
+    "rustup_toolchain_override": "1.95.0"
+  },
+  "receipt_note": "produced locally on xbabe2 by deploy/ci/kernel-v1-product-build.sh with the checked-in builder image (WP8, B17 re-receipt); the workflow lane regenerates it on every main push"
+}

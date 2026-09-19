@@ -32,9 +32,29 @@ python-check:
 lint-paths:
     ! git grep -nE '/home/[a-z]+/' -- crates/*/src crates/*/tests python/src deploy/systemd .github
 
+# self-hosted lanes (xbabe2 only; the scripts refuse or block with a precise reason elsewhere)
+gpu-qualification *ARGS:
+    bash deploy/ci/gpu-qualification.sh {{ARGS}}
+
+e2e-smoke:
+    bash deploy/ci/e2e-smoke.sh
+
+kernel-v1-build *ARGS:
+    bash deploy/ci/kernel-v1-product-build.sh {{ARGS}} target/kernel-v1
+
+# the no-silent-skip assertion over the last `just test-main` run
+no-silent-skip:
+    cargo nextest list -P main --workspace --locked --message-format json > target/nextest-list-main.json
+    python3 deploy/ci/no-silent-skip.py --lane full-rust --list target/nextest-list-main.json --junit target/nextest/main/junit-main.xml
+
+# local images (never pushed)
+runner-image:
+    DOCKER_BUILDKIT=1 docker build -f deploy/docker/runner.Dockerfile -t jope-runner:$(git rev-parse --short=12 HEAD) -t jope-runner:current .
+    DOCKER_BUILDKIT=1 docker build -f deploy/docker/kernel-builder.Dockerfile -t jope-kernel-builder:rust1.95-glibc2.35 .
+
 ci-pr: hygiene fmt clippy test-pr python-check
 
-ci-main: ci-pr test-main
+ci-main: ci-pr test-main no-silent-skip gpu-qualification e2e-smoke
 
 # kept for muscle memory: the historical gate name
 required: ci-pr

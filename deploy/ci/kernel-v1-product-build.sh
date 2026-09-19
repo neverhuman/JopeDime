@@ -80,6 +80,7 @@ if [[ -z $frozen_key ]]; then
     exit 1
   fi
   source_sha256=$(git -C "$repo" rev-parse "HEAD:deploy/kernel-v1/source")
+  source_id_kind="git-tree"
   source_ref="git tree $source_sha256 at $(git -C "$repo" rev-parse HEAD)"
 else
   command -v aws >/dev/null || { echo "--frozen-source needs the aws CLI (OIDC role JopeDimeCiRead)" >&2; exit 2; }
@@ -98,6 +99,7 @@ else
   source_dir=$run/frozen/source
   source_kind="frozen s3://$archive_bucket/$frozen_key"
   source_sha256=$expected
+  source_id_kind="sha256"
   source_ref="archive object sha256 $expected"
   [[ -f $source_dir/Cargo.lock ]] || { echo "frozen source has no Cargo.lock" >&2; exit 1; }
 fi
@@ -115,6 +117,7 @@ CARGO_HOME=$cargo_home cargo fetch --locked --manifest-path "$source_dir/Cargo.t
 
 # ---- 2. build (no network, read-only source, glibc-2.35 userland) ---------------------------
 build_cmd="cargo build --release --offline --locked --bin jope-parallel -j $jobs"
+build_start=$(date +%s)
 image_id=$(docker image inspect --format '{{.Id}}' "$image") \
   || { echo "builder image $image is not present: docker build -f deploy/docker/kernel-builder.Dockerfile -t $image ." >&2; exit 1; }
 docker run --rm --network none \
@@ -156,8 +159,10 @@ cargo run --quiet --locked --offline --manifest-path "$repo/crates/jope-engine/C
   --forbid-gpu-libraries >/dev/null
 
 # Side receipt: which source was built (the jope-build-receipt schema has no source-kind field).
-printf '{"schema":"jope.kernel-v1-source/v1","source":"%s","source_sha256":"%s","lineage":"%s","builder_image":"%s@%s","receipt":"%s"}\n' \
-  "$source_kind" "$source_sha256" "$lineage" "$image" "$image_id" "$run/receipt.json" > "$run/source.json"
+printf '{"schema":"jope.kernel-v1-source/v1","source":"%s","source_id":"%s","source_id_kind":"%s","lineage":"%s","builder_image":"%s@%s","rustc":"%s","builder_libc":"%s","build_seconds":%s,"receipt":"%s"}\n' \
+  "$source_kind" "$source_sha256" "$source_id_kind" "$lineage" "$image" "$image_id" \
+  "$(sed -n 's/^release: //p' "$run/work/rustc-vV.txt")" "$(cat "$run/work/builder-libc.txt")" "$(( $(date +%s) - build_start ))" \
+  "$run/receipt.json" > "$run/source.json"
 
 echo "binary:  $binary"
 echo "sha256:  $(sha256sum "$binary" | cut -d' ' -f1)"
