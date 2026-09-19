@@ -1,0 +1,24 @@
+# /etc/systemd/system/jope-runner@.service — one ephemeral runner job for lane %i (gpu|kernel).
+# Started by jope-runner@%i.timer; never enabled directly. Root, because it reads the PAT file
+# and talks to the docker daemon; the job itself runs as uid 1001 inside the container.
+[Unit]
+Description=JopeDime self-hosted runner job (%i lane, JIT/ephemeral)
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+ConditionPathExists=/etc/jope-runner/github-pat
+
+[Service]
+Type=exec
+ExecStart=/opt/jope-runner/run.sh %i
+# A listener that receives no job idles; stop it after 30 minutes so a fresh JIT config is
+# requested by the next timer tick (JIT configs are single-use).
+RuntimeMaxSec=1800
+TimeoutStopSec=90
+KillMode=mixed
+Restart=no
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/jope-runner
+PrivateTmp=yes

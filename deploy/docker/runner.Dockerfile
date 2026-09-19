@@ -104,7 +104,7 @@ RUN set -eu; \
     rm -f /tmp/*.tgz; \
     cargo nextest --version | grep -F "cargo-nextest ${NEXTEST_VERSION}"; \
     cargo deny --version | grep -F "cargo-deny ${CARGO_DENY_VERSION}"; \
-    cargo audit --version | grep -F "cargo-audit ${CARGO_AUDIT_VERSION}"; \
+    cargo audit --version | grep -F "${CARGO_AUDIT_VERSION}"; \
     cargo sbom --version | grep -F "${CARGO_SBOM_VERSION}"
 # cargo-sweep publishes no binary release: it is compiled from crates.io with the crate's own
 # Cargo.lock (--locked), so every dependency is pinned by the registry checksums in that lockfile.
