@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://veox.ai/schemas/jope.score.v1.schema.json",
+  "title": "jope.score/v1",
+  "description": "One evaluation result, appended once to scores/ledger/<yyyy>/<mm>/<ulid>.jsonl and never edited. row_sha256 = sha256 of the canonical JSON of the row with row_sha256 set to the empty string. benchmark_valid is true only for rows measured under a published benchmark protocol (SOTArena).",
+  "$defs": {
+    "Cost": {
+      "additionalProperties": false,
+      "properties": {
+        "runtime_seconds": {
+          "default": null,
+          "description": "Fit/evaluate wall seconds of the winning program.",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "search_seconds": {
+          "default": null,
+          "description": "Search wall seconds spent to find it, when recorded.",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "Direction": {
+      "enum": [
+        "higher",
+        "lower"
+      ],
+      "type": "string"
+    },
+    "Metric": {
+      "enum": [
+        "r2",
+        "oof_r2",
+        "auc",
+        "macro_f1",
+        "negative_mase",
+        "rmse",
+        "logloss",
+        "mase"
+      ],
+      "type": "string"
+    },
+    "ScoreSource": {
+      "additionalProperties": false,
+      "description": "Where a score row came from (kept open: benchmark trackers add their own keys).",
+      "properties": {
+        "kind": {
+          "description": "`sotarena`, `campaign`, `arena`, ...",
+          "type": "string"
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_kind": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_revision": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_uri": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "description": "Row status as published (`ok`, ...).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "track": {
+          "description": "Benchmark track (e.g. `tabular-regression-v2`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "version": {
+          "description": "Published version of the track results.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "benchmark_valid": {
+      "type": "boolean"
+    },
+    "cost": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Cost"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "cut_id": {
+      "description": "sha256 of the canonical JSON naming the evaluation cut/protocol.",
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "dataset_hash": {
+      "type": "string"
+    },
+    "direction": {
+      "$ref": "#/$defs/Direction"
+    },
+    "evaluator_sha256": {
+      "pattern": "^(unbound|[0-9a-f]{64})$",
+      "type": "string"
+    },
+    "git_sha": {
+      "type": "string"
+    },
+    "method_id": {
+      "type": "string"
+    },
+    "metric": {
+      "$ref": "#/$defs/Metric"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "receipt_sha256": {
+      "description": "sha256 of the receipt/report the value was read from.",
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "row_sha256": {
+      "description": "sha256 of the canonical JSON of this record without `row_sha256`.",
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "schema": {
+      "description": "Always `jope.score/v1`.",
+      "type": "string"
+    },
+    "source": {
+      "$ref": "#/$defs/ScoreSource"
+    },
+    "ts_unix": {
+      "format": "uint64",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "value": {
+      "format": "double",
+      "type": "number"
+    }
+  },
+  "required": [
+    "schema",
+    "dataset_hash",
+    "cut_id",
+    "method_id",
+    "evaluator_sha256",
+    "protocol",
+    "metric",
+    "value",
+    "direction",
+    "benchmark_valid",
+    "receipt_sha256",
+    "run_id",
+    "git_sha",
+    "ts_unix",
+    "source",
+    "row_sha256"
+  ],
+  "type": "object"
+}

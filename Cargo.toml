@@ -8,6 +8,7 @@ members = [
   "crates/jope-cli",
   "crates/jope-datasets",
   "crates/jope-encoders",
+  "crates/jope-learning",
   "crates/numpy-pcg64",
   "crates/smartcluster/jain-smartcluster-core",
   "crates/smartcluster/jain-smartcluster",
