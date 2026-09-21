@@ -13,7 +13,7 @@ Legend — `status`: `moved` (present here, target + test recorded), `new` (no p
 | engine-subcommand | 88 | 88 | 0 | 0 | 0 | 0 |
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 6 | 0 | 0 | 0 | 0 |
-| new-bin | 7 | 0 | 7 | 0 | 0 | 0 |
+| new-bin | 8 | 0 | 8 | 0 | 0 | 0 |
 | ops-sh | 1 | 1 | 0 | 0 | 0 | 0 |
 | root-binary | 56 | 56 | 0 | 0 | 0 | 0 |
 | script-py | 116 | 116 | 0 | 0 | 0 | 0 |
@@ -29,9 +29,9 @@ Legend — `status`: `moved` (present here, target + test recorded), `new` (no p
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **764** | **735** | **1** | **1** | **20** | **7** |
+| **total** | **770** | **735** | **7** | **1** | **20** | **7** |
 
-`moved`/`new` rows without a covering test: 651.
+`moved`/`new` rows without a covering test: 654.
 
 ## Rows
 
@@ -804,6 +804,7 @@ Legend — `status`: `moved` (present here, target + test recorded), `new` (no p
 | new-bin | (new) | crates/jope-models/src/main.rs (jope-models) | jope-models::* | new | model bundles: fetch / verify / publish / path over object_store (WP7; re-land of #15) |
 | new-bin | (new) | crates/jope-paths/src/bin/jope-units-render.rs (jope-units-render) | none | new | ADR-0003: renders the systemd unit templates under deploy/systemd; from `wp4/paths` |
 | new-bin | (new) | crates/jope-arena/src/main.rs (jope-arena) | jope-arena::* (34 tests) | new | SOTArena fetch, Elo ladders, family reports, score emission (WP12; ported from the SOTArena reporter tree recorded in assets/regression/SOURCES.md, now a crate) |
+| new-bin | (new) | crates/jope-learning/src/main.rs (jope-learning) | jope-learning::* (21 tests) | new | learning store: hash-chained HWM and score ledgers, conditional pointers, ingest sources (WP11 L1/L2) |
 | vendored-bin | jain-smartcluster@715128f: scq | crates/smartcluster/scq/src/main.rs (scq) | none | moved | vendored smartcluster crate (the SCQ evaluator the flywheel calls) |
 | vendored-bin | jain-core/crates/starforge (import, WP3): model_bundle_pack | crates/jope-encoders/src/bin/model_bundle_pack.rs (model_bundle_pack) | none | moved | vendored encoder; tests gated on the starforge weights |
 | vendored-bin | jain-core/crates/starforge (import, WP3): starforge | crates/jope-encoders/src/main.rs (starforge) | none | moved | vendored encoder; tests gated on the starforge weights |
