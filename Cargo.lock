@@ -2218,6 +2218,7 @@ dependencies = [
  "csv",
  "flate2",
  "object_store",
+ "ruzstd",
  "serde",
  "serde_json",
  "sha2",

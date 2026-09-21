@@ -27,6 +27,8 @@ clap.workspace = true
 csv = "1.4"
 flate2 = "1"
 object_store = { version = "0.14", default-features = false, features = ["fs"] }
+# Pure-Rust zstd decoder (already in the workspace via starforge) for `.zst` inputs.
+ruzstd = "0.8"
 serde.workspace = true
 serde_json = { workspace = true, features = ["float_roundtrip"] }
 sha2.workspace = true

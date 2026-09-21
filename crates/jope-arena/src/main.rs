@@ -80,6 +80,9 @@ enum Command {
         /// Print the full JSON report.
         #[arg(long)]
         json: bool,
+        /// Also fail on files present in the directory but absent from the manifest.
+        #[arg(long)]
+        strict: bool,
     },
     /// Copy a results directory into an object store as `scores/sotarena/<track>/<version>/`.
     Publish {
@@ -240,7 +243,7 @@ fn main() -> Result<()> {
             eprintln!("emitted {} score rows", rows.len());
             Ok(())
         }
-        Command::VerifyResults { dir, json } => {
+        Command::VerifyResults { dir, json, strict } => {
             let report = verify::verify_results(&dir)?;
             if json {
                 let mut text = serde_json::to_string_pretty(&report)?;
@@ -266,6 +269,9 @@ fn main() -> Result<()> {
             );
             if !report.passed() {
                 bail!("results directory does not match its evidence manifest");
+            }
+            if strict && !report.passed_strict() {
+                bail!("results directory holds files the evidence manifest does not list");
             }
             Ok(())
         }

@@ -1,0 +1,14 @@
+{
+  "attempted": 768,
+  "checkpoint_sha256": "caa22d011f9744824a0d3ef8c3cbd0037ae7c5a7a65a6fc2ee310c223aa729f2",
+  "conditioning_context_sha256": "e49c392e7852f24e395f731a9e8f16c5c3ac2a20193f09162893edf838e6bafd",
+  "context_mode": "matching_training_cut",
+  "duplicates": 695,
+  "filled_population": 80,
+  "final_tests_opened": false,
+  "schema": "parallel.proposal_generation.v1",
+  "seed": 12479097054601161336,
+  "seeds_sha256": "1720ae74a287fb02a1fbb8e5902cec67aea75683c806b0cae76db3ca3a9f8a0d",
+  "unique_neural": 64,
+  "valid": 768
+}

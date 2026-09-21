@@ -1,0 +1,330 @@
+{
+  "schema": "parallel.seed_population.v1",
+  "prepared_sha256": "1821c91fe9780c7a7626b566651b769c477412af6734febd253fa07abdd56408",
+  "cut": 0,
+  "training_sha256": "89c1805616707693d5c210daa35a45bfd2d2b61bd995158c6ab4051854ddafe8",
+  "context_sha256": "53b0ec78cac5d85280fb374e684804f2b3b4aea6033153cbc10ec886738f18a0",
+  "checkpoint_sha256": "caa22d011f9744824a0d3ef8c3cbd0037ae7c5a7a65a6fc2ee310c223aa729f2",
+  "candidates": [
+    {
+      "genome": "(pipe X (target_bin_encode bins=8) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (hinge append=true knots=4) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (bin_onehot bins=12) (robust_scale append=true) (cheb append=true degree=2) (target_bin_encode append=true bins=16) (robust_scale append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (rff_cos append=false gamma=1.0 n=32 seed=23) (blom) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (blom append=true) (standardize) (robust_scale append=false) (pair_prod append=false topk=8) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (cheb append=true degree=2) (rank) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (blom append=true) (standardize) (robust_scale) (standardize append=true) (bin_onehot append=true bins=16) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (rff_cos append=true gamma=2.0 n=32 seed=23) (oblique_hinge append=true n=16) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (sigmoid append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (blom append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (svd_project k=32) (derive expr=\"tanh(tanh(tanh(5)))\") (ksmooth gamma=2.0 k=16))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (sigmoid) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (pair_prod append=true topk=4) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (blom append=true) (standardize) (robust_scale) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (hinge knots=8) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (ksmooth gamma=2.0 k=64))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (standardize append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (bin_onehot append=true bins=12) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (robust_scale append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (poly_interact append=true) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (hinge append=true knots=4) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (ksmooth gamma=2.0 k=16))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (rff_cos append=true gamma=2.0 n=64 seed=23) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (poly_interact append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (row_stats append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (rank append=true) (row_stats append=true) (row_stats) (sigmoid append=true) (ksmooth gamma=2.0 k=16))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (rff_sin gamma=2.0 n=64 seed=29) (robust_scale) (pair_prod append=false topk=8) (blom append=true) (histgbm2 bags=3 leaves=63 lr=0.03 rounds=500))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (robust_scale append=false) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (robust_scale) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (pair_prod append=true topk=4) (gbm rounds=150))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (ensemble_ridge_gbm))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (pair_prod append=true topk=4) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (blom append=true) (standardize) (robust_scale) (hinge append=true knots=2) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (hinge append=false knots=8) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (target_bin_encode append=true bins=16) (robust_scale) (winsor_clip q=0.1) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (hinge append=true knots=2) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (norm_features append=false) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (sigmoid) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (rand_proj append=true k=64 seed=31) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (pair_prod append=true topk=12) (rank) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom append=true) (sigmoid) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (pair_prod append=true topk=4) (target_bin_encode append=false bins=8) (ksmooth gamma=2.0 k=64))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (quantile_bins append=true bins=16) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (sigmoid append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (rff_sin gamma=1.0 n=64 seed=29) (rand_proj append=true k=32 seed=31) (rank append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (pair_prod append=true topk=4) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (quantile_bins bins=4) (svd_project k=32) (sigmoid append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom append=false) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (hinge append=true knots=2) (robust_scale append=true) (winsor_clip append=true q=0.02) (target_bin_encode append=true bins=16) (robust_scale) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (robust_scale append=true) (blom append=true) (quantile_bins append=true bins=8) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (sigmoid append=true) (standardize) (ksmooth gamma=2.0 k=64))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (blom append=true) (standardize) (polar append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (rff_cos append=true gamma=2.0 n=32 seed=23) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (pair_prod append=true topk=4) (row_stats) (robust_scale) (ksmooth gamma=2.0 k=64))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (rff_cos append=true gamma=0.5 n=32 seed=23) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (standardize) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (ksmooth gamma=1.0 k=64))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (rff_cos gamma=0.5 n=32 seed=23) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (sigmoid append=true) (ksmooth gamma=2.0 k=64))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (histgbm2 bags=3 leaves=63 lr=0.03 rounds=500))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (blom append=true) (standardize) (target_bin_encode append=true bins=16) (bin_onehot append=true bins=16) (robust_scale) (histgbm2 bags=5 leaves=63 lr=0.08 rounds=500))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (row_diff_stats append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (ridge))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (ridge))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (gpr kernel=linear m=400 steps=40))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (ridge_gcv))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (rank append=true) (rank) (ridge))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (hinge append=true knots=2) (ridge_gcv))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (ksmooth gamma=2.0 k=32))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (rank append=true) (ridge))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (ksmooth gamma=2.0 k=64))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (quantile_bins bins=4) (bin_onehot append=true bins=8) (ksmooth gamma=2.0 k=16))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (quantile_bins append=true bins=16) (ksmooth gamma=0.5 k=64))",
+      "origin": "random_exploration"
+    },
+    {
+      "genome": "(pipe X (standardize) (ksmooth gamma=2.0 k=64))",
+      "origin": "random_exploration"
+    },
+    {
+      "genome": "(pipe X (standardize append=true) (rff_sin gamma=0.5 n=64 seed=29) (rank append=true) (bin_onehot append=true bins=4) (rff_cos gamma=2.0 n=64 seed=23) (rank append=true) (histgbm2 bags=5 leaves=63 lr=0.03 rounds=500))",
+      "origin": "random_exploration"
+    },
+    {
+      "genome": "(pipe X (oblique_hinge append=true n=32 seed=19) (winsor_clip q=0.1) (histgbm2 bags=5 leaves=15 lr=0.08 rounds=500))",
+      "origin": "random_exploration"
+    },
+    {
+      "genome": "(pipe X (sigmoid append=true) (pair_prod append=true topk=12) (rank) (cheb degree=6) (rff_sin append=true gamma=0.5 n=64 seed=29) (rand_proj k=32 seed=31) (elasticnet alpha=0.01 l1_ratio=0.2))",
+      "origin": "random_exploration"
+    },
+    {
+      "genome": "(pipe X (quantile_bins append=true bins=8) (winsor_clip append=true q=0.1) (blom) (sigmoid) (ridge))",
+      "origin": "random_exploration"
+    }
+  ]
+}

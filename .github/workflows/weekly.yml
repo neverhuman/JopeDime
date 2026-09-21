@@ -1,0 +1,87 @@
+name: weekly
+
+# Plan WP12 / "CI additions": the weekly regression suite on the self-hosted xbabe2 runner —
+# one Golden42 panel cell, encoder parity, policy parity, the emitter bench — and the restore
+# drill from a fresh directory. Both scripts fail with the exact missing prerequisite; nothing is
+# skipped silently. Receipts are uploaded as artifacts.
+
+on:
+  schedule:
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: weekly
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: never
+  AWS_REGION: us-east-2
+
+jobs:
+  regression-suite:
+    runs-on: [self-hosted, linux, x64, xbabe2-gpu]
+    timeout-minutes: 720
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v5
+        with:
+          persist-credentials: false
+      - name: Toolchain (from rust-toolchain.toml)
+        run: rustup show active-toolchain
+      - name: AWS credentials (JopeDimeCiRead via OIDC)
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          role-to-assume: ${{ vars.JOPE_DIME_CI_READ_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Pinned models and Golden42 datasets
+        run: |
+          set -euo pipefail
+          cargo build -q --locked -p jope-cli --bin jope
+          target/debug/jope models fetch --pinned
+          target/debug/jope datasets fetch golden42
+      - name: Regression suite
+        env:
+          RECEIPTS_DIR: ${{ github.workspace }}/target/regression
+          JOPE_REGISTRY: ${{ github.workspace }}/datasets/by-id
+        run: bash deploy/ci/regression-suite.sh all
+      - name: Upload receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: regression-suite-${{ github.run_id }}
+          path: target/regression
+          if-no-files-found: error
+          retention-days: 90
+
+  restore-drill:
+    runs-on: [self-hosted, linux, x64, xbabe2-gpu]
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v5
+        with:
+          persist-credentials: false
+      - name: Toolchain (from rust-toolchain.toml)
+        run: rustup show active-toolchain
+      - name: AWS credentials (JopeDimeCiRead via OIDC)
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          role-to-assume: ${{ vars.JOPE_DIME_CI_READ_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Restore drill (fresh directory)
+        env:
+          RECEIPTS_DIR: ${{ github.workspace }}/target/restore-drill
+        run: bash deploy/ci/restore-drill.sh
+      - name: Upload receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: restore-drill-${{ github.run_id }}
+          path: target/restore-drill
+          if-no-files-found: error
+          retention-days: 90

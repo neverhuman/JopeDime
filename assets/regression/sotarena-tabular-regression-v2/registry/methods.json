@@ -1,0 +1,2757 @@
+{
+  "methods": [
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "ada_boost",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Ada Boost",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "ada_boost_200",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Ada Boost 200",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "ada_boost_deep",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Ada Boost Deep",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "ard_regression",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Ard Regression",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "autogluon_300s",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Autogluon 300S",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "autogluon_tabular_seconds30",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Autogluon Tabular Seconds30",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "autogluon_tabular_seconds300",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Autogluon Tabular Seconds300",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "autogluon_tabular_seconds60",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Autogluon Tabular Seconds60",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "bagging",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Bagging",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "bayesian_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Bayesian Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "catboost",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Catboost",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "catboost_300",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Catboost 300",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "catboost_deep",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Catboost Deep",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "catboost_huber_delta1_trees300_depth6",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Catboost Huber Delta1 Trees300 Depth6",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "catboost_lossguide",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Catboost Lossguide",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "catboost_lossguide_trees300_leaves32_lr0p04",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Catboost Lossguide Trees300 Leaves32 Lr0P04",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "catboost_lq_q1p5_trees300_depth6",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Catboost Lq Q1P5 Trees300 Depth6",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "catboost_mae_trees300_depth6",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Catboost Mae Trees300 Depth6",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "catboost_ordered_trees300_depth6_lr0p04",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Catboost Ordered Trees300 Depth6 Lr0P04",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "catboost_ordered_trees500_depth6",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Catboost Ordered Trees500 Depth6",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "catboost_plain_trees200_depth4_lr0p06",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Catboost Plain Trees200 Depth4 Lr0P06",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "catboost_quantile_alpha0p5_trees300_depth6",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Catboost Quantile Alpha0P5 Trees300 Depth6",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "chimera_regression",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Chimera Regression",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "decision_tree",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Decision Tree",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "ebm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Ebm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "ebm_interactions",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Ebm Interactions",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "elastic_net",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Elastic Net",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "elastic_net_cv",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Elastic Net Cv",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "evalml_automl_seconds60",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Evalml Automl Seconds60",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "extra_trees",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Extra Trees",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "extra_trees_1024",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Extra Trees 1024",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "extra_trees_512",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Extra Trees 512",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "fable5_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Fable 5 attempt",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "flaml_automl_300s",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Flaml Automl 300S",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "gaussian_process",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Gaussian Process",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "gpboost_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Gpboost Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "gpt5p6sol_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "OpenAI* attempt",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "gradient_boosting",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Gradient Boosting",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "gradient_boosting_stochastic",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Gradient Boosting Stochastic",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "grok4p5_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Grok 4.5 attempt",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "hist_gradient_boosting",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Hist Gradient Boosting",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "histgbm_large",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Histgbm Large",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "histgbm_regularized",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Histgbm Regularized",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "huber",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Huber",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "huber_robust",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Huber Robust",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "hunt9_a",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Hunt9 A",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "hunt9_b",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Hunt9 B",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "hunt9b_a",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Hunt9B A",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "hunt9b_r1",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Hunt9B R1",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "hunt9b_r2",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Hunt9B R2",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "hunt9b_r3",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Hunt9B R3",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "hyp3_chimera_regression",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Hyp3 Chimera Regression",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "hyp3_stacking_trees_meta",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Hyp3 Stacking Trees Meta",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "hyp3_tabicl",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Hyp3 Tabicl",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "imodels_figs_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Imodels Figs Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "imodels_figs_regressor_depth3",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Imodels Figs Regressor Depth3",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "imodels_figs_regressor_rules16",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Imodels Figs Regressor Rules16",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "imodels_figs_regressor_rules64_depth3",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Imodels Figs Regressor Rules64 Depth3",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "imodels_rulefit_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Imodels Rulefit Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "jable_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Jable Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "jain_prime",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Jain Prime",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "jain_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Jain Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "jain_regressor_1000",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Jain Regressor 1000",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "jain_regressor_300",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Jain Regressor 300",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "jain_regressor_42",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Jain Regressor 42",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "jain_regressor_fast30",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Jain Regressor Fast30",
+      "url": null
+    },
+    {
+      "description": "Typed evolutionary model discovery with encrypted, winner-specific native C++17 replay.",
+      "family": "evolutionary-symbolic",
+      "id": "jope-dime",
+      "implementation_access": "encrypted-validator-access",
+      "languages": [
+        "Rust",
+        "C++17",
+        "Python"
+      ],
+      "name": "jope-dime (evolved)",
+      "replay_languages": [
+        "C++17"
+      ],
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "jope-dime-regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Jope Dime Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "jope-lime",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Jope Lime",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "jope_gp_v1",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Jope Gp V1",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "jope_prime",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Jope Prime",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "kernel_ridge_rbf",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Kernel Ridge Rbf",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "kimik3_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Kimi K3 attempt",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "knn",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Knn",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "knn_cosine",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Knn Cosine",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "knn_distance",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Knn Distance",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "knn_large",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Knn Large",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "lasso",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Lasso",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "lightgbm_dart",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Lightgbm Dart",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "lightgbm_deep",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Lightgbm Deep",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "lightgbm_extra_trees",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Lightgbm Extra Trees",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "lightgbm_extra_trees_trees300_leaves63_lr0p04",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Lightgbm Extra Trees Trees300 Leaves63 Lr0P04",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "lightgbm_gbdt",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Lightgbm Gbdt",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "lightgbm_gbdt_trees150_leaves15_lr0p07",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Lightgbm Gbdt Trees150 Leaves15 Lr0P07",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "lightgbm_gbdt_trees300_leaves31_lr0p04",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Lightgbm Gbdt Trees300 Leaves31 Lr0P04",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "lightgbm_goss",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Lightgbm Goss",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "lightgbm_goss_trees300_leaves31_lr0p04",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Lightgbm Goss Trees300 Leaves31 Lr0P04",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "lightgbm_huber_trees300_leaves31_lr0p04",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Lightgbm Huber Trees300 Leaves31 Lr0P04",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "lightgbm_large_leaves",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Lightgbm Large Leaves",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "lightgbm_linear_tree_trees300_leaves31_lr0p04",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Lightgbm Linear Tree Trees300 Leaves31 Lr0P04",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "lightgbm_quantile_alpha0p5_trees300_leaves31_lr0p04",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Lightgbm Quantile Alpha0P5 Trees300 Leaves31 Lr0P04",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "lightgbm_rf_trees500_leaves63",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Lightgbm Rf Trees500 Leaves63",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "linear_regression",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Linear Regression",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "linear_svr",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Linear Svr",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "mlp",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Mlp",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "ngboost",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Ngboost",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_0039f3c487da3912_append_row_blom_normal_scores_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 0039F3C487Da3912 Append Row Blom Normal Scores Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_0062a441167c6e4e_append_quantized_copula_hmm_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 0062A441167C6E4E Append Quantized Copula Hmm Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_0195a4ea9f5f9dc0_append_row_fractal_hurst_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 0195A4Ea9F5F9Dc0 Append Row Fractal Hurst Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_022bbd54efeaeb7a_append_sign_stable_rff_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 022Bbd54Efeaeb7A Append Sign Stable Rff Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_0232ca9200032f73_append_gabor_phase_congruency_approx_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 0232Ca9200032F73 Append Gabor Phase Congruency Approx Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_02ecd0b48ba74762_append_orbit_moment_bank_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 02Ecd0B48Ba74762 Append Orbit Moment Bank Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_07c7bb3da36a3338_append_hammersley_rff_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 07C7Bb3Da36A3338 Append Hammersley Rff Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_08c311618d88f009_append_piecewise_affine_projection_bank_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 08C311618D88F009 Append Piecewise Affine Projection Bank Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_08ced5aa8f2aab86_append_phase_entropy_quantile_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 08Ced5Aa8F2Aab86 Append Phase Entropy Quantile Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_08e4914dfd087229_append_copula_grad_rff_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 08E4914Dfd087229 Append Copula Grad Rff Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_0b378bc57fdda416_append_per_row_geodesic_curvature_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 0B378Bc57Fdda416 Append Per Row Geodesic Curvature Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_0bce2ff986be4643_append_grouped_orthogonal_rff_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 0Bce2Ff986Be4643 Append Grouped Orthogonal Rff Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_0cb1fdafe6ed45e5_append_random_power_sphere_map_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 0Cb1Fdafe6Ed45E5 Append Random Power Sphere Map Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_0cb439490f211946_append_random_power_sphere_map_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 0Cb439490F211946 Append Random Power Sphere Map Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_0d7bebbe9e763cce_append_rank_uncertainty_proj_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 0D7Bebbe9E763Cce Append Rank Uncertainty Proj Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_0e6fe45ac95e6bf2_append_cepstrum_envelope_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 0E6Fe45Ac95E6Bf2 Append Cepstrum Envelope Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_10dd2466bd7e3a96_append_rank_quantile_warp_adapt_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 10Dd2466Bd7E3A96 Append Rank Quantile Warp Adapt Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_1e81d14c107d52e3_append_random_vine_surprise_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 1E81D14C107D52E3 Append Random Vine Surprise Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_205f84f829c3b9fa_append_manifold_isometry_defect_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 205F84F829C3B9Fa Append Manifold Isometry Defect Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_216aa360f9ea1cf4_append_knn_hull_area_ratio_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 216Aa360F9Ea1Cf4 Append Knn Hull Area Ratio Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_21c8513198332e1a_append_orbit_moment_bank_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 21C8513198332E1A Append Orbit Moment Bank Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_28b4f1fc6d2da47a_append_per_row_geodesic_curvature_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 28B4F1Fc6D2Da47A Append Per Row Geodesic Curvature Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_2a0bcceb71fab7a5_append_copula_chi2_local_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 2A0Bcceb71Fab7A5 Append Copula Chi2 Local Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_2ac0fd906eb47dc9_append_manifold_isometry_defect_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 2Ac0Fd906Eb47Dc9 Append Manifold Isometry Defect Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_2b8fafb5273f0bd9_append_harmonic_phase_entropy_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 2B8Fafb5273F0Bd9 Append Harmonic Phase Entropy Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_31b031445611ed91_append_harmonic_phase_entropy_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 31B031445611Ed91 Append Harmonic Phase Entropy Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_32b73c69dee36ddc_append_partition_moment_features_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 32B73C69Dee36Ddc Append Partition Moment Features Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_33896aa0fc0f650d_append_quantized_copula_hmm_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 33896Aa0Fc0F650D Append Quantized Copula Hmm Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_356d74fd4b2f0b70_append_conformal_local_scale_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 356D74Fd4B2F0B70 Append Conformal Local Scale Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_3595a3176b1867e3_append_row_recurrence_features_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 3595A3176B1867E3 Append Row Recurrence Features Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_389c358741cccf96_append_copula_diag_entropy_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 389C358741Cccf96 Append Copula Diag Entropy Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_3d2c0865fd617050_append_phase_quadrant_coherence_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 3D2C0865Fd617050 Append Phase Quadrant Coherence Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_3e5b4fec2c927192_append_bootstrap_tangent_angular_variance_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 3E5B4Fec2C927192 Append Bootstrap Tangent Angular Variance Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_3e95b085efa7010f_append_cumulative_sign_rff_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 3E95B085Efa7010F Append Cumulative Sign Rff Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_3ee5ce9a36ff1b45_append_orthogonal_rff_bins_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 3Ee5Ce9A36Ff1B45 Append Orthogonal Rff Bins Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_4044f8a5a4fee913_append_phase_curvature_transform_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 4044F8A5A4Fee913 Append Phase Curvature Transform Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_409bcb6bb142c570_append_phase_amplitude_coupling_index_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 409Bcb6Bb142C570 Append Phase Amplitude Coupling Index Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_42e5036e51cf9ead_append_deterministic_hadamard_kernel_features_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 42E5036E51Cf9Ead Append Deterministic Hadamard Kernel Features Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_4411767d8c5348e6_append_diffusion_curvature_per_row_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 4411767D8C5348E6 Append Diffusion Curvature Per Row Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_46378e9fbe0ee3dc_append_partition_moment_features_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 46378E9Fbe0Ee3Dc Append Partition Moment Features Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_4827f95b08f0a9af_append_compressed_rank_kernel_sketch_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 4827F95B08F0A9Af Append Compressed Rank Kernel Sketch Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_490c843b47647e10_append_jackknife_leverage_perrow_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 490C843B47647E10 Append Jackknife Leverage Perrow Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_4971fe23a4ff8280_append_orthogonal_rff_bins_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 4971Fe23A4Ff8280 Append Orthogonal Rff Bins Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_4e85ba54ac456cdc_append_row_recurrence_features_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 4E85Ba54Ac456Cdc Append Row Recurrence Features Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_4e9a5ce11584b89e_append_anchor_moment_kernel_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 4E9A5Ce11584B89E Append Anchor Moment Kernel Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_500d47983b91e59d_append_phase_gated_ratio_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 500D47983B91E59D Append Phase Gated Ratio Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_52636a5ff6f79b67_append_copula_log_density_estimate_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 52636A5Ff6F79B67 Append Copula Log Density Estimate Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_543717e7a12b6b9d_append_mobius_pair_proj_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 543717E7A12B6B9D Append Mobius Pair Proj Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_54cc3c571d77f910_append_deterministic_pair_hash_kernel_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 54Cc3C571D77F910 Append Deterministic Pair Hash Kernel Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_5672934811e2231f_append_random_vine_surprise_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 5672934811E2231F Append Random Vine Surprise Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_578a402572df9dfb_append_hammersley_rff_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 578A402572Df9Dfb Append Hammersley Rff Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_57a25013708284c2_append_deterministic_hadamard_kernel_features_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 57A25013708284C2 Append Deterministic Hadamard Kernel Features Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_5a4da1e844a6d376_append_deterministic_cosine_pool_rff_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 5A4Da1E844A6D376 Append Deterministic Cosine Pool Rff Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_5c11dfcf6d345373_append_conformal_local_scale_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 5C11Dfcf6D345373 Append Conformal Local Scale Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_5fcac9465e794d1d_append_cumulative_sign_rff_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 5Fcac9465E794D1D Append Cumulative Sign Rff Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_60f1d62c8e9a538e_append_mobius_pair_proj_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 60F1D62C8E9A538E Append Mobius Pair Proj Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_65778ee0ce111df5_append_row_fractal_hurst_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 65778Ee0Ce111Df5 Append Row Fractal Hurst Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_678b4df369c34ca6_append_recurrence_graph_spectrum_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 678B4Df369C34Ca6 Append Recurrence Graph Spectrum Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_67bc114fe8a7713a_append_copula_gaussian_loglik_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 67Bc114Fe8A7713A Append Copula Gaussian Loglik Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_6942d9611ac26088_append_copula_tail_dependence_sketch_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 6942D9611Ac26088 Append Copula Tail Dependence Sketch Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_6d06f81eaba859ca_append_cumulative_sign_rff_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 6D06F81Eaba859Ca Append Cumulative Sign Rff Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_6d960b82598dc8a9_append_gaussian_depth_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 6D960B82598Dc8A9 Append Gaussian Depth Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_6dbacd2e99134561_append_quantile_bin_rff_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 6Dbacd2E99134561 Append Quantile Bin Rff Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_706191de4bd2503b_append_copula_grad_rff_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 706191De4Bd2503B Append Copula Grad Rff Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_7924d040f8482660_append_bootstrap_tangent_angular_variance_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 7924D040F8482660 Append Bootstrap Tangent Angular Variance Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_79f84d4095326876_append_mst_graph_profile_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 79F84D4095326876 Append Mst Graph Profile Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_7b3302db3c55e909_append_copula_tail_dependence_sketch_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 7B3302Db3C55E909 Append Copula Tail Dependence Sketch Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_7cbb8ba549d9b58d_append_gaussian_depth_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 7Cbb8Ba549D9B58D Append Gaussian Depth Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_7d9df972a094e492_append_piecewise_affine_projection_bank_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 7D9Df972A094E492 Append Piecewise Affine Projection Bank Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_84dbfe25bb990ba1_append_delay_embed_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 84Dbfe25Bb990Ba1 Append Delay Embed Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_859f6d9f37942924_append_betti_gaps_composite_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 859F6D9F37942924 Append Betti Gaps Composite Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_868356988412eea0_append_piecewise_affine_projection_bank_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 868356988412Eea0 Append Piecewise Affine Projection Bank Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_8775587f28a78f4c_append_phase_amplitude_coupling_contrast_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 8775587F28A78F4C Append Phase Amplitude Coupling Contrast Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_8874a8406f1d5770_append_orthogonal_rff_bins_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 8874A8406F1D5770 Append Orthogonal Rff Bins Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_8a3027aaede9ede2_append_betti_gaps_composite_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 8A3027Aaede9Ede2 Append Betti Gaps Composite Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_8aa86846ca5308ec_append_rank_normalized_kernel_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 8Aa86846Ca5308Ec Append Rank Normalized Kernel Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_8b6d7c7d0244c504_append_phase_quadrant_coherence_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 8B6D7C7D0244C504 Append Phase Quadrant Coherence Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_8c6c778914ead3dc_append_mcd_leverage_proj_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 8C6C778914Ead3Dc Append Mcd Leverage Proj Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_8d45de7cb6dc5968_append_copula_grad_rff_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 8D45De7Cb6Dc5968 Append Copula Grad Rff Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_8e04a31c9bbe34ac_append_phase_coupling_entropy_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 8E04A31C9Bbe34Ac Append Phase Coupling Entropy Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_8f4739d21cc2ee7e_append_deterministic_cosine_pool_rff_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 8F4739D21Cc2Ee7E Append Deterministic Cosine Pool Rff Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_8fd03c4ae22d5318_append_betti_curve_sparse_stateless_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 8Fd03C4Ae22D5318 Append Betti Curve Sparse Stateless Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_921de4428243e8f4_append_mcd_leverage_proj_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 921De4428243E8F4 Append Mcd Leverage Proj Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_92c5500eb0e10f87_append_phase_curvature_transform_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 92C5500Eb0E10F87 Append Phase Curvature Transform Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_9379f2eb196b5c02_append_compressed_rank_kernel_sketch_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 9379F2Eb196B5C02 Append Compressed Rank Kernel Sketch Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_98a233168924f418_append_quantile_bin_rff_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 98A233168924F418 Append Quantile Bin Rff Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_99140796a9ac134e_append_phase_structure_moment_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 99140796A9Ac134E Append Phase Structure Moment Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_9aaa22f6cd3a5fc9_append_betti_curve_sparse_stateless_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 9Aaa22F6Cd3A5Fc9 Append Betti Curve Sparse Stateless Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_9c0c12a03ce466f0_append_quantile_bin_rff_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 9C0C12A03Ce466F0 Append Quantile Bin Rff Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_9ea2dcf78bb3f4c3_append_row_fractal_hurst_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm 9Ea2Dcf78Bb3F4C3 Append Row Fractal Hurst Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_a09e9a02990bed59_append_orbit_moment_bank_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm A09E9A02990Bed59 Append Orbit Moment Bank Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_a1d490b48a2abba8_append_knn_hull_area_ratio_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm A1D490B48A2Abba8 Append Knn Hull Area Ratio Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_a79f7115d751b8a4_append_rank_quantile_warp_adapt_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm A79F7115D751B8A4 Append Rank Quantile Warp Adapt Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_a8e5675b95cef532_append_diffusion_curvature_per_row_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm A8E5675B95Cef532 Append Diffusion Curvature Per Row Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_a92d20b8e3117277_append_grouped_orthogonal_rff_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm A92D20B8E3117277 Append Grouped Orthogonal Rff Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_aa42b2892200feeb_append_grassmann_subspace_angles_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm Aa42B2892200Feeb Append Grassmann Subspace Angles Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_abc31da7f580fdcc_append_anchor_moment_kernel_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm Abc31Da7F580Fdcc Append Anchor Moment Kernel Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_ad00ced3b148d032_append_betti_curve_sparse_stateless_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm Ad00Ced3B148D032 Append Betti Curve Sparse Stateless Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_b302358723d9091a_append_gabor_phase_congruency_approx_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm B302358723D9091A Append Gabor Phase Congruency Approx Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_b3ed9b5d98a97dbd_append_copula_diag_entropy_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm B3Ed9B5D98A97Dbd Append Copula Diag Entropy Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_b6801a8708e4b2a1_append_recurrence_graph_spectrum_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm B6801A8708E4B2A1 Append Recurrence Graph Spectrum Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_b6c265e586f6f8f8_append_phase_entropy_quantile_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm B6C265E586F6F8F8 Append Phase Entropy Quantile Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_b8b2dd63b09b094c_append_per_row_geodesic_curvature_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm B8B2Dd63B09B094C Append Per Row Geodesic Curvature Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_b9f40b762c24d559_append_robust_phase_autocov_summary_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm B9F40B762C24D559 Append Robust Phase Autocov Summary Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_ba04c88dfd2bc5f2_append_rank_normalized_kernel_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm Ba04C88Dfd2Bc5F2 Append Rank Normalized Kernel Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_ba5912832fa39272_append_jackknife_leverage_perrow_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm Ba5912832Fa39272 Append Jackknife Leverage Perrow Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_bc5772e8e5f9ed90_append_row_recurrence_features_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm Bc5772E8E5F9Ed90 Append Row Recurrence Features Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_bd2996293441aa75_append_pseudo_winsor_moments_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm Bd2996293441Aa75 Append Pseudo Winsor Moments Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_bf4001fb0fb58a5b_append_phase_coupling_entropy_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm Bf4001Fb0Fb58A5B Append Phase Coupling Entropy Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_c6711fd746192507_append_phase_gated_ratio_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm C6711Fd746192507 Append Phase Gated Ratio Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_c8ae9658ac9de190_append_manifold_isometry_defect_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm C8Ae9658Ac9De190 Append Manifold Isometry Defect Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_ca4335826b6f7ed8_append_sign_stable_rff_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm Ca4335826B6F7Ed8 Append Sign Stable Rff Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_ca9c2027cc9ff0ed_append_rank_normal_pairwise_product_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm Ca9C2027Cc9Ff0Ed Append Rank Normal Pairwise Product Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_cc9e5ec332c4dc5c_append_diffusion_curvature_per_row_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm Cc9E5Ec332C4Dc5C Append Diffusion Curvature Per Row Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_ccb82531603316b5_append_cepstrum_envelope_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm Ccb82531603316B5 Append Cepstrum Envelope Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_d07a525b60678542_append_mst_graph_profile_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm D07A525B60678542 Append Mst Graph Profile Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_d0fce33676934a86_append_delay_embed_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm D0Fce33676934A86 Append Delay Embed Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_d10236965260e01a_append_pseudo_winsor_moments_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm D10236965260E01A Append Pseudo Winsor Moments Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_d22288bcd5864509_append_grassmann_subspace_angles_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm D22288Bcd5864509 Append Grassmann Subspace Angles Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_d31aefa0767985e2_append_phase_amplitude_coupling_contrast_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm D31Aefa0767985E2 Append Phase Amplitude Coupling Contrast Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_d3a3205740f40c59_append_recurrence_graph_spectrum_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm D3A3205740F40C59 Append Recurrence Graph Spectrum Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_d3acab20d12ca1e7_append_copula_chi2_local_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm D3Acab20D12Ca1E7 Append Copula Chi2 Local Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_d48ec9ad8eb3117d_append_random_power_sphere_map_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm D48Ec9Ad8Eb3117D Append Random Power Sphere Map Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_dc11f5a6a6100593_append_grouped_orthogonal_rff_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm Dc11F5A6A6100593 Append Grouped Orthogonal Rff Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_e3b41e148f32cbfa_append_knn_hull_area_ratio_histgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm E3B41E148F32Cbfa Append Knn Hull Area Ratio Histgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_f00d627ae4cf7985_append_delay_embed_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm F00D627Ae4Cf7985 Append Delay Embed Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_f1a65a72f8c248f3_append_hammersley_rff_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm F1A65A72F8C248F3 Append Hammersley Rff Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_f28b696f57d9cb85_append_phase_amplitude_coupling_index_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm F28B696F57D9Cb85 Append Phase Amplitude Coupling Index Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_f3b838c3e2cab833_append_rank_uncertainty_proj_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm F3B838C3E2Cab833 Append Rank Uncertainty Proj Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_f3beb0cc460406fa_append_phase_structure_moment_elasticnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm F3Beb0Cc460406Fa Append Phase Structure Moment Elasticnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nm_fd99e93e79259ba9_append_robust_phase_autocov_summary_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nm Fd99E93E79259Ba9 Append Robust Phase Autocov Summary Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nu_svr_rbf",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nu Svr Rbf",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "nystroem_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Nystroem Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "orthogonal_matching_pursuit",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Orthogonal Matching Pursuit",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "passive_aggressive_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Passive Aggressive Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "pca_lgbm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Pca Lgbm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "poisson_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Poisson Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "poly2_ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Poly2 Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "pygam_linear_gam_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Pygam Linear Gam Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "pytabkit_realmlp_td_s_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Pytabkit Realmlp Td S Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "pytorch_tabular_autoint_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Pytorch Tabular Autoint Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "pytorch_tabular_category_embedding_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Pytorch Tabular Category Embedding Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "pytorch_tabular_category_embedding_regressor_epochs40",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Pytorch Tabular Category Embedding Regressor Epochs40",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "pytorch_tabular_category_embedding_regressor_epochs5",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Pytorch Tabular Category Embedding Regressor Epochs5",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "pytorch_tabular_danet_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Pytorch Tabular Danet Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "pytorch_tabular_fttransformer_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Pytorch Tabular Fttransformer Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "pytorch_tabular_fttransformer_regressor_epochs40",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Pytorch Tabular Fttransformer Regressor Epochs40",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "pytorch_tabular_fttransformer_regressor_epochs5",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Pytorch Tabular Fttransformer Regressor Epochs5",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "pytorch_tabular_gandalf_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Pytorch Tabular Gandalf Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "pytorch_tabular_gate_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Pytorch Tabular Gate Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "pytorch_tabular_mdn_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Pytorch Tabular Mdn Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "pytorch_tabular_node_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Pytorch Tabular Node Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "pytorch_tabular_tabtransformer_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Pytorch Tabular Tabtransformer Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "quantile_median",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Quantile Median",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "random_forest",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Random Forest",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "random_forest_1024",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Random Forest 1024",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "random_forest_512",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Random Forest 512",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "random_forest_mae",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Random Forest Mae",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "ransac",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Ransac",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "rbf_svr",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Rbf Svr",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "rbfsampler_sgd",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Rbfsampler Sgd",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "realmlp_regressor_capped_rows50000",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Realmlp Regressor Capped Rows50000",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "ridge",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Ridge",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "ridge_cv",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Ridge Cv",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "sgd_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Sgd Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "skorch_resmlp_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Skorch Resmlp Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "skorch_resmlp_regressor_hidden256_depth4_epochs30",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Skorch Resmlp Regressor Hidden256 Depth4 Epochs30",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "skorch_resmlp_regressor_hidden64_depth2_epochs10",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Skorch Resmlp Regressor Hidden64 Depth2 Epochs10",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "stacking_trees_meta",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Stacking Trees Meta",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "tabdpt_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Tabdpt Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "tabfm_ensemble_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "TabFM Ensemble",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "tabfm_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "TabFM",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "tabicl",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Tabicl",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "tabm",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Tabm",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "tabm_regressor_epochs10",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Tabm Regressor Epochs10",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "tabnet",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Tabnet",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "tabnet_regressor_steps3_epochs50",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Tabnet Regressor Steps3 Epochs50",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "tabpfn_v25_regressor_default",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Tabpfn V25 Regressor Default",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "tabpfn_v25_regressor_real",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Tabpfn V25 Regressor Real",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "tabpfn_v3_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "TabPFN v3",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "tabpfn_v3_regressor_default",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "TabPFN v3 Default",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "tabr_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Tabr Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "theil_sen",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Theil Sen",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "torch_frame_fttransformer_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Torch Frame Fttransformer Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "torch_frame_resnet_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Torch Frame Resnet Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "torch_frame_trompt_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Torch Frame Trompt Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "tweedie_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Tweedie Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "validation_gp_full_20260710_143239__ab0239b9ef0ba28e__ensemble_m1",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Validation Gp Full 20260710 143239  Ab0239B9Ef0Ba28E  Ensemble M1",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "validation_gp_full_20260710_143239__ab0239b9ef0ba28e__ensemble_m2",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Validation Gp Full 20260710 143239  Ab0239B9Ef0Ba28E  Ensemble M2",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "validation_gp_full_20260710_143239__ab0239b9ef0ba28e__ensemble_m3",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Validation Gp Full 20260710 143239  Ab0239B9Ef0Ba28E  Ensemble M3",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "validation_gp_full_20260710_143239__ab0239b9ef0ba28e__single_primary",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Validation Gp Full 20260710 143239  Ab0239B9Ef0Ba28E  Single Primary",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "voting_regressor",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Voting Regressor",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "xgboost_absoluteerror_trees300_depth4_lr0p04",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Xgboost Absoluteerror Trees300 Depth4 Lr0P04",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "xgboost_dart",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Xgboost Dart",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "xgboost_deep",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Xgboost Deep",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "xgboost_gblinear",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Xgboost Gblinear",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "xgboost_gblinear_alpha0p001_lambda1",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Xgboost Gblinear Alpha0P001 Lambda1",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "xgboost_hist",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Xgboost Hist",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "xgboost_hist_240",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Xgboost Hist 240",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "xgboost_hist_trees1200_depth6_lr0p015",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Xgboost Hist Trees1200 Depth6 Lr0P015",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "xgboost_hist_trees120_depth3_lr0p08",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Xgboost Hist Trees120 Depth3 Lr0P08",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "xgboost_hist_trees300_depth4_lr0p04",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Xgboost Hist Trees300 Depth4 Lr0P04",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "xgboost_hist_trees500_depth6",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Xgboost Hist Trees500 Depth6",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "xgboost_hist_trees600_depth6_lr0p03",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Xgboost Hist Trees600 Depth6 Lr0P03",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "xgboost_hist_trees900_depth4_lr0p02",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Xgboost Hist Trees900 Depth4 Lr0P02",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "xgboost_interaction_depth4_trees400",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Xgboost Interaction Depth4 Trees400",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "xgboost_monotone_none_trees300_depth6",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Xgboost Monotone None Trees300 Depth6",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "xgboost_pseudohuber_trees300_depth4_lr0p04",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Xgboost Pseudohuber Trees300 Depth4 Lr0P04",
+      "url": null
+    },
+    {
+      "description": "Golden42 result imported from a content-addressed run report.",
+      "family": "imported-regressor",
+      "id": "xgboost_rf_trees500_depth8",
+      "implementation_access": "reported-run",
+      "languages": [],
+      "name": "Xgboost Rf Trees500 Depth8",
+      "url": null
+    }
+  ],
+  "schema": "sotarena.method-registry.v1"
+}
