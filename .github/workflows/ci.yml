@@ -216,7 +216,8 @@ jobs:
   # `cargo check` never links; `cargo test` does. Linking every test binary in this workspace
   # produces a 72 GB target (measured), against roughly 14 GB free on an ubuntu-24.04 runner — the
   # link dies with `ld terminated with signal 7 [Bus error]` and nothing runs. So this lane gates
-  # the product crates. Measured on run 35586778652 (the lane's first green hosted run): 651
+  # the product crates. Measured on run 35586778652, the first green run that kept an artifact
+  # (the lane was already green at 35580809723 and 35583896833, which retained nothing): 651
   # tests executed and passed, target 8.98 GB, free disk 11.5 GB before and 3.9 GB after,
   # nextest 626 s inside an 822 s job. The full product inventory is 664 = 651 executed + 9
   # ignored + 4 filtered by the `pr` profile. The heavy crates
