@@ -118,10 +118,12 @@ jobs:
           # option. `cargo deny check --all-features ...` is a parse error ("unexpected
           # argument '--all-features' found"), so an earlier attempt at this restore never ran
           # the gate at all. The assertion below is here because a comment could not stop that.
+          # `--layout crate` prints one `name@version (n): licenses` line per crate, so the
+          # crate name is anchored with @, not with a space.
           missing=""
           graph="$(cargo deny --all-features list --layout crate)"
           for c in torch-sys cudarc safetensors; do
-            grep -qE "^$c " <<< "$graph" || missing="$missing $c"
+            grep -qE "^$c@" <<< "$graph" || missing="$missing $c"
           done
           if [ -n "$missing" ]; then
             echo "cargo-deny is not seeing the optional-feature graph; missing:$missing" >&2
