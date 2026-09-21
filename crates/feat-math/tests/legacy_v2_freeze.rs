@@ -388,8 +388,10 @@ fn legacy_v2_reference_files_match_the_takeover_snapshot() {
     for (path, contents, expected_sha256) in [
         (
             // Re-pinned 2026-09-18 after `cargo fmt` over the crate (ADR-0002 step 1): the
-            // change is whitespace-only — `git diff -w 53ba1f8 4235db6 -- crates/feat-math/tests/golden.rs`
-            // is empty. The G-00 takeover snapshot value was cc960036a498880e92c49adebb8ce6acc313a3f88add7925d9392b72fc5d5303.
+            // golden.rs was re-pinned after `cargo fmt`: `rustfmt` over the 53ba1f8 copy is byte-identical to
+            // the 4235db6 copy (sha256 91f759100481…), so the change is formatting only. Note the raw
+            // `git diff -w 53ba1f8 4235db6 -- crates/feat-math/tests/golden.rs` is NOT empty (56 lines):
+            // rustfmt also added trailing commas when it wrapped arguments.
             "tests/golden.rs",
             include_str!("golden.rs"),
             "91f759100481b3fbbf8f85d626eba63140f7d7ead6e0e778ecc4b59ac3c6d0c9",
