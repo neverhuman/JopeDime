@@ -1,5 +1,7 @@
 # Emitters: Python, Rust, C++17, C++20, JavaScript
 
+> **Status on `main` (2026-09-21):** this page describes the target design from the port plan. Verbs marked WP7/WP11 (`jope models|datasets|learn|hwm|scores`) are not on `main` yet; `jope encode|fit|emit|search|champions|train-step|route` and `verify-inputs|generate-fixtures` are (see the README's "What this SHA actually does").
+
 `crates/feat-math` lowers a fitted genome to a standalone program. The interpreter
 (`model::fit/predict`, f64) is the reference; every emitted program must reproduce its predictions
 bit for bit. Plan section: "Code emission"; decisions: [ADR-0002](adr/ADR-0002-feat-math-reconciliation.md).
@@ -19,7 +21,7 @@ writes `model.py`/`model.rs` always, `model.cpp`/`model.js` when their gates pas
 `manifest.json` (sha256 and token counts of the sources, math-kernel policy) and `targets.txt`.
 Without `--all` an uncovered target is reported and recorded, never silently dropped; with `--all`
 it is an error naming the unsupported elements. The `jope emit --lang {python,rust,cpp17,cpp20,js}`
-CLI wraps this once `jope-cli` grows its subcommands.
+CLI wraps this (`jope emit --lang all` is on `main` since #20).
 
 ## Per-target exclusion table
 
