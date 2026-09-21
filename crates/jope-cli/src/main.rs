@@ -1,9 +1,9 @@
 use anyhow::{ensure, Result};
 use clap::{Parser, Subcommand};
 use jope_cli::{
-    emit_genome, encode_dataset, fit_dataset, generate_fixtures, local_champions, local_train_step,
-    refuse_s3, resolve_root, search_dataset, verify_inputs, write_json, Verification,
-    DEFAULT_GENOME,
+    emit_genome, encode_dataset, fit_dataset, generate_fixtures, load_router, local_champions,
+    local_train_step, refuse_s3, resolve_root, route_dataset, search_dataset, verify_inputs,
+    write_json, Verification, DEFAULT_GENOME,
 };
 use std::{path::PathBuf, process::ExitCode};
 
@@ -11,7 +11,7 @@ use std::{path::PathBuf, process::ExitCode};
 #[command(
     name = "jope",
     version,
-    about = "JOPE-Dime fixtures, encode, fit/emit/search, and local champions"
+    about = "JOPE-Dime fixtures, encode, fit/emit/search, local champions, and centroid router"
 )]
 struct Cli {
     #[command(subcommand)]
@@ -92,7 +92,7 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
-    /// One local train step: record champion genomes as router labels. Live --env fails closed.
+    /// One local train step: fit a 128-d centroid router on champion genomes. Live --env fails closed.
     TrainStep {
         #[arg(long)]
         local: bool,
@@ -102,6 +102,15 @@ enum Command {
         root: Option<PathBuf>,
         #[arg(long)]
         output: Option<PathBuf>,
+        #[arg(long)]
+        json: bool,
+    },
+    /// Route one dataset through a trained local centroid router, then fit the chosen genome.
+    Route {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        router: PathBuf,
         #[arg(long)]
         json: bool,
     },
@@ -127,7 +136,8 @@ fn execute(command: &Command) -> Result<Verification> {
         | Command::Emit { .. }
         | Command::Search { .. }
         | Command::Champions { .. }
-        | Command::TrainStep { .. } => unreachable!("kernel commands are dispatched separately"),
+        | Command::TrainStep { .. }
+        | Command::Route { .. } => unreachable!("kernel commands are dispatched separately"),
     }
 }
 
@@ -287,15 +297,35 @@ fn main() -> ExitCode {
                         {
                             return fail(*json, "jope.train-step.v1", error);
                         }
+                        if let Err(error) = write_json(&path.join("router.v1.json"), &report.router)
+                        {
+                            return fail(*json, "jope.train-step.v1", error);
+                        }
                     }
                     print_json(*json, &report, || {
                         format!(
-                            "Local train-step recorded {} router labels.",
-                            report.labels.len()
+                            "Local train-step fitted a centroid router on {} labels ({} classes).",
+                            report.labels.len(),
+                            report.router.classes.len()
                         )
                     })
                 }
                 Err(error) => fail(*json, "jope.train-step.v1", error),
+            };
+        }
+        Command::Route {
+            input,
+            router,
+            json,
+        } => {
+            return match load_router(router).and_then(|router| route_dataset(input, &router)) {
+                Ok(report) => print_json(*json, &report, || {
+                    format!(
+                        "Routed {} to {} (cosine {:.4}, hold R² {:.4}).",
+                        report.dataset_id, report.genome, report.cosine, report.hold_r2
+                    )
+                }),
+                Err(error) => fail(*json, "jope.route.v1", error),
             };
         }
         _ => {}

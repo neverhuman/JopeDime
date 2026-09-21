@@ -164,7 +164,7 @@ fn filename(lang: &str) -> &'static str {
     }
 }
 
-fn read_dataset(path: &Path) -> Result<Dataset> {
+pub(crate) fn read_dataset(path: &Path) -> Result<Dataset> {
     serde_json::from_slice(
         &fs::read(path).with_context(|| format!("read dataset {}", path.display()))?,
     )

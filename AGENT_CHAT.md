@@ -27,8 +27,13 @@ tree untouched.
 
 ## 2026-09-21 — Grok: PR E (local champions, S3 fail-closed)
 
-Claim: `jope champions --local`, `jope train-step --local`, fail-closed
-`--pull/--push` and `--env dev`. Branch
-`feat/local-champions-failclosed-s3-20260921` from `origin/main` `8326c36`.
-Does **not** update jope-policy weights and does **not** write S3. Do not
-start F until this PR merges.
+Merged as #21 (`86c88bd`). Live S3 still fail-closed. Canonical dirty tree
+untouched.
+
+## 2026-09-21 — Grok: PR F (local centroid router)
+
+Claim: train-step fits a 128-d centroid router on champion labels;
+`jope route` nearest-centroid then fit. Branch
+`feat/local-centroid-router-20260921` from `origin/main` `86c88bd`. Not the
+bound jope-policy checkpoint. Not live S3. Do not start G/H until this
+merges.

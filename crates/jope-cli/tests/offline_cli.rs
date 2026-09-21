@@ -284,4 +284,72 @@ fn local_champions_and_train_step_cover_ten_datasets() {
     let report: Value = serde_json::from_slice(&step.stdout).unwrap();
     assert_eq!(report["ok"], true);
     assert_eq!(report["labels"].as_array().unwrap().len(), 10);
+    assert_eq!(report["router"]["dim"], 128);
+    assert!(!report["router"]["classes"].as_array().unwrap().is_empty());
+}
+
+#[test]
+fn route_without_router_fails_closed() {
+    let input = regression_linear();
+    let output = jope(
+        Path::new("."),
+        &[
+            "route",
+            "--json",
+            "--input",
+            input.to_str().expect("utf8 path"),
+            "--router",
+            "missing-router.json",
+        ],
+    );
+    assert!(!output.status.success());
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["ok"], false);
+    assert_eq!(report["schema"], "jope.route.v1");
+}
+
+#[test]
+fn train_step_writes_router_and_route_fits_a_ridge_genome() {
+    let temporary = tempfile::tempdir().unwrap();
+    let root = synthetic_root();
+    let trained = jope(
+        Path::new("."),
+        &[
+            "train-step",
+            "--local",
+            "--json",
+            "--root",
+            root.to_str().expect("utf8 path"),
+            "--output",
+            temporary.path().to_str().expect("utf8 path"),
+        ],
+    );
+    assert!(
+        trained.status.success(),
+        "{}",
+        String::from_utf8_lossy(&trained.stderr)
+    );
+    assert!(temporary.path().join("router.v1.json").is_file());
+    let input = regression_linear();
+    let routed = jope(
+        Path::new("."),
+        &[
+            "route",
+            "--json",
+            "--input",
+            input.to_str().expect("utf8 path"),
+            "--router",
+            temporary.path().to_str().expect("utf8 path"),
+        ],
+    );
+    assert!(
+        routed.status.success(),
+        "{}",
+        String::from_utf8_lossy(&routed.stderr)
+    );
+    let report: Value = serde_json::from_slice(&routed.stdout).unwrap();
+    assert_eq!(report["ok"], true);
+    assert_eq!(report["schema"], "jope.route.v1");
+    assert!(report["genome"].as_str().unwrap().contains("ridge"));
+    assert!(report["hold_r2"].as_f64().unwrap().is_finite());
 }
