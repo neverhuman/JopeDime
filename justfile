@@ -18,20 +18,19 @@ fmt:
 clippy:
     cargo clippy --workspace --all-targets --locked -- -D warnings
 
-# PR tier, mirroring the hosted `rust-test` lane exactly (see deploy/ci/rust-test-filter.sh):
-# the known-broken tests and the serial-only binaries are split out into their own recipes below.
-# engine + emitters, PR tier; no neural/gpu features, slow tests excluded by .config/nextest.toml
+# `test-pr-deferred` is the heavy set a hosted runner cannot link (72 GB target); `test-pr-all` is
+# the whole workspace. Both are below.
+# PR tier: exactly what the hosted `rust-test` lane runs — the product crates, 617 tests
 test-pr:
-    env OMP_NUM_THREADS=1 RAYON_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 JOPE_PARITY_STRICT=1 cargo nextest run -P pr --workspace --locked -E "$(bash deploy/ci/rust-test-filter.sh)"
-    env OMP_NUM_THREADS=1 RAYON_NUM_THREADS=1 JOPE_PARITY_STRICT=1 cargo nextest run -P pr --workspace --locked --test-threads 1 -E "$(bash deploy/ci/rust-test-filter.sh --serial)"
+    env OMP_NUM_THREADS=1 RAYON_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 JOPE_PARITY_STRICT=1 bash -c 'read -ra p <<< "$(bash deploy/ci/rust-test-scope.sh)"; exec cargo nextest run -P pr --locked "${p[@]}"'
+
+# the crates deferred from the hosted lane; expect the failures in deploy/ci/known-broken-tests.txt
+test-pr-deferred:
+    env OMP_NUM_THREADS=1 RAYON_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 JOPE_PARITY_STRICT=1 bash -c 'read -ra p <<< "$(bash deploy/ci/rust-test-scope.sh --deferred)"; exec cargo nextest run -P pr --locked "${p[@]}"'
 
 # the binaries that spawn real daemons and must not race each other
 test-pr-serial:
     env OMP_NUM_THREADS=1 RAYON_NUM_THREADS=1 JOPE_PARITY_STRICT=1 cargo nextest run -P pr --workspace --locked --test-threads 1 -E "$(bash deploy/ci/rust-test-filter.sh --serial)"
-
-# deploy/ci/known-broken-tests.txt: expected RED; a pass means delete that line from the file
-test-pr-broken:
-    env OMP_NUM_THREADS=1 RAYON_NUM_THREADS=1 JOPE_PARITY_STRICT=1 cargo nextest run -P pr --workspace --locked --test-threads 2 -E "$(bash deploy/ci/rust-test-filter.sh --broken)"
 
 # everything in the PR tier, nothing excluded
 test-pr-all:
