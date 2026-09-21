@@ -107,4 +107,6 @@ Do not open a stack of PRs. Merge or close the current one before starting the n
 - [`docs/adr/`](docs/adr/) — architecture decision records 0001–0005
 - [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 
+## Licence
+
 Apache-2.0. See [LICENSE](LICENSE).

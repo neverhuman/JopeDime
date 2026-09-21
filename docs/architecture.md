@@ -1,5 +1,7 @@
 # Architecture
 
+> **Status on `main` (2026-09-21):** this page describes the target design from the port plan. Verbs marked WP7/WP11 (`jope models|datasets|learn|hwm|scores`) are not on `main` yet; `jope encode|fit|emit|search|champions|train-step|route` and `verify-inputs|generate-fixtures` are (see the README's "What this SHA actually does").
+
 JopeDime is one repository that holds the whole pipeline
 **dataset → encoders → policy → GP genome → emitted source code**. Rust owns search, evaluation,
 the emitters, the CLI and every contract validator; a `uv`-managed Python package owns encoder
@@ -91,7 +93,7 @@ flowchart TB
 | `crates/jope-models` | `jope-models` | in flight (WP7, `wp7/models-cli`; manifests in PR [#9](https://github.com/veox-ai/JopeDime/pull/9)) | `jope models fetch / verify / publish / path` over the content-addressed models bucket. `docs/models.md` lands with WP7. |
 | `crates/jope-learning` | `jope-learning` | in flight (WP11, `wp11/learning-store`) | The S3-facing half of the learning loop of [ADR-0005](adr/ADR-0005-canonical-learning-loop.md): HWM ledger, corpus snapshots, checkpoint lineage, wave pointers. `docs/learning.md` lands with WP11. |
 | `crates/jope-arena` | `jope-arena` | in flight (WP12, `wp12/arena`) | SOTArena fetch, score emission, family Elo. `docs/arena.md` lands with WP12. |
-| `crates/jope-cli` | `jope-cli` (binary `jope`) | landed as a stub (prints its version) | The umbrella `jope search | emit | encode | propose | learn | hwm | scores | arena | campaign | selfplay | models | datasets | doctor`; subcommands attach as their crates land. |
+| `crates/jope-cli` | `jope-cli` (binary `jope`) | on `main` since #17–#22: `verify-inputs`, `generate-fixtures`, `encode`, `fit`, `emit`, `search`, `champions`, `train-step`, `route`; the `models`/`datasets` umbrella verbs arrive with `wp7/models-cli` | The umbrella `jope search | emit | encode | propose | learn | hwm | scores | arena | campaign | selfplay | models | datasets | doctor`; subcommands attach as their crates land. |
 | `crates/smartcluster/*` | `jain-smartcluster{,-core,-fabric,-daemon}`, `jain-worker`, `jainnode`, `scq` | landed (vendored at 715128f8, versions 8.0.0) | The scheduler the engine's native loop, smartcluster worker and native graph bind to; crates.io dependencies only. Not covered by `deploy/ci/version-consistency.sh`. |
 
 Excluded from the workspace on purpose: `crates/hyperion/host` (superseded by `crates/hyperion`),
