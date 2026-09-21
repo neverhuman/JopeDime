@@ -157,6 +157,7 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
             &cut_output,
         )?);
     }
+    search::remeasure_topk_on_all_cuts(&preparation.cuts, &mut searched)?;
     let successful: u64 = searched.iter().map(|c| c.successful_measurements).sum();
     let failed: u64 = searched
         .iter()
@@ -190,6 +191,16 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     let started = Instant::now();
     let emit_dir = root.join("emit");
     let emitted = emit::emit(&selection.genome, &options.languages, &emit_dir)?;
+    ensure!(
+        emitted.genome_sha256 == crate::sha256_hex(emitted.canonical_genome.as_bytes()),
+        "emit hashed the input spelling, not the canonical genome"
+    );
+    ensure!(
+        emitted.canonical_genome == selection.genome,
+        "canonical emit genome {} is not the selected genome {}",
+        emitted.canonical_genome,
+        selection.genome
+    );
     ensure!(
         emitted.genome_sha256 == selection.program_sha256,
         "the emitted genome is not the selected one"

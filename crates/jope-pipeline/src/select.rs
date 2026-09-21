@@ -179,6 +179,8 @@ mod tests {
             observations,
             search_sha256: String::new(),
             observations_sha256: String::new(),
+            rng_seed: 0,
+            budget: crate::search::Budget::default(),
         }
     }
 
@@ -222,7 +224,9 @@ mod tests {
     }
 
     #[test]
-    fn the_lowest_mean_across_cuts_wins_over_a_better_single_cut() {
+    fn complete_cover_still_ranks_above_a_better_partial_cover() {
+        // select() itself still prefers full cover. The product path must
+        // remeasure top-k first so a real champion is on every cut.
         let wide = "(pipe X (ridge))";
         let narrow = "(pipe X (standardize) (ridge))";
         let selection = select(&[
