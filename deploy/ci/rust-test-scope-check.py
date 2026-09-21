@@ -31,12 +31,13 @@ def emitted(*args: str) -> list[str]:
     out = subprocess.run(
         ["bash", str(script), *args], capture_output=True, text=True, cwd=here.parent.parent
     )
+    scope = " ".join(args) if args else "(product, no args)"
     if out.returncode != 0:
-        sys.exit(f"rust-test-scope.sh {' '.join(args)}: exit {out.returncode}\n{out.stderr.strip()}")
+        sys.exit(f"rust-test-scope.sh {scope}: exit {out.returncode}\n{out.stderr.strip()}")
     tokens = out.stdout.split()
     if not tokens or len(tokens) % 2 or tokens[0::2] != ["-p"] * (len(tokens) // 2):
         sys.exit(
-            f"rust-test-scope.sh {' '.join(args)}: expected `-p <name>` pairs, got: {out.stdout!r}"
+            f"rust-test-scope.sh {scope}: expected `-p <name>` pairs, got: {out.stdout!r}"
         )
     return tokens[1::2]
 

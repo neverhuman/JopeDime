@@ -268,10 +268,16 @@ jobs:
             echo "packages=${scope}"
           } | tee rust-test-evidence/identity.txt
           df -B1 --output=source,size,used,avail,pcent / | tee rust-test-evidence/disk-before.txt
-          # Marks that nextest was reached, so the retention step can tell "the report is missing"
-          # from "the run never got that far" instead of accepting both.
-          touch rust-test-evidence/nextest-started
+          # Records how nextest exited, so the retention step can tell "the report is missing"
+          # from "the run never got that far" AND from "the build failed, which produces no report
+          # by design". Measured: a passing run and a failing-test run each write junit.xml, a
+          # crate that does not compile exits 101 and writes none.
+          set +e
           cargo nextest run -P pr --locked "${pkgs[@]}"
+          nextest_rc=$?
+          set -e
+          echo "$nextest_rc" > rust-test-evidence/nextest-exit
+          exit "$nextest_rc"
       - name: Retain test report and disk measurements
         if: always()
         run: |
@@ -282,16 +288,21 @@ jobs:
           # `[profile.pr.junit] path = "junit.xml"` puts it here; keep the lane honest about a
           # missing report instead of uploading a directory that quietly holds no results.
           junit="target/nextest/pr/junit.xml"
+          rc="$(cat rust-test-evidence/nextest-exit 2>/dev/null || echo unreached)"
           if [ -f "$junit" ]; then
             cp "$junit" rust-test-evidence/junit.xml
-          elif [ -f rust-test-evidence/nextest-started ]; then
-            # nextest ran and produced no report: the path is wrong or the profile lost its junit
-            # config, and a lane that silently uploads no results is the thing this step exists to
-            # prevent. Fail here rather than leave a green check over an empty artifact.
-            echo "nextest ran but no report at ${junit}" | tee rust-test-evidence/junit-MISSING.txt
+          elif [ "$rc" = 0 ] || [ "$rc" = 100 ]; then
+            # nextest ran the tests and produced no report: the path is wrong or the profile lost
+            # its junit config, and a lane that silently uploads no results is the thing this step
+            # exists to prevent. Fail here rather than leave a green check over an empty artifact.
+            echo "nextest exited ${rc} but left no report at ${junit}" \
+              | tee rust-test-evidence/junit-MISSING.txt
             exit 1
           else
-            echo "nextest never ran; no report expected" | tee rust-test-evidence/junit-ABSENT.txt
+            # Either the run never reached nextest (a failing scope script) or nextest never
+            # reached the tests (exit 101 on a crate that does not compile). Neither owes a report,
+            # and the test step has already failed with the real cause.
+            echo "no report expected: nextest exit ${rc}" | tee rust-test-evidence/junit-ABSENT.txt
           fi
       - name: Upload rust-test evidence
         if: always()
