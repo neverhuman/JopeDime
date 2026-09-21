@@ -1,7 +1,8 @@
 //! Local champion bank and a label-recording train step. Live S3 is fail-closed on this SHA.
 
 use crate::admission::verify_inputs;
-use crate::kernel::search_dataset;
+use crate::kernel::{read_dataset, search_dataset};
+use crate::router::{dataset_embedding, fit_centroid_router, RouterArtifact};
 use crate::schema::Catalog;
 use anyhow::{bail, Context, Result};
 use serde::Serialize;
@@ -33,6 +34,7 @@ pub struct TrainStepReport {
     pub ok: bool,
     pub env: &'static str,
     pub labels: Vec<ChampionRow>,
+    pub router: RouterArtifact,
     pub note: &'static str,
 }
 
@@ -67,12 +69,28 @@ pub fn local_champions(root: &Path) -> Result<ChampionBank> {
 
 pub fn local_train_step(root: &Path) -> Result<TrainStepReport> {
     let bank = local_champions(root)?;
+    let catalog: Catalog = serde_json::from_slice(&fs::read(root.join("catalog.json"))?)
+        .context("parse catalog.json")?;
+    let mut examples = Vec::new();
+    for entry in &catalog.datasets {
+        let data = read_dataset(&root.join(&entry.path))?;
+        let embedding = dataset_embedding(&data)?;
+        let genome = bank
+            .rows
+            .iter()
+            .find(|row| row.dataset_id == entry.id)
+            .map(|row| row.genome.clone())
+            .with_context(|| format!("missing champion for {}", entry.id))?;
+        examples.push((embedding, genome));
+    }
+    let router = fit_centroid_router(&examples)?;
     Ok(TrainStepReport {
         schema: "jope.train-step.v1",
         ok: true,
         env: "local",
         labels: bank.rows,
-        note: "records champion genomes as router labels; does not update jope-policy weights or write S3",
+        router,
+        note: "fits a 128-d centroid router on champion genomes; does not update jope-policy checkpoint weights or write S3",
     })
 }
 
