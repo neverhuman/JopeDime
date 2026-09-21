@@ -1,0 +1,29 @@
+# One job, on the self-hosted CPU lane, to prove a self-hosted runner picks up work while the
+# GitHub-hosted lanes are refused for billing. Deleted once the lanes are moved over.
+name: runner-probe
+on:
+  push:
+    branches: [ci/self-hosted-probe-20260921]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: [self-hosted, linux, x64, jope-ci]
+    timeout-minutes: 10
+    steps:
+      - name: Identify the runner
+        run: |
+          set -euo pipefail
+          echo "runner=${RUNNER_NAME:-?} os=$(uname -srm) host=$(hostname)"
+          echo "cores=$(nproc) mem=$(free -g | awk '/^Mem:/{print $2}')GB"
+          df -h / | tail -1
+      - name: Toolchain present in the image
+        run: |
+          set -euo pipefail
+          for t in cargo rustc g++ clang++ cmake node python3 just cargo-nextest; do
+            printf '%-16s %s\n' "$t" "$(command -v "$t" || echo MISSING)"
+          done
+          cargo --version; cmake --version | head -1
