@@ -74,7 +74,7 @@ Coordinate in [`AGENT_CHAT.md`](AGENT_CHAT.md).
 
 1. Required contexts = every job that `.github/workflows/ci.yml` defines **at the reviewed head** (on `main` today: `hygiene`; once #24 lands: `changes`, `hygiene`, `rust-check`, `emitters`, `inputs`, where a path-gated lane that did not run because its paths are untouched is recorded as `skipped-by-path`, not as green). `gh pr checks <n>` must show every required context `pass` at the exact head SHA; absent, cancelled or failed = not green. Heavy lanes (full nextest, LibTorch `features`, sanitizers, security, Jankurai) are main/nightly lanes per D2 and are not required on PRs until each has passed on `main`.
 2. Review posted by the other identity (`gh pr review <n> --approve` as `neverhuman`, or the PAT identity for Grok's PRs). Trust-surface PRs (workflows, lockfiles, credentials, protection manifests) get a second, security lens.
-3. `gh pr merge <n> --merge` (original commits kept), then `git ls-remote origin main` recorded in the row below.
+3. `gh pr merge <n> --rebase` (merge commits are disabled in the repository settings; rebase keeps each original commit, squash is acceptable for single-commit docs PRs), then `git ls-remote origin main` recorded in the row below.
 4. Never more than three PRs open across all agents (D1 supersedes Grok's one-open-PR rule for its lane only while that lane is active); a PR older than 24 h is merged, drafted, or closed with a reason.
 
 ## Landing board (Claude integrator; old PR → new PR → merged SHA)
@@ -84,7 +84,7 @@ Coordinate in [`AGENT_CHAT.md`](AGENT_CHAT.md).
 | — | `coord/integrator-lane-20260921` (this) | | #23 | |
 | #7 | `ci/lanes` | 38aeaa1 | | |
 | #10 | `wp1/test-timings` | 5f66e3f | | |
-| #14 | `wp8/neural-receipt` | 44501a9 | | |
+| #14 | `wp8/neural-receipt` | 44501a9 | #25 | `dc5ccf9` 2026-09-21T03:58:58Z (rebase; reviewer `neverhuman`) |
 | #12 | `wp10/parity-census` | c483544 | | |
 | #9 | `wp7/model-manifests` | f62095c | | |
 | #11 | `wpd1/datasets` | d672e76 | | |
@@ -116,10 +116,14 @@ Two agents hold different owner directions dated 2026-09-21:
   protection/qualification before any merge. It reports that Grok has released
   its JopeDime lane and that the preservation owner has not.
 
-Until the owner states which direction controls, no PR on this board is merged;
-#23/#24/#25 stay open for review only. Neither owner's release is assumed from
-silence. Live preservation workers (PIDs 115122, 3692153, 3692154, 3777416 at
-03:20Z) are not touched by either lane.
+**Owner ruling (2026-09-21 ≈03:58Z, given directly to the integrator session
+with all three directions quoted verbatim): D1–D5 control.** Codex's foundation
+work lands through the same reviewed-PR gate one small PR at a time with the
+≥95 audit as a ratchet; Cursor keeps the reviewer/coordinator role; the
+preservation lane and its live workers (PIDs 115122, 3692153, 3692154, 3777416
+at 03:20Z) are not touched by anyone. The stopped-writer and audit-before-merge
+holds do not apply to this repository from that time. Posted on the canonical
+board, the canonical chat and the cross-tree wire at 03:58:38Z.
 
 Merge history for the record: #1–#16 were closed unmerged (2026-09-18/20);
 #17–#22 (Grok's A–F) are the first merges in this repository, 2026-09-21
