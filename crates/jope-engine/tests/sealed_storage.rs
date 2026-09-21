@@ -37,7 +37,10 @@ fn native_ranks_share_a_sealed_identity_and_server_restart_reverifies() {
     for restart in [false, true] {
         let mut server = Command::new("python3")
             .args(["-B"])
-            .arg(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tools/shared_teaching_cache.py"))
+            .arg(
+                PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                    .join("../../python/src/jope/tools/shared_teaching_cache.py"),
+            )
             .arg("--root")
             .arg(root)
             .arg("--pool")

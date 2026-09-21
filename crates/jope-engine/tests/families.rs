@@ -8,6 +8,7 @@ use jope_parallel::{
 use serde_json::{json, Value};
 use std::{
     collections::BTreeMap,
+    ffi::OsString,
     fs,
     path::{Path, PathBuf},
 };
@@ -288,14 +289,27 @@ fn canonical_metadata_wins_over_earlier_acquisition_stubs() {
     );
 }
 
+/// The policy helper `src/families.rs` hashes (`include_bytes!("../policy/family_growth_policy.py")`)
+/// and copies into each fixture's `tools/` directory.
+fn policy_helper() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("policy/family_growth_policy.py")
+}
+
+/// ADR-0003 split the two modules the fixture script imports across two trees: the policy helper
+/// stays crate-local because the crate embeds it, while its `GrowthFixture` test double moved into
+/// the uv package. Both directories have to be on the path or the script cannot import either.
+fn growth_pythonpath() -> OsString {
+    let crate_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let mut path = crate_dir.join("policy").into_os_string();
+    path.push(":");
+    path.push(crate_dir.join("../../python/src/jope/tools"));
+    path
+}
+
 fn growth_fixture(f: &Fixture, parent_path: &Path) -> (PathBuf, PathBuf, String) {
     let root = f.dir.path();
     fs::create_dir_all(root.join("tools")).unwrap();
-    fs::copy(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tools/family_growth_policy.py"),
-        root.join("tools/family_growth_policy.py"),
-    )
-    .unwrap();
+    fs::copy(policy_helper(), root.join("tools/family_growth_policy.py")).unwrap();
     let script = r#"
 import json,sys
 from pathlib import Path
@@ -317,10 +331,7 @@ print(cid)
         .args(["-B", "-c", script])
         .arg(root)
         .arg(parent_path)
-        .env(
-            "PYTHONPATH",
-            Path::new(env!("CARGO_MANIFEST_DIR")).join("tools"),
-        )
+        .env("PYTHONPATH", growth_pythonpath())
         .output()
         .unwrap();
     assert!(
@@ -402,7 +413,7 @@ fn component_growth_refuses_forged_summaries_changed_helper_and_stale_parent() {
     )
     .is_err());
     fs::copy(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tools/family_growth_policy.py"),
+        policy_helper(),
         f.dir.path().join("tools/family_growth_policy.py"),
     )
     .unwrap();
