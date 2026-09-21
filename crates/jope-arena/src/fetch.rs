@@ -11,8 +11,10 @@ use std::env;
 use std::fs;
 use std::io::Read;
 use std::path::{Component, Path, PathBuf};
+use std::sync::{Arc, OnceLock};
 
 use anyhow::{ensure, Context, Result};
+use ureq::tls::{TlsConfig, TlsProvider};
 
 use crate::reporter::{Config, DataFile, Dataset, DatasetCatalog};
 
@@ -154,15 +156,43 @@ pub trait Downloader {
     fn get(&self, url: &str) -> Result<Vec<u8>>;
 }
 
+/// The process-wide `ureq` agent, built once.
+///
+/// `ureq` is compiled with `rustls-no-provider`, so it contributes no crypto-provider feature to
+/// `rustls` and the workspace keeps resolving exactly one (`aws_lc_rs`, from jainnode and from
+/// object_store's reqwest). With two provider features on, `CryptoProvider::from_crate_features()`
+/// returns `None` and every bare `rustls::ClientConfig::builder()` in the workspace panics. The
+/// price of `rustls-no-provider` is that the provider is no longer implied by the features, so it
+/// is handed to `ureq` explicitly here; `rustls` is a direct dependency of this crate for that.
+/// Roots stay `ureq`'s default (`RootCerts::WebPki`, the Mozilla store from `webpki-roots`).
+fn https_agent() -> &'static ureq::Agent {
+    static AGENT: OnceLock<ureq::Agent> = OnceLock::new();
+    AGENT.get_or_init(|| {
+        ureq::Agent::config_builder()
+            .tls_config(
+                TlsConfig::builder()
+                    .provider(TlsProvider::Rustls)
+                    .unversioned_rustls_crypto_provider(Arc::new(
+                        rustls::crypto::aws_lc_rs::default_provider(),
+                    ))
+                    .build(),
+            )
+            .build()
+            .new_agent()
+    })
+}
+
 /// `ureq` GET.
 pub struct HttpDownloader;
 
 impl Downloader for HttpDownloader {
     fn get(&self, url: &str) -> Result<Vec<u8>> {
         let mut bytes = Vec::new();
-        ureq::get(url)
+        https_agent()
+            .get(url)
             .call()
             .with_context(|| format!("download failed: {url}"))?
+            .into_body()
             .into_reader()
             .read_to_end(&mut bytes)?;
         Ok(bytes)
