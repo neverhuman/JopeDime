@@ -711,7 +711,53 @@ def test_sealed_audit_is_one_shot_and_never_training_eligible(tmp_path):
 
 
 def test_systemd_services_are_independently_restartable():
+    # ADR-0003 (PR #13/#32) turned every unit into a `.service.in` template rendered by
+    # deploy/systemd/render.sh, so the units are named `*.service.in` and spell the bundle
+    # directory as @JOPE_BUNDLE@ instead of a literal runtime-bundles path. The guarantee
+    # this test exists to defend is unchanged: each service restarts on its own and executes
+    # out of the versioned runtime bundle, never an ad-hoc path.
     root = Path(__file__).parents[2] / "deploy" / "systemd" / "selfplay"
+    required = {
+        "jope-selfplay-corpus-freezer.service.in",
+        "jope-selfplay-ingestion.service.in",
+        "jope-selfplay-promotion.service.in",
+        "jope-selfplay-queue.service.in",
+        "jope-selfplay-supply.service.in",
+        "jope-selfplay-trainer-watchdog.service.in",
+    }
+    units = {unit.name: unit for unit in root.glob("jope-selfplay-*.service.in")}
+    assert required <= units.keys()
+    for name in required:
+        unit = units[name]
+        text = unit.read_text()
+        assert "Restart=always" in text
+        assert "ExecStart=@JOPE_BUNDLE@/" in text
+
+
+def test_rendered_systemd_services_execute_from_the_runtime_bundle(tmp_path):
+    # The template assertions above are static; render for real so the substitution itself is
+    # covered. This is the half that went missing when the units became templates.
+    repo = Path(__file__).parents[2]
+    bundle = tmp_path / "runtime-bundles" / "current" / "runtime" / "bin"
+    out = tmp_path / "out"
+    subprocess.run(
+        [
+            "bash",
+            str(repo / "deploy" / "systemd" / "render.sh"),
+            "--home",
+            str(tmp_path / "home"),
+            "--state",
+            str(tmp_path / "state"),
+            "--bundle",
+            str(bundle),
+            "--user",
+            "jope",
+            "--out",
+            str(out),
+        ],
+        check=True,
+        capture_output=True,
+    )
     required = {
         "jope-selfplay-corpus-freezer.service",
         "jope-selfplay-ingestion.service",
@@ -720,10 +766,10 @@ def test_systemd_services_are_independently_restartable():
         "jope-selfplay-supply.service",
         "jope-selfplay-trainer-watchdog.service",
     }
-    units = {unit.name: unit for unit in root.glob("jope-selfplay-*.service")}
-    assert required <= units.keys()
+    rendered = {unit.name: unit for unit in (out / "selfplay").glob("jope-selfplay-*.service")}
+    assert required <= rendered.keys()
     for name in required:
-        unit = units[name]
-        text = unit.read_text()
+        text = rendered[name].read_text()
         assert "Restart=always" in text
-        assert "runtime-bundles/current/runtime/bin/" in text
+        assert f"ExecStart={bundle}/" in text
+        assert "@JOPE_" not in text  # every placeholder substituted
