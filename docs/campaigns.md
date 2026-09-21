@@ -1,5 +1,7 @@
 # Campaigns
 
+> **Status on `main` (2026-09-21):** this page describes the target design from the port plan. Verbs marked WP7/WP11 (`jope models|datasets|learn|hwm|scores`) are not on `main` yet; `jope encode|fit|emit|search|champions|train-step|route` and `verify-inputs|generate-fixtures` are (see the README's "What this SHA actually does").
+
 `crates/jope-campaigns` (package `jope-dime-regressor` until the WP5 rename) is the benchmark
 side of the repository: the programs that run jope-dime against fixed panels, keep their receipts
 and produce the numbers the SOTArena scores and Elo ladders are made of. Plan sections:
