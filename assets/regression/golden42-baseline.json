@@ -10,7 +10,7 @@
     "datasets": 42
   },
   "source": {
-    "tree": "/home/ubuntu/jain-split/jope-dime/sotarena (nested benchmark clone)",
+    "tree": "<historical jope-dime checkout>/sotarena (nested benchmark clone)",
     "commit": "e5db30a07c093661c8f6940d3e22192511f8388b",
     "reports": "results/external-references/golden42/<dataset_hash>/jope-dime-regressor.json",
     "scores_csv": {

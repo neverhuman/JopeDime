@@ -9,8 +9,8 @@ Source trees (read-only at the time of the port, 2026-09-18/19):
 
 | Tree | Role | Identity |
 |---|---|---|
-| `/home/ubuntu/jain-split/jope-dime/sotarena/` | nested benchmark clone of `github.com/neverhuman/sotarena` | commit `e5db30a07c093661c8f6940d3e22192511f8388b` ("Upgrade Golden45 verification protocol and replay", 2026-07-25) |
-| `/home/ubuntu/jain-split/jope-dime/` | the historical jope-dime workspace | commit `c9513e8288434a37ceedd4535b38f702bf35ad7f` (`main`, 2026-09-18) |
+| `<historical jope-dime checkout>/sotarena/` | nested benchmark clone of `github.com/neverhuman/sotarena` | commit `e5db30a07c093661c8f6940d3e22192511f8388b` ("Upgrade Golden45 verification protocol and replay", 2026-07-25) |
+| `<historical jope-dime checkout>/` | the historical jope-dime workspace | commit `c9513e8288434a37ceedd4535b38f702bf35ad7f` (`main`, 2026-09-18) |
 | `/home/ubuntu/sotarena/` | the Rust Elo reporter (`src/main.rs`, `config.json`, `data/`) | code ported into `crates/jope-arena`; no data copied |
 | `/home/ubuntu/sotarena_pull/` | local score-emission toolkit | its `SotarenaPullArtifact.v1` emission schema is read by `jope-arena emit-scores`; no data copied |
 
@@ -42,7 +42,7 @@ place with `jope-arena verify-results`: ok=397 missing=0 mismatched=0), `dataset
 the recomputed ladder (`jope.arena-elo-snapshot/v1`). Its `leaderboard_sha256` equals the committed
 `leaderboard.csv` above, i.e. the recomputation is byte-identical: **jope-dime rank 1, Elo 2259.8,
 11 dataset wins, 45/45**, 305 methods, 8,763 rankable rows. The same command with
-`--root /home/ubuntu/jain-split/jope-dime/sotarena --check` reported `check=ok`; so did
+`--root <historical jope-dime checkout>/sotarena --check` reported `check=ok`; so did
 `--track tabular-regression-v1` (Golden42 development track: jope-dime 2259.9).
 
 ## `golden42-baseline.json`
