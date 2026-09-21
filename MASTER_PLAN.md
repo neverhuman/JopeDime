@@ -4,7 +4,7 @@
 `origin/main`; the landing board below records each merge SHA. **Twenty-two**
 PRs merged on 2026-09-21: Grok's #17–#22 (01:24–03:16Z, `4235db6` → `1f0fc5a`),
 then #23–#33 and #35–#39 under D1 (03:58–11:11Z, `1f0fc5a` → `70506066`).
-#34 is still open inside that range, so it is not a contiguous span. Every readback
+#34 is open, which is why that is two spans and not one. Every readback
 line in this file is regenerated, not transcribed; the command that produced
 it is next to it.
 
@@ -78,7 +78,7 @@ Coordinate in [`AGENT_CHAT.md`](AGENT_CHAT.md).
 ## Merge rule (per PR)
 
 1. Required contexts = every job that `.github/workflows/ci.yml` defines **at the reviewed head** (on `main` at `70506066`: `changes`, `hygiene`, `rust-check`, `emitters`, `inputs`, `python`, `rust-test`, where a path-gated lane that did not run because its paths are untouched is recorded as `skipped-by-path`, not as green). `gh pr checks <n>` must show every required context `pass` at the exact head SHA; absent, cancelled or failed = not green. Heavy lanes (full nextest, LibTorch `features`, sanitizers, security, Jankurai) are main/nightly lanes per D2 and are not required on PRs until each has passed on `main`.
-2. Review posted by the other GitHub identity than the author (`neverhuman` for PRs authored by `jepsontaylor`, and vice versa), from a session that did not write the PR. **The identity that matters is the PR's author, not the commits'**: `gh pr create` without `GH_TOKEN` opens the PR as the `gh` OAuth user, and GitHub then refuses the review outright (`Can not request changes on your own pull request`). #40 and #41 were opened that way and had to be closed and reopened as #42/#43; check `gh pr view <n> --json author` before requesting a review (a fresh review agent or another lane — Cursor's coordinator is invited). Both logins are operated by agents on this host; an approval proves an independent read at the exact head, not a human sign-off. Trust-surface PRs (workflows, lockfiles, credentials, protection manifests) get a second, security lens.
+2. Review posted by the other GitHub identity than the author (`neverhuman` for PRs authored by `jepsontaylor`, and vice versa), from a session that did not write the PR. **The identity that matters is the PR's author, not the commits'**: `gh pr create` without `GH_TOKEN` opens the PR as the `gh` OAuth user, and GitHub then refuses the review outright (`Can not request changes on your own pull request`). #40 and #41 were opened that way and had to be closed and reopened as #42/#43. Check `gh pr view <n> --json author` before requesting a review (a fresh review agent or another lane — Cursor's coordinator is invited). Both logins are operated by agents on this host; an approval proves an independent read at the exact head, not a human sign-off. Trust-surface PRs (workflows, lockfiles, credentials, protection manifests) get a second, security lens.
 3. `gh pr merge <n> --rebase` (merge commits are disabled in the repository settings; rebase keeps each original commit, squash is acceptable for single-commit docs PRs), then `git ls-remote origin main` recorded in the row below.
 4. Never more than three PRs open across all agents (D1 supersedes Grok's one-open-PR rule for its lane only while that lane is active); a PR older than 24 h is merged, drafted, or closed with a reason.
 
@@ -102,8 +102,8 @@ Coordinate in [`AGENT_CHAT.md`](AGENT_CHAT.md).
 | — | board | | #36 | `ebf055d` 06:36:46Z (landing rows through #33) |
 | — | rustfmt drift | | #37 | `dc46e86` 06:47:00Z (two drifted hunks in `jope-engine eval_registry/query`) |
 | — | python lane | | #38 | `d43bc5f` 07:49:28Z (fixes the systemd test #32 broke; **adds the hosted `python` lane that would have caught it**) |
-| — | `wp11/learning-store` | df9e4e0 | **#34 open** | round 5. The four P1s of round 4 are fixed and independently reproduced as fixed; the live blockers are a new P1 (`hwm.rs:442` trusts a remote blob's presence as proof of its identity), a `read_batch` panic on a tampered seal count, and the rebase onto `70506066` plus a `jope-learning` row in the test scope |
-| — | rust-test lane | | #39 | `7050606` 11:11:35Z (4 rounds; the hosted gate ran no Rust tests at all, and the scope guard itself failed open twice before the reviewer's negative probes closed it) |
+| — | `wp11/learning-store` | df9e4e0 | **#34 open** | round 5. All four P1s of round 4 are fixed — three reproduced from the CLI by the reviewer, the fourth (non-finite entry refusal) read only, since no CLI source can carry a non-finite value in. Blocking: `jope-learning` is in neither test scope, so `check.sh` fails closed on the merged tree; the rebase onto `70506066`; and two P2s — a `read_batch` capacity-overflow panic on a tampered seal count, and `verify` reporting zero breaks on a truncated ledger against a doc that claims otherwise |
+| — | rust-test lane | | #39 | `7050606` 11:11:35Z (4 rounds; the hosted gate ran no Rust tests beyond two `feat-math` targets, and the scope guard itself failed open twice before the reviewer's negative probes closed it) |
 | — | ADR-0003 test paths | | **#42 open** | three tests red since the relocation; also drops their quarantine entries. #40 was the same branch opened from the wrong identity and is closed |
 | — | `wp13/pipeline-run` | | queued | `jope pipeline run`: dataset → prepare → GP search on feat-math → select → emit → receipt |
 | — | `wp5/cli-split` | d0b4819 | | needs a mechanical re-do on current main, not a replay (#32 rewrote 67 of the files it moves) |
@@ -130,11 +130,19 @@ measured; a figure without a source is a defect in this section.
   MSRV check. Clippy and rustfmt live only in the local `justfile`, so
   formatting drift reaches `main` unchallenged — #37 is exactly that, landed
   after the fact. Adding `cargo fmt --all --check` to the gate is cheap and
-  owed; clippy cannot be blocking yet (143 pre-existing errors outside
-  `feat-math`, itself ~31).
-- **The hosted `rust-test` lane, measured on its first green run** (`35586778652`,
-  artifact `rust-test-evidence`, independently audited by the qualification
-  reviewer): **651 tests executed and passed**, target **8.98 GB**, free disk
+  owed, and is already written on `ci/rust-test-followup-20260921`
+  (`7160f6da`) awaiting a slot. Clippy cannot join it: `cargo clippy
+  --workspace --all-targets --locked -- -D warnings` at `70506066` on this
+  host fails in **`feat-math` with 37 errors** and stops there ("could not
+  compile `feat-math` (lib test) due to 37 previous errors"), so the workspace
+  total is **not measured** and no figure for it is quoted here. Earlier boards
+  said "143 outside feat-math"; that came from a branch where feat-math was
+  already clean and is not reproducible against this tree.
+- **The hosted `rust-test` lane, measured on the first green run that retained
+  an artifact** (`35586778652`, artifact `rust-test-evidence` = `10633028231`,
+  independently audited by the qualification reviewer; the lane was already
+  green at `35580809723` 09:00Z and `35583896833` 09:32Z, neither of which kept
+  anything — which is the whole reason retention landed): **651 tests executed and passed**, target **8.98 GB**, free disk
   11.5 GB before and 3.9 GB after, nextest **626 s** inside an **822 s** job.
   Full product inventory 664 = 651 executed + 9 ignored + 4 filtered by the
   `pr` profile. The tree's own comments said 9.4 GB / 617 tests / "about a
@@ -147,7 +155,8 @@ measured; a figure without a source is a defect in this section.
   with `deploy/ci/rust-test-scope-check.py` asserting against `cargo metadata`
   that the two agree with the script's own output and leave nothing unplaced.
   A crate in neither list would be gated by nothing; `jope-arena` did that
-  once, and the guard caught `jope-pipeline` doing it next.
+  once, and the guard caught `jope-pipeline` doing it next — on the unmerged
+  `wp13/pipeline-run` (`d13cc7e7`), so do not look for that crate on `main`.
 - **A full-workspace run is red on `main` for reasons unrelated to any branch.**
   18 failures across `jope-parallel`, `jainnode` and `jain-smartcluster-daemon`,
   measured by the integrator session on this host with `cargo nextest run -P pr
@@ -228,5 +237,5 @@ sessions.
 | "the hosted gate ran no Rust tests at all" — this board's earlier draft and the #39 discussion | `emitters` ran `cargo test -p feat-math --lib -- cxx::` and `--test portable_parity`. The rest of the claim holds. |
 | "the fence explains 9 of the quarantined tests" — this board's earlier draft | It explains 5. The `cause A` block held 9 because 3 relocation failures and 1 panic were misfiled under it. |
 | "`rust-check` runs clippy and fmt" — the D2 row before this revision | It runs `cargo check`, a systemd test and an MSRV check. Neither linter is in any hosted lane. |
-| "13 open PRs", "zero workflows", `main` at `458ef58`, the S3 lane "parked", 8-GPU lanes in `AGENT_CHAT.md`'s header | Pre-2026-09-21 state of the stale `jain-split` mirror, which is now a pointer. |
+| "13 open PRs", "zero workflows", `main` at `458ef58`, the S3 lane "parked", 8-GPU lanes in the header of **`/home/ubuntu/jain-split/jope-dime/AGENT_CHAT.md`** (not this repository's file, whose header says the opposite) | Pre-2026-09-21 state of the stale `jain-split` mirror, which is now a pointer. |
 | PR #40, PR #41 | Opened from the reviewer's identity and closed unmerged; the same branches are #42 and #43. Not withdrawals of the work. |
