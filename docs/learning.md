@@ -116,18 +116,37 @@ is no push/pull/backfill verb to recover with. `sync.rs` reconciles instead. It 
 
 | mirror's tip | meaning | what the push does |
 |---|---|---|
-| absent, or a batch this host holds, at the position and file hash its `HEAD.json` claims | **behind** — a gap | upload every local batch after it (immutable, content-addressed, so re-uploading is a no-op), the blobs those batches name and the pointers they moved, then move `HEAD.json` conditionally on the tip just validated |
+| absent, or a batch this host holds, at the position and file hash its `HEAD.json` claims | **behind** — a gap | for every local batch after it: the blobs that batch names first, then the batch object (both immutable and content-addressed, so re-uploading is a no-op); then move `HEAD.json` conditionally on the tip just validated; then the `current.json` pointers those batches moved |
 | anything else — a batch this host does not have, different bytes, a different depth or ledger | **diverged** | refuse, before the local append, naming both tips and what to run |
 
 A pointer is caught up on the same rule: the mirror's `current.json` may be replaced only when the
 record it holds appears *earlier* in this host's accepted history for that pointer. A record this
 host's ledger never accepted is another writer's tip and is refused, not overwritten.
 
+`HEAD.json` is the commit point, and the order around it is what makes a failed push *retryable*.
+`sync::plan` derives the gap from the mirror's tip and nothing else, so anything a push skips under
+a tip it has already moved is out of reach of every later push. Blobs therefore go up ahead of the
+batch object that names them — free, because they are content-addressed, immutable and created with
+`If-None-Match: *`, so a repeat is an `Exists` no-op — and a push that dies part-way leaves the tip
+where it was, so the retry recomputes the same gap and closes it. What the mirror's `HEAD.json`
+names, the mirror can always back.
+
+The `current.json` pointers deliberately stay *after* the move: the real corpus has ~12k of them and
+each would cost a GET per push. A pointer whose own write failed therefore stays stale — or absent,
+for a cut the mirror has never held — until the next batch that accepts a record at it, which
+catches it up under the same ancestor rule. That is staleness, not a wedge, and it is visible,
+because the mirror's pointer and the mirror's ledger disagree. Blobs cannot be left that way,
+because nothing re-derives them: a later batch names its own records, never the ones already
+committed.
+
 Because the check runs before the local append, a diverged mirror costs nothing: no batch sealed,
 no pointer moved, no object left on the mirror that its own `HEAD` cannot reach. A gap costs one
 GET and the batches in it. `crates/jope-learning/tests/mirror_reconcile.rs` holds both: the
 three-step wedge (mirrored ingest, unmirrored ingest, mirrored ingest) now succeeds and leaves the
-mirror a complete copy; a genuinely diverged mirror still fails closed.
+mirror a complete copy; a genuinely diverged mirror still fails closed; and
+`a_failed_blob_push_leaves_the_mirrors_head_where_it_was` injects an object-store failure mid-push
+and asserts that while any blob a batch names is missing, the mirror's `HEAD.json` has not moved
+past that batch — and that the next push closes the gap.
 
 A server-side conditional PUT with an expected version (`PutMode::Update`) is not exposed by
 `Store` yet and the local-filesystem backend of `object_store` does not implement it; until it is,
