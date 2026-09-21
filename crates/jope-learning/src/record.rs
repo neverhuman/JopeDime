@@ -107,6 +107,27 @@ pub struct Provenance {
     pub record_sha256: String,
 }
 
+impl Cost {
+    /// Both fields are IEEE doubles that JSON cannot represent when they are not finite: serde
+    /// writes NaN and the infinities as `null`, and `Option<f64>` reads `null` back as `None`. So
+    /// unlike a non-finite *score*, a non-finite cost does not make the record unreadable — it
+    /// makes it quietly *wrong*, with the row hash still validating and nothing to notice. Both
+    /// records check it here so that the next source to populate `cost` gets the refusal rather
+    /// than the silent loss; `sotarena::parse_line` hardcodes `None` today, which is the only
+    /// reason this has never fired.
+    pub fn validate(&self) -> Result<()> {
+        for (name, v) in [
+            ("runtime_seconds", self.runtime_seconds),
+            ("search_seconds", self.search_seconds),
+        ] {
+            if let Some(v) = v {
+                ensure!(v.is_finite(), "cost.{name} is not finite");
+            }
+        }
+        Ok(())
+    }
+}
+
 /// One high-water mark: the best program known for an exact cut under an evaluator identity.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -163,6 +184,7 @@ impl HwmRecord {
             "score.direction disagrees with the metric table"
         );
         ensure!(self.score.value.is_finite(), "score is not finite");
+        self.cost.validate()?;
         ensure!(
             self.genome.program_sha256 == crate::canon::sha256_hex(self.genome.dsl.as_bytes()),
             "program_sha256 does not hash the DSL"
@@ -263,6 +285,9 @@ impl ScoreRecord {
             "direction disagrees with the metric table"
         );
         ensure!(self.value.is_finite(), "value is not finite");
+        if let Some(cost) = &self.cost {
+            cost.validate()?;
+        }
         ensure!(
             is_hex64(&self.receipt_sha256),
             "receipt_sha256 is not 64 hex"

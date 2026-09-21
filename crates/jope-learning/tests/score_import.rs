@@ -14,6 +14,10 @@
 //!   imported file asked for. Those writes also happened *before* the mirror divergence preflight,
 //!   so a run that exits 2 saying "Nothing was written" had already overwritten last week's
 //!   archive.
+//!
+//! Validating the *spelling* of a path is not validating where writing to it goes, so the descent
+//! also refuses a symlink anywhere on the archive path — and refuses it before creating anything,
+//! which `an_archive_path_through_a_symlink_is_refused_before_anything_is_created` pins.
 
 mod common;
 
@@ -294,4 +298,72 @@ fn one_unsafe_version_refuses_the_whole_import() {
         Vec::<String>::new(),
         "the good version was archived before the bad one was refused"
     );
+}
+
+// --------------------------------------------------------------------------------------
+// A name check cannot see a symlink. The descent must refuse one *before* it creates anything.
+// --------------------------------------------------------------------------------------
+
+/// Fails on the pre-fix code at the second assertion: `archive_dir` returned the containment
+/// refusal — "Nothing was written" — having already run `create_dir_all` straight through the
+/// symlink and created `<outside-state>/version` on the far side of it.
+#[cfg(unix)]
+#[test]
+fn an_archive_path_through_a_symlink_is_refused_before_anything_is_created() {
+    use jope_learning::state::State;
+
+    let tmp = tempfile::tempdir().unwrap();
+    let outside = tmp.path().join("outside-state");
+    fs::create_dir_all(&outside).unwrap();
+    let state = State::at(&tmp.path().join("state"));
+    let parent = state.root().join("scores/sotarena");
+    fs::create_dir_all(&parent).unwrap();
+    std::os::unix::fs::symlink(&outside, parent.join("track")).unwrap();
+
+    let err = state
+        .archive_dir("sotarena", "track", "version")
+        .expect_err("an archive path through a symlink was accepted");
+    // The defect first: the pre-fix code *did* return this error — after `create_dir_all` had
+    // already run straight through the symlink.
+    assert!(
+        !outside.join("version").exists(),
+        "a refusal saying nothing was written created {} on the far side of the symlink",
+        outside.join("version").display()
+    );
+    assert_eq!(
+        files(&outside),
+        Vec::<String>::new(),
+        "the refused call wrote outside the state root"
+    );
+    let msg = format!("{err:#}");
+    assert!(
+        msg.contains("symlink") && msg.contains("Nothing was written"),
+        "expected the symlink refusal, got: {msg}"
+    );
+
+    // A dangling symlink is refused the same way, and still creates nothing.
+    fs::remove_file(parent.join("track")).unwrap();
+    std::os::unix::fs::symlink(outside.join("nowhere"), parent.join("track")).unwrap();
+    let err = state
+        .archive_dir("sotarena", "track", "version")
+        .expect_err("a dangling symlink on the archive path was accepted");
+    assert!(format!("{err:#}").contains("symlink"), "{err:#}");
+    assert!(!outside.join("nowhere").exists());
+
+    // A plain file where a directory must go is refused too, rather than half-created.
+    fs::remove_file(parent.join("track")).unwrap();
+    fs::write(parent.join("track"), b"not a directory\n").unwrap();
+    let err = state
+        .archive_dir("sotarena", "track", "version")
+        .expect_err("a file on the archive path was accepted");
+    assert!(format!("{err:#}").contains("not a directory"), "{err:#}");
+
+    // The control: with the obstruction gone the same call succeeds and lands inside the root.
+    fs::remove_file(parent.join("track")).unwrap();
+    let dir = state.archive_dir("sotarena", "track", "version").unwrap();
+    assert_eq!(dir, state.root().join("scores/sotarena/track/version"));
+    assert!(dir.is_dir());
+    assert!(fs::canonicalize(&dir)
+        .unwrap()
+        .starts_with(fs::canonicalize(state.root()).unwrap()));
 }

@@ -430,23 +430,54 @@ fn push_mirror(m: &Mirror, state: &State, ledger: &Ledger) -> Result<MirrorRepor
                 // thing this push must not do: the batch object would go up, `HEAD.json` would
                 // move past it, and from then on `sync::plan` never returns that batch again — the
                 // gap is outside every future backfill window and therefore permanent, while every
-                // later push reports success. So: publish it only if the mirror already holds it
-                // (then the mirror's copy is still self-contained and there is nothing to upload),
-                // and otherwise fail before the batch object is written, leaving the mirror's tip
-                // where it was so that a push made after the blob is restored closes the same gap.
-                None if m.get(&State::blob_rel(sha))?.is_some() => report.existed += 1,
-                None => bail!(
-                    "{}: names record {sha}, and neither this host's blob store ({}) nor the \
-                     mirror at {} holds it. Refusing to publish a batch the mirror could not \
-                     back: the mirror's HEAD.json would name a record nobody can supply, and \
-                     because the backfill window is derived from that HEAD.json alone, no later \
-                     push would ever come back for it. The mirror's tip is unchanged; restore \
-                     the blob (`hwm verify` lists it as `blob-missing`) from a bundle or by \
-                     re-ingesting its source, then re-run this push.",
-                    path.display(),
-                    state.blob_path(sha).display(),
-                    m.url
-                ),
+                // later push reports success. So the mirror is asked whether it can back the
+                // record itself, and otherwise the push fails before the batch object is written,
+                // leaving the mirror's tip where it was so that a push made after the blob is
+                // restored closes the same gap.
+                //
+                // "Can back it" means the mirror's bytes *hash to the sha the event names*, not
+                // merely that something exists at that key. Every other path into this store
+                // proves identity — `State::read_blob` re-hashes what it reads and
+                // `Mirror::put_immutable` compares bytes on an `Exists` — and this one must too,
+                // because it is the only path that accepts an object it did not itself write.
+                // Presence alone would let one wrong object under the immutable key launder
+                // itself into a published, HEAD-reachable batch that no reader can verify.
+                None => {
+                    let rel = State::blob_rel(sha);
+                    let refuse = |detail: String| {
+                        anyhow!(
+                            "{}: names record {sha}, and this host's blob store ({}) does not \
+                             hold it — {detail}. Refusing to publish a batch the mirror could \
+                             not back: the mirror's HEAD.json would name a record no reader can \
+                             verify, and because the backfill window is derived from that \
+                             HEAD.json alone, no later push would ever come back for it. The \
+                             mirror's tip and its existing bytes are unchanged; restore the blob \
+                             (`hwm verify` lists it as `blob-missing`) from a bundle or by \
+                             re-ingesting its source, then re-run this push.",
+                            path.display(),
+                            state.blob_path(sha).display(),
+                        )
+                    };
+                    match m.get(&rel)? {
+                        None => bail!(refuse(format!("and neither does the mirror at {}", m.url))),
+                        Some(theirs) => {
+                            let got = sha256_hex(&theirs);
+                            if got != *sha {
+                                bail!(refuse(format!(
+                                    "and the {} bytes the mirror at {} holds at {rel} hash to \
+                                     {got}, not {sha}, so that object is not this record. It is \
+                                     left exactly as it is — an immutable key is never \
+                                     overwritten to make a push succeed",
+                                    theirs.len(),
+                                    m.url
+                                )));
+                            }
+                            // The mirror's copy is the record, so the batch is already backed
+                            // there and there is nothing to upload for it.
+                            report.existed += 1;
+                        }
+                    }
+                }
             }
             if e.outcome == "accepted" {
                 keys.insert(e.pointer.clone());
@@ -627,9 +658,11 @@ pub fn verify(state: &State, event_dirs: &[PathBuf]) -> Result<VerifyReport> {
             detail,
         });
     };
-    // Lenient parse: a malformed event is a break, not an abort.
+    // Lenient throughout: a malformed event is a break, not an abort, and so is a batch that
+    // cannot be read at all — `ledger.verify()` above has already recorded an `unreadable` break
+    // for each of those, so reading the rest adds diagnosis instead of replacing it.
     let mut events = Vec::new();
-    for (i, v) in ledger.events()?.iter().enumerate() {
+    for (i, v) in ledger.events_readable()?.iter().enumerate() {
         match parse_event(i, v) {
             Ok(e) => events.push(e),
             Err(err) => brk(

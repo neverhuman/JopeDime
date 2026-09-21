@@ -21,8 +21,10 @@
 //!
 //! That ordering covers a blob missing from the *mirror*. It does not cover a blob missing from
 //! the *local store*, which the push used to skip in silence —
-//! `a_blob_the_local_store_cannot_supply_is_never_published_over` is that case, and
-//! `a_blob_only_the_mirror_still_has_does_not_wedge_the_push` is its negative control.
+//! `a_blob_the_local_store_cannot_supply_is_never_published_over` is that case,
+//! `a_blob_only_the_mirror_still_has_does_not_wedge_the_push` is its negative control, and
+//! `a_wrong_object_under_the_immutable_key_cannot_stand_in_for_the_blob` is the boundary between
+//! the two: the mirror backs the batch only when its bytes *are* the record.
 
 mod common;
 
@@ -525,8 +527,10 @@ fn a_blob_the_local_store_cannot_supply_is_never_published_over() {
         String::from_utf8_lossy(&r.stdout)
     );
     assert!(
-        r.stderr.contains(&lost) && r.stderr.contains("nor the mirror"),
-        "the refusal must name the blob and say who cannot supply it, got: {}",
+        r.stderr.contains(&lost)
+            && r.stderr
+                .contains("Refusing to publish a batch the mirror could not back"),
+        "the refusal must name the blob it could not supply, got: {}",
         r.stderr
     );
     assert_eq!(
@@ -599,4 +603,83 @@ fn a_blob_only_the_mirror_still_has_does_not_wedge_the_push() {
     );
     assert_eq!(named_blobs_missing_from(&mirror_dir), Vec::<String>::new());
     assert_eq!(rep.accepted, 1);
+}
+
+/// The mirror-only fallback must prove **identity**, not presence.
+///
+/// `read_blob` re-hashes what it reads and `put_immutable` compares bytes on an `Exists`, so every
+/// other way a record enters this system is checked against the sha that names it. The fallback
+/// was the one path that accepted an object this host never wrote, and it accepted it on the
+/// strength of a successful GET alone. One wrong object under the immutable key — a truncated
+/// upload, a key reused by an unrelated writer, a restore from the wrong bundle — would then
+/// launder itself into a published, `HEAD`-reachable batch that no reader can verify, and
+/// `hwm verify` against the mirror reports `blob-corrupt` for a record the push called backed.
+///
+/// Fails on the pre-fix code at the first assertion: the ingest returns `Ok` and the mirror's tip
+/// advances over a batch whose record the mirror does not actually hold.
+#[test]
+fn a_wrong_object_under_the_immutable_key_cannot_stand_in_for_the_blob() {
+    let tmp = tempfile::tempdir().unwrap();
+    let mirror_dir = tmp.path().join("mirror");
+    fs::create_dir_all(&mirror_dir).unwrap();
+    let m = Mirror::open(&format!("file://{}", mirror_dir.display())).unwrap();
+    let state = State::at(&tmp.path().join("state"));
+    let mirror_head = mirror_dir.join("hwm/ledger/HEAD.json");
+
+    // 1. mirrored: the mirror holds batch 1 and the blob it names.
+    hwm::ingest(&state, Some(&m), vec![candidate(0.5, 1)], json!({"k": 1})).unwrap();
+    let head_1 = fs::read(&mirror_head).unwrap();
+    let ledger_1 = tree(&mirror_dir.join("hwm/ledger"));
+
+    // 2. local only: the mirror is a batch behind and has never seen that batch's blob.
+    hwm::ingest(&state, None, vec![candidate(0.4, 2)], json!({"k": 2})).unwrap();
+
+    // 3. the local blob is lost, and something else is sitting under its immutable key on the
+    //    mirror. Nothing on this path re-reads it, so nothing has ever checked it.
+    let sha = jope_learning::canon::sha256_hex(b"d0/cut-0/0.4");
+    fs::remove_file(state.blob_path(&sha)).unwrap();
+    let rel = State::blob_rel(&sha);
+    let wrong = b"wrong bytes under the required immutable key".to_vec();
+    fs::create_dir_all(mirror_dir.join(&rel).parent().unwrap()).unwrap();
+    fs::write(mirror_dir.join(&rel), &wrong).unwrap();
+
+    // 4. the push must refuse: a GET that returns *something* is not proof the mirror can back
+    //    the record.
+    let err = hwm::ingest(&state, Some(&m), vec![candidate(0.3, 3)], json!({"k": 3}))
+        .expect_err("mirror blob presence was taken as proof of content identity");
+    let msg = format!("{err:#}");
+    assert!(
+        msg.contains(&sha) && msg.contains("not this record"),
+        "the refusal must name the record and say the mirror's object is not it, got: {msg}"
+    );
+    assert_eq!(
+        fs::read(&mirror_head).unwrap(),
+        head_1,
+        "the mirror's tip moved over a batch the mirror cannot back"
+    );
+    assert_eq!(
+        tree(&mirror_dir.join("hwm/ledger")),
+        ledger_1,
+        "a batch object went up although its record could not be supplied"
+    );
+    // The refusal does not "repair" the mirror by overwriting an immutable key: whatever is there
+    // is another writer's business, and this host has nothing to replace it with anyway.
+    assert_eq!(
+        fs::read(mirror_dir.join(&rel)).unwrap(),
+        wrong,
+        "the push overwrote an immutable key to make itself succeed"
+    );
+
+    // 5. restore the real blob locally. The correct bytes now conflict with the wrong object, and
+    //    `put_immutable` refuses that too rather than silently replacing it — the push still fails
+    //    closed, and still leaves the tip and the foreign object alone.
+    state.put_blob(b"d0/cut-0/0.4").unwrap();
+    let err = hwm::ingest(&state, Some(&m), vec![candidate(0.25, 4)], json!({"k": 4}))
+        .expect_err("an immutable key holding different bytes must not be overwritten");
+    assert!(
+        format!("{err:#}").contains("different bytes"),
+        "expected the immutable-collision refusal, got: {err:#}"
+    );
+    assert_eq!(fs::read(&mirror_head).unwrap(), head_1);
+    assert_eq!(fs::read(mirror_dir.join(&rel)).unwrap(), wrong);
 }
