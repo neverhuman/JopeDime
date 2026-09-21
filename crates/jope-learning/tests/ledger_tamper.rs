@@ -10,6 +10,9 @@
 //! * a removed tail with `HEAD.json` rewritten to match is *not* detected, and the module doc used
 //!   to claim it was. The doc is now accurate and this file pins the real behaviour, including the
 //!   external anchor that does catch it.
+//!
+//! And one way the *export* could launder a broken chain: `hwm freeze` used to take `HEAD.json` at
+//! its word and stamp it into a manifest as provenance.
 
 mod common;
 
@@ -267,4 +270,92 @@ fn a_removed_tail_is_invisible_locally_and_refused_by_the_mirror() {
         serde_json::from_slice(&fs::read(mirror_dir.join("hwm/ledger/HEAD.json")).unwrap())
             .unwrap();
     assert_eq!(mirror_head.batches, 3);
+}
+
+/// `hwm freeze` must verify the chain before exporting from it.
+///
+/// `freeze` was the only path in the crate that wrote without a chain check: `ingest` and
+/// `scores::append` call `require_intact`, `find` and `rows` go through the fail-closed
+/// `events()`, and `freeze` parsed `HEAD.json`, walked the pointers and wrote a manifest carrying
+/// `batches` and `events_total` it had never checked. The blobs were never the problem —
+/// `read_blob` re-hashes each one it copies — but a frozen corpus is the artifact a later reader
+/// trusts *without* re-deriving it, and `ledger_head` in that manifest reads as provenance for the
+/// chain it came from. That is precisely the claim a corpus consumer cannot check for itself.
+///
+/// Fails on the pre-fix code at the first assertion: the export exits `Ok` on a tree whose
+/// `hwm verify` reports breaks, and writes a `manifest.json` stamped with the broken chain's
+/// `batches`/`events_total`.
+#[test]
+fn freeze_refuses_to_export_from_a_chain_it_cannot_walk() {
+    let tmp = tempfile::tempdir().unwrap();
+    let state = State::at(&tmp.path().join("state"));
+    for (i, v) in [0.5, 0.4, 0.3].into_iter().enumerate() {
+        hwm::ingest(
+            &state,
+            None,
+            vec![candidate(v, i as u64 + 1)],
+            json!({"k": i}),
+        )
+        .unwrap();
+    }
+    let out = tmp.path().join("freeze");
+
+    // The control first: a clean tree exports, so the check is not a blanket refusal.
+    let clean = hwm::freeze(&state, &out, false).unwrap();
+    assert_eq!((clean.pointers, clean.included), (1, 1));
+    assert!(out.join("manifest.json").is_file());
+    fs::remove_dir_all(&out).unwrap();
+
+    // Break the chain the way a tamper does, and confirm the verifier sees it.
+    let batches = Ledger::open(state.root(), "hwm").batches().unwrap();
+    forge_event_count(&batches[1].1, "18446744073709551615");
+    let report = hwm::verify(&state, &[]).unwrap();
+    assert!(
+        !report.ok() && report.total_breaks() > 0,
+        "the fixture is only meaningful if verify reports breaks"
+    );
+
+    // The export must refuse, and say what it refused and why.
+    let err = hwm::freeze(&state, &out, false)
+        .expect_err("a corpus was exported from a chain this host cannot walk");
+    let msg = format!("{err:#}");
+    for needle in [
+        "refusing to freeze into",
+        "nothing was written",
+        "hwm verify",
+        "chain broken",
+        "break(s)",
+        "unreadable",
+    ] {
+        assert!(
+            msg.contains(needle),
+            "the refusal must be legible — missing {needle:?} in: {msg}"
+        );
+    }
+    assert!(
+        !out.join("manifest.json").exists(),
+        "a manifest was written for a chain that does not verify"
+    );
+
+    // Through the binary, the same: exit 2, not a silent 0 with an exported corpus.
+    let out2 = tmp.path().join("freeze-cli");
+    let r = jl(
+        state.root(),
+        &["hwm", "freeze", "--out", out2.to_str().unwrap()],
+    );
+    assert_eq!(
+        r.status,
+        2,
+        "hwm freeze exited {} on a broken chain; stdout: {}",
+        r.status,
+        String::from_utf8_lossy(&r.stdout)
+    );
+    assert!(r.stderr.contains("refusing to freeze into"), "{}", r.stderr);
+    assert!(
+        !out2.join("manifest.json").exists(),
+        "the CLI wrote a manifest for a chain that does not verify"
+    );
+    // `hwm verify` still works on the same tree — the export refusing must not take the
+    // diagnostic down with it.
+    assert_eq!(jl(state.root(), &["hwm", "verify"]).status, 1);
 }

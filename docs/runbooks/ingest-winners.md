@@ -104,15 +104,40 @@ blob, compares every `current.json` on disk with the ledger, and — for champio
 the engine chain from `current.json` back to `improvement_number 0` through the event files,
 proving each `event-<sha>.json` re-serialises to its own name.
 
-## 6. Inspect
+## 6. Inspect (read-only)
 
 ```sh
 $JL hwm show <dataset_hash> [--task regression] [--cut <cut_id>] [--raw]   # --raw = the original bytes
 $JL hwm find <identity_sha256 | Identity::key()>
 $JL hwm status ; $JL scores status
 $JL scores query --best-per-dataset [--version tabular-regression-v2]
+$JL hwm blob <sha256>                              # one record's bytes, no provenance claim
+```
+
+`hwm status` is a bare `HEAD.json` read and makes no claim about the chain; `show`, `find` and
+`blob` re-hash whatever they hand you. Use `blob` and `show --raw` to salvage individual records
+from a store that does not verify — they read one record at a time and assert nothing about where
+it came from.
+
+## 7. Export a corpus
+
+```sh
+$JL hwm verify --events …                          # section 5 — must be exit 0 first
 $JL hwm freeze --out <dir> [--include-unbound]     # snapshot restricted to HWM winners
 ```
+
+**This is the export boundary, not an inspection.** `freeze` writes a corpus that later readers
+consume *without* re-deriving it, and the `ledger_head` in its `manifest.json` is a provenance
+claim about the chain it came from. It therefore verifies the batch chain first
+(`require_intact`, the same check `ingest` makes) and exits 2 without writing anything if the
+chain does not walk — there is no `--force`.
+
+That check is the chain, not a clean bill of health for the tree. Run section 5's `hwm verify`
+before publishing a corpus: it additionally re-hashes every blob, replays the per-pointer chains
+and compares every `current.json` against the ledger, so a `pointer-orphan` or a `pointer-stale`
+on an otherwise-intact chain shows up there and not in `freeze`. And a removed tail with
+`HEAD.json` rewritten to match is invisible to both, for the reason given under *Failure modes*
+— only the mirror catches that.
 
 ## Failure modes
 
@@ -131,5 +156,6 @@ $JL hwm freeze --out <dir> [--include-unbound]     # snapshot restricted to HWM 
 | exit 2 `candidate(s) whose score is not a finite number` | a source row carries a NaN or an infinity, which JSON cannot represent and this ledger could never read back | nothing was written — no blob, no batch, no pointer, nothing on the mirror. The error names each candidate and field; fix or drop those rows at the source and re-run |
 | exit 2 `unsafe track_id …` / `unsafe version …` on `scores append` | the imported `scores.csv` names an archive directory that is not a plain path component (absolute, `..`, nested, …) | nothing was written, for any version of that import; correct the `track_id` column in the published results and re-run |
 | `"rows": 0` with `"mirror": {"batches": 0, …}` | every row was a duplicate **and** the mirror was already at this host's tip | a genuine no-op; `"mirror": null` (and only that) means no mirror was configured at all |
+| exit 2 `refusing to freeze into … chain broken: N break(s)` | `hwm freeze` verifies the chain before exporting, and this one does not walk | nothing was written — no blobs copied, no `manifest.json`. Run `hwm verify` for the full report and repair the ledger; a corpus must not carry a `ledger_head` nobody checked. To pull individual records out of a damaged store, use `hwm blob` / `hwm show --raw`, which make no provenance claim |
 | `rows hash to … but the manifest binds …` | the streamed split is not the archived one | check the archive against `SHA256SUMS`; do not pass `--rows` from any other copy |
 | `scan.rejects` non-empty for champions | a file is not a valid `parallel.cut_champion.v1` or its name is not its identity key | inspect; never edit the file — rejected files are a preservation finding |

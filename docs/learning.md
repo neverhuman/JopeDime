@@ -279,3 +279,14 @@ Archive receipts for what *was* preserved (`/home/ubuntu/preserved-archives/2026
 Lineage B is complete and is the canonical loop; its winners are the bound records above and
 are the only ones `hwm freeze` exports by default (`replayable: false` records need
 `--include-unbound`; `sealed` records are never exported).
+
+`freeze` verifies the batch chain before it exports anything — `require_intact`, the same check
+`ingest` makes — and refuses without writing a blob or a manifest if the chain does not walk.
+This is the export boundary: a frozen corpus is consumed *without* being re-derived, and the
+`ledger_head` in its manifest is a provenance claim about the chain it came from, which is exactly
+the claim its reader cannot check. There is no `--force`; salvage from a damaged store is
+`hwm blob` and `hwm show --raw`, which hand over one record at a time and assert nothing about its
+provenance. That check is the chain and not the whole tree — `hwm verify` additionally re-hashes
+every blob, replays the per-pointer chains and compares every `current.json` against the ledger,
+and the removed-tail limit above applies to both — so `hwm verify` stays the thing to run before
+publishing a corpus.

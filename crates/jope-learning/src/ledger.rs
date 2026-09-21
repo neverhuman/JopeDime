@@ -540,9 +540,15 @@ impl Ledger {
     pub fn require_intact(&self) -> Result<LedgerReport> {
         let r = self.verify()?;
         if !r.ok() {
+            let mut kinds: Vec<&str> = r.breaks.iter().map(|b| b.kind.as_str()).collect();
+            kinds.sort_unstable();
+            kinds.dedup();
             bail!(
-                "{} ledger chain broken: {}",
+                "{} ledger chain broken: {} break(s) [{}] across {} batch(es): {}",
                 self.name,
+                r.breaks.len(),
+                kinds.join(", "),
+                r.batches,
                 r.breaks
                     .iter()
                     .map(|b| format!("{}:{}:{}", b.batch, b.kind, b.detail))
