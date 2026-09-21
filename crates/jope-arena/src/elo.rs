@@ -8,7 +8,7 @@
 //!   order (sorted datasets, sorted method pairs, `np.bincount` sequential adds) and the final
 //!   centering uses numpy's pairwise summation, so ratings match to the last bit up to the
 //!   platform's `exp`.
-//! * [`ratings`] — `/home/ubuntu/sotarena/src/main.rs::ratings`, the Rust reporter's version that
+//! * [`ratings`] — the SOTArena reporter's `src/main.rs::ratings`, the Rust reporter's version that
 //!   aggregates each pair's sufficient statistics (match count, outcome sum) before the same
 //!   diagonal-Newton iteration. Identical in exact arithmetic; differs by floating-point noise.
 //!
