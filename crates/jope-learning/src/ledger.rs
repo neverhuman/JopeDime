@@ -54,13 +54,6 @@ pub struct BatchReceipt {
     pub sha256: String,
     pub events: u64,
     pub prev_batch_sha256: Option<String>,
-    /// The exact bytes of `HEAD.json` as they stood *before* this batch was appended, read under
-    /// the ledger lock (`None` = the ledger had no `HEAD.json` yet). A mirror push uses this as the
-    /// expected-previous value of the remote `HEAD.json`, so a remote tip that some other writer
-    /// has already moved fails the write instead of being clobbered. Not part of the CLI's JSON
-    /// report.
-    #[serde(skip)]
-    pub prev_head_bytes: Option<Vec<u8>>,
 }
 
 #[derive(Clone, Debug, Serialize, Default)]
@@ -83,6 +76,20 @@ pub struct Break {
     pub batch: String,
     pub kind: String,
     pub detail: String,
+}
+
+/// The result of comparing a mirror's `HEAD.json` against the local chain
+/// ([`Ledger::mirror_position`]).
+#[derive(Clone, Debug)]
+pub enum MirrorPosition {
+    /// The mirror's tip is this chain's tip (or both are empty): nothing to backfill.
+    UpToDate,
+    /// The mirror's tip is a batch of this chain, or the mirror has no `HEAD.json` at all.
+    /// `missing` is every local batch after it, oldest first — the gap to upload before the
+    /// pointer moves.
+    Behind { missing: Vec<(String, PathBuf)> },
+    /// The mirror names a chain this host cannot continue. Refuse; do not overwrite.
+    Diverged { detail: String },
 }
 
 pub struct Ledger {
@@ -159,11 +166,6 @@ impl Ledger {
             .open(self.root.join(".lock"))?;
         lock.lock()?;
         let head_path = self.root.join("HEAD.json");
-        let prev_head_bytes = if head_path.exists() {
-            Some(fs::read(&head_path)?)
-        } else {
-            None
-        };
         let head = self.head()?;
         let ulid = ulid::Ulid::new().to_string();
         let ts = now_unix();
@@ -209,7 +211,6 @@ impl Ledger {
             sha256: sha,
             events: events.len() as u64,
             prev_batch_sha256: seal.prev_batch_sha256,
-            prev_head_bytes,
         })
     }
 
@@ -407,6 +408,83 @@ impl Ledger {
         }
         report.head = head;
         Ok(report)
+    }
+
+    /// Where a mirror's `HEAD.json` sits relative to *this host's* chain.
+    ///
+    /// This is the whole of the push path's safety argument, so it is deliberately narrow: the
+    /// only thing that may be caught up is a mirror whose tip is a batch **this host already
+    /// has**, at the position and with the file hash the mirror's own `HEAD.json` claims.
+    /// Anything else — a tip this host cannot produce, a tip whose bytes differ, a tip that
+    /// claims a different depth — is a real divergence and is refused. `head_bytes` is a fresh
+    /// read of the key that is about to be written; using it as the expected-previous value is
+    /// only sound *because* this function proves it is an ancestor of the local chain first.
+    pub fn mirror_position(&self, head_bytes: Option<&[u8]>) -> Result<MirrorPosition> {
+        let batches = self.batches()?;
+        let diverged = |detail: String| Ok(MirrorPosition::Diverged { detail });
+        let Some(bytes) = head_bytes else {
+            // The mirror has no HEAD for this ledger: everything local is missing.
+            return Ok(if batches.is_empty() {
+                MirrorPosition::UpToDate
+            } else {
+                MirrorPosition::Behind { missing: batches }
+            });
+        };
+        let head: Head = match serde_json::from_slice(bytes) {
+            Ok(h) => h,
+            Err(e) => {
+                return diverged(format!(
+                    "its HEAD.json does not parse as {HEAD_SCHEMA}: {e}"
+                ))
+            }
+        };
+        if head.schema != HEAD_SCHEMA {
+            return diverged(format!("its HEAD.json has schema {}", head.schema));
+        }
+        if head.ledger != self.name {
+            return diverged(format!(
+                "its HEAD.json is for ledger {}, not {}",
+                head.ledger, self.name
+            ));
+        }
+        if head.path.rsplit('/').next().unwrap_or(&head.path) != format!("{}.jsonl", head.batch) {
+            return diverged(format!(
+                "its HEAD.json names batch {} at path {}",
+                head.batch, head.path
+            ));
+        }
+        let Some(i) = batches.iter().position(|(rel, _)| rel == &head.path) else {
+            return diverged(format!(
+                "its tip {} is not a batch of this host's {} chain (local tip {})",
+                head.batch,
+                self.name,
+                batches
+                    .last()
+                    .map_or("(empty)".to_string(), |(rel, _)| rel.clone())
+            ));
+        };
+        let sha = sha256_hex(&fs::read(&batches[i].1)?);
+        if sha != head.sha256 {
+            return diverged(format!(
+                "its tip {} hashes to {} there and {sha} here",
+                head.batch, head.sha256
+            ));
+        }
+        if head.batches != (i + 1) as u64 {
+            return diverged(format!(
+                "its tip {} is batch {} of this host's chain but its HEAD.json counts {}",
+                head.batch,
+                i + 1,
+                head.batches
+            ));
+        }
+        Ok(if i + 1 == batches.len() {
+            MirrorPosition::UpToDate
+        } else {
+            MirrorPosition::Behind {
+                missing: batches[i + 1..].to_vec(),
+            }
+        })
     }
 
     /// Fail unless the chain verifies (used before any append in strict mode).

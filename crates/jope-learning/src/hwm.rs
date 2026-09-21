@@ -17,9 +17,6 @@ use std::time::Instant;
 pub const EVENT_SCHEMA: &str = "jope.hwm-event/v1";
 pub const FREEZE_SCHEMA: &str = "jope.hwm-freeze/v1";
 
-/// A pointer to move: key, new bytes, the bytes it replaces (None = it did not exist).
-pub type PointerUpdate = (PointerKey, Vec<u8>, Option<Vec<u8>>);
-
 /// One record proposed to the ledger with the bytes that become its blob.
 pub struct Candidate {
     pub record: HwmRecord,
@@ -138,6 +135,12 @@ pub fn ingest(
     let _lock = state.lock("hwm")?;
     let ledger = Ledger::open(state.root(), "hwm");
     ledger.require_intact()?;
+    // Before a single local byte moves: if the mirror has diverged from this host's chain there is
+    // nothing this run can do about it, and appending anyway only widens the gap and leaves batch
+    // objects on the mirror that its own HEAD cannot reach.
+    if let Some(m) = mirror {
+        crate::sync::preflight(m, &ledger)?;
+    }
     candidates.sort_by(|a, b| {
         (a.record.ts_unix, &a.record.identity_sha256)
             .cmp(&(b.record.ts_unix, &b.record.identity_sha256))
@@ -147,7 +150,6 @@ pub fn ingest(
     let mut events = Vec::with_capacity(candidates.len());
     let mut rejects = Vec::new();
     let mut blobs_written = 0u64;
-    let mut new_blobs: Vec<(String, Vec<u8>)> = Vec::new();
     let ts = now_unix();
     for (seq, mut c) in candidates.into_iter().enumerate() {
         let blob_sha = sha256_hex(&c.blob);
@@ -159,7 +161,6 @@ pub fn ingest(
         );
         if !state.blob_path(&blob_sha).exists() {
             blobs_written += 1;
-            new_blobs.push((blob_sha.clone(), c.blob.clone()));
         }
         state.put_blob(&c.blob)?;
         let key = PointerKey::of(&c.record);
@@ -226,7 +227,6 @@ pub fn ingest(
     };
     // Pointers move only after their events are durable.
     let mut pointers_written = 0u64;
-    let mut pointer_updates: Vec<PointerUpdate> = Vec::new();
     for (key, record) in &current {
         let before = on_disk.get(key).cloned().flatten();
         if before.as_ref().map(|r| &r.provenance.record_sha256)
@@ -234,24 +234,15 @@ pub fn ingest(
         {
             continue;
         }
-        let prev_bytes = before.as_ref().map(pointer_bytes).transpose()?;
         state.write_pointer(
             key,
             record,
             before.as_ref().map(|r| r.provenance.record_sha256.as_str()),
         )?;
         pointers_written += 1;
-        pointer_updates.push((key.clone(), pointer_bytes(record)?, prev_bytes));
     }
     let mirror_report = match mirror {
-        Some(m) => Some(push_mirror(
-            m,
-            state,
-            &ledger,
-            &new_blobs,
-            batch.as_ref(),
-            &pointer_updates,
-        )?),
+        Some(m) => Some(push_mirror(m, state, &ledger)?),
         None => None,
     };
     Ok(IngestReport {
@@ -268,51 +259,126 @@ pub fn ingest(
     })
 }
 
-fn pointer_bytes(record: &HwmRecord) -> Result<Vec<u8>> {
-    let mut b = serde_json::to_vec_pretty(record)?;
-    b.push(b'\n');
-    Ok(b)
+/// For every pointer, the `record_sha256`s this host's ledger accepted at it, oldest first. The
+/// only evidence that a pointer the mirror holds is an *earlier state of ours* rather than another
+/// host's.
+fn accepted_history(ledger: &Ledger) -> Result<BTreeMap<PointerKey, Vec<String>>> {
+    let mut out: BTreeMap<PointerKey, Vec<String>> = BTreeMap::new();
+    for v in ledger.events()? {
+        let e: HwmEvent = serde_json::from_value(v).context("parse hwm event")?;
+        if e.outcome == "accepted" {
+            out.entry(e.pointer)
+                .or_default()
+                .push(e.record.provenance.record_sha256);
+        }
+    }
+    Ok(out)
 }
 
-fn push_mirror(
-    m: &Mirror,
-    state: &State,
-    ledger: &Ledger,
-    blobs: &[(String, Vec<u8>)],
-    batch: Option<&crate::ledger::BatchReceipt>,
-    pointers: &[PointerUpdate],
-) -> Result<MirrorReport> {
-    use jope_datasets::store::PutOutcome;
+/// Bring the mirror up to this host's tip: the ledger batches it is missing, the blobs those
+/// batches name, and the `current.json` pointers they moved.
+///
+/// Everything is derived from the batches [`crate::sync::push`] backfilled rather than from what
+/// this one run happened to write, so a mirror left behind by an earlier local-only ingest is
+/// caught up completely — batches, blobs and pointers — instead of being wedged for ever.
+///
+/// Deliberately *not* every pointer: the real corpus has ~12k of them and each would cost a GET
+/// per push. A pointer whose own write failed after `HEAD.json` moved therefore stays stale on the
+/// mirror until some later batch accepts a record at it. That is staleness, not a wedge — the next
+/// accepted event at that pointer catches it up under the same ancestor rule — and it is visible,
+/// because the mirror's pointer and the mirror's ledger disagree.
+fn push_mirror(m: &Mirror, state: &State, ledger: &Ledger) -> Result<MirrorReport> {
     let mut report = MirrorReport {
         url: m.url.clone(),
         ..Default::default()
     };
-    let mut count = |o: PutOutcome| match o {
-        PutOutcome::Created => report.created += 1,
-        PutOutcome::Exists => report.existed += 1,
-    };
-    for (sha, bytes) in blobs {
-        count(m.put_immutable(&State::blob_rel(sha), bytes)?);
+    let plan = crate::sync::plan(m, ledger)?;
+    let backfilled = crate::sync::push(m, ledger, plan, &mut report)?;
+    // Blobs are content-addressed and immutable, so pushing one the mirror already has is a
+    // no-op; pushing every record the backfilled batches name is what keeps the mirror's ledger
+    // self-contained (`hwm verify` reads a blob per event).
+    let mut keys: BTreeSet<PointerKey> = BTreeSet::new();
+    for (_, path) in &backfilled {
+        let (events, _, _, _) = Ledger::read_batch(path)?;
+        for v in events {
+            let e: HwmEvent = serde_json::from_value(v).context("parse hwm event")?;
+            let sha = &e.record.provenance.record_sha256;
+            if let Some(bytes) = state.read_blob(sha)? {
+                report.count(m.put_immutable(&State::blob_rel(sha), &bytes)?);
+            }
+            if e.outcome == "accepted" {
+                keys.insert(e.pointer);
+            }
+        }
     }
-    if let Some(b) = batch {
-        let rel = format!("{}/ledger/{}", ledger.name(), b.path);
-        count(m.put_immutable(&rel, &fs::read(ledger.root().join(&b.path))?)?);
-        let head_rel = format!("{}/ledger/HEAD.json", ledger.name());
-        let head_bytes = fs::read(ledger.root().join("HEAD.json"))?;
-        // The expected-previous value is the LOCAL pre-append HEAD, captured under the ledger
-        // lock — never a fresh read of the key we are about to write, which would make the
-        // precondition self-satisfying and the PUT last-writer-wins. A second host that appended
-        // its own ULID-named batch has already moved the mirror's HEAD, so this fails closed
-        // instead of orphaning that batch.
-        m.put_pointer(&head_rel, &head_bytes, b.prev_head_bytes.as_deref())?;
+    let mut history: Option<BTreeMap<PointerKey, Vec<String>>> = None;
+    for key in &keys {
+        let local_bytes = match fs::read(state.pointer_path(key)?) {
+            Ok(b) => b,
+            // A pointer named by an accepted event but absent on disk is a local break, which
+            // `hwm verify` reports as `pointer-missing`; the push has nothing to copy.
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(e) => return Err(e).with_context(|| format!("read {}", key.rel())),
+        };
+        let observed = m.get(&key.rel())?;
+        if observed.as_deref() == Some(local_bytes.as_slice()) {
+            continue;
+        }
+        if let Some(theirs) = &observed {
+            let hist = match &history {
+                Some(h) => h,
+                None => history.insert(accepted_history(ledger)?),
+            };
+            check_pointer_ancestor(m, key, theirs, &local_bytes, hist.get(key))?;
+        }
+        m.put_pointer(&key.rel(), &local_bytes, observed.as_deref())?;
         report.pointers += 1;
     }
-    for (key, bytes, prev) in pointers {
-        m.put_pointer(&key.rel(), bytes, prev.as_deref())?;
-        report.pointers += 1;
-    }
-    let _ = state;
     Ok(report)
+}
+
+/// The mirror's copy of a pointer may only be replaced when it is an *earlier* state of that
+/// pointer on this host's chain (or the same record). Anything else is another host's decision and
+/// overwriting it would lose a record that is the tip of a chain we do not have.
+fn check_pointer_ancestor(
+    m: &Mirror,
+    key: &PointerKey,
+    theirs_bytes: &[u8],
+    ours_bytes: &[u8],
+    history: Option<&Vec<String>>,
+) -> Result<()> {
+    let rel = key.rel();
+    let refuse = |detail: String| -> anyhow::Error {
+        anyhow::anyhow!(
+            "{rel}: the mirror at {} holds a record this host's ledger never accepted at that \
+             pointer — {detail}. Refusing to overwrite it. Ingest the source that produced it on \
+             this host first, or push to a mirror this host's chain covers.",
+            m.url
+        )
+    };
+    let theirs: HwmRecord = serde_json::from_slice(theirs_bytes)
+        .map_err(|e| refuse(format!("its bytes do not parse as a record: {e}")))?;
+    let ours: HwmRecord =
+        serde_json::from_slice(ours_bytes).context("parse this host's own pointer")?;
+    if theirs.provenance.record_sha256 == ours.provenance.record_sha256 {
+        return Ok(());
+    }
+    let hist = history.map(Vec::as_slice).unwrap_or(&[]);
+    let at = |sha: &str| hist.iter().position(|h| h == sha);
+    match (
+        at(&theirs.provenance.record_sha256),
+        at(&ours.provenance.record_sha256),
+    ) {
+        (Some(t), Some(o)) if t < o => Ok(()),
+        (Some(_), Some(_)) => Err(refuse(format!(
+            "it holds {} which this host's ledger accepted *after* the {} we would write",
+            theirs.provenance.record_sha256, ours.provenance.record_sha256
+        ))),
+        _ => Err(refuse(format!(
+            "it holds record {}, which is not in this host's accepted history for that pointer",
+            theirs.provenance.record_sha256
+        ))),
+    }
 }
 
 /// The ledger's events parsed.

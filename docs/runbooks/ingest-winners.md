@@ -8,13 +8,15 @@ tie against itself and is logged as a rejected event, never dropped).
 ```sh
 cargo build --release -p jope-learning --locked
 JL=target/release/jope-learning
-export JOPE_STATE=/path/to/state            # ADR-0003 default: $XDG_STATE_HOME/jope, else ~/.local/state/jope
+export JOPE_STATE=/path/to/state            # ADR-0003 default: $XDG_STATE_HOME/jope, else ~/.local/state/jope, else <jope_home>/state
 # export JOPE_LEARNING_URL=s3://veox-jopedime-learning-use2   # optional durable mirror
 ```
 
 `--store <url>` / `JOPE_LEARNING_URL` mirrors every batch, blob and pointer through
 `object_store` (`file:///dir` for drills, `s3://` in production, credentials from the
-environment). Without it the local tree is the only copy.
+environment). Without it the local tree is the only copy. Mixing the two is safe: a mirror left
+behind by an unmirrored run (or a failed push) is caught up by the next `--store` run, which
+uploads the batches, blobs and pointers it is missing before moving its `HEAD.json`.
 
 ## 1. Champions (lineage B, `parallel.cut_champion.v1`)
 
@@ -103,5 +105,7 @@ $JL hwm freeze --out <dir> [--include-unbound]     # snapshot restricted to HWM 
 |---|---|---|
 | exit 2 `chain broken` on ingest | a ledger batch or HEAD was altered | nothing is appended; restore the batch from the mirror or the bundle, re-run `verify` |
 | `pointer … changed underneath us` | another writer moved the pointer between decision and write | re-run the ingest (the candidate is re-decided against the new incumbent) |
+| exit 2 `holds a chain this host cannot continue` | the mirror's tip is a batch this host's ledger does not have (another host owns that chain) | nothing was written, locally or on the mirror; re-run without `--store` to record locally, or point `--store` at a mirror this host's chain covers |
+| exit 2 `this host's ledger never accepted at that pointer` | the mirror's `current.json` holds a record from a chain this host has not ingested | ingest that source here first, or push to a mirror this host's chain covers; the batches and `HEAD.json` of that run did land |
 | `rows hash to … but the manifest binds …` | the streamed split is not the archived one | check the archive against `SHA256SUMS`; do not pass `--rows` from any other copy |
 | `scan.rejects` non-empty for champions | a file is not a valid `parallel.cut_champion.v1` or its name is not its identity key | inspect; never edit the file — rejected files are a preservation finding |
