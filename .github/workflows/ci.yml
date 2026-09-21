@@ -22,7 +22,7 @@ jobs:
       inputs: ${{ steps.filter.outputs.inputs }}
     steps:
       - name: Checkout
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v5
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0 (pin unchanged from main; the old comment said v5)
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -50,7 +50,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v5
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0 (pin unchanged from main; the old comment said v5)
         with:
           persist-credentials: false
       - name: Toolchain (from rust-toolchain.toml)
@@ -80,7 +80,7 @@ jobs:
       CARGO_INCREMENTAL: "0"
     steps:
       - name: Checkout
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v5
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0 (pin unchanged from main; the old comment said v5)
         with:
           persist-credentials: false
       - name: Toolchain (from rust-toolchain.toml)
@@ -117,7 +117,7 @@ jobs:
       JOPE_PARITY_STRICT: "1"
     steps:
       - name: Checkout
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v5
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0 (pin unchanged from main; the old comment said v5)
         with:
           persist-credentials: false
       - name: Toolchain (from rust-toolchain.toml)
@@ -132,8 +132,12 @@ jobs:
           for tool in g++ clang++ node python3 rustc; do printf '%s: ' "$tool"; "$tool" --version | head -1; done
       - name: Emitted-code matrix
         run: bash deploy/ci/emitters.sh
-      - name: Strict portable parity (Rust, C++17, C++20, Python, JavaScript)
-        run: "cargo test -p feat-math --locked --lib cxx:: --test portable_parity"
+      # Two invocations: a name filter given once applies to every selected test binary, so the
+      # previous single command ran 0 of the portable_parity tests (found in review of #24).
+      - name: Strict portable parity — cxx helper unit tests
+        run: cargo test -p feat-math --locked --lib -- cxx::
+      - name: Strict portable parity — portable_all_helper_backends_match_bits
+        run: cargo test -p feat-math --locked --test portable_parity
 
   # Committed fixtures: the synthetic datasets verify against their catalog offline and the pinned
   # generator reproduces them byte for byte. Runs whenever datasets/synthetic or the CLI change.
@@ -147,7 +151,7 @@ jobs:
       CARGO_INCREMENTAL: "0"
     steps:
       - name: Checkout
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v5
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0 (pin unchanged from main; the old comment said v5)
         with:
           persist-credentials: false
       - name: Toolchain (from rust-toolchain.toml)
