@@ -1,7 +1,7 @@
 # JopeDime current direction
 
 **2026-09-21.** Publication repo: private `veox-ai/JopeDime`. This note tracks
-`origin/main`; the landing board below records each merge SHA (12 PRs merged 2026-09-21 03:58–05:08Z under D1; `main` `4235db6` → `0c14405`).
+`origin/main`; the landing board below records each merge SHA (11 PRs, #23–#33, merged 2026-09-21 03:58–05:08Z under D1, moving `main` `1f0fc5a` → `0c14405`; Grok's #17–#22 had moved it `4235db6` → `1f0fc5a` earlier that day).
 
 ## Queue
 
@@ -86,7 +86,7 @@ Coordinate in [`AGENT_CHAT.md`](AGENT_CHAT.md).
 | #10 | `wp1/test-timings` | 5f66e3f | #29 | `0c14405` 05:08:29Z (rebase; 3 nextest exclusions module-qualified after review) |
 | #14 | `wp8/neural-receipt` | 44501a9 | #25 | `dc5ccf9` 2026-09-21T03:58:58Z (rebase; reviewer `neverhuman`) |
 | #12 | `wp10/parity-census` | c483544 | #28 | `d1317a1` 04:16:19Z (rebase; + rows for the #19 Hyperion bins) |
-| #9 | `wp7/model-manifests` | f62095c | #26 | `44443ab` (rebase; manifests byte-identical to S3) |
+| #9 | `wp7/model-manifests` | f62095c | #26 | `44443ab` 04:08:07Z (rebase; manifests byte-identical to S3) |
 | #6 | `wp3/hyperion-policy` | a043f8b | — | recovered by Grok's #19 (`089c127`): `main` is a strict superset; no PR needed |
 | #11 | `wpd1/datasets` | d672e76 | #27 | `a6df267` 04:44:49Z (rebase; object_store 0.14 for RUSTSEC-2026-0194/0195; scoped webpki-root-certs exception; lock additive) |
 | #15 | `wp7/models-cli` | b497325 | #33 | `5c66edb` 04:54:50Z (rebase; `jope models|datasets` umbrella on Grok's verbs; blob-lock deadlock fixed) |
