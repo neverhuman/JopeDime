@@ -6,7 +6,7 @@
 #   2. read the fine-grained PAT from the root-0600 file (never exported, never mounted) and ask
 #      GitHub for a single-use JIT config:
 #        POST /repos/<owner>/<repo>/actions/runners/generate-jitconfig
-#        {"name": "xbabe2-<lane>-<stamp>", "runner_group_id": 1, "labels": [...], "work_folder": "/home/runner/work"}   # absolute: a relative path lands on the 4 GB tmpfs home
+#        {"name": "xbabe2-<lane>-<stamp>", "runner_group_id": 1, "labels": [...], "work_folder": "work"}
 #      The response's encoded_jit_config is passed to the container on stdin only;
 #   3. docker run the image with the plan's hardening flags and the named volumes.
 # The container exits when its one job ends; the runner deregisters itself (JIT = ephemeral).
@@ -29,7 +29,7 @@ perms=$(stat -c '%a %U' "$JOPE_RUNNER_PAT_FILE")
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
 name="$JOPE_RUNNER_HOST-$lane-$stamp"
 body=$(jq -nc --arg name "$name" --arg labels "$labels" \
-  '{name:$name, runner_group_id:1, labels:(["self-hosted","linux","x64"] + ($labels|split(","))), work_folder:"/home/runner/work"}')
+  '{name:$name, runner_group_id:1, labels:(["self-hosted","linux","x64"] + ($labels|split(","))), work_folder:"/home/runner/work/$lane"}')
 # The token goes to curl through a config file on a private fd, never on the command line.
 response=$(curl -fsS --retry 3 -X POST \
   -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" \
