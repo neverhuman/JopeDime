@@ -130,7 +130,9 @@ pub fn verify(state: &State) -> Result<VerifyReport> {
         ..Default::default()
     };
     let mut seen = std::collections::BTreeSet::new();
-    for v in ledger.events()? {
+    // Lenient for the same reason as `hwm::verify`: `ledger.verify()` above already reported any
+    // batch that could not be read, and the verifier must survive it to report the rest.
+    for v in ledger.events_readable()? {
         report.rows += 1;
         match serde_json::from_value::<ScoreRecord>(v.clone()) {
             Ok(r) => {

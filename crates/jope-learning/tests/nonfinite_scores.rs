@@ -256,3 +256,112 @@ fn a_poisoned_ledger_names_the_offending_event() {
         2
     );
 }
+
+/// The guard must be symmetric: `cost` is two more IEEE doubles on the way into the same ledgers.
+///
+/// A non-finite *score* makes a record unreadable, which is loud. A non-finite *cost* is worse in
+/// the way that matters: `Option<f64>` serialises NaN to `null` and reads `null` back as `None`,
+/// `row_sha256` still validates, and the number is simply gone with nothing to notice. It is
+/// unreachable today only because `sotarena::parse_line` hardcodes `cost: None` — which is a
+/// property of one source, not of the ledger.
+///
+/// Fails on the pre-fix code at the `ScoreRecord` assertions: `validate()` checked `value` and
+/// never looked at `cost`.
+#[test]
+fn a_non_finite_cost_is_refused_on_both_record_types() {
+    // jope.hwm/v1: the record's own structural check sees both fields...
+    for (field, cost) in [
+        (
+            "cost.runtime_seconds",
+            Cost {
+                runtime_seconds: Some(f64::NAN),
+                search_seconds: None,
+            },
+        ),
+        (
+            "cost.search_seconds",
+            Cost {
+                runtime_seconds: None,
+                search_seconds: Some(f64::INFINITY),
+            },
+        ),
+    ] {
+        let mut r = candidate(0.5, 1).record;
+        r.cost = cost;
+        let err = r
+            .validate()
+            .err()
+            .unwrap_or_else(|| panic!("{field} was accepted by HwmRecord::validate"));
+        assert!(format!("{err:#}").contains(field), "{err:#}");
+    }
+    // ...and a finite cost still validates, so the guard did not become a blanket refusal.
+    let mut ok = candidate(0.5, 1).record;
+    ok.cost = Cost {
+        runtime_seconds: Some(1.5),
+        search_seconds: Some(0.0),
+    };
+    ok.validate().expect("a finite cost must still validate");
+
+    // ...and it is refused at entry, before anything is written.
+    let tmp = tempfile::tempdir().unwrap();
+    let state = State::at(&tmp.path().join("state"));
+    let mut c = candidate(0.5, 1);
+    c.record.cost.search_seconds = Some(f64::NAN);
+    let err = hwm::ingest(&state, None, vec![c], json!({"k": "cost"}))
+        .expect_err("a non-finite cost was admitted");
+    let msg = format!("{err:#}");
+    assert!(
+        msg.contains("cost.search_seconds") && msg.contains("Nothing was written"),
+        "the refusal must name the field, got: {msg}"
+    );
+    assert_eq!(files(state.root()), Vec::<String>::new());
+
+    // jope.score/v1: refused by the row's own structural check, which `scores::append` runs on
+    // every row before it can become an event.
+    let mut row = ScoreRecord {
+        schema: SCORE_SCHEMA.into(),
+        dataset_hash: "019de5d76a718163".into(),
+        cut_id: "0".repeat(64),
+        method_id: "jope-dime".into(),
+        evaluator_sha256: UNBOUND.into(),
+        protocol: "public-development".into(),
+        metric: Metric::Rmse,
+        value: 0.5,
+        direction: Metric::Rmse.direction(),
+        cost: None,
+        benchmark_valid: true,
+        receipt_sha256: "a".repeat(64),
+        run_id: "run".into(),
+        git_sha: UNBOUND.into(),
+        ts_unix: 1,
+        source: ScoreSource {
+            kind: "test".into(),
+            track: None,
+            version: None,
+            status: None,
+            source_kind: None,
+            source_revision: None,
+            source_uri: None,
+            notes: None,
+        },
+        row_sha256: String::new(),
+    };
+    row.row_sha256 = row.compute_row_sha256().unwrap();
+    row.validate().expect("the control row must be valid");
+
+    row.cost = Some(Cost {
+        runtime_seconds: Some(f64::NAN),
+        search_seconds: None,
+    });
+    row.row_sha256 = row.compute_row_sha256().unwrap();
+    let err = row
+        .validate()
+        .expect_err("a score row with a non-finite cost was accepted");
+    assert!(
+        format!("{err:#}").contains("cost.runtime_seconds"),
+        "{err:#}"
+    );
+    // And note *why* it has to be caught here: the row hash does not notice, because the NaN is
+    // already `null` by the time it is hashed.
+    assert_eq!(row.row_sha256, row.compute_row_sha256().unwrap());
+}

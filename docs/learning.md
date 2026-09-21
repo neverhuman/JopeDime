@@ -140,11 +140,30 @@ of the local store first and of the mirror second, and if neither can supply it 
 The tip stays where it was; restore the blob (`hwm verify` lists it as `blob-missing`) and the next
 push closes the same gap.
 
+"The mirror already holds it" means the mirror's bytes *hash to the sha the event names*, not that
+a GET returned something. This is the only path in the crate that accepts an object this host did
+not itself write — `State::read_blob` re-hashes what it reads and `Mirror::put_immutable` compares
+bytes on an `Exists`, and neither is on it — so identity is proved here or nowhere. A wrong object
+under the immutable key (a truncated upload, a restore from the wrong bundle, a key reused by an
+unrelated writer) is refused, the push fails before the batch object is written, and that object is
+left exactly as it is: an immutable key is never overwritten to make a push succeed.
+
 The `current.json` pointers deliberately stay *after* the move: the real corpus has ~12k of them and
-each would cost a GET per push. A pointer whose own write failed therefore stays stale — or absent,
-for a cut the mirror has never held — until the next batch that accepts a record at it, which
-catches it up under the same ancestor rule. That is staleness, not a wedge, and it is visible,
-because the mirror's pointer and the mirror's ledger disagree. Blobs cannot be left that way,
+each would cost a GET per push. A pointer write therefore fails on a mirror whose ledger has
+**already committed**, and the mismatch it leaves outlives the run: the pointer stays stale — or
+absent, for a cut the mirror has never held — until the next batch that *accepts* a record at it,
+which catches it up under the same ancestor rule. A duplicate-only retry does not repair it,
+because it seals a batch of rejects and moves no pointer, so a cut that has stopped improving can
+stay stale indefinitely.
+
+Being explicit about what that costs, because the earlier wording was not: `hwm verify` run against
+that mirror **reports the mismatch** — `pointer-stale`, or `pointer-missing` for a cut it has never
+held — and keeps reporting it while every later push exits 0. That is the verifier working, not a
+verifier that is "unaffected": the ledger is authoritative and complete, the derived index is
+behind it, and both facts are visible. It is an accepted limitation of a single-publisher,
+compare-then-put mirror; moving the pointer writes ahead of the `HEAD.json` move would trade it for
+something worse, because `check_pointer_ancestor` refuses a pointer another host owns and that
+refusal would then wedge the ledger push itself. Blobs cannot be left in this category at all,
 because nothing re-derives them: a later batch names its own records, never the ones already
 committed.
 

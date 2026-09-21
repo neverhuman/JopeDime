@@ -108,20 +108,24 @@ impl State {
         Ok(sha)
     }
 
-    /// `<state>/scores/<source>/<track>/<version>`, with every component proved to be a plain
-    /// path segment *before* the join and the result proved to resolve inside the state root.
+    /// `<state>/scores/<source>/<track>/<version>`, built one component at a time and proved to
+    /// stay inside the state root **before** any of it is created.
     ///
     /// `track` and `version` come from the imported source — the `track_id` column of a published
     /// `scores.csv` and a directory name under the results tree. Neither is this crate's to trust:
     /// an absolute `track_id` makes `Path::join` discard the state root outright, and a `..` one
     /// walks out of it, so the archive and its checksum land wherever the CSV says. The segment
-    /// check refuses both by construction; the canonicalised containment check that follows is the
-    /// belt to its braces, and catches the one thing a name check cannot — a symlink already
-    /// sitting on the archive path and pointing somewhere else.
+    /// check refuses both by construction — a component that cannot contain a separator cannot
+    /// spell an escape.
     ///
-    /// The directory is created here, because containment can only be *proved* of a path that
-    /// exists: `canonicalize` resolves symlinks, and a check that skipped it would be checking the
-    /// spelling of the path rather than where writing to it actually goes.
+    /// A name check is not the whole story, because a directory already on the archive path may be
+    /// a *symlink* out of the tree, and no amount of checking the spelling of a path says where
+    /// writing to it goes. So the descent is explicit: each component is `lstat`ed, a real
+    /// directory is descended into, a missing one is created, and anything else — a symlink, a
+    /// file — is refused. Refusing is only worth anything if it happens first: creating the whole
+    /// path and *then* canonicalising it would have already made a directory on the far side of
+    /// the symlink, which is the same "validate after you mutate" mistake as archiving before the
+    /// divergence preflight. The canonicalised containment check stays as the closing assertion.
     pub fn archive_dir(&self, source: &str, track: &str, version: &str) -> Result<PathBuf> {
         for (what, seg) in [
             ("source", source),
@@ -135,16 +139,35 @@ impl State {
                  `.`, `-` and `_`. Nothing was written. Fix the {what} in the source and re-run."
             );
         }
-        let dir = self
-            .root
-            .join("scores")
-            .join(source)
-            .join(track)
-            .join(version);
-        fs::create_dir_all(&dir)
-            .with_context(|| format!("create archive directory {}", dir.display()))?;
+        // The root has to exist before anything can be proved to be under it.
+        fs::create_dir_all(&self.root)
+            .with_context(|| format!("create state root {}", self.root.display()))?;
         let root = fs::canonicalize(&self.root)
             .with_context(|| format!("canonicalize state root {}", self.root.display()))?;
+        let mut dir = self.root.clone();
+        for seg in ["scores", source, track, version] {
+            dir.push(seg);
+            match fs::symlink_metadata(&dir) {
+                Ok(md) if md.is_dir() => {}
+                Ok(md) => bail!(
+                    "refusing to archive to {}: {} is {}, and every component of the archive \
+                     path must be a real directory inside the state root {} — a symlink there \
+                     would put the write outside it. Nothing was written.",
+                    dir.display(),
+                    dir.display(),
+                    if md.file_type().is_symlink() {
+                        "a symlink"
+                    } else {
+                        "not a directory"
+                    },
+                    root.display()
+                ),
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => fs::create_dir(&dir)
+                    .with_context(|| format!("create archive directory {}", dir.display()))?,
+                Err(e) => return Err(e).with_context(|| format!("stat {}", dir.display())),
+            }
+        }
+        // Closing assertion: nothing between the checks turned the finished path into an escape.
         let real =
             fs::canonicalize(&dir).with_context(|| format!("canonicalize {}", dir.display()))?;
         ensure!(

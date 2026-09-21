@@ -4,8 +4,20 @@
 //! seal line (`jope.ledger-seal/v1`) carrying the sha256 of the event lines, the previous
 //! batch's ULID and the sha256 of the previous batch *file*. `HEAD.json` names the tip. A batch is
 //! written to a temporary file, fsynced and renamed; nothing is ever rewritten. `verify` walks the
-//! batches in ULID order and recomputes every hash, so a tampered, truncated, reordered or
-//! missing batch shows up as a break.
+//! batches in ULID order and recomputes every hash, so an *edited*, reordered, duplicated or
+//! mid-chain-missing batch shows up as a break, as does a `HEAD.json` that disagrees with the tip
+//! it names in batch, file hash, path or counts.
+//!
+//! What it does **not** detect is a tail that was removed *and* `HEAD.json` rewritten to match:
+//! delete the newest batches, point `HEAD.json` at the new last one with its real sha and
+//! corrected counts, and the remaining chain is internally consistent, because `HEAD.json` is the
+//! only anchor and it lives in the directory it anchors. No hash inside the tree can notice
+//! history that is no longer in the tree. Detecting it needs an anchor from outside: today that is
+//! the mirror — [`Ledger::mirror_position`] refuses a mirror whose tip this host's chain no longer
+//! contains, so a truncated host cannot push and is told why — or any external record of the tip.
+//! `verify` reporting zero breaks means "everything here is consistent with everything else here",
+//! which is the strongest thing a self-contained chain can say, and is stated that way rather than
+//! as an integrity guarantee it cannot make.
 
 use crate::canon::sha256_hex;
 use crate::civil::year_month;
@@ -252,6 +264,23 @@ impl Ledger {
         ensure!(seal.schema == SEAL_SCHEMA, "seal schema mismatch");
         let body = &bytes[..last_start];
         let events_sha = sha256_hex(body);
+        // `seal.events` is a `u64` read out of the file being checked for tampering, so it is not
+        // an allocation size until it has been reconciled with what the file can actually hold.
+        // Every event is at least one byte and its newline, so the body bounds the count outright;
+        // a seal claiming `u64::MAX` used to reach `Vec::with_capacity` and abort the process with
+        // `capacity overflow`, which walks straight past `verify`'s careful conversion of a
+        // `read_batch` failure into a `Break` — the one command whose job is to report corruption
+        // died on it, and so did `require_intact` on the write path. Refusing here makes it an
+        // ordinary `unreadable` break, like every other malformed batch.
+        let max_events = (body.len() / 2) as u64;
+        ensure!(
+            seal.events <= max_events,
+            "seal of {} declares {} events, which {} bytes of batch body cannot hold (at most {})",
+            path.display(),
+            seal.events,
+            body.len(),
+            max_events
+        );
         let mut events = Vec::with_capacity(seal.events as usize);
         for (i, line) in text[..last_start].lines().enumerate() {
             events.push(
@@ -260,6 +289,23 @@ impl Ledger {
             );
         }
         Ok((events, seal, file_sha, events_sha))
+    }
+
+    /// Every event of every batch that *can* be read, skipping the batches that cannot.
+    ///
+    /// Only for the verifiers. [`Ledger::verify`] already records an `unreadable` break for each
+    /// batch it could not parse, and the tool whose job is to diagnose a broken ledger is the one
+    /// tool that must not stop at the first break — a forged seal in batch 1 should not hide what
+    /// is wrong with batches 2 to 40. Every other caller uses [`Ledger::events`] and fails closed,
+    /// because a partial read is not a ledger and must never be mistaken for one.
+    pub fn events_readable(&self) -> Result<Vec<Value>> {
+        let mut all = Vec::new();
+        for (_, p) in self.batches()? {
+            if let Ok((events, _, _, _)) = Ledger::read_batch(&p) {
+                all.extend(events);
+            }
+        }
+        Ok(all)
     }
 
     /// All events across all batches in chain order (does not verify).
@@ -273,6 +319,9 @@ impl Ledger {
     }
 
     /// Walk the chain, recomputing every hash.
+    ///
+    /// Self-contained: it compares the tree against itself. See the module docs for the one thing
+    /// that cannot detect — a removed tail with `HEAD.json` rewritten to match — and what does.
     pub fn verify(&self) -> Result<LedgerReport> {
         let mut report = LedgerReport {
             ledger: self.name.clone(),

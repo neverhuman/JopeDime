@@ -15,8 +15,23 @@ export JOPE_STATE=/path/to/state            # ADR-0003 default: $XDG_STATE_HOME/
 `--store <url>` / `JOPE_LEARNING_URL` mirrors every batch, blob and pointer through
 `object_store` (`file:///dir` for drills, `s3://` in production, credentials from the
 environment). Without it the local tree is the only copy. Mixing the two is safe: a mirror left
-behind by an unmirrored run (or a failed push) is caught up by the next `--store` run, which
-uploads the batches, blobs and pointers it is missing before moving its `HEAD.json`.
+behind by an unmirrored run (or a failed push) is caught up by the next `--store` run.
+
+The order inside that push is not uniform, and the difference is what you are reading for when
+something fails. **Content goes up before `HEAD.json`**: for every batch in the gap, the record
+blobs that batch names, then the batch object, and only then the pointer move — so a failure
+anywhere in that part leaves the mirror's tip where it was and costs nothing but a retry. **The
+`current.json` pointers go up *after* `HEAD.json`**, not before it, and only for the pointers the
+backfilled batches moved. A pointer write that fails therefore fails on a mirror whose ledger has
+already committed, and it leaves a mismatch that this run cannot undo: `hwm verify` against that
+mirror reports `pointer-stale` (or `pointer-missing`, for a cut it has never held) until some
+later batch *accepts* a record at that pointer. A duplicate-only retry does not repair it — it
+seals a batch of rejects, which moves no pointer — so the verifier keeps reporting the mismatch
+while every push reports success.
+
+That is an accepted limitation of a single-publisher, compare-then-put mirror, not a bug to work
+around here: the ledger stays authoritative and the stale entry is a derived index. Do not try to
+repair it by hand-editing the mirror's `current.json`.
 
 ## 1. Champions (lineage B, `parallel.cut_champion.v1`)
 
@@ -107,9 +122,12 @@ $JL hwm freeze --out <dir> [--include-unbound]     # snapshot restricted to HWM 
 | `pointer … changed underneath us` | another writer moved the pointer between decision and write | re-run the ingest (the candidate is re-decided against the new incumbent) |
 | exit 2 `holds a chain this host cannot continue` | the mirror's tip is a batch this host's ledger does not have (another host owns that chain) | nothing was written, locally or on the mirror; re-run without `--store` to record locally, or point `--store` at a mirror this host's chain covers |
 | exit 2 `this host's ledger never accepted at that pointer` | the mirror's `current.json` holds a record from a chain this host has not ingested | ingest that source here first, or push to a mirror this host's chain covers; the batches and `HEAD.json` of that run did land |
-| exit 2 `put blobs/sha256/…`, `put <ledger>/…jsonl` or any other object-store error during a `--store` run | the push failed part-way | the local append stands; the mirror's `HEAD.json` did **not** move, so nothing on it is reachable that it cannot back. Re-run the same `--store` ingest: the next push recomputes the same gap and closes it (batches, the blobs they name, the pointers they moved) |
-| the mirror's `current.json` is older than the mirror's own ledger | a pointer write failed after `HEAD.json` moved (pointers are pushed last and not re-listed per run) | disclosed, not a wedge: the next batch that *accepts* a record at that pointer catches it up. To force it, ingest a better record for that cut with `--store`; `hwm verify` against the mirror's ledger is unaffected, because every blob it names is there |
-| exit 2 `names record … and neither this host's blob store … nor the mirror … holds it` | a batch the push was backfilling names a record blob that no longer exists locally and was never mirrored | the mirror's tip did **not** move and nothing was published. `hwm verify` lists the same record as `blob-missing`; restore it from a bundle or re-ingest its source, then re-run the `--store` push — it recomputes the same gap and closes it |
+| exit 2 `put blobs/sha256/…` or `put <ledger>/…jsonl` during a `--store` run — a **pre-`HEAD`** content failure | the push failed while uploading a blob or a batch object, which both happen before the pointer move | the local append stands; the mirror's `HEAD.json` did **not** move, so nothing reachable from it is unbacked and `hwm verify` against the mirror is clean. Re-run the same `--store` ingest: the next push recomputes the same gap and closes it |
+| exit 2 `put hwm/<task>/…/current.json` or `mirror pointer changed` — a **post-`HEAD`** pointer failure | the push failed *after* `HEAD.json` committed; pointers go up last | the mirror's ledger is committed and correct, but its `current.json` index is now behind it. `hwm verify` against that mirror reports `pointer-stale` (or `pointer-missing`) and will keep reporting it: a plain retry re-runs the same duplicate rows, seals a batch of rejects and moves no pointer. Re-running is safe but does **not** repair the index; only a batch that *accepts* a record at that cut does. Do not hand-edit the mirror's `current.json` |
+| the mirror's `current.json` is older than the mirror's own ledger | the same post-`HEAD` pointer failure, seen later | accepted limitation, not a wedge, and **visible**: `hwm verify` against the mirror reports `pointer-stale` for it. The ledger stays authoritative. To clear it, ingest a genuinely better record for that cut with `--store`; a cut that has stopped improving can stay stale indefinitely |
+| exit 2 `names record … does not hold it — and neither does the mirror` | a batch the push was backfilling names a record blob that no longer exists locally and was never mirrored | the mirror's tip did **not** move and nothing was published. `hwm verify` lists the same record as `blob-missing`; restore it from a bundle or re-ingest its source, then re-run the `--store` push — it recomputes the same gap and closes it |
+| exit 2 `the … bytes the mirror … holds at blobs/sha256/… hash to … not …, so that object is not this record` | the local blob is gone and the object under its immutable key on the mirror is **not** that record | nothing was published and **the mirror's object was not touched** — an immutable key is never overwritten to make a push succeed. Find out what wrote it before doing anything else; then restore the correct blob locally. Note that a correct local blob will *also* refuse (`exists … with different bytes`) until the wrong object is dealt with by whoever owns it |
+| exit 2 `… is a symlink` / `is not a directory` on `scores append` | a component of `<state>/scores/sotarena/<track>/<version>` is not a real directory inside the state root | nothing was written, and nothing was created on the far side of it; the archive path must be real directories under `--state`. Remove the symlink or point `--state` somewhere clean |
 | exit 2 `candidate(s) whose score is not a finite number` | a source row carries a NaN or an infinity, which JSON cannot represent and this ledger could never read back | nothing was written — no blob, no batch, no pointer, nothing on the mirror. The error names each candidate and field; fix or drop those rows at the source and re-run |
 | exit 2 `unsafe track_id …` / `unsafe version …` on `scores append` | the imported `scores.csv` names an archive directory that is not a plain path component (absolute, `..`, nested, …) | nothing was written, for any version of that import; correct the `track_id` column in the published results and re-run |
 | `"rows": 0` with `"mirror": {"batches": 0, …}` | every row was a duplicate **and** the mirror was already at this host's tip | a genuine no-op; `"mirror": null` (and only that) means no mirror was configured at all |
