@@ -20,6 +20,7 @@ jobs:
       rust: ${{ steps.filter.outputs.rust }}
       emitters: ${{ steps.filter.outputs.emitters }}
       inputs: ${{ steps.filter.outputs.inputs }}
+      python: ${{ steps.filter.outputs.python }}
     steps:
       - name: Checkout
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0 (pin unchanged from main; the old comment said v5)
@@ -32,7 +33,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
-          rust=true; emitters=true; inputs=true
+          rust=true; emitters=true; inputs=true; python=true
           # The checkout is the pull request's merge ref with full history, so the base commit is
           # present without another fetch (persist-credentials is off, so a fetch could not auth).
           if [ -n "$BASE_SHA" ]; then
@@ -41,9 +42,10 @@ jobs:
             grep -qE '^(crates/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|\.github/workflows/ci\.yml$)' <<<"$changed" || rust=false
             grep -qE '^(crates/feat-math/|datasets/test/|deploy/ci/emitters|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.github/workflows/ci\.yml$)' <<<"$changed" || emitters=false
             grep -qE '^(datasets/synthetic/|crates/jope-cli/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.github/workflows/ci\.yml$)' <<<"$changed" || inputs=false
+            grep -qE '^(python/|deploy/systemd/|\.github/workflows/ci\.yml$)' <<<"$changed" || python=false
           fi
-          { echo "rust=$rust"; echo "emitters=$emitters"; echo "inputs=$inputs"; } >> "$GITHUB_OUTPUT"
-          echo "rust=$rust emitters=$emitters inputs=$inputs"
+          { echo "rust=$rust"; echo "emitters=$emitters"; echo "inputs=$inputs"; echo "python=$python"; } >> "$GITHUB_OUTPUT"
+          echo "rust=$rust emitters=$emitters inputs=$inputs python=$python"
 
   hygiene:
     runs-on: ubuntu-24.04
@@ -164,3 +166,38 @@ jobs:
         run: cargo run --locked --bin jope -- verify-inputs --offline --json --root datasets/synthetic
       - name: Generator reproduces the committed fixtures
         run: cargo run --locked --bin jope -- generate-fixtures --check --json --output datasets/synthetic
+
+  # The Python compatibility/training surface: the uv project must install, lint, format and pass
+  # its tests. Nothing hosted ran these before, which is how a systemd-template rename silently
+  # broke tests/test_durable_selfplay.py; deploy/systemd is in the gate for exactly that reason.
+  python:
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          persist-credentials: false
+      - name: Install uv (checksum-pinned, per agent/ci-tools.json)
+        run: |
+          set -euo pipefail
+          url=https://github.com/astral-sh/uv/releases/download/0.11.28/uv-x86_64-unknown-linux-gnu.tar.gz
+          sha=e490a6464492183c5d4534a5527fb4440f7f2bb2f228162ad7e4afe076dc0224
+          curl -sSLo /tmp/uv.tar.gz "$url"
+          echo "$sha  /tmp/uv.tar.gz" | sha256sum -c -
+          sudo tar -xzf /tmp/uv.tar.gz -C /usr/local/bin --strip-components=1 uv-x86_64-unknown-linux-gnu/uv
+          uv --version
+      - name: Sync the locked environment (CPU torch)
+        working-directory: python
+        run: uv sync --locked --extra dev --extra cpu
+      - name: Ruff lint and format
+        working-directory: python
+        run: |
+          set -euo pipefail
+          uv run --no-sync ruff check .
+          uv run --no-sync ruff format --check .
+      - name: Pytest (xbabe2-only tests deselected)
+        working-directory: python
+        run: uv run --no-sync pytest -q -m "not xbabe2" -p no:cacheprovider
