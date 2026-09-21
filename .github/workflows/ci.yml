@@ -14,7 +14,7 @@ concurrency:
 jobs:
   # Path gate: docs-only pull requests run hygiene only; workflow_dispatch runs everything.
   changes:
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 3
     outputs:
       rust: ${{ steps.filter.outputs.rust }}
@@ -48,7 +48,7 @@ jobs:
           echo "rust=$rust emitters=$emitters inputs=$inputs python=$python"
 
   hygiene:
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 10
     steps:
       - name: Checkout
@@ -60,22 +60,27 @@ jobs:
       - name: Install linters
         run: |
           set -euo pipefail
-          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
-          curl -sSL https://github.com/rhysd/actionlint/releases/download/v1.7.8/actionlint_1.7.8_linux_amd64.tar.gz | sudo tar -xz -C /usr/local/bin actionlint
-          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz | sudo tar -xz -C /usr/local/bin gitleaks
+          # The runner image ships shellcheck, actionlint and gitleaks pinned by sha256. It has
+          # no sudo and a read-only root filesystem, so assert they are present rather than
+          # installing them; a missing tool is an image defect and should fail loudly here.
+          for t in shellcheck actionlint gitleaks; do
+            command -v "$t" >/dev/null || { echo "runner image is missing $t" >&2; exit 1; }
+            printf '%-12s %s\n' "$t" "$(command -v "$t")"
+          done
       - name: Hygiene
         run: bash deploy/ci/check.sh
       - name: cargo-deny
-        uses: EmbarkStudios/cargo-deny-action@34899fc7ba81ca6268d5947a7a16b4649013fea1 # v2
-        with:
-          command: check bans licenses sources
+        run: |
+          set -euo pipefail
+          # Was EmbarkStudios/cargo-deny-action, a Docker container action: the ci lane is
+          # deliberately given no docker socket, and the binary is in the image anyway.
+          cargo deny --version
+          cargo deny check bans licenses sources
 
-  # The whole workspace type-checks on a hosted runner without CUDA, LibTorch or a GPU
-  # (`neural`, `gpu`, `hyperion-cuda` stay off; those lanes are self-hosted, main/nightly only).
   rust-check:
     needs: changes
     if: needs.changes.outputs.rust == 'true'
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 45
     env:
       CARGO_TERM_COLOR: always
@@ -87,10 +92,8 @@ jobs:
           persist-credentials: false
       - name: Toolchain (from rust-toolchain.toml)
         run: rustup show active-toolchain
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          shared-key: rust-check
+      # No Swatinem/rust-cache: this lane's CARGO_HOME and CARGO_TARGET_DIR are persistent
+      # named volumes on the runner host, which is a better cache than the hosted one.
       - name: cargo check --workspace --all-targets --locked
         run: cargo check --workspace --all-targets --locked
       # The rendered-systemd guarantee (no /home/ literal, no unrendered @JOPE_* token, every
@@ -118,7 +121,7 @@ jobs:
   emitters:
     needs: changes
     if: needs.changes.outputs.emitters == 'true'
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 30
     env:
       CARGO_TERM_COLOR: always
@@ -131,10 +134,8 @@ jobs:
           persist-credentials: false
       - name: Toolchain (from rust-toolchain.toml)
         run: rustup show active-toolchain
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          shared-key: emitters
+      # No Swatinem/rust-cache: this lane's CARGO_HOME and CARGO_TARGET_DIR are persistent
+      # named volumes on the runner host, which is a better cache than the hosted one.
       - name: Compilers on this runner
         run: |
           set -euo pipefail
@@ -153,7 +154,7 @@ jobs:
   inputs:
     needs: changes
     if: needs.changes.outputs.inputs == 'true'
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 20
     env:
       CARGO_TERM_COLOR: always
@@ -165,10 +166,8 @@ jobs:
           persist-credentials: false
       - name: Toolchain (from rust-toolchain.toml)
         run: rustup show active-toolchain
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          shared-key: inputs
+      # No Swatinem/rust-cache: this lane's CARGO_HOME and CARGO_TARGET_DIR are persistent
+      # named volumes on the runner host, which is a better cache than the hosted one.
       - name: Verify the committed fixtures offline
         run: cargo run --locked --bin jope -- verify-inputs --offline --json --root datasets/synthetic
       - name: Generator reproduces the committed fixtures
@@ -181,7 +180,7 @@ jobs:
   python:
     needs: changes
     if: needs.changes.outputs.python == 'true'
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 25
     steps:
       - name: Checkout
@@ -218,7 +217,7 @@ jobs:
   rust-test:
     needs: changes
     if: needs.changes.outputs.rust == 'true'
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 45
     env:
       CARGO_TERM_COLOR: always
@@ -235,14 +234,10 @@ jobs:
           persist-credentials: false
       - name: Toolchain (from rust-toolchain.toml)
         run: rustup show active-toolchain
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          shared-key: rust-test
-      - name: Install cargo-nextest
-        uses: taiki-e/install-action@4076c08d76dba979c11a7285295b0716c1d67908 # v2.87.15
-        with:
-          tool: cargo-nextest
+      # No Swatinem/rust-cache: this lane's CARGO_HOME and CARGO_TARGET_DIR are persistent
+      # named volumes on the runner host, which is a better cache than the hosted one.
+      - name: cargo-nextest from the image
+        run: cargo nextest --version
       - name: Product-crate tests (blocking)
         run: |
           set -euo pipefail

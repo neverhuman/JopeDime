@@ -3,3 +3,7 @@ self-hosted-runner:
   labels:
     - xbabe2-gpu
     - xbabe2-kernel
+    # The CPU lane. Host-neutral on purpose: it is served by jope-runner@ci..ci4 on
+    # whichever xbabe host holds the runner, so a host move needs no workflow edit.
+    - jope-ci
+    - xbabe1-ci
