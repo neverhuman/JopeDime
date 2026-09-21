@@ -740,4 +740,3 @@ def test_systemd_services_are_independently_restartable():
         text = unit.read_text()
         assert "Restart=always" in text
         assert "ExecStart=@JOPE_BUNDLE@/" in text
-
