@@ -1,0 +1,10 @@
+[Unit]
+Description=JopeDime runner nightly prune
+
+[Timer]
+OnCalendar=*-*-* 05:30:00 UTC
+Persistent=true
+Unit=jope-runner-prune.service
+
+[Install]
+WantedBy=timers.target

@@ -11,7 +11,8 @@ permissions:
 # time but wrong for this repo: deploy/ci/emitters.sh looks for target/debug/examples/emit under
 # the checkout, and crates/jope-paths walks the executable's ancestors for the .jope-home marker
 # that sits at the repository root. Both break when the artefacts live outside the workspace. The
-# workspace itself is on a persistent named volume, so builds are still cached between jobs.
+# workspace lives on a persistent volume, but actions/checkout clears it at the start of every
+# job, so this is NOT a cross-job build cache — only CARGO_HOME (the registry) persists.
 env:
   CARGO_TARGET_DIR: ${{ github.workspace }}/target
 
@@ -83,7 +84,12 @@ jobs:
           # Was EmbarkStudios/cargo-deny-action, a Docker container action: the ci lane is
           # deliberately given no docker socket, and the binary is in the image anyway.
           cargo deny --version
-          cargo deny check bans licenses sources
+          # --all-features is NOT cosmetic: EmbarkStudios/cargo-deny-action defaulted to it,
+          # which overrides deny.toml's [graph] all-features = false. Without it, every
+          # optional-feature dependency leaves the graph — torch-sys, cudarc and safetensors
+          # all dropped out of bans/licenses/sources when this was first ported. Keeping the
+          # action's scope is the difference between the same gate and a weaker one.
+          cargo deny check --all-features bans licenses sources
 
   rust-check:
     needs: changes
@@ -195,11 +201,10 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
           persist-credentials: false
-      - name: uv
-        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
-        with:
-          enable-cache: true
-          cache-dependency-glob: python/uv.lock
+      - name: uv from the image
+        # Was astral-sh/setup-uv, which installs `latest` from the network and would shadow the
+        # image's pinned uv. Assert the pinned one instead of fetching an unpinned one.
+        run: uv --version
       - name: Sync the locked environment (CPU torch)
         working-directory: python
         run: uv sync --locked --extra dev --extra cpu

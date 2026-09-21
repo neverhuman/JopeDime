@@ -1,0 +1,13 @@
+# /etc/systemd/system/jope-runner@.timer — poll cadence for lane %i. Each tick starts one job
+# container (if none is running); the service exits when its job ends or after RuntimeMaxSec.
+[Unit]
+Description=JopeDime runner cadence (%i lane)
+
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=1min
+AccuracySec=15s
+Unit=jope-runner@%i.service
+
+[Install]
+WantedBy=timers.target
