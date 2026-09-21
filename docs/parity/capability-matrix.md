@@ -802,7 +802,7 @@ you saw.
 | vendored-example | jain-smartcluster@715128f: fit_child_fixture | crates/smartcluster/jain-smartcluster-daemon/examples/fit_child_fixture.rs (fit_child_fixture) | none | moved | vendored smartcluster crate |
 | vendored-bin | jain-smartcluster@715128f: jain-worker | crates/smartcluster/jain-worker/src/main.rs (jain-worker) | jain-worker::bin/jain-worker (4 tests) | moved | vendored smartcluster crate |
 | vendored-bin | jain-smartcluster@715128f: jainnode | crates/smartcluster/jainnode/src/main.rs (jainnode) | jainnode::bin/jainnode (1 tests) | moved | vendored smartcluster crate |
-| new-bin | (new) umbrella CLI | crates/jope-cli/src/main.rs (jope) | jope-cli::bin/jope (1 tests) | new | plan: `jope` umbrella (models/datasets/learn/engine verbs land in WP5/WP7/WP11) |
+| new-bin | (new) umbrella CLI | crates/jope-cli/src/main.rs (jope) | jope-cli::bin/jope (1 tests) | new | plan: `jope` umbrella (models/datasets/pipeline delegate in process; learn/engine verbs land in WP5/WP7/WP11) |
 | new-bin | (new) | crates/hyperion/src/bin/hyperion-batch-worker.rs (hyperion-batch-worker) | none | new | Hyperion v5/v7 batch worker; from jain-core feat-core via `wp3/hyperion-policy` (landed as #19) |
 | new-bin | (new) | crates/hyperion/src/bin/hyperion-v5-reference.rs (hyperion-v5-reference) | none | new | Hyperion v5 reference encoder CLI; from jain-core feat-cli hyperion_vs.rs via `wp3/hyperion-policy` (landed as #19) |
 | new-bin | (new) | crates/jope-datasets/src/main.rs (jope-datasets) | jope-datasets::* (23 tests) | new | dataset catalog: ingest dry-run, fetch/verify/link over object_store (WP-D1/D5; re-land of #11) |
