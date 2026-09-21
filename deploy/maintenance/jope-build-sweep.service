@@ -8,4 +8,4 @@ Nice=15
 IOSchedulingClass=idle
 UMask=0077
 TimeoutStartSec=30min
-ExecStart=/home/ubuntu/lane-tools/jope-build-report.sh --config /home/ubuntu/lane-tools/jope-report-roots.json
+ExecStart=/home/ubuntu/lane-tools/jope-build-report.sh --config /home/ubuntu/lane-tools/jope-report-roots.json --custody /home/ubuntu/jope-rescue-20260921/maintenance-reports

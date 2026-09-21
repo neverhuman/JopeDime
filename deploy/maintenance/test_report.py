@@ -3,11 +3,16 @@
 
 import argparse
 import hashlib
+import importlib.util
+import io
 import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import time
+from contextlib import redirect_stderr, redirect_stdout
+from unittest.mock import patch
 
 
 def inventory(root):
@@ -23,6 +28,8 @@ def inventory(root):
 
 
 def main():
+    if not __debug__:
+        raise RuntimeError("test assertions require Python without -O")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--scratch", type=Path, required=True)
     parser.add_argument("--helper", type=Path,
@@ -38,6 +45,7 @@ def main():
                  "target/unknown", "generic/CACHEDIR.TAG", "stale/debug/receipt.bin",
                  "stale/release/proof", "stale/tmp/evidence", "stale/nested/.rustc_info.json",
                  "fingerprint/release/.fingerprint/marker", "fresh/debug/recent",
+                 "recent-nested/.rustc_info.json", "recent-nested/nested/.rustc_info.json",
                  "odd\nname/.rustc_info.json"]:
         p = root / name
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -46,10 +54,18 @@ def main():
     outside.mkdir()
     (outside / ".rustc_info.json").write_text("{}")
     (root / "linked").symlink_to(outside, target_is_directory=True)
+    (root / "marker-link").mkdir()
+    (root / "marker-link/.rustc_info.json").symlink_to(outside / ".rustc_info.json")
+    (root / "relsym/release").mkdir(parents=True)
+    (root / "relsym/release/.fingerprint").symlink_to(outside, target_is_directory=True)
+    locked = root / "inaccessible"
+    locked.mkdir(mode=0o755)
+    locked.chmod(0o755)
     old = time.time() - 72 * 3600
     for p in [root, *root.rglob("*")]:
         os.utime(p, (old, old), follow_symlinks=False)
     os.utime(root / "fresh/debug/recent", None)
+    os.utime(root / "recent-nested/nested/.rustc_info.json", None)
     before = inventory(root)
     helper = args.helper.resolve(strict=True)
     results = []
@@ -68,6 +84,8 @@ def main():
     rows = json.loads(r.stdout)["candidates"]
     assert {Path(row["path"]).name for row in rows} == {"stale", "fingerprint", "odd\nname"}
     assert len(rows) == 3, "nested Cargo output must not be double-counted"
+    r = call("fingerprint cannot escape supplied root", [root / "fingerprint/release"], True)
+    assert json.loads(r.stdout)["candidates"] == []
     for label, arguments in [
         ("delete rejected", [root, "--delete"]),
         ("delete before root validation", [scratch / "missing", "--delete"]),
@@ -78,39 +96,52 @@ def main():
         ("symlink root", [root / "linked"]),
     ]:
         call(label, arguments, False)
-    locked = root / "inaccessible"
-    locked.mkdir()
     locked.chmod(0)
     try:
         assert os.geteuid() != 0, "run permission fixture as an unprivileged user"
         call("traversal failure", [root, "--stale", "48"], False)
     finally:
         locked.chmod(0o755)
-    fakebin = scratch / "fakebin"
-    fakebin.mkdir()
-    du = fakebin / "du"
-    du.write_text("#!/bin/sh\necho 'injected measurement failure' >&2\nexit 1\n")
-    du.chmod(0o755)
-    call("measurement failure", [root, "--stale", "48"], False,
-         {**os.environ, "PATH": str(fakebin) + os.pathsep + os.environ["PATH"]})
-    # Real du can print a numeric partial total and still fail on unreadable descendants.
-    du.write_text("#!/bin/sh\nprintf '123\\tpartial-root\\n'\n"
-                  "echo 'injected partial measurement' >&2\nexit 1\n")
-    call("partial numeric measurement fails", [root, "--stale", "48"], False,
-         {**os.environ, "PATH": str(fakebin) + os.pathsep + os.environ["PATH"]})
-    # The permission fixture intentionally added one directory. Compare the original entries.
+    spec = importlib.util.spec_from_file_location("jope_report", helper.with_name("jope_report.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    for label, outcome in [
+        ("measurement failure", subprocess.CalledProcessError(1, ["du"], stderr="failed")),
+        ("partial numeric measurement fails", subprocess.CalledProcessError(
+            1, ["du"], output="123\tpartial-root\n", stderr="permission denied")),
+        ("invalid successful measurement", subprocess.CompletedProcess(["du"], 0, "garbage", "")),
+    ]:
+        out, err = io.StringIO(), io.StringIO()
+        behavior = {"side_effect": outcome} if isinstance(outcome, Exception) else {"return_value": outcome}
+        with patch.object(module.subprocess, "run", **behavior), \
+                patch.object(sys, "argv", [str(helper), "scan", str(root), "--stale", "48"]), \
+                redirect_stdout(out), redirect_stderr(err):
+            code = module.main()
+        assert code == 1 and err.getvalue() and not out.getvalue(), label
+        results.append({"test": label, "exit": code, "stderr": err.getvalue()})
+    real_walk = module.walk
+
+    def mtime_walk_failure(path):
+        if Path(path) == root / "stale":
+            raise PermissionError("injected descendant traversal failure after candidate discovery")
+        return real_walk(path)
+
+    with patch.object(module, "walk", side_effect=mtime_walk_failure):
+        try:
+            module.scan(root, 48)
+        except PermissionError:
+            results.append({"test": "descendant mtime traversal failure", "passed": True})
+        else:
+            raise AssertionError("candidate mtime traversal failure was suppressed")
     after = inventory(root)
-    for name in before:
-        if name == ".":
-            after[name]["mtime_ns"] = before[name]["mtime_ns"]
-        assert before[name] == after[name], name
+    assert before == after, "fixture contents, membership, links, modes or mtimes changed"
     reports = scratch / "reports"
     reports.mkdir()
     config = scratch / "invalid-config.json"
-    config.write_text(json.dumps({"custody": str(reports), "cargo_roots": [],
+    config.write_text(json.dumps({"cargo_roots": [],
                                   "stale_hours": 48, "measurement_roots": []}))
     wrapper = helper.with_name("jope-build-report.sh")
-    r = subprocess.run([str(wrapper), "--config", str(config)], capture_output=True,
+    r = subprocess.run([str(wrapper), "--config", str(config), "--custody", str(reports)], capture_output=True,
                        text=True, timeout=30)
     assert r.returncode != 0
     receipt = json.loads(next(reports.glob("*/receipt.json")).read_text())
@@ -121,7 +152,7 @@ def main():
     (scratch / "results.json").write_text(json.dumps({"tests": results,
         "wrapper_failure": receipt, "helper_sha256": hashlib.sha256(helper.read_bytes()).hexdigest(),
         "core_sha256": hashlib.sha256(helper.with_name("jope_report.py").read_bytes()).hexdigest(),
-        "preservation": "all original contents, symlinks and modes unchanged"}, indent=2))
+        "preservation": "exact unchanged file/directory membership, contents, symlinks, modes and mtimes; raw inventories"}, indent=2))
     print(f"PASS: {len(results)} scanner scenarios, failure receipt, full fixture preservation; {scratch}")
 
 

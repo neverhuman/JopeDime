@@ -13,6 +13,8 @@ import subprocess
 import sys
 import time
 
+APPROVED_ROOTS = ["/home/ubuntu/JopeDime", "/home/ubuntu/jain-split/jope-dime"]
+
 
 def utc():
     return datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -31,7 +33,7 @@ def walk(root):
 
 
 def allocated(root, privileged=False):
-    command = ["sudo", "-n", "/usr/bin/du"] if privileged else ["du"]
+    command = ["/usr/bin/sudo", "-n", "/usr/bin/du"] if privileged else ["/usr/bin/du"]
     result = subprocess.run(
         [*command, "-s", "-B1", "--", str(root)], capture_output=True, text=True,
         check=True, timeout=600,
@@ -40,6 +42,7 @@ def allocated(root, privileged=False):
 
 
 def scan(root, hours):
+    root = Path(os.path.abspath(root))
     candidates = set()
     for directory, dirs, files in walk(root):
         dirs[:] = [d for d in dirs if d != ".git"]
@@ -48,7 +51,8 @@ def scan(root, hours):
         if ".rustc_info.json" in files and stat.S_ISREG(marker.lstat().st_mode):
             candidates.add(path)
         if path.name in ("debug", "release") and ".fingerprint" in dirs:
-            if stat.S_ISDIR((path / ".fingerprint").lstat().st_mode):
+            if (path.parent == root or root in path.parent.parents) and \
+                    stat.S_ISDIR((path / ".fingerprint").lstat().st_mode):
                 candidates.add(path.parent)
     rows = []
     cutoff = time.time() - hours * 3600 if hours is not None else None
@@ -56,7 +60,8 @@ def scan(root, hours):
         if any(parent in candidates for parent in candidate.parents):
             continue
         newest = candidate.lstat().st_mtime
-        # Visit every descendant, including fresh trees, so traversal failures are visible.
+        # Measure all contents, including nested .git evidence, after identifying candidates.
+        # Visit fresh trees too so traversal failures stay visible.
         for directory, dirs, files in walk(candidate):
             for name in dirs + files:
                 newest = max(newest, (Path(directory) / name).lstat().st_mtime)
@@ -65,7 +70,10 @@ def scan(root, hours):
         rows.append({"path": str(candidate), "allocated_bytes": allocated(candidate),
                      "newest_mtime": newest})
     return {"completed_at": utc(), "root": os.path.abspath(root), "stale_hours": hours,
-            "candidates": rows, "allocated_bytes": sum(r["allocated_bytes"] for r in rows),
+            "candidates": rows,
+            "candidate_allocated_bytes_sum": sum(r["allocated_bytes"] for r in rows),
+            "sum_may_double_count_hardlinks": True,
+            # This object is returned only after every traversal and measurement succeeds.
             "report_only": True, "complete": True}
 
 
@@ -83,38 +91,54 @@ def interrupted(signum, _frame):
 
 
 def report(args):
-    config_path = args.config.resolve(strict=True)
-    config = json.loads(config_path.read_text())
-    output = Path(config["custody"]).resolve(strict=True)
+    # Custody is a service argument so bad configuration can still receive a failure receipt.
+    output = args.custody.resolve()
+    if Path("/tmp") in [output, *output.parents] or any(
+            (parent / ".git").exists() for parent in [output, *output.parents]):
+        raise ValueError("report custody must be outside /tmp and Git working trees")
+    output.mkdir(parents=True, exist_ok=True, mode=0o700)
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     run = output / stamp
     run.mkdir(mode=0o700)
     receipt = {"started_at": utc(), "status": "running", "exit_status": None,
-               "config": config, "checksums": {}, "measurements": []}
+               "checksums": {}, "measurements": [], "scan_outputs": [],
+               "invocation_id": os.environ.get("INVOCATION_ID")}
     source = Path(__file__).resolve().parent
-    for path in [config_path, Path(__file__).resolve(), source / "cargo-build-dirs.sh",
-                 source / "jope-build-report.sh"]:
-        receipt["checksums"][str(path)] = hashlib.sha256(path.read_bytes()).hexdigest()
     receipt_path = run / "receipt.json"
 
     def save():
         receipt_path.write_text(json.dumps(receipt, indent=2) + "\n")
 
     save()
-    signal.signal(signal.SIGTERM, interrupted)
-    signal.signal(signal.SIGINT, interrupted)
     try:
+        signal.signal(signal.SIGTERM, interrupted)
+        signal.signal(signal.SIGINT, interrupted)
+        paths = [Path(__file__).resolve(), source / "cargo-build-dirs.sh",
+                 source / "jope-build-report.sh"]
+        units = Path.home() / ".config/systemd/user"
+        paths.extend(p for p in [units / "jope-build-sweep.service",
+                                units / "jope-build-sweep.timer"] if p.is_file())
+        for path in paths:
+            receipt["checksums"][str(path)] = hashlib.sha256(path.read_bytes()).hexdigest()
+        config_path = args.config.resolve(strict=True)
+        config_bytes = config_path.read_bytes()
+        receipt["checksums"][str(config_path)] = hashlib.sha256(config_bytes).hexdigest()
+        config = json.loads(config_bytes)
+        if not isinstance(config, dict) or not {"cargo_roots", "stale_hours",
+                                               "measurement_roots"} <= config.keys():
+            raise ValueError("config requires cargo_roots, stale_hours and measurement_roots")
+        receipt["config"] = config
         roots = config["cargo_roots"]
-        approved = ["/home/ubuntu/JopeDime", "/home/ubuntu/jain-split/jope-dime"]
-        if roots != approved or config["stale_hours"] != 48:
+        if roots != APPROVED_ROOTS or config["stale_hours"] != 48:
             raise ValueError("service requires the two approved Cargo roots and a 48-hour filter")
-        for index, root in enumerate(roots):
-            with (run / f"candidates-{index}.json").open("w") as out, \
-                    (run / f"scan-{index}.stderr").open("w") as err:
-                subprocess.run([str(source / "cargo-build-dirs.sh"), root, "--stale", "48"],
-                               stdout=out, stderr=err, check=True, timeout=600)
+        if not isinstance(config["measurement_roots"], list):
+            raise ValueError("measurement_roots must be a list")
         seen = []
         for item in config["measurement_roots"]:
+            if not isinstance(item, dict) or not isinstance(item.get("path"), str) or \
+                    not isinstance(item.get("group"), str) or \
+                    not isinstance(item.get("privileged", False), bool):
+                raise ValueError("each measurement requires string path/group and optional boolean privileged")
             path = Path(item["path"])
             resolved = path.resolve(strict=True)
             if resolved != path or not resolved.is_dir():
@@ -123,6 +147,19 @@ def report(args):
                    for prior in seen):
                 raise ValueError(f"overlapping measurement root: {path}")
             seen.append(resolved)
+        for index, root in enumerate(roots):
+            result_path = run / f"candidates-{index}.json"
+            diagnostic = run / f"scan-{index}.stderr"
+            receipt["scan_outputs"].append({"root": root, "output": result_path.name,
+                                            "stderr": diagnostic.name})
+            diagnostic.write_text("")
+            try:
+                result_path.write_text(json.dumps(scan(root, 48), indent=2) + "\n")
+            except Exception as error:
+                diagnostic.write_text(str(error) + "\n" + (getattr(error, "stderr", "") or ""))
+                raise
+        for item in config["measurement_roots"]:
+            resolved = Path(item["path"])
             receipt["measurements"].append({**item, "allocated_bytes": allocated(
                 resolved, item.get("privileged", False)),
                                             "observed_at": utc()})
@@ -156,6 +193,7 @@ def main():
     scanner.add_argument("--stale", type=whole_hours)
     wrapper = sub.add_parser("report")
     wrapper.add_argument("--config", type=Path, required=True)
+    wrapper.add_argument("--custody", type=Path, required=True)
     args = parser.parse_args()
     try:
         if args.mode == "report":
