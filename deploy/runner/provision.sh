@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# deploy/runner/provision.sh — one-time host provisioning of the xbabe2 runner (run as root by
+# deploy/runner/provision.sh — one-time host provisioning of a self-hosted runner (run as root by
 # the owner; docs/runbooks/runner.md). It creates the named volumes, provisions the neural SDK
 # volume from deploy/receipts/libtorch.json (sha256-verified, exactly as docs/runbooks/neural-sdk.md),
 # builds the runner image from deploy/docker/runner.Dockerfile, installs the systemd units and
@@ -83,4 +83,18 @@ install -d -m 0755 /opt/jope-runner
 install -m 0755 "$here"/common.sh "$here"/run.sh "$here"/disk-guard.sh "$here"/prune.sh /opt/jope-runner/
 install -m 0644 "$here"/jope-runner@.service "$here"/jope-runner@.timer "$here"/jope-runner-prune.service "$here"/jope-runner-prune.timer "$here"/jope-docker-proxy.service /etc/systemd/system/
 systemctl daemon-reload
+
+# 5. provenance: record what is actually deployed, so a lane can prove it rather than assume it.
+# run.sh injects these into every job; .github/workflows/ci.yml compares the script digest with
+# the checkout's, which fails the lane when the host is running something other than the commit
+# under test. Inspection cannot establish that; only a comparison the lane performs can.
+scripts_sha=$(cat /opt/jope-runner/common.sh /opt/jope-runner/run.sh | sha256sum | cut -d' ' -f1)
+image_id=$(docker image inspect --format '{{.Id}}' "$JOPE_RUNNER_IMAGE" 2>/dev/null || echo unknown)
+jq -n --arg image "$JOPE_RUNNER_IMAGE" --arg image_id "$image_id" --arg scripts_sha "$scripts_sha" \
+      --arg provisioned_from "$here" --arg host "$JOPE_RUNNER_HOST" \
+  '{host:$host, image:$image, image_id:$image_id, scripts_sha256:$scripts_sha, provisioned_from:$provisioned_from}' \
+  > "$JOPE_RUNNER_STATE/image.json"
+chmod 0640 "$JOPE_RUNNER_STATE/image.json"
+echo "recorded $JOPE_RUNNER_STATE/image.json: image_id=$image_id scripts_sha256=$scripts_sha"
+
 echo "installed units: jope-runner@{gpu,kernel}.timer, jope-runner-prune.timer, jope-docker-proxy.service (none enabled — see docs/runbooks/runner.md)"

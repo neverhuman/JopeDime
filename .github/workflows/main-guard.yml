@@ -29,7 +29,10 @@ jobs:
           if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
             commits=$AFTER
           else
-            commits=$(gh api "repos/$REPO/compare/$BEFORE...$AFTER" --jq '.commits[].sha' || echo "$AFTER")
+            # No `|| echo "$AFTER"` fallback: that silently narrowed the guard to the head commit
+            # whenever the API call failed, which is the one case where it most needs to be loud.
+            commits=$(gh api "repos/$REPO/compare/$BEFORE...$AFTER" --jq '.commits[].sha') \
+              || { echo "main-guard: could not list the pushed commits; refusing to pass" >&2; exit 1; }
           fi
           bad=""
           for sha in $commits; do

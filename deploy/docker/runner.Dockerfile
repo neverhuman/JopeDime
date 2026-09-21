@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
-# deploy/docker/runner.Dockerfile — the self-hosted GitHub Actions runner image for xbabe2
-# (plan: "Self-hosted runner (xbabe2)"; WP8). Built locally by the owner, never pushed:
+# deploy/docker/runner.Dockerfile — the self-hosted GitHub Actions runner image (WP8).
+# Built locally on whichever xbabe host runs the lanes, never pushed to a registry:
 #   docker build -f deploy/docker/runner.Dockerfile -t jope-runner:<git sha> .
 #
 # Base: the CUDA *12.8* devel image, not 13.0.1. deploy/receipts/libtorch.json (the WP8
@@ -72,6 +72,11 @@ ARG NODE_SHA256=9fc6f21b6c4a62439727123e510e9c39febb2f563738f4927cd3e0b288c9b3c9
 # publishes no checksum file: the sha256 below was computed from the zip on 2026-09-19.
 ARG AWSCLI_VERSION=2.36.49
 ARG AWSCLI_SHA256=6b51b62d232217350e72d8f2493f47d3461239d011d1d5eef960dfcd8cb07069
+# GitHub CLI: .github/workflows/main-guard.yml is three `gh api` / `gh issue create` calls, and
+# the CUDA base image has no gh, so that guard fails on every push to main without it. sha256
+# from cli/cli's published gh_<version>_checksums.txt.
+ARG GH_VERSION=2.101.0
+ARG GH_SHA256=9bca2d1c16825f109907a23307628a2f0698fbf99662b73a5cf0b020293072b8
 
 # fetch <url> <sha256> <dest>: download, verify, fail closed.
 COPY deploy/docker/fetch.sh /usr/local/bin/jope-fetch
@@ -126,6 +131,8 @@ RUN set -eu; \
     tar -xzf /tmp/uv.tgz -C /usr/local/bin --strip-components=1 uv-x86_64-unknown-linux-gnu/uv uv-x86_64-unknown-linux-gnu/uvx; \
     jope-fetch "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" "${NODE_SHA256}" /tmp/node.txz; \
     mkdir -p /opt/node; tar -xJf /tmp/node.txz -C /opt/node --strip-components=1; \
+    jope-fetch "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz" "${GH_SHA256}" /tmp/gh.tgz; \
+    tar -xzf /tmp/gh.tgz -C /usr/local/bin --strip-components=2 "gh_${GH_VERSION}_linux_amd64/bin/gh"; \
     jope-fetch "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWSCLI_VERSION}.zip" "${AWSCLI_SHA256}" /tmp/awscli.zip; \
     unzip -q /tmp/awscli.zip -d /tmp/awscli; /tmp/awscli/aws/install --bin-dir /usr/local/bin --install-dir /opt/aws-cli; rm -rf /tmp/awscli; \
     rm -f /tmp/*.tgz /tmp/*.txz /tmp/*.zip; \
@@ -135,6 +142,7 @@ RUN set -eu; \
     syft version | grep -F "${SYFT_VERSION}"; \
     uv --version | grep -F "uv ${UV_VERSION}"; \
     node --version | grep -F "v${NODE_VERSION}"; \
+    gh --version | grep -F "gh version ${GH_VERSION}"; \
     aws --version | grep -F "aws-cli/${AWSCLI_VERSION}"
 
 # ---- actions-runner (JIT/ephemeral use only; never `config.sh`-registered in the image) ----
