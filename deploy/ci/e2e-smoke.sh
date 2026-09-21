@@ -54,6 +54,58 @@ for run in a b; do
     --output "$OUT/$run"
 done
 
+# Multi-cut selection. Nothing else in this script or in the unit tests passes --cuts, so the
+# whole cross-cut path -- including the remeasurement that makes the ranking comparable -- used to
+# early-return on every CI run and could be deleted without turning a single test red.
+#
+# The assertion is about the candidate pool, not about which genome wins, so it does not depend on
+# what the search happens to find. Without remeasurement a genome discovered on one cut is only
+# ever measured there, so NO non-bootstrap genome reaches every cut; with it, the top-k from each
+# cut are measured on all of them. Measured on this dataset at seed 7: 12 such genomes with
+# remeasurement and 0 without, and the champion degrades from
+# `(pipe X (rank append=true) (gpr m=400 steps=60))` at hold RMSE 0.070814 to the bootstrap
+# `(pipe X (ridge))` at 0.095582 -- 26 % worse, which is exactly the pathology cross-cut
+# selection exists to avoid.
+echo "== multi-cut selection ranks candidates measured on every cut"
+"$JOPE" pipeline run \
+  --dataset "$DATASET" \
+  --budget "$BUDGET" \
+  --rng-seed "$RNG_SEED" \
+  --emit rust,python \
+  --policy skip \
+  --cuts 3 \
+  --output "$OUT/cuts3"
+python3 - "$OUT/cuts3" <<'PYEOF'
+import collections, glob, json, os, sys
+
+root = sys.argv[1]
+files = sorted(glob.glob(os.path.join(root, "search", "cut-*", "observations.json")))
+assert len(files) == 3, f"expected three per-cut observation files, found {len(files)}"
+
+seen = collections.defaultdict(set)
+for path in files:
+    for observation in json.load(open(path)):
+        seen[observation["genome"]].add(observation["cut"])
+
+cuts = {cut for cuts_seen in seen.values() for cut in cuts_seen}
+assert cuts == {0, 1, 2}, f"observations mention cuts {sorted(cuts)}, expected 0..2"
+
+bootstrap = "(pipe X (ridge))"
+covered = [g for g, c in seen.items() if c == cuts and g != bootstrap]
+assert covered, (
+    "no searched genome was measured on every cut, so the selection ranked means taken over "
+    "different cuts -- remeasurement did not run"
+)
+
+receipt = json.load(open(os.path.join(root, "receipt.json")))
+assert receipt["ok"], receipt
+best = receipt["select"]["best"] if "select" in receipt else None
+if best is not None and "cuts_measured" in best:
+    assert best["cuts_measured"] == 3, best
+
+print(f"  ok: {len(covered)} searched genome(s) measured on all 3 cuts; champion ranked over 3")
+PYEOF
+
 # A run that emits nothing must say so and fail, instead of reporting a passed emit stage over an
 # empty directory. Which branch this takes depends on the champion the search happens to find, so
 # both are asserted rather than assuming today's winner: if cpp17 covers it there must be an
