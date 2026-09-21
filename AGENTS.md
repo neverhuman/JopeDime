@@ -10,7 +10,8 @@ disk incident recorded in [`MASTER_CLEAN_UP.md`](MASTER_CLEAN_UP.md).
 
 ## Which checkout
 
-**The canonical local checkout is `/home/ubuntu/JopeDime`**, on `main`. There is one.
+**The canonical local checkout is `/home/ubuntu/JopeDime`**. Work on its claimed PR branch;
+return it to verified remote `main` after the reviewed lifecycle.
 
 Do not confuse this repository with `~/jain-split/jope-dime` (also reachable as `~/jope-dime`, a
 symlink). That is a different repository on a different upstream — the local forge at
@@ -20,9 +21,9 @@ symlink). That is a different repository on a different upstream — the local f
 
 **Never clone into `/tmp`.** `/tmp` is emptied at boot. On 2026-09-21 it held **442 GiB across 180
 clones** of this repository, including commits that existed nowhere else and were one reboot from
-being lost permanently. If you need a throwaway checkout, put it under `$HOME`.
+being lost permanently. Use the reusable bare verification directory under custody for independent restoration.
 
-**Delete a lane and its build directory when its pull request closes.** Not later, not never.
+**After its PR closes, preserve and restore-verify unique source and evidence, then remove the lane.**
 **At most 4 concurrent lanes.**
 
 **Worktrees live in exactly one place: `<repo>/.agent/worktrees/`** — owner ruling, 2026-09-21.
@@ -44,8 +45,8 @@ and so was walked straight past by Claude Code's `EnterWorktree` **tool**. A rul
 
 - **One build directory per lane, reused.** Never a fresh `--target-dir` per task. The alternative
   produced 119 separate Cargo build directories totalling 809 G.
-- `CARGO_INCREMENTAL=0` and `CARGO_PROFILE_DEV_DEBUG=line-tables-only` are set in the agent
-  environment. Backtraces still work; do not unset them to "speed up" a build.
+- Verify or explicitly set `CARGO_INCREMENTAL=0` and
+  `CARGO_PROFILE_DEV_DEBUG=line-tables-only` before Cargo; not every agent inherits them.
 - **`CARGO_TARGET_DIR` must not be set globally** until #46 is fixed. `deploy/ci/emitters.sh`
   hard-codes `target/debug/examples/emit` and `crates/jope-paths` walks the running executable's
   ancestors for the `.jope-home` marker, so redirecting Cargo's output breaks both. `.github/
@@ -57,19 +58,18 @@ and so was walked straight past by Claude Code's `EnterWorktree` **tool**. A rul
 `target/health/` holds generated score files that are **evidence**: regenerate them through their
 owning proof lane, never hand-edit, and never blanket-delete the tree they live in.
 
-To reclaim build space use a tool that distinguishes build output from evidence — one that
-identifies build directories by `.rustc_info.json` / `debug|release/.fingerprint` rather than by
-name, and copies non-Cargo files out before deleting.
+The maintenance helper reports candidates only. Cargo markers do not certify contents;
+source and evidence at every depth need preservation and independent verification before removal.
 
 ## Preserve before you delete — and then delete
 
 Both halves are required. "Preserve everything" with no counterpart is how a disk reaches 91 %.
 
-1. **Preserve first.** Bundle it, restore the bundle in a throwaway `git clone --no-local`, and
+1. **Preserve first.** Bundle it, restore the bundle in a reusable independent `git clone --no-local --bare` under custody, and
    confirm **the specific commit is present** — a bundle can verify and still lack the commit you
    care about. This is not hypothetical: during the 2026-09-21 cleanup a detached worktree `HEAD`
    (`b2f72ec`) was absent from a `--all` bundle and would have been lost.
-2. **Then delete.** A rescued, verified copy is authority to reclaim the original.
+2. **Then delete.** A complete verified recovery route plus a fresh dependency check permits logged reclamation.
 
 **Only trees you are going to delete need a bundle.** Bundling a tree you are keeping consumes the
 disk you are trying to reclaim.
@@ -93,8 +93,8 @@ review, checks, correction, or merge, resolve it before opening another lane.
 
 ## Change discipline
 
-Use focused commits, preserve reproducibility, and do not rewrite shared branches. Rebase a feature
-branch onto `origin/main` before handoff. If a generated artifact is stale, delete or regenerate it
+Use focused commits, preserve reproducibility, and do not rewrite shared branches. Update private feature branches onto current `origin/main` before handoff. For shared
+PR branches, use a history-preserving update; never force-push or rewrite shared history. If a generated artifact is stale, delete or regenerate it
 only through its owning proof lane.
 
 ## Large data
@@ -102,3 +102,34 @@ only through its owning proof lane.
 Bulk data does not live inside a git working tree — git does not protect untracked files, they can
 never be committed at that size, and their presence makes every `git status` and every
 untracked-file rescue walk them.
+
+## Custody, maintenance and lane closure
+
+One writer per checkout. Use the canonical checkout or a claimed, registered
+worktree under `<repo>/.agent/worktrees/`; no sibling clones or tool-specific roots.
+Preserve `.claude/worktrees` as the symlink to that shared root. At most four managed
+lanes per repository, each with one reused build directory. No clones, worktrees
+or build output under `/tmp`. Bulk data stays outside working trees.
+
+When a lane's PR closes, preserve unique source and evidence first, verify recovery,
+then remove the lane with `git worktree remove`. Reuse one independent **bare**
+verification directory under custody outside working trees, populated with
+`git clone --no-local --bare` or equivalent independent bundle restoration. Check
+exact commits, trees and connectivity; no alternates or dependency on the original.
+Remove verified generated restoration contents after each batch; keep immutable
+archives and receipts. A valid checksum, a local commit and a merged change are
+three different states.
+
+The daily maintenance policy reports candidates older than 48 hours at **04:00 UTC**,
+with `Persistent=true`; it never deletes. `cargo-build-dirs.sh` rejects `--delete`.
+Cargo markers (`.rustc_info.json`, `debug/release/.fingerprint`) identify candidates,
+not disposable contents. Neither `target` nor generic `CACHEDIR.TAG` identifies
+Cargo output. Evidence may occur at any depth, including `debug`, `release`, and
+`tmp`. Preserve and independently verify all relevant content and recheck active
+consumers before an explicit logged removal. Unknown content is retained. See
+`/home/ubuntu/JopeDime/deploy/maintenance/README.md` for installed reporting behavior.
+
+Before running Cargo, verify or explicitly set `CARGO_INCREMENTAL=0` and
+`CARGO_PROFILE_DEV_DEBUG=line-tables-only`. Claude's settings retain these values;
+other agents may not inherit them. Keep `CARGO_TARGET_DIR` unset globally. Preserve
+JopeDime CI's workspace override and the issue #46 dependency.

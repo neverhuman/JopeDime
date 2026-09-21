@@ -22,3 +22,7 @@ check-*.log
 
 # Shared agent worktree root (owner ruling 2026-09-21). .claude/worktrees is a symlink here.
 .agent/
+
+# Local agent configuration, shared-root symlink and append locks stay local.
+/.claude/
+*.md.lock
