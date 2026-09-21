@@ -1,10 +1,12 @@
 # JopeDime current direction
 
 **2026-09-21.** Publication repo: private `veox-ai/JopeDime`. This note tracks
-`origin/main`; the landing board below records each merge SHA. **Twenty-two**
+`origin/main`; the landing board below records each merge SHA. **Twenty-three**
 PRs merged on 2026-09-21: Grok's #17–#22 (01:24–03:16Z, `4235db6` → `1f0fc5a`),
-then #23–#33 and #35–#39 under D1 (03:58–11:11Z, `1f0fc5a` → `70506066`).
-#34 is open, which is why that is two spans and not one. Every readback
+then #23–#33, #35–#39 and #42 under D1 (03:58–11:50Z, `1f0fc5a` →
+`5feb2fa0`). #34 is open, which is why that is three spans and not one.
+Regenerated at push time from `git ls-remote origin main` and
+`gh pr list --state merged`, not at draft time — see the note above the table. Every readback
 line in this file is regenerated, not transcribed; the command that produced
 it is next to it.
 
@@ -89,6 +91,13 @@ rows are pinned to a merge SHA. A row about a moving PR is unfalsifiable and
 goes stale within the hour; live state belongs on the PR, where GitHub is the
 source of truth.
 
+A merge and its landing row land in the same push, and any change to this file
+re-reads `git ls-remote origin main` and `gh pr list --state merged` at **push**
+time rather than draft time. This revision exists because #42 merged two
+minutes before the previous one was pushed, so a board opened to fix a stale
+readback shipped one of its own. Neither command takes a second, and neither
+can be satisfied by remembering.
+
 | Old PR | Branch | Head | New PR | Merged |
 | --- | --- | --- | --- | --- |
 | — | `coord/integrator-lane-20260921` | | #23 | `4753a9a` 04:06:47Z |
@@ -109,7 +118,7 @@ source of truth.
 | — | python lane | | #38 | `d43bc5f` 07:49:28Z (fixes the systemd test #32 broke; **adds the hosted `python` lane that would have caught it**) |
 | — | `wp11/learning-store` | df9e4e0 | **#34 open** | **at `5737aca7`, review 11:29:54Z**: all four P1s of round 4 fixed — three reproduced from the CLI, the fourth (non-finite entry refusal) read only, since no CLI source can carry a non-finite value in. Blocking then: `jope-learning` in neither test scope, so `check.sh` fails closed on the merged tree; the rebase; and two P2s. Live state is on the PR, not here |
 | — | rust-test lane | | #39 | `7050606` 11:11:35Z (4 rounds; the hosted gate ran no Rust tests beyond two `feat-math` targets, and the scope guard itself failed open twice before the reviewer's negative probes closed it) |
-| — | ADR-0003 test paths | | **#42 open** | **at `648c6c4f`**: three tests red since the ADR-0003 relocation, fixed; their quarantine entries dropped. #40 was the same branch opened from the wrong identity and is closed |
+| — | ADR-0003 test paths | | #42 | `5feb2fa0` 11:50:13Z (three tests red since the ADR-0003 relocation, fixed; quarantine 15 → 12 and the misfiled `queue.rs` panic given its own cause. #40 was the same branch opened from the wrong identity and is closed) |
 | — | `wp13/pipeline-run` | 8b4cf466 | **#44 open** | `jope pipeline run`: dataset → prepare → GP search on feat-math → select → emit → receipt |
 | — | `wp5/cli-split` | d0b4819 | | needs a mechanical re-do on current main, not a replay (#32 rewrote 67 of the files it moves) |
 | — | `wp8/runner-lanes` | f6c101d | | |
@@ -165,7 +174,8 @@ measured; a figure without a source is a defect in this section.
   that the two agree with the script's own output and leave nothing unplaced.
   A crate in neither list would be gated by nothing; `jope-arena` did that
   once, and the guard caught `jope-pipeline` doing it next — on the unmerged
-  `wp13/pipeline-run` (`d13cc7e7`), so do not look for that crate on `main`.
+  `wp13/pipeline-run` (#44, `8b4cf466`), so do not look for that crate on
+  `main`.
 - **A full-workspace run is red on `main` for reasons unrelated to any branch.**
   18 failures across `jope-parallel`, `jainnode` and `jain-smartcluster-daemon`,
   measured by the integrator session on this host with `cargo nextest run -P pr
@@ -181,9 +191,9 @@ measured; a figure without a source is a defect in this section.
   `70506066`): the `cause A` block holds 9, but the fit-authority fence
   explains **5** of them (2 "namespace capability inactive", 3 "fit authority
   fenced"). The other 4 are 3 × the ADR-0003 relocation (cause A0, fixed in the
-  open #42) and 1 × a `queue.rs:133` panic that was misfiled under the fence.
+  #42, merged) and 1 × a `queue.rs:133` panic that was misfiled under the fence.
   `cause B` (behavioural assertions) holds 5 and `cause C` (racy, passes
-  serially) holds 1. #42 takes the file to 12 and unfiles the panic.
+  serially) holds 1. #42 took the file to 12 and unfiled the panic.
 
 ## Correction to the product plan: the engine cannot measure
 
@@ -194,7 +204,7 @@ non-test scope ("production capabilities have no verifier yet"), so **no
 shipped binary can measure through the engine**. That is not a bug to route
 around quietly: it is a deliberate fence, and it explains **5** of the 15
 quarantined tests — not the 9 the `cause A` block appears to hold, which is
-why that block is being unfiled in #42.
+why that block was unfiled in #42.
 
 Consequence for the pipeline: **WP-P1 (`jope pipeline run`) builds on
 `feat_math::evolve` + `feat_math::fit` + `feat_math::transpile`, not on
