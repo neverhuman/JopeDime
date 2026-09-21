@@ -19,3 +19,6 @@ python/dist/
 !docs/parity/*.json
 metadata.err
 check-*.log
+
+# Shared agent worktree root (owner ruling 2026-09-21). .claude/worktrees is a symlink here.
+.agent/

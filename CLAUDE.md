@@ -23,8 +23,11 @@ See [`MASTER_CLEAN_UP.md`](MASTER_CLEAN_UP.md) for the full record.
    repository** lived there, holding commits that existed nowhere else.
 2. **One build directory per lane, reused.** Never a fresh `--target-dir` per task. At most 4
    concurrent lanes. **Delete a lane and its build when its PR closes.**
-3. **Do not create a worktree by any means** — not `git worktree add`, not the `EnterWorktree`
-   tool. Phrase the rule as an outcome: there is one checkout.
+3. **Worktrees go in `<repo>/.agent/worktrees/` — nowhere else.** Owner ruling 2026-09-21: one
+   shared directory for Claude, Codex and Grok, instead of a per-tool location each.
+   `.claude/worktrees` is a **symlink** to it so the `EnterWorktree` tool lands there without
+   configuration. Max 4 lanes; remove with `git worktree remove` when the PR closes. **Never
+   `/tmp`.**
 4. **`target/health/` is evidence.** Never `rm -rf target`. Reclaim with a tool that identifies
    build dirs by `.rustc_info.json` / `debug|release/.fingerprint` and copies non-Cargo files out
    first.
