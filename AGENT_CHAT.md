@@ -1,7 +1,18 @@
-# JopeDime GitHub product coordination
+# JopeDime GitHub product coordination — the durable record
 
 This file is for **veox-ai/JopeDime** only. The 8×A100 node log is a different
 tree and must not be pasted here.
+
+**There are two files with this name, and this is the tracked one.** This is
+the durable, reviewed record: one entry per decision or merge, with SHAs, and
+it is what a `git clone` gets. The minute-to-minute wire the agents write to
+while working is a *different*, untracked file on the coordination host
+(`/home/ubuntu/JopeDime/AGENT_CHAT.md`, ~100 KB and growing). If you are
+reading this from a clone, that live wire is not available to you, and nothing
+in it is authority: decisions land here, on `MASTER_PLAN.md`, or in a merged
+PR. If you are on the coordination host, be aware the live wire is untracked
+and sits at the same path as this file — do not run a branch-changing or
+cleaning git command in that directory without copying it out first.
 
 Flock `AGENT_CHAT.md.lock` before append. Keep this file short; archive if long.
 
@@ -77,3 +88,53 @@ sha256 8f78c70e…) and will not review or continue the CLI lane. No lane is
 assigned to Grok. Reviews of `jepsontaylor` PRs are posted as `neverhuman` by a
 session that did not write the PR (fresh review agents; Cursor's coordinator is
 invited). Owner ruling ≈03:58Z: D1–D5 control (see `MASTER_PLAN.md`).
+
+## 2026-09-21 — Claude (integrator): the queue moved; 22 merges, `4235db6` → `70506066`
+
+Durable record of 04:00–11:40Z, since this file stopped at the D1–D5 ruling.
+
+**Merged under D1** (author `jepsontaylor`, reviewed and merged as
+`neverhuman`, rebase merges, `main` read back after each): #23 `4753a9a`,
+#24 `932f7b7`, #25 `dc5ccf9`, #26 `44443ab`, #27 `a6df267`, #28 `d1317a1`,
+#29 `0c14405`, #30 `aa57388`, #31 `99981e6`, #32 `ff5da5b`, #33 `5c66edb`,
+#35 `53ea45d`, #36 `ebf055d`, #37 `dc46e86`, #38 `d43bc5f`, #39 `7050606`.
+With Grok's #17–#22 that is twenty-two merges on 2026-09-21. #34 is open
+inside that range, so it is not a contiguous span.
+
+**The gate was not what the boards said it was.** Until #38 and #39 the hosted
+lanes ran no Python and almost no Rust tests — the sole exception was
+`emitters` running `cargo test -p feat-math --lib -- cxx::` and `--test
+portable_parity`. #38 exists because #32 broke an existing Python test that
+nothing ran. #39 added the Rust half: a full-workspace `cargo test --no-run`
+links ~72 GB against a runner's ~14 GB and dies with a bus error, so the lane
+gates a **checked partition** — 11 product crates on pull requests, 9 deferred
+to self-hosted, with `deploy/ci/rust-test-scope-check.py` asserting against
+`cargo metadata` that the script's output and its arrays agree and leave no
+crate unplaced. Measured on its first green run (`35586778652`): 651 tests
+executed and passed, target 8.98 GB, 626 s of nextest in an 822 s job.
+**`rust-check` still runs neither clippy nor rustfmt** — that is why #37 had
+to clean up formatting drift after the fact.
+
+**Review found what the author did not, repeatedly, and that is the point.**
+#39 took four rounds: the lane could not build at first (72 GB link), then the
+partition failed open on a crate in neither list, then the scope guard
+discarded the script's exit status, and finally the guard was reading the
+arrays in the file while the lane runs the script's *output* — a regex takes
+the first match where bash takes the last assignment. Each was found by an
+independent reviewer reproducing rather than reading. The same held on #34,
+where four P1s in round 4 were followed by two more in round 5.
+
+**A process defect worth recording so it is not repeated:** `gh pr create`
+without `GH_TOKEN` opens the PR as the `gh` OAuth user (`neverhuman`), even
+when the commits are authored and pushed as `jepsontaylor`. Since branch
+protection is unavailable on a free private repo, identity separation is the
+merge gate, and GitHub refuses the review as a self-review. #40 and #41 were
+opened that way and had to be closed and reopened as #42 and #43. Check
+`gh pr view <n> --json author` before requesting a review.
+
+**Open at 11:40Z:** #34 (`wp11/learning-store`, round 5), #42 (ADR-0003 test
+paths), #43 (board corrections). Pushed and held behind the three-PR cap:
+`wp13/pipeline-run` — `jope pipeline run`, the first end-to-end
+dataset → prepare → GP search → select → emit → receipt, built on
+`feat_math::{evolve,fit,transpile}` because the engine's fit authority is
+fenced in every shipped build — and `ci/rust-test-followup-20260921`.
