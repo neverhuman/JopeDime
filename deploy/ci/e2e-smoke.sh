@@ -54,6 +54,37 @@ for run in a b; do
     --output "$OUT/$run"
 done
 
+# A run that emits nothing must say so and fail, instead of reporting a passed emit stage over an
+# empty directory. Which branch this takes depends on the champion the search happens to find, so
+# both are asserted rather than assuming today's winner: if cpp17 covers it there must be an
+# artifact, and if it does not the run must exit non-zero with `ok:false` and a failed emit stage.
+echo "== a single uncovered target fails the run instead of passing with nothing emitted"
+set +e
+"$JOPE" pipeline run \
+  --dataset "$DATASET" \
+  --budget "$BUDGET" \
+  --rng-seed "$RNG_SEED" \
+  --emit cpp17 \
+  --policy skip \
+  --output "$OUT/cpp17-only" > "$OUT/cpp17-only.log" 2>&1
+cpp17_rc=$?
+set -e
+python3 - "$OUT/cpp17-only/receipt.json" "$cpp17_rc" <<'PYEOF'
+import json, sys
+receipt, rc = json.load(open(sys.argv[1])), int(sys.argv[2])
+emit = next(s for s in receipt["stages"] if s["name"] == "emit")
+if receipt["artifacts"]:
+    assert rc == 0, f"cpp17 was emitted but the run exited {rc}"
+    assert emit["status"] == "passed" and receipt["ok"], receipt
+    print(f"  ok: cpp17 covered this champion; emitted {len(receipt['artifacts'])} artifact(s), rc=0")
+else:
+    assert rc != 0, "no code was emitted and the run still exited 0"
+    assert emit["status"] == "failed", emit
+    assert receipt["ok"] is False, "ok survived a failed stage"
+    assert receipt["emit_exclusions"], "nothing emitted and nothing excluded"
+    print(f"  ok: cpp17 does not cover this champion; rc={rc}, emit failed: {emit['reason']}")
+PYEOF
+
 echo "== emitted sources are byte-identical across the two runs"
 diff -r "$OUT/a/emit" "$OUT/b/emit"
 echo "  ok"
