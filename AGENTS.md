@@ -25,10 +25,20 @@ being lost permanently. If you need a throwaway checkout, put it under `$HOME`.
 **Delete a lane and its build directory when its pull request closes.** Not later, not never.
 **At most 4 concurrent lanes.**
 
-**Do not create a worktree — by any means.** This covers the `git worktree add` command, *and any
-tool or harness feature that creates one*, including Claude Code's `EnterWorktree` tool and
-`.claude/worktrees/`. A ban phrased as a prohibition on a shell command was walked straight past by
-a tool. The rule is about the outcome: **there is one checkout.**
+**Worktrees live in exactly one place: `<repo>/.agent/worktrees/`** — owner ruling, 2026-09-21.
+One shared directory for every agent (Claude, Codex, Grok) rather than a per-tool location each.
+`.claude/worktrees` is a **symlink** to `.agent/worktrees`, so Claude Code's own worktree tool lands
+in the shared directory without any configuration. **Do not replace that symlink with a real
+directory**, and do not introduce `.codex/worktrees` or similar — that is the sprawl this replaces.
+
+- **Never `/tmp`** — not worktrees, not clones, not build output. It is emptied at boot.
+- **At most 4 concurrent lanes per repository**, one build directory each, reused.
+- **Remove a lane when its PR closes** with `git worktree remove`, never `rm -rf` (which orphans
+  the admin entry).
+
+This supersedes the previous blanket ban, which was phrased as a prohibition on `git worktree add`
+and so was walked straight past by Claude Code's `EnterWorktree` **tool**. A rule stated as a
+*location* is enforceable; one that names a single invocation is not.
 
 ## Build output
 
