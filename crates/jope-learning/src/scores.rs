@@ -68,11 +68,12 @@ pub fn append(
                 jope_datasets::store::PutOutcome::Exists => rep.existed += 1,
             }
             let head_rel = "scores/ledger/HEAD.json";
-            let prev = m.get(head_rel)?;
+            // Expected-previous is the LOCAL pre-append HEAD captured under the ledger lock, not a
+            // re-read of the key being written; see `Mirror::put_pointer` and `BatchReceipt`.
             m.put_pointer(
                 head_rel,
                 &fs::read(ledger.root().join("HEAD.json"))?,
-                prev.as_deref(),
+                b.prev_head_bytes.as_deref(),
             )?;
             rep.pointers += 1;
             Some(rep)

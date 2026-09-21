@@ -2319,6 +2319,7 @@ dependencies = [
  "clap",
  "hex",
  "jope-datasets",
+ "jope-paths",
  "rusqlite",
  "schemars",
  "serde",

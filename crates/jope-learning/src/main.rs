@@ -28,7 +28,8 @@ struct Cli {
 
 #[derive(Args, Clone)]
 struct Common {
-    /// Local state tree (default: $JOPE_STATE, else ~/.local/state/jope).
+    /// Local state tree (ADR-0003 default: $JOPE_STATE, else $XDG_STATE_HOME/jope, else
+    /// ~/.local/state/jope, else <jope_home>/state).
     #[arg(long, global = true)]
     state: Option<PathBuf>,
     /// object_store URL mirrored after every write (default: $JOPE_LEARNING_URL; none = local only).

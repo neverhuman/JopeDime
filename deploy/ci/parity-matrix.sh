@@ -3,8 +3,10 @@
 #
 # Fails when docs/parity/capability-matrix.md has a row with no target and no dropped/lost/pending
 # status, when a binary, clap subcommand, example, Python tool, jope-py command or systemd unit
-# exists in this tree without a row, when a pending-WP<N> number is outside 4..12, or when a
-# moved row points at a missing path. Prints counts by status and by kind.
+# exists in this tree without a row, when a pending-WP<N> number is outside 4..12, when a
+# moved row points at a missing path, or when the committed `## Counts` table disagrees with the
+# rows it summarises (two lanes bumping the same tally to the same wrong number merge without a
+# git conflict, so the gate recomputes it). Prints counts by status and by kind.
 #
 # The clap subcommands are taken from the source enum (crates/jope-engine/src/main.rs, which also
 # lists the `neural`-gated and hidden variants) and, unless --no-build is given, cross-checked

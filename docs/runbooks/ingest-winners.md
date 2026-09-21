@@ -8,7 +8,7 @@ tie against itself and is logged as a rejected event, never dropped).
 ```sh
 cargo build --release -p jope-learning --locked
 JL=target/release/jope-learning
-export JOPE_STATE=/path/to/state            # default ~/.local/state/jope
+export JOPE_STATE=/path/to/state            # ADR-0003 default: $XDG_STATE_HOME/jope, else ~/.local/state/jope
 # export JOPE_LEARNING_URL=s3://veox-jopedime-learning-use2   # optional durable mirror
 ```
 

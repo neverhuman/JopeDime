@@ -20,7 +20,14 @@ Two modes, standard library only:
       (ii) every binary, clap subcommand (source enum plus, when given, the parsed `--help`),
       example, Python tool (python/src/jope/{tools,research}/*.{py,sh}), jope-py command and
       systemd unit present in this tree has a row; (iii) `pending-WP<N>` has N in 4..12;
-      (iv) a `moved`/`new` row's path-like target exists. Prints counts by status and kind.
+      (iv) a `moved`/`new` row's path-like target exists; (v) the committed `## Counts` table
+      and its covering-test tally agree with the rows recomputed from `## Rows`. Prints counts
+      by status and kind.
+
+      (v) exists because the tally is the one part of the matrix git cannot referee: two lanes
+      that each add a row of the same kind both bump the same cell to the same number, so the
+      text is byte-identical, there is no conflict, and the merged file silently under-counts by
+      one. The gate recomputes the table instead of trusting it.
 """
 
 from __future__ import annotations
@@ -280,7 +287,16 @@ def status_class(status: str) -> str:
     return "invalid"
 
 
-def render_matrix(rows: list[dict], old_sha: str, new_sha: str) -> str:
+COUNT_CLASSES = ["moved", "new", "pending", "dropped", "lost"]
+NO_TEST_RE = re.compile(r"^`moved`/`new` rows without a covering test: (\d+)\.$")
+
+
+def counts_lines(rows: list[dict]) -> tuple[list[str], int]:
+    """The body of the `## Counts` table and the covering-test tally, recomputed from `rows`.
+
+    The single source of truth for both `census` (which writes them) and `check` (which compares
+    the committed ones against them).
+    """
     by_kind_status: dict[str, Counter] = defaultdict(Counter)
     statuses = Counter()
     no_test = 0
@@ -290,6 +306,41 @@ def render_matrix(rows: list[dict], old_sha: str, new_sha: str) -> str:
         statuses[cls] += 1
         if r["test"] == "none" and cls in ("moved", "new"):
             no_test += 1
+    lines = []
+    for kind in sorted(by_kind_status):
+        c = by_kind_status[kind]
+        lines.append(f"| {kind} | {sum(c.values())} | " + " | ".join(str(c[s]) for s in COUNT_CLASSES) + " |")
+    lines.append(f"| **total** | **{len(rows)}** | " + " | ".join(f"**{statuses[s]}**" for s in COUNT_CLASSES) + " |")
+    return lines, no_test
+
+
+def counts_row_kind(line: str) -> str:
+    """The kind a `## Counts` line is about (`**total**` for the total row)."""
+    cells = split_row(line)
+    return cells[0] if cells else line
+
+
+def committed_counts(path: Path) -> tuple[list[str], int | None]:
+    """The `## Counts` table as committed: its data lines verbatim and the covering-test tally."""
+    lines = path.read_text().splitlines()
+    if "## Counts" not in lines:
+        return [], None
+    table: list[str] = []
+    no_test: int | None = None
+    for line in lines[lines.index("## Counts") + 1:]:
+        if line.startswith("## "):
+            break
+        stripped = line.rstrip()
+        if stripped.startswith("| ") and not stripped.startswith("| kind "):
+            table.append(stripped)
+        m = NO_TEST_RE.match(stripped)
+        if m:
+            no_test = int(m.group(1))
+    return table, no_test
+
+
+def render_matrix(rows: list[dict], old_sha: str, new_sha: str) -> str:
+    table, no_test = counts_lines(rows)
     out = []
     out.append("# Capability parity matrix")
     out.append("")
@@ -299,7 +350,8 @@ def render_matrix(rows: list[dict], old_sha: str, new_sha: str) -> str:
         "checkout, then hand-annotated; `deploy/ci/parity-matrix.sh` (hygiene lane) fails when a row has no "
         "target and no `dropped`/`lost`/`pending-WP<N>` status, when a binary, clap subcommand, example, Python "
         "tool, `jope-py` command or systemd unit exists in this tree without a row, when a `pending-WP<N>` "
-        "number is outside 4..12, or when a `moved` row points at a path that does not exist. Re-run the census "
+        "number is outside 4..12, when a `moved` row points at a path that does not exist, or when the `## "
+        "Counts` table below disagrees with the rows it summarises. Re-run the census "
         "with `--merge docs/parity/capability-matrix.md` to keep the hand edits." % (old_sha, new_sha)
     )
     out.append("")
@@ -313,13 +365,9 @@ def render_matrix(rows: list[dict], old_sha: str, new_sha: str) -> str:
     out.append("")
     out.append("## Counts")
     out.append("")
-    classes = ["moved", "new", "pending", "dropped", "lost"]
-    out.append("| kind | rows | " + " | ".join(classes) + " |")
-    out.append("|---|---:|" + "---:|" * len(classes))
-    for kind in sorted(by_kind_status):
-        c = by_kind_status[kind]
-        out.append(f"| {kind} | {sum(c.values())} | " + " | ".join(str(c[s]) for s in classes) + " |")
-    out.append(f"| **total** | **{len(rows)}** | " + " | ".join(f"**{statuses[s]}**" for s in classes) + " |")
+    out.append("| kind | rows | " + " | ".join(COUNT_CLASSES) + " |")
+    out.append("|---|---:|" + "---:|" * len(COUNT_CLASSES))
+    out.extend(table)
     out.append("")
     out.append(f"`moved`/`new` rows without a covering test: {no_test}.")
     out.append("")
@@ -863,6 +911,28 @@ def cmd_check(a):
             missing.append(f"systemd unit: {rel}")
     for m in missing:
         problems.append(f"no row for {m}")
+    # (v) the committed `## Counts` table must agree with the rows it summarises. Two concurrent
+    # lanes that each add a row of the same kind bump the same cell to the same number, so git sees
+    # no conflict and the merged file under-counts silently; recompute instead of trusting.
+    want_table, want_no_test = counts_lines(rows)
+    got_table, got_no_test = committed_counts(Path(a.matrix))
+    if not got_table:
+        problems.append("the matrix has no `## Counts` table")
+    elif got_table != want_table:
+        wanted = {counts_row_kind(l): l for l in want_table}
+        gotten = {counts_row_kind(l): l for l in got_table}
+        for kind in sorted(set(wanted) | set(gotten)):
+            if wanted.get(kind) != gotten.get(kind):
+                problems.append(
+                    f"## Counts row `{kind}` disagrees with the rows below it: committed "
+                    f"`{gotten.get(kind, '(no such row)')}`, recomputed `{wanted.get(kind, '(no such kind)')}`"
+                )
+    if got_no_test is None:
+        problems.append("## Counts has no `moved`/`new` rows without a covering test: <n>. line")
+    elif got_no_test != want_no_test:
+        problems.append(
+            f"## Counts says {got_no_test} `moved`/`new` rows without a covering test; the rows say {want_no_test}"
+        )
     # report
     by_status = Counter(status_class(r["status"]) for r in rows)
     by_kind = Counter(r["kind"] for r in rows)
