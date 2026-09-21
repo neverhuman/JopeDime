@@ -19,7 +19,7 @@ anyhow.workspace = true
 clap.workspace = true
 futures-util.workspace = true
 hex.workspace = true
-object_store = { version = "0.13", features = ["aws"] }
+object_store = { version = "0.14", features = ["aws"] }
 schemars = "1"
 serde.workspace = true
 serde_json.workspace = true
