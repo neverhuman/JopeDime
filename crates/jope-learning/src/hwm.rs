@@ -1070,7 +1070,24 @@ pub fn freeze(state: &State, out: &Path, include_unbound: bool) -> Result<Freeze
             .with_context(|| format!("blob {sha} missing for {}", pointer.rel()))?;
         let rel = State::blob_rel(&sha);
         let dest = out.join(&rel);
-        if !dest.exists() {
+        // A destination path is content-addressed, but existence is not integrity: skipping the
+        // write because the path was occupied published a manifest asserting `record_sha256`
+        // over whatever bytes happened to sit there -- a truncated, corrupted or planted file
+        // exported as though it had been verified, with `verify` unable to catch it because the
+        // source ledger it checks is intact. Re-export stays idempotent (identical bytes are
+        // accepted in silence); disagreeing bytes fail the freeze before any manifest is written.
+        if dest.exists() {
+            let existing = fs::read(&dest)
+                .with_context(|| format!("reading existing export {}", dest.display()))?;
+            let existing_sha = sha256_hex(&existing);
+            ensure!(
+                existing_sha == sha,
+                "refusing to freeze {}: {} already holds bytes hashing to {existing_sha}, \
+                 not the {sha} its path claims",
+                pointer.rel(),
+                dest.display()
+            );
+        } else {
             atomic_write(&dest, &blob)?;
         }
         manifest.entries.push(FreezeEntry {
