@@ -1,7 +1,11 @@
 # JopeDime current direction
 
 **2026-09-21.** Publication repo: private `veox-ai/JopeDime`. This note tracks
-`origin/main`; the landing board below records each merge SHA (11 PRs, #23–#33, merged 2026-09-21 03:58–05:08Z under D1, moving `main` `1f0fc5a` → `0c14405`; Grok's #17–#22 had moved it `4235db6` → `1f0fc5a` earlier that day).
+`origin/main`; the landing board below records each merge SHA. Twenty-one PRs
+merged on 2026-09-21: Grok's #17–#22 (01:24–03:16Z, `4235db6` → `1f0fc5a`),
+then #23–#39 under D1 (03:58–11:11Z, `1f0fc5a` → `70506066`). Every readback
+line in this file is regenerated, not transcribed; the command that produced
+it is next to it.
 
 ## Queue
 
@@ -65,7 +69,7 @@ Coordinate in [`AGENT_CHAT.md`](AGENT_CHAT.md).
 | # | Decision |
 | --- | --- |
 | D1 | Agents merge: hosted CI green at the exact head + review by the *other* GitHub identity than the author (`jepsontaylor` PAT / `neverhuman` gh; both agent-operated on xbabe2) + merge SHA and `main` readback recorded here. |
-| D2 | PR gate = hygiene + rust-check + emitters + inputs (≤15 min, path-gated). Full nextest, LibTorch `features`, sanitizers, security, artifacts, Jankurai = visible non-blocking main/nightly lanes, each promoted to blocking once it passes on main. Jankurai is a no-regression ratchet, never a merge gate. |
+| D2 | PR gate = hygiene + rust-check + emitters + inputs + `python` (#38) + `rust-test` (#39, open) — all path-gated. Full nextest, LibTorch `features`, sanitizers, security, artifacts, Jankurai = visible non-blocking main/nightly lanes, each promoted to blocking once it passes on main. Jankurai is a no-regression ratchet, never a merge gate. |
 | D3 | Owner upgrades `veox-ai` to Team; branch protection (required checks + 1 approval + no force-push) is enabled the moment the API stops returning 403. |
 | D4 | `veox-jopedime-{datasets,models,learning,archive}-use2` (+usw2 replicas) = product buckets the crates target. `jopedime-714044927654-us-east-2-{dev,prod,sealed}` = preservation custody. Nothing deleted; `catalogs/s3.json` records both. |
 | D5 | Both the ten real test datasets (`wpd1`) and the forty synthetic fixtures (Codex `15a1d31`) are admitted to Git. |
@@ -93,14 +97,67 @@ Coordinate in [`AGENT_CHAT.md`](AGENT_CHAT.md).
 | #8 | `wp6/python` | d49662f | #31 | `99981e6` 04:42:33Z (rebase; ruff format + pidfd fallback) |
 | #13 | `wp4/paths` | 96a61c8 | #32 | `ff5da5b` 05:04:22Z (rebase; abs-path hygiene step now blocking for crates/deploy/.github) |
 | #16 | `wp9/docs-release` | 9bec536 | #30 | `aa57388` 04:33:58Z (rebase; README kept as Grok's honest front door, quickstart → docs/quickstart.md, status banners) |
-| — | `wp11/learning-store` | df9e4e0 | #34 | |
-| — | `wp12/arena` | 53f5ec4 | #35 | |
-| — | `wp5/cli-split` | d0b4819 | | |
+| — | `wp12/arena` | 53f5ec4 | #35 | `53ea45d` 08:21:44Z (rebase; rustls provider guard fails closed, ureq 3 proxy/redirect deltas disclosed) |
+| — | board | | #36 | `ebf055d` 06:36:46Z (landing rows through #33) |
+| — | rustfmt drift | | #37 | `dc46e86` 06:47:00Z (two drifted hunks in `jope-engine eval_registry/query`) |
+| — | python lane | | #38 | `d43bc5f` 07:49:28Z (fixes the systemd test #32 broke; **adds the hosted `python` lane that would have caught it**) |
+| — | `wp11/learning-store` | df9e4e0 | **#34 open** | round 4 in progress: four P1s, all reviewer-found |
+| — | rust-test lane | | #39 | `7050606` 11:11:35Z (4 rounds; the hosted gate ran no Rust tests at all, and the scope guard itself failed open twice before the reviewer's negative probes closed it) |
+| — | ADR-0003 test paths | | **#40 open** | three tests red since the relocation; also drops their quarantine entries |
+| — | `wp13/pipeline-run` | | queued | `jope pipeline run`: dataset → prepare → GP search on feat-math → select → emit → receipt |
+| — | `wp5/cli-split` | d0b4819 | | needs a mechanical re-do on current main, not a replay (#32 rewrote 67 of the files it moves) |
 | — | `wp8/runner-lanes` | f6c101d | | |
-| #5 | dependabot cargo group | 1151493 | | |
+| #5 | dependabot cargo group | 1151493 | | re-trigger after main settles; lockfile = trust surface, two lenses |
 
 Recovery of #5–#16: bundle `pr-5-through-16.bundle` (sha256 3bafaa52…) is also
 at `s3://veox-jopedime-archive-use2/git-bundles/20260921/`.
+
+## What the gate actually proves (2026-09-21, measured)
+
+Read this before trusting a green check.
+
+- Until #38 and #39, **the hosted gate ran no Rust tests and no Python at all**:
+  `hygiene`, `rust-check` (`cargo check` + `clippy` + `fmt`), `emitters` and
+  `inputs`. A green PR meant "it compiles and the emitters agree", never "the
+  tests pass". #38 added the `python` lane — and was itself opened because #32
+  merged a broken Python test that nothing ran. #39 adds the Rust half.
+- **The `pr` nextest profile on live `main` is red**: 18 failures in
+  `jope-parallel`, `jainnode` and `jain-smartcluster-daemon`, measured
+  independently on `main` itself. A full-workspace run on any branch is
+  therefore red for reasons that have nothing to do with that branch, and
+  "workspace tests are red" is not evidence against a PR.
+- A full-workspace `cargo test --no-run` links ~72 GB of artefacts against a
+  hosted runner's ~14 GB of disk — it does not fail a test, it SIGBUSes. #39
+  splits the workspace into **product** (11 crates, gated on pull requests,
+  651 tests, 9.4–12 GB) and **deferred** (9 crates, self-hosted), and
+  `deploy/ci/rust-test-scope-check.py` asserts against `cargo metadata` that
+  the two lists are an exact partition — no repeats, no overlap, nothing
+  unplaced. A crate in neither list would be gated by nothing and flagged by
+  nothing; `jope-arena` did exactly that once, which is why the check exists.
+- 15 tests were quarantined in `deploy/ci/known-broken-tests.txt` with a cause
+  each, not a blanket skip: **A0** the ADR-0003 relocation (3, fixed by #40),
+  **A** the fit-authority fence (below), **B** behavioural assertions, **C**
+  one racy test that passes at `--test-threads 1`.
+
+## Correction to the product plan: the engine cannot measure
+
+`crates/jope-engine/src/fit_boundary.rs` requires `JOPE_FIT_SERVICE_SOCKET`
+unconditionally — no socket, no fitting — and
+`eval_registry/authority.rs::activation_block` returns a block for every
+non-test scope ("production capabilities have no verifier yet"), so **no
+shipped binary can measure through the engine**. That is not a bug to route
+around quietly: it is a deliberate fence, and it explains 9 of the 14
+quarantined tests.
+
+Consequence for the pipeline: **WP-P1 (`jope pipeline run`) builds on
+`feat_math::evolve` + `feat_math::fit` + `feat_math::transpile`, not on
+`jope-engine`'s held entry points.** `crates/jope-cli/src/kernel.rs` is the
+unfenced path today, but its `SEARCH_CANDIDATES` is a three-candidate loop, not
+a genetic program — the GP is `feat_math::evolve`
+(`random_canonical_pipeline` / `mutate_canonical_pipeline` /
+`crossover_canonical_pipelines`) and it is complete. Lifting the fence is a
+separate, reviewed change with its own verifier, never a side effect of a
+pipeline PR.
 
 ## Recorded conflict — owner to settle (2026-09-21)
 
