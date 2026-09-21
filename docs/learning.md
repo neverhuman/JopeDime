@@ -85,9 +85,20 @@ ts_unix}`. The batch is written through a temporary file, fsynced and renamed; `
 then replaced the same way. Batches are never rewritten. `verify` lists the batches in ULID
 order and recomputes: the seal's event count and `events_sha256`, the link to the previous
 batch's name and file hash, and that `HEAD.json` names the last batch with its hash and the
-running counts — so a tampered byte, a truncated file, a removed batch or a stale head is a
-named break. Every writer first proves the chain intact (`require_intact`) and refuses to append
-to a broken ledger.
+running counts — so a tampered byte, a truncated batch file, a batch removed from the middle of
+the chain, a reordered or duplicated batch, and a `HEAD.json` that disagrees with the tip in
+batch, file hash, path or counts are all named breaks.
+
+The one thing that is **not**: a removed *tail* with `HEAD.json` rewritten to match it. Delete
+the newest batches, point `HEAD.json` at the new last one with its real sha and corrected counts,
+and what remains is internally consistent, because `HEAD.json` is the only anchor and it lives in
+the directory it anchors. `verify` reporting zero breaks means "everything here is consistent
+with everything else here", which is the strongest claim a self-contained chain can make. The
+anchor that does catch it is external: `Ledger::mirror_position` refuses a host whose chain no
+longer contains the mirror's tip, so a truncated host cannot push and is told why.
+
+Every path that writes or exports first proves the chain intact (`require_intact`) and refuses
+on a broken ledger — `hwm ingest`, `scores append` and `hwm freeze` alike.
 
 ### Pointers
 
