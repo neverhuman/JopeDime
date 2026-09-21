@@ -225,6 +225,10 @@ pub struct CutSearch {
     pub search_sha256: String,
     #[serde(skip)]
     pub observations_sha256: String,
+    #[serde(skip)]
+    pub rng_seed: u64,
+    #[serde(skip)]
+    pub budget: Budget,
 }
 
 /// A scored survivor carried between generations.
@@ -526,8 +530,89 @@ pub fn run_cut(cut: &Cut, budget: Budget, rng_seed: u64, output: &Path) -> Resul
         observations,
         search_sha256: String::new(),
         observations_sha256: String::new(),
+        rng_seed,
+        budget,
     };
+    publish_cut_search(&mut search)?;
+    Ok(search)
+}
 
+/// How many of each cut's best measured genomes are forced onto every other cut
+/// before selection. Without this, `--cuts > 1` can only ever pick the bootstrap:
+/// it is the one genome injected into every cut, so `cuts_measured` ranks it first.
+pub const REMEASURE_TOP_K: usize = ELITES;
+
+/// Re-fit each cut's top-k genomes on every other cut so selection compares a
+/// common set. No-op when there is only one cut.
+pub fn remeasure_topk_on_all_cuts(cuts: &[Cut], searches: &mut [CutSearch]) -> Result<()> {
+    ensure!(
+        cuts.len() == searches.len(),
+        "remeasure: {} cuts vs {} searches",
+        cuts.len(),
+        searches.len()
+    );
+    if cuts.len() <= 1 {
+        return Ok(());
+    }
+    let mut pool = BTreeSet::new();
+    for search in searches.iter() {
+        let mut measured: Vec<&Observation> = search
+            .observations
+            .iter()
+            .filter(|observation| observation.measured())
+            .collect();
+        measured.sort_by(|a, b| {
+            a.rmse
+                .unwrap_or(f64::INFINITY)
+                .total_cmp(&b.rmse.unwrap_or(f64::INFINITY))
+                .then(a.genome.cmp(&b.genome))
+        });
+        for observation in measured.into_iter().take(REMEASURE_TOP_K) {
+            pool.insert(observation.genome.clone());
+        }
+    }
+    for (cut, search) in cuts.iter().zip(searches.iter_mut()) {
+        let already: BTreeSet<String> = search
+            .observations
+            .iter()
+            .filter(|observation| observation.measured())
+            .map(|observation| observation.genome.clone())
+            .collect();
+        for genome in &pool {
+            if already.contains(genome) {
+                continue;
+            }
+            let observation = evaluate(genome, cut, search.generations as usize, "remeasure");
+            search.completed_evaluations += 1;
+            if observation.measured() {
+                search.successful_measurements += 1;
+            } else {
+                search.failed_or_unavailable_measurements += 1;
+            }
+            search.observations.push(observation);
+        }
+        if let Some(best) = search
+            .observations
+            .iter()
+            .filter(|observation| observation.measured())
+            .min_by(|a, b| {
+                a.rmse
+                    .unwrap_or(f64::INFINITY)
+                    .total_cmp(&b.rmse.unwrap_or(f64::INFINITY))
+                    .then(a.genome.cmp(&b.genome))
+            })
+        {
+            search.best_validation_rmse = best.rmse;
+            search.best_validation_r2 = best.hold_r2;
+            search.best_program = Some(best.genome.clone());
+        }
+        publish_cut_search(search)?;
+    }
+    Ok(())
+}
+
+fn publish_cut_search(search: &mut CutSearch) -> Result<()> {
+    let output = &search.output;
     std::fs::create_dir_all(output).with_context(|| format!("create {}", output.display()))?;
     let observations_bytes = serde_json::to_vec_pretty(&search.observations)?;
     let observations_path = output.join("observations.json");
@@ -540,16 +625,16 @@ pub fn run_cut(cut: &Cut, budget: Budget, rng_seed: u64, output: &Path) -> Resul
     let mut summary = serde_json::to_value(&search)?;
     summary["schema"] = "jope.pipeline-search/v1".into();
     summary["engine"] = SEARCH_ENGINE.into();
-    summary["rng_seed"] = rng_seed.into();
-    summary["budget_evaluations"] = budget.evaluations.into();
-    summary["budget_seconds"] = budget.seconds.into();
+    summary["rng_seed"] = search.rng_seed.into();
+    summary["budget_evaluations"] = search.budget.evaluations.into();
+    summary["budget_seconds"] = search.budget.seconds.into();
     summary["observations_sha256"] = search.observations_sha256.clone().into();
     let summary_bytes = serde_json::to_vec_pretty(&summary)?;
     let search_path = output.join("search.json");
     std::fs::write(&search_path, &summary_bytes)
         .with_context(|| format!("write {}", search_path.display()))?;
     search.search_sha256 = sha256_hex(&summary_bytes);
-    Ok(search)
+    Ok(())
 }
 
 #[cfg(test)]
@@ -658,6 +743,72 @@ mod tests {
         // The champion can only be at least as good as the bootstrap.
         let bootstrap = search.observations[0].rmse.unwrap();
         assert!(search.best_validation_rmse.unwrap() <= bootstrap);
+    }
+
+    #[test]
+    fn remeasure_puts_each_cuts_topk_on_every_other_cut() {
+        let temp = tempfile::tempdir().unwrap();
+        let preparation = prepare::build(
+            &linear_rows(150),
+            "remeasure",
+            7,
+            2,
+            &temp.path().join("prepared"),
+        )
+        .unwrap();
+        let budget = Budget {
+            evaluations: 16,
+            seconds: 120,
+        };
+        let mut searches: Vec<CutSearch> = preparation
+            .cuts
+            .iter()
+            .map(|cut| {
+                run_cut(
+                    cut,
+                    budget,
+                    7,
+                    &temp.path().join(format!("search-{}", cut.index)),
+                )
+                .unwrap()
+            })
+            .collect();
+        remeasure_topk_on_all_cuts(&preparation.cuts, &mut searches).unwrap();
+        let mut pool = BTreeSet::new();
+        for search in &searches {
+            let mut measured: Vec<&Observation> = search
+                .observations
+                .iter()
+                .filter(|observation| observation.measured())
+                .collect();
+            measured.sort_by(|a, b| {
+                a.rmse
+                    .unwrap()
+                    .total_cmp(&b.rmse.unwrap())
+                    .then(a.genome.cmp(&b.genome))
+            });
+            for observation in measured.into_iter().take(REMEASURE_TOP_K) {
+                pool.insert(observation.genome.clone());
+            }
+        }
+        for search in &searches {
+            let have: BTreeSet<_> = search
+                .observations
+                .iter()
+                .filter(|observation| observation.measured())
+                .map(|observation| observation.genome.clone())
+                .collect();
+            for genome in &pool {
+                assert!(
+                    have.contains(genome),
+                    "cut {} missing remeasured {genome}",
+                    search.cut
+                );
+            }
+        }
+        let selection = crate::select::select(&searches).unwrap();
+        let best = selection.best.unwrap();
+        assert_eq!(best.cuts_measured, 2);
     }
 
     #[test]

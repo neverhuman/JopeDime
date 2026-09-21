@@ -208,7 +208,7 @@ pub fn emit(genome: &str, languages: &[Language], directory: &Path) -> Result<Em
     )?;
     Ok(Emitted {
         canonical_genome: parsed.canonical(),
-        genome_sha256: hash(genome.trim().as_bytes()),
+        genome_sha256: hash(parsed.canonical().as_bytes()),
         artifacts,
         exclusions,
     })
@@ -287,6 +287,16 @@ mod tests {
             "py rs cpp js\n"
         );
         assert!(temp.path().join("manifest.json").is_file());
+        assert_eq!(
+            emitted.genome_sha256,
+            hash(emitted.canonical_genome.as_bytes())
+        );
+        assert_eq!(
+            emitted.canonical_genome,
+            feat_math::genome::GenomeIr::parse(crate::select::BOOTSTRAP_GENOME)
+                .unwrap()
+                .canonical()
+        );
     }
 
     #[test]
