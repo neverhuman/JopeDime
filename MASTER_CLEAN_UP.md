@@ -528,3 +528,74 @@ restarted during this work.
 **If a lane fails at Checkout with a missing `action.yml`, clear `_actions` before suspecting
 anything else.** This is now the second failure mode traced to the shared `jope-work` volume, after
 the `$lane` collision.
+
+---
+
+# 🔴 19-AGENT TREE AUDIT — findings that must be read before any further deletion
+
+A 19-agent read-only workflow audited all 15 large trees plus three adversarial cross-tree lenses
+(byte-identity, superset, unjustified-verdict). 854 tool calls, zero errors. Raw results:
+`…/subagents/workflows/wf_49186f71-318/journal.jsonl`.
+
+## Three findings that would cause data loss if acted on naively
+
+### D1 — MUTUAL DELETION. `jope-dime-mirror/objects` and the node mirror are each other's only copy
+
+They share **17,864 content-addressed names = 6,572,246,321 B**. The adversarial auditor hashed 25
+of the shared objects as git blobs: **23 of 25 are NOT in `jain-split/jope-dime/.git`.** The mirror
+audit justifies `COLLAPSE_FULLY` by pointing at the kernel-mirror copy; the node audit calls that
+same overlap "duplicated locally". **Execute both verdicts and 6.57 GB is gone with no third copy.**
+Neither may be collapsed until one is designated the survivor **in writing**.
+
+### D2 — a planned 83.2 GB reclaim was justified against a path *this cleanup moved*
+
+The node-mirror audit's containment check targeted
+`jain-split/jope-dime/parallel/recovery/xbabe2-migration-20260914/accepted60000-restored/parallel`.
+That path is **ABSENT** — because **Phase 4 of this cleanup moved it** to
+`~/jope-evidence/xbabe2-migration-20260914/…` (byte total matching exactly, 110,918,425,513 B).
+
+**Consequence: `~/jope-evidence` (123.9 GB) is now load-bearing for ~136 GB of planned deletion,
+appears in no audit, and nothing protects it.** An agent reading "container gone" as "already
+handled" would waive the precondition and delete the only copy. It is listed in DO-NOT-TOUCH above;
+that entry is now *mandatory*, not advisory.
+
+### D3 — ~299 GB of "safe" deletion rests on an unaudited 1.69 TB tree
+
+`jope-flywheel/encodings` (~140 GB) and `jope-preservation/quant-v2-packs` (~158 GB) are
+collapsible **only** because `~/remote_super/quant` holds the sources — verified 240/240 and 60/60
+by sha256 sampling. `remote_super` is **the largest tree on the pressured filesystem, appears in
+zero audits and zero preservation census roots**, and is exactly what an uninformed disk-pressure
+agent deletes next. **Protect it before either reclaim is authorised.**
+
+## Two custody gaps in MY OWN work, found by the audit and now closed
+
+| Gap | Why it mattered | Fixed |
+| --- | --- | --- |
+| **`jope-slime` was never captured.** It was in the rescue batch I killed when the runaway tar was consuming the disk, and I did not re-run it. | 321 commits, remote deleted, absent from xbabe3, the forge (500) and GitHub (404). | `verbatim-git/jope-slime-dotgit.tar.gz` (293 MB) |
+| **A `--all` bundle would have lost 36 commits anyway.** `rev-list --all` = 321, `--all --reflog` = **357**. `git bundle create --all` captures none of the reflog-only tips, and they are substantive (e.g. `c4af807c "freeze objective scalar oracle fixture (660 cases, 22284 rows)"`). | Custody must be a **verbatim `.git` copy**, not a bundle. | verified in the tar: `--all`=321, `--all --reflog`=**357** |
+| **`review-34`'s tip `5113383e` was in no custody bundle** — the audit calls it "the single most dangerous item in the sprawl": 12 commits absent from GitHub's 80 refs and not an ancestor of `main`. | | `verbatim-git/review-34-dotgit.tar.gz` (13 MB), `5113383e` verified present |
+
+**Custody is now 1,433 files / 2.2 GB, `sha256sum -c` passes.**
+
+### A method warning the audit proved with a counterexample
+
+**"Same name + same byte size" is not identity for Rust build output.**
+`libreqwest-c7416b0e4a29b351.rlib` — identical name, identical 19,744,970 B, in 5 targets →
+**5 different sha256**. Of 20 name+size matches sampled, only 4 were truly identical. The same
+heuristic held **100 %** for data files (28/28, 60/60, 240/240). Never cite name+size as dedup
+evidence for build artifacts. Relatedly: **predicate every build strip on `CACHEDIR.TAG`, not on
+`-name target`** — 13 dirs named `target` in `jope-migration-evidence` are not Cargo output and two
+are vendored crate *source*.
+
+## Recommended stopping point
+
+| Scenario | Reclaim |
+| --- | --- |
+| Zero-risk only (build output + sha-proven dups, no owner decision, no unaudited dependency) | ~143 GB |
+| **+ the dead-session scratch in the live bullet tree (coordination only, zero data at stake)** | **~310 GB ← recommended without owner input** |
+| + custody executed and survivors pinned | ~500 GB |
+| Full plan (needs `remote_super` protected and the `HANDOFF.md` retention clause waived) | ~778 GB |
+
+The auditors also measured **622 GB freed between the brief and their report** — two of the fifteen
+audits describe a disk that no longer exists. **Re-measure before executing any row**; the dominant
+operational risk is now racing deleters, not the disk.
