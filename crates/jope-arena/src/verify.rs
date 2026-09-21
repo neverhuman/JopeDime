@@ -58,9 +58,15 @@ pub struct Verification {
 }
 
 impl Verification {
-    /// True when nothing is missing, mismatched or unlisted.
+    /// True when every listed file inside the snapshot is present and matches. Unlisted files
+    /// are reported; [`Verification::passed_strict`] also refuses them.
     pub fn passed(&self) -> bool {
-        self.missing == 0 && self.mismatched == 0 && self.unlisted.is_empty()
+        self.missing == 0 && self.mismatched == 0
+    }
+
+    /// [`Verification::passed`] and nothing unlisted.
+    pub fn passed_strict(&self) -> bool {
+        self.passed() && self.unlisted.is_empty()
     }
 }
 
@@ -90,18 +96,22 @@ fn walk(dir: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
     Ok(())
 }
 
-/// Locate the benchmark root a results directory belongs to: the manifest's paths start with
-/// `results/<track>/…`, so the root is the ancestor where that prefix resolves to `dir`.
-fn benchmark_root(dir: &Path, sample_path: &str) -> Option<PathBuf> {
+/// Locate the benchmark root a results directory belongs to: the manifest's paths are relative
+/// to it (`results/<track>/…`), so it is the ancestor of `dir` under which the most listed paths
+/// exist (nearest ancestor on ties); `None` when no ancestor resolves any of them.
+fn benchmark_root(dir: &Path, listed: &[ManifestFile]) -> Option<PathBuf> {
     let canonical = dir.canonicalize().ok()?;
-    let sample = Path::new(sample_path);
-    let relative_dir = sample.parent()?;
+    let mut best: Option<(usize, PathBuf)> = None;
     for ancestor in canonical.ancestors() {
-        if ancestor.join(relative_dir) == canonical {
-            return Some(ancestor.to_path_buf());
+        let hits = listed
+            .iter()
+            .filter(|file| ancestor.join(&file.path).is_file())
+            .count();
+        if hits > 0 && best.as_ref().is_none_or(|(most, _)| hits > *most) {
+            best = Some((hits, ancestor.to_path_buf()));
         }
     }
-    None
+    best.map(|(_, root)| root)
 }
 
 /// Verify `dir` against its `evidence-manifest.json`.
@@ -131,12 +141,7 @@ pub fn verify_results(dir: &Path) -> Result<Verification> {
         "{} lists no files",
         manifest_path.display()
     );
-    let sample = listed
-        .iter()
-        .find(|f| f.path.contains("/scores.csv") || f.path.contains("/dataset-metadata/"))
-        .map(|f| f.path.clone())
-        .unwrap_or_else(|| listed[0].path.clone());
-    let root = benchmark_root(dir, &sample);
+    let root = benchmark_root(dir, &listed);
     let canonical_dir = dir.canonicalize()?;
     let results_prefix = root
         .as_ref()
@@ -267,11 +272,15 @@ mod tests {
         assert_eq!(report.mismatched, 0);
         assert_eq!(report.unlisted, vec!["stray.txt".to_owned()]);
         assert!(!report.passed());
+        assert!(!report.passed_strict());
 
-        std::fs::remove_file(root.join("results/tr/stray.txt")).unwrap();
         write(root, "results/tr/gone.json", b"");
         let report = verify_results(&root.join("results/tr")).unwrap();
         assert!(report.passed(), "{report:?}");
+        assert!(!report.passed_strict());
+        std::fs::remove_file(root.join("results/tr/stray.txt")).unwrap();
+        let report = verify_results(&root.join("results/tr")).unwrap();
+        assert!(report.passed_strict(), "{report:?}");
 
         write(root, "results/tr/scores.csv", b"a,c\n");
         let report = verify_results(&root.join("results/tr")).unwrap();

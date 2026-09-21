@@ -1,0 +1,330 @@
+{
+  "schema": "parallel.seed_population.v1",
+  "prepared_sha256": "839dc6278019a41cd1f7c18b8f67873d18867c95c8f9c7f73e5a3e881c063ee9",
+  "cut": 0,
+  "training_sha256": "913076c624a7de507e0cf8dc7fcf1d6fa3d515b9ce6750e714a0e6e86f73105b",
+  "context_sha256": "e49c392e7852f24e395f731a9e8f16c5c3ac2a20193f09162893edf838e6bafd",
+  "checkpoint_sha256": "caa22d011f9744824a0d3ef8c3cbd0037ae7c5a7a65a6fc2ee310c223aa729f2",
+  "candidates": [
+    {
+      "genome": "(pipe X (poly_interact append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (norm_features append=false) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (quantile_bins bins=4) (bin_onehot append=true bins=8) (ksmooth gamma=2.0 k=16))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (standardize append=true) (poly_interact) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (robust_scale append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (standardize append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (pair_prod append=true topk=4) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (blom append=true) (standardize) (robust_scale append=false) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (poly_interact append=true) (cheb append=true degree=4) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (hinge append=true knots=2) (sigmoid append=true) (blom) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (hinge knots=8) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (hinge append=true knots=6) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (sigmoid append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (standardize append=true) (poly_interact append=true) (sigmoid append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (blom append=true) (standardize) (robust_scale) (standardize append=true) (bin_onehot append=true bins=12) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (poly_interact) (robust_scale append=true) (cheb append=true degree=2) (target_bin_encode append=true bins=16) (robust_scale) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (poly_interact append=true) (hinge append=true knots=6) (poly_interact append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (standardize) (quantile_bins append=true bins=8) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (cheb append=true degree=2) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (hinge append=true knots=2) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (rank append=false) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (bin_onehot append=true bins=8) (hinge append=true knots=6) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (robust_scale append=true) (standardize append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (poly_interact) (robust_scale append=true) (cheb append=true degree=2) (robust_scale) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (hinge append=true knots=2) (sigmoid append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (standardize) (standardize) (robust_scale append=true) (standardize append=true) (bin_onehot append=true bins=16) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (standardize append=true) (poly_interact append=true) (blom append=true) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (ksmooth gamma=2.0 k=16))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (poly_interact append=true) (robust_scale append=true) (cheb append=true degree=2) (target_bin_encode append=true bins=16) (robust_scale) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (hinge append=true knots=2) (robust_scale append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (sigmoid append=true) (standardize) (robust_scale append=true) (standardize append=true) (bin_onehot bins=12) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (standardize append=true) (robust_scale) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom append=true) (poly_interact append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (standardize append=true) (poly_interact append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (poly_interact append=true) (hinge append=true knots=2) (poly_interact append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (step append=true) (standardize) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (robust_scale append=false) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom append=true) (sigmoid append=true) (standardize) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (sigmoid append=true) (standardize) (robust_scale) (standardize append=true) (bin_onehot append=true bins=16) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (poly_interact append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (standardize) (standardize append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (fft_mag k=8) (robust_scale append=true) (cheb append=true degree=2) (target_bin_encode append=true bins=16) (robust_scale) (hinge append=true knots=2) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (robust_scale append=true) (standardize) (robust_scale) (standardize append=true) (bin_onehot append=true bins=16) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (robust_scale) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (sigmoid) (rank append=true) (row_stats append=true) (row_stats) (sigmoid append=true) (ksmooth gamma=2.0 k=16))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (robust_scale) (standardize) (blom append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (hinge append=true knots=2) (row_spectral) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (robust_scale) (standardize) (robust_scale) (standardize append=true) (bin_onehot append=true bins=16) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (robust_scale) (standardize) (robust_scale append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (hinge append=true knots=2) (robust_scale append=true) (blom) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (robust_scale append=true) (row_stats append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (cheb append=true degree=2) (poly_interact append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (sigmoid append=true) (standardize) (robust_scale append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (standardize append=true) (norm_row) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (standardize append=true) (hinge append=true knots=2) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (poly_interact append=true) (hinge append=true knots=6) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (blom) (sigmoid append=true) (standardize append=true) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (landmark_dist k=8) (robust_scale append=true) (standardize append=true) (ksmooth gamma=2.0 k=32))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (standardize append=false) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (sigmoid) (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (target_bin_encode bins=8) (derive expr=\"tanh(tanh(tanh(5)))\") (ridge))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (ksmooth gamma=2.0 k=64))",
+      "origin": "neural_policy"
+    },
+    {
+      "genome": "(pipe X (rank append=true) (ridge))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (hinge append=true knots=2) (ridge_gcv))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (cheb append=true degree=2) (rank) (ridge))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (blom) (blom append=true) (standardize) (robust_scale) (standardize append=true) (bin_onehot append=true bins=16) (ridge))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (standardize append=true) (ridge))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (ridge))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (standardize) (ridge))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (sigmoid) (rank append=true) (row_stats append=true) (row_stats) (sigmoid append=true) (ridge_gcv))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (rank append=true) (rank) (ridge))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (rank) (ridge))",
+      "origin": "retained_cut_teacher"
+    },
+    {
+      "genome": "(pipe X (robust_scale) (quantile_bins append=true bins=16) (histgbm depth=4 lr=0.15 rounds=180))",
+      "origin": "random_exploration"
+    },
+    {
+      "genome": "(pipe X (cheb append=true degree=3) (sigmoid append=true) (cheb append=true degree=2) (poly_interact append=true) (quantile_bins append=true bins=16) (row_stats) (ridge))",
+      "origin": "random_exploration"
+    },
+    {
+      "genome": "(pipe X (oblique_hinge append=true n=32 seed=19) (pair_prod append=true topk=12) (rand_proj append=true k=32 seed=31) (histgbm depth=4 lr=0.1 rounds=120))",
+      "origin": "random_exploration"
+    },
+    {
+      "genome": "(pipe X (quantile_bins append=true bins=8) (gpr kernel=rq m=300 steps=40))",
+      "origin": "random_exploration"
+    },
+    {
+      "genome": "(pipe X (row_stats append=true) (rff_sin gamma=1.0 n=16 seed=29) (rank append=true) (pair_prod append=true topk=4) (histgbm2 bags=5 leaves=31 lr=0.03 rounds=500))",
+      "origin": "random_exploration"
+    },
+    {
+      "genome": "(pipe X (rand_proj k=32 seed=31) (target_bin_encode append=true bins=16) (robust_scale append=true) (poly_interact append=true) (bin_onehot append=true bins=8) (histgbm2 bags=5 leaves=63 lr=0.03 rounds=500))",
+      "origin": "random_exploration"
+    }
+  ]
+}
