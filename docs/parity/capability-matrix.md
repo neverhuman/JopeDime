@@ -14,6 +14,7 @@ Legend — `status`: `moved` (present here, target + test recorded), `new` (no p
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 6 | 0 | 0 | 0 | 0 |
 | new-bin | 6 | 0 | 6 | 0 | 0 | 0 |
+| new-bin | 4 | 0 | 4 | 0 | 0 | 0 |
 | ops-sh | 1 | 1 | 0 | 0 | 0 | 0 |
 | root-binary | 56 | 56 | 0 | 0 | 0 | 0 |
 | script-py | 116 | 116 | 0 | 0 | 0 | 0 |
@@ -803,6 +804,7 @@ Legend — `status`: `moved` (present here, target + test recorded), `new` (no p
 | new-bin | (new) | crates/jope-datasets/src/main.rs (jope-datasets) | jope-datasets::* (23 tests) | new | dataset catalog: ingest dry-run, fetch/verify/link over object_store (WP-D1/D5; re-land of #11) |
 | new-bin | (new) | crates/jope-models/src/main.rs (jope-models) | jope-models::* | new | model bundles: fetch / verify / publish / path over object_store (WP7; re-land of #15) |
 | new-bin | (new) | crates/jope-paths/src/bin/jope-units-render.rs (jope-units-render) | none | new | ADR-0003: renders the systemd unit templates under deploy/systemd; from `wp4/paths` |
+| new-bin | (new) | crates/jope-arena/src/main.rs (jope-arena) | jope-arena::* (34 tests) | new | SOTArena fetch, Elo ladders, family reports, score emission (WP12; from /home/ubuntu/sotarena, now a crate) |
 | vendored-bin | jain-smartcluster@715128f: scq | crates/smartcluster/scq/src/main.rs (scq) | none | moved | vendored smartcluster crate (the SCQ evaluator the flywheel calls) |
 | vendored-bin | jain-core/crates/starforge (import, WP3): model_bundle_pack | crates/jope-encoders/src/bin/model_bundle_pack.rs (model_bundle_pack) | none | moved | vendored encoder; tests gated on the starforge weights |
 | vendored-bin | jain-core/crates/starforge (import, WP3): starforge | crates/jope-encoders/src/main.rs (starforge) | none | moved | vendored encoder; tests gated on the starforge weights |
