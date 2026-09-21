@@ -24,12 +24,12 @@ data → encoders (Hyperion, …) → DL policy → GP kernel →
   working Python/Rust/C++17/JS → S3 champion trees → train the router
 ```
 
-Git holds tiny fixtures only (D5: the ten real test datasets from `wpd1` and the
-forty synthetic fixtures from Codex `15a1d31` are both admitted). Real datasets
-and weights stay in S3.
+Git holds tiny fixtures only (D5: the ten licensed test datasets from `wpd1`,
+≈1 MB, and the forty synthetic fixtures from Codex `15a1d31`, ≈0.8 MB, are both
+admitted). Every other dataset and all weights stay in S3.
 The neural policy is a product router, not a held-out SOTA claim.
 
-## Serial recovery (one open PR)
+## Serial recovery (Grok's lane, one open PR at a time; now merged through F)
 
 | PR | Goal | Status |
 | --- | --- | --- |
@@ -42,9 +42,12 @@ The neural policy is a product router, not a held-out SOTA claim.
 | G | Live S3 champion pull/push | Claude (integrator): lands as `hwm push\|pull` over `wp11/learning-store` + `wpd1`/`wp7` S3 crates; credentials available |
 | H | Docs/ADRs after the above are true | Not started |
 
-Defer: Dependabot #5, workflow copy (#7, needs `workflow` scope), 365-file
-Python dump (#8), timings (#10), census regen (#12), path mega-move (#13),
-LibTorch (#14), forty-fixture wholesale import.
+Grok's lane deferred: Dependabot #5, workflow copy (#7), 365-file Python dump
+(#8), timings (#10), census regen (#12), path mega-move (#13), LibTorch (#14),
+forty-fixture wholesale import. Those items are queued on the integrator's
+landing board below (it holds the `workflow`-scope PAT and the AWS
+credentials that blocked them here); none is a wholesale import — each lands
+as its own reviewed PR.
 
 ## Blockers (do not fake)
 
@@ -69,16 +72,16 @@ Coordinate in [`AGENT_CHAT.md`](AGENT_CHAT.md).
 
 ## Merge rule (per PR)
 
-1. `gh pr checks <n>` all green at the head SHA in the PR.
+1. Required contexts = every job that `.github/workflows/ci.yml` defines **at the reviewed head** (on `main` today: `hygiene`; once #24 lands: `changes`, `hygiene`, `rust-check`, `emitters`, `inputs`, where a path-gated lane that did not run because its paths are untouched is recorded as `skipped-by-path`, not as green). `gh pr checks <n>` must show every required context `pass` at the exact head SHA; absent, cancelled or failed = not green. Heavy lanes (full nextest, LibTorch `features`, sanitizers, security, Jankurai) are main/nightly lanes per D2 and are not required on PRs until each has passed on `main`.
 2. Review posted by the other identity (`gh pr review <n> --approve` as `neverhuman`, or the PAT identity for Grok's PRs). Trust-surface PRs (workflows, lockfiles, credentials, protection manifests) get a second, security lens.
 3. `gh pr merge <n> --merge` (original commits kept), then `git ls-remote origin main` recorded in the row below.
-4. Never more than three PRs open across all agents; a PR older than 24 h is merged, drafted, or closed with a reason.
+4. Never more than three PRs open across all agents (D1 supersedes Grok's one-open-PR rule for its lane only while that lane is active); a PR older than 24 h is merged, drafted, or closed with a reason.
 
 ## Landing board (Claude integrator; old PR → new PR → merged SHA)
 
 | Old PR | Branch | Head | New PR | Merged |
 | --- | --- | --- | --- | --- |
-| — | `coord/integrator-lane-20260921` (this) | | | |
+| — | `coord/integrator-lane-20260921` (this) | | #23 | |
 | #7 | `ci/lanes` | 38aeaa1 | | |
 | #10 | `wp1/test-timings` | 5f66e3f | | |
 | #14 | `wp8/neural-receipt` | 44501a9 | | |
@@ -97,3 +100,27 @@ Coordinate in [`AGENT_CHAT.md`](AGENT_CHAT.md).
 
 Recovery of #5–#16: bundle `pr-5-through-16.bundle` (sha256 3bafaa52…) is also
 at `s3://veox-jopedime-archive-use2/git-bundles/20260921/`.
+
+## Recorded conflict — owner to settle (2026-09-21)
+
+Two agents hold different owner directions dated 2026-09-21:
+
+- **Integrator (Claude, this board's D1–D5):** rapid PRs; agents merge after CI +
+  cross-identity review; fast PR gate; both fixture sets admitted; org upgrade
+  for protection. Owner-approved plan copy:
+  `/home/ubuntu/jope-migration-evidence/claude/jopedime-unstall-20260921/PLAN.md`.
+- **Coordinator (`jdime_merger_cursor`, review on #23 at 03:50Z):** a
+  "stopped-writer plan" requiring explicit owner releases from every writer,
+  stopped preservation workers/supervisors and restoration first, one
+  implementation/ledger owner, exactly ten synthetic scenarios, and
+  protection/qualification before any merge. It reports that Grok has released
+  its JopeDime lane and that the preservation owner has not.
+
+Until the owner states which direction controls, no PR on this board is merged;
+#23/#24/#25 stay open for review only. Neither owner's release is assumed from
+silence. Live preservation workers (PIDs 115122, 3692153, 3692154, 3777416 at
+03:20Z) are not touched by either lane.
+
+Merge history for the record: #1–#16 were closed unmerged (2026-09-18/20);
+#17–#22 (Grok's A–F) are the first merges in this repository, 2026-09-21
+01:24–03:16Z, `main` `4235db6` → `1f0fc5a`.
