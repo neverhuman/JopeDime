@@ -2,6 +2,49 @@
 
 **Started** 2026-09-21 ~18:00 UTC · **Operator-approved plan** · **Status: IN PROGRESS**
 
+---
+
+## 📌 COORDINATION — read this before acting
+
+This file is the **live wire for cleanup work**. Two copies, kept identical:
+`~/jope-dime/MASTER_CLEAN_UP.md` (= `~/jain-split/jope-dime/…`, a symlink) and
+`~/JopeDime/MASTER_CLEAN_UP.md` (committed, PR #49). **Append; do not rewrite others' entries.**
+
+**Claude integrator (session `c6953cbe`), last update 2026-09-21 ~19:10 UTC.**
+
+### Claimed / completed by me — do not redo
+
+- `/tmp/claude-1000` **jope-dime portion: cleared to 0 repos** (was 180). Custody in
+  `~/jope-rescue-20260921/` — **1,424 files, `sha256sum -c` passes**.
+- **All worktrees collapsed**: 14 → 3, one per repo. Do not re-create any.
+- `~/JopeDime` **reset to canonical**: `main` @ `6a85fa3`, clean, 104 G → 2.1 G.
+- Prevention landed: both `CLAUDE.md` files, both `AGENTS.md`, `MASTER_PLAN.md` line 3,
+  `.gitignore`, `settings.json` `env`, and a daily sweep timer.
+- Dead session `c2314a57` rescued and removed; its 4 wedged PIDs killed.
+
+### ⛔ DO NOT TOUCH — not ours, or live
+
+| Path | Why |
+| --- | --- |
+| `/tmp/claude-1000/-home-ubuntu-bullet/ff4e2f6f…` (163 G) | **live agent session**, was writing minutes before the scan |
+| `/tmp/jeryu-*` (~131 G, 1,044 dirs + 41,128 tiny) | different project |
+| `/tmp/{bullet,bf,jekko,pr}*` (~2 G) | bullet project, live session |
+| `~/remote_super` (**1,597 G**), `~/jbaby` (423 G), `~/jmcp-split` (171 G), `~/gate-runner` (161 G) | **never mentioned in any brief**; need an owner decision |
+| `~/jope-preservation`, `~/jope-flywheel`, `~/preserved-archives`, `~/jope` | kept per decision C2 (`~/jope` has **no `.git`** — unrecoverable) |
+
+### ⚠️ Traps that have already cost time — do not relearn them
+
+1. **`git log --not --remotes` lies.** Branch-only. Reported "zero unpushed" for trees holding
+   **39, 15 and 85**. Use **`git log --all --not --remotes`**.
+2. **The `rtk` hook truncates.** Globbed `du -sk /home/ubuntu/*` returns only entries beginning
+   `a`/`b` — which is how a **1,597 GiB** tree went unseen. Use `/usr/bin/…` absolute paths.
+3. **A bundle can verify and still lack the commit.** `b2f72ec` (a detached worktree `HEAD`) was
+   absent from its `--all` bundle. Always confirm the specific SHA restores.
+4. **Only trees you will DELETE need a bundle.** Bundling a kept tree consumed 15 GB mid-emergency.
+5. **`target/` is an evidence store here.** Never `rm -rf`. Use `cargo-build-dirs.sh`.
+
+---
+
 This file is written *live as the work proceeds*, not afterwards. Every deletion is recorded with
 what was preserved first and what it reclaimed. Mistakes are recorded too.
 
@@ -314,6 +357,72 @@ Custody manifest sha256: `f903b6a00d2ee685…`
 `~/jain-split/jope-dime`: `git fsck --connectivity-only` reports **0 errors**; **2 stashes** and all
 **39 unpushed commits** intact; 1 worktree.
 `~/JopeDime`: on `main`, clean, with the rescued branch still reachable at `dc06289`.
+
+## PHASE 5b — THE RULES NEVER LOADED ✅ (the most consequential finding)
+
+The operator's note said it plainly: *"Claude loads CLAUDE.md, and these projects only have
+AGENTS.md."* **That is correct, and it means the entire `AGENTS.md` rewrite above would have had
+no effect.**
+
+Verified: with cwd `/home/ubuntu/jain-split/jope-dime`, the contract injected into this session was
+the **parent** `jain-split/CLAUDE.md`. `jope-dime/AGENTS.md` was never loaded. `~/JopeDime` had
+neither file on `main`.
+
+| Path | Before | Now |
+| --- | --- | --- |
+| `jain-split/jope-dime/CLAUDE.md` | **missing** | created, first line `@AGENTS.md` |
+| `JopeDime/CLAUDE.md` | **missing** | created, first line `@AGENTS.md` |
+
+So the rules an agent actually receives now chain: `CLAUDE.md` → `AGENTS.md` →
+`jain-split/AGENTS.md`. Before today that chain was broken at the first link, which is why a tree
+whose contract says *"Never create a git worktree — anywhere, for any reason"* accumulated eight.
+
+**Do not delete the `@AGENTS.md` line from either file.** It is the only thing making the contract
+load.
+
+## PHASE 4b — THE EXTRA FOLDERS, MERGED PROPERLY ✅
+
+Committed to branch `docs/cleanup-and-extra-folders-20260921` — **64 files, 208,413 insertions**.
+These had sat untracked for weeks; untracked means git does not protect them and any `git clean`
+or untracked-skipping rescue would lose them. "Merged in properly" for text means *committed*.
+
+Landed: `AGENTS.md`, `CLAUDE.md`, `MASTER_PLAN.md`, `MASTER_CLEAN_UP.md`, the four
+`*_GITHUB_PORT_PLAN.md`, `NEW_REPO.md`, `COPY_CHECK_8GPU_20260918.md`,
+`CODEX_SESSION_REPORT_2026-09-15.md`, `PR_AGENT_CHAT.md`, `docs/migration/`,
+`docs/paper/internal/superseded_release_rev2/`, three `parallel/assets/*/target-spec.json`, three
+`docs/audits/` evidence files.
+
+Deliberately **not** committed, now ignored instead: `.bundles/` (21 G — the custody store the
+contract mandates), `research/` (9 G — bulk belongs in `~/jope-evidence/`), `*.md.lock`
+(per-session append locks).
+
+On a branch, not `main`: this tree's contract requires the reviewed lifecycle. The point is that
+the documents are **in git** and can no longer be lost; landing them is a separate reviewable step.
+
+## PHASE 2c — `/tmp/*` OUTSIDE `claude-1000` ✅ (and who owns it)
+
+`/tmp` is 300 G. Measured rather than assumed:
+
+| Owner | Size | Action |
+| --- | --- | --- |
+| `claude-1000/-home-ubuntu-bullet` | 163 G | ⛔ **live session** |
+| `jeryu-*` | ~131 G — 1,044 entries >10 MiB, plus **41,128 tiny dirs totalling only 2.23 GiB** | ⛔ different project |
+| `bullet` / `bf` / `jekko` / `pr*` | ~2 G | ⛔ bullet project, live |
+| **jope-dime** | **0.35 G** | ✅ **deleted — now zero** |
+
+There are **no files over 500 MB** anywhere in `/tmp` outside `claude-1000`; the 131 G is spread
+thin across a different project's scratch. **Only 7 of 1,115 entries were ours.**
+
+## A policy conflict the operator should settle
+
+The operator's note says *"Lanes go in `.claude/worktrees/` for jope-dime."* The repository's own
+`jain-split/AGENTS.md` says *"**Never create a git worktree — anywhere, for any reason.**"*
+
+These cannot both hold. I resolved it toward the **repository contract** (no worktrees; one
+checkout; throwaway clones under `$HOME` when isolation is genuinely needed) because it is the
+written, versioned rule and because four `.claude/worktrees/*` are precisely what this cleanup had
+to unwind. **If the intent is the opposite, `jain-split/AGENTS.md:111` must change first** — a
+repo-local file may not weaken it, by that same contract's line 36.
 
 ## ⚠️ SCOPE CORRECTION — this cleanup did not end the disk emergency
 
