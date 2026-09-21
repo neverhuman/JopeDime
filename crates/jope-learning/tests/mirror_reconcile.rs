@@ -12,6 +12,12 @@
 //! `a_local_only_ingest_no_longer_wedges_the_mirror` is the three-step reproduction; it fails on
 //! the pre-fix code at step 3 with rc=2. `a_diverged_mirror_is_refused_and_nothing_is_written` is
 //! the negative control: catching up must not become "overwrite whatever is there".
+//!
+//! Reconciling correctly is not enough on its own, because `HEAD.json` is also the *only* input the
+//! reconcile has: `plan` returns the batches after the mirror's tip and nothing else, so anything a
+//! push skips under a tip it has already moved is never offered to a later push.
+//! `a_failed_blob_push_leaves_the_mirrors_head_where_it_was` is the ordering that follows from
+//! that, with an object-store failure injected mid-push.
 
 mod common;
 
@@ -342,5 +348,120 @@ fn a_pointer_from_a_chain_this_host_does_not_have_is_refused() {
         fs::read(mirror_dir.join(key.rel())).unwrap(),
         bytes,
         "the other host's pointer was overwritten"
+    );
+}
+
+/// Every `record_sha256` the mirror's own ledger batches name whose blob is *not* on the mirror.
+/// The mirror's copy is self-contained exactly when this is empty: `hwm verify` reads a blob per
+/// event, so a name with no blob is a ledger that cannot be walked from the mirror alone.
+fn named_blobs_missing_from(mirror: &Path) -> Vec<String> {
+    let mut missing = Vec::new();
+    for entry in walkdir::WalkDir::new(mirror.join("hwm/ledger"))
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|e| e.path().extension().and_then(|x| x.to_str()) == Some("jsonl"))
+    {
+        let (events, _, _, _) = Ledger::read_batch(entry.path()).unwrap();
+        for v in events {
+            let sha = v["record"]["provenance"]["record_sha256"]
+                .as_str()
+                .expect("every event names a record sha256");
+            if !mirror.join(State::blob_rel(sha)).exists() {
+                missing.push(sha.to_string());
+            }
+        }
+    }
+    missing.sort();
+    missing.dedup();
+    missing
+}
+
+/// One failed blob PUT must not leave the mirror's `HEAD.json` naming batches whose blobs the
+/// mirror does not hold.
+///
+/// The invariant: **while any blob a batch names is still missing from the mirror, the mirror's
+/// `HEAD.json` has not moved past that batch.** It is worth exactly one thing, and that thing is
+/// recovery: `sync::plan` derives `missing` from the mirror's tip alone, so a tip that has moved
+/// past a batch puts that batch out of reach of every later push. Hold the invariant and the retry
+/// sees the same gap and closes it; break it and the mirror's own ledger names records it will
+/// never hold, while each later push reports success.
+///
+/// Fails on the round-two code at the first assertion: `sync::push` moved `HEAD.json` before
+/// `push_mirror` uploaded the blobs, so the injected failure leaves the mirror's tip at the local
+/// tip with the blobs of two batches missing, and steps 4 and 5 then backfill nothing.
+#[test]
+fn a_failed_blob_push_leaves_the_mirrors_head_where_it_was() {
+    let tmp = tempfile::tempdir().unwrap();
+    let mirror_dir = tmp.path().join("mirror");
+    fs::create_dir_all(&mirror_dir).unwrap();
+    let m = Mirror::open(&format!("file://{}", mirror_dir.display())).unwrap();
+    let state = State::at(&tmp.path().join("state"));
+    let mirror_head = mirror_dir.join("hwm/ledger/HEAD.json");
+
+    // 1. mirrored: the mirror holds batch 1 and the blob it names.
+    hwm::ingest(&state, Some(&m), vec![candidate(0.5, 1)], json!({"k": 1})).unwrap();
+    assert!(named_blobs_missing_from(&mirror_dir).is_empty());
+    let head_1 = fs::read_to_string(&mirror_head).unwrap();
+    let ledger_1 = tree(&mirror_dir.join("hwm/ledger"));
+
+    // 2. local only: the mirror is behind by a batch whose blob it has never seen.
+    hwm::ingest(&state, None, vec![candidate(0.4, 2)], json!({"k": 2})).unwrap();
+
+    // 3. every blob PUT now fails: a regular file sits where the store must create the `sha256`
+    //    directory, which no uid can write through. Stands in for one transient object-store
+    //    error — a 503, a throttle, a revoked key.
+    let blobs = mirror_dir.join("blobs/sha256");
+    let stashed = tmp.path().join("blobs-sha256");
+    fs::rename(&blobs, &stashed).unwrap();
+    fs::write(&blobs, b"an object store that cannot take a blob\n").unwrap();
+    let err = hwm::ingest(&state, Some(&m), vec![candidate(0.3, 3)], json!({"k": 3}))
+        .expect_err("the blob PUT must fail the push");
+    assert!(
+        format!("{err:#}").contains("blobs/sha256/"),
+        "expected the blob put to be what failed, got: {err:#}"
+    );
+    assert_eq!(
+        fs::read_to_string(&mirror_head).unwrap(),
+        head_1,
+        "the mirror's tip moved over batches whose blobs never went up; no later push will \
+         backfill them, because `plan` only ever returns batches after that tip"
+    );
+    assert_eq!(
+        tree(&mirror_dir.join("hwm/ledger")),
+        ledger_1,
+        "a batch object went up before the blobs it names"
+    );
+
+    // 4. the object store recovers. The gap is still the gap, so the next push closes it — batches,
+    //    the blobs they name, and the pointers they moved.
+    fs::remove_file(&blobs).unwrap();
+    fs::rename(&stashed, &blobs).unwrap();
+    hwm::ingest(&state, Some(&m), vec![candidate(0.25, 4)], json!({"k": 4})).unwrap();
+
+    let ledger = Ledger::open(state.root(), "hwm");
+    assert_eq!(
+        fs::read(&mirror_head).unwrap(),
+        fs::read(ledger.root().join("HEAD.json")).unwrap(),
+        "the mirror did not catch up after the store recovered"
+    );
+    assert_eq!(
+        named_blobs_missing_from(&mirror_dir),
+        Vec::<String>::new(),
+        "the mirror's ledger still names blobs the mirror does not hold"
+    );
+    // Including the record from the batch the failed push was in the middle of, and the one it
+    // never reached.
+    for value in ["0.5", "0.4", "0.3", "0.25"] {
+        let sha = jope_learning::canon::sha256_hex(format!("d0/cut-0/{value}").as_bytes());
+        assert!(
+            mirror_dir.join(State::blob_rel(&sha)).exists(),
+            "blob of the {value} record is missing from the mirror"
+        );
+    }
+    let key = pointer_key();
+    assert_eq!(
+        fs::read(mirror_dir.join(key.rel())).unwrap(),
+        fs::read(state.pointer_path(&key).unwrap()).unwrap(),
+        "the pointer did not catch up"
     );
 }

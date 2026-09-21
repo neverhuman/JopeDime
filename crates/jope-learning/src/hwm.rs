@@ -278,27 +278,34 @@ fn accepted_history(ledger: &Ledger) -> Result<BTreeMap<PointerKey, Vec<String>>
 /// Bring the mirror up to this host's tip: the ledger batches it is missing, the blobs those
 /// batches name, and the `current.json` pointers they moved.
 ///
-/// Everything is derived from the batches [`crate::sync::push`] backfilled rather than from what
+/// Everything is derived from the batches [`crate::sync::push`] backfills rather than from what
 /// this one run happened to write, so a mirror left behind by an earlier local-only ingest is
 /// caught up completely — batches, blobs and pointers — instead of being wedged for ever.
 ///
-/// Deliberately *not* every pointer: the real corpus has ~12k of them and each would cost a GET
-/// per push. A pointer whose own write failed after `HEAD.json` moved therefore stays stale on the
-/// mirror until some later batch accepts a record at it. That is staleness, not a wedge — the next
-/// accepted event at that pointer catches it up under the same ancestor rule — and it is visible,
-/// because the mirror's pointer and the mirror's ledger disagree.
+/// The blobs go up *inside* that backfill, ahead of the batch object that names them and therefore
+/// ahead of the `HEAD.json` move, because the mirror's `HEAD.json` is the only input
+/// [`crate::sync::plan`] has: once it names a batch, that batch is never in `missing` again and
+/// nothing will ever come back for its blobs. Pushing them afterwards would mean one failed blob
+/// PUT leaves the mirror's ledger permanently naming records the mirror does not hold, with every
+/// later push reporting success. Keeping them ahead of it costs nothing — they are
+/// content-addressed and immutable, so a blob the mirror already has is an `Exists` no-op — and it
+/// is what keeps the mirror's ledger self-contained (`hwm verify` reads a blob per event).
+///
+/// The `current.json` pointers stay *after* the `HEAD.json` move, and are deliberately *not* every
+/// pointer: the real corpus has ~12k of them and each would cost a GET per push. A pointer whose
+/// own write failed after `HEAD.json` moved therefore stays stale on the mirror — or absent, for a
+/// cut the mirror has never held — until some later batch accepts a record at it. That is staleness, not a wedge — the next accepted event at that
+/// pointer catches it up under the same ancestor rule — and it is visible, because the mirror's
+/// pointer and the mirror's ledger disagree. Blobs cannot be left that way because nothing
+/// re-derives them: a later batch names its *own* records, never the ones already committed.
 fn push_mirror(m: &Mirror, state: &State, ledger: &Ledger) -> Result<MirrorReport> {
     let mut report = MirrorReport {
         url: m.url.clone(),
         ..Default::default()
     };
     let plan = crate::sync::plan(m, ledger)?;
-    let backfilled = crate::sync::push(m, ledger, plan, &mut report)?;
-    // Blobs are content-addressed and immutable, so pushing one the mirror already has is a
-    // no-op; pushing every record the backfilled batches name is what keeps the mirror's ledger
-    // self-contained (`hwm verify` reads a blob per event).
     let mut keys: BTreeSet<PointerKey> = BTreeSet::new();
-    for (_, path) in &backfilled {
+    crate::sync::push(m, ledger, plan, &mut report, |path, report| {
         let (events, _, _, _) = Ledger::read_batch(path)?;
         for v in events {
             let e: HwmEvent = serde_json::from_value(v).context("parse hwm event")?;
@@ -310,7 +317,8 @@ fn push_mirror(m: &Mirror, state: &State, ledger: &Ledger) -> Result<MirrorRepor
                 keys.insert(e.pointer);
             }
         }
-    }
+        Ok(())
+    })?;
     let mut history: Option<BTreeMap<PointerKey, Vec<String>>> = None;
     for key in &keys {
         let local_bytes = match fs::read(state.pointer_path(key)?) {

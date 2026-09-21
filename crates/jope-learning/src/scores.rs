@@ -68,8 +68,11 @@ pub fn append(
             // Upload every batch the mirror is missing — not just this one — then move HEAD.json
             // conditionally on the tip `sync::plan` proved is an ancestor of this chain. A mirror
             // left behind by a local-only append catches up here instead of wedging.
+            //
+            // Nothing to put on the mirror ahead of each batch object: a score batch embeds its
+            // rows, so unlike an hwm batch it names no blob and is self-contained on its own.
             let plan = crate::sync::plan(m, &ledger)?;
-            crate::sync::push(m, &ledger, plan, &mut rep)?;
+            crate::sync::push(m, &ledger, plan, &mut rep, |_, _| Ok(()))?;
             Some(rep)
         }
         _ => None,

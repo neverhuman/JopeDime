@@ -9,9 +9,10 @@
 //! So the push *reconciles* instead of asserting. It reads the mirror's `HEAD.json`, asks
 //! [`Ledger::mirror_position`] whether that tip is a batch this host already has, and:
 //!
-//! * **gap** — uploads every local batch after it (batches are content-addressed, immutable and
-//!   created with `If-None-Match: *`, so re-uploading one is a no-op and uploading one twice from
-//!   two hosts cannot corrupt it), and only then moves `HEAD.json`, still conditionally;
+//! * **gap** — uploads every local batch after it, and everything each of those batches *names*
+//!   ahead of the batch object itself (all of it content-addressed, immutable and created with
+//!   `If-None-Match: *`, so re-uploading one is a no-op and uploading one twice from two hosts
+//!   cannot corrupt it), and only then moves `HEAD.json`, still conditionally;
 //! * **divergence** — the mirror's tip is a batch this host cannot produce, so catching up would
 //!   mean orphaning it. Fail closed, before anything local is touched, and say what to run.
 //!
@@ -26,7 +27,7 @@ use crate::ledger::{Ledger, MirrorPosition};
 use crate::mirror::{Mirror, MirrorReport};
 use anyhow::{anyhow, Result};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// What the push is about to do to one ledger's copy on the mirror.
 pub struct Plan {
@@ -83,25 +84,39 @@ pub fn preflight(m: &Mirror, ledger: &Ledger) -> Result<()> {
     plan(m, ledger).map(|_| ())
 }
 
-/// Upload every batch the mirror is missing, then move its `HEAD.json` conditionally on the bytes
-/// [`plan`] observed and validated. Returns the batches that were uploaded, oldest first, so the
-/// caller can push whatever those batches reference (blobs, pointers).
+/// Upload every batch the mirror is missing — each one preceded by `prepare`, which puts whatever
+/// that batch *names* on the mirror — and only then move its `HEAD.json`, conditionally on the
+/// bytes [`plan`] observed and validated.
+///
+/// `HEAD.json` is the commit point, and the order around it is the whole guarantee. It is the only
+/// key that makes a batch object reachable, and it is also the only key [`plan`] consults to decide
+/// what is missing. So while it still holds the old tip, a failed push costs nothing: the next
+/// `plan` recomputes the same gap and re-runs `prepare` over the same batches. Once it holds the
+/// new tip, `plan` returns [`MirrorPosition::UpToDate`], `missing` is empty and `prepare` never
+/// runs for those batches again — so anything it was going to upload must already be there.
+///
+/// Uploading early is always safe: blobs and batch objects are content-addressed, immutable and
+/// written with `If-None-Match: *`, so a repeat is an `Exists` no-op and two hosts uploading the
+/// same object cannot corrupt it. Uploading late is not: it turns one transient object-store
+/// failure into a mirror whose own ledger permanently names records it does not hold.
 pub fn push(
     m: &Mirror,
     ledger: &Ledger,
     plan: Plan,
     report: &mut MirrorReport,
-) -> Result<Vec<(String, PathBuf)>> {
+    mut prepare: impl FnMut(&Path, &mut MirrorReport) -> Result<()>,
+) -> Result<()> {
     for (rel, path) in &plan.missing {
+        prepare(path, report)?;
         let rel = format!("{}/ledger/{rel}", ledger.name());
         report.count(m.put_immutable(&rel, &fs::read(path)?)?);
         report.batches += 1;
     }
     if plan.missing.is_empty() {
-        return Ok(plan.missing);
+        return Ok(());
     }
     let head_bytes = fs::read(ledger.root().join("HEAD.json"))?;
     m.put_pointer(&plan.head_rel, &head_bytes, plan.observed_head.as_deref())?;
     report.pointers += 1;
-    Ok(plan.missing)
+    Ok(())
 }
