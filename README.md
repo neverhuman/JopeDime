@@ -97,4 +97,14 @@ Do not open a stack of PRs. Merge or close the current one before starting the n
 | `python/` | Bounded compatibility / training surface |
 | `ops/ci` | Required local/hosted checks |
 
+## Further reading
+
+- [`docs/quickstart.md`](docs/quickstart.md) — the measured feat-math quickstart (timings from `4235db6`, before PRs #17–#26; not this SHA)
+- [`docs/architecture.md`](docs/architecture.md) — crates, contracts and the intended pipeline
+- [`docs/emitters.md`](docs/emitters.md) — per-target coverage of the Python / Rust / C++17 / JavaScript emitters
+- [`docs/datasets.md`](docs/datasets.md) — dataset store layout, licence rule and `datasets/test`
+- [`docs/campaigns.md`](docs/campaigns.md) — benchmark campaigns
+- [`docs/adr/`](docs/adr/) — architecture decision records 0001–0005
+- [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
+
 Apache-2.0. See [LICENSE](LICENSE).
