@@ -102,22 +102,39 @@ whole ingest.
 `--store <url>` / `JOPE_LEARNING_URL` pushes through `jope_datasets::store::Store` (thin adapter
 in `mirror.rs`): blobs and batches with the create-only put (`If-None-Match: *`, an existing
 object must hold the same bytes), `HEAD.json` and `current.json` by reading the object back and
-comparing it, before replacing it, with the bytes that were on the **writer's own tree** before it
-wrote — the pointer record it decided against, and the `HEAD.json` captured under the ledger lock
-before the batch was appended (`BatchReceipt::prev_head_bytes`). The expected-previous value is
-never a fresh read of the key about to be written: that precondition satisfies itself, making the
+comparing it against an expected-previous value before replacing it. That value is never an
+*unchecked* read of the key about to be written: such a precondition satisfies itself, making the
 write last-writer-wins, which is how a second host's batch gets orphaned.
 `crates/jope-learning/tests/mirror_lost_update.rs` reproduces that race — two `$JOPE_STATE` trees,
 one mirror; the second writer is refused and the first's batch stays the tip.
+
+Nor is it the writer's own pre-write state. A precondition with no way to satisfy it is a wedge:
+one `hwm ingest` without `--store`, or one transient push failure, and the local pre-append
+`HEAD.json` never equals the mirror's again, so every later push and every retry fails — and there
+is no push/pull/backfill verb to recover with. `sync.rs` reconciles instead. It reads the mirror's
+`HEAD.json` and asks `Ledger::mirror_position` where that tip sits in the local chain:
+
+| mirror's tip | meaning | what the push does |
+|---|---|---|
+| absent, or a batch this host holds, at the position and file hash its `HEAD.json` claims | **behind** — a gap | upload every local batch after it (immutable, content-addressed, so re-uploading is a no-op), the blobs those batches name and the pointers they moved, then move `HEAD.json` conditionally on the tip just validated |
+| anything else — a batch this host does not have, different bytes, a different depth or ledger | **diverged** | refuse, before the local append, naming both tips and what to run |
+
+A pointer is caught up on the same rule: the mirror's `current.json` may be replaced only when the
+record it holds appears *earlier* in this host's accepted history for that pointer. A record this
+host's ledger never accepted is another writer's tip and is refused, not overwritten.
+
+Because the check runs before the local append, a diverged mirror costs nothing: no batch sealed,
+no pointer moved, no object left on the mirror that its own `HEAD` cannot reach. A gap costs one
+GET and the batches in it. `crates/jope-learning/tests/mirror_reconcile.rs` holds both: the
+three-step wedge (mirrored ingest, unmirrored ingest, mirrored ingest) now succeeds and leaves the
+mirror a complete copy; a genuinely diverged mirror still fails closed.
 
 A server-side conditional PUT with an expected version (`PutMode::Update`) is not exposed by
 `Store` yet and the local-filesystem backend of `object_store` does not implement it; until it is,
 the compare-then-put is still TOCTOU between the GET and the PUT and is serialised only by the
 local lock, which does not reach across hosts. What the precondition buys is that a *diverged*
-mirror is refused rather than overwritten. One consequence: pointing `--store` at a mirror that is
-behind a local tree with unmirrored history fails closed — backfill first (the push/pull verb is
-not in this step). `s3://` is configured through the environment and was not exercised in this
-step.
+mirror is refused rather than overwritten. `s3://` is configured through the environment and was
+not exercised in this step.
 
 ## Mapping table (as implemented in `sources/`)
 

@@ -24,6 +24,7 @@ pub mod record;
 pub mod scores;
 pub mod sources;
 pub mod state;
+pub mod sync;
 
 /// Version stamped into ledger seals.
 pub const TOOL_VERSION: &str = concat!("jope-learning/", env!("CARGO_PKG_VERSION"));

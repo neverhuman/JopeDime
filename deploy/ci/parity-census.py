@@ -290,6 +290,15 @@ def status_class(status: str) -> str:
 COUNT_CLASSES = ["moved", "new", "pending", "dropped", "lost"]
 NO_TEST_RE = re.compile(r"^`moved`/`new` rows without a covering test: (\d+)\.$")
 
+# Why the `## Counts` table is gated at all. Emitted by `census` and required by `check`, so that
+# regenerating the matrix cannot silently drop the rule and hand-editing cannot either.
+COUNTS_PREAMBLE = [
+    "Recomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees",
+    "with them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the",
+    "same number, so git reports no conflict — update this table from the rows, not from the last value",
+    "you saw.",
+]
+
 
 def counts_lines(rows: list[dict]) -> tuple[list[str], int]:
     """The body of the `## Counts` table and the covering-test tally, recomputed from `rows`.
@@ -320,12 +329,18 @@ def counts_row_kind(line: str) -> str:
     return cells[0] if cells else line
 
 
-def committed_counts(path: Path) -> tuple[list[str], int | None]:
-    """The `## Counts` table as committed: its data lines verbatim and the covering-test tally."""
+def committed_counts(path: Path) -> tuple[list[str], int | None, list[str]]:
+    """The `## Counts` section as committed: table lines, covering-test tally, and every other line.
+
+    The third element is what the preamble check reads: `render_matrix` writes COUNTS_PREAMBLE
+    there, so a regeneration that dropped it — or a hand edit that deleted it — shows up as a
+    missing line rather than as silence.
+    """
     lines = path.read_text().splitlines()
     if "## Counts" not in lines:
-        return [], None
+        return [], None, []
     table: list[str] = []
+    prose: list[str] = []
     no_test: int | None = None
     for line in lines[lines.index("## Counts") + 1:]:
         if line.startswith("## "):
@@ -333,10 +348,14 @@ def committed_counts(path: Path) -> tuple[list[str], int | None]:
         stripped = line.rstrip()
         if stripped.startswith("| ") and not stripped.startswith("| kind "):
             table.append(stripped)
+            continue
         m = NO_TEST_RE.match(stripped)
         if m:
             no_test = int(m.group(1))
-    return table, no_test
+            continue
+        if stripped:
+            prose.append(stripped)
+    return table, no_test, prose
 
 
 def render_matrix(rows: list[dict], old_sha: str, new_sha: str) -> str:
@@ -364,6 +383,8 @@ def render_matrix(rows: list[dict], old_sha: str, new_sha: str) -> str:
                "optionally with the command in parentheses, or `dropped` / `lost` / `pending`." % ARCHIVE)
     out.append("")
     out.append("## Counts")
+    out.append("")
+    out.extend(COUNTS_PREAMBLE)
     out.append("")
     out.append("| kind | rows | " + " | ".join(COUNT_CLASSES) + " |")
     out.append("|---|---:|" + "---:|" * len(COUNT_CLASSES))
@@ -915,7 +936,13 @@ def cmd_check(a):
     # lanes that each add a row of the same kind bump the same cell to the same number, so git sees
     # no conflict and the merged file under-counts silently; recompute instead of trusting.
     want_table, want_no_test = counts_lines(rows)
-    got_table, got_no_test = committed_counts(Path(a.matrix))
+    got_table, got_no_test, got_prose = committed_counts(Path(a.matrix))
+    for line in COUNTS_PREAMBLE:
+        if line not in got_prose:
+            problems.append(
+                f"## Counts is missing the line documenting why it is gated: `{line}` "
+                "(re-run `deploy/ci/parity-census.py census`, which emits it)"
+            )
     if not got_table:
         problems.append("the matrix has no `## Counts` table")
     elif got_table != want_table:

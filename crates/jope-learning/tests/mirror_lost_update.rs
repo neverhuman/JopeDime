@@ -4,13 +4,17 @@
 //! create-only PUT and then move `<ledger>/HEAD.json`. The local `$JOPE_STATE` flock serialises
 //! writers on one host and nothing else; two hosts with separate state trees each append a
 //! distinctly-ULID-named batch, so the create-only PUT never collides and the *pointer* is the only
-//! thing that can catch the divergence. It only catches it if the expected-previous value is the
-//! writer's own pre-append `HEAD.json` — reading the key that is about to be written makes the
-//! precondition self-satisfying and the write last-writer-wins, and the earlier host's batch stops
-//! being reachable from `HEAD` (`verify`'s chain walk starts there).
+//! thing that can catch the divergence. It only catches it if the expected-previous value is
+//! checked against the writer's own chain — a bare read of the key that is about to be written
+//! makes the precondition self-satisfying and the write last-writer-wins, and the earlier host's
+//! batch stops being reachable from `HEAD` (`verify`'s chain walk starts there).
 //!
-//! `head_write_is_conditional_on_the_writers_own_pre_append_head` fails on the pre-fix code: the
-//! second ingest exits 0 and the mirror `HEAD.json` names host B's batch.
+//! `a_host_that_does_not_hold_the_mirrors_tip_cannot_move_it` fails on the pre-fix code: the
+//! second ingest exits 0 and the mirror `HEAD.json` names host B's batch. It was named
+//! `head_write_is_conditional_on_the_writers_own_pre_append_head` when that pre-append `HEAD.json`
+//! was the witness; `sync::plan` now supplies a witness it has proved is an ancestor of the local
+//! chain (see `mirror_reconcile.rs` for why the old witness wedged the mirror), so the scenario is
+//! unchanged and the rule it enforces is stated as it now stands.
 
 mod common;
 
@@ -55,7 +59,7 @@ fn ingest(state: &Path, url: &str, dir: &Path, bundle: &str) -> common::Run {
 }
 
 #[test]
-fn head_write_is_conditional_on_the_writers_own_pre_append_head() {
+fn a_host_that_does_not_hold_the_mirrors_tip_cannot_move_it() {
     let tmp = tempfile::tempdir().unwrap();
     let mirror = tmp.path().join("mirror");
     fs::create_dir_all(&mirror).unwrap();
@@ -84,10 +88,15 @@ fn head_write_is_conditional_on_the_writers_own_pre_append_head() {
         String::from_utf8_lossy(&r.stdout)
     );
     assert!(
-        r.stderr.contains("mirror pointer changed"),
+        r.stderr.contains("holds a chain this host cannot continue"),
         "expected the conditional-pointer failure, got: {}",
         r.stderr
     );
+    // Refused before host B sealed anything locally, so a retry finds no wider gap.
+    assert!(jope_learning::ledger::Ledger::open(&state_b, "hwm")
+        .batches()
+        .unwrap()
+        .is_empty());
 
     // The first host's batch is still the tip, and still present: nothing was orphaned.
     assert_eq!(
@@ -149,7 +158,7 @@ fn sotarena_results(dir: &Path, track: &str, method: &str) -> PathBuf {
 }
 
 #[test]
-fn the_score_ledger_head_is_conditional_too() {
+fn the_score_ledger_tip_is_guarded_the_same_way() {
     let tmp = tempfile::tempdir().unwrap();
     let mirror = tmp.path().join("mirror");
     fs::create_dir_all(&mirror).unwrap();
@@ -190,9 +199,15 @@ fn the_score_ledger_head_is_conditional_too() {
         String::from_utf8_lossy(&r.stdout)
     );
     assert!(
-        r.stderr.contains("mirror pointer changed"),
+        r.stderr.contains("holds a chain this host cannot continue"),
         "expected the conditional-pointer failure, got: {}",
         r.stderr
     );
     assert_eq!(fs::read(&head_obj).unwrap(), head_after_a);
+    assert!(
+        jope_learning::ledger::Ledger::open(&tmp.path().join("state-b"), "scores")
+            .batches()
+            .unwrap()
+            .is_empty()
+    );
 }

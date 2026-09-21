@@ -809,7 +809,7 @@ you saw.
 | new-bin | (new) | crates/jope-models/src/main.rs (jope-models) | jope-models::* | new | model bundles: fetch / verify / publish / path over object_store (WP7; re-land of #15) |
 | new-bin | (new) | crates/jope-paths/src/bin/jope-units-render.rs (jope-units-render) | none | new | ADR-0003: renders the systemd unit templates under deploy/systemd; from `wp4/paths` |
 | new-bin | (new) | crates/jope-arena/src/main.rs (jope-arena) | jope-arena::* (34 tests) | new | SOTArena fetch, Elo ladders, family reports, score emission (WP12; ported from the SOTArena reporter tree recorded in assets/regression/SOURCES.md, now a crate) |
-| new-bin | (new) | crates/jope-learning/src/main.rs (jope-learning) | jope-learning::* (31 tests) | new | learning store: hash-chained HWM and score ledgers, conditional pointers, ingest sources (WP11 L1/L2) |
+| new-bin | (new) | crates/jope-learning/src/main.rs (jope-learning) | jope-learning::* (35 tests) | new | learning store: hash-chained HWM and score ledgers, conditional pointers, ingest sources (WP11 L1/L2) |
 | vendored-bin | jain-smartcluster@715128f: scq | crates/smartcluster/scq/src/main.rs (scq) | none | moved | vendored smartcluster crate (the SCQ evaluator the flywheel calls) |
 | vendored-bin | jain-core/crates/starforge (import, WP3): model_bundle_pack | crates/jope-encoders/src/bin/model_bundle_pack.rs (model_bundle_pack) | none | moved | vendored encoder; tests gated on the starforge weights |
 | vendored-bin | jain-core/crates/starforge (import, WP3): starforge | crates/jope-encoders/src/main.rs (starforge) | none | moved | vendored encoder; tests gated on the starforge weights |

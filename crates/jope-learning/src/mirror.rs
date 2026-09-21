@@ -3,16 +3,20 @@
 //!
 //! Thin adapter, not a re-implementation: immutable objects (blobs, ledger batches) use the
 //! create-only `put_if_absent` (`If-None-Match: *`); pointers (`current.json`, `HEAD.json`) are
-//! read back and compared, before being replaced, with the bytes that were on the *writer's own*
-//! tree before it wrote — the per-cut pointer it decided against (`hwm::ingest`) and the
-//! `HEAD.json` captured under the ledger lock before the batch was appended
-//! (`BatchReceipt::prev_head_bytes`). The expected-previous value must never be a fresh read of
-//! the key about to be written: that makes the precondition self-satisfying and the write
-//! last-writer-wins, which is how a second host's ledger batch can be orphaned.
+//! read back and compared against an expected-previous value before being replaced.
 //!
-//! Consequence worth knowing: attaching a mirror to a local tree that already has unmirrored
-//! history fails closed, because the local pre-write state does not match the mirror's. Backfill
-//! the earlier batches and pointers first (the push/pull verb is not in this step).
+//! That expected-previous value must never be an *unchecked* read of the key about to be written:
+//! that makes the precondition self-satisfying and the write last-writer-wins, which is how a
+//! second host's ledger batch gets orphaned. Nor can it simply be the writer's own pre-write state
+//! — the `HEAD.json` captured under the ledger lock before the batch was appended — because a
+//! precondition with no way to satisfy it is a wedge: one local-only ingest and the mirror can
+//! never be written again.
+//!
+//! [`crate::sync`] resolves both: it reads the mirror's `HEAD.json`, *proves against the local
+//! chain* that the tip it found is a batch this host already holds, uploads the batches in
+//! between, and only then hands those exact bytes to [`Mirror::put_pointer`] as the witness. A
+//! mirror that is merely behind catches up; a mirror whose tip this host cannot produce is
+//! refused, untouched.
 //!
 //! A true server-side conditional PUT (`PutMode::Update` with the expected version) is not
 //! reachable through the `Store` API today and `object_store`'s local filesystem backend does not
@@ -37,6 +41,18 @@ pub struct MirrorReport {
     pub created: u64,
     pub existed: u64,
     pub pointers: u64,
+    /// Ledger batch objects this push uploaded. More than one means the mirror was behind and has
+    /// been caught up; `created` vs `existed` says how many of them were genuinely new.
+    pub batches: u64,
+}
+
+impl MirrorReport {
+    pub fn count(&mut self, outcome: PutOutcome) {
+        match outcome {
+            PutOutcome::Created => self.created += 1,
+            PutOutcome::Exists => self.existed += 1,
+        }
+    }
 }
 
 /// `--store`, else `JOPE_LEARNING_URL`, else none.

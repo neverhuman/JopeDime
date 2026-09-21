@@ -9,7 +9,6 @@ use anyhow::{Context, Result};
 use serde::Serialize;
 use serde_json::Value;
 use std::collections::BTreeMap;
-use std::fs;
 use std::time::Instant;
 
 #[derive(Clone, Debug, Serialize)]
@@ -34,6 +33,10 @@ pub fn append(
     let _lock = state.lock("scores")?;
     let ledger = Ledger::open(state.root(), "scores");
     ledger.require_intact()?;
+    // Fail closed before anything local moves; see `sync::preflight`.
+    if let Some(m) = mirror {
+        crate::sync::preflight(m, &ledger)?;
+    }
     let existing: std::collections::BTreeSet<String> = ledger
         .events()?
         .iter()
@@ -57,25 +60,16 @@ pub fn append(
         Some(ledger.append(&events, source.clone())?)
     };
     let mirror_report = match (mirror, &batch) {
-        (Some(m), Some(b)) => {
+        (Some(m), Some(_)) => {
             let mut rep = MirrorReport {
                 url: m.url.clone(),
                 ..Default::default()
             };
-            let rel = format!("scores/ledger/{}", b.path);
-            match m.put_immutable(&rel, &fs::read(ledger.root().join(&b.path))?)? {
-                jope_datasets::store::PutOutcome::Created => rep.created += 1,
-                jope_datasets::store::PutOutcome::Exists => rep.existed += 1,
-            }
-            let head_rel = "scores/ledger/HEAD.json";
-            // Expected-previous is the LOCAL pre-append HEAD captured under the ledger lock, not a
-            // re-read of the key being written; see `Mirror::put_pointer` and `BatchReceipt`.
-            m.put_pointer(
-                head_rel,
-                &fs::read(ledger.root().join("HEAD.json"))?,
-                b.prev_head_bytes.as_deref(),
-            )?;
-            rep.pointers += 1;
+            // Upload every batch the mirror is missing — not just this one — then move HEAD.json
+            // conditionally on the tip `sync::plan` proved is an ancestor of this chain. A mirror
+            // left behind by a local-only append catches up here instead of wedging.
+            let plan = crate::sync::plan(m, &ledger)?;
+            crate::sync::push(m, &ledger, plan, &mut rep)?;
             Some(rep)
         }
         _ => None,
