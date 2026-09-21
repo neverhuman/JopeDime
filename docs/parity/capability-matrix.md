@@ -34,7 +34,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **770** | **735** | **7** | **1** | **20** | **7** |
+| **total** | **771** | **735** | **8** | **1** | **20** | **7** |
 
 `moved`/`new` rows without a covering test: 654.
 
