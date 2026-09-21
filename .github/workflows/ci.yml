@@ -93,6 +93,13 @@ jobs:
           shared-key: rust-check
       - name: cargo check --workspace --all-targets --locked
         run: cargo check --workspace --all-targets --locked
+      # Nothing hosted has ever checked formatting: `just fmt` is local-only, so drift reached main
+      # and #37 had to clean it up after the fact. It is green on main at 70506066, so it can be
+      # blocking from the start rather than "informative until it passes".
+      # Clippy cannot join it yet — 143 errors outside feat-math, ~31 inside — and is tracked on
+      # the board as owed, not quietly skipped here.
+      - name: cargo fmt --all -- --check
+        run: cargo fmt --all -- --check
       # The rendered-systemd guarantee (no /home/ literal, no unrendered @JOPE_* token, every
       # ExecStart under the rendered roots) lives in this test, which `cargo check` compiles but
       # never runs. deploy/systemd/ is in this lane's gate above so a template-only change — the
