@@ -206,19 +206,20 @@ jobs:
         working-directory: python
         run: uv run --no-sync pytest -q -m "not xbabe2" -p no:cacheprovider
 
-  # The hosted gate ran NO Rust tests: `rust-check` is `cargo check`, and the only `cargo test` in
-  # this file was `-p feat-math`. So every integration test in the repo was compiled and never run,
-  # which is how 14 broken engine tests sat unnoticed. This lane closes that.
-  #   step 1 blocks on the whole PR tier except the two documented sets;
-  #   step 2 blocks on the binaries that must not race (they pass serially — they are not broken);
-  #   step 3 runs the known-broken set and reports without blocking, so a recovery is visible and
-  #          the allowlist cannot quietly rot.
-  # deploy/ci/rust-test-filter.sh is the single source of truth shared with the justfile.
+  # `cargo check` never links; `cargo test` does. Linking every test binary in this workspace
+  # produces a 72 GB target (measured), against roughly 14 GB free on an ubuntu-24.04 runner — the
+  # link dies with `ld terminated with signal 7 [Bus error]` and nothing runs. So this lane gates
+  # the product crates, which link to 9.4 GB and run 617 tests in about a minute. The heavy crates
+  # (jope-parallel, jope-dime-regressor, the vendored smartcluster set) are deferred to the
+  # self-hosted runner lane; deploy/ci/rust-test-scope.sh says so, and deploy/ci/known-broken-tests.txt
+  # and serial-test-binaries.txt record what is broken and what races in them.
+  # Before this lane, NO hosted job ran a Rust test at all: rust-check is `cargo check`, and the
+  # only `cargo test` in this file was -p feat-math.
   rust-test:
     needs: changes
     if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 45
     env:
       CARGO_TERM_COLOR: always
       CARGO_INCREMENTAL: "0"
@@ -242,10 +243,14 @@ jobs:
         uses: taiki-e/install-action@4076c08d76dba979c11a7285295b0716c1d67908 # v2.87.15
         with:
           tool: cargo-nextest
-      - name: PR tier, blocking
-        run: cargo nextest run -P pr --workspace --locked -E "$(bash deploy/ci/rust-test-filter.sh)"
-      - name: Serial-only binaries, blocking
-        run: cargo nextest run -P pr --workspace --locked --test-threads 1 -E "$(bash deploy/ci/rust-test-filter.sh --serial)"
-      - name: Known-broken set (informative; a pass here means delete its line)
-        continue-on-error: true
-        run: cargo nextest run -P pr --workspace --locked --test-threads 2 -E "$(bash deploy/ci/rust-test-filter.sh --broken)"
+      - name: Disk before
+        run: df -h / | tail -1
+      - name: Product-crate tests (blocking)
+        run: |
+          set -euo pipefail
+          # read into an array: the scope script emits `-p a -p b ...` and the split is intentional
+          read -ra pkgs <<< "$(bash deploy/ci/rust-test-scope.sh)"
+          cargo nextest run -P pr --locked "${pkgs[@]}"
+      - name: Disk after
+        if: always()
+        run: df -h / | tail -1

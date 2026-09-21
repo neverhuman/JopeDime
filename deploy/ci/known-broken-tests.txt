@@ -1,8 +1,8 @@
-# Tests that genuinely FAIL on main, excluded from the blocking `rust-test` lane and from
-# `just test-pr` so the gate can catch NEW breakage instead of drowning in old.
+# Tests that genuinely FAIL on main. Every one is in a crate the hosted lane DEFERS (see
+# deploy/ci/rust-test-scope.sh), so this file does not gate anything today — it is the record of
+# what the self-hosted lane will have to face, and the definition of a work package.
 #
-# They are not hidden: the lane runs them in an informative step and `just test-pr-broken` runs
-# them locally, so a test that starts passing shows up as a signal to delete its line.
+# Run them with `just test-pr-deferred`. A test that starts passing should have its line deleted.
 #
 # Format: <binary> <test> # <reason>
 #
@@ -10,10 +10,16 @@
 # with `--test-threads 2` and reproduced deterministically, so these are real failures, not flakes.
 # Tests that only failed under parallelism are NOT here — see deploy/ci/serial-test-binaries.txt.
 #
-# --- cause A: the fit-authority service refuses to serve in a clean checkout ---
-# "original fit unavailable; never replay: Blocked { reason: namespace capability inactive ... }"
-# and "mandatory fit authority service unavailable: fitting is fenced": these need a service and
-# capability state that the port tree does not carry.
+# --- cause A: the fit authority refuses, permanently ---
+# eval_registry/authority.rs activation_block() reads the activations/coverage tables into
+# `active`, then does `let _ = active;` and returns "namespace capability inactive: explicit
+# verified activation required" UNCONDITIONALLY, with the comment "Production capabilities have no
+# verifier yet". The only bypass is #[cfg(test)] — which integration tests do not get, because they
+# link the library built without it, while the crate's own unit tests do. Upstream, fit_boundary.rs
+# bails first without $JOPE_FIT_SERVICE_SOCKET ("fitting is fenced"). So these cannot pass in any
+# shipped build until that verifier exists; it is not an environment problem.
+# Verified per-test below: only three actually emit those strings; the rest fail earlier or for
+# their own reasons, noted individually.
 gp_contracts fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units # namespace capability inactive
 gp_contracts sealed_memory_view_matches_file_evaluation_and_rejects_writes # namespace capability inactive
 view_contracts fitted_view_predictor_uses_the_exact_cut_and_original_target_units # fit authority fenced
@@ -22,7 +28,7 @@ view_contracts experiment_crashes_at_durable_boundaries_recover_without_repeatin
 families authenticated_component_growth_preserves_panels_and_is_membership_only # families.rs:298 panic
 families component_growth_refuses_forged_summaries_changed_helper_and_stale_parent # families.rs:298 panic
 queue native_preparation_status_cannot_change_a_live_gp_queue # queue.rs:133 panic
-sealed_storage native_ranks_share_a_sealed_identity_and_server_restart_reverifies # server exits before the readiness deadline
+sealed_storage native_ranks_share_a_sealed_identity_and_server_restart_reverifies # crates/jope-engine/tools/shared_teaching_cache.py is MISSING from the tree (sealed_storage.rs:40 references it) - a port gap, not a fence
 #
 # --- cause B: behavioural assertions that do not hold on this tree (not environment) ---
 learning_history compact_overview_uses_latest_validation_timestamp_across_overlapping_runs # expects "Validation Sequence NLL: 0.12345"
@@ -30,3 +36,9 @@ learning_history navigation_reaches_both_ends_and_all_view_sizes_remain_usable #
 view_contracts matched_search_seed_is_recorded_and_cannot_change_on_resume # expects stderr "RNG seed mismatch"
 view_contracts one_evaluation_budget_runs_the_incumbent_before_neural_candidates # observations[0]["failure"] is not null
 view_contracts projected_gp_candidates_are_exactly_representable_unique_and_durable # left == right assertion
+#
+# --- cause C: race-sensitive under parallel execution, not broken ---
+# Passes in isolation and as a serial module; 1 red in 3 full runs at high load. It is a lib test
+# among 334 in one binary, so the binary-granular serial list cannot help it; it needs a nextest
+# [test-groups] entry or a real fix.
+eval_registry::authority::tests::failed_exit_signal_and_timeout_cannot_be_cleared_by_result_files # racy; jope-parallel lib; docs/parity/test-timings.json already records it as fail
