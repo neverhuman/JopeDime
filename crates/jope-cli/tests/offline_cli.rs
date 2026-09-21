@@ -149,3 +149,83 @@ fn encode_without_weights_fails_closed() {
     assert_eq!(report["ok"], false);
     assert_eq!(report["schema"], "jope.encode.v1");
 }
+
+fn regression_linear() -> std::path::PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../datasets/synthetic/regression/linear.json")
+}
+
+#[test]
+fn fit_ridge_on_regression_linear_reports_finite_r2() {
+    let input = regression_linear();
+    let output = jope(
+        Path::new("."),
+        &[
+            "fit",
+            "--json",
+            "--input",
+            input.to_str().expect("utf8 path"),
+        ],
+    );
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["ok"], true);
+    assert_eq!(report["schema"], "jope.fit.v1");
+    assert!(report["train_r2"].as_f64().unwrap().is_finite());
+    assert!(report["hold_r2"].as_f64().unwrap().is_finite());
+}
+
+#[test]
+fn emit_all_languages_writes_four_artifacts() {
+    let temporary = tempfile::tempdir().unwrap();
+    let out = temporary.path().join("emitted");
+    let output = jope(
+        temporary.path(),
+        &[
+            "emit",
+            "--json",
+            "--lang",
+            "all",
+            "--output",
+            out.to_str().expect("utf8 path"),
+        ],
+    );
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["ok"], true);
+    assert_eq!(report["artifacts"].as_array().unwrap().len(), 4);
+    for name in ["model.py", "model.rs", "model.cpp", "model.js"] {
+        assert!(out.join(name).is_file(), "missing {name}");
+    }
+}
+
+#[test]
+fn search_picks_a_ridge_family_genome() {
+    let input = regression_linear();
+    let output = jope(
+        Path::new("."),
+        &[
+            "search",
+            "--json",
+            "--input",
+            input.to_str().expect("utf8 path"),
+        ],
+    );
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["ok"], true);
+    assert_eq!(report["schema"], "jope.search.v1");
+    assert_eq!(report["considered"], 3);
+    assert!(report["genome"].as_str().unwrap().contains("ridge"));
+}

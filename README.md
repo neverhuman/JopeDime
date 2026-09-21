@@ -18,7 +18,7 @@ encodings→GP neural policy will ship because the product needs a router; it is
 
 | Surface | Status on this SHA |
 | --- | --- |
-| `jope` CLI | No subcommand still prints `jope 0.1.0`. `generate-fixtures` and `verify-inputs --offline` qualify the ten Git fixtures. `encode --input` is CPU Hyperion and **fails closed** without `HYPERION_V7_WEIGHTS`. Search / emit / S3 are **not** wired yet. |
+| `jope` CLI | No subcommand still prints `jope 0.1.0`. Fixtures: `generate-fixtures`, `verify-inputs --offline`. `encode --input` is CPU Hyperion and **fails closed** without `HYPERION_V7_WEIGHTS`. `fit` / `search` / `emit --lang {rust,python,cpp17,javascript,all}` run on feat-math. S3 is **not** wired yet. |
 | `crates/feat-math` | Typed GP IR, fit, and portable emitters (Rust / Python / JS / C++17; C++20 compiles C++17). |
 | `crates/jope-encoders` | Encoder implementations (package name `starforge`). |
 | `crates/hyperion` | Workspace member. CPU/Candle default (`hyperion-cpu`). CUDA feature exists; not the CI default. |
@@ -44,6 +44,9 @@ cargo run --locked --bin jope -- verify-inputs --offline --root datasets/synthet
 # Verified 10 synthetic datasets, … bytes, offline.
 # Encode needs the Hyperion bundle (not in git):
 # HYPERION_V7_WEIGHTS=… cargo run --locked --bin jope -- encode --input datasets/synthetic/binary/linear.json
+cargo run --locked --bin jope -- fit --input datasets/synthetic/regression/linear.json --json
+cargo run --locked --bin jope -- emit --lang all --output /tmp/jope-emitted --json
+cargo run --locked --bin jope -- search --input datasets/synthetic/regression/linear.json --json
 ```
 
 GitHub PR CI is `.github/workflows/ci.yml` (hygiene + cargo-deny).
@@ -79,7 +82,7 @@ Do not open a stack of PRs. Merge or close the current one before starting the n
 
 | Path | Role |
 | --- | --- |
-| `crates/jope-cli` | `jope` binary: version, fixtures, CPU encode |
+| `crates/jope-cli` | `jope` binary: fixtures, CPU encode, fit/search/emit |
 | `crates/feat-math` | GP genomes, fit, emitters |
 | `crates/jope-encoders` | Encoders (`starforge`) |
 | `crates/hyperion` | Hyperion v5/v7 CPU/Candle encoder |

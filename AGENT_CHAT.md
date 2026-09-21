@@ -17,9 +17,13 @@ Merged as #18 (`049410f`). Ten integer-only Git fixtures plus
 
 ## 2026-09-21 — Grok: PR C (Hyperion / jope-policy encode)
 
-Claim: `crates/hyperion`, `crates/jope-policy`, `jope encode`, workspace
-members, README/MASTER_PLAN. Branch `feat/encode-hyperion-policy-20260921`
-from `origin/main` `049410f`. Recovered from retained `wp3/hyperion-policy`
-(`a043f8b`), rebased onto current main. CPU/Candle. Do not start D until
-this PR merges. Search / emit / S3 still not this PR. Weights stay out of
-git; encode fails closed without `HYPERION_V7_WEIGHTS`.
+Merged as #19 (`089c127`). CPU/Candle Hyperion + `jope encode` fail-closed
+without weights. Canonical dirty tree untouched.
+
+## 2026-09-21 — Grok: PR D (fit / emit / search)
+
+Claim: `crates/jope-cli` fit/emit/search on feat-math, README/MASTER_PLAN.
+Branch `feat/fit-emit-search-20260921` from `origin/main` `089c127`. Default
+genome `(pipe X (ridge))`. Emit writes Python/Rust/C++17/JS. Search is a
+three-candidate ridge family, not a full evolutionary campaign. Do not start
+E until this PR merges. S3 still not this PR.

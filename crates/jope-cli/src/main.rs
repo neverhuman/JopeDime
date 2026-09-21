@@ -1,13 +1,16 @@
 use anyhow::{ensure, Result};
 use clap::{Parser, Subcommand};
-use jope_cli::{encode_dataset, generate_fixtures, resolve_root, verify_inputs, Verification};
+use jope_cli::{
+    emit_genome, encode_dataset, fit_dataset, generate_fixtures, resolve_root, search_dataset,
+    verify_inputs, Verification, DEFAULT_GENOME,
+};
 use std::{path::PathBuf, process::ExitCode};
 
 #[derive(Parser)]
 #[command(
     name = "jope",
     version,
-    about = "JOPE-Dime offline input and CPU encode"
+    about = "JOPE-Dime fixtures, CPU encode, and feat-math fit/emit/search"
 )]
 struct Cli {
     #[command(subcommand)]
@@ -45,6 +48,34 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// Fit a GP genome on one admitted dataset (train R², holdout R²).
+    Fit {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long, default_value = DEFAULT_GENOME)]
+        genome: String,
+        #[arg(long)]
+        json: bool,
+    },
+    /// Emit working Python / Rust / C++17 / JavaScript from a GP genome.
+    Emit {
+        #[arg(long, default_value = DEFAULT_GENOME)]
+        genome: String,
+        /// rust, python, cpp17, javascript, or all
+        #[arg(long)]
+        lang: String,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        #[arg(long)]
+        json: bool,
+    },
+    /// Score a tiny ridge-family GP candidate set on one admitted dataset.
+    Search {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 fn execute(command: &Command) -> Result<Verification> {
@@ -62,8 +93,27 @@ fn execute(command: &Command) -> Result<Verification> {
             }
             verify_inputs(output)
         }
-        Command::Encode { .. } => unreachable!("encode is dispatched separately"),
+        Command::Encode { .. }
+        | Command::Fit { .. }
+        | Command::Emit { .. }
+        | Command::Search { .. } => unreachable!("kernel commands are dispatched separately"),
     }
+}
+
+fn print_json<T: serde::Serialize>(
+    json: bool,
+    report: &T,
+    text: impl FnOnce() -> String,
+) -> ExitCode {
+    if json {
+        println!(
+            "{}",
+            serde_json::to_string(report).expect("serializable report")
+        );
+    } else {
+        println!("{}", text());
+    }
+    ExitCode::SUCCESS
 }
 
 fn fail(json: bool, schema: &str, error: anyhow::Error) -> ExitCode {
@@ -83,28 +133,66 @@ fn main() -> ExitCode {
         println!("jope {}", env!("CARGO_PKG_VERSION"));
         return ExitCode::SUCCESS;
     };
-    if let Command::Encode { input, json } = &command {
-        return match encode_dataset(input) {
-            Ok(report) => {
-                if *json {
-                    println!(
-                        "{}",
-                        serde_json::to_string(&report).expect("serializable encode report")
-                    );
-                } else {
-                    println!(
+    match &command {
+        Command::Encode { input, json } => {
+            return match encode_dataset(input) {
+                Ok(report) => print_json(*json, &report, || {
+                    format!(
                         "Encoded {} ({} train rows → {} cols).",
                         report.dataset_id, report.train_rows, report.output_cols
-                    );
-                }
-                ExitCode::SUCCESS
-            }
-            Err(error) => fail(*json, "jope.encode.v1", error),
-        };
+                    )
+                }),
+                Err(error) => fail(*json, "jope.encode.v1", error),
+            };
+        }
+        Command::Fit {
+            input,
+            genome,
+            json,
+        } => {
+            return match fit_dataset(input, genome) {
+                Ok(report) => print_json(*json, &report, || {
+                    format!(
+                        "Fitted {} on {} (train R² {:.4}, hold R² {:.4}).",
+                        report.genome, report.dataset_id, report.train_r2, report.hold_r2
+                    )
+                }),
+                Err(error) => fail(*json, "jope.fit.v1", error),
+            };
+        }
+        Command::Emit {
+            genome,
+            lang,
+            output,
+            json,
+        } => {
+            return match emit_genome(genome, lang, output.as_deref()) {
+                Ok(report) => print_json(*json, &report, || {
+                    format!(
+                        "Emitted {} artifact(s) from {}.",
+                        report.artifacts.len(),
+                        report.genome
+                    )
+                }),
+                Err(error) => fail(*json, "jope.emit.v1", error),
+            };
+        }
+        Command::Search { input, json } => {
+            return match search_dataset(input) {
+                Ok(report) => print_json(*json, &report, || {
+                    format!(
+                        "Search picked {} on {} (hold R² {:.4}).",
+                        report.genome, report.dataset_id, report.hold_r2
+                    )
+                }),
+                Err(error) => fail(*json, "jope.search.v1", error),
+            };
+        }
+        _ => {}
     }
     let json = match &command {
         Command::VerifyInputs { json, .. } | Command::GenerateFixtures { json, .. } => *json,
-        Command::Encode { .. } => unreachable!("encode returned above"),
+        _ => unreachable!("kernel commands returned above"),
     };
     match execute(&command) {
         Ok(report) => {
