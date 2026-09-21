@@ -125,3 +125,27 @@ fn committed_corpus_matches_regeneration() {
     let report = jope_cli::verify_inputs(&root).unwrap();
     assert_eq!(report.dataset_count, 10);
 }
+
+#[test]
+fn encode_without_weights_fails_closed() {
+    let input =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../datasets/synthetic/binary/linear.json");
+    let output = Command::new(env!("CARGO_BIN_EXE_jope"))
+        .env_remove("JOPE_HOME")
+        .env_remove("JOPE_INPUTS_ROOT")
+        .env_remove("HYPERION_V7_WEIGHTS")
+        .env_remove("JAIN_HYPERION_WEIGHTS")
+        .env_remove("JAIN_HYPERION_MANIFEST")
+        .args([
+            "encode",
+            "--json",
+            "--input",
+            input.to_str().expect("utf8 path"),
+        ])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["ok"], false);
+    assert_eq!(report["schema"], "jope.encode.v1");
+}

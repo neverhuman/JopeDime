@@ -12,7 +12,14 @@ not in that PR. Withdrawn #5–#16 remain evidence, not a live queue.
 
 ## 2026-09-21 — Grok: PR B (ten synthetic fixtures)
 
-Claim: `crates/jope-cli`, `datasets/synthetic`, README/MASTER_PLAN for this
-SHA. Branch `feat/ten-synthetic-fixtures-20260921` from `origin/main`
-`b388ada`. Disposable clone only. Canonical dirty tree untouched. Do not
-start C until this PR merges. Encode / search / emit / S3 still not this PR.
+Merged as #18 (`049410f`). Ten integer-only Git fixtures plus
+`verify-inputs --offline`. Canonical dirty tree untouched.
+
+## 2026-09-21 — Grok: PR C (Hyperion / jope-policy encode)
+
+Claim: `crates/hyperion`, `crates/jope-policy`, `jope encode`, workspace
+members, README/MASTER_PLAN. Branch `feat/encode-hyperion-policy-20260921`
+from `origin/main` `049410f`. Recovered from retained `wp3/hyperion-policy`
+(`a043f8b`), rebased onto current main. CPU/Candle. Do not start D until
+this PR merges. Search / emit / S3 still not this PR. Weights stay out of
+git; encode fails closed without `HYPERION_V7_WEIGHTS`.

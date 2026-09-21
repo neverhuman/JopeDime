@@ -18,10 +18,11 @@ encodings→GP neural policy will ship because the product needs a router; it is
 
 | Surface | Status on this SHA |
 | --- | --- |
-| `jope` CLI | No subcommand still prints `jope 0.1.0`. `generate-fixtures` and `verify-inputs --offline` qualify the ten Git fixtures. Encode / search / emit / S3 commands are **not** wired yet. |
+| `jope` CLI | No subcommand still prints `jope 0.1.0`. `generate-fixtures` and `verify-inputs --offline` qualify the ten Git fixtures. `encode --input` is CPU Hyperion and **fails closed** without `HYPERION_V7_WEIGHTS`. Search / emit / S3 are **not** wired yet. |
 | `crates/feat-math` | Typed GP IR, fit, and portable emitters (Rust / Python / JS / C++17; C++20 compiles C++17). |
 | `crates/jope-encoders` | Encoder implementations (package name `starforge`). |
-| `crates/hyperion` | Host/runtime sources present; **not** a default workspace member. |
+| `crates/hyperion` | Workspace member. CPU/Candle default (`hyperion-cpu`). CUDA feature exists; not the CI default. |
+| `crates/jope-policy` | Workspace member. Step-60000 proposal policy on Candle. Needs the bound checkpoint to propose. |
 | `crates/jope-engine`, `crates/jope-campaigns` | Engine and campaign crates in the workspace. |
 | Git datasets | Ten synthetic fixtures in `datasets/synthetic/` plus `datasets/test/pmlb-229-pwlinear/`. Real tables stay in S3. |
 | S3 fetch / champion training | Not on this SHA. |
@@ -41,6 +42,8 @@ cargo run --locked --bin jope
 # jope 0.1.0
 cargo run --locked --bin jope -- verify-inputs --offline --root datasets/synthetic
 # Verified 10 synthetic datasets, … bytes, offline.
+# Encode needs the Hyperion bundle (not in git):
+# HYPERION_V7_WEIGHTS=… cargo run --locked --bin jope -- encode --input datasets/synthetic/binary/linear.json
 ```
 
 GitHub PR CI is `.github/workflows/ci.yml` (hygiene + cargo-deny).
@@ -76,10 +79,11 @@ Do not open a stack of PRs. Merge or close the current one before starting the n
 
 | Path | Role |
 | --- | --- |
-| `crates/jope-cli` | `jope` binary: version line, fixture generate/verify |
+| `crates/jope-cli` | `jope` binary: version, fixtures, CPU encode |
 | `crates/feat-math` | GP genomes, fit, emitters |
 | `crates/jope-encoders` | Encoders (`starforge`) |
-| `crates/hyperion` | Hyperion host sources (not default members) |
+| `crates/hyperion` | Hyperion v5/v7 CPU/Candle encoder |
+| `crates/jope-policy` | Bound step-60000 GP router (needs checkpoint) |
 | `crates/jope-engine` | Storage / training / execution contracts |
 | `crates/jope-campaigns` | Campaign and qualification tooling |
 | `datasets/synthetic` | Ten integer-only Git fixtures + `catalog.json` |

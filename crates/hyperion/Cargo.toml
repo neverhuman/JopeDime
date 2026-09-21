@@ -1,0 +1,44 @@
+[package]
+publish = false
+name = "hyperion"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Hyperion v5/v7 candle inference: matrix-sweep encoder, router, .hvc2 cache and the shared-GPU lease queue"
+
+[features]
+default = ["hyperion-cpu", "batch-worker"]
+# Dependency lines copied from jain-core feat-core/Cargo.toml (candle 0.11.0, cudarc dynamic-linking
+# flavour comes from candle-core's own `cuda` feature).
+hyperion-cpu = ["dep:candle-core", "dep:candle-nn"]
+hyperion-cuda = ["hyperion-cpu", "candle-core/cuda", "candle-nn/cuda"]
+# The `hyperion-batch-worker` binary drives jope-engine's prepared views; the library never needs it.
+batch-worker = ["dep:jope-parallel", "dep:rayon"]
+
+[dependencies]
+anyhow.workspace = true
+rand.workspace = true
+rand_chacha = "0.3"
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+candle-core = { version = "0.11.0", default-features = false, optional = true }
+candle-nn = { version = "0.11.0", default-features = false, optional = true }
+rayon = { workspace = true, optional = true }
+jope-parallel = { path = "../jope-engine", optional = true }
+
+[[bin]]
+name = "hyperion-v5-reference"
+path = "src/bin/hyperion-v5-reference.rs"
+
+[[bin]]
+name = "hyperion-batch-worker"
+path = "src/bin/hyperion-batch-worker.rs"
+required-features = ["hyperion-cpu", "batch-worker"]
+
+[lints.rust]
+# battle_gpu/queue.rs is copied verbatim from jain-battle-gpu and still names that crate's loader
+# features; they are never enabled here (the lease queue is std-only).
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(feature, values("gpu", "gpu-dynamic-loading", "gpu-dynamic-linking"))'] }
