@@ -507,3 +507,24 @@ which this cleanup did not touch.
   `main` after #34 landed.
 - Issues filed: **#46** hard-coded build layout, **#47** gitleaks scan scope, **#48** the emit
   binding covering only `model.py`/`model.rs`.
+
+## Runner failure mode found and fixed (operational note)
+
+After the cleanup, PR #49's `changes` lane failed in 5 s with:
+
+```
+Can't find 'action.yml', 'action.yaml' or 'Dockerfile' under
+'/home/runner/work/ci3/_actions/actions/checkout/08eba0b27e82...'
+```
+
+Not the prune timer (it has never run, and `prune.sh` does not touch `jope-work`). Inspecting the
+volume showed **every lane had two `actions/checkout` entries but only one with an `action.yml`** —
+a half-downloaded copy in each, almost certainly from jobs killed mid-download when listeners were
+restarted during this work.
+
+`_actions` is a per-lane download cache and is disposable. Cleared with
+`docker run --rm -v jope-work:/w alpine:3 sh -c 'rm -rf /w/*/_actions'`; the re-run passed.
+
+**If a lane fails at Checkout with a missing `action.yml`, clear `_actions` before suspecting
+anything else.** This is now the second failure mode traced to the shared `jope-work` volume, after
+the `$lane` collision.
