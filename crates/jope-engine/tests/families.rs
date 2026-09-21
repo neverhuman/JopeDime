@@ -289,8 +289,9 @@ fn canonical_metadata_wins_over_earlier_acquisition_stubs() {
     );
 }
 
-/// The policy helper `src/families.rs` hashes (`include_bytes!("../policy/family_growth_policy.py")`)
-/// and copies into each fixture's `tools/` directory.
+/// The policy helper the crate embeds and hashes
+/// (`src/families.rs`: `include_bytes!("../policy/family_growth_policy.py")`). The tests below copy
+/// it into each fixture's `tools/` directory, which is where `freeze_growth` looks for it.
 fn policy_helper() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("policy/family_growth_policy.py")
 }
