@@ -13,7 +13,7 @@ Legend — `status`: `moved` (present here, target + test recorded), `new` (no p
 | engine-subcommand | 88 | 88 | 0 | 0 | 0 | 0 |
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 6 | 0 | 0 | 0 | 0 |
-| new-bin | 6 | 0 | 6 | 0 | 0 | 0 |
+| new-bin | 7 | 0 | 7 | 0 | 0 | 0 |
 | new-bin | 4 | 0 | 4 | 0 | 0 | 0 |
 | ops-sh | 1 | 1 | 0 | 0 | 0 | 0 |
 | root-binary | 56 | 56 | 0 | 0 | 0 | 0 |
