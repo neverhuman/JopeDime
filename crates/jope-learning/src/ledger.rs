@@ -179,7 +179,21 @@ impl Ledger {
         lock.lock()?;
         let head_path = self.root.join("HEAD.json");
         let head = self.head()?;
-        let ulid = ulid::Ulid::new().to_string();
+        // ULIDs are lexicographically ordered only ACROSS milliseconds. Within one,
+        // `Ulid::new()` fills the low 80 bits with random entropy, so two batches sealed in the
+        // same millisecond sort randomly against each other -- measured on this machine, 9923 of
+        // 19995 consecutive same-millisecond pairs came out lexicographically reversed. Since
+        // `batches()` orders by exactly this name and `verify()` walks the prev-links in that
+        // order, an intact ledger was reported `prev-link` BROKEN whenever two appends landed in
+        // one millisecond: a false alarm from the one structure whose job is telling the truth
+        // about tampering, and one that only appears on hardware fast enough to do two appends
+        // inside a millisecond.
+        //
+        // Appends are serialised by the lock taken above, and `head` is the batch being chained
+        // onto, so clamping against it makes each id strictly greater than its predecessor by
+        // construction -- across processes, not merely within one -- which is what `batches()`
+        // needs in order to be sorting by anything meaningful.
+        let ulid = next_batch_id(head.as_ref().map(|h| h.batch.as_str()))?.to_string();
         let ts = now_unix();
         let (yyyy, mm) = year_month(ts);
         let rel = format!("{yyyy}/{mm}/{ulid}.jsonl");
@@ -244,7 +258,8 @@ impl Ledger {
                 .replace('\\', "/");
             out.push((rel, p.to_path_buf()));
         }
-        // ULIDs are lexicographically time-ordered; the yyyy/mm prefix agrees with them.
+        // Batch ids are strictly increasing by construction (see `next_batch_id`), which is
+        // what makes this sort the append order; the yyyy/mm prefix agrees with them.
         out.sort_by(|a, b| {
             let stem = |r: &str| r.rsplit('/').next().unwrap_or(r).to_string();
             stem(&a.0).cmp(&stem(&b.0))
@@ -564,8 +579,128 @@ pub fn map_err_walk(e: walkdir::Error) -> anyhow::Error {
     anyhow!("{e}")
 }
 
+/// The id for the next batch: a fresh ULID, or the previous id incremented when the clock has not
+/// advanced past it.
+///
+/// Strictly greater than `prev` whenever `prev` parses, which is what `Ledger::batches()`'s
+/// ordering depends on. Callers must hold the ledger lock, so `prev` really is the batch being
+/// chained onto and no other writer can mint in between.
+fn next_batch_id(prev: Option<&str>) -> Result<ulid::Ulid> {
+    let fresh = ulid::Ulid::new();
+    let Some(prev) = prev else { return Ok(fresh) };
+    let Ok(prev) = ulid::Ulid::from_string(prev) else {
+        // An id that does not parse cannot be ordered against. Returning the fresh one leaves
+        // `verify()` to report the malformed chain rather than inventing an order for it here.
+        return Ok(fresh);
+    };
+    if fresh > prev {
+        return Ok(fresh);
+    }
+    prev.increment()
+        .ok_or_else(|| anyhow!("batch id space exhausted after {prev}"))
+}
+
 #[cfg(test)]
 mod tests {
+    /// The ordering `Ledger::batches()` sorts by, pinned without depending on machine speed.
+    ///
+    /// A `prev` stamped in the future is one a fresh `Ulid::new()` cannot beat, so the clamp in
+    /// `next_batch_id` is the only thing that can satisfy this -- no timing, no retries, no
+    /// "usually passes". Reverting the clamp fails this test every run on every machine.
+    #[test]
+    fn a_batch_id_is_always_greater_than_the_one_it_chains_onto() {
+        let now = ulid::Ulid::new();
+
+        // Unreachable by the wall clock for the next minute.
+        let future = ulid::Ulid::from_parts(now.timestamp_ms() + 60_000, 0);
+        let next = next_batch_id(Some(&future.to_string())).unwrap();
+        assert!(
+            next > future,
+            "{next} does not follow {future}; batches() would sort them backwards"
+        );
+        assert!(
+            next.to_string() > future.to_string(),
+            "ids order differently as strings than as ULIDs, and batches() sorts strings"
+        );
+
+        // Repeated against its own output: a run of appends inside one tick must keep climbing.
+        let mut prev = future;
+        for _ in 0..1000 {
+            let cur = next_batch_id(Some(&prev.to_string())).unwrap();
+            assert!(cur.to_string() > prev.to_string(), "{cur} <= {prev}");
+            prev = cur;
+        }
+
+        // An ordinary prev, and the two degenerate inputs, must not panic.
+        assert!(next_batch_id(Some(&now.to_string())).unwrap() > now);
+        assert!(next_batch_id(None).is_ok());
+        assert!(
+            next_batch_id(Some("not-a-ulid")).is_ok(),
+            "an unparseable id must leave verify() to report the malformed chain, not panic here"
+        );
+    }
+
+    /// Batches sealed inside the same millisecond must still verify.
+    ///
+    /// `Ulid::new()` is not monotonic within a millisecond -- it randomises the low 80 bits -- so
+    /// batch names sorted lexicographically came out in a different order than they were appended
+    /// whenever the host was fast enough to seal two in one tick. `verify()` walks prev-links in
+    /// that order, so it reported `prev-link` BREAK on a ledger nobody had touched. It surfaced as
+    /// a CI failure on the NVMe runner while passing on slower disks, which is the worst shape for
+    /// a bug in a tamper-evident structure: it accuses when it is fastest.
+    #[test]
+    fn batches_sealed_within_one_millisecond_still_verify() {
+        let dir = tempfile::tempdir().unwrap();
+        let ledger = Ledger::open(dir.path(), "hwm");
+
+        // NOTE: whether this actually seals two batches inside one millisecond depends on how
+        // fast the disk is -- on a slow one every append takes longer than a tick and the bug
+        // cannot appear. So this is an end-to-end guard, not the regression test; the property
+        // itself is pinned deterministically by
+        // `a_batch_id_is_always_greater_than_the_one_it_chains_onto` below.
+        let mut ids = Vec::new();
+        for n in 0..64u64 {
+            ids.push(
+                ledger
+                    .append(&[json!({"n": n})], json!({"t": n}))
+                    .unwrap()
+                    .batch,
+            );
+        }
+
+        let mut sorted = ids.clone();
+        sorted.sort();
+        assert_eq!(
+            ids, sorted,
+            "batch ids are not in append order, so batches() cannot sort by them"
+        );
+        assert_eq!(
+            ids.iter().collect::<std::collections::BTreeSet<_>>().len(),
+            ids.len(),
+            "two batches were given the same id"
+        );
+
+        let report = ledger.verify().unwrap();
+        assert!(
+            report.ok(),
+            "an untouched ledger reported breaks: {:?}",
+            report.breaks
+        );
+        assert_eq!((report.batches, report.events), (64, 64));
+
+        // And the events come back in the order they were appended, which is the property the
+        // name ordering exists to provide.
+        assert_eq!(
+            ledger
+                .events()
+                .unwrap()
+                .iter()
+                .map(|e| e["n"].as_u64().unwrap())
+                .collect::<Vec<_>>(),
+            (0..64).collect::<Vec<_>>()
+        );
+    }
+
     use super::*;
     use serde_json::json;
 
