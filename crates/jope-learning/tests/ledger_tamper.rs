@@ -359,3 +359,66 @@ fn freeze_refuses_to_export_from_a_chain_it_cannot_walk() {
     // diagnostic down with it.
     assert_eq!(jl(state.root(), &["hwm", "verify"]).status, 1);
 }
+
+/// A destination path under `blobs/` is content-addressed, but a path existing is not the same
+/// claim as its bytes hashing to the name it sits under. `freeze` skipped the write whenever the
+/// destination existed, so a corrupted or planted export was published under a manifest asserting
+/// `record_sha256` over it — and `verify`, which walks the *source* ledger, is structurally unable
+/// to notice, because the source is intact. Reported on PR #34 by the independent reviewer.
+#[test]
+fn freeze_refuses_a_destination_blob_that_does_not_hash_to_the_path_it_sits_under() {
+    let tmp = tempfile::tempdir().unwrap();
+    let state = State::at(&tmp.path().join("state"));
+    for (i, v) in [0.5, 0.4, 0.3].into_iter().enumerate() {
+        hwm::ingest(
+            &state,
+            None,
+            vec![candidate(v, i as u64 + 1)],
+            json!({"k": i}),
+        )
+        .unwrap();
+    }
+    let out = tmp.path().join("freeze");
+
+    // Control 1: a clean export writes the blob and a manifest.
+    let first = hwm::freeze(&state, &out, false).unwrap();
+    assert_eq!(first.included, 1);
+    let blob = out.join(&first.entries[0].blob);
+    let expected_sha = first.entries[0].record_sha256.clone();
+    assert!(blob.is_file(), "the control export wrote no blob");
+    let original = fs::read(&blob).unwrap();
+
+    // Control 2: re-exporting the same corpus over the same tree stays idempotent. Without this
+    // the refusal below could be satisfied by simply banning every re-export.
+    let again = hwm::freeze(&state, &out, false).unwrap();
+    assert_eq!(again.included, first.included);
+    assert_eq!(
+        fs::read(&blob).unwrap(),
+        original,
+        "an idempotent re-export disturbed a blob whose bytes already agreed"
+    );
+
+    // The tamper: the path still claims `expected_sha`; the bytes under it no longer hash to it.
+    fs::write(&blob, b"not the champion these bytes claim to be").unwrap();
+
+    // The source ledger is untouched, which is the whole point — destination integrity is what
+    // freeze is being asked to establish, and no amount of source verification can supply it.
+    assert!(
+        hwm::verify(&state, &[]).unwrap().ok(),
+        "the fixture is only meaningful while the source ledger still verifies clean"
+    );
+
+    let err = hwm::freeze(&state, &out, false)
+        .expect_err("a manifest was published over a blob that does not hash to its own path");
+    let msg = format!("{err:#}");
+    for needle in [
+        "refusing to freeze",
+        "already holds bytes hashing to",
+        expected_sha.as_str(),
+    ] {
+        assert!(
+            msg.contains(needle),
+            "the refusal must be legible — missing {needle:?} in: {msg}"
+        );
+    }
+}
