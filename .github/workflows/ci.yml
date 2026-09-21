@@ -255,15 +255,22 @@ jobs:
           [ "${#pkgs[@]}" -gt 0 ] || { echo "rust-test-scope.sh produced an empty package set" >&2; exit 1; }
           # Identity of what actually ran, so the uploaded report can be tied to a revision and a
           # package set rather than to "the lane was green once".
+          # Captured as statements, not inside `echo "$( )"`: a command substitution in an echo
+          # argument cannot trip `set -e`, so a failing rustup would be recorded as an empty value.
+          toolchain="$(rustup show active-toolchain)"
+          runner="$(uname -srm)"
           {
             echo "revision=${GITHUB_SHA}"
             echo "ref=${GITHUB_REF}"
             echo "run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
-            echo "runner=$(uname -srm)"
-            echo "toolchain=$(rustup show active-toolchain)"
+            echo "runner=${runner}"
+            echo "toolchain=${toolchain}"
             echo "packages=${scope}"
           } | tee rust-test-evidence/identity.txt
           df -B1 --output=source,size,used,avail,pcent / | tee rust-test-evidence/disk-before.txt
+          # Marks that nextest was reached, so the retention step can tell "the report is missing"
+          # from "the run never got that far" instead of accepting both.
+          touch rust-test-evidence/nextest-started
           cargo nextest run -P pr --locked "${pkgs[@]}"
       - name: Retain test report and disk measurements
         if: always()
@@ -277,8 +284,14 @@ jobs:
           junit="target/nextest/pr/junit.xml"
           if [ -f "$junit" ]; then
             cp "$junit" rust-test-evidence/junit.xml
+          elif [ -f rust-test-evidence/nextest-started ]; then
+            # nextest ran and produced no report: the path is wrong or the profile lost its junit
+            # config, and a lane that silently uploads no results is the thing this step exists to
+            # prevent. Fail here rather than leave a green check over an empty artifact.
+            echo "nextest ran but no report at ${junit}" | tee rust-test-evidence/junit-MISSING.txt
+            exit 1
           else
-            echo "NO JUNIT REPORT AT ${junit}" | tee rust-test-evidence/junit-MISSING.txt
+            echo "nextest never ran; no report expected" | tee rust-test-evidence/junit-ABSENT.txt
           fi
       - name: Upload rust-test evidence
         if: always()
@@ -287,4 +300,5 @@ jobs:
           name: rust-test-evidence
           path: rust-test-evidence/
           if-no-files-found: error
+          overwrite: true
           retention-days: 30
