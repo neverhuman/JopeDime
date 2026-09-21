@@ -22,15 +22,16 @@ clippy:
 # the whole workspace. Both are below.
 # PR tier: exactly what the hosted `rust-test` lane runs — the product crates, 617 tests
 test-pr:
-    env OMP_NUM_THREADS=1 RAYON_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 JOPE_PARITY_STRICT=1 bash -c 'read -ra p <<< "$(bash deploy/ci/rust-test-scope.sh)"; exec cargo nextest run -P pr --locked "${p[@]}"'
+    env OMP_NUM_THREADS=1 RAYON_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 JOPE_PARITY_STRICT=1 bash -euo pipefail -c 's="$(bash deploy/ci/rust-test-scope.sh)"; read -ra p <<< "$s"; [ "${#p[@]}" -gt 0 ] || exit 1; exec cargo nextest run -P pr --locked "${p[@]}"'
 
 # the crates deferred from the hosted lane; expect the failures in deploy/ci/known-broken-tests.txt
 test-pr-deferred:
-    env OMP_NUM_THREADS=1 RAYON_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 JOPE_PARITY_STRICT=1 bash -c 'read -ra p <<< "$(bash deploy/ci/rust-test-scope.sh --deferred)"; exec cargo nextest run -P pr --locked "${p[@]}"'
+    env OMP_NUM_THREADS=1 RAYON_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 JOPE_PARITY_STRICT=1 bash -euo pipefail -c 's="$(bash deploy/ci/rust-test-scope.sh --deferred)"; read -ra p <<< "$s"; [ "${#p[@]}" -gt 0 ] || exit 1; exec cargo nextest run -P pr --locked "${p[@]}"'
 
-# the binaries that spawn real daemons and must not race each other
+# the binaries that spawn real daemons and must not race each other (deferred crates only, so this
+# does not link the whole workspace to run 25 tests)
 test-pr-serial:
-    env OMP_NUM_THREADS=1 RAYON_NUM_THREADS=1 JOPE_PARITY_STRICT=1 cargo nextest run -P pr --workspace --locked --test-threads 1 -E "$(bash deploy/ci/rust-test-filter.sh --serial)"
+    bash -euo pipefail -c 's="$(bash deploy/ci/rust-test-scope.sh --deferred)"; read -ra p <<< "$s"; [ "${#p[@]}" -gt 0 ] || exit 1; exec env OMP_NUM_THREADS=1 RAYON_NUM_THREADS=1 JOPE_PARITY_STRICT=1 cargo nextest run -P pr --locked "${p[@]}" --test-threads 1 -E "$(bash deploy/ci/rust-test-filter.sh --serial)"'
 
 # everything in the PR tier, nothing excluded
 test-pr-all:
