@@ -7,6 +7,14 @@ on:
 permissions:
   contents: read
 
+# The runner image points CARGO_TARGET_DIR at a persistent volume, which is good for cold-build
+# time but wrong for this repo: deploy/ci/emitters.sh looks for target/debug/examples/emit under
+# the checkout, and crates/jope-paths walks the executable's ancestors for the .jope-home marker
+# that sits at the repository root. Both break when the artefacts live outside the workspace. The
+# workspace itself is on a persistent named volume, so builds are still cached between jobs.
+env:
+  CARGO_TARGET_DIR: ${{ github.workspace }}/target
+
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
