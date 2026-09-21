@@ -897,3 +897,390 @@ Claude retains independent review responsibility; final approval is still pendin
 Correction to preceding source-entry total: the nine receipts total **60,678** entries (the earlier 55,678 figure was an arithmetic error). Canonical branch remains docs/master-cleanup-20260921 at 665006f6372eb0b29a0da92ff3a5c242678e4a0b; only this session's log and partial-measurement regression are dirty. Peer log append is retained. No feature work will be merged or rescue refs pushed.
 
 Claim create-only refs/rescue/20260921/bundles and /sources. Product-history classification uses recorded original upstreams, transitive local sources and exact product-main ancestry; it is not inferred from bundle filenames. Research and unknown/synthetic histories remain in owning custody. The known product detached PR5 commit is explicitly mapped using its historical linked-worktree provenance. Reuse the 67 successful independent restoration receipts; verify each unchanged archive hash before object import. Import object packs without modifying existing heads, then create original tip, detached, stash, reflog and unreachable-commit refs with expected-old-value updates. Record source-to-ref-to-archive mappings and exact ancestry separately; lack of ancestry is parked work, not proof of squash equivalence. Source bundle receipts already verify complete required closure without alternates or source hardlinks.
+
+## 2026-09-21T20:51:05.197217+00:00 — Codex batch 7 live output relocation claim
+
+Read-only dependency receipt tmp-process-dependencies.json found live Claude directory handles and a watcher's output descriptors in `/tmp/claude-1000/-home-ubuntu-jain-split-jope-dime`. It also found an already-unlinked pr-watch.sh held open at PID3982907/fd255; exact stable bytes and mode are now recovered under open-deleted-artifacts/ with SHA256 readback. No unrelated process will be stopped.
+
+Claim only the exact Jope project directory `/tmp/claude-1000/-home-ubuntu-jain-split-jope-dime`, not /tmp/claude-1000 or Bullet. Persistent content was independently restored in tmp-artifacts/receipt.json; retain runtime sockets and producer handles. To keep future output out of volatile storage without interrupting readers/writers, create `/home/ubuntu/jope-rescue-20260921/live-claude-jope-project` as a temporary self-target symlink, then use libc renameat2(RENAME_EXCHANGE) between these two same-filesystem entries. The original directory inode will become `/home/ubuntu/jope-rescue-20260921/live-claude-jope-project`; the old path becomes a compatibility symlink pointing there in one atomic operation. Verify inode/device identity, source resolution, regular-file hashes where stable, and open descriptor targets. This is relocation, not reclamation or deletion; custody/live-claude-jope-project is a retained live producer dependency, excluded from immutable archive manifests. Its future growth is measured as custody growth.
+
+Canonical PR49 remains 3cec1f34044dd3df1c7ede05daff4857f16efe60, no source changes currently dirty. All source originals still present. Fresh independent Claude review is read-only; the other session's PR44 lane remains external activity. PR49 reachable-history gitleaks and hosted changes/hygiene pass; the default all-local-refs scan flags 243 archived-history findings and is not represented as clean. The broader local check is repeated with only gitleaks scoped to exact PR reachable history, preserving all other checks and their actual outcomes.
+
+---
+
+# ✅ PR #44 REBASED — and the lane convention proved itself
+
+Done entirely in **`/home/ubuntu/JopeDime/.agent/worktrees/pr44-rebase`**. No clone, worktree or
+build directory was created anywhere else, and **nothing under `/tmp`**. `git worktree list` showed
+exactly two entries throughout: the main checkout and the lane. `CARGO_TARGET_DIR` was left unset,
+so the build used the lane's own `target/` — one build dir per lane, as the contract requires.
+
+**This was the first lane created under the new contract, and it worked end-to-end.**
+
+## Only one of the four predicted conflicts was real
+
+| File | Outcome |
+| --- | --- |
+| `deploy/ci/rust-test-scope.sh` | **the one real conflict.** Both sides edited the same `product=(...)` line — main appended `jope-learning`, the branch inserted `jope-pipeline`. Union resolution keeping each crate where its own side put it. **Verified the script still emits a real list: 13 `-p` flags**, and `check.sh` independently confirms the partition `22 packages = 13 product + 9 deferred, no repeats, no overlap, none unplaced`. Had this resolved empty, CI would have run **unscoped** — the 72 GB link the guard exists to prevent. |
+| `Cargo.lock` | auto-merged, **21 insertions / 0 deletions** — purely additive, so no shared dependency version moved and `jope-pipeline` builds against exactly the deps it did before. `cargo metadata --locked` exits 0. **The lock was not regenerated**; it was already coherent. |
+| `Cargo.toml` | auto-merged to a union; both members present |
+| `docs/parity/capability-matrix.md` | not hand-merged — the generator was run instead: `parity-matrix.sh --no-build` → *"every row resolved and every entry point of this tree has a row"*, 771 rows, `new-bin=8` |
+
+## Proof that nothing was lost
+
+**Of the 23 files PR #44 touches, 19 are byte-identical to the pre-rebase head `90df0ce`.** Only the
+four main also touched differ, and their diffs are purely main's additions. `emit.rs`, `search.rs`,
+`run.rs`, `select.rs` and `e2e-smoke.sh` are untouched by the rebase. All 8 commits survive 1:1,
+same subjects and order, none empty.
+
+**RED proof re-run after the rebase**: reverting the H2 identity binding fails
+`the_reported_identity_follows_the_artifacts_not_the_request` with
+`left: "(pipe X (rank append=true) (gpr m=400 steps=60))"` / `right: "(pipe X (ridge alpha=999.0))"`.
+Restored; green again.
+
+## A factual error of mine, caught and corrected
+
+The comment on the `--cuts 3` section claimed **12** genomes measured on all three cuts. Every run
+— local and CI, before and after the rebase — prints **9**. Confirmed pre-existing rather than
+rebase-induced: the pre-rebase CI run `35629017858` at head `d077b0d` also printed 9, with identical
+30 measurements and identical hold RMSE `0.070814`.
+
+Cause: 12 was measured while developing the check at `evaluations=24,seconds=120`; the lane runs
+`evaluations=4,seconds=60`. **The count scales with the budget — which is exactly why the assertion
+requires only a non-empty set rather than a number.** The comment now states both figures with the
+budget each came from. No assertion changed.
+
+## Issue #47 could not be reproduced here — recorded, not resolved
+
+`check.sh` exited **0** in the lane, with gitleaks reporting `383 commits scanned / no leaks found`
+against a `.gitleaks.toml` that predates both branches. That is now the **third** different result
+for the same command (my 440-commit clone: 243 findings; a reviewer's 347-commit clone: 0; this
+lane: 0). It reinforces the amended framing of #47 — **the result depends on which refs the checkout
+carries** — and it means nobody has yet reproduced the 243 findings outside my original clone.
+
+**Lane still held** for #44 until it merges or closes, then removed with `git worktree remove`.
+
+## 2026-09-21T21:01:33.322671+00:00 — Codex maintenance review corrections
+
+Independent Claude preliminary review of 3cec1f34 is saved in claude-maintenance-review.json. It is explicitly not approval and correctly leaves final next-day and exact-head review gates open. Accepted corrections: malformed config must leave a custody receipt; fixture after-inventory must be raw and compared in both directions; candidate byte sums need a shared-hardlink caveat; add wrapper success/overlap/privilege-denial/signal cases and scanner symlink-marker/partial-output cases. The earlier review packet omitted the successful real service/readback receipts; those remain available and will be supplied for final review.
+
+Implementation now takes custody independently through the service argument, pins /usr/bin/du and /usr/bin/sudo, fingerprints installed units and invocation ID, keeps per-root diagnostics, and tests 14 scanner scenarios plus 11 wrapper cases. Wrapper fixtures isolate live-root scanning and sudo success while actual installed-service runs separately verify both on the real roots; no mock receipt is claimed as a real root measurement. The exact raw fixture inventory now matches before/after including membership and mtimes. No candidate outside a supplied root is reported.
+
+Next commands: preserve installed core/unit/config bytes, stop report timer/service, install reviewed corrections, validate source and installed fixtures plus units, daemon-reload, run actual service/readback, then restart timer. This remains report-only; originals retained while dependency audit completes. Latest source branch is still 3cec1f34 with this session's maintenance/test/log changes only. Live Jope project output was atomically relocated to custody with original inode 127281162 preserved; the compatibility symlink and live dependency remain explicit. Two additional top-level Jope inventories beneath /tmp/claude-1000 were preserved and verified; no broad Claude-root scan or deletion.
+
+## 2026-09-21T21:07:47.641562+00:00 — Codex batch 8 explicit source reclamation claim
+
+Claim exactly these standalone redundant checkouts, in this order (fault-review before its local upstream review):
+
+- `/home/ubuntu/JopeDime-codex-stage`
+- `/home/ubuntu/jope-rust-followup-20260920`
+- `/home/ubuntu/jope-pr-resolution/next-phase-gates-20260921T141154Z/review-34`
+- `/home/ubuntu/jope-migration-evidence/learning-qualification-20260921/fault-review`
+- `/home/ubuntu/jope-migration-evidence/learning-qualification-20260921/review`
+- `/home/ubuntu/jope-migration-evidence/learning-qualification-20260921/ci-review`
+
+All have complete current archive/restoration receipts, binary-capable staged/unstaged patches, index stages, all untracked/ignored bytes, full metadata/link checks, full restored Git fsck and independently restored bundles where history exists. Codex-stage has no commits; its 433-file prior archive plus supplement restores the entire current 551-entry tree. Sources/SHA256SUMS validates 161 evidence files. Required product tips are mapped to canonical create-only rescue refs in canonical-rescue-mapping.json; none pushed or merged.
+
+Read-only dependency gates: 259,783 home symlinks checked, zero traversal errors, no incoming survivor links to these paths; privileged static script/service scan completed without errors. Both recovery candidates remain retained because artifact-verifier/verify_archives.py names them; health remains retained as the older candidate's origin. Product, research, bulk mirrors, jope-evidence, remote_super/quant, Bullet and unrelated projects stay protected. PR44 external lane retained untouched.
+
+Before EACH removal: re-read synchronized logs; confirm absolute resolved path is unchanged, standalone .git/common directory and sole self worktree registration; refresh full file inventory and exact HEAD; recheck process handles and retained repository remotes; verify archive hashes and canonical rescue refs; record du allocated bytes and last-link allocated bytes. Use Python shutil.rmtree only for these independent clones (no linked/registered managed worktree is removed). Then assert absence, record actual measurements and update the ledger. Stop on any mismatch, new consumer, lock or new writer. No blanket inventory deletion. Current canonical head is 3cec1f34 with only Codex maintenance-review corrections and log changes.
+
+### 2026-09-21T21:07:48.579788+00:00 — source removal 0
+
+`/home/ubuntu/JopeDime-codex-stage`; HEAD None; complete refreshed inventory matches receipt. Archive hash and restored bundle verified. Standalone clone, no Git locks, active consumer or surviving local-remote dependency. Planned `shutil.rmtree('/home/ubuntu/JopeDime-codex-stage')`; allocated 9183232 bytes, last-link allocated 9183232 bytes. Preservation: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/sources/0/receipt.json`.
+
+Completed 2026-09-21T21:07:48.753035+00:00: `/home/ubuntu/JopeDime-codex-stage` absent; all custody retained; receipt `source-removal-receipts.json`. Next allowed action is the next explicit path after repeating gates.
+
+### 2026-09-21T21:07:50.513630+00:00 — source removal 1
+
+`/home/ubuntu/jope-rust-followup-20260920`; HEAD 168075574f1865be51ad5f241320bdf4793618d0; complete refreshed inventory matches receipt. Archive hash and restored bundle verified. Standalone clone, no Git locks, active consumer or surviving local-remote dependency. Planned `shutil.rmtree('/home/ubuntu/jope-rust-followup-20260920')`; allocated 74883072 bytes, last-link allocated 74883072 bytes. Preservation: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/sources/2/receipt.json`.
+
+Completed 2026-09-21T21:07:51.157214+00:00: `/home/ubuntu/jope-rust-followup-20260920` absent; all custody retained; receipt `source-removal-receipts.json`. Next allowed action is the next explicit path after repeating gates.
+
+### 2026-09-21T21:07:52.715704+00:00 — source removal 2
+
+`/home/ubuntu/jope-pr-resolution/next-phase-gates-20260921T141154Z/review-34`; HEAD 5113383e52472a59e704511cc3f8f6a3cae59bca; complete refreshed inventory matches receipt. Archive hash and restored bundle verified. Standalone clone, no Git locks, active consumer or surviving local-remote dependency. Planned `shutil.rmtree('/home/ubuntu/jope-pr-resolution/next-phase-gates-20260921T141154Z/review-34')`; allocated 72765440 bytes, last-link allocated 72765440 bytes. Preservation: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/sources/5/receipt.json`.
+
+Completed 2026-09-21T21:07:53.235418+00:00: `/home/ubuntu/jope-pr-resolution/next-phase-gates-20260921T141154Z/review-34` absent; all custody retained; receipt `source-removal-receipts.json`. Next allowed action is the next explicit path after repeating gates.
+
+### 2026-09-21T21:07:54.989529+00:00 — source removal 3
+
+`/home/ubuntu/jope-migration-evidence/learning-qualification-20260921/fault-review`; HEAD 5737aca7b51e28a3ef0004bbff0c6eca61409afb; complete refreshed inventory matches receipt. Archive hash and restored bundle verified. Standalone clone, no Git locks, active consumer or surviving local-remote dependency. Planned `shutil.rmtree('/home/ubuntu/jope-migration-evidence/learning-qualification-20260921/fault-review')`; allocated 73187328 bytes, last-link allocated 73187328 bytes. Preservation: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/sources/7/receipt.json`.
+
+Completed 2026-09-21T21:07:55.536593+00:00: `/home/ubuntu/jope-migration-evidence/learning-qualification-20260921/fault-review` absent; all custody retained; receipt `source-removal-receipts.json`. Next allowed action is the next explicit path after repeating gates.
+
+### 2026-09-21T21:07:57.397019+00:00 — source removal 4
+
+`/home/ubuntu/jope-migration-evidence/learning-qualification-20260921/review`; HEAD 5737aca7b51e28a3ef0004bbff0c6eca61409afb; complete refreshed inventory matches receipt. Archive hash and restored bundle verified. Standalone clone, no Git locks, active consumer or surviving local-remote dependency. Planned `shutil.rmtree('/home/ubuntu/jope-migration-evidence/learning-qualification-20260921/review')`; allocated 73166848 bytes, last-link allocated 73166848 bytes. Preservation: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/sources/6/receipt.json`.
+
+Completed 2026-09-21T21:07:57.940443+00:00: `/home/ubuntu/jope-migration-evidence/learning-qualification-20260921/review` absent; all custody retained; receipt `source-removal-receipts.json`. Next allowed action is the next explicit path after repeating gates.
+
+### 2026-09-21T21:07:59.780935+00:00 — source removal 5
+
+`/home/ubuntu/jope-migration-evidence/learning-qualification-20260921/ci-review`; HEAD 17079698aa4b224ee2c36a3fed3b93914c3a8547; complete refreshed inventory matches receipt. Archive hash and restored bundle verified. Standalone clone, no Git locks, active consumer or surviving local-remote dependency. Planned `shutil.rmtree('/home/ubuntu/jope-migration-evidence/learning-qualification-20260921/ci-review')`; allocated 72581120 bytes, last-link allocated 72581120 bytes. Preservation: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/sources/8/receipt.json`.
+
+Completed 2026-09-21T21:08:00.318911+00:00: `/home/ubuntu/jope-migration-evidence/learning-qualification-20260921/ci-review` absent; all custody retained; receipt `source-removal-receipts.json`. Next allowed action is the next explicit path after repeating gates.
+
+## 2026-09-21T21:12:20.497508+00:00 — Codex batch 8 loose artifact reclamation claim
+
+Six explicit independent source clones removed successfully: 375,767,040 allocated bytes, also 375,767,040 last-link allocated bytes; source-removal-receipts.json records each command, exact HEAD, state gate, archive and absence verification. Source custody checksums and canonical rescue refs remain intact. Three source candidates deliberately retained for owning-verifier/local-remote dependencies.
+
+Claim the **653** exact confirmed Jope paths in tmp-removal-candidates.json, processed in explicit groups of at most 20 with per-path operation receipts under tmp-removals/. This includes all 651 original Jope-named paths plus the two newly found Jope inventory files directly beneath /tmp/claude-1000. The live project compatibility symlink and 43 mixed/uncertain ownership files are retained; the latter are backed up but are not treated as exclusively Jope-owned. No Bullet, jeryu or ambiguous project directory is included.
+
+Preservation: full persistent bytes and metadata independently restored in tmp-artifacts/receipt.json; 159 identical custody files reused. The two additional files have exact metadata/hash receipts. Forty-one stale Unix socket/FIFO nodes were inventoried and recreated under the reusable verifier, matching kind/mode/owner/mtime/xattrs; no live kernel socket or open-file consumer exists, and no live IPC state is claimed recovered. See tmp-runtime-node-recovery.json. Loose bundle heads/trees received independent bare restoration and full fsck under tmp-bundle-verification/. Verification directory is now removed.
+
+Before every path: re-read synchronized logs; verify exact resolved location, complete current inventory against immutable snapshot, process/service/script/socket dependencies and the owning archive checksum; save planned exact unlink/rmtree command and measured allocated/last-link bytes. Then remove only that path and verify absence. Before/after each group, append receipt reference and totals to both logs. Archive mismatch, producer change or consumer stops that group and retains the original. No blanket cleanup command and no rebuildable/bulk-store expansion. Canonical branch remains PR49 with the recorded Codex maintenance/log corrections; all task changes stay on this PR.
+
+## 2026-09-21T21:21:42.155514+00:00 — report root update after verified removal
+
+Remove only the two deleted top-level source roots (JopeDime-codex-stage and jope-rust-followup-20260920) from the installed measurement config; their explicit removal receipts remain under custody. Preserve the prior config as report-roots-before-source-removals.json. The remaining 28 nonoverlapping roots and the two approved Cargo scan roots stay explicit. Write atomically, run the installed service after temporary-artifact reclamation, and retain fresh actual output as the post-cleanup baseline. No deletion behavior is introduced.
+
+## 2026-09-21T21:25:26.194233+00:00 — separate unrelated-root measurement rows
+
+For the required next-day attribution check, add four explicit read-only size measurements with group=unrelated: /home/ubuntu/remote_super, /home/ubuntu/jbaby, /home/ubuntu/jmcp-split and /home/ubuntu/gate-runner. These are the same four roots in the earlier baseline. They are measured by separate du invocations and remain outside Cargo candidate scanning and reclamation. The report now has 28 Jope roots plus four unrelated roots, with no overlap or symlink-root double count. Cargo scanning remains only canonical product and research. The baseline and tomorrow report use the same config.
+
+## 2026-09-21T21:27:15.801965+00:00 — current-contract consistency follow-up
+
+Codex retains the documentation claim. Correct remaining current prose in research AGENTS.md/MASTER_PLAN.md and the identical host rules ~/.codex/AGENTS.md and ~/.claude/CLAUDE.md: canonical product checkout stays on its claimed PR branch until reviewed merge; additional lanes are registered shared-root worktrees, not generic throwaway home clones; lane removal follows preservation and restoration. Historical log entries stay unchanged. Research remains a distinct forge repository; the product GitHub publication pointer does not change that identity. Earlier Claude integration ownership in the research board is superseded for PR49 by the explicit Codex-writes/Claude-reviews assignment. Preserve before-edit bytes in this batch.
+
+## 2026-09-21T21:35:31.240767+00:00 — research checkpoint readback
+
+Research current HEAD is 0879d7fcc794b940a17ec4d029d559607d4c3538, not the initial dac6d9f7 checkpoint. The intervening commit is the peer's already-recorded 20:27 sweep/handoff log append: only MASTER_CLEAN_UP.md changed. It is preserved, and both current logs match; AGENTS.md, CLAUDE.md and MASTER_PLAN.md have no intervening committed edits. The existing dirty sotarena submodule remains untouched. Codex continues the same claimed documentation batch on this history without rewriting it. Product HEAD is 629df79b37d800a176ff3d944f8873e03f12ad37; hosted changes/hygiene pass. Expanded retained-Jope script/service search found no dependency on the 653 candidate temporary paths, with no traversal failure; full home symlink traversal is still running, so temporary originals remain present.
+
+## 2026-09-21T21:39:42.060841+00:00 — Claude correction review and final maintenance evidence
+
+Read-only Claude correction review is preserved as claude-correction-review.json; it is not approval. It confirms earlier correctness fixes, requests committed/installed checksum parity and test-script fingerprints, and asks that a missing comparison root retain completed Cargo scan output. These are now implemented. Additional low-cost corrections record supplied/resolved custody and missing unit paths, document group labels/creation behavior, and cover custody refusal, missing measurement roots, timeout and exact refusal exit codes. Source suites pass 15 scanner scenarios and 14 wrapper cases. Bootstrap signal/kill limitations remain documented; no deletion path exists.
+
+Next commands: preserve installed core/config, stop report timer/service, install final source, run installed suites and syntax/ShellCheck/unit validation, start manual service after reclamation and capture the actual 32-root post-cleanup baseline, then restart timer. Custody is labeled separately from 27 other Jope roots; four unrelated roots remain separately labeled. Final review packet will include actual service receipts within permitted read roots and exact committed/installed/test hash parity. Research prevention documents are locally committed at 87ec95b8dd (no research publication); pre-existing sotarena changes remain untouched.
+
+## 2026-09-21T21:46:02.392684+00:00 — dependency scan implementation change
+
+The initial full-home Python symlink walk was still incomplete after about 26 minutes. Stopped only its exact verified scanner PID3528213, a read-only process owned by this batch; no candidate was removed. Replaced it with native find metadata traversal, without following symlinks and with the same .git-directory exclusion, then resolve every discovered symlink and check candidate ancestors. This changes traversal cost, not scope. The removal gate rejects traversal errors, nonzero find status, vanished links and dependency hits. Both retained-Jope script scans are complete with no hits or errors.
+
+A separate name refresh saw a transient systemd PrivateTmp directory belonging to the existing jope-xbabe1-circuit-breaker service; it disappeared as that service finished. Its system-managed runtime namespace is excluded from source-artifact reclamation and was not removed by Codex. The 653 claimed preserved roots remain unchanged on complete hash/metadata refresh.
+
+## 2026-09-21T21:52:15.375032+00:00 — temporary artifact dependency gate complete
+
+Native full-home traversal resolved 259,877 symlinks: zero dependencies on the 653 candidates, zero traversal errors, zero vanished links. Expanded script/service scans also have zero matches/errors. Complete refreshed current inventories still match the preserved originals. Resume exactly the 653-path claim in groups of at most 20, with fresh per-path process/socket checks, archive hashes, full current inventories and log rereads; stop if another writer changes the logs. The earlier runner attempt failed before any operation because the unfinished symlink scan had no receipt; its diagnostic is retained as remove-tmp-initial-gate-failure.txt.
+
+Current canonical head is 8efac7f4127d67e41250fe3f474311d2ebbedfd6, with only append-only log and the new concise cleanup receipt index uncommitted. Research prevention is locally committed at 87ec95b8dd6403a3b4e0e326d6d58ee1b8465d7b; research log and pre-existing sotarena dirty state retained. Installed final source/test parity is verified. The report-only timer is stopped pending the post-cleanup baseline; no automatic deletion exists.
+
+### 2026-09-21T21:52:15.633526+00:00 — Codex temporary artifact group 0
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/00/paths.json` (SHA256 945a7a4161a631ef7c2988c85ba9faf4920d1d059c4ae277e18202a6cfc700bb). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:52:28.919443+00:00: 20 paths absent; allocated bytes 573440, last-link allocated bytes 573440. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/00`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:52:28.974534+00:00 — Codex temporary artifact group 1
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/01/paths.json` (SHA256 0f68757468eab56c39c9c8b72eb0e189f0550b11f91c77ca2a90101564112955). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:52:42.334486+00:00: 20 paths absent; allocated bytes 778240, last-link allocated bytes 778240. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/01`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:52:42.384665+00:00 — Codex temporary artifact group 2
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/02/paths.json` (SHA256 9ac95519cecf401a48a9ced53f923da2a246b9c43646537e32350b2f18c09a41). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:52:57.012011+00:00: 20 paths absent; allocated bytes 819200, last-link allocated bytes 819200. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/02`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:52:57.379273+00:00 — Codex temporary artifact group 3
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/03/paths.json` (SHA256 3ea1bc6d106a1398129c6f508455be924e9e6c9302cc6782af446f9923b0bd54). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:53:14.195613+00:00: 20 paths absent; allocated bytes 778240, last-link allocated bytes 778240. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/03`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:53:14.246311+00:00 — Codex temporary artifact group 4
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/04/paths.json` (SHA256 e6c9cf6e44841f96fe03ede92df42bb4b07958b52716b42668a5b5e2c8ec6c0d). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:53:28.209298+00:00: 20 paths absent; allocated bytes 356352, last-link allocated bytes 356352. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/04`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:53:28.275780+00:00 — Codex temporary artifact group 5
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/05/paths.json` (SHA256 ba2d283115e66cf299fa70d62c6a7b4fe90614f2168dce47ad0137f57058ba16). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:53:44.961716+00:00: 20 paths absent; allocated bytes 475136, last-link allocated bytes 475136. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/05`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:53:45.017974+00:00 — Codex temporary artifact group 6
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/06/paths.json` (SHA256 3658e0e2c69edce490f8ae5cc7e2fa3c88617b6487b02aec94d2ffb80812b734). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:54:17.040715+00:00: 20 paths absent; allocated bytes 679936, last-link allocated bytes 679936. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/06`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:54:17.287399+00:00 — Codex temporary artifact group 7
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/07/paths.json` (SHA256 31cf2244a58ccc0c984c1382e56de7640826ead6f2609d3b52058e1c14715c45). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:54:32.617779+00:00: 20 paths absent; allocated bytes 5246976, last-link allocated bytes 5246976. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/07`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:54:32.680009+00:00 — Codex temporary artifact group 8
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/08/paths.json` (SHA256 857d9541392691aeaa54d7c97eaaa645d749cbe78d8061bc7c2197879a9d054e). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:54:52.795731+00:00: 20 paths absent; allocated bytes 831488, last-link allocated bytes 831488. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/08`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:54:52.858220+00:00 — Codex temporary artifact group 9
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/09/paths.json` (SHA256 f401b68f08daf894582a6b1255740dcbf49296efeab20a019be46663f3f14036). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:55:14.399125+00:00: 20 paths absent; allocated bytes 540672, last-link allocated bytes 540672. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/09`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:55:14.486245+00:00 — Codex temporary artifact group 10
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/10/paths.json` (SHA256 94a49ad800430601eae84b25048a0daa198ed65e47f5f7d7978f24d804995d45). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:55:29.408839+00:00: 20 paths absent; allocated bytes 991232, last-link allocated bytes 991232. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/10`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:55:29.501229+00:00 — Codex temporary artifact group 11
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/11/paths.json` (SHA256 c5926c16f5d95620e2f03e3ebe3364006f640aea45579ef7f41bff6e367c4679). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:55:47.864139+00:00: 20 paths absent; allocated bytes 1355776, last-link allocated bytes 1355776. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/11`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:55:47.924331+00:00 — Codex temporary artifact group 12
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/12/paths.json` (SHA256 83ecdae800b824391921931d49891766d490645d112df799993fd7e0b3dc7a3b). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:56:02.332181+00:00: 20 paths absent; allocated bytes 13762560, last-link allocated bytes 13762560. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/12`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:56:02.488687+00:00 — Codex temporary artifact group 13
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/13/paths.json` (SHA256 41f3fff66f74e931252dda2e2e095c096e6d4a66cdd858256cbefab28c1f6eef). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:56:20.466731+00:00: 20 paths absent; allocated bytes 163840, last-link allocated bytes 163840. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/13`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:56:20.519891+00:00 — Codex temporary artifact group 14
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/14/paths.json` (SHA256 2bb719b2ee9dbdc8f327c284e0bd6cde3d2b5226ddc7c0a7001ddeff940c1cac). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:56:34.522824+00:00: 20 paths absent; allocated bytes 163840, last-link allocated bytes 163840. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/14`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:56:34.574721+00:00 — Codex temporary artifact group 15
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/15/paths.json` (SHA256 a59f657ff05ef0c3333293f51fa5350add8b02fdff7cc788c69d40db3702bc34). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:56:51.163943+00:00: 20 paths absent; allocated bytes 163840, last-link allocated bytes 163840. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/15`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:56:51.219438+00:00 — Codex temporary artifact group 16
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/16/paths.json` (SHA256 3d883bec299425ed9ebda668e58dc84166964b09300ac0b07c3de4147dc8cf9f). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:57:06.406794+00:00: 20 paths absent; allocated bytes 163840, last-link allocated bytes 163840. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/16`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:57:06.459446+00:00 — Codex temporary artifact group 17
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/17/paths.json` (SHA256 42c057bdd14011b05421f1f29f6f3896255af04109f388f6e6cb43099edc5a6d). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:57:21.798567+00:00: 20 paths absent; allocated bytes 163840, last-link allocated bytes 163840. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/17`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:57:21.858930+00:00 — Codex temporary artifact group 18
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/18/paths.json` (SHA256 306e9cfdfe93bc20b76edfaaec246580b797d82ce2dfe5b36f6592da23e5d245). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:57:35.918134+00:00: 20 paths absent; allocated bytes 200704, last-link allocated bytes 200704. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/18`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:57:35.972520+00:00 — Codex temporary artifact group 19
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/19/paths.json` (SHA256 6e533e5f9184842c4bb727f6293c99715392814895a237c369112f43e3a3aa11). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:57:50.246018+00:00: 20 paths absent; allocated bytes 245760, last-link allocated bytes 245760. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/19`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:57:50.298816+00:00 — Codex temporary artifact group 20
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/20/paths.json` (SHA256 7665bf17b01c402529e91bdf57dca07860b663dc23be26e2452d1a94b6ea6291). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:58:03.844339+00:00: 20 paths absent; allocated bytes 245760, last-link allocated bytes 245760. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/20`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:58:03.894521+00:00 — Codex temporary artifact group 21
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/21/paths.json` (SHA256 e822c23c778a5312d9561a1c6f040b32a81e96d204ba0e60062da5b31eabf836). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:58:20.006831+00:00: 20 paths absent; allocated bytes 245760, last-link allocated bytes 245760. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/21`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:58:20.065704+00:00 — Codex temporary artifact group 22
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/22/paths.json` (SHA256 3174ff6aa4873a42d1c9a3bd252e2b764ffb2070ac664df9e25bebcb0a26ce16). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:58:35.146619+00:00: 20 paths absent; allocated bytes 245760, last-link allocated bytes 245760. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/22`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:58:35.285018+00:00 — Codex temporary artifact group 23
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/23/paths.json` (SHA256 f4edd18ac41877efe945a351c8f119484c7a541621faa0f2122c04b57ebcd4ab). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:58:49.411033+00:00: 20 paths absent; allocated bytes 245760, last-link allocated bytes 245760. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/23`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:58:49.460712+00:00 — Codex temporary artifact group 24
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/24/paths.json` (SHA256 1225116e5d9a5b49ba8bd0ecbddf2cb8b287e05fb54c068a4b245acdb99ab361). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:59:02.780338+00:00: 20 paths absent; allocated bytes 245760, last-link allocated bytes 245760. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/24`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:59:02.844128+00:00 — Codex temporary artifact group 25
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/25/paths.json` (SHA256 a1c46d8327c896981f0695b6507874037d11bca73f8de4a0bae5a2d5ee68e856). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:59:18.699092+00:00: 20 paths absent; allocated bytes 245760, last-link allocated bytes 245760. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/25`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:59:18.843394+00:00 — Codex temporary artifact group 26
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/26/paths.json` (SHA256 72343cb3ecdd48d603bddc2959c246e08f27386537f6c0a6d5dc0615380209a1). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:59:33.379509+00:00: 20 paths absent; allocated bytes 188416, last-link allocated bytes 188416. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/26`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:59:33.428260+00:00 — Codex temporary artifact group 27
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/27/paths.json` (SHA256 0459d152b37c4e7094eb2588fb681e0c9881a49790ff13d95f40713fcbfe6686). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T21:59:47.262021+00:00: 20 paths absent; allocated bytes 163840, last-link allocated bytes 163840. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/27`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T21:59:47.312315+00:00 — Codex temporary artifact group 28
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/28/paths.json` (SHA256 5f421741728309bd13e668b2a35d071bcd193e7479d8d41a036896017b8280c0). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T22:00:00.691961+00:00: 20 paths absent; allocated bytes 2473984, last-link allocated bytes 2473984. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/28`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T22:00:00.747990+00:00 — Codex temporary artifact group 29
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/29/paths.json` (SHA256 93781e0a18e16de467b6109b370690e9a30cc0574ed7585e78ff367e4be8420d). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T22:00:15.793791+00:00: 20 paths absent; allocated bytes 2641920, last-link allocated bytes 2641920. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/29`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T22:00:15.848061+00:00 — Codex temporary artifact group 30
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/30/paths.json` (SHA256 35b4eeb155358ea6aef539187b1a6d41504c69d075a11bc1d0fb221127021ade). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T22:00:30.361620+00:00: 20 paths absent; allocated bytes 1826816, last-link allocated bytes 1826816. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/30`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T22:00:30.417637+00:00 — Codex temporary artifact group 31
+
+Claim 20 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/31/paths.json` (SHA256 5b0e69303a0e273b8ea96505768bad9721d440472b84e2d561b7929bdc9e2218). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T22:00:43.379497+00:00: 20 paths absent; allocated bytes 7831552, last-link allocated bytes 7831552. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/31`. Custody retained. Next group requires the same gates.
+
+### 2026-09-21T22:00:43.432932+00:00 — Codex temporary artifact group 32
+
+Claim 13 exact paths in `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/32/paths.json` (SHA256 5b7895a9b9883ef0793292b56041f50a6ff435a6ef63788258c55ea41915d7b3). Each operation is recorded before execution in its numbered receipt. Full snapshot, archive hash, fresh process/socket checks and synchronized-log reread are required before each removal. Uncertainty stops this group. No other paths claimed.
+
+Completed 2026-09-21T22:00:51.758750+00:00: 13 paths absent; allocated bytes 13410304, last-link allocated bytes 13410304. Exact before/after operations and dependency receipts: `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/tmp-removals/32`. Custody retained. Next group requires the same gates.
+
+## 2026-09-21T22:01:54.194962+00:00 — current source/artifact reclamation complete; lifecycle pending
+
+All 33 explicit temporary-artifact groups completed: 653 paths removed after per-path gates, 58,466,304 allocated bytes and the same last-link allocated bytes. Together with six source clones (375,767,040 bytes), this batch removed **434,233,344 allocated/last-link bytes**. This is not net filesystem growth or a restatement of historical hundreds-of-GB savings. Exact paths, commands, hashes, dependency snapshots and verified absence are in source-removal-receipts.json and tmp-removals/*/*.json. Source candidates still retained: both recovery candidates for their owning verifier, plus health as the older candidate's origin.
+
+Final current ledger: 62 source/evidence paths (6 removed, 56 retained), 1,438 original custody entries retained, 697 temporary entries (653 removed, 44 retained: live compatibility symlink and 43 mixed-ownership files). Every current entry has a final disposition. Separate historical-source-dispositions.json records 168 previously absent sources with explicit retrospective preservation limits; no missing original is called landed merely because it is absent. Product tip mappings separately contain 76 already-landed ancestry mappings and 393 parked mappings, representing 177 distinct objects across 469 mappings. All four follow-up gaps remain protected.
+
+Temporary custody checksums passed after removal (5 archive/inventory files, 3 top-file receipts, 2 open-deleted-file receipts). One top-file manifest command was initially run from the wrong directory and reported missing relative paths; rerunning in its own directory passed all three. The failed-command diagnostic is retained; no archive mismatch occurred. Original/prior/source manifests had already passed after source removals. No generated verification repository remains; protected survivors and both shared-worktree symlinks remain present. Current repository HEAD/refs/status observations are refreshed in current-repository-readback.json.
+
+Manual execution of the final installed report has now started after the final removal, using 27 Jope roots, one custody root and four unrelated roots. Its actual successful receipt will define the fresh baseline. Timer remains stopped until validation succeeds, then is enabled for 04:00 UTC with Persistent=true. Next-day observation, complete independent exact-head Claude review and merge remain pending; operational source/artifact dispositions do not imply PR completion. The total lane limit is four including the canonical checkout when used as a writer, not the historical peer phrase "4+main".
+
+## 2026-09-21T22:07:46.179128+00:00 — installed baseline success and next-day gate
+
+Final installed service ran 22:01:03–22:04:51 UTC with Result=success and ExecMainStatus=0. Actual receipt: /home/ubuntu/jope-rescue-20260921/maintenance-reports/20260921T220103.631443Z/receipt.json; full 32-root config, script/unit hashes, invocation ID, two candidate outputs and per-root measurements retained. post-cleanup-baseline.json and baseline-report-manifest.json bind the source receipt and every report file. Baseline canonical allocation: 6,106,714,112 bytes; custody: 4,402,053,120 bytes. Filesystem: 6,542,821,421,056 used, 1,313,341,087,744 available, 84%. These are allocated measurements at recorded per-root times, not a deduplicated sum or net reclamation.
+
+Separately measured unrelated roots: remote_super 1,714,946,367,488 bytes; jbaby 454,112,268,288; jmcp-split 183,198,212,096; gate-runner 172,605,321,216. Tomorrow's report uses the same explicit config, with custody separated from the 27 other Jope roots. New or unexplained host growth is not automatically assigned to Jope.
+
+Live manager readback in final-timer-readback.txt/final-service-readback.txt confirms timer enabled+active, OnCalendar=*-*-* 04:00:00 UTC, Persistent=yes, next elapse 2026-09-22 04:00:00 UTC, service timeout 30min, and report-only ExecStart with no deletion flag. compare-next-day.py correctly rejects today's state with a nonzero "No actual following-day report yet" result. Scheduling does not satisfy that gate.
+
+All current reclamation is finished. Original 1,438-entry, prior 26-entry and source 161-entry manifests passed again after all removals; the additional 5/3/2-entry temporary custody manifests also pass. All 473 local rescue refs and the four-gap bundle match; canonical connectivity fsck passes. New immutable batch manifest is predeclared as SHA256SUMS.before-next-day, with mutable current-state handoff files explicitly excluded and stable ledger/readback snapshots included. Final operational checkpoint readback will be stored as pre-next-day-checkpoint.json. Both cleanup-log copies remain synchronized; the research sotarena dirty state stays untouched.
+
+Next allowed work is complete independent Claude review of the current operational diff/evidence, then the actual following-day observation, necessary growth explanation and final exact-head review/CI/merge. No additional cleanup lane or automatic deletion is authorized by this completion record. Final post-merge receipt remains predeclared at final-merge-readback.json in this batch; post its pointer in PR49 rather than dirtying main.
