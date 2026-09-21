@@ -13,6 +13,7 @@ SCRIPTS = Path(jope.research.__file__).parent
 import golden46_special_execution as special  # noqa: E402
 
 
+@pytest.mark.xbabe2  # reads /home/ubuntu/remote_super/quant campaign manifests (old state plane)
 def test_special_specs_match_frozen_cohort() -> None:
     assert set(special.SPECIAL_SPECS) == special.frozen_special_ids()
 
@@ -50,6 +51,7 @@ def test_chimera_conversion_is_bound_to_frozen_source_identity() -> None:
     )
 
 
+@pytest.mark.xbabe2  # reads /home/ubuntu/remote_super/quant campaign manifests (old state plane)
 def test_chimera_special_identity_records_source_and_converted_artifacts() -> None:
     identity = special.special_identity("chimera_regression")
     assert identity["parameters"]["source_checkpoint"] == special.CHIMERA_EXPECTED

@@ -427,6 +427,7 @@ def test_submit_adopts_a_job_that_became_active_during_refill(tmp_path, monkeypa
     assert "already active" in detail
 
 
+@pytest.mark.xbabe2  # needs the runtime-bundle tree on the old state plane (bundle_sources() is empty on a clean checkout)
 def test_runtime_bundle_contains_the_complete_prime_python_package():
     targets = {target for _, target in bundle_sources()}
     assert "jope-prime/src/jope/__init__.py" in targets
@@ -716,6 +717,13 @@ def test_systemd_services_are_independently_restartable():
     # directory as @JOPE_BUNDLE@ instead of a literal runtime-bundles path. The guarantee
     # this test exists to defend is unchanged: each service restarts on its own and executes
     # out of the versioned runtime bundle, never an ad-hoc path.
+    #
+    # This is the template-level half. The rendered half — that substitution leaves no
+    # @JOPE_* token, no /home/ literal, and every ExecStart under the rendered roots — is
+    # covered in Rust by crates/jope-campaigns/tests/systemd_unit_paths.rs
+    # (rendered_units_resolve_only_under_the_rendered_roots), which drives the same
+    # jope_paths::systemd::render_tree that render.sh shells out to. Duplicating it here
+    # would drag a cargo build into the Python lane for no extra coverage.
     root = Path(__file__).parents[2] / "deploy" / "systemd" / "selfplay"
     required = {
         "jope-selfplay-corpus-freezer.service.in",
@@ -733,43 +741,3 @@ def test_systemd_services_are_independently_restartable():
         assert "Restart=always" in text
         assert "ExecStart=@JOPE_BUNDLE@/" in text
 
-
-def test_rendered_systemd_services_execute_from_the_runtime_bundle(tmp_path):
-    # The template assertions above are static; render for real so the substitution itself is
-    # covered. This is the half that went missing when the units became templates.
-    repo = Path(__file__).parents[2]
-    bundle = tmp_path / "runtime-bundles" / "current" / "runtime" / "bin"
-    out = tmp_path / "out"
-    subprocess.run(
-        [
-            "bash",
-            str(repo / "deploy" / "systemd" / "render.sh"),
-            "--home",
-            str(tmp_path / "home"),
-            "--state",
-            str(tmp_path / "state"),
-            "--bundle",
-            str(bundle),
-            "--user",
-            "jope",
-            "--out",
-            str(out),
-        ],
-        check=True,
-        capture_output=True,
-    )
-    required = {
-        "jope-selfplay-corpus-freezer.service",
-        "jope-selfplay-ingestion.service",
-        "jope-selfplay-promotion.service",
-        "jope-selfplay-queue.service",
-        "jope-selfplay-supply.service",
-        "jope-selfplay-trainer-watchdog.service",
-    }
-    rendered = {unit.name: unit for unit in (out / "selfplay").glob("jope-selfplay-*.service")}
-    assert required <= rendered.keys()
-    for name in required:
-        text = rendered[name].read_text()
-        assert "Restart=always" in text
-        assert f"ExecStart={bundle}/" in text
-        assert "@JOPE_" not in text  # every placeholder substituted
