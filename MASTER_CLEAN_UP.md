@@ -265,16 +265,63 @@ not only in a bundle. The stash survived. Then fast-forwarded to `origin/main`.
    and `~/jain-split/jope-dime`. Before today, `crontab -l` had no cleanup entry and no timer swept
    anything.
 
+## PHASE 2b — `/tmp` SESSION CLONES COLLAPSED ✅
+
+`lane-inventory.sh` reported **93 of 107** repos in my own session as `HAS-WORK`. That tool fails
+safe: it cannot verify a commit through a local-path remote, so it counts every commit as unsaved.
+The audit, conversely, claimed all 117 were fully present on GitHub.
+
+Rather than trust either, I checked every unsaved SHA against the canonical clone's fetched origin
+refs. **195 SHAs across ~25 clones could not be shown present.** Many of those branches were
+squash-merged and deleted, so absence proves little — but proving it would have taken 195 API calls,
+and **bundling was cheaper than the argument**: 44 artifacts, 713 MB. Then the clones went.
+
+- 94 scratchpad directories removed.
+- 442 loose inventory listings removed (already inside `scratchpad-loose-files.tgz`).
+- My session's `/tmp` footprint: **293 GiB → 284 KB**.
+- `/tmp/claude-1000/-home-ubuntu-jain-split-jope-dime`: **5.3 MB total**, 0 git repos.
+
+## PHASE 1b — BUILD OUTPUT STRIPPED FROM THE EVIDENCE STORES ✅
+
+The `~/jope-*` data stores are kept (decision C2), but Cargo output *inside* them is still build
+output. Swept with the same evidence-preserving script: **+71 G**, with 5 non-Cargo directories
+rescued out of `jope-migration-evidence` first.
+
+`jope-migration-evidence` 33 G · `jope-recovery` 15 G · `jope-dime-recovery` 18 G ·
+`jope-prime` 1.7 G · `jope-dime-mirror` 1.3 G · `jope-scratch` 486 M ·
+`jope-dime-cache-evidence` 398 M · `flywheel` 309 M · `jope-slime` 230 M.
+
+**Not one receipt was touched** — only directories carrying `.rustc_info.json` or
+`debug|release/.fingerprint`.
+
 ## Result
 
 | | Before | After |
 | --- | --- | --- |
-| **Free disk** | 697 G (91 %) | **1.2 T (85 %)** |
-| `/tmp/claude-1000` | 442 GiB | 187 G |
-| `~/JopeDime` | 104 G | 2.1 G |
+| **Free disk** | **697 G (91 %)** | **1.3 T (84 %)** — **+603 G** |
+| `/tmp/claude-1000`, my session | 293 GiB | **284 KB** |
+| `/tmp/claude-1000`, total | 442 GiB | 163 G (all of it the live `bullet` session) |
+| `~/JopeDime` | 104 G, stale branch, 856 dirty | **2.1 G, `main` @ `6a85fa3`, clean** |
 | `~/jain-split/jope-dime` | 246 G | 129 G |
-| Worktrees (all repos) | 14 | **3 — one each** |
-| Custody preserved | — | **1.1 G, 1,378 files, sha256-manifested** |
+| Worktrees across all repos | 14 | **3 — exactly one each** |
+| Git repos in `/tmp` (jope-dime) | 180 | **0** |
+| Custody preserved | — | **1.9 G, 1,424 files, `sha256sum -c` passes** |
+
+Custody manifest sha256: `f903b6a00d2ee685…`
+
+### Repo health after the work
+
+`~/jain-split/jope-dime`: `git fsck --connectivity-only` reports **0 errors**; **2 stashes** and all
+**39 unpushed commits** intact; 1 worktree.
+`~/JopeDime`: on `main`, clean, with the rescued branch still reachable at `dc06289`.
+
+### Still open
+
+- **The `bullet` session's 163 G** — a live agent was writing in it. Needs the operator's consent.
+- **`~/jope-node-mirror` → 193 G** (root-owned symlink) — the largest single reclaim candidate left
+  on the box, and it has never had an owner decision.
+- `~/jope` (64 G) has **no `.git`** — nothing in it is recoverable from any remote. Left alone.
+- `jope-preservation` 234 G, `jope-flywheel` 152 G, `preserved-archives` 133 G — kept per C2.
 
 ---
 
