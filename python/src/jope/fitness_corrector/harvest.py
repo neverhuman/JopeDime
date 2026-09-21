@@ -13,6 +13,7 @@ Harvest sources:
             then exact compare on parsed lines).
   negatives: labels with negative=1 from the DB snapshot (off-band probes).
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -34,6 +35,7 @@ NEWMATH_SCHEMA = "PrimeNewmathGpReport.v1"
 # ---------------------------------------------------------------------------
 # freeze
 # ---------------------------------------------------------------------------
+
 
 def _inventory_hash(paths: list[Path]) -> str:
     h = hashlib.sha256()
@@ -90,9 +92,12 @@ def snapshot_db(cache_dir: Path) -> dict:
     dst = sqlite3.connect(str(dst_path))
     src.backup(dst)
     dst.commit()
-    meta = dict(dst.execute(
-        "SELECT key, value FROM metadata WHERE key IN "
-        "('completed_gp_candidates','completed_algorithms_searched')"))
+    meta = dict(
+        dst.execute(
+            "SELECT key, value FROM metadata WHERE key IN "
+            "('completed_gp_candidates','completed_algorithms_searched')"
+        )
+    )
     n_labels = dst.execute("SELECT COUNT(*) FROM labels").fetchone()[0]
     dst.close()
     src.close()
@@ -102,6 +107,7 @@ def snapshot_db(cache_dir: Path) -> dict:
 # ---------------------------------------------------------------------------
 # featmath harvest
 # ---------------------------------------------------------------------------
+
 
 def harvest_featmath(cache_dir: Path, out_path: Path) -> dict:
     rows = 0
@@ -149,13 +155,13 @@ def harvest_featmath(cache_dir: Path, out_path: Path) -> dict:
                 }
                 out.write(json.dumps(row, sort_keys=True) + "\n")
                 rows += 1
-    return {"reports": n_reports, "pairs": rows,
-            "calib_reports": n_calib_reports, "calib_rows": n_calib_rows}
+    return {"reports": n_reports, "pairs": rows, "calib_reports": n_calib_reports, "calib_rows": n_calib_rows}
 
 
 # ---------------------------------------------------------------------------
 # newmath harvest
 # ---------------------------------------------------------------------------
+
 
 def _grep_candidates(task_dir: Path, genomes: list[str]) -> dict[str, list[dict]]:
     """Exact-match candidate rows per genome via grep -F prefilter."""
@@ -169,9 +175,10 @@ def _grep_candidates(task_dir: Path, genomes: list[str]) -> dict[str, list[dict]
     hits: dict[str, list[dict]] = {g: [] for g in genomes}
     if cand_files:
         proc = subprocess.run(
-            ["grep", "-hF", "-f", str(pat_file),
-             *[str(f) for f in cand_files]],
-            capture_output=True, text=True)
+            ["grep", "-hF", "-f", str(pat_file), *[str(f) for f in cand_files]],
+            capture_output=True,
+            text=True,
+        )
         for line in proc.stdout.splitlines():
             try:
                 c = json.loads(line)
@@ -212,15 +219,19 @@ def _population_sample(task_dir: Path, stride: int = 25) -> dict:
                 if isinstance(v, (int, float)):
                     complexities.append(float(v))
     preds.sort()
-    return {"pred_sorted": preds, "n_lines": n_lines, "max_generation": max_gen,
-            "mean_complexity": (sum(complexities) / len(complexities))
-            if complexities else None}
+    return {
+        "pred_sorted": preds,
+        "n_lines": n_lines,
+        "max_generation": max_gen,
+        "mean_complexity": (sum(complexities) / len(complexities)) if complexities else None,
+    }
 
 
 def _percentile_of(sorted_vals: list[float], x: float) -> float | None:
     if not sorted_vals or x is None or not math.isfinite(x):
         return None
     import bisect
+
     lo = bisect.bisect_left(sorted_vals, x)
     hi = bisect.bisect_right(sorted_vals, x)
     return (lo + hi) / 2.0 / len(sorted_vals)
@@ -247,45 +258,49 @@ def _harvest_one_newmath(task_dir: Path) -> tuple[list[dict], dict]:
         matched += 1
         cands.sort(key=lambda c: (c.get("generation", 0), c.get("candidate_id", "")))
         first = cands[0]
-        preds = [c.get("predicted_score") for c in cands
-                 if isinstance(c.get("predicted_score"), (int, float))]
-        acqs = [c.get("acquisition_score") for c in cands
-                if isinstance(c.get("acquisition_score"), (int, float))]
-        rows.append({
-            "engine": "newmath",
-            "dataset": dataset,
-            "task_key": task_dir.name,
-            "gp_task_id": prov.get("gp_task_id") or task_id,
-            "genome": g,
-            "predicted_score": first.get("predicted_score"),
-            "predicted_score_range": (max(preds) - min(preds)) if preds else None,
-            "acquisition_score": first.get("acquisition_score"),
-            "acquisition_score_max": max(acqs) if acqs else None,
-            "mutation": first.get("mutation"),
-            "origin": first.get("origin"),
-            "complexity": first.get("complexity"),
-            "novelty_hash": first.get("novelty_hash"),
-            "first_generation": first.get("generation"),
-            "last_generation": cands[-1].get("generation"),
-            "occurrences": len(cands),
-            "task_max_generation": pop["max_generation"],
-            "task_n_lines": pop["n_lines"],
-            "task_mean_complexity": pop["mean_complexity"],
-            "within_task_pred_percentile": _percentile_of(
-                pop["pred_sorted"], first.get("predicted_score")),
-            "honest_robust_score": lab.get("robust_score"),
-            "honest_oof_r2": prov.get("oof_r2"),
-            "honest_fold_r2": prov.get("fold_r2") or [],
-        })
-    audit = {"task": task_dir.name, "dataset": dataset,
-             "labels": len(labels), "matched": matched}
+        preds = [
+            c.get("predicted_score") for c in cands if isinstance(c.get("predicted_score"), (int, float))
+        ]
+        acqs = [
+            c.get("acquisition_score") for c in cands if isinstance(c.get("acquisition_score"), (int, float))
+        ]
+        rows.append(
+            {
+                "engine": "newmath",
+                "dataset": dataset,
+                "task_key": task_dir.name,
+                "gp_task_id": prov.get("gp_task_id") or task_id,
+                "genome": g,
+                "predicted_score": first.get("predicted_score"),
+                "predicted_score_range": (max(preds) - min(preds)) if preds else None,
+                "acquisition_score": first.get("acquisition_score"),
+                "acquisition_score_max": max(acqs) if acqs else None,
+                "mutation": first.get("mutation"),
+                "origin": first.get("origin"),
+                "complexity": first.get("complexity"),
+                "novelty_hash": first.get("novelty_hash"),
+                "first_generation": first.get("generation"),
+                "last_generation": cands[-1].get("generation"),
+                "occurrences": len(cands),
+                "task_max_generation": pop["max_generation"],
+                "task_n_lines": pop["n_lines"],
+                "task_mean_complexity": pop["mean_complexity"],
+                "within_task_pred_percentile": _percentile_of(
+                    pop["pred_sorted"], first.get("predicted_score")
+                ),
+                "honest_robust_score": lab.get("robust_score"),
+                "honest_oof_r2": prov.get("oof_r2"),
+                "honest_fold_r2": prov.get("fold_r2") or [],
+            }
+        )
+    audit = {"task": task_dir.name, "dataset": dataset, "labels": len(labels), "matched": matched}
     return rows, audit
 
 
-def harvest_newmath(cache_dir: Path, out_path: Path,
-                    audit_path: Path, workers: int = 8) -> dict:
-    dirs = sorted(d for d in (cache_dir / "scratch_freeze").glob("task_*")
-                  if (d / "gp_evaluations.json").is_file())
+def harvest_newmath(cache_dir: Path, out_path: Path, audit_path: Path, workers: int = 8) -> dict:
+    dirs = sorted(
+        d for d in (cache_dir / "scratch_freeze").glob("task_*") if (d / "gp_evaluations.json").is_file()
+    )
     all_rows: list[dict] = []
     audits: list[dict] = []
     with ThreadPoolExecutor(max_workers=workers) as ex:
@@ -303,28 +318,37 @@ def harvest_newmath(cache_dir: Path, out_path: Path,
     n_labels = sum(a["labels"] for a in audits)
     n_matched = sum(a["matched"] for a in audits)
     low = [a for a in audits if a["labels"] and a["matched"] < 0.8 * a["labels"]]
-    return {"dirs": len(dirs), "labels_seen": n_labels, "pairs": n_matched,
-            "match_rate": round(n_matched / n_labels, 4) if n_labels else None,
-            "low_match_dirs": len(low)}
+    return {
+        "dirs": len(dirs),
+        "labels_seen": n_labels,
+        "pairs": n_matched,
+        "match_rate": round(n_matched / n_labels, 4) if n_labels else None,
+        "low_match_dirs": len(low),
+    }
 
 
 # ---------------------------------------------------------------------------
 # negatives
 # ---------------------------------------------------------------------------
 
+
 def harvest_negatives(cache_dir: Path, out_path: Path) -> dict:
-    db = sqlite3.connect(f"file:{cache_dir / 'league_snapshot.db'}?mode=ro",
-                         uri=True)
+    db = sqlite3.connect(f"file:{cache_dir / 'league_snapshot.db'}?mode=ro", uri=True)
     cur = db.execute(
         "SELECT dataset, engine, semantic_genome, "
         "json_extract(label_json,'$.evidence_tier') "
-        "FROM labels WHERE negative=1")
+        "FROM labels WHERE negative=1"
+    )
     n = 0
     with out_path.open("w") as out:
         for dataset, engine, genome, tier in cur:
-            out.write(json.dumps({
-                "dataset": dataset, "engine": engine, "genome": genome,
-                "evidence_tier": tier}, sort_keys=True) + "\n")
+            out.write(
+                json.dumps(
+                    {"dataset": dataset, "engine": engine, "genome": genome, "evidence_tier": tier},
+                    sort_keys=True,
+                )
+                + "\n"
+            )
             n += 1
     db.close()
     return {"rows": n}
@@ -337,11 +361,9 @@ def run_all(cache_dir: Path) -> dict:
         "freeze_reports": freeze_reports(cache_dir),
         "snapshot_db": snapshot_db(cache_dir),
     }
-    audit["featmath"] = harvest_featmath(
-        cache_dir, cache_dir / "featmath_pairs.jsonl")
+    audit["featmath"] = harvest_featmath(cache_dir, cache_dir / "featmath_pairs.jsonl")
     audit["newmath"] = harvest_newmath(
-        cache_dir, cache_dir / "newmath_pairs.jsonl",
-        cache_dir / "newmath_match_audit.jsonl")
-    audit["negatives"] = harvest_negatives(
-        cache_dir, cache_dir / "negatives.jsonl")
+        cache_dir, cache_dir / "newmath_pairs.jsonl", cache_dir / "newmath_match_audit.jsonl"
+    )
+    audit["negatives"] = harvest_negatives(cache_dir, cache_dir / "negatives.jsonl")
     return audit

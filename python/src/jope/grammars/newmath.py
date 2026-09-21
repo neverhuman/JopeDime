@@ -25,7 +25,9 @@ def _t(name: str, families: tuple[str, ...], params: tuple[ParamSpec, ...] = (),
     return OpSpec(name=name, role="transform", params=params, families=families, allow_append=False, **kw)
 
 
-def _h(name: str, families: tuple[str, ...], cost_class: str, params: tuple[ParamSpec, ...] = (), **kw) -> OpSpec:
+def _h(
+    name: str, families: tuple[str, ...], cost_class: str, params: tuple[ParamSpec, ...] = (), **kw
+) -> OpSpec:
     return OpSpec(name=name, role="head", params=params, families=families, cost_class=cost_class, **kw)
 
 
@@ -87,7 +89,10 @@ _TRANSFORMS = [
     _t(
         "wavelet",
         ("wavelet", "spectral"),
-        (ParamSpec("family", "str", ("dyadic", "morlet", "mexican")), ParamSpec("scale", "int", (1, 2, 3, 4))),
+        (
+            ParamSpec("family", "str", ("dyadic", "morlet", "mexican")),
+            ParamSpec("scale", "int", (1, 2, 3, 4)),
+        ),
     ),
     _t(
         "iterate",

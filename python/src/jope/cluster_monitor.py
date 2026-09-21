@@ -82,10 +82,10 @@ def _parse(host: str, text: str) -> HostState:
 # primary v33 loop.
 #
 # Policy constants (ratio = load1 / cores):
-FACTORY_MAX = 1.00       # opportunistic GP factory (nice -5): shed workers past 1.0x, skip past 1.5x
-EVAL_REMOTE_MAX = 1.40   # remote eval hosts: attenuate only when clearly oversaturated by foreign load
-EVAL_WORKER_FLOOR = 0.25 # ...but never below 25% of requested workers
-KEEPALIVE_MAX = 1.30     # skip an OPTIONAL factory relaunch when the local box is already hot
+FACTORY_MAX = 1.00  # opportunistic GP factory (nice -5): shed workers past 1.0x, skip past 1.5x
+EVAL_REMOTE_MAX = 1.40  # remote eval hosts: attenuate only when clearly oversaturated by foreign load
+EVAL_WORKER_FLOOR = 0.25  # ...but never below 25% of requested workers
+KEEPALIVE_MAX = 1.30  # skip an OPTIONAL factory relaunch when the local box is already hot
 _LOCAL = ("local", "localhost", "")
 _LOAD_CMD = "cat /proc/loadavg | cut -d' ' -f1; nproc"
 _LOAD_TTL = 30.0
@@ -213,11 +213,23 @@ class ClusterMonitor:
                 cmd = ["bash", "-lc", _REMOTE_CMD]
             else:
                 cmd = [
-                    "ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=4",
-                    "-o", "ControlMaster=auto", "-o", f"ControlPath={ssh_control_path(host)}",
-                    "-o", "ControlPersist=300", host, _REMOTE_CMD,
+                    "ssh",
+                    "-o",
+                    "BatchMode=yes",
+                    "-o",
+                    "ConnectTimeout=4",
+                    "-o",
+                    "ControlMaster=auto",
+                    "-o",
+                    f"ControlPath={ssh_control_path(host)}",
+                    "-o",
+                    "ControlPersist=300",
+                    host,
+                    _REMOTE_CMD,
                 ]
-            proc = subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=6.0)
+            proc = subprocess.run(
+                cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=6.0
+            )
             if proc.returncode == 0 and proc.stdout.strip():
                 return _parse(host, proc.stdout)
         except (OSError, subprocess.TimeoutExpired):

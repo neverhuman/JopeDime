@@ -1,4 +1,5 @@
 """Isolated four-task campaign identities. Never merges into regression recovery."""
+
 from __future__ import annotations
 
 import hashlib
@@ -60,8 +61,13 @@ def isolate(task, inventory_sha, parent_campaign=None, parent_checkpoint_sha=Non
 
 def inventory(dataset_dirs, task):
     rows = [{"dataset": name, "task": task} for name in dataset_dirs]
-    return dict(schema="parallel.task_inventory.v1", task=task, n=len(rows),
-                sha256=digest({"task": task, "datasets": sorted(dataset_dirs)}), rows=rows)
+    return dict(
+        schema="parallel.task_inventory.v1",
+        task=task,
+        n=len(rows),
+        sha256=digest({"task": task, "datasets": sorted(dataset_dirs)}),
+        rows=rows,
+    )
 
 
 def frozen_panel(campaign, families, cuts_per_family=2):
@@ -83,6 +89,11 @@ def frozen_panel(campaign, families, cuts_per_family=2):
 def specialist_bind(campaign, checkpoint_sha):
     if campaign["task"] != "regression" and checkpoint_sha == RECOVERY_SHA:
         raise ValueError("specialist cannot bind the regression recovery checkpoint")
-    return dict(schema="parallel.specialist_bind.v1", task=campaign["task"],
-                campaign_id=campaign["campaign_id"], checkpoint_sha256=checkpoint_sha,
-                vocabulary_shared=True, routing_ce=False)
+    return dict(
+        schema="parallel.specialist_bind.v1",
+        task=campaign["task"],
+        campaign_id=campaign["campaign_id"],
+        checkpoint_sha256=checkpoint_sha,
+        vocabulary_shared=True,
+        routing_ce=False,
+    )

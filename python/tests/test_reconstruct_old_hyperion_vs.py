@@ -43,9 +43,7 @@ def test_all100_collapse_matches_two_stage_historical_mean() -> None:
 
 
 def test_matrix_publish_round_trips_and_refuses_overwrite(tmp_path: Path) -> None:
-    matrix = np.array(
-        [[-0.12345679, 0.0], [np.float32(1.0 / 3.0), 12.5]], dtype=np.float32
-    )
+    matrix = np.array([[-0.12345679, 0.0], [np.float32(1.0 / 3.0), 12.5]], dtype=np.float32)
     path = tmp_path / "train3.vs.orig"
     receipt = MODULE.write_matrix_exclusive(path, matrix)
     replay = np.loadtxt(path, delimiter=",", dtype=np.float32, ndmin=2)

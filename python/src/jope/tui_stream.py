@@ -297,7 +297,7 @@ class StreamView:
         started = state.get("phase_started")
         if isinstance(started, (int, float)):
             age = int(now - started)
-            line.append(f"· {age//60}m{age%60:02d}s ", style="dim")
+            line.append(f"· {age // 60}m{age % 60:02d}s ", style="dim")
         try:
             # liveness = freshest of state / per-batch train progress / miner progress
             candidates = [state_p, self.run_dir / "train_progress.json", self.run_dir / "miner_progress.json"]
@@ -322,43 +322,48 @@ class StreamView:
                 rate = done / (now - started)
                 if rate > 0 and done < total:
                     eta = int((total - done) / rate)
-                    body.append(f"  ETA {eta//60}m{eta%60:02d}s", style="bold white")
+                    body.append(f"  ETA {eta // 60}m{eta % 60:02d}s", style="bold white")
             body.append("\n")
         # generation-level ETA: remaining phases estimated from the last completed gen
         if gens and isinstance(started, (int, float)):
             durs = gens[-1]
             phase_costs = {
-                "TRAIN": durs.get("train_sec"), "PROPOSE": durs.get("propose_sec"),
+                "TRAIN": durs.get("train_sec"),
+                "PROPOSE": durs.get("propose_sec"),
                 "EVAL": durs.get("eval_sec"),
                 "BENCH": max(
                     (durs.get("total_sec") or 0)
                     - sum(durs.get(k) or 0 for k in ("train_sec", "propose_sec", "eval_sec")),
                     0,
                 ),
-                "GATE": 5.0, "DONE": 0.0,
+                "GATE": 5.0,
+                "DONE": 0.0,
             }
             order = ["TRAIN", "PROPOSE", "EVAL", "GATE", "BENCH", "DONE"]
             if phase in order and all(isinstance(v, (int, float)) for v in phase_costs.values()):
                 idx = order.index(phase)
                 cur_cost = float(phase_costs.get(phase) or 0.0)
                 cur_left = max(cur_cost - (now - started), 0.0)
-                rest = sum(float(phase_costs[p] or 0.0) for p in order[idx + 1:])
+                rest = sum(float(phase_costs[p] or 0.0) for p in order[idx + 1 :])
                 gen_eta = int(cur_left + rest)
-                body.append(f" gen ETA ~{gen_eta//60}m{gen_eta%60:02d}s", style="bold magenta")
-                body.append(f"  (last gen {int((durs.get('total_sec') or 0)//60)}m)\n", style="dim")
+                body.append(f" gen ETA ~{gen_eta // 60}m{gen_eta % 60:02d}s", style="bold magenta")
+                body.append(f"  (last gen {int((durs.get('total_sec') or 0) // 60)}m)\n", style="dim")
         # concurrent champion miner: live raced/total + champions found this slice
         miner_p = self.run_dir / "miner_progress.json"
         if state.get("miner_active") and miner_p.exists():
             try:
                 mp_ = json.loads(miner_p.read_text(encoding="utf-8"))
                 body.append(" ⛏ ", style="yellow")
-                body.append(_bar(100.0 * mp_.get("raced", 0) / max(mp_.get("total", 1), 1), 100.0, 12, "yellow"))
-                body.append(f" {mp_.get('raced',0)}/{mp_.get('total','?')} mutants", style="dim")
-                body.append(f"  +{mp_.get('champions',0)} champions\n", style="bold yellow")
+                body.append(
+                    _bar(100.0 * mp_.get("raced", 0) / max(mp_.get("total", 1), 1), 100.0, 12, "yellow")
+                )
+                body.append(f" {mp_.get('raced', 0)}/{mp_.get('total', '?')} mutants", style="dim")
+                body.append(f"  +{mp_.get('champions', 0)} champions\n", style="bold yellow")
             except (OSError, json.JSONDecodeError, ZeroDivisionError):
                 pass
         if gens:
             last = gens[-1]
+
             # deployed capability = cheap-probe selector (elo_probe); elo_top1 is the
             # reward-pick baseline, kept as a diagnostic. Fall back for pre-cutover rows.
             def _dep(g):
@@ -367,8 +372,11 @@ class StreamView:
                     if isinstance(v, (int, float)):
                         return v
                 return None
+
             elos = [_dep(g) for g in gens if isinstance(_dep(g), (int, float))]
-            beats = [g["beat_rate_vs_prev"] for g in gens if isinstance(g.get("beat_rate_vs_prev"), (int, float))]
+            beats = [
+                g["beat_rate_vs_prev"] for g in gens if isinstance(g.get("beat_rate_vs_prev"), (int, float))
+            ]
             if elos:
                 body.append(" Elo↥ ", style="dim")
                 body.append(_sparkline(elos[-32:]), style="magenta")
@@ -397,7 +405,9 @@ class StreamView:
                 verdict = last.get("shipped")
                 body.append(f" {beats[-1]:.2f} ", style="cyan")
                 if verdict is not None:
-                    body.append("✓shipped" if verdict else "✗held", style="bold green" if verdict else "bold red")
+                    body.append(
+                        "✓shipped" if verdict else "✗held", style="bold green" if verdict else "bold red"
+                    )
                 body.append("\n")
             nb = last.get("new_bests")
             champs = last.get("miner_new_champions")
@@ -411,7 +421,9 @@ class StreamView:
             body.append(info)
         else:
             body.append(" first generation running…", style="dim")
-        return Panel(body, title="self-play · beat all former selves", border_style="magenta", box=box.ROUNDED)
+        return Panel(
+            body, title="self-play · beat all former selves", border_style="magenta", box=box.ROUNDED
+        )
 
     def _read_progress(self) -> dict | None:
         """Read the atomic per-batch progress file (sibling of the metrics jsonl)."""
@@ -431,7 +443,9 @@ class StreamView:
         if not rows and not prog:
             return Panel(
                 Text("no active training run\n(point --train-metrics at a metrics.jsonl)", style="dim"),
-                title="training loss", border_style="cyan", box=box.ROUNDED,
+                title="training loss",
+                border_style="cyan",
+                box=box.ROUNDED,
             )
         losses = [float(r["loss"]) for r in rows if isinstance(r.get("loss"), (int, float))]
         last = rows[-1] if rows else {}
@@ -449,16 +463,26 @@ class StreamView:
         if prog and not prog.get("epoch_done"):
             body.append(" ")
             body.append(_bar(float(prog.get("pct", 0.0)), 100.0, 18, "bright_green"))
-            body.append(f"  batch {prog.get('batch','?')}/{prog.get('total_batches','?')}", style="white")
+            body.append(f"  batch {prog.get('batch', '?')}/{prog.get('total_batches', '?')}", style="white")
             rl = prog.get("running_loss")
             if isinstance(rl, (int, float)):
                 body.append(f"  running {rl:.3f}", style="cyan")
             body.append("\n")
         # train vs val loss + overfit flag (red when val exceeds train and the gap is growing).
         # Use the latest completed-epoch metrics for val (progress mid-epoch may not have it yet).
-        train_now = (prog or {}).get("running_loss") if (prog and not prog.get("epoch_done")) else last.get("train_loss")
-        vl = (prog or {}).get("val_loss") if (prog or {}).get("val_loss") is not None else last.get("val_loss")
-        gap = (prog or {}).get("overfit_gap") if (prog or {}).get("overfit_gap") is not None else last.get("overfit_gap")
+        train_now = (
+            (prog or {}).get("running_loss")
+            if (prog and not prog.get("epoch_done"))
+            else last.get("train_loss")
+        )
+        vl = (
+            (prog or {}).get("val_loss") if (prog or {}).get("val_loss") is not None else last.get("val_loss")
+        )
+        gap = (
+            (prog or {}).get("overfit_gap")
+            if (prog or {}).get("overfit_gap") is not None
+            else last.get("overfit_gap")
+        )
         if isinstance(vl, (int, float)):
             gaps = [float(r["overfit_gap"]) for r in rows if isinstance(r.get("overfit_gap"), (int, float))]
             growing = len(gaps) >= 2 and gaps[-1] > gaps[-2]
@@ -491,10 +515,16 @@ class StreamView:
         body.append(line)
         body.append("\n")
         # Elo trajectory sparkline across the run (relative-performance headline)
-        pws = [float(r["val_pairwise_win_accuracy"]) for r in rows
-               if isinstance(r.get("val_pairwise_win_accuracy"), (int, float))]
+        pws = [
+            float(r["val_pairwise_win_accuracy"])
+            for r in rows
+            if isinstance(r.get("val_pairwise_win_accuracy"), (int, float))
+        ]
         if len(pws) >= 2:
-            elos = [1500 + 400 * math.log10(min(max(p, 1e-4), 1 - 1e-4) / (1 - min(max(p, 1e-4), 1 - 1e-4))) for p in pws]
+            elos = [
+                1500 + 400 * math.log10(min(max(p, 1e-4), 1 - 1e-4) / (1 - min(max(p, 1e-4), 1 - 1e-4)))
+                for p in pws
+            ]
             body.append("loss ", style="dim")
             body.append(_sparkline(losses[-64:]), style="cyan")
             body.append(f" {losses[-1]:.3f}\n", style="dim")
@@ -504,11 +534,21 @@ class StreamView:
         elif len(losses) >= 2:
             body.append(_sparkline(losses[-64:]), style="cyan")
             body.append(f"  min {min(losses):.4f}", style="dim")
-        return Panel(body, title=f"training loss · {self.train_metrics_path.name}", border_style="cyan", box=box.ROUNDED)
+        return Panel(
+            body,
+            title=f"training loss · {self.train_metrics_path.name}",
+            border_style="cyan",
+            box=box.ROUNDED,
+        )
 
     def _cluster_panel(self) -> Panel:
         if self.cluster is None:
-            return Panel(Text("cluster monitor off", style="dim"), title="cluster", border_style="blue", box=box.ROUNDED)
+            return Panel(
+                Text("cluster monitor off", style="dim"),
+                title="cluster",
+                border_style="blue",
+                box=box.ROUNDED,
+            )
         table = Table(box=box.SIMPLE, expand=True, pad_edge=False, show_edge=False)
         table.add_column("host", width=7)
         table.add_column("GPU", ratio=1)
@@ -524,16 +564,24 @@ class StreamView:
             util = g.get("util") or 0.0
             gpu_bar = _bar(util, 100.0, 12, "green" if util < 70 else "yellow" if util < 90 else "red")
             mem_u, mem_t = g.get("mem_used") or 0.0, g.get("mem_total") or 1.0
-            mem = f"{mem_u/1024:.1f}/{mem_t/1024:.0f}G"
+            mem = f"{mem_u / 1024:.1f}/{mem_t / 1024:.0f}G"
             temp = f"{int(g.get('temp') or 0)}"
             load = st.load1 or 0.0
             cores = st.cores or 1
             cpu_pct = min(100.0, 100.0 * load / cores)
-            cpu_bar = _bar(cpu_pct, 100.0, 12, "green" if cpu_pct < 70 else "yellow" if cpu_pct < 90 else "red")
+            cpu_bar = _bar(
+                cpu_pct, 100.0, 12, "green" if cpu_pct < 70 else "yellow" if cpu_pct < 90 else "red"
+            )
             lanes = str(st.lanes if st.lanes is not None else "?")
             host_style = "bold cyan" if st.host == "local" else "bold"
-            table.add_row(Text(st.host[:7], style=host_style), gpu_bar, mem, temp,
-                          Text.assemble(cpu_bar, f" {load:.0f}"), lanes)
+            table.add_row(
+                Text(st.host[:7], style=host_style),
+                gpu_bar,
+                mem,
+                temp,
+                Text.assemble(cpu_bar, f" {load:.0f}"),
+                lanes,
+            )
         return Panel(table, title="cluster · GPU / cores / eval lanes", border_style="blue", box=box.ROUNDED)
 
     def _header(self) -> Panel:
@@ -553,9 +601,7 @@ class StreamView:
                 f" ★ best {best.get('score', 0):+.3f} {best.get('engine', '')}/{best.get('head', '')} ",
                 style="bold yellow",
             )
-        foot = Text(
-            "  j/k move · p/r python/rust · l follow · s save · q quit", style="dim"
-        )
+        foot = Text("  j/k move · p/r python/rust · l follow · s save · q quit", style="dim")
         return Panel(Group(text, foot), box=box.MINIMAL, border_style="magenta")
 
     def _gene_table(self) -> Panel:

@@ -155,7 +155,9 @@ def propose_active_v2(
 ) -> list[dict[str, Any]]:
     validator = validator or RustValidator()
     calibration = load_selector_calibration(selector_calibration)
-    x = torch.tensor([normalize_embedding(list(np.asarray(embedding).reshape(-1).astype(float)))], dtype=torch.float32)
+    x = torch.tensor(
+        [normalize_embedding(list(np.asarray(embedding).reshape(-1).astype(float)))], dtype=torch.float32
+    )
     target = torch.tensor([_normalize_target_summary(target_summary)], dtype=torch.float32)
     with torch.no_grad():
         out = model(x, target)
@@ -193,7 +195,9 @@ def propose_active_v2(
             risk = candidate_risk_reason(actions)
             result["candidate_risk_reason"] = risk
             result["candidate_diversity_key"] = _candidate_diversity_key(actions)
-            valid_features.append(genome_features_from_actions(actions, result.get("family_bitmap"), model.vocab))
+            valid_features.append(
+                genome_features_from_actions(actions, result.get("family_bitmap"), model.vocab)
+            )
             valid.append(result)
         else:
             result["candidate_filter"] = "invalid"
@@ -236,7 +240,9 @@ def propose_active_v2(
                 row["candidate_selected"] = False
                 row["candidate_filter"] = "reward_or_diversity"
     if candidate_audit is not None:
-        for row in sorted(valid + duplicates + invalid, key=lambda item: int(item.get("proposal_index") or 0)):
+        for row in sorted(
+            valid + duplicates + invalid, key=lambda item: int(item.get("proposal_index") or 0)
+        ):
             candidate_audit.append(_audit_candidate_row(row))
     if not proposals:
         fallback = validator.validate_one(KNOWN_VALID_FALLBACK)
@@ -324,9 +330,15 @@ def _active_v2_candidate_genomes(
     attempts = max(n * 12, 32)
     sample_temperature = temperature if temperature > 0.0 else 0.7
     for attempt in range(attempts):
-        genome, _ = decode_active_v2_output(out, vocab, row=0, temperature=sample_temperature, seed=seed + attempt + 1)
+        genome, _ = decode_active_v2_output(
+            out, vocab, row=0, temperature=sample_temperature, seed=seed + attempt + 1
+        )
         candidates.append((genome, {"decoder": "sample", "sample_attempt": attempt}))
-    candidates.extend(_historical_mutation_candidates(historical_genomes or [], vocab=vocab, seed=seed, limit=max(n * 4, 12)))
+    candidates.extend(
+        _historical_mutation_candidates(
+            historical_genomes or [], vocab=vocab, seed=seed, limit=max(n * 4, 12)
+        )
+    )
     return candidates
 
 
@@ -341,7 +353,9 @@ def _active_v2_prediction_summary(out: dict[str, Any]) -> dict[str, float]:
     }
 
 
-def _select_reward_ranked_candidates(valid: list[dict[str, Any]], *, n: int, score_key: str = "reward") -> list[dict[str, Any]]:
+def _select_reward_ranked_candidates(
+    valid: list[dict[str, Any]], *, n: int, score_key: str = "reward"
+) -> list[dict[str, Any]]:
     ranked = sorted(
         valid,
         key=lambda row: float(
@@ -440,7 +454,9 @@ def _select_portfolio_candidates(
 
     fallback_pool = [row for row in safe if id(row) not in selected_ids]
     if preferred_selected:
-        fallback_pool = [row for row in fallback_pool if _selection_head(row) not in _PORTFOLIO_DEFERRED_HEADS] or fallback_pool
+        fallback_pool = [
+            row for row in fallback_pool if _selection_head(row) not in _PORTFOLIO_DEFERRED_HEADS
+        ] or fallback_pool
     else:
         non_deferred = [row for row in fallback_pool if _selection_head(row) not in _PORTFOLIO_DEFERRED_HEADS]
         fallback_pool = non_deferred or fallback_pool
@@ -527,7 +543,8 @@ def candidate_risk_reason(actions: dict[str, Any]) -> str | None:
     appended_expansion_count = sum(
         1
         for stage in transforms
-        if str(stage.get("op") or "") in _EXPANSIVE_TRANSFORMS and bool((stage.get("params") or {}).get("append"))
+        if str(stage.get("op") or "") in _EXPANSIVE_TRANSFORMS
+        and bool((stage.get("params") or {}).get("append"))
     )
     if head_op in {"gpr", "ridge", "elasticnet"} and (expansion_count >= 5 or appended_expansion_count >= 3):
         return f"excessive_feature_expansion_before:{head_op}"
@@ -640,7 +657,9 @@ def _mutate_actions(actions: dict[str, Any], *, vocab: dict[str, Any], rng: rand
         transforms.pop(rng.randrange(len(transforms)))
     elif choice == "append_safe_transform" and len(transforms) < 6:
         op = rng.choice(["robust_scale", "rank", "blom", "quantile_bins"])
-        transforms.append({"op": op, "params": _sample_stage_params(TRANSFORMS.get(op, {}), rng, allow_append=True)})
+        transforms.append(
+            {"op": op, "params": _sample_stage_params(TRANSFORMS.get(op, {}), rng, allow_append=True)}
+        )
     elif choice == "toggle_append" and transforms:
         stage = transforms[rng.randrange(len(transforms))]
         params = dict(stage.get("params") or {})

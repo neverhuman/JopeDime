@@ -9,10 +9,7 @@ import pytest
 
 import jope.research
 
-SCRIPT = (
-    Path(jope.research.__file__).parent
-    / "freeze_hyperion_precomputed_cell_coverage.py"
-)
+SCRIPT = Path(jope.research.__file__).parent / "freeze_hyperion_precomputed_cell_coverage.py"
 SPEC = importlib.util.spec_from_file_location("freeze_hyperion_cell", SCRIPT)
 assert SPEC and SPEC.loader
 coverage = importlib.util.module_from_spec(SPEC)

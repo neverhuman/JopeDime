@@ -86,9 +86,7 @@ class UnknownDatasetError(EvaluatorRemoteError):
         server_retriable: bool,
         details: Mapping[str, str],
     ) -> None:
-        super().__init__(
-            code="unknown_dataset", message=message, retriable=True, details=details
-        )
+        super().__init__(code="unknown_dataset", message=message, retriable=True, details=details)
         self.server_retriable = server_retriable
 
 
@@ -159,8 +157,7 @@ def _exact_fields(value: Mapping[str, Any], fields: set[str], name: str) -> None
     actual = set(value)
     if actual != fields:
         raise EvaluatorProtocolError(
-            f"{name} fields differ from protocol v4: expected {sorted(fields)}, "
-            f"received {sorted(actual)}"
+            f"{name} fields differ from protocol v4: expected {sorted(fields)}, received {sorted(actual)}"
         )
 
 
@@ -196,9 +193,7 @@ def _cuda_backend(value: Any, name: str) -> dict[str, Any]:
     if backend["driver_version"] is not None and (
         not isinstance(backend["driver_version"], str) or not backend["driver_version"]
     ):
-        raise EvaluatorProtocolError(
-            f"{name}.driver_version must be a non-empty string or null"
-        )
+        raise EvaluatorProtocolError(f"{name}.driver_version must be a non-empty string or null")
 
     compute = _mapping(backend["compute_capability"], f"{name}.compute_capability")
     _exact_fields(compute, {"major", "minor"}, f"{name}.compute_capability")
@@ -242,9 +237,7 @@ def _cuda_backend(value: Any, name: str) -> dict[str, Any]:
         bits=32,
         positive=True,
     )
-    nvrtc = _mapping(
-        identity["nvrtc_version"], f"{name}.execution_identity.nvrtc_version"
-    )
+    nvrtc = _mapping(identity["nvrtc_version"], f"{name}.execution_identity.nvrtc_version")
     _exact_fields(
         nvrtc,
         {"major", "minor"},
@@ -256,9 +249,7 @@ def _cuda_backend(value: Any, name: str) -> dict[str, Any]:
         bits=16,
         positive=True,
     )
-    _unsigned_integer(
-        nvrtc["minor"], f"{name}.execution_identity.nvrtc_version.minor", bits=16
-    )
+    _unsigned_integer(nvrtc["minor"], f"{name}.execution_identity.nvrtc_version.minor", bits=16)
     _unsigned_integer(
         identity["cuda_api_version"],
         f"{name}.execution_identity.cuda_api_version",
@@ -266,13 +257,9 @@ def _cuda_backend(value: Any, name: str) -> dict[str, Any]:
         positive=True,
     )
     if not isinstance(identity["cudarc_version"], str) or not identity["cudarc_version"]:
-        raise EvaluatorProtocolError(
-            f"{name}.execution_identity.cudarc_version must be a non-empty string"
-        )
+        raise EvaluatorProtocolError(f"{name}.execution_identity.cudarc_version must be a non-empty string")
     if identity["fmad_enabled"] is not False:
-        raise EvaluatorProtocolError(
-            f"{name}.execution_identity.fmad_enabled must be false"
-        )
+        raise EvaluatorProtocolError(f"{name}.execution_identity.fmad_enabled must be false")
     return json.loads(json.dumps(backend))
 
 
@@ -316,9 +303,7 @@ class PrimeEvaluatorClient:
             raise ValueError("client_name and client_version must be non-empty")
 
         self._path = path
-        self._expected_registry_hash = _sha256(
-            expected_registry_hash, "expected_registry_hash"
-        )
+        self._expected_registry_hash = _sha256(expected_registry_hash, "expected_registry_hash")
         self._expected_registry_version = expected_registry_version
         self._client_name = client_name
         self._client_version = client_version
@@ -543,9 +528,7 @@ class PrimeEvaluatorClient:
         reason: str | None = None,
         timeout: float | None = None,
     ) -> dict[str, Any]:
-        return self._request(
-            "cancel_job", {"job_id": job_id, "reason": reason}, timeout=timeout
-        )
+        return self._request("cancel_job", {"job_id": job_id, "reason": reason}, timeout=timeout)
 
     def stats(self, *, timeout: float | None = None) -> dict[str, Any]:
         return self._request("get_stats", None, timeout=timeout)
@@ -564,9 +547,7 @@ class PrimeEvaluatorClient:
         timeout: float | None,
         job_id: str | None = None,
     ) -> dict[str, Any]:
-        request_timeout = self._request_timeout if timeout is None else _positive_timeout(
-            timeout, "timeout"
-        )
+        request_timeout = self._request_timeout if timeout is None else _positive_timeout(timeout, "timeout")
         with self._lock:
             return self._request_locked(
                 request_type,
@@ -619,9 +600,7 @@ class PrimeEvaluatorClient:
             self._close_socket()
             raise EvaluatorTransportError(f"evaluator socket error: {error}") from error
         try:
-            return self._decode_response(
-                response, request_id=request_id, expected=expected
-            )
+            return self._decode_response(response, request_id=request_id, expected=expected)
         except EvaluatorProtocolError:
             self._close_socket()
             raise
@@ -634,9 +613,9 @@ class PrimeEvaluatorClient:
         outgoing_limit: int,
     ) -> dict[str, Any]:
         try:
-            payload = json.dumps(
-                envelope, separators=(",", ":"), ensure_ascii=False, allow_nan=False
-            ).encode("utf-8")
+            payload = json.dumps(envelope, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode(
+                "utf-8"
+            )
         except (TypeError, ValueError) as error:
             raise ValueError(f"request is not valid finite JSON: {error}") from error
         if not payload or len(payload) > min(self._max_frame_size, outgoing_limit):
@@ -663,9 +642,7 @@ class PrimeEvaluatorClient:
             remaining -= len(chunk)
         return b"".join(chunks)
 
-    def _decode_response(
-        self, envelope: dict[str, Any], *, request_id: int, expected: str
-    ) -> dict[str, Any]:
+    def _decode_response(self, envelope: dict[str, Any], *, request_id: int, expected: str) -> dict[str, Any]:
         _exact_fields(
             envelope,
             {"protocol_version", "request_id", "response"},
@@ -679,9 +656,7 @@ class PrimeEvaluatorClient:
             or isinstance(response_request_id, bool)
             or response_request_id != request_id
         ):
-            self._fail_protocol(
-                f"response request id {response_request_id!r} did not match {request_id}"
-            )
+            self._fail_protocol(f"response request id {response_request_id!r} did not match {request_id}")
         response = _mapping(envelope["response"], "response")
         _exact_fields(response, {"type", "payload"}, "response")
         response_type = response["type"]
@@ -689,9 +664,7 @@ class PrimeEvaluatorClient:
         if response_type == "error":
             self._raise_remote(payload)
         if response_type != expected:
-            self._fail_protocol(
-                f"expected {expected!r} response, received {response_type!r}"
-            )
+            self._fail_protocol(f"expected {expected!r} response, received {response_type!r}")
         return payload
 
     def _accept_hello(self, hello: dict[str, Any]) -> None:
@@ -734,20 +707,15 @@ class PrimeEvaluatorClient:
                 f"capabilities.backends[{index}]",
             )
             if not isinstance(backend_capability["available"], bool):
-                raise EvaluatorProtocolError(
-                    f"capabilities.backends[{index}].available must be a boolean"
-                )
+                raise EvaluatorProtocolError(f"capabilities.backends[{index}].available must be a boolean")
             fast_cuda_capabilities.append((index, backend_capability))
         if len(fast_cuda_capabilities) != 1:
-            raise EvaluatorProtocolError(
-                "capabilities must advertise exactly one FastCuda backend"
-            )
+            raise EvaluatorProtocolError("capabilities must advertise exactly one FastCuda backend")
         cuda_index, cuda_capability = fast_cuda_capabilities[0]
         if cuda_capability["available"]:
             if cuda_capability["diagnostic"] is not None:
                 raise EvaluatorProtocolError(
-                    f"capabilities.backends[{cuda_index}].diagnostic must be null "
-                    "when FastCuda is available"
+                    f"capabilities.backends[{cuda_index}].diagnostic must be null when FastCuda is available"
                 )
             fast_cuda_backend = _cuda_backend(
                 cuda_capability["backend"],
@@ -756,33 +724,26 @@ class PrimeEvaluatorClient:
         else:
             if cuda_capability["backend"] is not None:
                 raise EvaluatorProtocolError(
-                    f"capabilities.backends[{cuda_index}].backend must be null "
-                    "when FastCuda is unavailable"
+                    f"capabilities.backends[{cuda_index}].backend must be null when FastCuda is unavailable"
                 )
             fast_cuda_backend = None
         numerical_tiers = capabilities["numerical_tiers"]
         if not isinstance(numerical_tiers, list):
             raise EvaluatorProtocolError("capabilities.numerical_tiers must be a list")
         if ("fast_cuda" in numerical_tiers) != cuda_capability["available"]:
-            raise EvaluatorProtocolError(
-                "FastCuda capability availability disagrees with numerical_tiers"
-            )
+            raise EvaluatorProtocolError("FastCuda capability availability disagrees with numerical_tiers")
         cuda_architectures = capabilities["cuda_architectures"]
         if not isinstance(cuda_architectures, list):
             raise EvaluatorProtocolError("capabilities.cuda_architectures must be a list")
         if fast_cuda_backend is None:
             if cuda_architectures:
-                raise EvaluatorProtocolError(
-                    "unavailable FastCuda must not advertise CUDA architectures"
-                )
+                raise EvaluatorProtocolError("unavailable FastCuda must not advertise CUDA architectures")
         else:
             if len(cuda_architectures) != 1:
                 raise EvaluatorProtocolError(
                     "available FastCuda must advertise exactly one CUDA architecture"
                 )
-            architecture = _mapping(
-                cuda_architectures[0], "capabilities.cuda_architectures[0]"
-            )
+            architecture = _mapping(cuda_architectures[0], "capabilities.cuda_architectures[0]")
             _exact_fields(
                 architecture,
                 {"major", "minor"},
@@ -800,23 +761,17 @@ class PrimeEvaluatorClient:
                 bits=16,
             )
             if architecture != fast_cuda_backend["compute_capability"]:
-                raise EvaluatorProtocolError(
-                    "CUDA architecture disagrees with the FastCuda backend"
-                )
+                raise EvaluatorProtocolError("CUDA architecture disagrees with the FastCuda backend")
         if self._handshake_complete and fast_cuda_backend != self._fast_cuda_backend:
-            raise EvaluatorProtocolError(
-                "FastCuda backend identity changed across evaluator reconnect"
-            )
+            raise EvaluatorProtocolError("FastCuda backend identity changed across evaluator reconnect")
         received_hash = capabilities["operator_registry_hash"]
         if received_hash != self._expected_registry_hash:
             raise RegistryMismatchError(
-                f"evaluator registry hash {received_hash!r} does not match "
-                f"{self._expected_registry_hash!r}"
+                f"evaluator registry hash {received_hash!r} does not match {self._expected_registry_hash!r}"
             )
         if (
             self._expected_registry_version is not None
-            and capabilities["operator_registry_version"]
-            != self._expected_registry_version
+            and capabilities["operator_registry_version"] != self._expected_registry_version
         ):
             raise RegistryMismatchError("evaluator registry version mismatch")
         if capabilities["supports_unix_socket"] is not True:
@@ -842,16 +797,10 @@ class PrimeEvaluatorClient:
         if not all(isinstance(key, str) and isinstance(value, str) for key, value in details.items()):
             self._fail_protocol("remote error details must map strings to strings")
         if code == "unknown_dataset":
-            raise UnknownDatasetError(
-                message=message, server_retriable=retriable, details=details
-            )
-        raise EvaluatorRemoteError(
-            code=code, message=message, retriable=retriable, details=details
-        )
+            raise UnknownDatasetError(message=message, server_retriable=retriable, details=details)
+        raise EvaluatorRemoteError(code=code, message=message, retriable=retriable, details=details)
 
-    def _cancel_separately(
-        self, job_id: str
-    ) -> tuple[dict[str, Any] | None, str | None]:
+    def _cancel_separately(self, job_id: str) -> tuple[dict[str, Any] | None, str | None]:
         sock: socket.socket | None = None
         try:
             sock = self._connect(self._cancel_timeout)
@@ -867,9 +816,7 @@ class PrimeEvaluatorClient:
                     },
                 },
             }
-            hello_response = self._exchange(
-                sock, hello_envelope, self._cancel_timeout, self._max_frame_size
-            )
+            hello_response = self._exchange(sock, hello_envelope, self._cancel_timeout, self._max_frame_size)
             hello = self._decode_response(hello_response, request_id=1, expected="hello")
             self._accept_hello(hello)
             cancel_envelope = {
@@ -883,9 +830,7 @@ class PrimeEvaluatorClient:
                     },
                 },
             }
-            response = self._exchange(
-                sock, cancel_envelope, self._cancel_timeout, self._peer_max_frame_size
-            )
+            response = self._exchange(sock, cancel_envelope, self._cancel_timeout, self._peer_max_frame_size)
             return (
                 self._decode_response(response, request_id=2, expected="cancel_job"),
                 None,

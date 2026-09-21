@@ -142,9 +142,7 @@ def test_offspring_float_parameters_use_canonical_text():
 
 def test_binary_rewrite_removes_target_and_attaches_probability_head():
     row = candidate(1, "accepted_dl_checkpoint")
-    row["canonical_genome"] = (
-        "(pipe X (target kind=log1p) (cheb degree=3) (ridge))"
-    )
+    row["canonical_genome"] = "(pipe X (target kind=log1p) (cheb degree=3) (ridge))"
     rewritten = rewrite_binary_candidate(row, "dataset", 0)
     assert "(target " not in rewritten["canonical_genome"]
     assert rewritten["canonical_genome"].endswith("(logit_ridge l2=0.1))") or (
@@ -186,31 +184,21 @@ def test_refill_enforces_target_and_hard_cap():
 def test_stale_dispatch_does_not_count_as_live_work():
     from test_exact_backlog import stale_dispatch
 
-    assert stale_dispatch(
-        {"state": "dispatching", "pid": None, "runtime_secs": 121}
-    )
-    assert not stale_dispatch(
-        {"state": "dispatching", "pid": None, "runtime_secs": 120}
-    )
-    assert not stale_dispatch(
-        {"state": "running", "pid": 123, "runtime_secs": 10_000}
-    )
+    assert stale_dispatch({"state": "dispatching", "pid": None, "runtime_secs": 121})
+    assert not stale_dispatch({"state": "dispatching", "pid": None, "runtime_secs": 120})
+    assert not stale_dispatch({"state": "running", "pid": 123, "runtime_secs": 10_000})
 
 
 def test_strict_wave_mutation_is_deterministic_and_records_parentage():
     parents = [
         {
             "canonical_genome": "(pipe X (standardize) (ridge))",
-            "semantic_sha256": sha256_text(
-                "(pipe X (standardize) (ridge))"
-            ),
+            "semantic_sha256": sha256_text("(pipe X (standardize) (ridge))"),
             "score_receipt": {"score": 0.5},
         },
         {
             "canonical_genome": "(pipe X (rank append=true) (ridge))",
-            "semantic_sha256": sha256_text(
-                "(pipe X (rank append=true) (ridge))"
-            ),
+            "semantic_sha256": sha256_text("(pipe X (rank append=true) (ridge))"),
             "score_receipt": {"score": 0.4},
         },
     ]
@@ -312,9 +300,7 @@ def test_checkpoint_gate_is_fail_closed_until_every_condition_passes():
 
 
 def test_scheduler_project_registration_and_weight_are_exact():
-    projects = tomllib.loads(
-        Path("/home/ubuntu/smart_cluster/etc/projects.toml").read_text()
-    )["projects"]
+    projects = tomllib.loads(Path("/home/ubuntu/smart_cluster/etc/projects.toml").read_text())["projects"]
     assert projects["jope-testonly"] == {
         "max_tier": "normal",
         "weight": 10.0,
@@ -380,15 +366,9 @@ def test_selfplay_authority_and_catalog_counts_fail_closed():
 def test_only_infrastructure_failures_are_recovered():
     from test_exact_backlog import is_infrastructure_failure
 
-    assert is_infrastructure_failure(
-        {"state": "failed", "failure_class": "rpc-error"}
-    )
-    assert not is_infrastructure_failure(
-        {"state": "failed", "failure_class": "crash"}
-    )
-    assert not is_infrastructure_failure(
-        {"state": "running", "failure_class": "rpc-error"}
-    )
+    assert is_infrastructure_failure({"state": "failed", "failure_class": "rpc-error"})
+    assert not is_infrastructure_failure({"state": "failed", "failure_class": "crash"})
+    assert not is_infrastructure_failure({"state": "running", "failure_class": "rpc-error"})
 
 
 def test_submission_locality_groups_shared_dataset_inputs(tmp_path):
@@ -401,9 +381,7 @@ def test_submission_locality_groups_shared_dataset_inputs(tmp_path):
         ("job-a", "a", "1"),
     ):
         manifest = tmp_path / f"{job_id}.json"
-        manifest.write_text(
-            json.dumps({"train_sha256": train_hash, "test_sha256": test_hash})
-        )
+        manifest.write_text(json.dumps({"train_sha256": train_hash, "test_sha256": test_hash}))
         rows.append((job_id, tmp_path / f"{job_id}.toml", "manifest-hash", manifest))
 
     assert [row[0] for row in sorted(rows, key=submission_locality_key)] == [
@@ -468,14 +446,7 @@ def test_selected_rows_prestage_manifests_and_dataset_inputs(tmp_path):
 def test_active_trainer_metrics_reports_live_validation_signal(tmp_path):
     from test_exact_monitor import active_trainer_metrics
 
-    output = (
-        tmp_path
-        / "attempts"
-        / "0"
-        / "outputs"
-        / "training"
-        / "watermark-000000123"
-    )
+    output = tmp_path / "attempts" / "0" / "outputs" / "training" / "watermark-000000123"
     output.mkdir(parents=True)
     (output / "train_metrics.jsonl").write_text(
         "\n".join(
@@ -498,13 +469,9 @@ def test_active_trainer_metrics_reports_live_validation_signal(tmp_path):
             )
         )
     )
-    (output / "train_progress.json").write_text(
-        json.dumps({"epoch": 3, "batch": 4, "total_batches": 10})
-    )
+    (output / "train_progress.json").write_text(json.dumps({"epoch": 3, "batch": 4, "total_batches": 10}))
 
-    result = active_trainer_metrics(
-        {"run_dir": str(tmp_path), "attempt": 0}
-    )
+    result = active_trainer_metrics({"run_dir": str(tmp_path), "attempt": 0})
     assert result["completed_epochs"] == 2
     assert result["latest_pairwise_accuracy"] == 0.59
     assert result["best_pairwise_accuracy"] == 0.6

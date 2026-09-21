@@ -1,4 +1,5 @@
 """Fail-closed pricing and trace checks for a campaign-local Jnoccio gateway."""
+
 from __future__ import annotations
 
 import hashlib
@@ -71,7 +72,9 @@ def route_name_is_free(provider: str, route: str) -> bool:
     return False
 
 
-def select_zero_price_routes(provider: str, models: Sequence[Mapping[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def select_zero_price_routes(
+    provider: str, models: Sequence[Mapping[str, Any]]
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Select only named free routes with complete live zero-price metadata."""
 
     provider_key = provider.casefold()
@@ -156,4 +159,3 @@ def watchdog_violations(
 def is_quota_exhaustion(value: Any) -> bool:
     text = json.dumps(value, sort_keys=True).casefold()
     return any(fragment in text for fragment in ("quota", "rate limit", "rate_limit", "429"))
-

@@ -64,9 +64,7 @@ def test_overlay_contains_only_hash_bound_train_side_files(tmp_path: Path) -> No
         "authoritative_cell_sha256": screen.common.sha256_file(cached / "train3.vs"),
         "relative_path": f"{screen.DATASET_ID}/train3.vs",
     }
-    receipt = screen.materialize_overlay(
-        quant, authority_root, tmp_path / "overlay", entry
-    )
+    receipt = screen.materialize_overlay(quant, authority_root, tmp_path / "overlay", entry)
     overlay = tmp_path / "overlay" / screen.DATASET_ID
     assert sorted(path.name for path in overlay.iterdir()) == ["train.csv", "train3.vs"]
     assert receipt["test_artifacts_read"] is False

@@ -148,9 +148,7 @@ def test_a_manifest_at_the_wrong_watermark_is_refused(root, monkeypatch):
     poisoned["source_label_watermark"] = POINTER_WATERMARK
     manifest_path.write_text(json.dumps(poisoned, sort_keys=True))
     with pytest.raises(RuntimeError, match="not the tournament's 1805437"):
-        controller._freeze_corpus(
-            {"watermark": TOURNAMENT_WATERMARK, "corpus_mode": "full_consolidation"}
-        )
+        controller._freeze_corpus({"watermark": TOURNAMENT_WATERMARK, "corpus_mode": "full_consolidation"})
 
 
 def test_a_corrupt_global_pointer_still_fails_closed(root):
@@ -163,6 +161,4 @@ def test_a_corrupt_global_pointer_still_fails_closed(root):
     pointer["manifest_sha256"] = "f" * 64
     pointer_path.write_text(json.dumps(pointer, sort_keys=True))
     with pytest.raises(RuntimeError, match="pointer failed hash verification"):
-        controller._freeze_corpus(
-            {"watermark": TOURNAMENT_WATERMARK, "corpus_mode": "full_consolidation"}
-        )
+        controller._freeze_corpus({"watermark": TOURNAMENT_WATERMARK, "corpus_mode": "full_consolidation"})

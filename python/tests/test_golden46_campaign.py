@@ -20,9 +20,7 @@ def test_historical_aspfm_receipt_is_terminal_without_a_score(tmp_path: Path) ->
     assert receipt["benchmark_cell_resolved"] is True
     assert receipt["score_present"] is False
     assert receipt["method_identity_changed"] is False
-    stored = json.loads(
-        (tmp_path / "ZTS/jope-dime-regressor/terminal-receipt.json").read_text()
-    )
+    stored = json.loads((tmp_path / "ZTS/jope-dime-regressor/terminal-receipt.json").read_text())
     assert stored == receipt
 
 

@@ -20,9 +20,7 @@ SPLIT_MANIFEST_V1 = "PrimeDatasetSplitManifest.v1"
 TRAIN_SPLIT = "train"
 DEVELOPMENT_SPLIT = "development"
 TEMPORAL_AUDIT_SPLIT = "temporal_audit"
-REPORT_ONLY_SPLITS = frozenset(
-    {"arena", "sealed", "double_holdout", TEMPORAL_AUDIT_SPLIT}
-)
+REPORT_ONLY_SPLITS = frozenset({"arena", "sealed", "double_holdout", TEMPORAL_AUDIT_SPLIT})
 _ASSIGNABLE_SPLITS = frozenset({TRAIN_SPLIT, DEVELOPMENT_SPLIT, TEMPORAL_AUDIT_SPLIT})
 
 
@@ -31,9 +29,7 @@ class SplitIntegrityError(ValueError):
 
 
 def canonical_sha256(value: Any) -> str:
-    encoded = json.dumps(
-        value, sort_keys=True, separators=(",", ":"), allow_nan=False
-    ).encode("utf-8")
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
 
@@ -64,19 +60,12 @@ def _label_body(row: dict[str, Any]) -> dict[str, Any]:
 
 def _dataset(row: dict[str, Any]) -> str:
     label = _label_body(row)
-    return str(
-        label.get("dataset")
-        or label.get("dataset_hash")
-        or label.get("dataset_id")
-        or ""
-    )
+    return str(label.get("dataset") or label.get("dataset_hash") or label.get("dataset_id") or "")
 
 
 def _authority_split(row: dict[str, Any]) -> str:
     value = _label_body(row).get("split")
-    return (
-        str(value).strip().lower().replace("-", "_") if value is not None else "train"
-    )
+    return str(value).strip().lower().replace("-", "_") if value is not None else "train"
 
 
 def _committed_at_ms(row: dict[str, Any]) -> int | None:
@@ -196,9 +185,7 @@ def validate_split_manifest(manifest: dict[str, Any]) -> None:
         "legacy_development_dataset_ids",
     ):
         value = manifest[field]
-        if not isinstance(value, list) or any(
-            not isinstance(item, str) or not item for item in value
-        ):
+        if not isinstance(value, list) or any(not isinstance(item, str) or not item for item in value):
             raise SplitIntegrityError(f"split manifest {field} must be strings")
         if value != sorted(set(value)):
             raise SplitIntegrityError(f"split manifest {field} is not canonical")
@@ -211,13 +198,9 @@ def validate_split_manifest(manifest: dict[str, Any]) -> None:
             or manifest["missing_source_family"]
             or manifest["missing_committed_at_ms"]
         ):
-            raise SplitIntegrityError(
-                "complete split manifest reports incomplete inputs"
-            )
+            raise SplitIntegrityError("complete split manifest reports incomplete inputs")
         if observed_splits != _ASSIGNABLE_SPLITS:
-            raise SplitIntegrityError(
-                "complete split manifest requires all three splits"
-            )
+            raise SplitIntegrityError("complete split manifest requires all three splits")
     elif assignments:
         raise SplitIntegrityError("incomplete split manifest cannot assign datasets")
 
@@ -296,18 +279,13 @@ def build_split_manifest(
         return manifest
 
     family_time = {
-        family: min(first_committed[dataset] for dataset in members)
-        for family, members in families.items()
+        family: min(first_committed[dataset] for dataset in members) for family, members in families.items()
     }
-    audit_candidates = [
-        family for family in families if family not in development_families
-    ]
+    audit_candidates = [family for family in families if family not in development_families]
     audit_count = max(1, round(temporal_audit_fraction * len(audit_candidates)))
     audit_count = min(audit_count, len(audit_candidates) - 1)
     audit_families = set(
-        sorted(audit_candidates, key=lambda family: (family_time[family], family))[
-            -audit_count:
-        ]
+        sorted(audit_candidates, key=lambda family: (family_time[family], family))[-audit_count:]
     )
     remaining = [
         family
@@ -408,9 +386,7 @@ def load_or_create_split_manifest(
                 development_fraction=float(existing["development_fraction"]),
                 temporal_audit_fraction=float(existing["temporal_audit_fraction"]),
                 seed=int(existing["seed"]),
-                legacy_development_dataset_ids=existing[
-                    "legacy_development_dataset_ids"
-                ],
+                legacy_development_dataset_ids=existing["legacy_development_dataset_ids"],
             )
             if existing != current:
                 raise SplitIntegrityError(
@@ -451,9 +427,7 @@ def assignment_for_dataset(manifest: dict[str, Any], dataset: str) -> dict[str, 
     validate_split_manifest(manifest)
     record = manifest["assignments"].get(dataset)
     if not isinstance(record, dict):
-        raise SplitIntegrityError(
-            f"dataset {dataset!r} is absent from frozen split assignments"
-        )
+        raise SplitIntegrityError(f"dataset {dataset!r} is absent from frozen split assignments")
     return record
 
 
@@ -493,9 +467,7 @@ def partition_training_rows(rows: Iterable[Any]) -> dict[str, Any]:
         report_hints = authority_hints.intersection(REPORT_ONLY_SPLITS)
         if report_hints:
             if len(report_hints) != 1:
-                raise SplitIntegrityError(
-                    "TrainingRow has conflicting report-only authority"
-                )
+                raise SplitIntegrityError("TrainingRow has conflicting report-only authority")
             split = next(iter(report_hints))
         if split not in _ASSIGNABLE_SPLITS | REPORT_ONLY_SPLITS:
             raise SplitIntegrityError(f"unsupported TrainingRow split {raw_split!r}")
@@ -537,9 +509,7 @@ def partition_training_rows(rows: Iterable[Any]) -> dict[str, Any]:
             raise SplitIntegrityError("source family overlaps multiple splits")
 
     if bound_present and unbound_model_rows:
-        raise SplitIntegrityError(
-            "manifest-bound training cannot mix unbound train/development rows"
-        )
+        raise SplitIntegrityError("manifest-bound training cannot mix unbound train/development rows")
     return {
         "train": train,
         "development": development,

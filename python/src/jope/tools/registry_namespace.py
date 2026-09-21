@@ -1,4 +1,5 @@
 """Refuse production namespace enable until the remaining release gates exist."""
+
 from __future__ import annotations
 
 GATES = (

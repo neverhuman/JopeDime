@@ -31,9 +31,7 @@ def _json(path: str | Path) -> Any:
 def _write(path: str | Path, value: Any) -> None:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(
-        value, indent=2, sort_keys=True, allow_nan=False
-    ).encode() + b"\n"
+    payload = json.dumps(value, indent=2, sort_keys=True, allow_nan=False).encode() + b"\n"
     temporary = destination.with_name(f".{destination.name}.tmp.{os.getpid()}")
     with temporary.open("xb") as handle:
         handle.write(payload)
@@ -152,9 +150,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "ingest-receipts":
         store = ReceiptStore(args.store)
         rows = (
-            json.loads(line)
-            for line in args.jsonl.read_text(encoding="utf-8").splitlines()
-            if line.strip()
+            json.loads(line) for line in args.jsonl.read_text(encoding="utf-8").splitlines() if line.strip()
         )
         print(json.dumps(store.import_all(rows), sort_keys=True))
         return 0
@@ -181,13 +177,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "gate":
         rows = _json(args.rows)
         result = (
-            evaluate_offline_gate(
-                rows, seed=args.seed, production=not args.diagnostic
-            )
+            evaluate_offline_gate(rows, seed=args.seed, production=not args.diagnostic)
             if args.kind == "offline"
-            else evaluate_prospective_gate(
-                rows, seed=args.seed, production=not args.diagnostic
-            )
+            else evaluate_prospective_gate(rows, seed=args.seed, production=not args.diagnostic)
         )
         _write(args.out, result)
         print(args.out)

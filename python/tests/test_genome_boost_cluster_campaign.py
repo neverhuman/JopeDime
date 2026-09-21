@@ -6,9 +6,7 @@ from pathlib import Path
 
 import jope.research
 
-MODULE_PATH = (
-    Path(jope.research.__file__).parent / "genome_boost_cluster_campaign.py"
-)
+MODULE_PATH = Path(jope.research.__file__).parent / "genome_boost_cluster_campaign.py"
 SPEC = importlib.util.spec_from_file_location("genome_boost_cluster_campaign", MODULE_PATH)
 campaign = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
@@ -51,12 +49,14 @@ def test_tabpfn_spec_has_exact_resources():
     spec = tomllib.loads(text)
     assert spec["resource"]["placement"] == "single_node"
     assert "node" not in spec["resource"]
-    assert spec["dependencies"]["smoke"] == [{
-        "name": "campaign runtime capability available",
-        "command": "/usr/bin/test",
-        "args": ["-e", "/tmp/synthetic-campaign-capability"],
-        "timeout_secs": 5,
-    }]
+    assert spec["dependencies"]["smoke"] == [
+        {
+            "name": "campaign runtime capability available",
+            "command": "/usr/bin/test",
+            "args": ["-e", "/tmp/synthetic-campaign-capability"],
+            "timeout_secs": 5,
+        }
+    ]
     assert "preemptible = true" in text
     assert "max_runtime_hours = 8" in text
     assert "max_restarts = 1" in text
@@ -83,9 +83,7 @@ def test_submit_next_enqueues_only_one_gpu_job(tmp_path, monkeypatch):
         "run",
         lambda command, **kwargs: calls.append(command),
     )
-    campaign.submit_next(
-        argparse.Namespace(plan=plan, state=tmp_path / "state.json")
-    )
+    campaign.submit_next(argparse.Namespace(plan=plan, state=tmp_path / "state.json"))
 
     assert calls == [
         [campaign.SCQ_BINARY, "check", str(specs[0])],
@@ -110,8 +108,6 @@ def test_submit_next_does_not_enqueue_while_lane_active(tmp_path, monkeypatch):
         lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("unexpected submit")),
     )
 
-    campaign.submit_next(
-        argparse.Namespace(plan=plan, state=tmp_path / "state.json")
-    )
+    campaign.submit_next(argparse.Namespace(plan=plan, state=tmp_path / "state.json"))
     state = json.loads((tmp_path / "state.json").read_text())
     assert state["active"] == [{"attempt": 0, "id": "job-0", "state": "running"}]

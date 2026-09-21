@@ -157,7 +157,9 @@ def train_from_jsonl(
     if checkpoint is not None:
         out = Path(checkpoint)
         out.parent.mkdir(parents=True, exist_ok=True)
-        torch.save({"model": model.state_dict(), "loss": loss, "loss_history": history, "epochs": epochs}, out)
+        torch.save(
+            {"model": model.state_dict(), "loss": loss, "loss_history": history, "epochs": epochs}, out
+        )
     return {
         "rows": len(rows),
         "epochs": epochs,
@@ -326,17 +328,18 @@ def train_active_v2_from_jsonl(
             **{f"val_{key}": value for key, value in metrics.items()},
         }
         current_metric = _checkpoint_metric_value(row, checkpoint_metric)
-        if distributed.is_rank0 and current_metric is not None and _checkpoint_metric_better(
-            checkpoint_metric,
-            current_metric,
-            best_metric_value,
+        if (
+            distributed.is_rank0
+            and current_metric is not None
+            and _checkpoint_metric_better(
+                checkpoint_metric,
+                current_metric,
+                best_metric_value,
+            )
         ):
             best_metric_value = current_metric
             best_epoch = epoch
-            best_state = {
-                key: value.detach().cpu().clone()
-                for key, value in base_model.state_dict().items()
-            }
+            best_state = {key: value.detach().cpu().clone() for key, value in base_model.state_dict().items()}
         row["checkpoint_metric_value"] = current_metric
         row["best_checkpoint_metric_value"] = best_metric_value
         row["best_checkpoint_epoch"] = best_epoch
@@ -349,10 +352,11 @@ def train_active_v2_from_jsonl(
     if checkpoint is not None and distributed.is_rank0:
         out = Path(checkpoint)
         out.parent.mkdir(parents=True, exist_ok=True)
-        model_state = best_state if best_state is not None else {
-            key: value.detach().cpu()
-            for key, value in base_model.state_dict().items()
-        }
+        model_state = (
+            best_state
+            if best_state is not None
+            else {key: value.detach().cpu() for key, value in base_model.state_dict().items()}
+        )
         torch.save(
             {
                 "model_version": "active_v2",
@@ -490,17 +494,19 @@ def _aggregate_loss_totals(
     names = ACTIVE_V2_LOSS_COMPONENTS
     if distributed.enabled:
         values = [float(total), float(steps)] + [float(component_totals.get(name, 0.0)) for name in names]
-        tensor = torch.tensor(values, dtype=torch.float64, device=device if device.startswith("cuda") else "cpu")
+        tensor = torch.tensor(
+            values, dtype=torch.float64, device=device if device.startswith("cuda") else "cpu"
+        )
         dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
         total = float(tensor[0].item())
         steps = int(tensor[1].item())
         component_totals = {name: float(tensor[index + 2].item()) for index, name in enumerate(names)}
     denom = max(1, steps)
-    return total / denom, {
-        name: value / denom
-        for name, value in sorted(component_totals.items())
-        if value != 0.0
-    }, denom
+    return (
+        total / denom,
+        {name: value / denom for name, value in sorted(component_totals.items()) if value != 0.0},
+        denom,
+    )
 
 
 def _distributed_barrier(distributed: _DistributedContext) -> None:
@@ -558,8 +564,7 @@ def _active_v2_loss_summary(
                 component_totals[name] = component_totals.get(name, 0.0) + float(value.detach().cpu())
             steps += 1
     return total / max(1, steps), {
-        name: value / max(1, steps)
-        for name, value in sorted(component_totals.items())
+        name: value / max(1, steps) for name, value in sorted(component_totals.items())
     }
 
 

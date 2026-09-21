@@ -67,27 +67,39 @@ def replay_full(pack, pack_dir, out_dir, tag, split, utils, step):
     write_extra(extra, pack, utils)
     out = out_dir / f"{tag}_{split}_elo.json"
     subprocess.run(
-        [str(fable_elo_bin()), "elo-json",
-         "--cache", str(pack_dir / "utilities.jsonl"),
-         "--extra", str(extra), "--datasets", str(datasets), "--out", str(out)],
-        check=True, capture_output=True,
+        [
+            str(fable_elo_bin()),
+            "elo-json",
+            "--cache",
+            str(pack_dir / "utilities.jsonl"),
+            "--extra",
+            str(extra),
+            "--datasets",
+            str(datasets),
+            "--out",
+            str(out),
+        ],
+        check=True,
+        capture_output=True,
     )
     ratings = json.loads(out.read_text())["ratings"]
     ordered = sorted(ratings.items(), key=lambda kv: -kv[1])
     rank_pos = 1 + [n for n, _ in ordered].index(OUR_ALGORITHM)
-    return {"elo": ratings[OUR_ALGORITHM], "rank": rank_pos, "n": len(idx),
-            "above": [n for n, _ in ordered[max(0, rank_pos - 3):rank_pos - 1]]}
+    return {
+        "elo": ratings[OUR_ALGORITHM],
+        "rank": rank_pos,
+        "n": len(idx),
+        "above": [n for n, _ in ordered[max(0, rank_pos - 3) : rank_pos - 1]],
+    }
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ckpt", required=True)
-    parser.add_argument("--which", default="ema_model",
-                        choices=["ema_model", "model"])
+    parser.add_argument("--which", default="ema_model", choices=["ema_model", "model"])
     parser.add_argument("--tag", required=True)
     parser.add_argument("--pack-dir", type=Path, default=DEFAULT_PACK_DIR)
-    parser.add_argument("--out-dir", type=Path,
-                        default=Path.home() / "fable_god_run" / "eval_full")
+    parser.add_argument("--out-dir", type=Path, default=Path.home() / "fable_god_run" / "eval_full")
     args = parser.parse_args()
 
     ddp = "RANK" in os.environ
@@ -96,8 +108,7 @@ def main():
     if ddp:
         dist.init_process_group("nccl" if torch.cuda.is_available() else "gloo")
         torch.cuda.set_device(int(os.environ.get("LOCAL_RANK", 0)))
-    device = torch.device(f"cuda:{os.environ.get('LOCAL_RANK', 0)}"
-                          if torch.cuda.is_available() else "cpu")
+    device = torch.device(f"cuda:{os.environ.get('LOCAL_RANK', 0)}" if torch.cuda.is_available() else "cpu")
     is_main = rank == 0
 
     pack = FablePack(args.pack_dir / "fable_real_v1.pack", preload=True)
@@ -110,8 +121,7 @@ def main():
     for split in ("val", "test"):
         utils = sweep_split(runner, pack, split, rank, world)
         if is_main:
-            result[split] = replay_full(pack, args.pack_dir, args.out_dir,
-                                        args.tag, split, utils, step)
+            result[split] = replay_full(pack, args.pack_dir, args.out_dir, args.tag, split, utils, step)
     if is_main:
         result["seconds"] = round(time.time() - started, 1)
         (args.out_dir / f"{args.tag}_result.json").write_text(json.dumps(result, indent=2))

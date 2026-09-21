@@ -1,4 +1,5 @@
 """Metadata contracts only. Hashes do not establish original execution or access."""
+
 import hashlib
 import json
 import math
@@ -6,9 +7,19 @@ import os
 import tempfile
 from pathlib import Path
 
-CONTEXT_FIELDS = ("family", "dataset", "partition", "cut", "prepared_sha256",
-                  "training_sha256", "validation_sha256", "preprocessing_sha256",
-                  "evaluator_sha256", "runtime_sha256", "numerical_contract_sha256")
+CONTEXT_FIELDS = (
+    "family",
+    "dataset",
+    "partition",
+    "cut",
+    "prepared_sha256",
+    "training_sha256",
+    "validation_sha256",
+    "preprocessing_sha256",
+    "evaluator_sha256",
+    "runtime_sha256",
+    "numerical_contract_sha256",
+)
 
 
 def finite(value):
@@ -19,8 +30,7 @@ def finite(value):
 
 
 def sha256_value(value):
-    return (isinstance(value, str) and len(value) == 64
-            and all(c in "0123456789abcdef" for c in value))
+    return isinstance(value, str) and len(value) == 64 and all(c in "0123456789abcdef" for c in value)
 
 
 def canonical(value):
@@ -55,8 +65,11 @@ def metadata_bytes(path, limit=32 * 1024 * 1024):
 
 def read_with_digest(path, limit=32 * 1024 * 1024):
     data, observed = metadata_bytes(path, limit)
-    value = json.loads(data, object_pairs_hook=_object,
-                      parse_constant=lambda x: (_ for _ in ()).throw(ValueError("nonfinite JSON: " + x)))
+    value = json.loads(
+        data,
+        object_pairs_hook=_object,
+        parse_constant=lambda x: (_ for _ in ()).throw(ValueError("nonfinite JSON: " + x)),
+    )
     canonical(value)  # Reject overflowing JSON exponents, too.
     return value, observed
 
@@ -92,17 +105,25 @@ def context(row):
     if not isinstance(row, dict) or any(k not in row for k in CONTEXT_FIELDS):
         raise ValueError("complete scientific context identity required")
     value = {k: row[k] for k in CONTEXT_FIELDS}
-    if (value["partition"] != "meta_train" or type(value["cut"]) is not int or value["cut"] < 0
-            or any(not isinstance(value[k], str) or not value[k] for k in ("family", "dataset"))
-            or any(not sha256_value(v) for k, v in value.items() if k.endswith("_sha256"))):
+    if (
+        value["partition"] != "meta_train"
+        or type(value["cut"]) is not int
+        or value["cut"] < 0
+        or any(not isinstance(value[k], str) or not value[k] for k in ("family", "dataset"))
+        or any(not sha256_value(v) for k, v in value.items() if k.endswith("_sha256"))
+    ):
         raise ValueError("invalid or nontraining scientific context")
     return value
 
 
 def program(row):
     genome, sha = row.get("genome"), row.get("program_sha256")
-    if (not isinstance(genome, str) or not genome or not sha256_value(sha)
-            or hashlib.sha256(genome.encode()).hexdigest() != sha):
+    if (
+        not isinstance(genome, str)
+        or not genome
+        or not sha256_value(sha)
+        or hashlib.sha256(genome.encode()).hexdigest() != sha
+    ):
         raise ValueError("program bytes/digest disagree")
     return {"genome": genome, "program_sha256": sha}
 

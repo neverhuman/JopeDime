@@ -26,6 +26,7 @@ language over the parsed genome:
 which also gives the findings contract its teeth: a prospector cannot smuggle "I trained a GBM and
 got 0.31" through a field that has to parse as a rate contrast over grammar ops.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -48,12 +49,12 @@ from jope.grammars import FAMILY_LIST_V3, grammar_for
 from . import SCHEMA_VERSION, LeakageError, assert_no_forbidden_inputs, security
 
 # --- Controller-owned limits ---------------------------------------------------------------------
-FINDINGS_BYTE_CAP = 8_192          # the findings payload an agent may return
+FINDINGS_BYTE_CAP = 8_192  # the findings payload an agent may return
 MAX_FINDINGS = 12
-MAX_CONTRASTS = 6                  # contrasts must be PRE-COMMITTED in the spec
+MAX_CONTRASTS = 6  # contrasts must be PRE-COMMITTED in the spec
 MAX_QUESTION_CHARS = 400
-MIN_SUPPORT_N = 30                 # a floor against anecdotes; NOT a reliability fix (see module doc)
-REPLICATION_MIN_RATIO = 0.5        # replication half must retain half the log-magnitude
+MIN_SUPPORT_N = 30  # a floor against anecdotes; NOT a reliability fix (see module doc)
+REPLICATION_MIN_RATIO = 0.5  # replication half must retain half the log-magnitude
 DEFAULT_ENGINE = "featmath"
 ANALYSIS_HARNESS = Path(__file__).resolve().parents[3] / "ops" / "zyal" / "analysis_runner.py"
 
@@ -62,10 +63,21 @@ FINDING_KEYS = ("claim", "effect", "support_n", "contrast")
 # Tokens that mark a *fitted model result*. Enforcement is token-based and vocabulary-aware: `gbm`
 # is a real featmath head op, so "head_op=gbm appears 3.2x more often" is a described contrast and
 # must pass, while "I trained a GBM regressor" must not. See `_model_result_tokens`.
-MODEL_RESULT_TOKENS = frozenset({
-    "auc", "r2", "rmse", "accuracy", "trained", "model", "gbm", "regressor",
-    "classifier", "spearman", "correlation",
-})
+MODEL_RESULT_TOKENS = frozenset(
+    {
+        "auc",
+        "r2",
+        "rmse",
+        "accuracy",
+        "trained",
+        "model",
+        "gbm",
+        "regressor",
+        "classifier",
+        "spearman",
+        "correlation",
+    }
+)
 
 # --- Contrast grammar ----------------------------------------------------------------------------
 CONTRAST_GRAMMAR = "rate(<predicate>) in <stratum> vs <stratum>"
@@ -85,14 +97,14 @@ STRATA: dict[str, object] = {
 }
 
 PREDICATE_ATTRS = (
-    "head_op",        # op of the terminal stage
-    "first_op",       # op of the first stage
-    "has_op",         # op appears anywhere
-    "op_pair",        # 'a>b': a immediately followed by b
+    "head_op",  # op of the terminal stage
+    "first_op",  # op of the first stage
+    "has_op",  # op appears anywhere
+    "op_pair",  # 'a>b': a immediately followed by b
     "terminal_family",  # family declared by the terminal stage
-    "has_family",     # family declared by any stage
-    "cost_class",     # cost class of any stage
-    "n_stages",       # supports = >= <=
+    "has_family",  # family declared by any stage
+    "cost_class",  # cost class of any stage
+    "n_stages",  # supports = >= <=
 )
 
 
@@ -168,8 +180,7 @@ def parse_contrast(text: str, engine: str = DEFAULT_ENGINE) -> Contrast:
     # Cheap belt-and-braces: the grammar vocabulary is fixed, but if it ever grows a token that
     # touches the forbidden boundary we want the failure here rather than in a prompt.
     assert_no_forbidden_inputs([attr, val])
-    return Contrast(text=text.strip(), attr=attr, op=op, value=val,
-                    stratum_a=a, stratum_b=b)
+    return Contrast(text=text.strip(), attr=attr, op=op, value=val, stratum_a=a, stratum_b=b)
 
 
 # --- Spec ----------------------------------------------------------------------------------------
@@ -186,15 +197,19 @@ def analysis_spec_schema() -> dict:
         "required": ["question", "hypothesis", "contrasts", "source"],
         "properties": {
             "question": {
-                "type": "string", "maxLength": MAX_QUESTION_CHARS,
+                "type": "string",
+                "maxLength": MAX_QUESTION_CHARS,
                 "description": "What structural question about genomes are you asking?",
             },
             "hypothesis": {
-                "type": "string", "maxLength": MAX_QUESTION_CHARS,
+                "type": "string",
+                "maxLength": MAX_QUESTION_CHARS,
                 "description": "What do you expect to see, and why? Stated BEFORE measurement.",
             },
             "contrasts": {
-                "type": "array", "minItems": 1, "maxItems": MAX_CONTRASTS,
+                "type": "array",
+                "minItems": 1,
+                "maxItems": MAX_CONTRASTS,
                 "items": {"type": "string", "pattern": CONTRAST_GRAMMAR},
                 "description": (
                     f"Pre-committed contrasts, each of the form {CONTRAST_GRAMMAR!r}. "
@@ -204,7 +219,8 @@ def analysis_spec_schema() -> dict:
                 ),
             },
             "source": {
-                "type": "string", "maxLength": security.MAX_PLUGIN_BYTES,
+                "type": "string",
+                "maxLength": security.MAX_PLUGIN_BYTES,
                 "description": (
                     "Python defining analyze(shard) -> list of findings, each "
                     "{'claim': str, 'effect': float, 'support_n': int, 'contrast': str}. "
@@ -213,8 +229,16 @@ def analysis_spec_schema() -> dict:
             },
         },
         "controller_owned": [
-            "id", "path", "filename", "output", "seed", "split", "image_digest", "timeout_s",
-            "engine", "shard",
+            "id",
+            "path",
+            "filename",
+            "output",
+            "seed",
+            "split",
+            "image_digest",
+            "timeout_s",
+            "engine",
+            "shard",
         ],
     }
 
@@ -314,8 +338,8 @@ def materialize_select_shard(rows, out_dir) -> Path:
     tmp = Path(tempfile.mkdtemp(prefix=".select.tmp-", dir=out_dir))
     try:
         lines = "".join(
-            json.dumps({"row": i, "group": int(group[i]), "genome": str(genome_sel[i])},
-                       sort_keys=True) + "\n"
+            json.dumps({"row": i, "group": int(group[i]), "genome": str(genome_sel[i])}, sort_keys=True)
+            + "\n"
             for i in range(len(genome_sel))
         ).encode()
         (tmp / "genomes.jsonl").write_bytes(lines)
@@ -330,9 +354,7 @@ def materialize_select_shard(rows, out_dir) -> Path:
             "genomes_sha256": hashlib.sha256(lines).hexdigest(),
             "columns": ["y", "group"],
         }
-        (tmp / "manifest.json").write_bytes(
-            json.dumps(manifest, indent=2, sort_keys=True).encode() + b"\n"
-        )
+        (tmp / "manifest.json").write_bytes(json.dumps(manifest, indent=2, sort_keys=True).encode() + b"\n")
         if target.exists():
             shutil.rmtree(target)
         os.replace(tmp, target)
@@ -449,8 +471,9 @@ def _run_command(cmd: list[str], timeout_s: int):
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_s, check=False)
 
 
-def run_analysis(spec_source, shard, image_digest, timeout_s: int = 120,
-                 harness=None, engine: str = DEFAULT_ENGINE) -> dict:
+def run_analysis(
+    spec_source, shard, image_digest, timeout_s: int = 120, harness=None, engine: str = DEFAULT_ENGINE
+) -> dict:
     """Static-check `analyze`, run it against the SELECT shard, and police the findings it returns.
 
     Every path, the mode, and the timeout are minted here. The agent supplies source and nothing
@@ -458,14 +481,17 @@ def run_analysis(spec_source, shard, image_digest, timeout_s: int = 120,
     """
     shard = Path(shard)
     result: dict = {
-        "ok": False, "returncode": None, "accepted": [], "rejected": [], "errors": [],
-        "stdout_tail": "", "stderr_tail": "",
+        "ok": False,
+        "returncode": None,
+        "accepted": [],
+        "rejected": [],
+        "errors": [],
+        "stdout_tail": "",
+        "stderr_tail": "",
     }
     # Checked before anything is written to disk; sandbox_command enforces it again at mount time.
     if shard.name != "select":
-        raise security.SandboxRejection(
-            f"analysis may only read the SELECT shard, got {shard.name!r}"
-        )
+        raise security.SandboxRejection(f"analysis may only read the SELECT shard, got {shard.name!r}")
     if not shard.is_dir():
         raise FileNotFoundError(f"select shard not found: {shard}")
 
@@ -482,8 +508,12 @@ def run_analysis(spec_source, shard, image_digest, timeout_s: int = 120,
         output = work / "output"
         output.mkdir()
         cmd = security.sandbox_command(
-            plugin=plugin, harness=harness, data_shard=shard, output=output,
-            image_digest=image_digest, mode="analysis",
+            plugin=plugin,
+            harness=harness,
+            data_shard=shard,
+            output=output,
+            image_digest=image_digest,
+            mode="analysis",
         )
         try:
             proc = _run_command(cmd, timeout_s)
@@ -521,7 +551,7 @@ def _predicate_hits(contrast: Contrast, genomes: np.ndarray, engine: str) -> np.
     def hit(text: str) -> bool:
         pg = parse(text, engine)
         if not pg.ok or not pg.stages:
-            return False           # '(sym ...)' genomes are not pipelines; never silently counted
+            return False  # '(sym ...)' genomes are not pipelines; never silently counted
         if attr == "head_op":
             return pg.stages[-1].op == value
         if attr == "first_op":
@@ -540,8 +570,9 @@ def _predicate_hits(contrast: Contrast, genomes: np.ndarray, engine: str) -> np.
             return any(s.cost_class == value for s in pg.stages)
         if attr == "n_stages":
             n, target = len(pg.stages), int(value)
-            return n >= target if contrast.op == ">=" else (
-                n <= target if contrast.op == "<=" else n == target)
+            return (
+                n >= target if contrast.op == ">=" else (n <= target if contrast.op == "<=" else n == target)
+            )
         return False  # pragma: no cover - parse_contrast rejects unknown attributes
 
     out = np.zeros(len(genomes), dtype=bool)
@@ -579,8 +610,12 @@ def measure_contrast(contrast, rows, mask=None, engine: str | None = None) -> di
     return {
         "contrast": contrast.text,
         "effect": float(rate_a / rate_b),
-        "rate_a": float(rate_a), "rate_b": float(rate_b),
-        "k_a": k_a, "n_a": n_a, "k_b": k_b, "n_b": n_b,
+        "rate_a": float(rate_a),
+        "rate_b": float(rate_b),
+        "k_a": k_a,
+        "n_a": n_a,
+        "k_b": k_b,
+        "n_b": n_b,
         "support_n": k_a + k_b,
         "n_rows": int(sel.sum()),
     }
@@ -612,8 +647,7 @@ def replicate(finding, rows, seed: int) -> dict:
     """
     errors = check_finding(finding, getattr(rows, "engine", DEFAULT_ENGINE))
     if errors:
-        return {"replicated": False, "reason": "finding failed the findings contract",
-                "errors": errors}
+        return {"replicated": False, "reason": "finding failed the findings contract", "errors": errors}
 
     engine = getattr(rows, "engine", DEFAULT_ENGINE)
     contrast = parse_contrast(finding["contrast"], engine)
@@ -623,7 +657,7 @@ def replicate(finding, rows, seed: int) -> dict:
     keys = np.asarray(sorted(set(str(d) for d in dataset[sel])))
     if len(keys) < 2:
         return {"replicated": False, "reason": "fewer than 2 select datasets; cannot split halves"}
-    order = np.random.RandomState(int(seed) % (2 ** 32)).permutation(len(keys))
+    order = np.random.RandomState(int(seed) % (2**32)).permutation(len(keys))
     half_a_keys = set(keys[order[: len(keys) // 2]])
     in_a = np.asarray([str(d) in half_a_keys for d in dataset])
     mask_a, mask_b = sel & in_a, sel & ~in_a
@@ -655,15 +689,16 @@ def replicate(finding, rows, seed: int) -> dict:
         "n_datasets_half_b": len(keys) - len(half_a_keys),
         # A claim whose own contrast does not reproduce on all of SELECT was never measured as
         # stated; that is a different failure from failing to replicate, so it is reported apart.
-        "claim_matches_full": bool(
-            abs(math.log(full["effect"]) - log_claim) <= math.log(1.25)
-        ),
+        "claim_matches_full": bool(abs(math.log(full["effect"]) - log_claim) <= math.log(1.25)),
         "underpowered": bool(underpowered),
         "replicated": bool(holds and not underpowered),
         "reason": (
-            "support below floor on the replication half" if underpowered
-            else "holds" if holds
-            else "sign flipped" if not sign_agrees
+            "support below floor on the replication half"
+            if underpowered
+            else "holds"
+            if holds
+            else "sign flipped"
+            if not sign_agrees
             else "magnitude below half"
         ),
     }

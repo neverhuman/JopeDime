@@ -29,9 +29,7 @@ from .propose import target_summary_from_vs
 REPO_ROOT = Path(__file__).resolve().parents[2]
 _PRIME_CONFIG = load_config()
 DEFAULT_RUN_DIR = _PRIME_CONFIG.legacy_root / "runs" / "self_play_v33"
-DEFAULT_ART_DIR = (
-    _PRIME_CONFIG.legacy_root / "data" / "processed" / "active_v3_dual_20260706"
-)
+DEFAULT_ART_DIR = _PRIME_CONFIG.legacy_root / "data" / "processed" / "active_v3_dual_20260706"
 DEFAULT_BENCH_DIR = _PRIME_CONFIG.validation_benchmark_root
 DEFAULT_OUT_DIR = _PRIME_CONFIG.artifacts / "full_cv_meta_selector_v2"
 DEFAULT_V1_DIR = DEFAULT_BENCH_DIR / "full_cv_meta_selector_v1"
@@ -75,8 +73,27 @@ RANKISH_OPS = {"rank", "quantile_bins", "quantile", "bins", "winsor"}
 STOCHASTIC_OPS = {"rand_proj", "random_proj", "rff_cos", "rff_sin", "bag"}
 NONLINEAR_REPEAT_OPS = {"sigmoid", "rank", "winsor", "target_bin_encode"}
 FEATURE_FAMILIES = {
-    "base": ("valid", "cache_hit", "folds", "timing_", "cv_oof_", "cv_mean_", "pool_", "head_type=", "engine="),
-    "cv_reliability": ("cvrel_", "cv_fold_", "cv_sorted_", "cv_lcb_", "cv_boot_", "cv_rank_", "cv_margin_", "cv_prob_"),
+    "base": (
+        "valid",
+        "cache_hit",
+        "folds",
+        "timing_",
+        "cv_oof_",
+        "cv_mean_",
+        "pool_",
+        "head_type=",
+        "engine=",
+    ),
+    "cv_reliability": (
+        "cvrel_",
+        "cv_fold_",
+        "cv_sorted_",
+        "cv_lcb_",
+        "cv_boot_",
+        "cv_rank_",
+        "cv_margin_",
+        "cv_prob_",
+    ),
     "pool_context": ("ctx_", "consensus_", "delta_vs_", "rank_", "pct_", "pooldist_"),
     "genome_structure": ("genome_", "gstruct_", "gparam_", "op=", "family=", "ngram_"),
     "dataset_stats": ("ds_", "dsstat_", "shift_"),
@@ -234,7 +251,9 @@ def main(argv: list[str] | None = None) -> int:
         "validation_ledger": str(validation_path),
     }
     joblib.dump(model_artifact, out_dir / "model_artifact.joblib")
-    write_feature_importance(out_dir / "feature_importance.csv", final_models["stage1_reg_model"], feature_names)
+    write_feature_importance(
+        out_dir / "feature_importance.csv", final_models["stage1_reg_model"], feature_names
+    )
     write_shap_stub(out_dir / "shap_summary.csv", feature_names)
 
     choices_by_mode = build_validation_choices(
@@ -349,14 +368,11 @@ def build_source_audit(
         "current_validation_k": bench_dir / "ledger.jsonl",
     }
     ledger_counts = {
-        name: count_eval_ledger(path, validation_hashes)
-        for name, path in ledgers.items()
-        if path.exists()
+        name: count_eval_ledger(path, validation_hashes) for name, path in ledgers.items() if path.exists()
     }
-    recoverable_train = (
-        ledger_counts.get("self_play_v33_train_proposals", {}).get("test_labeled_rows", 0)
-        + ledger_counts.get("self_play_v33_gp_mutants", {}).get("test_labeled_rows", 0)
-    )
+    recoverable_train = ledger_counts.get("self_play_v33_train_proposals", {}).get(
+        "test_labeled_rows", 0
+    ) + ledger_counts.get("self_play_v33_gp_mutants", {}).get("test_labeled_rows", 0)
     best_reconciled = max((r["gen1_30_total"] for r in metrics_reconciliations), default=0)
     return {
         "expected_full_cv_gen1_30": {
@@ -481,7 +497,9 @@ def load_eval_rows(
     df = pd.DataFrame(rows)
     if df.empty:
         return df
-    df = df.sort_values(["dataset_hash", "source_path", "source_ordinal"], kind="stable").reset_index(drop=True)
+    df = df.sort_values(["dataset_hash", "source_path", "source_ordinal"], kind="stable").reset_index(
+        drop=True
+    )
     df["candidate_ordinal"] = df.groupby("dataset_hash").cumcount()
     return df
 
@@ -513,7 +531,9 @@ def record_from_eval_row(
     pool = pool_lookup.get((h, engine, genome), {})
     meta = split_meta.get(h, {})
     dataset_features = dataset_feature_summary(h, meta)
-    genome_features = parse_genome_features(genome, pool.get("family_bitmap") if isinstance(pool, dict) else None)
+    genome_features = parse_genome_features(
+        genome, pool.get("family_bitmap") if isinstance(pool, dict) else None
+    )
     fold_stats = summarize_folds(fold_r2)
     rec: dict[str, Any] = {
         "dataset_hash": h,
@@ -525,7 +545,9 @@ def record_from_eval_row(
         "cache_hit": bool(row.get("cache_hit")),
         "folds": int(row.get("folds") or len(fold_r2) or 0),
         "evaluator_version": str(row.get("evaluator_version") or ""),
-        "head_type": str(row.get("head_type") or pool.get("head_type") or genome_features.get("head_type") or ""),
+        "head_type": str(
+            row.get("head_type") or pool.get("head_type") or genome_features.get("head_type") or ""
+        ),
         "stage_count": finite_float(row.get("stage_count")),
         "transform_count": finite_float(row.get("transform_count")),
         "timing_total_ms": finite_float(nested_get(row, ("timings", "total_ms"))),
@@ -538,14 +560,22 @@ def record_from_eval_row(
         "label_test_rmse": test_rmse,
         "label_test_r2": finite_float(nested_get(row, ("metrics", "test", "r2"))),
         "label_test_mae": finite_float(nested_get(row, ("metrics", "test", "mae"))),
-        "pool_reward_mean": finite_float(pool.get("reward_mean", pool.get("reward")) if isinstance(pool, dict) else None),
+        "pool_reward_mean": finite_float(
+            pool.get("reward_mean", pool.get("reward")) if isinstance(pool, dict) else None
+        ),
         "pool_reward_std": finite_float(pool.get("reward_std") if isinstance(pool, dict) else None),
         "pool_reward_lcb": finite_float(pool.get("reward_lcb") if isinstance(pool, dict) else None),
-        "pool_reward_percentile": finite_float(pool.get("reward_percentile_in_engine") if isinstance(pool, dict) else None),
+        "pool_reward_percentile": finite_float(
+            pool.get("reward_percentile_in_engine") if isinstance(pool, dict) else None
+        ),
         "pool_p_bad": finite_float(pool.get("p_bad") if isinstance(pool, dict) else None),
-        "pool_selection_key": finite_float(pool.get("selection_key", pool.get("final_selection_key")) if isinstance(pool, dict) else None),
+        "pool_selection_key": finite_float(
+            pool.get("selection_key", pool.get("final_selection_key")) if isinstance(pool, dict) else None
+        ),
         "pool_selection_score": finite_float(pool.get("selection_score") if isinstance(pool, dict) else None),
-        "pool_selected_for_eval_rank": finite_float(pool.get("selected_for_eval_rank") if isinstance(pool, dict) else None),
+        "pool_selected_for_eval_rank": finite_float(
+            pool.get("selected_for_eval_rank") if isinstance(pool, dict) else None
+        ),
         "pool_decoder": str(pool.get("decoder") or "") if isinstance(pool, dict) else "",
         "pool_generation": finite_float(pool.get("generation") if isinstance(pool, dict) else None),
         "pool_candidate_risk": str(pool.get("candidate_risk_reason") or "") if isinstance(pool, dict) else "",
@@ -638,7 +668,9 @@ def dataset_numeric_stats(train_csv: Path, test_csv: Path) -> dict[str, Any]:
     rec["dsstat_duplicate_row_ratio"] = safe_div(int(train_df.duplicated().sum()), len(train_df))
     nunique = train_df.nunique(dropna=False)
     rec["dsstat_constant_cols"] = float((nunique <= 1).sum())
-    rec["dsstat_near_constant_cols"] = float((train_num.std(numeric_only=True, ddof=0).fillna(0.0) <= 1e-6).sum())
+    rec["dsstat_near_constant_cols"] = float(
+        (train_num.std(numeric_only=True, ddof=0).fillna(0.0) <= 1e-6).sum()
+    )
 
     means = train_num.mean(numeric_only=True).to_numpy(np.float64, copy=False)
     stds = train_num.std(numeric_only=True, ddof=0).to_numpy(np.float64, copy=False)
@@ -661,12 +693,21 @@ def dataset_numeric_stats(train_csv: Path, test_csv: Path) -> dict[str, Any]:
         if common > 0:
             train_mean = train_num.iloc[:, :common].mean(numeric_only=True).to_numpy(np.float64, copy=False)
             test_mean = test_num.iloc[:, :common].mean(numeric_only=True).to_numpy(np.float64, copy=False)
-            train_std = train_num.iloc[:, :common].std(numeric_only=True, ddof=0).replace(0.0, np.nan).to_numpy(np.float64, copy=False)
-            test_std = test_num.iloc[:, :common].std(numeric_only=True, ddof=0).to_numpy(np.float64, copy=False)
+            train_std = (
+                train_num.iloc[:, :common]
+                .std(numeric_only=True, ddof=0)
+                .replace(0.0, np.nan)
+                .to_numpy(np.float64, copy=False)
+            )
+            test_std = (
+                test_num.iloc[:, :common].std(numeric_only=True, ddof=0).to_numpy(np.float64, copy=False)
+            )
             shift = np.abs(train_mean - test_mean) / np.where(np.isfinite(train_std), train_std, 1.0)
             rec["shift_mean_abs_z_mean"] = float(np.nanmean(shift))
             rec["shift_mean_abs_z_p90"] = float(np.nanpercentile(shift, 90))
-            std_shift = np.abs(train_std - test_std) / np.where(np.abs(train_std) > 1e-12, np.abs(train_std), 1.0)
+            std_shift = np.abs(train_std - test_std) / np.where(
+                np.abs(train_std) > 1e-12, np.abs(train_std), 1.0
+            )
             rec["shift_std_ratio_mean"] = float(np.nanmean(std_shift))
     _DATASET_NUMERIC_CACHE[cache_key] = rec
     return rec
@@ -833,7 +874,11 @@ def structured_genome_features(
     rec["gstruct_redflag_repeated_sigmoid"] = 1.0 if lower_genome.count("sigmoid") >= 2 else 0.0
     rec["gstruct_redflag_repeated_rank"] = 1.0 if lower_genome.count("rank") >= 2 else 0.0
     rec["gstruct_est_feature_explosion"] = float(
-        sum(1.0 + len(s.get("params", {})) for s in transforms if s["op"] in {"cheb", "poly_interact", "bin_onehot", "quantile_bins"})
+        sum(
+            1.0 + len(s.get("params", {}))
+            for s in transforms
+            if s["op"] in {"cheb", "poly_interact", "bin_onehot", "quantile_bins"}
+        )
     )
     if head_type:
         rec[f"gstruct_head={head_type}"] = 1.0
@@ -907,11 +952,15 @@ def add_group_labels(df: pd.DataFrame) -> pd.DataFrame:
     df["label_regret"] = df["label_test_rmse"] - df["label_dataset_oracle_rmse"]
     df["label_test_rank"] = df.groupby("dataset_hash")["label_test_rmse"].rank(method="min", ascending=True)
     group_size = df.groupby("dataset_hash")["label_test_rmse"].transform("count").clip(lower=1)
-    df["label_test_percentile"] = np.where(group_size > 1, (df["label_test_rank"] - 1.0) / (group_size - 1.0), 0.0)
+    df["label_test_percentile"] = np.where(
+        group_size > 1, (df["label_test_rank"] - 1.0) / (group_size - 1.0), 0.0
+    )
     df["label_oracle_top1"] = (df["label_test_rank"] <= 1.0).astype(np.float32)
     df["label_oracle_top3"] = (df["label_test_rank"] <= 3.0).astype(np.float32)
     df["label_beats_robust"] = 0.0
-    robust_best = df.loc[df.groupby("dataset_hash")["cv_score_robust"].idxmax()][["dataset_hash", "label_test_rmse"]]
+    robust_best = df.loc[df.groupby("dataset_hash")["cv_score_robust"].idxmax()][
+        ["dataset_hash", "label_test_rmse"]
+    ]
     robust_best = robust_best.rename(columns={"label_test_rmse": "robust_pick_rmse"})
     df = df.merge(robust_best, on="dataset_hash", how="left")
     df["label_beats_robust"] = (df["label_test_rmse"] <= df["robust_pick_rmse"] + 1e-12).astype(np.float32)
@@ -934,7 +983,9 @@ def add_within_dataset_context_features(df: pd.DataFrame) -> pd.DataFrame:
     for col, asc in metric_specs:
         rank_col = f"ctx_rank_{col}"
         pct_col = f"ctx_pct_{col}"
-        df[rank_col] = df.groupby("dataset_hash")[col].rank(method="average", ascending=asc, na_option="bottom")
+        df[rank_col] = df.groupby("dataset_hash")[col].rank(
+            method="average", ascending=asc, na_option="bottom"
+        )
         size = df.groupby("dataset_hash")[col].transform("count").replace(0, np.nan)
         df[pct_col] = df[rank_col] / size
 
@@ -946,17 +997,28 @@ def add_within_dataset_context_features(df: pd.DataFrame) -> pd.DataFrame:
         work["ctx_head_diversity"] = float(work["head_type"].fillna("").nunique())
         work["ctx_engine_diversity"] = float(work["engine"].fillna("").nunique())
         work["ctx_duplicate_genome_count"] = float(size - work["canonical_genome"].nunique())
-        work["ctx_target_aware_frac"] = float((work.get("family=target_aware", 0.0) > 0).mean()) if "family=target_aware" in work.columns else 0.0
+        work["ctx_target_aware_frac"] = (
+            float((work.get("family=target_aware", 0.0) > 0).mean())
+            if "family=target_aware" in work.columns
+            else 0.0
+        )
         work["ctx_high_gap_frac"] = float((work["train_cv_r2_gap"].fillna(0.0) > 0.05).mean())
         robust_scores = work["cv_score_robust"].astype(float)
         work["ctx_cv_entropy"] = shannon_entropy(robust_scores.to_numpy(float))
-        work["ctx_topk_robust_spread"] = float(robust_scores.nlargest(min(5, size)).max() - robust_scores.nlargest(min(5, size)).min()) if size else 0.0
+        work["ctx_topk_robust_spread"] = (
+            float(robust_scores.nlargest(min(5, size)).max() - robust_scores.nlargest(min(5, size)).min())
+            if size
+            else 0.0
+        )
         work["ctx_robust_z"] = groupwise_zscore(work["cv_score_robust"])
         work["ctx_oof_z"] = groupwise_zscore(work["cv_oof_r2"])
         work["ctx_mean_z"] = groupwise_zscore(work["cv_mean_r2"])
         work["ctx_policy_z"] = groupwise_zscore(work["pool_selection_key"])
-        work["consensus_borda"] = (
-            -(work["ctx_rank_cv_oof_r2"] + work["ctx_rank_cv_mean_r2"] + work["ctx_rank_cv_score_robust"] + work["ctx_rank_pool_selection_key"].fillna(size))
+        work["consensus_borda"] = -(
+            work["ctx_rank_cv_oof_r2"]
+            + work["ctx_rank_cv_mean_r2"]
+            + work["ctx_rank_cv_score_robust"]
+            + work["ctx_rank_pool_selection_key"].fillna(size)
         )
         work["consensus_rrf"] = (
             reciprocal_rank(work["ctx_rank_cv_oof_r2"])
@@ -964,18 +1026,32 @@ def add_within_dataset_context_features(df: pd.DataFrame) -> pd.DataFrame:
             + reciprocal_rank(work["ctx_rank_cv_score_robust"])
             + reciprocal_rank(work["ctx_rank_pool_selection_key"])
         )
-        work["consensus_disagreement_policy_cv"] = np.abs(work["ctx_pct_pool_selection_key"].fillna(1.0) - work["ctx_pct_cv_score_robust"])
+        work["consensus_disagreement_policy_cv"] = np.abs(
+            work["ctx_pct_pool_selection_key"].fillna(1.0) - work["ctx_pct_cv_score_robust"]
+        )
 
         robust_top = work.sort_values("cv_score_robust", ascending=False, kind="stable").iloc[0]
-        policy_top = work.sort_values("pool_selection_key", ascending=False, kind="stable").iloc[0] if work["pool_selection_key"].notna().any() else robust_top
+        policy_top = (
+            work.sort_values("pool_selection_key", ascending=False, kind="stable").iloc[0]
+            if work["pool_selection_key"].notna().any()
+            else robust_top
+        )
         oof_top = work.sort_values("cv_oof_r2", ascending=False, kind="stable").iloc[0]
         mean_top = work.sort_values("cv_mean_r2", ascending=False, kind="stable").iloc[0]
-        fast_top = work.sort_values(["timing_total_ms", "cv_score_robust"], ascending=[True, False], kind="stable").iloc[0]
+        fast_top = work.sort_values(
+            ["timing_total_ms", "cv_score_robust"], ascending=[True, False], kind="stable"
+        ).iloc[0]
         for idx, row in work.iterrows():
             head_type = str(row.get("head_type") or "")
             same_head = work[work["head_type"] == head_type] if head_type else work.iloc[:0]
-            same_head_top = same_head.sort_values("cv_score_robust", ascending=False, kind="stable").iloc[0] if not same_head.empty else robust_top
-            updates = comparative_context_row(row, robust_top, policy_top, oof_top, mean_top, fast_top, same_head_top)
+            same_head_top = (
+                same_head.sort_values("cv_score_robust", ascending=False, kind="stable").iloc[0]
+                if not same_head.empty
+                else robust_top
+            )
+            updates = comparative_context_row(
+                row, robust_top, policy_top, oof_top, mean_top, fast_top, same_head_top
+            )
             for key, value in updates.items():
                 work.at[idx, key] = value
         out_frames.append(work)
@@ -996,12 +1072,18 @@ def comparative_context_row(
     same_head_top: pd.Series,
 ) -> dict[str, float]:
     return {
-        "delta_vs_top_robust_cv": safe_sub(row.get("cv_score_robust"), robust_top.get("cv_score_robust")) or 0.0,
+        "delta_vs_top_robust_cv": safe_sub(row.get("cv_score_robust"), robust_top.get("cv_score_robust"))
+        or 0.0,
         "delta_vs_top_robust_oof": safe_sub(row.get("cv_oof_r2"), robust_top.get("cv_oof_r2")) or 0.0,
-        "delta_vs_top_policy_selection": safe_sub(row.get("pool_selection_key"), policy_top.get("pool_selection_key")) or 0.0,
-        "delta_vs_top_policy_cv": safe_sub(row.get("cv_score_robust"), policy_top.get("cv_score_robust")) or 0.0,
+        "delta_vs_top_policy_selection": safe_sub(
+            row.get("pool_selection_key"), policy_top.get("pool_selection_key")
+        )
+        or 0.0,
+        "delta_vs_top_policy_cv": safe_sub(row.get("cv_score_robust"), policy_top.get("cv_score_robust"))
+        or 0.0,
         "delta_vs_fast_good_cv": safe_sub(row.get("cv_score_robust"), fast_top.get("cv_score_robust")) or 0.0,
-        "delta_vs_same_head_cv": safe_sub(row.get("cv_score_robust"), same_head_top.get("cv_score_robust")) or 0.0,
+        "delta_vs_same_head_cv": safe_sub(row.get("cv_score_robust"), same_head_top.get("cv_score_robust"))
+        or 0.0,
         "ctx_margin_to_rank2": rank_margin_from_top(row, robust_top, "cv_score_robust"),
         "ctx_margin_oof_to_best": safe_sub(row.get("cv_oof_r2"), oof_top.get("cv_oof_r2")) or 0.0,
         "ctx_margin_mean_to_best": safe_sub(row.get("cv_mean_r2"), mean_top.get("cv_mean_r2")) or 0.0,
@@ -1025,7 +1107,11 @@ def groupwise_zscore(series: pd.Series) -> pd.Series:
 
 
 def reciprocal_rank(series: pd.Series) -> pd.Series:
-    values = series.astype(float).replace([np.inf, -np.inf], np.nan).fillna(series.max(skipna=True) if series.notna().any() else 999.0)
+    values = (
+        series.astype(float)
+        .replace([np.inf, -np.inf], np.nan)
+        .fillna(series.max(skipna=True) if series.notna().any() else 999.0)
+    )
     return 1.0 / (50.0 + values)
 
 
@@ -1043,7 +1129,9 @@ def shannon_entropy(values: np.ndarray) -> float:
 def compute_cv_red_flag_label(df: pd.DataFrame) -> np.ndarray:
     high_cv = df["ctx_pct_cv_score_robust"].fillna(1.0) <= 0.2
     poor_test = df["label_test_percentile"].fillna(0.0) >= 0.5
-    big_gap = df["label_regret"].fillna(0.0) > df.groupby("dataset_hash")["label_regret"].transform("median").fillna(0.0)
+    big_gap = df["label_regret"].fillna(0.0) > df.groupby("dataset_hash")["label_regret"].transform(
+        "median"
+    ).fillna(0.0)
     return (high_cv & poor_test & big_gap).astype(np.float32).to_numpy()
 
 
@@ -1128,7 +1216,9 @@ def cross_validate_components(
         stage1_rank[va_idx] = predict_stage1_ranker(rank_model, x_train[va_idx])
         risk_model = train_risk_gate(x_train[tr_idx], y_risk[tr_idx], seed=random_state + 200 + fold)
         risk_pred[va_idx] = predict_binary_model(risk_model, x_train[va_idx])
-        pair_model = train_pairwise_anchor_model(train_df.iloc[tr_idx].reset_index(drop=True), x_train[tr_idx], seed=random_state + 300 + fold)
+        pair_model = train_pairwise_anchor_model(
+            train_df.iloc[tr_idx].reset_index(drop=True), x_train[tr_idx], seed=random_state + 300 + fold
+        )
         pairwise_pred[va_idx] = predict_pairwise_anchor_scores(
             df=train_df.iloc[va_idx].reset_index(drop=True),
             x=x_train[va_idx],
@@ -1279,7 +1369,11 @@ def anchor_rows_for_group(group: pd.DataFrame) -> list[pd.Series]:
     anchors.append(group.sort_values("cv_mean_r2", ascending=False, kind="stable").iloc[0])
     if group["pool_selection_key"].notna().any():
         anchors.append(group.sort_values("pool_selection_key", ascending=False, kind="stable").iloc[0])
-    anchors.append(group.sort_values(["timing_total_ms", "cv_score_robust"], ascending=[True, False], kind="stable").iloc[0])
+    anchors.append(
+        group.sort_values(
+            ["timing_total_ms", "cv_score_robust"], ascending=[True, False], kind="stable"
+        ).iloc[0]
+    )
     unique = []
     seen = set()
     for row in anchors:
@@ -1301,7 +1395,9 @@ def predict_pairwise_anchor_scores(df: pd.DataFrame, x: sparse.csr_matrix, model
     scores = np.zeros(len(df), dtype=np.float32)
     for _, group in df.groupby("dataset_hash", sort=False):
         anchors = anchor_rows_for_group(group)
-        anchor_positions = [int(pos) for pos in group.index if any(int(pos) == int(anchor.name) for anchor in anchors)]
+        anchor_positions = [
+            int(pos) for pos in group.index if any(int(pos) == int(anchor.name) for anchor in anchors)
+        ]
         if not anchor_positions:
             continue
         pos_map = {int(idx): i for i, idx in enumerate(group.index.tolist())}
@@ -1315,7 +1411,11 @@ def predict_pairwise_anchor_scores(df: pd.DataFrame, x: sparse.csr_matrix, model
                 diff = x[group.index[left_pos]] - x[group.index[right_pos]]
                 prob = predict_binary_model(model, diff)
                 values.append(float(prob[0]))
-            scores[group.index.get_loc(idx) if isinstance(group.index, pd.RangeIndex) else group.index.tolist().index(idx)] = float(np.mean(values)) if values else 0.5
+            scores[
+                group.index.get_loc(idx)
+                if isinstance(group.index, pd.RangeIndex)
+                else group.index.tolist().index(idx)
+            ] = float(np.mean(values)) if values else 0.5
     if len(df.index) and not isinstance(df.index, pd.RangeIndex):
         aligned = np.zeros(len(df), dtype=np.float32)
         for i, idx in enumerate(df.index.tolist()):
@@ -1351,7 +1451,9 @@ def choose_blend_weights(train_df: pd.DataFrame) -> dict[str, Any]:
         robust_picks = pick_rows(train_df.assign(_score=train_df["cv_score_robust"]), "_score")
         beat_robust = mean_or_none(
             [
-                1.0 if float(picks[h]["label_test_rmse"]) <= float(robust_picks[h]["label_test_rmse"]) + 1e-12 else 0.0
+                1.0
+                if float(picks[h]["label_test_rmse"]) <= float(robust_picks[h]["label_test_rmse"]) + 1e-12
+                else 0.0
                 for h in picks
                 if h in robust_picks
             ]
@@ -1457,7 +1559,9 @@ def robust_top_risk(df: pd.DataFrame) -> np.ndarray:
     return out
 
 
-def build_model_compare(train_df: pd.DataFrame, component_compare: list[dict[str, Any]], blend_result: dict[str, Any]) -> list[dict[str, Any]]:
+def build_model_compare(
+    train_df: pd.DataFrame, component_compare: list[dict[str, Any]], blend_result: dict[str, Any]
+) -> list[dict[str, Any]]:
     rows = []
     baseline_specs = {
         "cv_mean_full": train_df["cv_mean_r2"].to_numpy(np.float32),
@@ -1500,7 +1604,18 @@ def run_feature_ablations(
         ("base_plus_pool_context", ["base", "pool_context"]),
         ("base_plus_genome_structure", ["base", "genome_structure"]),
         ("base_plus_dataset_stats", ["base", "dataset_stats"]),
-        ("full", ["base", "cv_reliability", "pool_context", "genome_structure", "dataset_stats", "anchor", "other"]),
+        (
+            "full",
+            [
+                "base",
+                "cv_reliability",
+                "pool_context",
+                "genome_structure",
+                "dataset_stats",
+                "anchor",
+                "other",
+            ],
+        ),
     ]
     rows = []
     y_rmse = train_df["label_test_rmse"].to_numpy(np.float32)
@@ -1512,7 +1627,9 @@ def run_feature_ablations(
             continue
         pred = np.full(len(train_df), np.nan, dtype=np.float32)
         for fold, (tr_idx, va_idx) in enumerate(splitter.split(x_train, y_rmse, groups), start=1):
-            model = train_stage1_regressor(x_train[tr_idx][:, cols], y_rmse[tr_idx], seed=random_state + 500 + fold)
+            model = train_stage1_regressor(
+                x_train[tr_idx][:, cols], y_rmse[tr_idx], seed=random_state + 500 + fold
+            )
             pred[va_idx] = -np.asarray(model.predict(x_train[va_idx][:, cols]), dtype=np.float32)
         metrics = evaluate_scores(train_df, pred)
         metrics.update({"ablation": name, "families": ",".join(families), "feature_count": int(cols.sum())})
@@ -1551,11 +1668,15 @@ def fit_final_components(
     stage1_rank = predict_stage1_ranker(stage1_rank_model, x_train)
     risk_gate_model = train_risk_gate(x_train, y_risk, seed=random_state + 200)
     risk_gate = predict_binary_model(risk_gate_model, x_train)
-    pairwise_model = train_pairwise_anchor_model(train_df.reset_index(drop=True), x_train, seed=random_state + 300)
+    pairwise_model = train_pairwise_anchor_model(
+        train_df.reset_index(drop=True), x_train, seed=random_state + 300
+    )
     train_df["score_stage1_reg"] = stage1_reg
     train_df["score_stage1_rank"] = stage1_rank
     train_df["score_risk_gate"] = risk_gate
-    train_df["score_pairwise"] = predict_pairwise_anchor_scores(train_df.reset_index(drop=True), x_train, pairwise_model)
+    train_df["score_pairwise"] = predict_pairwise_anchor_scores(
+        train_df.reset_index(drop=True), x_train, pairwise_model
+    )
     return {
         "stage1_reg": stage1_reg_model,
         "stage1_rank": predict_stage1_ranker(stage1_rank_model, x_val),
@@ -1568,7 +1689,9 @@ def fit_final_components(
 
 
 def evaluate_scores(df: pd.DataFrame, scores: np.ndarray) -> dict[str, Any]:
-    work = df[["dataset_hash", "label_test_rmse", "label_regret", "label_relevance", "label_test_rank"]].copy()
+    work = df[
+        ["dataset_hash", "label_test_rmse", "label_regret", "label_relevance", "label_test_rank"]
+    ].copy()
     work["score"] = scores
     picks = []
     ndcgs = []
@@ -1672,7 +1795,9 @@ def load_choices_jsonl(path: Path) -> dict[str, dict[str, Any]]:
     return out
 
 
-def choose_from_current_per_ds(current: dict[str, list[dict[str, Any]]], mode: str) -> dict[str, dict[str, Any]]:
+def choose_from_current_per_ds(
+    current: dict[str, list[dict[str, Any]]], mode: str
+) -> dict[str, dict[str, Any]]:
     out: dict[str, dict[str, Any]] = {}
     for h, rows in current.items():
         ok = [r for r in rows if finite_float(r.get("test_rmse")) is not None]
@@ -1681,8 +1806,17 @@ def choose_from_current_per_ds(current: dict[str, list[dict[str, Any]]], mode: s
         if mode == "top1":
             pick = min(ok, key=lambda r: int(r.get("rank") or 0))
         elif mode == "cv_select":
-            withcv = [r for r in ok if finite_float(r.get("score_robust")) is not None or finite_float(r.get("oof_r2")) is not None]
-            pick = max(withcv, key=lambda r: probe_score(r)) if withcv else min(ok, key=lambda r: int(r.get("rank") or 0))
+            withcv = [
+                r
+                for r in ok
+                if finite_float(r.get("score_robust")) is not None
+                or finite_float(r.get("oof_r2")) is not None
+            ]
+            pick = (
+                max(withcv, key=lambda r: probe_score(r))
+                if withcv
+                else min(ok, key=lambda r: int(r.get("rank") or 0))
+            )
         elif mode == "best_k":
             pick = min(ok, key=lambda r: float(r["test_rmse"]))
         else:
@@ -1763,7 +1897,9 @@ def build_elo_report(
         modes_report[mode] = {**row, "top_incumbents": res.get("top_incumbents")}
         per_dataset_by_mode[mode] = res["per_dataset"]
 
-    reproduction = reproduce_current_metrics(current_per_ds_path, current_metrics_path, validation_hashes, double_holdout_hashes)
+    reproduction = reproduce_current_metrics(
+        current_per_ds_path, current_metrics_path, validation_hashes, double_holdout_hashes
+    )
     jable = load_jable_summary(jable_path)
     report = {
         "schema_version": "full_cv_meta_selector_v2",
@@ -1840,7 +1976,12 @@ def reproduce_current_metrics(
             modes[mode]["published_elo"] is not None
             and abs(float(modes[mode]["published_elo"]) - float(res["elo"])) <= 0.11
         )
-    return {"status": "ok", "per_ds_path": str(per_ds_path), "metrics_path": str(metrics_path), "modes": modes}
+    return {
+        "status": "ok",
+        "per_ds_path": str(per_ds_path),
+        "metrics_path": str(metrics_path),
+        "modes": modes,
+    }
 
 
 def load_jable_summary(path: Path) -> dict[str, Any]:
@@ -1856,7 +1997,9 @@ def load_jable_summary(path: Path) -> dict[str, Any]:
     }
 
 
-def build_hard_misses(val_df: pd.DataFrame, choices_by_mode: dict[str, dict[str, dict[str, Any]]]) -> dict[str, Any]:
+def build_hard_misses(
+    val_df: pd.DataFrame, choices_by_mode: dict[str, dict[str, dict[str, Any]]]
+) -> dict[str, Any]:
     robust = choices_by_mode.get("robust_cv_full", {})
     v2 = choices_by_mode.get("meta_selector_v2", {})
     misses = []
@@ -1919,7 +2062,9 @@ def build_oracle_gap_report(per_dataset_by_mode: dict[str, Any]) -> dict[str, An
         oracle_rmse = finite_float(oracle_row.get("rmse", oracle_row.get("test_rmse")))
         robust_row = robust.get(h)
         v2_row = v2.get(h)
-        robust_rmse = finite_float(robust_row.get("rmse", robust_row.get("test_rmse"))) if robust_row else None
+        robust_rmse = (
+            finite_float(robust_row.get("rmse", robust_row.get("test_rmse"))) if robust_row else None
+        )
         v2_rmse = finite_float(v2_row.get("rmse", v2_row.get("test_rmse"))) if v2_row else None
         if oracle_rmse is None or robust_rmse is None or v2_rmse is None:
             continue
@@ -1995,7 +2140,9 @@ def write_feature_importance(path: Path, model: Any, feature_names: list[str]) -
     rows = []
     if values is not None:
         arr = np.asarray(values, dtype=float).reshape(-1)
-        for name, value in sorted(zip(feature_names, arr, strict=False), key=lambda item: -abs(item[1]))[:500]:
+        for name, value in sorted(zip(feature_names, arr, strict=False), key=lambda item: -abs(item[1]))[
+            :500
+        ]:
             rows.append({"feature": name, "importance": float(value)})
     pd.DataFrame(rows, columns=["feature", "importance"]).to_csv(path, index=False)
 
@@ -2015,7 +2162,9 @@ def write_json(path: Path, data: Any) -> None:
     path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def write_readme(path: Path, *, elo_report: dict[str, Any], blend_result: dict[str, Any], ablations: list[dict[str, Any]]) -> None:
+def write_readme(
+    path: Path, *, elo_report: dict[str, Any], blend_result: dict[str, Any], ablations: list[dict[str, Any]]
+) -> None:
     modes = elo_report.get("modes", {})
     v2 = modes.get("meta_selector_v2", {})
     robust = modes.get("robust_cv_full", {})

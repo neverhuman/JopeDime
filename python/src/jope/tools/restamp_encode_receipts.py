@@ -1,4 +1,5 @@
 """Re-stamp expansion encode receipts. Lock is not the blocker."""
+
 from __future__ import annotations
 
 import json
@@ -15,8 +16,10 @@ def restamp(receipt, lock_held=False):
     if lock_held:
         out["lock_held"] = True
         out["lock_diagnosis"] = "held"
-    elif claimed == STALE or claimed == "encoding-service.lock" or (
-        isinstance(claimed, str) and "encoding-service.lock" in claimed
+    elif (
+        claimed == STALE
+        or claimed == "encoding-service.lock"
+        or (isinstance(claimed, str) and "encoding-service.lock" in claimed)
     ):
         out["apply_contexts_blocked_by"] = REAL_BLOCKER
         out["lock_held"] = False

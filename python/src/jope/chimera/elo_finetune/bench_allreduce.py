@@ -41,15 +41,19 @@ def main() -> None:
     if rank == 0:
         bus_gb = 2 * (dist.get_world_size() - 1) / dist.get_world_size()
         bus_gb *= payload.numel() * payload.element_size() / 1e9
-        print(json.dumps({
-            "world": dist.get_world_size(),
-            "payload_mb": round(payload.numel() * payload.element_size() / 1e6, 1),
-            "median_s": round(median, 3),
-            "min_s": round(times[0], 3),
-            "max_s": round(times[-1], 3),
-            "effective_gbps": round(bus_gb / median * 8, 2),
-            "go": median < 2.5,
-        }))
+        print(
+            json.dumps(
+                {
+                    "world": dist.get_world_size(),
+                    "payload_mb": round(payload.numel() * payload.element_size() / 1e6, 1),
+                    "median_s": round(median, 3),
+                    "min_s": round(times[0], 3),
+                    "max_s": round(times[-1], 3),
+                    "effective_gbps": round(bus_gb / median * 8, 2),
+                    "go": median < 2.5,
+                }
+            )
+        )
     dist.destroy_process_group()
 
 

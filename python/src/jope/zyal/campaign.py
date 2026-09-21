@@ -19,6 +19,7 @@ campaign into an unpublishable one:
 The path-traversal guard on `run_root` exists because the controller mints run ids from config, and
 a run id of `../../../etc` would otherwise let a config file choose where artifacts land.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -74,6 +75,7 @@ class CampaignError(RuntimeError):
 
 # --- settings ----------------------------------------------------------------------------------
 
+
 def _default_controller_src() -> Path:
     return Path(__file__).resolve().parent
 
@@ -108,9 +110,7 @@ class CampaignSettings:
         jail = self.runs_base
         candidate = (jail / self.run_id).resolve()
         if candidate == jail or jail not in candidate.parents:
-            raise CampaignError(
-                f"run_root {candidate} escapes {jail}; the controller owns every path"
-            )
+            raise CampaignError(f"run_root {candidate} escapes {jail}; the controller owns every path")
         self._run_root = candidate
 
     @property
@@ -149,6 +149,7 @@ def ensure_dirs(settings: CampaignSettings) -> None:
 
 
 # --- atomic io ---------------------------------------------------------------------------------
+
 
 def atomic_json(path, obj) -> str:
     """Write `obj` as JSON via tmp + os.replace. Returns the sha256 of the bytes written.
@@ -201,10 +202,14 @@ def emit_event(settings: CampaignSettings, kind: str, payload: dict) -> None:
     never corrupt one.
     """
     settings.run_root.mkdir(parents=True, exist_ok=True)
-    line = json.dumps(
-        {"ts_ms": int(time.time() * 1000), "kind": kind, "payload": payload},
-        sort_keys=True, ensure_ascii=False,
-    ) + "\n"
+    line = (
+        json.dumps(
+            {"ts_ms": int(time.time() * 1000), "kind": kind, "payload": payload},
+            sort_keys=True,
+            ensure_ascii=False,
+        )
+        + "\n"
+    )
     with open(settings.events_path, "a", encoding="utf-8") as handle:
         handle.write(line)
         handle.flush()
@@ -212,10 +217,12 @@ def emit_event(settings: CampaignSettings, kind: str, payload: dict) -> None:
 
 # --- controller freeze -------------------------------------------------------------------------
 
+
 def _controller_sources(settings: CampaignSettings) -> dict[str, Path]:
     src = settings.controller_src
-    return {p.relative_to(src).as_posix(): p for p in sorted(src.rglob("*.py"))
-            if "__pycache__" not in p.parts}
+    return {
+        p.relative_to(src).as_posix(): p for p in sorted(src.rglob("*.py")) if "__pycache__" not in p.parts
+    }
 
 
 def freeze_controller(settings: CampaignSettings) -> dict:
@@ -335,8 +342,11 @@ class CampaignStore:
     # -- budget
     def budget(self) -> dict:
         row = self.conn.execute("SELECT total_usd, spent_usd FROM budget WHERE id = 1").fetchone()
-        return {"total_usd": row["total_usd"], "spent_usd": row["spent_usd"],
-                "remaining_usd": row["total_usd"] - row["spent_usd"]}
+        return {
+            "total_usd": row["total_usd"],
+            "spent_usd": row["spent_usd"],
+            "remaining_usd": row["total_usd"] - row["spent_usd"],
+        }
 
     def submit_lease(self, role_id: str, epoch: int, est_cost: float) -> bool:
         """Reserve budget for one attempt. Returns False if refused; never raises on refusal.
@@ -358,16 +368,12 @@ class CampaignStore:
                 self.conn.execute("ROLLBACK")
                 return False
 
-            row = self.conn.execute(
-                "SELECT total_usd, spent_usd FROM budget WHERE id = 1"
-            ).fetchone()
+            row = self.conn.execute("SELECT total_usd, spent_usd FROM budget WHERE id = 1").fetchone()
             if row["spent_usd"] + debit > row["total_usd"]:
                 self.conn.execute("ROLLBACK")
                 return False
 
-            self.conn.execute(
-                "UPDATE budget SET spent_usd = spent_usd + ? WHERE id = 1", (debit,)
-            )
+            self.conn.execute("UPDATE budget SET spent_usd = spent_usd + ? WHERE id = 1", (debit,))
             self.conn.execute(
                 "INSERT INTO attempts (role_id, epoch, attempt, status, started_ms, cost_usd) "
                 "VALUES (?, ?, ?, 'leased', ?, ?)",
@@ -379,8 +385,7 @@ class CampaignStore:
             raise
         return True
 
-    def finish_attempt(self, role_id: str, epoch: int, status: str,
-                       actual_cost: float) -> None:
+    def finish_attempt(self, role_id: str, epoch: int, status: str, actual_cost: float) -> None:
         """Close the open attempt and reconcile the lease to what was actually spent."""
         actual = max(float(actual_cost), MIN_DEBIT_USD)
         self.conn.execute("BEGIN IMMEDIATE")
@@ -395,8 +400,7 @@ class CampaignStore:
                 self.conn.execute(
                     "UPDATE attempts SET status = ?, finished_ms = ?, cost_usd = ? "
                     "WHERE role_id = ? AND epoch = ? AND attempt = ?",
-                    (status, int(time.time() * 1000), actual,
-                     role_id, int(epoch), row["attempt"]),
+                    (status, int(time.time() * 1000), actual, role_id, int(epoch), row["attempt"]),
                 )
                 # Reconcile: the lease already moved `row["cost_usd"]`; move only the difference.
                 # Clamped at zero so a refund can never drive spent_usd negative and hand back
@@ -441,8 +445,15 @@ class CampaignStore:
             rows = self.conn.execute(
                 "SELECT * FROM families WHERE epoch = ? ORDER BY family_id", (int(epoch),)
             ).fetchall()
-        return [{"family_id": r["family_id"], "epoch": r["epoch"], "slug": r["slug"],
-                 "json": json.loads(r["json"])} for r in rows]
+        return [
+            {
+                "family_id": r["family_id"],
+                "epoch": r["epoch"],
+                "slug": r["slug"],
+                "json": json.loads(r["json"]),
+            }
+            for r in rows
+        ]
 
     def recent_slugs(self, limit: int) -> list[str]:
         rows = self.conn.execute(

@@ -21,7 +21,13 @@ from torch import nn
 # genome embedding (cannot shape the trunk) — its validation pairwise-win is the
 # anti-collapse yardstick the conditional heads must beat.
 POLICY_V3_LOSS_COMPONENTS = [
-    "seq_nll", "reward_bt", "reward_listwise", "runtime_huber", "stability_bce", "ablation_bt", "routing_ce",
+    "seq_nll",
+    "reward_bt",
+    "reward_listwise",
+    "runtime_huber",
+    "stability_bce",
+    "ablation_bt",
+    "routing_ce",
 ]
 
 # Reported-but-never-optimized quantities. These ride along in the components dict so the
@@ -66,12 +72,22 @@ POLICY_V3_DIAGNOSTIC_COMPONENTS = [
 # sequence path at all.
 ROUTING_CE_WEIGHT = 0.05
 PHASE_A_PROFILE = {
-    "seq_nll": 1.0, "runtime_huber": 0.2, "reward_bt": 1.0, "reward_listwise": 0.5,
-    "stability_bce": 0.5, "ablation_bt": 1.0, "routing_ce": ROUTING_CE_WEIGHT,
+    "seq_nll": 1.0,
+    "runtime_huber": 0.2,
+    "reward_bt": 1.0,
+    "reward_listwise": 0.5,
+    "stability_bce": 0.5,
+    "ablation_bt": 1.0,
+    "routing_ce": ROUTING_CE_WEIGHT,
 }
 PHASE_B_PROFILE = {
-    "seq_nll": 1.0, "runtime_huber": 0.2, "reward_bt": 1.0, "reward_listwise": 0.5,
-    "stability_bce": 0.5, "ablation_bt": 1.0, "routing_ce": ROUTING_CE_WEIGHT,
+    "seq_nll": 1.0,
+    "runtime_huber": 0.2,
+    "reward_bt": 1.0,
+    "reward_listwise": 0.5,
+    "stability_bce": 0.5,
+    "ablation_bt": 1.0,
+    "routing_ce": ROUTING_CE_WEIGHT,
 }
 # Components excluded from Kendall-Gal reweighting (fixed scale from the profile).
 # K&G's +0.5*s bonus actively SUPPRESSES slow-learning terms: reward_bt sits near its
@@ -251,9 +267,7 @@ def self_play_bt_loss(
         sel = torch.linspace(0, win_t.numel() - 1, max_pairs, device=reward.device).round().long()
         win_t, lose_t, weight_t, margin_t = win_t[sel], lose_t[sel], weight_t[sel], margin_t[sel]
     weight_t = weight_t / weight_t.mean().clamp_min(1e-6)
-    pair_loss = torch.nn.functional.softplus(
-        reward[lose_t].float() - reward[win_t].float() + margin_t
-    )
+    pair_loss = torch.nn.functional.softplus(reward[lose_t].float() - reward[win_t].float() + margin_t)
     return (pair_loss * weight_t).mean()
 
 
@@ -271,9 +285,7 @@ def rank_pct_listwise_loss(
     target puts ~decisive mass on the top of the list — unlike raw deltas (median ~0.01)
     whose near-uniform targets made constant rewards optimal (the old collapse).
     """
-    pair = rank_pct_listwise_terms(
-        reward, rank_pct, dataset_ids, tau=tau, min_group=min_group
-    )
+    pair = rank_pct_listwise_terms(reward, rank_pct, dataset_ids, tau=tau, min_group=min_group)
     return None if pair is None else pair[0]
 
 
@@ -363,9 +375,7 @@ def stability_bce_term(
     if positives <= 0 or positives >= labels.numel():
         return None
     weight = torch.as_tensor(float(pos_weight), device=logits.device, dtype=torch.float32)
-    loss = torch.nn.functional.binary_cross_entropy_with_logits(
-        logits, labels, pos_weight=weight
-    )
+    loss = torch.nn.functional.binary_cross_entropy_with_logits(logits, labels, pos_weight=weight)
     with torch.no_grad():
         p = (positives / labels.numel()).float()
         w = weight
@@ -401,7 +411,8 @@ def rwr_weights(
         "seed": 0.25,
         # self-play generations ("self_g3") and miner champions ("champion_g3"):
         # champions are the rising imitation targets — weighted ABOVE everything else.
-        "self": 1.0, "champion": 1.5,
+        "self": 1.0,
+        "champion": 1.5,
     }
     if source_multiplier:
         multipliers.update(source_multiplier)
@@ -411,6 +422,7 @@ def rwr_weights(
             return multipliers[src]
         base = src.split("_g")[0]  # self_g3 -> self, champion_g2 -> champion
         return multipliers.get(base, 0.25)
+
     grouped: dict[str, list[int]] = defaultdict(list)
     for idx, (dataset_id, score) in enumerate(zip(dataset_ids, robust_scores)):
         if score is not None and math.isfinite(score):

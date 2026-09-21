@@ -27,9 +27,7 @@ def test_residual_arm_grid_is_fixed_to_six_shrunken_ridges() -> None:
 def test_residual_ridge_learns_intercept_and_signal() -> None:
     features = np.asarray([[0.0], [1.0], [2.0], [3.0]])
     residuals = np.asarray([1.0, 3.0, 5.0, 7.0])
-    predicted = audit.ridge_residual_predictions(
-        features, residuals, np.asarray([[1.5]]), alpha=1e-8
-    )
+    predicted = audit.ridge_residual_predictions(features, residuals, np.asarray([[1.5]]), alpha=1e-8)
     assert np.allclose(predicted, [4.0], atol=1e-6)
 
 

@@ -99,26 +99,27 @@ def check_goldens(pack: FablePack, n: int, seed: int) -> None:
             f"(pack-only={set(got) - set(want)}, ref-only={set(want) - set(got)})"
         )
         for algo, utility in want.items():
-            assert abs(got[algo] - utility) <= 1e-12, (
-                f"{view.dataset_id}/{algo}: {got[algo]} != {utility}"
-            )
+            assert abs(got[algo] - utility) <= 1e-12, f"{view.dataset_id}/{algo}: {got[algo]} != {utility}"
     print(f"goldens ok: {len(picks)} datasets bit-exact X/y, utilities at 1e-12")
 
 
 def check_invariants(pack: FablePack) -> None:
     counts = {name: len(pack.split_indices(name)) for name in SPLIT_NAMES}
     assert counts == {"train": 1629, "val": 340, "test": 353}, counts
-    for name in ("train_row_offsets", "test_row_offsets", "x_train_offsets",
-                 "x_test_offsets", "util_offsets"):
+    for name in (
+        "train_row_offsets",
+        "test_row_offsets",
+        "x_train_offsets",
+        "x_test_offsets",
+        "util_offsets",
+    ):
         off = pack.section(name)
         assert off[0] == 0 and (np.diff(off) >= 0).all(), f"{name} not monotone"
     for name in ("X_train", "y_train", "X_test", "y_test", "util_values"):
         assert np.isfinite(pack.section(name)).all(), f"{name} has non-finite values"
     ours = pack.algo_id.get("tabpfn_v3_regressor")
     assert ours is not None, "our algorithm missing from algo table"
-    have_ours = sum(
-        1 for i in range(len(pack)) if ours in pack.dataset(i).util_algo_ids
-    )
+    have_ours = sum(1 for i in range(len(pack)) if ours in pack.dataset(i).util_algo_ids)
     print(f"invariants ok: splits {counts}, our reports on {have_ours}/{len(pack)} datasets")
 
 
@@ -137,14 +138,10 @@ def check_rebuild(out_dir: Path) -> None:
     original = sha256_file(out_dir / "fable_real_v1.pack")
     with tempfile.TemporaryDirectory(dir=out_dir.parent) as tmp:
         tmp_dir = Path(tmp)
-        (tmp_dir / "real_split_v2.json").write_bytes(
-            (out_dir / "real_split_v2.json").read_bytes()
-        )
+        (tmp_dir / "real_split_v2.json").write_bytes((out_dir / "real_split_v2.json").read_bytes())
         (tmp_dir / "utilities.jsonl").symlink_to(out_dir / "utilities.jsonl")
         manifest = build(tmp_dir, jobs=32)
-    assert manifest["pack_sha256"] == original, (
-        f"rebuild differs: {manifest['pack_sha256']} != {original}"
-    )
+    assert manifest["pack_sha256"] == original, f"rebuild differs: {manifest['pack_sha256']} != {original}"
     print(f"rebuild ok: identical sha256 {original[:16]}…")
 
 

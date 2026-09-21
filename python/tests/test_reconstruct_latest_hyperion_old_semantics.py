@@ -7,10 +7,7 @@ import numpy as np
 
 import jope.research
 
-SCRIPT = (
-    Path(jope.research.__file__).parent
-    / "reconstruct_latest_hyperion_old_semantics.py"
-)
+SCRIPT = Path(jope.research.__file__).parent / "reconstruct_latest_hyperion_old_semantics.py"
 SPEC = importlib.util.spec_from_file_location("hyperion_old_v2", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
 MODULE = importlib.util.module_from_spec(SPEC)

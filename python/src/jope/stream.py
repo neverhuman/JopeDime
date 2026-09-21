@@ -162,25 +162,41 @@ def run_stream(cfg: StreamConfig, *, router: EngineRouter | None = None) -> dict
                 break
 
             # ---- 1) sample + validate + dedupe + surrogate-score one cycle ----
-            cycle_ds = [roster[(cursor + i) % len(roster)] for i in range(min(cfg.datasets_per_cycle, len(roster)))]
+            cycle_ds = [
+                roster[(cursor + i) % len(roster)] for i in range(min(cfg.datasets_per_cycle, len(roster)))
+            ]
             cursor = (cursor + len(cycle_ds)) % len(roster)
             eval_inputs: list[dict[str, Any]] = []
             eval_meta: list[dict[str, Any]] = []
             for dataset_hash in cycle_ds:
                 entry = datasets[dataset_hash]
-                embedding = torch.tensor(embedding_from_vs(entry["vs_path"], standardization), dtype=torch.float32)
-                target = torch.tensor(target_summary_from_vs(entry.get("train_target_vs")), dtype=torch.float32)
+                embedding = torch.tensor(
+                    embedding_from_vs(entry["vs_path"], standardization), dtype=torch.float32
+                )
+                target = torch.tensor(
+                    target_summary_from_vs(entry.get("train_target_vs")), dtype=torch.float32
+                )
                 candidates: list[dict[str, Any]] = []
                 for engine in cfg.engines:
                     seqs = sample_sequences(
-                        model, embedding, target, n=cfg.sample_batch, engine=engine,
-                        temperature=cfg.temperature, seed=rng.randrange(1 << 30), device=cfg.device,
+                        model,
+                        embedding,
+                        target,
+                        n=cfg.sample_batch,
+                        engine=engine,
+                        temperature=cfg.temperature,
+                        seed=rng.randrange(1 << 30),
+                        device=cfg.device,
                     )
                     for seq in seqs:
                         decoded_engine, actions = decode_tokens(seq, model.vocab)
                         candidates.append(
-                            {"engine": decoded_engine, "genome": format_pipeline_actions(actions),
-                             "actions": actions, "tokens": seq}
+                            {
+                                "engine": decoded_engine,
+                                "genome": format_pipeline_actions(actions),
+                                "actions": actions,
+                                "tokens": seq,
+                            }
                         )
                 validations = router.validate_many([(c["engine"], c["genome"]) for c in candidates])
                 pool: list[dict[str, Any]] = []
@@ -212,10 +228,15 @@ def run_stream(cfg: StreamConfig, *, router: EngineRouter | None = None) -> dict
                 for i, cand in enumerate(pool):
                     cand["mu"], cand["sigma"] = float(mean[i]), float(std[i])
                     cand["gene_id"] = feed.proposed(
-                        engine=cand["engine"], canonical=cand["canonical"], dataset_hash=dataset_hash,
+                        engine=cand["engine"],
+                        canonical=cand["canonical"],
+                        dataset_hash=dataset_hash,
                         head=cand.get("head_type"),
                         families=[k for k, v in cand["family_bitmap"].items() if v],
-                        decoder="sample", mu=cand["mu"], sigma=cand["sigma"], p_bad=float(p_bad[i]),
+                        decoder="sample",
+                        mu=cand["mu"],
+                        sigma=cand["sigma"],
+                        p_bad=float(p_bad[i]),
                         risk=cand.get("risk"),
                     )
                     counters["proposed"] += 1
@@ -224,11 +245,21 @@ def run_stream(cfg: StreamConfig, *, router: EngineRouter | None = None) -> dict
                 selected_ids = {id(c) for c in selected}
                 counters["surrogate_only"] += sum(1 for c in pool if id(c) not in selected_ids)
                 for cand in selected:
-                    feed.selected(cand["gene_id"], engine=cand["engine"], dataset_hash=dataset_hash,
-                                  canonical=cand["canonical"], selection_slot="stream_cv")
+                    feed.selected(
+                        cand["gene_id"],
+                        engine=cand["engine"],
+                        dataset_hash=dataset_hash,
+                        canonical=cand["canonical"],
+                        selection_slot="stream_cv",
+                    )
                     eval_inputs.append(
-                        {"engine": cand["engine"], "dataset_hash": dataset_hash,
-                         "train_csv": entry["train_csv"], "genome": cand["canonical"], "folds": cfg.folds}
+                        {
+                            "engine": cand["engine"],
+                            "dataset_hash": dataset_hash,
+                            "train_csv": entry["train_csv"],
+                            "genome": cand["canonical"],
+                            "folds": cfg.folds,
+                        }
                     )
                     eval_meta.append({**cand, "dataset_hash": dataset_hash})
 
@@ -241,31 +272,55 @@ def run_stream(cfg: StreamConfig, *, router: EngineRouter | None = None) -> dict
                 oof = cv.get("oof_r2")
                 fold_r2 = cv.get("fold_r2") if isinstance(cv.get("fold_r2"), list) else None
                 row = TrainingRow(
-                    dataset_id=meta["dataset_hash"], source="active_stream",
+                    dataset_id=meta["dataset_hash"],
+                    source="active_stream",
                     embedding=embedding_from_vs(datasets[meta["dataset_hash"]]["vs_path"], standardization),
-                    target_embedding=target_summary_from_vs(datasets[meta["dataset_hash"]].get("train_target_vs")),
-                    genome=meta["canonical"], canonical_genome=meta["canonical"], engine=meta["engine"],
+                    target_embedding=target_summary_from_vs(
+                        datasets[meta["dataset_hash"]].get("train_target_vs")
+                    ),
+                    genome=meta["canonical"],
+                    canonical_genome=meta["canonical"],
+                    engine=meta["engine"],
                     family_bitmap=meta.get("family_bitmap") or {},
-                    metadata={"provenance": "loop", "surrogate_mu": meta["mu"],
-                              "surrogate_sigma": meta["sigma"], "actions": meta["actions"], "split": "train"},
+                    metadata={
+                        "provenance": "loop",
+                        "surrogate_mu": meta["mu"],
+                        "surrogate_sigma": meta["sigma"],
+                        "actions": meta["actions"],
+                        "split": "train",
+                    },
                 )
                 if isinstance(oof, (int, float)) and math.isfinite(float(oof)):
                     row.score = max(float(oof), -1.0)
                     row.metadata["oof_r2_raw"] = float(oof)
                     row.metadata["score_robust"] = robust_score(float(oof), fold_r2)
                     row.cost_ms = (result.get("timings") or {}).get("total_ms")
-                    feed.scored(meta["gene_id"], engine=meta["engine"], dataset_hash=meta["dataset_hash"],
-                                canonical=meta["canonical"], head=meta.get("head_type"), oof_r2=float(oof),
-                                fold_scores=fold_r2, score_robust=float(row.metadata["score_robust"]),
-                                total_ms=row.cost_ms, cache_hit=bool(result.get("cache_hit")),
-                                blowup=float(oof) < -1.0)
+                    feed.scored(
+                        meta["gene_id"],
+                        engine=meta["engine"],
+                        dataset_hash=meta["dataset_hash"],
+                        canonical=meta["canonical"],
+                        head=meta.get("head_type"),
+                        oof_r2=float(oof),
+                        fold_scores=fold_r2,
+                        score_robust=float(row.metadata["score_robust"]),
+                        total_ms=row.cost_ms,
+                        cache_hit=bool(result.get("cache_hit")),
+                        blowup=float(oof) < -1.0,
+                    )
                 else:
                     row.score = None
                     row.metadata["eval_error"] = (result.get("errors") or ["unknown"])[0]
                     row.metadata["score_robust"] = -1.0
-                    feed.scored(meta["gene_id"], engine=meta["engine"], dataset_hash=meta["dataset_hash"],
-                                canonical=meta["canonical"], head=meta.get("head_type"),
-                                timeout=bool(result.get("timeout")), cache_hit=bool(result.get("cache_hit")))
+                    feed.scored(
+                        meta["gene_id"],
+                        engine=meta["engine"],
+                        dataset_hash=meta["dataset_hash"],
+                        canonical=meta["canonical"],
+                        head=meta.get("head_type"),
+                        timeout=bool(result.get("timeout")),
+                        cache_hit=bool(result.get("cache_hit")),
+                    )
                 known.add((row.dataset_id, row.engine, row.canonical_genome or row.genome))
                 counters["cv_scored"] += 1
                 rows_since_refit.append(row)
@@ -273,19 +328,30 @@ def run_stream(cfg: StreamConfig, *, router: EngineRouter | None = None) -> dict
                     handle.write(json.dumps(row.to_json(), sort_keys=True) + "\n")
 
             # ---- 3) periodic reward-only refit so scores feed back ----
-            due = (time.time() - last_refit) >= cfg.refit_interval_s or len(rows_since_refit) >= cfg.refit_min_new_rows
+            due = (time.time() - last_refit) >= cfg.refit_interval_s or len(
+                rows_since_refit
+            ) >= cfg.refit_min_new_rows
             if due and rows_since_refit:
                 refit_metrics = _refit(model, rows_since_refit, loop_cfg, policy=False)
                 torch.save(
-                    model.checkpoint_payload(grammar_specs=[s.to_json() for s in _specs(model)]), cfg.checkpoint
+                    model.checkpoint_payload(grammar_specs=[s.to_json() for s in _specs(model)]),
+                    cfg.checkpoint,
                 )
                 # surface the reward-refit loss to the TUI's live training panel
                 refit_count += 1
                 with (cfg.run_dir / "stream_metrics.jsonl").open("a", encoding="utf-8") as handle:
-                    handle.write(json.dumps({
-                        "epoch": refit_count, "epochs": refit_count, "phase": "refit",
-                        "loss": refit_metrics.get("refit_loss"), "refit_rows": len(rows_since_refit),
-                    }) + "\n")
+                    handle.write(
+                        json.dumps(
+                            {
+                                "epoch": refit_count,
+                                "epochs": refit_count,
+                                "phase": "refit",
+                                "loss": refit_metrics.get("refit_loss"),
+                                "refit_rows": len(rows_since_refit),
+                            }
+                        )
+                        + "\n"
+                    )
                 rows_since_refit = []
                 last_refit = time.time()
 

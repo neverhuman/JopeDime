@@ -15,6 +15,7 @@ Protocol (locked 2026-07-10):
 Every loader call re-asserts validation disjointness; `assert_dev_hashes` is the
 hard gate any dev-scoring path must call (ported from the fable harness).
 """
+
 from __future__ import annotations
 
 import json
@@ -43,9 +44,7 @@ def assert_dev_hashes(hashes) -> None:
     """Hard integrity gate: no validation hash may ever be scored during development."""
     bad = set(hashes) & validation_hashes()
     if bad:
-        raise RuntimeError(
-            f"INTEGRITY VIOLATION: validation hashes in dev scoring: {sorted(bad)[:5]}"
-        )
+        raise RuntimeError(f"INTEGRITY VIOLATION: validation hashes in dev scoring: {sorted(bad)[:5]}")
 
 
 def get_pools() -> dict[str, list[str]]:
@@ -55,9 +54,7 @@ def get_pools() -> dict[str, list[str]]:
         if FABLE_POOLS_PATH.exists():
             fable = json.loads(FABLE_POOLS_PATH.read_text())
             if fable != pools:
-                raise RuntimeError(
-                    "dev_pools_v35.json has drifted from the fable pools.json"
-                )
+                raise RuntimeError("dev_pools_v35.json has drifted from the fable pools.json")
         val = validation_hashes()
         for k, v in pools.items():
             if set(v) & val:

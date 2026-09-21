@@ -1,4 +1,5 @@
 """H01: head shares from existing observations. No new fits. No invented core-seconds."""
+
 from __future__ import annotations
 
 import hashlib
@@ -78,18 +79,21 @@ def scan(paths):
     shares = []
     total = sum(heads.values()) or 1
     for head, count in heads.most_common():
-        shares.append(dict(
-            head=head,
-            observations=count,
-            observation_share=count / total,
-            unique_programs=len(programs.get(head, ())),
-            timeouts=timeouts[head],
-            wall_seconds_sum=walls[head] if wall_n[head] else None,
-            wall_rows=wall_n[head],
-            core_seconds=None,
-        ))
-    return dict(files=files, observations=rows, unread=unread, shares=shares,
-                observation_total=sum(heads.values()))
+        shares.append(
+            dict(
+                head=head,
+                observations=count,
+                observation_share=count / total,
+                unique_programs=len(programs.get(head, ())),
+                timeouts=timeouts[head],
+                wall_seconds_sum=walls[head] if wall_n[head] else None,
+                wall_rows=wall_n[head],
+                core_seconds=None,
+            )
+        )
+    return dict(
+        files=files, observations=rows, unread=unread, shares=shares, observation_total=sum(heads.values())
+    )
 
 
 def census(roots, output):

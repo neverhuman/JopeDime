@@ -4,6 +4,7 @@ These are deliberately small validators rather than an alternate persistence
 layer.  The campaign controller remains the sole mutation authority and binds
 every receipt with canonical SHA-256 hashes.
 """
+
 from __future__ import annotations
 
 from collections.abc import Mapping

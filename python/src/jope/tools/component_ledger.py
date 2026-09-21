@@ -1,4 +1,5 @@
 """Stage ledger plus identity join. Directory arrival is not novelty."""
+
 from __future__ import annotations
 
 STAGES = (
@@ -17,8 +18,16 @@ STAGES = (
 )
 
 
-def join_row(component_id, aliases=(), family=None, prepared_path=None, context_ids=(),
-             stage="discovered", already_in_index=False, task="regression"):
+def join_row(
+    component_id,
+    aliases=(),
+    family=None,
+    prepared_path=None,
+    context_ids=(),
+    stage="discovered",
+    already_in_index=False,
+    task="regression",
+):
     if already_in_index and STAGES.index(stage) < STAGES.index("context-published"):
         stage = "context-published"
     return dict(
@@ -75,15 +84,30 @@ def growth_candidates(transferred_ids, already_in_index, live_ids, sealed_ids, e
     )
 
 
-def provenance_receipt(component_id, object_hashes, target=None, units=None, horizon=None,
-                       predictors=None, entity=None, time_col=None, prior_split=None,
-                       reviewer=None, policy_version=None, source_path=None):
-    missing = [name for name, value in (
-        ("object_hashes", object_hashes),
-        ("target", target),
-        ("reviewer", reviewer),
-        ("policy_version", policy_version),
-    ) if not value]
+def provenance_receipt(
+    component_id,
+    object_hashes,
+    target=None,
+    units=None,
+    horizon=None,
+    predictors=None,
+    entity=None,
+    time_col=None,
+    prior_split=None,
+    reviewer=None,
+    policy_version=None,
+    source_path=None,
+):
+    missing = [
+        name
+        for name, value in (
+            ("object_hashes", object_hashes),
+            ("target", target),
+            ("reviewer", reviewer),
+            ("policy_version", policy_version),
+        )
+        if not value
+    ]
     return dict(
         schema="parallel.provenance_receipt.v1",
         component_id=component_id,

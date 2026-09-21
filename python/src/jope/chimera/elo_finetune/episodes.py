@@ -57,8 +57,9 @@ def load_task(name: str) -> tuple[np.ndarray, np.ndarray]:
     """All rows of a task pooled (its own train/test split is irrelevant to
     episodes — we re-split freshly)."""
     root = ARCHIVE_ROOT / name
-    frames = [pd.read_csv(root / f, header=None, dtype=np.float32).to_numpy()
-              for f in ("train.csv", "test.csv")]
+    frames = [
+        pd.read_csv(root / f, header=None, dtype=np.float32).to_numpy() for f in ("train.csv", "test.csv")
+    ]
     data = np.concatenate(frames, axis=0)
     return np.ascontiguousarray(data[:, :-1]), np.ascontiguousarray(data[:, -1])
 
@@ -120,7 +121,8 @@ def draw_episode(task: str, seed: int, X: np.ndarray, y: np.ndarray) -> Episode:
         warp, yw = "identity", y  # degenerate warp on this task: fall back
 
     return Episode(
-        task=task, seed=seed,
+        task=task,
+        seed=seed,
         ctx_x=np.ascontiguousarray(X[np.ix_(ctx_rows, cols)]),
         ctx_y=np.ascontiguousarray(yw[ctx_rows]),
         qry_x=np.ascontiguousarray(X[np.ix_(qry_rows, cols)]),
@@ -130,6 +132,7 @@ def draw_episode(task: str, seed: int, X: np.ndarray, y: np.ndarray) -> Episode:
 
 
 # ---- live zoo (gen_synth_regression.py zoo_best_r2 hyperparameters) --------
+
 
 def _impute(ctx_x: np.ndarray, qry_x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Sklearn zoo members (except histgbm) cannot take NaN; ctx-mean impute."""
@@ -163,8 +166,12 @@ def score_zoo(ep: Episode) -> dict[str, float]:
             n_estimators=40, max_depth=12, min_samples_leaf=2, random_state=1, n_jobs=1
         ),
         "histgbm": HistGradientBoostingRegressor(
-            max_iter=70, max_depth=8, learning_rate=0.08, l2_regularization=0.01,
-            early_stopping=False, random_state=2,
+            max_iter=70,
+            max_depth=8,
+            learning_rate=0.08,
+            l2_regularization=0.01,
+            early_stopping=False,
+            random_state=2,
         ),
     }
     out = {}
@@ -203,8 +210,7 @@ def list_real_tasks(limit: int | None = None, seed: int = 0) -> list[str]:
     return names
 
 
-def column_as_target(X: np.ndarray, y: np.ndarray, seed: int
-                     ) -> tuple[np.ndarray, np.ndarray] | None:
+def column_as_target(X: np.ndarray, y: np.ndarray, seed: int) -> tuple[np.ndarray, np.ndarray] | None:
     """Tier C decontamination: a random feature column becomes the target
     (the original target joins the features). The label FUNCTION is new, so
     dataset-level function memory cannot leak into the episode score; only
@@ -216,8 +222,7 @@ def column_as_target(X: np.ndarray, y: np.ndarray, seed: int
     for c in range(n_cols - 1):  # exclude the original target as new target
         col = full[:, c]
         finite = col[np.isfinite(col)]
-        if len(finite) > 0.9 * len(col) and np.std(finite) > 1e-9 \
-                and len(np.unique(finite)) >= 16:
+        if len(finite) > 0.9 * len(col) and np.std(finite) > 1e-9 and len(np.unique(finite)) >= 16:
             candidates.append(c)
     if not candidates:
         return None
@@ -228,14 +233,16 @@ def column_as_target(X: np.ndarray, y: np.ndarray, seed: int
 
 
 def prepare_episodes(
-    tasks: list[str], per_task: int, base_seed: int, workers: int = 32,
+    tasks: list[str],
+    per_task: int,
+    base_seed: int,
+    workers: int = 32,
     col_as_target: bool = False,
 ) -> list[Episode]:
     """Draw episodes and score the zoo once for each (parallel, CPU)."""
     from multiprocessing import Pool
 
-    specs = [(t, base_seed + 7919 * k, col_as_target)
-             for t in tasks for k in range(per_task)]
+    specs = [(t, base_seed + 7919 * k, col_as_target) for t in tasks for k in range(per_task)]
     with Pool(workers) as pool:
         episodes = pool.map(_build_one, specs, chunksize=4)
     return [e for e in episodes if e is not None]

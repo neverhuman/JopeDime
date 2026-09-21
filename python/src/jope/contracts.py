@@ -16,9 +16,7 @@ from enum import Enum
 
 
 def _canonical_hash(value: object) -> str:
-    payload = json.dumps(
-        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False
-    ).encode("utf-8")
+    payload = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
 
@@ -77,13 +75,9 @@ def freeze_source_family_split(
             if candidate <= holdout_count and candidate not in reachable:
                 reachable[candidate] = (*chosen, family)
     if holdout_count not in reachable:
-        raise ValueError(
-            "source families cannot realize the requested exact holdout count"
-        )
+        raise ValueError("source families cannot realize the requested exact holdout count")
     held_families = set(reachable[holdout_count])
-    holdout = tuple(
-        sorted(dataset for family in held_families for dataset in families[family])
-    )
+    holdout = tuple(sorted(dataset for family in held_families for dataset in families[family]))
     train = tuple(sorted(set(dataset_families).difference(holdout)))
     if len(train) != train_count:
         raise AssertionError("family split count invariant failed")
@@ -188,9 +182,7 @@ def build_split_view_manifest(
         test_row_hashes = tuple(row_hashes[row] for row in test_row_ids_tuple)
         train_hash = _row_set_hash(train_row_hashes)
         test_hash = _row_set_hash(test_row_hashes)
-        assignment = {
-            row_hashes[row]: "test" if row in test_set else "train" for row in ordered
-        }
+        assignment = {row_hashes[row]: "test" if row in test_set else "train" for row in ordered}
         row_assignment_hash = _canonical_hash(
             {
                 "schema": "SplitViewRowAssignment.v1",
@@ -279,14 +271,10 @@ class BinaryTargetSummaryV1:
         if self.view_index not in range(5):
             raise ValueError("binary target summary view_index must be in 0..5")
         if self.training_row_count < 2:
-            raise ValueError(
-                "binary target summary requires at least two training rows"
-            )
+            raise ValueError("binary target summary requires at least two training rows")
         if not 0 < self.positive_row_count < self.training_row_count:
             raise ValueError("binary target summary requires both classes")
-        if len(self.values) != 512 or any(
-            not math.isfinite(value) for value in self.values
-        ):
+        if len(self.values) != 512 or any(not math.isfinite(value) for value in self.values):
             raise ValueError("binary target summary must be a finite 512-vector")
         if any(value != 0.0 for value in self.values[7:]):
             raise ValueError("BinaryTargetSummary.v1 reserved values must be zero")
@@ -337,13 +325,8 @@ def binary_target_summary(
     if view_index not in range(len(split_view_manifest.views)):
         raise ValueError("binary target summary view_index must be in 0..5")
     if len(training_targets) != len(training_row_ids) or not training_targets:
-        raise ValueError(
-            "binary targets and row identities must be non-empty and aligned"
-        )
-    if any(
-        isinstance(value, bool) or value not in (0, 1, 0.0, 1.0)
-        for value in training_targets
-    ):
+        raise ValueError("binary targets and row identities must be non-empty and aligned")
+    if any(isinstance(value, bool) or value not in (0, 1, 0.0, 1.0) for value in training_targets):
         raise ValueError("binary targets must be a non-empty strict 0/1 sequence")
     view = split_view_manifest.views[view_index]
     if tuple(training_row_ids) != view._train_row_ids:

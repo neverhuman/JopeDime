@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Emit world-class close receipts. Does not unfence, rebind d77e856b, or train."""
+
 from __future__ import annotations
 
 import json
@@ -25,8 +26,13 @@ ACTIVE = REDTEAM / "data/remote-active-contexts.json"
 LOCAL_HASHES = REDTEAM / "data/local-raw-hashes.json"
 REMOTE_HASHES = REDTEAM / "data/remote-raw-hashes.json"
 SSH = [
-    "ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=15",
-    "-i", str(Path("~/.ssh/lambda_cloud_a100_20260907_ed25519").expanduser()),
+    "ssh",
+    "-o",
+    "BatchMode=yes",
+    "-o",
+    "ConnectTimeout=15",
+    "-i",
+    str(Path("~/.ssh/lambda_cloud_a100_20260907_ed25519").expanduser()),
     "ubuntu@158.101.20.226",
 ]
 
@@ -48,7 +54,8 @@ def fence_receipt():
     try:
         show = subprocess.check_output(
             SSH + ["systemctl show jope-parallel-gp --property=MainPID,ActiveState"],
-            text=True, timeout=20,
+            text=True,
+            timeout=20,
         )
         observed = dict(line.split("=", 1) for line in show.splitlines() if "=" in line)
     except (OSError, subprocess.SubprocessError) as error:
@@ -72,8 +79,12 @@ def sync_receipts():
     remote_df = {}
     try:
         raw = subprocess.check_output(
-            SSH + ["python3 -c \"import shutil,json;u=shutil.disk_usage('/home/ubuntu');print(json.dumps({'free':u.free,'total':u.total}))\""],
-            text=True, timeout=20,
+            SSH
+            + [
+                "python3 -c \"import shutil,json;u=shutil.disk_usage('/home/ubuntu');print(json.dumps({'free':u.free,'total':u.total}))\""
+            ],
+            text=True,
+            timeout=20,
         )
         remote_df = json.loads(raw.strip().splitlines()[-1])
     except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as error:
@@ -88,10 +99,15 @@ def sync_receipts():
     declared = {
         "source": {"present": (ROOT / "parallel/src").is_dir(), "reason": None},
         "durable_data": {"present": (REDTEAM / "data/quant-content-comparison.json").is_file()},
-        "recovery": {"present": Path("/home/ubuntu/jope-dime-recovery/20260908").exists(),
-                     "reason": "declared recovery root"},
+        "recovery": {
+            "present": Path("/home/ubuntu/jope-dime-recovery/20260908").exists(),
+            "reason": "declared recovery root",
+        },
         "release": {"present": (ROOT / "parallel/releases").is_dir()},
-        "deployment_conformance": {"present": False, "reason": "mirror health was live-GP-only; fence patch not deployed"},
+        "deployment_conformance": {
+            "present": False,
+            "reason": "mirror health was live-GP-only; fence patch not deployed",
+        },
         "replication_lag": {"present": True, "lag_seconds": 0},
     }
     cert = sync.certify(declared)
@@ -114,10 +130,14 @@ def triplet_receipt(capacity):
     plan["copied_bytes"] = 0
     plan["execute"] = False
     plan["execute_reason"] = "not yet gated"
-    write("a2-raw-triplet-plan.json", {k: v for k, v in plan.items() if k != "selected"} | {
-        "selected_head": plan["selected"][:20],
-        "n_selected": plan["n_selected"],
-    })
+    write(
+        "a2-raw-triplet-plan.json",
+        {k: v for k, v in plan.items() if k != "selected"}
+        | {
+            "selected_head": plan["selected"][:20],
+            "n_selected": plan["n_selected"],
+        },
+    )
     return plan
 
 
@@ -140,11 +160,13 @@ def ledger_receipts():
     active = load(ACTIVE)
     already = list((active.get("newly_transferred_ids_in_active_index") or {}).get("regression") or [])
     comparison = load(COMPARISON)
-    transferred = sorted({
-        Path(path).parts[1]
-        for path in comparison.get("local_only_paths") or []
-        if path.startswith("regression/") and path.endswith("/meta.json")
-    })
+    transferred = sorted(
+        {
+            Path(path).parts[1]
+            for path in comparison.get("local_only_paths") or []
+            if path.startswith("regression/") and path.endswith("/meta.json")
+        }
+    )
     # The 64 already-active IDs are a subset of Claude's 1724 copied set, not
     # necessarily of the still-missing local_only_paths. Bind both populations.
     copied = list(already)
@@ -159,31 +181,44 @@ def ledger_receipts():
     for cid in growth_set["novel_ids"]:
         rows.append(ledger.join_row(cid, stage="retained"))
     built = ledger.build_ledger(rows)
-    write("b1-component-ledger.json", {
-        **{k: v for k, v in built.items() if k != "rows"},
-        "already_in_index_ids": already,
-        "n_already_in_index_ids": len(already),
-        "n_novel_ids": len(growth_set["novel_ids"]),
-    })
-    write("b1-growth-candidates.json", {
-        **{k: v for k, v in growth_set.items() if k not in ("novel_ids", "unresolved_ids", "already_in_index_ids")},
-        "already_in_index_ids": already,
-        "novel_head": growth_set["novel_ids"][:32],
-    })
+    write(
+        "b1-component-ledger.json",
+        {
+            **{k: v for k, v in built.items() if k != "rows"},
+            "already_in_index_ids": already,
+            "n_already_in_index_ids": len(already),
+            "n_novel_ids": len(growth_set["novel_ids"]),
+        },
+    )
+    write(
+        "b1-growth-candidates.json",
+        {
+            **{
+                k: v
+                for k, v in growth_set.items()
+                if k not in ("novel_ids", "unresolved_ids", "already_in_index_ids")
+            },
+            "already_in_index_ids": already,
+            "novel_head": growth_set["novel_ids"][:32],
+        },
+    )
     missing_prov = []
     for cid in growth_set["novel_ids"][:32]:
         receipt = ledger.provenance_receipt(cid, {}, source_path=f"regression/{cid}")
         if not receipt["resolved"]:
             missing_prov.append(cid)
-    write("b1-provenance-before-prepare.json", dict(
-        schema="parallel.provenance_before_prepare.v1",
-        n_novel=len(growth_set["novel_ids"]),
-        n_checked=min(32, len(growth_set["novel_ids"])),
-        n_resolved=0,
-        prepare_allowed=False,
-        missing_component_ids=missing_prov,
-        initial_decisions_mass_approve=False,
-    ))
+    write(
+        "b1-provenance-before-prepare.json",
+        dict(
+            schema="parallel.provenance_before_prepare.v1",
+            n_novel=len(growth_set["novel_ids"]),
+            n_checked=min(32, len(growth_set["novel_ids"])),
+            n_resolved=0,
+            prepare_allowed=False,
+            missing_component_ids=missing_prov,
+            initial_decisions_mass_approve=False,
+        ),
+    )
     return already, growth_set
 
 
@@ -239,11 +274,25 @@ def successor_receipt(assignment):
 def cycle_receipt():
     ns = registry_namespace.enable_namespace()
     cycle = loop.az2017_cycle(
-        loop.RECOVERY_NLL, loop.RECOVERY_BT, False, False, False, False, False, 0.014,
-        hold="held", automatic_training=True, teachers_growth=False, new_teacher_beats=0,
-        corpus_is_recovery=True, new_gp_identity=False, admission_v2=False,
-        reuse_excluded_from_growth=False, two_panels_predeclared=False,
-        historical_import_complete=False, namespace_enabled=False,
+        loop.RECOVERY_NLL,
+        loop.RECOVERY_BT,
+        False,
+        False,
+        False,
+        False,
+        False,
+        0.014,
+        hold="held",
+        automatic_training=True,
+        teachers_growth=False,
+        new_teacher_beats=0,
+        corpus_is_recovery=True,
+        new_gp_identity=False,
+        admission_v2=False,
+        reuse_excluded_from_growth=False,
+        two_panels_predeclared=False,
+        historical_import_complete=False,
+        namespace_enabled=False,
     )
     cycle["namespace"] = {"enabled": ns[0] if isinstance(ns, tuple) else False, "claimed_savings_745": False}
     cycle["honest_rates"] = dict(neural_seed=0.0, final_gp=0.0, margin=0.014)
@@ -257,49 +306,58 @@ def main():
     cert, capacity = sync_receipts()
     plan = triplet_receipt(capacity)
     allowed, reasons = triplets.execute_allowed(
-        plan, capacity, cert, bool(fence.get("legacy_dispatch_fenced")),
+        plan,
+        capacity,
+        cert,
+        bool(fence.get("legacy_dispatch_fenced")),
     )
-    write("a2-raw-triplet-execute.json", dict(
-        schema="parallel.raw_triplet_execute.v1",
-        allowed=allowed,
-        reasons=reasons,
-        copied_bytes=0,
-        synthetics_copied=0,
-        expansion_v9_preserved=True,
-        defective_excluded=True,
-        n_selected=plan["n_selected"],
-        selected_bytes=plan["selected_bytes"],
-    ))
+    write(
+        "a2-raw-triplet-execute.json",
+        dict(
+            schema="parallel.raw_triplet_execute.v1",
+            allowed=allowed,
+            reasons=reasons,
+            copied_bytes=0,
+            synthetics_copied=0,
+            expansion_v9_preserved=True,
+            defective_excluded=True,
+            n_selected=plan["n_selected"],
+            selected_bytes=plan["selected_bytes"],
+        ),
+    )
     hold = hold_receipt()
     already, growth_set = ledger_receipts()
     assignment = family_growth_receipt(already, growth_set)
     successor_receipt(assignment)
     cycle = cycle_receipt()
-    write("SUMMARY.json", dict(
-        schema="parallel.worldclass_close.summary.v1",
-        live_execution_authority="codex_two_cycle_20260910_1824",
-        live_brake="fence",
-        fence_up=bool(fence.get("legacy_dispatch_fenced")),
-        restart_774452=False,
-        sync_certified=cert["certified"],
-        missing_sync_roots=cert["missing_roots"],
-        capacity_allows_backfill=capacity.get("backfill_allowed"),
-        synthetics_copied=0,
-        already_in_index=len(already),
-        already_in_index_not_counted_as_new=True,
-        successor_is_d77e856b=False,
-        live_index_written=False,
-        train_launched=False,
-        may_serve=False,
-        claimed_savings_745=False,
-        world_class=False,
-        existence_rate=cycle["neural_seed_rate"],
-        hold_merged=hold["automatic_training_hold_merged"],
-        n_selected_triplets=plan["n_selected"],
-        triplet_copy_allowed=allowed,
-        triplet_copy_reasons=reasons,
-        copied_bytes=0,
-    ))
+    write(
+        "SUMMARY.json",
+        dict(
+            schema="parallel.worldclass_close.summary.v1",
+            live_execution_authority="codex_two_cycle_20260910_1824",
+            live_brake="fence",
+            fence_up=bool(fence.get("legacy_dispatch_fenced")),
+            restart_774452=False,
+            sync_certified=cert["certified"],
+            missing_sync_roots=cert["missing_roots"],
+            capacity_allows_backfill=capacity.get("backfill_allowed"),
+            synthetics_copied=0,
+            already_in_index=len(already),
+            already_in_index_not_counted_as_new=True,
+            successor_is_d77e856b=False,
+            live_index_written=False,
+            train_launched=False,
+            may_serve=False,
+            claimed_savings_745=False,
+            world_class=False,
+            existence_rate=cycle["neural_seed_rate"],
+            hold_merged=hold["automatic_training_hold_merged"],
+            n_selected_triplets=plan["n_selected"],
+            triplet_copy_allowed=allowed,
+            triplet_copy_reasons=reasons,
+            copied_bytes=0,
+        ),
+    )
 
 
 if __name__ == "__main__":

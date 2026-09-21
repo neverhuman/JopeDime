@@ -46,9 +46,7 @@ class EloLoss:
             test_rows = float(te_off[i + 1] - te_off[i])
             self._weight[i] = min(1.0, test_rows / TINY_QRY_DAMP)
 
-    def soft_win_mass(
-        self, u_soft: torch.Tensor, dataset_indices: list[int]
-    ) -> tuple[torch.Tensor, dict]:
+    def soft_win_mass(self, u_soft: torch.Tensor, dataset_indices: list[int]) -> tuple[torch.Tensor, dict]:
         B = len(dataset_indices)
         c_max = max(self._comp[i].shape[0] for i in dataset_indices)
         comp = np.full((B, c_max), np.nan, dtype=np.float32)
@@ -57,12 +55,8 @@ class EloLoss:
         comp_t = torch.from_numpy(comp).to(self.device)
         mask = torch.isfinite(comp_t)
         comp_t = torch.nan_to_num(comp_t)
-        tau = torch.tensor(
-            [self._tau[i] for i in dataset_indices], device=self.device
-        ).unsqueeze(1)
-        weight = torch.tensor(
-            [self._weight[i] for i in dataset_indices], device=self.device
-        )
+        tau = torch.tensor([self._tau[i] for i in dataset_indices], device=self.device).unsqueeze(1)
+        weight = torch.tensor([self._weight[i] for i in dataset_indices], device=self.device)
 
         z = (u_soft.unsqueeze(1) - comp_t) / tau
         soft_wins = torch.sigmoid(z) * mask

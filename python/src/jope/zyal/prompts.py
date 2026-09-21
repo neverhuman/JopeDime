@@ -19,6 +19,7 @@ will happily return ``feature-family-01`` with a one-line rationale forty times 
 minimum-length and placeholder rules in :func:`family_card_contract` and :func:`validate_payload`
 are what turn a role into a proposal that can actually be falsified.
 """
+
 from __future__ import annotations
 
 import functools
@@ -123,46 +124,82 @@ class _Schema(NamedTuple):
 
 ROLE_SCHEMAS: dict[str, _Schema] = {
     "genome_architect": _Schema(
-        "family_cards", 3,
-        ("engine_scope", "falsifier", "family_slug", "mechanism_hypothesis",
-         "novelty_argument", "structural_observables"),
+        "family_cards",
+        3,
+        (
+            "engine_scope",
+            "falsifier",
+            "family_slug",
+            "mechanism_hypothesis",
+            "novelty_argument",
+            "structural_observables",
+        ),
     ),
     "spec_builder": _Schema(
-        "feature_specs", 4,
-        ("aggregation", "extraction_rule", "falsifier", "feature_slug",
-         "mechanism_hypothesis", "structural_observables"),
+        "feature_specs",
+        4,
+        (
+            "aggregation",
+            "extraction_rule",
+            "falsifier",
+            "feature_slug",
+            "mechanism_hypothesis",
+            "structural_observables",
+        ),
     ),
     "interaction_synthesizer": _Schema(
-        "interactions", 4,
-        ("combiner", "falsifier", "interaction_slug", "left_observable",
-         "mechanism_hypothesis", "right_observable"),
+        "interactions",
+        4,
+        (
+            "combiner",
+            "falsifier",
+            "interaction_slug",
+            "left_observable",
+            "mechanism_hypothesis",
+            "right_observable",
+        ),
     ),
     "expression_specialist": _Schema(
-        "expression_features", 4,
-        ("extraction_rule", "falsifier", "feature_slug", "mechanism_hypothesis",
-         "target_construct"),
+        "expression_features",
+        4,
+        ("extraction_rule", "falsifier", "feature_slug", "mechanism_hypothesis", "target_construct"),
     ),
     "param_topology": _Schema(
-        "param_features", 4,
-        ("falsifier", "feature_slug", "mechanism_hypothesis", "op_scope", "param_scope",
-         "topology_statistic"),
+        "param_features",
+        4,
+        (
+            "falsifier",
+            "feature_slug",
+            "mechanism_hypothesis",
+            "op_scope",
+            "param_scope",
+            "topology_statistic",
+        ),
     ),
     "plugin_writer": _Schema(
-        "plugins", 1,
-        ("falsifier", "family_slug", "mechanism_hypothesis", "novelty_argument",
-         "output_columns", "source"),
+        "plugins",
+        1,
+        ("falsifier", "family_slug", "mechanism_hypothesis", "novelty_argument", "output_columns", "source"),
     ),
     "data_prospector": _Schema(
-        "probes", 3,
+        "probes",
+        3,
         ("falsifier", "method", "probe_slug", "question", "structural_observable"),
     ),
     "adversarial_tester": _Schema(
-        "attacks", 5,
-        ("attack_slug", "expected_breakage", "failure_mode", "structure_preserving_intervention",
-         "target_family_slug"),
+        "attacks",
+        5,
+        (
+            "attack_slug",
+            "expected_breakage",
+            "failure_mode",
+            "structure_preserving_intervention",
+            "target_family_slug",
+        ),
     ),
     "blind_judge": _Schema(
-        "judgements", 8,
+        "judgements",
+        8,
         ("card_slug", "reason", "verdict"),
     ),
 }
@@ -206,10 +243,11 @@ RULES: tuple[str, ...] = (
     "compute_family(structure, config).",
 )
 
-_SHRINK_GENOME_FLOOR = 4          # a preview below this teaches the role nothing
+_SHRINK_GENOME_FLOOR = 4  # a preview below this teaches the role nothing
 
 
 # --- IDs ----------------------------------------------------------------------------------------
+
 
 def mint_id(epoch: int, role_class: str, slug: str) -> str:
     """The controller's artifact ID. Agents never construct one; their slug is an input only."""
@@ -222,6 +260,7 @@ def role_id(epoch: int, role_class: str, index: int) -> str:
 
 # --- Roster -------------------------------------------------------------------------------------
 
+
 def role_specs(epoch: int) -> list[dict]:
     """The full deterministic roster for one epoch. No randomness anywhere in here.
 
@@ -233,25 +272,28 @@ def role_specs(epoch: int) -> list[dict]:
     for role_class, count in ROLE_COUNTS.items():
         schema = ROLE_SCHEMAS[role_class]
         for i in range(count):
-            specs.append({
-                "id": role_id(epoch, role_class, i),
-                "epoch": epoch,
-                "role_class": role_class,
-                "index": i,
-                "schema_version": SCHEMA_VERSION,
-                "objective": ROLE_OBJECTIVES[role_class],
-                "engines": list(ENGINES),
-                "mode": "analysis" if role_class in ANALYSIS_ROLES else "feature",
-                "output_key": schema.output_key,
-                "n_items": schema.n_items,
-                "item_keys": list(schema.item_keys),
-                "max_attempts": MAX_ATTEMPTS_PER_ROLE,
-            })
+            specs.append(
+                {
+                    "id": role_id(epoch, role_class, i),
+                    "epoch": epoch,
+                    "role_class": role_class,
+                    "index": i,
+                    "schema_version": SCHEMA_VERSION,
+                    "objective": ROLE_OBJECTIVES[role_class],
+                    "engines": list(ENGINES),
+                    "mode": "analysis" if role_class in ANALYSIS_ROLES else "feature",
+                    "output_key": schema.output_key,
+                    "n_items": schema.n_items,
+                    "item_keys": list(schema.item_keys),
+                    "max_attempts": MAX_ATTEMPTS_PER_ROLE,
+                }
+            )
     assert len(specs) == ROLES_PER_EPOCH
     return specs
 
 
 # --- Genome sampling ------------------------------------------------------------------------------
+
 
 class GenomeSample(NamedTuple):
     """Genomes plus the provenance needed to reproduce the draw.
@@ -259,6 +301,7 @@ class GenomeSample(NamedTuple):
     Returned as a tuple so the seed can be recorded in the prompt artifact -- a preview that cannot
     be reproduced makes the whole prompt unauditable.
     """
+
     genomes: list[str]
     seed: int
     seed_key: str
@@ -292,6 +335,7 @@ def sample_genomes(rows, role_id: str, epoch: int, n: int = GENOME_PREVIEW_N) ->
 
 
 # --- Domain context -------------------------------------------------------------------------------
+
 
 @functools.lru_cache(maxsize=1)
 def grammar_snapshot() -> dict:
@@ -366,6 +410,7 @@ def family_card_contract() -> dict:
 
 # --- Envelope --------------------------------------------------------------------------------------
 
+
 def _dumps(obj: Any) -> str:
     return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
@@ -389,11 +434,20 @@ def _assert_feedback_categorical(node: Any, path: str = "feedback") -> None:
         raise LeakageError(f"{path} must be a dict of categorical strings, got {type(node).__name__}")
 
 
-_NUMERIC_CONTEXT_ALLOWLIST = frozenset({
-    # Structural counts an agent legitimately needs and which reveal nothing about the target.
-    "epoch", "n_epochs", "concept_count", "preview_count", "max_concepts", "min_concepts",
-    "byte_cap", "seed", "attempt",
-})
+_NUMERIC_CONTEXT_ALLOWLIST = frozenset(
+    {
+        # Structural counts an agent legitimately needs and which reveal nothing about the target.
+        "epoch",
+        "n_epochs",
+        "concept_count",
+        "preview_count",
+        "max_concepts",
+        "min_concepts",
+        "byte_cap",
+        "seed",
+        "attempt",
+    }
+)
 
 
 def _scan_context(node, path: str) -> None:
@@ -582,9 +636,8 @@ def build_schema_retry_prompt(role: dict, invalid_payload: Any, errors: list[str
                 "errors": shown,
                 "n_errors_total": len(errors or []),
                 "invalid_payload_excerpt": artifact,
-                "truncated": len(artifact) < len(_dumps(invalid_payload)
-                                                 if not isinstance(invalid_payload, str)
-                                                 else invalid_payload),
+                "truncated": len(artifact)
+                < len(_dumps(invalid_payload) if not isinstance(invalid_payload, str) else invalid_payload),
             },
         }
         text = _dumps(envelope)
@@ -598,12 +651,12 @@ def build_schema_retry_prompt(role: dict, invalid_payload: Any, errors: list[str
             shown = []
         else:
             raise ValueError(
-                f"retry envelope is {_nbytes(text)} bytes with nothing left to shrink "
-                f"(cap {PROMPT_BYTE_CAP})"
+                f"retry envelope is {_nbytes(text)} bytes with nothing left to shrink (cap {PROMPT_BYTE_CAP})"
             )
 
 
 # --- Validation -------------------------------------------------------------------------------------
+
 
 def _norm(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", str(text).casefold()).strip()
@@ -620,9 +673,7 @@ def _check_slug(value: Any, where: str, errors: list[str]) -> None:
     if not (_SLUG_MIN <= len(slug) <= _SLUG_MAX):
         errors.append(f"{where}: {slug!r} must be {_SLUG_MIN}-{_SLUG_MAX} characters")
     if _PLACEHOLDER_RE.match(slug):
-        errors.append(
-            f"{where}: {slug!r} is a generic placeholder name; name the concrete mechanism"
-        )
+        errors.append(f"{where}: {slug!r} is a generic placeholder name; name the concrete mechanism")
     if any(w in slug for w in _PLACEHOLDER_WORDS):
         errors.append(f"{where}: {slug!r} contains placeholder content")
 
@@ -692,8 +743,7 @@ def validate_payload(role: dict, payload: Any) -> list[str]:
                 norm = value.strip().casefold()
                 if norm in seen_slugs:
                     errors.append(
-                        f"{where}.{key}: duplicate slug {value.strip()!r}, already used at "
-                        f"{seen_slugs[norm]}"
+                        f"{where}.{key}: duplicate slug {value.strip()!r}, already used at {seen_slugs[norm]}"
                     )
                 else:
                     seen_slugs[norm] = where
@@ -701,8 +751,7 @@ def validate_payload(role: dict, payload: Any) -> list[str]:
             minimum = CONTRACT_MIN_CHARS.get(key)
             if minimum and len(value.strip()) < minimum:
                 errors.append(
-                    f"{where}.{key}: {len(value.strip())} characters, contract requires at least "
-                    f"{minimum}"
+                    f"{where}.{key}: {len(value.strip())} characters, contract requires at least {minimum}"
                 )
             if any(w in value.casefold() for w in _PLACEHOLDER_WORDS):
                 errors.append(f"{where}.{key}: contains placeholder content")
@@ -721,17 +770,13 @@ def validate_payload(role: dict, payload: Any) -> list[str]:
         if role_class == "blind_judge":
             verdict = item.get("verdict")
             if isinstance(verdict, str) and verdict.strip().casefold() not in JUDGE_VERDICTS:
-                errors.append(
-                    f"{where}.verdict: {verdict!r} is not one of {list(JUDGE_VERDICTS)}"
-                )
+                errors.append(f"{where}.verdict: {verdict!r} is not one of {list(JUDGE_VERDICTS)}")
 
         if role_class == "plugin_writer":
             source = item.get("source")
             if isinstance(source, str) and source.strip():
                 if len(source.encode("utf-8")) > MAX_PLUGIN_BYTES:
-                    errors.append(
-                        f"{where}.source: exceeds the {MAX_PLUGIN_BYTES} byte plugin limit"
-                    )
+                    errors.append(f"{where}.source: exceeds the {MAX_PLUGIN_BYTES} byte plugin limit")
                 if "def compute_family(" not in source:
                     errors.append(f"{where}.source: must define compute_family(structure, config)")
 

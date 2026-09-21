@@ -10,6 +10,7 @@ map inside `genome_features.py`: that map is stale and silently collapses 14+ li
 (quantile_bins, poly_interact, row_stats, row_spectral, rff_sin, hinge, landmark_dist, bin_onehot,
 norm_row, step, target_bin_encode, oblique_hinge, winsor_moments) into `fam_other`.
 """
+
 from __future__ import annotations
 
 import functools
@@ -29,7 +30,7 @@ class Stage:
     params: dict[str, str]
     index: int
     n_stages: int
-    role: str                      # "transform" | "head" | "unknown"
+    role: str  # "transform" | "head" | "unknown"
     families: tuple[str, ...]
     cost_class: str
     expr: str | None = None

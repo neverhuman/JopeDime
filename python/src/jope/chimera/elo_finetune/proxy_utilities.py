@@ -44,8 +44,7 @@ def main() -> None:
     started = time.time()
     done = 0
     for split in SPLIT_NAMES:
-        plans = bucket_schedule(pack, split, run_seed=args.seed_a, epoch=0,
-                                micro_size=args.micro)
+        plans = bucket_schedule(pack, split, run_seed=args.seed_a, epoch=0, micro_size=args.micro)
         for plan in plans:
             batch = collate(pack, plan, seed_a=args.seed_a)
             out = runner.tier1(batch, with_grad=False)
@@ -83,8 +82,7 @@ def main() -> None:
         flat.tofile(args.pack_dir / "kl_base_logits_v1.bin")
         np.save(args.pack_dir / "kl_base_offsets_v1.npy", offsets)
         (args.pack_dir / "kl_base_meta_v1.json").write_text(
-            json.dumps({"seed_a": args.seed_a, "pack_sha256": pack_sha,
-                        "n_buckets": 5000}) + "\n"
+            json.dumps({"seed_a": args.seed_a, "pack_sha256": pack_sha, "n_buckets": 5000}) + "\n"
         )
         summary["kl_cache_gb"] = round(flat.nbytes / 1e9, 2)
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Bind the real two-block auxiliary run to its frozen parent and rank receipts."""
+
 import argparse
 import hashlib
 import json
@@ -21,9 +22,11 @@ def main():
     a = ap.parse_args()
     root, output = a.root.resolve(), a.output.resolve()
     bound = {}
+
     def read(path):
         bound[str(path.relative_to(root))] = digest(path)
         return json.loads(path.read_text())
+
     report = read(output / "qualification.json")
     assert report["passed"] and report["world"] == 8 and report["optimizer_steps"] == 20
     assert report["gp_heartbeat_advanced"] and report["final_tests_opened"] is False
@@ -43,8 +46,14 @@ def main():
         ranks = [read(launch / f"complete-{rank}.json") for rank in range(8)]
         assert len({row["parameter_sha256"] for row in ranks}) == 1
         assert len({row["steps"] for row in ranks}) == 1
-        launch_results.append(dict(step=ranks[0]["steps"], resumed=receipt["resumed"],
-                                   seconds=receipt["seconds"], parameter_sha256=ranks[0]["parameter_sha256"]))
+        launch_results.append(
+            dict(
+                step=ranks[0]["steps"],
+                resumed=receipt["resumed"],
+                seconds=receipt["seconds"],
+                parameter_sha256=ranks[0]["parameter_sha256"],
+            )
+        )
     launch_results.sort(key=lambda row: row["step"])
     assert [(row["step"], row["resumed"]) for row in launch_results] == [(10, False), (20, True)]
     for step in [10, 20]:
@@ -57,8 +66,12 @@ def main():
         assert state["validation"]["panel_sha256"] == panel
         assert state["corpus_sha256"] == spec["corpus_sha256"]
         assert state["sampler_id"] == spec["sampler_id"]
-        for name, key in [("model.ot", "model_sha256"), ("optimizer.ot", "optimizer_sha256"),
-                          ("optimizer.json", "optimizer_metadata_sha256"), ("config.json", "config_sha256")]:
+        for name, key in [
+            ("model.ot", "model_sha256"),
+            ("optimizer.ot", "optimizer_sha256"),
+            ("optimizer.json", "optimizer_metadata_sha256"),
+            ("config.json", "config_sha256"),
+        ]:
             assert digest(cp / name) == state[key]
             bound[str((cp / name).relative_to(root))] = state[key]
     assert parent_state["validation"]["panel_sha256"] == panel
@@ -67,10 +80,18 @@ def main():
     assert digest(root / selected["checkpoint"] / "state.json") == selected["state_sha256"]
     assert selected_state["validation"]["sequence_nll"] == selected["validation_nll"]
     assert selected["validation_nll"] <= parent["validation_nll"]
-    result = dict(schema="parallel.auxiliary_receipt_verification.v1", passed=True,
-                  launches=launch_results, selected=selected, validation_panel_sha256=panel,
-                  exact_optimizer_continuation=True, frozen_proposal_checkpoint_unchanged=True,
-                  inputs=bound, qualification=True, final_tests_opened=False)
+    result = dict(
+        schema="parallel.auxiliary_receipt_verification.v1",
+        passed=True,
+        launches=launch_results,
+        selected=selected,
+        validation_panel_sha256=panel,
+        exact_optimizer_continuation=True,
+        frozen_proposal_checkpoint_unchanged=True,
+        inputs=bound,
+        qualification=True,
+        final_tests_opened=False,
+    )
     path = output / "verified.json"
     assert not path.exists(), "Verification output exists"
     path.write_text(json.dumps(result, indent=2) + "\n")

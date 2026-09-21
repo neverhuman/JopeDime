@@ -253,8 +253,7 @@ class EngineRouter:
             if engine == "prime":
                 self._check_engine(engine)
                 raise ValueError(
-                    "Prime validation is shape-aware and available only through "
-                    "compiled native evaluation"
+                    "Prime validation is shape-aware and available only through compiled native evaluation"
                 )
             results = self.validator(engine).validate_many([normalized[i][1] for i in indices])
             for i, result in zip(indices, results, strict=True):
@@ -283,8 +282,7 @@ class EngineRouter:
             if engine == "prime":
                 self._check_engine(engine)
                 raise ValueError(
-                    "Prime user emission requires exact promotion through "
-                    "PrimeNativeSearch.emit_user_python"
+                    "Prime user emission requires exact promotion through PrimeNativeSearch.emit_user_python"
                 )
             results = self.validator(engine, host).emit_many([normalized[i][1] for i in indices])
             for i, result in zip(indices, results, strict=True):
@@ -296,7 +294,9 @@ class EngineRouter:
         return self.emit([(engine, genome)], host=host)[0]
 
     def eval_one(self, row: dict, *, timeout_s: float | None = None) -> dict:
-        for _, result in self.iter_eval_regression_many([dict(row, **({} if timeout_s is None else {"_timeout_s": timeout_s}))]):
+        for _, result in self.iter_eval_regression_many(
+            [dict(row, **({} if timeout_s is None else {"_timeout_s": timeout_s}))]
+        ):
             return result
         raise RuntimeError("eval_one produced no result")
 
@@ -319,9 +319,7 @@ class EngineRouter:
 
         hosts = tuple(hosts) if hosts else self.hosts
         if any(str(row.get("engine") or DEFAULT_ENGINE) == "prime" for row in rows):
-            raise ValueError(
-                "Prime rows must use the persistent native evaluator, not host drivers"
-            )
+            raise ValueError("Prime rows must use the persistent native evaluator, not host drivers")
         threads_per_host = max(1, min(int(workers_per_host), 100))  # user cap: never > 100 cores
         # group by (engine, task) so each host-call uses the right binary + subcommand
         grouped: dict[tuple[str, str], list[int]] = {}
@@ -345,12 +343,24 @@ class EngineRouter:
                 # compute-saturation guard: attenuate workers on an oversaturated REMOTE host
                 # (never `local` — that's the v33 primary node). Fail-open on probe error.
                 from .cluster_monitor import eval_worker_multiplier
+
                 mult = eval_worker_multiplier(host)
                 host_threads = max(1, round(threads_per_host * mult))
                 if mult < 1.0:
-                    print(f"[eval-guard] {host} saturated → workers {threads_per_host}→{host_threads}", flush=True)
-                base = ["python3", driver, "--bin", bin_path, "--subcommand", subcommand,
-                        "--workers", str(host_threads)]
+                    print(
+                        f"[eval-guard] {host} saturated → workers {threads_per_host}→{host_threads}",
+                        flush=True,
+                    )
+                base = [
+                    "python3",
+                    driver,
+                    "--bin",
+                    bin_path,
+                    "--subcommand",
+                    subcommand,
+                    "--workers",
+                    str(host_threads),
+                ]
                 if self.timeouts_enabled:
                     # per-genome cost classes (e.g. portfolio=600s) must survive the batch
                     # path: use the max class across this batch, not the engine default.
@@ -361,12 +371,24 @@ class EngineRouter:
                     base += ["--default-timeout", str(batch_timeout)]
                 if host not in ("local", ""):
                     remote = " ".join(shlex.quote(c) for c in base)
-                    cmd = ["ssh", "-o", "BatchMode=yes", "-o", "ControlMaster=auto",
-                           "-o", f"ControlPath={ssh_control_path(host)}", "-o", "ControlPersist=600", host, remote]
+                    cmd = [
+                        "ssh",
+                        "-o",
+                        "BatchMode=yes",
+                        "-o",
+                        "ControlMaster=auto",
+                        "-o",
+                        f"ControlPath={ssh_control_path(host)}",
+                        "-o",
+                        "ControlPersist=600",
+                        host,
+                        remote,
+                    ]
                 else:
                     cmd = base
-                proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                        stderr=subprocess.DEVNULL, text=True)
+                proc = subprocess.Popen(
+                    cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True
+                )
                 out, _ = proc.communicate(payload)
                 for line in out.splitlines():
                     line = line.strip()
@@ -464,9 +486,7 @@ class EngineRouter:
             finally:
                 results.put(None)
 
-        threads = [
-            threading.Thread(target=run_lane, args=lane, daemon=True) for lane in lanes
-        ]
+        threads = [threading.Thread(target=run_lane, args=lane, daemon=True) for lane in lanes]
         for thread in threads:
             thread.start()
         finished = 0
@@ -511,7 +531,9 @@ class EngineRouter:
                 return self.timeout_for(_engine, genome)
 
             for local_idx, result in enumerate(
-                validator.iter_eval_many(engine_rows, subcommand=EVAL_SUBCOMMAND[task], timeout_for=timeout_for)
+                validator.iter_eval_many(
+                    engine_rows, subcommand=EVAL_SUBCOMMAND[task], timeout_for=timeout_for
+                )
             ):
                 yield indices[local_idx], result
 

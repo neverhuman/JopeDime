@@ -205,11 +205,7 @@ def encode_tabarena_train(
             medians.append(0.0)
             continue
         dictionaries.append({})
-        values = sorted(
-            value
-            for row in rows
-            if (value := _finite_float(row[column])) is not None
-        )
+        values = sorted(value for row in rows if (value := _finite_float(row[column])) is not None)
         if not values:
             medians.append(0.0)
         elif len(values) % 2:
@@ -350,8 +346,7 @@ def cache_dime_embeddings(
     output = output_base / "dime_score" / "embeddings" / EMBEDDING_VERSION
     output.mkdir(parents=True, exist_ok=True)
     split_manifest = Path(
-        split_manifest
-        or config.legacy_root / "data/processed/active_v3_dual_20260706/split_manifest.json"
+        split_manifest or config.legacy_root / "data/processed/active_v3_dual_20260706/split_manifest.json"
     )
     standardization_path = Path(
         standardization_path
@@ -364,9 +359,7 @@ def cache_dime_embeddings(
     projection_path = Path(foundation_spec["projection_file"])
     if not projection_path.is_absolute():
         projection_path = standardization_path.parent / projection_path
-    contract = frozen_contract(
-        standardization_path, projection_path, config, expected=expected_contract
-    )
+    contract = frozen_contract(standardization_path, projection_path, config, expected=expected_contract)
     projection = _load_projection(projection_path)
     split = json.loads(split_manifest.read_text(encoding="utf-8")).get("datasets")
     if not isinstance(split, dict):
@@ -423,9 +416,7 @@ def cache_dime_embeddings(
         sidecar_path = output / f"tabarena--{dataset}.v1.json"
         source = tabarena / dataset
         encoded_dir = output / "sources" / "tabarena" / dataset
-        encoded, preprocessing = encode_tabarena_train(
-            source / "train.csv", source / "metadata.json"
-        )
+        encoded, preprocessing = encode_tabarena_train(source / "train.csv", source / "metadata.json")
         encoded_bytes = _csv_bytes(encoded)
         encoded_path = encoded_dir / "train.csv"
         _write_new_or_equal(encoded_path, encoded_bytes)
@@ -452,13 +443,10 @@ def cache_dime_embeddings(
                 ("foundation_raw", "foundation_raw_sha256"),
             ):
                 recorded_path = Path(str(recorded_sources.get(path_key)))
-                if (
-                    not recorded_path.is_file()
-                    or sha256_file(recorded_path) != recorded_sources.get(digest_key)
+                if not recorded_path.is_file() or sha256_file(recorded_path) != recorded_sources.get(
+                    digest_key
                 ):
-                    raise ValueError(
-                        f"TabArena cached source SHA-256 mismatch for {dataset}: {path_key}"
-                    )
+                    raise ValueError(f"TabArena cached source SHA-256 mismatch for {dataset}: {path_key}")
             vector = np.load(vector_path, allow_pickle=False)
         else:
             from ..encoders.foundation import encode_dataset, load_expert
@@ -484,9 +472,7 @@ def cache_dime_embeddings(
             sources.update(
                 {
                     "hyperion_vs": str(encoded_dir / "hyperion3train128dim.vs"),
-                    "hyperion_vs_sha256": sha256_file(
-                        encoded_dir / "hyperion3train128dim.vs"
-                    ),
+                    "hyperion_vs_sha256": sha256_file(encoded_dir / "hyperion3train128dim.vs"),
                     "foundation_raw": str(raw_path),
                     "foundation_raw_sha256": sha256_file(raw_path),
                 }

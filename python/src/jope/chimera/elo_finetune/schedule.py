@@ -65,8 +65,7 @@ class StagePlan:
         return "stage2"
 
     def stage_start(self, stage: str) -> int:
-        return {"stage0": 1, "stage1": self.stage0_steps + 1,
-                "stage2": self.stage1_steps + 1}[stage]
+        return {"stage0": 1, "stage1": self.stage0_steps + 1, "stage2": self.stage1_steps + 1}[stage]
 
     def trainable_groups(self, stage: str) -> set[str]:
         groups = {"head"}
@@ -135,18 +134,13 @@ class PromotionGate:
         if self.best == float("-inf"):
             self.best = m_hat
             self.baseline_train_elo = train_spliced_elo
-            return {"ewma": m_hat, "se": se, "promote": False, "rollback": False,
-                    "baseline_set": True}
+            return {"ewma": m_hat, "se": se, "promote": False, "rollback": False, "baseline_set": True}
 
         train_ok = (
             math.isnan(self.baseline_train_elo)
             or train_spliced_elo >= self.baseline_train_elo - self.train_drop_limit
         )
-        promote = (
-            m_hat >= self.best + self.promote_margin
-            and (m_hat - 1.96 * se) > self.best
-            and train_ok
-        )
+        promote = m_hat >= self.best + self.promote_margin and (m_hat - 1.96 * se) > self.best and train_ok
         if promote:
             self.best = m_hat
             self.below_count = 0
@@ -155,12 +149,10 @@ class PromotionGate:
         else:
             self.below_count = 0
         rollback = self.below_count >= self.rollback_patience
-        return {"ewma": m_hat, "se": se, "promote": promote, "rollback": rollback,
-                "baseline_set": False}
+        return {"ewma": m_hat, "se": se, "promote": promote, "rollback": rollback, "baseline_set": False}
 
     def state_dict(self) -> dict:
-        return {k: getattr(self, k) for k in
-                ("best", "m", "v", "t", "below_count", "baseline_train_elo")}
+        return {k: getattr(self, k) for k in ("best", "m", "v", "t", "below_count", "baseline_train_elo")}
 
     def load_state_dict(self, state: dict) -> None:
         for k, value in state.items():

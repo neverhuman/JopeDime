@@ -7,6 +7,7 @@ standardization stored in one artifact. The final v3.2 dataset vector is
 The artifact path is recorded in standardization.json under "foundation" so
 `propose.embedding_from_vs` call sites need no signature change.
 """
+
 from __future__ import annotations
 
 import hashlib

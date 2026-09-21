@@ -1,4 +1,5 @@
 """Build an immutable release in private storage during approved spare CPU windows."""
+
 import argparse
 import json
 import shutil
@@ -26,7 +27,11 @@ def main():
     complete = output / "build.json"
     if complete.exists():
         receipt = json.loads(complete.read_text())
-        runtime.require(receipt["source_sha256"] == manifest["source_sha256"] and digest(output / "bin/jope-parallel") == receipt["executable_sha256"], "completed build changed")
+        runtime.require(
+            receipt["source_sha256"] == manifest["source_sha256"]
+            and digest(output / "bin/jope-parallel") == receipt["executable_sha256"],
+            "completed build changed",
+        )
         return
     cargo_home = output / "cargo-home"
     # Cargo can write only in this private cache; production's cache is read-only.
@@ -38,30 +43,76 @@ def main():
             with spare_lease(args.root, "hardening-build", cpus=2):
                 if not (cargo_home / "registry").exists():
                     staging = cargo_home / "registry.staging"
-                    shutil.copytree(registry, staging, dirs_exist_ok=True, ignore=shutil.ignore_patterns(".cache-lock", "*.lock"))
+                    shutil.copytree(
+                        registry,
+                        staging,
+                        dirs_exist_ok=True,
+                        ignore=shutil.ignore_patterns(".cache-lock", "*.lock"),
+                    )
                     staging.rename(cargo_home / "registry")
-                env = runtime.child_env(CARGO_HOME=str(cargo_home), CARGO_TARGET_DIR=str(output / "target"),
-                    CARGO_BUILD_JOBS="2", RUSTUP_HOME=str(Path.home() / ".rustup"), HOME=str(Path.home()),
-                    PATH=str(Path.home() / ".cargo/bin") + ":/usr/bin:/bin")
+                env = runtime.child_env(
+                    CARGO_HOME=str(cargo_home),
+                    CARGO_TARGET_DIR=str(output / "target"),
+                    CARGO_BUILD_JOBS="2",
+                    RUSTUP_HOME=str(Path.home() / ".rustup"),
+                    HOME=str(Path.home()),
+                    PATH=str(Path.home() / ".cargo/bin") + ":/usr/bin:/bin",
+                )
                 logpath = output / f"build-{time.time_ns()}.log"
-                command = [str(cargo), "build", "--offline", "--locked", "--release", "--bin", "jope-parallel", "-j", "2", "--manifest-path", str(source / "Cargo.toml")]
+                command = [
+                    str(cargo),
+                    "build",
+                    "--offline",
+                    "--locked",
+                    "--release",
+                    "--bin",
+                    "jope-parallel",
+                    "-j",
+                    "2",
+                    "--manifest-path",
+                    str(source / "Cargo.toml"),
+                ]
                 begun = time.monotonic()
                 with logpath.open("w") as log:
-                    result = runtime.run(command, root=args.root, timeout=max(.1, deadline - begun), env=env, stdout=log, stderr=log)
+                    result = runtime.run(
+                        command,
+                        root=args.root,
+                        timeout=max(0.1, deadline - begun),
+                        env=env,
+                        stdout=log,
+                        stderr=log,
+                    )
                 result.check_returncode()
                 executable = output / "bin/jope-parallel"
                 executable.parent.mkdir(exist_ok=True)
-                with executable.open("xb") as target, (output / "target/release/jope-parallel").open("rb") as built:
+                with (
+                    executable.open("xb") as target,
+                    (output / "target/release/jope-parallel").open("rb") as built,
+                ):
                     shutil.copyfileobj(built, target)
                 executable.chmod(0o555)
-                runtime.write(complete, {"source_sha256": manifest["source_sha256"], "executable_sha256": digest(executable),
-                    "command": command, "seconds": time.monotonic() - begun, "target_directory": str(output / "target"),
-                    "production_executables_replaced": False})
+                runtime.write(
+                    complete,
+                    {
+                        "source_sha256": manifest["source_sha256"],
+                        "executable_sha256": digest(executable),
+                        "command": command,
+                        "seconds": time.monotonic() - begun,
+                        "target_directory": str(output / "target"),
+                        "production_executables_replaced": False,
+                    },
+                )
                 return
         except BlockingIOError as error:
-            runtime.write(output / "progress.json", {"phase": "waiting", "reason": str(error), "timestamp": int(time.time())})
+            runtime.write(
+                output / "progress.json",
+                {"phase": "waiting", "reason": str(error), "timestamp": int(time.time())},
+            )
             time.sleep(2)
-    runtime.write(output / "progress.json", {"phase": "paused", "reason": "bounded build window expired", "timestamp": int(time.time())})
+    runtime.write(
+        output / "progress.json",
+        {"phase": "paused", "reason": "bounded build window expired", "timestamp": int(time.time())},
+    )
 
 
 if __name__ == "__main__":

@@ -66,7 +66,11 @@ class WeightedScoreEnsemble:
     def __init__(self, models: Sequence[tuple[str, object]], weights: Sequence[float]) -> None:
         self.models = list(models)
         weights_array = np.asarray(list(weights), dtype=np.float64)
-        if weights_array.size != len(self.models) or not np.isfinite(weights_array).all() or float(weights_array.sum()) <= 0.0:
+        if (
+            weights_array.size != len(self.models)
+            or not np.isfinite(weights_array).all()
+            or float(weights_array.sum()) <= 0.0
+        ):
             weights_array = np.ones(len(self.models), dtype=np.float64)
         self.weights = weights_array / max(1.0e-12, float(weights_array.sum()))
 
@@ -138,7 +142,9 @@ def _uniform_distances(sorted_values: np.ndarray) -> tuple[float, float, float]:
     ecdf_hi = np.arange(1, n + 1, dtype=np.float64) / n
     ecdf_lo = np.arange(0, n, dtype=np.float64) / n
     ks = float(np.maximum(np.abs(ecdf_hi - sorted_values), np.abs(sorted_values - ecdf_lo)).max())
-    cvm = float((1.0 / (12.0 * n)) + np.sum((sorted_values - ((2.0 * np.arange(1, n + 1) - 1.0) / (2.0 * n))) ** 2))
+    cvm = float(
+        (1.0 / (12.0 * n)) + np.sum((sorted_values - ((2.0 * np.arange(1, n + 1) - 1.0) / (2.0 * n))) ** 2)
+    )
     wasserstein = float(np.abs(sorted_values - ((np.arange(1, n + 1) - 0.5) / n)).mean())
     return ks, cvm, wasserstein
 
@@ -210,7 +216,33 @@ def summarize_target_window(
             add(f"standardized_moment_{power}", _safe_div(central, (std + 1.0e-6) ** power))
 
     quantile_probs = np.asarray(
-        [0.0, 0.001, 0.005, 0.01, 0.02, 0.05, 0.10, 0.125, 0.20, 0.25, 0.333, 0.375, 0.50, 0.625, 0.667, 0.75, 0.80, 0.875, 0.90, 0.95, 0.98, 0.99, 0.995, 0.999, 1.0],
+        [
+            0.0,
+            0.001,
+            0.005,
+            0.01,
+            0.02,
+            0.05,
+            0.10,
+            0.125,
+            0.20,
+            0.25,
+            0.333,
+            0.375,
+            0.50,
+            0.625,
+            0.667,
+            0.75,
+            0.80,
+            0.875,
+            0.90,
+            0.95,
+            0.98,
+            0.99,
+            0.995,
+            0.999,
+            1.0,
+        ],
         dtype=np.float64,
     )
     quantiles = np.quantile(x, quantile_probs)
@@ -220,7 +252,10 @@ def summarize_target_window(
     for left, right in [(0.25, 0.75), (0.10, 0.90), (0.05, 0.95), (0.01, 0.99), (0.001, 0.999)]:
         add(f"q_range_{left:.3f}_{right:.3f}", qmap[right] - qmap[left])
     for i in range(len(quantile_probs) - 1):
-        add(f"q_gap_{quantile_probs[i]:.3f}_{quantile_probs[i + 1]:.3f}", float(quantiles[i + 1] - quantiles[i]))
+        add(
+            f"q_gap_{quantile_probs[i]:.3f}_{quantile_probs[i + 1]:.3f}",
+            float(quantiles[i + 1] - quantiles[i]),
+        )
 
     iqr = qmap[0.75] - qmap[0.25]
     add("iqr", iqr)
@@ -232,7 +267,31 @@ def summarize_target_window(
         add(f"trimmed_mean_{trim:.2f}", _trimmed_mean(sx, trim))
         add(f"winsorized_mean_{trim:.2f}", _winsorized_mean(x, trim, 1.0 - trim))
 
-    thresholds = np.asarray([0.0, 0.001, 0.005, 0.01, 0.02, 0.05, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 0.98, 0.99, 0.995, 0.999, 1.0])
+    thresholds = np.asarray(
+        [
+            0.0,
+            0.001,
+            0.005,
+            0.01,
+            0.02,
+            0.05,
+            0.10,
+            0.20,
+            0.30,
+            0.40,
+            0.50,
+            0.60,
+            0.70,
+            0.80,
+            0.90,
+            0.95,
+            0.98,
+            0.99,
+            0.995,
+            0.999,
+            1.0,
+        ]
+    )
     for threshold in thresholds:
         add(f"cdf_le_{threshold:.3f}", float(np.mean(x <= threshold)))
         add(f"tail_ge_{threshold:.3f}", float(np.mean(x >= threshold)))
@@ -266,7 +325,9 @@ def summarize_target_window(
     add("sorted_gap_max", float(gaps.max()))
     add("sorted_gap_endpoint_left", float(sx[0]))
     add("sorted_gap_endpoint_right", float(1.0 - sx[-1]))
-    for p, q in zip((0.10, 0.25, 0.50, 0.75, 0.90, 0.99), np.quantile(gaps, [0.10, 0.25, 0.50, 0.75, 0.90, 0.99])):
+    for p, q in zip(
+        (0.10, 0.25, 0.50, 0.75, 0.90, 0.99), np.quantile(gaps, [0.10, 0.25, 0.50, 0.75, 0.90, 0.99])
+    ):
         add(f"sorted_gap_q_{p:.2f}", float(q))
 
     add("gini", _gini(x))
@@ -308,7 +369,10 @@ def summarize_target_window(
     binary_rate = float(np.mean(x >= 0.5))
     binary_entropy = 0.0
     if 0.0 < binary_rate < 1.0:
-        binary_entropy = float(-(binary_rate * math.log(binary_rate) + (1.0 - binary_rate) * math.log(1.0 - binary_rate)) / math.log(2.0))
+        binary_entropy = float(
+            -(binary_rate * math.log(binary_rate) + (1.0 - binary_rate) * math.log(1.0 - binary_rate))
+            / math.log(2.0)
+        )
     add("binary_rate_at_05", binary_rate)
     add("binary_balance", 1.0 - abs(2.0 * binary_rate - 1.0))
     add("binary_entropy", binary_entropy)
@@ -323,7 +387,9 @@ def summarize_target_window(
     return feature_array, names
 
 
-def _limit_records(records: Sequence[DatasetRecord], limit_per_task: int | None, seed: int) -> list[DatasetRecord]:
+def _limit_records(
+    records: Sequence[DatasetRecord], limit_per_task: int | None, seed: int
+) -> list[DatasetRecord]:
     if limit_per_task is None:
         return list(records)
     limited: list[DatasetRecord] = []
@@ -372,8 +438,12 @@ def _sample_window_features(
         with np.load(record.cache_path, allow_pickle=False) as npz:
             profile = np.asarray(npz["profile"], dtype=np.float32) if cfg.include_cache_profile else None
             for view_index in range(cfg.views_per_record):
-                rng = np.random.default_rng(stable_seed("classical-window", cfg.seed, record.dataset_id, view_index, cfg.window_size))
-                indices, effective_count, replacement_fraction = sample_indices(record.length, cfg.window_size, rng)
+                rng = np.random.default_rng(
+                    stable_seed("classical-window", cfg.seed, record.dataset_id, view_index, cfg.window_size)
+                )
+                indices, effective_count, replacement_fraction = sample_indices(
+                    record.length, cfg.window_size, rng
+                )
                 if record.task == TASK_BINARY:
                     values = bits_at_indices(npz["bits"], indices)
                 else:
@@ -399,7 +469,17 @@ def _sample_window_features(
 
 def pair_feature_names(feature_names: Sequence[str]) -> list[str]:
     names: list[str] = []
-    for prefix in ("diff", "absdiff", "sqdiff", "minimum", "maximum", "ratio", "log_absdiff", "product", "mean"):
+    for prefix in (
+        "diff",
+        "absdiff",
+        "sqdiff",
+        "minimum",
+        "maximum",
+        "ratio",
+        "log_absdiff",
+        "product",
+        "mean",
+    ):
         names.extend([f"{prefix}:{name}" for name in feature_names])
     names.extend(
         [
@@ -457,7 +537,13 @@ def pair_features(left: np.ndarray, right: np.ndarray) -> np.ndarray:
 
 
 def length_feature_indices(feature_names: Sequence[str]) -> list[int]:
-    length_names = {"log_original_length", "log_effective_count", "replacement_fraction", "sample_count", "sample_count_over_window"}
+    length_names = {
+        "log_original_length",
+        "log_effective_count",
+        "replacement_fraction",
+        "sample_count",
+        "sample_count_over_window",
+    }
     return [index for index, name in enumerate(feature_names) if name in length_names]
 
 
@@ -525,7 +611,9 @@ def build_pair_indices(
     return [pairs[int(index)] for index in order]
 
 
-def pair_dataset_from_indices(windows: Sequence[WindowFeature], pairs: Sequence[PairIndex]) -> tuple[np.ndarray, np.ndarray]:
+def pair_dataset_from_indices(
+    windows: Sequence[WindowFeature], pairs: Sequence[PairIndex]
+) -> tuple[np.ndarray, np.ndarray]:
     features = np.stack([window.features for window in windows]).astype(np.float32, copy=False)
     pair_dim = pair_features(features[0], features[0]).shape[0]
     x_pairs = np.empty((len(pairs), pair_dim), dtype=np.float32)
@@ -621,7 +709,9 @@ def _ensemble_members(model_reports: Mapping[str, object], fitted_models: Mappin
     return preferred or [name for name in fitted_models if name != "dummy" and name != "length_only"]
 
 
-def _validation_weights(model_names: Sequence[str], model_reports: Mapping[str, object], y_val: np.ndarray) -> np.ndarray:
+def _validation_weights(
+    model_names: Sequence[str], model_reports: Mapping[str, object], y_val: np.ndarray
+) -> np.ndarray:
     weights: list[float] = []
     positive_rate = float(np.mean(y_val))
     for name in model_names:
@@ -753,7 +843,9 @@ def build_retrieval_queries(
     return built
 
 
-def retrieval_metrics_from_scores(scores_by_query: Sequence[np.ndarray], candidate_count: int) -> dict[str, float]:
+def retrieval_metrics_from_scores(
+    scores_by_query: Sequence[np.ndarray], candidate_count: int
+) -> dict[str, float]:
     ranks: list[int] = []
     for scores in scores_by_query:
         order = np.argsort(np.asarray(scores, dtype=np.float64))[::-1]
@@ -772,7 +864,9 @@ def retrieval_metrics_for_model(
     features = np.stack([window.features for window in windows]).astype(np.float32, copy=False)
     scores_by_query: list[np.ndarray] = []
     for query in queries:
-        x_pairs = np.stack([pair_features(features[int(query.query)], features[int(index)]) for index in query.candidates])
+        x_pairs = np.stack(
+            [pair_features(features[int(query.query)], features[int(index)]) for index in query.candidates]
+        )
         scores_by_query.append(_score_model(model, x_pairs))
     return retrieval_metrics_from_scores(scores_by_query, len(queries[0].candidates))
 
@@ -807,9 +901,13 @@ def run_classical_baseline(cfg: ClassicalBaselineConfig) -> dict[str, object]:
     records = _limit_records(records, cfg.limit_per_task, cfg.seed)
     if len(records) < 3:
         raise ValueError("Need at least three records for train/val/test classical baseline splits")
-    splits = _split_records(records, train_fraction=cfg.train_fraction, val_fraction=cfg.val_fraction, seed=cfg.seed)
+    splits = _split_records(
+        records, train_fraction=cfg.train_fraction, val_fraction=cfg.val_fraction, seed=cfg.seed
+    )
     if not splits["train"] or not splits["val"] or not splits["test"]:
-        raise ValueError(f"Non-empty train/val/test splits are required; got {[len(splits[key]) for key in ('train', 'val', 'test')]}")
+        raise ValueError(
+            f"Non-empty train/val/test splits are required; got {[len(splits[key]) for key in ('train', 'val', 'test')]}"
+        )
 
     sampled: dict[str, list[WindowFeature]] = {}
     feature_names: list[str] | None = None
@@ -879,13 +977,25 @@ def run_classical_baseline(cfg: ClassicalBaselineConfig) -> dict[str, object]:
         cached = matrix_cache.get(indices)
         if cached is not None:
             return cached
-        selected = {split_name: select_window_features(windows, indices) for split_name, windows in sampled.items()}
+        selected = {
+            split_name: select_window_features(windows, indices) for split_name, windows in sampled.items()
+        }
         selected_names = [feature_names[index] for index in indices]
         selected_pair_names = pair_feature_names(selected_names)
         x_train, y_train = pair_dataset_from_indices(selected["train"], pair_indices["train"])
         x_val, y_val = pair_dataset_from_indices(selected["val"], pair_indices["val"])
         x_test, y_test = pair_dataset_from_indices(selected["test"], pair_indices["test"])
-        cached = (selected, selected_names, selected_pair_names, x_train, y_train, x_val, y_val, x_test, y_test)
+        cached = (
+            selected,
+            selected_names,
+            selected_pair_names,
+            x_train,
+            y_train,
+            x_val,
+            y_val,
+            x_test,
+            y_test,
+        )
         matrix_cache[indices] = cached
         return cached
 
@@ -905,7 +1015,9 @@ def run_classical_baseline(cfg: ClassicalBaselineConfig) -> dict[str, object]:
         report_prefix: str = "",
         include_ensemble: bool = False,
     ) -> dict[str, object]:
-        selected, selected_names, selected_pair_names, x_train, y_train, x_val, y_val, x_test, y_test = matrices_for(feature_indices)
+        selected, selected_names, selected_pair_names, x_train, y_train, x_val, y_val, x_test, y_test = (
+            matrices_for(feature_indices)
+        )
         reports: dict[str, object] = {}
         fitted: dict[str, object] = {}
         for model_name, model in specs.items():
@@ -990,9 +1102,15 @@ def run_classical_baseline(cfg: ClassicalBaselineConfig) -> dict[str, object]:
             )
         )
     if _ensemble_requested(requested):
-        ensemble_base = {name: full_specs[name] for name in ("sgd_logistic", "hist_gbdt", "extra_trees") if name in full_specs}
+        ensemble_base = {
+            name: full_specs[name]
+            for name in ("sgd_logistic", "hist_gbdt", "extra_trees")
+            if name in full_specs
+        }
         if not ensemble_base:
-            ensemble_base = {name: full_specs[name] for name in full_specs if name not in {"dummy", "length_only"}}
+            ensemble_base = {
+                name: full_specs[name] for name in full_specs if name not in {"dummy", "length_only"}
+            }
         if ensemble_base:
             full_model_specs = {name: model_reports[name] for name in ensemble_base if name in model_reports}
             _, _, _, _, _, x_val, y_val, _, _ = matrices_for(full_indices)
@@ -1007,8 +1125,12 @@ def run_classical_baseline(cfg: ClassicalBaselineConfig) -> dict[str, object]:
             member_names = _ensemble_members(full_model_specs, fitted_models)
             if member_names:
                 weights = _validation_weights(member_names, full_model_specs, y_val)
-                selected, selected_names, selected_pair_names, _, _, x_val, y_val, x_test, y_test = matrices_for(full_indices)
-                ensemble = WeightedScoreEnsemble([(name, fitted_models[name]) for name in member_names], weights)
+                selected, selected_names, selected_pair_names, _, _, x_val, y_val, x_test, y_test = (
+                    matrices_for(full_indices)
+                )
+                ensemble = WeightedScoreEnsemble(
+                    [(name, fitted_models[name]) for name in member_names], weights
+                )
                 val_scores = _score_model(ensemble, x_val)
                 threshold = _best_f1_threshold(y_val, val_scores)
                 test_scores = _score_model(ensemble, x_test)
@@ -1057,7 +1179,9 @@ def run_classical_baseline(cfg: ClassicalBaselineConfig) -> dict[str, object]:
         "pair_feature_dim": len(pair_names),
         "length_feature_names": [feature_names[index] for index in length_indices],
         "no_length_window_feature_dim": len(no_length_indices),
-        "no_length_pair_feature_dim": len(pair_feature_names([feature_names[index] for index in no_length_indices])),
+        "no_length_pair_feature_dim": len(
+            pair_feature_names([feature_names[index] for index in no_length_indices])
+        ),
         "feature_names": feature_names,
         "pair_feature_names": pair_names,
         "models": model_reports,

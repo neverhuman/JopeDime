@@ -70,8 +70,7 @@ def episode_scores(rmse_model: float, ep: Episode) -> tuple[float, float, float]
     return loss, float(m_t.mean()), float((m > 0).mean())
 
 
-def evaluate(runner: ProtocolRunner, episodes: list[Episode],
-             theta_sp_sq: float = 0.0) -> FitnessReport:
+def evaluate(runner: ProtocolRunner, episodes: list[Episode], theta_sp_sq: float = 0.0) -> FitnessReport:
     per_bucket: dict[str, list[float]] = defaultdict(list)
     margins, winrates, ep_losses = [], [], []
     for ep in episodes:
@@ -87,9 +86,7 @@ def evaluate(runner: ProtocolRunner, episodes: list[Episode],
     # DORO trim: drop the top-ε episode losses (broken/unlearnable episodes)
     if ep_losses:
         cut = np.quantile(ep_losses, 1.0 - DORO_TRIM)
-        per_bucket = {
-            b: [v for v in vals if v <= cut] for b, vals in per_bucket.items()
-        }
+        per_bucket = {b: [v for v in vals if v <= cut] for b, vals in per_bucket.items()}
     bucket_means = {b: float(np.mean(v)) for b, v in per_bucket.items() if v}
     if bucket_means:
         means = np.array(list(bucket_means.values()))

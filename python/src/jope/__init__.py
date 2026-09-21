@@ -12,4 +12,3 @@ __all__ = [
     "propose_one",
     "sample_genome",
 ]
-

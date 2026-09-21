@@ -31,9 +31,7 @@ def test_reward_order_changes_production_slots_and_preserves_global_best() -> No
     ]
     selected = MODULE.rank_scored_proposals(rows, 3)
     assert selected[0]["semantic_sha256"] == "b" * 64
-    assert [row["semantic_sha256"] for row in selected] != [
-        row["semantic_sha256"] for row in rows
-    ]
+    assert [row["semantic_sha256"] for row in selected] != [row["semantic_sha256"] for row in rows]
 
 
 def test_diversity_starts_after_slot_zero_and_never_duplicates() -> None:
@@ -97,18 +95,14 @@ def test_exact_dataset_manifest_preserves_order_and_rejects_drift(tmp_path) -> N
             }
         )
     )
-    selected = MODULE.filter_exact_dataset_manifest(
-        entries, manifest, catalog_sha256="f" * 64
-    )
+    selected = MODULE.filter_exact_dataset_manifest(entries, manifest, catalog_sha256="f" * 64)
     assert [row["dataset_hash"] for row in selected] == ["b", "a"]
 
     value = json.loads(manifest.read_text())
     value["entries"][0]["context_sha256"] = "0" * 64
     manifest.write_text(json.dumps(value))
     try:
-        MODULE.filter_exact_dataset_manifest(
-            entries, manifest, catalog_sha256="f" * 64
-        )
+        MODULE.filter_exact_dataset_manifest(entries, manifest, catalog_sha256="f" * 64)
     except RuntimeError as error:
         assert "absent or changed" in str(error)
     else:

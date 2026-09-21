@@ -43,7 +43,9 @@ def _nvidia_smi() -> list[dict[str, str]]:
     for line in output.splitlines():
         parts = [part.strip() for part in line.split(",")]
         if len(parts) >= 5:
-            rows.append({"idx": parts[0], "name": parts[1], "util": parts[2], "used": parts[3], "total": parts[4]})
+            rows.append(
+                {"idx": parts[0], "name": parts[1], "util": parts[2], "used": parts[3], "total": parts[4]}
+            )
     return rows
 
 
@@ -72,7 +74,7 @@ def render_dashboard(run_dir: Path) -> Group:
     gpu_table.add_column("Util", justify="right")
     gpu_table.add_column("Memory", justify="right")
     for gpu in _nvidia_smi():
-        gpu_table.add_row(gpu["idx"], f'{gpu["util"]}%', f'{gpu["used"]}/{gpu["total"]} MiB')
+        gpu_table.add_row(gpu["idx"], f"{gpu['util']}%", f"{gpu['used']}/{gpu['total']} MiB")
     if gpu_table.row_count == 0:
         gpu_table.add_row("-", "-", "-")
 
@@ -118,7 +120,9 @@ def render_dashboard(run_dir: Path) -> Group:
 
 def watch(run_dir: Path, refresh_seconds: float = 2.0) -> None:
     run_dir = Path(run_dir).expanduser()
-    with Live(render_dashboard(run_dir), refresh_per_second=max(1.0, 1.0 / refresh_seconds), screen=True) as live:
+    with Live(
+        render_dashboard(run_dir), refresh_per_second=max(1.0, 1.0 / refresh_seconds), screen=True
+    ) as live:
         while True:
             live.update(render_dashboard(run_dir))
             time.sleep(refresh_seconds)

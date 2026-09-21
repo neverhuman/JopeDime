@@ -1,4 +1,5 @@
 """New expansion assembly identity. Never writes the live context index."""
+
 from __future__ import annotations
 
 import hashlib
@@ -25,8 +26,11 @@ def refuse_live_index(output):
     path = Path(output)
     resolved = path.resolve()
     live = Path(__file__).resolve().parents[1] / LIVE_CONTEXTS
-    if (LIVE_CONTEXTS in path.as_posix() or LIVE_CONTEXTS in resolved.as_posix()
-            or (path.exists() and live.exists() and path.samefile(live))):
+    if (
+        LIVE_CONTEXTS in path.as_posix()
+        or LIVE_CONTEXTS in resolved.as_posix()
+        or (path.exists() and live.exists() and path.samefile(live))
+    ):
         raise ValueError("refusing to write the live current-contexts.json")
     return True
 
@@ -61,7 +65,9 @@ def canary_apply_contract():
 
 
 def assign_partitions(*args, **kwargs):
-    raise ValueError("legacy sorted-tail assignment retired; use authenticated seed-20260907 component growth")
+    raise ValueError(
+        "legacy sorted-tail assignment retired; use authenticated seed-20260907 component growth"
+    )
 
 
 def canary_v5(output, v5_families):
@@ -71,17 +77,22 @@ def canary_v5(output, v5_families):
 
 def v6_plan(expansion_families, output, live_families=()):
     refuse_live_index(output)
-    raise ValueError("legacy sorted-tail assignment retired; use authenticated seed-20260907 component growth")
+    raise ValueError(
+        "legacy sorted-tail assignment retired; use authenticated seed-20260907 component growth"
+    )
 
 
-def successor_from_growth(assignment, output, parent_assembly=PARENT_ASSEMBLY,
-                          parent_registry=PARENT_REGISTRY):
+def successor_from_growth(
+    assignment, output, parent_assembly=PARENT_ASSEMBLY, parent_registry=PARENT_REGISTRY
+):
     """Retain a verified growth proposal; only native publication creates an assembly."""
     from family_growth_policy import verify_assignment
 
     refuse_live_index(output)
     if not isinstance(assignment, (str, Path)):
-        raise ValueError("verified growth assignment file required; Boolean declarations cannot authorize assembly")
+        raise ValueError(
+            "verified growth assignment file required; Boolean declarations cannot authorize assembly"
+        )
     path = Path(assignment).resolve(strict=True)
     verified = verify_assignment(path)
     if not verified["rows"]:
@@ -109,5 +120,6 @@ def successor_from_growth(assignment, output, parent_assembly=PARENT_ASSEMBLY,
             stream.write(data)
             stream.flush()
             import os
+
             os.fsync(stream.fileno())
     return receipt

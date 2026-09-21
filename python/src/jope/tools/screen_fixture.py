@@ -1,4 +1,5 @@
 """H05 fixture: freeze identities before opening payloads. No numerical starts."""
+
 from __future__ import annotations
 
 import hashlib
@@ -22,13 +23,24 @@ GATES = dict(
     numerical_starts_per_context=1000,
 )
 AXES = (
-    dict(name="same_row_f32", precision="f32", same_rows=True,
-         note="authority namespace required; not a teaching score"),
-    dict(name="histgbm_proxy", replaces="histgbm2", with_head="histgbm",
-         note="retain original and proxy identities separately"),
+    dict(
+        name="same_row_f32",
+        precision="f32",
+        same_rows=True,
+        note="authority namespace required; not a teaching score",
+    ),
+    dict(
+        name="histgbm_proxy",
+        replaces="histgbm2",
+        with_head="histgbm",
+        note="retain original and proxy identities separately",
+    ),
     dict(name="gpr_proxy", note="shorter optimization or smaller basis; separately identified proxy"),
-    dict(name="row_fidelity", rows=[128, 256, "full"],
-         note="only after same-row screening qualifies; training-only ordered nested rows"),
+    dict(
+        name="row_fidelity",
+        rows=[128, 256, "full"],
+        note="only after same-row screening qualifies; training-only ordered nested rows",
+    ),
 )
 
 
@@ -46,9 +58,15 @@ def select_identities(census, limit_per_head=8):
         head = share["head"]
         if head in ("unknown",):
             continue
-        chosen.append(dict(head=head, observations=share["observations"],
-                           unique_programs=share["unique_programs"],
-                           selected_for_stratum=True, limit=limit_per_head))
+        chosen.append(
+            dict(
+                head=head,
+                observations=share["observations"],
+                unique_programs=share["unique_programs"],
+                selected_for_stratum=True,
+                limit=limit_per_head,
+            )
+        )
         if len(chosen) >= 8:
             break
     return chosen

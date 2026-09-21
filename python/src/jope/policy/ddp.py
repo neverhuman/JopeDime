@@ -26,7 +26,11 @@ def init_distributed(requested_device: str) -> DistContext:
     world_size = int(os.environ.get("WORLD_SIZE", "1"))
     if world_size <= 1:
         # single process: honor the requested device (cuda→cpu if unavailable)
-        dev = requested_device if (not requested_device.startswith("cuda") or torch.cuda.is_available()) else "cpu"
+        dev = (
+            requested_device
+            if (not requested_device.startswith("cuda") or torch.cuda.is_available())
+            else "cpu"
+        )
         return DistContext(enabled=False, device=dev)
     import torch.distributed as dist
 

@@ -6,6 +6,7 @@ fold-dependent (fit on train-fold datasets only) and is appended by
 protocol.fold_features — never here — so unseen-dataset evaluation stays
 honest. Honest-side quantities never become features (prefix guard).
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -18,21 +19,27 @@ import numpy as np
 
 from .genome_features import structural_features
 
-LEAKY_PREFIXES = ("honest", "oof", "fold_r2", "robust", "cv_", "label_",
-                  "actual", "mean_r2", "test_")
+LEAKY_PREFIXES = ("honest", "oof", "fold_r2", "robust", "cv_", "label_", "actual", "mean_r2", "test_")
 
 NEWMATH_ORIGINS = ("known_good", "gp_seed", "league", "gp", "other")
-NEWMATH_MUTATIONS = ("anchor_replay_baseline", "seed_concept", "insert_stage",
-                     "parameter_jitter", "typed_crossover", "subprogram_union",
-                     "adf_insertion", "expr_mutation", "other")
+NEWMATH_MUTATIONS = (
+    "anchor_replay_baseline",
+    "seed_concept",
+    "insert_stage",
+    "parameter_jitter",
+    "typed_crossover",
+    "subprogram_union",
+    "adf_insertion",
+    "expr_mutation",
+    "other",
+)
 
 EMB_KINDS = ("hyperion", "tabpfn_v3")
 PCA_K = {"hyperion": 16, "tabpfn_v3": 8}
 
 
 def assert_no_leaky_features(names: list[str]) -> None:
-    bad = [n for n in names
-           if any(n.lower().startswith(p) for p in LEAKY_PREFIXES)]
+    bad = [n for n in names if any(n.lower().startswith(p) for p in LEAKY_PREFIXES)]
     if bad:
         raise ValueError(f"leaky feature names: {bad}")
 
@@ -45,11 +52,11 @@ def _finite(x, default=None):
 # dataset-side inputs
 # ---------------------------------------------------------------------------
 
+
 def load_dataset_embeddings(snapshot_db: Path) -> dict[str, dict[str, np.ndarray]]:
     db = sqlite3.connect(f"file:{snapshot_db}?mode=ro", uri=True)
     out: dict[str, dict[str, np.ndarray]] = {}
-    for ds, hyp, tab in db.execute(
-            "SELECT dataset, hyperion, tabpfn_v3 FROM dataset_bank"):
+    for ds, hyp, tab in db.execute("SELECT dataset, hyperion, tabpfn_v3 FROM dataset_bank"):
         rec: dict[str, np.ndarray] = {}
         if hyp is not None:
             rec["hyperion"] = np.frombuffer(hyp, dtype=np.float32).astype(np.float64)
@@ -88,10 +95,11 @@ def dataset_shapes_from_reports(cache_dir: Path) -> dict[str, dict]:
 # PCA helpers (called by protocol per fold, and by the final artifact fit)
 # ---------------------------------------------------------------------------
 
-def fit_embedding_pca(embeds: dict[str, dict[str, np.ndarray]],
-                      datasets: list[str], kind: str, k: int) -> dict | None:
-    mats = [embeds[d][kind] for d in sorted(set(datasets))
-            if d in embeds and kind in embeds[d]]
+
+def fit_embedding_pca(
+    embeds: dict[str, dict[str, np.ndarray]], datasets: list[str], kind: str, k: int
+) -> dict | None:
+    mats = [embeds[d][kind] for d in sorted(set(datasets)) if d in embeds and kind in embeds[d]]
     if len(mats) < max(8, k + 2):
         return None
     x = np.stack(mats)
@@ -115,6 +123,7 @@ def project_embedding(pca: dict | None, vec: np.ndarray | None, k: int) -> np.nd
 # per-engine candidate-varying features
 # ---------------------------------------------------------------------------
 
+
 def _clip_r2(v: float | None) -> float | None:
     """Proxy scores are fold R²s: values outside [-1, 1] are degenerate
     telemetry (observed up to 627 in reports) — clip per house convention."""
@@ -127,8 +136,11 @@ def featmath_features(row: dict) -> dict[str, float] | None:
     s = structural_features(row.get("genome") or "")
     if s is None:
         return None
-    fold = [_clip_r2(v) for v in (row.get("search_fold_scores") or [])
-            if isinstance(v, (int, float)) and math.isfinite(v)]
+    fold = [
+        _clip_r2(v)
+        for v in (row.get("search_fold_scores") or [])
+        if isinstance(v, (int, float)) and math.isfinite(v)
+    ]
     r0 = _clip_r2(_finite(row.get("search_score_rung0")))
     r1 = _clip_r2(_finite(row.get("search_score_rung1")))
     r2 = _clip_r2(_finite(row.get("search_score_rung2")))
@@ -189,6 +201,7 @@ def newmath_features(row: dict) -> dict[str, float] | None:
 # table assembly
 # ---------------------------------------------------------------------------
 
+
 def within_group_z(values: np.ndarray, groups: np.ndarray) -> np.ndarray:
     z = np.zeros_like(values)
     for g in np.unique(groups):
@@ -220,14 +233,13 @@ def within_group_midrank_pct(values: np.ndarray, groups: np.ndarray) -> np.ndarr
 # columns that get within-task z + mid-rank companions (range-restriction fix)
 WTZ_COLS = {
     "featmath": ("proxy_score", "rung0", "rung1", "rung2", "fold_std"),
-    "newmath": ("proxy_score", "acq_score", "complexity_field",
-                "first_gen_frac"),
+    "newmath": ("proxy_score", "acq_score", "complexity_field", "first_gen_frac"),
 }
 
 
-def build_modeling_table(pairs_path: Path, engine: str,
-                         embeds: dict[str, dict[str, np.ndarray]],
-                         shapes: dict[str, dict]) -> dict:
+def build_modeling_table(
+    pairs_path: Path, engine: str, embeds: dict[str, dict[str, np.ndarray]], shapes: dict[str, dict]
+) -> dict:
     builder = featmath_features if engine == "featmath" else newmath_features
     honest_key = "honest_oof_r2" if engine == "featmath" else "honest_robust_score"
     rows = []
@@ -287,9 +299,15 @@ def build_modeling_table(pairs_path: Path, engine: str,
         groups.append(ds)
         task_keys.append(r["task_key"])
         started.append(_finite(r.get("started_at_unix_ms"), 0.0) or 0.0)
-        metas.append({"dataset": ds, "task_key": r["task_key"],
-                      "genome": r["genome"], "honest": y,
-                      "proxy_score": vals["proxy_score"]})
+        metas.append(
+            {
+                "dataset": ds,
+                "task_key": r["task_key"],
+                "genome": r["genome"],
+                "honest": y,
+                "proxy_score": vals["proxy_score"],
+            }
+        )
     task_arr = np.array(task_keys)
     # within-task z + mid-rank companions for the key proxy columns
     wtz_names: list[str] = []
@@ -309,14 +327,20 @@ def build_modeling_table(pairs_path: Path, engine: str,
     # unclipped catastrophic negatives destroy absolute-head fits and regret.
     y_abs = np.maximum(y_abs, -1.0)
     return {
-        "X": x, "y_abs": y_abs,
+        "X": x,
+        "y_abs": y_abs,
         "y_z": within_group_z(y_abs, task_arr),
-        "groups": np.array(groups), "task_keys": task_arr,
+        "groups": np.array(groups),
+        "task_keys": task_arr,
         "started_ms": np.array(started),
-        "emb_h": emb_h, "emb_t": emb_t,
-        "emb_h_ok": emb_h_ok, "emb_t_ok": emb_t_ok,
-        "feature_names": base_names, "meta": metas,
-        "n_unparseable": n_unparseable, "engine": engine,
+        "emb_h": emb_h,
+        "emb_t": emb_t,
+        "emb_h_ok": emb_h_ok,
+        "emb_t_ok": emb_t_ok,
+        "feature_names": base_names,
+        "meta": metas,
+        "n_unparseable": n_unparseable,
+        "engine": engine,
     }
 
 

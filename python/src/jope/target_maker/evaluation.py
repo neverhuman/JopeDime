@@ -102,10 +102,16 @@ def _sample_eval_windows(
     feature_names: list[str] | None = None
     for record in records:
         with np.load(record.cache_path, allow_pickle=False) as npz:
-            cache_profile = np.asarray(npz["profile"], dtype=np.float32) if cfg.include_cache_profile else None
+            cache_profile = (
+                np.asarray(npz["profile"], dtype=np.float32) if cfg.include_cache_profile else None
+            )
             for view_index in range(cfg.views_per_record):
-                rng = np.random.default_rng(stable_seed("classical-window", cfg.seed, record.dataset_id, view_index, cfg.window_size))
-                indices, effective_count, replacement_fraction = sample_indices(record.length, cfg.window_size, rng)
+                rng = np.random.default_rng(
+                    stable_seed("classical-window", cfg.seed, record.dataset_id, view_index, cfg.window_size)
+                )
+                indices, effective_count, replacement_fraction = sample_indices(
+                    record.length, cfg.window_size, rng
+                )
                 if record.task == TASK_BINARY:
                     values = bits_at_indices(npz["bits"], indices)
                 else:
@@ -140,7 +146,9 @@ def _sample_eval_windows(
     return windows, feature_names
 
 
-def _score_report(y_val: np.ndarray, val_scores: np.ndarray, y_test: np.ndarray, test_scores: np.ndarray) -> dict[str, object]:
+def _score_report(
+    y_val: np.ndarray, val_scores: np.ndarray, y_test: np.ndarray, test_scores: np.ndarray
+) -> dict[str, object]:
     threshold = _best_f1_threshold(y_val, val_scores)
     return {
         "val": _classification_metrics(y_val, val_scores, threshold),
@@ -151,7 +159,11 @@ def _score_report(y_val: np.ndarray, val_scores: np.ndarray, y_test: np.ndarray,
 def _length_scores(windows: Sequence[EvalWindow], pairs: Sequence[PairIndex]) -> np.ndarray:
     meta = np.asarray(
         [
-            [math.log1p(window.original_length), math.log1p(window.effective_count), window.replacement_fraction]
+            [
+                math.log1p(window.original_length),
+                math.log1p(window.effective_count),
+                window.replacement_fraction,
+            ]
             for window in windows
         ],
         dtype=np.float64,
@@ -168,7 +180,11 @@ def _length_retrieval(windows: Sequence[EvalWindow], queries: Sequence[Retrieval
         return {}
     meta = np.asarray(
         [
-            [math.log1p(window.original_length), math.log1p(window.effective_count), window.replacement_fraction]
+            [
+                math.log1p(window.original_length),
+                math.log1p(window.effective_count),
+                window.replacement_fraction,
+            ]
             for window in windows
         ],
         dtype=np.float64,
@@ -186,7 +202,9 @@ def _classical_bundle_for(
     pair_indices: Mapping[str, Sequence[PairIndex]],
     indices: tuple[int, ...],
 ):
-    selected = {split: select_window_features(windows, indices) for split, windows in sampled_features.items()}
+    selected = {
+        split: select_window_features(windows, indices) for split, windows in sampled_features.items()
+    }
     selected_feature_names = [feature_names[index] for index in indices]
     selected_pair_names = pair_feature_names(selected_feature_names)
     x_val, y_val = pair_dataset_from_indices(selected["val"], pair_indices["val"])
@@ -236,12 +254,16 @@ def _fit_eval_classical(
     model_dir = cfg.run_dir / "models"
     model_dir.mkdir(parents=True, exist_ok=True)
 
-    def fit_one_set(specs: Mapping[str, object], indices: tuple[int, ...], prefix: str = "") -> tuple[dict[str, object], dict[str, object], np.ndarray]:
-        selected, selected_feature_names, selected_pair_names, x_val, y_val, x_test, y_test = _classical_bundle_for(
-            sampled_features,
-            feature_names,
-            pair_indices,
-            indices,
+    def fit_one_set(
+        specs: Mapping[str, object], indices: tuple[int, ...], prefix: str = ""
+    ) -> tuple[dict[str, object], dict[str, object], np.ndarray]:
+        selected, selected_feature_names, selected_pair_names, x_val, y_val, x_test, y_test = (
+            _classical_bundle_for(
+                sampled_features,
+                feature_names,
+                pair_indices,
+                indices,
+            )
         )
         x_train, y_train = pair_dataset_from_indices(selected["train"], pair_indices["train"])
         reports: dict[str, object] = {}
@@ -286,13 +308,17 @@ def _fit_eval_classical(
     if _ensemble_requested(requested):
         member_names = _ensemble_members(full_reports, full_fitted)
         if member_names:
-            selected, selected_feature_names, selected_pair_names, x_val, y_val, x_test, y_test = _classical_bundle_for(
-                sampled_features,
-                feature_names,
-                pair_indices,
-                full_indices,
+            selected, selected_feature_names, selected_pair_names, x_val, y_val, x_test, y_test = (
+                _classical_bundle_for(
+                    sampled_features,
+                    feature_names,
+                    pair_indices,
+                    full_indices,
+                )
             )
-            weights = _validation_weights(member_names, full_reports, y_val_full if y_val_full.size else y_val)
+            weights = _validation_weights(
+                member_names, full_reports, y_val_full if y_val_full.size else y_val
+            )
             ensemble = WeightedScoreEnsemble([(name, full_fitted[name]) for name in member_names], weights)
             model_path = model_dir / "ensemble.joblib"
             import joblib
@@ -330,14 +356,18 @@ def _fit_eval_classical(
     if _ensemble_requested(requested):
         member_names = _ensemble_members(no_length_reports, no_length_fitted)
         if member_names:
-            selected, selected_feature_names, selected_pair_names, x_val, y_val, x_test, y_test = _classical_bundle_for(
-                sampled_features,
-                feature_names,
-                pair_indices,
-                no_length_indices_tuple,
+            selected, selected_feature_names, selected_pair_names, x_val, y_val, x_test, y_test = (
+                _classical_bundle_for(
+                    sampled_features,
+                    feature_names,
+                    pair_indices,
+                    no_length_indices_tuple,
+                )
             )
             weights = _validation_weights(member_names, no_length_reports, y_val_no_length)
-            ensemble = WeightedScoreEnsemble([(name, no_length_fitted[name]) for name in member_names], weights)
+            ensemble = WeightedScoreEnsemble(
+                [(name, no_length_fitted[name]) for name in member_names], weights
+            )
             model_path = model_dir / "no_length_ensemble.joblib"
             import joblib
 
@@ -382,7 +412,9 @@ def _load_eval_classical(
         if isinstance(bundle, Mapping):
             model = bundle.get("model")
             model_name = str(bundle.get("model_name") or model_path.stem)
-            indices = tuple(int(index) for index in bundle.get("selected_feature_indices", range(len(feature_names))))
+            indices = tuple(
+                int(index) for index in bundle.get("selected_feature_indices", range(len(feature_names)))
+            )
         else:
             model = bundle
             model_name = model_path.stem
@@ -390,7 +422,9 @@ def _load_eval_classical(
         if model is None:
             continue
         reports[model_name] = {
-            **_evaluate_classical_model(model, sampled_features, feature_names, pair_indices, retrieval_queries, indices),
+            **_evaluate_classical_model(
+                model, sampled_features, feature_names, pair_indices, retrieval_queries, indices
+            ),
             "model_path": str(model_path),
         }
     return reports
@@ -412,16 +446,24 @@ def _encode_windows(
     batch_size = max(1, int(cfg.batch_size))
     for start in range(0, len(windows), batch_size):
         chunk = windows[start : start + batch_size]
-        values = torch.from_numpy(np.stack([window.values for window in chunk]).astype(np.float32, copy=False)).to(device)
+        values = torch.from_numpy(
+            np.stack([window.values for window in chunk]).astype(np.float32, copy=False)
+        ).to(device)
         task = torch.tensor([window.task for window in chunk], device=device, dtype=torch.long)
         if ablate_length:
             original_length = torch.full((len(chunk),), float(cfg.window_size), device=device)
             effective_count = torch.full((len(chunk),), float(cfg.window_size), device=device)
             replacement_fraction = torch.zeros(len(chunk), device=device)
         else:
-            original_length = torch.tensor([window.original_length for window in chunk], device=device, dtype=torch.float32)
-            effective_count = torch.tensor([window.effective_count for window in chunk], device=device, dtype=torch.float32)
-            replacement_fraction = torch.tensor([window.replacement_fraction for window in chunk], device=device, dtype=torch.float32)
+            original_length = torch.tensor(
+                [window.original_length for window in chunk], device=device, dtype=torch.float32
+            )
+            effective_count = torch.tensor(
+                [window.effective_count for window in chunk], device=device, dtype=torch.float32
+            )
+            replacement_fraction = torch.tensor(
+                [window.replacement_fraction for window in chunk], device=device, dtype=torch.float32
+            )
         mask = torch.ones_like(values)
         out = model(
             values,
@@ -488,9 +530,13 @@ def eval_representations(cfg: EvalRepresentationsConfig) -> dict[str, object]:
     records = _limit_records(records, cfg.limit_per_task, cfg.seed)
     if len(records) < 3:
         raise ValueError("Need at least three records for train/val/test evaluation splits")
-    splits = _split_records(records, train_fraction=cfg.train_fraction, val_fraction=cfg.val_fraction, seed=cfg.seed)
+    splits = _split_records(
+        records, train_fraction=cfg.train_fraction, val_fraction=cfg.val_fraction, seed=cfg.seed
+    )
     if not splits["train"] or not splits["val"] or not splits["test"]:
-        raise ValueError(f"Non-empty train/val/test splits are required; got {[len(splits[key]) for key in ('train', 'val', 'test')]}")
+        raise ValueError(
+            f"Non-empty train/val/test splits are required; got {[len(splits[key]) for key in ('train', 'val', 'test')]}"
+        )
 
     sampled: dict[str, list[EvalWindow]] = {}
     feature_names: list[str] | None = None
@@ -543,8 +589,12 @@ def eval_representations(cfg: EvalRepresentationsConfig) -> dict[str, object]:
         checkpoint = Path(checkpoint).expanduser()
         key = _checkpoint_key(checkpoint)
         neural_reports[key] = {
-            "normal": _evaluate_neural_checkpoint(checkpoint, sampled, pair_indices, retrieval_queries, cfg, ablate_length=False),
-            "length_ablated": _evaluate_neural_checkpoint(checkpoint, sampled, pair_indices, retrieval_queries, cfg, ablate_length=True),
+            "normal": _evaluate_neural_checkpoint(
+                checkpoint, sampled, pair_indices, retrieval_queries, cfg, ablate_length=False
+            ),
+            "length_ablated": _evaluate_neural_checkpoint(
+                checkpoint, sampled, pair_indices, retrieval_queries, cfg, ablate_length=True
+            ),
         }
 
     trained_classical, no_length_classical = _fit_eval_classical(

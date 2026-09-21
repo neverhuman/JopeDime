@@ -55,8 +55,10 @@ class BeyondReproachTests(unittest.TestCase):
             self.assertEqual(reg["n_closed"], 0)
             ids = {row["id"] for row in reg["items"]}
             self.assertTrue({"S01", "R06", "D01", "L01"} <= ids)
-            self.assertIn("stub verify_execution_protocol",
-                          next(r["fake_close"] for r in reg["items"] if r["id"] == "R06"))
+            self.assertIn(
+                "stub verify_execution_protocol",
+                next(r["fake_close"] for r in reg["items"] if r["id"] == "R06"),
+            )
             required = ("id", "owner", "would_close", "fake_close", "evidence_sha256")
             for row in reg["items"]:
                 self.assertIn("closed", row)

@@ -29,6 +29,7 @@ the champion's 1,331 columns before any candidate is checked. Without that order
 reinvents an existing baseline column is registered as novel and celebrated, when the correct
 outcome is rejection -- the whole fitness question is *marginal* lift over that baseline.
 """
+
 from __future__ import annotations
 
 import ast
@@ -45,29 +46,72 @@ import numpy as np
 from . import CAMPAIGN_SEED, assert_no_forbidden_inputs
 
 # --- Tunables -----------------------------------------------------------------------------------
-VALUE_DECIMALS = 9                 # values are rounded to 1e-9 before hashing
-NEAR_DUP_R = 0.999                 # |pearson| above this is a near-duplicate
-SKETCH_ROWS = 2048                 # rows kept per column for the durable pearson gate
-SKETCH_SEED = CAMPAIGN_SEED ^ 0x5A17          # distinct from every fold seed
+VALUE_DECIMALS = 9  # values are rounded to 1e-9 before hashing
+NEAR_DUP_R = 0.999  # |pearson| above this is a near-duplicate
+SKETCH_ROWS = 2048  # rows kept per column for the durable pearson gate
+SKETCH_SEED = CAMPAIGN_SEED ^ 0x5A17  # distinct from every fold seed
 FORMULA_KEYS = ("formula", "expr", "expression", "compute", "equation", "body")
 MECHANISM_KEYS = ("mechanism", "theory", "rationale", "description", "hypothesis", "summary")
 
 _WORD_RE = re.compile(r"[a-z0-9_]+")
-_STOPWORDS = frozenset({
-    "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "in", "is", "it", "its",
-    "of", "on", "or", "that", "the", "then", "this", "to", "we", "which", "with",
-})
+_STOPWORDS = frozenset(
+    {
+        "a",
+        "an",
+        "and",
+        "are",
+        "as",
+        "at",
+        "be",
+        "by",
+        "for",
+        "from",
+        "in",
+        "is",
+        "it",
+        "its",
+        "of",
+        "on",
+        "or",
+        "that",
+        "the",
+        "then",
+        "this",
+        "to",
+        "we",
+        "which",
+        "with",
+    }
+)
 
 # Operators whose operand order carries no meaning. Sorting these is what makes `a+b` and `b+a`
 # the same formula; leaving them unsorted is why naive text hashing of formulas barely helps.
 _COMMUTATIVE = (ast.Add, ast.Mult, ast.BitAnd, ast.BitOr, ast.BitXor)
 _OP_SYMBOL = {
-    ast.Add: "+", ast.Sub: "-", ast.Mult: "*", ast.Div: "/", ast.FloorDiv: "//",
-    ast.Mod: "%", ast.Pow: "**", ast.BitAnd: "&", ast.BitOr: "|", ast.BitXor: "^",
-    ast.LShift: "<<", ast.RShift: ">>",
-    ast.USub: "neg", ast.UAdd: "pos", ast.Invert: "inv", ast.Not: "not",
-    ast.Eq: "==", ast.NotEq: "!=", ast.Lt: "<", ast.LtE: "<=", ast.Gt: ">", ast.GtE: ">=",
-    ast.And: "and", ast.Or: "or",
+    ast.Add: "+",
+    ast.Sub: "-",
+    ast.Mult: "*",
+    ast.Div: "/",
+    ast.FloorDiv: "//",
+    ast.Mod: "%",
+    ast.Pow: "**",
+    ast.BitAnd: "&",
+    ast.BitOr: "|",
+    ast.BitXor: "^",
+    ast.LShift: "<<",
+    ast.RShift: ">>",
+    ast.USub: "neg",
+    ast.UAdd: "pos",
+    ast.Invert: "inv",
+    ast.Not: "not",
+    ast.Eq: "==",
+    ast.NotEq: "!=",
+    ast.Lt: "<",
+    ast.LtE: "<=",
+    ast.Gt: ">",
+    ast.GtE: ">=",
+    ast.And: "and",
+    ast.Or: "or",
 }
 
 
@@ -77,6 +121,7 @@ class NoveltyError(RuntimeError):
 
 # --- Gate 1: canonical formula -------------------------------------------------------------------
 
+
 def _num(value) -> str:
     """One spelling per number. `2`, `2.0` and `2.000` all collapse to `2`."""
     try:
@@ -84,7 +129,7 @@ def _num(value) -> str:
     except (TypeError, ValueError):
         return str(value)
     if f == 0.0:
-        return "0"                     # also folds -0.0
+        return "0"  # also folds -0.0
     return f"{f:.12g}"
 
 
@@ -177,6 +222,7 @@ def canonical_formula(spec_output) -> str:
     Defeated by algebraic restatement -- `(a*b)+(a*c)` and `a*(b+c)` are different strings here.
     That is the reason `numeric_signature` exists and this is not the gate that decides anything.
     """
+
     def walk(node, in_formula: bool) -> str:
         if isinstance(node, str):
             return _canon_text(node) if in_formula else " ".join(node.casefold().split())
@@ -206,6 +252,7 @@ def canonical_formula(spec_output) -> str:
 
 # --- Gate 2: semantic fingerprint -----------------------------------------------------------------
 
+
 def semantic_fingerprint(card) -> str:
     """blake2b over the normalized mechanism prose of a theory card.
 
@@ -231,11 +278,11 @@ def semantic_fingerprint(card) -> str:
 
 # --- Gate 3: structure signature -------------------------------------------------------------------
 
+
 def _shape(node) -> str:
     """Type/key skeleton with all scalar VALUES erased. List lengths are collapsed."""
     if isinstance(node, dict):
-        return "{" + ",".join(f"{str(k).casefold()}:{_shape(node[k])}"
-                              for k in sorted(node, key=str)) + "}"
+        return "{" + ",".join(f"{str(k).casefold()}:{_shape(node[k])}" for k in sorted(node, key=str)) + "}"
     if isinstance(node, (list, tuple, set, frozenset)):
         inner = sorted({_shape(v) for v in node})
         return "[" + "|".join(inner) + "]"
@@ -264,6 +311,7 @@ def structure_signature(spec) -> str:
 
 
 # --- Gate 4: numeric signature (the decisive one) ---------------------------------------------------
+
 
 def numeric_signature(values: np.ndarray) -> str:
     """blake2b over the actual computed column values. THE gate.
@@ -302,8 +350,8 @@ def numeric_signature(values: np.ndarray) -> str:
 
     finite = np.where(nan_mask | posinf | neginf, 0.0, arr)
     finite = np.round(finite, VALUE_DECIMALS)
-    finite = finite + 0.0                      # folds -0.0 -> 0.0
-    finite[finite == 0.0] = 0.0                # belt and braces on the -0.0 byte pattern
+    finite = finite + 0.0  # folds -0.0 -> 0.0
+    finite[finite == 0.0] = 0.0  # belt and braces on the -0.0 byte pattern
 
     h = hashlib.blake2b(digest_size=16)
     h.update(f"zyal_numeric_v1|{arr.shape[0]}x{arr.shape[1]}|{VALUE_DECIMALS}".encode())
@@ -315,6 +363,7 @@ def numeric_signature(values: np.ndarray) -> str:
 
 
 # --- Sketching for the durable near-duplicate gate ---------------------------------------------------
+
 
 def _sketch_indices(n_rows: int) -> np.ndarray:
     """Fixed seeded row subsample. Every column in one index MUST use the same rows or the
@@ -365,6 +414,7 @@ def _column_1d(values: np.ndarray) -> np.ndarray:
 
 # --- Durable index ------------------------------------------------------------------------------
 
+
 class NoveltyIndex:
     """Append-only novelty registries under `<run_root>/novelty/`.
 
@@ -388,10 +438,10 @@ class NoveltyIndex:
         self.near_dup_r = float(near_dup_r)
 
         self.n_rows: int | None = None
-        self._numeric: dict[str, str] = {}      # numeric sig -> feature_id
+        self._numeric: dict[str, str] = {}  # numeric sig -> feature_id
         self._formula: dict[str, str] = {}
-        self._semantic: dict[str, list[str]] = {}   # semantic sig -> feature_ids
-        self._structure: dict[str, set[str]] = {}   # feature_id -> structure sig
+        self._semantic: dict[str, list[str]] = {}  # semantic sig -> feature_ids
+        self._structure: dict[str, set[str]] = {}  # feature_id -> structure sig
         self._ids: list[str] = []
         self._zsketches: dict[str, np.ndarray] = {}
         self._stack: np.ndarray | None = None
@@ -449,8 +499,12 @@ class NoveltyIndex:
 
     def _write_meta(self) -> None:
         tmp = self.meta_path.with_suffix(".json.tmp")
-        tmp.write_text(json.dumps({"n_rows": self.n_rows, "sketch_rows": SKETCH_ROWS,
-                                   "sketch_seed": SKETCH_SEED}, sort_keys=True))
+        tmp.write_text(
+            json.dumps(
+                {"n_rows": self.n_rows, "sketch_rows": SKETCH_ROWS, "sketch_seed": SKETCH_SEED},
+                sort_keys=True,
+            )
+        )
         os.replace(tmp, self.meta_path)
 
     # -- shape guards ----------------------------------------------------------------------------
@@ -556,16 +610,16 @@ class NoveltyIndex:
 
         return True, "novel", None
 
-    def register(self, *, feature_id: str, column_values: np.ndarray, spec, card,
-                 extra: dict | None = None) -> None:
+    def register(
+        self, *, feature_id: str, column_values: np.ndarray, spec, card, extra: dict | None = None
+    ) -> None:
         """Atomically append one column to the registry.
 
         `feature_id` is REQUIRED and is never minted here. The controller owns every ID; an index
         that invented its own would break the one invariant the campaign audit depends on.
         """
         if not feature_id or not isinstance(feature_id, str):
-            raise NoveltyError("feature_id must be supplied by the controller; the index never "
-                               "mints IDs")
+            raise NoveltyError("feature_id must be supplied by the controller; the index never mints IDs")
         col = np.asarray(column_values, dtype=np.float64)
         n = col.shape[0] if col.ndim else 1
         self._pin_rows(n)
@@ -594,6 +648,7 @@ class NoveltyIndex:
 
 # --- Batch reconciliation -------------------------------------------------------------------------
 
+
 def reconcile_duplicates(matrix: np.ndarray, names, index: NoveltyIndex):
     """-> (kept_matrix, kept_names, rejections). Duplicate columns are PHYSICALLY DROPPED.
 
@@ -621,13 +676,15 @@ def reconcile_duplicates(matrix: np.ndarray, names, index: NoveltyIndex):
             index.register(feature_id=name, column_values=col, spec=spec, card=card)
             keep.append(j)
         else:
-            rejections.append({
-                "name": name,
-                "column_index": j,
-                "reason": reason,
-                "duplicate_of": dup_of,
-                "numeric": numeric_signature(col),
-            })
+            rejections.append(
+                {
+                    "name": name,
+                    "column_index": j,
+                    "reason": reason,
+                    "duplicate_of": dup_of,
+                    "numeric": numeric_signature(col),
+                }
+            )
 
     kept_idx = np.array(keep, dtype=np.int64)
     kept_matrix = mat[:, kept_idx] if len(kept_idx) else mat[:, :0]

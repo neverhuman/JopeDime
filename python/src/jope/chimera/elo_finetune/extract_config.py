@@ -21,9 +21,7 @@ from .paths import regressor_source_dir
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--ckpt", type=Path, default=regressor_source_dir() / "model.ckpt"
-    )
+    parser.add_argument("--ckpt", type=Path, default=regressor_source_dir() / "model.ckpt")
     parser.add_argument(
         "--out",
         type=Path,

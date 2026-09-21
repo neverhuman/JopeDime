@@ -122,9 +122,7 @@ def test_the_high_water_mark_is_a_maximum_not_the_previous_row(tmp_path):
 
 def test_the_guard_document_is_published_where_the_alarm_scan_reads_it(tmp_path):
     publish_freeze_guard(record(4_690_000, LIVE_SPLITS), root=tmp_path)
-    published = json.loads(
-        (tmp_path / "ops" / "corpus-freeze-guard.v1.json").read_text()
-    )
+    published = json.loads((tmp_path / "ops" / "corpus-freeze-guard.v1.json").read_text())
     assert published["schema"] == "JopeCorpusFreezeGuard.v1"
     assert published["alarm"] == "corpus_dataset_count_fell"
 

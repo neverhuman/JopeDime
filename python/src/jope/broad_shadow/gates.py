@@ -22,9 +22,7 @@ def normalized_regret(scores: Sequence[float], selected_index: int) -> float:
     ):
         raise ValueError("normalized regret requires a finite candidate slate")
     span = float(values.max() - values.min())
-    return 0.0 if span <= 1e-12 else float(
-        (values.max() - values[selected_index]) / span
-    )
+    return 0.0 if span <= 1e-12 else float((values.max() - values[selected_index]) / span)
 
 
 def paired_bootstrap_interval(
@@ -69,12 +67,8 @@ def evaluate_offline_gate(
     datasets = [str(row["dataset_hash"]) for row in rows]
     if len(datasets) != len(set(datasets)):
         raise ValueError("offline gate contains duplicate datasets")
-    baseline_regret = np.asarray(
-        [float(row["real_only_regret"]) for row in rows], dtype=np.float64
-    )
-    mixed_regret = np.asarray(
-        [float(row["mixed_regret"]) for row in rows], dtype=np.float64
-    )
+    baseline_regret = np.asarray([float(row["real_only_regret"]) for row in rows], dtype=np.float64)
+    mixed_regret = np.asarray([float(row["mixed_regret"]) for row in rows], dtype=np.float64)
     baseline_pairwise = np.asarray(
         [float(row["real_only_pairwise_accuracy"]) for row in rows],
         dtype=np.float64,
@@ -83,12 +77,8 @@ def evaluate_offline_gate(
         [float(row["mixed_pairwise_accuracy"]) for row in rows],
         dtype=np.float64,
     )
-    baseline_validity = np.asarray(
-        [float(row["real_only_validity"]) for row in rows], dtype=np.float64
-    )
-    mixed_validity = np.asarray(
-        [float(row["mixed_validity"]) for row in rows], dtype=np.float64
-    )
+    baseline_validity = np.asarray([float(row["real_only_validity"]) for row in rows], dtype=np.float64)
+    mixed_validity = np.asarray([float(row["mixed_validity"]) for row in rows], dtype=np.float64)
     arrays = (
         baseline_regret,
         mixed_regret,
@@ -102,11 +92,7 @@ def evaluate_offline_gate(
     improvement = baseline_regret - mixed_regret
     interval = paired_bootstrap_interval(improvement, seed=seed)
     baseline_mean = float(baseline_regret.mean())
-    relative_reduction = (
-        float(improvement.mean() / baseline_mean)
-        if baseline_mean > 1e-12
-        else -math.inf
-    )
+    relative_reduction = float(improvement.mean() / baseline_mean) if baseline_mean > 1e-12 else -math.inf
     pairwise_delta = float(mixed_pairwise.mean() - baseline_pairwise.mean())
     validity_delta = float(mixed_validity.mean() - baseline_validity.mean())
     conditions = {
@@ -147,35 +133,27 @@ def evaluate_prospective_gate(
     if len(datasets) != len(set(datasets)):
         raise ValueError("prospective gate contains duplicate datasets")
     improvement = np.asarray(
-        [
-            float(row["mixed_best_robust_r2"])
-            - float(row["real_only_best_robust_r2"])
-            for row in rows
-        ],
+        [float(row["mixed_best_robust_r2"]) - float(row["real_only_best_robust_r2"]) for row in rows],
         dtype=np.float64,
     )
-    baseline_validity = np.asarray(
-        [float(row["real_only_validity"]) for row in rows], dtype=np.float64
-    )
-    mixed_validity = np.asarray(
-        [float(row["mixed_validity"]) for row in rows], dtype=np.float64
-    )
-    baseline_wall = np.asarray(
-        [float(row["real_only_wall_seconds"]) for row in rows], dtype=np.float64
-    )
-    mixed_wall = np.asarray(
-        [float(row["mixed_wall_seconds"]) for row in rows], dtype=np.float64
-    )
-    if not all(
-        np.all(np.isfinite(array))
-        for array in (
-            improvement,
-            baseline_validity,
-            mixed_validity,
-            baseline_wall,
-            mixed_wall,
+    baseline_validity = np.asarray([float(row["real_only_validity"]) for row in rows], dtype=np.float64)
+    mixed_validity = np.asarray([float(row["mixed_validity"]) for row in rows], dtype=np.float64)
+    baseline_wall = np.asarray([float(row["real_only_wall_seconds"]) for row in rows], dtype=np.float64)
+    mixed_wall = np.asarray([float(row["mixed_wall_seconds"]) for row in rows], dtype=np.float64)
+    if (
+        not all(
+            np.all(np.isfinite(array))
+            for array in (
+                improvement,
+                baseline_validity,
+                mixed_validity,
+                baseline_wall,
+                mixed_wall,
+            )
         )
-    ) or np.any(baseline_wall <= 0) or np.any(mixed_wall < 0):
+        or np.any(baseline_wall <= 0)
+        or np.any(mixed_wall < 0)
+    ):
         raise ValueError("prospective gate metrics must be finite with positive baseline time")
     interval = paired_bootstrap_interval(improvement, seed=seed)
     validity_delta = float(mixed_validity.mean() - baseline_validity.mean())

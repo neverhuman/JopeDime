@@ -1,4 +1,5 @@
 """AZ-2017 specialist loop gates and numeric bars. Serving is never assigned here."""
+
 from __future__ import annotations
 
 from scientific_metadata import canonical, finite
@@ -26,7 +27,10 @@ def search_beating_allowed(frozen_bt, recovery_bt=RECOVERY_BT):
 
 
 def frozen_diagnostic_pass(nll, bt, recovery_nll=RECOVERY_NLL, recovery_bt=RECOVERY_BT):
-    if not all(finite(x) for x in (nll, bt, recovery_nll, recovery_bt)) or min(recovery_nll, recovery_bt) <= 0:
+    if (
+        not all(finite(x) for x in (nll, bt, recovery_nll, recovery_bt))
+        or min(recovery_nll, recovery_bt) <= 0
+    ):
         return False, ["diagnostic requires finite nonnegative nll/bt and positive references"]
     reasons = []
     if nll > recovery_nll * (1 + NLL_GUARD):
@@ -49,8 +53,13 @@ def may_serve(diagnostic_ok, probe_ok, paper_ok, quality_report_for_challenger=F
     return False, ["serve blocked: diagnostic flags cannot replace original promotion evidence"]
 
 
-def win_rates(rows, teacher_key="best_retained_teacher", seed_key="best_initial_neural_seed",
-              final_key="best_final_gp", margin=BARS["paper_relative_margin"]):
+def win_rates(
+    rows,
+    teacher_key="best_retained_teacher",
+    seed_key="best_initial_neural_seed",
+    final_key="best_final_gp",
+    margin=BARS["paper_relative_margin"],
+):
     seed_n = seed_beats = final_n = final_beats = margin_beats = 0
     seen = set()
     duplicates = invalid = 0
@@ -86,7 +95,8 @@ def win_rates(rows, teacher_key="best_retained_teacher", seed_key="best_initial_
         final_gp_beats=final_beats,
         final_gp_rate=final_beats / final_n if final_n else 0.0,
         final_gp_margin_rate=margin_beats / final_n if final_n else 0.0,
-        duplicate_rows=duplicates, invalid_rows=invalid,
+        duplicate_rows=duplicates,
+        invalid_rows=invalid,
         scope="available unique diagnostic rows; original execution and family independence unverified",
         independent_evaluation=False,
     )
@@ -104,12 +114,15 @@ def world_class(rates):
 
 def descriptive_bars(rates):
     if not isinstance(rates, dict) or not all(
-            finite(rates.get(k)) and rates[k] <= 1
-            for k in ("neural_seed_rate", "final_gp_rate", "final_gp_margin_rate")):
+        finite(rates.get(k)) and rates[k] <= 1
+        for k in ("neural_seed_rate", "final_gp_rate", "final_gp_margin_rate")
+    ):
         return False
-    return (rates["neural_seed_rate"] >= BARS["neural_seed_beats_teacher"]
-            and rates["final_gp_rate"] >= BARS["final_gp_beats_teacher"]
-            and rates["final_gp_margin_rate"] >= BARS["final_gp_beats_teacher_by_margin"])
+    return (
+        rates["neural_seed_rate"] >= BARS["neural_seed_beats_teacher"]
+        and rates["final_gp_rate"] >= BARS["final_gp_beats_teacher"]
+        and rates["final_gp_margin_rate"] >= BARS["final_gp_beats_teacher_by_margin"]
+    )
 
 
 def specialist_loop(task, served_from_own_panel, registry_teacher_refit_rate, mixed_corpus=False):

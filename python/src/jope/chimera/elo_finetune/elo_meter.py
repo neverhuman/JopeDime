@@ -163,26 +163,20 @@ class SplicedEloMeter:
         safe_count = np.maximum(self.match_count, 1.0)
         for _ in range(ELO_ROUNDS):
             deltas = np.zeros_like(ratings)
-            e_cc = 1.0 / (
-                1.0 + 10.0 ** ((ratings[self.cc_right] - ratings[self.cc_left]) / ELO_SCALE)
-            )
+            e_cc = 1.0 / (1.0 + 10.0 ** ((ratings[self.cc_right] - ratings[self.cc_left]) / ELO_SCALE))
             np.add.at(deltas, self.cc_left, self.cc_out - self.cc_cnt * e_cc)
             np.add.at(
                 deltas,
                 self.cc_right,
                 (self.cc_cnt - self.cc_out) - self.cc_cnt * (1.0 - e_cc),
             )
-            e_ours = 1.0 / (
-                1.0 + 10.0 ** ((ratings[self.active] - ratings[self.ours]) / ELO_SCALE)
-            )
+            e_ours = 1.0 / (1.0 + 10.0 ** ((ratings[self.active] - ratings[self.ours]) / ELO_SCALE))
             np.add.at(
                 deltas,
                 self.active,
                 (our_active_cnt - our_active_out) - our_active_cnt * (1.0 - e_ours),
             )
-            deltas[self.ours] += float(
-                np.sum(our_active_out - our_active_cnt * e_ours)
-            )
+            deltas[self.ours] += float(np.sum(our_active_out - our_active_cnt * e_ours))
             ratings += ELO_K * deltas / safe_count
         return ratings
 
@@ -200,9 +194,7 @@ class SplicedEloMeter:
 
     def exchange_rate(self) -> float:
         """dElo/d(mean winrate) at the current ratings (loss-design §0.4)."""
-        e = 1.0 / (
-            1.0 + 10.0 ** ((self._ratings[self.active] - self.our_rating) / ELO_SCALE)
-        )
+        e = 1.0 / (1.0 + 10.0 ** ((self._ratings[self.active] - self.our_rating) / ELO_SCALE))
         weights = self.our_cnt[self.active].astype(np.float64)
         mean_ee = float(np.sum(weights * e * (1.0 - e)) / np.sum(weights))
         return ELO_SCALE / (math.log(10.0) * max(mean_ee, 1e-6))

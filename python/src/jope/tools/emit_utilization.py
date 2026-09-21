@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Install next units on the GPU host and emit utilization receipts. Never starts the fenced GP."""
+
 from __future__ import annotations
 
 import json
@@ -26,8 +27,9 @@ def write(name, payload):
 
 
 def ssh(script, timeout=60):
-    result = subprocess.run(SSH + ["python3", "-"], input=script, text=True,
-                            capture_output=True, timeout=timeout)
+    result = subprocess.run(
+        SSH + ["python3", "-"], input=script, text=True, capture_output=True, timeout=timeout
+    )
     if result.returncode:
         raise RuntimeError(result.stderr[-2000:] or result.stdout[-2000:])
     text = result.stdout.strip().splitlines()
@@ -36,17 +38,47 @@ def ssh(script, timeout=60):
 
 def rsync_runtime():
     dest = HOST + ":" + REMOTE + "/runs/flywheel-utilization-20260911/runtime/tools/"
-    subprocess.run(["ssh", "-o", "BatchMode=yes", "-i", str(SSH_KEY), HOST,
-                    "mkdir -p " + REMOTE + "/runs/flywheel-utilization-20260911/runtime/tools "
-                    + REMOTE + "/runs/flywheel-utilization-20260911/runtime/systemd"], check=True)
-    subprocess.run(["rsync", "-a", "--delete", "--exclude=__pycache__",
-                    "-e", "ssh -o BatchMode=yes -i " + str(SSH_KEY),
-                    str(ROOT / "parallel/tools") + "/", dest], check=True)
-    subprocess.run(["rsync", "-a",
-                    "-e", "ssh -o BatchMode=yes -i " + str(SSH_KEY),
-                    str(ROOT / "parallel/systemd/jope-parallel-gp-next.service"),
-                    str(ROOT / "parallel/systemd/jope-parallel-controller-next.service"),
-                    HOST + ":" + REMOTE + "/runs/flywheel-utilization-20260911/runtime/systemd/"], check=True)
+    subprocess.run(
+        [
+            "ssh",
+            "-o",
+            "BatchMode=yes",
+            "-i",
+            str(SSH_KEY),
+            HOST,
+            "mkdir -p "
+            + REMOTE
+            + "/runs/flywheel-utilization-20260911/runtime/tools "
+            + REMOTE
+            + "/runs/flywheel-utilization-20260911/runtime/systemd",
+        ],
+        check=True,
+    )
+    subprocess.run(
+        [
+            "rsync",
+            "-a",
+            "--delete",
+            "--exclude=__pycache__",
+            "-e",
+            "ssh -o BatchMode=yes -i " + str(SSH_KEY),
+            str(ROOT / "parallel/tools") + "/",
+            dest,
+        ],
+        check=True,
+    )
+    subprocess.run(
+        [
+            "rsync",
+            "-a",
+            "-e",
+            "ssh -o BatchMode=yes -i " + str(SSH_KEY),
+            str(ROOT / "parallel/systemd/jope-parallel-gp-next.service"),
+            str(ROOT / "parallel/systemd/jope-parallel-controller-next.service"),
+            HOST + ":" + REMOTE + "/runs/flywheel-utilization-20260911/runtime/systemd/",
+        ],
+        check=True,
+    )
 
 
 def install_units():
@@ -72,7 +104,8 @@ print(json.dumps(launch_next.start('{unit}')))
 
 
 def observe():
-    return ssh(r"""
+    return ssh(
+        r"""
 import json, subprocess, time
 from pathlib import Path
 def show(unit):
@@ -103,7 +136,9 @@ print(json.dumps({
     'hold': (progress.get('automatic_training_hold') or {}).get('status'),
     'gp_service': {k: gp.get(k) for k in ('timestamp','phase','active','queued','completed_evaluations','wait_for_work','slot_leases')},
 }))
-""", timeout=90)
+""",
+        timeout=90,
+    )
 
 
 def wait_gp(launch_ts, seconds=90):
@@ -140,23 +175,29 @@ print(json.dumps({
         started = start_next(fence.NEXT_GP)
     except Exception as exc:
         write("u1-gp-next-failed.json", {"error": str(exc)})
-        write("u3-resident-stopped.json", ssh(r"""
+        write(
+            "u3-resident-stopped.json",
+            ssh(r"""
 import json, sys
 sys.path.insert(0, '/home/ubuntu/jope-dime/parallel/runs/flywheel-utilization-20260911/runtime/tools')
 import launch_next
 print(json.dumps(launch_next.stop_resident_if_no_dispatcher(False)))
-"""))
+"""),
+        )
         raise
     write("u1-gp-next.json", dict(started, executable_sha256=pre["executable_sha256"], launch_ts=launch_ts))
     first = wait_gp(launch_ts)
     pid = int(first["gp_next"].get("MainPID") or 0)
     if pid in (0, fence.LEGACY_GP_PID):
-        write("u3-resident-stopped.json", ssh(r"""
+        write(
+            "u3-resident-stopped.json",
+            ssh(r"""
 import json, sys
 sys.path.insert(0, '/home/ubuntu/jope-dime/parallel/runs/flywheel-utilization-20260911/runtime/tools')
 import launch_next
 print(json.dumps(launch_next.stop_resident_if_no_dispatcher(False)))
-"""))
+"""),
+        )
         raise RuntimeError("gp-next did not publish a new identity: " + json.dumps(first["gp_next"]))
     if str(first["legacy_gp"].get("MainPID") or "0") not in ("0", ""):
         raise RuntimeError("legacy GP is not still stopped")
@@ -165,32 +206,38 @@ print(json.dumps(launch_next.stop_resident_if_no_dispatcher(False)))
     write("u2-controller-next.json", ctrl)
     time.sleep(5)
     second = observe()
-    write("u3-resident-bind.json", dict(
-        resident_left_up=second["resident"].get("ActiveState") == "active",
-        gp_next_pid=int(second["gp_next"].get("MainPID") or 0),
-        controller_pid=int(second["controller_next"].get("MainPID") or 0),
-        invocation=second["gp_next"].get("InvocationID"),
-        legacy_main_pid=int(second["legacy_gp"].get("MainPID") or 0),
-        campaign=second["campaign"].get("ActiveState"),
-        nvidia=second["nvidia"],
-        resident_ranks=second.get("resident_ranks"),
-        tasks=second.get("tasks"),
-        hold=second.get("hold"),
-        gp_service=second["gp_service"],
-        dispatch_into_existing_pool=True,
-        restarted_774452=False,
-        train_on_recovery=False,
-    ))
-    write("SUMMARY.json", dict(
-        schema="parallel.utilization_summary.v1",
-        gp_next_pid=pid,
-        restart_774452=False,
-        legacy_fenced=True,
-        controller_started=second["controller_next"].get("ActiveState") == "active",
-        leftover_incomplete_searches=286,
-        may_serve=False,
-        claimed_savings_745=False,
-    ))
+    write(
+        "u3-resident-bind.json",
+        dict(
+            resident_left_up=second["resident"].get("ActiveState") == "active",
+            gp_next_pid=int(second["gp_next"].get("MainPID") or 0),
+            controller_pid=int(second["controller_next"].get("MainPID") or 0),
+            invocation=second["gp_next"].get("InvocationID"),
+            legacy_main_pid=int(second["legacy_gp"].get("MainPID") or 0),
+            campaign=second["campaign"].get("ActiveState"),
+            nvidia=second["nvidia"],
+            resident_ranks=second.get("resident_ranks"),
+            tasks=second.get("tasks"),
+            hold=second.get("hold"),
+            gp_service=second["gp_service"],
+            dispatch_into_existing_pool=True,
+            restarted_774452=False,
+            train_on_recovery=False,
+        ),
+    )
+    write(
+        "SUMMARY.json",
+        dict(
+            schema="parallel.utilization_summary.v1",
+            gp_next_pid=pid,
+            restart_774452=False,
+            legacy_fenced=True,
+            controller_started=second["controller_next"].get("ActiveState") == "active",
+            leftover_incomplete_searches=286,
+            may_serve=False,
+            claimed_savings_745=False,
+        ),
+    )
 
 
 if __name__ == "__main__":

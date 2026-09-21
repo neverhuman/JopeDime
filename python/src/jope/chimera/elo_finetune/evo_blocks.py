@@ -67,8 +67,7 @@ class BlockTable:
                 rows_per_block = max(1, TARGET_BLOCK // max(row_numel, 1))
                 step = rows_per_block * row_numel
                 for start in range(0, numel, step):
-                    self.blocks.append(
-                        Block(bid, name, start, min(start + step, numel), group))
+                    self.blocks.append(Block(bid, name, start, min(start + step, numel), group))
                     bid += 1
             else:
                 self.blocks.append(Block(bid, name, 0, numel, group))
@@ -76,8 +75,7 @@ class BlockTable:
         self.n_blocks = bid
         self.numels = np.array([b.end - b.start for b in self.blocks], dtype=np.int64)
         self.total_params = int(self.numels.sum())
-        self.group_of_block = np.array(
-            [MODULE_GROUPS.index(b.group) for b in self.blocks], dtype=np.int32)
+        self.group_of_block = np.array([MODULE_GROUPS.index(b.group) for b in self.blocks], dtype=np.int32)
 
     def layout_json(self) -> dict:
         """Tensor → block-range table for the TUI's evo_layout.json."""
@@ -89,16 +87,17 @@ class BlockTable:
         for name in sorted(by_tensor):
             blocks = by_tensor[name]
             numel = sum(b.end - b.start for b in blocks)
-            tensors.append({
-                "name": name,
-                "offset": offset,
-                "numel": numel,
-                "block0": blocks[0].id,
-                "nblocks": len(blocks),
-            })
+            tensors.append(
+                {
+                    "name": name,
+                    "offset": offset,
+                    "numel": numel,
+                    "block0": blocks[0].id,
+                    "nblocks": len(blocks),
+                }
+            )
             offset += numel
-        return {"n_params": self.total_params, "n_blocks": self.n_blocks,
-                "tensors": tensors}
+        return {"n_params": self.total_params, "n_blocks": self.n_blocks, "tensors": tensors}
 
 
 @dataclass
@@ -114,8 +113,9 @@ class CandidateSpec:
         return [self.gen, self.cand_id if self.sign > 0 else -self.cand_id]
 
 
-def sample_mask(table: BlockTable, p: np.ndarray, mask_seed: int,
-                target_params: int | None = None) -> np.ndarray:
+def sample_mask(
+    table: BlockTable, p: np.ndarray, mask_seed: int, target_params: int | None = None
+) -> np.ndarray:
     """Blocks drawn without replacement ∝ p until Σ params ≥ 3% of the net."""
     target = target_params or int(round(SPARSITY * table.total_params))
     rng = np.random.default_rng([mask_seed, 11])
@@ -151,21 +151,21 @@ class DeltaEngine:
             for name, flat in self._flat.items()
         }
 
-    def build_delta(self, spec: CandidateSpec, mask_blocks: np.ndarray,
-                    sigma_groups: np.ndarray) -> list[tuple[Block, torch.Tensor]]:
+    def build_delta(
+        self, spec: CandidateSpec, mask_blocks: np.ndarray, sigma_groups: np.ndarray
+    ) -> list[tuple[Block, torch.Tensor]]:
         """δ_i = σ_c · g_m · max(|w_i|, 0.3·RMS(tensor)) · z_i, deterministic
         in (spec, champion weights)."""
         srng = np.random.default_rng([spec.sigma_seed, 23])
-        sigma_c = float(np.clip(0.02 * np.exp(0.4 * srng.standard_normal()),
-                                0.003, 0.03))
+        sigma_c = float(np.clip(0.02 * np.exp(0.4 * srng.standard_normal()), 0.003, 0.03))
         out = []
         for k, bid in enumerate(mask_blocks.tolist()):
             block = self.table.blocks[bid]
             w = self._flat[block.tensor][block.start : block.end]
             vrng = np.random.default_rng([spec.value_seed, bid, 37])
-            z = torch.from_numpy(
-                vrng.standard_normal(block.end - block.start).astype(np.float32)
-            ).to(w.device)
+            z = torch.from_numpy(vrng.standard_normal(block.end - block.start).astype(np.float32)).to(
+                w.device
+            )
             g_m = float(sigma_groups[MODULE_GROUPS.index(block.group)])
             scale = torch.clamp(w.abs(), min=0.3 * self.rms[block.tensor])
             out.append((block, spec.sign * sigma_c * g_m * scale * z))
@@ -180,8 +180,7 @@ class DeltaEngine:
                 seg.add_(d)
         return saved
 
-    def restore(self, delta: list[tuple[Block, torch.Tensor]],
-                saved: list[torch.Tensor]) -> None:
+    def restore(self, delta: list[tuple[Block, torch.Tensor]], saved: list[torch.Tensor]) -> None:
         with torch.no_grad():
             for (block, _), orig in zip(delta, saved):
                 self._flat[block.tensor][block.start : block.end].copy_(orig)
@@ -219,8 +218,9 @@ class DeltaEngine:
 
     def checksum(self, sample_tensors: int = 4) -> str:
         h = hashlib.sha256()
-        names = self.table.tensor_names[:: max(1, len(self.table.tensor_names)
-                                               // sample_tensors)][:sample_tensors]
+        names = self.table.tensor_names[:: max(1, len(self.table.tensor_names) // sample_tensors)][
+            :sample_tensors
+        ]
         for name in names:
             h.update(self._flat[name][:1024].float().cpu().numpy().tobytes())
         return h.hexdigest()[:16]
@@ -241,15 +241,13 @@ def save_sparse_delta(path: str, deltas: dict[str, tuple[np.ndarray, np.ndarray]
     np.savez_compressed(path, **payload)
 
 
-def delta_to_sparse(delta: list[tuple[Block, torch.Tensor]]
-                    ) -> dict[str, tuple[np.ndarray, np.ndarray]]:
+def delta_to_sparse(delta: list[tuple[Block, torch.Tensor]]) -> dict[str, tuple[np.ndarray, np.ndarray]]:
     """Convert an in-memory block delta to the sparse-file representation."""
     grouped: dict[str, list[tuple[np.ndarray, np.ndarray]]] = {}
     for block, d in delta:
         idx = np.arange(block.start, block.end, dtype=np.int64)
         grouped.setdefault(block.tensor, []).append((idx, d.cpu().numpy()))
     return {
-        name: (np.concatenate([i for i, _ in parts]),
-               np.concatenate([v for _, v in parts]))
+        name: (np.concatenate([i for i, _ in parts]), np.concatenate([v for _, v in parts]))
         for name, parts in grouped.items()
     }

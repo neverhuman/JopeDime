@@ -102,21 +102,14 @@ def _fmt(value: Any, digits: int = 3) -> str:
 
 
 def _sparkline(values: list[Any], width: int = 64) -> str:
-    finite = [
-        float(value)
-        for value in values[-width:]
-        if isinstance(value, (int, float))
-    ]
+    finite = [float(value) for value in values[-width:] if isinstance(value, (int, float))]
     if not finite:
         return "-"
     blocks = "▁▂▃▄▅▆▇█"
     low, high = min(finite), max(finite)
     if high - low < 1e-12:
         return blocks[3] * len(finite)
-    return "".join(
-        blocks[min(7, int(7 * (value - low) / (high - low)))]
-        for value in finite
-    )
+    return "".join(blocks[min(7, int(7 * (value - low) / (high - low)))] for value in finite)
 
 
 def _finite_float(value: Any) -> float | None:
@@ -136,11 +129,7 @@ def _downsample_full_history(values: list[Any], width: int) -> list[float | None
     for column in range(bucket_count):
         start = column * len(values) // bucket_count
         end = (column + 1) * len(values) // bucket_count
-        finite = [
-            number
-            for value in values[start:end]
-            if (number := _finite_float(value)) is not None
-        ]
+        finite = [number for value in values[start:end] if (number := _finite_float(value)) is not None]
         sampled.append(sum(finite) / len(finite) if finite else None)
     return sampled
 
@@ -162,9 +151,13 @@ def _scaled_sparkline(
         if value is None:
             result.append("·", style="dim")
             continue
-        level = 3 if span < 1e-12 else min(
-            7,
-            max(0, int(7 * (value - low) / span)),
+        level = (
+            3
+            if span < 1e-12
+            else min(
+                7,
+                max(0, int(7 * (value - low) / span)),
+            )
         )
         result.append(blocks[level], style=style)
     return result or Text("-", style="dim")
@@ -179,10 +172,7 @@ def _history_plot(
     width: int = 64,
 ) -> Group:
     finite = [
-        number
-        for _, values, _ in series
-        for value in values
-        if (number := _finite_float(value)) is not None
+        number for _, values, _ in series for value in values if (number := _finite_float(value)) is not None
     ]
     if fixed_range is not None:
         low, high = fixed_range
@@ -191,21 +181,12 @@ def _history_plot(
     else:
         low, high = 0.0, 1.0
 
-    numeric_epochs = [
-        number
-        for epoch in epochs
-        if (number := _finite_float(epoch)) is not None
-    ]
-    epoch_range = (
-        f"{int(numeric_epochs[0])}–{int(numeric_epochs[-1])}"
-        if numeric_epochs
-        else "-"
-    )
+    numeric_epochs = [number for epoch in epochs if (number := _finite_float(epoch)) is not None]
+    epoch_range = f"{int(numeric_epochs[0])}–{int(numeric_epochs[-1])}" if numeric_epochs else "-"
     header = Text.assemble(
         (title, "bold"),
         (
-            f"  ·  full epochs {epoch_range}  ·  {len(epochs)} points"
-            f"  ·  shared scale {low:.4g}–{high:.4g}",
+            f"  ·  full epochs {epoch_range}  ·  {len(epochs)} points  ·  shared scale {low:.4g}–{high:.4g}",
             "dim",
         ),
     )
@@ -215,11 +196,7 @@ def _history_plot(
     table.add_column("oldest → newest (entire history)", ratio=1)
     for label, values, style in series:
         latest = next(
-            (
-                number
-                for value in reversed(values)
-                if (number := _finite_float(value)) is not None
-            ),
+            (number for value in reversed(values) if (number := _finite_float(value)) is not None),
             None,
         )
         table.add_row(
@@ -313,12 +290,7 @@ class DimeScoreView:
         errors = self.errors.poll()
         latest_live = live_rows[-1] if live_rows else {}
         last = durable_rows[-1] if durable_rows else {}
-        validation = (
-            last.get("validation")
-            or progress.get("validation")
-            or summary.get("validation")
-            or {}
-        )
+        validation = last.get("validation") or progress.get("validation") or summary.get("validation") or {}
         test_metrics = summary.get("test") or progress.get("test") or {}
 
         state = suite.get(
@@ -369,16 +341,10 @@ class DimeScoreView:
                 )
             )[:20],
         )
-        identity_table.add_row(
-            "initialization", str(identity.get("initialization", "-"))
-        )
+        identity_table.add_row("initialization", str(identity.get("initialization", "-")))
         identity_table.add_row(
             "warm-start",
-            (
-                "eligible"
-                if preflight.get("eligible")
-                else str(preflight.get("reason", "-"))
-            ),
+            ("eligible" if preflight.get("eligible") else str(preflight.get("reason", "-"))),
         )
         identity_table.add_row("seed", str(identity.get("seed", "-")))
         row_split = identity.get("row_split") or {}
@@ -386,23 +352,15 @@ class DimeScoreView:
         identity_table.add_row(
             "example holdout",
             (
-                f"{100 * validation_fraction:.0f}% · "
-                f"{row_split.get('method', '-')}"
+                f"{100 * validation_fraction:.0f}% · {row_split.get('method', '-')}"
                 if isinstance(validation_fraction, (int, float))
-                else (
-                    f"global genomes · {row_split.get('method', '-')}"
-                    if row_split.get("method")
-                    else "-"
-                )
+                else (f"global genomes · {row_split.get('method', '-')}" if row_split.get("method") else "-")
             ),
         )
         split_dataset_counts = row_split.get("dataset_counts") or {}
         identity_table.add_row(
             "datasets train · val · test",
-            " · ".join(
-                str(split_dataset_counts.get(name, "-"))
-                for name in ("train", "validation", "test")
-            ),
+            " · ".join(str(split_dataset_counts.get(name, "-")) for name in ("train", "validation", "test")),
         )
         randomization = identity.get("batch_randomization") or {}
         identity_table.add_row(
@@ -413,8 +371,7 @@ class DimeScoreView:
         identity_table.add_row(
             "binary packing",
             (
-                f"{packing.get('format')} · "
-                f"{packing.get('tokens', '-')} tokens"
+                f"{packing.get('format')} · {packing.get('tokens', '-')} tokens"
                 if packing.get("format")
                 else "-"
             ),
@@ -439,22 +396,13 @@ class DimeScoreView:
         epochs = [row.get("epoch") for row in durable_rows]
 
         def train_history(key: str) -> list[Any]:
-            return [
-                (row.get("train_losses") or {}).get(key)
-                for row in durable_rows
-            ]
+            return [(row.get("train_losses") or {}).get(key) for row in durable_rows]
 
         def validation_history(key: str) -> list[Any]:
-            return [
-                ((row.get("validation") or {}).get("losses") or {}).get(key)
-                for row in durable_rows
-            ]
+            return [((row.get("validation") or {}).get("losses") or {}).get(key) for row in durable_rows]
 
         def quality_history(key: str) -> list[Any]:
-            return [
-                (row.get("validation") or {}).get(key)
-                for row in durable_rows
-            ]
+            return [(row.get("validation") or {}).get(key) for row in durable_rows]
 
         epoch_history = Group(
             _history_plot(
@@ -520,9 +468,7 @@ class DimeScoreView:
         learning.add_row(
             "samples/s",
             _fmt(
-                latest_live.get(
-                    "samples_per_second", progress.get("samples_per_second")
-                ),
+                latest_live.get("samples_per_second", progress.get("samples_per_second")),
                 0,
             ),
         )
@@ -557,9 +503,7 @@ class DimeScoreView:
             " × ".join(
                 map(
                     str,
-                    latest_live.get(
-                        "batch_shape", progress.get("batch_shape", [])
-                    ),
+                    latest_live.get("batch_shape", progress.get("batch_shape", [])),
                 )
             )
             or "-",
@@ -587,12 +531,8 @@ class DimeScoreView:
             ("validity PR-AUC", "validity_pr_auc"),
         ):
             quality.add_row(label, _fmt(validation.get(key), 4))
-        cold_start = (
-            (ablation.get("dataset_held_out") or {}).get("validation") or {}
-        )
-        genome_only = (
-            (ablation.get("genome_only") or {}).get("validation") or {}
-        )
+        cold_start = (ablation.get("dataset_held_out") or {}).get("validation") or {}
+        genome_only = (ablation.get("genome_only") or {}).get("validation") or {}
         quality.add_row(
             "cold-start Spearman",
             _fmt(cold_start.get("mean_per_dataset_spearman"), 4),
@@ -638,16 +578,14 @@ class DimeScoreView:
         system.add_row(
             "4 GiB headroom",
             (
-                f"{_fmt(headroom, 0)} MiB · "
-                f"{'OK' if progress.get('gpu_headroom_ok') else 'LOW'}"
+                f"{_fmt(headroom, 0)} MiB · {'OK' if progress.get('gpu_headroom_ok') else 'LOW'}"
                 if headroom is not None
                 else "-"
             ),
         )
         system.add_row(
             "temperature · power",
-            f"{_fmt(progress.get('gpu_temperature_c'), 0)} °C"
-            f" · {_fmt(progress.get('gpu_power_watts'), 0)} W",
+            f"{_fmt(progress.get('gpu_temperature_c'), 0)} °C · {_fmt(progress.get('gpu_power_watts'), 0)} W",
         )
         system.add_row(
             "graphics · SM · memory clocks",
@@ -684,20 +622,14 @@ class DimeScoreView:
             comparison.add_row("waiting", "-", "-", "-")
         selected = pilots.get("selected_initialization", "-")
 
-        error_text = (
-            "\n".join(str(row.get("error", row))[:180] for row in errors)
-            or "none"
-        )
+        error_text = "\n".join(str(row.get("error", row))[:180] for row in errors) or "none"
         return Group(
             Panel(Group(title, subtitle), box=box.DOUBLE, border_style="bright_blue"),
             Panel(identity_table, title="Immutable identity", border_style="cyan"),
             Panel(losses, title="10 Hz loss windows", border_style="magenta"),
             Panel(
                 epoch_history,
-                title=(
-                    "Full-history train vs "
-                    f"{validation.get('split_name', '10% validation')}"
-                ),
+                title=(f"Full-history train vs {validation.get('split_name', '10% validation')}"),
                 border_style="bright_magenta",
             ),
             Panel(learning, title="Throughput and timing", border_style="magenta"),

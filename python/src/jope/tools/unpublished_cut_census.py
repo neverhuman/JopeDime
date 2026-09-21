@@ -1,4 +1,5 @@
 """D01 evidence: recount metadata unpublished cuts. Does not admit identities."""
+
 from __future__ import annotations
 
 import hashlib
@@ -28,7 +29,8 @@ def recount(census_path):
     missing = Counter(name for row in rows for name in row.get("missing_components", []))
     dispositions = Counter(
         disposition.get("partition", "unknown")
-        for row in rows for disposition in row.get("historical_registry_dispositions", [])
+        for row in rows
+        for disposition in row.get("historical_registry_dispositions", [])
     )
     # Metadata completeness is not native membership or decision-receipt admission.
     execution_queue = 0
@@ -60,9 +62,11 @@ def recount(census_path):
         claimed_4048_certified=False,
         execution_queue=execution_queue,
         empty_queue=execution_queue == 0,
-        reason=(f"{len(registered)} metadata-declared registered rows; "
-                f"{len(metadata_ok)} metadata-declared additions; "
-                "no native component, membership or decision receipts joined"),
+        reason=(
+            f"{len(registered)} metadata-declared registered rows; "
+            f"{len(metadata_ok)} metadata-declared additions; "
+            "no native component, membership or decision receipts joined"
+        ),
         source_errors=data.get("errors", []),
         live_index_written=False,
     )

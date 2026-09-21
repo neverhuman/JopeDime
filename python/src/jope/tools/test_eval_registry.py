@@ -6,20 +6,47 @@ from eval_registry import EvalRegistry, evaluation_key
 
 
 def full_admission(**overrides):
-    row = {k: f"{k}-x" for k in (
-        "program_sha256", "family", "partition", "prepared_sha256", "cut",
-        "training_sha256", "validation_sha256", "evaluator_sha256", "evaluator_protocol",
-        "preprocessing_sha256", "target_scale", "metric_units", "vocabulary_sha256",
-        "feature_view_sha256", "evaluation_seed", "resource_protocol")}
+    row = {
+        k: f"{k}-x"
+        for k in (
+            "program_sha256",
+            "family",
+            "partition",
+            "prepared_sha256",
+            "cut",
+            "training_sha256",
+            "validation_sha256",
+            "evaluator_sha256",
+            "evaluator_protocol",
+            "preprocessing_sha256",
+            "target_scale",
+            "metric_units",
+            "vocabulary_sha256",
+            "feature_view_sha256",
+            "evaluation_seed",
+            "resource_protocol",
+        )
+    }
     row.update(overrides)
     return row
 
 
 def full_execution(**overrides):
-    row = {k: f"{k}-x" for k in (
-        "evaluator_binary_sha256", "entry_point", "loaded_libs_sha256",
-        "omp_threads", "rayon_threads", "fit_rng", "sealed_input_sha256",
-        "resource_window", "admission_policy_sha256", "clean_completion_sha256")}
+    row = {
+        k: f"{k}-x"
+        for k in (
+            "evaluator_binary_sha256",
+            "entry_point",
+            "loaded_libs_sha256",
+            "omp_threads",
+            "rayon_threads",
+            "fit_rng",
+            "sealed_input_sha256",
+            "resource_window",
+            "admission_policy_sha256",
+            "clean_completion_sha256",
+        )
+    }
     row.update(overrides)
     return row
 
@@ -56,8 +83,7 @@ class EvalRegistryTests(unittest.TestCase):
         auth = self.reg.authorize_dispatch(claimed["key"], claimed["start_token"])
         self.assertTrue(auth["authorize_fit"])
         running = self.reg.consume_start(claimed["key"], claimed["start_token"])
-        done = self.reg.complete(claimed["key"], running["attempt_token"],
-                                 {"rmse": 0.0}, 0.0)
+        done = self.reg.complete(claimed["key"], running["attempt_token"], {"rmse": 0.0}, 0.0)
         self.assertEqual(done["action"], "completed")
         reuse = self.reg.lookup(a, e)
         self.assertEqual(reuse["action"], "reuse")
@@ -85,12 +111,28 @@ class EvalRegistryTests(unittest.TestCase):
         self.assertEqual(bad["action"], "rejected")
 
     def test_merge_attributes_cross_shard_hits(self):
-        totals = self.reg.merge_counts([
-            dict(origin="gp", repeats=10, hits_on_exact=4, hits_on_provisional=0,
-                 cross_shard_hits=2, modeled_seconds=30, measured_core_seconds=8),
-            dict(origin="teacher", repeats=5, hits_on_exact=1, hits_on_provisional=1,
-                 cross_shard_hits=3, modeled_seconds=15, measured_core_seconds=0),
-        ])
+        totals = self.reg.merge_counts(
+            [
+                dict(
+                    origin="gp",
+                    repeats=10,
+                    hits_on_exact=4,
+                    hits_on_provisional=0,
+                    cross_shard_hits=2,
+                    modeled_seconds=30,
+                    measured_core_seconds=8,
+                ),
+                dict(
+                    origin="teacher",
+                    repeats=5,
+                    hits_on_exact=1,
+                    hits_on_provisional=1,
+                    cross_shard_hits=3,
+                    modeled_seconds=15,
+                    measured_core_seconds=0,
+                ),
+            ]
+        )
         self.assertEqual(totals["repeats"], 15)
         self.assertEqual(totals["hits_on_exact"], 5)
         self.assertEqual(totals["cross_shard_hits"], 5)

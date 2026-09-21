@@ -157,7 +157,9 @@ def explicit_stats_dim(config: ModelConfig) -> int:
     return base + rich
 
 
-def _masked_quantiles(clipped: torch.Tensor, mask: torch.Tensor, positions: tuple[float, ...]) -> torch.Tensor:
+def _masked_quantiles(
+    clipped: torch.Tensor, mask: torch.Tensor, positions: tuple[float, ...]
+) -> torch.Tensor:
     denom = mask.sum(dim=1).clamp_min(1.0)
     sorted_values = clipped.masked_fill(mask <= 0, 1.0).sort(dim=1).values
     pos = torch.tensor(positions, device=clipped.device, dtype=clipped.dtype)
@@ -165,7 +167,9 @@ def _masked_quantiles(clipped: torch.Tensor, mask: torch.Tensor, positions: tupl
     return sorted_values.gather(1, q_index.clamp(0, clipped.shape[1] - 1))
 
 
-def _rich_explicit_stats(clipped: torch.Tensor, mask: torch.Tensor, mean: torch.Tensor, std: torch.Tensor) -> torch.Tensor:
+def _rich_explicit_stats(
+    clipped: torch.Tensor, mask: torch.Tensor, mean: torch.Tensor, std: torch.Tensor
+) -> torch.Tensor:
     denom = mask.sum(dim=1).clamp_min(1.0)
     batch, width = clipped.shape
     parts: list[torch.Tensor] = []
@@ -188,8 +192,12 @@ def _rich_explicit_stats(clipped: torch.Tensor, mask: torch.Tensor, mean: torch.
     parts.append(((x3 >= thresholds).float() * m3).sum(dim=1) / denom.unsqueeze(1))
     parts.append(((clipped <= 1.0e-12).float() * mask).sum(dim=1, keepdim=True) / denom.unsqueeze(1))
     parts.append(((clipped >= 1.0 - 1.0e-12).float() * mask).sum(dim=1, keepdim=True) / denom.unsqueeze(1))
-    parts.append((((clipped >= 0.40) & (clipped <= 0.60)).float() * mask).sum(dim=1, keepdim=True) / denom.unsqueeze(1))
-    parts.append((((clipped <= 0.05) | (clipped >= 0.95)).float() * mask).sum(dim=1, keepdim=True) / denom.unsqueeze(1))
+    parts.append(
+        (((clipped >= 0.40) & (clipped <= 0.60)).float() * mask).sum(dim=1, keepdim=True) / denom.unsqueeze(1)
+    )
+    parts.append(
+        (((clipped <= 0.05) | (clipped >= 0.95)).float() * mask).sum(dim=1, keepdim=True) / denom.unsqueeze(1)
+    )
 
     for bins in RICH_HISTOGRAM_BINS:
         hist = _histogram(clipped, mask, bins)
@@ -207,7 +215,9 @@ def _rich_explicit_stats(clipped: torch.Tensor, mask: torch.Tensor, mean: torch.
 
     centers = torch.linspace(0.0, 1.0, RICH_RBF_CENTERS, device=clipped.device, dtype=clipped.dtype)
     for bandwidth in RICH_RBF_BANDWIDTHS:
-        density = torch.exp(-((clipped.unsqueeze(-1) - centers.view(1, 1, -1)).square()) / (2.0 * bandwidth * bandwidth))
+        density = torch.exp(
+            -((clipped.unsqueeze(-1) - centers.view(1, 1, -1)).square()) / (2.0 * bandwidth * bandwidth)
+        )
         parts.append((density * mask.unsqueeze(-1)).sum(dim=1) / denom.unsqueeze(1))
 
     centered = (clipped - mean.unsqueeze(1)) * mask
@@ -223,7 +233,9 @@ def _rich_explicit_stats(clipped: torch.Tensor, mask: torch.Tensor, mean: torch.
     adjacent = torch.clamp(sorted_values[:, 1:] - sorted_values[:, :-1], min=0.0) * adj_valid.float()
     adj_denom = (denom - 1.0).clamp_min(1.0)
     gap_mean = adjacent.sum(dim=1) / adj_denom
-    gap_std = torch.sqrt(((adjacent - gap_mean.unsqueeze(1)).square() * adj_valid.float()).sum(dim=1) / adj_denom + 1.0e-8)
+    gap_std = torch.sqrt(
+        ((adjacent - gap_mean.unsqueeze(1)).square() * adj_valid.float()).sum(dim=1) / adj_denom + 1.0e-8
+    )
     gap_min = adjacent.masked_fill(~adj_valid, 1.0).min(dim=1).values
     gap_max = adjacent.max(dim=1).values
     left_gap = rich_q[:, 0]
@@ -232,7 +244,12 @@ def _rich_explicit_stats(clipped: torch.Tensor, mask: torch.Tensor, mean: torch.
 
     ecdf_hi = (positions.float() + 1.0) / denom.view(-1, 1)
     ecdf_lo = positions.float() / denom.view(-1, 1)
-    ks = torch.maximum((ecdf_hi - sorted_values).abs(), (sorted_values - ecdf_lo).abs()).masked_fill(~valid, 0.0).max(dim=1).values
+    ks = (
+        torch.maximum((ecdf_hi - sorted_values).abs(), (sorted_values - ecdf_lo).abs())
+        .masked_fill(~valid, 0.0)
+        .max(dim=1)
+        .values
+    )
     expected = (positions.float() + 0.5) / denom.view(-1, 1)
     cvm = ((((sorted_values - expected).square()) * valid.float()).sum(dim=1) + 1.0 / (12.0 * denom)) / denom
     wasserstein = ((sorted_values - expected).abs() * valid.float()).sum(dim=1) / denom
@@ -328,7 +345,10 @@ class TargetEncoder(nn.Module):
             ResidualMLP(cfg.token_dim, cfg.hidden_dim),
         )
         self.set_blocks = nn.ModuleList(
-            [SetBlock(cfg.token_dim, cfg.attention_heads, cfg.hidden_dim) for _ in range(cfg.attention_layers)]
+            [
+                SetBlock(cfg.token_dim, cfg.attention_heads, cfg.hidden_dim)
+                for _ in range(cfg.attention_layers)
+            ]
         )
         stats_dim = explicit_stats_dim(cfg)
         self.stats_mlp = nn.Sequential(
@@ -360,7 +380,9 @@ class TargetEncoder(nn.Module):
         rbf = torch.exp(-48.0 * (x.unsqueeze(-1) - self.rbf_centers.view(1, 1, -1)).square())
         angles = 2.0 * math.pi * x.unsqueeze(-1) * self.fourier_freqs.view(1, 1, -1)
         fourier = torch.cat([torch.sin(angles), torch.cos(angles)], dim=-1)
-        task_one_hot = F.one_hot(task.clamp(0, 1), num_classes=2).float().unsqueeze(1).expand(-1, x.shape[1], -1)
+        task_one_hot = (
+            F.one_hot(task.clamp(0, 1), num_classes=2).float().unsqueeze(1).expand(-1, x.shape[1], -1)
+        )
         return torch.cat([x.unsqueeze(-1), rbf, fourier, task_one_hot, mask.float().unsqueeze(-1)], dim=-1)
 
     def forward(
@@ -409,7 +431,9 @@ class TargetEncoder(nn.Module):
 
 
 def checkpoint_config(checkpoint: Mapping[str, object]) -> ModelConfig:
-    return ModelConfig.from_mapping(checkpoint.get("model_config") if isinstance(checkpoint, Mapping) else None)
+    return ModelConfig.from_mapping(
+        checkpoint.get("model_config") if isinstance(checkpoint, Mapping) else None
+    )
 
 
 def build_model_from_checkpoint(checkpoint: Mapping[str, object]) -> TargetEncoder:

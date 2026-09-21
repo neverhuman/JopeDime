@@ -72,6 +72,8 @@ def _gp_host_map(default_workers: int) -> dict[str, int]:
         if host:
             out[host] = max(0, int(n or default_workers))
     return out or {GP_HOST: default_workers}
+
+
 JAIN_BIN = str(_PRIME_CONFIG.jain_binary)
 GPU_CACHE = str(_PRIME_CONFIG.gpu_cache)
 REG_ROOT = str(_PRIME_CONFIG.regression_dataset_root)
@@ -147,8 +149,9 @@ class GpFactory:
         self.standardization = json.loads((self.art_dir / "standardization.json").read_text())
         self.state_path = self.run_dir / "factory_state.json"
         self.state: dict[str, Any] = (
-            json.loads(self.state_path.read_text()) if self.state_path.exists() else
-            {"batch": 0, "cursor": 0, "harvested_rows": 0, "improved_datasets": 0}
+            json.loads(self.state_path.read_text())
+            if self.state_path.exists()
+            else {"batch": 0, "cursor": 0, "harvested_rows": 0, "improved_datasets": 0}
         )
 
     # -- seeds -------------------------------------------------------------------
@@ -257,7 +260,9 @@ class GpFactory:
                     if not g:
                         continue
                     pct = r.get("reward_percentile_in_engine")
-                    pct = float(pct) if isinstance(pct, (int, float)) and math.isfinite(pct) else float("-inf")
+                    pct = (
+                        float(pct) if isinstance(pct, (int, float)) and math.isfinite(pct) else float("-inf")
+                    )
                     ranked[h].append((pct, g))
             idx = {}
             for h in set(ranked) | set(bars):
@@ -267,8 +272,12 @@ class GpFactory:
                         seeds.append(g)
                     if len(seeds) >= POOL_SEEDS_PER_DATASET:
                         break
-                idx[h] = {"seeds": seeds, "model_bar": bars.get(h),
-                          "pool_file": latest.name, "generation": generation}
+                idx[h] = {
+                    "seeds": seeds,
+                    "model_bar": bars.get(h),
+                    "pool_file": latest.name,
+                    "generation": generation,
+                }
             cache_path.write_text(json.dumps(idx))
         self._mpi, self._mpi_src = idx, latest.name
         return idx
@@ -311,8 +320,14 @@ class GpFactory:
                     emb = embedding_from_vs(entry["vs_path"], self.standardization)
                     tgt = target_summary_from_vs(entry.get("train_target_vs"))
                     props = propose_v3(
-                        emb, target_summary=tgt, model=model, router=router, n=4,
-                        engines=("featmath",), device="cpu", seed=batch,
+                        emb,
+                        target_summary=tgt,
+                        model=model,
+                        router=router,
+                        n=4,
+                        engines=("featmath",),
+                        device="cpu",
+                        seed=batch,
                     )
                     genomes: list[str] = []
                     for p in props:
@@ -439,8 +454,13 @@ class GpFactory:
         return path
 
     def _jain_cmd(
-        self, remote_dir: str, shard_file: str, w: int, seeds_name: str,
-        jain_seed: int, remote_targets: str | None,
+        self,
+        remote_dir: str,
+        shard_file: str,
+        w: int,
+        seeds_name: str,
+        jain_seed: int,
+        remote_targets: str | None,
     ) -> str:
         cmd = (
             f"nice -n 5 {JAIN_BIN} jain-regressor --root {GP_WORK_ROOT} "
@@ -497,6 +517,7 @@ class GpFactory:
         # on any host that is already loaded (by our eval/miner or the user's own jobs) and
         # skip it entirely when badly oversaturated. Fail-open (None load → full workers).
         from .cluster_monitor import factory_workers
+
         want = _gp_host_map(self.workers)
         assignments = []
         fallback_host = None
@@ -531,7 +552,9 @@ class GpFactory:
                 ],
                 check=True,
             )
-            subprocess.run(["rsync", "-a", str(slice_file), str(seeds_file), f"{host}:{remote_dir}/"], check=True)
+            subprocess.run(
+                ["rsync", "-a", str(slice_file), str(seeds_file), f"{host}:{remote_dir}/"], check=True
+            )
             for dataset_hash in sorted(host_hashes.get(host, ())):
                 remote_dataset = f"{GP_WORK_ROOT}/{dataset_hash}"
                 subprocess.run(
@@ -578,40 +601,49 @@ class GpFactory:
                     subprocess.run(["rsync", "-a", str(tf), f"{host}:{remote_dir}/"], check=True)
                     remote_targets = f"{remote_dir}/{tf.name}"
             reports = " ".join(
-                f"{GP_WORK_ROOT}/{dataset_hash}/reports/{MODEL_NAME}.json"
-                for dataset_hash in shard
+                f"{GP_WORK_ROOT}/{dataset_hash}/reports/{MODEL_NAME}.json" for dataset_hash in shard
             )
-            cmd = (
-                f"rm -f {reports}; "
-                + self._jain_cmd(
-                    remote_dir,
-                    shard_file,
-                    w,
-                    seeds_file.name,
-                    jain_seed,
-                    remote_targets,
-                )
+            cmd = f"rm -f {reports}; " + self._jain_cmd(
+                remote_dir,
+                shard_file,
+                w,
+                seeds_file.name,
+                jain_seed,
+                remote_targets,
             )
             log_path = self.run_dir / f"jain_{tag}_w{w}.log"
-            procs.append(subprocess.Popen(["ssh", "-o", "BatchMode=yes", host, cmd],
-                                          stdout=log_path.open("w"), stderr=subprocess.STDOUT))
+            procs.append(
+                subprocess.Popen(
+                    ["ssh", "-o", "BatchMode=yes", host, cmd],
+                    stdout=log_path.open("w"),
+                    stderr=subprocess.STDOUT,
+                )
+            )
         rc = [p.wait() for p in procs]
         seed_source = "game" if self.game_mode else ("model+champion" if use_model else "champion")
-        self.log(f"[factory {tag}] jain workers done rc={rc} "
-                 f"seed_source={seed_source} n_seeds={len(seeds)} "
-                 f"seed_coverage={getattr(self, '_last_seed_coverage', {})}")
+        self.log(
+            f"[factory {tag}] jain workers done rc={rc} "
+            f"seed_source={seed_source} n_seeds={len(seeds)} "
+            f"seed_coverage={getattr(self, '_last_seed_coverage', {})}"
+        )
 
         # pull reports back from the host that ran each dataset's shard
         pulled = 0
         for h in hashes:
             # a dropped host may not have run this shard; fall back to whichever host did run
-            src = f"{shard_host.get(h, fallback_host or GP_HOST)}:{GP_WORK_ROOT}/{h}/reports/{MODEL_NAME}.json"
+            src = (
+                f"{shard_host.get(h, fallback_host or GP_HOST)}:{GP_WORK_ROOT}/{h}/reports/{MODEL_NAME}.json"
+            )
             dst = GP_WORK_ROOT / h / "reports"
             subprocess.run(["rsync", "-a", src, f"{dst}/"], capture_output=True, check=True)
             pulled += 1
-        return {"rc": rc, "reports_pulled": pulled,
-                "seed_source": seed_source, "n_seeds": len(seeds),
-                "seed_coverage": getattr(self, "_last_seed_coverage", {})}
+        return {
+            "rc": rc,
+            "reports_pulled": pulled,
+            "seed_source": seed_source,
+            "n_seeds": len(seeds),
+            "seed_coverage": getattr(self, "_last_seed_coverage", {}),
+        }
 
     # -- harvest ------------------------------------------------------------------
     def harvest_slice(self, batch: int, hashes: list[str], champions: dict[str, dict]) -> dict[str, Any]:
@@ -634,9 +666,13 @@ class GpFactory:
             bar = (champions.get(h) or {}).get("score")
             emb = embedding_from_vs(entry["vs_path"], self.standardization)
             tgt = target_summary_from_vs(entry.get("train_target_vs"))
-            candidates = [{
-                "genome": rep.get("genome"), "cv": rep.get("cv") or {}, "rank": 0,
-            }]
+            candidates = [
+                {
+                    "genome": rep.get("genome"),
+                    "cv": rep.get("cv") or {},
+                    "rank": 0,
+                }
+            ]
             for i, f in enumerate(rep.get("finalists") or []):
                 candidates.append({"genome": f.get("genome"), "cv": f.get("cv") or {}, "rank": i + 1})
             best_new = None
@@ -653,46 +689,54 @@ class GpFactory:
                 if beats and (best_new is None or score > best_new):
                     best_new = score
                     best_new_genome = genome
-                rows.append(TrainingRow(
-                    dataset_id=h,
-                    source="gp_factory",
-                    embedding=emb,
-                    target_embedding=tgt,
-                    genome=genome,
-                    canonical_genome=genome,
-                    engine="featmath",
-                    score=max(float(oof), -1.0),
-                    metadata={
-                        "provenance": f"gp_factory_b{batch}",
-                        "task_type": "regression",
-                        "split": "train",
-                        "oof_r2_raw": float(oof),
-                        "score_robust": score,
-                        "rank_pct": 1.0 if beats and c["rank"] == 0 else (0.9 if beats else 0.6),
-                        "finalist_rank": c["rank"],
-                        "beat_bar": beats,
-                        "algorithm": MODEL_NAME,
-                    },
-                ).to_json())
+                rows.append(
+                    TrainingRow(
+                        dataset_id=h,
+                        source="gp_factory",
+                        embedding=emb,
+                        target_embedding=tgt,
+                        genome=genome,
+                        canonical_genome=genome,
+                        engine="featmath",
+                        score=max(float(oof), -1.0),
+                        metadata={
+                            "provenance": f"gp_factory_b{batch}",
+                            "task_type": "regression",
+                            "split": "train",
+                            "oof_r2_raw": float(oof),
+                            "score_robust": score,
+                            "rank_pct": 1.0 if beats and c["rank"] == 0 else (0.9 if beats else 0.6),
+                            "finalist_rank": c["rank"],
+                            "beat_bar": beats,
+                            "algorithm": MODEL_NAME,
+                        },
+                    ).to_json()
+                )
                 for seed in seed_sources.get(genome, []):
-                    ledger_rows.append({
-                        "gp_batch": batch,
-                        "dataset_hash": h,
-                        "seed_source": seed.get("source"),
-                        "seed_dataset_hash": seed.get("dataset_hash"),
-                        "seed_rank": seed.get("seed_rank"),
-                        "seed_score": seed.get("seed_score"),
-                        "seed_genome": genome,
-                        "descendant_type": "finalist",
-                        "finalist_rank": c["rank"],
-                        "descendant_genome": genome,
-                        "descendant_robust_score": score,
-                        "delta": score - bar if bar is not None else None,
-                        "cost_ms": (rep.get("timings") or {}).get("total_ms"),
-                        "exact_seed_match": True,
-                    })
+                    ledger_rows.append(
+                        {
+                            "gp_batch": batch,
+                            "dataset_hash": h,
+                            "seed_source": seed.get("source"),
+                            "seed_dataset_hash": seed.get("dataset_hash"),
+                            "seed_rank": seed.get("seed_rank"),
+                            "seed_score": seed.get("seed_score"),
+                            "seed_genome": genome,
+                            "descendant_type": "finalist",
+                            "finalist_rank": c["rank"],
+                            "descendant_genome": genome,
+                            "descendant_robust_score": score,
+                            "delta": score - bar if bar is not None else None,
+                            "cost_ms": (rep.get("timings") or {}).get("total_ms"),
+                            "exact_seed_match": True,
+                        }
+                    )
             for row in ledger_rows:
-                if row.get("dataset_hash") == h and best_new_genome is not None and row.get("descendant_genome") == best_new_genome:
+                if (
+                    row.get("dataset_hash") == h
+                    and best_new_genome is not None
+                    and row.get("descendant_genome") == best_new_genome
+                ):
                     row["descendant_type"] = "champion"
             if best_new is not None:
                 improved += 1
@@ -709,7 +753,8 @@ class GpFactory:
                 for row in ledger_rows:
                     fh.write(json.dumps(row, sort_keys=True) + "\n")
         return {
-            "rows": len(rows), "improved_datasets": improved,
+            "rows": len(rows),
+            "improved_datasets": improved,
             "mean_delta": round(sum(deltas) / len(deltas), 5) if deltas else None,
             "seed_attribution_rows": len(ledger_rows),
             "out": str(out),
@@ -779,8 +824,12 @@ class GpFactory:
             self.state.update({"phase": f"GAME r{r}", "slice": len(remaining), "ts": time.time()})
             _atomic_json(self.state_path, self.state)
             run_info = self.run_slice(
-                batch, remaining, champions, tag=f"b{batch}r{r}",
-                extra=extra or None, targets=targets,
+                batch,
+                remaining,
+                champions,
+                tag=f"b{batch}r{r}",
+                extra=extra or None,
+                targets=targets,
                 jain_seed=self.seed + batch * 10 + r,
             )
             h_info = self.harvest_slice(batch, remaining, champions)
@@ -813,22 +862,35 @@ class GpFactory:
                         beaten = best is not None  # no bar to beat: any measured result wins
                     else:
                         beaten = best is not None and best >= target
-                    fh.write(json.dumps({
-                        "batch": batch, "round": r, "dataset": h,
-                        "model_bar": per_ds[h]["model_bar"],
-                        "champion_bar": per_ds[h]["champion_bar"],
-                        "target": target, "gp_best_score": best,
-                        "beaten": beaten, "wall_s": wall, "ts": ts,
-                    }, sort_keys=True) + "\n")
+                    fh.write(
+                        json.dumps(
+                            {
+                                "batch": batch,
+                                "round": r,
+                                "dataset": h,
+                                "model_bar": per_ds[h]["model_bar"],
+                                "champion_bar": per_ds[h]["champion_bar"],
+                                "target": target,
+                                "gp_best_score": best,
+                                "beaten": beaten,
+                                "wall_s": wall,
+                                "ts": ts,
+                            },
+                            sort_keys=True,
+                        )
+                        + "\n"
+                    )
                     if beaten:
                         beaten_round[h] = r
                     else:
                         still.append(h)
                         if tops := outcome.get("top_genomes"):
                             extra[h] = tops[:3]  # reseed next round with this round's best
-            self.log(f"[factory b{batch} r{r}/{self.game_rounds}] "
-                     f"beat {len(remaining) - len(still)}/{len(remaining)} targets, "
-                     f"{len(still)} carry over rc={run_info.get('rc')} secs={wall}")
+            self.log(
+                f"[factory b{batch} r{r}/{self.game_rounds}] "
+                f"beat {len(remaining) - len(still)}/{len(remaining)} targets, "
+                f"{len(still)} carry over rc={run_info.get('rc')} secs={wall}"
+            )
             remaining = still
             if not remaining:
                 break
@@ -872,8 +934,9 @@ class GpFactory:
                 batch = self.state["batch"] + 1
                 hashes = hashes_all[cursor : cursor + self.slice_size]
                 t0 = time.time()
-                self.state.update({"batch": batch, "cursor": cursor, "phase": "GP",
-                                   "slice": len(hashes), "ts": time.time()})
+                self.state.update(
+                    {"batch": batch, "cursor": cursor, "phase": "GP", "slice": len(hashes), "ts": time.time()}
+                )
                 _atomic_json(self.state_path, self.state)
                 if self.game_mode:
                     info = self._run_game_batch(batch, hashes, champions)
@@ -881,21 +944,27 @@ class GpFactory:
                     hist = self.state.setdefault("game_rounds_histogram", {})
                     for k, v in info["rounds_histogram"].items():
                         hist[k] = hist.get(k, 0) + v
-                    self.state.update({
-                        "cursor": cursor, "phase": "IDLE",
-                        "harvested_rows": self.state.get("harvested_rows", 0) + info["rows"],
-                        "improved_datasets": self.state.get("improved_datasets", 0) + info["improved_datasets"],
-                        "game_batches": self.state.get("game_batches", 0) + 1,
-                        "games_played": self.state.get("games_played", 0) + info["games_played"],
-                        "games_won": self.state.get("games_won", 0) + info["games_won"],
-                        "last_batch": {**info, "secs": round(time.time() - t0, 1)},
-                        "ts": time.time(),
-                    })
+                    self.state.update(
+                        {
+                            "cursor": cursor,
+                            "phase": "IDLE",
+                            "harvested_rows": self.state.get("harvested_rows", 0) + info["rows"],
+                            "improved_datasets": self.state.get("improved_datasets", 0)
+                            + info["improved_datasets"],
+                            "game_batches": self.state.get("game_batches", 0) + 1,
+                            "games_played": self.state.get("games_played", 0) + info["games_played"],
+                            "games_won": self.state.get("games_won", 0) + info["games_won"],
+                            "last_batch": {**info, "secs": round(time.time() - t0, 1)},
+                            "ts": time.time(),
+                        }
+                    )
                     _atomic_json(self.state_path, self.state)
-                    self.log(f"[factory b{batch} game] won={info['games_won']}/{info['games_played']} "
-                             f"rounds={json.dumps(info['rounds_histogram'], sort_keys=True)} "
-                             f"rows={info['rows']} improved={info['improved_datasets']} "
-                             f"secs={round(time.time() - t0, 1)}")
+                    self.log(
+                        f"[factory b{batch} game] won={info['games_won']}/{info['games_played']} "
+                        f"rounds={json.dumps(info['rounds_histogram'], sort_keys=True)} "
+                        f"rows={info['rows']} improved={info['improved_datasets']} "
+                        f"secs={round(time.time() - t0, 1)}"
+                    )
                     batches_done += 1
                     continue
                 run_info = self.run_slice(batch, hashes, champions)
@@ -906,20 +975,28 @@ class GpFactory:
                 # A/B tally: does seeding gen-0 with the model's fresh proposals raise the
                 # per-batch improved-datasets rate vs champion-only seeding? (the merit gate)
                 arm = "ab_model" if run_info.get("seed_source", "").startswith("model") else "ab_control"
-                tally = self.state.setdefault(arm, {"batches": 0, "improved": 0, "delta_sum": 0.0, "datasets": 0})
+                tally = self.state.setdefault(
+                    arm, {"batches": 0, "improved": 0, "delta_sum": 0.0, "datasets": 0}
+                )
                 tally["batches"] += 1
                 tally["improved"] += h_info["improved_datasets"]
                 tally["delta_sum"] += float(h_info.get("mean_delta") or 0.0)
                 tally["datasets"] += len(hashes)
-                self.state.update({
-                    "cursor": cursor, "phase": "IDLE",
-                    "harvested_rows": self.state.get("harvested_rows", 0) + h_info["rows"],
-                    "improved_datasets": self.state.get("improved_datasets", 0) + h_info["improved_datasets"],
-                    "last_batch": {**run_info, **h_info, "secs": round(time.time() - t0, 1)},
-                    "ts": time.time(),
-                })
+                self.state.update(
+                    {
+                        "cursor": cursor,
+                        "phase": "IDLE",
+                        "harvested_rows": self.state.get("harvested_rows", 0) + h_info["rows"],
+                        "improved_datasets": self.state.get("improved_datasets", 0)
+                        + h_info["improved_datasets"],
+                        "last_batch": {**run_info, **h_info, "secs": round(time.time() - t0, 1)},
+                        "ts": time.time(),
+                    }
+                )
                 _atomic_json(self.state_path, self.state)
-                self.log(f"[factory b{batch}] {json.dumps({**run_info, **h_info, 'secs': round(time.time()-t0,1)})}")
+                self.log(
+                    f"[factory b{batch}] {json.dumps({**run_info, **h_info, 'secs': round(time.time() - t0, 1)})}"
+                )
                 batches_done += 1
             self.state["cursor"] = 0  # next pass restarts the rotation
             _atomic_json(self.state_path, self.state)

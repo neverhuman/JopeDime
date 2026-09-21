@@ -69,16 +69,12 @@ def build_fused_corpus(
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
 
-    standardization = json.loads(
-        (base / "standardization.json").read_text(encoding="utf-8")
-    )
+    standardization = json.loads((base / "standardization.json").read_text(encoding="utf-8"))
     mean = np.asarray(standardization["mean"], dtype=np.float64)
     scale = np.asarray(standardization["scale"], dtype=np.float64)
 
     # ---- 1) reuse the regression rows verbatim, tag task_type ----------------------
-    reg_rows = [
-        TrainingRow.from_json(r) for r in read_jsonl(base / "active_rows.jsonl")
-    ]
+    reg_rows = [TrainingRow.from_json(r) for r in read_jsonl(base / "active_rows.jsonl")]
     for row in reg_rows:
         row.metadata.setdefault("task_type", "regression")
 
@@ -108,9 +104,7 @@ def build_fused_corpus(
             standardized_signature = _standardize(sig, mean, scale)
             source_family = _source_family(d)
             train_sha256 = _sha256_file(d / "train.csv")
-            test_sha256 = (
-                _sha256_file(d / "test.csv") if (d / "test.csv").is_file() else None
-            )
+            test_sha256 = _sha256_file(d / "test.csv") if (d / "test.csv").is_file() else None
             # The outer split does not affect view membership. Validate all five class
             # summaries before admitting the dataset to the family-disjoint split.
             admission_manifest = build_split_view_manifest(
@@ -140,12 +134,9 @@ def build_fused_corpus(
         }
 
     source_families = {
-        dataset_hash: str(record["source_family"])
-        for dataset_hash, record in admitted.items()
+        dataset_hash: str(record["source_family"]) for dataset_hash, record in admitted.items()
     }
-    validation_count = (
-        248 if len(admitted) == 1_244 else round(len(admitted) * binary_val_fraction)
-    )
+    validation_count = 248 if len(admitted) == 1_244 else round(len(admitted) * binary_val_fraction)
     train_hashes, validation_hashes = freeze_source_family_split(
         source_families,
         train_count=len(admitted) - validation_count,
@@ -186,10 +177,7 @@ def build_fused_corpus(
             seen: set[str] = set()
             genomes: list[str] = []
             attempts = 0
-            while (
-                len(genomes) < seed_genomes_per_engine * 2
-                and attempts < seed_genomes_per_engine * 12
-            ):
+            while len(genomes) < seed_genomes_per_engine * 2 and attempts < seed_genomes_per_engine * 12:
                 attempts += 1
                 g = sample_genome_from_spec(
                     spec,
@@ -268,9 +256,7 @@ def build_fused_corpus(
         view_index = int(row.metadata["split_view_index"])
         target_summary = target_summaries[row.dataset_id][view_index]
         row.target_embedding = list(target_summary.values)
-        actions = parse_pipeline_actions(
-            row.canonical_genome or row.genome, grammar_for(row.engine)
-        )
+        actions = parse_pipeline_actions(row.canonical_genome or row.genome, grammar_for(row.engine))
         actions["task"] = "binary"
         d = binary_root / row.dataset_id
         row.metadata.update(
@@ -295,22 +281,16 @@ def build_fused_corpus(
     assign_elo(bin_rows)
 
     # ---- 6) merge + write ----------------------------------------------------------
-    all_rows = reg_rows + [
-        r for r in bin_rows if r.score is not None or r.metadata.get("eval_error")
-    ]
+    all_rows = reg_rows + [r for r in bin_rows if r.score is not None or r.metadata.get("eval_error")]
     write_jsonl(out / "active_rows.jsonl", all_rows)
-    (out / "standardization.json").write_text(
-        json.dumps(standardization), encoding="utf-8"
-    )
+    (out / "standardization.json").write_text(json.dumps(standardization), encoding="utf-8")
     summaries_dir = out / "binary_target_summaries"
     summaries_dir.mkdir(exist_ok=True)
     views_dir = out / "split_views"
     views_dir.mkdir(exist_ok=True)
     for dataset_hash, summaries in target_summaries.items():
         for target_summary in summaries:
-            (
-                summaries_dir / f"{dataset_hash}.view-{target_summary.view_index}.json"
-            ).write_text(
+            (summaries_dir / f"{dataset_hash}.view-{target_summary.view_index}.json").write_text(
                 json.dumps(target_summary.to_json(), sort_keys=True), encoding="utf-8"
             )
         (views_dir / f"{dataset_hash}.json").write_text(
@@ -329,8 +309,7 @@ def build_fused_corpus(
             "split_view_manifest": str(views_dir / f"{dataset_hash}.json"),
             "split_view_manifest_sha256": split_views[dataset_hash].sha256,
             "binary_target_summaries": [
-                str(summaries_dir / f"{dataset_hash}.view-{view_index}.json")
-                for view_index in range(5)
+                str(summaries_dir / f"{dataset_hash}.view-{view_index}.json") for view_index in range(5)
             ],
             "vs_path": str(d / ROW_SIDECAR),
             "train_csv": str(d / "train.csv"),
@@ -351,13 +330,10 @@ def build_fused_corpus(
         "binary_validation_datasets": len(val_hashes & set(admitted)),
         "binary_rejected_datasets": len(candidates) - len(admitted),
         "source_family_disjoint": not (
-            {source_families[item] for item in train_hashes}
-            & {source_families[item] for item in val_hashes}
+            {source_families[item] for item in train_hashes} & {source_families[item] for item in val_hashes}
         ),
     }
-    (out / "fused_manifest.json").write_text(
-        json.dumps(summary, sort_keys=True), encoding="utf-8"
-    )
+    (out / "fused_manifest.json").write_text(json.dumps(summary, sort_keys=True), encoding="utf-8")
     return summary
 
 
@@ -367,9 +343,7 @@ def _assign_binary_relative_labels(rows: list[TrainingRow]) -> None:
         by_dataset.setdefault(row.dataset_id, []).append(row)
     for group in by_dataset.values():
         scored = [
-            (r, r.metadata.get("score_robust"))
-            for r in group
-            if r.metadata.get("score_robust") is not None
+            (r, r.metadata.get("score_robust")) for r in group if r.metadata.get("score_robust") is not None
         ]
         incumbent = max((s for _, s in scored), default=None)
         for row in group:
@@ -427,9 +401,7 @@ def _training_targets(path: Path) -> tuple[list[int], list[str]]:
 def _source_family(dataset_dir: Path) -> str:
     """Derive a stable lineage family; never use target/test statistics."""
     meta_path = dataset_dir / "meta.json"
-    meta = (
-        json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.is_file() else {}
-    )
+    meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.is_file() else {}
     explicit = meta.get("source_family")
     if isinstance(explicit, str) and explicit.strip():
         return explicit.strip()

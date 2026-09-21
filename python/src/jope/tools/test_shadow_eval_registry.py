@@ -11,20 +11,28 @@ class ShadowRegistryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             reg = EvalRegistry(Path(folder) / "shadow.sqlite")
             a, e = full_admission(), full_execution()
-            first = reg.shadow_replay([
-                dict(admission=a, execution=e, result={"rmse": 0.0}, primary_score=0.0),
-            ])
+            first = reg.shadow_replay(
+                [
+                    dict(admission=a, execution=e, result={"rmse": 0.0}, primary_score=0.0),
+                ]
+            )
             self.assertEqual(first["replayed"], 1)
             self.assertFalse(first["wired_to_live_gp"])
             self.assertFalse(first["claimed_savings"])
-            again = reg.shadow_replay([
-                dict(admission=a, execution=e, result={"rmse": 0.0}, primary_score=0.0),
-            ])
+            again = reg.shadow_replay(
+                [
+                    dict(admission=a, execution=e, result={"rmse": 0.0}, primary_score=0.0),
+                ]
+            )
             self.assertEqual(again["replayed"], 0)
             self.assertGreaterEqual(again["registry_hit"], 1)
-            partial = reg.shadow_replay([
-                dict(admission={"program_sha256": "abc"}, execution={}, result={"rmse": 1}, primary_score=1),
-            ])
+            partial = reg.shadow_replay(
+                [
+                    dict(
+                        admission={"program_sha256": "abc"}, execution={}, result={"rmse": 1}, primary_score=1
+                    ),
+                ]
+            )
             self.assertGreaterEqual(partial["tombstones"], 1)
 
 

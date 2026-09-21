@@ -29,8 +29,7 @@ class LeagueEpisodeTests(unittest.TestCase):
         self.assertFalse(row["shuffled_minted"])
         self.assertNotIn("policy_logprob", row["arms"]["neural"])
         league.validate(row)
-        tagged = league.episode(board, arms(logprob=-2.5), independent_evaluation=False,
-                                policy_logprob=-2.5)
+        tagged = league.episode(board, arms(logprob=-2.5), independent_evaluation=False, policy_logprob=-2.5)
         self.assertEqual(tagged["arms"]["neural"]["policy_logprob"], -2.5)
         self.assertFalse(tagged["independent_evaluation"])
         league.validate(tagged)

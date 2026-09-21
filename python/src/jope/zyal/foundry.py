@@ -5,6 +5,7 @@ call a model and it never opens DEV or TEST.  Keeping those concerns here makes
 ``compile`` useful when credentials are absent while leaving the expensive
 screening/model stages behind explicit receipts.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -87,13 +88,25 @@ SELECT_LABELS = frozenset(
 
 _CATEGORY_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("invalid/uncomputable", ("invalid", "uncomputable", "impossible", "outcome", "label correlation")),
-    ("counterfactuals", ("counterfactual", "leave one", "deletion", "delete", "duplicate stage", "swap", "ablation")),
+    (
+        "counterfactuals",
+        ("counterfactual", "leave one", "deletion", "delete", "duplicate stage", "swap", "ablation"),
+    ),
     ("cost/deployment", ("deployment", "latency", "runtime", "cache", "parallel", "memory cost", "cost")),
-    ("dataset compatibility", ("dataset", "missingness", "sparsity", "intrinsic dimension", "conditioning", "effective rank")),
+    (
+        "dataset compatibility",
+        ("dataset", "missingness", "sparsity", "intrinsic dimension", "conditioning", "effective rank"),
+    ),
     ("head compatibility", ("head", "terminal", "pre-head", "sample complexity")),
-    ("expressions", ("expression", "symbolic", "singularity", "saturation", "guard", "lipschitz", "curvature")),
+    (
+        "expressions",
+        ("expression", "symbolic", "singularity", "saturation", "guard", "lipschitz", "curvature"),
+    ),
     ("parameters", ("parameter", "hyperparameter", "seed", "default", "bound", "regularization")),
-    ("capacity/resources", ("capacity", "width", "bottleneck", "compression", "expansion", "resource", "information retention")),
+    (
+        "capacity/resources",
+        ("capacity", "width", "bottleneck", "compression", "expansion", "resource", "information retention"),
+    ),
     ("AST/program semantics", ("ast", "program", "graph", "path kernel", "motif", "compression complexity")),
     ("sequence/flow", ("sequence", "flow", "trajectory", "stage", "operator", "transition", "position")),
 )
@@ -230,7 +243,13 @@ def generation_zero_errors(concept: Mapping[str, Any]) -> list[str]:
     if "embedding" in text:
         qualified = any(
             term in text
-            for term in ("dataset_embedding", "dataset embedding", "self-supervised", "masked-stage", "invariance")
+            for term in (
+                "dataset_embedding",
+                "dataset embedding",
+                "self-supervised",
+                "masked-stage",
+                "invariance",
+            )
         )
         if not qualified:
             errors.append("embedding authority/objective is undefined")
@@ -246,49 +265,104 @@ def generation_zero_errors(concept: Mapping[str, Any]) -> list[str]:
 
 _PRIMITIVES_BY_CATEGORY: dict[str, tuple[str, ...]] = {
     "sequence/flow": (
-        "operator_entropy", "transition_entropy", "long_range_repeat", "family_switches",
-        "cost_centroid", "cost_switches", "n_stages", "n_transforms",
+        "operator_entropy",
+        "transition_entropy",
+        "long_range_repeat",
+        "family_switches",
+        "cost_centroid",
+        "cost_switches",
+        "n_stages",
+        "n_transforms",
     ),
     "AST/program semantics": (
-        "path_complexity", "genome_compression_ratio", "long_range_repeat", "ast_depth",
-        "ast_constant_count", "expr_len", "n_exprs", "col_refs",
+        "path_complexity",
+        "genome_compression_ratio",
+        "long_range_repeat",
+        "ast_depth",
+        "ast_constant_count",
+        "expr_len",
+        "n_exprs",
+        "col_refs",
     ),
     "parameters": (
-        "param_default_distance", "param_bound_distance", "param_constraint_ratio",
-        "repeated_param_drift", "seed_collision", "regularization_capacity_balance",
-        "missing_default_topology", "numeric_param_count",
+        "param_default_distance",
+        "param_bound_distance",
+        "param_constraint_ratio",
+        "repeated_param_drift",
+        "seed_collision",
+        "regularization_capacity_balance",
+        "missing_default_topology",
+        "numeric_param_count",
     ),
     "expressions": (
-        "expr_constant_folded_size", "expr_effective_variables", "expr_degree_proxy",
-        "expr_frequency_proxy", "expr_interval_growth", "expr_singularity_risk",
-        "expr_saturation_risk", "expr_guard_coverage", "expr_lipschitz_proxy",
-        "expr_monotonicity_proxy", "expr_symmetry_proxy", "expr_branch_balance",
+        "expr_constant_folded_size",
+        "expr_effective_variables",
+        "expr_degree_proxy",
+        "expr_frequency_proxy",
+        "expr_interval_growth",
+        "expr_singularity_risk",
+        "expr_saturation_risk",
+        "expr_guard_coverage",
+        "expr_lipschitz_proxy",
+        "expr_monotonicity_proxy",
+        "expr_symmetry_proxy",
+        "expr_branch_balance",
         "expr_variable_interactions",
     ),
     "capacity/resources": (
-        "cumulative_log_width", "information_retention_proxy", "width_cost_area",
-        "bottleneck_depth", "bottleneck_duration", "bottleneck_location",
-        "recovery_after_compression", "expansion_overshoot", "maximum_width_drawdown",
-        "destructive_pressure_waves", "width_change_points",
+        "cumulative_log_width",
+        "information_retention_proxy",
+        "width_cost_area",
+        "bottleneck_depth",
+        "bottleneck_duration",
+        "bottleneck_location",
+        "recovery_after_compression",
+        "expansion_overshoot",
+        "maximum_width_drawdown",
+        "destructive_pressure_waves",
+        "width_change_points",
     ),
     "dataset compatibility": (
-        "dataset_effective_rank", "dataset_intrinsic_dimension", "dataset_sparsity",
-        "train_missingness", "condition_diagnostic", "rank_diagnostic", "train_rows",
-        "train_width", "head_supply_demand_gap", "regularization_capacity_balance",
+        "dataset_effective_rank",
+        "dataset_intrinsic_dimension",
+        "dataset_sparsity",
+        "train_missingness",
+        "condition_diagnostic",
+        "rank_diagnostic",
+        "train_rows",
+        "train_width",
+        "head_supply_demand_gap",
+        "regularization_capacity_balance",
     ),
     "head compatibility": (
-        "head_representation_supply", "head_representation_demand", "head_supply_demand_gap",
-        "effective_capacity", "regularization_capacity_balance", "runtime_cost_estimate",
-        "train_rows", "train_width",
+        "head_representation_supply",
+        "head_representation_demand",
+        "head_supply_demand_gap",
+        "effective_capacity",
+        "regularization_capacity_balance",
+        "runtime_cost_estimate",
+        "train_rows",
+        "train_width",
     ),
     "counterfactuals": (
-        "leave_one_stage_out_delta", "adjacent_swap_delta", "duplicate_stage_delta",
-        "head_swap_delta", "parameter_default_delta", "operator_entropy",
-        "cost_centroid", "family_switches",
+        "leave_one_stage_out_delta",
+        "adjacent_swap_delta",
+        "duplicate_stage_delta",
+        "head_swap_delta",
+        "parameter_default_delta",
+        "operator_entropy",
+        "cost_centroid",
+        "family_switches",
     ),
     "cost/deployment": (
-        "semantic_cacheability", "runtime_cost_estimate", "peak_memory_proxy",
-        "parallelism_proxy", "width_cost_area", "total_cost", "max_cost", "cost_centroid",
+        "semantic_cacheability",
+        "runtime_cost_estimate",
+        "peak_memory_proxy",
+        "parallelism_proxy",
+        "width_cost_area",
+        "total_cost",
+        "max_cost",
+        "cost_centroid",
     ),
 }
 
@@ -339,7 +413,9 @@ def theory_descriptor(concept: Mapping[str, Any]) -> dict[str, Any]:
         "invariances": sorted(map(str, concept.get("invariances") or [])),
         "falsifier": str(concept.get("falsifier") or ""),
         "engine_scope": "both" if "engine" in (concept.get("inputs") or []) else "declared_by_corpus",
-        "dataset_scope": "train_only" if any(str(item).startswith("dataset_") for item in concept.get("inputs") or []) else "genome_only",
+        "dataset_scope": "train_only"
+        if any(str(item).startswith("dataset_") for item in concept.get("inputs") or [])
+        else "genome_only",
         "extraction_cost_class": str(concept.get("cost_class") or "unknown"),
     }
 
@@ -408,7 +484,10 @@ def _local_variants(observables: Sequence[str], dataset_conditioned: bool) -> li
         {"name": _name(central, "position"), "expr": ["mul", raw, ["cost_centroid"]]},
         {"name": _name(complement, "raw"), "expr": other},
         {"name": _name(central, "complement"), "expr": ["mul", raw, other]},
-        {"name": _name(central, "cost"), "expr": ["div", ["mul", raw, ["total_cost"]], ["max", 1, ["n_stages"]]]},
+        {
+            "name": _name(central, "cost"),
+            "expr": ["div", ["mul", raw, ["total_cost"]], ["max", 1, ["n_stages"]]],
+        },
     ]
     if len(observables) > 2:
         third = [observables[2]]
@@ -421,7 +500,10 @@ def _local_variants(observables: Sequence[str], dataset_conditioned: bool) -> li
     if dataset_conditioned and central not in {"train_rows", "train_width"}:
         outputs.extend(
             [
-                {"name": _name(central, "rows"), "expr": ["div", ["mul", raw, ["log1p", ["train_rows"]]], ["max", 1, ["train_width"]]]},
+                {
+                    "name": _name(central, "rows"),
+                    "expr": ["div", ["mul", raw, ["log1p", ["train_rows"]]], ["max", 1, ["train_width"]]],
+                },
                 {"name": _name(central, "missing"), "expr": ["mul", raw, ["train_missingness"]]},
             ]
         )
@@ -447,31 +529,53 @@ def compile_theory_family(
     family_id = "zyal." + cluster_id.removeprefix("cluster.")
     if errors:
         return {
-            "schema": "FeatureFamilySpec.v1", "family_id": None, "cluster_id": cluster_id,
-            "disposition": "rejected", "reason": "; ".join(sorted(set(errors))), "columns": [],
-            "spec": None, "spec_sha256": "0" * 64, "theory": theory,
-            "output_expression_hashes": [], "output_expression_set_sha256": "0" * 64,
-            "translation_attempts": 1, "alias_of": alias_of,
+            "schema": "FeatureFamilySpec.v1",
+            "family_id": None,
+            "cluster_id": cluster_id,
+            "disposition": "rejected",
+            "reason": "; ".join(sorted(set(errors))),
+            "columns": [],
+            "spec": None,
+            "spec_sha256": "0" * 64,
+            "theory": theory,
+            "output_expression_hashes": [],
+            "output_expression_set_sha256": "0" * 64,
+            "translation_attempts": 1,
+            "alias_of": alias_of,
         }
     outputs = _local_variants(observables, theory["dataset_scope"] == "train_only")
     set_sha256 = expression_set_hash(outputs)
     duplicate = used_expression_sets.get(set_sha256)
     if duplicate and alias_of is None:
         return {
-            "schema": "FeatureFamilySpec.v1", "family_id": None, "cluster_id": cluster_id,
-            "disposition": "rejected", "reason": f"identical output-expression set to non-alias family {duplicate}",
-            "columns": [], "spec": None, "spec_sha256": "0" * 64, "theory": theory,
+            "schema": "FeatureFamilySpec.v1",
+            "family_id": None,
+            "cluster_id": cluster_id,
+            "disposition": "rejected",
+            "reason": f"identical output-expression set to non-alias family {duplicate}",
+            "columns": [],
+            "spec": None,
+            "spec_sha256": "0" * 64,
+            "theory": theory,
             "output_expression_hashes": [expression_hash(item["expr"]) for item in outputs],
-            "output_expression_set_sha256": set_sha256, "translation_attempts": 2,
+            "output_expression_set_sha256": set_sha256,
+            "translation_attempts": 2,
             "alias_of": None,
         }
     if alias_of:
         return {
-            "schema": "FeatureFamilySpec.v1", "family_id": None, "cluster_id": cluster_id,
-            "disposition": "alias", "reason": "inherits representative family", "columns": [],
-            "spec": None, "spec_sha256": "0" * 64, "theory": theory,
+            "schema": "FeatureFamilySpec.v1",
+            "family_id": None,
+            "cluster_id": cluster_id,
+            "disposition": "alias",
+            "reason": "inherits representative family",
+            "columns": [],
+            "spec": None,
+            "spec_sha256": "0" * 64,
+            "theory": theory,
             "output_expression_hashes": [expression_hash(item["expr"]) for item in outputs],
-            "output_expression_set_sha256": set_sha256, "translation_attempts": 1,
+            "output_expression_set_sha256": set_sha256,
+            "translation_attempts": 1,
             "alias_of": alias_of,
         }
     spec = {
@@ -482,12 +586,18 @@ def compile_theory_family(
     }
     used_expression_sets[set_sha256] = family_id
     return {
-        "schema": "FeatureFamilySpec.v1", "family_id": family_id, "cluster_id": cluster_id,
-        "disposition": "declarative_featurespec", "reason": None,
-        "columns": [item["name"] for item in outputs], "spec": spec,
-        "spec_sha256": object_hash(spec), "theory": theory,
+        "schema": "FeatureFamilySpec.v1",
+        "family_id": family_id,
+        "cluster_id": cluster_id,
+        "disposition": "declarative_featurespec",
+        "reason": None,
+        "columns": [item["name"] for item in outputs],
+        "spec": spec,
+        "spec_sha256": object_hash(spec),
+        "theory": theory,
         "output_expression_hashes": [expression_hash(item["expr"]) for item in outputs],
-        "output_expression_set_sha256": set_sha256, "translation_attempts": 1,
+        "output_expression_set_sha256": set_sha256,
+        "translation_attempts": 1,
         "alias_of": None,
     }
 
@@ -496,7 +606,11 @@ def validate_expression_set_uniqueness(families: Iterable[Mapping[str, Any]]) ->
     seen: dict[str, str] = {}
     errors: list[str] = []
     for family in families:
-        if family.get("disposition") not in {"declarative_featurespec", "llm_featurespec", "sandboxed_plugin"}:
+        if family.get("disposition") not in {
+            "declarative_featurespec",
+            "llm_featurespec",
+            "sandboxed_plugin",
+        }:
             continue
         digest = str(family.get("output_expression_set_sha256") or "")
         family_id = str(family.get("family_id") or "")
@@ -619,8 +733,15 @@ def artifact_forensics(
     table_receipts: list[dict[str, Any]] = []
     evidence_summary: dict[str, dict[str, Any]] = {}
     table_names = (
-        "concepts", "probe_results", "reviews", "curations", "memory",
-        "concept_ledger", "compilation_dispositions", "roles", "attempts",
+        "concepts",
+        "probe_results",
+        "reviews",
+        "curations",
+        "memory",
+        "concept_ledger",
+        "compilation_dispositions",
+        "roles",
+        "attempts",
     )
 
     def generated_by_r4_controller(relative: Path) -> bool:
@@ -650,18 +771,17 @@ def artifact_forensics(
         if database.is_file():
             connection = sqlite3.connect(f"file:{database.resolve()}?mode=ro", uri=True)
             existing = {
-                str(row[0])
-                for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")
+                str(row[0]) for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")
             }
             summary: dict[str, Any] = {}
             if "concepts" in existing:
-                concept_columns = {
-                    str(row[1]) for row in connection.execute("PRAGMA table_info(concepts)")
-                }
+                concept_columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(concepts)")}
                 summary["concepts"] = int(connection.execute("SELECT COUNT(*) FROM concepts").fetchone()[0])
                 if "sandbox_valid" in concept_columns:
                     summary["valid_concepts"] = int(
-                        connection.execute("SELECT COALESCE(SUM(sandbox_valid),0) FROM concepts").fetchone()[0]
+                        connection.execute("SELECT COALESCE(SUM(sandbox_valid),0) FROM concepts").fetchone()[
+                            0
+                        ]
                     )
                 if "payload_json" in concept_columns:
                     summary["original_category_labels"] = int(
@@ -670,7 +790,9 @@ def artifact_forensics(
                         ).fetchone()[0]
                     )
             for table, key in (
-                ("probe_results", "probes"), ("reviews", "judgments"), ("curations", "curations")
+                ("probe_results", "probes"),
+                ("reviews", "judgments"),
+                ("curations", "curations"),
             ):
                 if table in existing:
                     summary[key] = int(connection.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0])
@@ -730,12 +852,16 @@ def artifact_forensics(
         "table_receipts": table_receipts,
         "counts": counts,
         "evidence_summary": evidence_summary,
-        "concept_hashes": [item for item in table_receipts if item["table"] in {"concepts", "concept_ledger"}],
+        "concept_hashes": [
+            item for item in table_receipts if item["table"] in {"concepts", "concept_ledger"}
+        ],
         "probe_hashes": [item for item in table_receipts if item["table"] == "probe_results"],
         "judgment_hashes": [item for item in table_receipts if item["table"] == "reviews"],
         "curation_hashes": [item for item in table_receipts if item["table"] in {"curations", "memory"}],
         "duplicate_hashes": [item for item in artifacts if "duplicate" in item["path"]],
-        "compilation_hashes": [item for item in table_receipts if item["table"] == "compilation_dispositions"],
+        "compilation_hashes": [
+            item for item in table_receipts if item["table"] == "compilation_dispositions"
+        ],
         "coverage_hashes": [item for item in artifacts if "coverage" in item["path"]],
     }
     return write_append_only_json(run_root / "receipts/r4-forensics", "artifact-forensics", identity, receipt)
@@ -761,9 +887,7 @@ def probe_coverage(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     for cluster_id, members in sorted(valid_by_cluster.items()):
         if cluster_id in select_by_cluster:
             continue
-        representative = next(
-            (row for row in members if row.get("probe_receipt_sha256")), members[0]
-        )
+        representative = next((row for row in members if row.get("probe_receipt_sha256")), members[0])
         pending_representatives[cluster_id] = str(representative["concept_id"])
 
     ledger = []
@@ -800,8 +924,7 @@ def probe_coverage(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         "records": ledger,
         "total": len(ledger),
         "covered": sum(
-            item["state"] in {"select_probe", "alias_inherited", "not_applicable_invalid"}
-            for item in ledger
+            item["state"] in {"select_probe", "alias_inherited", "not_applicable_invalid"} for item in ledger
         ),
         "pending_concepts": sum(
             item["cluster_id"] in pending_clusters and item["state"] != "not_applicable_invalid"
@@ -826,7 +949,9 @@ def epoch_curriculum_receipt(run_id: str, roles: Sequence[Mapping[str, Any]]) ->
     return {
         "schema": "EpochCurriculum.v1",
         "run_id": run_id,
-        "epochs": [{"epoch": epoch, "curriculum": CURRICULUM[epoch], "roles": ROLE_COUNTS} for epoch in range(1, 11)],
+        "epochs": [
+            {"epoch": epoch, "curriculum": CURRICULUM[epoch], "roles": ROLE_COUNTS} for epoch in range(1, 11)
+        ],
         "original_role_identities": role_ids,
         "complete": not errors,
         "errors": errors,
@@ -850,7 +975,9 @@ def baseline_schema() -> dict[str, Any]:
     }
 
 
-def validate_authority_file(path: Path, *, expected_fields: int, expected_schema_sha256: str | None = None) -> dict[str, Any]:
+def validate_authority_file(
+    path: Path, *, expected_fields: int, expected_schema_sha256: str | None = None
+) -> dict[str, Any]:
     """Validate content/schema evidence; filenames carry no authority."""
 
     raw_sha256 = file_hash(path)
@@ -876,8 +1003,12 @@ def validate_authority_file(path: Path, *, expected_fields: int, expected_schema
     if expected_schema_sha256 and schema_sha256 != expected_schema_sha256:
         errors.append("schema sha256 does not match the pinned authority")
     return {
-        "path": str(path), "sha256": raw_sha256, "field_count": field_count,
-        "schema_sha256": schema_sha256, "verified": not errors, "errors": errors,
+        "path": str(path),
+        "sha256": raw_sha256,
+        "field_count": field_count,
+        "schema_sha256": schema_sha256,
+        "verified": not errors,
+        "errors": errors,
     }
 
 
@@ -928,7 +1059,11 @@ def challenger_protocol() -> dict[str, Any]:
         "schema": "ZyalChallengerProtocol.v1",
         "model_families": MODEL_FAMILIES,
         "lexicographic_metrics": [
-            "within_group_spearman", "capture_at_3", "mean_regret", "percentile_pearson", "latency"
+            "within_group_spearman",
+            "capture_at_3",
+            "mean_regret",
+            "percentile_pearson",
+            "latency",
         ],
         "subset_sizes": [200, 300, 400, 500],
         "subset_selection": "nested_independently_inside_each_outer_training_fold",

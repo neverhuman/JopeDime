@@ -19,9 +19,13 @@ class FenceHonestyTests(unittest.TestCase):
 
     def test_planned_migration_is_not_a_104_crash(self):
         status = f.inspect_fence(
-            dict(legacy_dispatch_fenced=True, historical_import_complete=False,
-                 registry_dispatch_enabled=False),
-            override_exists=True, handoff_exists=False, gp_main_pid=0, restart="no",
+            dict(
+                legacy_dispatch_fenced=True, historical_import_complete=False, registry_dispatch_enabled=False
+            ),
+            override_exists=True,
+            handoff_exists=False,
+            gp_main_pid=0,
+            restart="no",
         )
         self.assertEqual(status["phase"], "planned_migration")
         self.assertTrue(status["verified"])
@@ -30,16 +34,29 @@ class FenceHonestyTests(unittest.TestCase):
         self.assertTrue(status["historical_104_is_not_a_crash"])
 
     def test_handoff_present_or_live_pid_is_unverified(self):
-        self.assertFalse(f.inspect_fence(
-            dict(legacy_dispatch_fenced=True, historical_import_complete=False,
-                 registry_dispatch_enabled=False),
-            override_exists=True, handoff_exists=True,
-        )["verified"])
-        self.assertFalse(f.inspect_fence(
-            dict(legacy_dispatch_fenced=True, historical_import_complete=False,
-                 registry_dispatch_enabled=False),
-            override_exists=True, handoff_exists=False, gp_main_pid=774452,
-        )["verified"])
+        self.assertFalse(
+            f.inspect_fence(
+                dict(
+                    legacy_dispatch_fenced=True,
+                    historical_import_complete=False,
+                    registry_dispatch_enabled=False,
+                ),
+                override_exists=True,
+                handoff_exists=True,
+            )["verified"]
+        )
+        self.assertFalse(
+            f.inspect_fence(
+                dict(
+                    legacy_dispatch_fenced=True,
+                    historical_import_complete=False,
+                    registry_dispatch_enabled=False,
+                ),
+                override_exists=True,
+                handoff_exists=False,
+                gp_main_pid=774452,
+            )["verified"]
+        )
 
 
 if __name__ == "__main__":

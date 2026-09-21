@@ -90,9 +90,7 @@ def select_self_play_round(
         values,
         key=lambda value: (
             str(value.get("structural_diversity_key") or ""),
-            hashlib.sha256(
-                f"{seed}\0{dataset_hash}\0{value['semantic_sha256']}".encode()
-            ).digest(),
+            hashlib.sha256(f"{seed}\0{dataset_hash}\0{value['semantic_sha256']}".encode()).digest(),
         ),
     ):
         key = str(row.get("structural_diversity_key") or "")
@@ -136,9 +134,7 @@ def select_self_play_round(
                 ),
                 count,
             )
-    if len(selected) != 10 or len(
-        {row["semantic_sha256"] for row in selected}
-    ) != 10:
+    if len(selected) != 10 or len({row["semantic_sha256"] for row in selected}) != 10:
         raise AssertionError("self-play best-of-ten allocation invariant failed")
     for slot, row in enumerate(selected):
         row["slot"] = slot
@@ -191,13 +187,7 @@ def self_play_authorized(prospective_gate: Mapping[str, Any]) -> bool:
         prospective_gate.get("schema") == "BroadProspectiveGate.v1"
         and prospective_gate.get("passed") is True
         and prospective_gate.get("gate_sha256")
-        == content_sha256(
-            {
-                key: value
-                for key, value in prospective_gate.items()
-                if key != "gate_sha256"
-            }
-        )
+        == content_sha256({key: value for key, value in prospective_gate.items() if key != "gate_sha256"})
     )
 
 

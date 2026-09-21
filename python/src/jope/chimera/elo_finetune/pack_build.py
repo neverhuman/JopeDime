@@ -97,9 +97,7 @@ def build(out_dir: Path, jobs: int) -> dict:
     split_map = json.loads((out_dir / "real_split_v2.json").read_text())
     utilities_path = out_dir / "utilities.jsonl"
 
-    on_disk = sorted(
-        d.name for d in ARCHIVE_ROOT.iterdir() if d.is_dir() and REAL_DIR_RE.match(d.name)
-    )
+    on_disk = sorted(d.name for d in ARCHIVE_ROOT.iterdir() if d.is_dir() and REAL_DIR_RE.match(d.name))
     dataset_ids = [h for h in on_disk if h in split_map]
     dropped = [h for h in on_disk if h not in split_map]
 
@@ -113,13 +111,11 @@ def build(out_dir: Path, jobs: int) -> dict:
 
     D = len(loaded)
     arrays: dict[str, np.ndarray] = {
-        "dataset_ids": np.frombuffer(
-            "".join(r["dataset_id"] for r in loaded).encode(), np.uint8
-        ).reshape(D, 16),
-        "n_features": np.array([r["n_features"] for r in loaded], np.int32),
-        "split": np.array(
-            [SPLIT_NAMES.index(split_map[r["dataset_id"]]) for r in loaded], np.uint8
+        "dataset_ids": np.frombuffer("".join(r["dataset_id"] for r in loaded).encode(), np.uint8).reshape(
+            D, 16
         ),
+        "n_features": np.array([r["n_features"] for r in loaded], np.int32),
+        "split": np.array([SPLIT_NAMES.index(split_map[r["dataset_id"]]) for r in loaded], np.uint8),
         "seed": np.array([r["seed"] for r in loaded], np.int64),
     }
 
@@ -157,12 +153,8 @@ def build(out_dir: Path, jobs: int) -> dict:
     write_pack(pack_path, header, arrays)
 
     pack_sha = sha256_file(pack_path)
-    (out_dir / "fable_real_v1.pack.sha256").write_text(
-        f"{pack_sha}  fable_real_v1.pack\n"
-    )
-    split_counts = {
-        name: int((arrays["split"] == code).sum()) for code, name in enumerate(SPLIT_NAMES)
-    }
+    (out_dir / "fable_real_v1.pack.sha256").write_text(f"{pack_sha}  fable_real_v1.pack\n")
+    split_counts = {name: int((arrays["split"] == code).sum()) for code, name in enumerate(SPLIT_NAMES)}
     manifest = {
         "schema": "fable_pack_v1",
         "created_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),

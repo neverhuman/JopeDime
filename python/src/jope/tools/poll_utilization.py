@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Poll the GPU host until propose kernels leave 0% or the sample budget ends."""
+
 from __future__ import annotations
 
 import json
@@ -67,8 +68,7 @@ print(json.dumps({
     'remaining_incomplete': remaining,
 }))
 """
-    result = subprocess.run(SSH + ["python3", "-"], input=script, text=True,
-                            capture_output=True, timeout=90)
+    result = subprocess.run(SSH + ["python3", "-"], input=script, text=True, capture_output=True, timeout=90)
     if result.returncode:
         raise RuntimeError(result.stderr[-2000:] or result.stdout[-2000:])
     return json.loads(result.stdout.strip().splitlines()[-1])
@@ -112,7 +112,9 @@ def main():
         (OUT / "u4-samples.jsonl").write_text("".join(json.dumps(s) + "\n" for s in samples))
         if first_kernel is None and any(k > 0 for k in kernels):
             first_kernel = sample
-            (OUT / "u4-first-kernel.json").write_text(json.dumps(first_kernel, indent=2, sort_keys=True) + "\n")
+            (OUT / "u4-first-kernel.json").write_text(
+                json.dumps(first_kernel, indent=2, sort_keys=True) + "\n"
+            )
             break
         if "train" in row["tasks"]:
             raise RuntimeError("train task scheduled on recovery; abort")
@@ -120,28 +122,37 @@ def main():
             raise RuntimeError("legacy GP pid is not 0")
         time.sleep(20)
     last = samples[-1] if samples else {}
-    (OUT / "u4-useful-hour.json").write_text(json.dumps({
-        "schema": "parallel.useful_hour.v1",
-        "launch_ts": LAUNCH,
-        "samples": len(samples),
-        "first_kernel_nonzero": first_kernel is not None,
-        "first_kernel": None if first_kernel is None else {
-            "now": first_kernel["now"],
-            "kernels": first_kernel["kernels"],
-            "kind": first_kernel["kind"],
-        },
-        "last_kind": last.get("kind"),
-        "last_tasks": last.get("tasks"),
-        "completed_evaluations": (last.get("gp") or {}).get("completed_evaluations"),
-        "gp_active": (last.get("gp") or {}).get("active"),
-        "occupancy": last.get("occupancy"),
-        "vram_residency_is_not_occupancy": True,
-        "acceptance": (last.get("occupancy") or {}).get("acceptance", "inconclusive"),
-        "may_serve": False,
-        "claimed_savings_745": False,
-        "train_on_recovery": False,
-        "restart_774452": False,
-    }, indent=2, sort_keys=True) + "\n")
+    (OUT / "u4-useful-hour.json").write_text(
+        json.dumps(
+            {
+                "schema": "parallel.useful_hour.v1",
+                "launch_ts": LAUNCH,
+                "samples": len(samples),
+                "first_kernel_nonzero": first_kernel is not None,
+                "first_kernel": None
+                if first_kernel is None
+                else {
+                    "now": first_kernel["now"],
+                    "kernels": first_kernel["kernels"],
+                    "kind": first_kernel["kind"],
+                },
+                "last_kind": last.get("kind"),
+                "last_tasks": last.get("tasks"),
+                "completed_evaluations": (last.get("gp") or {}).get("completed_evaluations"),
+                "gp_active": (last.get("gp") or {}).get("active"),
+                "occupancy": last.get("occupancy"),
+                "vram_residency_is_not_occupancy": True,
+                "acceptance": (last.get("occupancy") or {}).get("acceptance", "inconclusive"),
+                "may_serve": False,
+                "claimed_savings_745": False,
+                "train_on_recovery": False,
+                "restart_774452": False,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"
+    )
 
 
 if __name__ == "__main__":

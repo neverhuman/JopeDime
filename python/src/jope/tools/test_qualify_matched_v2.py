@@ -17,7 +17,7 @@ def fixture(root):
     output = root / "runs/matched-experiment"
     output.mkdir(parents=True)
     evaluator = root / "evaluate.py"
-    evaluator.write_text('''#!/usr/bin/env python3
+    evaluator.write_text("""#!/usr/bin/env python3
 import hashlib,json,sys,time
 from pathlib import Path
 arg=lambda name:sys.argv[sys.argv.index(name)+1]
@@ -31,35 +31,67 @@ training_sha256='tr',validation_sha256='va',failure=None,metrics={'rmse':score,'
 (d/'observations.json').write_text(json.dumps(obs))
 (d/'search.json').write_text(json.dumps(dict(seeds_sha256=sha(Path(arg('--seeds'))),vocabulary_sha256=sha(Path(arg('--vocabulary'))),
 rng_seed=int(arg('--rng-seed')),completed_evaluations=1,final_tests_opened=False,best_validation_rmse=score,best_program='program',wall_seconds=.08,resumed=resumed)))
-''')
+""")
     evaluator.chmod(0o755)
     s.write(root / "vocab.json", {})
-    view = dict(dataset="d", family="f", cut=0, prepared="prepared", prepared_sha256="p", training_sha256="tr", validation_sha256="va", target_scale=1.0, populations={}, provenance={})
+    view = dict(
+        dataset="d",
+        family="f",
+        cut=0,
+        prepared="prepared",
+        prepared_sha256="p",
+        training_sha256="tr",
+        validation_sha256="va",
+        target_scale=1.0,
+        populations={},
+        provenance={},
+    )
     for arm in q.ARMS:
         path = output / "frozen" / arm / "seeds.json"
         s.write(path, {})
         view["populations"][arm] = str(path.relative_to(root))
-        view["provenance"][arm] = {"program": {"program_origins": [{"kind": "bank"}], "selection": "neural_reward_heads", "retained_teacher": False}}
-    manifest = {"schema": "parallel.seed_experiment.v2", "output": str(output.relative_to(root)), "views": [view],
-        "evaluator": str(evaluator.relative_to(root)), "evaluator_sha256": s.digest(evaluator), "vocabulary": "vocab.json", "vocabulary_sha256": s.digest(root / "vocab.json"),
-        "blocks": [{"id": f"seed-{seed}", "view": 0, "seed": seed} for seed in q.SEEDS], "selected_checkpoint_source": "frozen", "qualification": "used families"}
+        view["provenance"][arm] = {
+            "program": {
+                "program_origins": [{"kind": "bank"}],
+                "selection": "neural_reward_heads",
+                "retained_teacher": False,
+            }
+        }
+    manifest = {
+        "schema": "parallel.seed_experiment.v2",
+        "output": str(output.relative_to(root)),
+        "views": [view],
+        "evaluator": str(evaluator.relative_to(root)),
+        "evaluator_sha256": s.digest(evaluator),
+        "vocabulary": "vocab.json",
+        "vocabulary_sha256": s.digest(root / "vocab.json"),
+        "blocks": [{"id": f"seed-{seed}", "view": 0, "seed": seed} for seed in q.SEEDS],
+        "selected_checkpoint_source": "frozen",
+        "qualification": "used families",
+    }
     s.write(output / "manifest.json", manifest)
     return output, manifest
 
 
 class MatchedTests(unittest.TestCase):
     def test_partial_launch_counts_only_started_workers_and_preserves_interruption(self):
-        with tempfile.TemporaryDirectory() as tmp, patch.object(q, "spare_lease", admitted), patch.object(q, "admission_reason", return_value=None):
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch.object(q, "spare_lease", admitted),
+            patch.object(q, "admission_reason", return_value=None),
+        ):
             root = Path(tmp)
             output, manifest = fixture(root)
             start = q.runtime.popen
             children = []
+
             def partial(*args, **kwargs):
                 if children:
                     raise FileNotFoundError("injected second rank launch failure")
                 child = start(*args, **kwargs)
                 children.append(child)
                 return child
+
             with patch.object(q.runtime, "popen", partial), self.assertRaises(FileNotFoundError):
                 q.run(root, manifest, 15, 1)
             self.assertIsNotNone(children[0].poll())
@@ -74,7 +106,11 @@ class MatchedTests(unittest.TestCase):
             self.assertEqual(report["interrupted_blocks_preserved"], 1)
 
     def test_three_seed_blocks_are_recomputed_and_resume_without_relaunch(self):
-        with tempfile.TemporaryDirectory() as tmp, patch.object(q, "spare_lease", admitted), patch.object(q, "admission_reason", return_value=None):
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch.object(q, "spare_lease", admitted),
+            patch.object(q, "admission_reason", return_value=None),
+        ):
             root = Path(tmp)
             output, manifest = fixture(root)
             result = q.run(root, manifest, 15, 2)
@@ -87,7 +123,7 @@ class MatchedTests(unittest.TestCase):
             ledger = (output / "launches.jsonl").read_bytes()
             path = next(output.glob("blocks/*/attempt-*/*/search.json"))
             value = s.read(path)
-            value["best_validation_rmse"] = .0001
+            value["best_validation_rmse"] = 0.0001
             s.write(path, value)
             with self.assertRaisesRegex(ValueError, "winner differs"):
                 q.run(root, manifest, 15, 2)
@@ -99,6 +135,7 @@ class MatchedTests(unittest.TestCase):
             output, manifest = fixture(root)
             cancelled = False
             (root / "hold-first-attempt").write_text("hold until cleanup")
+
             def admission(_):
                 nonlocal cancelled
                 if cancelled:
@@ -107,6 +144,7 @@ class MatchedTests(unittest.TestCase):
                     cancelled = True
                     return "mandatory GPU handoff"
                 return None
+
             with patch.object(q, "admission_reason", side_effect=admission):
                 result = q.run(root, manifest, 20, 1)
             self.assertTrue(cancelled)

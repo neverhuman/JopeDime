@@ -106,9 +106,16 @@ def propose_and_eval(
         tgt = target_summary_from_vs(str(d / "train_target.vs"))
         try:
             result = propose_v3(
-                emb, target_summary=tgt, model=model, router=router,
-                n=k, seed=seed, temperature=temperature, engines=("featmath", "newmath"),
-                device=device, samples_per_engine=samples_per_engine,
+                emb,
+                target_summary=tgt,
+                model=model,
+                router=router,
+                n=k,
+                seed=seed,
+                temperature=temperature,
+                engines=("featmath", "newmath"),
+                device=device,
+                samples_per_engine=samples_per_engine,
                 selector_calibration=selector_calibration,
                 selector_reranker=selector_reranker,
                 return_all_candidates=candidate_pool_dir is not None,
@@ -147,21 +154,34 @@ def propose_and_eval(
             cpid = pool_row.get("candidate_pool_id") if pool_row else None
             if pool_row is not None:
                 pool_row["selected_for_eval_rank"] = rank
-            per_ds[h].append({
-                "rank": rank, "engine": p.get("engine"), "genome": g,
-                "reward_mean": p.get("reward_mean", p.get("reward")), "reward_std": p.get("reward_std"),
-                "selection_key": p.get("selection_key"), "selection_score": p.get("selection_score"),
-                "selector_reranker_score": p.get("selector_reranker_score"),
-                "candidate_pool_id": cpid,
-            })
-            eval_inputs.append({
-                "engine": p.get("engine"), "dataset_hash": h,
-                "train_csv": str(d / "train.csv"), "test_csv": str(d / "test.csv"),
-                "genome": g, "folds": folds, "_h": h, "_rank": rank,
-                "_candidate_pool_id": cpid,
-            })
+            per_ds[h].append(
+                {
+                    "rank": rank,
+                    "engine": p.get("engine"),
+                    "genome": g,
+                    "reward_mean": p.get("reward_mean", p.get("reward")),
+                    "reward_std": p.get("reward_std"),
+                    "selection_key": p.get("selection_key"),
+                    "selection_score": p.get("selection_score"),
+                    "selector_reranker_score": p.get("selector_reranker_score"),
+                    "candidate_pool_id": cpid,
+                }
+            )
+            eval_inputs.append(
+                {
+                    "engine": p.get("engine"),
+                    "dataset_hash": h,
+                    "train_csv": str(d / "train.csv"),
+                    "test_csv": str(d / "test.csv"),
+                    "genome": g,
+                    "folds": folds,
+                    "_h": h,
+                    "_rank": rank,
+                    "_candidate_pool_id": cpid,
+                }
+            )
         if (i + 1) % 10 == 0 or i + 1 == len(hashes):
-            log(f"  proposed {i+1}/{len(hashes)} datasets ({time.time()-t0:.0f}s)")
+            log(f"  proposed {i + 1}/{len(hashes)} datasets ({time.time() - t0:.0f}s)")
     if proposal_errors:
         err_path = Path(ledger).with_name("elo_proposal_errors.jsonl")
         with err_path.open("w", encoding="utf-8") as fh:
@@ -176,14 +196,13 @@ def propose_and_eval(
 
     log(f"  evaluating {len(eval_inputs)} proposals via bridge...")
     t1 = time.time()
-    results = list(iter_eval_regression_with_ledger(
-        eval_inputs, ledger=str(ledger), router=router, workers=workers))
-    log(f"  evaluated in {time.time()-t1:.0f}s")
+    results = list(
+        iter_eval_regression_with_ledger(eval_inputs, ledger=str(ledger), router=router, workers=workers)
+    )
+    log(f"  evaluated in {time.time() - t1:.0f}s")
     by_idx = {idx: res for idx, res in results}
     pool_by_id = {
-        str(row.get("candidate_pool_id")): row
-        for row in candidate_pool_rows
-        if row.get("candidate_pool_id")
+        str(row.get("candidate_pool_id")): row for row in candidate_pool_rows if row.get("candidate_pool_id")
     }
     for idx, inp in enumerate(eval_inputs):
         res = by_idx.get(idx, {}) or {}
@@ -191,7 +210,9 @@ def propose_and_eval(
         test = (res.get("metrics") or {}).get("test") or {}
         rec = per_ds[inp["_h"]][inp["_rank"]]
         rec["oof_r2"] = cv.get("oof_r2")
-        rec["score_robust"] = robust_score(float(cv["oof_r2"]), cv.get("fold_r2")) if _finite(cv.get("oof_r2")) else None
+        rec["score_robust"] = (
+            robust_score(float(cv["oof_r2"]), cv.get("fold_r2")) if _finite(cv.get("oof_r2")) else None
+        )
         rec["test_rmse"] = test.get("rmse")
         rec["test_r2"] = test.get("r2")
         rec["valid"] = bool(res.get("valid", False))
@@ -244,8 +265,8 @@ def rmse_for_mode(props: list[dict], mode: str) -> float | None:
         pick = max(withcv, key=_probe_score) if withcv else min(ok, key=lambda p: p["rank"])
         return float(pick["test_rmse"])
     if mode.startswith("cv_top"):
-        n = int(mode[len("cv_top"):])
-        cand = sorted(ok, key=lambda p: p["rank"])[:n]              # top-N by reward rank
+        n = int(mode[len("cv_top") :])
+        cand = sorted(ok, key=lambda p: p["rank"])[:n]  # top-N by reward rank
         withcv = [p for p in cand if _finite(p.get("score_robust")) or _finite(p.get("oof_r2"))]
         pick = max(withcv, key=_probe_score) if withcv else min(cand, key=lambda p: p["rank"])
         return float(pick["test_rmse"])
@@ -286,14 +307,29 @@ def ladder_elo(per_ds: dict[str, list[dict]], hashes: list[str], mode: str) -> d
             beat = int((jr < inc_valid).sum())
             n = len(inc_valid)
             p = min(max(beat / n, 1e-4), 1 - 1e-4)
-            per_dataset.append({
-                "hash": h, "rmse": jr, "rank": int((inc_valid < jr).sum()) + 1, "field": n,
-                "beat": beat, "pctile": round(100 * beat / n, 1),
-                "elo_local": round(1000 + 400 * math.log10(p / (1 - p))),
-            })
+            per_dataset.append(
+                {
+                    "hash": h,
+                    "rmse": jr,
+                    "rank": int((inc_valid < jr).sum()) + 1,
+                    "field": n,
+                    "beat": beat,
+                    "pctile": round(100 * beat / n, 1),
+                    "elo_local": round(1000 + 400 * math.log10(p / (1 - p))),
+                }
+            )
         else:
-            per_dataset.append({"hash": h, "rmse": None, "rank": None, "field": int(len(inc_valid)),
-                                "beat": 0, "pctile": 0.0, "elo_local": None})
+            per_dataset.append(
+                {
+                    "hash": h,
+                    "rmse": None,
+                    "rank": None,
+                    "field": int(len(inc_valid)),
+                    "beat": 0,
+                    "pctile": 0.0,
+                    "elo_local": None,
+                }
+            )
     name = f"jope_{mode}"
     algos = lad["algorithms"] + [name]
     U_aug = np.hstack([U, jc])
@@ -306,8 +342,12 @@ def ladder_elo(per_ds: dict[str, list[dict]], hashes: list[str], mode: str) -> d
     battles_won = sum(1 for p in per_dataset if p.get("rank") == 1)
     battles_top3 = sum(1 for p in per_dataset if p.get("rank") is not None and p["rank"] <= 3)
     return {
-        "mode": mode, "elo": round(ratings[name], 1), "field_rank": jrank, "field_size": len(order),
-        "battles_won": battles_won, "battles_top3": battles_top3,
+        "mode": mode,
+        "elo": round(ratings[name], 1),
+        "field_rank": jrank,
+        "field_size": len(order),
+        "battles_won": battles_won,
+        "battles_top3": battles_top3,
         "n_scored": sum(1 for p in per_dataset if p.get("rank") is not None),
         "top_incumbents": [(kk, round(vv, 1)) for kk, vv in order[:5] if kk != name][:5],
         "per_dataset": per_dataset,
@@ -340,8 +380,16 @@ def run_elo_bench(
     hashes = sets[subset] if subset in sets else sets["validation"]
     log(f"elo-bench: {len(hashes)} datasets ({subset}; double_holdout={len(sets['double_holdout'])}) k={k}")
     per_ds = propose_and_eval(
-        checkpoint, hashes, art_dir=art_dir, k=k, folds=folds, seed=seed,
-        temperature=temperature, ledger=ledger or (out / "ledger.jsonl"), workers=workers, log=log,
+        checkpoint,
+        hashes,
+        art_dir=art_dir,
+        k=k,
+        folds=folds,
+        seed=seed,
+        temperature=temperature,
+        ledger=ledger or (out / "ledger.jsonl"),
+        workers=workers,
+        log=log,
         selector_calibration=selector_calibration,
         selector_reranker=selector_reranker,
         samples_per_engine=samples_per_engine,
@@ -349,8 +397,13 @@ def run_elo_bench(
         proposal_failure_threshold=proposal_failure_threshold,
     )
     report: dict[str, Any] = {
-        "checkpoint": str(checkpoint), "k": k, "folds": folds, "seed": seed,
-        "temperature": temperature, "subset": subset, "n_datasets": len(hashes),
+        "checkpoint": str(checkpoint),
+        "k": k,
+        "folds": folds,
+        "seed": seed,
+        "temperature": temperature,
+        "subset": subset,
+        "n_datasets": len(hashes),
         "double_holdout_n": len(sets["double_holdout"]),
         "selector_calibration": str(selector_calibration) if selector_calibration else None,
         "selector_reranker": str(selector_reranker) if selector_reranker else None,
@@ -371,6 +424,13 @@ def run_elo_bench(
             report["modes"][mode]["double_holdout_rank"] = res_dh["field_rank"]
     (out / "per_ds.json").write_text(json.dumps(per_ds))
     (out / "elo_report.json").write_text(json.dumps(report, indent=2))
-    log(json.dumps({m: {kk: vv for kk, vv in d.items() if kk != "top_incumbents"}
-                    for m, d in report["modes"].items()}, indent=2))
+    log(
+        json.dumps(
+            {
+                m: {kk: vv for kk, vv in d.items() if kk != "top_incumbents"}
+                for m, d in report["modes"].items()
+            },
+            indent=2,
+        )
+    )
     return report

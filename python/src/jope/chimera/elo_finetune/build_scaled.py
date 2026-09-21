@@ -25,8 +25,7 @@ def main():
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
-    payload = CheckpointManager.load(Path(args.base).expanduser(),
-                                     map_location="cpu")
+    payload = CheckpointManager.load(Path(args.base).expanduser(), map_location="cpu")
     state = {k: v.clone() for k, v in payload[args.which].items()}
     data = np.load(Path(args.delta).expanduser())
     for name in data["tensors"]:
@@ -36,8 +35,7 @@ def main():
         val = torch.from_numpy(data[f"{name}::val"]).to(flat.dtype) * args.scale
         flat.index_add_(0, idx, val)
     out = Path(args.out).expanduser()
-    torch.save({"ema_model": state, "step": payload.get("step", 0),
-                "scale": args.scale}, out)
+    torch.save({"ema_model": state, "step": payload.get("step", 0), "scale": args.scale}, out)
     print(f"scaled champion: base + {args.scale}*delta -> {out}")
 
 

@@ -65,16 +65,21 @@ def main() -> None:
     boot_sd = float(estimates.std(ddof=1))
     inflation = boot_sd / max(analytic_se, 1e-12)
     lag1 = float(np.corrcoef(deltas[:-1], deltas[1:])[0, 1]) if n > 2 else 0.0
-    print(json.dumps({
-        "steps": n,
-        "half_life": args.half_life,
-        "ewma_debiased": m_hat,
-        "analytic_se": analytic_se,
-        "bootstrap_sd": boot_sd,
-        "inflation_factor": round(inflation, 3),
-        "lag1_autocorr": round(lag1, 4),
-        "action": "multiply bands by inflation_factor" if inflation > 1.5 else "bands ok",
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "steps": n,
+                "half_life": args.half_life,
+                "ewma_debiased": m_hat,
+                "analytic_se": analytic_se,
+                "bootstrap_sd": boot_sd,
+                "inflation_factor": round(inflation, 3),
+                "lag1_autocorr": round(lag1, 4),
+                "action": "multiply bands by inflation_factor" if inflation > 1.5 else "bands ok",
+            },
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

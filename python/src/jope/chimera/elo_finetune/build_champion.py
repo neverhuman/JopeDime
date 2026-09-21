@@ -24,8 +24,7 @@ from .ckpt import CheckpointManager
 
 
 def apply_promos(state: dict, champion_dir: Path) -> int:
-    promos = sorted(champion_dir.glob("promo_*.npz"),
-                    key=lambda p: int(p.stem.split("_")[1]))
+    promos = sorted(champion_dir.glob("promo_*.npz"), key=lambda p: int(p.stem.split("_")[1]))
     for npz in promos:
         data = np.load(npz)
         for name in data["tensors"]:
@@ -45,13 +44,11 @@ def main():
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
-    payload = CheckpointManager.load(Path(args.base).expanduser(),
-                                     map_location="cpu")
+    payload = CheckpointManager.load(Path(args.base).expanduser(), map_location="cpu")
     state = {k: v.clone() for k, v in payload[args.which].items()}
     n = apply_promos(state, Path(args.champion_dir).expanduser())
     out = Path(args.out).expanduser()
-    torch.save({"ema_model": state, "step": payload.get("step", 0),
-                "n_promos": n}, out)
+    torch.save({"ema_model": state, "step": payload.get("step", 0), "n_promos": n}, out)
     print(f"champion: base {args.which} + {n} promo delta(s) -> {out}")
 
 

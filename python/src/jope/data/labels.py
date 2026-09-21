@@ -51,4 +51,3 @@ def pairwise_labels(rows: list[TrainingRow]) -> list[dict]:
                 }
             )
     return pairs
-

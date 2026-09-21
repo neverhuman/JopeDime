@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Four disjoint, manifest-driven streams; reuse matching remote originals."""
+
 import argparse
 import concurrent.futures
 import hashlib
@@ -52,13 +53,19 @@ print(json.dumps({'missing':missing,'reused':reused}))
     missing = set(state["missing"])
     streams = []
     for dataset in sorted({f["dataset"] for f in manifest["files"]}):
-        rows = [f for f in manifest["files"] if f["dataset"] == dataset and f["role"] != "real_backing_source" and f["destination"] in missing]
+        rows = [
+            f
+            for f in manifest["files"]
+            if f["dataset"] == dataset and f["role"] != "real_backing_source" and f["destination"] in missing
+        ]
         if rows:
             source = pathlib.Path(rows[0]["source"])
             while source.name != dataset:
                 source = source.parent
             streams.append((source, pathlib.Path("data/originals/review-v3/regression") / dataset, rows))
-    backing = [f for f in manifest["files"] if f["role"] == "real_backing_source" and f["destination"] in missing]
+    backing = [
+        f for f in manifest["files"] if f["role"] == "real_backing_source" and f["destination"] in missing
+    ]
     if backing:
         streams.append((pathlib.Path("/home/ubuntu"), pathlib.Path("data/originals/backing"), backing))
     assert len(streams) <= 4
@@ -71,9 +78,21 @@ print(json.dumps({'missing':missing,'reused':reused}))
                 assert sha(path) == row["sha256"]
                 listing.write(str(path.relative_to(source)) + "\n")
             listing.flush()
-            command = ["rtk", "proxy", "rsync", "-a", "--ignore-existing", "--partial", "--partial-dir=.rsync-partial",
-                       "--files-from", listing.name, "-e", f"ssh -i {args.identity} -o BatchMode=yes",
-                       str(source) + "/", f"{args.host}:{root / destination}/"]
+            command = [
+                "rtk",
+                "proxy",
+                "rsync",
+                "-a",
+                "--ignore-existing",
+                "--partial",
+                "--partial-dir=.rsync-partial",
+                "--files-from",
+                listing.name,
+                "-e",
+                f"ssh -i {args.identity} -o BatchMode=yes",
+                str(source) + "/",
+                f"{args.host}:{root / destination}/",
+            ]
             subprocess.run(command, check=True)
         return len(rows)
 
@@ -81,11 +100,19 @@ print(json.dumps({'missing':missing,'reused':reused}))
         transferred = sum(pool.map(transfer, streams))
     checked = remote(preflight)
     assert not checked["missing"]
-    receipt = dict(schema="parallel.reviewed_source_staging.v1", passed=True, host=args.host,
-                   manifest_sha256=sha(manifest_path), verified_files=len(checked["reused"]),
-                   transferred_files=transferred, reused_files=len(state["reused"]), streams=len(streams),
-                   transferred_bytes=sum(f["bytes"] for f in manifest["files"] if f["destination"] in missing),
-                   copied_cut_csv_files=0, original_final_test_targets_parsed=False)
+    receipt = dict(
+        schema="parallel.reviewed_source_staging.v1",
+        passed=True,
+        host=args.host,
+        manifest_sha256=sha(manifest_path),
+        verified_files=len(checked["reused"]),
+        transferred_files=transferred,
+        reused_files=len(state["reused"]),
+        streams=len(streams),
+        transferred_bytes=sum(f["bytes"] for f in manifest["files"] if f["destination"] in missing),
+        copied_cut_csv_files=0,
+        original_final_test_targets_parsed=False,
+    )
     output = root / "manifests/generated/review-v3-node-staging.json"
     with output.open("x") as target:
         json.dump(receipt, target, indent=2)

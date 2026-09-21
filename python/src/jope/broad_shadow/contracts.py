@@ -105,9 +105,7 @@ def _finite(value: Any, name: str, *, minimum: float | None = None) -> float:
     return number
 
 
-def _optional_finite(
-    value: Any, name: str, *, minimum: float | None = None
-) -> float | None:
+def _optional_finite(value: Any, name: str, *, minimum: float | None = None) -> float | None:
     return None if value is None else _finite(value, name, minimum=minimum)
 
 
@@ -171,15 +169,11 @@ _CATALOG_FIELDS = {
 }
 
 
-def _validate_encoding_ref(
-    value: Any, name: str, expected_dimensions: int
-) -> None:
+def _validate_encoding_ref(value: Any, name: str, expected_dimensions: int) -> None:
     row = _exact_fields(value, _ENCODING_FIELDS, name)
     _sha256(row["sha256"], f"{name}.sha256")
     _safe_relative_path(row["path"], f"{name}.path")
-    offset = _positive_integer(
-        row["offset_bytes"], f"{name}.offset_bytes", allow_zero=True
-    )
+    offset = _positive_integer(row["offset_bytes"], f"{name}.offset_bytes", allow_zero=True)
     if offset % 4:
         raise ValueError(f"{name}.offset_bytes must be float32 aligned")
     if row["dimensions"] != expected_dimensions or row["dtype"] != "float32_le":
@@ -246,9 +240,7 @@ def validate_broad_catalog(payload: Any, *, production: bool = False) -> None:
             "target_encoding",
             TARGET_SUMMARY_DIMENSIONS,
         )
-        if type(row["foundation_complete"]) is not bool or type(
-            row["hyperion_complete"]
-        ) is not bool:
+        if type(row["foundation_complete"]) is not bool or type(row["hyperion_complete"]) is not bool:
             raise ValueError("catalog completion flags must be booleans")
         foundation_complete += int(row["foundation_complete"])
         hyperion_count += int(row["hyperion_complete"])
@@ -276,13 +268,10 @@ def validate_broad_catalog(payload: Any, *, production: bool = False) -> None:
     declared_families = manifest["synthetic_family_split_counts"]
     if (
         declared_real != {name: real_counts[name] for name in sorted(REAL_SPLITS)}
-        or declared_synthetic
-        != {name: synthetic_counts[name] for name in sorted(SYNTHETIC_SPLITS)}
+        or declared_synthetic != {name: synthetic_counts[name] for name in sorted(SYNTHETIC_SPLITS)}
         or declared_families
         != {
-            name: len(
-                {family for family, assigned in family_split.items() if assigned == name}
-            )
+            name: len({family for family, assigned in family_split.items() if assigned == name})
             for name in sorted(SYNTHETIC_SPLITS)
         }
     ):
@@ -294,9 +283,7 @@ def validate_broad_catalog(payload: Any, *, production: bool = False) -> None:
     if production:
         if declared_real != REAL_SPLIT_COUNTS:
             raise ValueError("production real split must remain 2090/119/64/49")
-        if set(synthetic_counts) != SYNTHETIC_SPLITS or set(family_split.values()) != set(
-            SYNTHETIC_SPLITS
-        ):
+        if set(synthetic_counts) != SYNTHETIC_SPLITS or set(family_split.values()) != set(SYNTHETIC_SPLITS):
             raise ValueError("production synthetic authority requires all three splits")
         if foundation_count < 27_875:
             raise ValueError("production catalog must bind the 27,875 foundation cache")
@@ -347,24 +334,12 @@ _SLATE_FIELDS = {
 
 def _validate_protocol(value: Any, expected: str) -> None:
     protocol = _exact_fields(value, _PROTOCOL_FIELDS, f"{expected} protocol")
-    if (
-        protocol["fidelity"] != expected
-        or protocol["train_only"] is not True
-        or protocol["omp_threads"] != 1
-    ):
+    if protocol["fidelity"] != expected or protocol["train_only"] is not True or protocol["omp_threads"] != 1:
         raise ValueError(f"{expected} protocol violates train-only/OMP authority")
     if expected == "screening":
-        if (
-            protocol["folds"] != 3
-            or protocol["row_cap"] != 768
-            or protocol["timeout_seconds"] != 30
-        ):
+        if protocol["folds"] != 3 or protocol["row_cap"] != 768 or protocol["timeout_seconds"] != 30:
             raise ValueError("screening protocol must be CV3/768 rows/30 seconds")
-    elif (
-        protocol["folds"] != 5
-        or protocol["row_cap"] is not None
-        or protocol["timeout_seconds"] is not None
-    ):
+    elif protocol["folds"] != 5 or protocol["row_cap"] is not None or protocol["timeout_seconds"] is not None:
         raise ValueError("exact protocol must be full-train CV5 without screening caps")
 
 
@@ -387,10 +362,7 @@ def validate_probe_slate(payload: Any, *, production: bool = False) -> None:
     anchor_families: set[str] = set()
     for index, value in enumerate(anchors):
         anchor = _exact_fields(value, _ANCHOR_FIELDS, "probe anchor")
-        if (
-            anchor["anchor_index"] != index
-            or anchor["performance_quartile"] != index
-        ):
+        if anchor["anchor_index"] != index or anchor["performance_quartile"] != index:
             raise ValueError("anchors must cover ordered performance quartiles 0..3")
         if anchor["engine"] not in {"featmath", "newmath"}:
             raise ValueError("probe anchor engine is unsupported")
@@ -516,11 +488,7 @@ def validate_broad_receipt(payload: Any) -> None:
     _sha256(receipt["train_sha256"], "train_sha256")
     semantic = _sha256(receipt["semantic_sha256"], "semantic_sha256")
     genome = receipt["canonical_genome"]
-    if (
-        not isinstance(genome, str)
-        or not genome
-        or hashlib.sha256(genome.encode()).hexdigest() != semantic
-    ):
+    if not isinstance(genome, str) or not genome or hashlib.sha256(genome.encode()).hexdigest() != semantic:
         raise ValueError("receipt semantic hash does not bind canonical genome")
     _sha256(receipt["evaluator_release_sha256"], "evaluator_release_sha256")
     _sha256(receipt["fold_plan_sha256"], "fold_plan_sha256")
@@ -529,20 +497,12 @@ def validate_broad_receipt(payload: Any) -> None:
     if fidelity not in FIDELITIES:
         raise ValueError("receipt fidelity must be screening or exact")
     _validate_protocol(receipt["protocol"], fidelity)
-    if (
-        receipt["label_authority"] != "train_only_oof_r2"
-        or receipt["test_table_accessed"] is not False
-    ):
+    if receipt["label_authority"] != "train_only_oof_r2" or receipt["test_table_accessed"] is not False:
         raise ValueError("test-table or benchmark labels are forbidden")
-    if (
-        not isinstance(receipt["selection_channel"], str)
-        or not receipt["selection_channel"].strip()
-    ):
+    if not isinstance(receipt["selection_channel"], str) or not receipt["selection_channel"].strip():
         raise ValueError("selection_channel must be nonempty")
     _positive_integer(receipt["recorded_at_ms"], "recorded_at_ms")
-    runtime = _optional_finite(
-        receipt["runtime_seconds"], "runtime_seconds", minimum=0.0
-    )
+    runtime = _optional_finite(receipt["runtime_seconds"], "runtime_seconds", minimum=0.0)
     if type(receipt["valid"]) is not bool:
         raise ValueError("receipt valid flag must be boolean")
     if receipt["valid"]:
@@ -570,9 +530,10 @@ def validate_broad_receipt(payload: Any) -> None:
             or not isinstance(failure["message"], str)
         ):
             raise ValueError("invalid receipt requires a typed failure")
-        if any(
-            receipt[field] is not None for field in ("oof_r2", "robust_score")
-        ) or receipt["fold_r2"] != []:
+        if (
+            any(receipt[field] is not None for field in ("oof_r2", "robust_score"))
+            or receipt["fold_r2"] != []
+        ):
             raise ValueError("failure receipts cannot carry finite score labels")
 
 
@@ -602,9 +563,7 @@ def validate_broad_corpus_snapshot(payload: Any, *, production: bool = False) ->
         _sha256(snapshot[field], field)
     _positive_integer(snapshot["created_at_ms"], "created_at_ms")
     rows = _positive_integer(snapshot["row_count"], "row_count")
-    valid = _positive_integer(
-        snapshot["valid_row_count"], "valid_row_count", allow_zero=True
-    )
+    valid = _positive_integer(snapshot["valid_row_count"], "valid_row_count", allow_zero=True)
     datasets = _positive_integer(snapshot["dataset_count"], "dataset_count")
     if valid > rows or datasets > rows:
         raise ValueError("broad snapshot counts are inconsistent")
@@ -682,7 +641,5 @@ def group_receipts_for_ranking(
         if not receipt["valid"]:
             continue
         protocol_hash = content_sha256(receipt["protocol"])
-        grouped[
-            (receipt["dataset_hash"], receipt["fidelity"], protocol_hash)
-        ].append(receipt)
+        grouped[(receipt["dataset_hash"], receipt["fidelity"], protocol_hash)].append(receipt)
     return dict(grouped)

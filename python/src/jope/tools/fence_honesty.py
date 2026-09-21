@@ -1,4 +1,5 @@
 """Keep the registry fence honest. Never restart legacy GP 774452."""
+
 from __future__ import annotations
 
 LEGACY_GP_PID = 774452
@@ -55,9 +56,7 @@ def classify_health(fence, health_receipt=None):
         collection_active=False,
         restart_legacy_gp=False,
         paid_idle_is_not_a_license=True,
-        historical_104_is_not_a_crash=not historical_failures_are_crash(
-            receipt.get("failed_views"), phase
-        ),
+        historical_104_is_not_a_crash=not historical_failures_are_crash(receipt.get("failed_views"), phase),
     )
 
 

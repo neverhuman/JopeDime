@@ -25,14 +25,30 @@ class HeadCostCensusTests(unittest.TestCase):
             root = Path(folder)
             path = root / "search" / "observations.json"
             path.parent.mkdir()
-            path.write_text(json.dumps([
-                {"genome": "(pipe X (histgbm2))", "program_sha256": "a" * 64,
-                 "failure": None, "runtime_seconds": 1.0},
-                {"genome": "(pipe X (histgbm2))", "program_sha256": "b" * 64,
-                 "failure": "candidate_or_view_timeout", "runtime_seconds": 30.0},
-                {"genome": "(pipe X (gpr))", "program_sha256": "c" * 64,
-                 "failure": None, "metrics": {"seconds": 0.5}},
-            ]))
+            path.write_text(
+                json.dumps(
+                    [
+                        {
+                            "genome": "(pipe X (histgbm2))",
+                            "program_sha256": "a" * 64,
+                            "failure": None,
+                            "runtime_seconds": 1.0,
+                        },
+                        {
+                            "genome": "(pipe X (histgbm2))",
+                            "program_sha256": "b" * 64,
+                            "failure": "candidate_or_view_timeout",
+                            "runtime_seconds": 30.0,
+                        },
+                        {
+                            "genome": "(pipe X (gpr))",
+                            "program_sha256": "c" * 64,
+                            "failure": None,
+                            "metrics": {"seconds": 0.5},
+                        },
+                    ]
+                )
+            )
             receipt = h.census([root], root / "census.json")
             self.assertFalse(receipt["unverified"])
             self.assertEqual(receipt["observations"], 3)

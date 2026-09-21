@@ -63,4 +63,3 @@ def _apply_validation(rows: list[TrainingRow]) -> None:
         row.family_bitmap = dict(meta.get("family_bitmap") or {})
         row.complexity = int(meta.get("stage_count") or row.complexity or 0)
         row.metadata["validation"] = meta
-

@@ -184,7 +184,9 @@ def build_active_v2_corpus(
                 "x128_rows": vs_row_counts[row.dataset_id],
                 "target_encoder": target_encoder,
                 "target_embedding_dim": 0 if target_summary is None else len(target_summary),
-                "target_sidecar_used": str(train_target_vs) if target_encoder == "train_target_vs" and train_target_vs.exists() else None,
+                "target_sidecar_used": str(train_target_vs)
+                if target_encoder == "train_target_vs" and train_target_vs.exists()
+                else None,
                 "actions": actions,
             }
         )
@@ -218,7 +220,9 @@ def build_active_v2_corpus(
         "target_encoder": target_encoder,
         "target_source_root": str(root),
         "target_sidecar": ACTIVE_TRAIN_TARGET_SIDECAR if target_encoder == "train_target_vs" else None,
-        "heldout_target_sidecar_locked": ACTIVE_TEST_TARGET_SIDECAR if target_encoder == "train_target_vs" else None,
+        "heldout_target_sidecar_locked": ACTIVE_TEST_TARGET_SIDECAR
+        if target_encoder == "train_target_vs"
+        else None,
         "split_manifest": split_manifest,
         "label_summary": label_summary,
     }
@@ -243,7 +247,9 @@ def write_active_artifacts(out_dir: str | Path, build: ActiveBuild) -> None:
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     write_jsonl(out / "active_rows.jsonl", build.rows)
-    (out / "active_vocab.json").write_text(json.dumps(build.vocab, indent=2, sort_keys=True), encoding="utf-8")
+    (out / "active_vocab.json").write_text(
+        json.dumps(build.vocab, indent=2, sort_keys=True), encoding="utf-8"
+    )
     (out / "standardization.json").write_text(
         json.dumps(build.standardization, indent=2, sort_keys=True),
         encoding="utf-8",
@@ -254,7 +260,9 @@ def write_active_artifacts(out_dir: str | Path, build: ActiveBuild) -> None:
         dataset_hash=np.asarray([row.dataset_id for row in build.rows]),
         x128=np.asarray([row.embedding[:VS_DIM] for row in build.rows], dtype=np.float32),
         target=np.asarray([row.embedding[VS_DIM : VS_DIM + 64] for row in build.rows], dtype=np.float32),
-        score=np.asarray([np.nan if row.score is None else row.score for row in build.rows], dtype=np.float32),
+        score=np.asarray(
+            [np.nan if row.score is None else row.score for row in build.rows], dtype=np.float32
+        ),
         rank=np.asarray([-1 if row.rank is None else row.rank for row in build.rows], dtype=np.int32),
         split=np.asarray([row.metadata.get("split", "train") for row in build.rows]),
     )
@@ -264,7 +272,9 @@ def write_active_v2_artifacts(out_dir: str | Path, build: ActiveBuild) -> None:
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     write_jsonl(out / "active_rows.jsonl", build.rows)
-    (out / "active_vocab.json").write_text(json.dumps(build.vocab, indent=2, sort_keys=True), encoding="utf-8")
+    (out / "active_vocab.json").write_text(
+        json.dumps(build.vocab, indent=2, sort_keys=True), encoding="utf-8"
+    )
     (out / "vocab.json").write_text(json.dumps(build.vocab, indent=2, sort_keys=True), encoding="utf-8")
     (out / "standardization.json").write_text(
         json.dumps(build.standardization, indent=2, sort_keys=True),
@@ -285,7 +295,9 @@ def write_active_v2_artifacts(out_dir: str | Path, build: ActiveBuild) -> None:
         canonical_genome=np.asarray([row.canonical_genome or row.genome for row in build.rows]),
         signature=np.asarray([row.embedding[:DATASET_SIGNATURE_DIM] for row in build.rows], dtype=np.float32),
         target_summary=np.asarray([_target_summary(row) for row in build.rows], dtype=np.float32),
-        score=np.asarray([np.nan if row.score is None else row.score for row in build.rows], dtype=np.float32),
+        score=np.asarray(
+            [np.nan if row.score is None else row.score for row in build.rows], dtype=np.float32
+        ),
         oof_delta_to_incumbent=np.asarray(
             [_float_or_nan(row.metadata.get("oof_delta_to_incumbent")) for row in build.rows],
             dtype=np.float32,
@@ -496,7 +508,9 @@ def _build_split_manifest(
         entry["candidate_rows"] = int(entry.get("candidate_rows") or 0) + 1
         if row.score is not None:
             current = entry.get("best_known_oof_r2")
-            entry["best_known_oof_r2"] = float(row.score) if current is None else max(float(current), float(row.score))
+            entry["best_known_oof_r2"] = (
+                float(row.score) if current is None else max(float(current), float(row.score))
+            )
     return {
         "datasets": datasets,
         "counts": dict(sorted(_count_splits(split_by_dataset).items())),

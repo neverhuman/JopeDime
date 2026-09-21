@@ -8,6 +8,7 @@ ExpertOut fields (per test row, batch B=1 dataset at a time):
   hidden    (M, 512)    row-interactor / output_norm embedding
   conf      (M, Cc)     per-row confidence features (generalizable)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -20,10 +21,10 @@ HID = 512
 
 @dataclass
 class ExpertOut:
-    hidden: torch.Tensor            # (M, 512) float32 cpu
-    conf: torch.Tensor             # (M, Cc)
-    mean: torch.Tensor | None = None       # (M,)
-    logits: torch.Tensor | None = None     # (M, K)
+    hidden: torch.Tensor  # (M, 512) float32 cpu
+    conf: torch.Tensor  # (M, Cc)
+    mean: torch.Tensor | None = None  # (M,)
+    logits: torch.Tensor | None = None  # (M, K)
     quantiles: torch.Tensor | None = None  # (M, Q)
 
 
@@ -35,7 +36,8 @@ def _freeze(model):
 
 
 def _zscore(X: np.ndarray, ref: np.ndarray, clip: float = 100.0):
-    mu = ref.mean(0, keepdims=True); sd = ref.std(0, keepdims=True) + 1e-6
+    mu = ref.mean(0, keepdims=True)
+    sd = ref.std(0, keepdims=True) + 1e-6
     return np.clip((X - mu) / sd, -clip, clip).astype("float32")
 
 
@@ -54,12 +56,14 @@ class TabPFNv3Reg(Expert):
     name = "tabpfn_v3_reg"
     task = "regression"
 
-    MAX_TOTAL = 1024   # model caps context+query per forward (bf16 autocast)
+    MAX_TOTAL = 1024  # model caps context+query per forward (bf16 autocast)
 
     def __init__(self, device="cuda", full_kv=True):
         import sys
+
         sys.path.insert(0, "/home/ubuntu/fable_god")
         from python.elo_finetune.model_io import bucket_centres, load_regressor
+
         self.device = torch.device(device)
         self.model = _freeze(load_regressor(device=device))
         if full_kv:
@@ -75,23 +79,24 @@ class TabPFNv3Reg(Expert):
         cy = ds.ytr.astype("float32")
         mu, sd = float(cy.mean()), float(cy.std()) + 1e-8
         cyz = torch.from_numpy((cy - mu) / sd).to(self.device).unsqueeze(1)
-        C = cx.shape[0]; qc = max(8, min(qx_all.shape[0], self.MAX_TOTAL - C))
+        C = cx.shape[0]
+        qc = max(8, min(qx_all.shape[0], self.MAX_TOTAL - C))
         logits_parts, hid_parts = [], []
         for s in range(0, qx_all.shape[0], qc):
-            qx = torch.from_numpy(qx_all[s:s + qc]).to(self.device)
+            qx = torch.from_numpy(qx_all[s : s + qc]).to(self.device)
             x = torch.cat([cx, qx], 0).unsqueeze(1)
             out = self.model(x, cyz, only_return_standard_out=False)
             logits_parts.append(out["standard"].float().reshape(qx.shape[0], -1))
             hid_parts.append(out["test_embeddings"].float().reshape(qx.shape[0], HID))
-        logits = torch.cat(logits_parts, 0)             # (M, 5000)
-        hid = torch.cat(hid_parts, 0)                   # (M, 512)
+        logits = torch.cat(logits_parts, 0)  # (M, 5000)
+        hid = torch.cat(hid_parts, 0)  # (M, 512)
         p = torch.softmax(logits, -1)
         mean_z = p @ self.centres
         mean = mean_z * sd + mu
         cdf = torch.cumsum(p, -1)
         qlev = torch.linspace(0.05, 0.95, 19, device=self.device)
         idx = torch.searchsorted(cdf, qlev.expand(qx_all.shape[0], -1)).clamp(0, self.centres.numel() - 1)
-        quant = self.centres[idx] * sd + mu             # (M, 19)
+        quant = self.centres[idx] * sd + mu  # (M, 19)
         var = (p * (self.centres.unsqueeze(0) - mean_z.unsqueeze(1)) ** 2).sum(-1)
         std = var.clamp_min(0).sqrt() * sd
         ent = -(p.clamp_min(1e-9).log() * p).sum(-1)
@@ -108,43 +113,47 @@ import os as _os
 class TabICLReg(Expert):
     name = "tabicl_reg"
     task = "regression"
-    W = _os.environ.get("TABICL_REG_WEIGHTS",
-        "/home/ubuntu/jain_small/artifacts/foundation/tabicl-regressor-v2-20260212.safetensors")
+    W = _os.environ.get(
+        "TABICL_REG_WEIGHTS",
+        "/home/ubuntu/jain_small/artifacts/foundation/tabicl-regressor-v2-20260212.safetensors",
+    )
 
     def __init__(self, device="cuda"):
         from safetensors.torch import load_file
         from tabicl._model.tabicl import TabICL
+
         self.device = torch.device(device)
         m = TabICL(max_classes=0, num_quantiles=999, bias_free_ln=True)
         m.load_state_dict(load_file(self.W), strict=True)
         self.model = _freeze(m).to(self.device)
         self._hid = {}
         self.model.row_interactor.register_forward_hook(
-            lambda mod, i, o: self._hid.__setitem__("h", o.detach()))
+            lambda mod, i, o: self._hid.__setitem__("h", o.detach())
+        )
         self.qlev = torch.linspace(0.0005, 0.9995, 999)
 
     @torch.no_grad()
     def infer(self, ds) -> ExpertOut:
         n = ds.n_train
         X = np.concatenate([ds.Xtr, ds.Xte], 0)
-        Xz = _zscore(X, ds.Xtr)                          # z-score by train stats
-        cy = ds.ytr.astype("float32"); mu, sd = float(cy.mean()), float(cy.std()) + 1e-8
+        Xz = _zscore(X, ds.Xtr)  # z-score by train stats
+        cy = ds.ytr.astype("float32")
+        mu, sd = float(cy.mean()), float(cy.std()) + 1e-8
         yz = (cy - mu) / sd
         Xt = torch.from_numpy(Xz).unsqueeze(0).to(self.device)
         yt = torch.from_numpy(yz).unsqueeze(0).to(self.device)
-        q = self.model(Xt, yt).float()[0]               # (M, 999) raw quantiles (z-space)
-        q, _ = torch.sort(q, -1)                         # enforce monotone
+        q = self.model(Xt, yt).float()[0]  # (M, 999) raw quantiles (z-space)
+        q, _ = torch.sort(q, -1)  # enforce monotone
         quant_z = q
         quant = quant_z * sd + mu
-        mean = quant.mean(-1)                            # mean of quantiles ~ E[y]
+        mean = quant.mean(-1)  # mean of quantiles ~ E[y]
         # 19 evenly-spaced quantiles to match a common grid
         pick = torch.linspace(0, 998, 19).long()
         quant19 = quant[:, pick]
-        spread = (quant[:, 899] - quant[:, 99])          # 90-10 spread (uncertainty)
-        hid = self._hid["h"].float()[0, n:]              # test rows (M, 512)
+        spread = quant[:, 899] - quant[:, 99]  # 90-10 spread (uncertainty)
+        hid = self._hid["h"].float()[0, n:]  # test rows (M, 512)
         conf = torch.stack([spread * 0 + spread, spread * 0, mean], -1).cpu()
-        return ExpertOut(hidden=hid.cpu(), conf=conf,
-                         mean=mean.cpu(), quantiles=quant19.cpu())
+        return ExpertOut(hidden=hid.cpu(), conf=conf, mean=mean.cpu(), quantiles=quant19.cpu())
 
 
 # --------------------------------------------------------------------------
@@ -160,34 +169,36 @@ def _cls_conf(p1):
 class TabPFNv3ClsBinary(Expert):
     name = "tabpfn_v3_cls"
     task = "binary"
-    CKPT = _os.environ.get("TABPFN_CLS_CKPT",
-        "/home/ubuntu/tabpfn-v3-classifier-v3_20260417_binary.ckpt")
-    DEPS = _os.environ.get("TABPFN_CLS_DEPS",
-        "/home/ubuntu/fable_god/provenance/classifier_deps")
+    CKPT = _os.environ.get("TABPFN_CLS_CKPT", "/home/ubuntu/tabpfn-v3-classifier-v3_20260417_binary.ckpt")
+    DEPS = _os.environ.get("TABPFN_CLS_DEPS", "/home/ubuntu/fable_god/provenance/classifier_deps")
     MAX_TOTAL = 1024
 
     def __init__(self, device="cuda"):
         import sys
+
         sys.path.insert(0, self.DEPS)
         from tabpfn_v3_train import build_model_from_checkpoint
+
         self.device = torch.device(device)
-        self.model = _freeze(build_model_from_checkpoint(
-            self.CKPT, load_weights=True, strict=True, device=device))
+        self.model = _freeze(
+            build_model_from_checkpoint(self.CKPT, load_weights=True, strict=True, device=device)
+        )
 
     @torch.no_grad()
     def infer(self, ds) -> ExpertOut:
         cx = torch.from_numpy(ds.Xtr.astype("float32")).to(self.device)
         qx_all = ds.Xte.astype("float32")
         cy = torch.from_numpy(ds.ytr.astype("float32")).to(self.device).unsqueeze(1)
-        C = cx.shape[0]; qc = max(8, min(qx_all.shape[0], self.MAX_TOTAL - C))
+        C = cx.shape[0]
+        qc = max(8, min(qx_all.shape[0], self.MAX_TOTAL - C))
         lg_parts, hid_parts = [], []
         for s in range(0, qx_all.shape[0], qc):
-            qx = torch.from_numpy(qx_all[s:s + qc]).to(self.device)
+            qx = torch.from_numpy(qx_all[s : s + qc]).to(self.device)
             x = torch.cat([cx, qx], 0).unsqueeze(1)
             out = self.model(x, cy, only_return_standard_out=False)
             lg_parts.append(out["standard"][..., :2].float().reshape(qx.shape[0], 2))
             hid_parts.append(out["test_embeddings"].float().reshape(qx.shape[0], HID))
-        logits = torch.cat(lg_parts, 0)                 # (M,2) log-probs
+        logits = torch.cat(lg_parts, 0)  # (M,2) log-probs
         hid = torch.cat(hid_parts, 0)
         p1 = torch.softmax(logits, -1)[:, 1]
         return ExpertOut(hidden=hid.cpu(), conf=_cls_conf(p1).cpu(), logits=logits.cpu())
@@ -195,44 +206,51 @@ class TabPFNv3ClsBinary(Expert):
     @torch.no_grad()
     def infer_batch(self, tasks) -> list:
         """Batched over B same-shape tasks. x:[R,B,C], y:[N,B]; chunk queries."""
-        C = tasks[0].Xtr.shape[0]; B = len(tasks)
+        C = tasks[0].Xtr.shape[0]
+        B = len(tasks)
         cx = torch.from_numpy(np.stack([t.Xtr for t in tasks], 1)).to(self.device)  # (C,B,F)
-        qx_all = np.stack([t.Xte for t in tasks], 1)                                 # (Mtot,B,F)
+        qx_all = np.stack([t.Xte for t in tasks], 1)  # (Mtot,B,F)
         cy = torch.from_numpy(np.stack([t.ytr.astype("float32") for t in tasks], 1)).to(self.device)  # (C,B)
-        M = qx_all.shape[0]; qc = max(8, min(M, self.MAX_TOTAL - C))
+        M = qx_all.shape[0]
+        qc = max(8, min(M, self.MAX_TOTAL - C))
         lg_parts, hid_parts = [], []
         for s in range(0, M, qc):
-            qx = torch.from_numpy(qx_all[s:s + qc]).to(self.device)
-            x = torch.cat([cx, qx], 0)                    # (C+q, B, F)
+            qx = torch.from_numpy(qx_all[s : s + qc]).to(self.device)
+            x = torch.cat([cx, qx], 0)  # (C+q, B, F)
             out = self.model(x, cy, only_return_standard_out=False)
-            lg_parts.append(out["standard"][..., :2].float())      # (q,B,2)
-            hid_parts.append(out["test_embeddings"].float())       # (q,B,512)
-        logits = torch.cat(lg_parts, 0)                   # (M,B,2)
-        hid = torch.cat(hid_parts, 0)                     # (M,B,512)
+            lg_parts.append(out["standard"][..., :2].float())  # (q,B,2)
+            hid_parts.append(out["test_embeddings"].float())  # (q,B,512)
+        logits = torch.cat(lg_parts, 0)  # (M,B,2)
+        hid = torch.cat(hid_parts, 0)  # (M,B,512)
         outs = []
         for b in range(B):
             p1 = torch.softmax(logits[:, b], -1)[:, 1]
-            outs.append(ExpertOut(hidden=hid[:, b].cpu(), conf=_cls_conf(p1).cpu(),
-                                  logits=logits[:, b].cpu()))
+            outs.append(
+                ExpertOut(hidden=hid[:, b].cpu(), conf=_cls_conf(p1).cpu(), logits=logits[:, b].cpu())
+            )
         return outs
 
 
 class TabICLCls(Expert):
     name = "tabicl_cls"
     task = "binary"
-    W = _os.environ.get("TABICL_CLS_WEIGHTS",
-        "/home/ubuntu/jain_small/artifacts/foundation/tabicl-classifier-v2-20260212.safetensors")
+    W = _os.environ.get(
+        "TABICL_CLS_WEIGHTS",
+        "/home/ubuntu/jain_small/artifacts/foundation/tabicl-classifier-v2-20260212.safetensors",
+    )
 
     def __init__(self, device="cuda"):
         from safetensors.torch import load_file
         from tabicl._model.tabicl import TabICL
+
         self.device = torch.device(device)
         m = TabICL(max_classes=10)
         m.load_state_dict(load_file(self.W), strict=True)
         self.model = _freeze(m).to(self.device)
         self._hid = {}
         self.model.row_interactor.register_forward_hook(
-            lambda mod, i, o: self._hid.__setitem__("h", o.detach()))
+            lambda mod, i, o: self._hid.__setitem__("h", o.detach())
+        )
 
     @torch.no_grad()
     def infer(self, ds) -> ExpertOut:
@@ -240,7 +258,7 @@ class TabICLCls(Expert):
         Xz = _zscore(np.concatenate([ds.Xtr, ds.Xte], 0), ds.Xtr)
         X = torch.from_numpy(Xz).unsqueeze(0).to(self.device)
         y = torch.from_numpy(ds.ytr.astype("float32")).unsqueeze(0).to(self.device)
-        lg = self.model(X, y).float()[0]                # (M, K>=2)
+        lg = self.model(X, y).float()[0]  # (M, K>=2)
         logits = lg[:, :2] if lg.shape[1] >= 2 else torch.cat([lg, lg], -1)
         p1 = torch.softmax(logits, -1)[:, 1]
         hid = self._hid["h"].float()[0, n:]
@@ -252,13 +270,13 @@ class TabICLCls(Expert):
         n = tasks[0].Xtr.shape[0]
         Xb = np.stack([_zscore(np.concatenate([t.Xtr, t.Xte], 0), t.Xtr) for t in tasks])
         yb = np.stack([t.ytr.astype("float32") for t in tasks])
-        X = torch.from_numpy(Xb).to(self.device); y = torch.from_numpy(yb).to(self.device)
-        lg = self.model(X, y).float()                   # (B, M, K)
-        H = self._hid["h"].float()                       # (B, T, 512)
+        X = torch.from_numpy(Xb).to(self.device)
+        y = torch.from_numpy(yb).to(self.device)
+        lg = self.model(X, y).float()  # (B, M, K)
+        H = self._hid["h"].float()  # (B, T, 512)
         outs = []
         for b in range(len(tasks)):
             logits = lg[b][:, :2] if lg.shape[-1] >= 2 else torch.cat([lg[b], lg[b]], -1)
             p1 = torch.softmax(logits, -1)[:, 1]
-            outs.append(ExpertOut(hidden=H[b, n:].cpu(), conf=_cls_conf(p1).cpu(),
-                                  logits=logits.cpu()))
+            outs.append(ExpertOut(hidden=H[b, n:].cpu(), conf=_cls_conf(p1).cpu(), logits=logits.cpu()))
         return outs

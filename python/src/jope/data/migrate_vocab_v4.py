@@ -40,9 +40,7 @@ def grammar_structure_hash(specs: list[GrammarSpec]) -> str:
         for role, group in (("t", spec.transforms), ("h", spec.heads)):
             for name in sorted(group):
                 op = group[name]
-                expr_bins = [
-                    "|".join(str(b) for b in p.bins) for p in op.params if p.kind == "expr"
-                ]
+                expr_bins = ["|".join(str(b) for b in p.bins) for p in op.params if p.kind == "expr"]
                 parts.append(
                     f"{spec.engine}:{role}:{name}:params={','.join(p.name + ':' + p.kind for p in op.params)}"
                     f":tasks={','.join(sorted(op.tasks))}:gen={int(op.generate)}:expr={';'.join(expr_bins)}"

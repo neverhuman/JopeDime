@@ -15,14 +15,29 @@ def bind_view(root, view):
     source.write_text("x,y\n0,0\n1,1\n")
     recipe = root / view["prepared"] / f"cut-{view['cut']}/preprocessing.json"
     s.write(recipe, {"target_scale": view["target_scale"]})
-    cut = {"index": view["cut"], "train_indices": [0], "validation_indices": [1],
-           "training_sha256": view["training_sha256"], "validation_sha256": view["validation_sha256"],
-           "preprocessing_sha256": s.digest(recipe)}
+    cut = {
+        "index": view["cut"],
+        "train_indices": [0],
+        "validation_indices": [1],
+        "training_sha256": view["training_sha256"],
+        "validation_sha256": view["validation_sha256"],
+        "preprocessing_sha256": s.digest(recipe),
+    }
     path = root / view["prepared"] / "prepared.json"
-    s.write(path, {"dataset": view["dataset"], "task": "regression", "cuts": [cut],
-                   "storage": {"source": "source.csv", "source_sha256": s.digest(source)}})
-    view.update(prepared_sha256=s.digest(path), preprocessing_sha256=s.digest(recipe),
-                membership_sha256=s.sha(s.compact([[0], [1]])))
+    s.write(
+        path,
+        {
+            "dataset": view["dataset"],
+            "task": "regression",
+            "cuts": [cut],
+            "storage": {"source": "source.csv", "source_sha256": s.digest(source)},
+        },
+    )
+    view.update(
+        prepared_sha256=s.digest(path),
+        preprocessing_sha256=s.digest(recipe),
+        membership_sha256=s.sha(s.compact([[0], [1]])),
+    )
 
 
 def fixture_index():
@@ -30,10 +45,23 @@ def fixture_index():
     for family in range(8):
         for cut in range(8):
             context = len(contexts)
-            contexts.append({"dataset": f"d{family}", "family": f"f{family}", "cut": cut,
-                             "partition": "meta_validation", "prepared_sha256": f"p{family}"})
-            groups.append({"context": context, "family": f"f{family}", "partition": "meta_validation",
-                           "records": list(range(context * 15, (context + 1) * 15))})
+            contexts.append(
+                {
+                    "dataset": f"d{family}",
+                    "family": f"f{family}",
+                    "cut": cut,
+                    "partition": "meta_validation",
+                    "prepared_sha256": f"p{family}",
+                }
+            )
+            groups.append(
+                {
+                    "context": context,
+                    "family": f"f{family}",
+                    "partition": "meta_validation",
+                    "records": list(range(context * 15, (context + 1) * 15)),
+                }
+            )
     return {"contexts": contexts, "groups": groups}
 
 
@@ -42,7 +70,14 @@ class SeedExperimentTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             output = root / "runs/experiment"
-            s.write(output / "manifest.json", {"output": "runs/experiment", "schema": "parallel.seed_experiment.v1", "production_champion_writes": False})
+            s.write(
+                output / "manifest.json",
+                {
+                    "output": "runs/experiment",
+                    "schema": "parallel.seed_experiment.v1",
+                    "production_champion_writes": False,
+                },
+            )
             args = argparse.Namespace(root=root, manifest=Path("runs/experiment/manifest.json"))
             with (output / "comparison-controller.lock").open("a") as owner:
                 s.fcntl.flock(owner, s.fcntl.LOCK_EX | s.fcntl.LOCK_NB)
@@ -57,8 +92,12 @@ class SeedExperimentTests(unittest.TestCase):
     def test_panel_reconstruction_binds_exact_sample_records(self):
         index = fixture_index()
         panel = s.validation_panel(index, 8, 20260907)
-        state = {"sampler_id": s.SAMPLER, "seed": 20260907, "world": 8,
-                 "validation": {"panel_sha256": s.sha(s.compact(panel))}}
+        state = {
+            "sampler_id": s.SAMPLER,
+            "seed": 20260907,
+            "world": 8,
+            "validation": {"panel_sha256": s.sha(s.compact(panel))},
+        }
         actual, rows = s.panel_cuts(index, state)
         self.assertEqual(actual, panel)
         self.assertEqual(len(actual), 8)
@@ -81,7 +120,10 @@ class SeedExperimentTests(unittest.TestCase):
     def test_missing_and_failed_prefixes_cannot_be_presented_as_complete_success(self):
         view = {"prepared_sha256": "p", "cut": 3, "training_sha256": "tr", "validation_sha256": "va"}
         programs = [str(i) for i in range(8)]
-        results = {s.evaluation_key(view, p, "e"): {"status": "complete", "rmse": 1 + i} for i, p in enumerate(programs[:7])}
+        results = {
+            s.evaluation_key(view, p, "e"): {"status": "complete", "rmse": 1 + i}
+            for i, p in enumerate(programs[:7])
+        }
         incomplete = s.prefix_outcome(programs, view, results, "e", 8)
         self.assertFalse(incomplete["complete"])
         self.assertIsNone(incomplete["best_rmse"])
@@ -104,10 +146,13 @@ class SeedExperimentTests(unittest.TestCase):
         views = []
         for family in ("a", "b"):
             for cut in range(2):
-                arms = {arm: {"best8": {"complete": True, "best_rmse": rmse}} for arm, rmse in (("larger_pool", 0.9 if family == "a" else 1.1), ("generic", 1.0))}
+                arms = {
+                    arm: {"best8": {"complete": True, "best_rmse": rmse}}
+                    for arm, rmse in (("larger_pool", 0.9 if family == "a" else 1.1), ("generic", 1.0))
+                }
                 views.append({"family": family, "cut": cut, "arms": arms})
         result = s.family_comparison(views, "larger_pool", "generic", "best8", 2)
-        self.assertAlmostEqual(result["family_balanced_ratio"], (.9 * 1.1) ** .5)
+        self.assertAlmostEqual(result["family_balanced_ratio"], (0.9 * 1.1) ** 0.5)
         self.assertEqual((result["wins"], result["losses"]), (1, 1))
         views[0]["arms"]["larger_pool"]["best8"]["complete"] = False
         result = s.family_comparison(views, "larger_pool", "generic", "best8", 2)
@@ -119,17 +164,35 @@ class SeedExperimentTests(unittest.TestCase):
             root = Path(tmp)
             output = root / "runs/experiment"
             evaluator = root / "evaluate.py"
-            evaluator.write_text("#!/usr/bin/env python3\nimport json,sys,time\nfrom pathlib import Path\ntime.sleep(.1)\np=Path(sys.argv[sys.argv.index('--output')+1]); p.write_text(json.dumps({'rmse': 1.0}))\n")
+            evaluator.write_text(
+                "#!/usr/bin/env python3\nimport json,sys,time\nfrom pathlib import Path\ntime.sleep(.1)\np=Path(sys.argv[sys.argv.index('--output')+1]); p.write_text(json.dumps({'rmse': 1.0}))\n"
+            )
             evaluator.chmod(0o755)
             programs = [f"program-{i}" for i in range(64)]
-            view = {"dataset": "d", "family": "f", "cut": 3, "prepared": "prepared", "prepared_sha256": "p",
-                    "training_sha256": "tr", "validation_sha256": "va", "target_scale": 2.0}
-            manifest = {"schema": "parallel.seed_experiment.v1", "output": "runs/experiment", "production_champion_writes": False,
-                        "artifacts": [{"path": "evaluate.py", "sha256": s.digest(evaluator)}], "evaluator": "evaluate.py",
-                        "evaluator_sha256": s.digest(evaluator), "views": [view]}
+            view = {
+                "dataset": "d",
+                "family": "f",
+                "cut": 3,
+                "prepared": "prepared",
+                "prepared_sha256": "p",
+                "training_sha256": "tr",
+                "validation_sha256": "va",
+                "target_scale": 2.0,
+            }
+            manifest = {
+                "schema": "parallel.seed_experiment.v1",
+                "output": "runs/experiment",
+                "production_champion_writes": False,
+                "artifacts": [{"path": "evaluate.py", "sha256": s.digest(evaluator)}],
+                "evaluator": "evaluate.py",
+                "evaluator_sha256": s.digest(evaluator),
+                "views": [view],
+            }
             if "views" in manifest:
                 manifest["schema"] = "parallel.seed_experiment.v2"
-                manifest["evaluation_policy"] = s.evaluation_policy(manifest["evaluator_sha256"], s.executable_dependencies(root / manifest["evaluator"]))
+                manifest["evaluation_policy"] = s.evaluation_policy(
+                    manifest["evaluator_sha256"], s.executable_dependencies(root / manifest["evaluator"])
+                )
                 manifest["runtime_dependencies"] = s.executable_dependencies(root / manifest["evaluator"])
                 manifest["meeting_gate"] = manifest["evaluation_policy"]["meeting_gate"]
                 for view in manifest["views"]:
@@ -137,15 +200,44 @@ class SeedExperimentTests(unittest.TestCase):
                     view["evaluation_policy_sha256"] = s.sha(s.compact(manifest["evaluation_policy"]))
             s.write(output / "manifest.json", manifest)
             rankings_path = output / "proposals/d/cut-3/rankings.json"
-            s.write(rankings_path, {"dataset": "d", "family": "f", "cut": 3, "manifest_sha256": s.digest(output / "manifest.json"),
-                                    "training_context_only": True, "retained_teachers_consulted": False, "heldout_labels_read": False, "gp_outcomes_read": False,
-                                    "rankings": {arm: programs for arm in s.ARMS}})
-            s.write(rankings_path.parent / "complete.json", {"manifest_sha256": s.digest(output / "manifest.json"), "rankings_sha256": s.digest(rankings_path)})
-            args = argparse.Namespace(root=root, manifest=output / "manifest.json", workers=2, prefix=8, seconds=20, downstream=False)
+            s.write(
+                rankings_path,
+                {
+                    "dataset": "d",
+                    "family": "f",
+                    "cut": 3,
+                    "manifest_sha256": s.digest(output / "manifest.json"),
+                    "training_context_only": True,
+                    "retained_teachers_consulted": False,
+                    "heldout_labels_read": False,
+                    "gp_outcomes_read": False,
+                    "rankings": {arm: programs for arm in s.ARMS},
+                },
+            )
+            s.write(
+                rankings_path.parent / "complete.json",
+                {
+                    "manifest_sha256": s.digest(output / "manifest.json"),
+                    "rankings_sha256": s.digest(rankings_path),
+                },
+            )
+            args = argparse.Namespace(
+                root=root,
+                manifest=output / "manifest.json",
+                workers=2,
+                prefix=8,
+                seconds=20,
+                downstream=False,
+            )
+
             @contextlib.contextmanager
             def lease(*args, **kwargs):
                 yield
-            with patch("experiment_scheduler.admission_reason", return_value=None), patch("experiment_scheduler.spare_lease", lease):
+
+            with (
+                patch("experiment_scheduler.admission_reason", return_value=None),
+                patch("experiment_scheduler.spare_lease", lease),
+            ):
                 result = s.compare(args)
                 self.assertEqual(result["physical_fits"], 8)
                 self.assertEqual(result["logical_evaluations"], 48)
@@ -159,7 +251,9 @@ class SeedExperimentTests(unittest.TestCase):
                 key = orphan.parent.name
                 orphan.unlink()
                 ledger = [json.loads(line) for line in (output / "attempts.jsonl").read_text().splitlines()]
-                (output / "attempts.jsonl").write_text("".join(json.dumps(r)+"\n" for r in ledger if r["key"] != key))
+                (output / "attempts.jsonl").write_text(
+                    "".join(json.dumps(r) + "\n" for r in ledger if r["key"] != key)
+                )
                 recovered = s.compare(args)
                 self.assertEqual(recovered["physical_attempts"], 8)
                 self.assertEqual(recovered["physical_fits"], 8)
@@ -175,17 +269,35 @@ class SeedExperimentTests(unittest.TestCase):
             root = Path(tmp)
             output = root / "runs/experiment"
             evaluator = root / "evaluate.py"
-            evaluator.write_text("#!/usr/bin/env python3\nimport json,sys,time\nfrom pathlib import Path\nwhile not (Path(sys.argv[0]).parent/'resume-admitted').exists(): time.sleep(.01)\np=Path(sys.argv[sys.argv.index('--output')+1]); p.write_text(json.dumps({'rmse': 1.0}))\n")
+            evaluator.write_text(
+                "#!/usr/bin/env python3\nimport json,sys,time\nfrom pathlib import Path\nwhile not (Path(sys.argv[0]).parent/'resume-admitted').exists(): time.sleep(.01)\np=Path(sys.argv[sys.argv.index('--output')+1]); p.write_text(json.dumps({'rmse': 1.0}))\n"
+            )
             evaluator.chmod(0o755)
             programs = [f"program-{i}" for i in range(64)]
-            view = {"dataset": "d", "family": "f", "cut": 3, "prepared": "prepared", "prepared_sha256": "p",
-                    "training_sha256": "tr", "validation_sha256": "va", "target_scale": 1.0}
-            manifest = {"schema": "parallel.seed_experiment.v1", "output": "runs/experiment", "production_champion_writes": False,
-                        "artifacts": [{"path": "evaluate.py", "sha256": s.digest(evaluator)}], "evaluator": "evaluate.py",
-                        "evaluator_sha256": s.digest(evaluator), "views": [view]}
+            view = {
+                "dataset": "d",
+                "family": "f",
+                "cut": 3,
+                "prepared": "prepared",
+                "prepared_sha256": "p",
+                "training_sha256": "tr",
+                "validation_sha256": "va",
+                "target_scale": 1.0,
+            }
+            manifest = {
+                "schema": "parallel.seed_experiment.v1",
+                "output": "runs/experiment",
+                "production_champion_writes": False,
+                "artifacts": [{"path": "evaluate.py", "sha256": s.digest(evaluator)}],
+                "evaluator": "evaluate.py",
+                "evaluator_sha256": s.digest(evaluator),
+                "views": [view],
+            }
             if "views" in manifest:
                 manifest["schema"] = "parallel.seed_experiment.v2"
-                manifest["evaluation_policy"] = s.evaluation_policy(manifest["evaluator_sha256"], s.executable_dependencies(root / manifest["evaluator"]))
+                manifest["evaluation_policy"] = s.evaluation_policy(
+                    manifest["evaluator_sha256"], s.executable_dependencies(root / manifest["evaluator"])
+                )
                 manifest["runtime_dependencies"] = s.executable_dependencies(root / manifest["evaluator"])
                 manifest["meeting_gate"] = manifest["evaluation_policy"]["meeting_gate"]
                 for view in manifest["views"]:
@@ -193,22 +305,50 @@ class SeedExperimentTests(unittest.TestCase):
                     view["evaluation_policy_sha256"] = s.sha(s.compact(manifest["evaluation_policy"]))
             s.write(output / "manifest.json", manifest)
             ranking = output / "proposals/d/cut-3/rankings.json"
-            s.write(ranking, {"dataset": "d", "family": "f", "cut": 3, "manifest_sha256": s.digest(output / "manifest.json"),
-                             "training_context_only": True, "retained_teachers_consulted": False, "heldout_labels_read": False, "gp_outcomes_read": False,
-                             "rankings": {arm: programs for arm in s.ARMS}})
-            s.write(ranking.parent / "complete.json", {"manifest_sha256": s.digest(output / "manifest.json"), "rankings_sha256": s.digest(ranking)})
+            s.write(
+                ranking,
+                {
+                    "dataset": "d",
+                    "family": "f",
+                    "cut": 3,
+                    "manifest_sha256": s.digest(output / "manifest.json"),
+                    "training_context_only": True,
+                    "retained_teachers_consulted": False,
+                    "heldout_labels_read": False,
+                    "gp_outcomes_read": False,
+                    "rankings": {arm: programs for arm in s.ARMS},
+                },
+            )
+            s.write(
+                ranking.parent / "complete.json",
+                {"manifest_sha256": s.digest(output / "manifest.json"), "rankings_sha256": s.digest(ranking)},
+            )
+
             @contextlib.contextmanager
             def lease(*args, **kwargs):
                 yield
+
             calls = 0
+
             def admission(root):
                 nonlocal calls
                 calls += 1
                 if calls >= 4:
                     (root / "resume-admitted").touch()
                 return "mandatory GPU block" if calls == 3 else None
-            args = argparse.Namespace(root=root, manifest=output / "manifest.json", workers=2, prefix=8, seconds=20, downstream=False)
-            with patch("experiment_scheduler.admission_reason", admission), patch("experiment_scheduler.spare_lease", lease):
+
+            args = argparse.Namespace(
+                root=root,
+                manifest=output / "manifest.json",
+                workers=2,
+                prefix=8,
+                seconds=20,
+                downstream=False,
+            )
+            with (
+                patch("experiment_scheduler.admission_reason", admission),
+                patch("experiment_scheduler.spare_lease", lease),
+            ):
                 result = s.compare(args)
             attempts = [json.loads(line) for line in (output / "attempts.jsonl").read_text().splitlines()]
             self.assertEqual(sum(r["status"] == "cancelled" for r in attempts), 2)
@@ -243,11 +383,18 @@ time.sleep(.3)
 """)
             evaluator.chmod(0o755)
             (root / "corpus").mkdir()
-            (root / "corpus/vocabulary.json").write_text('{}')
-            manifest = {"output": "runs/experiment", "corpus": "corpus", "evaluator": "search.py", "evaluator_sha256": s.digest(evaluator)}
+            (root / "corpus/vocabulary.json").write_text("{}")
+            manifest = {
+                "output": "runs/experiment",
+                "corpus": "corpus",
+                "evaluator": "search.py",
+                "evaluator_sha256": s.digest(evaluator),
+            }
             if "views" in manifest:
                 manifest["schema"] = "parallel.seed_experiment.v2"
-                manifest["evaluation_policy"] = s.evaluation_policy(manifest["evaluator_sha256"], s.executable_dependencies(root / manifest["evaluator"]))
+                manifest["evaluation_policy"] = s.evaluation_policy(
+                    manifest["evaluator_sha256"], s.executable_dependencies(root / manifest["evaluator"])
+                )
                 manifest["runtime_dependencies"] = s.executable_dependencies(root / manifest["evaluator"])
                 manifest["meeting_gate"] = manifest["evaluation_policy"]["meeting_gate"]
                 for view in manifest["views"]:
@@ -261,39 +408,59 @@ time.sleep(.3)
             for arm in ("current", "larger_pool", "generic"):
                 seeds = output / f"downstream/d/cut-3/{arm}/seeds.json"
                 s.write(seeds, {"candidates": [{"genome": str(i)} for i in range(80)]})
-                receipt = {"manifest_sha256": s.digest(output / "manifest.json"), "rankings_sha256": s.digest(ranking), "seeds_sha256": s.digest(seeds)}
+                receipt = {
+                    "manifest_sha256": s.digest(output / "manifest.json"),
+                    "rankings_sha256": s.digest(ranking),
+                    "seeds_sha256": s.digest(seeds),
+                }
                 s.write(seeds.parent / "assembly.json", receipt)
                 assemblies.append({"dataset": "d", "cut": 3, "arm": arm, "seeds_sha256": s.digest(seeds)})
-            s.write(output / "assemblies-complete.json", {"manifest_sha256": s.digest(output / "manifest.json"), "assemblies": assemblies})
+            s.write(
+                output / "assemblies-complete.json",
+                {"manifest_sha256": s.digest(output / "manifest.json"), "assemblies": assemblies},
+            )
+
             @contextlib.contextmanager
             def lease(*args, **kwargs):
                 yield
+
             handed_off = False
+
             def admission(root):
                 nonlocal handed_off
-                if not handed_off and len(list((output / "downstream-results").glob("*/cut-*/*/search.json"))) == 2:
+                if (
+                    not handed_off
+                    and len(list((output / "downstream-results").glob("*/cut-*/*/search.json"))) == 2
+                ):
                     handed_off = True
                     return "mandatory GPU handoff"
                 return None
-            with patch("experiment_scheduler.admission_reason", admission), patch("experiment_scheduler.spare_lease", lease):
-                result = s.run_downstream(root, manifest, [(view, {})], time.monotonic()+10, 2)
+
+            with (
+                patch("experiment_scheduler.admission_reason", admission),
+                patch("experiment_scheduler.spare_lease", lease),
+            ):
+                result = s.run_downstream(root, manifest, [(view, {})], time.monotonic() + 10, 2)
                 self.assertTrue(result["complete"])
                 self.assertTrue(result["no_aggregate_regression"])
                 self.assertEqual(result["physical_evaluations"], 6)
                 self.assertEqual(result["physical_fits"], 3)
                 self.assertEqual(result["failed_evaluations"], 3)
                 self.assertEqual(result["failure_codes"], {"candidate_or_view_timeout": 3})
-                self.assertAlmostEqual(result["candidate_seconds_observed"], .09)
+                self.assertAlmostEqual(result["candidate_seconds_observed"], 0.09)
                 self.assertTrue(handed_off)
-                again = s.run_downstream(root, manifest, [(view, {})], time.monotonic()+10, 2)
+                again = s.run_downstream(root, manifest, [(view, {})], time.monotonic() + 10, 2)
                 self.assertTrue(again["complete"])
-                self.assertEqual([p.read_text() for p in (output / "downstream-results").glob("*/cut-*/*/executed")], ["x"] * 3)
+                self.assertEqual(
+                    [p.read_text() for p in (output / "downstream-results").glob("*/cut-*/*/executed")],
+                    ["x"] * 3,
+                )
                 path = output / "downstream-results/d/cut-3/current/search.json"
                 changed = s.read(path)
                 changed["seeds_sha256"] = "tampered"
                 s.write(path, changed)
                 with self.assertRaisesRegex(ValueError, "identity mismatch"):
-                    s.run_downstream(root, manifest, [(view, {})], time.monotonic()+10, 2)
+                    s.run_downstream(root, manifest, [(view, {})], time.monotonic() + 10, 2)
 
 
 if __name__ == "__main__":

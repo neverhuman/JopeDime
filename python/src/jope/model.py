@@ -118,7 +118,9 @@ class JopeOneShotModel(nn.Module):
         if batch.transform_count is not None:
             losses.append(F.cross_entropy(out["transform_count_logits"], batch.transform_count.long()))
         if batch.transform_multi_hot is not None:
-            losses.append(F.binary_cross_entropy_with_logits(out["transform_logits"], batch.transform_multi_hot.float()))
+            losses.append(
+                F.binary_cross_entropy_with_logits(out["transform_logits"], batch.transform_multi_hot.float())
+            )
         if batch.head is not None:
             losses.append(F.cross_entropy(out["head_logits"], batch.head.long()))
         if batch.family is not None:
@@ -136,7 +138,9 @@ def rows_to_batch(rows: list, device: str | torch.device = "cpu") -> JopeBatch:
     embedding = torch.tensor([row.embedding for row in rows], dtype=torch.float32, device=device)
     valid = torch.tensor([1.0 if row.valid else 0.0 for row in rows], dtype=torch.float32, device=device)
     value = torch.tensor([_row_value(row) for row in rows], dtype=torch.float32, device=device)
-    complexity = torch.tensor([float(row.complexity or 0.0) for row in rows], dtype=torch.float32, device=device)
+    complexity = torch.tensor(
+        [float(row.complexity or 0.0) for row in rows], dtype=torch.float32, device=device
+    )
     runtime = torch.tensor([float(row.cost_ms or 0.0) for row in rows], dtype=torch.float32, device=device)
     family = torch.zeros((len(rows), len(FAMILY_LIST)), dtype=torch.float32, device=device)
     transform_multi_hot = torch.zeros((len(rows), len(TRANSFORM_LIST)), dtype=torch.float32, device=device)
@@ -277,12 +281,7 @@ _GENOME_SCALAR_FEATURES = 2
 def genome_feature_dim(vocab: dict[str, Any] | None) -> int:
     """Fixed width of the genome feature vector consumed by the reward head."""
     spec = normalize_active_v2_vocab(vocab)
-    return (
-        len(spec["transform_ops"])
-        + len(spec["head_ops"])
-        + len(FAMILY_LIST)
-        + _GENOME_SCALAR_FEATURES
-    )
+    return len(spec["transform_ops"]) + len(spec["head_ops"]) + len(FAMILY_LIST) + _GENOME_SCALAR_FEATURES
 
 
 def genome_features_from_actions(
@@ -353,7 +352,9 @@ class JopeActiveModelV2(nn.Module):
         self.slot_op_heads = nn.ModuleList(
             [nn.Linear(hidden_dim, len(self.vocab["transform_ops"])) for _ in range(ACTIVE_MAX_TRANSFORMS)]
         )
-        self.slot_append_heads = nn.ModuleList([nn.Linear(hidden_dim, 1) for _ in range(ACTIVE_MAX_TRANSFORMS)])
+        self.slot_append_heads = nn.ModuleList(
+            [nn.Linear(hidden_dim, 1) for _ in range(ACTIVE_MAX_TRANSFORMS)]
+        )
         self.head_head = nn.Linear(hidden_dim, len(self.vocab["head_ops"]))
         self.value_head = nn.Linear(hidden_dim, 1)
         self.rank_head = nn.Linear(hidden_dim, 1)
@@ -408,7 +409,9 @@ class JopeActiveModelV2(nn.Module):
             "z": z,
             "transform_count_logits": self.transform_count_head(z),
             "slot_op_logits": torch.stack([head(z) for head in self.slot_op_heads], dim=1),
-            "slot_append_logits": torch.stack([head(z).squeeze(-1) for head in self.slot_append_heads], dim=1),
+            "slot_append_logits": torch.stack(
+                [head(z).squeeze(-1) for head in self.slot_append_heads], dim=1
+            ),
             "head_logits": self.head_head(z),
             "param_logits": param_logits,
             "value": self.value_head(z).squeeze(-1),
@@ -450,18 +453,20 @@ class JopeActiveModelV2(nn.Module):
         out = self.forward(batch.embedding, batch.target_summary, batch.genome_features)
         return self.loss_components_from_output(out, batch)
 
-    def loss_components_from_output(self, out: dict[str, Any], batch: ActiveV2Batch) -> dict[str, torch.Tensor]:
+    def loss_components_from_output(
+        self, out: dict[str, Any], batch: ActiveV2Batch
+    ) -> dict[str, torch.Tensor]:
         losses: dict[str, torch.Tensor] = {}
-        losses["transform_count_ce"] = _balanced_cross_entropy(out["transform_count_logits"], batch.transform_count.long())
+        losses["transform_count_ce"] = _balanced_cross_entropy(
+            out["transform_count_logits"], batch.transform_count.long()
+        )
         flat_slot_logits = out["slot_op_logits"].reshape(-1, out["slot_op_logits"].shape[-1])
         losses["slot_op_ce"] = _balanced_cross_entropy(flat_slot_logits, batch.slot_ops.reshape(-1).long())
         append_mask = batch.slot_append >= 0
         if append_mask.any():
-            losses["slot_append_bce"] = (
-                F.binary_cross_entropy_with_logits(
-                    out["slot_append_logits"][append_mask],
-                    batch.slot_append[append_mask].float(),
-                )
+            losses["slot_append_bce"] = F.binary_cross_entropy_with_logits(
+                out["slot_append_logits"][append_mask],
+                batch.slot_append[append_mask].float(),
             )
         losses["head_ce"] = _balanced_cross_entropy(out["head_logits"], batch.head.long())
         param_losses: list[torch.Tensor] = []
@@ -476,14 +481,14 @@ class JopeActiveModelV2(nn.Module):
             losses["value_huber"] = F.huber_loss(out["value"][value_mask], batch.value[value_mask].float())
         rank_mask = torch.isfinite(batch.rank_percentile)
         if rank_mask.any():
-            losses["rank_huber"] = F.huber_loss(out["rank_percentile"][rank_mask], batch.rank_percentile[rank_mask].float())
+            losses["rank_huber"] = F.huber_loss(
+                out["rank_percentile"][rank_mask], batch.rank_percentile[rank_mask].float()
+            )
         top_mask = torch.isfinite(batch.top_candidate)
         if top_mask.any():
-            losses["top_candidate_bce"] = (
-                F.binary_cross_entropy_with_logits(
-                    out["top_candidate_logit"][top_mask],
-                    batch.top_candidate[top_mask].float(),
-                )
+            losses["top_candidate_bce"] = F.binary_cross_entropy_with_logits(
+                out["top_candidate_logit"][top_mask],
+                batch.top_candidate[top_mask].float(),
             )
         complexity_mask = torch.isfinite(batch.complexity)
         if complexity_mask.any():
@@ -551,8 +556,12 @@ def rows_to_active_v2_batch(
 ) -> ActiveV2Batch:
     spec_vocab = normalize_active_v2_vocab(vocab)
     n = len(rows)
-    embedding = torch.tensor([row.embedding[:EMBEDDING_DIM] for row in rows], dtype=torch.float32, device=device)
-    target_summary = torch.tensor([_row_target_summary(row) for row in rows], dtype=torch.float32, device=device)
+    embedding = torch.tensor(
+        [row.embedding[:EMBEDDING_DIM] for row in rows], dtype=torch.float32, device=device
+    )
+    target_summary = torch.tensor(
+        [_row_target_summary(row) for row in rows], dtype=torch.float32, device=device
+    )
     transform_ops = {op: i for i, op in enumerate(spec_vocab["transform_ops"])}
     head_ops = {op: i for i, op in enumerate(spec_vocab["head_ops"])}
     transform_count = torch.zeros(n, dtype=torch.long, device=device)
@@ -561,8 +570,7 @@ def rows_to_active_v2_batch(
     head = torch.zeros(n, dtype=torch.long, device=device)
     param_specs = active_v2_param_specs(spec_vocab)
     param_labels = {
-        spec["key"]: torch.full((n,), -100, dtype=torch.long, device=device)
-        for spec in param_specs
+        spec["key"]: torch.full((n,), -100, dtype=torch.long, device=device) for spec in param_specs
     }
     value = torch.full((n,), float("nan"), dtype=torch.float32, device=device)
     rank_percentile = torch.full((n,), float("nan"), dtype=torch.float32, device=device)
@@ -688,11 +696,35 @@ def decode_active_v2_output(
         params: dict[str, Any] = {}
         if float(output["slot_append_logits"][row, slot].detach().cpu()) > 0.0:
             params["append"] = True
-        _decode_params(params, output, spec_vocab, kind="transform", slot=slot, op=op, row=row, temperature=temperature, generator=generator)
+        _decode_params(
+            params,
+            output,
+            spec_vocab,
+            kind="transform",
+            slot=slot,
+            op=op,
+            row=row,
+            temperature=temperature,
+            generator=generator,
+        )
         transforms.append({"op": op, "params": params})
     head_params: dict[str, Any] = {}
-    _decode_params(head_params, output, spec_vocab, kind="head", slot=0, op=head_op, row=row, temperature=temperature, generator=generator)
-    actions = {"transform_count": len(transforms), "transforms": transforms, "head": {"op": head_op, "params": head_params}}
+    _decode_params(
+        head_params,
+        output,
+        spec_vocab,
+        kind="head",
+        slot=0,
+        op=head_op,
+        row=row,
+        temperature=temperature,
+        generator=generator,
+    )
+    actions = {
+        "transform_count": len(transforms),
+        "transforms": transforms,
+        "head": {"op": head_op, "params": head_params},
+    }
     return format_pipeline_actions(actions), actions
 
 
@@ -735,7 +767,9 @@ def active_v2_validation_metrics(
                 values.extend(batch.value[mask].detach().cpu().tolist())
                 value_preds.extend(out["value"][mask].detach().cpu().tolist())
                 reward = out.get("reward")
-                reward_preds.extend((reward if reward is not None else out["value"])[mask].detach().cpu().tolist())
+                reward_preds.extend(
+                    (reward if reward is not None else out["value"])[mask].detach().cpu().tolist()
+                )
                 dataset_ids.extend([ds for ds, k in zip(batch.dataset_ids, keep, strict=True) if k])
     return {
         "grammar_exact_match": exact / max(1, total),
@@ -794,7 +828,9 @@ def _finite_or_nan(value: Any) -> float:
     return out if math.isfinite(out) else float("nan")
 
 
-def _balanced_cross_entropy(logits: torch.Tensor, target: torch.Tensor, *, ignore_index: int = -100) -> torch.Tensor:
+def _balanced_cross_entropy(
+    logits: torch.Tensor, target: torch.Tensor, *, ignore_index: int = -100
+) -> torch.Tensor:
     target = target.long()
     valid = target != ignore_index
     if not valid.any():
@@ -832,7 +868,9 @@ def _ranknet_loss(pred: torch.Tensor, label: torch.Tensor, dataset_ids: list[str
     return torch.stack(pairs).mean()
 
 
-def _listwise_top_loss(pred_top: torch.Tensor, label_top: torch.Tensor, dataset_ids: list[str]) -> torch.Tensor | None:
+def _listwise_top_loss(
+    pred_top: torch.Tensor, label_top: torch.Tensor, dataset_ids: list[str]
+) -> torch.Tensor | None:
     losses: list[torch.Tensor] = []
     grouped: dict[str, list[int]] = defaultdict(list)
     finite = torch.isfinite(label_top).detach().cpu().tolist()

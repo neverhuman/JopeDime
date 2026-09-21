@@ -1,15 +1,35 @@
 """Classify declared stages while retaining missing useful-work proof explicitly."""
+
 from __future__ import annotations
 
 import gpu_occupancy
 
-KINDS = ("train", "propose", "monitor", "gp-eval", "pack", "staging",
-         "collective-wait", "checkpoint", "failed", "held", "unexplained")
+KINDS = (
+    "train",
+    "propose",
+    "monitor",
+    "gp-eval",
+    "pack",
+    "staging",
+    "collective-wait",
+    "checkpoint",
+    "failed",
+    "held",
+    "unexplained",
+)
 GPU_TASK_KINDS = ("train", "propose", "monitor")
 
 
-def classify(propose_active, gp_eval_active, pack_active, held, kernel_mean=None,
-             *, train_active=False, monitor_active=False):
+def classify(
+    propose_active,
+    gp_eval_active,
+    pack_active,
+    held,
+    kernel_mean=None,
+    *,
+    train_active=False,
+    monitor_active=False,
+):
     if held:
         kind = "held"
     elif train_active:
@@ -25,8 +45,13 @@ def classify(propose_active, gp_eval_active, pack_active, held, kernel_mean=None
     else:
         kind = "unexplained"
     useful = kind in GPU_TASK_KINDS
-    return dict(kind=kind, useful=useful, kernel_mean=kernel_mean,
-                classification_basis="declared_stage_only", verified_useful=False)
+    return dict(
+        kind=kind,
+        useful=useful,
+        kernel_mean=kernel_mean,
+        classification_basis="declared_stage_only",
+        verified_useful=False,
+    )
 
 
 def committed(outputs):
@@ -56,5 +81,6 @@ def join(history, now, ranks, eligible, kind, outputs, kernel_mean=None):
         "original funded reservation and task identity",
         "independent task/rank interval observation",
         "committed output or optimizer increment verification",
-        "fit-start reconciliation and predeclared hour"]
+        "fit-start reconciliation and predeclared hour",
+    ]
     return snapshot

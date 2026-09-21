@@ -123,10 +123,7 @@ def _league_label_evidence(label: dict[str, Any]) -> dict[str, Any]:
         values = raw_provenance["fold_r2"]
         if not isinstance(values, list) or len(values) != folds:
             raise ValueError("LeagueLabel.v1 provenance.fold_r2 must cover every fold")
-        if any(
-            type(value) not in (int, float) or not math.isfinite(float(value))
-            for value in values
-        ):
+        if any(type(value) not in (int, float) or not math.isfinite(float(value)) for value in values):
             raise ValueError("LeagueLabel.v1 provenance.fold_r2 must contain finite scores")
         provenance["fold_r2"] = [float(value) for value in values]
     if "robust_formula" in raw_provenance:
@@ -289,9 +286,7 @@ class SignatureEmbedder:
         if expected:
             digest = _sha256_file(candidate)
             if digest != expected:
-                raise ValueError(
-                    f"staged signature hash mismatch for {dataset_hash}/{candidate.name}"
-                )
+                raise ValueError(f"staged signature hash mismatch for {dataset_hash}/{candidate.name}")
         return candidate
 
     def covers(self, dataset_hash: str) -> bool:
@@ -500,11 +495,7 @@ def label_to_training_row(
         engine=engine,
         valid=not parsed["failed"],
         score=reward,
-        cost_ms=(
-            parsed["runtime_seconds"] * 1_000.0
-            if parsed.get("runtime_seconds") is not None
-            else None
-        ),
+        cost_ms=(parsed["runtime_seconds"] * 1_000.0 if parsed.get("runtime_seconds") is not None else None),
         metadata=metadata,
     )
     return tr, "ok"
@@ -536,20 +527,13 @@ def build_corpus(
     # the fixed internal validation boundary.
     def dataset_id(row: dict[str, Any]) -> str:
         label = row.get("label") if isinstance(row.get("label"), dict) else row
-        return str(
-            label.get("dataset_hash")
-            or label.get("dataset_id")
-            or label.get("dataset")
-            or ""
-        )
+        return str(label.get("dataset_hash") or label.get("dataset_id") or label.get("dataset") or "")
 
     if split_manifest is not None:
         validate_split_manifest(split_manifest)
         if split_manifest["status"] != "complete":
             raise ValueError("cannot build a corpus from an incomplete split manifest")
-    hashes = sorted(
-        {dataset_id(r) for r in rows if is_training_authority_label(r)} - {""}
-    )
+    hashes = sorted({dataset_id(r) for r in rows if is_training_authority_label(r)} - {""})
     if split_manifest is not None:
         val_datasets = {
             dataset
@@ -559,11 +543,7 @@ def build_corpus(
     elif validation_datasets is None:
         shuffled = hashes[:]
         random.Random(seed).shuffle(shuffled)
-        n_val = (
-            max(1, round(val_fraction * len(shuffled)))
-            if (val_fraction > 0 and len(shuffled) > 1)
-            else 0
-        )
+        n_val = max(1, round(val_fraction * len(shuffled))) if (val_fraction > 0 and len(shuffled) > 1) else 0
         val_datasets = set(shuffled[:n_val])
     else:
         val_datasets = {str(value) for value in validation_datasets}
@@ -578,23 +558,13 @@ def build_corpus(
         if not is_training_authority_label(r):
             reasons["report_only_evidence"] = reasons.get("report_only_evidence", 0) + 1
             continue
-        assignment = (
-            assignment_for_dataset(split_manifest, dh)
-            if split_manifest is not None
-            else None
-        )
+        assignment = assignment_for_dataset(split_manifest, dh) if split_manifest is not None else None
         if assignment is not None and assignment["split"] == TEMPORAL_AUDIT_SPLIT:
             audit_datasets.add(dh)
-            reasons["report_only_temporal_audit"] = (
-                reasons.get("report_only_temporal_audit", 0) + 1
-            )
+            reasons["report_only_temporal_audit"] = reasons.get("report_only_temporal_audit", 0) + 1
             continue
         split = (
-            assignment["split"]
-            if assignment is not None
-            else "validation"
-            if dh in val_datasets
-            else "train"
+            assignment["split"] if assignment is not None else "validation" if dh in val_datasets else "train"
         )
         tr, reason = label_to_training_row(
             r, embedder=embedder, resolver=resolver, split=split, provenance=provenance
@@ -618,9 +588,7 @@ def build_corpus(
 
     train_datasets = {str(r.dataset_id) for r in out if (r.metadata or {}).get("split") == "train"}
     val_seen = {
-        str(r.dataset_id)
-        for r in out
-        if (r.metadata or {}).get("split") in {"validation", DEVELOPMENT_SPLIT}
+        str(r.dataset_id) for r in out if (r.metadata or {}).get("split") in {"validation", DEVELOPMENT_SPLIT}
     }
     stats = {
         "input_rows": len(rows),
@@ -633,9 +601,7 @@ def build_corpus(
         "validation_dataset_ids": sorted(val_datasets),
         "temporal_audit_datasets": len(audit_datasets),
         "temporal_audit_dataset_ids": sorted(audit_datasets),
-        "split_manifest_sha256": (
-            split_manifest["manifest_sha256"] if split_manifest is not None else None
-        ),
+        "split_manifest_sha256": (split_manifest["manifest_sha256"] if split_manifest is not None else None),
         "embedding_dim": len(out[0].embedding) if out else 0,
         "target_summary_dim": len(out[0].target_embedding or []) if out else 0,
         "synthetic_embedding_rows": synthetic,

@@ -47,13 +47,9 @@ def _dime_loader_workers(value: str) -> str | int:
     try:
         workers = int(value)
     except ValueError as error:
-        raise argparse.ArgumentTypeError(
-            "loader workers must be auto or an integer from 0 to 8"
-        ) from error
+        raise argparse.ArgumentTypeError("loader workers must be auto or an integer from 0 to 8") from error
     if workers < 0 or workers > 8:
-        raise argparse.ArgumentTypeError(
-            "loader workers must be auto or an integer from 0 to 8"
-        )
+        raise argparse.ArgumentTypeError("loader workers must be auto or an integer from 0 to 8")
     return workers
 
 
@@ -98,7 +94,9 @@ def main(argv: list[str] | None = None) -> int:
     p_build_active.add_argument("--validation-fraction", type=float, default=0.1)
     p_build_active.add_argument("--seed", type=int, default=0)
     p_build_active.add_argument("--no-validate", action="store_true")
-    p_build_active.add_argument("--target-encoder", choices=["none", "summary64", "neural64", "train_target_vs"], default="none")
+    p_build_active.add_argument(
+        "--target-encoder", choices=["none", "summary64", "neural64", "train_target_vs"], default="none"
+    )
     p_build_active.add_argument("--target-model")
     p_build_active_v2 = data_sub.add_parser("build-active-v2")
     p_build_active_v2.add_argument("--quant-root", default=str(prime_config.regression_dataset_root))
@@ -160,9 +158,7 @@ def main(argv: list[str] | None = None) -> int:
 
     p_train_active = sub.add_parser("train-active")
     p_train_active.add_argument("--corpus", default=str(active_v1_dir / "active_rows.jsonl"))
-    p_train_active.add_argument(
-        "--checkpoint", default=str(prime_config.checkpoints / "active_v1-smoke.pt")
-    )
+    p_train_active.add_argument("--checkpoint", default=str(prime_config.checkpoints / "active_v1-smoke.pt"))
     p_train_active.add_argument("--epochs", type=int, default=1)
     p_train_active.add_argument("--batch-size", type=int, default=32)
     p_train_active.add_argument("--lr", type=float, default=1e-3)
@@ -207,9 +203,15 @@ def main(argv: list[str] | None = None) -> int:
     p_train_policy.add_argument("--n-heads", type=int, default=4)
     p_train_policy.add_argument("--amp", action="store_true", help="mixed-precision autocast (CUDA)")
     p_train_policy.add_argument("--progress-jsonl", help="atomic per-batch progress file for the TUI")
-    p_train_policy.add_argument("--extra-rows", nargs="*", default=[],
-                                help="extra row files merged into the corpus (self-play generations)")
-    p_train_policy.add_argument("--init-from", help="warm-start weights from a prior checkpoint (shape-filtered)")
+    p_train_policy.add_argument(
+        "--extra-rows",
+        nargs="*",
+        default=[],
+        help="extra row files merged into the corpus (self-play generations)",
+    )
+    p_train_policy.add_argument(
+        "--init-from", help="warm-start weights from a prior checkpoint (shape-filtered)"
+    )
 
     p_train_dime = sub.add_parser("train-dime-score")
     p_train_dime.add_argument("--corpus", required=True)
@@ -254,9 +256,7 @@ def main(argv: list[str] | None = None) -> int:
     p_propose_dataset = sub.add_parser("propose-dataset")
     p_propose_dataset.add_argument("--dataset-dir")
     p_propose_dataset.add_argument("--vs")
-    p_propose_dataset.add_argument(
-        "--standardization", default=str(active_v1_dir / "standardization.json")
-    )
+    p_propose_dataset.add_argument("--standardization", default=str(active_v1_dir / "standardization.json"))
     p_propose_dataset.add_argument("--checkpoint")
     p_propose_dataset.add_argument("--n", type=int, default=1)
     p_propose_dataset.add_argument("--seed", type=int, default=0)
@@ -415,7 +415,9 @@ def main(argv: list[str] | None = None) -> int:
 
     p_elo = sub.add_parser("elo-bench", help="place the policy on the 97-algorithm regression Elo ladder")
     p_elo.add_argument("--checkpoint", required=True)
-    p_elo.add_argument("--art-dir", required=True, help="processed corpus dir (standardization + split_manifest)")
+    p_elo.add_argument(
+        "--art-dir", required=True, help="processed corpus dir (standardization + split_manifest)"
+    )
     p_elo.add_argument("--k", type=int, default=16, help="candidates proposed per dataset")
     p_elo.add_argument("--folds", type=int, default=3)
     p_elo.add_argument("--seed", type=int, default=17)
@@ -440,7 +442,9 @@ def main(argv: list[str] | None = None) -> int:
     p_blast.add_argument("--headless", action="store_true")
     p_blast.add_argument("--seconds", type=int, default=10)
 
-    p_sp = sub.add_parser("self-play", help="self-play generation loop: each model must beat all former selves")
+    p_sp = sub.add_parser(
+        "self-play", help="self-play generation loop: each model must beat all former selves"
+    )
     p_sp.add_argument("--art-dir", required=True)
     p_sp.add_argument("--run-dir", default=str(prime_config.runs / "self_play"))
     p_sp.add_argument("--generations", type=int, default=4)
@@ -454,11 +458,17 @@ def main(argv: list[str] | None = None) -> int:
     p_sp.add_argument("--eval-workers", type=int, default=90)
     p_sp.add_argument("--single-node", action="store_true", help="train on the local GPU only (no xbabe3)")
     p_sp.add_argument("--train-hosts", help="comma list, e.g. local,xbabe3 (overrides --single-node)")
-    p_sp.add_argument("--miner-slice", type=int, default=400, help="datasets champion-mined per generation (0=off)")
+    p_sp.add_argument(
+        "--miner-slice", type=int, default=400, help="datasets champion-mined per generation (0=off)"
+    )
     p_sp.add_argument("--elo-every", type=int, default=1, help="run elo-bench every N generations")
     p_sp.add_argument("--lr", type=float, default=5e-4, help="LR for fresh-init generations")
-    p_sp.add_argument("--warm-lr", type=float, default=1.5e-4,
-                      help="refinement LR for warm-started generations (0 disables)")
+    p_sp.add_argument(
+        "--warm-lr",
+        type=float,
+        default=1.5e-4,
+        help="refinement LR for warm-started generations (0 disables)",
+    )
     p_sp.add_argument("--selector-calibration")
     p_sp.add_argument("--selector-reranker")
     p_sp.add_argument("--samples-per-engine", type=int)
@@ -477,29 +487,40 @@ def main(argv: list[str] | None = None) -> int:
     p_gpf.add_argument("--pop", type=int, default=128)
     p_gpf.add_argument("--time-budget-secs", type=int, default=240)
     p_gpf.add_argument("--gpu-kernel-configs", type=int, default=0)
-    p_gpf.add_argument("--game", action="store_true",
-                       help="game mode: iterate-to-beat max(champion bar, model bar) per dataset")
+    p_gpf.add_argument(
+        "--game",
+        action="store_true",
+        help="game mode: iterate-to-beat max(champion bar, model bar) per dataset",
+    )
     p_gpf.add_argument("--game-rounds", type=int, default=3)
-    p_gpf.add_argument("--fitness", default="v2", choices=("v1", "v2"),
-                       help="jain fitness variant; v2 lite-race is default (better proxy<->realized correlation)")
-    p_gpf.add_argument("--fresh-proposals",
-                       help="policy ckpt for fresh CPU featmath proposals in game mode (slow)")
-    p_gpf.add_argument("--candidate-pools-glob",
-                       help="override the candidate_pools_g*.jsonl glob for model bars/seeds")
+    p_gpf.add_argument(
+        "--fitness",
+        default="v2",
+        choices=("v1", "v2"),
+        help="jain fitness variant; v2 lite-race is default (better proxy<->realized correlation)",
+    )
+    p_gpf.add_argument(
+        "--fresh-proposals", help="policy ckpt for fresh CPU featmath proposals in game mode (slow)"
+    )
+    p_gpf.add_argument(
+        "--candidate-pools-glob", help="override the candidate_pools_g*.jsonl glob for model bars/seeds"
+    )
 
     p_study_gp = sub.add_parser(
         "study-validation-gp",
         help="run the 9-dataset validation-only Jain GP study",
     )
-    p_study_gp.add_argument("--dataset", action="append", dest="datasets",
-                            help="dataset hash to run; repeatable (default: fixed 9)")
+    p_study_gp.add_argument(
+        "--dataset",
+        action="append",
+        dest="datasets",
+        help="dataset hash to run; repeatable (default: fixed 9)",
+    )
     p_study_gp.add_argument("--art-dir", default=str(prime_config.artifacts))
     p_study_gp.add_argument("--root", default=str(prime_config.regression_dataset_root))
     p_study_gp.add_argument("--checkpoint", default=str(prime_config.warm_start_checkpoint))
     p_study_gp.add_argument("--jain-bin", default=str(prime_config.jain_binary))
-    p_study_gp.add_argument(
-        "--run-dir", default=str(prime_config.runs / "validation_gp_study")
-    )
+    p_study_gp.add_argument("--run-dir", default=str(prime_config.runs / "validation_gp_study"))
     p_study_gp.add_argument("--study-tag")
     p_study_gp.add_argument("--hosts", default="xbabe1,xbabe2,xbabe3")
     p_study_gp.add_argument("--workers-per-host", type=int, default=3)
@@ -522,15 +543,15 @@ def main(argv: list[str] | None = None) -> int:
     p_mine.add_argument("--slice-file", required=True, help="JSON list of dataset hashes to mine")
     p_mine.add_argument("--out", required=True)
     p_mine.add_argument("--workers", type=int, default=90)
-    p_mine.add_argument(
-        "--ledger", default=str(prime_config.runs / "self_play" / "miner_ledger.jsonl")
-    )
+    p_mine.add_argument("--ledger", default=str(prime_config.runs / "self_play" / "miner_ledger.jsonl"))
     p_mine.add_argument("--per-dataset", type=int, default=14)
     p_mine.add_argument("--seed", type=int, default=0)
     p_mine.add_argument("--progress-file", help="atomic miner progress json for the TUI")
     p_mine.add_argument("--gene-feed", help="shared gene_events.jsonl to emit scored/champion events")
 
-    p_prep = sub.add_parser("prep-v31-labels", help="stamp rank_pct/task_type/global-RWR onto an active corpus")
+    p_prep = sub.add_parser(
+        "prep-v31-labels", help="stamp rank_pct/task_type/global-RWR onto an active corpus"
+    )
     p_prep.add_argument("--corpus", required=True)
     p_prep.add_argument("--dry-run", action="store_true")
 
@@ -541,7 +562,9 @@ def main(argv: list[str] | None = None) -> int:
     p_gp = sub.add_parser("gp", help="seed jope genes into the jmath GP engine / harvest winners")
     gp_sub = p_gp.add_subparsers(dest="gp_command", required=True)
     p_gp_export = gp_sub.add_parser("export")
-    p_gp_export.add_argument("--source", action="append", required=True, help="jope JSONL (loop_rows/evaluation); repeatable")
+    p_gp_export.add_argument(
+        "--source", action="append", required=True, help="jope JSONL (loop_rows/evaluation); repeatable"
+    )
     p_gp_export.add_argument("--out-dir", required=True)
     p_gp_export.add_argument("--top", type=int, default=200)
     p_gp_export.add_argument("--min-oof", type=float, default=0.0)
@@ -1061,8 +1084,11 @@ def main(argv: list[str] | None = None) -> int:
             dirs = dirs[: args.limit]
         counts: dict[str, int] = {}
         for report in make_signatures_many(
-            dirs, host_index=args.host_index, host_count=args.host_count,
-            force=args.force, report_jsonl=Path(args.report_jsonl) if args.report_jsonl else None,
+            dirs,
+            host_index=args.host_index,
+            host_count=args.host_count,
+            force=args.force,
+            report_jsonl=Path(args.report_jsonl) if args.report_jsonl else None,
         ):
             counts[report.status] = counts.get(report.status, 0) + 1
         print(json.dumps({"datasets": len(dirs), "by_status": counts}, sort_keys=True))
@@ -1086,9 +1112,18 @@ def main(argv: list[str] | None = None) -> int:
                     missing += 1
                 if len(bad) < 20:
                     bad.append(f"{d.name}: missing={v['missing']} corrupt={v['corrupt']}")
-        print(json.dumps({"datasets": len(dirs), "complete": complete, "corrupt": corrupt,
-                          "missing_only": missing - corrupt if missing > corrupt else missing,
-                          "examples": bad}, sort_keys=True))
+        print(
+            json.dumps(
+                {
+                    "datasets": len(dirs),
+                    "complete": complete,
+                    "corrupt": corrupt,
+                    "missing_only": missing - corrupt if missing > corrupt else missing,
+                    "examples": bad,
+                },
+                sort_keys=True,
+            )
+        )
         return 0
     if args.command == "blast":
         import os as _os
@@ -1097,11 +1132,12 @@ def main(argv: list[str] | None = None) -> int:
         root = Path(__file__).resolve().parents[2]
         binary = root / "rust/jope-blast/target/release/jope-blast"
         if not binary.exists():
-            _sp.run(["cargo", "build", "--release", "--manifest-path",
-                     str(root / "rust/jope-blast/Cargo.toml")], check=True)
+            _sp.run(
+                ["cargo", "build", "--release", "--manifest-path", str(root / "rust/jope-blast/Cargo.toml")],
+                check=True,
+            )
         pool = prime_config.artifacts / "blast_pool.tsv"
-        cmd = [str(binary), "--workers", str(args.workers), "--fps", str(args.fps),
-               "--rate", str(args.rate)]
+        cmd = [str(binary), "--workers", str(args.workers), "--fps", str(args.fps), "--rate", str(args.rate)]
         if args.replay:
             if not pool.exists():
                 raise SystemExit(f"pool missing: {pool} (build it from the corpus first)")
@@ -1205,10 +1241,17 @@ def main(argv: list[str] | None = None) -> int:
         datasets = {h: e for h, e in manifest.items() if h in wanted}
         champions = build_champions(art)
         mine_slice(
-            art, args.out, generation=args.generation, datasets=datasets,
-            champions=champions, per_dataset=args.per_dataset, workers=args.workers,
-            seed=args.seed, ledger=args.ledger,
-            progress_path=args.progress_file, gene_feed_path=args.gene_feed,
+            art,
+            args.out,
+            generation=args.generation,
+            datasets=datasets,
+            champions=champions,
+            per_dataset=args.per_dataset,
+            workers=args.workers,
+            seed=args.seed,
+            ledger=args.ledger,
+            progress_path=args.progress_file,
+            gene_feed_path=args.gene_feed,
         )
         return 0
     if args.command == "prep-v31-labels":

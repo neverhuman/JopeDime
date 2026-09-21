@@ -1,4 +1,5 @@
 """Content-addressed real-triplet copy plan. Excludes synthetics and nested extras."""
+
 from __future__ import annotations
 
 import re
@@ -16,16 +17,16 @@ NESTED = ("reports", "predictions", "hyperion", ".vs", "vectors")
 
 
 def is_triplet(path):
-    if (not isinstance(path, str) or path.startswith('/') or '\\' in path or '\0' in path
-            or any(part in ('', '.', '..') for part in path.split('/'))):
+    if (
+        not isinstance(path, str)
+        or path.startswith("/")
+        or "\\" in path
+        or "\0" in path
+        or any(part in ("", ".", "..") for part in path.split("/"))
+    ):
         return False
     parts = Path(path).parts
-    return (
-        len(parts) == 3
-        and parts[0] in TASKS
-        and parts[2] in TRIPLET
-        and DEFECTIVE not in parts[1]
-    )
+    return len(parts) == 3 and parts[0] in TASKS and parts[2] in TRIPLET and DEFECTIVE not in parts[1]
 
 
 def is_excluded(path):
@@ -45,7 +46,7 @@ def plan_copy(local_only_paths, remote_hashes=None, local_sizes=None):
     objects = []
     bytes_out = 0
     if len(set(local_only_paths)) != len(local_only_paths):
-        raise ValueError('duplicate logical paths')
+        raise ValueError("duplicate logical paths")
     for path in local_only_paths:
         if is_excluded(path):
             skipped_exclude.append(path)
@@ -55,17 +56,24 @@ def plan_copy(local_only_paths, remote_hashes=None, local_sizes=None):
             continue
         row = local_sizes.get(path, {})
         digest = row.get("sha256")
-        if (not isinstance(digest, str) or not re.fullmatch('[0-9a-f]{64}', digest)
-                or type(row.get('size')) is not int or row['size'] < 0
-                or type(row.get('mode')) is not int or not 0 <= row['mode'] <= 0o777
-                or row.get('classification') != 'retained_non_synthetic_triplet'):
-            raise ValueError('complete original object record required: ' + path)
+        if (
+            not isinstance(digest, str)
+            or not re.fullmatch("[0-9a-f]{64}", digest)
+            or type(row.get("size")) is not int
+            or row["size"] < 0
+            or type(row.get("mode")) is not int
+            or not 0 <= row["mode"] <= 0o777
+            or row.get("classification") != "retained_non_synthetic_triplet"
+        ):
+            raise ValueError("complete original object record required: " + path)
         if digest and digest in remote_hashes:
             skipped_hash.append(path)
             continue
         selected.append(path)
-        objects.append(dict(path=path, **{key: row[key] for key in ('sha256', 'size', 'mode', 'classification')}))
-        bytes_out += row['size']
+        objects.append(
+            dict(path=path, **{key: row[key] for key in ("sha256", "size", "mode", "classification")})
+        )
+        bytes_out += row["size"]
     return dict(
         schema="parallel.raw_triplet_parity.v1",
         n_selected=len(selected),
@@ -88,4 +96,6 @@ def execute_allowed(plan, capacity, certificates, fence_up):
     Transfer bootstraps parity. It requires sealed source objects, scope and
     live capacity/custody checks; it never requires deployment or parity first.
     """
-    return False, ["legacy declarations cannot authorize transfer; use the verified workspace transfer operation"]
+    return False, [
+        "legacy declarations cannot authorize transfer; use the verified workspace transfer operation"
+    ]

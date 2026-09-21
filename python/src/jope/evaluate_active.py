@@ -125,9 +125,7 @@ def evaluate_active_v2(
             canonical = proposal.get("canonical_genome")
             engine = str(proposal.get("engine") or "featmath")
             novel = bool(
-                proposal.get("valid")
-                and isinstance(canonical, str)
-                and (engine, canonical) not in seen
+                proposal.get("valid") and isinstance(canonical, str) and (engine, canonical) not in seen
             )
             proposal_row = {
                 **proposal,
@@ -194,7 +192,11 @@ def evaluate_active_v2(
         test_metrics = metrics.get("test") if isinstance(metrics.get("test"), dict) else {}
         incumbent = meta.get("incumbent_oof_r2")
         oof_r2 = cv.get("oof_r2")
-        delta = float(oof_r2) - float(incumbent) if isinstance(oof_r2, (int, float)) and isinstance(incumbent, (int, float)) else None
+        delta = (
+            float(oof_r2) - float(incumbent)
+            if isinstance(oof_r2, (int, float)) and isinstance(incumbent, (int, float))
+            else None
+        )
         # Holdout: model was trained on the whole train.csv and scored on test.csv (last col = target).
         test_r2 = test_metrics.get("r2") if isinstance(test_metrics.get("r2"), (int, float)) else None
         evaluation_row = {
@@ -243,7 +245,13 @@ def evaluate_active_v2(
                 selector_calibration,
             )
         )
-        summary.update(_evaluation_progress(total=len(eval_inputs), done=len(evaluation_rows), in_progress=len(evaluation_rows) < len(eval_inputs)))
+        summary.update(
+            _evaluation_progress(
+                total=len(eval_inputs),
+                done=len(evaluation_rows),
+                in_progress=len(evaluation_rows) < len(eval_inputs),
+            )
+        )
         _write_eval_summary(out, summary)
     summary = _summary(proposal_rows, evaluation_rows, selected)
     summary.update(
@@ -277,7 +285,9 @@ def _historical_by_dataset(rows: list[TrainingRow]) -> dict[str, dict[str, Any]]
         if row.canonical_genome:
             entry["canonical"].add((engine, row.canonical_genome))
         if row.score is not None:
-            entry["best"] = float(row.score) if entry["best"] is None else max(float(entry["best"]), float(row.score))
+            entry["best"] = (
+                float(row.score) if entry["best"] is None else max(float(entry["best"]), float(row.score))
+            )
             if row.canonical_genome:
                 entry["scored"].append((float(row.score), engine, row.canonical_genome))
     for entry in out.values():
@@ -288,7 +298,9 @@ def _historical_by_dataset(rows: list[TrainingRow]) -> dict[str, dict[str, Any]]
     return out
 
 
-def _historical_genomes_for(dataset_hash: str, historical: dict[str, dict[str, Any]], *, limit: int = 8) -> list[str]:
+def _historical_genomes_for(
+    dataset_hash: str, historical: dict[str, dict[str, Any]], *, limit: int = 8
+) -> list[str]:
     # featmath-only genome strings for the legacy v2 mutation path.
     entry = historical.get(dataset_hash) or {}
     pairs = entry.get("scored") if isinstance(entry.get("scored"), list) else []
@@ -303,7 +315,9 @@ def _historical_pairs_for(
     return list(pairs[:limit])
 
 
-def _select_datasets(split_manifest: dict[str, Any], *, split: str, datasets: str) -> dict[str, dict[str, Any]]:
+def _select_datasets(
+    split_manifest: dict[str, Any], *, split: str, datasets: str
+) -> dict[str, dict[str, Any]]:
     all_datasets = split_manifest.get("datasets") if isinstance(split_manifest.get("datasets"), dict) else {}
     selected = {
         dataset_hash: dict(entry)
@@ -316,7 +330,9 @@ def _select_datasets(split_manifest: dict[str, Any], *, split: str, datasets: st
     return {dataset_hash: entry for dataset_hash, entry in selected.items() if dataset_hash in requested}
 
 
-def _incumbent_for(dataset_hash: str, entry: dict[str, Any], historical: dict[str, dict[str, Any]]) -> float | None:
+def _incumbent_for(
+    dataset_hash: str, entry: dict[str, Any], historical: dict[str, dict[str, Any]]
+) -> float | None:
     value = entry.get("best_known_oof_r2")
     if isinstance(value, (int, float)):
         return float(value)
@@ -332,15 +348,13 @@ def _summary(
     valid = [row for row in proposal_rows if row.get("valid")]
     novel = [row for row in proposal_rows if row.get("novel")]
     invalid_reasons = Counter(
-        str(error)
-        for row in proposal_rows
-        if not row.get("valid")
-        for error in (row.get("errors") or [])
+        str(error) for row in proposal_rows if not row.get("valid") for error in (row.get("errors") or [])
     )
     deltas = [
         float(row["oof_delta_vs_incumbent"])
         for row in evaluation_rows
-        if isinstance(row.get("oof_delta_vs_incumbent"), (int, float)) and math.isfinite(float(row["oof_delta_vs_incumbent"]))
+        if isinstance(row.get("oof_delta_vs_incumbent"), (int, float))
+        and math.isfinite(float(row["oof_delta_vs_incumbent"]))
     ]
     by_dataset: dict[str, list[float]] = defaultdict(list)
     for row in evaluation_rows:
@@ -353,8 +367,12 @@ def _summary(
         for row in evaluation_rows
         if isinstance(row.get("test_r2"), (int, float)) and math.isfinite(float(row["test_r2"]))
     ]
-    heads = Counter(str(row.get("head_type") or _head_from_genome(row.get("canonical_genome") or "")) for row in valid)
-    eval_skip_reasons = Counter(str(row.get("evaluation_skip_reason")) for row in proposal_rows if row.get("evaluation_skip_reason"))
+    heads = Counter(
+        str(row.get("head_type") or _head_from_genome(row.get("canonical_genome") or "")) for row in valid
+    )
+    eval_skip_reasons = Counter(
+        str(row.get("evaluation_skip_reason")) for row in proposal_rows if row.get("evaluation_skip_reason")
+    )
     eval_skipped_datasets = {
         str(row.get("dataset_hash"))
         for row in proposal_rows
@@ -383,7 +401,8 @@ def _summary(
         "invalid_reasons": dict(invalid_reasons.most_common(8)),
         "evaluated_count": len(evaluation_rows),
         "cache_hit_count": sum(1 for row in evaluation_rows if row.get("cache_hit")),
-        "cache_hit_rate": sum(1 for row in evaluation_rows if row.get("cache_hit")) / max(1, len(evaluation_rows)),
+        "cache_hit_rate": sum(1 for row in evaluation_rows if row.get("cache_hit"))
+        / max(1, len(evaluation_rows)),
         "novel_eval_count": sum(1 for row in evaluation_rows if not row.get("cache_hit")),
         "eval_skipped_dataset_count": len(eval_skipped_datasets),
         "eval_skip_reasons": dict(eval_skip_reasons.most_common()),
@@ -398,10 +417,18 @@ def _summary(
         "median_test_r2": _median(test_r2s),
         "head_distribution": dict(heads),
         "head_diversity": len([head for head, count in heads.items() if count > 0 and head != "None"]),
-        "gp_proposal_count": sum(1 for row in valid if row.get("head_type") == "gpr" or "(gpr" in str(row.get("canonical_genome") or "")),
+        "gp_proposal_count": sum(
+            1
+            for row in valid
+            if row.get("head_type") == "gpr" or "(gpr" in str(row.get("canonical_genome") or "")
+        ),
         "gp_eval_count": len(gp_evals),
-        "gp_fold_r2": [((row.get("cv") or {}).get("fold_r2")) for row in gp_evals if isinstance(row.get("cv"), dict)],
-        "reward_actual_correlation": _correlation([pair[0] for pair in reward_pairs], [pair[1] for pair in reward_pairs]),
+        "gp_fold_r2": [
+            ((row.get("cv") or {}).get("fold_r2")) for row in gp_evals if isinstance(row.get("cv"), dict)
+        ],
+        "reward_actual_correlation": _correlation(
+            [pair[0] for pair in reward_pairs], [pair[1] for pair in reward_pairs]
+        ),
         "head_outcomes": _head_outcomes(evaluation_rows),
         "worst_reward_outliers": _worst_reward_outliers(evaluation_rows),
         "evaluator_version": EVALUATOR_VERSION,
@@ -563,7 +590,10 @@ def _worst_reward_outliers(evaluation_rows: list[dict[str, Any]], *, limit: int 
         and isinstance(row.get("oof_delta_vs_incumbent"), (int, float))
         and float(row["oof_delta_vs_incumbent"]) < 0.0
     ]
-    rows.sort(key=lambda row: (float(row.get("reward") or 0.0), -float(row.get("oof_delta_vs_incumbent") or 0.0)), reverse=True)
+    rows.sort(
+        key=lambda row: (float(row.get("reward") or 0.0), -float(row.get("oof_delta_vs_incumbent") or 0.0)),
+        reverse=True,
+    )
     out: list[dict[str, Any]] = []
     for row in rows[:limit]:
         out.append(

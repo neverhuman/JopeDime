@@ -1,4 +1,5 @@
 """Receipt-only scored-family allowlist. Does not rewrite prepared.json or live corpus."""
+
 from __future__ import annotations
 
 import copy
@@ -7,7 +8,6 @@ from pathlib import Path
 
 SCHEMA = "parallel.scored_family_allowlist.v2"
 KNOWN_QUARANTINE = {}  # No family-name or target-magnitude heuristics.
-
 
 
 def inspect_prepared(prepared):
@@ -54,16 +54,22 @@ def report(rows, extra_quarantine=None):
     for row in rows:
         families.setdefault(row["family"], copy.deepcopy(row))
     for family, reason in quarantine.items():
-        families.setdefault(family, dict(family=family, task="regression", scored=False,
-                                         reasons=[reason], path=None))
+        families.setdefault(
+            family, dict(family=family, task="regression", scored=False, reasons=[reason], path=None)
+        )
         families[family]["scored"] = False
         families[family].setdefault("reasons", []).append(reason)
         families[family]["reasons"] = sorted(set(families[family]["reasons"]))
     scored = sorted(f for f, row in families.items() if row["scored"])
     held = sorted(f for f, row in families.items() if not row["scored"])
-    return dict(schema=SCHEMA, eligibility_scope="task-screen-only; identity and contamination qualification required",
-                independent_evaluation=False, scored_families=scored, quarantined_families=held,
-                rows=[families[f] for f in sorted(families)])
+    return dict(
+        schema=SCHEMA,
+        eligibility_scope="task-screen-only; identity and contamination qualification required",
+        independent_evaluation=False,
+        scored_families=scored,
+        quarantined_families=held,
+        rows=[families[f] for f in sorted(families)],
+    )
 
 
 def quality_rows_on_allowlist(quality_report, allowlist):

@@ -43,10 +43,7 @@ def parent_result() -> dict[str, object]:
         "final_cv_evaluations": 70,
         "winner_genome": "(pipe X (ridge))",
         "winner_semantic": "winner",
-        "top": [
-            {"canonical": f"(pipe X (ridge lambda_frac={index}.0))"}
-            for index in range(10)
-        ],
+        "top": [{"canonical": f"(pipe X (ridge lambda_frac={index}.0))"} for index in range(10)],
     }
 
 
@@ -74,9 +71,7 @@ def test_v2_search_is_exact_matched_and_does_not_mutate_authorities() -> None:
 
 def test_config_rejects_foreign_view_archive_and_base_drift() -> None:
     with pytest.raises(ValueError, match="unsupported feature view"):
-        screen.strict_v2_config(
-            base_config(), parent_result(), "development-a", 101, "row128"
-        )
+        screen.strict_v2_config(base_config(), parent_result(), "development-a", 101, "row128")
     parent = parent_result()
     parent["top"] = parent["top"][:-1]
     with pytest.raises(ValueError, match="top-ten"):
@@ -91,9 +86,7 @@ def test_staging_reads_only_train_and_exact_cell_matrix(tmp_path: Path) -> None:
     dataset = tmp_path / "fixture"
     dataset.mkdir()
     (dataset / "train.csv").write_text("1,2,0\n3,4,1\n5,6,2\n7,8,3\n", encoding="utf-8")
-    (dataset / "train3.vs").write_text(
-        "0.1,0.2\n0.3,0.4\n0.5,0.6\n0.7,0.8\n", encoding="utf-8"
-    )
+    (dataset / "train3.vs").write_text("0.1,0.2\n0.3,0.4\n0.5,0.6\n0.7,0.8\n", encoding="utf-8")
     # A forbidden path can exist, but the API cannot name it.
     (dataset / "test.csv").write_text("secret\n", encoding="utf-8")
     destination = tmp_path / "staged" / "train.csv"
@@ -130,9 +123,7 @@ def test_result_requires_complete_strict_search() -> None:
     result["strict_fold_contract"]["candidate_timeout_seconds"] = 90
     with pytest.raises(ValueError, match="incomplete, foreign"):
         screen.validate_result(result, "development-a", 101, "raw")
-    result["strict_fold_contract"]["candidate_timeout_seconds"] = (
-        screen.EXPECTED_EVALUATOR_TIMEOUT_SECONDS
-    )
+    result["strict_fold_contract"]["candidate_timeout_seconds"] = screen.EXPECTED_EVALUATOR_TIMEOUT_SECONDS
     result["generations"][7]["invalid_members"] = 1
     with pytest.raises(ValueError, match="incomplete candidate"):
         screen.validate_result(result, "development-a", 101, "raw")

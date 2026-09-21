@@ -26,9 +26,7 @@ def test_chimera_blocker_is_unresolved_and_forbids_substitution(tmp_path: Path) 
     assert receipt["status"] == "blocked-missing-frozen-artifact"
     assert receipt["benchmark_cell_resolved"] is False
     assert receipt["substitution_permitted"] is False
-    stored = json.loads(
-        (tmp_path / "ZTS_small/chimera_regression/compatibility-receipt.json").read_text()
-    )
+    stored = json.loads((tmp_path / "ZTS_small/chimera_regression/compatibility-receipt.json").read_text())
     assert stored["missing_artifact"]["sha256"] == special.CHIMERA_EXPECTED["sha256"]
 
 
@@ -55,10 +53,7 @@ def test_chimera_conversion_is_bound_to_frozen_source_identity() -> None:
 def test_chimera_special_identity_records_source_and_converted_artifacts() -> None:
     identity = special.special_identity("chimera_regression")
     assert identity["parameters"]["source_checkpoint"] == special.CHIMERA_EXPECTED
-    assert (
-        identity["parameters"]["converted_checkpoint"]
-        == special.CHIMERA_CONVERTED_EXPECTED
-    )
+    assert identity["parameters"]["converted_checkpoint"] == special.CHIMERA_CONVERTED_EXPECTED
 
 
 def test_worker_array_loader_never_returns_test_target(tmp_path: Path) -> None:

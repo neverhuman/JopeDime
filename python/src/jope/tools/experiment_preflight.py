@@ -1,4 +1,5 @@
 """Read-only production snapshot for experiment release/coexistence checks."""
+
 import argparse
 import hashlib
 import json
@@ -19,9 +20,30 @@ def snapshot(root):
     services = {}
     for name in ("gp", "campaign", "monitor", "reports", "teacher-telemetry"):
         unit = f"jope-parallel-{name}.service"
-        result = subprocess.run(["systemctl", "show", unit, "-p", "MainPID", "-p", "NRestarts", "-p", "ActiveState",
-                                 "-p", "SubState", "-p", "ExecStart", "-p", "FragmentPath", "-p", "ControlGroup"],
-                                capture_output=True, text=True, check=True)
+        result = subprocess.run(
+            [
+                "systemctl",
+                "show",
+                unit,
+                "-p",
+                "MainPID",
+                "-p",
+                "NRestarts",
+                "-p",
+                "ActiveState",
+                "-p",
+                "SubState",
+                "-p",
+                "ExecStart",
+                "-p",
+                "FragmentPath",
+                "-p",
+                "ControlGroup",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
         fields = dict(line.split("=", 1) for line in result.stdout.splitlines() if "=" in line)
         pid = fields.get("MainPID", "0")
         exe = Path(f"/proc/{pid}/exe")
@@ -37,13 +59,22 @@ def snapshot(root):
         try:
             value = json.loads(path.read_text())
             if "active_rows" in value:
-                value["worker_executables"] = sorted({str(Path(f"/proc/{r['pid']}/exe").resolve())
-                    for r in value.pop("active_rows") if Path(f"/proc/{r['pid']}/exe").exists()})
+                value["worker_executables"] = sorted(
+                    {
+                        str(Path(f"/proc/{r['pid']}/exe").resolve())
+                        for r in value.pop("active_rows")
+                        if Path(f"/proc/{r['pid']}/exe").exists()
+                    }
+                )
             receipts[name] = value
         except (OSError, ValueError) as error:
             receipts[name] = {"unavailable": str(error)}
-    return {"schema": "parallel.experiment_preflight.v1", "timestamp": time.time(),
-            "services": services, "receipts": receipts}
+    return {
+        "schema": "parallel.experiment_preflight.v1",
+        "timestamp": time.time(),
+        "services": services,
+        "receipts": receipts,
+    }
 
 
 def compare(before, after):
@@ -53,8 +84,12 @@ def compare(before, after):
         for key in ("MainPID", "NRestarts", "ActiveState", "SubState", "executable_sha256", "service_sha256"):
             if old.get(key) != new.get(key):
                 failures.append(f"{unit}: {key} changed")
-    return {"production_service_identity_unchanged": not failures, "failures": failures,
-            "before_timestamp": before["timestamp"], "after_timestamp": after["timestamp"]}
+    return {
+        "production_service_identity_unchanged": not failures,
+        "failures": failures,
+        "before_timestamp": before["timestamp"],
+        "after_timestamp": after["timestamp"],
+    }
 
 
 if __name__ == "__main__":
