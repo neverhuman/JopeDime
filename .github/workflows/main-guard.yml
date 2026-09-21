@@ -17,6 +17,15 @@ jobs:
     runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 5
     steps:
+      # This workflow stands in for branch protection until the org is on the Team plan, and it
+      # now runs on the self-hosted lane, so it is worth the extra minute to prove the runner is
+      # the one this commit describes before trusting its verdict.
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          persist-credentials: false
+      - name: Runner provenance
+        uses: ./.github/actions/runner-provenance
       - name: Every commit on main belongs to a merged pull request
         env:
           GH_TOKEN: ${{ github.token }}
@@ -36,7 +45,13 @@ jobs:
           fi
           bad=""
           for sha in $commits; do
-            merged=$(gh api "repos/$REPO/commits/$sha/pulls" --jq '[.[] | select(.merged_at != null)] | length')
+            merged=$(gh api "repos/$REPO/commits/$sha/pulls" --jq '[.[] | select(.merged_at != null)] | length') \
+              || { echo "main-guard: could not look up pull requests for $sha; refusing to pass" >&2; exit 1; }
+            # An empty or non-numeric answer makes `[ "$merged" -eq 0 ]` exit 2, which reads as
+            # false inside an if -- so an API hiccup silently excused the commit it was checking.
+            case $merged in
+              ''|*[!0-9]*) echo "main-guard: unexpected pull-request count '$merged' for $sha" >&2; exit 1 ;;
+            esac
             if [ "$merged" -eq 0 ]; then bad="$bad $sha"; fi
           done
           if [ -n "$bad" ]; then

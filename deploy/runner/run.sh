@@ -47,19 +47,20 @@ jit=$(jq -r '.encoded_jit_config // empty' <<<"$response")
 [[ -n $jit ]] || { echo "run.sh: no encoded_jit_config in the response: $(jq -c 'del(.encoded_jit_config)' <<<"$response")" >&2; exit 1; }
 echo "run.sh: runner $name id=$(jq -r '.runner.id' <<<"$response") labels=$labels"
 
-# Provenance injected into the job: the sha256 of the host scripts that built this container and
-# the id of the image they started. ci.yml recomputes the former from the checkout, so a lane
-# fails when the deployed scripts are not the ones in the commit under test. Falls back to the
-# running copies if provision.sh has not written its receipt yet.
+# Provenance injected into the job, so a lane can prove what it is running instead of assuming.
+# The script digest is recomputed from the deployed files on every launch -- reading it back from
+# provision.sh's receipt would go stale precisely when someone edits /opt/jope-runner in place,
+# which is the case this exists to catch. The receipt is used only for the image id provisioning
+# recorded, which the lane compares against the image actually being started: they disagree when
+# the image was rebuilt or retagged without re-running provision.sh.
 prov=$JOPE_RUNNER_STATE/image.json
-if [[ -r $prov ]]; then
-  scripts_sha=$(jq -r '.scripts_sha256 // "unknown"' "$prov")
-  image_id=$(jq -r '.image_id // "unknown"' "$prov")
-else
-  self_dir=$(dirname "${BASH_SOURCE[0]}")
-  scripts_sha=$(cat "$self_dir/common.sh" "$self_dir/run.sh" | sha256sum | cut -d' ' -f1)
-  image_id=$(docker image inspect --format '{{.Id}}' "$JOPE_RUNNER_IMAGE" 2>/dev/null || echo unknown)
-fi
+scripts_sha=$(jope_runner_deployed_digest) || {
+  echo "run.sh: a file in JOPE_RUNNER_DEPLOYED is missing ($scripts_sha) -- re-run provision.sh" >&2
+  exit 2
+}
+image_id=$(docker image inspect --format '{{.Id}}' "$JOPE_RUNNER_IMAGE" 2>/dev/null || echo unknown)
+recorded_image_id=unknown
+[[ -r $prov ]] && recorded_image_id=$(jq -r '.image_id // "unknown"' "$prov")
 
 docker_args=(
   run --rm --init --name "$name" --label jope.runner=1 --label "jope.lane=$lane"
@@ -72,7 +73,7 @@ docker_args=(
   -v jope-sdk:/opt/jope-sdk:ro -v jope-models:/var/lib/jope/models
   -e "JOPE_RUNNER_LANE=$lane" -e "JOPE_GPU_DEVICE=$JOPE_RUNNER_GPU"
   -e "JOPE_RUNNER_HOST=$JOPE_RUNNER_HOST" -e "JOPE_RUNNER_SCRIPTS_SHA256=$scripts_sha"
-  -e "JOPE_RUNNER_IMAGE_ID=$image_id"
+  -e "JOPE_RUNNER_IMAGE_ID=$image_id" -e "JOPE_RUNNER_IMAGE_ID_RECORDED=$recorded_image_id"
   -i
 )
 case $lane in

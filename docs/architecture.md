@@ -162,5 +162,6 @@ stage:
 
 [docs/emitters.md](emitters.md) · [docs/datasets.md](datasets.md) ·
 [docs/campaigns.md](campaigns.md) · [docs/adr/](adr/) ·
-`docs/models.md`, `docs/ci.md`, `docs/learning.md`, `docs/arena.md` (landing with WP7/WP8/WP11/WP12) ·
+[docs/models.md](models.md) · [docs/runbooks/runner.md](runbooks/runner.md) ·
+`docs/learning.md`, `docs/arena.md` (landing with WP11/WP12) ·
 [docs/legacy/root-docs/](legacy/root-docs/) (the pre-port documents, kept verbatim for provenance).

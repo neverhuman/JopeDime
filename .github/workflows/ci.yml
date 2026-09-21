@@ -49,10 +49,16 @@ jobs:
           if [ -n "$BASE_SHA" ]; then
             changed=$(git diff --name-only "$BASE_SHA" HEAD)
             printf 'changed files:\n%s\n' "$changed"
-            grep -qE '^(crates/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/|\.github/workflows/ci\.yml$)' <<<"$changed" || rust=false
-            grep -qE '^(crates/feat-math/|datasets/test/|deploy/ci/emitters|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.github/workflows/ci\.yml$)' <<<"$changed" || emitters=false
-            grep -qE '^(datasets/synthetic/|crates/jope-cli/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.github/workflows/ci\.yml$)' <<<"$changed" || inputs=false
-            grep -qE '^(python/|deploy/systemd/|\.github/workflows/ci\.yml$)' <<<"$changed" || python=false
+            # deploy/runner/ and deploy/docker/ are in EVERY filter on purpose. They decide the
+            # container each lane runs in, and each lane asserts something about it -- the python
+            # lane pins uv, the rust lanes pin cargo-nextest, hygiene pins cargo-deny. Without
+            # these, bumping UV_VERSION in the Dockerfile alone set python=false and skipped the
+            # one assertion whose entire job is catching that drift.
+            img='deploy/runner/|deploy/docker/'
+            grep -qE "^(crates/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/|$img|\.github/workflows/ci\.yml$)" <<<"$changed" || rust=false
+            grep -qE "^(crates/feat-math/|datasets/test/|deploy/ci/emitters|Cargo\.(toml|lock)$|rust-toolchain\.toml$|$img|\.github/workflows/ci\.yml$)" <<<"$changed" || emitters=false
+            grep -qE "^(datasets/synthetic/|crates/jope-cli/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|$img|\.github/workflows/ci\.yml$)" <<<"$changed" || inputs=false
+            grep -qE "^(python/|deploy/systemd/|$img|\.github/workflows/ci\.yml$)" <<<"$changed" || python=false
           fi
           { echo "rust=$rust"; echo "emitters=$emitters"; echo "inputs=$inputs"; echo "python=$python"; } >> "$GITHUB_OUTPUT"
           echo "rust=$rust emitters=$emitters inputs=$inputs python=$python"
@@ -65,30 +71,8 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0 (pin unchanged from main; the old comment said v5)
         with:
           persist-credentials: false
-      - name: Runner provenance (the host is running this commit's scripts)
-        # deploy/runner/{common,run}.sh shape the container this job runs in -- the work folder,
-        # the tmpfs flags, the volumes, the lane's privileges. Reading the committed copies proves
-        # nothing about what the host executed, so run.sh injects the sha256 of the scripts it was
-        # started from and this step recomputes it from the checkout. They differ exactly when the
-        # deployed runner is not the one under review, and then this lane fails.
-        run: |
-          set -euo pipefail
-          # These come from the container run.sh started, not from the workflow: a self-hosted
-          # runner's steps inherit the runner process environment.
-          committed=$(cat deploy/runner/common.sh deploy/runner/run.sh | sha256sum | cut -d' ' -f1)
-          echo "host:      ${JOPE_RUNNER_HOST:-?}"
-          echo "image id:  ${JOPE_RUNNER_IMAGE_ID:-unset}"
-          echo "deployed:  ${JOPE_RUNNER_SCRIPTS_SHA256:-unset}"
-          echo "committed: $committed"
-          if [ -z "${JOPE_RUNNER_SCRIPTS_SHA256:-}" ]; then
-            echo "runner injected no provenance: re-run deploy/runner/provision.sh on the host" >&2
-            exit 1
-          fi
-          if [ "$JOPE_RUNNER_SCRIPTS_SHA256" != "$committed" ]; then
-            echo "the runner host is executing different scripts than this commit carries." >&2
-            echo "deploy deploy/runner/{common,run}.sh to the host and re-run this lane." >&2
-            exit 1
-          fi
+      - name: Runner provenance
+        uses: ./.github/actions/runner-provenance
       - name: Toolchain (from rust-toolchain.toml)
         run: rustup show active-toolchain
       - name: Install linters
@@ -112,7 +96,8 @@ jobs:
           # --all-features is NOT cosmetic: EmbarkStudios/cargo-deny-action defaulted to it,
           # which overrides deny.toml's [graph] all-features = false. Measured on this image
           # (cargo-deny 0.20.2): the graph is 329 crates without it and 367 with it, and
-          # torch-sys, cudarc and safetensors are three of the crates that only appear with it.
+          # torch-sys and cudarc are absent from the smaller one. safetensors is in both -- it is
+          # asserted below anyway as a canary, not as evidence that the scope changed.
           #
           # ORDER MATTERS: --all-features is a top-level cargo-deny option, not a `check`
           # option. `cargo deny check --all-features ...` is a parse error ("unexpected

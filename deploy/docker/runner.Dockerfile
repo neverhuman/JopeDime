@@ -40,7 +40,8 @@ RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
 # it by deploy/runner/provision.sh). No sudo in the image.
 RUN groupadd -g 1001 runner && useradd -u 1001 -g 1001 -m -d /home/runner -s /bin/bash runner
 
-# ---- pinned tool versions (bump here and in docs/ci.md) ----
+# ---- pinned tool versions (bump here; the lanes assert several of them, so a bump that
+# skips .github/workflows/ci.yml will fail rather than drift) ----
 ARG ACTIONS_RUNNER_VERSION=2.337.0
 ARG ACTIONS_RUNNER_SHA256=70920811a4f8ad4328818682bca5c6469c1c942fab52448868071d0063816613
 ARG RUSTUP_VERSION=1.29.1
