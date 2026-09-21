@@ -37,13 +37,26 @@ pub struct State {
     root: PathBuf,
 }
 
-fn safe_segment(s: &str) -> bool {
+/// One *plain* path component: non-empty, no separator, no `.`/`..`, and nothing outside
+/// `[A-Za-z0-9._-]`.
+///
+/// Every path this crate builds from data it did not author goes through here. `Path::join` is
+/// not a containment operator — joining an absolute component *replaces* the whole path, and a
+/// `..` component walks out of it — so a single unvalidated field (a CSV `track_id`, a dataset id,
+/// a cut id) is enough to write outside `$JOPE_STATE` entirely. Checking the component instead of
+/// the joined path is what makes that impossible rather than merely unlikely: no separator can
+/// appear, so no escape can be spelled.
+pub fn plain_segment(s: &str) -> bool {
     !s.is_empty()
-        && s != "ledger"
-        && s.bytes()
-            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b'.'))
         && s != "."
         && s != ".."
+        && s.bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b'.'))
+}
+
+/// A [`plain_segment`] that is also not the reserved `ledger` directory name.
+fn safe_segment(s: &str) -> bool {
+    plain_segment(s) && s != "ledger"
 }
 
 impl State {
@@ -93,6 +106,55 @@ impl State {
             atomic_write(&path, bytes)?;
         }
         Ok(sha)
+    }
+
+    /// `<state>/scores/<source>/<track>/<version>`, with every component proved to be a plain
+    /// path segment *before* the join and the result proved to resolve inside the state root.
+    ///
+    /// `track` and `version` come from the imported source — the `track_id` column of a published
+    /// `scores.csv` and a directory name under the results tree. Neither is this crate's to trust:
+    /// an absolute `track_id` makes `Path::join` discard the state root outright, and a `..` one
+    /// walks out of it, so the archive and its checksum land wherever the CSV says. The segment
+    /// check refuses both by construction; the canonicalised containment check that follows is the
+    /// belt to its braces, and catches the one thing a name check cannot — a symlink already
+    /// sitting on the archive path and pointing somewhere else.
+    ///
+    /// The directory is created here, because containment can only be *proved* of a path that
+    /// exists: `canonicalize` resolves symlinks, and a check that skipped it would be checking the
+    /// spelling of the path rather than where writing to it actually goes.
+    pub fn archive_dir(&self, source: &str, track: &str, version: &str) -> Result<PathBuf> {
+        for (what, seg) in [
+            ("source", source),
+            ("track_id", track),
+            ("version", version),
+        ] {
+            ensure!(
+                plain_segment(seg),
+                "refusing to archive under an unsafe {what} {seg:?}: a path component must be \
+                 non-empty, must not be `.` or `..`, and may only contain ASCII letters, digits, \
+                 `.`, `-` and `_`. Nothing was written. Fix the {what} in the source and re-run."
+            );
+        }
+        let dir = self
+            .root
+            .join("scores")
+            .join(source)
+            .join(track)
+            .join(version);
+        fs::create_dir_all(&dir)
+            .with_context(|| format!("create archive directory {}", dir.display()))?;
+        let root = fs::canonicalize(&self.root)
+            .with_context(|| format!("canonicalize state root {}", self.root.display()))?;
+        let real =
+            fs::canonicalize(&dir).with_context(|| format!("canonicalize {}", dir.display()))?;
+        ensure!(
+            real.starts_with(&root),
+            "refusing to archive to {}: it resolves outside the state root {}. Nothing was \
+             written.",
+            real.display(),
+            root.display()
+        );
+        Ok(dir)
     }
 
     pub fn read_blob(&self, sha256: &str) -> Result<Option<Vec<u8>>> {

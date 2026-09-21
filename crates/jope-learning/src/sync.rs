@@ -95,6 +95,12 @@ pub fn preflight(m: &Mirror, ledger: &Ledger) -> Result<()> {
 /// new tip, `plan` returns [`MirrorPosition::UpToDate`], `missing` is empty and `prepare` never
 /// runs for those batches again — so anything it was going to upload must already be there.
 ///
+/// That last clause is a *contract on `prepare`*, not a property this function can enforce, and it
+/// is the one that was broken: `prepare` must upload everything its batch names or return an
+/// error. Quietly skipping one object — because the local store could not supply it, say — is
+/// indistinguishable here from having uploaded it, and the skip is permanent: the batch object
+/// goes up, `HEAD.json` moves past it, and no later `plan` ever offers that batch again.
+///
 /// Uploading early is always safe: blobs and batch objects are content-addressed, immutable and
 /// written with `If-None-Match: *`, so a repeat is an `Exists` no-op and two hosts uploading the
 /// same object cannot corrupt it. Uploading late is not: it turns one transient object-store

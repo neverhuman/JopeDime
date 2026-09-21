@@ -18,6 +18,11 @@
 //! push skips under a tip it has already moved is never offered to a later push.
 //! `a_failed_blob_push_leaves_the_mirrors_head_where_it_was` is the ordering that follows from
 //! that, with an object-store failure injected mid-push.
+//!
+//! That ordering covers a blob missing from the *mirror*. It does not cover a blob missing from
+//! the *local store*, which the push used to skip in silence —
+//! `a_blob_the_local_store_cannot_supply_is_never_published_over` is that case, and
+//! `a_blob_only_the_mirror_still_has_does_not_wedge_the_push` is its negative control.
 
 mod common;
 
@@ -464,4 +469,134 @@ fn a_failed_blob_push_leaves_the_mirrors_head_where_it_was() {
         fs::read(state.pointer_path(&key).unwrap()).unwrap(),
         "the pointer did not catch up"
     );
+}
+
+/// A blob a batch names and the **local** store cannot supply must never be skipped.
+///
+/// The round-three ordering guarantees that while a blob is missing from the *mirror*, the
+/// mirror's `HEAD.json` has not moved past the batch that names it. It says nothing about a blob
+/// missing from the *local* store, and that hole was wide enough to falsify the whole guarantee:
+/// `state.read_blob` returning `None` simply skipped the upload, the batch object went up anyway,
+/// `HEAD.json` moved past it, and `sync::plan` — which derives the backfill window from that
+/// `HEAD.json` and nothing else — never offered that batch again. The mirror was left naming a
+/// record that neither host could supply, permanently, at exit 0.
+///
+/// Fails on the pre-fix code at the first assertion: step 4 exits `Ok`, the mirror's tip advances
+/// to `batches: 3`, and the mirror's own batch events name ten record blobs while it holds nine.
+#[test]
+fn a_blob_the_local_store_cannot_supply_is_never_published_over() {
+    let tmp = tempfile::tempdir().unwrap();
+    let mirror = tmp.path().join("mirror");
+    fs::create_dir_all(&mirror).unwrap();
+    let url = format!("file://{}", mirror.display());
+    let state = tmp.path().join("state");
+    let dir_a = champion_subset(&tmp.path().join("champs-a"), 0, 5);
+    let dir_b = champion_subset(&tmp.path().join("champs-b"), 5, 5);
+    let mirror_head = mirror.join("hwm/ledger/HEAD.json");
+
+    // 1. mirrored: the mirror holds batch 1 and the five blobs it names.
+    ingest(&state, Some(&url), &dir_a, "a").ok();
+    let head_1 = fs::read(&mirror_head).unwrap();
+    let ledger_1 = tree(&mirror.join("hwm/ledger"));
+
+    // 2. local only: the mirror is a batch behind, and has never seen that batch's blobs.
+    ingest(&state, None, &dir_b, "b").ok();
+
+    // 3. one blob local batch 2 names is lost from the *local* store — a pruned cache, a bad
+    //    disk, an operator `rm`. The ledger still names it; `hwm verify` calls it `blob-missing`.
+    let ledger = Ledger::open(&state, "hwm");
+    let batch_2 = ledger.batches().unwrap().into_iter().next_back().unwrap().1;
+    let (events, _, _, _) = Ledger::read_batch(&batch_2).unwrap();
+    let lost = events[0]["record"]["provenance"]["record_sha256"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let lost_path = State::at(&state).blob_path(&lost);
+    let lost_bytes = fs::read(&lost_path).unwrap();
+    fs::remove_file(&lost_path).unwrap();
+
+    // 4. mirrored again. The push must refuse: publishing batch 2 would move the mirror's tip
+    //    past a batch whose blob nobody holds, and no later push would ever come back for it.
+    let r = ingest(&state, Some(&url), &dir_a, "a");
+    assert_ne!(
+        r.status,
+        0,
+        "a blob no one can supply was published over; stdout: {}",
+        String::from_utf8_lossy(&r.stdout)
+    );
+    assert!(
+        r.stderr.contains(&lost) && r.stderr.contains("nor the mirror"),
+        "the refusal must name the blob and say who cannot supply it, got: {}",
+        r.stderr
+    );
+    assert_eq!(
+        named_blobs_missing_from(&mirror),
+        Vec::<String>::new(),
+        "the mirror's own ledger names a blob the mirror does not hold"
+    );
+    assert_eq!(
+        fs::read(&mirror_head).unwrap(),
+        head_1,
+        "the mirror's tip moved over a batch naming a blob nobody can supply"
+    );
+    assert_eq!(
+        tree(&mirror.join("hwm/ledger")),
+        ledger_1,
+        "a batch object went up before the blobs it names could be supplied"
+    );
+
+    // 5. the blob is restored from a bundle. The gap is still the gap, so the next push closes it.
+    fs::write(&lost_path, &lost_bytes).unwrap();
+    ingest(&state, Some(&url), &dir_a, "a").ok();
+    assert_eq!(
+        fs::read(&mirror_head).unwrap(),
+        fs::read(ledger.root().join("HEAD.json")).unwrap(),
+        "the mirror did not catch up once the blob was restored"
+    );
+    assert_eq!(named_blobs_missing_from(&mirror), Vec::<String>::new());
+    assert_eq!(
+        tree(&mirror.join("blobs")),
+        tree(&state.join("blobs")),
+        "every blob the mirrored ledger names must be on the mirror"
+    );
+}
+
+/// The negative control for the refusal above: a blob only the *mirror* still has is not a gap,
+/// and must not wedge the push.
+///
+/// Failing closed on `read_blob == None` alone would turn every pruned local blob into a mirror
+/// that can never be written again — the same one-way door the reconcile was built to remove. The
+/// batch is publishable exactly when *someone* can back it, so the local store is asked first and
+/// the mirror second.
+#[test]
+fn a_blob_only_the_mirror_still_has_does_not_wedge_the_push() {
+    let tmp = tempfile::tempdir().unwrap();
+    let mirror_dir = tmp.path().join("mirror");
+    fs::create_dir_all(&mirror_dir).unwrap();
+    let m = Mirror::open(&format!("file://{}", mirror_dir.display())).unwrap();
+    let state = State::at(&tmp.path().join("state"));
+
+    // Both records are on the mirror, pushed while the local store still had their blobs.
+    hwm::ingest(&state, Some(&m), vec![candidate(0.5, 1)], json!({"k": 1})).unwrap();
+    hwm::ingest(&state, Some(&m), vec![candidate(0.4, 2)], json!({"k": 2})).unwrap();
+
+    // A local-only batch of one tie: it names the 0.4 record again, and nothing else.
+    hwm::ingest(&state, None, vec![candidate(0.4, 3)], json!({"k": 3})).unwrap();
+
+    // The local blob for 0.4 is pruned. The mirror still has it, so the backfilled batch is
+    // already backed and the push has nothing to upload for it.
+    let sha = jope_learning::canon::sha256_hex(b"d0/cut-0/0.4");
+    assert!(mirror_dir.join(State::blob_rel(&sha)).exists());
+    fs::remove_file(state.blob_path(&sha)).unwrap();
+
+    let rep = hwm::ingest(&state, Some(&m), vec![candidate(0.3, 4)], json!({"k": 4}))
+        .expect("a blob the mirror already holds must not wedge the push");
+    let ledger = Ledger::open(state.root(), "hwm");
+    assert_eq!(
+        fs::read(mirror_dir.join("hwm/ledger/HEAD.json")).unwrap(),
+        fs::read(ledger.root().join("HEAD.json")).unwrap(),
+        "the mirror did not catch up"
+    );
+    assert_eq!(named_blobs_missing_from(&mirror_dir), Vec::<String>::new());
+    assert_eq!(rep.accepted, 1);
 }
