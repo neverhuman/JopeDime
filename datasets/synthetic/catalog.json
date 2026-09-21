@@ -1,0 +1,122 @@
+{
+  "schema": "jope.synthetic.v1",
+  "provenance": {
+    "kind": "synthetic",
+    "license": "Apache-2.0",
+    "generator": "jope.synthetic.splitmix64.integer.v1",
+    "source": "crates/jope-cli/src/generator",
+    "external_inputs": []
+  },
+  "datasets": [
+    {
+      "id": "binary.linear",
+      "task": "binary",
+      "scenario": "linear",
+      "path": "binary/linear.json",
+      "sha256": "7298e16774d2146de24c6d952dc806c87e12fa916a55e542663fa030c5e261a6",
+      "bytes": 19065,
+      "seed": 1246711877,
+      "rows": 96,
+      "expected_behavior": "Admit the declared single-target schema and fixed train/validation/test partitions. Admission proves input integrity, not model support or predictive quality."
+    },
+    {
+      "id": "binary.imbalanced",
+      "task": "binary",
+      "scenario": "imbalanced",
+      "path": "binary/imbalanced.json",
+      "sha256": "b3e5b86cf837dce3ddc08bc68b73dd8f4ed002cdf8c7b566fafcedb92dd15342",
+      "bytes": 19070,
+      "seed": 1246711879,
+      "rows": 96,
+      "expected_behavior": "Admit the declared single-target schema and fixed train/validation/test partitions. Admission proves input integrity, not model support or predictive quality."
+    },
+    {
+      "id": "binary.outliers",
+      "task": "binary",
+      "scenario": "outliers",
+      "path": "binary/outliers.json",
+      "sha256": "840626f6ac6696421822b41e478d9153974ab590bd56cd32cda6ab631ffd5231",
+      "bytes": 19090,
+      "seed": 1246711885,
+      "rows": 96,
+      "expected_behavior": "Admit the declared single-target schema and fixed train/validation/test partitions. Admission proves input integrity, not model support or predictive quality."
+    },
+    {
+      "id": "regression.linear",
+      "task": "regression",
+      "scenario": "linear",
+      "path": "regression/linear.json",
+      "sha256": "ec956c76409d16952fdb8e806ed16ec370965de72abfa1ae9a3fc54adbc445a9",
+      "bytes": 19375,
+      "seed": 1246711977,
+      "rows": 96,
+      "expected_behavior": "Admit the declared single-target schema and fixed train/validation/test partitions. Admission proves input integrity, not model support or predictive quality."
+    },
+    {
+      "id": "regression.sparse_signal",
+      "task": "regression",
+      "scenario": "sparse_signal",
+      "path": "regression/sparse_signal.json",
+      "sha256": "40fa77a82a53351f34786514354cdc6284299b7f269c36e3ccf95d40b9eb9e39",
+      "bytes": 33280,
+      "seed": 1246711981,
+      "rows": 96,
+      "expected_behavior": "Admit the declared single-target schema and fixed train/validation/test partitions. Admission proves input integrity, not model support or predictive quality."
+    },
+    {
+      "id": "regression.extrapolation",
+      "task": "regression",
+      "scenario": "extrapolation",
+      "path": "regression/extrapolation.json",
+      "sha256": "6bb74d1f324ef862f2c2c711a4518525533328b07f45d0b2aae2b9dc1e2053b2",
+      "bytes": 19427,
+      "seed": 1246711986,
+      "rows": 96,
+      "expected_behavior": "Admit the declared single-target schema and fixed train/validation/test partitions. Admission proves input integrity, not model support or predictive quality."
+    },
+    {
+      "id": "time_series.trend",
+      "task": "time_series",
+      "scenario": "trend",
+      "path": "time_series/trend.json",
+      "sha256": "0fae7d962f5853b8662dfb5e6ab6381dff6f1e2323cd95d3ccf841a0a0cc9919",
+      "bytes": 19908,
+      "seed": 1246712077,
+      "rows": 96,
+      "expected_behavior": "Admit the declared single-target schema and fixed train/validation/test partitions. Preserve chronology within each series and across partition boundaries; random resplitting is invalid. Admission proves input integrity, not model support or predictive quality."
+    },
+    {
+      "id": "time_series.lag_dependence",
+      "task": "time_series",
+      "scenario": "lag_dependence",
+      "path": "time_series/lag_dependence.json",
+      "sha256": "45d55b17df4ec16022da48e9b3d2399862c2d646c8683374ec64304faae71c7a",
+      "bytes": 20098,
+      "seed": 1246712085,
+      "rows": 96,
+      "expected_behavior": "Admit the declared single-target schema and fixed train/validation/test partitions. Preserve chronology within each series and across partition boundaries; random resplitting is invalid. Admission proves input integrity, not model support or predictive quality."
+    },
+    {
+      "id": "multiclass.three_classes",
+      "task": "multiclass",
+      "scenario": "three_classes",
+      "path": "multiclass/three_classes.json",
+      "sha256": "21c6d7777093fa145abda826f586d0e7c32783efcb33d5fbb236f88ded804888",
+      "bytes": 19093,
+      "seed": 1246712177,
+      "rows": 96,
+      "expected_behavior": "Admit the declared single-target schema and fixed train/validation/test partitions. Admission proves input integrity, not model support or predictive quality."
+    },
+    {
+      "id": "multiclass.many_classes",
+      "task": "multiclass",
+      "scenario": "many_classes",
+      "path": "multiclass/many_classes.json",
+      "sha256": "f4eef589bfacd3b1e6a59e0240429a8759a4c6b6cc80f15b7e81b25be1c5c2d1",
+      "bytes": 19111,
+      "seed": 1246712178,
+      "rows": 96,
+      "expected_behavior": "Admit the declared single-target schema and fixed train/validation/test partitions. Admission proves input integrity, not model support or predictive quality."
+    }
+  ]
+}
