@@ -1,0 +1,11 @@
+[Unit]
+Description=Report JopeDime Cargo candidates and disk usage (no deletion)
+Documentation=file:/home/ubuntu/JopeDime/deploy/maintenance/README.md
+
+[Service]
+Type=oneshot
+Nice=15
+IOSchedulingClass=idle
+UMask=0077
+TimeoutStartSec=30min
+ExecStart=/home/ubuntu/lane-tools/jope-build-report.sh --config /home/ubuntu/lane-tools/jope-report-roots.json

@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily 48-hour JopeDime report (no deletion)
+
+[Timer]
+OnCalendar=*-*-* 04:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target
