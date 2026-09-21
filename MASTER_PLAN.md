@@ -1,7 +1,7 @@
 # JopeDime current direction
 
 **2026-09-21.** Publication repo: private `veox-ai/JopeDime`. This note tracks
-`origin/main` after PR F (#22, `1f0fc5a3eeaca5b536a902bad48d6cc09aa7b748`).
+`origin/main`; the landing board below records each merge SHA (12 PRs merged 2026-09-21 03:58–05:08Z under D1; `main` `4235db6` → `0c14405`).
 
 ## Queue
 
@@ -81,19 +81,20 @@ Coordinate in [`AGENT_CHAT.md`](AGENT_CHAT.md).
 
 | Old PR | Branch | Head | New PR | Merged |
 | --- | --- | --- | --- | --- |
-| — | `coord/integrator-lane-20260921` (this) | | #23 | |
-| #7 | `ci/lanes` | 38aeaa1 | | |
-| #10 | `wp1/test-timings` | 5f66e3f | | |
+| — | `coord/integrator-lane-20260921` | | #23 | `4753a9a` 04:06:47Z |
+| #7 | `ci/lanes` | 38aeaa1 | #24 | `932f7b7` 04:06:52Z (rebase; + inputs lane; review found the strict-parity step ran 0 tests — fixed) |
+| #10 | `wp1/test-timings` | 5f66e3f | #29 | `0c14405` 05:08:29Z (rebase; 3 nextest exclusions module-qualified after review) |
 | #14 | `wp8/neural-receipt` | 44501a9 | #25 | `dc5ccf9` 2026-09-21T03:58:58Z (rebase; reviewer `neverhuman`) |
-| #12 | `wp10/parity-census` | c483544 | | |
-| #9 | `wp7/model-manifests` | f62095c | | |
-| #11 | `wpd1/datasets` | d672e76 | | |
-| #15 | `wp7/models-cli` | b497325 | | |
-| #8 | `wp6/python` | d49662f | | |
-| #13 | `wp4/paths` | 96a61c8 | | |
-| #16 | `wp9/docs-release` | 9bec536 | | |
-| — | `wp11/learning-store` | df9e4e0 | | |
-| — | `wp12/arena` | 53f5ec4 | | |
+| #12 | `wp10/parity-census` | c483544 | #28 | `d1317a1` 04:16:19Z (rebase; + rows for the #19 Hyperion bins) |
+| #9 | `wp7/model-manifests` | f62095c | #26 | `44443ab` (rebase; manifests byte-identical to S3) |
+| #6 | `wp3/hyperion-policy` | a043f8b | — | recovered by Grok's #19 (`089c127`): `main` is a strict superset; no PR needed |
+| #11 | `wpd1/datasets` | d672e76 | #27 | `a6df267` 04:44:49Z (rebase; object_store 0.14 for RUSTSEC-2026-0194/0195; scoped webpki-root-certs exception; lock additive) |
+| #15 | `wp7/models-cli` | b497325 | #33 | `5c66edb` 04:54:50Z (rebase; `jope models|datasets` umbrella on Grok's verbs; blob-lock deadlock fixed) |
+| #8 | `wp6/python` | d49662f | #31 | `99981e6` 04:42:33Z (rebase; ruff format + pidfd fallback) |
+| #13 | `wp4/paths` | 96a61c8 | #32 | `ff5da5b` 05:04:22Z (rebase; abs-path hygiene step now blocking for crates/deploy/.github) |
+| #16 | `wp9/docs-release` | 9bec536 | #30 | `aa57388` 04:33:58Z (rebase; README kept as Grok's honest front door, quickstart → docs/quickstart.md, status banners) |
+| — | `wp11/learning-store` | df9e4e0 | #34 | |
+| — | `wp12/arena` | 53f5ec4 | #35 | |
 | — | `wp5/cli-split` | d0b4819 | | |
 | — | `wp8/runner-lanes` | f6c101d | | |
 | #5 | dependabot cargo group | 1151493 | | |
