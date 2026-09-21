@@ -12,7 +12,8 @@ permissions:
 # the checkout, and crates/jope-paths walks the executable's ancestors for the .jope-home marker
 # that sits at the repository root. Both break when the artefacts live outside the workspace. The
 # workspace lives on a persistent volume, but actions/checkout clears it at the start of every
-# job, so this is NOT a cross-job build cache — only CARGO_HOME (the registry) persists.
+# job, so this is NOT a cross-job build cache — only CARGO_HOME (the registry) and
+# UV_CACHE_DIR (the Python wheel cache) persist, both as named volumes on the runner host.
 env:
   CARGO_TARGET_DIR: ${{ github.workspace }}/target
 
@@ -64,6 +65,30 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0 (pin unchanged from main; the old comment said v5)
         with:
           persist-credentials: false
+      - name: Runner provenance (the host is running this commit's scripts)
+        # deploy/runner/{common,run}.sh shape the container this job runs in -- the work folder,
+        # the tmpfs flags, the volumes, the lane's privileges. Reading the committed copies proves
+        # nothing about what the host executed, so run.sh injects the sha256 of the scripts it was
+        # started from and this step recomputes it from the checkout. They differ exactly when the
+        # deployed runner is not the one under review, and then this lane fails.
+        run: |
+          set -euo pipefail
+          # These come from the container run.sh started, not from the workflow: a self-hosted
+          # runner's steps inherit the runner process environment.
+          committed=$(cat deploy/runner/common.sh deploy/runner/run.sh | sha256sum | cut -d' ' -f1)
+          echo "host:      ${JOPE_RUNNER_HOST:-?}"
+          echo "image id:  ${JOPE_RUNNER_IMAGE_ID:-unset}"
+          echo "deployed:  ${JOPE_RUNNER_SCRIPTS_SHA256:-unset}"
+          echo "committed: $committed"
+          if [ -z "${JOPE_RUNNER_SCRIPTS_SHA256:-}" ]; then
+            echo "runner injected no provenance: re-run deploy/runner/provision.sh on the host" >&2
+            exit 1
+          fi
+          if [ "$JOPE_RUNNER_SCRIPTS_SHA256" != "$committed" ]; then
+            echo "the runner host is executing different scripts than this commit carries." >&2
+            echo "deploy deploy/runner/{common,run}.sh to the host and re-run this lane." >&2
+            exit 1
+          fi
       - name: Toolchain (from rust-toolchain.toml)
         run: rustup show active-toolchain
       - name: Install linters
@@ -83,13 +108,28 @@ jobs:
           set -euo pipefail
           # Was EmbarkStudios/cargo-deny-action, a Docker container action: the ci lane is
           # deliberately given no docker socket, and the binary is in the image anyway.
-          cargo deny --version
+          cargo deny --version | grep -qF 'cargo-deny 0.20.2'
           # --all-features is NOT cosmetic: EmbarkStudios/cargo-deny-action defaulted to it,
-          # which overrides deny.toml's [graph] all-features = false. Without it, every
-          # optional-feature dependency leaves the graph — torch-sys, cudarc and safetensors
-          # all dropped out of bans/licenses/sources when this was first ported. Keeping the
-          # action's scope is the difference between the same gate and a weaker one.
-          cargo deny check --all-features bans licenses sources
+          # which overrides deny.toml's [graph] all-features = false. Measured on this image
+          # (cargo-deny 0.20.2): the graph is 329 crates without it and 367 with it, and
+          # torch-sys, cudarc and safetensors are three of the crates that only appear with it.
+          #
+          # ORDER MATTERS: --all-features is a top-level cargo-deny option, not a `check`
+          # option. `cargo deny check --all-features ...` is a parse error ("unexpected
+          # argument '--all-features' found"), so an earlier attempt at this restore never ran
+          # the gate at all. The assertion below is here because a comment could not stop that.
+          missing=""
+          graph="$(cargo deny --all-features list --layout crate)"
+          for c in torch-sys cudarc safetensors; do
+            grep -qE "^$c " <<< "$graph" || missing="$missing $c"
+          done
+          if [ -n "$missing" ]; then
+            echo "cargo-deny is not seeing the optional-feature graph; missing:$missing" >&2
+            echo "check that --all-features is passed BEFORE the check subcommand" >&2
+            exit 1
+          fi
+          echo "deny graph: $(wc -l <<< "$graph") crates, optional-feature deps present"
+          cargo deny --all-features check bans licenses sources
 
   rust-check:
     needs: changes
@@ -203,8 +243,9 @@ jobs:
           persist-credentials: false
       - name: uv from the image
         # Was astral-sh/setup-uv, which installs `latest` from the network and would shadow the
-        # image's pinned uv. Assert the pinned one instead of fetching an unpinned one.
-        run: uv --version
+        # image's pinned uv. Assert the pinned one instead of fetching an unpinned one -- and
+        # assert the version, because `uv --version` on its own only proves some uv is on PATH.
+        run: uv --version | grep -qF 'uv 0.11.28' || { uv --version >&2; echo 'expected the image-pinned uv 0.11.28' >&2; exit 1; }
       - name: Sync the locked environment (CPU torch)
         working-directory: python
         run: uv sync --locked --extra dev --extra cpu
@@ -250,7 +291,10 @@ jobs:
       # No Swatinem/rust-cache: this lane's CARGO_HOME and CARGO_TARGET_DIR are persistent
       # named volumes on the runner host, which is a better cache than the hosted one.
       - name: cargo-nextest from the image
-        run: cargo nextest --version
+        # Asserted, not printed: the hosted lane resolved cargo-nextest 0.9.145 via
+        # taiki-e/install-action and the image pins 0.9.133, so this lane must fail loudly if
+        # the image drifts from the version this gate's results were established on.
+        run: cargo nextest --version | grep -qF 'cargo-nextest 0.9.133' || { cargo nextest --version >&2; echo 'expected the image-pinned cargo-nextest 0.9.133' >&2; exit 1; }
       - name: Product-crate tests (blocking)
         run: |
           set -euo pipefail

@@ -1,4 +1,4 @@
-# /etc/systemd/system/jope-docker-proxy.service — the docker socket proxy for the xbabe2-kernel
+# /etc/systemd/system/jope-docker-proxy.service — the docker socket proxy for the <host>-kernel
 # lane. Only container and image operations are allowed (CONTAINERS=1 IMAGES=1 POST=1); exec,
 # volumes, networks, swarm, secrets, system and the build endpoint stay denied (defaults 0), so the
 # kernel-v1 lane can `docker run --network none` its builder but nothing else. The proxy listens

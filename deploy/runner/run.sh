@@ -6,7 +6,8 @@
 #   2. read the fine-grained PAT from the root-0600 file (never exported, never mounted) and ask
 #      GitHub for a single-use JIT config:
 #        POST /repos/<owner>/<repo>/actions/runners/generate-jitconfig
-#        {"name": "xbabe2-<lane>-<stamp>", "runner_group_id": 1, "labels": [...], "work_folder": "work"}
+#        {"name": "<host>-<lane>-<stamp>", "runner_group_id": 1, "labels": [...],
+#         "work_folder": "/home/runner/work/<lane>"}
 #      The response's encoded_jit_config is passed to the container on stdin only;
 #   3. docker run the image with the plan's hardening flags and the named volumes.
 # The container exits when its one job ends; the runner deregisters itself (JIT = ephemeral).
@@ -28,8 +29,14 @@ perms=$(stat -c '%a %U' "$JOPE_RUNNER_PAT_FILE")
 
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
 name="$JOPE_RUNNER_HOST-$lane-$stamp"
-body=$(jq -nc --arg name "$name" --arg labels "$labels" \
-  '{name:$name, runner_group_id:1, labels:(["self-hosted","linux","x64"] + ($labels|split(","))), work_folder:"/home/runner/work/$lane"}')
+# work_folder is absolute and per-lane. Absolute because entrypoint.sh copies the runner to
+# /home/runner/runner, so a relative "work" resolves inside the small /home/runner tmpfs instead
+# of the jope-work volume. Per-lane because the four lanes run concurrently against one volume:
+# a shared root means actions/checkout in one lane deletes the target/ another lane is building.
+# $lane must be passed to jq as an argument -- jq does not expand shell variables, so writing
+# "$lane" inside the program yields a literal directory named '$lane' shared by every lane.
+body=$(jq -nc --arg name "$name" --arg labels "$labels" --arg lane "$lane" \
+  '{name:$name, runner_group_id:1, labels:(["self-hosted","linux","x64"] + ($labels|split(","))), work_folder:"/home/runner/work/\($lane)"}')
 # The token goes to curl through a config file on a private fd, never on the command line.
 response=$(curl -fsS --retry 3 -X POST \
   -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" \
@@ -39,6 +46,20 @@ response=$(curl -fsS --retry 3 -X POST \
 jit=$(jq -r '.encoded_jit_config // empty' <<<"$response")
 [[ -n $jit ]] || { echo "run.sh: no encoded_jit_config in the response: $(jq -c 'del(.encoded_jit_config)' <<<"$response")" >&2; exit 1; }
 echo "run.sh: runner $name id=$(jq -r '.runner.id' <<<"$response") labels=$labels"
+
+# Provenance injected into the job: the sha256 of the host scripts that built this container and
+# the id of the image they started. ci.yml recomputes the former from the checkout, so a lane
+# fails when the deployed scripts are not the ones in the commit under test. Falls back to the
+# running copies if provision.sh has not written its receipt yet.
+prov=$JOPE_RUNNER_STATE/image.json
+if [[ -r $prov ]]; then
+  scripts_sha=$(jq -r '.scripts_sha256 // "unknown"' "$prov")
+  image_id=$(jq -r '.image_id // "unknown"' "$prov")
+else
+  self_dir=$(dirname "${BASH_SOURCE[0]}")
+  scripts_sha=$(cat "$self_dir/common.sh" "$self_dir/run.sh" | sha256sum | cut -d' ' -f1)
+  image_id=$(docker image inspect --format '{{.Id}}' "$JOPE_RUNNER_IMAGE" 2>/dev/null || echo unknown)
+fi
 
 docker_args=(
   run --rm --init --name "$name" --label jope.runner=1 --label "jope.lane=$lane"
@@ -50,6 +71,8 @@ docker_args=(
   -v jope-cargo:/var/cache/jope/cargo -v jope-target:/var/cache/jope/target -v jope-uv:/var/cache/jope/uv
   -v jope-sdk:/opt/jope-sdk:ro -v jope-models:/var/lib/jope/models
   -e "JOPE_RUNNER_LANE=$lane" -e "JOPE_GPU_DEVICE=$JOPE_RUNNER_GPU"
+  -e "JOPE_RUNNER_HOST=$JOPE_RUNNER_HOST" -e "JOPE_RUNNER_SCRIPTS_SHA256=$scripts_sha"
+  -e "JOPE_RUNNER_IMAGE_ID=$image_id"
   -i
 )
 case $lane in
