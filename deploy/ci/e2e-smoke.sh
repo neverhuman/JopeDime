@@ -99,11 +99,19 @@ assert covered, (
 
 receipt = json.load(open(os.path.join(root, "receipt.json")))
 assert receipt["ok"], receipt
-best = receipt["select"]["best"] if "select" in receipt else None
-if best is not None and "cuts_measured" in best:
-    assert best["cuts_measured"] == 3, best
 
-print(f"  ok: {len(covered)} searched genome(s) measured on all 3 cuts; champion ranked over 3")
+# Indexed unconditionally and with no `in` guard. The first version of this read
+# receipt["select"]["best"] behind an `if "select" in receipt` -- but the receipt has no
+# top-level "select" key, so `best` was always None, the assertion never ran, and the line
+# below printed "champion ranked over 3" regardless. A guard that silently turns an assertion
+# off is worse than no assertion: it reports success for a check that did not happen.
+best = receipt["search"]["best"]
+assert best["cuts_measured"] == 3, best
+
+print(
+    f"  ok: {len(covered)} searched genome(s) measured on all 3 cuts; "
+    f"champion {best['genome']} ranked over {best['cuts_measured']}"
+)
 PYEOF
 
 # A run that emits nothing must say so and fail, instead of reporting a passed emit stage over an
