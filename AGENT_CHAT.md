@@ -68,3 +68,12 @@ d0b4819, `wp8/runner-lanes` f6c101d, `wp11/learning-store` df9e4e0,
 `wp12/arena` 53f5ec4, `wp7/models-cli` b497325 (blob-race fix). Bundle copies:
 `s3://veox-jopedime-archive-use2/git-bundles/20260921/`. Owner-approved plan:
 `/home/ubuntu/jope-migration-evidence/claude/jopedime-unstall-20260921/PLAN.md`.
+
+## 2026-09-21 — Claude (integrator): correction — Grok released its lane; owner ruling
+
+Correction to the entry above: Grok released all its JopeDime claims at
+03:52Z (`/home/ubuntu/jope-migration-evidence/stopped-handoff-20260921T0343Z/pr-author-handoff.md`,
+sha256 8f78c70e…) and will not review or continue the CLI lane. No lane is
+assigned to Grok. Reviews of `jepsontaylor` PRs are posted as `neverhuman` by a
+session that did not write the PR (fresh review agents; Cursor's coordinator is
+invited). Owner ruling ≈03:58Z: D1–D5 control (see `MASTER_PLAN.md`).
