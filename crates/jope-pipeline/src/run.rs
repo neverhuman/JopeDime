@@ -6,7 +6,7 @@
 //! fails closed rather than letting a caller believe it ran. The S3 publication
 //! and router-training stages are likewise out of scope and are not pretended to.
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use jope_datasets::paths::now_rfc3339;
 use std::{path::PathBuf, time::Instant};
 
@@ -208,7 +208,13 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
             .collect::<Vec<_>>()
             .join("; ")
     });
-    stages.record("emit", "passed", emit_reason, started);
+    // Every requested language excluded means the run produced no code at all. Recording that as
+    // `passed` because the emitter "handled" each one is the false green this pipeline exists to
+    // avoid: the caller asked for working source and got none, so the stage failed and so did the
+    // run. A partial emission is a pass with its exclusions recorded, which is a different thing.
+    let all_excluded = emitted.artifacts.is_empty();
+    let emit_status = if all_excluded { "failed" } else { "passed" };
+    stages.record("emit", emit_status, emit_reason, started);
 
     let started = Instant::now();
     stages.record("receipt", "passed", None, started);
@@ -230,6 +236,19 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     let path = root.join("receipt.json");
     std::fs::write(&path, serde_json::to_vec_pretty(&receipt)?)
         .with_context(|| format!("write {}", path.display()))?;
+    // Written first, so the receipt that records the failure survives the failure.
+    if all_excluded {
+        bail!(
+            "no code was emitted: every requested language was excluded ({}); receipt in {}",
+            receipt
+                .emit_exclusions
+                .iter()
+                .map(|e| format!("{}: {}", e.language, e.reason))
+                .collect::<Vec<_>>()
+                .join("; "),
+            root.display()
+        );
+    }
     Ok(receipt)
 }
 
@@ -265,7 +284,7 @@ fn assemble(
     }
     Ok(Receipt {
         schema: receipt::RECEIPT_SCHEMA_ID.to_owned(),
-        ok: true,
+        ok: stages.iter().all(|s| s.status != "failed"),
         tool_version: TOOL_VERSION.to_owned(),
         git_sha: git_sha(),
         created_at: now_rfc3339(),

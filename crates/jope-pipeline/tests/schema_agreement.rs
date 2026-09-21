@@ -189,6 +189,63 @@ fn a_well_formed_receipt_validates() {
     validate_value(&fixture()).unwrap();
 }
 
+/// A run that emitted nothing must not be able to describe itself as one that emitted code.
+/// The CLI already fails such a run, but the receipt is what a later reader trusts, so the
+/// contradiction is refused here too rather than only at the moment of the run.
+#[test]
+fn the_validator_refuses_an_emit_stage_that_disagrees_with_the_artifacts() {
+    // `passed` with nothing emitted.
+    let mut receipt = fixture();
+    receipt["artifacts"] = json!([]);
+    receipt["emit_exclusions"] = json!([
+        {"language": "rust", "reason": "the emitter does not cover head gpr"}
+    ]);
+    let errors = validate_value(&receipt).unwrap_err();
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("emit passed but the receipt names no artifact")),
+        "{errors:?}"
+    );
+
+    // `failed` while artifacts are listed: the mirror image, equally a lie.
+    let mut receipt = fixture();
+    receipt["ok"] = json!(false);
+    receipt["stages"][5]["status"] = json!("failed");
+    receipt["stages"][5]["reason"] = json!("rust: the emitter does not cover head gpr");
+    let errors = validate_value(&receipt).unwrap_err();
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("emit failed but the receipt names 1 artifact")),
+        "{errors:?}"
+    );
+
+    // `ok` may not survive a failed stage.
+    let mut receipt = fixture();
+    receipt["artifacts"] = json!([]);
+    receipt["stages"][5]["status"] = json!("failed");
+    receipt["stages"][5]["reason"] = json!("rust: the emitter does not cover head gpr");
+    let errors = validate_value(&receipt).unwrap_err();
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("ok is true but a stage failed")),
+        "{errors:?}"
+    );
+
+    // And the honest shape of the same run validates.
+    let mut receipt = fixture();
+    receipt["ok"] = json!(false);
+    receipt["artifacts"] = json!([]);
+    receipt["stages"][5]["status"] = json!("failed");
+    receipt["stages"][5]["reason"] = json!("rust: the emitter does not cover head gpr");
+    receipt["emit_exclusions"] = json!([
+        {"language": "rust", "reason": "the emitter does not cover head gpr"}
+    ]);
+    validate_value(&receipt).unwrap();
+}
+
 #[test]
 fn the_validator_rejects_what_the_schema_and_the_invariants_forbid() {
     let cases = [
