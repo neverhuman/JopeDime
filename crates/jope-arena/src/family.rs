@@ -3,7 +3,7 @@
 //! Methods are merged into families by the configured prefix patterns (best score per dataset
 //! wins), a family is *global-eligible* when it has scores in every task, the analysis
 //! blacklists must be exactly the datasets some global family lacks, and every task table rates
-//! its participants with [`crate::elo::ratings`]. Ported from `/home/ubuntu/sotarena/src/main.rs`
+//! its participants with [`crate::elo::ratings`]. Ported from the SOTArena reporter's `src/main.rs`
 //! (`canonical_participants`, `global_family_ids`, `validate_blacklist_complements`,
 //! `apply_analysis_blacklists`, `build_task_table`, `build_global`, `build_valid_report`,
 //! `build_report`).
