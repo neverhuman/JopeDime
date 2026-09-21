@@ -18,7 +18,8 @@ encodings→GP neural policy will ship because the product needs a router; it is
 
 | Surface | Status on this SHA |
 | --- | --- |
-| `jope` CLI | No subcommand still prints `jope 0.1.0`. Fixtures, CPU `encode` (fail-closed without weights), `fit` / `search` / `emit`, `champions --local`, `train-step --local` (fits a 128-d centroid router), `route`. `champions --pull/--push` and `train-step --env dev` **fail closed**. Live S3 is **not** wired. |
+| `jope` CLI | No subcommand still prints `jope 0.1.0`. Fixtures, CPU `encode` (fail-closed without weights), `fit` / `search` / `emit`, `champions --local`, `train-step --local` (fits a 128-d centroid router), `route`, `pipeline run`. `champions --pull/--push` and `train-step --env dev` **fail closed**. Live S3 is **not** wired. |
+| `jope pipeline run` | CPU spine only: dataset -> folds -> GP search -> select -> emit -> `jope.pipeline-receipt/v1`. The search is a generational GP over feat-math pipeline genomes: every candidate is fitted with `feat_math::fit` on a cut's training rows and scored on that cut's held-out rows, and the champion is the lowest mean held-out RMSE. The receipt carries the per-cut measurement counts and the champion's RMSE and R². It does **not** use the engine's GP search, which cannot measure in a shipped binary (`eval_registry/authority.rs` blocks every capability outside `cfg(test)` and `fit_boundary.rs` fences fitting behind a service socket). The encode/propose stage is **skipped** and recorded (`--policy require` fails closed); S3 publication and router training are **not** in it. |
 | `crates/feat-math` | Typed GP IR, fit, and portable emitters (Rust / Python / JS / C++17; C++20 compiles C++17). |
 | `crates/jope-encoders` | Encoder implementations (package name `starforge`). |
 | `crates/hyperion` | Workspace member. CPU/Candle default (`hyperion-cpu`). CUDA feature exists; not the CI default. |
@@ -50,6 +51,9 @@ cargo run --locked --bin jope -- search --input datasets/synthetic/regression/li
 cargo run --locked --bin jope -- champions --local --root datasets/synthetic --json
 cargo run --locked --bin jope -- train-step --local --root datasets/synthetic --output /tmp/jope-router --json
 cargo run --locked --bin jope -- route --input datasets/synthetic/regression/linear.json --router /tmp/jope-router --json
+cargo run --locked --bin jope -- pipeline run --dataset datasets/test/pmlb-229-pwlinear \
+  --budget evaluations=8,seconds=120 --emit rust,python,cpp17,cpp20,js --policy skip --output target/e2e
+cargo run --locked --bin jope -- pipeline verify-receipt --receipt target/e2e/receipt.json
 ```
 
 GitHub PR CI is `.github/workflows/ci.yml` (hygiene + cargo-deny).

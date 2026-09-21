@@ -18,6 +18,7 @@ feat-math = { path = "../feat-math" }
 hyperion = { path = "../hyperion", default-features = false, features = ["hyperion-cpu"] }
 jope-datasets = { path = "../jope-datasets" }
 jope-models = { path = "../jope-models" }
+jope-pipeline = { path = "../jope-pipeline" }
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true

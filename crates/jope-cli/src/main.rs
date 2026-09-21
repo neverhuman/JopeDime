@@ -1,6 +1,6 @@
 //! `jope`: the one command line. Fixture, kernel, champion and router verbs live in this
-//! crate; `jope models …` and `jope datasets …` delegate to the library crates' own clap
-//! commands (no process is spawned).
+//! crate; `jope models …`, `jope datasets …` and `jope pipeline …` delegate to the library
+//! crates' own clap commands (no process is spawned).
 
 use anyhow::{ensure, Result};
 use clap::{Parser, Subcommand};
@@ -15,7 +15,7 @@ use std::{path::PathBuf, process::ExitCode};
 #[command(
     name = "jope",
     version,
-    about = "JOPE-Dime fixtures, encode, fit/emit/search, local champions, centroid router, model bundles and dataset catalog"
+    about = "JOPE-Dime fixtures, encode, fit/emit/search, local champions, centroid router, model bundles, dataset catalog and the product pipeline"
 )]
 struct Cli {
     #[command(subcommand)]
@@ -122,6 +122,8 @@ enum Command {
     Models(jope_models::cli::Cli),
     /// Dataset catalog: ingest, fetch, verify and link content-addressed datasets.
     Datasets(jope_datasets::cli::Cli),
+    /// Product pipeline: dataset, prepared cuts, GP search, emitted code and a receipt.
+    Pipeline(jope_pipeline::cli::Cli),
 }
 
 fn execute(command: &Command) -> Result<Verification> {
@@ -147,8 +149,9 @@ fn execute(command: &Command) -> Result<Verification> {
         | Command::TrainStep { .. }
         | Command::Route { .. }
         | Command::Models(_)
-        | Command::Datasets(_) => {
-            unreachable!("kernel, models and datasets commands are dispatched separately")
+        | Command::Datasets(_)
+        | Command::Pipeline(_) => {
+            unreachable!("kernel, models, datasets and pipeline commands are dispatched separately")
         }
     }
 }
@@ -189,6 +192,7 @@ fn main() -> ExitCode {
     let command = match command {
         Command::Models(cli) => return jope_models::cli::exec(cli),
         Command::Datasets(cli) => return jope_datasets::cli::exec(cli),
+        Command::Pipeline(cli) => return jope_pipeline::cli::exec(cli),
         command => command,
     };
     match &command {
@@ -400,6 +404,7 @@ mod tests {
             "route",
             "models",
             "datasets",
+            "pipeline",
         ] {
             assert!(names.contains(&verb), "{verb} missing from {names:?}");
         }
@@ -408,6 +413,9 @@ mod tests {
         assert_eq!(verbs, ["fetch", "verify", "publish", "path"]);
         let datasets = cmd.find_subcommand("datasets").unwrap();
         assert!(datasets.find_subcommand("fetch").is_some());
+        let pipeline = cmd.find_subcommand("pipeline").unwrap();
+        let verbs: Vec<&str> = pipeline.get_subcommands().map(|c| c.get_name()).collect();
+        assert_eq!(verbs, ["run", "verify-receipt"]);
         Cli::command().debug_assert();
     }
 }
