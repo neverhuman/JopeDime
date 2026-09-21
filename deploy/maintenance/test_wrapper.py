@@ -90,6 +90,11 @@ def main():
     for name, second in [("duplicate", measured), ("nested", measured / "child")]:
         exercise(name, {**config, "measurement_roots": config["measurement_roots"] +
                        [{"group": "fixture", "path": str(second)}]}, 1)
+    path, receipt = exercise("missing-measurement-root", {**config, "measurement_roots": [
+        {"group": "fixture", "path": str(scratch / "absent")}]}, 1)
+    assert len(receipt["scan_outputs"]) == 2
+    for row in receipt["scan_outputs"]:
+        assert json.loads((path.parent / row["output"]).read_text())["complete"]
     privileged = {**config, "measurement_roots": [{**config["measurement_roots"][0],
                                                    "privileged": True}]}
     exercise("privileged-command", privileged, 0)
@@ -132,8 +137,19 @@ def main():
     receipt = json.loads(receipt_path.read_text())
     assert receipt["status"] == "failed" and "signal 15" in receipt["error"]
     cases.append({"name": "real-SIGTERM", "receipt": str(receipt_path)})
+    # Neither refused location is created or modified.
+    for name, custody in [("tmp-custody-refused", Path("/tmp")),
+                          ("working-tree-custody-refused", Path(module.APPROVED_ROOTS[0]))]:
+        try:
+            module.report(SimpleNamespace(config=config_path, custody=custody))
+        except ValueError as error:
+            assert "outside /tmp and Git working trees" in str(error)
+        else:
+            raise AssertionError(name)
+        cases.append({"name": name, "refused_before_writes": True})
     assert (measured / "evidence.bin").read_bytes() == b"\x00preserve\xff"
     (scratch / "results.json").write_text(json.dumps({"cases": cases,
+        "test_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "core_sha256": hashlib.sha256(core.read_bytes()).hexdigest(),
         "scope": "real receipt/disk/df paths; approved-root scanning isolated by mock, sudo success delegated to unprivileged du; installed service independently tests real roots/sudo"}, indent=2))
     print(f"PASS: {len(cases)} wrapper cases; {scratch}")

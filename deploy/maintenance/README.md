@@ -17,16 +17,20 @@ and verify it, check current consumers, then remove the explicit approved paths.
 The installed entrypoints remain `~/lane-tools/cargo-build-dirs.sh` and the
 user units `jope-build-sweep.service` / `.timer`. The service calls
 `~/lane-tools/jope-build-report.sh`; install `jope_report.py` beside both helpers.
-Python 3 and GNU coreutils are required. Pass the existing custody location through
+Python 3 and GNU coreutils are required. Pass the custody location through
 the service's `--custody` argument, independently of `--config`, so malformed
 configuration still gets a failure receipt. Custody inside `/tmp` or a Git working
 tree is rejected. If custody itself cannot be created/accessed, diagnostics remain
 in the systemd journal. The wrapper saves candidate output,
 stderr, script/config/unit checksums, systemd invocation ID, exit status, timestamps, per-root allocated
-bytes and filesystem usage beneath an existing custody directory outside
+bytes and filesystem usage beneath a custody directory outside
 working trees. Failed and interrupted runs retain their diagnostics. A killed
 process may leave a `running` receipt; inspect the systemd journal and treat it
 as incomplete. The service has a 30-minute timeout.
+
+The wrapper creates custody if needed and records both supplied and resolved paths.
+Missing unit files are recorded explicitly. Completed Cargo scans are retained
+even when a separate measurement root is missing; the overall run fails.
 
 The machine-local `~/lane-tools/jope-report-roots.json` has this structure:
 
@@ -48,6 +52,8 @@ record deliberately resolved symlink targets in the custody ledger. Preserve
 separate unrelated-root measurements for comparison, never scan Bullet or the
 broad Claude `/tmp` root for Cargo output. Per-root `du` measurements can include
 shared hardlinks, so do not claim their sum equals filesystem use.
+`group` is a label for per-root comparison, not an aggregated total. Label custody
+separately to distinguish report/archive growth from product and research growth.
 For retained stores containing root-owned evidence, an individual measurement row
 may set `"privileged": true` to invoke only `/usr/bin/sudo -n /usr/bin/du -s -B1 -- ROOT`.
 This read-only measurement requires existing noninteractive sudo permission;
@@ -71,3 +77,6 @@ directory. The fixture directory is proof evidence, not a working lane. Test the
 installed helper too with `--helper /home/ubuntu/lane-tools/cargo-build-dirs.sh`.
 The next-day measurement is a separate acceptance gate: scheduling it does not
 mean it happened. Keep PR #49 open until its actual successful report is recorded.
+
+Test the installed wrapper core with `test_wrapper.py --core /home/ubuntu/lane-tools/jope_report.py`,
+using the same required `--scratch` argument. Both test receipts fingerprint the test script.
