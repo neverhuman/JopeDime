@@ -20,5 +20,5 @@ fi
 mkdir -p /home/runner/work
 cp -a /opt/actions-runner /home/runner/runner
 cd /home/runner/runner
-echo "jope-runner-entrypoint: $(cat /opt/actions-runner/bin/Runner.Listener.deps.json | grep -o '"Runner.Listener/[0-9.]*"' | head -1) uid=$(id -u) work=/home/runner/work"
+echo "jope-runner-entrypoint: $(grep -o '"Runner.Listener/[0-9.]*"' /opt/actions-runner/bin/Runner.Listener.deps.json | head -1) uid=$(id -u) work=/home/runner/work"
 exec ./run.sh --jitconfig "$jitconfig"

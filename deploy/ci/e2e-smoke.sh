@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2317  # predict/compile_and_predict are exported and invoked by name through run (indirect calls look unreachable to shellcheck)
 # deploy/ci/e2e-smoke.sh — the `e2e-smoke` lane (main.yml / nightly.yml, self-hosted): one bounded
 # pass of the product loop on a committed test dataset, written against the binaries that exist
 # in this tree (`jope-parallel`, package jope-parallel; the feat-math `emit` example). Writes

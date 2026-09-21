@@ -3,6 +3,7 @@
 # directory has less than JOPE_RUNNER_MIN_FREE_GB free (default 50 GB). Exit 0 = enough space.
 set -euo pipefail
 # shellcheck source=deploy/runner/common.sh
+# shellcheck disable=SC1091  # sourced relative to this file; run shellcheck -x to follow
 . "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 docker_root=$(docker info --format '{{.DockerRootDir}}' 2>/dev/null || echo /var/lib/docker)

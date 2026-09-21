@@ -13,6 +13,7 @@
 # If GitHub has no queued job the listener idles until the service's RuntimeMaxSec stops it.
 set -euo pipefail
 # shellcheck source=deploy/runner/common.sh
+# shellcheck disable=SC1091  # sourced relative to this file; run shellcheck -x to follow
 . "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 lane=${1:?usage: run.sh <gpu|kernel>}

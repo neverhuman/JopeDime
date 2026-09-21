@@ -11,6 +11,7 @@ set -euo pipefail
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd "$here/../.." && pwd)
 # shellcheck source=deploy/runner/common.sh
+# shellcheck disable=SC1091  # sourced relative to this file; run shellcheck -x to follow
 . "$here/common.sh"
 
 skip_sdk=0; skip_image=0
