@@ -8,8 +8,9 @@
 # `cargo test` LINKS, unlike `cargo check`. Linking every test binary in this workspace produces a
 # 72 GB target directory (measured 2026-09-21); a standard ubuntu-24.04 runner has roughly 14 GB
 # free, so the link dies with `collect2: fatal error: ld terminated with signal 7 [Bus error]` and
-# no test runs at all. The product scope below links to 9.4 GB and runs 617 tests in about a
-# minute, so it is a real gate that fits.
+# no test runs at all. The product scope below fits: measured on hosted run 35586778652, it links
+# to 8.98 GB against 11.5 GB free (3.9 GB left afterwards) and executes 651 tests in 626 s. The
+# full product inventory is 664 = 651 executed + 9 ignored + 4 filtered by the `pr` profile.
 #
 # The deferred crates (jope-parallel, jope-dime-regressor, the vendored smartcluster set) are the
 # heavy ones, and they are also where every currently-broken and every race-sensitive test lives:
