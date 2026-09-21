@@ -18,12 +18,16 @@
 # are genuinely untested on pull requests, which this file states rather than hides.
 set -euo pipefail
 
-product=(feat-math jope-cli jope-datasets jope-models starforge jope-policy hyperion numpy-pcg64 jope-paths battle-gpu)
+product=(feat-math jope-cli jope-datasets jope-models starforge jope-policy hyperion numpy-pcg64 jope-paths battle-gpu jope-arena)
 deferred=(jope-parallel jope-dime-regressor jain-smartcluster jain-smartcluster-core jain-smartcluster-fabric jain-smartcluster-daemon jain-worker jainnode scq)
 
+# deploy/ci/check.sh asserts that product + deferred is exactly the workspace, so a crate added
+# later cannot silently land in neither list (which is how jope-arena slipped through once).
 case "${1:-}" in
-  --deferred) printf -- '-p %s ' "${deferred[@]}" ;;
-  "")         printf -- '-p %s ' "${product[@]}" ;;
+  --deferred) set -- "${deferred[@]}" ;;
+  "")         set -- "${product[@]}" ;;
   *) echo "usage: $0 [--deferred]" >&2; exit 2 ;;
 esac
+[ "$#" -gt 0 ] || { echo "$0: empty package set" >&2; exit 3; }
+printf -- '-p %s ' "$@"
 echo

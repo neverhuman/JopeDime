@@ -38,5 +38,6 @@ step "datasets/test (jope-datasets verify --repo)"; if cargo run -q -p jope-data
 step "models/ (jope-models verify --manifests-only: schema + index + PINNED, no network)"; if cargo run -q -p jope-models --locked -- verify --manifests-only; then echo "ok"; else echo "models manifests verification failed"; fail=1; fi
 step "no absolute home paths in code"; abs=$(git grep -nE '/home/[a-z]+/' -- crates/*/src crates/*/tests deploy/systemd .github || true); if [ -n "$abs" ]; then head -20 <<<"$abs"; echo "absolute paths above: $(wc -l <<<"$abs") hits (ADR-0003: use the jope-paths resolvers / unit-template placeholders)"; fail=1; else echo "ok"; fi
 step "no absolute home paths in python (informational until WP6 lands)"; pyabs=$(git grep -nE '/home/[a-z]+/' -- python/src || true); if [ -n "$pyabs" ]; then echo "$(wc -l <<<"$pyabs") hits in python/src (informational until WP6 lands)"; else echo "ok"; fi
+step "rust-test scope partitions the workspace (deploy/ci/rust-test-scope.sh)"; if ! python3 deploy/ci/rust-test-scope-check.py; then fail=1; fi
 step "size caps"; big=$(git ls-files -z | xargs -0 stat -c '%s %n' | awk '$1>5242880{print}' ); if [ -n "$big" ]; then echo "$big"; echo "files over 5 MiB"; fail=1; else echo "ok"; fi
 exit $fail
