@@ -86,16 +86,16 @@ def main():
     assert len(rows) == 3, "nested Cargo output must not be double-counted"
     r = call("fingerprint cannot escape supplied root", [root / "fingerprint/release"], True)
     assert json.loads(r.stdout)["candidates"] == []
-    for label, arguments in [
-        ("delete rejected", [root, "--delete"]),
-        ("delete before root validation", [scratch / "missing", "--delete"]),
-        ("missing age", [root, "--stale"]),
-        ("invalid age", [root, "--stale", "wat"]),
-        ("negative age", [root, "--stale", "-1"]),
-        ("missing root", [scratch / "missing"]),
-        ("symlink root", [root / "linked"]),
+    for label, arguments, expected in [
+        ("delete rejected", [root, "--delete"], 2),
+        ("delete before root validation", [scratch / "missing", "--delete"], 2),
+        ("missing age", [root, "--stale"], 2),
+        ("invalid age", [root, "--stale", "wat"], 2),
+        ("negative age", [root, "--stale", "-1"], 2),
+        ("missing root", [scratch / "missing"], 1),
+        ("symlink root", [root / "linked"], 1),
     ]:
-        call(label, arguments, False)
+        assert call(label, arguments, False).returncode == expected
     locked.chmod(0)
     try:
         assert os.geteuid() != 0, "run permission fixture as an unprivileged user"
@@ -110,6 +110,7 @@ def main():
         ("partial numeric measurement fails", subprocess.CalledProcessError(
             1, ["du"], output="123\tpartial-root\n", stderr="permission denied")),
         ("invalid successful measurement", subprocess.CompletedProcess(["du"], 0, "garbage", "")),
+        ("measurement timeout", subprocess.TimeoutExpired(["du"], 600)),
     ]:
         out, err = io.StringIO(), io.StringIO()
         behavior = {"side_effect": outcome} if isinstance(outcome, Exception) else {"return_value": outcome}
@@ -150,6 +151,7 @@ def main():
     (scratch / "before.json").write_text(json.dumps(before, indent=2))
     (scratch / "after.json").write_text(json.dumps(after, indent=2))
     (scratch / "results.json").write_text(json.dumps({"tests": results,
+        "test_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "wrapper_failure": receipt, "helper_sha256": hashlib.sha256(helper.read_bytes()).hexdigest(),
         "core_sha256": hashlib.sha256(helper.with_name("jope_report.py").read_bytes()).hexdigest(),
         "preservation": "exact unchanged file/directory membership, contents, symlinks, modes and mtimes; raw inventories"}, indent=2))

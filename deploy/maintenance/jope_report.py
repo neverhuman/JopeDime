@@ -102,6 +102,8 @@ def report(args):
     run.mkdir(mode=0o700)
     receipt = {"started_at": utc(), "status": "running", "exit_status": None,
                "checksums": {}, "measurements": [], "scan_outputs": [],
+               "custody_argument": str(args.custody), "custody_resolved": str(output),
+               "missing_unit_files": [],
                "invocation_id": os.environ.get("INVOCATION_ID")}
     source = Path(__file__).resolve().parent
     receipt_path = run / "receipt.json"
@@ -116,8 +118,11 @@ def report(args):
         paths = [Path(__file__).resolve(), source / "cargo-build-dirs.sh",
                  source / "jope-build-report.sh"]
         units = Path.home() / ".config/systemd/user"
-        paths.extend(p for p in [units / "jope-build-sweep.service",
-                                units / "jope-build-sweep.timer"] if p.is_file())
+        for path in [units / "jope-build-sweep.service", units / "jope-build-sweep.timer"]:
+            if path.is_file():
+                paths.append(path)
+            else:
+                receipt["missing_unit_files"].append(str(path))
         for path in paths:
             receipt["checksums"][str(path)] = hashlib.sha256(path.read_bytes()).hexdigest()
         config_path = args.config.resolve(strict=True)
@@ -133,6 +138,18 @@ def report(args):
             raise ValueError("service requires the two approved Cargo roots and a 48-hour filter")
         if not isinstance(config["measurement_roots"], list):
             raise ValueError("measurement_roots must be a list")
+        for index, root in enumerate(roots):
+            result_path = run / f"candidates-{index}.json"
+            diagnostic = run / f"scan-{index}.stderr"
+            receipt["scan_outputs"].append({"root": root, "output": result_path.name,
+                                            "stderr": diagnostic.name})
+            diagnostic.write_text("")
+            try:
+                result_path.write_text(json.dumps(scan(root, 48), indent=2) + "\n")
+            except Exception as error:
+                diagnostic.write_text(str(error) + "\n" + (getattr(error, "stderr", "") or ""))
+                raise
+        # Keep Cargo reports even if a separate comparison root is stale.
         seen = []
         for item in config["measurement_roots"]:
             if not isinstance(item, dict) or not isinstance(item.get("path"), str) or \
@@ -147,17 +164,6 @@ def report(args):
                    for prior in seen):
                 raise ValueError(f"overlapping measurement root: {path}")
             seen.append(resolved)
-        for index, root in enumerate(roots):
-            result_path = run / f"candidates-{index}.json"
-            diagnostic = run / f"scan-{index}.stderr"
-            receipt["scan_outputs"].append({"root": root, "output": result_path.name,
-                                            "stderr": diagnostic.name})
-            diagnostic.write_text("")
-            try:
-                result_path.write_text(json.dumps(scan(root, 48), indent=2) + "\n")
-            except Exception as error:
-                diagnostic.write_text(str(error) + "\n" + (getattr(error, "stderr", "") or ""))
-                raise
         for item in config["measurement_roots"]:
             resolved = Path(item["path"])
             receipt["measurements"].append({**item, "allocated_bytes": allocated(
