@@ -141,13 +141,14 @@ impl BlobDir {
         Ok(true)
     }
 
-    /// Every complete blob name (sorted); partials are skipped.
+    /// Every complete blob name (sorted); in-flight `.partial` files and the `.partial.lock`
+    /// files that serialise writers (left in place on purpose) are skipped.
     pub fn list(&self) -> Vec<String> {
         let mut names: Vec<String> = std::fs::read_dir(&self.dir)
             .map(|rd| {
                 rd.filter_map(|e| e.ok())
                     .map(|e| e.file_name().to_string_lossy().into_owned())
-                    .filter(|n| !n.ends_with(".partial"))
+                    .filter(|n| !n.ends_with(".partial") && !n.ends_with(".partial.lock"))
                     .collect()
             })
             .unwrap_or_default();
@@ -301,7 +302,11 @@ mod concurrency_tests {
             r.as_ref().unwrap();
         }
         let out = std::fs::read(blobs.path(&sha)).unwrap();
-        assert_eq!(out.len(), payload.len(), "blob must not be doubled or truncated");
+        assert_eq!(
+            out.len(),
+            payload.len(),
+            "blob must not be doubled or truncated"
+        );
         assert_eq!(crate::hash::sha256_hex(&out), sha);
         assert!(!blobs.partial_path(&sha).exists());
         assert_eq!(blobs.list(), vec![sha]);

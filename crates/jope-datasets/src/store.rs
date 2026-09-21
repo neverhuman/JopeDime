@@ -199,13 +199,19 @@ impl Store {
                 .map(|s| s.to_string_lossy().into_owned())
                 .unwrap_or_default()
         ));
-        let _lock = std::fs::OpenOptions::new()
+        let lock_file = std::fs::OpenOptions::new()
             .create(true)
             .truncate(false)
             .write(true)
             .open(&lock_path)?;
-        _lock
-            .lock()
+        // `File::lock` blocks its thread until the lock is granted, so it runs on the blocking
+        // pool: taken inline it would block the runtime thread polling this future, and when
+        // several `ensure` futures share one polling thread (`join_all` under `block_on`) the
+        // holder is never polled again to release the lock (a deadlock, seen in the concurrency
+        // test).
+        let _lock = tokio::task::spawn_blocking(move || lock_file.lock().map(|()| lock_file))
+            .await
+            .context("lock task")?
             .with_context(|| format!("lock {}", lock_path.display()))?;
         let total = self
             .size(rel)
