@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2317  # the check_* functions are invoked by name through run_step (indirect calls look unreachable to shellcheck)
 # deploy/ci/gpu-qualification.sh — wrapper of the self-hosted `neural-cuda` lane (main.yml,
 # nightly.yml). Runs the CUDA-bound builds and tests under the exact SDK environment of
 # deploy/receipts/libtorch.json and writes a `jope.cuda-qualification/v1` receipt
@@ -169,6 +170,7 @@ if [[ $mode == run ]]; then
   else
     add_step "$(step_record sdk-env "bash deploy/ci/neural-env.sh" passed 0 0 "${outdir#"$target"/}/sdk-env.log" "$(sha256sum "$outdir/sdk-env.log" | cut -c1-64)" 0)"
     # shellcheck source=deploy/ci/neural-env.sh
+    # shellcheck disable=SC1091  # sourced at run time from the repo root; shellcheck -x follows it
     . deploy/ci/neural-env.sh
     run_step clippy-neural "cargo clippy -p jope-parallel --features neural --all-targets --locked" check_clippy
     run_step nextest-neural "cargo nextest run -P main -p jope-parallel --features neural --locked" check_nextest

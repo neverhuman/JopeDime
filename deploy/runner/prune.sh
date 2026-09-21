@@ -4,6 +4,7 @@
 # target volume. Never touches the SDK or models volumes.
 set -euo pipefail
 # shellcheck source=deploy/runner/common.sh
+# shellcheck disable=SC1091  # sourced relative to this file; run shellcheck -x to follow
 . "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 echo "prune: $(date -u +%FT%TZ)"
