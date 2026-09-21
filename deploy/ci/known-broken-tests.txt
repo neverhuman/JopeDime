@@ -6,14 +6,15 @@
 #
 # Format: <binary> <test> # <reason>
 #
-# Derived 2026-09-21 from a clean clone of main d43bc5f5. Every line below was re-run at low load
+# Derived 2026-09-21 from a clean clone of main d43bc5f5 (cause A0 fixed and removed since). Every line below was re-run at low load
 # with `--test-threads 2` and reproduced deterministically, so these are real failures, not flakes.
 # Tests that only failed under parallelism are NOT here — see deploy/ci/serial-test-binaries.txt.
 #
-# --- cause A0: ADR-0003/WP6 relocation left three tests pointing at moved files ---
-# Not fences and not lost files: both scripts are tracked, just not where the tests look
-# ($CARGO_MANIFEST_DIR/tools/). family_growth_policy.py -> crates/jope-engine/policy/,
-# shared_teaching_cache.py -> python/src/jope/tools/. These three should be the cheapest to fix.
+# --- cause A0: FIXED, entries removed ---
+# The ADR-0003/WP6 relocation had left three tests pointing at moved files. They were repointed
+# at crates/jope-engine/policy/ and python/src/jope/tools/ in the same pull request that removed
+# their lines here, and re-run green. A quarantine file that still names a passing test teaches
+# the next reader to distrust the whole list, so nothing is left behind as a reminder.
 #
 # --- cause A: the fit authority refuses, permanently ---
 # eval_registry/authority.rs activation_block() reads the activations/coverage tables into
@@ -30,10 +31,7 @@ gp_contracts sealed_memory_view_matches_file_evaluation_and_rejects_writes # nam
 view_contracts fitted_view_predictor_uses_the_exact_cut_and_original_target_units # fit authority fenced
 view_contracts isolated_fitted_view_export_binds_success_and_preserves_worker_failures # fit authority fenced
 view_contracts experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits # fit authority fenced
-families authenticated_component_growth_preserves_panels_and_is_membership_only # STALE PATH: families.rs:295 copies $CARGO_MANIFEST_DIR/tools/family_growth_policy.py, which the port moved to crates/jope-engine/policy/
-families component_growth_refuses_forged_summaries_changed_helper_and_stale_parent # STALE PATH: families.rs:405, same relocation as above
 queue native_preparation_status_cannot_change_a_live_gp_queue # queue.rs:133 panic
-sealed_storage native_ranks_share_a_sealed_identity_and_server_restart_reverifies # STALE PATH, not a fence: sealed_storage.rs:40 runs $CARGO_MANIFEST_DIR/tools/shared_teaching_cache.py, which the port moved to python/src/jope/tools/
 #
 # --- cause B: behavioural assertions that do not hold on this tree (not environment) ---
 learning_history compact_overview_uses_latest_validation_timestamp_across_overlapping_runs # expects "Validation Sequence NLL: 0.12345"
