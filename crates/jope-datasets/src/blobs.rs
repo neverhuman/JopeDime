@@ -262,3 +262,48 @@ mod tests {
         assert!(rt.block_on(blobs.ensure(None, &bad, 7)).is_err());
     }
 }
+
+#[cfg(test)]
+mod concurrency_tests {
+    use super::*;
+
+    /// Eight concurrent `ensure` calls for one blob (threads and a second process would race the
+    /// same way) must produce exactly one correct blob and no doubled content or leftover partial.
+    #[test]
+    fn concurrent_ensure_of_one_blob_is_serialised() {
+        let tmp = tempfile::tempdir().unwrap();
+        let src_root = tmp.path().join("store");
+        std::fs::create_dir_all(src_root.join("blobs/sha256")).unwrap();
+        let payload: Vec<u8> = (0..300_000u32).map(|i| (i % 251) as u8).collect();
+        let sha = crate::hash::sha256_hex(&payload);
+        std::fs::write(src_root.join("blobs/sha256").join(&sha), &payload).unwrap();
+        let store = Store::open(&format!("file://{}", src_root.display())).unwrap();
+        let blobs = BlobDir::new(tmp.path().join("cache"));
+        std::fs::create_dir_all(tmp.path().join("cache")).unwrap();
+        let rt = tokio::runtime::Builder::new_multi_thread()
+            .worker_threads(8)
+            .enable_all()
+            .build()
+            .unwrap();
+        let results = rt.block_on(async {
+            let tasks: Vec<_> = (0..8)
+                .map(|_| {
+                    let store = &store;
+                    let blobs = &blobs;
+                    let sha = sha.clone();
+                    let len = payload.len() as u64;
+                    async move { blobs.ensure(Some(store), &sha, len).await }
+                })
+                .collect();
+            futures_util::future::join_all(tasks).await
+        });
+        for r in &results {
+            r.as_ref().unwrap();
+        }
+        let out = std::fs::read(blobs.path(&sha)).unwrap();
+        assert_eq!(out.len(), payload.len(), "blob must not be doubled or truncated");
+        assert_eq!(crate::hash::sha256_hex(&out), sha);
+        assert!(!blobs.partial_path(&sha).exists());
+        assert_eq!(blobs.list(), vec![sha]);
+    }
+}
