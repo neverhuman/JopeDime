@@ -19,6 +19,7 @@ jobs:
     outputs:
       rust: ${{ steps.filter.outputs.rust }}
       emitters: ${{ steps.filter.outputs.emitters }}
+      inputs: ${{ steps.filter.outputs.inputs }}
     steps:
       - name: Checkout
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v5
@@ -31,7 +32,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
-          rust=true; emitters=true
+          rust=true; emitters=true; inputs=true
           # The checkout is the pull request's merge ref with full history, so the base commit is
           # present without another fetch (persist-credentials is off, so a fetch could not auth).
           if [ -n "$BASE_SHA" ]; then
@@ -39,10 +40,12 @@ jobs:
             printf 'changed files:\n%s\n' "$changed"
             grep -qE '^(crates/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|\.github/workflows/ci\.yml$)' <<<"$changed" || rust=false
             grep -qE '^(crates/feat-math/|datasets/test/|deploy/ci/emitters|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.github/workflows/ci\.yml$)' <<<"$changed" || emitters=false
+            grep -qE '^(datasets/synthetic/|crates/jope-cli/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.github/workflows/ci\.yml$)' <<<"$changed" || inputs=false
           fi
           echo "rust=$rust" >> "$GITHUB_OUTPUT"
           echo "emitters=$emitters" >> "$GITHUB_OUTPUT"
-          echo "rust=$rust emitters=$emitters"
+          echo "inputs=$inputs" >> "$GITHUB_OUTPUT"
+          echo "rust=$rust emitters=$emitters inputs=$inputs"
 
   hygiene:
     runs-on: ubuntu-24.04
@@ -133,3 +136,29 @@ jobs:
         run: bash deploy/ci/emitters.sh
       - name: Strict portable parity (Rust, C++17, C++20, Python, JavaScript)
         run: "cargo test -p feat-math --locked --lib cxx:: --test portable_parity"
+
+  # Committed fixtures: the synthetic datasets verify against their catalog offline and the pinned
+  # generator reproduces them byte for byte. Runs whenever datasets/synthetic or the CLI change.
+  inputs:
+    needs: changes
+    if: needs.changes.outputs.inputs == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CARGO_TERM_COLOR: always
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v5
+        with:
+          persist-credentials: false
+      - name: Toolchain (from rust-toolchain.toml)
+        run: rustup show active-toolchain
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: inputs
+      - name: Verify the committed fixtures offline
+        run: cargo run --locked --bin jope -- verify-inputs --offline --json --root datasets/synthetic
+      - name: Generator reproduces the committed fixtures
+        run: cargo run --locked --bin jope -- generate-fixtures --check --json --output datasets/synthetic
