@@ -1005,8 +1005,42 @@ pub struct FreezeManifest {
 
 /// A snapshot restricted to HWM winners: every pointer that is not sealed and (unless
 /// `include_unbound`) is replayable, with its blob copied under `<out>/blobs/sha256/`.
+///
+/// Verifies the chain first, like every other path that writes or exports. This is the export
+/// boundary — a frozen corpus is the artifact a later reader trusts *without* re-deriving it, and
+/// the `ledger_head` this manifest carries reads as provenance for the chain it came from. It used
+/// to be the one path in the crate that took `HEAD.json` at its word: `ingest` and
+/// `scores::append` call `require_intact`, `find` and `rows` go through the fail-closed
+/// `events()`, and `freeze` parsed `HEAD.json`, walked the pointers and wrote a manifest stamping
+/// `batches` and `events_total` it had never checked.
+///
+/// The blobs were never the problem — `read_blob` re-hashes every one it copies — so the exported
+/// *content* was sound. What was unsound was the manifest's implicit claim about where it came
+/// from, which is exactly the claim a corpus consumer cannot re-derive for itself.
+///
+/// The check is `require_intact`, the same one `ingest` uses, and it buys the same thing: the
+/// batch chain this host holds is internally consistent. It is not a claim that the tree is
+/// perfect. Two things it does not cover, both documented rather than papered over: a removed tail
+/// with `HEAD.json` rewritten to match is invisible to any self-contained check (see the
+/// [`crate::ledger`] module docs), and a pointer-level break with an intact chain — a
+/// `pointer-orphan` standing on its own — is reported by `hwm verify` and not by this. Run
+/// `hwm verify` before freezing a corpus you intend to publish; the runbook says so.
+///
+/// There is deliberately no `--force`. No workflow in this tree freezes a ledger it has reason to
+/// believe is broken: `freeze` has exactly two callers, both of them tests that build a clean tree
+/// first, and salvage from a damaged store is `hwm blob` and `hwm show --raw`, which read one
+/// record at a time and make no provenance claim at all.
 pub fn freeze(state: &State, out: &Path, include_unbound: bool) -> Result<FreezeManifest> {
     let ledger = Ledger::open(state.root(), "hwm");
+    ledger.require_intact().with_context(|| {
+        format!(
+            "refusing to freeze into {}: nothing was written. A frozen corpus is trusted without \
+             being re-derived, and its manifest's `ledger_head` is a provenance claim about the \
+             chain it came from, so it must not be written from a chain this host cannot walk. \
+             Run `hwm verify` for the full report and repair the ledger first",
+            out.display()
+        )
+    })?;
     let head = ledger.head()?;
     let pointers = state.pointers()?;
     let mut manifest = FreezeManifest {
