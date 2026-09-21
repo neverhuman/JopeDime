@@ -7,9 +7,12 @@ Flock `AGENT_CHAT.md.lock` before append. Keep this file short; archive if long.
 
 ## 2026-09-21 — Grok: PR A (honest front door)
 
-GitHub work is branch `docs/honest-front-door-20260921` from `origin/main`
-`4235db6`. Unpublished health work on `codex/jankurai-health-20260919` is not
-in this PR. The 8×A100 tree is not in this PR.
+Merged as #17 (`b388ada`). Unpublished health work and the 8×A100 tree were
+not in that PR. Withdrawn #5–#16 remain evidence, not a live queue.
 
-Open PRs were empty at start. One PR only. After merge, requery before B
-(ten fixtures). Withdrawn #5–#16 remain evidence, not a live queue.
+## 2026-09-21 — Grok: PR B (ten synthetic fixtures)
+
+Claim: `crates/jope-cli`, `datasets/synthetic`, README/MASTER_PLAN for this
+SHA. Branch `feat/ten-synthetic-fixtures-20260921` from `origin/main`
+`b388ada`. Disposable clone only. Canonical dirty tree untouched. Do not
+start C until this PR merges. Encode / search / emit / S3 still not this PR.

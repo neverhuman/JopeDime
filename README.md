@@ -16,14 +16,14 @@ encodings→GP neural policy will ship because the product needs a router; it is
 
 ## What this SHA actually does
 
-| Surface | Status on `main` |
+| Surface | Status on this SHA |
 | --- | --- |
-| `jope` CLI | Prints `jope 0.1.0`. Encode / search / emit / S3 commands are **not** wired yet. |
+| `jope` CLI | No subcommand still prints `jope 0.1.0`. `generate-fixtures` and `verify-inputs --offline` qualify the ten Git fixtures. Encode / search / emit / S3 commands are **not** wired yet. |
 | `crates/feat-math` | Typed GP IR, fit, and portable emitters (Rust / Python / JS / C++17; C++20 compiles C++17). |
 | `crates/jope-encoders` | Encoder implementations (package name `starforge`). |
 | `crates/hyperion` | Host/runtime sources present; **not** a default workspace member. |
 | `crates/jope-engine`, `crates/jope-campaigns` | Engine and campaign crates in the workspace. |
-| Git datasets | One tiny table: `datasets/test/pmlb-229-pwlinear/`. Ten synthetic fixtures land next. |
+| Git datasets | Ten synthetic fixtures in `datasets/synthetic/` plus `datasets/test/pmlb-229-pwlinear/`. Real tables stay in S3. |
 | S3 fetch / champion training | Not on this SHA. |
 
 The engineering spec remains [`CURSOR_GITHUB_PORT_PLAN.md`](CURSOR_GITHUB_PORT_PLAN.md).
@@ -39,12 +39,14 @@ LibTorch, CUDA, or cluster runtime).
 cargo build --locked
 cargo run --locked --bin jope
 # jope 0.1.0
-bash ops/ci/required.sh
+cargo run --locked --bin jope -- verify-inputs --offline --root datasets/synthetic
+# Verified 10 synthetic datasets, … bytes, offline.
 ```
 
-`ops/ci/required.sh` is path audit, `rustfmt`, locked workspace tests, and the
-`jope 0.` version line. GitHub Actions YAML is `ops/ci/github-ci.yml` until a
-token with `workflow` scope can copy it to `.github/workflows/ci.yml`.
+GitHub PR CI is `.github/workflows/ci.yml` (hygiene + cargo-deny).
+`ops/ci/required.sh` is the fuller local gate (path audit, `rustfmt`, locked
+workspace tests, `jope 0.` version line). Replacing the hosted workflow with
+`ops/ci/github-ci.yml` needs a token with `workflow` scope.
 
 Prove emitters on this SHA:
 
@@ -74,12 +76,13 @@ Do not open a stack of PRs. Merge or close the current one before starting the n
 
 | Path | Role |
 | --- | --- |
-| `crates/jope-cli` | `jope` binary (version only) |
+| `crates/jope-cli` | `jope` binary: version line, fixture generate/verify |
 | `crates/feat-math` | GP genomes, fit, emitters |
 | `crates/jope-encoders` | Encoders (`starforge`) |
 | `crates/hyperion` | Hyperion host sources (not default members) |
 | `crates/jope-engine` | Storage / training / execution contracts |
 | `crates/jope-campaigns` | Campaign and qualification tooling |
+| `datasets/synthetic` | Ten integer-only Git fixtures + `catalog.json` |
 | `datasets/test` | Tiny CI table(s) |
 | `python/` | Bounded compatibility / training surface |
 | `ops/ci` | Required local/hosted checks |
