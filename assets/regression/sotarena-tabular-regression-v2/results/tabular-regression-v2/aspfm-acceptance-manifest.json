@@ -1,0 +1,93 @@
+{
+  "accepted_backend": "rust",
+  "benchmark_valid": true,
+  "decision": "accepted-current-best-rust-replay",
+  "entries": [
+    {
+      "accepted_rmse": 0.025694559660332014,
+      "configuration": {
+        "path": "private/jope-dime/replay/rust-snapshot/6054656956182296/c055ef5a27476372c9b44d9fba86f22abc07e053baf039294ccc7924fdf4cd43.json",
+        "sha256": "c055ef5a27476372c9b44d9fba86f22abc07e053baf039294ccc7924fdf4cd43"
+      },
+      "dataset_id": "6054656956182296",
+      "predictions_sha256": "c432decd817e76b50ab836419b5666a546942db2f2af98c81b459721606f081d",
+      "replay_receipt": {
+        "event": "dataset-resumed",
+        "event_sequence": 53,
+        "path": "results/tabular-regression-v2/aspfm-replay-receipts/6054656956182296.json",
+        "sha256": "d19e41ced77668f4a075380612530f799d01ce2b302620c118b83819a5bb8c55"
+      },
+      "source_evolution_receipt": {
+        "candidate_generation": 11,
+        "candidate_slot": 29,
+        "checkpoint_generation": 15,
+        "checkpoint_sha256": "2d13f0f0413a754f9631c9d2b3655931e7205dde6bb48ce895e3949a0ac36f64",
+        "run_id": "golden46-new3-20260723-v4",
+        "sha256": "a522326849a16ebb5d7f21019d9e40f85c48570f5488bc7582a20f07f7dd72ca"
+      }
+    },
+    {
+      "accepted_rmse": 0.1823874052422644,
+      "configuration": {
+        "path": "private/jope-dime/replay/rust-snapshot/ZTS_small/9b5ea2d73936a838a927592276e584e19f56dab79e471f7978201f55cc4522f9.json",
+        "sha256": "9b5ea2d73936a838a927592276e584e19f56dab79e471f7978201f55cc4522f9"
+      },
+      "dataset_id": "ZTS_small",
+      "predictions_sha256": "0eb8b3af2476437a5bc227dad9ee8dadfe39d8cc73ba227aa2aea7ae7a5121ac",
+      "replay_receipt": {
+        "event": "dataset-resumed",
+        "event_sequence": 51,
+        "path": "results/tabular-regression-v2/aspfm-replay-receipts/ZTS_small.json",
+        "sha256": "89deb8fcd6dbda01d01d7f7f9c2521335c2ffbe9c30c108336ee8ec0192b2f23"
+      },
+      "source_evolution_receipt": {
+        "candidate_generation": 14,
+        "candidate_slot": 11,
+        "checkpoint_generation": 15,
+        "checkpoint_sha256": "c3506e7253899c0a2bbf8ee561aeda33e151b6a33e24d51c326dda2b12661fb0",
+        "run_id": "golden46-new3-20260723-v4",
+        "sha256": "e3d0ee95e212cd904e2fef02799efba732670a16a44716c7d76806b5d8e2a021"
+      }
+    },
+    {
+      "accepted_rmse": 0.1752875691465526,
+      "configuration": {
+        "path": "private/jope-dime/replay/rust-snapshot/a3bd0a400ec4d7f9/0af10e1a5878638859255fcb5dba25f28d061003c63e119095c2a8490af7bb27.json",
+        "sha256": "0af10e1a5878638859255fcb5dba25f28d061003c63e119095c2a8490af7bb27"
+      },
+      "dataset_id": "a3bd0a400ec4d7f9",
+      "predictions_sha256": "c3619334a95d44f9a9986914bf6cb4dceeb7483a13a91ccc1f8b8a0b5a3ebf58",
+      "replay_receipt": {
+        "event": "dataset-completed",
+        "event_sequence": 83,
+        "path": "results/tabular-regression-v2/aspfm-replay-receipts/a3bd0a400ec4d7f9.json",
+        "sha256": "3d4172928617ef91d9458caa774769b4356565b4eb6b9be61d569733ec9426a6"
+      },
+      "source_evolution_receipt": {
+        "candidate_generation": 1,
+        "candidate_slot": 15,
+        "checkpoint_generation": 15,
+        "checkpoint_sha256": "dfc5e947d8d53a9868f31ff3be5eeebf9c67862b2098bb063415616daa94105f",
+        "run_id": "golden46-new3-20260723-v4",
+        "sha256": "7f5d5ef368ee722ad6aefec6549f2120945555f69e247f1198fa4ec4173d84af"
+      }
+    }
+  ],
+  "event_ledger": {
+    "path": "reports/demo/golden45-rust-replay.events.jsonl",
+    "sha256": "0547d0b819176735e21c2c7f8a027e8d95949eca00b12f1d46eee3e3607d0c15"
+  },
+  "method_id": "jope-dime",
+  "protocol": "aspfm-generated",
+  "publication": {
+    "datasets_scored": 45,
+    "datasets_total": 45,
+    "elo_rank": 1,
+    "elo": 2259.8,
+    "full_coverage_rank": 1,
+    "publication_state": "45/45"
+  },
+  "run_id": "golden46-new3-20260723-v4",
+  "schema": "sotarena.aspfm-acceptance-manifest.v2",
+  "track_id": "tabular-regression-v2"
+}

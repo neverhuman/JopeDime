@@ -1,8 +1,8 @@
-//! Small file helpers: transparent `.gz` inputs, streaming SHA-256, JSON.
+//! Small file helpers: transparent `.gz` / `.zst` inputs, streaming SHA-256, JSON.
 //!
-//! Every input file may be committed either as `<name>` or as `<name>.gz` (the regression fixture
-//! keeps the 3.4 MB `scores.csv` under the repository's size cap that way); readers here accept
-//! both and callers never see the difference.
+//! Every input file may be committed as `<name>`, `<name>.gz` or `<name>.zst` (the regression
+//! fixture keeps the 3.4 MB `scores.csv` under the 500 KiB cap as `scores.csv.zst`); readers here
+//! accept all three and callers never see the difference.
 
 use std::fs::File;
 use std::io::Read;
@@ -12,27 +12,38 @@ use anyhow::{Context, Result};
 use serde::de::DeserializeOwned;
 use sha2::{Digest, Sha256};
 
-/// The on-disk file behind `path`: `path` itself, or `path.gz`.
+/// Compressed spellings tried after the plain path, in order.
+pub const COMPRESSED_SUFFIXES: [&str; 2] = [".gz", ".zst"];
+
+/// The on-disk file behind `path`: `path` itself, `path.gz` or `path.zst`.
 pub fn resolve_input(path: &Path) -> Option<PathBuf> {
     if path.is_file() {
         return Some(path.to_path_buf());
     }
-    let mut gz = path.as_os_str().to_owned();
-    gz.push(".gz");
-    let gz = PathBuf::from(gz);
-    gz.is_file().then_some(gz)
+    COMPRESSED_SUFFIXES.iter().find_map(|suffix| {
+        let mut candidate = path.as_os_str().to_owned();
+        candidate.push(suffix);
+        let candidate = PathBuf::from(candidate);
+        candidate.is_file().then_some(candidate)
+    })
 }
 
-/// Read `path` (or `path.gz`, gunzipped) fully.
+/// Read `path` (or its `.gz` / `.zst` spelling, decompressed) fully.
 pub fn read_bytes(path: &Path) -> Result<Vec<u8>> {
     let actual = resolve_input(path)
-        .with_context(|| format!("missing input {} (nor {0}.gz)", path.display()))?;
+        .with_context(|| format!("missing input {} (nor .gz / .zst)", path.display()))?;
     let mut file = File::open(&actual).with_context(|| format!("open {}", actual.display()))?;
     let mut bytes = Vec::new();
     if actual.extension().is_some_and(|ext| ext == "gz") {
         flate2::read::GzDecoder::new(file)
             .read_to_end(&mut bytes)
             .with_context(|| format!("gunzip {}", actual.display()))?;
+    } else if actual.extension().is_some_and(|ext| ext == "zst") {
+        ruzstd::decoding::StreamingDecoder::new(&mut file)
+            .map_err(|error| anyhow::anyhow!("{error}"))
+            .with_context(|| format!("zstd header {}", actual.display()))?
+            .read_to_end(&mut bytes)
+            .with_context(|| format!("unzstd {}", actual.display()))?;
     } else {
         file.read_to_end(&mut bytes)
             .with_context(|| format!("read {}", actual.display()))?;
@@ -103,7 +114,15 @@ mod tests {
         );
         assert_eq!(read_bytes(&gz).unwrap(), b"x,y\n1,2\n");
         let missing = read_bytes(&dir.path().join("c.csv")).unwrap_err();
-        assert!(missing.to_string().contains("c.csv.gz"), "{missing}");
+        assert!(missing.to_string().contains(".gz / .zst"), "{missing}");
+        let zst = dir.path().join("d.csv.zst");
+        std::fs::write(
+            &zst,
+            ruzstd::encoding::compress_to_vec(&b"x,y\n1,2\n"[..], ruzstd::encoding::CompressionLevel::Fastest),
+        )
+        .unwrap();
+        assert_eq!(read_bytes(&dir.path().join("d.csv")).unwrap(), b"x,y\n1,2\n");
+        assert_eq!(resolve_input(&dir.path().join("d.csv")), Some(zst));
         let (sha, bytes) = sha256_file(&plain).unwrap();
         assert_eq!(bytes, 8);
         assert_eq!(sha, sha256_hex(b"x,y\n1,2\n"));

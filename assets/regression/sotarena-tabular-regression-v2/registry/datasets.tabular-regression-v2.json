@@ -1,0 +1,2055 @@
+{
+  "datasets": [
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "Monthly airline passengers",
+      "features": 2,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/019de5d76a718163/metadata.json",
+          "sha256": "b423f80d91afbef16aa9603d401e9aaefabb3599a6ffb2aac520725b8c35f124"
+        },
+        "test": {
+          "columns": 3,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/019de5d76a718163/test.csv",
+          "rows": 24,
+          "sha256": "3c3880fd9922845c3b37d1ccdaeab314f03427fa630206845f6a4c30aca621be"
+        },
+        "train": {
+          "columns": 3,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/019de5d76a718163/train.csv",
+          "rows": 120,
+          "sha256": "51bcd78adab1e89b6970e1db59b982d4faf751e6383d0c6b9b6dd58b027ad59b"
+        }
+      },
+      "id": "019de5d76a718163",
+      "rows": 144,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 11059930,
+        "test_rows": 24,
+        "train_rows": 120
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "019de5d76a718163babc29e512211b9f419b6657f0e9074a585c19f23d7d95f0",
+        "source_dataset_id": "flights",
+        "source_license": "CC0 (seaborn-data)",
+        "source_platform": "seaborn",
+        "source_url": "https://github.com/mwaskom/seaborn-data/blob/master/flights.csv",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "695_chatfield_4",
+      "features": 12,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/047e62b52a3f4ede/metadata.json",
+          "sha256": "131167249442a929248d09254b9ed300af4e03294d4dc5c006c60430009364a2"
+        },
+        "test": {
+          "columns": 13,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/047e62b52a3f4ede/test.csv",
+          "rows": 40,
+          "sha256": "db81d97c1bbcf243835ad680fc963705167fd8b461ede2adb7f747762b9e613d"
+        },
+        "train": {
+          "columns": 13,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/047e62b52a3f4ede/train.csv",
+          "rows": 195,
+          "sha256": "f6efbbe844d2a00256435487f60174353502afee158f74044419464e91e30d9d"
+        }
+      },
+      "id": "047e62b52a3f4ede",
+      "rows": 235,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 88819128,
+        "test_rows": 40,
+        "train_rows": 195
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "047e62b52a3f4ede2f48e684262ce2775bf984d552149be67fd9f99f0067a48b",
+        "source_dataset_id": "695_chatfield_4",
+        "source_license": "MIT (PMLB)",
+        "source_platform": "pmlb",
+        "source_url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/695_chatfield_4/695_chatfield_4.tsv.gz",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "hepatitis",
+      "features": 19,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/13b5df533e59a626/metadata.json",
+          "sha256": "ad2869f89c0ae41079f27c43ac6424ba8de096c6477efa7ac2049426d81cf933"
+        },
+        "test": {
+          "columns": 20,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/13b5df533e59a626/test.csv",
+          "rows": 21,
+          "sha256": "8ddc474338429731b8514e0fbd84eb2c8beff11d6cc2d1f0ddbe479cc44b3118"
+        },
+        "train": {
+          "columns": 20,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/13b5df533e59a626/train.csv",
+          "rows": 105,
+          "sha256": "daf84f20781471da155254c054101936ceb9860a06ceb7edc2590dd8886828bd"
+        }
+      },
+      "id": "13b5df533e59a626",
+      "rows": 126,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 310442078,
+        "test_rows": 21,
+        "train_rows": 105
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "13b5df533e59a6263dc6288c5948494ab2bc61aab2f2c13dba5676a40732d354",
+        "source_dataset_id": "55",
+        "source_license": null,
+        "source_platform": "openml",
+        "source_url": "https://www.openml.org/d/55",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "17a4542ee4fb9e44",
+      "features": 9,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/17a4542ee4fb9e44/metadata.json",
+          "sha256": "516e16d08a7f2847a0584927e9dd2b7ef19a0f33cd9070365267cea657b00057"
+        },
+        "test": {
+          "columns": 10,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/17a4542ee4fb9e44/test.csv",
+          "rows": 32,
+          "sha256": "13018564259808725908cdab0529791cd2d43d03d388554aedb9b0361079be40"
+        },
+        "train": {
+          "columns": 10,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/17a4542ee4fb9e44/train.csv",
+          "rows": 157,
+          "sha256": "abb8c42e2d352809c36a1e335d565d5a315b9789bafc70ff0a680c6f36dd1c28"
+        }
+      },
+      "id": "17a4542ee4fb9e44",
+      "rows": 189,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 378630947,
+        "test_rows": 32,
+        "train_rows": 157
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "17a4542ee4fb9e449e91aca422db14da6024b15bd4d21b887396f87de49d79b1",
+        "source_dataset_id": null,
+        "source_license": null,
+        "source_platform": null,
+        "source_url": null,
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "feynman_III_10_19",
+      "features": 4,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/1a803b27c2400dc4/metadata.json",
+          "sha256": "a073761389b7ad22af9afb5ff592ad421e03131cb6932ca95d10a63c3a0e595a"
+        },
+        "test": {
+          "columns": 5,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/1a803b27c2400dc4/test.csv",
+          "rows": 999,
+          "sha256": "4541a1bcf7460847a9aa34cd226cd903aa795f3ba1ba550c7cde06a647454ec5"
+        },
+        "train": {
+          "columns": 5,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/1a803b27c2400dc4/train.csv",
+          "rows": 1000,
+          "sha256": "726aad432c3a9ba5bc9cc0e7c057fe5964398f3219d43fce5c4f28e95a2ae7b1"
+        }
+      },
+      "id": "1a803b27c2400dc4",
+      "rows": 1999,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 464854058,
+        "test_rows": 999,
+        "train_rows": 1000
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "1a803b27c2400dc4972a2d84ffedfe3703406bdb7d1ab32d191cae1f3fc05924",
+        "source_dataset_id": "feynman_III_10_19",
+        "source_license": "MIT (PMLB)",
+        "source_platform": "pmlb",
+        "source_url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/feynman_III_10_19/feynman_III_10_19.tsv.gz",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "229_pwLinear",
+      "features": 10,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/1cb97b1d7314d43d/metadata.json",
+          "sha256": "e0f9fbe5fdeb2259b32ebe81e38d40633831b36907359692f07638662b594cf9"
+        },
+        "test": {
+          "columns": 11,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/1cb97b1d7314d43d/test.csv",
+          "rows": 34,
+          "sha256": "ebf1425f8097b11ec54dc67e8a9af9d486a8d9a0083c6b98cef7bc493fba70ea"
+        },
+        "train": {
+          "columns": 11,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/1cb97b1d7314d43d/train.csv",
+          "rows": 166,
+          "sha256": "12cebdca583ad0d7316e1963e0c1d7c2eda9efe1b9585a00a49364b570bb52e5"
+        }
+      },
+      "id": "1cb97b1d7314d43d",
+      "rows": 200,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 495737872,
+        "test_rows": 34,
+        "train_rows": 166
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "1cb97b1d7314d43dee07a1f78f16d74ea27faa0653fd135dfe0084ada3369517",
+        "source_dataset_id": "229_pwLinear",
+        "source_license": "MIT (PMLB)",
+        "source_platform": "pmlb",
+        "source_url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/229_pwLinear/229_pwLinear.tsv.gz",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "Parkinsons Telemonitoring",
+      "features": 21,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/21fbfe8b53dbcd60/metadata.json",
+          "sha256": "a509377436c726ed518b201553c47d52a66ae682923a8a17df9a3fd063610be0"
+        },
+        "test": {
+          "columns": 22,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/21fbfe8b53dbcd60/test.csv",
+          "rows": 999,
+          "sha256": "9786badb9d822cd0dc34b730019c13feff1fd02fe85da61a59c00a27e461f61c"
+        },
+        "train": {
+          "columns": 22,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/21fbfe8b53dbcd60/train.csv",
+          "rows": 1000,
+          "sha256": "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931"
+        }
+      },
+      "id": "21fbfe8b53dbcd60",
+      "rows": 1999,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 550427014,
+        "test_rows": 999,
+        "train_rows": 1000
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "21fbfe8b53dbcd605d79486b6b1bf9624b7ab9a4e549fb2b63c74a7344c46460",
+        "source_dataset_id": "parkinsons-telemonitoring",
+        "source_license": null,
+        "source_platform": "uci",
+        "source_url": "https://archive.ics.uci.edu/ml/machine-learning-databases/parkinsons/telemonitoring/parkinsons_updrs.data",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 3,
+      "cohort": "golden42",
+      "display_name": "healthcare_insurance_expenses",
+      "features": 6,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/24713c7f7bfa7807/metadata.json",
+          "sha256": "785d6a9db129badc87ca32e4c4e83a2f4d34bfa9ee87816e062fe9286ceec3e8"
+        },
+        "test": {
+          "columns": 7,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/24713c7f7bfa7807/test.csv",
+          "rows": 338,
+          "sha256": "89b77683e7c4899d043f6bbad31d291cbae40d90639fc2d161655d965a2d66b2"
+        },
+        "train": {
+          "columns": 7,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/24713c7f7bfa7807/train.csv",
+          "rows": 1000,
+          "sha256": "792b5536a28dc7180265ea0a0f5a770e9d7eb002b150298e20c66f3278690836"
+        }
+      },
+      "id": "24713c7f7bfa7807",
+      "rows": 1338,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 625220466,
+        "test_rows": 338,
+        "train_rows": 1000
+      },
+      "target": "charges",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "24713c7f7bfa78075849f7d2b4ac34626959d9e9f99930eeaf1a4ea0953ddaf9",
+        "source_dataset_id": "46931",
+        "source_license": null,
+        "source_platform": "openml",
+        "source_url": "https://www.openml.org/d/46931",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "barium",
+      "features": 30,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/30ef3eaa6d2971a9/metadata.json",
+          "sha256": "ce55dcc2a78f96245dbc386348bdceaa8bc31eb11d9a5c1a1245133b4f95b5ce"
+        },
+        "test": {
+          "columns": 31,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/30ef3eaa6d2971a9/test.csv",
+          "rows": 22,
+          "sha256": "d7ef01a3237bc304d2f3b15c1f034babe03de34f4e0410b6eb1492e1bad1cf7b"
+        },
+        "train": {
+          "columns": 31,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/30ef3eaa6d2971a9/train.csv",
+          "rows": 109,
+          "sha256": "53e723ca42438573f0e9e4584e1004d5c777b02b852dae9f67e60951134b63e5"
+        }
+      },
+      "id": "30ef3eaa6d2971a9",
+      "rows": 131,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 836376999,
+        "test_rows": 22,
+        "train_rows": 109
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "30ef3eaa6d2971a9d9073a534ccf4f9fbd780245e0575eff139e2b490102490e",
+        "source_dataset_id": "wooldridge/barium",
+        "source_license": "GPL (R package wooldridge)",
+        "source_platform": "rdatasets",
+        "source_url": "https://vincentarelbundock.github.io/Rdatasets/csv/wooldridge/barium.csv",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "Herbicide applied to Galium aparine",
+      "features": 2,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/3305a3ad973fb227/metadata.json",
+          "sha256": "be83bdf7b5cfab3a7f3cfde81a17b30fc9fde5358568f7c1bd02aaef1b763bfc"
+        },
+        "test": {
+          "columns": 3,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/3305a3ad973fb227/test.csv",
+          "rows": 40,
+          "sha256": "832bb2073eaaca40477b8c4cf17844203a946869d97ea17e0fe19687fb8844dd"
+        },
+        "train": {
+          "columns": 3,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/3305a3ad973fb227/train.csv",
+          "rows": 200,
+          "sha256": "638c6593584f5c0d38a98827e59bea2fec1ffc7dc7a811f7cfa6f19c8cc00dad"
+        }
+      },
+      "id": "3305a3ad973fb227",
+      "rows": 240,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 842040480,
+        "test_rows": 40,
+        "train_rows": 200
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "3305a3ad973fb227a66d9f6e1d229e17063e3195d0351fb28597da345f4f0b3f",
+        "source_dataset_id": "drc/G.aparine",
+        "source_license": "GPL (R package drc)",
+        "source_platform": "rdatasets",
+        "source_url": "https://vincentarelbundock.github.io/Rdatasets/csv/drc/G.aparine.csv",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "3baa7e37fc1f7861",
+      "features": 4,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/3baa7e37fc1f7861/metadata.json",
+          "sha256": "c665f97414595b5b1d0b6048eee6874e7aa5107ecc96472c78c6a6e3c3751fda"
+        },
+        "test": {
+          "columns": 5,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/3baa7e37fc1f7861/test.csv",
+          "rows": 54,
+          "sha256": "3fd03a9fc1ce7d56c51b0b55b4b8763e2e5d8050d41ba06dbcc59a43654057ad"
+        },
+        "train": {
+          "columns": 5,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/3baa7e37fc1f7861/train.csv",
+          "rows": 269,
+          "sha256": "d4c16304ff999b49535e953b98521ded91604e04d6e905b28a5dbd4c62b0fec5"
+        }
+      },
+      "id": "3baa7e37fc1f7861",
+      "rows": 323,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 983521594,
+        "test_rows": 54,
+        "train_rows": 269
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "3baa7e37fc1f78610bca695056c57ea74ae8eb1c5aa65689643d1f83b3a3d943",
+        "source_dataset_id": null,
+        "source_license": null,
+        "source_platform": null,
+        "source_url": null,
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "Health expenditure by country",
+      "features": 3,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/3f781a51af45387e/metadata.json",
+          "sha256": "2445511a88d402f301d81c4eb54c1a8be52604b3c9e0afd5fb5970afafd8bdf7"
+        },
+        "test": {
+          "columns": 4,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/3f781a51af45387e/test.csv",
+          "rows": 46,
+          "sha256": "70ea053fba7399996f05da58ff56797ec4affa4a641eeb1cd8ac47dc98d334b3"
+        },
+        "train": {
+          "columns": 4,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/3f781a51af45387e/train.csv",
+          "rows": 228,
+          "sha256": "0cf0e55c14f03a1f28d4cd74c222ff05ccc17f72ca0ee34293b369fe8dac52cc"
+        }
+      },
+      "id": "3f781a51af45387e",
+      "rows": 274,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 1045249372,
+        "test_rows": 46,
+        "train_rows": 228
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "3f781a51af45387ee3598e45797720e9e780a3ef16186dd50efa08b23083925d",
+        "source_dataset_id": "healthexp",
+        "source_license": "CC0 (seaborn-data)",
+        "source_platform": "seaborn",
+        "source_url": "https://github.com/mwaskom/seaborn-data/blob/master/healthexp.csv",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "Development of an Empirically Derived Measure of Food Safety Culture in Restaurants",
+      "features": 39,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/43b4cc3ab0ebbd97/metadata.json",
+          "sha256": "ed41992fd86da96f604e224a54b34499080f6e253436bfbaa3570a2e51d7f8e4"
+        },
+        "test": {
+          "columns": 40,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/43b4cc3ab0ebbd97/test.csv",
+          "rows": 97,
+          "sha256": "cd1216d1d5f1bf4a4a6f4c4cd167ffbed4efa7552ef8adddc5de1028d578929f"
+        },
+        "train": {
+          "columns": 40,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/43b4cc3ab0ebbd97/train.csv",
+          "rows": 482,
+          "sha256": "aee617254b8f278a2b8f0dd9c1bdff04e72d6c07c0cbde5841451cea461ec015"
+        }
+      },
+      "id": "43b4cc3ab0ebbd97",
+      "rows": 579,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 1115810615,
+        "test_rows": 97,
+        "train_rows": 482
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "43b4cc3ab0ebbd97405ea7eab86f851be1ee76369c815e8777289316da114f6f",
+        "source_dataset_id": "37nu-tuw8",
+        "source_license": null,
+        "source_platform": "socrata",
+        "source_url": "https://data.cdc.gov/resource/37nu-tuw8.csv",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "feynman_test_11",
+      "features": 4,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/471f11cc2d38853a/metadata.json",
+          "sha256": "f6a1d7fabeda56ed60d66c32845126ced4a364c4224d6af9093d3fe26b9d6987"
+        },
+        "test": {
+          "columns": 5,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/471f11cc2d38853a/test.csv",
+          "rows": 999,
+          "sha256": "2e0f24e113e326577e274bf1046f8b8b051344b58bf4d3a780e8ef1fc38b839a"
+        },
+        "train": {
+          "columns": 5,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/471f11cc2d38853a/train.csv",
+          "rows": 1000,
+          "sha256": "1b76efcd8ce6fb625746e60a70adea5ac04a19b2dbfc1277e37d48add9a2abf8"
+        }
+      },
+      "id": "471f11cc2d38853a",
+      "rows": 1999,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 1177171649,
+        "test_rows": 999,
+        "train_rows": 1000
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "471f11cc2d38853ae411fbac997c91896e6b22b0e4907c15c6d47c0fc8160fb1",
+        "source_dataset_id": "feynman_test_11",
+        "source_license": "MIT (PMLB)",
+        "source_platform": "pmlb",
+        "source_url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/feynman_test_11/feynman_test_11.tsv.gz",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "Well Switching in Bangladesh",
+      "features": 4,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/4f68d277d770477f/metadata.json",
+          "sha256": "2b3e4e0662d26ca1955a3ed3ef0577c17bbf4c041e52b3e09679015dcf10b696"
+        },
+        "test": {
+          "columns": 5,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/4f68d277d770477f/test.csv",
+          "rows": 999,
+          "sha256": "29fc9d3ffefb2f9c79d7ad8850f1cf8cf4a255fdbe8b9aeb6b3b9d6b8be68de2"
+        },
+        "train": {
+          "columns": 5,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/4f68d277d770477f/train.csv",
+          "rows": 1000,
+          "sha256": "f37e0cfa6c30782aae46786c2eba1a85948e049fa33b034d423e3c6202b7127b"
+        }
+      },
+      "id": "4f68d277d770477f",
+      "rows": 1999,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 1314780538,
+        "test_rows": 999,
+        "train_rows": 1000
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "4f68d277d770477f885dc84924e280fd74b1c826c06ac53465e16ec7bd40cf62",
+        "source_dataset_id": "carData/Wells",
+        "source_license": "GPL (R package carData)",
+        "source_platform": "rdatasets",
+        "source_url": "https://vincentarelbundock.github.io/Rdatasets/csv/carData/Wells.csv",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "542e75bc0cfdd1bf",
+      "features": 17,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/542e75bc0cfdd1bf/metadata.json",
+          "sha256": "4d4d201ac880af8b5914a2b0700ff46164245a2de9dd9061c7897038487c083a"
+        },
+        "test": {
+          "columns": 18,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/542e75bc0cfdd1bf/test.csv",
+          "rows": 8,
+          "sha256": "9e04446fc36c649dc3f72502ca62f565ec78e5aa329a7ab07dd97a7e5eaf99ff"
+        },
+        "train": {
+          "columns": 18,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/542e75bc0cfdd1bf/train.csv",
+          "rows": 37,
+          "sha256": "f0d6ae95f8b160407d4aa1ec77b6e5e355cbe26bd688362baa2287a8c48f683b"
+        }
+      },
+      "id": "542e75bc0cfdd1bf",
+      "rows": 45,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 1427854001,
+        "test_rows": 8,
+        "train_rows": 37
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "542e75bc0cfdd1bf041f0c85318c4426117a119bb48ac52494bf83224b01c613",
+        "source_dataset_id": null,
+        "source_license": null,
+        "source_platform": null,
+        "source_url": null,
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "TidyTuesday 2018: Week4 Australian Salary",
+      "features": 4,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/55b144de19659467/metadata.json",
+          "sha256": "e21bff6878148693ffb24c99b7fc96a65d8b6bae109ed10bbe7ad0133feffe9f"
+        },
+        "test": {
+          "columns": 5,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/55b144de19659467/test.csv",
+          "rows": 999,
+          "sha256": "6d163444dc0896b033b43064b9cb194f45057e633631d0623f444fd6c83aad3c"
+        },
+        "train": {
+          "columns": 5,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/55b144de19659467/train.csv",
+          "rows": 1000,
+          "sha256": "703323ddf743a31c5aa7c55db18ec3fe23c2286d60b5295dd06101caedd455db"
+        }
+      },
+      "id": "55b144de19659467",
+      "rows": 1999,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 1417962451,
+        "test_rows": 999,
+        "train_rows": 1000
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "55b144de196594678bb87dd1a112daa27ccfcb684c5eca2e3a81ab3ef0877e3d",
+        "source_dataset_id": "data/2018/2018-04-23/week4_australian_salary.csv",
+        "source_license": "CC0 1.0 (TidyTuesday)",
+        "source_platform": "tidytuesday",
+        "source_url": "https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2018/2018-04-23/week4_australian_salary.csv",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "sick",
+      "features": 27,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/55f06d147bcc2a32/metadata.json",
+          "sha256": "0a63305602d28dbb1956c2cf11122e1c20192620f030caeb70b252520d7c1d3f"
+        },
+        "test": {
+          "columns": 28,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/55f06d147bcc2a32/test.csv",
+          "rows": 999,
+          "sha256": "3a98baf7de404b6eea86f83c5063d26686dd02b105abfe178320bd0b9b3f313d"
+        },
+        "train": {
+          "columns": 28,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/55f06d147bcc2a32/train.csv",
+          "rows": 1000,
+          "sha256": "bc73d3ce1e7911a0104277114dc6358f1592e6418dc0eb35bc9032bab741ceaa"
+        }
+      },
+      "id": "55f06d147bcc2a32",
+      "rows": 1999,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 1422215705,
+        "test_rows": 999,
+        "train_rows": 1000
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "55f06d147bcc2a3279a208dc1f53eebd1f493de97ce80166d1c8f63b958a34d0",
+        "source_dataset_id": "38",
+        "source_license": null,
+        "source_platform": "openml",
+        "source_url": "https://www.openml.org/d/38",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "California Housing (sklearn)",
+      "features": 8,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/5f91a00bd3b66742/metadata.json",
+          "sha256": "532e09962fd3cab28f5cf80b027f424715e141b27e8521ec168a0ff4d3adf1df"
+        },
+        "test": {
+          "columns": 9,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/5f91a00bd3b66742/test.csv",
+          "rows": 999,
+          "sha256": "e141e1079e76e798712135ddcc7bcd53e64bab97f9e7b945471a754d279972d6"
+        },
+        "train": {
+          "columns": 9,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/5f91a00bd3b66742/train.csv",
+          "rows": 1000,
+          "sha256": "b30a7bdeac53ecd8e0d736ea0b392595a3ef2fdb72f90de5e1a621b8cfbe789c"
+        }
+      },
+      "id": "5f91a00bd3b66742",
+      "rows": 1999,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 1587840774,
+        "test_rows": 999,
+        "train_rows": 1000
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "5f91a00bd3b6674298e103dcebe0f42a057225d3432b5f25deb397720bb17733",
+        "source_dataset_id": "fetch_california_housing",
+        "source_license": "Public Domain",
+        "source_platform": "sklearn",
+        "source_url": "https://scikit-learn.org/stable/datasets/real_world.html#california-housing-dataset",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "first_principles_supernovae_zg",
+      "features": 1,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/693890aae9dc860b/metadata.json",
+          "sha256": "f250e3ea828c392c222ef90bf1405a7e4d1d099743d1e09281b898f4194cae94"
+        },
+        "test": {
+          "columns": 2,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/693890aae9dc860b/test.csv",
+          "rows": 41,
+          "sha256": "03bb6c0b0abdf033f3318dbd30eaa04cd45e85820413e0ff80b52e31f4259186"
+        },
+        "train": {
+          "columns": 2,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/693890aae9dc860b/train.csv",
+          "rows": 202,
+          "sha256": "0a9dc81f52ea843bbfbbd2fabd9ff1e7c78e5d025ad21b4de4be9aa59d5497dd"
+        }
+      },
+      "id": "693890aae9dc860b",
+      "rows": 243,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 1745729447,
+        "test_rows": 41,
+        "train_rows": 202
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "693890aae9dc860bf163d1ed3d3d5444f7af074dbebb4d32c7bcc887e65cdb54",
+        "source_dataset_id": "first_principles_supernovae_zg",
+        "source_license": "MIT (PMLB)",
+        "source_platform": "pmlb",
+        "source_url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/first_principles_supernovae_zg/first_principles_supernovae_zg.tsv.gz",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "Uniformity trial of peanuts",
+      "features": 3,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/79e600bc5fcd5da7/metadata.json",
+          "sha256": "f1f1633a024fc9fa1314b5046c5f1e213957986e24ee470a2e873da251318d3c"
+        },
+        "test": {
+          "columns": 4,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/79e600bc5fcd5da7/test.csv",
+          "rows": 36,
+          "sha256": "0622e041bc3258a108bd70f73847e2681ea0cdb81cdb4bf5cae14805a0c69e28"
+        },
+        "train": {
+          "columns": 4,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/79e600bc5fcd5da7/train.csv",
+          "rows": 180,
+          "sha256": "24dda7eb3c3cfaf211d94f35b95806a5ef2d983f361575d912bb708ca83e58a1"
+        }
+      },
+      "id": "79e600bc5fcd5da7",
+      "rows": 216,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 2027104177,
+        "test_rows": 36,
+        "train_rows": 180
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "79e600bc5fcd5da708a9de9040f59dc48d9f495a6505106712f6be2cc7928171",
+        "source_dataset_id": "agridat/bancroft.peanut.uniformity",
+        "source_license": "GPL (R package agridat)",
+        "source_platform": "rdatasets",
+        "source_url": "https://vincentarelbundock.github.io/Rdatasets/csv/agridat/bancroft.peanut.uniformity.csv",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "Bike Sharing Day",
+      "features": 14,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/7af85a04de0c7018/metadata.json",
+          "sha256": "76d036f5387bb76e95d8bedbc98cdf8979a23fde26931d193f2fb15225c9ed36"
+        },
+        "test": {
+          "columns": 15,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/7af85a04de0c7018/test.csv",
+          "rows": 122,
+          "sha256": "db046b54d10b5e037aa54b4a17ff96945c1bc8848d8d347df4f83e24e80ff4d1"
+        },
+        "train": {
+          "columns": 15,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/7af85a04de0c7018/train.csv",
+          "rows": 609,
+          "sha256": "e444cdeb59a4cce97d1d8f26584e028799eaace56fa77453b85d6f09c20838cc"
+        }
+      },
+      "id": "7af85a04de0c7018",
+      "rows": 731,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 2077064457,
+        "test_rows": 122,
+        "train_rows": 609
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "7af85a04de0c7018feb0716fa1d7a26974b3390829e5e1cc81dd886c2ff7c9ab",
+        "source_dataset_id": "bike-sharing-day",
+        "source_license": null,
+        "source_platform": "uci",
+        "source_url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00275/Bike-Sharing-Dataset.zip",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 3,
+      "cohort": "golden42",
+      "display_name": "World Bank country-year indicators target population_total",
+      "features": 13,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/860e5558f732f638/metadata.json",
+          "sha256": "46a83583d439e945ad47985a288f1f71ddaa42d2e6932e524d815e784d6857be"
+        },
+        "test": {
+          "columns": 14,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/860e5558f732f638/test.csv",
+          "rows": 999,
+          "sha256": "639fdbd328dac21d2bf89ed428c8d2e0733f2e2b6e7f8e7f4003730cce759532"
+        },
+        "train": {
+          "columns": 14,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/860e5558f732f638/train.csv",
+          "rows": 1000,
+          "sha256": "dfae00dde1f2294f970d46f5b9323d1cb21f636e895d16b29cf96e852e2ecb55"
+        }
+      },
+      "id": "860e5558f732f638",
+      "rows": 1999,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 2268820053,
+        "test_rows": 999,
+        "train_rows": 1000
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "860e5558f732f638ff167df7afa55032c39f6ec58b0c0228a157824da7c24d29",
+        "source_dataset_id": "country-year-panel-sp.pop.totl",
+        "source_license": "World Bank API Terms of Use",
+        "source_platform": "worldbank",
+        "source_url": "https://api.worldbank.org/v2/country/all/indicator/SP.POP.TOTL",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "ab0239b9ef0ba28e",
+      "features": 1040,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/ab0239b9ef0ba28e/metadata.json",
+          "sha256": "9fb70f1ac44d482b0990997fbd1ef39e1e307ea28db50e2b1956efa6a6b587ec"
+        },
+        "test": {
+          "columns": 1041,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/ab0239b9ef0ba28e/test.csv",
+          "rows": 6,
+          "sha256": "a96000f1a12738cc744b635caca8fedd22e849922e5d6d5f63dac82a8e3029c1"
+        },
+        "train": {
+          "columns": 1041,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/ab0239b9ef0ba28e/train.csv",
+          "rows": 28,
+          "sha256": "708cb744064657fe9e267097e71d9d5131ba66a06c54207e4bd894ee3432013a"
+        }
+      },
+      "id": "ab0239b9ef0ba28e",
+      "rows": 34,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 2855739060,
+        "test_rows": 6,
+        "train_rows": 28
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "ab0239b9ef0ba28ea9d90d73cb7dfe8411707342456a56895b6fba17c7f8b3f0",
+        "source_dataset_id": null,
+        "source_license": null,
+        "source_platform": null,
+        "source_url": null,
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "522_pm10",
+      "features": 7,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/aebf5d861a8365b4/metadata.json",
+          "sha256": "9f016209283fe2eeb3bbd21c9deed2d377e5597e93fa56cad7c956483c76a9b5"
+        },
+        "test": {
+          "columns": 8,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/aebf5d861a8365b4/test.csv",
+          "rows": 84,
+          "sha256": "26ea21f622cd3a9e834e37aa190adcf9873fa9d9b46da5a5ab4a22b2f9314f77"
+        },
+        "train": {
+          "columns": 8,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/aebf5d861a8365b4/train.csv",
+          "rows": 416,
+          "sha256": "e097df5ad6f7d99888c6b8dcc65d3297349cc9d86da21eb5399a9cde27226af8"
+        }
+      },
+      "id": "aebf5d861a8365b4",
+      "rows": 500,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 2945088139,
+        "test_rows": 84,
+        "train_rows": 416
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "aebf5d861a8365b414869c41507df3f5fb7b72c53c5c2c69aee8e5c131f559b9",
+        "source_dataset_id": "522_pm10",
+        "source_license": "MIT (PMLB)",
+        "source_platform": "pmlb",
+        "source_url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/522_pm10/522_pm10.tsv.gz",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "scene",
+      "features": 299,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/b1f909fcfceeef4b/metadata.json",
+          "sha256": "08fb84b997e0b35788fd56d731972cffdcd47c590f3c7e155336a7415507f970"
+        },
+        "test": {
+          "columns": 300,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/b1f909fcfceeef4b/test.csv",
+          "rows": 999,
+          "sha256": "e821b6c5db77d50d33232ebae1e85d51b996b91185297a14cc780d75a43c9dbd"
+        },
+        "train": {
+          "columns": 300,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/b1f909fcfceeef4b/train.csv",
+          "rows": 1000,
+          "sha256": "f8750290d862cf7c1db49cd9a63e85ffd2fef77511534a7fd5ea7a96c311be9c"
+        }
+      },
+      "id": "b1f909fcfceeef4b",
+      "rows": 1999,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 2966171377,
+        "test_rows": 999,
+        "train_rows": 1000
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "b1f909fcfceeef4b13153c79ca0e5af11a1b86157a14be7ea06b857bb2107042",
+        "source_dataset_id": "312",
+        "source_license": null,
+        "source_platform": "openml",
+        "source_url": "https://www.openml.org/d/312",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "b253fbfae8460dc1",
+      "features": 7,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/b253fbfae8460dc1/metadata.json",
+          "sha256": "7f496333c7cbd03829b5f412f31afdb25291f6b4ffe9372129ef07e2f8b4e3ff"
+        },
+        "test": {
+          "columns": 8,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/b253fbfae8460dc1/test.csv",
+          "rows": 9,
+          "sha256": "15b570f690fca04746947f1b307a6af86abeeb0ca960bc5bc9fbf30ab9c29de6"
+        },
+        "train": {
+          "columns": 8,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/b253fbfae8460dc1/train.csv",
+          "rows": 43,
+          "sha256": "130daab3e850eb95658f904f759dd6c4113963474d3552ca6508d98e71548aff"
+        }
+      },
+      "id": "b253fbfae8460dc1",
+      "rows": 52,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 3009862903,
+        "test_rows": 9,
+        "train_rows": 43
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "b253fbfae8460dc167d180914926e10bdb468537a061dcb260ea9febb8f690ea",
+        "source_dataset_id": null,
+        "source_license": null,
+        "source_platform": null,
+        "source_url": null,
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "credit-approval",
+      "features": 15,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/b5beff4a53fa12c0/metadata.json",
+          "sha256": "0fe25cae98a1ad9bdfc7d408be43c4c61c5f9f6d3ae18e01063687afb5c680d3"
+        },
+        "test": {
+          "columns": 16,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/b5beff4a53fa12c0/test.csv",
+          "rows": 115,
+          "sha256": "db24e77e70a8536249c28a5584d84b563ef49d12559aa24be777f321aea45653"
+        },
+        "train": {
+          "columns": 16,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/b5beff4a53fa12c0/train.csv",
+          "rows": 575,
+          "sha256": "54a7427165c1af7b660ec6d93a1dc2dcc6e8c418bfd76a4309e3cd5be6b4d6ec"
+        }
+      },
+      "id": "b5beff4a53fa12c0",
+      "rows": 690,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 3029063751,
+        "test_rows": 115,
+        "train_rows": 575
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "b5beff4a53fa12c03a4958b92d0757b9fc5031ec90e1bc5f9d51edfe4e832623",
+        "source_dataset_id": "29",
+        "source_license": null,
+        "source_platform": "openml",
+        "source_url": "https://www.openml.org/d/29",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "583_fri_c1_1000_50",
+      "features": 50,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/b78d323566930bd7/metadata.json",
+          "sha256": "e38ff121312f2c0e48c724a8274cf39d899d232733160b0dcdab99a3cb6970ed"
+        },
+        "test": {
+          "columns": 51,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/b78d323566930bd7/test.csv",
+          "rows": 167,
+          "sha256": "18eeae9f603cf673625664a93e32929011ca953b1c2214933e9ce033ebb3686d"
+        },
+        "train": {
+          "columns": 51,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/b78d323566930bd7/train.csv",
+          "rows": 833,
+          "sha256": "92cae8e64ac36e7aa58b86a6b2c6d52aa360ae791bb942a056db4290f879749e"
+        }
+      },
+      "id": "b78d323566930bd7",
+      "rows": 1000,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 3065517368,
+        "test_rows": 167,
+        "train_rows": 833
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "b78d323566930bd7c6842bd688964491e586aa611af8ec96158c9290ff46c784",
+        "source_dataset_id": "583_fri_c1_1000_50",
+        "source_license": "MIT (PMLB)",
+        "source_platform": "pmlb",
+        "source_url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/583_fri_c1_1000_50/583_fri_c1_1000_50.tsv.gz",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 6,
+      "cohort": "golden42",
+      "display_name": "Beach Lab Data",
+      "features": 12,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/bd49e740a79bcb6c/metadata.json",
+          "sha256": "aaa01f347ef7efd4d6d5d51202092f8a72f9f02cc9651cbffff93ffd79bce2d7"
+        },
+        "test": {
+          "columns": 13,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/bd49e740a79bcb6c/test.csv",
+          "rows": 999,
+          "sha256": "2f5c28dd7fff46af1352c2b5071ed1984d63c42d841b2bd7911693330b962995"
+        },
+        "train": {
+          "columns": 13,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/bd49e740a79bcb6c/train.csv",
+          "rows": 1000,
+          "sha256": "0ace82b556def5ad669840475c050d06e018a459ce0e5facd532356e42bea9b4"
+        }
+      },
+      "id": "bd49e740a79bcb6c",
+      "rows": 1999,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 3162292301,
+        "test_rows": 999,
+        "train_rows": 1000
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "bd49e740a79bcb6cdd089514662e43ea0a2357c489a886c2365aa5a33ce93055",
+        "source_dataset_id": "2ivx-z93u",
+        "source_license": null,
+        "source_platform": "socrata",
+        "source_url": "https://data.cityofchicago.org/resource/2ivx-z93u.csv",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "cmc",
+      "features": 9,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/c32fa09b48fb2f27/metadata.json",
+          "sha256": "088f7695e786cbc103ce888e2edd13b8d2146717fc98f03b07b094a540615003"
+        },
+        "test": {
+          "columns": 10,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/c32fa09b48fb2f27/test.csv",
+          "rows": 473,
+          "sha256": "c5902e424cb49c248935831ba687f43e86fe4929463011fa0b2bba8ef64b69d6"
+        },
+        "train": {
+          "columns": 10,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/c32fa09b48fb2f27/train.csv",
+          "rows": 1000,
+          "sha256": "24dfcad2c2ecbfde5e70e87729971353a1b6f9e583ef7b1d7b8960871a63ad04"
+        }
+      },
+      "id": "c32fa09b48fb2f27",
+      "rows": 1473,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 3256518550,
+        "test_rows": 473,
+        "train_rows": 1000
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "c32fa09b48fb2f27d36e90e470770423993d5e7385d93c46de563f1691dfe067",
+        "source_dataset_id": "23",
+        "source_license": null,
+        "source_platform": "openml",
+        "source_url": "https://www.openml.org/d/23",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "Voting Intentions in the 1988 Chilean Plebiscite",
+      "features": 7,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/c7d815714ca52bce/metadata.json",
+          "sha256": "e597fcd4be410cf8b4e8c259b0888a69af617109604f41417d0dc25223463650"
+        },
+        "test": {
+          "columns": 8,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/c7d815714ca52bce/test.csv",
+          "rows": 999,
+          "sha256": "07676d6a55c50d6fa535393a14ac5df31751810b7421cb17548d349f891fb039"
+        },
+        "train": {
+          "columns": 8,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/c7d815714ca52bce/train.csv",
+          "rows": 1000,
+          "sha256": "2cc33f1cf38de2da3edfe69d8ffd4623d84039c22f20755b0dffe8411c698df3"
+        }
+      },
+      "id": "c7d815714ca52bce",
+      "rows": 1999,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 3337433724,
+        "test_rows": 999,
+        "train_rows": 1000
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "c7d815714ca52bce85630b39a3c3eadafcea97ddbedab3788f489423820eb850",
+        "source_dataset_id": "stevedata/chile88",
+        "source_license": "GPL (R package stevedata)",
+        "source_platform": "rdatasets",
+        "source_url": "https://vincentarelbundock.github.io/Rdatasets/csv/stevedata/chile88.csv",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "National Community Based Survey of Supports for Healthy Eating and Active Living  (CBS HEAL)",
+      "features": 116,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/c8f90fc9cc5364be/metadata.json",
+          "sha256": "a90bb16873707f54efee70bd064e2719fbfab784a2366f9a4afcedca85f954a2"
+        },
+        "test": {
+          "columns": 117,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/c8f90fc9cc5364be/test.csv",
+          "rows": 982,
+          "sha256": "6bf87a9a0b1658fa288391169ccb3f8d68379d39a4b1fddf02d4c72093ed25c2"
+        },
+        "train": {
+          "columns": 117,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/c8f90fc9cc5364be/train.csv",
+          "rows": 1000,
+          "sha256": "0a245c858b39996820977306c9b0ab2443c45677b5a32514f83009be6cfce197"
+        }
+      },
+      "id": "c8f90fc9cc5364be",
+      "rows": 1982,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 3385600196,
+        "test_rows": 982,
+        "train_rows": 1000
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "c8f90fc9cc5364be8432d51662ef37fa6687db64b5e3d5ac838ba63ef1417462",
+        "source_dataset_id": "8hus-y5nc",
+        "source_license": null,
+        "source_platform": "socrata",
+        "source_url": "https://data.cdc.gov/resource/8hus-y5nc.csv",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "cf5e74b4e9594944",
+      "features": 569,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/cf5e74b4e9594944/metadata.json",
+          "sha256": "6439d68406a04a7cb593e078c476b151f5215a160849d32875e03695b54a2110"
+        },
+        "test": {
+          "columns": 570,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/cf5e74b4e9594944/test.csv",
+          "rows": 3,
+          "sha256": "7db0822f1cb7868d17979d77b3cd6026ced380dce95ca695363fe8cc465e7ad2"
+        },
+        "train": {
+          "columns": 570,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/cf5e74b4e9594944/train.csv",
+          "rows": 10,
+          "sha256": "448561065e46696f52695daa363d3b273d67f119c198e5315c1c5e3a88798bfd"
+        }
+      },
+      "id": "cf5e74b4e9594944",
+      "rows": 13,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 3463140281,
+        "test_rows": 3,
+        "train_rows": 10
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "cf5e74b4e95949446b3dab923f9237aa2ca1af5b72a5015e3f63d3b2d3dadcbf",
+        "source_dataset_id": null,
+        "source_license": null,
+        "source_platform": null,
+        "source_url": null,
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 2,
+      "cohort": "golden42",
+      "display_name": "Subject Level Analysis Dataset",
+      "features": 18,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/d2daf53412ab18dc/metadata.json",
+          "sha256": "ffab48bd91bd84533c3b6b0d28b0d39dea0eff921d712c00973300032c8e20b0"
+        },
+        "test": {
+          "columns": 19,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/d2daf53412ab18dc/test.csv",
+          "rows": 51,
+          "sha256": "11e74707f870729d3bde09a2a833182cef2d5fb332085d19552b49173455bc35"
+        },
+        "train": {
+          "columns": 19,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/d2daf53412ab18dc/train.csv",
+          "rows": 255,
+          "sha256": "b4df46c6d4c67b71d930800196dfae14d46b40a107469a5ca29cb6836bcff883"
+        }
+      },
+      "id": "d2daf53412ab18dc",
+      "rows": 306,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 3555709497,
+        "test_rows": 51,
+        "train_rows": 255
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "d2daf53412ab18dc7c7be3259d4350ef45f5cbccc61ecd87c82df89d6331f033",
+        "source_dataset_id": "admiral/admiral_adsl",
+        "source_license": "GPL (R package admiral)",
+        "source_platform": "rdatasets",
+        "source_url": "https://vincentarelbundock.github.io/Rdatasets/csv/admiral/admiral_adsl.csv",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "dee1fc8e9afd81c9",
+      "features": 8,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/dee1fc8e9afd81c9/metadata.json",
+          "sha256": "2644ae02578f94422222a00b28bcffbb8647d287c3fd0c07b6e64f3b41896246"
+        },
+        "test": {
+          "columns": 9,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/dee1fc8e9afd81c9/test.csv",
+          "rows": 26,
+          "sha256": "5b2ff1c591d014656d4610b92cdd209e934c00b3217bb79fafc74dcef3a0e9e6"
+        },
+        "train": {
+          "columns": 9,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/dee1fc8e9afd81c9/train.csv",
+          "rows": 129,
+          "sha256": "301a7df114759e50110e097979ece2046f6ec12a347f4af6a48b2deea8a6243d"
+        }
+      },
+      "id": "dee1fc8e9afd81c9",
+      "rows": 155,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 3755268995,
+        "test_rows": 26,
+        "train_rows": 129
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "dee1fc8e9afd81c998bf14180827ac1c52483709d4082bb77b8b8cce7de7b3f8",
+        "source_dataset_id": null,
+        "source_license": null,
+        "source_platform": null,
+        "source_url": null,
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "e1c1db5260d0894e",
+      "features": 10,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/e1c1db5260d0894e/metadata.json",
+          "sha256": "46349aa76fa4a80c920beaa505d38d38c0f4ea6aac55d582c8fa6fcd21367076"
+        },
+        "test": {
+          "columns": 11,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/e1c1db5260d0894e/test.csv",
+          "rows": 17,
+          "sha256": "647caeb8b7301dcded97d0dd62d8ffffa2d376dcd60e7db83ef2ad02c47c2271"
+        },
+        "train": {
+          "columns": 11,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/e1c1db5260d0894e/train.csv",
+          "rows": 83,
+          "sha256": "bfc6a2802fb867d5d63b1a5b3d8171616914c8e12756e532112bc41497fb67a1"
+        }
+      },
+      "id": "e1c1db5260d0894e",
+      "rows": 100,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 3774151775,
+        "test_rows": 17,
+        "train_rows": 83
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "e1c1db5260d0894e26b3911e0ae5007c49c039410e5cd6f56cdbe7c0edc4a9b5",
+        "source_dataset_id": null,
+        "source_license": null,
+        "source_platform": null,
+        "source_url": null,
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "556_analcatdata_apnea2",
+      "features": 3,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/e5a3a7b3668a1cc2/metadata.json",
+          "sha256": "6d0b736e0b3ad004332772835e72e476c1d44c1d7a22223ff214828352e2e726"
+        },
+        "test": {
+          "columns": 4,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/e5a3a7b3668a1cc2/test.csv",
+          "rows": 80,
+          "sha256": "d74ad67ccc2ea864b2fff50e5b16b8244990383c11da4a0300653747104dbffd"
+        },
+        "train": {
+          "columns": 4,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/e5a3a7b3668a1cc2/train.csv",
+          "rows": 395,
+          "sha256": "03cf920cf274800e8be16d3c345a65290431d625d705dbe9ede7e274081b1f67"
+        }
+      },
+      "id": "e5a3a7b3668a1cc2",
+      "rows": 475,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 3835068606,
+        "test_rows": 80,
+        "train_rows": 395
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "e5a3a7b3668a1cc247299c5eef87f9ee1aed3ee23e8d983650f5ffe60355e9cf",
+        "source_dataset_id": "556_analcatdata_apnea2",
+        "source_license": "MIT (PMLB)",
+        "source_platform": "pmlb",
+        "source_url": "https://github.com/EpistasisLab/pmlb/raw/master/datasets/556_analcatdata_apnea2/556_analcatdata_apnea2.tsv.gz",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "fruitfly",
+      "features": 4,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/ee56a1015e344c11/metadata.json",
+          "sha256": "3c7c1f617633a525ea45fbaebd910063587859c16f87119711b7826985745a6f"
+        },
+        "test": {
+          "columns": 5,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/ee56a1015e344c11/test.csv",
+          "rows": 21,
+          "sha256": "1879fd389b06e5e85d6b6445f00b16e2f5e5c605457462ac688086c07c2a8c59"
+        },
+        "train": {
+          "columns": 5,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/ee56a1015e344c11/train.csv",
+          "rows": 104,
+          "sha256": "c2901b2480d859f03539855ca1c350507538dd7a16f3cb54d1c698c634fb9d89"
+        }
+      },
+      "id": "ee56a1015e344c11",
+      "rows": 125,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 4016277004,
+        "test_rows": 21,
+        "train_rows": 104
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "ee56a1015e344c1105bdb177947c765b53c8e5f231677b875970607c2313568e",
+        "source_dataset_id": "199",
+        "source_license": null,
+        "source_platform": "openml",
+        "source_url": "https://www.openml.org/d/199",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "diabetes",
+      "features": 8,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/f0e7eb3d790df37d/metadata.json",
+          "sha256": "6185b0e8236f00fb633803407d4a90ebc656500fb83ebbe9d4753a8ff6f8bcd4"
+        },
+        "test": {
+          "columns": 9,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/f0e7eb3d790df37d/test.csv",
+          "rows": 128,
+          "sha256": "a996d618303827fbf90bb197a692c1f64756c94ae2c02b586a550f4c1f9a1a0e"
+        },
+        "train": {
+          "columns": 9,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/f0e7eb3d790df37d/train.csv",
+          "rows": 640,
+          "sha256": "fb005f2c8c8b62cc5940ecba938307ee80a97f791d2939a2110c5e4d1edcb369"
+        }
+      },
+      "id": "f0e7eb3d790df37d",
+      "rows": 768,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 4057123888,
+        "test_rows": 128,
+        "train_rows": 640
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "f0e7eb3d790df37dfd1e4d52311f37854bdd53b5f1d413bd38d9417e5eed4ee9",
+        "source_dataset_id": "37",
+        "source_license": null,
+        "source_platform": "openml",
+        "source_url": "https://www.openml.org/d/37",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "Fertility and Women's Labor Supply",
+      "features": 7,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/f8536dfeef471c2f/metadata.json",
+          "sha256": "4789dd06dd0ad71047b8419fa5c02538826bcbed973a434b217a8b553974f85f"
+        },
+        "test": {
+          "columns": 8,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/f8536dfeef471c2f/test.csv",
+          "rows": 999,
+          "sha256": "585ba0afe51b109ee1a0c13a9086969c52167962a3ef54bfed2ee7d4dc8cc233"
+        },
+        "train": {
+          "columns": 8,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/f8536dfeef471c2f/train.csv",
+          "rows": 1000,
+          "sha256": "1b64e6da7dffa1807f9cbce551481f5c491ee6e786bb6677eb636c4123615601"
+        }
+      },
+      "id": "f8536dfeef471c2f",
+      "rows": 1999,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 4184230643,
+        "test_rows": 999,
+        "train_rows": 1000
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "f8536dfeef471c2fb80bbc852720c90627af93242f9005f50070361a82795180",
+        "source_dataset_id": "AER/Fertility",
+        "source_license": "GPL (R package AER)",
+        "source_platform": "rdatasets",
+        "source_url": "https://vincentarelbundock.github.io/Rdatasets/csv/AER/Fertility.csv",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden42",
+      "display_name": "Uniformity trials of apples, lemons, oranges, and walnuts",
+      "features": 2,
+      "files": {
+        "split_metadata": {
+          "path": "splits/tabular-regression-v1/fe3cc716a05d036f/metadata.json",
+          "sha256": "34f2df6716387a0c39ccc636b528c765e49aa0efc91f193e1de8be75631b13e9"
+        },
+        "test": {
+          "columns": 3,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/fe3cc716a05d036f/test.csv",
+          "rows": 40,
+          "sha256": "cf3b11943d8717aeb70e2c8e42cfc9aeb2a23c568d777925b99198dba28ff405"
+        },
+        "train": {
+          "columns": 3,
+          "has_header": false,
+          "path": "data/tabular-regression-v1/fe3cc716a05d036f/train.csv",
+          "rows": 200,
+          "sha256": "1f8bd42f24a840a08e51609b1dc6f92d1cd5a33d35f0ac6345857a1bc473de05"
+        }
+      },
+      "id": "fe3cc716a05d036f",
+      "rows": 240,
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 4278837275,
+        "test_rows": 40,
+        "train_rows": 200
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "dataset_sha256": "fe3cc716a05d036fe64b9642812d9deb8a8781b1122d68e80c53720906194e0a",
+        "source_dataset_id": "agridat/batchelor.valencia.uniformity",
+        "source_license": "GPL (R package agridat)",
+        "source_platform": "rdatasets",
+        "source_url": "https://vincentarelbundock.github.io/Rdatasets/csv/agridat/batchelor.valencia.uniformity.csv",
+        "suite": "golden42"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden45-extension",
+      "display_name": "ZTS_small",
+      "features": 147,
+      "files": {
+        "metadata": {
+          "path": "results/tabular-regression-v2/dataset-metadata/ZTS_small/meta.json",
+          "sha256": "b7312ae445f1be3e7680220f688b3e3bbb9c6228f2c82e9a7ac31a1ca2d32656"
+        },
+        "test": {
+          "columns": 148,
+          "has_header": false,
+          "member": "ZTS_small/test.csv",
+          "rows": 1000,
+          "sha256": "806d6838aa3dd6f0b0c21adf718de17456d42c5219af4dd0b46eee8b0624726c",
+          "storage": "encrypted-bundle"
+        },
+        "train": {
+          "columns": 148,
+          "has_header": false,
+          "member": "ZTS_small/train.csv",
+          "rows": 1000,
+          "sha256": "d980dd6bf4fe12d5c10faa1dea699d6767f4d6ae3bfc1fbe72037875e3e9c2be",
+          "storage": "encrypted-bundle"
+        }
+      },
+      "id": "ZTS_small",
+      "rows": 2000,
+      "split": {
+        "method": "canonical published split",
+        "test_rows": 1000,
+        "train_rows": 1000
+      },
+      "storage": {
+        "bundle_manifest": "data/tabular-regression-v2/restricted-bundle.manifest.json",
+        "ciphertext": "data/tabular-regression-v2/golden45-restricted.tar.zst.gpg",
+        "kind": "encrypted-bundle"
+      },
+      "target": "target",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "source_dataset_id": "ZTS_small",
+        "source_license": null,
+        "source_platform": "local-derived",
+        "source_release_id": null,
+        "source_url": null,
+        "suite": "golden45"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden45-extension",
+      "display_name": "NOMAD electronic band gap \u2014 final 665-feature release",
+      "features": 665,
+      "files": {
+        "metadata": {
+          "path": "results/tabular-regression-v2/dataset-metadata/a3bd0a400ec4d7f9/meta.json",
+          "sha256": "e30fd05a96b369bed957418b6fb464638a094d076c9fb2b0961d47c1b55e6cc9"
+        },
+        "test": {
+          "columns": 666,
+          "has_header": true,
+          "member": "a3bd0a400ec4d7f9/test.csv",
+          "rows": 600,
+          "sha256": "398556c974e2fae1eefc40d5e5ed5030eb22fafb192fadae582b9a62e0c93a89",
+          "storage": "encrypted-bundle"
+        },
+        "train": {
+          "columns": 666,
+          "has_header": true,
+          "member": "a3bd0a400ec4d7f9/train.csv",
+          "rows": 2400,
+          "sha256": "751bfe4ea1a82dc056652c4f2ba1bc6d6ea03a3c4ea2f75420956665955fb6ad",
+          "storage": "encrypted-bundle"
+        }
+      },
+      "id": "a3bd0a400ec4d7f9",
+      "rows": 3000,
+      "split": {
+        "id_namespace": "split-local",
+        "join_key": "id",
+        "join_key_packaged": false,
+        "method": "upstream locked split preserved exactly",
+        "test_labels_source": "evaluation/test_labels.csv",
+        "test_rows": 600,
+        "train_rows": 2400
+      },
+      "storage": {
+        "bundle_manifest": "data/tabular-regression-v2/restricted-bundle.manifest.json",
+        "ciphertext": "data/tabular-regression-v2/golden45-restricted.tar.zst.gpg",
+        "kind": "encrypted-bundle"
+      },
+      "target": "bandgap_energy_ev",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "source_dataset_id": "a3bd0a400ec4d7f9",
+        "source_license": null,
+        "source_platform": "local-locked-release",
+        "source_release_id": "20260722-r1",
+        "source_url": null,
+        "suite": "golden45"
+      }
+    },
+    {
+      "categorical_features": 0,
+      "cohort": "golden45-extension",
+      "display_name": "NOMAD formation energy per atom \u2014 final 1,000-feature release",
+      "features": 1000,
+      "files": {
+        "metadata": {
+          "path": "results/tabular-regression-v2/dataset-metadata/6054656956182296/meta.json",
+          "sha256": "4b63fc7867c3754bb3393735a10d3e21abee686e32bbfbc8bcda8534d58dea7b"
+        },
+        "test": {
+          "columns": 1001,
+          "has_header": true,
+          "member": "6054656956182296/test.csv",
+          "rows": 600,
+          "sha256": "924be0789def76c47dfef6e70f1cbf94ef9d889fa70675c491af89571fb1591d",
+          "storage": "encrypted-bundle"
+        },
+        "train": {
+          "columns": 1001,
+          "has_header": true,
+          "member": "6054656956182296/train.csv",
+          "rows": 2400,
+          "sha256": "81f777b313bf6ea3f4333dad04630b67a6fd3413b972f9fd22a94366d92c19d5",
+          "storage": "encrypted-bundle"
+        }
+      },
+      "id": "6054656956182296",
+      "rows": 3000,
+      "split": {
+        "id_namespace": "split-local",
+        "join_key": "id",
+        "join_key_packaged": false,
+        "method": "upstream locked split preserved exactly",
+        "test_labels_source": "evaluation/test_labels.csv",
+        "test_rows": 600,
+        "train_rows": 2400
+      },
+      "storage": {
+        "bundle_manifest": "data/tabular-regression-v2/restricted-bundle.manifest.json",
+        "ciphertext": "data/tabular-regression-v2/golden45-restricted.tar.zst.gpg",
+        "kind": "encrypted-bundle"
+      },
+      "target": "formation_energy_ev_natom",
+      "target_index": -1,
+      "task": "regression",
+      "upstream": {
+        "source_dataset_id": "6054656956182296",
+        "source_license": null,
+        "source_platform": "local-locked-release",
+        "source_release_id": "20260722-r1",
+        "source_url": null,
+        "suite": "golden45"
+      }
+    }
+  ]
+}
