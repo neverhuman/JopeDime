@@ -13,7 +13,7 @@ Legend — `status`: `moved` (present here, target + test recorded), `new` (no p
 | engine-subcommand | 88 | 88 | 0 | 0 | 0 | 0 |
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 6 | 0 | 0 | 0 | 0 |
-| new-bin | 4 | 0 | 4 | 0 | 0 | 0 |
+| new-bin | 5 | 0 | 5 | 0 | 0 | 0 |
 | ops-sh | 1 | 1 | 0 | 0 | 0 | 0 |
 | root-binary | 56 | 56 | 0 | 0 | 0 | 0 |
 | script-py | 116 | 116 | 0 | 0 | 0 | 0 |
@@ -801,6 +801,7 @@ Legend — `status`: `moved` (present here, target + test recorded), `new` (no p
 | new-bin | (new) | crates/hyperion/src/bin/hyperion-batch-worker.rs (hyperion-batch-worker) | none | new | Hyperion v5/v7 batch worker; from jain-core feat-core via `wp3/hyperion-policy` (landed as #19) |
 | new-bin | (new) | crates/hyperion/src/bin/hyperion-v5-reference.rs (hyperion-v5-reference) | none | new | Hyperion v5 reference encoder CLI; from jain-core feat-cli hyperion_vs.rs via `wp3/hyperion-policy` (landed as #19) |
 | new-bin | (new) | crates/jope-datasets/src/main.rs (jope-datasets) | jope-datasets::* (23 tests) | new | dataset catalog: ingest dry-run, fetch/verify/link over object_store (WP-D1/D5; re-land of #11) |
+| new-bin | (new) | crates/jope-models/src/main.rs (jope-models) | jope-models::* | new | model bundles: fetch / verify / publish / path over object_store (WP7; re-land of #15) |
 | vendored-bin | jain-smartcluster@715128f: scq | crates/smartcluster/scq/src/main.rs (scq) | none | moved | vendored smartcluster crate (the SCQ evaluator the flywheel calls) |
 | vendored-bin | jain-core/crates/starforge (import, WP3): model_bundle_pack | crates/jope-encoders/src/bin/model_bundle_pack.rs (model_bundle_pack) | none | moved | vendored encoder; tests gated on the starforge weights |
 | vendored-bin | jain-core/crates/starforge (import, WP3): starforge | crates/jope-encoders/src/main.rs (starforge) | none | moved | vendored encoder; tests gated on the starforge weights |
