@@ -122,7 +122,11 @@ def replay_selector_reranker(
     *,
     k: int = 6,
 ) -> dict[str, Any]:
-    rows = rows_or_paths if isinstance(rows_or_paths, list) and (not rows_or_paths or isinstance(rows_or_paths[0], dict)) else _load_measured_pool_rows(rows_or_paths)  # type: ignore[arg-type]
+    rows = (
+        rows_or_paths
+        if isinstance(rows_or_paths, list) and (not rows_or_paths or isinstance(rows_or_paths[0], dict))
+        else _load_measured_pool_rows(rows_or_paths)
+    )  # type: ignore[arg-type]
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in rows:  # type: ignore[union-attr]
         groups[str(row.get("dataset_hash"))].append(row)
@@ -138,7 +142,11 @@ def replay_selector_reranker(
         best = max(float(row["score_robust"]) for row in measured)
         current = min(
             measured,
-            key=lambda row: int(row.get("selected_for_eval_rank") if isinstance(row.get("selected_for_eval_rank"), int) else 10**9),
+            key=lambda row: int(
+                row.get("selected_for_eval_rank")
+                if isinstance(row.get("selected_for_eval_rank"), int)
+                else 10**9
+            ),
         )
         scored = []
         for row in measured:
@@ -151,7 +159,9 @@ def replay_selector_reranker(
         selected = ranked[0]
         current_regrets.append(best - float(current["score_robust"]))
         reranker_regrets.append(best - float(selected["score_robust"]))
-        captures.append(1 if any(float(row["score_robust"]) == best for row in ranked[: max(1, int(k))]) else 0)
+        captures.append(
+            1 if any(float(row["score_robust"]) == best for row in ranked[: max(1, int(k))]) else 0
+        )
         ndcg_values.append(_ndcg_at_k(ranked, k=max(1, int(k))))
     return {
         "dataset_count": len(current_regrets),
@@ -215,12 +225,16 @@ def _feature_names(rows: list[dict[str, Any]]) -> list[str]:
     engines = sorted({str(row.get("engine") or "") for row in rows if row.get("engine")})
     heads = sorted({str(row.get("head_type") or "") for row in rows if row.get("head_type")})
     decoders = sorted({str(row.get("decoder") or "") for row in rows if row.get("decoder")})
-    families = sorted({
-        str(k)
-        for row in rows
-        for k, v in (row.get("family_bitmap") if isinstance(row.get("family_bitmap"), dict) else {}).items()
-        if v
-    })
+    families = sorted(
+        {
+            str(k)
+            for row in rows
+            for k, v in (
+                row.get("family_bitmap") if isinstance(row.get("family_bitmap"), dict) else {}
+            ).items()
+            if v
+        }
+    )
     names = list(_BASE_FEATURES)
     names.extend(f"engine={engine}" for engine in engines)
     names.extend(f"head={head}" for head in heads)
@@ -230,7 +244,11 @@ def _feature_names(rows: list[dict[str, Any]]) -> list[str]:
 
 
 def _ndcg_at_k(rows: list[dict[str, Any]], *, k: int) -> float | None:
-    gains = [max(float(row["score_robust"]), 0.0) for row in rows[:k] if _finite_float(row.get("score_robust")) is not None]
+    gains = [
+        max(float(row["score_robust"]), 0.0)
+        for row in rows[:k]
+        if _finite_float(row.get("score_robust")) is not None
+    ]
     ideal = sorted([max(float(row["score_robust"]), 0.0) for row in rows], reverse=True)[:k]
     if not gains or not ideal:
         return None

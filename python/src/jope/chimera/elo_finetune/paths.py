@@ -28,8 +28,7 @@ def regressor_source_dir() -> Path:
         if (candidate / "starlight_core_regressor_train.py").is_file():
             return candidate
     raise FileNotFoundError(
-        "regressor_source not found; set FABLE_REGRESSOR_SOURCE "
-        f"(tried {[str(c) for c in candidates]})"
+        f"regressor_source not found; set FABLE_REGRESSOR_SOURCE (tried {[str(c) for c in candidates]})"
     )
 
 

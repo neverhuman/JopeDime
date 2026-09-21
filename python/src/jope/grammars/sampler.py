@@ -13,9 +13,7 @@ from ..pipeline_text import format_stage
 from .spec import ExprSpec, GrammarSpec, OpSpec
 
 
-def sample_expr(
-    spec: ExprSpec, rng: random.Random, *, elementwise: bool, allow_col: bool = True
-) -> str:
+def sample_expr(spec: ExprSpec, rng: random.Random, *, elementwise: bool, allow_col: bool = True) -> str:
     """Grow a bounded expression tree and render it infix (parseable by both engines).
 
     Always contains at least one variable: a constant-only expression is both useless

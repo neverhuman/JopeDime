@@ -3,6 +3,7 @@
 Native children must run under the transient service: path validation alone
 cannot prevent a concurrent rename from redirecting a native output write.
 """
+
 import ctypes
 import fcntl
 import hashlib
@@ -45,7 +46,11 @@ def output_root(root, output):
     for path in registries:
         try:
             doc = json.loads(path.read_text())
-            if isinstance(doc, dict) and "campaign" in doc.get("schema", "") and isinstance(doc.get("output"), str):
+            if (
+                isinstance(doc, dict)
+                and "campaign" in doc.get("schema", "")
+                and isinstance(doc.get("output"), str)
+            ):
                 protected.add(inside(root, doc["output"]))
             if isinstance(doc, dict) and doc.get("schema") == "parallel.gp_jobs.v1":
                 # GP stores also live outside campaign directories. Reserve the
@@ -67,8 +72,10 @@ def output_root(root, output):
                 if isinstance(doc.get(key), str):
                     protected.add(inside(root, doc[key]))
     for path in protected:
-        require(not (output.is_relative_to(path) or path.is_relative_to(output)),
-                f"experiment output overlaps production: {path}")
+        require(
+            not (output.is_relative_to(path) or path.is_relative_to(output)),
+            f"experiment output overlaps production: {path}",
+        )
     if output.exists():
         for directory, dirs, files in os.walk(output, followlinks=False):
             for name in dirs + files:
@@ -171,10 +178,19 @@ def controller(root, output, name="experiment"):
 
 
 def child_env(output=None, **updates):
-    semantic = [k for k in os.environ if k.startswith("JAIN_HYPERION_") and k != "JAIN_HYPERION_CUDA_MAX_LOAD_RATIO"]
+    semantic = [
+        k for k in os.environ if k.startswith("JAIN_HYPERION_") and k != "JAIN_HYPERION_CUDA_MAX_LOAD_RATIO"
+    ]
     require(not semantic, "semantic Hyperion overrides rejected: " + ", ".join(sorted(semantic)))
-    env = {"PATH": "/usr/local/bin:/usr/bin:/bin", "LANG": "C.UTF-8", "PYTHONDONTWRITEBYTECODE": "1",
-           "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "RAYON_NUM_THREADS": "1"}
+    env = {
+        "PATH": "/usr/local/bin:/usr/bin:/bin",
+        "LANG": "C.UTF-8",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "RAYON_NUM_THREADS": "1",
+    }
     if output is not None:
         env["JOPE_EXPERIMENT_DIR"] = str(output)
     env.update(updates)
@@ -189,6 +205,7 @@ def popen(command, **kwargs):
     """Inherit the lease and die if the launching controller disappears."""
     parent = os.getpid()
     limits = kwargs.pop("preexec_fn", None)
+
     def prepare():
         if ctypes.CDLL(None, use_errno=True).prctl(1, signal.SIGKILL, 0, 0, 0) != 0:
             os._exit(127)
@@ -196,6 +213,7 @@ def popen(command, **kwargs):
             os._exit(127)
         if limits:
             limits()
+
     kwargs["pass_fds"] = tuple(set(kwargs.pop("pass_fds", ())) | set(_lease_fds) | set(_controller_fds))
     kwargs["preexec_fn"] = prepare
     kwargs["start_new_session"] = True
@@ -205,6 +223,7 @@ def popen(command, **kwargs):
 def run(command, *, root=None, timeout=60, **kwargs):
     """Synchronous owned work; callers with a lease still honor handoff."""
     import time
+
     children = []
     with owned_ranks(children):
         child = popen(command, **kwargs)
@@ -213,13 +232,14 @@ def run(command, *, root=None, timeout=60, **kwargs):
         while True:
             if root is not None:
                 from experiment_scheduler import admission_reason
+
                 reason = admission_reason(root)
                 if reason:
                     raise BlockingIOError(reason)
             if time.monotonic() >= deadline:
                 raise subprocess.TimeoutExpired(command, timeout)
             try:
-                stdout, stderr = child.communicate(timeout=min(.2, max(.001, deadline - time.monotonic())))
+                stdout, stderr = child.communicate(timeout=min(0.2, max(0.001, deadline - time.monotonic())))
                 return subprocess.CompletedProcess(command, child.returncode, stdout, stderr)
             except subprocess.TimeoutExpired:
                 pass
@@ -259,26 +279,68 @@ def supervise(root, output):
     output = output_root(root, output)
     child_env()  # Reject semantic overrides before any resource admission.
     if os.environ.get("JOPE_EXPERIMENT_SERVICE") == "1":
-        require("jope-experiment-" in Path("/proc/self/cgroup").read_text(), "experiment service cgroup missing")
+        require(
+            "jope-experiment-" in Path("/proc/self/cgroup").read_text(), "experiment service cgroup missing"
+        )
         return
     output.mkdir(parents=True, exist_ok=True)
-    locks = [checked_path(Path(root) / "runs" / name) for name in ("experiment-spare-cpus.lock", "encoding-service.lock")]
+    locks = [
+        checked_path(Path(root) / "runs" / name)
+        for name in ("experiment-spare-cpus.lock", "encoding-service.lock")
+    ]
     require(all(p.is_file() for p in locks), "existing scheduler lock files are required")
     unit = "jope-experiment-" + uuid.uuid4().hex
-    command = ["sudo", "-n", "systemd-run", "--quiet", "--wait", "--pipe", "--collect", "--unit=" + unit,
-               "-p", "User=" + str(os.getuid()), "-p", "KillMode=control-group", "-p", "SendSIGKILL=yes",
-               "-p", "TimeoutStopSec=10", "-p", "ProtectSystem=strict", "-p", "ProtectHome=read-only",
-               "-p", "PrivateTmp=yes", "-p", "NoNewPrivileges=yes", "-p", "RestrictSUIDSGID=yes",
-               "-p", "ReadOnlyPaths=" + str(Path(root).resolve()),
-               "-p", "ReadWritePaths=" + " ".join(str(p) for p in [output, *locks]),
-               "-p", "WorkingDirectory=" + str(Path(root).resolve()), "-p", "UMask=0077",
-               "-p", "Nice=10", "-p", "AllowedCPUs=0-7 62-69", "--setenv=JOPE_EXPERIMENT_SERVICE=1", "--setenv=PYTHONDONTWRITEBYTECODE=1",
-               sys.executable, str(Path(sys.argv[0]).resolve()), *sys.argv[1:]]
+    command = [
+        "sudo",
+        "-n",
+        "systemd-run",
+        "--quiet",
+        "--wait",
+        "--pipe",
+        "--collect",
+        "--unit=" + unit,
+        "-p",
+        "User=" + str(os.getuid()),
+        "-p",
+        "KillMode=control-group",
+        "-p",
+        "SendSIGKILL=yes",
+        "-p",
+        "TimeoutStopSec=10",
+        "-p",
+        "ProtectSystem=strict",
+        "-p",
+        "ProtectHome=read-only",
+        "-p",
+        "PrivateTmp=yes",
+        "-p",
+        "NoNewPrivileges=yes",
+        "-p",
+        "RestrictSUIDSGID=yes",
+        "-p",
+        "ReadOnlyPaths=" + str(Path(root).resolve()),
+        "-p",
+        "ReadWritePaths=" + " ".join(str(p) for p in [output, *locks]),
+        "-p",
+        "WorkingDirectory=" + str(Path(root).resolve()),
+        "-p",
+        "UMask=0077",
+        "-p",
+        "Nice=10",
+        "-p",
+        "AllowedCPUs=0-7 62-69",
+        "--setenv=JOPE_EXPERIMENT_SERVICE=1",
+        "--setenv=PYTHONDONTWRITEBYTECODE=1",
+        sys.executable,
+        str(Path(sys.argv[0]).resolve()),
+        *sys.argv[1:],
+    ]
     raise SystemExit(subprocess.call(command))
 
 
 def entrypoint(main, output_flag, name="experiment"):
     import argparse
+
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--root", type=Path)
     parser.add_argument(output_flag, type=Path, dest="output")

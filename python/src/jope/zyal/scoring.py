@@ -16,6 +16,7 @@ Two rules that are easy to get wrong and expensive to get wrong:
   the SE of the mean is ~0.009 -- so raw deltas below ~0.02 are indistinguishable from noise, and
   a campaign generating thousands of candidates will produce many of them by chance alone.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -27,7 +28,7 @@ from . import CHAMPION, TIE_BAND
 SCREEN_FOLDS = 2
 CONFIRM_FOLDS = 5
 SCREEN_FOLD_SEED = 20260720
-CONFIRM_FOLD_SEED = 771_7919      # deliberately different from the screen seed
+CONFIRM_FOLD_SEED = 771_7919  # deliberately different from the screen seed
 
 
 def _fold_map(datasets: np.ndarray, n_folds: int, seed: int) -> np.ndarray:
@@ -38,29 +39,41 @@ def _fold_map(datasets: np.ndarray, n_folds: int, seed: int) -> np.ndarray:
     return np.array([assign[d] for d in datasets])
 
 
-def _oof_predict(X: np.ndarray, y: np.ndarray, datasets: np.ndarray,
-                 folds: np.ndarray, n_folds: int, n_estimators: int) -> np.ndarray:
+def _oof_predict(
+    X: np.ndarray, y: np.ndarray, datasets: np.ndarray, folds: np.ndarray, n_folds: int, n_estimators: int
+) -> np.ndarray:
     import lightgbm as lgb
+
     oof = np.zeros(len(y), dtype=np.float64)
     for f in range(n_folds):
         tr, te = folds != f, folds == f
         if not tr.any() or not te.any():
             continue
         model = lgb.LGBMRegressor(
-            n_estimators=n_estimators, learning_rate=0.05, num_leaves=63,
-            min_child_samples=25, colsample_bytree=0.4, subsample=0.85, subsample_freq=1,
+            n_estimators=n_estimators,
+            learning_rate=0.05,
+            num_leaves=63,
+            min_child_samples=25,
+            colsample_bytree=0.4,
+            subsample=0.85,
+            subsample_freq=1,
             # LightGBM's PyPI wheel here is CPU-only; device_type='gpu' does not error but runs
             # SLOWER than CPU (155 s vs 92 s measured). Pinning it stops anyone rediscovering that.
-            device_type="cpu", deterministic=True, force_row_wise=True,
-            n_jobs=8, random_state=SCREEN_FOLD_SEED, verbose=-1,
+            device_type="cpu",
+            deterministic=True,
+            force_row_wise=True,
+            n_jobs=8,
+            random_state=SCREEN_FOLD_SEED,
+            verbose=-1,
         )
         model.fit(X[tr], y[tr])
         oof[te] = model.predict(X[te])
     return oof
 
 
-def screen(base: np.ndarray, candidate: np.ndarray, y: np.ndarray,
-           datasets: np.ndarray, score: np.ndarray) -> dict:
+def screen(
+    base: np.ndarray, candidate: np.ndarray, y: np.ndarray, datasets: np.ndarray, score: np.ndarray
+) -> dict:
     """Cheap 2-fold pass: does base+candidate beat base alone? Returns raw deltas, no CI."""
     folds = _fold_map(datasets, SCREEN_FOLDS, SCREEN_FOLD_SEED)
     pred_base = _oof_predict(base, y, datasets, folds, SCREEN_FOLDS, 200)
@@ -80,8 +93,14 @@ def screen(base: np.ndarray, candidate: np.ndarray, y: np.ndarray,
     }
 
 
-def confirm(base: np.ndarray, candidate: np.ndarray, y: np.ndarray,
-            datasets: np.ndarray, score: np.ndarray, n_boot: int = 2000) -> dict:
+def confirm(
+    base: np.ndarray,
+    candidate: np.ndarray,
+    y: np.ndarray,
+    datasets: np.ndarray,
+    score: np.ndarray,
+    n_boot: int = 2000,
+) -> dict:
     """Expensive 5-fold pass with a paired bootstrap over datasets. This decides survival.
 
     Different fold seed from `screen` on purpose: confirming on the folds a candidate was selected

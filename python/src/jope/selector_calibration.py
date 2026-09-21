@@ -19,9 +19,7 @@ PORTFOLIO_META_POLICY = "portfolio_meta_v1"
 PORTFOLIO_BASELINE_POLICY = "portfolio_baseline"
 BIN_POLICIES = ("raw_reward", "head_reward_bins", "robust_pattern_bins")
 POLICIES = (*BIN_POLICIES, PORTFOLIO_META_POLICY)
-DEFAULT_TRAIN_FEEDBACK_RUN = (
-    load_config().runs / "active_v2_train_feedback_current_code_20260705_232346"
-)
+DEFAULT_TRAIN_FEEDBACK_RUN = load_config().runs / "active_v2_train_feedback_current_code_20260705_232346"
 DEFAULT_EVALUATION_JSONL = DEFAULT_TRAIN_FEEDBACK_RUN / "evaluation.jsonl"
 DEFAULT_PROPOSALS_JSONL = DEFAULT_TRAIN_FEEDBACK_RUN / "proposals.jsonl"
 DEFAULT_OUTPUT_JSON = DEFAULT_TRAIN_FEEDBACK_RUN / "selector_calibration.json"
@@ -233,7 +231,11 @@ def load_selector_training_rows(
                 "proposal_index": int(proposal_index) if isinstance(proposal_index, int) else None,
                 "canonical_genome": canonical,
                 "reward": reward,
-                "reward_std": _finite_float(merged.get("reward_std") if merged.get("reward_std") is not None else merged.get("uncertainty")),
+                "reward_std": _finite_float(
+                    merged.get("reward_std")
+                    if merged.get("reward_std") is not None
+                    else merged.get("uncertainty")
+                ),
                 "reward_percentile_in_engine": _finite_float(merged.get("reward_percentile_in_engine")),
                 "p_bad": _finite_float(merged.get("p_bad")),
                 "delta": delta,
@@ -289,9 +291,7 @@ def load_realization_selector_rows(
     for path in _iter_paths(realization_jsonl):
         for raw in read_jsonl(path):
             if raw.get("schema") != MODEL_REALIZATION_SCHEMA:
-                raise ValueError(
-                    f"realization adapter requires {MODEL_REALIZATION_SCHEMA!r} rows"
-                )
+                raise ValueError(f"realization adapter requires {MODEL_REALIZATION_SCHEMA!r} rows")
             if split and str(raw.get("split") or "") != split:
                 continue
             _validate_selector_realization_label(raw)
@@ -327,9 +327,7 @@ def load_realization_selector_rows(
 
         incumbent = _finite_float(incumbent_realized_scores.get(key[0]))
         if incumbent is None:
-            raise ValueError(
-                f"missing finite realized incumbent for dataset_hash={key[0]!r}"
-            )
+            raise ValueError(f"missing finite realized incumbent for dataset_hash={key[0]!r}")
         reward = _finite_float(
             candidate.get("reward_mean")
             if candidate.get("reward_mean") is not None
@@ -340,9 +338,7 @@ def load_realization_selector_rows(
         realized_score = float(anchor["realized_score"])
         raw_delta = realized_score - incumbent
         actions = _parse_actions_for_engine(canonical, engine)
-        head = str(
-            candidate.get("head_type") or _head_from_actions(actions) or "unknown"
-        )
+        head = str(candidate.get("head_type") or _head_from_actions(actions) or "unknown")
         artifact_hashes = {
             str(label["target"]): str(label["artifact_hash"])
             for label in sorted(labels, key=lambda item: str(item["target"]))
@@ -360,9 +356,7 @@ def load_realization_selector_rows(
                 "fold_plan_hash": anchor["fold_plan_hash"],
                 "reward": reward,
                 "reward_std": _finite_float(candidate.get("reward_std")),
-                "reward_percentile_in_engine": _finite_float(
-                    candidate.get("reward_percentile_in_engine")
-                ),
+                "reward_percentile_in_engine": _finite_float(candidate.get("reward_percentile_in_engine")),
                 "p_bad": _finite_float(candidate.get("p_bad")),
                 "realized_score": realized_score,
                 "incumbent_realized_score": incumbent,
@@ -374,9 +368,7 @@ def load_realization_selector_rows(
                 **_action_feature_values(actions),
                 "split": split,
                 "source": "prime_model_realization",
-                "execution_runtime_ms": _finite_float(
-                    anchor.get("execution_runtime_ms")
-                ),
+                "execution_runtime_ms": _finite_float(anchor.get("execution_runtime_ms")),
                 "peak_memory_bytes": anchor.get("peak_memory_bytes"),
             }
         )
@@ -482,7 +474,11 @@ def score_candidate_with_calibration(
         reward = 0.0
     bin_stats, bin_components = _lookup_bin_stats(row, calibration, reward)
     engine_stats = _lookup_engine_stats(row, calibration)
-    pattern_penalties = _candidate_pattern_penalties(row, calibration) if policy in {"robust_pattern_bins", PORTFOLIO_META_POLICY} else {}
+    pattern_penalties = (
+        _candidate_pattern_penalties(row, calibration)
+        if policy in {"robust_pattern_bins", PORTFOLIO_META_POLICY}
+        else {}
+    )
     pattern_penalty = float(sum(pattern_penalties.values()))
     calibrated_score = float(bin_stats["score"]) - pattern_penalty
     meta_score = None
@@ -526,7 +522,8 @@ def pattern_flags(actions: dict[str, Any] | None) -> list[str]:
     appended_expansion_count = sum(
         1
         for stage in transforms
-        if str(stage.get("op") or "") in _EXPANSIVE_TRANSFORMS and bool((stage.get("params") or {}).get("append"))
+        if str(stage.get("op") or "") in _EXPANSIVE_TRANSFORMS
+        and bool((stage.get("params") or {}).get("append"))
     )
     flags: list[str] = []
     if counts.get("target_bin_encode", 0) > 0:
@@ -586,7 +583,9 @@ def _fit_calibration_model(
                 "engine": engine,
                 "head": head,
                 "fallback": True,
-                "source": head if head in head_bins and not bool(head_bins[head].get("fallback")) else _GLOBAL_HEAD,
+                "source": head
+                if head in head_bins and not bool(head_bins[head].get("fallback"))
+                else _GLOBAL_HEAD,
                 "count": len(key_rows),
             }
     return {
@@ -680,13 +679,19 @@ def _portfolio_meta_matrix(
             np.asarray(targets, dtype=np.float64),
             feature_names,
         )
-    return np.zeros((0, len(feature_names)), dtype=np.float64), np.zeros((0,), dtype=np.float64), feature_names
+    return (
+        np.zeros((0, len(feature_names)), dtype=np.float64),
+        np.zeros((0,), dtype=np.float64),
+        feature_names,
+    )
 
 
 def _fit_reward_bins(rows: list[dict[str, Any]], *, bin_count: int, head: str) -> dict[str, Any]:
     rewards = [float(row["reward"]) for row in rows if _finite_float(row.get("reward")) is not None]
     if rewards:
-        quantiles = np.quantile(np.asarray(rewards, dtype=np.float64), np.linspace(0.0, 1.0, max(1, bin_count) + 1)).tolist()
+        quantiles = np.quantile(
+            np.asarray(rewards, dtype=np.float64), np.linspace(0.0, 1.0, max(1, bin_count) + 1)
+        ).tolist()
     else:
         quantiles = [0.0 for _ in range(max(1, bin_count) + 1)]
     thresholds = quantiles[1:-1]
@@ -729,16 +734,19 @@ def _fit_pattern_penalties(rows: list[dict[str, Any]], *, min_pattern_rows: int)
     for pattern in _PATTERN_NAMES:
         deltas = by_pattern[pattern]
         stats = _stats(deltas)
-        loss_heavy = (
-            len(deltas) >= min_pattern_rows
-            and (
-                float(stats["win_rate"]) < float(global_stats["win_rate"])
-                or float(stats["expected_delta"]) < float(global_stats["expected_delta"])
-            )
+        loss_heavy = len(deltas) >= min_pattern_rows and (
+            float(stats["win_rate"]) < float(global_stats["win_rate"])
+            or float(stats["expected_delta"]) < float(global_stats["expected_delta"])
         )
         win_gap = max(0.0, float(global_stats["win_rate"]) - float(stats["win_rate"])) if loss_heavy else 0.0
-        delta_gap = max(0.0, float(global_stats["expected_delta"]) - float(stats["expected_delta"])) if loss_heavy else 0.0
-        tail_gap = max(0.0, float(stats["tail_risk"]) - float(global_stats["tail_risk"])) if loss_heavy else 0.0
+        delta_gap = (
+            max(0.0, float(global_stats["expected_delta"]) - float(stats["expected_delta"]))
+            if loss_heavy
+            else 0.0
+        )
+        tail_gap = (
+            max(0.0, float(stats["tail_risk"]) - float(global_stats["tail_risk"])) if loss_heavy else 0.0
+        )
         penalty = min(2.0, 0.08 * win_gap + 0.35 * delta_gap + 0.05 * tail_gap)
         out[pattern] = {
             **stats,
@@ -748,7 +756,9 @@ def _fit_pattern_penalties(rows: list[dict[str, Any]], *, min_pattern_rows: int)
     return out
 
 
-def _selection_metrics(rows: list[dict[str, Any]], calibration: dict[str, Any], policy: str) -> dict[str, Any]:
+def _selection_metrics(
+    rows: list[dict[str, Any]], calibration: dict[str, Any], policy: str
+) -> dict[str, Any]:
     selected = _select_top_by_dataset(rows, calibration, policy)
     return {
         **_delta_metrics([row["delta"] for row in selected]),
@@ -769,7 +779,9 @@ def _portfolio_delta_metrics(groups: list[list[dict[str, Any]]]) -> dict[str, An
     return metrics
 
 
-def _select_top_by_dataset(rows: list[dict[str, Any]], calibration: dict[str, Any], policy: str) -> list[dict[str, Any]]:
+def _select_top_by_dataset(
+    rows: list[dict[str, Any]], calibration: dict[str, Any], policy: str
+) -> list[dict[str, Any]]:
     by_dataset: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
         by_dataset[str(row["dataset_hash"])].append(row)
@@ -805,11 +817,17 @@ def _select_portfolio_by_dataset(
             enriched = dict(row)
             enriched.update(score_candidate_with_calibration(row, calibration, policy=policy))
             scored.append(enriched)
-        groups.append(_select_portfolio_rows(scored, calibrated_score_key="selection_score" if policy != "raw_reward" else None))
+        groups.append(
+            _select_portfolio_rows(
+                scored, calibrated_score_key="selection_score" if policy != "raw_reward" else None
+            )
+        )
     return groups
 
 
-def _select_portfolio_rows(rows: list[dict[str, Any]], *, calibrated_score_key: str | None) -> list[dict[str, Any]]:
+def _select_portfolio_rows(
+    rows: list[dict[str, Any]], *, calibrated_score_key: str | None
+) -> list[dict[str, Any]]:
     safe = [row for row in rows if not row.get("candidate_risk_reason")]
     if not safe:
         return []
@@ -836,14 +854,20 @@ def _select_portfolio_rows(rows: list[dict[str, Any]], *, calibrated_score_key: 
             add(row)
             break
     for head in _PORTFOLIO_PREFERRED_HEADS:
-        bucket = [row for row in safe if id(row) not in selected_ids and str(row.get("head_type") or "") == head]
+        bucket = [
+            row for row in safe if id(row) not in selected_ids and str(row.get("head_type") or "") == head
+        ]
         if not bucket:
             continue
         diverse = [row for row in bucket if _portfolio_diversity_key(row) not in selected_diversity]
         add(_rank_rows(diverse or bucket, calibrated_score_key or "reward")[0])
         break
     for pool in (
-        [row for row in safe if id(row) not in selected_ids and _portfolio_diversity_key(row) not in selected_diversity],
+        [
+            row
+            for row in safe
+            if id(row) not in selected_ids and _portfolio_diversity_key(row) not in selected_diversity
+        ],
         [row for row in safe if id(row) not in selected_ids],
     ):
         for row in _rank_rows(pool, calibrated_score_key or "reward"):
@@ -935,9 +959,15 @@ def _delta_metrics(deltas: list[float]) -> dict[str, Any]:
     }
 
 
-def _lookup_bin_stats(row: dict[str, Any], calibration: dict[str, Any], reward: float) -> tuple[dict[str, Any], dict[str, Any]]:
+def _lookup_bin_stats(
+    row: dict[str, Any], calibration: dict[str, Any], reward: float
+) -> tuple[dict[str, Any], dict[str, Any]]:
     fit = calibration.get("fit") if isinstance(calibration.get("fit"), dict) else {}
-    global_bins = fit.get("global_bins") if isinstance(fit.get("global_bins"), dict) else _fit_reward_bins([], bin_count=5, head=_GLOBAL_HEAD)
+    global_bins = (
+        fit.get("global_bins")
+        if isinstance(fit.get("global_bins"), dict)
+        else _fit_reward_bins([], bin_count=5, head=_GLOBAL_HEAD)
+    )
     head = str(row.get("head_type") or _head_from_genome(str(row.get("canonical_genome") or "")) or "unknown")
     engine = str(row.get("engine") or _DEFAULT_ENGINE)
     head_bins = fit.get("head_bins") if isinstance(fit.get("head_bins"), dict) else {}
@@ -1010,9 +1040,16 @@ def _score_portfolio_meta(
     mean = np.asarray(model.get("feature_mean") or [], dtype=np.float64)
     scale = np.asarray(model.get("feature_scale") or [], dtype=np.float64)
     coef = np.asarray(model.get("coef") or [], dtype=np.float64)
-    if not names or mean.shape[0] != len(names) or scale.shape[0] != len(names) or coef.shape[0] != len(names):
+    if (
+        not names
+        or mean.shape[0] != len(names)
+        or scale.shape[0] != len(names)
+        or coef.shape[0] != len(names)
+    ):
         return None
-    categories = model.get("categories") if isinstance(model.get("categories"), dict) else _meta_categories([])
+    categories = (
+        model.get("categories") if isinstance(model.get("categories"), dict) else _meta_categories([])
+    )
     values = _portfolio_meta_feature_values(row, bin_stats, bin_components, pattern_penalty, categories)
     x = np.asarray([float(values.get(str(name), 0.0)) for name in names], dtype=np.float64)
     scale = np.where(np.abs(scale) < 1e-9, 1.0, scale)
@@ -1058,7 +1095,9 @@ def _portfolio_meta_feature_values(
         values[f"engine={category}"] = 1.0 if engine == category else 0.0
     for category in categories.get("heads", []):
         values[f"head={category}"] = 1.0 if head == category else 0.0
-    values.update({key: float(value) for key, value in bin_components.items() if isinstance(value, (int, float, bool))})
+    values.update(
+        {key: float(value) for key, value in bin_components.items() if isinstance(value, (int, float, bool))}
+    )
     return values
 
 
@@ -1077,14 +1116,19 @@ def _action_feature_values(actions: dict[str, Any] | None) -> dict[str, Any]:
     appended_expansion_count = sum(
         1
         for stage in transforms
-        if str(stage.get("op") or "") in _EXPANSIVE_TRANSFORMS and bool((stage.get("params") or {}).get("append"))
+        if str(stage.get("op") or "") in _EXPANSIVE_TRANSFORMS
+        and bool((stage.get("params") or {}).get("append"))
     )
     gpr_periodic = 0
     if head_op == "gpr":
         kernel = str((head.get("params") or {}).get("kernel") or "rbf")
         gpr_periodic = int("periodic" in kernel)
     return {
-        "transform_count": int(actions.get("transform_count") if isinstance(actions.get("transform_count"), int) else len(transforms)),
+        "transform_count": int(
+            actions.get("transform_count")
+            if isinstance(actions.get("transform_count"), int)
+            else len(transforms)
+        ),
         "repeated_scaler": int(sum(counts.get(op, 0) for op in _SCALER_TRANSFORMS) > 1),
         "target_bin": int(counts.get("target_bin_encode", 0) > 0),
         "appended_expansion_count": int(appended_expansion_count),
@@ -1200,16 +1244,26 @@ def _selector_row_from_training_json(raw: dict[str, Any], *, split: str) -> dict
     )
     if reward is None:
         return None
-    score = _finite_float(metadata.get("score_robust") if metadata.get("score_robust") is not None else raw.get("score"))
-    raw_score = _finite_float(metadata.get("oof_r2_raw") if metadata.get("oof_r2_raw") is not None else raw.get("score"))
+    score = _finite_float(
+        metadata.get("score_robust") if metadata.get("score_robust") is not None else raw.get("score")
+    )
+    raw_score = _finite_float(
+        metadata.get("oof_r2_raw") if metadata.get("oof_r2_raw") is not None else raw.get("score")
+    )
     delta = _finite_float(metadata.get("oof_delta_to_incumbent"))
     if delta is None:
-        incumbent = _finite_float(metadata.get("best_known_robust") if metadata.get("best_known_robust") is not None else metadata.get("best_known_oof_r2"))
+        incumbent = _finite_float(
+            metadata.get("best_known_robust")
+            if metadata.get("best_known_robust") is not None
+            else metadata.get("best_known_oof_r2")
+        )
         if score is not None and incumbent is not None:
             delta = score - incumbent
     if delta is None:
         return None
-    actions = metadata.get("actions") if isinstance(metadata.get("actions"), dict) else _parse_actions(canonical)
+    actions = (
+        metadata.get("actions") if isinstance(metadata.get("actions"), dict) else _parse_actions(canonical)
+    )
     head = str(raw.get("head_type") or _head_from_actions(actions) or "unknown")
     action_features = _action_feature_values(actions)
     p_bad = _finite_float(metadata.get("p_bad"))
@@ -1221,7 +1275,11 @@ def _selector_row_from_training_json(raw: dict[str, Any], *, split: str) -> dict
         "proposal_index": None,
         "canonical_genome": canonical,
         "reward": reward,
-        "reward_std": _finite_float(metadata.get("surrogate_sigma") if metadata.get("surrogate_sigma") is not None else raw.get("reward_std")),
+        "reward_std": _finite_float(
+            metadata.get("surrogate_sigma")
+            if metadata.get("surrogate_sigma") is not None
+            else raw.get("reward_std")
+        ),
         "reward_percentile_in_engine": _finite_float(
             metadata.get("rank_percentile_engine")
             if metadata.get("rank_percentile_engine") is not None
@@ -1310,7 +1368,9 @@ def _iter_paths(paths: str | Path | list[str | Path] | tuple[str | Path, ...] | 
     return [Path(path) for path in paths]
 
 
-def _stringify_paths(paths: str | Path | list[str | Path] | tuple[str | Path, ...] | None) -> list[str] | str | None:
+def _stringify_paths(
+    paths: str | Path | list[str | Path] | tuple[str | Path, ...] | None,
+) -> list[str] | str | None:
     if paths is None:
         return None
     if isinstance(paths, (str, Path)):

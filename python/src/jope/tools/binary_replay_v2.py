@@ -1,4 +1,5 @@
 """Recompute both sides of all 80 binary contexts, including every raw component."""
+
 import argparse
 import signal
 import subprocess
@@ -15,12 +16,24 @@ from experiment_scheduler import SPARE_CPUS, admission_reason, spare_lease
 
 def configuration(executable):
     from seed_experiment import executable_dependencies
-    result = subprocess.run(["nvidia-smi", "--query-gpu=index,uuid,name,driver_version", "--format=csv,noheader"],
-                            env=runtime.child_env(), capture_output=True, text=True, check=True)
+
+    result = subprocess.run(
+        ["nvidia-smi", "--query-gpu=index,uuid,name,driver_version", "--format=csv,noheader"],
+        env=runtime.child_env(),
+        capture_output=True,
+        text=True,
+        check=True,
+    )
     gpus = [line.strip() for line in result.stdout.splitlines() if line.strip()]
-    runtime.require(len(gpus) == 8 and len(set(gpus)) == 8, "replay requires the frozen eight-GPU configuration")
-    return {"runtime_dependencies": executable_dependencies(executable), "gpus": gpus,
-            "precision": "frozen encoder specifications and executable defaults", "dispatch_threads": 2}
+    runtime.require(
+        len(gpus) == 8 and len(set(gpus)) == 8, "replay requires the frozen eight-GPU configuration"
+    )
+    return {
+        "runtime_dependencies": executable_dependencies(executable),
+        "gpus": gpus,
+        "precision": "frozen encoder specifications and executable defaults",
+        "dispatch_threads": 2,
+    }
 
 
 def commands_for_replay(root, original, output, executable, waves, specs):
@@ -31,16 +44,41 @@ def commands_for_replay(root, original, output, executable, waves, specs):
             for number, wave in enumerate(waves):
                 ranks = []
                 for rank in range(len(binary.read(wave)["jobs"])):
-                    command = ([str(root / hyperion["persistent_binary"]), "--root", str(root)] if component == "hyperion"
-                               else [str(executable), "--root", str(root), f"{component}-rank"])
-                    command += ["--jobs", str(wave), "--spec", str(specs[component]), "--output", str(output / side / "components" / component), "--rank", str(rank), "--world", "8"]
+                    command = (
+                        [str(root / hyperion["persistent_binary"]), "--root", str(root)]
+                        if component == "hyperion"
+                        else [str(executable), "--root", str(root), f"{component}-rank"]
+                    )
+                    command += [
+                        "--jobs",
+                        str(wave),
+                        "--spec",
+                        str(specs[component]),
+                        "--output",
+                        str(output / side / "components" / component),
+                        "--rank",
+                        str(rank),
+                        "--world",
+                        "8",
+                    ]
                     if component != "hyperion":
                         command += ["--batch", "128" if component == "target" else "2"]
                     ranks.append(command)
                 commands[f"{side}-{component}-{number:02}"] = ranks
-        command = [str(executable), "--root", str(root), "apply-binary-contexts", "--jobs", str(original / "jobs.json"),
-                   "--assembly", str(root / "data/encodings/contexts-assembly-v2"), "--aliases", str(original / "aliases.json"),
-                   "--output", str(output / side / "contexts")]
+        command = [
+            str(executable),
+            "--root",
+            str(root),
+            "apply-binary-contexts",
+            "--jobs",
+            str(original / "jobs.json"),
+            "--assembly",
+            str(root / "data/encodings/contexts-assembly-v2"),
+            "--aliases",
+            str(original / "aliases.json"),
+            "--output",
+            str(output / side / "contexts"),
+        ]
         for component in binary.COMPONENTS:
             command += ["--" + component, str(output / side / "components" / component)]
         commands[side + "-contexts"] = [command]
@@ -53,37 +91,76 @@ def audit(root, manifest_path):
     manifest = binary.read(manifest_path)
     saved = binary.read(output / "verification.json")
     runtime.require(saved["manifest_sha256"] == binary.sha(manifest_path), "replay manifest binding changed")
-    runtime.require(manifest.get("views") == manifest.get("pairs") == 80 and manifest.get("raw_components_per_side") == 240
-                    and saved.get("independently_computed_contexts") == 160 and saved.get("independently_computed_raw_components") == 480,
-                    "replay reported counts disagree with the required cohort")
+    runtime.require(
+        manifest.get("views") == manifest.get("pairs") == 80
+        and manifest.get("raw_components_per_side") == 240
+        and saved.get("independently_computed_contexts") == 160
+        and saved.get("independently_computed_raw_components") == 480,
+        "replay reported counts disagree with the required cohort",
+    )
     waves = sorted((output / "waves").glob("*.json"))
     jobs = [job for path in waves for job in binary.read(path)["jobs"]]
-    runtime.require(len(waves) == 10 and len(jobs) == 80 and len({(j["prepared"], j["cut"]) for j in jobs}) == 80, "replay jobs incomplete or duplicated")
+    runtime.require(
+        len(waves) == 10 and len(jobs) == 80 and len({(j["prepared"], j["cut"]) for j in jobs}) == 80,
+        "replay jobs incomplete or duplicated",
+    )
     # Earlier v2 manifests bind these exact preparation paths in their ten waves.
-    original = root / manifest["source_experiment"] if "source_experiment" in manifest else (root / jobs[0]["prepared"]).parents[1]
-    runtime.require(binary.sha(original / "jobs.json") == manifest["jobs_sha256"], "original replay jobs changed")
-    runtime.require(binary.verify(root, original)["report_sha256"] == manifest["original_report_sha256"], "original replay artifacts changed")
+    original = (
+        root / manifest["source_experiment"]
+        if "source_experiment" in manifest
+        else (root / jobs[0]["prepared"]).parents[1]
+    )
+    runtime.require(
+        binary.sha(original / "jobs.json") == manifest["jobs_sha256"], "original replay jobs changed"
+    )
+    runtime.require(
+        binary.verify(root, original)["report_sha256"] == manifest["original_report_sha256"],
+        "original replay artifacts changed",
+    )
     executable = root / manifest.get("executable", "bin/jope-parallel-neural-v56-experiment")
     runtime.require(binary.sha(executable) == manifest["encoder_sha256"], "frozen replay executable changed")
     if "configuration" in manifest:
-        runtime.require(configuration(executable) == manifest["configuration"], "replay numerical environment changed")
-    runtime.require([binary.read(p) for p in waves] == serial_job_waves(binary.read(original / "jobs.json")), "serial replay waves changed")
+        runtime.require(
+            configuration(executable) == manifest["configuration"], "replay numerical environment changed"
+        )
+    runtime.require(
+        [binary.read(p) for p in waves] == serial_job_waves(binary.read(original / "jobs.json")),
+        "serial replay waves changed",
+    )
     specs = {name: original / "sampling" / f"{name}-spec.json" for name in ("target", "foundation")}
     specs["hyperion"] = root / "manifests/hyperion-reviewed4-safe-spec.json"
-    runtime.require({k: binary.sha(v) for k, v in specs.items()} == manifest["specs"], "frozen replay specifications changed")
+    runtime.require(
+        {k: binary.sha(v) for k, v in specs.items()} == manifest["specs"],
+        "frozen replay specifications changed",
+    )
     expected_commands = commands_for_replay(root, original, output, executable, waves, specs)
     stage_files = list((output / "stages").glob("*.json"))
-    runtime.require({p.stem for p in stage_files} == set(expected_commands) and len(stage_files) == 62, "missing full replay stage")
+    runtime.require(
+        {p.stem for p in stage_files} == set(expected_commands) and len(stage_files) == 62,
+        "missing full replay stage",
+    )
     for path in stage_files:
         stage = binary.read(path)
         commands = expected_commands[path.stem]
-        runtime.require(stage["commands_sha256"] == binary.compact_sha(commands), "replay stage command changed")
+        runtime.require(
+            stage["commands_sha256"] == binary.compact_sha(commands), "replay stage command changed"
+        )
         stages.verify(root, commands, stage)
-    bound_vectors = {root / name for path in stage_files for name in binary.read(path)["outputs"] if name.endswith(".f32")}
-    runtime.require(set((output / "a").rglob("*.f32")) | set((output / "b").rglob("*.f32")) == bound_vectors, "unexpected replay vector artifact")
-    indexes = {side: binary.keyed(binary.read(output / side / "contexts/index.json")["encodings"], side) for side in ("a", "b")}
+    bound_vectors = {
+        root / name for path in stage_files for name in binary.read(path)["outputs"] if name.endswith(".f32")
+    }
+    runtime.require(
+        set((output / "a").rglob("*.f32")) | set((output / "b").rglob("*.f32")) == bound_vectors,
+        "unexpected replay vector artifact",
+    )
+    indexes = {
+        side: binary.keyed(binary.read(output / side / "contexts/index.json")["encodings"], side)
+        for side in ("a", "b")
+    }
     expected = {(binary.read(root / j["prepared"] / "prepared.json")["dataset"], j["cut"]): j for j in jobs}
-    runtime.require(indexes["a"].keys() == indexes["b"].keys() == expected.keys(), "replay context coverage mismatch")
+    runtime.require(
+        indexes["a"].keys() == indexes["b"].keys() == expected.keys(), "replay context coverage mismatch"
+    )
     pairs = []
     for key, job in expected.items():
         prepared = binary.read(root / job["prepared"] / "prepared.json")
@@ -95,18 +172,35 @@ def audit(root, manifest_path):
                 path = output / side / suffix / filename
                 metadata = binary.read(path.parent / f"{component}.json")
                 binary.vector(path, dimensions)
-                runtime.require(metadata["prepared_sha256"] == job["prepared_sha256"] and metadata["training_sha256"] == cut["training_sha256"] and metadata["preprocessing_sha256"] == cut["preprocessing_sha256"] and metadata["signature_sha256"] == binary.sha(path), "replay component binding changed")
-            compared[component] = compare_floats(output / "a" / suffix / filename, output / "b" / suffix / filename)
+                runtime.require(
+                    metadata["prepared_sha256"] == job["prepared_sha256"]
+                    and metadata["training_sha256"] == cut["training_sha256"]
+                    and metadata["preprocessing_sha256"] == cut["preprocessing_sha256"]
+                    and metadata["signature_sha256"] == binary.sha(path),
+                    "replay component binding changed",
+                )
+            compared[component] = compare_floats(
+                output / "a" / suffix / filename, output / "b" / suffix / filename
+            )
         for side in ("a", "b"):
             binary.vector(root / indexes[side][key]["path"], 2048)
-        compared["context"] = compare_floats(root / indexes["a"][key]["path"], root / indexes["b"][key]["path"])
+        compared["context"] = compare_floats(
+            root / indexes["a"][key]["path"], root / indexes["b"][key]["path"]
+        )
         pairs.append({"dataset": key[0], "cut": key[1], "comparisons": compared})
     actual = {(p["dataset"], p["cut"]): p for p in pairs}
     claimed = {(p["dataset"], p["cut"]): p for p in saved["pairs"]}
-    runtime.require(len(saved["pairs"]) == 80 and actual == claimed, "saved replay comparisons differ from current bytes")
+    runtime.require(
+        len(saved["pairs"]) == 80 and actual == claimed, "saved replay comparisons differ from current bytes"
+    )
     passed = all(c["exact"] for p in pairs for c in p["comparisons"].values())
     exact_pairs = sum(all(c["exact"] for c in p["comparisons"].values()) for p in pairs)
-    runtime.require(saved["passed"] == passed and saved["verified_pairs"] == exact_pairs and saved.get("compared_pairs", 80) == 80, "saved replay coverage claim changed")
+    runtime.require(
+        saved["passed"] == passed
+        and saved["verified_pairs"] == exact_pairs
+        and saved.get("compared_pairs", 80) == 80,
+        "saved replay coverage claim changed",
+    )
     return dict(saved, passed=passed, read_only=True)
 
 
@@ -123,25 +217,45 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     verified = binary.verify(root, original)
     jobs = binary.read(original / "jobs.json")
-    runtime.require(len(jobs["jobs"]) == 80 and verified["component_hashes"] == 240, "full replay requires all 80 admitted contexts")
+    runtime.require(
+        len(jobs["jobs"]) == 80 and verified["component_hashes"] == 240,
+        "full replay requires all 80 admitted contexts",
+    )
     original_run = binary.read(original / "encoding-run.json")
-    runtime.require(binary.sha(args.binary) == original_run["executable_sha256"], "replay executable differs from frozen encoder")
+    runtime.require(
+        binary.sha(args.binary) == original_run["executable_sha256"],
+        "replay executable differs from frozen encoder",
+    )
     python_env = stages.python_environment(original)
-    environment = runtime.child_env(**python_env, OMP_NUM_THREADS="2", JAIN_HYPERION_CUDA_MAX_LOAD_RATIO="1000")
+    environment = runtime.child_env(
+        **python_env, OMP_NUM_THREADS="2", JAIN_HYPERION_CUDA_MAX_LOAD_RATIO="1000"
+    )
     hyperion_spec = root / "manifests/hyperion-reviewed4-safe-spec.json"
     specs = {name: original / "sampling" / f"{name}-spec.json" for name in ("target", "foundation")}
     specs["hyperion"] = hyperion_spec
     binary.read(hyperion_spec)
-    request = {"schema": "parallel.binary_full_replay.v2", "views": 80, "pairs": 80, "raw_components_per_side": 240,
+    request = {
+        "schema": "parallel.binary_full_replay.v2",
+        "views": 80,
+        "pairs": 80,
+        "raw_components_per_side": 240,
         "original_verified_contexts": verified["context_hashes"],
-        "source_experiment": str(original.relative_to(root)), "executable": str(args.binary.relative_to(root)),
-        "original_report_sha256": verified["report_sha256"], "jobs_sha256": binary.sha(original / "jobs.json"),
-        "encoder_sha256": binary.sha(args.binary), "specs": {k: binary.sha(v) for k, v in specs.items()},
-        "projection_sha256": original_run["projection_sha256"], "child_environment": environment,
+        "source_experiment": str(original.relative_to(root)),
+        "executable": str(args.binary.relative_to(root)),
+        "original_report_sha256": verified["report_sha256"],
+        "jobs_sha256": binary.sha(original / "jobs.json"),
+        "encoder_sha256": binary.sha(args.binary),
+        "specs": {k: binary.sha(v) for k, v in specs.items()},
+        "projection_sha256": original_run["projection_sha256"],
+        "child_environment": environment,
         "configuration": configuration(args.binary),
         "dispatch": "serial single cut per rank; global job index modulo eight; consecutive waves",
-        "exact_tolerance": 0, "prior_outputs_preserved": True, "raw_components_reused": False,
-        "driver_sha256": binary.sha(Path(__file__)), "runtime_sha256": binary.sha(Path(runtime.__file__))}
+        "exact_tolerance": 0,
+        "prior_outputs_preserved": True,
+        "raw_components_reused": False,
+        "driver_sha256": binary.sha(Path(__file__)),
+        "runtime_sha256": binary.sha(Path(runtime.__file__)),
+    }
     immutable(output / "manifest.json", request)
     waves = []
     for number, wave in enumerate(serial_job_waves(jobs)):
@@ -150,9 +264,11 @@ def main():
         waves.append(path)
     deadline = time.monotonic() + args.seconds
     stopping = False
+
     def interrupt(*_):
         nonlocal stopping
         stopping = True
+
     for sig in (signal.SIGTERM, signal.SIGINT):
         signal.signal(sig, interrupt)
 
@@ -176,24 +292,62 @@ def main():
                         log = path.open("w")
                         logs.append(log)
                         env = dict(environment, CUDA_VISIBLE_DEVICES=str(rank))
-                        affinity = ",".join(map(str, SPARE_CPUS[rank*2:rank*2+2]))
-                        children.append(runtime.popen(["taskset", "-c", affinity] + command, cwd=root, env=env, stdout=log, stderr=log))
+                        affinity = ",".join(map(str, SPARE_CPUS[rank * 2 : rank * 2 + 2]))
+                        children.append(
+                            runtime.popen(
+                                ["taskset", "-c", affinity] + command,
+                                cwd=root,
+                                env=env,
+                                stdout=log,
+                                stderr=log,
+                            )
+                        )
                     while any(c.poll() is None for c in children):
                         reason = admission_reason(root)
                         if reason or stopping or time.monotonic() >= deadline:
                             raise BlockingIOError(reason or "bounded interruption")
-                        runtime.require(not any(c.returncode not in (None, 0) for c in children), f"replay stage failed: {name}")
-                        runtime.write(output / "progress.json", {"phase": name, "timestamp": int(time.time()), "published_stages": len(list((output / "stages").glob("*.json"))), "required_stages": 62, "replay_pairs_verified": 0})
-                        time.sleep(.5)
+                        runtime.require(
+                            not any(c.returncode not in (None, 0) for c in children),
+                            f"replay stage failed: {name}",
+                        )
+                        runtime.write(
+                            output / "progress.json",
+                            {
+                                "phase": name,
+                                "timestamp": int(time.time()),
+                                "published_stages": len(list((output / "stages").glob("*.json"))),
+                                "required_stages": 62,
+                                "replay_pairs_verified": 0,
+                            },
+                        )
+                        time.sleep(0.5)
                     runtime.require(all(c.returncode == 0 for c in children), f"replay stage failed: {name}")
                     outputs = stages.inventory(root, commands)
-                    immutable(receipt_path, {"complete": True, "commands_sha256": command_sha,
-                        "seconds": time.monotonic() - begun, "outputs": outputs})
+                    immutable(
+                        receipt_path,
+                        {
+                            "complete": True,
+                            "commands_sha256": command_sha,
+                            "seconds": time.monotonic() - begun,
+                            "outputs": outputs,
+                        },
+                    )
                     return True
             except BlockingIOError as error:
                 if begun is not None:
-                    runtime.write(output / "cancellations" / f"{time.time_ns()}.json", {"stage": name, "reason": str(error), "seconds": time.monotonic() - begun})
-                runtime.write(output / "progress.json", {"phase": "waiting", "next_stage": name, "timestamp": int(time.time()), "reason": str(error)})
+                    runtime.write(
+                        output / "cancellations" / f"{time.time_ns()}.json",
+                        {"stage": name, "reason": str(error), "seconds": time.monotonic() - begun},
+                    )
+                runtime.write(
+                    output / "progress.json",
+                    {
+                        "phase": "waiting",
+                        "next_stage": name,
+                        "timestamp": int(time.time()),
+                        "reason": str(error),
+                    },
+                )
                 time.sleep(1)
             finally:
                 for log in logs:
@@ -203,27 +357,61 @@ def main():
     for name, commands in commands_for_replay(root, original, output, args.binary, waves, specs).items():
         if not run_stage(name, commands):
             return
-    indexes = {side: binary.keyed(binary.read(output / side / "contexts/index.json")["encodings"], side) for side in ("a", "b")}
-    runtime.require(indexes["a"].keys() == indexes["b"].keys() and len(indexes["a"]) == 80, "replay pair inventory incomplete")
+    indexes = {
+        side: binary.keyed(binary.read(output / side / "contexts/index.json")["encodings"], side)
+        for side in ("a", "b")
+    }
+    runtime.require(
+        indexes["a"].keys() == indexes["b"].keys() and len(indexes["a"]) == 80,
+        "replay pair inventory incomplete",
+    )
     pairs = []
     for key in indexes["a"]:
         compared = {}
         for component, (filename, _) in binary.COMPONENTS.items():
             suffix = Path("components") / component / key[0] / f"cut-{key[1]}" / filename
             compared[component] = compare_floats(output / "a" / suffix, output / "b" / suffix)
-        compared["context"] = compare_floats(root / indexes["a"][key]["path"], root / indexes["b"][key]["path"])
+        compared["context"] = compare_floats(
+            root / indexes["a"][key]["path"], root / indexes["b"][key]["path"]
+        )
         pairs.append({"dataset": key[0], "cut": key[1], "comparisons": compared})
     passed = all(c["exact"] for p in pairs for c in p["comparisons"].values())
-    runtime.require(binary.verify(root, original) == verified, "original binary artifacts changed during replay")
-    runtime.require(configuration(args.binary) == request["configuration"], "replay numerical environment changed during computation")
+    runtime.require(
+        binary.verify(root, original) == verified, "original binary artifacts changed during replay"
+    )
+    runtime.require(
+        configuration(args.binary) == request["configuration"],
+        "replay numerical environment changed during computation",
+    )
     exact_pairs = sum(all(c["exact"] for c in p["comparisons"].values()) for p in pairs)
-    immutable(output / "verification.json", {"schema": "parallel.binary_full_replay_verification.v2", "passed": passed,
-        "pairs": pairs, "compared_pairs": 80, "verified_pairs": exact_pairs, "independently_computed_contexts": 160, "independently_computed_raw_components": 480,
-        "manifest_sha256": binary.sha(output / "manifest.json"), "originals_unchanged": True,
-        "stage_seconds": sum(binary.read(p)["seconds"] for p in (output / "stages").glob("*.json")),
-        "cancelled_seconds": sum(binary.read(p)["seconds"] for p in (output / "cancellations").glob("*.json"))})
-    runtime.write(output / "progress.json", {"phase": "completed" if passed else "numerical differences", "passed": passed,
-        "timestamp": int(time.time()), "replay_pairs_verified": exact_pairs, "exact_pairs": exact_pairs})
+    immutable(
+        output / "verification.json",
+        {
+            "schema": "parallel.binary_full_replay_verification.v2",
+            "passed": passed,
+            "pairs": pairs,
+            "compared_pairs": 80,
+            "verified_pairs": exact_pairs,
+            "independently_computed_contexts": 160,
+            "independently_computed_raw_components": 480,
+            "manifest_sha256": binary.sha(output / "manifest.json"),
+            "originals_unchanged": True,
+            "stage_seconds": sum(binary.read(p)["seconds"] for p in (output / "stages").glob("*.json")),
+            "cancelled_seconds": sum(
+                binary.read(p)["seconds"] for p in (output / "cancellations").glob("*.json")
+            ),
+        },
+    )
+    runtime.write(
+        output / "progress.json",
+        {
+            "phase": "completed" if passed else "numerical differences",
+            "passed": passed,
+            "timestamp": int(time.time()),
+            "replay_pairs_verified": exact_pairs,
+            "exact_pairs": exact_pairs,
+        },
+    )
     runtime.require(passed, "full replay contains numerical differences; evidence preserved")
 
 

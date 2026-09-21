@@ -4,6 +4,7 @@
 No queue writer or evaluator is invoked. Rust owns the all-GPU lease and ranks;
 this wrapper owns their deadline and stops only its own process descendants.
 """
+
 import argparse
 import ctypes
 import fcntl
@@ -122,39 +123,55 @@ def stop_owned(process):
 
 @lru_cache(maxsize=256)
 def prepared_cuts(root, path, expected_sha):
-    path = (root/path/'prepared.json').resolve()
+    path = (root / path / "prepared.json").resolve()
     assert path.is_relative_to(root) and digest(path) == expected_sha
     prepared = read(path)
-    return {cut['index']: cut for cut in prepared['cuts']}
+    return {cut["index"]: cut for cut in prepared["cuts"]}
 
 
 def validate_pool(root, path, checkpoint_sha, snapshot_sha, contexts):
-    generation, seeds, best = [read(path/name) for name in ('generation.json', 'seeds.json', 'pure-best-predicted.json')]
-    assert generation['schema'] == 'parallel.proposal_generation.v2'
-    assert generation['champion_snapshot_sha256'] == snapshot_sha
-    assert generation['checkpoint_sha256'] == checkpoint_sha
-    assert generation['context_mode'] == 'matching_training_cut'
-    key = (best['dataset'], seeds['cut'])
+    generation, seeds, best = [
+        read(path / name) for name in ("generation.json", "seeds.json", "pure-best-predicted.json")
+    ]
+    assert generation["schema"] == "parallel.proposal_generation.v2"
+    assert generation["champion_snapshot_sha256"] == snapshot_sha
+    assert generation["checkpoint_sha256"] == checkpoint_sha
+    assert generation["context_mode"] == "matching_training_cut"
+    key = (best["dataset"], seeds["cut"])
     row = contexts[key]
-    assert row['partition'] != 'meta_test'
-    assert path.name == f'cut-{key[1]}' and path.parent.name == key[0]
-    assert seeds['prepared_sha256'] == row['prepared_sha256'] and seeds['context_sha256'] == row['sha256']
-    context = (root/row['path']).resolve()
-    assert context.is_relative_to(root) and context.stat().st_size == 8192 and digest(context) == row['sha256']
-    cut = prepared_cuts(root, row['prepared'], row['prepared_sha256'])[key[1]]
-    first = dict(dataset=key[0], cut=key[1], prepared_sha256=row['prepared_sha256'],
-                 training_sha256=cut['training_sha256'], vocabulary_sha256=best['vocabulary_sha256'])
-    job = dict(cut=key[1], prepared_sha256=row['prepared_sha256'], seeds_sha256=digest(path/'seeds.json'))
+    assert row["partition"] != "meta_test"
+    assert path.name == f"cut-{key[1]}" and path.parent.name == key[0]
+    assert seeds["prepared_sha256"] == row["prepared_sha256"] and seeds["context_sha256"] == row["sha256"]
+    context = (root / row["path"]).resolve()
+    assert (
+        context.is_relative_to(root) and context.stat().st_size == 8192 and digest(context) == row["sha256"]
+    )
+    cut = prepared_cuts(root, row["prepared"], row["prepared_sha256"])[key[1]]
+    first = dict(
+        dataset=key[0],
+        cut=key[1],
+        prepared_sha256=row["prepared_sha256"],
+        training_sha256=cut["training_sha256"],
+        vocabulary_sha256=best["vocabulary_sha256"],
+    )
+    job = dict(cut=key[1], prepared_sha256=row["prepared_sha256"], seeds_sha256=digest(path / "seeds.json"))
     counts, scope = verify_generation(path, generation, seeds, job, first, read)
-    assert scope == 'pure_prediction_then_adaptive_gp_assembly'
-    return {'path': str(path.relative_to(root)), 'seeds_sha256': job['seeds_sha256'],
-            'generation_sha256': digest(path/'generation.json'), 'dataset': key[0], 'cut': key[1],
-            'prepared': row['prepared'], 'prepared_sha256': row['prepared_sha256'],
-            'pure_ranking_sha256': generation['pure_ranking_sha256'],
-            'pure_best_predicted_sha256': generation['pure_best_predicted_sha256'],
-            'gp_ranking_sha256': generation['gp_ranking_sha256'],
-            'gp_population_assembly_sha256': generation['gp_population_assembly_sha256'],
-            'teacher_overlaps': counts['teacher_overlaps'], 'overlap_refills': counts['overlap_refills']}
+    assert scope == "pure_prediction_then_adaptive_gp_assembly"
+    return {
+        "path": str(path.relative_to(root)),
+        "seeds_sha256": job["seeds_sha256"],
+        "generation_sha256": digest(path / "generation.json"),
+        "dataset": key[0],
+        "cut": key[1],
+        "prepared": row["prepared"],
+        "prepared_sha256": row["prepared_sha256"],
+        "pure_ranking_sha256": generation["pure_ranking_sha256"],
+        "pure_best_predicted_sha256": generation["pure_best_predicted_sha256"],
+        "gp_ranking_sha256": generation["gp_ranking_sha256"],
+        "gp_population_assembly_sha256": generation["gp_population_assembly_sha256"],
+        "teacher_overlaps": counts["teacher_overlaps"],
+        "overlap_refills": counts["overlap_refills"],
+    }
 
 
 def restore_library(root, output, checkpoint_sha, binding, contexts):
@@ -202,22 +219,32 @@ def run(root, spec_path):
     output.mkdir(parents=True, exist_ok=True)
     lock = (output / "wrapper.lock").open("a+")
     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    validator_sha = digest(Path(__file__).with_name('proposal_pool_v2.py'))
-    assert validator_sha == spec['pool_validator_sha256']
-    assert spec['pure_prediction_protocol'] == PURE_PROTOCOL and spec['gp_assembly_protocol'] == ASSEMBLY_PROTOCOL
-    binding = {"spec_sha256": digest(spec_path), "script_sha256": digest(Path(__file__)),
-               "pool_validator_sha256": validator_sha, "executable_sha256": spec['executable_sha256']}
+    validator_sha = digest(Path(__file__).with_name("proposal_pool_v2.py"))
+    assert validator_sha == spec["pool_validator_sha256"]
+    assert (
+        spec["pure_prediction_protocol"] == PURE_PROTOCOL
+        and spec["gp_assembly_protocol"] == ASSEMBLY_PROTOCOL
+    )
+    binding = {
+        "spec_sha256": digest(spec_path),
+        "script_sha256": digest(Path(__file__)),
+        "pool_validator_sha256": validator_sha,
+        "executable_sha256": spec["executable_sha256"],
+    }
     if (output / "binding.json").exists():
         assert read(output / "binding.json") == binding
     else:
         write(output / "binding.json", binding)
     contexts = read(paths["corpus"] / "index.json")["contexts"]
-    contexts_by_key = {(c['dataset'], c['cut']): c for c in contexts}
+    contexts_by_key = {(c["dataset"], c["cut"]): c for c in contexts}
     assert len(contexts_by_key) == len(contexts)
     starts = range(spec["cut_start"], spec["cut_end"], spec["chunk_cuts"])
     chunks = [(start, min(spec["chunk_cuts"], spec["cut_end"] - start)) for start in starts]
-    expected = {(c["dataset"], c["cut"]) for c in contexts if c["partition"] != "meta_test"
-                and spec["cut_start"] <= c["cut"] < spec["cut_end"]}
+    expected = {
+        (c["dataset"], c["cut"])
+        for c in contexts
+        if c["partition"] != "meta_test" and spec["cut_start"] <= c["cut"] < spec["cut_end"]
+    }
     # Restore verified saved work before any admission gate; a restart after
     # the campaign cutoff must never publish zero progress over saved pools.
     pools, completed = restore_library(root, output, spec["checkpoint_sha256"], binding, contexts_by_key)
@@ -226,26 +253,48 @@ def run(root, spec_path):
     for signum in [signal.SIGTERM, signal.SIGINT]:
         signal.signal(signum, lambda *_: stop.__setitem__(0, True))
     assert ctypes.CDLL(None).prctl(36, 1, 0, 0, 0) == 0  # Linux child subreaper.
+
     def publish(phase, reason, chunk=None):
-        write(root / "runs/pure-proposal-library.json", {"schema": "parallel.pure_proposal_library_progress.v1",
-              "timestamp": int(time.time()), "phase": phase, "reason": reason,
-              "checkpoint_sha256": spec["checkpoint_sha256"], "corpus_sha256": spec["corpus_sha256"],
-              "output": str(output.relative_to(root)), "active_chunk": chunk,
-              "saved_seed_pools": len(pools), "planned_seed_pools": len(expected),
-              "saved_ranked_programs": 64 * len(pools), "completed_chunks": len(completed),
-              "gpu_world": 8, "gp_jobs_admitted": 0, "gp_evaluations": 0,
-              "pure_prediction_protocol": PURE_PROTOCOL, "gp_assembly_protocol": ASSEMBLY_PROTOCOL,
-              "pure_prediction_verified": bool(pools), "gp_population_training_only_end_to_end": False,
-              "teacher_overlaps": sum(p['teacher_overlaps'] for p in pools.values()),
-              "overlap_refills": sum(p['overlap_refills'] for p in pools.values()),
-              "qualification_only": True, "encodings_recomputed": 0})
+        write(
+            root / "runs/pure-proposal-library.json",
+            {
+                "schema": "parallel.pure_proposal_library_progress.v1",
+                "timestamp": int(time.time()),
+                "phase": phase,
+                "reason": reason,
+                "checkpoint_sha256": spec["checkpoint_sha256"],
+                "corpus_sha256": spec["corpus_sha256"],
+                "output": str(output.relative_to(root)),
+                "active_chunk": chunk,
+                "saved_seed_pools": len(pools),
+                "planned_seed_pools": len(expected),
+                "saved_ranked_programs": 64 * len(pools),
+                "completed_chunks": len(completed),
+                "gpu_world": 8,
+                "gp_jobs_admitted": 0,
+                "gp_evaluations": 0,
+                "pure_prediction_protocol": PURE_PROTOCOL,
+                "gp_assembly_protocol": ASSEMBLY_PROTOCOL,
+                "pure_prediction_verified": bool(pools),
+                "gp_population_training_only_end_to_end": False,
+                "teacher_overlaps": sum(p["teacher_overlaps"] for p in pools.values()),
+                "overlap_refills": sum(p["overlap_refills"] for p in pools.values()),
+                "qualification_only": True,
+                "encodings_recomputed": 0,
+            },
+        )
+
     reason = "all requested proposal pools saved"
     for start, cuts in chunks:
         if any(c["cut_start"] == start and c["cuts"] == cuts for c in completed):
             continue
         chunk_root = output / f"chunk-{start:04}"
         destination = chunk_root / "neural"
-        wanted = {(c["dataset"], c["cut"]) for c in contexts if c["partition"] != "meta_test" and start <= c["cut"] < start + cuts}
+        wanted = {
+            (c["dataset"], c["cut"])
+            for c in contexts
+            if c["partition"] != "meta_test" and start <= c["cut"] < start + cuts
+        }
         if not wanted:
             continue
         allowed, reason = gate(root, paths["cycle"], int(time.time()))
@@ -272,9 +321,22 @@ def run(root, spec_path):
             if not allowed or stop[0] or time.monotonic() - begin >= spec["service_seconds"]:
                 break
             chunk_root.mkdir(parents=True, exist_ok=True)
-            command = [str(paths["executable"]), "--root", str(root), "propose", "--corpus", str(paths["corpus"]),
-                       "--checkpoint", str(paths["checkpoint"]), "--output", str(destination),
-                       "--cut-start", str(start), "--cuts", str(cuts)]
+            command = [
+                str(paths["executable"]),
+                "--root",
+                str(root),
+                "propose",
+                "--corpus",
+                str(paths["corpus"]),
+                "--checkpoint",
+                str(paths["checkpoint"]),
+                "--output",
+                str(destination),
+                "--cut-start",
+                str(start),
+                "--cuts",
+                str(cuts),
+            ]
             with (chunk_root / "controller.log").open("ab") as log:
                 process = subprocess.Popen(command, stdout=log, stderr=log, start_new_session=True)
                 started = time.monotonic()
@@ -282,8 +344,15 @@ def run(root, spec_path):
                     while process.poll() is None:
                         allowed, reason = gate(root, paths["cycle"], int(time.time()))
                         elapsed = time.monotonic() - started
-                        if not allowed or stop[0] or elapsed >= spec["block_seconds"] or time.monotonic() - begin >= spec["service_seconds"]:
-                            reason = reason if not allowed else "owned proposal block time or stop limit reached"
+                        if (
+                            not allowed
+                            or stop[0]
+                            or elapsed >= spec["block_seconds"]
+                            or time.monotonic() - begin >= spec["service_seconds"]
+                        ):
+                            reason = (
+                                reason if not allowed else "owned proposal block time or stop limit reached"
+                            )
                             stop_owned(process)
                             break
                         snapshot_path = chunk_root / "champion-snapshot.json"
@@ -292,19 +361,40 @@ def run(root, spec_path):
                             for path in destination.glob("*/cut-*/generation.json"):
                                 key = str(path.parent)
                                 if key not in pools:
-                                    pool = validate_pool(root, path.parent, spec["checkpoint_sha256"], snapshot_sha, contexts_by_key)
+                                    pool = validate_pool(
+                                        root,
+                                        path.parent,
+                                        spec["checkpoint_sha256"],
+                                        snapshot_sha,
+                                        contexts_by_key,
+                                    )
                                     assert (pool["dataset"], pool["cut"]) in wanted
                                     pools[key] = pool
-                        publish("running", "saving verified pure predictions and GP seed pools; GP admission remains zero",
-                                {"cut_start": start, "cuts": cuts, "expected_pools": len(wanted), "elapsed_seconds": elapsed})
+                        publish(
+                            "running",
+                            "saving verified pure predictions and GP seed pools; GP admission remains zero",
+                            {
+                                "cut_start": start,
+                                "cuts": cuts,
+                                "expected_pools": len(wanted),
+                                "elapsed_seconds": elapsed,
+                            },
+                        )
                         time.sleep(1)
                 finally:
                     stop_owned(process)
                 if process.returncode != 0:
                     if allowed and not stop[0] and time.monotonic() - started < spec["block_seconds"]:
                         reason = f"proposal controller failed with status {process.returncode}; inspect its saved log"
-                    write(chunk_root / "stopped.json", {"reason": reason, "returncode": process.returncode,
-                          "timestamp": int(time.time()), "saved_artifacts_preserved": True})
+                    write(
+                        chunk_root / "stopped.json",
+                        {
+                            "reason": reason,
+                            "returncode": process.returncode,
+                            "timestamp": int(time.time()),
+                            "saved_artifacts_preserved": True,
+                        },
+                    )
                     break
         snapshot_sha = digest(chunk_root / "champion-snapshot.json")
         current = []
@@ -315,30 +405,68 @@ def run(root, spec_path):
         assert {(p["dataset"], p["cut"]) for p in current} == wanted
         jobs = read(destination / "jobs.json")
         assert len(jobs["jobs"]) == len(wanted)
-        assert len({(j['prepared'], j['cut']) for j in jobs['jobs']}) == len(wanted)
+        assert len({(j["prepared"], j["cut"]) for j in jobs["jobs"]}) == len(wanted)
         for job in jobs["jobs"]:
-            seed_path = (root/job['seeds']).resolve()
+            seed_path = (root / job["seeds"]).resolve()
             assert seed_path.is_relative_to(destination)
             pool = pools[str(seed_path.parent)]
-            assert digest(seed_path) == job["seeds_sha256"] == pool['seeds_sha256']
-            assert job['prepared'] == pool['prepared'] and job['prepared_sha256'] == pool['prepared_sha256']
-            assert job['cut'] == pool['cut'] and (root/job['output']).resolve() == seed_path.parent/'search'
-        completed.append({"cut_start": start, "cuts": cuts, "pools": len(current),
-                          "jobs": str((destination / "jobs.json").relative_to(root)),
-                          "jobs_sha256": digest(destination / "jobs.json"), "snapshot_sha256": snapshot_sha})
-        write(output / "library-index.json", {"schema": "parallel.pure_proposal_library_index.v1", **binding,
-              "chunks": completed, "pools": list(pools.values()), "gp_jobs_admitted": 0, "gp_evaluations": 0})
+            assert digest(seed_path) == job["seeds_sha256"] == pool["seeds_sha256"]
+            assert job["prepared"] == pool["prepared"] and job["prepared_sha256"] == pool["prepared_sha256"]
+            assert (
+                job["cut"] == pool["cut"] and (root / job["output"]).resolve() == seed_path.parent / "search"
+            )
+        completed.append(
+            {
+                "cut_start": start,
+                "cuts": cuts,
+                "pools": len(current),
+                "jobs": str((destination / "jobs.json").relative_to(root)),
+                "jobs_sha256": digest(destination / "jobs.json"),
+                "snapshot_sha256": snapshot_sha,
+            }
+        )
+        write(
+            output / "library-index.json",
+            {
+                "schema": "parallel.pure_proposal_library_index.v1",
+                **binding,
+                "chunks": completed,
+                "pools": list(pools.values()),
+                "gp_jobs_admitted": 0,
+                "gp_evaluations": 0,
+            },
+        )
         publish("running", "chunk verified; checking campaign before next GPU block")
     else:
         reason = "all requested proposal pools saved"
     complete = len(pools) == len(expected)
-    write(output / "library-index.json", {"schema": "parallel.pure_proposal_library_index.v1", **binding,
-          "chunks": completed, "pools": list(pools.values()), "gp_jobs_admitted": 0, "gp_evaluations": 0})
+    write(
+        output / "library-index.json",
+        {
+            "schema": "parallel.pure_proposal_library_index.v1",
+            **binding,
+            "chunks": completed,
+            "pools": list(pools.values()),
+            "gp_jobs_admitted": 0,
+            "gp_evaluations": 0,
+        },
+    )
     publish("completed" if complete else "stopped", reason)
-    write(output / "wrapper-complete.json", {"schema": "parallel.pure_proposal_library_stop.v1", **binding,
-          "timestamp": int(time.time()), "reason": reason, "all_requested_saved": complete,
-          "saved_seed_pools": len(pools), "completed_chunks": completed, "gp_jobs_admitted": 0,
-          "gp_evaluations": 0, "encodings_recomputed": 0})
+    write(
+        output / "wrapper-complete.json",
+        {
+            "schema": "parallel.pure_proposal_library_stop.v1",
+            **binding,
+            "timestamp": int(time.time()),
+            "reason": reason,
+            "all_requested_saved": complete,
+            "saved_seed_pools": len(pools),
+            "completed_chunks": completed,
+            "gp_jobs_admitted": 0,
+            "gp_evaluations": 0,
+            "encodings_recomputed": 0,
+        },
+    )
 
 
 if __name__ == "__main__":

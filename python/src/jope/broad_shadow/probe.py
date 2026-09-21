@@ -24,10 +24,7 @@ def _candidate_order(
     return sorted(
         candidates,
         key=lambda candidate: hashlib.sha256(
-            (
-                f"{seed}\0{dataset}\0{role}\0"
-                f"{candidate['semantic_sha256']}"
-            ).encode()
+            (f"{seed}\0{dataset}\0{role}\0{candidate['semantic_sha256']}").encode()
         ).digest(),
     )
 
@@ -42,9 +39,7 @@ def _take_unique(
     role: str,
 ) -> list[Mapping[str, Any]]:
     selected: list[Mapping[str, Any]] = []
-    for candidate in _candidate_order(
-        candidates, seed=seed, dataset=dataset, role=role
-    ):
+    for candidate in _candidate_order(candidates, seed=seed, dataset=dataset, role=role):
         semantic = str(candidate["semantic_sha256"])
         if semantic in used:
             continue
@@ -94,9 +89,7 @@ def build_probe_slate(
                 if needed == 0:
                     break
                 available = [
-                    candidate
-                    for candidate in source
-                    if str(candidate["semantic_sha256"]) not in used
+                    candidate for candidate in source if str(candidate["semantic_sha256"]) not in used
                 ]
                 if not available:
                     continue
@@ -111,9 +104,7 @@ def build_probe_slate(
                     )
                 )
             if len(selected) != count:
-                raise ValueError(
-                    f"dataset {dataset} cannot deterministically refill {role}"
-                )
+                raise ValueError(f"dataset {dataset} cannot deterministically refill {role}")
             for candidate in selected:
                 slots.append(
                     {

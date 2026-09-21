@@ -10,27 +10,63 @@ also occur and parse fine.
 Stdlib + no third-party imports: shared by the study and the deployable
 reference implementation.
 """
+
 from __future__ import annotations
 
 import hashlib
 
 HEAD_OPS = (
-    "ridge", "elasticnet", "logistic", "histgbm", "histgbm2", "gbm",
-    "gpr", "ksmooth", "knn", "huber_ridge", "portfolio", "ridge_gcv",
+    "ridge",
+    "elasticnet",
+    "logistic",
+    "histgbm",
+    "histgbm2",
+    "gbm",
+    "gpr",
+    "ksmooth",
+    "knn",
+    "huber_ridge",
+    "portfolio",
+    "ridge_gcv",
 )
 
 # op -> family; anything absent maps to "other". Deterministic, hand-frozen.
 FAMILY = {}
-for _op in ("standardize", "robust_scale", "norm_features", "winsor_clip",
-            "quantile", "rank", "blom", "sigmoid", "tanh_scale"):
+for _op in (
+    "standardize",
+    "robust_scale",
+    "norm_features",
+    "winsor_clip",
+    "quantile",
+    "rank",
+    "blom",
+    "sigmoid",
+    "tanh_scale",
+):
     FAMILY[_op] = "scale"
-for _op in ("rfft_mag", "fft_mag", "polar", "rff_cos", "rff_orthogonal",
-            "rff_halton", "fastfood_rbf", "spectral", "wavelet"):
+for _op in (
+    "rfft_mag",
+    "fft_mag",
+    "polar",
+    "rff_cos",
+    "rff_orthogonal",
+    "rff_halton",
+    "fastfood_rbf",
+    "spectral",
+    "wavelet",
+):
     FAMILY[_op] = "fourier"
 for _op in ("cheb", "poly", "legendre", "hermite", "spline", "bspline"):
     FAMILY[_op] = "poly"
-for _op in ("rand_proj", "svd_project", "pca", "nystrom", "nystrom_leverage",
-            "count_sketch", "tensor_sketch"):
+for _op in (
+    "rand_proj",
+    "svd_project",
+    "pca",
+    "nystrom",
+    "nystrom_leverage",
+    "count_sketch",
+    "tensor_sketch",
+):
     FAMILY[_op] = "proj"
 for _op in ("pair_prod", "cross_terms", "all_pairs", "top_pairs"):
     FAMILY[_op] = "interact"
@@ -38,14 +74,35 @@ for _op in ("row_stat", "reduce", "row_norm", "aggregate"):
     FAMILY[_op] = "rowstat"
 for _op in ("map", "derive"):
     FAMILY[_op] = "expr"
-for _op in ("lag", "roll", "delay_embedding", "iterate", "phase_interference",
-            "quasicrystal", "golden_scale", "logistic_map", "poincare"):
+for _op in (
+    "lag",
+    "roll",
+    "delay_embedding",
+    "iterate",
+    "phase_interference",
+    "quasicrystal",
+    "golden_scale",
+    "logistic_map",
+    "poincare",
+):
     FAMILY[_op] = "dynamical"
-FAMILIES = ("scale", "fourier", "poly", "proj", "interact", "rowstat", "expr",
-            "dynamical", "other")
+FAMILIES = ("scale", "fourier", "poly", "proj", "interact", "rowstat", "expr", "dynamical", "other")
 
-WIDTH_KEYS = ("n", "k", "degree", "bins", "dims", "components", "rank",
-              "n_features", "order", "knots", "topk", "n_paths", "m")
+WIDTH_KEYS = (
+    "n",
+    "k",
+    "degree",
+    "bins",
+    "dims",
+    "components",
+    "rank",
+    "n_features",
+    "order",
+    "knots",
+    "topk",
+    "n_paths",
+    "m",
+)
 
 
 def split_stages_quoted(genome: str) -> list[str] | None:
@@ -81,7 +138,7 @@ def split_stages_quoted(genome: str) -> list[str] | None:
                 start = i
         elif ch == ")":
             if depth == 2 and start >= 0:
-                stages.append(s[start:i + 1])
+                stages.append(s[start : i + 1])
                 start = -1
             depth -= 1
             if depth == 0:
@@ -90,7 +147,7 @@ def split_stages_quoted(genome: str) -> list[str] | None:
             return None
     if in_quote or depth != 0 or not header_done:
         return None
-    head = s[1:s.find(" ")] if " " in s else s[1:-1]
+    head = s[1 : s.find(" ")] if " " in s else s[1:-1]
     if head != "pipe":
         return None
     return stages
@@ -161,11 +218,9 @@ def structural_features(genome: str) -> dict[str, float] | None:
     feats: dict[str, float] = {
         "n_stages": float(len(ops)),
         "n_transforms": float(len(ops) - 1),
-        "expr_char_len": float(sum(len(v) for _, p in parsed
-                                   for k, v in p.items() if k == "expr")),
+        "expr_char_len": float(sum(len(v) for _, p in parsed for k, v in p.items() if k == "expr")),
         "n_exprs": float(sum(1 for _, p in parsed if "expr" in p)),
-        "n_append": float(sum(1 for _, p in parsed
-                              if p.get("append") == "true")),
+        "n_append": float(sum(1 for _, p in parsed if p.get("append") == "true")),
         "n_seeded": float(sum(1 for _, p in parsed if "seed" in p)),
     }
     width = 0.0
@@ -179,8 +234,7 @@ def structural_features(genome: str) -> dict[str, float] | None:
         feats[f"fam_{fam}"] = 0.0
     for op in ops[:-1]:
         feats[f"fam_{FAMILY.get(op, 'other')}"] += 1.0
-    for h in ("ridge", "elasticnet", "logistic", "histgbm", "histgbm2",
-              "gpr", "ksmooth", "other"):
+    for h in ("ridge", "elasticnet", "logistic", "histgbm", "histgbm2", "gpr", "ksmooth", "other"):
         feats[f"head_{h}"] = 1.0 if head == h else 0.0
     return feats
 
@@ -202,10 +256,8 @@ def hashed_ngrams(genome: str, buckets: int = 256) -> dict[str, float] | None:
     out: dict[str, float] = {}
     for n in (1, 2, 3):
         for i in range(len(ops) - n + 1):
-            gram = ">".join(ops[i:i + n])
-            b = int.from_bytes(
-                hashlib.blake2b(gram.encode(), digest_size=4).digest(),
-                "big") % buckets
+            gram = ">".join(ops[i : i + n])
+            b = int.from_bytes(hashlib.blake2b(gram.encode(), digest_size=4).digest(), "big") % buckets
             key = f"ng{n}_{b}"
             out[key] = out.get(key, 0.0) + 1.0
     return out

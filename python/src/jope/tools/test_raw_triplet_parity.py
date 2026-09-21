@@ -14,10 +14,20 @@ class RawTripletParityTests(unittest.TestCase):
                 "expansion_v9_manifest.json",
                 "synth_foo/train.csv",
             ],
-            remote_hashes={"a"*64},
+            remote_hashes={"a" * 64},
             local_sizes={
-                "regression/aa/meta.json": {"sha256": "b"*64, "size": 10, "mode": 0o644, "classification": "retained_non_synthetic_triplet"},
-                "regression/aa/train.csv": {"sha256": "a"*64, "size": 20, "mode": 0o644, "classification": "retained_non_synthetic_triplet"},
+                "regression/aa/meta.json": {
+                    "sha256": "b" * 64,
+                    "size": 10,
+                    "mode": 0o644,
+                    "classification": "retained_non_synthetic_triplet",
+                },
+                "regression/aa/train.csv": {
+                    "sha256": "a" * 64,
+                    "size": 20,
+                    "mode": 0o644,
+                    "classification": "retained_non_synthetic_triplet",
+                },
             },
         )
         self.assertEqual(plan["selected"], ["regression/aa/meta.json"])
@@ -27,12 +37,12 @@ class RawTripletParityTests(unittest.TestCase):
         self.assertEqual(plan["n_skipped_present_hash"], 1)
 
     def test_traversal_missing_hash_and_duplicate_paths_are_rejected(self):
-        for path in ('regression/../train.csv', '/regression/a/train.csv', 'regression//train.csv'):
+        for path in ("regression/../train.csv", "/regression/a/train.csv", "regression//train.csv"):
             self.assertFalse(r.is_triplet(path))
-        with self.assertRaisesRegex(ValueError, 'complete original object record'):
-            r.plan_copy(['regression/a/train.csv'])
-        with self.assertRaisesRegex(ValueError, 'duplicate'):
-            r.plan_copy(['regression/a/train.csv']*2)
+        with self.assertRaisesRegex(ValueError, "complete original object record"):
+            r.plan_copy(["regression/a/train.csv"])
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            r.plan_copy(["regression/a/train.csv"] * 2)
 
     def test_booleans_cannot_authorize_transfer(self):
         ok, reasons = r.execute_allowed(
@@ -43,8 +53,11 @@ class RawTripletParityTests(unittest.TestCase):
         )
         self.assertFalse(ok)
         self.assertTrue(any("verified workspace transfer" in row for row in reasons))
-        self.assertFalse(r.execute_allowed(dict(synthetics_copied=0),
-                         dict(backfill_allowed=True), dict(certified=True), True)[0])
+        self.assertFalse(
+            r.execute_allowed(
+                dict(synthetics_copied=0), dict(backfill_allowed=True), dict(certified=True), True
+            )[0]
+        )
 
 
 if __name__ == "__main__":

@@ -47,10 +47,8 @@ class RealTaskSource:
 
     def __init__(self, pack_dir: Path, split: str = "train"):
         self.pack = FablePack(pack_dir / "fable_real_v1.pack", preload=False)
-        self.task_ids = [self.pack.dataset_ids[i]
-                         for i in self.pack.split_indices(split)]
-        self._index = {t: i for t, i in zip(
-            self.task_ids, self.pack.split_indices(split).tolist())}
+        self.task_ids = [self.pack.dataset_ids[i] for i in self.pack.split_indices(split)]
+        self._index = {t: i for t, i in zip(self.task_ids, self.pack.split_indices(split).tolist())}
 
     def load(self, task: str) -> tuple[np.ndarray, np.ndarray]:
         view = self.pack.dataset(self._index[task])
@@ -97,8 +95,7 @@ def build_val(spec: tuple) -> Episode | None:
     _, task, seed = spec
     try:
         if _POOL_STATE["val"] is None:
-            _POOL_STATE["val"] = RealTaskSource(
-                Path(os.environ["FABLE_PACK_DIR"]), "val")
+            _POOL_STATE["val"] = RealTaskSource(Path(os.environ["FABLE_PACK_DIR"]), "val")
         X, y = _POOL_STATE["val"].load(task)
         if X.shape[0] < 96:
             return None
@@ -115,10 +112,8 @@ def build_synth(spec: tuple) -> Episode | None:
         task = gen.build_one(int(gen_seed), profile=profile, max_features=192)
         if task is None:
             return None
-        X = np.concatenate([np.asarray(task["Xtr"], np.float32),
-                            np.asarray(task["Xte"], np.float32)], axis=0)
-        y = np.concatenate([np.asarray(task["ytr"], np.float32),
-                            np.asarray(task["yte"], np.float32)])
+        X = np.concatenate([np.asarray(task["Xtr"], np.float32), np.asarray(task["Xte"], np.float32)], axis=0)
+        y = np.concatenate([np.asarray(task["ytr"], np.float32), np.asarray(task["yte"], np.float32)])
         if X.shape[0] < 96:
             return None
         return _finish(draw_episode(f"synthrt_{gen_seed:016x}", ep_seed, X, y))
@@ -142,38 +137,33 @@ def build_coltarget(spec: tuple) -> Episode | None:
         return None
 
 
-_BUILDERS = {"real": build_real, "val": build_val,
-             "synth": build_synth, "coltar": build_coltarget}
+_BUILDERS = {"real": build_real, "val": build_val, "synth": build_synth, "coltar": build_coltarget}
 
 
 def build_episode(spec: tuple) -> Episode | None:
     return _BUILDERS[spec[0]](spec)
 
 
-def episode_specs_narrow(task_ids: list[str], gen: int, n: int,
-                         shard: tuple[int, int]) -> list[tuple]:
+def episode_specs_narrow(task_ids: list[str], gen: int, n: int, shard: tuple[int, int]) -> list[tuple]:
     """Deterministic CRN spec list for a generation's F_narrow episodes;
     shard = (offset, world) partitions the SAME global list per node."""
     rng = np.random.default_rng([gen, 5001])
     tasks = rng.choice(task_ids, size=n, replace=n > len(task_ids))
-    specs = [("real", str(t), int(gen) * 1_000_003 + k)
-             for k, t in enumerate(tasks)]
-    return specs[shard[0]::shard[1]]
+    specs = [("real", str(t), int(gen) * 1_000_003 + k) for k, t in enumerate(tasks)]
+    return specs[shard[0] :: shard[1]]
 
 
-def episode_specs_guard(task_ids: list[str], gen: int, n: int,
-                        shard: tuple[int, int]) -> list[tuple]:
+def episode_specs_guard(task_ids: list[str], gen: int, n: int, shard: tuple[int, int]) -> list[tuple]:
     """60% realtime synth + 40% col-as-target real."""
     rng = np.random.default_rng([gen, 7001])
     specs: list[tuple] = []
     n_synth = int(0.6 * n)
     for k in range(n_synth):
-        specs.append(("synth", int(rng.integers(2**62)), gen * 900_001 + k,
-                      "balanced"))
+        specs.append(("synth", int(rng.integers(2**62)), gen * 900_001 + k, "balanced"))
     tasks = rng.choice(task_ids, size=n - n_synth, replace=False)
     for k, t in enumerate(tasks):
         specs.append(("coltar", str(t), gen * 800_009 + k))
-    return specs[shard[0]::shard[1]]
+    return specs[shard[0] :: shard[1]]
 
 
 class EpisodeProducer:
@@ -183,8 +173,7 @@ class EpisodeProducer:
     def __init__(self, pack_dir: Path, workers: int = 48):
         from multiprocessing import Pool
 
-        self.pool = Pool(workers, initializer=_pool_init,
-                         initargs=(str(pack_dir),))
+        self.pool = Pool(workers, initializer=_pool_init, initargs=(str(pack_dir),))
 
     def prepare(self, specs: list[tuple]) -> list[Episode]:
         episodes = self.pool.map(build_episode, specs, chunksize=2)

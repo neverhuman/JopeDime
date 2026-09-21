@@ -25,18 +25,14 @@ def test_index_is_path_free_and_structurally_complete():
 
 @pytest.mark.xbabe2  # needs the benchmarks/sotarena clone at e5db30a0 (B18: pin unfetchable, submodule absent from the port tree)
 def test_complete_verification_fails_closed_on_missing_binary_splits():
-    with pytest.raises(
-        fixtures.FixtureError, match="46 external fixture files remain unresolved"
-    ):
+    with pytest.raises(fixtures.FixtureError, match="46 external fixture files remain unresolved"):
         fixtures.validate_index(fixtures.read_index(), require_complete=True)
 
 
 @pytest.mark.xbabe2  # needs the benchmarks/sotarena clone at e5db30a0 (B18: pin unfetchable, submodule absent from the port tree)
 def test_workspace_profile_materializes_committed_read_only_bytes(tmp_path):
     destination = tmp_path / "fixtures"
-    receipt = fixtures.materialize(
-        fixtures.read_index(), destination, "workspace_tests"
-    )
+    receipt = fixtures.materialize(fixtures.read_index(), destination, "workspace_tests")
 
     assert receipt["file_count"] == 254
     sample = destination / "sotarena" / "elo.py"
@@ -44,9 +40,7 @@ def test_workspace_profile_materializes_committed_read_only_bytes(tmp_path):
     assert stat.S_IMODE(sample.stat().st_mode) == 0o444
     assert stat.S_IMODE(destination.stat().st_mode) == 0o555
     expected = next(
-        row
-        for row in fixtures.read_index()["entries"]
-        if row["target_path"] == "sotarena/elo.py"
+        row for row in fixtures.read_index()["entries"] if row["target_path"] == "sotarena/elo.py"
     )
     assert hashlib.sha256(sample.read_bytes()).hexdigest() == expected["sha256"]
 
@@ -91,9 +85,7 @@ def test_qualified_local_recovery_imports_exact_46_into_temporary_cas(tmp_path):
     assert json.loads(index_path.read_text()) == recovered
     import_digest = hashlib.sha256(fixtures.canonical_bytes(import_manifest)).hexdigest()
     recovered_rows = [
-        row
-        for row in recovered["entries"]
-        if row["source"]["kind"] == "verified_local_recovery"
+        row for row in recovered["entries"] if row["source"]["kind"] == "verified_local_recovery"
     ]
     assert len(recovered_rows) == 46
     assert all(
@@ -110,9 +102,10 @@ def test_qualified_local_recovery_imports_exact_46_into_temporary_cas(tmp_path):
 
     repositories = {row["id"]: row for row in recovered["repositories"]}
     sample = recovered_rows[0]
-    assert hashlib.sha256(
-        fixtures.source_bytes(sample, repositories, fixture_store)
-    ).hexdigest() == sample["sha256"]
+    assert (
+        hashlib.sha256(fixtures.source_bytes(sample, repositories, fixture_store)).hexdigest()
+        == sample["sha256"]
+    )
 
 
 def test_recovery_double_read_rejects_symlink(tmp_path):

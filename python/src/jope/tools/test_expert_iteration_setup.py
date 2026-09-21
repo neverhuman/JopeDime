@@ -39,16 +39,27 @@ class ExpertIterationSetupTests(unittest.TestCase):
         self.assertFalse(s.strategy()["flywheel_getting_smarter"])
 
     def test_fake_upgrades_are_refused(self):
-        for name in ("unqualified_mcts_gain_claim", "unqualified_width_gain_claim",
-                     "unqualified_loss_gain_claim",
-                     "occupancy_as_intelligence", "2_of_140_as_world_class"):
+        for name in (
+            "unqualified_mcts_gain_claim",
+            "unqualified_width_gain_claim",
+            "unqualified_loss_gain_claim",
+            "occupancy_as_intelligence",
+            "2_of_140_as_world_class",
+        ):
             self.assertTrue(s.refuse_fake_upgrade(name))
         self.assertFalse(s.refuse_fake_upgrade("new_identity_funded_train"))
 
     def history(self):
-        return [dict(neural_seed_rate=seed, gp_improves_on_seed=repair,
-                     parent=str(i) * 64, corpus=str(i + 3) * 64, gp=str(i + 6) * 64)
-                for i, seed, repair in ((1, .02, .9), (2, .11, .5))]
+        return [
+            dict(
+                neural_seed_rate=seed,
+                gp_improves_on_seed=repair,
+                parent=str(i) * 64,
+                corpus=str(i + 3) * 64,
+                gp=str(i + 6) * 64,
+            )
+            for i, seed, repair in ((1, 0.02, 0.9), (2, 0.11, 0.5))
+        ]
 
     def test_matching_rate_trends_are_diagnostics_never_certification(self):
         history = self.history()
@@ -64,8 +75,18 @@ class ExpertIterationSetupTests(unittest.TestCase):
 
     def test_malformed_rates_and_missing_lineage_are_unavailable(self):
         for key in ("neural_seed_rate", "gp_improves_on_seed"):
-            for value in (None, True, False, float("nan"), float("inf"),
-                          -float("inf"), -0.1, 1.1, 10**400, "0.9"):
+            for value in (
+                None,
+                True,
+                False,
+                float("nan"),
+                float("inf"),
+                -float("inf"),
+                -0.1,
+                1.1,
+                10**400,
+                "0.9",
+            ):
                 with self.subTest(key=key, value=str(value)):
                     history = self.history()
                     history[0][key] = value
@@ -122,10 +143,10 @@ class ExpertIterationSetupTests(unittest.TestCase):
             self.assertEqual([path.read_bytes() for path in paths], original)
         with tempfile.TemporaryDirectory() as folder:
             summary = Path(folder) / "SUMMARY.json"
-            summary.write_text('retained-original\n')
+            summary.write_text("retained-original\n")
             with self.assertRaises(FileExistsError):
                 s.emit(folder)
-            self.assertEqual(summary.read_text(), 'retained-original\n')
+            self.assertEqual(summary.read_text(), "retained-original\n")
             self.assertFalse((Path(folder) / "STRATEGY.json").exists())
 
 

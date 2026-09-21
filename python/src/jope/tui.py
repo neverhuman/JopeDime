@@ -145,7 +145,9 @@ class RunView:
         proposals = _read_jsonl(self.run_dir / "proposals.jsonl", limit=200)
         candidate_audit = _read_jsonl(self.run_dir / "candidate_audit.jsonl", limit=400)
         evaluations = _read_jsonl(self.run_dir / "evaluation.jsonl", limit=100)
-        eval_summary = _read_json(self.run_dir / "eval_summary.json") or _read_json(self.run_dir / "summary.json")
+        eval_summary = _read_json(self.run_dir / "eval_summary.json") or _read_json(
+            self.run_dir / "summary.json"
+        )
         log_tail = _tail_lines(self.run_dir / "run.log", 14)
         log_json = _json_objects_from_log(self.run_dir / "run.log")
         metrics = _read_jsonl(self.run_dir / "train_metrics.jsonl", limit=400)
@@ -179,7 +181,13 @@ class RunView:
             "loop_metrics": loop_metrics,
             "checkpoint": checkpoint,
             "checkpoint_exists": checkpoint.exists(),
-            "loss_weights": (metrics[-1].get("loss_weights") if metrics and isinstance(metrics[-1].get("loss_weights"), dict) else None) or ckpt.get("loss_weights") or {},
+            "loss_weights": (
+                metrics[-1].get("loss_weights")
+                if metrics and isinstance(metrics[-1].get("loss_weights"), dict)
+                else None
+            )
+            or ckpt.get("loss_weights")
+            or {},
             "freshness": artifact_freshness(art_dir=self.art_dir, run_dir=self.run_dir),
             "metrics_age": _file_age(self.run_dir / "train_metrics.jsonl"),
             "proposals_age": _file_age(self.run_dir / "proposals.jsonl"),
@@ -247,7 +255,11 @@ class RunView:
         table.add_column("examples")
         table.add_row("transforms", str(len(transforms)), ", ".join(list(transforms)[:5]))
         table.add_row("heads", str(len(heads)), ", ".join(heads))
-        table.add_row("transform counts", str(len(vocab.get("transform_counts") or [])), str(vocab.get("transform_counts") or []))
+        table.add_row(
+            "transform counts",
+            str(len(vocab.get("transform_counts") or [])),
+            str(vocab.get("transform_counts") or []),
+        )
         param_count = sum(len(p) for p in transforms.values()) + sum(len(p) for p in heads.values())
         table.add_row("observed params", str(param_count), "from canonical reports")
         return Panel(table, title="Active Vocabulary", border_style="cyan", box=box.ROUNDED)
@@ -288,11 +300,19 @@ class RunView:
         status.add_column(justify="right")
         status.add_column(justify="right")
         status.add_row("[dim]metric[/]", "[dim]value[/]", "[dim]trend[/]")
-        status.add_row("train loss", _fmt_float(losses[-1]) if losses else "…", _spark(losses, width=14, label=""))
-        status.add_row("val loss", _fmt_float(val_losses[-1]) if val_losses else "…", _spark(val_losses, width=14, label=""))
+        status.add_row(
+            "train loss", _fmt_float(losses[-1]) if losses else "…", _spark(losses, width=14, label="")
+        )
+        status.add_row(
+            "val loss",
+            _fmt_float(val_losses[-1]) if val_losses else "…",
+            _spark(val_losses, width=14, label=""),
+        )
         self._ranking_rows(status, metrics, last)
         body = Group(progress, Text(spark, style="bold magenta"), headline, status)
-        return Panel(body, title="Learning Signal · relative performance", border_style="magenta", box=box.ROUNDED)
+        return Panel(
+            body, title="Learning Signal · relative performance", border_style="magenta", box=box.ROUNDED
+        )
 
     def _ranking_rows(self, status: Table, metrics: list[dict[str, Any]], last: dict[str, Any]) -> None:
         rbt = _metric_values(metrics, "train_loss_reward_bt")
@@ -304,9 +324,15 @@ class RunView:
         status.add_row("reward BT loss", _fmt_float(rbt[-1]) if rbt else "-", _spark(rbt, width=14, label=""))
         if rlw:
             status.add_row("reward listwise", _fmt_float(rlw[-1]), _spark(rlw, width=14, label=""))
-        status.add_row("top-1 regret", _fmt_float(regret[-1]) if regret else "-", _spark(regret, width=14, label=""))
-        status.add_row("head accuracy", _fmt_pct(head_acc[-1]) if head_acc else "-", _spark(head_acc, width=14, label=""))
-        status.add_row("grammar exact", _fmt_pct(grammar[-1]) if grammar else "-", _spark(grammar, width=14, label=""))
+        status.add_row(
+            "top-1 regret", _fmt_float(regret[-1]) if regret else "-", _spark(regret, width=14, label="")
+        )
+        status.add_row(
+            "head accuracy", _fmt_pct(head_acc[-1]) if head_acc else "-", _spark(head_acc, width=14, label="")
+        )
+        status.add_row(
+            "grammar exact", _fmt_pct(grammar[-1]) if grammar else "-", _spark(grammar, width=14, label="")
+        )
         status.add_row("value MAE", _fmt_float(vmae[-1]) if vmae else "-", _spark(vmae, width=14, label=""))
         eps = last.get("examples_per_sec")
         if isinstance(eps, (int, float)):
@@ -334,7 +360,9 @@ class RunView:
         table.add_column("valid", justify="right")
         table.add_column("wt", justify="right")
         last = metrics[-1] if metrics else {}
-        train_c = last.get("train_loss_components") if isinstance(last.get("train_loss_components"), dict) else {}
+        train_c = (
+            last.get("train_loss_components") if isinstance(last.get("train_loss_components"), dict) else {}
+        )
         val_c = last.get("val_loss_components") if isinstance(last.get("val_loss_components"), dict) else {}
         names = sorted(
             set(train_c) | set(val_c),
@@ -352,7 +380,12 @@ class RunView:
             )
         if not names:
             table.add_row("-", "-", "-", "-")
-        return Panel(Group(lines, table), title="Loss Curves · task-weighted", border_style="bright_magenta", box=box.ROUNDED)
+        return Panel(
+            Group(lines, table),
+            title="Loss Curves · task-weighted",
+            border_style="bright_magenta",
+            box=box.ROUNDED,
+        )
 
     def _proposal_panel(self, state: dict[str, Any]) -> Panel:
         proposals = state["proposals"]
@@ -370,7 +403,9 @@ class RunView:
             reward = row.get("reward")
             table.add_row(
                 str(row.get("reward_rank")) if row.get("reward_rank") is not None else "-",
-                "[green]ok[/]" if row.get("valid") else ("[yellow]fb[/]" if row.get("fallback") else "[red]bad[/]"),
+                "[green]ok[/]"
+                if row.get("valid")
+                else ("[yellow]fb[/]" if row.get("fallback") else "[red]bad[/]"),
                 f"{float(reward):+0.3f}" if isinstance(reward, (int, float)) else "-",
                 str(row.get("head_type") or _head_from_genome(genome) or "?"),
                 _fmt_float(row.get("uncertainty")),
@@ -426,7 +461,18 @@ class RunView:
                 _truncate(genome, GENOME_PREVIEW),
             )
         if not entries:
-            table.add_row("wait", "-", "-", "-", "-", "-", "-", "-", "-", "candidate stream appears after proposal generation")
+            table.add_row(
+                "wait",
+                "-",
+                "-",
+                "-",
+                "-",
+                "-",
+                "-",
+                "-",
+                "-",
+                "candidate stream appears after proposal generation",
+            )
         freshest = _freshest_age(state.get("proposals_age"), state.get("candidate_audit_age"))
         title = (
             "Live Gene Stream · score/eval/code "
@@ -438,7 +484,12 @@ class RunView:
         row = _latest_algorithm_row(state)
         if row is None:
             text = Text("waiting for a genome with generated source metadata", style="dim")
-            return Panel(text, title="Algorithm Preview · Python / Rust", border_style="bright_magenta", box=box.ROUNDED)
+            return Panel(
+                text,
+                title="Algorithm Preview · Python / Rust",
+                border_style="bright_magenta",
+                box=box.ROUNDED,
+            )
         roots = [self.run_dir, self.art_dir]
         python_code, python_source = _code_for_row(row, "python", roots)
         rust_code, rust_source = _code_for_row(row, "rust", roots)
@@ -447,7 +498,9 @@ class RunView:
         head = str(row.get("head_type") or _head_from_genome(genome) or "?")
         token_count = _code_token_total(row)
 
-        code_table = Table(show_header=True, header_style="bold bright_white", box=box.SIMPLE_HEAVY, expand=True)
+        code_table = Table(
+            show_header=True, header_style="bold bright_white", box=box.SIMPLE_HEAVY, expand=True
+        )
         code_table.add_column(f"Python · {python_source}", ratio=1)
         code_table.add_column(f"Rust · {rust_source}", ratio=1)
         code_table.add_row(
@@ -469,24 +522,41 @@ class RunView:
         table.add_column(justify="right")
         completed = summary.get("eval_completed_count", summary.get("evaluated_count", len(evaluations)))
         requested = summary.get("eval_requested_count")
-        progress = f"{_fmt_int(completed)}/{_fmt_int(requested)}" if requested is not None else _fmt_int(completed)
+        progress = (
+            f"{_fmt_int(completed)}/{_fmt_int(requested)}" if requested is not None else _fmt_int(completed)
+        )
         if summary.get("evaluation_in_progress"):
             progress += " [bright_yellow]running[/]"
         table.add_row("eval progress", progress)
-        table.add_row("win rate", Text(_fmt_pct(summary.get("win_rate_vs_incumbent")), style=_win_style(summary.get("win_rate_vs_incumbent"))))
+        table.add_row(
+            "win rate",
+            Text(
+                _fmt_pct(summary.get("win_rate_vs_incumbent")),
+                style=_win_style(summary.get("win_rate_vs_incumbent")),
+            ),
+        )
         table.add_row("median delta", _fmt_float(summary.get("median_delta_vs_incumbent")))
         table.add_row("best-of-n median", _fmt_float(summary.get("best_of_n_median_delta")))
         table.add_row("reward corr", _fmt_float(summary.get("reward_actual_correlation")))
         table.add_row("novel evals", _fmt_int(summary.get("novel_eval_count", len(evaluations))))
         heads = summary.get("head_outcomes") if isinstance(summary.get("head_outcomes"), dict) else {}
-        for head, outcome in sorted(heads.items(), key=lambda item: float((item[1] or {}).get("win_rate") or 0.0), reverse=True)[:4]:
+        for head, outcome in sorted(
+            heads.items(), key=lambda item: float((item[1] or {}).get("win_rate") or 0.0), reverse=True
+        )[:4]:
             if not isinstance(outcome, dict):
                 continue
-            table.add_row(f"{head} wins", f"{_fmt_pct(outcome.get('win_rate'))} ({_fmt_int(outcome.get('wins'))}/{_fmt_int(outcome.get('count'))})")
+            table.add_row(
+                f"{head} wins",
+                f"{_fmt_pct(outcome.get('win_rate'))} ({_fmt_int(outcome.get('wins'))}/{_fmt_int(outcome.get('count'))})",
+            )
         freshness = state.get("freshness") or {}
         if freshness.get("warning"):
             table.add_row("freshness", Text(str(freshness["warning"]), style="bold red"))
-        outliers = summary.get("worst_reward_outliers") if isinstance(summary.get("worst_reward_outliers"), list) else []
+        outliers = (
+            summary.get("worst_reward_outliers")
+            if isinstance(summary.get("worst_reward_outliers"), list)
+            else []
+        )
         if outliers:
             worst = outliers[0]
             table.add_row(
@@ -510,7 +580,9 @@ class RunView:
         table.add_row("fallbacks", f"[yellow]{fallback}[/]")
         completed = summary.get("eval_completed_count", summary.get("evaluated_count", len(evaluations)))
         requested = summary.get("eval_requested_count")
-        progress = f"{_fmt_int(completed)}/{_fmt_int(requested)}" if requested is not None else _fmt_int(completed)
+        progress = (
+            f"{_fmt_int(completed)}/{_fmt_int(requested)}" if requested is not None else _fmt_int(completed)
+        )
         if summary.get("evaluation_in_progress"):
             progress += " [bright_yellow]running[/]"
         table.add_row("CV eval progress", progress)
@@ -530,9 +602,16 @@ class RunView:
     def _gp_panel(self, state: dict[str, Any]) -> Panel:
         proposals = state["proposals"]
         evaluations = state["evaluations"]
-        gpr_eval = [r for r in evaluations if r.get("head_type") == "gpr" or "(gpr" in str(r.get("canonical_genome") or "")]
+        gpr_eval = [
+            r
+            for r in evaluations
+            if r.get("head_type") == "gpr" or "(gpr" in str(r.get("canonical_genome") or "")
+        ]
         lines = Text()
-        heads = Counter(str(r.get("head_type") or _head_from_genome(r.get("canonical_genome") or "") or "?") for r in proposals)
+        heads = Counter(
+            str(r.get("head_type") or _head_from_genome(r.get("canonical_genome") or "") or "?")
+            for r in proposals
+        )
         if heads:
             lines.append("head mix  ", style="bold")
             lines.append(", ".join(f"{h}:{c}" for h, c in heads.most_common(6)), style="cyan")
@@ -540,7 +619,10 @@ class RunView:
         if gpr_eval:
             for r in gpr_eval[-2:]:
                 cv = r.get("cv") if isinstance(r.get("cv"), dict) else {}
-                lines.append(f"GPR CV {_fmt_float(cv.get('oof_r2'))} Δ {_fmt_float(r.get('oof_delta_vs_incumbent'))}\n", style="green")
+                lines.append(
+                    f"GPR CV {_fmt_float(cv.get('oof_r2'))} Δ {_fmt_float(r.get('oof_delta_vs_incumbent'))}\n",
+                    style="green",
+                )
         lines.append("uncertainty ridge (top proposals)\n", style="bold")
         top_unc = sorted(proposals, key=lambda r: float(r.get("uncertainty") or 0.0), reverse=True)[:5]
         for r in top_unc:
@@ -556,7 +638,9 @@ class RunView:
                     f"mem {_fmt_plain_float(r.get('nvidia_smi_memory_used_mb'))}/{_fmt_plain_float(r.get('nvidia_smi_memory_total_mb'))}\n",
                     style="dim",
                 )
-        return Panel(lines, title="Heads / Uncertainty / Cluster", border_style="bright_cyan", box=box.ROUNDED)
+        return Panel(
+            lines, title="Heads / Uncertainty / Cluster", border_style="bright_cyan", box=box.ROUNDED
+        )
 
     def _loop_panel(self, state: dict[str, Any]) -> Panel:
         rows = state.get("loop_metrics") or []
@@ -620,7 +704,10 @@ class RunView:
         if percpu:
             text.append("core ", style="dim")
             for value in percpu:
-                text.append(_HEAT[min(len(_HEAT) - 1, int(value / 100.0 * (len(_HEAT) - 1)))], style=_load_style(value))
+                text.append(
+                    _HEAT[min(len(_HEAT) - 1, int(value / 100.0 * (len(_HEAT) - 1)))],
+                    style=_load_style(value),
+                )
             text.append("\n")
 
         mem = sys["mem"]
@@ -663,7 +750,9 @@ class RunView:
         if procs:
             text.append("top  ", style="bold")
             text.append(
-                "  ".join(f"{p['name'][:12]}·{p['pid']} {p['cpu']:0.0f}%c {p['mem']:0.0f}%m" for p in procs[:4]),
+                "  ".join(
+                    f"{p['name'][:12]}·{p['pid']} {p['cpu']:0.0f}%c {p['mem']:0.0f}%m" for p in procs[:4]
+                ),
                 style="dim",
             )
         return Panel(text, title="System Load · realtime", border_style="bright_green", box=box.ROUNDED)
@@ -695,18 +784,30 @@ class RunView:
             out["loadavg"] = None
         try:
             vm = psutil.virtual_memory()
-            out["mem"] = {"percent": float(vm.percent), "used_gb": vm.used / 2**30, "total_gb": vm.total / 2**30}
+            out["mem"] = {
+                "percent": float(vm.percent),
+                "used_gb": vm.used / 2**30,
+                "total_gb": vm.total / 2**30,
+            }
         except Exception:
             out["mem"] = {"percent": 0.0, "used_gb": 0.0, "total_gb": 0.0}
         try:
             sw = psutil.swap_memory()
-            out["swap"] = {"percent": float(sw.percent), "used_gb": sw.used / 2**30, "total_gb": sw.total / 2**30}
+            out["swap"] = {
+                "percent": float(sw.percent),
+                "used_gb": sw.used / 2**30,
+                "total_gb": sw.total / 2**30,
+            }
         except Exception:
             out["swap"] = None
         try:
             target = self.run_dir if self.run_dir.exists() else Path(".")
             du = psutil.disk_usage(str(target))
-            out["disk"] = {"percent": float(du.percent), "free_gb": du.free / 2**30, "mount": _mount_label(target)}
+            out["disk"] = {
+                "percent": float(du.percent),
+                "free_gb": du.free / 2**30,
+                "mount": _mount_label(target),
+            }
         except Exception:
             out["disk"] = None
         out["top_procs"] = self._top_processes()

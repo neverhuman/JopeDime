@@ -64,9 +64,7 @@ def _owned_path(root: Path, value: str | Path, *, field: str) -> Path:
 def load_config(path: str | Path | None = None) -> PrimeConfig:
     configured = path if path is not None else os.environ.get("JOPE_PRIME_CONFIG")
     config_path = (
-        Path(configured)
-        if configured is not None
-        else Path(__file__).resolve().parents[2] / "prime.toml"
+        Path(configured) if configured is not None else Path(__file__).resolve().parents[2] / "prime.toml"
     )
     config_path = config_path.expanduser().resolve(strict=False)
     with config_path.open("rb") as handle:
@@ -81,43 +79,26 @@ def load_config(path: str | Path | None = None) -> PrimeConfig:
     config_dir = config_path.parent
     root = _resolved(prime["root"], relative_to=config_dir)
     legacy_root = _resolved(legacy["root"], relative_to=config_dir)
-    warm_start_checkpoint = _resolved(
-        legacy["warm_start_checkpoint"], relative_to=config_dir
-    )
-    jain_binary_reference = _resolved(
-        legacy["jain_binary_reference"], relative_to=config_dir
-    )
-    regression_dataset_root = _resolved(
-        legacy["regression_dataset_root"], relative_to=config_dir
-    )
+    warm_start_checkpoint = _resolved(legacy["warm_start_checkpoint"], relative_to=config_dir)
+    jain_binary_reference = _resolved(legacy["jain_binary_reference"], relative_to=config_dir)
+    regression_dataset_root = _resolved(legacy["regression_dataset_root"], relative_to=config_dir)
     binary_dataset_root = _resolved(legacy["binary_dataset_root"], relative_to=config_dir)
     newmath_winners_dir = _resolved(legacy["newmath_winners_dir"], relative_to=config_dir)
     hyperion_binary_candidates = tuple(
-        _resolved(value, relative_to=config_dir)
-        for value in legacy["hyperion_binary_candidates"]
+        _resolved(value, relative_to=config_dir) for value in legacy["hyperion_binary_candidates"]
     )
     if not hyperion_binary_candidates:
         raise ValueError("legacy.hyperion_binary_candidates must not be empty")
     hyperion_weights = _resolved(legacy["hyperion_weights"], relative_to=config_dir)
     hyperion_manifest = _resolved(legacy["hyperion_manifest"], relative_to=config_dir)
-    validation_benchmark_root = _resolved(
-        legacy["validation_benchmark_root"], relative_to=config_dir
-    )
+    validation_benchmark_root = _resolved(legacy["validation_benchmark_root"], relative_to=config_dir)
     fable_root = _resolved(legacy["fable_root"], relative_to=config_dir)
     nomad_root = _resolved(legacy["nomad_root"], relative_to=config_dir)
     quant_models_root = _resolved(legacy["quant_models_root"], relative_to=config_dir)
-    foundation_fusion_python = _resolved(
-        legacy["foundation_fusion_python"], relative_to=config_dir
-    )
-    target_maker_exporter = _resolved(
-        legacy["target_maker_exporter"], relative_to=config_dir
-    )
-    target_encoder_model = _resolved(
-        legacy["target_encoder_model"], relative_to=config_dir
-    )
-    validation_dataset_manifest = _resolved(
-        legacy["validation_dataset_manifest"], relative_to=config_dir
-    )
+    foundation_fusion_python = _resolved(legacy["foundation_fusion_python"], relative_to=config_dir)
+    target_maker_exporter = _resolved(legacy["target_maker_exporter"], relative_to=config_dir)
+    target_encoder_model = _resolved(legacy["target_encoder_model"], relative_to=config_dir)
+    validation_dataset_manifest = _resolved(legacy["validation_dataset_manifest"], relative_to=config_dir)
     read_only_inputs = {
         "root": legacy_root,
         "warm_start_checkpoint": warm_start_checkpoint,
@@ -144,9 +125,7 @@ def load_config(path: str | Path | None = None) -> PrimeConfig:
         if candidate.is_relative_to(root) or root.is_relative_to(candidate):
             raise ValueError(f"legacy.{field} must not overlap prime.root")
     discovery_backend = str(evaluation.get("discovery_backend", "auto"))
-    promotion_backend = str(
-        evaluation.get("promotion_backend", evaluation.get("backend", "exact_f64"))
-    )
+    promotion_backend = str(evaluation.get("promotion_backend", evaluation.get("backend", "exact_f64")))
     user_artifact = str(evaluation.get("user_artifact", "portable_python"))
     if discovery_backend not in {"auto", "fast_cuda", "fast_cpu", "exact"}:
         raise ValueError("evaluation.discovery_backend is invalid")
@@ -183,9 +162,7 @@ def load_config(path: str | Path | None = None) -> PrimeConfig:
         artifacts=_owned_path(root, prime["artifacts"], field="artifacts"),
         runs=_owned_path(root, prime["runs"], field="runs"),
         cache=_owned_path(root, prime["cache"], field="cache"),
-        ssh_control_dir=_owned_path(
-            root, prime["ssh_control_dir"], field="ssh_control_dir"
-        ),
+        ssh_control_dir=_owned_path(root, prime["ssh_control_dir"], field="ssh_control_dir"),
         checkpoints=_owned_path(root, prime["checkpoints"], field="checkpoints"),
         models=_owned_path(root, prime["models"], field="models"),
         jain_binary=_owned_path(root, prime["jain_binary"], field="jain_binary"),
@@ -202,14 +179,8 @@ def load_config(path: str | Path | None = None) -> PrimeConfig:
 def _remote_scratch_root(value: str | Path) -> str:
     """Validate the configured POSIX prefix used only on worker hosts."""
     text = str(value).rstrip("/")
-    if (
-        not text.startswith("/")
-        or text in {"", "/", "/tmp"}
-        or text.startswith("/tmp/")
-    ):
-        raise ValueError(
-            "remote.scratch_root must be a durable dedicated absolute path outside /tmp"
-        )
+    if not text.startswith("/") or text in {"", "/", "/tmp"} or text.startswith("/tmp/"):
+        raise ValueError("remote.scratch_root must be a durable dedicated absolute path outside /tmp")
     if any(character.isspace() for character in text):
         raise ValueError("remote.scratch_root must not contain whitespace")
     return text
@@ -219,8 +190,7 @@ def ssh_control_path(host: str, config: PrimeConfig | None = None) -> Path:
     """Return an owned SSH multiplexing socket path for a simple host name."""
     config = config or load_config()
     safe = "".join(
-        character if character.isalnum() or character in {"-", "_", "."} else "_"
-        for character in str(host)
+        character if character.isalnum() or character in {"-", "_", "."} else "_" for character in str(host)
     )
     if not safe:
         raise ValueError("SSH host must be non-empty")

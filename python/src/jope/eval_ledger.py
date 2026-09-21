@@ -47,9 +47,7 @@ def iter_eval_regression_with_ledger(
     ``validator`` kwarg keeps single-engine (featmath) callers working unchanged.
     """
     rows = list(rows)
-    if any(row.get("engine") == "prime" for row in rows) and (
-        router is None or router.prime_search is None
-    ):
+    if any(row.get("engine") == "prime" for row in rows) and (router is None or router.prime_search is None):
         raise ValueError("Prime rows require a configured native evaluator")
     if router is None and validator is None:
         validator = RustValidator()
@@ -87,7 +85,9 @@ def iter_eval_regression_with_ledger(
         if router is not None:
             miss_iterable = _iter_eval(misses, validator=None, router=router, workers=worker_count)
         else:
-            miss_iterable = _iter_eval_parallel(misses, validator=validator, router=router, workers=worker_count)
+            miss_iterable = _iter_eval_parallel(
+                misses, validator=validator, router=router, workers=worker_count
+            )
         for local_idx, out in miss_iterable:
             idx = miss_indices[local_idx]
             _append_ledger(ledger_path, [out])
@@ -123,18 +123,14 @@ def _iter_eval(
     if not rows:
         return
     if router is not None:
-        prime_indices = [
-            index for index, row in enumerate(rows) if row.get("engine") == "prime"
-        ]
+        prime_indices = [index for index, row in enumerate(rows) if row.get("engine") == "prime"]
         if prime_indices:
             if router.prime_search is None:
                 raise ValueError("Prime rows require a configured native evaluator")
             prime_rows = [rows[index] for index in prime_indices]
             for local_index, result in router.prime_search.evaluate_rows(prime_rows):
                 yield prime_indices[local_index], result
-            legacy_indices = [
-                index for index, row in enumerate(rows) if row.get("engine") != "prime"
-            ]
+            legacy_indices = [index for index, row in enumerate(rows) if row.get("engine") != "prime"]
             if not legacy_indices:
                 return
             legacy_rows = [rows[index] for index in legacy_indices]
@@ -151,9 +147,7 @@ def _iter_eval(
         # node via separate bridge PROCESSES (host-local driver) — ~5-6x the old ssh
         # lock-step lanes, which the head-node GIL + ssh latency capped at ~8-way.
         if len(router.hosts) > 1 or (workers or 0) > 1:
-            yield from router.iter_eval_via_host_drivers(
-                rows, workers_per_host=max(1, workers or 90)
-            )
+            yield from router.iter_eval_via_host_drivers(rows, workers_per_host=max(1, workers or 90))
             return
         yield from router.iter_eval_regression_many(rows)
         return
@@ -246,7 +240,9 @@ def _candidate_cache_keys(
     if not genomes:
         return keys
     if isinstance(validator, EngineRouter):
-        metas = validator.validate_many(list(zip(engines, [g if isinstance(g, str) else str(g) for g in genomes])))
+        metas = validator.validate_many(
+            list(zip(engines, [g if isinstance(g, str) else str(g) for g in genomes]))
+        )
         # regression rows keep byte-identical keys (task defaults to regression); binary
         # rows land in disjoint key space via the eval-binary evaluator_version string.
         versions = [validator.evaluator_version(engine, task) for engine, task in zip(engines, tasks)]

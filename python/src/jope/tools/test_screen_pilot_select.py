@@ -20,8 +20,9 @@ def inventory(head="ridge", count=64):
     rows = []
     for family in range(8):
         for cut in (0, 1):
-            bound = dict(family=f"family-{family}", dataset=f"dataset-{family}",
-                         cut=cut, partition="meta_train")
+            bound = dict(
+                family=f"family-{family}", dataset=f"dataset-{family}", cut=cut, partition="meta_train"
+            )
             for key in metadata.CONTEXT_FIELDS:
                 if key.endswith("_sha256"):
                     bound[key] = sha(f"{family}:{cut}:{key}")
@@ -43,11 +44,18 @@ def scores(selection, selection_sha, axis="same_row_f32"):
     rows = []
     for number, p in enumerate(selection["programs"]):
         proxy = p["genome"].replace("(histgbm2", "(histgbm", 1) if axis == "histgbm_proxy" else p["genome"]
-        rows.append(dict(context=p["context"], program_sha256=p["program_sha256"],
-                         proxy_genome=proxy, proxy_program_sha256=sha(proxy),
-                         proxy_contract_sha256=sha(axis), score=float(number % 64), status="ok"))
-    return dict(schema="parallel.screen_scores.v1", selection_sha256=selection_sha,
-                axis=axis, rows=rows)
+        rows.append(
+            dict(
+                context=p["context"],
+                program_sha256=p["program_sha256"],
+                proxy_genome=proxy,
+                proxy_program_sha256=sha(proxy),
+                proxy_contract_sha256=sha(axis),
+                score=float(number % 64),
+                status="ok",
+            )
+        )
+    return dict(schema="parallel.screen_scores.v1", selection_sha256=selection_sha, axis=axis, rows=rows)
 
 
 class ScreenPilotSelectTests(unittest.TestCase):
@@ -59,12 +67,14 @@ class ScreenPilotSelectTests(unittest.TestCase):
                 for p in row["candidates"]:
                     p["original_reference"] = dict(path="missing-original.json", sha256=sha("missing"))
             original = s.reference
+
             def checked_reference(*args):
                 self.assertTrue((root / "pilot/selection.json").exists())
                 frozen = metadata.read(root / "pilot/selection.json")
                 self.assertEqual(len(frozen["contexts"]), 16)
                 self.assertEqual(len(frozen["programs"]), 1024)
                 return original(*args)
+
             with patch.object(s, "reference", checked_reference):
                 selection, _ = freeze(root, value)
             status = metadata.read(root / "pilot/reference-status.json")
@@ -77,10 +87,23 @@ class ScreenPilotSelectTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             value = inventory()
-            value["contexts"][0]["candidates"][0]["rmse"] = 0.
+            value["contexts"][0]["candidates"][0]["rmse"] = 0.0
             (root / "metadata.json").write_text(json.dumps(value))
-            result = subprocess.run([sys.executable, "-B", s.__file__, "--root", str(root),
-                "--output", "pilot", "--metadata", "metadata.json"], capture_output=True, text=True)
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-B",
+                    s.__file__,
+                    "--root",
+                    str(root),
+                    "--output",
+                    "pilot",
+                    "--metadata",
+                    "metadata.json",
+                ],
+                capture_output=True,
+                text=True,
+            )
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("outcomes", result.stderr)
             self.assertFalse((root / "pilot").exists())
@@ -92,18 +115,24 @@ class ScreenPilotSelectTests(unittest.TestCase):
             (root / "data/targets.json").write_text("[]")
             value = inventory()
             value["contexts"][0]["candidates"][0]["original_reference"] = dict(
-                path="data/targets.json", sha256=sha("[]"))
+                path="data/targets.json", sha256=sha("[]")
+            )
             actual_open = Path.open
+
             def refuse_open(path, *args, **kwargs):
                 if "data" in path.parts:
                     raise AssertionError("payload must be rejected before open")
                 return actual_open(path, *args, **kwargs)
+
             with patch.object(Path, "open", refuse_open):
                 selection, _ = freeze(root, value)
             result = metadata.read(root / "pilot/reference-status.json")
             reasons = [row["unavailable_reason"] for row in result["references"]]
             self.assertTrue(any("data/ payloads" in reason for reason in reasons))
-            self.assertEqual(selection["metadata_sha256"], hashlib.sha256((root / "metadata.json").read_bytes()).hexdigest())
+            self.assertEqual(
+                selection["metadata_sha256"],
+                hashlib.sha256((root / "metadata.json").read_bytes()).hexdigest(),
+            )
 
     def test_best16_and_audit5_are_from_same64(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -129,11 +158,13 @@ class ScreenPilotSelectTests(unittest.TestCase):
             valid["rows"][63].update(status="failed", score=None)
             chosen, _ = s.rejection_audits(selection, binding, valid)
             self.assertEqual(len(chosen), 256)
-            for mutate in (lambda x: x["rows"].pop(),
-                           lambda x: x["rows"].append(copy.deepcopy(x["rows"][0])),
-                           lambda x: x["rows"][0].update(program_sha256=sha("outside64")),
-                           lambda x: x["rows"][0].update(score=True),
-                           lambda x: x["rows"][0]["context"].update(runtime_sha256=sha("other-runtime"))):
+            for mutate in (
+                lambda x: x["rows"].pop(),
+                lambda x: x["rows"].append(copy.deepcopy(x["rows"][0])),
+                lambda x: x["rows"][0].update(program_sha256=sha("outside64")),
+                lambda x: x["rows"][0].update(score=True),
+                lambda x: x["rows"][0]["context"].update(runtime_sha256=sha("other-runtime")),
+            ):
                 changed = copy.deepcopy(valid)
                 mutate(changed)
                 with self.assertRaises(ValueError):
@@ -170,9 +201,11 @@ class ScreenPilotSelectTests(unittest.TestCase):
             self.assertEqual((old / "selection.json").read_bytes(), before)
 
     def test_duplicate_conflicting_and_nontraining_metadata_reject(self):
-        for mutate in (lambda x: x["contexts"].append(copy.deepcopy(x["contexts"][0])),
-                       lambda x: x["contexts"][0].update(partition="meta_test"),
-                       lambda x: x["contexts"][0]["candidates"][0].update(program_sha256=sha("wrong"))):
+        for mutate in (
+            lambda x: x["contexts"].append(copy.deepcopy(x["contexts"][0])),
+            lambda x: x["contexts"][0].update(partition="meta_test"),
+            lambda x: x["contexts"][0]["candidates"][0].update(program_sha256=sha("wrong")),
+        ):
             value = inventory()
             mutate(value)
             with self.assertRaises(ValueError):

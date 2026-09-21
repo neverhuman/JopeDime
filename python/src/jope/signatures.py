@@ -191,30 +191,55 @@ def make_signatures(
 
     binary = hyperion_bin or hyperion_binary()
     test_csv = dataset_dir / "test.csv"
-    scratch = (
-        ensure_prime_owned_directory(scratch, config)
-        if scratch is not None
-        else dataset_dir
-    )
+    scratch = ensure_prime_owned_directory(scratch, config) if scratch is not None else dataset_dir
     # hyperion_vs always needs --test; for train-only dirs, replay train as test and discard.
     test_arg = str(test_csv) if test_csv.exists() else str(train_csv)
     test_from_train = not test_csv.exists()
-    cell_test = str(scratch / ("_discard_test3.vs" if test_from_train else CELL_TEST if scratch == dataset_dir else CELL_TEST))
-    row_test = str(scratch / ("_discard_test128.vs" if test_from_train else ROW_TEST if scratch == dataset_dir else ROW_TEST))
+    cell_test = str(
+        scratch
+        / ("_discard_test3.vs" if test_from_train else CELL_TEST if scratch == dataset_dir else CELL_TEST)
+    )
+    row_test = str(
+        scratch
+        / ("_discard_test128.vs" if test_from_train else ROW_TEST if scratch == dataset_dir else ROW_TEST)
+    )
     cmd = [
         binary,
-        "--train", str(train_csv), "--test", test_arg,
-        "--out-cell-train", str(dataset_dir / CELL_TRAIN), "--out-cell-test", cell_test,
-        "--out-row-train", str(dataset_dir / ROW_TRAIN), "--out-row-test", row_test,
-        "--weights", HYPERION_WEIGHTS, "--manifest", HYPERION_MANIFEST,
-        "--sweeps", str(HYPERION_SWEEPS), "--scales", HYPERION_SCALES, "--seed", str(HYPERION_SEED), "--batch", "256",
+        "--train",
+        str(train_csv),
+        "--test",
+        test_arg,
+        "--out-cell-train",
+        str(dataset_dir / CELL_TRAIN),
+        "--out-cell-test",
+        cell_test,
+        "--out-row-train",
+        str(dataset_dir / ROW_TRAIN),
+        "--out-row-test",
+        row_test,
+        "--weights",
+        HYPERION_WEIGHTS,
+        "--manifest",
+        HYPERION_MANIFEST,
+        "--sweeps",
+        str(HYPERION_SWEEPS),
+        "--scales",
+        HYPERION_SCALES,
+        "--seed",
+        str(HYPERION_SEED),
+        "--batch",
+        "256",
     ]
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_s)
     except subprocess.TimeoutExpired:
-        return SignatureReport(str(dataset_dir), dataset_hash, "failed", [f"hyperion_vs timeout after {timeout_s}s"])
+        return SignatureReport(
+            str(dataset_dir), dataset_hash, "failed", [f"hyperion_vs timeout after {timeout_s}s"]
+        )
     if proc.returncode != 0:
-        return SignatureReport(str(dataset_dir), dataset_hash, "failed", [f"hyperion_vs: {proc.stderr.strip()[:300]}"])
+        return SignatureReport(
+            str(dataset_dir), dataset_hash, "failed", [f"hyperion_vs: {proc.stderr.strip()[:300]}"]
+        )
 
     if test_from_train:
         for junk in (Path(cell_test), Path(row_test)):
@@ -246,8 +271,11 @@ def make_signatures(
         encoding="utf-8",
     )
     return SignatureReport(
-        str(dataset_dir), dataset_hash, "generated",
-        rows_train=post["rows"].get("train.csv"), timings_ms=(time.time() - started) * 1000.0,
+        str(dataset_dir),
+        dataset_hash,
+        "generated",
+        rows_train=post["rows"].get("train.csv"),
+        timings_ms=(time.time() - started) * 1000.0,
     )
 
 

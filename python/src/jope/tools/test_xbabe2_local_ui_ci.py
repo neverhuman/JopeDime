@@ -17,8 +17,7 @@ class Xbabe2LocalUiCiTests(unittest.TestCase):
         self.assertIn("refused", (proc.stderr + proc.stdout).lower())
 
     def test_refuses_without_explicit_flag(self):
-        env = {k: v for k, v in os.environ.items()
-               if k not in {"XBABE2_LOCAL_UI_CI", "CI", "GITHUB_ACTIONS"}}
+        env = {k: v for k, v in os.environ.items() if k not in {"XBABE2_LOCAL_UI_CI", "CI", "GITHUB_ACTIONS"}}
         proc = subprocess.run(["bash", str(SCRIPT)], env=env, capture_output=True, text=True)
         self.assertNotEqual(proc.returncode, 0)
 

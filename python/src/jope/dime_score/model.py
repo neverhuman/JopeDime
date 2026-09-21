@@ -140,14 +140,10 @@ def bradley_terry_loss(
 ) -> torch.Tensor:
     terms: list[torch.Tensor] = []
     for dataset in torch.unique(dataset_indices):
-        indexes = torch.nonzero(
-            (dataset_indices == dataset) & valid_mask, as_tuple=False
-        ).flatten()
+        indexes = torch.nonzero((dataset_indices == dataset) & valid_mask, as_tuple=False).flatten()
         if len(indexes) < 2:
             continue
-        left, right = torch.triu_indices(
-            len(indexes), len(indexes), offset=1, device=logits.device
-        )
+        left, right = torch.triu_indices(len(indexes), len(indexes), offset=1, device=logits.device)
         first, second = indexes[left], indexes[right]
         target_delta = targets[first] - targets[second]
         keep = target_delta != 0
@@ -181,9 +177,7 @@ def score_losses(
         )
     else:
         huber = outputs["score"].sum() * 0.0
-    ranking = bradley_terry_loss(
-        outputs["score_logit"], percentiles, dataset_indices, valid
-    )
+    ranking = bradley_terry_loss(outputs["score_logit"], percentiles, dataset_indices, valid)
     positive_weight = torch.as_tensor(
         validity_positive_weight,
         dtype=outputs["validity_logit"].dtype,
@@ -215,11 +209,7 @@ def partial_warm_start(
     target = model.state_dict()
     loaded: list[str] = []
     for name, value in source.items():
-        if not (
-            name.startswith("decoder.")
-            or name.startswith("out_norm.")
-            or name == "pos_emb.weight"
-        ):
+        if not (name.startswith("decoder.") or name.startswith("out_norm.") or name == "pos_emb.weight"):
             continue
         if name in target and target[name].shape == value.shape:
             target[name] = value.detach().to(dtype=target[name].dtype)
@@ -238,13 +228,10 @@ def partial_warm_start(
         token_weight = target["token_emb.weight"].clone()
         for target_index, token in enumerate(tokens):
             source_index_value = source_index.get(token)
-            if (
-                source_index_value is not None
-                and source_index_value < source["token_emb.weight"].shape[0]
-            ):
-                token_weight[target_index] = source["token_emb.weight"][
-                    source_index_value
-                ].to(dtype=token_weight.dtype)
+            if source_index_value is not None and source_index_value < source["token_emb.weight"].shape[0]:
+                token_weight[target_index] = source["token_emb.weight"][source_index_value].to(
+                    dtype=token_weight.dtype
+                )
                 token_rows += 1
         target["token_emb.weight"] = token_weight
     model.load_state_dict(target)
@@ -409,27 +396,17 @@ class DimeBroadCritic(nn.Module):
         else:
             dataset_prefix = self.dataset_adapter(dataset_embedding.float())
             target_prefix = self.target_adapter(target_summary.float())
-            anchor_input = torch.cat(
-                (features.float(), observed.float().unsqueeze(-1)), dim=-1
-            ).flatten(1)
+            anchor_input = torch.cat((features.float(), observed.float().unsqueeze(-1)), dim=-1).flatten(1)
             anchor_prefix = self.anchor_adapter(anchor_input)
             fidelity_prefix = self.fidelity_emb(fidelity_ids.long())
-        context = torch.stack(
-            (dataset_prefix, target_prefix, anchor_prefix, fidelity_prefix), dim=1
-        )
+        context = torch.stack((dataset_prefix, target_prefix, anchor_prefix, fidelity_prefix), dim=1)
 
-        signed_log = torch.sign(numeric_values) * torch.log1p(
-            torch.abs(numeric_values)
-        )
+        signed_log = torch.sign(numeric_values) * torch.log1p(torch.abs(numeric_values))
         mean = numeric_mean[token_ids]
         scale = numeric_scale[token_ids].clamp_min(1e-8)
         normalized = ((signed_log - mean) / scale).unsqueeze(-1)
         numeric = self.numeric_adapter(normalized) * numeric_mask.unsqueeze(-1)
-        tokens = (
-            self.token_emb(token_ids)
-            + self.action_type_emb(action_type_ids)
-            + numeric
-        )
+        tokens = self.token_emb(token_ids) + self.action_type_emb(action_type_ids) + numeric
         hidden = torch.cat((context, tokens), dim=1)
         positions = torch.arange(hidden.shape[1], device=token_ids.device)
         hidden = hidden + self.pos_emb(positions).unsqueeze(0)
@@ -542,9 +519,7 @@ def broad_critic_losses(
             continue
         target = scores[indexes]
         prediction = outputs["score"][indexes]
-        listwise_terms.append(
-            -(torch.softmax(target, dim=0) * torch.log_softmax(prediction, dim=0)).sum()
-        )
+        listwise_terms.append(-(torch.softmax(target, dim=0) * torch.log_softmax(prediction, dim=0)).sum())
         order = torch.argsort(target, stable=True)
         deciles = torch.empty_like(order)
         deciles[order] = torch.div(
@@ -552,17 +527,13 @@ def broad_critic_losses(
             max(len(indexes), 1),
             rounding_mode="floor",
         ).clamp_max(9)
-        left, right = torch.triu_indices(
-            len(indexes), len(indexes), offset=1, device=indexes.device
-        )
+        left, right = torch.triu_indices(len(indexes), len(indexes), offset=1, device=indexes.device)
         target_delta = target[left] - target[right]
         keep = (target_delta != 0) & (deciles[left] != deciles[right])
         if torch.any(keep):
             direction = torch.sign(target_delta[keep])
             predicted_delta = prediction[left[keep]] - prediction[right[keep]]
-            pairwise_terms.append(
-                F.softplus(-direction * predicted_delta).mean()
-            )
+            pairwise_terms.append(F.softplus(-direction * predicted_delta).mean())
     zero = outputs["score"].sum() * 0.0
     listwise = torch.stack(listwise_terms).mean() if listwise_terms else zero
     pairwise = torch.stack(pairwise_terms).mean() if pairwise_terms else zero
@@ -576,17 +547,16 @@ def broad_critic_losses(
     )
     huber = _dataset_balanced_mean(huber_values, groups, finite_score)
     distribution_targets = (
-        ((torch.nan_to_num(scores).clamp(-3, 3) + 3) / 6)
-        * outputs["score_distribution_logits"].shape[1]
-    ).long().clamp_max(outputs["score_distribution_logits"].shape[1] - 1)
+        (((torch.nan_to_num(scores).clamp(-3, 3) + 3) / 6) * outputs["score_distribution_logits"].shape[1])
+        .long()
+        .clamp_max(outputs["score_distribution_logits"].shape[1] - 1)
+    )
     distribution_values = F.cross_entropy(
         outputs["score_distribution_logits"],
         distribution_targets,
         reduction="none",
     )
-    distribution = _dataset_balanced_mean(
-        distribution_values, groups, finite_score
-    )
+    distribution = _dataset_balanced_mean(distribution_values, groups, finite_score)
     score_loss = 0.75 * huber + 0.25 * distribution
 
     validity_values = F.binary_cross_entropy_with_logits(
@@ -602,9 +572,7 @@ def broad_critic_losses(
         delta=0.5,
         reduction="none",
     )
-    runtime_loss = _dataset_balanced_mean(
-        runtime_values, groups, finite_runtime
-    )
+    runtime_loss = _dataset_balanced_mean(runtime_values, groups, finite_runtime)
     total = (
         ranking_weight * ranking
         + score_weight * score_loss

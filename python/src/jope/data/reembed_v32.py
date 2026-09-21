@@ -5,6 +5,7 @@ Fits the projection (train datasets only), registers it in standardization.json,
 then rewrites active_rows.jsonl + self_rows_g*.jsonl + champion_rows_g*.jsonl
 in place (atomic tmp+rename; one-time .v31.bak backups).
 """
+
 from __future__ import annotations
 
 import json

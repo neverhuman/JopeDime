@@ -32,6 +32,7 @@ Column naming is the controller's, never the agent's: the agent supplies a bare 
 and the controller supplies `family_id`, which this module joins as ``f"{family_id}.{name}"``. The
 assembled names are run through `assert_no_forbidden_inputs` before any matrix is returned.
 """
+
 from __future__ import annotations
 
 import ast
@@ -50,15 +51,23 @@ from jope.grammars import FAMILY_LIST_V3, grammar_for
 from . import assert_no_forbidden_inputs
 
 __all__ = [
-    "ABSENT", "MIN_OUTPUTS", "MAX_OUTPUTS", "MAX_EXPR_DEPTH", "MAX_EXPR_NODES",
-    "PRIMITIVES", "spec_schema", "validate_spec", "compile_spec", "execute_spec",
+    "ABSENT",
+    "MIN_OUTPUTS",
+    "MAX_OUTPUTS",
+    "MAX_EXPR_DEPTH",
+    "MAX_EXPR_NODES",
+    "PRIMITIVES",
+    "spec_schema",
+    "validate_spec",
+    "compile_spec",
+    "execute_spec",
 ]
 
 # --- Limits --------------------------------------------------------------------------------------
 MIN_OUTPUTS = 8
 MAX_OUTPUTS = 25
 MAX_EXPR_DEPTH = 12
-MAX_EXPR_NODES = 200          # per output; a 25-output spec is bounded at 5,000 nodes
+MAX_EXPR_NODES = 200  # per output; a 25-output spec is bounded at 5,000 nodes
 MAX_ABS_LITERAL = 1e12
 
 # Sentinel for "this op is not in the pipeline" / "this param is not set or is not numeric".
@@ -358,12 +367,15 @@ _DOC = {
     "fourgram": "count of an exact adjacent op quadruple",
     "positional_bigram": "mean normalized start position of an adjacent op pair; -1 if absent",
     "diag": "train-only per-dataset diagnostic by key",
-    "add": "a + b", "sub": "a - b", "mul": "a * b",
+    "add": "a + b",
+    "sub": "a - b",
+    "mul": "a * b",
     "div": "a / b; |b| < 1e-12 yields a non-finite value, which becomes 0.0",
     "log1p": "log(1 + x); x <= -1 becomes 0.0",
     "sqrt": "square root; x < 0 becomes 0.0",
     "abs": "absolute value",
-    "min": "minimum of 2 or more", "max": "maximum of 2 or more",
+    "min": "minimum of 2 or more",
+    "max": "maximum of 2 or more",
     "clip": "clip(x, lo, hi)",
 }
 
@@ -388,12 +400,36 @@ class _Ctx:
     """
 
     __slots__ = (
-        "pg", "diag", "stages", "ops", "n_stages", "n_transforms", "op_count", "fam_count",
-        "first_pos", "last_pos", "first_stage", "head", "costs", "cost_classes", "expr_len",
-        "n_exprs", "n_col_refs", "expr_text", "ast_nodes", "ast_functions", "ast_variables",
-        "ast_constants", "ast_depth", "param_count", "numeric_param_count",
-        "categorical_param_count", "params_by_name",
-        "ast_paths", "ast_internal_nodes", "ast_child_edges",
+        "pg",
+        "diag",
+        "stages",
+        "ops",
+        "n_stages",
+        "n_transforms",
+        "op_count",
+        "fam_count",
+        "first_pos",
+        "last_pos",
+        "first_stage",
+        "head",
+        "costs",
+        "cost_classes",
+        "expr_len",
+        "n_exprs",
+        "n_col_refs",
+        "expr_text",
+        "ast_nodes",
+        "ast_functions",
+        "ast_variables",
+        "ast_constants",
+        "ast_depth",
+        "param_count",
+        "numeric_param_count",
+        "categorical_param_count",
+        "params_by_name",
+        "ast_paths",
+        "ast_internal_nodes",
+        "ast_child_edges",
     )
 
     def __init__(self, pg: ParsedGenome, diagnostics: dict | None) -> None:
@@ -476,8 +512,7 @@ class _Ctx:
                     ast_internal_nodes += 1
                     ast_child_edges += len(children)
                     path_stack.extend(
-                        (child, path + (type(child).__name__.casefold(),))
-                        for child in children
+                        (child, path + (type(child).__name__.casefold(),)) for child in children
                     )
                 else:
                     ast_paths.append(path)
@@ -589,7 +624,9 @@ def _param_dispersion(ctx: _Ctx, name: str) -> float:
 
 def _adjacent_param_reuse(ctx: _Ctx, name: str) -> float:
     entries = ctx.params_by_name.get(name, [])
-    return float(sum(1 for left, right in zip(entries, entries[1:]) if right[0] == left[0] + 1 and right[1] == left[1]))
+    return float(
+        sum(1 for left, right in zip(entries, entries[1:]) if right[0] == left[0] + 1 and right[1] == left[1])
+    )
 
 
 # --- Section B5 helper metrics --------------------------------------------------------------------
@@ -643,17 +680,13 @@ def _ast_path_ngram(ctx: _Ctx, tokens: tuple[str, ...]) -> float:
     width = len(tokens)
     for path in ctx.ast_paths:
         for index in range(max(0, len(path) - width + 1)):
-            if path[index:index + width] == tokens:
+            if path[index : index + width] == tokens:
                 count += 1
     return float(count)
 
 
 def _positional_bigram(ctx: _Ctx, left: str, right: str) -> float:
-    positions = [
-        index
-        for index, (a, b) in enumerate(zip(ctx.ops, ctx.ops[1:]))
-        if a == left and b == right
-    ]
+    positions = [index for index, (a, b) in enumerate(zip(ctx.ops, ctx.ops[1:])) if a == left and b == right]
     if not positions:
         return ABSENT
     denominator = max(1, len(ctx.ops) - 1)
@@ -881,7 +914,8 @@ def _structural_summary(ops: list[str], costs: list[float]) -> tuple[float, ...]
     n = len(ops)
     centroid = (
         sum(index * cost for index, cost in enumerate(costs)) / max(sum(costs) * max(n - 1, 1), 1e-12)
-        if costs else 0.0
+        if costs
+        else 0.0
     )
     return float(n), float(sum(costs)), centroid, _entropy(ops), _entropy(zip(ops, ops[1:]))
 
@@ -900,7 +934,9 @@ def _counterfactual_metric(ctx: _Ctx, name: str) -> float:
         return max(
             _summary_delta(
                 baseline,
-                _structural_summary(ctx.ops[:index] + ctx.ops[index + 1:], ctx.costs[:index] + ctx.costs[index + 1:]),
+                _structural_summary(
+                    ctx.ops[:index] + ctx.ops[index + 1 :], ctx.costs[:index] + ctx.costs[index + 1 :]
+                ),
             )
             for index in range(len(ctx.ops))
         )
@@ -917,8 +953,8 @@ def _counterfactual_metric(ctx: _Ctx, name: str) -> float:
             _summary_delta(
                 baseline,
                 _structural_summary(
-                    ctx.ops[: index + 1] + [ctx.ops[index]] + ctx.ops[index + 1:],
-                    ctx.costs[: index + 1] + [ctx.costs[index]] + ctx.costs[index + 1:],
+                    ctx.ops[: index + 1] + [ctx.ops[index]] + ctx.ops[index + 1 :],
+                    ctx.costs[: index + 1] + [ctx.costs[index]] + ctx.costs[index + 1 :],
                 ),
             )
             for index in range(len(ctx.ops))
@@ -948,8 +984,10 @@ def _constant_folded_size(node: ast.AST) -> int:
     if isinstance(node, ast.Constant):
         return 1
     children = list(ast.iter_child_nodes(node))
-    if children and isinstance(node, (ast.BinOp, ast.UnaryOp)) and all(
-        isinstance(child, (ast.Constant, ast.operator, ast.unaryop)) for child in children
+    if (
+        children
+        and isinstance(node, (ast.BinOp, ast.UnaryOp))
+        and all(isinstance(child, (ast.Constant, ast.operator, ast.unaryop)) for child in children)
     ):
         return 1
     return 1 + sum(_constant_folded_size(child) for child in children)
@@ -1027,7 +1065,7 @@ def _expression_metric(ctx: _Ctx, name: str) -> float:
     pairs: set[tuple[str, str]] = set()
     for tree in trees:
         variables = sorted(_variable_names(tree))
-        pairs.update((left, right) for i, left in enumerate(variables) for right in variables[i + 1:])
+        pairs.update((left, right) for i, left in enumerate(variables) for right in variables[i + 1 :])
     return float(len(pairs))
 
 
@@ -1096,7 +1134,9 @@ def _r4_primitive(ctx: _Ctx, name: str) -> float:
         raw = ctx.pg.text.encode()
         return len(zlib.compress(raw, level=9)) / max(1, len(raw))
     if name == "long_range_repeat":
-        return float(sum(ctx.ops[i] == ctx.ops[j] for i in range(len(ctx.ops)) for j in range(i + 2, len(ctx.ops))))
+        return float(
+            sum(ctx.ops[i] == ctx.ops[j] for i in range(len(ctx.ops)) for j in range(i + 2, len(ctx.ops)))
+        )
     if name == "semantic_cacheability":
         stages = [(stage.op, tuple(sorted(stage.params.items()))) for stage in ctx.stages]
         return (len(stages) - len(set(stages))) / max(1, len(stages))
@@ -1111,50 +1151,90 @@ def _r4_primitive(ctx: _Ctx, name: str) -> float:
 
 _WIDTH_PRIMITIVES = frozenset(
     {
-        "cumulative_log_width", "information_retention_proxy", "width_cost_area",
-        "bottleneck_depth", "bottleneck_duration", "bottleneck_location",
-        "recovery_after_compression", "expansion_overshoot", "maximum_width_drawdown",
-        "destructive_pressure_waves", "width_change_points",
+        "cumulative_log_width",
+        "information_retention_proxy",
+        "width_cost_area",
+        "bottleneck_depth",
+        "bottleneck_duration",
+        "bottleneck_location",
+        "recovery_after_compression",
+        "expansion_overshoot",
+        "maximum_width_drawdown",
+        "destructive_pressure_waves",
+        "width_change_points",
     }
 )
 _PARAM_PRIMITIVES = frozenset(
     {
-        "param_default_distance", "param_bound_distance", "param_constraint_ratio",
-        "repeated_param_drift", "seed_collision", "regularization_capacity_balance",
+        "param_default_distance",
+        "param_bound_distance",
+        "param_constraint_ratio",
+        "repeated_param_drift",
+        "seed_collision",
+        "regularization_capacity_balance",
         "missing_default_topology",
     }
 )
 _COUNTERFACTUAL_PRIMITIVES = frozenset(
     {
-        "leave_one_stage_out_delta", "adjacent_swap_delta", "duplicate_stage_delta",
-        "head_swap_delta", "parameter_default_delta",
+        "leave_one_stage_out_delta",
+        "adjacent_swap_delta",
+        "duplicate_stage_delta",
+        "head_swap_delta",
+        "parameter_default_delta",
     }
 )
 _EXPRESSION_PRIMITIVES = frozenset(
     {
-        "expr_constant_folded_size", "expr_effective_variables", "expr_degree_proxy",
-        "expr_frequency_proxy", "expr_interval_growth", "expr_singularity_risk",
-        "expr_saturation_risk", "expr_guard_coverage", "expr_lipschitz_proxy",
-        "expr_monotonicity_proxy", "expr_symmetry_proxy", "expr_branch_balance",
+        "expr_constant_folded_size",
+        "expr_effective_variables",
+        "expr_degree_proxy",
+        "expr_frequency_proxy",
+        "expr_interval_growth",
+        "expr_singularity_risk",
+        "expr_saturation_risk",
+        "expr_guard_coverage",
+        "expr_lipschitz_proxy",
+        "expr_monotonicity_proxy",
+        "expr_symmetry_proxy",
+        "expr_branch_balance",
         "expr_variable_interactions",
     }
 )
 _R4_DIAGNOSTIC_PRIMITIVES = _WIDTH_PRIMITIVES | frozenset(
     {
-        "regularization_capacity_balance", "head_representation_supply",
-        "head_supply_demand_gap", "effective_capacity", "dataset_effective_rank",
-        "dataset_intrinsic_dimension", "dataset_sparsity", "peak_memory_proxy",
+        "regularization_capacity_balance",
+        "head_representation_supply",
+        "head_supply_demand_gap",
+        "effective_capacity",
+        "dataset_effective_rank",
+        "dataset_intrinsic_dimension",
+        "dataset_sparsity",
+        "peak_memory_proxy",
     }
 )
 _R4_PRIMITIVES = (
-    _WIDTH_PRIMITIVES | _PARAM_PRIMITIVES | _COUNTERFACTUAL_PRIMITIVES |
-    _EXPRESSION_PRIMITIVES | frozenset(
+    _WIDTH_PRIMITIVES
+    | _PARAM_PRIMITIVES
+    | _COUNTERFACTUAL_PRIMITIVES
+    | _EXPRESSION_PRIMITIVES
+    | frozenset(
         {
-            "head_representation_supply", "head_representation_demand", "head_supply_demand_gap",
-            "effective_capacity", "dataset_effective_rank", "dataset_intrinsic_dimension",
-            "dataset_sparsity", "operator_entropy", "transition_entropy", "path_complexity",
-            "genome_compression_ratio", "long_range_repeat", "semantic_cacheability",
-            "peak_memory_proxy", "parallelism_proxy",
+            "head_representation_supply",
+            "head_representation_demand",
+            "head_supply_demand_gap",
+            "effective_capacity",
+            "dataset_effective_rank",
+            "dataset_intrinsic_dimension",
+            "dataset_sparsity",
+            "operator_entropy",
+            "transition_entropy",
+            "path_complexity",
+            "genome_compression_ratio",
+            "long_range_repeat",
+            "semantic_cacheability",
+            "peak_memory_proxy",
+            "parallelism_proxy",
         }
     )
 )
@@ -1210,8 +1290,9 @@ def _known_ops(engine: str | None) -> frozenset[str] | None:
     return frozenset(dict(g.transforms)) | frozenset(dict(g.heads))
 
 
-def _validate_node(node, path: str, engine_ops, depth: int, budget: list[int],
-                   diag_keys: set[str], errors: list[str]) -> None:
+def _validate_node(
+    node, path: str, engine_ops, depth: int, budget: list[int], diag_keys: set[str], errors: list[str]
+) -> None:
     if depth > MAX_EXPR_DEPTH:
         errors.append(f"{path}: expression nests deeper than {MAX_EXPR_DEPTH}")
         return
@@ -1231,9 +1312,7 @@ def _validate_node(node, path: str, engine_ops, depth: int, budget: list[int],
             errors.append(f"{path}: literal {node!r} exceeds {MAX_ABS_LITERAL:g}")
         return
     if not isinstance(node, list) or not node:
-        errors.append(
-            f"{path}: expected a number or a [primitive, ...args] list, got {type(node).__name__}"
-        )
+        errors.append(f"{path}: expected a number or a [primitive, ...args] list, got {type(node).__name__}")
         return
 
     head = node[0]
@@ -1307,9 +1386,7 @@ def validate_spec(spec, engine: str | None = None) -> list[str]:
         errors.append(f"missing required key(s) {missing}")
 
     family_id = spec.get("family_id")
-    if family_id is not None and not (
-        isinstance(family_id, str) and _FAMILY_ID_RE.match(family_id)
-    ):
+    if family_id is not None and not (isinstance(family_id, str) and _FAMILY_ID_RE.match(family_id)):
         errors.append(f"family_id {family_id!r} is not a valid controller-minted id")
 
     engine = engine or (spec.get("engine") if isinstance(spec.get("engine"), str) else None)
@@ -1320,9 +1397,7 @@ def validate_spec(spec, engine: str | None = None) -> list[str]:
         errors.append("outputs must be a list")
         return errors
     if not (MIN_OUTPUTS <= len(outputs) <= MAX_OUTPUTS):
-        errors.append(
-            f"outputs must hold {MIN_OUTPUTS}-{MAX_OUTPUTS} entries, got {len(outputs)}"
-        )
+        errors.append(f"outputs must hold {MIN_OUTPUTS}-{MAX_OUTPUTS} entries, got {len(outputs)}")
 
     seen: set[str] = set()
     diag_keys: set[str] = set()
@@ -1406,18 +1481,28 @@ def _compile_node(node, prim_cache: dict):
     if prim == "cost_centroid":
         return _cost_centroid
     if prim == "cost_switches":
-        return lambda ctx: float(sum(left != right for left, right in zip(ctx.cost_classes, ctx.cost_classes[1:])))
+        return lambda ctx: float(
+            sum(left != right for left, right in zip(ctx.cost_classes, ctx.cost_classes[1:]))
+        )
     if prim == "runtime_cost_estimate":
         return lambda ctx: float(sum(ctx.costs) * max(1.0, ctx.n_stages))
     if prim in {
-        "train_rows", "train_width", "train_missingness", "target_cardinality",
-        "rank_diagnostic", "condition_diagnostic",
+        "train_rows",
+        "train_width",
+        "train_missingness",
+        "target_cardinality",
+        "rank_diagnostic",
+        "condition_diagnostic",
     }:
         prim_cache["uses_diagnostics"] = True
         return lambda ctx, name=prim: _fixed_diag(ctx, name)
     if prim in {
-        "resolved_width_min", "resolved_width_max", "resolved_width_mean",
-        "resolved_width_range", "compression_steps", "expansion_steps",
+        "resolved_width_min",
+        "resolved_width_max",
+        "resolved_width_mean",
+        "resolved_width_range",
+        "compression_steps",
+        "expansion_steps",
     }:
         prim_cache["uses_diagnostics"] = True
 
@@ -1451,18 +1536,17 @@ def _compile_node(node, prim_cache: dict):
         return lambda ctx: float(max((len(path) for path in ctx.ast_paths), default=0))
     if prim == "ast_path_mean_len":
         return lambda ctx: (
-            float(sum(len(path) for path in ctx.ast_paths) / len(ctx.ast_paths))
-            if ctx.ast_paths else ABSENT
+            float(sum(len(path) for path in ctx.ast_paths) / len(ctx.ast_paths)) if ctx.ast_paths else ABSENT
         )
     if prim == "ast_repeated_path_fraction":
         return lambda ctx: (
             float((len(ctx.ast_paths) - len(set(ctx.ast_paths))) / len(ctx.ast_paths))
-            if ctx.ast_paths else 0.0
+            if ctx.ast_paths
+            else 0.0
         )
     if prim == "ast_branch_factor":
         return lambda ctx: (
-            float(ctx.ast_child_edges / ctx.ast_internal_nodes)
-            if ctx.ast_internal_nodes else 0.0
+            float(ctx.ast_child_edges / ctx.ast_internal_nodes) if ctx.ast_internal_nodes else 0.0
         )
     if prim == "ast_path_ngram":
         tokens = tuple(re.findall(r"[a-z_][a-z0-9_]*", args[0].casefold()))
@@ -1491,7 +1575,6 @@ def _compile_node(node, prim_cache: dict):
     if prim == "positional_bigram":
         left, right = args
         return lambda ctx: _positional_bigram(ctx, left, right)
-
 
     if prim == "position_norm":
         op = args[0]
@@ -1522,10 +1605,7 @@ def _compile_node(node, prim_cache: dict):
     if prim == "family_transition":
         left, right = args
         return lambda ctx: float(
-            sum(
-                left in a.families and right in b.families
-                for a, b in zip(ctx.stages, ctx.stages[1:])
-            )
+            sum(left in a.families and right in b.families for a, b in zip(ctx.stages, ctx.stages[1:]))
         )
     if prim == "head_distance":
         op = args[0]
@@ -1584,14 +1664,16 @@ def _compile_node(node, prim_cache: dict):
             return lambda ctx: 0.0
         return lambda ctx: float(
             sum(
-                tuple(tokens[index:index + len(ngram)]) == ngram
+                tuple(tokens[index : index + len(ngram)]) == ngram
                 for tokens in [re.findall(r"[a-z_][a-z0-9_]*|\d+(?:\.\d+)?", ctx.expr_text)]
                 for index in range(max(0, len(tokens) - len(ngram) + 1))
             )
         )
     if prim == "expr_char_ngram":
         ngram = args[0].casefold()
-        return lambda ctx: float(sum(ctx.expr_text.startswith(ngram, index) for index in range(len(ctx.expr_text))))
+        return lambda ctx: float(
+            sum(ctx.expr_text.startswith(ngram, index) for index in range(len(ctx.expr_text)))
+        )
     if prim == "diag":
         key = args[0]
         prim_cache["uses_diagnostics"] = True
@@ -1615,13 +1697,13 @@ def _compile_node(node, prim_cache: dict):
         a, b = sub
         return lambda ctx: _safe_div(a(ctx), b(ctx))
     if prim == "log1p":
-        a, = sub
+        (a,) = sub
         return lambda ctx: _safe_log1p(a(ctx))
     if prim == "sqrt":
-        a, = sub
+        (a,) = sub
         return lambda ctx: _safe_sqrt(a(ctx))
     if prim == "abs":
-        a, = sub
+        (a,) = sub
         return lambda ctx: abs(a(ctx))
     if prim == "min":
         return lambda ctx: min(f(ctx) for f in sub)
@@ -1630,7 +1712,7 @@ def _compile_node(node, prim_cache: dict):
     if prim == "clip":
         x, lo, hi = sub
         return lambda ctx: _clip(x(ctx), lo(ctx), hi(ctx))
-    raise ValueError(f"unhandled primitive {prim!r}")   # unreachable after validate_spec
+    raise ValueError(f"unhandled primitive {prim!r}")  # unreachable after validate_spec
 
 
 def _clip(x: float, lo: float, hi: float) -> float:
@@ -1650,8 +1732,7 @@ class CompiledSpec:
 
     __slots__ = ("family_id", "output_names", "names", "uses_diagnostics", "n_substituted", "_fns")
 
-    def __init__(self, family_id: str, output_names: list[str], fns: list,
-                 uses_diagnostics: bool) -> None:
+    def __init__(self, family_id: str, output_names: list[str], fns: list, uses_diagnostics: bool) -> None:
         self.family_id = family_id
         self.output_names = output_names
         self.names = [f"{family_id}.{n}" for n in output_names]
@@ -1709,8 +1790,9 @@ def compile_spec(spec, *, family_id: str | None = None) -> CompiledSpec:
 
 
 # --- Execution -----------------------------------------------------------------------------------
-def execute_spec(fn, genomes, engine: str, diagnostics_by_dataset: dict | None = None,
-                 datasets=None) -> tuple[np.ndarray, list[str], dict]:
+def execute_spec(
+    fn, genomes, engine: str, diagnostics_by_dataset: dict | None = None, datasets=None
+) -> tuple[np.ndarray, list[str], dict]:
     """Run a compiled spec over the corpus. -> (float32 (n_rows, n_outputs), names, stats).
 
     Distinct work is done once and fanned out by inverse index. The dedup KEY depends on the spec:
@@ -1772,14 +1854,13 @@ def execute_spec(fn, genomes, engine: str, diagnostics_by_dataset: dict | None =
         per_key_subs[r] = after - before
         before = after
 
-    if compact is None:      # empty corpus
+    if compact is None:  # empty corpus
         compact = np.zeros((0, len(names)), dtype=np.float64)
 
     with np.errstate(over="ignore", invalid="ignore"):
         # Overflow to inf here is an expected, handled outcome, not a warning worth printing
         # 34,419 times; the pass below counts and substitutes it.
-        out = (compact[inverse].astype(np.float32) if n_rows
-               else np.zeros((0, len(names)), np.float32))
+        out = compact[inverse].astype(np.float32) if n_rows else np.zeros((0, len(names)), np.float32)
 
     # Second finiteness pass. Not redundant: float64 values above the float32 range become inf on
     # downcast, and an inf here would reach the screen as a real feature value.
@@ -1789,9 +1870,9 @@ def execute_spec(fn, genomes, engine: str, diagnostics_by_dataset: dict | None =
         n_substituted += int(bad.sum())
         out[bad] = 0.0
 
-    constant = ([] if len(out) == 0
-                else [names[j] for j in range(out.shape[1])
-                      if out[:, j].max() == out[:, j].min()])
+    constant = (
+        [] if len(out) == 0 else [names[j] for j in range(out.shape[1]) if out[:, j].max() == out[:, j].min()]
+    )
 
     assert_no_forbidden_inputs(names)
     stats = {
@@ -1857,9 +1938,13 @@ def spec_schema(engine: str | None = None) -> dict:
                 ),
                 "oneOf": [
                     {"type": "number"},
-                    {"type": "array", "minItems": 1,
-                     "items": {"oneOf": [{"type": "string"}, {"type": "number"},
-                                         {"$ref": "#/$defs/expr"}]}},
+                    {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                            "oneOf": [{"type": "string"}, {"type": "number"}, {"$ref": "#/$defs/expr"}]
+                        },
+                    },
                 ],
             },
         },

@@ -124,16 +124,10 @@ class _LiveMetricsWriter:
             "samples": sum(int(row["batch_samples"]) for row in self.rows),
             "queue_starvations": sum(int(bool(row["starved"])) for row in self.rows),
         }
-        output["samples_per_second"] = (
-            output["samples"] / output["window_seconds"]
-        )
+        output["samples_per_second"] = output["samples"] / output["window_seconds"]
         for name in mean_fields:
             output[name] = float(np.mean([float(row[name]) for row in self.rows]))
-        depths = [
-            int(row["queue_depth"])
-            for row in self.rows
-            if row.get("queue_depth") is not None
-        ]
+        depths = [int(row["queue_depth"]) for row in self.rows if row.get("queue_depth") is not None]
         output["queue_depth"] = min(depths) if depths else None
         for name in (
             "epoch",
@@ -145,13 +139,8 @@ class _LiveMetricsWriter:
             "eta_seconds",
         ):
             output[name] = latest.get(name)
-        total_ms = sum(
-            output[name]
-            for name in ("loader_wait_ms", "h2d_ms", "compute_ms", "optimizer_ms")
-        )
-        output["loader_wait_pct"] = (
-            100.0 * output["loader_wait_ms"] / max(total_ms, 1e-9)
-        )
+        total_ms = sum(output[name] for name in ("loader_wait_ms", "h2d_ms", "compute_ms", "optimizer_ms"))
+        output["loader_wait_pct"] = 100.0 * output["loader_wait_ms"] / max(total_ms, 1e-9)
         return output
 
     def flush(self) -> None:
@@ -228,7 +217,9 @@ def load_embedding_matrix(root: str | Path) -> tuple[np.ndarray, dict[str, int],
     return matrix, {identity: index for index, identity in enumerate(identities)}, manifest
 
 
-def _numeric_normalization(corpus: TokenizedCorpus, device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
+def _numeric_normalization(
+    corpus: TokenizedCorpus, device: torch.device
+) -> tuple[torch.Tensor, torch.Tensor]:
     size = len(corpus.index["tokens"])
     mean = torch.zeros(size, dtype=torch.float32, device=device)
     scale = torch.ones(size, dtype=torch.float32, device=device)
@@ -255,25 +246,15 @@ def _collate_cpu(
     action_types = torch.zeros((batch, width), dtype=torch.long)
     for row, (token_ids, numeric_values, mask, type_ids) in enumerate(sequences):
         length = len(token_ids)
-        tokens[row, :length] = torch.from_numpy(
-            np.asarray(token_ids, dtype=np.int64).copy()
-        )
-        numeric[row, :length] = torch.from_numpy(
-            np.asarray(numeric_values, dtype=np.float64).copy()
-        )
-        numeric_mask[row, :length] = torch.from_numpy(
-            np.asarray(mask, dtype=np.float32).copy()
-        )
-        action_types[row, :length] = torch.from_numpy(
-            np.asarray(type_ids, dtype=np.int64).copy()
-        )
+        tokens[row, :length] = torch.from_numpy(np.asarray(token_ids, dtype=np.int64).copy())
+        numeric[row, :length] = torch.from_numpy(np.asarray(numeric_values, dtype=np.float64).copy())
+        numeric_mask[row, :length] = torch.from_numpy(np.asarray(mask, dtype=np.float32).copy())
+        action_types[row, :length] = torch.from_numpy(np.asarray(type_ids, dtype=np.int64).copy())
     dataset_ids = np.asarray(corpus.dataset_indices[indexes], dtype=np.int64)
     embedding_rows = embedding_lookup[dataset_ids]
     if np.any(embedding_rows < 0):
         raise ValueError("corpus references a dataset absent from the embedding manifest")
-    embeddings = torch.from_numpy(
-        np.asarray(embedding_matrix[embedding_rows], dtype=np.float32).copy()
-    )
+    embeddings = torch.from_numpy(np.asarray(embedding_matrix[embedding_rows], dtype=np.float32).copy())
     return {
         "embedding": embeddings,
         "token_ids": tokens,
@@ -281,12 +262,8 @@ def _collate_cpu(
         "numeric_mask": numeric_mask,
         "action_type_ids": action_types,
         "lengths": lengths,
-        "percentiles": torch.from_numpy(
-            np.asarray(corpus.percentiles[indexes], dtype=np.float32).copy()
-        ),
-        "validities": torch.from_numpy(
-            np.asarray(corpus.validities[indexes], dtype=np.float32).copy()
-        ),
+        "percentiles": torch.from_numpy(np.asarray(corpus.percentiles[indexes], dtype=np.float32).copy()),
+        "validities": torch.from_numpy(np.asarray(corpus.validities[indexes], dtype=np.float32).copy()),
         "dataset_indices": torch.from_numpy(dataset_ids.copy()),
         "row_indices": torch.tensor(indexes, dtype=torch.long),
     }
@@ -298,10 +275,7 @@ def _move_batch(
     *,
     non_blocking: bool,
 ) -> dict[str, torch.Tensor]:
-    return {
-        name: tensor.to(device, non_blocking=non_blocking)
-        for name, tensor in batch.items()
-    }
+    return {name: tensor.to(device, non_blocking=non_blocking) for name, tensor in batch.items()}
 
 
 def _collate(
@@ -350,9 +324,7 @@ class _MmapCollator:
         if self._corpus is None:
             # The parent verified both immutable artifacts before workers started.
             self._corpus = TokenizedCorpus(self.corpus_root, verify=False)
-            self._embeddings = np.load(
-                self.embeddings_path, mmap_mode="r", allow_pickle=False
-            )
+            self._embeddings = np.load(self.embeddings_path, mmap_mode="r", allow_pickle=False)
         assert self._embeddings is not None
         return _collate_cpu(
             self._corpus,
@@ -443,9 +415,7 @@ class _BatchPrefetcher(Iterator[tuple[dict[str, torch.Tensor], dict[str, float |
         timing: dict[str, Any] = {
             "loader_wait_ms": loader_wait_ms,
             "queue_depth": depth,
-            "starved": bool(
-                loader_wait_ms >= 2.0 and (depth is None or depth == 0)
-            ),
+            "starved": bool(loader_wait_ms >= 2.0 and (depth is None or depth == 0)),
         }
         if self.stream is None:
             self.next_batch = cpu_batch
@@ -493,9 +463,7 @@ def _embedding_lookup(corpus: TokenizedCorpus, identities: dict[str, int]) -> np
     for index, identity in enumerate(corpus.index["datasets"]):
         if identity in identities:
             lookup[index] = identities[identity]
-    missing = [
-        corpus.index["datasets"][index] for index, value in enumerate(lookup) if value < 0
-    ]
+    missing = [corpus.index["datasets"][index] for index, value in enumerate(lookup) if value < 0]
     if missing:
         raise ValueError(f"score corpus datasets missing embeddings: {missing}")
     return lookup
@@ -607,9 +575,7 @@ def select_autotune_candidate(
         and float(row.get("free_vram_mib", 0.0)) >= minimum_headroom_mib
     ]
     if not eligible:
-        raise RuntimeError(
-            "no autotuned configuration retained the required 4 GiB VRAM headroom"
-        )
+        raise RuntimeError("no autotuned configuration retained the required 4 GiB VRAM headroom")
     return max(
         eligible,
         key=lambda row: (
@@ -632,9 +598,7 @@ def _timed_training_step(
 ) -> tuple[dict[str, torch.Tensor], float, float, float]:
     optimizer.zero_grad(set_to_none=True)
     cuda = batch["token_ids"].device.type == "cuda"
-    compute_started = (
-        torch.cuda.Event(enable_timing=True) if cuda else time.perf_counter()
-    )
+    compute_started = torch.cuda.Event(enable_timing=True) if cuda else time.perf_counter()
     compute_finished = torch.cuda.Event(enable_timing=True) if cuda else None
     if cuda:
         compute_started.record()
@@ -667,12 +631,8 @@ def _timed_training_step(
     if cuda:
         assert isinstance(compute_finished, torch.cuda.Event)
         compute_finished.record()
-        optimizer_started: torch.cuda.Event | float = torch.cuda.Event(
-            enable_timing=True
-        )
-        optimizer_finished: torch.cuda.Event | None = torch.cuda.Event(
-            enable_timing=True
-        )
+        optimizer_started: torch.cuda.Event | float = torch.cuda.Event(enable_timing=True)
+        optimizer_finished: torch.cuda.Event | None = torch.cuda.Event(enable_timing=True)
         optimizer_started.record()
     else:
         optimizer_started = time.perf_counter()
@@ -793,27 +753,18 @@ def _benchmark_configuration(
         free_mib = free_bytes / (1024 * 1024)
         record = {
             **base,
-            "status": (
-                "ok"
-                if free_mib >= MINIMUM_VRAM_HEADROOM_MIB
-                else "insufficient_headroom"
-            ),
+            "status": ("ok" if free_mib >= MINIMUM_VRAM_HEADROOM_MIB else "insufficient_headroom"),
             "actual_examples": actual_examples,
             "samples_per_second": samples / max(elapsed, 1e-9),
             "loader_wait_ms": loader_wait / AUTOTUNE_TIMED_STEPS,
-            "loader_wait_pct": 100.0
-            * loader_wait
-            / max(elapsed * 1000.0, 1e-9),
+            "loader_wait_pct": 100.0 * loader_wait / max(elapsed * 1000.0, 1e-9),
             "h2d_ms": h2d / AUTOTUNE_TIMED_STEPS,
             "compute_ms": compute / AUTOTUNE_TIMED_STEPS,
             "optimizer_ms": optimizer_ms / AUTOTUNE_TIMED_STEPS,
             "queue_starvations": starvations,
-            "mean_queue_depth": (
-                float(np.mean(queue_depths)) if queue_depths else None
-            ),
+            "mean_queue_depth": (float(np.mean(queue_depths)) if queue_depths else None),
             "free_vram_mib": free_mib,
-            "peak_vram_mib": torch.cuda.max_memory_allocated()
-            / (1024 * 1024),
+            "peak_vram_mib": torch.cuda.max_memory_allocated() / (1024 * 1024),
             **_gpu_telemetry(),
         }
         return record
@@ -844,16 +795,8 @@ def _autotune_training(
     config: TrainConfig,
 ) -> tuple[int, int, Any, dict[str, Any]]:
     if device.type != "cuda" or not config.autotune:
-        workers = (
-            0
-            if config.loader_workers == "auto"
-            else int(config.loader_workers)
-        )
-        forward = (
-            torch.compile(model)
-            if config.compile_model and device.type == "cuda"
-            else model
-        )
+        workers = 0 if config.loader_workers == "auto" else int(config.loader_workers)
+        forward = torch.compile(model) if config.compile_model and device.type == "cuda" else model
         return config.genomes_per_dataset, workers, forward, {}
 
     if config.loader_workers == "auto":
@@ -866,10 +809,7 @@ def _autotune_training(
     if not worker_candidates:
         worker_candidates = (0,)
 
-    state = {
-        name: tensor.detach().clone()
-        for name, tensor in model.state_dict().items()
-    }
+    state = {name: tensor.detach().clone() for name, tensor in model.state_dict().items()}
     torch_rng = torch.random.get_rng_state()
     cuda_rng = torch.cuda.get_rng_state_all()
     records: list[dict[str, Any]] = []
@@ -893,9 +833,7 @@ def _autotune_training(
                     mode="eager",
                 )
             )
-        selected_worker = int(
-            select_autotune_candidate(records)["loader_workers"]
-        )
+        selected_worker = int(select_autotune_candidate(records)["loader_workers"])
         for requested_examples in AUTOTUNE_BATCH_SIZES[1:]:
             model.load_state_dict(state)
             records.append(
@@ -955,8 +893,7 @@ def _autotune_training(
             if (
                 compiled is not None
                 and compiled_record.get("status") == "ok"
-                and float(compiled_record["samples_per_second"])
-                > float(eager_selected["samples_per_second"])
+                and float(compiled_record["samples_per_second"]) > float(eager_selected["samples_per_second"])
             ):
                 selected = compiled_record
                 forward = compiled
@@ -1085,17 +1022,13 @@ def quality_metrics(
         top_precision.append(sum(int(index in actual_top) for index in predicted_top) / count)
         top_regret.append(float(targets[indexes].max() - targets[predicted_top].max()))
     mae = float(np.mean(np.abs(scores[valid] - targets[valid]))) if valid.any() else math.nan
-    constant_mae = (
-        float(np.mean(np.abs(train_constant - targets[valid]))) if valid.any() else math.nan
-    )
+    constant_mae = float(np.mean(np.abs(train_constant - targets[valid]))) if valid.any() else math.nan
     bins = np.minimum((scores[valid] * 10).astype(int), 9) if valid.any() else np.array([])
     calibration = []
     for bin_index in range(10):
         selected = bins == bin_index
         if np.any(selected):
-            calibration.append(
-                abs(float(scores[valid][selected].mean() - targets[valid][selected].mean()))
-            )
+            calibration.append(abs(float(scores[valid][selected].mean() - targets[valid][selected].mean())))
     labels = (validity_targets >= 1.0 - 1e-12).astype(np.float64)
     return {
         "mean_per_dataset_spearman": float(np.nanmean(per_dataset_spearman))
@@ -1130,8 +1063,7 @@ def evaluate(
 ) -> dict[str, Any]:
     if heldout:
         indexes = np.flatnonzero(
-            (np.asarray(corpus.dataset_splits) == split)
-            & (np.asarray(corpus.splits) == 2)
+            (np.asarray(corpus.dataset_splits) == split) & (np.asarray(corpus.splits) == 2)
         )
     else:
         indexes = np.flatnonzero(np.asarray(corpus.splits) == split)
@@ -1162,9 +1094,7 @@ def evaluate(
         scores.append(output["score"].float().cpu().numpy())
         score_logits.append(output["score_logit"].float().cpu().numpy())
         validities.append(output["validity"].float().cpu().numpy())
-        validity_logits.append(
-            output["validity_logit"].float().cpu().numpy()
-        )
+        validity_logits.append(output["validity_logit"].float().cpu().numpy())
     if not scores:
         raise ValueError("validation split has no examples")
     score_values = np.concatenate(scores)
@@ -1193,15 +1123,9 @@ def evaluate(
         torch.from_numpy(datasets),
         validity_positive_weight=_validity_positive_weight(corpus, heldout),
     )
-    metrics["losses"] = {
-        name: float(value) for name, value in losses.items()
-    }
+    metrics["losses"] = {name: float(value) for name, value in losses.items()}
     metrics["examples"] = int(len(indexes))
-    metrics["split_name"] = (
-        "dataset-held-out test"
-        if heldout
-        else ("train", "validation", "test")[split]
-    )
+    metrics["split_name"] = "dataset-held-out test" if heldout else ("train", "validation", "test")[split]
     return metrics
 
 
@@ -1244,7 +1168,9 @@ def _checkpoint(
             "ffn_dim": model.ffn_dim,
             "max_sequence_length": model.max_sequence_length,
         },
-        "config": {key: str(value) if isinstance(value, Path) else value for key, value in asdict(config).items()},
+        "config": {
+            key: str(value) if isinstance(value, Path) else value for key, value in asdict(config).items()
+        },
         "warm_start_report": warm_start_report,
         "data_loading": {
             "genomes_per_dataset": genomes_per_dataset,
@@ -1296,9 +1222,7 @@ def warm_start_preflight(config: TrainConfig) -> dict[str, Any]:
                 "mapping": mapping,
                 "eligible": mapped > 0,
                 "reason": (
-                    f"{mapped} exact-shape tensors mapped"
-                    if mapped
-                    else "zero exact-shape tensors mapped"
+                    f"{mapped} exact-shape tensors mapped" if mapped else "zero exact-shape tensors mapped"
                 ),
             }
         )
@@ -1317,14 +1241,10 @@ def _train_dime_score(config: TrainConfig) -> dict[str, Any]:
     torch.manual_seed(config.seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(config.seed)
-    device = torch.device(
-        config.device if config.device != "cuda" or torch.cuda.is_available() else "cpu"
-    )
+    device = torch.device(config.device if config.device != "cuda" or torch.cuda.is_available() else "cpu")
     tokenized_root = prepare_corpus(config.corpus_root)
     corpus = TokenizedCorpus(tokenized_root)
-    embedding_matrix, identities, embedding_manifest = load_embedding_matrix(
-        config.embeddings_root
-    )
+    embedding_matrix, identities, embedding_manifest = load_embedding_matrix(config.embeddings_root)
     embedding_lookup = _embedding_lookup(corpus, identities)
     config.run_dir.mkdir(parents=True, exist_ok=True)
     run_identity = {
@@ -1375,10 +1295,7 @@ def _train_dime_score(config: TrainConfig) -> dict[str, Any]:
         if not last_path.is_file():
             raise ValueError(f"resume requested but checkpoint is absent: {last_path}")
         checkpoint = torch.load(last_path, map_location=device, weights_only=False)
-        if (
-            checkpoint.get("tokenized_corpus_binding_sha256")
-            != corpus.manifest["binding_sha256"]
-        ):
+        if checkpoint.get("tokenized_corpus_binding_sha256") != corpus.manifest["binding_sha256"]:
             raise ValueError("resume checkpoint corpus binding mismatch")
         if checkpoint.get("embedding_sha256") != embedding_manifest["embeddings_sha256"]:
             raise ValueError("resume checkpoint embedding binding mismatch")
@@ -1388,14 +1305,10 @@ def _train_dime_score(config: TrainConfig) -> dict[str, Any]:
         warm = torch.load(config.warm_start, map_location="cpu", weights_only=False)
         warm_start_report = partial_warm_start(model, warm, corpus.index["tokens"])
 
-    embeddings_path = config.embeddings_root / str(
-        embedding_manifest["embeddings_file"]
-    )
+    embeddings_path = config.embeddings_root / str(embedding_manifest["embeddings_file"])
     if checkpoint is not None:
         loading = checkpoint.get("data_loading") or {}
-        genomes_per_dataset = int(
-            loading.get("genomes_per_dataset", config.genomes_per_dataset)
-        )
+        genomes_per_dataset = int(loading.get("genomes_per_dataset", config.genomes_per_dataset))
         loader_workers = int(
             loading.get(
                 "loader_workers",
@@ -1405,9 +1318,7 @@ def _train_dime_score(config: TrainConfig) -> dict[str, Any]:
         execution_mode = str(loading.get("execution_mode", "eager"))
         compiled_forward: Any = (
             torch.compile(model)
-            if execution_mode == "compiled"
-            and config.compile_model
-            and device.type == "cuda"
+            if execution_mode == "compiled" and config.compile_model and device.type == "cuda"
             else model
         )
     else:
@@ -1437,11 +1348,7 @@ def _train_dime_score(config: TrainConfig) -> dict[str, Any]:
         execution_mode = (
             str(autotune_decision["selected"]["mode"])
             if autotune_decision
-            else (
-                "compiled"
-                if compiled_forward is not model and device.type == "cuda"
-                else "eager"
-            )
+            else ("compiled" if compiled_forward is not model and device.type == "cuda" else "eager")
         )
         if autotune_decision:
             _atomic_json(
@@ -1553,9 +1460,7 @@ def _train_dime_score(config: TrainConfig) -> dict[str, Any]:
                 batch_samples = len(batch["row_indices"])
                 samples += batch_samples
                 global_step += 1
-                loss_values = {
-                    name: float(losses[name].detach()) for name in totals
-                }
+                loss_values = {name: float(losses[name].detach()) for name in totals}
                 for name, value in loss_values.items():
                     totals[name] += value
                 step_timing = {
@@ -1667,17 +1572,12 @@ def _train_dime_score(config: TrainConfig) -> dict[str, Any]:
                 "schema": "jope-prime.dime-score-metrics.v1",
                 "epoch": epoch,
                 "epochs": config.epochs,
-                "train_losses": {
-                    name: total / len(sampler) for name, total in totals.items()
-                },
+                "train_losses": {name: total / len(sampler) for name, total in totals.items()},
                 "validation": validation,
                 "samples_per_second": samples / elapsed,
                 "samples": samples,
                 "epoch_seconds": elapsed,
-                "timing": {
-                    name: value / len(sampler)
-                    for name, value in timing_totals.items()
-                },
+                "timing": {name: value / len(sampler) for name, value in timing_totals.items()},
                 "queue_starvations": starvations,
                 "batch_shape": [
                     sampler.datasets_per_batch,
@@ -1716,8 +1616,7 @@ def _train_dime_score(config: TrainConfig) -> dict[str, Any]:
             if improved:
                 _atomic_torch_save(config.run_dir / "best.pt", saved)
             if config.checkpoint_every > 0 and (
-                (epoch + 1) % config.checkpoint_every == 0
-                or epoch + 1 == config.epochs
+                (epoch + 1) % config.checkpoint_every == 0 or epoch + 1 == config.epochs
             ):
                 _atomic_torch_save(
                     config.run_dir / f"epoch-{epoch + 1:04d}.pt",
@@ -1792,8 +1691,7 @@ def _train_dime_score(config: TrainConfig) -> dict[str, Any]:
     )
     gate_metrics = test_metrics or final_metrics
     beats_constant = bool(
-        math.isfinite(gate_metrics["mae"])
-        and gate_metrics["mae"] < gate_metrics["constant_percentile_mae"]
+        math.isfinite(gate_metrics["mae"]) and gate_metrics["mae"] < gate_metrics["constant_percentile_mae"]
     )
     summary = {
         "schema": "jope-prime.dime-score-summary.v1",
@@ -1805,9 +1703,7 @@ def _train_dime_score(config: TrainConfig) -> dict[str, Any]:
         "selection_split": final_metrics["split_name"],
         "quality_gate_split": gate_metrics["split_name"],
         "beats_constant_percentile_baseline": beats_constant,
-        "dataset_conditioning_beats_genome_only": None
-        if config.genome_only
-        else "requires matched ablation",
+        "dataset_conditioning_beats_genome_only": None if config.genome_only else "requires matched ablation",
         "quality_gate": "publishable" if beats_constant else "diagnostic",
         "stopped_early": stopped_early,
         "checkpoint": str(best_path),
@@ -1873,9 +1769,7 @@ def run_initialization_pilots(
     initializations = ["scratch"]
     if preflight["eligible"]:
         initializations.append("warm")
-    results: dict[str, list[dict[str, Any]]] = {
-        initialization: [] for initialization in initializations
-    }
+    results: dict[str, list[dict[str, Any]]] = {initialization: [] for initialization in initializations}
     for initialization in initializations:
         for seed in seeds:
             run = base.run_dir / "pilots" / initialization / f"seed-{seed}"
@@ -1898,13 +1792,8 @@ def run_initialization_pilots(
             results[initialization].append(train_dime_score(config))
     comparison: dict[str, dict[str, float]] = {}
     for initialization, summaries in results.items():
-        spearman = sorted(
-            float(summary["validation"]["mean_per_dataset_spearman"])
-            for summary in summaries
-        )
-        pairwise = sorted(
-            float(summary["validation"]["pairwise_accuracy"]) for summary in summaries
-        )
+        spearman = sorted(float(summary["validation"]["mean_per_dataset_spearman"]) for summary in summaries)
+        pairwise = sorted(float(summary["validation"]["pairwise_accuracy"]) for summary in summaries)
         middle = len(spearman) // 2
         comparison[initialization] = {
             "median_mean_per_dataset_spearman": spearman[middle],

@@ -1,4 +1,5 @@
 """parallel.league_episode.v1 — Expert Iteration league receipt. No serving writes."""
+
 from __future__ import annotations
 
 import math
@@ -31,8 +32,7 @@ def require(condition, message):
 
 
 def arm(rmse, program_sha256=None, evaluations=None, policy_logprob=None, source=None):
-    row = dict(rmse=rmse, program_sha256=program_sha256, evaluations=evaluations,
-               source=source)
+    row = dict(rmse=rmse, program_sha256=program_sha256, evaluations=evaluations, source=source)
     if policy_logprob is not None:
         row["policy_logprob"] = policy_logprob
     return row
@@ -52,16 +52,19 @@ def episode(board, arms, independent_evaluation, policy_logprob=None):
     """Build one league episode. Serving is never written."""
     require(isinstance(board, dict), "board missing")
     require(isinstance(arms, dict), "arms missing")
-    require(set(arms) == set(REQUIRED_ARMS),
-            f"required arms {REQUIRED_ARMS}; got {tuple(arms)}")
+    require(set(arms) == set(REQUIRED_ARMS), f"required arms {REQUIRED_ARMS}; got {tuple(arms)}")
     require("shuffled" not in arms, "shuffled arm is retired")
-    require(independent_evaluation is False,
-            "league diagnostics cannot certify independent evaluation; original verifier required")
+    require(
+        independent_evaluation is False,
+        "league diagnostics cannot certify independent evaluation; original verifier required",
+    )
     checked = {name: validate_arm(name, arms[name]) for name in REQUIRED_ARMS}
     if policy_logprob is not None:
-        require("policy_logprob" not in checked["neural"]
-                or checked["neural"]["policy_logprob"] == policy_logprob,
-                "neural policy_logprob conflict")
+        require(
+            "policy_logprob" not in checked["neural"]
+            or checked["neural"]["policy_logprob"] == policy_logprob,
+            "neural policy_logprob conflict",
+        )
         checked["neural"] = dict(checked["neural"], policy_logprob=policy_logprob)
         require(finite(checked["neural"]["policy_logprob"]), "policy_logprob invalid")
     neural = checked["neural"]["rmse"]
@@ -84,20 +87,22 @@ def validate(row):
     require(isinstance(row, dict) and row.get("schema") == SCHEMA, "unknown league schema")
     require(row.get("serving_written") is False, "league episode must not write serving")
     require(row.get("shuffled_minted") is False, "shuffled stays off")
-    require(row.get("independent_evaluation") is False,
-            "league diagnostics cannot certify independent evaluation")
+    require(
+        row.get("independent_evaluation") is False, "league diagnostics cannot certify independent evaluation"
+    )
     require(row.get("qualification_ready") is False, "league diagnostics are unqualified")
     require(set(row.get("arms") or ()) == set(REQUIRED_ARMS), "incomplete league arms")
     require("shuffled" not in (row.get("arms") or ()), "shuffled arm is retired")
     for name in REQUIRED_ARMS:
         validate_arm(name, row["arms"][name])
     neural = row["arms"]["neural"]["rmse"]
-    for key, opponent in (("neural_vs_teacher", "teacher"),
-                          ("neural_vs_random", "random"),
-                          ("neural_vs_generic", "generic")):
+    for key, opponent in (
+        ("neural_vs_teacher", "teacher"),
+        ("neural_vs_random", "random"),
+        ("neural_vs_generic", "generic"),
+    ):
         require(row.get(key) in OUTCOMES, f"{key} missing")
-        require(row[key] == outcome(neural, row["arms"][opponent]["rmse"]),
-                f"{key} disagrees with rmse")
+        require(row[key] == outcome(neural, row["arms"][opponent]["rmse"]), f"{key} disagrees with rmse")
     if "policy_logprob" in row["arms"]["neural"]:
         require(finite(row["arms"]["neural"]["policy_logprob"]), "policy_logprob invalid")
     return row

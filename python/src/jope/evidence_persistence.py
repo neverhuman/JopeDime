@@ -139,15 +139,12 @@ def _read_retry_spool(path: Path) -> _TaskWrite:
         or not isinstance(payload["observations"], list)
         or not isinstance(payload["telemetry_totals"], dict)
         or not _SHA256.fullmatch(str(payload["content_sha256"]))
-        or hashlib.sha256(_canonical_json(content)).hexdigest()
-        != payload["content_sha256"]
+        or hashlib.sha256(_canonical_json(content)).hexdigest() != payload["content_sha256"]
     ):
         raise ValueError("task evidence retry spool is invalid or corrupted")
     observations = _snapshot_observations(payload["observations"])
     telemetry = json.loads(_canonical_json(payload["telemetry_totals"]))
-    task = _TaskWrite(
-        payload["task_id"], payload["release_id"], observations, telemetry
-    )
+    task = _TaskWrite(payload["task_id"], payload["release_id"], observations, telemetry)
     if _retry_payload(task) != payload:
         raise ValueError("task evidence retry spool is not canonical")
     return task
@@ -191,9 +188,7 @@ def _fsync_directory(path: Path) -> None:
 
 def _atomic_write(path: Path, payload: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(
-        dir=path.parent, prefix=f".{path.name}.", suffix=".tmp"
-    )
+    descriptor, temporary_name = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
     temporary = Path(temporary_name)
     try:
         with os.fdopen(descriptor, "wb") as handle:
@@ -234,9 +229,7 @@ def _require_nonempty_string(value: Any, name: str) -> str:
 
 
 def _require_optional_finite(value: Any, name: str) -> None:
-    if value is not None and (
-        type(value) not in (int, float) or not math.isfinite(float(value))
-    ):
+    if value is not None and (type(value) not in (int, float) or not math.isfinite(float(value))):
         raise ValueError(f"candidate observation {name} must be finite when present")
 
 
@@ -293,41 +286,26 @@ def _validate_observation(row: dict[str, Any], task_id: str, release_id: str) ->
         "search_plan",
     ):
         _require_nonempty_string(row[name], name)
-    if not isinstance(row["source_family"], str) or not _SOURCE_FAMILY.fullmatch(
-        row["source_family"]
-    ):
+    if not isinstance(row["source_family"], str) or not _SOURCE_FAMILY.fullmatch(row["source_family"]):
         raise ValueError("candidate observation source_family must be a lowercase slug")
     if not _SHA256.fullmatch(str(row["source_family_manifest_sha256"])):
         raise ValueError(
             "candidate observation source_family_manifest_sha256 must be a lowercase SHA-256 digest"
         )
-    semantic_missing = (
-        not isinstance(row["semantic_id"], str) or not row["semantic_id"].strip()
-    )
-    canonical_missing = (
-        not isinstance(row["canonical_genome"], str)
-        or not row["canonical_genome"].strip()
-    )
+    semantic_missing = not isinstance(row["semantic_id"], str) or not row["semantic_id"].strip()
+    canonical_missing = not isinstance(row["canonical_genome"], str) or not row["canonical_genome"].strip()
     if semantic_missing != canonical_missing:
-        raise ValueError(
-            "candidate canonical and semantic identities must be present together"
-        )
+        raise ValueError("candidate canonical and semantic identities must be present together")
     generation = row["generation"]
     complexity = row["complexity"]
     if type(generation) is not int or not 0 <= generation <= (1 << 64) - 1:
-        raise ValueError(
-            "candidate observation generation must be an unsigned 64-bit integer"
-        )
+        raise ValueError("candidate observation generation must be an unsigned 64-bit integer")
     if type(complexity) is not int or not 0 <= complexity <= (1 << 32) - 1:
-        raise ValueError(
-            "candidate observation complexity must be an unsigned 32-bit integer"
-        )
+        raise ValueError("candidate observation complexity must be an unsigned 32-bit integer")
     parents = row.get("parents", [])
     if not isinstance(parents, list):
         raise ValueError("candidate observation parents must be a list")
-    validated_parents = [
-        _require_nonempty_string(parent, "parent") for parent in parents
-    ]
+    validated_parents = [_require_nonempty_string(parent, "parent") for parent in parents]
     if len(set(validated_parents)) != len(validated_parents):
         raise ValueError("candidate observation parents must be unique")
     mutation = row.get("mutation")
@@ -351,9 +329,7 @@ def _validate_observation(row: dict[str, Any], task_id: str, release_id: str) ->
         raise ValueError("candidate observation has invalid registry identity")
     for name, digest in registry.items():
         if not isinstance(digest, str) or not _SHA256.fullmatch(digest):
-            raise ValueError(
-                f"candidate observation {name} must be a lowercase SHA-256 digest"
-            )
+            raise ValueError(f"candidate observation {name} must be a lowercase SHA-256 digest")
     if registry["release_hash"] != release_id:
         raise ValueError("candidate observation release differs from registry identity")
     failure = row.get("failure")
@@ -420,9 +396,7 @@ def _validate_honest_evaluation(row: dict[str, Any]) -> None:
         "evidence_tier",
     ):
         _require_nonempty_string(row[name], name)
-    if not isinstance(row["source_family"], str) or not _SOURCE_FAMILY.fullmatch(
-        row["source_family"]
-    ):
+    if not isinstance(row["source_family"], str) or not _SOURCE_FAMILY.fullmatch(row["source_family"]):
         raise ValueError("honest evaluation source_family must be a lowercase slug")
     if not _SHA256.fullmatch(str(row["source_family_manifest_sha256"])):
         raise ValueError("honest evaluation has invalid source-family authority hash")
@@ -436,18 +410,13 @@ def _validate_honest_evaluation(row: dict[str, Any]) -> None:
         or not isinstance(scores, list)
         or len(scores) != folds
         or any(
-            score is not None
-            and (type(score) not in (int, float) or not math.isfinite(float(score)))
+            score is not None and (type(score) not in (int, float) or not math.isfinite(float(score)))
             for score in scores
         )
     ):
         raise ValueError("honest evaluation must account for every declared fold")
     runtime = row["runtime_seconds"]
-    if (
-        type(runtime) not in (int, float)
-        or not math.isfinite(float(runtime))
-        or runtime < 0
-    ):
+    if type(runtime) not in (int, float) or not math.isfinite(float(runtime)) or runtime < 0:
         raise ValueError("honest evaluation runtime must be finite and nonnegative")
     failure = row["failure"]
     success = (
@@ -487,14 +456,9 @@ def _validate_honest_evaluation(row: dict[str, Any]) -> None:
         "release_hash",
     }:
         raise ValueError("honest evaluation has invalid registry identity")
-    if any(
-        not isinstance(value, str) or not _SHA256.fullmatch(value)
-        for value in registry.values()
-    ):
+    if any(not isinstance(value, str) or not _SHA256.fullmatch(value) for value in registry.values()):
         raise ValueError("honest evaluation registry identity has invalid hashes")
-    if not isinstance(row["release_id"], str) or not _SHA256.fullmatch(
-        row["release_id"]
-    ):
+    if not isinstance(row["release_id"], str) or not _SHA256.fullmatch(row["release_id"]):
         raise ValueError("honest evaluation release_id is invalid")
     if registry["release_hash"] != row["release_id"]:
         raise ValueError("honest evaluation release differs from registry identity")
@@ -532,10 +496,7 @@ def _validate_arena_proposal_decision(row: dict[str, Any]) -> None:
         raise ValueError("arena proposal decision players must differ")
     if row["suite"] not in {"stage_a", "stage_b", "double_holdout"}:
         raise ValueError("arena proposal decision has unsupported suite")
-    if (
-        type(row["proposal_seed"]) is not int
-        or not 0 <= row["proposal_seed"] <= (1 << 64) - 1
-    ):
+    if type(row["proposal_seed"]) is not int or not 0 <= row["proposal_seed"] <= (1 << 64) - 1:
         raise ValueError("arena proposal decision proposal_seed is invalid")
     if type(row["mmr_lambda"]) not in (int, float) or float(row["mmr_lambda"]) not in {
         0.0,
@@ -543,9 +504,7 @@ def _validate_arena_proposal_decision(row: dict[str, Any]) -> None:
         0.25,
         0.5,
     }:
-        raise ValueError(
-            "arena proposal decision MMR lambda is outside the locked grid"
-        )
+        raise ValueError("arena proposal decision MMR lambda is outside the locked grid")
     registry = row["registry_identity"]
     if not isinstance(registry, dict) or set(registry) != {
         "registry_hash",
@@ -553,19 +512,14 @@ def _validate_arena_proposal_decision(row: dict[str, Any]) -> None:
         "release_hash",
     }:
         raise ValueError("arena proposal decision has invalid registry identity")
-    if any(
-        not isinstance(value, str) or not _SHA256.fullmatch(value)
-        for value in registry.values()
-    ):
+    if any(not isinstance(value, str) or not _SHA256.fullmatch(value) for value in registry.values()):
         raise ValueError("arena proposal decision registry identity has invalid hashes")
     if (
         not isinstance(row["release_id"], str)
         or not _SHA256.fullmatch(row["release_id"])
         or row["release_id"] != registry["release_hash"]
     ):
-        raise ValueError(
-            "arena proposal decision release differs from registry identity"
-        )
+        raise ValueError("arena proposal decision release differs from registry identity")
 
     proposals = row["proposals"]
     if not isinstance(proposals, list) or len(proposals) != 160:
@@ -629,15 +583,11 @@ def _validate_arena_proposal_decision(row: dict[str, Any]) -> None:
         ):
             pass
         else:
-            raise ValueError(
-                "proposal canonical and semantic identities must be present together"
-            )
+            raise ValueError("proposal canonical and semantic identities must be present together")
         if failure is not None:
             _require_nonempty_string(failure, "proposal failure_reason")
         rank = proposal["rank"]
-        if rank is not None and (
-            type(rank) is not int or not 0 <= rank < 10 or rank in ranks
-        ):
+        if rank is not None and (type(rank) is not int or not 0 <= rank < 10 or rank in ranks):
             raise ValueError("arena proposal selected rank is invalid or duplicate")
         cv_result = proposal["cv_result"]
         if cv_result is not None:
@@ -648,17 +598,11 @@ def _validate_arena_proposal_decision(row: dict[str, Any]) -> None:
                 or cv_result["semantic_id"] != semantic
                 or cv_result["canonical_genome"] != canonical
             ):
-                raise ValueError(
-                    "proposal CV result differs from its raw proposal identity"
-                )
+                raise ValueError("proposal CV result differs from its raw proposal identity")
         if rank is not None and ((cv_result is not None) == (failure is not None)):
-            raise ValueError(
-                "selected proposal requires exactly one CV result or failure reason"
-            )
+            raise ValueError("selected proposal requires exactly one CV result or failure reason")
         if rank is None and cv_result is not None:
-            raise ValueError(
-                "unselected proposal cannot carry an authoritative CV result"
-            )
+            raise ValueError("unselected proposal cannot carry an authoritative CV result")
         if rank is not None:
             ranks.add(rank)
             if not isinstance(semantic, str) or not semantic.strip():
@@ -669,13 +613,9 @@ def _validate_arena_proposal_decision(row: dict[str, Any]) -> None:
             cluster = proposal["structural_cluster"]
             selected_clusters[cluster] = selected_clusters.get(cluster, 0) + 1
             if selected_clusters[cluster] > 2:
-                raise ValueError(
-                    "arena proposal selects more than two candidates from one cluster"
-                )
+                raise ValueError("arena proposal selects more than two candidates from one cluster")
     if ranks != set(range(10)):
-        raise ValueError(
-            "arena proposal decision must select exactly ranks 0 through 9"
-        )
+        raise ValueError("arena proposal decision must select exactly ranks 0 through 9")
 
 
 def _validate_task(
@@ -720,9 +660,7 @@ def _validate_task(
     for name, value in telemetry_totals.items():
         if not name.strip() or not math.isfinite(float(value)) or float(value) < 0.0:
             raise ValueError("telemetry totals must be named, finite, and nonnegative")
-    return sorted(
-        rows, key=lambda row: (row["candidate_id"], row.get("semantic_id", ""))
-    )
+    return sorted(rows, key=lambda row: (row["candidate_id"], row.get("semantic_id", "")))
 
 
 def _observation_set_sha256(rows: list[dict[str, Any]]) -> str:
@@ -741,9 +679,7 @@ def _intent_payload(
         "release_id": release_id,
         "observation_set_sha256": _observation_set_sha256(rows),
         "row_count": len(rows),
-        "telemetry_totals": {
-            name: float(value) for name, value in sorted(telemetry_totals.items())
-        },
+        "telemetry_totals": {name: float(value) for name, value in sorted(telemetry_totals.items())},
     }
 
 
@@ -755,22 +691,16 @@ def _commit_intent(
     telemetry_totals: dict[str, float],
 ) -> Path:
     path = _task_directory(root, task_id) / "INTENT.json"
-    encoded = _canonical_json(
-        _intent_payload(task_id, release_id, rows, telemetry_totals)
-    )
+    encoded = _canonical_json(_intent_payload(task_id, release_id, rows, telemetry_totals))
     if path.exists():
         if path.read_bytes() != encoded:
-            raise ValueError(
-                "task evidence intent already exists with different content"
-            )
+            raise ValueError("task evidence intent already exists with different content")
     else:
         _atomic_write(path, encoded)
     return path
 
 
-def _read_intent(
-    root: Path, task_id: str, rows: list[dict[str, Any]]
-) -> dict[str, Any] | None:
+def _read_intent(root: Path, task_id: str, rows: list[dict[str, Any]]) -> dict[str, Any] | None:
     path = _task_directory(root, task_id) / "INTENT.json"
     if not path.is_file():
         return None
@@ -866,9 +796,7 @@ def _write_shard(task_dir: Path, rows: list[dict[str, Any]]) -> tuple[Path, str]
             for column in range(metadata.num_columns)
         }
         if codecs != {"ZSTD"}:
-            raise ValueError(
-                f"evidence Parquet is not uniformly Zstd-compressed: {codecs}"
-            )
+            raise ValueError(f"evidence Parquet is not uniformly Zstd-compressed: {codecs}")
         return final, digest
     finally:
         temporary.unlink(missing_ok=True)
@@ -897,9 +825,7 @@ def _manifest_for(
         "release_id": release_id,
         "row_count": len(rows),
         "row_counts_by_stratum": counts,
-        "telemetry_totals": {
-            name: float(value) for name, value in sorted(telemetry_totals.items())
-        },
+        "telemetry_totals": {name: float(value) for name, value in sorted(telemetry_totals.items())},
         "shards": (
             [
                 {
@@ -924,26 +850,17 @@ def _safe_shard_path(root: Path, task_dir: Path, location: Any) -> Path:
     relative = Path(location)
     if "\\" in location or any(part in {"", ".", ".."} for part in location.split("/")):
         raise ValueError("task evidence shard location is not a safe relative path")
-    if relative.is_absolute() or any(
-        part in {"", ".", ".."} for part in relative.parts
-    ):
+    if relative.is_absolute() or any(part in {"", ".", ".."} for part in relative.parts):
         raise ValueError("task evidence shard location is not a safe relative path")
     resolved_root = root.resolve()
     resolved_task_shards = (task_dir / "shards").resolve()
     resolved = (root / relative).resolve()
-    if (
-        not resolved.is_relative_to(resolved_root)
-        or resolved.parent != resolved_task_shards
-    ):
-        raise ValueError(
-            "task evidence shard location escapes its task shard directory"
-        )
+    if not resolved.is_relative_to(resolved_root) or resolved.parent != resolved_task_shards:
+        raise ValueError("task evidence shard location escapes its task shard directory")
     return resolved
 
 
-def _validate_committed_manifest(
-    root: Path, task_id: str, task_dir: Path, payload: Any
-) -> None:
+def _validate_committed_manifest(root: Path, task_id: str, task_dir: Path, payload: Any) -> None:
     expected_fields = {
         "schema",
         "task_id",
@@ -1033,10 +950,7 @@ def _validate_committed_manifest(
             raise ValueError("task evidence manifest references an invalid shard")
         parquet = pq.ParquetFile(path)
         metadata = parquet.metadata
-        if (
-            metadata.num_rows != row_count
-            or set(parquet.schema.names) != expected_columns
-        ):
+        if metadata.num_rows != row_count or set(parquet.schema.names) != expected_columns:
             raise ValueError("task evidence Parquet schema or row count differs")
         codecs = {
             str(metadata.row_group(group).column(column).compression).upper()
@@ -1050,23 +964,15 @@ def _validate_committed_manifest(
         descriptor_rows += row_count
     if descriptor_rows != payload["row_count"]:
         raise ValueError("task evidence manifest row count differs from its shards")
-    validated = _validate_task(
-        task_id, payload["release_id"], rows, payload["telemetry_totals"]
-    )
+    validated = _validate_task(task_id, payload["release_id"], rows, payload["telemetry_totals"])
     actual_counts = {stratum: 0 for stratum in EVIDENCE_STRATA}
     for row in validated:
         actual_counts[row["selection_stratum"]] += 1
-    if any(
-        actual_counts[stratum] != counts.get(stratum, 0) for stratum in EVIDENCE_STRATA
-    ):
-        raise ValueError(
-            "task evidence manifest stratum counts differ from its shard rows"
-        )
+    if any(actual_counts[stratum] != counts.get(stratum, 0) for stratum in EVIDENCE_STRATA):
+        raise ValueError("task evidence manifest stratum counts differ from its shard rows")
 
 
-def _validate_incomplete_manifest(
-    root: Path, task_id: str, task_dir: Path, payload: Any
-) -> None:
+def _validate_incomplete_manifest(root: Path, task_id: str, task_dir: Path, payload: Any) -> None:
     expected_fields = {
         "schema",
         "task_id",
@@ -1110,9 +1016,7 @@ def _validate_incomplete_manifest(
     ):
         raise ValueError("incomplete task evidence manifest has invalid telemetry")
     descriptors = payload["shards"]
-    if not isinstance(descriptors, list) or len(descriptors) != (
-        1 if payload["row_count"] else 0
-    ):
+    if not isinstance(descriptors, list) or len(descriptors) != (1 if payload["row_count"] else 0):
         raise ValueError("incomplete task evidence shard count differs from its rows")
     if not descriptors:
         return
@@ -1147,10 +1051,7 @@ def _validate_incomplete_manifest(
         "selection_probability",
         "observation_json",
     }
-    if (
-        parquet.metadata.num_rows != payload["row_count"]
-        or set(parquet.schema.names) != expected_columns
-    ):
+    if parquet.metadata.num_rows != payload["row_count"] or set(parquet.schema.names) != expected_columns:
         raise ValueError("incomplete task evidence Parquet schema or rows differ")
     codecs = {
         str(parquet.metadata.row_group(group).column(column).compression).upper()
@@ -1161,9 +1062,7 @@ def _validate_incomplete_manifest(
         raise ValueError("incomplete task evidence Parquet is not Zstd-compressed")
     table = pq.read_table(path, columns=["observation_json"])
     rows = [json.loads(value.as_py()) for value in table.column(0)]
-    validated = _validate_task(
-        task_id, payload["release_id"], rows, payload["telemetry_totals"]
-    )
+    validated = _validate_task(task_id, payload["release_id"], rows, payload["telemetry_totals"])
     actual_counts = {stratum: 0 for stratum in EVIDENCE_STRATA}
     for row in validated:
         actual_counts[row["selection_stratum"]] += 1
@@ -1183,19 +1082,14 @@ def _read_committed(root: Path, task_id: str) -> tuple[dict[str, Any], Path] | N
         "manifest_sha256",
     }:
         raise ValueError("task evidence completion marker has invalid fields")
-    if (
-        completion["schema"] != "TaskEvidenceCompletion.v1"
-        or completion["task_id"] != task_id
-    ):
+    if completion["schema"] != "TaskEvidenceCompletion.v1" or completion["task_id"] != task_id:
         raise ValueError("task evidence completion marker has invalid task authority")
     manifest_hash = completion["manifest_sha256"]
     if not _SHA256.fullmatch(str(manifest_hash or "")):
         raise ValueError("task evidence completion marker has invalid manifest hash")
     manifest = task_dir / "manifests" / f"{manifest_hash}.task-evidence-manifest.json"
     if not manifest.is_file() or _sha256_file(manifest) != manifest_hash:
-        raise ValueError(
-            "task evidence completion marker references an invalid manifest"
-        )
+        raise ValueError("task evidence completion marker references an invalid manifest")
     payload = json.loads(manifest.read_text(encoding="utf-8"))
     _validate_committed_manifest(root, task_id, task_dir, payload)
     return payload, manifest
@@ -1208,23 +1102,17 @@ def _committed_observation_index(root: Path, task_id: str) -> dict[str, dict[str
     manifest, _ = committed
     rows: dict[str, dict[str, Any]] = {}
     for descriptor in manifest["shards"]:
-        table = pq.read_table(
-            root / descriptor["location"], columns=["observation_json"]
-        )
+        table = pq.read_table(root / descriptor["location"], columns=["observation_json"])
         for value in table.column(0):
             row = json.loads(value.as_py())
             candidate_id = row["candidate_id"]
             if candidate_id in rows:
-                raise ValueError(
-                    "committed candidate task contains duplicate join keys"
-                )
+                raise ValueError("committed candidate task contains duplicate join keys")
             rows[candidate_id] = row
     return rows
 
 
-def _validate_honest_candidate_join(
-    evaluation: dict[str, Any], candidate: dict[str, Any]
-) -> None:
+def _validate_honest_candidate_join(evaluation: dict[str, Any], candidate: dict[str, Any]) -> None:
     if "proxy" in evaluation["evidence_tier"].casefold():
         raise ValueError("proxy-derived tiers cannot enter honest evaluation authority")
     joined_fields = (
@@ -1243,9 +1131,7 @@ def _validate_honest_candidate_join(
         "release_id",
     )
     if any(evaluation[name] != candidate[name] for name in joined_fields):
-        raise ValueError(
-            "honest evaluation join keys differ from its committed candidate observation"
-        )
+        raise ValueError("honest evaluation join keys differ from its committed candidate observation")
 
 
 def _honest_join_key(row: dict[str, Any]) -> dict[str, Any]:
@@ -1272,9 +1158,7 @@ def _arena_join_key(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _record_directory(
-    root: Path, task_id: str, kind: str, join_key: dict[str, Any]
-) -> tuple[Path, str]:
+def _record_directory(root: Path, task_id: str, kind: str, join_key: dict[str, Any]) -> tuple[Path, str]:
     join_sha256 = hashlib.sha256(_canonical_json(join_key)).hexdigest()
     return _task_directory(root, task_id) / "records" / kind / join_sha256, join_sha256
 
@@ -1362,9 +1246,7 @@ def _commit_bound_record(
             validator=validator,
         )
         if _canonical_json(stored) != encoded:
-            raise ValueError(
-                "evidence record join key is already committed with different content"
-            )
+            raise ValueError("evidence record join key is already committed with different content")
         return result
 
     record_path = directory / f"{content_sha256}.record.json"
@@ -1398,9 +1280,7 @@ def _commit_bound_record(
     return result
 
 
-def commit_honest_evaluation(
-    root: str | Path, evaluation: dict[str, Any]
-) -> EvidenceRecordResult:
+def commit_honest_evaluation(root: str | Path, evaluation: dict[str, Any]) -> EvidenceRecordResult:
     """Append one candidate-joined honest evaluation and verify marker-last readback."""
     root = Path(root)
     row = json.loads(_canonical_json(evaluation))
@@ -1409,9 +1289,7 @@ def commit_honest_evaluation(
         candidates = _committed_observation_index(root, row["task_id"])
         candidate = candidates.get(row["candidate_id"])
         if candidate is None:
-            raise ValueError(
-                "honest evaluation candidate is absent from committed task evidence"
-            )
+            raise ValueError("honest evaluation candidate is absent from committed task evidence")
         _validate_honest_candidate_join(row, candidate)
         return _commit_bound_record(
             root,
@@ -1437,9 +1315,7 @@ def read_honest_evaluation(
         "schema": "HonestEvaluationJoin.v1",
         "task_id": _require_nonempty_string(task_id, "task_id"),
         "candidate_id": _require_nonempty_string(candidate_id, "candidate_id"),
-        "evaluator_version": _require_nonempty_string(
-            evaluator_version, "evaluator_version"
-        ),
+        "evaluator_version": _require_nonempty_string(evaluator_version, "evaluator_version"),
         "fold_plan": _require_nonempty_string(fold_plan, "fold_plan"),
         "evidence_tier": _require_nonempty_string(evidence_tier, "evidence_tier"),
     }
@@ -1466,9 +1342,7 @@ def _validate_arena_joins(root: Path, decision: dict[str, Any]) -> None:
             continue
         candidate = candidates.get(proposal["candidate_id"])
         if candidate is None:
-            raise ValueError(
-                "selected arena proposal is absent from committed task evidence"
-            )
+            raise ValueError("selected arena proposal is absent from committed task evidence")
         if (
             candidate["task_id"] != decision["task_id"]
             or candidate["dataset"] != decision["dataset"]
@@ -1479,9 +1353,7 @@ def _validate_arena_joins(root: Path, decision: dict[str, Any]) -> None:
             or candidate["registry_identity"] != decision["registry_identity"]
             or candidate["release_id"] != decision["release_id"]
         ):
-            raise ValueError(
-                "selected arena proposal join keys differ from its candidate observation"
-            )
+            raise ValueError("selected arena proposal join keys differ from its candidate observation")
         evaluation = proposal["cv_result"]
         if evaluation is None:
             continue
@@ -1504,9 +1376,7 @@ def _validate_arena_joins(root: Path, decision: dict[str, Any]) -> None:
             raise ValueError("arena CV result differs from persisted honest evaluation")
 
 
-def commit_arena_proposal_decision(
-    root: str | Path, decision: dict[str, Any]
-) -> EvidenceRecordResult:
+def commit_arena_proposal_decision(root: str | Path, decision: dict[str, Any]) -> EvidenceRecordResult:
     """Append one strict 160-to-10 arena decision after all selected joins verify."""
     root = Path(root)
     row = json.loads(_canonical_json(decision))
@@ -1574,9 +1444,7 @@ def _validate_evidence_persistence_batch(
         raise ValueError("evidence persistence batch has unknown or missing fields")
     if payload["schema"] != EVIDENCE_PERSISTENCE_BATCH_V1:
         raise ValueError("unsupported evidence persistence batch schema")
-    if not isinstance(payload["intent_sha256"], str) or not _SHA256.fullmatch(
-        payload["intent_sha256"]
-    ):
+    if not isinstance(payload["intent_sha256"], str) or not _SHA256.fullmatch(payload["intent_sha256"]):
         raise ValueError("evidence persistence batch intent hash is invalid")
     phase = payload["phase"]
     if phase not in {"candidates", "honest", "decision"}:
@@ -1602,9 +1470,7 @@ def _validate_evidence_persistence_batch(
         raise ValueError("evidence persistence batch honest rows must be a list")
     expected_honest = {"candidates": 0, "honest": 1, "decision": 10}[phase]
     if len(evaluations) != expected_honest:
-        raise ValueError(
-            f"{phase} evidence persistence requires {expected_honest} honest rows"
-        )
+        raise ValueError(f"{phase} evidence persistence requires {expected_honest} honest rows")
     evaluation_ids: set[str] = set()
     for evaluation in evaluations:
         _validate_honest_evaluation(evaluation)
@@ -1624,28 +1490,16 @@ def _validate_evidence_persistence_batch(
         if decision["task_id"] != task_id or decision["release_id"] != release_id:
             raise ValueError("arena decision differs from its persistence batch")
         evaluation_by_candidate = {row["candidate_id"]: row for row in evaluations}
-        selected = [
-            proposal
-            for proposal in decision["proposals"]
-            if proposal["rank"] is not None
-        ]
-        if {proposal["candidate_id"] for proposal in selected} != set(
-            evaluation_by_candidate
-        ):
-            raise ValueError(
-                "arena decision selected set differs from honest batch rows"
-            )
+        selected = [proposal for proposal in decision["proposals"] if proposal["rank"] is not None]
+        if {proposal["candidate_id"] for proposal in selected} != set(evaluation_by_candidate):
+            raise ValueError("arena decision selected set differs from honest batch rows")
         for proposal in selected:
             if _canonical_json(proposal["cv_result"]) != _canonical_json(
                 evaluation_by_candidate[proposal["candidate_id"]]
             ):
-                raise ValueError(
-                    "arena decision CV bytes differ from its honest batch row"
-                )
+                raise ValueError("arena decision CV bytes differ from its honest batch row")
     elif decision is not None:
-        raise ValueError(
-            "only decision evidence persistence may carry an arena decision"
-        )
+        raise ValueError("only decision evidence persistence may carry an arena decision")
     return observations, evaluations
 
 
@@ -1666,9 +1520,7 @@ def _validate_gp_evidence_persistence_batch(
         raise ValueError("GP evidence persistence batch has unknown or missing fields")
     if payload["schema"] != GP_EVIDENCE_PERSISTENCE_BATCH_V1:
         raise ValueError("unsupported GP evidence persistence batch schema")
-    if not isinstance(payload["intent_sha256"], str) or not _SHA256.fullmatch(
-        payload["intent_sha256"]
-    ):
+    if not isinstance(payload["intent_sha256"], str) or not _SHA256.fullmatch(payload["intent_sha256"]):
         raise ValueError("GP evidence persistence intent hash is invalid")
     task_id = _require_nonempty_string(payload["task_id"], "GP batch task_id")
     release_id = payload["release_id"]
@@ -1726,12 +1578,8 @@ def commit_task_evidence(
             manifest, manifest_path = existing
             stored_rows = []
             for descriptor in manifest["shards"]:
-                table = pq.read_table(
-                    root / descriptor["location"], columns=["observation_json"]
-                )
-                stored_rows.extend(
-                    json.loads(value.as_py()) for value in table.column(0)
-                )
+                table = pq.read_table(root / descriptor["location"], columns=["observation_json"])
+                stored_rows.extend(json.loads(value.as_py()) for value in table.column(0))
             if (
                 sorted(
                     stored_rows,
@@ -1745,27 +1593,19 @@ def commit_task_evidence(
                 or manifest["telemetry_totals"]
                 != {name: float(value) for name, value in sorted(telemetry.items())}
             ):
-                raise ValueError(
-                    "task evidence is already committed with different content"
-                )
+                raise ValueError("task evidence is already committed with different content")
             return EvidenceWriteResult(task_id, "complete", manifest_path)
 
         task_dir = _task_directory(root, task_id)
         _commit_intent(root, task_id, release_id, rows, telemetry)
         shard, shard_hash = _write_shard(task_dir, rows)
-        manifest = _manifest_for(
-            root, task_id, release_id, rows, telemetry, shard, shard_hash
-        )
+        manifest = _manifest_for(root, task_id, release_id, rows, telemetry, shard, shard_hash)
         manifest_bytes = _canonical_json(manifest)
         manifest_hash = hashlib.sha256(manifest_bytes).hexdigest()
-        manifest_path = (
-            task_dir / "manifests" / f"{manifest_hash}.task-evidence-manifest.json"
-        )
+        manifest_path = task_dir / "manifests" / f"{manifest_hash}.task-evidence-manifest.json"
         if manifest_path.exists():
             if manifest_path.read_bytes() != manifest_bytes:
-                raise ValueError(
-                    f"immutable evidence manifest collision at {manifest_path}"
-                )
+                raise ValueError(f"immutable evidence manifest collision at {manifest_path}")
         else:
             _atomic_write(manifest_path, manifest_bytes)
         _atomic_write(
@@ -1816,9 +1656,7 @@ def commit_incomplete_task_evidence(
         if existing is not None:
             manifest, manifest_path = existing
             if manifest["release_id"] != release_id:
-                raise ValueError(
-                    "complete task evidence has a different release identity"
-                )
+                raise ValueError("complete task evidence has a different release identity")
             return EvidenceWriteResult(task_id, "complete", manifest_path)
         task_dir = _task_directory(root, task_id)
         shard: Path | None = None
@@ -1838,9 +1676,7 @@ def commit_incomplete_task_evidence(
         )
         manifest_bytes = _canonical_json(manifest)
         manifest_hash = hashlib.sha256(manifest_bytes).hexdigest()
-        manifest_path = (
-            task_dir / "manifests" / f"{manifest_hash}.task-evidence-manifest.json"
-        )
+        manifest_path = task_dir / "manifests" / f"{manifest_hash}.task-evidence-manifest.json"
         if manifest_path.exists():
             if manifest_path.read_bytes() != manifest_bytes:
                 raise ValueError("immutable incomplete evidence manifest collision")
@@ -1850,15 +1686,11 @@ def commit_incomplete_task_evidence(
             raise ValueError("incomplete evidence manifest changed during commit")
         _validate_incomplete_manifest(root, task_id, task_dir, manifest)
         if (task_dir / "COMPLETE.json").exists():
-            raise ValueError(
-                "incomplete evidence unexpectedly created a completion marker"
-            )
+            raise ValueError("incomplete evidence unexpectedly created a completion marker")
         return EvidenceWriteResult(task_id, "incomplete", manifest_path, reason)
 
 
-def commit_evidence_persistence_batch(
-    root: str | Path, batch: dict[str, Any]
-) -> dict[str, Any]:
+def commit_evidence_persistence_batch(root: str | Path, batch: dict[str, Any]) -> dict[str, Any]:
     """Commit one Rust-produced arena phase in dependency order.
 
     Candidate observations are committed first on every phase so a replayed
@@ -1874,9 +1706,7 @@ def commit_evidence_persistence_batch(
         release_id=row["release_id"],
         observations=observations,
     )
-    honest_receipts = [
-        commit_honest_evaluation(root, evaluation) for evaluation in evaluations
-    ]
+    honest_receipts = [commit_honest_evaluation(root, evaluation) for evaluation in evaluations]
     arena_receipt = (
         commit_arena_proposal_decision(root, row["arena_decision"])
         if row["arena_decision"] is not None
@@ -1889,18 +1719,12 @@ def commit_evidence_persistence_batch(
         "task_id": row["task_id"],
         "status": "complete",
         "manifest_path": str(manifest.manifest_path),
-        "honest_content_sha256": [
-            receipt.content_sha256 for receipt in honest_receipts
-        ],
-        "arena_content_sha256": (
-            arena_receipt.content_sha256 if arena_receipt is not None else None
-        ),
+        "honest_content_sha256": [receipt.content_sha256 for receipt in honest_receipts],
+        "arena_content_sha256": (arena_receipt.content_sha256 if arena_receipt is not None else None),
     }
 
 
-def commit_gp_evidence_persistence_batch(
-    root: str | Path, batch: dict[str, Any]
-) -> dict[str, Any]:
+def commit_gp_evidence_persistence_batch(root: str | Path, batch: dict[str, Any]) -> dict[str, Any]:
     """Commit proxy-only GP rows, leaving incomplete sources marker-free."""
     row = json.loads(_canonical_json(batch))
     observations, telemetry = _validate_gp_evidence_persistence_batch(row)
@@ -1926,18 +1750,14 @@ def commit_gp_evidence_persistence_batch(
         "schema": "GpEvidencePersistenceBatchReceipt.v1",
         "intent_sha256": row["intent_sha256"],
         "task_id": row["task_id"],
-        "status": (
-            "complete" if result.status == "complete" else "evidence_incomplete"
-        ),
+        "status": ("complete" if result.status == "complete" else "evidence_incomplete"),
         "manifest_path": str(result.manifest_path),
         "row_count": len(observations),
         "reason": result.reason,
     }
 
 
-def _commit_incomplete_manifest(
-    root: Path, task_id: str, release_id: str, reason: str
-) -> Path | None:
+def _commit_incomplete_manifest(root: Path, task_id: str, release_id: str, reason: str) -> Path | None:
     if not task_id.strip() or not _SHA256.fullmatch(release_id) or not reason.strip():
         return None
     manifest = {
@@ -1953,11 +1773,7 @@ def _commit_incomplete_manifest(
     }
     encoded = _canonical_json(manifest)
     digest = hashlib.sha256(encoded).hexdigest()
-    path = (
-        _task_directory(root, task_id)
-        / "manifests"
-        / f"{digest}.task-evidence-manifest.json"
-    )
+    path = _task_directory(root, task_id) / "manifests" / f"{digest}.task-evidence-manifest.json"
     try:
         if path.exists():
             if path.read_bytes() != encoded:
@@ -1996,18 +1812,14 @@ class AsyncEvidenceWriter:
             raise ValueError("evidence writer queue/result bounds must be positive")
         self.root = Path(root)
         self._queue: queue.Queue[_TaskWrite | None] = queue.Queue(max_pending_tasks)
-        self._incomplete_queue: queue.Queue[_IncompleteWrite | None] = queue.Queue(
-            max_pending_tasks
-        )
+        self._incomplete_queue: queue.Queue[_IncompleteWrite | None] = queue.Queue(max_pending_tasks)
         self._max_results = max_results or max_pending_tasks * 4
         self._results: OrderedDict[str, EvidenceWriteResult] = OrderedDict()
         self._condition = threading.Condition()
         self._state_lock = threading.Lock()
         self._pending: set[str] = set()
         self._closed = False
-        self._thread = threading.Thread(
-            target=self._run, name="prime-evidence-writer", daemon=True
-        )
+        self._thread = threading.Thread(target=self._run, name="prime-evidence-writer", daemon=True)
         self._incomplete_thread = threading.Thread(
             target=self._run_incomplete,
             name="prime-evidence-incomplete-writer",
@@ -2034,9 +1846,7 @@ class AsyncEvidenceWriter:
                 if not self._closed and task_id not in self._pending:
                     self._pending.add(task_id)
                     try:
-                        self._incomplete_queue.put_nowait(
-                            _IncompleteWrite(task_id, release_id, reason)
-                        )
+                        self._incomplete_queue.put_nowait(_IncompleteWrite(task_id, release_id, reason))
                     except queue.Full:
                         immediate = True
             if immediate:
@@ -2044,9 +1854,7 @@ class AsyncEvidenceWriter:
                     EvidenceWriteResult(
                         task_id,
                         "incomplete",
-                        _commit_incomplete_manifest(
-                            self.root, task_id, release_id, reason
-                        ),
+                        _commit_incomplete_manifest(self.root, task_id, release_id, reason),
                         reason,
                     )
                 )
@@ -2056,9 +1864,7 @@ class AsyncEvidenceWriter:
             if self._closed:
                 return EvidenceSubmission(False, task_id, "evidence writer is closed")
             if task_id in self._pending:
-                return EvidenceSubmission(
-                    False, task_id, "evidence task is already pending"
-                )
+                return EvidenceSubmission(False, task_id, "evidence task is already pending")
         try:
             _commit_retry_spool(self.root, task)
         except Exception as error:
@@ -2080,9 +1886,7 @@ class AsyncEvidenceWriter:
                 reason = "evidence writer is closed after durable retry commit"
                 immediate = EvidenceWriteResult(task_id, "incomplete", None, reason)
             if task_id in self._pending:
-                return EvidenceSubmission(
-                    False, task_id, "evidence task is already pending"
-                )
+                return EvidenceSubmission(False, task_id, "evidence task is already pending")
             if immediate is None:
                 self._pending.add(task_id)
                 try:
@@ -2092,13 +1896,9 @@ class AsyncEvidenceWriter:
                     reason = "evidence queue is full; durable retry is pending"
                     rejection_reason = reason
                     try:
-                        self._incomplete_queue.put_nowait(
-                            _IncompleteWrite(task_id, release_id, reason)
-                        )
+                        self._incomplete_queue.put_nowait(_IncompleteWrite(task_id, release_id, reason))
                     except queue.Full:
-                        immediate = EvidenceWriteResult(
-                            task_id, "incomplete", None, reason
-                        )
+                        immediate = EvidenceWriteResult(task_id, "incomplete", None, reason)
         if immediate is not None:
             if immediate.manifest_path is None:
                 immediate = EvidenceWriteResult(
@@ -2116,9 +1916,7 @@ class AsyncEvidenceWriter:
             return EvidenceSubmission(False, task_id, immediate.reason)
         return EvidenceSubmission(accepted, task_id, rejection_reason)
 
-    def wait(
-        self, task_id: str, timeout: float | None = None
-    ) -> EvidenceWriteResult | None:
+    def wait(self, task_id: str, timeout: float | None = None) -> EvidenceWriteResult | None:
         with self._condition:
             self._condition.wait_for(lambda: task_id in self._results, timeout=timeout)
             return self._results.get(task_id)
@@ -2167,9 +1965,7 @@ class AsyncEvidenceWriter:
                 result = EvidenceWriteResult(
                     task.task_id,
                     "incomplete",
-                    _commit_incomplete_manifest(
-                        self.root, task.task_id, task.release_id, reason
-                    ),
+                    _commit_incomplete_manifest(self.root, task.task_id, task.release_id, reason),
                     reason,
                 )
             if result.status == "complete":
@@ -2191,12 +1987,8 @@ class AsyncEvidenceWriter:
             if task is None:
                 self._incomplete_queue.task_done()
                 return
-            manifest_path = _commit_incomplete_manifest(
-                self.root, task.task_id, task.release_id, task.reason
-            )
-            result = EvidenceWriteResult(
-                task.task_id, "incomplete", manifest_path, task.reason
-            )
+            manifest_path = _commit_incomplete_manifest(self.root, task.task_id, task.release_id, task.reason)
+            result = EvidenceWriteResult(task.task_id, "incomplete", manifest_path, task.reason)
             self._record_result(result)
             self._incomplete_queue.task_done()
 
@@ -2214,13 +2006,8 @@ def recover_orphan_shards(root: str | Path) -> list[EvidenceWriteResult]:
     for retry_path in sorted((root / "tasks").glob("*/RETRY.json")):
         try:
             task = _read_retry_spool(retry_path)
-            if (
-                retry_path.parent.resolve()
-                != _task_directory(root, task.task_id).resolve()
-            ):
-                raise ValueError(
-                    "task evidence retry spool directory is not task-bound"
-                )
+            if retry_path.parent.resolve() != _task_directory(root, task.task_id).resolve():
+                raise ValueError("task evidence retry spool directory is not task-bound")
             committed = _read_committed(root, task.task_id)
             if committed is None:
                 recovered.append(
@@ -2249,17 +2036,12 @@ def recover_orphan_shards(root: str | Path) -> list[EvidenceWriteResult]:
                 continue
             for temporary in (task_dir / "staging").glob("*.tmp"):
                 temporary.unlink(missing_ok=True)
-            shards = sorted(
-                (task_dir / "shards").glob("*.candidate-observations.parquet")
-            )
+            shards = sorted((task_dir / "shards").glob("*.candidate-observations.parquet"))
             if len(shards) != 1:
                 continue
             shard = shards[0]
             expected_hash = shard.name.split(".", 1)[0]
-            if (
-                not _SHA256.fullmatch(expected_hash)
-                or _sha256_file(shard) != expected_hash
-            ):
+            if not _SHA256.fullmatch(expected_hash) or _sha256_file(shard) != expected_hash:
                 continue
             table = pq.read_table(shard, columns=["observation_json"])
             rows = [json.loads(value.as_py()) for value in table.column(0)]
@@ -2294,13 +2076,8 @@ def _commit_batch_command(root: Path, request_path: Path) -> int:
     try:
         encoded = request_path.read_bytes()
         request_hash = request_path.name.split(".", 1)[0]
-        if (
-            not _SHA256.fullmatch(request_hash)
-            or hashlib.sha256(encoded).hexdigest() != request_hash
-        ):
-            raise ValueError(
-                "evidence capture request filename is not content-addressed"
-            )
+        if not _SHA256.fullmatch(request_hash) or hashlib.sha256(encoded).hexdigest() != request_hash:
+            raise ValueError("evidence capture request filename is not content-addressed")
         payload = json.loads(encoded)
         receipt = commit_evidence_persistence_batch(root, payload)
         sys.stdout.buffer.write(_canonical_json(receipt) + b"\n")
@@ -2330,13 +2107,8 @@ def _commit_gp_batch_command(root: Path, request_path: Path) -> int:
     try:
         encoded = request_path.read_bytes()
         request_hash = request_path.name.split(".", 1)[0]
-        if (
-            not _SHA256.fullmatch(request_hash)
-            or hashlib.sha256(encoded).hexdigest() != request_hash
-        ):
-            raise ValueError(
-                "GP evidence capture request filename is not content-addressed"
-            )
+        if not _SHA256.fullmatch(request_hash) or hashlib.sha256(encoded).hexdigest() != request_hash:
+            raise ValueError("GP evidence capture request filename is not content-addressed")
         payload = json.loads(encoded)
         receipt = commit_gp_evidence_persistence_batch(root, payload)
         receipt_bytes = _canonical_json(receipt) + b"\n"

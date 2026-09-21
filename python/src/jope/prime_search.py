@@ -171,13 +171,9 @@ class PrimeNativeSearch:
         capabilities = client.capabilities
         fast_cuda_backend = client.fast_cuda_backend
         if self._cuda_available(capabilities) != (fast_cuda_backend is not None):
-            raise NativeSearchError(
-                "evaluator FastCuda capability and backend identity disagree"
-            )
+            raise NativeSearchError("evaluator FastCuda capability and backend identity disagree")
         self._fast_cuda_backend = (
-            json.loads(json.dumps(fast_cuda_backend))
-            if fast_cuda_backend is not None
-            else None
+            json.loads(json.dumps(fast_cuda_backend)) if fast_cuda_backend is not None else None
         )
         maximum = capabilities.get("max_batch_size")
         if not isinstance(maximum, int) or isinstance(maximum, bool) or maximum <= 0:
@@ -243,15 +239,9 @@ class PrimeNativeSearch:
     ) -> int:
         value = provenance.get(field)
         minimum = 1 if positive else 0
-        if (
-            not isinstance(value, int)
-            or isinstance(value, bool)
-            or not minimum <= value < (1 << bits)
-        ):
+        if not isinstance(value, int) or isinstance(value, bool) or not minimum <= value < (1 << bits):
             qualifier = "positive " if positive else "nonnegative "
-            raise NativeSearchError(
-                f"native provenance {field} must be a {qualifier}u{bits} integer"
-            )
+            raise NativeSearchError(f"native provenance {field} must be a {qualifier}u{bits} integer")
         return value
 
     def _validate_result_provenance(
@@ -261,9 +251,7 @@ class PrimeNativeSearch:
         expected_request_size: int,
     ) -> tuple[int, int, int, int]:
         if provenance.get("protocol_version") != PROTOCOL_VERSION:
-            raise NativeSearchError(
-                "successful native result did not attest protocol v4 provenance"
-            )
+            raise NativeSearchError("successful native result did not attest protocol v4 provenance")
         tier = provenance.get("numerical_tier")
         backend_value = provenance.get("backend")
         if not isinstance(backend_value, Mapping):
@@ -271,13 +259,9 @@ class PrimeNativeSearch:
         backend = dict(backend_value)
         if tier == "fast_cuda":
             if self._fast_cuda_backend is None:
-                raise NativeSearchError(
-                    "FastCuda result has no handshaken CUDA backend identity"
-                )
+                raise NativeSearchError("FastCuda result has no handshaken CUDA backend identity")
             try:
-                backend_wire = json.dumps(
-                    backend, sort_keys=True, separators=(",", ":"), allow_nan=False
-                )
+                backend_wire = json.dumps(backend, sort_keys=True, separators=(",", ":"), allow_nan=False)
                 expected_wire = json.dumps(
                     self._fast_cuda_backend,
                     sort_keys=True,
@@ -285,41 +269,25 @@ class PrimeNativeSearch:
                     allow_nan=False,
                 )
             except (TypeError, ValueError) as error:
-                raise NativeSearchError(
-                    "FastCuda result returned a malformed backend identity"
-                ) from error
+                raise NativeSearchError("FastCuda result returned a malformed backend identity") from error
             if backend_wire != expected_wire:
-                raise NativeSearchError(
-                    "FastCuda result backend differs from the handshaken identity"
-                )
+                raise NativeSearchError("FastCuda result backend differs from the handshaken identity")
         elif backend.get("kind") == "cuda" or "execution_identity" in backend:
-            raise NativeSearchError(
-                f"{tier!r} result must not claim a CUDA execution identity"
-            )
+            raise NativeSearchError(f"{tier!r} result must not claim a CUDA execution identity")
         request_elapsed = self._provenance_integer(
             provenance, "request_elapsed_micros", bits=64, positive=False
         )
-        request_size = self._provenance_integer(
-            provenance, "request_batch_size", bits=32, positive=True
-        )
+        request_size = self._provenance_integer(provenance, "request_batch_size", bits=32, positive=True)
         backend_elapsed = self._provenance_integer(
             provenance, "batch_elapsed_micros", bits=64, positive=False
         )
-        backend_size = self._provenance_integer(
-            provenance, "execution_batch_size", bits=32, positive=True
-        )
+        backend_size = self._provenance_integer(provenance, "execution_batch_size", bits=32, positive=True)
         if request_size != expected_request_size:
-            raise NativeSearchError(
-                "native provenance request_batch_size differs from the request"
-            )
+            raise NativeSearchError("native provenance request_batch_size differs from the request")
         if backend_size > request_size:
-            raise NativeSearchError(
-                "native backend cohort exceeds the whole request size"
-            )
+            raise NativeSearchError("native backend cohort exceeds the whole request size")
         if backend_elapsed > request_elapsed:
-            raise NativeSearchError(
-                "native backend cohort elapsed time exceeds the whole request"
-            )
+            raise NativeSearchError("native backend cohort elapsed time exceeds the whole request")
         return request_elapsed, request_size, backend_elapsed, backend_size
 
     def _register_dataset(self, train_csv: Path, *, force: bool = False) -> _RegisteredDataset:
@@ -453,7 +421,9 @@ class PrimeNativeSearch:
         limit = self.max_batch_size if batch_size is None else min(batch_size, self.max_batch_size)
         if limit <= 0:
             raise ValueError("batch_size must be positive")
-        grouped: dict[tuple[Path, int, int, str | None], list[tuple[int, Mapping[str, Any]]]] = defaultdict(list)
+        grouped: dict[tuple[Path, int, int, str | None], list[tuple[int, Mapping[str, Any]]]] = defaultdict(
+            list
+        )
         for index, row in enumerate(rows):
             if str(row.get("engine") or "prime") != "prime":
                 raise ValueError("PrimeNativeSearch accepts only engine='prime' rows")
@@ -495,10 +465,11 @@ class PrimeNativeSearch:
                 registered, fold_id = self._register_fold_retry(
                     train_csv, folds=folds, seed=row_seed, assignments=assignments
                 )
-            chunks = [members] if native_ranked else [
-                members[offset : offset + limit]
-                for offset in range(0, len(members), limit)
-            ]
+            chunks = (
+                [members]
+                if native_ranked
+                else [members[offset : offset + limit] for offset in range(0, len(members), limit)]
+            )
             for chunk in chunks:
                 try:
                     response = self._evaluate_chunk(
@@ -594,11 +565,7 @@ class PrimeNativeSearch:
             if not isinstance(result, Mapping):
                 raise NativeSearchError("native evaluation returned a malformed result")
             candidate_id = result.get("candidate_id")
-            if (
-                not isinstance(candidate_id, str)
-                or not candidate_id
-                or candidate_id in by_id
-            ):
+            if not isinstance(candidate_id, str) or not candidate_id or candidate_id in by_id:
                 raise NativeSearchError("native evaluation returned duplicate candidate ids")
             by_id[candidate_id] = result
         expected_ids = {str(index) for index, _ in chunk}
@@ -637,24 +604,16 @@ class PrimeNativeSearch:
                 raise NativeSearchError(
                     "compiled-only native evaluation did not execute its CompiledPlan binding"
                 )
-            timing_facts = self._validate_result_provenance(
-                provenance, expected_request_size=len(chunk)
-            )
+            timing_facts = self._validate_result_provenance(provenance, expected_request_size=len(chunk))
             result_request_facts = timing_facts[:2]
             if request_facts is None:
                 request_facts = result_request_facts
             elif result_request_facts != request_facts:
-                raise NativeSearchError(
-                    "successful results disagree on whole-request provenance"
-                )
+                raise NativeSearchError("successful results disagree on whole-request provenance")
             cuda_eligible = provenance.get("cuda_eligible")
             if not isinstance(cuda_eligible, bool):
                 raise NativeSearchError("native evaluation omitted CUDA eligibility")
-            if (
-                self.require_cuda
-                and cuda_eligible
-                and provenance.get("numerical_tier") != "fast_cuda"
-            ):
+            if self.require_cuda and cuda_eligible and provenance.get("numerical_tier") != "fast_cuda":
                 raise NativeSearchError(
                     "strict CUDA search received an eligible "
                     f"{provenance.get('numerical_tier')!r}: {provenance.get('fallback')!r}"
@@ -671,9 +630,7 @@ class PrimeNativeSearch:
                 or not math.isfinite(float(metric_score))
                 or float(metric_score) != native_score
             ):
-                raise NativeSearchError(
-                    "native ranking score does not match the candidate metrics"
-                )
+                raise NativeSearchError("native ranking score does not match the candidate metrics")
             elapsed = provenance.get("elapsed_micros")
             evaluator_version = provenance.get("evaluator_version")
             if not isinstance(evaluator_version, str) or not evaluator_version:
@@ -735,15 +692,9 @@ class PrimeNativeSearch:
             ordered.append((index, result))
             seen.add(index)
             previous_rank = (score, index)
-        valid_unranked = [
-            index
-            for index, result in bridged
-            if result.get("valid") and index not in seen
-        ]
+        valid_unranked = [index for index, result in bridged if result.get("valid") and index not in seen]
         if valid_unranked:
-            raise NativeSearchError(
-                f"native ranking omitted successful candidates {valid_unranked!r}"
-            )
+            raise NativeSearchError(f"native ranking omitted successful candidates {valid_unranked!r}")
         ordered.extend((index, result) for index, result in bridged if index not in seen)
         return ordered
 
@@ -882,34 +833,22 @@ class PrimeNativeSearch:
                 or not math.isfinite(float(metric_score))
                 or float(metric_score) != native_score
             ):
-                raise NativeSearchError(
-                    "exact native ranking score does not match candidate metrics"
-                )
+                raise NativeSearchError("exact native ranking score does not match candidate metrics")
             if provenance.get("compiled_plan_execution") is not True:
                 raise NativeSearchError("exact promotion bypassed the CompiledPlan binding")
-            timing_facts = self._validate_result_provenance(
-                provenance, expected_request_size=len(rows)
-            )
+            timing_facts = self._validate_result_provenance(provenance, expected_request_size=len(rows))
             result_request_facts = timing_facts[:2]
             if request_facts is None:
                 request_facts = result_request_facts
             elif result_request_facts != request_facts:
-                raise NativeSearchError(
-                    "exact results disagree on whole-request provenance"
-                )
+                raise NativeSearchError("exact results disagree on whole-request provenance")
             if provenance.get("numerical_tier") != "exact_f64":
                 raise NativeSearchError("exact promotion did not execute exact f64")
             if provenance.get("exact_gate") != "passed":
                 raise NativeSearchError("exact promotion did not pass its exact gate")
             index = int(candidate_id)
-            if (
-                previous_rank is not None
-                and native_score == previous_rank[0]
-                and index < previous_rank[1]
-            ):
-                raise NativeSearchError(
-                    "exact native ranking changed request order for an exact tie"
-                )
+            if previous_rank is not None and native_score == previous_rank[0] and index < previous_rank[1]:
+                raise NativeSearchError("exact native ranking changed request order for an exact tie")
             payload = dict(payload)
             payload["_native_robust_score"] = native_score
             payload["_promotion_job_id"] = promotion_job_id
@@ -1000,14 +939,9 @@ class PrimeNativeSearch:
                 force=True,
             )
             if registered.dataset_id != promoted_dataset_id or fold_id != promoted_fold_id:
-                raise NativeSearchError(
-                    "re-registered winner differs from its promotion receipt"
-                )
+                raise NativeSearchError("re-registered winner differs from its promotion receipt")
             response = compile_once()
-        if (
-            response.get("candidate_id") != candidate_id
-            or response.get("plan_hash") != plan_hash
-        ):
+        if response.get("candidate_id") != candidate_id or response.get("plan_hash") != plan_hash:
             raise NativeSearchError("Python emission response identity does not match winner")
         bundles = response.get("bundles")
         if not isinstance(bundles, list) or len(bundles) != 1:

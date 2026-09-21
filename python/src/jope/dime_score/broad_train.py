@@ -46,9 +46,7 @@ class BroadTrainConfig:
 
 
 def _atomic_json(path: Path, value: Any) -> None:
-    payload = json.dumps(
-        value, indent=2, sort_keys=True, allow_nan=False
-    ).encode() + b"\n"
+    payload = json.dumps(value, indent=2, sort_keys=True, allow_nan=False).encode() + b"\n"
     temporary = path.with_name(f".{path.name}.tmp.{os.getpid()}")
     with temporary.open("wb") as handle:
         handle.write(payload)
@@ -59,9 +57,7 @@ def _atomic_json(path: Path, value: Any) -> None:
 
 def _append_jsonl(path: Path, value: Any) -> None:
     with path.open("a", encoding="utf-8") as handle:
-        handle.write(
-            json.dumps(value, sort_keys=True, allow_nan=False) + "\n"
-        )
+        handle.write(json.dumps(value, sort_keys=True, allow_nan=False) + "\n")
         handle.flush()
         os.fsync(handle.fileno())
 
@@ -96,39 +92,21 @@ def _collate(
     metadata = np.asarray(corpus.metadata[row_array])
     return {
         "row_indices": tensor(row_array),
-        "dataset_embedding": tensor(
-            np.asarray(corpus.dataset_embeddings[row_array]), dtype=torch.float32
-        ),
-        "target_summary": tensor(
-            np.asarray(corpus.target_summaries[row_array]), dtype=torch.float32
-        ),
-        "anchor_features": tensor(
-            np.asarray(corpus.anchor_features[row_array]), dtype=torch.float32
-        ),
-        "anchor_mask": tensor(
-            np.asarray(corpus.anchor_masks[row_array]), dtype=torch.float32
-        ),
+        "dataset_embedding": tensor(np.asarray(corpus.dataset_embeddings[row_array]), dtype=torch.float32),
+        "target_summary": tensor(np.asarray(corpus.target_summaries[row_array]), dtype=torch.float32),
+        "anchor_features": tensor(np.asarray(corpus.anchor_features[row_array]), dtype=torch.float32),
+        "anchor_mask": tensor(np.asarray(corpus.anchor_masks[row_array]), dtype=torch.float32),
         "fidelity_ids": tensor(metadata[:, 2], dtype=torch.long),
         "token_ids": tensor(tokens, dtype=torch.long),
-        "numeric_values": tensor(
-            np.zeros_like(tokens, dtype=np.float32), dtype=torch.float32
-        ),
-        "numeric_mask": tensor(
-            np.zeros_like(tokens, dtype=np.float32), dtype=torch.float32
-        ),
-        "action_type_ids": tensor(
-            np.zeros_like(tokens, dtype=np.int64), dtype=torch.long
-        ),
+        "numeric_values": tensor(np.zeros_like(tokens, dtype=np.float32), dtype=torch.float32),
+        "numeric_mask": tensor(np.zeros_like(tokens, dtype=np.float32), dtype=torch.float32),
+        "action_type_ids": tensor(np.zeros_like(tokens, dtype=np.int64), dtype=torch.long),
         "lengths": tensor(lengths, dtype=torch.long),
         "anchor_owner": tensor(metadata[:, 5], dtype=torch.long),
         "dataset_indices": tensor(metadata[:, 0], dtype=torch.long),
         "scores": tensor(np.asarray(corpus.scores[row_array]), dtype=torch.float32),
-        "validity": tensor(
-            np.asarray(corpus.validity[row_array]), dtype=torch.float32
-        ),
-        "log_runtime": tensor(
-            np.asarray(corpus.runtime[row_array]), dtype=torch.float32
-        ),
+        "validity": tensor(np.asarray(corpus.validity[row_array]), dtype=torch.float32),
+        "log_runtime": tensor(np.asarray(corpus.runtime[row_array]), dtype=torch.float32),
     }
 
 
@@ -198,11 +176,7 @@ def broad_quality_metrics(
     top_valid = []
     keys = sorted(set(zip(datasets.tolist(), fidelities.tolist(), strict=True)))
     for dataset, fidelity in keys:
-        indexes = np.flatnonzero(
-            (datasets == dataset)
-            & (fidelities == fidelity)
-            & np.isfinite(targets)
-        )
+        indexes = np.flatnonzero((datasets == dataset) & (fidelities == fidelity) & np.isfinite(targets))
         if not len(indexes):
             continue
         actual = targets[indexes]
@@ -213,10 +187,7 @@ def broad_quality_metrics(
             delta = actual[left] - actual[right]
             keep = delta != 0
             pair_correct += int(
-                np.sum(
-                    np.sign(predicted[left][keep] - predicted[right][keep])
-                    == np.sign(delta[keep])
-                )
+                np.sum(np.sign(predicted[left][keep] - predicted[right][keep]) == np.sign(delta[keep]))
             )
             pair_total += int(keep.sum())
         order = np.argsort(-predicted, kind="mergesort")[:10]
@@ -228,28 +199,16 @@ def broad_quality_metrics(
         ndcg.append(dcg / idcg if idcg > 1e-12 else 1.0)
         chosen = indexes[order[0]]
         span = float(actual.max() - actual.min())
-        regrets.append(
-            0.0
-            if span <= 1e-12
-            else float((actual.max() - targets[chosen]) / span)
-        )
-        normalized_mae.append(
-            float(np.mean(np.abs(predicted - actual)) / max(span, 1e-6))
-        )
+        regrets.append(0.0 if span <= 1e-12 else float((actual.max() - targets[chosen]) / span))
+        normalized_mae.append(float(np.mean(np.abs(predicted - actual)) / max(span, 1e-6)))
         top_valid.append(float(validity_targets[chosen]))
     return {
         "pairwise_accuracy": pair_correct / pair_total if pair_total else math.nan,
-        "mean_per_dataset_spearman": (
-            float(np.nanmean(spearman)) if spearman else math.nan
-        ),
+        "mean_per_dataset_spearman": (float(np.nanmean(spearman)) if spearman else math.nan),
         "ndcg_at_10": float(np.mean(ndcg)) if ndcg else math.nan,
-        "normalized_mae": (
-            float(np.mean(normalized_mae)) if normalized_mae else math.nan
-        ),
+        "normalized_mae": (float(np.mean(normalized_mae)) if normalized_mae else math.nan),
         "regret_at_1": float(np.mean(regrets)) if regrets else math.nan,
-        "validity_accuracy": float(
-            np.mean((validity_predictions >= 0.5) == (validity_targets >= 0.5))
-        ),
+        "validity_accuracy": float(np.mean((validity_predictions >= 0.5) == (validity_targets >= 0.5))),
         "top1_validity": float(np.mean(top_valid)) if top_valid else math.nan,
     }
 
@@ -257,11 +216,7 @@ def broad_quality_metrics(
 def _metric_set(metrics: dict[str, Any]) -> dict[str, float | None]:
     def finite(name: str) -> float | None:
         value = metrics.get(name)
-        return (
-            float(value)
-            if isinstance(value, (int, float)) and math.isfinite(float(value))
-            else None
-        )
+        return float(value) if isinstance(value, (int, float)) and math.isfinite(float(value)) else None
 
     return {
         "pairwise_accuracy": finite("pairwise_accuracy"),
@@ -340,9 +295,7 @@ def evaluate_broad(
     )
     metrics["losses"] = {name: value / steps for name, value in losses.items()}
     metrics["examples"] = len(rows)
-    metrics["mode"] = (
-        "genome_only" if genome_only else "zero_shot" if zero_shot else "four_anchor"
-    )
+    metrics["mode"] = "genome_only" if genome_only else "zero_shot" if zero_shot else "four_anchor"
     return metrics
 
 
@@ -368,8 +321,7 @@ def _checkpoint(
         "best_regret_at_1": best_regret,
         "corpus_snapshot_sha256": corpus.manifest["snapshot_sha256"],
         "config": {
-            key: str(value) if isinstance(value, Path) else value
-            for key, value in asdict(config).items()
+            key: str(value) if isinstance(value, Path) else value for key, value in asdict(config).items()
         },
         "rng": {
             "torch": torch.get_rng_state(),
@@ -460,9 +412,7 @@ def _autotune_broad_batch(
                     "batch_size": candidate,
                     "examples": len(rows),
                     "examples_per_second": len(rows) / elapsed,
-                    "peak_vram_mib": (
-                        torch.cuda.max_memory_allocated(device) / 1024**2
-                    ),
+                    "peak_vram_mib": (torch.cuda.max_memory_allocated(device) / 1024**2),
                     "free_vram_mib": free_mib,
                     "accepted": free_mib >= config.minimum_free_vram_mib,
                 }
@@ -482,9 +432,7 @@ def _autotune_broad_batch(
 
     accepted = [row for row in records if row["accepted"]]
     if not accepted:
-        raise RuntimeError(
-            "no broad batch size retained the required 4 GiB free VRAM"
-        )
+        raise RuntimeError("no broad batch size retained the required 4 GiB free VRAM")
     selected = max(
         accepted,
         key=lambda row: (
@@ -510,8 +458,7 @@ def train_broad_critic(config: BroadTrainConfig) -> dict[str, Any]:
         or not 0 < config.maximum_loader_wait_percent <= 100
     ):
         raise ValueError(
-            "broad training requires >=100 warmup epochs, patience >=30, "
-            "and a loader wait gate in (0, 100]"
+            "broad training requires >=100 warmup epochs, patience >=30, and a loader wait gate in (0, 100]"
         )
     corpus = BroadCorpus(config.corpus_root)
     config.run_dir.mkdir(parents=True, exist_ok=True)
@@ -553,12 +500,10 @@ def train_broad_critic(config: BroadTrainConfig) -> dict[str, Any]:
         weight_decay=config.weight_decay,
     )
     train_rows = np.flatnonzero(
-        (np.asarray(corpus.metadata[:, 3]) == 0)
-        & (np.asarray(corpus.metadata[:, 6]) == 0)
+        (np.asarray(corpus.metadata[:, 3]) == 0) & (np.asarray(corpus.metadata[:, 6]) == 0)
     )
     validation_rows = np.flatnonzero(
-        (np.asarray(corpus.metadata[:, 3]) == 0)
-        & (np.asarray(corpus.metadata[:, 6]) == 1)
+        (np.asarray(corpus.metadata[:, 3]) == 0) & (np.asarray(corpus.metadata[:, 6]) == 1)
     )
     cold_rows = np.flatnonzero(np.asarray(corpus.metadata[:, 3]) == 3)
     if not len(train_rows) or not len(validation_rows):
@@ -597,10 +542,7 @@ def train_broad_critic(config: BroadTrainConfig) -> dict[str, Any]:
     last_path = config.run_dir / "last.pt"
     if config.resume:
         checkpoint = torch.load(last_path, map_location=device, weights_only=False)
-        if (
-            checkpoint["corpus_snapshot_sha256"]
-            != corpus.manifest["snapshot_sha256"]
-        ):
+        if checkpoint["corpus_snapshot_sha256"] != corpus.manifest["snapshot_sha256"]:
             raise ValueError("broad resume corpus identity mismatch")
         model.load_state_dict(checkpoint["model"])
         optimizer.load_state_dict(checkpoint["optimizer"])
@@ -683,19 +625,11 @@ def train_broad_critic(config: BroadTrainConfig) -> dict[str, Any]:
             for name, value in losses.items():
                 totals[name] = totals.get(name, 0.0) + float(value.detach())
             train_predictions.append(outputs["score"].detach().cpu().numpy())
-            train_validity_predictions.append(
-                outputs["validity"].detach().cpu().numpy()
-            )
+            train_validity_predictions.append(outputs["validity"].detach().cpu().numpy())
             train_targets.append(batch["scores"].detach().cpu().numpy())
-            train_validity_targets.append(
-                batch["validity"].detach().cpu().numpy()
-            )
-            train_datasets.append(
-                batch["dataset_indices"].detach().cpu().numpy()
-            )
-            train_fidelities.append(
-                batch["fidelity_ids"].detach().cpu().numpy()
-            )
+            train_validity_targets.append(batch["validity"].detach().cpu().numpy())
+            train_datasets.append(batch["dataset_indices"].detach().cpu().numpy())
+            train_fidelities.append(batch["fidelity_ids"].detach().cpu().numpy())
             examples += len(batch_rows)
             tokens_seen += int(batch["lengths"].sum())
             now = time.monotonic()
@@ -715,20 +649,12 @@ def train_broad_critic(config: BroadTrainConfig) -> dict[str, Any]:
                             "state": "running",
                             "scq_job_id": os.environ.get("SCQ_JOB_ID"),
                             "scq_owner": "broad_shadow",
-                            "gpu_utilization_percent": gpu[
-                                "gpu_utilization_pct"
-                            ],
-                            "used_vram_mib": (
-                                int(used) if used is not None else None
-                            ),
+                            "gpu_utilization_percent": gpu["gpu_utilization_pct"],
+                            "used_vram_mib": (int(used) if used is not None else None),
                             "free_vram_mib": (
-                                int(total - used)
-                                if total is not None and used is not None
-                                else None
+                                int(total - used) if total is not None and used is not None else None
                             ),
-                            "total_vram_mib": (
-                                int(total) if total is not None else None
-                            ),
+                            "total_vram_mib": (int(total) if total is not None else None),
                             "updated_at_ms": int(time.time() * 1000),
                         }
                     ],
@@ -738,9 +664,7 @@ def train_broad_critic(config: BroadTrainConfig) -> dict[str, Any]:
                         "failures_total": 0,
                         "self_play_wins_total": 0,
                         "time_to_best_seconds": (
-                            time.monotonic() - training_started
-                            if best_epoch >= 0
-                            else None
+                            time.monotonic() - training_started if best_epoch >= 0 else None
                         ),
                     },
                     "evaluator_failures": [],
@@ -800,8 +724,7 @@ def train_broad_critic(config: BroadTrainConfig) -> dict[str, Any]:
         ndcg = float(validation["ndcg_at_10"])
         regret = float(validation["regret_at_1"])
         improved = math.isfinite(ndcg) and (
-            ndcg > best_ndcg + 1e-8
-            or (abs(ndcg - best_ndcg) <= 1e-8 and regret < best_regret - 1e-8)
+            ndcg > best_ndcg + 1e-8 or (abs(ndcg - best_ndcg) <= 1e-8 and regret < best_regret - 1e-8)
         )
         if improved:
             best_ndcg, best_regret, best_epoch = ndcg, regret, epoch
@@ -841,19 +764,11 @@ def train_broad_critic(config: BroadTrainConfig) -> dict[str, Any]:
         _atomic_torch_save(resume_path, saved)
         _retain_latest_three(config.run_dir)
         if (epoch + 1) % 10 == 0:
-            _atomic_torch_save(
-                config.run_dir / f"epoch-{epoch + 1:04d}.pt", saved
-            )
+            _atomic_torch_save(config.run_dir / f"epoch-{epoch + 1:04d}.pt", saved)
         if improved:
             _atomic_torch_save(config.run_dir / "best.pt", saved)
-            _atomic_torch_save(
-                config.run_dir / f"best-epoch-{epoch + 1:04d}.pt", saved
-            )
-        loader_wait_percent = (
-            100.0
-            * loading_seconds
-            / max(loading_seconds + compute_seconds, 1e-9)
-        )
+            _atomic_torch_save(config.run_dir / f"best-epoch-{epoch + 1:04d}.pt", saved)
+        loader_wait_percent = 100.0 * loading_seconds / max(loading_seconds + compute_seconds, 1e-9)
         _atomic_json(
             config.run_dir / "progress.v2.json",
             {
@@ -865,25 +780,15 @@ def train_broad_critic(config: BroadTrainConfig) -> dict[str, Any]:
                 "examples_per_second": examples / elapsed,
                 "tokens_per_second": tokens_seen / elapsed,
                 "loader_wait_percent": loader_wait_percent,
-                "loader_acceptance_percent": (
-                    config.maximum_loader_wait_percent
-                ),
+                "loader_acceptance_percent": (config.maximum_loader_wait_percent),
                 "best_epoch": best_epoch,
                 "best_ndcg_at_10": best_ndcg,
                 "best_regret_at_1": best_regret,
             },
         )
-        if (
-            device.type == "cuda"
-            and loader_wait_percent > config.maximum_loader_wait_percent
-        ):
-            raise RuntimeError(
-                "broad data loader exceeded the 10% steady-state step-time gate"
-            )
-        if (
-            epoch + 1 >= config.minimum_early_stop_epoch
-            and epoch - best_epoch >= config.patience
-        ):
+        if device.type == "cuda" and loader_wait_percent > config.maximum_loader_wait_percent:
+            raise RuntimeError("broad data loader exceeded the 10% steady-state step-time gate")
+        if epoch + 1 >= config.minimum_early_stop_epoch and epoch - best_epoch >= config.patience:
             stopped_early = True
             break
     hardware.stop()

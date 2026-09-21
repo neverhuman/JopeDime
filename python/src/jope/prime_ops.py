@@ -28,20 +28,15 @@ _F64_TINY = float.fromhex("0x1.0p-1022")
 
 
 def _registry_usize_bins(operator_name: str, parameter_name: str) -> tuple[int, ...]:
-    operator = next(
-        entry for entry in registry_snapshot() if entry["name"] == operator_name
-    )
-    parameter = next(
-        item for item in operator["params"] if item["name"] == parameter_name
-    )
+    operator = next(entry for entry in registry_snapshot() if entry["name"] == operator_name)
+    parameter = next(item for item in operator["params"] if item["name"] == parameter_name)
     return tuple(int(item["usize"]) for item in parameter["bins"])
 
 
 _TENSOR_SKETCH_WIDTHS = _registry_usize_bins("tensor_sketch", "n")
 _TENSOR_SKETCH_DEGREES = _registry_usize_bins("tensor_sketch", "degree")
 if not _TENSOR_SKETCH_WIDTHS or any(
-    width <= 0 or width > MAX_WIDTH or width & (width - 1)
-    for width in _TENSOR_SKETCH_WIDTHS
+    width <= 0 or width > MAX_WIDTH or width & (width - 1) for width in _TENSOR_SKETCH_WIDTHS
 ):
     raise RuntimeError("TensorSketch registry widths must be positive powers of two")
 
@@ -65,15 +60,10 @@ class _Pcg32:
 
     def next_u32(self) -> int:
         old = self.state
-        self.state = (
-            old * 6364136223846793005 + self.inc
-        ) & _U64_MASK
+        self.state = (old * 6364136223846793005 + self.inc) & _U64_MASK
         xorshifted = (((old >> 18) ^ old) >> 27) & _U32_MASK
         rotation = (old >> 59) & 31
-        return (
-            (xorshifted >> rotation)
-            | (xorshifted << ((-rotation) & 31))
-        ) & _U32_MASK
+        return ((xorshifted >> rotation) | (xorshifted << ((-rotation) & 31))) & _U32_MASK
 
     def next_f64(self) -> float:
         high = self.next_u32() << 32
@@ -146,9 +136,7 @@ def _modified_gram_schmidt(matrix: np.ndarray) -> list[np.ndarray]:
                 for row in range(rows):
                     vector[row] -= projection * previous[row]
         norm_squared = _dot(vector, vector)
-        threshold = (
-            _F64_EPSILON * max(1.0, original_norm) * max(1, rows)
-        ) ** 2
+        threshold = (_F64_EPSILON * max(1.0, original_norm) * max(1, rows)) ** 2
         if not math.isfinite(norm_squared) or norm_squared <= threshold:
             # Pick the standard-basis residual with greatest norm. Strict `>`
             # means an exact tie keeps the lowest coordinate.
@@ -287,7 +275,7 @@ def _halton(count: int, dimension: int, seed: int) -> np.ndarray:
                 value, digit = divmod(value, base)
                 acc += digit * factor
                 factor /= base
-            shift = ((int(seed) * 0x9E3779B97F4A7C15 + j * 0xD1B54A32D192ED03) & ((1 << 64) - 1))
+            shift = (int(seed) * 0x9E3779B97F4A7C15 + j * 0xD1B54A32D192ED03) & ((1 << 64) - 1)
             shift = ((shift >> 11) + 0.5) / float(1 << 53)
             out[i, j] = (acc + shift) % 1.0
     return out
@@ -297,17 +285,32 @@ def _normal_ppf(u: np.ndarray) -> np.ndarray:
     # Acklam's rational inverse-normal approximation, versioned as part of the
     # Prime semantics. Clamping avoids infinities at the exact endpoints.
     u = np.clip(u, 1e-15, 1.0 - 1e-15)
-    a = (-39.69683028665376, 220.9460984245205, -275.9285104469687, 138.3577518672690, -30.66479806614716, 2.506628277459239)
+    a = (
+        -39.69683028665376,
+        220.9460984245205,
+        -275.9285104469687,
+        138.3577518672690,
+        -30.66479806614716,
+        2.506628277459239,
+    )
     b = (-54.47609879822406, 161.5858368580409, -155.6989798598866, 66.80131188771972, -13.28068155288572)
-    c = (-0.007784894002430293, -0.3223964580411365, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783)
+    c = (
+        -0.007784894002430293,
+        -0.3223964580411365,
+        -2.400758277161838,
+        -2.549732539343734,
+        4.374664141464968,
+        2.938163982698783,
+    )
     d = (0.007784695709041462, 0.3224671290700398, 2.445134137142996, 3.754408661907416)
     lo = u < 0.02425
     hi = u > 1.0 - 0.02425
     mid = ~(lo | hi)
     out = np.empty_like(u)
+
     def tail(q: np.ndarray) -> np.ndarray:
-        numerator = (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5])
-        denominator = ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0)
+        numerator = ((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]
+        denominator = (((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0
         return numerator / denominator
 
     q = np.sqrt(-2.0 * np.log(u[lo]))
@@ -374,10 +377,7 @@ def _rbf_kernel(left: np.ndarray, right: np.ndarray, gamma: float) -> np.ndarray
         for column in range(len(right)):
             distance = 0.0
             for feature in range(left.shape[1]):
-                difference = (
-                    float(left[row, feature]) / scale
-                    - float(right[column, feature]) / scale
-                )
+                difference = float(left[row, feature]) / scale - float(right[column, feature]) / scale
                 distance += difference * difference
             exponent = multiplier * distance
             if math.isnan(exponent) or exponent < 0.0:
@@ -406,11 +406,7 @@ def _ridge_leverage_landmarks(
     pilot = x[_maximin_pilot_indices(x, pilot_count)]
     features = _rbf_kernel(x, pilot, gamma)
     gram = _symmetric_gram(features)
-    regularizer = (
-        ridge
-        if math.isfinite(ridge) and ridge > 0.0
-        else np.finfo(np.float64).eps
-    )
+    regularizer = ridge if math.isfinite(ridge) and ridge > 0.0 else np.finfo(np.float64).eps
     lower = _regularized_cholesky(gram, regularizer)
     scores = np.empty(len(features), dtype=np.float64)
     for row in range(len(features)):
@@ -439,11 +435,7 @@ def _nystrom_fit(x: np.ndarray, k: int, gamma: float, ridge: float) -> NystromSt
             landmarks=landmarks,
             projector=np.empty((0, 0), dtype=np.float64),
         )
-    regularizer = (
-        ridge
-        if math.isfinite(ridge) and ridge > 0.0
-        else np.finfo(np.float64).eps
-    )
+    regularizer = ridge if math.isfinite(ridge) and ridge > 0.0 else np.finfo(np.float64).eps
     kernel = _rbf_kernel(landmarks, landmarks, gamma)
     lower = _regularized_cholesky(kernel, regularizer)
     # K + ridge*I = L*L^T, so L^-T is a deterministic whitening factor.
@@ -585,21 +577,15 @@ _RADIX2_FORWARD_ROOTS = {
 
 def _validate_radix2_width(width: int) -> None:
     if width <= 0 or width > MAX_WIDTH or width & (width - 1):
-        raise ValueError(
-            f"TensorSketch width must be a positive power of two no greater than {MAX_WIDTH}"
-        )
+        raise ValueError(f"TensorSketch width must be a positive power of two no greater than {MAX_WIDTH}")
 
 
 def _validate_tensor_sketch_parameters(n: int, degree: int) -> None:
     _validate_radix2_width(n)
     if n not in _TENSOR_SKETCH_WIDTHS:
-        raise ValueError(
-            f"TensorSketch width must be one of the registry widths {_TENSOR_SKETCH_WIDTHS}"
-        )
+        raise ValueError(f"TensorSketch width must be one of the registry widths {_TENSOR_SKETCH_WIDTHS}")
     if degree not in _TENSOR_SKETCH_DEGREES:
-        raise ValueError(
-            f"TensorSketch degree must be one of the registry values {_TENSOR_SKETCH_DEGREES}"
-        )
+        raise ValueError(f"TensorSketch degree must be one of the registry values {_TENSOR_SKETCH_DEGREES}")
 
 
 def _fft_radix2_v1(
@@ -660,28 +646,16 @@ def _fft_radix2_v1(
                 # loop; portable scalar twins evaluate the same operations.
                 odd_real = real_rows[:, odd].copy()
                 odd_imaginary = imaginary_rows[:, odd].copy()
-                product_real = (
-                    twiddle_real * odd_real
-                    - twiddle_imaginary * odd_imaginary
-                )
-                product_imaginary = (
-                    twiddle_real * odd_imaginary
-                    + twiddle_imaginary * odd_real
-                )
+                product_real = twiddle_real * odd_real - twiddle_imaginary * odd_imaginary
+                product_imaginary = twiddle_real * odd_imaginary + twiddle_imaginary * odd_real
                 even_real = real_rows[:, even].copy()
                 even_imaginary = imaginary_rows[:, even].copy()
                 real_rows[:, even] = even_real + product_real
                 imaginary_rows[:, even] = even_imaginary + product_imaginary
                 real_rows[:, odd] = even_real - product_real
                 imaginary_rows[:, odd] = even_imaginary - product_imaginary
-                next_twiddle_real = (
-                    twiddle_real * root_real
-                    - twiddle_imaginary * root_imaginary
-                )
-                next_twiddle_imaginary = (
-                    twiddle_real * root_imaginary
-                    + twiddle_imaginary * root_real
-                )
+                next_twiddle_real = twiddle_real * root_real - twiddle_imaginary * root_imaginary
+                next_twiddle_imaginary = twiddle_real * root_imaginary + twiddle_imaginary * root_real
                 twiddle_real = next_twiddle_real
                 twiddle_imaginary = next_twiddle_imaginary
         length *= 2
@@ -697,15 +671,9 @@ def _tensor_sketch(x: np.ndarray, n: int, degree: int, seed: int) -> np.ndarray:
     spectra_real = np.ones((len(x), n), dtype=np.float64)
     spectra_imaginary = np.zeros((len(x), n), dtype=np.float64)
     for table in range(degree):
-        table_real, table_imaginary = _fft_radix2_v1(
-            _count_sketch(x, n, seed + table * 0x9E37)
-        )
-        product_real = (
-            spectra_real * table_real - spectra_imaginary * table_imaginary
-        )
-        product_imaginary = (
-            spectra_real * table_imaginary + spectra_imaginary * table_real
-        )
+        table_real, table_imaginary = _fft_radix2_v1(_count_sketch(x, n, seed + table * 0x9E37))
+        product_real = spectra_real * table_real - spectra_imaginary * table_imaginary
+        product_imaginary = spectra_real * table_imaginary + spectra_imaginary * table_real
         spectra_real = product_real
         spectra_imaginary = product_imaginary
     transformed, _ = _fft_radix2_v1(
@@ -747,7 +715,9 @@ def fit_transform(
     return _finish(matrix, _finite(z), append), state
 
 
-def apply_transform(name: str, x: Any, params: dict[str, Any] | None = None, *, state: Any | None = None) -> np.ndarray:
+def apply_transform(
+    name: str, x: Any, params: dict[str, Any] | None = None, *, state: Any | None = None
+) -> np.ndarray:
     if name == "nystrom_leverage" and state is not None:
         params = dict(params or {})
         matrix = _matrix(x)

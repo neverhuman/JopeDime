@@ -1,4 +1,5 @@
 """Honest league win-rate receipt from existing paired rows. No serving writes."""
+
 from __future__ import annotations
 
 import argparse
@@ -73,15 +74,26 @@ def paired_summary_with_digest(path):
             seen[key] = row
             n += 1
             counts[(row.get("opponent"), row.get("outcome"))] += 1
-    generic = dict(win=counts.get(("generic", "win"), 0),
-                   loss=counts.get(("generic", "loss"), 0),
-                   tie=counts.get(("generic", "tie"), 0))
-    shuffled = dict(win=counts.get(("shuffled", "win"), 0),
-                    loss=counts.get(("shuffled", "loss"), 0),
-                    tie=counts.get(("shuffled", "tie"), 0))
+    generic = dict(
+        win=counts.get(("generic", "win"), 0),
+        loss=counts.get(("generic", "loss"), 0),
+        tie=counts.get(("generic", "tie"), 0),
+    )
+    shuffled = dict(
+        win=counts.get(("shuffled", "win"), 0),
+        loss=counts.get(("shuffled", "loss"), 0),
+        tie=counts.get(("shuffled", "tie"), 0),
+    )
     generic_n = sum(generic.values())
-    return (dict(rows=n, generic=generic, shuffled=shuffled,
-                 vs_generic_rate=(generic["win"] / generic_n) if generic_n else None), observed)
+    return (
+        dict(
+            rows=n,
+            generic=generic,
+            shuffled=shuffled,
+            vs_generic_rate=(generic["win"] / generic_n) if generic_n else None,
+        ),
+        observed,
+    )
 
 
 def later_vs_teacher(diagnostic, arm="neural"):
@@ -89,17 +101,30 @@ def later_vs_teacher(diagnostic, arm="neural"):
     pairs = block.get("pairs")
     better = block.get("final_better")
     equal, worse = block.get("final_equal"), block.get("final_worse")
-    if (any(type(x) is not int or x < 0 for x in (pairs, better, equal, worse))
-            or pairs <= 0 or better + equal + worse != pairs):
+    if (
+        any(type(x) is not int or x < 0 for x in (pairs, better, equal, worse))
+        or pairs <= 0
+        or better + equal + worse != pairs
+    ):
         return None
-    return dict(pairs=pairs, final_better=better,
-                final_equal=block.get("final_equal"),
-                final_worse=block.get("final_worse"),
-                rate=better / pairs)
+    return dict(
+        pairs=pairs,
+        final_better=better,
+        final_equal=block.get("final_equal"),
+        final_worse=block.get("final_worse"),
+        rate=better / pairs,
+    )
 
 
-def receipt(quality=None, diagnostic=None, paired=None, dest=None,
-            quality_path=None, diagnostic_path=None, paired_path=None):
+def receipt(
+    quality=None,
+    diagnostic=None,
+    paired=None,
+    dest=None,
+    quality_path=None,
+    diagnostic_path=None,
+    paired_path=None,
+):
     def bound_report(value, path):
         if path is None:
             return value, None
@@ -107,6 +132,7 @@ def receipt(quality=None, diagnostic=None, paired=None, dest=None,
         if value is not None and digest(value) != digest(loaded):
             raise ValueError("supplied report disagrees with its source bytes")
         return loaded, observed
+
     quality, quality_sha = bound_report(quality, quality_path)
     diagnostic, diagnostic_sha = bound_report(diagnostic, diagnostic_path)
     rows = quality_rows(quality or {})
@@ -156,13 +182,17 @@ def receipt(quality=None, diagnostic=None, paired=None, dest=None,
         world_class=bars_ok,
         descriptive_bars_met=descriptive_bars(measured_for_bars),
         qualification_ready=False,
-        unavailable_requirements=["original execution and selection/access verification",
-                                  "independent family support and frozen scientific comparison"],
+        unavailable_requirements=[
+            "original execution and selection/access verification",
+            "independent family support and frozen scientific comparison",
+        ],
         independent_evaluation=False,
         serving_written=False,
         shuffled_retired=False,
-        note=("final_gp_rate uses later_vs_teacher when quality rows are absent; "
-              "margin and seed stay unavailable without paired teacher/seed/final magnitudes"),
+        note=(
+            "final_gp_rate uses later_vs_teacher when quality rows are absent; "
+            "margin and seed stay unavailable without paired teacher/seed/final magnitudes"
+        ),
     )
     body["identity"] = digest({k: body[k] for k in body if k != "identity"})
     if dest:
@@ -179,9 +209,22 @@ if __name__ == "__main__":
     p.add_argument("--paired", type=Path)
     p.add_argument("--output", type=Path, required=True)
     args = p.parse_args()
-    out = receipt(dest=args.output,
-                  quality_path=args.quality, diagnostic_path=args.diagnostic,
-                  paired_path=args.paired)
-    print(json.dumps({k: out[k] for k in ("schema", "neural_seed_rate", "final_gp_rate",
-                                          "final_gp_margin_rate", "vs_random",
-                                          "world_class")}, indent=2))
+    out = receipt(
+        dest=args.output, quality_path=args.quality, diagnostic_path=args.diagnostic, paired_path=args.paired
+    )
+    print(
+        json.dumps(
+            {
+                k: out[k]
+                for k in (
+                    "schema",
+                    "neural_seed_rate",
+                    "final_gp_rate",
+                    "final_gp_margin_rate",
+                    "vs_random",
+                    "world_class",
+                )
+            },
+            indent=2,
+        )
+    )

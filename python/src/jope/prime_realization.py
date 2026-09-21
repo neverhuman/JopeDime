@@ -183,9 +183,7 @@ class ModelArtifactSource:
         registry = payload.get("operator_registry")
         input_contract = payload.get("input_contract")
         seeds = payload.get("seeds")
-        if not isinstance(registry, dict) or not isinstance(
-            registry.get("operator_versions"), dict
-        ):
+        if not isinstance(registry, dict) or not isinstance(registry.get("operator_versions"), dict):
             raise ValueError("evaluator artifact has no operator registry identity")
         if not isinstance(input_contract, dict):
             raise ValueError("evaluator artifact has no input contract")
@@ -199,16 +197,10 @@ class ModelArtifactSource:
             input_columns <= 0
             or not isinstance(train_rows, list)
             or not train_rows
-            or any(
-                not isinstance(row, list) or len(row) != input_columns + 1
-                for row in train_rows
-            )
+            or any(not isinstance(row, list) or len(row) != input_columns + 1 for row in train_rows)
             or not isinstance(test_features, list)
             or not test_features
-            or any(
-                not isinstance(row, list) or len(row) != input_columns
-                for row in test_features
-            )
+            or any(not isinstance(row, list) or len(row) != input_columns for row in test_features)
             or not isinstance(expected_predictions, list)
             or len(expected_predictions) != len(test_features)
             or vectors_payload.get("features") != test_features
@@ -227,9 +219,7 @@ class ModelArtifactSource:
             registry_hash=str(registry.get("hash") or ""),
             emitter_version=str(payload.get("emitter_version") or ""),
             canonical_genome=(
-                str(payload["canonical_genome"])
-                if payload.get("canonical_genome") is not None
-                else None
+                str(payload["canonical_genome"]) if payload.get("canonical_genome") is not None else None
             ),
             input_columns=input_columns,
             seeds=seeds,
@@ -297,6 +287,7 @@ class ModelRealizationLabel:
 @dataclass(frozen=True)
 class RealizationLabel:
     """Backward-compatible type name for a transform-conformance record."""
+
     schema: str
     dataset_id: str
     split: str
@@ -390,9 +381,7 @@ def _sealed_dataset_hashes(config: PrimeConfig) -> set[str]:
     if not isinstance(datasets, list):
         raise ValueError("sealed validation manifest has no datasets list")
     hashes = {
-        str(item["dataset_hash"])
-        for item in datasets
-        if isinstance(item, dict) and item.get("dataset_hash")
+        str(item["dataset_hash"]) for item in datasets if isinstance(item, dict) and item.get("dataset_hash")
     }
     if not hashes:
         raise ValueError("sealed validation manifest contains no dataset hashes")
@@ -446,9 +435,7 @@ def _python_predictions(
     config: PrimeConfig,
     timeout_s: float,
 ) -> tuple[np.ndarray, float, int]:
-    artifact_cache = prime_owned_path(
-        config.cache / "realizations" / artifact_hash, config
-    )
+    artifact_cache = prime_owned_path(config.cache / "realizations" / artifact_hash, config)
     artifact_cache.mkdir(parents=True, exist_ok=True)
     work = Path(tempfile.mkdtemp(prefix="run-python-", dir=artifact_cache))
     source_path = work / "count_sketch.py"
@@ -500,9 +487,7 @@ def _run_process_with_peak_memory(
     _, stderr = process.communicate()
     runtime_ms = (time.perf_counter_ns() - started) / 1_000_000.0
     if process.returncode != 0:
-        raise RuntimeError(
-            f"{description} exited {process.returncode}: {stderr.strip()}"
-        )
+        raise RuntimeError(f"{description} exited {process.returncode}: {stderr.strip()}")
     return runtime_ms, peak, stderr
 
 
@@ -588,12 +573,8 @@ def realize_artifact(
     provenance: dict[str, Any] = {
         "target": target,
         "numerical_tier": manifest.get("numerical_tier"),
-        "operator_versions": {
-            operator: manifest.get("operator", {}).get("semantic_version")
-        },
-        "implementation_version": manifest.get("operator", {}).get(
-            "implementation_version"
-        ),
+        "operator_versions": {operator: manifest.get("operator", {}).get("semantic_version")},
+        "implementation_version": manifest.get("operator", {}).get("implementation_version"),
     }
     try:
         source, _ = _verify_artifact(artifact, target)
@@ -624,16 +605,12 @@ def realize_artifact(
     maximum_error: float | None = None
     if predictions is not None:
         if predictions.shape == reference.shape:
-            maximum_error = float(
-                np.max(np.abs(predictions - reference)) if reference.size else 0.0
-            )
+            maximum_error = float(np.max(np.abs(predictions - reference)) if reference.size else 0.0)
             parity = bool(np.array_equal(predictions, reference))
             if not parity and failure is None:
                 failure = f"output parity mismatch (maximum absolute error {maximum_error:.17g})"
         elif failure is None:
-            failure = (
-                f"output shape mismatch: artifact={predictions.shape}, reference={reference.shape}"
-            )
+            failure = f"output shape mismatch: artifact={predictions.shape}, reference={reference.shape}"
 
     record = {
         "schema": REALIZATION_SCHEMA,
@@ -724,17 +701,13 @@ def _validated_model_arrays(
         raise ValueError("training and holdout targets must be finite")
     exact: np.ndarray | None = None
     if exact_predictions is not None:
-        exact = np.ascontiguousarray(
-            np.asarray(exact_predictions, dtype=np.float64).reshape(-1)
-        )
+        exact = np.ascontiguousarray(np.asarray(exact_predictions, dtype=np.float64).reshape(-1))
         if exact.shape != targets.shape or not np.all(np.isfinite(exact)):
             raise ValueError("exact_predictions must be finite and match test_targets")
     return train, features, targets, exact
 
 
-def _validated_folds(
-    folds: Sequence[Sequence[int]], row_count: int
-) -> list[list[int]]:
+def _validated_folds(folds: Sequence[Sequence[int]], row_count: int) -> list[list[int]]:
     if isinstance(folds, (str, bytes)) or len(folds) < 2:
         raise ValueError("folds must contain at least two explicit validation folds")
     normalized: list[list[int]] = []
@@ -785,15 +758,13 @@ def _read_predictions(path: Path, expected_rows: int) -> np.ndarray:
     if not path.is_file():
         raise RuntimeError("standalone program did not create predictions.csv")
     try:
-        predictions = np.asarray(
-            np.loadtxt(path, delimiter=",", dtype=np.float64), dtype=np.float64
-        ).reshape(-1)
+        predictions = np.asarray(np.loadtxt(path, delimiter=",", dtype=np.float64), dtype=np.float64).reshape(
+            -1
+        )
     except (OSError, ValueError) as error:
         raise RuntimeError(f"invalid predictions.csv: {error}") from error
     if predictions.shape != (expected_rows,):
-        raise RuntimeError(
-            f"prediction count mismatch: expected {expected_rows}, got {predictions.size}"
-        )
+        raise RuntimeError(f"prediction count mismatch: expected {expected_rows}, got {predictions.size}")
     if not np.all(np.isfinite(predictions)):
         raise RuntimeError("standalone program emitted non-finite predictions")
     return np.ascontiguousarray(predictions)
@@ -896,9 +867,7 @@ def realize_model_artifact(
         language = "python" if artifact.artifact_kind == "portable_python" else "rust"
         violations = lint_portable_source(artifact.source, language)
         if violations:
-            raise ValueError(
-                f"{artifact.artifact_kind} source failed independence lint: {violations}"
-            )
+            raise ValueError(f"{artifact.artifact_kind} source failed independence lint: {violations}")
 
         artifact_cache = prime_owned_path(
             config.cache / "model_realizations" / artifact.artifact_hash, config
@@ -999,11 +968,7 @@ def realize_model_artifact(
         if oof_predictions is not None and len(cv_profile) == len(normalized_folds)
         else None
     )
-    if (
-        failure is None
-        and exact_maximum_error is not None
-        and exact_maximum_error > exact_tolerance
-    ):
+    if failure is None and exact_maximum_error is not None and exact_maximum_error > exact_tolerance:
         failure = (
             "exact-reference mismatch: maximum absolute error "
             f"{exact_maximum_error:.17g} exceeds {exact_tolerance:.17g}"
@@ -1041,24 +1006,18 @@ def realize_model_artifact(
         "target_hash": target_hash,
         "operator_versions": dict(artifact.operator_versions),
         "backend_provenance": backend_provenance,
-        "holdout_predictions": (
-            holdout_predictions.tolist() if holdout_predictions is not None else None
-        ),
+        "holdout_predictions": (holdout_predictions.tolist() if holdout_predictions is not None else None),
         "holdout_predictions_sha256": (
             _array_hash(holdout_predictions) if holdout_predictions is not None else None
         ),
         # This is the selector-facing label. A partial run may retain useful
         # holdout diagnostics, but it must never become promotion evidence.
-        "realized_score": (
-            holdout_metrics["r2"] if holdout_metrics and failure is None else None
-        ),
+        "realized_score": (holdout_metrics["r2"] if holdout_metrics and failure is None else None),
         "holdout_r2": holdout_metrics["r2"] if holdout_metrics else None,
         "holdout_rmse": holdout_metrics["rmse"] if holdout_metrics else None,
         "holdout_mae": holdout_metrics["mae"] if holdout_metrics else None,
         "cv_profile": cv_profile,
-        "oof_predictions_sha256": (
-            _array_hash(oof_predictions) if oof_metrics is not None else None
-        ),
+        "oof_predictions_sha256": (_array_hash(oof_predictions) if oof_metrics is not None else None),
         "oof_r2": oof_metrics["r2"] if oof_metrics else None,
         "exact_prediction_maximum_absolute_error": exact_maximum_error,
         "exact_prediction_rmse": exact_rmse,

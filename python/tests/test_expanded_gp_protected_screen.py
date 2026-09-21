@@ -68,14 +68,9 @@ def test_continuation_uses_exact_parent_archive_and_rung_budget() -> None:
         "final_cv_evaluations": 70,
         "winner_genome": "(pipe X (ridge))",
         "winner_semantic": "winner",
-        "top": [
-            {"canonical": f"(pipe X (ridge lambda_frac={index}.0))"}
-            for index in range(10)
-        ],
+        "top": [{"canonical": f"(pipe X (ridge lambda_frac={index}.0))"} for index in range(10)],
     }
-    config = screen.continuation_config(
-        base_config(), parent, "development-a", 101, 2000
-    )
+    config = screen.continuation_config(base_config(), parent, "development-a", 101, 2000)
     assert config["strategy"] == "c2000"
     assert config["budget"]["generations"] == 50
     assert config["dl_genes"] == [member["canonical"] for member in parent["top"]]

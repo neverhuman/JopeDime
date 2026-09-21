@@ -68,11 +68,10 @@ def deployment_elo(row: dict[str, Any]) -> float | None:
     return None
 
 
-def _resolve_ship_decision(gate_shipped: bool, elo: dict[str, Any], history: list[dict[str, Any]]) -> dict[str, Any]:
-    prior = [
-        deployment_elo(h) for h in history
-        if h.get("shipped") and deployment_elo(h) is not None
-    ]
+def _resolve_ship_decision(
+    gate_shipped: bool, elo: dict[str, Any], history: list[dict[str, Any]]
+) -> dict[str, Any]:
+    prior = [deployment_elo(h) for h in history if h.get("shipped") and deployment_elo(h) is not None]
     cur = deployment_elo(elo)
     baseline = max(prior) if prior else None
     elo_record = bool(cur is not None and (baseline is None or cur >= baseline))
@@ -90,7 +89,13 @@ def _choose_deployed_candidate(recs: list[dict[str, Any]]) -> dict[str, Any] | N
     scored = [r for r in recs if _finite_float(r.get("score_robust")) is not None]
     if not scored:
         return None
-    return max(scored, key=lambda r: (_finite_float(r.get("score_robust")) or float("-inf"), _finite_float(r.get("_oof")) or float("-inf")))
+    return max(
+        scored,
+        key=lambda r: (
+            _finite_float(r.get("score_robust")) or float("-inf"),
+            _finite_float(r.get("_oof")) or float("-inf"),
+        ),
+    )
 
 
 def _proposal_failure_exceeded(failed: int, total: int, threshold: float | None) -> bool:
@@ -214,9 +219,7 @@ class SelfPlay:
         self.log = log
 
         manifest = json.loads((self.art_dir / "split_manifest.json").read_text())["datasets"]
-        self.datasets = {
-            h: e for h, e in sorted(manifest.items()) if e.get("split") == "train"
-        }
+        self.datasets = {h: e for h, e in sorted(manifest.items()) if e.get("split") == "train"}
         if dataset_limit:
             self.datasets = dict(list(self.datasets.items())[:dataset_limit])
         self.standardization = json.loads((self.art_dir / "standardization.json").read_text())
@@ -228,8 +231,9 @@ class SelfPlay:
 
         self.gene_feed = GeneFeed(self.run_dir / "gene_events.jsonl", run_id="self_play")
         self.state: dict[str, Any] = (
-            json.loads(self.state_path.read_text()) if self.state_path.exists() else
-            {"generation": 0, "phase": "idle", "self_best": {}, "gen_top1": {}, "elo_history": []}
+            json.loads(self.state_path.read_text())
+            if self.state_path.exists()
+            else {"generation": 0, "phase": "idle", "self_best": {}, "gen_top1": {}, "elo_history": []}
         )
         # per-dataset historical score pools (for rank_pct of new rows) — built lazily
         self._score_pool: dict[str, list[float]] | None = None
@@ -307,7 +311,7 @@ class SelfPlay:
         hashes = list(self.datasets)
         size = min(self.miner_slice, len(hashes))
         start = (g * size) % max(1, len(hashes))
-        chunk = hashes[start:start + size]
+        chunk = hashes[start : start + size]
         if len(chunk) < size:  # wrap around
             chunk += hashes[: size - len(chunk)]
         slice_file = self.run_dir / f"miner_slice_g{g}.json"
@@ -323,8 +327,7 @@ class SelfPlay:
             f"--gene-feed {self.run_dir}/gene_events.jsonl"
         )
         log_path = self.run_dir / f"miner_g{g}.log"
-        return subprocess.Popen(["bash", "-lc", cmd], stdout=log_path.open("w"),
-                                stderr=subprocess.STDOUT)
+        return subprocess.Popen(["bash", "-lc", cmd], stdout=log_path.open("w"), stderr=subprocess.STDOUT)
 
     def _best_checkpoint(self) -> Path | None:
         """Checkpoint of the highest-Elo former generation — the warm-start ancestor.
@@ -397,30 +400,49 @@ class SelfPlay:
             log_path = self.run_dir / f"gen{g}_rank{rank}.log"
             if host == "local":
                 cmd = f"cd {PROJ} && env {NCCL_ENV} {tr}"
-                procs.append(subprocess.Popen(["bash", "-lc", cmd], stdout=log_path.open("w"),
-                                              stderr=subprocess.STDOUT))
+                procs.append(
+                    subprocess.Popen(
+                        ["bash", "-lc", cmd], stdout=log_path.open("w"), stderr=subprocess.STDOUT
+                    )
+                )
             else:
                 # ship fresh code + corpus labels + self rows before remote training
-                subprocess.run(["rsync", "-a", "--exclude", "__pycache__",
-                                f"{PROJ}/src/jope/", f"{host}:{PROJ}/src/jope/"], check=True)
-                subprocess.run(["rsync", "-a", f"{self.art_dir}/",
-                                f"{host}:{self.art_dir}/"], check=True)
+                subprocess.run(
+                    [
+                        "rsync",
+                        "-a",
+                        "--exclude",
+                        "__pycache__",
+                        f"{PROJ}/src/jope/",
+                        f"{host}:{PROJ}/src/jope/",
+                    ],
+                    check=True,
+                )
+                subprocess.run(["rsync", "-a", f"{self.art_dir}/", f"{host}:{self.art_dir}/"], check=True)
                 # warm-start checkpoint lives in run_dir on THIS host only — every rank
                 # loads it locally, so it must exist at the same path on the remote
                 # (rank1 FileNotFoundError -> dead rank -> NCCL hang, observed gen 4).
                 if warm is not None:
-                    subprocess.run(["ssh", "-o", "BatchMode=yes", host,
-                                    f"mkdir -p {self.run_dir}"], check=True)
+                    subprocess.run(
+                        ["ssh", "-o", "BatchMode=yes", host, f"mkdir -p {self.run_dir}"], check=True
+                    )
                     subprocess.run(["rsync", "-a", str(warm), f"{host}:{warm}"], check=True)
                 cmd = f"cd {PROJ} && env {NCCL_ENV} {tr}"
-                procs.append(subprocess.Popen(["ssh", "-o", "BatchMode=yes", host, cmd],
-                                              stdout=log_path.open("w"), stderr=subprocess.STDOUT))
+                procs.append(
+                    subprocess.Popen(
+                        ["ssh", "-o", "BatchMode=yes", host, cmd],
+                        stdout=log_path.open("w"),
+                        stderr=subprocess.STDOUT,
+                    )
+                )
         rc = [p.wait() for p in procs]
         if any(rc) or not ckpt.exists():
             raise RuntimeError(f"gen {g} training failed rc={rc}; see {self.run_dir}/gen{g}_rank*.log")
         return ckpt
 
-    def propose_generation(self, g: int, ckpt: Path) -> tuple[dict[str, list[dict]], list[dict], list[dict], dict[str, Any]]:
+    def propose_generation(
+        self, g: int, ckpt: Path
+    ) -> tuple[dict[str, list[dict]], list[dict], list[dict], dict[str, Any]]:
         from .policy.decode import propose_v3
         from .policy.model_v3 import load_policy_v3
 
@@ -451,14 +473,21 @@ class SelfPlay:
             tgt = target_summary_from_vs(entry.get("train_target_vs"))
             try:
                 result = propose_v3(
-                    emb, target_summary=tgt, model=model, router=router, n=n,
-                    seed=self.seed + g * 7919 + i, temperature=0.7,
-                    engines=("featmath", "newmath"), device=device,
+                    emb,
+                    target_summary=tgt,
+                    model=model,
+                    router=router,
+                    n=n,
+                    seed=self.seed + g * 7919 + i,
+                    temperature=0.7,
+                    engines=("featmath", "newmath"),
+                    device=device,
                     samples_per_engine=self.samples_per_engine,
                     selector_calibration=self.selector_calibration,
                     selector_reranker=self.selector_reranker,
                     return_all_candidates=self.candidate_pool_dir is not None,
-                    gene_feed=self.gene_feed, gene_feed_dataset=h,
+                    gene_feed=self.gene_feed,
+                    gene_feed_dataset=h,
                 )
                 if self.candidate_pool_dir is not None:
                     props, all_candidates = result
@@ -493,20 +522,34 @@ class SelfPlay:
                 candidate_pool_id = pool_row.get("candidate_pool_id") if pool_row else None
                 if pool_row is not None:
                     pool_row["selected_for_eval_rank"] = rank
-                rec = {"rank": rank, "engine": p.get("engine"), "genome": genome,
-                       "deployed": rank == 0, "candidate_pool_id": candidate_pool_id,
-                       "reward": p.get("reward"), "reward_std": p.get("reward_std"),
-                       "reward_percentile_in_engine": p.get("reward_percentile_in_engine"),
-                       "p_bad": p.get("p_bad"), "selection_key": p.get("selection_key"),
-                       "selection_score": p.get("selection_score"),
-                       "selector_reranker_score": p.get("selector_reranker_score")}
+                rec = {
+                    "rank": rank,
+                    "engine": p.get("engine"),
+                    "genome": genome,
+                    "deployed": rank == 0,
+                    "candidate_pool_id": candidate_pool_id,
+                    "reward": p.get("reward"),
+                    "reward_std": p.get("reward_std"),
+                    "reward_percentile_in_engine": p.get("reward_percentile_in_engine"),
+                    "p_bad": p.get("p_bad"),
+                    "selection_key": p.get("selection_key"),
+                    "selection_score": p.get("selection_score"),
+                    "selector_reranker_score": p.get("selector_reranker_score"),
+                }
                 picks[h].append(rec)
-                eval_inputs.append({
-                    "engine": p.get("engine"), "dataset_hash": h,
-                    "train_csv": entry["train_csv"], "test_csv": entry.get("test_csv"),
-                    "genome": genome, "folds": self.folds, "_h": h, "_rank": rank,
-                    "_candidate_pool_id": candidate_pool_id,
-                })
+                eval_inputs.append(
+                    {
+                        "engine": p.get("engine"),
+                        "dataset_hash": h,
+                        "train_csv": entry["train_csv"],
+                        "test_csv": entry.get("test_csv"),
+                        "genome": genome,
+                        "folds": self.folds,
+                        "_h": h,
+                        "_rank": rank,
+                        "_candidate_pool_id": candidate_pool_id,
+                    }
+                )
             if (i + 1) % 10 == 0 or i + 1 == len(hashes):
                 self._progress(i + 1, len(hashes))
         if proposal_errors:
@@ -518,7 +561,9 @@ class SelfPlay:
         stats = {
             "proposal_failures": len(proposal_errors),
             "proposal_failure_rate": failure_rate,
-            "proposal_error_path": str(self.run_dir / f"proposal_errors_g{g}.jsonl") if proposal_errors else None,
+            "proposal_error_path": str(self.run_dir / f"proposal_errors_g{g}.jsonl")
+            if proposal_errors
+            else None,
         }
         if _proposal_failure_exceeded(len(proposal_errors), len(hashes), self.proposal_failure_threshold):
             raise RuntimeError(
@@ -547,7 +592,9 @@ class SelfPlay:
         t0 = time.time()
         done = 0
         for idx, res in iter_eval_regression_with_ledger(
-            eval_inputs, ledger=str(self.run_dir / "ledger.jsonl"), router=router,
+            eval_inputs,
+            ledger=str(self.run_dir / "ledger.jsonl"),
+            router=router,
             workers=self.eval_workers,
         ):
             by_idx[idx] = res
@@ -559,8 +606,10 @@ class SelfPlay:
 
                 self.gene_feed.scored(
                     _gid(inp.get("engine", ""), inp.get("_h", ""), inp.get("genome", "")),
-                    engine=inp.get("engine", ""), dataset_hash=inp.get("_h", ""),
-                    canonical=inp.get("genome", ""), oof_r2=cv0.get("oof_r2"),
+                    engine=inp.get("engine", ""),
+                    dataset_hash=inp.get("_h", ""),
+                    canonical=inp.get("genome", ""),
+                    oof_r2=cv0.get("oof_r2"),
                     cache_hit=bool(res.get("cache_hit")),
                 )
             except Exception:
@@ -604,7 +653,9 @@ class SelfPlay:
                 deployed_scores[h] = best["score_robust"]
                 measured = [r for r in recs if _finite_float(r.get("score_robust")) is not None]
                 if measured:
-                    best_measured = max(measured, key=lambda r: _finite_float(r.get("score_robust")) or float("-inf"))
+                    best_measured = max(
+                        measured, key=lambda r: _finite_float(r.get("score_robust")) or float("-inf")
+                    )
                     regrets.append((best_measured["score_robust"] or 0.0) - (best["score_robust"] or 0.0))
                     captures_at_6.append(1 if int(best_measured.get("rank") or 0) < 6 else 0)
                 pool_row = pool_by_id.get(str(best.get("candidate_pool_id") or ""))
@@ -615,10 +666,15 @@ class SelfPlay:
 
                     self.gene_feed.selected(
                         _gid(str(best.get("engine") or ""), h, str(best.get("genome") or "")),
-                        engine=best.get("engine"), dataset_hash=h, canonical=best.get("genome"),
-                        selection_slot=f"self_g{g}_deployed", reward_rank=best.get("rank"),
-                        generation=g, candidate_pool_id=best.get("candidate_pool_id"),
-                        selection_key=best.get("selection_key"), selection_score=best.get("selection_score"),
+                        engine=best.get("engine"),
+                        dataset_hash=h,
+                        canonical=best.get("genome"),
+                        selection_slot=f"self_g{g}_deployed",
+                        reward_rank=best.get("rank"),
+                        generation=g,
+                        candidate_pool_id=best.get("candidate_pool_id"),
+                        selection_key=best.get("selection_key"),
+                        selection_score=best.get("selection_score"),
                         selected_for_eval=True,
                     )
                 except Exception:
@@ -632,15 +688,23 @@ class SelfPlay:
                     continue
                 score = rec["score_robust"]
                 row = TrainingRow(
-                    dataset_id=h, source="self_play",
+                    dataset_id=h,
+                    source="self_play",
                     embedding=embedding_from_vs(entry["vs_path"], self.standardization),
                     target_embedding=target_summary_from_vs(entry.get("train_target_vs")),
-                    genome=rec["genome"], canonical_genome=rec["genome"], engine=rec["engine"],
-                    score=max(rec["_oof"], -1.0), cost_ms=rec.get("_cost_ms"),
+                    genome=rec["genome"],
+                    canonical_genome=rec["genome"],
+                    engine=rec["engine"],
+                    score=max(rec["_oof"], -1.0),
+                    cost_ms=rec.get("_cost_ms"),
                     metadata={
-                        "provenance": f"self_g{g}", "generation": g,
-                        "deployed": rec["deployed"], "task_type": "regression", "split": "train",
-                        "oof_r2_raw": rec["_oof"], "score_robust": score,
+                        "provenance": f"self_g{g}",
+                        "generation": g,
+                        "deployed": rec["deployed"],
+                        "task_type": "regression",
+                        "split": "train",
+                        "oof_r2_raw": rec["_oof"],
+                        "score_robust": score,
                         "rank_pct": round(self._rank_pct(h, score), 6),
                         "former_best_score": former_best,
                         "candidate_pool_id": rec.get("candidate_pool_id"),
@@ -699,8 +763,7 @@ class SelfPlay:
                 self.state["self_best"][h] = s
                 new_bests += 1
         mean_pct = (
-            sum(self._rank_pct(h, s) for h, s in deployed.items()) / len(deployed)
-            if deployed else None
+            sum(self._rank_pct(h, s) for h, s in deployed.items()) / len(deployed) if deployed else None
         )
         self.state["gen_top1"][str(g)] = deployed
         shipped = beat_rate is None or beat_rate >= self.gate_beat_rate
@@ -717,7 +780,9 @@ class SelfPlay:
     def _last_shipped_deployed_scores(self, g: int) -> tuple[dict[str, float], int | None]:
         explicit = self.state.get("last_shipped_deployed")
         if isinstance(explicit, dict):
-            return {str(k): float(v) for k, v in explicit.items() if _finite_float(v) is not None}, self.state.get("last_shipped_generation")
+            return {
+                str(k): float(v) for k, v in explicit.items() if _finite_float(v) is not None
+            }, self.state.get("last_shipped_generation")
         gen_top1 = self.state.get("gen_top1") if isinstance(self.state.get("gen_top1"), dict) else {}
         shipped_gens = [
             int(row.get("gen"))
@@ -746,8 +811,12 @@ class SelfPlay:
                 self._progress(int(m.group(1)), int(m.group(2)))
 
         report = run_elo_bench(
-            ckpt, self.art_dir, k=16, out_dir=self.run_dir / f"elo_g{g}",
-            ledger=self.run_dir / "elo_ledger.jsonl", workers=self.eval_workers,
+            ckpt,
+            self.art_dir,
+            k=16,
+            out_dir=self.run_dir / f"elo_g{g}",
+            ledger=self.run_dir / "elo_ledger.jsonl",
+            workers=self.eval_workers,
             selector_calibration=self.selector_calibration,
             selector_reranker=self.selector_reranker,
             samples_per_engine=self.samples_per_engine,
@@ -757,19 +826,29 @@ class SelfPlay:
         )
         top1 = report["modes"]["top1"]
         probe = report["modes"].get("cv_top6", report["modes"]["cv_select"])
-        out = {"elo_top1": top1["elo"], "elo_rank": top1["field_rank"],
-                "elo_top1_dh": top1.get("double_holdout_elo"),
-                # cheap-probe deployed selector (probe top-6 reward candidates, pick best robust score)
-                "elo_probe": probe["elo"], "elo_probe_rank": probe["field_rank"],
-                "elo_probe_dh": probe.get("double_holdout_elo"),
-                "battles_won": probe.get("battles_won"),
-                "battles_top3": probe.get("battles_top3"),
-                "elo_cv": report["modes"]["cv_select"]["elo"],
-                "elo_best_k": report["modes"]["best_k"]["elo"]}
+        out = {
+            "elo_top1": top1["elo"],
+            "elo_rank": top1["field_rank"],
+            "elo_top1_dh": top1.get("double_holdout_elo"),
+            # cheap-probe deployed selector (probe top-6 reward candidates, pick best robust score)
+            "elo_probe": probe["elo"],
+            "elo_probe_rank": probe["field_rank"],
+            "elo_probe_dh": probe.get("double_holdout_elo"),
+            "battles_won": probe.get("battles_won"),
+            "battles_top3": probe.get("battles_top3"),
+            "elo_cv": report["modes"]["cv_select"]["elo"],
+            "elo_best_k": report["modes"]["best_k"]["elo"],
+        }
         out["elo_deployed"] = deployment_elo(out)
-        if _finite_float(out.get("elo_best_k")) is not None and _finite_float(out.get("elo_top1")) is not None:
+        if (
+            _finite_float(out.get("elo_best_k")) is not None
+            and _finite_float(out.get("elo_top1")) is not None
+        ):
             out["top1_regret_vs_best_k"] = float(out["elo_best_k"]) - float(out["elo_top1"])
-        if _finite_float(out.get("elo_best_k")) is not None and _finite_float(out.get("elo_probe")) is not None:
+        if (
+            _finite_float(out.get("elo_best_k")) is not None
+            and _finite_float(out.get("elo_probe")) is not None
+        ):
             out["probe_regret_vs_best_k"] = float(out["elo_best_k"]) - float(out["elo_probe"])
         return out
 
@@ -791,7 +870,7 @@ class SelfPlay:
                 for line in reversed(mlog.read_text().splitlines() if mlog.exists() else []):
                     if '"new_champions"' in line:
                         try:
-                            miner_report = json.loads(line[line.index("{"):])
+                            miner_report = json.loads(line[line.index("{") :])
                         except Exception:
                             pass
                         break
@@ -820,11 +899,13 @@ class SelfPlay:
                 # warm-start ancestor, else future gens build on a weaker checkpoint.
                 # deployed capability is now the cheap-probe selector (elo_probe), so the
                 # warm-start ancestor is chosen by THAT, not the reward-rank elo_top1.
-                gate.update(_resolve_ship_decision(
-                    bool(gate.get("shipped", True)),
-                    elo,
-                    self.state.get("elo_history", []),
-                ))
+                gate.update(
+                    _resolve_ship_decision(
+                        bool(gate.get("shipped", True)),
+                        elo,
+                        self.state.get("elo_history", []),
+                    )
+                )
                 self.state["elo_history"].append({"gen": g, "shipped": bool(gate["shipped"]), **elo})
             if gate.get("shipped"):
                 self.state["last_shipped_deployed"] = appended["deployed_scores"]

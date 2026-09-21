@@ -30,10 +30,7 @@ def prior() -> dict[str, list[dict[str, object]]]:
                 "worst_pct": 53.0 if expert is benchmark.EXPERTS[0] else 55.0,
             }
         )
-    return {
-        f"development-{index}": rows if index else list(reversed(rows))
-        for index in range(22)
-    }
+    return {f"development-{index}": rows if index else list(reversed(rows)) for index in range(22)}
 
 
 def test_expert_authority_requires_primary_to_rank_first_21_of_22() -> None:

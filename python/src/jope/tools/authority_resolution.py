@@ -1,4 +1,5 @@
 """Name the winning flywheel authority. Does not unfence, apply v6, or move serving."""
+
 from __future__ import annotations
 
 SCHEMA = "parallel.authority_resolution.v1"

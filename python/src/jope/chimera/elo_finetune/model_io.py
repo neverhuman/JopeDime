@@ -49,8 +49,7 @@ def load_regressor(
     result = model.load_state_dict(state, strict=True)
     if result.missing_keys or result.unexpected_keys:
         raise RuntimeError(
-            f"strict load failed: missing={result.missing_keys}, "
-            f"unexpected={result.unexpected_keys}"
+            f"strict load failed: missing={result.missing_keys}, unexpected={result.unexpected_keys}"
         )
     return model.to(device).eval()
 

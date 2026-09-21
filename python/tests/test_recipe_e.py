@@ -26,10 +26,7 @@ def test_recipe_e_mix_is_exact_over_five_batches():
         assert sum(counts.values()) == 256
         assert counts["exact_current_parent_pairs"] % 2 == 0
         observed.update(counts)
-    assert observed == {
-        lane: int(fraction * 5 * 256)
-        for lane, fraction in RECIPE_E_BATCH_MIX.items()
-    }
+    assert observed == {lane: int(fraction * 5 * 256) for lane, fraction in RECIPE_E_BATCH_MIX.items()}
 
 
 def test_recipe_e_trigger_and_fixed_objective_contract():

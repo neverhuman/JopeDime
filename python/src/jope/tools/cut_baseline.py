@@ -1,4 +1,5 @@
 """Per-cut train-mean baseline B. Diagnostics only; does not rewrite ranking labels."""
+
 from __future__ import annotations
 
 import math
@@ -30,8 +31,8 @@ def disagreement_vs_unit(score, baseline):
 
 
 def annotate_observation(metrics_rmse, baseline, units="cut_normalized_target"):
-    if units not in ('cut_normalized_target', 'original_target'):
-        raise ValueError('unknown RMSE units')
+    if units not in ("cut_normalized_target", "original_target"):
+        raise ValueError("unknown RMSE units")
     valid = beats_baseline(metrics_rmse, baseline) is not None
     ratio = metrics_rmse / baseline if valid and baseline > 0 else None
     if ratio is not None and not math.isfinite(ratio):
@@ -47,7 +48,11 @@ def annotate_observation(metrics_rmse, baseline, units="cut_normalized_target"):
         "relative_rmse": ratio,
         "rmse_skill": 1 - ratio if ratio is not None else None,
         "squared_error_skill": 1 - squared if squared is not None and math.isfinite(squared) else None,
-        "ratio_status": 'available' if ratio is not None else 'zero_baseline' if valid and baseline == 0 else 'unavailable',
+        "ratio_status": "available"
+        if ratio is not None
+        else "zero_baseline"
+        if valid and baseline == 0
+        else "unavailable",
         "beats_unit_one": beats_baseline(metrics_rmse, 1.0),
         "beats_cut_baseline": beats_baseline(metrics_rmse, baseline),
         "unit_vs_baseline_disagrees": disagreement_vs_unit(metrics_rmse, baseline),

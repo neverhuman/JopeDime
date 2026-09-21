@@ -18,7 +18,9 @@ TASK_REGRESSION = 1
 TASK_NAMES = {TASK_BINARY: "binary", TASK_REGRESSION: "regression"}
 TASK_IDS = {name: task for task, name in TASK_NAMES.items()}
 
-PROFILE_QUANTILES = np.asarray([0.0, 0.01, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.99, 1.0], dtype=np.float32)
+PROFILE_QUANTILES = np.asarray(
+    [0.0, 0.01, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.99, 1.0], dtype=np.float32
+)
 PROFILE_HIST_BINS = 16
 PROFILE_DIM = 8 + len(PROFILE_QUANTILES) + PROFILE_HIST_BINS
 
@@ -91,7 +93,9 @@ def iter_complete_dataset_dirs(root: Path) -> Iterator[Path]:
             yield child
 
 
-def scan_datasets(roots: Mapping[int, Path] | None = None, limit_per_task: int | None = None) -> list[tuple[int, Path]]:
+def scan_datasets(
+    roots: Mapping[int, Path] | None = None, limit_per_task: int | None = None
+) -> list[tuple[int, Path]]:
     roots = roots or default_roots()
     found: list[tuple[int, Path]] = []
     for task in (TASK_BINARY, TASK_REGRESSION):
@@ -288,7 +292,10 @@ def prepare_cache(
     target_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = cache_dir / "manifest.jsonl"
     workers = default_cache_workers() if workers is None else max(1, int(workers))
-    jobs = [(task, Path(dataset_dir), target_dir, seed, overwrite) for task, dataset_dir in scan_datasets(roots, limit_per_task=limit_per_task)]
+    jobs = [
+        (task, Path(dataset_dir), target_dir, seed, overwrite)
+        for task, dataset_dir in scan_datasets(roots, limit_per_task=limit_per_task)
+    ]
     if workers == 1 or len(jobs) <= 1:
         records = [_prepare_cache_record(job) for job in jobs]
     else:
@@ -301,7 +308,9 @@ def prepare_cache(
     return records
 
 
-def load_manifest(cache_dir: Path, split: str | None = None, val_fraction: float = 0.05, seed: int = 17) -> list[DatasetRecord]:
+def load_manifest(
+    cache_dir: Path, split: str | None = None, val_fraction: float = 0.05, seed: int = 17
+) -> list[DatasetRecord]:
     cache_dir = Path(cache_dir).expanduser().resolve()
     manifest_path = cache_dir / "manifest.jsonl"
     records: list[DatasetRecord] = []
@@ -358,7 +367,9 @@ class TargetCacheDataset(Dataset):
     def __len__(self) -> int:
         return len(self.records) * self.length_multiplier
 
-    def _sample_one(self, record: DatasetRecord, npz: Mapping[str, np.ndarray], rng: np.random.Generator) -> dict[str, object]:
+    def _sample_one(
+        self, record: DatasetRecord, npz: Mapping[str, np.ndarray], rng: np.random.Generator
+    ) -> dict[str, object]:
         requested = int(rng.choice(self.augment_lengths)) if self.augment_lengths else self.window_size
         requested = min(max(1, requested), self.window_size)
         idx, effective_count, replacement_fraction = sample_indices(record.length, requested, rng)
@@ -386,7 +397,9 @@ class TargetCacheDataset(Dataset):
         key = (rank, worker_id, worker_seed)
         if self._random_rng is None or self._random_rng_key != key:
             self._random_rng_key = key
-            self._random_rng = np.random.default_rng(stable_seed("sample-random", self.seed, rank, worker_id, worker_seed))
+            self._random_rng = np.random.default_rng(
+                stable_seed("sample-random", self.seed, rank, worker_id, worker_seed)
+            )
         return self._random_rng
 
     def _sample_rng(self, record: DatasetRecord, index: int) -> np.random.Generator:
@@ -423,7 +436,9 @@ def collate_target_batch(items: Sequence[Mapping[str, object]]) -> dict[str, obj
             "values": torch.from_numpy(np.stack([v["values"] for v in view])).float(),
             "mask": torch.from_numpy(np.stack([v["mask"] for v in view])).float(),
             "effective_count": torch.tensor([v["effective_count"] for v in view], dtype=torch.float32),
-            "replacement_fraction": torch.tensor([v["replacement_fraction"] for v in view], dtype=torch.float32),
+            "replacement_fraction": torch.tensor(
+                [v["replacement_fraction"] for v in view], dtype=torch.float32
+            ),
             "requested_length": torch.tensor([v["requested_length"] for v in view], dtype=torch.float32),
         }
 

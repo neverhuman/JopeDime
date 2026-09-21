@@ -1,4 +1,5 @@
 """Read-only report reproduction. Missing inputs are listed before verification."""
+
 import argparse
 import collections
 import json
@@ -23,9 +24,11 @@ def _audit(root, manifest_path):
     manifest = s.read(manifest_path)
     if manifest.get("workflow") == "matched_downstream_v2":
         from qualify_matched_v2 import audit as audit_matched
+
         return audit_matched(root, manifest_path)
     if manifest.get("schema") == "parallel.binary_full_replay.v2":
         from binary_replay_v2 import audit as audit_replay
+
         return audit_replay(root, manifest_path)
     missing = [a["path"] for a in manifest["artifacts"] if not s.inside(root, a["path"]).is_file()]
     if missing:
@@ -35,8 +38,12 @@ def _audit(root, manifest_path):
     require((output / "rankings-frozen.json").is_file(), "missing dependency: rankings-frozen.json")
     # With a pre-existing seal, this function only compares immutable receipts.
     rows = s.seal_rankings(root, manifest, manifest_path)
-    identities = {s.evaluation_key(v, p, manifest["evaluator_sha256"]): (v, p)
-                  for v, rankings in rows for programs in rankings.values() for p in programs[:64]}
+    identities = {
+        s.evaluation_key(v, p, manifest["evaluator_sha256"]): (v, p)
+        for v, rankings in rows
+        for programs in rankings.values()
+        for p in programs[:64]
+    }
     results = {}
     for directory in (output / "evaluations").iterdir():
         require(directory.name in identities and directory.is_dir(), f"unexpected cache entry: {directory}")
@@ -50,7 +57,12 @@ def _audit(root, manifest_path):
     unjournaled = []
     for result in results.values():
         s.validate_ledgers(launches, [result], identities, s.digest(manifest_path), strict=strict)
-        matching = [r for r in ledger if result.get("attempt_serial") is not None and r.get("attempt_serial") == result["attempt_serial"]]
+        matching = [
+            r
+            for r in ledger
+            if result.get("attempt_serial") is not None
+            and r.get("attempt_serial") == result["attempt_serial"]
+        ]
         require(not matching or matching == [result], "cached result and attempt journal disagree")
         if result not in ledger:
             unjournaled.append(result["key"])
@@ -65,21 +77,39 @@ def _audit(root, manifest_path):
             search, observations = s.read(directory / "search.json"), s.read(directory / "observations.json")
             seeds = output / f"downstream/{view['dataset']}/cut-{view['cut']}/{arm}/seeds.json"
             require(search.get("seeds_sha256") == s.digest(seeds), "downstream seed identity changed")
-            require(search.get("vocabulary_sha256") == s.digest(s.inside(root, manifest["corpus"]) / "vocabulary.json"), "downstream vocabulary changed")
+            require(
+                search.get("vocabulary_sha256")
+                == s.digest(s.inside(root, manifest["corpus"]) / "vocabulary.json"),
+                "downstream vocabulary changed",
+            )
             require(search.get("completed_evaluations") == len(observations), "downstream counts disagree")
             s.validate_search(search, observations, view, manifest["evaluator_sha256"])
-            downstream.append({"dataset": view["dataset"], "cut": view["cut"], "arm": "pure_first64" if arm == "current" else arm,
-                "best_rmse": search["best_validation_rmse"], "best_program": search["best_program"],
-                "evaluations": len(observations), "fits": sum(r["failure"] is None for r in observations),
-                "wall_seconds": search["wall_seconds"], "resumed": search.get("resumed", False)})
-    report.update(passed=True, manifest_sha256=s.digest(manifest_path), read_only=True,
-                  elapsed_measurement="Candidate costs reproduced below; controller wall time is not inferred from evaluator metrics",
-                  recorded_controller_invocations=[s.read(p) for p in sorted((output / "invocations").glob("*.json"))],
-                  downstream_recomputed=downstream, downstream_required_searches=3 * len(rows),
-                  attempt_cost_seconds=sum(r.get("seconds", 0) for r in ledger),
-                  results_awaiting_journal_reconciliation=unjournaled,
-                  attempts_with_unknown_elapsed_cost=sum(bool(r.get("elapsed_cost_unknown")) for r in ledger),
-                  attempt_statuses=dict(collections.Counter(r["status"] for r in ledger)))
+            downstream.append(
+                {
+                    "dataset": view["dataset"],
+                    "cut": view["cut"],
+                    "arm": "pure_first64" if arm == "current" else arm,
+                    "best_rmse": search["best_validation_rmse"],
+                    "best_program": search["best_program"],
+                    "evaluations": len(observations),
+                    "fits": sum(r["failure"] is None for r in observations),
+                    "wall_seconds": search["wall_seconds"],
+                    "resumed": search.get("resumed", False),
+                }
+            )
+    report.update(
+        passed=True,
+        manifest_sha256=s.digest(manifest_path),
+        read_only=True,
+        elapsed_measurement="Candidate costs reproduced below; controller wall time is not inferred from evaluator metrics",
+        recorded_controller_invocations=[s.read(p) for p in sorted((output / "invocations").glob("*.json"))],
+        downstream_recomputed=downstream,
+        downstream_required_searches=3 * len(rows),
+        attempt_cost_seconds=sum(r.get("seconds", 0) for r in ledger),
+        results_awaiting_journal_reconciliation=unjournaled,
+        attempts_with_unknown_elapsed_cost=sum(bool(r.get("elapsed_cost_unknown")) for r in ledger),
+        attempt_statuses=dict(collections.Counter(r["status"] for r in ledger)),
+    )
     return report
 
 

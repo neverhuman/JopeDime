@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """One spare-CPU allocation shared by qualification comparisons and encoders."""
+
 import fcntl
 import json
 import os
@@ -83,8 +84,12 @@ def spare_lease(root, owner, cpus=16, gpu=False):
             raise BlockingIOError("the requested spare CPU affinity is unavailable")
         os.sched_setaffinity(0, available[:cpus])
         runtime._lease_fds = previous_fds + tuple(h.fileno() for h in handles)
-        yield {"owner": owner, "cpus": available[:cpus], "gpu_world": 8 if gpu else 0,
-               "pass_fds": runtime._lease_fds}
+        yield {
+            "owner": owner,
+            "cpus": available[:cpus],
+            "gpu_world": 8 if gpu else 0,
+            "pass_fds": runtime._lease_fds,
+        }
     finally:
         runtime._lease_fds = previous_fds
         os.sched_setaffinity(0, original)

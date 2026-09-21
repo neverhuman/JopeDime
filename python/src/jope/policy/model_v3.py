@@ -90,9 +90,7 @@ TASK_LANE = {
 }
 
 
-def _task_lane_mask(
-    task_types: Sequence[str] | None, rows: int, device: torch.device
-) -> torch.Tensor:
+def _task_lane_mask(task_types: Sequence[str] | None, rows: int, device: torch.device) -> torch.Tensor:
     """Boolean binary-lane mask (True = binary-lane heads) for one batch.
 
     Tasks map through TASK_LANE; any task outside it raises — the reward_stats
@@ -104,9 +102,7 @@ def _task_lane_mask(
         raise ValueError("task types must contain exactly one value per row")
     unknown = sorted({task for task in task_types if task not in TASK_LANE})
     if unknown:
-        raise ValueError(
-            f"unknown task type(s) {unknown}; known tasks: {sorted(TASK_LANE)}"
-        )
+        raise ValueError(f"unknown task type(s) {unknown}; known tasks: {sorted(TASK_LANE)}")
     return torch.tensor(
         [TASK_LANE[task] == "binary" for task in task_types],
         dtype=torch.bool,
@@ -134,9 +130,13 @@ class PolicyV3Batch:
     # v3.1 self-play / ranking labels (nan/False when absent → losses skip)
     rank_pct: torch.Tensor | None = None  # (B,) float in [0,1], per-dataset rank percentile
     is_self: torch.Tensor | None = None  # (B,) bool, row came from a former model generation
-    former_best: torch.Tensor | None = None  # (B,) float, best former-self score for the row's dataset (nan none)
+    former_best: torch.Tensor | None = (
+        None  # (B,) float, best former-self score for the row's dataset (nan none)
+    )
     routing_label: torch.Tensor | None = None  # (B,) int64, winner-head-family class (-1 unknown)
-    seq_weight: torch.Tensor | None = None  # (B,) float, provenance imitation weight (V7: anti self-confirmation)
+    seq_weight: torch.Tensor | None = (
+        None  # (B,) float, provenance imitation weight (V7: anti self-confirmation)
+    )
 
 
 class JopePolicyModelV3(nn.Module):
@@ -171,9 +171,7 @@ class JopePolicyModelV3(nn.Module):
         if target_keep_dim is None:
             target_keep_dim = target_dim
         if not 1 <= int(target_keep_dim) <= target_dim:
-            raise ValueError(
-                f"target_keep_dim must be in [1, {target_dim}], got {target_keep_dim!r}"
-            )
+            raise ValueError(f"target_keep_dim must be in [1, {target_dim}], got {target_keep_dim!r}")
         self.target_keep_dim = int(target_keep_dim)
         self.split_reward_context = bool(split_reward_context)
         self.input_block_norm = bool(input_block_norm)
@@ -181,12 +179,8 @@ class JopePolicyModelV3(nn.Module):
         self.target_block_rms = float(target_block_rms)
         if min(self.dataset_block_rms, self.target_block_rms) <= 0.0:
             raise ValueError("block RMS constants must be positive")
-        self._dataset_block_scale = (
-            1.0 / self.dataset_block_rms if self.input_block_norm else 1.0
-        )
-        self._target_block_scale = (
-            1.0 / self.target_block_rms if self.input_block_norm else 1.0
-        )
+        self._dataset_block_scale = 1.0 / self.dataset_block_rms if self.input_block_norm else 1.0
+        self._target_block_scale = 1.0 / self.target_block_rms if self.input_block_norm else 1.0
         self._target_tail_checks_remaining = TARGET_TAIL_CHECK_BATCHES
         self.d_model = d_model
         self.n_layers = n_layers
@@ -205,9 +199,7 @@ class JopePolicyModelV3(nn.Module):
         self.fused_task_heads = fused_task_heads
         self.routing_head = nn.Linear(d_model, routing_classes) if routing_classes > 0 else None
         self.binary_routing_head = (
-            nn.Linear(d_model, routing_classes)
-            if fused_task_heads and routing_classes > 0
-            else None
+            nn.Linear(d_model, routing_classes) if fused_task_heads and routing_classes > 0 else None
         )
 
         def _context_encoder() -> nn.Sequential:
@@ -288,35 +280,33 @@ class JopePolicyModelV3(nn.Module):
                 for _ in range(reward_heads)
             ]
         )
-        self.binary_reward_heads = nn.ModuleList(
-            [
-                nn.Sequential(
-                    nn.Linear(3 * d_model, d_model),
-                    nn.GELU(),
-                    nn.Dropout(0.05),
-                    nn.Linear(d_model, 1),
-                )
-                for _ in range(reward_heads)
-            ]
-        ) if fused_task_heads else None
+        self.binary_reward_heads = (
+            nn.ModuleList(
+                [
+                    nn.Sequential(
+                        nn.Linear(3 * d_model, d_model),
+                        nn.GELU(),
+                        nn.Dropout(0.05),
+                        nn.Linear(d_model, 1),
+                    )
+                    for _ in range(reward_heads)
+                ]
+            )
+            if fused_task_heads
+            else None
+        )
         # Frozen-purpose ABLATION head (genome-only): trained with the same BT loss, used
         # only as a validation control — the conditional heads must beat it on pairwise
         # win-rate or conditioning is not adding information (anti-collapse guard).
         self.reward_head_ablation = nn.Sequential(
             nn.Linear(d_model, d_model), nn.GELU(), nn.Dropout(0.05), nn.Linear(d_model, 1)
         )
-        self.runtime_head = nn.Sequential(
-            nn.Linear(2 * d_model, d_model), nn.GELU(), nn.Linear(d_model, 1)
-        )
+        self.runtime_head = nn.Sequential(nn.Linear(2 * d_model, d_model), nn.GELU(), nn.Linear(d_model, 1))
         # RF2: blowup/instability predictor — now dataset-conditioned (a transform safe at
         # n=10k/p=20 blows up at n=200/p=2000). Same interaction-only feature map.
-        self.stability_head = nn.Sequential(
-            nn.Linear(3 * d_model, d_model), nn.GELU(), nn.Linear(d_model, 1)
-        )
+        self.stability_head = nn.Sequential(nn.Linear(3 * d_model, d_model), nn.GELU(), nn.Linear(d_model, 1))
         self.binary_stability_head = (
-            nn.Sequential(
-                nn.Linear(3 * d_model, d_model), nn.GELU(), nn.Linear(d_model, 1)
-            )
+            nn.Sequential(nn.Linear(3 * d_model, d_model), nn.GELU(), nn.Linear(d_model, 1))
             if fused_task_heads
             else None
         )
@@ -325,9 +315,7 @@ class JopePolicyModelV3(nn.Module):
         )
 
     # ---- context ------------------------------------------------------------
-    def context_input(
-        self, embedding: torch.Tensor, target_summary: torch.Tensor | None
-    ) -> torch.Tensor:
+    def context_input(self, embedding: torch.Tensor, target_summary: torch.Tensor | None) -> torch.Tensor:
         """Per-block-normalised, live-width encoder input. Shared by both encoders."""
         if target_summary is None:
             target_summary = torch.zeros(
@@ -353,9 +341,7 @@ class JopePolicyModelV3(nn.Module):
         """SEQUENCE-path dataset context. Consumers: ctx_proj -> the causal decoder."""
         return self.encoder(self.context_input(embedding, target_summary))
 
-    def reward_context(
-        self, embedding: torch.Tensor, target_summary: torch.Tensor | None
-    ) -> torch.Tensor:
+    def reward_context(self, embedding: torch.Tensor, target_summary: torch.Tensor | None) -> torch.Tensor:
         """REWARD-path dataset context.
 
         Consumers: z_gamma, z_proj (hence every reward head), runtime_head, the stability
@@ -380,20 +366,22 @@ class JopePolicyModelV3(nn.Module):
         positions = torch.arange(T + 1, device=token_ids.device)
         h = h + self.pos_emb(positions).unsqueeze(0)
         causal = torch.triu(torch.ones(T + 1, T + 1, device=token_ids.device, dtype=torch.bool), diagonal=1)
-        key_pad = torch.cat(
-            [torch.zeros(B, 1, dtype=torch.bool, device=token_ids.device), ~pad_mask], dim=1
-        )
+        key_pad = torch.cat([torch.zeros(B, 1, dtype=torch.bool, device=token_ids.device), ~pad_mask], dim=1)
         h = self.decoder(h, mask=causal, src_key_padding_mask=key_pad)
         h = self.out_norm(h)
         logits = h @ self.token_emb.weight.t()  # (B, T+1, rows)
         return logits[..., : self.vocab.size]
 
-    def decoder_logits(self, z: torch.Tensor, token_ids: torch.Tensor, pad_mask: torch.Tensor) -> torch.Tensor:
+    def decoder_logits(
+        self, z: torch.Tensor, token_ids: torch.Tensor, pad_mask: torch.Tensor
+    ) -> torch.Tensor:
         """Teacher-forcing logits for predicting tokens 1..T-1. Returns (B, T-1, V)."""
         T = token_ids.shape[1]
         return self._full_logits(z, token_ids, pad_mask)[:, 1:T, :]
 
-    def next_token_logits(self, z: torch.Tensor, token_ids: torch.Tensor, pad_mask: torch.Tensor) -> torch.Tensor:
+    def next_token_logits(
+        self, z: torch.Tensor, token_ids: torch.Tensor, pad_mask: torch.Tensor
+    ) -> torch.Tensor:
         """Next-token logits after each row's prefix. Returns (B, V)."""
         full = self._full_logits(z, token_ids, pad_mask)
         lengths = pad_mask.sum(dim=1)  # prefix length L per row; h[L] predicts token L
@@ -411,9 +399,7 @@ class JopePolicyModelV3(nn.Module):
         emb = self.reward_token_emb(token_ids)
         mask = pad_mask.unsqueeze(-1).float()
         if self.training and self.training_token_dropout > 0.0:
-            mask = mask * (
-                torch.rand_like(mask) >= self.training_token_dropout
-            )
+            mask = mask * (torch.rand_like(mask) >= self.training_token_dropout)
         pooled = (emb * mask).sum(dim=1) / mask.sum(dim=1).clamp_min(1.0)
         return self.reward_norm(pooled)
 
@@ -430,13 +416,9 @@ class JopePolicyModelV3(nn.Module):
     ) -> torch.Tensor:
         g = self.genome_embedding(token_ids, pad_mask)
         phi = self._zg_features(z, g)
-        regression = torch.stack(
-            [head(phi).squeeze(-1) for head in self.reward_heads], dim=-1
-        )
+        regression = torch.stack([head(phi).squeeze(-1) for head in self.reward_heads], dim=-1)
         binary = (
-            torch.stack(
-                [head(phi).squeeze(-1) for head in self.binary_reward_heads], dim=-1
-            )
+            torch.stack([head(phi).squeeze(-1) for head in self.binary_reward_heads], dim=-1)
             if self.binary_reward_heads is not None
             else regression
         )
@@ -504,17 +486,9 @@ class JopePolicyModelV3(nn.Module):
 
     def loss_components(self, batch: PolicyV3Batch, *, phase: str = "B") -> dict[str, torch.Tensor]:
         embedding = batch.embedding
-        if (
-            self.training
-            and self.training_embedding_jitter > 0.0
-            and embedding.shape[0] > 1
-        ):
+        if self.training and self.training_embedding_jitter > 0.0 and embedding.shape[0] > 1:
             scale = embedding.std(dim=0, keepdim=True, unbiased=False).clamp_min(1e-6)
-            embedding = embedding + (
-                self.training_embedding_jitter
-                * scale
-                * torch.randn_like(embedding)
-            )
+            embedding = embedding + (self.training_embedding_jitter * scale * torch.randn_like(embedding))
         z = self.context(embedding, batch.target_summary)
         # v3.4: every reward-side consumer reads its own encoder. On a v3.3 checkpoint
         # reward_context() returns the same encoder, so behaviour is unchanged.
@@ -522,9 +496,7 @@ class JopePolicyModelV3(nn.Module):
         components: dict[str, torch.Tensor] = {}
 
         if self.routing_head is not None and batch.routing_label is not None:
-            binary_mask = _task_lane_mask(
-                batch.task_types, z_reward.shape[0], z_reward.device
-            )
+            binary_mask = _task_lane_mask(batch.task_types, z_reward.shape[0], z_reward.device)
             routing_terms: list[torch.Tensor] = []
             for task_mask, head in (
                 (~binary_mask, self.routing_head),
@@ -532,9 +504,7 @@ class JopePolicyModelV3(nn.Module):
             ):
                 mask = task_mask & (batch.routing_label >= 0)
                 if head is not None and mask.sum() >= 2:
-                    routing_terms.append(
-                        F.cross_entropy(head(z_reward[mask]), batch.routing_label[mask])
-                    )
+                    routing_terms.append(F.cross_entropy(head(z_reward[mask]), batch.routing_label[mask]))
             if routing_terms:
                 components["routing_ce"] = torch.stack(routing_terms).mean()
 
@@ -552,13 +522,10 @@ class JopePolicyModelV3(nn.Module):
 
         finite = torch.isfinite(batch.robust_delta)
         if finite.sum() >= 2:
-            rewards = self.reward_all(
-                z_reward, batch.token_ids, batch.pad_mask, batch.task_types
-            )  # (B, K)
+            rewards = self.reward_all(z_reward, batch.token_ids, batch.pad_mask, batch.task_types)  # (B, K)
             keep_all = finite
             task_reward_pair_ids = [
-                f"{task}:{identity}"
-                for task, identity in zip(batch.task_types, batch.reward_pair_ids)
+                f"{task}:{identity}" for task, identity in zip(batch.task_types, batch.reward_pair_ids)
             ]
             ids_all = [d for d, m in zip(task_reward_pair_ids, keep_all.tolist()) if m]
             rank_pct = batch.rank_pct[keep_all] if batch.rank_pct is not None else None
@@ -582,9 +549,7 @@ class JopePolicyModelV3(nn.Module):
                 if bt is not None:
                     bt_terms.append(bt)
                 if batch.rank_pct is not None:
-                    pair = rank_pct_listwise_terms(
-                        rewards[keep, k], batch.rank_pct[keep], ids
-                    )
+                    pair = rank_pct_listwise_terms(rewards[keep, k], batch.rank_pct[keep], ids)
                     lw = None if pair is None else pair[0]
                     if pair is not None:
                         lw_entropies.append(pair[1])
@@ -608,8 +573,9 @@ class JopePolicyModelV3(nn.Module):
             if keep_all.sum() >= 2:
                 g_detached = self.genome_embedding(batch.token_ids, batch.pad_mask).detach()
                 abl = self.reward_head_ablation(g_detached[keep_all]).squeeze(-1)
-                abl_bt = self_play_bt_loss(abl, batch.robust_delta[keep_all], ids_all,
-                                           rank_pct=rank_pct, is_self=is_self)
+                abl_bt = self_play_bt_loss(
+                    abl, batch.robust_delta[keep_all], ids_all, rank_pct=rank_pct, is_self=is_self
+                )
                 if abl_bt is not None:
                     components["ablation_bt"] = abl_bt
 
@@ -625,9 +591,7 @@ class JopePolicyModelV3(nn.Module):
                 stability_logits = self.instability_logit(
                     batch.token_ids, batch.pad_mask, z_reward, batch.task_types
                 )
-                binary_mask = _task_lane_mask(
-                    batch.task_types, z_reward.shape[0], z_reward.device
-                )
+                binary_mask = _task_lane_mask(batch.task_types, z_reward.shape[0], z_reward.device)
                 stability_terms: list[torch.Tensor] = []
                 stability_baselines: list[torch.Tensor] = []
                 for task_mask in (~binary_mask, binary_mask):
@@ -652,9 +616,7 @@ class JopePolicyModelV3(nn.Module):
                     stability_baselines.append(pair[1])
                 if stability_terms:
                     components["stability_bce"] = torch.stack(stability_terms).mean()
-                    components["stability_bce_baseline"] = torch.stack(
-                        stability_baselines
-                    ).mean()
+                    components["stability_bce_baseline"] = torch.stack(stability_baselines).mean()
         return components
 
     def loss(self, batch: PolicyV3Batch, *, phase: str = "B") -> torch.Tensor:
@@ -719,14 +681,8 @@ class JopePolicyModelV3(nn.Module):
                     if self.fused_task_heads
                     else ["regression"]
                 ),
-                "lanes": (
-                    dict(TASK_LANE)
-                    if self.fused_task_heads
-                    else {"regression": "regression"}
-                ),
-                "aliased_tasks": (
-                    ["timeseries", "multiclass"] if self.fused_task_heads else []
-                ),
+                "lanes": (dict(TASK_LANE) if self.fused_task_heads else {"regression": "regression"}),
+                "aliased_tasks": (["timeseries", "multiclass"] if self.fused_task_heads else []),
                 "reward_ensemble_per_task": self.reward_k,
                 "separate_stability": self.fused_task_heads,
                 "separate_routing": self.fused_task_heads and self.routing_classes > 0,
@@ -840,9 +796,7 @@ def rows_to_policy_v3_batch(
     if not sequences:
         raise ValueError("no encodable rows in batch")
     rows = kept_rows
-    task_types = [
-        str((row.metadata or {}).get("task_type") or "regression") for row in rows
-    ]
+    task_types = [str((row.metadata or {}).get("task_type") or "regression") for row in rows]
     if any(task not in TASK_LANE for task in task_types):
         raise ValueError(
             "policy rows must use a known task_type "
@@ -880,9 +834,7 @@ def rows_to_policy_v3_batch(
         dtype=torch.float32,
         device=device,
     )
-    runtime = torch.tensor(
-        [_finite(row.cost_ms) for row in rows], dtype=torch.float32, device=device
-    )
+    runtime = torch.tensor([_finite(row.cost_ms) for row in rows], dtype=torch.float32, device=device)
 
     def _bad(row, task: str) -> float:
         """1.0 when a candidate is worse than its task's trivial baseline.
@@ -930,8 +882,7 @@ def rows_to_policy_v3_batch(
         device=device,
     )
     reward_pair_ids = [
-        str((row.metadata or {}).get("reward_pair_identity") or row.dataset_id)
-        for row in rows
+        str((row.metadata or {}).get("reward_pair_identity") or row.dataset_id) for row in rows
     ]
     if precomputed_rwr is not None:
         weight_list = [precomputed_rwr.get(id(row), 1.0) for row in rows]
@@ -941,12 +892,10 @@ def rows_to_policy_v3_batch(
         weight_list = [float((row.metadata or {}).get("rwr_weight_global") or 1.0) for row in rows]
     else:
         weight_list = rwr_weights(
+            [f"{task}:{identity}" for task, identity in zip(task_types, reward_pair_ids)],
             [
-                f"{task}:{identity}"
-                for task, identity in zip(task_types, reward_pair_ids)
-            ],
-            [
-                None if not math.isfinite(_finite((row.metadata or {}).get("score_robust", row.score)))
+                None
+                if not math.isfinite(_finite((row.metadata or {}).get("score_robust", row.score)))
                 else _finite((row.metadata or {}).get("score_robust", row.score))
                 for row in rows
             ],
@@ -955,15 +904,8 @@ def rows_to_policy_v3_batch(
     rwr_weight = torch.tensor(weight_list, dtype=torch.float32, device=device)
     bootstrap = torch.tensor(
         [
-            [
-                bootstrap_mask(
-                    f"{task}:{identity}", row.engine, canonical, k
-                )
-                for k in range(reward_k)
-            ]
-            for row, canonical, task, identity in zip(
-                rows, canonicals, task_types, reward_pair_ids
-            )
+            [bootstrap_mask(f"{task}:{identity}", row.engine, canonical, k) for k in range(reward_k)]
+            for row, canonical, task, identity in zip(rows, canonicals, task_types, reward_pair_ids)
         ],
         dtype=torch.bool,
         device=device,
@@ -982,7 +924,8 @@ def rows_to_policy_v3_batch(
         embedding=torch.tensor([row.embedding for row in rows], dtype=torch.float32, device=device),
         target_summary=torch.tensor(
             [
-                (row.target_embedding or [0.0] * 512)[:512] + [0.0] * max(0, 512 - len(row.target_embedding or []))
+                (row.target_embedding or [0.0] * 512)[:512]
+                + [0.0] * max(0, 512 - len(row.target_embedding or []))
                 for row in rows
             ],
             dtype=torch.float32,
@@ -1001,14 +944,8 @@ def rows_to_policy_v3_batch(
         bad_label=bad_label,
         bootstrap=bootstrap,
         canonicals=canonicals,
-        rank_pct=(
-            torch.tensor(rank_pct_vals, dtype=torch.float32, device=device) if has_rank else None
-        ),
-        is_self=(
-            torch.tensor(is_self_vals, dtype=torch.bool, device=device)
-            if any(is_self_vals)
-            else None
-        ),
+        rank_pct=(torch.tensor(rank_pct_vals, dtype=torch.float32, device=device) if has_rank else None),
+        is_self=(torch.tensor(is_self_vals, dtype=torch.bool, device=device) if any(is_self_vals) else None),
         former_best=(
             torch.tensor(former_best_vals, dtype=torch.float32, device=device)
             if any(math.isfinite(v) for v in former_best_vals)
@@ -1037,13 +974,9 @@ def _validate_action_vocab_compatibility(
     if not saved_tokens or saved_tokens == current_tokens:
         return
     if current_tokens[: len(saved_tokens)] != saved_tokens:
-        raise ValueError(
-            "action vocab drift: checkpoint tokens are not an exact current prefix"
-        )
+        raise ValueError("action vocab drift: checkpoint tokens are not an exact current prefix")
     if embedding_rows < len(current_tokens):
-        raise ValueError(
-            "action vocab extension exceeds the checkpoint embedding table"
-        )
+        raise ValueError("action vocab extension exceeds the checkpoint embedding table")
 
 
 def load_policy_v3(state: dict[str, Any]) -> JopePolicyModelV3:
@@ -1104,18 +1037,14 @@ def load_policy_v3(state: dict[str, Any]) -> JopePolicyModelV3:
     # SHAPES (conditional 3d inputs) — shape-mismatched tensors from older checkpoints
     # are skipped (those heads re-init and retrain) instead of crashing the load.
     current = model.state_dict()
-    filtered = {
-        k: v for k, v in state["model"].items()
-        if k in current and current[k].shape == v.shape
-    }
+    filtered = {k: v for k, v in state["model"].items() if k in current and current[k].shape == v.shape}
     # A silently-skipped CONTEXT tensor is the "lobotomy" failure class: the network still
     # loads, PyTorch reports nothing, and the dataset conditioning is random for the rest of
     # the run. Heads may re-init; the two context encoders may not.
     context_missing = sorted(
         key
         for key in current
-        if key.split(".")[0] in {"encoder", "reward_encoder", "ctx_proj"}
-        and key not in filtered
+        if key.split(".")[0] in {"encoder", "reward_encoder", "ctx_proj"} and key not in filtered
     )
     if context_missing:
         raise ValueError(

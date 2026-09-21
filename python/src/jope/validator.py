@@ -208,11 +208,16 @@ class RustValidator:
             # stdin -> the bridge exits cleanly.
             return [
                 "ssh",
-                "-o", "BatchMode=yes",
-                "-o", "ConnectTimeout=8",
-                "-o", "ControlMaster=auto",
-                "-o", f"ControlPath={ssh_control_path(self.ssh_host)}",
-                "-o", "ControlPersist=300",
+                "-o",
+                "BatchMode=yes",
+                "-o",
+                "ConnectTimeout=8",
+                "-o",
+                "ControlMaster=auto",
+                "-o",
+                f"ControlPath={ssh_control_path(self.ssh_host)}",
+                "-o",
+                "ControlPersist=300",
                 self.ssh_host,
                 *cmd,
             ]

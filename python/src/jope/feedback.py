@@ -37,11 +37,15 @@ def build_active_feedback_corpus(
     eval_path = Path(evaluation_jsonl)
     base_path = Path(base_corpus) if base_corpus is not None else art / "active_rows.jsonl"
     split_manifest = _read_json(art / "split_manifest.json")
-    split_datasets = split_manifest.get("datasets") if isinstance(split_manifest.get("datasets"), dict) else {}
+    split_datasets = (
+        split_manifest.get("datasets") if isinstance(split_manifest.get("datasets"), dict) else {}
+    )
     base_rows = []
     for row in (TrainingRow.from_json(item) for item in read_jsonl(base_path)):
         _strip_holdout_target_metadata(row)
-        split = str(row.metadata.get("split") or (split_datasets.get(row.dataset_id) or {}).get("split") or "train")
+        split = str(
+            row.metadata.get("split") or (split_datasets.get(row.dataset_id) or {}).get("split") or "train"
+        )
         if split != "train" and not allow_non_train:
             continue
         base_rows.append(row)
@@ -77,7 +81,12 @@ def _rows_from_feedback(data: dict, path: Path) -> list[TrainingRow]:
         if not genome:
             continue
         cv = item.get("cv") if isinstance(item.get("cv"), dict) else {}
-        score = cv.get("oof_r2") or cv.get("mean_r2") or item.get("score") or (data.get("metrics") or {}).get("r2")
+        score = (
+            cv.get("oof_r2")
+            or cv.get("mean_r2")
+            or item.get("score")
+            or (data.get("metrics") or {}).get("r2")
+        )
         rows.append(
             TrainingRow(
                 dataset_id=str(data.get("dataset_hash") or item.get("dataset_id") or path.stem),
@@ -123,7 +132,9 @@ def _rows_from_active_evaluations(
         valid_items.append((row, genome, entry))
     if rejected:
         examples = ", ".join(f"{dataset}:{split}" for dataset, split in rejected[:5])
-        raise ValueError(f"active feedback defaults to train split only; rejected {len(rejected)} non-train evaluations ({examples})")
+        raise ValueError(
+            f"active feedback defaults to train split only; rejected {len(rejected)} non-train evaluations ({examples})"
+        )
     validator = RustValidator()
     validations = validator.validate_many([genome for _, genome, _ in valid_items]) if valid_items else []
     rows: list[TrainingRow] = []
@@ -143,15 +154,25 @@ def _rows_from_active_evaluations(
         if incumbent_value is None:
             incumbent_value = entry.get("best_known_oof_r2")
         incumbent = _optional_float(incumbent_value)
-        delta = score - incumbent if incumbent is not None else _optional_float(item.get("oof_delta_vs_incumbent"))
+        delta = (
+            score - incumbent
+            if incumbent is not None
+            else _optional_float(item.get("oof_delta_vs_incumbent"))
+        )
         timings = item.get("timings") if isinstance(item.get("timings"), dict) else {}
         metadata = {
             "source": "active_eval",
             "dataset_hash": dataset_id,
-            "split": "train" if not allow_non_train else str(item.get("split") or entry.get("split") or "train"),
+            "split": "train"
+            if not allow_non_train
+            else str(item.get("split") or entry.get("split") or "train"),
             "vs_path": entry.get("vs_path") or template.metadata.get("vs_path"),
-            "train_csv": item.get("train_csv") or entry.get("train_csv") or template.metadata.get("train_csv"),
-            "train_target_vs": item.get("train_target_vs") or entry.get("train_target_vs") or template.metadata.get("train_target_vs"),
+            "train_csv": item.get("train_csv")
+            or entry.get("train_csv")
+            or template.metadata.get("train_csv"),
+            "train_target_vs": item.get("train_target_vs")
+            or entry.get("train_target_vs")
+            or template.metadata.get("train_target_vs"),
             "actions": actions,
             "candidate_rank": None,
             "rank_percentile": None,

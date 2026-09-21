@@ -18,8 +18,7 @@ from .eval_protocol import ProtocolRunner
 from .fitness_v2 import M_BOUND, M_STAR, TAU, episode_scores, model_rmse
 
 
-def candidate_margins(runner: ProtocolRunner, episodes: list[Episode]
-                      ) -> list[float]:
+def candidate_margins(runner: ProtocolRunner, episodes: list[Episode]) -> list[float]:
     """Per-episode mean bounded margin, in episode order (CRN identity)."""
     out = []
     for ep in episodes:
@@ -35,20 +34,17 @@ def paired_stats(cand: list[float], incumbent: list[float]) -> dict:
     ok = np.isfinite(a) & np.isfinite(b)
     d = a[ok] - b[ok]
     if len(d) < 8:
-        return {"n": int(len(d)), "delta": float("nan"), "se": float("nan"),
-                "wilcoxon_p": None}
+        return {"n": int(len(d)), "delta": float("nan"), "se": float("nan"), "wilcoxon_p": None}
     se = float(d.std(ddof=1) / np.sqrt(len(d)))
     try:
         from scipy.stats import wilcoxon
 
         nonzero = d[d != 0]
-        p = float(wilcoxon(nonzero, alternative="greater").pvalue) \
-            if len(nonzero) >= 8 else 1.0
+        p = float(wilcoxon(nonzero, alternative="greater").pvalue) if len(nonzero) >= 8 else 1.0
     except Exception:
         z = d.mean() / max(se, 1e-12)
         p = float(0.5 * math.erfc(z / math.sqrt(2)))
-    return {"n": int(len(d)), "delta": float(d.mean()), "se": se,
-            "wilcoxon_p": p}
+    return {"n": int(len(d)), "delta": float(d.mean()), "se": se, "wilcoxon_p": p}
 
 
 # ---- masked-gradient arm ---------------------------------------------------
@@ -63,8 +59,7 @@ def _model_rmse_torch(model, ep: Episode, device, centres) -> torch.Tensor:
     qx = torch.from_numpy(np.ascontiguousarray(ep.qry_x)).to(device)
     cyz = torch.from_numpy((cy - mu) / sd).to(device)
     x = torch.cat([cx, qx], 0).unsqueeze(1)
-    with torch.autocast(device_type=device.type, dtype=torch.bfloat16,
-                        enabled=device.type == "cuda"):
+    with torch.autocast(device_type=device.type, dtype=torch.bfloat16, enabled=device.type == "cuda"):
         logits = model(x, cyz.unsqueeze(1))
     pred_z = (torch.softmax(logits.float(), -1) @ centres).reshape(-1)
     pred = pred_z * sd + mu
@@ -72,8 +67,7 @@ def _model_rmse_torch(model, ep: Episode, device, centres) -> torch.Tensor:
     return torch.sqrt(((pred - target) ** 2).mean() + 1e-12)
 
 
-def _ipo_loss_torch(rmse_model: torch.Tensor, ep: Episode, device
-                    ) -> torch.Tensor:
+def _ipo_loss_torch(rmse_model: torch.Tensor, ep: Episode, device) -> torch.Tensor:
     opp = np.array([v for v in ep.zoo_rmse.values() if np.isfinite(v)])
     s_e = float(np.median(opp))
     if s_e <= 1e-12:
@@ -88,9 +82,16 @@ def _ipo_loss_torch(rmse_model: torch.Tensor, ep: Episode, device
     return (w * (m_t - M_STAR) ** 2).sum() / w.sum()
 
 
-def grad_arm_delta(model, engine, mask_blocks: np.ndarray,
-                   inner_episodes: list[Episode], device,
-                   k_steps: int = 8, batch: int = 16, lr: float = 3e-5) -> dict:
+def grad_arm_delta(
+    model,
+    engine,
+    mask_blocks: np.ndarray,
+    inner_episodes: list[Episode],
+    device,
+    k_steps: int = 8,
+    batch: int = 16,
+    lr: float = 3e-5,
+) -> dict:
     """Freeze 97%, AdamW the masked 3% on fresh disposable episodes; return
     the sparse delta and restore the model bit-exactly."""
 
@@ -123,9 +124,7 @@ def grad_arm_delta(model, engine, mask_blocks: np.ndarray,
         # backward PER EPISODE: grads accumulate, graphs free immediately —
         # summing losses first retains all 16 graphs at once (~>20GB, OOM).
         for ep in eps:
-            loss = _ipo_loss_torch(
-                _model_rmse_torch(model, ep, device, centres), ep, device
-            ) / len(eps)
+            loss = _ipo_loss_torch(_model_rmse_torch(model, ep, device, centres), ep, device) / len(eps)
             loss.backward()
         with torch.no_grad():
             for name, p in named.items():
@@ -145,8 +144,7 @@ def grad_arm_delta(model, engine, mask_blocks: np.ndarray,
             flat = engine._flat[name]
             idx_parts, val_parts = [], []
             for b in blks:
-                diff = (flat[b.start : b.end]
-                        - full_snapshot[name][b.start : b.end])
+                diff = flat[b.start : b.end] - full_snapshot[name][b.start : b.end]
                 idx_parts.append(np.arange(b.start, b.end, dtype=np.int64))
                 val_parts.append(diff.cpu().numpy())
             sparse[name] = (np.concatenate(idx_parts), np.concatenate(val_parts))

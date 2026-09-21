@@ -21,7 +21,15 @@ from .tokens import BOS, decode_tokens
 # Transforms that blow up dimensionality/instability when repeated (risk guard).
 _EXPLOSIVE = {
     "featmath": {"cheb", "poly_interact", "pair_prod", "bin_onehot", "rff_cos", "rff_sin"},
-    "newmath": {"cheb", "poly_interact", "rff_cos", "rff_sin", "phase_interference", "iterate", "logistic_map"},
+    "newmath": {
+        "cheb",
+        "poly_interact",
+        "rff_cos",
+        "rff_sin",
+        "phase_interference",
+        "iterate",
+        "logistic_map",
+    },
 }
 
 
@@ -156,8 +164,7 @@ def sample_sequences_batched(
     if n <= 0:
         raise ValueError("n must be positive")
     if target_summaries is not None and (
-        target_summaries.ndim != 2
-        or target_summaries.shape[0] != embeddings.shape[0]
+        target_summaries.ndim != 2 or target_summaries.shape[0] != embeddings.shape[0]
     ):
         raise ValueError("target summaries must match the embedding batch")
 
@@ -187,13 +194,9 @@ def sample_sequences_batched(
 
     live = [index for index, state in enumerate(states) if not state.is_done()]
     while live:
-        token_ids, pad_mask = pad_sequences(
-            [seqs[index] for index in live], device=device
-        )
+        token_ids, pad_mask = pad_sequences([seqs[index] for index in live], device=device)
         live_index = torch.tensor(live, dtype=torch.long, device=context.device)
-        step_logits = model.next_token_logits(
-            context.index_select(0, live_index), token_ids, pad_mask
-        )
+        step_logits = model.next_token_logits(context.index_select(0, live_index), token_ids, pad_mask)
         next_live: list[int] = []
         for row_index, sequence_index in enumerate(live):
             legal = states[sequence_index].legal_ids()
@@ -205,29 +208,18 @@ def sample_sequences_batched(
             if temperature <= 0.0:
                 token = int(masked.argmax().item())
             else:
-                probabilities = torch.softmax(
-                    masked / max(temperature, 1e-6), dim=-1
-                )
+                probabilities = torch.softmax(masked / max(temperature, 1e-6), dim=-1)
                 if 0.0 < top_p < 1.0:
                     sorted_probabilities, order = probabilities.sort(descending=True)
-                    keep = (
-                        sorted_probabilities.cumsum(-1) - sorted_probabilities < top_p
-                    )
+                    keep = sorted_probabilities.cumsum(-1) - sorted_probabilities < top_p
                     keep[0] = True
                     filtered = torch.zeros_like(probabilities)
                     filtered[order[keep]] = probabilities[order[keep]]
                     probabilities = filtered / filtered.sum()
-                token = int(
-                    torch.multinomial(
-                        probabilities, 1, generator=generator
-                    ).item()
-                )
+                token = int(torch.multinomial(probabilities, 1, generator=generator).item())
             states[sequence_index].advance(token)
             seqs[sequence_index].append(token)
-            if (
-                not states[sequence_index].is_done()
-                and len(seqs[sequence_index]) < max_len
-            ):
+            if not states[sequence_index].is_done() and len(seqs[sequence_index]) < max_len:
                 next_live.append(sequence_index)
         live = next_live
 
@@ -351,13 +343,18 @@ def propose_v3(
     valid: list[dict[str, Any]] = []
     disagreements = 0
     for cand, meta in zip(candidates, validations):
-        row = {**cand, **{k: meta.get(k) for k in ("valid", "canonical_genome", "head_type", "errors", "family_bitmap")}}
+        row = {
+            **cand,
+            **{k: meta.get(k) for k in ("valid", "canonical_genome", "head_type", "errors", "family_bitmap")},
+        }
         row.pop("actions", None)
         if not meta.get("valid"):
             disagreements += 1
             row["automaton_bridge_disagreement"] = True
             if candidate_audit is not None:
-                candidate_audit.append({k: row.get(k) for k in ("engine", "genome", "decoder", "valid", "errors")})
+                candidate_audit.append(
+                    {k: row.get(k) for k in ("engine", "genome", "decoder", "valid", "errors")}
+                )
             continue
         canonical = str(meta.get("canonical_genome"))
         key = (cand["engine"], canonical)
@@ -370,7 +367,9 @@ def propose_v3(
         if key in seen:
             row["candidate_filter"] = "duplicate_canonical"
             if candidate_audit is not None:
-                candidate_audit.append({k: row.get(k) for k in ("engine", "canonical_genome", "decoder", "candidate_filter")})
+                candidate_audit.append(
+                    {k: row.get(k) for k in ("engine", "canonical_genome", "decoder", "candidate_filter")}
+                )
             continue
         seen.add(key)
         valid.append(row)
@@ -479,7 +478,9 @@ def propose_v3(
     if reranker is not None:
         order = _rank_candidates_with_reranker(valid, n, stability_threshold)
     else:
-        order = rank_candidates(valid, n, stability_threshold, lambda i: float(valid[i].get("selection_key", 0.0)))
+        order = rank_candidates(
+            valid, n, stability_threshold, lambda i: float(valid[i].get("selection_key", 0.0))
+        )
     proposals: list[dict[str, Any]] = []
     all_candidates: list[dict[str, Any]] = []
     for rank, i in enumerate(order):
@@ -536,10 +537,14 @@ def _rank_candidates_with_reranker(
     base_order = sorted(
         range(len(valid)),
         key=lambda i: (
-            _row_numeric(valid[i], "selector_reranker_score", default=_row_numeric(valid[i], "selection_key")),
+            _row_numeric(
+                valid[i], "selector_reranker_score", default=_row_numeric(valid[i], "selection_key")
+            ),
             _row_numeric(valid[i], "selection_key"),
             _row_numeric(valid[i], "reward"),
-            -int(valid[i].get("proposal_index") if isinstance(valid[i].get("proposal_index"), int) else 10**9),
+            -int(
+                valid[i].get("proposal_index") if isinstance(valid[i].get("proposal_index"), int) else 10**9
+            ),
         ),
         reverse=True,
     )
@@ -596,7 +601,11 @@ def _rank_candidates_with_reranker(
     engines = sorted({str(row.get("engine") or "") for row in valid})
     underrepresented = sorted(engines, key=lambda e: (engine_counts.get(e, 0), e))
     for engine in underrepresented:
-        bucket = [i for i in base_order if i not in selected_set and safe(i) and str(valid[i].get("engine") or "") == engine]
+        bucket = [
+            i
+            for i in base_order
+            if i not in selected_set and safe(i) and str(valid[i].get("engine") or "") == engine
+        ]
         if bucket and add(bucket[0]):
             return selected + [i for i in base_order if i not in selected_set]
 
@@ -613,7 +622,11 @@ def _candidate_diversity_key_v3(
 ) -> str:
     transforms = [stage for stage in actions.get("transforms") or [] if isinstance(stage, dict)]
     first = str(transforms[0].get("op") if transforms else "none")
-    head = str(head_type or ((actions.get("head") or {}).get("op") if isinstance(actions.get("head"), dict) else "") or "unknown")
+    head = str(
+        head_type
+        or ((actions.get("head") or {}).get("op") if isinstance(actions.get("head"), dict) else "")
+        or "unknown"
+    )
     families = family_bitmap if isinstance(family_bitmap, dict) else {}
     active = sorted(str(k) for k, v in families.items() if v)
     family = active[0] if active else first

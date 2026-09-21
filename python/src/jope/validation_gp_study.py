@@ -112,9 +112,7 @@ class ValidationGpStudy:
             self.cfg.study_tag = f"validation_gp_{stamp}"
         self.prime_config = load_config()
         self.source_root = Path(self.cfg.root)
-        self.root = (
-            self.prime_config.cache / "validation_gp_datasets" / self.cfg.study_tag
-        )
+        self.root = self.prime_config.cache / "validation_gp_datasets" / self.cfg.study_tag
         self.art_dir = Path(self.cfg.art_dir)
         self.out_dir = Path(self.cfg.run_dir) / self.cfg.study_tag
         self.out_dir.mkdir(parents=True, exist_ok=True)
@@ -395,7 +393,9 @@ class ValidationGpStudy:
         if is_local_host(host):
             rc = run_logged(cmd, log_path)
         else:
-            rc = self._run_remote_jain(host, dataset, stage, model_name, seeds_path, log_path, status_path, cmd)
+            rc = self._run_remote_jain(
+                host, dataset, stage, model_name, seeds_path, log_path, status_path, cmd
+            )
         if rc != 0:
             raise RuntimeError(f"{stage} Jain failed for {dataset} on {host}; rc={rc}; log={log_path}")
         if not report_path.exists():
@@ -481,8 +481,7 @@ class ValidationGpStudy:
         local_cmd: list[str],
     ) -> int:
         remote_dir = (
-            f"{_PRIME_CONFIG.remote_scratch_root}/validation_gp/"
-            f"{self.cfg.study_tag}/{dataset}/{stage}"
+            f"{_PRIME_CONFIG.remote_scratch_root}/validation_gp/{self.cfg.study_tag}/{dataset}/{stage}"
         )
         remote_seeds = f"{remote_dir}/seeds.txt"
         remote_status = f"{remote_dir}/status.jsonl"
@@ -531,7 +530,9 @@ class ValidationGpStudy:
         subprocess.run(["rsync", "-a", f"{host}:{report}", str(report.parent) + "/"], check=False)
         return proc.returncode
 
-    def _robust_rerank(self, dataset: str, entry: dict[str, Any], candidates: list[str]) -> list[dict[str, Any]]:
+    def _robust_rerank(
+        self, dataset: str, entry: dict[str, Any], candidates: list[str]
+    ) -> list[dict[str, Any]]:
         rows = [
             {
                 "engine": "featmath",
@@ -754,8 +755,8 @@ class ValidationGpStudy:
             writer.writeheader()
             for row in results:
                 inc = row.get("incumbent") or {}
-                single_rmse = ((row.get("single_primary") or {}).get("rmse"))
-                ensemble_rmse = ((row.get("ensemble_secondary") or {}).get("rmse"))
+                single_rmse = (row.get("single_primary") or {}).get("rmse")
+                ensemble_rmse = (row.get("ensemble_secondary") or {}).get("rmse")
                 inc_rmse = inc.get("rmse")
                 writer.writerow(
                     {

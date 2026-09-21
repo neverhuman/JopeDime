@@ -28,8 +28,7 @@ class ExpansionAssemblyTests(unittest.TestCase):
     def test_legacy_emitters_cannot_create_assembly_evidence(self):
         with tempfile.TemporaryDirectory() as folder:
             output = Path(folder) / "index.json"
-            for emit in (lambda: e.canary_v5(output, ["new"]),
-                         lambda: e.v6_plan(["new"], output)):
+            for emit in (lambda: e.canary_v5(output, ["new"]), lambda: e.v6_plan(["new"], output)):
                 with self.assertRaisesRegex(ValueError, "retired"):
                     emit()
                 self.assertFalse(output.exists())
@@ -38,8 +37,10 @@ class ExpansionAssemblyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             output = Path(folder) / "successor.json"
             with self.assertRaisesRegex(ValueError, "assignment file"):
-                e.successor_from_growth(dict(sha256="ab" * 32,
-                    rows=[dict(family="new", partition="meta_train")], n_test=0), output)
+                e.successor_from_growth(
+                    dict(sha256="ab" * 32, rows=[dict(family="new", partition="meta_train")], n_test=0),
+                    output,
+                )
             self.assertFalse(output.exists())
 
     def test_live_families_are_excluded(self):

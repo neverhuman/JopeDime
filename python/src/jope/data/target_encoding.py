@@ -35,7 +35,11 @@ def encode_target_embedding(
     if encoder == "summary64":
         return summary64_embedding(read_train_targets(train_csv)).tolist()
     if encoder == "train_target_vs":
-        path = Path(train_target_vs) if train_target_vs is not None else Path(train_csv).with_name("train_target.vs")
+        path = (
+            Path(train_target_vs)
+            if train_target_vs is not None
+            else Path(train_csv).with_name("train_target.vs")
+        )
         return target_vs_embedding(path).tolist()
     if encoder == "neural64":
         path = Path(model_path or DEFAULT_NEURAL64)

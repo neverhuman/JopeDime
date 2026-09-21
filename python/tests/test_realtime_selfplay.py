@@ -96,12 +96,15 @@ def test_v1_quarantine_is_excluded_from_python_discovery_and_consumption(tmp_pat
         ("meta.json", "{}"),
     ):
         (source / name).write_text(contents)
-    assert discover(
-        source_root=source_root,
-        mirror_root=tmp_path / "mirror",
-        verify_mirror=False,
-        cache_root=cache_root,
-    ) == []
+    assert (
+        discover(
+            source_root=source_root,
+            mirror_root=tmp_path / "mirror",
+            verify_mirror=False,
+            cache_root=cache_root,
+        )
+        == []
+    )
 
     row = {
         "task": "regression",
@@ -147,9 +150,7 @@ def test_attempt_history_retains_stale_retirement_and_pair_can_be_reused(tmp_pat
         pairs=[pair],
     )
     registry.record_submission("2" * 64, "old", "old-job")
-    assert registry.supersede_unstarted(
-        "2" * 64, "old-job", retirement_receipt_sha256="3" * 64
-    ) == 1
+    assert registry.supersede_unstarted("2" * 64, "old-job", retirement_receipt_sha256="3" * 64) == 1
     assert registry.get(**pair)["state"] == "available"
     assert registry.reserve(**pair, owner="new", canonical_genome="(pipe X (ridge))")
     history = registry.attempt_history(**pair)
@@ -164,20 +165,21 @@ def test_attempt_history_retains_stale_retirement_and_pair_can_be_reused(tmp_pat
 def test_checked_unsubmitted_reservation_can_be_superseded(tmp_path):
     registry = PairRegistry(tmp_path / "pairs.sqlite")
     pair = identity()
-    assert registry.reserve(
-        **pair, owner="checked", canonical_genome="(pipe X (ridge))"
-    )
+    assert registry.reserve(**pair, owner="checked", canonical_genome="(pipe X (ridge))")
     registry.bind_manifest(
         owner="checked",
         manifest_path="/checked.json",
         manifest_sha256="5" * 64,
         pairs=[pair],
     )
-    assert registry.supersede_unstarted(
-        "5" * 64,
-        "checked-job",
-        retirement_receipt_sha256="6" * 64,
-    ) == 1
+    assert (
+        registry.supersede_unstarted(
+            "5" * 64,
+            "checked-job",
+            retirement_receipt_sha256="6" * 64,
+        )
+        == 1
+    )
     assert registry.get(**pair)["state"] == "available"
     history = registry.attempt_history(**pair)
     assert history[0]["state"] == "superseded_unstarted"
@@ -311,9 +313,7 @@ def test_freshness_holds_and_retires_only_confirmed_unstarted_jobs(tmp_path):
     preview = supervisor.preview_stale_retirement()
     # Unclaimed scheduler work is outside the supervisor's cancellation scope.
     assert preview["payload"]["preserved_started"] == []
-    result = supervisor.apply_stale_retirement(
-        preview["preview_receipt_sha256"], "retire-1"
-    )
+    result = supervisor.apply_stale_retirement(preview["preview_receipt_sha256"], "retire-1")
     assert result["held"] == 1
     assert result["retired"] == 1
     assert result["running_interrupted"] == 0
@@ -325,26 +325,18 @@ def test_freshness_holds_and_retires_only_confirmed_unstarted_jobs(tmp_path):
     assert registry.attempt_history(**pair)[0]["state"] == "superseded_unstarted"
     registry.close()
     assert (
-        sqlite3.connect(root / "ops" / "backlog.sqlite")
-        .execute("SELECT state FROM claims")
-        .fetchone()[0]
+        sqlite3.connect(root / "ops" / "backlog.sqlite").execute("SELECT state FROM claims").fetchone()[0]
         == "superseded_unstarted"
     )
-    assert supervisor.apply_stale_retirement(
-        preview["preview_receipt_sha256"], "retire-1"
-    ) == result
+    assert supervisor.apply_stale_retirement(preview["preview_receipt_sha256"], "retire-1") == result
     supervisor.close()
 
 
 def test_interrupted_cancelled_retirement_is_resumable(tmp_path):
-    root, scheduler, supervisor, pair, _ = freshness_fixture(
-        tmp_path, initial_state="cancelled"
-    )
+    root, scheduler, supervisor, pair, _ = freshness_fixture(tmp_path, initial_state="cancelled")
     supervisor.sync_checkpoint()
     preview = supervisor.preview_stale_retirement()
-    result = supervisor.apply_stale_retirement(
-        preview["preview_receipt_sha256"], "resume-cancel"
-    )
+    result = supervisor.apply_stale_retirement(preview["preview_receipt_sha256"], "resume-cancel")
     assert result["held"] == 0
     assert result["retired"] == 1
     registry = PairRegistry(root / "ops" / "pair-registry.sqlite")
@@ -408,9 +400,9 @@ def test_micro_cohort_is_deterministic_balanced_and_lane_exact(tmp_path, monkeyp
     entries = datasets()
     sealed_families = {"regression-family-000", "binary-family-000"}
     sealed_catalog = tmp_path / "synthetic-sealed-catalog.json"
-    sealed_catalog.write_text(json.dumps({
-        "entries": [{"source_family": family} for family in sorted(sealed_families)]
-    }))
+    sealed_catalog.write_text(
+        json.dumps({"entries": [{"source_family": family} for family in sorted(sealed_families)]})
+    )
     monkeypatch.setattr(wave_module, "SEALED_COHORT", sealed_catalog)
     monkeypatch.delenv("JOPE_MICRO_COHORT_OPTIONAL_TASKS", raising=False)
     first = select_micro_cohort(entries, {}, wave_id="strict-wave-000007")
@@ -494,13 +486,10 @@ def test_expanded_cache_resumes_and_catalog_v2_validates(tmp_path):
         catalog_root=tmp_path / "catalog",
         tranche_id="tranche-test",
         context_encoder=lambda cache, task: (
-            hashlib.sha256(f"{task}:{cache.name}".encode()).digest()
-            * (8192 // 32)
+            hashlib.sha256(f"{task}:{cache.name}".encode()).digest() * (8192 // 32)
         ),
     )
-    authority = validate_catalog_manifest(
-        tmp_path / "catalog" / "current.json"
-    )
+    authority = validate_catalog_manifest(tmp_path / "catalog" / "current.json")
     assert authority["catalog_version"] == 2
     assert authority["task_counts"] == {
         "regression": 1,
@@ -561,9 +550,7 @@ def test_adaptive_fitness_fits_train_once_and_scores_test_without_cv(tmp_path):
     train.write_text("0,0\n1,1\n")
     test.write_text("2,2\n3,3\n")
     estimator = SpyEstimator()
-    result = evaluate_adaptive(
-        "regression", train, test, lambda: estimator
-    )
+    result = evaluate_adaptive("regression", train, test, lambda: estimator)
     assert len(estimator.fit_rows[0]) == 2
     assert estimator.predict_rows == [[2.0], [3.0]]
     assert result["score"] == 1.0
@@ -644,18 +631,19 @@ def test_compile_cache_is_dataset_fitted_and_finalists_are_bounded():
     ]
     finalists = compiled_finalists(rows, {("regression", "d"): 0.15})
     assert [row["score"] for row in finalists] == [0.3, 0.2]
-    assert exact_parity([0.0], [0.0], interpreted_score=1.0, compiled_score=1.0)[
-        "qualified"
-    ]
+    assert exact_parity([0.0], [0.0], interpreted_score=1.0, compiled_score=1.0)["qualified"]
 
 
 def test_xbabe4_slot_target_ramp_and_three_sample_rollback():
     policy = (
-        Path(__file__).parents[2] / "crates" / "jope-campaigns" / "manifests" / "selfplay" / "scq-nodes.v3.toml"
+        Path(__file__).parents[2]
+        / "crates"
+        / "jope-campaigns"
+        / "manifests"
+        / "selfplay"
+        / "scq-nodes.v3.toml"
     )
-    assert validate_selfplay_policy(policy)["nodes"]["xbabe4"][
-        "cpu_job_slot_multiplier"
-    ] == 2.0
+    assert validate_selfplay_policy(policy)["nodes"]["xbabe4"]["cpu_job_slot_multiplier"] == 2.0
     assert node_slot_target(20, 2.0) == 40
     state = {
         "stage": "baseline",
@@ -702,9 +690,7 @@ def test_gp_export_has_all_64_and_injection_preserves_budget(tmp_path):
                 "score": slot / 64,
             }
         )
-    proposals.write_text(
-        "".join(json.dumps(row) + "\n" for row in rows)
-    )
+    proposals.write_text("".join(json.dumps(row) + "\n" for row in rows))
     exported = export_gp_seeds(
         proposals,
         task="regression",

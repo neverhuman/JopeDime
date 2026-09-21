@@ -135,9 +135,7 @@ class ReceiptStore:
         finally:
             temporary.unlink(missing_ok=True)
 
-    def import_all(
-        self, receipts: Iterable[Mapping[str, Any]]
-    ) -> dict[str, int]:
+    def import_all(self, receipts: Iterable[Mapping[str, Any]]) -> dict[str, int]:
         inserted = duplicates = 0
         for receipt in receipts:
             _, created = self.append(receipt)

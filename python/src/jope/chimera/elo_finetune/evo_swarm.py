@@ -19,15 +19,15 @@ from .evo_blocks import MODULE_GROUPS
 
 @dataclass
 class SwarmConfig:
-    eta: float = 0.12          # PBIL learning rate
-    beta: float = 0.7          # velocity momentum
-    gamma: float = 0.06        # velocity contribution
-    rho: float = 0.10          # uniform exploration floor
+    eta: float = 0.12  # PBIL learning rate
+    beta: float = 0.7  # velocity momentum
+    gamma: float = 0.06  # velocity contribution
+    rho: float = 0.10  # uniform exploration floor
     rho_max: float = 0.30
-    p_cap_mult: float = 50.0   # max p_b = cap_mult / B
+    p_cap_mult: float = 50.0  # max p_b = cap_mult / B
     top_frac: float = 0.25
-    credit_ewma: float = 0.9   # per-block signed credit smoothing (TUI)
-    fifth_lo: float = 0.15     # 1/5th rule bounds on success rate
+    credit_ewma: float = 0.9  # per-block signed credit smoothing (TUI)
+    fifth_lo: float = 0.15  # 1/5th rule bounds on success rate
     fifth_hi: float = 0.25
     fifth_step: float = 1.15
     g_clip: tuple = (0.5, 1.5)
@@ -39,7 +39,7 @@ class Swarm:
         self.n = n_blocks
         self.p = np.full(n_blocks, 1.0 / n_blocks)
         self.v = np.zeros(n_blocks)
-        self.credit = np.zeros(n_blocks)          # signed EWMA (TUI diagnostic)
+        self.credit = np.zeros(n_blocks)  # signed EWMA (TUI diagnostic)
         self.credit_count = np.zeros(n_blocks)
         self.sigma_groups = np.ones(len(MODULE_GROUPS))
         self.success_window: list[int] = []
@@ -79,8 +79,9 @@ class Swarm:
         # signed per-block credit EWMA (rendering only, never sampling)
         for unit in units:
             blocks = unit["mask_blocks"]
-            self.credit[blocks] = (cfg.credit_ewma * self.credit[blocks]
-                                   + (1 - cfg.credit_ewma) * unit["delta"])
+            self.credit[blocks] = (
+                cfg.credit_ewma * self.credit[blocks] + (1 - cfg.credit_ewma) * unit["delta"]
+            )
             self.credit_count[blocks] += 1
 
     def fifth_rule(self, successes: int, attempts: int) -> None:
@@ -94,21 +95,25 @@ class Swarm:
             return
         rate = s / t
         if rate > self.cfg.fifth_hi:
-            self.sigma_groups = np.clip(self.sigma_groups * self.cfg.fifth_step,
-                                        *self.cfg.g_clip)
+            self.sigma_groups = np.clip(self.sigma_groups * self.cfg.fifth_step, *self.cfg.g_clip)
         elif rate < self.cfg.fifth_lo:
-            self.sigma_groups = np.clip(self.sigma_groups / self.cfg.fifth_step,
-                                        *self.cfg.g_clip)
+            self.sigma_groups = np.clip(self.sigma_groups / self.cfg.fifth_step, *self.cfg.g_clip)
 
     def success_rate(self) -> float:
         t = sum(b for _, b in self.success_window)
         return (sum(a for a, _ in self.success_window) / t) if t else 0.0
 
     def save(self, path: str) -> None:
-        np.savez(path, p=self.p, v=self.v, credit=self.credit,
-                 credit_count=self.credit_count, sigma_groups=self.sigma_groups,
-                 rho=self.rho,
-                 success_window=np.array(self.success_window or [(0, 0)]))
+        np.savez(
+            path,
+            p=self.p,
+            v=self.v,
+            credit=self.credit,
+            credit_count=self.credit_count,
+            sigma_groups=self.sigma_groups,
+            rho=self.rho,
+            success_window=np.array(self.success_window or [(0, 0)]),
+        )
 
     @classmethod
     def load(cls, path: str, n_blocks: int) -> Swarm:

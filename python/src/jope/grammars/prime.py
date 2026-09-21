@@ -91,9 +91,7 @@ def _param(entry: dict[str, Any]) -> ParamSpec:
 
 
 def _cost_class(cost: int) -> str:
-    return {0: "cheap", 1: "cheap", 2: "medium", 3: "medium", 4: "expensive"}.get(
-        int(cost), "extreme"
-    )
+    return {0: "cheap", 1: "cheap", 2: "medium", 3: "medium", 4: "expensive"}.get(int(cost), "extreme")
 
 
 def _op(entry: dict[str, Any]) -> OpSpec:
@@ -130,9 +128,7 @@ def _op(entry: dict[str, Any]) -> OpSpec:
 def _prime_transform_entries(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Select Prime transforms by canonical registry metadata, in wire-ID order."""
     selected = [
-        entry
-        for entry in entries
-        if entry.get("role") == "transform" and "prime" in entry.get("tags", [])
+        entry for entry in entries if entry.get("role") == "transform" and "prime" in entry.get("tags", [])
     ]
     if not selected:
         raise ValueError("Prime registry exposes no transforms tagged 'prime'")

@@ -218,15 +218,23 @@ def _values_from_npz(record: DatasetRecord, npz: Mapping[str, np.ndarray], indic
     return np.asarray(npz["values"], dtype=np.float32)[indices]
 
 
-def _sample_windows(records: Sequence[DatasetRecord], cfg: FusedTrainingConfig) -> tuple[list[FusedWindow], list[str]]:
+def _sample_windows(
+    records: Sequence[DatasetRecord], cfg: FusedTrainingConfig
+) -> tuple[list[FusedWindow], list[str]]:
     windows: list[FusedWindow] = []
     feature_names: list[str] | None = None
     for record in records:
         with np.load(record.cache_path, allow_pickle=False) as npz:
-            cache_profile = np.asarray(npz["profile"], dtype=np.float32) if cfg.include_cache_profile else None
+            cache_profile = (
+                np.asarray(npz["profile"], dtype=np.float32) if cfg.include_cache_profile else None
+            )
             for view_index in range(cfg.views_per_record):
-                rng = np.random.default_rng(stable_seed("fusion-window", cfg.seed, record.dataset_id, view_index, cfg.window_size))
-                indices, effective_count, replacement_fraction = sample_indices(record.length, cfg.window_size, rng)
+                rng = np.random.default_rng(
+                    stable_seed("fusion-window", cfg.seed, record.dataset_id, view_index, cfg.window_size)
+                )
+                indices, effective_count, replacement_fraction = sample_indices(
+                    record.length, cfg.window_size, rng
+                )
                 values = np.asarray(_values_from_npz(record, npz, indices), dtype=np.float32)
                 features, names = summarize_target_window(
                     values,
@@ -259,7 +267,9 @@ def _sample_windows(records: Sequence[DatasetRecord], cfg: FusedTrainingConfig) 
 
 def _signature_from_feature_stack(stack: np.ndarray) -> np.ndarray:
     x = np.nan_to_num(np.asarray(stack, dtype=np.float32), nan=0.0, posinf=0.0, neginf=0.0)
-    return np.concatenate([x.mean(axis=0), x.std(axis=0), x.min(axis=0), x.max(axis=0)]).astype(np.float32, copy=False)
+    return np.concatenate([x.mean(axis=0), x.std(axis=0), x.min(axis=0), x.max(axis=0)]).astype(
+        np.float32, copy=False
+    )
 
 
 def _record_signatures(
@@ -271,11 +281,17 @@ def _record_signatures(
     feature_names: list[str] | None = None
     for record in records:
         with np.load(record.cache_path, allow_pickle=False) as npz:
-            cache_profile = np.asarray(npz["profile"], dtype=np.float32) if cfg.include_cache_profile else None
+            cache_profile = (
+                np.asarray(npz["profile"], dtype=np.float32) if cfg.include_cache_profile else None
+            )
             rows: list[np.ndarray] = []
             for view_index in range(cfg.signature_views):
-                rng = np.random.default_rng(stable_seed("fusion-signature", cfg.seed, record.dataset_id, view_index, cfg.window_size))
-                indices, effective_count, replacement_fraction = sample_indices(record.length, cfg.window_size, rng)
+                rng = np.random.default_rng(
+                    stable_seed("fusion-signature", cfg.seed, record.dataset_id, view_index, cfg.window_size)
+                )
+                indices, effective_count, replacement_fraction = sample_indices(
+                    record.length, cfg.window_size, rng
+                )
                 values = np.asarray(_values_from_npz(record, npz, indices), dtype=np.float32)
                 features, names = summarize_target_window(
                     values,
@@ -309,7 +325,9 @@ def _raw_signature_from_values(
     include_cache_profile: bool,
 ) -> tuple[np.ndarray, np.ndarray, list[str], int, int, float]:
     task_id = normalize_task(task)
-    arr = np.asarray(list(values) if not isinstance(values, np.ndarray) else values, dtype=np.float32).reshape(-1)
+    arr = np.asarray(
+        list(values) if not isinstance(values, np.ndarray) else values, dtype=np.float32
+    ).reshape(-1)
     arr = arr[np.isfinite(arr)]
     if arr.size == 0:
         raise ValueError("Cannot encode an empty target")
@@ -324,7 +342,9 @@ def _raw_signature_from_values(
     effective_values: list[int] = []
     replacement_values: list[float] = []
     for view_index in range(max(1, int(signature_views))):
-        rng = np.random.default_rng(stable_seed("fusion-signature-inference", seed, task_id, original_length, view_index, window_size))
+        rng = np.random.default_rng(
+            stable_seed("fusion-signature-inference", seed, task_id, original_length, view_index, window_size)
+        )
         indices, effective_count, replacement_fraction = sample_indices(original_length, window_size, rng)
         features, feature_names = summarize_target_window(
             arr[indices],
@@ -354,7 +374,9 @@ def _raw_signature_from_values(
     )
 
 
-def _fit_signature_vectorizer(signatures: Mapping[str, np.ndarray], component_dim: int, seed: int) -> dict[str, object]:
+def _fit_signature_vectorizer(
+    signatures: Mapping[str, np.ndarray], component_dim: int, seed: int
+) -> dict[str, object]:
     from sklearn.decomposition import TruncatedSVD
     from sklearn.preprocessing import StandardScaler
 
@@ -380,7 +402,9 @@ def _fit_signature_vectorizer(signatures: Mapping[str, np.ndarray], component_di
     }
 
 
-def _transform_signatures(vectorizer: Mapping[str, object], signatures: Mapping[str, np.ndarray]) -> dict[str, np.ndarray]:
+def _transform_signatures(
+    vectorizer: Mapping[str, object], signatures: Mapping[str, np.ndarray]
+) -> dict[str, np.ndarray]:
     keys = sorted(signatures)
     if not keys:
         return {}
@@ -412,11 +436,19 @@ def _encode_neural_windows(
     batch_size = max(1, int(batch_size))
     for start in range(0, len(windows), batch_size):
         chunk = windows[start : start + batch_size]
-        values = torch.from_numpy(np.stack([window.values for window in chunk]).astype(np.float32, copy=False)).to(torch_device)
+        values = torch.from_numpy(
+            np.stack([window.values for window in chunk]).astype(np.float32, copy=False)
+        ).to(torch_device)
         task = torch.tensor([window.task for window in chunk], device=torch_device, dtype=torch.long)
-        original_length = torch.tensor([window.original_length for window in chunk], device=torch_device, dtype=torch.float32)
-        effective_count = torch.tensor([window.effective_count for window in chunk], device=torch_device, dtype=torch.float32)
-        replacement_fraction = torch.tensor([window.replacement_fraction for window in chunk], device=torch_device, dtype=torch.float32)
+        original_length = torch.tensor(
+            [window.original_length for window in chunk], device=torch_device, dtype=torch.float32
+        )
+        effective_count = torch.tensor(
+            [window.effective_count for window in chunk], device=torch_device, dtype=torch.float32
+        )
+        replacement_fraction = torch.tensor(
+            [window.replacement_fraction for window in chunk], device=torch_device, dtype=torch.float32
+        )
         mask = torch.ones_like(values)
         out = model(
             values,
@@ -464,12 +496,16 @@ def _batch_from_components(
         tasks=np.asarray([window.task for window in windows], dtype=np.int64),
         original_lengths=np.asarray([window.original_length for window in windows], dtype=np.float64),
         effective_counts=np.asarray([window.effective_count for window in windows], dtype=np.float64),
-        replacement_fractions=np.asarray([window.replacement_fraction for window in windows], dtype=np.float64),
+        replacement_fractions=np.asarray(
+            [window.replacement_fraction for window in windows], dtype=np.float64
+        ),
     )
 
 
 def _cosine_scores(vectors: np.ndarray, pairs: Sequence[PairIndex]) -> np.ndarray:
-    return np.asarray([float(np.dot(vectors[pair.left], vectors[pair.right])) for pair in pairs], dtype=np.float64)
+    return np.asarray(
+        [float(np.dot(vectors[pair.left], vectors[pair.right])) for pair in pairs], dtype=np.float64
+    )
 
 
 def _pair_features_matrix(left: np.ndarray, right: np.ndarray) -> np.ndarray:
@@ -514,7 +550,9 @@ def _pair_features_matrix(left: np.ndarray, right: np.ndarray) -> np.ndarray:
     return np.nan_to_num(out.astype(np.float32, copy=False), nan=0.0, posinf=0.0, neginf=0.0)
 
 
-def _pair_matrix_from_feature_matrix(features: np.ndarray, pairs: Sequence[PairIndex], *, chunk_size: int | None = None) -> tuple[np.ndarray, np.ndarray]:
+def _pair_matrix_from_feature_matrix(
+    features: np.ndarray, pairs: Sequence[PairIndex], *, chunk_size: int | None = None
+) -> tuple[np.ndarray, np.ndarray]:
     if not pairs:
         raise ValueError("At least one pair is required")
     left_idx = np.asarray([pair.left for pair in pairs], dtype=np.int64)
@@ -564,7 +602,10 @@ def _model_pair_scores_for_batch(
     batch: _BatchEncoding,
     pairs: Sequence[PairIndex],
 ) -> np.ndarray:
-    indices = tuple(int(index) for index in model_bundle.get("selected_feature_indices", range(batch.window_features.shape[1])))
+    indices = tuple(
+        int(index)
+        for index in model_bundle.get("selected_feature_indices", range(batch.window_features.shape[1]))
+    )
     features = batch.window_features[:, np.asarray(indices, dtype=np.int64)]
     return _score_pairs_from_feature_matrix(model_bundle["model"], features, pairs, chunk_size=8192)
 
@@ -576,7 +617,10 @@ def _model_retrieval_for_batch(
 ) -> dict[str, float]:
     if not queries:
         return {}
-    indices = tuple(int(index) for index in model_bundle.get("selected_feature_indices", range(batch.window_features.shape[1])))
+    indices = tuple(
+        int(index)
+        for index in model_bundle.get("selected_feature_indices", range(batch.window_features.shape[1]))
+    )
     features = batch.window_features[:, np.asarray(indices, dtype=np.int64)]
     all_pairs: list[PairIndex] = []
     sizes: list[int] = []
@@ -634,15 +678,23 @@ def _fit_classical_models(
     specs = _model_specs(base_requested, cfg.seed, cfg.n_jobs)
     windows_by_split = {split: _window_features(windows) for split, windows in sampled.items()}
     full_indices = tuple(range(len(feature_names)))
-    selected = {split: select_window_features(windows, full_indices) for split, windows in windows_by_split.items()}
+    selected = {
+        split: select_window_features(windows, full_indices) for split, windows in windows_by_split.items()
+    }
     selected_features = {
         split: np.stack([window.features for window in windows]).astype(np.float32, copy=False)
         for split, windows in selected.items()
     }
     pair_names = pair_feature_names(feature_names)
-    x_train, y_train = _pair_matrix_from_feature_matrix(selected_features["train"], pair_indices["train"], chunk_size=8192)
-    x_val, y_val = _pair_matrix_from_feature_matrix(selected_features["val"], pair_indices["val"], chunk_size=8192)
-    x_test, y_test = _pair_matrix_from_feature_matrix(selected_features["test"], pair_indices["test"], chunk_size=8192)
+    x_train, y_train = _pair_matrix_from_feature_matrix(
+        selected_features["train"], pair_indices["train"], chunk_size=8192
+    )
+    x_val, y_val = _pair_matrix_from_feature_matrix(
+        selected_features["val"], pair_indices["val"], chunk_size=8192
+    )
+    x_test, y_test = _pair_matrix_from_feature_matrix(
+        selected_features["test"], pair_indices["test"], chunk_size=8192
+    )
 
     bundles: dict[str, Mapping[str, object]] = {}
     reports: dict[str, object] = {}
@@ -652,8 +704,12 @@ def _fit_classical_models(
         model.fit(x_train, y_train)
         val_scores = _score_model(model, x_val)
         test_scores = _score_model(model, x_test)
-        val_retrieval = _classical_retrieval_from_features(model, selected_features["val"], retrieval_queries["val"])
-        test_retrieval = _classical_retrieval_from_features(model, selected_features["test"], retrieval_queries["test"])
+        val_retrieval = _classical_retrieval_from_features(
+            model, selected_features["val"], retrieval_queries["val"]
+        )
+        test_retrieval = _classical_retrieval_from_features(
+            model, selected_features["test"], retrieval_queries["test"]
+        )
         artifact_name = _model_artifact_name(model_name)
         model_path = model_dir / f"{artifact_name}.joblib"
         bundle = {
@@ -667,7 +723,9 @@ def _fit_classical_models(
         joblib.dump(bundle, model_path)
         bundles[model_name] = {**bundle, "model_path": str(model_path)}
         reports[model_name] = {
-            **_score_report_with_retrieval(y_val, val_scores, y_test, test_scores, val_retrieval, test_retrieval),
+            **_score_report_with_retrieval(
+                y_val, val_scores, y_test, test_scores, val_retrieval, test_retrieval
+            ),
             "model_path": str(model_path),
             "fit_seconds": time.time() - started,
         }
@@ -680,8 +738,12 @@ def _fit_classical_models(
             ensemble = WeightedScoreEnsemble([(name, fitted[name]) for name in member_names], weights)
             val_scores = _score_model(ensemble, x_val)
             test_scores = _score_model(ensemble, x_test)
-            val_retrieval = _classical_retrieval_from_features(ensemble, selected_features["val"], retrieval_queries["val"])
-            test_retrieval = _classical_retrieval_from_features(ensemble, selected_features["test"], retrieval_queries["test"])
+            val_retrieval = _classical_retrieval_from_features(
+                ensemble, selected_features["val"], retrieval_queries["val"]
+            )
+            test_retrieval = _classical_retrieval_from_features(
+                ensemble, selected_features["test"], retrieval_queries["test"]
+            )
             model_path = model_dir / "ensemble.joblib"
             bundle = {
                 "model": ensemble,
@@ -696,7 +758,9 @@ def _fit_classical_models(
             joblib.dump(bundle, model_path)
             bundles["ensemble"] = {**bundle, "model_path": str(model_path)}
             reports["ensemble"] = {
-                **_score_report_with_retrieval(y_val, val_scores, y_test, test_scores, val_retrieval, test_retrieval),
+                **_score_report_with_retrieval(
+                    y_val, val_scores, y_test, test_scores, val_retrieval, test_retrieval
+                ),
                 "model_path": str(model_path),
                 "member_names": member_names,
                 "weights": weights.tolist(),
@@ -915,10 +979,7 @@ def _fit_meta_candidates(
         }
         for split in ("train", "val", "test")
     }
-    retrieval_flat = {
-        split: _flatten_retrieval_pairs(retrieval_queries[split])
-        for split in ("val", "test")
-    }
+    retrieval_flat = {split: _flatten_retrieval_pairs(retrieval_queries[split]) for split in ("val", "test")}
     retrieval_classical_scores = {
         split: {
             name: (
@@ -937,9 +998,23 @@ def _fit_meta_candidates(
         train_fused_scores = _cosine_scores(train_batch.vectors, pair_indices["train"])
         val_fused_scores = _cosine_scores(val_batch.vectors, pair_indices["val"])
         test_fused_scores = _cosine_scores(test_batch.vectors, pair_indices["test"])
-        x_train = _meta_features(train_batch, pair_indices["train"], classical_pair_scores["train"], classical_names, train_fused_scores)
-        x_val = _meta_features(val_batch, pair_indices["val"], classical_pair_scores["val"], classical_names, val_fused_scores)
-        x_test = _meta_features(test_batch, pair_indices["test"], classical_pair_scores["test"], classical_names, test_fused_scores)
+        x_train = _meta_features(
+            train_batch,
+            pair_indices["train"],
+            classical_pair_scores["train"],
+            classical_names,
+            train_fused_scores,
+        )
+        x_val = _meta_features(
+            val_batch, pair_indices["val"], classical_pair_scores["val"], classical_names, val_fused_scores
+        )
+        x_test = _meta_features(
+            test_batch,
+            pair_indices["test"],
+            classical_pair_scores["test"],
+            classical_names,
+            test_fused_scores,
+        )
 
         for kind in ("logistic", "hist_gbdt"):
             model = _fit_meta_model(kind, cfg.seed)
@@ -977,7 +1052,9 @@ def _fit_meta_candidates(
             joblib.dump(artifact, artifact_path)
             artifacts[key] = {**artifact, "artifact_path": str(artifact_path)}
             reports[key] = {
-                **_score_report_with_retrieval(y_val, val_scores, y_test, test_scores, val_retrieval, test_retrieval),
+                **_score_report_with_retrieval(
+                    y_val, val_scores, y_test, test_scores, val_retrieval, test_retrieval
+                ),
                 "kind": kind,
                 "weight_key": weight_key,
                 "artifact_path": str(artifact_path),
@@ -999,7 +1076,9 @@ def _meta_retrieval(
         name: _model_pair_scores_for_batch(bundle, batch, all_pairs)
         for name, bundle in classical_bundles.items()
     }
-    return _meta_retrieval_from_flat(model, batch, queries, all_pairs, sizes, classical_scores, classical_names)
+    return _meta_retrieval_from_flat(
+        model, batch, queries, all_pairs, sizes, classical_scores, classical_names
+    )
 
 
 def _flatten_retrieval_pairs(queries: Sequence[RetrievalQuery]) -> tuple[list[PairIndex], list[int]]:
@@ -1074,7 +1153,9 @@ def _write_bundle_manifest(
         "vector_dim": int(cfg.vector_dim),
         "classical_component_dim": int(cfg.classical_component_dim),
         "feature_names": list(feature_names),
-        "signature_feature_names": [f"{agg}:{name}" for agg in ("mean", "std", "min", "max") for name in feature_names],
+        "signature_feature_names": [
+            f"{agg}:{name}" for agg in ("mean", "std", "min", "max") for name in feature_names
+        ],
         "vectorizer": {
             "artifact": vectorizer_artifact,
             "signature_dim": int(vectorizer.get("signature_dim", 0)),
@@ -1086,13 +1167,16 @@ def _write_bundle_manifest(
             "final": checkpoint_final,
         },
         "classical_models": {
-            name: os.path.relpath(str(bundle["model_path"]), str(bundle_dir)) for name, bundle in classical_bundles.items()
+            name: os.path.relpath(str(bundle["model_path"]), str(bundle_dir))
+            for name, bundle in classical_bundles.items()
         },
         "vector_weights": [float(x) for x in vector_weights],
         "scorer": dict(scorer),
         "report": dict(report),
     }
-    (bundle_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    (bundle_dir / "manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
 
 def _copy_checkpoints(bundle_dir: Path, best_checkpoint: Path, final_checkpoint: Path) -> tuple[str, str]:
@@ -1170,18 +1254,28 @@ def _train_best_bundle(
     signatures, _, signature_feature_names = _record_signatures(signature_records, cfg)
     if signature_feature_names != feature_names:
         raise RuntimeError("Signature feature names do not match sampled window feature names")
-    vectorizer = _fit_signature_vectorizer({record.dataset_id: signatures[record.dataset_id] for record in records_by_split["train"]}, cfg.classical_component_dim, cfg.seed)
+    vectorizer = _fit_signature_vectorizer(
+        {record.dataset_id: signatures[record.dataset_id] for record in records_by_split["train"]},
+        cfg.classical_component_dim,
+        cfg.seed,
+    )
     component_by_record = _transform_signatures(vectorizer, signatures)
     vectorizer_path = bundle_dir / "fused_vectorizer.joblib"
     joblib.dump({**vectorizer, "feature_names": feature_names}, vectorizer_path)
 
-    classical_bundles, classical_reports = _fit_classical_models(bundle_dir, cfg, sampled, feature_names, pair_indices, retrieval_queries)
+    classical_bundles, classical_reports = _fit_classical_models(
+        bundle_dir, cfg, sampled, feature_names, pair_indices, retrieval_queries
+    )
     best_embeddings = {
-        split: _encode_neural_windows(cfg.best_checkpoint, windows, device=cfg.device, batch_size=cfg.batch_size)
+        split: _encode_neural_windows(
+            cfg.best_checkpoint, windows, device=cfg.device, batch_size=cfg.batch_size
+        )
         for split, windows in sampled.items()
     }
     final_embeddings = {
-        split: _encode_neural_windows(cfg.final_checkpoint, windows, device=cfg.device, batch_size=cfg.batch_size)
+        split: _encode_neural_windows(
+            cfg.final_checkpoint, windows, device=cfg.device, batch_size=cfg.batch_size
+        )
         for split, windows in sampled.items()
     }
 
@@ -1223,9 +1317,17 @@ def _train_best_bundle(
     )
 
     best_meta_key = max(meta_reports, key=lambda key: float(meta_reports[key].get("validation_score", -1.0)))
-    best_vector_key = max(vector_reports, key=lambda key: float(vector_reports[key].get("validation_score", -1.0)))
-    best_classical_name = max(classical_reports, key=lambda key: float(classical_reports[key].get("validation_score", -1.0)))
-    hist_score = float(classical_reports.get("hist_gbdt", {}).get("validation_score", -1.0)) if isinstance(classical_reports, Mapping) else -1.0
+    best_vector_key = max(
+        vector_reports, key=lambda key: float(vector_reports[key].get("validation_score", -1.0))
+    )
+    best_classical_name = max(
+        classical_reports, key=lambda key: float(classical_reports[key].get("validation_score", -1.0))
+    )
+    hist_score = (
+        float(classical_reports.get("hist_gbdt", {}).get("validation_score", -1.0))
+        if isinstance(classical_reports, Mapping)
+        else -1.0
+    )
     best_classical_score = float(classical_reports[best_classical_name].get("validation_score", -1.0))
     best_meta_score = float(meta_reports[best_meta_key].get("validation_score", -1.0))
     fusion_wins = best_meta_score > max(hist_score, best_classical_score)
@@ -1235,7 +1337,9 @@ def _train_best_bundle(
 
     scorer_artifact = None
     if fusion_wins:
-        scorer_artifact = _relative_artifact(bundle_dir, Path(str(meta_artifacts[best_meta_key]["artifact_path"])))
+        scorer_artifact = _relative_artifact(
+            bundle_dir, Path(str(meta_artifacts[best_meta_key]["artifact_path"]))
+        )
         scorer = {
             "default": "fused_meta",
             "artifact": scorer_artifact,
@@ -1252,7 +1356,9 @@ def _train_best_bundle(
             "reason": "fused meta validation score did not beat the best validated classical scorer",
         }
 
-    checkpoint_best, checkpoint_final = _copy_checkpoints(bundle_dir, cfg.best_checkpoint, cfg.final_checkpoint)
+    checkpoint_best, checkpoint_final = _copy_checkpoints(
+        bundle_dir, cfg.best_checkpoint, cfg.final_checkpoint
+    )
     report = {
         "split_records": {split: len(records) for split, records in records_by_split.items()},
         "split_windows": {split: len(windows) for split, windows in sampled.items()},
@@ -1316,8 +1422,12 @@ def _train_final_bundle(
         same_task_negative_fraction=cfg.same_task_negative_fraction,
     )
     classical_bundles = _fit_classical_models_all(bundle_dir, cfg, windows, feature_names, pairs)
-    best_embeddings = _encode_neural_windows(cfg.best_checkpoint, windows, device=cfg.device, batch_size=cfg.batch_size)
-    final_embeddings = _encode_neural_windows(cfg.final_checkpoint, windows, device=cfg.device, batch_size=cfg.batch_size)
+    best_embeddings = _encode_neural_windows(
+        cfg.best_checkpoint, windows, device=cfg.device, batch_size=cfg.batch_size
+    )
+    final_embeddings = _encode_neural_windows(
+        cfg.final_checkpoint, windows, device=cfg.device, batch_size=cfg.batch_size
+    )
     weight_key = str(selection.get("vector_weight_key", "balanced"))
     weights = dict(_weight_grid()).get(weight_key, (1.0, 1.0, 1.0))
     batch = _batch_from_components(
@@ -1333,8 +1443,7 @@ def _train_final_bundle(
     classical_names = sorted(classical_bundles)
     fused_scores = _cosine_scores(batch.vectors, pairs)
     classical_scores = {
-        name: _model_pair_scores_for_batch(bundle, batch, pairs)
-        for name, bundle in classical_bundles.items()
+        name: _model_pair_scores_for_batch(bundle, batch, pairs) for name, bundle in classical_bundles.items()
     }
     x_all = _meta_features(batch, pairs, classical_scores, classical_names, fused_scores)
     scorer_dir = bundle_dir / "scorers"
@@ -1355,7 +1464,11 @@ def _train_final_bundle(
         "config": _jsonable_config(cfg),
     }
     joblib.dump(meta_artifact, meta_artifact_path)
-    best_classical_name = str(selection.get("best_classical_name", "ensemble" if "ensemble" in classical_bundles else classical_names[0]))
+    best_classical_name = str(
+        selection.get(
+            "best_classical_name", "ensemble" if "ensemble" in classical_bundles else classical_names[0]
+        )
+    )
     fusion_wins = bool(selection.get("fusion_wins", False))
     if fusion_wins:
         scorer = {
@@ -1374,7 +1487,9 @@ def _train_final_bundle(
             "fusion_wins": False,
             "reason": "fused meta validation score did not beat the best validated classical scorer",
         }
-    checkpoint_best, checkpoint_final = _copy_checkpoints(bundle_dir, cfg.best_checkpoint, cfg.final_checkpoint)
+    checkpoint_best, checkpoint_final = _copy_checkpoints(
+        bundle_dir, cfg.best_checkpoint, cfg.final_checkpoint
+    )
     report = {
         "record_count": len(records),
         "window_count": len(windows),
@@ -1408,9 +1523,13 @@ def train_fusion(cfg: FusedTrainingConfig) -> dict[str, object]:
     records = _limit_records(records, cfg.limit_per_task, cfg.seed)
     if len(records) < 3:
         raise ValueError("Need at least three records for fused train/val/test splits")
-    splits = _split_records(records, train_fraction=cfg.train_fraction, val_fraction=cfg.val_fraction, seed=cfg.seed)
+    splits = _split_records(
+        records, train_fraction=cfg.train_fraction, val_fraction=cfg.val_fraction, seed=cfg.seed
+    )
     if not splits["train"] or not splits["val"] or not splits["test"]:
-        raise ValueError(f"Non-empty train/val/test splits are required; got {[len(splits[key]) for key in ('train', 'val', 'test')]}")
+        raise ValueError(
+            f"Non-empty train/val/test splits are required; got {[len(splits[key]) for key in ('train', 'val', 'test')]}"
+        )
 
     best_bundle = cfg.run_dir / "best.bundle"
     final_bundle = cfg.run_dir / "final.bundle"
@@ -1529,19 +1648,25 @@ class FusedTargetEncoder:
         right = self._encode_target(right_values, right_task, seed=seed_value)
         return self._score_encoded(left, right)
 
-    def _encode_target(self, values: Iterable[float] | np.ndarray, task: str | int, *, seed: int) -> _TargetEncoding:
-        raw_signature, mean_features, names, original_length, effective_count, replacement_fraction = _raw_signature_from_values(
-            values,
-            task,
-            window_size=self.window_size,
-            signature_views=self.signature_views,
-            seed=seed,
-            include_cache_profile=self.include_cache_profile,
+    def _encode_target(
+        self, values: Iterable[float] | np.ndarray, task: str | int, *, seed: int
+    ) -> _TargetEncoding:
+        raw_signature, mean_features, names, original_length, effective_count, replacement_fraction = (
+            _raw_signature_from_values(
+                values,
+                task,
+                window_size=self.window_size,
+                signature_views=self.signature_views,
+                seed=seed,
+                include_cache_profile=self.include_cache_profile,
+            )
         )
         if names != self.feature_names:
             missing = set(self.feature_names).symmetric_difference(names)
             sample = sorted(missing)[:5]
-            raise ValueError(f"Fused bundle feature names are incompatible with input signature; sample mismatch: {sample}")
+            raise ValueError(
+                f"Fused bundle feature names are incompatible with input signature; sample mismatch: {sample}"
+            )
         component = _transform_single_signature(self.vectorizer, raw_signature, self.classical_component_dim)
         best = encode_values(
             self.best_model,
@@ -1586,7 +1711,10 @@ class FusedTargetEncoder:
     def _classical_scores_for_two(self, left: _TargetEncoding, right: _TargetEncoding) -> dict[str, float]:
         scores: dict[str, float] = {}
         for name, bundle in self.classical_bundles.items():
-            indices = tuple(int(index) for index in bundle.get("selected_feature_indices", range(left.window_features.shape[0])))
+            indices = tuple(
+                int(index)
+                for index in bundle.get("selected_feature_indices", range(left.window_features.shape[0]))
+            )
             idx = np.asarray(indices, dtype=np.int64)
             x = pair_features(left.window_features[idx], right.window_features[idx])[None, :]
             scores[name] = float(_score_model(bundle["model"], x)[0])
@@ -1605,7 +1733,9 @@ class FusedTargetEncoder:
             if fallback not in classical_scores:
                 fallback = sorted(classical_scores)[0]
             return float(np.clip(classical_scores[fallback], 0.0, 1.0))
-        classical_names = [str(name) for name in self.meta_artifact.get("classical_model_names", sorted(classical_scores))]
+        classical_names = [
+            str(name) for name in self.meta_artifact.get("classical_model_names", sorted(classical_scores))
+        ]
         fused_score = float(np.dot(left.vector, right.vector))
         x = _meta_features_for_two(left, right, classical_scores, classical_names, fused_score)
         return float(np.clip(_score_model(self.meta_artifact["model"], x)[0], 0.0, 1.0))
@@ -1629,12 +1759,18 @@ class FusedTargetEncoder:
             if window.features.shape[0] != len(names):
                 raise ValueError("Fused eval window feature dimension does not match bundle")
             signatures.setdefault(window.dataset_id, []).append(window.features)
-        raw_signatures = {key: _signature_from_feature_stack(np.stack(rows)) for key, rows in signatures.items()}
+        raw_signatures = {
+            key: _signature_from_feature_stack(np.stack(rows)) for key, rows in signatures.items()
+        }
         components = _transform_signatures(self.vectorizer, raw_signatures)
         best_path = self._artifact_path(self.manifest["neural"]["best"])
         final_path = self._artifact_path(self.manifest["neural"]["final"])
-        best = _encode_neural_windows(best_path, fused_windows, device=str(self.device), batch_size=batch_size)
-        final = _encode_neural_windows(final_path, fused_windows, device=str(self.device), batch_size=batch_size)
+        best = _encode_neural_windows(
+            best_path, fused_windows, device=str(self.device), batch_size=batch_size
+        )
+        final = _encode_neural_windows(
+            final_path, fused_windows, device=str(self.device), batch_size=batch_size
+        )
         return _batch_from_components(
             fused_windows,
             best,
@@ -1656,7 +1792,10 @@ class FusedTargetEncoder:
             if model_name not in self.classical_bundles:
                 model_name = sorted(self.classical_bundles)[0]
             return _model_pair_scores_for_batch(self.classical_bundles[model_name], batch, pairs)
-        classical_names = [str(name) for name in self.meta_artifact.get("classical_model_names", sorted(self.classical_bundles))]
+        classical_names = [
+            str(name)
+            for name in self.meta_artifact.get("classical_model_names", sorted(self.classical_bundles))
+        ]
         fused_scores = _cosine_scores(batch.vectors, pairs)
         classical_scores = {
             name: _model_pair_scores_for_batch(self.classical_bundles[name], batch, pairs)
@@ -1667,7 +1806,9 @@ class FusedTargetEncoder:
         return _score_model(self.meta_artifact["model"], x)
 
 
-def _transform_single_signature(vectorizer: Mapping[str, object], signature: np.ndarray, component_dim: int) -> np.ndarray:
+def _transform_single_signature(
+    vectorizer: Mapping[str, object], signature: np.ndarray, component_dim: int
+) -> np.ndarray:
     scaler = vectorizer.get("scaler")
     reducer = vectorizer.get("reducer")
     x = np.asarray(signature, dtype=np.float32).reshape(1, -1)
@@ -1691,12 +1832,18 @@ def encode_values_fused(
 ) -> np.ndarray:
     if len(args) == 3:
         encoder_or_bundle, values, task = args
-        encoder = encoder_or_bundle if isinstance(encoder_or_bundle, FusedTargetEncoder) else load_fused_encoder(Path(str(encoder_or_bundle)), device=device)
+        encoder = (
+            encoder_or_bundle
+            if isinstance(encoder_or_bundle, FusedTargetEncoder)
+            else load_fused_encoder(Path(str(encoder_or_bundle)), device=device)
+        )
     elif len(args) == 2 and bundle_dir is not None:
         values, task = args
         encoder = load_fused_encoder(Path(bundle_dir), device=device)
     else:
-        raise TypeError("encode_values_fused expects (encoder_or_bundle, values, task) or (values, task, bundle_dir=...)")
+        raise TypeError(
+            "encode_values_fused expects (encoder_or_bundle, values, task) or (values, task, bundle_dir=...)"
+        )
     return encoder.encode_values(values, task, seed=seed)
 
 
@@ -1708,7 +1855,11 @@ def score_values_fused(
 ) -> float:
     if len(args) == 5:
         encoder_or_bundle, left_values, left_task, right_values, right_task = args
-        encoder = encoder_or_bundle if isinstance(encoder_or_bundle, FusedTargetEncoder) else load_fused_encoder(Path(str(encoder_or_bundle)), device=device)
+        encoder = (
+            encoder_or_bundle
+            if isinstance(encoder_or_bundle, FusedTargetEncoder)
+            else load_fused_encoder(Path(str(encoder_or_bundle)), device=device)
+        )
     elif len(args) == 4 and bundle_dir is not None:
         left_values, left_task, right_values, right_task = args
         encoder = load_fused_encoder(Path(bundle_dir), device=device)
@@ -1782,7 +1933,9 @@ def evaluate_fused_bundle_on_windows(
     }
 
 
-def _fused_retrieval(encoder: FusedTargetEncoder, batch: _BatchEncoding, queries: Sequence[RetrievalQuery]) -> dict[str, float]:
+def _fused_retrieval(
+    encoder: FusedTargetEncoder, batch: _BatchEncoding, queries: Sequence[RetrievalQuery]
+) -> dict[str, float]:
     if not queries:
         return {}
     if encoder.scorer.get("default") != "fused_meta":
@@ -1792,5 +1945,10 @@ def _fused_retrieval(encoder: FusedTargetEncoder, batch: _BatchEncoding, queries
         return _retrieval_from_vectors(batch.vectors, queries)
     if encoder.meta_artifact is None:
         return _retrieval_from_vectors(batch.vectors, queries)
-    classical_names = [str(name) for name in encoder.meta_artifact.get("classical_model_names", sorted(encoder.classical_bundles))]
-    return _meta_retrieval(encoder.meta_artifact["model"], batch, queries, encoder.classical_bundles, classical_names)
+    classical_names = [
+        str(name)
+        for name in encoder.meta_artifact.get("classical_model_names", sorted(encoder.classical_bundles))
+    ]
+    return _meta_retrieval(
+        encoder.meta_artifact["model"], batch, queries, encoder.classical_bundles, classical_names
+    )

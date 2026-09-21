@@ -17,7 +17,7 @@ def normalize_embedding(
         return [0.0] * dims[0]
     if len(values) in dims:
         return [float(v) for v in values]
-    out = [float(v) for v in values[:dims[0]]]
+    out = [float(v) for v in values[: dims[0]]]
     if len(out) < dims[0]:
         out.extend([0.0] * (dims[0] - len(out)))
     return out
@@ -77,11 +77,7 @@ class TrainingRow:
             complexity=_optional_int(data.get("complexity")),
             runtime_class=data.get("runtime_class"),
             feedback_origin=data.get("feedback_origin"),
-            engine=str(
-                data.get("engine")
-                or (data.get("metadata") or {}).get("engine")
-                or "featmath"
-            ),
+            engine=str(data.get("engine") or (data.get("metadata") or {}).get("engine") or "featmath"),
             metadata=dict(data.get("metadata") or {}),
         )
 
@@ -102,4 +98,3 @@ def _optional_int(value: Any) -> int | None:
         return int(value)
     except (TypeError, ValueError):
         return None
-

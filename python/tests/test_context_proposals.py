@@ -55,10 +55,7 @@ def test_cache_identity_excludes_catalog_and_reuses_artifact(tmp_path) -> None:
     assert catalog_after_append not in str(second)
     assert first == second
 
-    selected = [
-        raw_row(character, 1.0 - index / 10)
-        for index, character in enumerate("12345678")
-    ]
+    selected = [raw_row(character, 1.0 - index / 10) for index, character in enumerate("12345678")]
     artifact = MODULE.proposal_artifact(key(), 64, selected, selected)
     assert MODULE.atomic_create_json(first, artifact)
     assert not MODULE.atomic_create_json(first, artifact)
@@ -73,13 +70,9 @@ def test_slots_are_logged_before_decode_and_missing_slots_escalate(tmp_path) -> 
 
     rows = [raw_row("a", 1.0), raw_row("b", 0.9, "gpr")]
     retry = MODULE.proposal_artifact(key(128), 128, rows, rows)
-    assert [row["status"] for row in retry["slots"][2:]] == [
-        "pending_retry"
-    ] * 6
+    assert [row["status"] for row in retry["slots"][2:]] == ["pending_retry"] * 6
     permanent = MODULE.proposal_artifact(key(256), 256, rows, rows)
-    assert [row["status"] for row in permanent["slots"][2:]] == [
-        "permanent_failure"
-    ] * 6
+    assert [row["status"] for row in permanent["slots"][2:]] == ["permanent_failure"] * 6
     assert permanent["rejection_counts"]["unavailable"] == 6
     assert set(permanent["rejection_counts"]) == set(MODULE.REJECTION_REASONS)
 
@@ -91,17 +84,12 @@ def test_calibration_fallback_removes_learned_risk_from_ranking() -> None:
         "target_coverage": 0.95,
     }
     selection_policy = {"learned_risk": {"enabled": True}}
-    policy = MODULE.decoding_policy(
-        bad, digest("d"), digest("e"), selection_policy, digest("f")
-    )
+    policy = MODULE.decoding_policy(bad, digest("d"), digest("e"), selection_policy, digest("f"))
     assert policy["proposal_selection_policy_sha256"] == digest("f")
     assert not policy["learned_uncertainty_and_risk_enabled"]
     assert policy["selector_calibration_sha256"] is None
     assert policy["uncertainty_fallback"] == "empirical_reward_mad"
-    assert (
-        policy["validity_repair"]
-        == "dataset-local-deterministic-featmath-grammar-v1"
-    )
+    assert policy["validity_repair"] == "dataset-local-deterministic-featmath-grammar-v1"
 
     rows = [raw_row("a", 0.2), raw_row("b", 0.8)]
     rows[1]["instability_probability"] = 0.99

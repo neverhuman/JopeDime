@@ -47,8 +47,7 @@ class Worker:
         tm = import_regressor_train()
         cfg = json.loads((default_weights_dir() / CONFIG_NAME).read_text())
         self.model = tm.get_architecture(tm.TabPFNV3Config.from_dict(cfg))
-        payload = CheckpointManager.load(root / "ckpt" / "step_1500.ckpt",
-                                         map_location="cpu")
+        payload = CheckpointManager.load(root / "ckpt" / "step_1500.ckpt", map_location="cpu")
         self.model.load_state_dict(payload["ema_model"], strict=True)
         self.model = self.model.to(self.device).eval()
         self.table = BlockTable(self.model.state_dict())
@@ -81,44 +80,55 @@ class Worker:
 
         for cand in spec["candidates"]:
             if cand["kind"] == "seed":
-                cs = CandidateSpec(spec["gen"], cand["cand_id"],
-                                   cand["mask_seed"], cand["sigma_seed"],
-                                   cand["value_seed"], cand.get("sign", 1))
+                cs = CandidateSpec(
+                    spec["gen"],
+                    cand["cand_id"],
+                    cand["mask_seed"],
+                    cand["sigma_seed"],
+                    cand["value_seed"],
+                    cand.get("sign", 1),
+                )
                 mask = np.array(cand["mask_blocks"], dtype=np.int64)
                 delta = self.engine.build_delta(cs, mask, sigma_groups)
                 saved = self.engine.apply(delta)
                 try:
-                    results[str(cand["cand_id"])] = candidate_margins(
-                        self.runner, episodes)
+                    results[str(cand["cand_id"])] = candidate_margins(self.runner, episodes)
                 finally:
                     self.engine.restore(delta, saved)
             else:  # file-based (grad/recomb/elite)
                 path = self.exchange / cand["path"]
                 saved = self.engine.apply_sparse_file_saved(str(path))
                 try:
-                    results[str(cand["cand_id"])] = candidate_margins(
-                        self.runner, episodes)
+                    results[str(cand["cand_id"])] = candidate_margins(self.runner, episodes)
                 finally:
                     self.engine.restore_sparse_saved(saved)
-        return {"kind": "eval", "gen": spec["gen"], "rung": spec["rung"],
-                "episode_ids": ep_ids, "margins": results,
-                "checksum": self.engine.checksum()}
+        return {
+            "kind": "eval",
+            "gen": spec["gen"],
+            "rung": spec["rung"],
+            "episode_ids": ep_ids,
+            "margins": results,
+            "checksum": self.engine.checksum(),
+        }
 
     def handle_grad(self, spec: dict) -> dict:
         self.sync_champion(spec.get("champion_promos", []))
         inner = self.episodes_for(spec["inner_episode_specs"])
         for arm in spec["arms"]:
             sparse = grad_arm_delta(
-                self.model, self.engine,
-                np.array(arm["mask_blocks"], dtype=np.int64), inner,
-                self.device, k_steps=spec.get("k_steps", 8),
-                lr=spec.get("lr", 3e-5))
+                self.model,
+                self.engine,
+                np.array(arm["mask_blocks"], dtype=np.int64),
+                inner,
+                self.device,
+                k_steps=spec.get("k_steps", 8),
+                lr=spec.get("lr", 3e-5),
+            )
             from .evo_blocks import save_sparse_delta
 
             out = self.exchange / f"grad_g{spec['gen']}_a{arm['arm_id']}.npz"
             save_sparse_delta(str(out), sparse)
-        return {"kind": "grad", "gen": spec["gen"], "done": True,
-                "checksum": self.engine.checksum()}
+        return {"kind": "grad", "gen": spec["gen"], "done": True, "checksum": self.engine.checksum()}
 
     def handle_incumbent(self, spec: dict) -> dict:
         """guard / probe / val-gate: incumbent (and optionally challenger)."""
@@ -136,12 +146,15 @@ class Worker:
                 out[str(cand["cand_id"])] = candidate_margins(self.runner, episodes)
             finally:
                 self.engine.restore_sparse_saved(saved)
-        return {"kind": spec["kind"], "gen": spec["gen"], "margins": out,
-                "episode_ids": [f"{e.task}:{e.seed}" for e in episodes]}
+        return {
+            "kind": spec["kind"],
+            "gen": spec["gen"],
+            "margins": out,
+            "episode_ids": [f"{e.task}:{e.seed}" for e in episodes],
+        }
 
     def loop(self) -> None:
-        print(f"worker up: {self.table.n_blocks} blocks, "
-              f"checksum {self.engine.checksum()}", flush=True)
+        print(f"worker up: {self.table.n_blocks} blocks, checksum {self.engine.checksum()}", flush=True)
         while True:
             specs = sorted(self.inbox.glob("*.json"))
             if not specs:
@@ -154,19 +167,25 @@ class Worker:
                 time.sleep(0.5)
                 continue
             t0 = time.time()
-            handler = {"eval": self.handle_eval, "grad": self.handle_grad,
-                       "guard": self.handle_incumbent,
-                       "probe": self.handle_incumbent,
-                       "valgate": self.handle_incumbent}[spec["kind"]]
+            handler = {
+                "eval": self.handle_eval,
+                "grad": self.handle_grad,
+                "guard": self.handle_incumbent,
+                "probe": self.handle_incumbent,
+                "valgate": self.handle_incumbent,
+            }[spec["kind"]]
             try:
                 result = handler(spec)
                 result["seconds"] = round(time.time() - t0, 1)
             except Exception as err:  # report, never die silently
                 import traceback
 
-                result = {"kind": "error", "gen": spec.get("gen"),
-                          "error": repr(err),
-                          "trace": traceback.format_exc()[-2000:]}
+                result = {
+                    "kind": "error",
+                    "gen": spec.get("gen"),
+                    "error": repr(err),
+                    "trace": traceback.format_exc()[-2000:],
+                }
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()  # reclaim after OOM paths
             out = self.outbox / (path.stem + ".result.json")

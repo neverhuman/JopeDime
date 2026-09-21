@@ -52,9 +52,7 @@ def _require_family(value: Any) -> str:
     return value
 
 
-def _metadata_path(
-    metadata_root: Path, dataset: str, signature_entry: Mapping[str, Any]
-) -> Path:
+def _metadata_path(metadata_root: Path, dataset: str, signature_entry: Mapping[str, Any]) -> Path:
     referenced = {
         (Path(value).parent / "meta.json").resolve()
         for name, value in signature_entry.items()
@@ -77,18 +75,14 @@ def _metadata_path(
             or next(iter(referenced)).parent.name != dataset
             or not next(iter(referenced)).is_file()
         ):
-            raise ValueError(
-                f"dataset {dataset} signature paths do not bind one metadata file"
-            )
+            raise ValueError(f"dataset {dataset} signature paths do not bind one metadata file")
         return next(iter(referenced))
 
     candidates = [metadata_root / dataset / "meta.json"]
     candidates.extend(metadata_root.glob(f"*/{dataset}/meta.json"))
     matches = sorted({path.resolve() for path in candidates if path.is_file()})
     if len(matches) != 1:
-        raise ValueError(
-            f"dataset {dataset} requires exactly one metadata file under metadata_root"
-        )
+        raise ValueError(f"dataset {dataset} requires exactly one metadata file under metadata_root")
     return matches[0]
 
 
@@ -117,9 +111,7 @@ def validate_source_family_manifest(payload: Any) -> None:
         "unresolved_dataset_count",
         "source_family_count",
     )
-    if any(
-        type(payload[name]) is not int or payload[name] < 0 for name in integer_fields
-    ):
+    if any(type(payload[name]) is not int or payload[name] < 0 for name in integer_fields):
         raise ValueError("source-family manifest counts must be nonnegative integers")
     if payload["dataset_count"] != len(rows):
         raise ValueError("source-family dataset_count differs from its rows")
@@ -142,13 +134,9 @@ def validate_source_family_manifest(payload: Any) -> None:
             raise ValueError("source-family row has unknown or missing fields")
         dataset = row["dataset"]
         if not isinstance(dataset, str) or not _DATASET_ID.fullmatch(dataset):
-            raise ValueError(
-                "dataset identity must be 16 lowercase hexadecimal characters"
-            )
+            raise ValueError("dataset identity must be 16 lowercase hexadecimal characters")
         if previous is not None and previous >= dataset:
-            raise ValueError(
-                "source-family datasets must be strictly sorted and unique"
-            )
+            raise ValueError("source-family datasets must be strictly sorted and unique")
         previous = dataset
         dataset_sha256 = _require_sha256(row["dataset_sha256"], "dataset_sha256")
         if not dataset_sha256.startswith(dataset):
@@ -173,12 +161,7 @@ def validate_source_family_manifest(payload: Any) -> None:
             resolved += 1
             families.add(family)
         elif resolution == "unresolved":
-            if (
-                family is not None
-                or receipt is not None
-                or not isinstance(reason, str)
-                or not reason.strip()
-            ):
+            if family is not None or receipt is not None or not isinstance(reason, str) or not reason.strip():
                 raise ValueError("unresolved source-family evidence is inconsistent")
             unresolved += 1
         else:
@@ -205,17 +188,13 @@ def build_source_family_manifest(
     signature_path = Path(signature_manifest_path)
     signature_bytes = signature_path.read_bytes()
     signature = json.loads(signature_bytes)
-    if not isinstance(signature, dict) or not isinstance(
-        signature.get("datasets"), dict
-    ):
+    if not isinstance(signature, dict) or not isinstance(signature.get("datasets"), dict):
         raise ValueError("signature manifest requires a datasets object")
     datasets = signature["datasets"]
     reviews = dict(reviewed_mappings or {})
     unknown_reviews = set(reviews) - set(datasets)
     if unknown_reviews:
-        raise ValueError(
-            f"reviewed mappings contain unknown datasets: {sorted(unknown_reviews)}"
-        )
+        raise ValueError(f"reviewed mappings contain unknown datasets: {sorted(unknown_reviews)}")
 
     rows: list[dict[str, Any]] = []
     metadata_root = Path(metadata_root)
@@ -240,9 +219,7 @@ def build_source_family_manifest(
         if upstream is not None:
             family = _require_family(upstream)
             if review is not None:
-                raise ValueError(
-                    f"dataset {dataset} already has upstream source_family"
-                )
+                raise ValueError(f"dataset {dataset} already has upstream source_family")
             row = {
                 "dataset": dataset,
                 "dataset_sha256": dataset_sha256,
@@ -260,13 +237,8 @@ def build_source_family_manifest(
                 "review_receipt_sha256",
             }
             if not isinstance(review, Mapping) or set(review) != expected_review_fields:
-                raise ValueError(
-                    f"reviewed mapping has invalid fields for dataset {dataset}"
-                )
-            if (
-                review["dataset_sha256"] != dataset_sha256
-                or review["metadata_sha256"] != metadata_sha256
-            ):
+                raise ValueError(f"reviewed mapping has invalid fields for dataset {dataset}")
+            if review["dataset_sha256"] != dataset_sha256 or review["metadata_sha256"] != metadata_sha256:
                 raise ValueError(f"reviewed mapping is stale for dataset {dataset}")
             row = {
                 "dataset": dataset,

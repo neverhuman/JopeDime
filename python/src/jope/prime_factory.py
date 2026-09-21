@@ -27,11 +27,7 @@ def _registry_value(value: Any) -> Any:
 
 def count_sketch_genomes() -> list[str]:
     """Exhaustive canonical certification cohort in stable registry-bin order."""
-    entries = [
-        entry
-        for entry in registry_document()["operators"]
-        if entry.get("name") == "count_sketch"
-    ]
+    entries = [entry for entry in registry_document()["operators"] if entry.get("name") == "count_sketch"]
     if len(entries) != 1:
         raise ValueError("canonical registry must contain one CountSketch descriptor")
     entry = entries[0]
@@ -46,8 +42,7 @@ def count_sketch_genomes() -> list[str]:
     for width, seed, append in product(widths, seeds, (False, True)):
         append_text = "true" if append else "false"
         genomes.append(
-            f"(pipe X (count_sketch n={int(width)} seed={int(seed)} "
-            f"append={append_text}) (ridge))"
+            f"(pipe X (count_sketch n={int(width)} seed={int(seed)} append={append_text}) (ridge))"
         )
     return genomes
 
@@ -132,8 +127,7 @@ class PrimeCountSketchFactory:
         ranked = [
             candidate
             for candidate in candidates
-            if candidate["native_result"].get("valid")
-            and candidate["native_score_robust"] is not None
+            if candidate["native_result"].get("valid") and candidate["native_score_robust"] is not None
         ]
         if not ranked:
             raise NativeSearchError("CountSketch shadow batch produced no finite native scores")
@@ -226,10 +220,7 @@ class PrimeCountSketchFactory:
                 raise NativeSearchError("winner bundle contains invalid bytes")
             content_bytes = bytes(contents)
             content_hash = file.get("sha256")
-            if (
-                not isinstance(content_hash, str)
-                or hashlib.sha256(content_bytes).hexdigest() != content_hash
-            ):
+            if not isinstance(content_hash, str) or hashlib.sha256(content_bytes).hexdigest() != content_hash:
                 raise NativeSearchError("winner bundle file hash does not match its bytes")
             validated_files.append((relative, content_bytes))
         manifest = bundle.get("manifest")

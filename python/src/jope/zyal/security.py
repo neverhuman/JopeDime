@@ -11,25 +11,67 @@ Stage 1 (this module, free) rejects most hostile or careless code before Docker 
 Stage 2 is the container. Neither alone is sufficient: the AST check cannot stop a runtime trick,
 and the container alone would happily run code that quietly reads a path it should not.
 """
+
 from __future__ import annotations
 
 import ast
 from pathlib import Path
 
-ALLOWED_IMPORTS = frozenset({
-    "collections", "functools", "itertools", "math", "numpy", "statistics", "heapq", "bisect",
-})
+ALLOWED_IMPORTS = frozenset(
+    {
+        "collections",
+        "functools",
+        "itertools",
+        "math",
+        "numpy",
+        "statistics",
+        "heapq",
+        "bisect",
+    }
+)
 
 # Names that grant dynamic execution, filesystem reach, or introspection escape.
-FORBIDDEN_CALLS = frozenset({
-    "breakpoint", "compile", "eval", "exec", "getattr", "globals", "input",
-    "locals", "open", "setattr", "vars", "__import__", "memoryview",
-})
-FORBIDDEN_NAMES = frozenset({
-    "builtins", "ctypes", "ftplib", "http", "httpx", "importlib", "io", "marshal",
-    "multiprocessing", "os", "pathlib", "pickle", "requests", "shutil", "socket",
-    "subprocess", "sys", "tempfile", "threading", "urllib",
-})
+FORBIDDEN_CALLS = frozenset(
+    {
+        "breakpoint",
+        "compile",
+        "eval",
+        "exec",
+        "getattr",
+        "globals",
+        "input",
+        "locals",
+        "open",
+        "setattr",
+        "vars",
+        "__import__",
+        "memoryview",
+    }
+)
+FORBIDDEN_NAMES = frozenset(
+    {
+        "builtins",
+        "ctypes",
+        "ftplib",
+        "http",
+        "httpx",
+        "importlib",
+        "io",
+        "marshal",
+        "multiprocessing",
+        "os",
+        "pathlib",
+        "pickle",
+        "requests",
+        "shutil",
+        "socket",
+        "subprocess",
+        "sys",
+        "tempfile",
+        "threading",
+        "urllib",
+    }
+)
 
 MAX_PLUGIN_BYTES = 20_480
 IMAGE_LOCK = Path("ops/zyal/image-lock.json")
@@ -104,21 +146,39 @@ def sandbox_command(
             "DEV and TEST must be unreachable, not merely disallowed"
         )
     return [
-        "docker", "run", "--rm",
-        "--network", "none",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
         "--read-only",
-        "--cap-drop", "ALL",
-        "--security-opt", "no-new-privileges",
-        "--user", "65532:65532",
-        "--pids-limit", str(pids),
-        "--memory", memory,
-        "--cpus", str(cpus),
-        "--tmpfs", "/tmp:rw,noexec,nosuid,size=512m",
-        "--mount", f"type=bind,src={plugin.resolve()},dst=/work/plugin.py,readonly",
-        "--mount", f"type=bind,src={harness.resolve()},dst=/opt/zyal/runner.py,readonly",
-        "--mount", f"type=bind,src={shard},dst=/inputs/shard,readonly",
-        "--mount", f"type=bind,src={output.resolve()},dst=/output",
-        "--env", f"ZYAL_MODE={mode}",
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges",
+        "--user",
+        "65532:65532",
+        "--pids-limit",
+        str(pids),
+        "--memory",
+        memory,
+        "--cpus",
+        str(cpus),
+        "--tmpfs",
+        "/tmp:rw,noexec,nosuid,size=512m",
+        "--mount",
+        f"type=bind,src={plugin.resolve()},dst=/work/plugin.py,readonly",
+        "--mount",
+        f"type=bind,src={harness.resolve()},dst=/opt/zyal/runner.py,readonly",
+        "--mount",
+        f"type=bind,src={shard},dst=/inputs/shard,readonly",
+        "--mount",
+        f"type=bind,src={output.resolve()},dst=/output",
+        "--env",
+        f"ZYAL_MODE={mode}",
         image_digest,
-        "python", "/opt/zyal/runner.py", "--mode", mode,
+        "python",
+        "/opt/zyal/runner.py",
+        "--mode",
+        mode,
     ]

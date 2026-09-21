@@ -1,4 +1,5 @@
 """Sync only a release inventory to a fresh remote staging directory."""
+
 import argparse
 import hashlib
 import json
@@ -16,21 +17,50 @@ def sync(release, host, key, remote_root):
     files = manifest["files"]
     for name, expected in files.items():
         require(not Path(name).is_absolute() and ".." not in Path(name).parts, "unsafe inventory path")
-        require(hashlib.sha256((release / name).read_bytes()).hexdigest() == expected, f"local hash mismatch: {name}")
-    require(hashlib.sha256(json.dumps(files, sort_keys=True, separators=(",", ":")).encode()).hexdigest() == manifest["source_sha256"], "source hash mismatch")
+        require(
+            hashlib.sha256((release / name).read_bytes()).hexdigest() == expected,
+            f"local hash mismatch: {name}",
+        )
+    require(
+        hashlib.sha256(json.dumps(files, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        == manifest["source_sha256"],
+        "source hash mismatch",
+    )
     staging = remote_root + "/builds/." + release.name + ".staging"
     final = remote_root + "/builds/" + release.name
     ssh = ["ssh", "-o", "BatchMode=yes", "-i", str(key), host]
+
     def remote(code, *args):
-        return subprocess.run(ssh + [shlex.join(["python3", "-", *args])], input=code, text=True,
-                              capture_output=True, check=True).stdout
-    remote("import pathlib,sys\ns,f=map(pathlib.Path,sys.argv[1:]);\nif s.exists() or f.exists(): raise SystemExit('release/staging exists; inspect before retry')\ns.mkdir()\n", staging, final)
+        return subprocess.run(
+            ssh + [shlex.join(["python3", "-", *args])],
+            input=code,
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout
+
+    remote(
+        "import pathlib,sys\ns,f=map(pathlib.Path,sys.argv[1:]);\nif s.exists() or f.exists(): raise SystemExit('release/staging exists; inspect before retry')\ns.mkdir()\n",
+        staging,
+        final,
+    )
     with tempfile.NamedTemporaryFile(mode="w") as inventory:
         inventory.write("\n".join([*files, "release-manifest.json"]) + "\n")
         inventory.flush()
-        subprocess.run(["rsync", "-a", "--files-from=" + inventory.name, "-e", shlex.join(ssh[:-1]),
-                        str(release) + "/", host + ":" + shlex.quote(staging + "/")], check=True)
-    verification = remote('''import pathlib,sys,json,hashlib,os
+        subprocess.run(
+            [
+                "rsync",
+                "-a",
+                "--files-from=" + inventory.name,
+                "-e",
+                shlex.join(ssh[:-1]),
+                str(release) + "/",
+                host + ":" + shlex.quote(staging + "/"),
+            ],
+            check=True,
+        )
+    verification = remote(
+        """import pathlib,sys,json,hashlib,os
 s,f=map(pathlib.Path,sys.argv[1:3]); manifest=s/'release-manifest.json'
 if hashlib.sha256(manifest.read_bytes()).hexdigest()!=sys.argv[3]: raise SystemExit('remote release manifest differs from local')
 m=json.loads(manifest.read_text())
@@ -49,7 +79,11 @@ for p in f.rglob('*'):
  if p.is_dir(): p.chmod(0o555)
 f.chmod(0o555)
 print(json.dumps({'release':str(f),'source_sha256':m['source_sha256'],'verified_files':len(m['files']),'published_atomically':True}))
-''', staging, final, hashlib.sha256((release / "release-manifest.json").read_bytes()).hexdigest())
+""",
+        staging,
+        final,
+        hashlib.sha256((release / "release-manifest.json").read_bytes()).hexdigest(),
+    )
     return json.loads(verification)
 
 

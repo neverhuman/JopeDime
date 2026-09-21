@@ -113,8 +113,22 @@ class ExprSpec:
     binops: tuple[str, ...] = ("+", "-", "*", "/")
     # Canonical const strings (kept as strings so render/parse is exact).
     consts: tuple[str, ...] = (
-        "-2", "-1", "-0.5", "-0.25", "-0.1", "0", "0.05", "0.1",
-        "0.25", "0.5", "1", "2", "3", "5", "10", "20",
+        "-2",
+        "-1",
+        "-0.5",
+        "-0.25",
+        "-0.1",
+        "0",
+        "0.05",
+        "0.1",
+        "0.25",
+        "0.5",
+        "1",
+        "2",
+        "3",
+        "5",
+        "10",
+        "20",
     )
     max_col: int = 8
     max_depth: int = 4
@@ -244,7 +258,9 @@ class GrammarSpec:
                 merged[spec.name] = spec.default
         return format_stage({"op": op.name, "params": merged})
 
-    def _probe(self, transform_stages: list[str], head: OpSpec, head_params: dict[str, Any] | None = None) -> str:
+    def _probe(
+        self, transform_stages: list[str], head: OpSpec, head_params: dict[str, Any] | None = None
+    ) -> str:
         from ..pipeline_text import format_stage
 
         head_stage = format_stage({"op": head.name, "params": head_params or {}})

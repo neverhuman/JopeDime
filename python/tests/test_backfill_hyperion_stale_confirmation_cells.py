@@ -21,9 +21,7 @@ SPEC.loader.exec_module(backfill)
 
 def test_synthetic_hold_reverses_features_and_replaces_targets() -> None:
     source = b"1,2,99\n3,4,-7\n"
-    assert backfill.synthetic_hold_bytes(source, Path("train.csv")) == (
-        b"3,4,0\n1,2,0\n"
-    )
+    assert backfill.synthetic_hold_bytes(source, Path("train.csv")) == (b"3,4,0\n1,2,0\n")
 
 
 def test_stale_projection_matches_replay_fallback_accounting() -> None:

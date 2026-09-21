@@ -149,9 +149,7 @@ def preflight_spec(
     stat = os.statvfs(cwd)
     free_bytes = stat.f_bavail * stat.f_frsize
     if free_bytes < minimum_disk_free_gib * 1024**3:
-        raise RuntimeError(
-            f"disk gate blocks pack expansion: {free_bytes / 1024**3:.1f} GiB free"
-        )
+        raise RuntimeError(f"disk gate blocks pack expansion: {free_bytes / 1024**3:.1f} GiB free")
     if not SCQ_BINARY.is_file():
         raise RuntimeError(f"SCQ binary is absent: {SCQ_BINARY}")
     results = {}
@@ -203,10 +201,7 @@ def submit_via_central_wrapper(
     spec_sha256 = hashlib.sha256(spec.read_bytes()).hexdigest()
     if destination.exists():
         existing = json.loads(destination.read_text(encoding="utf-8"))
-        if (
-            existing.get("schema") != "BroadScqJobReceipt.v2"
-            or existing.get("spec_sha256") != spec_sha256
-        ):
+        if existing.get("schema") != "BroadScqJobReceipt.v2" or existing.get("spec_sha256") != spec_sha256:
             raise ValueError("existing SCQ receipt conflicts with requested spec")
         return existing
     completed = subprocess.run(
@@ -230,9 +225,7 @@ def submit_via_central_wrapper(
     receipt["receipt_sha256"] = content_sha256(receipt)
     destination.parent.mkdir(parents=True, exist_ok=True)
     payload = canonical_json_bytes(receipt) + b"\n"
-    temporary = destination.with_name(
-        f".{destination.name}.tmp.{os.getpid()}"
-    )
+    temporary = destination.with_name(f".{destination.name}.tmp.{os.getpid()}")
     with temporary.open("xb") as handle:
         handle.write(payload)
         handle.flush()

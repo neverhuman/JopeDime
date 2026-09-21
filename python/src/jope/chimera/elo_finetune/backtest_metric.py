@@ -34,8 +34,7 @@ from .paths import import_regressor_train
 
 # Held-out ground truth: test-split spliced proxy Elo at each checkpoint step
 # (from the run's archived metrics; base = meter level at init).
-GROUND_TRUTH = {"base": 1312.4, "1000": 1317.5, "1400": 1302.0,
-                "1500": 1300.6, "1828": 1295.0}
+GROUND_TRUTH = {"base": 1312.4, "1000": 1317.5, "1400": 1302.0, "1500": 1300.6, "1828": 1295.0}
 CKPT_STEPS = {"base": 0, "1000": 1000, "1400": 1400, "1500": 1500, "1828": 1828}
 
 
@@ -96,20 +95,27 @@ def main() -> None:
     parser.add_argument("--tasks", type=int, default=400)
     parser.add_argument("--per-task", type=int, default=1)
     parser.add_argument("--seed", type=int, default=20260703)
-    parser.add_argument("--ckpt-dir", type=Path,
-                        default=Path.home() / "fable_god_run" / "ckpt")
+    parser.add_argument("--ckpt-dir", type=Path, default=Path.home() / "fable_god_run" / "ckpt")
     parser.add_argument("--pack-dir", type=Path, default=DEFAULT_PACK_DIR)
     parser.add_argument("--old-fitness-datasets", type=int, default=240)
-    parser.add_argument("--real-frac", type=float, default=0.4,
-                        help="fraction of episodes drawn as real column-as-target "
-                             "(Tier C, pre-registered >=30% in the design brief)")
-    parser.add_argument("--narrow", action="store_true",
-                        help="F_narrow variant: TRUE-target episodes from real "
-                             "TRAIN-split tasks, fresh subsets/warps (the "
-                             "specialization signal; expected to keep rising)")
+    parser.add_argument(
+        "--real-frac",
+        type=float,
+        default=0.4,
+        help="fraction of episodes drawn as real column-as-target "
+        "(Tier C, pre-registered >=30% in the design brief)",
+    )
+    parser.add_argument(
+        "--narrow",
+        action="store_true",
+        help="F_narrow variant: TRUE-target episodes from real "
+        "TRAIN-split tasks, fresh subsets/warps (the "
+        "specialization signal; expected to keep rising)",
+    )
     parser.add_argument("--workers", type=int, default=48)
-    parser.add_argument("--out", type=Path,
-                        default=Path.home() / "fable_god_run" / "eval_full" / "backtest_v2.json")
+    parser.add_argument(
+        "--out", type=Path, default=Path.home() / "fable_god_run" / "eval_full" / "backtest_v2.json"
+    )
     args = parser.parse_args()
     device = torch.device(args.device)
 
@@ -129,15 +135,18 @@ def main() -> None:
         n_real = args.tasks - n_synth
         print(f"drawing episodes: {n_synth} synth + {n_real} real column-as-target ...")
         episodes = prepare_episodes(
-            list_synth_tasks(limit=n_synth, seed=args.seed),
-            args.per_task, args.seed, args.workers)
+            list_synth_tasks(limit=n_synth, seed=args.seed), args.per_task, args.seed, args.workers
+        )
         if n_real:
             episodes += prepare_episodes(
                 list_real_tasks(limit=n_real, seed=args.seed),
-                args.per_task, args.seed + 1, args.workers, col_as_target=True)
-    buckets = {b: sum(1 for e in episodes if e.bucket == b)
-               for b in ("easy", "medium", "hard", "noisy")}
-    print(f"  {len(episodes)} episodes ready in {time.time()-t0:.0f}s, buckets={buckets}")
+                args.per_task,
+                args.seed + 1,
+                args.workers,
+                col_as_target=True,
+            )
+    buckets = {b: sum(1 for e in episodes if e.bucket == b) for b in ("easy", "medium", "hard", "noisy")}
+    print(f"  {len(episodes)} episodes ready in {time.time() - t0:.0f}s, buckets={buckets}")
 
     tags_present = available_tags(args.ckpt_dir)
     print(f"checkpoints present: {tags_present}")
@@ -167,20 +176,27 @@ def main() -> None:
             base_margins = report.per_episode_margin
         elif base_margins and len(report.per_episode_margin) == len(base_margins):
             deltas = np.array(report.per_episode_margin) - np.array(base_margins)
-            paired = {"mean_delta_margin": float(deltas.mean()),
-                      "se": float(deltas.std(ddof=1) / np.sqrt(len(deltas)))}
+            paired = {
+                "mean_delta_margin": float(deltas.mean()),
+                "se": float(deltas.std(ddof=1) / np.sqrt(len(deltas))),
+            }
         results[tag] = {
-            "fitness": report.fitness, "loss_task": report.loss_task,
-            "mean_margin": report.mean_margin, "mean_winrate_vs_zoo": report.mean_winrate,
-            "sp_sq": sp_sq, "n_episodes": report.n_episodes,
+            "fitness": report.fitness,
+            "loss_task": report.loss_task,
+            "mean_margin": report.mean_margin,
+            "mean_winrate_vs_zoo": report.mean_winrate,
+            "sp_sq": sp_sq,
+            "n_episodes": report.n_episodes,
             "per_bucket_loss": report.per_bucket_loss,
             "old_fitness_seedA_winrate": control,
             "paired_vs_base": paired,
             "seconds": round(time.time() - t0, 1),
         }
-        print(f"  {tag}: fitness={report.fitness:+.4f} margin={report.mean_margin:+.4f} "
-              f"wr_zoo={report.mean_winrate:.3f} old_fitness={control:.4f} "
-              f"({results[tag]['seconds']}s)")
+        print(
+            f"  {tag}: fitness={report.fitness:+.4f} margin={report.mean_margin:+.4f} "
+            f"wr_zoo={report.mean_winrate:.3f} old_fitness={control:.4f} "
+            f"({results[tag]['seconds']}s)"
+        )
         del model, runner
         torch.cuda.empty_cache()
 
@@ -191,8 +207,9 @@ def main() -> None:
     verdict = {
         "argmax_tag": tags[int(np.argmax(fit))],
         "argmax_expected": "1000 (nearest saved point to the ~850 peak)",
-        "declines_after_peak": bool(all(
-            fit[i] > fit[i + 1] for i in range(tags.index("1000"), len(tags) - 1))),
+        "declines_after_peak": bool(
+            all(fit[i] > fit[i + 1] for i in range(tags.index("1000"), len(tags) - 1))
+        ),
         "spearman_fitness_vs_truth": spearman(fit, truth),
         "spearman_oldfitness_vs_truth": spearman(old, truth),
         "old_fitness_keeps_rising": bool(all(old[i] < old[i + 1] for i in range(len(old) - 1))),
@@ -203,12 +220,14 @@ def main() -> None:
         and verdict["spearman_fitness_vs_truth"] >= 0.8
         and verdict["spearman_oldfitness_vs_truth"] < 0.5
     )
-    payload = {"config": vars(args) | {"ckpt_dir": str(args.ckpt_dir),
-                                       "pack_dir": str(args.pack_dir),
-                                       "out": str(args.out)},
-               "ground_truth_test_spliced_elo": GROUND_TRUTH,
-               "episode_buckets": buckets,
-               "results": results, "verdict": verdict}
+    payload = {
+        "config": vars(args)
+        | {"ckpt_dir": str(args.ckpt_dir), "pack_dir": str(args.pack_dir), "out": str(args.out)},
+        "ground_truth_test_spliced_elo": GROUND_TRUTH,
+        "episode_buckets": buckets,
+        "results": results,
+        "verdict": verdict,
+    }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(payload, indent=2))
     print(json.dumps(verdict, indent=2))

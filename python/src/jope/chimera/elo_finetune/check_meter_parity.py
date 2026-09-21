@@ -76,8 +76,7 @@ def rust_ratings(pack_dir: Path, extra: Path, datasets: Path, out: Path) -> dict
 def compare(name: str, meter: SplicedEloMeter, rust: dict[str, float]) -> float:
     ours = meter.ratings_by_name()
     assert set(ours) == set(rust), (
-        f"{name}: algo sets differ: meter-only={set(ours) - set(rust)}, "
-        f"rust-only={set(rust) - set(ours)}"
+        f"{name}: algo sets differ: meter-only={set(ours) - set(rust)}, rust-only={set(rust) - set(ours)}"
     )
     worst = max(abs(ours[a] - rust[a]) for a in ours)
     assert worst <= 1e-9, f"{name}: max rating diff {worst}"

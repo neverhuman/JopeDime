@@ -166,15 +166,11 @@ def _training_schedule_parameter_roles(
         matches = [
             role
             for role, roots in _TRAINING_SCHEDULE_ROLE_ROOTS.items()
-            if any(
-                parameter_name == root or parameter_name.startswith(f"{root}.")
-                for root in roots
-            )
+            if any(parameter_name == root or parameter_name.startswith(f"{root}.") for root in roots)
         ]
         if len(matches) != 1:
             raise RuntimeError(
-                f"training schedule must classify {parameter_name!r} exactly once; "
-                f"matched {matches}"
+                f"training schedule must classify {parameter_name!r} exactly once; matched {matches}"
             )
         roles[matches[0]].append(parameter_name)
     return {role: tuple(names) for role, names in roles.items()}
@@ -268,9 +264,7 @@ def select_preregistered_training_schedule(
         "sequence_validity": _finite_schedule_metric(
             accepted_baseline, "sequence_validity", minimum=0.0, maximum=1.0
         ),
-        "seq_nll": _finite_schedule_metric(
-            accepted_baseline, "seq_nll", minimum=0.0, maximum=None
-        ),
+        "seq_nll": _finite_schedule_metric(accepted_baseline, "seq_nll", minimum=0.0, maximum=None),
     }
     by_schedule: dict[str, dict[str, Any]] = {}
     for candidate in candidates:
@@ -281,13 +275,9 @@ def select_preregistered_training_schedule(
             raise ValueError(f"unknown schedule result {schedule!r}")
         if schedule in by_schedule:
             raise ValueError(f"duplicate schedule result {schedule!r}")
-        schedule_identity = preregistered_training_schedule_config(schedule)[
-            "identity_sha256"
-        ]
+        schedule_identity = preregistered_training_schedule_config(schedule)["identity_sha256"]
         if candidate.get("schedule_identity_sha256") != schedule_identity:
-            raise ValueError(
-                f"schedule result {schedule!r} is not bound to its immutable identity"
-            )
+            raise ValueError(f"schedule result {schedule!r} is not bound to its immutable identity")
         normalized = {
             "schedule": schedule,
             "schedule_identity_sha256": schedule_identity,
@@ -306,9 +296,7 @@ def select_preregistered_training_schedule(
             "sequence_validity": _finite_schedule_metric(
                 candidate, "sequence_validity", minimum=0.0, maximum=1.0
             ),
-            "seq_nll": _finite_schedule_metric(
-                candidate, "seq_nll", minimum=0.0, maximum=None
-            ),
+            "seq_nll": _finite_schedule_metric(candidate, "seq_nll", minimum=0.0, maximum=None),
         }
         rejection_reasons = []
         if normalized["sequence_validity"] < baseline["sequence_validity"]:
@@ -321,13 +309,8 @@ def select_preregistered_training_schedule(
 
     missing = set(PREREGISTERED_TRAINING_SCHEDULES) - set(by_schedule)
     if missing:
-        raise ValueError(
-            "schedule selection requires all preregistered results; missing "
-            f"{sorted(missing)}"
-        )
-    normalized_candidates = [
-        by_schedule[schedule] for schedule in PREREGISTERED_TRAINING_SCHEDULES
-    ]
+        raise ValueError(f"schedule selection requires all preregistered results; missing {sorted(missing)}")
+    normalized_candidates = [by_schedule[schedule] for schedule in PREREGISTERED_TRAINING_SCHEDULES]
     ranked = sorted(
         (candidate for candidate in normalized_candidates if candidate["eligible"]),
         key=lambda candidate: (
@@ -342,9 +325,7 @@ def select_preregistered_training_schedule(
         "candidates": normalized_candidates,
         "eligible_ranking": [candidate["schedule"] for candidate in ranked],
         "selected_schedule": ranked[0]["schedule"] if ranked else None,
-        "selected_schedule_identity_sha256": (
-            ranked[0]["schedule_identity_sha256"] if ranked else None
-        ),
+        "selected_schedule_identity_sha256": (ranked[0]["schedule_identity_sha256"] if ranked else None),
     }
 
 
@@ -414,9 +395,7 @@ def anti_overfit_experiment_config() -> dict[str, Any]:
     }
 
 
-def _apply_legacy_replay_weight(
-    rows: Iterable[TrainingRow], *, watermark_cutoff: int
-) -> int:
+def _apply_legacy_replay_weight(rows: Iterable[TrainingRow], *, watermark_cutoff: int) -> int:
     """Downweight train rows known to predate the current fresh-label cycle."""
 
     if watermark_cutoff <= 0:
@@ -442,16 +421,12 @@ def _apply_legacy_replay_weight(
     return weighted
 
 
-def _update_ema_state(
-    ema_state: dict[str, torch.Tensor], model_state: dict[str, torch.Tensor]
-) -> None:
+def _update_ema_state(ema_state: dict[str, torch.Tensor], model_state: dict[str, torch.Tensor]) -> None:
     with torch.no_grad():
         for key, value in model_state.items():
             shadow = ema_state[key]
             if value.dtype.is_floating_point:
-                shadow.mul_(ANTI_OVERFIT_EMA_DECAY).add_(
-                    value, alpha=1.0 - ANTI_OVERFIT_EMA_DECAY
-                )
+                shadow.mul_(ANTI_OVERFIT_EMA_DECAY).add_(value, alpha=1.0 - ANTI_OVERFIT_EMA_DECAY)
             else:
                 shadow.copy_(value)
 
@@ -492,11 +467,7 @@ def _recompute_reward_targets(rows: list[TrainingRow]) -> None:
         if score is None:
             continue
         metadata = row.metadata or {}
-        identity = (
-            metadata.get("reward_pair_identity")
-            or metadata.get("dataset_hash")
-            or row.dataset_id
-        )
+        identity = metadata.get("reward_pair_identity") or metadata.get("dataset_hash") or row.dataset_id
         grouped.setdefault(str(identity), []).append((index, score))
 
     for entries in grouped.values():
@@ -521,9 +492,7 @@ def _fsync_directory(path: Path) -> None:
 
 def _atomic_write_bytes(path: Path, payload: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(
-        dir=path.parent, prefix=f".{path.name}.", suffix=".tmp"
-    )
+    descriptor, temporary_name = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
     temporary = Path(temporary_name)
     try:
         with os.fdopen(descriptor, "wb") as handle:
@@ -551,9 +520,7 @@ TASK_BATCH_QUOTA_DIVISOR = {
 }
 
 
-def _grouped_batches(
-    rows: list[TrainingRow], batch_size: int, rng: random.Random
-) -> list[list[TrainingRow]]:
+def _grouped_batches(rows: list[TrainingRow], batch_size: int, rng: random.Random) -> list[list[TrainingRow]]:
     from ..train import _dataset_grouped_batches
 
     by_task: dict[str, list[TrainingRow]] = {}
@@ -576,9 +543,7 @@ def _grouped_batches(
         grouped = _dataset_grouped_batches(task_rows, quota, rng)
         return [row for group in grouped for row in group]
 
-    def take_cycle(
-        pool: list[TrainingRow], start: int, count: int
-    ) -> list[TrainingRow]:
+    def take_cycle(pool: list[TrainingRow], start: int, count: int) -> list[TrainingRow]:
         return [pool[(start + offset) % len(pool)] for offset in range(count)]
 
     if set(present) == {"regression", "binary"}:
@@ -613,22 +578,14 @@ def _grouped_batches(
             "fused four-task training requires a positive batch_size divisible by "
             "eight for the 4:2:1:1 regression:binary:timeseries:multiclass mix"
         )
-    quotas = {
-        task: max(1, batch_size // TASK_BATCH_QUOTA_DIVISOR[task]) for task in present
-    }
+    quotas = {task: max(1, batch_size // TASK_BATCH_QUOTA_DIVISOR[task]) for task in present}
     # Slots budgeted for absent tasks go to the first present task in canonical
     # order (regression when it exists), keeping every batch exactly batch_size.
     quotas[present[0]] += batch_size - sum(quotas.values())
     orders = {task: coverage_order(by_task[task], quotas[task]) for task in present}
-    batch_count = max(
-        math.ceil(len(orders[task]) / quotas[task]) for task in present
-    )
+    batch_count = max(math.ceil(len(orders[task]) / quotas[task]) for task in present)
     return [
-        [
-            row
-            for task in present
-            for row in take_cycle(orders[task], index * quotas[task], quotas[task])
-        ]
+        [row for task in present for row in take_cycle(orders[task], index * quotas[task], quotas[task])]
         for index in range(batch_count)
     ]
 
@@ -677,9 +634,7 @@ def _iter_policy_batches(
 
     if not str(device).startswith("cuda"):
         for rows in batch_rows:
-            yield rows_to_policy_v3_batch(
-                rows, vocab, device=device, artifact_cache=artifact_cache
-            )
+            yield rows_to_policy_v3_batch(rows, vocab, device=device, artifact_cache=artifact_cache)
         return
 
     copy_stream = torch.cuda.Stream(device=device)
@@ -688,9 +643,7 @@ def _iter_policy_batches(
 
     def enqueue(rows: list[TrainingRow]) -> None:
         host_batch = _pin_policy_batch(
-            rows_to_policy_v3_batch(
-                rows, vocab, device="cpu", artifact_cache=artifact_cache
-            )
+            rows_to_policy_v3_batch(rows, vocab, device="cpu", artifact_cache=artifact_cache)
         )
         with torch.cuda.stream(copy_stream):
             device_batch = _move_policy_batch(host_batch, device, non_blocking=True)
@@ -718,28 +671,18 @@ def _iter_policy_batches(
             pass
 
 
-def _rows_for_cuda_benchmark(
-    rows: list[TrainingRow], batch_size: int
-) -> list[TrainingRow]:
+def _rows_for_cuda_benchmark(rows: list[TrainingRow], batch_size: int) -> list[TrainingRow]:
     regression = [
-        row
-        for row in rows
-        if str((row.metadata or {}).get("task_type") or "regression") == "regression"
+        row for row in rows if str((row.metadata or {}).get("task_type") or "regression") == "regression"
     ]
-    binary = [
-        row
-        for row in rows
-        if str((row.metadata or {}).get("task_type") or "regression") == "binary"
-    ]
+    binary = [row for row in rows if str((row.metadata or {}).get("task_type") or "regression") == "binary"]
 
     def cycle(pool: list[TrainingRow], count: int) -> list[TrainingRow]:
         return [pool[index % len(pool)] for index in range(count)]
 
     if regression and binary:
         binary_count = batch_size // 4
-        return cycle(regression, batch_size - binary_count) + cycle(
-            binary, binary_count
-        )
+        return cycle(regression, batch_size - binary_count) + cycle(binary, binary_count)
     return cycle(rows, batch_size)
 
 
@@ -788,8 +731,7 @@ def _synchronize_cuda_batch_benchmarks(results: list[dict[str, Any]], dist_ctx) 
     for result in results:
         locally_eligible = (
             result.get("finite") is True
-            and float(result.get("vram_headroom_fraction", -1.0))
-            >= CUDA_MINIMUM_VRAM_HEADROOM
+            and float(result.get("vram_headroom_fraction", -1.0)) >= CUDA_MINIMUM_VRAM_HEADROOM
         )
         eligible = torch.tensor(
             1 if locally_eligible else 0,
@@ -866,17 +808,13 @@ def _benchmark_cuda_batch_sizes(
                 device_batch = _move_policy_batch(host_batch, device, non_blocking=True)
                 # Hold the second staged batch while timing the first so the
                 # headroom gate accounts for the production prefetch footprint.
-                prefetched_batch = _move_policy_batch(
-                    host_batch, device, non_blocking=True
-                )
+                prefetched_batch = _move_policy_batch(host_batch, device, non_blocking=True)
                 torch.cuda.synchronize(device)
 
                 optimizer.zero_grad(set_to_none=True)
                 with torch.autocast(device_type="cuda", enabled=amp):
                     warm_components = model.loss_components(device_batch, phase=phase)
-                    warm_loss = kg_combine(
-                        warm_components, model.loss_log_vars, profile
-                    )
+                    warm_loss = kg_combine(warm_components, model.loss_log_vars, profile)
                 warm_loss.backward()
                 torch.cuda.synchronize(device)
 
@@ -890,27 +828,19 @@ def _benchmark_cuda_batch_sizes(
                 loss.backward()
                 finished.record()
                 finished.synchronize()
-                elapsed_seconds = max(
-                    1e-9, float(started.elapsed_time(finished)) / 1_000.0
-                )
+                elapsed_seconds = max(1e-9, float(started.elapsed_time(finished)) / 1_000.0)
                 peak_reserved = torch.cuda.max_memory_reserved(device)
                 incremental_peak = max(0, peak_reserved - baseline_reserved)
                 estimated_free_at_peak = max(
                     0,
                     free_before - incremental_peak - optimizer_state_reserve,
                 )
-                finite = bool(
-                    torch.isfinite(warm_loss).item() and torch.isfinite(loss).item()
-                )
+                finite = bool(torch.isfinite(warm_loss).item() and torch.isfinite(loss).item())
                 result.update(
                     {
                         "finite": finite,
-                        "samples_per_second": (
-                            candidate / elapsed_seconds if finite else 0.0
-                        ),
-                        "vram_headroom_fraction": (
-                            estimated_free_at_peak / max(1, total_memory)
-                        ),
+                        "samples_per_second": (candidate / elapsed_seconds if finite else 0.0),
+                        "vram_headroom_fraction": (estimated_free_at_peak / max(1, total_memory)),
                         "peak_reserved_bytes": int(peak_reserved),
                         "optimizer_state_reserve_bytes": int(optimizer_state_reserve),
                     }
@@ -940,9 +870,7 @@ def _benchmark_cuda_batch_sizes(
     return results
 
 
-_PREFIX_EXPANDABLE_STATE_KEYS = frozenset(
-    {"token_emb.weight", "reward_token_emb.weight"}
-)
+_PREFIX_EXPANDABLE_STATE_KEYS = frozenset({"token_emb.weight", "reward_token_emb.weight"})
 
 
 def _vocab_for_training_rows(
@@ -1030,27 +958,13 @@ def migrate_context_state(
     payload = source_payload or {}
     source_block_norm = bool(payload.get("input_block_norm", False))
     source_dataset_rms = (
-        float(payload.get("dataset_block_rms", DATASET_BLOCK_RMS))
-        if source_block_norm
-        else 1.0
+        float(payload.get("dataset_block_rms", DATASET_BLOCK_RMS)) if source_block_norm else 1.0
     )
-    source_target_rms = (
-        float(payload.get("target_block_rms", TARGET_BLOCK_RMS))
-        if source_block_norm
-        else 1.0
-    )
-    dataset_gain = (
-        model.dataset_block_rms if model.input_block_norm else 1.0
-    ) / source_dataset_rms
-    target_gain = (
-        model.target_block_rms if model.input_block_norm else 1.0
-    ) / source_target_rms
+    source_target_rms = float(payload.get("target_block_rms", TARGET_BLOCK_RMS)) if source_block_norm else 1.0
+    dataset_gain = (model.dataset_block_rms if model.input_block_norm else 1.0) / source_dataset_rms
+    target_gain = (model.target_block_rms if model.input_block_norm else 1.0) / source_target_rms
 
-    if (
-        target_source_width == target_target_width
-        and dataset_gain == 1.0
-        and target_gain == 1.0
-    ):
+    if target_source_width == target_target_width and dataset_gain == 1.0 and target_gain == 1.0:
         migrated_encoder_first = source
     else:
         migrated_encoder_first = torch.zeros(
@@ -1081,17 +995,13 @@ def migrate_context_state(
             )
         state[key] = migrated_encoder_first
 
-    if model.reward_encoder is not None and not any(
-        k.startswith("reward_encoder.") for k in state
-    ):
+    if model.reward_encoder is not None and not any(k.startswith("reward_encoder.") for k in state):
         cloned = 0
         for name in list(state):
             if name == "encoder" or name.startswith("encoder."):
-                state[f"reward_encoder.{name[len('encoder.'):]}"] = state[name].clone()
+                state[f"reward_encoder.{name[len('encoder.') :]}"] = state[name].clone()
                 cloned += 1
-        notes.append(
-            f"reward_encoder seeded as an exact clone of the migrated encoder ({cloned} tensors)"
-        )
+        notes.append(f"reward_encoder seeded as an exact clone of the migrated encoder ({cloned} tensors)")
     return state, notes
 
 
@@ -1125,16 +1035,12 @@ def _warm_start_model(
             and 0 < previous.shape[0] <= target.shape[0]
         ):
             expanded = target.detach().clone()
-            expanded[: previous.shape[0]].copy_(
-                previous.to(device=expanded.device, dtype=expanded.dtype)
-            )
+            expanded[: previous.shape[0]].copy_(previous.to(device=expanded.device, dtype=expanded.dtype))
             loadable[key] = expanded
             prefix_copied.append(key)
     if strict_context:
         missing = sorted(
-            key
-            for key in current
-            if key.split(".")[0] in _WARM_START_CRITICAL_ROOTS and key not in loadable
+            key for key in current if key.split(".")[0] in _WARM_START_CRITICAL_ROOTS and key not in loadable
         )
         if missing:
             raise ValueError(
@@ -1205,14 +1111,10 @@ def validate_prime_authority_checkpoint(state: dict[str, Any]) -> None:
         )
     embedding_rows = int(state.get("embedding_rows") or 0)
     if embedding_rows < len(saved):
-        raise ValueError(
-            "checkpoint embedding table is smaller than its action vocabulary"
-        )
+        raise ValueError("checkpoint embedding table is smaller than its action vocabulary")
 
 
-def _embedding_rows_for_warm_start(
-    vocab: ActionVocab, checkpoint: dict[str, Any] | None
-) -> int:
+def _embedding_rows_for_warm_start(vocab: ActionVocab, checkpoint: dict[str, Any] | None) -> int:
     rows = vocab.size + 256
     if checkpoint is None:
         return rows
@@ -1228,9 +1130,7 @@ def _embedding_rows_for_warm_start(
 def _atomic_torch_save(payload: dict[str, Any], path: Path) -> None:
     """Atomically replace a mutable trainer snapshot after a complete torch save."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(
-        dir=path.parent, prefix=f".{path.name}.", suffix=".tmp"
-    )
+    descriptor, temporary_name = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
     os.close(descriptor)
     temporary = Path(temporary_name)
     try:
@@ -1251,9 +1151,7 @@ def _persistent_row_artifacts(
     path: Path, vocab: ActionVocab
 ) -> tuple[dict[str, tuple[list[int], list[list[int]]]], str]:
     vocab_hash = hashlib.sha256(
-        json.dumps(vocab.tokens, ensure_ascii=False, separators=(",", ":")).encode(
-            "utf-8"
-        )
+        json.dumps(vocab.tokens, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
     key = str(path.resolve())
     payload = _ROW_ARTIFACT_CACHE_MEMORY.get(key)
@@ -1283,9 +1181,7 @@ def _capture_rng_state(rng: random.Random) -> dict[str, Any]:
         "python_local": rng.getstate(),
         "numpy_global": np.random.get_state(),
         "torch_cpu": torch.get_rng_state(),
-        "torch_cuda": torch.cuda.get_rng_state_all()
-        if torch.cuda.is_available()
-        else [],
+        "torch_cuda": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else [],
     }
 
 
@@ -1341,9 +1237,7 @@ def _val_loss(
                         update: dict[str, Any] = {
                             "validation_batch": batch_index,
                             "validation_batches": total_batches,
-                            "validation_pct": round(
-                                100.0 * batch_index / max(1, total_batches), 1
-                            ),
+                            "validation_pct": round(100.0 * batch_index / max(1, total_batches), 1),
                             "val_partial_batches": steps,
                         }
                         if steps:
@@ -1361,9 +1255,7 @@ def _val_loss(
                         {
                             "validation_batch": batch_index,
                             "validation_batches": total_batches,
-                            "validation_pct": round(
-                                100.0 * batch_index / max(1, total_batches), 1
-                            ),
+                            "validation_pct": round(100.0 * batch_index / max(1, total_batches), 1),
                             "val_partial": total / steps,
                             "val_partial_batches": steps,
                         }
@@ -1514,21 +1406,16 @@ def train_policy_v3_from_jsonl(
         raise ValueError("legacy_watermark_cutoff must be nonnegative")
     if training_schedule is not None and anti_overfit_experiment:
         raise ValueError(
-            "staged training schedules and the anti-overfit experiment must run "
-            "as separate experiments"
+            "staged training schedules and the anti-overfit experiment must run as separate experiments"
         )
     if training_schedule is not None and not 1 <= epochs <= LIFELONG_MAX_PASSES:
-        raise ValueError(
-            "staged training schedules are limited to one through three passes"
-        )
+        raise ValueError("staged training schedules are limited to one through three passes")
     if family_held_early_stopping and not 1 <= epochs <= LIFELONG_MAX_PASSES:
         raise ValueError("family-held lifelong cycles are limited to three passes")
     if early_stopping_patience is not None and early_stopping_patience < 1:
         raise ValueError("early_stopping_patience must be positive")
     training_schedule_identity = (
-        preregistered_training_schedule_config(training_schedule)
-        if training_schedule is not None
-        else None
+        preregistered_training_schedule_config(training_schedule) if training_schedule is not None else None
     )
 
     metrics_path = Path(metrics_jsonl) if metrics_jsonl else None
@@ -1537,11 +1424,7 @@ def train_policy_v3_from_jsonl(
     progress_path = (
         Path(progress_jsonl)
         if progress_jsonl
-        else (
-            metrics_path.parent / "train_progress.json"
-            if metrics_path is not None
-            else None
-        )
+        else (metrics_path.parent / "train_progress.json" if metrics_path is not None else None)
     )
     if progress_path is not None and is_main(dist_ctx):
         progress_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1559,9 +1442,7 @@ def train_policy_v3_from_jsonl(
                 "batch": 0,
                 "total_batches": 0,
                 "pct": 0.0,
-                "active_label_watermark": int(
-                    (resume_extra or {}).get("source_label_watermark", 0) or 0
-                ),
+                "active_label_watermark": int((resume_extra or {}).get("source_label_watermark", 0) or 0),
                 "elapsed_sec": now - progress_started,
                 "updated_at": now,
                 "progress_timestamp_ms": int(now * 1_000),
@@ -1572,24 +1453,16 @@ def train_policy_v3_from_jsonl(
     resume_payload: dict[str, Any] | None = None
     if resume_from:
         emit_progress("model_restore", input_mode="resume")
-        resume_payload = torch.load(
-            str(resume_from), map_location="cpu", weights_only=False
-        )
+        resume_payload = torch.load(str(resume_from), map_location="cpu", weights_only=False)
         if resume_payload.get("schema") != TRAINER_RESUME_V1:
-            raise ValueError(
-                f"unsupported trainer resume schema {resume_payload.get('schema')!r}"
-            )
+            raise ValueError(f"unsupported trainer resume schema {resume_payload.get('schema')!r}")
         if not branch_from_accepted_resume:
-            _validate_training_schedule_resume(
-                resume_payload, training_schedule_identity
-            )
+            _validate_training_schedule_resume(resume_payload, training_schedule_identity)
         saved_experiment = resume_payload.get("anti_overfit_experiment")
         if saved_experiment is not None and not branch_from_accepted_resume:
             expected = anti_overfit_experiment_config()
             if not anti_overfit_experiment:
-                raise ValueError(
-                    "anti-overfit resume requires anti_overfit_experiment=True"
-                )
+                raise ValueError("anti-overfit resume requires anti_overfit_experiment=True")
             if saved_experiment != expected:
                 raise ValueError("anti-overfit resume configuration has drifted")
 
@@ -1662,17 +1535,11 @@ def train_policy_v3_from_jsonl(
     if resume_payload is not None:
         saved_tokens = (resume_payload.get("action_vocab") or {}).get("tokens")
         if saved_tokens != vocab.tokens:
-            raise ValueError(
-                "resume action vocabulary does not match the current Prime bundle"
-            )
+            raise ValueError("resume action vocabulary does not match the current Prime bundle")
     resolved_device = (
         dist_ctx.device
         if dist_ctx.enabled
-        else (
-            device
-            if (not device.startswith("cuda") or torch.cuda.is_available())
-            else "cpu"
-        )
+        else (device if (not device.startswith("cuda") or torch.cuda.is_available()) else "cpu")
     )
 
     # BUG-B fix (all 7 external reviews): the reward/listwise losses read ONLY
@@ -1692,29 +1559,20 @@ def train_policy_v3_from_jsonl(
         generated = prov not in ("corpus", "quant_report", "seed")
         if generated:
             rp = md.get("rank_pct")
-            is_winner = ok and (
-                float(v) == 0.0 or (isinstance(rp, (int, float)) and rp >= 0.9)
-            )
+            is_winner = ok and (float(v) == 0.0 or (isinstance(rp, (int, float)) and rp >= 0.9))
             md["seq_weight"] = 1.0 if is_winner else (0.05 if ok else 0.0)
             r.metadata = md
     legacy_weighted_rows = (
-        _apply_legacy_replay_weight(
-            train_rows, watermark_cutoff=legacy_watermark_cutoff
-        )
+        _apply_legacy_replay_weight(train_rows, watermark_cutoff=legacy_watermark_cutoff)
         if anti_overfit_experiment
         else 0
     )
     if is_main(dist_ctx):
-        rates = {
-            k: round(sum(v) / max(1, len(v)), 3)
-            for k, v in sorted(finite_by_source.items())
-        }
+        rates = {k: round(sum(v) / max(1, len(v)), 3) for k, v in sorted(finite_by_source.items())}
         print(f"reward_finite_rate_by_source: {rates}")
         for k, v in rates.items():
             if k != "corpus" and v < 0.95 and len(finite_by_source[k]) > 100:
-                print(
-                    f"WARNING: source '{k}' reward coverage {v} < 0.95 — selector is starved of it"
-                )
+                print(f"WARNING: source '{k}' reward coverage {v} < 0.95 — selector is starved of it")
 
     # dataset_dim follows the corpus: v3.1 rows carry 512, v3.2 rows 1536.
     row_dataset_dim = len(rows[0].embedding) if rows else 512
@@ -1746,11 +1604,7 @@ def train_policy_v3_from_jsonl(
     from collections import Counter
 
     fam_counts = Counter(h for _, h in winner.values())
-    saved_families = (
-        list(resume_payload.get("routing_families") or [])
-        if resume_payload is not None
-        else []
-    )
+    saved_families = list(resume_payload.get("routing_families") or []) if resume_payload is not None else []
     if saved_families:
         routing_families = saved_families
     else:
@@ -1761,9 +1615,7 @@ def train_policy_v3_from_jsonl(
     if resume_payload is not None:
         saved_routing = int(resume_payload["routing_classes"])
         if routing_classes is not None and routing_classes != saved_routing:
-            raise ValueError(
-                f"resume routing class mismatch: {saved_routing} != {routing_classes}"
-            )
+            raise ValueError(f"resume routing class mismatch: {saved_routing} != {routing_classes}")
         n_routing = saved_routing
     if len(routing_families) >= n_routing:
         raise ValueError("routing family mapping leaves no fixed 'other' class")
@@ -1776,15 +1628,11 @@ def train_policy_v3_from_jsonl(
         md["routing_class"] = fam_index.get(w[1], other_idx) if w else -1
         r.metadata = md
     if is_main(dist_ctx):
-        print(
-            f"routing supervision: {len(winner)} datasets, {n_routing} classes {routing_families}"
-        )
+        print(f"routing supervision: {len(winner)} datasets, {n_routing} classes {routing_families}")
 
     initial_payload = resume_payload
     if initial_payload is None and init_from:
-        initial_payload = torch.load(
-            str(init_from), map_location="cpu", weights_only=False
-        )
+        initial_payload = torch.load(str(init_from), map_location="cpu", weights_only=False)
     if prime_vocab and initial_payload is not None:
         validate_prime_authority_checkpoint(initial_payload)
     if resume_payload is None or branch_from_accepted_resume:
@@ -1797,8 +1645,7 @@ def train_policy_v3_from_jsonl(
             torch.cuda.manual_seed_all(seed)
     embedding_rows = _embedding_rows_for_warm_start(vocab, initial_payload)
     corpus_has_binary = any(
-        str((row.metadata or {}).get("task_type") or "regression") == "binary"
-        for row in rows
+        str((row.metadata or {}).get("task_type") or "regression") == "binary" for row in rows
     )
     fused_task_heads = (
         bool(resume_payload.get("fused_task_heads", False))
@@ -1822,10 +1669,7 @@ def train_policy_v3_from_jsonl(
         checkpoint=resume_payload if resume_payload is not None else initial_payload,
     )
     if is_main(dist_ctx):
-        print(
-            f"context target block: keeping {target_keep_dim} dims "
-            f"(structurally-zero tail dropped)"
-        )
+        print(f"context target block: keeping {target_keep_dim} dims (structurally-zero tail dropped)")
     base_model = JopePolicyModelV3(
         vocab,
         d_model=d_model,
@@ -1853,12 +1697,9 @@ def train_policy_v3_from_jsonl(
             base_model, prev_state, source_payload=initial_payload
         )
         if is_main(dist_ctx):
-            detail = (
-                f"; prefix-copied {','.join(prefix_copied)}" if prefix_copied else ""
-            )
+            detail = f"; prefix-copied {','.join(prefix_copied)}" if prefix_copied else ""
             print(
-                f"warm-started {loaded_count}/{len(base_model.state_dict())} tensors "
-                f"from {init_from}{detail}"
+                f"warm-started {loaded_count}/{len(base_model.state_dict())} tensors from {init_from}{detail}"
             )
     model = wrap_ddp(base_model, dist_ctx)
 
@@ -1887,9 +1728,7 @@ def train_policy_v3_from_jsonl(
     artifact_cache = precompute_row_artifacts(
         train_rows + val_rows, vocab, persistent_cache=persistent_artifacts
     )
-    persistent_after = (
-        len(persistent_artifacts) if persistent_artifacts is not None else 0
-    )
+    persistent_after = len(persistent_artifacts) if persistent_artifacts is not None else 0
     preprocess_cache_misses = max(0, persistent_after - persistent_before)
     preprocess_cache_hits = (
         max(0, len(train_rows) + len(val_rows) - preprocess_cache_misses)
@@ -1917,8 +1756,7 @@ def train_policy_v3_from_jsonl(
     accepted_ancestor_metrics: dict[str, float] | None = None
     if initial_payload is not None and family_held_early_stopping:
         current_validation_ids = sorted(
-            str(value)
-            for value in (resume_extra or {}).get("validation_dataset_ids", [])
+            str(value) for value in (resume_extra or {}).get("validation_dataset_ids", [])
         )
         trainer_extra = initial_payload.get("trainer_extra")
         saved_validation_ids = (
@@ -1932,13 +1770,10 @@ def train_policy_v3_from_jsonl(
             and current_validation_ids
             and saved_validation_ids == current_validation_ids
         ):
-            accepted_ancestor_pairwise_accuracy = (
-                _checkpoint_payload_pairwise_accuracy(initial_payload)
-            )
-        if (
-            training_schedule is not None
-            or accepted_ancestor_pairwise_accuracy is None
-        ) and is_main(dist_ctx):
+            accepted_ancestor_pairwise_accuracy = _checkpoint_payload_pairwise_accuracy(initial_payload)
+        if (training_schedule is not None or accepted_ancestor_pairwise_accuracy is None) and is_main(
+            dist_ctx
+        ):
             with torch.no_grad():
                 accepted_metrics = policy_v3_validation_metrics(
                     unwrap(model),
@@ -1949,9 +1784,7 @@ def train_policy_v3_from_jsonl(
                     greedy_eval_datasets=0,
                     router=router,
                 )
-            accepted_ancestor_pairwise_accuracy = accepted_metrics.get(
-                "pairwise_win_accuracy"
-            )
+            accepted_ancestor_pairwise_accuracy = accepted_metrics.get("pairwise_win_accuracy")
             accepted_ancestor_metrics = {
                 key: float(accepted_metrics[key])
                 for key in (
@@ -1977,9 +1810,7 @@ def train_policy_v3_from_jsonl(
             )
             dist.broadcast(accepted_state, src=0)
             accepted_value = float(accepted_state.item())
-            accepted_ancestor_pairwise_accuracy = (
-                None if math.isnan(accepted_value) else accepted_value
-            )
+            accepted_ancestor_pairwise_accuracy = None if math.isnan(accepted_value) else accepted_value
     accepted_baseline_sec = time.perf_counter() - accepted_baseline_started
     scaler = torch.amp.GradScaler("cuda", enabled=amp and dev_is_cuda)
 
@@ -2069,17 +1900,9 @@ def train_policy_v3_from_jsonl(
     phase_a_epochs = (
         int(resume_payload["phase_a_epochs"])
         if resume_payload is not None
-        else (
-            0
-            if phase_a_fraction <= 0.0
-            else max(1, int(round(phase_a_fraction * epochs)))
-        )
+        else (0 if phase_a_fraction <= 0.0 else max(1, int(round(phase_a_fraction * epochs))))
     )
-    start_epoch = (
-        int(resume_payload.get("global_epoch", 0))
-        if resume_payload
-        else int(initial_epoch)
-    )
+    start_epoch = int(resume_payload.get("global_epoch", 0)) if resume_payload else int(initial_epoch)
     if training_schedule is not None:
         scheduler_lambdas = [(lambda _: 1.0) for _ in optimizer_groups]
     else:
@@ -2091,21 +1914,13 @@ def train_policy_v3_from_jsonl(
         ]
         if anti_overfit_experiment:
             scheduler_lambdas.append(lambda _: 1.0)
-    scheduler = torch.optim.lr_scheduler.LambdaLR(
-        opt, lr_lambda=scheduler_lambdas
-    )
+    scheduler = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda=scheduler_lambdas)
     if resume_payload is not None and not branch_from_accepted_resume:
-        optimizer_state_compatible = resume_payload.get(
-            "optimizer_state_compatible_with_model", True
-        )
+        optimizer_state_compatible = resume_payload.get("optimizer_state_compatible_with_model", True)
         if type(optimizer_state_compatible) is not bool:
-            raise ValueError(
-                "resume optimizer/model compatibility marker must be a boolean"
-            )
+            raise ValueError("resume optimizer/model compatibility marker must be a boolean")
         saved_optimizer = resume_payload["optimizer"]
-        optimizer_layout_matches = len(saved_optimizer.get("param_groups", [])) == len(
-            opt.param_groups
-        )
+        optimizer_layout_matches = len(saved_optimizer.get("param_groups", [])) == len(opt.param_groups)
         if optimizer_state_compatible and optimizer_layout_matches:
             opt.load_state_dict(saved_optimizer)
             scheduler.load_state_dict(resume_payload["scheduler"])
@@ -2115,9 +1930,7 @@ def train_policy_v3_from_jsonl(
                 "starting fresh optimizer, scheduler, and scaler state"
             )
         elif is_main(dist_ctx):
-            print(
-                "anti-overfit optimizer layout changed: starting fresh optimizer moments"
-            )
+            print("anti-overfit optimizer layout changed: starting fresh optimizer moments")
         # A checkpoint written while AMP was disabled stores an EMPTY GradScaler
         # state dict; loading that into an enabled scaler raises "source state
         # dict is empty". When enabling AMP on resume, skip the empty state and
@@ -2131,9 +1944,7 @@ def train_policy_v3_from_jsonl(
     batch_benchmark: list[dict[str, Any]] = []
     batch_selection = "configured"
     if autotune_batch_size and dev_is_cuda:
-        saved_batch_size = (
-            resume_payload.get("batch_size") if resume_payload is not None else None
-        )
+        saved_batch_size = resume_payload.get("batch_size") if resume_payload is not None else None
         if (
             resume_payload is not None
             and resume_payload.get("batch_autotune") is True
@@ -2145,9 +1956,7 @@ def train_policy_v3_from_jsonl(
             batch_selection = "resume"
         else:
             benchmark_phase = "A" if start_epoch + 1 <= phase_a_epochs else "B"
-            benchmark_profile = (
-                PHASE_A_PROFILE if benchmark_phase == "A" else PHASE_B_PROFILE
-            )
+            benchmark_profile = PHASE_A_PROFILE if benchmark_phase == "A" else PHASE_B_PROFILE
             batch_benchmark = _benchmark_cuda_batch_sizes(
                 unwrap(model),
                 opt,
@@ -2164,17 +1973,10 @@ def train_policy_v3_from_jsonl(
             batch_size = _select_cuda_batch_size(batch_benchmark)
             batch_selection = "benchmark"
         if is_main(dist_ctx):
-            print(
-                f"CUDA batch selection: {batch_size} ({batch_selection}; "
-                f"candidates={batch_benchmark})"
-            )
-    history: list[float] = (
-        list(resume_payload.get("loss_history", [])) if resume_payload else []
-    )
+            print(f"CUDA batch selection: {batch_size} ({batch_selection}; candidates={batch_benchmark})")
+    history: list[float] = list(resume_payload.get("loss_history", [])) if resume_payload else []
     retain_prior_selection = resume_payload is not None and not reset_checkpoint_selection_on_resume
-    best_value: float | None = (
-        resume_payload.get("best_value") if retain_prior_selection else None
-    )
+    best_value: float | None = resume_payload.get("best_value") if retain_prior_selection else None
     best_payload: dict[str, Any] | None = (
         resume_payload.get("best_payload") if retain_prior_selection else None
     )
@@ -2183,37 +1985,21 @@ def train_policy_v3_from_jsonl(
     )
     ema_state: dict[str, torch.Tensor] | None = None
     if anti_overfit_experiment:
-        saved_ema = (
-            resume_payload.get("anti_overfit_ema")
-            if resume_payload is not None
-            else None
-        )
+        saved_ema = resume_payload.get("anti_overfit_ema") if resume_payload is not None else None
         ema_state = (
-            {
-                key: value.detach().clone().to(resolved_device)
-                for key, value in saved_ema.items()
-            }
+            {key: value.detach().clone().to(resolved_device) for key, value in saved_ema.items()}
             if isinstance(saved_ema, dict) and saved_ema
-            else {
-                key: value.detach().clone()
-                for key, value in unwrap(model).state_dict().items()
-            }
+            else {key: value.detach().clone() for key, value in unwrap(model).state_dict().items()}
         )
     retain_plateau_state = anti_overfit_experiment and retain_prior_selection
     plateau_best: float | None = (
-        resume_payload.get("anti_overfit_plateau_best")
-        if retain_plateau_state
-        else None
+        resume_payload.get("anti_overfit_plateau_best") if retain_plateau_state else None
     )
     plateau_bad_epochs = (
-        int(resume_payload.get("anti_overfit_plateau_bad_epochs", 0) or 0)
-        if retain_plateau_state
-        else 0
+        int(resume_payload.get("anti_overfit_plateau_bad_epochs", 0) or 0) if retain_plateau_state else 0
     )
     anti_overfit_lr_scale = (
-        float(resume_payload.get("anti_overfit_lr_scale", 1.0) or 1.0)
-        if retain_plateau_state
-        else 1.0
+        float(resume_payload.get("anti_overfit_lr_scale", 1.0) or 1.0) if retain_plateau_state else 1.0
     )
     started = time.time()
     current_phase = ""
@@ -2244,9 +2030,7 @@ def train_policy_v3_from_jsonl(
             current_phase = phase
             unwrap(model).set_phase(phase)
             if training_schedule is None:
-                opt.param_groups[1]["lr"] = (
-                    lr * (0.1 if phase == "B" else 1.0) * anti_overfit_lr_scale
-                )
+                opt.param_groups[1]["lr"] = lr * (0.1 if phase == "B" else 1.0) * anti_overfit_lr_scale
         profile = PHASE_A_PROFILE if phase == "A" else PHASE_B_PROFILE
         model.train()
         epoch_started = time.time()
@@ -2269,10 +2053,7 @@ def train_policy_v3_from_jsonl(
         # truncate every shard to the minimum shard length (loses ≤ world-1 batches/epoch).
         my_batches = shard_for_rank(all_batches, dist_ctx)
         if dist_ctx.enabled and dist_ctx.world_size > 1:
-            min_len = min(
-                len(all_batches[r :: dist_ctx.world_size])
-                for r in range(dist_ctx.world_size)
-            )
+            min_len = min(len(all_batches[r :: dist_ctx.world_size]) for r in range(dist_ctx.world_size))
             my_batches = my_batches[:min_len]
         n_batches = max(1, len(my_batches))
         emit_progress(
@@ -2311,17 +2092,13 @@ def train_policy_v3_from_jsonl(
             if scaler.is_enabled():
                 scaler.scale(loss).backward()
                 scaler.unscale_(opt)
-                all_reduce_gradients(
-                    unwrap(model), dist_ctx
-                )  # average grads across ranks
+                all_reduce_gradients(unwrap(model), dist_ctx)  # average grads across ranks
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
                 scaler.step(opt)
                 scaler.update()
             else:
                 loss.backward()
-                all_reduce_gradients(
-                    unwrap(model), dist_ctx
-                )  # average grads across ranks
+                all_reduce_gradients(unwrap(model), dist_ctx)  # average grads across ranks
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
                 opt.step()
             clamp_log_vars(unwrap(model).loss_log_vars)
@@ -2359,8 +2136,7 @@ def train_policy_v3_from_jsonl(
         steps_all = max(1.0, agg["__steps__"])
         train_loss = agg["__loss__"] / steps_all
         component_avgs = {
-            k: agg[k] / steps_all
-            for k in POLICY_V3_LOSS_COMPONENTS + POLICY_V3_DIAGNOSTIC_COMPONENTS
+            k: agg[k] / steps_all for k in POLICY_V3_LOSS_COMPONENTS + POLICY_V3_DIAGNOSTIC_COMPONENTS
         }
         # Excess-over-floor reporting. Both of these headline numbers are dominated by an
         # irreducible constant, so the raw value cannot say whether the model learned
@@ -2378,9 +2154,7 @@ def train_policy_v3_from_jsonl(
                 f"batches skipped) — aborting so the supervisor restarts from a healthy checkpoint"
             )
         if nonfinite_batches and is_main(dist_ctx):
-            print(
-                f"WARNING epoch {epoch}: skipped {nonfinite_batches} nonfinite-loss batches"
-            )
+            print(f"WARNING epoch {epoch}: skipped {nonfinite_batches} nonfinite-loss batches")
 
         # Part C: full val loss on held-out real datasets (rank 0), same profile as train.
         validation_progress_state: dict[str, Any] = {}
@@ -2417,8 +2191,7 @@ def train_policy_v3_from_jsonl(
         raw_state_backup: dict[str, torch.Tensor] | None = None
         if ema_state is not None:
             raw_state_backup = {
-                key: value.detach().clone()
-                for key, value in unwrap(model).state_dict().items()
+                key: value.detach().clone() for key, value in unwrap(model).state_dict().items()
             }
             unwrap(model).load_state_dict(ema_state)
         val_loss, val_loss_components = (
@@ -2465,9 +2238,7 @@ def train_policy_v3_from_jsonl(
                 vocab,
                 batch_size=batch_size,
                 device=resolved_device,
-                greedy_eval_datasets=greedy_eval_datasets
-                if epoch % 5 == 0 or epoch == epochs
-                else 0,
+                greedy_eval_datasets=greedy_eval_datasets if epoch % 5 == 0 or epoch == epochs else 0,
                 router=router,
             )
             if is_main(dist_ctx)
@@ -2499,11 +2270,7 @@ def train_policy_v3_from_jsonl(
                 )
                 dist.broadcast(early_stop_state, src=0)
                 early_stop_values = early_stop_state.tolist()
-                family_held_best = (
-                    None
-                    if math.isnan(early_stop_values[0])
-                    else float(early_stop_values[0])
-                )
+                family_held_best = None if math.isnan(early_stop_values[0]) else float(early_stop_values[0])
                 family_held_bad_passes = int(early_stop_values[1])
                 stop_after_pass = bool(early_stop_values[2])
             family_held_early_stopped = stop_after_pass
@@ -2517,17 +2284,13 @@ def train_policy_v3_from_jsonl(
                     macro_validation_bad_passes = 0
                 else:
                     macro_validation_bad_passes += 1
-                macro_validation_early_stopped = (
-                    macro_validation_bad_passes >= early_stopping_patience
-                )
+                macro_validation_early_stopped = macro_validation_bad_passes >= early_stopping_patience
             if dist_ctx.enabled:
                 import torch.distributed as dist
 
                 macro_stop_state = torch.tensor(
                     [
-                        float("nan")
-                        if macro_validation_best is None
-                        else macro_validation_best,
+                        float("nan") if macro_validation_best is None else macro_validation_best,
                         float(macro_validation_bad_passes),
                         1.0 if macro_validation_early_stopped else 0.0,
                     ],
@@ -2536,9 +2299,7 @@ def train_policy_v3_from_jsonl(
                 )
                 dist.broadcast(macro_stop_state, src=0)
                 macro_values = macro_stop_state.tolist()
-                macro_validation_best = (
-                    None if math.isnan(macro_values[0]) else float(macro_values[0])
-                )
+                macro_validation_best = None if math.isnan(macro_values[0]) else float(macro_values[0])
                 macro_validation_bad_passes = int(macro_values[1])
                 macro_validation_early_stopped = bool(macro_values[2])
             stop_after_pass = stop_after_pass or macro_validation_early_stopped
@@ -2568,8 +2329,7 @@ def train_policy_v3_from_jsonl(
             "epoch_sec": time.time() - epoch_started,
             "elapsed_sec": time.time() - started,
             "loss_weights": {
-                name: float(torch.exp(-p.detach()).cpu())
-                for name, p in unwrap(model).loss_log_vars.items()
+                name: float(torch.exp(-p.detach()).cpu()) for name, p in unwrap(model).loss_log_vars.items()
             },
             "train_loss_components": {k: v for k, v in sorted(component_avgs.items())},
             **{f"val_{k}": v for k, v in metrics.items()},
@@ -2619,24 +2379,17 @@ def train_policy_v3_from_jsonl(
         if is_main(dist_ctx):
             if phase == "A":
                 nll = metrics.get("seq_nll")
-                if nll is not None and (
-                    imitation_payload is None or nll < imitation_payload["metric_value"]
-                ):
+                if nll is not None and (imitation_payload is None or nll < imitation_payload["metric_value"]):
                     imitation_payload = {
                         "metric_value": nll,
                         "epoch": epoch,
-                        "label_watermark": int(
-                            (resume_extra or {}).get("source_label_watermark", 0) or 0
-                        ),
+                        "label_watermark": int((resume_extra or {}).get("source_label_watermark", 0) or 0),
                         "metrics": {
                             "train_loss": train_loss,
                             "val_loss": val_loss,
                             "val_seq_nll": nll,
                         },
-                        "state": {
-                            k: v.detach().cpu().clone()
-                            for k, v in unwrap(model).state_dict().items()
-                        },
+                        "state": {k: v.detach().cpu().clone() for k, v in unwrap(model).state_dict().items()},
                     }
             else:
                 value = metrics.get(checkpoint_metric.removeprefix("val_"))
@@ -2645,27 +2398,16 @@ def train_policy_v3_from_jsonl(
                     best_payload = {
                         "metric_value": value,
                         "epoch": epoch,
-                        "label_watermark": int(
-                            (resume_extra or {}).get("source_label_watermark", 0) or 0
-                        ),
+                        "label_watermark": int((resume_extra or {}).get("source_label_watermark", 0) or 0),
                         "metrics": {
                             "train_loss": train_loss,
                             "val_loss": val_loss,
-                            "val_pairwise_win_accuracy": metrics.get(
-                                "pairwise_win_accuracy"
-                            ),
-                            "val_reward_cv_correlation": metrics.get(
-                                "reward_cv_correlation"
-                            ),
-                            "val_sequence_validity": metrics.get(
-                                "sequence_validity"
-                            ),
+                            "val_pairwise_win_accuracy": metrics.get("pairwise_win_accuracy"),
+                            "val_reward_cv_correlation": metrics.get("reward_cv_correlation"),
+                            "val_sequence_validity": metrics.get("sequence_validity"),
                             "val_seq_nll": metrics.get("seq_nll"),
                         },
-                        "state": {
-                            k: v.detach().cpu().clone()
-                            for k, v in unwrap(model).state_dict().items()
-                        },
+                        "state": {k: v.detach().cpu().clone() for k, v in unwrap(model).state_dict().items()},
                     }
         if raw_state_backup is not None:
             unwrap(model).load_state_dict(raw_state_backup)
@@ -2703,11 +2445,7 @@ def train_policy_v3_from_jsonl(
                 )
                 dist.broadcast(plateau_state, src=0)
                 plateau_values = plateau_state.tolist()
-                plateau_best = (
-                    None
-                    if math.isnan(plateau_values[0])
-                    else float(plateau_values[0])
-                )
+                plateau_best = None if math.isnan(plateau_values[0]) else float(plateau_values[0])
                 plateau_bad_epochs = int(plateau_values[1])
                 anti_overfit_lr_scale = float(plateau_values[2])
                 lr_halved = bool(plateau_values[3])
@@ -2717,9 +2455,7 @@ def train_policy_v3_from_jsonl(
                 group["lr"] *= anti_overfit_lr_scale
         historical_selected_payload = best_payload or imitation_payload
         checkpoint_state_epoch = (
-            epoch
-            if checkpoint_state == "current"
-            else (historical_selected_payload or {}).get("epoch")
+            epoch if checkpoint_state == "current" else (historical_selected_payload or {}).get("epoch")
         )
         checkpoint_state_metric = (
             metrics.get(checkpoint_metric.removeprefix("val_"))
@@ -2764,8 +2500,7 @@ def train_policy_v3_from_jsonl(
                 "schema": TRAINER_RESUME_V1,
                 "global_epoch": epoch,
                 "model": {
-                    key: value.detach().cpu().clone()
-                    for key, value in unwrap(model).state_dict().items()
+                    key: value.detach().cpu().clone() for key, value in unwrap(model).state_dict().items()
                 },
                 "optimizer": opt.state_dict(),
                 "scheduler": scheduler.state_dict(),
@@ -2814,8 +2549,7 @@ def train_policy_v3_from_jsonl(
                     {
                         "anti_overfit_experiment": anti_overfit_experiment_config(),
                         "anti_overfit_ema": {
-                            key: value.detach().cpu().clone()
-                            for key, value in (ema_state or {}).items()
+                            key: value.detach().cpu().clone() for key, value in (ema_state or {}).items()
                         },
                         "anti_overfit_plateau_best": plateau_best,
                         "anti_overfit_plateau_bad_epochs": plateau_bad_epochs,
@@ -2831,18 +2565,14 @@ def train_policy_v3_from_jsonl(
     core = unwrap(model)
     continuation_epoch = start_epoch + completed_local_epochs
     historical_selected_payload = best_payload or imitation_payload
-    checkpoint_selected_payload = (
-        None if checkpoint_state == "current" else historical_selected_payload
-    )
+    checkpoint_selected_payload = None if checkpoint_state == "current" else historical_selected_payload
     checkpoint_state_epoch = (
         continuation_epoch
         if checkpoint_state == "current"
         else (checkpoint_selected_payload or {}).get("epoch")
     )
     checkpoint_state_metric_name = (
-        checkpoint_metric
-        if best_payload is not None or checkpoint_state == "current"
-        else "val_seq_nll"
+        checkpoint_metric if best_payload is not None or checkpoint_state == "current" else "val_seq_nll"
     )
     checkpoint_state_metric_value = (
         metrics.get(checkpoint_metric.removeprefix("val_"))
@@ -2897,9 +2627,7 @@ def train_policy_v3_from_jsonl(
                 checkpoint_metric=checkpoint_metric,
                 best_checkpoint_metric_value=(best_payload or {}).get("metric_value"),
                 best_checkpoint_epoch=(best_payload or {}).get("epoch"),
-                historical_best_label_watermark=(best_payload or {}).get(
-                    "label_watermark"
-                ),
+                historical_best_label_watermark=(best_payload or {}).get("label_watermark"),
                 checkpoint_state_kind=checkpoint_state,
                 checkpoint_state_epoch=checkpoint_state_epoch,
                 checkpoint_state_metric_name=checkpoint_state_metric_name,
@@ -2945,9 +2673,7 @@ def train_policy_v3_from_jsonl(
         )
         if imitation_payload is not None:
             imitation_out = out.with_suffix(".imitation.pt")
-            state_backup = {
-                k: v.detach().cpu().clone() for k, v in core.state_dict().items()
-            }
+            state_backup = {k: v.detach().cpu().clone() for k, v in core.state_dict().items()}
             core.load_state_dict(imitation_payload["state"])
             _atomic_torch_save(
                 core.checkpoint_payload(
@@ -2962,9 +2688,7 @@ def train_policy_v3_from_jsonl(
                         else {}
                     ),
                     **(
-                        {
-                            "anti_overfit_experiment": anti_overfit_experiment_config()
-                        }
+                        {"anti_overfit_experiment": anti_overfit_experiment_config()}
                         if anti_overfit_experiment
                         else {}
                     ),
@@ -2982,13 +2706,10 @@ def train_policy_v3_from_jsonl(
             # accepted-lineage cycle then starts fresh optimizer state from precisely
             # the model that won the arena.
             latest_resume_state["model"] = {
-                key: value.detach().cpu().clone()
-                for key, value in core.state_dict().items()
+                key: value.detach().cpu().clone() for key, value in core.state_dict().items()
             }
             latest_resume_state["last_checkpoint_state"] = checkpoint_state
-            latest_resume_state["resume_model_state_kind"] = (
-                published_model_state_kind
-            )
+            latest_resume_state["resume_model_state_kind"] = published_model_state_kind
             latest_resume_state["optimizer_state_compatible_with_model"] = (
                 optimizer_state_compatible_with_model
             )
@@ -3021,9 +2742,7 @@ def train_policy_v3_from_jsonl(
         "selected_checkpoint_metrics": checkpoint_state_metrics,
         "selected_state_is_current": checkpoint_state == "current",
         "resume_model_state_kind": published_model_state_kind,
-        "optimizer_state_compatible_with_model": (
-            optimizer_state_compatible_with_model
-        ),
+        "optimizer_state_compatible_with_model": (optimizer_state_compatible_with_model),
         "family_held_early_stopping": family_held_early_stopping,
         "family_held_best_pairwise_accuracy": family_held_best,
         "family_held_bad_passes": family_held_bad_passes,
@@ -3102,9 +2821,7 @@ def policy_v3_validation_metrics(
         logits = model.decoder_logits(z, batch.token_ids, batch.pad_mask)
         targets = batch.token_ids[:, 1:]
         target_pad = batch.pad_mask[:, 1:]
-        nll = masked_sequence_nll(
-            logits, targets, batch.legal, target_pad, label_smoothing=0.0
-        )
+        nll = masked_sequence_nll(logits, targets, batch.legal, target_pad, label_smoothing=0.0)
         nll_total += float(nll)
         nll_steps += 1
         # per-engine head accuracy at the head-op position
@@ -3127,19 +2844,12 @@ def policy_v3_validation_metrics(
             # val_binary_pairwise_win sat at chance and conditional_advantage
             # read negative regardless of what the model had actually learned.
             # (Unknown task_type values raise inside _task_lane_mask.)
-            row_tasks = [
-                str((row.metadata or {}).get("task_type") or "regression")
-                for row in batch_rows
-            ]
-            mean, std = model.reward_stats(
-                z_reward, batch.token_ids, batch.pad_mask, row_tasks
-            )
+            row_tasks = [str((row.metadata or {}).get("task_type") or "regression") for row in batch_rows]
+            mean, std = model.reward_stats(z_reward, batch.token_ids, batch.pad_mask, row_tasks)
             values.extend(batch.robust_delta[mask].cpu().tolist())
             preds.extend(mean[mask].cpu().tolist())
             stds.extend(std[mask].cpu().tolist())
-            ids.extend(
-                [d for d, keep in zip(batch.reward_pair_ids, mask.cpu().tolist()) if keep]
-            )
+            ids.extend([d for d, keep in zip(batch.reward_pair_ids, mask.cpu().tolist()) if keep])
             tasks.extend(
                 [
                     str((row.metadata or {}).get("task_type") or "regression")
@@ -3156,16 +2866,12 @@ def policy_v3_validation_metrics(
         "pairwise_win_accuracy": _pairwise_accuracy(preds, values, ids),
         "top1_historical_regret": _top1_regret(preds, values, ids),
         "reward_cv_correlation": _pearson(preds, values),
-        "uncertainty_error_spearman": _spearman(
-            stds, [abs(p - v) for p, v in zip(preds, values)]
-        ),
+        "uncertainty_error_spearman": _spearman(stds, [abs(p - v) for p, v in zip(preds, values)]),
     }
     # Per-task lanes (four-task program): metrics are emitted only for tasks with
     # at least one validation row — a task absent from the val split contributes
     # no keys rather than NaN placeholders.
-    per_task_ablation = (
-        ablation_preds if ablation_preds and len(ablation_preds) == len(values) else None
-    )
+    per_task_ablation = ablation_preds if ablation_preds and len(ablation_preds) == len(values) else None
     for task in ("regression", "binary", "timeseries", "multiclass"):
         indexes = [index for index, value in enumerate(tasks) if value == task]
         if not indexes:
@@ -3173,21 +2879,15 @@ def policy_v3_validation_metrics(
         task_preds = [preds[index] for index in indexes]
         task_values = [values[index] for index in indexes]
         task_ids = [ids[index] for index in indexes]
-        out[f"{task}_pairwise_win_accuracy"] = _pairwise_accuracy(
-            task_preds, task_values, task_ids
-        )
+        out[f"{task}_pairwise_win_accuracy"] = _pairwise_accuracy(task_preds, task_values, task_ids)
         out[f"{task}_reward_cv_correlation"] = _pearson(task_preds, task_values)
-        out[f"{task}_top1_historical_regret"] = _top1_regret(
-            task_preds, task_values, task_ids
-        )
+        out[f"{task}_top1_historical_regret"] = _top1_regret(task_preds, task_values, task_ids)
         if per_task_ablation is not None:
             task_ablation_win = _pairwise_accuracy(
                 [per_task_ablation[index] for index in indexes], task_values, task_ids
             )
             out[f"{task}_ablation_pairwise_win"] = task_ablation_win
-            out[f"{task}_conditional_advantage"] = (
-                out[f"{task}_pairwise_win_accuracy"] - task_ablation_win
-            )
+            out[f"{task}_conditional_advantage"] = out[f"{task}_pairwise_win_accuracy"] - task_ablation_win
     # v3.1 anti-collapse guard: conditional heads must beat the genome-only control.
     if ablation_preds and len(ablation_preds) == len(values):
         abl_win = _pairwise_accuracy(ablation_preds, values, ids)
@@ -3199,9 +2899,7 @@ def policy_v3_validation_metrics(
         # uses the dataset embedding from one that ignores it. Weighting the
         # advantage makes the trainer keep the checkpoint that is actually
         # conditional, not merely accurate.
-        out["conditional_score"] = (
-            out["pairwise_win_accuracy"] + 2.0 * out["conditional_advantage"]
-        )
+        out["conditional_score"] = out["pairwise_win_accuracy"] + 2.0 * out["conditional_advantage"]
     for engine, total in head_totals.items():
         out[f"head_accuracy_{engine}"] = head_hits[engine] / max(1, total)
 
@@ -3220,32 +2918,21 @@ def policy_v3_validation_metrics(
         stage_counts: list[int] = []
         for row in subset:
             emb = torch.tensor(row.embedding, dtype=torch.float32)
-            tgt = (
-                torch.tensor(row.target_embedding, dtype=torch.float32)
-                if row.target_embedding
-                else None
-            )
+            tgt = torch.tensor(row.target_embedding, dtype=torch.float32) if row.target_embedding else None
             for engine in vocab.engines:
                 seq = greedy_sequence(model, emb, tgt, engine=engine, device=device)
                 _, actions = decode_tokens(seq, vocab)
                 probes.append((engine, format_pipeline_actions(actions)))
             # free samples (engine unforced): measures engine routing + expr usage (RF6)
-            for seq in sample_sequences(
-                model, emb, tgt, n=4, temperature=0.8, seed=17, device=device
-            ):
+            for seq in sample_sequences(model, emb, tgt, n=4, temperature=0.8, seed=17, device=device):
                 engine_choice, actions = decode_tokens(seq, vocab)
                 engine_choices.append(engine_choice)
                 sample_count += 1
                 stage_counts.append(len(actions.get("transforms") or []))
-                if any(
-                    "expr" in (st.get("params") or {})
-                    for st in actions.get("transforms") or []
-                ):
+                if any("expr" in (st.get("params") or {}) for st in actions.get("transforms") or []):
                     expr_count += 1
         results = router.validate_many(probes)
-        out["one_shot_greedy_valid_rate"] = sum(
-            1 for r in results if r.get("valid")
-        ) / max(1, len(results))
+        out["one_shot_greedy_valid_rate"] = sum(1 for r in results if r.get("valid")) / max(1, len(results))
         if sample_count:
             out["expr_genome_fraction"] = expr_count / sample_count
             out["mean_transform_count"] = sum(stage_counts) / sample_count
@@ -3253,9 +2940,7 @@ def policy_v3_validation_metrics(
 
             probs = [c / sample_count for c in _Counter(engine_choices).values()]
             out["engine_choice_entropy"] = -sum(p * math.log(p) for p in probs if p > 0)
-            out["engine_choice_share"] = {
-                e: engine_choices.count(e) / sample_count for e in vocab.engines
-            }
+            out["engine_choice_share"] = {e: engine_choices.count(e) / sample_count for e in vocab.engines}
     return out
 
 

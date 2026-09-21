@@ -39,13 +39,7 @@ def freeze_synthetic_family_splits(
         min(train_end + int(0.1 * len(families)), len(families) - 1),
     )
     return {
-        family: (
-            "train"
-            if index < train_end
-            else "validation"
-            if index < validation_end
-            else "test"
-        )
+        family: ("train" if index < train_end else "validation" if index < validation_end else "test")
         for index, family in enumerate(families)
     }
 
@@ -60,12 +54,8 @@ def build_broad_catalog(
     """Freeze already-reviewed rows into ``BroadDatasetCatalog.v1``."""
 
     ordered = sorted((dict(row) for row in rows), key=lambda row: row["dataset_hash"])
-    real_counts = Counter(
-        row["split"] for row in ordered if row.get("domain") == "real"
-    )
-    synthetic_counts = Counter(
-        row["split"] for row in ordered if row.get("domain") == "synthetic"
-    )
+    real_counts = Counter(row["split"] for row in ordered if row.get("domain") == "real")
+    synthetic_counts = Counter(row["split"] for row in ordered if row.get("domain") == "synthetic")
     family_splits: dict[str, str] = {}
     for row in ordered:
         if row.get("domain") == "synthetic":
@@ -81,12 +71,8 @@ def build_broad_catalog(
         target_encoding_dimensions=512,
         foundation_cache_count=foundation_cache_count,
         hyperion_complete_count=sum(bool(row["hyperion_complete"]) for row in ordered),
-        real_split_counts={
-            split: real_counts[split] for split in sorted(REAL_SPLITS)
-        },
-        synthetic_split_counts={
-            split: synthetic_counts[split] for split in sorted(SYNTHETIC_SPLITS)
-        },
+        real_split_counts={split: real_counts[split] for split in sorted(REAL_SPLITS)},
+        synthetic_split_counts={split: synthetic_counts[split] for split in sorted(SYNTHETIC_SPLITS)},
         synthetic_family_split_counts={
             split: sum(assigned == split for assigned in family_splits.values())
             for split in sorted(SYNTHETIC_SPLITS)
@@ -108,9 +94,7 @@ def select_balanced_synthetic_pilot(
     eligible = [row for row in catalog_rows if row.get("domain") == "synthetic"]
     if len(eligible) < count:
         raise ValueError(f"pilot needs {count} synthetic datasets, found {len(eligible)}")
-    buckets: dict[tuple[str, int, int, str, str], list[Mapping[str, Any]]] = defaultdict(
-        list
-    )
+    buckets: dict[tuple[str, int, int, str, str], list[Mapping[str, Any]]] = defaultdict(list)
     for row in eligible:
         rows = int(row["rows"])
         features = int(row["features"])
@@ -125,9 +109,7 @@ def select_balanced_synthetic_pilot(
         )
         buckets[key].append(row)
     for key, values in buckets.items():
-        values.sort(
-            key=lambda row: _order_key(seed, *map(str, key), str(row["dataset_hash"]))
-        )
+        values.sort(key=lambda row: _order_key(seed, *map(str, key), str(row["dataset_hash"])))
     keys = sorted(buckets, key=lambda key: _order_key(seed, *map(str, key)))
     selected: list[Mapping[str, Any]] = []
     while len(selected) < count:
@@ -243,13 +225,7 @@ def constrained_semantic_genome_splits(
     )
     names = ("train", "validation", "test")
     assignment = {
-        semantic: (
-            "train"
-            if index < train_end
-            else "validation"
-            if index < validation_end
-            else "test"
-        )
+        semantic: ("train" if index < train_end else "validation" if index < validation_end else "test")
         for index, semantic in enumerate(semantics)
     }
     constrained = {

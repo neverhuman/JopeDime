@@ -35,9 +35,7 @@ def prime_owned_path(path: str | Path, config: PrimeConfig | None = None) -> Pat
     return candidate
 
 
-def ensure_prime_owned_directory(
-    path: str | Path, config: PrimeConfig | None = None
-) -> Path:
+def ensure_prime_owned_directory(path: str | Path, config: PrimeConfig | None = None) -> Path:
     """Create a real Prime-owned directory, never an output symlink."""
     config = config or load_config()
     requested = Path(path).expanduser()
@@ -62,9 +60,7 @@ def _link_input(source: Path, destination: Path) -> None:
     try:
         destination.symlink_to(source)
     except FileExistsError:  # another staging worker won the same deterministic race
-        if not destination.is_symlink() or (
-            destination.resolve(strict=False) != source.resolve(strict=True)
-        ):
+        if not destination.is_symlink() or (destination.resolve(strict=False) != source.resolve(strict=True)):
             raise ValueError(f"staged input path collision: {destination}") from None
 
 

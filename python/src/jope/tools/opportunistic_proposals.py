@@ -4,6 +4,7 @@
 No queue writer or evaluator is invoked. Rust owns the all-GPU lease and ranks;
 this wrapper owns their deadline and stops only its own process descendants.
 """
+
 import argparse
 import ctypes
 import fcntl
@@ -121,23 +122,64 @@ def stop_owned(process):
 
 def validate_pool(root, path, checkpoint_sha, snapshot_sha):
     generation = read(path / "generation.json")
-    for key, name in [("seeds_sha256", "seeds.json"), ("ranking_sha256", "ranking.json"),
-                      ("best_predicted_sha256", "best-predicted.json")]:
+    for key, name in [
+        ("seeds_sha256", "seeds.json"),
+        ("ranking_sha256", "ranking.json"),
+        ("best_predicted_sha256", "best-predicted.json"),
+    ]:
         if generation[key] != digest(path / name):
             raise ValueError("saved proposal hash changed: " + str(path / name))
-    seeds, ranking, best = [read(path / name) for name in ("seeds.json", "ranking.json", "best-predicted.json")]
-    require((generation["champion_snapshot_sha256"] == snapshot_sha), 'Invalid artifact: generation["champion_snapshot_sha256"] == snapshot_sha')
-    require((generation["checkpoint_sha256"] == checkpoint_sha == seeds["checkpoint_sha256"]), 'Invalid artifact: generation["checkpoint_sha256"] == checkpoint_sha == seeds["checkpoint_sha256"]')
-    require((ranking["bindings"]["checkpoint_sha256"] == checkpoint_sha), 'Invalid artifact: ranking["bindings"]["checkpoint_sha256"] == checkpoint_sha')
-    require((ranking["bindings"]["conditioning_context_sha256"] == seeds["context_sha256"]), 'Invalid artifact: ranking["bindings"]["conditioning_context_sha256"] == seeds["context_sha256"]')
-    require((ranking["training_context_only"] and not ranking["heldout_labels_read"] and not ranking["gp_scores_read"]), 'Invalid artifact: ranking["training_context_only"] and not ranking["heldout_labels_read"] and not ranking["gp_scores_read"]')
-    require((len(seeds["candidates"]) == 80 and ranking["chosen_count"] == 64), 'Invalid artifact: len(seeds["candidates"]) == 80 and ranking["chosen_count"] == 64')
-    require(([c["genome"] for c in seeds["candidates"][:64]] == [x["program"] for x in ranking["ranked"]]), 'Invalid artifact: [c["genome"] for c in seeds["candidates"][:64]] == [x["program"] for x in ranking["ranked"]]')
-    require((best["prediction"] == ranking["ranked"][0] and not best["final_tests_opened"]), 'Invalid artifact: best["prediction"] == ranking["ranked"][0] and not best["final_tests_opened"]')
-    require((best["training_context_sha256"] == seeds["context_sha256"]), 'Invalid artifact: best["training_context_sha256"] == seeds["context_sha256"]')
-    return {"path": str(path.relative_to(root)), "seeds_sha256": generation["seeds_sha256"],
-            "generation_sha256": digest(path / "generation.json"), "dataset": best["dataset"],
-            "cut": seeds["cut"], "prepared_sha256": seeds["prepared_sha256"]}
+    seeds, ranking, best = [
+        read(path / name) for name in ("seeds.json", "ranking.json", "best-predicted.json")
+    ]
+    require(
+        (generation["champion_snapshot_sha256"] == snapshot_sha),
+        'Invalid artifact: generation["champion_snapshot_sha256"] == snapshot_sha',
+    )
+    require(
+        (generation["checkpoint_sha256"] == checkpoint_sha == seeds["checkpoint_sha256"]),
+        'Invalid artifact: generation["checkpoint_sha256"] == checkpoint_sha == seeds["checkpoint_sha256"]',
+    )
+    require(
+        (ranking["bindings"]["checkpoint_sha256"] == checkpoint_sha),
+        'Invalid artifact: ranking["bindings"]["checkpoint_sha256"] == checkpoint_sha',
+    )
+    require(
+        (ranking["bindings"]["conditioning_context_sha256"] == seeds["context_sha256"]),
+        'Invalid artifact: ranking["bindings"]["conditioning_context_sha256"] == seeds["context_sha256"]',
+    )
+    require(
+        (
+            ranking["training_context_only"]
+            and not ranking["heldout_labels_read"]
+            and not ranking["gp_scores_read"]
+        ),
+        'Invalid artifact: ranking["training_context_only"] and not ranking["heldout_labels_read"] and not ranking["gp_scores_read"]',
+    )
+    require(
+        (len(seeds["candidates"]) == 80 and ranking["chosen_count"] == 64),
+        'Invalid artifact: len(seeds["candidates"]) == 80 and ranking["chosen_count"] == 64',
+    )
+    require(
+        ([c["genome"] for c in seeds["candidates"][:64]] == [x["program"] for x in ranking["ranked"]]),
+        'Invalid artifact: [c["genome"] for c in seeds["candidates"][:64]] == [x["program"] for x in ranking["ranked"]]',
+    )
+    require(
+        (best["prediction"] == ranking["ranked"][0] and not best["final_tests_opened"]),
+        'Invalid artifact: best["prediction"] == ranking["ranked"][0] and not best["final_tests_opened"]',
+    )
+    require(
+        (best["training_context_sha256"] == seeds["context_sha256"]),
+        'Invalid artifact: best["training_context_sha256"] == seeds["context_sha256"]',
+    )
+    return {
+        "path": str(path.relative_to(root)),
+        "seeds_sha256": generation["seeds_sha256"],
+        "generation_sha256": digest(path / "generation.json"),
+        "dataset": best["dataset"],
+        "cut": seeds["cut"],
+        "prepared_sha256": seeds["prepared_sha256"],
+    }
 
 
 def restore_library(root, output, checkpoint_sha, binding):
@@ -145,56 +187,95 @@ def restore_library(root, output, checkpoint_sha, binding):
     if not index_path.exists():
         return {}, []
     index = read(index_path)
-    require((index["schema"] == "parallel.proposal_library_index.v1"), 'Invalid artifact: index["schema"] == "parallel.proposal_library_index.v1"')
-    require((all(index[k] == v for k, v in binding.items())), 'Invalid artifact: all(index[k] == v for k, v in binding.items())')
+    require(
+        (index["schema"] == "parallel.proposal_library_index.v1"),
+        'Invalid artifact: index["schema"] == "parallel.proposal_library_index.v1"',
+    )
+    require(
+        (all(index[k] == v for k, v in binding.items())),
+        "Invalid artifact: all(index[k] == v for k, v in binding.items())",
+    )
     pools = {}
     for previous in index["pools"]:
         path = (root / previous["path"]).resolve()
-        require((path.is_relative_to(output)), 'Invalid artifact: path.is_relative_to(output)')
+        require((path.is_relative_to(output)), "Invalid artifact: path.is_relative_to(output)")
         snapshot_sha = digest(path.parents[2] / "champion-snapshot.json")
         actual = validate_pool(root, path, checkpoint_sha, snapshot_sha)
-        require((actual == previous), 'Invalid artifact: actual == previous')
+        require((actual == previous), "Invalid artifact: actual == previous")
         pools[str(path)] = actual
     for chunk in index["chunks"]:
         path = (root / chunk["jobs"]).resolve()
-        require((path.is_relative_to(output) and digest(path) == chunk["jobs_sha256"]), 'Invalid artifact: path.is_relative_to(output) and digest(path) == chunk["jobs_sha256"]')
-        require(((path.parent / "complete.json").exists()), 'Invalid artifact: (path.parent / "complete.json").exists()')
+        require(
+            (path.is_relative_to(output) and digest(path) == chunk["jobs_sha256"]),
+            'Invalid artifact: path.is_relative_to(output) and digest(path) == chunk["jobs_sha256"]',
+        )
+        require(
+            ((path.parent / "complete.json").exists()),
+            'Invalid artifact: (path.parent / "complete.json").exists()',
+        )
     return pools, index["chunks"]
 
 
 def run(root, spec_path):
     spec = read(spec_path)
-    require((spec["schema"] == "parallel.opportunistic_proposals_spec.v1"), 'Invalid artifact: spec["schema"] == "parallel.opportunistic_proposals_spec.v1"')
-    require((1 <= spec["chunk_cuts"] <= 8 and 1 <= spec["block_seconds"] <= 60), 'Invalid artifact: 1 <= spec["chunk_cuts"] <= 8 and 1 <= spec["block_seconds"] <= 60')
+    require(
+        (spec["schema"] == "parallel.opportunistic_proposals_spec.v1"),
+        'Invalid artifact: spec["schema"] == "parallel.opportunistic_proposals_spec.v1"',
+    )
+    require(
+        (1 <= spec["chunk_cuts"] <= 8 and 1 <= spec["block_seconds"] <= 60),
+        'Invalid artifact: 1 <= spec["chunk_cuts"] <= 8 and 1 <= spec["block_seconds"] <= 60',
+    )
     require((1 <= spec["service_seconds"] <= 1200), 'Invalid artifact: 1 <= spec["service_seconds"] <= 1200')
     paths = {}
     for name in ["cycle", "corpus", "checkpoint", "output", "executable"]:
         value = Path(spec[name])
-        require((not value.is_absolute() and ".." not in value.parts), 'Invalid artifact: not value.is_absolute() and ".." not in value.parts')
+        require(
+            (not value.is_absolute() and ".." not in value.parts),
+            'Invalid artifact: not value.is_absolute() and ".." not in value.parts',
+        )
         paths[name] = (root / value).resolve()
-        require((paths[name].is_relative_to(root)), 'Invalid artifact: paths[name].is_relative_to(root)')
+        require((paths[name].is_relative_to(root)), "Invalid artifact: paths[name].is_relative_to(root)")
     for name, filename in [("corpus", "index.json"), ("checkpoint", "state.json"), ("executable", None)]:
         path = paths[name] / filename if filename else paths[name]
         require((digest(path) == spec[name + "_sha256"]), name + " identity changed")
     state = read(paths["checkpoint"] / "state.json")
-    require((state["corpus_sha256"] == spec["corpus_sha256"]), 'Invalid artifact: state["corpus_sha256"] == spec["corpus_sha256"]')
-    require((digest(paths["checkpoint"] / "model.ot") == state["model_sha256"]), 'Invalid artifact: digest(paths["checkpoint"] / "model.ot") == state["model_sha256"]')
-    require((digest(paths["corpus"] / "vocabulary.json") == state["vocabulary_sha256"]), 'Invalid artifact: digest(paths["corpus"] / "vocabulary.json") == state["vocabulary_sha256"]')
+    require(
+        (state["corpus_sha256"] == spec["corpus_sha256"]),
+        'Invalid artifact: state["corpus_sha256"] == spec["corpus_sha256"]',
+    )
+    require(
+        (digest(paths["checkpoint"] / "model.ot") == state["model_sha256"]),
+        'Invalid artifact: digest(paths["checkpoint"] / "model.ot") == state["model_sha256"]',
+    )
+    require(
+        (digest(paths["corpus"] / "vocabulary.json") == state["vocabulary_sha256"]),
+        'Invalid artifact: digest(paths["corpus"] / "vocabulary.json") == state["vocabulary_sha256"]',
+    )
     output = paths["output"]
-    require((output.is_relative_to(root / "runs/gp-reviewed3")), 'Invalid artifact: output.is_relative_to(root / "runs/gp-reviewed3")')
+    require(
+        (output.is_relative_to(root / "runs/gp-reviewed3")),
+        'Invalid artifact: output.is_relative_to(root / "runs/gp-reviewed3")',
+    )
     output.mkdir(parents=True, exist_ok=True)
     lock = (output / "wrapper.lock").open("a+")
     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     binding = {"spec_sha256": digest(spec_path), "script_sha256": digest(Path(__file__))}
     if (output / "binding.json").exists():
-        require((read(output / "binding.json") == binding), 'Invalid artifact: read(output / "binding.json") == binding')
+        require(
+            (read(output / "binding.json") == binding),
+            'Invalid artifact: read(output / "binding.json") == binding',
+        )
     else:
         write(output / "binding.json", binding)
     contexts = read(paths["corpus"] / "index.json")["contexts"]
     starts = range(spec["cut_start"], spec["cut_end"], spec["chunk_cuts"])
     chunks = [(start, min(spec["chunk_cuts"], spec["cut_end"] - start)) for start in starts]
-    expected = {(c["dataset"], c["cut"]) for c in contexts if c["partition"] != "meta_test"
-                and spec["cut_start"] <= c["cut"] < spec["cut_end"]}
+    expected = {
+        (c["dataset"], c["cut"])
+        for c in contexts
+        if c["partition"] != "meta_test" and spec["cut_start"] <= c["cut"] < spec["cut_end"]
+    }
     # Restore verified saved work before any admission gate; a restart after
     # the campaign cutoff must never publish zero progress over saved pools.
     pools, completed = restore_library(root, output, spec["checkpoint_sha256"], binding)
@@ -202,23 +283,46 @@ def run(root, spec_path):
     stop = [False]
     for signum in [signal.SIGTERM, signal.SIGINT]:
         signal.signal(signum, lambda *_: stop.__setitem__(0, True))
-    require((ctypes.CDLL(None).prctl(36, 1, 0, 0, 0) == 0), 'Invalid artifact: ctypes.CDLL(None).prctl(36, 1, 0, 0, 0) == 0')  # Linux child subreaper.
+    require(
+        (ctypes.CDLL(None).prctl(36, 1, 0, 0, 0) == 0),
+        "Invalid artifact: ctypes.CDLL(None).prctl(36, 1, 0, 0, 0) == 0",
+    )  # Linux child subreaper.
+
     def publish(phase, reason, chunk=None):
-        write(root / "runs/proposal-library.json", {"schema": "parallel.proposal_library_progress.v1",
-              "timestamp": int(time.time()), "phase": phase, "reason": reason,
-              "checkpoint_sha256": spec["checkpoint_sha256"], "corpus_sha256": spec["corpus_sha256"],
-              "output": str(output.relative_to(root)), "active_chunk": chunk,
-              "saved_seed_pools": len(pools), "planned_seed_pools": len(expected),
-              "saved_ranked_programs": 64 * len(pools), "completed_chunks": len(completed),
-              "gpu_world": 8, "gp_jobs_admitted": 0, "gp_evaluations": 0,
-              "qualification_only": True, "encodings_recomputed": 0})
+        write(
+            root / "runs/proposal-library.json",
+            {
+                "schema": "parallel.proposal_library_progress.v1",
+                "timestamp": int(time.time()),
+                "phase": phase,
+                "reason": reason,
+                "checkpoint_sha256": spec["checkpoint_sha256"],
+                "corpus_sha256": spec["corpus_sha256"],
+                "output": str(output.relative_to(root)),
+                "active_chunk": chunk,
+                "saved_seed_pools": len(pools),
+                "planned_seed_pools": len(expected),
+                "saved_ranked_programs": 64 * len(pools),
+                "completed_chunks": len(completed),
+                "gpu_world": 8,
+                "gp_jobs_admitted": 0,
+                "gp_evaluations": 0,
+                "qualification_only": True,
+                "encodings_recomputed": 0,
+            },
+        )
+
     reason = "all requested proposal pools saved"
     for start, cuts in chunks:
         if any(c["cut_start"] == start and c["cuts"] == cuts for c in completed):
             continue
         chunk_root = output / f"chunk-{start:04}"
         destination = chunk_root / "neural"
-        wanted = {(c["dataset"], c["cut"]) for c in contexts if c["partition"] != "meta_test" and start <= c["cut"] < start + cuts}
+        wanted = {
+            (c["dataset"], c["cut"])
+            for c in contexts
+            if c["partition"] != "meta_test" and start <= c["cut"] < start + cuts
+        }
         if not wanted:
             continue
         allowed, reason = gate(root, paths["cycle"], int(time.time()))
@@ -245,9 +349,22 @@ def run(root, spec_path):
             if not allowed or stop[0] or time.monotonic() - begin >= spec["service_seconds"]:
                 break
             chunk_root.mkdir(parents=True, exist_ok=True)
-            command = [str(paths["executable"]), "--root", str(root), "propose", "--corpus", str(paths["corpus"]),
-                       "--checkpoint", str(paths["checkpoint"]), "--output", str(destination),
-                       "--cut-start", str(start), "--cuts", str(cuts)]
+            command = [
+                str(paths["executable"]),
+                "--root",
+                str(root),
+                "propose",
+                "--corpus",
+                str(paths["corpus"]),
+                "--checkpoint",
+                str(paths["checkpoint"]),
+                "--output",
+                str(destination),
+                "--cut-start",
+                str(start),
+                "--cuts",
+                str(cuts),
+            ]
             with (chunk_root / "controller.log").open("ab") as log:
                 process = subprocess.Popen(command, stdout=log, stderr=log, start_new_session=True)
                 started = time.monotonic()
@@ -255,8 +372,15 @@ def run(root, spec_path):
                     while process.poll() is None:
                         allowed, reason = gate(root, paths["cycle"], int(time.time()))
                         elapsed = time.monotonic() - started
-                        if not allowed or stop[0] or elapsed >= spec["block_seconds"] or time.monotonic() - begin >= spec["service_seconds"]:
-                            reason = reason if not allowed else "owned proposal block time or stop limit reached"
+                        if (
+                            not allowed
+                            or stop[0]
+                            or elapsed >= spec["block_seconds"]
+                            or time.monotonic() - begin >= spec["service_seconds"]
+                        ):
+                            reason = (
+                                reason if not allowed else "owned proposal block time or stop limit reached"
+                            )
                             stop_owned(process)
                             break
                         snapshot_path = chunk_root / "champion-snapshot.json"
@@ -265,19 +389,39 @@ def run(root, spec_path):
                             for path in destination.glob("*/cut-*/generation.json"):
                                 key = str(path.parent)
                                 if key not in pools:
-                                    pool = validate_pool(root, path.parent, spec["checkpoint_sha256"], snapshot_sha)
-                                    require(((pool["dataset"], pool["cut"]) in wanted), 'Invalid artifact: (pool["dataset"], pool["cut"]) in wanted')
+                                    pool = validate_pool(
+                                        root, path.parent, spec["checkpoint_sha256"], snapshot_sha
+                                    )
+                                    require(
+                                        ((pool["dataset"], pool["cut"]) in wanted),
+                                        'Invalid artifact: (pool["dataset"], pool["cut"]) in wanted',
+                                    )
                                     pools[key] = pool
-                        publish("running", "saving ranked neural seed pools; GP admission remains zero",
-                                {"cut_start": start, "cuts": cuts, "expected_pools": len(wanted), "elapsed_seconds": elapsed})
+                        publish(
+                            "running",
+                            "saving ranked neural seed pools; GP admission remains zero",
+                            {
+                                "cut_start": start,
+                                "cuts": cuts,
+                                "expected_pools": len(wanted),
+                                "elapsed_seconds": elapsed,
+                            },
+                        )
                         time.sleep(1)
                 finally:
                     stop_owned(process)
                 if process.returncode != 0:
                     if allowed and not stop[0] and time.monotonic() - started < spec["block_seconds"]:
                         reason = f"proposal controller failed with status {process.returncode}; inspect its saved log"
-                    write(chunk_root / "stopped.json", {"reason": reason, "returncode": process.returncode,
-                          "timestamp": int(time.time()), "saved_artifacts_preserved": True})
+                    write(
+                        chunk_root / "stopped.json",
+                        {
+                            "reason": reason,
+                            "returncode": process.returncode,
+                            "timestamp": int(time.time()),
+                            "saved_artifacts_preserved": True,
+                        },
+                    )
                     break
         snapshot_sha = digest(chunk_root / "champion-snapshot.json")
         current = []
@@ -285,27 +429,69 @@ def run(root, spec_path):
             pool = validate_pool(root, path.parent, spec["checkpoint_sha256"], snapshot_sha)
             pools[str(path.parent)] = pool
             current.append(pool)
-        require(({(p["dataset"], p["cut"]) for p in current} == wanted), 'Invalid artifact: {(p["dataset"], p["cut"]) for p in current} == wanted')
+        require(
+            ({(p["dataset"], p["cut"]) for p in current} == wanted),
+            'Invalid artifact: {(p["dataset"], p["cut"]) for p in current} == wanted',
+        )
         jobs = read(destination / "jobs.json")
         require((len(jobs["jobs"]) == len(wanted)), 'Invalid artifact: len(jobs["jobs"]) == len(wanted)')
         for job in jobs["jobs"]:
-            require((digest(root / job["seeds"]) == job["seeds_sha256"]), 'Invalid artifact: digest(root / job["seeds"]) == job["seeds_sha256"]')
-        completed.append({"cut_start": start, "cuts": cuts, "pools": len(current),
-                          "jobs": str((destination / "jobs.json").relative_to(root)),
-                          "jobs_sha256": digest(destination / "jobs.json"), "snapshot_sha256": snapshot_sha})
-        write(output / "library-index.json", {"schema": "parallel.proposal_library_index.v1", **binding,
-              "chunks": completed, "pools": list(pools.values()), "gp_jobs_admitted": 0, "gp_evaluations": 0})
+            require(
+                (digest(root / job["seeds"]) == job["seeds_sha256"]),
+                'Invalid artifact: digest(root / job["seeds"]) == job["seeds_sha256"]',
+            )
+        completed.append(
+            {
+                "cut_start": start,
+                "cuts": cuts,
+                "pools": len(current),
+                "jobs": str((destination / "jobs.json").relative_to(root)),
+                "jobs_sha256": digest(destination / "jobs.json"),
+                "snapshot_sha256": snapshot_sha,
+            }
+        )
+        write(
+            output / "library-index.json",
+            {
+                "schema": "parallel.proposal_library_index.v1",
+                **binding,
+                "chunks": completed,
+                "pools": list(pools.values()),
+                "gp_jobs_admitted": 0,
+                "gp_evaluations": 0,
+            },
+        )
         publish("running", "chunk verified; checking campaign before next GPU block")
     else:
         reason = "all requested proposal pools saved"
     complete = len(pools) == len(expected)
-    write(output / "library-index.json", {"schema": "parallel.proposal_library_index.v1", **binding,
-          "chunks": completed, "pools": list(pools.values()), "gp_jobs_admitted": 0, "gp_evaluations": 0})
+    write(
+        output / "library-index.json",
+        {
+            "schema": "parallel.proposal_library_index.v1",
+            **binding,
+            "chunks": completed,
+            "pools": list(pools.values()),
+            "gp_jobs_admitted": 0,
+            "gp_evaluations": 0,
+        },
+    )
     publish("completed" if complete else "stopped", reason)
-    write(output / "wrapper-complete.json", {"schema": "parallel.proposal_library_stop.v1", **binding,
-          "timestamp": int(time.time()), "reason": reason, "all_requested_saved": complete,
-          "saved_seed_pools": len(pools), "completed_chunks": completed, "gp_jobs_admitted": 0,
-          "gp_evaluations": 0, "encodings_recomputed": 0})
+    write(
+        output / "wrapper-complete.json",
+        {
+            "schema": "parallel.proposal_library_stop.v1",
+            **binding,
+            "timestamp": int(time.time()),
+            "reason": reason,
+            "all_requested_saved": complete,
+            "saved_seed_pools": len(pools),
+            "completed_chunks": completed,
+            "gp_jobs_admitted": 0,
+            "gp_evaluations": 0,
+            "encodings_recomputed": 0,
+        },
+    )
 
 
 if __name__ == "__main__":

@@ -87,7 +87,13 @@ def _load_state(path: Path) -> dict[str, Any]:
             return json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             pass
-    return {"iteration": 0, "roster_cursor": 0, "best_window": [], "policy_refits_halted": False, "spearman_bad_streak": 0}
+    return {
+        "iteration": 0,
+        "roster_cursor": 0,
+        "best_window": [],
+        "policy_refits_halted": False,
+        "spearman_bad_streak": 0,
+    }
 
 
 def run_loop(cfg: LoopConfig, *, router: EngineRouter | None = None) -> dict[str, Any]:
@@ -148,8 +154,19 @@ def run_loop(cfg: LoopConfig, *, router: EngineRouter | None = None) -> dict[str
                 break
 
             iter_row = _loop_iteration(
-                iteration, state, cfg, model, router, datasets, roster_keys, known,
-                loop_rows_path, loop_rows, corpus_rows, cfg_standardization, gene_feed
+                iteration,
+                state,
+                cfg,
+                model,
+                router,
+                datasets,
+                roster_keys,
+                known,
+                loop_rows_path,
+                loop_rows,
+                corpus_rows,
+                cfg_standardization,
+                gene_feed,
             )
             with metrics_path.open("a", encoding="utf-8") as handle:
                 handle.write(json.dumps(iter_row, sort_keys=True) + "\n")
@@ -190,11 +207,22 @@ def _loop_iteration(
     iter_started = time.time()
     rng = random.Random(cfg.seed * 100003 + iteration)
     cursor = state.get("roster_cursor", 0)
-    roster = [roster_keys[(cursor + i) % len(roster_keys)] for i in range(min(cfg.datasets_per_iter, len(roster_keys)))]
+    roster = [
+        roster_keys[(cursor + i) % len(roster_keys)]
+        for i in range(min(cfg.datasets_per_iter, len(roster_keys)))
+    ]
     state["roster_cursor"] = (cursor + len(roster)) % len(roster_keys)
 
     per_engine: dict[str, dict[str, float]] = {
-        e: {"sampled": 0, "unique": 0, "cv_requested": 0, "cv_completed": 0, "timeouts": 0, "blowups": 0, "cache_hits": 0}
+        e: {
+            "sampled": 0,
+            "unique": 0,
+            "cv_requested": 0,
+            "cv_completed": 0,
+            "timeouts": 0,
+            "blowups": 0,
+            "cache_hits": 0,
+        }
         for e in cfg.engines
     }
     eval_inputs: list[dict[str, Any]] = []

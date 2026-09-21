@@ -145,13 +145,7 @@ def prepare_corpus(corpus_root: str | Path) -> Path:
     corpus = Path(corpus_root).resolve()
     source, gene_schema, examples_path = _validate_source(corpus)
     binding = hashlib.sha256(
-        (
-            TOKENIZER_VERSION
-            + "\0"
-            + source["examples_sha256"]
-            + "\0"
-            + source["gene_schema_sha256"]
-        ).encode()
+        (TOKENIZER_VERSION + "\0" + source["examples_sha256"] + "\0" + source["gene_schema_sha256"]).encode()
     ).hexdigest()
     final = corpus / "tokenized" / binding
     if final.exists():
@@ -190,9 +184,7 @@ def prepare_corpus(corpus_root: str | Path) -> Path:
         lengths.append(len(actions) + 2)
         score = row.get("percentile")
         score_value = float(score) if score is not None else math.nan
-        if score is not None and (
-            not math.isfinite(score_value) or not 0.0 <= score_value <= 1.0
-        ):
+        if score is not None and (not math.isfinite(score_value) or not 0.0 <= score_value <= 1.0):
             raise ValueError(f"score example {semantic} has invalid percentile")
         percentile.append(score_value)
         success = float(row.get("success_rate"))
@@ -201,14 +193,10 @@ def prepare_corpus(corpus_root: str | Path) -> Path:
         validity.append(success)
         score_rmse = row.get("rmse")
         rmse_value = float(score_rmse) if score_rmse is not None else math.nan
-        if score_rmse is not None and (
-            not math.isfinite(rmse_value) or rmse_value < 0.0
-        ):
+        if score_rmse is not None and (not math.isfinite(rmse_value) or rmse_value < 0.0):
             raise ValueError(f"score example {semantic} has invalid RMSE")
         if (score is None) != (score_rmse is None):
-            raise ValueError(
-                f"score example {semantic} has inconsistent percentile and RMSE"
-            )
+            raise ValueError(f"score example {semantic} has inconsistent percentile and RMSE")
         rmse.append(rmse_value)
     if not identities:
         raise ValueError("Dime score corpus has no examples")
@@ -351,9 +339,7 @@ def prepare_corpus(corpus_root: str | Path) -> Path:
         "semantic_sha256": semantics,
         "numeric_stats": numeric_stats,
         "split_names": list(SPLIT_NAMES),
-        "split_counts": {
-            name: int(np.sum(row_split == index)) for index, name in enumerate(SPLIT_NAMES)
-        },
+        "split_counts": {name: int(np.sum(row_split == index)) for index, name in enumerate(SPLIT_NAMES)},
         "row_split_contract": {
             "method": "sha256-global-semantic-order",
             "partition_unit": "semantic_sha256",
@@ -364,27 +350,16 @@ def prepare_corpus(corpus_root: str | Path) -> Path:
             },
             "semantic_overlap": False,
             "unique_genome_counts": {
-                name: len(
-                    {
-                        semantics[row]
-                        for row in np.flatnonzero(row_split == split_index)
-                    }
-                )
+                name: len({semantics[row] for row in np.flatnonzero(row_split == split_index)})
                 for split_index, name in enumerate(SPLIT_NAMES)
             },
             "dataset_counts": {
-                name: len(
-                    {
-                        identities[row]
-                        for row in np.flatnonzero(row_split == split_index)
-                    }
-                )
+                name: len({identities[row] for row in np.flatnonzero(row_split == split_index)})
                 for split_index, name in enumerate(SPLIT_NAMES)
             },
         },
         "dataset_holdout_counts": {
-            name: int(np.sum(heldout_dataset_split == index))
-            for index, name in enumerate(SPLIT_NAMES)
+            name: int(np.sum(heldout_dataset_split == index)) for index, name in enumerate(SPLIT_NAMES)
         },
         "gene_schema_contract_sha256": gene_schema.get("contract_sha256"),
     }
@@ -487,9 +462,7 @@ class DatasetUniformBatchSampler:
     def __iter__(self) -> Iterator[list[int]]:
         rng = np.random.default_rng(self.seed + self.epoch)
         for _ in range(self.steps):
-            datasets = rng.choice(
-                self.datasets, size=self.datasets_per_batch, replace=False
-            )
+            datasets = rng.choice(self.datasets, size=self.datasets_per_batch, replace=False)
             batch: list[int] = []
             for dataset in datasets:
                 rows = self.rows[int(dataset)]

@@ -8,21 +8,39 @@ import unpublished_cut_census as u
 
 class UnpublishedCutCensusTests(unittest.TestCase):
     def fixture(self, rows, protected_values_opened=False, **extra):
-        body = dict(schema="parallel.redteam_metadata_audit.v1",
-                    protected_values_opened=protected_values_opened,
-                    expansion_rows=rows, component_groups_outside_retained_indexes=1930,
-                    component_complete_groups=12, **extra)
+        body = dict(
+            schema="parallel.redteam_metadata_audit.v1",
+            protected_values_opened=protected_values_opened,
+            expansion_rows=rows,
+            component_groups_outside_retained_indexes=1930,
+            component_complete_groups=12,
+            **extra,
+        )
         return body
 
     def test_metadata_complete_does_not_fill_the_queue(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "census.json"
-            path.write_text(json.dumps(self.fixture([
-                dict(component_metadata_complete=True, registered_eligible=False,
-                     metadata_eligible_addition=False, task="regression"),
-                dict(component_metadata_complete=False, registered_eligible=False,
-                     metadata_eligible_addition=False, task="binary"),
-            ])))
+            path.write_text(
+                json.dumps(
+                    self.fixture(
+                        [
+                            dict(
+                                component_metadata_complete=True,
+                                registered_eligible=False,
+                                metadata_eligible_addition=False,
+                                task="regression",
+                            ),
+                            dict(
+                                component_metadata_complete=False,
+                                registered_eligible=False,
+                                metadata_eligible_addition=False,
+                                task="binary",
+                            ),
+                        ]
+                    )
+                )
+            )
             receipt = u.recount(path)
             self.assertEqual(receipt["component_metadata_complete"], 1)
             self.assertEqual(receipt["registered_eligible"], 0)
@@ -52,14 +70,31 @@ class UnpublishedCutCensusTests(unittest.TestCase):
     def test_retained_and_metadata_candidates_do_not_claim_native_admission(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "census.json"
-            path.write_text(json.dumps(self.fixture([
-                dict(component_metadata_complete=True, registered_eligible=True,
-                     metadata_eligible_addition=True, task="regression", retained_index=False,
-                     historical_registry_dispositions=[dict(partition="meta_train")]),
-                dict(component_metadata_complete=False, registered_eligible=False,
-                     retained_index=True, missing_components=["target"]),
-                dict(task="regression"),
-            ], active=dict(rows=8), errors=[dict(path="unreadable.json")])))
+            path.write_text(
+                json.dumps(
+                    self.fixture(
+                        [
+                            dict(
+                                component_metadata_complete=True,
+                                registered_eligible=True,
+                                metadata_eligible_addition=True,
+                                task="regression",
+                                retained_index=False,
+                                historical_registry_dispositions=[dict(partition="meta_train")],
+                            ),
+                            dict(
+                                component_metadata_complete=False,
+                                registered_eligible=False,
+                                retained_index=True,
+                                missing_components=["target"],
+                            ),
+                            dict(task="regression"),
+                        ],
+                        active=dict(rows=8),
+                        errors=[dict(path="unreadable.json")],
+                    )
+                )
+            )
             receipt = u.recount(path)
             self.assertEqual(receipt["registered_eligible"], 1)
             self.assertIn("1 metadata-declared registered", receipt["reason"])

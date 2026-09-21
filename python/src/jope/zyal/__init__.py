@@ -18,6 +18,7 @@ like signal:
 The reference nomad run failed its own audit because the engine was edited mid-run, so the
 controller snapshot is sha256-locked at preflight and re-verified at every epoch boundary.
 """
+
 from __future__ import annotations
 
 SCHEMA_VERSION = "zyal_genome_v1"
@@ -46,27 +47,50 @@ TIE_BAND = 0.0005
 # dominate: `finalist_rank` alone scores 0.5659 within-dataset and is not available cold-start.
 FORBIDDEN_INPUT_SUBSTRINGS = (
     # champion's list
-    "test_", "proxy", "rung", "partial_cv", "dataset_id", "dataset_hash",
-    "semantic_hash", "candidate_id", "outcome",
+    "test_",
+    "proxy",
+    "rung",
+    "partial_cv",
+    "dataset_id",
+    "dataset_hash",
+    "semantic_hash",
+    "candidate_id",
+    "outcome",
     # ours
-    "finalist", "robust_score", "oof", "fold_r2", "evidence", "negative",
-    "runtime_seconds", "gp_task_id", "label_", "oracle_", "regret", "watermark",
+    "finalist",
+    "robust_score",
+    "oof",
+    "fold_r2",
+    "evidence",
+    "negative",
+    "runtime_seconds",
+    "gp_task_id",
+    "label_",
+    "oracle_",
+    "regret",
+    "watermark",
 )
 
 # --- Categorical feedback vocabulary -----------------------------------------------------------
 # nomad's `build_epoch_prompt` raises if a non-categorical value reaches an adaptive role. Same
 # here: this tuple is the ONLY vocabulary a feature-proposing agent may receive as feedback.
 CATEGORICAL_VOCAB = (
-    "positive", "neutral", "negative",
-    "low", "medium", "high",
-    "fast", "slow",
-    "novel", "redundant",
+    "positive",
+    "neutral",
+    "negative",
+    "low",
+    "medium",
+    "high",
+    "fast",
+    "slow",
+    "novel",
+    "redundant",
 )
 
-PROMPT_BYTE_CAP = 12_288          # 12 KB, matching nomad
+PROMPT_BYTE_CAP = 12_288  # 12 KB, matching nomad
 MAX_ATTEMPTS_PER_ROLE = 2
-GENOME_PREVIEW_N = 40             # random genomes shown to each role
-PRIOR_SLUG_WINDOW = 120           # sliding window of prior family slugs injected into prompts
+GENOME_PREVIEW_N = 40  # random genomes shown to each role
+PRIOR_SLUG_WINDOW = 120  # sliding window of prior family slugs injected into prompts
 
 
 class LeakageError(RuntimeError):
@@ -86,14 +110,11 @@ def assert_categorical_only(feedback: dict) -> None:
                 f"only {CATEGORICAL_VOCAB}"
             )
         if value not in CATEGORICAL_VOCAB:
-            raise LeakageError(
-                f"feedback[{key!r}] = {value!r} is outside the categorical vocabulary"
-            )
+            raise LeakageError(f"feedback[{key!r}] = {value!r} is outside the categorical vocabulary")
 
 
 def assert_no_forbidden_inputs(names) -> None:
     """Reject any feature/column name that touches the forbidden boundary."""
-    bad = [n for n in names
-           if any(s in str(n).casefold() for s in FORBIDDEN_INPUT_SUBSTRINGS)]
+    bad = [n for n in names if any(s in str(n).casefold() for s in FORBIDDEN_INPUT_SUBSTRINGS)]
     if bad:
         raise LeakageError(f"forbidden inputs present: {sorted(bad)[:10]}")

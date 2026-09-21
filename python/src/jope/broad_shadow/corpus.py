@@ -51,9 +51,7 @@ def sha256_file(path: str | Path) -> str:
 
 
 def _write_json_new(path: Path, payload: Mapping[str, Any]) -> None:
-    data = json.dumps(
-        payload, indent=2, sort_keys=True, allow_nan=False
-    ).encode() + b"\n"
+    data = json.dumps(payload, indent=2, sort_keys=True, allow_nan=False).encode() + b"\n"
     with path.open("xb") as handle:
         handle.write(data)
         handle.flush()
@@ -88,9 +86,7 @@ def _anchor_signature(
             continue
         key = (str(receipt["dataset_hash"]), semantic)
         prior = selected.get(key)
-        if prior is None or (
-            receipt["fidelity"] == "exact" and prior["fidelity"] != "exact"
-        ):
+        if prior is None or (receipt["fidelity"] == "exact" and prior["fidelity"] != "exact"):
             selected[key] = receipt
     output: dict[str, tuple[np.ndarray, np.ndarray]] = {}
     datasets = sorted({dataset for dataset, _ in selected})
@@ -100,8 +96,7 @@ def _anchor_signature(
         observed_scores = [
             float(selected[(dataset, semantic)]["robust_score"])
             for semantic in anchors
-            if (dataset, semantic) in selected
-            and selected[(dataset, semantic)]["valid"]
+            if (dataset, semantic) in selected and selected[(dataset, semantic)]["valid"]
         ]
         normalized = normalize_score_within_dataset(observed_scores)
         score_iter = iter(normalized)
@@ -113,9 +108,7 @@ def _anchor_signature(
             valid = bool(receipt["valid"])
             features[index, 0] = next(score_iter) if valid else 0.0
             runtime = receipt["runtime_seconds"]
-            features[index, 1] = (
-                math.log1p(float(runtime)) if runtime is not None else 0.0
-            )
+            features[index, 1] = math.log1p(float(runtime)) if runtime is not None else 0.0
             features[index, 2] = float(valid)
         output[dataset] = features, mask
     return output
@@ -159,9 +152,7 @@ def materialize_broad_corpus(
             row["fold_plan_sha256"],
         )
     )
-    catalog_by_dataset = {
-        row["dataset_hash"]: row for row in catalog["datasets"]
-    }
+    catalog_by_dataset = {row["dataset_hash"]: row for row in catalog["datasets"]}
     for receipt in rows:
         catalog_row = catalog_by_dataset.get(receipt["dataset_hash"])
         if catalog_row is None:
@@ -196,13 +187,9 @@ def materialize_broad_corpus(
     try:
         dataset_names = sorted({str(row["dataset_hash"]) for row in rows})
         dataset_index = {name: index for index, name in enumerate(dataset_names)}
-        anchor_semantics = [
-            str(anchor["semantic_sha256"]) for anchor in probe_slate["anchors"]
-        ]
+        anchor_semantics = [str(anchor["semantic_sha256"]) for anchor in probe_slate["anchors"]]
         signatures = _anchor_signature(rows, anchor_semantics)
-        total_tokens = sum(
-            len(tokenized_genomes[row["semantic_sha256"]]) for row in rows
-        )
+        total_tokens = sum(len(tokenized_genomes[row["semantic_sha256"]]) for row in rows)
         arrays = {
             "token_ids": np.lib.format.open_memmap(
                 temporary / PACK_FILES["token_ids"][0],
@@ -297,9 +284,7 @@ def materialize_broad_corpus(
                     _read_vector(Path(catalog_root), catalog_row["target_encoding"]),
                 )
             dataset_vector, target_vector = vector_cache[dataset]
-            tokens = np.asarray(
-                tokenized_genomes[receipt["semantic_sha256"]], dtype=np.uint16
-            )
+            tokens = np.asarray(tokenized_genomes[receipt["semantic_sha256"]], dtype=np.uint16)
             end = cursor + len(tokens)
             arrays["token_ids"][cursor:end] = tokens
             arrays["offsets"][index + 1] = end
@@ -326,13 +311,9 @@ def materialize_broad_corpus(
             arrays["anchor_masks"][index] = observed
             arrays["validity"][index] = int(receipt["valid"])
             if receipt["runtime_seconds"] is not None:
-                arrays["runtime"][index] = math.log1p(
-                    float(receipt["runtime_seconds"])
-                )
+                arrays["runtime"][index] = math.log1p(float(receipt["runtime_seconds"]))
             if receipt["valid"]:
-                raw_scores[(dataset, receipt["fidelity"])].append(
-                    (index, float(receipt["robust_score"]))
-                )
+                raw_scores[(dataset, receipt["fidelity"])].append((index, float(receipt["robust_score"])))
             domain = (
                 "online"
                 if str(receipt["selection_channel"]).startswith("online")
@@ -383,12 +364,8 @@ def materialize_broad_corpus(
             row_count=len(rows),
             valid_row_count=sum(bool(row["valid"]) for row in rows),
             dataset_count=len(dataset_names),
-            domain_counts={
-                name: domain_counts[name] for name in ("real", "synthetic", "online")
-            },
-            fidelity_counts={
-                name: fidelity_counts[name] for name in ("screening", "exact")
-            },
+            domain_counts={name: domain_counts[name] for name in ("real", "synthetic", "online")},
+            fidelity_counts={name: fidelity_counts[name] for name in ("screening", "exact")},
             files=file_contracts,
         )
         validate_broad_corpus_snapshot(snapshot, production=production)
@@ -425,13 +402,9 @@ class BroadCorpus:
 
     def __init__(self, root: str | Path, *, verify: bool = True) -> None:
         self.root = Path(root)
-        self.manifest = json.loads(
-            (self.root / "manifest.v1.json").read_text(encoding="utf-8")
-        )
+        self.manifest = json.loads((self.root / "manifest.v1.json").read_text(encoding="utf-8"))
         validate_broad_corpus_snapshot(self.manifest)
-        self.index = json.loads(
-            (self.root / "index.v1.json").read_text(encoding="utf-8")
-        )
+        self.index = json.loads((self.root / "index.v1.json").read_text(encoding="utf-8"))
         if verify:
             for contract in self.manifest["files"].values():
                 path = self.root / contract["path"]
@@ -474,17 +447,13 @@ class ExactOnceBatchSampler:
             raise ValueError("eligible row is outside corpus")
         grouped: dict[tuple[int, int], list[int]] = defaultdict(list)
         for row in selected.tolist():
-            grouped[
-                (int(corpus.metadata[row, 1]), int(corpus.metadata[row, 0]))
-            ].append(row)
+            grouped[(int(corpus.metadata[row, 1]), int(corpus.metadata[row, 0]))].append(row)
         codes = {"real": 0, "synthetic": 1, "online": 2}
         mix = dict(domain_mix or {})
         if mix and (
             set(mix) - set(codes)
             or any(
-                not isinstance(weight, (int, float))
-                or not math.isfinite(float(weight))
-                or weight < 0
+                not isinstance(weight, (int, float)) or not math.isfinite(float(weight)) or weight < 0
                 for weight in mix.values()
             )
             or sum(float(weight) for weight in mix.values()) <= 0
@@ -492,9 +461,7 @@ class ExactOnceBatchSampler:
             raise ValueError("domain_mix must contain nonnegative real/synthetic/online weights")
         self.corpus = corpus
         self.rows = grouped
-        self.domain_mix = {
-            codes[name]: float(weight) for name, weight in mix.items() if weight > 0
-        }
+        self.domain_mix = {codes[name]: float(weight) for name, weight in mix.items() if weight > 0}
         self.eligible = selected
         self.batch_size = batch_size
         self.seed = seed
@@ -523,25 +490,19 @@ class ExactOnceBatchSampler:
         active_by_domain: dict[int, deque[tuple[int, int]]] = defaultdict(deque)
         for group in groups:
             active_by_domain[group[0]].append(group)
-        weights = self.domain_mix or {
-            domain: 1.0 for domain in sorted(active_by_domain)
-        }
+        weights = self.domain_mix or {domain: 1.0 for domain in sorted(active_by_domain)}
         # Smooth weighted round-robin domains; each domain internally
         # round-robins shuffled dataset queues.
         credit = {domain: 0.0 for domain in set(active_by_domain) | set(weights)}
         stream: list[int] = []
         while any(active_by_domain.values()):
-            available = [
-                domain for domain, active in active_by_domain.items() if active
-            ]
+            available = [domain for domain, active in active_by_domain.items() if active]
             total_weight = sum(weights.get(domain, 0.0) for domain in available)
             if total_weight <= 0:
                 total_weight = float(len(available))
                 local_weights = {domain: 1.0 for domain in available}
             else:
-                local_weights = {
-                    domain: weights.get(domain, 0.0) for domain in available
-                }
+                local_weights = {domain: weights.get(domain, 0.0) for domain in available}
             for domain in available:
                 credit[domain] += local_weights[domain]
             domain = max(available, key=lambda value: (credit[value], -value))
@@ -556,8 +517,7 @@ class ExactOnceBatchSampler:
             buffer = stream[start : start + self.bucket_buffer]
             buffer.sort(key=lambda row: int(self.corpus.metadata[row, 4]))
             local = [
-                buffer[index : index + self.batch_size]
-                for index in range(0, len(buffer), self.batch_size)
+                buffer[index : index + self.batch_size] for index in range(0, len(buffer), self.batch_size)
             ]
             rng.shuffle(local)
             for batch in local:
@@ -577,10 +537,7 @@ class ExactOnceBatchSampler:
             "duplicate_rows": duplicates,
             "coverage": unique / max(len(self.eligible), 1),
             "domain_rows": {
-                name: sum(
-                    int(self.corpus.metadata[row, 1]) == code
-                    for row in flattened
-                )
+                name: sum(int(self.corpus.metadata[row, 1]) == code for row in flattened)
                 for name, code in (
                     ("real", 0),
                     ("synthetic", 1),

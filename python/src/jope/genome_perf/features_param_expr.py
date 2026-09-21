@@ -59,6 +59,7 @@ Everything here is pure: one genome in, floats out. No IO, no labels, no dataset
 randomness. ``extract`` never raises and never returns nan/inf -- unparseable ``(sym ...)`` and
 portfolio genomes (``pg.ok is False``) fall through to the documented defaults.
 """
+
 from __future__ import annotations
 
 import functools
@@ -71,8 +72,19 @@ from .parse import ParsedGenome, col_refs, expr_spec, param_bins
 # Params that widen the feature matrix. Summed (not averaged) because the engine cost and the
 # overfitting surface both scale with the total emitted width, not with any single stage's width.
 WIDTH_KEYS = (
-    "n", "k", "degree", "bins", "dims", "components", "rank",
-    "n_features", "order", "knots", "topk", "n_paths", "m",
+    "n",
+    "k",
+    "degree",
+    "bins",
+    "dims",
+    "components",
+    "rank",
+    "n_features",
+    "order",
+    "knots",
+    "topk",
+    "n_paths",
+    "m",
 )
 
 # Head regularization strength, in fallback order. featmath spells it `alpha`; the other two are
@@ -171,6 +183,7 @@ def _is_offgrid(engine: str, op: str, param: str, raw: str) -> bool:
 # Expression tokenizer
 # --------------------------------------------------------------------------------------------
 
+
 @functools.lru_cache(maxsize=65536)
 def _tokenize(expr: str) -> tuple[tuple[str, ...], tuple[str, ...], tuple[float, ...], int, int, dict]:
     """-> (func names, leaf identifiers, constant magnitudes, depth, binop count, binop breakdown).
@@ -184,7 +197,7 @@ def _tokenize(expr: str) -> tuple[tuple[str, ...], tuple[str, ...], tuple[float,
     binops = {"add": 0, "sub": 0, "mul": 0, "div": 0}
     depth = max_depth = 0
     i, n = 0, len(expr)
-    prev_value_char = ""     # last non-space char, for unary-vs-binary disambiguation
+    prev_value_char = ""  # last non-space char, for unary-vs-binary disambiguation
     pending_col_arg = False  # the next numeric literal is a col() index, not a constant
 
     while i < n:
@@ -265,6 +278,7 @@ def _expr_len_band(length: int) -> float:
 # --------------------------------------------------------------------------------------------
 # Contract
 # --------------------------------------------------------------------------------------------
+
 
 @functools.lru_cache(maxsize=8)
 def _names(engine: str) -> tuple[str, ...]:
@@ -411,18 +425,16 @@ def extract(pg: ParsedGenome, engine: str = "featmath") -> dict[str, float]:
     if rff_n_max is not None and rff_n_max > 0:
         out["g4_rff_n_log2"] = math.log2(rff_n_max)
         rounded = int(round(rff_n_max))
-        out["g4_rff_n_is_pow2"] = 1.0 if (
-            abs(rff_n_max - rounded) < 1e-9 and rounded > 0 and rounded & (rounded - 1) == 0
-        ) else 0.0
+        out["g4_rff_n_is_pow2"] = (
+            1.0 if (abs(rff_n_max - rounded) < 1e-9 and rounded > 0 and rounded & (rounded - 1) == 0) else 0.0
+        )
 
     if len(seeds) >= 2:
         counts: dict[str, int] = {}
         for s in seeds:
             counts[s] = counts.get(s, 0) + 1
         total = float(len(seeds))
-        out["g4_seed_entropy"] = -sum(
-            (c / total) * math.log2(c / total) for c in counts.values()
-        )
+        out["g4_seed_entropy"] = -sum((c / total) * math.log2(c / total) for c in counts.values())
 
     # ---------------------------------------------------------------- G5
     exprs = [e for e in (pg.exprs or []) if e]
@@ -480,10 +492,7 @@ def extract(pg: ParsedGenome, engine: str = "featmath") -> dict[str, float]:
             out["g5_col_ref_max_index"] = float(max(refs))
             out["g5_col_ref_span"] = float(max(refs) - min(refs))
 
-        uses_rowstat = any(
-            out.get(f"g5_uses_{v}", 0.0) > 0.0
-            for v in tuple(spec.vars_common) + _EXTRA_VARS
-        )
+        uses_rowstat = any(out.get(f"g5_uses_{v}", 0.0) > 0.0 for v in tuple(spec.vars_common) + _EXTRA_VARS)
         out["g5_is_pure_rowstat"] = 1.0 if (uses_rowstat and not refs) else 0.0
 
     # Final safety net: the contract promises finite plain floats, always.

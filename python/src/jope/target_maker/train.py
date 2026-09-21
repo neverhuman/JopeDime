@@ -87,7 +87,9 @@ def move_view(view: Mapping[str, torch.Tensor], device: torch.device) -> dict[st
     return {key: value.to(device, non_blocking=True) for key, value in view.items()}
 
 
-def encode_view(model: nn.Module, view: Mapping[str, torch.Tensor], batch: Mapping[str, object], device: torch.device) -> dict[str, torch.Tensor]:
+def encode_view(
+    model: nn.Module, view: Mapping[str, torch.Tensor], batch: Mapping[str, object], device: torch.device
+) -> dict[str, torch.Tensor]:
     task = batch["task"].to(device, non_blocking=True)
     length = batch["length"].to(device, non_blocking=True)
     moved = move_view(view, device)
@@ -102,7 +104,9 @@ def encode_view(model: nn.Module, view: Mapping[str, torch.Tensor], batch: Mappi
     )
 
 
-def supervised_contrastive_loss(z1: torch.Tensor, z2: torch.Tensor, labels: torch.Tensor, temperature: float = 0.10) -> torch.Tensor:
+def supervised_contrastive_loss(
+    z1: torch.Tensor, z2: torch.Tensor, labels: torch.Tensor, temperature: float = 0.10
+) -> torch.Tensor:
     embeddings = F.normalize(torch.cat([z1, z2], dim=0), dim=1)
     labels = torch.cat([labels, labels], dim=0).to(embeddings.device)
     logits = embeddings @ embeddings.T / temperature
@@ -150,9 +154,13 @@ def total_loss(
     task = batch["task"].to(device, non_blocking=True)
     labels = batch["group_label"].to(device, non_blocking=True)
     instance = instance_matching_loss(out1["embedding"], out2["embedding"], temperature=cfg.temperature)
-    contrastive = supervised_contrastive_loss(out1["embedding"], out2["embedding"], labels, temperature=cfg.temperature)
+    contrastive = supervised_contrastive_loss(
+        out1["embedding"], out2["embedding"], labels, temperature=cfg.temperature
+    )
     profile_loss = 0.5 * (F.mse_loss(out1["profile"], profile) + F.mse_loss(out2["profile"], profile))
-    task_loss = 0.5 * (F.cross_entropy(out1["task_logits"], task) + F.cross_entropy(out2["task_logits"], task))
+    task_loss = 0.5 * (
+        F.cross_entropy(out1["task_logits"], task) + F.cross_entropy(out2["task_logits"], task)
+    )
     collapse = variance_regularization(torch.cat([out1["embedding"], out2["embedding"]], dim=0))
     total = (
         cfg.instance_loss_weight * instance
@@ -195,7 +203,13 @@ def embedding_rank_health(embedding: torch.Tensor) -> float:
 
 
 @torch.no_grad()
-def evaluate(model: nn.Module, loader: DataLoader, device: torch.device, max_batches: int = 32, cfg: TrainConfig | None = None) -> dict[str, float]:
+def evaluate(
+    model: nn.Module,
+    loader: DataLoader,
+    device: torch.device,
+    max_batches: int = 32,
+    cfg: TrainConfig | None = None,
+) -> dict[str, float]:
     model.eval()
     totals: dict[str, float] = {}
     count = 0
@@ -213,14 +227,22 @@ def evaluate(model: nn.Module, loader: DataLoader, device: torch.device, max_bat
         binary_mask = task == TASK_BINARY
         regression_mask = task == TASK_REGRESSION
         binary_rate_mae = (
-            F.l1_loss(out1["profile"][binary_mask, 2], profile[binary_mask, 2]).item() if binary_mask.any() else 0.0
+            F.l1_loss(out1["profile"][binary_mask, 2], profile[binary_mask, 2]).item()
+            if binary_mask.any()
+            else 0.0
         )
         regression_quantile_mae = (
             F.l1_loss(out1["profile"][regression_mask, 8:19], profile[regression_mask, 8:19]).item()
             if regression_mask.any()
             else 0.0
         )
-        row = {**parts, **metrics, "profile_mae": mae, "binary_rate_mae": binary_rate_mae, "regression_quantile_mae": regression_quantile_mae}
+        row = {
+            **parts,
+            **metrics,
+            "profile_mae": mae,
+            "binary_rate_mae": binary_rate_mae,
+            "regression_quantile_mae": regression_quantile_mae,
+        }
         for key, value in row.items():
             totals[key] = totals.get(key, 0.0) + float(value)
         embeddings.append(out1["embedding"].detach().cpu())
@@ -252,7 +274,9 @@ def make_loader(
     )
     sampler = None
     if is_ddp:
-        sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, shuffle=train, seed=cfg.seed)
+        sampler = DistributedSampler(
+            dataset, num_replicas=world_size, rank=rank, shuffle=train, seed=cfg.seed
+        )
     else:
         sampler = RandomSampler(dataset) if train else SequentialSampler(dataset)
     loader = DataLoader(
@@ -312,13 +336,17 @@ def train(cfg: TrainConfig) -> Path | None:
     torch.manual_seed(cfg.seed + rank)
     np.random.seed(cfg.seed + rank)
     try:
-        train_records = load_manifest(cfg.cache_dir, split="train", val_fraction=cfg.val_fraction, seed=cfg.seed)
+        train_records = load_manifest(
+            cfg.cache_dir, split="train", val_fraction=cfg.val_fraction, seed=cfg.seed
+        )
         val_records = load_manifest(cfg.cache_dir, split="val", val_fraction=cfg.val_fraction, seed=cfg.seed)
         if not train_records:
             raise ValueError("No training records found. Run prepare-cache first.")
         if not val_records:
             val_records = train_records[: min(len(train_records), max(1, cfg.batch_size))]
-        train_loader, train_sampler = make_loader(train_records, cfg, train=True, is_ddp=is_ddp, rank=rank, world_size=world_size)
+        train_loader, train_sampler = make_loader(
+            train_records, cfg, train=True, is_ddp=is_ddp, rank=rank, world_size=world_size
+        )
         val_loader, _ = make_loader(val_records, cfg, train=False, is_ddp=False, rank=0, world_size=1)
         model = TargetEncoder(
             ModelConfig(
@@ -330,7 +358,9 @@ def train(cfg: TrainConfig) -> Path | None:
             )
         ).to(device)
         if is_ddp:
-            model = DistributedDataParallel(model, device_ids=[device.index] if device.type == "cuda" else None)
+            model = DistributedDataParallel(
+                model, device_ids=[device.index] if device.type == "cuda" else None
+            )
         optimizer = torch.optim.AdamW(model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
         best_metric = -1.0
         best_path: Path | None = None
@@ -373,18 +403,29 @@ def train(cfg: TrainConfig) -> Path | None:
             if is_ddp:
                 torch.distributed.barrier()
             if is_main_process():
-                metrics = evaluate(model.module if isinstance(model, DistributedDataParallel) else model, val_loader, device, cfg=cfg)
+                metrics = evaluate(
+                    model.module if isinstance(model, DistributedDataParallel) else model,
+                    val_loader,
+                    device,
+                    cfg=cfg,
+                )
                 metric = metrics.get("retrieval@1", 0.0) + metrics.get("group_retrieval@1", 0.0)
                 row = {**metrics, "epoch": epoch, "step": global_step, "phase": "val", "time": time.time()}
                 append_metrics(cfg.run_dir, row)
                 checkpoint = save_checkpoint(cfg.run_dir, model, optimizer, cfg, epoch, metrics)
                 if metric >= best_metric:
                     best_metric = metric
-                    best_path = save_checkpoint(cfg.run_dir, model, optimizer, cfg, epoch, metrics, name="best.pt")
-                append_metrics(cfg.run_dir, {**row, "checkpoint": str(checkpoint), "best_checkpoint": str(best_path)})
+                    best_path = save_checkpoint(
+                        cfg.run_dir, model, optimizer, cfg, epoch, metrics, name="best.pt"
+                    )
+                append_metrics(
+                    cfg.run_dir, {**row, "checkpoint": str(checkpoint), "best_checkpoint": str(best_path)}
+                )
         if cfg.final_all_data_epochs > 0:
             all_records = load_manifest(cfg.cache_dir, split="all", seed=cfg.seed)
-            all_loader, all_sampler = make_loader(all_records, cfg, train=True, is_ddp=is_ddp, rank=rank, world_size=world_size)
+            all_loader, all_sampler = make_loader(
+                all_records, cfg, train=True, is_ddp=is_ddp, rank=rank, world_size=world_size
+            )
             for epoch in range(cfg.final_all_data_epochs):
                 model.train()
                 if all_sampler is not None:
@@ -404,7 +445,15 @@ def train(cfg: TrainConfig) -> Path | None:
             if is_ddp:
                 torch.distributed.barrier()
             if is_main_process():
-                final_path = save_checkpoint(cfg.run_dir, model, optimizer, cfg, cfg.epochs + cfg.final_all_data_epochs, {}, name="final.pt")
+                final_path = save_checkpoint(
+                    cfg.run_dir,
+                    model,
+                    optimizer,
+                    cfg,
+                    cfg.epochs + cfg.final_all_data_epochs,
+                    {},
+                    name="final.pt",
+                )
                 append_metrics(
                     cfg.run_dir,
                     {

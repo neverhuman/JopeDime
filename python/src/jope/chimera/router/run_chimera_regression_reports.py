@@ -4,6 +4,7 @@ The runner is intentionally report-oriented: each worker loads Chimera once on a
 single GPU, processes many dataset folders, and writes the same JSON shape used
 by the existing Quant regression benchmarks.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -26,7 +27,9 @@ import numpy as np
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATASET_ROOT = Path("/home/ubuntu/quant/regression")
-DEFAULT_CKPT = Path("/home/ubuntu/fable_god/chimeria_regression_shuffle/run_FINAL_e10_trunk/FINAL_stackfusionreg.pt")
+DEFAULT_CKPT = Path(
+    "/home/ubuntu/fable_god/chimeria_regression_shuffle/run_FINAL_e10_trunk/FINAL_stackfusionreg.pt"
+)
 ALGORITHM = "chimera_regression"
 MODEL_NAME = "chimera_regression"
 DEFAULT_REPORT_NAME = "chimera_regression.json"
@@ -147,7 +150,9 @@ def unique_strings(values: list[str | None]) -> list[str]:
     return out
 
 
-def find_hyp3_payload_dir(dataset_hash: str, dataset_name: str, payload_roots: tuple[Path, ...]) -> Path | None:
+def find_hyp3_payload_dir(
+    dataset_hash: str, dataset_name: str, payload_roots: tuple[Path, ...]
+) -> Path | None:
     for root in payload_roots:
         for name in unique_strings([dataset_hash, dataset_name]):
             candidate = root / name
@@ -297,7 +302,9 @@ def environment_payload(ckpt: Path, gpu_device: str | int | None) -> dict[str, A
     return payload
 
 
-def dataset_report_fields(dataset_hash: str, dataset_dir: Path, meta: dict[str, Any], ds: Any | None = None) -> dict[str, Any]:
+def dataset_report_fields(
+    dataset_hash: str, dataset_dir: Path, meta: dict[str, Any], ds: Any | None = None
+) -> dict[str, Any]:
     if ds is not None:
         train_rows = int(ds.Xtr.shape[0])
         test_rows = int(ds.Xte.shape[0])
@@ -348,10 +355,14 @@ def hyp3_feature_metadata_stub(
 ) -> dict[str, Any]:
     resolved_payload = payload_dir
     if resolved_payload is None:
-        resolved_payload = Path(item.payload_dir) if item.payload_dir else find_hyp3_payload_dir(
-            item.dataset_hash,
-            dataset_dir.name,
-            payload_roots,
+        resolved_payload = (
+            Path(item.payload_dir)
+            if item.payload_dir
+            else find_hyp3_payload_dir(
+                item.dataset_hash,
+                dataset_dir.name,
+                payload_roots,
+            )
         )
     return {
         "name": HYP3_ALGORITHM,
@@ -379,13 +390,21 @@ def load_hyp3_augmented_dataset(
     from python.fusion.data import QuantDataset
 
     dataset_dir = Path(item.dataset_dir)
-    payload_dir = Path(item.payload_dir) if item.payload_dir else find_hyp3_payload_dir(
-        item.dataset_hash,
-        dataset_dir.name,
-        payload_roots,
+    payload_dir = (
+        Path(item.payload_dir)
+        if item.payload_dir
+        else find_hyp3_payload_dir(
+            item.dataset_hash,
+            dataset_dir.name,
+            payload_roots,
+        )
     )
     if payload_dir is None:
-        checked = [str(root / name) for root in payload_roots for name in unique_strings([item.dataset_hash, dataset_dir.name])]
+        checked = [
+            str(root / name)
+            for root in payload_roots
+            for name in unique_strings([item.dataset_hash, dataset_dir.name])
+        ]
         raise FileNotFoundError(f"missing HYP3 payload directory for {item.dataset_hash}; checked={checked}")
 
     train_csv = load_numeric_matrix(dataset_dir / "train.csv", "original train.csv")
@@ -406,19 +425,25 @@ def load_hyp3_augmented_dataset(
     hyperion3_test = load_numeric_matrix(payload_dir / "hyperion3test.vs", "HYP3 hyperion3test.vs")
 
     if train3.shape[0] != train_csv.shape[0]:
-        raise ValueError(f"HYP3 train3 row mismatch: block_rows={train3.shape[0]} train_rows={train_csv.shape[0]}")
+        raise ValueError(
+            f"HYP3 train3 row mismatch: block_rows={train3.shape[0]} train_rows={train_csv.shape[0]}"
+        )
     if hyperion3_train.shape[0] != train_csv.shape[0]:
         raise ValueError(
             f"HYP3 hyperion3train row mismatch: block_rows={hyperion3_train.shape[0]} train_rows={train_csv.shape[0]}"
         )
     if test3.shape[0] != test_csv.shape[0]:
-        raise ValueError(f"HYP3 test3 row mismatch: block_rows={test3.shape[0]} test_rows={test_csv.shape[0]}")
+        raise ValueError(
+            f"HYP3 test3 row mismatch: block_rows={test3.shape[0]} test_rows={test_csv.shape[0]}"
+        )
     if hyperion3_test.shape[0] != test_csv.shape[0]:
         raise ValueError(
             f"HYP3 hyperion3test row mismatch: block_rows={hyperion3_test.shape[0]} test_rows={test_csv.shape[0]}"
         )
     if train3.shape[1] != test3.shape[1]:
-        raise ValueError(f"HYP3 train3/test3 column mismatch: train_cols={train3.shape[1]} test_cols={test3.shape[1]}")
+        raise ValueError(
+            f"HYP3 train3/test3 column mismatch: train_cols={train3.shape[1]} test_cols={test3.shape[1]}"
+        )
     if hyperion3_train.shape[1] != hyperion3_test.shape[1]:
         raise ValueError(
             f"HYP3 hyperion3 train/test column mismatch: "
@@ -474,16 +499,22 @@ def audit_hyp3_payloads(selected: list[WorkItem], payload_roots: tuple[Path, ...
     missing: list[dict[str, Any]] = []
     for item in selected:
         dataset_dir = Path(item.dataset_dir)
-        payload_dir = Path(item.payload_dir) if item.payload_dir else find_hyp3_payload_dir(
-            item.dataset_hash,
-            dataset_dir.name,
-            payload_roots,
+        payload_dir = (
+            Path(item.payload_dir)
+            if item.payload_dir
+            else find_hyp3_payload_dir(
+                item.dataset_hash,
+                dataset_dir.name,
+                payload_roots,
+            )
         )
         missing_files = []
         if payload_dir is None:
             missing_files = list(HYP3_REQUIRED_FILES)
         else:
-            missing_files = [file_name for file_name in HYP3_REQUIRED_FILES if not (payload_dir / file_name).exists()]
+            missing_files = [
+                file_name for file_name in HYP3_REQUIRED_FILES if not (payload_dir / file_name).exists()
+            ]
         if missing_files:
             missing.append(
                 {
@@ -852,7 +883,12 @@ def run_pending(args: argparse.Namespace, pending: list[WorkItem]) -> dict[str, 
             daemon=False,
         )
         proc.start()
-        workers[worker_id] = {"process": proc, "gpu_id": gpu_id, "ready": False, "started_at": time.monotonic()}
+        workers[worker_id] = {
+            "process": proc,
+            "gpu_id": gpu_id,
+            "ready": False,
+            "started_at": time.monotonic(),
+        }
 
     for gpu_id, _slot in worker_specs:
         start_worker(gpu_id)
@@ -1036,18 +1072,26 @@ def run_pending(args: argparse.Namespace, pending: list[WorkItem]) -> dict[str, 
                 counts["worker_failures"] += 1
                 start_worker(str(info["gpu_id"]))
 
-        live_workers = [info for wid, info in workers.items() if wid not in dead_workers and info["process"].is_alive()]
+        live_workers = [
+            info for wid, info in workers.items() if wid not in dead_workers and info["process"].is_alive()
+        ]
         if not live_workers and counts["completed"] + counts["failed"] < total:
             raise RuntimeError("all Chimera workers exited before the worklist completed")
 
     maybe_print_progress(force=True)
 
-    live_worker_ids = [wid for wid, info in workers.items() if wid not in dead_workers and info["process"].is_alive()]
+    live_worker_ids = [
+        wid for wid, info in workers.items() if wid not in dead_workers and info["process"].is_alive()
+    ]
     for _wid in live_worker_ids:
         task_queue.put(None)
     stop_deadline = time.monotonic() + 60
     while time.monotonic() < stop_deadline:
-        live = [info["process"] for wid, info in workers.items() if wid not in dead_workers and info["process"].is_alive()]
+        live = [
+            info["process"]
+            for wid, info in workers.items()
+            if wid not in dead_workers and info["process"].is_alive()
+        ]
         if not live:
             break
         for proc in live:
@@ -1083,8 +1127,16 @@ def summarize_reports(
         else:
             missing.append(item)
 
-    r2_values = [float(r["metrics"]["r2"]) for r in completed_reports if isinstance(r.get("metrics"), dict) and r["metrics"].get("r2") is not None]
-    rmse_values = [float(r["metrics"]["rmse"]) for r in completed_reports if isinstance(r.get("metrics"), dict) and r["metrics"].get("rmse") is not None]
+    r2_values = [
+        float(r["metrics"]["r2"])
+        for r in completed_reports
+        if isinstance(r.get("metrics"), dict) and r["metrics"].get("r2") is not None
+    ]
+    rmse_values = [
+        float(r["metrics"]["rmse"])
+        for r in completed_reports
+        if isinstance(r.get("metrics"), dict) and r["metrics"].get("rmse") is not None
+    ]
 
     def mean_or_none(values: list[float]) -> float | None:
         return float(np.mean(values)) if values else None
@@ -1095,7 +1147,9 @@ def summarize_reports(
     failures = [
         {
             "dataset_hash": str(r.get("dataset_hash")),
-            "report_path": str(Path(args.dataset_root) / str(r.get("dataset_hash")) / "reports" / args.report_name)
+            "report_path": str(
+                Path(args.dataset_root) / str(r.get("dataset_hash")) / "reports" / args.report_name
+            )
             if r.get("dataset_hash")
             else None,
             "error": r.get("error") or r.get("failure_message"),
@@ -1190,7 +1244,9 @@ def main(argv: list[str] | None = None, default_feature_augmentation: str = "non
     parser.add_argument("--algorithm", default=None)
     parser.add_argument("--model-name", default=None)
     parser.add_argument("--summary-prefix", default=None)
-    parser.add_argument("--feature-augmentation", choices=("none", "hyp3"), default=default_feature_augmentation)
+    parser.add_argument(
+        "--feature-augmentation", choices=("none", "hyp3"), default=default_feature_augmentation
+    )
     parser.add_argument("--hyp3-payload-root", type=Path, action="append", default=None)
     parser.add_argument("--scratch-root", type=Path, default=DEFAULT_HYP3_SCRATCH_ROOT)
     parser.add_argument("--gpus", default="auto")
@@ -1209,7 +1265,7 @@ def main(argv: list[str] | None = None, default_feature_augmentation: str = "non
 
     args.dataset_root = args.dataset_root.expanduser().resolve()
     args.ckpt = args.ckpt.expanduser().resolve()
-    args.summary_dir = (args.summary_dir.expanduser().resolve() if args.summary_dir else args.ckpt.parent)
+    args.summary_dir = args.summary_dir.expanduser().resolve() if args.summary_dir else args.ckpt.parent
     args.scratch_root = args.scratch_root.expanduser().resolve()
     hyp3_roots = args.hyp3_payload_root or list(DEFAULT_HYP3_PAYLOAD_ROOTS)
     args.hyp3_payload_roots = tuple(root.expanduser().resolve() for root in hyp3_roots)

@@ -11,6 +11,7 @@ Two structural choices, both forced by the arithmetic rather than by taste:
    a dataset and therefore cannot have a main effect, which corrupts any within-window importance
    normalization. Without the tags that sampling is impossible.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -21,10 +22,10 @@ import numpy as np
 
 from .parse import ParsedGenome, parse
 
-BLOCK_GENOME = "genome"     # varies within a dataset -- the only block with a main effect
-BLOCK_TF = "trainfold"      # train-fold-fitted, also genome-varying
+BLOCK_GENOME = "genome"  # varies within a dataset -- the only block with a main effect
+BLOCK_TF = "trainfold"  # train-fold-fitted, also genome-varying
 BLOCK_RETRIEVAL = "retrieval"
-BLOCK_DATASET = "dataset"   # constant within a dataset -- zero main effect by construction
+BLOCK_DATASET = "dataset"  # constant within a dataset -- zero main effect by construction
 BLOCK_INTERACT = "interact"
 
 
@@ -114,9 +115,14 @@ def build_retrieval_matrix(parses, datasets, retrievers, emb_by_space) -> tuple[
     return out, names
 
 
-def build_interactions(genome_mat: np.ndarray, genome_cols: list[int],
-                       ds_mat: np.ndarray, ds_cols: list[int],
-                       gnames: list[str], dnames: list[str]) -> tuple[np.ndarray, list[str]]:
+def build_interactions(
+    genome_mat: np.ndarray,
+    genome_cols: list[int],
+    ds_mat: np.ndarray,
+    ds_cols: list[int],
+    gnames: list[str],
+    dnames: list[str],
+) -> tuple[np.ndarray, list[str]]:
     """Explicit genome x dataset crosses, HARD-BUDGETED.
 
     The full cross of ~1,950 genome columns against ~6,900 dataset dims is 13.5M products fit on
@@ -130,8 +136,14 @@ def build_interactions(genome_mat: np.ndarray, genome_cols: list[int],
     return out, names
 
 
-def save_matrix(path: str, genome_block: np.ndarray, dataset_block: np.ndarray,
-                row_dataset_idx: np.ndarray, spec: FeatureSpec, meta: dict) -> None:
+def save_matrix(
+    path: str,
+    genome_block: np.ndarray,
+    dataset_block: np.ndarray,
+    row_dataset_idx: np.ndarray,
+    spec: FeatureSpec,
+    meta: dict,
+) -> None:
     """Persist the two-table layout plus a manifest tying it to its definition."""
     os.makedirs(path, exist_ok=True)
     np.save(os.path.join(path, "genome_block.npy"), genome_block.astype(np.float32))
@@ -140,6 +152,14 @@ def save_matrix(path: str, genome_block: np.ndarray, dataset_block: np.ndarray,
     with open(os.path.join(path, "feature_spec.json"), "w") as f:
         json.dump(spec.to_json(), f, indent=1)
     with open(os.path.join(path, "manifest.json"), "w") as f:
-        json.dump({**meta, "feature_spec_hash": spec.hash(),
-                   "genome_block_shape": list(genome_block.shape),
-                   "dataset_block_shape": list(dataset_block.shape)}, f, indent=1, sort_keys=True)
+        json.dump(
+            {
+                **meta,
+                "feature_spec_hash": spec.hash(),
+                "genome_block_shape": list(genome_block.shape),
+                "dataset_block_shape": list(dataset_block.shape),
+            },
+            f,
+            indent=1,
+            sort_keys=True,
+        )

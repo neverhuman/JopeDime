@@ -31,7 +31,9 @@ def load_encoder(checkpoint_path: Path, device: torch.device | str | None = None
     return model
 
 
-def _window_indices(length: int, window_size: int, stride: int, max_windows: int | None, seed: int) -> list[np.ndarray]:
+def _window_indices(
+    length: int, window_size: int, stride: int, max_windows: int | None, seed: int
+) -> list[np.ndarray]:
     if length <= 0:
         raise ValueError("Cannot encode an empty target")
     rng = np.random.default_rng(stable_seed("encode", seed, length, window_size, stride))
@@ -63,7 +65,9 @@ def encode_values(
 ) -> np.ndarray:
     device = torch.device(device or next(model.parameters()).device)
     task_id = normalize_task(task)
-    arr = np.asarray(list(values) if not isinstance(values, np.ndarray) else values, dtype=np.float32).reshape(-1)
+    arr = np.asarray(
+        list(values) if not isinstance(values, np.ndarray) else values, dtype=np.float32
+    ).reshape(-1)
     arr = arr[np.isfinite(arr)]
     if task_id == TASK_BINARY:
         arr = (arr >= 0.5).astype(np.float32)

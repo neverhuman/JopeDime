@@ -1,4 +1,5 @@
 """Successor remaining-gap register and flywheel-evidence contract. No launch."""
+
 from __future__ import annotations
 
 import argparse
@@ -73,15 +74,30 @@ WOULD_CLOSE = {
     "L03": "native freeze() on a funded new-identity corpus/baseline/checkpoint",
 }
 EXTRA = (
-    dict(id="L01", owner="scheduler", priority="P1",
-         problem="vs-random league arm is not minted in live GP jobs",
-         closed=False, evidence=[]),
-    dict(id="L02", owner="scheduler", priority="P1",
-         problem="policy_logprob not persisted on observation seeds",
-         closed=False, evidence=[]),
-    dict(id="L03", owner="scheduler", priority="P1",
-         problem="teacher_improved replay argv has unresolved corpus/baseline/checkpoint",
-         closed=False, evidence=[]),
+    dict(
+        id="L01",
+        owner="scheduler",
+        priority="P1",
+        problem="vs-random league arm is not minted in live GP jobs",
+        closed=False,
+        evidence=[],
+    ),
+    dict(
+        id="L02",
+        owner="scheduler",
+        priority="P1",
+        problem="policy_logprob not persisted on observation seeds",
+        closed=False,
+        evidence=[],
+    ),
+    dict(
+        id="L03",
+        owner="scheduler",
+        priority="P1",
+        problem="teacher_improved replay argv has unresolved corpus/baseline/checkpoint",
+        closed=False,
+        evidence=[],
+    ),
 )
 
 
@@ -146,8 +162,13 @@ def refuse_useful_hour(outputs=None):
     return useful_hour.committed(outputs) is False
 
 
-def flywheel_effect(p1_accepted, p2_successor_discoveries, useful_hour_committed=False,
-                    world_class_ok=False, vs_random="unavailable"):
+def flywheel_effect(
+    p1_accepted,
+    p2_successor_discoveries,
+    useful_hour_committed=False,
+    world_class_ok=False,
+    vs_random="unavailable",
+):
     blocked = []
     if not p1_accepted:
         blocked.append("p1_not_accepted")
@@ -202,8 +223,7 @@ def emit(dest, audit_path=AUDIT, winrate=None):
     dest.mkdir(parents=True, exist_ok=True)
     reg = register(audit_path)
     (dest / "register.json").write_text(json.dumps(reg, sort_keys=True, indent=2) + "\n")
-    rates = {"neural_seed_rate": 0.0, "final_gp_rate": 0.014285714285714285,
-             "final_gp_margin_rate": 0.0}
+    rates = {"neural_seed_rate": 0.0, "final_gp_rate": 0.014285714285714285, "final_gp_margin_rate": 0.0}
     if winrate:
         wr = json.loads(Path(winrate).read_text())
         for key in rates:

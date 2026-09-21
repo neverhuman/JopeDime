@@ -25,4 +25,3 @@ def write_jsonl(path: str | Path, rows: Iterable[dict | TrainingRow]) -> int:
             handle.write(json.dumps(data, sort_keys=True) + "\n")
             n += 1
     return n
-

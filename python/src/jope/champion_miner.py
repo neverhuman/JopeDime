@@ -56,7 +56,9 @@ def build_champions(
     sources: list[tuple[str, Path]] = [("active_rows", art_dir / "active_rows.jsonl")]
     for glob in globs:
         sources.extend((glob, path) for path in sorted(art_dir.glob(glob)))
-    sources.extend(("champion_rows_g*.jsonl", path) for path in sorted(art_dir.glob("champion_rows_g*.jsonl")))
+    sources.extend(
+        ("champion_rows_g*.jsonl", path) for path in sorted(art_dir.glob("champion_rows_g*.jsonl"))
+    )
     seen_paths: set[Path] = set()
     counts: dict[str, dict[str, int]] = defaultdict(lambda: {"files": 0, "rows": 0})
     for source, path in sources:
@@ -135,7 +137,8 @@ def _mutate_actions(actions: dict, spec, rng: random.Random) -> list[dict]:
 
     # 4) swap one transform with a random generatable non-expr one
     swappable = [
-        n for n, op in spec.transforms.items()
+        n
+        for n, op in spec.transforms.items()
         if op.generate and not op.takes_expr and "regression" in op.tasks
     ]
     for i in range(len(transforms)):
@@ -213,10 +216,16 @@ def mine_slice(
         except Exception:
             pass
         for eng, g in genomes:
-            eval_inputs.append({
-                "engine": eng, "dataset_hash": h, "train_csv": entry["train_csv"],
-                "test_csv": entry.get("test_csv"), "genome": g, "folds": folds,
-            })
+            eval_inputs.append(
+                {
+                    "engine": eng,
+                    "dataset_hash": h,
+                    "train_csv": entry["train_csv"],
+                    "test_csv": entry.get("test_csv"),
+                    "genome": g,
+                    "folds": folds,
+                }
+            )
             meta.append({"h": h, "engine": eng, "genome": g})
 
     log(f"[miner g{generation}] racing {len(eval_inputs)} mutants across {len(datasets)} datasets")
@@ -231,10 +240,18 @@ def mine_slice(
             return
         p = Path(progress_path)
         tmp = p.with_suffix(p.suffix + ".tmp")
-        tmp.write_text(json.dumps({
-            "generation": generation, "raced": raced, "total": len(eval_inputs),
-            "champions": champs, "ts": __import__("time").time(),
-        }), encoding="utf-8")
+        tmp.write_text(
+            json.dumps(
+                {
+                    "generation": generation,
+                    "raced": raced,
+                    "total": len(eval_inputs),
+                    "champions": champs,
+                    "ts": __import__("time").time(),
+                }
+            ),
+            encoding="utf-8",
+        )
         tmp.replace(p)
 
     # incremental consumption: live progress + scored events while the GPUs train
@@ -258,8 +275,11 @@ def mine_slice(
 
                 feed.scored(
                     _gid(m0["engine"], m0["h"], m0["genome"]),
-                    engine=m0["engine"], dataset_hash=m0["h"], canonical=m0["genome"],
-                    oof_r2=cv0.get("oof_r2"), cache_hit=bool(res.get("cache_hit")),
+                    engine=m0["engine"],
+                    dataset_hash=m0["h"],
+                    canonical=m0["genome"],
+                    oof_r2=cv0.get("oof_r2"),
+                    cache_hit=bool(res.get("cache_hit")),
                 )
             except Exception:
                 pass
@@ -289,7 +309,9 @@ def mine_slice(
 
                 feed.selected(
                     _gid(m["engine"], m["h"], m["genome"]),
-                    engine=m["engine"], dataset_hash=m["h"], canonical=m["genome"],
+                    engine=m["engine"],
+                    dataset_hash=m["h"],
+                    canonical=m["genome"],
                     selection_slot=f"champion_g{generation}",
                 )
             except Exception:

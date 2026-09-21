@@ -21,6 +21,7 @@ encode which algorithms had been *run* by the time a dataset was encoded, and th
 pattern correlates with encode date, not with difficulty -- it would leak calendar time into a
 cold-start model.
 """
+
 from __future__ import annotations
 
 import functools
@@ -39,8 +40,7 @@ from . import R2_CLIP_FLOOR
 # Paths
 # --------------------------------------------------------------------------------------------
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__)))))
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 CANON_ALGOS_PATH = "prime/runs/genome_perf_v1/cache/reports_canon.json"
 CANON_ALGOS_ABS = os.path.join(REPO_ROOT, CANON_ALGOS_PATH)
@@ -76,16 +76,18 @@ HIDDEN_BASE = 856
 ACTION_BASE = 984
 
 IDX_SKETCH = np.arange(N_SKETCH, dtype=np.int32)
-IDX_HIDDEN = np.concatenate([
-    np.arange(HIDDEN_BASE + CAND_STRIDE * i, HIDDEN_BASE + CAND_STRIDE * i + N_HIDDEN,
-              dtype=np.int32)
-    for i in range(N_CANDIDATES)
-])
-IDX_ACTION = np.concatenate([
-    np.arange(ACTION_BASE + CAND_STRIDE * i, ACTION_BASE + CAND_STRIDE * i + N_ACTION,
-              dtype=np.int32)
-    for i in range(N_CANDIDATES)
-])
+IDX_HIDDEN = np.concatenate(
+    [
+        np.arange(HIDDEN_BASE + CAND_STRIDE * i, HIDDEN_BASE + CAND_STRIDE * i + N_HIDDEN, dtype=np.int32)
+        for i in range(N_CANDIDATES)
+    ]
+)
+IDX_ACTION = np.concatenate(
+    [
+        np.arange(ACTION_BASE + CAND_STRIDE * i, ACTION_BASE + CAND_STRIDE * i + N_ACTION, dtype=np.int32)
+        for i in range(N_CANDIDATES)
+    ]
+)
 
 _SKETCH_RE = re.compile(r"^sketch\..+\.(\d+)$")
 _HIDDEN_RE = re.compile(r"^candidate\.(.+)\.hidden_state\.(\d+)$")
@@ -131,15 +133,48 @@ ALGO_FAMILY_OVERRIDES = {
 }
 
 ALGO_FAMILY_RULES = (
-    ("tree", "prefix", ("catboost", "lightgbm", "xgboost", "random_forest", "extra_trees",
-                        "gradient_boosting", "hist_gradient_boosting", "histgbm", "ada_boost")),
+    (
+        "tree",
+        "prefix",
+        (
+            "catboost",
+            "lightgbm",
+            "xgboost",
+            "random_forest",
+            "extra_trees",
+            "gradient_boosting",
+            "hist_gradient_boosting",
+            "histgbm",
+            "ada_boost",
+        ),
+    ),
     ("tree", "exact", ("decision_tree", "bagging")),
-    ("kernel", "prefix", ("rbf_svr", "nu_svr", "kernel_ridge", "linear_svr", "nystroem",
-                          "rbfsampler", "gaussian_process")),
-    ("linear", "prefix", ("ridge", "lasso", "elastic_net", "linear_regression", "bayesian_ridge",
-                          "ard_regression", "huber", "sgd_regressor", "theil_sen", "ransac",
-                          "quantile_median", "poisson_regressor", "tweedie_regressor",
-                          "orthogonal_matching_pursuit", "passive_aggressive")),
+    (
+        "kernel",
+        "prefix",
+        ("rbf_svr", "nu_svr", "kernel_ridge", "linear_svr", "nystroem", "rbfsampler", "gaussian_process"),
+    ),
+    (
+        "linear",
+        "prefix",
+        (
+            "ridge",
+            "lasso",
+            "elastic_net",
+            "linear_regression",
+            "bayesian_ridge",
+            "ard_regression",
+            "huber",
+            "sgd_regressor",
+            "theil_sen",
+            "ransac",
+            "quantile_median",
+            "poisson_regressor",
+            "tweedie_regressor",
+            "orthogonal_matching_pursuit",
+            "passive_aggressive",
+        ),
+    ),
 )
 
 # ds_nonlinearity is defined against these two exact baselines, per the brief.
@@ -164,6 +199,7 @@ def algo_family(algo: str) -> str:
 # --------------------------------------------------------------------------------------------
 # Canonical algo list
 # --------------------------------------------------------------------------------------------
+
 
 def build_canonical_algo_list(datasets, persist: bool = True) -> list[str]:
     """Algorithms whose report exists for 100% of `datasets`. Sorted. Persisted to CANON_ALGOS_PATH.
@@ -216,6 +252,7 @@ def load_canonical_algo_list() -> list[str]:
 # --------------------------------------------------------------------------------------------
 # Sources
 # --------------------------------------------------------------------------------------------
+
 
 @functools.lru_cache(maxsize=1)
 def _bank() -> dict[str, tuple]:
@@ -325,6 +362,7 @@ def zero_feature_datasets() -> frozenset:
 # .vs reading + header validation
 # --------------------------------------------------------------------------------------------
 
+
 def validate_a4168_header(names) -> None:
     """Raise A4168LayoutError unless `names` matches the documented interleaved layout exactly.
 
@@ -401,9 +439,7 @@ def read_a4168(dataset: str) -> np.ndarray | None:
     except ValueError:
         return None
     if vec.shape[0] != A4168_DIM:
-        raise A4168LayoutError(
-            f"{path}: expected {A4168_DIM} values, got {vec.shape[0]}"
-        )
+        raise A4168LayoutError(f"{path}: expected {A4168_DIM} values, got {vec.shape[0]}")
     return np.nan_to_num(vec, nan=0.0, posinf=0.0, neginf=0.0)
 
 
@@ -507,8 +543,7 @@ def dataset_features(dataset: str, canon: list[str]) -> dict[str, float]:
 
         enc = meta.get("feature_encodings")
         if isinstance(enc, dict) and enc:
-            n_cat = sum(1 for v in enc.values()
-                        if not (isinstance(v, dict) and v.get("kind") == "numeric"))
+            n_cat = sum(1 for v in enc.values() if not (isinstance(v, dict) and v.get("kind") == "numeric"))
             out["ds_cat_frac"] = float(n_cat / len(enc))
 
     # --- block availability -----------------------------------------------------------------
@@ -525,6 +560,7 @@ def dataset_features(dataset: str, canon: list[str]) -> dict[str, float]:
 # --------------------------------------------------------------------------------------------
 # Dense blocks
 # --------------------------------------------------------------------------------------------
+
 
 def dataset_blocks(datasets, canon: list[str] | None = None) -> dict[str, np.ndarray]:
     """-> dense float32 blocks, one row per entry of `datasets`, IN THAT ORDER.

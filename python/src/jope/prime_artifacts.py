@@ -110,9 +110,7 @@ def _bounded_int(value: Any, parameter: dict[str, Any]) -> int:
     return result
 
 
-def _count_sketch_params(
-    entry: dict[str, Any], params: dict[str, Any] | None
-) -> dict[str, Any]:
+def _count_sketch_params(entry: dict[str, Any], params: dict[str, Any] | None) -> dict[str, Any]:
     supplied = dict(params or {})
     append = supplied.pop("append", False)
     if not isinstance(append, bool):
@@ -141,8 +139,10 @@ def _input_matrix(test_rows: Any | None, input_columns: int) -> np.ndarray:
         raise ValueError(f"input_columns must be in 1..{MAX_WIDTH}")
     if test_rows is None:
         test_rows = [
-            [((row + 1) * (column + 2) * (-1 if (row + column) % 2 else 1)) / 7.0
-             for column in range(input_columns)]
+            [
+                ((row + 1) * (column + 2) * (-1 if (row + column) % 2 else 1)) / 7.0
+                for column in range(input_columns)
+            ]
             for row in range(4)
         ]
     matrix = np.asarray(test_rows, dtype=np.float64)
@@ -151,12 +151,8 @@ def _input_matrix(test_rows: Any | None, input_columns: int) -> np.ndarray:
     if matrix.shape[0] == 0:
         raise ValueError("test_rows must contain at least one row")
     if matrix.shape[1] != input_columns:
-        raise ValueError(
-            f"test_rows has {matrix.shape[1]} columns; input contract requires {input_columns}"
-        )
-    return np.ascontiguousarray(
-        np.nan_to_num(matrix, nan=0.0, posinf=0.0, neginf=0.0)
-    )
+        raise ValueError(f"test_rows has {matrix.shape[1]} columns; input contract requires {input_columns}")
+    return np.ascontiguousarray(np.nan_to_num(matrix, nan=0.0, posinf=0.0, neginf=0.0))
 
 
 def lint_portable_source(source: str, language: str) -> list[str]:
@@ -255,7 +251,7 @@ def _python_source(*, width: int, seed: int, append: bool, input_columns: int) -
 def _rust_source(*, width: int, seed: int, append: bool, input_columns: int) -> str:
     append_text = "true" if append else "false"
     return textwrap.dedent(
-        f'''\
+        f"""\
         #![forbid(unsafe_code)]
 
         use std::env;
@@ -362,7 +358,7 @@ def _rust_source(*, width: int, seed: int, append: bool, input_columns: int) -> 
                 std::process::exit(2);
             }}
         }}
-        '''
+        """
     )
 
 

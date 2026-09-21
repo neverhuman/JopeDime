@@ -65,7 +65,9 @@ def build_parser() -> argparse.ArgumentParser:
     tr.add_argument("--task-loss-weight", type=float, default=0.05)
     tr.add_argument("--collapse-loss-weight", type=float, default=0.05)
 
-    baseline = sub.add_parser("classical-baseline", help="Train non-neural summary-stat same-dataset pair baselines.")
+    baseline = sub.add_parser(
+        "classical-baseline", help="Train non-neural summary-stat same-dataset pair baselines."
+    )
     baseline.add_argument("--cache-dir", type=_path, required=True)
     baseline.add_argument("--run-dir", type=_path, required=True)
     baseline.add_argument("--window-size", type=int, default=96)
@@ -85,10 +87,19 @@ def build_parser() -> argparse.ArgumentParser:
     baseline.add_argument("--models", default="length_only,dummy,sgd_logistic,hist_gbdt,extra_trees,ensemble")
     baseline.add_argument("--n-jobs", type=int, default=-1)
 
-    ev = sub.add_parser("eval-representations", help="Evaluate neural and classical representations on one shared split.")
+    ev = sub.add_parser(
+        "eval-representations", help="Evaluate neural and classical representations on one shared split."
+    )
     ev.add_argument("--cache-dir", type=_path, required=True)
     ev.add_argument("--run-dir", type=_path, required=True)
-    ev.add_argument("--neural-checkpoint", "--checkpoint", dest="neural_checkpoints", type=_path, action="append", default=[])
+    ev.add_argument(
+        "--neural-checkpoint",
+        "--checkpoint",
+        dest="neural_checkpoints",
+        type=_path,
+        action="append",
+        default=[],
+    )
     ev.add_argument("--classical-model-dir", type=_path, default=None)
     ev.add_argument("--classical-models", default="")
     ev.add_argument("--fused-bundle", dest="fused_bundles", type=_path, action="append", default=[])
@@ -156,7 +167,9 @@ def build_parser() -> argparse.ArgumentParser:
     fused_enc.add_argument("--seed", type=int, default=17)
     fused_enc.add_argument("--device", default=None)
 
-    fused_score = sub.add_parser("score-fused", help="Score whether two targets come from the same dataset with a fused bundle.")
+    fused_score = sub.add_parser(
+        "score-fused", help="Score whether two targets come from the same dataset with a fused bundle."
+    )
     fused_score.add_argument("--bundle", type=_path, required=True)
     fused_score.add_argument("--left-input", type=_path, required=True)
     fused_score.add_argument("--left-task", choices=["binary", "regression"], required=True)
@@ -186,7 +199,9 @@ def main(argv: list[str] | None = None) -> int:
         counts = {"binary": 0, "regression": 0}
         for record in records:
             counts["binary" if record.task == TASK_BINARY else "regression"] += 1
-        print(json.dumps({"cache_dir": str(args.cache_dir), "records": len(records), **counts}, sort_keys=True))
+        print(
+            json.dumps({"cache_dir": str(args.cache_dir), "records": len(records), **counts}, sort_keys=True)
+        )
         return 0
     if args.command == "inspect-cache":
         records = load_manifest(args.cache_dir)
@@ -289,7 +304,9 @@ def main(argv: list[str] | None = None) -> int:
                 run_dir=args.run_dir,
                 neural_checkpoints=tuple(args.neural_checkpoints),
                 classical_model_dir=args.classical_model_dir,
-                classical_models=tuple(part.strip() for part in args.classical_models.split(",") if part.strip()),
+                classical_models=tuple(
+                    part.strip() for part in args.classical_models.split(",") if part.strip()
+                ),
                 fused_bundles=tuple(args.fused_bundles),
                 window_size=args.window_size,
                 views_per_record=args.views_per_record,
@@ -382,7 +399,11 @@ def main(argv: list[str] | None = None) -> int:
                 batch_size=args.batch_size,
             )
         )
-        selection = report.get("best_report", {}).get("selection", {}) if isinstance(report.get("best_report"), dict) else {}
+        selection = (
+            report.get("best_report", {}).get("selection", {})
+            if isinstance(report.get("best_report"), dict)
+            else {}
+        )
         print(
             json.dumps(
                 {
@@ -391,7 +412,9 @@ def main(argv: list[str] | None = None) -> int:
                     "final_bundle": report["final_bundle"],
                     "inference_bundle": report["inference_bundle"],
                     "fusion_wins": selection.get("fusion_wins") if isinstance(selection, dict) else None,
-                    "selected_default": selection.get("selected_default") if isinstance(selection, dict) else None,
+                    "selected_default": selection.get("selected_default")
+                    if isinstance(selection, dict)
+                    else None,
                 },
                 sort_keys=True,
             )

@@ -4,6 +4,7 @@ The package itself is importable through the editable install (`uv sync`). The r
 historical tests import as top-level modules (test_exact_train, test_exact_common, ...) live in
 jope.research; expose that directory on sys.path so those tests keep working unchanged (WP6).
 """
+
 from __future__ import annotations
 
 import os

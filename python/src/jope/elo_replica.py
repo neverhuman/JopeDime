@@ -10,6 +10,7 @@ Semantics: round-robin logistic Elo over all per-dataset pairwise utility
 (−RMSE) comparisons, 60 sweeps, K=64 averaged per player, init 1000, ties by
 isclose(rel=abs=1e-12).
 """
+
 from __future__ import annotations
 
 import math
@@ -122,14 +123,29 @@ def per_dataset_diagnostics(cand_rmse: dict[str, float], hashes: list[str]) -> l
             beat = int((jr < inc_valid).sum())
             nn = len(inc_valid)
             p = min(max(beat / nn, 1e-4), 1 - 1e-4)
-            out.append({
-                "hash": h, "rmse": jr, "rank": int((inc_valid < jr).sum()) + 1, "field": nn,
-                "beat": beat, "pctile": round(100 * beat / nn, 1),
-                "elo_local": round(1000 + 400 * math.log10(p / (1 - p))),
-            })
+            out.append(
+                {
+                    "hash": h,
+                    "rmse": jr,
+                    "rank": int((inc_valid < jr).sum()) + 1,
+                    "field": nn,
+                    "beat": beat,
+                    "pctile": round(100 * beat / nn, 1),
+                    "elo_local": round(1000 + 400 * math.log10(p / (1 - p))),
+                }
+            )
         else:
-            out.append({"hash": h, "rmse": None, "rank": None, "field": int(len(inc_valid)),
-                        "beat": 0, "pctile": 0.0, "elo_local": None})
+            out.append(
+                {
+                    "hash": h,
+                    "rmse": None,
+                    "rank": None,
+                    "field": int(len(inc_valid)),
+                    "beat": 0,
+                    "pctile": 0.0,
+                    "elo_local": None,
+                }
+            )
     return out
 
 

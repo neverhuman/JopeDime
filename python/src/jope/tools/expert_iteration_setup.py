@@ -1,4 +1,5 @@
 """Expert-iteration strategy diagnostics; no scientific certification or launch."""
+
 from __future__ import annotations
 
 import hashlib
@@ -53,9 +54,20 @@ LOSS = dict(
     teacher_in_each_comparison=True,
 )
 
-ARCH = dict(layers=6, width=512, heads=4, ffn=2048, max_seq=128, dropout=0.1,
-            dataset_dim=1536, target_keep_dim=512, batch="256x8", new_steps=1000,
-            task_cap_seconds=300, optimizer="carry")
+ARCH = dict(
+    layers=6,
+    width=512,
+    heads=4,
+    ffn=2048,
+    max_seq=128,
+    dropout=0.1,
+    dataset_dim=1536,
+    target_keep_dim=512,
+    batch="256x8",
+    new_steps=1000,
+    task_cap_seconds=300,
+    optimizer="carry",
+)
 
 MEASURED = dict(
     quality_sha256=QUALITY_SHA,
@@ -154,22 +166,28 @@ def rate_series_diagnostic(history):
         if not isinstance(row, dict):
             return dict(base, status="unavailable", reason="invalid_row")
         rates = [row.get(key) for key in ("neural_seed_rate", "gp_improves_on_seed")]
-        if any(type(rate) not in (int, float) or not 0 <= rate <= 1
-               or not math.isfinite(rate) for rate in rates):
+        if any(
+            type(rate) not in (int, float) or not 0 <= rate <= 1 or not math.isfinite(rate) for rate in rates
+        ):
             return dict(base, status="unavailable", reason="invalid_rate")
-        if any(not isinstance(row.get(key), str)
-               or re.fullmatch(r"[0-9a-f]{64}", row[key]) is None
-               for key in ("parent", "corpus", "gp")):
+        if any(
+            not isinstance(row.get(key), str) or re.fullmatch(r"[0-9a-f]{64}", row[key]) is None
+            for key in ("parent", "corpus", "gp")
+        ):
             return dict(base, status="unavailable", reason="missing_or_invalid_lineage")
         seeds.append(rates[0])
         repairs.append(rates[1])
-    return dict(base, status="diagnostic_only", rows=len(history),
-                seed_rate_strictly_increasing=all(b > a for a, b in zip(seeds, seeds[1:])),
-                repair_rate_strictly_decreasing=all(b < a for a, b in zip(repairs, repairs[1:])),
-                distinct_parents=len({row["parent"] for row in history}),
-                distinct_corpora=len({row["corpus"] for row in history}),
-                distinct_gp_runs=len({row["gp"] for row in history}),
-                identity_labels_verified=False)
+    return dict(
+        base,
+        status="diagnostic_only",
+        rows=len(history),
+        seed_rate_strictly_increasing=all(b > a for a, b in zip(seeds, seeds[1:])),
+        repair_rate_strictly_decreasing=all(b < a for a, b in zip(repairs, repairs[1:])),
+        distinct_parents=len({row["parent"] for row in history}),
+        distinct_corpora=len({row["corpus"] for row in history}),
+        distinct_gp_runs=len({row["gp"] for row in history}),
+        identity_labels_verified=False,
+    )
 
 
 def flywheel_getting_smarter(history):
@@ -208,15 +226,17 @@ def strategy():
             pairwise_is_ordinal_not_agz_calibration=True,
             claude_seed_series="not_copied_unverified_by_this_lane",
         ),
-        note=("Expert Iteration is a relevant framework, not proof of best design. "
-              "Pairwise BT trains relative program preferences on a disjoint critic. "
-              "Prefix-value/search alternatives need separate qualification. Rate trends and "
-              "identity labels are diagnostics; attributable gain requires original admissions, "
-              "independent matched evaluation and accepted P1/P2 discovery joins. "
-              "The supplied gen-66 rates and source digest are historical diagnostics, not "
-              "independent evidence verified by this helper. The legacy expert budget is "
-              "historical configuration, not current authorization. A formula-only pair-weight "
-              "ratio is not a measured training-gradient contribution."),
+        note=(
+            "Expert Iteration is a relevant framework, not proof of best design. "
+            "Pairwise BT trains relative program preferences on a disjoint critic. "
+            "Prefix-value/search alternatives need separate qualification. Rate trends and "
+            "identity labels are diagnostics; attributable gain requires original admissions, "
+            "independent matched evaluation and accepted P1/P2 discovery joins. "
+            "The supplied gen-66 rates and source digest are historical diagnostics, not "
+            "independent evidence verified by this helper. The legacy expert budget is "
+            "historical configuration, not current authorization. A formula-only pair-weight "
+            "ratio is not a measured training-gradient contribution."
+        ),
     )
 
 
@@ -249,4 +269,8 @@ def emit(dest):
 
 
 if __name__ == "__main__":
-    print(json.dumps(emit(Path("parallel/runs/flywheel-worldclass-20260911/expert-iteration-setup-v2")), indent=2))
+    print(
+        json.dumps(
+            emit(Path("parallel/runs/flywheel-worldclass-20260911/expert-iteration-setup-v2")), indent=2
+        )
+    )

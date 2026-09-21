@@ -2,6 +2,7 @@
 
 The target is built here and nowhere else, so there is exactly one definition of "percentile".
 """
+
 from __future__ import annotations
 
 import json
@@ -13,22 +14,20 @@ import numpy as np
 
 from . import R2_CLIP_FLOOR, STRATA, split_of
 
-LEAGUE_DB = os.environ.get(
-    "JOPE_LEAGUE_DB", "/home/ubuntu/jope-prime/prime/runs/league/league.db"
-)
+LEAGUE_DB = os.environ.get("JOPE_LEAGUE_DB", "/home/ubuntu/jope-prime/prime/runs/league/league.db")
 
 
 @dataclass
 class RowTable:
-    dataset: np.ndarray        # (N,) str -- dataset hash
-    genome: np.ndarray         # (N,) str -- full S-expression text
-    score: np.ndarray          # (N,) f8  -- CLIPPED robust_score
-    y: np.ndarray              # (N,) f8  -- within-dataset midrank percentile in [0,1]
-    oof_r2: np.ndarray         # (N,) f8  -- nan where absent
-    fold_std: np.ndarray       # (N,) f8  -- population std of fold_r2, nan where absent
-    se_oof: np.ndarray         # (N,) f8  -- std(fold_r2)/sqrt(k), the per-row measurement noise
+    dataset: np.ndarray  # (N,) str -- dataset hash
+    genome: np.ndarray  # (N,) str -- full S-expression text
+    score: np.ndarray  # (N,) f8  -- CLIPPED robust_score
+    y: np.ndarray  # (N,) f8  -- within-dataset midrank percentile in [0,1]
+    oof_r2: np.ndarray  # (N,) f8  -- nan where absent
+    fold_std: np.ndarray  # (N,) f8  -- population std of fold_r2, nan where absent
+    se_oof: np.ndarray  # (N,) f8  -- std(fold_r2)/sqrt(k), the per-row measurement noise
     finalist_rank: np.ndarray  # (N,) f8  -- REFERENCE ONLY, never a feature
-    split: np.ndarray          # (N,) str -- select | dev | test
+    split: np.ndarray  # (N,) str -- select | dev | test
     engine: str
     watermark: int
 
@@ -56,7 +55,7 @@ def within_group_midrank_pct(values: np.ndarray, groups: np.ndarray) -> np.ndarr
             j = i
             while j + 1 < len(v) and v[order[j + 1]] == v[order[i]]:
                 j += 1
-            ranks[order[i:j + 1]] = 0.5 * (i + j)  # midrank of the tie block
+            ranks[order[i : j + 1]] = 0.5 * (i + j)  # midrank of the tie block
             i = j + 1
         out[m] = ranks / (len(v) - 1)
     return out
@@ -70,8 +69,7 @@ def load_rows(engine: str, db_path: str = LEAGUE_DB) -> RowTable:
     try:
         watermark = con.execute("select max(watermark) from labels").fetchone()[0]
         raw = con.execute(
-            "select dataset, semantic_genome, label_json from labels "
-            "where fold_plan = ? and negative = 0",
+            "select dataset, semantic_genome, label_json from labels where fold_plan = ? and negative = 0",
             (STRATA[engine],),
         ).fetchall()
     finally:
@@ -87,7 +85,7 @@ def load_rows(engine: str, db_path: str = LEAGUE_DB) -> RowTable:
         folds = prov.get("fold_r2")
         if folds:
             arr = np.asarray(folds, dtype=np.float64)
-            std = float(arr.std())          # POPULATION std, matching robust_formula
+            std = float(arr.std())  # POPULATION std, matching robust_formula
             fstd.append(std)
             se.append(std / np.sqrt(len(arr)))
         else:

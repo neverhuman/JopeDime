@@ -111,9 +111,7 @@ class RatchetSchedulePack:
             if not np.array_equal(group_indices, np.arange(first_group, last_group)):
                 raise ValueError("schedule-pack microbatch groups are not contiguous")
             group_view = self.groups[first_group:last_group]
-            if not np.array_equal(
-                group_view["group_position"], np.arange(len(group_view), dtype=np.uint16)
-            ):
+            if not np.array_equal(group_view["group_position"], np.arange(len(group_view), dtype=np.uint16)):
                 raise ValueError("schedule-pack microbatch group order is not canonical")
             first_row = int(group_view[0]["row_start"])
             last_row = int(group_view[-1]["row_start"] + group_view[-1]["row_count"])
@@ -215,29 +213,16 @@ class PinnedTrainingBatchRing:
         self._copy_device: str | None = None
         pin = bool(require_pinned)
         self._contexts = [
-            torch.empty((max_groups, dimensions), dtype=torch.float32, pin_memory=pin)
-            for _ in range(depth)
+            torch.empty((max_groups, dimensions), dtype=torch.float32, pin_memory=pin) for _ in range(depth)
         ]
-        self._group_indices = [
-            torch.empty(max_rows, dtype=torch.int64, pin_memory=pin)
-            for _ in range(depth)
-        ]
-        self._label_kinds = [
-            torch.empty(max_rows, dtype=torch.uint8, pin_memory=pin)
-            for _ in range(depth)
-        ]
-        self._flags = [
-            torch.empty(max_rows, dtype=torch.uint8, pin_memory=pin)
-            for _ in range(depth)
-        ]
+        self._group_indices = [torch.empty(max_rows, dtype=torch.int64, pin_memory=pin) for _ in range(depth)]
+        self._label_kinds = [torch.empty(max_rows, dtype=torch.uint8, pin_memory=pin) for _ in range(depth)]
+        self._flags = [torch.empty(max_rows, dtype=torch.uint8, pin_memory=pin) for _ in range(depth)]
         self._targets = [
-            torch.empty((max_rows, 4), dtype=torch.float32, pin_memory=pin)
-            for _ in range(depth)
+            torch.empty((max_rows, 4), dtype=torch.float32, pin_memory=pin) for _ in range(depth)
         ]
 
-    def stage(
-        self, groups: np.ndarray, labels: np.ndarray
-    ) -> RatchetPinnedHostMicrobatch:
+    def stage(self, groups: np.ndarray, labels: np.ndarray) -> RatchetPinnedHostMicrobatch:
         slot = self._cursor
         self._cursor = (self._cursor + 1) % self.depth
         if self._states[slot] == "staged":
@@ -324,10 +309,7 @@ class PinnedTrainingBatchRing:
         torch = self._torch
         if batch.slot < 0 or batch.slot >= self.depth:
             raise ValueError("pinned microbatch names an unknown ring slot")
-        if (
-            batch.generation != self._generations[batch.slot]
-            or self._states[batch.slot] != "staged"
-        ):
+        if batch.generation != self._generations[batch.slot] or self._states[batch.slot] != "staged":
             raise ValueError("pinned microbatch is stale or was already transferred")
         if not str(device).startswith("cuda"):
             raise ValueError("nonblocking ratchet transfer requires a CUDA device")
@@ -340,9 +322,7 @@ class PinnedTrainingBatchRing:
         event = torch.cuda.Event()
         with torch.cuda.stream(self._copy_stream):
             # Transfer the full 2,048-d context once, then split on device.
-            device_contexts = batch.contexts.to(
-                device=device, dtype=dtype, non_blocking=True
-            )
+            device_contexts = batch.contexts.to(device=device, dtype=dtype, non_blocking=True)
             output = RatchetDeviceMicrobatch(
                 dataset_encodings=device_contexts[:, : self.catalog.dataset_dimensions],
                 target_encodings=device_contexts[:, self.catalog.dataset_dimensions :],
@@ -399,12 +379,8 @@ def open_encoding_catalog(
             digest.update(chunk)
     if digest.hexdigest() != data_sha256:
         raise ValueError("encoding catalog data differs from its immutable manifest")
-    rows = np.memmap(
-        data_path, dtype="<f4", mode="r", shape=(row_count, dimensions), order="C"
-    )
-    return RatchetEncodingCatalog(
-        catalog_sha256, data_sha256, rows, dataset_dimensions, target_dimensions
-    )
+    rows = np.memmap(data_path, dtype="<f4", mode="r", shape=(row_count, dimensions), order="C")
+    return RatchetEncodingCatalog(catalog_sha256, data_sha256, rows, dataset_dimensions, target_dimensions)
 
 
 def materialize_training_microbatches(
@@ -484,9 +460,7 @@ def open_schedule_pack(path: str | Path) -> RatchetSchedulePack:
     if bytes(header[136:168]).hex() != manifest["encoding_catalog_sha256"]:
         raise ValueError("schedule-pack header differs from encoding-catalog authority")
 
-    groups = np.ndarray(
-        shape=(group_count,), dtype=GROUP_DTYPE, buffer=mapped, offset=groups_start
-    )
+    groups = np.ndarray(shape=(group_count,), dtype=GROUP_DTYPE, buffer=mapped, offset=groups_start)
     rows = np.ndarray(shape=(row_count,), dtype=ROW_DTYPE, buffer=mapped, offset=rows_start)
     if len({bytes(value) for value in groups["dataset_hash_bytes"]}) != 8:
         raise ValueError("schedule pack does not contain eight distinct dataset games")
@@ -510,10 +484,9 @@ def _validate_metadata(manifest: dict, completion: dict, binary_path: Path) -> N
     canonical_manifest_sha256 = hashlib.sha256(
         json.dumps(manifest, ensure_ascii=False, separators=(",", ":")).encode()
     ).hexdigest()
-    if (
-        completion.get("schema") != "RatchetSchedulePackCompletion.v1"
-        or completion.get("pack_sha256") != manifest.get("pack_sha256")
-    ):
+    if completion.get("schema") != "RatchetSchedulePackCompletion.v1" or completion.get(
+        "pack_sha256"
+    ) != manifest.get("pack_sha256"):
         raise ValueError("schedule-pack completion marker names another pack")
     if completion.get("manifest_sha256") != canonical_manifest_sha256:
         raise ValueError("schedule-pack completion marker differs from its manifest")

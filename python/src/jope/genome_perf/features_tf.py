@@ -13,6 +13,7 @@ appear on all 2,090 datasets, so a genome retrieving its own past results on a n
 is the common case, not the exception. `g7_self_hit_count` exposes exactly how often that fired so
 the ablation can distinguish transfer from memorization.
 """
+
 from __future__ import annotations
 
 import itertools
@@ -41,12 +42,21 @@ DEFAULT_K = 32
 PAIR_SHRINK_PRIOR = 200.0
 
 G3_NAMES = [
-    "g3_pair_synergy_sum", "g3_pair_synergy_max", "g3_pair_antagonism_min",
-    "g3_n_synergistic_pairs", "g3_n_antagonistic_pairs", "g3_adjacent_synergy_sum",
-    "g3_pair_coverage", "g3_n_pairs",
-    "g3_has_discretize_then_linear", "g3_has_randproj_then_tree",
-    "g3_skeleton_mean", "g3_skeleton_count", "g3_skeleton_rarity",
-    "g3_head_mean", "g3_op_mean_sum",
+    "g3_pair_synergy_sum",
+    "g3_pair_synergy_max",
+    "g3_pair_antagonism_min",
+    "g3_n_synergistic_pairs",
+    "g3_n_antagonistic_pairs",
+    "g3_adjacent_synergy_sum",
+    "g3_pair_coverage",
+    "g3_n_pairs",
+    "g3_has_discretize_then_linear",
+    "g3_has_randproj_then_tree",
+    "g3_skeleton_mean",
+    "g3_skeleton_count",
+    "g3_skeleton_rarity",
+    "g3_head_mean",
+    "g3_op_mean_sum",
 ]
 
 DISCRETIZERS = {"bin_onehot", "quantile_bins", "target_bin_encode"}
@@ -100,8 +110,9 @@ class SynergyFeatures:
 
         self.op_mean = {o: float(np.mean(v)) for o, v in op_acc.items() if len(v) >= MIN_PAIR_SUPPORT}
         self.head_mean = {h: float(np.mean(v)) for h, v in head_acc.items() if len(v) >= MIN_PAIR_SUPPORT}
-        self.skeleton = {s: (float(np.mean(v)), len(v))
-                         for s, v in skel_acc.items() if len(v) >= MIN_SKELETON_SUPPORT}
+        self.skeleton = {
+            s: (float(np.mean(v)), len(v)) for s, v in skel_acc.items() if len(v) >= MIN_SKELETON_SUPPORT
+        }
         # lift = observed - (mean_a + mean_b - grand_mean), the additive expectation, then shrunk
         # toward 0 by support. See PAIR_SHRINK_PRIOR for why shrinkage is not optional here.
         self.pair_lift = {}
@@ -145,9 +156,7 @@ class SynergyFeatures:
             bool(DISCRETIZERS & set(ops)) and LINEAR_FAMILY in head_fams
         )
         # the measured -0.078 anti-motif: a random projection feeding a tree head
-        out["g3_has_randproj_then_tree"] = float(
-            bool(PROJECTION_OPS & set(ops)) and TREE_FAMILY in head_fams
-        )
+        out["g3_has_randproj_then_tree"] = float(bool(PROJECTION_OPS & set(ops)) and TREE_FAMILY in head_fams)
 
         mean_count = self.skeleton.get(pg.skeleton)
         if mean_count:
@@ -159,8 +168,9 @@ class SynergyFeatures:
             out["g3_skeleton_rarity"] = float(np.log(max(self.n_train, 1)))
 
         out["g3_head_mean"] = self.head_mean.get(head.op, self.grand_mean) if head else self.grand_mean
-        out["g3_op_mean_sum"] = float(sum(self.op_mean.get(o, self.grand_mean) - self.grand_mean
-                                          for o in set(ops)))
+        out["g3_op_mean_sum"] = float(
+            sum(self.op_mean.get(o, self.grand_mean) - self.grand_mean for o in set(ops))
+        )
         return out
 
 
@@ -176,12 +186,23 @@ class RetrievalFeatures:
     def __init__(self, space: str, k: int = DEFAULT_K) -> None:
         self.space = space
         self.k = k
-        self.names = [f"g7_{space}_{s}" for s in (
-            "skeleton_mean", "skeleton_max", "skeleton_count",
-            "head_mean", "domfam_mean", "ngram_weighted",
-            "sim_mean", "sim_decay", "nbr_best_mean", "nbr_best_std",
-            "self_hit_count", "coverage",
-        )]
+        self.names = [
+            f"g7_{space}_{s}"
+            for s in (
+                "skeleton_mean",
+                "skeleton_max",
+                "skeleton_count",
+                "head_mean",
+                "domfam_mean",
+                "ngram_weighted",
+                "sim_mean",
+                "sim_decay",
+                "nbr_best_mean",
+                "nbr_best_std",
+                "self_hit_count",
+                "coverage",
+            )
+        ]
         self._train_ds: list[str] = []
         self._emb: np.ndarray | None = None
         self._by_ds_skel: dict[str, dict[str, float]] = {}
@@ -193,8 +214,14 @@ class RetrievalFeatures:
     def feature_names(self) -> list[str]:
         return list(self.names)
 
-    def fit(self, dataset: np.ndarray, parses: list[ParsedGenome], y: np.ndarray,
-            train: np.ndarray, emb_by_dataset: dict[str, np.ndarray]) -> RetrievalFeatures:
+    def fit(
+        self,
+        dataset: np.ndarray,
+        parses: list[ParsedGenome],
+        y: np.ndarray,
+        train: np.ndarray,
+        emb_by_dataset: dict[str, np.ndarray],
+    ) -> RetrievalFeatures:
         idx = np.flatnonzero(train)
         skel: dict[str, dict[str, list[float]]] = {}
         head: dict[str, dict[str, list[float]]] = {}
@@ -232,7 +259,7 @@ class RetrievalFeatures:
                 sims[self._train_ds.index(exclude)] = -np.inf
             except ValueError:
                 pass
-        top = np.argpartition(-sims, min(self.k, len(sims) - 1))[:self.k]
+        top = np.argpartition(-sims, min(self.k, len(sims) - 1))[: self.k]
         top = top[np.argsort(-sims[top])]
         return [(self._train_ds[j], float(sims[j])) for j in top if np.isfinite(sims[j])]
 

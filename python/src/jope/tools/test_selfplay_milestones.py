@@ -28,13 +28,15 @@ class SelfPlayMilestoneTests(unittest.TestCase):
         self.assertIn("diagnostic regression: ranking_bt", reasons)
 
     def test_existence_proof_and_world_class_bars(self):
-        zero = m.win_rates([{"best_retained_teacher": 1.0, "best_initial_neural_seed": 1.14,
-                             "best_final_gp": 1.0}] * 20)
+        zero = m.win_rates(
+            [{"best_retained_teacher": 1.0, "best_initial_neural_seed": 1.14, "best_final_gp": 1.0}] * 20
+        )
         self.assertEqual(zero["neural_seed_rate"], 0.0)
         self.assertFalse(m.existence_proof(zero))
         self.assertFalse(m.world_class(zero))
         winning = m.win_rates(
-            [{"best_retained_teacher": 1.0, "best_initial_neural_seed": 0.9, "best_final_gp": 0.8}] * 20)
+            [{"best_retained_teacher": 1.0, "best_initial_neural_seed": 0.9, "best_final_gp": 0.8}] * 20
+        )
         self.assertFalse(m.existence_proof(winning))
         self.assertFalse(m.world_class(winning))
         self.assertTrue(m.descriptive_bars(winning))
@@ -46,8 +48,9 @@ class SelfPlayMilestoneTests(unittest.TestCase):
             self.assertFalse(m.frozen_diagnostic_pass(value, m.RECOVERY_BT)[0])
             self.assertFalse(m.frozen_diagnostic_pass(m.RECOVERY_NLL, value)[0])
             self.assertFalse(m.ranking_bt_stable(value))
-            rates = m.win_rates([dict(best_retained_teacher=1., best_initial_neural_seed=value,
-                                     best_final_gp=value)])
+            rates = m.win_rates(
+                [dict(best_retained_teacher=1.0, best_initial_neural_seed=value, best_final_gp=value)]
+            )
             self.assertEqual(rates["neural_seed_n"], 0)
             self.assertFalse(m.world_class(rates))
 

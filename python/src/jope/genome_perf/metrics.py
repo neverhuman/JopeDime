@@ -16,6 +16,7 @@ Three decisions here are load-bearing and easy to get wrong:
    prediction is pure noise that only inflates the denominator. `pooled_r_centered` -- correlation
    after centering predictions per dataset -- is the interpretable single number.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -34,7 +35,7 @@ def _midrank(v: np.ndarray) -> np.ndarray:
         j = i
         while j + 1 < len(v) and v[order[j + 1]] == v[order[i]]:
             j += 1
-        ranks[order[i:j + 1]] = 0.5 * (i + j)
+        ranks[order[i : j + 1]] = 0.5 * (i + j)
         i = j + 1
     return ranks
 
@@ -50,8 +51,9 @@ def spearman(a: np.ndarray, b: np.ndarray) -> float:
     return float(((ra - ra.mean()) * (rb - rb.mean())).mean() / (sa * sb))
 
 
-def per_dataset_spearman(dataset: np.ndarray, pred: np.ndarray, truth: np.ndarray,
-                         min_group: int = MIN_GROUP) -> dict[str, float]:
+def per_dataset_spearman(
+    dataset: np.ndarray, pred: np.ndarray, truth: np.ndarray, min_group: int = MIN_GROUP
+) -> dict[str, float]:
     """-> {dataset: rho}, omitting groups that are too small or degenerate."""
     out: dict[str, float] = {}
     for d in np.unique(dataset):
@@ -113,8 +115,13 @@ def pooled_r_centered(dataset: np.ndarray, pred: np.ndarray, truth: np.ndarray) 
     return float(np.corrcoef(p, t)[0, 1])
 
 
-def evaluate(dataset: np.ndarray, pred: np.ndarray, truth_pct: np.ndarray, score: np.ndarray,
-             snr: dict[str, float] | None = None) -> dict:
+def evaluate(
+    dataset: np.ndarray,
+    pred: np.ndarray,
+    truth_pct: np.ndarray,
+    score: np.ndarray,
+    snr: dict[str, float] | None = None,
+) -> dict:
     """Full metric block for one arm, including the SNR strata."""
     per = per_dataset_spearman(dataset, pred, truth_pct)
     out = {
@@ -135,9 +142,14 @@ def evaluate(dataset: np.ndarray, pred: np.ndarray, truth_pct: np.ndarray, score
     return out
 
 
-def paired_bootstrap_delta(dataset: np.ndarray, pred_a: np.ndarray, pred_b: np.ndarray,
-                           truth: np.ndarray, n_boot: int = 2000,
-                           seed: int = STUDY_SEED) -> dict:
+def paired_bootstrap_delta(
+    dataset: np.ndarray,
+    pred_a: np.ndarray,
+    pred_b: np.ndarray,
+    truth: np.ndarray,
+    n_boot: int = 2000,
+    seed: int = STUDY_SEED,
+) -> dict:
     """95% CI on mean-Spearman(a) - mean-Spearman(b), resampling DATASETS (the unit of analysis).
 
     Paired, because the arms share folds -- an unpaired comparison of two independent CIs is both
@@ -147,11 +159,21 @@ def paired_bootstrap_delta(dataset: np.ndarray, pred_a: np.ndarray, pred_b: np.n
     b = per_dataset_spearman(dataset, pred_b, truth)
     common = sorted(set(a) & set(b))
     if not common:
-        return {"delta": float("nan"), "ci_lo": float("nan"), "ci_hi": float("nan"),
-                "excludes_zero": False, "n": 0}
+        return {
+            "delta": float("nan"),
+            "ci_lo": float("nan"),
+            "ci_hi": float("nan"),
+            "excludes_zero": False,
+            "n": 0,
+        }
     d = np.array([a[k] - b[k] for k in common])
     rng = np.random.RandomState(seed)
     boot = np.array([d[rng.randint(0, len(d), len(d))].mean() for _ in range(n_boot)])
     lo, hi = np.percentile(boot, [2.5, 97.5])
-    return {"delta": float(d.mean()), "ci_lo": float(lo), "ci_hi": float(hi),
-            "excludes_zero": bool(lo > 0 or hi < 0), "n": len(common)}
+    return {
+        "delta": float(d.mean()),
+        "ci_lo": float(lo),
+        "ci_hi": float(hi),
+        "excludes_zero": bool(lo > 0 or hi < 0),
+        "n": len(common),
+    }

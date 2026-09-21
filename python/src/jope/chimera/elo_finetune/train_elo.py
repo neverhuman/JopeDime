@@ -152,8 +152,7 @@ def eval_subsets(pack: FablePack, cfg: RunConfig) -> dict[str, np.ndarray]:
 class ExactEloEval:
     """Tier-2 on a fixed subset → fable-elo exact replay → (elo, rank)."""
 
-    def __init__(self, pack: FablePack, pack_dir: Path, eval_dir: Path,
-                 subsets: dict[str, np.ndarray]):
+    def __init__(self, pack: FablePack, pack_dir: Path, eval_dir: Path, subsets: dict[str, np.ndarray]):
         self.pack = pack
         self.pack_dir = pack_dir
         self.eval_dir = eval_dir
@@ -170,22 +169,30 @@ class ExactEloEval:
         write_extra(extra, self.pack, utilities)
         out = self.eval_dir / f"step_{step}_{split}_elo.json"
         subprocess.run(
-            [str(fable_elo_bin()), "elo-json",
-             "--cache", str(self.pack_dir / "utilities.jsonl"),
-             "--extra", str(extra),
-             "--datasets", str(self.subset_files[split]),
-             "--out", str(out)],
-            check=True, capture_output=True,
+            [
+                str(fable_elo_bin()),
+                "elo-json",
+                "--cache",
+                str(self.pack_dir / "utilities.jsonl"),
+                "--extra",
+                str(extra),
+                "--datasets",
+                str(self.subset_files[split]),
+                "--out",
+                str(out),
+            ],
+            check=True,
+            capture_output=True,
         )
         ratings = json.loads(out.read_text())["ratings"]
         ordered = sorted(ratings.items(), key=lambda kv: -kv[1])
         rank = 1 + [name for name, _ in ordered].index(OUR_ALGORITHM)
-        return {"elo": ratings[OUR_ALGORITHM], "rank": rank,
-                "ratings": ratings, "path": str(out)}
+        return {"elo": ratings[OUR_ALGORITHM], "rank": rank, "ratings": ratings, "path": str(out)}
 
 
-def tier2_utilities(runner: ProtocolRunner, pack: FablePack, indices: np.ndarray,
-                    rank: int, world: int) -> dict[int, float]:
+def tier2_utilities(
+    runner: ProtocolRunner, pack: FablePack, indices: np.ndarray, rank: int, world: int
+) -> dict[int, float]:
     shard = indices[rank::world]
     local = {int(i): -runner.tier2_rmse(pack.dataset(int(i))) for i in shard}
     if world == 1:
@@ -222,8 +229,9 @@ def main() -> None:
     ema_model = copy.deepcopy(model).eval()
     for p in ema_model.parameters():
         p.requires_grad = False
-    plan = StagePlan(stage0_steps=cfg.stage0_steps, stage1_steps=cfg.stage1_steps,
-                     total_steps=cfg.total_steps)
+    plan = StagePlan(
+        stage0_steps=cfg.stage0_steps, stage1_steps=cfg.stage1_steps, total_steps=cfg.total_steps
+    )
     optimizer = build_optimizer(model, plan, cfg)
     runner = ProtocolRunner(model, device)
     runner_ema = ProtocolRunner(ema_model, device)
@@ -311,8 +319,7 @@ def main() -> None:
         metrics_dir = out_root / "metrics"
         writer_train = JsonlWriter(metrics_dir / "train_metrics.jsonl", run_id)
         writer_eval = JsonlWriter(metrics_dir / "eval_metrics.jsonl", run_id)
-        test_plans = bucket_schedule(pack, "test", run_seed=cfg.seed_a, epoch=0,
-                                     micro_size=cfg.micro_size)
+        test_plans = bucket_schedule(pack, "test", run_seed=cfg.seed_a, epoch=0, micro_size=cfg.micro_size)
         test_plan_ptr = start_step % max(1, len(test_plans))
     subsets = eval_subsets(pack, cfg)
     if is_main:
@@ -349,31 +356,38 @@ def main() -> None:
         val, test = results["val"], results["test"]
         verdict = gate.observe(val["elo"], train_meter.our_rating)
         if first:
-            base_elo = {"train": train_meter.our_rating, "val": val["elo"],
-                        "test": test["elo"]}
+            base_elo = {"train": train_meter.our_rating, "val": val["elo"], "test": test["elo"]}
             base_rank = {"train": 0, "val": val["rank"], "test": test["rank"]}
             leaderboard = [
-                {"algorithm": a, "elo": e}
-                for a, e in sorted(val["ratings"].items(), key=lambda kv: -kv[1])
+                {"algorithm": a, "elo": e} for a, e in sorted(val["ratings"].items(), key=lambda kv: -kv[1])
             ]
-            write_anchors(out_root / "metrics" / "anchors.json", run_id, base_elo,
-                          base_rank, leaderboard,
-                          {"train": 1629, "val": 340, "test": 353})
+            write_anchors(
+                out_root / "metrics" / "anchors.json",
+                run_id,
+                base_elo,
+                base_rank,
+                leaderboard,
+                {"train": 1629, "val": 340, "test": 353},
+            )
             anchors_path = out_root / "metrics" / "anchors.json"
             writer_eval.event(step, f"anchors written: {anchors_path}")
         base = json.loads((out_root / "metrics" / "anchors.json").read_text())["base_elo"]
         for split, res in results.items():
-            writer_eval.write("eval", step, {
-                "split": split,
-                "elo_exact": res["elo"],
-                "delta_vs_base": res["elo"] - base[split],
-                "elo_rank": res["rank"],
-                "n_datasets": len(subsets[split]),
-                "replay_path": res["path"],
-                "promoted": bool(verdict["promote"]) and split == "val",
-                "rollback": bool(verdict["rollback"]) and split == "val",
-                "ema": True,
-            })
+            writer_eval.write(
+                "eval",
+                step,
+                {
+                    "split": split,
+                    "elo_exact": res["elo"],
+                    "delta_vs_base": res["elo"] - base[split],
+                    "elo_rank": res["rank"],
+                    "n_datasets": len(subsets[split]),
+                    "replay_path": res["path"],
+                    "promoted": bool(verdict["promote"]) and split == "val",
+                    "rollback": bool(verdict["rollback"]) and split == "val",
+                    "ema": True,
+                },
+            )
         if verdict["promote"]:
             path = ckpts.save(checkpoint_payload(step, epoch_now, cursor_now), step, best=True)
             writer_eval.write("ckpt", step, {"path": str(path), "sha256": None, "best": True})
@@ -399,8 +413,15 @@ def main() -> None:
 
     stop = False
     while not stop and epoch < cfg.max_epochs:
-        plans = bucket_schedule(pack, "train", cfg.run_seed, epoch, cfg.micro_size,
-                                cell_budget=cfg.cell_budget, row_budget=cfg.row_budget)
+        plans = bucket_schedule(
+            pack,
+            "train",
+            cfg.run_seed,
+            epoch,
+            cfg.micro_size,
+            cell_budget=cfg.cell_budget,
+            row_budget=cfg.row_budget,
+        )
         sync_size = world * cfg.accum
         n_groups = len(plans) // sync_size
         for g in range(cursor, n_groups):
@@ -423,8 +444,14 @@ def main() -> None:
             my_plans = group_plans[rank * cfg.accum : (rank + 1) * cfg.accum]
             step_start = time.time()
             batch_utils: dict[int, float] = {}
-            agg = {"loss": 0.0, "loss_elo": 0.0, "loss_nll": 0.0, "loss_kl": 0.0,
-                   "entropy_bar": 0.0, "winrate_mean": 0.0}
+            agg = {
+                "loss": 0.0,
+                "loss_elo": 0.0,
+                "loss_nll": 0.0,
+                "loss_kl": 0.0,
+                "entropy_bar": 0.0,
+                "winrate_mean": 0.0,
+            }
             rows_done = 0
             for micro in my_plans:
                 # Grads accumulate locally across micro-batches; one explicit
@@ -434,8 +461,9 @@ def main() -> None:
                 try:
                     batch = collate(pack, micro, cfg.seed_a)
                     out = runner.tier1(batch, with_grad=True)
-                    loss, lm = combined_loss(elo_loss, out, micro.dataset_indices,
-                                             borders, lam_nll, lam_kl, kl_anchor)
+                    loss, lm = combined_loss(
+                        elo_loss, out, micro.dataset_indices, borders, lam_nll, lam_kl, kl_anchor
+                    )
                     loss = loss / len(my_plans)
                     loss.backward()
                 except torch.OutOfMemoryError:
@@ -465,16 +493,13 @@ def main() -> None:
             # sync grads across ranks (one flattened bf16 all-reduce), then all
             # ranks clip identically off the global gradient.
             allreduce_grads()
-            grad_norm = float(torch.nn.utils.clip_grad_norm_(
-                model.parameters(), cfg.grad_clip))
+            grad_norm = float(torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.grad_clip))
             g_hat, _ = grad_ewma.update(min(grad_norm, 1e6))
-            skip = not math.isfinite(grad_norm) or (
-                grad_ewma.t > 50 and grad_norm > 10.0 * g_hat)
+            skip = not math.isfinite(grad_norm) or (grad_ewma.t > 50 and grad_norm > 10.0 * g_hat)
             if skip:
                 optimizer.zero_grad(set_to_none=True)
                 if is_main:
-                    writer_train.event(step, f"skip step: grad_norm={grad_norm:.2f}",
-                                       level="warn")
+                    writer_train.event(step, f"skip step: grad_norm={grad_norm:.2f}", level="warn")
             else:
                 optimizer.step()
                 optimizer.zero_grad(set_to_none=True)
@@ -498,47 +523,49 @@ def main() -> None:
                 test_plan_ptr += 1
                 tbatch = collate(pack, probe, cfg.seed_a)
                 tout = runner.tier1(tbatch, with_grad=False)
-                tutils = {int(i): float(u) for i, u in
-                          zip(probe.dataset_indices, tout.utilities_f64())}
+                tutils = {int(i): float(u) for i, u in zip(probe.dataset_indices, tout.utilities_f64())}
                 tmeter_out = test_meter.update(tutils)
                 tg = test_meter.exchange_rate()
                 tm_fast, tse_fast = ewma_test.update(tmeter_out["delta_raw"])
 
                 step_time = time.time() - step_start
-                writer_train.write("train", step, {
-                    "phase": stage,
-                    "lr": head_lr,
-                    "loss": agg["loss"],
-                    "loss_elo": agg["loss_elo"],
-                    "loss_nll": agg["loss_nll"],
-                    "loss_kl": agg["loss_kl"],
-                    "grad_norm": grad_norm,
-                    "n_datasets": len(batch_utils),
-                    "elo_train_spliced": meter_out["elo_spliced"],
-                    "delta_raw": delta,
-                    "delta_elo_raw": meter_out["delta_elo_raw"],
-                    "delta_elo_fast": g_rate * m_fast,
-                    "delta_elo_fast_band": 1.96 * g_rate * se_fast,
-                    "delta_elo_slow": g_rate * m_slow,
-                    "delta_elo_slow_band": 1.96 * g_rate * se_slow,
-                    "elo_test_spliced": tmeter_out["elo_spliced"],
-                    "delta_elo_test_fast": tg * tm_fast,
-                    "delta_elo_test_fast_band": 1.96 * tg * tse_fast,
-                    "utility_mean": float(np.mean(list(batch_utils.values()))),
-                    "winrate_mean": agg["winrate_mean"],
-                    "entropy_bar": agg["entropy_bar"],
-                    "rows_per_s": rows_done / max(step_time, 1e-6),
-                    "sync_ms": None,
-                    "per_rank_ms": None,
-                })
+                writer_train.write(
+                    "train",
+                    step,
+                    {
+                        "phase": stage,
+                        "lr": head_lr,
+                        "loss": agg["loss"],
+                        "loss_elo": agg["loss_elo"],
+                        "loss_nll": agg["loss_nll"],
+                        "loss_kl": agg["loss_kl"],
+                        "grad_norm": grad_norm,
+                        "n_datasets": len(batch_utils),
+                        "elo_train_spliced": meter_out["elo_spliced"],
+                        "delta_raw": delta,
+                        "delta_elo_raw": meter_out["delta_elo_raw"],
+                        "delta_elo_fast": g_rate * m_fast,
+                        "delta_elo_fast_band": 1.96 * g_rate * se_fast,
+                        "delta_elo_slow": g_rate * m_slow,
+                        "delta_elo_slow_band": 1.96 * g_rate * se_slow,
+                        "elo_test_spliced": tmeter_out["elo_spliced"],
+                        "delta_elo_test_fast": tg * tm_fast,
+                        "delta_elo_test_fast_band": 1.96 * tg * tse_fast,
+                        "utility_mean": float(np.mean(list(batch_utils.values()))),
+                        "winrate_mean": agg["winrate_mean"],
+                        "entropy_bar": agg["entropy_bar"],
+                        "rows_per_s": rows_done / max(step_time, 1e-6),
+                        "sync_ms": None,
+                        "per_rank_ms": None,
+                    },
+                )
 
             if step % cfg.eval_every == 0:
                 run_eval(step, first=False, epoch_now=epoch, cursor_now=g + 1)
                 last_ckpt_time = time.time()
                 if is_main:
                     path = ckpts.save(checkpoint_payload(step, epoch, g + 1), step)
-                    writer_eval.write("ckpt", step, {"path": str(path),
-                                                     "sha256": None, "best": False})
+                    writer_eval.write("ckpt", step, {"path": str(path), "sha256": None, "best": False})
             elif is_main and time.time() - last_ckpt_time > cfg.ckpt_minutes * 60:
                 ckpts.save(checkpoint_payload(step, epoch, g + 1), step)
                 last_ckpt_time = time.time()

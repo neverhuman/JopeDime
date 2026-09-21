@@ -3,6 +3,7 @@
 Unknown / partial history is a tombstone, never a miss that authorizes a new fit.
 A start token is consumed exactly once. rmse==0 is a valid success.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -12,15 +13,34 @@ from pathlib import Path
 
 SCHEMA = "parallel.eval_registry.v1"
 ADMISSION_FIELDS = (
-    "program_sha256", "family", "partition", "prepared_sha256", "cut",
-    "training_sha256", "validation_sha256", "evaluator_sha256", "evaluator_protocol",
-    "preprocessing_sha256", "target_scale", "metric_units", "vocabulary_sha256",
-    "feature_view_sha256", "evaluation_seed", "resource_protocol",
+    "program_sha256",
+    "family",
+    "partition",
+    "prepared_sha256",
+    "cut",
+    "training_sha256",
+    "validation_sha256",
+    "evaluator_sha256",
+    "evaluator_protocol",
+    "preprocessing_sha256",
+    "target_scale",
+    "metric_units",
+    "vocabulary_sha256",
+    "feature_view_sha256",
+    "evaluation_seed",
+    "resource_protocol",
 )
 EXECUTION_FIELDS = (
-    "evaluator_binary_sha256", "entry_point", "loaded_libs_sha256",
-    "omp_threads", "rayon_threads", "fit_rng", "sealed_input_sha256",
-    "resource_window", "admission_policy_sha256", "clean_completion_sha256",
+    "evaluator_binary_sha256",
+    "entry_point",
+    "loaded_libs_sha256",
+    "omp_threads",
+    "rayon_threads",
+    "fit_rng",
+    "sealed_input_sha256",
+    "resource_window",
+    "admission_policy_sha256",
+    "clean_completion_sha256",
 )
 
 
@@ -37,8 +57,12 @@ def evaluation_key(admission, execution):
     missing += [k for k in EXECUTION_FIELDS if k not in execution]
     if missing:
         return None, missing
-    return digest({"admission": {k: admission[k] for k in ADMISSION_FIELDS},
-                   "execution": {k: execution[k] for k in EXECUTION_FIELDS}}), ()
+    return digest(
+        {
+            "admission": {k: admission[k] for k in ADMISSION_FIELDS},
+            "execution": {k: execution[k] for k in EXECUTION_FIELDS},
+        }
+    ), ()
 
 
 class EvalRegistry:
@@ -100,9 +124,12 @@ class EvalRegistry:
         return key
 
     def is_tombstoned(self, admission):
-        return self.db.execute(
-            "SELECT 1 FROM tombstones WHERE partial_key=?", (self.partial_key(admission),)
-        ).fetchone() is not None
+        return (
+            self.db.execute(
+                "SELECT 1 FROM tombstones WHERE partial_key=?", (self.partial_key(admission),)
+            ).fetchone()
+            is not None
+        )
 
     def lookup(self, admission, execution):
         self._bump("registry_lookup")
@@ -124,8 +151,14 @@ class EvalRegistry:
         state, start, attempt, result, score, source = row
         if state == "completed":
             self._bump("registry_hit")
-            return dict(action="reuse", authorize_fit=False, key=key,
-                        result=json.loads(result), primary_score=score, source=source)
+            return dict(
+                action="reuse",
+                authorize_fit=False,
+                key=key,
+                result=json.loads(result),
+                primary_score=score,
+                source=source,
+            )
         if state in ("failed", "timeout"):
             self._bump("registry_hit")
             return dict(action="reuse_terminal", authorize_fit=False, key=key, state=state)
@@ -200,8 +233,13 @@ class EvalRegistry:
 
     def merge_counts(self, shards):
         """Attribute every repeat. Do not drop cross-shard hits from origin totals."""
-        totals = {"repeats": 0, "hits_on_exact": 0, "hits_on_provisional": 0,
-                  "cross_shard_hits": 0, "per_origin": {}}
+        totals = {
+            "repeats": 0,
+            "hits_on_exact": 0,
+            "hits_on_provisional": 0,
+            "cross_shard_hits": 0,
+            "per_origin": {},
+        }
         for shard in shards:
             repeats = int(shard.get("repeats") or 0)
             exact = int(shard.get("hits_on_exact") or 0)

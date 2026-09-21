@@ -15,6 +15,7 @@ Pure genome-only features. Three ideas:
 The dataset-interacted version (cost x n_rows, the actual timeout-risk signal) is built
 elsewhere; ``g9_cost_x_depth`` is the genome-only stand-in.
 """
+
 from __future__ import annotations
 
 import math
@@ -151,9 +152,7 @@ def extract(pg, engine: str = "featmath") -> dict[str, float]:
     out["g9_est_cost_per_stage"] = math.log1p(total / n_stages)
     out["g9_max_stage_cost"] = math.log1p(max(weights))
     out["g9_cost_concentration"] = _gini(weights)
-    out["g9_head_cost_weight"] = math.log1p(
-        COST_WEIGHT.get(head.cost_class, _DEFAULT_WEIGHT)
-    )
+    out["g9_head_cost_weight"] = math.log1p(COST_WEIGHT.get(head.cost_class, _DEFAULT_WEIGHT))
     out["g9_cost_x_depth"] = math.log1p(total * n_stages)
 
     return out

@@ -8,9 +8,7 @@ import pytest
 
 import jope.research
 
-SCRIPT = (
-    Path(jope.research.__file__).parent / "verify_old_hyperion_vs_replays.py"
-)
+SCRIPT = Path(jope.research.__file__).parent / "verify_old_hyperion_vs_replays.py"
 SPEC = importlib.util.spec_from_file_location("verify_old_hyperion_vs_replays", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
 MODULE = importlib.util.module_from_spec(SPEC)

@@ -21,6 +21,7 @@ Defaults: a genome with `pg.ok is False` ((sym ...) and portfolio genomes) yield
 neutral value -- 0.0 everywhere except the `g6_first_pos_`/`g6_last_pos_` block, whose documented
 "absent" sentinel is -1.0. `extract` never raises.
 """
+
 from __future__ import annotations
 
 import functools
@@ -87,8 +88,7 @@ def _names(engine: str) -> tuple[str, ...]:
 def _defaults(engine: str) -> dict[str, float]:
     """Neutral row: 0.0 everywhere, except position columns which use the -1.0 absent sentinel."""
     return {
-        n: (ABSENT_POS if n.startswith(("g6_first_pos_", "g6_last_pos_")) else 0.0)
-        for n in _names(engine)
+        n: (ABSENT_POS if n.startswith(("g6_first_pos_", "g6_last_pos_")) else 0.0) for n in _names(engine)
     }
 
 

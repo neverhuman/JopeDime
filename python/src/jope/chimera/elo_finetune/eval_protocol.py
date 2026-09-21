@@ -86,8 +86,9 @@ class ProtocolRunner:
         return Tier1Output(u_soft=u_soft, logits=logits, y_qry_z=y_qry_z, mu=mu, sd=sd)
 
     @torch.no_grad()
-    def _mean_single(self, cx: np.ndarray, cy: np.ndarray, qx: np.ndarray,
-                     max_total: int = 1024) -> np.ndarray:
+    def _mean_single(
+        self, cx: np.ndarray, cy: np.ndarray, qx: np.ndarray, max_total: int = 1024
+    ) -> np.ndarray:
         """Bit-faithful port of predict_reg.Regressor._mean for a live model."""
         cx = np.array(cx, np.float32, copy=True)
         qx = np.array(qx, np.float32, copy=True)

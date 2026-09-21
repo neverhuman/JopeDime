@@ -1,4 +1,5 @@
 """Closed-loop gates. Never assigns serving. Never launches a live train."""
+
 from __future__ import annotations
 
 from flywheel_plan import may_serve, search_beating_training_allowed
@@ -25,24 +26,40 @@ def two_panels(old_nll, old_bt, new_family_ok):
     return True, []
 
 
-def launch_train_allowed(hold, automatic_training, teachers_growth, new_teacher_beats,
-                         corpus_is_recovery=True, new_gp_identity=False, admission_v2=False,
-                         reuse_excluded_from_growth=False, two_panels_predeclared=False,
-                         historical_import_complete=False, namespace_enabled=False):
+def launch_train_allowed(
+    hold,
+    automatic_training,
+    teachers_growth,
+    new_teacher_beats,
+    corpus_is_recovery=True,
+    new_gp_identity=False,
+    admission_v2=False,
+    reuse_excluded_from_growth=False,
+    two_panels_predeclared=False,
+    historical_import_complete=False,
+    namespace_enabled=False,
+):
     # Retained diagnostics have no execution capability. The governed native
     # task/reservation and corpus verifiers are the only permitted training gate.
     return False, "diagnostic-only helper; native funded task required"
 
 
-def grown_family_train(old_nll, old_bt, new_family_ok, diagnostic_ok, probe_ok, paper_ok,
-                       challenger_qr, neural_seed_rate, **train_kwargs):
+def grown_family_train(
+    old_nll,
+    old_bt,
+    new_family_ok,
+    diagnostic_ok,
+    probe_ok,
+    paper_ok,
+    challenger_qr,
+    neural_seed_rate,
+    **train_kwargs,
+):
     """One grown-family train gate. Never launches. may_serve stays four-conjunct."""
     panels_ok, panel_reasons = two_panels(old_nll, old_bt, new_family_ok)
     train_kwargs = dict(train_kwargs)
     train_kwargs.pop("two_panels_predeclared", None)
-    allowed, reason = launch_train_allowed(
-        two_panels_predeclared=panels_ok, **train_kwargs
-    )
+    allowed, reason = launch_train_allowed(two_panels_predeclared=panels_ok, **train_kwargs)
     serve_ok, serve_reason = serve_decision(
         diagnostic_ok, probe_ok, paper_ok, challenger_qr, neural_seed_rate
     )
@@ -72,8 +89,9 @@ def binary_campaign_bind(inventory_sha, checkpoint_sha):
     camp = isolate("binary", inventory_sha)
     if checkpoint_sha == RECOVERY_SHA:
         raise ValueError("binary specialist cannot bind recovery")
-    return dict(campaign=camp, checkpoint_sha256=checkpoint_sha, live_gp_pid=LIVE_GP_PID,
-                wired_to_live_gp=False)
+    return dict(
+        campaign=camp, checkpoint_sha256=checkpoint_sha, live_gp_pid=LIVE_GP_PID, wired_to_live_gp=False
+    )
 
 
 def snapshot(rows, frozen_bt=0.56, hold="held"):
@@ -111,15 +129,31 @@ def from_stage_d(stage_d, hold="held"):
     )
 
 
-def az2017_cycle(old_nll, old_bt, new_family_ok, diagnostic_ok, probe_ok, paper_ok,
-                 challenger_qr, neural_seed_rate, rates=None, **train_kwargs):
+def az2017_cycle(
+    old_nll,
+    old_bt,
+    new_family_ok,
+    diagnostic_ok,
+    probe_ok,
+    paper_ok,
+    challenger_qr,
+    neural_seed_rate,
+    rates=None,
+    **train_kwargs,
+):
     """One AZ-2017 evaluate-before-replace cycle. Never launches or serves."""
     gate = grown_family_train(
-        old_nll, old_bt, new_family_ok, diagnostic_ok, probe_ok, paper_ok,
-        challenger_qr, neural_seed_rate, **train_kwargs
+        old_nll,
+        old_bt,
+        new_family_ok,
+        diagnostic_ok,
+        probe_ok,
+        paper_ok,
+        challenger_qr,
+        neural_seed_rate,
+        **train_kwargs,
     )
-    rates = rates or {"neural_seed_rate": neural_seed_rate, "final_gp_rate": 0.0,
-                      "final_gp_margin_rate": 0.0}
+    rates = rates or {"neural_seed_rate": neural_seed_rate, "final_gp_rate": 0.0, "final_gp_margin_rate": 0.0}
     missing = []
     if not train_kwargs.get("new_gp_identity"):
         missing.append("new_gp_identity")

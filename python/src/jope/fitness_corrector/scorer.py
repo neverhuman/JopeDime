@@ -7,6 +7,7 @@ vector: `rank` (within-task z target — the primary ranking head) and
 `absolute` (honest score — budget gating / calibrated reporting), plus a
 bucketed residual-quantile calibration table for the absolute head.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -18,8 +19,7 @@ import numpy as np
 from . import SCHEMA_VERSION
 
 
-def fit_ridge(x: np.ndarray, y: np.ndarray, l2: float,
-              feature_names: list[str]) -> dict:
+def fit_ridge(x: np.ndarray, y: np.ndarray, l2: float, feature_names: list[str]) -> dict:
     mean = x.mean(axis=0)
     scale = x.std(axis=0)
     scale = np.where(scale < 1e-12, 1.0, scale)
@@ -46,8 +46,7 @@ def ridge_predict(head: dict, x: np.ndarray) -> np.ndarray:
     return head["intercept"] + ((x - mean) / scale) @ coef
 
 
-def residual_calibration(pred: np.ndarray, actual: np.ndarray,
-                         n_buckets: int = 10) -> dict:
+def residual_calibration(pred: np.ndarray, actual: np.ndarray, n_buckets: int = 10) -> dict:
     """Empirical p10/p50/p90 of (actual - pred) per prediction decile."""
     edges = np.quantile(pred, np.linspace(0, 1, n_buckets + 1))
     edges[0], edges[-1] = -np.inf, np.inf
@@ -63,28 +62,40 @@ def residual_calibration(pred: np.ndarray, actual: np.ndarray,
             p10.append(0.0)
             p50.append(0.0)
             p90.append(0.0)
-    return {"bucket_edges": [None if not np.isfinite(e) else float(e)
-                             for e in edges.tolist()],
-            "residual_p10": p10, "residual_p50": p50, "residual_p90": p90}
+    return {
+        "bucket_edges": [None if not np.isfinite(e) else float(e) for e in edges.tolist()],
+        "residual_p10": p10,
+        "residual_p50": p50,
+        "residual_p90": p90,
+    }
 
 
-def build_artifact(engine: str, rank_head: dict, abs_head: dict,
-                   pca_bundle: dict, calibration: dict, fit_meta: dict,
-                   replay: dict) -> dict:
+def build_artifact(
+    engine: str,
+    rank_head: dict,
+    abs_head: dict,
+    pca_bundle: dict,
+    calibration: dict,
+    fit_meta: dict,
+    replay: dict,
+) -> dict:
     pca_out = {}
     for kind, pca in (pca_bundle or {}).items():
         if pca is None:
             continue
-        pca_out[kind] = {"mean": np.asarray(pca["mean"]).tolist(),
-                         "components": np.asarray(pca["components"]).tolist()}
+        pca_out[kind] = {
+            "mean": np.asarray(pca["mean"]).tolist(),
+            "components": np.asarray(pca["components"]).tolist(),
+        }
     return {
         "schema_version": SCHEMA_VERSION,
         "engine": engine,
         "model_type": "linear_ridge",
         "target": "honest_within_task_z",
-        **{k: rank_head[k] for k in ("feature_names", "feature_mean",
-                                     "feature_scale", "coef", "intercept",
-                                     "l2")},
+        **{
+            k: rank_head[k]
+            for k in ("feature_names", "feature_mean", "feature_scale", "coef", "intercept", "l2")
+        },
         "absolute_head": abs_head,
         "pca": pca_out,
         "calibration": calibration,
@@ -103,8 +114,7 @@ def write_artifact(artifact: dict, path: Path) -> str:
 def load_artifact(path: Path) -> dict:
     art = json.loads(Path(path).read_text())
     if art.get("schema_version") != SCHEMA_VERSION:
-        raise ValueError(
-            f"unsupported artifact schema: {art.get('schema_version')!r}")
+        raise ValueError(f"unsupported artifact schema: {art.get('schema_version')!r}")
     return art
 
 
@@ -113,8 +123,9 @@ def score(artifact: dict, x: np.ndarray) -> np.ndarray:
     return ridge_predict(artifact, x)
 
 
-def score_absolute_with_uncertainty(artifact: dict, x: np.ndarray
-                                    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def score_absolute_with_uncertainty(
+    artifact: dict, x: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     pred = ridge_predict(artifact["absolute_head"], x)
     cal = artifact["calibration"]
     edges = [(-np.inf if e is None else e) for e in cal["bucket_edges"]]

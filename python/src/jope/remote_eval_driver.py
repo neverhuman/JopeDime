@@ -24,8 +24,9 @@ import threading
 import time
 
 
-def _worker(bin_path: str, subcommand: str, jobs: queue.Queue, out_lock: threading.Lock,
-            default_timeout: float | None) -> None:
+def _worker(
+    bin_path: str, subcommand: str, jobs: queue.Queue, out_lock: threading.Lock, default_timeout: float | None
+) -> None:
     """One persistent bridge process draining rows from the shared queue (lock-step).
 
     Timeouts use ``select`` on the bridge's stdout fd — no per-read thread — so N workers
@@ -35,8 +36,12 @@ def _worker(bin_path: str, subcommand: str, jobs: queue.Queue, out_lock: threadi
 
     def spawn() -> subprocess.Popen:
         return subprocess.Popen(
-            [bin_path, subcommand], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL, text=True, bufsize=1,
+            [bin_path, subcommand],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            bufsize=1,
         )
 
     def read_line(p: subprocess.Popen, timeout: float | None) -> str | None:
@@ -72,15 +77,24 @@ def _worker(bin_path: str, subcommand: str, jobs: queue.Queue, out_lock: threadi
                     proc.stdin.write(json.dumps(row) + "\n")
                     proc.stdin.flush()
                 except (BrokenPipeError, OSError):
-                    _emit(out_lock, {"_idx": idx, "valid": False, "bridge_crash": True,
-                                     "errors": ["write failed twice"]})
+                    _emit(
+                        out_lock,
+                        {"_idx": idx, "valid": False, "bridge_crash": True, "errors": ["write failed twice"]},
+                    )
                     continue
             line = read_line(proc, timeout)
             if line == "__TIMEOUT__":
                 proc.kill()
                 proc = None
-                _emit(out_lock, {"_idx": idx, "valid": False, "timeout": True,
-                                 "errors": [f"eval timeout after {time.time()-started:.1f}s"]})
+                _emit(
+                    out_lock,
+                    {
+                        "_idx": idx,
+                        "valid": False,
+                        "timeout": True,
+                        "errors": [f"eval timeout after {time.time() - started:.1f}s"],
+                    },
+                )
                 continue
             if not line:
                 proc.kill()
@@ -118,8 +132,12 @@ def _shard_worker(args_tuple) -> list[str]:
 
     def spawn():
         return subprocess.Popen(
-            [bin_path, subcommand], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL, text=True, bufsize=1,
+            [bin_path, subcommand],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            bufsize=1,
         )
 
     proc = spawn()
@@ -147,8 +165,14 @@ def _shard_worker(args_tuple) -> list[str]:
                     if remaining <= 0:
                         proc.kill()
                         proc = spawn()
-                        line = json.dumps({"_idx": idx, "valid": False, "timeout": True,
-                                           "errors": [f"eval timeout after {timeout:.1f}s"]})
+                        line = json.dumps(
+                            {
+                                "_idx": idx,
+                                "valid": False,
+                                "timeout": True,
+                                "errors": [f"eval timeout after {timeout:.1f}s"],
+                            }
+                        )
                         break
                     ready, _, _ = select.select([proc.stdout], [], [], remaining)
                     if ready:

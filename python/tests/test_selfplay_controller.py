@@ -39,15 +39,10 @@ def test_production_controller_owns_deterministic_post_training_phases():
         "seed_next_strict_wave": "_seed_next_strict_wave",
         "freeze_winner_scan": "_freeze_winner_scan",
     }
-    assert {
-        phase: handlers[phase].__name__ for phase in expected
-    } == expected
+    assert {phase: handlers[phase].__name__ for phase in expected} == expected
     assert handlers["generate_gate_proposals"].__name__ == "_generate_gate_proposals"
     assert handlers["evaluate_frozen_gate"].__name__ == "_evaluate_frozen_gate"
-    assert (
-        handlers["run_sotarena_qualification"].__name__
-        == "_run_sotarena_qualification"
-    )
+    assert handlers["run_sotarena_qualification"].__name__ == "_run_sotarena_qualification"
 
 
 def snapshot(labels=50_000):
@@ -92,8 +87,7 @@ def test_journal_retries_pending_action_and_never_duplicates_success(tmp_path):
     assert journal.perform("key", "action", {"x": 1}, callback) == {"ok": True}
     assert len(calls) == 2
     events = [
-        json.loads(line)
-        for line in (tmp_path / "ops/controller-events.jsonl").read_text().splitlines()
+        json.loads(line) for line in (tmp_path / "ops/controller-events.jsonl").read_text().splitlines()
     ]
     assert [row["status"] for row in events] == [
         "started",
@@ -105,9 +99,7 @@ def test_journal_retries_pending_action_and_never_duplicates_success(tmp_path):
 
 
 @pytest.mark.parametrize("gate_pass,expected", [(True, "accepted"), (False, "rejected")])
-def test_controller_resumes_each_phase_and_gate_is_fail_closed(
-    tmp_path, gate_pass, expected
-):
+def test_controller_resumes_each_phase_and_gate_is_fail_closed(tmp_path, gate_pass, expected):
     calls = []
 
     def handler(name):
@@ -149,9 +141,7 @@ def test_controller_coalesces_threshold_and_rejects_catalog_drift(tmp_path):
     assert result["phase"] == "collecting_labels"
     assert result["next_watermark"] == 50_000
     broken = snapshot()
-    broken["catalog_entries"].append(
-        {"task": "regression", "dataset_hash": "unexpected"}
-    )
+    broken["catalog_entries"].append({"task": "regression", "dataset_hash": "unexpected"})
     with pytest.raises(ValueError, match="catalog count mismatch"):
         controller.cycle(broken)
     controller.close()
@@ -186,9 +176,7 @@ def test_packed_corpus_is_content_bound_reversible_and_parity_checked(tmp_path):
     train = tmp_path / "train.jsonl"
     validation = tmp_path / "validation.jsonl"
     train.write_text(json.dumps(_training_row("r", "regression", 0.2, "train")) + "\n")
-    validation.write_text(
-        json.dumps(_training_row("b", "binary", 0.8, "validation")) + "\n"
-    )
+    validation.write_text(json.dumps(_training_row("b", "binary", 0.8, "validation")) + "\n")
     data = tmp_path / "contexts.f32"
     np.arange(2 * 2_048, dtype="<f4").tofile(data)
     catalog = tmp_path / "catalog.json"
@@ -244,10 +232,7 @@ def test_packed_corpus_is_content_bound_reversible_and_parity_checked(tmp_path):
     assert np.load(root / "token_offsets.npy").tolist() == [0, 2, 3]
     assert not (root / "observations.jsonl").exists()
     assert (root / packed["selected_row_index"]["path"]).stat().st_size == 2 * 32
-    assert sum(
-        len((root / shard["path"]).read_text().splitlines())
-        for shard in packed["label_shards"]
-    ) == 2
+    assert sum(len((root / shard["path"]).read_text().splitlines()) for shard in packed["label_shards"]) == 2
     staged_source = tmp_path / "staged-corpus-manifest.json"
     staged_train = tmp_path / "staged-train.jsonl"
     staged_validation = tmp_path / "staged-validation.jsonl"
@@ -283,9 +268,7 @@ def test_packing_uses_frozen_catalog_binding_after_live_pointer_advances(tmp_pat
     train = tmp_path / "train.jsonl"
     validation = tmp_path / "validation.jsonl"
     train.write_text(json.dumps(_training_row("r", "regression", 0.2, "train")) + "\n")
-    validation.write_text(
-        json.dumps(_training_row("b", "binary", 0.8, "validation")) + "\n"
-    )
+    validation.write_text(json.dumps(_training_row("b", "binary", 0.8, "validation")) + "\n")
     catalog = tmp_path / "catalog-a.json"
     catalog.write_text(
         json.dumps(
@@ -361,12 +344,8 @@ def test_packed_v3_reuses_content_addressed_label_shards(tmp_path, monkeypatch):
     validation_a = tmp_path / "validation-a.jsonl"
     validation_b = tmp_path / "validation-b.jsonl"
     train.write_text(json.dumps(_training_row("r", "regression", 0.2, "train")) + "\n")
-    validation_a.write_text(
-        json.dumps(_training_row("b-a", "binary", 0.8, "validation")) + "\n"
-    )
-    validation_b.write_text(
-        json.dumps(_training_row("b-b", "binary", 0.7, "validation")) + "\n"
-    )
+    validation_a.write_text(json.dumps(_training_row("b-a", "binary", 0.8, "validation")) + "\n")
+    validation_b.write_text(json.dumps(_training_row("b-b", "binary", 0.7, "validation")) + "\n")
     data = tmp_path / "contexts.f32"
     np.arange(3 * 2_048, dtype="<f4").tofile(data)
     catalog = tmp_path / "catalog.json"
@@ -460,9 +439,7 @@ def test_packed_corpus_keeps_only_complete_receipt_exact_training_pairs(tmp_path
     validation_row = _training_row("b", "binary", 0.8, "validation")
     train = tmp_path / "train.jsonl"
     validation = tmp_path / "validation.jsonl"
-    train.write_text(
-        "\n".join(json.dumps(row) for row in (direct, comparator)) + "\n"
-    )
+    train.write_text("\n".join(json.dumps(row) for row in (direct, comparator)) + "\n")
     validation.write_text(json.dumps(validation_row) + "\n")
     catalog = tmp_path / "catalog.json"
     catalog.write_text(
@@ -519,10 +496,7 @@ def test_packed_corpus_keeps_only_complete_receipt_exact_training_pairs(tmp_path
     assert (pair["direct_ordinal"], pair["comparator_ordinal"]) == (0, 1)
     assert pair["hard"] is True
     assert pair["novel"] is True
-    recipe_e_rows = [
-        json.loads(line)
-        for line in (root / "recipe_e_evidence.jsonl").read_text().splitlines()
-    ]
+    recipe_e_rows = [json.loads(line) for line in (root / "recipe_e_evidence.jsonl").read_text().splitlines()]
     assert [row["lane"] for row in recipe_e_rows] == [
         "completed_descendant_trajectories",
         "validity_instability_hard_negatives",
@@ -534,9 +508,7 @@ def test_packed_corpus_keeps_only_complete_receipt_exact_training_pairs(tmp_path
     }
 
 
-def test_causal_training_members_require_successful_receipt_exact_pair(
-    tmp_path, monkeypatch
-):
+def test_causal_training_members_require_successful_receipt_exact_pair(tmp_path, monkeypatch):
     root = tmp_path / "runtime"
     wave = root / "waves/strict-wave-000205"
     wave.mkdir(parents=True)
@@ -640,9 +612,7 @@ def test_causal_training_members_require_successful_receipt_exact_pair(
     assert stats["task_counts"] == {"regression": 1}
 
 
-def test_corrected_ingest_requires_hash_bound_prediction_evidence(
-    tmp_path, monkeypatch
-):
+def test_corrected_ingest_requires_hash_bound_prediction_evidence(tmp_path, monkeypatch):
     import test_exact_ingest as ingest
     from test_exact_common import selfplay_authority, sha256_text
 
@@ -750,9 +720,7 @@ def test_jain_cpu_clone_removes_every_gpu_admission_path():
     }
     payload = cpu_payload(source)
     assert payload["HostConfig"]["DeviceRequests"] == []
-    assert payload["HostConfig"]["Devices"] == [
-        {"PathOnHost": "/dev/safe-device"}
-    ]
+    assert payload["HostConfig"]["Devices"] == [{"PathOnHost": "/dev/safe-device"}]
     assert payload["HostConfig"]["Runtime"] == "runc"
     assert payload["Env"] == [
         "SAFE=value",

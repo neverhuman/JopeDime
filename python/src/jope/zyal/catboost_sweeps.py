@@ -10,6 +10,7 @@ The final feature count is chosen on a tuning partition.  A disjoint grouped
 holdout is opened once for the reported out-of-sample number; it never affects
 importance estimates, cut interpolation, or hyperparameters.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -270,9 +271,7 @@ def _default_model_factory(seed: int, config: SweepConfig) -> CatBoostLike:
 
 
 def _normalised_importance(model: CatBoostLike, feature_count: int) -> np.ndarray:
-    raw = np.asarray(
-        model.get_feature_importance(type="PredictionValuesChange"), dtype=np.float64
-    )
+    raw = np.asarray(model.get_feature_importance(type="PredictionValuesChange"), dtype=np.float64)
     if raw.shape != (feature_count,) or not np.isfinite(raw).all():
         raise SweepError("CatBoost returned malformed feature importance")
     raw = np.maximum(raw, 0.0)
@@ -422,12 +421,8 @@ def exhaustive_sweeps(
         sweep_seed = config.seed + 10_000 * (sweep + 1)
         for split_attempt in range(100):
             split_seed = sweep_seed + split_attempt
-            train, validation = grouped_random_80_20(
-                split_groups, partitions["discovery"], seed=split_seed
-            )
-            validation_hash = _hash_strings(
-                sorted(map(str, set(split_groups[validation])))
-            )
+            train, validation = grouped_random_80_20(split_groups, partitions["discovery"], seed=split_seed)
+            validation_hash = _hash_strings(sorted(map(str, set(split_groups[validation]))))
             if validation_hash not in validation_group_hashes:
                 validation_group_hashes.add(validation_hash)
                 break
@@ -467,9 +462,7 @@ def exhaustive_sweeps(
                     "window": window_index,
                     "indices": list(map(int, indices)),
                     "train_groups": _hash_strings(sorted(map(str, set(split_groups[train])))),
-                    "validation_groups": _hash_strings(
-                        sorted(map(str, set(split_groups[validation])))
-                    ),
+                    "validation_groups": _hash_strings(sorted(map(str, set(split_groups[validation])))),
                 }
             )
             checkpoint_path = (
@@ -483,9 +476,8 @@ def exhaustive_sweeps(
             if checkpoint_path is not None and checkpoint_path.is_file():
                 checkpoint = json.loads(checkpoint_path.read_text(encoding="utf-8"))
                 result_sha256 = checkpoint.pop("result_sha256", None)
-                if (
-                    checkpoint.get("identity_sha256") != checkpoint_key
-                    or result_sha256 != _canonical_hash(checkpoint)
+                if checkpoint.get("identity_sha256") != checkpoint_key or result_sha256 != _canonical_hash(
+                    checkpoint
                 ):
                     raise SweepError(f"CatBoost window checkpoint was modified: {checkpoint_path}")
                 importance = np.asarray(checkpoint["importance"], dtype=np.float64)
@@ -518,9 +510,7 @@ def exhaustive_sweeps(
                     }
                     checkpoint["result_sha256"] = _canonical_hash(checkpoint)
                     encoded = json.dumps(checkpoint, sort_keys=True, indent=2, allow_nan=False) + "\n"
-                    temporary = checkpoint_path.with_name(
-                        f".{checkpoint_path.name}.{os.getpid()}.tmp"
-                    )
+                    temporary = checkpoint_path.with_name(f".{checkpoint_path.name}.{os.getpid()}.tmp")
                     with temporary.open("x", encoding="utf-8") as handle:
                         handle.write(encoded)
                         handle.flush()
@@ -529,9 +519,7 @@ def exhaustive_sweeps(
                         os.link(temporary, checkpoint_path)
                     except FileExistsError:
                         if checkpoint_path.read_text(encoding="utf-8") != encoded:
-                            raise SweepError(
-                                f"CatBoost window checkpoint collision: {checkpoint_path}"
-                            )
+                            raise SweepError(f"CatBoost window checkpoint collision: {checkpoint_path}")
                     finally:
                         temporary.unlink(missing_ok=True)
             candidate_count = len(indices)
@@ -543,9 +531,7 @@ def exhaustive_sweeps(
             denoised = np.maximum(candidate_importance - noise_threshold, 0.0)
             positive_anchors = anchor_importance[anchor_importance > 0]
             anchor_scale = (
-                float(np.median(positive_anchors))
-                if len(positive_anchors)
-                else 1.0 / max(1, candidate_count)
+                float(np.median(positive_anchors)) if len(positive_anchors) else 1.0 / max(1, candidate_count)
             )
             calibrated = denoised / max(anchor_scale, 1e-12)
             if not np.any(calibrated):
@@ -611,9 +597,7 @@ def exhaustive_sweeps(
                 "split_seed": split_seed,
                 "split": "grouped_random_80_20",
                 "train_groups_sha256": _hash_strings(sorted(map(str, set(split_groups[train])))),
-                "validation_groups_sha256": _hash_strings(
-                    sorted(map(str, set(split_groups[validation])))
-                ),
+                "validation_groups_sha256": _hash_strings(sorted(map(str, set(split_groups[validation])))),
                 "train_rows": int(train.sum()),
                 "validation_rows": int(validation.sum()),
                 "windows": window_reports,
@@ -692,7 +676,9 @@ def _fit_feature_set(
         model.predict(np.asarray(candidates[validation][:, indices], dtype=np.float32)),
         dtype=np.float64,
     )
-    return ranking_metrics(prediction, target[validation], metric_groups[validation]), time.perf_counter() - started
+    return ranking_metrics(
+        prediction, target[validation], metric_groups[validation]
+    ), time.perf_counter() - started
 
 
 def finalize_percentile_set(
@@ -729,12 +715,9 @@ def finalize_percentile_set(
     final = np.asarray(partitions["final"], dtype=bool)
     aggregate = list(sweep_receipt["aggregate"])
     percentile_by_name = {
-        str(row["feature_name"]): float(row["contribution_percentile"])
-        for row in aggregate
+        str(row["feature_name"]): float(row["contribution_percentile"]) for row in aggregate
     }
-    contribution_by_name = {
-        str(row["feature_name"]): float(row["mean_contribution"]) for row in aggregate
-    }
+    contribution_by_name = {str(row["feature_name"]): float(row["mean_contribution"]) for row in aggregate}
 
     evaluated: dict[float, dict[str, Any]] = {}
 
@@ -747,7 +730,12 @@ def finalize_percentile_set(
         )
         if not len(indices):
             indices = np.asarray(
-                [max(range(len(feature_names)), key=lambda index: contribution_by_name[feature_names[index]])],
+                [
+                    max(
+                        range(len(feature_names)),
+                        key=lambda index: contribution_by_name[feature_names[index]],
+                    )
+                ],
                 dtype=np.int64,
             )
         metrics, seconds = _fit_feature_set(
@@ -789,21 +777,16 @@ def finalize_percentile_set(
         min(len(by_cut) - 1, best_position + 1),
     }.difference({best_position})
     for position in sorted(neighbor_positions):
-        lower, upper = sorted(
-            [best_initial["percentile_cut"], by_cut[position]["percentile_cut"]]
-        )
+        lower, upper = sorted([best_initial["percentile_cut"], by_cut[position]["percentile_cut"]])
         for point in range(1, config.interpolation_points + 1):
             cut = lower + (upper - lower) * point / (config.interpolation_points + 1)
             evaluate(round(cut, 6))
 
-    best_spearman = max(
-        row["tuning_metrics"]["within_group_spearman"] for row in evaluated.values()
-    )
+    best_spearman = max(row["tuning_metrics"]["within_group_spearman"] for row in evaluated.values())
     plateau = [
         row
         for row in evaluated.values()
-        if row["tuning_metrics"]["within_group_spearman"]
-        >= best_spearman - config.plateau_tolerance
+        if row["tuning_metrics"]["within_group_spearman"] >= best_spearman - config.plateau_tolerance
     ]
     chosen = min(
         plateau,
@@ -822,12 +805,8 @@ def finalize_percentile_set(
         {
             "feature_names_sha256": _hash_strings(chosen["feature_names"]),
             "target_sha256": hashlib.sha256(target.tobytes()).hexdigest(),
-            "train_groups_sha256": _hash_strings(
-                sorted(map(str, set(split_groups[train_final])))
-            ),
-            "final_groups_sha256": _hash_strings(
-                sorted(map(str, set(split_groups[final])))
-            ),
+            "train_groups_sha256": _hash_strings(sorted(map(str, set(split_groups[train_final])))),
+            "final_groups_sha256": _hash_strings(sorted(map(str, set(split_groups[final])))),
             "config": asdict(config),
         }
     )
@@ -841,9 +820,7 @@ def finalize_percentile_set(
         cached = _read_sealed_json(result_path)
         if cached.get("identity_sha256") != final_identity:
             raise SweepError(f"final CatBoost holdout identity changed: {result_path}")
-        final_metrics = {
-            str(key): float(value) for key, value in cached["metrics"].items()
-        }
+        final_metrics = {str(key): float(value) for key, value in cached["metrics"].items()}
         final_seconds = float(cached["seconds"])
         final_cache_hit = True
     else:
@@ -859,18 +836,13 @@ def finalize_percentile_set(
                 if result_path is not None and result_path.is_file():
                     cached = _read_sealed_json(result_path)
                     if cached.get("identity_sha256") != final_identity:
-                        raise SweepError(
-                            f"final CatBoost holdout identity changed: {result_path}"
-                        )
-                    final_metrics = {
-                        str(key): float(value) for key, value in cached["metrics"].items()
-                    }
+                        raise SweepError(f"final CatBoost holdout identity changed: {result_path}")
+                    final_metrics = {str(key): float(value) for key, value in cached["metrics"].items()}
                     final_seconds = float(cached["seconds"])
                     final_cache_hit = True
                 else:
                     raise SweepError(
-                        "final CatBoost holdout was reserved but no result was sealed; "
-                        "refusing to reopen it"
+                        "final CatBoost holdout was reserved but no result was sealed; refusing to reopen it"
                     )
         if not final_cache_hit:
             final_metrics, final_seconds = _fit_feature_set(

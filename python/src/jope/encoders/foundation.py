@@ -13,6 +13,7 @@ Sidecars are written to a central cache dir (NOT into the quant tree):
     <out_dir>/<dataset_hash>.npy          float32 (2048,)
     <out_dir>/encode_log.jsonl            one line per dataset (provenance)
 """
+
 from __future__ import annotations
 
 import json
@@ -74,8 +75,8 @@ def _split_ctx_query(n: int, rng: np.random.Generator) -> tuple[np.ndarray, np.n
     n_ctx = min(CTX_ROWS, max(8, (3 * n) // 4))
     n_q = min(QUERY_ROWS, n - n_ctx)
     if n_q < 4:  # tiny dataset: allow query overlap with context tail
-        return idx[:n_ctx], idx[max(0, n - 8):]
-    return idx[:n_ctx], idx[n_ctx:n_ctx + n_q]
+        return idx[:n_ctx], idx[max(0, n - 8) :]
+    return idx[:n_ctx], idx[n_ctx : n_ctx + n_q]
 
 
 def encode_dataset(expert, dataset_dir: Path) -> np.ndarray:
@@ -83,14 +84,21 @@ def encode_dataset(expert, dataset_dir: Path) -> np.ndarray:
     rng = np.random.default_rng(SEED)
     ctx, qry = _split_ctx_query(X.shape[0], rng)
     ds = SimpleNamespace(
-        Xtr=X[ctx], ytr=y[ctx], Xte=X[qry], n_train=len(ctx),
+        Xtr=X[ctx],
+        ytr=y[ctx],
+        Xte=X[qry],
+        n_train=len(ctx),
     )
     out = expert.infer(ds)
     hid = out.hidden.numpy()  # (M, 512)
-    vec = np.concatenate([
-        hid.mean(0), hid.std(0),
-        np.percentile(hid, 10, axis=0), np.percentile(hid, 90, axis=0),
-    ]).astype("float32")
+    vec = np.concatenate(
+        [
+            hid.mean(0),
+            hid.std(0),
+            np.percentile(hid, 10, axis=0),
+            np.percentile(hid, 90, axis=0),
+        ]
+    ).astype("float32")
     assert vec.shape == (RAW_DIM,), vec.shape
     return vec
 
@@ -118,10 +126,16 @@ def encode_many(
                 vec = encode_dataset(expert, Path(root) / h)
                 np.save(out_dir / f"{h}.npy", vec)
                 ok += 1
-                fh.write(json.dumps({
-                    "hash": h, "secs": round(time.time() - t, 3),
-                    "encoder": ENCODER_VERSION,
-                }) + "\n")
+                fh.write(
+                    json.dumps(
+                        {
+                            "hash": h,
+                            "secs": round(time.time() - t, 3),
+                            "encoder": ENCODER_VERSION,
+                        }
+                    )
+                    + "\n"
+                )
                 fh.flush()
             except Exception as exc:  # noqa: BLE001
                 failed += 1

@@ -136,17 +136,18 @@ def test_catalog_counts_default_missing_new_tasks_and_reject_unknown_tasks():
         {"regression": 1, "binary": 1, "timeseries": 1, "multiclass": 1},
     ) == {"regression": 1, "binary": 1, "timeseries": 1, "multiclass": 1}
     # Legacy two-task declaration: missing NEW tasks default to zero.
-    assert validate_catalog_counts(
-        entries[:2], {"regression": 1, "binary": 1}
-    ) == {"regression": 1, "binary": 1, "timeseries": 0, "multiclass": 0}
+    assert validate_catalog_counts(entries[:2], {"regression": 1, "binary": 1}) == {
+        "regression": 1,
+        "binary": 1,
+        "timeseries": 0,
+        "multiclass": 0,
+    }
     # ... which still fails closed when the catalog contains new-task entries.
     with pytest.raises(ValueError, match="catalog count mismatch"):
         validate_catalog_counts(entries, {"regression": 1, "binary": 1})
     # Unknown tasks are rejected, in declarations and in entries.
     with pytest.raises(ValueError, match="unsupported task counts"):
-        validate_catalog_counts(
-            entries[:2], {"regression": 1, "binary": 1, "multi_label": 1}
-        )
+        validate_catalog_counts(entries[:2], {"regression": 1, "binary": 1, "multi_label": 1})
     with pytest.raises(ValueError, match="unsupported or anonymous"):
         validate_catalog_counts(
             [{"task": "bogus", "dataset_hash": "d9"}],
@@ -240,9 +241,7 @@ def test_submission_requires_live_reservations_and_is_idempotent(tmp_path):
         "protocol_sha256": protocol(),
     }
     assert registry.reserve(**identity, owner="one", canonical_genome=genome)
-    registry.db.execute(
-        "UPDATE pairs SET manifest_sha256='manifest' WHERE task='regression'"
-    )
+    registry.db.execute("UPDATE pairs SET manifest_sha256='manifest' WHERE task='regression'")
     registry.db.commit()
     assert registry.authorize_submission("manifest", "one") == 1
     assert registry.record_submission("manifest", "one", "job") == 1
@@ -280,9 +279,7 @@ def test_pair_registry_batch_reservation_reuses_in_input_order(tmp_path):
 
 def test_queue_horizons_use_observed_p95_cluster_slots_and_clamps():
     assert dynamic_queue_targets([]) == (256, 512, 0.0)
-    target, hard_cap, p95 = dynamic_queue_targets(
-        [1.0] * 56 + [100.0] * 4
-    )
+    target, hard_cap, p95 = dynamic_queue_targets([1.0] * 56 + [100.0] * 4)
     assert (target, hard_cap, p95) == (1_500, 3_000, 100.0)
     target, hard_cap, p95 = dynamic_queue_targets([50.0] * 60, 400)
     assert (target, hard_cap, p95) == (800, 1_500, 50.0)
@@ -375,9 +372,7 @@ def test_orphaned_submission_retries_only_without_a_receipt(tmp_path, monkeypatc
             manifest_path=f"/manifest-{index}.json",
             manifest_sha256=f"manifest-{index}",
         )
-        registry.record_submission(
-            f"manifest-{index}", f"owner-{index}", f"job-{index}"
-        )
+        registry.record_submission(f"manifest-{index}", f"owner-{index}", f"job-{index}")
     registry.close()
     receipt = runs / "job-1" / "attempts" / "0" / "outputs" / "receipt"
     receipt.mkdir(parents=True)
@@ -408,16 +403,12 @@ def test_orphaned_submission_retries_only_without_a_receipt(tmp_path, monkeypatc
     database.close()
     assert states == {"job-0": "checked", "job-1": "submitted"}
     registry = PairRegistry(registry_path)
-    assert registry.manifest_state_counts("manifest-0") == {
-        "infrastructure_retry": 1
-    }
+    assert registry.manifest_state_counts("manifest-0") == {"infrastructure_retry": 1}
     assert registry.manifest_state_counts("manifest-1") == {"submitted": 1}
     registry.close()
 
 
-def test_submit_adopts_a_job_that_became_active_during_refill(
-    tmp_path, monkeypatch
-):
+def test_submit_adopts_a_job_that_became_active_during_refill(tmp_path, monkeypatch):
     monkeypatch.setattr(
         backlog_module,
         "retry_command",
@@ -446,7 +437,7 @@ def test_runtime_bundle_contains_the_complete_prime_python_package():
 
 
 def test_deployment_explicitly_restarts_already_active_services():
-    deploy = (Path(jope.research.__file__).parent / "deploy_selfplay_bundle.py")
+    deploy = Path(jope.research.__file__).parent / "deploy_selfplay_bundle.py"
     source = deploy.read_text()
     assert '["systemctl", "--user", "enable", *UNITS]' in source
     assert '["systemctl", "--user", "restart", *UNITS]' in source
@@ -457,13 +448,9 @@ def test_checkpoint_vocab_compatibility_requires_an_exact_fitting_prefix(monkeyp
 
     _validate_action_vocab_compatibility(["PAD", "BOS"], ["PAD", "BOS", "EOS"], 3)
     with pytest.raises(ValueError, match="exact current prefix"):
-        _validate_action_vocab_compatibility(
-            ["PAD", "old"], ["PAD", "BOS", "EOS"], 3
-        )
+        _validate_action_vocab_compatibility(["PAD", "old"], ["PAD", "BOS", "EOS"], 3)
     with pytest.raises(ValueError, match="exceeds"):
-        _validate_action_vocab_compatibility(
-            ["PAD", "BOS"], ["PAD", "BOS", "EOS"], 2
-        )
+        _validate_action_vocab_compatibility(["PAD", "BOS"], ["PAD", "BOS", "EOS"], 2)
 
 
 def test_failed_candidate_canary_leaves_last_good_active(tmp_path):
@@ -487,9 +474,7 @@ def test_failed_candidate_canary_leaves_last_good_active(tmp_path):
     )
     with pytest.raises(RuntimeError, match="did not pass"):
         promote_candidate(bad_report, tmp_path)
-    assert load_pointer("active", tmp_path)["evaluator_sha256"] == good[
-        "evaluator_sha256"
-    ]
+    assert load_pointer("active", tmp_path)["evaluator_sha256"] == good["evaluator_sha256"]
 
 
 def gate_evidence(lift: float) -> dict:
@@ -628,7 +613,14 @@ def test_new_task_verdicts_are_advisory_until_anchored():
     assert gated["task_verdicts"]["multiclass"]["advisory"] is True
 
 
-PARITY_FIXTURE = Path(__file__).parents[2] / "crates" / "jope-campaigns" / "tests" / "fixtures" / "conditionality_gate_parity.json"
+PARITY_FIXTURE = (
+    Path(__file__).parents[2]
+    / "crates"
+    / "jope-campaigns"
+    / "tests"
+    / "fixtures"
+    / "conditionality_gate_parity.json"
+)
 
 
 def test_conditionality_gate_parity_fixture_matches_python():
@@ -641,9 +633,7 @@ def test_conditionality_gate_parity_fixture_matches_python():
     fixture = json.loads(PARITY_FIXTURE.read_text())
     regenerate = os.environ.get("JOPE_REGENERATE_PARITY_FIXTURE") == "1"
     for case in fixture["cases"]:
-        produced = json.dumps(
-            evaluate_gate(case["evidence"]), sort_keys=True, separators=(",", ":")
-        )
+        produced = json.dumps(evaluate_gate(case["evidence"]), sort_keys=True, separators=(",", ":"))
         if regenerate:
             case["expected_gate_compact_json"] = produced
             continue
@@ -686,10 +676,7 @@ def test_controller_has_no_file_waiting_production_phases():
     handlers = default_handlers()
     assert handlers["generate_gate_proposals"].__name__ == "_generate_gate_proposals"
     assert handlers["evaluate_frozen_gate"].__name__ == "_evaluate_frozen_gate"
-    assert (
-        handlers["run_sotarena_qualification"].__name__
-        == "_run_sotarena_qualification"
-    )
+    assert handlers["run_sotarena_qualification"].__name__ == "_run_sotarena_qualification"
 
 
 def test_sealed_audit_is_one_shot_and_never_training_eligible(tmp_path):

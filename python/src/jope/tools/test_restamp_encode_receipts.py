@@ -15,10 +15,10 @@ class RestampTests(unittest.TestCase):
         out = r.restamp({"apply_contexts_blocked_by": r.STALE}, lock_held=True)
         self.assertTrue(out["lock_held"])
 
-
     def test_restamp_tree_does_not_write_the_lock(self):
         import tempfile
         from pathlib import Path
+
         with tempfile.TemporaryDirectory() as folder:
             src = Path(folder) / "src"
             src.mkdir()

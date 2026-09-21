@@ -103,9 +103,9 @@ def build_holdout_and_folds(
 
     k = max(2, min(int(folds), n_train))
     # Contiguous chunks of a fresh permutation → a clean partition of 0..n_train-1.
-    fold_perm = np.random.Generator(
-        np.random.PCG64((int(seed) ^ 0x5DEECE66D) & ((1 << 64) - 1))
-    ).permutation(n_train)
+    fold_perm = np.random.Generator(np.random.PCG64((int(seed) ^ 0x5DEECE66D) & ((1 << 64) - 1))).permutation(
+        n_train
+    )
     fold_index_lists = [sorted(int(i) for i in chunk) for chunk in np.array_split(fold_perm, k)]
     fold_index_lists = [chunk for chunk in fold_index_lists if chunk]
     return train_rows, test_features, test_targets, fold_index_lists

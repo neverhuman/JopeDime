@@ -1,4 +1,5 @@
 """Inspect replay evidence without manufacturing discovery or training authority."""
+
 import argparse
 from collections import defaultdict
 from pathlib import Path
@@ -107,8 +108,14 @@ def beating_set(rows):
                 conflicts.add(evaluation)
             identities[evaluation] = payload
             if row.get("failure") is not None or score is None:
-                failed.append(dict(coordinates, evaluation_identity_sha256=evaluation,
-                                   failure=row.get("failure"), score_available=score is not None))
+                failed.append(
+                    dict(
+                        coordinates,
+                        evaluation_identity_sha256=evaluation,
+                        failure=row.get("failure"),
+                        score_available=score is not None,
+                    )
+                )
                 continue
             if not is_teacher(row) and row.get("evaluation_origin") != "execution":
                 reused.append(dict(coordinates, evaluation_identity_sha256=evaluation))
@@ -125,7 +132,10 @@ def beating_set(rows):
         program_conflicts = set()
         for row in items:
             key = row["program_sha256"]
-            if key in seen and (seen[key]["_score"], seen[key].get("origin")) != (row["_score"], row.get("origin")):
+            if key in seen and (seen[key]["_score"], seen[key].get("origin")) != (
+                row["_score"],
+                row.get("origin"),
+            ):
                 program_conflicts.add(key)
             seen.setdefault(key, row)
         clean = [row for key, row in seen.items() if key not in program_conflicts]
@@ -136,34 +146,54 @@ def beating_set(rows):
         for key, row in sorted(seen.items()):
             if key in program_conflicts or is_teacher(row):
                 continue
-            entry = dict(context=row["_context"], **row["_program"], rmse=row["_score"],
-                         units="original_target", origin=row.get("origin"),
-                         evaluation_identity_sha256=row["evaluation_identity_sha256"],
-                         source_path=row["_source"], source_sha256=row["_source_sha256"],
-                         row_index=row["_row_index"], original_query=row.get("original_query"),
-                         independent_evaluation=False, original_verified=False)
+            entry = dict(
+                context=row["_context"],
+                **row["_program"],
+                rmse=row["_score"],
+                units="original_target",
+                origin=row.get("origin"),
+                evaluation_identity_sha256=row["evaluation_identity_sha256"],
+                source_path=row["_source"],
+                source_sha256=row["_source_sha256"],
+                row_index=row["_row_index"],
+                original_query=row.get("original_query"),
+                independent_evaluation=False,
+                original_verified=False,
+            )
             if teachers and row["_score"] < min(teachers):
                 beating.append(entry)
             if generics and not is_generic(row) and row["_score"] < min(generics):
                 generic_beating.append(entry)
         if program_conflicts:
-            unavailable.append(dict(reason="conflicting repeated program outcomes",
-                                    program_sha256=sorted(program_conflicts)))
+            unavailable.append(
+                dict(reason="conflicting repeated program outcomes", program_sha256=sorted(program_conflicts))
+            )
     if conflicts:
-        unavailable.append(dict(reason="conflicting original computation identities",
-                                evaluation_identity_sha256=sorted(conflicts)))
-    return dict(inspected_groups=len(groups), teacher_groups=teacher_groups,
-                generic_groups=generic_groups, diagnostic_teacher_beating=beating,
-                diagnostic_generic_beating=generic_beating, unavailable=unavailable,
-                failed_observations=failed, reuse_or_unknown_origins=reused)
+        unavailable.append(
+            dict(
+                reason="conflicting original computation identities",
+                evaluation_identity_sha256=sorted(conflicts),
+            )
+        )
+    return dict(
+        inspected_groups=len(groups),
+        teacher_groups=teacher_groups,
+        generic_groups=generic_groups,
+        diagnostic_teacher_beating=beating,
+        diagnostic_generic_beating=generic_beating,
+        unavailable=unavailable,
+        failed_observations=failed,
+        reuse_or_unknown_origins=reused,
+    )
 
 
 def argv(*_args, **_kwargs):
     raise ValueError("recover original selected condition/seed manifests; invented reset ablation retired")
 
 
-def plan(root, dest=None, corpus=None, baseline=None, checkpoint=None, block_identity="0",
-         selected_experiment=None):
+def plan(
+    root, dest=None, corpus=None, baseline=None, checkpoint=None, block_identity="0", selected_experiment=None
+):
     sources, rows = load_observations(root)
     found = beating_set(rows)
     originals = []
@@ -173,36 +203,61 @@ def plan(root, dest=None, corpus=None, baseline=None, checkpoint=None, block_ide
         if ref is not None:
             try:
                 value = reference(Path(root).resolve(), ref)
-                if (not isinstance(value, dict) or value.get("context") != candidate["context"]
-                        or value.get("program_sha256") != candidate["program_sha256"]
-                        or value.get("evaluation_identity_sha256") != candidate["evaluation_identity_sha256"]):
+                if (
+                    not isinstance(value, dict)
+                    or value.get("context") != candidate["context"]
+                    or value.get("program_sha256") != candidate["program_sha256"]
+                    or value.get("evaluation_identity_sha256") != candidate["evaluation_identity_sha256"]
+                ):
                     raise ValueError("original query identity conflict")
                 reason = "independent original query/access verifier unavailable; hashes are not execution"
             except (OSError, ValueError, TypeError, KeyError) as error:
                 reason = str(error)
-        originals.append(dict(program_sha256=candidate["program_sha256"], original_query=ref,
-                              verified=False, unavailable_reason=reason))
+        originals.append(
+            dict(
+                program_sha256=candidate["program_sha256"],
+                original_query=ref,
+                verified=False,
+                unavailable_reason=reason,
+            )
+        )
     selected = None
     if selected_experiment is not None:
         # Preserve the recovered original manifest as evidence; never invent its conditions.
         _, selected_sha = read_with_digest(selected_experiment)
         selected = dict(path=str(selected_experiment), sha256=selected_sha)
-    result = dict(schema=SCHEMA, observation_files=len(sources), observation_rows=len(rows),
-                  source_files=sources,
-                  teacher_beating_n=None, generic_beating_n=None,
-                  diagnostic_teacher_beating_n=len(found["diagnostic_teacher_beating"]),
-                  diagnostic_generic_beating_n=len(found["diagnostic_generic_beating"]),
-                  diagnostics=found, original_verification=originals,
-                  selected_experiment=selected, replay_argv=None,
-                  requested_inputs={k: str(v) if v is not None else None for k, v in
-                                    (("corpus", corpus), ("baseline", baseline), ("checkpoint", checkpoint))},
-                  unavailable_requirements=["original admitted computation and query/access verification",
-                                            "incumbent snapshot frozen before each original discovery",
-                                            "original selected condition/seed manifest qualification"],
-                  importance_sampling="unavailable; rank_log_weight and legacy policy_logprob are a ranking weight, not behavior propensity",
-                  freeze_ran=False, train_launched=False, materialize_view=False,
-                  launch_train_allowed=False, serving_written=False, shuffled_minted=False,
-                  qualification_ready=False, independent_evaluation=False)
+    result = dict(
+        schema=SCHEMA,
+        observation_files=len(sources),
+        observation_rows=len(rows),
+        source_files=sources,
+        teacher_beating_n=None,
+        generic_beating_n=None,
+        diagnostic_teacher_beating_n=len(found["diagnostic_teacher_beating"]),
+        diagnostic_generic_beating_n=len(found["diagnostic_generic_beating"]),
+        diagnostics=found,
+        original_verification=originals,
+        selected_experiment=selected,
+        replay_argv=None,
+        requested_inputs={
+            k: str(v) if v is not None else None
+            for k, v in (("corpus", corpus), ("baseline", baseline), ("checkpoint", checkpoint))
+        },
+        unavailable_requirements=[
+            "original admitted computation and query/access verification",
+            "incumbent snapshot frozen before each original discovery",
+            "original selected condition/seed manifest qualification",
+        ],
+        importance_sampling="unavailable; rank_log_weight and legacy policy_logprob are a ranking weight, not behavior propensity",
+        freeze_ran=False,
+        train_launched=False,
+        materialize_view=False,
+        launch_train_allowed=False,
+        serving_written=False,
+        shuffled_minted=False,
+        qualification_ready=False,
+        independent_evaluation=False,
+    )
     if dest is not None:
         immutable(Path(dest) / "plan.json", result)
     return result
@@ -215,7 +270,16 @@ if __name__ == "__main__":
     for name in ("corpus", "baseline", "checkpoint", "selected-experiment"):
         parser.add_argument("--" + name, type=Path)
     args = parser.parse_args()
-    result = plan(args.observations, args.output, corpus=args.corpus, baseline=args.baseline,
-                  checkpoint=args.checkpoint, selected_experiment=args.selected_experiment)
-    print(canonical({k: result[k] for k in ("schema", "teacher_beating_n", "train_launched",
-                                          "qualification_ready")}).decode())
+    result = plan(
+        args.observations,
+        args.output,
+        corpus=args.corpus,
+        baseline=args.baseline,
+        checkpoint=args.checkpoint,
+        selected_experiment=args.selected_experiment,
+    )
+    print(
+        canonical(
+            {k: result[k] for k in ("schema", "teacher_beating_n", "train_launched", "qualification_ready")}
+        ).decode()
+    )
