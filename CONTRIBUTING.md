@@ -69,7 +69,7 @@ rebase merges only (linear history); the branch is deleted on merge.
 - A model bundle or a learning-loop change: the models and learning documents landing with
   WP7/WP11 (`docs/models.md`, `docs/learning.md`, `docs/runbooks/ingest-winners.md`).
 - A CI lane: keep pull-request lanes hosted, credential-free and under 35 billed minutes; heavy
-  or GPU work belongs to main/nightly on the self-hosted runner (`docs/ci.md`, landing with WP8).
+  or GPU work belongs to main/nightly on the self-hosted runner (`docs/runbooks/runner.md`).
 
 ## Releases
 

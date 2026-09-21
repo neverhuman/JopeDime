@@ -20,6 +20,35 @@ JOPE_RUNNER_PIDS=${JOPE_RUNNER_PIDS:-4096}
 JOPE_RUNNER_TMPFS_SIZE=${JOPE_RUNNER_TMPFS_SIZE:-32g}
 JOPE_RUNNER_DOCKER_PROXY_SOCK=${JOPE_RUNNER_DOCKER_PROXY_SOCK:-/run/jope-docker-proxy/docker.sock}
 
+# Every file provision.sh installs onto the host, in a fixed order. This list is the single
+# source of truth for the provenance digest: run.sh hashes these, and .github/workflows/ci.yml
+# parses this very array out of the checkout and hashes the matching deploy/runner/<name> files,
+# so the workflow cannot drift from what is actually deployed. entrypoint.sh is absent on purpose
+# -- it lives inside the image, and the lane binds it separately from inside the container.
+# shellcheck disable=SC2034  # read by run.sh and provision.sh after sourcing
+JOPE_RUNNER_DEPLOYED=(
+  /opt/jope-runner/common.sh
+  /opt/jope-runner/run.sh
+  /opt/jope-runner/disk-guard.sh
+  /opt/jope-runner/prune.sh
+  /etc/systemd/system/jope-runner@.service
+  /etc/systemd/system/jope-runner@.service.d/runtime-max.conf
+  /etc/systemd/system/jope-runner@.timer
+  /etc/systemd/system/jope-runner-prune.service
+  /etc/systemd/system/jope-runner-prune.timer
+  /etc/systemd/system/jope-docker-proxy.service
+)
+
+# The digest of what is deployed right now. Always recomputed, never cached: a receipt written at
+# provision time is exactly wrong for the case this exists to catch, an in-place edit afterwards.
+jope_runner_deployed_digest() {
+  local f
+  for f in "${JOPE_RUNNER_DEPLOYED[@]}"; do
+    [[ -r $f ]] || { echo "missing-$f"; return 1; }
+  done
+  cat "${JOPE_RUNNER_DEPLOYED[@]}" | sha256sum | cut -d' ' -f1
+}
+
 # Named volumes (created by provision.sh; owned by uid 1001 inside).
 # shellcheck disable=SC2034  # read by provision.sh
 JOPE_VOLUMES=(jope-work jope-cargo jope-target jope-uv jope-sdk jope-models)

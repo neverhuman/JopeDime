@@ -82,13 +82,22 @@ install -d -m 0750 -o root -g root "$JOPE_RUNNER_STATE"
 install -d -m 0755 /opt/jope-runner
 install -m 0755 "$here"/common.sh "$here"/run.sh "$here"/disk-guard.sh "$here"/prune.sh /opt/jope-runner/
 install -m 0644 "$here"/jope-runner@.service "$here"/jope-runner@.timer "$here"/jope-runner-prune.service "$here"/jope-runner-prune.timer "$here"/jope-docker-proxy.service /etc/systemd/system/
+# The drop-in was committed but never installed here, so a freshly provisioned host ran with the
+# upstream RuntimeMaxSec=1800 -- the mid-job SIGTERM the drop-in exists to prevent. Installed as a
+# directory so any future .conf in it is picked up without editing this line again.
+install -d -m 0755 "/etc/systemd/system/jope-runner@.service.d"
+install -m 0644 "$here"/jope-runner@.service.d/*.conf "/etc/systemd/system/jope-runner@.service.d/"
 systemctl daemon-reload
 
 # 5. provenance: record what is actually deployed, so a lane can prove it rather than assume it.
 # run.sh injects these into every job; .github/workflows/ci.yml compares the script digest with
 # the checkout's, which fails the lane when the host is running something other than the commit
 # under test. Inspection cannot establish that; only a comparison the lane performs can.
-scripts_sha=$(cat /opt/jope-runner/common.sh /opt/jope-runner/run.sh | sha256sum | cut -d' ' -f1)
+# Sourced from the freshly installed copy so the digest describes what is now deployed, not what
+# this script was invoked from.
+# shellcheck disable=SC1091
+. /opt/jope-runner/common.sh
+scripts_sha=$(jope_runner_deployed_digest)
 image_id=$(docker image inspect --format '{{.Id}}' "$JOPE_RUNNER_IMAGE" 2>/dev/null || echo unknown)
 jq -n --arg image "$JOPE_RUNNER_IMAGE" --arg image_id "$image_id" --arg scripts_sha "$scripts_sha" \
       --arg provisioned_from "$here" --arg host "$JOPE_RUNNER_HOST" \
