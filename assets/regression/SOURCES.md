@@ -11,8 +11,8 @@ Source trees (read-only at the time of the port, 2026-09-18/19):
 |---|---|---|
 | `<historical jope-dime checkout>/sotarena/` | nested benchmark clone of `github.com/neverhuman/sotarena` | commit `e5db30a07c093661c8f6940d3e22192511f8388b` ("Upgrade Golden45 verification protocol and replay", 2026-07-25) |
 | `<historical jope-dime checkout>/` | the historical jope-dime workspace | commit `c9513e8288434a37ceedd4535b38f702bf35ad7f` (`main`, 2026-09-18) |
-| `/home/ubuntu/sotarena/` | the Rust Elo reporter (`src/main.rs`, `config.json`, `data/`) | code ported into `crates/jope-arena`; no data copied |
-| `/home/ubuntu/sotarena_pull/` | local score-emission toolkit | its `SotarenaPullArtifact.v1` emission schema is read by `jope-arena emit-scores`; no data copied |
+| `<host>/sotarena/` | the Rust Elo reporter (`src/main.rs`, `config.json`, `data/`) | code ported into `crates/jope-arena`; no data copied |
+| `<host>/sotarena_pull/` | local score-emission toolkit | its `SotarenaPullArtifact.v1` emission schema is read by `jope-arena emit-scores`; no data copied |
 
 ## `sotarena-tabular-regression-v2/` — a minimal `SOTARENA_ROOT`
 
