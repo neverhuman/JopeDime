@@ -42,9 +42,7 @@ jobs:
             grep -qE '^(crates/feat-math/|datasets/test/|deploy/ci/emitters|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.github/workflows/ci\.yml$)' <<<"$changed" || emitters=false
             grep -qE '^(datasets/synthetic/|crates/jope-cli/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.github/workflows/ci\.yml$)' <<<"$changed" || inputs=false
           fi
-          echo "rust=$rust" >> "$GITHUB_OUTPUT"
-          echo "emitters=$emitters" >> "$GITHUB_OUTPUT"
-          echo "inputs=$inputs" >> "$GITHUB_OUTPUT"
+          { echo "rust=$rust"; echo "emitters=$emitters"; echo "inputs=$inputs"; } >> "$GITHUB_OUTPUT"
           echo "rust=$rust emitters=$emitters inputs=$inputs"
 
   hygiene:
