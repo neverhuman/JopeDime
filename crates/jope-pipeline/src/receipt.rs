@@ -253,6 +253,22 @@ impl Receipt {
                 "{measured} successful measurement(s) but the selection is the unmeasured fallback"
             ));
         }
+        // A passed emit stage with nothing emitted would be a receipt that says the run produced
+        // code while listing none, which no reader could catch without re-deriving it.
+        if let Some(emit) = self.stages.iter().find(|s| s.name == "emit") {
+            if emit.status == "passed" && self.artifacts.is_empty() {
+                errors.push("stage emit passed but the receipt names no artifact".to_owned());
+            }
+            if emit.status == "failed" && !self.artifacts.is_empty() {
+                errors.push(format!(
+                    "stage emit failed but the receipt names {} artifact(s)",
+                    self.artifacts.len()
+                ));
+            }
+        }
+        if self.ok && self.stages.iter().any(|s| s.status == "failed") {
+            errors.push("ok is true but a stage failed".to_owned());
+        }
         if let Some(best) = &self.search.best {
             if best.genome != self.search.selected_genome {
                 errors.push("the selected genome is not the best one".to_owned());
