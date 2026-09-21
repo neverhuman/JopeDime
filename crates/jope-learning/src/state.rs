@@ -8,8 +8,6 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-pub const DEFAULT_STATE_SUFFIX: &str = ".local/state/jope";
-
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PointerKey {
@@ -49,17 +47,17 @@ fn safe_segment(s: &str) -> bool {
 }
 
 impl State {
-    /// `--state`, else `$JOPE_STATE`, else `~/.local/state/jope`.
+    /// `--state`, else ADR-0003's state root: [`jope_paths::jope_state`] — `$JOPE_STATE`, else
+    /// `$XDG_STATE_HOME/jope`, else `$HOME/.local/state/jope`, else `<jope_home>/state`.
+    ///
+    /// The resolution rule is *not* re-implemented here: a second copy is how this crate and the
+    /// rest of the product would drift onto two different state trees (they did — this crate used
+    /// to skip the XDG step and hard-error with `HOME` unset). The `Result` is kept because the
+    /// caller is fallible and so that a future resolver may fail.
     pub fn resolve(arg: Option<PathBuf>) -> Result<State> {
         let root = match arg {
             Some(p) => p,
-            None => match std::env::var_os("JOPE_STATE") {
-                Some(v) if !v.is_empty() => PathBuf::from(v),
-                _ => {
-                    let home = std::env::var_os("HOME").context("HOME unset and no --state")?;
-                    PathBuf::from(home).join(DEFAULT_STATE_SUFFIX)
-                }
-            },
+            None => jope_paths::jope_state(),
         };
         Ok(State { root })
     }

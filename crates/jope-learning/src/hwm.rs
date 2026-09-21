@@ -299,8 +299,12 @@ fn push_mirror(
         count(m.put_immutable(&rel, &fs::read(ledger.root().join(&b.path))?)?);
         let head_rel = format!("{}/ledger/HEAD.json", ledger.name());
         let head_bytes = fs::read(ledger.root().join("HEAD.json"))?;
-        let prev = m.get(&head_rel)?;
-        m.put_pointer(&head_rel, &head_bytes, prev.as_deref())?;
+        // The expected-previous value is the LOCAL pre-append HEAD, captured under the ledger
+        // lock — never a fresh read of the key we are about to write, which would make the
+        // precondition self-satisfying and the PUT last-writer-wins. A second host that appended
+        // its own ULID-named batch has already moved the mirror's HEAD, so this fails closed
+        // instead of orphaning that batch.
+        m.put_pointer(&head_rel, &head_bytes, b.prev_head_bytes.as_deref())?;
         report.pointers += 1;
     }
     for (key, bytes, prev) in pointers {

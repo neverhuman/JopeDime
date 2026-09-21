@@ -54,6 +54,13 @@ pub struct BatchReceipt {
     pub sha256: String,
     pub events: u64,
     pub prev_batch_sha256: Option<String>,
+    /// The exact bytes of `HEAD.json` as they stood *before* this batch was appended, read under
+    /// the ledger lock (`None` = the ledger had no `HEAD.json` yet). A mirror push uses this as the
+    /// expected-previous value of the remote `HEAD.json`, so a remote tip that some other writer
+    /// has already moved fails the write instead of being clobbered. Not part of the CLI's JSON
+    /// report.
+    #[serde(skip)]
+    pub prev_head_bytes: Option<Vec<u8>>,
 }
 
 #[derive(Clone, Debug, Serialize, Default)]
@@ -151,6 +158,12 @@ impl Ledger {
             .write(true)
             .open(self.root.join(".lock"))?;
         lock.lock()?;
+        let head_path = self.root.join("HEAD.json");
+        let prev_head_bytes = if head_path.exists() {
+            Some(fs::read(&head_path)?)
+        } else {
+            None
+        };
         let head = self.head()?;
         let ulid = ulid::Ulid::new().to_string();
         let ts = now_unix();
@@ -188,10 +201,7 @@ impl Ledger {
             batches: head.as_ref().map_or(0, |h| h.batches) + 1,
             events_total: head.as_ref().map_or(0, |h| h.events_total) + events.len() as u64,
         };
-        atomic_write(
-            &self.root.join("HEAD.json"),
-            &serde_json::to_vec_pretty(&new_head)?,
-        )?;
+        atomic_write(&head_path, &serde_json::to_vec_pretty(&new_head)?)?;
         lock.unlock()?;
         Ok(BatchReceipt {
             batch: ulid,
@@ -199,6 +209,7 @@ impl Ledger {
             sha256: sha,
             events: events.len() as u64,
             prev_batch_sha256: seal.prev_batch_sha256,
+            prev_head_bytes,
         })
     }
 

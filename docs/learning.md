@@ -59,6 +59,12 @@ Rejected candidates are ledger events like accepted ones — nothing is dropped 
 
 ## Layout under `$JOPE_STATE` (mirrored 1:1 to the store URL)
 
+The root is `--state` when given, else ADR-0003's `jope_paths::jope_state()` — `$JOPE_STATE`, else
+`$XDG_STATE_HOME/jope`, else `$HOME/.local/state/jope`, else `<jope_home>/state`. The rule is not
+re-implemented here; `crates/jope-learning/tests/state_resolve.rs` asserts every step of it, and
+that each step agrees with `jope-paths`, so this crate cannot drift onto a state tree the rest of
+the product does not use.
+
 ```
 blobs/sha256/<64hex>                            record blobs, content-addressed, written once
 hwm/ledger/<yyyy>/<mm>/<ulid>.jsonl             HWM events, sealed batches (see below)
@@ -96,11 +102,22 @@ whole ingest.
 `--store <url>` / `JOPE_LEARNING_URL` pushes through `jope_datasets::store::Store` (thin adapter
 in `mirror.rs`): blobs and batches with the create-only put (`If-None-Match: *`, an existing
 object must hold the same bytes), `HEAD.json` and `current.json` by reading the object back and
-comparing it to the bytes the writer decided against before replacing it. A server-side
-conditional PUT with an expected version (`PutMode::Update`) is not exposed by `Store` yet and
-the local-filesystem backend of `object_store` does not implement it; until it is, the
-compare-then-put runs under the local lock, which is the only writer in this design.
-`s3://` is configured through the environment and was not exercised in this step.
+comparing it, before replacing it, with the bytes that were on the **writer's own tree** before it
+wrote — the pointer record it decided against, and the `HEAD.json` captured under the ledger lock
+before the batch was appended (`BatchReceipt::prev_head_bytes`). The expected-previous value is
+never a fresh read of the key about to be written: that precondition satisfies itself, making the
+write last-writer-wins, which is how a second host's batch gets orphaned.
+`crates/jope-learning/tests/mirror_lost_update.rs` reproduces that race — two `$JOPE_STATE` trees,
+one mirror; the second writer is refused and the first's batch stays the tip.
+
+A server-side conditional PUT with an expected version (`PutMode::Update`) is not exposed by
+`Store` yet and the local-filesystem backend of `object_store` does not implement it; until it is,
+the compare-then-put is still TOCTOU between the GET and the PUT and is serialised only by the
+local lock, which does not reach across hosts. What the precondition buys is that a *diverged*
+mirror is refused rather than overwritten. One consequence: pointing `--store` at a mirror that is
+behind a local tree with unmirrored history fails closed — backfill first (the push/pull verb is
+not in this step). `s3://` is configured through the environment and was not exercised in this
+step.
 
 ## Mapping table (as implemented in `sources/`)
 

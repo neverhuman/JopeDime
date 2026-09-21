@@ -3,11 +3,23 @@
 //!
 //! Thin adapter, not a re-implementation: immutable objects (blobs, ledger batches) use the
 //! create-only `put_if_absent` (`If-None-Match: *`); pointers (`current.json`, `HEAD.json`) are
-//! read back and compared with the bytes the writer decided against before being replaced. A true
-//! server-side conditional PUT (`PutMode::Update` with the expected version) is not reachable
-//! through the `Store` API today and `object_store`'s local filesystem backend does not implement
-//! it either, so the compare-then-put runs under the local `$JOPE_STATE` lock that every writer
-//! takes first.
+//! read back and compared, before being replaced, with the bytes that were on the *writer's own*
+//! tree before it wrote — the per-cut pointer it decided against (`hwm::ingest`) and the
+//! `HEAD.json` captured under the ledger lock before the batch was appended
+//! (`BatchReceipt::prev_head_bytes`). The expected-previous value must never be a fresh read of
+//! the key about to be written: that makes the precondition self-satisfying and the write
+//! last-writer-wins, which is how a second host's ledger batch can be orphaned.
+//!
+//! Consequence worth knowing: attaching a mirror to a local tree that already has unmirrored
+//! history fails closed, because the local pre-write state does not match the mirror's. Backfill
+//! the earlier batches and pointers first (the push/pull verb is not in this step).
+//!
+//! A true server-side conditional PUT (`PutMode::Update` with the expected version) is not
+//! reachable through the `Store` API today and `object_store`'s local filesystem backend does not
+//! implement it either, so the compare-then-put is still TOCTOU between the GET and the PUT, and
+//! is serialised only by the local `$JOPE_STATE` lock that every writer takes first — a lock that
+//! does not reach across hosts. What the precondition does buy is that a *diverged* mirror is
+//! detected and refused rather than overwritten.
 
 use anyhow::{bail, Result};
 use jope_datasets::store::{PutOutcome, Store};
