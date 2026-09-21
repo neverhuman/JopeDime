@@ -90,9 +90,43 @@ def descendants(pid):
         owned |= found
 
 
+PIDFD_AVAILABLE = hasattr(os, "pidfd_open") and hasattr(signal, "pidfd_send_signal")
+
+
+def _stop_owned_by_pid(process):
+    """Fallback without pidfds (interpreters built against a sysroot older than glibc 2.36, e.g.
+    python-build-standalone): freeze the controller by pid, kill its descendants by pid, then the
+    controller. Same order as the pidfd path; without pidfds a reused pid could in principle be
+    signalled, which is why the pidfd path is preferred whenever the interpreter offers it."""
+    try:
+        os.kill(process.pid, signal.SIGSTOP)
+    except ProcessLookupError:
+        process.wait(timeout=5)
+        return
+    children = list(descendants(process.pid))
+    for pid in children:
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    try:
+        os.kill(process.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    process.wait(timeout=5)
+    for pid in children:
+        try:
+            os.waitpid(pid, 0)
+        except ChildProcessError:
+            pass
+
+
 def stop_owned(process):
     """Freeze the spawning controller, then kill pidfd-bound owned descendants."""
     if process.poll() is not None:
+        return
+    if not PIDFD_AVAILABLE:
+        _stop_owned_by_pid(process)
         return
     controller = os.pidfd_open(process.pid)
     children = []
