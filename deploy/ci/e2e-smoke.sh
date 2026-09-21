@@ -61,8 +61,14 @@ done
 # The assertion is about the candidate pool, not about which genome wins, so it does not depend on
 # what the search happens to find. Without remeasurement a genome discovered on one cut is only
 # ever measured there, so NO non-bootstrap genome reaches every cut; with it, the top-k from each
-# cut are measured on all of them. Measured on this dataset at seed 7: 12 such genomes with
-# remeasurement and 0 without, and the champion degrades from
+# cut are measured on all of them.
+#
+# The COUNT scales with the budget, so the assertion deliberately requires only that the set is
+# non-empty. At this lane's budget (evaluations=4,seconds=60) it yields 9; at the larger
+# evaluations=24,seconds=120 used while developing the check it yielded 12. Without remeasurement
+# it is 0 at either budget, which is the property being tested.
+#
+# The contrast that matters, measured at this dataset and seed 7: the champion degrades from
 # `(pipe X (rank append=true) (gpr m=400 steps=60))` at hold RMSE 0.070814 to the bootstrap
 # `(pipe X (ridge))` at 0.095582 -- 26 % worse, which is exactly the pathology cross-cut
 # selection exists to avoid.
