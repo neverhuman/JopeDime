@@ -1,0 +1,27 @@
+[package]
+name = "jope-pipeline"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "JOPE-Dime product pipeline: dataset to prepared cuts to GP search to emitted code, with a receipt"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+feat-math = { path = "../feat-math" }
+jope-datasets = { path = "../jope-datasets" }
+schemars = "1"
+sha2.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

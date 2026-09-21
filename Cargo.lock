@@ -2380,6 +2380,21 @@ name = "jope-paths"
 version = "0.1.0"
 
 [[package]]
+name = "jope-pipeline"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "feat-math",
+ "jope-datasets",
+ "schemars",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+]
+
+[[package]]
 name = "jope-policy"
 version = "0.1.0"
 dependencies = [
