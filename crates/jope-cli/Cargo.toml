@@ -14,6 +14,7 @@ path = "src/main.rs"
 [dependencies]
 anyhow.workspace = true
 clap.workspace = true
+hyperion = { path = "../hyperion", default-features = false, features = ["hyperion-cpu"] }
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
