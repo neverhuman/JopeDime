@@ -93,6 +93,11 @@ def main():
     du.chmod(0o755)
     call("measurement failure", [root, "--stale", "48"], False,
          {**os.environ, "PATH": str(fakebin) + os.pathsep + os.environ["PATH"]})
+    # Real du can print a numeric partial total and still fail on unreadable descendants.
+    du.write_text("#!/bin/sh\nprintf '123\\tpartial-root\\n'\n"
+                  "echo 'injected partial measurement' >&2\nexit 1\n")
+    call("partial numeric measurement fails", [root, "--stale", "48"], False,
+         {**os.environ, "PATH": str(fakebin) + os.pathsep + os.environ["PATH"]})
     # The permission fixture intentionally added one directory. Compare the original entries.
     after = inventory(root)
     for name in before:
