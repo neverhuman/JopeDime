@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   guard:
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 5
     steps:
       - name: Every commit on main belongs to a merged pull request
