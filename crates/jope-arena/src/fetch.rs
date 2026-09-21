@@ -165,6 +165,19 @@ pub trait Downloader {
 /// price of `rustls-no-provider` is that the provider is no longer implied by the features, so it
 /// is handed to `ureq` explicitly here; `rustls` is a direct dependency of this crate for that.
 /// Roots stay `ureq`'s default (`RootCerts::WebPki`, the Mozilla store from `webpki-roots`).
+///
+/// Two `ureq` 3 defaults are kept on purpose rather than inherited unnoticed (the 2 -> 3 bump
+/// changed both; see the PR's disclosures):
+/// * `proxy: Proxy::try_from_env()` (`ureq-3.4.2/src/config.rs:948`) -- this path **honours**
+///   `HTTP_PROXY` / `HTTPS_PROXY` / `ALL_PROXY` / `NO_PROXY`. `ureq` 2 only did so behind its
+///   non-default `proxy-from-env` feature, which was off, so this is a real behaviour change.
+///   Deliberately kept: a runner or workstation behind a proxy could otherwise not fetch at all,
+///   and it cannot weaken integrity here -- an HTTPS `CONNECT` proxy tunnels TLS end to end (the
+///   origin certificate is still checked against the WebPKI roots above) and `verify_bytes`
+///   checks byte count and SHA-256 against the manifest pin on download *and* on cache read.
+///   To stop honouring them, add `.proxy(None)` to the builder below.
+/// * `max_redirects: 10` (`ureq` 2 used 5). Exceeding the limit is a `TooManyRedirects` error in
+///   both versions; the count is immaterial for a sha-pinned artifact, so the ureq 3 default stands.
 fn https_agent() -> &'static ureq::Agent {
     static AGENT: OnceLock<ureq::Agent> = OnceLock::new();
     AGENT.get_or_init(|| {
