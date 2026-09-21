@@ -1,6 +1,7 @@
-//! Offline fixtures, CPU Hyperion encode, and feat-math fit/emit/search.
+//! Offline fixtures, CPU Hyperion encode, feat-math fit/emit/search, local champions.
 
 mod admission;
+mod champions;
 mod encode;
 mod generator;
 mod kernel;
@@ -8,6 +9,9 @@ mod schema;
 mod storage;
 
 pub use admission::{verify_inputs, Verification};
+pub use champions::{
+    local_champions, local_train_step, refuse_s3, write_json, ChampionBank, TrainStepReport,
+};
 pub use encode::{encode_dataset, EncodeReport};
 pub use generator::generate_fixtures;
 pub use kernel::{
