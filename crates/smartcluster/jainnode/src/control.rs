@@ -76,10 +76,18 @@ impl MtlsControlClient {
                 .add(certificate)
                 .map_err(|_| ControlError::InvalidCertificate)?;
         }
-        let tls = ClientConfig::builder()
-            .with_root_certificates(roots)
-            .with_client_auth_cert(material.client_certificates, material.client_private_key)
-            .map_err(|_| ControlError::InvalidCertificate)?;
+        // Never let the crypto provider be inferred from the rustls crate features: any crate in
+        // the workspace that turns on a second provider (e.g. an HTTP client pulling
+        // `rustls/ring`) makes `CryptoProvider::from_crate_features()` return `None`, and a bare
+        // `ClientConfig::builder()` then panics at the first outbound control connection.
+        let tls = ClientConfig::builder_with_provider(Arc::new(
+            rustls::crypto::aws_lc_rs::default_provider(),
+        ))
+        .with_safe_default_protocol_versions()
+        .map_err(|_| ControlError::InvalidConfiguration)?
+        .with_root_certificates(roots)
+        .with_client_auth_cert(material.client_certificates, material.client_private_key)
+        .map_err(|_| ControlError::InvalidCertificate)?;
         let tcp = tokio::time::timeout(
             config.connect_timeout,
             TcpStream::connect(config.hub_address),

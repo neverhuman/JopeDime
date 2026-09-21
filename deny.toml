@@ -29,8 +29,9 @@ name = "webpki-root-certs"
 allow = ["CDLA-Permissive-2.0"]
 
 # jope-arena fetches SOTArena results over HTTPS with ureq, whose rustls backend ships Mozilla's CA
-# root store via webpki-roots (0.26 re-exports 1.x). That data is CDLA-Permissive-2.0 (a permissive
-# data licence, not code). Scoped to the two root-store crates; the global allow list is unchanged.
+# root store via webpki-roots (1.0, ureq 3's `rustls-webpki-roots`). That data is CDLA-Permissive-2.0
+# (a permissive data licence, not code). Scoped to the two root-store crates; the global allow list
+# is unchanged.
 [[licenses.exceptions]]
 name = "webpki-roots"
 allow = ["CDLA-Permissive-2.0"]

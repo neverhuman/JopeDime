@@ -29,11 +29,18 @@ flate2 = "1"
 object_store = { version = "0.14", default-features = false, features = ["fs"] }
 # Pure-Rust zstd decoder (already in the workspace via starforge) for `.zst` inputs.
 ruzstd = "0.8"
+# The rustls crypto provider is named here (and handed to `ureq` in `fetch.rs`) so the
+# workspace resolves exactly one: `ureq` is built with `rustls-no-provider`, which keeps
+# `rustls/ring` out of the graph alongside the `rustls/aws_lc_rs` that jainnode and
+# object_store/reqwest already enable. Two provider features make
+# `CryptoProvider::from_crate_features()` return `None` and every bare
+# `rustls::ClientConfig::builder()` in the workspace panics.
+rustls.workspace = true
 serde.workspace = true
 serde_json = { workspace = true, features = ["float_roundtrip"] }
 sha2.workspace = true
 tokio.workspace = true
-ureq = "2.10"
+ureq = { version = "3.4", default-features = false, features = ["rustls-no-provider", "rustls-webpki-roots", "gzip"] }
 
 [dev-dependencies]
 tempfile.workspace = true
