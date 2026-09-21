@@ -315,6 +315,57 @@ Custody manifest sha256: `f903b6a00d2ee685…`
 **39 unpushed commits** intact; 1 worktree.
 `~/JopeDime`: on `main`, clean, with the rescued branch still reachable at `dc06289`.
 
+## ⚠️ SCOPE CORRECTION — this cleanup did not end the disk emergency
+
+The brief framed `/tmp/claude-1000` as the main cause. **It was ~6.6 % of used space.**
+
+| Consumer | Size | Share of the 6.5 TiB used |
+| --- | --- | --- |
+| **`/home/ubuntu`** | **5,611 GiB** | **~84 %** |
+| `/tmp` total | ~544 GiB | ~8 % |
+| └ `/tmp/claude-1000` | 442 GiB | ~6.6 % |
+| `/var` | 51 GiB | < 1 % |
+
+A per-entry inventory of all 472 entries in `/home/ubuntu`
+(`~/jope-rescue-20260921/logs/home-inventory.tsv`) shows the real ranking. **The three largest
+trees on this host appear in no brief, no plan and no agent chat:**
+
+| | GiB | In scope this round? |
+| --- | --- | --- |
+| **`remote_super`** | **1,597** | ❌ never mentioned anywhere |
+| **`jain-split`** | **804** | partially — `jope-dime` (129 G) is inside it |
+| **`jbaby`** | **423** | ❌ never mentioned |
+| `jope-preservation` | 233 | kept per C2 |
+| **`jmcp-split`** | **171** | ❌ never mentioned |
+| **`gate-runner`** | **161** | ❌ never mentioned |
+| `jope-flywheel` | 151 | kept per C2 |
+| `preserved-archives` | 132 | kept per C2 |
+| `jope-evidence` | 117 | created by this cleanup (the moved bulk) |
+| `jankurai-split` | 85 | ❌ never mentioned |
+
+**`remote_super` alone is more than twice everything this cleanup reclaimed.** Note also that
+`remote_super/smart_cluster` — the parent of the orphaned worktree removed in Phase 2 — does
+**not** exist, so that tree already contains at least one dead subtree.
+
+### A measurement hazard that affected my own early numbers
+
+The `rtk` `PreToolUse` hook rewrites `du`, `find`, `ls`, `grep` and `sort` and returns
+**summarised or truncated** output. A globbed `du -sk /home/ubuntu/*` returned only entries
+beginning `a`/`b` — the ~300 directories past `b` were silently missing, which is why
+`remote_super`, `jbaby`, `jmcp-split` and `gate-runner` went unnoticed for so long. The inventory
+above was re-derived with `/usr/bin/du` per entry.
+
+**Treat any globbed `du` on this host as possibly partial.** Use `/usr/bin/…` absolute paths.
+
+### Prior art nobody cited
+
+`/home/ubuntu` already contains `disk-pressure-cleanup.sh` (dry-run by default; cleans
+`*/target` trees oldest-first, `/var/tmp/buildah*`, journal vacuum, syslog truncate),
+`big_files_fast.sh`, `fleet-disk-gc/`, and four dated `storage-{audit,cleanup,offload,reclamation}`
+directories going back to 2026-07-24. **This host has had this exact problem at least four times.**
+Read `disk-pressure-cleanup.sh` before writing anything new — it covers `/var` and `/var/tmp`,
+which this cleanup did not touch.
+
 ### Still open
 
 - **The `bullet` session's 163 G** — a live agent was writing in it. Needs the operator's consent.
