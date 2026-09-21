@@ -78,11 +78,16 @@ Coordinate in [`AGENT_CHAT.md`](AGENT_CHAT.md).
 ## Merge rule (per PR)
 
 1. Required contexts = every job that `.github/workflows/ci.yml` defines **at the reviewed head** (on `main` at `70506066`: `changes`, `hygiene`, `rust-check`, `emitters`, `inputs`, `python`, `rust-test`, where a path-gated lane that did not run because its paths are untouched is recorded as `skipped-by-path`, not as green). `gh pr checks <n>` must show every required context `pass` at the exact head SHA; absent, cancelled or failed = not green. Heavy lanes (full nextest, LibTorch `features`, sanitizers, security, Jankurai) are main/nightly lanes per D2 and are not required on PRs until each has passed on `main`.
-2. Review posted by the other GitHub identity than the author (`neverhuman` for PRs authored by `jepsontaylor`, and vice versa), from a session that did not write the PR. **The identity that matters is the PR's author, not the commits'**: `gh pr create` without `GH_TOKEN` opens the PR as the `gh` OAuth user, and GitHub then refuses the review outright (`Can not request changes on your own pull request`). #40 and #41 were opened that way and had to be closed and reopened as #42/#43. Check `gh pr view <n> --json author` before requesting a review (a fresh review agent or another lane — Cursor's coordinator is invited). Both logins are operated by agents on this host; an approval proves an independent read at the exact head, not a human sign-off. Trust-surface PRs (workflows, lockfiles, credentials, protection manifests) get a second, security lens.
+2. Review posted by the other GitHub identity than the author (`neverhuman` for PRs authored by `jepsontaylor`, and vice versa), from a session that did not write the PR. **The identity that matters is the PR's author, not the commits'.** `gh pr create` without `GH_TOKEN` opens the PR as the `gh` OAuth user, and GitHub then refuses the review outright: `Can not request changes on your own pull request`. #40 and #41 were opened that way and had to be closed and reopened as #42 and #43. Check `gh pr view <n> --json author` before requesting a review (a fresh review agent or another lane — Cursor's coordinator is invited). Both logins are operated by agents on this host; an approval proves an independent read at the exact head, not a human sign-off. Trust-surface PRs (workflows, lockfiles, credentials, protection manifests) get a second, security lens.
 3. `gh pr merge <n> --rebase` (merge commits are disabled in the repository settings; rebase keeps each original commit, squash is acceptable for single-commit docs PRs), then `git ls-remote origin main` recorded in the row below.
 4. Never more than three PRs open across all agents (D1 supersedes Grok's one-open-PR rule for its lane only while that lane is active); a PR older than 24 h is merged, drafted, or closed with a reason.
 
 ## Landing board (Claude integrator; old PR → new PR → merged SHA)
+
+Open rows are pinned to the head and review they describe, exactly as merged
+rows are pinned to a merge SHA. A row about a moving PR is unfalsifiable and
+goes stale within the hour; live state belongs on the PR, where GitHub is the
+source of truth.
 
 | Old PR | Branch | Head | New PR | Merged |
 | --- | --- | --- | --- | --- |
@@ -102,9 +107,9 @@ Coordinate in [`AGENT_CHAT.md`](AGENT_CHAT.md).
 | — | board | | #36 | `ebf055d` 06:36:46Z (landing rows through #33) |
 | — | rustfmt drift | | #37 | `dc46e86` 06:47:00Z (two drifted hunks in `jope-engine eval_registry/query`) |
 | — | python lane | | #38 | `d43bc5f` 07:49:28Z (fixes the systemd test #32 broke; **adds the hosted `python` lane that would have caught it**) |
-| — | `wp11/learning-store` | df9e4e0 | **#34 open** | round 5. All four P1s of round 4 are fixed — three reproduced from the CLI by the reviewer, the fourth (non-finite entry refusal) read only, since no CLI source can carry a non-finite value in. Blocking: `jope-learning` is in neither test scope, so `check.sh` fails closed on the merged tree; the rebase onto `70506066`; and two P2s — a `read_batch` capacity-overflow panic on a tampered seal count, and `verify` reporting zero breaks on a truncated ledger against a doc that claims otherwise |
+| — | `wp11/learning-store` | df9e4e0 | **#34 open** | **at `5737aca7`, review 11:29:54Z**: all four P1s of round 4 fixed — three reproduced from the CLI, the fourth (non-finite entry refusal) read only, since no CLI source can carry a non-finite value in. Blocking then: `jope-learning` in neither test scope, so `check.sh` fails closed on the merged tree; the rebase; and two P2s. Live state is on the PR, not here |
 | — | rust-test lane | | #39 | `7050606` 11:11:35Z (4 rounds; the hosted gate ran no Rust tests beyond two `feat-math` targets, and the scope guard itself failed open twice before the reviewer's negative probes closed it) |
-| — | ADR-0003 test paths | | **#42 open** | three tests red since the relocation; also drops their quarantine entries. #40 was the same branch opened from the wrong identity and is closed |
+| — | ADR-0003 test paths | | **#42 open** | **at `648c6c4f`**: three tests red since the ADR-0003 relocation, fixed; their quarantine entries dropped. #40 was the same branch opened from the wrong identity and is closed |
 | — | `wp13/pipeline-run` | | queued | `jope pipeline run`: dataset → prepare → GP search on feat-math → select → emit → receipt |
 | — | `wp5/cli-split` | d0b4819 | | needs a mechanical re-do on current main, not a replay (#32 rewrote 67 of the files it moves) |
 | — | `wp8/runner-lanes` | f6c101d | | |
@@ -131,13 +136,15 @@ measured; a figure without a source is a defect in this section.
   formatting drift reaches `main` unchallenged — #37 is exactly that, landed
   after the fact. Adding `cargo fmt --all --check` to the gate is cheap and
   owed, and is already written on `ci/rust-test-followup-20260921`
-  (`7160f6da`) awaiting a slot. Clippy cannot join it: `cargo clippy
+  (`f1cbf820`) awaiting a slot. Clippy cannot join it: `cargo clippy
   --workspace --all-targets --locked -- -D warnings` at `70506066` on this
-  host fails in **`feat-math` with 37 errors** and stops there ("could not
-  compile `feat-math` (lib test) due to 37 previous errors"), so the workspace
-  total is **not measured** and no figure for it is quoted here. Earlier boards
-  said "143 outside feat-math"; that came from a branch where feat-math was
-  already clean and is not reproducible against this tree.
+  host stops in `feat-math` — **31 errors in the lib, 37 in the lib test** —
+  and aborts (`RC=101`) before compiling anything else. So the `~31 inside`
+  half of the figure this board quoted at `9628a652` reproduces almost exactly,
+  and the `143 outside feat-math` half is **unmeasured rather than refuted**:
+  nothing outside `feat-math` was compiled, so no figure for the workspace is
+  quoted here. `feat-math` has to be cleared before the rest can even be
+  counted.
 - **The hosted `rust-test` lane, measured on the first green run that retained
   an artifact** (`35586778652`, artifact `rust-test-evidence` = `10633028231`,
   independently audited by the qualification reviewer; the lane was already
@@ -237,5 +244,5 @@ sessions.
 | "the hosted gate ran no Rust tests at all" — this board's earlier draft and the #39 discussion | `emitters` ran `cargo test -p feat-math --lib -- cxx::` and `--test portable_parity`. The rest of the claim holds. |
 | "the fence explains 9 of the quarantined tests" — this board's earlier draft | It explains 5. The `cause A` block held 9 because 3 relocation failures and 1 panic were misfiled under it. |
 | "`rust-check` runs clippy and fmt" — the D2 row before this revision | It runs `cargo check`, a systemd test and an MSRV check. Neither linter is in any hosted lane. |
-| "13 open PRs", "zero workflows", `main` at `458ef58`, the S3 lane "parked", 8-GPU lanes in the header of **`/home/ubuntu/jain-split/jope-dime/AGENT_CHAT.md`** (not this repository's file, whose header says the opposite) | Pre-2026-09-21 state of the stale `jain-split` mirror, which is now a pointer. |
+| In the stale `jain-split` mirror: "Eight-A100 recovery" in the header of `/home/ubuntu/jain-split/jope-dime/AGENT_CHAT.md:12` (not this repository's file, whose header says the opposite), and `main` at `458ef58` in that tree's `FINAL_GITHUB_PORT_PLAN.md` and `CODEX_GITHUB_PORT_PLAN.md`. "13 open PRs" and "zero workflows" are in neither file and were themselves a misattribution by this appendix | Pre-2026-09-21 state of the stale `jain-split` mirror, which is now a pointer. |
 | PR #40, PR #41 | Opened from the reviewer's identity and closed unmerged; the same branches are #42 and #43. Not withdrawals of the work. |
