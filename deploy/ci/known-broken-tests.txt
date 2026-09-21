@@ -6,7 +6,8 @@
 #
 # Format: <binary> <test> # <reason>
 #
-# Derived 2026-09-21 from a clean clone of main d43bc5f5 (cause A0 fixed and removed since). Every line below was re-run at low load
+# Derived 2026-09-21 from a clean clone of main d43bc5f5; cause A0 has been fixed and removed
+# since. Every line below was re-run at low load
 # with `--test-threads 2` and reproduced deterministically, so these are real failures, not flakes.
 # Tests that only failed under parallelism are NOT here — see deploy/ci/serial-test-binaries.txt.
 #
@@ -14,7 +15,8 @@
 # The ADR-0003/WP6 relocation had left three tests pointing at moved files. They were repointed
 # at crates/jope-engine/policy/ and python/src/jope/tools/ in the same pull request that removed
 # their lines here, and re-run green. A quarantine file that still names a passing test teaches
-# the next reader to distrust the whole list, so nothing is left behind as a reminder.
+# the next reader to distrust the whole list. This heading is kept because the relocation is the
+# kind of breakage that recurs; the entries are not.
 #
 # --- cause A: the fit authority refuses, permanently ---
 # eval_registry/authority.rs activation_block() reads the activations/coverage tables into
@@ -31,6 +33,10 @@ gp_contracts sealed_memory_view_matches_file_evaluation_and_rejects_writes # nam
 view_contracts fitted_view_predictor_uses_the_exact_cut_and_original_target_units # fit authority fenced
 view_contracts isolated_fitted_view_export_binds_success_and_preserves_worker_failures # fit authority fenced
 view_contracts experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits # fit authority fenced
+#
+# --- cause A1: a panic, filed under the fence block but not caused by it ---
+# Counting this one under cause A would make the fence look like it explains more than it does:
+# after A0 is removed the fence explains five entries, and this is a sixth with its own cause.
 queue native_preparation_status_cannot_change_a_live_gp_queue # queue.rs:133 panic
 #
 # --- cause B: behavioural assertions that do not hold on this tree (not environment) ---
