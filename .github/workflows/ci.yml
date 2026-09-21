@@ -135,7 +135,7 @@ jobs:
       # Two invocations: a name filter given once applies to every selected test binary, so the
       # previous single command ran 0 of the portable_parity tests (found in review of #24).
       - name: Strict portable parity — cxx helper unit tests
-        run: cargo test -p feat-math --locked --lib -- cxx::
+        run: "cargo test -p feat-math --locked --lib -- cxx::"
       - name: Strict portable parity — portable_all_helper_backends_match_bits
         run: cargo test -p feat-math --locked --test portable_parity
 
