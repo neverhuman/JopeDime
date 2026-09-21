@@ -325,7 +325,7 @@ pub fn metric_better(candidate: f64, current: f64, direction: Direction) -> bool
     }
 }
 
-/// `ratings` from `/home/ubuntu/sotarena/src/main.rs`, verbatim: pair statistics are aggregated
+/// `ratings` from the SOTArena reporter's `src/main.rs`, verbatim: pair statistics are aggregated
 /// (count, mean outcome) before the diagonal-Newton iteration, which is exact for the
 /// Bradley–Terry likelihood and avoids materialising millions of repeated pairwise matches.
 pub fn ratings(

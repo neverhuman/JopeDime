@@ -2,7 +2,7 @@
 //! `data/<task>/<hash>/dataset.json`, `data/<task>/<hash>/results/*.json`,
 //! `data/<task>/analysis-blacklist.json`, `data/global/results/*.json`.
 //!
-//! Ported from `/home/ubuntu/sotarena/src/main.rs` (config validation, dataset catalogue, result
+//! Ported from the SOTArena reporter's `src/main.rs` (config validation, dataset catalogue, result
 //! records, score documents, analysis blacklists). The verified-ASPFM archive loader
 //! (`submission/ASPFM/release.json`, an age-encrypted tarball replayed by `aspfm.rs`) is **not**
 //! ported: those results enter the benchmark clone as ordinary `scores.csv` rows instead.

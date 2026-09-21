@@ -1,4 +1,4 @@
-//! Dataset fetch with SHA-256 verification (`/home/ubuntu/sotarena/src/main.rs::fetch`).
+//! Dataset fetch with SHA-256 verification (the SOTArena reporter's `src/main.rs::fetch`).
 //!
 //! Each reporter dataset (`data/<task>/<hash>/dataset.json`) names an HTTPS CSV per split with
 //! its exact byte count and SHA-256. Files land in `<cache>/<task>/<hash>/{train,test}.csv`

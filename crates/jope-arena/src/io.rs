@@ -118,10 +118,16 @@ mod tests {
         let zst = dir.path().join("d.csv.zst");
         std::fs::write(
             &zst,
-            ruzstd::encoding::compress_to_vec(&b"x,y\n1,2\n"[..], ruzstd::encoding::CompressionLevel::Fastest),
+            ruzstd::encoding::compress_to_vec(
+                &b"x,y\n1,2\n"[..],
+                ruzstd::encoding::CompressionLevel::Fastest,
+            ),
         )
         .unwrap();
-        assert_eq!(read_bytes(&dir.path().join("d.csv")).unwrap(), b"x,y\n1,2\n");
+        assert_eq!(
+            read_bytes(&dir.path().join("d.csv")).unwrap(),
+            b"x,y\n1,2\n"
+        );
         assert_eq!(resolve_input(&dir.path().join("d.csv")), Some(zst));
         let (sha, bytes) = sha256_file(&plain).unwrap();
         assert_eq!(bytes, 8);
