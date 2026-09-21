@@ -205,3 +205,47 @@ jobs:
       - name: Pytest (xbabe2-only tests deselected)
         working-directory: python
         run: uv run --no-sync pytest -q -m "not xbabe2" -p no:cacheprovider
+
+  # The hosted gate ran NO Rust tests: `rust-check` is `cargo check`, and the only `cargo test` in
+  # this file was `-p feat-math`. So every integration test in the repo was compiled and never run,
+  # which is how 14 broken engine tests sat unnoticed. This lane closes that.
+  #   step 1 blocks on the whole PR tier except the two documented sets;
+  #   step 2 blocks on the binaries that must not race (they pass serially — they are not broken);
+  #   step 3 runs the known-broken set and reports without blocking, so a recovery is visible and
+  #          the allowlist cannot quietly rot.
+  # deploy/ci/rust-test-filter.sh is the single source of truth shared with the justfile.
+  rust-test:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      CARGO_TERM_COLOR: always
+      CARGO_INCREMENTAL: "0"
+      OMP_NUM_THREADS: "1"
+      RAYON_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      JOPE_PARITY_STRICT: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          persist-credentials: false
+      - name: Toolchain (from rust-toolchain.toml)
+        run: rustup show active-toolchain
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: rust-test
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@4076c08d76dba979c11a7285295b0716c1d67908 # v2.87.15
+        with:
+          tool: cargo-nextest
+      - name: PR tier, blocking
+        run: cargo nextest run -P pr --workspace --locked -E "$(bash deploy/ci/rust-test-filter.sh)"
+      - name: Serial-only binaries, blocking
+        run: cargo nextest run -P pr --workspace --locked --test-threads 1 -E "$(bash deploy/ci/rust-test-filter.sh --serial)"
+      - name: Known-broken set (informative; a pass here means delete its line)
+        continue-on-error: true
+        run: cargo nextest run -P pr --workspace --locked --test-threads 2 -E "$(bash deploy/ci/rust-test-filter.sh --broken)"
