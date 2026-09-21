@@ -5,7 +5,28 @@ cd "$(dirname "$0")/../.."
 fail=0
 step(){ printf '\n== %s\n' "$*"; }
 step "cargo metadata --locked"; cargo metadata --locked --format-version 1 --no-deps > /dev/null
-step "exactly one rustls crypto provider in the workspace graph"; if rustls_tree=$(cargo tree --locked --workspace -e features -i rustls 2>/dev/null); then providers=$(grep -oE 'rustls feature "(ring|aws_lc_rs)"' <<<"$rustls_tree" | sort -u); n=$(printf '%s\n' "$providers" | grep -c 'rustls feature' || true); if [ "$n" = 1 ]; then echo "ok: $providers"; else echo "${providers:-<none>}"; echo "rustls must resolve exactly one crypto provider; $n found. Two (or zero) make CryptoProvider::from_crate_features() return None and every bare rustls::ClientConfig::builder() in the workspace panics (crates/smartcluster/jainnode/src/control.rs). Build the offending HTTP client without its provider feature (e.g. ureq's rustls-no-provider) instead of relaxing this check."; fail=1; fi; else echo "rustls is not in the workspace graph; nothing to disambiguate"; fi
+step "exactly one rustls crypto provider in the workspace graph"
+rustls_err=$(mktemp); rustls_tree=""
+if rustls_tree=$(cargo tree --locked --workspace -e features -i rustls 2>"$rustls_err"); then
+  providers=$(grep -oE 'rustls feature "(ring|aws_lc_rs)"' <<<"$rustls_tree" | sort -u)
+  n=$(printf '%s\n' "$providers" | grep -c 'rustls feature' || true)
+  if [ "$n" = 1 ]; then echo "ok: $providers"; else
+    echo "${providers:-<none>}"
+    echo "rustls must resolve exactly one crypto provider; $n found. Two (or zero) make CryptoProvider::from_crate_features() return None and every bare rustls::ClientConfig::builder() in the workspace panics (crates/smartcluster/jainnode/src/control.rs). Build the offending HTTP client without its provider feature (e.g. ureq's rustls-no-provider) instead of relaxing this check."
+    fail=1
+  fi
+elif grep -q 'did not match any packages' "$rustls_err"; then
+  # The one legitimate non-zero exit: rustls is genuinely absent from the graph.
+  echo "rustls is not in the workspace graph; nothing to disambiguate"
+else
+  # Any other failure (most commonly a Cargo.toml edit whose Cargo.lock was not
+  # regenerated: "cannot update the lock file ... because --locked was passed") means the
+  # guard did not run. Fail closed -- a silent pass here is how the regression lands.
+  cat "$rustls_err"
+  echo "cargo tree failed (above); the rustls provider guard could not run. Fix the error -- do not treat this as a pass."
+  fail=1
+fi
+rm -f "$rustls_err"
 step "shell syntax + shellcheck"; while IFS= read -r f; do bash -n "$f"; done < <(git ls-files '*.sh'); if command -v shellcheck >/dev/null; then git ls-files 'deploy/ci/*.sh' 'xtools/**/*.sh' | xargs -r shellcheck -S warning; fi
 step "actionlint"; if command -v actionlint >/dev/null; then actionlint -no-color; else echo "actionlint not installed (skipped locally; CI installs it)"; fi
 step "gitleaks"; if command -v gitleaks >/dev/null; then gitleaks detect --redact --no-banner --config .gitleaks.toml --source . ; else echo "gitleaks not installed (skipped locally; CI installs it)"; fi

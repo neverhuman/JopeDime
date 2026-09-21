@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 16 --config-file deploy/ci/nextest-inventory.toml",
-  "count": 2318,
+  "count": 2353,
   "ignored": 34,
   "packages": {
    "battle-gpu": {
@@ -941,7 +941,7 @@
     }
    },
    "jainnode": {
-    "count": 81,
+    "count": 82,
     "ignored": 0,
     "binaries": {
      "jainnode": {
@@ -1037,6 +1037,74 @@
       "ignored": 0,
       "tests": [
        "tests::run_requires_role_envelope_and_independent_hub_key"
+      ]
+     },
+     "jainnode::rustls_provider": {
+      "kind": "test",
+      "count": 1,
+      "ignored": 0,
+      "tests": [
+       "rustls_crate_features_name_exactly_one_crypto_provider"
+      ]
+     }
+    }
+   },
+   "jope-arena": {
+    "count": 34,
+    "ignored": 0,
+    "binaries": {
+     "jope-arena": {
+      "kind": "lib",
+      "count": 31,
+      "ignored": 0,
+      "tests": [
+       "elo::tests::aggregated_and_per_match_fits_agree",
+       "elo::tests::better_method_gets_higher_rating",
+       "elo::tests::direction_and_tolerance_are_deterministic",
+       "elo::tests::matches_follow_sorted_upper_triangle_order_with_relative_ties",
+       "elo::tests::methods_without_a_match_have_no_rating",
+       "elo::tests::pairwise_sum_matches_numpy_structure",
+       "elo::tests::ties_remain_centered",
+       "family::tests::configured_families_match_and_merge_historical_variants",
+       "family::tests::report_ranks_families_and_validates_blacklists",
+       "fetch::tests::cache_must_be_outside_the_root",
+       "fetch::tests::fetch_verifies_downloads_and_the_cache",
+       "io::tests::gz_inputs_are_transparent",
+       "leaderboard::tests::ladder_matches_the_python_reference_shape",
+       "leaderboard::tests::pending_counts_only_unresolved_cells",
+       "leaderboard::tests::results_resolution_prefers_versions_then_flat",
+       "paths::tests::explicit_variables_win_and_empty_values_are_unset",
+       "paths::tests::home_marker_is_found_from_the_working_directory",
+       "paths::tests::roots_follow_home_and_state",
+       "publish::tests::file_store_publish_is_byte_exact_and_immutable",
+       "pyfmt::tests::repr_matches_python_spelling",
+       "pyfmt::tests::rounding_matches_python",
+       "reporter::tests::config_validation_rejects_overlaps_and_bad_weights",
+       "reporter::tests::hashes_and_urls_fail_closed",
+       "reporter::tests::patterns_are_exact_or_one_trailing_prefix_wildcard",
+       "reporter::tests::results_keep_the_best_score_and_track_validity",
+       "scores::tests::emission_reads_every_receipt_kind",
+       "scores::tests::empty_campaign_is_an_error",
+       "scores::tests::header_and_enums_are_enforced",
+       "scores::tests::scores_round_trip_byte_for_byte",
+       "verify::tests::manifest_hashes_are_checked_and_extras_reported",
+       "verify::tests::missing_manifest_is_an_error"
+      ]
+     },
+     "jope-arena::bin/jope-arena": {
+      "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
+     "jope-arena::elo_regression": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "committed_fixture_reproduces_the_published_ladder",
+       "fixture_files_are_the_published_bytes",
+       "live_sotarena_root_reproduces_the_published_ladder_when_present"
       ]
      }
     }
@@ -3891,7 +3959,7 @@
   }
  },
  "totals": {
-  "rust": 2318,
+  "rust": 2353,
   "python": 214
  }
 }
