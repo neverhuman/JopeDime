@@ -23,8 +23,7 @@ pub use crate::router_contracts_v2::{
 
 pub const EXPLORATORY_CAMPAIGN_ID: &str =
     "hyperion-two-stream-current20-train-adaptive-exploratory-v2";
-pub const CONFIRMATORY_CAMPAIGN_ID: &str =
-    "hyperion-two-stream-fresh20-confirmatory-v1";
+pub const CONFIRMATORY_CAMPAIGN_ID: &str = "hyperion-two-stream-fresh20-confirmatory-v1";
 pub const ROUTER_SEEDS: [u64; 2] = [303, 404];
 pub const OUTER_FOLDS: usize = 7;
 pub const INNER_FOLDS: usize = 2;
@@ -129,7 +128,10 @@ impl FeatureViewContractV2 {
         for (name, value) in [
             ("feature-view train", self.train_sha256.as_str()),
             ("feature-view real cell", self.real_cell_sha256.as_str()),
-            ("feature-view encoder", self.encoder_identity_sha256.as_str()),
+            (
+                "feature-view encoder",
+                self.encoder_identity_sha256.as_str(),
+            ),
         ] {
             validate_sha256(name, value)?;
         }
@@ -251,7 +253,9 @@ impl FixedCandidateBankV1 {
                         == candidate.median_leave_one_dataset_percentile_micros
                         && prior.semantic_sha256 >= candidate.semantic_sha256)
                 {
-                    return Err("fixed candidate bank is not in its deterministic rank order".into());
+                    return Err(
+                        "fixed candidate bank is not in its deterministic rank order".into(),
+                    );
                 }
             }
         }
@@ -332,7 +336,9 @@ pub fn build_fixed_candidate_bank(
         .collect::<Vec<_>>();
     eligible.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| a.1.cmp(&b.1)));
     if eligible.len() < FIXED_BANK_SIZE {
-        return Err("fewer than twelve production-compatible genomes have complete evidence".into());
+        return Err(
+            "fewer than twelve production-compatible genomes have complete evidence".into(),
+        );
     }
     let candidates = eligible
         .into_iter()
@@ -390,7 +396,11 @@ impl GroupedOuterPlanV2 {
         {
             return Err("grouped outer plan schema, seed, or shape drifted".into());
         }
-        let all_groups = self.row_atomic_groups.iter().cloned().collect::<BTreeSet<_>>();
+        let all_groups = self
+            .row_atomic_groups
+            .iter()
+            .cloned()
+            .collect::<BTreeSet<_>>();
         if all_groups.len() != self.atomic_group_count
             || self.atomic_group_count < MINIMUM_ATOMIC_GROUPS
         {
@@ -403,7 +413,9 @@ impl GroupedOuterPlanV2 {
                 || fold.hold_rows.len() < MINIMUM_HOLD_ROWS
                 || fold.hold_groups.len() < MINIMUM_HOLD_GROUPS
             {
-                return Err(format!("outer fold {index} violates the minimum structural guards"));
+                return Err(format!(
+                    "outer fold {index} violates the minimum structural guards"
+                ));
             }
             let fit_rows = fold.fit_rows.iter().copied().collect::<BTreeSet<_>>();
             let hold_rows = fold.hold_rows.iter().copied().collect::<BTreeSet<_>>();
@@ -413,7 +425,9 @@ impl GroupedOuterPlanV2 {
                 || fit_rows.len() + hold_rows.len() != self.row_count
                 || fit_rows.union(&hold_rows).copied().ne(0..self.row_count)
             {
-                return Err(format!("outer fold {index} does not partition every row once"));
+                return Err(format!(
+                    "outer fold {index} does not partition every row once"
+                ));
             }
             let expected_hold_groups = hold_rows
                 .iter()
@@ -431,14 +445,18 @@ impl GroupedOuterPlanV2 {
                 || actual_hold_groups.len() != fold.hold_groups.len()
                 || actual_fit_groups.len() != fold.fit_groups.len()
             {
-                return Err(format!("outer fold {index} leaks or misstates atomic groups"));
+                return Err(format!(
+                    "outer fold {index} leaks or misstates atomic groups"
+                ));
             }
             for row in hold_rows {
                 coverage[row] = coverage[row].saturating_add(1);
             }
         }
         if coverage.iter().any(|count| *count != 1) {
-            return Err("outer fold bank does not provide exactly one hold prediction per row".into());
+            return Err(
+                "outer fold bank does not provide exactly one hold prediction per row".into(),
+            );
         }
         Ok(())
     }
@@ -471,7 +489,11 @@ pub fn build_grouped_outer_plan_v2(
         return Err("Hyperion routing requires at least fourteen atomic groups".into());
     }
     let mut ordered = group_rows.keys().cloned().collect::<Vec<_>>();
-    ordered.sort_by(|a, b| seeded_group_key(seed, a).cmp(&seeded_group_key(seed, b)).then(a.cmp(b)));
+    ordered.sort_by(|a, b| {
+        seeded_group_key(seed, a)
+            .cmp(&seeded_group_key(seed, b))
+            .then(a.cmp(b))
+    });
     let mut fold_groups = vec![Vec::<String>::new(); OUTER_FOLDS];
     let mut fold_rows = vec![0usize; OUTER_FOLDS];
     for (index, group) in ordered.into_iter().enumerate() {
@@ -541,7 +563,9 @@ impl GroupedFoldBankV2 {
                 && (plan.row_count != self.plans[0].row_count
                     || plan.row_atomic_groups != self.plans[0].row_atomic_groups)
             {
-                return Err("grouped fold bank plans do not describe the same rows and groups".into());
+                return Err(
+                    "grouped fold bank plans do not describe the same rows and groups".into(),
+                );
             }
         }
         Ok(())
@@ -608,20 +632,31 @@ impl StrategyScreenConfigV3 {
             || self.test_material_present
             || self.candidate_timeout_seconds != FIXED_CANDIDATE_TIMEOUT_SECONDS
         {
-            return Err("strategy-screen V3 authority, seed, timeout, or test boundary drifted".into());
+            return Err(
+                "strategy-screen V3 authority, seed, timeout, or test boundary drifted".into(),
+            );
         }
         self.feature_view.validate()?;
         if self.train_sha256 != self.feature_view.train_sha256
             || self.real_cell_sha256 != self.feature_view.real_cell_sha256
         {
-            return Err("strategy-screen V3 feature view is not bound to the same train and cell bytes".into());
+            return Err(
+                "strategy-screen V3 feature view is not bound to the same train and cell bytes"
+                    .into(),
+            );
         }
         for (name, value) in [
             ("strategy dataset", self.dataset_sha256.as_str()),
             ("strategy train", self.train_sha256.as_str()),
             ("strategy real cell", self.real_cell_sha256.as_str()),
-            ("strategy grouped fold bank", self.grouped_fold_bank_sha256.as_str()),
-            ("strategy candidate bank", self.candidate_bank_sha256.as_str()),
+            (
+                "strategy grouped fold bank",
+                self.grouped_fold_bank_sha256.as_str(),
+            ),
+            (
+                "strategy candidate bank",
+                self.candidate_bank_sha256.as_str(),
+            ),
             ("strategy configuration", self.configuration_sha256.as_str()),
             ("strategy source tree", self.source_tree_sha256.as_str()),
             ("strategy binary", self.binary_sha256.as_str()),
@@ -769,7 +804,9 @@ impl FoldCellEncodingReceiptV2 {
             || self.test_path_resolved
             || !self.finite_output
         {
-            return Err("fold-local cell receipt failed CUDA, isolation, shape, or leakage proof".into());
+            return Err(
+                "fold-local cell receipt failed CUDA, isolation, shape, or leakage proof".into(),
+            );
         }
         for (name, value) in [
             ("fold train", self.train_sha256.as_str()),
@@ -829,7 +866,12 @@ impl FoldLocalCellCoverageV2 {
             validate_sha256(name, value)?;
         }
         if !self.structurally_eligible {
-            if self.failure_reason.as_deref().unwrap_or("").trim().is_empty()
+            if self
+                .failure_reason
+                .as_deref()
+                .unwrap_or("")
+                .trim()
+                .is_empty()
                 || !self.receipts.is_empty()
                 || self.full_train_byte_equal
             {
@@ -842,7 +884,9 @@ impl FoldLocalCellCoverageV2 {
             || self.fresh_full_train_cell_sha256 != self.authorized_full_train_cell_sha256
             || self.receipts.len() != ROUTER_SEEDS.len() * OUTER_FOLDS
         {
-            return Err("eligible coverage is incomplete or does not replay train3.vs byte-for-byte".into());
+            return Err(
+                "eligible coverage is incomplete or does not replay train3.vs byte-for-byte".into(),
+            );
         }
         let mut keys = BTreeSet::new();
         for receipt in &self.receipts {
@@ -893,9 +937,13 @@ impl FixedBankSeedResultV2 {
         if !ROUTER_SEEDS.contains(&self.seed)
             || !self.complete
             || self.append_fold_relative_regressions.len() != OUTER_FOLDS
-            || ![self.raw_pooled_rmse, self.cell_only_pooled_rmse, self.append_pooled_rmse]
-                .iter()
-                .all(|value| value.is_finite() && *value >= 0.0)
+            || ![
+                self.raw_pooled_rmse,
+                self.cell_only_pooled_rmse,
+                self.append_pooled_rmse,
+            ]
+            .iter()
+            .all(|value| value.is_finite() && *value >= 0.0)
             || self
                 .append_fold_relative_regressions
                 .iter()
@@ -959,8 +1007,14 @@ impl FixedBankAdmissionV2 {
             ("fixed-bank dataset", self.dataset_sha256.as_str()),
             ("fixed-bank train", self.train_sha256.as_str()),
             ("fixed-bank real cell", self.real_cell_sha256.as_str()),
-            ("fixed-bank candidate bank", self.candidate_bank_sha256.as_str()),
-            ("fixed-bank fold bank", self.grouped_fold_bank_sha256.as_str()),
+            (
+                "fixed-bank candidate bank",
+                self.candidate_bank_sha256.as_str(),
+            ),
+            (
+                "fixed-bank fold bank",
+                self.grouped_fold_bank_sha256.as_str(),
+            ),
         ] {
             validate_sha256(name, value)?;
         }
@@ -971,11 +1025,12 @@ impl FixedBankAdmissionV2 {
             }
         }
         let expected_admission = self.seeds.iter().all(|seed| {
-            seed.append_relative_improvement() >= 0.0
-                && seed.worst_append_fold_regression() <= 0.10
+            seed.append_relative_improvement() >= 0.0 && seed.worst_append_fold_regression() <= 0.10
         });
         if self.append_admitted != expected_admission {
-            return Err("fixed-bank append admission does not match its frozen two-seed gate".into());
+            return Err(
+                "fixed-bank append admission does not match its frozen two-seed gate".into(),
+            );
         }
         Ok(())
     }
@@ -1028,7 +1083,9 @@ impl GpStreamReceiptV2 {
             || self.outer_hold_labels_reached_search
             || self.test_material_present
         {
-            return Err("GP stream drifted from the independent exact-2,000 nested contract".into());
+            return Err(
+                "GP stream drifted from the independent exact-2,000 nested contract".into(),
+            );
         }
         for digest in [
             &self.search_identity_sha256,
@@ -1097,10 +1154,7 @@ impl NestedTwoStreamSearchV2 {
         }
         for seed in ROUTER_SEEDS {
             for fold in 0..OUTER_FOLDS as u32 {
-                for view in [
-                    FeatureViewKindV2::Raw,
-                    FeatureViewKindV2::HyperionCellOnly,
-                ] {
+                for view in [FeatureViewKindV2::Raw, FeatureViewKindV2::HyperionCellOnly] {
                     if !keys.contains(&(seed, fold, view)) {
                         return Err("raw or cell-only nested stream is missing".into());
                     }
@@ -1401,8 +1455,8 @@ impl SeedActivationEvidenceV2 {
         } else {
             0.0
         };
-        let expected_normalized =
-            (self.raw_pooled_rmse - self.route_pooled_rmse) / self.training_target_standard_deviation;
+        let expected_normalized = (self.raw_pooled_rmse - self.route_pooled_rmse)
+            / self.training_target_standard_deviation;
         let expected_wins = self
             .raw_fold_rmse
             .iter()
@@ -1428,7 +1482,9 @@ impl SeedActivationEvidenceV2 {
             || self.fold_wins != expected_wins
             || (self.worst_fold_regression - expected_worst).abs() > 1e-12
         {
-            return Err("seed activation evidence does not reconstruct from its RMSE values".into());
+            return Err(
+                "seed activation evidence does not reconstruct from its RMSE values".into(),
+            );
         }
         Ok(())
     }
@@ -1584,8 +1640,7 @@ impl RouteCandidateV2 {
         let median = (self.seeds[0].relative_rmse_improvement
             + self.seeds[1].relative_rmse_improvement)
             * 0.5;
-        median
-            >= thresholds.minimum_two_seed_median_improvement_micros as f64 / 1_000_000.0
+        median >= thresholds.minimum_two_seed_median_improvement_micros as f64 / 1_000_000.0
     }
 }
 
@@ -1717,8 +1772,7 @@ impl SeedAblationV2 {
             old_production_raw_rmse,
             matched_raw_gp_rmse,
             routed_rmse,
-            gp_lift: (old_production_raw_rmse - matched_raw_gp_rmse)
-                / old_production_raw_rmse,
+            gp_lift: (old_production_raw_rmse - matched_raw_gp_rmse) / old_production_raw_rmse,
             incremental_hyperion_lift: (matched_raw_gp_rmse - routed_rmse) / matched_raw_gp_rmse,
             total_lift: (old_production_raw_rmse - routed_rmse) / old_production_raw_rmse,
         })
@@ -1774,17 +1828,31 @@ impl RouterPolicyFreezeV2 {
             if !dataset.starts_with(CURRENT_EXPLORATORY_DATASET_IDS[index])
                 || !unique.insert(dataset.as_str())
             {
-                return Err("router policy adaptation cohort is foreign, reordered, or duplicated".into());
+                return Err(
+                    "router policy adaptation cohort is foreign, reordered, or duplicated".into(),
+                );
             }
         }
         for (name, value) in [
-            ("policy candidate bank", self.fixed_candidate_bank_sha256.as_str()),
-            ("policy grouped folds", self.grouped_fold_protocol_sha256.as_str()),
+            (
+                "policy candidate bank",
+                self.fixed_candidate_bank_sha256.as_str(),
+            ),
+            (
+                "policy grouped folds",
+                self.grouped_fold_protocol_sha256.as_str(),
+            ),
             ("policy encoder", self.encoder_identity_sha256.as_str()),
-            ("policy search configuration", self.search_configuration_sha256.as_str()),
+            (
+                "policy search configuration",
+                self.search_configuration_sha256.as_str(),
+            ),
             ("policy source tree", self.source_tree_sha256.as_str()),
             ("policy search binary", self.search_binary_sha256.as_str()),
-            ("policy comparator", self.comparator_snapshot_sha256.as_str()),
+            (
+                "policy comparator",
+                self.comparator_snapshot_sha256.as_str(),
+            ),
             ("policy evaluator", self.evaluator_sha256.as_str()),
             ("policy finalizer", self.finalizer_binary_sha256.as_str()),
         ] {
@@ -1849,8 +1917,14 @@ impl RouterSeedSelectionV2 {
                 self.selected_predictor_sha256.as_str(),
             ),
             ("selection decision", self.router_decision_sha256.as_str()),
-            ("selection nested search", self.nested_search_sha256.as_str()),
-            ("selection cell coverage", self.fold_cell_coverage_sha256.as_str()),
+            (
+                "selection nested search",
+                self.nested_search_sha256.as_str(),
+            ),
+            (
+                "selection cell coverage",
+                self.fold_cell_coverage_sha256.as_str(),
+            ),
             (
                 "selection fixed-bank admission",
                 self.fixed_bank_admission_sha256.as_str(),
@@ -1909,7 +1983,9 @@ impl RouterSelectionInventoryV2 {
             || !self.all_selections_precede_test_access
             || self.test_access_count_at_freeze != 0
         {
-            return Err("selection inventory is partial, foreign, or was frozen after test access".into());
+            return Err(
+                "selection inventory is partial, foreign, or was frozen after test access".into(),
+            );
         }
         let datasets = self.dataset_sha256s.iter().collect::<BTreeSet<_>>();
         if datasets.len() != ROUTER_DATASET_COUNT {
@@ -1921,7 +1997,9 @@ impl RouterSelectionInventoryV2 {
         if self.campaign_id == EXPLORATORY_CAMPAIGN_ID {
             for (index, dataset) in self.dataset_sha256s.iter().enumerate() {
                 if !dataset.starts_with(CURRENT_EXPLORATORY_DATASET_IDS[index]) {
-                    return Err("exploratory selection inventory differs from the current twenty".into());
+                    return Err(
+                        "exploratory selection inventory differs from the current twenty".into(),
+                    );
                 }
             }
         }
@@ -2060,8 +2138,8 @@ pub fn stage_sealed_test_once_v2(
     if bytes.is_empty() || feature_count == 0 || raw_sha256(bytes) != test_sha256 {
         return Err("sealed test bytes are empty or differ from their authorized hash".into());
     }
-    let text = std::str::from_utf8(bytes)
-        .map_err(|error| format!("sealed test is not UTF-8: {error}"))?;
+    let text =
+        std::str::from_utf8(bytes).map_err(|error| format!("sealed test is not UTF-8: {error}"))?;
     let mut feature_rows = Vec::new();
     let mut labels = Vec::new();
     for (line_index, line) in text.lines().enumerate() {
@@ -2181,7 +2259,11 @@ pub fn lock_finalizer_route_before_labels_v2(
     if proof.encoder_identity_sha256 != policy.encoder_identity_sha256 {
         failures.push("encoder identity mismatch".into());
     }
-    if validate_sha256("authorized train cell", &proof.authorized_full_train_cell_sha256).is_err()
+    if validate_sha256(
+        "authorized train cell",
+        &proof.authorized_full_train_cell_sha256,
+    )
+    .is_err()
         || proof.fresh_full_train_cell_sha256 != proof.authorized_full_train_cell_sha256
     {
         failures.push("fresh full-train cell output is not byte-identical to train3.vs".into());
@@ -2279,7 +2361,9 @@ pub fn score_after_finalizer_lock_v2(
         ("requested route", requested_route_predictions),
     ] {
         if predictions.len() != labels.len() {
-            return Err(format!("{name} predictions do not cover the staged test rows"));
+            return Err(format!(
+                "{name} predictions do not cover the staged test rows"
+            ));
         }
         require_finite(name, predictions)?;
     }
@@ -2291,11 +2375,7 @@ pub fn score_after_finalizer_lock_v2(
     let old_production_raw_rmse = rmse_slice(labels, old_raw_predictions)?;
     let matched_raw_gp_rmse = rmse_slice(labels, matched_raw_predictions)?;
     let routed_rmse = rmse_slice(labels, routed_predictions)?;
-    let ablation = SeedAblationV2::new(
-        old_production_raw_rmse,
-        matched_raw_gp_rmse,
-        routed_rmse,
-    )?;
+    let ablation = SeedAblationV2::new(old_production_raw_rmse, matched_raw_gp_rmse, routed_rmse)?;
     Ok(FinalizedSeedScoreV2 {
         schema: FinalizedSeedScoreV2::SCHEMA.into(),
         seed,

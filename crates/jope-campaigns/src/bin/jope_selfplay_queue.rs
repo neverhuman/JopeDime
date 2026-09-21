@@ -3762,10 +3762,7 @@ mod tests {
         let targets = dynamic_queue_targets(&[20.0, 30.0, 40.0], 200).unwrap();
         assert_eq!(targets.target, 2_048);
         assert_eq!(targets.hard_cap, 4_096);
-        assert_eq!(
-            dynamic_queue_targets(&[20.0], 2_000).unwrap().target,
-            2_500
-        );
+        assert_eq!(dynamic_queue_targets(&[20.0], 2_000).unwrap().target, 2_500);
         assert!(QUEUE_STATES.contains(&"queued"));
         assert!(QUEUE_STATES.contains(&"starting"));
         assert!(!QUEUE_STATES.contains(&"held"));

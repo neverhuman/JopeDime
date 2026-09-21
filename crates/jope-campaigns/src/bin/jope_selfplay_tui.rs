@@ -1002,9 +1002,7 @@ fn collect_sources(args: &Args) -> RawSources {
         &mut raw.source_states,
     );
     raw.supply_breaker = read_json_source(
-        &args
-            .root
-            .join("ops/cohort-supply-circuit-breaker.v1.json"),
+        &args.root.join("ops/cohort-supply-circuit-breaker.v1.json"),
         "supply-breaker",
         true,
         &mut raw.source_states,
@@ -1032,9 +1030,7 @@ fn collect_sources(args: &Args) -> RawSources {
         &mut raw.source_states,
     );
     raw.campaign = read_json_source(
-        &args
-            .root
-            .join("ops/dlgp-budget-campaign-status.v1.json"),
+        &args.root.join("ops/dlgp-budget-campaign-status.v1.json"),
         "budget-campaign",
         true,
         &mut raw.source_states,
@@ -3126,7 +3122,9 @@ fn parse_campaign(value: Option<&Value>) -> CampaignSummary {
         .unwrap_or("-")
         .to_owned();
     CampaignSummary {
-        stage: string_at(value, &["stage"]).unwrap_or("unavailable").to_owned(),
+        stage: string_at(value, &["stage"])
+            .unwrap_or("unavailable")
+            .to_owned(),
         gate_state: string_at(value, &["gate_state"])
             .unwrap_or("launch_gates_blocked")
             .to_owned(),
@@ -3686,10 +3684,15 @@ fn blocked_banner(dashboard: &Dashboard) -> Option<String> {
         ));
     }
     if dashboard.priority_drift {
-        return Some("DIME BLOCKED — project priority drift; launch remains fail-closed".to_owned());
+        return Some(
+            "DIME BLOCKED — project priority drift; launch remains fail-closed".to_owned(),
+        );
     }
     if dashboard.stale_critical_source {
-        return Some("DIME BLOCKED — one or more critical canonical status sources are stale or absent".to_owned());
+        return Some(
+            "DIME BLOCKED — one or more critical canonical status sources are stale or absent"
+                .to_owned(),
+        );
     }
     if below_floor_without_ready {
         return Some(format!(
@@ -3731,9 +3734,11 @@ fn blocked_banner(dashboard: &Dashboard) -> Option<String> {
         ));
     }
     if dime_waiting > 0 {
-        if let Some(node) = dashboard.nodes.iter().find(|node| {
-            node.state == "up" && node.cpu_busy_pct.is_some_and(|value| value < 25.0)
-        }) {
+        if let Some(node) = dashboard
+            .nodes
+            .iter()
+            .find(|node| node.state == "up" && node.cpu_busy_pct.is_some_and(|value| value < 25.0))
+        {
             return Some(format!(
                 "DIME STARVED — runnable backlog while {} remains at {:.1}% CPU",
                 node.node,
@@ -3819,9 +3824,7 @@ fn cockpit_state(dashboard: &Dashboard) -> &'static str {
     {
         return "RUNNING";
     }
-    if dashboard.campaign.gate_state != "runnable"
-        && dashboard.campaign.gate_state != "complete"
-    {
+    if dashboard.campaign.gate_state != "runnable" && dashboard.campaign.gate_state != "complete" {
         return "GATED";
     }
     "RUNNING"
@@ -5967,7 +5970,10 @@ fn render_compact_gpu_dl(
                     }),
                 ),
                 Span::raw(short(
-                    &format!("{role}{} — {reason}", gpu.owner_job.as_deref().unwrap_or("idle")),
+                    &format!(
+                        "{role}{} — {reason}",
+                        gpu.owner_job.as_deref().unwrap_or("idle")
+                    ),
                     area.width.saturating_sub(42) as usize,
                 )),
             ])

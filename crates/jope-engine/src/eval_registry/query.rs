@@ -435,9 +435,7 @@ pub(super) fn score_verified(
         predictions_sha256: hash(&predictions),
         metrics_sha256: hash(&metrics),
         producer_source_sha256: hash(include_bytes!("query.rs")),
-        predictor_source_sha256: hash(include_bytes!(
-            "../../../feat-math/src/model.rs"
-        )),
+        predictor_source_sha256: hash(include_bytes!("../../../feat-math/src/model.rs")),
         preprocessing_source_sha256: hash(include_bytes!("../prepare.rs")),
         producer_executable_sha256,
         producer_runtime_sha256: runtime.into(),
@@ -521,9 +519,7 @@ pub fn verify_artifacts(
     ensure!(
         receipt.producer_source_sha256 == hash(include_bytes!("query.rs"))
             && receipt.predictor_source_sha256
-                == hash(include_bytes!(
-                    "../../../feat-math/src/model.rs"
-                ))
+                == hash(include_bytes!("../../../feat-math/src/model.rs"))
             && receipt.preprocessing_source_sha256 == hash(include_bytes!("../prepare.rs"))
             && valid_sha(&receipt.producer_executable_sha256)
             && valid_sha(&receipt.producer_runtime_sha256)

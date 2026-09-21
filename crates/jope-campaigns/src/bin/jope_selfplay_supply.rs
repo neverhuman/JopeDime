@@ -567,8 +567,8 @@ impl PersistedSupplyState {
         prior.validate()?;
         let scientific_payload = proposer_scientific_payload(self, &prior)?;
         let mut projection = proposer_recovery_projection(root, self, &scientific_payload)?;
-        let replayed_receipt = self.proposal_job_id.as_deref()
-            != Some(projection.current_job_identity.as_str());
+        let replayed_receipt =
+            self.proposal_job_id.as_deref() != Some(projection.current_job_identity.as_str());
         reconcile_proposer_projection(root, self, &projection)?;
         if replayed_receipt {
             self.revision = self.revision.saturating_add(1);
@@ -630,9 +630,9 @@ impl PersistedSupplyState {
             .checked_add(1)
             .context("cohort proposer infrastructure attempt overflow")?;
         let next_job_identity = format!("{base}-infra{next_attempt_number:06}");
-        let scientific_failures = projection
-            .scientific_failures
-            .saturating_add(u32::from(terminal_class == DimeTerminalClassV1::ScientificFailure));
+        let scientific_failures = projection.scientific_failures.saturating_add(u32::from(
+            terminal_class == DimeTerminalClassV1::ScientificFailure,
+        ));
         let retry_allowed = scientific_failures < 5;
         let evidence_sha256 = scientific.unwrap_or_else(|| {
             sha256_bytes(
@@ -1243,14 +1243,12 @@ fn cycle(args: &Args) -> Result<CycleReport> {
             args.max_overlap_waves
                 .saturating_mul(manifests_per_wave(args.max_candidates_per_manifest)),
         );
-    let builds_planned = if pending_ack.is_none()
-        && decision.target_feasible
-        && manifest_target_feasible
-    {
-        decision.builds_planned.max(manifest_reserve_builds).min(1)
-    } else {
-        0
-    };
+    let builds_planned =
+        if pending_ack.is_none() && decision.target_feasible && manifest_target_feasible {
+            decision.builds_planned.max(manifest_reserve_builds).min(1)
+        } else {
+            0
+        };
     if args.build && builds_planned == 1 {
         ensure_native_wave_builder(&args.wave_builder)?;
         assert_checkpoint_unchanged(args, &inputs.checkpoint_sha256)?;
@@ -1378,9 +1376,8 @@ fn held_report(
         .ok()
         .filter(|target| (2_048..=4_096).contains(target))
         .unwrap_or(args.queued_target);
-    let dynamic_ready_reserve = dynamic_queue_target.saturating_add(
-        2 * manifests_per_wave(args.max_candidates_per_manifest),
-    );
+    let dynamic_ready_reserve = dynamic_queue_target
+        .saturating_add(2 * manifests_per_wave(args.max_candidates_per_manifest));
     CycleReport {
         schema: "JopeMicroWaveSupplyStatus.v2",
         generated_at_ms: now_ms(),
@@ -4277,7 +4274,8 @@ mod tests {
             state.runtime_pinned_attempts[0].proposer_inputs,
             state.runtime_pinned_attempts[1].proposer_inputs
         );
-        let payload = proposer_scientific_payload(&state, &state.runtime_pinned_attempts[0]).unwrap();
+        let payload =
+            proposer_scientific_payload(&state, &state.runtime_pinned_attempts[0]).unwrap();
         let projection = proposer_recovery_projection(directory.path(), &state, &payload).unwrap();
         assert_eq!(projection.scientific_failures, 0);
         assert_eq!(projection.foreign_cancellation_timestamps_ms.len(), 1);
@@ -4326,7 +4324,10 @@ mod tests {
             let mut projection =
                 proposer_recovery_projection(directory.path(), &state, &payload).unwrap();
             projection
-                .mark_submitted(&projection.current_job_identity.clone(), projection.retry_not_before_ms)
+                .mark_submitted(
+                    &projection.current_job_identity.clone(),
+                    projection.retry_not_before_ms,
+                )
                 .unwrap();
             observed = projection.retry_not_before_ms;
             save_recovery_projection(directory.path(), &projection).unwrap();

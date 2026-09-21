@@ -30,7 +30,11 @@ fn unit_files() -> Vec<PathBuf> {
         .filter(|path| path.extension().and_then(|value| value.to_str()) == Some("service"))
         .collect();
     units.sort();
-    assert!(!units.is_empty(), "no service units found in {}", systemd.display());
+    assert!(
+        !units.is_empty(),
+        "no service units found in {}",
+        systemd.display()
+    );
     units
 }
 

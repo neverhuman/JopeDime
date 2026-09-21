@@ -91,7 +91,11 @@ fn producer_of(origin_class: &str, candidate_source: &str) -> &'static str {
 /// must always yield the same sample, or ELO stops being replayable.
 fn stride_seed(task: &str, dataset: &str) -> u64 {
     let mut hash = 1469598103934665603u64;
-    for byte in task.bytes().chain(b"/".iter().copied()).chain(dataset.bytes()) {
+    for byte in task
+        .bytes()
+        .chain(b"/".iter().copied())
+        .chain(dataset.bytes())
+    {
         hash ^= byte as u64;
         hash = hash.wrapping_mul(1099511628211);
     }
@@ -138,7 +142,10 @@ impl Rating {
 
 /// One ELO match between two rated entities. `score` is 1 / 0.5 / 0.
 fn play(table: &mut BTreeMap<String, Rating>, left: &str, right: &str, score: f64) {
-    let left_rating = table.entry(left.to_owned()).or_insert_with(Rating::new).value;
+    let left_rating = table
+        .entry(left.to_owned())
+        .or_insert_with(Rating::new)
+        .value;
     let right_rating = table
         .entry(right.to_owned())
         .or_insert_with(Rating::new)
