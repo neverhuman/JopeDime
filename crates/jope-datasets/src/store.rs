@@ -188,10 +188,36 @@ impl Store {
         if let Some(parent) = dest.parent() {
             std::fs::create_dir_all(parent)?;
         }
+        // One writer per destination across threads AND processes: an exclusive advisory lock on
+        // `<dest>.partial.lock`. Without it two fetches of the same blob (two services sharing one
+        // $JOPE_HOME, or a retried CI job) appended to one `.partial` and produced a blob that was
+        // the content twice (seen against the real bucket). The lock is released when `_lock`
+        // drops; the lock file itself is harmless to leave behind.
+        let lock_path = dest.with_file_name(format!(
+            "{}.partial.lock",
+            dest.file_name()
+                .map(|s| s.to_string_lossy().into_owned())
+                .unwrap_or_default()
+        ));
+        let _lock = std::fs::OpenOptions::new()
+            .create(true)
+            .truncate(false)
+            .write(true)
+            .open(&lock_path)?;
+        _lock
+            .lock()
+            .with_context(|| format!("lock {}", lock_path.display()))?;
         let total = self
             .size(rel)
             .await?
             .ok_or_else(|| anyhow!("{rel}: not found in {}", self.url))?;
+        // Another writer may have completed this destination while we waited for the lock.
+        if let Ok(m) = std::fs::metadata(dest) {
+            if m.len() == total && digest_file_hex(dest)? == expected_sha256 {
+                return Ok(total);
+            }
+            std::fs::remove_file(dest)?;
+        }
         let mut hasher = Sha256::new();
         let mut start = 0u64;
         if let Ok(m) = std::fs::metadata(&partial) {
@@ -210,9 +236,12 @@ impl Store {
                 let _ = std::fs::remove_file(&partial);
             }
         }
+        // Resume appends to the verified prefix; a fresh download truncates whatever is there.
         let mut file = std::fs::OpenOptions::new()
             .create(true)
-            .append(true)
+            .append(start > 0)
+            .write(true)
+            .truncate(start == 0)
             .open(&partial)?;
         if start < total {
             let opts = GetOptions {
@@ -244,4 +273,19 @@ impl Store {
             ))
         }
     }
+}
+
+/// sha256 (hex) of a local file, streamed.
+fn digest_file_hex(path: &Path) -> Result<String> {
+    let mut f = std::fs::File::open(path)?;
+    let mut hasher = Sha256::new();
+    let mut buf = vec![0u8; 1 << 20];
+    loop {
+        let n = f.read(&mut buf)?;
+        if n == 0 {
+            break;
+        }
+        hasher.update(&buf[..n]);
+    }
+    Ok(hex::encode(hasher.finalize()))
 }
