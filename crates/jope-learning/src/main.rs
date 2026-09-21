@@ -346,7 +346,19 @@ fn run_scores(state: &State, common: &Common, cmd: ScoresCmd) -> Result<bool> {
             let git_sha = git_sha
                 .or_else(|| sotarena::git_sha_of(&path))
                 .unwrap_or_else(|| jope_learning::record::UNBOUND.into());
-            let mut reports = Vec::new();
+            // Two phases, and the split is the point. Everything that can refuse the import —
+            // parsing every CSV, and proving that every archive path the run would write is a
+            // plain path component inside the state root — happens first, with nothing written.
+            // Only then does the second phase mutate anything, so one bad `track_id` in the last
+            // version cannot leave the first version's archive already overwritten.
+            struct Pending {
+                version: String,
+                track: String,
+                bytes: Vec<u8>,
+                rows: Vec<jope_learning::record::ScoreRecord>,
+                scan: jope_learning::sources::sotarena::TrackScan,
+            }
+            let mut pending = Vec::new();
             for (version, csv) in sotarena::track_versions(&path)? {
                 let bytes = std::fs::read(&csv)?;
                 let fallback_ts = std::fs::metadata(&csv)?
@@ -357,25 +369,54 @@ fn run_scores(state: &State, common: &Common, cmd: ScoresCmd) -> Result<bool> {
                 let (rows, mut scan) =
                     sotarena::parse_scores(&bytes, &version, &git_sha, fallback_ts)?;
                 scan.scores_csv = csv.display().to_string();
-                // The published file, byte-identical, next to its hash.
-                let published = state
-                    .root()
-                    .join("scores/sotarena")
-                    .join(
-                        rows.first()
-                            .and_then(|r| r.source.track.clone())
-                            .unwrap_or_else(|| version.clone()),
-                    )
-                    .join(&version);
-                jope_learning::ledger::atomic_write(&published.join("scores.csv"), &bytes)?;
-                jope_learning::ledger::atomic_write(
-                    &published.join("scores.csv.sha256"),
-                    format!("{}  scores.csv\n", scan.scores_sha256).as_bytes(),
-                )?;
+                // `track_id` is a column of a file this crate did not write. It names a directory
+                // under the state root, so it is checked as a path component before it is ever
+                // joined to one; `State::archive_dir` re-checks it and proves containment.
+                let track = rows
+                    .first()
+                    .and_then(|r| r.source.track.clone())
+                    .unwrap_or_else(|| version.clone());
+                for (what, seg) in [("track_id", &track), ("version", &version)] {
+                    if !jope_learning::state::plain_segment(seg) {
+                        bail!(
+                            "{}: unsafe {what} {seg:?} — a path component must be non-empty, must \
+                             not be `.` or `..`, and may only contain ASCII letters, digits, `.`, \
+                             `-` and `_`. Nothing was written.",
+                            csv.display()
+                        );
+                    }
+                }
+                pending.push(Pending {
+                    version,
+                    track,
+                    bytes,
+                    rows,
+                    scan,
+                });
+            }
+            let mut reports = Vec::new();
+            for Pending {
+                version,
+                track,
+                bytes,
+                rows,
+                scan,
+            } in pending
+            {
                 let mut scans = BTreeMap::new();
                 scans.insert(version.clone(), scan.clone());
                 let source = sotarena::scan_source(&path, &git_sha, &scans);
-                let rep = scores::append(state, mirror.as_ref(), rows, source)?;
+                // The published file, byte-identical, next to its hash — written inside the
+                // `scores` lock and only after the mirror preflight has had its chance to refuse.
+                let sha = scan.scores_sha256.clone();
+                let rep = scores::append(state, mirror.as_ref(), rows, source, |state| {
+                    let dir = state.archive_dir("sotarena", &track, &version)?;
+                    jope_learning::ledger::atomic_write(&dir.join("scores.csv"), &bytes)?;
+                    jope_learning::ledger::atomic_write(
+                        &dir.join("scores.csv.sha256"),
+                        format!("{sha}  scores.csv\n").as_bytes(),
+                    )
+                })?;
                 let mut v = serde_json::to_value(&rep)?;
                 v["scan"] = serde_json::to_value(&scan)?;
                 reports.push(v);

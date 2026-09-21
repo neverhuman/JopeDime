@@ -6,7 +6,7 @@ use crate::ledger::{atomic_write, now_unix, Ledger, LedgerReport};
 use crate::mirror::{Mirror, MirrorReport};
 use crate::record::HwmRecord;
 use crate::state::{PointerKey, State};
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
@@ -124,6 +124,66 @@ pub struct IngestReport {
     pub seconds: f64,
 }
 
+/// Every field of a record that is an IEEE double and is not finite, as `field: value`.
+///
+/// `serde_json` has no representation for NaN or an infinity: it writes them as `null` and
+/// refuses to read them back. A record carrying one is therefore not a record that happens to be
+/// wrong, it is a record that *cannot be written down* — and an append-only hash-chained ledger
+/// has no way to take one back. One such event makes every later `events()` call fail with
+/// `invalid type: null, expected f64`, which is to say the whole ledger, not just that event.
+fn unrepresentable_floats(r: &HwmRecord) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut check = |name: &str, v: f64| {
+        if !v.is_finite() {
+            out.push(format!("{name}={v}"));
+        }
+    };
+    check("score.value", r.score.value);
+    if let Some(v) = r.cost.runtime_seconds {
+        check("cost.runtime_seconds", v);
+    }
+    if let Some(v) = r.cost.search_seconds {
+        check("cost.search_seconds", v);
+    }
+    out
+}
+
+/// Refuse any candidate the ledger could not read back, before a single byte of it is written.
+///
+/// This is deliberately *not* a [`Decision`]: a rejection event is itself a ledger write, and the
+/// whole point is that this record cannot be put in the ledger in any shape. Writing it as a
+/// rejection would poison the chain exactly as accepting it would; writing it with a substituted
+/// score would be a fabricated number in an append-only record of what was measured. So the run
+/// fails, names the candidate and the field, and nothing moves — the source is wrong and only the
+/// source can fix it. Ordinary ties and inferior candidates are unaffected: they are
+/// representable, so they keep their readable rejection event.
+fn refuse_unrepresentable(candidates: &[Candidate]) -> Result<()> {
+    let mut bad: Vec<String> = Vec::new();
+    for c in candidates {
+        let fields = unrepresentable_floats(&c.record);
+        if !fields.is_empty() {
+            bad.push(format!(
+                "{} ({}) at {}: {}",
+                c.record.identity_sha256,
+                c.record.provenance.source,
+                PointerKey::of(&c.record).rel(),
+                fields.join(", ")
+            ));
+        }
+    }
+    ensure!(
+        bad.is_empty(),
+        "refusing to ingest {} candidate(s) whose score is not a finite number, because JSON \
+         cannot represent one: serde writes NaN and the infinities as `null` and cannot read them \
+         back, so a single such event would make every later read of this append-only ledger fail \
+         with `invalid type: null, expected f64`. Nothing was written — no blob, no batch, no \
+         pointer, nothing on the mirror. Fix or drop these rows at the source and re-run:\n  {}",
+        bad.len(),
+        bad.join("\n  ")
+    );
+    Ok(())
+}
+
 /// Admit `candidates` in (ts, identity) order, append one sealed batch, then move the pointers.
 pub fn ingest(
     state: &State,
@@ -132,6 +192,9 @@ pub fn ingest(
     source: Value,
 ) -> Result<IngestReport> {
     let started = Instant::now();
+    // Before the lock, before the mirror preflight, before any blob: a candidate that cannot be
+    // serialised and read back has no admissible outcome at all, so it never reaches the ledger.
+    refuse_unrepresentable(&candidates)?;
     let _lock = state.lock("hwm")?;
     let ledger = Ledger::open(state.root(), "hwm");
     ledger.require_intact()?;
@@ -259,13 +322,57 @@ pub fn ingest(
     })
 }
 
+/// Parse one ledger event, saying *which* event failed and why in terms a reader can act on.
+///
+/// A bare `invalid type: null, expected f64` names neither the batch, the event nor the field, and
+/// is indistinguishable from a dozen other schema problems; on a 12k-event corpus it is not enough
+/// to find the offending line. So on failure the raw JSON is re-read for the identifying fields it
+/// still has, and the one cause that cannot be fixed by re-ingesting — a float written as `null` —
+/// is named for what it is.
+pub fn parse_event(index: usize, v: &Value) -> Result<HwmEvent> {
+    match serde_json::from_value::<HwmEvent>(v.clone()) {
+        Ok(e) => Ok(e),
+        Err(err) => {
+            let at = |p: &[&str]| {
+                let mut cur = v;
+                for k in p {
+                    cur = cur.get(*k)?;
+                }
+                cur.as_str().map(str::to_string)
+            };
+            let mut detail = format!(
+                "event #{index} (seq {}, pointer {}, identity {}, record {})",
+                v.get("seq").map_or("?".into(), |x| x.to_string()),
+                at(&["pointer", "task"]).map_or("?".into(), |t| format!(
+                    "{t}/{}/{}",
+                    at(&["pointer", "dataset_hash"]).unwrap_or_else(|| "?".into()),
+                    at(&["pointer", "cut_id"]).unwrap_or_else(|| "?".into())
+                )),
+                at(&["record", "identity_sha256"]).unwrap_or_else(|| "?".into()),
+                at(&["record", "provenance", "record_sha256"]).unwrap_or_else(|| "?".into()),
+            );
+            if v.pointer("/record/score/value") == Some(&Value::Null) {
+                detail.push_str(
+                    ": its `record.score.value` is JSON `null`, which is how serde writes a NaN \
+                     or an infinity and is why it cannot be read back. This event was written by \
+                     a build that admitted a non-finite score; it cannot be repaired in place, \
+                     because the ledger is append-only and hash-chained. Quarantine the batch \
+                     that holds it (`hwm verify` reports it as `event-unparseable` without \
+                     failing) and re-ingest its source",
+                );
+            }
+            Err(anyhow!("parse hwm event: {detail}: {err}"))
+        }
+    }
+}
+
 /// For every pointer, the `record_sha256`s this host's ledger accepted at it, oldest first. The
 /// only evidence that a pointer the mirror holds is an *earlier state of ours* rather than another
 /// host's.
 fn accepted_history(ledger: &Ledger) -> Result<BTreeMap<PointerKey, Vec<String>>> {
     let mut out: BTreeMap<PointerKey, Vec<String>> = BTreeMap::new();
-    for v in ledger.events()? {
-        let e: HwmEvent = serde_json::from_value(v).context("parse hwm event")?;
+    for (i, v) in ledger.events()?.iter().enumerate() {
+        let e = parse_event(i, v)?;
         if e.outcome == "accepted" {
             out.entry(e.pointer)
                 .or_default()
@@ -291,6 +398,13 @@ fn accepted_history(ledger: &Ledger) -> Result<BTreeMap<PointerKey, Vec<String>>
 /// content-addressed and immutable, so a blob the mirror already has is an `Exists` no-op — and it
 /// is what keeps the mirror's ledger self-contained (`hwm verify` reads a blob per event).
 ///
+/// Ordering is only half of it, because it only covers a blob missing from the *mirror*. A blob
+/// missing from the *local store* is the same permanent damage arriving through a different door:
+/// the upload is skipped, the batch object goes up regardless, the tip moves past it, and the gap
+/// is outside every future backfill window. So the local store is asked first, the mirror second,
+/// and a record neither can supply stops the push before that batch's object is written — the one
+/// point at which stopping still leaves the mirror repairable.
+///
 /// The `current.json` pointers stay *after* the `HEAD.json` move, and are deliberately *not* every
 /// pointer: the real corpus has ~12k of them and each would cost a GET per push. A pointer whose
 /// own write failed after `HEAD.json` moved therefore stays stale on the mirror — or absent, for a
@@ -307,14 +421,35 @@ fn push_mirror(m: &Mirror, state: &State, ledger: &Ledger) -> Result<MirrorRepor
     let mut keys: BTreeSet<PointerKey> = BTreeSet::new();
     crate::sync::push(m, ledger, plan, &mut report, |path, report| {
         let (events, _, _, _) = Ledger::read_batch(path)?;
-        for v in events {
-            let e: HwmEvent = serde_json::from_value(v).context("parse hwm event")?;
+        for (i, v) in events.iter().enumerate() {
+            let e = parse_event(i, v)?;
             let sha = &e.record.provenance.record_sha256;
-            if let Some(bytes) = state.read_blob(sha)? {
-                report.count(m.put_immutable(&State::blob_rel(sha), &bytes)?);
+            match state.read_blob(sha)? {
+                Some(bytes) => report.count(m.put_immutable(&State::blob_rel(sha), &bytes)?),
+                // The local store cannot supply a blob this batch names. Skipping it is the one
+                // thing this push must not do: the batch object would go up, `HEAD.json` would
+                // move past it, and from then on `sync::plan` never returns that batch again — the
+                // gap is outside every future backfill window and therefore permanent, while every
+                // later push reports success. So: publish it only if the mirror already holds it
+                // (then the mirror's copy is still self-contained and there is nothing to upload),
+                // and otherwise fail before the batch object is written, leaving the mirror's tip
+                // where it was so that a push made after the blob is restored closes the same gap.
+                None if m.get(&State::blob_rel(sha))?.is_some() => report.existed += 1,
+                None => bail!(
+                    "{}: names record {sha}, and neither this host's blob store ({}) nor the \
+                     mirror at {} holds it. Refusing to publish a batch the mirror could not \
+                     back: the mirror's HEAD.json would name a record nobody can supply, and \
+                     because the backfill window is derived from that HEAD.json alone, no later \
+                     push would ever come back for it. The mirror's tip is unchanged; restore \
+                     the blob (`hwm verify` lists it as `blob-missing`) from a bundle or by \
+                     re-ingesting its source, then re-run this push.",
+                    path.display(),
+                    state.blob_path(sha).display(),
+                    m.url
+                ),
             }
             if e.outcome == "accepted" {
-                keys.insert(e.pointer);
+                keys.insert(e.pointer.clone());
             }
         }
         Ok(())
@@ -393,8 +528,9 @@ fn check_pointer_ancestor(
 pub fn events(state: &State) -> Result<Vec<HwmEvent>> {
     Ledger::open(state.root(), "hwm")
         .events()?
-        .into_iter()
-        .map(|v| serde_json::from_value(v).context("parse hwm event"))
+        .iter()
+        .enumerate()
+        .map(|(i, v)| parse_event(i, v))
         .collect()
 }
 
@@ -493,10 +629,14 @@ pub fn verify(state: &State, event_dirs: &[PathBuf]) -> Result<VerifyReport> {
     };
     // Lenient parse: a malformed event is a break, not an abort.
     let mut events = Vec::new();
-    for (i, v) in ledger.events()?.into_iter().enumerate() {
-        match serde_json::from_value::<HwmEvent>(v) {
+    for (i, v) in ledger.events()?.iter().enumerate() {
+        match parse_event(i, v) {
             Ok(e) => events.push(e),
-            Err(err) => brk("event-unparseable", format!("event #{i}"), err.to_string()),
+            Err(err) => brk(
+                "event-unparseable",
+                format!("event #{i}"),
+                format!("{err:#}"),
+            ),
         }
     }
     let mut expected: BTreeMap<PointerKey, HwmRecord> = BTreeMap::new();

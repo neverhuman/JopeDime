@@ -23,11 +23,19 @@ pub struct AppendReport {
 
 /// Append `rows` as one sealed batch. Rows whose `row_sha256` is already in the ledger are
 /// skipped (re-running an append is idempotent), and reported.
+///
+/// `archive` writes whatever copy of the source this import keeps next to the ledger. It is a
+/// callback rather than the caller's own `fs::write` for two reasons, both of which were real
+/// defects: it must run **after** the divergence preflight, or a refusal that promises "nothing
+/// was written" has already overwritten last week's archived `scores.csv`; and it must run
+/// **under the same `scores` lock** as the ledger append, or two concurrent imports can interleave
+/// an archive of one run with the batch of another.
 pub fn append(
     state: &State,
     mirror: Option<&Mirror>,
     rows: Vec<ScoreRecord>,
     source: Value,
+    archive: impl FnOnce(&State) -> Result<()>,
 ) -> Result<AppendReport> {
     let started = Instant::now();
     let _lock = state.lock("scores")?;
@@ -37,6 +45,8 @@ pub fn append(
     if let Some(m) = mirror {
         crate::sync::preflight(m, &ledger)?;
     }
+    // Only now, past every refusal and inside the lock, may local bytes move.
+    archive(state)?;
     let existing: std::collections::BTreeSet<String> = ledger
         .events()?
         .iter()
@@ -59,23 +69,31 @@ pub fn append(
     } else {
         Some(ledger.append(&events, source.clone())?)
     };
-    let mirror_report = match (mirror, &batch) {
-        (Some(m), Some(_)) => {
+    // The push is driven by `--store`, never by whether *this* run happened to seal a batch.
+    //
+    // Gating it on `batch` was the bug: an append whose rows are all duplicates seals nothing, so
+    // the mirror was never even looked at — and since the backfill is the only thing that catches
+    // a mirror up, the one command an operator would re-run to repair a mirror left behind by an
+    // earlier local-only append was precisely the command that did nothing. It reported `rows: 0`,
+    // `mirror: null` and exit 0, which is indistinguishable from a run with no `--store` at all.
+    //
+    // So: configured means pushed, and `mirror` is `Some` exactly when a mirror was configured.
+    // A push that genuinely had nothing to do says so in its own counts (`batches: 0`), which no
+    // longer reads as "no mirror" and cannot be mistaken for a publish.
+    //
+    // Nothing to put on the mirror ahead of each batch object: a score batch embeds its rows, so
+    // unlike an hwm batch it names no blob and is self-contained on its own.
+    let mirror_report = match mirror {
+        Some(m) => {
             let mut rep = MirrorReport {
                 url: m.url.clone(),
                 ..Default::default()
             };
-            // Upload every batch the mirror is missing — not just this one — then move HEAD.json
-            // conditionally on the tip `sync::plan` proved is an ancestor of this chain. A mirror
-            // left behind by a local-only append catches up here instead of wedging.
-            //
-            // Nothing to put on the mirror ahead of each batch object: a score batch embeds its
-            // rows, so unlike an hwm batch it names no blob and is self-contained on its own.
             let plan = crate::sync::plan(m, &ledger)?;
             crate::sync::push(m, &ledger, plan, &mut rep, |_, _| Ok(()))?;
             Some(rep)
         }
-        _ => None,
+        None => None,
     };
     Ok(AppendReport {
         source,

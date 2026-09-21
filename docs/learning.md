@@ -128,8 +128,17 @@ host's ledger never accepted is another writer's tip and is refused, not overwri
 a tip it has already moved is out of reach of every later push. Blobs therefore go up ahead of the
 batch object that names them — free, because they are content-addressed, immutable and created with
 `If-None-Match: *`, so a repeat is an `Exists` no-op — and a push that dies part-way leaves the tip
-where it was, so the retry recomputes the same gap and closes it. What the mirror's `HEAD.json`
-names, the mirror can always back.
+where it was, so the retry recomputes the same gap and closes it.
+
+**What the mirror's `HEAD.json` names, the mirror holds** — and the push fails closed rather than
+publish a batch for which that would stop being true. Ordering alone only covers a blob missing
+from the *mirror*; a blob missing from the *local* store used to be skipped in silence, and
+because the skip happened inside the backfill the batch object still went up, the tip still moved
+past it, and no later push ever came back for it. So each blob a backfilled batch names is asked
+of the local store first and of the mirror second, and if neither can supply it the push refuses
+**before that batch's object is written**, naming the record and both places that do not have it.
+The tip stays where it was; restore the blob (`hwm verify` lists it as `blob-missing`) and the next
+push closes the same gap.
 
 The `current.json` pointers deliberately stay *after* the move: the real corpus has ~12k of them and
 each would cost a GET per push. A pointer whose own write failed therefore stays stale — or absent,
@@ -147,6 +156,44 @@ mirror a complete copy; a genuinely diverged mirror still fails closed; and
 `a_failed_blob_push_leaves_the_mirrors_head_where_it_was` injects an object-store failure mid-push
 and asserts that while any blob a batch names is missing, the mirror's `HEAD.json` has not moved
 past that batch — and that the next push closes the gap.
+`a_blob_the_local_store_cannot_supply_is_never_published_over` removes a blob from the *local*
+store instead and asserts the same tip invariant, with
+`a_blob_only_the_mirror_still_has_does_not_wedge_the_push` as its control: a blob the mirror
+already holds is not a gap and must not become a new one-way door.
+
+### Refused at the door
+
+Two classes of input never reach any ledger, because no later step could undo them:
+
+* **A score that is not a finite number.** JSON has no NaN and no infinity; `serde_json` writes
+  both as `null` and cannot read them back, so one such event makes every later read of an
+  append-only, hash-chained ledger fail with `invalid type: null, expected f64` — the whole ledger,
+  not just that event. `hwm ingest` therefore refuses the run before the lock, before the mirror
+  preflight and before any blob, naming each offending candidate and field. It is *not* recorded as
+  a rejection event: a rejection event is itself a ledger write, and writing it with a substituted
+  score would put a number in the record that was never measured. `jope.hwm/v1` is unchanged — the
+  fix is at the point of entry, not in the schema. Candidates that are merely not better are
+  unaffected and keep their readable rejection event
+  (`crates/jope-learning/tests/nonfinite_scores.rs`). A ledger already poisoned by an older build
+  is not silently unreadable either: the reader names the batch position, the pointer, the
+  identity, the record hash and the field, and `hwm verify` reports it as `event-unparseable`
+  without aborting.
+* **A path component that came out of an imported file.** `scores append` archives each published
+  `scores.csv` under `<state>/scores/sotarena/<track_id>/<version>/`, and `track_id` is a column of
+  that CSV. `Path::join` is not containment — an absolute component replaces the whole path, a `..`
+  component walks out of it — so every such component is checked to be a plain segment
+  (`[A-Za-z0-9._-]`, non-empty, not `.` or `..`) *before* the join, and the resulting directory is
+  canonicalised and proved to be under the state root. The whole import is refused if any version
+  in it is unsafe, so a good version is never archived before a later bad one is caught
+  (`crates/jope-learning/tests/score_import.rs`).
+
+Those archive writes also happen **inside the `scores` lock and after the divergence preflight**,
+not before it: a run that exits 2 saying `Nothing was written` must not already have replaced last
+week's archived source. And the mirror push is driven by `--store`, never by whether this run
+happened to seal a batch — an import whose rows are all duplicates seals nothing, and gating the
+push on that made the one command an operator would re-run to repair a lagging mirror the one
+command that skipped it. `mirror` is `Some` exactly when a mirror was configured; a push with
+nothing to do says so in its own counts (`"batches": 0`) instead of reporting `null`.
 
 A server-side conditional PUT with an expected version (`PutMode::Update`) is not exposed by
 `Store` yet and the local-filesystem backend of `object_store` does not implement it; until it is,
