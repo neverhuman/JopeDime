@@ -599,3 +599,64 @@ are vendored crate *source*.
 The auditors also measured **622 GB freed between the brief and their report** — two of the fifteen
 audits describe a disk that no longer exists. **Re-measure before executing any row**; the dominant
 operational risk is now racing deleters, not the disk.
+
+---
+
+# ✅ OWNER RULING — one worktree root for every agent (2026-09-21)
+
+The policy conflict flagged earlier is **settled**, and in a better direction than my resolution.
+
+I had resolved it toward *no worktrees at all*, following `jain-split/AGENTS.md:111`. The owner's
+ruling is instead: **worktrees are fine — they live in exactly one place, shared by every agent.**
+
+```
+<repo>/.agent/worktrees/        ← the one root: Claude, Codex, Grok
+<repo>/.claude/worktrees  →  ../.agent/worktrees     (symlink)
+```
+
+## Why a symlink rather than a setting
+
+There is **no worktree-path setting** in Claude Code (`settings.json` has no such key). A symlink
+is therefore the only way to make the `EnterWorktree` **tool** land in a shared directory without
+asking every agent to remember a convention — and remembering a convention is exactly what failed
+last time.
+
+**Verified by execution, not assumed:**
+
+```
+$ git worktree add --detach .claude/worktrees/_probe HEAD
+$ git worktree list | grep _probe
+/home/ubuntu/jain-split/jope-dime/.agent/worktrees/_probe      ← git resolved the symlink
+```
+
+Git records the **real** path, so a worktree created through `.claude/worktrees/` is registered
+under `.agent/worktrees/`. Probe removed; both repos back to 1 worktree.
+
+## What changed, and where
+
+| File | Change |
+| --- | --- |
+| `jain-split/AGENTS.md:111` | the blanket ban replaced by the location rule — **amended at the source**, because its own line 35 forbids a repo-local file from creating an exception |
+| `jain-split/AGENTS.md:35` | inheritance must now be **mechanical**: a repo-local `AGENTS.md` must `@import` the parent, and must be accompanied by a `CLAUDE.md` whose first line is `@AGENTS.md` |
+| `jope-dime/AGENTS.md`, `jope-dime/CLAUDE.md` | aligned |
+| `JopeDime/AGENTS.md`, `JopeDime/CLAUDE.md` | aligned |
+| both `.gitignore` | `.agent/` ignored |
+| both `.agent/worktrees/README.md` | the convention stated in place, for an agent that reads the directory rather than the contract |
+
+**The reasoning worth keeping:** the old rule was *"Never create a git worktree — anywhere, for any
+reason."* A prohibition naming a **mechanism** is what a tool walks past — and one did, creating
+four worktrees in the very tree that forbade them. **A rule stated as a location is enforceable;
+one that names a single invocation is not.**
+
+> ⚠️ `jain-split/` is **not a git repository**, so `jain-split/AGENTS.md` has no version control at
+> all. Before and after copies are in `~/jope-rescue-20260921/` (`jain-split-AGENTS.md.before`,
+> `.after`). Anyone editing it should do the same.
+
+## Final state
+
+| | |
+| --- | --- |
+| Worktrees | **3 — one per repo**, none in `/tmp`, none outside `.agent/worktrees/` |
+| `/tmp` worktrees or jope-dime repos | **0** |
+| Free disk | **1.2 T (84 %)**, from 697 G (91 %) |
+| Custody | **1,433 files / 2.2 G**, `sha256sum -c` passes |
