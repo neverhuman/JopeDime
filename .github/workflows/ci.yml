@@ -243,18 +243,48 @@ jobs:
         uses: taiki-e/install-action@4076c08d76dba979c11a7285295b0716c1d67908 # v2.87.15
         with:
           tool: cargo-nextest
-      - name: Disk before
-        run: df -h / | tail -1
       - name: Product-crate tests (blocking)
         run: |
           set -euo pipefail
+          mkdir -p rust-test-evidence
           # Capture first so a failing scope script aborts here: inside `read -ra pkgs <<< "$(...)"`
           # the command substitution's exit status is discarded, pkgs would be empty, and cargo
           # would silently run UNSCOPED — straight back into the 72 GB link this lane exists to avoid.
           scope="$(bash deploy/ci/rust-test-scope.sh)"
           read -ra pkgs <<< "$scope"
           [ "${#pkgs[@]}" -gt 0 ] || { echo "rust-test-scope.sh produced an empty package set" >&2; exit 1; }
+          # Identity of what actually ran, so the uploaded report can be tied to a revision and a
+          # package set rather than to "the lane was green once".
+          {
+            echo "revision=${GITHUB_SHA}"
+            echo "ref=${GITHUB_REF}"
+            echo "run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
+            echo "runner=$(uname -srm)"
+            echo "toolchain=$(rustup show active-toolchain)"
+            echo "packages=${scope}"
+          } | tee rust-test-evidence/identity.txt
+          df -B1 --output=source,size,used,avail,pcent / | tee rust-test-evidence/disk-before.txt
           cargo nextest run -P pr --locked "${pkgs[@]}"
-      - name: Disk after
+      - name: Retain test report and disk measurements
         if: always()
-        run: df -h / | tail -1
+        run: |
+          set -euo pipefail
+          mkdir -p rust-test-evidence
+          df -B1 --output=source,size,used,avail,pcent / | tee rust-test-evidence/disk-after.txt
+          du -sb target 2>/dev/null | tee rust-test-evidence/target-bytes.txt || true
+          # `[profile.pr.junit] path = "junit.xml"` puts it here; keep the lane honest about a
+          # missing report instead of uploading a directory that quietly holds no results.
+          junit="target/nextest/pr/junit.xml"
+          if [ -f "$junit" ]; then
+            cp "$junit" rust-test-evidence/junit.xml
+          else
+            echo "NO JUNIT REPORT AT ${junit}" | tee rust-test-evidence/junit-MISSING.txt
+          fi
+      - name: Upload rust-test evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rust-test-evidence
+          path: rust-test-evidence/
+          if-no-files-found: error
+          retention-days: 30
