@@ -1,0 +1,13 @@
+# Test binaries that spawn real daemons/services and race each other under parallel execution.
+# They are NOT broken and NOT excluded: the `rust-test` lane runs them in their own BLOCKING step
+# with `--test-threads 1`, which is how they are meant to run.
+#
+# Evidence (2026-09-21, clean clone of main d43bc5f5): each of these failed in a
+# `cargo nextest run -P pr --workspace` at load average 44-155, and every one passed twice in a row
+# at `--test-threads 1`. Excluding them would have hidden working tests; serialising them keeps the
+# coverage and the gate.
+#
+# Format: <binary>  # <crate> — <note>
+daemon_e2e # jain-smartcluster-daemon — spawns a real daemon and binds a queue
+restart_chaos # jain-smartcluster-daemon — kills and restarts a real daemon
+resident_protocol # jope-parallel — socket readiness races within a deadline
