@@ -191,14 +191,24 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     let started = Instant::now();
     let emit_dir = root.join("emit");
     let emitted = emit::emit(&selection.genome, &options.languages, &emit_dir)?;
-    ensure!(
-        emitted.genome_sha256 == crate::sha256_hex(emitted.canonical_genome.as_bytes()),
-        "emit hashed the input spelling, not the canonical genome"
-    );
+    // Both fields below are read back out of emit/manifest.json, which transpile builds from the
+    // IR it actually lowered -- so these compare the artifacts on disk against the selection.
+    // The previous pair derived both sides from emit()'s own argument, which made them hold even
+    // when the transpiler emitted a different genome entirely:
+    //   ensure!(emitted.genome_sha256 == sha256(emitted.canonical_genome))  is  hash(x) == hash(x)
+    //   ensure!(emitted.canonical_genome == selection.genome)               is  parse(g).canonical() == g
+    // The second only tested that the selected genome was already canonical, which every genome
+    // reaching this point is.
     ensure!(
         emitted.canonical_genome == selection.genome,
-        "canonical emit genome {} is not the selected genome {}",
+        "the emitted manifest describes {}, not the selected genome {}",
         emitted.canonical_genome,
+        selection.genome
+    );
+    ensure!(
+        emitted.genome_sha256 == crate::sha256_hex(selection.genome.as_bytes()),
+        "the emitted manifest's genome_sha256 {} is not the digest of the selected genome {}",
+        emitted.genome_sha256,
         selection.genome
     );
     ensure!(
