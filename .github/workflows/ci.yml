@@ -39,7 +39,7 @@ jobs:
           if [ -n "$BASE_SHA" ]; then
             changed=$(git diff --name-only "$BASE_SHA" HEAD)
             printf 'changed files:\n%s\n' "$changed"
-            grep -qE '^(crates/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|\.github/workflows/ci\.yml$)' <<<"$changed" || rust=false
+            grep -qE '^(crates/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/|\.github/workflows/ci\.yml$)' <<<"$changed" || rust=false
             grep -qE '^(crates/feat-math/|datasets/test/|deploy/ci/emitters|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.github/workflows/ci\.yml$)' <<<"$changed" || emitters=false
             grep -qE '^(datasets/synthetic/|crates/jope-cli/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.github/workflows/ci\.yml$)' <<<"$changed" || inputs=false
             grep -qE '^(python/|deploy/systemd/|\.github/workflows/ci\.yml$)' <<<"$changed" || python=false
@@ -93,6 +93,13 @@ jobs:
           shared-key: rust-check
       - name: cargo check --workspace --all-targets --locked
         run: cargo check --workspace --all-targets --locked
+      # The rendered-systemd guarantee (no /home/ literal, no unrendered @JOPE_* token, every
+      # ExecStart under the rendered roots) lives in this test, which `cargo check` compiles but
+      # never runs. deploy/systemd/ is in this lane's gate above so a template-only change — the
+      # exact shape of #32 — reaches it. The package in crates/jope-campaigns is named
+      # jope-dime-regressor.
+      - name: Rendered systemd units resolve under the rendered roots
+        run: cargo test -p jope-dime-regressor --locked --test systemd_unit_paths
       - name: "Workspace MSRV (decision 8: at most 1.97.1)"
         run: |
           set -euo pipefail
