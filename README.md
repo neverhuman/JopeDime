@@ -18,14 +18,14 @@ encodings→GP neural policy will ship because the product needs a router; it is
 
 | Surface | Status on this SHA |
 | --- | --- |
-| `jope` CLI | No subcommand still prints `jope 0.1.0`. Fixtures: `generate-fixtures`, `verify-inputs --offline`. `encode --input` is CPU Hyperion and **fails closed** without `HYPERION_V7_WEIGHTS`. `fit` / `search` / `emit --lang {rust,python,cpp17,javascript,all}` run on feat-math. S3 is **not** wired yet. |
+| `jope` CLI | No subcommand still prints `jope 0.1.0`. Fixtures, CPU `encode` (fail-closed without weights), `fit` / `search` / `emit`, `champions --local`, `train-step --local`. `champions --pull/--push` and `train-step --env dev` **fail closed**. Live S3 is **not** wired. |
 | `crates/feat-math` | Typed GP IR, fit, and portable emitters (Rust / Python / JS / C++17; C++20 compiles C++17). |
 | `crates/jope-encoders` | Encoder implementations (package name `starforge`). |
 | `crates/hyperion` | Workspace member. CPU/Candle default (`hyperion-cpu`). CUDA feature exists; not the CI default. |
 | `crates/jope-policy` | Workspace member. Step-60000 proposal policy on Candle. Needs the bound checkpoint to propose. |
 | `crates/jope-engine`, `crates/jope-campaigns` | Engine and campaign crates in the workspace. |
 | Git datasets | Ten synthetic fixtures in `datasets/synthetic/` plus `datasets/test/pmlb-229-pwlinear/`. Real tables stay in S3. |
-| S3 fetch / champion training | Not on this SHA. |
+| S3 fetch / champion training | Live S3 fail-closed. Local champion bank + label-recording train-step exist. Policy weights are **not** updated. |
 
 The engineering spec remains [`CURSOR_GITHUB_PORT_PLAN.md`](CURSOR_GITHUB_PORT_PLAN.md).
 Serial recovery of withdrawn PRs #5–#16 (unmerged, branches retained) is
@@ -47,6 +47,8 @@ cargo run --locked --bin jope -- verify-inputs --offline --root datasets/synthet
 cargo run --locked --bin jope -- fit --input datasets/synthetic/regression/linear.json --json
 cargo run --locked --bin jope -- emit --lang all --output /tmp/jope-emitted --json
 cargo run --locked --bin jope -- search --input datasets/synthetic/regression/linear.json --json
+cargo run --locked --bin jope -- champions --local --root datasets/synthetic --json
+cargo run --locked --bin jope -- train-step --local --root datasets/synthetic --json
 ```
 
 GitHub PR CI is `.github/workflows/ci.yml` (hygiene + cargo-deny).
@@ -82,7 +84,7 @@ Do not open a stack of PRs. Merge or close the current one before starting the n
 
 | Path | Role |
 | --- | --- |
-| `crates/jope-cli` | `jope` binary: fixtures, CPU encode, fit/search/emit |
+| `crates/jope-cli` | `jope` binary: fixtures, encode, fit/search/emit, local champions |
 | `crates/feat-math` | GP genomes, fit, emitters |
 | `crates/jope-encoders` | Encoders (`starforge`) |
 | `crates/hyperion` | Hyperion v5/v7 CPU/Candle encoder |

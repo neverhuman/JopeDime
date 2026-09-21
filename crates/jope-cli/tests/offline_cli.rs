@@ -229,3 +229,59 @@ fn search_picks_a_ridge_family_genome() {
     assert_eq!(report["considered"], 3);
     assert!(report["genome"].as_str().unwrap().contains("ridge"));
 }
+
+fn synthetic_root() -> std::path::PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../datasets/synthetic")
+}
+
+#[test]
+fn champions_pull_and_push_fail_closed() {
+    for flag in ["--pull", "--push"] {
+        let output = jope(Path::new("."), &["champions", "--json", flag]);
+        assert!(!output.status.success());
+        let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(report["ok"], false);
+        assert_eq!(report["schema"], "jope.champions.v1");
+    }
+}
+
+#[test]
+fn train_step_without_local_fails_closed() {
+    let output = jope(Path::new("."), &["train-step", "--json", "--env", "dev"]);
+    assert!(!output.status.success());
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["ok"], false);
+    assert_eq!(report["schema"], "jope.train-step.v1");
+}
+
+#[test]
+fn local_champions_and_train_step_cover_ten_datasets() {
+    let root = synthetic_root();
+    let root = root.to_str().expect("utf8 path");
+    let champions = jope(
+        Path::new("."),
+        &["champions", "--local", "--json", "--root", root],
+    );
+    assert!(
+        champions.status.success(),
+        "{}",
+        String::from_utf8_lossy(&champions.stderr)
+    );
+    let bank: Value = serde_json::from_slice(&champions.stdout).unwrap();
+    assert_eq!(bank["ok"], true);
+    assert_eq!(bank["dataset_count"], 10);
+    assert_eq!(bank["env"], "local");
+
+    let step = jope(
+        Path::new("."),
+        &["train-step", "--local", "--json", "--root", root],
+    );
+    assert!(
+        step.status.success(),
+        "{}",
+        String::from_utf8_lossy(&step.stderr)
+    );
+    let report: Value = serde_json::from_slice(&step.stdout).unwrap();
+    assert_eq!(report["ok"], true);
+    assert_eq!(report["labels"].as_array().unwrap().len(), 10);
+}

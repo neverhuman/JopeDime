@@ -22,8 +22,13 @@ without weights. Canonical dirty tree untouched.
 
 ## 2026-09-21 — Grok: PR D (fit / emit / search)
 
-Claim: `crates/jope-cli` fit/emit/search on feat-math, README/MASTER_PLAN.
-Branch `feat/fit-emit-search-20260921` from `origin/main` `089c127`. Default
-genome `(pipe X (ridge))`. Emit writes Python/Rust/C++17/JS. Search is a
-three-candidate ridge family, not a full evolutionary campaign. Do not start
-E until this PR merges. S3 still not this PR.
+Merged as #20 (`8326c36`). Fit/search/emit on feat-math. Canonical dirty
+tree untouched.
+
+## 2026-09-21 — Grok: PR E (local champions, S3 fail-closed)
+
+Claim: `jope champions --local`, `jope train-step --local`, fail-closed
+`--pull/--push` and `--env dev`. Branch
+`feat/local-champions-failclosed-s3-20260921` from `origin/main` `8326c36`.
+Does **not** update jope-policy weights and does **not** write S3. Do not
+start F until this PR merges.

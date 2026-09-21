@@ -1,8 +1,9 @@
 use anyhow::{ensure, Result};
 use clap::{Parser, Subcommand};
 use jope_cli::{
-    emit_genome, encode_dataset, fit_dataset, generate_fixtures, resolve_root, search_dataset,
-    verify_inputs, Verification, DEFAULT_GENOME,
+    emit_genome, encode_dataset, fit_dataset, generate_fixtures, local_champions, local_train_step,
+    refuse_s3, resolve_root, search_dataset, verify_inputs, write_json, Verification,
+    DEFAULT_GENOME,
 };
 use std::{path::PathBuf, process::ExitCode};
 
@@ -10,7 +11,7 @@ use std::{path::PathBuf, process::ExitCode};
 #[command(
     name = "jope",
     version,
-    about = "JOPE-Dime fixtures, CPU encode, and feat-math fit/emit/search"
+    about = "JOPE-Dime fixtures, encode, fit/emit/search, and local champions"
 )]
 struct Cli {
     #[command(subcommand)]
@@ -76,6 +77,34 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// Local champion bank over admitted fixtures. --pull/--push fail closed (no live S3).
+    Champions {
+        #[arg(long)]
+        local: bool,
+        #[arg(long)]
+        pull: bool,
+        #[arg(long)]
+        push: bool,
+        #[arg(long)]
+        root: Option<PathBuf>,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        #[arg(long)]
+        json: bool,
+    },
+    /// One local train step: record champion genomes as router labels. Live --env fails closed.
+    TrainStep {
+        #[arg(long)]
+        local: bool,
+        #[arg(long)]
+        env: Option<String>,
+        #[arg(long)]
+        root: Option<PathBuf>,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 fn execute(command: &Command) -> Result<Verification> {
@@ -96,7 +125,9 @@ fn execute(command: &Command) -> Result<Verification> {
         Command::Encode { .. }
         | Command::Fit { .. }
         | Command::Emit { .. }
-        | Command::Search { .. } => unreachable!("kernel commands are dispatched separately"),
+        | Command::Search { .. }
+        | Command::Champions { .. }
+        | Command::TrainStep { .. } => unreachable!("kernel commands are dispatched separately"),
     }
 }
 
@@ -186,6 +217,85 @@ fn main() -> ExitCode {
                     )
                 }),
                 Err(error) => fail(*json, "jope.search.v1", error),
+            };
+        }
+        Command::Champions {
+            local,
+            pull,
+            push,
+            root,
+            output,
+            json,
+        } => {
+            let selected = [*local, *pull, *push].into_iter().filter(|v| *v).count();
+            if selected != 1 {
+                return fail(
+                    *json,
+                    "jope.champions.v1",
+                    anyhow::anyhow!("select exactly one of --local, --pull, --push"),
+                );
+            }
+            if *pull || *push {
+                return match refuse_s3() {
+                    Ok(report) => print_json(*json, &report, || "unreachable".into()),
+                    Err(error) => fail(*json, "jope.champions.v1", error),
+                };
+            }
+            return match resolve_root(root.clone()).and_then(|root| local_champions(&root)) {
+                Ok(report) => {
+                    if let Some(path) = output {
+                        if let Err(error) = write_json(&path.join("champions.json"), &report) {
+                            return fail(*json, "jope.champions.v1", error);
+                        }
+                    }
+                    print_json(*json, &report, || {
+                        format!("Local champion bank: {} datasets.", report.dataset_count)
+                    })
+                }
+                Err(error) => fail(*json, "jope.champions.v1", error),
+            };
+        }
+        Command::TrainStep {
+            local,
+            env,
+            root,
+            output,
+            json,
+        } => {
+            if env.as_deref() == Some("dev") || env.as_deref() == Some("prod") {
+                return fail(
+                    *json,
+                    "jope.train-step.v1",
+                    anyhow::anyhow!(
+                        "live --env={env} train-step is not wired on this SHA; use --local",
+                        env = env.as_deref().unwrap_or("")
+                    ),
+                );
+            }
+            if !*local {
+                return fail(
+                    *json,
+                    "jope.train-step.v1",
+                    anyhow::anyhow!("select --local (live S3 train-step is fail-closed)"),
+                );
+            }
+            return match resolve_root(root.clone()).and_then(|root| local_train_step(&root)) {
+                Ok(report) => {
+                    if let Some(path) = output {
+                        if let Err(error) =
+                            write_json(&path.join("routing-labels.v1.json"), &report)
+                        {
+                            return fail(*json, "jope.train-step.v1", error);
+                        }
+                    }
+                    print_json(*json, &report, || {
+                        format!(
+                            "Local train-step recorded {} router labels.",
+                            report.labels.len()
+                        )
+                    })
+                }
+                Err(error) => fail(*json, "jope.train-step.v1", error),
             };
         }
         _ => {}
