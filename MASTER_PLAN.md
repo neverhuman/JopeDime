@@ -110,7 +110,7 @@ source of truth.
 | — | `wp11/learning-store` | df9e4e0 | **#34 open** | **at `5737aca7`, review 11:29:54Z**: all four P1s of round 4 fixed — three reproduced from the CLI, the fourth (non-finite entry refusal) read only, since no CLI source can carry a non-finite value in. Blocking then: `jope-learning` in neither test scope, so `check.sh` fails closed on the merged tree; the rebase; and two P2s. Live state is on the PR, not here |
 | — | rust-test lane | | #39 | `7050606` 11:11:35Z (4 rounds; the hosted gate ran no Rust tests beyond two `feat-math` targets, and the scope guard itself failed open twice before the reviewer's negative probes closed it) |
 | — | ADR-0003 test paths | | **#42 open** | **at `648c6c4f`**: three tests red since the ADR-0003 relocation, fixed; their quarantine entries dropped. #40 was the same branch opened from the wrong identity and is closed |
-| — | `wp13/pipeline-run` | | queued | `jope pipeline run`: dataset → prepare → GP search on feat-math → select → emit → receipt |
+| — | `wp13/pipeline-run` | 8b4cf466 | **#44 open** | `jope pipeline run`: dataset → prepare → GP search on feat-math → select → emit → receipt |
 | — | `wp5/cli-split` | d0b4819 | | needs a mechanical re-do on current main, not a replay (#32 rewrote 67 of the files it moves) |
 | — | `wp8/runner-lanes` | f6c101d | | |
 | #5 | dependabot cargo group | 1151493 | | re-trigger after main settles; lockfile = trust surface, two lenses |
@@ -138,13 +138,15 @@ measured; a figure without a source is a defect in this section.
   owed, and is already written on `ci/rust-test-followup-20260921`
   (`f1cbf820`) awaiting a slot. Clippy cannot join it: `cargo clippy
   --workspace --all-targets --locked -- -D warnings` at `70506066` on this
-  host stops in `feat-math` — **31 errors in the lib, 37 in the lib test** —
-  and aborts (`RC=101`) before compiling anything else. So the `~31 inside`
-  half of the figure this board quoted at `9628a652` reproduces almost exactly,
-  and the `143 outside feat-math` half is **unmeasured rather than refuted**:
-  nothing outside `feat-math` was compiled, so no figure for the workspace is
-  quoted here. `feat-math` has to be cleared before the rest can even be
-  counted.
+  host fails in `feat-math` — **31 errors in the lib, 37 in the lib test** —
+  and exits `RC=101`. So the `~31 inside` half of the figure this board quoted
+  at `9628a652` reproduces almost exactly, and the `143 outside feat-math` half
+  is **unmeasured rather than refuted**: every diagnostic in that run names a
+  `crates/feat-math/` path, and once the build failed cargo stopped scheduling
+  the rest (`warning: build failed, waiting for other jobs to finish...`),
+  having already checked `jope-paths`, `numpy-pcg64`, `jope-arena` and
+  `jope-datasets` clean. So no workspace figure is quoted here. A count for the
+  rest is one `--exclude feat-math` away; nobody has run it.
 - **The hosted `rust-test` lane, measured on the first green run that retained
   an artifact** (`35586778652`, artifact `rust-test-evidence` = `10633028231`,
   independently audited by the qualification reviewer; the lane was already
@@ -244,5 +246,5 @@ sessions.
 | "the hosted gate ran no Rust tests at all" — this board's earlier draft and the #39 discussion | `emitters` ran `cargo test -p feat-math --lib -- cxx::` and `--test portable_parity`. The rest of the claim holds. |
 | "the fence explains 9 of the quarantined tests" — this board's earlier draft | It explains 5. The `cause A` block held 9 because 3 relocation failures and 1 panic were misfiled under it. |
 | "`rust-check` runs clippy and fmt" — the D2 row before this revision | It runs `cargo check`, a systemd test and an MSRV check. Neither linter is in any hosted lane. |
-| In the stale `jain-split` mirror: "Eight-A100 recovery" in the header of `/home/ubuntu/jain-split/jope-dime/AGENT_CHAT.md:12` (not this repository's file, whose header says the opposite), and `main` at `458ef58` in that tree's `FINAL_GITHUB_PORT_PLAN.md` and `CODEX_GITHUB_PORT_PLAN.md`. "13 open PRs" and "zero workflows" are in neither file and were themselves a misattribution by this appendix | Pre-2026-09-21 state of the stale `jain-split` mirror, which is now a pointer. |
+| In the stale `jain-split` mirror: "Eight-A100 recovery" in the header of `/home/ubuntu/jain-split/jope-dime/AGENT_CHAT.md:12` (not this repository's file, whose header says the opposite); and `main` at `458ef58` **with** "zero Actions workflows / runs" in that tree's `FINAL_GITHUB_PORT_PLAN.md:116` and `CODEX_GITHUB_PORT_PLAN.md:27-28`. "13 open PRs" appears in neither and was this appendix's own misattribution | Pre-2026-09-21 state of the stale `jain-split` mirror, which is now a pointer. |
 | PR #40, PR #41 | Opened from the reviewer's identity and closed unmerged; the same branches are #42 and #43. Not withdrawals of the work. |
