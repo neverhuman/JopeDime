@@ -660,3 +660,78 @@ one that names a single invocation is not.**
 | `/tmp` worktrees or jope-dime repos | **0** |
 | Free disk | **1.2 T (84 %)**, from 697 G (91 %) |
 | Custody | **1,433 files / 2.2 G**, `sha256sum -c` passes |
+
+---
+
+# ✅ WORKTREE CONVENTION — now host-wide (2026-09-21, final)
+
+The previous entry applied the owner ruling to **two** repositories. This one carries it across the
+whole host, which is what "Claude, Codex and Grok all use the same folder system" actually requires.
+
+## What was still wrong
+
+| | |
+| --- | --- |
+| Top-level git repos in `$HOME` | **55** |
+| …with `.agent/worktrees` | **2** |
+| `~/.claude/CLAUDE.md` | **8 bytes — `@RTK.md` and nothing else** |
+| `~/.codex/AGENTS.md` | 28 bytes — an RTK import and nothing else |
+
+The rule reached two repos and no future one. **And there was still a `/tmp` worktree** — exactly
+the thing the ruling forbids:
+
+```
+sotarena  /tmp/sotarena-aspfm-readme-preview.avItSy  e58659c9  [agent/aspfm-readme-preview] prunable
+```
+
+Directory already wiped, registration orphaned. Verified **before** pruning that `e58659c9` is on
+`origin/agent/aspfm-readme-preview` and the branch has **0** commits absent from any remote — no
+data at risk. Pruned; the branch still exists locally at `e58659c950`. It was the **only** `/tmp`
+worktree registration on the box.
+
+## The rule now loads everywhere
+
+`~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md` both carry the same convention, with their original
+RTK imports preserved as line 1. Because they are *global*, they apply to all 55 repos and every
+repository created later — including ones no agent has touched yet.
+
+> ⚠️ **Neither `~/.claude/` nor `~/.codex/` is a git repository.** Both files' before and after
+> copies are in `~/jope-rescue-20260921/` (`global-claude-CLAUDE.md.{before,after}`,
+> `global-codex-AGENTS.md.{before,after}`). Same caveat as `jain-split/AGENTS.md`: editing them
+> edits an unbacked file.
+
+## Seven repositories migrated
+
+| Repo | Was | Now |
+| --- | --- | --- |
+| `jain-split/jope-dime`, `JopeDime` | done previously | ✓ |
+| `redline-testing`, `warpos`, `openQG`, `echoforge` | empty `.claude/worktrees` | dir removed, symlinked, `.agent/` ignored |
+| `jmcp-split/jmcp-talk` | **live worktree**, 42 M, 16 dirty, **19 unpushed commits** | preserved, then **`git worktree move`** (never `mv`, which breaks the registration), then symlinked |
+
+`jmcp-talk`'s work was bundled and **verified before the move** — tip `48adf3a5d468` confirmed
+present in the bundle, 71 commits, plus a 66 KB patch and a 13 MB untracked tarball. After the
+move: still 2 worktrees, still **16 dirty and 19 unpushed**. Nothing lost.
+
+Left alone deliberately: `~/.jeryu/worktrees` (empty) and `~/flywheel/worktrees` (plain data, not a
+git worktree).
+
+## Verified by execution
+
+- **Zero** worktree registrations under `/tmp`, anywhere on the host.
+- **Zero** worktrees outside `<repo>/.agent/worktrees/` — every one is either a repo root or under
+  the shared root. (One apparent violation was the `~/jope-dime` **symlink** reporting its main
+  worktree at its real path; re-checked with symlinks resolved, it is clean.)
+- End-to-end probe in a **migrated** repo, not just the original:
+  `git worktree add --detach .claude/worktrees/_probe HEAD` in `warpos` registered at
+  `/home/ubuntu/warpos/.agent/worktrees/_probe`. Removed; all repos back to one worktree.
+- An `echoforge` probe failed on `git-crypt` (repo not unlocked) — **not** a symlink fault; the
+  symlink was intact and no stale registration was left. Noted so nobody re-diagnoses it.
+
+## Why it is a symlink and not a documented convention
+
+There is **no worktree-path setting** in Claude Code. A symlink is the only way to make the
+`EnterWorktree` **tool** land in the shared root with nothing to remember — and "remember the
+convention" is precisely what failed before: the old rule named a *mechanism* (`git worktree add`)
+and a *tool* walked past it, creating four worktrees in a tree that forbade them.
+
+**A rule naming a mechanism gets bypassed. A rule naming a location does not.**
