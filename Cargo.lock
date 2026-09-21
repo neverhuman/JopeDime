@@ -2312,6 +2312,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "jope-learning"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "hex",
+ "jope-datasets",
+ "rusqlite",
+ "schemars",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror 2.0.20",
+ "tokio",
+ "ulid",
+ "walkdir",
+]
+
+[[package]]
 name = "jope-models"
 version = "0.1.0"
 dependencies = [
