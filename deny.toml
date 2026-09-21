@@ -20,3 +20,10 @@ allow-wildcard-paths = true
 unknown-registry = "deny"
 unknown-git = "deny"
 allow-git = []
+
+# object_store 0.14 → reqwest (rustls) → rustls-platform-verifier → webpki-root-certs, a wasm32-only
+# target dependency (never compiled here) whose root-store data is CDLA-Permissive-2.0. Scoped to
+# that one crate so the global allow list stays as it is (review finding on #27).
+[[licenses.exceptions]]
+name = "webpki-root-certs"
+allow = ["CDLA-Permissive-2.0"]
