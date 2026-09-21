@@ -15,6 +15,7 @@ import golden46_matrix_audit as matrix  # noqa: E402
 import golden46_required_study_audit as required  # noqa: E402
 
 
+@pytest.mark.xbabe2  # reads /home/ubuntu/remote_super/quant campaign manifests (old state plane)
 def test_historical_aspfm_receipt_is_terminal_without_a_score(tmp_path: Path) -> None:
     receipt = historical.write_receipt("ZTS", tmp_path)
     assert receipt["benchmark_cell_resolved"] is True
@@ -30,6 +31,7 @@ def test_full_zts_registered_gpu_methods_are_all_frozen_ineligible() -> None:
     assert len(cluster.eligible_methods("ZTS", {"cpu", "cpu_light"})) == 96
 
 
+@pytest.mark.xbabe2  # reads /home/ubuntu/golden42/golden42_foundry/data/panel46.json (old state plane)
 def test_matrix_contract_accounts_for_all_historical_cells(tmp_path: Path) -> None:
     payload = matrix.matrix_audit(
         matrix.DEFAULT_ARTIFACT_ROOT,
@@ -42,6 +44,7 @@ def test_matrix_contract_accounts_for_all_historical_cells(tmp_path: Path) -> No
     assert 476 + 24 == payload["expected_cells"]
 
 
+@pytest.mark.xbabe2  # reads /home/ubuntu/golden42/golden42_foundry/data/panel46.json (old state plane)
 def test_required_study_excludes_full_zts(tmp_path: Path) -> None:
     payload = required.required_study_audit(
         required.DEFAULT_ARTIFACT_ROOT,

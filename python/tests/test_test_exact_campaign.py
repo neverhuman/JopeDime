@@ -299,6 +299,7 @@ def test_checkpoint_gate_is_fail_closed_until_every_condition_passes():
     assert "candidate_policy_is_not_conditional" in result["reasons"]
 
 
+@pytest.mark.xbabe2  # reads /home/ubuntu/smart_cluster/etc/projects.toml (old state plane)
 def test_scheduler_project_registration_and_weight_are_exact():
     projects = tomllib.loads(Path("/home/ubuntu/smart_cluster/etc/projects.toml").read_text())["projects"]
     assert projects["jope-testonly"] == {

@@ -170,6 +170,7 @@ jobs:
   # The Python compatibility/training surface: the uv project must install, lint, format and pass
   # its tests. Nothing hosted ran these before, which is how a systemd-template rename silently
   # broke tests/test_durable_selfplay.py; deploy/systemd is in the gate for exactly that reason.
+  # Tests that need the old state plane on xbabe2 carry the `xbabe2` marker and are deselected.
   python:
     needs: changes
     if: needs.changes.outputs.python == 'true'
@@ -180,15 +181,11 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
           persist-credentials: false
-      - name: Install uv (checksum-pinned, per agent/ci-tools.json)
-        run: |
-          set -euo pipefail
-          url=https://github.com/astral-sh/uv/releases/download/0.11.28/uv-x86_64-unknown-linux-gnu.tar.gz
-          sha=e490a6464492183c5d4534a5527fb4440f7f2bb2f228162ad7e4afe076dc0224
-          curl -sSLo /tmp/uv.tar.gz "$url"
-          echo "$sha  /tmp/uv.tar.gz" | sha256sum -c -
-          sudo tar -xzf /tmp/uv.tar.gz -C /usr/local/bin --strip-components=1 uv-x86_64-unknown-linux-gnu/uv
-          uv --version
+      - name: uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: python/uv.lock
       - name: Sync the locked environment (CPU torch)
         working-directory: python
         run: uv sync --locked --extra dev --extra cpu
