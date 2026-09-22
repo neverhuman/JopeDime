@@ -51,7 +51,11 @@ actual checkout SHA, command, input/evidence hashes, source cleanliness, times a
 It recomputes the path plan from the checked-out base diff. Only a declared path exclusion may
 have a skipped job with no receipt. Failed/cancelled/missing/started/unavailable outcomes, missing
 reports after execution starts, ambiguous receipts, zero executed tests and unknown test counts
-fail. There is no `continue-on-error` success path.
+fail. CI receipts are read only at each artifact root; nested pipeline receipts are hashed
+product evidence. Every downloaded evidence file must be declared by the CI manifest, including
+hidden files. There is no `continue-on-error` success path. Retry with **Re-run all jobs**:
+re-running only failed jobs leaves successful lanes without receipts for the new attempt and
+therefore cannot pass this aggregate.
 
 Nextest collection is captured separately from execution. The execution summary supplies skips
 that nextest 0.9.133 omits from JUnit; serialized executed/pass/fail counts must agree. Nextest's

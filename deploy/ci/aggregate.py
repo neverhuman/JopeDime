@@ -18,6 +18,20 @@ plan_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(plan_module)
 
 
+def load_receipts(root):
+    receipts = {}
+    # download-artifact keeps each artifact in a separate immediate directory.
+    # Product pipeline evidence also contains receipt.json; it is data covered by
+    # the CI receipt's hashes, not another CI lane to discover recursively.
+    for artifact in root.iterdir():
+        path = artifact / "receipt.json"
+        if artifact.is_symlink() or not artifact.is_dir() or not path.is_file():
+            raise ValueError(f"artifact lacks a root CI receipt: {artifact.name}")
+        receipt = json.loads(path.read_text())
+        receipts.setdefault(receipt["lane"], []).append((path, receipt))
+    return receipts
+
+
 def verify(mapping, plan, needs, receipts, expected):
     errors, inventory = [], {}
     def reject(message):
@@ -75,6 +89,9 @@ def verify(mapping, plan, needs, receipts, expected):
             if receipt.get("inputs", {}).get(name) != digest(ROOT / name):
                 reject(f"{lane}: input mismatch {name}")
         evidence = receipt.get("evidence", {})
+        actual_files = {str(p.relative_to(path.parent)) for p in path.parent.rglob("*") if p.is_file() and p != path}
+        if actual_files != set(evidence):
+            reject(f"{lane}: evidence manifest differs from artifact files")
         required = {"command.log"}
         if lane == "changes":
             required.add("plan.json")
@@ -119,10 +136,7 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
-        receipts = {}
-        for path in args.receipts.rglob("receipt.json"):
-            receipt = json.loads(path.read_text())
-            receipts.setdefault(receipt["lane"], []).append((path, receipt))
+        receipts = load_receipts(args.receipts)
         changes = receipts.get("changes", [])
         if len(changes) != 1:
             raise ValueError("missing or ambiguous changes receipt")

@@ -46,6 +46,7 @@ jobs:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 30
 
   hygiene:
@@ -73,6 +74,7 @@ jobs:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 30
 
   rust-check:
@@ -102,6 +104,7 @@ jobs:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 30
 
   rust-test:
@@ -137,6 +140,7 @@ jobs:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 30
 
   emitters:
@@ -168,6 +172,7 @@ jobs:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 30
 
   inputs:
@@ -197,6 +202,7 @@ jobs:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 30
 
   python:
@@ -226,6 +232,7 @@ jobs:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 30
 
   e2e-smoke:
@@ -255,6 +262,7 @@ jobs:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 30
 
   aggregate:
@@ -292,4 +300,5 @@ jobs:
           name: ci-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/ci-aggregate/${{ github.run_id }}/${{ github.run_attempt }}/
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 30

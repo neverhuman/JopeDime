@@ -489,3 +489,19 @@ Live queue/service failure fixture handling passes; no older successful-run fall
 Evidence under foundation/aggregation. Genuine hosted docs-only path proof will be
 recorded on the next serial branch before CPU implementation changes, after this
 aggregate merges; no synthetic excluded plan is claimed as hosted proof.
+
+PR60 hosted PR35766319916 passed all eight substantive lanes, then aggregate failed
+while recursively treating nested pipeline product receipt.json files as CI lane
+receipts (missing lane key). Failure preserved at foundation/aggregation/
+first-aggregate-failure.log. Continue same claim: discover CI receipts only at each
+downloaded artifact root; nested product receipts remain hashed evidence. Add a
+regression fixture and reject undeclared extra evidence files. New source requires
+fresh all-nine CI and exact-head independent review; approval5281998554 applies only
+to45c5db5b03e0d17129d4094cf0f36c0b80469a9e and is insufficient for correction.
+
+Corrected verifier replayed all eight actual uploaded PR artifacts successfully;
+product receipts remain declared/hashed data. Receipt discovery now uses artifact
+roots, and extra undeclared files fail. Uploads explicitly include hidden evidence
+inside the fresh run directory. Document Re-run all jobs: successful old-attempt
+receipts cannot satisfy a new attempt.43 focused tests now include both regressions.
+Replay fixture and original failed hosted logs remain under foundation/aggregation.
