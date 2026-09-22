@@ -380,31 +380,69 @@ fn v2_rejects_overspending_missing_accounting_and_incomparable_cut_sets() {
     let mut cases = Vec::new();
     let mut v = fixture();
     v["search"]["evaluations"] = json!(4);
-    cases.push(v);
+    cases.push((v, "total budget/phase accounting mismatch"));
     let mut v = fixture();
     v["search"]["cuts"][0]
         .as_object_mut()
         .unwrap()
         .remove("accounting");
-    cases.push(v);
+    cases.push((v, "accounting"));
     let mut v = fixture();
     v["search"]["compared_cuts"] = json!([1]);
-    cases.push(v);
+    cases.push((v, "must compare all requested cuts"));
     let mut v = fixture();
     v["search"]["coverage"][0]["measured_cuts"] = json!([]);
-    cases.push(v);
+    cases.push((v, "selected program lacks complete bound cut coverage"));
     let mut v = fixture();
     v["search"]["cuts"][0]["accounting"]["deadline_overrun"] = json!(true);
-    cases.push(v);
+    cases.push((v, "total budget/phase accounting mismatch"));
     let mut v = fixture();
     v["search"]["cuts"][0]["accounting"]["comparison"]["completed_evaluations"] = json!(1);
-    cases.push(v);
-    for value in cases {
+    cases.push((v, "invalid phase outcomes or admission limit"));
+    let mut v = fixture();
+    v["search"]["cuts"][0]["accounting"]["comparison"]["stopped_by"] = json!("seconds");
+    cases.push((v, "phase stop reason mismatch"));
+    let mut v = fixture();
+    v["search"]["cuts"][0]["accounting"]["exploration"]["stopped_by"] = json!("not_requested");
+    cases.push((v, "exploration stop reason mismatch"));
+    let mut v = fixture();
+    v["search"]["cuts"][0]["accounting"]["exploration"]["successful_measurements"] =
+        json!(u64::MAX);
+    cases.push((v, "invalid phase outcomes or admission limit"));
+    for (value, expected) in cases {
+        let errors = validate_value(&value).unwrap_err();
         assert!(
-            validate_value(&value).is_err(),
-            "accepted forged receipt: {value}"
+            errors.iter().any(|e| e.contains(expected)),
+            "wanted {expected:?}, got {errors:?}"
         );
     }
+}
+
+#[test]
+fn schema_only_consumers_require_every_new_v2_field() {
+    let schema = schema();
+    for field in ["budget_policy", "compared_cuts", "coverage"] {
+        assert!(schema["$defs"]["Search"]["required"]
+            .as_array()
+            .unwrap()
+            .contains(&json!(field)));
+        let mut v = fixture();
+        v["search"].as_object_mut().unwrap().remove(field);
+        let errors = jope_datasets::schema::validate(&schema, &v);
+        assert!(errors.iter().any(|e| e.contains(field)), "{errors:?}");
+    }
+    assert!(schema["$defs"]["CutSearch"]["required"]
+        .as_array()
+        .unwrap()
+        .contains(&json!("accounting")));
+    let mut v = fixture();
+    v["search"]["cuts"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("accounting");
+    assert!(jope_datasets::schema::validate(&schema, &v)
+        .iter()
+        .any(|e| e.contains("accounting")));
 }
 
 #[test]

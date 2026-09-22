@@ -216,7 +216,9 @@ pub struct CutSearch {
     pub completed_evaluations: u64,
     pub successful_measurements: u64,
     pub failed_or_unavailable_measurements: u64,
-    /// [`STOPPED_BY_EVALUATIONS`] or [`STOPPED_BY_SECONDS`].
+    /// Single cut: exploration's evaluations/seconds/search-space reason.
+    /// Multiple cuts: comparison's seconds, evaluations, or pool-exhausted reason
+    /// in that precedence; exploration retains its separate reason.
     pub stopped_by: &'static str,
     pub seconds: f64,
     pub exploration: Phase,

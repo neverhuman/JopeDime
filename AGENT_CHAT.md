@@ -205,3 +205,17 @@ under implementation-20260922 custody. These local checks precede the commit.
 Next: commit, independent Claude exact-head review, hostedCI, eligible native review
 and guarded merge. Publication credential remediation is pending separately; no
 GitHub approval or merge claimed. Canonical remains claimed, not handed off.
+
+## 2026-09-22T05:03:52Z — Codex — independent review corrections on the same issue52 claim
+
+Claude independently approved71efaef46183a913bd1eb49d70ad1a2dd174c7ca after a complete
+read-only pipeline/CI review (session9e200396-bbb3-4fb4-a4ca-bc650b3edf55). Seven
+nonblocking findings are being corrected: explicit v2 schema required fields, stop
+reason descriptions/consistency, checked arithmetic, default unique smoke output,
+and specific negative-test diagnostics. HostedCI35688529752 found a missing
+schema-example census row; three jobs passed, hygiene failed, four queued jobs
+were cancelled after runner-registration capability became unavailable. No CIgreen.
+Extend the same claim to docs/parity/capability-matrix.md; regenerate its counts
+through the owning census module and run its guard. Source stayed frozen through
+review. New head will require fresh review/checks; publication credential replacement
+and xbabe1 registration repair remain pending. No other writer or lane observed.
