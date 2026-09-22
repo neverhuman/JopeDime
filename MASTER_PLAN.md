@@ -1,6 +1,6 @@
 # JopeDime current direction
 
-**2026-09-22 full-main foundation claim.** Publication repo: private `veox-ai/JopeDime`.
+**2026-09-22 CPU foundation delivery.** Publication repo: private `veox-ai/JopeDime`.
 Issue #52 is closed by [PR #55](https://github.com/veox-ai/JopeDime/pull/55).
 Its source head `c5a5b1138b4e878327eb2f429ac75be9b8a9374c` received independent
 Claude review and native `neverhuman` approval after verifying `jepsontaylor` was
@@ -56,35 +56,104 @@ Canonical returned clean before claiming `ci/full-main-cpu`. The first aggregate
 correctly stayed red when nested product receipts were misclassified; that defect
 was fixed and the real failed-run artifacts replayed before final hosted acceptance.
 
-Static coverage assigns22packages,18features,214Cargo targets,216Python test-named
-files,4workflows/13jobs and32benchmark sources. Actual fast results at the above
-source:43protocol tests;751nextest passes with13skips from764listed;207Python passes
-with15deselected from222; four systemd tests; four emitter tests with278filtered.
-Counts are per invocation and overlap across lanes. Non-test verification commands
-have unknown/not-applicable test counts, never invented zeros. Receipts and strict
-aggregate are wired; see [coverage/receipt semantics](deploy/ci/coverage.md).
+[PR #61](https://github.com/veox-ai/JopeDime/pull/61) delivered the CPU foundation from
+exact source `ac26f6596e24a2af6e627b87e87d9bd18a90514e`, independently reviewed by
+Claude with native neverhuman approval 5282585692. Manual 35773238753/1 and
+PR 35772555348/2 passed all nine jobs. Guarded rebase merge produced
+`fdb2e8e3e3d152590d9246b5226eca417f5c6cbc` with the identical reviewed tree.
+The preliminary genuine docs-only run 35769025859 passed changes, hygiene and
+aggregate with six declared path exclusions. Failed pre-deployment provenance runs
+and the first aggregate failure remain evidence, not superseded success claims.
 
-The new branch begins with a genuine hosted documentation-only path proof. No CPU
-runner or full-main implementation is claimed yet. Then the same focused PR will
-add independent CPU families and reviewed runner delivery under the resource limits
-below. A fixed host-role allocation (two fast slots on xbabe1; full CPU on xbabe2)
-is the initial implementation choice, subject to live ownership/provenance readback
-and independent review before deployment. Baseline execution and a subsequent
-build-reuse job, with fresh evidence at each run/attempt, remain required.
+The reviewed runner source was deployed after draining owned listeners. Actual readback
+verified two fast slots on xbabe1 at 16 GiB/16 CPUs each and one exclusive full slot on
+xbabe2 at 48 GiB/16 CPUs, no swap, separate PR/trusted-main work and cache volumes,
+read-only root/policy/hooks, no GPU/Docker/PAT/models mounts or training/publishing/S3
+credentials. Other JopeDime roles are disabled; the held 24 GiB/28 CPU proposal was not
+used. Provenance remains mandatory. Full jobs have 120 minutes and at least 50 GB disk
+reserve. Main-guard shares the full slot serially, so it can queue behind the baseline.
+See the [runner runbook](docs/runbooks/runner.md) and custody `foundation/full-main`.
 
-The remaining user-approved foundation delivery is a diagnostic push-triggered full-main
-CPU baseline. Full Rust/Python repair, strict Clippy, persistent runner migration and
-mandatory full-CPU gates remain the following phase. Qualification and soak are
-unstarted. Fast jobs are limited to two at 16 GiB/16 CPUs each; full CPU is exclusive
-among JopeDime jobs on its host at 48 GiB/16 CPUs, 120 minutes and a 50 GB disk reserve.
+Current static discovery at that source assigns 22 packages, 18 features, 214 Cargo targets,
+218 Python test-named files, 6 workflows/16 jobs and 32 benchmark sources. These are discovery
+counts, not tests executed. Fast CI executed 54 protocol tests, 751 nextest passes with 13 skips
+from 764 listed, 207 Python passes with 15 deselected from 222, four systemd tests and four
+emitter tests with 278 filtered. Counts overlap across invocations. Non-test commands
+have unknown/not-applicable counts, never invented zeros. Collection, execution and
+explicit deferred/research dispositions remain distinct in
+[coverage/receipt semantics](deploy/ci/coverage.md).
+
+The first push-triggered full-main run,
+[35775436225](https://github.com/veox-ai/JopeDime/actions/runs/35775436225), attempt 1,
+completed at `fdb2e8e3e3d152590d9246b5226eca417f5c6cbc`. All11families produced fresh,
+verified receipts and a retained inventory: eight passed, two failed, one unavailable.
+The overall job correctly failed. Downloaded artifacts replayed through the verifier
+with matching evidence digests; no missing/invalid family results were accepted.
+
+| Family | Observed outcome at that main |
+| --- | --- |
+| Default workspace | 2,523 passed, 29 failed, 37 skipped; 2,589 listed; exit 100 |
+| Maintained Python | 207 passed, 15 deselected; 222 collected |
+| Doctests | 8 passed |
+| Scratch feature variants | 1,879 passed, 30 failed, 16 skipped; 1,925 listed; ten-minute family limit, exit 124 |
+| Policy/testing | 23 passed, 5 skipped; 28 listed |
+| S3 feature, offline only | 34 passed; no live S3 credentials or qualification |
+| CPU-neural | Unavailable, exit 78: configured `/usr/include/cuda_runtime.h` missing; counts unknown |
+| Emitters | 4 passed, 278 filtered plus emitted-code parity |
+| Input verification and pipeline smoke | Both passed; non-test counts not applicable |
+| Build artifact measurement | Passed; initial artifact `fresh:false`; subsequent cached reuse is a post-merge acceptance check |
+
+The scratch timeout interrupted `feat-math::golden fast_profile_portfolio_head` after
+466.505 seconds of that test; compilation and the rest of the family used the remaining
+budget. Counts are per invocation and overlap. Ignored/deselected tests, research scripts,
+GPU and live-service dependencies remain explicit non-execution in the mapping/inventory.
+Main-guard35775436296 passed at that exact main. Negative admission run35775538345
+proved rejection in both domains: actual Worker hook invocation followed by exit137
+in0.467seconds (fast) and0.674seconds (main), no bypass-step execution, and no OOM,
+service stop or timeout explaining the exits. Installed hashes/policies and deterministic
+authorization replay bind the inference; denial stderr itself was lost with the Workers.
+The expected-rejection run was cancelled after preserving both proofs; it is not passing CI.
+The workflow runs on every main push and manual dispatch of main, and remains diagnostic.
+
+Proposed next repair PRs, derived from the 29 default failures and the other family outcomes:
+
+- **Repair campaign spec and fixture discovery**: four spec-drift failures and nine missing
+  or host-dependent fixture/module/catalog failures. Preserve dataset identities and sealed
+  input boundaries; do not copy research data into the learning worker's input closure.
+- **Repair campaign status and UI assertions**: three failures in island counts, selfplay
+  alarms and requeued-attempt history.
+- **Repair engine cache, history and queue contracts**: five failures in native cache
+  accounting/invalidation, displayed learning metrics and unsupported-task queue handling.
+- **Make fit-authority test setup explicit**: eight failing engine fit/view contracts;
+  preserve the production fit fence and require valid test authority rather than bypass it.
+- **Bound the scratch-feature portfolio proof**: investigate the measured timeout and
+  preserve the approved 120 minute full-job/resource limits when revising family budgets.
+- **Repair CPU-neural SDK discovery**: reconcile the declared CPU feature's header/runtime
+  prerequisites; an unavailable SDK is not a passing test result or GPU qualification.
+
+These are measured failure groupings, not yet established root causes. The held lint patch
+belongs to the later lint repair PR; reproduce its warning census before strict enforcement.
+Custody includes `push-35775436225-verified.json`, `default-repair-observations.json`,
+exact source reviews/CI/deployment fingerprints, and the original failed logs.
+
+Full Rust/Python repairs, strict Clippy enforcement, persistent managed runners and
+mandatory full-CPU gates remain the following phase. GPU/S3 qualification and learning
+campaigns remain outstanding. Qualification and soak clocks are unstarted. The approval
+procedure and verified credential paths are now explicit in
+[AGENTS.md](AGENTS.md#approval-procedure-on-this-host).
+
+Post-merge completion is recorded outside the checkout at
+`/home/ubuntu/jope-rescue-20260921/implementation-20260922/foundation/completion.json`,
+including the final main SHA, documentation review/CI, a subsequent job's fresh cache-reuse
+receipt, and the clean canonical handoff. This source record does not preclaim those outcomes.
 
 Stopped-head handoffs preserve `runner-prov` at
 `b8acc6202824698e6480ae2fa92f1a89a6e04626` and `lint` at
 `187c2f14dfca1c10d6670b81e6db7cebbe7fcc6a`, with existing authorship.
 The 24 GiB/28 CPU runner proposal is withdrawn as written and remains undeployed.
 The lint patch stays deferred; its reported 388 warnings require reproduction.
-The runner delivery must also bind effective resource overrides, which the current
-installed-script digest does not cover. Handoffs: `foundation/held-lanes-handoff.json`.
+The deployed launcher now rejects unrecorded effective resource overrides; actual
+container resources are verified by provenance. Handoffs: `foundation/held-lanes-handoff.json`.
 
 PR49's actual scheduled report succeeded at **04:00–04:02 UTC**, with32 roots,
 six unchanged installed fingerprints and report-only behavior. Independent Claude
@@ -379,12 +448,7 @@ sessions.
 | In the stale `jain-split` mirror: "Eight-A100 recovery" in the header of `/home/ubuntu/jain-split/jope-dime/AGENT_CHAT.md:12` (not this repository's file, whose header says the opposite); and `main` at `458ef58` **with** "zero Actions workflows / runs" in that tree's `FINAL_GITHUB_PORT_PLAN.md:116` and `CODEX_GITHUB_PORT_PLAN.md:27-28`. "13 open PRs" appears in neither and was this appendix's own misattribution | Pre-2026-09-21 state of the stale `jain-split` mirror, which is now a pointer. |
 | PR #40, PR #41 | Opened from the reviewer's identity and closed unmerged; the same branches are #42 and #43. Not withdrawals of the work. |
 
-### CPU foundation candidate (PR61, 2026-09-22)
+### CPU foundation record (PR61, 2026-09-22)
 
-The candidate maps default workspace nextest, doctests, six CPU feature selections,38 maintained
-Python files, input/emitter/pipeline checks and build reuse to independent bounded families.
-The push/main-manual workflow is diagnostic; functional failure stays red. Two fast16GiB/16CPU
-slots on xbabe1 and one exclusive48GiB/16CPU full slot on xbabe2 use separate writable domains,
-read-only admission policy, no GPU/S3/training/publishing credentials, and50GB minimum reserve.
-This is configured source, pending exact-head review, reviewed deployment, CI and live run
-receipts. No qualification or soak clock has started. Held lint/runner branches remain intact.
+Source, reviewed deployment and live run evidence are recorded at the top of this document.
+They remain separate from full CPU qualification, which requires the subsequent repair phase.
