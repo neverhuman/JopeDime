@@ -68,19 +68,8 @@ matrix() { # <genome-name> <dsl> [--all]
     node --check "$dir/program.js"; run js node "$dir/program.js";;
   esac
   echo "== $name: compare predictions of ${#run[@]} programs (IEEE-754 bit patterns)"
-  python3 - "$dir" > "$dir/predictions.bits" <<'PY'
-import glob, os, struct, sys
-out = sys.argv[1]
-bits = {}
-for path in sorted(glob.glob(os.path.join(out, "pred-*.txt"))):
-    rows = [line.strip() for line in open(path) if line.strip()]
-    bits[os.path.basename(path)] = [struct.pack("<d", float(v)).hex() for v in rows]
-first = next(iter(bits.values()))
-for name, value in bits.items():
-    if value != first:
-        print(f"MISMATCH {name}", file=sys.stderr); sys.exit(1)
-print("\n".join(first))
-PY
+  # Shared with deploy/ci/e2e-smoke.sh, which makes the same bit comparison.
+  python3 deploy/ci/emitters/compare-bits.py "$dir" > "$dir/predictions.bits"
   echo "  $(wc -l < "$dir/predictions.bits") rows; programs agree: ${run[*]}"
   echo "== $name: expectations"
   for target in $targets; do

@@ -56,13 +56,17 @@ fn champion_executes_and_emits_dual_artifacts() {
 
 #[test]
 fn emitted_python_matches_interpreter_predictions() {
-    // Skip silently if no python3 on the host (CI images always have it).
+    // ADR-0002 §4: CI sets JOPE_PARITY_STRICT=1 so a missing toolchain is a failure, not a
+    // silently skipped backend. Without it this test returned `Ok` while asserting nothing.
     if std::process::Command::new("python3")
         .arg("--version")
         .output()
         .is_err()
     {
-        eprintln!("python3 unavailable; skipping parity check");
+        if std::env::var_os("JOPE_PARITY_STRICT").is_some_and(|v| v == "1") {
+            panic!("champion parity: python3 is unavailable and JOPE_PARITY_STRICT=1");
+        }
+        eprintln!("champion parity SKIP: python3 is unavailable");
         return;
     }
     let genome = GenomeIr::parse(CHAMPION_GENOME).expect("parse");
