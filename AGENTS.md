@@ -32,6 +32,16 @@ One shared directory for every agent (Claude, Codex, Grok) rather than a per-too
 in the shared directory without any configuration. **Do not replace that symlink with a real
 directory**, and do not introduce `.codex/worktrees` or similar — that is the sprawl this replaces.
 
+**Bootstrap before any worktree tool in a fresh checkout.** These ignored directories and
+the symlink are not supplied by Git. From the repository root, create `.agent/worktrees`
+and `.claude` with `rtk proxy mkdir -p .agent/worktrees .claude`. If there is no entry at
+`.claude/worktrees` (a dangling symlink counts as existing), create it with
+`rtk proxy ln -sT ../.agent/worktrees .claude/worktrees`. Before every worktree tool use,
+verify it is a symlink and `rtk proxy readlink -f .claude/worktrees` resolves to this
+repository's `.agent/worktrees`. A real directory or a different target requires
+preservation and reconciliation before proceeding; never replace it with `ln -f`.
+Its absence or wrong type is invisible to `git status` because `.claude/` is ignored.
+
 - **Never `/tmp`** — not worktrees, not clones, not build output. It is emptied at boot.
 - **At most 4 concurrent lanes per repository**, one build directory each, reused.
 - **Remove a lane when its PR closes** with `git worktree remove`, never `rm -rf` (which orphans

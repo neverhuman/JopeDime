@@ -25,8 +25,10 @@ in the systemd journal. The wrapper saves candidate output,
 stderr, script/config/unit checksums, systemd invocation ID, exit status, timestamps, per-root allocated
 bytes and filesystem usage beneath a custody directory outside
 working trees. Failed and interrupted runs retain their diagnostics. A killed
-process may leave a `running` receipt; inspect the systemd journal and treat it
-as incomplete. The service has a 30-minute timeout.
+process may leave a `running` receipt or truncate a receipt during a write. Preserve
+either result and inspect the systemd journal; neither establishes a complete run.
+The next-day comparator refuses malformed JSON rather than accepting partial evidence.
+The service has a 30-minute timeout.
 
 The wrapper creates custody if needed and records both supplied and resolved paths.
 Missing unit files are recorded explicitly. Completed Cargo scans are retained
@@ -65,7 +67,8 @@ syntax checks, ShellCheck, the fixture test below, and `systemd-analyze --user
 verify` on the units. Install the three helper files, local root configuration
 and two units, then `systemctl --user daemon-reload`. Manually start the service,
 inspect its receipt and `systemctl --user cat/show` readback, then enable and
-start the timer. Its calendar is explicitly `04:00:00 UTC`, with
+start the timer. Verify `loginctl show-user ubuntu -p Linger` reports `Linger=yes`
+so the user manager can run without a login session. Its calendar is explicitly `04:00:00 UTC`, with
 `Persistent=true`. On failure leave automatic deletion stopped.
 
 Run `python3 deploy/maintenance/test_report.py --scratch CUSTODY_FIXTURE_DIR`.
