@@ -1,35 +1,22 @@
 //! Stage 5: pick the program to emit, from what the search actually measured.
 //!
-//! The rule is the plain one named in the receipt: over the cuts that were
-//! searched, a program's score is the **mean of its held-out RMSE**, and the
-//! lowest mean wins. Every RMSE in that mean was computed on rows the fit that
-//! produced it never saw ([`crate::prepare`] builds the folds; [`crate::search`]
-//! never crosses them).
-//!
-//! A program measured on more cuts beats one measured on fewer, because a mean
-//! over one cut is not comparable with a mean over five. Ties break on the
-//! canonical genome, so the choice is a function of the measurements alone and
-//! two runs of the same command select the same program.
-//!
-//! This is *not* a fold-pure lower-confidence-bound selection. No such selector
-//! exists in this workspace and none is invented here; [`Selection::method`] says
-//! exactly what was applied.
-//!
-//! [`UNMEASURED_FALLBACK`] survives as a guard, not as a normal path. Since the
-//! search fails loudly when a cut measures nothing, a run reaching this crate's
-//! [`select`] always carries at least one measurement; the fallback is what keeps
-//! that an assertion rather than a panic.
+//! Only programs measured on every requested cut are eligible. Among them,
+//! the lowest mean held-out RMSE wins, with canonical genome as the tie-breaker.
+//! Partial coverage is recorded, never compared with a different cut set. If
+//! no program covers every cut, selection fails rather than emitting an
+//! unqualified partial winner.
 
-use anyhow::Result;
-use std::collections::BTreeMap;
+use anyhow::{ensure, Result};
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{search::CutSearch, sha256_hex};
 
-/// Generation 0's seed, and the genome emitted if nothing at all measured.
+/// Generation 0's seed.
 pub use crate::search::BOOTSTRAP_GENOME;
 
 /// How the emitted program was chosen.
-pub const MIN_MEAN_VALIDATION_RMSE: &str = "min_mean_validation_rmse";
+pub const MIN_MEAN_VALIDATION_RMSE: &str = "all_cuts_then_min_mean_validation_rmse_then_genome";
+/// Historical v1 method; v2 refuses selection with no complete coverage.
 pub const UNMEASURED_FALLBACK: &str = "unmeasured_fallback_bootstrap_genome";
 
 /// One program's measurement on one cut.
@@ -66,20 +53,45 @@ pub struct Selection {
     pub program_sha256: String,
     pub best: Option<Best>,
     pub reason: Option<String>,
+    pub compared_cuts: Vec<u64>,
+    pub coverage: Vec<crate::receipt::Coverage>,
 }
 
 /// Apply the selection rule over every cut's observations.
 pub fn select(cuts: &[CutSearch]) -> Result<Selection> {
-    // genome -> cut -> that program's best measurement on that cut.
+    let expected: BTreeSet<usize> = cuts.iter().map(|c| c.cut).collect();
+    ensure!(
+        !expected.is_empty() && expected.len() == cuts.len(),
+        "selection needs distinct cuts"
+    );
+    let mut attempted: BTreeMap<String, BTreeSet<usize>> = BTreeMap::new();
+    // genome -> cut -> that program's measurement on that cut.
     let mut measured: BTreeMap<String, BTreeMap<usize, Measurement>> = BTreeMap::new();
     for cut in cuts {
         for observation in &cut.observations {
+            ensure!(
+                observation.cut == cut.cut,
+                "observation cut identity mismatch"
+            );
+            ensure!(
+                attempted
+                    .entry(observation.genome.clone())
+                    .or_default()
+                    .insert(cut.cut),
+                "duplicate program attempt on cut {}",
+                cut.cut
+            );
             let (Some(rmse), Some(hold_r2), Some(train_r2)) =
                 (observation.rmse, observation.hold_r2, observation.train_r2)
             else {
                 continue;
             };
-            if !observation.measured() || !rmse.is_finite() || rmse < 0.0 {
+            if !observation.measured()
+                || !rmse.is_finite()
+                || rmse < 0.0
+                || !hold_r2.is_finite()
+                || !train_r2.is_finite()
+            {
                 continue;
             }
             let entry = measured
@@ -92,21 +104,36 @@ pub fn select(cuts: &[CutSearch]) -> Result<Selection> {
                 train_r2,
                 seconds: observation.seconds,
             };
-            entry
-                .and_modify(|kept| {
-                    // One cut may measure the same genome only once, but keep the
-                    // rule total anyway: the better score on that cut stands.
-                    if candidate.rmse < kept.rmse {
-                        *kept = candidate;
-                    }
-                })
-                .or_insert(candidate);
+            entry.or_insert(candidate);
         }
     }
 
     let searched = cuts.len();
+    let coverage: Vec<crate::receipt::Coverage> = attempted
+        .iter()
+        .map(|(genome, attempts)| {
+            let measured_cuts: BTreeSet<usize> = measured
+                .get(genome)
+                .map(|m| m.keys().copied().collect())
+                .unwrap_or_default();
+            crate::receipt::Coverage {
+                program_sha256: sha256_hex(genome.as_bytes()),
+                measured_cuts: measured_cuts.iter().map(|&c| c as u64).collect(),
+                failed_cuts: attempts
+                    .difference(&measured_cuts)
+                    .map(|&c| c as u64)
+                    .collect(),
+                missing_cuts: expected.difference(attempts).map(|&c| c as u64).collect(),
+            }
+        })
+        .collect();
+    let partial = coverage
+        .iter()
+        .filter(|c| c.measured_cuts.len() != searched)
+        .count();
     let ranked = measured
         .into_iter()
+        .filter(|(_, per_cut)| per_cut.len() == searched)
         .map(|(genome, per_cut)| {
             let n = per_cut.len() as f64;
             Best {
@@ -120,28 +147,17 @@ pub fn select(cuts: &[CutSearch]) -> Result<Selection> {
             }
         })
         .min_by(|a, b| {
-            b.cuts_measured
-                .cmp(&a.cuts_measured)
-                .then(a.validation_rmse.total_cmp(&b.validation_rmse))
+            a.validation_rmse
+                .total_cmp(&b.validation_rmse)
                 .then(a.genome.cmp(&b.genome))
         });
 
-    let Some(best) = ranked else {
-        return Ok(Selection {
-            method: UNMEASURED_FALLBACK,
-            genome: BOOTSTRAP_GENOME.to_owned(),
-            program_sha256: sha256_hex(BOOTSTRAP_GENOME.as_bytes()),
-            best: None,
-            reason: Some(format!(
-                "no successful measurement on any of the {searched} searched cut(s); \
-                 emitting the bootstrap genome {BOOTSTRAP_GENOME} instead"
-            )),
-        });
-    };
-    let reason = (best.cuts_measured < searched).then(|| {
+    let best = ranked.ok_or_else(|| anyhow::anyhow!(
+        "no program measured on all {searched} requested cuts; {partial} incomplete program(s); inspect observations.json"
+    ))?;
+    let reason = (partial > 0).then(|| {
         format!(
-            "measured on {} of {searched} searched cut(s); the mean is over those cuts only",
-            best.cuts_measured
+            "excluded {partial} program(s) without measurements on all {searched} requested cuts"
         )
     });
     Ok(Selection {
@@ -150,6 +166,8 @@ pub fn select(cuts: &[CutSearch]) -> Result<Selection> {
         program_sha256: best.program_sha256.clone(),
         best: Some(best),
         reason,
+        compared_cuts: expected.iter().map(|&c| c as u64).collect(),
+        coverage,
     })
 }
 
@@ -173,6 +191,8 @@ mod tests {
                 .count() as u64,
             stopped_by: crate::search::STOPPED_BY_EVALUATIONS,
             seconds: 1.0,
+            exploration: crate::receipt::Phase::not_requested(),
+            comparison: crate::receipt::Phase::not_requested(),
             best_validation_rmse: None,
             best_validation_r2: None,
             best_program: None,
@@ -212,15 +232,9 @@ mod tests {
     }
 
     #[test]
-    fn an_unmeasured_search_falls_back_and_says_so() {
-        let selection = select(&[cut(0, vec![failed("(pipe X (ridge))", 0)])]).unwrap();
-        assert_eq!(selection.method, UNMEASURED_FALLBACK);
-        assert_eq!(selection.genome, BOOTSTRAP_GENOME);
-        assert!(selection.best.is_none());
-        assert!(selection
-            .reason
-            .unwrap()
-            .contains("no successful measurement"));
+    fn an_unmeasured_search_fails_closed() {
+        let error = select(&[cut(0, vec![failed("(pipe X (ridge))", 0)])]).unwrap_err();
+        assert!(error.to_string().contains("no program measured on all"));
     }
 
     #[test]
@@ -240,7 +254,8 @@ mod tests {
         assert_eq!(best.cuts_measured, 2);
         assert!((best.validation_rmse - 1.1).abs() < 1e-12);
         assert_eq!(best.program_sha256, sha256_hex(wide.as_bytes()));
-        assert!(selection.reason.is_none());
+        assert!(selection.reason.unwrap().contains("excluded 1 program"));
+        assert_eq!(selection.compared_cuts, vec![0, 1]);
     }
 
     #[test]
@@ -272,11 +287,15 @@ mod tests {
     }
 
     #[test]
-    fn a_partial_cut_cover_is_recorded_in_the_reason() {
-        let only = "(pipe X (ridge))";
-        let selection = select(&[cut(0, vec![measured(only, 0, 1.0)]), cut(1, vec![])]).unwrap();
-        assert_eq!(selection.best.unwrap().cuts_measured, 1);
-        assert!(selection.reason.unwrap().contains("1 of 2"));
+    fn different_partial_cut_sets_are_never_compared() {
+        let error = select(&[
+            cut(0, vec![measured("a", 0, 1.0)]),
+            cut(1, vec![measured("b", 1, 0.1)]),
+        ])
+        .unwrap_err();
+        assert!(error
+            .to_string()
+            .contains("no program measured on all 2 requested cuts"));
     }
 
     #[test]

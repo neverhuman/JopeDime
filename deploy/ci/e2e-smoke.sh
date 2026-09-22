@@ -6,10 +6,10 @@
 #   * the pipeline runs dataset -> prepare -> search -> select -> emit -> receipt offline, with the
 #     propose stage explicitly skipped (`--policy skip`) rather than silently absent;
 #   * the search actually MEASURED: every cut reports successful measurements, the selection is
-#     `min_mean_validation_rmse` and the receipt carries a champion with a real held-out RMSE and
+#     `all_cuts_then_min_mean_validation_rmse_then_genome` and the receipt carries a champion with a real held-out RMSE and
 #     R^2. This is the assertion that fails if the search ever regresses to the unmeasured
 #     bootstrap fallback, which is what the engine-backed search did on every run;
-#   * the receipt validates against the committed `jope.pipeline-receipt/v1` schema, records the
+#   * the receipt validates against the committed `jope.pipeline-receipt/v2` schema, records the
 #     skip with a reason, and names the emitted files with their real sha256;
 #   * two runs at the same seeds emit byte-identical sources;
 #   * every emitted program compiles, runs on the committed split and agrees with its siblings on
@@ -36,7 +36,8 @@ for tool in rustc g++ clang++ node python3 sha256sum; do
   command -v "$tool" > /dev/null || { echo "missing required tool: $tool"; exit 1; }
 done
 
-rm -rf "$OUT"; mkdir -p "$OUT"
+[ ! -e "$OUT" ] || { echo "refusing to overwrite prior evidence: $OUT" >&2; exit 1; }
+mkdir -p "$OUT"
 cargo build -q --locked --bin jope
 JOPE=target/debug/jope
 
@@ -54,24 +55,10 @@ for run in a b; do
     --output "$OUT/$run"
 done
 
-# Multi-cut selection. Nothing else in this script or in the unit tests passes --cuts, so the
-# whole cross-cut path -- including the remeasurement that makes the ranking comparable -- used to
-# early-return on every CI run and could be deleted without turning a single test red.
-#
-# The assertion is about the candidate pool, not about which genome wins, so it does not depend on
-# what the search happens to find. Without remeasurement a genome discovered on one cut is only
-# ever measured there, so NO non-bootstrap genome reaches every cut; with it, the top-k from each
-# cut are measured on all of them.
-#
-# The COUNT scales with the budget, so the assertion deliberately requires only that the set is
-# non-empty. At this lane's budget (evaluations=4,seconds=60) it yields 9; at the larger
-# evaluations=24,seconds=120 used while developing the check it yielded 12. Without remeasurement
-# it is 0 at either budget, which is the property being tested.
-#
-# The contrast that matters, measured at this dataset and seed 7: the champion degrades from
-# `(pipe X (rank append=true) (gpr m=400 steps=60))` at hold RMSE 0.070814 to the bootstrap
-# `(pipe X (ridge))` at 0.095582 -- 26 % worse, which is exactly the pathology cross-cut
-# selection exists to avoid.
+# Exercise cross-cut comparison within the total four-attempt allowance: two
+# exploration slots and up to two comparison slots per cut. A non-bootstrap
+# program must have successful measurements on every cut. Failures are counted
+# as attempts but never count toward this coverage check.
 echo "== multi-cut selection ranks candidates measured on every cut"
 "$JOPE" pipeline run \
   --dataset "$DATASET" \
@@ -91,7 +78,8 @@ assert len(files) == 3, f"expected three per-cut observation files, found {len(f
 seen = collections.defaultdict(set)
 for path in files:
     for observation in json.load(open(path)):
-        seen[observation["genome"]].add(observation["cut"])
+        if observation["status"] == "measured":
+            seen[observation["genome"]].add(observation["cut"])
 
 cuts = {cut for cuts_seen in seen.values() for cut in cuts_seen}
 assert cuts == {0, 1, 2}, f"observations mention cuts {sorted(cuts)}, expected 0..2"
@@ -105,6 +93,22 @@ assert covered, (
 
 receipt = json.load(open(os.path.join(root, "receipt.json")))
 assert receipt["ok"], receipt
+search = receipt["search"]
+assert search["compared_cuts"] == [0, 1, 2], search
+assert search["selection"] == "all_cuts_then_min_mean_validation_rmse_then_genome"
+assert search["budget_policy"] == "per_cut_total_attempts_and_active_seconds_nonpreemptive_v1"
+for cut in search["cuts"]:
+    observations = json.load(open(os.path.join(root, "search", f"cut-{cut['cut']}", "observations.json")))
+    assert len(observations) == cut["completed_evaluations"] <= search["evaluations"], cut
+    assert len({o["genome"] for o in observations}) == len(observations), "duplicate attempts"
+    accounting = cut["accounting"]
+    for name in ("exploration", "comparison"):
+        phase = accounting[name]
+        rows = [o for o in observations if (o["origin"] == "remeasure") == (name == "comparison")]
+        assert len(rows) == phase["completed_evaluations"] <= phase["evaluation_limit"], phase
+        assert sum(o["status"] == "measured" for o in rows) == phase["successful_measurements"], phase
+        assert len(rows) - phase["successful_measurements"] == phase["failed_measurements"], phase
+    assert accounting["deadline_overrun"] == (accounting["active_seconds"] > search["seconds"]), accounting
 
 # Indexed unconditionally and with no `in` guard. The first version of this read
 # receipt["select"]["best"] behind an `if "select" in receipt` -- but the receipt has no
@@ -157,6 +161,7 @@ echo "  ok"
 
 echo "== receipt validates against the committed schema"
 "$JOPE" pipeline verify-receipt --receipt "$OUT/a/receipt.json"
+"$JOPE" pipeline verify-receipt --receipt "$OUT/cuts3/receipt.json"
 
 echo "== receipt is truthful about the skip and the artifacts"
 python3 - "$OUT/a" <<'PY'
@@ -177,7 +182,7 @@ cuts = search["cuts"]
 assert cuts, "no cut was searched"
 measured = sum(c["successful_measurements"] for c in cuts)
 assert measured > 0, f"the search reported {measured} successful measurements"
-assert search["selection"] == "min_mean_validation_rmse", search["selection"]
+assert search["selection"] == "all_cuts_then_min_mean_validation_rmse_then_genome", search["selection"]
 best = search.get("best")
 assert best, "a measured search recorded no champion"
 assert best["genome"] == search["selected_genome"], best["genome"]
@@ -187,12 +192,13 @@ for key in ("validation_rmse", "validation_r2", "train_r2"):
 assert best["validation_rmse"] >= 0.0, best["validation_rmse"]
 assert best["cuts_measured"] >= 1, best["cuts_measured"]
 for cut in cuts:
+    assert cut["completed_evaluations"] <= search["evaluations"], cut
     assert cut["completed_evaluations"] == (
         cut["successful_measurements"] + cut["failed_or_unavailable_measurements"]
     ), cut
     # The fit rows and the scored rows are disjoint by construction; both must exist.
     assert cut["train_rows"] > 0 and cut["hold_rows"] > 0, cut
-    assert cut["stopped_by"] in ("evaluations", "seconds"), cut["stopped_by"]
+    assert cut["stopped_by"] in ("evaluations", "seconds", "search_space_exhausted", "comparison_pool_exhausted"), cut["stopped_by"]
     if cut["successful_measurements"]:
         assert cut["best_program"], cut
 print(f"  ok: search measured {measured} candidate(s); champion {search['selected_genome']} "

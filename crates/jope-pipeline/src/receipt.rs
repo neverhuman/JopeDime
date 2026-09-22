@@ -1,4 +1,4 @@
-//! `jope.pipeline-receipt/v1`: what the run did, stage by stage.
+//! `jope.pipeline-receipt/v2`: what the run did, stage by stage.
 //!
 //! The committed JSON Schema under `schemas/` is the public contract; the Rust
 //! type derives `JsonSchema` so `tests/schema_agreement.rs` can assert the two
@@ -9,11 +9,63 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-pub const RECEIPT_SCHEMA_ID: &str = "jope.pipeline-receipt/v1";
+pub const RECEIPT_SCHEMA_ID: &str = "jope.pipeline-receipt/v2";
 
 /// The committed receipt schema (JSON Schema 2020-12).
 pub const RECEIPT_SCHEMA_JSON: &str =
+    include_str!("../../../schemas/jope.pipeline-receipt.v2.schema.json");
+
+pub const LEGACY_SCHEMA_ID: &str = "jope.pipeline-receipt/v1";
+pub const LEGACY_SCHEMA_JSON: &str =
     include_str!("../../../schemas/jope.pipeline-receipt.v1.schema.json");
+
+/// Per-phase admission limits and actual work. One non-preemptible fit can
+/// exceed seconds_limit; no later fit is admitted in that phase.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Phase {
+    pub evaluation_limit: u64,
+    pub seconds_limit: f64,
+    pub completed_evaluations: u64,
+    pub successful_measurements: u64,
+    pub failed_measurements: u64,
+    pub seconds: f64,
+    pub stopped_by: String,
+}
+
+impl Phase {
+    pub fn not_requested() -> Self {
+        Self {
+            evaluation_limit: 0,
+            seconds_limit: 0.0,
+            completed_evaluations: 0,
+            successful_measurements: 0,
+            failed_measurements: 0,
+            seconds: 0.0,
+            stopped_by: crate::search::NOT_REQUESTED.to_owned(),
+        }
+    }
+}
+
+/// Required for v2; absent for historical v1 receipts, which made no total-budget guarantee.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Accounting {
+    pub exploration: Phase,
+    pub comparison: Phase,
+    pub active_seconds: f64,
+    pub deadline_overrun: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Coverage {
+    #[schemars(regex(pattern = r"^[0-9a-f]{64}$"))]
+    pub program_sha256: String,
+    pub measured_cuts: Vec<u64>,
+    pub failed_cuts: Vec<u64>,
+    pub missing_cuts: Vec<u64>,
+}
 
 /// A stage either ran, was deliberately skipped with a reason, or failed.
 pub const STATUSES: [&str; 3] = ["passed", "skipped", "failed"];
@@ -85,6 +137,9 @@ pub struct CutSearch {
     /// What ended this cut: `evaluations`, `seconds`, or `search_space_exhausted`
     /// when the grammar stopped yielding candidates it had not already measured.
     pub stopped_by: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(required)]
+    pub accounting: Option<Accounting>,
     /// The best held-out RMSE measured on this cut, in the dataset's target units.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub best_validation_rmse: Option<f64>,
@@ -129,11 +184,18 @@ pub struct Search {
     /// worse than it.
     pub bootstrap_genome: String,
     pub cuts: Vec<CutSearch>,
-    /// How the emitted program was chosen. `min_mean_validation_rmse` is the only
-    /// rule applied here; no fold-pure lower-confidence-bound selector exists in
-    /// this workspace. `unmeasured_fallback_bootstrap_genome` means nothing was
-    /// measured at all, which the search stage now refuses to return.
+    /// v2: require every requested cut, then minimum mean RMSE, then canonical
+    /// genome. v1 used coverage count before RMSE, including different partial sets.
     pub selection: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(required)]
+    pub budget_policy: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(required)]
+    pub compared_cuts: Option<Vec<u64>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(required)]
+    pub coverage: Option<Vec<Coverage>>,
     /// The genome handed to the emitters, always present.
     pub selected_genome: String,
     #[schemars(regex(pattern = r"^[0-9a-f]{64}$"))]
@@ -191,7 +253,7 @@ impl Receipt {
     /// Structural invariants the schema cannot express.
     pub fn invariant_errors(&self) -> Vec<String> {
         let mut errors = Vec::new();
-        if self.schema != RECEIPT_SCHEMA_ID {
+        if self.schema != RECEIPT_SCHEMA_ID && self.schema != LEGACY_SCHEMA_ID {
             errors.push(format!(
                 "schema is {:?}, expected {RECEIPT_SCHEMA_ID:?}",
                 self.schema
@@ -224,8 +286,10 @@ impl Receipt {
             ));
         }
         for cut in &self.search.cuts {
-            if cut.completed_evaluations
-                != cut.successful_measurements + cut.failed_or_unavailable_measurements
+            if cut
+                .successful_measurements
+                .checked_add(cut.failed_or_unavailable_measurements)
+                != Some(cut.completed_evaluations)
             {
                 errors.push(format!(
                     "cut {}: {} evaluations but {} + {} outcomes",
@@ -247,7 +311,7 @@ impl Receipt {
             .cuts
             .iter()
             .map(|c| c.successful_measurements)
-            .sum();
+            .fold(0u64, u64::saturating_add);
         if measured > 0 && self.search.selection == crate::select::UNMEASURED_FALLBACK {
             errors.push(format!(
                 "{measured} successful measurement(s) but the selection is the unmeasured fallback"
@@ -282,7 +346,148 @@ impl Receipt {
                 self.search.selection
             ));
         }
+        if self.schema == RECEIPT_SCHEMA_ID {
+            self.v2_errors(&mut errors);
+        }
         errors
+    }
+
+    fn v2_errors(&self, errors: &mut Vec<String>) {
+        use std::collections::BTreeSet;
+        let search = &self.search;
+        let expected: BTreeSet<u64> = self.prepared.cuts.iter().copied().collect();
+        let actual: BTreeSet<u64> = search.cuts.iter().map(|c| c.cut).collect();
+        if expected.is_empty()
+            || expected.len() != self.prepared.cuts.len()
+            || actual != expected
+            || actual.len() != search.cuts.len()
+        {
+            errors.push("cut identities must match the distinct prepared cuts".into());
+        }
+        if search.budget_policy.as_deref() != Some(crate::search::BUDGET_POLICY)
+            || search.evaluations == 0
+            || search.evaluations > crate::search::MAX_EVALUATIONS as u64
+            || search.seconds == 0
+            || search.seconds > crate::search::MAX_SECONDS
+        {
+            errors.push("invalid v2 total budget or missing budget policy".into());
+        }
+        if search.selection != crate::select::MIN_MEAN_VALIDATION_RMSE
+            || search.compared_cuts.as_ref() != Some(&expected.iter().copied().collect::<Vec<_>>())
+        {
+            errors.push("v2 selection must compare all requested cuts".into());
+        }
+        let Some(coverage) = &search.coverage else {
+            errors.push("v2 requires program coverage".into());
+            return;
+        };
+        let mut programs = BTreeSet::new();
+        for program in coverage {
+            let all: Vec<u64> = program
+                .measured_cuts
+                .iter()
+                .chain(&program.failed_cuts)
+                .chain(&program.missing_cuts)
+                .copied()
+                .collect();
+            if !programs.insert(&program.program_sha256)
+                || all.len() != expected.len()
+                || all.iter().copied().collect::<BTreeSet<_>>() != expected
+            {
+                errors.push(
+                    "program coverage must partition the requested cuts without duplicates".into(),
+                );
+            }
+        }
+        for cut in &search.cuts {
+            let Some(a) = &cut.accounting else {
+                errors.push(format!("cut {}: v2 requires phase accounting", cut.cut));
+                continue;
+            };
+            let (x, y) = (&a.exploration, &a.comparison);
+            for phase in [x, y] {
+                if phase.completed_evaluations
+                    != phase
+                        .successful_measurements
+                        .saturating_add(phase.failed_measurements)
+                    || phase.completed_evaluations > phase.evaluation_limit
+                    || !phase.seconds.is_finite()
+                    || phase.seconds < 0.0
+                    || !phase.seconds_limit.is_finite()
+                    || phase.seconds_limit < 0.0
+                {
+                    errors.push(format!(
+                        "cut {}: invalid phase outcomes or admission limit",
+                        cut.cut
+                    ));
+                }
+            }
+            let reserve = search.cuts.len() > 1;
+            let exploration_limit = if reserve {
+                search.evaluations.div_ceil(2)
+            } else {
+                search.evaluations
+            };
+            let exploration_seconds = search.seconds as f64 / if reserve { 2.0 } else { 1.0 };
+            let comparison_limit = if reserve {
+                search.evaluations.saturating_sub(x.completed_evaluations)
+            } else {
+                0
+            };
+            let comparison_seconds = if reserve {
+                (search.seconds as f64 - x.seconds).max(0.0)
+            } else {
+                0.0
+            };
+            if x.evaluation_limit != exploration_limit
+                || x.seconds_limit != exploration_seconds
+                || y.evaluation_limit != comparison_limit
+                || (y.seconds_limit - comparison_seconds).abs() > 1e-9
+                || cut.completed_evaluations > search.evaluations
+                || x.completed_evaluations
+                    .saturating_add(y.completed_evaluations)
+                    != cut.completed_evaluations
+                || x.successful_measurements
+                    .saturating_add(y.successful_measurements)
+                    != cut.successful_measurements
+                || x.failed_measurements.saturating_add(y.failed_measurements)
+                    != cut.failed_or_unavailable_measurements
+                || !a.active_seconds.is_finite()
+                || a.active_seconds < 0.0
+                || (a.active_seconds - x.seconds - y.seconds).abs() > 1e-9
+                || a.deadline_overrun != (a.active_seconds > search.seconds as f64)
+            {
+                errors.push(format!(
+                    "cut {}: total budget/phase accounting mismatch",
+                    cut.cut
+                ));
+            }
+            if coverage
+                .iter()
+                .filter(|p| p.measured_cuts.contains(&cut.cut))
+                .count() as u64
+                != cut.successful_measurements
+                || coverage
+                    .iter()
+                    .filter(|p| p.failed_cuts.contains(&cut.cut))
+                    .count() as u64
+                    != cut.failed_or_unavailable_measurements
+            {
+                errors.push(format!("cut {}: coverage/outcome mismatch", cut.cut));
+            }
+        }
+        if let Some(best) = &search.best {
+            if best.cuts_measured != expected.len() as u64
+                || best.program_sha256 != search.selected_program_sha256
+                || crate::sha256_hex(best.genome.as_bytes()) != best.program_sha256
+                || !coverage.iter().any(|p| {
+                    p.program_sha256 == best.program_sha256
+                        && p.measured_cuts.len() == expected.len()
+                })
+            {
+                errors.push("selected program lacks complete bound cut coverage".into());
+            }
+        }
     }
 }
 
@@ -293,13 +498,55 @@ pub fn schema() -> serde_json::Value {
 
 /// The schema schemars derives from [`Receipt`].
 pub fn derived_schema() -> serde_json::Value {
-    schemars::schema_for!(Receipt).to_value()
+    let mut value = schemars::schema_for!(Receipt).to_value();
+    value["title"] = RECEIPT_SCHEMA_ID.into();
+    value["$id"] =
+        "https://github.com/veox-ai/JopeDime/schemas/jope.pipeline-receipt.v2.schema.json".into();
+    value["properties"]["schema"]["const"] = RECEIPT_SCHEMA_ID.into();
+    value["properties"]["policy"]["enum"] = serde_json::json!(["auto", "skip", "require"]);
+    value["$defs"]["Stage"]["properties"]["status"]["enum"] = serde_json::json!(STATUSES);
+    let stops = serde_json::json!([
+        "evaluations",
+        "seconds",
+        "search_space_exhausted",
+        "comparison_pool_exhausted"
+    ]);
+    value["$defs"]["CutSearch"]["properties"]["stopped_by"]["enum"] = stops.clone();
+    let mut phase_stops = stops.as_array().unwrap().clone();
+    phase_stops.push(serde_json::json!("not_requested"));
+    value["$defs"]["Phase"]["properties"]["stopped_by"]["enum"] = phase_stops.into();
+    // Close objects consistently, including optional nested definitions.
+    fn close(value: &mut serde_json::Value) {
+        match value {
+            serde_json::Value::Object(m) => {
+                if m.contains_key("properties") {
+                    m.insert("additionalProperties".into(), false.into());
+                }
+                for child in m.values_mut() {
+                    close(child);
+                }
+            }
+            serde_json::Value::Array(a) => {
+                for child in a {
+                    close(child);
+                }
+            }
+            _ => {}
+        }
+    }
+    close(&mut value);
+    value
 }
 
 /// Validate one receipt document: the committed schema, then the Rust type, then
 /// the invariants above.
 pub fn validate_value(value: &serde_json::Value) -> Result<Receipt, Vec<String>> {
-    let errors = jope_datasets::schema::validate(&schema(), value);
+    let schema = if value["schema"] == LEGACY_SCHEMA_ID {
+        serde_json::from_str(LEGACY_SCHEMA_JSON).expect("legacy schema parses")
+    } else {
+        schema()
+    };
+    let errors = jope_datasets::schema::validate(&schema, value);
     if !errors.is_empty() {
         return Err(errors);
     }

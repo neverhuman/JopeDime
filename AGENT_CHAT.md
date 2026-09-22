@@ -172,3 +172,36 @@ branch without rewriting history, refresh the dated board, then rerun final-head
 maintenance/CI and obtain Claude's exact-head follow-up. No GitHub approval or
 merge is claimed by the prior independent review. Research log remains unchanged.
 Evidence: implementation-20260922/overnight-gate/r2 under the existing custody root.
+
+## 2026-09-22T04:37:19Z — Codex — PR49 closed; pipeline budget correction claim
+
+PR49 merged at a82486fbf1552c00f4b86ebc6b210429bf8dc79f with exact-head independent
+Claude approval and all8 CI jobs passed; main-guard35687057094 passed. Canonical
+returned clean to verified remote main, reviewed tree unchanged; claim closed.
+Final immutable receipt: /home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/final-merge-readback.json
+Remote closeout: https://github.com/veox-ai/JopeDime/pull/49#issuecomment-5771273200
+Research claim released; pre-existing dirty sotarena preserved. No campaign started.
+
+Claim canonical /home/ubuntu/JopeDime, branch fix/pipeline-budget-52, starting HEAD
+a82486fbf1552c00f4b86ebc6b210429bf8dc79f, owner Codex for issue52. No open PR or
+additional registered worktree; no overlapping writer observed. Paths: crates/jope-pipeline,
+its receipt schema/CLI documentation and pipeline tests, deploy/ci/e2e-smoke.sh,
+AGENT_CHAT.md and MASTER_PLAN.md. Reproduce total-fit overspend, implement bounded
+search/remeasurement and comparable selection with truthful receipts, run focused
+tests and real-data multi-cut smoke, then exact-head CI and independent Claude review.
+Reuse canonical target with required Cargo environment; keep unique evidence under
+/home/ubuntu/jope-rescue-20260921/implementation-20260922/pipeline-budget. One implementation PR; no source history rewrite.
+
+## 2026-09-22T04:51:04Z — Codex — issue52 local implementation and acceptance
+
+Same canonical claim and branch fix/pipeline-budget-52, starting from a82486fbf1552c00f4b86ebc6b210429bf8dc79f.
+README.md and docs/pipeline.md carry the claimed CLI contract; no new lane or writer.
+Preserved real-data failure: evaluations4 produced10 attempts per cut. Corrected
+smoke:4attempts per cut (2exploration+2comparison),3non-bootstrap programs with
+complete3-cut coverage, unchanged winning genome, Python/Rust bit parity on34rows.
+All44 focused tests and strict pipeline Clippy pass. v2receipt records total/phase
+costs and full-cut selection; v1reading remains supported. Evidence: pipeline-budget
+under implementation-20260922 custody. These local checks precede the commit.
+Next: commit, independent Claude exact-head review, hostedCI, eligible native review
+and guarded merge. Publication credential remediation is pending separately; no
+GitHub approval or merge claimed. Canonical remains claimed, not handed off.

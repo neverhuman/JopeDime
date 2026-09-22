@@ -1,4 +1,4 @@
-//! The committed `jope.pipeline-receipt/v1` schema and the schemars output of
+//! The committed `jope.pipeline-receipt/v2` schema and the schemars output of
 //! [`jope_pipeline::Receipt`] must agree on every object's required set and
 //! property list, so neither can drift without this failing. The walk is the one
 //! `crates/jope-datasets/tests/schema_agreement.rs` uses.
@@ -136,13 +136,13 @@ fn receipt_schema_agrees_with_the_rust_type() {
 #[test]
 fn the_committed_file_is_byte_identical_to_the_embedded_schema() {
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../schemas/jope.pipeline-receipt.v1.schema.json");
+        .join("../../schemas/jope.pipeline-receipt.v2.schema.json");
     assert_eq!(std::fs::read_to_string(&path).unwrap(), RECEIPT_SCHEMA_JSON);
 }
 
 /// A receipt shaped exactly as `run` writes one, with a measured champion.
 fn fixture() -> Value {
-    json!({
+    let mut value = json!({
         "schema": RECEIPT_SCHEMA_ID,
         "ok": true,
         "tool_version": jope_pipeline::TOOL_VERSION,
@@ -181,7 +181,28 @@ fn fixture() -> Value {
             "bytes": 4096}],
         "emit_exclusions": [],
         "observations_sha256": "2".repeat(64)
-    })
+    });
+    let sha = jope_pipeline::sha256_hex(b"(pipe X (ridge))");
+    value["search"]["selected_program_sha256"] = json!(sha);
+    value["search"]["best"]["program_sha256"] = json!(sha);
+    value["search"]["selection"] = json!(jope_pipeline::select::MIN_MEAN_VALIDATION_RMSE);
+    value["search"]["budget_policy"] = json!(jope_pipeline::search::BUDGET_POLICY);
+    value["search"]["compared_cuts"] = json!([0]);
+    value["search"]["coverage"] = json!((0..8)
+        .map(|i| json!({
+            "program_sha256": if i == 0 {sha.clone()} else {format!("{i:064x}")},
+            "measured_cuts": if i < 6 {vec![0]} else {vec![]},
+            "failed_cuts": if i < 6 {vec![]} else {vec![0]}, "missing_cuts": [],
+        }))
+        .collect::<Vec<_>>());
+    value["search"]["cuts"][0]["accounting"] = json!({
+        "active_seconds": 1.0, "deadline_overrun": false,
+        "exploration": {"evaluation_limit": 8, "seconds_limit": 120.0,
+            "completed_evaluations": 8, "successful_measurements": 6, "failed_measurements": 2,
+            "seconds": 1.0, "stopped_by": "evaluations"},
+        "comparison": jope_pipeline::receipt::Phase::not_requested()
+    });
+    value
 }
 
 #[test]
@@ -249,7 +270,7 @@ fn the_validator_refuses_an_emit_stage_that_disagrees_with_the_artifacts() {
 #[test]
 fn the_validator_rejects_what_the_schema_and_the_invariants_forbid() {
     let cases = [
-        ("schema", json!("jope.pipeline-receipt/v2"), "const"),
+        ("schema", json!("jope.pipeline-receipt/v99"), "const"),
         ("policy", json!("maybe"), "policy"),
         ("observations_sha256", json!("short"), "match"),
     ];
@@ -334,4 +355,59 @@ fn the_validator_rejects_what_the_schema_and_the_invariants_forbid() {
     let mut receipt = fixture();
     receipt["search"]["cuts"][0]["stopped_by"] = json!("boredom");
     assert!(validate_value(&receipt).is_err());
+}
+
+#[test]
+fn old_v1_receipts_remain_readable_without_claiming_v2_budget_guarantees() {
+    let mut value = fixture();
+    value["schema"] = json!(jope_pipeline::receipt::LEGACY_SCHEMA_ID);
+    for key in ["budget_policy", "compared_cuts", "coverage"] {
+        value["search"].as_object_mut().unwrap().remove(key);
+    }
+    value["search"]["cuts"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("accounting");
+    value["search"]["selection"] = json!("min_mean_validation_rmse");
+    value["search"]["evaluations"] = json!(4); // historical overspend remains historical
+    let receipt = validate_value(&value).unwrap();
+    assert_eq!(receipt.schema, jope_pipeline::receipt::LEGACY_SCHEMA_ID);
+    assert!(receipt.search.cuts[0].accounting.is_none());
+}
+
+#[test]
+fn v2_rejects_overspending_missing_accounting_and_incomparable_cut_sets() {
+    let mut cases = Vec::new();
+    let mut v = fixture();
+    v["search"]["evaluations"] = json!(4);
+    cases.push(v);
+    let mut v = fixture();
+    v["search"]["cuts"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("accounting");
+    cases.push(v);
+    let mut v = fixture();
+    v["search"]["compared_cuts"] = json!([1]);
+    cases.push(v);
+    let mut v = fixture();
+    v["search"]["coverage"][0]["measured_cuts"] = json!([]);
+    cases.push(v);
+    let mut v = fixture();
+    v["search"]["cuts"][0]["accounting"]["deadline_overrun"] = json!(true);
+    cases.push(v);
+    let mut v = fixture();
+    v["search"]["cuts"][0]["accounting"]["comparison"]["completed_evaluations"] = json!(1);
+    cases.push(v);
+    for value in cases {
+        assert!(
+            validate_value(&value).is_err(),
+            "accepted forged receipt: {value}"
+        );
+    }
+}
+
+#[test]
+fn committed_schema_is_generated_from_code_exactly() {
+    assert_eq!(schema(), derived_schema());
 }

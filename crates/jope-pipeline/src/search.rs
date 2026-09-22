@@ -62,7 +62,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::{prepare::Cut, sha256_hex};
+use crate::{prepare::Cut, receipt::Phase, sha256_hex};
 
 /// The search implementation, named in the receipt.
 pub const SEARCH_ENGINE: &str = "feat-math canonical-pipeline GP (in-process)";
@@ -91,6 +91,12 @@ pub const STOPPED_BY_SECONDS: &str = "seconds";
 /// Neither budget bound was reached: the grammar stopped yielding candidates
 /// this cut had not already measured. Honest, and it guarantees termination.
 pub const STOPPED_BY_EXHAUSTED: &str = "search_space_exhausted";
+pub const STOPPED_BY_POOL: &str = "comparison_pool_exhausted";
+pub const NOT_REQUESTED: &str = "not_requested";
+
+/// Time is cumulative active wall time on this cut, excluding other cuts and
+/// publication. An in-process fit may overrun; no new fit is admitted afterward.
+pub const BUDGET_POLICY: &str = "per_cut_total_attempts_and_active_seconds_nonpreemptive_v1";
 
 /// Consecutive generations that may spend no evaluation before the search calls
 /// the space exhausted. Without this a run whose offspring all collide would spin
@@ -213,6 +219,8 @@ pub struct CutSearch {
     /// [`STOPPED_BY_EVALUATIONS`] or [`STOPPED_BY_SECONDS`].
     pub stopped_by: &'static str,
     pub seconds: f64,
+    pub exploration: Phase,
+    pub comparison: Phase,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub best_validation_rmse: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -398,6 +406,39 @@ fn offspring(
 
 /// Run one cut's search and publish its evidence under `output`.
 pub fn run_cut(cut: &Cut, budget: Budget, rng_seed: u64, output: &Path) -> Result<CutSearch> {
+    run_cut_allocated(cut, budget, rng_seed, output, false)
+}
+
+/// Multiple cuts reserve half the evaluation slots (rounded down) and half the
+/// active seconds for comparison. Comparison may use any unspent exploration
+/// allowance; the total requested budget never grows.
+pub fn run_cuts(
+    cuts: &[Cut],
+    budget: Budget,
+    rng_seed: u64,
+    output: &Path,
+) -> Result<Vec<CutSearch>> {
+    let mut searches = Vec::new();
+    for cut in cuts {
+        searches.push(run_cut_allocated(
+            cut,
+            budget,
+            rng_seed,
+            &output.join(format!("cut-{}", cut.index)),
+            cuts.len() > 1,
+        )?);
+    }
+    remeasure_topk_on_all_cuts(cuts, &mut searches)?;
+    Ok(searches)
+}
+
+fn run_cut_allocated(
+    cut: &Cut,
+    budget: Budget,
+    rng_seed: u64,
+    output: &Path,
+    reserve: bool,
+) -> Result<CutSearch> {
     budget.check()?;
     ensure!(
         !output.join("search.json").exists(),
@@ -405,7 +446,13 @@ pub fn run_cut(cut: &Cut, budget: Budget, rng_seed: u64, output: &Path) -> Resul
         output.display()
     );
     let started = Instant::now();
-    let deadline = Duration::from_secs(budget.seconds);
+    let evaluation_limit = if reserve {
+        budget.evaluations.div_ceil(2)
+    } else {
+        budget.evaluations
+    };
+    let seconds_limit = budget.seconds as f64 / if reserve { 2.0 } else { 1.0 };
+    let deadline = Duration::from_secs_f64(seconds_limit);
 
     let mut observations: Vec<Observation> = Vec::new();
     let mut seen: BTreeSet<String> = BTreeSet::new();
@@ -436,7 +483,7 @@ pub fn run_cut(cut: &Cut, budget: Budget, rng_seed: u64, output: &Path) -> Resul
 
         let spent_before = evaluations;
         for (genome, origin) in candidates {
-            if evaluations >= budget.evaluations {
+            if evaluations >= evaluation_limit {
                 break 'search STOPPED_BY_EVALUATIONS;
             }
             if started.elapsed() >= deadline {
@@ -524,6 +571,16 @@ pub fn run_cut(cut: &Cut, budget: Budget, rng_seed: u64, output: &Path) -> Resul
         failed_or_unavailable_measurements: failed,
         stopped_by,
         seconds,
+        exploration: Phase {
+            evaluation_limit: evaluation_limit as u64,
+            seconds_limit,
+            completed_evaluations: evaluations as u64,
+            successful_measurements: successful,
+            failed_measurements: failed,
+            seconds,
+            stopped_by: stopped_by.to_owned(),
+        },
+        comparison: Phase::not_requested(),
         best_validation_rmse: best.rmse,
         best_validation_r2: best.hold_r2,
         best_program: Some(best.genome.clone()),
@@ -537,68 +594,124 @@ pub fn run_cut(cut: &Cut, budget: Budget, rng_seed: u64, output: &Path) -> Resul
     Ok(search)
 }
 
-/// How many of each cut's best measured genomes are forced onto every other cut
-/// before selection. Without this, `--cuts > 1` can only ever pick the bootstrap:
-/// it is the one genome injected into every cut, so `cuts_measured` ranks it first.
+/// Up to this many of each cut's best genomes enter the bounded comparison pool.
 pub const REMEASURE_TOP_K: usize = ELITES;
 
-/// Re-fit each cut's top-k genomes on every other cut so selection compares a
-/// common set. No-op when there is only one cut.
+/// Try each cut's top-k in rank/cut order, across the other cuts. All attempts,
+/// including failures, use the same total allowance as exploration. Partial
+/// coverage is retained as evidence and is ineligible for selection.
 pub fn remeasure_topk_on_all_cuts(cuts: &[Cut], searches: &mut [CutSearch]) -> Result<()> {
+    remeasure_with(cuts, searches, evaluate)
+}
+
+fn remeasure_with(
+    cuts: &[Cut],
+    searches: &mut [CutSearch],
+    mut evaluate_candidate: impl FnMut(&str, &Cut, usize, &'static str) -> Observation,
+) -> Result<()> {
     ensure!(
         cuts.len() == searches.len(),
-        "remeasure: {} cuts vs {} searches",
-        cuts.len(),
-        searches.len()
+        "remeasure: cuts/searches length mismatch"
     );
+    for (cut, search) in cuts.iter().zip(searches.iter()) {
+        ensure!(cut.index == search.cut, "remeasure: cut identity mismatch");
+    }
     if cuts.len() <= 1 {
         return Ok(());
     }
-    let mut pool = BTreeSet::new();
-    for search in searches.iter() {
-        let mut measured: Vec<&Observation> = search
-            .observations
-            .iter()
-            .filter(|observation| observation.measured())
-            .collect();
-        measured.sort_by(|a, b| {
-            a.rmse
-                .unwrap_or(f64::INFINITY)
-                .total_cmp(&b.rmse.unwrap_or(f64::INFINITY))
-                .then(a.genome.cmp(&b.genome))
-        });
-        for observation in measured.into_iter().take(REMEASURE_TOP_K) {
-            pool.insert(observation.genome.clone());
+    // Round-robin ranks avoid comparing scores measured on different cuts when
+    // ordering this bounded pool. Canonical genome breaks within-cut score ties.
+    let ranked: Vec<Vec<String>> = searches
+        .iter()
+        .map(|search| {
+            let mut measured: Vec<_> = search
+                .observations
+                .iter()
+                .filter(|o| o.measured())
+                .collect();
+            measured.sort_by(|a, b| {
+                a.rmse
+                    .unwrap()
+                    .total_cmp(&b.rmse.unwrap())
+                    .then(a.genome.cmp(&b.genome))
+            });
+            measured
+                .into_iter()
+                .take(REMEASURE_TOP_K)
+                .map(|o| o.genome.clone())
+                .collect()
+        })
+        .collect();
+    let mut seen = BTreeSet::new();
+    let mut pool = Vec::new();
+    for rank in 0..REMEASURE_TOP_K {
+        for candidates in &ranked {
+            if let Some(genome) = candidates.get(rank) {
+                if seen.insert(genome.clone()) {
+                    pool.push(genome.clone());
+                }
+            }
         }
     }
-    for (cut, search) in cuts.iter().zip(searches.iter_mut()) {
-        let already: BTreeSet<String> = search
-            .observations
-            .iter()
-            .filter(|observation| observation.measured())
-            .map(|observation| observation.genome.clone())
-            .collect();
-        for genome in &pool {
-            if already.contains(genome) {
-                continue;
+    for search in searches.iter_mut() {
+        // Do not reset phase history if an already compared search is supplied.
+        ensure!(
+            search.comparison.stopped_by == NOT_REQUESTED,
+            "comparison already performed"
+        );
+        search.comparison = Phase {
+            evaluation_limit: (search.budget.evaluations as u64)
+                .saturating_sub(search.completed_evaluations),
+            seconds_limit: (search.budget.seconds as f64 - search.seconds).max(0.0),
+            stopped_by: STOPPED_BY_POOL.to_owned(),
+            ..Phase::not_requested()
+        };
+    }
+    for genome in &pool {
+        for (cut, search) in cuts.iter().zip(searches.iter_mut()) {
+            let started = Instant::now();
+            // Failed attempts count and are never retried on the same cut.
+            let already = search.observations.iter().any(|o| &o.genome == genome);
+            let elapsed = search.seconds + started.elapsed().as_secs_f64();
+            if !already
+                && search.completed_evaluations < search.budget.evaluations as u64
+                && elapsed < search.budget.seconds as f64
+            {
+                let observation =
+                    evaluate_candidate(genome, cut, search.generations as usize, "remeasure");
+                search.completed_evaluations += 1;
+                search.comparison.completed_evaluations += 1;
+                if observation.measured() {
+                    search.successful_measurements += 1;
+                    search.comparison.successful_measurements += 1;
+                } else {
+                    search.failed_or_unavailable_measurements += 1;
+                    search.comparison.failed_measurements += 1;
+                }
+                search.observations.push(observation);
             }
-            let observation = evaluate(genome, cut, search.generations as usize, "remeasure");
-            search.completed_evaluations += 1;
-            if observation.measured() {
-                search.successful_measurements += 1;
-            } else {
-                search.failed_or_unavailable_measurements += 1;
-            }
-            search.observations.push(observation);
+            let seconds = started.elapsed().as_secs_f64();
+            search.seconds += seconds;
+            search.comparison.seconds += seconds;
         }
+    }
+    for search in searches.iter_mut() {
+        search.stopped_by = if search.seconds >= search.budget.seconds as f64 {
+            STOPPED_BY_SECONDS
+        } else if search.completed_evaluations >= search.budget.evaluations as u64 {
+            STOPPED_BY_EVALUATIONS
+        } else {
+            STOPPED_BY_POOL
+        };
+        search.comparison.stopped_by = search.stopped_by.to_owned();
         if let Some(best) = search
             .observations
             .iter()
-            .filter(|observation| observation.measured())
+            .filter(|o| o.measured())
             .min_by(|a, b| {
                 a.rmse
-                    .unwrap_or(f64::INFINITY)
-                    .total_cmp(&b.rmse.unwrap_or(f64::INFINITY))
+                    .unwrap()
+                    .total_cmp(&b.rmse.unwrap())
                     .then(a.genome.cmp(&b.genome))
             })
         {
@@ -623,8 +736,10 @@ fn publish_cut_search(search: &mut CutSearch) -> Result<()> {
     // `search.json` names the observations it summarises, so the pair cannot be
     // mixed up after the fact.
     let mut summary = serde_json::to_value(&search)?;
-    summary["schema"] = "jope.pipeline-search/v1".into();
+    summary["schema"] = "jope.pipeline-search/v2".into();
     summary["engine"] = SEARCH_ENGINE.into();
+    summary["budget_policy"] = BUDGET_POLICY.into();
+    summary["deadline_overrun"] = (search.seconds > search.budget.seconds as f64).into();
     summary["rng_seed"] = search.rng_seed.into();
     summary["budget_evaluations"] = search.budget.evaluations.into();
     summary["budget_seconds"] = search.budget.seconds.into();
@@ -746,69 +861,211 @@ mod tests {
     }
 
     #[test]
-    fn remeasure_puts_each_cuts_topk_on_every_other_cut() {
+    fn comparison_stays_within_total_budget_and_keeps_a_common_pool() {
         let temp = tempfile::tempdir().unwrap();
         let preparation = prepare::build(
             &linear_rows(150),
-            "remeasure",
+            "bounded",
             7,
-            2,
+            3,
             &temp.path().join("prepared"),
         )
         .unwrap();
-        let budget = Budget {
-            evaluations: 16,
-            seconds: 120,
-        };
-        let mut searches: Vec<CutSearch> = preparation
-            .cuts
+        let searches = run_cuts(
+            &preparation.cuts,
+            Budget {
+                evaluations: 4,
+                seconds: 60,
+            },
+            7,
+            &temp.path().join("search"),
+        )
+        .unwrap();
+        let mut common: Option<BTreeSet<String>> = None;
+        for search in &searches {
+            assert!(search.completed_evaluations <= 4, "overspent: {search:?}");
+            assert_eq!(
+                search.completed_evaluations,
+                search.observations.len() as u64
+            );
+            assert_eq!(
+                search.completed_evaluations,
+                search.exploration.completed_evaluations + search.comparison.completed_evaluations
+            );
+            assert_eq!(search.exploration.evaluation_limit, 2);
+            assert_eq!(search.comparison.evaluation_limit, 2);
+            let measured: BTreeSet<String> = search
+                .observations
+                .iter()
+                .filter(|o| o.measured())
+                .map(|o| o.genome.clone())
+                .collect();
+            common = Some(match common {
+                Some(c) => c.intersection(&measured).cloned().collect(),
+                None => measured,
+            });
+        }
+        assert!(common.unwrap().iter().any(|g| g != BOOTSTRAP_GENOME));
+        assert_eq!(
+            crate::select::select(&searches)
+                .unwrap()
+                .best
+                .unwrap()
+                .cuts_measured,
+            3
+        );
+    }
+
+    fn comparison_fixture(temp: &Path, reserve: bool) -> (Vec<Cut>, Vec<CutSearch>) {
+        let cuts = prepare::build(
+            &linear_rows(150),
+            "comparison-limits",
+            7,
+            2,
+            &temp.join("prepared"),
+        )
+        .unwrap()
+        .cuts;
+        let searches = cuts
             .iter()
             .map(|cut| {
-                run_cut(
+                run_cut_allocated(
                     cut,
-                    budget,
+                    Budget {
+                        evaluations: 8,
+                        seconds: 60,
+                    },
                     7,
-                    &temp.path().join(format!("search-{}", cut.index)),
+                    &temp.join(format!("search-{}", cut.index)),
+                    reserve,
                 )
                 .unwrap()
             })
             .collect();
-        remeasure_topk_on_all_cuts(&preparation.cuts, &mut searches).unwrap();
-        let mut pool = BTreeSet::new();
-        for search in &searches {
-            let mut measured: Vec<&Observation> = search
-                .observations
-                .iter()
-                .filter(|observation| observation.measured())
-                .collect();
-            measured.sort_by(|a, b| {
-                a.rmse
-                    .unwrap()
-                    .total_cmp(&b.rmse.unwrap())
-                    .then(a.genome.cmp(&b.genome))
-            });
-            for observation in measured.into_iter().take(REMEASURE_TOP_K) {
-                pool.insert(observation.genome.clone());
-            }
+        (cuts, searches)
+    }
+
+    #[test]
+    fn comparison_never_admits_a_fit_after_the_total_evaluation_limit() {
+        let temp = tempfile::tempdir().unwrap();
+        let (cuts, mut searches) = comparison_fixture(temp.path(), false);
+        remeasure_with(&cuts, &mut searches, |_, _, _, _| {
+            panic!("admitted an over-budget fit")
+        })
+        .unwrap();
+        assert!(searches
+            .iter()
+            .all(|s| s.completed_evaluations == 8 && s.comparison.completed_evaluations == 0));
+    }
+
+    #[test]
+    fn comparison_never_admits_a_fit_after_the_total_seconds_limit() {
+        let temp = tempfile::tempdir().unwrap();
+        let (cuts, mut searches) = comparison_fixture(temp.path(), true);
+        for search in &mut searches {
+            search.seconds = 60.0;
+            search.exploration.seconds = 60.0;
         }
-        for search in &searches {
-            let have: BTreeSet<_> = search
-                .observations
+        remeasure_with(&cuts, &mut searches, |_, _, _, _| {
+            panic!("admitted a late fit")
+        })
+        .unwrap();
+        assert!(
+            searches
                 .iter()
-                .filter(|observation| observation.measured())
-                .map(|observation| observation.genome.clone())
-                .collect();
-            for genome in &pool {
-                assert!(
-                    have.contains(genome),
-                    "cut {} missing remeasured {genome}",
-                    search.cut
-                );
+                .all(|s| s.stopped_by == STOPPED_BY_SECONDS
+                    && s.comparison.completed_evaluations == 0)
+        );
+    }
+
+    #[test]
+    fn a_nonpreemptible_overrun_prevents_the_next_fit() {
+        let temp = tempfile::tempdir().unwrap();
+        let (cuts, mut searches) = comparison_fixture(temp.path(), true);
+        searches[0].seconds = 59.99;
+        searches[1].seconds = 60.0;
+        let mut calls = 0;
+        remeasure_with(&cuts, &mut searches, |genome, cut, generation, origin| {
+            calls += 1;
+            std::thread::sleep(Duration::from_millis(25));
+            evaluate(genome, cut, generation, origin)
+        })
+        .unwrap();
+        assert_eq!(calls, 1);
+        assert!(searches[0].seconds > 60.0);
+        assert_eq!(searches[0].stopped_by, STOPPED_BY_SECONDS);
+    }
+
+    #[test]
+    fn comparison_failures_spend_budget_and_are_not_retried() {
+        let temp = tempfile::tempdir().unwrap();
+        let (cuts, mut searches) = comparison_fixture(temp.path(), true);
+        let mut calls = 0;
+        remeasure_with(&cuts, &mut searches, |genome, cut, generation, origin| {
+            calls += 1;
+            Observation {
+                genome: genome.to_owned(),
+                program_sha256: sha256_hex(genome.as_bytes()),
+                cut: cut.index,
+                generation,
+                origin,
+                train_r2: None,
+                hold_r2: None,
+                rmse: None,
+                seconds: 0.0,
+                status: FIT_FAILED,
+                failure: Some("injected failure".to_owned()),
             }
+        })
+        .unwrap();
+        assert!(calls > 0);
+        for search in searches {
+            assert!(search.completed_evaluations <= 8);
+            assert_eq!(
+                search.comparison.completed_evaluations,
+                search.comparison.failed_measurements
+            );
+            assert_eq!(
+                search
+                    .observations
+                    .iter()
+                    .map(|o| &o.genome)
+                    .collect::<BTreeSet<_>>()
+                    .len(),
+                search.observations.len()
+            );
         }
-        let selection = crate::select::select(&searches).unwrap();
-        let best = selection.best.unwrap();
-        assert_eq!(best.cuts_measured, 2);
+    }
+
+    #[test]
+    fn a_one_evaluation_budget_has_explicit_bootstrap_only_coverage() {
+        let temp = tempfile::tempdir().unwrap();
+        let cuts = prepare::build(
+            &linear_rows(150),
+            "tiny",
+            7,
+            3,
+            &temp.path().join("prepared"),
+        )
+        .unwrap()
+        .cuts;
+        let searches = run_cuts(
+            &cuts,
+            Budget {
+                evaluations: 1,
+                seconds: 60,
+            },
+            7,
+            &temp.path().join("search"),
+        )
+        .unwrap();
+        assert!(searches
+            .iter()
+            .all(|s| s.completed_evaluations == 1 && s.comparison.completed_evaluations == 0));
+        let selected = crate::select::select(&searches).unwrap();
+        assert_eq!(selected.genome, BOOTSTRAP_GENOME);
+        assert_eq!(selected.coverage.len(), 1);
+        assert_eq!(selected.compared_cuts, vec![0, 1, 2]);
     }
 
     #[test]
