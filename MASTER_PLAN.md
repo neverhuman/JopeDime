@@ -1,16 +1,16 @@
 # JopeDime current direction
 
 **2026-09-22 readback.** Publication repo: private `veox-ai/JopeDime`. The observed
-remote `main` is `25242513173e1a8b01f7d1e9f73775b7df14110e`; GitHub lists 29 merged
-PRs and only #49 open. #34, #44, #45, #50 and #51 have merged. Sources:
+remote `main` is `3e0616057bc3234d568deceb884ea1c69ea8451b`; GitHub lists 30 merged
+PRs and only #49 open. #34, #44, #45, #50, #51 and #53 have merged. Sources:
 `git ls-remote origin refs/heads/main` and
 `gh pr list --state merged --limit 100 --json number,headRefOid,mergeCommit,mergedAt`;
 open state from `gh pr list --state open --json number,headRefOid`.
 The evidence is retained under
-`/home/ubuntu/jope-rescue-20260921/implementation-20260922/bulletfarm-contract-study/github-readback.json`.
+`/home/ubuntu/jope-rescue-20260921/implementation-20260922/overnight-gate/r2/github-readback.json`.
 Refresh these observations at handoff. The historical measurements below retain
 their original commit identities; they are not current qualification.
-Another session merged #44/#50/#51. This session records those merges without
+Another session merged #44/#50/#51/#53. This session records those merges without
 claiming their complete review/qualification lifecycle was performed here.
 
 PR49's actual September 22 scheduled report succeeded at **04:00–04:02 UTC**:
@@ -19,8 +19,10 @@ growth, external lane-removal limitation and remaining final-head gates are in
 [the cleanup receipt index](deploy/maintenance/CLEANUP-20260921.md).
 The next action is final maintenance tests, all eight manual CI jobs and complete
 independent Claude review before the guarded merge. No learning qualification or
-soak has started. Codex's canonical checkout claim and the separate active Clippy
-lane are recorded in [AGENT_CHAT.md](AGENT_CHAT.md).
+soak has started. Codex's canonical checkout claim is recorded in [AGENT_CHAT.md](AGENT_CHAT.md).
+The external Clippy lane was removed after #53 merged; its unique-evidence
+preservation is not established by this task. It was active during the 04:00
+measurement and is not counted among this cleanup's verified removals.
 
 ## Queue
 
@@ -102,7 +104,7 @@ the current operating rules are in [AGENTS.md](AGENTS.md).
 
 ## Merge rule (per PR)
 
-1. Required contexts = every job that `.github/workflows/ci.yml` defines **at the reviewed head** (on `main` at `25242513`: `changes`, `hygiene`, `rust-check`, `emitters`, `inputs`, `python`, `rust-test`, `e2e-smoke`). A lane legitimately excluded by its declared path matrix is recorded as `skipped-by-path`, not green. Every required execution must pass at the exact head; absent, cancelled or failed is not green. The configured jobs are not proof of execution. Heavy functional lanes become required after their successful main qualification; Jankurai remains informational under D2.
+1. Required contexts = every job that `.github/workflows/ci.yml` defines **at the reviewed head** (on `main` at `3e061605`: `changes`, `hygiene`, `rust-check`, `emitters`, `inputs`, `python`, `rust-test`, `e2e-smoke`). A lane legitimately excluded by its declared path matrix is recorded as `skipped-by-path`, not green. Every required execution must pass at the exact head; absent, cancelled or failed is not green. The configured jobs are not proof of execution. Heavy functional lanes become required after their successful main qualification; Jankurai remains informational under D2.
 2. Review must come from a session that did not write the PR and a GitHub identity distinct from both the PR author and every GitHub-associated commit author. Follow the PR-scoped identity checks in `AGENTS.md`; check `gh api user --jq .login` in the posting environment. #40 and #41 were opened under the wrong account and replaced by #42 and #43. An agent-operated approval proves an independent read at the exact head, not human sign-off. Trust-surface PRs (workflows, lockfiles, credentials, protection manifests) also receive a security review.
 3. `gh pr merge <n> --rebase --match-head-commit <reviewed-full-sha>`, then verify fresh remote `main` and `main-guard`. Preserve shared source-branch history when updating its base.
 4. Resolve the existing queue, then one implementation PR at a time. Fix review findings on its existing branch; record explicit replacement/disposition for superseded work. The four managed-lane limit does not authorize four concurrent implementation PRs.
@@ -147,6 +149,7 @@ can be satisfied by remembering.
 | — | `wp8/runner-lanes` | 51857841 | #45 | `c572f1778562768ebc7c29fbfeff047f871cba6c` 2026-09-21T16:55:46Z |
 | — | strict Python parity prerequisites | d76cdf1e | #50 | `baa4c1f24e7b2ab7f38af5061feea6029d27cc94` 2026-09-22T03:10:24Z |
 | — | generated README benchmark results | 9e44a206 | #51 | `25242513173e1a8b01f7d1e9f73775b7df14110e` 2026-09-22T03:20:41Z |
+| — | feat-math Clippy cleanup | c0e8d473 | #53 | `3e0616057bc3234d568deceb884ea1c69ea8451b` 2026-09-22T04:09:11Z; external merge, remaining workspace lint work still requires its own measured evidence |
 | #5 | dependabot cargo group | 1151493 | | re-trigger after main settles; lockfile = trust surface, two lenses |
 
 Recovery of #5–#16: bundle `pr-5-through-16.bundle` (sha256 3bafaa52…) is also

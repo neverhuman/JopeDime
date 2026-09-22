@@ -153,3 +153,22 @@ Next: final-head maintenance tests and full manual CI, complete independent Clau
 review, eligible native approval, guarded rebase merge and main/main-guard readback.
 Evidence: implementation-20260922/overnight-gate under /home/ubuntu/jope-rescue-20260921.
 Claim continues through that lifecycle; the separate Clippy lane remains untouched.
+
+## 2026-09-22T04:18:58.379117+00:00 — Codex — final review corrections and current-main update
+
+Claude independently approved the complete PR49 code/operational review at
+`bf691c4e11457789ec9b0d7de5696a46e41a5391`; all eight manual CI jobs passed there
+(run35685752452), with742Rust tests passed/13skipped and207Python passed/15deselected.
+Those receipts remain tied to that head. Four low documentation findings are
+being corrected: final-head proof pointer, stale active-lane wording, the date
+of the root-contract gap, and operator-resolved measurement-root wording.
+Extend this same canonical claim to AGENTS.md and CLAUDE.md for those corrections.
+
+Another session merged Clippy PR53 at3e0616057bc3234d568deceb884ea1c69ea8451b and
+removed its lane. Its unique-evidence preservation is not established here.
+Canonical HEAD is stillbf691c4e11457789ec9b0d7de5696a46e41a5391, clean before this
+entry, with no additional registered worktree. Merge origin/main into this shared
+branch without rewriting history, refresh the dated board, then rerun final-head
+maintenance/CI and obtain Claude's exact-head follow-up. No GitHub approval or
+merge is claimed by the prior independent review. Research log remains unchanged.
+Evidence: implementation-20260922/overnight-gate/r2 under the existing custody root.

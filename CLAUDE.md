@@ -2,8 +2,8 @@
 
 # CLAUDE.md — JopeDime
 
-**This file exists because Claude Code loads `CLAUDE.md`, not `AGENTS.md`.** Until 2026-09-21 this
-repository had neither on `main` — the only `AGENTS.md` lived on an unmerged branch — so a Claude
+**This file exists because Claude Code loads `CLAUDE.md`, not `AGENTS.md`.** The 2026-09-21 audit
+found neither file on `main` — the only `AGENTS.md` lived on an unmerged branch — so a Claude
 session cloning this repo had **no contract at all**. The `@AGENTS.md` import on line 1 is what
 makes the contract load. **Do not remove it.**
 

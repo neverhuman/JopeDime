@@ -2,8 +2,8 @@
 
 The operating contract for contributors and automated agents working in this repository.
 
-Until 2026-09-21 `main` carried **no root `AGENTS.md`** — one existed only on an unmerged branch,
-so an agent working from a fresh clone had no contract at all. That gap is a direct cause of the
+The 2026-09-21 audit found that `main` carried **no root `AGENTS.md`** — one existed only on an
+unmerged branch, so an agent working from a fresh clone had no contract at all. That gap is a direct cause of the
 disk incident recorded in [`MASTER_CLEAN_UP.md`](MASTER_CLEAN_UP.md).
 
 ---
