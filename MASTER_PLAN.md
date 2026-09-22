@@ -194,6 +194,25 @@ are merged, and so is everything through #39, including #34 — see the landing 
 a time**. Do not reopen the twelve-PR pile. Live S3 is not claimed. Bound
 `jope-policy` checkpoint training is not claimed.
 
+## ASM demonstration delivery — 2026-09-22
+
+The latest explicit user direction is the private [ASM demonstration](docs/asm.md):
+a fixed ten-regression/ten-binary/ten-multiclass panel, fold-zero screening and top-five
+recipe confirmation over five development folds. Preserve labels, private discovery
+and untouched final evaluation. The full acceptance list and unchanged runtime limits
+are recorded there; wins are an empirical target, not an implementation claim.
+
+Prerequisites PR63/65 are merged with exact-head full CI, independent native review
+and successful main-guard. Canonical was verified clean at remote main
+95e92af34fc95854f102965b3f4fbf01d08beeb7; four extra lanes were preserved and removed,
+leaving one registered checkout. Lifecycle/custody receipts live under
+`/home/ubuntu/jope-rescue-20260921/asm-demonstration-20260922`.
+
+Current focused branch: `feat/asm-experiment-contract`. Work in progress: task refusal,
+capability inventory, experiment/evaluation contracts and frozen input panel. Execution,
+training and fitted export qualification remain subsequent serial PRs. The panel and
+training clocks have not started; a source implementation is not a measured win.
+
 ## Product target
 
 ```text

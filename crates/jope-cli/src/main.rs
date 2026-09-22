@@ -24,6 +24,10 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Report current ASM capabilities and remaining qualification gaps.
+    Doctor,
+    /// Inspect private, fixed-panel benchmark manifests.
+    Benchmark(jope_pipeline::front_door::BenchmarkCli),
     /// Verify the ten synthetic fixtures against the pinned deterministic generator.
     VerifyInputs {
         /// Explicitly select offline qualification; no network access is performed.
@@ -141,7 +145,9 @@ fn execute(command: &Command) -> Result<Verification> {
             }
             verify_inputs(output)
         }
-        Command::Encode { .. }
+        Command::Doctor
+        | Command::Benchmark(_)
+        | Command::Encode { .. }
         | Command::Fit { .. }
         | Command::Emit { .. }
         | Command::Search { .. }
@@ -190,6 +196,11 @@ fn main() -> ExitCode {
         return ExitCode::SUCCESS;
     };
     let command = match command {
+        Command::Doctor => {
+            println!("{}", jope_pipeline::front_door::doctor());
+            return ExitCode::SUCCESS;
+        }
+        Command::Benchmark(cli) => return jope_pipeline::front_door::benchmark(cli),
         Command::Models(cli) => return jope_models::cli::exec(cli),
         Command::Datasets(cli) => return jope_datasets::cli::exec(cli),
         Command::Pipeline(cli) => return jope_pipeline::cli::exec(cli),

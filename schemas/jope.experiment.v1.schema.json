@@ -1,0 +1,126 @@
+{
+  "$defs": {
+    "Resources": {
+      "additionalProperties": false,
+      "properties": {
+        "cpus": {
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "gpu_tasks": {
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "memory_bytes": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "per_fit_seconds": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "reporting_seconds": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "swap_bytes": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "threads_per_worker": {
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "total_seconds": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "workers": {
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "workers",
+        "cpus",
+        "memory_bytes",
+        "swap_bytes",
+        "gpu_tasks",
+        "threads_per_worker",
+        "total_seconds",
+        "reporting_seconds",
+        "per_fit_seconds"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "checkpoints": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "expected_artifacts": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "methods_sha256": {
+      "type": "string"
+    },
+    "numerical_policy": {
+      "type": "string"
+    },
+    "panel_sha256": {
+      "type": "string"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "resources": {
+      "$ref": "#/$defs/Resources"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "seed": {
+      "format": "uint64",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "source_sha": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "panel_sha256",
+    "methods_sha256",
+    "source_sha",
+    "checkpoints",
+    "seed",
+    "resources",
+    "expected_artifacts",
+    "protocol",
+    "numerical_policy"
+  ],
+  "title": "Experiment",
+  "type": "object"
+}
