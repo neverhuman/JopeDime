@@ -8,6 +8,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import tomllib
 import unittest
 
 HELPER = Path(__file__).with_name("cargo-artifact.py").resolve()
@@ -125,6 +126,46 @@ else:
         result = self.cli("target-dir")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout, str(self.binary.parent)+"\n")
+
+    def test_nextest_config_preserves_profiles_and_binds_external_store(self):
+        source = self.root / "nextest.toml"
+        output = self.root / "generated.toml"
+        source.write_text('[profile.pr]\ndefault-filter = "all()"\n[profile.pr.junit]\npath = "junit.xml"\n')
+        artifact.nextest_config(source, output, self.binary.parent)
+        config = tomllib.loads(output.read_text())
+        self.assertEqual(config["store"]["dir"], str(self.binary.parent / "nextest"))
+        self.assertEqual(config["profile"], tomllib.loads(source.read_text())["profile"])
+        with self.assertRaises(FileExistsError):
+            artifact.nextest_config(source, output, self.binary.parent)
+        source.write_text('[store]\ndir="custom"\n')
+        with self.assertRaisesRegex(ValueError, "already configures a store"):
+            artifact.nextest_config(source, self.root/"other.toml", self.binary.parent)
+
+    def test_report_retention_requires_execution_and_a_current_report(self):
+        workflow = HELPER.parents[2] / ".github/workflows/ci.yml"
+        block = workflow.read_text().split("      - name: Retain test report and disk measurements\n")[1]
+        block = block.split("      - name: Upload rust-test evidence\n")[0].split("        run: |\n")[1]
+        script = "\n".join(line[10:] for line in block.splitlines())
+        # Exercise the actual workflow step. Stub only Cargo metadata; its path
+        # resolution is tested separately above and with real nextest runs.
+        script = 'python3() { printf "%s\\n" "$REPORT_TARGET"; }\n' + script
+        for index, (started, report, code) in enumerate([(False, True, 0), (True, False, 1), (True, True, 0)]):
+            with self.subTest(started=started, report=report):
+                case = self.root / str(index)
+                evidence = case / "rust-test-evidence"
+                evidence.mkdir(parents=True)
+                target = case / "external target"
+                junit = target / "nextest/pr/junit.xml"
+                junit.parent.mkdir(parents=True)
+                if started:
+                    (evidence / "nextest-started").touch()
+                if report:
+                    junit.write_text("old report" if not started else "current report")
+                result = subprocess.run(["bash", "-c", script], cwd=case,
+                                        env={**os.environ, "REPORT_TARGET": str(target)},
+                                        capture_output=True, text=True)
+                self.assertEqual(result.returncode, code, result.stdout+result.stderr)
+                self.assertEqual((evidence / "junit.xml").exists(), started and report)
 
 
 if __name__ == "__main__":

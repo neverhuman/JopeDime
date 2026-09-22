@@ -322,8 +322,9 @@ jobs:
           # Preserve a previous report before execution, so a failed build cannot
           # upload it as this run's test result from the persistent target.
           if [ -f "$junit" ]; then mv "$junit" rust-test-evidence/prior-junit.xml; fi
+          python3 deploy/ci/cargo-artifact.py nextest-config --output rust-test-evidence/nextest.toml
           touch rust-test-evidence/nextest-started
-          cargo nextest run -P pr --locked "${pkgs[@]}"
+          cargo nextest run --config-file rust-test-evidence/nextest.toml -P pr --locked "${pkgs[@]}"
       - name: Retain test report and disk measurements
         if: always()
         run: |
@@ -335,16 +336,14 @@ jobs:
           # `[profile.pr.junit] path = "junit.xml"` puts it here; keep the lane honest about a
           # missing report instead of uploading a directory that quietly holds no results.
           junit="$target/nextest/pr/junit.xml"
-          if [ -f "$junit" ]; then
+          if [ -f rust-test-evidence/nextest-started ]; then
+            if [ ! -f "$junit" ]; then
+              echo "nextest ran but no report at ${junit}" | tee rust-test-evidence/junit-MISSING.txt
+              exit 1
+            fi
             cp "$junit" rust-test-evidence/junit.xml
-          elif [ -f rust-test-evidence/nextest-started ]; then
-            # nextest ran and produced no report: the path is wrong or the profile lost its junit
-            # config, and a lane that silently uploads no results is the thing this step exists to
-            # prevent. Fail here rather than leave a green check over an empty artifact.
-            echo "nextest ran but no report at ${junit}" | tee rust-test-evidence/junit-MISSING.txt
-            exit 1
           else
-            echo "nextest never ran; no report expected" | tee rust-test-evidence/junit-ABSENT.txt
+            echo "nextest never ran; no current report expected" | tee rust-test-evidence/junit-ABSENT.txt
           fi
       - name: Upload rust-test evidence
         if: always()
