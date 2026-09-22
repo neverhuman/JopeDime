@@ -79,7 +79,8 @@
         "systemd_unit_paths test counts"
       ],
       "requires_nonzero_tests": true,
-      "stage": "execution"
+      "stage": "execution",
+      "feature_selection": "package-defaults"
     },
     "rust-test": {
       "command": [
@@ -110,7 +111,8 @@
         "disk and effective target measurements"
       ],
       "requires_nonzero_tests": true,
-      "stage": "execution"
+      "stage": "execution",
+      "feature_selection": "package-defaults"
     },
     "emitters": {
       "command": [
@@ -137,7 +139,8 @@
         "strict parity test counts"
       ],
       "requires_nonzero_tests": true,
-      "stage": "execution"
+      "stage": "execution",
+      "feature_selection": "package-defaults"
     },
     "inputs": {
       "command": [
@@ -162,7 +165,8 @@
         "generator equality exit"
       ],
       "requires_nonzero_tests": false,
-      "stage": "execution"
+      "stage": "execution",
+      "feature_selection": "package-defaults"
     },
     "python": {
       "command": [
@@ -214,7 +218,8 @@
         "reproducible emitted sources/predictions"
       ],
       "requires_nonzero_tests": false,
-      "stage": "execution"
+      "stage": "execution",
+      "feature_selection": "package-defaults"
     },
     "main-guard": {
       "command": [
@@ -6931,14 +6936,11 @@
           "testing"
         ]
       },
-      "lanes": [
-        "rust-check",
-        "rust-test"
-      ],
+      "lanes": [],
       "dispositions": [
-        "full-cpu-default"
+        "full-cpu-features"
       ],
-      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; all doctests and remaining default tests await full-main."
+      "scope": "Requires explicit --features testing; neither default-feature PR commands nor the default workspace full-main command build or execute this target."
     },
     "target:numpy-pcg64/lib/numpy_pcg64": {
       "discovery": {

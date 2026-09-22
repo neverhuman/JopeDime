@@ -36,6 +36,23 @@ class CoverageTests(unittest.TestCase):
         discovered[key]["required_features"] = ["new-capability"]
         self.assertTrue(any("changed discovery" in e for e in coverage.validate(self.mapping, discovered)))
 
+    def test_required_feature_target_cannot_claim_default_execution(self):
+        key = "target:jope-policy/test/jope_dime"
+        for lane, disposition in (("rust-check", None), ("rust-test", None), (None, "full-cpu-default")):
+            with self.subTest(lane=lane, disposition=disposition):
+                mapping = copy.deepcopy(self.mapping)
+                mapping["items"][key]["lanes"] = [lane] if lane else []
+                mapping["items"][key]["dispositions"] = [disposition] if disposition else []
+                self.assertTrue(any("non-default required features" in e for e in coverage.validate(mapping, self.discovered)))
+        self.assertEqual({"default", "hyperion-cpu", "batch-worker"}, coverage.default_features(self.discovered, "hyperion"))
+
+    def test_workflow_comments_flow_values_and_indentation(self):
+        text = 'name: proof\njobs: # comment\n    build: # comment\n      runs-on: ubuntu-latest\n    "test": {runs-on: ubuntu-latest}\n'
+        self.assertEqual(["build", "test"], coverage.workflow_jobs(text))
+        for text in ('jobs: {build: {runs-on: ubuntu-latest}}', 'jobs:\n  <<: *other\n', 'jobs:\n  build:\n  build:\n', 'jobs:\n'):
+            with self.subTest(text=text), self.assertRaises(ValueError):
+                coverage.workflow_jobs(text)
+
     def test_unassigned_and_stale_items_fail(self):
         key = next(iter(self.discovered))
         self.mapping["items"][key]["lanes"] = []
