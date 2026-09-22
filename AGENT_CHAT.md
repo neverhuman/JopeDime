@@ -505,3 +505,40 @@ roots, and extra undeclared files fail. Uploads explicitly include hidden eviden
 inside the fresh run directory. Document Re-run all jobs: successful old-attempt
 receipts cannot satisfy a new attempt.43 focused tests now include both regressions.
 Replay fixture and original failed hosted logs remain under foundation/aggregation.
+
+## 2026-09-22T18:42:27.881251+00:00 — Codex — aggregate closeout and full-main CPU claim
+
+PR60 merged from exact independently reviewed source f08bcb6486fff1c6472a5a07224d110444853b86;
+all nine manual35767660672 and PR35767666966 jobs, including both aggregates, passed.
+Independent Claude/native neverhuman approval5282087456. Remote main
+8ea1289fec019caa21facda4dea26bfb328bbbe8; main-guard35768646717 success. Canonical returned
+clean to freshly fetched main. Custody foundation/aggregation/lifecycle-receipt.json.
+The first aggregate's nested-product-receipt defect and failed runs remain preserved;
+corrected real-artifact replay and final hosted acceptance are separate records.
+
+Claim canonical ci/full-main-cpu from that main, owner Codex foundation continuation.
+Paths .github/workflows/{full-main,ci,main-guard}.yml, .github/actions/{cargo-target,
+runner-provenance}, deploy/ci/* for full CPU families/receipts/coverage/tests,
+deploy/runner/* and deploy/docker/runner.Dockerfile if the reviewed hook requires it,
+docs/runbooks/runner.md, MASTER_PLAN.md and AGENT_CHAT.md. Installed owned JopeDime
+runner scripts/units/containers on xbabe1/xbabe2 are in the user-assigned delivery
+scope, after independent candidate review and draining affected owned listeners.
+Preserve prior installed bytes/fingerprints and held runner-prov b8acc6202 and
+lint187c2f14d source/authorship; existing stopped-head handoffs remain authoritative.
+No unrelated service changes, training, publishing, S3 or GPU credentials.
+
+Begin with documentation-only commit/PR to prove hosted declared path exclusions;
+freeze that head until changes+hygiene+aggregate pass and six lanes are explicitly
+skipped-by-path. Then implement the same focused PR's bounded full-main baseline.
+Limits remain at most two fast jobs16GiB/16CPU each; full CPU exclusive among JopeDime
+runner jobs on its host48GiB/16CPU,120minutes, at least50GB disk reserve. Separate
+PR/trusted-main writable work/cache, retain container isolation and provenance.
+A fixed host role (two fast slots on xbabe1, full CPU on xbabe2) is the initial
+implementation choice to avoid overlapping Jope jobs; confirm live ownership before
+deployment. Full-main is push-to-main plus manual and diagnostic, not a merge gate.
+Acceptance: independent families retain failures, actual resulting-main run with
+pass/fail/exclusion/unavailable inventory, subsequent job shows persistent build
+reuse with fresh run-specific evidence, installed fingerprints and actual limits
+verified. Fast gates plus aggregate remain required procedurally; protection403
+is not enforcement. Full CPU repair/strict Clippy/persistent runner migration and
+GPU/S3/learning qualification remain deferred; qualification and soak unstarted.
