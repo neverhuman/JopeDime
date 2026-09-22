@@ -404,6 +404,6 @@ smokes in both layouts; exact-head CI/review/merge/main-guard. Preserve proof ev
 and independently verify recovery before removing the lane after merge.
 
 2026-09-22T17:12:31.136817+00:00 — Extend the issue46 claim to .github/actions/cargo-target/action.yml.
-Persistent Cargo targets must include the stable runner lane as well as the job,
-so two concurrent jobs cannot share nextest result paths. Both normal/external
+Persistent Cargo targets must be separate for each stable runner lane, which reuses
+one target across its sequential jobs; concurrent jobs cannot share result paths. Both normal/external
 proofs at 96ec9a996 passed; job-scoped target selection may now replace the workaround.
