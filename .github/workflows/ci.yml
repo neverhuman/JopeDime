@@ -1,232 +1,204 @@
 name: ci
-
 on:
   pull_request:
   workflow_dispatch:
-
 permissions:
   contents: read
 
-# Build paths are discovered from Cargo (#46). Each build job selects its runner lane
-# target below; checkout cleanup does not erase compiled artifacts.
 env:
   CARGO_INCREMENTAL: "0"
   CARGO_PROFILE_DEV_DEBUG: line-tables-only
+  JOPE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  BASE_SHA: ${{ github.event.pull_request.base.sha }}
 
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # Path gate: docs-only pull requests run hygiene only; workflow_dispatch runs everything.
   changes:
     runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 3
     outputs:
-      rust: ${{ steps.filter.outputs.rust }}
-      emitters: ${{ steps.filter.outputs.emitters }}
-      inputs: ${{ steps.filter.outputs.inputs }}
-      python: ${{ steps.filter.outputs.python }}
-      e2e: ${{ steps.filter.outputs.e2e }}
+      rust: ${{ steps.lane.outputs.rust }}
+      emitters: ${{ steps.lane.outputs.emitters }}
+      inputs: ${{ steps.lane.outputs.inputs }}
+      python: ${{ steps.lane.outputs.python }}
+      e2e: ${{ steps.lane.outputs.e2e }}
     steps:
       - name: Checkout
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0 (pin unchanged from main; the old comment said v5)
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: Classify changed paths
-        id: filter
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      - name: Runner provenance
+        uses: ./.github/actions/runner-provenance
+      - name: Run declared lane and retain receipt
+        id: lane
         run: |
           set -euo pipefail
-          rust=true; emitters=true; inputs=true; python=true; e2e=true
-          # The checkout is the pull request's merge ref with full history, so the base commit is
-          # present without another fetch (persist-credentials is off, so a fetch could not auth).
-          if [ -n "$BASE_SHA" ]; then
-            changed=$(git diff --name-only "$BASE_SHA" HEAD)
-            printf 'changed files:\n%s\n' "$changed"
-            # deploy/runner/ and deploy/docker/ are in EVERY filter on purpose. They decide the
-            # container each lane runs in, and each lane asserts something about it -- the python
-            # lane pins uv, the rust lanes pin cargo-nextest, hygiene pins cargo-deny. Without
-            # these, bumping UV_VERSION in the Dockerfile alone set python=false and skipped the
-            # one assertion whose entire job is catching that drift.
-            img='deploy/runner/|deploy/docker/|\.github/actions/|deploy/ci/cargo-artifact\.py'
-            grep -qE "^(crates/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/|$img|\.github/workflows/ci\.yml$)" <<<"$changed" || rust=false
-            grep -qE "^(crates/feat-math/|datasets/test/|deploy/ci/emitters|Cargo\.(toml|lock)$|rust-toolchain\.toml$|$img|\.github/workflows/ci\.yml$)" <<<"$changed" || emitters=false
-            grep -qE "^(datasets/synthetic/|crates/jope-cli/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|$img|\.github/workflows/ci\.yml$)" <<<"$changed" || inputs=false
-            grep -qE "^(python/|deploy/systemd/|$img|\.github/workflows/ci\.yml$)" <<<"$changed" || python=false
-            grep -qE "^(crates/(jope-pipeline|jope-cli|jope-engine|jope-datasets|feat-math)/|datasets/test/|schemas/|deploy/ci/(e2e-smoke|emitters)|Cargo\.(toml|lock)$|rust-toolchain\.toml$|$img|\.github/workflows/ci\.yml$)" <<<"$changed" || e2e=false
-          fi
-          { echo "rust=$rust"; echo "emitters=$emitters"; echo "inputs=$inputs"; echo "python=$python"; echo "e2e=$e2e"; } >> "$GITHUB_OUTPUT"
-          echo "rust=$rust emitters=$emitters inputs=$inputs python=$python e2e=$e2e"
+          evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
+          python3 deploy/ci/receipt.py --lane changes --output "$evidence" --backend none -- bash deploy/ci/fast-lane.sh changes
+      - name: Upload current lane evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
+          if-no-files-found: error
+          retention-days: 30
 
   hygiene:
     runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0 (pin unchanged from main; the old comment said v5)
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
           persist-credentials: false
       - name: Persistent Cargo target
         uses: ./.github/actions/cargo-target
       - name: Runner provenance
         uses: ./.github/actions/runner-provenance
-      - name: Toolchain (from rust-toolchain.toml)
-        run: rustup show active-toolchain
-      - name: Install linters
+      - name: Run declared lane and retain receipt
+        id: lane
         run: |
           set -euo pipefail
-          # The runner image ships shellcheck, actionlint and gitleaks pinned by sha256. It has
-          # no sudo and a read-only root filesystem, so assert they are present rather than
-          # installing them; a missing tool is an image defect and should fail loudly here.
-          for t in shellcheck actionlint gitleaks; do
-            command -v "$t" >/dev/null || { echo "runner image is missing $t" >&2; exit 1; }
-            printf '%-12s %s\n' "$t" "$(command -v "$t")"
-          done
-      - name: Cargo artifact protocol tests
-        run: python3 deploy/ci/test-cargo-artifact.py
-      - name: Coverage mapping and collection failure tests
-        run: |
-          python3 deploy/ci/test-coverage.py
-          python3 deploy/ci/test-receipt.py
-      - name: Hygiene
-        run: bash deploy/ci/check.sh
-      - name: cargo-deny
-        run: |
-          set -euo pipefail
-          # Was EmbarkStudios/cargo-deny-action, a Docker container action: the ci lane is
-          # deliberately given no docker socket, and the binary is in the image anyway.
-          cargo deny --version | grep -qF 'cargo-deny 0.20.2'
-          # --all-features is NOT cosmetic: EmbarkStudios/cargo-deny-action defaulted to it,
-          # which overrides deny.toml's [graph] all-features = false. Measured on this image
-          # (cargo-deny 0.20.2): the graph is 329 crates without it and 367 with it, and
-          # torch-sys and cudarc are absent from the smaller one. safetensors is in both -- it is
-          # asserted below anyway as a canary, not as evidence that the scope changed.
-          #
-          # ORDER MATTERS: --all-features is a top-level cargo-deny option, not a `check`
-          # option. `cargo deny check --all-features ...` is a parse error ("unexpected
-          # argument '--all-features' found"), so an earlier attempt at this restore never ran
-          # the gate at all. The assertion below is here because a comment could not stop that.
-          # `--layout crate` prints one `name@version (n): licenses` line per crate, so the
-          # crate name is anchored with @, not with a space.
-          missing=""
-          graph="$(cargo deny --all-features list --layout crate)"
-          for c in torch-sys cudarc safetensors; do
-            grep -qE "^$c@" <<< "$graph" || missing="$missing $c"
-          done
-          if [ -n "$missing" ]; then
-            echo "cargo-deny is not seeing the optional-feature graph; missing:$missing" >&2
-            echo "check that --all-features is passed BEFORE the check subcommand" >&2
-            exit 1
-          fi
-          echo "deny graph: $(wc -l <<< "$graph") crates, optional-feature deps present"
-          cargo deny --all-features check bans licenses sources
+          evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
+          python3 deploy/ci/receipt.py --lane hygiene --output "$evidence" --backend unittest -- bash deploy/ci/fast-lane.sh hygiene
+      - name: Upload current lane evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
+          if-no-files-found: error
+          retention-days: 30
 
   rust-check:
     needs: changes
     if: needs.changes.outputs.rust == 'true'
     runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 45
-    env:
-      CARGO_TERM_COLOR: always
-      CARGO_INCREMENTAL: "0"
     steps:
       - name: Checkout
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0 (pin unchanged from main; the old comment said v5)
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
           persist-credentials: false
       - name: Persistent Cargo target
         uses: ./.github/actions/cargo-target
-      - name: Toolchain (from rust-toolchain.toml)
-        run: rustup show active-toolchain
-      # Cargo registry and this runner lane's target directory persist on the host.
-      - name: cargo check --workspace --all-targets --locked
-        run: cargo check --workspace --all-targets --locked
-      # The rendered-systemd guarantee (no /home/ literal, no unrendered @JOPE_* token, every
-      # ExecStart under the rendered roots) lives in this test, which `cargo check` compiles but
-      # never runs. deploy/systemd/ is in this lane's gate above so a template-only change — the
-      # exact shape of #32 — reaches it. The package in crates/jope-campaigns is named
-      # jope-dime-regressor.
-      - name: Rendered systemd units resolve under the rendered roots
-        run: cargo test -p jope-dime-regressor --locked --test systemd_unit_paths
-      - name: "Workspace MSRV (decision 8: at most 1.97.1)"
+      - name: Runner provenance
+        uses: ./.github/actions/runner-provenance
+      - name: Run declared lane and retain receipt
+        id: lane
         run: |
           set -euo pipefail
-          cargo metadata --no-deps --locked --format-version 1 > /tmp/metadata.json
-          python3 - <<'PY'
-          import json
-          packages = json.load(open('/tmp/metadata.json'))['packages']
-          versions = sorted({p['rust_version'] for p in packages if p.get('rust_version')})
-          print('rust-version values in the workspace:', versions)
-          assert versions and versions[-1].split('.')[:2] <= ['1', '97'], versions
-          PY
+          evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
+          python3 deploy/ci/receipt.py --lane rust-check --output "$evidence" --backend rust -- bash deploy/ci/fast-lane.sh rust-check
+      - name: Upload current lane evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
+          if-no-files-found: error
+          retention-days: 30
 
-  # Emitted code: the Python/Rust bit-identical pair, the four-language portable genome across
-  # g++/clang++ × C++17/C++20 and node, byte-identical sources and prediction bits against the
-  # committed expectations; plus the strict portable-parity test (no backend may be skipped).
+  rust-test:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: [self-hosted, linux, x64, jope-ci]
+    timeout-minutes: 45
+    env:
+      JOPE_PARITY_STRICT: "1"
+      OMP_NUM_THREADS: "1"
+      RAYON_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+        with:
+          persist-credentials: false
+      - name: Persistent Cargo target
+        uses: ./.github/actions/cargo-target
+      - name: Runner provenance
+        uses: ./.github/actions/runner-provenance
+      - name: Run declared lane and retain receipt
+        id: lane
+        run: |
+          set -euo pipefail
+          evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
+          python3 deploy/ci/receipt.py --lane rust-test --output "$evidence" --backend nextest --junit "$evidence/junit.xml" -- bash deploy/ci/fast-lane.sh rust-test
+      - name: Upload current lane evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
+          if-no-files-found: error
+          retention-days: 30
+
   emitters:
     needs: changes
     if: needs.changes.outputs.emitters == 'true'
     runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 30
     env:
-      CARGO_TERM_COLOR: always
-      CARGO_INCREMENTAL: "0"
       JOPE_PARITY_STRICT: "1"
     steps:
       - name: Checkout
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0 (pin unchanged from main; the old comment said v5)
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
           persist-credentials: false
       - name: Persistent Cargo target
         uses: ./.github/actions/cargo-target
-      - name: Toolchain (from rust-toolchain.toml)
-        run: rustup show active-toolchain
-      # Cargo registry and this runner lane's target directory persist on the host.
-      - name: Compilers on this runner
+      - name: Runner provenance
+        uses: ./.github/actions/runner-provenance
+      - name: Run declared lane and retain receipt
+        id: lane
         run: |
           set -euo pipefail
-          for tool in g++ clang++ node python3 rustc; do printf '%s: ' "$tool"; "$tool" --version | head -1; done
-      - name: Emitted-code matrix
-        run: bash deploy/ci/emitters.sh
-      # Two invocations: a name filter given once applies to every selected test binary, so the
-      # previous single command ran 0 of the portable_parity tests (found in review of #24).
-      - name: Strict portable parity — cxx helper unit tests
-        run: "cargo test -p feat-math --locked --lib -- cxx::"
-      - name: Strict portable parity — portable_all_helper_backends_match_bits
-        run: cargo test -p feat-math --locked --test portable_parity
+          evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
+          python3 deploy/ci/receipt.py --lane emitters --output "$evidence" --backend rust -- bash deploy/ci/fast-lane.sh emitters
+      - name: Upload current lane evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
+          if-no-files-found: error
+          retention-days: 30
 
-  # Committed fixtures: the synthetic datasets verify against their catalog offline and the pinned
-  # generator reproduces them byte for byte. Runs whenever datasets/synthetic or the CLI change.
   inputs:
     needs: changes
     if: needs.changes.outputs.inputs == 'true'
     runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 20
-    env:
-      CARGO_TERM_COLOR: always
-      CARGO_INCREMENTAL: "0"
     steps:
       - name: Checkout
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0 (pin unchanged from main; the old comment said v5)
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
           persist-credentials: false
       - name: Persistent Cargo target
         uses: ./.github/actions/cargo-target
-      - name: Toolchain (from rust-toolchain.toml)
-        run: rustup show active-toolchain
-      # Cargo registry and this runner lane's target directory persist on the host.
-      - name: Verify the committed fixtures offline
-        run: cargo run --locked --bin jope -- verify-inputs --offline --json --root datasets/synthetic
-      - name: Generator reproduces the committed fixtures
-        run: cargo run --locked --bin jope -- generate-fixtures --check --json --output datasets/synthetic
+      - name: Runner provenance
+        uses: ./.github/actions/runner-provenance
+      - name: Run declared lane and retain receipt
+        id: lane
+        run: |
+          set -euo pipefail
+          evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
+          python3 deploy/ci/receipt.py --lane inputs --output "$evidence" --backend none -- bash deploy/ci/fast-lane.sh inputs
+      - name: Upload current lane evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
+          if-no-files-found: error
+          retention-days: 30
 
-  # The Python compatibility/training surface: the uv project must install, lint, format and pass
-  # its tests. Nothing hosted ran these before, which is how a systemd-template rename silently
-  # broke tests/test_durable_selfplay.py; deploy/systemd is in the gate for exactly that reason.
-  # Tests that need the old state plane on xbabe2 carry the `xbabe2` marker and are deselected.
   python:
     needs: changes
     if: needs.changes.outputs.python == 'true'
@@ -234,163 +206,90 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Checkout
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
           persist-credentials: false
       - name: Persistent Cargo target
         uses: ./.github/actions/cargo-target
-      - name: uv from the image
-        # Was astral-sh/setup-uv, which installs `latest` from the network and would shadow the
-        # image's pinned uv. Assert the pinned one instead of fetching an unpinned one -- and
-        # assert the version, because `uv --version` on its own only proves some uv is on PATH.
-        run: uv --version | grep -qF 'uv 0.11.28' || { uv --version >&2; echo 'expected the image-pinned uv 0.11.28' >&2; exit 1; }
-      - name: Sync the locked environment (CPU torch)
-        working-directory: python
-        run: uv sync --locked --extra dev --extra cpu
-      - name: Ruff lint and format
-        working-directory: python
+      - name: Runner provenance
+        uses: ./.github/actions/runner-provenance
+      - name: Run declared lane and retain receipt
+        id: lane
         run: |
           set -euo pipefail
-          uv run --no-sync ruff check .
-          uv run --no-sync ruff format --check .
-      - name: Pytest (xbabe2-only tests deselected)
-        working-directory: python
-        run: uv run --no-sync pytest -q -m "not xbabe2" -p no:cacheprovider
-
-  # `cargo check` never links; `cargo test` does. Linking every test binary in this workspace
-  # produces a 72 GB target (measured), against roughly 14 GB free on an ubuntu-24.04 runner — the
-  # link dies with `ld terminated with signal 7 [Bus error]` and nothing runs. So this lane gates
-  # the product crates, which link to 9.4 GB and run 617 tests in about a minute. The heavy crates
-  # (jope-parallel, jope-dime-regressor, the vendored smartcluster set) are deferred to the
-  # self-hosted runner lane; deploy/ci/rust-test-scope.sh says so, and deploy/ci/known-broken-tests.txt
-  # and serial-test-binaries.txt record what is broken and what races in them.
-  # Before this lane, NO hosted job ran a Rust test at all: rust-check is `cargo check`, and the
-  # only `cargo test` in this file was -p feat-math.
-  rust-test:
-    needs: changes
-    if: needs.changes.outputs.rust == 'true'
-    runs-on: [self-hosted, linux, x64, jope-ci]
-    timeout-minutes: 45
-    env:
-      CARGO_TERM_COLOR: always
-      CARGO_INCREMENTAL: "0"
-      OMP_NUM_THREADS: "1"
-      RAYON_NUM_THREADS: "1"
-      OPENBLAS_NUM_THREADS: "1"
-      MKL_NUM_THREADS: "1"
-      JOPE_PARITY_STRICT: "1"
-    steps:
-      - name: Checkout
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
-        with:
-          persist-credentials: false
-      - name: Persistent Cargo target
-        uses: ./.github/actions/cargo-target
-      - name: Toolchain (from rust-toolchain.toml)
-        run: rustup show active-toolchain
-      # Cargo registry and this runner lane's target directory persist on the host.
-      - name: cargo-nextest from the image
-        # Asserted, not printed: the hosted lane resolved cargo-nextest 0.9.145 via
-        # taiki-e/install-action and the image pins 0.9.133, so this lane must fail loudly if
-        # the image drifts from the version this gate's results were established on.
-        run: cargo nextest --version | grep -qF 'cargo-nextest 0.9.133' || { cargo nextest --version >&2; echo 'expected the image-pinned cargo-nextest 0.9.133' >&2; exit 1; }
-      - name: Product-crate tests (blocking)
-        run: |
-          set -euo pipefail
-          mkdir -p rust-test-evidence
-          # Capture first so a failing scope script aborts here: inside `read -ra pkgs <<< "$(...)"`
-          # the command substitution's exit status is discarded, pkgs would be empty, and cargo
-          # would silently run UNSCOPED — straight back into the 72 GB link this lane exists to avoid.
-          scope="$(bash deploy/ci/rust-test-scope.sh)"
-          read -ra pkgs <<< "$scope"
-          [ "${#pkgs[@]}" -gt 0 ] || { echo "rust-test-scope.sh produced an empty package set" >&2; exit 1; }
-          # Identity of what actually ran, so the uploaded report can be tied to a revision and a
-          # package set rather than to "the lane was green once".
-          # Captured as statements, not inside `echo "$( )"`: a command substitution in an echo
-          # argument cannot trip `set -e`, so a failing rustup would be recorded as an empty value.
-          toolchain="$(rustup show active-toolchain)"
-          runner="$(uname -srm)"
-          {
-            echo "revision=${GITHUB_SHA}"
-            echo "ref=${GITHUB_REF}"
-            echo "run=${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
-            echo "runner=${runner}"
-            echo "toolchain=${toolchain}"
-            echo "packages=${scope}"
-          } | tee rust-test-evidence/identity.txt
-          df -B1 --output=source,size,used,avail,pcent / | tee rust-test-evidence/disk-before.txt
-          # Marks that nextest was reached, so the retention step can tell "the report is missing"
-          # from "the run never got that far" instead of accepting both.
-          target=$(python3 deploy/ci/cargo-artifact.py target-dir)
-          junit="$target/nextest/pr/junit.xml"
-          # Preserve a previous report before execution, so a failed build cannot
-          # upload it as this run's test result from the persistent target.
-          if [ -f "$junit" ]; then mv "$junit" rust-test-evidence/prior-junit.xml; fi
-          python3 deploy/ci/cargo-artifact.py nextest-config --output rust-test-evidence/nextest.toml
-          touch rust-test-evidence/nextest-started
-          cargo nextest run --config-file rust-test-evidence/nextest.toml -P pr --locked "${pkgs[@]}"
-      - name: Retain test report and disk measurements
+          evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
+          python3 deploy/ci/receipt.py --lane python --output "$evidence" --backend pytest --junit "$evidence/junit.xml" -- bash deploy/ci/fast-lane.sh python
+      - name: Upload current lane evidence
         if: always()
-        run: |
-          set -euo pipefail
-          mkdir -p rust-test-evidence
-          df -B1 --output=source,size,used,avail,pcent / | tee rust-test-evidence/disk-after.txt
-          target=$(python3 deploy/ci/cargo-artifact.py target-dir)
-          du -sb "$target" 2>/dev/null | tee rust-test-evidence/target-bytes.txt || true
-          # `[profile.pr.junit] path = "junit.xml"` puts it here; keep the lane honest about a
-          # missing report instead of uploading a directory that quietly holds no results.
-          junit="$target/nextest/pr/junit.xml"
-          if [ -f rust-test-evidence/nextest-started ]; then
-            if [ ! -f "$junit" ]; then
-              echo "nextest ran but no report at ${junit}" | tee rust-test-evidence/junit-MISSING.txt
-              exit 1
-            fi
-            cp "$junit" rust-test-evidence/junit.xml
-          else
-            echo "nextest never ran; no current report expected" | tee rust-test-evidence/junit-ABSENT.txt
-          fi
-      - name: Upload rust-test evidence
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: rust-test-evidence
-          path: rust-test-evidence/
+          name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
           if-no-files-found: error
-          overwrite: true
           retention-days: 30
 
-  # One end-to-end `jope pipeline run` on a committed dataset: the receipt validates against its
-  # committed schema and records the skipped propose stage, two runs emit byte-identical sources,
-  # and every emitted program agrees with its siblings on the prediction bits.
   e2e-smoke:
     needs: changes
     if: needs.changes.outputs.e2e == 'true'
     runs-on: [self-hosted, linux, x64, jope-ci]
-    # The lane's own work is ~30 s; the cap covers a cold build of the jope binary. The --cuts 3
-    # section adds roughly a minute.
     timeout-minutes: 25
-    env:
-      CARGO_TERM_COLOR: always
-      CARGO_INCREMENTAL: "0"
     steps:
       - name: Checkout
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
           persist-credentials: false
       - name: Persistent Cargo target
         uses: ./.github/actions/cargo-target
-      - name: Toolchain (from rust-toolchain.toml)
-        run: rustup show active-toolchain
-      # No Swatinem/rust-cache: CARGO_HOME is a persistent named volume on the runner host.
-      - name: Compilers this lane needs are in the image
+      - name: Runner provenance
+        uses: ./.github/actions/runner-provenance
+      - name: Run declared lane and retain receipt
+        id: lane
         run: |
           set -euo pipefail
-          # Asserted, not printed. e2e-smoke.sh compiles the emitted C++ and runs the emitted
-          # JavaScript and Python, so a missing toolchain here is an image defect, not a code
-          # failure, and should say so rather than surfacing as a confusing script error.
-          for tool in g++ clang++ node python3 rustc cargo; do
-            command -v "$tool" >/dev/null || { echo "runner image is missing $tool" >&2; exit 1; }
-            printf '%-10s %s\n' "$tool" "$("$tool" --version | head -1)"
-          done
-      - name: End-to-end pipeline smoke
-        run: bash deploy/ci/e2e-smoke.sh
+          evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
+          python3 deploy/ci/receipt.py --lane e2e-smoke --output "$evidence" --backend none -- bash deploy/ci/fast-lane.sh e2e-smoke
+      - name: Upload current lane evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          path: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
+          if-no-files-found: error
+          retention-days: 30
+
+  aggregate:
+    needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke]
+    if: always()
+    runs-on: [self-hosted, linux, x64, jope-ci]
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Runner provenance
+        uses: ./.github/actions/runner-provenance
+      - name: Download this run and attempt only
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: ci-${{ github.run_id }}-${{ github.run_attempt }}-*
+          path: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
+      - name: Validate every required result
+        if: always()
+        env:
+          NEEDS_JSON: ${{ toJson(needs) }}
+        run: |
+          set -euo pipefail
+          output="target/ci-aggregate/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+          mkdir -p "$output"
+          printf '%s\n' "$NEEDS_JSON" > "$output/needs.json"
+          python3 deploy/ci/aggregate.py --receipts "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --needs "$output/needs.json" --output "$output/aggregate.json"
+      - name: Upload aggregate inventory
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ci-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/ci-aggregate/${{ github.run_id }}/${{ github.run_attempt }}/
+          if-no-files-found: error
+          retention-days: 30

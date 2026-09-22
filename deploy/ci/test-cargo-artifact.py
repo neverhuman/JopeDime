@@ -142,11 +142,8 @@ else:
             artifact.nextest_config(source, self.root/"other.toml", self.binary.parent)
 
     def test_report_retention_requires_execution_and_a_current_report(self):
-        workflow = HELPER.parents[2] / ".github/workflows/ci.yml"
-        block = workflow.read_text().split("      - name: Retain test report and disk measurements\n")[1]
-        block = block.split("      - name: Upload rust-test evidence\n")[0].split("        run: |\n")[1]
-        script = "\n".join(line[10:] for line in block.splitlines())
-        # Exercise the actual workflow step. Stub only Cargo metadata; its path
+        script = (HELPER.parent / "retain-nextest.sh").read_text()
+        # Exercise the actual retention command. Stub only Cargo metadata; its path
         # resolution is tested separately above and with real nextest runs.
         script = 'python3() { printf "%s\\n" "$REPORT_TARGET"; }\n' + script
         for index, (started, report, code) in enumerate([(False, True, 0), (True, False, 1), (True, True, 0)]):
@@ -161,7 +158,7 @@ else:
                     (evidence / "nextest-started").touch()
                 if report:
                     junit.write_text("old report" if not started else "current report")
-                result = subprocess.run(["bash", "-c", script], cwd=case,
+                result = subprocess.run(["bash", "-c", script, "retain-nextest", str(evidence)], cwd=case,
                                         env={**os.environ, "REPORT_TARGET": str(target)},
                                         capture_output=True, text=True)
                 self.assertEqual(result.returncode, code, result.stdout+result.stderr)

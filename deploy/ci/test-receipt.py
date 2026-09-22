@@ -26,6 +26,11 @@ class ReceiptTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             receipt.identity(env, "b" * 40)
 
+    def test_pr_requires_source_identity(self):
+        env = dict(GITHUB_RUN_ID="123", GITHUB_RUN_ATTEMPT="1", GITHUB_EVENT_NAME="pull_request")
+        with self.assertRaisesRegex(ValueError, "JOPE_SOURCE_SHA"):
+            receipt.identity(env, "b" * 40)
+
     def test_unknown_skips_are_not_zero(self):
         counts = dict(collected=None, executed=2, passed=2, failed=0, skipped=None, excluded=None)
         receipt.validate_counts(counts)
