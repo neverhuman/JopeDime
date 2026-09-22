@@ -1,0 +1,29 @@
+{
+  "schema": "jope.arena-protocol-corrections/v1",
+  "track_id": "tabular-regression-v2",
+  "scores_sha256": "5ec868987c2f4286ae44728fde49215ec6e55e7d27e62100d3823744e2957db6",
+  "corrections": [
+    {
+      "id": "golden46-new3-20260723-v4-test-adaptive",
+      "method_id": "jope-dime",
+      "source_kind": "accepted-current-best-rust-replay",
+      "source_revision": "golden46-new3-20260723-v4",
+      "dataset_ids": [
+        "6054656956182296",
+        "ZTS_small",
+        "a3bd0a400ec4d7f9"
+      ],
+      "benchmark_valid": false,
+      "selection": "test-adaptive",
+      "reason": "The three Golden46 rows were accepted from run golden46-new3-20260723-v4 through results/tabular-regression-v2/aspfm-acceptance-manifest.json, which records benchmark_valid: true. The campaign that produced that run lives in this repository's test-adaptive module and writes every artefact of the run with benchmark_valid: false and test_adaptive: true (its generation-zero seed snapshots are derived from the best test-scored candidate of the corrected parent run). The published flag contradicts the source run's own label, so these rows are demoted to test-adaptive here. The other 42 jope-dime rows (source_kind complete-evolution-ledger-snapshot, Golden42) carry no contradicting label in this repository and are left as published; their selection protocol is re-established by the same-cut benchmark rather than assumed either way.",
+      "evidence": [
+        "crates/jope-campaigns/src/test_adaptive/aggressive.rs:732-748 (GenerationZeroSeedSnapshot { benchmark_valid: false, test_adaptive: true, run_id, arm: \"corrected-test-adaptive-continuation\" })",
+        "crates/jope-campaigns/src/test_adaptive/aggressive.rs:510-530 (the same flags on the run's other artefacts)",
+        "crates/jope-campaigns/src/test_adaptive/scq_batch.rs:32 (GOLDEN46_RUN_ID = \"golden46-new3-20260723-v4\")",
+        "crates/jope-campaigns/src/main.rs:714 (run-golden46 defaults to this run id)",
+        "docs/legacy/root-docs/legacy/README.root-legacy.md:164-175 (the aggressive and Golden46 lanes; the aggressive lane is documented as test-adaptive and benchmark_valid: false)",
+        "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/aspfm-acceptance-manifest.json (source_evolution_receipt.run_id = golden46-new3-20260723-v4 for all three entries; benchmark_valid: true)"
+      ]
+    }
+  ]
+}

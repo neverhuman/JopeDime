@@ -1,9 +1,11 @@
 # assets/regression — provenance
 
-Every file here is a byte-exact copy (or a lossless compression) of a committed artefact in one of
-the read-only source trees the WP12 brief names. Nothing was edited; the SHA-256 values below are of
-the **originals** and are re-checked by `crates/jope-arena/tests/elo_regression.rs` and by
-`deploy/ci/regression-suite.sh`.
+Every file under `sotarena-tabular-regression-v2/` and `seed-population/` is a byte-exact copy (or a
+lossless compression) of a committed artefact in one of the read-only source trees the WP12 brief
+names. Nothing in them was edited; the SHA-256 values below are of the **originals** and are
+re-checked by `crates/jope-arena/tests/elo_regression.rs` and by `deploy/ci/regression-suite.sh`.
+The files at this level (`elo-*.json`, `leaderboard-*.csv`, `protocol-corrections-*.json`,
+`golden42-baseline.json`, `bench-baseline.json`) are derived here from those copies and say so.
 
 Source trees (read-only at the time of the port, 2026-09-18/19):
 
@@ -36,14 +38,46 @@ Not copied (too large or not needed by the ladder): `results/tabular-regression-
 place with `jope-arena verify-results`: ok=397 missing=0 mismatched=0), `dataset-metadata/`,
 `external-references/`, `source-audits/`, `terminal-receipts/`, `aspfm-replay-receipts/`.
 
-## `elo-tabular-regression-v2.json`
+## `elo-tabular-regression-v2.json` — the published ladder
 
 `jope-arena elo --track tabular-regression-v2 --root assets/regression/sotarena-tabular-regression-v2 --json …`:
-the recomputed ladder (`jope.arena-elo-snapshot/v1`). Its `leaderboard_sha256` equals the committed
-`leaderboard.csv` above, i.e. the recomputation is byte-identical: **jope-dime rank 1, Elo 2259.8,
-11 dataset wins, 45/45**, 305 methods, 8,763 rankable rows. The same command with
-`--root <historical jope-dime checkout>/sotarena --check` reported `check=ok`; so did
-`--track tabular-regression-v1` (Golden42 development track: jope-dime 2259.9).
+the recomputed ladder (`jope.arena-elo-snapshot/v2`, `ladder: published`, no corrections). Its
+`leaderboard_sha256` equals the committed `leaderboard.csv` above, i.e. the recomputation is
+byte-identical: **jope-dime rank 1, Elo 2259.8, 11 dataset wins, 45/45**, 305 methods, 8,763
+rankable rows. The same command with `--root <historical jope-dime checkout>/sotarena --check`
+reported `check=ok`; so did `--track tabular-regression-v1` (Golden42 development track: jope-dime
+2259.9). This is what the benchmark published; the README renders it as the best known program
+per dataset, not as a held-out result.
+
+## `protocol-corrections-tabular-regression-v2.json` — where this tree contradicts the published flags
+
+Not a copy of anything: a `jope.arena-protocol-corrections/v1` file written here, bound to the
+`scores.csv` SHA-256 above, listing published rows whose `benchmark_valid: True` this repository's
+own campaign code contradicts. One entry (SHA-256 `6d095191322f7d4a21362052232333c4956c537157203a47a6b1d1b0c2a5c7ab`):
+
+| id | selects | why |
+|---|---|---|
+| `golden46-new3-20260723-v4-test-adaptive` | the 3 `jope-dime` rows with `source_revision = golden46-new3-20260723-v4` (`6054656956182296`, `ZTS_small`, `a3bd0a400ec4d7f9`; `source_kind = accepted-current-best-rust-replay`, via `aspfm-acceptance-manifest.json`) | the run's own artefacts are written with `benchmark_valid: false, test_adaptive: true` (`crates/jope-campaigns/src/test_adaptive/aggressive.rs`); the acceptance manifest relabelled the replayed winners `true` |
+
+The other 42 `jope-dime` rows (`source_kind = complete-evolution-ledger-snapshot`) are **not**
+corrected: this tree holds no artefact contradicting their flag, and none proving their selection was
+frozen before test scoring either. A correction needs cited evidence; an inference is not one.
+Corrections can only demote, must select at least one row, and are refused against any other
+`scores.csv` (`crates/jope-arena/src/corrections.rs`).
+
+## `leaderboard-tabular-regression-v2.benchmark-valid.csv` and `elo-tabular-regression-v2.benchmark-valid.json`
+
+`jope-arena elo --track tabular-regression-v2 --root assets/regression/sotarena-tabular-regression-v2
+--ladder benchmark-valid --corrections assets/regression/protocol-corrections-tabular-regression-v2.json
+--out … --json …`: the same `scores.csv` with the corrections applied and every row whose
+`benchmark_valid` is `False` left out of the fit (`excluded_rows: 3`, 8,760 rankable rows, 305
+methods). CSV SHA-256 `e0454e2c389647e7dfab37a874c7dd7915c2535c1aec1fc958a9e6b8b0df0199`. On it
+**jope-dime is rank 1, Elo 2260.8, 11 dataset wins, 42/45 — no longer a full-coverage rank** (the
+three uncovered datasets have only test-adaptive results); `jope-dime-regressor` (one fixed-seed
+reproducible run, `public-development`) is rank 32, Elo 1684.8, 42/45. Asserted byte-for-byte by
+`crates/jope-arena/tests/elo_regression.rs::benchmark_valid_ladder_excludes_the_rows_the_campaign_code_labels_test_adaptive`
+and rendered into the README by `deploy/ci/readme-benchmarks.py`, which refuses to render when the
+two snapshots, the two CSVs and the corrections file disagree with each other.
 
 ## `golden42-baseline.json`
 

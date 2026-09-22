@@ -16,7 +16,10 @@
 //! [`scores`] is the `scores.csv` schema both trees share, plus emission from campaign receipts.
 //! [`elo`] holds both Bradley–Terry fits: the per-match one that produced the committed
 //! leaderboards and the reporter's pair-aggregated one; they agree to floating-point noise.
+//! [`corrections`] records where this repository's own campaign code contradicts a published
+//! `benchmark_valid` flag; the benchmark-valid ladder in [`leaderboard`] applies it.
 
+pub mod corrections;
 pub mod elo;
 pub mod family;
 pub mod fetch;

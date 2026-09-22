@@ -1,8 +1,11 @@
 {
-  "schema": "jope.arena-elo-snapshot/v1",
+  "schema": "jope.arena-elo-snapshot/v2",
   "track_id": "tabular-regression-v2",
   "version": null,
+  "ladder": "published",
   "scores_sha256": "5ec868987c2f4286ae44728fde49215ec6e55e7d27e62100d3823744e2957db6",
+  "corrections": null,
+  "excluded_rows": 0,
   "leaderboard_sha256": "2d28ffbd8b5830c6adc39874dfcf98498419ef8c1df6ac5eb135c660013fb24f",
   "rankable_rows": 8763,
   "datasets_scored": 45,

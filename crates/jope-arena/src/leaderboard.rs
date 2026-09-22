@@ -6,6 +6,17 @@
 //! `results/<track>/` (the upstream layout) or in `results/<track>/<version>/` (what
 //! [`crate::publish`] writes); `--version` selects one, otherwise the newest version directory,
 //! otherwise the flat layout.
+//!
+//! Two ladders are computed from the same rows ([`Ladder`]):
+//!
+//! * **published** — every rankable row, exactly as the benchmark ranked them. This is what the
+//!   benchmark published and what the regression fixture reproduces byte-for-byte.
+//! * **benchmark-valid** — only rows whose `benchmark_valid` is `True` after an optional
+//!   [`Corrections`] file has been applied. This is the held-out claim; a row whose source run
+//!   this repository's own campaign code labels test-adaptive never enters it.
+//!
+//! Either way the `benchmark_valid` cell of a ladder row is computed from the rows that entered
+//! the fit (`True` only when every one of the method's ranked rows is valid), never assumed.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
@@ -15,10 +26,11 @@ use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::corrections::{Corrections, CorrectionsMeta};
 use crate::elo::{fit_elo, matches_from_scores, TIE_RELATIVE_TOLERANCE};
-use crate::io::{read_json, read_text, resolve_input};
+use crate::io::{read_bytes, read_json, read_text, resolve_input, sha256_hex};
 use crate::pyfmt::{py_bool, py_repr, py_round};
-use crate::scores::{read_scores, ScoreRow};
+use crate::scores::{parse_scores, ScoreRow};
 
 /// `tracks/<track>/track.json` (the fields the ladder needs; the rest is kept as `extra`).
 #[derive(Clone, Debug, Deserialize)]
@@ -50,6 +62,34 @@ pub struct Track {
 
 fn default_method_registry() -> String {
     "registry/methods.json".to_owned()
+}
+
+/// Which rows enter the fit.
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq, clap::ValueEnum)]
+#[serde(rename_all = "kebab-case")]
+pub enum Ladder {
+    /// Every rankable row, as the benchmark ranked them.
+    Published,
+    /// Only rows whose `benchmark_valid` is `True` (after corrections).
+    BenchmarkValid,
+}
+
+impl Ladder {
+    /// The spelling used in snapshots and on the command line.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Published => "published",
+            Self::BenchmarkValid => "benchmark-valid",
+        }
+    }
+
+    /// The `scope` cell every row of this ladder carries.
+    pub fn scope(self) -> &'static str {
+        match self {
+            Self::Published => "official unified benchmark comparison",
+            Self::BenchmarkValid => "benchmark-valid rows only; protocol corrections applied",
+        }
+    }
 }
 
 /// Where one results snapshot lives.
@@ -168,9 +208,11 @@ pub struct LeaderboardRow {
     pub coverage_status: String,
     /// `|`-joined sorted protocols.
     pub protocols: String,
-    /// Always `True`.
+    /// `True` when every ranked row of the method is `benchmark_valid`, else `False`. The
+    /// benchmark's own `leaderboard.py` wrote `True` unconditionally; the published fixture is
+    /// all-`True` so the two agree on it.
     pub benchmark_valid: String,
-    /// Always `official unified benchmark comparison`.
+    /// [`Ladder::scope`].
     pub scope: String,
 }
 
@@ -181,6 +223,15 @@ pub struct Leaderboard {
     pub track_id: String,
     /// Results version label, if versioned.
     pub version: Option<String>,
+    /// Which rows entered the fit.
+    pub ladder: Ladder,
+    /// SHA-256 of the `scores.csv` bytes the rows were read from.
+    pub scores_sha256: String,
+    /// The corrections applied before ranking, if any.
+    pub corrections: Option<CorrectionsMeta>,
+    /// Rankable rows left out because they were not `benchmark_valid` (always 0 when
+    /// published).
+    pub excluded_rows: usize,
     /// Rows in rank order.
     pub rows: Vec<LeaderboardRow>,
     /// Unrounded ratings by method id.
@@ -216,18 +267,37 @@ pub fn pending_by_method(ledger_text: &str) -> Result<BTreeMap<String, usize>> {
     Ok(pending)
 }
 
+/// Inputs of [`build_leaderboard`] beyond the score rows.
+#[derive(Clone, Debug)]
+pub struct Inputs<'a> {
+    /// Track id every row must carry.
+    pub track_id: &'a str,
+    /// Results version label.
+    pub version: Option<&'a str>,
+    /// Which rows enter the fit.
+    pub ladder: Ladder,
+    /// SHA-256 of the `scores.csv` bytes.
+    pub scores_sha256: &'a str,
+    /// Corrections already applied to the rows, for the record.
+    pub corrections: Option<CorrectionsMeta>,
+    /// Method id → display name.
+    pub method_names: &'a BTreeMap<String, String>,
+    /// Method id → unresolved ledger cells.
+    pub pending: &'a BTreeMap<String, usize>,
+    /// Datasets in the registry.
+    pub total_datasets: usize,
+}
+
 /// `build_leaderboard` from `leaderboard.py`, over already-loaded inputs.
-pub fn build_leaderboard(
-    track_id: &str,
-    version: Option<&str>,
-    scores: &[ScoreRow],
-    method_names: &BTreeMap<String, String>,
-    pending: &BTreeMap<String, usize>,
-    total_datasets: usize,
-) -> Result<Leaderboard> {
+pub fn build_leaderboard(scores: &[ScoreRow], inputs: Inputs<'_>) -> Result<Leaderboard> {
+    let track_id = inputs.track_id;
+    let total_datasets = inputs.total_datasets;
+    let (method_names, pending) = (inputs.method_names, inputs.pending);
     let mut by_dataset: BTreeMap<String, BTreeMap<String, f64>> = BTreeMap::new();
     let mut protocols_by_method: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    let mut valid_by_method: BTreeMap<String, bool> = BTreeMap::new();
     let mut rankable_rows = 0;
+    let mut excluded_rows = 0;
     for row in scores {
         if !row.is_rankable() {
             continue;
@@ -237,6 +307,19 @@ pub fn build_leaderboard(
             "score row for {} inside track {track_id}",
             row.track_id
         );
+        let valid = match row.benchmark_valid.as_str() {
+            "True" => true,
+            "False" => false,
+            other => bail!(
+                "benchmark_valid {other:?} for {}/{} is neither True nor False",
+                row.dataset_id,
+                row.method_id
+            ),
+        };
+        if inputs.ladder == Ladder::BenchmarkValid && !valid {
+            excluded_rows += 1;
+            continue;
+        }
         let value: f64 = row.value.parse().with_context(|| {
             format!(
                 "non-numeric value {:?} for {}/{}",
@@ -251,6 +334,7 @@ pub fn build_leaderboard(
             .entry(row.method_id.clone())
             .or_default()
             .insert(row.protocol.clone());
+        *valid_by_method.entry(row.method_id.clone()).or_insert(true) &= valid;
         rankable_rows += 1;
     }
     let matches = matches_from_scores(&by_dataset, TIE_RELATIVE_TOLERANCE);
@@ -321,13 +405,18 @@ pub fn build_leaderboard(
                 .get(method_id)
                 .map(|set| set.iter().cloned().collect::<Vec<_>>().join("|"))
                 .unwrap_or_default(),
-            benchmark_valid: "True".to_owned(),
-            scope: "official unified benchmark comparison".to_owned(),
+            benchmark_valid: py_bool(valid_by_method.get(method_id).copied().unwrap_or(false))
+                .to_owned(),
+            scope: inputs.ladder.scope().to_owned(),
         });
     }
     Ok(Leaderboard {
         track_id: track_id.to_owned(),
-        version: version.map(str::to_owned),
+        version: inputs.version.map(str::to_owned),
+        ladder: inputs.ladder,
+        scores_sha256: inputs.scores_sha256.to_owned(),
+        corrections: inputs.corrections,
+        excluded_rows,
         rows,
         ratings,
         rankable_rows,
@@ -367,15 +456,42 @@ pub fn load_dataset_ids(root: &Path, track: &Track) -> Result<Vec<String>> {
         .collect()
 }
 
-/// Recompute the ladder for `track_id` under `root`.
+/// Recompute a ladder for `track_id` under `root`, applying `corrections` (a
+/// `jope.arena-protocol-corrections/v1` file) to the rows first when given.
 pub fn compute(
     root: &Path,
     track_id: &str,
     version: Option<&str>,
+    ladder: Ladder,
+    corrections: Option<&Path>,
 ) -> Result<(Leaderboard, ResultsLocation)> {
     let track = load_track(root, track_id)?;
     let location = resolve_results(root, track_id, version)?;
-    let scores = read_scores(&location.dir.join("scores.csv"))?;
+    let scores_path = location.dir.join("scores.csv");
+    let scores_bytes = read_bytes(&scores_path)?;
+    let scores_sha256 = sha256_hex(&scores_bytes);
+    let mut scores = parse_scores(
+        std::str::from_utf8(&scores_bytes)
+            .with_context(|| format!("{} is not UTF-8", scores_path.display()))?,
+    )?;
+    let corrections = match corrections {
+        Some(path) => {
+            let (corrections, sha256) = Corrections::load(path)?;
+            let (applied, rows_corrected) = corrections
+                .apply(track_id, &scores_sha256, &mut scores)
+                .with_context(|| format!("apply {}", path.display()))?;
+            Some(CorrectionsMeta {
+                file: path
+                    .file_name()
+                    .map(|name| name.to_string_lossy().into_owned())
+                    .unwrap_or_default(),
+                sha256,
+                applied,
+                rows_corrected,
+            })
+        }
+        None => None,
+    };
     let method_names = load_method_names(root, &track)?;
     let dataset_ids = load_dataset_ids(root, &track)?;
     let ledger_path = location.dir.join("resolution-ledger.jsonl");
@@ -398,12 +514,17 @@ pub fn compute(
         );
     }
     let leaderboard = build_leaderboard(
-        track_id,
-        location.version.as_deref(),
         &scores,
-        &method_names,
-        &pending,
-        dataset_ids.len(),
+        Inputs {
+            track_id,
+            version: location.version.as_deref(),
+            ladder,
+            scores_sha256: &scores_sha256,
+            corrections,
+            method_names: &method_names,
+            pending: &pending,
+            total_datasets: dataset_ids.len(),
+        },
     )?;
     Ok((leaderboard, location))
 }
@@ -432,17 +553,27 @@ pub fn parse_csv(text: &str) -> Result<Vec<LeaderboardRow>> {
     Ok(rows)
 }
 
-/// The JSON snapshot committed as `assets/regression/elo-<track>.json`.
+/// Schema id of [`Snapshot`]. v2 added `ladder`, `corrections` and `excluded_rows`.
+pub const SNAPSHOT_SCHEMA: &str = "jope.arena-elo-snapshot/v2";
+
+/// The JSON snapshot committed as `assets/regression/elo-<track>[.<ladder>].json`.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct Snapshot {
-    /// `jope.arena-elo-snapshot/v1`.
+    /// [`SNAPSHOT_SCHEMA`].
     pub schema: String,
     /// Track id.
     pub track_id: String,
     /// Results version label.
     pub version: Option<String>,
+    /// Which rows entered the fit.
+    pub ladder: Ladder,
     /// SHA-256 of the `scores.csv` bytes the ladder was computed from.
     pub scores_sha256: String,
+    /// The corrections applied before ranking, if any.
+    pub corrections: Option<CorrectionsMeta>,
+    /// Rankable rows left out as not `benchmark_valid`.
+    pub excluded_rows: usize,
     /// SHA-256 of the `leaderboard.csv` text produced.
     pub leaderboard_sha256: String,
     /// Rankable rows.
@@ -457,14 +588,17 @@ pub struct Snapshot {
 
 impl Snapshot {
     /// Build from a computed ladder.
-    pub fn new(leaderboard: &Leaderboard, scores_sha256: &str) -> Result<Self> {
+    pub fn new(leaderboard: &Leaderboard) -> Result<Self> {
         let csv = to_csv(&leaderboard.rows)?;
         Ok(Self {
-            schema: "jope.arena-elo-snapshot/v1".to_owned(),
+            schema: SNAPSHOT_SCHEMA.to_owned(),
             track_id: leaderboard.track_id.clone(),
             version: leaderboard.version.clone(),
-            scores_sha256: scores_sha256.to_owned(),
-            leaderboard_sha256: crate::io::sha256_hex(csv.as_bytes()),
+            ladder: leaderboard.ladder,
+            scores_sha256: leaderboard.scores_sha256.clone(),
+            corrections: leaderboard.corrections.clone(),
+            excluded_rows: leaderboard.excluded_rows,
+            leaderboard_sha256: sha256_hex(csv.as_bytes()),
             rankable_rows: leaderboard.rankable_rows,
             datasets_scored: leaderboard.datasets_scored,
             methods: leaderboard.rows.len(),
@@ -479,7 +613,28 @@ mod tests {
     use crate::scores::parse_scores;
 
     fn row(dataset: &str, method: &str, value: &str, status: &str) -> String {
-        format!("t,{dataset},{method},public-development,rmse,{value},{status},True,k,,,,\n")
+        valid_row(dataset, method, value, status, "True")
+    }
+
+    fn valid_row(dataset: &str, method: &str, value: &str, status: &str, valid: &str) -> String {
+        format!("t,{dataset},{method},public-development,rmse,{value},{status},{valid},k,,,,\n")
+    }
+
+    fn inputs<'a>(
+        ladder: Ladder,
+        names: &'a BTreeMap<String, String>,
+        pending: &'a BTreeMap<String, usize>,
+    ) -> Inputs<'a> {
+        Inputs {
+            track_id: "t",
+            version: Some("v1"),
+            ladder,
+            scores_sha256: "s",
+            corrections: None,
+            method_names: names,
+            pending,
+            total_datasets: 3,
+        }
     }
 
     #[test]
@@ -496,9 +651,13 @@ mod tests {
         let scores = parse_scores(&text).unwrap();
         let names = BTreeMap::from([("a".to_owned(), "Method A".to_owned())]);
         let pending = BTreeMap::from([("c".to_owned(), 1)]);
-        let board = build_leaderboard("t", Some("v1"), &scores, &names, &pending, 3).unwrap();
+        let board =
+            build_leaderboard(&scores, inputs(Ladder::Published, &names, &pending)).unwrap();
         assert_eq!(board.rankable_rows, 6);
         assert_eq!(board.datasets_scored, 3);
+        assert_eq!(board.excluded_rows, 0);
+        assert_eq!(board.scores_sha256, "s");
+        assert!(board.rows.iter().all(|r| r.benchmark_valid == "True"));
         let ids: Vec<&str> = board.rows.iter().map(|r| r.method_id.as_str()).collect();
         assert_eq!(
             ids,
@@ -528,6 +687,75 @@ mod tests {
         assert_eq!(parse_csv(&csv).unwrap(), board.rows);
         let mean: f64 = board.ratings.values().sum::<f64>() / 3.0;
         assert!((mean - 1500.0).abs() < 1e-9);
+        let snapshot = Snapshot::new(&board).unwrap();
+        assert_eq!(snapshot.schema, SNAPSHOT_SCHEMA);
+        assert_eq!(snapshot.ladder, Ladder::Published);
+        assert_eq!(snapshot.leaderboard_sha256, sha256_hex(csv.as_bytes()));
+        let text = serde_json::to_string(&snapshot).unwrap();
+        assert!(text.contains("\"ladder\":\"published\""), "{text}");
+        assert_eq!(serde_json::from_str::<Snapshot>(&text).unwrap(), snapshot);
+    }
+
+    #[test]
+    fn benchmark_valid_ladder_drops_invalid_rows_and_published_ladder_marks_them() {
+        // Method `a` wins d1 with a test-adaptive row; `b` is the honest full-coverage entry.
+        let mut text = crate::scores::COLUMNS.join(",");
+        text.push('\n');
+        text += &valid_row("d1", "a", "0.1", "ok", "False");
+        text += &row("d1", "b", "0.5", "ok");
+        text += &row("d2", "a", "0.4", "ok");
+        text += &row("d2", "b", "0.5", "ok");
+        text += &row("d3", "b", "0.5", "ok");
+        text += &valid_row("d3", "c", "0.2", "ok", "maybe");
+        let scores = parse_scores(&text).unwrap();
+        let names = BTreeMap::new();
+        let pending = BTreeMap::new();
+        let error =
+            build_leaderboard(&scores, inputs(Ladder::Published, &names, &pending)).unwrap_err();
+        assert!(
+            error.to_string().contains("neither True nor False"),
+            "{error}"
+        );
+        let scores: Vec<ScoreRow> = scores.into_iter().filter(|r| r.method_id != "c").collect();
+
+        let published =
+            build_leaderboard(&scores, inputs(Ladder::Published, &names, &pending)).unwrap();
+        assert_eq!(published.rankable_rows, 5);
+        assert_eq!(published.excluded_rows, 0);
+        let a = published.rows.iter().find(|r| r.method_id == "a").unwrap();
+        assert_eq!(a.datasets_scored, 2);
+        assert_eq!(
+            a.benchmark_valid, "False",
+            "one invalid row marks the method's published standing"
+        );
+        assert_eq!(
+            published.rows[0].method_id, "a",
+            "a wins both datasets as published"
+        );
+        let b = published.rows.iter().find(|r| r.method_id == "b").unwrap();
+        assert_eq!(b.benchmark_valid, "True");
+        assert_eq!(published.rows[0].scope, Ladder::Published.scope());
+
+        let valid =
+            build_leaderboard(&scores, inputs(Ladder::BenchmarkValid, &names, &pending)).unwrap();
+        assert_eq!(valid.rankable_rows, 4);
+        assert_eq!(valid.excluded_rows, 1);
+        assert_eq!(valid.ladder, Ladder::BenchmarkValid);
+        let a = valid.rows.iter().find(|r| r.method_id == "a").unwrap();
+        assert_eq!(
+            a.datasets_scored, 1,
+            "the invalid d1 row never entered the fit"
+        );
+        assert_eq!(a.full_coverage, "False");
+        assert_eq!(a.benchmark_valid, "True");
+        assert_eq!(a.dataset_wins, 1, "a still wins d2 honestly");
+        assert!(valid.rows.iter().all(|r| r.benchmark_valid == "True"));
+        assert_eq!(valid.rows[0].scope, Ladder::BenchmarkValid.scope());
+        let snapshot = Snapshot::new(&valid).unwrap();
+        assert_eq!(snapshot.excluded_rows, 1);
+        assert!(serde_json::to_string(&snapshot)
+            .unwrap()
+            .contains("\"ladder\":\"benchmark-valid\""));
     }
 
     #[test]
