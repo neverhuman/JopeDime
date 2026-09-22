@@ -13,6 +13,15 @@ their original commit identities; they are not current qualification.
 Another session merged #44/#50/#51. This session records those merges without
 claiming their complete review/qualification lifecycle was performed here.
 
+PR49's actual September 22 scheduled report succeeded at **04:00–04:02 UTC**:
+32 roots, unchanged installed fingerprints, report-only behavior. Its measured
+growth, external lane-removal limitation and remaining final-head gates are in
+[the cleanup receipt index](deploy/maintenance/CLEANUP-20260921.md).
+The next action is final maintenance tests, all eight manual CI jobs and complete
+independent Claude review before the guarded merge. No learning qualification or
+soak has started. Codex's canonical checkout claim and the separate active Clippy
+lane are recorded in [AGENT_CHAT.md](AGENT_CHAT.md).
+
 ## Queue
 
 PRs **#5–#16 were closed unmerged** on 2026-09-20 (administrative withdrawal,
