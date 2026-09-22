@@ -1,6 +1,6 @@
 # JopeDime current direction
 
-**2026-09-22 coverage-foundation readback.** Publication repo: private `veox-ai/JopeDime`.
+**2026-09-22 aggregation implementation readback.** Publication repo: private `veox-ai/JopeDime`.
 Issue #52 is closed by [PR #55](https://github.com/veox-ai/JopeDime/pull/55).
 Its source head `c5a5b1138b4e878327eb2f429ac75be9b8a9374c` received independent
 Claude review and native `neverhuman` approval after verifying `jepsontaylor` was
@@ -40,18 +40,25 @@ with fresh dependency checks. See `foundation/issue46/lifecycle-receipt.json` an
 GPU/S3 regression and release/container wrappers have static validation only here;
 their required capabilities are not claimed as exercised by CPU smoke proofs.
 
-The current claimed branch is `ci/coverage-foundation`. Static mapping in
-[coverage.json](deploy/ci/coverage.json) assigns22packages,18features,214Cargo targets,
-213Python test-named files,4workflows/12jobs and32benchmark sources. These are static
-counts, not executed tests. Real maintained pytest collection reports222 tests;
-collection errors now remain failures and static mode requires explicit selection.
-Receipt foundations bind source/checkout SHA, run/attempt, command, status, counts
-and evidence digests; wiring and strict aggregation remain the next serial PR.
-See [coverage/receipt semantics](deploy/ci/coverage.md). This phase still requires
-final-head hosted CI, independent review and guarded merge.
+Coverage foundation [PR #59](https://github.com/veox-ai/JopeDime/pull/59) merged from
+`a13f8cee4fa10cbde4b56305a2e6d842f089d749` after all eight manual35763473661 and
+PR35763657978 jobs passed and independent Claude/native neverhuman approval5281705335.
+Main `aa1e5986824b41632fce482bb06a64c02a21d65d`, main-guard35764421202 passed;
+canonical returned clean before the next claim. Custody: `foundation/coverage/lifecycle-receipt.json`.
+The review corrected a feature-gated target wrongly assigned to default commands.
 
-The user-approved bounded foundation remains serial: explicit coverage/receipts;
-trustworthy aggregation/operator status; then a diagnostic push-triggered full-main
+The current branch is `ci/aggregate-receipts`. Static [coverage mapping](deploy/ci/coverage.json)
+now assigns22packages,18features,214Cargo targets,216Python test-named files,
+4workflows/13jobs and32benchmark sources. These are static counts. Maintained real
+pytest collection previously reported222, with207 passing and15 deselected at the above
+source; nextest executed751 with13 skips, not the751-only JUnit total. New receipts bind
+source/checkout/run/attempt, commands, source cleanliness and evidence digests. The
+aggregate always evaluates dependencies and rejects missing/failed/cancelled/unavailable,
+stale and zero/unknown execution. Runner-independent status reads only the requested run.
+See [coverage/receipt semantics](deploy/ci/coverage.md). This implementation still requires
+final-head hosted CI, independent review and guarded merge; full-main runner delivery remains next.
+
+The user-approved bounded foundation remains serial: trustworthy aggregation/operator status; then a diagnostic push-triggered full-main
 CPU baseline. Full Rust/Python repair, strict Clippy, persistent runner migration and
 mandatory full-CPU gates remain the following phase. Qualification and soak are
 unstarted. Fast jobs are limited to two at 16 GiB/16 CPUs each; full CPU is exclusive
@@ -144,7 +151,7 @@ as its own reviewed PR.
 
 ## Blockers (do not fake)
 
-- Coverage foundation still needs final-head hosted CI, independent review and guarded merge.
+- Aggregation still needs final-head hosted CI, independent review and guarded merge.
   Writer access has recovered; keep runner credentials separate and preserve
   independent reviewer eligibility for each subsequent PR.
 - Private-repo rulesets API returns HTTP 403 until the org is upgraded (D3,

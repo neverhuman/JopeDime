@@ -100,7 +100,7 @@ def validate(mapping, discovered):
     lanes = mapping.get("lanes", {})
     dispositions = mapping.get("dispositions", {})
     for name, lane in lanes.items():
-        for field in ("command", "environment", "inputs", "path_applicability", "evidence", "requires_nonzero_tests", "stage"):
+        for field in ("command", "environment", "inputs", "path_applicability", "evidence", "requires_nonzero_tests", "stage", "feature_selection", "result_backend"):
             if field not in lane:
                 errors.append(f"lane {name} missing {field}")
         if not lane.get("command") or not lane.get("inputs") or not lane.get("evidence"):
@@ -109,6 +109,10 @@ def validate(mapping, discovered):
             errors.append(f"lane {name} requires_nonzero_tests must be boolean")
         if lane.get("stage") not in ("static", "collection", "execution"):
             errors.append(f"lane {name} has invalid stage")
+        if lane.get("feature_selection") not in ("package-defaults", "explicit", "not-applicable"):
+            errors.append(f"lane {name} must declare feature selection")
+        if lane.get("result_backend") not in ("none", "rust", "nextest", "pytest", "unittest"):
+            errors.append(f"lane {name} must declare result backend")
     for name, disposition in dispositions.items():
         if disposition.get("status") not in ("deferred", "historical"):
             errors.append(f"disposition {name} has invalid status")

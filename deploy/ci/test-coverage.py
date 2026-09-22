@@ -66,6 +66,10 @@ class CoverageTests(unittest.TestCase):
         next(iter(self.mapping["lanes"].values())).pop("requires_nonzero_tests")
         self.assertGreaterEqual(len(coverage.validate(self.mapping, self.discovered)), 2)
 
+    def test_every_lane_declares_feature_selection(self):
+        self.mapping["lanes"]["rust-check"].pop("feature_selection")
+        self.assertTrue(any("feature selection" in error for error in coverage.validate(self.mapping, self.discovered)))
+
     def test_collection_failure_preserves_exit_without_static_fallback(self):
         for phase, code in (("sync", 23), ("run", 2)):
             with self.subTest(phase=phase), tempfile.TemporaryDirectory() as scratch:

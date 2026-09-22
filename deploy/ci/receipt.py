@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import results
 
 ROOT = Path(__file__).resolve().parents[2]
 ENV_KEYS = ("CARGO_INCREMENTAL", "CARGO_PROFILE_DEV_DEBUG", "CARGO_TARGET_DIR",
@@ -25,6 +26,8 @@ def utc():
 
 
 def identity(env, checkout_sha):
+    if env.get("GITHUB_EVENT_NAME") == "pull_request" and not env.get("JOPE_SOURCE_SHA"):
+        raise ValueError("PR receipts require JOPE_SOURCE_SHA")
     source = env.get("JOPE_SOURCE_SHA", checkout_sha)
     expected_checkout = env.get("GITHUB_SHA", checkout_sha)
     for sha in (source, checkout_sha, expected_checkout):
@@ -55,15 +58,16 @@ def validate_counts(counts):
             raise ValueError("collection counts do not reconcile")
 
 
-def run_lane(lane, command, output, counts_path=None, evidence=()):
+def run_lane(lane, command, output, counts_path=None, evidence=(), backend="none", junit=None):
     checkout = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     run_identity = identity(os.environ, checkout)
+    dirty = subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=all"], cwd=ROOT, text=True).splitlines()
     # Exclusive creation makes old artifacts and accidentally repeated steps fail closed.
     output.mkdir(parents=True, exist_ok=False)
     receipt = {"schema": "jope.ci-receipt/v1", **run_identity, "lane": lane,
-               "command": command, "cwd": str(Path.cwd()), "started_at": utc(),
+               "command": command, "cwd": str(Path.cwd()), "started_at": utc(), "dirty_source": dirty,
                "environment": {k: os.environ[k] for k in ENV_KEYS if k in os.environ},
-               "inputs": {str(p): digest(ROOT / p) for p in ("Cargo.lock", "rust-toolchain.toml", "python/uv.lock", "deploy/ci/coverage.json")},
+               "inputs": {str(p): digest(ROOT / p) for p in ("Cargo.lock", "rust-toolchain.toml", "python/uv.lock", "deploy/ci/coverage.json", "deploy/ci/fast-lane.sh", "deploy/ci/receipt.py", "deploy/ci/results.py", "deploy/ci/ci-plan.py")},
                "status": "started", "exit_status": None, "counts": dict.fromkeys(("collected", "executed", "passed", "failed", "skipped", "excluded")),
                "evidence": {}}
     path = output / "receipt.json"
@@ -72,7 +76,8 @@ def run_lane(lane, command, output, counts_path=None, evidence=()):
         if counts_path is not None and counts_path.exists():
             raise ValueError(f"counts file already exists before execution: {counts_path}")
         with (output / "command.log").open("w") as log:
-            child = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace")
+            child = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace",
+                                     env=dict(os.environ, JOPE_LANE_EVIDENCE=str(output.resolve())))
             for line in child.stdout:
                 print(line, end="", flush=True)
                 log.write(line)
@@ -80,6 +85,14 @@ def run_lane(lane, command, output, counts_path=None, evidence=()):
             code = child.wait()
             code = code if code >= 0 else 128 - code
         receipt.update(exit_status=code, status="passed" if code == 0 else "failed")
+        if backend != "none":
+            receipt["counts"] = results.summarize((output / "command.log").read_text(), backend, junit)
+            validate_counts(receipt["counts"])
+            if backend == "nextest":
+                listing = json.loads((output / "collection.json").read_text())
+                listed = sum(len(suite.get("testcases", {})) for suite in listing["rust-suites"].values())
+                if listing["test-count"] != listed or listed != receipt["counts"]["collected"]:
+                    raise ValueError("nextest collection and execution counts disagree")
         if counts_path is not None:
             counts = json.loads(counts_path.read_text())
             validate_counts(counts)
@@ -92,10 +105,11 @@ def run_lane(lane, command, output, counts_path=None, evidence=()):
             target.parent.mkdir(exist_ok=True)
             with target.open("xb") as stream:
                 stream.write(source.read_bytes())
-        receipt["evidence"] = {str(p.relative_to(output)): digest(p) for p in sorted(output.rglob("*")) if p.is_file() and p != path}
     except (OSError, ValueError) as exc:
-        receipt.update(status="unavailable", diagnostic=str(exc))
-        code = 1
+        receipt.update(status="failed" if receipt["exit_status"] not in (None, 0) else "unavailable", diagnostic=str(exc))
+        code = receipt["exit_status"] or 1
+    receipt["evidence"] = {str(p.relative_to(output)): digest(p) for p in sorted(output.rglob("*")) if p.is_file() and p != path}
+    receipt["dirty_source_after"] = subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=all"], cwd=ROOT, text=True).splitlines()
     receipt["finished_at"] = utc()
     path.write_text(json.dumps(receipt, indent=2) + "\n")
     return code
@@ -107,6 +121,8 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--counts", type=Path)
     parser.add_argument("--evidence", type=Path, action="append", default=[])
+    parser.add_argument("--backend", choices=["none", "nextest", "pytest", "rust", "unittest"], default="none")
+    parser.add_argument("--junit", type=Path)
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
     command = args.command[1:] if args.command[:1] == ["--"] else args.command
@@ -114,7 +130,7 @@ def main():
     if args.lane not in mapping["lanes"] or not command:
         parser.error("a declared lane and command are required")
     try:
-        return run_lane(args.lane, command, args.output, args.counts, args.evidence)
+        return run_lane(args.lane, command, args.output, args.counts, args.evidence, args.backend, args.junit)
     except (ValueError, OSError, KeyError) as exc:
         print(f"receipt: {exc}", file=sys.stderr)
         return 1
