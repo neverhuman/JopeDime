@@ -185,10 +185,14 @@ by anyone while the PR carries commits with no GitHub account attached unless
 recognized approval operation whose eligibility lookup fails (it fails closed). Its commit
 lookup reads at most 100 commits, and unknown command shapes pass through. Its merge path only
 warns when the merger authored or committed on the PR (`GH_ROLE_STRICT_MERGER=1` makes that
-fatal) and can continue after a failed eligibility lookup. Offline tests of every one of these
-decisions live in `/home/ubuntu/.local/bin/test-gh-role.py`. A copy that excluded only the PR
-opener existed on this host between 22:25 and 23:10 UTC on 2026-09-22; the owner ruled that the
-full exclusion set is the rule and it was restored (backup
+fatal), can continue after a failed eligibility lookup, and performs no check at all for a merge
+it cannot pin to a PR number. It prints one reason per excluded login and flags unassociated
+commit authors but not unassociated committers. The offline tests in
+`/home/ubuntu/.local/bin/test-gh-role.py` cover the approval-eligibility decisions (opener,
+associated author, associated committer, unassociated commits with and without acknowledgement,
+fail-closed lookup) and the argument parsing; they do not exercise the merge path's warning.
+A copy that excluded only the PR opener existed on this host between 22:25 and 23:10 UTC on
+2026-09-22; the owner ruled that the full exclusion set is the rule and it was restored (backup
 `~/.config/github-access/backups/gh-role.20260922T2310Z.strong`).
 
 **A successful helper check does not satisfy this repository's reviewer rule.**
