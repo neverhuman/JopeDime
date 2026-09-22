@@ -144,3 +144,19 @@ the same `<hash>/{train.csv,test.csv,meta.json}` layout as the historical
 `quant/regression/<hash>/`, so no reader changes; `fetch --print-registry` prints the path for CI.
 
 Adding a dataset: [runbooks/add-a-dataset.md](runbooks/add-a-dataset.md).
+
+### AWS credential selection (PR63 correction)
+
+Signed S3 stores retain static environment keys, web identity (OIDC), ECS and EKS
+credential providers. A complete static key pair wins; otherwise `JOPE_AWS_PROFILE`
+then `AWS_PROFILE` selects a profile through `aws configure export-credentials`.
+A selected profile replaces the complete key/token tuple, including any stale ambient
+session token. Native OIDC/container providers remain available when no profile is
+selected. `JOPE_AWS_ALLOW_IMDS=1` explicitly enables instance metadata if no other
+source is configured; incomplete sources otherwise fail before network access.
+`JOPE_DATASETS_ANON=1` bypasses credential resolution for unsigned requests.
+
+Profile resolution requires the AWS CLI. It does not mutate the caller's environment
+and does not echo either output stream from a failing helper. The helper currently
+has no process deadline; prepare and verify credentials before a bounded campaign.
+Exported temporary credentials are a snapshot and are not refreshed during that process.
