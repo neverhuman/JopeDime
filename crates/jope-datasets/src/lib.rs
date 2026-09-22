@@ -8,6 +8,7 @@ pub mod blobs;
 pub mod cache;
 pub mod catalog;
 pub mod cli;
+pub mod credentials;
 pub mod hash;
 pub mod ingest;
 pub mod meta;
