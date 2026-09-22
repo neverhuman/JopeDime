@@ -773,6 +773,28 @@
       "stage": "execution",
       "result_backend": "rust",
       "feature_selection": "package-defaults"
+    },
+    "runner-admission-probe": {
+      "command": [
+        "gh workflow run runner-admission-probe.yml --ref main"
+      ],
+      "environment": {},
+      "inputs": [
+        "workflow SHA",
+        "installed hook and policy",
+        "run/attempt and assigned runner"
+      ],
+      "path_applicability": "manual operational negative proof only; expected job rejection",
+      "evidence": [
+        "hook denial from actual Worker",
+        "no bypass step execution",
+        "container termination",
+        "exact run/attempt API state"
+      ],
+      "requires_nonzero_tests": false,
+      "stage": "execution",
+      "result_backend": "none",
+      "feature_selection": "not-applicable"
     }
   },
   "dispositions": {
@@ -7724,6 +7746,36 @@
         "cpu-qualification"
       ],
       "scope": "Push/main-manual diagnostic CPU families, independent outcomes within120minutes; no merge gate or qualification claim."
+    },
+    "workflow:.github/workflows/runner-admission-probe.yml": {
+      "discovery": {
+        "kind": "workflow"
+      },
+      "lanes": [
+        "runner-admission-probe"
+      ],
+      "dispositions": [],
+      "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
+    },
+    "job:.github/workflows/runner-admission-probe.yml/reject-fast": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "lanes": [
+        "runner-admission-probe"
+      ],
+      "dispositions": [],
+      "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
+    },
+    "job:.github/workflows/runner-admission-probe.yml/reject-main": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "lanes": [
+        "runner-admission-probe"
+      ],
+      "dispositions": [],
+      "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
     }
   }
 }

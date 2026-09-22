@@ -48,7 +48,7 @@ installed files and safe fingerprints outside the checkout, and record service/r
 Stop the affected JopeDime timers first. Read GitHub runner `busy` state and wait for owned jobs
 to finish; then stop idle owned services and confirm no owned container remains. Never stop the
 unrelated `actions-runner*` fleet. Do not inspect credentials or replace unrecorded drop-ins
-without preserving them. The launcher rejects any extra effective service drop-in.
+without preserving them. The launcher rejects any extra effective service drop-in and any surviving container owning the same lane, even after a dead docker CLI releases its lock.
 
 From the reviewed checkout, `sudo deploy/runner/provision.sh --skip-sdk` builds the image,
 creates the role-specific volumes, installs host files/units and writes
@@ -94,3 +94,15 @@ Nothing automatically deletes targets, volumes, Docker build cache or retained e
 For fast CI reruns use **Re-run all jobs**: receipts from a successful older attempt cannot
 satisfy the current attempt. Full CPU failure repairs, strict Clippy enforcement, full CPU
 qualification and learning/soak remain following work, not claims of this configuration.
+
+## Admission negative proof
+
+Manually dispatch `runner-admission-probe.yml` after reviewed deployment. Its two jobs target
+each domain from a workflow neither domain admits. Expected outcome is rejection. Verify the
+real Worker hook denial, zero execution of the `always()` bypass step, and container exit;
+a generic failed job is not proof. Preserve run/attempt API data and scoped service logs.
+The probe has no token permissions, checkout or user payload, and a two-minute timeout.
+Cancel the probe after both denials are retained if GitHub still waits on the terminated
+Workers. Listener admission consumes a slot briefly; this remains a possible denial-of-service
+vector. Main-guard can queue behind a full run. PR caches remain shared across PRs within each
+fast slot; cross-PR isolation and enforced main protection are not claimed here.
