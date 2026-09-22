@@ -316,6 +316,10 @@ impl LogisticGate {
         x.iter()
             .map(|row| {
                 let mut logit = self.w[0];
+                // `col` indexes four arrays in lockstep (row, means, scales, and w at an
+                // offset). Zipping them would need a three-way chain plus an offset skip to
+                // say what one index says plainly.
+                #[allow(clippy::needless_range_loop)]
                 for col in 0..self.means.len().min(row.len()) {
                     let value =
                         ((row[col] - self.means[col]) / self.scales[col]).clamp(-20.0, 20.0);
@@ -680,13 +684,13 @@ impl RidgeGcvModel {
             }
         }
         let mut y_mean = 0.0;
-        for i in 0..n {
-            y_mean += y[i];
+        for &target in y.iter().take(n) {
+            y_mean += target;
         }
         y_mean /= n.max(1) as f64;
         let mut y_var = 0.0;
-        for i in 0..n {
-            let d = y[i] - y_mean;
+        for &target in y.iter().take(n) {
+            let d = target - y_mean;
             y_var += d * d;
         }
         let mut cols: Vec<usize> = (0..p).collect();
@@ -749,14 +753,14 @@ impl RidgeGcvModel {
             }
             let (mut e, q) = jacobi_eigen(&mut km, n);
             let mut e_max = 0.0;
-            for i in 0..n {
-                if e[i] > e_max {
-                    e_max = e[i];
+            for &value in e.iter().take(n) {
+                if value > e_max {
+                    e_max = value;
                 }
             }
-            for i in 0..n {
-                if e[i] < e_max * 1e-12 {
-                    e[i] = 0.0;
+            for value in e.iter_mut().take(n) {
+                if *value < e_max * 1e-12 {
+                    *value = 0.0;
                 }
             }
             let mut u = vec![0.0f64; n];
@@ -848,14 +852,14 @@ impl RidgeGcvModel {
         // Clamp tiny/negative eigenvalues (Jacobi roundoff) to exactly zero;
         // those directions are excluded from the fit and the trace.
         let mut e_max = 0.0;
-        for i in 0..p {
-            if e[i] > e_max {
-                e_max = e[i];
+        for &value in e.iter().take(p) {
+            if value > e_max {
+                e_max = value;
             }
         }
-        for i in 0..p {
-            if e[i] < e_max * 1e-12 {
-                e[i] = 0.0;
+        for value in e.iter_mut().take(p) {
+            if *value < e_max * 1e-12 {
+                *value = 0.0;
             }
         }
         // Rotate the rhs into the eigenbasis: bt = V^T b.

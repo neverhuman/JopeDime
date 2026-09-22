@@ -168,7 +168,12 @@ impl MathAst {
     /// Transcendentals lower through `m_*` wrappers supplied by the C++
     /// emitter. That single routing layer selects PlatformLibm or the
     /// verified portable kernel without duplicating AST semantics here.
-    #[allow(dead_code)] // Shared P-1C/P-1D lowering boundary; C++ symbolic emission fails closed today.
+    #[allow(dead_code)]
+    // Shared P-1C/P-1D lowering boundary; C++ symbolic emission fails closed today.
+    // `portable` reads as recursion-only because today's leaf arms all lower the same way;
+    // it is the caller-facing switch between PlatformLibm and the portable kernel, and the
+    // arms that consume it are added by the emitter work this boundary exists for.
+    #[allow(clippy::only_used_in_recursion)]
     pub fn to_cpp(&self, portable: bool) -> String {
         match self {
             MathAst::Const(v) => {

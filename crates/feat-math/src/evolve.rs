@@ -368,6 +368,10 @@ mod gpu_screen_tests {
             .into_iter()
             .map(|problem| {
                 let mut rows: Rows = vec![vec![0.0; problem.p]; problem.train_n];
+                // Column-major to row-major transpose. The index arithmetic
+                // `column * train_n + row` is the operation being performed, not an
+                // accidental way of walking a slice.
+                #[allow(clippy::needless_range_loop)]
                 for column in 0..problem.p {
                     for row in 0..problem.train_n {
                         rows[row][column] =
@@ -3490,8 +3494,12 @@ fn prep_rung0_candidate(
 /// retry the entire wave on the existing exact CPU path. Candidates that
 /// cannot be prepared for the backend are CPU-scored inside a successful
 /// wave.
+/// One scored candidate from a wave: its genome text, its parsed expression, and the
+/// per-fold scores, which are `None` when that candidate fell back to the CPU path.
+type ScoredCandidate<'chunk> = (&'chunk String, &'chunk DslExpr, Option<Vec<f64>>);
+
 struct GpuWaveAttempt<'chunk> {
-    scored: Option<Vec<(&'chunk String, &'chunk DslExpr, Option<Vec<f64>>)>>,
+    scored: Option<Vec<ScoredCandidate<'chunk>>>,
     timings: GpuScreenPhaseTimings,
     routes: Vec<Vec<Rung0FoldRouteReceipt>>,
 }

@@ -132,6 +132,9 @@ impl LogitRidgeModel {
         x.iter()
             .map(|row| {
                 let mut linear = self.weights[0];
+                // `j` indexes four arrays in lockstep (row, means, scales, and weights at an
+                // offset). One index says this more plainly than a three-way zip plus a skip.
+                #[allow(clippy::needless_range_loop)]
                 for j in 0..self.means.len().min(row.len()) {
                     linear += self.weights[j + 1]
                         * ((row[j] - self.means[j]) / self.scales[j]).clamp(-30.0, 30.0);
@@ -371,6 +374,14 @@ impl ExtraTreesModel {
     }
 }
 
+/// A candidate split held while searching: score, feature index, threshold, the branch
+/// orientation flag, and the two row partitions it produces.
+type ExtraSplit = (f64, usize, f64, bool, Vec<usize>, Vec<usize>);
+
+// Recursive tree fitting: every argument is threaded to the child calls, so bundling them
+// into a parameter struct would add a type and a construction per node without removing a
+// single value from the recursion.
+#[allow(clippy::too_many_arguments)]
 fn fit_extra_node(
     x: &Rows,
     y: &[f64],
@@ -387,7 +398,7 @@ fn fit_extra_node(
     let cols = x[0].len();
     let start = rng.next_u32() as usize % cols;
     let step = (rng.next_u32() as usize % cols).max(1);
-    let mut best: Option<(f64, usize, f64, bool, Vec<usize>, Vec<usize>)> = None;
+    let mut best: Option<ExtraSplit> = None;
     let mut visited = BTreeSet::new();
     let mut feature = start;
     while visited.len() < max_features {
@@ -793,6 +804,9 @@ impl MulticlassRidgeModel {
             values.extend((0..feature_count).map(|feature| {
                 ((finite(row[feature]) - means[feature]) / scales[feature]).clamp(-30.0, 30.0)
             }));
+            // Lower-triangular Gram accumulation: `right` runs to `left` inclusive, and both
+            // index `values` as well as `gram`. The triangle is the point.
+            #[allow(clippy::needless_range_loop)]
             for left in 0..width {
                 for right in 0..=left {
                     gram[left][right] += sample_weight * values[left] * values[right];
@@ -800,6 +814,9 @@ impl MulticlassRidgeModel {
                 rhs[class][left] += sample_weight * values[left];
             }
         }
+        // Mirror the lower triangle into the upper one. Reading and writing two different
+        // cells of the same matrix is what this does; an iterator form cannot express it.
+        #[allow(clippy::needless_range_loop)]
         for left in 0..width {
             for right in 0..left {
                 gram[right][left] = gram[left][right];
@@ -807,8 +824,8 @@ impl MulticlassRidgeModel {
         }
         let l2 = stage.get_f64("l2", 0.02).clamp(1e-9, 1e6) * x.len() as f64;
         gram[0][0] += 1e-9;
-        for feature in 1..width {
-            gram[feature][feature] += l2;
+        for (feature, row) in gram.iter_mut().enumerate().take(width).skip(1) {
+            row[feature] += l2;
         }
         let weights = rhs
             .iter()
@@ -1123,6 +1140,9 @@ fn solve_positive_definite(matrix: &[Vec<f64>], target: &[f64]) -> Option<Vec<f6
                 if row == column {
                     value += jitter;
                 }
+                // Cholesky inner product: `prior` indexes two different rows of the same
+                // triangular factor. This is the textbook recurrence, written as such.
+                #[allow(clippy::needless_range_loop)]
                 for prior in 0..column {
                     value -= lower[row][prior] * lower[column][prior];
                 }

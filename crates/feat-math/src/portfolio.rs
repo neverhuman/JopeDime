@@ -81,8 +81,8 @@ impl GroupMeanModel {
     pub fn fit(x: &Rows, y: &[f64]) -> GroupMeanModel {
         let n = x.len().min(y.len());
         let mut g_mean = 0.0;
-        for i in 0..n {
-            g_mean += y[i];
+        for &target in y.iter().take(n) {
+            g_mean += target;
         }
         g_mean /= n.max(1) as f64;
         let mut sums: std::collections::BTreeMap<Vec<u64>, (f64, f64)> =
@@ -606,8 +606,8 @@ pub fn fit_portfolio(
     }
     let fallback_used = member_rmse[best] < stack_rmse - 1e-9;
     if fallback_used {
-        for a in 0..m {
-            w[a] = if a == best { 1.0 } else { 0.0 };
+        for (a, weight) in w.iter_mut().enumerate().take(m) {
+            *weight = if a == best { 1.0 } else { 0.0 };
         }
     }
     // Internal stack r^2 against the stacked training target (diagnostics +

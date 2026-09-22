@@ -535,7 +535,7 @@ pub fn next_generation(
                     250_000,
                     &[&pool[0].candidate],
                 )?
-            } else if generation % config.migration_interval == 0 && slot == 0 {
+            } else if generation.is_multiple_of(config.migration_interval) && slot == 0 {
                 let migrant =
                     &ranked_islands[(island + config.islands - 1) % config.islands][0].candidate;
                 mutate_candidate(migrant, seed, generation, island)?

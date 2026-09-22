@@ -296,7 +296,7 @@ fn legacy_row_and_expression_transform_corpus_matches_bits() {
         })
         .collect::<Vec<_>>();
     let y = [0.1, 0.4, 0.2, 0.9, 1.1, 1.6, 1.4, 2.1, 2.4, 2.9];
-    let test = vec![vec![0.125, -1.5], vec![0.0, 2.5], vec![2.125, 6.5]];
+    let test = [vec![0.125, -1.5], vec![0.0, 2.5], vec![2.125, 6.5]];
     let values = test.iter().flatten().copied().collect::<Vec<_>>();
     let missing = vec![0; values.len()];
     let cases = [
@@ -369,7 +369,7 @@ fn complete_legacy_transform_registry_matches_bits() {
         .iter()
         .map(|row| 0.3 * row[0] - 0.4 * row[1] + row[2] * row[3] * 0.1)
         .collect::<Vec<_>>();
-    let test = vec![
+    let test = [
         vec![-1.7, -0.9, 0.4, -2.0],
         vec![0.2, 0.15, 0.95, 0.0],
         vec![2.3, 1.1, -0.8, 2.0],
@@ -780,7 +780,7 @@ fn nontrivial_fitted_legacy_head_states_match_bits() {
             }
         })
         .collect::<Vec<_>>();
-    let test = vec![
+    let test = [
         vec![-1.7, (-1.7_f64).sin(), (-1.19_f64).cos(), 0.0],
         vec![-0.2, (-0.2_f64).sin(), (-0.14_f64).cos(), 1.0],
         vec![1.3, 1.3_f64.sin(), 0.91_f64.cos(), 2.0],

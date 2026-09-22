@@ -1710,10 +1710,10 @@ pub(crate) fn compile_v3_genome(
     ))
 }
 
-fn classify_stages<'a>(
-    stages: &'a [Stage],
+fn classify_stages(
+    stages: &[Stage],
     task: TaskKind,
-) -> Result<Vec<(&'a Stage, &'static OperationDescriptor)>> {
+) -> Result<Vec<(&Stage, &'static OperationDescriptor)>> {
     let mut classified = Vec::with_capacity(stages.len());
     let mut target_count = 0usize;
     let mut input_count = 0usize;
