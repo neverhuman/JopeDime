@@ -10,7 +10,7 @@
 #           (falls back to --config-file deploy/ci/nextest-inventory.toml when the tree's
 #           .config/nextest.toml does not load; JOPE_BUILD_JOBS caps --build-jobs)
 #   Python: `uv sync --frozen --extra dev --extra cpu && uv run pytest --collect-only -q` when
-#           python/uv.lock is committed and uv is installed; otherwise (or with --static-python)
+#           python/uv.lock is committed and uv is installed; only with --static-python use
 #           a stdlib AST scan of python/tests for `def test_*` — the JSON records which mode
 #           produced it, and parametrized ids are compared with their `[...]` suffix stripped so the
 #           two modes agree.
@@ -60,14 +60,16 @@ fi
 py_mode=""
 if [ "$python" = 1 ]; then
   py_mode=static-scan
-  if [ "$static_python" = 0 ] && [ -f python/uv.lock ] && command -v uv >/dev/null; then
-    if (cd python && uv sync --frozen --extra dev --extra cpu > "$tmp/uv-sync.log" 2>&1 \
-        && uv run pytest --collect-only -q -p no:cacheprovider > "$tmp/pytest.txt" 2> "$tmp/pytest.err"); then
-      py_mode=pytest-collect
-    else
-      echo "warning: uv sync / pytest --collect-only failed; falling back to the static scan" >&2
-      tail -20 "$tmp/pytest.err" "$tmp/uv-sync.log" 2>/dev/null >&2 || true
-    fi
+  if [ "$static_python" = 0 ]; then
+    [ -f python/uv.lock ] || { echo 'Python collection requires python/uv.lock' >&2; exit 1; }
+    command -v uv >/dev/null || { echo 'Python collection requires uv' >&2; exit 127; }
+    (cd python && uv sync --frozen --extra dev --extra cpu) > "$tmp/uv-sync.log" 2>&1 || {
+      rc=$?; cat "$tmp/uv-sync.log" >&2; exit "$rc";
+    }
+    (cd python && uv run --no-sync pytest --collect-only -q -p no:cacheprovider) > "$tmp/pytest.txt" 2> "$tmp/pytest.err" || {
+      rc=$?; cat "$tmp/pytest.txt" "$tmp/pytest.err" >&2; exit "$rc";
+    }
+    py_mode=pytest-collect
   fi
 fi
 
@@ -114,8 +116,7 @@ def static_ids():
         try:
             tree = ast.parse(p.read_text(errors="replace"))
         except SyntaxError as exc:
-            print(f"warning: {rel}: {exc}", file=sys.stderr)
-            continue
+            raise SystemExit(f"static inventory cannot parse {rel}: {exc}") from exc
         ids = []
         for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith("test"):
@@ -138,7 +139,7 @@ def collected_ids():
 if do_python:
     files = collected_ids() if py_mode == "pytest-collect" else static_ids()
     command = ("cd python && uv sync --frozen --extra dev --extra cpu && uv run pytest --collect-only -q"
-               if py_mode == "pytest-collect" else "stdlib AST scan of python/tests/**/test_*.py for def test_* (python/uv.lock not committed or --static-python)")
+               if py_mode == "pytest-collect" else "explicit --static-python: stdlib AST scan of python/tests/**/test_*.py; not collection or execution")
     total = sum(len(v) for v in files.values())
     fresh["python"] = {"mode": py_mode, "command": command, "count": total,
                        "packages": {"jope": {"count": total, "files": {f: {"count": len(v), "tests": v} for f, v in files.items()}}}}

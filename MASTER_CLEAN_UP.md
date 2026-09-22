@@ -1326,3 +1326,22 @@ Fresh preservation readback confirms all 469 mapped rescue refs plus four gap re
 The owner-requested Bulletfarm study adapted explicit claims/handoffs, exact-head independent review, acceptance evidence and milestone separation to JopeDime's existing rules. Changes are committed at b9c97aee6e1ec58c8a2829fea7013061952249ef; current main 25242513173e1a8b01f7d1e9f73775b7df14110e was merged into the shared branch without history rewriting at 6b034d13c89fd74182591804f3add581812506d1. Other sessions merged #44/#50/#51. Issue52 records the outstanding pipeline budget/selection correction and independent follow-up validation; no retroactive independent approval is claimed for #44. The separately registered Clippy lane is outside this completion task's write claim. No qualification or soak clock has started.
 
 Evidence: /home/ubuntu/jope-rescue-20260921/implementation-20260922/overnight-gate/{actual-report-readback,growth-analysis,final-preservation-readback,external-lane-removal-readback}.json. Prior sealed manifests and restoration receipts are unchanged. Both cleanup logs are appended identically under their locks after the research guarded coordination claim. Final maintenance tests, all eight manual CI jobs, complete independent Claude review of the resulting exact head, guarded GitHub rebase merge and remote-main/main-guard readback remain required. Final post-merge receipt remains predeclared at /home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/final-merge-readback.json and will be linked in PR49.
+
+## 2026-09-22T17:37:11.281536+00:00 — Codex — issue46 proof lane closure
+
+PR56 merged with exact-head independent review, all eight manual and PR jobs passed,
+and main-guard35761248043 succeeded at main c7ae554a85f0e2d35d282aa87ee72a539d6cb4c2.
+Claim removal of .agent/worktrees/artifact-proof at161ddeb58b2fcf1768651f8dc5b7aff6ebdc61ac,
+/home/ubuntu/jope-builds/artifact proof, and the reusable generated restore.git and
+restore-files under /home/ubuntu/jope-rescue-20260921/codex-verification. Bundle and
+archive in implementation-20260922/foundation/issue46 independently restored: exact
+source commit/trees/connectivity, no alternates, and3619 filesystem entries matched
+file hashes, links, permissions, nanosecond timestamps and ownership. Fresh manifests
+match, worktree has no dirty/untracked/ignored files, root process cwd/exe/fd/maps
+scan finds no consumers and no nested mounts. Shared refs/stash remain in canonical
+Git storage. Immutable custody stays. Operations and verified absence will be recorded
+in foundation/issue46/proof-closure.json before releasing the lane. No other removal.
+
+Completed: all four explicit paths absent; git worktree remove used for the lane.
+Immutable archives, manifests and receipts retained; source branches, stash, lint and
+runner lanes unchanged. Full completion receipt: foundation/issue46/proof-closure.json.
