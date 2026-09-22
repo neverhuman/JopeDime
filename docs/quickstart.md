@@ -1,4 +1,10 @@
-Measured on 2026-09-18 at `4235db6` before PRs #17–#26; commands below that name `jope models|datasets|learn` verbs are not on `main` yet (they land with `wp7/models-cli`, `wp11/learning-store`).
+**For the currently published benchmark numbers, read [Measured results](../README.md#measured-results)** —
+that section is regenerated from committed evidence by `deploy/ci/readme-benchmarks.py` and names the
+SHA it was generated at. The timings on *this* page are historical: measured 2026-09-18 at `4235db6`,
+never re-measured at the head of `main`.
+
+The `wp7/models-cli` and `wp11/learning-store` work this page described as unlanded has since merged
+(#33, #34); run `jope --help` on current `main` for the verbs that exist today.
 
 # Quickstart (laptop, CPU only)
 
