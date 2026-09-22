@@ -118,3 +118,38 @@ Current HEAD remains `5d251f50a5e4b80897e383fb02215e6eeded71f2`; dirty paths are
 four owned documentation files. The updated diff, hashes and link checks will be
 sealed after these corrections and before committing. The actual 04:00 report,
 final PR49 head checks and complete independent review remain outstanding.
+
+## 2026-09-22T03:47:51.709327+00:00 — Codex — actual next-day measurement continuation
+
+Continue the existing PR49 claim on canonical `docs/master-cleanup-20260921`,
+HEAD `6b034d13c89fd74182591804f3add581812506d1`, tracked clean before this entry.
+The Bulletfarm contract adaptation is committed at `b9c97aee6e1ec58c8a2829fea7013061952249ef`;
+current main `25242513173e1a8b01f7d1e9f73775b7df14110e` was merged without rewriting history.
+Claim `MASTER_CLEAN_UP.md`, `deploy/maintenance/CLEANUP-20260921.md`, `MASTER_PLAN.md`
+and this ledger for the actual 04:00 UTC measurement, final tests/review and merge.
+No overlapping writable handle was observed. Separate research-log claim follows
+through its guarded parent ledger; pre-existing dirty `sotarena` stays untouched.
+A separate Claude session now has registered lane `.agent/worktrees/clippy` on
+`fix/feat-math-clippy-20260922`; this session did not create it or authorize its lifecycle.
+Account for its build growth in the report without editing that lane.
+Evidence: `/home/ubuntu/jope-rescue-20260921/implementation-20260922/overnight-gate`.
+No next-day observation, final approval or merge is claimed yet.
+
+## 2026-09-22T04:07:31Z — Codex — actual report recorded, final validation pending
+
+The real Sep22 04:00 service completed at 04:02:41 UTC with exit0, all32 roots,
+unchanged six installed fingerprints and the 48-hour report-only policy. The
+prepared comparator passed. Both cleanup logs now contain the measured deltas,
+known build/evidence activity, unattributed changes and external lane-removal limits.
+The external session's log establishes git worktree removal after clean-tracked
+checks; preservation of ignored/unique evidence is not established by that log.
+All473 rescue refs and trees still match. No new cleanup or campaign occurred.
+
+Canonical branch remains docs/master-cleanup-20260921 at 6b034d13c89fd74182591804f3add581812506d1
+before the measured-report commit. Dirty paths are this ledger, MASTER_PLAN.md,
+MASTER_CLEAN_UP.md and deploy/maintenance/CLEANUP-20260921.md. Research receives
+only the synchronized cleanup-log append and local commit; dirty sotarena remains.
+Next: final-head maintenance tests and full manual CI, complete independent Claude
+review, eligible native approval, guarded rebase merge and main/main-guard readback.
+Evidence: implementation-20260922/overnight-gate under /home/ubuntu/jope-rescue-20260921.
+Claim continues through that lifecycle; the separate Clippy lane remains untouched.
