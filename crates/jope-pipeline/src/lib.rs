@@ -7,7 +7,7 @@
 //! `feat_math::folds::fold_of`, [`search`] runs a genetic-programming search
 //! whose every fit is `feat_math::fit`, and [`emit`] transpiles the champion to
 //! standalone Python, Rust, C++ and JavaScript. Every stage records what it did —
-//! including what it skipped and why — in a `jope.pipeline-receipt/v1`.
+//! including what it skipped and why — in a `jope.pipeline-receipt/v2`.
 //!
 //! This crate deliberately does **not** depend on `jope-engine`. The engine's GP
 //! search cannot measure anything in a shipped binary — `eval_registry/authority.rs`

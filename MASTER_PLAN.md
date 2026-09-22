@@ -1,28 +1,34 @@
 # JopeDime current direction
 
-**2026-09-22 readback.** Publication repo: private `veox-ai/JopeDime`. The observed
-remote `main` is `3e0616057bc3234d568deceb884ea1c69ea8451b`; GitHub lists 30 merged
-PRs and only #49 open. #34, #44, #45, #50, #51 and #53 have merged. Sources:
-`git ls-remote origin refs/heads/main` and
-`gh pr list --state merged --limit 100 --json number,headRefOid,mergeCommit,mergedAt`;
-open state from `gh pr list --state open --json number,headRefOid`.
-The evidence is retained under
-`/home/ubuntu/jope-rescue-20260921/implementation-20260922/overnight-gate/r2/github-readback.json`.
-Refresh these observations at handoff. The historical measurements below retain
-their original commit identities; they are not current qualification.
-Another session merged #44/#50/#51/#53. This session records those merges without
-claiming their complete review/qualification lifecycle was performed here.
+**2026-09-22 04:50 UTC readback.** Publication repo: private `veox-ai/JopeDime`.
+Remote `main` is `a82486fbf1552c00f4b86ebc6b210429bf8dc79f`; #49 is merged.
+The canonical checkout returned clean to that main before the issue52 correction
+branch was claimed. Refresh Git/PR state before acting; this is a dated observation.
 
-PR49's actual September 22 scheduled report succeeded at **04:00–04:02 UTC**:
-32 roots, unchanged installed fingerprints, report-only behavior. Its measured
-growth, external lane-removal limitation and remaining final-head gates are in
-[the cleanup receipt index](deploy/maintenance/CLEANUP-20260921.md).
-The next action is final maintenance tests, all eight manual CI jobs and complete
-independent Claude review before the guarded merge. No learning qualification or
-soak has started. Codex's canonical checkout claim is recorded in [AGENT_CHAT.md](AGENT_CHAT.md).
-The external Clippy lane was removed after #53 merged; its unique-evidence
-preservation is not established by this task. It was active during the 04:00
-measurement and is not counted among this cleanup's verified removals.
+PR49's actual scheduled report succeeded at **04:00–04:02 UTC**, with32 roots,
+six unchanged installed fingerprints and report-only behavior. Independent Claude
+review approved exact head `252d466a3d3c48bce2ee2432fb198eeda9f249ca`; all eight
+manual CI jobs passed, and main-guard passed at the merge commit. The final immutable
+receipt is `/home/ubuntu/jope-rescue-20260921/completion-20260921t201512z/final-merge-readback.json`,
+linked in [the PR closeout](https://github.com/veox-ai/JopeDime/pull/49#issuecomment-5771273200).
+Historical preservation limitations remain explicit in the cleanup record.
+
+Other sessions merged #44/#50/#51/#53. This session does not claim their complete
+independent-review or lane-evidence preservation lifecycle. #44's observed
+cross-cut budget defect is tracked by [issue52](https://github.com/veox-ai/JopeDime/issues/52):
+a four-attempt budget produced ten attempts on each of three cuts. The current
+focused correction reserves comparison work within the total allowance, records
+phase costs and requires complete cut coverage before selecting a program.
+Implementation and qualification are separate; see [the contract](docs/pipeline.md).
+Evidence lives under `/home/ubuntu/jope-rescue-20260921/implementation-20260922/pipeline-budget`.
+
+No learning qualification or soak has started. The remaining delivery sequence is
+CI coverage/#46, deterministic security/#47, emitter binding/#48, dataset/fold
+contracts, S3 conditional recovery, benchmark/task adapters, isolated GPU execution,
+canonical training/resume, successor proposals/promotion and the bounded controller,
+followed by the one-hour qualification and24-hour soak. Ownership is recorded in
+[AGENT_CHAT.md](AGENT_CHAT.md). The Bulletfarm-inspired contract improvements are
+merged in49; its private tools and conflicting clone/build policies were not imported.
 
 ## Queue
 

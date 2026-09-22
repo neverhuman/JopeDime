@@ -33,7 +33,8 @@ pub enum Cmd {
         /// Where the preparation, searches, emitted sources and receipt are written.
         #[arg(long)]
         output: PathBuf,
-        /// Per-cut search budget, `evaluations=N,seconds=S` (1..=1000 / 1..=600).
+        /// Total per-cut budget across search and comparison (1..=1000 attempts / 1..=600 active seconds).
+        /// Multiple cuts reserve half for comparison; an in-flight fit may overrun time.
         #[arg(long, default_value = "evaluations=64,seconds=300")]
         budget: String,
         /// Fold seed for the cut preparation.
@@ -55,7 +56,7 @@ pub enum Cmd {
         #[arg(long)]
         json: bool,
     },
-    /// Validate a receipt against the committed jope.pipeline-receipt/v1 schema.
+    /// Validate a receipt against the committed jope.pipeline-receipt/v1 or v2 schema.
     VerifyReceipt {
         #[arg(long)]
         receipt: PathBuf,

@@ -145,19 +145,12 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
     );
 
     let started = Instant::now();
-    let mut searched = Vec::new();
-    for cut in &preparation.cuts {
-        let cut_output = root.join("search").join(format!("cut-{}", cut.index));
-        // A cut that measured nothing returns Err and ends the run here: an
-        // unmeasured champion is the failure mode this stage exists to remove.
-        searched.push(search::run_cut(
-            cut,
-            options.budget,
-            options.rng_seed,
-            &cut_output,
-        )?);
-    }
-    search::remeasure_topk_on_all_cuts(&preparation.cuts, &mut searched)?;
+    let searched = search::run_cuts(
+        &preparation.cuts,
+        options.budget,
+        options.rng_seed,
+        &root.join("search"),
+    )?;
     let successful: u64 = searched.iter().map(|c| c.successful_measurements).sum();
     let failed: u64 = searched
         .iter()
@@ -298,6 +291,12 @@ fn assemble(
             successful_measurements: cut.successful_measurements,
             failed_or_unavailable_measurements: cut.failed_or_unavailable_measurements,
             stopped_by: cut.stopped_by.to_owned(),
+            accounting: Some(receipt::Accounting {
+                exploration: cut.exploration.clone(),
+                comparison: cut.comparison.clone(),
+                active_seconds: cut.seconds,
+                deadline_overrun: cut.seconds > cut.budget.seconds as f64,
+            }),
             best_validation_rmse: cut.best_validation_rmse,
             best_validation_r2: cut.best_validation_r2,
             best_program: cut.best_program.clone(),
@@ -346,6 +345,9 @@ fn assemble(
             bootstrap_genome: search::BOOTSTRAP_GENOME.to_owned(),
             cuts,
             selection: selection.method.to_owned(),
+            budget_policy: Some(search::BUDGET_POLICY.to_owned()),
+            compared_cuts: Some(selection.compared_cuts.clone()),
+            coverage: Some(selection.coverage.clone()),
             selected_genome: selection.genome.clone(),
             selected_program_sha256: selection.program_sha256.clone(),
             best: selection.best.as_ref().map(|b| receipt::Best {
