@@ -581,3 +581,68 @@ Mapping now6workflows/16jobs including manual negative admission probe; probe
 rejection is operational evidence, never counted as passing functional CI.
 Orphan/legacy-container and Docker-inspection failures refuse startup. Actionlint,
 ShellCheck, coverage and diff checks pass. Freeze amended source for fresh review.
+
+## 2026-09-22T19:52:17.075226+00:00 — Codex resumed foundation / approval documentation claim
+
+PR61 merged from independently approved ac26f6596e24a2af6e627b87e87d9bd18a90514e
+to remote main fdb2e8e3e3d152590d9246b5226eca417f5c6cbc, identical tree. Final
+manual35773238753/1 and PR35772555348/2 all nine jobs passed; independent native
+neverhuman approval5282585692. Reviewed runner candidate deployed and actual
+16GiB/16CPU fast x2 and exclusive48GiB/16CPU full host limits/fingerprints verified.
+Push full-main35775436225/1 is running at that main; main-guard35775436296 queues
+behind it, so lifecycle verification remains pending. Custody foundation/full-main.
+Negative probe35775538345 fast Worker starts the hook then container exits137;
+the bypass marker appears only as submitted script metadata, not executed output.
+Main-domain probe still queued; retain exact invocation/service evidence.
+
+Resume same owner and budget; claim canonical next branch docs/approval-and-cpu-handoff
+from freshly fetched main. Current checkout ci/full-main-cpu ac26f6596e24a2af6e627b87e87d9bd18a90514e
+was clean; queue empty. Preserve lint187c2f14d and runner-prov b8acc6202 held lanes.
+User explicitly requests concrete PR approval process and credential/key paths in
+AGENTS.md (the existing contract filename). Claim AGENTS.md, AGENT_CHAT.md,
+MASTER_PLAN.md and docs/runbooks/runner.md for verified approval instructions and
+measured CPU handoff. No secret contents in source or receipts. Verification: path
+metadata/account checks, diff/link checks, docs path plan plus all-nine exact-head
+manual CI, independent Claude/native eligible approval, guarded merge/main-guard;
+first full-main inventory and subsequent fresh receipt with cached build reuse.
+Do not claim full CPU qualification or start qualification/soak clocks.
+
+Independent read-only documentation preflight found CLAUDE.md still states the resolved
+#46 target-directory limitation. Extend the same documentation claim to CLAUDE.md
+before synchronizing that rule. Also separate approval readback from the merge command,
+make procedural reviewer credential separation explicit, and document exact run lookup.
+Probe review requests timed exit137/no-OOM/no-stop observations plus installed hook hashes
+and deterministic policy replay; retain those before marking both-domain denial verified.
+
+2026-09-22T20:06:05.731103+00:00 Queue refresh observed external Claude-owned
+PR63 feat/s3-live-credentials at dc0fe3da7e638e1f88e1fa6e6a42dd4b8987876c,
+registered fourth worktree .agent/worktrees/s3-live, jepsontaylor author. Its source
+paths are crates/jope-datasets/src/{credentials,lib,store}.rs and do not overlap the
+already-claimed documentation continuation. Preserve that writer and source; this
+session does not take over, merge, qualify live S3 or provide CPU jobs credentials.
+No new lane or implementation is being opened by this documentation follow-through.
+Re-fetch main before final documentation head/review to account for external merges.
+The external lane owns its reviewed lifecycle and custody closure.
+
+2026-09-22T20:13:45.924076+00:00 PR61 lifecycle verified: main-guard35775436296
+success at fdb2e8e3e3d152590d9246b5226eca417f5c6cbc. Push full-main35775436225/1
+completed all11families with valid fresh receipts: eight passed, two failed, one
+unavailable. Default2523passed/29failed/37skipped; scratch1879passed/30failed/16skipped
+at its10minute limit; CPU-neural unavailable78 (configured CUDA header absent).
+Maintained Python207passed/15deselected; doctests8passed; policy23passed/5skipped;
+S3offline34passed; emitter/input/pipeline proofs passed. Artifact replay/digests verified.
+Both real Worker admission probes35775538345 rejected before any bypass step;
+hook-to-exit137 fast0.467s/main0.674s, matching installed hooks/policies, no OOM/stop/timeout.
+Denial stderr is inferred because Worker termination prevents forwarding it. Cancelled
+probe after preserving both outcomes; not a passing functional CI run. Custody:
+foundation/full-main/lifecycle-receipt.json, push-35775436225-verified.json,
+admission-probe-proof.json and default-repair-observations.json.
+
+Documentation source now names approval steps, credential paths without secret bytes,
+procedural identity separation, current artifact-target rules, operational probe evidence
+and measured repair PRs. Local diff/import/link/path-plan/coverage validation passed;
+independent draft review corrections addressed. Freeze for native exact-head review
+and hosted documentation path plan plus all-nine manual CI. Final post-merge receipt
+foundation/completion.json will bind the reviewed documentation head, resulting main,
+main-guard, a subsequent job's fresh reuse evidence, and clean canonical ownership release.
+Full CPU repair/qualification and soak remain unstarted. No implementation added here.
