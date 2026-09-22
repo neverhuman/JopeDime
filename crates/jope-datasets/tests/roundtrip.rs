@@ -8,6 +8,7 @@ use jope_datasets::paths::Cache;
 use jope_datasets::store::Store;
 use std::os::unix::fs::MetadataExt;
 use std::path::Path;
+use std::process::Command;
 
 fn rt() -> tokio::runtime::Runtime {
     tokio::runtime::Builder::new_multi_thread()
@@ -320,4 +321,81 @@ fn cli_offline_fetch_prints_registry() {
         .status()
         .unwrap();
     assert!(st.success());
+}
+
+#[test]
+fn native_providers_remain_available() {
+    if std::env::var_os("JOPE_TEST_PROVIDER_CHILD").is_some() {
+        assert!(jope_datasets::credentials::resolve().unwrap().is_none());
+        return;
+    }
+    for environment in [
+        vec![
+            ("AWS_WEB_IDENTITY_TOKEN_FILE", "/unused-token"),
+            ("AWS_ROLE_ARN", "role"),
+        ],
+        vec![("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", "/credentials")],
+        vec![
+            (
+                "AWS_CONTAINER_CREDENTIALS_FULL_URI",
+                "http://localhost/credentials",
+            ),
+            ("AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE", "/unused-token"),
+        ],
+    ] {
+        let output = Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "native_providers_remain_available",
+                "--nocapture",
+            ])
+            .env_clear()
+            .env("JOPE_TEST_PROVIDER_CHILD", "1")
+            .envs(environment)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stdout)
+        );
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn failing_helper_cannot_disclose_stderr() {
+    if std::env::var_os("JOPE_TEST_HELPER_CHILD").is_some() {
+        let error = match jope_datasets::credentials::from_profile("fixture") {
+            Ok(_) => panic!("failing helper unexpectedly succeeded"),
+            Err(error) => error.to_string(),
+        };
+        assert!(error.contains("failed for profile fixture"));
+        assert!(
+            !error.contains("SECRET_CANARY"),
+            "helper stderr leaked: {error}"
+        );
+        return;
+    }
+    use std::os::unix::fs::PermissionsExt;
+    let temp = tempfile::tempdir().unwrap();
+    let aws = temp.path().join("aws");
+    std::fs::write(&aws, "#!/bin/sh\nprintf SECRET_CANARY >&2\nexit 7\n").unwrap();
+    std::fs::set_permissions(&aws, std::fs::Permissions::from_mode(0o700)).unwrap();
+    let output = Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "failing_helper_cannot_disclose_stderr",
+            "--nocapture",
+        ])
+        .env_clear()
+        .env("JOPE_TEST_HELPER_CHILD", "1")
+        .env("PATH", temp.path())
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stdout)
+    );
 }
