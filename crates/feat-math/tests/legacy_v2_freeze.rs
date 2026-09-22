@@ -399,7 +399,13 @@ fn legacy_v2_reference_files_match_the_takeover_snapshot() {
         (
             "tests/champion_parity.rs",
             include_str!("champion_parity.rs"),
-            "cb79da4b7f64555ba51ec60b6a6ffcf72ac9325ea03bedc8d8130472fd8d1e85",
+            // Re-pinned: `emitted_python_matches_interpreter_predictions` gained the
+            // JOPE_PARITY_STRICT guard required by ADR-0002 section 4, so a missing python3
+            // fails instead of returning `Ok` having asserted nothing. A freeze update, not a
+            // semantic change: `regenerate_legacy_v2_freeze` reports every genome_sha256,
+            // emission hash and prediction_bits fixture unchanged.
+            // Previous: cb79da4b7f64555ba51ec60b6a6ffcf72ac9325ea03bedc8d8130472fd8d1e85
+            "69d4db59e21dad0a0f05df3e463d44e76bbddb0dfcbf9d7b32ee23c7826fab53",
         ),
         (
             "tests/tokens.rs",
