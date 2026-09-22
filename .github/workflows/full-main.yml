@@ -1,0 +1,50 @@
+name: full-main-cpu
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+
+env:
+  CARGO_INCREMENTAL: "0"
+  CARGO_PROFILE_DEV_DEBUG: line-tables-only
+  CARGO_BUILD_JOBS: "4"
+  JOPE_SOURCE_SHA: ${{ github.sha }}
+  JOPE_PARITY_STRICT: "1"
+  OMP_NUM_THREADS: "1"
+  RAYON_NUM_THREADS: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+
+# One fixed full slot serializes jobs on xbabe2. No concurrency group discards pending pushes.
+jobs:
+  cpu:
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, linux, x64, jope-full-cpu]
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+        with:
+          persist-credentials: false
+      - name: Persistent Cargo target
+        uses: ./.github/actions/cargo-target
+      - name: Runner provenance and approved resources
+        uses: ./.github/actions/runner-provenance
+      - name: Execute every declared CPU family independently
+        run: |
+          python3 deploy/ci/full-main.py run --output "target/full-cpu/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+      - name: Inventory every result including failed or missing families
+        if: always()
+        run: |
+          python3 deploy/ci/full-main.py summarize --output "target/full-cpu/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+      - name: Upload fresh run evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: full-cpu-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/full-cpu/${{ github.run_id }}/${{ github.run_attempt }}/
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 30

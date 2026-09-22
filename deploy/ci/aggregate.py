@@ -9,7 +9,7 @@ from pathlib import Path
 import sys
 import subprocess
 
-from receipt import digest, identity, validate_counts
+from receipt import INPUTS, digest, identity, validate_counts
 from results import summarize
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -85,7 +85,7 @@ def verify(mapping, plan, needs, receipts, expected):
                 raise ValueError("invalid execution times")
         except (KeyError, TypeError, ValueError):
             reject(f"{lane}: incomplete execution times")
-        for name in ("Cargo.lock", "rust-toolchain.toml", "python/uv.lock", "deploy/ci/coverage.json", "deploy/ci/fast-lane.sh", "deploy/ci/receipt.py", "deploy/ci/results.py", "deploy/ci/ci-plan.py"):
+        for name in INPUTS:
             if receipt.get("inputs", {}).get(name) != digest(ROOT / name):
                 reject(f"{lane}: input mismatch {name}")
         evidence = receipt.get("evidence", {})

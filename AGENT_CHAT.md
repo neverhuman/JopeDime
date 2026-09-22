@@ -542,3 +542,29 @@ reuse with fresh run-specific evidence, installed fingerprints and actual limits
 verified. Fast gates plus aggregate remain required procedurally; protection403
 is not enforcement. Full CPU repair/strict Clippy/persistent runner migration and
 GPU/S3/learning qualification remain deferred; qualification and soak unstarted.
+
+Hosted genuine docs-only proof completed on PR61/source
+0f9c4b3ace1887fc51baeaef9b3e6c67a73c642a in run35769025859 attempt1. Changes,
+hygiene and aggregate passed; six substantive lanes were correctly skipped-by-path.
+Aggregate binds the source plus actual synthetic checkout separately. Preserved
+artifacts and API state: foundation/full-main/docs-only-proof.json. Continue the
+same PR61 claim into CPU implementation and independently reviewed runner delivery;
+this preliminary docs head does not approve or qualify those forthcoming changes.
+
+## 2026-09-22T18:51:00.601567+00:00 — Codex resumed PR61
+Canonical ci/full-main-cpu HEAD0f9c4b3ace1887fc51baeaef9b3e6c67a73c642a,
+only AGENT_CHAT.md dirty from docs-only proof. Queue only PR61; three registered
+lanes unchanged. Resume same owner, paths, limits and verification above; prior
+stopped-head handoffs preserved. No new campaign or qualification clock.
+
+PR61 claim includes .github/actionlint.yaml to declare the new reviewed runner label.
+Local admission/resource/independent-family tests pass. Initial actionlint rejected
+the undeclared full label; register it explicitly without disabling validation.
+
+2026-09-22T19:03:55.585212+00:00 PR61 candidate:53focused tests pass,
+coverage22packages/18features/214targets/218Pythonfiles/5workflows/14jobs, format,
+actionlint and ShellCheck pass. Custody foundation/full-main/candidate-checks.json.
+Source includes fixed16GiB/16CPU fast2slots,48GiB/16CPU exclusivefull, domain
+admission, separate work/cache and report-only maintenance. No host deployed yet.
+Freeze candidate for independent Claude review before installed changes. Hosted
+pre-deployment CI may fail provenance by design; do not weaken that requirement.

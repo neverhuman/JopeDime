@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   guard:
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    runs-on: [self-hosted, linux, x64, jope-full-cpu]
     timeout-minutes: 5
     steps:
       # This workflow stands in for branch protection until the org is on the Team plan, and it

@@ -5,7 +5,7 @@ description: >-
   checked out already, because it recomputes digests from the checkout.
 
   What this binds, precisely, so it is not read as more than it is:
-    - the ten host files listed in JOPE_RUNNER_DEPLOYED (scripts, units, the drop-in)
+    - the host files listed in JOPE_RUNNER_DEPLOYED (scripts, units, the drop-in)
     - the image's entrypoint, hashed from inside the container against the committed one
     - the image identity, against the one provision.sh recorded
   What it does NOT bind: the rest of the image's contents. A rebuilt image carrying the same tag
@@ -60,3 +60,6 @@ runs:
           echo "the running image is not the one provision.sh recorded: re-run provision.sh" >&2
           exit 1
         fi
+    - name: Immutable admission policy and actual cgroup limits
+      shell: bash
+      run: python3 deploy/runner/verify-container.py

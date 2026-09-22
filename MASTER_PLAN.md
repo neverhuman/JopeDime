@@ -378,3 +378,13 @@ sessions.
 | "`rust-check` runs clippy and fmt" — the D2 row before this revision | It runs `cargo check`, a systemd test and an MSRV check. Neither linter is in any hosted lane. |
 | In the stale `jain-split` mirror: "Eight-A100 recovery" in the header of `/home/ubuntu/jain-split/jope-dime/AGENT_CHAT.md:12` (not this repository's file, whose header says the opposite); and `main` at `458ef58` **with** "zero Actions workflows / runs" in that tree's `FINAL_GITHUB_PORT_PLAN.md:116` and `CODEX_GITHUB_PORT_PLAN.md:27-28`. "13 open PRs" appears in neither and was this appendix's own misattribution | Pre-2026-09-21 state of the stale `jain-split` mirror, which is now a pointer. |
 | PR #40, PR #41 | Opened from the reviewer's identity and closed unmerged; the same branches are #42 and #43. Not withdrawals of the work. |
+
+### CPU foundation candidate (PR61, 2026-09-22)
+
+The candidate maps default workspace nextest, doctests, six CPU feature selections,38 maintained
+Python files, input/emitter/pipeline checks and build reuse to independent bounded families.
+The push/main-manual workflow is diagnostic; functional failure stays red. Two fast16GiB/16CPU
+slots on xbabe1 and one exclusive48GiB/16CPU full slot on xbabe2 use separate writable domains,
+read-only admission policy, no GPU/S3/training/publishing credentials, and50GB minimum reserve.
+This is configured source, pending exact-head review, reviewed deployment, CI and live run
+receipts. No qualification or soak clock has started. Held lint/runner branches remain intact.
