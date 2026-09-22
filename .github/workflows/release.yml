@@ -64,9 +64,13 @@ jobs:
               (ldd --version | head -n1) > /builder/builder-libc.txt
               rustc -vV > /builder/rustc-vV.txt
               printf "%s\n" "${RUSTUP_TOOLCHAIN-}" > /builder/rustup-toolchain.txt
-              cargo build --release --locked -p jope-cli
+              cargo metadata --locked --no-deps --format-version 1 > /builder/metadata.json
+              cargo build --release --locked -p jope-cli --bin jope --message-format=json-render-diagnostics > /builder/build.jsonl
             '
-          cp target/bookworm/release/jope "dist/jope-$GITHUB_REF_NAME-x86_64-unknown-linux-gnu"
+          binary=$(python3 deploy/ci/cargo-artifact.py select --package jope-cli --bin jope \
+            --metadata "$RUNNER_TEMP/builder/metadata.json" --messages "$RUNNER_TEMP/builder/build.jsonl" \
+            --path-map /work "$PWD")
+          cp "$binary" "dist/jope-$GITHUB_REF_NAME-x86_64-unknown-linux-gnu"
           cat "$RUNNER_TEMP/builder/builder-libc.txt" "$RUNNER_TEMP/builder/rustc-vV.txt"
 
       - name: Build receipt (glibc ≤ ${{ env.MAX_GLIBC }}, no CUDA/LibTorch libraries)

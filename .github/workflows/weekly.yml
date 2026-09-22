@@ -41,9 +41,9 @@ jobs:
       - name: Pinned models and Golden42 datasets
         run: |
           set -euo pipefail
-          cargo build -q --locked -p jope-cli --bin jope
-          target/debug/jope models fetch --pinned
-          target/debug/jope datasets fetch golden42
+          jope=$(python3 deploy/ci/cargo-artifact.py build --package jope-cli --bin jope)
+          "$jope" models fetch --pinned
+          "$jope" datasets fetch golden42
       - name: Regression suite
         env:
           RECEIPTS_DIR: ${{ github.workspace }}/target/regression

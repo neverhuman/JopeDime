@@ -16,7 +16,7 @@ cd "$(dirname "$0")/../.."
 
 DATASET=datasets/test/pmlb-229-pwlinear
 EXPECT=crates/feat-math/tests/fixtures/emitted
-OUT=${EMITTERS_OUT:-target/emitters}
+OUT=${EMITTERS_OUT:-target/emitters/$(date -u +%Y%m%dT%H%M%S.%NZ)-$$}
 CXX_FLAGS=(-O3 -ffp-contract=off -fno-fast-math)
 if [ -n "${JOPE_CXX_MARCH:-}" ]; then CXX_FLAGS+=("-march=${JOPE_CXX_MARCH}"); fi
 fail=0
@@ -24,9 +24,9 @@ fail=0
 for tool in rustc g++ clang++ node python3 sha256sum; do
   command -v "$tool" > /dev/null || { echo "missing required tool: $tool"; exit 1; }
 done
-rm -rf "$OUT"; mkdir -p "$OUT"
-cargo build -q -p feat-math --locked --example emit
-EMIT=target/debug/examples/emit
+[ ! -e "$OUT" ] || { echo "refusing to overwrite prior evidence: $OUT" >&2; exit 1; }
+mkdir -p "$OUT"
+EMIT=$(python3 deploy/ci/cargo-artifact.py build --package feat-math --example emit)
 
 # The emitted programs take (train.csv, test_features.csv, predictions): derive the features-only
 # test file from the committed split (the last column is the target).

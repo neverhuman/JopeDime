@@ -33,7 +33,7 @@
 # builder's RUSTUP_TOOLCHAIN, the actual `rustc -vV` release, and
 # `matches_file`, so the override is explicit rather than silent.
 #
-# No Python is invoked. Not part of `just required`.
+# Python reads Cargo artifact messages on the host. Not part of `just required`.
 set -euo pipefail
 
 out=${1:?usage: kernel-v1-product-build.sh OUT_DIR}
@@ -66,7 +66,7 @@ fi
 CARGO_HOME=$cargo_home cargo fetch --locked --manifest-path "$source_dir/Cargo.toml"
 
 # 2. build (no network, read-only source, glibc-2.35 userland).
-build_cmd="cargo build --release --offline --locked --bin jope-parallel -j $jobs"
+build_cmd="cargo build --release --offline --locked --bin jope-parallel -j $jobs --message-format=json-render-diagnostics"
 image_id=$(docker image inspect --format '{{.Id}}' "$image")
 docker run --rm --network none \
     --user "$(id -u):$(id -g)" \
@@ -82,11 +82,12 @@ docker run --rm --network none \
         rustc -vV > /work/rustc-vV.txt
         printf '%s\n' "\${RUSTUP_TOOLCHAIN-}" > /work/rustup-toolchain.txt
         (ldd --version | head -n1) > /work/builder-libc.txt
-        $build_cmd
+        cargo metadata --offline --locked --no-deps --format-version 1 > /work/metadata.json
+        $build_cmd > /work/build.jsonl
     " 2>&1 | tee "$run/build.log"
 
-binary=$run/work/target/release/jope-parallel
-[[ -x $binary ]] || { echo "build produced no binary" >&2; exit 1; }
+binary=$(python3 "$repo/deploy/ci/cargo-artifact.py" select --package jope-parallel --bin jope-parallel \
+    --metadata "$run/work/metadata.json" --messages "$run/work/build.jsonl" --path-map /work "$run/work")
 # The copy that was built must equal the git-tracked source it is receipted as.
 diff -r "$source_dir" "$run/work/src" >/dev/null
 
