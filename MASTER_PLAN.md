@@ -1,14 +1,17 @@
 # JopeDime current direction
 
-**2026-09-21.** Publication repo: private `veox-ai/JopeDime`. This note tracks
-`origin/main`; the landing board below records each merge SHA. **Twenty-three**
-PRs merged on 2026-09-21: Grok's #17–#22 (01:24–03:16Z, `4235db6` → `1f0fc5a`),
-then #23–#33, #35–#39 and #42 under D1 (03:58–11:50Z, `1f0fc5a` →
-`5feb2fa0`). #34 is open, which is why that is three spans and not one.
-Regenerated at push time from `git ls-remote origin main` and
-`gh pr list --state merged`, not at draft time — see the note above the table. Every readback
-line in this file is regenerated, not transcribed; the command that produced
-it is next to it.
+**2026-09-22 readback.** Publication repo: private `veox-ai/JopeDime`. The observed
+remote `main` is `25242513173e1a8b01f7d1e9f73775b7df14110e`; GitHub lists 29 merged
+PRs and only #49 open. #34, #44, #45, #50 and #51 have merged. Sources:
+`git ls-remote origin refs/heads/main` and
+`gh pr list --state merged --limit 100 --json number,headRefOid,mergeCommit,mergedAt`;
+open state from `gh pr list --state open --json number,headRefOid`.
+The evidence is retained under
+`/home/ubuntu/jope-rescue-20260921/implementation-20260922/bulletfarm-contract-study/github-readback.json`.
+Refresh these observations at handoff. The historical measurements below retain
+their original commit identities; they are not current qualification.
+Another session merged #44/#50/#51. This session records those merges without
+claiming their complete review/qualification lifecycle was performed here.
 
 ## Queue
 
@@ -20,21 +23,27 @@ bundle and per-PR repair checklists live in the builder's
 directory's `REPORT.md`.
 
 PRs **A–F** ([#17](https://github.com/veox-ai/JopeDime/pull/17)–[#22](https://github.com/veox-ai/JopeDime/pull/22))
-are merged, and so is everything through #39 except #34 — see the landing board. **Zero open PRs is not “done.”** Recover selected work **one PR at
+are merged, and so is everything through #39, including #34 — see the landing board. **Zero open PRs is not “done.”** Recover selected work **one PR at
 a time**. Do not reopen the twelve-PR pile. Live S3 is not claimed. Bound
 `jope-policy` checkpoint training is not claimed.
 
 ## Product target
 
 ```text
-data → encoders (Hyperion, …) → DL policy → GP kernel →
-  working Python/Rust/C++17/JS → S3 champion trees → train the router
+verified training inputs → encoders → neural GP proposals + GP exploration →
+  measured programs and bound emitted code → durable S3 targets and comparisons → immutable corpus →
+  policy training → export and qualification → next bounded GP generation
 ```
 
 Git holds tiny fixtures only (D5: the ten licensed test datasets from `wpd1`,
 ≈1 MB, and the forty synthetic fixtures from Codex `15a1d31`, ≈0.8 MB, are both
 admitted). Every other dataset and all weights stay in S3.
-The neural policy is a product router, not a held-out SOTA claim.
+This is the requested product goal, not a claim that the loop is qualified.
+Preserve dataset labels and private admission; keep outer test folds and sealed
+meta-test families outside learning. Accepted serving state changes only through
+its bound promotion protocol. The existing centroid router is a separate baseline.
+The Sep22 user-approved plan freezes the encoder for the first regression experiment.
+The policy proposes GP programs; a held-out SOTA claim requires separate frozen evaluation.
 
 ## Serial recovery (Grok's lane, one open PR at a time; now merged through F)
 
@@ -46,7 +55,7 @@ The neural policy is a product router, not a held-out SOTA claim.
 | D | Search/fit/emit CLI on feat-math | Merged #20 `8326c36` |
 | E | Local champion bank; live S3 fail-closed | Merged #21 `86c88bd` |
 | F | Local 128-d centroid router train-step + `jope route` | Merged #22 `1f0fc5a` |
-| G | Live S3 champion pull/push | Claude (integrator): `wp11/learning-store` is PR #34, in round 5; `hwm pull` and the S3 exercise are not written yet — every test so far is `file://` |
+| G | Live S3 champion pull/push | #34 merged `6a85fa398504f99e7787a58d7d3efd623bb6100d`; pull/recovery and server-enforced conditional replacement remain follow-ups. [The mirror implementation](crates/jope-learning/src/mirror.rs) records its compare-then-put limitation. The merge alone does not prove live S3 restoration. |
 | H | Docs/ADRs after the above are true | Not started |
 
 Grok's lane deferred: Dependabot #5, workflow copy (#7), 365-file Python dump
@@ -63,15 +72,20 @@ as its own reviewed PR.
   `neverhuman`.
 - Private-repo rulesets API returns HTTP 403 until the org is upgraded (D3,
   owner action in progress). Until then the merge rule below is process-only.
-- No `--admin` merge. No worktrees. No credentials in git.
+- No `--admin` merge. Worktrees only in `.agent/worktrees/`, at most four,
+  with the current serial queue policy in [AGENTS.md](AGENTS.md). No credentials in git.
 
 Coordinate in [`AGENT_CHAT.md`](AGENT_CHAT.md).
 
-## Owner decisions — 2026-09-21 (newest direction; supersede the 09-20 holds)
+## Owner decisions — 2026-09-21
+
+D2–D5 remain in effect. The Sep22 user-directed continuation clarifies D1 to
+check both PR and commit authors and uses one implementation PR at a time;
+the current operating rules are in [AGENTS.md](AGENTS.md).
 
 | # | Decision |
 | --- | --- |
-| D1 | Agents merge: hosted CI green at the exact head + review by the *other* GitHub identity than the author (`jepsontaylor` PAT / `neverhuman` gh; both agent-operated on xbabe2) + merge SHA and `main` readback recorded here. |
+| D1 | Agents merge after exact-head CI and independent review by an identity different from both PR and GitHub-associated commit authors (`jepsontaylor` / `neverhuman`, when eligible), with guarded merge and remote `main` readback. |
 | D2 | PR gate at `70506066` = the seven jobs `ci.yml` defines: `changes`, `hygiene`, `rust-check`, `emitters`, `inputs`, `python` (#38), `rust-test` (#39) — all path-gated. **`rust-check` runs `cargo check --workspace --all-targets --locked` plus a systemd test and an MSRV check; it runs neither clippy nor rustfmt** — those exist only in the local `justfile`, which is why #37 had to land rustfmt drift that no lane would have caught. Full nextest, LibTorch `features`, sanitizers, security, artifacts, Jankurai = visible non-blocking main/nightly lanes, each promoted to blocking once it passes on main. Jankurai is a no-regression ratchet, never a merge gate. |
 | D3 | Owner upgrades `veox-ai` to Team; branch protection (required checks + 1 approval + no force-push) is enabled the moment the API stops returning 403. |
 | D4 | `veox-jopedime-{datasets,models,learning,archive}-use2` (+usw2 replicas) = product buckets the crates target. `jopedime-714044927654-us-east-2-{dev,prod,sealed}` = preservation custody. Nothing deleted; `catalogs/s3.json` records both. |
@@ -79,10 +93,10 @@ Coordinate in [`AGENT_CHAT.md`](AGENT_CHAT.md).
 
 ## Merge rule (per PR)
 
-1. Required contexts = every job that `.github/workflows/ci.yml` defines **at the reviewed head** (on `main` at `70506066`: `changes`, `hygiene`, `rust-check`, `emitters`, `inputs`, `python`, `rust-test`, where a path-gated lane that did not run because its paths are untouched is recorded as `skipped-by-path`, not as green). `gh pr checks <n>` must show every required context `pass` at the exact head SHA; absent, cancelled or failed = not green. Heavy lanes (full nextest, LibTorch `features`, sanitizers, security, Jankurai) are main/nightly lanes per D2 and are not required on PRs until each has passed on `main`.
-2. Review posted by the other GitHub identity than the author (`neverhuman` for PRs authored by `jepsontaylor`, and vice versa), from a session that did not write the PR. **The identity that matters is the PR's author, not the commits'.** `gh pr create` without `GH_TOKEN` opens the PR as the `gh` OAuth user, and GitHub then refuses the review outright: `Can not request changes on your own pull request`. #40 and #41 were opened that way and had to be closed and reopened as #42 and #43. Check `gh pr view <n> --json author` before requesting a review (a fresh review agent or another lane — Cursor's coordinator is invited). Both logins are operated by agents on this host; an approval proves an independent read at the exact head, not a human sign-off. Trust-surface PRs (workflows, lockfiles, credentials, protection manifests) get a second, security lens.
-3. `gh pr merge <n> --rebase` (merge commits are disabled in the repository settings; rebase keeps each original commit, squash is acceptable for single-commit docs PRs), then `git ls-remote origin main` recorded in the row below.
-4. Never more than three PRs open across all agents (D1 supersedes Grok's one-open-PR rule for its lane only while that lane is active); a PR older than 24 h is merged, drafted, or closed with a reason.
+1. Required contexts = every job that `.github/workflows/ci.yml` defines **at the reviewed head** (on `main` at `25242513`: `changes`, `hygiene`, `rust-check`, `emitters`, `inputs`, `python`, `rust-test`, `e2e-smoke`). A lane legitimately excluded by its declared path matrix is recorded as `skipped-by-path`, not green. Every required execution must pass at the exact head; absent, cancelled or failed is not green. The configured jobs are not proof of execution. Heavy functional lanes become required after their successful main qualification; Jankurai remains informational under D2.
+2. Review must come from a session that did not write the PR and a GitHub identity distinct from both the PR author and every GitHub-associated commit author. Follow the PR-scoped identity checks in `AGENTS.md`; check `gh api user --jq .login` in the posting environment. #40 and #41 were opened under the wrong account and replaced by #42 and #43. An agent-operated approval proves an independent read at the exact head, not human sign-off. Trust-surface PRs (workflows, lockfiles, credentials, protection manifests) also receive a security review.
+3. `gh pr merge <n> --rebase --match-head-commit <reviewed-full-sha>`, then verify fresh remote `main` and `main-guard`. Preserve shared source-branch history when updating its base.
+4. Resolve the existing queue, then one implementation PR at a time. Fix review findings on its existing branch; record explicit replacement/disposition for superseded work. The four managed-lane limit does not authorize four concurrent implementation PRs.
 
 ## Landing board (Claude integrator; old PR → new PR → merged SHA)
 
@@ -116,16 +130,23 @@ can be satisfied by remembering.
 | — | board | | #36 | `ebf055d` 06:36:46Z (landing rows through #33) |
 | — | rustfmt drift | | #37 | `dc46e86` 06:47:00Z (two drifted hunks in `jope-engine eval_registry/query`) |
 | — | python lane | | #38 | `d43bc5f` 07:49:28Z (fixes the systemd test #32 broke; **adds the hosted `python` lane that would have caught it**) |
-| — | `wp11/learning-store` | df9e4e0 | **#34 open** | **at `5737aca7`, review 11:29:54Z**: all four P1s of round 4 fixed — three reproduced from the CLI, the fourth (non-finite entry refusal) read only, since no CLI source can carry a non-finite value in. Blocking then: `jope-learning` in neither test scope, so `check.sh` fails closed on the merged tree; the rebase; and two P2s. Live state is on the PR, not here |
+| — | `wp11/learning-store` | 44aa4b69 | #34 | `6a85fa398504f99e7787a58d7d3efd623bb6100d` 2026-09-21T17:30:58Z; remaining live-recovery limits are recorded above |
 | — | rust-test lane | | #39 | `7050606` 11:11:35Z (4 rounds; the hosted gate ran no Rust tests beyond two `feat-math` targets, and the scope guard itself failed open twice before the reviewer's negative probes closed it) |
 | — | ADR-0003 test paths | | #42 | `5feb2fa0` 11:50:13Z (three tests red since the ADR-0003 relocation, fixed; quarantine 15 → 12 and the misfiled `queue.rs` panic given its own cause. #40 was the same branch opened from the wrong identity and is closed) |
-| — | `wp13/pipeline-run` | 8b4cf466 | **#44 open** | `jope pipeline run`: dataset → prepare → GP search on feat-math → select → emit → receipt |
+| — | `wp13/pipeline-run` | 16ed3505 | #44 | `584112293221563aa1acfe1b9a06bf3c987f1e6f` 2026-09-22T03:11:35Z; CPU GP pipeline. Codex owns budget/selection correction [#52](https://github.com/veox-ai/JopeDime/issues/52) and independent validation of the pipeline/CI assertions after #49. Artifact binding #48 remains open. The final review disclosed author involvement in two CI commits; this readback does not certify full review independence. |
 | — | `wp5/cli-split` | d0b4819 | | needs a mechanical re-do on current main, not a replay (#32 rewrote 67 of the files it moves) |
-| — | `wp8/runner-lanes` | f6c101d | | |
+| — | `wp8/runner-lanes` | 51857841 | #45 | `c572f1778562768ebc7c29fbfeff047f871cba6c` 2026-09-21T16:55:46Z |
+| — | strict Python parity prerequisites | d76cdf1e | #50 | `baa4c1f24e7b2ab7f38af5061feea6029d27cc94` 2026-09-22T03:10:24Z |
+| — | generated README benchmark results | 9e44a206 | #51 | `25242513173e1a8b01f7d1e9f73775b7df14110e` 2026-09-22T03:20:41Z |
 | #5 | dependabot cargo group | 1151493 | | re-trigger after main settles; lockfile = trust surface, two lenses |
 
 Recovery of #5–#16: bundle `pr-5-through-16.bundle` (sha256 3bafaa52…) is also
 at `s3://veox-jopedime-archive-use2/git-bundles/20260921/`.
+
+The #44 review disclosure and checks are retained in
+`/home/ubuntu/jope-rescue-20260921/implementation-20260922/queue/external-merges-20260922.json`;
+the #52 acceptance is linked in its row. Corrective validation cannot retroactively
+make the earlier merge independent.
 
 ## What the gate actually proves (2026-09-21, measured)
 

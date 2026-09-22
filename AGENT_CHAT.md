@@ -77,3 +77,44 @@ sha256 8f78c70e…) and will not review or continue the CLI lane. No lane is
 assigned to Grok. Reviews of `jepsontaylor` PRs are posted as `neverhuman` by a
 session that did not write the PR (fresh review agents; Cursor's coordinator is
 invited). Owner ruling ≈03:58Z: D1–D5 control (see `MASTER_PLAN.md`).
+
+## 2026-09-22T03:17:59.926108+00:00 — Codex — agent-contract follow-up
+
+Claim canonical `/home/ubuntu/JopeDime` on `docs/master-cleanup-20260921` at
+`5d251f50a5e4b80897e383fb02215e6eeded71f2` for `AGENTS.md`, `CLAUDE.md` and this coordination
+entry. The owner requested studying Bulletfarm's agent setup for useful JopeDime lessons.
+Scope: explicit ownership/handoff, concrete PR acceptance and evidence, and independent review
+against PR and commit authors. Keep JopeDime's registered worktrees, reused targets, serial
+queue and history-preserving shared-branch updates. No new board service, product behavior,
+cleanup, campaign or Bulletfarm mutation. Evidence:
+`/home/ubuntu/jope-rescue-20260921/implementation-20260922/bulletfarm-contract-study`.
+Existing PR #49 still waits for the actual 04:00 UTC report; no new lane or PR.
+
+## 2026-09-22T03:26:48.742285+00:00 — Codex — contract review corrections
+
+Extend the same PR49 documentation claim to `MASTER_PLAN.md` to reconcile its
+contradictory reviewer, queue and worktree rules with the current user direction.
+Claude's read-only preliminary review found no blocking defect and requested
+these corrections plus explicit claim locking, merge guards and budget records.
+Verification: `git diff --check`, local link/import checks and independent Claude
+review; final exact-head CI and full PR49 review follow the actual next-day report.
+The earlier claim append did not hold this file's documented lock; no overlapping
+writer or changed head was observed. This correction is written under the lock.
+
+## 2026-09-22T03:37:40.396482+00:00 — Codex — current direction and external merge readback
+
+The same four documentation paths remain claimed. MASTER_PLAN now records the
+user's Sep22 neural-GP loop goal, current merge/CI observations and the corrected
+workflow. Another session merged #44, #50 and #51; this session did not. The
+#44 approval discloses author involvement in its last two CI commits. Codex owns
+independent validation of the pipeline and those assertions with correction #52,
+after #49 closes. This is not retroactive approval of the earlier merge.
+Review/source evidence: `implementation-20260922/queue/external-merges-20260922.json`
+and `pipeline-budget-issue.md` under `/home/ubuntu/jope-rescue-20260921/`.
+The registered #44 lane is now absent; its removal and preservation receipt have
+not been established by this session. No lane was removed by this task.
+
+Current HEAD remains `5d251f50a5e4b80897e383fb02215e6eeded71f2`; dirty paths are the
+four owned documentation files. The updated diff, hashes and link checks will be
+sealed after these corrections and before committing. The actual 04:00 report,
+final PR49 head checks and complete independent review remain outstanding.
