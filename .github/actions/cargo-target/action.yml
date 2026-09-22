@@ -1,0 +1,15 @@
+name: Cargo target directory
+description: Reuse one build directory per runner lane without sharing reports across concurrent jobs.
+runs:
+  using: composite
+  steps:
+    - name: Select the target for this runner lane
+      shell: bash
+      run: |
+        set -euo pipefail
+        lane=${JOPE_RUNNER_LANE:?runner did not identify its lane}
+        case "$lane" in
+          ci|ci2|ci3|ci4) ;;
+          *) echo "unsupported CPU runner lane: $lane" >&2; exit 1 ;;
+        esac
+        echo "CARGO_TARGET_DIR=/var/cache/jope/target/$lane" >> "$GITHUB_ENV"

@@ -35,6 +35,8 @@
 #
 # Python reads Cargo artifact messages on the host. Not part of `just required`.
 set -euo pipefail
+export CARGO_INCREMENTAL=${CARGO_INCREMENTAL:-0}
+export CARGO_PROFILE_DEV_DEBUG=${CARGO_PROFILE_DEV_DEBUG:-line-tables-only}
 
 out=${1:?usage: kernel-v1-product-build.sh OUT_DIR}
 repo=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
@@ -71,7 +73,7 @@ image_id=$(docker image inspect --format '{{.Id}}' "$image")
 docker run --rm --network none \
     --user "$(id -u):$(id -g)" \
     -e HOME=/work -e CARGO_HOME=/cargo-home -e CARGO_TARGET_DIR=/work/target \
-    -e CARGO_NET_OFFLINE=true \
+    -e CARGO_NET_OFFLINE=true -e CARGO_INCREMENTAL -e CARGO_PROFILE_DEV_DEBUG \
     -v "$source_dir:/src:ro" \
     -v "$cargo_home:/cargo-home" \
     -v "$run/work:/work" \
