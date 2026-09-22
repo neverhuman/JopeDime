@@ -1,9 +1,60 @@
 # JopeDime current direction
 
-**2026-09-22 04:50 UTC readback.** Publication repo: private `veox-ai/JopeDime`.
+**2026-09-22 16:48 UTC readback.** Publication repo: private `veox-ai/JopeDime`.
 Remote `main` is `a82486fbf1552c00f4b86ebc6b210429bf8dc79f`; #49 is merged.
 The canonical checkout returned clean to that main before the issue52 correction
-branch was claimed. Refresh Git/PR state before acting; this is a dated observation.
+branch was claimed. Its current head is `5571629cee5942276f43515c987c032bdbd7fcdd`;
+PR #54 is open under `neverhuman`, while both commits are associated with
+`jepsontaylor`. It will be replaced under the established writer identity so an
+independent `neverhuman` reviewer is eligible. Refresh Git/PR state before acting;
+this is a dated observation.
+
+Issue52's saved exact-head evidence remains intact: 45 tests and all seven local
+acceptance commands passed, and independent Claude review approved that head.
+The fresh-context continuation verified the recorded log/review hashes; it did not
+rerun those local commands. [Manual CI run35740838329](https://github.com/veox-ai/JopeDime/actions/runs/35740838329),
+attempt1, now passed all eight jobs at that exact source head. Rust nextest executed
+751 passing tests and reported13 skipped (4 through the PR profile filter); its JUnit
+contains751 passing cases, binds the same head/run/attempt, and omits the skipped cases.
+Python executed207 passing tests with15 deselected. These are the existing gate's
+scope, not full CPU-phase coverage. No native GitHub approval exists yet. The
+coordination updates in this continuation require fresh exact-head CI and review;
+an ancestor review does not approve a changed head.
+
+The separate operational session claimed runner/access recovery at14:22 UTC and
+installed working runner credentials on xbabe1/xbabe2. Its listeners executed the
+above jobs, including successful runner-provenance verification on xbabe2. This
+canonical continuation preserved all eight logs, Rust's uploaded evidence and the
+hosted smoke artifacts outside the runner workspace. The smoke archive independently
+verifies4 attempts per cut (2exploration+2comparison),3 non-bootstrap programs with
+complete3-cut coverage, receipt-bound cut hashes and identical Python/Rust predictions
+on34rows. Evidence and the prepared publication body are under
+`/home/ubuntu/jope-rescue-20260921/implementation-20260922/pipeline-budget/hosted-35740838329`.
+
+The operational session recovered the separate writer credential at 16:32 UTC;
+`gh api user` now confirms `jepsontaylor` with repository/workflow access. Its stopped
+handoff releases credential/configuration ownership. The existing `neverhuman`
+authentication remains available to an eligible independent reviewer. Protection
+readback still returns 403; the merge procedure is enforced procedurally.
+The successful run used the earlier runner limits, which do not establish the
+approved CPU foundation limits. Earlier recovery receipts remain unchanged.
+
+The user-approved bounded foundation is serial: complete issue52's final-head
+eight-job CI, independent review/native approval, guarded merge and main/main-guard
+readback; close #46 with normal and external artifact-path proofs; deliver explicit
+coverage/receipts; then trustworthy aggregation/operator status; then a diagnostic
+push-triggered full-main CPU baseline. Every implementation lands in a separate
+reviewed PR. Full Rust/Python repair, strict Clippy, persistent runner migration and
+mandatory full-CPU gates remain the following phase. Qualification and soak are
+unstarted. Fast jobs are limited to two at 16 GiB/16 CPUs each; full CPU is exclusive
+among JopeDime jobs on its host at 48 GiB/16 CPUs, 120 minutes and a 50 GB disk reserve.
+
+Two clean registered lanes are preserved pending stopped-head handoffs:
+`runner-prov` at `b8acc6202824698e6480ae2fa92f1a89a6e04626` and `lint` at
+`187c2f14dfca1c10d6670b81e6db7cebbe7fcc6a`. Their existing authorship is retained.
+The proposed 24 GiB/28 CPU runner sizing does not replace the approved limits; its
+changes remain undeployed. The lint patch stays deferred to the repair phase;
+its reported 388 warnings require reproduction before use as a current result.
 
 PR49's actual scheduled report succeeded at **04:00–04:02 UTC**, with32 roots,
 six unchanged installed fingerprints and report-only behavior. Independent Claude
@@ -84,9 +135,10 @@ as its own reviewed PR.
 
 ## Blockers (do not fake)
 
-- `neverhuman` gh OAuth has no `workflow` scope; `jepsontaylor`'s PAT does —
-  workflow changes are authored from that identity (Claude) and reviewed by
-  `neverhuman`.
+- #54's PR author and commit authors leave neither established account eligible
+  to review it. Replace it under `jepsontaylor` and obtain a fresh independent
+  exact-head review/native approval. Writer access has recovered; preserve
+  `neverhuman` eligibility and keep runner credentials separate.
 - Private-repo rulesets API returns HTTP 403 until the org is upgraded (D3,
   owner action in progress). Until then the merge rule below is process-only.
 - No `--admin` merge. Worktrees only in `.agent/worktrees/`, at most four,
