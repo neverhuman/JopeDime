@@ -47,6 +47,25 @@ class AggregateTests(unittest.TestCase):
     def test_valid_complete_execution(self):
         self.assertEqual([], self.verify()['errors'])
 
+    def test_product_receipt_is_hashed_data_not_a_ci_lane(self):
+        path, receipt = self.receipts['e2e-smoke'][0]
+        product = path.parent / 'pipeline/a/receipt.json'
+        product.parent.mkdir(parents=True)
+        product.write_text('{"schema":"jope.pipeline-receipt/v2"}')
+        receipt['evidence'][str(product.relative_to(path.parent))] = digest(product)
+        for candidates in self.receipts.values():
+            for ci_path, ci_receipt in candidates:
+                ci_path.write_text(json.dumps(ci_receipt))
+        discovered = aggregate.load_receipts(self.root)
+        self.assertEqual(set(aggregate.plan_module.LANES), set(discovered))
+        self.assertEqual([], aggregate.verify(self.mapping, self.plan, self.needs, discovered, self.expected)['errors'])
+
+    def test_artifact_without_root_receipt_and_undeclared_files_fail(self):
+        with self.assertRaises(ValueError):
+            aggregate.load_receipts(self.root)
+        (self.receipts['rust-test'][0][0].parent / 'junit-MISSING.txt').write_text('undeclared')
+        self.assertTrue(any('manifest differs' in error for error in self.verify()['errors']))
+
     def test_wrong_source_checkout_attempt_and_run_fail(self):
         for field, wrong in [('source_sha','c'*40),('checkout_sha','c'*40),('attempt',1),('run_id','41')]:
             with self.subTest(field=field):
