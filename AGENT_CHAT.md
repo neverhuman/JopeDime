@@ -568,3 +568,16 @@ Source includes fixed16GiB/16CPU fast2slots,48GiB/16CPU exclusivefull, domain
 admission, separate work/cache and report-only maintenance. No host deployed yet.
 Freeze candidate for independent Claude review before installed changes. Hosted
 pre-deployment CI may fail provenance by design; do not weaken that requirement.
+
+Independent Claude/neverhuman approval5282545111 at8aae81453d76448359ba531bfe54c4e3e66e0967
+authorizes source deployment, with operational notes. No host changes yet.
+Before deployment, strengthen orphan-container refusal and add manual-only
+.github/workflows/runner-admission-probe.yml to prove real Worker denial in both
+domains. Extend claim to that workflow and mapping/tests. Fresh head needs fresh
+independent review; the previous approval will not be used for an amended head.
+
+Amended candidate: runner6tests and full-main5tests pass, total54focusedtests.
+Mapping now6workflows/16jobs including manual negative admission probe; probe
+rejection is operational evidence, never counted as passing functional CI.
+Orphan/legacy-container and Docker-inspection failures refuse startup. Actionlint,
+ShellCheck, coverage and diff checks pass. Freeze amended source for fresh review.

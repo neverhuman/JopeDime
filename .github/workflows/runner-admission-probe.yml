@@ -1,0 +1,25 @@
+name: runner-admission-probe
+# Manual negative operational proof. Expected outcome is rejection, not a green job.
+# Operators verify the hook denial, absent bypass marker and terminated container.
+on:
+  workflow_dispatch:
+permissions: {}
+jobs:
+  reject-fast:
+    runs-on: [self-hosted, linux, x64, jope-ci]
+    timeout-minutes: 2
+    steps:
+      - name: Must never execute after admission denial
+        if: always()
+        run: |
+          echo 'ADMISSION_POLICY_BYPASS'
+          exit 1
+  reject-main:
+    runs-on: [self-hosted, linux, x64, jope-full-cpu]
+    timeout-minutes: 2
+    steps:
+      - name: Must never execute after admission denial
+        if: always()
+        run: |
+          echo 'ADMISSION_POLICY_BYPASS'
+          exit 1

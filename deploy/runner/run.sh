@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# deploy/runner/run.sh <gpu|kernel> — start ONE ephemeral runner job container (called by
+# deploy/runner/run.sh <ci|ci2|full> — start ONE ephemeral runner job container (called by
 # jope-runner@<lane>.service, as root, on the timer's cadence).
 #
 #   1. disk guard (refuse under 50 GB free);
@@ -11,7 +11,7 @@
 #      The response's encoded_jit_config is passed to the container on stdin only;
 #   3. docker run the image with the plan's hardening flags and the named volumes.
 # The container exits when its one job ends; the runner deregisters itself (JIT = ephemeral).
-# If GitHub has no queued job the listener idles until the service's RuntimeMaxSec stops it.
+# If GitHub has no queued job the listener idles; workflows own accepted-job timeouts.
 set -euo pipefail
 # shellcheck source=deploy/runner/common.sh
 # shellcheck disable=SC1091  # sourced relative to this file; run shellcheck -x to follow
@@ -29,6 +29,7 @@ dropins=$(systemctl show "jope-runner@$lane.service" -p DropInPaths --value)
 # A root-owned per-lane lock prevents duplicate service/manual listeners sharing storage.
 exec 9>"$JOPE_RUNNER_STATE/$lane.lock"
 flock -n 9 || { echo "lane already owned: $lane" >&2; exit 2; }
+jope_runner_check_existing "$lane"
 volume_prefix="jope-$JOPE_RUNNER_DOMAIN-$lane"
 policy="$JOPE_RUNNER_STATE/$lane-policy.json"
 jq -n --arg domain "$JOPE_RUNNER_DOMAIN" --arg lane "$lane" --arg host "$JOPE_RUNNER_HOST" \

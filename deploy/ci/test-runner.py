@@ -60,6 +60,18 @@ class RunnerTests(unittest.TestCase):
             result = subprocess.run(['bash','-ec','source deploy/runner/common.sh; jope_runner_role "$1" "$2"','test',host,lane],cwd=ROOT,capture_output=True)
             self.assertEqual(2,result.returncode)
 
+    def test_orphans_and_legacy_roles_refuse_start(self):
+        cases = [('xbabe1','ci','abc ci',2), ('xbabe1','ci','abc ci2',0),
+                 ('xbabe2','full','abc full',2), ('xbabe2','full','abc ci',2),
+                 ('xbabe1','ci','abc ',2), ('xbabe2','full','',0)]
+        script = 'source deploy/runner/common.sh; JOPE_RUNNER_HOST=$1; existing_fixture=$3; docker() { printf "%s\\n" "$existing_fixture"; }; jope_runner_check_existing "$2"'
+        for host,lane,existing,code in cases:
+            with self.subTest(host=host,lane=lane,existing=existing):
+                result=subprocess.run(['bash','-c',script,'test',host,lane,existing],cwd=ROOT,capture_output=True,text=True)
+                self.assertEqual(code,result.returncode,result.stderr)
+        result=subprocess.run(['bash','-c','source deploy/runner/common.sh; docker() { return 23; }; jope_runner_check_existing full'],cwd=ROOT,capture_output=True)
+        self.assertEqual(23,result.returncode)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -69,3 +69,18 @@ jope_runner_labels() {
     full) echo "$JOPE_RUNNER_HOST-full,jope-full-cpu" ;;
   esac
 }
+
+# A dead docker CLI can release flock while its container survives. Refuse a second
+# writer and any legacy role still running on a host assigned to this CPU foundation.
+jope_runner_check_existing() { # requested lane; docker failure is never an empty fleet
+  local existing id running
+  existing=$(docker ps --filter label=jope.runner=1 --format '{{.ID}} {{.Label "jope.lane"}}') || return
+  while read -r id running; do
+    [[ -n $id ]] || continue
+    case "$JOPE_RUNNER_HOST/$running" in
+      xbabe1/ci|xbabe1/ci2|xbabe2/full) ;;
+      *) echo "unapproved existing JopeDime container: $id lane=$running" >&2; return 2 ;;
+    esac
+    [[ $running != "$1" ]] || { echo "existing container owns lane $1: $id" >&2; return 2; }
+  done <<< "$existing"
+}
