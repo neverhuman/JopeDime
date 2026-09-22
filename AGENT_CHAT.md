@@ -407,3 +407,12 @@ and independently verify recovery before removing the lane after merge.
 Persistent Cargo targets must be separate for each stable runner lane, which reuses
 one target across its sequential jobs; concurrent jobs cannot share result paths. Both normal/external
 proofs at 96ec9a996 passed; job-scoped target selection may now replace the workaround.
+
+2026-09-22T17:20:18.807994+00:00 — Continue #56 on the same claim after hosted evidence exposed
+nextest 0.9.133 keeping its default store relative to the workspace even when
+Cargo target_directory changes. Rust tests passed; report retention failed in
+PR run 35759329834 at 9a947a793. Preserve its log under issue46/pr-rust-failure.log.
+Generate a run-specific config binding store.dir to Cargo metadata while retaining
+all original profiles/filters. Also address independent reviewer finding: retention
+requires an execution marker before copying any report. New head needs fresh review
+and CI; the earlier native approval applies only to 9a947a793.

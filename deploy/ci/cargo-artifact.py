@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tomllib
 
 
 def cargo_environment(target_dir=None):
@@ -29,6 +30,17 @@ def metadata(manifest, env):
         ["cargo", "metadata", "--locked", "--no-deps", "--format-version", "1",
          "--manifest-path", manifest], env=env,
     ))
+
+
+def nextest_config(source, output, target):
+    """Nextest's default store is workspace-relative, independently of Cargo."""
+    text = Path(source).read_text()
+    if "store" in tomllib.loads(text):
+        raise ValueError("nextest already configures a store; reconcile it before relocating reports")
+    # Keep every profile/filter byte intact. TOML basic strings accept JSON's
+    # escaped string form, including spaces in an absolute target directory.
+    with Path(output).open("x") as stream:
+        stream.write("store = { dir = " + json.dumps(str(Path(target) / "nextest")) + " }\n" + text)
 
 
 def executable(messages, meta, package, kind, name, path_map=None):
@@ -69,7 +81,10 @@ def main():
     build = commands.add_parser("build")
     select = commands.add_parser("select", help="read a successful container build")
     directory = commands.add_parser("target-dir")
-    for p in (build, directory):
+    config = commands.add_parser("nextest-config", help="bind nextest's store to Cargo's effective target")
+    config.add_argument("--source", default=".config/nextest.toml")
+    config.add_argument("--output", required=True)
+    for p in (build, directory, config):
         p.add_argument("--manifest-path", default="Cargo.toml")
         p.add_argument("--target-dir")
     for p in (build, select):
@@ -93,6 +108,9 @@ def main():
             meta = metadata(args.manifest_path, env)
             if args.command == "target-dir":
                 print(meta["target_directory"])
+                return 0
+            if args.command == "nextest-config":
+                nextest_config(args.source, args.output, meta["target_directory"])
                 return 0
             command = ["cargo", "build", "--locked", "--message-format=json-render-diagnostics",
                        "--manifest-path", args.manifest_path, "--package", args.package,
