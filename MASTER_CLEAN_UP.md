@@ -1345,3 +1345,21 @@ in foundation/issue46/proof-closure.json before releasing the lane. No other rem
 Completed: all four explicit paths absent; git worktree remove used for the lane.
 Immutable archives, manifests and receipts retained; source branches, stash, lint and
 runner lanes unchanged. Full completion receipt: foundation/issue46/proof-closure.json.
+
+## 2026-09-22T22:14:23.615098+00:00 — ASM prerequisite lane closure
+
+The explicit user assignment transfers the held runner-prov and lint lanes from their
+stopped handoffs. Unique heads b8acc6202824698e6480ae2fa92f1a89a6e04626 and
+187c2f14dfca1c10d6670b81e6db7cebbe7fcc6a and all local refs/stash were bundled.
+Independent bare restoration verified both exact commits and trees, complete connectivity
+and absence of alternates. Complete lint target archive independently restored with
+8531 matching entries (2657308834 file bytes); no target contents assumed disposable.
+Current status/stash/all-local-only-commits and remote tags are retained; no active cwd,
+fd, executable or mapped consumers and no permission errors in privileged readback.
+Remove only these two registered lanes with git worktree remove, retaining their local
+branches and immutable custody. Remove generated independent restorations after final
+verification. Custody: /home/ubuntu/jope-rescue-20260921/asm-demonstration-20260922/lanes.
+No source fix is landed by this closure; runner sizing remains withdrawn, lint deferred.
+
+Closure completed; three registered product checkouts remain. Both named lanes and
+generated restorations are absent; immutable archives, local source branches and receipts remain.

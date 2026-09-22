@@ -162,7 +162,7 @@ The writer session never calls the approval API for its own change. Independence
 a separate reviewer process that did not write the change; selecting another account alone
 does not provide it. An independent agent review is recorded as such, not as a human review.
 
-**Select an identity through the installed helper, by full path. There are exactly two:**
+**The installed helper selects these two configured identities:**
 
 ```sh
 /home/ubuntu/.local/bin/gh-role writer    <gh arguments>   # jepsontaylor: commits, pushes, PR creation
@@ -175,15 +175,16 @@ agent on this host shares. An inherited `GH_TOKEN` cannot override the role: the
 `GH_TOKEN`, `GITHUB_TOKEN`, `GH_ENTERPRISE_TOKEN`, `GITHUB_ENTERPRISE_TOKEN`, `GH_CONFIG_DIR` and
 `GH_HOST`, then confirms `/user` really is the account asked for before running anything.
 
-Plain `gh` authenticates as whichever account is active — `jepsontaylor` today — so an agent that
-forgets the helper silently acts as the writer. Use the path.
+Plain `gh` can use the active account or an inherited token override. Verify the resulting
+identity at every use; the helper clears those overrides for the selected role.
 
 **What it refuses**, which is the rule in step 2 made mechanical rather than manual: an approval
 where the selected account opened the pull request, authored any commit or is any commit's
 committer; an approval over commits with no GitHub account attached unless `--ack-unassociated`
-records that provenance was established; a `pr create` under the reviewer role; and any case where
-it cannot resolve the pull request or the lookup fails — it fails closed, because a guard that
-allows when it cannot tell is not a guard. `gh api` forms of the same operations are covered too.
+records that provenance was established; a `pr create` under the reviewer role; and failed
+lookups for recognized review operations. The parser recognizes common `gh api` forms too.
+It passes unknown command shapes through, and its commit lookup reads at most 100 commits.
+Keep the paginated API checks below: this helper does not replace the complete review procedure.
 
 **Its limits, so this is not read as more than it is.** Every agent here runs as `ubuntu`, so
 anything that can run `gh-role` can run `gh` directly and skip it: it prevents the mistake, not a
@@ -216,8 +217,8 @@ account, which is what the paragraph above already says and remains the binding 
    ```
 
    It prints the exclusion set with a reason per login. Use it before every approval; it is
-   cheaper than the two calls above and it cannot forget the committer field. It does **not**
-   answer whether the review is independent — see the limits above.
+   an additional check that includes the committer field. Retain the paginated author inventory
+   above, especially for PRs exceeding 100 commits. It does **not** establish independence.
 3. Dispatch `gh workflow run ci.yml --ref BRANCH`, then identify and retain that run's
    **full source SHA, run ID and attempt**. Record the dispatch time, then use
    `gh run list --workflow ci.yml --branch BRANCH --event workflow_dispatch --json databaseId,headSha,createdAt,attempt`
@@ -280,16 +281,14 @@ checked at use time; `GH_TOKEN`/`GITHUB_TOKEN` can override the stored CLI accou
 | Claude CLI authentication | `/home/ubuntu/.claude/.credentials.json` (0600) | Authentication for the independent Claude process; separate from the GitHub credential it uses to submit review. |
 | Runner registration PAT | `/etc/jope-runner/github-pat` (root:root, 0600 on runner hosts) | Host launcher only, for single-use JIT registration. Never mount into a job or use as the PR review credential. |
 | GitHub identity helper | `/home/ubuntu/.local/bin/gh-role` (0700) | `gh-role writer` → `jepsontaylor`, `gh-role reviewer` → `neverhuman`. The supported way to select an identity; see the approval procedure above. xbabe2 only. |
-| GitHub writer token file | `/home/ubuntu/.config/jopedime/secrets/gh.env` (0600) | A **bare token on one line with no `KEY=`**, despite the suffix. `source`-ing it silently does nothing and leaves the shell as the wrong identity, which has already produced a false-clean merge guard. Read it as a value: `GH_TOKEN="$(tr -d '\r\n' < …)"`. |
-| AWS credential for JopeDime S3 | profile `veox-jepson-prod` in `/home/ubuntu/.aws/config`, resolved by `credential_process` `/home/ubuntu/.aws/veox-jepson-new-cred.sh` (0700) | Account `714044927654`: read **and** write on every `veox-jopedime-*` bucket. `veox-jepson` and `veox-jepson-new` are the *same credential* under other names, not a dev/prod pair. `veox-alton` (`/home/ubuntu/.aws/veox-alton-cred.sh`, 0700) also reaches the same account. |
-| AWS sandbox credential | profile `veox-jepson-sandbox` → `/home/ubuntu/.aws/veox-jepson-cred.sh` (0700) | A **different account** (`228886154691`) holding different buckets. It returns `AccessDenied` on every jopedime bucket — do not reach for it when S3 fails. |
-| `aws.env` | `/home/ubuntu/.config/jopedime/secrets/aws.env` (0600) | **A human-readable note, not an env file**: neither line contains `=`, so `source` sets nothing. Use the profile above. |
+| GitHub writer token file | `/home/ubuntu/.config/jopedime/secrets/gh.env` (0600) | A **bare token on one line with no `KEY=`**, despite the suffix. Sourcing it attempts to execute the token as a command and can expose it in shell diagnostics. Never source it; prefer the CLI credential store through the helper. |
+| AWS credential for JopeDime S3 | profile `veox-jepson-prod` in `/home/ubuntu/.aws/config`, resolved by `credential_process` `/home/ubuntu/.aws/veox-jepson-new-cred.sh` (0700) | Account `714044927654`; verify the permissions needed for each operation at use time. `veox-jepson` and `veox-jepson-new` are the *same credential* under other names, not a dev/prod pair. `veox-alton` (`/home/ubuntu/.aws/veox-alton-cred.sh`, 0700) also reaches the same account. |
+| AWS sandbox credential | profile `veox-jepson-sandbox` → `/home/ubuntu/.aws/veox-jepson-cred.sh` (0700) | A **different account** (`228886154691`) holding different buckets. The prior datasets-bucket probe returned `AccessDenied`; it is not the selected product profile. |
+| `aws.env` | `/home/ubuntu/.config/jopedime/secrets/aws.env` (0600) | **A human-readable note, not an env file**: the earlier inspection found no assignments. Never source it. Use the profile above. |
 
-This is what `gh-role` does internally, kept here because the mechanism is worth understanding
-even when the helper is doing it for you — and because the helper is installed on xbabe2 only, so
-on any other host this fragment is the procedure. To select the review account without changing
-the shared writer's login, the review launcher captures the token privately and passes it only to
-the independent process:
+The following launcher fragment illustrates credential delivery to a separate review process.
+It is not the helper's full validation implementation. On another host, verify account and
+host selection explicitly before use. It does not change the shared writer's login:
 
 ```python
 env = os.environ.copy()
@@ -313,23 +312,24 @@ whereas this user's SSH alias `xbabe2` points to `agent@192.168.68.89` using
 
 ### S3 buckets and how to reach them
 
-All JopeDime data is in AWS account `714044927654`, reachable with the one credential above.
-**There is no separate dev and prod credential**; dev and prod are expressed in bucket names.
+The product buckets listed below were observed in AWS account `714044927654` on
+2026-09-22. The named profile aliases resolved to one credential at that observation;
+this is not a permanent access guarantee. Local custody and training state also exist.
 
 | Bucket | What it holds |
 | --- | --- |
 | `s3://veox-jopedime-datasets-use2` | The dataset corpus. `JOPE_DATASETS_URL` defaults here (`crates/jope-datasets/src/lib.rs`). Content-addressed: `blobs/ catalog/ collections/ datasets/`. |
-| `s3://veox-jopedime-learning-use2` | The learning store, `JOPE_LEARNING_URL`. Everything currently under `staging/lineage-a/`, part of which [`docs/learning.md`](docs/learning.md) declares unrecoverable — it is not a canonical prefix and must not be promoted as one. |
+| `s3://veox-jopedime-learning-use2` | The learning store, `JOPE_LEARNING_URL`. The 2026-09-22 observation found `staging/lineage-a/`, part of which [`docs/learning.md`](docs/learning.md) declares unrecoverable — it is not a canonical prefix and must not be promoted as one. |
 | `s3://veox-jopedime-models-use2` | Model bundles (`crates/jope-models`). |
 | `s3://veox-jopedime-archive-use2` | Git bundles and archives. |
 | `…-usw2` | `veox-jopedime-learning-usw2` and `veox-jopedime-models-usw2` are the us-west-2 counterparts. |
-| `s3://jopedime-714044927654-us-east-2-{dev,prod,sealed}` | A separate family in the same account. **No code path uses these**; recorded so they are not mistaken for the corpus. |
+| `s3://jopedime-714044927654-us-east-2-{dev,prod,sealed}` | A separate family in the same account. These are not the configured product corpus buckets; do not substitute them for the defaults. |
 
 Relevant environment: `JOPE_DATASETS_URL`, `JOPE_LEARNING_URL`, `JOPE_DATASETS_ANON=1` (unsigned
 requests, for a public bucket), and `JOPE_AWS_PROFILE` / `JOPE_AWS_ALLOW_IMDS`.
 
-**The failure mode to recognise.** `object_store` reads AWS credentials from the environment and
-then falls back to the EC2 instance metadata service. It never executes `credential_process`,
+**The pre-PR63 failure mode.** The unadapted `object_store` builder supports native
+environment, OIDC and container providers, then falls back to EC2 instance metadata. It never executes `credential_process`,
 which is how every profile on this host supplies credentials, and the `[default]` profile has
 none. With only a profile selected you therefore get a ~13 s wait and an error naming
 `169.254.169.254` — which reads as a network fault and is in fact "no credentials":
@@ -339,7 +339,7 @@ error: get datasets/<id>/manifest.json: Generic S3 error: Error performing
 PUT http://169.254.169.254/latest/api/token in 12.9s, after 10 retries
 ```
 
-Set `AWS_PROFILE=veox-jepson-prod` (`crates/jope-datasets/src/credentials.rs` resolves it through
+With PR63 present, set `AWS_PROFILE=veox-jepson-prod` (`crates/jope-datasets/src/credentials.rs` resolves it through
 the AWS CLI and fails by name when it cannot), or put credentials in the environment yourself with
 `eval "$(aws configure export-credentials --format env)"`. On this host that yields a long-lived
 static key pair with no session token, so do not write it to disk, bake it into an image or hand
