@@ -17,8 +17,24 @@ set -euo pipefail
 # shellcheck disable=SC1091  # sourced relative to this file; run shellcheck -x to follow
 . "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
-lane=${1:?usage: run.sh <gpu|kernel>}
+lane=${1:?usage: run.sh <ci|ci2|full>}
+jope_runner_role "$JOPE_RUNNER_HOST" "$lane"
 labels=$(jope_runner_labels "$lane")
+# Refuse unrecorded systemd overrides, including the historical per-instance budget.
+dropins=$(systemctl show "jope-runner@$lane.service" -p DropInPaths --value)
+[[ $dropins == /etc/systemd/system/jope-runner@.service.d/runtime-max.conf ]] || {
+  echo "unrecorded runner drop-ins: $dropins" >&2; exit 2;
+}
+[[ $(systemctl show "jope-runner@$lane.service" -p FragmentPath --value) == /etc/systemd/system/jope-runner@.service ]] || exit 2
+# A root-owned per-lane lock prevents duplicate service/manual listeners sharing storage.
+exec 9>"$JOPE_RUNNER_STATE/$lane.lock"
+flock -n 9 || { echo "lane already owned: $lane" >&2; exit 2; }
+volume_prefix="jope-$JOPE_RUNNER_DOMAIN-$lane"
+policy="$JOPE_RUNNER_STATE/$lane-policy.json"
+jq -n --arg domain "$JOPE_RUNNER_DOMAIN" --arg lane "$lane" --arg host "$JOPE_RUNNER_HOST" \
+  --arg memory "$JOPE_RUNNER_MEMORY" --arg prefix "$volume_prefix" \
+  '{domain:$domain,lane:$lane,host:$host,memory:$memory,cpus:16,volume_prefix:$prefix}' > "$policy"
+chmod 0444 "$policy"
 [[ $(id -u) -eq 0 ]] || { echo "run.sh must run as root (reads $JOPE_RUNNER_PAT_FILE)" >&2; exit 2; }
 "$(dirname "${BASH_SOURCE[0]}")/disk-guard.sh"
 
@@ -66,22 +82,19 @@ docker_args=(
   run --rm --init --name "$name" --label jope.runner=1 --label "jope.lane=$lane"
   --user "$JOPE_RUNNER_UID"
   --cap-drop ALL --security-opt no-new-privileges --pids-limit "$JOPE_RUNNER_PIDS"
-  --memory "$JOPE_RUNNER_MEMORY" --cpus "$JOPE_RUNNER_CPUS"
+  --memory "$JOPE_RUNNER_MEMORY" --memory-swap "$JOPE_RUNNER_MEMORY" --cpus "$JOPE_RUNNER_CPUS"
   --read-only --tmpfs "/tmp:size=$JOPE_RUNNER_TMPFS_SIZE,exec" --tmpfs "/home/runner:size=4g,exec,uid=$JOPE_RUNNER_UID,gid=$JOPE_RUNNER_UID"
-  -v jope-work:/home/runner/work
-  -v jope-cargo:/var/cache/jope/cargo -v jope-target:/var/cache/jope/target -v jope-uv:/var/cache/jope/uv
-  -v jope-sdk:/opt/jope-sdk:ro -v jope-models:/var/lib/jope/models
-  -e "JOPE_RUNNER_LANE=$lane" -e "JOPE_GPU_DEVICE=$JOPE_RUNNER_GPU"
+  -v "$volume_prefix-work:/home/runner/work"
+  -v "$volume_prefix-cargo:/var/cache/jope/cargo" -v "$volume_prefix-target:/var/cache/jope/target" -v "$volume_prefix-uv:/var/cache/jope/uv"
+  -v jope-sdk:/opt/jope-sdk:ro
+  -v /opt/jope-runner/job-started.sh:/opt/jope-runner/job-started.sh:ro
+  -v /opt/jope-runner/job-policy.py:/opt/jope-runner/job-policy.py:ro
+  -v "$policy:/opt/jope-runner/policy.json:ro"
+  -e ACTIONS_RUNNER_HOOK_JOB_STARTED=/opt/jope-runner/job-started.sh
+  -e "JOPE_RUNNER_LANE=$lane"
   -e "JOPE_RUNNER_HOST=$JOPE_RUNNER_HOST" -e "JOPE_RUNNER_SCRIPTS_SHA256=$scripts_sha"
   -e "JOPE_RUNNER_IMAGE_ID=$image_id" -e "JOPE_RUNNER_IMAGE_ID_RECORDED=$recorded_image_id"
   -i
 )
-case $lane in
-  gpu)    docker_args+=(--gpus "$JOPE_RUNNER_GPU") ;;
-  ci|ci2|ci3|ci4) : ;;  # CPU only: no GPU, no docker socket. The least privilege of the lanes.
-  kernel) # no GPU; docker only through the socket proxy (containers + images, nothing else)
-          [[ -S $JOPE_RUNNER_DOCKER_PROXY_SOCK ]] || { echo "run.sh: docker socket proxy $JOPE_RUNNER_DOCKER_PROXY_SOCK is not up (jope-docker-proxy.service)" >&2; exit 1; }
-          docker_args+=(-v "$JOPE_RUNNER_DOCKER_PROXY_SOCK:/var/run/docker.sock" -e DOCKER_HOST=unix:///var/run/docker.sock) ;;
-esac
 docker_args+=("$JOPE_RUNNER_IMAGE")
 printf '%s' "$jit" | exec docker "${docker_args[@]}"

@@ -11,9 +11,11 @@ import sys
 import results
 
 ROOT = Path(__file__).resolve().parents[2]
-ENV_KEYS = ("CARGO_INCREMENTAL", "CARGO_PROFILE_DEV_DEBUG", "CARGO_TARGET_DIR",
+ENV_KEYS = ("CARGO_BUILD_JOBS", "CARGO_INCREMENTAL", "CARGO_PROFILE_DEV_DEBUG", "CARGO_TARGET_DIR",
             "OMP_NUM_THREADS", "RAYON_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
             "JOPE_PARITY_STRICT", "JOPE_RUNNER_LANE", "JOPE_CPU_CLASS")
+
+INPUTS = ("Cargo.lock", "rust-toolchain.toml", "python/uv.lock", "deploy/ci/coverage.json", "deploy/ci/fast-lane.sh", "deploy/ci/receipt.py", "deploy/ci/results.py", "deploy/ci/ci-plan.py", "deploy/ci/full-lane.sh", "deploy/ci/full-main.py")
 
 
 def digest(path):
@@ -67,7 +69,7 @@ def run_lane(lane, command, output, counts_path=None, evidence=(), backend="none
     receipt = {"schema": "jope.ci-receipt/v1", **run_identity, "lane": lane,
                "command": command, "cwd": str(Path.cwd()), "started_at": utc(), "dirty_source": dirty,
                "environment": {k: os.environ[k] for k in ENV_KEYS if k in os.environ},
-               "inputs": {str(p): digest(ROOT / p) for p in ("Cargo.lock", "rust-toolchain.toml", "python/uv.lock", "deploy/ci/coverage.json", "deploy/ci/fast-lane.sh", "deploy/ci/receipt.py", "deploy/ci/results.py", "deploy/ci/ci-plan.py")},
+               "inputs": {str(p): digest(ROOT / p) for p in INPUTS},
                "status": "started", "exit_status": None, "counts": dict.fromkeys(("collected", "executed", "passed", "failed", "skipped", "excluded")),
                "evidence": {}}
     path = output / "receipt.json"

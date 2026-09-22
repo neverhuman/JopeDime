@@ -6,6 +6,7 @@ permissions:
   contents: read
 
 env:
+  CARGO_BUILD_JOBS: "4"
   CARGO_INCREMENTAL: "0"
   CARGO_PROFILE_DEV_DEBUG: line-tables-only
   JOPE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}

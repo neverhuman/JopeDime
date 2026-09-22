@@ -26,26 +26,35 @@ done
 for tool in docker jq curl unzip sha256sum systemctl; do
   command -v "$tool" >/dev/null || { echo "missing tool: $tool" >&2; exit 2; }
 done
-docker info --format '{{json .Runtimes}}' | jq -e '.nvidia' >/dev/null || { echo "docker has no 'nvidia' runtime (nvidia-container-toolkit)" >&2; exit 2; }
+case $JOPE_RUNNER_HOST in
+  xbabe1) lanes=(ci ci2) ;;
+  xbabe2) lanes=(full) ;;
+  *) echo "unapproved CPU runner host" >&2; exit 2 ;;
+esac
+JOPE_VOLUMES=(jope-sdk)
+for lane in "${lanes[@]}"; do
+  jope_runner_role "$JOPE_RUNNER_HOST" "$lane"
+  for kind in work cargo target uv; do JOPE_VOLUMES+=("jope-$JOPE_RUNNER_DOMAIN-$lane-$kind"); done
+done
 
 # 1. volumes
 for v in "${JOPE_VOLUMES[@]}"; do
   docker volume inspect "$v" >/dev/null 2>&1 || docker volume create "$v" >/dev/null
   echo "volume $v: $(docker volume inspect --format '{{.Mountpoint}}' "$v")"
 done
-# ownership for uid 1001 (the image user); done through a throwaway container, never on the host path directly
-docker run --rm --user 0 --network none --cap-drop ALL --cap-add CHOWN --cap-add FOWNER --cap-add DAC_OVERRIDE \
-  -v jope-work:/v/work -v jope-cargo:/v/cargo -v jope-target:/v/target -v jope-uv:/v/uv -v jope-sdk:/v/sdk -v jope-models:/v/models \
-  ubuntu:24.04 bash -c "chown $JOPE_RUNNER_UID:$JOPE_RUNNER_UID /v/*"
-
 # 2. image (local build; never pushed) — built before the SDK step, which runs inside it
 if [[ $skip_image -eq 0 ]]; then
   sha=$(git -C "$repo" rev-parse --short=12 HEAD)
   DOCKER_BUILDKIT=1 docker build -q -f "$repo/deploy/docker/runner.Dockerfile" -t "jope-runner:$sha" -t "$JOPE_RUNNER_IMAGE" "$repo"
-  DOCKER_BUILDKIT=1 docker build -q -f "$repo/deploy/docker/kernel-builder.Dockerfile" -t jope-kernel-builder:rust1.95-glibc2.35 "$repo"
-  echo "images: jope-runner:$sha ($(docker image inspect --format '{{.Id}}' "jope-runner:$sha")), jope-kernel-builder:rust1.95-glibc2.35"
+  echo "images: jope-runner:$sha ($(docker image inspect --format '{{.Id}}' "jope-runner:$sha"))"
 fi
 docker image inspect "$JOPE_RUNNER_IMAGE" >/dev/null 2>&1 || { echo "image $JOPE_RUNNER_IMAGE is absent (drop --skip-image)" >&2; exit 1; }
+
+# Initialize volume root ownership only; retain all previous volumes and their evidence.
+for v in "${JOPE_VOLUMES[@]}"; do
+  docker run --rm --user 0 --network none --cap-drop ALL --cap-add CHOWN \
+    -v "$v:/v" --entrypoint chown "$JOPE_RUNNER_IMAGE" "$JOPE_RUNNER_UID:$JOPE_RUNNER_UID" /v
+done
 
 # 3. neural SDK volume (read-only for the runner; provisioned once from the receipt)
 if [[ $skip_sdk -eq 0 ]]; then
@@ -80,7 +89,7 @@ install -d -m 0700 -o root -g root /etc/jope-runner
 [[ -f $JOPE_RUNNER_PAT_FILE ]] || { install -m 0600 -o root -g root /dev/null "$JOPE_RUNNER_PAT_FILE"; echo "created empty $JOPE_RUNNER_PAT_FILE — paste the fine-grained PAT (Administration: write on $JOPE_RUNNER_REPO only) into it"; }
 install -d -m 0750 -o root -g root "$JOPE_RUNNER_STATE"
 install -d -m 0755 /opt/jope-runner
-install -m 0755 "$here"/common.sh "$here"/run.sh "$here"/disk-guard.sh "$here"/prune.sh /opt/jope-runner/
+install -m 0755 "$here"/common.sh "$here"/run.sh "$here"/disk-guard.sh "$here"/prune.sh "$here"/job-started.sh "$here"/job-policy.py /opt/jope-runner/
 install -m 0644 "$here"/jope-runner@.service "$here"/jope-runner@.timer "$here"/jope-runner-prune.service "$here"/jope-runner-prune.timer "$here"/jope-docker-proxy.service /etc/systemd/system/
 # The drop-in was committed but never installed here, so a freshly provisioned host ran with the
 # upstream RuntimeMaxSec=1800 -- the mid-job SIGTERM the drop-in exists to prevent. Installed as a
@@ -106,4 +115,4 @@ jq -n --arg image "$JOPE_RUNNER_IMAGE" --arg image_id "$image_id" --arg scripts_
 chmod 0640 "$JOPE_RUNNER_STATE/image.json"
 echo "recorded $JOPE_RUNNER_STATE/image.json: image_id=$image_id scripts_sha256=$scripts_sha"
 
-echo "installed units: jope-runner@{gpu,kernel}.timer, jope-runner-prune.timer, jope-docker-proxy.service (none enabled — see docs/runbooks/runner.md)"
+echo "installed units: jope-runner@{ci,ci2,full}.timer, jope-runner-prune.timer, jope-docker-proxy.service (none enabled — see docs/runbooks/runner.md)"

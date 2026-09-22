@@ -1,5 +1,5 @@
 [Unit]
-Description=JopeDime runner nightly prune
+Description=JopeDime runner nightly storage report (no deletion)
 
 [Timer]
 OnCalendar=*-*-* 05:30:00 UTC

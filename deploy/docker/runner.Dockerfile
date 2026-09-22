@@ -164,7 +164,6 @@ COPY --chmod=0755 deploy/runner/entrypoint.sh /usr/local/bin/jope-runner-entrypo
 #   /opt/jope-sdk       volume jope-sdk, read-only: LibTorch + NVIDIA wheels (JOPE_NEURAL_SDK_ROOT)
 #   /var/lib/jope/models volume jope-models: pinned model bundles (JOPE_MODELS_ROOT)
 ENV CARGO_HOME=/var/cache/jope/cargo \
-    CARGO_TARGET_DIR=/var/cache/jope/target \
     UV_CACHE_DIR=/var/cache/jope/uv \
     JOPE_NEURAL_SDK_ROOT=/opt/jope-sdk \
     JOPE_MODELS_ROOT=/var/lib/jope/models \

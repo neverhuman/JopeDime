@@ -1,104 +1,96 @@
-# Self-hosted runner runbook
+# Self-hosted CPU runner runbook
 
-`.github/workflows/ci.yml`, `main-guard.yml` and `weekly.yml` run on a self-hosted GitHub Actions
-runner. This runbook says how to provision one, what each lane is allowed to touch, and what goes
-wrong in practice.
+The CPU foundation uses JIT registration and one isolated container per job. Fast CI remains
+required by the reviewed merge procedure. `full-main.yml` runs on every push to main and manual
+dispatch of main, reports all declared CPU families, and is diagnostic until the repair phase.
+Branch protection remains procedural until the API readback establishes enforcement.
 
-It exists because the hosted lanes stopped: `veox-ai` is on the free org plan, its monthly Actions
-minutes ran out on 2026-09-21 at 12:01Z, and every job after that failed in 2–4 s with
-`runner_id: 0`. Nothing could merge, because a required context that cannot *start* blocks a merge
-exactly as much as one that fails.
+## Approved allocation
 
-## Shape
+| Host | Slots / labels | Per-job cap | Writable storage domain |
+| --- | --- | --- | --- |
+| xbabe1 | ci, ci2 / jope-ci | 16 GiB, 16 CPUs, no swap | pr-ci, pr-ci2 |
+| xbabe2 | full / jope-full-cpu | 48 GiB, 16 CPUs, no swap | main-full |
 
-One container per job, and the container exits when the job ends. The runner is registered with a
-**JIT config** from `generate-jitconfig`: single-use, self-deregistering, never `config.sh`-
-registered, no credential in the image. A systemd timer starts a listener; if GitHub has no queued
-job it idles until `RuntimeMaxSec` stops it and the timer starts another.
+The full slot also executes main-guard, serially. No other JopeDime runner role is admitted on
+xbabe2. `common.sh` rejects all other host/lane combinations, including the previous ci3/ci4,
+GPU and kernel roles. Their live qualification and persistent runner migration remain deferred.
+The stopped runner-sizing branch's 24 GiB/28 CPU proposal is preserved but not deployed.
 
-| Unit | Role |
-| --- | --- |
-| `jope-runner@<lane>.service` / `.timer` | one listener per lane (`ci`, `ci2`, `ci3`, `ci4`, `gpu`, `kernel`) |
-| `jope-runner@.service.d/runtime-max.conf` | raises `RuntimeMaxSec` to 5400 — **see "Idle time is job time"** |
-| `jope-runner-prune.service` / `.timer` | reclaims docker and volume space |
-| `jope-docker-proxy.service` | the socket proxy the `kernel` lane uses (containers and images only) |
+Each domain has separate named work, Cargo registry, target and uv volumes, for example
+`jope-pr-ci-target` and `jope-main-full-target`. PR/manual fast CI is always treated as untrusted,
+including a manual ci.yml dispatch of main; trusted main workflows use only the full domain.
+An ephemeral registration does not clean persistent volumes. Never share these writable domains
+or mount the legacy models volume into CPU jobs. Existing old volumes/evidence are retained
+until the independent custody procedure permits removal.
 
-Lane privileges, from `deploy/runner/run.sh`:
+Containers run as uid1001, with all capabilities dropped, no-new-privileges, read-only root,
+4096 pids, 4 GiB temporary filesystem, and 4 GiB executable home tmpfs. They have no GPU devices,
+Docker socket, host PAT, training, publishing or S3 credentials. The SDK volume is read-only.
+The root PAT is used only by the host to request a single-use JIT configuration; do not print
+JIT arguments, process arguments or Docker Config.Env during inspection.
 
-| Lane | GPU | docker |
-| --- | --- | --- |
-| `ci`, `ci2`, `ci3`, `ci4` | none | none — the least privilege of the lanes |
-| `gpu` | `--gpus $JOPE_RUNNER_GPU` | none |
-| `kernel` | none | socket **proxy** only |
+The read-only root-installed `job-started.sh`/`job-policy.py` hook admits only ci.yml PR/manual
+jobs to the fast domain, and main-branch push/manual full-main or push main-guard jobs to the
+trusted domain. It reads a root-selected policy file and Actions context, not checkout code or
+workflow overrides. Rejection kills the container's same-uid Listener/Worker processes before
+an `always()` step could run. Runner v2.337.0 reads the hook path from its process environment,
+invokes it before action pre-steps, and supplies GitHub context through the hook handler:
+[JobExtension](https://github.com/actions/runner/blob/v2.337.0/src/Runner.Worker/JobExtension.cs),
+[JobHookProvider](https://github.com/actions/runner/blob/v2.337.0/src/Runner.Worker/JobHookProvider.cs).
+This isolates admitted workload domains; it does not claim that self-hosted containers withstand
+every host-kernel exploit. See GitHub's [self-hosted hardening guidance](https://docs.github.com/en/actions/reference/security/secure-use#hardening-for-self-hosted-runners).
 
-Every lane runs `--user 1001`, `--cap-drop ALL`, `--security-opt no-new-privileges`, `--read-only`
-with explicit tmpfs and named volumes.
+## Reviewed deployment and drain
 
-## Provision a host
+Before changing an installed runner, obtain independent review of the exact candidate, preserve
+installed files and safe fingerprints outside the checkout, and record service/runner state.
+Stop the affected JopeDime timers first. Read GitHub runner `busy` state and wait for owned jobs
+to finish; then stop idle owned services and confirm no owned container remains. Never stop the
+unrelated `actions-runner*` fleet. Do not inspect credentials or replace unrecorded drop-ins
+without preserving them. The launcher rejects any extra effective service drop-in.
 
-```sh
-sudo deploy/runner/provision.sh            # volumes, host files, units. Enables nothing.
-sudo tee /etc/jope-runner/github-pat       # fine-grained PAT, Administration: write, this repo only
-sudo systemctl enable --now jope-runner@ci.timer jope-runner-prune.timer
-```
+From the reviewed checkout, `sudo deploy/runner/provision.sh --skip-sdk` builds the image,
+creates the role-specific volumes, installs host files/units and writes
+`/var/lib/jope-runner/image.json`. It enables no listener. Initial SDK provisioning follows its
+pinned receipt; the CPU delivery reuses the existing SDK read-only. Re-run provisioning after
+any image rebuild. Start only ci/ci2 timers on xbabe1 and only full on xbabe2; keep retired timers
+disabled. Verify actual container caps/mounts, installed hashes and a real job before claiming
+operational delivery. `--skip-image` requires an existing correctly built image.
 
-`provision.sh` installs the scripts to `/opt/jope-runner`, the units and the drop-in to
-`/etc/systemd/system`, and writes `/var/lib/jope-runner/image.json` recording the image id and the
-digest of everything it deployed. Build the image first:
+The provenance action compares all `JOPE_RUNNER_DEPLOYED` bytes with the source commit, checks
+the image entrypoint and provisioned image identity, and verifies the immutable policy and
+actual cgroup memory/CPU/swap values. It also compares the two mounted hook files with source.
+It does not hash every image file. Never weaken provenance to make an old deployment pass.
 
-```sh
-docker build -f deploy/docker/runner.Dockerfile -t jope-runner:current .
-```
+Idle listeners are not stopped by a service-start deadline: that deadline previously cut into
+accepted jobs. Each JIT listener still executes only one job. Workflows own execution timeouts;
+full-main has120minutes, with110minutes of independent family limits plus kill grace and an
+upload reserve. Timers launch the next ephemeral listener after its predecessor exits.
 
-**Re-run `provision.sh` after every image rebuild.** The image id is recorded there, and CI
-compares the running image against it — a rebuild that provisioning has not seen fails the
-provenance step by design.
+## Evidence and operation
 
-## Provenance: the lane proves what it is running
+`deploy/ci/coverage.json` explicitly selects default workspace tests, doctests, CPU feature
+variants, maintained Python files and CPU integration checks. The full main profile omits the
+PR filter. Ignored Rust tests and Python xbabe2 deselections are non-execution, recorded in the
+collection/results; GPU, live S3, research scripts and capability qualification remain separate.
+A missing SDK is unavailable, a compilation/test failure is failed, and missing counts are
+unknown. Families continue independently; no continue-on-error turns a failing job green.
 
-`.github/actions/runner-provenance` recomputes, from the checkout, the digest of every file in
-`JOPE_RUNNER_DEPLOYED` and compares it with the digest `run.sh` injected; it also hashes the
-image's entrypoint from inside the container and compares the running image id with the recorded
-one.
+Every run uploads `full-cpu-RUN-ATTEMPT`, including fresh family receipts, command logs, current
+JUnit/collection reports and inventory.json. Build reuse is measured by Cargo artifact
+`fresh` plus executable digest in full-build-reuse/reuse.json, and is not substituted for fresh
+test execution. The target directory is job-scoped, with one persistent target per lane;
+the image and host do not set CARGO_TARGET_DIR globally. Cargo builds use four compiler jobs,
+CARGO_INCREMENTAL=0 and CARGO_PROFILE_DEV_DEBUG=line-tables-only.
 
-This exists because reading a committed script proves nothing about what the host executed. Two
-defects shipped in the same pull request that added these lanes — a `work_folder` whose `$lane`
-never expanded, and a `cargo-deny` invocation that was a parse error — and both were visible in
-the committed files while surviving review. If the step fails, the host is out of date: re-deploy
-and re-run, do not weaken the check.
+`python3 deploy/ci/status.py RUN_ID --expected-sha FULL_SHA` requires no Actions runner and never
+substitutes an older successful run. After ten minutes queued, it reports requested labels,
+matching online/busy runners, service state and disk observations. A refused listener start
+can leave jobs queued: the guard requires at least50 GiB free on Docker/state/tmp filesystems;
+full families repeat a50 GB reserve check. The historical prune timer now only reports storage.
+Nothing automatically deletes targets, volumes, Docker build cache or retained evidence.
 
-It does **not** bind the rest of the image's contents.
-
-## Things that actually go wrong
-
-**Idle time is job time.** `RuntimeMaxSec` counts from service start, and a listener spends most
-of its life idle. At the upstream 1800 s a listener that waited 20 minutes and then picked up a
-13-minute job was SIGTERM'd mid-job, surfacing as a run marked failed with steps that have no
-conclusion. The drop-in budgets both phases.
-
-**One workspace per lane, not one per host.** `work_folder` must be **absolute** — `entrypoint.sh`
-copies the runner to `/home/runner/runner`, so a relative `work` resolves inside the 4 GB
-`/home/runner` tmpfs — and **per-lane**, because concurrent lanes sharing one root delete each
-other's checkouts (`Unable to create .git/index.lock: File exists`, `Unable to clean or reset the
-repository`).
-
-**A refused start is a queued job, not a red X.** `disk-guard.sh` refuses to start a listener below
-`JOPE_RUNNER_MIN_FREE_GB`. Nothing then picks the job up, so it sits queued rather than failing
-visibly. Check `systemctl status jope-runner@ci.service` and free space before assuming GitHub is
-at fault.
-
-**`jope-runner-prune.timer` is not enabled by provisioning** and does nothing until you enable it.
-Disk fills quietly until it crosses the guard, at which point jobs stop being picked up — see
-above for how that presents.
-
-**The image needs more than the CUDA base ships.** `cmake` (for `aws-lc-sys` via `rustls`),
-`libsqlite3-dev` (or `rust-lld: unable to find library -lsqlite3`), and `gh` (or `main-guard`
-fails on every push to main) are all required and all easy to omit.
-
-**`/home/runner` must be mounted `exec`.** A tmpfs defaults to `noexec`, and the runner copies
-itself there, so it fails with `Permission denied` on `run.sh`.
-
-## Do not
-
-Do not start the `actions-runner*` fleet on any host. Those units belong to a different repository
-and are not part of this system.
+For fast CI reruns use **Re-run all jobs**: receipts from a successful older attempt cannot
+satisfy the current attempt. Full CPU failure repairs, strict Clippy enforcement, full CPU
+qualification and learning/soak remain following work, not claims of this configuration.

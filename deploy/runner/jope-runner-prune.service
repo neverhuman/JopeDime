@@ -1,5 +1,5 @@
 [Unit]
-Description=JopeDime runner nightly prune (docker + cargo sweep --time 7)
+Description=JopeDime runner nightly storage report (no deletion)
 After=docker.service
 Requires=docker.service
 

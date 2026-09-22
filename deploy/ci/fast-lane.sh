@@ -27,6 +27,8 @@ python3 deploy/ci/test-receipt.py
 python3 deploy/ci/test-results.py
 python3 deploy/ci/test-aggregate.py
 python3 deploy/ci/test-status.py
+python3 deploy/ci/test-runner.py
+python3 deploy/ci/test-full-main.py
     # Hygiene
 bash deploy/ci/check.sh
     # cargo-deny

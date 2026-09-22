@@ -20,7 +20,7 @@ class AggregateTests(unittest.TestCase):
         self.plan = dict(schema='jope.ci-plan/v1', **self.expected, base_sha='', paths=[], lanes=dict.fromkeys(aggregate.plan_module.LANES, True))
         self.needs = {lane: {'result':'success'} for lane in aggregate.plan_module.LANES}
         self.receipts = {}
-        inputs = {name: digest(aggregate.ROOT / name) for name in ('Cargo.lock', 'rust-toolchain.toml', 'python/uv.lock', 'deploy/ci/coverage.json', 'deploy/ci/fast-lane.sh', 'deploy/ci/receipt.py', 'deploy/ci/results.py', 'deploy/ci/ci-plan.py')}
+        inputs = {name: digest(aggregate.ROOT / name) for name in aggregate.INPUTS}
         for lane in aggregate.plan_module.LANES:
             folder = self.root / lane
             folder.mkdir()
