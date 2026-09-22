@@ -91,6 +91,12 @@ can leave jobs queued: the guard requires at least50 GiB free on Docker/state/tm
 full families repeat a50 GB reserve check. The historical prune timer now only reports storage.
 Nothing automatically deletes targets, volumes, Docker build cache or retained evidence.
 
+On the canonical Ubuntu xbabe2 host, use `--host xbabe1 --host local` to inspect both CPU
+hosts. The user's SSH alias `xbabe2` resolves to `agent@192.168.68.89`, a different endpoint;
+a failed probe of that alias does not establish a failure of the local full runner. Account
+selection, credential locations and the exact-head merge procedure are in
+[AGENTS.md](../../AGENTS.md#approval-procedure-on-this-host).
+
 For fast CI reruns use **Re-run all jobs**: receipts from a successful older attempt cannot
 satisfy the current attempt. Full CPU failure repairs, strict Clippy enforcement, full CPU
 qualification and learning/soak remain following work, not claims of this configuration.
@@ -101,6 +107,15 @@ Manually dispatch `runner-admission-probe.yml` after reviewed deployment. Its tw
 each domain from a workflow neither domain admits. Expected outcome is rejection. Verify the
 real Worker hook denial, zero execution of the `always()` bypass step, and container exit;
 a generic failed job is not proof. Preserve run/attempt API data and scoped service logs.
+The Worker can die before forwarding the hook's denial text. In that case, retain the exact
+runner name and systemd invocation, installed hook hashes matching the reviewed source,
+root-selected domain policy, deterministic `authorize()` rejection for the actual workflow
+context (never call `main()` for a replay), and the hook-start-to-exit137 interval. Rule out
+kernel OOM, a service stop and execution timeout in that interval. Confirm no bypass step
+started, no marker was emitted as step output, and the container is absent. The Worker logs
+the submitted script as JSON before admission; a marker inside that script metadata is not
+execution. Label the denial message as inferred when it was not observed. Inspect only these
+selected events; full runner logs and process arguments can contain registration secrets.
 The probe has no token permissions, checkout or user payload, and a two-minute timeout.
 Cancel the probe after both denials are retained if GitHub still waits on the terminated
 Workers. Listener admission consumes a slot briefly; this remains a possible denial-of-service

@@ -31,10 +31,9 @@ See [`MASTER_CLEAN_UP.md`](MASTER_CLEAN_UP.md) for the full record.
    Git does not create the ignored symlink. Verify its type and resolved target every time.
 4. **`target/health/` is evidence.** Never `rm -rf target`. The helper reports Cargo candidates only;
    preserve and verify evidence at every depth before an explicit logged removal.
-5. **`CARGO_TARGET_DIR` must not be set globally** until #46 lands — `deploy/ci/emitters.sh:29`
-   hard-codes `target/debug/examples/emit` and `crates/jope-paths` walks the executable's
-   ancestors, so redirecting Cargo's output breaks both. The `CARGO_TARGET_DIR` override in
-   `.github/workflows/ci.yml` is load-bearing for the same reason.
+5. **Keep `CARGO_TARGET_DIR` unset globally.** #46 landed through PR #56 with normal and
+   external-directory proofs. CI selects its reused target per job through
+   `.github/actions/cargo-target`; preserve separate PR and trusted-main writable storage.
 
 ## Two measurement traps
 
@@ -55,6 +54,11 @@ before posting with `gh api user --jq .login` in the exact environment used to p
 comments and PR creation to use the reviewing login. GitHub then refused review with
 `Can not request changes on your own pull request` (#40/#41). Never infer eligibility from a
 token variable or Git name.
+
+The concrete approval commands and host-local credential paths are in
+[`AGENTS.md`](AGENTS.md#approval-procedure-on-this-host). In an independent review process,
+do not read credential files, run `gh auth` subcommands, change the shared login or use another
+account. Use only the review credential supplied by the launcher and verify it with `gh api user`.
 
 ## Coordination
 
