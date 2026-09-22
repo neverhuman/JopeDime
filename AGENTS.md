@@ -178,25 +178,32 @@ agent on this host shares. An inherited `GH_TOKEN` cannot override the role: the
 Plain `gh` can use the active account or an inherited token override. Verify the resulting
 identity at every use; the helper clears those overrides for the selected role.
 
-**Observed limits (2026-09-22 22:51 UTC).** The installed helper refuses approvals
-by the account that opened the PR, unassociated commit authors without an explicit
-`--ack-unassociated`, PR creation under the reviewer role, and failed lookups on
-recognized approval operations. It does **not** exclude associated commit authors
-or committers. Its commit lookup reads at most 100 commits, and unknown command
-shapes pass through. Its merge path can continue after a failed eligibility lookup.
+**Observed behavior (2026-09-22 23:10 UTC).** The installed helper refuses approvals by the
+account that opened the PR, by any associated author or committer of a commit on the PR,
+by anyone while the PR carries commits with no GitHub account attached unless
+`--ack-unassociated` is passed explicitly, PR creation under the reviewer role, and any
+recognized approval operation whose eligibility lookup fails (it fails closed). Its commit
+lookup reads at most 100 commits, and unknown command shapes pass through. Its merge path only
+warns when the merger authored or committed on the PR (`GH_ROLE_STRICT_MERGER=1` makes that
+fatal) and can continue after a failed eligibility lookup. Offline tests of every one of these
+decisions live in `/home/ubuntu/.local/bin/test-gh-role.py`. A copy that excluded only the PR
+opener existed on this host between 22:25 and 23:10 UTC on 2026-09-22; the owner ruled that the
+full exclusion set is the rule and it was restored (backup
+`~/.config/github-access/backups/gh-role.20260922T2310Z.strong`).
 
 **A successful helper check does not satisfy this repository's reviewer rule.**
 Independently compare the reviewer with the PR author and every associated commit
 author (and committer) using the paginated API inventory in step 2. The installed
 script can change independently of this repository; recheck it at use time. Never
-use its weaker behavior to self-approve or bypass the exact-head merge procedure.
+use a weaker copy of it to self-approve or bypass the exact-head merge procedure.
 
 **Its limits, so this is not read as more than it is.** Every agent here runs as `ubuntu`, so
 anything that can run `gh-role` can run `gh` directly and skip it: it prevents the mistake, not a
-determined actor. It is installed on **xbabe2 only** and is not yet version-controlled. And it can
-only check that the reviewer and PR opener logins differ. It cannot establish *independence*: a
-session that wrote the change does not become an independent reviewer by selecting the other
-account, which is what the paragraph above already says and remains the binding rule.
+determined actor. It is installed on **xbabe2 only** and is not yet version-controlled. It
+checks logins: reviewer versus opener, authors and committers. It cannot establish
+*independence*: a session that wrote the change does not become an independent reviewer by
+selecting the other account, which is what the paragraph above already says and remains the
+binding rule.
 
 1. Claim the checkout as above, preserve existing commit authorship, and use the writer for
    new commits and the PR. Check `gh api user --jq .login` before creating it. Current Git
@@ -215,16 +222,17 @@ account, which is what the paragraph above already says and remains the binding 
    If the reviewer opened the PR accidentally, preserve its discussion/evidence, close it
    as superseded and recreate it as the writer. Preserve the commits and their attribution.
 
-   The helper can perform its narrower PR-opener check:
+   The helper performs the same login comparison and prints its verdict:
 
    ```sh
    /home/ubuntu/.local/bin/gh-role eligible reviewer veox-ai/JopeDime PR_NUMBER
    ```
 
-   It prints the exclusion set with a reason per login. Use it before every approval; it is
-   only an additional PR-opener check with limited unassociated-author reporting. It does
-   **not** establish commit-author eligibility or reviewer independence. Always retain the
-   complete paginated author/committer inventory above.
+   It prints the exclusion set with a reason per login (opened the PR, authored commit,
+   committed commit) and lists commits with no GitHub account attached. Use it before every
+   approval as a second check, never as the only one: it reads at most 100 commits and it
+   does **not** establish reviewer independence. Always retain the complete paginated
+   author/committer inventory above.
 3. Dispatch `gh workflow run ci.yml --ref BRANCH`, then identify and retain that run's
    **full source SHA, run ID and attempt**. Record the dispatch time, then use
    `gh run list --workflow ci.yml --branch BRANCH --event workflow_dispatch --json databaseId,headSha,createdAt,attempt`
