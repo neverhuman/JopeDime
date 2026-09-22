@@ -65,8 +65,8 @@ step "jope binary"
 if [ -n "${JOPE_BIN:-}" ]; then
   [ -x "$JOPE_BIN" ] || fail "JOPE_BIN=$JOPE_BIN is not executable"
 else
-  cargo build -q --locked -p jope-cli --bin jope || fail "cargo build -p jope-cli failed"
-  JOPE_BIN="$REPO/target/debug/jope"
+  JOPE_BIN=$(python3 "$REPO/deploy/ci/cargo-artifact.py" build --package jope-cli --bin jope) \
+    || fail "cargo build -p jope-cli failed"
 fi
 "$JOPE_BIN" --version || fail "$JOPE_BIN --version failed"
 need_subcommand() { # <subcommand> <wp>

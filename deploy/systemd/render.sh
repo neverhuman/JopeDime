@@ -31,19 +31,15 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$home" ] && [ -n "$state" ] && [ -n "$bundle" ] && [ -n "$user" ] && [ -n "$out" ] || usage
 
-# The renderer: an explicitly named binary, one on PATH, one built in this
-# checkout, or a fresh build (needs the workspace toolchain).
+# The renderer: an explicitly named binary, one on PATH, or Cargo
+# (which reuses a cached build when fresh, regardless of its target directory).
 renderer=${JOPE_UNITS_RENDER:-}
 if [ -z "$renderer" ]; then
   if command -v jope-units-render >/dev/null 2>&1; then
     renderer=$(command -v jope-units-render)
-  elif [ -x "$repo/target/release/jope-units-render" ]; then
-    renderer=$repo/target/release/jope-units-render
-  elif [ -x "$repo/target/debug/jope-units-render" ]; then
-    renderer=$repo/target/debug/jope-units-render
   else
-    cargo build -q --locked --manifest-path "$repo/Cargo.toml" -p jope-paths --bin jope-units-render
-    renderer=$repo/target/debug/jope-units-render
+    renderer=$(python3 "$repo/deploy/ci/cargo-artifact.py" build \
+      --manifest-path "$repo/Cargo.toml" --package jope-paths --bin jope-units-render)
   fi
 fi
 

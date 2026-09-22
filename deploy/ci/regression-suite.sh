@@ -99,9 +99,9 @@ golden42() {
   if [ -n "${JOPE_CAMPAIGNS_BIN:-}" ]; then
     bin=$JOPE_CAMPAIGNS_BIN; [ -x "$bin" ] || fail "JOPE_CAMPAIGNS_BIN=$bin is not executable"
   else
-    cargo build -q --release --locked -p jope-dime-regressor --bin jope-dime-regressor \
+    bin=$(python3 "$REPO/deploy/ci/cargo-artifact.py" build --profile release \
+      --package jope-dime-regressor --bin jope-dime-regressor) \
       || fail "cargo build -p jope-dime-regressor failed (WP5 campaigns crate)"
-    bin="$REPO/target/release/jope-dime-regressor"
   fi
   local common=(--registry "$scratch" --panel-id "$panel_id" --kernel-version legacy-v2)
   local phase
@@ -190,9 +190,9 @@ policy_parity() {
   if [ -n "${JOPE_ENGINE_BIN:-}" ]; then
     bin=$JOPE_ENGINE_BIN; [ -x "$bin" ] || fail "JOPE_ENGINE_BIN=$bin is not executable"
   else
-    cargo build -q --release --locked -p jope-parallel --bin jope-parallel --features neural \
+    bin=$(python3 "$REPO/deploy/ci/cargo-artifact.py" build --profile release \
+      --package jope-parallel --bin jope-parallel --features neural) \
       || fail "cargo build -p jope-parallel --features neural failed (LibTorch per deploy/receipts/libtorch.json, WP8)"
-    bin="$REPO/target/release/jope-parallel"
   fi
   "$bin" --help 2>/dev/null | grep -q '^ *propose\b' || fail "$bin has no \`propose\` subcommand (built without the neural feature?)"
 
@@ -232,8 +232,9 @@ bench() { # [--record]
   local record=0; [ "${1:-}" = "--record" ] && record=1
   local genome="$REPO/crates/feat-math/assets/champions/8944cbdf.dsl"
   require_file "$genome" "the committed champion genome"
-  cargo build -q --release --locked -p feat-math --example emit || fail "cargo build -p feat-math --example emit failed"
-  local emit="$REPO/target/release/examples/emit" runs=${JOPE_BENCH_RUNS:-200} out="$RECEIPTS_DIR/bench-emit"
+  local emit runs=${JOPE_BENCH_RUNS:-200} out="$RECEIPTS_DIR/bench-emit"
+  emit=$(python3 "$REPO/deploy/ci/cargo-artifact.py" build --profile release --package feat-math --example emit) \
+    || fail "cargo build -p feat-math --example emit failed"
   rm -rf "$out"; mkdir -p "$out"
   "$emit" "$genome" "$out/warm" > /dev/null 2>&1 || fail "$emit cannot emit the champion"
   local timings="$out/timings-ns.txt" i t0 t1

@@ -78,20 +78,24 @@ fn find_marker(start: &Path) -> Option<PathBuf> {
 /// [`HOME_MARKER`]; otherwise the current directory. Replaces
 /// `~/jope-dime`.
 pub fn jope_home() -> PathBuf {
-    if let Some(home) = env_path(var::JOPE_HOME) {
-        return home;
+    select_home(
+        env_path(var::JOPE_HOME).as_deref(),
+        env::current_dir().ok().as_deref(),
+        env::current_exe().ok().as_deref(),
+    )
+}
+
+fn select_home(home: Option<&Path>, cwd: Option<&Path>, executable: Option<&Path>) -> PathBuf {
+    if let Some(home) = home.filter(|path| !path.as_os_str().is_empty()) {
+        return home.to_path_buf();
     }
-    let cwd = env::current_dir().ok();
-    if let Some(found) = cwd.as_deref().and_then(find_marker) {
+    if let Some(found) = cwd.and_then(find_marker) {
         return found;
     }
-    if let Some(found) = env::current_exe()
-        .ok()
-        .and_then(|exe| exe.parent().and_then(find_marker))
-    {
+    if let Some(found) = executable.and_then(Path::parent).and_then(find_marker) {
         return found;
     }
-    cwd.unwrap_or_else(|| PathBuf::from("."))
+    cwd.unwrap_or_else(|| Path::new(".")).to_path_buf()
 }
 
 /// Mutable run state (runs, queues, sqlite stores, pointers, logs).
@@ -270,13 +274,6 @@ mod tests {
         dir.canonicalize().expect("canonical temp dir")
     }
 
-    fn repo_root() -> PathBuf {
-        Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../..")
-            .canonicalize()
-            .expect("repo root")
-    }
-
     #[test]
     fn home_prefers_the_environment() {
         let _scope = EnvScope::new();
@@ -299,19 +296,50 @@ mod tests {
     }
 
     #[test]
-    fn home_falls_back_to_the_executable_ancestor_with_the_marker() {
-        let _scope = EnvScope::new();
-        let stray = temp_dir("no-marker");
-        env::set_current_dir(&stray).unwrap();
-        // No marker above the temp dir; the test binary lives under the repo's
-        // target/, and the repo root commits the marker.
+    fn home_resolution_is_independent_of_the_build_directory() {
+        let root = temp_dir("resolution");
+        let cwd_root = root.join("checkout");
+        let exe_root = root.join("installed");
+        let nested = cwd_root.join("nested");
+        let exe = exe_root.join("bin/jope");
+        let stray = root.join("no-marker");
+        for dir in [&nested, exe.parent().unwrap(), &stray] {
+            fs::create_dir_all(dir).unwrap();
+        }
+        fs::write(cwd_root.join(HOME_MARKER), "").unwrap();
+        fs::write(exe_root.join(HOME_MARKER), "").unwrap();
         assert!(
             find_marker(&stray).is_none(),
-            "temp tree must not carry a marker"
+            "fixture must have no ancestor marker"
         );
-        assert_eq!(jope_home().canonicalize().unwrap(), repo_root());
-        assert!(repo_root().join(HOME_MARKER).is_file());
-        fs::remove_dir_all(&stray).ok();
+
+        // Environment overrides remain verbatim, including relative paths.
+        assert_eq!(
+            select_home(Some(Path::new("relative")), Some(&nested), Some(&exe)),
+            PathBuf::from("relative")
+        );
+        assert_eq!(
+            select_home(Some(Path::new("")), Some(&nested), Some(&exe)),
+            cwd_root
+        );
+        assert_eq!(select_home(None, Some(&nested), Some(&exe)), cwd_root);
+        assert_eq!(select_home(None, Some(&stray), Some(&exe)), exe_root);
+        assert_eq!(select_home(None, None, Some(&exe)), exe_root);
+        assert_eq!(
+            select_home(None, Some(&stray), Some(&stray.join("bin"))),
+            stray
+        );
+        assert_eq!(select_home(None, Some(&stray), None), stray);
+        assert_eq!(select_home(None, None, None), PathBuf::from("."));
+        assert_eq!(
+            select_home(None, None, Some(&stray.join("bin"))),
+            PathBuf::from(".")
+        );
+
+        // The nearest marker wins within each ancestry chain.
+        fs::write(nested.join(HOME_MARKER), "").unwrap();
+        assert_eq!(select_home(None, Some(&nested), Some(&exe)), nested);
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

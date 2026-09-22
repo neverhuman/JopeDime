@@ -38,8 +38,7 @@ done
 
 [ ! -e "$OUT" ] || { echo "refusing to overwrite prior evidence: $OUT" >&2; exit 1; }
 mkdir -p "$OUT"
-cargo build -q --locked --bin jope
-JOPE=target/debug/jope
+JOPE=$(python3 deploy/ci/cargo-artifact.py build --package jope-cli --bin jope)
 
 # One process per candidate, each pinned to one thread, as the engine expects.
 export OMP_NUM_THREADS=1 RAYON_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
