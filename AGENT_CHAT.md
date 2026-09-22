@@ -92,3 +92,19 @@ caps at100), corrects the risk of sourcing a bare token file, and dates bucket/a
 observations. Metadata-only credential path checks passed; no secret files read.
 Verbatim archive hash, active links, cleanup synchronization and diff checks passed.
 Final PR65 head will include current main after PR63 lands, then fresh CI/review.
+
+## 2026-09-22T22:37:38.390703+00:00 — PR63 merged; PR65 final candidate
+
+PR63 merged from32e99f9214bc0cf86cfa1c53ed2393bcfa1e4df6 to main
+be4d31681e5f88edc8bdd3638578a182e4bc0ea1, identical reviewed tree. Manual35792141999/1
+allninejobs passed; PR35792147870/1 passed with inputs/python/emitters skipped-by-path.
+Independent Claude/native approval5284594279; complete API/artifact receipts in
+asm-demonstration-20260922/pr63/premerge-acceptance.json and merge-receipt.json.
+Main-guard remains pending. Canonical fast-forwarded; only owned coordination/cleanup
+documents remain dirty while PR65 carries them. No implementation lane opened.
+
+PR65 updated with a history-preserving main merge. Final scope is credential/identity
+documentation, truthful helper limits, active-ledger archival and the already-verified
+held-lane closure record. Final exact-head CI and independent native review follow.
+The remaining s3-live and agents-doc lanes will close after immutable source/evidence
+restoration and fresh consumer checks; prepared s3-live target archive is retained.
