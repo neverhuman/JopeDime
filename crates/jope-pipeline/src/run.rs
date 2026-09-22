@@ -109,19 +109,25 @@ pub fn run(options: &RunOptions) -> Result<Receipt> {
             output.display()
         );
     }
-    std::fs::create_dir_all(output).with_context(|| format!("create {}", output.display()))?;
-    // The search resolves every artifact path inside this root, rejecting `..`
-    // and any symlink component, so hand it an already canonical root.
-    let root = output
-        .canonicalize()
-        .with_context(|| format!("resolve {}", output.display()))?;
-
     let mut stages = Stages::new();
 
     let started = Instant::now();
     let resolved = dataset::resolve(&options.dataset)?;
+    ensure!(
+        resolved.row.task == jope_datasets::catalog::Task::Regression,
+        "task {} is unsupported by jope pipeline run: this path fits and scores regression only; \
+         use a task-qualified evaluator when available",
+        resolved.row.task.as_str()
+    );
     let rows = dataset::training_rows(&resolved)?;
     stages.record("dataset", "passed", None, started);
+
+    // Validate the task and inputs before publishing any run artifacts.
+    std::fs::create_dir_all(output).with_context(|| format!("create {}", output.display()))?;
+    // The search rejects traversal and symlink components beneath this root.
+    let root = output
+        .canonicalize()
+        .with_context(|| format!("resolve {}", output.display()))?;
 
     let started = Instant::now();
     let prepared_dir = root.join("prepared");
@@ -402,6 +408,52 @@ fn git_sha() -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn classification_is_refused_before_writing_a_regression_run() {
+        let temp = tempfile::tempdir().unwrap();
+        let input = temp.path().join("binary");
+        std::fs::create_dir(&input).unwrap();
+        // An admitted binary catalog and genuine 0/1 labels must never reach
+        // this regression-only search, even though both parse as numeric CSV.
+        let csv: String = (0..60).map(|i| format!("{},{}\n", i, i % 2)).collect();
+        let mut row: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../datasets/test/pmlb-229-pwlinear/metadata.json"
+        ))
+        .unwrap();
+        row["task"] = "binary".into();
+        row["target"]["type"] = "binary".into();
+        row["shape"] = serde_json::json!({
+            "rows":120,"features":1,"categorical_features":0,"columns":2
+        });
+        row["split"]["train_rows"] = 60.into();
+        row["split"]["test_rows"] = 60.into();
+        for name in ["train", "test"] {
+            row["files"][name] = serde_json::json!({
+                "sha256": crate::sha256_hex(csv.as_bytes()), "bytes": csv.len(),
+                "rows": 60, "columns": 2, "has_header": false
+            });
+            std::fs::write(input.join(format!("{name}.csv")), &csv).unwrap();
+        }
+        std::fs::write(input.join("metadata.json"), row.to_string()).unwrap();
+        let output = temp.path().join("run");
+        let options = RunOptions {
+            dataset: input.display().to_string(),
+            output: output.clone(),
+            budget: Budget {
+                evaluations: 1,
+                seconds: 1,
+            },
+            seed: 1,
+            rng_seed: 1,
+            cuts: 1,
+            languages: vec![Language::Rust],
+            policy: Policy::Skip,
+        };
+        let error = format!("{:#}", run(&options).unwrap_err());
+        assert!(error.contains("task binary is unsupported"), "{error}");
+        assert!(!output.exists(), "refusal left a misleading run directory");
+    }
 
     /// The dataset is unresolvable, so this also proves the policy is checked
     /// before any other work — including anything that writes to `--output`.

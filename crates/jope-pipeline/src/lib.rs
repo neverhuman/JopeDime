@@ -23,6 +23,8 @@
 pub mod cli;
 pub mod dataset;
 pub mod emit;
+pub mod experiment;
+pub mod front_door;
 pub mod prepare;
 pub mod receipt;
 pub mod run;

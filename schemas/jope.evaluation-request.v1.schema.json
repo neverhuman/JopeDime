@@ -1,0 +1,126 @@
+{
+  "$defs": {
+    "EvaluationStage": {
+      "enum": [
+        "screen",
+        "confirm",
+        "train_oof",
+        "diagnostic"
+      ],
+      "type": "string"
+    },
+    "Metric": {
+      "enum": [
+        "rmse",
+        "auroc",
+        "log_loss"
+      ],
+      "type": "string"
+    },
+    "Task": {
+      "enum": [
+        "regression",
+        "binary",
+        "multiclass",
+        "multi_label",
+        "timeseries"
+      ],
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Every field participates in identity, including fitting and scoring row order.\nNo sealed-final request is accepted by the development worker contract.",
+  "properties": {
+    "checkpoint_sha256": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "classes": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "dataset_sha256": {
+      "type": "string"
+    },
+    "evaluator_sha256": {
+      "type": "string"
+    },
+    "experiment_sha256": {
+      "type": "string"
+    },
+    "fitting_rows": {
+      "format": "uint",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "fitting_rows_sha256": {
+      "type": "string"
+    },
+    "fold": {
+      "format": "uint8",
+      "maximum": 255,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "metric": {
+      "$ref": "#/$defs/Metric"
+    },
+    "numerical_policy": {
+      "type": "string"
+    },
+    "recipe_sha256": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "scoring_rows": {
+      "format": "uint",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "scoring_rows_sha256": {
+      "type": "string"
+    },
+    "seed": {
+      "format": "uint64",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "split_sha256": {
+      "type": "string"
+    },
+    "stage": {
+      "$ref": "#/$defs/EvaluationStage"
+    },
+    "task": {
+      "$ref": "#/$defs/Task"
+    }
+  },
+  "required": [
+    "schema",
+    "experiment_sha256",
+    "dataset_sha256",
+    "split_sha256",
+    "fitting_rows_sha256",
+    "scoring_rows_sha256",
+    "fitting_rows",
+    "scoring_rows",
+    "recipe_sha256",
+    "evaluator_sha256",
+    "task",
+    "metric",
+    "classes",
+    "fold",
+    "stage",
+    "seed",
+    "numerical_policy"
+  ],
+  "title": "EvaluationRequest",
+  "type": "object"
+}

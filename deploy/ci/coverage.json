@@ -7776,6 +7776,16 @@
       ],
       "dispositions": [],
       "scope": "Deliberately rejected job in each storage domain. Failure alone is insufficient: require real Worker denial, no always-step execution and container termination. Not functional test coverage."
+    },
+    "python:benchmarks/test_prepare.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Existing fast Python lane explicitly collects benchmarks/test_prepare.py with the optional benchmark dependencies: grouped/stratified preparation, sealed partition isolation, immutable bytes, label preservation and frozen selection. Synthetic local fixtures; no network or fitting. Not assigned to full-main."
     }
   }
 }
