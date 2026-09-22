@@ -134,8 +134,10 @@ pub struct CutSearch {
     pub completed_evaluations: u64,
     pub successful_measurements: u64,
     pub failed_or_unavailable_measurements: u64,
-    /// What ended this cut: `evaluations`, `seconds`, or `search_space_exhausted`
-    /// when the grammar stopped yielding candidates it had not already measured.
+    /// Single cut: exploration's `evaluations`, `seconds`, or `search_space_exhausted`.
+    /// Multiple cuts: comparison's outcome, with `seconds` before `evaluations`
+    /// when both are reached, else `comparison_pool_exhausted`. Exploration's
+    /// original reason remains in accounting.exploration.stopped_by.
     pub stopped_by: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schemars(required)]
@@ -406,10 +408,10 @@ impl Receipt {
             };
             let (x, y) = (&a.exploration, &a.comparison);
             for phase in [x, y] {
-                if phase.completed_evaluations
-                    != phase
-                        .successful_measurements
-                        .saturating_add(phase.failed_measurements)
+                if phase
+                    .successful_measurements
+                    .checked_add(phase.failed_measurements)
+                    != Some(phase.completed_evaluations)
                     || phase.completed_evaluations > phase.evaluation_limit
                     || !phase.seconds.is_finite()
                     || phase.seconds < 0.0
@@ -444,14 +446,13 @@ impl Receipt {
                 || y.evaluation_limit != comparison_limit
                 || (y.seconds_limit - comparison_seconds).abs() > 1e-9
                 || cut.completed_evaluations > search.evaluations
-                || x.completed_evaluations
-                    .saturating_add(y.completed_evaluations)
-                    != cut.completed_evaluations
+                || x.completed_evaluations.checked_add(y.completed_evaluations)
+                    != Some(cut.completed_evaluations)
                 || x.successful_measurements
-                    .saturating_add(y.successful_measurements)
-                    != cut.successful_measurements
-                || x.failed_measurements.saturating_add(y.failed_measurements)
-                    != cut.failed_or_unavailable_measurements
+                    .checked_add(y.successful_measurements)
+                    != Some(cut.successful_measurements)
+                || x.failed_measurements.checked_add(y.failed_measurements)
+                    != Some(cut.failed_or_unavailable_measurements)
                 || !a.active_seconds.is_finite()
                 || a.active_seconds < 0.0
                 || (a.active_seconds - x.seconds - y.seconds).abs() > 1e-9
@@ -461,6 +462,34 @@ impl Receipt {
                     "cut {}: total budget/phase accounting mismatch",
                     cut.cut
                 ));
+            }
+            let exploration_stop_valid = match x.stopped_by.as_str() {
+                crate::search::STOPPED_BY_EVALUATIONS => {
+                    x.completed_evaluations == x.evaluation_limit
+                }
+                crate::search::STOPPED_BY_SECONDS => {
+                    x.seconds >= x.seconds_limit && x.completed_evaluations < x.evaluation_limit
+                }
+                crate::search::STOPPED_BY_EXHAUSTED => x.completed_evaluations < x.evaluation_limit,
+                _ => false,
+            };
+            if !exploration_stop_valid {
+                errors.push(format!("cut {}: exploration stop reason mismatch", cut.cut));
+            }
+            let expected_stop = if !reserve {
+                x.stopped_by.as_str()
+            } else if a.active_seconds >= search.seconds as f64 {
+                crate::search::STOPPED_BY_SECONDS
+            } else if cut.completed_evaluations >= search.evaluations {
+                crate::search::STOPPED_BY_EVALUATIONS
+            } else {
+                crate::search::STOPPED_BY_POOL
+            };
+            if cut.stopped_by != expected_stop
+                || (reserve && y.stopped_by != cut.stopped_by)
+                || (!reserve && *y != Phase::not_requested())
+            {
+                errors.push(format!("cut {}: phase stop reason mismatch", cut.cut));
             }
             if coverage
                 .iter()
@@ -515,6 +544,25 @@ pub fn derived_schema() -> serde_json::Value {
     let mut phase_stops = stops.as_array().unwrap().clone();
     phase_stops.push(serde_json::json!("not_requested"));
     value["$defs"]["Phase"]["properties"]["stopped_by"]["enum"] = phase_stops.into();
+    // serde(default) keeps v1 deserialization compatible. Schemars' `required`
+    // annotation removes null from these Options but does not undo that default.
+    for (definition, names) in [
+        ("CutSearch", &["accounting"][..]),
+        (
+            "Search",
+            &["budget_policy", "compared_cuts", "coverage"][..],
+        ),
+    ] {
+        let required = value["$defs"][definition]["required"]
+            .as_array_mut()
+            .unwrap();
+        for name in names {
+            let name = serde_json::json!(name);
+            if !required.contains(&name) {
+                required.push(name);
+            }
+        }
+    }
     // Close objects consistently, including optional nested definitions.
     fn close(value: &mut serde_json::Value) {
         match value {

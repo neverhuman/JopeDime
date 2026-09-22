@@ -26,7 +26,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 
 DATASET=${E2E_DATASET:-datasets/test/pmlb-229-pwlinear}
-OUT=${E2E_OUT:-target/e2e-smoke}
+OUT=${E2E_OUT:-target/e2e-smoke/$(date -u +%Y%m%dT%H%M%S.%NZ)-$$}
 BUDGET=${E2E_BUDGET:-evaluations=4,seconds=60}
 RNG_SEED=${E2E_RNG_SEED:-7}
 CXX_FLAGS=(-O3 -ffp-contract=off -fno-fast-math)

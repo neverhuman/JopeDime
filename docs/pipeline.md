@@ -41,7 +41,13 @@ selection over inner folds, not sealed outer-test evaluation or promotion.
 
 New runs write `jope.pipeline-search/v2` and `jope.pipeline-receipt/v2`, binding the
 requested total, phase allowances/counts/failures/stop reasons, active time and cut
-coverage. `jope pipeline verify-receipt` validates either v1 or v2 according to its
+coverage. For multiple cuts, the overall stop reason is comparison's outcome:
+`seconds` takes precedence when both total limits are reached, then `evaluations`,
+otherwise `comparison_pool_exhausted`. The exploration phase retains its own
+reason (`evaluations`, `seconds` or `search_space_exhausted`). Single-cut runs use
+the exploration reason and record comparison as `not_requested`.
+
+`jope pipeline verify-receipt` validates either v1 or v2 according to its
 own schema; v2 fields are required and their totals are checked. The v1 schema is
 unchanged. Generate the v2 schema from code with:
 
@@ -55,7 +61,8 @@ failed attempts, in-flight overrun, full-cut selection and legacy reading.
 `E2E_OUT=<new-durable-directory> bash deploy/ci/e2e-smoke.sh` runs the committed
 real-data development fixture, checks per-phase receipts against observations,
 requires a non-bootstrap program successfully measured on all three cuts, and
-verifies emitted program parity. The script refuses to overwrite existing evidence.
+verifies emitted program parity. The script refuses to overwrite existing evidence and uses a unique default directory
+under `target/e2e-smoke/` when `E2E_OUT` is unset.
 Use the repository's required Cargo environment for both commands.
 
 Neural proposals remain explicitly skipped here. The learning-loop, S3 recovery,

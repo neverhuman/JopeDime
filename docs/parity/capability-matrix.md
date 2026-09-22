@@ -19,6 +19,7 @@ you saw.
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 6 | 0 | 0 | 0 | 0 |
 | new-bin | 8 | 0 | 8 | 0 | 0 | 0 |
+| new-example | 1 | 0 | 1 | 0 | 0 | 0 |
 | ops-sh | 1 | 1 | 0 | 0 | 0 | 0 |
 | root-binary | 56 | 56 | 0 | 0 | 0 | 0 |
 | script-py | 116 | 116 | 0 | 0 | 0 | 0 |
@@ -34,7 +35,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **771** | **735** | **8** | **1** | **20** | **7** |
+| **total** | **772** | **735** | **9** | **1** | **20** | **7** |
 
 `moved`/`new` rows without a covering test: 654.
 
@@ -813,3 +814,4 @@ you saw.
 | vendored-bin | jain-smartcluster@715128f: scq | crates/smartcluster/scq/src/main.rs (scq) | none | moved | vendored smartcluster crate (the SCQ evaluator the flywheel calls) |
 | vendored-bin | jain-core/crates/starforge (import, WP3): model_bundle_pack | crates/jope-encoders/src/bin/model_bundle_pack.rs (model_bundle_pack) | none | moved | vendored encoder; tests gated on the starforge weights |
 | vendored-bin | jain-core/crates/starforge (import, WP3): starforge | crates/jope-encoders/src/main.rs (starforge) | none | moved | vendored encoder; tests gated on the starforge weights |
+| new-example | (new) pipeline receipt schema | crates/jope-pipeline/examples/receipt_schema.rs (receipt_schema) | jope-pipeline::schema_agreement committed_schema_is_generated_from_code_exactly | new | Regenerate v2 receipt schema from the Rust contract; v1 retained for reading. |

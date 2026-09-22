@@ -210,7 +210,7 @@
           "type": "string"
         },
         "stopped_by": {
-          "description": "What ended this cut: `evaluations`, `seconds`, or `search_space_exhausted`\nwhen the grammar stopped yielding candidates it had not already measured.",
+          "description": "Single cut: exploration's `evaluations`, `seconds`, or `search_space_exhausted`.\nMultiple cuts: comparison's outcome, with `seconds` before `evaluations`\nwhen both are reached, else `comparison_pool_exhausted`. Exploration's\noriginal reason remains in accounting.exploration.stopped_by.",
           "enum": [
             "evaluations",
             "seconds",
@@ -241,7 +241,8 @@
         "completed_evaluations",
         "successful_measurements",
         "failed_or_unavailable_measurements",
-        "stopped_by"
+        "stopped_by",
+        "accounting"
       ],
       "type": "object"
     },
@@ -529,7 +530,10 @@
         "cuts",
         "selection",
         "selected_genome",
-        "selected_program_sha256"
+        "selected_program_sha256",
+        "budget_policy",
+        "compared_cuts",
+        "coverage"
       ],
       "type": "object"
     },
