@@ -5,7 +5,9 @@ deferred/historical dispositions. Validate it with `python3 deploy/ci/coverage.p
 `discover` prints the current static inventory without changing assignments. New packages,
 features, Cargo targets, Python test-named files, workflows/jobs and benchmark sources fail
 validation until their scope is assigned. Changed target requirements and feature dependencies
-also require review. Git-tracked and unignored new files are included.
+also require review. Targets gated on non-default required features cannot be assigned to
+default-feature execution. Workflow jobs use a block mapping; comments, consistent indentation
+and flow-style job values are supported, while unsupported mapping forms fail closed. Git-tracked and unignored new files are included.
 
 The three evidence stages are distinct:
 

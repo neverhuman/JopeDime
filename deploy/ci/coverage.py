@@ -9,6 +9,53 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def workflow_jobs(text):
+    """Read block-mapping job keys; fail closed on unsupported YAML structure.
+
+    actionlint validates full YAML independently. Keeping the jobs mapping in block
+    form avoids introducing a second YAML dependency into the minimal CI image.
+    Comments, arbitrary consistent indentation and flow-style job values are supported.
+    """
+    headers = list(re.finditer(r"^jobs\s*:(.*)$", text, re.M))
+    if len(headers) != 1 or headers[0][1].strip().split("#", 1)[0].strip():
+        raise ValueError("workflow requires one top-level block jobs mapping")
+    names = []
+    indentation = None
+    for line in text[headers[0].end():].splitlines():
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if not line.startswith((" ", "\t")):
+            break
+        if "\t" in line[:len(line) - len(line.lstrip())]:
+            raise ValueError("workflow job indentation cannot contain tabs")
+        depth = len(line) - len(line.lstrip(" "))
+        if indentation is None:
+            indentation = depth
+        if depth < indentation:
+            raise ValueError("inconsistent workflow job indentation")
+        if depth == indentation:
+            match = re.match(r'''(?:([A-Za-z_][\w-]*)|"([A-Za-z_][\w-]*)"|'([A-Za-z_][\w-]*)')\s*:(?:\s|$)''', line.strip())
+            if not match:
+                raise ValueError(f"unsupported workflow job key: {line.strip()}")
+            names.append(next(value for value in match.groups() if value))
+    if not names or len(names) != len(set(names)):
+        raise ValueError("workflow has missing or duplicate job keys")
+    return names
+
+
+def default_features(discovered, package):
+    prefix = f"feature:{package}/"
+    features = {key[len(prefix):]: value["dependencies"] for key, value in discovered.items() if key.startswith(prefix)}
+    active = set()
+    pending = ["default"] if "default" in features else []
+    while pending:
+        feature = pending.pop()
+        if feature not in active:
+            active.add(feature)
+            pending.extend(dependency for dependency in features.get(feature, []) if dependency in features)
+    return active
+
+
 def discover(root=ROOT):
     metadata = json.loads(subprocess.check_output(
         ["cargo", "metadata", "--locked", "--no-deps", "--format-version", "1"], cwd=root, text=True))
@@ -34,10 +81,7 @@ def discover(root=ROOT):
             items[f"python:{filename}"] = {"kind": "python-family"}
         if path.parent == Path(".github/workflows") and path.suffix in (".yaml", ".yml"):
             items[f"workflow:{filename}"] = {"kind": "workflow"}
-            # Job keys have exactly two spaces under the top-level jobs mapping.
-            # actionlint independently validates YAML; this deliberately does not parse steps.
-            body = (root / filename).read_text().split("\njobs:\n", 1)[-1]
-            for name in re.findall(r"^  ([\w-]+):\s*$", body, re.M):
+            for name in workflow_jobs((root / filename).read_text()):
                 items[f"job:{filename}/{name}"] = {"kind": "workflow-job"}
         if path.suffix in (".rs", ".py", ".sh") and "bench" in path.name.lower():
             items[f"benchmark:{filename}"] = {"kind": "benchmark-source"}
@@ -77,6 +121,12 @@ def validate(mapping, discovered):
             errors.append(f"changed discovery: {key}; review its assignment")
         assigned = item.get("lanes", [])
         deferred = item.get("dispositions", [])
+        if key.startswith("target:"):
+            package = key.split(":", 1)[1].split("/", 1)[0]
+            missing_features = set(discovered[key]["required_features"]) - default_features(discovered, package)
+            default_lanes = {name for name, lane in lanes.items() if lane.get("feature_selection") == "package-defaults"}
+            if missing_features and (default_lanes.intersection(assigned) or "full-cpu-default" in deferred):
+                errors.append(f"non-default required features {sorted(missing_features)} assigned to default execution: {key}")
         if not assigned and not deferred:
             errors.append(f"unassigned item: {key}")
         for lane in assigned:

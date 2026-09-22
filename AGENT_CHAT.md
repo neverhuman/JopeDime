@@ -448,3 +448,10 @@ phase. New static mapping has22packages/18features/214targets/213Python test-nam
 files/4workflows/12jobs/32benchmark sources. Real pytest collection passes222tests;
 no AST fallback. Proof lane closed with independent restoration and fresh no-consumer
 checks; synchronized cleanup record and custody proof-closure.json bind removal.
+
+PR59 independent review5281662998 requests correcting the feature-gated jope-policy
+jope_dime target: default lanes skip required testing feature. Continue same claim
+to compute package default-feature closure, reject invalid default-lane assignments,
+and map that target to explicit CPU feature execution. Also harden workflow job
+discovery against comments/unsupported YAML forms. Prior source ce61f570b remains
+separate evidence; new head requires fresh all-eight CI and independent review.
