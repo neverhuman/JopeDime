@@ -1,8 +1,8 @@
 //! AWS credential resolution for the S3 backend.
 //!
 //! `object_store`'s [`AmazonS3Builder::from_env`] reads `AWS_ACCESS_KEY_ID`,
-//! `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` from the environment and then falls back to the
-//! EC2 instance metadata service. It never executes `credential_process`, which is how every
+//! `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN`, plus web-identity and container-provider
+//! configuration, from the environment. With no provider it falls back to EC2 instance metadata. It never executes `credential_process`, which is how every
 //! profile in `~/.aws/config` supplies credentials on the authoring hosts. So a host with working
 //! credentials waits ~13 s retrying an address it cannot reach and then fails with an HTTP error
 //! naming the metadata endpoint, which reads as a network fault rather than "no credentials":
@@ -26,7 +26,7 @@
 //! [`AmazonS3Builder::from_env`]: object_store::aws::AmazonS3Builder::from_env
 
 use anyhow::{bail, Context, Result};
-use std::process::Command;
+use std::{ffi::OsString, process::Command};
 
 /// One resolved credential set. `Debug` is deliberately not derived.
 #[derive(Clone)]
@@ -37,25 +37,52 @@ pub struct Credentials {
     pub session_token: Option<String>,
 }
 
-/// Whether the environment already carries what `from_env` needs, in which case object_store
-/// reads it directly and this module stays out of the way.
-pub fn environment_has_credentials() -> bool {
-    std::env::var_os("AWS_ACCESS_KEY_ID").is_some_and(|v| !v.is_empty())
-        && std::env::var_os("AWS_SECRET_ACCESS_KEY").is_some_and(|v| !v.is_empty())
+impl Credentials {
+    /// Bind exactly this profile's credentials, replacing any ambient session token.
+    pub(crate) fn apply_to(
+        self,
+        builder: object_store::aws::AmazonS3Builder,
+    ) -> object_store::aws::AmazonS3Builder {
+        builder.with_credentials(std::sync::Arc::new(
+            object_store::StaticCredentialProvider::new(object_store::aws::AwsCredential {
+                key_id: self.access_key_id,
+                secret_key: self.secret_access_key,
+                token: self.session_token,
+            }),
+        ))
+    }
 }
 
-/// The profile to evaluate: `JOPE_AWS_PROFILE` wins so this can be pointed somewhere specific
-/// without disturbing whatever else on the host reads `AWS_PROFILE`.
-pub fn configured_profile() -> Option<String> {
+/// Choose a profile or defer to object_store's native provider chain. Injecting the
+/// lookup keeps provider tests independent of the host's credentials.
+fn selected_profile(get: impl Fn(&str) -> Option<OsString>) -> Result<Option<String>> {
+    let present = |name| get(name).is_some_and(|v| !v.is_empty());
+    if present("AWS_ACCESS_KEY_ID") && present("AWS_SECRET_ACCESS_KEY") {
+        return Ok(None);
+    }
     for name in ["JOPE_AWS_PROFILE", "AWS_PROFILE"] {
-        if let Some(value) = std::env::var_os(name) {
-            let value = value.to_string_lossy().into_owned();
-            if !value.is_empty() {
-                return Some(value);
-            }
+        if let Some(value) = get(name).filter(|v| !v.is_empty()) {
+            return Ok(Some(value.to_string_lossy().into_owned()));
         }
     }
-    None
+    // object_store 0.14's web-identity, ECS and EKS providers precede IMDS.
+    // Preserve them; an explicitly selected profile still takes precedence.
+    if (present("AWS_WEB_IDENTITY_TOKEN_FILE") && present("AWS_ROLE_ARN"))
+        || present("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
+        || (present("AWS_CONTAINER_CREDENTIALS_FULL_URI")
+            && present("AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE"))
+        || get("JOPE_AWS_ALLOW_IMDS").is_some_and(|v| v == "1")
+    {
+        return Ok(None);
+    }
+    bail!(
+        "no complete AWS credential source: a complete static key pair, selected profile, \
+         web-identity or container provider is required. Select AWS_PROFILE=<profile> \
+         (or JOPE_AWS_PROFILE), configure a native provider, use JOPE_DATASETS_ANON=1 \
+         for unsigned requests, or explicitly allow EC2 instance metadata with \
+         JOPE_AWS_ALLOW_IMDS=1. Without a source the metadata fallback at 169.254.169.254 \
+         can stall before reporting a misleading network error."
+    )
 }
 
 /// Evaluate a profile's credentials through the AWS CLI, which does run `credential_process`.
@@ -72,10 +99,10 @@ pub fn from_profile(profile: &str) -> Result<Credentials> {
              profile's credential_process",
         )?;
     if !output.status.success() {
-        // stderr can name the profile and the failing helper, neither of which is secret.
+        // A credential_process controls stderr too; never disclose either captured stream.
         bail!(
-            "aws configure export-credentials failed for profile {profile}: {}",
-            String::from_utf8_lossy(&output.stderr).trim()
+            "aws configure export-credentials failed for profile {profile} ({})",
+            output.status
         );
     }
     let stdout = String::from_utf8_lossy(&output.stdout);
@@ -126,32 +153,12 @@ fn parse_export_env(stdout: &str) -> Option<Credentials> {
     })
 }
 
-/// Resolve credentials for a signed S3 store, or explain precisely why none are available.
-///
-/// `Ok(None)` means "the environment already has them, let object_store read it".
+/// Resolve a selected profile or let object_store use a configured native provider.
+/// No process environment variables are changed.
 pub fn resolve() -> Result<Option<Credentials>> {
-    if environment_has_credentials() {
-        return Ok(None);
-    }
-    if let Some(profile) = configured_profile() {
-        return from_profile(&profile).map(Some);
-    }
-    if std::env::var_os("JOPE_AWS_ALLOW_IMDS").is_some_and(|v| v == "1") {
-        return Ok(None);
-    }
-    bail!(
-        "no AWS credentials.\n\
-         The environment carries no AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY and no profile is \
-         selected, so object_store would fall back to the EC2 metadata service and fail after \
-         ~13 s with an error naming 169.254.169.254.\n\
-         Pick one:\n  \
-         AWS_PROFILE=<profile> (or JOPE_AWS_PROFILE) — evaluated through the AWS CLI, which does \
-         run credential_process\n  \
-         eval \"$(aws configure export-credentials --format env)\" — put them in the environment \
-         yourself\n  \
-         JOPE_DATASETS_ANON=1 — unsigned requests, for a public bucket\n  \
-         JOPE_AWS_ALLOW_IMDS=1 — really do use instance metadata (an EC2 instance role)"
-    )
+    selected_profile(|name| std::env::var_os(name))?
+        .map(|profile| from_profile(&profile))
+        .transpose()
 }
 
 #[cfg(test)]
@@ -208,24 +215,104 @@ mod tests {
         assert!(parse_export_env("").is_none());
     }
 
-    /// `resolve` must never silently pick the IMDS path: that is the 13-second failure this
-    /// module exists to remove.
+    fn select(env: &[(&str, &str)]) -> Result<Option<String>> {
+        selected_profile(|key| env.iter().find(|(k, _)| *k == key).map(|(_, v)| v.into()))
+    }
+
     #[test]
-    fn resolve_explains_itself_when_nothing_is_available() {
-        if environment_has_credentials() || configured_profile().is_some() {
-            return; // this host can resolve; the no-credential path is covered by the parser tests
+    fn preserves_native_oidc_and_container_providers() {
+        for env in [
+            vec![
+                ("AWS_WEB_IDENTITY_TOKEN_FILE", "/token"),
+                ("AWS_ROLE_ARN", "role"),
+            ],
+            vec![("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", "/credentials")],
+            vec![
+                (
+                    "AWS_CONTAINER_CREDENTIALS_FULL_URI",
+                    "http://localhost/credentials",
+                ),
+                ("AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE", "/token"),
+            ],
+            vec![("JOPE_AWS_ALLOW_IMDS", "1")],
+        ] {
+            assert_eq!(select(&env).unwrap(), None);
         }
-        let text = match resolve() {
-            Ok(_) => return, // JOPE_AWS_ALLOW_IMDS is set; that is a deliberate opt-in
-            Err(err) => err.to_string(),
-        };
-        assert!(
-            text.contains("AWS_PROFILE"),
-            "must say how to fix it: {text}"
+    }
+
+    #[test]
+    fn rejects_missing_partial_and_empty_sources() {
+        for env in [
+            vec![],
+            vec![("AWS_ACCESS_KEY_ID", "key")],
+            vec![("AWS_SECRET_ACCESS_KEY", "secret")],
+            vec![("AWS_ACCESS_KEY_ID", "key"), ("AWS_SECRET_ACCESS_KEY", "")],
+            vec![("AWS_WEB_IDENTITY_TOKEN_FILE", "/token")],
+            vec![("AWS_ROLE_ARN", "role")],
+            vec![(
+                "AWS_CONTAINER_CREDENTIALS_FULL_URI",
+                "http://localhost/credentials",
+            )],
+            vec![("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", "")],
+            vec![("JOPE_AWS_ALLOW_IMDS", "0")],
+        ] {
+            let error = select(&env).unwrap_err().to_string();
+            assert!(error.contains("no complete AWS credential source"));
+            assert!(error.contains("AWS_PROFILE"));
+            assert!(error.contains("169.254.169.254"));
+        }
+    }
+
+    #[test]
+    fn explicit_precedence_is_static_keys_then_jope_profile_then_aws_profile() {
+        assert_eq!(
+            select(&[
+                ("AWS_ACCESS_KEY_ID", "key"),
+                ("AWS_SECRET_ACCESS_KEY", "secret"),
+                ("JOPE_AWS_PROFILE", "jope")
+            ])
+            .unwrap(),
+            None
         );
-        assert!(
-            text.contains("169.254.169.254"),
-            "must name the symptom: {text}"
+        assert_eq!(
+            select(&[
+                ("JOPE_AWS_PROFILE", "jope"),
+                ("AWS_PROFILE", "aws"),
+                ("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", "/credentials")
+            ])
+            .unwrap()
+            .as_deref(),
+            Some("jope")
         );
+        assert_eq!(
+            select(&[
+                ("JOPE_AWS_PROFILE", ""),
+                ("AWS_PROFILE", "aws"),
+                ("JOPE_AWS_ALLOW_IMDS", "1")
+            ])
+            .unwrap()
+            .as_deref(),
+            Some("aws")
+        );
+    }
+    #[test]
+    fn profile_replaces_ambient_session_token() {
+        for token in [None, Some("profile-token")] {
+            let builder = object_store::aws::AmazonS3Builder::new()
+                .with_bucket_name("offline-fixture")
+                .with_region("us-east-2")
+                .with_token("stale-token");
+            let profile = Credentials {
+                access_key_id: "profile-key".into(),
+                secret_access_key: "profile-secret".into(),
+                session_token: token.map(str::to_owned),
+            };
+            let store = profile.apply_to(builder).build().unwrap();
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            let actual = rt.block_on(store.credentials().get_credential()).unwrap();
+            assert_eq!(actual.key_id, "profile-key");
+            assert_eq!(actual.secret_key, "profile-secret");
+            assert_eq!(actual.token.as_deref(), token);
+        }
     }
 }

@@ -1,4 +1,4 @@
-//! One transport for every backend through `object_store`: `s3://` (env credentials, anonymous
+//! One transport for every backend through `object_store`: `s3://` (native AWS providers or selected CLI profile, anonymous
 //! with `JOPE_DATASETS_ANON=1`), `file://` (tests, local mirrors) and `memory://`.
 
 use anyhow::{anyhow, Context, Result};
@@ -77,12 +77,7 @@ impl Store {
                     // `from_env` above already consumed any credentials the environment carried;
                     // this covers the profile case it cannot see, and fails by name rather than
                     // through the IMDS fallback. See `crate::credentials`.
-                    builder = builder
-                        .with_access_key_id(credentials.access_key_id)
-                        .with_secret_access_key(credentials.secret_access_key);
-                    if let Some(token) = credentials.session_token {
-                        builder = builder.with_token(token);
-                    }
+                    builder = credentials.apply_to(builder);
                 }
                 let store = builder.build().context("build S3 store")?;
                 let prefix = ObjPath::parse(parsed.path().trim_matches('/')).unwrap_or_default();
