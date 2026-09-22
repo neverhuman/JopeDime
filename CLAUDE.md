@@ -47,16 +47,21 @@ See [`MASTER_CLEAN_UP.md`](MASTER_CLEAN_UP.md) for the full record.
 
 ## Reviews
 
-The reviewing identity must not be the identity that authored the commits. Check with
-`gh api repos/veox-ai/JopeDime/commits --jq '.[].author.login'` — `git log` shows the committer
-name, not the GitHub account, so a mismatch is invisible locally. Posting comments without
-`GH_TOKEN` set falls through to the OAuth user, which is the *reviewing* account.
+Follow `AGENTS.md`: the reviewer must be independent of the writer, and its GitHub identity must
+differ from the PR author and every GitHub-associated commit author. Review names the exact full
+head SHA; a changed head needs fresh checks and review. Check the actual authenticated account
+before posting with `gh api user --jq .login` in the exact environment used to post. With
+`GH_TOKEN` unset, `gh` falls back to its stored account; this has previously caused author-side
+comments and PR creation to use the reviewing login. GitHub then refused review with
+`Can not request changes on your own pull request` (#40/#41). Never infer eligibility from a
+token variable or Git name.
 
 ## Coordination
 
 Several agents share this host. **`MASTER_CLEAN_UP.md` is the live record for cleanup work** —
 read its tail before acting and append as you go. `AGENT_CHAT.md` is the general peer wire.
 `MASTER_PLAN.md` is the board. None of them is release authority; git and the receipts are.
+Follow `AGENTS.md` for locked claim updates, stopped-head handoffs and evidence requirements.
 
 Verify or set `CARGO_INCREMENTAL=0` and `CARGO_PROFILE_DEV_DEBUG=line-tables-only`
 before Cargo; not every agent inherits Claude settings. One writer per checkout.

@@ -8,6 +8,20 @@ disk incident recorded in [`MASTER_CLEAN_UP.md`](MASTER_CLEAN_UP.md).
 
 ---
 
+## Direction and evidence
+
+The product repository is `veox-ai/JopeDime`; its current goal is the bounded neural GP learning
+loop in [MASTER_PLAN.md](MASTER_PLAN.md#product-target). Dataset labels stay intact; outer test
+folds and sealed meta-test families stay outside the learning worker's input closure.
+See [ADR-0005](docs/adr/ADR-0005-canonical-learning-loop.md) for the model lineage,
+[learning status](docs/learning.md) and the [capability matrix](docs/parity/capability-matrix.md)
+for recorded capabilities, and [MASTER_PLAN.md](MASTER_PLAN.md) for the delivery record.
+
+Read those records as dated observations. Refresh the relevant Git, CI and runtime evidence before
+acting; stale plans or historical PASS entries do not establish current capability. The latest
+explicit user direction controls scope and budgets. A configured command or workflow, a merged
+implementation, and a qualified live learning loop are separate milestones.
+
 ## Which checkout
 
 **The canonical local checkout is `/home/ubuntu/JopeDime`**. Work on its claimed PR branch;
@@ -16,6 +30,26 @@ return it to verified remote `main` after the reviewed lifecycle.
 Do not confuse this repository with `~/jain-split/jope-dime` (also reachable as `~/jope-dime`, a
 symlink). That is a different repository on a different upstream — the local forge at
 `git.neverhuman.org` — and it is the research monorepo, not this product repo.
+
+## Claim before writing; hand off with evidence
+
+Before the first write and after resuming a session, read the open PR queue, registered worktrees,
+and the latest entries in [AGENT_CHAT.md](AGENT_CHAT.md). Hold `flock` on `AGENT_CHAT.md.lock`,
+reread the claims, then append the checkout, branch, full HEAD, owner, paths and intended
+verification before editing. An overlapping claim waits for the current owner's stopped-head
+handoff; age or an idle session alone does not release it. An explicit later user assignment can
+transfer ownership: preserve the predecessor's work and record the transfer and observed state
+under the same lock before writing. Cleanup work also follows the
+synchronized [MASTER_CLEAN_UP.md](MASTER_CLEAN_UP.md) record, whose second copy is in the research
+repository; claim that repository separately before changing its copy. Recheck branch, HEAD,
+dirty state and overlapping writers immediately before a checkout or index mutation. The append
+lock serializes the record; it does not itself lock a checkout for the whole task.
+
+Keep corrections on the claimed PR branch. At handoff, record the stopped HEAD, dirty files,
+commands and outcomes, durable receipt locations, remaining blockers and ownership disposition.
+A campaign claim links its pinned manifest and approved resource limits and deadline. A fresh
+context resumes that state and its existing budget; it does not start a second lane or reset a
+campaign deadline. JopeDime uses these existing records, not Bulletfarm's `bf board`/`bf claim`.
 
 ## Where work happens
 
@@ -94,12 +128,45 @@ Land work through the reviewed lifecycle: branch → PR → CI green at the exac
 **different identity** → merge → verify the remote state. `main-guard` enforces that every commit
 on `main` belongs to a merged pull request.
 
-**The reviewing identity must not be the identity that authored the commits.** Check with
-`gh api repos/<owner>/<repo>/commits --jq '.[].author.login'`; `git log` shows the committer name,
-not the GitHub account, so a mismatch is invisible locally.
+**Review must be independent of the writer and bind the exact full head SHA.** Check the PR
+author with `gh pr view <number> --json author,headRefOid` and every GitHub-associated commit
+author with `gh api --paginate repos/veox-ai/JopeDime/pulls/<number>/commits --jq '.[].author.login'`.
+The reviewing identity must differ from both the PR author and all those commit authors. Record
+unassociated authors explicitly; local Git names and emails do not establish GitHub identity.
+Changing a login does not make the writer an independent reviewer. Any changed head needs fresh
+checks and review. Distinguish an independent review comment from a native GitHub approval, and
+claim enforced protection only after reading it back from the API.
+Use the established writer identity for new commits so the designated reviewer stays eligible;
+preserve existing authorship. If that reviewer becomes ineligible, find another eligible independent
+reviewer rather than rewriting attribution or self-approving.
+If no eligible independent reviewer is available, keep the PR open with that blocker recorded.
 
 Before starting new implementation work, check the open pull-request queue. If a PR is awaiting
-review, checks, correction, or merge, resolve it before opening another lane.
+review, checks, correction, or merge, resolve it before opening another lane. The current delivery
+plan uses one implementation PR at a time; the four-lane ceiling is not a concurrency target.
+
+Each focused PR states the behavior it changes, the acceptance command, and the evidence produced.
+For behavioral fixes, preserve a reproducing failure and prove the corrected behavior; refusing
+an operation and successfully executing its authorized path are different acceptance cases.
+For documentation, `git diff --check` and link/import verification supplement the same exact-head
+CI requirement; a declared path exclusion is recorded as `skipped-by-path`, not passed. Merge with
+`gh pr merge <number> --rebase --match-head-commit <reviewed-full-sha>`, then verify the resulting
+remote `main` and `main-guard`. GitHub's rebase merge does not authorize rewriting a shared branch.
+
+## What counts as verification
+
+Bind evidence to the source commit, command and exit status, execution time, relevant environment,
+input identities and resource budget. Record tests collected, executed, failed, skipped or excluded
+and why. Missing runners, cancelled jobs, zero collected tests and unavailable required capabilities
+are not passing coverage. Derive coverage totals from inventories and run receipts.
+
+Status records distinguish source implementation, fixture/local proof, hosted CI, live operational
+qualification and serving promotion. Preserve the remaining requirement for partial behavior.
+Do not mark a whole capability complete from a passing subset, a checkpoint file, or an author's
+summary. Training evidence includes actual optimizer updates and changed parameters; a target
+improvement needs replay under the same HWM comparison identity (`task`, `dataset_hash`, `cut_id`,
+evaluator, vocabulary and protocol). Resume preserves the
+declared resource limits and deadline, and unknown outcomes remain unknown rather than zero.
 
 ## Change discipline
 
