@@ -87,6 +87,10 @@ jobs:
           done
       - name: Cargo artifact protocol tests
         run: python3 deploy/ci/test-cargo-artifact.py
+      - name: Coverage mapping and collection failure tests
+        run: |
+          python3 deploy/ci/test-coverage.py
+          python3 deploy/ci/test-receipt.py
       - name: Hygiene
         run: bash deploy/ci/check.sh
       - name: cargo-deny

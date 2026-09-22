@@ -1,6 +1,6 @@
 # JopeDime current direction
 
-**2026-09-22 17:12 UTC readback.** Publication repo: private `veox-ai/JopeDime`.
+**2026-09-22 coverage-foundation readback.** Publication repo: private `veox-ai/JopeDime`.
 Issue #52 is closed by [PR #55](https://github.com/veox-ai/JopeDime/pull/55).
 Its source head `c5a5b1138b4e878327eb2f429ac75be9b8a9374c` received independent
 Claude review and native `neverhuman` approval after verifying `jepsontaylor` was
@@ -19,7 +19,7 @@ Lifecycle evidence is outside the checkout under
 `/home/ubuntu/jope-rescue-20260921/implementation-20260922/foundation/issue52`.
 Writer access is recovered. Protection API still returns 403; enforcement is procedural.
 
-The next focused delivery is #46. Local proof at
+Issue #46 is closed by [PR #56](https://github.com/veox-ai/JopeDime/pull/56). Local proof at
 `96ec9a996` passes both the canonical reused `target/` and the registered
 `artifact-proof` lane's stable external target directory with spaces. Each layout
 passed nine artifact protocol tests, twelve root tests plus one doctest, emitter
@@ -28,11 +28,29 @@ The old external-root test failed at main before the change. Logs, input hashes,
 commands, statuses, environment and 16 GiB/16 CPU budgets are retained under
 `foundation/issue46/{normal,external}` in the same custody tree. An initial scratch
 fixture placed under the repository marker failed its no-marker precondition;
-that failure is preserved separately. Final-head CI/review and #46 merge remain pending.
+that failure is preserved separately. Final source `161ddeb58b2fcf1768651f8dc5b7aff6ebdc61ac`
+passed all eight manual jobs in run35760152193 and all PR jobs35760158987. Independent
+Claude/native neverhuman approval5281400221 binds that head. Main is now
+`c7ae554a85f0e2d35d282aa87ee72a539d6cb4c2`; main-guard35761248043 passed.
+Nextest normal/external proofs passed at the final head after correcting its
+workspace-relative default report store and rejecting stale reports. The proof lane
+and external build were archived, independently restored/verified, then removed
+with fresh dependency checks. See `foundation/issue46/lifecycle-receipt.json` and
+`proof-closure.json`. Canonical returned clean to verified main before this phase.
 GPU/S3 regression and release/container wrappers have static validation only here;
 their required capabilities are not claimed as exercised by CPU smoke proofs.
 
-The user-approved bounded foundation remains serial: #46; explicit coverage/receipts;
+The current claimed branch is `ci/coverage-foundation`. Static mapping in
+[coverage.json](deploy/ci/coverage.json) assigns22packages,18features,214Cargo targets,
+213Python test-named files,4workflows/12jobs and32benchmark sources. These are static
+counts, not executed tests. Real maintained pytest collection reports222 tests;
+collection errors now remain failures and static mode requires explicit selection.
+Receipt foundations bind source/checkout SHA, run/attempt, command, status, counts
+and evidence digests; wiring and strict aggregation remain the next serial PR.
+See [coverage/receipt semantics](deploy/ci/coverage.md). This phase still requires
+final-head hosted CI, independent review and guarded merge.
+
+The user-approved bounded foundation remains serial: explicit coverage/receipts;
 trustworthy aggregation/operator status; then a diagnostic push-triggered full-main
 CPU baseline. Full Rust/Python repair, strict Clippy, persistent runner migration and
 mandatory full-CPU gates remain the following phase. Qualification and soak are
@@ -65,7 +83,7 @@ Implementation and qualification are separate; see [the contract](docs/pipeline.
 Evidence lives under `/home/ubuntu/jope-rescue-20260921/implementation-20260922/pipeline-budget`.
 
 No learning qualification or soak has started. The remaining delivery sequence is
-CI coverage/#46, deterministic security/#47, emitter binding/#48, dataset/fold
+CI coverage/aggregation/full-main, deterministic security/#47, emitter binding/#48, dataset/fold
 contracts, S3 conditional recovery, benchmark/task adapters, isolated GPU execution,
 canonical training/resume, successor proposals/promotion and the bounded controller,
 followed by the one-hour qualification and24-hour soak. Ownership is recorded in
@@ -126,7 +144,7 @@ as its own reviewed PR.
 
 ## Blockers (do not fake)
 
-- #46 still needs final-head hosted CI, independent review and guarded merge.
+- Coverage foundation still needs final-head hosted CI, independent review and guarded merge.
   Writer access has recovered; keep runner credentials separate and preserve
   independent reviewer eligibility for each subsequent PR.
 - Private-repo rulesets API returns HTTP 403 until the org is upgraded (D3,

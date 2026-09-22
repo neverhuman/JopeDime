@@ -416,3 +416,35 @@ Generate a run-specific config binding store.dir to Cargo metadata while retaini
 all original profiles/filters. Also address independent reviewer finding: retention
 requires an execution marker before copying any report. New head needs fresh review
 and CI; the earlier native approval applies only to 9a947a793.
+
+## 2026-09-22 — Codex — issue46 closeout and coverage claim
+
+Resume after fresh queue/worktree/ledger read. PR56 merged from reviewed source
+161ddeb58b2fcf1768651f8dc5b7aff6ebdc61ac; all eight manual jobs35760152193 and
+PR jobs35760158987 passed. Independent Claude/native neverhuman approval5281400221
+binds that exact head. Remote main c7ae554a85f0e2d35d282aa87ee72a539d6cb4c2 and
+main-guard are verified in foundation/issue46/lifecycle-receipt.json under the
+existing implementation-20260922 custody. Issue46 closed; canonical returned clean
+to verified main before this new branch.
+
+Claim canonical ci/coverage-foundation from that main, owner Codex foundation
+continuation. Paths deploy/ci/{coverage*,test-inventory*,check.sh}, .github/workflows/ci.yml,
+MASTER_PLAN.md, AGENT_CHAT.md and synchronized MASTER_CLEAN_UP.md. Explicit static
+workspace/features/targets/Python/workflow/benchmark mapping; unassigned additions
+fail; pytest collection failure remains failure; formatting/workflow/coverage guards.
+Acceptance: negative fixtures, real maintained Python collection, exact-head CI and
+independent review/merge/main-guard. Coverage mapping is not execution qualification.
+
+Close the artifact-proof lane only after archived source/evidence independent
+restoration and fresh dependency checks, append identical cleanup records after a
+separate research claim. Preserve held lint187c2f14d and runner-prov b8acc6202 lanes
+and authorship. Next phases remain aggregation/operator reporting, then bounded
+full-main diagnostic and reviewed runner delivery under approved16/16 and48/16 limits.
+
+Coverage/receipts phase path clarification: deploy/ci/{receipt.py,test-receipt.py,
+test-coverage.py,coverage.md} are included alongside the coverage* files. Initial
+path list omitted these explicit names; they implement the already claimed receipt
+phase. New static mapping has22packages/18features/214targets/213Python test-named
+files/4workflows/12jobs/32benchmark sources. Real pytest collection passes222tests;
+no AST fallback. Proof lane closed with independent restoration and fresh no-consumer
+checks; synchronized cleanup record and custody proof-closure.json bind removal.
