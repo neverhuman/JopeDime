@@ -1,6 +1,6 @@
 # JopeDime current direction
 
-**2026-09-22 aggregation implementation readback.** Publication repo: private `veox-ai/JopeDime`.
+**2026-09-22 full-main foundation claim.** Publication repo: private `veox-ai/JopeDime`.
 Issue #52 is closed by [PR #55](https://github.com/veox-ai/JopeDime/pull/55).
 Its source head `c5a5b1138b4e878327eb2f429ac75be9b8a9374c` received independent
 Claude review and native `neverhuman` approval after verifying `jepsontaylor` was
@@ -47,18 +47,32 @@ Main `aa1e5986824b41632fce482bb06a64c02a21d65d`, main-guard35764421202 passed;
 canonical returned clean before the next claim. Custody: `foundation/coverage/lifecycle-receipt.json`.
 The review corrected a feature-gated target wrongly assigned to default commands.
 
-The current branch is `ci/aggregate-receipts`. Static [coverage mapping](deploy/ci/coverage.json)
-now assigns22packages,18features,214Cargo targets,216Python test-named files,
-4workflows/13jobs and32benchmark sources. These are static counts. Maintained real
-pytest collection previously reported222, with207 passing and15 deselected at the above
-source; nextest executed751 with13 skips, not the751-only JUnit total. New receipts bind
-source/checkout/run/attempt, commands, source cleanliness and evidence digests. The
-aggregate always evaluates dependencies and rejects missing/failed/cancelled/unavailable,
-stale and zero/unknown execution. Runner-independent status reads only the requested run.
-See [coverage/receipt semantics](deploy/ci/coverage.md). This implementation still requires
-final-head hosted CI, independent review and guarded merge; full-main runner delivery remains next.
+Aggregation [PR #60](https://github.com/veox-ai/JopeDime/pull/60) merged from
+`f08bcb6486fff1c6472a5a07224d110444853b86` after both nine-job manual35767660672 and
+PR35767666966 runs passed, including aggregate, and independent Claude/native
+neverhuman approval5282087456. Main is `8ea1289fec019caa21facda4dea26bfb328bbbe8`;
+main-guard passed (exact receipt: `foundation/aggregation/lifecycle-receipt.json`).
+Canonical returned clean before claiming `ci/full-main-cpu`. The first aggregate
+correctly stayed red when nested product receipts were misclassified; that defect
+was fixed and the real failed-run artifacts replayed before final hosted acceptance.
 
-The user-approved bounded foundation remains serial: trustworthy aggregation/operator status; then a diagnostic push-triggered full-main
+Static coverage assigns22packages,18features,214Cargo targets,216Python test-named
+files,4workflows/13jobs and32benchmark sources. Actual fast results at the above
+source:43protocol tests;751nextest passes with13skips from764listed;207Python passes
+with15deselected from222; four systemd tests; four emitter tests with278filtered.
+Counts are per invocation and overlap across lanes. Non-test verification commands
+have unknown/not-applicable test counts, never invented zeros. Receipts and strict
+aggregate are wired; see [coverage/receipt semantics](deploy/ci/coverage.md).
+
+The new branch begins with a genuine hosted documentation-only path proof. No CPU
+runner or full-main implementation is claimed yet. Then the same focused PR will
+add independent CPU families and reviewed runner delivery under the resource limits
+below. A fixed host-role allocation (two fast slots on xbabe1; full CPU on xbabe2)
+is the initial implementation choice, subject to live ownership/provenance readback
+and independent review before deployment. Baseline execution and a subsequent
+build-reuse job, with fresh evidence at each run/attempt, remain required.
+
+The remaining user-approved foundation delivery is a diagnostic push-triggered full-main
 CPU baseline. Full Rust/Python repair, strict Clippy, persistent runner migration and
 mandatory full-CPU gates remain the following phase. Qualification and soak are
 unstarted. Fast jobs are limited to two at 16 GiB/16 CPUs each; full CPU is exclusive
@@ -151,7 +165,7 @@ as its own reviewed PR.
 
 ## Blockers (do not fake)
 
-- Aggregation still needs final-head hosted CI, independent review and guarded merge.
+- Full-main CPU workflow and runner delivery remain unimplemented and unqualified.
   Writer access has recovered; keep runner credentials separate and preserve
   independent reviewer eligibility for each subsequent PR.
 - Private-repo rulesets API returns HTTP 403 until the org is upgraded (D3,
