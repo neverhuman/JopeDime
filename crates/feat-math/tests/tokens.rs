@@ -237,7 +237,7 @@ fn random_stage(rng: &mut Pcg32) -> String {
         "lag" | "roll" | "fft_mag" => s.push_str(&format!(" k={}", 1 + rng.next_u32() % 6)),
         _ => {}
     }
-    if rng.next_u32() % 2 == 0 {
+    if rng.next_u32().is_multiple_of(2) {
         s.push_str(" append=true");
     }
     s.push(')');
@@ -273,13 +273,13 @@ fn random_head(rng: &mut Pcg32) -> String {
                 pick(rng, F64_POOL),
                 1 + rng.next_u32() % 3
             );
-            if rng.next_u32() % 2 == 0 {
+            if rng.next_u32().is_multiple_of(2) {
                 h.push_str(&format!(
                     " loss=huber delta={}",
                     pick(rng, &["0.5", "0.00001"])
                 ));
             }
-            if rng.next_u32() % 2 == 0 {
+            if rng.next_u32().is_multiple_of(2) {
                 h.push_str(" stop=mae val_shuffle=true");
             }
             h.push(')');
@@ -320,8 +320,8 @@ fn random_head(rng: &mut Pcg32) -> String {
 }
 
 fn random_genome(rng: &mut Pcg32) -> String {
-    if rng.next_u32() % 10 == 0 {
-        let kind = if rng.next_u32() % 2 == 0 {
+    if rng.next_u32().is_multiple_of(10) {
+        let kind = if rng.next_u32().is_multiple_of(2) {
             "affine"
         } else {
             "raw"

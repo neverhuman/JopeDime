@@ -714,7 +714,7 @@ mod tests {
     fn historical_unsafe_expression_library_is_regenerated_before_loading() {
         let genome = GenomeIr::parse("(sym raw \"c9+1\")").unwrap();
         let model =
-            crate::fit_legacy_numeric_bound(&genome, &vec![vec![1., 2.], vec![2., 3.]], &[0., 1.])
+            crate::fit_legacy_numeric_bound(&genome, &[vec![1., 2.], vec![2., 3.]], &[0., 1.])
                 .unwrap();
         let mut artifact = emit_fitted_cpp17(&model).unwrap();
         let GenomeIr::Symbolic { expr, .. } = genome else {

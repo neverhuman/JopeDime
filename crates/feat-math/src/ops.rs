@@ -1664,7 +1664,9 @@ mod tests {
     fn scalar_batch_functions_evaluate_with_guarded_semantics() {
         let (x, y) = toy(30, 3);
         // Every new function parses, fits, and matches its reference formula.
-        let cases: [(&str, fn(f64) -> f64); 8] = [
+        // A scalar op under test, paired with the reference formula it must reproduce.
+        type ScalarCase = (&'static str, fn(f64) -> f64);
+        let cases: [ScalarCase; 8] = [
             ("exp", |v| v.clamp(-30.0, 30.0).exp().min(1.0e12)),
             ("log", |v| if v <= 1e-300 { 0.0 } else { v.ln() }),
             ("asinh", asinh_stable),
@@ -1889,7 +1891,7 @@ mod tests {
                 Jitter(f64),
                 Vary,
             }
-            let mut pick_center = |rng: &mut Pcg32, forced: usize| -> f64 {
+            let pick_center = |rng: &mut Pcg32, forced: usize| -> f64 {
                 if rng.next_f64() < 0.5 {
                     centers[forced % centers.len()]
                 } else {

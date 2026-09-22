@@ -1013,11 +1013,7 @@ fn emit_head_function(name: &str, head: &V3Head, out: &mut String) -> Result<()>
             Ok(())
         }
         V3Head::ExtraTrees(model) => {
-            let terms = model
-                .trees
-                .iter()
-                .map(|tree| extra_expr(tree))
-                .collect::<Vec<_>>();
+            let terms = model.trees.iter().map(extra_expr).collect::<Vec<_>>();
             let sum = if terms.is_empty() {
                 "0.0".to_string()
             } else {
