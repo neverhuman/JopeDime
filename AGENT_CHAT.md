@@ -34,7 +34,7 @@ feat/s3-live-credentials dc0fe3da7e638e1f88e1fa6e6a42dd4b8987876c and #65
 docs/identities-and-aws-paths 1016e9404949e47fa5dd8d88c720a436aeca847e.
 Explicit user assignment transfers their reconciliation and stopped held-lane closure
 to this owner; preserve predecessor commits/authorship and every custody receipt.
-All five registered checkouts observed clean. lint187c2f14dfca1c10d6670b81e6db7cebbe7fcc6a
+All five registered checkouts observed clean. lint 187c2f14dfca1c10d6670b81e6db7cebbe7fcc6a
 and runner-prov b8acc6202824698e6480ae2fa92f1a89a6e04626 retain the stopped handoffs
 in implementation-20260922/foundation/held-lanes-handoff.json. No new lane.
 
@@ -51,7 +51,7 @@ Then deliver the supplied serial implementation plan through reviewed PRs. No pa
 or training campaign started. Approved panel limit remains 20 workers/20 CPUs/64 GiB
 without swap, one RTX3090 task, two hours after prepared/verified inputs, no paid
 cloud or exclusive-full-CPU-CI overlap. Training proof separately at most one GPU-hour,
-at most20minutes/category. Warm demo target<60s. Resume will retain original campaign
+at most 20 minutes/category. Warm demo target <60 s. Resume will retain original campaign
 deadlines once started; development work does not spend or reset campaign limits.
 
 Held lanes closed with exact source and complete ignored-evidence recovery verified.
@@ -70,35 +70,35 @@ PR63 is frozen at 59c948bb27b22ed103ef71442f439472c65bbb1d during independent re
 
 ## 2026-09-22T22:19:59.034798+00:00 — PR63 independent review corrections
 
-Claude/neverhuman native review5284490164 requests changes at
+Claude/neverhuman native review 5284490164 requests changes at
 59c948bb27b22ed103ef71442f439472c65bbb1d: preserve object_store OIDC/ECS/EKS
 providers, avoid inherited session-token contamination, and deterministic credential
 branch tests. Correct on the same claimed s3-live branch; extend paths to
 docs/datasets.md for the provider contract. Also redact arbitrary AWS child stderr.
-Local prior-head datasets tests32passed; new head requires fresh tests, full manual CI
-and independent review. Current manual35790948990 and PR35790953706 belong to the old
+Local prior-head datasets tests 32 passed; new head requires fresh tests, full manual CI
+and independent review. Current manual 35790948990 and PR 35790953706 belong to the old
 head and cannot certify corrections. No corpus or training campaign has started.
 
 ## 2026-09-22T22:31:00.821319+00:00 — PR63 corrected candidate and PR65 verification
 
-PR63 corrected head32e99f9214bc0cf86cfa1c53ed2393bcfa1e4df6: 37 local tests
+PR63 corrected head 32e99f9214bc0cf86cfa1c53ed2393bcfa1e4df6: 37 local tests
 and strict package Clippy pass. Two process probes fail on the predecessor for native
 provider rejection and helper-stderr disclosure, then pass on the corrected source.
-Independent Claude/native neverhuman approval5284594279 binds the new head;
-manual35792141999/1 and PR35792147870/1 remain pending. No merge yet.
+Independent Claude/native neverhuman approval 5284594279 binds the new head;
+manual 35792141999/1 and PR 35792147870/1 remain pending. No merge yet.
 
 PR65 narrows helper guarantees (unknown command forms pass through; commit lookup
-caps at100), corrects the risk of sourcing a bare token file, and dates bucket/access
+caps at 100), corrects the risk of sourcing a bare token file, and dates bucket/access
 observations. Metadata-only credential path checks passed; no secret files read.
 Verbatim archive hash, active links, cleanup synchronization and diff checks passed.
 Final PR65 head will include current main after PR63 lands, then fresh CI/review.
 
 ## 2026-09-22T22:37:38.390703+00:00 — PR63 merged; PR65 final candidate
 
-PR63 merged from32e99f9214bc0cf86cfa1c53ed2393bcfa1e4df6 to main
-be4d31681e5f88edc8bdd3638578a182e4bc0ea1, identical reviewed tree. Manual35792141999/1
-allninejobs passed; PR35792147870/1 passed with inputs/python/emitters skipped-by-path.
-Independent Claude/native approval5284594279; complete API/artifact receipts in
+PR63 merged from 32e99f9214bc0cf86cfa1c53ed2393bcfa1e4df6 to main
+be4d31681e5f88edc8bdd3638578a182e4bc0ea1, identical reviewed tree. Manual 35792141999/1
+all nine jobs passed; PR 35792147870/1 passed with inputs/python/emitters skipped-by-path.
+Independent Claude/native approval 5284594279; complete API/artifact receipts in
 asm-demonstration-20260922/pr63/premerge-acceptance.json and merge-receipt.json.
 Main-guard remains pending. Canonical fast-forwarded; only owned coordination/cleanup
 documents remain dirty while PR65 carries them. No implementation lane opened.
@@ -108,3 +108,18 @@ documentation, truthful helper limits, active-ledger archival and the already-ve
 held-lane closure record. Final exact-head CI and independent native review follow.
 The remaining s3-live and agents-doc lanes will close after immutable source/evidence
 restoration and fresh consumer checks; prepared s3-live target archive is retained.
+
+## 2026-09-22T22:51:49.832639+00:00 — PR65 helper drift correction
+
+Independent Claude/native review 5284795500 requests one documentation correction.
+The host-local gh-role script changed externally at 22:25 UTC after this session's
+earlier read: it now excludes only the PR opener, not associated commit authors or
+committers. This session did not modify the helper. Keep the repository's stricter
+independent-review rule and complete paginated checks; a clean helper result cannot
+certify author eligibility. PR63's separate premerge checks included all associated
+authors and committers; its native reviewer remains eligible.
+
+Correct AGENTS.md to describe the current helper's limited enforcement and its
+merge path's fail-open behavior. Also repair spacing in new active-ledger prose,
+preserving the archived bytes. Both old-head CI runs passed (35793380466/1 and
+35793383672/1); the corrected head needs fresh CI and review.
