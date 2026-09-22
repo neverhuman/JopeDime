@@ -12,11 +12,19 @@
 use std::path::{Path, PathBuf};
 
 use jope_arena::io::{read_bytes, read_text, sha256_hex};
-use jope_arena::leaderboard::{self, Snapshot};
+use jope_arena::leaderboard::{self, Ladder, Snapshot, SNAPSHOT_SCHEMA};
 
 const TRACK: &str = "tabular-regression-v2";
 const SCORES_SHA256: &str = "5ec868987c2f4286ae44728fde49215ec6e55e7d27e62100d3823744e2957db6";
 const LEADERBOARD_SHA256: &str = "2d28ffbd8b5830c6adc39874dfcf98498419ef8c1df6ac5eb135c660013fb24f";
+/// `assets/regression/protocol-corrections-tabular-regression-v2.json`: the three Golden46 rows
+/// of `jope-dime` (run `golden46-new3-20260723-v4`) demoted to test-adaptive, as the run's own
+/// artefacts label them (`crates/jope-campaigns/src/test_adaptive/aggressive.rs`).
+const CORRECTIONS_SHA256: &str = "6d095191322f7d4a21362052232333c4956c537157203a47a6b1d1b0c2a5c7ab";
+/// `assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv`.
+const VALID_LEADERBOARD_SHA256: &str =
+    "e0454e2c389647e7dfab37a874c7dd7915c2535c1aec1fc958a9e6b8b0df0199";
+const GOLDEN46_DATASETS: [&str; 3] = ["6054656956182296", "ZTS_small", "a3bd0a400ec4d7f9"];
 
 fn repo_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -34,8 +42,20 @@ fn snapshot_path() -> PathBuf {
     repo_root().join("assets/regression/elo-tabular-regression-v2.json")
 }
 
+fn corrections_path() -> PathBuf {
+    repo_root().join("assets/regression/protocol-corrections-tabular-regression-v2.json")
+}
+
+fn valid_leaderboard_path() -> PathBuf {
+    repo_root().join("assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv")
+}
+
+fn valid_snapshot_path() -> PathBuf {
+    repo_root().join("assets/regression/elo-tabular-regression-v2.benchmark-valid.json")
+}
+
 fn assert_published_ladder(root: &Path, label: &str) {
-    let (board, location) = leaderboard::compute(root, TRACK, None)
+    let (board, location) = leaderboard::compute(root, TRACK, None, Ladder::Published, None)
         .unwrap_or_else(|error| panic!("{label}: recompute failed: {error:#}"));
     let scores = read_bytes(&location.dir.join("scores.csv")).unwrap();
     assert_eq!(
@@ -43,6 +63,10 @@ fn assert_published_ladder(root: &Path, label: &str) {
         SCORES_SHA256,
         "{label}: scores.csv is not the published input"
     );
+    assert_eq!(board.scores_sha256, SCORES_SHA256, "{label}");
+    assert_eq!(board.ladder, Ladder::Published, "{label}");
+    assert_eq!(board.excluded_rows, 0, "{label}");
+    assert!(board.corrections.is_none(), "{label}");
     assert_eq!(board.rankable_rows, 8763, "{label}");
     assert_eq!(board.datasets_scored, 45, "{label}");
     assert_eq!(board.rows.len(), 305, "{label}");
@@ -76,7 +100,8 @@ fn assert_published_ladder(root: &Path, label: &str) {
 
     let snapshot: Snapshot =
         serde_json::from_slice(&std::fs::read(snapshot_path()).unwrap()).unwrap();
-    assert_eq!(snapshot.schema, "jope.arena-elo-snapshot/v1");
+    assert_eq!(snapshot.schema, SNAPSHOT_SCHEMA);
+    assert_eq!(snapshot.ladder, Ladder::Published);
     assert_eq!(snapshot.scores_sha256, SCORES_SHA256);
     assert_eq!(snapshot.leaderboard_sha256, LEADERBOARD_SHA256);
     assert_eq!(
@@ -84,7 +109,7 @@ fn assert_published_ladder(root: &Path, label: &str) {
         "{label}: rows equal the committed snapshot"
     );
     assert_eq!(
-        Snapshot::new(&board, SCORES_SHA256).unwrap(),
+        Snapshot::new(&board).unwrap(),
         snapshot,
         "{label}: snapshot regenerates identically"
     );
@@ -93,6 +118,156 @@ fn assert_published_ladder(root: &Path, label: &str) {
 #[test]
 fn committed_fixture_reproduces_the_published_ladder() {
     assert_published_ladder(&fixture_root(), "assets/regression fixture");
+}
+
+/// The benchmark-valid ladder: the same `scores.csv`, minus the rows this repository's own
+/// campaign code labels test-adaptive. The published bytes are untouched; the corrections file
+/// beside the fixture carries the evidence, and this test pins what applying it does.
+#[test]
+fn benchmark_valid_ladder_excludes_the_rows_the_campaign_code_labels_test_adaptive() {
+    let corrections = corrections_path();
+    assert_eq!(
+        sha256_hex(&read_bytes(&corrections).unwrap()),
+        CORRECTIONS_SHA256,
+        "corrections file changed: re-verify every entry, regenerate both committed ladders and \
+         the README, then update this constant"
+    );
+
+    // The scores the corrections select really are the three Golden46 acceptance rows.
+    let scores = jope_arena::scores::read_scores(
+        &fixture_root()
+            .join("results")
+            .join(TRACK)
+            .join("scores.csv"),
+    )
+    .unwrap();
+    let golden46: Vec<&jope_arena::scores::ScoreRow> = scores
+        .iter()
+        .filter(|r| r.method_id == "jope-dime" && r.source_revision == "golden46-new3-20260723-v4")
+        .collect();
+    assert_eq!(golden46.len(), 3);
+    for row in &golden46 {
+        assert!(
+            GOLDEN46_DATASETS.contains(&row.dataset_id.as_str()),
+            "{}",
+            row.dataset_id
+        );
+        assert_eq!(row.source_kind, "accepted-current-best-rust-replay");
+        assert_eq!(
+            row.benchmark_valid, "True",
+            "published as valid; that is the contradiction"
+        );
+        assert_eq!(
+            row.source_uri,
+            "results/tabular-regression-v2/aspfm-acceptance-manifest.json"
+        );
+    }
+
+    let (board, _) = leaderboard::compute(
+        &fixture_root(),
+        TRACK,
+        None,
+        Ladder::BenchmarkValid,
+        Some(&corrections),
+    )
+    .unwrap_or_else(|error| panic!("benchmark-valid recompute failed: {error:#}"));
+    assert_eq!(board.ladder, Ladder::BenchmarkValid);
+    assert_eq!(board.scores_sha256, SCORES_SHA256);
+    assert_eq!(board.excluded_rows, 3);
+    assert_eq!(board.rankable_rows, 8763 - 3);
+    assert_eq!(
+        board.datasets_scored, 45,
+        "the three datasets keep their other methods"
+    );
+    assert_eq!(board.rows.len(), 305);
+    let meta = board.corrections.as_ref().expect("corrections recorded");
+    assert_eq!(meta.file, "protocol-corrections-tabular-regression-v2.json");
+    assert_eq!(meta.sha256, CORRECTIONS_SHA256);
+    assert_eq!(meta.rows_corrected, 3);
+    assert_eq!(meta.applied.len(), 1);
+    assert_eq!(
+        meta.applied[0].id,
+        "golden46-new3-20260723-v4-test-adaptive"
+    );
+    assert_eq!(meta.applied[0].rows, 3);
+    assert!(
+        board.rows.iter().all(|r| r.benchmark_valid == "True"),
+        "nothing invalid survives into the benchmark-valid ladder"
+    );
+    assert!(board
+        .rows
+        .iter()
+        .all(|r| r.scope == Ladder::BenchmarkValid.scope()));
+
+    // What the correction does to this repository's own entries. These are the numbers the
+    // README renders; the honest coverage is 42/45 and it is no longer a full-coverage rank.
+    let jope = board
+        .rows
+        .iter()
+        .find(|r| r.method_id == "jope-dime")
+        .unwrap();
+    assert_eq!(jope.datasets_scored, 42);
+    assert_eq!(jope.full_coverage, "False");
+    assert_eq!(jope.full_coverage_rank, "");
+    assert_eq!(jope.coverage_status, "42/45");
+    assert_eq!(jope.elo_rank, 1);
+    assert_eq!(jope.elo, "2260.8");
+    assert_eq!(jope.dataset_wins, 11);
+    let regressor = board
+        .rows
+        .iter()
+        .find(|r| r.method_id == "jope-dime-regressor")
+        .unwrap();
+    assert_eq!(regressor.elo_rank, 32);
+    assert_eq!(regressor.elo, "1684.8");
+    assert_eq!(regressor.datasets_scored, 42);
+
+    let csv = leaderboard::to_csv(&board.rows).unwrap();
+    assert_eq!(sha256_hex(csv.as_bytes()), VALID_LEADERBOARD_SHA256);
+    assert_eq!(
+        csv,
+        read_text(&valid_leaderboard_path()).unwrap(),
+        "byte-identical to the committed benchmark-valid ladder"
+    );
+    let snapshot: Snapshot =
+        serde_json::from_slice(&std::fs::read(valid_snapshot_path()).unwrap()).unwrap();
+    assert_eq!(snapshot.schema, SNAPSHOT_SCHEMA);
+    assert_eq!(snapshot.ladder, Ladder::BenchmarkValid);
+    assert_eq!(snapshot.leaderboard_sha256, VALID_LEADERBOARD_SHA256);
+    assert_eq!(
+        Snapshot::new(&board).unwrap(),
+        snapshot,
+        "benchmark-valid snapshot regenerates identically"
+    );
+
+    // The published ladder with the same corrections keeps every row and every published
+    // number, and only the benchmark_valid cell changes: that is the annotation the README's
+    // best-known block relies on.
+    let (annotated, _) = leaderboard::compute(
+        &fixture_root(),
+        TRACK,
+        None,
+        Ladder::Published,
+        Some(&corrections),
+    )
+    .unwrap();
+    assert_eq!(annotated.excluded_rows, 0);
+    assert_eq!(annotated.rankable_rows, 8763);
+    let jope = annotated
+        .rows
+        .iter()
+        .find(|r| r.method_id == "jope-dime")
+        .unwrap();
+    assert_eq!(
+        (jope.elo_rank, jope.elo.as_str(), jope.datasets_scored),
+        (1, "2259.8", 45)
+    );
+    assert_eq!(jope.benchmark_valid, "False");
+    assert!(annotated
+        .rows
+        .iter()
+        .filter(|r| r.method_id != "jope-dime")
+        .all(|r| r.benchmark_valid == "True"));
 }
 
 #[test]

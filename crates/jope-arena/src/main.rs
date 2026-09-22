@@ -10,6 +10,7 @@ use std::path::PathBuf;
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
 
+use jope_arena::leaderboard::Ladder;
 use jope_arena::{family, fetch, io, leaderboard, paths, publish, reporter, scores, verify};
 
 #[derive(Parser)]
@@ -25,7 +26,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Recompute a track's official ladder from `results/<track>[/<version>]/scores.csv`.
+    /// Recompute a track's ladder from `results/<track>[/<version>]/scores.csv`.
     Elo {
         /// Track id (`tabular-regression-v2`).
         #[arg(long)]
@@ -36,15 +37,26 @@ enum Command {
         /// Benchmark root (default `SOTARENA_ROOT`).
         #[arg(long, env = paths::var::SOTARENA_ROOT)]
         root: Option<PathBuf>,
+        /// `published`: every rankable row, byte-for-byte the benchmark's own ladder.
+        /// `benchmark-valid`: only rows whose `benchmark_valid` is True after `--corrections`.
+        #[arg(long, value_enum, default_value_t = Ladder::Published)]
+        ladder: Ladder,
+        /// A `jope.arena-protocol-corrections/v1` file applied to the rows before ranking.
+        #[arg(long)]
+        corrections: Option<PathBuf>,
         /// Write the leaderboard CSV here (default: stdout).
         #[arg(long)]
         out: Option<PathBuf>,
-        /// Write the `jope.arena-elo-snapshot/v1` JSON here.
+        /// Write the `jope.arena-elo-snapshot/v2` JSON here.
         #[arg(long)]
         json: Option<PathBuf>,
-        /// Fail unless the ladder equals the committed `leaderboard.csv` next to the scores.
+        /// Fail unless the ladder equals the committed CSV (`--committed`, else the
+        /// `leaderboard.csv` next to the scores, which is only the published ladder).
         #[arg(long)]
         check: bool,
+        /// The committed ladder `--check` compares against.
+        #[arg(long, requires = "check")]
+        committed: Option<PathBuf>,
     },
     /// Turn a campaign's receipts into `scores.csv` rows.
     EmitScores {
@@ -171,18 +183,26 @@ fn main() -> Result<()> {
             track,
             version,
             root,
+            ladder,
+            corrections,
             out,
             json,
             check,
+            committed,
         } => {
             let root = benchmark_root(root);
-            let (board, location) = leaderboard::compute(&root, &track, version.as_deref())?;
+            let (board, location) = leaderboard::compute(
+                &root,
+                &track,
+                version.as_deref(),
+                ladder,
+                corrections.as_deref(),
+            )?;
             let csv = leaderboard::to_csv(&board.rows)?;
             let scores_path = io::resolve_input(&location.dir.join("scores.csv"))
                 .context("scores.csv vanished")?;
-            let scores_sha256 = io::sha256_hex(&io::read_bytes(&location.dir.join("scores.csv"))?);
             if let Some(path) = &json {
-                let snapshot = leaderboard::Snapshot::new(&board, &scores_sha256)?;
+                let snapshot = leaderboard::Snapshot::new(&board)?;
                 let mut text = serde_json::to_string_pretty(&snapshot)?;
                 text.push('\n');
                 write_out(Some(path), &text)?;
@@ -190,11 +210,18 @@ fn main() -> Result<()> {
             write_out(out.as_ref(), &csv)?;
             let top = board.rows.first();
             eprintln!(
-                "track={} version={} results={} scores_sha256={} rankable_rows={} datasets={} methods={} rank1={} elo={}",
+                "track={} version={} ladder={} results={} scores_sha256={} corrections={} excluded_rows={} rankable_rows={} datasets={} methods={} rank1={} elo={}",
                 board.track_id,
                 board.version.as_deref().unwrap_or("(flat)"),
+                board.ladder.as_str(),
                 scores_path.display(),
-                scores_sha256,
+                board.scores_sha256,
+                board
+                    .corrections
+                    .as_ref()
+                    .map(|c| format!("{}@{}:{}rows", c.file, &c.sha256[..12], c.rows_corrected))
+                    .unwrap_or_else(|| "none".to_owned()),
+                board.excluded_rows,
                 board.rankable_rows,
                 board.datasets_scored,
                 board.rows.len(),
@@ -202,8 +229,14 @@ fn main() -> Result<()> {
                 top.map(|r| r.elo.as_str()).unwrap_or("-"),
             );
             if check {
-                let committed = io::read_text(&location.dir.join("leaderboard.csv"))
-                    .context("--check needs a committed leaderboard.csv next to scores.csv")?;
+                let committed_path =
+                    committed.unwrap_or_else(|| location.dir.join("leaderboard.csv"));
+                let committed = io::read_text(&committed_path).with_context(|| {
+                    format!(
+                        "--check needs a committed ladder at {} (pass --committed for a non-published ladder)",
+                        committed_path.display()
+                    )
+                })?;
                 if committed != csv {
                     let theirs = leaderboard::parse_csv(&committed)?;
                     let first = theirs
@@ -214,9 +247,16 @@ fn main() -> Result<()> {
                         .unwrap_or_else(|| {
                             format!("row counts {} vs {}", theirs.len(), board.rows.len())
                         });
-                    bail!("recomputed ladder differs from the committed leaderboard.csv ({first})");
+                    bail!(
+                        "recomputed {} ladder differs from the committed {} ({first})",
+                        board.ladder.as_str(),
+                        committed_path.display()
+                    );
                 }
-                eprintln!("check=ok (byte-identical to the committed leaderboard.csv)");
+                eprintln!(
+                    "check=ok (byte-identical to the committed {})",
+                    committed_path.display()
+                );
             }
             Ok(())
         }
