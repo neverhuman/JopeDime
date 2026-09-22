@@ -178,18 +178,23 @@ agent on this host shares. An inherited `GH_TOKEN` cannot override the role: the
 Plain `gh` can use the active account or an inherited token override. Verify the resulting
 identity at every use; the helper clears those overrides for the selected role.
 
-**What it refuses**, which is the rule in step 2 made mechanical rather than manual: an approval
-where the selected account opened the pull request, authored any commit or is any commit's
-committer; an approval over commits with no GitHub account attached unless `--ack-unassociated`
-records that provenance was established; a `pr create` under the reviewer role; and failed
-lookups for recognized review operations. The parser recognizes common `gh api` forms too.
-It passes unknown command shapes through, and its commit lookup reads at most 100 commits.
-Keep the paginated API checks below: this helper does not replace the complete review procedure.
+**Observed limits (2026-09-22 22:51 UTC).** The installed helper refuses approvals
+by the account that opened the PR, unassociated commit authors without an explicit
+`--ack-unassociated`, PR creation under the reviewer role, and failed lookups on
+recognized approval operations. It does **not** exclude associated commit authors
+or committers. Its commit lookup reads at most 100 commits, and unknown command
+shapes pass through. Its merge path can continue after a failed eligibility lookup.
+
+**A successful helper check does not satisfy this repository's reviewer rule.**
+Independently compare the reviewer with the PR author and every associated commit
+author (and committer) using the paginated API inventory in step 2. The installed
+script can change independently of this repository; recheck it at use time. Never
+use its weaker behavior to self-approve or bypass the exact-head merge procedure.
 
 **Its limits, so this is not read as more than it is.** Every agent here runs as `ubuntu`, so
 anything that can run `gh-role` can run `gh` directly and skip it: it prevents the mistake, not a
 determined actor. It is installed on **xbabe2 only** and is not yet version-controlled. And it can
-only enforce *eligibility* — that two GitHub logins differ. It cannot establish *independence*: a
+only check that the reviewer and PR opener logins differ. It cannot establish *independence*: a
 session that wrote the change does not become an independent reviewer by selecting the other
 account, which is what the paragraph above already says and remains the binding rule.
 
@@ -202,7 +207,7 @@ account, which is what the paragraph above already says and remains the binding 
    ```sh
    gh pr view PR_NUMBER --json author,headRefOid,headRefName
    gh api --paginate repos/veox-ai/JopeDime/pulls/PR_NUMBER/commits \
-     --jq '.[] | {sha, login: (.author.login // "UNASSOCIATED"), git_author: .commit.author}'
+     --jq '.[] | {sha, login: (.author.login // "UNASSOCIATED"), committer: (.committer.login // "UNASSOCIATED"), git_author: .commit.author}'
    ```
 
    The reviewer must differ from the PR author and **every** associated commit author.
@@ -210,15 +215,16 @@ account, which is what the paragraph above already says and remains the binding 
    If the reviewer opened the PR accidentally, preserve its discussion/evidence, close it
    as superseded and recreate it as the writer. Preserve the commits and their attribution.
 
-   The helper answers the same question directly, and exits non-zero when the answer is no:
+   The helper can perform its narrower PR-opener check:
 
    ```sh
    /home/ubuntu/.local/bin/gh-role eligible reviewer veox-ai/JopeDime PR_NUMBER
    ```
 
    It prints the exclusion set with a reason per login. Use it before every approval; it is
-   an additional check that includes the committer field. Retain the paginated author inventory
-   above, especially for PRs exceeding 100 commits. It does **not** establish independence.
+   only an additional PR-opener check with limited unassociated-author reporting. It does
+   **not** establish commit-author eligibility or reviewer independence. Always retain the
+   complete paginated author/committer inventory above.
 3. Dispatch `gh workflow run ci.yml --ref BRANCH`, then identify and retain that run's
    **full source SHA, run ID and attempt**. Record the dispatch time, then use
    `gh run list --workflow ci.yml --branch BRANCH --event workflow_dispatch --json databaseId,headSha,createdAt,attempt`
