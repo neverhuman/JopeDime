@@ -73,6 +73,16 @@ impl Store {
                 }
                 if anonymous {
                     builder = builder.with_skip_signature(true);
+                } else if let Some(credentials) = crate::credentials::resolve()? {
+                    // `from_env` above already consumed any credentials the environment carried;
+                    // this covers the profile case it cannot see, and fails by name rather than
+                    // through the IMDS fallback. See `crate::credentials`.
+                    builder = builder
+                        .with_access_key_id(credentials.access_key_id)
+                        .with_secret_access_key(credentials.secret_access_key);
+                    if let Some(token) = credentials.session_token {
+                        builder = builder.with_token(token);
+                    }
                 }
                 let store = builder.build().context("build S3 store")?;
                 let prefix = ObjPath::parse(parsed.path().trim_matches('/')).unwrap_or_default();
