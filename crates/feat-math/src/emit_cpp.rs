@@ -414,7 +414,7 @@ fn model_cpp(stages: &[PlannedStage], head: &PlannedHead) -> String {
         out.push('\n');
     }
     out.push_str(&format!("    return {head_predict};\n"));
-    out.push_str("}");
+    out.push('}');
     out
 }
 

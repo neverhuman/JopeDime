@@ -954,7 +954,7 @@ mod tests {
 
         let unique: Vec<Option<usize>> = (0..6).map(Some).collect();
         let encoded = honest_ordered_values(&unique, &y, 0.0, 3);
-        for row in 0..y.len() {
+        for (row, &actual) in encoded.iter().enumerate().take(y.len()) {
             let fold = row % 3;
             let expected: Vec<f64> = y
                 .iter()
@@ -962,7 +962,7 @@ mod tests {
                 .filter_map(|(index, value)| (index % 3 != fold).then_some(*value))
                 .collect();
             let expected = expected.iter().sum::<f64>() / expected.len() as f64;
-            assert_eq!(encoded[row].to_bits(), expected.to_bits());
+            assert_eq!(actual.to_bits(), expected.to_bits());
         }
     }
 

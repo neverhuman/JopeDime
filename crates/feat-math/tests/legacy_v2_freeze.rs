@@ -394,7 +394,13 @@ fn legacy_v2_reference_files_match_the_takeover_snapshot() {
             // rustfmt also added trailing commas when it wrapped arguments.
             "tests/golden.rs",
             include_str!("golden.rs"),
-            "91f759100481b3fbbf8f85d626eba63140f7d7ead6e0e778ecc4b59ac3c6d0c9",
+            // Re-pinned: three `&PathBuf` parameters became `&Path` (clippy::ptr_arg). Callers
+            // reach them by deref coercion, so no call site changed. A freeze update, not a
+            // semantic change: `regenerate_legacy_v2_freeze` reports every genome_sha256,
+            // prediction_bits, RNG stream and fold assignment unchanged, and all 83 golden
+            // parity cases still agree bit-for-bit.
+            // Previous: 91f759100481b3fbbf8f85d626eba63140f7d7ead6e0e778ecc4b59ac3c6d0c9
+            "d8cc5d006f4ffa2e3a40840b08b13410f9ecca73f0ddad1378a3aa29296c171e",
         ),
         (
             "tests/champion_parity.rs",
@@ -410,7 +416,13 @@ fn legacy_v2_reference_files_match_the_takeover_snapshot() {
         (
             "tests/tokens.rs",
             include_str!("tokens.rs"),
-            "b51814b0c5e463d0f883e50fbbbc97bd7d34ab2bfa5d51de979ce6551cdafdbe",
+            // Re-pinned: four `rng.next_u32() % n == 0` became `.is_multiple_of(n)`
+            // (clippy::manual_is_multiple_of), applied by `cargo clippy --fix`. Identical for
+            // unsigned operands, and the RNG draw order is untouched, so the generated genome
+            // corpus is the same. A freeze update, not a semantic change:
+            // `regenerate_legacy_v2_freeze` reports every fixture unchanged.
+            // Previous: b51814b0c5e463d0f883e50fbbbc97bd7d34ab2bfa5d51de979ce6551cdafdbe
+            "b95c8d69424a651cac06edbde0d940edd9fad62db36bcb8a42d2ebe3d0a23031",
         ),
         (
             "tests/bench.rs",

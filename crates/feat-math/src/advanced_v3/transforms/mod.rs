@@ -1210,7 +1210,6 @@ fn apply_row_operation(
             history.drain(..history.len() - tail_limit);
         }
     }
-    let mut latest_orders = latest_orders;
     let mut tails = Vec::with_capacity(histories.len());
     for (key, rows) in histories {
         let mut tail = GroupTail {

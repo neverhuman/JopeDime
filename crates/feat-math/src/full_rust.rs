@@ -929,7 +929,7 @@ pub fn mutate_pipeline(
             };
         }
         _ => {
-            let mutate_head = transforms.is_empty() || rng.next_u32() as usize % 5 == 0;
+            let mutate_head = transforms.is_empty() || (rng.next_u32() as usize).is_multiple_of(5);
             let stage = if mutate_head {
                 &mut head
             } else {
@@ -996,7 +996,7 @@ pub fn mutate_pipeline_expanded(
             };
         }
         _ => {
-            let mutate_head = transforms.is_empty() || rng.next_u32() as usize % 5 == 0;
+            let mutate_head = transforms.is_empty() || (rng.next_u32() as usize).is_multiple_of(5);
             let stage = if mutate_head {
                 &mut head
             } else {
@@ -1152,7 +1152,7 @@ fn build_expression(rng: &mut Pcg32, feature_count: usize, depth: usize, budget:
             let left_budget = (budget - 1) / 2;
             let right_budget = budget - 1 - left_budget;
             Expr::Binary(
-                *choice(rng, &BINARY),
+                choice(rng, &BINARY),
                 Box::new(build_expression(rng, feature_count, depth - 1, left_budget)),
                 Box::new(build_expression(
                     rng,
@@ -1163,7 +1163,7 @@ fn build_expression(rng: &mut Pcg32, feature_count: usize, depth: usize, budget:
             )
         }
         _ => Expr::Unary(
-            *choice(rng, &UNARY),
+            choice(rng, &UNARY),
             Box::new(build_expression(rng, feature_count, depth - 1, budget - 1)),
         ),
     }
@@ -1233,7 +1233,7 @@ fn build_expression_expanded(
             let left_budget = (budget - 1) / 2;
             let right_budget = budget - 1 - left_budget;
             Expr::Binary(
-                *choice(rng, &BINARY),
+                choice(rng, &BINARY),
                 Box::new(build_expression_expanded(
                     rng,
                     feature_count,
@@ -1251,7 +1251,7 @@ fn build_expression_expanded(
             )
         }
         _ => Expr::Unary(
-            *choice(rng, &UNARY),
+            choice(rng, &UNARY),
             Box::new(build_expression_expanded(
                 rng,
                 feature_count,

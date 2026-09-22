@@ -210,13 +210,13 @@ impl GprModel {
             let pairs = mo * mo.saturating_sub(1) / 2;
             let diff_cache: Option<Vec<f64>> = if pairs
                 .checked_mul(p)
-                .map_or(false, |cells| cells <= DIFF_CACHE_MAX)
+                .is_some_and(|cells| cells <= DIFF_CACHE_MAX)
             {
                 let mut dz = Vec::with_capacity(pairs * p);
                 for i in 0..mo {
                     for j in (i + 1)..mo {
-                        for d in 0..p {
-                            dz.push(z[i][d] - z[j][d]);
+                        for (left, right) in z[i].iter().zip(z[j].iter()).take(p) {
+                            dz.push(left - right);
                         }
                     }
                 }

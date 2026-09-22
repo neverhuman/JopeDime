@@ -5,7 +5,7 @@
 use feat_math::transpile::{emit, lint_vocabulary, supports, EmitOptions, Emitted};
 use feat_math::{fit_predict, GenomeIr, Pcg32};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 fn toy_data(n: usize, cols: usize, seed: u64) -> (Vec<Vec<f64>>, Vec<f64>) {
@@ -24,7 +24,7 @@ fn toy_data(n: usize, cols: usize, seed: u64) -> (Vec<Vec<f64>>, Vec<f64>) {
     (x, y)
 }
 
-fn write_csvs(dir: &PathBuf, x_train: &[Vec<f64>], y_train: &[f64], x_test: &[Vec<f64>]) {
+fn write_csvs(dir: &Path, x_train: &[Vec<f64>], y_train: &[f64], x_test: &[Vec<f64>]) {
     let mut train = String::new();
     for (row, y) in x_train.iter().zip(y_train) {
         for v in row {
@@ -42,7 +42,7 @@ fn write_csvs(dir: &PathBuf, x_train: &[Vec<f64>], y_train: &[f64], x_test: &[Ve
     fs::write(dir.join("test_features.csv"), test).unwrap();
 }
 
-fn parse_predictions(path: &PathBuf) -> Vec<f64> {
+fn parse_predictions(path: &Path) -> Vec<f64> {
     fs::read_to_string(path)
         .unwrap_or_else(|e| panic!("no predictions at {}: {e}", path.display()))
         .lines()
@@ -50,7 +50,7 @@ fn parse_predictions(path: &PathBuf) -> Vec<f64> {
         .collect()
 }
 
-fn run_python(dir: &PathBuf, artifact: &Emitted) -> Vec<f64> {
+fn run_python(dir: &Path, artifact: &Emitted) -> Vec<f64> {
     fs::write(dir.join("model.py"), &artifact.python).unwrap();
     let out = Command::new("python3")
         .arg(dir.join("model.py"))
@@ -68,7 +68,7 @@ fn run_python(dir: &PathBuf, artifact: &Emitted) -> Vec<f64> {
     parse_predictions(&dir.join("py_predictions.txt"))
 }
 
-fn run_rust(dir: &PathBuf, artifact: &Emitted) -> Vec<f64> {
+fn run_rust(dir: &Path, artifact: &Emitted) -> Vec<f64> {
     fs::write(dir.join("model.rs"), &artifact.rust).unwrap();
     let bin = dir.join("model_bin");
     let out = Command::new("rustc")
