@@ -27,7 +27,8 @@ See [`MASTER_CLEAN_UP.md`](MASTER_CLEAN_UP.md) for the full record.
    shared directory for Claude, Codex and Grok, instead of a per-tool location each.
    `.claude/worktrees` is a **symlink** to it so the `EnterWorktree` tool lands there without
    configuration. Max 4 lanes; remove with `git worktree remove` when the PR closes. **Never
-   `/tmp`.**
+   `/tmp`.** Follow the fresh-checkout bootstrap in `AGENTS.md` before `EnterWorktree`;
+   Git does not create the ignored symlink. Verify its type and resolved target every time.
 4. **`target/health/` is evidence.** Never `rm -rf target`. The helper reports Cargo candidates only;
    preserve and verify evidence at every depth before an explicit logged removal.
 5. **`CARGO_TARGET_DIR` must not be set globally** until #46 lands — `deploy/ci/emitters.sh:29`

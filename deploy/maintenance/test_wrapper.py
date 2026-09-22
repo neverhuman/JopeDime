@@ -92,6 +92,15 @@ def main():
                        [{"group": "fixture", "path": str(second)}]}, 1)
     path, receipt = exercise("missing-measurement-root", {**config, "measurement_roots": [
         {"group": "fixture", "path": str(scratch / "absent")}]}, 1)
+    assert receipt["measurements"] == [] and cases[-1]["commands"] == []
+    assert len(receipt["scan_outputs"]) == 2
+    for row in receipt["scan_outputs"]:
+        assert json.loads((path.parent / row["output"]).read_text())["complete"]
+    path, receipt = exercise("valid-then-missing-measurement-root", {
+        **config, "measurement_roots": config["measurement_roots"] + [
+            {"group": "fixture", "path": str(scratch / "absent")}]}, 1)
+    # Validate every root before any du; preserve scans even if a later root is absent.
+    assert receipt["measurements"] == [] and cases[-1]["commands"] == []
     assert len(receipt["scan_outputs"]) == 2
     for row in receipt["scan_outputs"]:
         assert json.loads((path.parent / row["output"]).read_text())["complete"]
