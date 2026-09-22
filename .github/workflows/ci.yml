@@ -7,15 +7,11 @@ on:
 permissions:
   contents: read
 
-# The runner image points CARGO_TARGET_DIR at a persistent volume, which is good for cold-build
-# time but wrong for this repo: deploy/ci/emitters.sh looks for target/debug/examples/emit under
-# the checkout, and crates/jope-paths walks the executable's ancestors for the .jope-home marker
-# that sits at the repository root. Both break when the artefacts live outside the workspace. The
-# workspace lives on a persistent volume, but actions/checkout clears it at the start of every
-# job, so this is NOT a cross-job build cache — only CARGO_HOME (the registry) and
-# UV_CACHE_DIR (the Python wheel cache) persist, both as named volumes on the runner host.
+# Build paths are discovered from Cargo (#46). Each build job selects its runner lane
+# target below; checkout cleanup does not erase compiled artifacts.
 env:
-  CARGO_TARGET_DIR: ${{ github.workspace }}/target
+  CARGO_INCREMENTAL: "0"
+  CARGO_PROFILE_DEV_DEBUG: line-tables-only
 
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
@@ -55,7 +51,7 @@ jobs:
             # lane pins uv, the rust lanes pin cargo-nextest, hygiene pins cargo-deny. Without
             # these, bumping UV_VERSION in the Dockerfile alone set python=false and skipped the
             # one assertion whose entire job is catching that drift.
-            img='deploy/runner/|deploy/docker/'
+            img='deploy/runner/|deploy/docker/|\.github/actions/|deploy/ci/cargo-artifact\.py'
             grep -qE "^(crates/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/|$img|\.github/workflows/ci\.yml$)" <<<"$changed" || rust=false
             grep -qE "^(crates/feat-math/|datasets/test/|deploy/ci/emitters|Cargo\.(toml|lock)$|rust-toolchain\.toml$|$img|\.github/workflows/ci\.yml$)" <<<"$changed" || emitters=false
             grep -qE "^(datasets/synthetic/|crates/jope-cli/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|$img|\.github/workflows/ci\.yml$)" <<<"$changed" || inputs=false
@@ -73,6 +69,8 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0 (pin unchanged from main; the old comment said v5)
         with:
           persist-credentials: false
+      - name: Persistent Cargo target
+        uses: ./.github/actions/cargo-target
       - name: Runner provenance
         uses: ./.github/actions/runner-provenance
       - name: Toolchain (from rust-toolchain.toml)
@@ -135,10 +133,11 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0 (pin unchanged from main; the old comment said v5)
         with:
           persist-credentials: false
+      - name: Persistent Cargo target
+        uses: ./.github/actions/cargo-target
       - name: Toolchain (from rust-toolchain.toml)
         run: rustup show active-toolchain
-      # No Swatinem/rust-cache: this lane's CARGO_HOME and CARGO_TARGET_DIR are persistent
-      # named volumes on the runner host, which is a better cache than the hosted one.
+      # Cargo registry and this runner lane's target directory persist on the host.
       - name: cargo check --workspace --all-targets --locked
         run: cargo check --workspace --all-targets --locked
       # The rendered-systemd guarantee (no /home/ literal, no unrendered @JOPE_* token, every
@@ -177,10 +176,11 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0 (pin unchanged from main; the old comment said v5)
         with:
           persist-credentials: false
+      - name: Persistent Cargo target
+        uses: ./.github/actions/cargo-target
       - name: Toolchain (from rust-toolchain.toml)
         run: rustup show active-toolchain
-      # No Swatinem/rust-cache: this lane's CARGO_HOME and CARGO_TARGET_DIR are persistent
-      # named volumes on the runner host, which is a better cache than the hosted one.
+      # Cargo registry and this runner lane's target directory persist on the host.
       - name: Compilers on this runner
         run: |
           set -euo pipefail
@@ -209,10 +209,11 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0 (pin unchanged from main; the old comment said v5)
         with:
           persist-credentials: false
+      - name: Persistent Cargo target
+        uses: ./.github/actions/cargo-target
       - name: Toolchain (from rust-toolchain.toml)
         run: rustup show active-toolchain
-      # No Swatinem/rust-cache: this lane's CARGO_HOME and CARGO_TARGET_DIR are persistent
-      # named volumes on the runner host, which is a better cache than the hosted one.
+      # Cargo registry and this runner lane's target directory persist on the host.
       - name: Verify the committed fixtures offline
         run: cargo run --locked --bin jope -- verify-inputs --offline --json --root datasets/synthetic
       - name: Generator reproduces the committed fixtures
@@ -232,6 +233,8 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
           persist-credentials: false
+      - name: Persistent Cargo target
+        uses: ./.github/actions/cargo-target
       - name: uv from the image
         # Was astral-sh/setup-uv, which installs `latest` from the network and would shadow the
         # image's pinned uv. Assert the pinned one instead of fetching an unpinned one -- and
@@ -277,10 +280,11 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
           persist-credentials: false
+      - name: Persistent Cargo target
+        uses: ./.github/actions/cargo-target
       - name: Toolchain (from rust-toolchain.toml)
         run: rustup show active-toolchain
-      # No Swatinem/rust-cache: this lane's CARGO_HOME and CARGO_TARGET_DIR are persistent
-      # named volumes on the runner host, which is a better cache than the hosted one.
+      # Cargo registry and this runner lane's target directory persist on the host.
       - name: cargo-nextest from the image
         # Asserted, not printed: the hosted lane resolved cargo-nextest 0.9.145 via
         # taiki-e/install-action and the image pins 0.9.133, so this lane must fail loudly if
@@ -313,6 +317,11 @@ jobs:
           df -B1 --output=source,size,used,avail,pcent / | tee rust-test-evidence/disk-before.txt
           # Marks that nextest was reached, so the retention step can tell "the report is missing"
           # from "the run never got that far" instead of accepting both.
+          target=$(python3 deploy/ci/cargo-artifact.py target-dir)
+          junit="$target/nextest/pr/junit.xml"
+          # Preserve a previous report before execution, so a failed build cannot
+          # upload it as this run's test result from the persistent target.
+          if [ -f "$junit" ]; then mv "$junit" rust-test-evidence/prior-junit.xml; fi
           touch rust-test-evidence/nextest-started
           cargo nextest run -P pr --locked "${pkgs[@]}"
       - name: Retain test report and disk measurements
@@ -365,6 +374,8 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
           persist-credentials: false
+      - name: Persistent Cargo target
+        uses: ./.github/actions/cargo-target
       - name: Toolchain (from rust-toolchain.toml)
         run: rustup show active-toolchain
       # No Swatinem/rust-cache: CARGO_HOME is a persistent named volume on the runner host.

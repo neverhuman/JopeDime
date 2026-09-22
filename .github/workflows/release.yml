@@ -19,6 +19,8 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  CARGO_PROFILE_DEV_DEBUG: line-tables-only
   BUILDER_IMAGE: rust:1.97.1-bookworm
   MAX_GLIBC: "2.36"
 
@@ -58,6 +60,7 @@ jobs:
             --user "$(id -u):$(id -g)" \
             -e HOME=/work -e CARGO_HOME=/cargo-home -e CARGO_TARGET_DIR=/work/target/bookworm \
             -e RUSTUP_TOOLCHAIN=1.97.1 -e CARGO_TERM_COLOR=always \
+            -e CARGO_INCREMENTAL=0 -e CARGO_PROFILE_DEV_DEBUG=line-tables-only \
             -v "$PWD:/work" -v "$RUNNER_TEMP/cargo-home:/cargo-home" -v "$RUNNER_TEMP/builder:/builder" \
             -w /work "$BUILDER_IMAGE" \
             bash -euo pipefail -c '
