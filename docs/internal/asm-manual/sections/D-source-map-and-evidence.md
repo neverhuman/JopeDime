@@ -1,8 +1,8 @@
-# Source map and companion files
+# Source map, companion files and evidence index
 
 ## Current implementation references
 
-These links bind the reviewed implementation commit, not a moving branch. The merged main has the same source tree. Hashes below are SHA256 of file bytes; Git commit/tree identifiers use Git’s separate object identity. A link needs access to the private repository.
+These links bind the reviewed implementation commit `68f56404c3e1`, not a moving branch. PR83 merged it on 2026-09-23 as main `a75e543d2166`, which has the same source tree (`176b75bc36d7`), so each pinned file is also the file at that main commit. Hashes below are SHA256 of file bytes; Git commit/tree identifiers use Git’s separate object identity. A link needs access to the private repository.
 
 | Current source | SHA256 |
 | --- | --- |
@@ -55,9 +55,11 @@ These links bind the reviewed implementation commit, not a moving branch. The me
 | [deploy/prepare-panel-runtime.py](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/deploy/prepare-panel-runtime.py#L1) | `f9a0d1d9ca97dfd7664a39a8df6b1e364e738fdfaaa13a0e327402c073ee46f5` |
 | [python/src/jope/policy/model_v3.py](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/python/src/jope/policy/model_v3.py#L93) | `11ab74d12bda8a2fb817b073a685d128eff06479f769e4301488339424314ffe` |
 
+Current interface/semantics: `crates/jope-cli/src/main.rs`, `crates/jope-cli/src/kernel.rs`, `crates/jope-pipeline/src/cli.rs`, `crates/jope-pipeline/src/front_door.rs`, `crates/jope-paths/src/lib.rs`, `crates/jope-bench/src/panel/{cli,campaign_cli,campaign,optimize_cli,methods,score,receipt_timing}.rs`, `crates/jope-pipeline/src/{experiment,execution,supervisor,neural_search}.rs`, `deploy/prepare-panel-runtime.py`, `benchmarks/{panel.json,prepare.py}` and `AGENTS.md`.
+
 ## Pending source references
 
-These are stopped custody patch views. They are not installed capabilities and are not linked as if they existed at the reviewed Git commit. The training/product chapters and detailed checklist name their patch identities and acceptance gates.
+These are stopped custody patch views. They are not installed capabilities and are not linked as if they existed at the reviewed Git commit. Their patch identities and acceptance gates are named in [§](12-training-the-policy.md#the-pending-bounded-extension-path-sequence-and-limits), [§](14-install-and-prepare.md#command-surfaces-and-the-stopped-integration-order) and the integration card [§](A-roadmap-catalogue.md#int-01--serial-integration).
 
 | Pending path | SHA256 of inspected view |
 | --- | --- |
@@ -90,9 +92,33 @@ These are stopped custody patch views. They are not installed capabilities and a
 | `python/src/jope/policy/experimental_proposal.py` | `f0338f0505a27c9f2f5eac7579e2c506da5c116b3a206f44c52a1cf87cf9c0aa` |
 | `python/src/jope/policy/training_campaign.py` | `9d9cfb3257ecf2b6072cab8adc6d830f3df096605a06ff0677e6338c2aad5a2c` |
 
+Pending interfaces: final product postimages of `deploy/install-private.py`, `docs/private-install-demo.md` and panel `{demo,demo_asm,inference}.rs`; stopped add-on postimages of panel `{fitted_export,fitted_export_run}.rs` and `docs/{private-warm-target,private-fitted-qualification}.md`. Exact source and receipt hashes accompany this appendix's custody handoff.
+
+## Important local receipts
+
+The custody root is the single host-local directory `/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/`; this manual records no off-host copy of it. These are host-local receipt locations, not promises that every reader has the same files. The structured documentation evidence identifies the source observations copied into this edition. Weight bodies, source dataset bodies and sealed labels are not embedded in the manual.
+
+| Relative custody path | Meaning |
+| --- | --- |
+| `neural-integration/lifecycle-68f56404c3e199e06413bfd645d3fe0803d7b96f/` | Full author/committer inventory, CI, native reviews, merge and main-guard readbacks |
+| `neural-integration/pr83-final-review-68f56404c3e199e06413bfd645d3fe0803d7b96f/` | Independent review prompt, source/proof inspection and native approval receipt |
+| `neural-integration/source-match-68f56404c3e199e06413bfd645d3fe0803d7b96f.json` | All 2,855 Git blobs match the immutable build input inventory |
+| `neural-integration/native-context-68f56404c3e199e06413bfd645d3fe0803d7b96f/` | Eight native encoder qualification cases under unchanged numerical policy |
+| `neural-integration/origin-run-68f56404.json` | Final operational run command, timing and exit status |
+| `neural-integration/origin-report-68f56404.json` | Independent recovered-report command and timing |
+| `agent-final-acceptance/measured-origin-68f56404/audit.json` | Source/report/worker inventory and independently bound supervisor accounting |
+| `neural-integration/final-head-pipeline-bench-68f56404.json` | Local 53 benchmark and 106 pipeline test results |
+| `neural-integration/final-head-host-ten-68f56404.json` | Ten actual privileged host cases and binary identity |
+| `agent-final-acceptance/failed-origin-d0f5748b/audit.json` | Preserved failed prior run; not an accepted current score |
+| `agent-maintainer-manual/` | Section drafts, structured data inventory, example preparation and documentation observations |
+
+Treat a receipt's command, source SHA, input hashes, runtime and original deadline as one evidence unit. Copying a number out of that unit can lose its scope. A local path alone proves neither continued availability nor integrity: verify the retained hash and the contents required for the claim.
+
 ## Machine-readable companions
 
-The manual directory contains the following locally reproducible evidence. The original metadata/custody paths inside receipts describe where observations were obtained; use the copies under this directory when available. Historical preparation receipts intentionally retain their pre-execution wording. The separate acceptance receipt supersedes that status without rewriting history.
+### Companion files
+
+The manual directory, `docs/internal/asm-manual/`, contains the following locally reproducible evidence. Paths are relative to it, except the property list, which is `docs/asm-maintainer-status.plist` from the repository root. The original metadata/custody paths inside receipts describe where observations were obtained; use the copies under this directory when available. Historical preparation receipts keep their original pre-execution wording; the current state of the examples is the executed result in `data/example-acceptance/result.json` (14 commands, `ok: true`).
 
 | Companion | Purpose |
 | --- | --- |
@@ -110,7 +136,7 @@ The manual directory contains the following locally reproducible evidence. The o
 | `figures/` | Reproducible charts and associated historical data inputs |
 | `render-receipt.json` | PDF digest, pages, consumed input hashes and rendering environment |
 
-## Lossless evidence packaging
+### Lossless evidence packaging
 
 The full performance inventory and original catalog JSONL are stored as `data/performance-evidence.json.gz` and `data/metadata-receipts/veox-jopedime-datasets-use2--catalog--v1--catalog.jsonl.gz` to respect the repository’s 5 MiB file limit. Gzip preserves every original byte; no rows, fields, numeric precision or metadata were removed. `data/evidence-packaging.json` records both compressed and original SHA256 values, sizes and preservation paths. Historical handoffs and the initial assembly manifest intentionally retain their original uncompressed paths and hashes; the packaging receipt supplies the current location mapping.
 
@@ -131,36 +157,11 @@ assert len(catalog) == 3859
 
 The plotting tools consume the separately retained CSVs and summary JSON, so this storage change does not change their inputs or measurements. The renderer hashes the compressed companions as well as the packaging receipt.
 
-## Rebuilding the book
-
-The original build used Python 3.12 and the observed direct versions in `tools/requirements-docs.txt`. That file is not a transitive lock or a verified cold installer. A fresh environment also needs working Pango/Fontconfig, DejaVu fonts, and Poppler's `pdfinfo`, `pdftotext` and `pdftoppm`. The render receipt records exact Python/library versions and font-file hashes. The following environment-creation recipe is provided for rebuilding; it was not executed as a fresh installation during this document audit:
-
-```sh
-MANUAL_ENV=/home/ubuntu/.venvs/jope-manual
-python3 -m venv "$MANUAL_ENV"
-"$MANUAL_ENV/bin/python" -m pip install \
-  -r docs/internal/asm-manual/tools/requirements-docs.txt
-. "$MANUAL_ENV/bin/activate"
-```
-
-From the repository root, render the audited retained inputs with these local-only commands:
-
-```sh
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_inventory_figures.py
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_figures.py
-python3 docs/internal/asm-manual/tools/build_manual.py
-pdfinfo docs/asm-maintainer-manual.pdf
-pdftotext -layout docs/asm-maintainer-manual.pdf /path/to/durable/review/manual.txt
-```
-
-Rendering uses Python Markdown, BeautifulSoup and WeasyPrint with system DejaVu fonts; their observed versions and font hashes are retained in the render receipt. Plotting uses Matplotlib and NumPy. The renderer rejects missing/nonlocal images and failed resource fetches, and checks that inputs did not change during rendering. It does not run models, fit predictors, fetch datasets or open sealed labels. Inspect the resulting pages and extracted text before treating a successful render as a complete document.
-
-Byte-identical PDF rebuilding is not promised. `SOURCE_DATE_EPOCH` fixes font-subset timestamps, but the observed WeasyPrint 68.1 tagged-table identifiers contain process-specific values. Preserved first-edition repeat renders had identical normalized logical objects and decoded non-container streams after accounting for those identifiers, while their PDF hashes differed. Keep each output with its own render receipt and verify input hashes, content and layout; do not treat a changed PDF hash alone as changed measurements. This observation concerns the renderer, not numerical predictor reproducibility.
-
-
 ## Training-history and continuation companions
 
-The learning expansion is documented in [actual training history](14-training-history.md), [target history and packing](15-target-history-packing.md), [versions, KPIs and continuation](16-version-kpis-continuation.md), and [flywheel/focused search](17-flywheel-focused-search.md).
+### Companion inventory
+
+The learning expansion is documented in [actual training history](19-training-history.md#training-history-loss-trajectories-and-the-limits-of-progress), [target history and packing](20-corpus-and-target-history.md#corpus-and-target-history), [versions, KPIs and continuation](12-training-the-policy.md#the-continuation-interfaces-that-exist-today), and [flywheel/focused search](13-flywheel.md#closing-the-flywheel-objectives-closure-ledger-and-kpis).
 
 | Companion | Purpose |
 | --- | --- |
@@ -181,14 +182,16 @@ The learning expansion is documented in [actual training history](14-training-hi
 | `examples/continue-python-policy.py` | Current Python resume API illustration; metadata-only by default, numerical branch unexecuted and externally supervised |
 | `data/single-dataset-help-receipt.json` | Six actual metadata/help commands, with immutable CLI identity and zero fits |
 
-Regenerate the training and target figures before the PDF after changing an audited source CSV:
+### Reusing the evidence
 
-```sh
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_training_figures.py
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_target_figures.py
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_legacy_training_figure.py
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_per_step_figure.py
-python3 docs/internal/asm-manual/tools/build_manual.py
-```
+The adjacent `data/training-history` CSVs are long-form original measurements. `block-endpoint-metrics.csv` has 1,296 rows; `block-adaptive-validation.csv` 432; `fixed-monitor-metrics.csv` 16; `gen31-epoch-metrics.csv` 462; `a100-checkpoint-lineage.csv` 78; `a100-checkpoint-validation.csv` 312; and `rtx60100-step-metrics.csv` 700. The two original small logs are retained alongside the normalized data. Source hashes and line/JSON Pointer anchors make a plotted point independently traceable. The initial extraction audit covers four CSVs. The shipped `verify_history.py` checks all 3,218 metric `value` cells across the measurement CSVs, plus seven fields (step, model/parameter/optimizer/corpus hashes, world and global batch) and the state-file hash for each of the 78 lineage rows. It does not check every auxiliary numeric column, such as elapsed time, parent/local step, requested fresh fraction or row counts. Running that helper writes `verification.json` beside the CSVs; use a custody copy when preserving a stopped evidence bundle. Model bodies and sealed target values were not read for this reconstruction.
 
-These commands render retained observations; they do not train a model or reconstruct unavailable metrics. The original-history verifier needs the separately preserved source files named in each CSV. Plot rebuilding uses the committed CSVs. No missing source or changed hash may be converted into a successful historical verification.
+The additional `data/per-step-history` package preserves the 3,809,970-byte compressed step CSV (SHA `aa431f5a2f5f4d6bfc2e8568ef57bb10b100356750d22eb615dd68cfa1647627`), 21 full source-log hashes, block statistics, explicit 100-step bins and boundary comparisons. `tools/extract_per_step.py` regenerates into a new output directory from the retained raw logs and previously audited checkpoint CSVs; it refuses to overwrite an existing extraction. `tools/make_per_step_figure.py` independently recomputes every plotted bin from the compressed row data before drawing it. Run `python3 docs/internal/asm-manual/tools/make_per_step_figure.py` from the repository root to regenerate this one figure without loading models. The original seven-figure builder remains separate. Both figure receipts bind their exact input hashes.
+
+## Reproduction boundaries
+
+Rendering this manual uses its committed section Markdown, structured data, figure inputs and Python rendering tools. It should not fetch a corpus, load a model, run a fit or contact the sealed store. Plotting historical evidence is distinct from rerunning historical experiments. The included figure data keeps missingness, eligibility and snapshot identities.
+
+The private toy example has its own synthetic input and output receipt. Even a successful five-language recipe/refit comparison cannot qualify a different selected fitted predictor. The pending fitted-inference acceptance must authenticate the retained winner and compare complete saved-state predictions with its original numerical policy.
+
+Operational replay needs more than the document: the exact source/build, immutable workers, model/checkpoint/vocabulary, runtime dependencies, allowed data inputs, original plan and journals, and an available resource allocation. Reproduction that resumes an expired campaign cannot start fresh jobs by assigning a new deadline. A new experiment needs a separately recorded plan; it does not repair the old receipt.
