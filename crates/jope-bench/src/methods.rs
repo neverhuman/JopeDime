@@ -209,6 +209,8 @@ mod tests {
             assert_eq!(methods.len(), task.default_heads().len());
             assert!(methods.iter().all(|m| m.dsl.starts_with("(pipe X (")));
         }
+        assert_eq!(Task::Binary.default_heads().len(), 6);
+        assert!(Task::Binary.default_heads().contains(&"portfolio"));
         // A regression head is not a binary head and vice versa; the grammar says so.
         let error = baselines(&["ridge".to_owned()], Task::Binary).unwrap_err();
         assert!(error.to_string().contains("not a binary head"), "{error:#}");

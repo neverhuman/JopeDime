@@ -1,0 +1,12 @@
+elo_rank,full_coverage_rank,method_id,method,elo,average_rank,dataset_wins,datasets_scored,datasets_total,coverage_pct,full_coverage,pending_cells,coverage_status,protocols,benchmark_valid,scope
+1,1,baseline.stack,baseline.stack,1681.2,3.5,2,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+2,2,baseline.krr,baseline.krr,1628.1,3.9,2,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+3,3,baseline.histgbm2,baseline.histgbm2,1608.0,4.2,2,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+4,4,baseline.ensemble,baseline.ensemble,1575.5,4.5,2,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+5,5,afm.lite-race.v1.resampled,afm.lite-race.v1.resampled,1565.9,4.9,1,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+6,6,baseline.gpr,baseline.gpr,1468.9,6.5,1,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+7,7,baseline.histgbm,baseline.histgbm,1462.6,6.8,0,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+8,8,baseline.ridge_gcv,baseline.ridge_gcv,1424.6,7.2,0,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+9,9,baseline.ridge,baseline.ridge,1388.7,7.9,0,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+10,10,baseline.elasticnet,baseline.elasticnet,1388.7,7.7,0,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison
+11,11,baseline.ksmooth,baseline.ksmooth,1307.6,8.9,0,10,10,100.0,True,0,10/10,same-cut,True,official unified benchmark comparison

@@ -25,8 +25,10 @@ regression datasets):
    regression `baseline.ridge` = `(pipe X (ridge))` and so on for `ridge_gcv`, `elasticnet`,
    `histgbm`, `histgbm2`, `ksmooth`, `ensemble`, `krr`, `gpr`, `stack`; binary `logit_ridge`,
    `logistic`, `tab_boost`, `extra_trees`, `gam_boost`; multiclass `multiclass_ridge`,
-   `multiclass_ovr_logistic`, `multiclass_diagonal_lda`, `multiclass_nearest_centroid`. A head
-   named with `--heads` is checked against the dataset's task before anything runs. Plus
+   `multiclass_ovr_logistic`, `multiclass_diagonal_lda`, `multiclass_nearest_centroid`; binary
+   also `portfolio`, which for a binary task is an ensemble over the other heads that fits with
+   no members named. Heads named with `--heads` are checked against the task of every discovered
+   dataset before any report is written. Plus
    `--program NAME=<dsl>` or `NAME=@file` for any program you want on the ladder (a program whose
    head does not suit the task is a rejection with the grammar's reason, ranked last), plus
    `--search`, which runs the lite race on the **screen cut's training rows only** and enters its
@@ -44,7 +46,9 @@ regression datasets):
 4. **Screen, then deepen.** Every method is scored on `--screen-fold` (default 0) and ranked by
    the task's primary score there (R², AUC or macro-F1), **raw** (R² uncapped, so a degenerate
    fold still orders methods instead of tying them; two methods far below −1 keep their order).
-   The `--top N` (default 5) are re-scored on every cut; the committed number is the pooled
+   On a binary screen cut whose held-out rows are one class no method has an AUC, so the screen
+   ranks by the negated log loss instead and the finalists are still the least-bad methods rather
+   than an alphabetical pick. The `--top N` (default 5) are re-scored on every cut; the committed number is the pooled
    out-of-fold score over all rows with the campaign's variance penalty: regression
    `max(oof_r2, -1) - 0.25 * min(sd(fold_r2), 1)` (`robust_fitness`, the exact-CV campaign's);
    binary the same on the Gini scale `2·AUC − 1` (`robust_fitness_binary`, the binary campaign
@@ -67,6 +71,19 @@ cargo run --release -p jope-bench -- run --datasets datasets/test --out target/b
 cargo run --release -p jope-bench -- ladder --reports target/bench/reports --track-root target/bench/track
 cargo run --release -p jope-arena -- elo --track jope-same-cut-v1-deep --root target/bench/track
 ```
+
+## Committed evidence
+
+`assets/same-cut/v1/` holds the first committed run: the ten `datasets/test` regression datasets,
+every default head plus the searched program with `--resample-search` (32 programs × 8 rounds),
+k=5 on the pipeline's seed, top 5 deepened, with the tracks, both ladders and their snapshots
+(`SOURCES.md` there records the exact commands, the recording tree and host). The run is
+deterministic apart from timings. `crates/jope-bench/tests/committed_evidence.rs` re-derives the
+tracks from the reports and both ladders from the tracks byte for byte, and re-evaluates one
+dataset's baselines on the same cuts bit for bit; `deploy/ci/readme-benchmarks.py` renders the
+README's same-cut block from these files and refuses when they disagree. Regenerate with the
+commands in `SOURCES.md` and commit the whole directory together; a changed evaluator, head set
+or search budget is a new evidence directory, not an edit.
 
 ## Reading the result
 
