@@ -1,0 +1,17 @@
+{
+  "version": "v7",
+  "step": 0,
+  "dim": 128,
+  "heads": 4,
+  "layers": 4,
+  "emb_dim": 128,
+  "min_patch": 2,
+  "max_patch": 16,
+  "n_bands": 4,
+  "q_low": 1.0,
+  "q_high": 99.0,
+  "quant_scale": 3.0,
+  "pad_u8": 128,
+  "ws_list": [4, 7, 11, 15],
+  "seed": 0
+}
