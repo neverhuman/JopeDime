@@ -166,6 +166,23 @@ mod tests {
             other_bytes[0].cut_id, cuts[0].cut_id,
             "different bytes, different id"
         );
+        let other_k = build(
+            &FoldPlan::new("0123456789abcdef", 7, 4),
+            "0123456789abcdef",
+            "s",
+            100,
+        )
+        .unwrap();
+        assert_eq!(other_k.len(), 4);
+        assert_ne!(
+            other_k[0].cut_id, cuts[0].cut_id,
+            "different k, different id"
+        );
+        let other_rows = build(&plan, "0123456789abcdef", "s", 99).unwrap();
+        assert_ne!(
+            other_rows[0].cut_id, cuts[0].cut_id,
+            "different row count, different id"
+        );
         assert!(
             build(&FoldPlan::new("x", 1, 5), "x", "s", 10).is_err(),
             "too small"

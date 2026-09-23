@@ -55,6 +55,10 @@ enum Command {
         /// Also run the search on the screen cut's training rows and benchmark its program.
         #[arg(long)]
         search: bool,
+        /// In the deep stage, re-run the search on every cut's training rows and score each
+        /// cut's own program (measures the procedure, not the one program found on the screen cut).
+        #[arg(long, requires = "search")]
+        resample_search: bool,
         /// Search population.
         #[arg(long, default_value_t = 32)]
         search_pop: usize,
@@ -100,6 +104,7 @@ fn main() -> Result<()> {
             heads,
             programs,
             search,
+            resample_search,
             search_pop,
             search_gens,
             search_seconds,
@@ -134,11 +139,13 @@ fn main() -> Result<()> {
             let dirs = discover(&datasets)?;
             std::fs::create_dir_all(&out)?;
             let mut written = 0;
+            let mut skipped = 0;
             for dir in dirs {
                 let dataset = match load_dataset(&dir) {
                     Ok(dataset) => dataset,
                     Err(error) => {
                         eprintln!("skip {}: {error:#}", dir.display());
+                        skipped += 1;
                         continue;
                     }
                 };
@@ -149,28 +156,36 @@ fn main() -> Result<()> {
                         dir.display(),
                         dataset.task()
                     );
+                    skipped += 1;
                     continue;
                 }
                 let plan = FoldPlan::new(&dataset.row.dataset_hash, seed, folds);
-                let cuts = cuts::build(
+                let cuts = match cuts::build(
                     &plan,
                     &dataset.row.dataset_hash,
                     &dataset.train_sha256,
                     dataset.x.len(),
-                )?;
+                ) {
+                    Ok(cuts) => cuts,
+                    Err(error) => {
+                        eprintln!("skip {}: {error:#}", dataset.row.id);
+                        skipped += 1;
+                        continue;
+                    }
+                };
                 let mut methods = base_methods.clone();
                 if let Some(config) = &search_config {
                     let screen = cuts.get(screen_fold).context("screen fold out of range")?;
                     let (x_train, y_train) =
                         jope_bench::eval::take(&dataset.x, &dataset.y, &screen.train);
-                    let started = std::time::Instant::now();
-                    let found = methods::search(&x_train, &y_train, config)?;
+                    let mut found = methods::search(&x_train, &y_train, config)?;
                     eprintln!(
                         "{}: search {:.1}s -> {}",
-                        dataset.row.id,
-                        started.elapsed().as_secs_f64(),
-                        found.dsl
+                        dataset.row.id, found.produce_seconds, found.dsl
                     );
+                    if resample_search {
+                        found.resample = Some(config.clone());
+                    }
                     methods.push(found);
                 }
                 let started = std::time::Instant::now();
@@ -204,7 +219,7 @@ fn main() -> Result<()> {
                 for m in report.deep_ranked().iter().take(3) {
                     let deep = m.deep.as_ref().expect("ranked");
                     eprintln!(
-                        "  deep #{} {:<24} oof_rmse={} oof_r2={} fitness={} seconds={:.2}",
+                        "  deep #{} {:<24} oof_rmse={} oof_r2={} fitness={} seconds={:.2}{}",
                         m.deep_rank.unwrap_or(0),
                         m.method.id,
                         deep.oof_rmse.map(|v| format!("{v:.6}")).unwrap_or_default(),
@@ -212,14 +227,22 @@ fn main() -> Result<()> {
                         deep.robust_fitness
                             .map(|v| format!("{v:.4}"))
                             .unwrap_or_default(),
-                        deep.seconds
+                        deep.seconds,
+                        if deep.produce_seconds > 0.0 {
+                            format!(" produce={:.1}s", deep.produce_seconds)
+                        } else {
+                            String::new()
+                        }
                     );
                 }
             }
             if written == 0 {
-                bail!("no dataset was benchmarked");
+                bail!("no dataset was benchmarked ({skipped} skipped)");
             }
-            eprintln!("wrote {written} reports under {}", out.display());
+            eprintln!(
+                "wrote {written} reports under {} ({skipped} datasets skipped)",
+                out.display()
+            );
             Ok(())
         }
         Command::Ladder {
