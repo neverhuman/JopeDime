@@ -114,9 +114,20 @@ fn prepared_queue_fixture(
 
 #[test]
 fn native_preparation_status_cannot_change_a_live_gp_queue() {
-    for (status, task) in [
-        ("native_raw_verified_qualification_only", "regression"),
-        ("raw_training_reconstructed_qualification_only", "binary"),
+    // Each row is refused by the gate it exercises: an unqualified preparation status by the
+    // GP-worker compatibility check, and a non-regression task by the regression-only task
+    // contract (task_contract::require_task), which runs first. Neither may touch the queue.
+    for (status, task, reason) in [
+        (
+            "native_raw_verified_qualification_only",
+            "regression",
+            "incompatible with GP workers",
+        ),
+        (
+            "raw_training_reconstructed_qualification_only",
+            "binary",
+            "task binary is not qualified for parallel execution or teaching; regression only",
+        ),
     ] {
         let root = tempfile::tempdir().unwrap();
         let queue_path = root.path().join("runs/gp-priority-jobs.json");
@@ -130,7 +141,14 @@ fn native_preparation_status_cannot_change_a_live_gp_queue() {
         let error = queue::enqueue(root.path(), &jobs, &contexts)
             .unwrap_err()
             .to_string();
-        assert!(error.contains("incompatible with GP workers"), "{error}");
+        assert!(error.contains(reason), "{error}");
+        if task == "regression" {
+            // The status gate, not the task contract, must be what refused this row.
+            assert!(
+                !error.contains("not qualified for parallel execution"),
+                "{error}"
+            );
+        }
         assert_eq!(std::fs::read(&queue_path).unwrap(), before);
         assert!(!root.path().join("runs/new-source").exists());
         assert!(!root.path().join("runs/queue-receipts").exists());

@@ -2623,6 +2623,10 @@ fn compact_lines(
                     .map(|run| run.points.len())
                     .sum::<usize>()
             )));
+            // Latest losses before the per-run list, so they stay in the first visible rows.
+            let (summary, notice) = crate::learning_history::latest_summary(&history.learning);
+            lines.extend(summary.into_iter().map(Line::raw));
+            lines.push(Line::raw(notice));
             for saved in &history.learning.runs {
                 lines.push(Line::raw(format!(
                     "{}: {} · {} records · {} attempts",

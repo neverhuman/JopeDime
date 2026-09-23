@@ -801,6 +801,50 @@ fn chart(
         buf.set_stringn(graph.x, y, axis, graph.width as usize, Style::default());
     }
 }
+/// The newest saved losses and the history notice, shared by the text summary in
+/// [`render`] and the compact Deep-learning dashboard view, so small terminals keep the
+/// latest validation loss. INVALID runs are excluded, as in the overview charts. Training
+/// and validation each come from the record with the greatest timestamp across all
+/// remaining runs, so an overlapping run that merely started earlier cannot hide a newer
+/// validation. The notice is the first source error, otherwise the counts of unbound
+/// validation rows and incomplete final lines.
+pub fn latest_summary(snapshot: &Snapshot) -> ([String; 3], String) {
+    let points = || {
+        snapshot
+            .runs
+            .iter()
+            .filter(|r| r.status != "INVALID")
+            .flat_map(|r| r.points.iter())
+    };
+    let last = points().max_by_key(|p| p.timestamp);
+    let last_val = points()
+        .filter(|p| p.validation.is_some())
+        .max_by_key(|p| p.timestamp)
+        .and_then(|p| p.validation.as_ref());
+    let value = |v: Option<f64>| {
+        v.map(|v| format!("{v:.5}"))
+            .unwrap_or_else(|| "unavailable".into())
+    };
+    let unbound: usize = snapshot.runs.iter().map(|r| r.unbound_validation).sum();
+    let pending = snapshot.runs.iter().filter(|r| r.pending_line).count();
+    let notice = snapshot.errors.first().cloned().unwrap_or_else(|| {
+        format!("{unbound} unbound validation rows not plotted · {pending} incomplete final lines pending; saved logs remain unchanged")
+    });
+    (
+        [
+            format!("Training Sequence NLL: {}", value(last.map(|p| p.train))),
+            format!(
+                "Validation Sequence NLL: {}",
+                value(last_val.map(|v| v.sequence_nll))
+            ),
+            format!(
+                "Validation pairwise loss: {}",
+                value(last_val.map(|v| v.ranking_bt))
+            ),
+        ],
+        notice,
+    )
+}
 pub fn render(
     f: &mut Frame,
     area: Rect,
@@ -814,8 +858,7 @@ pub fn render(
         .and_then(|p| snapshot.runs.iter().position(|r| &r.path == p));
     let count: usize = snapshot.runs.iter().map(|r| r.points.len()).sum();
     let missing: usize = snapshot.runs.iter().map(|r| r.malformed).sum();
-    let unbound: usize = snapshot.runs.iter().map(|r| r.unbound_validation).sum();
-    let pending = snapshot.runs.iter().filter(|r| r.pending_line).count();
+    let ([training, validation_nll, pairwise], notice) = latest_summary(snapshot);
     let compact = area.height < 18;
     let header = if !snapshot.ready {
         "Loading FULL saved history in background…".into()
@@ -939,17 +982,7 @@ pub fn render(
             Color::Magenta,
         );
     } else {
-        let last = runs
-            .iter()
-            .flat_map(|r| r.points.iter())
-            .max_by_key(|p| p.timestamp);
-        let last_val = runs
-            .iter()
-            .flat_map(|r| r.points.iter())
-            .filter(|p| p.validation.is_some())
-            .max_by_key(|p| p.timestamp)
-            .and_then(|p| p.validation.as_ref());
-        let text=format!("Training Sequence NLL: {}\nValidation Sequence NLL: {}\nValidation pairwise loss: {}\n{}\nEnlarge terminal for three full-history charts.",last.map(|p|format!("{:.5}",p.train)).unwrap_or_else(||"unavailable".into()),last_val.map(|v|format!("{:.5}",v.sequence_nll)).unwrap_or_else(||"unavailable".into()),last_val.map(|v|format!("{:.5}",v.ranking_bt)).unwrap_or_else(||"unavailable".into()),selected.map(|i|short(&snapshot.runs[i].path)).unwrap_or_else(||"All recorded campaign and auxiliary runs".into()));
+        let text=format!("{training}\n{validation_nll}\n{pairwise}\n{}\nEnlarge terminal for three full-history charts.",selected.map(|i|short(&snapshot.runs[i].path)).unwrap_or_else(||"All recorded campaign and auxiliary runs".into()));
         let widget = Paragraph::new(text).wrap(Wrap { trim: true });
         f.render_widget(
             if compact {
@@ -965,7 +998,6 @@ pub fn render(
     let checkpoint = run["selected_checkpoint"]["checkpoint"]
         .as_str()
         .unwrap_or("unavailable");
-    let notice=snapshot.errors.first().cloned().unwrap_or_else(||format!("{unbound} unbound validation rows not plotted · {pending} incomplete final lines pending; saved logs remain unchanged"));
     let lines = if compact {
         vec![
             Line::raw("↑↓ runs · Home/End · a full · d details"),

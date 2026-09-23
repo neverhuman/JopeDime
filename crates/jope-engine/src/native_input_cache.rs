@@ -188,23 +188,31 @@ fn after_read(inputs: &Inputs, path: &Path, file: &File, identity: &Identity) ->
     );
     Ok(())
 }
-// ext4's metadata clock can repeat within a scheduler tick. Never seed reuse
-// from a recent timestamp: a same-tick write followed by mtime restoration can
-// otherwise leave the complete fingerprint unchanged. Other filesystems keep
-// full hashing until their timestamp behavior is separately qualified.
-fn eligible_for_reuse(file: &File, metadata: &Metadata) -> Result<bool> {
+/// fstatfs(2) `f_type` of ext4, the only filesystem qualified for reuse below.
+const EXT4_SUPER_MAGIC: u64 = 0xef53;
+/// fstatfs(2) `f_type` of an open file. The field is a signed word on some
+/// targets; filesystem magics are non-negative, so the conversion preserves it.
+fn filesystem_magic(file: &File) -> Result<u64> {
     let mut status = std::mem::MaybeUninit::<libc::statfs>::uninit();
     if unsafe { libc::fstatfs(file.as_raw_fd(), status.as_mut_ptr()) } != 0 {
         return Err(std::io::Error::last_os_error().into());
     }
     let status = unsafe { status.assume_init() };
+    Ok(status.f_type as u64)
+}
+// ext4's metadata clock can repeat within a scheduler tick. Never seed reuse
+// from a recent timestamp: a same-tick write followed by mtime restoration can
+// otherwise leave the complete fingerprint unchanged. Other filesystems keep
+// full hashing until their timestamp behavior is separately qualified.
+fn eligible_for_reuse(file: &File, metadata: &Metadata) -> Result<bool> {
+    let magic = filesystem_magic(file)?;
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)?
         .as_secs();
     let Some(cutoff) = now.checked_sub(2) else {
         return Ok(false);
     };
-    Ok(status.f_type == 0xef53
+    Ok(magic == EXT4_SUPER_MAGIC
         && metadata.mode() & 0o222 == 0
         && metadata.ctime() >= 0
         && metadata.mtime() >= 0
@@ -324,10 +332,42 @@ mod tests {
     fn reset() {
         CACHE.with(|c| *c.borrow_mut() = Cache::default());
     }
+    const TMPFS_MAGIC: u64 = 0x0102_1994;
+    fn assert_filesystem(dir: &Path, expected: u64, name: &str) {
+        let magic = filesystem_magic(&File::open(dir).unwrap()).unwrap();
+        assert_eq!(
+            magic,
+            expected,
+            "fixture {} must be on {name} (f_type {expected:#x}); observed f_type {magic:#x}",
+            dir.display()
+        );
+    }
+    /// Reuse is qualified on ext4 only, so the reuse tests place their fixture on ext4 on
+    /// purpose instead of inheriting $TMPDIR (tmpfs in the CI runner container). They use
+    /// the Cargo profile directory above this test binary's deps/, and assert its
+    /// filesystem, so a non-ext4 target fails loudly rather than being skipped.
+    fn ext4_fixture() -> tempfile::TempDir {
+        let exe = std::env::current_exe().unwrap();
+        let profile = exe
+            .ancestors()
+            .find(|dir| dir.file_name() == Some(std::ffi::OsStr::new("deps")))
+            .and_then(Path::parent)
+            .unwrap_or_else(|| {
+                panic!(
+                    "test binary {} is not under a deps/ directory",
+                    exe.display()
+                )
+            });
+        let base = profile.join("native-input-cache-tests");
+        std::fs::create_dir_all(&base).unwrap();
+        let t = tempfile::tempdir_in(base.canonicalize().unwrap()).unwrap();
+        assert_filesystem(t.path(), EXT4_SUPER_MAGIC, "ext4");
+        t
+    }
     #[test]
     fn full_first_hash_then_identity_checked_reuse_and_scope_exit() {
         reset();
-        let t = tempfile::tempdir().unwrap();
+        let t = ext4_fixture();
         let p = t.path().join("a");
         std::fs::write(&p, vec![7u8; 4 * 1024 * 1024]).unwrap();
         std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o444)).unwrap();
@@ -344,6 +384,30 @@ mod tests {
             });
         }
         assert!(hash_if_bound(&p).is_none());
+    }
+    /// The documented non-ext4 policy, pinned to tmpfs on purpose (/dev/shm is tmpfs on
+    /// the host and in the runner container): an old, read-only, hash-bound input that
+    /// ext4 would reuse is fully hashed on every read and never enters the cache.
+    #[test]
+    fn unqualified_filesystem_keeps_full_hashing_for_old_read_only_inputs() {
+        reset();
+        let t = tempfile::tempdir_in(Path::new("/dev/shm").canonicalize().unwrap()).unwrap();
+        assert_filesystem(t.path(), TMPFS_MAGIC, "tmpfs");
+        let p = t.path().join("a");
+        let len = 4 * 1024 * 1024;
+        std::fs::write(&p, vec![7u8; len]).unwrap();
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o444)).unwrap();
+        let h = crate::manifest::file_hash(&p).unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(2100));
+        let _s = enter(t.path(), &BTreeMap::from([("a".into(), h.clone())])).unwrap();
+        assert_eq!(hash_if_bound(&p).unwrap().unwrap(), h);
+        assert_eq!(hash_if_bound(&p).unwrap().unwrap(), h);
+        CACHE.with(|c| {
+            let c = c.borrow();
+            assert!(c.entries.is_empty(), "non-ext4 inputs must not seed reuse");
+            assert_eq!(c.hits, 0);
+            assert_eq!(c.full_bytes, 2 * len as u64);
+        });
     }
     #[test]
     fn writable_files_never_cache_and_wrong_expected_hash_never_enters() {
@@ -366,7 +430,7 @@ mod tests {
     #[test]
     fn same_size_mutation_restored_mtime_and_rename_invalidate() {
         reset();
-        let t = tempfile::tempdir().unwrap();
+        let t = ext4_fixture();
         let p = t.path().join("a");
         std::fs::write(&p, b"original").unwrap();
         std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o444)).unwrap();
