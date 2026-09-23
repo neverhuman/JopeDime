@@ -63,7 +63,7 @@
         "id": "afm.lite-race.v1.resampled",
         "kind": "search",
         "dsl": "(pipe X (target_bin_encode append=true bins=12) (gpr m=300 steps=40))",
-        "produce_seconds": 6.604782011,
+        "produce_seconds": 6.743342969,
         "resample": {
           "pop": 32,
           "gens": 8,
@@ -79,8 +79,8 @@
           "r2": 0.9997118073738143,
           "rmse": 0.0049300384192495494
         },
-        "fit_seconds": 0.063794979,
-        "predict_seconds": 0.000065404,
+        "fit_seconds": 0.089483483,
+        "predict_seconds": 0.000062188,
         "hold_rows": 43
       },
       "screen_fitness": 0.9997118073738143,
@@ -99,8 +99,8 @@
                 "r2": 0.9997118073738143,
                 "rmse": 0.0049300384192495494
               },
-              "fit_seconds": 0.063461057,
-              "predict_seconds": 0.000065003,
+              "fit_seconds": 0.063648271,
+              "predict_seconds": 0.000063169,
               "hold_rows": 43
             }
           },
@@ -115,8 +115,8 @@
                 "r2": 0.9997814700180365,
                 "rmse": 0.004035752332245867
               },
-              "fit_seconds": 0.140920571,
-              "predict_seconds": 0.000428501,
+              "fit_seconds": 0.16139968,
+              "predict_seconds": 0.000417149,
               "hold_rows": 40
             }
           },
@@ -131,8 +131,8 @@
                 "r2": 0.9990066593537363,
                 "rmse": 0.009978816444042624
               },
-              "fit_seconds": 4.6604718290000005,
-              "predict_seconds": 0.01481442,
+              "fit_seconds": 4.600698861,
+              "predict_seconds": 0.014789599,
               "hold_rows": 39
             }
           },
@@ -147,8 +147,8 @@
                 "r2": 0.9997619965256604,
                 "rmse": 0.0033795188519789494
               },
-              "fit_seconds": 11.751172278,
-              "predict_seconds": 0.035669863,
+              "fit_seconds": 11.600013995,
+              "predict_seconds": 0.035359836,
               "hold_rows": 39
             }
           },
@@ -163,8 +163,8 @@
                 "r2": 0.9996375022452072,
                 "rmse": 0.0055164337520758515
               },
-              "fit_seconds": 0.117579416,
-              "predict_seconds": 0.000188987,
+              "fit_seconds": 0.114823938,
+              "predict_seconds": 0.000101672,
               "hold_rows": 41
             }
           }
@@ -183,8 +183,8 @@
         },
         "fold_sd": 0.0002908993050680913,
         "robust_fitness": 0.9994750061767693,
-        "seconds": 16.784771925,
-        "produce_seconds": 9.773252437
+        "seconds": 16.59131617,
+        "produce_seconds": 10.385853999
       },
       "deep_rank": 4
     },
@@ -203,8 +203,8 @@
           "r2": 0.9996955169190047,
           "rmse": 0.005067461457124133
         },
-        "fit_seconds": 0.062412153,
-        "predict_seconds": 0.000051267,
+        "fit_seconds": 0.062496251,
+        "predict_seconds": 0.000051187,
         "hold_rows": 43
       },
       "screen_fitness": 0.9996955169190047,
@@ -223,8 +223,8 @@
                 "r2": 0.9996955169190047,
                 "rmse": 0.005067461457124133
               },
-              "fit_seconds": 0.07538055,
-              "predict_seconds": 0.000051788,
+              "fit_seconds": 0.065088868,
+              "predict_seconds": 0.00005263,
               "hold_rows": 43
             }
           },
@@ -239,8 +239,8 @@
                 "r2": 0.9997587191299789,
                 "rmse": 0.004240630538567218
               },
-              "fit_seconds": 0.067686402,
-              "predict_seconds": 0.000048883,
+              "fit_seconds": 0.076631882,
+              "predict_seconds": 0.000051297,
               "hold_rows": 40
             }
           },
@@ -255,8 +255,8 @@
                 "r2": 0.9998041723703887,
                 "rmse": 0.004430644593345691
               },
-              "fit_seconds": 0.109280915,
-              "predict_seconds": 0.000048862,
+              "fit_seconds": 0.08409234,
+              "predict_seconds": 0.000050936,
               "hold_rows": 39
             }
           },
@@ -271,8 +271,8 @@
                 "r2": 0.9997379033679392,
                 "rmse": 0.0035464508480215658
               },
-              "fit_seconds": 0.067369833,
-              "predict_seconds": 0.000049003,
+              "fit_seconds": 0.079957144,
+              "predict_seconds": 0.000048692,
               "hold_rows": 39
             }
           },
@@ -287,8 +287,8 @@
                 "r2": 0.9998139739993671,
                 "rmse": 0.003951778291338663
               },
-              "fit_seconds": 0.064764904,
-              "predict_seconds": 0.000049403,
+              "fit_seconds": 0.089357505,
+              "predict_seconds": 0.000051768,
               "hold_rows": 41
             }
           }
@@ -307,7 +307,7 @@
         },
         "fold_sd": 0.00004356879833779943,
         "robust_fitness": 0.9997577931971052,
-        "seconds": 0.3847305430000001,
+        "seconds": 0.395383062,
         "produce_seconds": 0.0
       },
       "deep_rank": 1
@@ -327,8 +327,8 @@
           "r2": 0.9995616165049662,
           "rmse": 0.006080453461017779
         },
-        "fit_seconds": 0.007751086,
-        "predict_seconds": 0.000050275,
+        "fit_seconds": 0.007956357,
+        "predict_seconds": 0.000052379,
         "hold_rows": 43
       },
       "screen_fitness": 0.9995616165049662,
@@ -347,8 +347,8 @@
                 "r2": 0.9995616165049662,
                 "rmse": 0.006080453461017779
               },
-              "fit_seconds": 0.025690961,
-              "predict_seconds": 0.000166735,
+              "fit_seconds": 0.013546606,
+              "predict_seconds": 0.000083498,
               "hold_rows": 43
             }
           },
@@ -363,8 +363,8 @@
                 "r2": 0.9996655813227512,
                 "rmse": 0.004992456090180577
               },
-              "fit_seconds": 0.008597357,
-              "predict_seconds": 0.000048783,
+              "fit_seconds": 0.013799365,
+              "predict_seconds": 0.000099749,
               "hold_rows": 40
             }
           },
@@ -379,8 +379,8 @@
                 "r2": 0.999768659506529,
                 "rmse": 0.0048156593646992915
               },
-              "fit_seconds": 0.013328139,
-              "predict_seconds": 0.000077256,
+              "fit_seconds": 0.013520848,
+              "predict_seconds": 0.000078418,
               "hold_rows": 39
             }
           },
@@ -395,8 +395,8 @@
                 "r2": 0.9997752157590691,
                 "rmse": 0.0032843252205797106
               },
-              "fit_seconds": 0.016506984,
-              "predict_seconds": 0.000094128,
+              "fit_seconds": 0.008705595,
+              "predict_seconds": 0.000048552,
               "hold_rows": 39
             }
           },
@@ -411,8 +411,8 @@
                 "r2": 0.9995312868325724,
                 "rmse": 0.006272769419439265
               },
-              "fit_seconds": 0.016041813,
-              "predict_seconds": 0.000096964,
+              "fit_seconds": 0.008017934,
+              "predict_seconds": 0.000056146,
               "hold_rows": 41
             }
           }
@@ -431,7 +431,7 @@
         },
         "fold_sd": 0.00010134889084240466,
         "robust_fitness": 0.9996310933400985,
-        "seconds": 0.08064911999999999,
+        "seconds": 0.057956710999999994,
         "produce_seconds": 0.0
       },
       "deep_rank": 2
@@ -451,8 +451,8 @@
           "r2": 0.9995616165049662,
           "rmse": 0.006080453461017779
         },
-        "fit_seconds": 0.085063221,
-        "predict_seconds": 0.000051147,
+        "fit_seconds": 0.084847099,
+        "predict_seconds": 0.000051267,
         "hold_rows": 43
       },
       "screen_fitness": 0.9995616165049662,
@@ -471,8 +471,8 @@
                 "r2": 0.9995616165049662,
                 "rmse": 0.006080453461017779
               },
-              "fit_seconds": 0.08706058,
-              "predict_seconds": 0.000052208,
+              "fit_seconds": 0.085970165,
+              "predict_seconds": 0.000051838,
               "hold_rows": 43
             }
           },
@@ -487,8 +487,8 @@
                 "r2": 0.9996655813227512,
                 "rmse": 0.004992456090180577
               },
-              "fit_seconds": 0.072062082,
-              "predict_seconds": 0.000049263,
+              "fit_seconds": 0.0785488,
+              "predict_seconds": 0.000050074,
               "hold_rows": 40
             }
           },
@@ -503,8 +503,8 @@
                 "r2": 0.999768659506529,
                 "rmse": 0.0048156593646992915
               },
-              "fit_seconds": 0.105025553,
-              "predict_seconds": 0.000048282,
+              "fit_seconds": 0.099153042,
+              "predict_seconds": 0.000048672,
               "hold_rows": 39
             }
           },
@@ -519,8 +519,8 @@
                 "r2": 0.9997752157590691,
                 "rmse": 0.0032843252205797106
               },
-              "fit_seconds": 0.081097348,
-              "predict_seconds": 0.000049093,
+              "fit_seconds": 0.099889636,
+              "predict_seconds": 0.000048482,
               "hold_rows": 39
             }
           },
@@ -535,8 +535,8 @@
                 "r2": 0.9995312868325724,
                 "rmse": 0.006272769419439265
               },
-              "fit_seconds": 0.097679733,
-              "predict_seconds": 0.000049935,
+              "fit_seconds": 0.078746224,
+              "predict_seconds": 0.000050896,
               "hold_rows": 41
             }
           }
@@ -555,7 +555,7 @@
         },
         "fold_sd": 0.00010134889084240466,
         "robust_fitness": 0.9996310933400985,
-        "seconds": 0.443174077,
+        "seconds": 0.442557829,
         "produce_seconds": 0.0
       },
       "deep_rank": 3
@@ -575,8 +575,8 @@
           "r2": 0.9719099731130267,
           "rmse": 0.048672645141490466
         },
-        "fit_seconds": 0.010601299,
-        "predict_seconds": 0.000626475,
+        "fit_seconds": 0.011526253,
+        "predict_seconds": 0.000648337,
         "hold_rows": 43
       },
       "screen_fitness": 0.9719099731130267,
@@ -595,8 +595,8 @@
                 "r2": 0.9719099731130267,
                 "rmse": 0.048672645141490466
               },
-              "fit_seconds": 0.014438379,
-              "predict_seconds": 0.000759167,
+              "fit_seconds": 0.010523164,
+              "predict_seconds": 0.000663906,
               "hold_rows": 43
             }
           },
@@ -611,8 +611,8 @@
                 "r2": 0.9913180423056775,
                 "rmse": 0.02543769900083722
               },
-              "fit_seconds": 0.009127591,
-              "predict_seconds": 0.000293826,
+              "fit_seconds": 0.007061934,
+              "predict_seconds": 0.000242689,
               "hold_rows": 40
             }
           },
@@ -627,8 +627,8 @@
                 "r2": 0.9840581716569405,
                 "rmse": 0.03997596856806259
               },
-              "fit_seconds": 0.005795676,
-              "predict_seconds": 0.000153561,
+              "fit_seconds": 0.005634984,
+              "predict_seconds": 0.000153581,
               "hold_rows": 39
             }
           },
@@ -643,8 +643,8 @@
                 "r2": 0.976201987535217,
                 "rmse": 0.03379353071502104
               },
-              "fit_seconds": 0.007389362,
-              "predict_seconds": 0.000226929,
+              "fit_seconds": 0.007182763,
+              "predict_seconds": 0.000225176,
               "hold_rows": 39
             }
           },
@@ -659,8 +659,8 @@
                 "r2": 0.9880771238363186,
                 "rmse": 0.03163707055964518
               },
-              "fit_seconds": 0.015385722,
-              "predict_seconds": 0.000426347,
+              "fit_seconds": 0.005889596,
+              "predict_seconds": 0.000203896,
               "hold_rows": 41
             }
           }
@@ -679,7 +679,7 @@
         },
         "fold_sd": 0.007251606392760916,
         "robust_fitness": 0.9810463063609572,
-        "seconds": 0.05399656,
+        "seconds": 0.037781689,
         "produce_seconds": 0.0
       },
       "deep_rank": 5
@@ -699,8 +699,8 @@
           "r2": 0.9372236918014997,
           "rmse": 0.07276235675121963
         },
-        "fit_seconds": 0.001439865,
-        "predict_seconds": 0.000012504,
+        "fit_seconds": 0.001934481,
+        "predict_seconds": 0.000022763,
         "hold_rows": 43
       },
       "screen_fitness": 0.9372236918014997,
@@ -721,8 +721,8 @@
           "r2": 0.9372236918014997,
           "rmse": 0.07276235675121963
         },
-        "fit_seconds": 0.000501699,
-        "predict_seconds": 0.000017713,
+        "fit_seconds": 0.002433064,
+        "predict_seconds": 0.000050015,
         "hold_rows": 43
       },
       "screen_fitness": 0.9372236918014997,
@@ -743,8 +743,8 @@
           "r2": 0.9020098577540943,
           "rmse": 0.09090757343834119
         },
-        "fit_seconds": 0.000029826,
-        "predict_seconds": 0.000192795,
+        "fit_seconds": 0.000049483,
+        "predict_seconds": 0.000397833,
         "hold_rows": 43
       },
       "screen_fitness": 0.9020098577540943,
@@ -765,8 +765,8 @@
           "r2": 0.6215336213866666,
           "rmse": 0.17865802294717628
         },
-        "fit_seconds": 0.000023604,
-        "predict_seconds": 2.335e-6,
+        "fit_seconds": 0.000013686,
+        "predict_seconds": 1.864e-6,
         "hold_rows": 43
       },
       "screen_fitness": 0.6215336213866666,
@@ -787,8 +787,8 @@
           "r2": 0.6212361750004218,
           "rmse": 0.1787282151084217
         },
-        "fit_seconds": 0.000028143,
-        "predict_seconds": 4.909e-6,
+        "fit_seconds": 0.000025007,
+        "predict_seconds": 4.759e-6,
         "hold_rows": 43
       },
       "screen_fitness": 0.6212361750004218,
@@ -809,8 +809,8 @@
           "r2": 0.6199237960669386,
           "rmse": 0.1790375850892392
         },
-        "fit_seconds": 8.537e-6,
-        "predict_seconds": 2.234e-6,
+        "fit_seconds": 9.368e-6,
+        "predict_seconds": 2.264e-6,
         "hold_rows": 43
       },
       "screen_fitness": 0.6199237960669386,
@@ -821,6 +821,6 @@
     "cores": 128,
     "workers": 16
   },
-  "git_sha": "cfb432f0ba9bd0eacf64a8d62ab5d14b2c804120",
-  "generated_at_unix": 1790142418
+  "git_sha": "97c4ea1daf7ed67ee34bc538f2b855ecab06a318",
+  "generated_at_unix": 1790143780
 }

@@ -393,17 +393,23 @@ def render_samecut() -> str:
     best = 0
     for r in sorted(reports, key=lambda r: r["dataset_id"]):
         s = next(m for m in r["methods"] if m["method"]["kind"] == "search")
-        top = next(m for m in r["methods"] if m.get("deep_rank") == 1)
+        # "Best" is the ladder's own rule: the lowest pooled RMSE among the finalists that
+        # scored, ties by method id. (The protocol's deep rank orders by the penalised score,
+        # which can disagree with RMSE on a close dataset; the table says which rule it uses.)
+        scored = [m for m in r["methods"] if m.get("deep") and m["deep"]["status"] == "ok"]
+        if not scored:
+            refuse(f"{SAMECUT.relative_to(ROOT)}: {r['dataset_id']} has no scored finalist")
+        top = min(scored, key=lambda m: (m["deep"]["oof"]["rmse"], m["method"]["id"]))
         rmse = top["deep"]["oof"]["rmse"]
         search_seconds.append(s["method"]["produce_seconds"])
         rank = s.get("deep_rank")
         if rank is not None:
             finalist += 1
-            best += rank == 1
+        best += top is s
         per_dataset.append(
             f"| `{r['dataset_id']}` | {r['rows']} | {r['features']} | "
             f"{'**' if top is s else ''}{top['method']['id']}{'**' if top is s else ''} | "
-            f"{rmse:.4g} | {('**' + str(rank) + '**') if rank == 1 else (rank if rank is not None else f'screen {s['screen_rank']}')} | "
+            f"{rmse:.4g} | {rank if rank is not None else f'screen {s['screen_rank']}'} | "
             f"{s['method']['produce_seconds']:.1f} s |"
         )
     mean_s = sum(search_seconds) / n
@@ -439,19 +445,20 @@ def render_samecut() -> str:
         *(samecut_row(r) for r in e["deep_rows"]),
         "",
         f"**Where the search stands today:** rank {ours['elo_rank']} of {deep['methods']} on the "
-        f"deep ladder, Elo {ours['elo']}, best method on {best} of {n} datasets, a finalist on "
-        f"{finalist}; on the other {n - finalist} it did not make the top-{protocol['top']} screen. "
-        "Coverage counts datasets where a method reached the deep stage, so the ladder ranks "
-        "finalists only. The screen ladder (every method, one cut) is committed beside it.",
+        f"deep ladder, Elo {ours['elo']}, lowest pooled RMSE on {best} of {n} datasets (the "
+        f"ladder's own rule), a finalist on {finalist}; on the other {n - finalist} it did not "
+        f"make the top-{protocol['top']} screen. Coverage counts datasets where a method reached "
+        "the deep stage, so the ladder ranks finalists only. The screen ladder (every method, "
+        "one cut) is committed beside it.",
         "",
         f"**Seconds per program.** Writing the program took the search {mean_s:.1f} s per dataset "
         f"on average (median {median_s:.1f} s, longest {max_s:.1f} s) on the screen cut's training "
-        f"rows, wall time under whatever else the host was running. The reference point set for "
-        f"a large language model writing the same program is about {LLM_REFERENCE_HOURS} hour "
-        f"and {LLM_REFERENCE_TOKENS:,} tokens; that comparison is one of cost, not of quality, "
-        "and the quality standing is the ladder above.",
+        f"rows, wall time under whatever else the host was running. The owner's stated reference "
+        f"point for a large language model writing a program for the same task, not measured "
+        f"here, is about {LLM_REFERENCE_HOURS} hour and {LLM_REFERENCE_TOKENS:,} tokens; that "
+        "comparison is one of cost, not of quality, and the quality standing is the ladder above.",
         "",
-        "| dataset | rows | features | best deep method | RMSE | search deep rank | search |",
+        "| dataset | rows | features | lowest pooled RMSE | RMSE | search rank (penalised score) | search |",
         "| --- | ---: | ---: | --- | ---: | ---: | ---: |",
         *per_dataset,
         "",

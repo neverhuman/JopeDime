@@ -2,8 +2,9 @@
 
 The first committed same-cut evidence: every tier-1 baseline and the program this repository's
 search wrote, scored on identical held-out cuts of the ten committed regression datasets under
-`datasets/test/`, by `jope-bench` at the tree this directory was committed from. Nothing here was
-edited by hand. The ten datasets are the `test-10` collection, chosen from the published ladder
+`datasets/test/`, by a release build of `jope-bench` from the commit each report names in
+`git_sha` (the last commit before the one that adds this directory; its `crates/jope-bench` source
+is the one that ships with the evidence). Nothing here was edited by hand. The ten datasets are the `test-10` collection, chosen from the published ladder
 where the historical engine ranked first (`docs/datasets.md`): a favourable selection, used because
 it is the only committed regression data. The comparison between methods on identical cuts of these
 ten is fair; nothing here generalises to a broader panel. `crates/jope-bench/tests/committed_evidence.rs` re-derives the tracks and both
@@ -13,8 +14,9 @@ refuses when they disagree with each other.
 
 ## How it was produced
 
-From the repository root, on the commit each report names in `git_sha`, with the release build of
-`jope-bench` and `jope-arena` (`cargo build --release -p jope-bench -p jope-arena --locked`):
+From the repository root, checked out at the commit each report names in `git_sha`, with the
+release build of `jope-bench` and `jope-arena` from that commit
+(`cargo build --release -p jope-bench -p jope-arena --locked`):
 
 ```sh
 jope-bench run --datasets datasets/test --out assets/same-cut/v1/reports \
