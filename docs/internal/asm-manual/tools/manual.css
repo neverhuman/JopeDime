@@ -1,5 +1,6 @@
-@page { size: A4; margin: 19mm 18mm 19mm; @top-left { content: "JOPE DIME / ASM"; font: 8pt "DejaVu Sans"; color: #526476; } @top-right { content: "PRIVATE MAINTAINER EDITION"; font: 7pt "DejaVu Sans"; color: #526476; } @bottom-left { content: "23 September 2026 · reviewed implementation snapshot"; font: 7pt "DejaVu Sans"; color: #687a8d; } @bottom-right { content: counter(page); font: 8pt "DejaVu Sans"; color: #0d2944; } }
+@page { size: A4; margin: 21mm 18mm 19mm; @top-left { content: string(chapter); font: 7.5pt "DejaVu Sans"; color: #526476; width: 60%; } @top-right { content: string(section, first); font: 7pt "DejaVu Sans"; color: #687a8d; width: 40%; text-align: right; } @bottom-left { font: 7pt "DejaVu Sans"; color: #687a8d; } @bottom-right { content: counter(page); font: 8pt "DejaVu Sans"; color: #0d2944; } }
 @page cover { margin: 0; @top-left { content: none; } @top-right { content: none; } @bottom-left { content: none; } @bottom-right { content: none; } }
+@page part { @top-left { content: none; } @top-right { content: none; } }
 html { font-family: "DejaVu Sans", sans-serif; color: #20354a; font-size: 9.5pt; line-height: 1.48; }
 body { margin: 0; }
 .cover { page: cover; min-height: 297mm; box-sizing: border-box; padding: 25mm 22mm; background: #102a43; color: #f5f9fc; break-after: page; }
@@ -11,15 +12,60 @@ body { margin: 0; }
 .cover-bottom { margin-top: 25mm; font-size: 10pt; color: #c6dae9; }
 .cover-bottom span { font-size: 8pt; }
 .front, .contents { break-after: page; }
-.contents ol { list-style: none; padding: 0; }
-.contents li { margin: 4mm 0; border-bottom: .3pt solid #dbe4eb; padding-bottom: 3mm; }
-.contents a { color: #163c5e; text-decoration: none; }
-.contents a::after { content: leader(".") target-counter(attr(href), page); }
+.front h1, .contents h1 { bookmark-level: 1; string-set: chapter content(text), section ""; }
+.front h2 { bookmark-level: 2; }
+
+/* Contents: parts, chapters and their sections. */
+.contents ol { list-style: none; padding: 0; margin: 0; }
+.contents li { margin: 0; }
+/* Contents rows: number and title, with the page number set flush right. Dot leaders are avoided on
+   purpose: leader(".") emits every dot as its own glyph (about 400 KB in this book), a dotted border
+   draws every dot as its own shape, and either would break the repository's 5 MiB file limit. */
+.contents a, .minitoc a { color: #163c5e; text-decoration: none; display: block; }
+.contents a::after, .minitoc a::after { content: target-counter(attr(href), page); float: right; padding-left: 3mm; }
+.contents a.ext::after, .companion-list a.ext::after { content: "Volume 2"; float: right; padding-left: 3mm; font-size: 7pt; color: #687a8d; }
+.companion-list a { color: #163c5e; display: block; }
+.contents li.toc-part { margin: 6mm 0 2mm; padding-bottom: 1.5mm; border-bottom: 1pt solid #48aaa7; font-size: 10.5pt; font-weight: 700; letter-spacing: .3px; break-after: avoid; }
+.contents li.toc-part a::after { content: none; }
+.contents li.toc-ch { margin: 2.6mm 0 .8mm; font-size: 9.5pt; font-weight: 600; break-after: avoid; border-bottom: .3pt solid #dbe4eb; }
+.contents li.toc-sec { margin: .5mm 0 .5mm 9mm; font-size: 8.3pt; }
+.contents li.toc-sub { margin: .3mm 0 .3mm 20mm; font-size: 7.8pt; color: #3a5670; }
+.companion-note { font-size: 10pt; line-height: 1.55; margin-bottom: 6mm; }
+.contents .n, .minitoc .n, .part-chapters .n { display: inline-block; min-width: 11mm; color: #427d94; font-weight: 600; }
+
+/* Part divider pages. */
+.part { page: part; break-before: page; break-after: page; padding-top: 55mm; }
+.part-label { font-size: 12pt; letter-spacing: 3px; text-transform: uppercase; color: #48aaa7; }
+.part h1.part-title { font-size: 30pt; line-height: 1.15; color: #123b5a; border: none; margin: 3mm 0 6mm; padding: 0; bookmark-level: 1; bookmark-label: attr(data-running); string-set: chapter attr(data-running), section ""; }
+.part-summary { font-size: 11pt; line-height: 1.55; color: #3a5670; max-width: 140mm; }
+.part-chapters { list-style: none; padding: 0; margin-top: 10mm; }
+.part-chapters li { margin: 3mm 0; font-size: 11pt; }
+.part-chapters a { color: #163c5e; }
+.part-chapters .n { min-width: 30mm; }
+
+/* Chapters and the numbered hierarchy. */
 .chapter { break-before: page; }
-h1 { font-size: 24pt; line-height: 1.2; color: #123b5a; border-bottom: 2pt solid #48aaa7; padding-bottom: 5mm; margin: 0 0 7mm; bookmark-level: 1; }
-h1[data-chapter]::before { content: attr(data-chapter) " / "; font-size: 14pt; color: #427d94; }
-h2 { color: #174f70; font-size: 15pt; line-height: 1.25; margin: 7mm 0 3mm; break-after: avoid; bookmark-level: 2; }
-h3 { color: #23617b; font-size: 11pt; margin: 5mm 0 2mm; break-after: avoid; bookmark-level: 3; }
+h1 { font-size: 24pt; line-height: 1.2; color: #123b5a; border-bottom: 2pt solid #48aaa7; padding-bottom: 5mm; margin: 0 0 6mm; }
+/* Bookmarks: chapter, section, subsection, sub-subsection (four levels). */
+.chapter h1 { bookmark-level: 1; bookmark-label: attr(data-running); string-set: chapter attr(data-running), section ""; }
+.chapter h1 .eyebrow { display: block; font-size: 10pt; letter-spacing: 2px; text-transform: uppercase; color: #427d94; margin-bottom: 2mm; }
+h2 { color: #174f70; font-size: 15pt; line-height: 1.25; margin: 8mm 0 3mm; break-after: avoid; bookmark-level: 2; bookmark-label: attr(data-running); string-set: section attr(data-running); }
+h3 { color: #23617b; font-size: 11.5pt; line-height: 1.3; margin: 6mm 0 2mm; break-after: avoid; bookmark-level: 3; bookmark-label: attr(data-running); }
+h4 { color: #2d6f84; font-size: 10pt; line-height: 1.3; margin: 4.5mm 0 1.5mm; break-after: avoid; bookmark-level: 4; bookmark-label: attr(data-running); }
+.companion-entry { margin: 6mm 0 2mm; break-inside: avoid; }
+.companion-title { font-size: 12.5pt; margin: 0 0 1.5mm; }
+.companion-list { list-style: none; padding: 0; margin: 0 0 0 9mm; font-size: 8.3pt; }
+.secnum { color: #48aaa7; font-weight: 700; margin-right: 2.5mm; }
+h2 .secnum { font-size: .92em; }
+
+/* The short contents at the top of each chapter. */
+.minitoc { border: .4pt solid #d4e1ea; border-left: 2pt solid #48aaa7; background: #f6f9fb; padding: 2.5mm 4mm 3mm; margin: 0 0 7mm; font-size: 8.3pt; break-inside: avoid; }
+.minitoc-title { font-size: 7.5pt; letter-spacing: 1.5px; text-transform: uppercase; color: #526476; margin-bottom: 1.5mm; }
+.minitoc ol { list-style: none; padding: 0; margin: 0; }
+.minitoc li { margin: .4mm 0; }
+.minitoc li.l3 { padding-left: 11mm; font-size: 7.8pt; color: #3a5670; }
+.minitoc li.l4 { padding-left: 24mm; font-size: 7.4pt; color: #526476; }
+
 p { orphans: 3; widows: 3; margin: 2.7mm 0; }
 a { color: #186f92; text-decoration: none; overflow-wrap: anywhere; }
 code { font-family: "DejaVu Sans Mono", monospace; font-size: .85em; overflow-wrap: anywhere; }
@@ -35,6 +81,10 @@ tbody tr:nth-child(even) { background: #f2f6f9; }
 td code, th code { font-size: .92em; }
 ul, ol { padding-left: 6mm; }
 li { margin: 1.5mm 0; }
-img { max-width: 100%; max-height: 225mm; display: block; margin: 4mm auto; object-fit: contain; }
+img { max-width: 100%; max-height: 215mm; display: block; margin: 4mm auto; object-fit: contain; }
+figure.fig { margin: 5mm 0; break-inside: avoid; }
+figure.fig img { margin: 0 auto 2mm; }
+figcaption { font-size: 8.3pt; line-height: 1.4; color: #3a5670; border-top: .4pt solid #d4e1ea; padding-top: 1.5mm; }
+.fignum { font-weight: 700; color: #123b5a; margin-right: 1.5mm; }
 blockquote { border-left: 2pt solid #67a8b5; margin: 4mm 0; padding: 1mm 4mm; background: #f2f7f9; }
 hr { border: 0; border-top: .5pt solid #d4e1ea; }

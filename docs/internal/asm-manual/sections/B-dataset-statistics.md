@@ -1,9 +1,10 @@
-# Dataset statistics appendix
-
+# Frozen-panel dataset statistics
 
 All statistics below use development rows only. Numeric values use finite observations; missing cells are counted separately. Standard deviation is the population statistic. Medians and the additional 1%, 5%, 25%, 75%, 95%, 99% quantiles in JSON linearly interpolate sorted values at `(n−1)p`. Category counts retain exact stored strings. Original class ordering and fold class counts are preserved. Upstream metadata, provenance URLs, source byte/hash pins, group-size histograms and all file identities remain in JSON.
 
-## 197_cpu_act
+## Regression datasets
+
+### 197_cpu_act
 
 Task `regression`; metric `rmse`; 6553 development rows; 1639 sealed rows counted from assignments; 21 numeric and 0 categorical features. Development groups: 6553; all groups: 8192; largest group: 1. Original fold sizes:[1311, 1311, 1311, 1310, 1310]; other-four-fold fit sizes:[5242, 5242, 5242, 5243, 5243]. Declared grouping columns: none.
 
@@ -35,7 +36,7 @@ Development target: min 0, median 89, max 99, mean 84.01938, population SD 18.29
 | freemem | numeric | 0 | 2757 | 55 | 579 | 12027 | 1768.3189 | 2497.6881 |
 | freeswap | numeric | 0 | 6154 | 2 | 1137126 | 2042280 | 1328586 | 421591.38 |
 
-## 225_puma8NH
+### 225_puma8NH
 
 Task `regression`; metric `rmse`; 6553 development rows; 1639 sealed rows counted from assignments; 8 numeric and 0 categorical features. Development groups: 6553; all groups: 8192; largest group: 1. Original fold sizes:[1311, 1311, 1311, 1310, 1310]; other-four-fold fit sizes:[5242, 5242, 5242, 5243, 5243]. Declared grouping columns: none.
 
@@ -45,16 +46,16 @@ Development target: min-12.415322, median 1.054127, max 11.87619, mean 1.1382282
 
 | Feature | Type | Missing | Distinct nonmissing | Minimum | Median | Maximum | Mean | Population SD |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
-| theta 1 | numeric | 0 | 6547 | -1.884729 | 0.0060899998 | 1.884735 | -0.0022002574 | 1.0823712 |
-| theta 2 | numeric | 0 | 6543 | -1.8834831 | 0.016564 | 1.883306 | 0.010064784 | 1.0937572 |
-| theta 3 | numeric | 0 | 6548 | -1.884449 | 0.023234 | 1.884046 | 0.0076206044 | 1.0832023 |
-| thetad 1 | numeric | 0 | 6548 | -1.884632 | -0.013532 | 1.884923 | -0.007727921 | 1.0913692 |
-| thetad 2 | numeric | 0 | 6549 | -1.8847851 | -0.030689999 | 1.884077 | -0.013800457 | 1.09539 |
-| thetad 3 | numeric | 0 | 6546 | -1.884558 | 0.020455999 | 1.884746 | 0.0078690332 | 1.0864734 |
-| tau 1 | numeric | 0 | 6534 | -0.59999502 | 0.0047479998 | 0.599011 | 0.00079091185 | 0.34369033 |
-| tau 2 | numeric | 0 | 6533 | -0.59987199 | 0.0048799999 | 0.59991199 | 0.0012599463 | 0.34712905 |
+| theta1 | numeric | 0 | 6547 | -1.884729 | 0.0060899998 | 1.884735 | -0.0022002574 | 1.0823712 |
+| theta2 | numeric | 0 | 6543 | -1.8834831 | 0.016564 | 1.883306 | 0.010064784 | 1.0937572 |
+| theta3 | numeric | 0 | 6548 | -1.884449 | 0.023234 | 1.884046 | 0.0076206044 | 1.0832023 |
+| thetad1 | numeric | 0 | 6548 | -1.884632 | -0.013532 | 1.884923 | -0.007727921 | 1.0913692 |
+| thetad2 | numeric | 0 | 6549 | -1.8847851 | -0.030689999 | 1.884077 | -0.013800457 | 1.09539 |
+| thetad3 | numeric | 0 | 6546 | -1.884558 | 0.020455999 | 1.884746 | 0.0078690332 | 1.0864734 |
+| tau1 | numeric | 0 | 6534 | -0.59999502 | 0.0047479998 | 0.599011 | 0.00079091185 | 0.34369033 |
+| tau2 | numeric | 0 | 6533 | -0.59987199 | 0.0048799999 | 0.59991199 | 0.0012599463 | 0.34712905 |
 
-## 230_machine_cpu
+### 230_machine_cpu
 
 Task `regression`; metric `rmse`; 169 development rows; 40 sealed rows counted from assignments; 6 numeric and 0 categorical features. Development groups: 152; all groups: 190; largest group: 5. Original fold sizes:[34, 32, 37, 33, 33]; other-four-fold fit sizes:[135,137,132,136,136]. Declared grouping columns: none.
 
@@ -71,7 +72,7 @@ Development target: min 6, median 50, max 1150, mean 111.53254, population SD 16
 | CHMIN | numeric | 0 | 15 | 0 | 3 | 52 | 4.9940828 | 7.2483396 |
 | CHMAX | numeric | 0 | 28 | 0 | 8 | 176 | 19.100592 | 27.884089 |
 
-## 522_pm10
+### 522_pm10
 
 Task `regression`; metric `rmse`; 402 development rows; 98 sealed rows counted from assignments; 7 numeric and 0 categorical features. Development groups: 218; all groups: 273; largest group: 6. Original fold sizes:[81, 81, 91, 67, 82]; other-four-fold fit sizes:[321,321,311,335,320]. Declared grouping columns:['day'].
 
@@ -82,14 +83,14 @@ Development target: min 0.69314998, median 3.3322001, max 5.3845, mean 3.3171902
 | Feature | Type | Missing | Distinct nonmissing | Minimum | Median | Maximum | Mean | Population SD |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
 | cars_per_hour | numeric | 0 | 374 | 3.8066599 | 7.4974751 | 8.3520803 | 7.0094372 | 1.0713765 |
-| temperature_at_2 m | numeric | 0 | 197 | -19 | 0.80000001 | 19.799999 | 0.51965173 | 6.3551238 |
+| temperature_at_2m | numeric | 0 | 197 | -19 | 0.80000001 | 19.799999 | 0.51965173 | 6.3551238 |
 | wind_speed | numeric | 0 | 71 | 0.40000001 | 2.8 | 9.3999996 | 3.1445274 | 1.7968553 |
-| temperature_diff_2 m_25 m | numeric | 0 | 56 | -5 | 0 | 4 | 0.11666667 | 0.97697158 |
+| temperature_diff_2m_25m | numeric | 0 | 56 | -5 | 0 | 4 | 0.11666667 | 0.97697158 |
 | wind_direction | numeric | 0 | 288 | 5 | 103.2 | 358 | 140.67065 | 84.378122 |
 | hour_of_day | numeric | 0 | 24 | 1 | 12 | 24 | 12.266169 | 6.8120686 |
 | day | numeric | 0 | 218 | 32 | 206.5 | 605 | 303.22139 | 197.99917 |
 
-## 529_pollen
+### 529_pollen
 
 Task `regression`; metric `rmse`; 3078 development rows; 770 sealed rows counted from assignments; 4 numeric and 0 categorical features. Development groups: 3078; all groups: 3848; largest group: 1. Original fold sizes:[616,616,616,615,615]; other-four-fold fit sizes:[2462, 2462, 2462, 2463, 2463]. Declared grouping columns: none.
 
@@ -104,7 +105,7 @@ Development target: min-12.0391, median-0.0282, max 10.4934, mean 0.013061306, p
 | CRACK | numeric | 0 | 3057 | -26.4652 | -0.12075 | 25.6434 | -0.07717969 | 7.9651552 |
 | WEIGHT | numeric | 0 | 3067 | -34.035198 | -0.1534 | 35.802799 | 0.062779366 | 10.099992 |
 
-## 579_fri_c0_250_5
+### 579_fri_c0_250_5
 
 Task `regression`; metric `rmse`; 200 development rows; 50 sealed rows counted from assignments; 5 numeric and 0 categorical features. Development groups: 200; all groups: 250; largest group: 1. Original fold sizes:[40, 40, 40, 40, 40]; other-four-fold fit sizes:[160,160,160,160,160]. Declared grouping columns: none.
 
@@ -114,13 +115,15 @@ Development target: min-2.2208376, median-0.050367098, max 2.1689749, mean-0.045
 
 | Feature | Type | Missing | Distinct nonmissing | Minimum | Median | Maximum | Mean | Population SD |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
-| oz 1 | numeric | 0 | 200 | -1.7117687 | -0.040313881 | 1.7466414 | -0.0097722925 | 0.99221231 |
-| oz 2 | numeric | 0 | 200 | -1.7675385 | 0.11001987 | 1.7166964 | 0.017360429 | 1.0225496 |
-| oz 3 | numeric | 0 | 200 | -1.798439 | -0.013159709 | 1.6682318 | 0.024478181 | 0.97661234 |
-| oz 4 | numeric | 0 | 200 | -1.7556303 | 0.029955601 | 1.6519692 | -0.027132471 | 0.97989126 |
-| oz 5 | numeric | 0 | 200 | -1.8355519 | 0.022033866 | 1.7011706 | -0.017172821 | 1.0096145 |
+| oz1 | numeric | 0 | 200 | -1.7117687 | -0.040313881 | 1.7466414 | -0.0097722925 | 0.99221231 |
+| oz2 | numeric | 0 | 200 | -1.7675385 | 0.11001987 | 1.7166964 | 0.017360429 | 1.0225496 |
+| oz3 | numeric | 0 | 200 | -1.798439 | -0.013159709 | 1.6682318 | 0.024478181 | 0.97661234 |
+| oz4 | numeric | 0 | 200 | -1.7556303 | 0.029955601 | 1.6519692 | -0.027132471 | 0.97989126 |
+| oz5 | numeric | 0 | 200 | -1.8355519 | 0.022033866 | 1.7011706 | -0.017172821 | 1.0096145 |
 
-## auto_insurance_price
+### auto_insurance_price
+
+#### Summary and feature statistics
 
 Task `regression`; metric `rmse`; 162 development rows; 39 sealed rows counted from assignments; 13 numeric and 10 categorical features. Development groups: 154; all groups: 193; largest group: 2. Original fold sizes:[35, 32, 31, 31, 33]; other-four-fold fit sizes:[127,130,131,131,129]. Declared grouping columns: none.
 
@@ -154,6 +157,8 @@ Development target: min 5118, median 10096.5, max 45400, mean 13127.222, populat
 | city_mpg | numeric | 0 | 26 | 13 | 24.5 | 49 | 25.024691 | 6.2370365 |
 | highway_mpg | numeric | 0 | 29 | 16 | 30 | 54 | 30.518519 | 6.6640942 |
 
+#### Category frequencies
+
 Exact development category frequencies:
 
 - `make`: `{"0": 3, "1": 6, "11": 11, "12": 16, "13": 9, "14": 5, "15": 4, "16": 1, "17": 3, "18": 12, "19": 25, "2": 5, "20": 11, "21": 8, "3": 2, "4": 6, "5": 11, "6": 2, "7": 3, "8": 13, "9": 6}`. Categories absent from the other four folds: `{"0": ["16"], "1": [], "2": [], "3": [], "4": []}`.
@@ -167,7 +172,7 @@ Exact development category frequencies:
 - `number_of_cylinders`: `{"0": 4, "1": 1, "2": 124, "3": 9, "4": 20, "5": 3, "6": 1}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": ["6"], "3": ["1"], "4": []}`.
 - `fuel_system`: `{"0": 9, "1": 55, "2": 3, "3": 14, "5": 72, "6": 8, "7": 1}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": ["7"], "4": []}`.
 
-## 690_visualizing_galaxy
+### 690_visualizing_galaxy
 
 Task `regression`; metric `rmse`; 258 development rows; 65 sealed rows counted from assignments; 4 numeric and 0 categorical features. Development groups: 258; all groups: 323; largest group: 1. Original fold sizes:[52, 52, 52, 51, 51]; other-four-fold fit sizes:[206,206,206,207,207]. Declared grouping columns: none.
 
@@ -182,7 +187,7 @@ Development target: min 1409, median 1581, max 1769, mean 1588.6085, population 
 | angle | numeric | 0 | 7 | 12.5 | 102.5 | 133 | 81.486434 | 38.60098 |
 | radialposition | numeric | 0 | 245 | -51.099998 | -1.8 | 55.700001 | -1.5406977 | 25.187122 |
 
-## 712_chscase_geyser1
+### 712_chscase_geyser1
 
 Task `regression`; metric `rmse`; 172 development rows; 50 sealed rows counted from assignments; 2 numeric and 0 categorical features. Development groups: 135; all groups: 169; largest group: 4. Original fold sizes:[32, 34, 38, 35, 33]; other-four-fold fit sizes:[140,138,134,137,139]. Declared grouping columns: none.
 
@@ -195,7 +200,7 @@ Development target: min 43, median 75, max 95, mean 71.098837, population SD 12.
 | col_1 | numeric | 0 | 16 | 1 | 16 | 23 | 12.209302 | 7.6502261 |
 | col_2 | numeric | 0 | 33 | 1.7 | 4.05 | 5.1999998 | 3.5883721 | 1.0771861 |
 
-## 503_wind
+### 503_wind
 
 Task `regression`; metric `rmse`; 5238 development rows; 1336 sealed rows counted from assignments; 14 numeric and 0 categorical features. Development groups: 172; all groups: 216; largest group: 31. Original fold sizes:[1066, 1074, 1030, 1032, 1036]; other-four-fold fit sizes:[4172, 4164, 4208, 4206, 4202]. Declared grouping columns:['year', 'month'].
 
@@ -220,7 +225,9 @@ Development target: min 1.75, median 14.88, max 42.540001, mean 15.517566, popul
 | CLO | numeric | 0 | 520 | 0.039999999 | 8.21 | 28.209999 | 8.6498683 | 4.5013668 |
 | BEL | numeric | 0 | 664 | 0.57999998 | 12.42 | 42.380001 | 13.044351 | 5.8033753 |
 
-## breast_cancer_wisconsin_diagnostic
+## Binary classification datasets
+
+### breast_cancer_wisconsin_diagnostic
 
 Task `binary`; metric `auroc`; 455 development rows; 114 sealed rows counted from assignments; 30 numeric and 0 categorical features. Development groups: 455; all groups: 569; largest group: 1. Original fold sizes:[91, 91, 91, 91, 91]; other-four-fold fit sizes:[364,364,364,364,364]. Declared grouping columns: none.
 
@@ -261,7 +268,9 @@ Frozen class order: `["0", "1"]`. Development counts: `{"0": 284, "1": 171}`. Co
 | symmetry_worst | numeric | 0 | 408 | 0.1565 | 0.281 | 0.6638 | 0.2903422 | 0.064265468 |
 | fractal_dimension_worst | numeric | 0 | 430 | 0.05504 | 0.07999 | 0.2075 | 0.084133473 | 0.018414541 |
 
-## credit_approval_germany
+### credit_approval_germany
+
+#### Summary and feature statistics
 
 Task `binary`; metric `auroc`; 800 development rows; 200 sealed rows counted from assignments; 3 numeric and 17 categorical features. Development groups: 800; all groups: 1000; largest group: 1. Original fold sizes:[160,160,160,160,160]; other-four-fold fit sizes:[640,640,640,640,640]. Declared grouping columns: none.
 
@@ -292,6 +301,8 @@ Frozen class order: `["0", "1"]`. Development counts: `{"0": 552, "1": 248}`. Co
 | assets | categorical | 0 | 4 | n/a | n/a | n/a | n/a | n/a |
 | telephone | categorical | 0 | 2 | n/a | n/a | n/a | n/a | n/a |
 
+#### Category frequencies
+
 Exact development category frequencies:
 
 - `purpose`: `{"0": 181, "1": 78, "2": 151, "3": 226, "4": 9, "5": 15, "6": 41, "7": 8, "8": 81, "9": 10}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
@@ -312,7 +323,9 @@ Exact development category frequencies:
 - `assets`: `{"0": 226, "1": 187, "2": 264, "3": 123}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 - `telephone`: `{"0": 477, "1": 323}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 
-## congressional_voting_records
+### congressional_voting_records
+
+#### Summary and feature statistics
 
 Task `binary`; metric `auroc`; 347 development rows; 88 sealed rows counted from assignments; 0 numeric and 16 categorical features. Development groups: 274; all groups: 342; largest group: 8. Original fold sizes:[77, 57, 64, 84, 65]; other-four-fold fit sizes:[270,290,283,263,282]. Declared grouping columns: none.
 
@@ -339,6 +352,8 @@ Frozen class order: `["0", "1"]`. Development counts: `{"0": 209, "1": 138}`. Co
 | duty_free_exports | categorical | 0 | 3 | n/a | n/a | n/a | n/a | n/a |
 | export_administation_act_south_africa | categorical | 0 | 3 | n/a | n/a | n/a | n/a | n/a |
 
+#### Category frequencies
+
 Exact development category frequencies:
 
 - `handicapped_infants`: `{"0": 142, "1": 194, "2": 11}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
@@ -358,7 +373,7 @@ Exact development category frequencies:
 - `duty_free_exports`: `{"0": 132, "1": 195, "2": 20}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 - `export_administation_act_south_africa`: `{"0": 219, "1": 53, "2": 75}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 
-## haberman
+### haberman
 
 Task `binary`; metric `auroc`; 245 development rows; 61 sealed rows counted from assignments; 3 numeric and 0 categorical features. Development groups: 226; all groups: 283; largest group: 3. Original fold sizes:[49, 49, 46, 50, 51]; other-four-fold fit sizes:[196,196,199,195,194]. Declared grouping columns: none.
 
@@ -372,7 +387,7 @@ Frozen class order: `["1", "2"]`. Development counts: `{"1": 181, "2": 64}`. Cou
 | Patients_year_of_operation | numeric | 0 | 12 | 58 | 63 | 69 | 62.857143 | 3.3036776 |
 | Number_of_positive_axillary_nodes_detected | numeric | 0 | 28 | 0 | 1 | 46 | 3.9346939 | 6.6807537 |
 
-## ionosphere
+### ionosphere
 
 Task `binary`; metric `auroc`; 281 development rows; 70 sealed rows counted from assignments; 32 numeric and 2 categorical features. Development groups: 280; all groups: 350; largest group: 2. Original fold sizes:[55, 57, 56, 57, 56]; other-four-fold fit sizes:[226,224,225,224,225]. Declared grouping columns: none.
 
@@ -422,13 +437,17 @@ Exact development category frequencies:
 - `0`: `{"0": 30, "1": 251}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 - `1`: `{"0": 281}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 
-## sonar
+### sonar
+
+#### Summary, identities and class counts
 
 Task `binary`; metric `auroc`; 166 development rows; 42 sealed rows counted from assignments; 60 numeric and 0 categorical features. Development groups: 166; all groups: 208; largest group: 1. Original fold sizes:[34, 33, 33, 33, 33]; other-four-fold fit sizes:[132,133,133,133,133]. Declared grouping columns: none.
 
 Development file SHA-256: `413956c1d626d6671e4b2e99f06ef3c9dbeab52cb947aa2dda52c5eb4d590ec4`. Assignment SHA-256: `dce5e4eb3541c056cab75d72b0be5212d4788bfec249a54a6ffe6160e82853f9`. Original source SHA-256: `64378cabaecdb50e2e1e644c1d6bc359f0627ebe313870ad09e1e41ed972529b`. Original license: unknown; repository license: MIT.
 
 Frozen class order: `["0", "1"]`. Development counts: `{"0": 88, "1": 78}`. Counts by original fold: `{"0": {"0": 19, "1": 15}, "1": {"0": 20, "1": 13}, "2": {"0": 16, "1": 17}, "3": {"0": 15, "1": 18}, "4": {"0": 18, "1": 15}}`.
+
+#### Feature statistics
 
 | Feature | Type | Missing | Distinct nonmissing | Minimum | Median | Maximum | Mean | Population SD |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
@@ -493,13 +512,17 @@ Frozen class order: `["0", "1"]`. Development counts: `{"0": 88, "1": 78}`. Coun
 | A59 | numeric | 0 | 103 | 0.0001 | 0.0061 | 0.0332 | 0.0079795181 | 0.0061732079 |
 | A60 | numeric | 0 | 98 | 0.0007 | 0.0053 | 0.0439 | 0.0065289157 | 0.0052317043 |
 
-## spambase
+### spambase
+
+#### Summary, identities and class counts
 
 Task `binary`; metric `auroc`; 3723 development rows; 878 sealed rows counted from assignments; 57 numeric and 0 categorical features. Development groups: 3381; all groups: 4207; largest group: 69. Original fold sizes:[696,781,710,789,747]; other-four-fold fit sizes:[3027, 2942, 3013, 2934, 2976]. Declared grouping columns: none.
 
 Development file SHA-256: `f02d0bf948106d71bdc4dd57a1acad05e36935396d3ce2450aa326e863d93748`. Assignment SHA-256: `d740e152f7c9942115e88fe36274779a4187bc3cdafa050d75d75ca207804991`. Original source SHA-256: `735e8d43f7ee78ac54ca17404510e95f4c8b364a721e4d9532a1b3221ed70961`. Original license: unknown; repository license: MIT.
 
 Frozen class order: `["0", "1"]`. Development counts: `{"0": 2261, "1": 1462}`. Counts by original fold: `{"0": {"0": 413, "1": 283}, "1": {"0": 486, "1": 295}, "2": {"0": 422, "1": 288}, "3": {"0": 489, "1": 300}, "4": {"0": 451, "1": 296}}`.
+
+#### Feature statistics
 
 | Feature | Type | Missing | Distinct nonmissing | Minimum | Median | Maximum | Mean | Population SD |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
@@ -561,7 +584,7 @@ Frozen class order: `["0", "1"]`. Development counts: `{"0": 2261, "1": 1462}`. 
 | 55 | numeric | 0 | 244 | 1 | 15 | 9989 | 53.011281 | 208.61383 |
 | 56 | numeric | 0 | 827 | 1 | 97 | 15841 | 282.47059 | 604.67923 |
 
-## phoneme
+### phoneme
 
 Task `binary`; metric `auroc`; 4330 development rows; 1074 sealed rows counted from assignments; 5 numeric and 0 categorical features. Development groups: 4279; all groups: 5349; largest group: 2. Original fold sizes:[866,867,866,870,861]; other-four-fold fit sizes:[3464, 3463, 3464, 3460, 3469]. Declared grouping columns: none.
 
@@ -577,7 +600,9 @@ Frozen class order: `["0", "1"]`. Development counts: `{"0": 3048, "1": 1282}`. 
 | Iy | numeric | 0 | 2152 | -1.494 | 0.286 | 2.785 | 0.40085681 | 0.79622039 |
 | Sh | numeric | 0 | 1607 | -1.246 | -0.044 | 2.719 | 0.079781524 | 0.57446239 |
 
-## tic_tac_toe
+### tic_tac_toe
+
+#### Summary and feature statistics
 
 Task `binary`; metric `auroc`; 766 development rows; 192 sealed rows counted from assignments; 0 numeric and 9 categorical features. Development groups: 766; all groups: 958; largest group: 1. Original fold sizes:[154,153,153,153,153]; other-four-fold fit sizes:[612,613,613,613,613]. Declared grouping columns: none.
 
@@ -597,6 +622,8 @@ Frozen class order: `["0", "1"]`. Development counts: `{"0": 252, "1": 514}`. Co
 | t8 | categorical | 0 | 3 | n/a | n/a | n/a | n/a | n/a |
 | t9 | categorical | 0 | 3 | n/a | n/a | n/a | n/a | n/a |
 
+#### Category frequencies
+
 Exact development category frequencies:
 
 - `t1`: `{"0": 178, "1": 260, "2": 328}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
@@ -609,7 +636,9 @@ Exact development category frequencies:
 - `t8`: `{"0": 214, "1": 262, "2": 290}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 - `t9`: `{"0": 167, "1": 265, "2": 334}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 
-## horse_colic_surgery
+### horse_colic_surgery
+
+#### Summary and feature statistics
 
 Task `binary`; metric `auroc`; 292 development rows; 76 sealed rows counted from assignments; 7 numeric and 13 categorical features. Development groups: 283; all groups: 354; largest group: 4. Original fold sizes:[58, 61, 58, 58, 57]; other-four-fold fit sizes:[234,231,234,234,235]. Declared grouping columns: none.
 
@@ -640,6 +669,8 @@ Frozen class order: `["0", "1"]`. Development counts: `{"0": 180, "1": 112}`. Co
 | abdominocentesis_appearance | categorical | 154 | 3 | n/a | n/a | n/a | n/a | n/a |
 | abdominocentesis_protein | numeric | 183 | 38 | 0.1 | 2 | 10.1 | 2.8963303 | 1.841366 |
 
+#### Category frequencies
+
 Exact development category frequencies:
 
 - `age_category`: `{"0": 267}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
@@ -656,7 +687,9 @@ Exact development category frequencies:
 - `rectal_examination`: `{"0": 27, "1": 17, "2": 18, "3": 40, "4": 78}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 - `abdominocentesis_appearance`: `{"0": 43, "1": 43, "2": 52}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 
-## iris
+## Multiclass classification datasets
+
+### iris
 
 Task `multiclass`; metric `log_loss`; 122 development rows; 28 sealed rows counted from assignments; 4 numeric and 0 categorical features. Development groups: 119; all groups: 147; largest group: 3. Original fold sizes:[25, 23, 25, 25, 24]; other-four-fold fit sizes:[97, 99, 97, 97, 98]. Declared grouping columns: none.
 
@@ -671,7 +704,7 @@ Frozen class order: `["0", "1", "2"]`. Development counts: `{"0": 37, "1": 40, "
 | petal-length | numeric | 0 | 40 | 1 | 4.5 | 6.9 | 3.8901639 | 1.7489767 |
 | petal-width | numeric | 0 | 21 | 0.1 | 1.4 | 2.5 | 1.2540984 | 0.76170081 |
 
-## wine_recognition
+### wine_recognition
 
 Task `multiclass`; metric `log_loss`; 142 development rows; 36 sealed rows counted from assignments; 13 numeric and 0 categorical features. Development groups: 142; all groups: 178; largest group: 1. Original fold sizes:[29, 29, 28, 28, 28]; other-four-fold fit sizes:[113,113,114,114,114]. Declared grouping columns: none.
 
@@ -695,7 +728,9 @@ Frozen class order: `["1", "2", "3"]`. Development counts: `{"1": 47, "2": 57, "
 | 12 | numeric | 0 | 106 | 1.27 | 2.78 | 3.82 | 2.6256338 | 0.69527932 |
 | 13 | numeric | 0 | 106 | 278 | 673.5 | 1680 | 751.73239 | 317.35709 |
 
-## car_evaluation
+### car_evaluation
+
+#### Summary and feature statistics
 
 Task `multiclass`; metric `log_loss`; 1382 development rows; 346 sealed rows counted from assignments; 0 numeric and 6 categorical features. Development groups: 1382; all groups: 1728; largest group: 1. Original fold sizes:[277,277,276,276,276]; other-four-fold fit sizes:[1105, 1105, 1106, 1106, 1106]. Declared grouping columns: none.
 
@@ -712,6 +747,8 @@ Frozen class order: `["0", "1", "2", "3"]`. Development counts: `{"0": 967, "1":
 | luggage_boot | categorical | 0 | 3 | n/a | n/a | n/a | n/a | n/a |
 | safety | categorical | 0 | 3 | n/a | n/a | n/a | n/a | n/a |
 
+#### Category frequencies
+
 Exact development category frequencies:
 
 - `buying_price`: `{"0": 345, "1": 346, "2": 346, "3": 345}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
@@ -721,7 +758,9 @@ Exact development category frequencies:
 - `luggage_boot`: `{"0": 448, "1": 468, "2": 466}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 - `safety`: `{"0": 467, "1": 468, "2": 447}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 
-## balance_scale
+### balance_scale
+
+#### Summary and feature statistics
 
 Task `multiclass`; metric `log_loss`; 500 development rows; 125 sealed rows counted from assignments; 0 numeric and 4 categorical features. Development groups: 500; all groups: 625; largest group: 1. Original fold sizes:[100,100,100,100,100]; other-four-fold fit sizes:[400,400,400,400,400]. Declared grouping columns: none.
 
@@ -736,6 +775,8 @@ Frozen class order: `["0", "1", "2"]`. Development counts: `{"0": 40, "1": 211, 
 | Right-Weight | categorical | 0 | 5 | n/a | n/a | n/a | n/a | n/a |
 | Right-Distance | categorical | 0 | 5 | n/a | n/a | n/a | n/a | n/a |
 
+#### Category frequencies
+
 Exact development category frequencies:
 
 - `Left-Weight`: `{"1": 100, "2": 100, "3": 100, "4": 100, "5": 100}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
@@ -743,13 +784,17 @@ Exact development category frequencies:
 - `Right-Weight`: `{"1": 101, "2": 101, "3": 99, "4": 99, "5": 100}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 - `Right-Distance`: `{"1": 70, "2": 86, "3": 106, "4": 118, "5": 120}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 
-## dermatology
+### dermatology
+
+#### Summary, identities and class counts
 
 Task `multiclass`; metric `log_loss`; 292 development rows; 74 sealed rows counted from assignments; 1 numeric and 33 categorical features. Development groups: 292; all groups: 366; largest group: 1. Original fold sizes:[59, 59, 58, 58, 58]; other-four-fold fit sizes:[233,233,234,234,234]. Declared grouping columns: none.
 
 Development file SHA-256: `a447d3a279d1f4c11f3b330935d362e3d8ca4c5e99afe5276f01e411a8e0795e`. Assignment SHA-256: `88ce0ea91c15e418c566d1a455a7b01b6cbc4335be5fbfca3efcf4549267a379`. Original source SHA-256: `c8852ba546e92249debecd9a897cda3f94fd10872fa13c62eb14ab40e279166e`. Original license: unknown; repository license: MIT.
 
 Frozen class order: `["1", "2", "3", "4", "5", "6"]`. Development counts: `{"1": 89, "2": 48, "3": 61, "4": 39, "5": 40, "6": 15}`. Counts by original fold: `{"0": {"1": 16, "2": 9, "3": 11, "4": 10, "5": 8, "6": 5}, "1": {"1": 16, "2": 13, "3": 13, "4": 9, "5": 6, "6": 2}, "2": {"1": 15, "2": 9, "3": 16, "4": 8, "5": 7, "6": 3}, "3": {"1": 22, "2": 9, "3": 10, "4": 6, "5": 10, "6": 1}, "4": {"1": 20, "2": 8, "3": 11, "4": 6, "5": 9, "6": 4}}`.
+
+#### Feature statistics
 
 | Feature | Type | Missing | Distinct nonmissing | Minimum | Median | Maximum | Mean | Population SD |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
@@ -788,6 +833,8 @@ Frozen class order: `["1", "2", "3", "4", "5", "6"]`. Development counts: `{"1":
 | band-like_infiltrate | categorical | 0 | 4 | n/a | n/a | n/a | n/a | n/a |
 | Age | numeric | 0 | 58 | 0 | 26.5 | 60 | 27.921233 | 15.306591 |
 
+#### Category frequencies
+
 Exact development category frequencies:
 
 - `erythema`: `{"0": 3, "1": 45, "2": 175, "3": 69}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
@@ -824,7 +871,7 @@ Exact development category frequencies:
 - `inflammatory_monoluclear_inflitrate`: `{"0": 11, "1": 64, "2": 171, "3": 46}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 - `band-like_infiltrate`: `{"0": 226, "1": 3, "2": 19, "3": 44}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 
-## segmentation
+### segmentation
 
 Task `multiclass`; metric `log_loss`; 1848 development rows; 462 sealed rows counted from assignments; 18 numeric and 1 categorical features. Development groups: 1669; all groups: 2086; largest group: 3. Original fold sizes:[364,372,369,373,370]; other-four-fold fit sizes:[1484, 1476, 1479, 1475, 1478]. Declared grouping columns: none.
 
@@ -858,7 +905,7 @@ Exact development category frequencies:
 
 - `region-pixel-count`: `{"9.0": 1848}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 
-## vehicle
+### vehicle
 
 Task `multiclass`; metric `log_loss`; 677 development rows; 169 sealed rows counted from assignments; 18 numeric and 0 categorical features. Development groups: 677; all groups: 846; largest group: 1. Original fold sizes:[135,136,135,136,135]; other-four-fold fit sizes:[542,541,542,541,542]. Declared grouping columns: none.
 
@@ -887,7 +934,9 @@ Frozen class order: `["1", "2", "3", "4"]`. Development counts: `{"1": 169, "2":
 | MAJORKURTOSIS | numeric | 0 | 29 | 176 | 189 | 204 | 189.05761 | 6.1604295 |
 | HOLLOWS RATIO | numeric | 0 | 31 | 181 | 197 | 211 | 195.79173 | 7.4621283 |
 
-## optdigits
+### optdigits
+
+#### Summary, identities and class counts
 
 Task `multiclass`; metric `log_loss`; 4496 development rows; 1124 sealed rows counted from assignments; 51 numeric and 13 categorical features. Development groups: 4496; all groups: 5620; largest group: 1. Original fold sizes:[900,899,899,899,899]; other-four-fold fit sizes:[3596, 3597, 3597, 3597, 3597]. Declared grouping columns: none.
 
@@ -895,72 +944,76 @@ Development file SHA-256: `afaa9819c5ac7059a64f7457e73444b3ba7c28ccb4cd3de27cdf5
 
 Frozen class order: `["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]`. Development counts: `{"0": 444, "1": 456, "2": 444, "3": 476, "4": 462, "5": 433, "6": 437, "7": 444, "8": 439, "9": 461}`. Counts by original fold: `{"0": {"0": 84, "1": 90, "2": 96, "3": 82, "4": 100, "5": 96, "6": 86, "7": 85, "8": 87, "9": 94}, "1": {"0": 88, "1": 90, "2": 74, "3": 109, "4": 95, "5": 83, "6": 96, "7": 93, "8": 93, "9": 78}, "2": {"0": 77, "1": 99, "2": 106, "3": 92, "4": 89, "5": 83, "6": 95, "7": 80, "8": 72, "9": 106}, "3": {"0": 93, "1": 88, "2": 92, "3": 89, "4": 90, "5": 79, "6": 72, "7": 99, "8": 94, "9": 103}, "4": {"0": 102, "1": 89, "2": 76, "3": 104, "4": 88, "5": 92, "6": 88, "7": 87, "8": 93, "9": 80}}`.
 
+#### Feature statistics
+
 | Feature | Type | Missing | Distinct nonmissing | Minimum | Median | Maximum | Mean | Population SD |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
-| input 1 | categorical | 0 | 1 | n/a | n/a | n/a | n/a | n/a |
-| input 2 | categorical | 0 | 9 | n/a | n/a | n/a | n/a | n/a |
-| input 3 | numeric | 0 | 17 | 0 | 5 | 16 | 5.3854537 | 4.6694807 |
-| input 4 | numeric | 0 | 17 | 0 | 13 | 16 | 11.763345 | 4.2575085 |
-| input 5 | numeric | 0 | 17 | 0 | 13 | 16 | 11.573176 | 4.4513964 |
-| input 6 | numeric | 0 | 17 | 0 | 4 | 16 | 5.5584964 | 5.6073441 |
-| input 7 | numeric | 0 | 17 | 0 | 0 | 16 | 1.3727758 | 3.349232 |
-| input 8 | numeric | 0 | 16 | 0 | 0 | 15 | 0.13122776 | 0.99381714 |
-| input 9 | categorical | 0 | 4 | n/a | n/a | n/a | n/a | n/a |
-| input 10 | numeric | 0 | 16 | 0 | 0 | 15 | 1.9730872 | 3.0879654 |
-| input 11 | numeric | 0 | 17 | 0 | 12 | 16 | 10.52758 | 5.4372549 |
-| input 12 | numeric | 0 | 17 | 0 | 13 | 16 | 11.79782 | 4.01247 |
-| input 13 | numeric | 0 | 17 | 0 | 11 | 16 | 10.540036 | 4.7693414 |
-| input 14 | numeric | 0 | 17 | 0 | 9 | 16 | 8.261121 | 5.9790084 |
-| input 15 | numeric | 0 | 17 | 0 | 0 | 16 | 2.0991993 | 3.9437706 |
-| input 16 | numeric | 0 | 14 | 0 | 0 | 13 | 0.13411922 | 0.91377922 |
-| input 17 | categorical | 0 | 5 | n/a | n/a | n/a | n/a | n/a |
-| input 18 | numeric | 0 | 17 | 0 | 1 | 16 | 2.5849644 | 3.4827212 |
-| input 19 | numeric | 0 | 17 | 0 | 11 | 16 | 9.6209964 | 5.8251162 |
-| input 20 | numeric | 0 | 17 | 0 | 6 | 16 | 6.8256228 | 5.8753604 |
-| input 21 | numeric | 0 | 17 | 0 | 6 | 16 | 7.1846085 | 6.1510996 |
-| input 22 | numeric | 0 | 17 | 0 | 9 | 16 | 7.9857651 | 6.2479372 |
-| input 23 | numeric | 0 | 17 | 0 | 0 | 16 | 1.9759786 | 3.498392 |
-| input 24 | categorical | 0 | 8 | n/a | n/a | n/a | n/a | n/a |
-| input 25 | categorical | 0 | 2 | n/a | n/a | n/a | n/a | n/a |
-| input 26 | numeric | 0 | 17 | 0 | 1 | 16 | 2.363879 | 3.0806441 |
-| input 27 | numeric | 0 | 17 | 0 | 11 | 16 | 9.1581406 | 6.1416147 |
-| input 28 | numeric | 0 | 17 | 0 | 10 | 16 | 9.0745107 | 5.9029827 |
-| input 29 | numeric | 0 | 17 | 0 | 12 | 16 | 9.7602313 | 6.2595395 |
-| input 30 | numeric | 0 | 17 | 0 | 8 | 16 | 7.7955961 | 5.9558196 |
-| input 31 | numeric | 0 | 17 | 0 | 0 | 16 | 2.3709964 | 3.6629328 |
-| input 32 | categorical | 0 | 3 | n/a | n/a | n/a | n/a | n/a |
-| input 33 | categorical | 0 | 2 | n/a | n/a | n/a | n/a | n/a |
-| input 34 | numeric | 0 | 16 | 0 | 0 | 15 | 2.1419039 | 3.3179478 |
-| input 35 | numeric | 0 | 17 | 0 | 8 | 16 | 7.67371 | 6.2749206 |
-| input 36 | numeric | 0 | 17 | 0 | 11 | 16 | 9.155694 | 6.1866184 |
-| input 37 | numeric | 0 | 17 | 0 | 12 | 16 | 10.287811 | 5.9272272 |
-| input 38 | numeric | 0 | 17 | 0 | 10 | 16 | 9.0538256 | 5.8700142 |
-| input 39 | numeric | 0 | 15 | 0 | 1 | 14 | 2.9219306 | 3.5062095 |
-| input 40 | categorical | 0 | 1 | n/a | n/a | n/a | n/a | n/a |
-| input 41 | categorical | 0 | 8 | n/a | n/a | n/a | n/a | n/a |
-| input 42 | numeric | 0 | 17 | 0 | 0 | 16 | 1.4971085 | 3.0053319 |
-| input 43 | numeric | 0 | 17 | 0 | 5 | 16 | 6.6127669 | 6.5197965 |
-| input 44 | numeric | 0 | 17 | 0 | 7 | 16 | 7.1683719 | 6.4851243 |
-| input 45 | numeric | 0 | 17 | 0 | 8 | 16 | 7.8153915 | 6.2973257 |
-| input 46 | numeric | 0 | 17 | 0 | 10 | 16 | 8.5473754 | 5.7808416 |
-| input 47 | numeric | 0 | 17 | 0 | 1 | 16 | 3.518016 | 4.3473655 |
-| input 48 | categorical | 0 | 7 | n/a | n/a | n/a | n/a | n/a |
-| input 49 | categorical | 0 | 9 | n/a | n/a | n/a | n/a | n/a |
-| input 50 | numeric | 0 | 17 | 0 | 0 | 16 | 0.80649466 | 1.9683692 |
-| input 51 | numeric | 0 | 17 | 0 | 8 | 16 | 7.7595641 | 5.6567184 |
-| input 52 | numeric | 0 | 17 | 0 | 10 | 16 | 9.7504448 | 5.1729862 |
-| input 53 | numeric | 0 | 17 | 0 | 10 | 16 | 9.6554715 | 5.2848009 |
-| input 54 | numeric | 0 | 17 | 0 | 11 | 16 | 9.1548043 | 5.9832257 |
-| input 55 | numeric | 0 | 17 | 0 | 1 | 16 | 3.7446619 | 4.8885914 |
-| input 56 | numeric | 0 | 13 | 0 | 0 | 13 | 0.15814057 | 0.81911142 |
-| input 57 | categorical | 0 | 2 | n/a | n/a | n/a | n/a | n/a |
-| input 58 | numeric | 0 | 11 | 0 | 0 | 10 | 0.27935943 | 0.92382518 |
-| input 59 | numeric | 0 | 17 | 0 | 5 | 16 | 5.7382117 | 5.007576 |
-| input 60 | numeric | 0 | 17 | 0 | 13 | 16 | 11.981317 | 4.3434726 |
-| input 61 | numeric | 0 | 17 | 0 | 13 | 16 | 11.577625 | 4.9533614 |
-| input 62 | numeric | 0 | 17 | 0 | 6 | 16 | 6.7164146 | 5.7925554 |
-| input 63 | numeric | 0 | 17 | 0 | 0 | 16 | 2.0507117 | 3.990158 |
-| input 64 | numeric | 0 | 17 | 0 | 0 | 16 | 0.24154804 | 1.3632569 |
+| input1 | categorical | 0 | 1 | n/a | n/a | n/a | n/a | n/a |
+| input2 | categorical | 0 | 9 | n/a | n/a | n/a | n/a | n/a |
+| input3 | numeric | 0 | 17 | 0 | 5 | 16 | 5.3854537 | 4.6694807 |
+| input4 | numeric | 0 | 17 | 0 | 13 | 16 | 11.763345 | 4.2575085 |
+| input5 | numeric | 0 | 17 | 0 | 13 | 16 | 11.573176 | 4.4513964 |
+| input6 | numeric | 0 | 17 | 0 | 4 | 16 | 5.5584964 | 5.6073441 |
+| input7 | numeric | 0 | 17 | 0 | 0 | 16 | 1.3727758 | 3.349232 |
+| input8 | numeric | 0 | 16 | 0 | 0 | 15 | 0.13122776 | 0.99381714 |
+| input9 | categorical | 0 | 4 | n/a | n/a | n/a | n/a | n/a |
+| input10 | numeric | 0 | 16 | 0 | 0 | 15 | 1.9730872 | 3.0879654 |
+| input11 | numeric | 0 | 17 | 0 | 12 | 16 | 10.52758 | 5.4372549 |
+| input12 | numeric | 0 | 17 | 0 | 13 | 16 | 11.79782 | 4.01247 |
+| input13 | numeric | 0 | 17 | 0 | 11 | 16 | 10.540036 | 4.7693414 |
+| input14 | numeric | 0 | 17 | 0 | 9 | 16 | 8.261121 | 5.9790084 |
+| input15 | numeric | 0 | 17 | 0 | 0 | 16 | 2.0991993 | 3.9437706 |
+| input16 | numeric | 0 | 14 | 0 | 0 | 13 | 0.13411922 | 0.91377922 |
+| input17 | categorical | 0 | 5 | n/a | n/a | n/a | n/a | n/a |
+| input18 | numeric | 0 | 17 | 0 | 1 | 16 | 2.5849644 | 3.4827212 |
+| input19 | numeric | 0 | 17 | 0 | 11 | 16 | 9.6209964 | 5.8251162 |
+| input20 | numeric | 0 | 17 | 0 | 6 | 16 | 6.8256228 | 5.8753604 |
+| input21 | numeric | 0 | 17 | 0 | 6 | 16 | 7.1846085 | 6.1510996 |
+| input22 | numeric | 0 | 17 | 0 | 9 | 16 | 7.9857651 | 6.2479372 |
+| input23 | numeric | 0 | 17 | 0 | 0 | 16 | 1.9759786 | 3.498392 |
+| input24 | categorical | 0 | 8 | n/a | n/a | n/a | n/a | n/a |
+| input25 | categorical | 0 | 2 | n/a | n/a | n/a | n/a | n/a |
+| input26 | numeric | 0 | 17 | 0 | 1 | 16 | 2.363879 | 3.0806441 |
+| input27 | numeric | 0 | 17 | 0 | 11 | 16 | 9.1581406 | 6.1416147 |
+| input28 | numeric | 0 | 17 | 0 | 10 | 16 | 9.0745107 | 5.9029827 |
+| input29 | numeric | 0 | 17 | 0 | 12 | 16 | 9.7602313 | 6.2595395 |
+| input30 | numeric | 0 | 17 | 0 | 8 | 16 | 7.7955961 | 5.9558196 |
+| input31 | numeric | 0 | 17 | 0 | 0 | 16 | 2.3709964 | 3.6629328 |
+| input32 | categorical | 0 | 3 | n/a | n/a | n/a | n/a | n/a |
+| input33 | categorical | 0 | 2 | n/a | n/a | n/a | n/a | n/a |
+| input34 | numeric | 0 | 16 | 0 | 0 | 15 | 2.1419039 | 3.3179478 |
+| input35 | numeric | 0 | 17 | 0 | 8 | 16 | 7.67371 | 6.2749206 |
+| input36 | numeric | 0 | 17 | 0 | 11 | 16 | 9.155694 | 6.1866184 |
+| input37 | numeric | 0 | 17 | 0 | 12 | 16 | 10.287811 | 5.9272272 |
+| input38 | numeric | 0 | 17 | 0 | 10 | 16 | 9.0538256 | 5.8700142 |
+| input39 | numeric | 0 | 15 | 0 | 1 | 14 | 2.9219306 | 3.5062095 |
+| input40 | categorical | 0 | 1 | n/a | n/a | n/a | n/a | n/a |
+| input41 | categorical | 0 | 8 | n/a | n/a | n/a | n/a | n/a |
+| input42 | numeric | 0 | 17 | 0 | 0 | 16 | 1.4971085 | 3.0053319 |
+| input43 | numeric | 0 | 17 | 0 | 5 | 16 | 6.6127669 | 6.5197965 |
+| input44 | numeric | 0 | 17 | 0 | 7 | 16 | 7.1683719 | 6.4851243 |
+| input45 | numeric | 0 | 17 | 0 | 8 | 16 | 7.8153915 | 6.2973257 |
+| input46 | numeric | 0 | 17 | 0 | 10 | 16 | 8.5473754 | 5.7808416 |
+| input47 | numeric | 0 | 17 | 0 | 1 | 16 | 3.518016 | 4.3473655 |
+| input48 | categorical | 0 | 7 | n/a | n/a | n/a | n/a | n/a |
+| input49 | categorical | 0 | 9 | n/a | n/a | n/a | n/a | n/a |
+| input50 | numeric | 0 | 17 | 0 | 0 | 16 | 0.80649466 | 1.9683692 |
+| input51 | numeric | 0 | 17 | 0 | 8 | 16 | 7.7595641 | 5.6567184 |
+| input52 | numeric | 0 | 17 | 0 | 10 | 16 | 9.7504448 | 5.1729862 |
+| input53 | numeric | 0 | 17 | 0 | 10 | 16 | 9.6554715 | 5.2848009 |
+| input54 | numeric | 0 | 17 | 0 | 11 | 16 | 9.1548043 | 5.9832257 |
+| input55 | numeric | 0 | 17 | 0 | 1 | 16 | 3.7446619 | 4.8885914 |
+| input56 | numeric | 0 | 13 | 0 | 0 | 13 | 0.15814057 | 0.81911142 |
+| input57 | categorical | 0 | 2 | n/a | n/a | n/a | n/a | n/a |
+| input58 | numeric | 0 | 11 | 0 | 0 | 10 | 0.27935943 | 0.92382518 |
+| input59 | numeric | 0 | 17 | 0 | 5 | 16 | 5.7382117 | 5.007576 |
+| input60 | numeric | 0 | 17 | 0 | 13 | 16 | 11.981317 | 4.3434726 |
+| input61 | numeric | 0 | 17 | 0 | 13 | 16 | 11.577625 | 4.9533614 |
+| input62 | numeric | 0 | 17 | 0 | 6 | 16 | 6.7164146 | 5.7925554 |
+| input63 | numeric | 0 | 17 | 0 | 0 | 16 | 2.0507117 | 3.990158 |
+| input64 | numeric | 0 | 17 | 0 | 0 | 16 | 0.24154804 | 1.3632569 |
+
+#### Category frequencies
 
 Exact development category frequencies:
 
@@ -978,7 +1031,7 @@ Exact development category frequencies:
 - `input49`: `{"0.0": 4465, "1.0": 18, "10.0": 1, "2.0": 4, "3.0": 4, "4.0": 1, "5.0": 1, "7.0": 1, "8.0": 1}`. Categories absent from the other four folds: `{"0": ["5.0"], "1": ["4.0"], "2": ["10.0", "7.0"], "3": [], "4": ["8.0"]}`.
 - `input57`: `{"0.0": 4494, "1.0": 2}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 
-## penguins
+### penguins
 
 Task `multiclass`; metric `log_loss`; 275 development rows; 69 sealed rows counted from assignments; 5 numeric and 2 categorical features. Development groups: 275; all groups: 344; largest group: 1. Original fold sizes:[55, 55, 55, 55, 55]; other-four-fold fit sizes:[220,220,220,220,220]. Declared grouping columns: none.
 
@@ -1001,7 +1054,7 @@ Exact development category frequencies:
 - `island`: `{"0": 135, "1": 100, "2": 40}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 - `sex`: `{"0": 130, "1": 134}`. Categories absent from the other four folds: `{"0": [], "1": [], "2": [], "3": [], "4": []}`.
 
-## tae
+### tae
 
 Task `multiclass`; metric `log_loss`; 124 development rows; 27 sealed rows counted from assignments; 3 numeric and 2 categorical features. Development groups: 86; all groups: 106; largest group: 4. Original fold sizes:[20, 25, 27, 30, 22]; other-four-fold fit sizes:[104, 99, 97, 94,102]. Declared grouping columns: none.
 

@@ -1,0 +1,107 @@
+{
+  "schema": "asm-manual.book/v1",
+  "title": "ASM — Maintainer and User Manual",
+  "edition_line": "Edition 2 · 23 September 2026 · implementation a75e543d2 (reviewed 68f56404)",
+  "cover": {
+    "eyebrow": "JOPE DIME / PRIVATE MAINTAINER EDITION",
+    "title_lines": [
+      "Algorithm",
+      "Synthesis Model"
+    ],
+    "subtitle_lines": [
+      "Technology, operations",
+      "and the evidence behind the claims"
+    ],
+    "definition_lines": [
+      "Learns to generate and optimize",
+      "executable algorithms from data."
+    ],
+    "bottom_title": "User & maintainer manual",
+    "bottom_lines": [
+      "Edition 2 · 23 September 2026",
+      "",
+      "Implementation: reviewed PR83 / main a75e543d2166",
+      "30 frozen datasets · 522 feature records · full gap checklist",
+      "Status: pipeline proven on one dataset; no panel result; no new training.",
+      "See ‘ASM at a glance’ in chapter 1."
+    ],
+    "note": "Historical rankings and current measurements are identified separately."
+  },
+  "parts": [
+    {
+      "number": "I",
+      "title": "Orientation: status, vocabulary, identities and plan",
+      "summary": "Start here. What works now and what is pending (chapter 1), how to read an evidence claim, the glossary and the full version identity (chapter 2), and the ordered plan with the owner's decisions (chapter 3). For a first hands-on run, go next to the private worked examples in section 9.4, whose 14 commands were executed and measured.",
+      "chapters": [
+        "01-current-status.md",
+        "02-reading-this-manual.md",
+        "03-roadmap.md"
+      ]
+    },
+    {
+      "number": "II",
+      "title": "How ASM works: from data to fitted programs",
+      "summary": "The forward pipeline in data-flow order: an overview, then frozen datasets and splits, the proposal context, the policy with its proposals and bounded search on twenty workers, evaluation and Elo, and the executable programs and languages that result.",
+      "chapters": [
+        "04-pipeline-overview.md",
+        "05-datasets-and-panel.md",
+        "06-encodings-and-context.md",
+        "07-policy-and-search.md",
+        "08-evaluation-protocol.md",
+        "09-programs-and-languages.md"
+      ]
+    },
+    {
+      "number": "III",
+      "title": "How ASM learns: teachers, training and the flywheel",
+      "summary": "The learning half of the pipeline in order: measured programs become eligible teachers, teachers become packed corpora, corpora train the policy and the new checkpoint is consumed (chapter 12 is the single training and continuation runbook), and the flywheel closes only when the next search measurably improves.",
+      "chapters": [
+        "10-teachers-and-targets.md",
+        "11-corpora-and-packing.md",
+        "12-training-the-policy.md",
+        "13-flywheel.md"
+      ]
+    },
+    {
+      "number": "IV",
+      "title": "Operating ASM: runbooks, recovery and maintenance",
+      "summary": "Procedures around the pipeline: install and prepare inputs, run and recover campaigns (all recovery vocabularies in one place), run a focused single-dataset proof, and maintain, review, preserve and rebuild the product and this manual. Training and teaching campaigns are operated from chapter 12 and section 10.5.",
+      "chapters": [
+        "14-install-and-prepare.md",
+        "15-running-campaigns.md",
+        "16-focused-search.md",
+        "17-maintenance.md"
+      ]
+    },
+    {
+      "number": "V",
+      "title": "Evidence and history: what has been measured",
+      "summary": "Measured and historical evidence kept apart from capability claims: the current operational proof and the historical rankings with their figures, the real training history, and the history of corpora and GP targets.",
+      "chapters": [
+        "18-measured-performance.md",
+        "19-training-history.md",
+        "20-corpus-and-target-history.md"
+      ]
+    }
+  ],
+  "appendices_title": "Reference material",
+  "appendices_summary": "Bulky reference kept out of the narrative: the roadmap catalogue, per-dataset statistics, the data estate inventory with copy gaps, and the source map and evidence index.",
+  "appendices": [
+    {
+      "letter": "A",
+      "file": "A-roadmap-catalogue.md"
+    },
+    {
+      "letter": "B",
+      "file": "B-dataset-statistics.md"
+    },
+    {
+      "letter": "C",
+      "file": "C-data-estate.md"
+    },
+    {
+      "letter": "D",
+      "file": "D-source-map-and-evidence.md"
+    }
+  ]
+}
