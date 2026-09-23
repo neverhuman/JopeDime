@@ -2405,8 +2405,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "csv",
  "feat-math",
  "jope-datasets",
+ "jope-policy",
  "nix 0.29.0",
  "schemars",
  "serde",
@@ -2424,11 +2426,13 @@ dependencies = [
  "candle-core",
  "candle-nn",
  "feat-math",
+ "hyperion",
  "rand 0.8.8",
  "rand_chacha 0.3.1",
  "serde",
  "serde_json",
  "sha2",
+ "starforge",
  "zip 8.6.0",
 ]
 

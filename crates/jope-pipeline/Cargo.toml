@@ -10,15 +10,27 @@ description = "JOPE-Dime product pipeline: dataset to prepared cuts to GP search
 [lib]
 path = "src/lib.rs"
 
+[features]
+default = []
+neural-search = ["dep:jope-policy"]
+qualified-context = ["neural-search", "jope-policy/context-producer"]
+
 [dependencies]
 anyhow.workspace = true
 clap.workspace = true
 feat-math = { path = "../feat-math" }
 jope-datasets = { path = "../jope-datasets" }
+jope-policy = { path = "../jope-policy", optional = true }
 schemars = "1"
 sha2.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+csv = "1.4"
+
+[[bin]]
+name = "jope-context-proof"
+path = "src/bin/jope-context-proof.rs"
+required-features = ["qualified-context"]
 
 [target.'cfg(target_os = "linux")'.dependencies]
 nix = { workspace = true, features = ["time"] }

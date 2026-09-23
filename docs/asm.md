@@ -2,7 +2,7 @@
 
 ASM **learns to generate and optimize executable algorithms from data**. This is
 its product direction, not a claim that every part of the loop is qualified.
-Discovery programs, search histories, training inputs and provenance remain private.
+Discovery programs, optimization histories, training inputs and provenance remain private.
 Readable generated source reveals the computation it implements.
 
 ## Current capability inventory
@@ -19,7 +19,7 @@ are separate milestones.
 | Classification | [advanced-v3](../crates/feat-math/src/advanced_v3.rs) and its fitted heads | Binary logistic/tree/boosting and multiclass ridge, OvR logistic, diagonal LDA and nearest-centroid implementations exist. Product regression search now refuses other tasks before creating output. |
 | Task metrics | [panel evaluator](../crates/jope-bench/src/panel/score.rs) | RMSE, binary AUROC and multiclass probability-matrix log loss use original labels and explicit class ordering. The multiclass fitting objective remains macro-F1; confirmation uses log loss. |
 | External methods | [typed adapters](../crates/jope-bench/adapters/_panel.py) | XGBoost, LightGBM, CatBoost and scikit-learn RF accept nullable raw cells, fit preprocessing on training rows, and retain complete private fitted artifacts. Dependencies and campaign execution still require qualification. |
-| Neural proposals | [policy seed binding](../crates/jope-policy/src/seeds.rs) | Accepted regression checkpoint and verified proposals exist; generation-zero product consumption is not connected. |
+| Neural proposals | [bounded proposal evaluation](../crates/jope-pipeline/src/neural_search.rs) | Source connects verified proposals to fitted generation-zero candidates and training-side selection. Actual accepted-model consumption and CPU context parity still need qualification. |
 | Training | [existing trainer](../crates/jope-engine/src/training.rs), Python trainers | Execution/category/provenance qualification remains. `jope train-step` is a centroid router. Existing sequence, quality and runtime objectives remain unchanged. |
 | Export | Legacy transpiler; advanced bound emitters and fitted C++ runtime | Coverage differs; emitted training recipes do not establish parity of a fitted predictor. Multiclass matrices need one shared output contract. |
 | Reuse | Existing champions and learning/HWM ledgers | General typed motif mining and governed operator promotion are pending. |
@@ -146,7 +146,9 @@ same window, verifies retained inputs and outputs, and does not repeat interrupt
 Jobs cancelled before launch remain eligible to start within the original deadline.
 
 Twenty one-thread fit processes share twenty CPU slots, 64 GiB and zero swap. Dataset
-admission rotates fairly. Independent watchers enforce each 30-second fit deadline,
+admission rotates fairly. An immutable allocation policy reserves 4 GiB for controller
+state and gives each of the twenty fit slots a fixed 3 GiB cap. A slot does not borrow
+memory when other slots are idle. Independent watchers enforce each 30-second fit deadline,
 including when controller work stalls, and drain forked or detached descendants before
 reusing a slot. Logs are bounded. Resource receipts distinguish measured CPU/wall time,
 cgroup memory, sampled RSS and unknown exact peak RSS. Reusing fold zero during
@@ -154,7 +156,7 @@ confirmation adds no fit cost. Reporting authenticates original commands and res
 inputs, preserves failed/unavailable outcomes, and starts no execution clock.
 
 This plan is explicitly a **comparator qualification**, not the complete ASM panel.
-Neural/generic paired search and the final unchanged thirty-dataset demonstration need
+Neural/generic paired optimization and the final unchanged thirty-dataset demonstration need
 their additional pinned inputs and measured receipts. The six synthetic host cases in
 `deploy/ci/qualify-execution.py` qualify isolation separately from real panel outcomes.
 
@@ -168,6 +170,31 @@ failures and the corrected run are retained in private custody under
 `asm-integration-20260923/workers-integration/host-proof-{1,2,3}-cases`.
 The successful test executable SHA256 is
 `bf1fe4d600564122cab48093969f4934a3d804751ed7b36b183964870fdeadd1`.
+
+The current source additionally covers graceful SIGTERM, original cutoff/resume and
+per-worker memory readback. These new host cases have not yet run. The outer service
+ends within the original total deadline; numerical work ends at the earlier cutoff,
+leaving the declared reporting interval available to the controller.
+
+### Neural execution and context qualification
+
+The optional pipeline `qualified-context` feature includes a separate CPU context
+worker and controller. It preserves the accepted component assets and transforms.
+Admission requires eight retained native reference cases from two preselected training
+families, followed by the fresh dataset encoding. All nine original bounded-worker
+receipts and pinned inputs are checked; a supplied vector or success flag is insufficient.
+The component and final-context error limit is fixed at 3e-4 before measurement.
+CPU numerical parity has not yet been measured. Existing native GPU entry-point holds
+and accepted regression checkpoint restrictions remain in force.
+
+The paired evaluator preregisters 64 neural slots plus 16 exploration slots against
+80 generic slots under equal 120-second arm allowances. Encoding and proposal work
+count inside the neural allowance. Canonical duplicates retain their origins and
+zero additional fit cost. Five inner training folds select a recipe before its outer
+development fold is scored. Every completed generated fit saves the complete fitted
+model, reloads it and checks prediction parity. Incomplete or unavailable arms remain
+explicit outcomes. Classification contexts use a separate experimental lineage with
+label-renaming invariance; they cannot be supplied to the accepted regression policy.
 
 ## Experiment and evidence contracts
 
@@ -186,7 +213,8 @@ nonzero rows and hashed prediction/fitted evidence. Failure, timeout, cancellati
 unavailability and exhausted budgets remain explicit results without fabricated scores.
 Unknown GPU time, RSS or currency cost remains unknown, not zero.
 
-The execution window is created only after verified inputs and dependencies are ready.
+Installation and immutable plan preparation precede admission. The execution window
+is created after host reservation, before controller input verification and numerical work.
 It binds the original start and deadline to the experiment; resume cannot extend it.
 The initial panel permits twenty isolated workers, at most twenty CPUs, 64 GiB RAM,
 zero swap, one numerical thread per worker, and at most one RTX 3090 task. Its total

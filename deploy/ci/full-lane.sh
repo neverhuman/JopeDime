@@ -54,9 +54,9 @@ PY
     ;;
   full-default|full-scratch|full-policy|full-s3-offline|full-neural)
     case $lane in
-      full-default) selection=(--workspace) ;;
+      full-default) selection=(--workspace --features jope-pipeline/qualified-context) ;;
       full-scratch) selection=(-p feat-math -p jope-parallel -p jope-dime-regressor --features "feat-math/gpr-scratch-reuse,jope-parallel/gpr-scratch-reuse,jope-dime-regressor/gpr-scratch-reuse") ;;
-      full-policy) selection=(-p jope-policy --features testing) ;;
+      full-policy) selection=(-p jope-policy --features testing,context-producer) ;;
       full-s3-offline) selection=(-p jope-arena --features s3) ;;
       full-neural)
         # SDK/runtime availability is measured independently; no GPU device/credentials.

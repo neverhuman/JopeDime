@@ -21,6 +21,10 @@
 //! (`--policy`) and the S3 / router-training stages.
 
 pub mod cli;
+#[cfg(all(target_os = "linux", feature = "qualified-context"))]
+pub mod context_qualification;
+#[cfg(feature = "qualified-context")]
+pub mod cpu_context_bridge;
 pub mod dataset;
 pub mod emit;
 #[cfg(target_os = "linux")]
@@ -28,13 +32,20 @@ pub mod execution;
 pub mod experiment;
 pub mod experiment_v2;
 pub mod front_door;
+#[cfg(feature = "neural-search")]
+pub mod neural_search;
 pub mod prepare;
 pub mod receipt;
 pub mod run;
 pub mod search;
+#[cfg(feature = "neural-search")]
+pub mod search_context;
+#[cfg(feature = "neural-search")]
+pub mod search_plan;
 pub mod select;
 #[cfg(target_os = "linux")]
 pub mod supervisor;
+pub mod synthesized_recipe;
 
 pub use receipt::{Receipt, RECEIPT_SCHEMA_ID};
 pub use run::{run, Policy, RunOptions};

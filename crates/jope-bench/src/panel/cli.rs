@@ -61,6 +61,14 @@ pub enum BenchmarkCommand {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Private generated-recipe fit; called only through the admitted pool.
+    #[command(hide = true)]
+    SynthesizedFitWorker {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
 }
 
 pub fn read_panel(path: &Path) -> Result<(Panel, String)> {
@@ -204,6 +212,10 @@ fn run(cli: BenchmarkCli) -> Result<Value> {
         BenchmarkCommand::Report(args) => super::campaign_cli::report(args),
         BenchmarkCommand::FitWorker { input, output } => {
             super::worker::fit(&input, &output)?;
+            Ok(json!({"ok":true,"output":output}))
+        }
+        BenchmarkCommand::SynthesizedFitWorker { input, output } => {
+            super::synthesized::worker(&input, &output)?;
             Ok(json!({"ok":true,"output":output}))
         }
     }

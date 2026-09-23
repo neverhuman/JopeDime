@@ -160,9 +160,9 @@ junit="$target/nextest/pr/junit.xml"
 # upload it as this run's test result from the persistent target.
 if [ -f "$junit" ]; then mv "$junit" "$EVIDENCE"/prior-junit.xml; fi
 python3 deploy/ci/cargo-artifact.py nextest-config --output "$EVIDENCE"/nextest.toml
-cargo nextest list --config-file "$EVIDENCE"/nextest.toml -P pr --locked "${pkgs[@]}" --message-format json > "$EVIDENCE/collection.json"
+cargo nextest list --config-file "$EVIDENCE"/nextest.toml -P pr --locked "${pkgs[@]}" --features jope-pipeline/qualified-context --message-format json > "$EVIDENCE/collection.json"
 touch "$EVIDENCE"/nextest-started
-cargo nextest run --config-file "$EVIDENCE"/nextest.toml -P pr --locked "${pkgs[@]}"
+cargo nextest run --config-file "$EVIDENCE"/nextest.toml -P pr --locked "${pkgs[@]}" --features jope-pipeline/qualified-context
     ;;
   e2e-smoke)
     # Toolchain (from rust-toolchain.toml)

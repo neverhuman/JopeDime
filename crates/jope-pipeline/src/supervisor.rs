@@ -78,12 +78,9 @@ fn remaining_ms(
             now >= window.started_unix_ms,
             "clock precedes original admission"
         );
-        Ok(
-            (window.deadline_unix_ms - experiment.resources.reporting_seconds * 1000)
-                .saturating_sub(now),
-        )
+        Ok(window.deadline_unix_ms.saturating_sub(now))
     } else {
-        Ok((experiment.resources.total_seconds - experiment.resources.reporting_seconds) * 1000)
+        Ok(experiment.resources.total_seconds * 1000)
     }
 }
 
@@ -162,7 +159,7 @@ pub fn launch(
     let unit = format!("jope-asm-{}-{invocation}.service", experiment.identity()?);
     let previous = original_window(experiment, &journal)?;
     let remaining = remaining_ms(experiment, previous.as_ref(), now_ms()?)?;
-    if remaining <= 2000 {
+    if remaining <= experiment.resources.reporting_seconds * 1000 || remaining <= 2000 {
         return Ok(LaunchResult {
             unit,
             exit_code: None,
@@ -177,6 +174,9 @@ pub fn launch(
     let user = nix::unistd::Uid::current().to_string();
     let tmp = journal.join("controller-tmp");
     fs::create_dir_all(&tmp)?;
+    // Keep the one-second SIGKILL grace and one-second launch/readback margin
+    // inside the original global window. Fits retain their earlier reporting
+    // cutoff; the service no longer sends SIGTERM before that fit cutoff.
     let runtime_ms = remaining - 2000;
     let properties = [
         "Type=exec".into(),
@@ -243,13 +243,22 @@ pub fn launch(
         }
         thread::sleep(Duration::from_millis(50));
     };
+    let finished_at = now_ms()?;
+    let original = original_window(experiment, &journal)?;
+    let execution_cutoff = original
+        .as_ref()
+        .map(|window| window.deadline_unix_ms - experiment.resources.reporting_seconds * 1000);
+    let reporting_wall_seconds = execution_cutoff
+        .map(|cutoff| finished_at.saturating_sub(cutoff.max(launched_at)) as f64 / 1000.);
     let result = LaunchResult {
         unit: unit.clone(),
         exit_code: status.code(),
-        original_window: original_window(experiment, &journal)?,
+        original_window: original,
         reason: (!status.success()).then(|| {
             if cancelled {
                 "cancelled bounded service".into()
+            } else if execution_cutoff.is_some_and(|cutoff| finished_at >= cutoff) {
+                format!("original execution cutoff reached; bounded service exited with {status}")
             } else {
                 format!("bounded service exited with {status}")
             }
@@ -257,7 +266,9 @@ pub fn launch(
     };
     let receipt = serde_json::json!({"schema":"jope.supervisor-launch/v1",
         "experiment_sha256":experiment.identity()?,"program":program,"arguments":arguments,
-        "properties":properties,"started_unix_ms":launched_at,"finished_unix_ms":now_ms()?,
+        "properties":properties,"started_unix_ms":launched_at,"finished_unix_ms":finished_at,
+        "execution_cutoff_unix_ms":execution_cutoff,"reporting_wall_seconds":reporting_wall_seconds,
+        "reporting_accounting":"wall after original fit cutoff; null if no original window was admitted",
         "result":result});
     // Every invocation gets a distinct append-only receipt. Original numerical
     // admission lives in window.json and is never rewritten by this launcher.
@@ -278,7 +289,7 @@ pub fn launch(
 mod tests {
     use super::*;
     #[test]
-    fn resume_runtime_uses_original_deadline_and_reporting_reserve() {
+    fn resume_runtime_uses_original_global_deadline_preserving_fit_cutoff() {
         let experiment = Experiment {
             schema: crate::experiment::EXPERIMENT_SCHEMA.into(),
             panel_sha256: "a".repeat(64),
@@ -306,12 +317,17 @@ mod tests {
             started_unix_ms: 1000,
             deadline_unix_ms: 121000,
         };
-        assert_eq!(remaining_ms(&experiment, None, 61000).unwrap(), 115000);
+        assert_eq!(remaining_ms(&experiment, None, 61000).unwrap(), 120000);
         assert_eq!(
             remaining_ms(&experiment, Some(&window), 61000).unwrap(),
-            55000
+            60000
         );
-        assert_eq!(remaining_ms(&experiment, Some(&window), 116000).unwrap(), 0);
+        assert_eq!(
+            remaining_ms(&experiment, Some(&window), 116000).unwrap(),
+            5000
+        );
+        assert!(!window.may_admit(&experiment, 116000).unwrap());
+        assert_eq!(remaining_ms(&experiment, Some(&window), 121000).unwrap(), 0);
         assert!(remaining_ms(&experiment, Some(&window), 999).is_err());
         window.deadline_unix_ms += 1;
         assert!(remaining_ms(&experiment, Some(&window), 61000).is_err());

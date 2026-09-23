@@ -339,6 +339,32 @@ impl StarlightFoundationEncoder {
         input: &FoundationDatasetInputV1,
         options: FoundationEncodeOptions,
     ) -> Result<FoundationEncodingV1> {
+        self.encode_impl(input, options, false)
+    }
+
+    /// Native component qualification seam: consume all supplied context/query rows
+    /// with context labels already normalized by the frozen FP64 recipe.
+    pub fn encode_standardized(
+        &self,
+        input: &FoundationDatasetInputV1,
+    ) -> Result<FoundationEncodingV1> {
+        self.encode_impl(
+            input,
+            FoundationEncodeOptions {
+                max_context_rows: 0,
+                max_query_rows: 0,
+                seed: 0,
+            },
+            true,
+        )
+    }
+
+    fn encode_impl(
+        &self,
+        input: &FoundationDatasetInputV1,
+        options: FoundationEncodeOptions,
+        standardized: bool,
+    ) -> Result<FoundationEncodingV1> {
         validate_input(input)?;
         let context_indices = take_indices(
             input.context_x.len(),
@@ -363,12 +389,21 @@ impl StarlightFoundationEncoder {
             .map(|&index| input.query_x[index].clone())
             .collect();
         let p = context.first().map(|row| row.len()).unwrap_or(0);
-        let dump = self.model.regression_fusion_features_single(
-            &flatten(&context),
-            &context_y,
-            &flatten(&query),
-            p,
-        )?;
+        let dump = if standardized {
+            self.model.regression_fusion_features_standardized(
+                &flatten(&context),
+                &context_y,
+                &flatten(&query),
+                p,
+            )?
+        } else {
+            self.model.regression_fusion_features_single(
+                &flatten(&context),
+                &context_y,
+                &flatten(&query),
+                p,
+            )?
+        };
         if dump.n_rows != query.len()
             || dump.hidden_dim != JOPE_FOUNDATION_HIDDEN_DIM
             || dump.hidden.len() != dump.n_rows * dump.hidden_dim

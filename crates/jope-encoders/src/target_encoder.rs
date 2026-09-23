@@ -69,6 +69,41 @@ pub struct FusedTargetEncoding {
     pub vector: Vec<f32>,
 }
 
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct FrozenTargetWindows {
+    pub classical: Vec<Vec<usize>>,
+    pub neural: Vec<Vec<usize>>,
+}
+impl FrozenTargetWindows {
+    /// Native export repeats the one short neural window to preserve two views.
+    pub fn native(length: usize, task: TargetTask, seed: u64) -> Result<Self> {
+        if length == 0 {
+            bail!("empty target sampling input");
+        }
+        let classical = classical_windows(length, task, seed)?;
+        let mut neural = neural_windows(length, seed)?;
+        if neural.len() == 1 {
+            neural.push(neural[0].clone());
+        }
+        let result = Self { classical, neural };
+        result.validate(length)?;
+        Ok(result)
+    }
+    pub fn validate(&self, length: usize) -> Result<()> {
+        for views in [&self.classical, &self.neural] {
+            if views.len() != 2
+                || views
+                    .iter()
+                    .any(|v| v.len() != 32 || v.iter().any(|&i| i >= length))
+            {
+                bail!("native target windows require two in-range windows of 32");
+            }
+        }
+        Ok(())
+    }
+}
+
 pub struct FusedTargetEncoder {
     tensors: HashMap<String, Tensor>,
     device: Device,
@@ -101,8 +136,38 @@ impl FusedTargetEncoder {
     pub fn encode(&self, values: &[f32], task: TargetTask) -> Result<FusedTargetEncoding> {
         let values = preprocess(values, task)?;
         let raw_signature = raw_signature(&values, task, self.seed)?;
-        let classical_component = self.classical_component(&raw_signature)?;
         let windows = neural_windows(values.len(), self.seed)?;
+        self.finish(values, task, raw_signature, windows)
+    }
+
+    /// Explicit frozen sampling seam. All rows must be finite unit-interval values;
+    /// this entry point never drops rows or silently changes the supplied windows.
+    pub fn encode_with_windows(
+        &self,
+        values: &[f32],
+        task: TargetTask,
+        windows: &FrozenTargetWindows,
+    ) -> Result<FusedTargetEncoding> {
+        if values.is_empty()
+            || values
+                .iter()
+                .any(|v| !v.is_finite() || !(0.0..=1.0).contains(v))
+        {
+            bail!("frozen target input must be finite and in [0,1]");
+        }
+        windows.validate(values.len())?;
+        let signature = raw_signature_windows(values, task, &windows.classical)?;
+        self.finish(values.to_vec(), task, signature, windows.neural.clone())
+    }
+
+    fn finish(
+        &self,
+        values: Vec<f32>,
+        task: TargetTask,
+        raw_signature: Vec<f32>,
+        windows: Vec<Vec<usize>>,
+    ) -> Result<FusedTargetEncoding> {
+        let classical_component = self.classical_component(&raw_signature)?;
         let neural_best = self.neural_embedding(&values, task, &windows, "neural_best")?;
         let neural_final = self.neural_embedding(&values, task, &windows, "neural_final")?;
         let mut vector = safe_unit(&neural_best);
@@ -346,5 +411,60 @@ impl FusedTargetEncoder {
 
     fn vec_f32(&self, name: &str) -> Result<Vec<f32>> {
         Ok(self.w(name)?.to_dtype(DType::F32)?.to_vec1::<f32>()?)
+    }
+}
+
+#[cfg(test)]
+mod frozen_window_tests {
+    use super::*;
+    use sha2::{Digest, Sha256};
+    #[test]
+    fn native_sampling_windows_match_retained_export_recipes() {
+        // Metadata-only recipes from target-export-cuda-v1/sampling.json,
+        // SHA256 dec8e830341867516ea232345197aa364818b8166a2ba9aeed91ee20d9cf55bf.
+        let windows = FrozenTargetWindows::native(7, TargetTask::Regression, 17).unwrap();
+        let actual = format!(
+            "{:x}",
+            Sha256::digest(serde_json::to_vec(&windows).unwrap())
+        );
+        assert_eq!(
+            actual,
+            "a04f9cee42f83b922e2c2179375ad8a1e922486f19cf1e992a591525c6313298"
+        );
+        let windows = FrozenTargetWindows::native(32, TargetTask::Regression, 17).unwrap();
+        let actual = format!(
+            "{:x}",
+            Sha256::digest(serde_json::to_vec(&windows).unwrap())
+        );
+        assert_eq!(
+            actual,
+            "b540d08f3681f445e67ec19319646cac81bb5e995a793b7d15cf076aed9ccff2"
+        );
+        let windows = FrozenTargetWindows::native(64, TargetTask::Regression, 17).unwrap();
+        let actual = format!(
+            "{:x}",
+            Sha256::digest(serde_json::to_vec(&windows).unwrap())
+        );
+        assert_eq!(
+            actual,
+            "bd0e22a3284559a02687d50e4427d42a6b9915d1acd67843484c2775a519508d"
+        );
+        let windows = FrozenTargetWindows::native(7, TargetTask::Binary, 17).unwrap();
+        let actual = format!(
+            "{:x}",
+            Sha256::digest(serde_json::to_vec(&windows).unwrap())
+        );
+        assert_eq!(
+            actual,
+            "a63d8894f1317c85a2b153bc37ad7386b1f2711e623dc68cb9fec0be21f2f71c"
+        );
+    }
+    #[test]
+    fn frozen_windows_reject_out_of_range_and_wrong_view_counts() {
+        let mut windows = FrozenTargetWindows::native(7, TargetTask::Regression, 17).unwrap();
+        windows.neural[0][0] = 7;
+        assert!(windows.validate(7).is_err());
+        windows.neural.pop();
+        assert!(windows.validate(7).is_err());
     }
 }

@@ -103,11 +103,14 @@
 //!   (`neural_rejection_fallback`, `random_exploration`) and are never labelled `neural_policy`.
 
 pub mod config;
+#[cfg(feature = "context-producer")]
+pub mod context_producer;
 pub mod decode;
 pub mod grammar;
 mod hashing;
 pub mod jope_embed;
 pub mod model;
+pub mod producer;
 pub mod ranking;
 pub mod seeds;
 

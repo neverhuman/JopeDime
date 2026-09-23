@@ -11,6 +11,7 @@ pub mod data;
 pub mod methods;
 pub mod protocol;
 pub mod score;
+pub mod synthesized;
 pub mod worker;
 
 /// Selection uses the arithmetic mean of five per-fold primary losses, without a
