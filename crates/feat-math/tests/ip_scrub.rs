@@ -247,9 +247,11 @@ fn user_supplied_names_do_not_trip_the_bound_and_fitted_lints() {
         ],
         row_semantics: RowSemantics::Iid,
     };
-    // Every category is a banned word; two also carry a quote and a backslash, which the Python
-    // artifact embeds Debug-escaped inside a JSON literal and the Rust artifact Debug-escaped.
-    let categories = ["population", "tour\"nament", "eli\\tes", "generation"];
+    // Every category contains a banned word on its own; three also carry a quote, a backslash or
+    // a control character, so the Python artifact embeds them Debug-escaped inside a JSON literal,
+    // the Rust artifact Debug-escaped and the C++ codec JSON-escaped: every spelling the mask must
+    // cover, on a name that would refuse without it.
+    let categories = ["population\"", "elites\\", "generation\u{8}", "tournament"];
     let mut rng = feat_math::Pcg32::new(23, 5);
     let mut rows = Vec::new();
     let mut y = Vec::new();
@@ -306,11 +308,20 @@ fn user_supplied_names_do_not_trip_the_bound_and_fitted_lints() {
             "{src}: codec vocabulary ships verbatim"
         );
         assert!(
-            cpp.codec.contains("tour\\\"nament"),
+            cpp.codec.contains("population\\\""),
             "{src}: the quoted category ships JSON-escaped in the codec"
         );
-        // The unmasked lint would have refused every one of these artifacts.
+        assert!(
+            artifact.rust.contains("elites\\\\"),
+            "{src}: the backslash category ships Debug-escaped in the Rust artifact"
+        );
+        assert!(
+            artifact.python.contains("generation"),
+            "{src}: the control-character category ships in the Python artifact"
+        );
+        // The unmasked lint would have refused every one of these artifacts, in every language.
         assert!(!lint_shipped_text(&artifact.python).is_empty());
+        assert!(!lint_shipped_text(&artifact.rust).is_empty());
         assert!(!lint_shipped_text(&cpp.codec).is_empty());
     }
 }
