@@ -33,6 +33,7 @@ import argparse
 import csv
 import hashlib
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -381,11 +382,20 @@ def load_samecut() -> dict:
         if row is None:
             refuse(f"{rel}: adapter.{name} is missing from the deep ladder")
         engines[name] = row
-    versions = {
-        m["method"]["adapter"]["name"]: m["method"]["adapter"]["version"]
-        for m in first["methods"]
-        if m["method"]["kind"] == "adapter"
-    }
+    # The engine specs (name, command, recorded version) come from the first report; every other
+    # report must have recorded the same spec per engine, or the directory is not one run. Methods
+    # are listed in screen order, which differs per dataset, so compare by name.
+    def engine_specs(r: dict) -> list:
+        return sorted(
+            (m["method"]["adapter"] for m in r["methods"] if m["method"]["kind"] == "adapter"),
+            key=lambda spec: spec["name"],
+        )
+
+    specs = engine_specs(first)
+    for r in reports:
+        if engine_specs(r) != specs:
+            refuse(f"{rel}: {r['dataset_id']} recorded different engine specs or versions")
+    versions = {spec["name"]: spec["version"] for spec in specs}
     return {
         "deep": deep,
         "deep_rows": deep_rows,
@@ -396,7 +406,21 @@ def load_samecut() -> dict:
         "ours": ours,
         "engines": engines,
         "engine_versions": versions,
+        "engine_specs": specs,
     }
+
+
+SAFE_TOKEN = re.compile(r"^[A-Za-z0-9_./=:+-]+$")
+
+
+def adapter_flag(spec: dict) -> str:
+    """The `--adapter` argument that recorded this engine, rendered so a shell reads it back
+    exactly; a token that would need quoting refuses rather than print a wrong command."""
+    tokens = [spec["name"], *spec["command"]]
+    for token in tokens:
+        if not SAFE_TOKEN.match(token):
+            refuse(f"adapter {spec['name']!r}: token {token!r} is not shell-safe to render")
+    return f"--adapter \"{spec['name']}={' '.join(spec['command'])}\""
 
 
 def samecut_row(r: dict, versions: dict) -> str:
@@ -511,6 +535,7 @@ def render_samecut() -> str:
         "",
         "```sh",
         "cargo run --release -p jope-bench -- run --datasets datasets/test --out target/same-cut/reports \\",
+        *(f"  {adapter_flag(spec)} \\" for spec in e["engine_specs"]),
         f"  --top {protocol['top']} --search --search-pop {search['pop']} --search-gens {search['gens']} "
         f"--resample-search --workers {host['workers']}",
         "cargo run --release -p jope-bench -- ladder --reports target/same-cut/reports \\",

@@ -131,6 +131,10 @@ Sources: `assets/same-cut/v2/leaderboard-jope-same-cut-v1-deep.csv` (sha256 `bf2
 
 ```sh
 cargo run --release -p jope-bench -- run --datasets datasets/test --out target/same-cut/reports \
+  --adapter "catboost=python3 crates/jope-bench/adapters/catboost_adapter.py" \
+  --adapter "lightgbm=python3 crates/jope-bench/adapters/lightgbm_adapter.py" \
+  --adapter "rf=python3 crates/jope-bench/adapters/sklearn_rf_adapter.py" \
+  --adapter "xgboost=python3 crates/jope-bench/adapters/xgboost_adapter.py" \
   --top 5 --search --search-pop 32 --search-gens 8 --resample-search --workers 16
 cargo run --release -p jope-bench -- ladder --reports target/same-cut/reports \
   --track-root target/same-cut/track --track jope-same-cut-v1
