@@ -52,8 +52,12 @@ BENCH = REGRESSION / "bench-baseline.json"
 README = ROOT / "README.md"
 
 # The same-cut evidence: `crates/jope-bench/tests/committed_evidence.rs` asserts that the tracks
-# re-derive from the reports and both ladders from the tracks, byte for byte.
-SAMECUT = ROOT / "assets/same-cut/v1"
+# re-derive from the reports and both ladders from the tracks, byte for byte. v2 is the rendered
+# one (heads, the searched program and the four external engines); v1 stays committed as the
+# record of the heads-only run.
+SAMECUT = ROOT / "assets/same-cut/v2"
+# The external engines v2 was recorded with, by adapter name (the row id is `adapter.<name>`).
+SAMECUT_ADAPTERS = ("catboost", "lightgbm", "rf", "xgboost")
 SAMECUT_REPORTS = SAMECUT / "reports"
 SAMECUT_TRACK_ID = "jope-same-cut-v1"
 SAMECUT_DEEP_CSV = SAMECUT / f"leaderboard-{SAMECUT_TRACK_ID}-deep.csv"
@@ -358,9 +362,30 @@ def load_samecut() -> dict:
             refuse(f"{rel}: {r['dataset_id']} does not carry exactly one {SEARCHED} row")
         if searched[0]["method"].get("resample") != r["search"]:
             refuse(f"{rel}: {r['dataset_id']}: the searched row is not the resampled procedure")
+        adapters = sorted(
+            m["method"]["adapter"]["name"]
+            for m in r["methods"]
+            if m["method"]["kind"] == "adapter"
+        )
+        if tuple(adapters) != SAMECUT_ADAPTERS:
+            refuse(f"{rel}: {r['dataset_id']} carries adapters {adapters}, not {list(SAMECUT_ADAPTERS)}")
+        for m in r["methods"]:
+            if m["method"]["kind"] == "adapter" and not m["method"]["adapter"].get("version"):
+                refuse(f"{rel}: {r['dataset_id']}: {m['method']['id']} records no engine version")
     ours = next((row for row in deep_rows if row["method_id"] == SEARCHED), None)
     if ours is None:
         refuse(f"{rel}: {SEARCHED} is missing from the deep ladder")
+    engines = {}
+    for name in SAMECUT_ADAPTERS:
+        row = next((row for row in deep_rows if row["method_id"] == f"adapter.{name}"), None)
+        if row is None:
+            refuse(f"{rel}: adapter.{name} is missing from the deep ladder")
+        engines[name] = row
+    versions = {
+        m["method"]["adapter"]["name"]: m["method"]["adapter"]["version"]
+        for m in first["methods"]
+        if m["method"]["kind"] == "adapter"
+    }
     return {
         "deep": deep,
         "deep_rows": deep_rows,
@@ -369,14 +394,20 @@ def load_samecut() -> dict:
         "track": track,
         "reports": reports,
         "ours": ours,
+        "engines": engines,
+        "engine_versions": versions,
     }
 
 
-def samecut_row(r: dict) -> str:
+def samecut_row(r: dict, versions: dict) -> str:
     ours = r["method_id"] == SEARCHED
     b = "**" if ours else ""
+    name = r["method"]
+    if r["method_id"].startswith("adapter."):
+        engine = r["method_id"][len("adapter.") :]
+        name = f"{name} ({versions.get(engine, 'version unknown')})"
     return (
-        f"| {b}{r['elo_rank']}{b} | {b}{r['method']}{b} | {b}{r['elo']}{b} | "
+        f"| {b}{r['elo_rank']}{b} | {b}{name}{b} | {b}{r['elo']}{b} | "
         f"{float(r['average_rank']):.2f} | {r['dataset_wins']} | "
         f"{r['datasets_scored']}/{r['datasets_total']} |"
     )
@@ -427,11 +458,14 @@ def render_samecut() -> str:
         f"`{first['git_sha'][:9]}` with {host['workers']} workers on {host['cores']} cores.",
         "",
         "Every row here is a number this tree produced and can reproduce: the ten single-head "
-        "baselines and the program the search wrote for each dataset, all fitted on the same "
-        "training rows and scored on the same held-out rows by one evaluator "
-        f"(`{SAMECUT_DOC.relative_to(ROOT)}`). The search sees only a cut's training rows, and its "
-        "deep row is the *procedure* re-run on every cut, not one program chosen with knowledge "
-        "of the other cuts' held-out rows. Bold is the searched program.",
+        "baselines, four external engines (XGBoost, LightGBM, CatBoost and a scikit-learn random "
+        "forest, each run as a subprocess with its library defaults, a fixed seed and one thread, "
+        "handed a cut's training rows and its held-out features only, and scored by this "
+        "benchmark from the predictions it returns) and the program the search wrote for each "
+        "dataset, all fitted on the same training rows and scored on the same held-out rows by "
+        f"one evaluator (`{SAMECUT_DOC.relative_to(ROOT)}`). The search sees only a cut's "
+        "training rows, and its deep row is the *procedure* re-run on every cut, not one program "
+        "chosen with knowledge of the other cuts' held-out rows. Bold is the searched program.",
         "",
         "**The datasets are a favourable selection.** They are the `test-10` collection, chosen "
         "from the published ladder where the historical engine ranked first "
@@ -443,14 +477,19 @@ def render_samecut() -> str:
         "",
         "| rank | method | Elo | avg rank | dataset wins | coverage |",
         "| ---: | --- | ---: | ---: | ---: | --- |",
-        *(samecut_row(r) for r in e["deep_rows"]),
+        *(samecut_row(r, e["engine_versions"]) for r in e["deep_rows"]),
         "",
         f"**Where the search stands today:** rank {ours['elo_rank']} of {deep['methods']} on the "
         f"deep ladder, Elo {ours['elo']}, lowest pooled RMSE on {best} of {n} datasets (the "
         f"ladder's own rule), a finalist on {finalist}; on the other {n - finalist} it did not "
-        f"make the top-{protocol['top']} screen. Coverage counts datasets where a method reached "
-        "the deep stage, so the ladder ranks finalists only. The screen ladder (every method, "
-        "one cut) is committed beside it.",
+        f"make the top-{protocol['top']} screen. Against the four external engines it ranks "
+        + ", ".join(
+            f"{'above' if int(ours['elo_rank']) < int(e['engines'][name]['elo_rank']) else 'below'} "
+            f"{e['engines'][name]['method']} (rank {e['engines'][name]['elo_rank']})"
+            for name in SAMECUT_ADAPTERS
+        )
+        + ". Coverage counts datasets where a method reached the deep stage, so the ladder ranks "
+        "finalists only. The screen ladder (every method, one cut) is committed beside it.",
         "",
         f"**Seconds per program.** Writing the program took the search {mean_s:.1f} s per dataset "
         f"on average (median {median_s:.1f} s, longest {max_s:.1f} s) on the screen cut's training "
