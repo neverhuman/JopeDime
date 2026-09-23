@@ -6,6 +6,26 @@ never re-measured at the head of `main`.
 The `wp7/models-cli` and `wp11/learning-store` work this page described as unlanded has since merged
 (#33, #34); run `jope --help` on current `main` for the verbs that exist today.
 
+## Build the ASM-enabled CLI
+
+The ASM feature is opt-in. The historical default workspace build below does not enable it.
+From the checkout, this available build command selects the ASM interface:
+
+```bash
+CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only \
+  cargo build --locked --release -j 4 -p jope-cli --features asm --bin jope
+./target/release/jope --help
+./target/release/jope benchmark --help
+./target/release/jope optimize --help
+```
+
+These paths assume Cargo's normal checkout-local `target/`; reuse that directory. Inspect the
+actual built binary, since another `jope` on `PATH` may have different features. Successful
+build/help checks establish command availability only. Neural search also needs authenticated
+model assets, context and policy workers, and a qualified run configuration; see the
+[maintainer manual](asm-maintainer-manual.pdf). The commands above were source-checked for
+this documentation correction; no new release build or fitted prediction is claimed here.
+
 # Quickstart (laptop, CPU only)
 
 For what the head of `main` actually does — the `jope` subcommands that exist today
