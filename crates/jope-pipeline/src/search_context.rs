@@ -40,6 +40,7 @@ impl TrainingIdentity {
 /// Native context files already produced through the existing engine authority
 /// and GPU fences. Caller pins their hashes in the campaign manifest. No dataset
 /// loader, panel root, scoring labels or alternate encoder is accepted here.
+#[derive(Serialize, Deserialize)]
 pub struct NativeContextFiles {
     pub vector: Artifact,
     pub receipt: Artifact,
@@ -48,10 +49,11 @@ pub struct NativeContextFiles {
 }
 
 /// Native receipt lineage and independently qualified CPU lineage remain distinct.
+#[derive(Serialize, Deserialize)]
 pub enum ContextFiles {
-    Native(NativeContextFiles),
+    Native(Box<NativeContextFiles>),
     #[cfg(feature = "qualified-context")]
-    QualifiedCpu(crate::cpu_context_bridge::CpuContextFiles),
+    QualifiedCpu(Box<crate::cpu_context_bridge::CpuContextFiles>),
 }
 impl ContextFiles {
     pub fn receipt(&self) -> &Artifact {

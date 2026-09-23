@@ -23,6 +23,7 @@ feat-math = { path = "../feat-math" }
 jope-arena = { path = "../jope-arena" }
 jope-datasets = { path = "../jope-datasets" }
 jope-pipeline = { path = "../jope-pipeline" }
+jope-policy = { path = "../jope-policy", optional = true, features = ["context-producer"] }
 rayon.workspace = true
 serde.workspace = true
 serde_json = { workspace = true, features = ["float_roundtrip"] }
@@ -33,6 +34,10 @@ tempfile.workspace = true
 nix = { workspace = true, features = ["time"] }
 
 [dev-dependencies]
+
+[features]
+default = []
+asm = ["jope-pipeline/qualified-context", "dep:jope-policy"]
 
 [lints]
 workspace = true

@@ -208,7 +208,7 @@ impl ContextCost {
 }
 /// Outputs attach to a previously registered input plan. Dereferencing exposes
 /// that immutable input plan; arm identity never depends on these output hashes.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Comparison {
     pub input_plan: PairInputPlan,
     pub producer_request: jope_policy::producer::Request,
@@ -506,6 +506,7 @@ impl Variation for RegressionVariation<'_> {
 /// proposal work inside that command are subject to the same process/cgroup
 /// gate, fit cap (normally30s) and original120s arm deadline as any worker.
 /// Existing context files may be reused; this API never relabels an old encoder.
+#[derive(Serialize, Deserialize)]
 pub struct PolicyWorker {
     pub job: WorkerJob,
     pub expected_program_sha256: String,
@@ -517,7 +518,7 @@ pub struct PolicyWorker {
     pub context: super::search_context::ContextFiles,
     pub output_name: PathBuf,
 }
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct NeuralRun {
     pub proposal_execution: WorkerOutcome,
     /// None means proposal failed/timed out/unavailable, not a generic substitute.
@@ -527,7 +528,7 @@ pub struct NeuralRun {
 /// One immutable pair, fixed neural-then-generic execution order, same fit and
 /// search budgets, same variation implementation and generic token policy.
 /// Errors are retained as inventory; they are never converted to wins or losses.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PairedReceipt {
     pub comparison_sha256: String,
     pub neural: Option<NeuralRun>,
@@ -667,7 +668,7 @@ pub fn run_pair<B: Backend, V: Variation>(
 
 /// Private fitted-recipe identity frozen before the controller opens the outer
 /// development scoring labels. It is selection evidence, not an outer win.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct FrozenRecipe {
     pub candidate: Candidate,
     pub selection_feedback: Feedback,
@@ -706,14 +707,20 @@ pub fn freeze_winner<B: Backend>(
         feedback.status == EvaluationStatus::Completed,
         "winner lacks complete train-side evidence"
     );
+    let mut refit_request = comparison.selection.refit_request(
+        &winner.candidate.program_sha256,
+        &winner.candidate.id_sha256,
+    )?;
+    refit_request.checkpoint_sha256 = receipt
+        .proposal
+        .as_ref()
+        .map(|p| p.checkpoint_sha256.clone());
+    refit_request.validate()?;
     let frozen = FrozenRecipe {
         candidate: winner.candidate.clone(),
         selection_feedback: feedback,
         search_receipt_sha256: sha256_hex(&serde_json::to_vec(receipt)?),
-        refit_request: comparison.selection.refit_request(
-            &winner.candidate.program_sha256,
-            &winner.candidate.id_sha256,
-        )?,
+        refit_request,
     };
     backend.persist(
         &receipt.arm,
@@ -765,12 +772,12 @@ fn evaluate_unique<B: Backend>(
     Ok(feedback)
 }
 
-fn run_neural<B: Backend, V: Variation>(
-    backend: &mut B,
+/// Read-only validation shared by execution and recovery reporting. No model
+/// is loaded and no command/window is admitted here.
+pub fn verify_policy_inputs(
     comparison: &Comparison,
-    variation: &mut V,
     worker: &PolicyWorker,
-) -> Result<NeuralRun> {
+) -> Result<super::search_context::VerifiedRegressionContext> {
     comparison.validate()?;
     ensure!(
         worker.request == comparison.producer_request
@@ -786,8 +793,6 @@ fn run_neural<B: Backend, V: Variation>(
         worker.release_manifest.sha256 == comparison.installation.release_manifest_sha256,
         "installation release receipt changed"
     );
-    let arm = comparison.arm(true)?;
-    let deadline = backend.begin_arm(&arm)?;
     let context = worker.context.load_for_comparison(comparison)?;
     context.matches(comparison)?;
     worker.request.validate()?;
@@ -863,6 +868,19 @@ fn run_neural<B: Backend, V: Variation>(
         worker.job.outputs.contains(&worker.output_name),
         "policy output was not declared"
     );
+    Ok(context)
+}
+
+fn run_neural<B: Backend, V: Variation>(
+    backend: &mut B,
+    comparison: &Comparison,
+    variation: &mut V,
+    worker: &PolicyWorker,
+) -> Result<NeuralRun> {
+    comparison.validate()?;
+    let arm = comparison.arm(true)?;
+    let deadline = backend.begin_arm(&arm)?;
+    let context = verify_policy_inputs(comparison, worker)?;
     let mut job = worker.job.clone();
     job.arm = Some(arm.clone());
     let expected_job = job.identity()?;
@@ -1250,7 +1268,8 @@ fn run_population<B: Backend, V: Variation>(
                 }
             };
             let canonical = SynthesizedRecipe::new(genome.clone())?.executable_sha256;
-            if seen.insert(canonical) {
+            if seen.insert(canonical.clone()) {
+                backend.persist(&receipt.arm,&format!("generation-{}-variation-accepted-{:06}",generation+1,candidates.len()),&serde_json::json!({"seed":seed,"attempt":attempt,"variation":comparison.variation_identity,"origin":origin,"parents":ancestors,"canonical_executable_sha256":canonical,"genome":genome}))?;
                 candidates.push(Candidate::new(
                     &receipt.arm,
                     genome,
@@ -1291,14 +1310,28 @@ fn stream_seed(base: u64, generation: usize, attempt: usize) -> u64 {
 /// Concrete bridge to the one shared worker pool. The job builder owns the
 /// fit-only input closure and must declare every output. The scorer verifies
 /// fitted output bytes and performs development scoring outside the worker.
-pub struct PoolBackend<'a, J, S> {
-    pub pool: &'a mut ExecutionPool,
+/// Pool access is message-based in the panel coordinator; only its supervisor
+/// thread owns ExecutionPool. This trait does not authorize direct engine fits.
+pub trait PoolAccess {
+    fn begin_arm(&mut self, arm: &ArmBudget) -> Result<u64>;
+    fn run(&mut self, jobs: Vec<WorkerJob>, cancelled: &AtomicBool) -> Result<Vec<WorkerOutcome>>;
+}
+impl PoolAccess for ExecutionPool {
+    fn begin_arm(&mut self, arm: &ArmBudget) -> Result<u64> {
+        ExecutionPool::begin_arm(self, arm)
+    }
+    fn run(&mut self, jobs: Vec<WorkerJob>, cancelled: &AtomicBool) -> Result<Vec<WorkerOutcome>> {
+        ExecutionPool::run(self, jobs, cancelled)
+    }
+}
+pub struct PoolBackend<'a, J, S, P = ExecutionPool> {
+    pub pool: &'a mut P,
     pub cancelled: &'a AtomicBool,
     pub journal: PathBuf,
     pub make_job: J,
     pub score: S,
 }
-impl<J, S> Backend for PoolBackend<'_, J, S>
+impl<J, S, P: PoolAccess> Backend for PoolBackend<'_, J, S, P>
 where
     J: FnMut(&Candidate, &EvaluationRequest) -> Result<WorkerJob>,
     S: FnMut(&Candidate, &[WorkerOutcome], &SelectionPlan) -> Result<Feedback>,

@@ -102,8 +102,10 @@ pub fn freeze_screen(
         }
     }
     ranked.sort_by(|(a, oa), (b, ob)| a.total_cmp(b).then(oa.method.cmp(&ob.method)));
+    let mut canonical_recipes = BTreeSet::new();
     let mut recipes: Vec<_> = ranked
         .iter()
+        .filter(|(_, o)| canonical_recipes.insert(o.request.recipe_sha256.clone()))
         .take(5)
         .map(|(_, observation)| frozen_recipe(observation, false))
         .collect::<Result<_>>()?;
@@ -450,5 +452,30 @@ mod tests {
             &confirmation
         )
         .is_err());
+    }
+    #[test]
+    fn top_five_deduplicates_recipes_and_retains_required_asm_alias() -> Result<()> {
+        let mut data = (0..7)
+            .map(|i| observation(i, Some(i as f64)))
+            .collect::<Vec<_>>();
+        data[1].request.recipe_sha256 = data[0].request.recipe_sha256.clone();
+        data[1].result.request_sha256 = data[1].request.identity()?;
+        let frozen = freeze_screen(&expected(&data), &data, Some("method-1"))?;
+        assert_eq!(frozen.recipes.iter().filter(|r| !r.diagnostic).count(), 5);
+        assert_eq!(
+            frozen
+                .recipes
+                .iter()
+                .filter(|r| !r.diagnostic)
+                .map(|r| &r.recipe_sha256)
+                .collect::<BTreeSet<_>>()
+                .len(),
+            5
+        );
+        assert!(frozen
+            .recipes
+            .iter()
+            .any(|r| r.method == "method-1" && r.diagnostic));
+        Ok(())
     }
 }

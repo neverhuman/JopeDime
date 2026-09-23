@@ -189,8 +189,9 @@ Admission requires eight retained native reference cases from two preselected tr
 families, followed by the fresh dataset encoding. All nine original bounded-worker
 receipts and pinned inputs are checked; a supplied vector or success flag is insufficient.
 The component and final-context error limit is fixed at 3e-4 before measurement.
-CPU numerical parity has not yet been measured. Existing native GPU entry-point holds
-and accepted regression checkpoint restrictions remain in force.
+CPU numerical parity requires a successful receipt for the exact source and worker
+executable; implementation and fixture tests do not supply that receipt. Existing
+native GPU entry-point holds and accepted regression checkpoint restrictions remain in force.
 
 The paired evaluator preregisters 64 neural slots plus 16 exploration slots against
 80 generic slots under equal 120-second arm allowances. Encoding and proposal work
@@ -200,6 +201,21 @@ development fold is scored. Every completed generated fit saves the complete fit
 model, reloads it and checks prediction parity. Incomplete or unavailable arms remain
 explicit outcomes. Classification contexts use a separate experimental lineage with
 label-renaming invariance; they cannot be supplied to the accepted regression policy.
+
+Build the optional command with `cargo build --locked -p jope-cli --features asm`.
+`jope optimize capabilities` reports compiled support without starting work. The
+`plan`, `run` and `report` commands bind paired arms to the verified comparator plan;
+reporting rechecks original training cells, selection, configuration, fitted outputs
+and execution deadlines. One supervisor shares twenty fit workers across bounded
+dataset waves. Classification uses a task-specific generic sampler while the accepted
+neural producer remains regression-only.
+
+`jope optimize proof-plan` prepares a separately budgeted single-regression operational
+proof using an explicit resource file. Its report records genuine neural-origin and
+offspring fits separately from fallback proposals. This proof does not replace the
+unchanged thirty-dataset panel. Worker installation evidence binds the actual Cargo
+artifact messages, source manifest, enabled features and immutable executable copies;
+the CLI installation receipt alone cannot authenticate these dedicated workers.
 
 ## Experiment and evidence contracts
 

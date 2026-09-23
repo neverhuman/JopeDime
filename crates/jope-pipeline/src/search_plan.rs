@@ -178,7 +178,13 @@ impl SelectionPlan {
         self.validate()?;
         let mut request = self.outer.clone();
         request.recipe_sha256 = canonical_recipe_sha256.into();
-        request.seed = candidate_seed(self.outer.seed, candidate_sha256)?;
+        // Outer comparison uses the frozen experiment seed for every method.
+        // Candidate-specific seeds isolate train-side requests only.
+        ensure!(
+            crate::experiment::sha256(candidate_sha256),
+            "invalid candidate identity"
+        );
+        request.seed = self.outer.seed;
         request.stage = EvaluationStage::Confirm;
         request.validate()?;
         Ok(request)
@@ -349,5 +355,16 @@ mod tests {
         let mut plan = fixture();
         plan.fitting_rows.swap(0, 1);
         assert!(plan.validate().is_err());
+    }
+    #[test]
+    fn frozen_refit_uses_common_outer_seed_and_canonical_recipe() -> Result<()> {
+        let plan = fixture();
+        let recipe = sha256_hex(b"canonical DSL");
+        let a = plan.refit_request(&recipe, &sha256_hex(b"candidate a"))?;
+        let b = plan.refit_request(&recipe, &sha256_hex(b"candidate b"))?;
+        assert_eq!(a.seed, plan.outer().seed);
+        assert_eq!(a.identity()?, b.identity()?);
+        assert_eq!(a.recipe_sha256, recipe);
+        Ok(())
     }
 }

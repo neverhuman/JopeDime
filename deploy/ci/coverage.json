@@ -142,7 +142,7 @@
       "feature_selection": "explicit",
       "result_backend": "nextest",
       "checks": [
-        "cargo nextest run --config-file rust-test-evidence/nextest.toml -P pr --locked $(bash deploy/ci/rust-test-scope.sh) --features jope-pipeline/qualified-context"
+        "cargo nextest run --config-file rust-test-evidence/nextest.toml -P pr --locked $(bash deploy/ci/rust-test-scope.sh) --features jope-cli/asm"
       ]
     },
     "emitters": {
@@ -8019,6 +8019,47 @@
       ],
       "dispositions": [],
       "scope": "Private producer binary compilation; unit/library contracts are separate from accepted-model execution."
+    },
+    "feature:jope-bench/asm": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "dep:jope-policy",
+          "jope-pipeline/qualified-context"
+        ]
+      },
+      "lanes": [
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Explicit CLI asm feature collects paired optimization, typed generic sampler, scheduling, report and build receipt contracts; live model proof separate."
+    },
+    "feature:jope-bench/default": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": []
+      },
+      "lanes": [
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Empty package-default marker; optional ASM explicitly selected."
+    },
+    "feature:jope-cli/asm": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "jope-bench/asm"
+        ]
+      },
+      "lanes": [
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Explicit optional CLI command and benchmark integration; CPU-only dependency graph, no GPU/model qualification implied."
     }
   }
 }

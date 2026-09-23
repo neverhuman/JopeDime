@@ -145,10 +145,10 @@ fn make_jobs(
     );
     let manifest: context_producer::ReferenceManifest = serde_json::from_slice(&bytes)?;
     let mut jobs = Vec::new();
-    for index in 0..8 {
+    for (index, expected_input) in expected_inputs.iter().enumerate() {
         let input = &references.cases[index];
         ensure!(
-            read_artifact(input, 128 << 20)? == expected_inputs[index],
+            read_artifact(input, 128 << 20)? == *expected_input,
             "case payload differs from predeclared manifest order"
         );
         let identity = &references.job_identities[index];

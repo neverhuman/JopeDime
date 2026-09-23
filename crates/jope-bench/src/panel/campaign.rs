@@ -46,6 +46,11 @@ pub struct Runtime {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Method {
+    Synthesized {
+        id: String,
+        recipe: jope_pipeline::synthesized_recipe::SynthesizedRecipe,
+        checkpoint_sha256: Option<String>,
+    },
     Rust {
         recipe: RustMethod,
     },
@@ -59,19 +64,23 @@ impl Method {
     pub fn id(&self) -> &str {
         match self {
             Self::Rust { recipe } => &recipe.id,
-            Self::External { id, .. } => id,
+            Self::External { id, .. } | Self::Synthesized { id, .. } => id,
         }
     }
-    fn runtime(&self) -> &str {
+    pub(crate) fn runtime(&self) -> &str {
         match self {
-            Self::Rust { .. } => "rust",
+            Self::Rust { .. } | Self::Synthesized { .. } => "rust",
             Self::External { runtime, .. } => runtime,
         }
     }
-    fn identity(&self) -> Result<String> {
+    pub(crate) fn identity(&self) -> Result<String> {
         match self {
             Self::Rust { recipe } => Ok(jope_pipeline::sha256_hex(recipe.dsl.as_bytes())),
             Self::External { .. } => digest(self),
+            Self::Synthesized { recipe, .. } => {
+                recipe.validate()?;
+                Ok(recipe.executable_sha256.clone())
+            }
         }
     }
 }
@@ -104,12 +113,17 @@ impl CampaignPlan {
             "method/runtime roster changed"
         );
         ensure!(
-            self.experiment.protocol == super::PROTOCOL
+            (self.experiment.protocol == super::PROTOCOL
+                || (self.scope == "asm-origin-proof"
+                    && self.experiment.protocol == "jope.asm-origin-proof/v1"))
                 && self.experiment.numerical_policy == score::NUMERICAL_POLICY,
             "campaign protocol or numerical policy changed"
         );
         ensure!(
-            self.scope == "comparator-qualification",
+            self.scope == "comparator-qualification"
+                || ((self.scope == "asm-panel" || self.scope == "asm-origin-proof")
+                    && cfg!(feature = "asm")
+                    && self.runtimes.contains_key("asm-configuration")),
             "unsupported campaign scope"
         );
         let native_runtime = self.runtimes.get("rust").context("native runtime absent")?;
@@ -136,6 +150,9 @@ impl CampaignPlan {
                     .context("runtime absent")?;
                 ensure!(!runtime.version.is_empty(), "runtime version/reason absent");
                 match method {
+                    Method::Synthesized { .. } => anyhow::bail!(
+                        "generated roster entries must come from retained train-side selection"
+                    ),
                     Method::Rust { recipe } => {
                         ensure!(native.contains(recipe), "changed native roster")
                     }
@@ -178,12 +195,12 @@ pub struct PendingFit {
     pub expected_engine_version: String,
 }
 
-fn digest(value: &impl Serialize) -> Result<String> {
+pub(crate) fn digest(value: &impl Serialize) -> Result<String> {
     Ok(jope_pipeline::sha256_hex(&serde_json::to_vec(value)?))
 }
 
 /// Create once or compare exact JSON value on resume. Never replace evidence.
-fn immutable(path: &Path, value: &impl Serialize) -> Result<()> {
+pub(crate) fn immutable(path: &Path, value: &impl Serialize) -> Result<()> {
     if path.try_exists()? {
         let previous: Value = serde_json::from_slice(&fs::read(path)?)?;
         ensure!(
@@ -197,7 +214,7 @@ fn immutable(path: &Path, value: &impl Serialize) -> Result<()> {
     }
 }
 
-fn request(
+pub(crate) fn request(
     dataset: &DevelopmentData,
     cut: &DevelopmentCut,
     method: &Method,
@@ -215,7 +232,12 @@ fn request(
         scoring_rows: cut.hold.rows.len(),
         recipe_sha256: method.identity()?,
         evaluator_sha256: jope_pipeline::sha256_hex(super::EVALUATOR.as_bytes()),
-        checkpoint_sha256: None,
+        checkpoint_sha256: match method {
+            Method::Synthesized {
+                checkpoint_sha256, ..
+            } => checkpoint_sha256.clone(),
+            _ => None,
+        },
         task: dataset.dataset.task,
         metric: dataset.dataset.metric,
         classes: dataset.dataset.classes.clone(),
@@ -241,7 +263,7 @@ pub fn prepare_fit(
     prepare_fit_impl(plan, dataset, cut, method, stage, journal, true)
 }
 
-fn prepare_fit_impl(
+pub(crate) fn prepare_fit_impl(
     plan: &CampaignPlan,
     dataset: &DevelopmentData,
     cut: &DevelopmentCut,
@@ -254,6 +276,18 @@ fn prepare_fit_impl(
     let id = request.identity()?;
     let input = journal.join("inputs").join(format!("{id}.json"));
     let input_value = match method {
+        Method::Synthesized { recipe, .. } => {
+            serde_json::to_value(super::synthesized::SynthesizedFitRequest {
+                task: dataset.dataset.task,
+                schema: dataset.schema.clone(),
+                classes: dataset.dataset.classes.clone(),
+                train: cut.train.table.clone(),
+                targets: cut.train.targets.clone(),
+                predict: cut.hold.table.clone(),
+                recipe: recipe.clone(),
+                scheduling_seed: request.seed,
+            })?
+        }
         Method::Rust { recipe } => {
             let (_, input) =
                 super::evaluation_input(dataset, cut, recipe, &plan.experiment, stage)?;
@@ -283,15 +317,22 @@ fn prepare_fit_impl(
     let mut args = runtime.argument_prefix.clone();
     let mut outputs = vec![PathBuf::from("output.json")];
     match method {
-        Method::Rust { .. } => args.extend(
-            ["fit-worker", "--input"]
-                .map(str::to_owned)
-                .into_iter()
-                .chain([
-                    input.display().to_string(),
-                    "--output".into(),
-                    output.display().to_string(),
-                ]),
+        Method::Rust { .. } | Method::Synthesized { .. } => args.extend(
+            [
+                if matches!(method, Method::Synthesized { .. }) {
+                    "synthesized-fit-worker"
+                } else {
+                    "fit-worker"
+                },
+                "--input",
+            ]
+            .map(str::to_owned)
+            .into_iter()
+            .chain([
+                input.display().to_string(),
+                "--output".into(),
+                output.display().to_string(),
+            ]),
         ),
         Method::External { .. } => {
             args.extend([
@@ -338,7 +379,20 @@ fn prepare_fit_impl(
     })
 }
 
-fn checked_predictions(fit: &PendingFit, outcome: &WorkerOutcome) -> Result<(Predictions, String)> {
+pub(crate) fn checked_predictions(
+    fit: &PendingFit,
+    outcome: &WorkerOutcome,
+) -> Result<(Predictions, String)> {
+    #[cfg(feature = "asm")]
+    if matches!(fit.method, Method::Synthesized { .. }) {
+        let journal = fit
+            .job
+            .directory
+            .parent()
+            .and_then(|p| p.parent())
+            .context("fit outside journal")?;
+        super::receipt_timing::completed_fit(journal, &fit.job, outcome)?;
+    }
     outcome.verify_outputs()?;
     ensure!(
         outcome.job_sha256 == fit.job.identity()?
@@ -363,6 +417,27 @@ fn checked_predictions(fit: &PendingFit, outcome: &WorkerOutcome) -> Result<(Pre
     );
     let bytes = fs::read(fit.job.directory.join("output.json"))?;
     match &fit.method {
+        Method::Synthesized { recipe, .. } => {
+            let result: super::synthesized::SynthesizedWorkerOutput =
+                serde_json::from_slice(&bytes)?;
+            ensure!(
+                result.schema == "jope.panel-synthesized-worker-output/v1"
+                    && result.input_sha256 == fit.input_sha256
+                    && result.executable_recipe_sha256 == recipe.executable_sha256
+                    && result.physical_fit_starts == 1
+                    && result.artifact.scheduling_seed == fit.request.seed
+                    && result.artifact.task == fit.request.task
+                    && result.artifact.classes == fit.request.classes
+                    && digest(&result.artifact.recipe)? == digest(recipe)?,
+                "generated fitted envelope changed"
+            );
+            result.artifact.validate()?;
+            ensure!(
+                result.artifact_sha256 == jope_pipeline::sha256_hex(&result.artifact.bytes()?),
+                "generated fitted artifact checksum mismatch"
+            );
+            Ok((result.predictions, result.artifact_sha256))
+        }
         Method::Rust { recipe } => {
             let result: RustWorkerOutput = serde_json::from_slice(&bytes)?;
             ensure!(
@@ -482,7 +557,10 @@ pub fn score_fit(
 
 /// Fold zero is the same physical fit as screening. Reuse its authenticated
 /// predictor and observations, while retaining the original resource receipt.
-fn reuse_fold_zero(screen: &Observation, confirm: EvaluationRequest) -> Result<Observation> {
+pub(crate) fn reuse_fold_zero(
+    screen: &Observation,
+    confirm: EvaluationRequest,
+) -> Result<Observation> {
     let mut original = confirm.clone();
     original.stage = EvaluationStage::Screen;
     ensure!(
@@ -507,7 +585,7 @@ fn reuse_fold_zero(screen: &Observation, confirm: EvaluationRequest) -> Result<O
     })
 }
 
-fn score_batch(
+pub(crate) fn score_batch(
     fits: &[PendingFit],
     outcomes: Vec<WorkerOutcome>,
     data: &[DevelopmentData],
@@ -558,6 +636,10 @@ pub fn run(
     pool: &mut ExecutionPool,
     cancel: &AtomicBool,
 ) -> Result<Value> {
+    #[cfg(feature = "asm")]
+    if plan.scope == super::origin_proof::SCOPE {
+        return super::origin_proof::run(plan, manifest, datasets, journal, pool, cancel);
+    }
     let controller_start = std::time::Instant::now();
     let controller_cpu_start = cpu_seconds()?;
     plan.validate()?;
@@ -646,10 +728,41 @@ pub fn run(
         return Ok(json!({"schema":"jope.panel-admission/v2", "ok":false,
             "experiment_sha256":plan.experiment.identity()?,"window":pool.window(),
             "outcomes":outcomes,"fits_started_by_this_call":null,
+            "datasets":plan.panel.datasets.iter().map(|d|json!({"dataset":d.id,"task":d.task,"asm":"unknown_no_admitted_arm_outcome"})).collect::<Vec<_>>(),
             "accounting_note":"Partial inventory can include completed and interrupted attempts; no new-fit count is inferred from gate release.",
             "reason":"bounded execution unavailable; no selection or scientific result was frozen"}));
     }
-    let screen = score_batch(&fits, outcomes, &data, journal)?;
+    #[allow(unused_mut)]
+    let mut screen = score_batch(&fits, outcomes, &data, journal)?;
+    #[allow(unused_mut)]
+    let mut roster: BTreeMap<String, Vec<Method>> = data
+        .iter()
+        .map(|d| {
+            (
+                d.dataset.id.clone(),
+                plan.methods[d.dataset.task.as_str()].clone(),
+            )
+        })
+        .collect();
+    #[allow(unused_mut)]
+    let mut asm_inventory = Value::Null;
+    #[cfg(feature = "asm")]
+    if plan.scope == "asm-panel" {
+        let attached = super::asm_campaign::attach(plan, &data, journal, pool, cancel, &screen)?;
+        asm_inventory = attached.inventory;
+        if !attached.ready {
+            return Ok(
+                json!({"schema":"jope.asm-partial/v1","datasets":asm_inventory,"reason":"paired arms contain resumable inventory","window":pool.window(),"screen":screen}),
+            );
+        }
+        for (dataset, methods) in attached.methods {
+            roster
+                .get_mut(&dataset)
+                .context("unknown generated dataset")?
+                .extend(methods);
+        }
+        screen.extend(attached.screen);
+    }
     let mut selections = BTreeMap::new();
     let mut confirms = Vec::new();
     let mut reused = Vec::new();
@@ -663,7 +776,11 @@ pub fn run(
             .iter()
             .map(|o| (o.method.clone(), o.request.clone()))
             .collect();
-        let selection = protocol::freeze_screen(&expected, &dataset_screen, None)?;
+        let asm_method = roster[&dataset.dataset.id]
+            .iter()
+            .find(|m| m.id() == "asm.neural")
+            .map(Method::id);
+        let selection = protocol::freeze_screen(&expected, &dataset_screen, asm_method)?;
         immutable(
             &journal
                 .join("frozen")
@@ -671,7 +788,7 @@ pub fn run(
             &selection,
         )?;
         for recipe in &selection.recipes {
-            let method = plan.methods[dataset.dataset.task.as_str()]
+            let method = roster[&dataset.dataset.id]
                 .iter()
                 .find(|m| m.id() == recipe.method)
                 .context("frozen recipe absent")?;
@@ -741,14 +858,17 @@ pub fn run(
             frozen,
             expected_screen,
             screen_data,
-            None,
+            roster[&dataset.dataset.id]
+                .iter()
+                .find(|m| m.id() == "asm.neural")
+                .map(Method::id),
             &expected,
             &observations,
         )?;
         datasets_report.push(
             json!({"dataset":dataset.dataset.id,"task":dataset.dataset.task,
             "screen":screen_data,"frozen":frozen,"confirmation":observations,"recipes":confirmed,
-            "asm":"not_run_comparator_qualification_only"}),
+            "asm":asm_inventory.get(&dataset.dataset.id).cloned().unwrap_or_else(||json!("not_run_comparator_qualification_only"))}),
         );
     }
     let all: Vec<_> = screen.iter().chain(&confirmation).collect();
@@ -758,6 +878,10 @@ pub fn run(
         }
     }
     let mut accounting = cost(&all);
+    #[cfg(feature = "asm")]
+    if plan.scope == "asm-panel" {
+        accounting = super::asm_campaign::accounting(plan, journal)?;
+    }
     accounting["controller_cpu_seconds_this_invocation"] =
         json!(cpu_seconds()? - controller_cpu_start);
     accounting["controller_wall_seconds_this_invocation"] =
@@ -821,7 +945,7 @@ pub fn cost(observations: &[&Observation]) -> Value {
         "accounting_note":"Worker totals exclude controller work; unknown costs remain unknown. No cloud price is assumed."})
 }
 
-fn cpu_seconds() -> Result<f64> {
+pub(crate) fn cpu_seconds() -> Result<f64> {
     let time = nix::time::clock_gettime(nix::time::ClockId::CLOCK_PROCESS_CPUTIME_ID)?;
     Ok(time.tv_sec() as f64 + time.tv_nsec() as f64 / 1e9)
 }
@@ -835,6 +959,10 @@ pub fn report(
     datasets: &Path,
     journal: &Path,
 ) -> Result<Value> {
+    #[cfg(feature = "asm")]
+    if plan.scope == super::origin_proof::SCOPE {
+        return super::origin_proof::report(plan, manifest, datasets, journal);
+    }
     plan.validate()?;
     let (approved, hash) = super::cli::read_panel(manifest)?;
     ensure!(
@@ -852,8 +980,38 @@ pub fn report(
         .iter()
         .map(|d| super::data::load_development(datasets, d))
         .collect::<Result<Vec<_>>>()?;
+    #[allow(unused_mut)]
+    let mut roster: BTreeMap<String, Vec<Method>> = data
+        .iter()
+        .map(|d| {
+            (
+                d.dataset.id.clone(),
+                plan.methods[d.dataset.task.as_str()].clone(),
+            )
+        })
+        .collect();
+    #[allow(unused_mut)]
+    let mut asm_inventory = Value::Null;
+    #[allow(unused_mut)]
+    let mut aliases: BTreeMap<String, String> = BTreeMap::new();
+    #[cfg(feature = "asm")]
+    if plan.scope == "asm-panel" {
+        let recovered = super::asm_campaign::recover(plan, &data, journal)?;
+        asm_inventory = recovered.inventory;
+        aliases = recovered.aliases;
+        for (dataset, methods) in recovered.methods {
+            roster
+                .get_mut(&dataset)
+                .context("unknown generated dataset")?
+                .extend(methods);
+        }
+    }
     let mut jobs = BTreeMap::new();
-    for stage in ["screen-jobs.json", "confirm-jobs.json"] {
+    for stage in [
+        "screen-jobs.json",
+        "confirm-jobs.json",
+        "asm-screen-jobs.json",
+    ] {
         let path = journal.join(stage);
         if !path.try_exists()? {
             continue;
@@ -871,7 +1029,7 @@ pub fn report(
         let mut screen = Vec::new();
         let mut confirmations = Vec::new();
         let mut inventory = Vec::new();
-        for method in &plan.methods[dataset.dataset.task.as_str()] {
+        for method in &roster[&dataset.dataset.id] {
             for (stage, folds) in [
                 (EvaluationStage::Screen, 0..1),
                 (EvaluationStage::Confirm, 0..5),
@@ -915,12 +1073,31 @@ pub fn report(
                         continue;
                     }
                     let outcome: WorkerOutcome = serde_json::from_slice(&fs::read(outcome_path)?)?;
-                    let fit = prepare_fit_impl(plan, dataset, &cut, method, stage, journal, false)?;
+                    let execution_method = if stage == EvaluationStage::Screen {
+                        aliases
+                            .get(&format!("{}/{}", dataset.dataset.id, method.id()))
+                            .and_then(|id| {
+                                roster[&dataset.dataset.id].iter().find(|m| m.id() == id)
+                            })
+                            .unwrap_or(method)
+                    } else {
+                        method
+                    };
+                    let fit = prepare_fit_impl(
+                        plan,
+                        dataset,
+                        &cut,
+                        execution_method,
+                        stage,
+                        journal,
+                        false,
+                    )?;
                     ensure!(
                         fit.job.identity()? == job.identity()?,
                         "retained command changed the pinned runtime or input closure"
                     );
-                    let observation = score_fit(&fit, &outcome, &cut.hold.labels)?;
+                    let mut observation = score_fit(&fit, &outcome, &cut.hold.labels)?;
+                    observation.method = method.id().to_owned();
                     inventory.push(json!({"method":method.id(),"stage":stage,"fold":fold,
                         "status":observation.result.status,"reason":observation.result.reason}));
                     if stage == EvaluationStage::Screen {
@@ -932,7 +1109,7 @@ pub fn report(
                 }
             }
         }
-        let expected = plan.methods[dataset.dataset.task.as_str()]
+        let expected = roster[&dataset.dataset.id]
             .iter()
             .map(|method| {
                 Ok((
@@ -955,12 +1132,20 @@ pub fn report(
             let frozen: protocol::FrozenSelection =
                 serde_json::from_slice(&fs::read(frozen_path)?)?;
             ensure!(
-                frozen == protocol::freeze_screen(&expected, &screen, None)?,
+                frozen
+                    == protocol::freeze_screen(
+                        &expected,
+                        &screen,
+                        roster[&dataset.dataset.id]
+                            .iter()
+                            .find(|m| m.id() == "asm.neural")
+                            .map(Method::id)
+                    )?,
                 "stale frozen selection"
             );
             let mut expected_confirm = Vec::new();
             for recipe in &frozen.recipes {
-                let method = plan.methods[dataset.dataset.task.as_str()]
+                let method = roster[&dataset.dataset.id]
                     .iter()
                     .find(|m| m.id() == recipe.method)
                     .context("unknown frozen method")?;
@@ -991,14 +1176,20 @@ pub fn report(
                     &frozen,
                     &expected,
                     &screen,
-                    None,
+                    roster[&dataset.dataset.id]
+                        .iter()
+                        .find(|m| m.id() == "asm.neural")
+                        .map(Method::id),
                     &expected_confirm,
                     &confirmations,
                 )?)?;
             }
         }
-        report.push(json!({"dataset":dataset.dataset.id,"task":dataset.dataset.task,
-            "inventory":inventory,"screen":screen,"confirmation":confirmations,"recipes":qualified}));
+        report.push(
+            json!({"dataset":dataset.dataset.id,"task":dataset.dataset.task,
+            "inventory":inventory,"screen":screen,"confirmation":confirmations,"recipes":qualified,
+            "asm":asm_inventory.get(&dataset.dataset.id)}),
+        );
     }
     let window: Option<jope_pipeline::experiment::ExecutionWindow> =
         if journal.join("window.json").try_exists()? {
@@ -1009,10 +1200,16 @@ pub fn report(
         } else {
             None
         };
+    #[allow(unused_mut)]
+    let mut accounting = cost(&observations.iter().collect::<Vec<_>>());
+    #[cfg(feature = "asm")]
+    if plan.scope == "asm-panel" {
+        accounting = super::asm_campaign::accounting(plan, journal)?;
+    }
     Ok(
         json!({"schema":"jope.panel-recovery-report/v2","scope":plan.scope,
         "plan_sha256":plan.identity()?,"experiment_sha256":plan.experiment.identity()?,
-        "window":window,"datasets":report,"cost":cost(&observations.iter().collect::<Vec<_>>()),
+        "window":window,"datasets":report,"cost":accounting,
         "sealed_inputs_opened":false,"fits_started":0,"clock_started":false,
         "complete_asm_demonstration":false}),
     )
