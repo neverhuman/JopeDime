@@ -1731,7 +1731,8 @@ where
     }
 }
 
-fn fold_replay_evidence(folds: &[WorkerOutcome]) -> Result<String> {
+/// Authenticate the ordered inner-fold evidence for live scoring and report replay.
+pub fn fold_replay_evidence(folds: &[WorkerOutcome]) -> Result<String> {
     let mut evidence = Vec::with_capacity(folds.len());
     ensure!(folds.len() == 5, "incomplete replay fold inventory");
     let mut requests = BTreeSet::new();
