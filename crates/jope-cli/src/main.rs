@@ -80,7 +80,7 @@ enum Command {
     Emit {
         #[arg(long, default_value = DEFAULT_GENOME)]
         genome: String,
-        /// rust, python, cpp17, javascript, or all
+        /// rust, python, cpp17, cpp20, javascript (or js), or all (the four sources, no cpp20)
         #[arg(long)]
         lang: String,
         #[arg(long)]

@@ -91,6 +91,12 @@ pub fn emit_genome(genome: &str, lang: &str, output: Option<&Path>) -> Result<Em
                 }
             }
             "cpp17" => emit_cpp17(&parsed, &opts).context("emit C++17")?,
+            // C++20 compiles the one C++ source; take it from the pipeline's own call so
+            // `jope emit` and `jope pipeline run` write the same `model.cpp` bytes.
+            "cpp20" => match jope_pipeline::emit::cpp_source(&parsed).context("emit C++20")? {
+                Ok(source) => source,
+                Err(reason) => bail!("{reason}"),
+            },
             "javascript" => emit_javascript(&parsed, &opts).context("emit javascript")?,
             _ => unreachable!(),
         };
@@ -148,9 +154,10 @@ fn languages(lang: &str) -> Result<Vec<&'static str>> {
         "rust" => vec!["rust"],
         "python" => vec!["python"],
         "cpp17" => vec!["cpp17"],
+        "cpp20" => vec!["cpp20"],
         "javascript" | "js" => vec!["javascript"],
         "all" => vec!["python", "rust", "cpp17", "javascript"],
-        other => bail!("unknown language {other} (rust|python|cpp17|javascript|all)"),
+        other => bail!("unknown language {other} (rust|python|cpp17|cpp20|javascript|all)"),
     })
 }
 
@@ -158,7 +165,7 @@ fn filename(lang: &str) -> &'static str {
     match lang {
         "python" => "model.py",
         "rust" => "model.rs",
-        "cpp17" => "model.cpp",
+        "cpp17" | "cpp20" => "model.cpp",
         "javascript" => "model.js",
         _ => "model.txt",
     }
