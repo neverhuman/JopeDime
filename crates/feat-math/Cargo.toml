@@ -4,7 +4,7 @@ publish = false
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Vendored new-math engine: pipeline-genome DSL interpreter, dual Python/Rust code emitters, and evolutionary invention"
+description = "Model-synthesis kernel: pipeline-program DSL interpreter, Python/Rust/C++17/JavaScript code emitters, and in-process program synthesis"
 
 [features]
 default = []

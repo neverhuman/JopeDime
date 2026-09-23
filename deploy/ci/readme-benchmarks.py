@@ -257,7 +257,7 @@ def render_arena() -> str:
         "one of those rows, so the benchmark-valid ladder above carries none of them:",
         "",
         f"- **{applied[golden42['id']]} Golden42 rows** are each the per-dataset minimum RMSE over "
-        "the evolution ledger's test-scored candidate evaluations (63,108 across the 42 datasets), "
+        "the ledger's test-scored candidate evaluations (63,108 across the 42 datasets), "
         "not the score of one program frozen before the test targets were opened. The red-team "
         "lane in this tree names "
         "that quantity the *best-test ASPFM envelope*, role `oracle_reference_only`, and keeps it "

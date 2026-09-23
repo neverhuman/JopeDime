@@ -157,8 +157,8 @@ const EXPECTED_FIXTURES: &[ExpectedFixture] = &[
         rust_sha256: "15529624f7d1f6927138b993103892fee598a995c31f01162205c5573f95b29a",
         rust_code_tokens: 3_104,
         rust_doc_tokens: 553,
-        manifest_len: 429,
-        manifest_sha256: "636eeee06e2d23fce3b084624ca7e2f055d70ce6fab923e241e113a6bbfb46db",
+        manifest_len: 628,
+        manifest_sha256: "2dae98558e4d13db3badc67b9814d62031fbc2ed8089cd5523de1b26a749a933",
         prediction_bits: &[
             0x3fca590c3f55b872,
             0x4013cc4995ccc1cf,
@@ -178,8 +178,8 @@ const EXPECTED_FIXTURES: &[ExpectedFixture] = &[
         rust_sha256: "fd9e4f4c396a4558db49f2e7ff180b9188937d603afd97d97e433f7bdb2b2a47",
         rust_code_tokens: 2_411,
         rust_doc_tokens: 455,
-        manifest_len: 376,
-        manifest_sha256: "1fe0423ac9a572634c669c9d499ea10483f60aedcf192de4279e473cc1a3ae64",
+        manifest_len: 522,
+        manifest_sha256: "0d0dd5d88969829863bc62fe7a8c0cb8824385dfc50bcdfd082d42b92751fa6d",
         prediction_bits: &[
             0xbf20540380be5600,
             0x401267bbd9628caf,
@@ -199,8 +199,8 @@ const EXPECTED_FIXTURES: &[ExpectedFixture] = &[
         rust_sha256: "0bc79ba5898d035327800309657a02a44812a34c19391e556224ba6b48bbbf13",
         rust_code_tokens: 5_705,
         rust_doc_tokens: 651,
-        manifest_len: 438,
-        manifest_sha256: "b7299a100fb66b32b7856ec1eeaad06d52320713dd930196ab40b6a63c9522af",
+        manifest_len: 646,
+        manifest_sha256: "9a2a9c8210d81b5ec628ca007c77f83eddb65af2b7d7ceb47cbd8a432f23a155",
         prediction_bits: &[
             0x3fee888888888888,
             0x3fee888888888888,
@@ -212,16 +212,17 @@ const EXPECTED_FIXTURES: &[ExpectedFixture] = &[
         name: "symbolic_affine",
         canonical: "(sym affine \"sigmoid(col(0)) + 0.5*col(1)\")",
         genome_sha256: "319147c804ab23dda6e4645f00ab0a63362297003378e6f3175e1c1be441115e",
-        python_len: 6_035,
-        python_sha256: "c9a837866a69a8a6a7c9e449189acafb4f8ece48f22b72a889162f598c174eed",
+        // 2.2.0: the closed-form calibration sentence no longer cites the method literature.
+        python_len: 6_023,
+        python_sha256: "d9e73018f5c599180948a2488d84ba5dfb397d7b598aaa7d3c469178beb69d36",
         python_code_tokens: 857,
-        python_doc_tokens: 294,
-        rust_len: 7_172,
-        rust_sha256: "e7e3188ed6e7af417557dd05aa724555f8ec0e0321cb92f1a75c99fc3949b5d9",
+        python_doc_tokens: 292,
+        rust_len: 7_160,
+        rust_sha256: "e5b5bd3f40a0cc0a6d2cbe34b9aaa66cb1dc7c23c2b798d66d7b4f47da94e91d",
         rust_code_tokens: 1_322,
-        rust_doc_tokens: 278,
-        manifest_len: 372,
-        manifest_sha256: "eee99bb7bc6792882c08037761b43fceda7476f4cf84256d1959c51277a44a44",
+        rust_doc_tokens: 276,
+        manifest_len: 514,
+        manifest_sha256: "29d232e3e40c23e1e00f6792b6578668a94442efecab6fac32e78745f3dc1104",
         prediction_bits: &[
             0x3fee509f8f512d46,
             0x3fef4c905f54b9a4,
@@ -241,8 +242,8 @@ const EXPECTED_FIXTURES: &[ExpectedFixture] = &[
         rust_sha256: "512098bc4a760614a50eac24586fca5de3d44faf7ef1dc70f5af8e44d570d1f6",
         rust_code_tokens: 4_459,
         rust_doc_tokens: 709,
-        manifest_len: 514,
-        manifest_sha256: "c9f57b06619cd72b165128fd4b9db9d0af7146e8f78eda82ea3df09b789b2f39",
+        manifest_len: 798,
+        manifest_sha256: "17130bfc43c643da416548baa33b52caed99bbf12312d4eeef0be008d2bb74dd",
         prediction_bits: &[
             0x3fee888888888888,
             0x3fee888888888888,
@@ -324,9 +325,13 @@ fn legacy_v2_genomes_predictions_and_emissions_are_frozen() {
 
 #[test]
 fn legacy_v2_parser_errors_rng_and_folds_are_frozen() {
+    // Re-pinned with EMITTER_VERSION 2.2.0: the parser's message for an unrecognized head form
+    // says "program" instead of the older word (shipped-text rule). The accepted grammar, the
+    // token positions and every other message are unchanged.
+    // Previous: "unrecognized genome form: " / "unrecognized genome form: garbage"
     for (source, expected_error) in [
-        ("", "unrecognized genome form: "),
-        ("garbage", "unrecognized genome form: garbage"),
+        ("", "unrecognized program form: "),
+        ("garbage", "unrecognized program form: garbage"),
         ("(pipe X (ridge)", "expected '(' at token 6, got None"),
         (
             "(portfolio (blend))",
@@ -400,7 +405,11 @@ fn legacy_v2_reference_files_match_the_takeover_snapshot() {
             // prediction_bits, RNG stream and fold assignment unchanged, and all 83 golden
             // parity cases still agree bit-for-bit.
             // Previous: 91f759100481b3fbbf8f85d626eba63140f7d7ead6e0e778ecc4b59ac3c6d0c9
-            "d8cc5d006f4ffa2e3a40840b08b13410f9ecca73f0ddad1378a3aa29296c171e",
+            // Re-pinned with EMITTER_VERSION 2.2.0: golden.rs asserts the new version string.
+            // The 83 parity cases are unchanged; the pipeline emissions they cover are
+            // byte-identical (deploy/ci/emitters.sh pins unchanged).
+            // Previous: d8cc5d006f4ffa2e3a40840b08b13410f9ecca73f0ddad1378a3aa29296c171e
+            "25e6512f5581a8622a84f78b8a2b0aa688426107e70ba37b64809af6d9c19db2",
         ),
         (
             "tests/champion_parity.rs",

@@ -80,7 +80,7 @@ pub fn explain(genome: &GenomeIr) -> Result<Explanation> {
 pub fn explain_canonical(src: &str) -> Result<Explanation> {
     let genome = GenomeIr::parse(src)?;
     if genome.canonical().is_empty() {
-        bail!("empty genome");
+        bail!("empty program");
     }
     explain(&genome)
 }

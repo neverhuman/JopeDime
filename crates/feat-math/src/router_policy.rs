@@ -208,7 +208,7 @@ pub fn propose_router_genomes(
     }
 
     if candidates.is_empty() {
-        bail!("router policy produced no valid supported genomes");
+        bail!("router policy produced no valid supported programs");
     }
 
     candidates.sort_by(|a, b| {

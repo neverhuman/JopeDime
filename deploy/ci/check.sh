@@ -33,6 +33,7 @@ step "shell syntax + shellcheck"; while IFS= read -r f; do bash -n "$f"; done < 
 step "workflow validation"; if ! bash deploy/ci/actionlint-workflows.sh; then fail=1; fi
 step "gitleaks"; if command -v gitleaks >/dev/null; then gitleaks detect --redact --no-banner --config .gitleaks.toml --source . ; else echo "gitleaks not installed (skipped locally; CI installs it)"; fi
 step "no family leftovers"; leftovers=$(git grep -nE 'git\.neverhuman\.org|127\.0\.0\.1:8787' -- crates python deploy .github ':!docs' ':!**/docs/**' ':!crates/jope-engine/assets/grammar/*' | grep -v 'deploy/kernel-v1/source/' || true); if [ -n "$leftovers" ]; then head -20 <<<"$leftovers"; echo "family remotes still referenced above"; fail=1; else echo "ok"; fi
+step "shipped-text rule in prose (deploy/ci/ip-scrub.sh; emitted code is covered by feat-math's ip_scrub test)"; if ! bash deploy/ci/ip-scrub.sh; then fail=1; fi
 step "capability parity matrix (docs/parity/capability-matrix.md; source-parsed subcommands, --help cross-check runs in the test lanes)"; if ! bash deploy/ci/parity-matrix.sh --no-build; then fail=1; fi
 step "test inventory (docs/parity/test-inventory.json; Python static scan here, the nextest half runs where the workspace is built)"; if ! bash deploy/ci/test-inventory.sh --no-rust --static-python; then fail=1; fi
 step "manifests (models index ↔ bundle manifests ↔ schema; no weights downloaded)"; if bash deploy/ci/manifests.sh; then echo "ok"; else fail=1; fi

@@ -3,7 +3,7 @@
 > **Status on `main` (2026-09-21):** this page describes the target design from the port plan. Verbs marked WP7/WP11 (`jope models|datasets|learn|hwm|scores`) are not on `main` yet; `jope encode|fit|emit|search|champions|train-step|route` and `verify-inputs|generate-fixtures` are (see the README's "What this SHA actually does").
 
 JopeDime is one repository that holds the whole pipeline
-**dataset → encoders → policy → GP genome → emitted source code**. Rust owns search, evaluation,
+**dataset → encoders → policy → program → emitted source code**. Rust owns search, evaluation,
 the emitters, the CLI and every contract validator; a `uv`-managed Python package owns encoder
 inference/training and the deep-learning models (owner decision 2 in the plan). This page is the
 map; the numbers were verified on the tree at the commit that introduced it (2026-09-18).
@@ -17,8 +17,8 @@ flowchart LR
   ENC --> Z[z ∈ R^1536<br/>hyperion-512 ‖ foundation-1024<br/>target-512]
   HYP --> Z
   Z --> POL[jope-policy<br/>step-60000 transformer, grammar-masked decode]
-  POL --> SEEDS[parallel.seed_population.v1<br/>80 candidate genomes]
-  SEEDS --> ENG[jope-engine<br/>GP search, cluster CV eval, eval registry]
+  POL --> SEEDS[parallel.seed_population.v1<br/>80 candidate programs]
+  SEEDS --> ENG[jope-engine<br/>program search, cluster CV eval, eval registry]
   ENG --> WIN[cut_champion.v1<br/>high-water marks]
   WIN --> FM[feat-math<br/>DSL interpreter, heads]
   FM --> EMIT[transpile::emit<br/>Python · Rust · C++17 · C++20 · JavaScript]
@@ -36,7 +36,7 @@ passed by shared memory between stages, which is what makes each stage replayabl
 flowchart TB
   subgraph product["product crates (workspace version)"]
     numpy[numpy-pcg64<br/>bit-exact numpy 1.26 RNG, 0 deps]
-    fm[feat-math<br/>DSL · evolve · heads · registry · emitters · fitted C++ runtime]
+    fm[feat-math<br/>DSL · search · heads · registry · emitters · fitted C++ runtime]
     bg[battle-gpu<br/>raw dlopen CUDA screening, feature gpu]
     enc[jope-encoders<br/>lib name starforge: foundation, target, chimera, policy decoder]
     hyp[hyperion<br/>candle v5/v7 inference, router, GPU lease]
@@ -79,12 +79,12 @@ flowchart TB
 
 | Crate (directory) | Package name | Status on `main` today | What it owns |
 |---|---|---|---|
-| `crates/feat-math` | `feat-math` | landed (WP2) | Genome DSL (`dsl.rs`, `genome.rs`, `spec.rs`), interpreter (`model.rs`, `heads.rs`, `gpr.rs`, `krr.rs`, `boost2.rs`, `portfolio.rs`), evolution (`evolve.rs`), the op authority `registry.rs`, all emitters (`emit_py.rs`, `emit_rs.rs`, `emit_cpp.rs`, `emit_js.rs`, `transpile.rs`), the fitted C++ runtime (`advanced_v3/`, `cpp/fitted_runtime.cpp`), the one compiler helper `cxx.rs`. Crate-local `assets/champions/8944cbdf.dsl` (`include_str!`). |
+| `crates/feat-math` | `feat-math` | landed (WP2) | Program DSL (`dsl.rs`, `genome.rs`, `spec.rs`), interpreter (`model.rs`, `heads.rs`, `gpr.rs`, `krr.rs`, `boost2.rs`, `portfolio.rs`), in-process search (`evolve.rs`), the op authority `registry.rs`, all emitters (`emit_py.rs`, `emit_rs.rs`, `emit_cpp.rs`, `emit_js.rs`, `transpile.rs`), the fitted C++ runtime (`advanced_v3/`, `cpp/fitted_runtime.cpp`), the one compiler helper `cxx.rs`. Crate-local `assets/champions/8944cbdf.dsl` (`include_str!`). |
 | `crates/numpy-pcg64` | `numpy-pcg64` | landed (WP3) | Bit-exact numpy 1.26.4 `SeedSequence`/PCG64/`Generator` integer sampling and the frozen sampling recipes. |
 | `crates/jope-encoders` | `starforge` (lib name kept so no source edit was needed) | landed (WP3) | Foundation encoder (Starlight / TabPFN-v3-reg, TabICL), target encoder, chimera fusion, hash-verified bundle loader. Weight-bound tests are env-gated. |
 | `crates/battle-gpu` | `battle-gpu` | landed | Raw `dlopen("libcuda.so.1")` GPU screening for rung-0 ridge; feature `gpu`. No cudarc, so it never conflicts with candle. |
-| `crates/jope-engine` | `jope-parallel` | landed (WP1) | The engine: GP search (`gp.rs`, `grammar.rs`, `proposals*.rs`, `champions.rs`, `corpus*.rs`, `tournament.rs`), eval registry authority (`eval_registry/`), the `jope-parallel` binary with its **88 clap subcommands and global `--root`** (the jain-core consumer contract), 11 more binaries incl. `jope-build-receipt`; crate-local `assets/grammar/` (4 JSON, the committed `featmath-jain-v1.json` bakes the literal key `parallel/assets/grammar/featmath.json` — plan blocker B4) and `manifests/`. Feature `neural` = tch/LibTorch (self-hosted only); feature `cluster` (WP11) gates the smartcluster-bound modules. |
-| `crates/jope-campaigns` | `jope-dime-regressor` (rename lands with WP5) | landed (WP1); tests compile since B6 | Benchmark campaigns: Golden42/46 panels, exact-CV, test-adaptive, DL-GP best5, generalized GP, search v3, hyperion gate/router, plus today the 55 `src/bin` programs. Crate-local `manifests/`, `seeds/`, `fixtures/` (`include_str!`/`include_bytes!` inputs, B1/B7/B8), `known-evaluator-identities.json` (ADR-0004). |
+| `crates/jope-engine` | `jope-parallel` | landed (WP1) | The engine: program search (`gp.rs`, `grammar.rs`, `proposals*.rs`, `champions.rs`, `corpus*.rs`, `tournament.rs`), eval registry authority (`eval_registry/`), the `jope-parallel` binary with its **88 clap subcommands and global `--root`** (the jain-core consumer contract), 11 more binaries incl. `jope-build-receipt`; crate-local `assets/grammar/` (4 JSON, the committed `featmath-jain-v1.json` bakes the literal key `parallel/assets/grammar/featmath.json` — plan blocker B4) and `manifests/`. Feature `neural` = tch/LibTorch (self-hosted only); feature `cluster` (WP11) gates the smartcluster-bound modules. |
+| `crates/jope-campaigns` | `jope-dime-regressor` (rename lands with WP5) | landed (WP1); tests compile since B6 | Benchmark campaigns: Golden42/46 panels, exact-CV, test-adaptive, DL best5, generalized search, search v3, hyperion gate/router, plus today the 55 `src/bin` programs. Crate-local `manifests/`, `seeds/`, `fixtures/` (`include_str!`/`include_bytes!` inputs, B1/B7/B8), `known-evaluator-identities.json` (ADR-0004). |
 | `crates/jope-selfplay` | `jope-selfplay` | in flight (WP5, `wp5/cli-split`) | The flywheel control plane split out of the campaigns crate: ratchet, queue/supply/wave/promotion, watchdogs, TUI — one binary with argv[0] dispatch so unit files keep their `jope_selfplay_*` names. |
 | `crates/hyperion` | `hyperion` | in PR [#6](https://github.com/veox-ai/JopeDime/pull/6) (WP3) | Hyperion v5 arm B / v7 inference (candle 0.11), router, `.hvc2` cache, GPU lease; bins `hyperion-v5-reference`, `hyperion-batch-worker`. `HYPERION_V7_WEIGHTS` replaces the historical absolute path. |
 | `crates/jope-policy` | `jope-policy` | in PR [#6](https://github.com/veox-ai/JopeDime/pull/6) (WP3) | The step-60000 policy port: grammar/automaton, model, decode, ranking, seeds. |

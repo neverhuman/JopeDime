@@ -52,7 +52,7 @@ almost certainly remove one.
    S3 blob key, the schema, headerlessness, the caps, and — as a warning while private, a failure
    once the switch is flipped — the public licence rule.
 5. If the emitter matrix should exercise it, add a `matrix` line in `deploy/ci/emitters.sh` with
-   a genome, run `UPDATE=1 bash deploy/ci/emitters.sh` once to create the pins under
+   a program, run `UPDATE=1 bash deploy/ci/emitters.sh` once to create the pins under
    `crates/feat-math/tests/fixtures/emitted/`, and commit the pins with the data.
 6. PR description: platform, upstream URL, licence and evidence URL, why this dataset (the
    SOTArena row), which dataset it replaces and why. The reviewer re-runs step 4.

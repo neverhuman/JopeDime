@@ -316,7 +316,7 @@ pub fn fit_table(
     match genome {
         GenomeIr::Symbolic { .. } | GenomeIr::Portfolio(_) => {
             if !matches!(task.kind, TaskKind::Regression | TaskKind::Timeseries) {
-                bail!("symbolic and explicit portfolio genomes are regression-only");
+                bail!("closed-form and explicit portfolio programs are regression-only");
             }
             let config = InputConfig::compatibility();
             let (input, block) = FittedInput::fit_transform(config, schema, table, y, task.kind)?;
@@ -510,7 +510,7 @@ pub fn validate_v3_genome(genome: &GenomeIr, task: &TaskSpec, schema: &DataSchem
     task.validate()?;
     schema.validate()?;
     let GenomeIr::Pipeline(dsl) = genome else {
-        bail!("schema-bound advanced-v3 genomes must be pipelines");
+        bail!("schema-bound advanced-v3 programs must be pipelines");
     };
     for stage in &dsl.stages {
         for (key, value) in &stage.params {

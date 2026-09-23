@@ -2,7 +2,7 @@
 
 > **Status on `main` (2026-09-21):** this page describes the target design from the port plan. Verbs marked WP7/WP11 (`jope models|datasets|learn|hwm|scores`) are not on `main` yet; `jope encode|fit|emit|search|champions|train-step|route` and `verify-inputs|generate-fixtures` are (see the README's "What this SHA actually does").
 
-`crates/feat-math` lowers a fitted genome to a standalone program. The interpreter
+`crates/feat-math` lowers a fitted program to standalone source in each target. The interpreter
 (`model::fit/predict`, f64) is the reference; every emitted program must reproduce its predictions
 bit for bit. Plan section: "Code emission"; decisions: [ADR-0002](adr/ADR-0002-feat-math-reconciliation.md).
 
@@ -16,7 +16,7 @@ bit for bit. Plan section: "Code emission"; decisions: [ADR-0002](adr/ADR-0002-f
 | C++20 | same source as C++17 | same `model.cpp` compiled with `-std=c++20` (`cxx::CxxStd::Cxx20`) | `-std=c++20` | identical to C++17: C++20 is a **compile target**, not a second emitter |
 | JavaScript | `transpile::emit_javascript`, gate `supports_javascript` | `model.js`, ES2020/CommonJS functions; `deploy/ci/emitters/driver.js` makes it a program (`node program.js …`) | Node ≥ 20 (CI uses 26) | same 22 transforms and two heads as C++ |
 
-The `emit` example (`cargo run -p feat-math --example emit -- [--all] <genome.dsl> <out-dir>`)
+The `emit` example (`cargo run -p feat-math --example emit -- [--all] <program.dsl> <out-dir>`)
 writes `model.py`/`model.rs` always, `model.cpp`/`model.js` when their gates pass, a sidecar
 `manifest.json` (sha256 and token counts of the sources, math-kernel policy) and `targets.txt`.
 Without `--all` an uncovered target is reported and recorded, never silently dropped; with `--all`
@@ -70,11 +70,11 @@ and `JOPE_CXX_MARCH=znver2` reproduces that identity ([ADR-0002](adr/ADR-0002-fe
 
 | Proof | Where | What it asserts |
 |---|---|---|
-| Python ≡ Rust | `tests/golden.rs` (67 genomes), `transpile.rs` unit tests | the emitted pair and the interpreter agree bit for bit; sources are byte-deterministic |
+| Python ≡ Rust | `tests/golden.rs` (67 programs), `transpile.rs` unit tests | the emitted pair and the interpreter agree bit for bit; sources are byte-deterministic |
 | Four-language portable parity + C++20 | `tests/portable_parity.rs` over `tests/portable/full_ref.{py,rs,cpp,js}` | Rust, C++17, **C++20**, Python and JavaScript backends produce equal bits; under `JOPE_PARITY_STRICT=1` (CI) a missing tool is a failure, never a skip |
-| Emitted C++ gates | `transpile.rs` tests (g++, incl. ubsan/asan variants), `tests/champion_parity.rs`, `tests/kernel_emission_safety.rs` | compiled emitted C++ matches the Rust reference; banned-vocabulary lint (`lint_vocabulary`) rejects any artefact mentioning search internals, paths or URLs |
+| Emitted C++ gates | `transpile.rs` tests (g++, incl. ubsan/asan variants), `tests/champion_parity.rs`, `tests/kernel_emission_safety.rs` | compiled emitted C++ matches the Rust reference; the shipped-text lint (`lint_shipped_text`, asserted over every backend and the manifest by `tests/ip_scrub.rs`) rejects any artefact that reveals how the program was found, or mentions paths or URLs |
 | Fitted runtime | `tests/advanced_v3_fitted_cpp.rs`, `tests/kernel_codec.rs` | the embedded `.so` and model images reproduce the interpreter; codec identity round-trips |
-| The matrix | `deploy/ci/emitters.sh` | for `8944cbdf` and `portable-4lang` on `datasets/test/pmlb-229-pwlinear`: python, rustc, g++-17, g++-20, clang++-17, clang++-20, node — every `pred-*.txt` has the same IEEE-754 bit pattern per row and equals the committed `<genome>.predictions.sha256`; every source equals `<genome>.<target>.sha256`; `targets.txt` is pinned. `UPDATE=1` rewrites the pins (review the diff); `JOPE_CXX_MARCH` adds `-march` to every C++ build — verified identical under `znver2` |
+| The matrix | `deploy/ci/emitters.sh` | for `8944cbdf` and `portable-4lang` on `datasets/test/pmlb-229-pwlinear`: python, rustc, g++-17, g++-20, clang++-17, clang++-20, node — every `pred-*.txt` has the same IEEE-754 bit pattern per row and equals the committed `<fixture>.predictions.sha256`; every source equals `<fixture>.<target>.sha256`; `targets.txt` is pinned. `UPDATE=1` rewrites the pins (review the diff); `JOPE_CXX_MARCH` adds `-march` to every C++ build — verified identical under `znver2` |
 | Cross-`-march` / cross-compiler | nightly `parity-matrix` (WP8): `JOPE_CXX_MARCH ∈ {x86-64-v3, znver2, native}` × g++/clang++ × c++17/20 | all equal the committed sha |
 
 Measured on 2026-09-18 (128-core host): `cargo test -p feat-math --locked` 13 m 01 s including
@@ -89,6 +89,6 @@ compilation, `bash deploy/ci/emitters.sh` 20 s, the `emit` example 0.2 s.
 - Reductions are sequential and in the same order in every target (no SIMD reassociation:
   `-fno-fast-math`).
 - The RNG-bearing transforms (`rff_*`, `rand_proj`, `landmark_dist`) carry their seeds in the
-  genome and use the same integer generator in every target.
+  program and use the same integer generator in every target.
 - Predictions are written with 17 significant digits, which round-trips a double exactly, and
   the matrix compares the resulting bit patterns, not decimal strings.

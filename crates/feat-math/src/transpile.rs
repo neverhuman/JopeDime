@@ -1,10 +1,12 @@
-//! battle-transpile — deterministic genome → standalone-code emitters.
+//! battle-transpile — deterministic program → standalone-code emitters.
 //!
-//! Given a `GenomeIr`, emits (1) a single-file dependency-free Python 3 script
-//! and (2) a single-file std-only Rust program, each exposing a Model with
-//! fit/predict and a main() that reads `train.csv test_features.csv` and writes
-//! predictions. Emitted code must be bit-identical in behavior to
-//! battle-runtime, human-readable, documented, and free of GP vocabulary.
+//! Given a `GenomeIr` (the internal program representation), emits (1) a
+//! single-file dependency-free Python 3 script and (2) a single-file std-only
+//! Rust program, each exposing a Model with fit/predict and a main() that reads
+//! `train.csv test_features.csv` and writes predictions. Emitted code must be
+//! bit-identical in behavior to battle-runtime, human-readable, documented, and
+//! free of any vocabulary that reveals how the program was found
+//! ([`lint_shipped_text`]).
 //!
 //! PUBLIC API CONTRACT — battle-judge and battle-cli build against these
 //! signatures; keep them stable.
@@ -39,7 +41,12 @@ mod emit_js;
 /// such genomes previously failed to emit, and artifacts for every genome
 /// without a portfolio head are byte-identical (verified against the
 /// pre-G3 binary on the invariance fixture set).
-pub const EMITTER_VERSION: &str = "2.1.0";
+/// v2.2: the `(sym affine ...)` docstring no longer cites the method
+/// literature (its bytes change; every pipeline artifact is byte-identical
+/// to v2.1), every emitter is linted with [`lint_shipped_text`], and the
+/// manifest carries `program` / `program_sha256` beside the legacy `dsl` /
+/// `genome_sha256` keys (readers switch, then the legacy keys go).
+pub const EMITTER_VERSION: &str = "2.2.0";
 
 /// Which transcendental math implementation an emission request selects.
 ///
@@ -137,9 +144,16 @@ pub struct JavaScriptEmitted {
     pub math_policy: &'static str,
 }
 
+/// The sidecar manifest. `program` / `program_sha256` are the names; `dsl` /
+/// `genome_sha256` are kept for the readers that still use them and are
+/// dropped once every reader has switched. The manifest is the program's
+/// round-trip record, so its `program` value is never linted; its keys and
+/// every other value are ([`lint_shipped_text`] in the tests).
 #[derive(Serialize)]
 struct Manifest<'a> {
     schema: &'a str,
+    program: String,
+    program_sha256: String,
     dsl: String,
     genome_sha256: String,
     flavor: &'a str,
@@ -173,7 +187,7 @@ pub fn emit(genome: &GenomeIr, opts: &EmitOptions) -> Result<Emitted> {
     validate_math_kernel(opts)?;
     let plan = match crate::spec::build_plan(genome) {
         Ok(plan) => plan,
-        Err(missing) => bail!("unsupported genome elements: {}", missing.join("; ")),
+        Err(missing) => bail!("unsupported program elements: {}", missing.join("; ")),
     };
     let start = Instant::now();
     let python = crate::emit_py::emit_python(&plan, opts);
@@ -187,11 +201,12 @@ pub fn emit(genome: &GenomeIr, opts: &EmitOptions) -> Result<Emitted> {
         }
     );
     for (lang, src) in [("python", python.as_str()), ("rust", rust.as_str())] {
-        let hits = if is_portfolio {
+        let mut hits = if is_portfolio {
             lint_vocabulary_portfolio(src)
         } else {
             lint_vocabulary(src)
         };
+        hits.extend(lint_shipped_phrases(src));
         if !hits.is_empty() {
             bail!("banned vocabulary in {lang} artifact: {}", hits.join(", "));
         }
@@ -211,6 +226,8 @@ pub fn emit(genome: &GenomeIr, opts: &EmitOptions) -> Result<Emitted> {
     let canonical = genome.canonical();
     let manifest = serde_json::to_string(&Manifest {
         schema: "battle-artifact-v1",
+        program: canonical.clone(),
+        program_sha256: sha256_hex(&canonical),
         genome_sha256: sha256_hex(&canonical),
         dsl: canonical,
         flavor,
@@ -254,7 +271,7 @@ pub fn supports(genome: &GenomeIr) -> std::result::Result<(), Vec<String>> {
 pub fn emit_cpp17(genome: &GenomeIr, opts: &EmitOptions) -> Result<String> {
     let plan = match crate::spec::build_plan(genome) {
         Ok(plan) => plan,
-        Err(missing) => bail!("unsupported genome elements: {}", missing.join("; ")),
+        Err(missing) => bail!("unsupported program elements: {}", missing.join("; ")),
     };
     let source = match emit_cpp::emit_cpp(&plan, opts) {
         Ok(source) => source,
@@ -263,7 +280,7 @@ pub fn emit_cpp17(genome: &GenomeIr, opts: &EmitOptions) -> Result<String> {
             unsupported.join(", ")
         ),
     };
-    let hits = lint_vocabulary(&source);
+    let hits = lint_shipped_text(&source);
     if !hits.is_empty() {
         bail!("banned vocabulary in C++17 artifact: {}", hits.join(", "));
     }
@@ -296,7 +313,7 @@ pub fn supports_cpp17(genome: &GenomeIr) -> std::result::Result<(), Vec<String>>
 pub fn emit_javascript(genome: &GenomeIr, opts: &EmitOptions) -> Result<String> {
     let plan = match crate::spec::build_plan(genome) {
         Ok(plan) => plan,
-        Err(missing) => bail!("unsupported genome elements: {}", missing.join("; ")),
+        Err(missing) => bail!("unsupported program elements: {}", missing.join("; ")),
     };
     let source = match emit_js::emit_js(&plan, opts) {
         Ok(source) => source,
@@ -305,7 +322,7 @@ pub fn emit_javascript(genome: &GenomeIr, opts: &EmitOptions) -> Result<String> 
             unsupported.join(", ")
         ),
     };
-    let hits = lint_vocabulary(&source);
+    let hits = lint_shipped_text(&source);
     if !hits.is_empty() {
         bail!(
             "banned vocabulary in JavaScript artifact: {}",
@@ -393,6 +410,49 @@ pub fn lint_vocabulary_portfolio(src: &str) -> Vec<String> {
     if src.to_lowercase().contains("oof") {
         hits.push("oof".to_string());
     }
+    hits
+}
+
+/// Phrases that reveal how a program was found and must never appear in
+/// anything that ships: emitted code in every language, manifests, receipts,
+/// CLI help. They extend [`lint_vocabulary`] (which bans the older single
+/// words) at the phrase level, so ordinary machine-learning words keep their
+/// ordinary meaning: "tree" in "boosted trees" is fine, "expression tree" is
+/// not. Matched case-insensitively as substrings.
+pub const SHIPPED_TEXT_BANNED: &[&str] = &[
+    "keijzer",
+    "koza",
+    "evolv",
+    "genetic prog",
+    "gp ",
+    "gp-",
+    "generation",
+    "expression tree",
+    "parse tree",
+    "syntax tree",
+    "symbolic regression",
+    "tree-based program",
+    "island",
+    "tournament",
+    "elitism",
+    "elites",
+];
+
+/// The phrase-level half of [`lint_shipped_text`].
+pub fn lint_shipped_phrases(src: &str) -> Vec<String> {
+    let lower = src.to_lowercase();
+    SHIPPED_TEXT_BANNED
+        .iter()
+        .filter(|b| lower.contains(**b))
+        .map(|b| b.to_string())
+        .collect()
+}
+
+/// The lint every shipped artifact must pass: [`lint_vocabulary`] plus
+/// [`SHIPPED_TEXT_BANNED`]. Returns every hit, empty when clean.
+pub fn lint_shipped_text(src: &str) -> Vec<String> {
+    let mut hits = lint_vocabulary(src);
+    hits.extend(lint_shipped_phrases(src));
     hits
 }
 

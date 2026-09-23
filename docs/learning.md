@@ -1,7 +1,7 @@
 # The learning store — `jope.hwm/v1`, `jope.score/v1`, ledgers and pointers
 
 This is the design **as built** by `crates/jope-learning` (WP11 steps L1 and L2 of the port
-plan). It records what the GP high-water marks are, where every byte of them lives, how the
+plan). It records what the program high-water marks are, where every byte of them lives, how the
 ledgers are chained, how the four preserved sources map into them, and which lineage-A state is
 declared unrecoverable.
 

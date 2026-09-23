@@ -1,0 +1,5 @@
+# deploy/ci/ip-scrub.sh exemptions: one path per line, then the reason. Remove a line when the
+# reason no longer holds.
+docs/asm.md owned by the contract lane; renamed and reworded with the pipeline/CLI follow-up
+crates/jope-pipeline/Cargo.toml pipeline description reworded with the receipt/manifest follow-up
+crates/jope-cli/Cargo.toml CLI description reworded with the help-string follow-up
