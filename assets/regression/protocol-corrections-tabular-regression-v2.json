@@ -15,14 +15,34 @@
       ],
       "benchmark_valid": false,
       "selection": "test-adaptive",
-      "reason": "The three Golden46 rows were accepted from run golden46-new3-20260723-v4 through results/tabular-regression-v2/aspfm-acceptance-manifest.json, which records benchmark_valid: true. The campaign that produced that run lives in this repository's test-adaptive module and writes every artefact of the run with benchmark_valid: false and test_adaptive: true (its generation-zero seed snapshots are derived from the best test-scored candidate of the corrected parent run). The published flag contradicts the source run's own label, so these rows are demoted to test-adaptive here. The other 42 jope-dime rows (source_kind complete-evolution-ledger-snapshot, Golden42) carry no contradicting label in this repository and are left as published; their selection protocol is re-established by the same-cut benchmark rather than assumed either way.",
+      "reason": "The three Golden46 rows were accepted from run golden46-new3-20260723-v4 through results/tabular-regression-v2/aspfm-acceptance-manifest.json, which records benchmark_valid: true. The campaign that produced that run lives in this repository's test-adaptive module and writes every artefact of the run with benchmark_valid: false and test_adaptive: true; its generation-zero seeds are derived from the best test-scored candidate of the corrected parent run. The published flag contradicts the source run's own label, so these rows are demoted to test-adaptive.",
       "evidence": [
         "crates/jope-campaigns/src/test_adaptive/aggressive.rs:732-748 (GenerationZeroSeedSnapshot { benchmark_valid: false, test_adaptive: true, run_id, arm: \"corrected-test-adaptive-continuation\" })",
-        "crates/jope-campaigns/src/test_adaptive/aggressive.rs:510-530 (the same flags on the run's other artefacts)",
+        "crates/jope-campaigns/src/test_adaptive/aggressive.rs:510-530 (PreflightReceipt and CampaignIdentity carry the same flags)",
+        "crates/jope-campaigns/src/test_adaptive/aggressive.rs:700-724 (parent seed chosen by lowest RMSE over the corrected parent's checkpoints, source_kind corrected_test_adaptive_parent)",
         "crates/jope-campaigns/src/test_adaptive/scq_batch.rs:32 (GOLDEN46_RUN_ID = \"golden46-new3-20260723-v4\")",
         "crates/jope-campaigns/src/main.rs:714 (run-golden46 defaults to this run id)",
-        "docs/legacy/root-docs/legacy/README.root-legacy.md:164-175 (the aggressive and Golden46 lanes; the aggressive lane is documented as test-adaptive and benchmark_valid: false)",
+        "docs/legacy/root-docs/legacy/README.root-legacy.md:67-78 (the aggressive lane is documented as test-adaptive and benchmark_valid: false; run-golden46 is the next entry, same module)",
         "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/aspfm-acceptance-manifest.json (source_evolution_receipt.run_id = golden46-new3-20260723-v4 for all three entries; benchmark_valid: true)"
+      ]
+    },
+    {
+      "id": "golden42-evolution-envelope-test-selected",
+      "method_id": "jope-dime",
+      "source_kind": "complete-evolution-ledger-snapshot",
+      "source_revision": "1784790556145",
+      "benchmark_valid": false,
+      "selection": "test-selected",
+      "reason": "The 42 Golden42 rows are the per-dataset minimum RMSE over every valid evaluation in the combined evolution ledger (63,108 test-scored candidate evaluations), not the score of one program selected before the test targets were opened. This repository's own red-team lane names exactly that quantity: it declares the jope-dime baseline as the best-test ASPFM envelope over 63,108 Golden42 candidate evaluations with role oracle_reference_only, refuses any configuration that says otherwise, reads the value from the index's best_rmse, and keeps it out of the fair ladder while jope-dime-regressor, TabPFN v3 and TabFM are role fair. A minimum over test-scored candidates is a test-adaptive selection whatever each candidate was fitted on, so these rows are demoted. The reproducible fixed-seed run of the same engine (jope-dime-regressor, public-development) is untouched.",
+      "evidence": [
+        "python/src/jope/research/index_combined_regression_evolution.py:183 (\"best_rmse\": min(rmse) over every valid evaluation of the per-dataset ledger)",
+        "crates/jope-campaigns/src/commands/train_only_redteam.rs:402-407 (oracle_aspfm: method_id \"jope-dime\", label \"best-test ASPFM envelope over 63,108 Golden42 candidate evaluations\", role \"oracle_reference_only\", candidate_evaluations 63_108)",
+        "crates/jope-campaigns/src/commands/train_only_redteam.rs:550-556 (a config that labels it otherwise is refused)",
+        "crates/jope-campaigns/src/commands/train_only_redteam_results.rs:566-578 (oracle_aspfm_rmse read from the jope-dime.combined-regression-dataset-index.v1 index's /best_rmse)",
+        "crates/jope-campaigns/src/commands/train_only_redteam_results.rs:1440-1471 (kept out of fair_ladder; ranked only in oracle_reference_ladder)",
+        "python/src/jope/research/train_only_redteam_scq.py:1527-1536 (the evolution index is listed among score_access_files beside test.csv)",
+        "assets/regression/SOURCES.md (dataset-coverage.csv's jope_best_rmse rejected as a baseline because it is the evolution-wide best, not one campaign cell)",
+        "scores.csv rows: method_id jope-dime, source_kind complete-evolution-ledger-snapshot, source_uri results/tabular-regression-v1/jope-dime-evolution/datasets/golden42/<hash>/evaluations.jsonl (the whole ledger, not one program's receipt)"
       ]
     }
   ]

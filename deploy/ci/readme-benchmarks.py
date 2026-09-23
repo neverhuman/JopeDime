@@ -111,7 +111,7 @@ def load_evidence() -> dict:
         refuse(f"{SNAPSHOT.relative_to(ROOT)}: the published ladder must apply no corrections")
     if corrections.get("schema") != CORRECTIONS_SCHEMA:
         refuse(f"{CORRECTIONS.relative_to(ROOT)}: schema is not {CORRECTIONS_SCHEMA}")
-    if corrections["scores_sha256"] != published["scores_sha256"] != valid["scores_sha256"]:
+    if not (corrections["scores_sha256"] == published["scores_sha256"] == valid["scores_sha256"]):
         refuse("the two ladders and the corrections do not bind the same scores.csv")
     meta = valid["corrections"]
     if meta is None or meta["sha256"] != sha256(CORRECTIONS):
@@ -119,8 +119,13 @@ def load_evidence() -> dict:
             f"{VALID_SNAPSHOT.relative_to(ROOT)} was not computed with the committed "
             f"{CORRECTIONS.relative_to(ROOT)}"
         )
-    if valid["excluded_rows"] < meta["rows_corrected"]:
-        refuse("the benchmark-valid ladder excluded fewer rows than the corrections demoted")
+    if valid["excluded_rows"] != meta["rows_corrected"]:
+        # Equal while every published row is True. If the benchmark ever publishes a False row,
+        # the ladder excludes it too and this sentence must be rewritten, not silently under-counted.
+        refuse(
+            f"the benchmark-valid ladder excluded {valid['excluded_rows']} rows but the corrections "
+            f"demoted {meta['rows_corrected']}; the README prose assumes they are the same set"
+        )
     if any(r["benchmark_valid"] != "True" for r in valid_rows):
         refuse("a benchmark-invalid method survived into the benchmark-valid ladder")
 
@@ -192,11 +197,16 @@ def render_arena() -> str:
     split = track.get("split", {})
     policy = track.get("leaderboard_policy", {})
     excluded = ", ".join(split.get("excluded_datasets", [])) or "none"
-    corrected = valid["corrections"]["rows_corrected"]
+    excluded_rows = valid["excluded_rows"]
     published_ours = {r["method_id"]: r for r in e["published_rows"] if r["method_id"] in OURS}
     valid_ours = {r["method_id"]: r for r in e["valid_rows"] if r["method_id"] in OURS}
-    run_ids = sorted({c["source_revision"] for c in corrections["corrections"] if c.get("source_revision")})
-    evidence = corrections["corrections"][0]["evidence"][0].split(" ")[0]
+    applied = {a["id"]: a["rows"] for a in valid["corrections"]["applied"]}
+    by_id = {c["id"]: c for c in corrections["corrections"]}
+    golden46 = by_id.get("golden46-new3-20260723-v4-test-adaptive")
+    golden42 = by_id.get("golden42-evolution-envelope-test-selected")
+    if golden46 is None or golden42 is None:
+        refuse("the README prose is written for the two committed corrections; update both together")
+    first_ref = lambda c: c["evidence"][0].split(" ")[0]  # noqa: E731
 
     out = [
         ARENA_BEGIN,
@@ -208,53 +218,64 @@ def render_arena() -> str:
         f"{split.get('restricted_dataset_count', 0)} datasets are restricted; "
         f"excluded datasets: {excluded}.",
         "",
-        "#### Held-out, benchmark-valid — the ladder this repository claims",
+        "#### Benchmark-valid — the ladder this repository claims",
         "",
         f"**{valid['methods']} methods** · {valid['rankable_rows']:,} rankable scores · "
-        f"{corrected} published rows excluded as test-adaptive (see the next block). "
-        "Bold rows are this repository's entries.",
+        f"{excluded_rows} published rows excluded as test-selected (see the next block). "
+        "Bold rows are this repository's entries. *Benchmark-valid* here means that no artefact in "
+        "this repository contradicts the row's published flag; it is not a claim that every "
+        "comparator's protocol was verified.",
         "",
         *ladder_table(e["valid_rows"]),
         "",
         "**Read the protocol column before the Elo column.** "
         f"`leaderboard_policy.protocols_ranked_together` is "
         f"`{str(policy.get('protocols_ranked_together', False)).lower()}`, so entries produced under "
-        "different protocols share one ladder. `jope-dime` is the only `aspfm-generated` entry "
-        "(a program written per dataset); `jope-dime-regressor` is one fixed-seed reproducible run "
-        "under `public-development`, the same protocol as every other comparator. Read the ladder "
-        "as a standing among entries generated under different protocols, not as a like-for-like "
-        "held-out comparison; the same-cut benchmark is what makes it one.",
+        "different protocols share one ladder. `jope-dime-regressor` is one fixed-seed reproducible "
+        "run of this repository's engine under `public-development`, the same protocol as every "
+        "other comparator. The same-cut benchmark is what turns this into a like-for-like "
+        "comparison.",
         "",
-        "#### Best known program per dataset — as published; test-adaptive, not a held-out result",
+        "#### Best known program per dataset — as published; test-selected, not a held-out result",
         "",
     ]
     p = published_ours.get("jope-dime")
+    if p is None:
+        refuse("jope-dime is missing from the published ladder")
     v = valid_ours.get("jope-dime")
-    if p is None or v is None:
-        refuse("jope-dime is missing from a ladder")
     out += [
         f"The benchmark published `jope-dime` at rank {p['elo_rank']}, Elo {p['elo']}, "
         f"{p['dataset_wins']} dataset wins, {p['datasets_scored']}/{p['datasets_total']} coverage, "
-        f"every row `benchmark_valid: True`. {corrected} of those rows come from run "
-        f"`{'`, `'.join(run_ids)}`, whose artefacts this repository's own campaign code writes with "
-        f"`benchmark_valid: false, test_adaptive: true` (`{evidence}`); the acceptance manifest "
-        "relabelled the replayed winners `true`. Those rows are the best program found per dataset "
-        "when candidates were scored on the test targets. They are reported here as best-known "
-        "results and are excluded from the ladder above; they are never a held-out claim.",
+        f"every row `benchmark_valid: True`. This repository's own code says otherwise about every "
+        "one of those rows, so the benchmark-valid ladder above carries none of them:",
         "",
-        f"The other {v['datasets_scored']} `jope-dime` rows are the best value of a per-dataset "
-        "evolution ledger (`source_kind: complete-evolution-ledger-snapshot`). This repository "
-        "holds no artefact contradicting their published flag, and none proving the selection was "
-        "frozen before the test targets were opened, so they stay as published. The same-cut "
-        "benchmark replaces every row above with numbers this tree can reproduce; until then, "
-        "*benchmark-valid* means \"no contradicting evidence here\", not \"verified held-out\".",
+        f"- **{applied[golden42['id']]} Golden42 rows** are the per-dataset minimum RMSE over "
+        "63,108 test-scored candidate evaluations of the evolution ledger, not the score of one "
+        "program frozen before the test targets were opened. The red-team lane in this tree names "
+        "that quantity the *best-test ASPFM envelope*, role `oracle_reference_only`, and keeps it "
+        f"out of its fair ladder (`{first_ref(golden42)}`, "
+        "`crates/jope-campaigns/src/commands/train_only_redteam.rs:402-407`).",
+        f"- **{applied[golden46['id']]} Golden46 rows** come from run "
+        f"`{golden46['source_revision']}`, whose artefacts this repository's campaign code writes "
+        f"with `benchmark_valid: false, test_adaptive: true` (`{first_ref(golden46)}`); the "
+        "acceptance manifest relabelled the replayed winners `true`.",
         "",
-        "| ladder | `jope-dime` rank | Elo | dataset wins | coverage |",
+        "Both are the best program found per dataset when candidates were scored on the test "
+        "targets: reported here as best-known results, never as a held-out claim. The reproducible "
+        "fixed-seed run of the same engine, `jope-dime-regressor`, is what stands on the ladder "
+        "above. The same-cut benchmark replaces every row on this page with numbers this tree can "
+        "reproduce.",
+        "",
+        "| ladder | `jope-dime` | Elo | dataset wins | coverage |",
         "| --- | ---: | ---: | ---: | --- |",
-        f"| as published | {p['elo_rank']} | {p['elo']} | {p['dataset_wins']} | "
+        f"| as published | rank {p['elo_rank']} | {p['elo']} | {p['dataset_wins']} | "
         f"{p['datasets_scored']}/{p['datasets_total']} |",
-        f"| benchmark-valid | {v['elo_rank']} | {v['elo']} | {v['dataset_wins']} | "
-        f"{v['datasets_scored']}/{v['datasets_total']} |",
+        (
+            f"| benchmark-valid | rank {v['elo_rank']} | {v['elo']} | {v['dataset_wins']} | "
+            f"{v['datasets_scored']}/{v['datasets_total']} |"
+            if v is not None
+            else "| benchmark-valid | not ranked | — | — | 0/45 (every row test-selected) |"
+        ),
         "",
         f"Sources: published `{LEADERBOARD.relative_to(ROOT)}` (sha256 "
         f"`{sha256(LEADERBOARD)[:16]}…`), recomputed byte-for-byte from `scores.csv`; benchmark-valid "

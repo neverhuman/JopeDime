@@ -17,13 +17,15 @@ use jope_arena::leaderboard::{self, Ladder, Snapshot, SNAPSHOT_SCHEMA};
 const TRACK: &str = "tabular-regression-v2";
 const SCORES_SHA256: &str = "5ec868987c2f4286ae44728fde49215ec6e55e7d27e62100d3823744e2957db6";
 const LEADERBOARD_SHA256: &str = "2d28ffbd8b5830c6adc39874dfcf98498419ef8c1df6ac5eb135c660013fb24f";
-/// `assets/regression/protocol-corrections-tabular-regression-v2.json`: the three Golden46 rows
-/// of `jope-dime` (run `golden46-new3-20260723-v4`) demoted to test-adaptive, as the run's own
-/// artefacts label them (`crates/jope-campaigns/src/test_adaptive/aggressive.rs`).
-const CORRECTIONS_SHA256: &str = "6d095191322f7d4a21362052232333c4956c537157203a47a6b1d1b0c2a5c7ab";
+/// `assets/regression/protocol-corrections-tabular-regression-v2.json`: every `jope-dime` row
+/// demoted — the three Golden46 rows (run `golden46-new3-20260723-v4`) as the run's own
+/// artefacts label them (`crates/jope-campaigns/src/test_adaptive/aggressive.rs`), and the 42
+/// Golden42 rows as the red-team lane labels them: the best-test envelope over 63,108
+/// test-scored evaluations (`crates/jope-campaigns/src/commands/train_only_redteam.rs:402-407`).
+const CORRECTIONS_SHA256: &str = "6a831c4a97c2fc29627399809e1860f358a6c3ce69d864a0091463c6d860816d";
 /// `assets/regression/leaderboard-tabular-regression-v2.benchmark-valid.csv`.
 const VALID_LEADERBOARD_SHA256: &str =
-    "e0454e2c389647e7dfab37a874c7dd7915c2535c1aec1fc958a9e6b8b0df0199";
+    "4c39f51c2e269114f7bbd32728c4627e9aba240518c8950cfb4facce540910fe";
 const GOLDEN46_DATASETS: [&str; 3] = ["6054656956182296", "ZTS_small", "a3bd0a400ec4d7f9"];
 
 fn repo_root() -> PathBuf {
@@ -162,6 +164,28 @@ fn benchmark_valid_ladder_excludes_the_rows_the_campaign_code_labels_test_adapti
             "results/tabular-regression-v2/aspfm-acceptance-manifest.json"
         );
     }
+    // ... and the 42 Golden42 evolution-envelope rows: the whole ledger cited as the source.
+    let golden42: Vec<&jope_arena::scores::ScoreRow> = scores
+        .iter()
+        .filter(|r| {
+            r.method_id == "jope-dime" && r.source_kind == "complete-evolution-ledger-snapshot"
+        })
+        .collect();
+    assert_eq!(golden42.len(), 42);
+    for row in &golden42 {
+        assert_eq!(row.source_revision, "1784790556145");
+        assert_eq!(row.benchmark_valid, "True");
+        assert!(
+            row.source_uri.ends_with("/evaluations.jsonl"),
+            "{}",
+            row.source_uri
+        );
+    }
+    assert_eq!(
+        scores.iter().filter(|r| r.method_id == "jope-dime").count(),
+        45,
+        "the two corrections cover every published jope-dime row"
+    );
 
     let (board, _) = leaderboard::compute(
         &fixture_root(),
@@ -173,23 +197,28 @@ fn benchmark_valid_ladder_excludes_the_rows_the_campaign_code_labels_test_adapti
     .unwrap_or_else(|error| panic!("benchmark-valid recompute failed: {error:#}"));
     assert_eq!(board.ladder, Ladder::BenchmarkValid);
     assert_eq!(board.scores_sha256, SCORES_SHA256);
-    assert_eq!(board.excluded_rows, 3);
-    assert_eq!(board.rankable_rows, 8763 - 3);
+    assert_eq!(board.excluded_rows, 45);
+    assert_eq!(board.rankable_rows, 8763 - 45);
     assert_eq!(
         board.datasets_scored, 45,
-        "the three datasets keep their other methods"
+        "every dataset keeps its other methods"
     );
-    assert_eq!(board.rows.len(), 305);
+    assert_eq!(board.rows.len(), 304, "jope-dime has no valid row left");
     let meta = board.corrections.as_ref().expect("corrections recorded");
     assert_eq!(meta.file, "protocol-corrections-tabular-regression-v2.json");
     assert_eq!(meta.sha256, CORRECTIONS_SHA256);
-    assert_eq!(meta.rows_corrected, 3);
-    assert_eq!(meta.applied.len(), 1);
+    assert_eq!(meta.rows_corrected, 45);
+    assert_eq!(meta.applied.len(), 2);
     assert_eq!(
         meta.applied[0].id,
         "golden46-new3-20260723-v4-test-adaptive"
     );
     assert_eq!(meta.applied[0].rows, 3);
+    assert_eq!(
+        meta.applied[1].id,
+        "golden42-evolution-envelope-test-selected"
+    );
+    assert_eq!(meta.applied[1].rows, 42);
     assert!(
         board.rows.iter().all(|r| r.benchmark_valid == "True"),
         "nothing invalid survives into the benchmark-valid ladder"
@@ -199,28 +228,24 @@ fn benchmark_valid_ladder_excludes_the_rows_the_campaign_code_labels_test_adapti
         .iter()
         .all(|r| r.scope == Ladder::BenchmarkValid.scope()));
 
-    // What the correction does to this repository's own entries. These are the numbers the
-    // README renders; the honest coverage is 42/45 and it is no longer a full-coverage rank.
-    let jope = board
-        .rows
-        .iter()
-        .find(|r| r.method_id == "jope-dime")
-        .unwrap();
-    assert_eq!(jope.datasets_scored, 42);
-    assert_eq!(jope.full_coverage, "False");
-    assert_eq!(jope.full_coverage_rank, "");
-    assert_eq!(jope.coverage_status, "42/45");
-    assert_eq!(jope.elo_rank, 1);
-    assert_eq!(jope.elo, "2260.8");
-    assert_eq!(jope.dataset_wins, 11);
+    // What the corrections do to this repository's own entries. These are the numbers the
+    // README renders: jope-dime is gone, and the reproducible fixed-seed run is the entry.
+    assert!(
+        board.rows.iter().all(|r| r.method_id != "jope-dime"),
+        "jope-dime must not appear on the benchmark-valid ladder"
+    );
+    assert_eq!(board.rows[0].method_id, "tabfm_ensemble_regressor");
+    assert_eq!(board.rows[0].elo, "1934.9");
     let regressor = board
         .rows
         .iter()
         .find(|r| r.method_id == "jope-dime-regressor")
         .unwrap();
-    assert_eq!(regressor.elo_rank, 32);
-    assert_eq!(regressor.elo, "1684.8");
+    assert_eq!(regressor.elo_rank, 31);
+    assert_eq!(regressor.elo, "1687.0");
     assert_eq!(regressor.datasets_scored, 42);
+    assert_eq!(regressor.full_coverage, "False");
+    assert_eq!(regressor.protocols, "public-development");
 
     let csv = leaderboard::to_csv(&board.rows).unwrap();
     assert_eq!(sha256_hex(csv.as_bytes()), VALID_LEADERBOARD_SHA256);

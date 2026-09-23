@@ -53,28 +53,32 @@ per dataset, not as a held-out result.
 
 Not a copy of anything: a `jope.arena-protocol-corrections/v1` file written here, bound to the
 `scores.csv` SHA-256 above, listing published rows whose `benchmark_valid: True` this repository's
-own campaign code contradicts. One entry (SHA-256 `6d095191322f7d4a21362052232333c4956c537157203a47a6b1d1b0c2a5c7ab`):
+own code contradicts. Two entries (file SHA-256
+`6a831c4a97c2fc29627399809e1860f358a6c3ce69d864a0091463c6d860816d`), together every `jope-dime` row:
 
 | id | selects | why |
 |---|---|---|
 | `golden46-new3-20260723-v4-test-adaptive` | the 3 `jope-dime` rows with `source_revision = golden46-new3-20260723-v4` (`6054656956182296`, `ZTS_small`, `a3bd0a400ec4d7f9`; `source_kind = accepted-current-best-rust-replay`, via `aspfm-acceptance-manifest.json`) | the run's own artefacts are written with `benchmark_valid: false, test_adaptive: true` (`crates/jope-campaigns/src/test_adaptive/aggressive.rs`); the acceptance manifest relabelled the replayed winners `true` |
+| `golden42-evolution-envelope-test-selected` | the 42 `jope-dime` rows with `source_kind = complete-evolution-ledger-snapshot` (`source_revision = 1784790556145`, `source_uri = …/jope-dime-evolution/datasets/golden42/<hash>/evaluations.jsonl`) | each value is the per-dataset minimum RMSE over every valid evaluation of the combined evolution ledger (63,108 test-scored candidate evaluations; `python/src/jope/research/index_combined_regression_evolution.py:183`). The red-team lane in this tree names that quantity the *best-test ASPFM envelope*, role `oracle_reference_only`, refuses a config that says otherwise and keeps it out of its fair ladder (`crates/jope-campaigns/src/commands/train_only_redteam.rs:402-407,550-556`, `train_only_redteam_results.rs:566-578,1440-1471`). A minimum over test-scored candidates is a test-adaptive selection whatever each candidate was fitted on |
 
-The other 42 `jope-dime` rows (`source_kind = complete-evolution-ledger-snapshot`) are **not**
-corrected: this tree holds no artefact contradicting their flag, and none proving their selection was
-frozen before test scoring either. A correction needs cited evidence; an inference is not one.
-Corrections can only demote, must select at least one row, and are refused against any other
-`scores.csv` (`crates/jope-arena/src/corrections.rs`).
+The second entry was added after independent review 5285270844 of PR #68 found the red-team
+labels; the first version of this file corrected only the Golden46 rows and said the tree held no
+artefact contradicting the other 42. It did. Corrections need cited evidence, can only demote, must
+select at least one row, and are refused against any other `scores.csv`
+(`crates/jope-arena/src/corrections.rs`). `jope-dime-regressor` (one fixed-seed reproducible run of
+the same engine, `public-development`) is untouched and is this repository's entry on the
+benchmark-valid ladder.
 
 ## `leaderboard-tabular-regression-v2.benchmark-valid.csv` and `elo-tabular-regression-v2.benchmark-valid.json`
 
 `jope-arena elo --track tabular-regression-v2 --root assets/regression/sotarena-tabular-regression-v2
 --ladder benchmark-valid --corrections assets/regression/protocol-corrections-tabular-regression-v2.json
 --out … --json …`: the same `scores.csv` with the corrections applied and every row whose
-`benchmark_valid` is `False` left out of the fit (`excluded_rows: 3`, 8,760 rankable rows, 305
-methods). CSV SHA-256 `e0454e2c389647e7dfab37a874c7dd7915c2535c1aec1fc958a9e6b8b0df0199`. On it
-**jope-dime is rank 1, Elo 2260.8, 11 dataset wins, 42/45 — no longer a full-coverage rank** (the
-three uncovered datasets have only test-adaptive results); `jope-dime-regressor` (one fixed-seed
-reproducible run, `public-development`) is rank 32, Elo 1684.8, 42/45. Asserted byte-for-byte by
+`benchmark_valid` is `False` left out of the fit (`excluded_rows: 45`, 8,718 rankable rows, 304
+methods). CSV SHA-256 `4c39f51c2e269114f7bbd32728c4627e9aba240518c8950cfb4facce540910fe`. On it
+**`jope-dime` does not appear** (every one of its 45 published rows is test-selected, see above);
+**`jope-dime-regressor` (one fixed-seed reproducible run, `public-development`) is rank 31, Elo
+1687.0, 1 dataset win, 42/45**; TabFM Ensemble is rank 1 at 1934.9. Asserted byte-for-byte by
 `crates/jope-arena/tests/elo_regression.rs::benchmark_valid_ladder_excludes_the_rows_the_campaign_code_labels_test_adaptive`
 and rendered into the README by `deploy/ci/readme-benchmarks.py`, which refuses to render when the
 two snapshots, the two CSVs and the corrections file disagree with each other.
