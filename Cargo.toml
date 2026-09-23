@@ -6,6 +6,7 @@ members = [
   "crates/jope-policy",
   "crates/battle-gpu",
   "crates/jope-arena",
+  "crates/jope-bench",
   "crates/jope-engine",
   "crates/jope-campaigns",
   "crates/jope-cli",
