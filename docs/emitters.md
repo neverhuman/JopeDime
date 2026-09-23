@@ -1,6 +1,6 @@
 # Emitters: Python, Rust, C++17, C++20, JavaScript
 
-> **Status on `main` (2026-09-21):** this page describes the target design from the port plan. Verbs marked WP7/WP11 (`jope models|datasets|learn|hwm|scores`) are not on `main` yet; `jope encode|fit|emit|search|champions|train-step|route` and `verify-inputs|generate-fixtures` are (see the README's "What this SHA actually does").
+> **Status on `main` (2026-09-23):** `jope emit` (all five targets, `--lang cpp20` included), `jope pipeline run --emit …`, `jope models` and `jope datasets` are on `main`. There is no `jope learn`, `jope hwm` or `jope scores`; the learning store is the separate `jope-learning` binary. The machine check of the exclusion table planned below has not landed. See the README's "What this SHA actually does".
 
 `crates/feat-math` lowers a fitted program to standalone source in each target. The interpreter
 (`model::fit/predict`, f64) is the reference; every emitted program must reproduce its predictions
@@ -80,8 +80,9 @@ and `JOPE_CXX_MARCH=znver2` reproduces that identity ([ADR-0002](adr/ADR-0002-fe
 | The matrix | `deploy/ci/emitters.sh` | for `8944cbdf` and `portable-4lang` on `datasets/test/pmlb-229-pwlinear`: python, rustc, g++-17, g++-20, clang++-17, clang++-20, node — every `pred-*.txt` has the same IEEE-754 bit pattern per row and equals the committed `<fixture>.predictions.sha256`; every source equals `<fixture>.<target>.sha256`; `targets.txt` is pinned. `UPDATE=1` rewrites the pins (review the diff); `JOPE_CXX_MARCH` adds `-march` to every C++ build — verified identical under `znver2` |
 | Cross-`-march` / cross-compiler | nightly `parity-matrix` (WP8): `JOPE_CXX_MARCH ∈ {x86-64-v3, znver2, native}` × g++/clang++ × c++17/20 | all equal the committed sha |
 
-Measured on 2026-09-18 (128-core host): `cargo test -p feat-math --locked` 13 m 01 s including
-compilation, `bash deploy/ci/emitters.sh` 20 s, the `emit` example 0.2 s.
+Measured on 2026-09-18 at `4235db6` (128-core host): `cargo test -p feat-math --locked` 13 m 01 s
+including compilation, `bash deploy/ci/emitters.sh` 20 s, the `emit` example 0.2 s. Not
+re-measured since.
 
 ## Why the numbers stay equal
 
