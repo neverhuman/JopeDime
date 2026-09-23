@@ -323,6 +323,15 @@ pub fn emit_fitted_cpp17(model: &BoundModel) -> Result<FittedCppArtifact> {
         "{PRELUDE}\n{head_functions}\n{encode}\n{transform}\n{predict}\n{abi}",
         encode = emit_input(model, missing_aware)?,
     );
+    for (what, text) in [
+        ("fitted C++17 artifact", &source),
+        ("fitted C++17 codec", &codec),
+    ] {
+        let hits = crate::transpile::lint_shipped_text(text);
+        if !hits.is_empty() {
+            bail!("banned vocabulary in {what}: {}", hits.join(", "));
+        }
+    }
     Ok(FittedCppArtifact {
         source_sha256: text_hash(&source),
         codec_sha256: text_hash(&codec),

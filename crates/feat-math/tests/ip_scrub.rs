@@ -4,7 +4,15 @@
 //!
 //! The manifest's `program` (and legacy `dsl`) values are the program itself and are exempt: the
 //! program text legitimately names registry members that the lint bans elsewhere.
+//!
+//! The schema-bound emitters (`emit_bound`: Python, Rust and a manifest for a fitted v3 model;
+//! `emit_fitted_cpp17`: C++17 source and codec) are covered too, on fitted regression and binary
+//! models.
 
+use feat_math::advanced_v3::{
+    emit_bound, emit_fitted_cpp17, fit_table, ColumnSpec, DataSchema, Objective, RawTable,
+    RowSemantics, TaskSpec,
+};
 use feat_math::transpile::{
     emit, emit_cpp17, emit_javascript, lint_shipped_phrases, lint_shipped_text, supports_cpp17,
     supports_javascript, EmitOptions, EMITTER_VERSION, SHIPPED_TEXT_BANNED,
@@ -12,6 +20,7 @@ use feat_math::transpile::{
 use feat_math::GenomeIr;
 
 const PIPELINES: &[&str] = &[
+    "(pipe X (portfolio preset=core))",
     "(pipe X (standardize) (rank) (blom) (quantile_bins) (bin_onehot bins=3) (ridge))",
     "(pipe X (hinge) (winsor_clip) (cheb) (poly_interact append=true) (elasticnet))",
     "(pipe X (rff_cos n=8) (rff_sin n=8) (rand_proj k=4) (landmark_dist k=4) (histgbm rounds=5))",
@@ -75,6 +84,7 @@ fn assert_clean(what: &str, text: &str) {
 #[test]
 fn every_emitter_is_clean_on_every_fixture() {
     let mut emitted = 0;
+    let (mut emitted_cpp, mut emitted_js) = (0, 0);
     for src in every_fixture() {
         let genome = GenomeIr::parse(&src).unwrap_or_else(|e| panic!("{src}: {e}"));
         for opts in option_sets() {
@@ -110,17 +120,114 @@ fn every_emitter_is_clean_on_every_fixture() {
             if supports_cpp17(&genome).is_ok() {
                 let cpp = emit_cpp17(&genome, &opts).unwrap_or_else(|e| panic!("{src}: {e}"));
                 assert_clean(&format!("c++17 of {src}"), &cpp);
-                emitted += 1;
+                emitted_cpp += 1;
             }
             if supports_javascript(&genome).is_ok() {
                 let js = emit_javascript(&genome, &opts).unwrap_or_else(|e| panic!("{src}: {e}"));
                 assert_clean(&format!("javascript of {src}"), &js);
-                emitted += 1;
+                emitted_js += 1;
             }
         }
     }
-    assert!(emitted >= 60, "only {emitted} artifacts were checked");
+    // Python + Rust on every fixture under both option sets, plus every C++ and JavaScript
+    // artifact the gates admit: the four-language fixture alone yields two of each.
+    assert!(
+        emitted >= 2 * 2 * 20,
+        "only {emitted} Python/Rust artifacts were checked"
+    );
+    assert!(
+        emitted_cpp >= 2,
+        "only {emitted_cpp} C++17 artifacts were checked"
+    );
+    assert!(
+        emitted_js >= 2,
+        "only {emitted_js} JavaScript artifacts were checked"
+    );
     assert_eq!(EMITTER_VERSION, "2.2.0");
+}
+
+/// Numeric schema `c0..` and a shortest-round-trip string table, as the campaign lanes build them.
+fn numeric_table(x: &[Vec<f64>]) -> (DataSchema, RawTable) {
+    let features = x[0].len();
+    let schema = DataSchema {
+        columns: (0..features)
+            .map(|j| ColumnSpec::numeric(format!("c{j}")))
+            .collect(),
+        row_semantics: RowSemantics::Iid,
+    };
+    let headers = (0..features).map(|j| format!("c{j}")).collect();
+    let cells = x
+        .iter()
+        .map(|row| row.iter().map(|v| format!("{v:?}")).collect())
+        .collect();
+    (schema, RawTable::new(headers, cells).unwrap())
+}
+
+#[test]
+fn bound_and_fitted_cpp_emitters_are_clean() {
+    let mut rng = feat_math::Pcg32::new(17, 3);
+    let mut x = Vec::new();
+    let mut y_regression = Vec::new();
+    let mut y_binary = Vec::new();
+    for _ in 0..160 {
+        let a = rng.next_f64();
+        let b = rng.next_f64();
+        let c = rng.next_f64();
+        x.push(vec![a, b, c]);
+        y_regression.push(2.0 * a - b + 0.3 * c);
+        y_binary.push(if 3.0 * (a - b) + (c - 0.5) > 0.0 {
+            1.0
+        } else {
+            0.0
+        });
+    }
+    let (schema, table) = numeric_table(&x);
+    let regression = TaskSpec::regression(Objective::R2).unwrap();
+    let binary = TaskSpec::binary(Objective::RocAuc).unwrap();
+    let cases = [
+        ("(pipe X (ridge))", &regression, &y_regression),
+        (
+            "(pipe X (standardize) (tab_boost))",
+            &regression,
+            &y_regression,
+        ),
+        ("(pipe X (logit_ridge))", &binary, &y_binary),
+        ("(pipe X (tab_boost))", &binary, &y_binary),
+        ("(pipe X (extra_trees))", &binary, &y_binary),
+        ("(pipe X (gam_boost))", &binary, &y_binary),
+        ("(pipe X (portfolio))", &binary, &y_binary),
+    ];
+    let (mut bound, mut fitted) = (0, 0);
+    for (src, task, y) in cases {
+        let genome = GenomeIr::parse(src).unwrap();
+        let model =
+            fit_table(&genome, task, &schema, &table, y).unwrap_or_else(|e| panic!("{src}: {e:#}"));
+        let artifact = emit_bound(&model, &EmitOptions::default())
+            .unwrap_or_else(|e| panic!("bound {src}: {e:#}"));
+        assert_clean(&format!("bound python of {src}"), &artifact.python);
+        assert_clean(&format!("bound rust of {src}"), &artifact.rust);
+        assert_clean(&format!("bound manifest of {src}"), &artifact.manifest);
+        let manifest: serde_json::Value = serde_json::from_str(&artifact.manifest).unwrap();
+        assert_eq!(manifest["emitter_version"], EMITTER_VERSION);
+        assert!(
+            manifest.get("program_sha256").is_some(),
+            "{src}: manifest names the program hash"
+        );
+        bound += 1;
+        match emit_fitted_cpp17(&model) {
+            Ok(cpp) => {
+                assert_clean(&format!("fitted c++17 of {src}"), &cpp.source);
+                assert_clean(&format!("fitted c++17 codec of {src}"), &cpp.codec);
+                fitted += 1;
+            }
+            Err(error) => eprintln!("fitted C++17 not supported for {src}: {error:#}"),
+        }
+    }
+    assert_eq!(bound, 7);
+    assert!(
+        fitted >= 4,
+        "only {fitted} fitted C++17 artifacts were emitted"
+    );
 }
 
 #[test]
