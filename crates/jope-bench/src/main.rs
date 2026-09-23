@@ -14,6 +14,10 @@ use jope_bench::report::{Report, Stamp};
 use jope_bench::task::Task;
 use jope_bench::{DEFAULT_FOLDS, DEFAULT_SEED};
 
+/// Ceiling on the default `run --workers`: the agreed per-host CPU budget, so a bare run on a
+/// 128-core host takes 20 cores rather than all of them. An explicit `--workers` is not capped.
+const DEFAULT_MAX_WORKERS: usize = 20;
+
 #[derive(Parser)]
 #[command(
     name = "jope-bench",
@@ -86,7 +90,7 @@ enum Command {
         /// Search seed.
         #[arg(long, default_value_t = 0x1EA7_BEEF)]
         search_seed: u64,
-        /// Rayon threads (default: all cores).
+        /// Rayon threads (default: min(20, available cores); 20 is the agreed per-host budget).
         #[arg(long)]
         workers: Option<usize>,
         /// Git head to stamp into reports (default: `GITHUB_SHA` or none).
@@ -140,6 +144,7 @@ fn main() -> Result<()> {
                     std::thread::available_parallelism()
                         .map(usize::from)
                         .unwrap_or(1)
+                        .min(DEFAULT_MAX_WORKERS)
                 })
                 .max(1);
             rayon::ThreadPoolBuilder::new()
