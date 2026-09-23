@@ -38,28 +38,89 @@ struct BoundManifest<'a> {
     rust_sha256: String,
 }
 
+/// The strings a bound or fitted artifact carries that come from the caller's
+/// data rather than from the emitter: the column names and every categorical
+/// vocabulary entry. The shipped-text lint runs with them masked
+/// ([`lint_shipped_masked`]), so a column called `island` or a category named
+/// `population` cannot fail emission, while everything the emitter itself
+/// writes is still checked. Both the raw spelling and the JSON-escaped one are
+/// masked, because the artifacts embed the schema as JSON text. Longest first,
+/// so a name that contains another is masked whole.
+pub(crate) fn user_text(model: &BoundModel) -> Vec<String> {
+    let mut raw: Vec<String> = model
+        .schema
+        .columns
+        .iter()
+        .map(|column| column.name.clone())
+        .collect();
+    for column in &model.input.columns {
+        if let FittedColumn::Categorical { vocabulary, .. } = column {
+            raw.extend(vocabulary.iter().cloned());
+        }
+    }
+    let mut forms = Vec::new();
+    for text in raw {
+        if text.len() < 2 {
+            continue;
+        }
+        if let Ok(json) = serde_json::to_string(&text) {
+            let escaped = &json[1..json.len() - 1];
+            if escaped != text {
+                forms.push(escaped.to_owned());
+            }
+        }
+        forms.push(text);
+    }
+    forms.sort_by(|a, b| b.len().cmp(&a.len()).then_with(|| a.cmp(b)));
+    forms.dedup();
+    forms
+}
+
+/// The shipped-text lint over `text` with every user-supplied string
+/// ([`user_text`]) replaced by underscores of the same length. Portfolio heads
+/// get the frozen emitter's stricter portfolio rule (`oof` is banned too).
+pub(crate) fn lint_shipped_masked(text: &str, user: &[String], portfolio: bool) -> Vec<String> {
+    let mut masked = text.to_owned();
+    for entry in user {
+        if masked.contains(entry.as_str()) {
+            masked = masked.replace(entry.as_str(), &"_".repeat(entry.len()));
+        }
+    }
+    let mut hits = if portfolio {
+        crate::transpile::lint_vocabulary_portfolio(&masked)
+    } else {
+        crate::transpile::lint_vocabulary(&masked)
+    };
+    hits.extend(crate::transpile::lint_shipped_phrases(&masked));
+    hits
+}
+
 /// Emit a fitted, raw-CSV prediction program. This is deliberately separate
 /// from `transpile::emit`: the latter remains the frozen artifact-v1 training
 /// program (pipeline artifacts are byte-identical across emitter versions
-/// 2.1 and 2.2; see `EMITTER_VERSION`).
+/// 2.1 and 2.2; see `EMITTER_VERSION`). Every artifact is linted with the
+/// caller's column names and categorical vocabularies masked
+/// ([`lint_shipped_masked`]).
 pub fn emit_bound(
     model: &BoundModel,
     options: &crate::transpile::EmitOptions,
 ) -> Result<BoundEmitted> {
     crate::transpile::validate_math_kernel(options)?;
     model.validate_binding()?;
-    let BoundPredictor::Pipeline { ops, .. } = &model.predictor else {
+    let BoundPredictor::Pipeline { ops, head, .. } = &model.predictor else {
         bail!("bound emission currently requires a v3 pipeline model");
     };
     for op in ops {
         op.validate_fitted_state(&model.schema)?;
     }
+    let portfolio = matches!(head, V3Head::ClassificationPortfolio(_));
+    let user = user_text(model);
     let start = std::time::Instant::now();
     let python = emit_bound_python(model)?;
     let rust = emit_bound_rust(model)?;
     let elapsed = start.elapsed().as_nanos().max(1);
     for (lang, text) in [("Python", &python), ("Rust", &rust)] {
-        let hits = crate::transpile::lint_shipped_text(text);
+        let hits = lint_shipped_masked(text, &user, portfolio);
         if !hits.is_empty() {
             bail!(
                 "banned vocabulary in bound {lang} artifact: {}",
@@ -82,7 +143,7 @@ pub fn emit_bound(
         python_sha256: text_hash(&python),
         rust_sha256: text_hash(&rust),
     })?;
-    let hits = crate::transpile::lint_shipped_text(&manifest);
+    let hits = lint_shipped_masked(&manifest, &user, portfolio);
     if !hits.is_empty() {
         bail!(
             "banned vocabulary in bound artifact manifest: {}",
