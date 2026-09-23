@@ -41,9 +41,18 @@ pub enum BenchmarkCommand {
         datasets: PathBuf,
         #[arg(long)]
         source_sha: String,
+        /// Add pinned runtime inventory for a bounded comparator qualification.
+        #[arg(long)]
+        runtimes: Option<PathBuf>,
         #[arg(long)]
         output: PathBuf,
     },
+    /// Execute or resume a pinned bounded campaign.
+    #[cfg(target_os = "linux")]
+    Run(super::campaign_cli::RunArgs),
+    /// Authenticate retained evidence and recompute scores without fitting.
+    #[cfg(target_os = "linux")]
+    Report(super::campaign_cli::ReportArgs),
     /// Internal single-fit endpoint; the controller supplies resource isolation.
     #[command(hide = true)]
     FitWorker {
@@ -119,8 +128,17 @@ fn run(cli: BenchmarkCli) -> Result<Value> {
             manifest,
             datasets,
             source_sha,
+            runtimes,
             output,
         } => {
+            if let Some(runtimes) = runtimes {
+                #[cfg(target_os = "linux")]
+                return super::campaign_cli::prepare(
+                    &manifest, &datasets, source_sha, &runtimes, &output,
+                );
+                #[cfg(not(target_os = "linux"))]
+                anyhow::bail!("bounded runtime plans require Linux");
+            }
             let (panel, panel_sha256) = read_panel(&manifest)?;
             let verification = verify_inputs(&panel, &datasets);
             ensure!(
@@ -180,6 +198,10 @@ fn run(cli: BenchmarkCli) -> Result<Value> {
             Ok(json!({"ok":true,"plan":output,"experiment_sha256":identity,
                 "execution_budget_started":false,"fits":0}))
         }
+        #[cfg(target_os = "linux")]
+        BenchmarkCommand::Run(args) => super::campaign_cli::run(args),
+        #[cfg(target_os = "linux")]
+        BenchmarkCommand::Report(args) => super::campaign_cli::report(args),
         BenchmarkCommand::FitWorker { input, output } => {
             super::worker::fit(&input, &output)?;
             Ok(json!({"ok":true,"output":output}))

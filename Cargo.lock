@@ -2260,6 +2260,7 @@ dependencies = [
  "jope-arena",
  "jope-datasets",
  "jope-pipeline",
+ "nix 0.29.0",
  "rayon",
  "serde",
  "serde_json",
@@ -2406,10 +2407,12 @@ dependencies = [
  "clap",
  "feat-math",
  "jope-datasets",
+ "nix 0.29.0",
  "schemars",
  "serde",
  "serde_json",
  "sha2",
+ "signal-hook",
  "tempfile",
 ]
 

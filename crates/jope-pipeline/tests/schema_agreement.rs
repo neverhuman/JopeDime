@@ -470,6 +470,13 @@ fn asm_contract_schemas_match_generated_types_exactly() {
             "jope.evaluation-result.v1",
             serde_json::to_value(schemars::schema_for!(EvaluationResult)).unwrap(),
         ),
+        (
+            "jope.evaluation-result.v2",
+            serde_json::to_value(schemars::schema_for!(
+                jope_pipeline::experiment_v2::EvaluationResult
+            ))
+            .unwrap(),
+        ),
     ];
     for (name, generated) in schemas {
         let path = Path::new(env!("CARGO_MANIFEST_DIR"))

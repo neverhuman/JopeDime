@@ -40,6 +40,7 @@ JOPE_RUNNER_DEPLOYED=(
   /etc/systemd/system/jope-runner-prune.service
   /etc/systemd/system/jope-runner-prune.timer
   /etc/systemd/system/jope-docker-proxy.service
+  /etc/tmpfiles.d/jope-exclusive-cpu.conf
 )
 
 # The digest of what is deployed right now. Always recomputed, never cached: a receipt written at
@@ -83,4 +84,32 @@ jope_runner_check_existing() { # requested lane; docker failure is never an empt
     esac
     [[ $running != "$1" ]] || { echo "existing container owns lane $1: $id" >&2; return 2; }
   done <<< "$existing"
+}
+
+# The campaign and full runner share this inode. The orphan cgroup check closes
+# the interval between a killed controller releasing flock and systemd draining
+# its descendants. A lock alone does not prove that the CPU host is idle.
+jope_runner_check_asm_groups() {
+  local root=${1:?cgroup root required} group field value found
+  for group in "$root"/jope-asm-*.service; do
+    [[ -e $group ]] || continue
+    [[ -r $group/cgroup.events ]] || { echo "ASM cgroup state unavailable: $group" >&2; return 2; }
+    found=0
+    while read -r field value; do
+      [[ $field == populated ]] || continue
+      found=1
+      [[ $value == 0 ]] || { echo "ASM work still owns CPU host: $group" >&2; return 2; }
+    done < "$group/cgroup.events"
+    [[ $found == 1 ]] || { echo "ASM populated counter missing: $group" >&2; return 2; }
+  done
+}
+
+jope_runner_exclusive_cpu() {
+  [[ $JOPE_RUNNER_HOST == xbabe2 && $1 == full ]] || return 0
+  [[ -f /run/lock/jope-exclusive-cpu.lock ]] || {
+    echo "shared CPU lock not provisioned" >&2; return 2;
+  }
+  exec 8<>/run/lock/jope-exclusive-cpu.lock
+  flock -n 8 || { echo "ASM/exclusive CPU allocation active" >&2; return 2; }
+  jope_runner_check_asm_groups /sys/fs/cgroup/system.slice
 }

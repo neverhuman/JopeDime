@@ -68,6 +68,15 @@ accepted jobs. Each JIT listener still executes only one job. Workflows own exec
 full-main has120minutes, with110minutes of independent family limits plus kill grace and an
 upload reserve. Timers launch the next ephemeral listener after its predecessor exits.
 
+The bounded ASM controller and the local full lane share the boot-persistent inode
+`/run/lock/jope-exclusive-cpu.lock`. Provisioning creates it through tmpfiles without
+replacing an existing inode. The full listener holds the lock for its whole allocation,
+including idle time, and refuses populated ASM cgroups left during crash cleanup. Drain
+the owned timer, wait for busy work to finish, then stop an idle owned listener before
+an ASM allocation. Resume the timer afterward. The controller does not alter the runner
+fleet. Both hosts require the same reviewed deployed-file inventory before exact-head
+CI can pass provenance; the new lock must not be used to bypass that check.
+
 ## Evidence and operation
 
 `deploy/ci/coverage.json` explicitly selects default workspace tests, doctests, CPU feature

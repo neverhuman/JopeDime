@@ -2,9 +2,8 @@
 //! Scores must already have been computed by the controller from checked predictions.
 
 use anyhow::{ensure, Context, Result};
-use jope_pipeline::experiment::{
-    EvaluationRequest, EvaluationResult, EvaluationStage, EvaluationStatus,
-};
+use jope_pipeline::experiment::{EvaluationRequest, EvaluationStage, EvaluationStatus};
+use jope_pipeline::experiment_v2::EvaluationResult;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -280,7 +279,8 @@ pub fn confirm(
 mod tests {
     use super::*;
     use jope_datasets::catalog::Task;
-    use jope_pipeline::experiment::{Consumption, Metric, REQUEST_SCHEMA, RESULT_SCHEMA};
+    use jope_pipeline::experiment::{Metric, REQUEST_SCHEMA};
+    use jope_pipeline::experiment_v2::{Consumption, RESULT_SCHEMA};
 
     fn observation(method: usize, score: Option<f64>) -> Observation {
         let request = EvaluationRequest {
@@ -317,11 +317,16 @@ mod tests {
             scored_rows: if score.is_some() { 20 } else { 0 },
             predictions_sha256: score.map(|_| "0".repeat(64)),
             fitted_state_sha256: score.map(|_| "1".repeat(64)),
+            worker_receipt_sha256: "2".repeat(64),
+            reused_from_request_sha256: None,
             consumption: Consumption {
-                wall_seconds: 0.,
-                cpu_seconds: 0.,
+                wall_seconds: Some(0.),
+                cpu_seconds: Some(0.),
                 gpu_seconds: None,
                 peak_rss_bytes: None,
+                cgroup_peak_memory_bytes: None,
+                sampled_peak_rss_bytes: None,
+                accounting_reason: "synthetic protocol fixture".into(),
             },
         };
         Observation {

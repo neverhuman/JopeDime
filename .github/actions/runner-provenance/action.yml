@@ -21,12 +21,13 @@ runs:
         # The file list is parsed out of the committed common.sh rather than repeated here, so
         # this step cannot drift from what run.sh actually hashes.
         mapfile -t deployed < <(sed -n '/^JOPE_RUNNER_DEPLOYED=(/,/^)/p' deploy/runner/common.sh \
-          | grep -oE '/(opt/jope-runner|etc/systemd/system)/[^ ]+')
+          | grep -oE '/(opt/jope-runner|etc/systemd/system|etc/tmpfiles.d)/[^ ]+')
         [ "${#deployed[@]}" -ge 10 ] || { echo "parsed only ${#deployed[@]} deployed files from common.sh" >&2; exit 1; }
         files=()
         for d in "${deployed[@]}"; do
           rel=${d#/opt/jope-runner/}
           rel=${rel#/etc/systemd/system/}
+          rel=${rel#/etc/tmpfiles.d/}
           files+=("deploy/runner/$rel")
         done
         committed=$(cat "${files[@]}" | sha256sum | cut -d' ' -f1)

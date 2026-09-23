@@ -2,6 +2,7 @@
 import importlib.util
 from pathlib import Path
 import subprocess
+import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -71,6 +72,25 @@ class RunnerTests(unittest.TestCase):
                 self.assertEqual(code,result.returncode,result.stderr)
         result=subprocess.run(['bash','-c','source deploy/runner/common.sh; docker() { return 23; }; jope_runner_check_existing full'],cwd=ROOT,capture_output=True)
         self.assertEqual(23,result.returncode)
+
+
+    def test_orphan_asm_cgroup_blocks_exclusive_cpu_reuse(self):
+        scratch_root = ROOT / 'target' / 'tmp'
+        scratch_root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='runner-asm-fixture-', dir=scratch_root) as name:
+            root = Path(name)
+            group = root / 'jope-asm-fixture.service'
+            group.mkdir()
+            script = 'source deploy/runner/common.sh; jope_runner_check_asm_groups "$1"'
+            cases = [(None, 2), ('populated 1\n', 2), ('populated 0\n', 0),
+                     ('frozen 0\n', 2), ('populated unknown\n', 2)]
+            for content, expected in cases:
+                with self.subTest(content=content):
+                    if content is not None:
+                        (group / 'cgroup.events').write_text(content)
+                    result = subprocess.run(['bash', '-c', script, 'fixture', str(root)],
+                                            cwd=ROOT, capture_output=True, text=True)
+                    self.assertEqual(expected, result.returncode, result.stderr)
 
 
 if __name__ == '__main__':

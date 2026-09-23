@@ -2,6 +2,10 @@
 //! Only development inputs enter this module. The historical same-cut protocol remains
 //! available separately; its regenerated cuts are not the frozen panel's assignments.
 
+#[cfg(target_os = "linux")]
+pub mod campaign;
+#[cfg(target_os = "linux")]
+pub mod campaign_cli;
 pub mod cli;
 pub mod data;
 pub mod methods;
