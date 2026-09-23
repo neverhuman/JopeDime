@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use rand::seq::SliceRandom;
 
 use crate::hashing::mix64;
@@ -29,12 +29,16 @@ pub struct SweepAccum {
 }
 
 impl SweepAccum {
-    fn new(h: usize, w: usize) -> Self {
+    fn new(h: usize, w: usize, with_confidence: bool) -> Self {
         Self {
             h,
             w,
             cell_sum: vec![0.0; h * w * EMB_KEEP],
-            cell_logit_mean: vec![0.0; h * w],
+            cell_logit_mean: if with_confidence {
+                vec![0.0; h * w]
+            } else {
+                Vec::new()
+            },
             cell_count: vec![0; h * w],
         }
     }
@@ -106,6 +110,43 @@ pub struct SweepOutput {
     pub advanced: bool,
 }
 
+/// The same normalized embedding outputs as the full composite sweep. No
+/// confidence head is executed or reported; this is not the raw-vector shortcut.
+pub struct EmbeddingSweepOutput {
+    pub cellmap: Vec<f32>,
+    pub h: usize,
+    pub w: usize,
+    pub row_emb: Vec<f32>,
+    pub dataset_vec: Vec<f32>,
+    pub cancelled: bool,
+    pub advanced: bool,
+}
+
+/// Reuse exact scale/patch/permutation/chunk order and scatter normalization,
+/// computing only the embedding branch. Cooperative stopping remains per chunk.
+pub fn run_composite_embedding_sweep(
+    model: &dyn PatchModel,
+    xu8: &U8Grid,
+    pad_u8: u8,
+    quant_scale: f32,
+    max_patch: usize,
+    plan: &SweepPlan,
+    sink: &dyn Sink,
+) -> Result<EmbeddingSweepOutput> {
+    let (embedding, _) = run_sweep(
+        model,
+        xu8,
+        pad_u8,
+        quant_scale,
+        max_patch,
+        plan,
+        sink,
+        |_| {},
+        false,
+    )?;
+    Ok(embedding)
+}
+
 /// The composite randomized sweep. Sweep 0 = identity permutations (UI moving front); sweeps 1..K
 /// shuffle rows and columns with `seeded(plan.seed ^ mix64(k))`. Each sweep tiles every scale in
 /// `plan.scales`, batching patches (chunk-capped so ~`target_chunks_per_sweep` frames stream per
@@ -120,11 +161,46 @@ pub fn run_composite_sweep(
     max_patch: usize,
     plan: &SweepPlan,
     sink: &dyn Sink,
-    mut on_chunk: impl FnMut(ChunkReport<'_>),
+    on_chunk: impl FnMut(ChunkReport<'_>),
 ) -> Result<SweepOutput> {
+    let (embedding, confidence) = run_sweep(
+        model,
+        xu8,
+        pad_u8,
+        quant_scale,
+        max_patch,
+        plan,
+        sink,
+        on_chunk,
+        true,
+    )?;
+    Ok(SweepOutput {
+        cellmap: embedding.cellmap,
+        h: embedding.h,
+        w: embedding.w,
+        row_emb: embedding.row_emb,
+        confidence: confidence.context("full sweep confidence missing")?,
+        dataset_vec: embedding.dataset_vec,
+        cancelled: embedding.cancelled,
+        advanced: embedding.advanced,
+    })
+}
+
+#[allow(clippy::too_many_arguments)]
+fn run_sweep(
+    model: &dyn PatchModel,
+    xu8: &U8Grid,
+    pad_u8: u8,
+    quant_scale: f32,
+    max_patch: usize,
+    plan: &SweepPlan,
+    sink: &dyn Sink,
+    mut on_chunk: impl FnMut(ChunkReport<'_>),
+    with_confidence: bool,
+) -> Result<(EmbeddingSweepOutput, Option<Vec<f32>>)> {
     validate_plan(plan, max_patch)?;
     let (h, w) = (xu8.h, xu8.w);
-    let mut acc = SweepAccum::new(h, w);
+    let mut acc = SweepAccum::new(h, w, with_confidence);
     let mut cancelled = false;
     let mut advanced = false;
 
@@ -182,18 +258,32 @@ pub fn run_composite_sweep(
              -> Result<Stop> {
                 touched.clear();
                 flush_patch_batch(
-                    model, x_flat, m_flat, coords, p, h, w, &perm_r, &perm_c, acc, touched,
+                    model,
+                    x_flat,
+                    m_flat,
+                    coords,
+                    p,
+                    h,
+                    w,
+                    &perm_r,
+                    &perm_c,
+                    acc,
+                    touched,
+                    with_confidence,
                 )?;
                 *patches_done += coords.len();
                 coords.clear();
                 let frac = *patches_done as f64 / total_patches.max(1) as f64;
-                on_chunk(ChunkReport {
-                    sweep: k,
-                    sweeps: plan.sweeps,
-                    frac,
-                    touched,
-                    accum: acc,
-                });
+                // Confidence-bearing progress is exposed only by the full path.
+                if with_confidence {
+                    on_chunk(ChunkReport {
+                        sweep: k,
+                        sweeps: plan.sweeps,
+                        frac,
+                        touched,
+                        accum: acc,
+                    });
+                }
                 if sink.is_cancelled() {
                     Ok(Stop::Cancelled)
                 } else if sink.take_advance_request(0) {
@@ -341,7 +431,8 @@ pub fn run_composite_sweep(
             }
         }
     }
-    let confidence = acc.cell_logit_mean.iter().map(|&l| sigmoid(l)).collect();
+    let confidence =
+        with_confidence.then(|| acc.cell_logit_mean.iter().map(|&l| sigmoid(l)).collect());
     // (4) Dataset vector = mean over covered rows of row_emb.
     let mut dataset_vec = vec![0.0f32; EMB_KEEP];
     let mut n_rows = 0usize;
@@ -358,16 +449,18 @@ pub fn run_composite_sweep(
         let inv = 1.0 / n_rows as f32;
         dataset_vec.iter_mut().for_each(|v| *v *= inv);
     }
-    Ok(SweepOutput {
-        cellmap,
-        h,
-        w,
-        row_emb,
+    Ok((
+        EmbeddingSweepOutput {
+            cellmap,
+            h,
+            w,
+            row_emb,
+            dataset_vec,
+            cancelled,
+            advanced,
+        },
         confidence,
-        dataset_vec,
-        cancelled,
-        advanced,
-    })
+    ))
 }
 
 /// Fast raw dataset-vector path. This is equivalent to `run_composite_sweep(...).dataset_vec`

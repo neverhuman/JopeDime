@@ -109,8 +109,43 @@ pub(super) fn percentile(values: &[f64], q: f64) -> f64 {
     if values.len() <= 1 {
         return values.first().copied().unwrap_or(0.0);
     }
-    let position = q * (values.len() - 1) as f64;
+    // The retained Torch 2.7 graph calls quantile on FP32 hidden rows. Its
+    // quantile tensor, rank multiplication and interpolation weights are FP32;
+    // a double-precision rank changes pooled tail values on sparse distributions.
+    let position = q as f32 * (values.len() - 1) as f32;
     let low = position.floor() as usize;
     let high = position.ceil() as usize;
-    values[low] + (values[high] - values[low]) * (position - low as f64)
+    let start = values[low] as f32;
+    let end = values[high] as f32;
+    let weight = position - low as f32;
+    // Match Torch's stable lerp branch, including the fused multiply-add used
+    // by the original CUDA FP32 graph.
+    if weight < 0.5 {
+        weight.mul_add(end - start, start) as f64
+    } else {
+        (-(1.0 - weight)).mul_add(end - start, end) as f64
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn foundation_percentiles_match_retained_torch27_f32_positions() {
+        // Independently generated with Torch 2.7.0 CPU, the retained encoder's
+        // version. Newer Torch versions use different quantile arithmetic.
+        for (n, zeros, block, expected) in [
+            (158, 142, 3, 1_077_936_256u32),
+            (158, 16, 2, 1_088_421_884),
+            (200, 180, 3, 1_065_351_680),
+            (200, 20, 2, 1_091_567_612),
+            (1, 0, 3, 1_092_616_192),
+        ] {
+            let rows = (0..n)
+                .map(|i| vec![if i < zeros { 0.0 } else { 10.0 }])
+                .collect::<Vec<_>>();
+            assert_eq!(pool_mean_std_p10_p90(&rows)[block].to_bits(), expected);
+        }
+    }
 }
