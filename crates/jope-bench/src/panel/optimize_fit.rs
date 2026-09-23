@@ -276,7 +276,9 @@ impl FitAdapter {
             loss: Some(loss),
             physical_fit_starts: oof.total_fit_starts(),
             worker_receipt_sha256: Some(digest(&outcomes)?),
-            replay_evidence_sha256: None,
+            replay_evidence_sha256: Some(jope_pipeline::neural_search::fold_replay_evidence(
+                outcomes,
+            )?),
             fitted_artifact_sha256: Some(oof.fitted_bundle_sha256()?),
             reason: None,
             oof: Some(oof),
