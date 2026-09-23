@@ -118,7 +118,7 @@ uv run --no-sync ruff format --check .
     # Pytest (xbabe2-only tests deselected)
 (
 cd python
-uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py -m "not xbabe2" -p no:cacheprovider --junitxml="$EVIDENCE/junit.xml"
+uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m "not xbabe2" -p no:cacheprovider --junitxml="$EVIDENCE/junit.xml"
 )
     ;;
   rust-test)

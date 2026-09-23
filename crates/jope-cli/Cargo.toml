@@ -17,6 +17,7 @@ clap.workspace = true
 feat-math = { path = "../feat-math" }
 hyperion = { path = "../hyperion", default-features = false, features = ["hyperion-cpu"] }
 jope-datasets = { path = "../jope-datasets" }
+jope-bench = { path = "../jope-bench" }
 jope-models = { path = "../jope-models" }
 jope-pipeline = { path = "../jope-pipeline" }
 serde.workspace = true

@@ -240,10 +240,10 @@
       "result_backend": "pytest",
       "feature_selection": "not-applicable",
       "checks": [
-        "uv sync --locked --extra dev --extra cpu",
+        "uv sync --locked --extra dev --extra cpu --extra benchmark",
         "uv run --no-sync ruff check .",
         "uv run --no-sync ruff format --check .",
-        "uv run --no-sync pytest -q -m \"not xbabe2\" -p no:cacheprovider"
+        "uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m \"not xbabe2\" -p no:cacheprovider --junitxml=\"$EVIDENCE/junit.xml\""
       ]
     },
     "e2e-smoke": {
@@ -7899,6 +7899,16 @@
       ],
       "dispositions": [],
       "scope": "Existing fast Python lane explicitly collects benchmarks/test_prepare.py with the optional benchmark dependencies: grouped/stratified preparation, sealed partition isolation, immutable bytes, label preservation and frozen selection. Synthetic local fixtures; no network or fitting. Not assigned to full-main."
+    },
+    "python:crates/jope-bench/adapters/test_panel.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python"
+      ],
+      "dispositions": [],
+      "scope": "Fast Python lane explicitly collects this adapter contract suite in the benchmark environment and includes it in the lane JUnit report. Synthetic estimators verify nullable raw cells, train-only preprocessing, declared probability columns, complete fitted reload, immutable private outputs and leakage refusal. No external-engine or real-panel qualification; not assigned to full-main."
     }
   }
 }

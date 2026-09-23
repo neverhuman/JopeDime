@@ -4,7 +4,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import _common  # noqa: E402
+if not (len(sys.argv) > 1 and sys.argv[1] == "--panel-v2"):
+    import _common  # noqa: E402
 
 
 def fit_predict(x, y, predict, task):
@@ -31,5 +32,16 @@ def version() -> str:
     return f"scikit-learn {sklearn.__version__} RandomForest"
 
 
+def create_panel_model(task):
+    from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+
+    common = dict(random_state=0, n_jobs=1)
+    return (RandomForestRegressor if task == "regression" else RandomForestClassifier)(**common)
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--panel-v2":
+        import _panel
+
+        sys.exit(_panel.run(create_panel_model, version))
     sys.exit(_common.run(fit_predict, version()))

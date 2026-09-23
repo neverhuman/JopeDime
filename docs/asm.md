@@ -17,8 +17,8 @@ are separate milestones.
 | Regression search | [pipeline search](../crates/jope-pipeline/src/search.rs), existing `feat-math` fit/evolution | Numeric finite inputs; generic generation-zero seeds; in-process fit can overrun its allowance. |
 | Native method metadata | [governed registry](../crates/feat-math/src/registry.rs) | Algorithms, aliases and lifecycle states exist; metadata is not an executable benchmark roster. |
 | Classification | [advanced-v3](../crates/feat-math/src/advanced_v3.rs) and its fitted heads | Binary logistic/tree/boosting and multiclass ridge, OvR logistic, diagonal LDA and nearest-centroid implementations exist. Product regression search now refuses other tasks before creating output. |
-| Task metrics | [advanced task types](../crates/feat-math/src/advanced_v3/types.rs) | Binary metrics exist; current multiclass task objective accepts accuracy/macro-F1. Panel multiclass log loss still needs a matrix-aware evaluator. |
-| External methods | Installed Python libraries are optional dependencies | No qualified panel adapters yet. An import is not an executed comparison. |
+| Task metrics | [panel evaluator](../crates/jope-bench/src/panel/score.rs) | RMSE, binary AUROC and multiclass probability-matrix log loss use original labels and explicit class ordering. The multiclass fitting objective remains macro-F1; confirmation uses log loss. |
+| External methods | [typed adapters](../crates/jope-bench/adapters/_panel.py) | XGBoost, LightGBM, CatBoost and scikit-learn RF accept nullable raw cells, fit preprocessing on training rows, and retain complete private fitted artifacts. Dependencies and campaign execution still require qualification. |
 | Neural proposals | [policy seed binding](../crates/jope-policy/src/seeds.rs) | Accepted regression checkpoint and verified proposals exist; generation-zero product consumption is not connected. |
 | Training | [existing trainer](../crates/jope-engine/src/training.rs), Python trainers | Execution/category/provenance qualification remains. `jope train-step` is a centroid router. Existing sequence, quality and runtime objectives remain unchanged. |
 | Export | Legacy transpiler; advanced bound emitters and fitted C++ runtime | Coverage differs; emitted training recipes do not establish parity of a fitted predictor. Multiclass matrices need one shared output contract. |
@@ -80,6 +80,9 @@ cargo build --locked -p jope-cli
 ./target/debug/jope benchmark verify-manifest --manifest benchmarks/panel.json
 uv run --project python --extra benchmark python benchmarks/prepare.py \
   --manifest benchmarks/panel.json --output "$HOME/.cache/jope/asm-private-30-v1"
+./target/debug/jope benchmark verify-inputs --manifest benchmarks/panel.json \
+  --datasets "$HOME/.cache/jope/asm-private-30-v1"
+./target/debug/jope benchmark methods
 ```
 
 The manifest command validates the contract, not local data bytes. Preparation checks
@@ -87,6 +90,27 @@ all pinned downloads and reproduces exact development, sealed and split identiti
 It refuses changed existing files. `--freeze` is a maintainer operation that refuses
 an existing manifest; it is not a way to replace datasets after measuring outcomes.
 Preparation receipts explicitly record zero fits and an unstarted execution budget.
+
+The benchmark loader checks the approved manifest digest and every development file before
+using its recorded folds. It opens no sealed or split files. Row order, original labels,
+group membership, categorical strings and nulls survive the boundary. A lossless categorical
+namespace distinguishes literal strings such as `NA` or `null` from a missing cell.
+
+The Rust registry contains 17 regression recipes in 16 algorithm families, five binary
+families and four multiclass families. Aliases do not add screening slots. The additional
+regression GPR configuration uses its distinct RBF-plus-linear fitted implementation.
+Default hyperparameters remain defaults, including the multiclass feature budget. Each
+recipe fits median imputation, capped one-hot categories and missing indicators on training
+rows only. External adapters retain their own engine precision; the controller uses f64
+scores, a probability row-sum tolerance of 1e-6, and a log-loss floor of 1e-15, without
+renormalizing predictions. These constants are pinned before campaign scoring.
+
+`jope benchmark plan --manifest benchmarks/panel.json --datasets PATH --source-sha FULL_SHA
+--output PLAN.json` writes a private, immutable Rust screening plan after verification.
+It starts no execution clock. External versions and ASM checkpoint identities still need
+to be added by campaign admission; this preliminary plan is not a complete comparison.
+The low-level fit worker emits complete fitted state and proves reload prediction parity.
+Its process resource limits are supplied by the shared execution controller, still pending.
 
 ## Experiment and evidence contracts
 
@@ -115,7 +139,11 @@ contracts do not yet enforce process isolation; the worker implementation must p
 
 Screen every applicable implementation on shared development fold zero. Select the
 true top five frozen method recipes, then confirm them across all five development
-folds, counting any additional diagnostic Jope challenger. Repeated development use
+folds, counting any additional diagnostic ASM challenger. Ranking uses smaller primary
+loss (1 - AUROC for binary), ties break by canonical method identifier, and confirmation
+reports the arithmetic mean of all five fold losses. An incomplete five-fold result has
+no mean score. Selection binds the full screen outcome inventory and recipe identities;
+stale results, missing methods and changed confirmation recipes are rejected. Repeated development use
 is adaptive evidence. Sealed final partitions stay outside proposal, search, training
 and motif inputs. Model-selection bias remains a limitation of adaptive evidence;
 see [Cawley and Talbot (2010)](https://www.jmlr.org/papers/v11/cawley10a.html).

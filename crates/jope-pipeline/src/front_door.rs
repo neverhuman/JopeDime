@@ -59,7 +59,7 @@ pub fn doctor() -> serde_json::Value {
         "capabilities":[
             {"name":"regression pipeline", "status":"implemented", "command":"jope pipeline run", "limit":"generic GP seeds; numerical finite inputs; recipe source emission"},
             {"name":"binary and multiclass pipeline", "status":"not_integrated", "limit":"task-aware kernels exist; the regression pipeline refuses these tasks"},
-            {"name":"bounded 30-dataset benchmark", "status":"contract_only", "limit":"execution and method adapters are pending"},
+            {"name":"bounded 30-dataset benchmark", "status":"evaluation_implemented", "limit":"frozen development verification, task metrics, Rust recipes and four typed adapters exist; shared isolated campaign execution is pending"},
             {"name":"neural generation-zero proposals", "status":"not_integrated", "limit":"accepted regression policy exists; pipeline does not consume it"},
             {"name":"policy training", "status":"not_qualified", "limit":"existing machinery needs a bounded execution proof; train-step is a centroid router"},
             {"name":"fitted predictor export across five backends", "status":"not_qualified", "limit":"existing emitters have different coverage; recipe emission is not fitted inference parity"}
