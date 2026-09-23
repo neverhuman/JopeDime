@@ -240,7 +240,7 @@
       "result_backend": "pytest",
       "feature_selection": "not-applicable",
       "checks": [
-        "uv sync --locked --extra dev --extra cpu --extra benchmark",
+        "uv sync --locked --extra dev --extra cpu --extra benchmark --extra foundry",
         "uv run --no-sync ruff check .",
         "uv run --no-sync ruff format --check .",
         "uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m \"not xbabe2\" -p no:cacheprovider --junitxml=\"$EVIDENCE/junit.xml\""
