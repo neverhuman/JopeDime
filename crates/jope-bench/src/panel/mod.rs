@@ -2,6 +2,8 @@
 //! Only development inputs enter this module. The historical same-cut protocol remains
 //! available separately; its regenerated cuts are not the frozen panel's assignments.
 
+#[cfg(all(feature = "asm", target_os = "linux"))]
+pub mod asm_campaign;
 #[cfg(target_os = "linux")]
 pub mod campaign;
 #[cfg(target_os = "linux")]
@@ -9,10 +11,23 @@ pub mod campaign_cli;
 pub mod cli;
 pub mod data;
 pub mod methods;
+#[cfg(all(feature = "asm", target_os = "linux"))]
+pub mod optimize;
+pub mod optimize_cli;
+#[cfg(all(feature = "asm", target_os = "linux"))]
+pub mod optimize_fit;
+#[cfg(all(feature = "asm", target_os = "linux"))]
+pub mod optimize_schedule;
+#[cfg(all(feature = "asm", target_os = "linux"))]
+pub mod origin_proof;
 pub mod protocol;
+#[cfg(all(feature = "asm", target_os = "linux"))]
+pub mod receipt_timing;
 pub mod score;
 pub mod synthesized;
 pub mod worker;
+#[cfg(all(feature = "asm", target_os = "linux"))]
+pub mod worker_build;
 
 /// Selection uses the arithmetic mean of five per-fold primary losses, without a
 /// variance penalty. Ties on the screen loss break by canonical method identifier.

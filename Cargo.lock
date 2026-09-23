@@ -2260,6 +2260,7 @@ dependencies = [
  "jope-arena",
  "jope-datasets",
  "jope-pipeline",
+ "jope-policy",
  "nix 0.29.0",
  "rayon",
  "serde",

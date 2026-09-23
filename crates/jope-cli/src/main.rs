@@ -28,6 +28,8 @@ enum Command {
     Doctor,
     /// Verify and plan the private, fixed-panel benchmark.
     Benchmark(jope_bench::panel::cli::BenchmarkCli),
+    /// Generate and optimize executable algorithms from the verified development panel.
+    Optimize(jope_bench::panel::optimize_cli::OptimizeCli),
     /// Verify the ten synthetic fixtures against the pinned deterministic generator.
     VerifyInputs {
         /// Explicitly select offline qualification; no network access is performed.
@@ -147,6 +149,7 @@ fn execute(command: &Command) -> Result<Verification> {
         }
         Command::Doctor
         | Command::Benchmark(_)
+        | Command::Optimize(_)
         | Command::Encode { .. }
         | Command::Fit { .. }
         | Command::Emit { .. }
@@ -201,6 +204,7 @@ fn main() -> ExitCode {
             return ExitCode::SUCCESS;
         }
         Command::Benchmark(cli) => return jope_bench::panel::cli::execute(cli),
+        Command::Optimize(cli) => return jope_bench::panel::optimize_cli::execute(cli),
         Command::Models(cli) => return jope_models::cli::exec(cli),
         Command::Datasets(cli) => return jope_datasets::cli::exec(cli),
         Command::Pipeline(cli) => return jope_pipeline::cli::exec(cli),

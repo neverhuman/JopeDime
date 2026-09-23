@@ -414,7 +414,7 @@ impl FrozenTransforms {
 }
 fn pool_hyperion(flat: &[f32]) -> Result<Vec<f32>> {
     ensure!(
-        !flat.is_empty() && flat.len() % 128 == 0 && flat.iter().all(|v| v.is_finite()),
+        !flat.is_empty() && flat.len().is_multiple_of(128) && flat.iter().all(|v| v.is_finite()),
         "invalid Hyperion row embeddings"
     );
     let n = flat.len() / 128;

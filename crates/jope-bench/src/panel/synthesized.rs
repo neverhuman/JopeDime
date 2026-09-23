@@ -32,6 +32,58 @@ pub struct SynthesizedFitRequest {
     /// Identity only; fit_table consumes DSL/internal engine seeds.
     pub scheduling_seed: u64,
 }
+/// Immutable fold data shared by every candidate. It contains only fitting
+/// labels and prediction features; parent-held validation labels are absent.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SynthesizedFoldInput {
+    pub task: Task,
+    pub schema: DataSchema,
+    pub classes: Vec<String>,
+    pub train: RawTable,
+    pub targets: Vec<f64>,
+    pub predict: RawTable,
+}
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SynthesizedFitSpec {
+    pub schema: String,
+    pub fold_path: std::path::PathBuf,
+    pub fold_sha256: String,
+    pub recipe: SynthesizedRecipe,
+    pub scheduling_seed: u64,
+}
+impl SynthesizedFitSpec {
+    pub fn materialize(&self) -> Result<SynthesizedFitRequest> {
+        ensure!(
+            self.schema == "jope.synthesized-fit-spec/v1",
+            "unknown fit spec"
+        );
+        ensure!(
+            self.fold_path.is_absolute()
+                && std::fs::canonicalize(&self.fold_path)? == self.fold_path
+                && std::fs::symlink_metadata(&self.fold_path)?.is_file(),
+            "fold input must be physical"
+        );
+        ensure!(
+            std::fs::metadata(&self.fold_path)?.len() <= 128 * 1024 * 1024,
+            "fold input exceeds128MiB"
+        );
+        let bytes = std::fs::read(&self.fold_path)?;
+        ensure!(sha256_hex(&bytes) == self.fold_sha256, "fold input changed");
+        let fold: SynthesizedFoldInput = serde_json::from_slice(&bytes)?;
+        Ok(SynthesizedFitRequest {
+            task: fold.task,
+            schema: fold.schema,
+            classes: fold.classes,
+            train: fold.train,
+            targets: fold.targets,
+            predict: fold.predict,
+            recipe: self.recipe.clone(),
+            scheduling_seed: self.scheduling_seed,
+        })
+    }
+}
 fn classes_valid(task: Task, classes: &[String]) -> Result<()> {
     let count = classes.iter().collect::<BTreeSet<_>>().len();
     ensure!(
@@ -196,7 +248,13 @@ pub fn worker(input: &Path, output: &Path) -> Result<()> {
         bytes.len() <= 128 * 1024 * 1024,
         "generated fit input exceeds128MiB"
     );
-    let request: SynthesizedFitRequest = serde_json::from_slice(&bytes)?;
+    let value: serde_json::Value = serde_json::from_slice(&bytes)?;
+    let request: SynthesizedFitRequest =
+        if value.get("schema").and_then(|v| v.as_str()) == Some("jope.synthesized-fit-spec/v1") {
+            serde_json::from_value::<SynthesizedFitSpec>(value)?.materialize()?
+        } else {
+            serde_json::from_value(value)?
+        };
     let mut result = fit_synthesized(&request)?;
     result.input_sha256 = sha256_hex(&bytes);
     write_private(output, &result)

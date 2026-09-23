@@ -30,5 +30,8 @@ rustix = { version = "=1.1.4", features = ["fs"] }
 [dev-dependencies]
 tempfile.workspace = true
 
+[features]
+asm = ["jope-bench/asm"]
+
 [lints]
 workspace = true
