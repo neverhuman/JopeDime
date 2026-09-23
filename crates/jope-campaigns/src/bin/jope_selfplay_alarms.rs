@@ -2177,7 +2177,12 @@ mod tests {
     /// `QueueStatus` requires. Written out by hand, NOT generated from the
     /// derived field list, so an over-strict extractor still fails
     /// `a_complete_in_schema_document_is_silent` instead of agreeing with
-    /// itself.
+    /// itself. Its values also pass every aggregate check in the consumer's
+    /// `load_queue_status` (jope_selfplay_supply.rs): queued + starting =
+    /// queued_starting, reserve + admission manifests = unclaimed manifests,
+    /// complete_reserve_waves = protected_reserve_waves.len(), useful_work =
+    /// queued + starting + dispatching + validated_ready, and
+    /// candidate_evaluation_work >= useful_work, non-zero with it.
     fn complete_keeper_document(generated_at_ms: u64) -> String {
         format!(
             r#"{{"schema":"JopeSelfplayQueueKeeper.v3","generated_at_ms":{generated_at_ms},
@@ -2187,8 +2192,8 @@ mod tests {
                "protected_reserve_waves":[],"complete_current_checkpoint_waves":0,
                "partial_current_checkpoint_waves":0,"complete_reserve_waves":0,
                "reserve_manifests":0,"admission_manifests":0,"validated_ready":7,
-               "useful_work":11,"candidate_evaluation_work":0,
-               "unclaimed_current_checkpoint_manifests":7}}"#
+               "useful_work":11,"candidate_evaluation_work":11,
+               "unclaimed_current_checkpoint_manifests":0}}"#
         )
     }
 
