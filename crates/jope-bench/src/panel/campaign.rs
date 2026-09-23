@@ -868,6 +868,7 @@ pub fn run(
         datasets_report.push(
             json!({"dataset":dataset.dataset.id,"task":dataset.dataset.task,
             "screen":screen_data,"frozen":frozen,"confirmation":observations,"recipes":confirmed,
+            "selection_exposure":super::selection_exposure::report(dataset,frozen,&roster[&dataset.dataset.id])?,
             "asm":asm_inventory.get(&dataset.dataset.id).cloned().unwrap_or_else(||json!("not_run_comparator_qualification_only"))}),
         );
     }
@@ -890,6 +891,7 @@ pub fn run(
         "plan_sha256":plan.identity()?, "experiment_sha256":plan.experiment.identity()?,
         "window":pool.window(), "datasets":datasets_report, "cost":accounting,
         "sealed_inputs_opened":false,"optimization_visible_labels":"development",
+        "confirmation_role":"adaptive_development","five_fold_summary_is_unbiased_generalization_estimate":false,
         "complete_asm_demonstration":false});
     let report_bytes = serde_json::to_vec(&report)?;
     let report_hash = jope_pipeline::sha256_hex(&report_bytes);
@@ -1128,6 +1130,7 @@ pub fn report(
             .join("frozen")
             .join(format!("{}.json", dataset.dataset.id));
         let mut qualified = Value::Null;
+        let mut selection_exposure = Value::Null;
         if frozen_path.try_exists()? {
             let frozen: protocol::FrozenSelection =
                 serde_json::from_slice(&fs::read(frozen_path)?)?;
@@ -1143,6 +1146,8 @@ pub fn report(
                     )?,
                 "stale frozen selection"
             );
+            selection_exposure =
+                super::selection_exposure::report(dataset, &frozen, &roster[&dataset.dataset.id])?;
             let mut expected_confirm = Vec::new();
             for recipe in &frozen.recipes {
                 let method = roster[&dataset.dataset.id]
@@ -1188,6 +1193,7 @@ pub fn report(
         report.push(
             json!({"dataset":dataset.dataset.id,"task":dataset.dataset.task,
             "inventory":inventory,"screen":screen,"confirmation":confirmations,"recipes":qualified,
+            "selection_exposure":selection_exposure,
             "asm":asm_inventory.get(&dataset.dataset.id)}),
         );
     }
@@ -1211,6 +1217,8 @@ pub fn report(
         "plan_sha256":plan.identity()?,"experiment_sha256":plan.experiment.identity()?,
         "window":window,"datasets":report,"cost":accounting,
         "sealed_inputs_opened":false,"fits_started":0,"clock_started":false,
+        "optimization_visible_labels":"development","confirmation_role":"adaptive_development",
+        "five_fold_summary_is_unbiased_generalization_estimate":false,
         "complete_asm_demonstration":false}),
     )
 }

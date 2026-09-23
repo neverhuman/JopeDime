@@ -209,6 +209,31 @@ impl WorkerJob {
     }
 }
 
+/// Only deduplicate the preliminary inventory pass within one submitted batch.
+/// This is not an admission/integrity cache: every actual gated launch and
+/// successful exit still calls `WorkerJob::verify_inputs` with full hashes.
+/// A file may change after this preflight; that later full check must reject it.
+#[derive(Default)]
+struct BatchPreflight {
+    verified: BTreeSet<(PathBuf, String)>,
+}
+impl BatchPreflight {
+    fn verify(&mut self, job: &WorkerJob) -> Result<()> {
+        ensure!(
+            !job.command.inputs.is_empty(),
+            "worker input closure is empty"
+        );
+        for artifact in std::iter::once(&job.command.program).chain(&job.command.inputs) {
+            let key = (artifact.path.clone(), artifact.sha256.clone());
+            if !self.verified.contains(&key) {
+                artifact.verify()?;
+                self.verified.insert(key);
+            }
+        }
+        Ok(())
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DependencyCheck {
     pub job_sha256: String,
@@ -632,6 +657,7 @@ impl ExecutionPool {
         let mut requests = BTreeSet::new();
         let mut queue = FairQueue::default();
         let mut outcomes = Vec::new();
+        let mut preflight = BatchPreflight::default();
         for job in jobs {
             let id = job.identity()?;
             ensure!(ids.insert(id.clone()), "duplicate job in batch");
@@ -665,7 +691,7 @@ impl ExecutionPool {
                     "cancelled before admission".into(),
                 )?);
             } else if !self.started_path(&id).exists() {
-                if let Err(error) = job.verify_inputs() {
+                if let Err(error) = preflight.verify(&job) {
                     let outcome = WorkerOutcome::unstarted(
                         &job,
                         EvaluationStatus::Unavailable,
@@ -777,12 +803,24 @@ impl ExecutionPool {
             for index in (0..active.len()).rev() {
                 if active[index].is_done() {
                     let running = active.swap_remove(index);
-                    let group = running.started.cgroup.clone();
+                    let started = running.started.clone();
+                    let group = started.cgroup.clone();
                     let outcome = running.finish()?;
+                    // Setup now belongs to the watcher. Preserve the same
+                    // bounded cleanup used by synchronous launch failures before
+                    // releasing its reserved CPU or admitting replacement work.
+                    if !self.started_path(&outcome.job_sha256).exists() {
+                        let recovery = self.recover_group(&started, true)?;
+                        if !recovery.is_empty() {
+                            admission_blocked = Some(format!("launch cleanup pending{recovery}"));
+                        }
+                    }
                     if !group.exists()
                         || named_counter(&group, "cgroup.events", "populated").ok() == Some(0)
                     {
-                        if self.started_path(&outcome.job_sha256).exists() {
+                        if self.started_path(&outcome.job_sha256).exists()
+                            || outcome.command_status == EvaluationStatus::BudgetExhausted
+                        {
                             immutable(&self.finished_path(&outcome.job_sha256), &outcome)?;
                         }
                         self.clear_cleanup(&outcome.job_sha256)?;
@@ -820,12 +858,6 @@ impl ExecutionPool {
                         &job,
                         EvaluationStatus::BudgetExhausted,
                         "original execution window exhausted".into(),
-                    )?)
-                } else if let Err(error) = job.verify_inputs() {
-                    Some(WorkerOutcome::unstarted(
-                        &job,
-                        EvaluationStatus::Unavailable,
-                        format!("input/dependency unavailable: {error:#}"),
                     )?)
                 } else {
                     None
@@ -895,18 +927,14 @@ impl ExecutionPool {
                         } else {
                             admission_blocked = Some(format!("launch cleanup pending{recovery}"));
                         }
-                        let mut outcome = WorkerOutcome::unstarted(
-                            &started.job,
-                            EvaluationStatus::Unavailable,
+                        let outcome = pre_gate_failure(
+                            &started,
+                            now_ms()?,
                             format!("fit launch unavailable: {error:#}"),
                         )?;
-                        // Setup never released the gate; retain inventory only.
-                        outcome.consumption = ObservedConsumption {
-                            accounting_reason:
-                                "launch failed before gate release; gate/setup CPU unavailable"
-                                    .into(),
-                            ..Default::default()
-                        };
+                        if outcome.command_status == EvaluationStatus::BudgetExhausted {
+                            immutable(&self.finished_path(&id), &outcome)?;
+                        }
                         outcomes.push(outcome);
                     }
                 }
@@ -1175,6 +1203,39 @@ impl Drop for ActiveFits {
     }
 }
 
+/// Setup can cross the original arm cutoff between the queue check and gate.
+/// That refusal is terminal for this job identity, even though no fit started.
+/// Keep setup consumption unknown rather than inferring zero physical work.
+fn pre_gate_failure(started: &Started, now: u64, reason: String) -> Result<WorkerOutcome> {
+    let expired = now >= started.fit_deadline_unix_ms;
+    let mut outcome = WorkerOutcome::unstarted(
+        &started.job,
+        if expired {
+            EvaluationStatus::BudgetExhausted
+        } else {
+            EvaluationStatus::Unavailable
+        },
+        if expired {
+            format!("original cutoff reached before gate release: {reason}")
+        } else {
+            reason
+        },
+    )?;
+    outcome.consumption = ObservedConsumption {
+        accounting_reason: "launch failed before gate release; gate/setup CPU unavailable".into(),
+        ..Default::default()
+    };
+    Ok(outcome)
+}
+
+fn pre_gate_cancellation(started: &Started, now: u64) -> Result<WorkerOutcome> {
+    let mut outcome = pre_gate_failure(started, now, "cancelled before gate release".into())?;
+    if outcome.command_status != EvaluationStatus::BudgetExhausted {
+        outcome.command_status = EvaluationStatus::Cancelled;
+    }
+    Ok(outcome)
+}
+
 /// Independent owner of each Child and deadline. Completion hashing can delay
 /// reclamation of this slot, but cannot delay another fit's deadline or exit
 /// observation. A local stop flag makes error-path Drop cancel only this fit.
@@ -1196,26 +1257,41 @@ impl Running {
         cancellation: Arc<AtomicBool>,
     ) -> Result<Self> {
         fs::create_dir_all(logs.join(&started.job_sha256))?;
-        let process = ProcessFit::start(started.clone(), cpu, memory_bytes)?;
+        let process_started = started.clone();
+        let process_journal = started_path.clone();
+        Self::spawn(started, cpu, started_path, move |thread_stop| {
+            if cancellation.load(Ordering::Acquire) || thread_stop.load(Ordering::Acquire) {
+                return pre_gate_cancellation(&process_started, now_ms()?);
+            }
+            // The existing bounded Running slot reserves this CPU while setup
+            // verifies all bytes and constructs its independently limited group.
+            // No worker gate opens on the supervisor's serial scheduling thread.
+            let process = ProcessFit::start(process_started, cpu, memory_bytes)?;
+            process.watch(
+                &process_journal,
+                per_fit_seconds,
+                &logs,
+                &cancellation,
+                &thread_stop,
+            )
+        })
+    }
+    fn spawn(
+        started: Started,
+        cpu: u32,
+        started_path: PathBuf,
+        watch: impl FnOnce(Arc<AtomicBool>) -> Result<WorkerOutcome> + Send + 'static,
+    ) -> Result<Self> {
         let stop = Arc::new(AtomicBool::new(false));
         let thread_stop = stop.clone();
-        let journal_path = started_path.clone();
         let watcher = thread::Builder::new()
             .name(format!("fit-{}", &started.job_sha256[..12]))
-            .spawn(move || {
-                process.watch(
-                    &started_path,
-                    per_fit_seconds,
-                    &logs,
-                    &cancellation,
-                    &thread_stop,
-                )
-            })?;
+            .spawn(move || watch(thread_stop))?;
         Ok(Self {
             started,
             cpu,
             watcher: Some(watcher),
-            started_path: journal_path,
+            started_path,
             stop,
         })
     }
@@ -1229,12 +1305,11 @@ impl Running {
             Ok(Err(error)) => format!("fit supervision/output failure: {error:#}"),
             Err(_) => "fit watcher panicked; original outcome unknown".into(),
         };
-        let status = if self.started_path.exists() {
-            EvaluationStatus::Failed
-        } else {
-            EvaluationStatus::Unavailable
-        };
-        let mut outcome = WorkerOutcome::unstarted(&self.started.job, status, reason)?;
+        if !self.started_path.exists() {
+            return pre_gate_failure(&self.started, now_ms()?, reason);
+        }
+        let mut outcome =
+            WorkerOutcome::unstarted(&self.started.job, EvaluationStatus::Failed, reason)?;
         outcome.consumption = ObservedConsumption {
             accounting_reason: "supervision failed; final counters and exit time unknown".into(),
             ..Default::default()
@@ -1397,6 +1472,8 @@ impl ProcessFit {
                 .any(|line| line == format!("0::/{expected}")),
             "fit attachment readback differs"
         );
+        // Always rehash actual bytes here; preliminary deduplication never
+        // admits a command and must not become metadata-only gate verification.
         job.verify_inputs()?;
         ensure!(
             now_ms()? < running.started.fit_deadline_unix_ms,
@@ -1425,6 +1502,11 @@ impl ProcessFit {
             gate_ms < self.started.fit_deadline_unix_ms,
             "deadline exhausted before gate release"
         );
+        if cancellation.load(Ordering::Acquire) || local_stop.load(Ordering::Acquire) {
+            // No executable was released. Drop kills the gated wrapper and the
+            // supervisor retains/reconciles cleanup ownership before slot reuse.
+            return pre_gate_cancellation(&self.started, gate_ms);
+        }
         immutable(started_path, &self.started)?;
         self.began = Instant::now();
         self.gate_released_unix_ms = Some(now_ms()?);
@@ -2007,6 +2089,210 @@ mod tests {
             .tempdir_in(fs::canonicalize(root).unwrap())
             .unwrap()
     }
+    fn preflight_job(root: &Path) -> WorkerJob {
+        let mut job = fixture_job('a', 'b');
+        let program = root.join("program");
+        let input = root.join("input");
+        fs::write(&program, b"trusted program").unwrap();
+        fs::write(&input, b"trusted input").unwrap();
+        job.command.program = Artifact {
+            sha256: hash_file(&program).unwrap(),
+            path: program,
+        };
+        job.command.inputs = vec![Artifact {
+            sha256: hash_file(&input).unwrap(),
+            path: input,
+        }];
+        job
+    }
+    #[test]
+    fn batch_preflight_deduplicates_only_identical_successful_pins() {
+        let scratch = scratch();
+        let job = preflight_job(scratch.path());
+        let mut preflight = BatchPreflight::default();
+        preflight.verify(&job).unwrap();
+        preflight.verify(&job).unwrap();
+        assert_eq!(preflight.verified.len(), 2);
+        let mut changed = job.clone();
+        changed.command.inputs[0].sha256 = crate::sha256_hex(b"different expected bytes");
+        assert!(preflight.verify(&changed).is_err());
+        assert_eq!(preflight.verified.len(), 2);
+        assert!(BatchPreflight::default().verify(&changed).is_err());
+    }
+    #[test]
+    fn full_gate_hash_rejects_mutation_despite_preflight_and_restored_mtime() {
+        let scratch = scratch();
+        let job = preflight_job(scratch.path());
+        let input = &job.command.inputs[0].path;
+        let modified = fs::metadata(input).unwrap().modified().unwrap();
+        let mut preflight = BatchPreflight::default();
+        preflight.verify(&job).unwrap();
+        fs::write(input, b"altered input").unwrap();
+        File::options()
+            .write(true)
+            .open(input)
+            .unwrap()
+            .set_times(fs::FileTimes::new().set_modified(modified))
+            .unwrap();
+        assert_eq!(fs::metadata(input).unwrap().modified().unwrap(), modified);
+        // Inventory deduplication is deliberately not the integrity boundary.
+        preflight.verify(&job).unwrap();
+        assert!(job.verify_inputs().is_err());
+        assert!(BatchPreflight::default().verify(&job).is_err());
+    }
+    #[test]
+    fn full_gate_hash_rejects_program_replacement_after_preflight() {
+        let scratch = scratch();
+        let job = preflight_job(scratch.path());
+        let mut preflight = BatchPreflight::default();
+        preflight.verify(&job).unwrap();
+        let replacement = scratch.path().join("replacement");
+        fs::write(&replacement, b"altered program").unwrap();
+        fs::rename(replacement, &job.command.program.path).unwrap();
+        preflight.verify(&job).unwrap();
+        assert!(job.verify_inputs().is_err());
+    }
+    #[test]
+    fn pre_gate_expiry_is_terminal_with_unknown_setup_cost_and_no_fit_claim() {
+        let job = fixture_job('a', 'b');
+        let started = Started {
+            job_sha256: job.identity().unwrap(),
+            job,
+            started_unix_ms: 100,
+            fit_deadline_unix_ms: 120,
+            cgroup: PathBuf::from("/synthetic/not-used"),
+        };
+        let before = pre_gate_failure(&started, 119, "synthetic missing input".into()).unwrap();
+        assert_eq!(before.command_status, EvaluationStatus::Unavailable);
+        for now in [120, 121] {
+            let after =
+                pre_gate_failure(&started, now, "fit expired before launch".into()).unwrap();
+            assert_eq!(after.command_status, EvaluationStatus::BudgetExhausted);
+            assert!(after.consumption.gate_released_unix_ms.is_none());
+            assert!(after.consumption.cpu_seconds.is_none());
+            assert!(after.exit_code.is_none());
+            assert!(after.outputs.is_empty());
+            assert_eq!(after.job_sha256, before.job_sha256);
+        }
+    }
+
+    fn setup_record(root: &Path, recipe: char, deadline: u64) -> Started {
+        let job = fixture_job('a', recipe);
+        let id = job.identity().unwrap();
+        Started {
+            job,
+            job_sha256: id.clone(),
+            started_unix_ms: now_ms().unwrap(),
+            fit_deadline_unix_ms: deadline,
+            cgroup: root.join(format!("fit-{id}")),
+        }
+    }
+    #[test]
+    fn bounded_watchers_enter_setup_concurrently_before_either_finishes() {
+        use std::sync::mpsc;
+        let scratch = scratch();
+        let (entered, notices) = mpsc::channel();
+        let mut fits = Vec::new();
+        let mut release = Vec::new();
+        for (cpu, recipe) in [(2, 'b'), (3, 'c')] {
+            let started = setup_record(scratch.path(), recipe, now_ms().unwrap() + 5000);
+            let path = scratch.path().join(format!("started-{cpu}.json"));
+            let entered = entered.clone();
+            let (send, wait) = mpsc::channel();
+            release.push(send);
+            fits.push(
+                Running::spawn(started, cpu, path, move |_| {
+                    entered.send(cpu).unwrap();
+                    wait.recv_timeout(Duration::from_secs(2)).unwrap();
+                    anyhow::bail!("synthetic setup failure; no process/cgroup invoked")
+                })
+                .unwrap(),
+            );
+        }
+        let first = notices.recv_timeout(Duration::from_secs(1)).unwrap();
+        let second = notices.recv_timeout(Duration::from_secs(1)).unwrap();
+        assert_ne!(first, second);
+        assert_eq!(
+            fits.iter().map(|f| f.cpu).collect::<BTreeSet<_>>(),
+            BTreeSet::from([2, 3])
+        );
+        assert!(fits.iter().all(|f| !f.is_done()));
+        for send in release {
+            send.send(()).unwrap();
+        }
+        for fit in fits {
+            let outcome = fit.finish().unwrap();
+            assert_eq!(outcome.command_status, EvaluationStatus::Unavailable);
+            assert!(outcome.consumption.gate_released_unix_ms.is_none());
+            assert!(outcome.consumption.cpu_seconds.is_none());
+        }
+    }
+    #[test]
+    fn async_setup_failure_keeps_cleanup_owner_and_original_expiry() {
+        let scratch = scratch();
+        let started = setup_record(scratch.path(), 'b', now_ms().unwrap().saturating_sub(1));
+        let cleanup = scratch.path().join("cleanup.json");
+        immutable(&cleanup, &started).unwrap();
+        let original = fs::read(&cleanup).unwrap();
+        let path = scratch.path().join("not-started.json");
+        let running = Running::spawn(started, 2, path.clone(), |_| {
+            anyhow::bail!("synthetic setup failed at original cutoff")
+        })
+        .unwrap();
+        let outcome = running.finish().unwrap();
+        assert_eq!(outcome.command_status, EvaluationStatus::BudgetExhausted);
+        assert!(outcome.consumption.gate_released_unix_ms.is_none());
+        assert!(outcome.exit_code.is_none());
+        assert!(!path.exists());
+        // The watcher never clears cleanup authority. The pool must reconcile it.
+        assert_eq!(fs::read(cleanup).unwrap(), original);
+    }
+    #[test]
+    fn dropping_setup_slot_signals_and_joins_its_watcher() {
+        use std::sync::mpsc;
+        let scratch = scratch();
+        let started = setup_record(scratch.path(), 'b', now_ms().unwrap() + 5000);
+        let (entered, notice) = mpsc::channel();
+        let stopped = Arc::new(AtomicBool::new(false));
+        let observed = stopped.clone();
+        let running = Running::spawn(
+            started,
+            2,
+            scratch.path().join("not-started.json"),
+            move |stop| {
+                entered.send(()).unwrap();
+                let limit = Instant::now() + Duration::from_secs(2);
+                while !stop.load(Ordering::Acquire) {
+                    ensure!(
+                        Instant::now() < limit,
+                        "setup drop did not signal cancellation"
+                    );
+                    thread::sleep(Duration::from_millis(1));
+                }
+                observed.store(true, Ordering::Release);
+                anyhow::bail!("synthetic setup observed stop before any command")
+            },
+        )
+        .unwrap();
+        notice.recv_timeout(Duration::from_secs(1)).unwrap();
+        drop(running);
+        assert!(stopped.load(Ordering::Acquire));
+    }
+    #[test]
+    fn pre_gate_setup_cancellation_does_not_reset_or_override_expired_cutoff() {
+        let scratch = scratch();
+        let started = setup_record(scratch.path(), 'b', 120);
+        let cancelled = pre_gate_cancellation(&started, 119).unwrap();
+        assert_eq!(cancelled.command_status, EvaluationStatus::Cancelled);
+        assert!(cancelled.exit_code.is_none());
+        assert!(cancelled.consumption.gate_released_unix_ms.is_none());
+        assert!(cancelled.consumption.cpu_seconds.is_none());
+        let expired = pre_gate_cancellation(&started, 120).unwrap();
+        assert_eq!(expired.command_status, EvaluationStatus::BudgetExhausted);
+        assert_eq!(expired.job_sha256, cancelled.job_sha256);
+        assert_eq!(started.fit_deadline_unix_ms, 120);
+    }
+
     #[test]
     fn fit_memory_is_equal_pinned_and_leaves_controller_headroom() {
         let mut experiment = fixture_experiment();

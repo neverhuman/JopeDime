@@ -226,9 +226,16 @@ are required, so dependency feature unification cannot change admission.
 The paired evaluator preregisters 64 neural slots plus 16 exploration slots against
 80 generic slots under equal 120-second arm allowances. Encoding and proposal work
 count inside the neural allowance. Canonical duplicates retain their origins and
-zero additional fit cost. Five inner training folds select a recipe before its outer
-development fold is scored. Every completed generated fit saves the complete fitted
-model, reloads it and checks prediction parity. Incomplete or unavailable arms remain
+zero additional fit cost. Five inner folds within development cut zero's training
+rows select each generated recipe before development fold zero is scored. That recipe
+is then frozen for confirmation across all five development folds. Its learning and
+selection already used labels from folds one through four; fold zero supplies the
+screen scores that select the top recipes for every method. These five-fold summaries
+are adaptive development measurements, not unbiased generalization estimates. Live and
+recovered reports retain every loss and outcome and identify each frozen recipe's
+ordered scoring-row overlap with recipe learning and screen selection. Sealed evaluation
+remains unopened. Every completed generated fit saves the complete fitted model,
+reloads it and checks prediction parity. Incomplete or unavailable arms remain
 explicit outcomes. Classification contexts use a separate experimental lineage with
 label-renaming invariance; they cannot be supplied to the accepted regression policy.
 
