@@ -1,15 +1,4 @@
-# Executable programs, fitted predictors and language support
-
-## Four different artifacts
-
-The private program `(pipe X (standardize) (ridge))` is a small executable algorithm description. It takes a feature table, fits standardization from training rows, then fits a ridge-regression head. It is an ordered typed recipe, rather than an already fitted set of coefficients. A different transform or head changes the algorithm. GP search works within its admitted grammar and task constraints; the presence of a code emitter does not grant arbitrary-language or arbitrary-operator coverage.
-
-Keep these artifact types distinct:
-
-1. **Private recipe:** the lossless canonical program and its configuration. It can be fitted again on new training data and can carry private discovery provenance.
-2. **Native fitted predictor:** preprocessing state, category dictionaries, imputation statistics, transforms, calibration and head parameters learned from one exact fit. It predicts without training again.
-3. **Emitted recipe:** a program in another language with `fit` and `predict` behavior. Running it on training data fits a new instance of the algorithm. Agreement between these refits tests recipe/runtime equivalence.
-4. **Fitted inference bundle:** an allowlisted implementation of one exact already fitted predictor. It contains the selected inference state and an input boundary; qualification compares its predictions against the original saved native artifact.
+# Complete fitted inference and language support
 
 At source `68f56404c3e199e06413bfd645d3fe0803d7b96f`, merged unchanged as main `a75e543d2` (same source tree), the legacy `jope emit` and `jope pipeline run --emit` paths produce type 3. `jope fit` computes a fit and reports scores but does not provide a saved fitted-artifact output flag. The pending product/winner packets, which are not part of merged main, expose type 4 from complete benchmark/demo fitted state. Do not advertise a legacy recipe file as the exact fitted winner.
 
@@ -30,7 +19,7 @@ This chapter and the supplied tiny fixture are **maintainer-private**. The DSL, 
 | Pending public fitted JavaScript | `predictRaw(rows)` over raw rows; Node/CommonJS qualification harness | Linear and multiclass subset below; a declared ECMAScript numerical policy and tolerance are used. |
 | CUDA | No qualified public fitted-export route in this delivery sequence | Deferred until Python/Rust, the one C++ emitter under both standards and JavaScript are qualified. A training GPU does not establish CUDA inference parity. |
 
-Source anchors: `crates/jope-cli/src/kernel.rs`, `crates/jope-pipeline/src/emit.rs`, `crates/feat-math/src/{transpile,emit_py,emit_rs,emit_cpp,emit_js}.rs`, `crates/feat-math/src/advanced_v3/fitted_cpp.rs`, and the pending `advanced_v3/fitted_portable.rs` plus `crates/jope-bench/src/panel/inference.rs`, which are absent from merged main `a75e543d2` and exist only as stopped, unintegrated custody patch views ([§](D-source-map-and-evidence.md#pending-source-references)).
+Source anchors: `crates/jope-cli/src/kernel.rs`, `crates/jope-pipeline/src/emit.rs`, `crates/feat-math/src/{transpile,emit_py,emit_rs,emit_cpp,emit_js}.rs`, `crates/feat-math/src/advanced_v3/fitted_cpp.rs`, and the pending `advanced_v3/fitted_portable.rs` plus `crates/jope-bench/src/panel/inference.rs`, which are absent from merged main `a75e543d2` and exist only as stopped, unintegrated custody patch views ([§](catalogue.md#pending-source-references)).
 
 ## Complete registered-recipe matrix
 
