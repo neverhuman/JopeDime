@@ -19,7 +19,8 @@ pub(in crate::bundle) fn verify_jope_metadata(
         metadata.grammar_specs.clone(),
     ))?);
     if vocabulary_sha256 != manifest.vocabulary_canonical_sha256
-        || grammar_sha256 != manifest.grammar_sha256
+        || manifest.grammar_sha256 != JOPE_GRAMMAR_SHA256
+        || grammar_sha256 != JOPE_GRAMMAR_CONTENT_SHA256
     {
         bail!(
             "JOPE vocabulary or grammar canonical content identity changed: vocab={vocabulary_sha256}, grammar={grammar_sha256}"
