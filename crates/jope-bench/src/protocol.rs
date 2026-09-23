@@ -8,8 +8,9 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::cuts::Cut;
-use crate::eval::{evaluate, evaluate_deep_programs, take, Deep, Outcome};
+use crate::eval::{evaluate, evaluate_deep_programs, fixed_programs, take, Deep, Outcome};
 use crate::methods::{search_program, Method};
+use crate::task::Task;
 
 /// Protocol parameters.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -29,11 +30,12 @@ pub struct MethodResult {
     pub screen_cut_id: String,
     /// Screen score.
     pub screen: Outcome,
-    /// The screen ranking key: held-out R² on the screen cut, **uncapped**, so a degenerate fold
-    /// (every method far below zero) still orders methods instead of tying them all at −1.
+    /// The screen ranking key: the task's primary score on the screen cut ([`Task::score_metric`]),
+    /// **raw** (R² uncapped), so a degenerate fold (every method far below zero) still orders
+    /// methods instead of tying them all at −1.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub screen_fitness: Option<f64>,
-    /// 1-based rank by screen fitness (rejected methods last, then by id).
+    /// 1-based rank by screen fitness (methods without a score last, then by id).
     pub screen_rank: usize,
     /// Deep score, for the top N only.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -50,39 +52,42 @@ fn rank_key(fitness: Option<f64>, id: &str) -> (u8, f64, String) {
     }
 }
 
-fn order_by<F: Fn(usize) -> (Option<f64>, String)>(n: usize, key: F) -> Vec<usize> {
-    let mut order: Vec<usize> = (0..n).collect();
+/// Indices of `entries` in rank order: by fitness descending (raw, however negative), entries
+/// without a fitness last, ties by id.
+pub fn rank_order(entries: &[(Option<f64>, &str)]) -> Vec<usize> {
+    let mut order: Vec<usize> = (0..entries.len()).collect();
     order.sort_by(|&a, &b| {
-        let (fa, ia) = key(a);
-        let (fb, ib) = key(b);
-        rank_key(fa, &ia)
-            .partial_cmp(&rank_key(fb, &ib))
+        rank_key(entries[a].0, entries[a].1)
+            .partial_cmp(&rank_key(entries[b].0, entries[b].1))
             .unwrap_or(std::cmp::Ordering::Equal)
     });
     order
 }
 
 /// Deep-score one method: the fixed program on every cut, or, for a method with `resample`, the
-/// search re-run on each cut's training rows and that cut's own program scored.
-fn deepen(method: &Method, x: &Rows, y: &[f64], cuts: &[Cut]) -> Deep {
+/// search re-run on each cut's training rows and that cut's own program scored. A cut whose
+/// search fails is a rejected fold naming the cause.
+fn deepen(method: &Method, x: &Rows, y: &[f64], cuts: &[Cut], task: Task) -> Deep {
     let Some(config) = &method.resample else {
-        let programs: Vec<String> = cuts.iter().map(|_| method.dsl.clone()).collect();
-        return evaluate_deep_programs(&programs, x, y, cuts);
+        return evaluate_deep_programs(&fixed_programs(&method.dsl, cuts), x, y, cuts, task);
     };
+    if task != Task::Regression {
+        let programs: Vec<Result<String, String>> = cuts
+            .iter()
+            .map(|_| Err("the search is regression-only".to_owned()))
+            .collect();
+        return evaluate_deep_programs(&programs, x, y, cuts, task);
+    }
     let started = std::time::Instant::now();
-    let found: Vec<Result<String>> = cuts
+    let programs: Vec<Result<String, String>> = cuts
         .par_iter()
         .map(|cut| {
             let (x_train, y_train) = take(x, y, &cut.train);
-            search_program(&x_train, &y_train, config)
+            search_program(&x_train, &y_train, config).map_err(|error| format!("{error:#}"))
         })
         .collect();
     let produce_seconds = started.elapsed().as_secs_f64();
-    let programs: Vec<String> = found
-        .into_iter()
-        .map(|r| r.unwrap_or_else(|error| format!("(search failed: {error})")))
-        .collect();
-    let mut deep = evaluate_deep_programs(&programs, x, y, cuts);
+    let mut deep = evaluate_deep_programs(&programs, x, y, cuts, task);
     deep.produce_seconds = produce_seconds;
     deep
 }
@@ -95,6 +100,7 @@ pub fn run(
     cuts: &[Cut],
     methods: Vec<Method>,
     protocol: &Protocol,
+    task: Task,
 ) -> Result<Vec<MethodResult>> {
     ensure!(!methods.is_empty(), "no methods to benchmark");
     ensure!(
@@ -112,13 +118,13 @@ pub fn run(
     let screen_cut = &cuts[protocol.screen_fold];
     let screens: Vec<Outcome> = methods
         .par_iter()
-        .map(|method| evaluate(&method.dsl, x, y, screen_cut))
+        .map(|method| evaluate(&method.dsl, x, y, screen_cut, task))
         .collect();
     let mut results: Vec<MethodResult> = methods
         .into_iter()
         .zip(screens)
         .map(|(method, screen)| {
-            let screen_fitness = screen.r2;
+            let screen_fitness = screen.score;
             MethodResult {
                 method,
                 screen_cut_id: screen_cut.cut_id.clone(),
@@ -134,9 +140,11 @@ pub fn run(
         })
         .collect();
 
-    let order = order_by(results.len(), |i| {
-        (results[i].screen_fitness, results[i].method.id.clone())
-    });
+    let entries: Vec<(Option<f64>, &str)> = results
+        .iter()
+        .map(|r| (r.screen_fitness, r.method.id.as_str()))
+        .collect();
+    let order = rank_order(&entries);
     for (rank, &i) in order.iter().enumerate() {
         results[i].screen_rank = rank + 1;
     }
@@ -148,18 +156,22 @@ pub fn run(
         .collect();
     let deeps: Vec<Deep> = finalists
         .par_iter()
-        .map(|&i| deepen(&results[i].method, x, y, cuts))
+        .map(|&i| deepen(&results[i].method, x, y, cuts, task))
         .collect();
     for (&i, deep) in finalists.iter().zip(deeps) {
         results[i].deep = Some(deep);
     }
-    let deep_order = order_by(finalists.len(), |j| {
-        let r = &results[finalists[j]];
-        (
-            r.deep.as_ref().and_then(|d| d.robust_fitness),
-            r.method.id.clone(),
-        )
-    });
+    let deep_entries: Vec<(Option<f64>, &str)> = finalists
+        .iter()
+        .map(|&i| {
+            let r = &results[i];
+            (
+                r.deep.as_ref().and_then(|d| d.robust_fitness),
+                r.method.id.as_str(),
+            )
+        })
+        .collect();
+    let deep_order = rank_order(&deep_entries);
     let mut deep_rank = 0;
     for &j in &deep_order {
         let i = finalists[j];
@@ -176,7 +188,7 @@ pub fn run(
 mod tests {
     use super::*;
     use crate::cuts::{build, FoldPlan};
-    use crate::methods::{baselines, MethodKind, SearchConfig};
+    use crate::methods::{baselines, default_baselines, MethodKind, SearchConfig};
 
     fn toy() -> (Rows, Vec<f64>) {
         let mut x = Vec::new();
@@ -195,11 +207,14 @@ mod tests {
     fn screen_ranks_everyone_and_deepens_the_top() {
         let (x, y) = toy();
         let cuts = build(&FoldPlan::new("p", 1, 4), "p", "s", x.len()).unwrap();
-        let mut methods = baselines(&[
-            "ridge".to_owned(),
-            "histgbm".to_owned(),
-            "ksmooth".to_owned(),
-        ])
+        let mut methods = baselines(
+            &[
+                "ridge".to_owned(),
+                "histgbm".to_owned(),
+                "ksmooth".to_owned(),
+            ],
+            Task::Regression,
+        )
         .unwrap();
         methods.push(Method {
             id: "program.broken".to_owned(),
@@ -208,17 +223,11 @@ mod tests {
             produce_seconds: 0.0,
             resample: None,
         });
-        let results = run(
-            &x,
-            &y,
-            &cuts,
-            methods.clone(),
-            &Protocol {
-                screen_fold: 0,
-                top: 2,
-            },
-        )
-        .unwrap();
+        let protocol = Protocol {
+            screen_fold: 0,
+            top: 2,
+        };
+        let results = run(&x, &y, &cuts, methods.clone(), &protocol, Task::Regression).unwrap();
         assert_eq!(results.len(), 4);
         assert_eq!(
             results.iter().map(|r| r.screen_rank).collect::<Vec<_>>(),
@@ -246,18 +255,78 @@ mod tests {
 
         // Duplicate ids are refused.
         methods.push(methods[0].clone());
-        let error = run(
+        let error = run(&x, &y, &cuts, methods, &protocol, Task::Regression).unwrap_err();
+        assert!(error.to_string().contains("duplicate method id"), "{error}");
+    }
+
+    #[test]
+    fn far_below_zero_still_orders_and_unscored_ranks_last() {
+        // Two methods far below R² = −1 (where the campaign fitness would tie them) keep their
+        // order by raw value; a method without a score ranks last; ties break by id.
+        let entries = [
+            (Some(-3.0), "baseline.b"),
+            (None, "program.unscored"),
+            (Some(-1.5), "baseline.a"),
+            (Some(0.2), "baseline.c"),
+            (Some(-1.5), "baseline.0"),
+        ];
+        let order = rank_order(&entries);
+        let ids: Vec<&str> = order.iter().map(|&i| entries[i].1).collect();
+        assert_eq!(
+            ids,
+            [
+                "baseline.c",
+                "baseline.0",
+                "baseline.a",
+                "baseline.b",
+                "program.unscored"
+            ]
+        );
+    }
+
+    #[test]
+    fn binary_and_multiclass_run_through_the_protocol() {
+        let (x, y) = crate::eval::tests::toy_binary();
+        let cuts = build(&FoldPlan::new("b", 1, 4), "b", "s", x.len()).unwrap();
+        let protocol = Protocol {
+            screen_fold: 0,
+            top: 2,
+        };
+        let results = run(
             &x,
             &y,
             &cuts,
-            methods,
-            &Protocol {
-                screen_fold: 0,
-                top: 2,
-            },
+            default_baselines(Task::Binary).unwrap(),
+            &protocol,
+            Task::Binary,
         )
-        .unwrap_err();
-        assert!(error.to_string().contains("duplicate method id"), "{error}");
+        .unwrap();
+        assert_eq!(results.len(), Task::Binary.default_heads().len());
+        assert!(results.iter().all(|r| r.screen.is_ok()), "{results:#?}");
+        assert!(results[0].screen_fitness.unwrap() > 0.8);
+        assert_eq!(results.iter().filter(|r| r.deep_rank.is_some()).count(), 2);
+        let deep = results[0].deep.as_ref().unwrap();
+        assert!(deep.oof.contains_key("auc") && deep.oof.contains_key("logloss"));
+
+        let (x, y) = crate::eval::tests::toy_multiclass();
+        let cuts = build(&FoldPlan::new("m", 1, 4), "m", "s", x.len()).unwrap();
+        let results = run(
+            &x,
+            &y,
+            &cuts,
+            default_baselines(Task::Multiclass).unwrap(),
+            &protocol,
+            Task::Multiclass,
+        )
+        .unwrap();
+        assert!(results.iter().all(|r| r.screen.is_ok()), "{results:#?}");
+        assert_eq!(results.iter().filter(|r| r.deep_rank.is_some()).count(), 2);
+        assert!(results[0]
+            .deep
+            .as_ref()
+            .unwrap()
+            .oof
+            .contains_key("macro_f1"));
     }
 
     #[test]
@@ -274,15 +343,18 @@ mod tests {
         let mut searched = crate::methods::search(&x_train, &y_train, &config).unwrap();
         assert!(searched.produce_seconds > 0.0);
         searched.resample = Some(config);
+        searched.id = crate::methods::RESAMPLED_SEARCH_METHOD_ID.to_owned();
+        let protocol = Protocol {
+            screen_fold: 0,
+            top: 1,
+        };
         let results = run(
             &x,
             &y,
             &cuts,
-            vec![searched],
-            &Protocol {
-                screen_fold: 0,
-                top: 1,
-            },
+            vec![searched.clone()],
+            &protocol,
+            Task::Regression,
         )
         .unwrap();
         let deep = results[0].deep.as_ref().expect("deepened");
@@ -293,5 +365,16 @@ mod tests {
             "{:?}",
             deep.folds
         );
+
+        // The search is regression-only: asked to resample on a binary task, every fold is a
+        // rejection that says so, not a parse error.
+        let (xb, yb) = crate::eval::tests::toy_binary();
+        let cuts_b = build(&FoldPlan::new("qb", 1, 3), "qb", "s", xb.len()).unwrap();
+        let deep = deepen(&searched, &xb, &yb, &cuts_b, Task::Binary);
+        assert_eq!(deep.status, "rejected");
+        assert!(deep
+            .folds
+            .iter()
+            .all(|f| f.outcome.reason.as_deref() == Some("search: the search is regression-only")));
     }
 }

@@ -1,6 +1,7 @@
 //! Datasets in the catalog layout: a directory with `metadata.json` (repository layout) or
 //! `manifest.json` (cache layout) describing a headerless, fully numeric `train.csv` whose last
-//! column is the target. The bytes are verified against the manifest before anything is parsed.
+//! column is the target. The bytes are verified against the manifest before anything is parsed,
+//! and the target column is checked against the task's rules before anything is fitted.
 
 use std::path::{Path, PathBuf};
 
@@ -8,6 +9,8 @@ use anyhow::{bail, ensure, Context, Result};
 use feat_math::Rows;
 use jope_datasets::catalog::CatalogRow;
 use sha2::{Digest, Sha256};
+
+use crate::task::Task;
 
 /// A loaded dataset: the catalog row plus the training rows.
 #[derive(Clone, Debug)]
@@ -25,12 +28,22 @@ pub struct Dataset {
 }
 
 impl Dataset {
-    /// The catalog task as its JSON spelling (`regression`, `binary`, ...).
+    /// The catalog task as its JSON spelling (`regression`, `binary`, `multiclass`, ...).
     pub fn task(&self) -> String {
         serde_json::to_value(self.row.task)
             .ok()
             .and_then(|v| v.as_str().map(str::to_owned))
             .unwrap_or_default()
+    }
+
+    /// The benchmarked task, or why the dataset is not benchmarked.
+    pub fn bench_task(&self) -> Result<Task> {
+        Task::parse(&self.task()).with_context(|| {
+            format!(
+                "task {} is not benchmarked (regression, binary and multiclass are)",
+                self.task()
+            )
+        })
     }
 }
 
@@ -84,6 +97,43 @@ pub fn parse_numeric_csv(text: &str, what: &str) -> Result<(Rows, Vec<f64>)> {
     Ok((x, y))
 }
 
+/// The target column must suit the task before any cut is made: binary targets are exactly 0
+/// or 1 with at least two rows of each class (the v3 grammar's own rule, checked here so the
+/// whole dataset is skipped with a reason rather than every method rejected); multiclass targets
+/// are finite non-negative integer class codes with at least three classes. Regression targets
+/// are any finite number.
+pub fn validate_target(task: Task, y: &[f64]) -> Result<()> {
+    match task {
+        Task::Regression => Ok(()),
+        Task::Binary => {
+            ensure!(
+                y.iter().all(|v| *v == 0.0 || *v == 1.0),
+                "binary targets must be exactly 0 or 1"
+            );
+            let positives = y.iter().filter(|v| **v == 1.0).count();
+            ensure!(
+                positives >= 2 && y.len() - positives >= 2,
+                "binary tasks need at least two rows in each class ({positives} positives of {})",
+                y.len()
+            );
+            Ok(())
+        }
+        Task::Multiclass => {
+            ensure!(
+                y.iter().all(|v| v.fract() == 0.0 && *v >= 0.0),
+                "multiclass targets must be non-negative integer class codes"
+            );
+            let classes: std::collections::BTreeSet<i64> = y.iter().map(|v| *v as i64).collect();
+            ensure!(
+                classes.len() >= 3,
+                "multiclass tasks need at least three classes ({} seen)",
+                classes.len()
+            );
+            Ok(())
+        }
+    }
+}
+
 /// `metadata.json` (repository layout) or `manifest.json` (cache layout) under `dir`.
 pub fn find_manifest(dir: &Path) -> Option<PathBuf> {
     ["metadata.json", "manifest.json"]
@@ -92,7 +142,8 @@ pub fn find_manifest(dir: &Path) -> Option<PathBuf> {
         .find(|path| path.is_file())
 }
 
-/// Load one dataset directory, verifying `train.csv` against the manifest.
+/// Load one dataset directory, verifying `train.csv` against the manifest and the target
+/// column against the task ([`validate_target`]).
 pub fn load_dataset(dir: &Path) -> Result<Dataset> {
     let manifest = find_manifest(dir)
         .with_context(|| format!("{}: no metadata.json or manifest.json", dir.display()))?;
@@ -132,13 +183,16 @@ pub fn load_dataset(dir: &Path) -> Result<Dataset> {
             x.len()
         );
     }
-    Ok(Dataset {
+    let dataset = Dataset {
         dir: dir.to_path_buf(),
         row,
         x,
         y,
         train_sha256,
-    })
+    };
+    let task = dataset.bench_task()?;
+    validate_target(task, &dataset.y).with_context(|| format!("{}", dir.display()))?;
+    Ok(dataset)
 }
 
 /// Dataset directories under `root`: `root` itself when it holds a manifest and a `train.csv`,
@@ -176,5 +230,32 @@ mod tests {
         assert!(parse_numeric_csv("1,inf\n", "t").is_err(), "non-finite");
         assert!(parse_numeric_csv("1\n", "t").is_err(), "one column");
         assert!(parse_numeric_csv("\n", "t").is_err(), "empty");
+    }
+
+    #[test]
+    fn targets_are_checked_against_the_task() {
+        assert!(validate_target(Task::Regression, &[1.5, -2.0]).is_ok());
+        assert!(validate_target(Task::Binary, &[0.0, 1.0, 0.0, 1.0]).is_ok());
+        assert!(
+            validate_target(Task::Binary, &[0.0, 1.0, 0.0, 2.0]).is_err(),
+            "not 0/1"
+        );
+        assert!(
+            validate_target(Task::Binary, &[0.0, 0.0, 0.0, 1.0]).is_err(),
+            "one positive"
+        );
+        assert!(validate_target(Task::Multiclass, &[0.0, 1.0, 2.0, 1.0]).is_ok());
+        assert!(
+            validate_target(Task::Multiclass, &[0.0, 1.0, 0.0, 1.0]).is_err(),
+            "two classes"
+        );
+        assert!(
+            validate_target(Task::Multiclass, &[0.0, 1.5, 2.0]).is_err(),
+            "non-integer"
+        );
+        assert!(
+            validate_target(Task::Multiclass, &[-1.0, 1.0, 2.0]).is_err(),
+            "negative"
+        );
     }
 }

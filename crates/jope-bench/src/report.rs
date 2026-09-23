@@ -1,5 +1,10 @@
-//! `jope.bench-report/v1`: one file per dataset with the plan, every cut id, every method's
-//! screen and deep scores and timings, and where it was produced.
+//! `jope.bench-report/v2`: one file per dataset with the task and its metrics, the plan, every
+//! cut id, every method's screen and deep scores and timings, and where it was produced.
+//!
+//! v2 (from v1): `task` is one of the benchmarked tasks and `score_metric`, `ladder_metric` and
+//! `metric_direction` name what the numbers are; every outcome carries `score` plus a `metrics`
+//! map instead of fixed `rmse`/`r2` fields; deep results carry `fold_score`, `oof_score` and an
+//! `oof` map, and a `reason` when rejected. No v1 report was ever committed.
 
 use std::path::Path;
 
@@ -9,9 +14,10 @@ use serde::{Deserialize, Serialize};
 use crate::cuts::{Cut, FoldPlan};
 use crate::load::{sha256_hex, Dataset};
 use crate::protocol::{MethodResult, Protocol};
+use crate::task::Task;
 
 /// Schema id.
-pub const SCHEMA: &str = "jope.bench-report/v1";
+pub const SCHEMA: &str = "jope.bench-report/v2";
 
 /// A cut, without its row lists.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -36,12 +42,14 @@ pub struct Host {
 }
 
 /// What the caller knows about the run that the data does not carry.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Stamp {
     /// Rayon threads the benchmark ran with.
     pub workers: usize,
     /// Git head of the tree that ran, when known.
     pub git_sha: Option<String>,
+    /// Search budget, when the search ran.
+    pub search: Option<crate::methods::SearchConfig>,
 }
 
 /// The report.
@@ -55,8 +63,14 @@ pub struct Report {
     pub dataset_id: String,
     /// Catalog hash.
     pub dataset_hash: String,
-    /// Catalog task.
+    /// The task ([`Task::as_str`]).
     pub task: String,
+    /// The primary score every `score` / `oof_score` is ([`Task::score_metric`]).
+    pub score_metric: String,
+    /// The metric a ladder built from this report ranks by ([`Task::ladder_metric`]).
+    pub ladder_metric: String,
+    /// `minimize` / `maximize`, for `ladder_metric`.
+    pub metric_direction: String,
     /// SHA-256 of `train.csv`.
     pub train_sha256: String,
     /// Training rows.
@@ -87,19 +101,23 @@ impl Report {
     /// Assemble a report.
     pub fn new(
         dataset: &Dataset,
+        task: Task,
         plan: &FoldPlan,
         cuts: &[Cut],
         protocol: &Protocol,
-        search: Option<crate::methods::SearchConfig>,
         methods: Vec<MethodResult>,
         stamp: Stamp,
     ) -> Self {
+        let (ladder_metric, direction) = task.ladder_metric();
         Self {
             schema: SCHEMA.to_owned(),
             evaluator: crate::EVALUATOR.to_owned(),
             dataset_id: dataset.row.id.clone(),
             dataset_hash: dataset.row.dataset_hash.clone(),
-            task: dataset.task(),
+            task: task.as_str().to_owned(),
+            score_metric: task.score_metric().to_owned(),
+            ladder_metric: ladder_metric.to_owned(),
+            metric_direction: direction.as_str().to_owned(),
             train_sha256: dataset.train_sha256.clone(),
             rows: dataset.x.len(),
             features: dataset.x.first().map(Vec::len).unwrap_or(0),
@@ -114,7 +132,7 @@ impl Report {
                 })
                 .collect(),
             protocol: protocol.clone(),
-            search,
+            search: stamp.search,
             methods,
             host: Host {
                 cores: std::thread::available_parallelism()

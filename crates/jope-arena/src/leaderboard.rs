@@ -27,7 +27,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::corrections::{Corrections, CorrectionsMeta};
-use crate::elo::{fit_elo, matches_from_scores, TIE_RELATIVE_TOLERANCE};
+use crate::elo::{fit_elo, matches_from_scores_directed, Direction, TIE_RELATIVE_TOLERANCE};
 use crate::io::{read_bytes, read_json, read_text, resolve_input, sha256_hex};
 use crate::pyfmt::{py_bool, py_repr, py_round};
 use crate::scores::{parse_scores, ScoreRow};
@@ -286,6 +286,8 @@ pub struct Inputs<'a> {
     pub pending: &'a BTreeMap<String, usize>,
     /// Datasets in the registry.
     pub total_datasets: usize,
+    /// Whether lower or higher values win (the track's `metric_direction`).
+    pub direction: Direction,
 }
 
 /// `build_leaderboard` from `leaderboard.py`, over already-loaded inputs.
@@ -337,7 +339,8 @@ pub fn build_leaderboard(scores: &[ScoreRow], inputs: Inputs<'_>) -> Result<Lead
         *valid_by_method.entry(row.method_id.clone()).or_insert(true) &= valid;
         rankable_rows += 1;
     }
-    let matches = matches_from_scores(&by_dataset, TIE_RELATIVE_TOLERANCE);
+    let matches =
+        matches_from_scores_directed(&by_dataset, inputs.direction, TIE_RELATIVE_TOLERANCE);
     let ratings = fit_elo(&matches);
 
     let mut ranks: BTreeMap<&str, Vec<f64>> = BTreeMap::new();
@@ -348,7 +351,14 @@ pub fn build_leaderboard(scores: &[ScoreRow], inputs: Inputs<'_>) -> Result<Lead
             .map(|(m, v)| (m.as_str(), *v))
             .collect();
         // Python: sorted by (value, method_id); values are finite so total_cmp is the same order.
-        ordered.sort_by(|a, b| a.1.total_cmp(&b.1).then_with(|| a.0.cmp(b.0)));
+        // A maximize track ranks the largest value first, ties still by method id.
+        ordered.sort_by(|a, b| {
+            let by_value = match inputs.direction {
+                Direction::Minimize => a.1.total_cmp(&b.1),
+                Direction::Maximize => b.1.total_cmp(&a.1),
+            };
+            by_value.then_with(|| a.0.cmp(b.0))
+        });
         for (rank, (method, _)) in ordered.iter().enumerate() {
             ranks.entry(method).or_default().push((rank + 1) as f64);
         }
@@ -507,12 +517,13 @@ pub fn compute(
     } else {
         BTreeMap::new()
     };
-    if track.metric_direction != "minimize" {
-        bail!(
-            "track {track_id} ranks by {} but the official ladder only knows minimize (lower wins)",
-            track.metric_direction
-        );
-    }
+    let direction = match track.metric_direction.as_str() {
+        "minimize" => Direction::Minimize,
+        "maximize" => Direction::Maximize,
+        other => bail!(
+            "track {track_id} ranks by {other:?}; metric_direction must be minimize or maximize"
+        ),
+    };
     let leaderboard = build_leaderboard(
         &scores,
         Inputs {
@@ -524,6 +535,7 @@ pub fn compute(
             method_names: &method_names,
             pending: &pending,
             total_datasets: dataset_ids.len(),
+            direction,
         },
     )?;
     Ok((leaderboard, location))
@@ -634,7 +646,49 @@ mod tests {
             method_names: names,
             pending,
             total_datasets: 3,
+            direction: Direction::Minimize,
         }
+    }
+
+    #[test]
+    fn a_maximize_track_ranks_the_largest_value_first() {
+        // The same rows as the reference-shape test, read as "higher wins": b now beats a on d1
+        // and c on d3, a still takes the d2 tie by id.
+        let mut text = crate::scores::COLUMNS.join(",");
+        text.push('\n');
+        text += &row("d1", "a", "1.0", "ok");
+        text += &row("d1", "b", "2.0", "ok");
+        text += &row("d2", "a", "1.0", "ok");
+        text += &row("d2", "b", "1.0", "ok");
+        text += &row("d3", "c", "0.5", "ok");
+        text += &row("d3", "b", "0.7", "ok");
+        let scores = parse_scores(&text).unwrap();
+        let names = BTreeMap::new();
+        let pending = BTreeMap::new();
+        let board = build_leaderboard(
+            &scores,
+            Inputs {
+                direction: Direction::Maximize,
+                ..inputs(Ladder::Published, &names, &pending)
+            },
+        )
+        .unwrap();
+        let ids: Vec<&str> = board.rows.iter().map(|r| r.method_id.as_str()).collect();
+        assert_eq!(ids[0], "b", "{ids:?}");
+        let b = &board.rows[0];
+        assert_eq!(b.dataset_wins, 2);
+        assert_eq!(b.average_rank, "1.333");
+        let a = board.rows.iter().find(|r| r.method_id == "a").unwrap();
+        assert_eq!(a.dataset_wins, 1, "the d2 tie goes to a by id");
+        assert_eq!(a.average_rank, "1.5");
+        let c = board.rows.iter().find(|r| r.method_id == "c").unwrap();
+        assert_eq!(c.dataset_wins, 0);
+        assert_eq!(c.average_rank, "2.0");
+        // Under minimize the same rows put c first (the reference-shape test); the fit is the
+        // same code with the outcomes flipped.
+        let minimized =
+            build_leaderboard(&scores, inputs(Ladder::Published, &names, &pending)).unwrap();
+        assert_eq!(minimized.rows[0].method_id, "c");
     }
 
     #[test]
