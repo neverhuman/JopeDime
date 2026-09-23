@@ -27,6 +27,8 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Frozen-panel inputs, recipes and planning through the product benchmark contract.
+    Panel(jope_bench::panel::cli::BenchmarkCli),
     /// Benchmark every dataset under a directory tree and write one report per dataset.
     Run {
         /// A dataset directory (metadata.json + train.csv) or a directory of them.
@@ -107,6 +109,12 @@ enum Command {
 
 fn main() -> Result<()> {
     match Cli::parse().command {
+        Command::Panel(cli) => {
+            if jope_bench::panel::cli::execute(cli) != std::process::ExitCode::SUCCESS {
+                bail!("panel command failed");
+            }
+            Ok(())
+        }
         Command::Run {
             datasets,
             out,

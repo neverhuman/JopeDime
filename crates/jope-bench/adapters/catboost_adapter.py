@@ -4,7 +4,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import _common  # noqa: E402
+if not (len(sys.argv) > 1 and sys.argv[1] == "--panel-v2"):
+    import _common  # noqa: E402
 
 
 def fit_predict(x, y, predict, task):
@@ -31,5 +32,16 @@ def version() -> str:
     return f"catboost {catboost.__version__}"
 
 
+def create_panel_model(task):
+    import catboost
+
+    common = dict(random_seed=0, thread_count=1, verbose=False, allow_writing_files=False)
+    return (catboost.CatBoostRegressor if task == "regression" else catboost.CatBoostClassifier)(**common)
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--panel-v2":
+        import _panel
+
+        sys.exit(_panel.run(create_panel_model, version))
     sys.exit(_common.run(fit_predict, version()))

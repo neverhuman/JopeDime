@@ -33,6 +33,8 @@ pub mod emit;
 pub mod eval;
 pub mod load;
 pub mod methods;
+/// Frozen development panel: raw inputs, task metrics and fitted predictors.
+pub mod panel;
 pub mod protocol;
 pub mod report;
 pub mod task;

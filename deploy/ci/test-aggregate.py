@@ -115,6 +115,17 @@ class AggregateTests(unittest.TestCase):
         self.plan['paths'] = ['crates/jope-cli/src/main.rs']
         self.assertEqual('failed', self.verify()['status'])
 
+    def test_panel_adapter_changes_require_python_execution(self):
+        for name in ('_panel.py', 'test_panel.py', 'xgboost_adapter.py',
+                     'lightgbm_adapter.py', 'catboost_adapter.py', 'sklearn_rf_adapter.py'):
+            with self.subTest(adapter=name):
+                lanes, _ = aggregate.plan_module.classify(
+                    [f'crates/jope-bench/adapters/{name}'], 'pull_request')
+                self.assertTrue(lanes['python'])
+        lanes, _ = aggregate.plan_module.classify(
+            ['crates/jope-bench/src/task.rs'], 'pull_request')
+        self.assertFalse(lanes['python'])
+
     def test_duplicate_receipt_and_missing_dependency_fail(self):
         self.receipts['python'].append(copy.deepcopy(self.receipts['python'][0]))
         del self.needs['rust-check']

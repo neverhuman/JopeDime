@@ -22,9 +22,10 @@ clap.workspace = true
 feat-math = { path = "../feat-math" }
 jope-arena = { path = "../jope-arena" }
 jope-datasets = { path = "../jope-datasets" }
+jope-pipeline = { path = "../jope-pipeline" }
 rayon.workspace = true
 serde.workspace = true
-serde_json.workspace = true
+serde_json = { workspace = true, features = ["float_roundtrip"] }
 sha2.workspace = true
 tempfile.workspace = true
 
