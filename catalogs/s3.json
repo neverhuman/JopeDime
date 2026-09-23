@@ -1,0 +1,614 @@
+{
+  "schema": "jope.s3-catalog/v1",
+  "account": "714044927654",
+  "inventoried": "2026-09-23",
+  "scope": "current object versions only (ListObjectsV2) and bucket configuration; metadata only, no object bodies; per-object retention not read; sealed bucket recorded per top-level prefix only",
+  "status_values": {
+    "canonical": "layout the product crates read and write",
+    "staging": "second copies awaiting migration into a canonical layout; never read by the product",
+    "historical": "archived or custody content kept for provenance; not a product input"
+  },
+  "inventories": [
+    {
+      "name": "s3-estate.json",
+      "sha256": "3575ba9b0e8ca061e4c83434bde2ce228d0888ceebf9819a48bb39096f55212c",
+      "captured_utc": "2026-09-23T16:39:11.304906+00:00"
+    },
+    {
+      "name": "s3-estate-extension.json",
+      "sha256": "ae091bb2ac6c86e6d8d41230c84f4cbdd06a1ffb2be1bac193e43e780f260063",
+      "captured_utc": "2026-09-23T17:37:54.490163+00:00"
+    }
+  ],
+  "absent_buckets": [
+    {
+      "bucket": "veox-jopedime-datasets-usw2",
+      "probe": "HeadBucket",
+      "http_status": 404,
+      "captured_utc": "2026-09-23T17:30:19.668726+00:00"
+    }
+  ],
+  "buckets": [
+    {
+      "bucket": "veox-jopedime-datasets-use2",
+      "region": "us-east-2",
+      "role": "product dataset corpus, content-addressed (T1 real tier only so far)",
+      "env_var": "JOPE_DATASETS_URL",
+      "default_of_crate": "jope-datasets",
+      "replica_of": null,
+      "versioning": "Enabled",
+      "object_lock": {
+        "enabled": true,
+        "default_retention": null
+      },
+      "replication_rules": [],
+      "lifecycle_rules": [
+        "abort-mpu",
+        "t3-payload-gir",
+        "sources-deep-archive"
+      ],
+      "encryption": "AES256",
+      "objects": 15442,
+      "bytes": 3234922515,
+      "inventory": {
+        "name": "s3-estate.json",
+        "sha256": "3575ba9b0e8ca061e4c83434bde2ce228d0888ceebf9819a48bb39096f55212c",
+        "captured_utc": "2026-09-23T16:39:11.304906+00:00"
+      },
+      "prefixes": [
+        {
+          "prefix": "blobs/",
+          "status": "canonical",
+          "objects": 11577,
+          "bytes": 3224104137,
+          "note": "T1 real-tier payload and meta blobs"
+        },
+        {
+          "prefix": "catalog/",
+          "status": "canonical",
+          "objects": 2,
+          "bytes": 5363942,
+          "note": "catalog/v1/catalog.jsonl sha256 ab9fda8d2dea46067b70a42812e9d3c1d9dc6ba025780100df34377e81aa1120"
+        },
+        {
+          "prefix": "collections/",
+          "status": "canonical",
+          "objects": 4,
+          "bytes": 94356,
+          "note": "test-10 and registry-real-v1, v1 + LATEST"
+        },
+        {
+          "prefix": "datasets/",
+          "status": "canonical",
+          "objects": 3859,
+          "bytes": 5360080,
+          "note": "one manifest.json per dataset"
+        }
+      ],
+      "planned_prefixes_absent": [
+        "prepared/",
+        "generators/",
+        "ingest/reports/"
+      ],
+      "catalog_v1": {
+        "sha256": "ab9fda8d2dea46067b70a42812e9d3c1d9dc6ba025780100df34377e81aa1120",
+        "datasets": 3859,
+        "origins": {
+          "real": 3859
+        },
+        "license_status": {
+          "recorded": 104,
+          "unknown": 3755
+        }
+      }
+    },
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "region": "us-east-2",
+      "role": "learning store (jope-learning mirror target); today only staging/ second copies",
+      "env_var": "JOPE_LEARNING_URL",
+      "default_of_crate": null,
+      "replica_of": null,
+      "versioning": "Enabled",
+      "object_lock": {
+        "enabled": true,
+        "default_retention": null
+      },
+      "replication_rules": [
+        {
+          "id": "hwm",
+          "prefix": "hwm/",
+          "status": "Enabled",
+          "destination": "veox-jopedime-learning-usw2"
+        },
+        {
+          "id": "waves",
+          "prefix": "waves/",
+          "status": "Enabled",
+          "destination": "veox-jopedime-learning-usw2"
+        },
+        {
+          "id": "serving-checkpoints",
+          "prefix": "checkpoints/serving/",
+          "status": "Enabled",
+          "destination": "veox-jopedime-learning-usw2"
+        },
+        {
+          "id": "training-head",
+          "prefix": "training-head",
+          "status": "Enabled",
+          "destination": "veox-jopedime-learning-usw2"
+        }
+      ],
+      "lifecycle_rules": [
+        "abort-mpu",
+        "observations-deep-archive",
+        "checkpoint-blobs-gir"
+      ],
+      "encryption": "AES256",
+      "objects": 645281,
+      "bytes": 430645459168,
+      "inventory": {
+        "name": "s3-estate.json",
+        "sha256": "3575ba9b0e8ca061e4c83434bde2ce228d0888ceebf9819a48bb39096f55212c",
+        "captured_utc": "2026-09-23T16:39:11.304906+00:00"
+      },
+      "prefixes": [
+        {
+          "prefix": "staging/",
+          "status": "staging",
+          "objects": 645281,
+          "bytes": 430645459168
+        },
+        {
+          "prefix": "staging/lineage-a/encodings/",
+          "status": "historical",
+          "objects": 419644,
+          "bytes": 149840032105,
+          "note": "lineage A; derived as bucket total minus the measured sibling prefixes"
+        },
+        {
+          "prefix": "staging/lineage-a/genebank/",
+          "status": "historical",
+          "objects": 5,
+          "bytes": 1809949972,
+          "note": "lineage A"
+        },
+        {
+          "prefix": "staging/lineage-a/preserved-archives-20260908-F-D-E/",
+          "status": "historical",
+          "objects": 34,
+          "bytes": 141775927725,
+          "note": "lineage A archives"
+        },
+        {
+          "prefix": "staging/lineage-b/accepted60000-restored/",
+          "status": "staging",
+          "objects": 225207,
+          "bytes": 110918425513,
+          "note": "lineage B restored parallel/ tree"
+        },
+        {
+          "prefix": "staging/mirror-weights/",
+          "status": "staging",
+          "objects": 391,
+          "bytes": 26301123853,
+          "note": "node-archive mirror weights class"
+        }
+      ],
+      "planned_prefixes_absent": [
+        "blobs/",
+        "hwm/",
+        "scores/"
+      ],
+      "inventory_targeted_prefixes": {
+        "name": "s3-estate-extension.json",
+        "sha256": "ae091bb2ac6c86e6d8d41230c84f4cbdd06a1ffb2be1bac193e43e780f260063",
+        "captured_utc": "2026-09-23T17:37:54.490163+00:00"
+      }
+    },
+    {
+      "bucket": "veox-jopedime-models-use2",
+      "region": "us-east-2",
+      "role": "model bundles",
+      "env_var": "JOPE_MODELS_URL",
+      "default_of_crate": "jope-models",
+      "replica_of": null,
+      "versioning": "Enabled",
+      "object_lock": {
+        "enabled": true,
+        "default_retention": null
+      },
+      "replication_rules": [
+        {
+          "id": "models-all",
+          "prefix": "",
+          "status": "Enabled",
+          "destination": "veox-jopedime-models-usw2"
+        }
+      ],
+      "lifecycle_rules": [
+        "abort-mpu"
+      ],
+      "encryption": "AES256",
+      "objects": 967,
+      "bytes": 3929105273,
+      "inventory": {
+        "name": "s3-estate-extension.json",
+        "sha256": "ae091bb2ac6c86e6d8d41230c84f4cbdd06a1ffb2be1bac193e43e780f260063",
+        "captured_utc": "2026-09-23T17:37:54.490163+00:00"
+      },
+      "prefixes": [
+        {
+          "prefix": "blobs/",
+          "status": "canonical",
+          "objects": 21,
+          "bytes": 1461921570,
+          "note": "blobs/sha256/<sha>"
+        },
+        {
+          "prefix": "bundles/",
+          "status": "canonical",
+          "objects": 3,
+          "bytes": 32045,
+          "note": "policy-step-60000, hyperion-v7, jope-prime-gen31-v2"
+        },
+        {
+          "prefix": "staging/",
+          "status": "staging",
+          "objects": 943,
+          "bytes": 2467151658,
+          "note": "upload copies the bundle blobs were server-side copied from"
+        },
+        {
+          "prefix": "staging/hyperion/",
+          "status": "staging",
+          "objects": 3,
+          "bytes": 246457442
+        },
+        {
+          "prefix": "staging/mirror-assets/",
+          "status": "staging",
+          "objects": 919,
+          "bytes": 1005227766
+        },
+        {
+          "prefix": "staging/policy-step-60000/",
+          "status": "staging",
+          "objects": 3,
+          "bytes": 119613078
+        },
+        {
+          "prefix": "staging/starforge-artifacts/",
+          "status": "staging",
+          "objects": 18,
+          "bytes": 1095853372
+        }
+      ]
+    },
+    {
+      "bucket": "veox-jopedime-models-usw2",
+      "region": "us-west-2",
+      "role": "cross-region replica of veox-jopedime-models-use2",
+      "env_var": null,
+      "default_of_crate": null,
+      "replica_of": "veox-jopedime-models-use2",
+      "versioning": "Enabled",
+      "object_lock": {
+        "enabled": true,
+        "default_retention": null
+      },
+      "replication_rules": [],
+      "lifecycle_rules": [
+        "abort-mpu"
+      ],
+      "encryption": "AES256",
+      "objects": 967,
+      "bytes": 3929105273,
+      "inventory": {
+        "name": "s3-estate-extension.json",
+        "sha256": "ae091bb2ac6c86e6d8d41230c84f4cbdd06a1ffb2be1bac193e43e780f260063",
+        "captured_utc": "2026-09-23T17:37:54.490163+00:00"
+      },
+      "prefixes": [
+        {
+          "prefix": "blobs/",
+          "status": "canonical",
+          "objects": 21,
+          "bytes": 1461921570,
+          "note": "blobs/sha256/<sha>"
+        },
+        {
+          "prefix": "bundles/",
+          "status": "canonical",
+          "objects": 3,
+          "bytes": 32045,
+          "note": "policy-step-60000, hyperion-v7, jope-prime-gen31-v2"
+        },
+        {
+          "prefix": "staging/",
+          "status": "staging",
+          "objects": 943,
+          "bytes": 2467151658,
+          "note": "upload copies the bundle blobs were server-side copied from"
+        },
+        {
+          "prefix": "staging/hyperion/",
+          "status": "staging",
+          "objects": 3,
+          "bytes": 246457442
+        },
+        {
+          "prefix": "staging/mirror-assets/",
+          "status": "staging",
+          "objects": 919,
+          "bytes": 1005227766
+        },
+        {
+          "prefix": "staging/policy-step-60000/",
+          "status": "staging",
+          "objects": 3,
+          "bytes": 119613078
+        },
+        {
+          "prefix": "staging/starforge-artifacts/",
+          "status": "staging",
+          "objects": 18,
+          "bytes": 1095853372
+        }
+      ]
+    },
+    {
+      "bucket": "veox-jopedime-learning-usw2",
+      "region": "us-west-2",
+      "role": "replica target for learning-use2 hwm/, waves/, checkpoints/serving/, training-head only",
+      "env_var": null,
+      "default_of_crate": null,
+      "replica_of": "veox-jopedime-learning-use2",
+      "versioning": "Enabled",
+      "object_lock": {
+        "enabled": true,
+        "default_retention": null
+      },
+      "replication_rules": [],
+      "lifecycle_rules": [
+        "abort-mpu"
+      ],
+      "encryption": "AES256",
+      "objects": 0,
+      "bytes": 0,
+      "inventory": {
+        "name": "s3-estate-extension.json",
+        "sha256": "ae091bb2ac6c86e6d8d41230c84f4cbdd06a1ffb2be1bac193e43e780f260063",
+        "captured_utc": "2026-09-23T17:37:54.490163+00:00"
+      },
+      "prefixes": [],
+      "note": "empty: the source holds none of the replicated prefixes; staging/ is not replicated"
+    },
+    {
+      "bucket": "veox-jopedime-archive-use2",
+      "region": "us-east-2",
+      "role": "git bundles and archived evidence",
+      "env_var": null,
+      "default_of_crate": null,
+      "replica_of": null,
+      "versioning": "Enabled",
+      "object_lock": {
+        "enabled": true,
+        "default_retention": null
+      },
+      "replication_rules": [],
+      "lifecycle_rules": [
+        "abort-mpu",
+        "evidence-deep-archive",
+        "derived-deep-archive"
+      ],
+      "encryption": "AES256",
+      "objects": 180547,
+      "bytes": 33078118944,
+      "inventory": {
+        "name": "s3-estate-extension.json",
+        "sha256": "ae091bb2ac6c86e6d8d41230c84f4cbdd06a1ffb2be1bac193e43e780f260063",
+        "captured_utc": "2026-09-23T17:37:54.490163+00:00"
+      },
+      "prefixes": [
+        {
+          "prefix": "git/",
+          "status": "historical",
+          "objects": 5,
+          "bytes": 22172137198,
+          "note": "all-refs git bundles + SHA256SUMS"
+        },
+        {
+          "prefix": "git-bundles/20260921/",
+          "status": "historical",
+          "objects": 3,
+          "bytes": 24157994
+        },
+        {
+          "prefix": "staging/node-high-value/",
+          "status": "staging",
+          "objects": 180539,
+          "bytes": 10881823752,
+          "note": "second copy of the node high-value evidence tree"
+        }
+      ],
+      "planned_prefixes_absent": [
+        "evidence/",
+        "derived/"
+      ]
+    },
+    {
+      "bucket": "jopedime-714044927654-us-east-2-dev",
+      "region": "us-east-2",
+      "role": "preservation custody, ordinary domain (dev reader)",
+      "env_var": null,
+      "default_of_crate": null,
+      "replica_of": null,
+      "versioning": "Enabled",
+      "object_lock": {
+        "enabled": false,
+        "default_retention": null,
+        "error": "ObjectLockConfigurationNotFoundError"
+      },
+      "replication_rules": [],
+      "lifecycle_rules": [
+        "abort-incomplete-multipart"
+      ],
+      "encryption": "AES256",
+      "objects": 186305,
+      "bytes": 118116270003,
+      "inventory": {
+        "name": "s3-estate-extension.json",
+        "sha256": "ae091bb2ac6c86e6d8d41230c84f4cbdd06a1ffb2be1bac193e43e780f260063",
+        "captured_utc": "2026-09-23T17:37:54.490163+00:00"
+      },
+      "prefixes": [
+        {
+          "prefix": "archives/",
+          "status": "historical",
+          "objects": 2,
+          "bytes": 174
+        },
+        {
+          "prefix": "catalogs/",
+          "status": "historical",
+          "objects": 437,
+          "bytes": 857938725
+        },
+        {
+          "prefix": "datasets/",
+          "status": "historical",
+          "objects": 32,
+          "bytes": 405200
+        },
+        {
+          "prefix": "objects/",
+          "status": "historical",
+          "objects": 185834,
+          "bytes": 117257925904
+        }
+      ],
+      "note": "not a product corpus bucket; do not substitute for the defaults"
+    },
+    {
+      "bucket": "jopedime-714044927654-us-east-2-prod",
+      "region": "us-east-2",
+      "role": "preservation custody, ordinary domain (prod reader)",
+      "env_var": null,
+      "default_of_crate": null,
+      "replica_of": null,
+      "versioning": "Enabled",
+      "object_lock": {
+        "enabled": false,
+        "default_retention": null,
+        "error": "ObjectLockConfigurationNotFoundError"
+      },
+      "replication_rules": [],
+      "lifecycle_rules": [
+        "abort-incomplete-multipart"
+      ],
+      "encryption": "AES256",
+      "objects": 186304,
+      "bytes": 117847288926,
+      "inventory": {
+        "name": "s3-estate-extension.json",
+        "sha256": "ae091bb2ac6c86e6d8d41230c84f4cbdd06a1ffb2be1bac193e43e780f260063",
+        "captured_utc": "2026-09-23T17:37:54.490163+00:00"
+      },
+      "prefixes": [
+        {
+          "prefix": "archives/",
+          "status": "historical",
+          "objects": 2,
+          "bytes": 175
+        },
+        {
+          "prefix": "catalogs/",
+          "status": "historical",
+          "objects": 437,
+          "bytes": 857939673
+        },
+        {
+          "prefix": "datasets/",
+          "status": "historical",
+          "objects": 32,
+          "bytes": 406035
+        },
+        {
+          "prefix": "objects/",
+          "status": "historical",
+          "objects": 185833,
+          "bytes": 116988943043
+        }
+      ],
+      "note": "not a product corpus bucket; do not substitute for the defaults"
+    },
+    {
+      "bucket": "jopedime-714044927654-us-east-2-sealed",
+      "region": "us-east-2",
+      "role": "preservation custody, sealed domain",
+      "env_var": null,
+      "default_of_crate": null,
+      "replica_of": null,
+      "versioning": "Enabled",
+      "object_lock": {
+        "enabled": false,
+        "default_retention": null,
+        "error": "ObjectLockConfigurationNotFoundError"
+      },
+      "replication_rules": [],
+      "lifecycle_rules": [
+        "abort-incomplete-multipart"
+      ],
+      "encryption": "aws:kms",
+      "objects": 8679,
+      "bytes": 246060447894,
+      "inventory": {
+        "name": "s3-estate-extension.json",
+        "sha256": "ae091bb2ac6c86e6d8d41230c84f4cbdd06a1ffb2be1bac193e43e780f260063",
+        "captured_utc": "2026-09-23T17:37:54.490163+00:00"
+      },
+      "prefixes": [
+        {
+          "prefix": "archives/",
+          "status": "historical",
+          "objects": 1,
+          "bytes": 155
+        },
+        {
+          "prefix": "catalogs/",
+          "status": "historical",
+          "objects": 387,
+          "bytes": 133001332
+        },
+        {
+          "prefix": "objects/",
+          "status": "historical",
+          "objects": 8291,
+          "bytes": 245927446407
+        }
+      ],
+      "note": "not a product corpus bucket; do not substitute for the defaults"
+    }
+  ],
+  "limitations": [
+    "Dated metadata observation, not a live capability or recovery qualification.",
+    "Current-object listings do not establish historical absence or include noncurrent versions.",
+    "Matching model-replica counts and bytes at prefix depths 1\u20133 do not establish key or payload identity.",
+    "Empty replication rules do not establish the absence of manually preserved copies elsewhere.",
+    "Per-object retention and legal hold were not inspected.",
+    "Prefix rows overlap hierarchically and must not all be summed together."
+  ],
+  "source_references": [
+    {
+      "path": "docs/internal/asm-manual/data/s3-estate.json",
+      "sha256": "3575ba9b0e8ca061e4c83434bde2ce228d0888ceebf9819a48bb39096f55212c"
+    },
+    {
+      "path": "docs/internal/asm-manual/data/data-estate-extension-summary.json",
+      "sha256": "e4dbe07502f46028fd2a9ff0ed9776ce0b68c5fe1856b820b7ca94492ef1b2e0",
+      "scope": "Selected aggregate summary; original inventory identity remains in inventories."
+    }
+  ]
+}

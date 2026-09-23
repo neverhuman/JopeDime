@@ -330,18 +330,28 @@ whereas this user's SSH alias `xbabe2` points to `agent@192.168.68.89` using
 
 ### S3 buckets and how to reach them
 
-The product buckets listed below were observed in AWS account `714044927654` on
-2026-09-22. The named profile aliases resolved to one credential at that observation;
-this is not a permanent access guarantee. Local custody and training state also exist.
+The buckets listed below were inventoried from metadata (current object versions, no object
+bodies) in AWS account `714044927654` on 2026-09-23. Sizes are decimal (1 GB = 10^9 B).
+Per-prefix counts, prefix status (canonical, staging or historical) and the inventory hashes
+are in [`catalogs/s3.json`](catalogs/s3.json). The named profile aliases resolved to one
+credential on 2026-09-22; this is not a permanent access guarantee. Local custody and
+training state also exist.
 
-| Bucket | What it holds |
+| Bucket | What it holds (2026-09-23) |
 | --- | --- |
-| `s3://veox-jopedime-datasets-use2` | The dataset corpus. `JOPE_DATASETS_URL` defaults here (`crates/jope-datasets/src/lib.rs`). Content-addressed: `blobs/ catalog/ collections/ datasets/`. |
-| `s3://veox-jopedime-learning-use2` | The learning store, `JOPE_LEARNING_URL`. The 2026-09-22 observation found `staging/lineage-a/`, part of which [`docs/learning.md`](docs/learning.md) declares unrecoverable — it is not a canonical prefix and must not be promoted as one. |
-| `s3://veox-jopedime-models-use2` | Model bundles (`crates/jope-models`). |
-| `s3://veox-jopedime-archive-use2` | Git bundles and archives. |
-| `…-usw2` | `veox-jopedime-learning-usw2` and `veox-jopedime-models-usw2` are the us-west-2 counterparts. |
-| `s3://jopedime-714044927654-us-east-2-{dev,prod,sealed}` | A separate family in the same account. These are not the configured product corpus buckets; do not substitute them for the defaults. |
+| `s3://veox-jopedime-datasets-use2` | The dataset corpus. `JOPE_DATASETS_URL` defaults here (`crates/jope-datasets/src/lib.rs`). Content-addressed: `blobs/ catalog/ collections/ datasets/`. 15,442 objects, 3.23 GB. It holds only the T1 real tier (3,859 datasets); T2 and T3 are not uploaded. No replica. |
+| `s3://veox-jopedime-learning-use2` | The learning store, `JOPE_LEARNING_URL` (no default; `jope-learning` mirrors only when `--store` or `JOPE_LEARNING_URL` is set). It holds **only `staging/`**: 645,281 objects, 430.65 GB of second copies (`lineage-a/`, `lineage-b/accepted60000-restored/`, `mirror-weights/`). [`docs/learning.md`](docs/learning.md) declares part of lineage A unrecoverable. `staging/` is not a canonical prefix and must not be promoted as one. |
+| `s3://veox-jopedime-models-use2` | Model bundles (`crates/jope-models`; `JOPE_MODELS_URL` defaults here): `blobs/` and `bundles/` (3 bundles), plus the `staging/` source copies. 967 objects, 3.93 GB. |
+| `s3://veox-jopedime-archive-use2` | Git bundles (`git/`: 5 objects, 22.17 GB; `git-bundles/20260921/`: 3 objects) and the `staging/node-high-value/` second copy (180,539 objects, 10.88 GB). 180,547 objects, 33.08 GB in total. There is no `evidence/` or `derived/` prefix yet. No replica. |
+| `s3://veox-jopedime-models-usw2` | Replica target of `models-use2` (rule `models-all`). On 2026-09-23 its object counts and bytes matched at inventoried prefix depths 1–3; this does not prove payload identity or tested recovery. |
+| `s3://veox-jopedime-learning-usw2` | Replica target for `learning-use2`'s `hwm/`, `waves/`, `checkpoints/serving/` and `training-head` only. The inventory found it **empty**, with no source objects under those prefixes. The configured rules do not cover `staging/`; other copies were not exhaustively inventoried. |
+| `s3://jopedime-714044927654-us-east-2-{dev,prod,sealed}` | Preservation custody, a separate family in the same account: dev 186,305 objects / 118.12 GB, prod 186,304 / 117.85 GB, sealed 8,679 / 246.06 GB. These are not the configured product corpus buckets; do not substitute them for the defaults. They have no Object Lock configuration and no replication. |
+
+The six inventoried `veox-jopedime-*` buckets had versioning and Object Lock enabled with
+**no default retention**. Per-object retention and legal holds were not read. The
+`veox-jopedime-datasets-usw2` HeadBucket probe returned HTTP 404 on 2026-09-23.
+In this inventory, “no replica” means no configured bucket replication destination was found;
+it does not establish the absence of manually preserved copies elsewhere.
 
 Relevant environment: `JOPE_DATASETS_URL`, `JOPE_LEARNING_URL`, `JOPE_DATASETS_ANON=1` (unsigned
 requests, for a public bucket), and `JOPE_AWS_PROFILE` / `JOPE_AWS_ALLOW_IMDS`.

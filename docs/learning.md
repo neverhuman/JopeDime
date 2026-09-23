@@ -76,6 +76,16 @@ scores/sotarena/<track>/<version>/scores.csv    the published file byte-identica
 hwm.lock  scores.lock                           flock held by every writer
 ```
 
+This tree is what `jope-learning` writes under the state root, and what it pushes to a mirror
+only when `--store` / `JOPE_LEARNING_URL` is configured. The 2026-09-23 current-object
+metadata inventory of `s3://veox-jopedime-learning-use2` found **only
+`staging/`** (645,281 objects, 430,645,459,168 B): preserved copies of lineage-B
+`accepted60000-restored`, lineage-A `encodings`, `genebank` and
+`preserved-archives-20260908-F-D-E`, and the mirror `weights` class. There are no `blobs/`,
+`hwm/` or `scores/` objects in that snapshot. This does not establish historical absence or
+payload recovery. `staging/` is not part of this layout and must not be promoted as canonical;
+[`catalogs/s3.json`](../catalogs/s3.json) records the inventoried prefixes and their status.
+
 ### Sealed, hash-chained batches
 
 A batch is one compact JSON event per line followed by a seal line

@@ -129,3 +129,20 @@ pointer and a concurrent promote loses the CAS deterministically; L5 metrics JSO
 parity for the v3-jsonl trainer; L6 every harness row green once. Plan "Verification" items 10–12
 (a full `jope learn train` on xbabe2 whose export loads in `jope-policy`; zero chain breaks; Elo
 recomputed from the ledger equals the published 2259.8 for `jope-dime`).
+
+## Implementation correction — 2026-09-23
+
+The decision and proposed acceptance above remain the historical record. The retained
+[step-60100 run metadata](../internal/asm-manual/data/training-history/rtx60100-run.json)
+records microbatch **256**, not 32. Together with world size 1 and accumulation 8, this gives
+the global batch 2,048 recorded in the
+[checkpoint state](../internal/asm-manual/data/training-history/rtx60100-state.json).
+This corrects both references to “32 × 8” above for that retained run.
+
+Step-60100 demonstrates unchanged-corpus hardware continuation with zero fresh programs;
+it is not a serving promotion or evidence that new GP discoveries improved a policy.
+The accepted native step-60000 policy remains a separate comparison identity from the
+experimental 256×2 regression lineage. The proposed command names, smoke workflows and
+acceptance gates above do not by themselves establish current implementation or execution.
+Current local HWM and score commands are provided by `jope-learning hwm` and
+`jope-learning scores`; use source-bound run receipts to assess the remaining loop.

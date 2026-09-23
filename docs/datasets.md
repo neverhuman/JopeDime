@@ -55,6 +55,17 @@ Access; public access later only through CloudFront OAC): `blobs/sha256/<64hex>`
 | T2 (≤ 2.3 GiB + ≈ 20 GiB derived) | non-synthetic `quant/binary` remainder; packed/derived training inputs go to the archive bucket | Standard / Deep Archive |
 | T3 (≈ 127 + 20 + 119 GiB) | synthetic binary (102,005 dirs), regression `synth_*` (25,205 dirs), synthetic sources | Glacier Instant Retrieval; sources Deep Archive |
 
+**What the bucket holds (metadata inventory, 2026-09-23).** Only the real part of T1 has been
+uploaded: 3,859 `origin: real` datasets (regression 2,611, binary 843, multi_label 322,
+timeseries 83) as 11,577 `blobs/` objects (3,224,104,137 B, about 3.22 GB), 3,859
+`datasets/<hash>/manifest.json`, `catalog/` and `collections/`, for 15,442 objects and
+3,234,922,515 B in total. The inventory did not identify the mirror `dataset` and `prepared`
+classes, T2 or T3 in this bucket. The `prepared/`, `generators/` and `ingest/reports/` prefixes are planned and
+absent. The bucket has versioning and Object Lock enabled with no default retention, and no
+configured replication destination. A HeadBucket probe for `veox-jopedime-datasets-usw2`
+returned HTTP 404 on 2026-09-23; this inventory does not rule out copies elsewhere. Per-prefix figures are in
+[`catalogs/s3.json`](../catalogs/s3.json).
+
 ## Ingest and de-duplication (`jope datasets ingest --source mirror|quant [--dry-run] [--resume]`)
 
 1. Enumerate directories `^(synth_)?[0-9a-f]{16}$` holding all three files; stream-sha256 them.
@@ -82,7 +93,8 @@ The PR #11 dry run over the real tree reproduced the plan's numbers exactly: 132
 a content identity. Options on the table: (a) compute `sha256(train.csv ‖ test.csv ‖ meta.json)`
 at ingest and record `hash_algorithm: "sha256:first16-ingest"` with the directory name as an alias
 (admits them, but their `dataset_hash` would no longer be self-describing); (b) keep them rejected
-and let the `synth_*` families live only in the archive bucket's `derived/quant-packed/` copy;
+and let the `synth_*` families live only in the archive bucket's `derived/quant-packed/` copy
+(that prefix was absent from the 2026-09-23 current-object inventory);
 (c) regenerate under a committed generator (impossible for regression until a generator source is
 found; WP-D7 covers the binary generator). Until the owner decides, they stay in `rejects.json` and
 no collection references them.
@@ -92,15 +104,23 @@ no collection references them.
 `provenance.license.status ∈ {recorded, unknown, restricted}`. `recorded` needs an SPDX expression
 (or `LicenseRef-*`, e.g. `LicenseRef-US-Gov-Public-Domain`) and an `evidence_url`; `unknown` is
 legal only in private collections; `restricted` never in a public collection; a public collection
-with any non-`recorded` member fails CI. Initial collections: `test-10` (public once the switch is
+with any non-`recorded` member fails CI. Planned collections: `test-10` (public once the switch is
 flipped), `golden42`/`golden46` (private until their 24 blank licences are backfilled),
-`registry-real-v1` (private; 1,416 unknown), `synthetic-binary-0.2.0`,
-`synthetic-regression-2.0.0` (own-generated, Apache-2.0).
+`registry-real-v1` (private), `synthetic-binary-0.2.0`,
+`synthetic-regression-2.0.0` (own-generated, Apache-2.0). Only `test-10` and `registry-real-v1`
+were found in the 2026-09-23 bucket inventory. `registry-real-v1` has 3,859 members: 3,755 with licence status `unknown`
+and 104 `recorded`. These figures were counted on 2026-09-23 from `catalog/v1/catalog.jsonl`
+(sha256 `ab9fda8d2dea46067b70a42812e9d3c1d9dc6ba025780100df34377e81aa1120`). The older figure of
+1,416 unknown covered the 2,613 real regression datasets only.
 
 ## The ten committed test datasets (`datasets/test/`, collection `test-10`)
 
-Chosen from SOTArena `tabular-regression-v2`, where jope-dime is Elo rank 1 (2259.8) with 11
-strict wins. `datasets/manifest.json` is the collection; each `metadata.json` is the catalog row;
+Chosen using the historical SOTArena `tabular-regression-v2` published snapshot, which listed
+jope-dime at Elo rank 1 (2259.8) with 11 strict wins. That view includes development/test-selected
+rows; it is not a held-out result or a current ASM qualification. The retained corrected
+benchmark-valid snapshot lists `jope-dime-regressor` at rank 31 (1687.0); these different
+eligibility views must not be combined. See the [historical plot data and provenance](internal/asm-manual/data/plot-data-manifest.json).
+`datasets/manifest.json` is the collection; each `metadata.json` is the catalog row;
 each `LICENSE` is the upstream text. Total 1,096,413 B (largest 540,717 B); no LFS.
 
 | Slug | `dataset_hash` | Platform | Licence (recorded) |
