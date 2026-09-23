@@ -1,0 +1,423 @@
+{
+  "schema": "jope.manual-local-corpus-metadata/v1",
+  "payload_bodies_opened": false,
+  "corpora": [
+    {
+      "path": "/home/ubuntu/jope-node-mirror/accepted60000-closure/runs/eight-a100-recovery-20260912/learning/snapshot-000097/corpus/index.json",
+      "sha256": "1c840597554f76598b7c173a0de6f5d13e1b29bfa971f4fa49777d9d1da47798",
+      "manifest_bytes": 60589288,
+      "schema": "parallel.teaching_shards.v1",
+      "qualification": true,
+      "label_policy": "reference_v1",
+      "records": 10214332,
+      "record_bytes": 532,
+      "vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+      "context_index_sha256": "d77e856bceac43ef323724ffcdfe24202c27ceb8d97c6276012ab202ffb3cf1e",
+      "contexts": 8894,
+      "context_partitions": {
+        "meta_train": 6962,
+        "meta_validation": 1054,
+        "meta_test": 878
+      },
+      "unique_context_datasets": 80,
+      "unique_families": 80,
+      "shards": 7877,
+      "counts": {
+        "failed_program": 109797,
+        "groups_below_eight": 139,
+        "meta_test_withheld": 488028,
+        "no_matching_context": 1338630,
+        "observations_seen": 34321997,
+        "unrepresentable:exact parameter has no frozen token; scores cannot be attached to a snapped program": 405322,
+        "unrepresentable:parameter outside frozen vocabulary": 112903
+      },
+      "source_entries": 60276,
+      "declared_record_payload_bytes": 5434024624,
+      "payload_files_metadata_only": {
+        "record_files_present": 7877,
+        "record_bytes_observed": 5434024624,
+        "record_files_missing": 0,
+        "record_size_mismatches": 0,
+        "label_files_present": 7877,
+        "label_bytes_observed": 3227289461,
+        "shard_manifest_files_present": 7877
+      },
+      "provenance.json": {
+        "path": "/home/ubuntu/jope-node-mirror/accepted60000-closure/runs/eight-a100-recovery-20260912/learning/snapshot-000097/corpus/provenance.json",
+        "sha256": "3d9887dc595ad54a21cd01573d942ff2e835aa444a509aa6c74c517a2fc70888",
+        "metadata": {
+          "final_tests_opened": false,
+          "independent_evaluation": false,
+          "index_sha256": "1c840597554f76598b7c173a0de6f5d13e1b29bfa971f4fa49777d9d1da47798",
+          "label_policy": "reference_v1",
+          "schema": "parallel.teaching_shards.v1"
+        }
+      },
+      "packing-timing.json": {
+        "path": "/home/ubuntu/jope-node-mirror/accepted60000-closure/runs/eight-a100-recovery-20260912/learning/snapshot-000097/corpus/packing-timing.json",
+        "sha256": "efcb9f03b27b54a987cd0cb77201b9881a7332b7c377bbdd49d61b38561ce1c6",
+        "metadata": {
+          "legacy_export_required_for_training": false,
+          "new_ledgers": 51,
+          "rebuilt_groups": 18,
+          "reused_groups": 7859
+        }
+      },
+      "groups": 7877
+    },
+    {
+      "path": "/home/ubuntu/jope-node-mirror/teaching-corpus/runs/dataset-inclusion-20260909/teaching-corpus/index.json",
+      "sha256": "f2018db88f54f7c569031a2e77a19a30a7dccfac52f0efd985d2958f1eef6b3c",
+      "manifest_bytes": 98330379,
+      "schema": "parallel.teaching_corpus.v1",
+      "qualification": true,
+      "label_policy": null,
+      "records": 5538508,
+      "record_bytes": 532,
+      "vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+      "context_index_sha256": "77394d071894ed477db87eb72291538aced1e99dae83fd5d50f77a0aa2a25d37",
+      "contexts": 8904,
+      "context_partitions": {
+        "meta_train": 6972,
+        "meta_validation": 1054,
+        "meta_test": 878
+      },
+      "unique_context_datasets": 82,
+      "unique_families": 82,
+      "shards": 0,
+      "counts": {
+        "failed_program": 39322,
+        "groups_below_eight": 139,
+        "meta_test_withheld": 379499,
+        "no_matching_context": 1083404,
+        "observations_seen": 11153961,
+        "unrepresentable:exact parameter has no frozen token; scores cannot be attached to a snapped program": 405322,
+        "unrepresentable:parameter outside frozen vocabulary": 112903
+      },
+      "source_entries": 18797,
+      "declared_record_payload_bytes": 2946486256,
+      "payload_files_metadata_only": {
+        "record_files_present": 0,
+        "record_bytes_observed": 0,
+        "record_files_missing": 0,
+        "record_size_mismatches": 0,
+        "label_files_present": 0,
+        "label_bytes_observed": 0,
+        "shard_manifest_files_present": 0,
+        "records.bin_bytes": 2946486256,
+        "labels.jsonl_bytes": 1753858051,
+        "vocabulary.json_bytes": 74785
+      },
+      "provenance.json": {
+        "path": "/home/ubuntu/jope-node-mirror/teaching-corpus/runs/dataset-inclusion-20260909/teaching-corpus/provenance.json",
+        "sha256": "8bfccd0aed64fdbe0b364f8abf7d097788d65c90080e09783f08faa391f7b599",
+        "metadata": {
+          "counts": {
+            "failed_program": 39322,
+            "groups_below_eight": 139,
+            "meta_test_withheld": 379499,
+            "no_matching_context": 1083404,
+            "observations_seen": 11153961,
+            "unrepresentable:exact parameter has no frozen token; scores cannot be attached to a snapped program": 405322,
+            "unrepresentable:parameter outside frozen vocabulary": 112903
+          },
+          "evaluation_bias": "adaptive_cut_heldout_teacher",
+          "final_tests_opened": false,
+          "groups": 6815,
+          "independent_evaluation": false,
+          "index_sha256": "f2018db88f54f7c569031a2e77a19a30a7dccfac52f0efd985d2958f1eef6b3c",
+          "label_policy": "exact program parameters only; no numeric snapping; duplicate program/cut labels have one vote",
+          "labels_sha256": "a4b8b28e34535c13a156c5aaa3832dae826098f9be12abd17b8446c9bc04611f",
+          "qualification": true,
+          "selected_programs": 5538508,
+          "source_entries": 18797,
+          "meta_training_family_count": 64
+        }
+      },
+      "source_entries_basis": "provenance.json",
+      "groups": 6815
+    },
+    {
+      "path": "/home/ubuntu/jope-node-mirror/corpus/corpus/cohort64-qualification-v1/index.json",
+      "sha256": "1ed78e35890c725e074cd806a754ae74caa62a3a07c1d11813921d02398ea582",
+      "manifest_bytes": 16742888,
+      "schema": "parallel.teaching_corpus.v1",
+      "qualification": true,
+      "label_policy": null,
+      "records": 779158,
+      "record_bytes": 532,
+      "vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+      "context_index_sha256": "f07787732e4fe381defa471f4026ee143c16a8bc3f1c8ed7834cf7475396eb51",
+      "contexts": 8799,
+      "context_partitions": {
+        "meta_train": 6877,
+        "meta_validation": 1054,
+        "meta_test": 868
+      },
+      "unique_context_datasets": 64,
+      "unique_families": 64,
+      "shards": 0,
+      "counts": {
+        "failed_program": 5384,
+        "groups_below_eight": 326,
+        "meta_test_withheld": 45142,
+        "no_matching_context": 376550,
+        "observations_seen": 1779615,
+        "unrepresentable:exact parameter has no frozen token; scores cannot be attached to a snapped program": 405322,
+        "unrepresentable:parameter outside frozen vocabulary": 112903
+      },
+      "source_entries": 3109,
+      "declared_record_payload_bytes": 414512056,
+      "payload_files_metadata_only": {
+        "record_files_present": 0,
+        "record_bytes_observed": 0,
+        "record_files_missing": 0,
+        "record_size_mismatches": 0,
+        "label_files_present": 0,
+        "label_bytes_observed": 0,
+        "shard_manifest_files_present": 0,
+        "records.bin_bytes": 414512056,
+        "labels.jsonl_bytes": 243431656,
+        "vocabulary.json_bytes": 74785
+      },
+      "provenance.json": {
+        "path": "/home/ubuntu/jope-node-mirror/corpus/corpus/cohort64-qualification-v1/provenance.json",
+        "sha256": "4883e3b9e1dc8f4b88330dc461bc7c5273929aa2fad34f6de85b91c182760d87",
+        "metadata": {
+          "counts": {
+            "failed_program": 5384,
+            "groups_below_eight": 326,
+            "meta_test_withheld": 45142,
+            "no_matching_context": 376550,
+            "observations_seen": 1779615,
+            "unrepresentable:exact parameter has no frozen token; scores cannot be attached to a snapped program": 405322,
+            "unrepresentable:parameter outside frozen vocabulary": 112903
+          },
+          "evaluation_bias": "adaptive_cut_heldout_teacher",
+          "final_tests_opened": false,
+          "groups": 1620,
+          "independent_evaluation": false,
+          "index_sha256": "1ed78e35890c725e074cd806a754ae74caa62a3a07c1d11813921d02398ea582",
+          "label_policy": "exact program parameters only; no numeric snapping; duplicate program/cut labels have one vote",
+          "labels_sha256": "3c4d161798458f08430faa026d69337bc15e47665d35e275064bcdca8209cff7",
+          "qualification": true,
+          "selected_programs": 779158,
+          "source_entries": 3109,
+          "meta_training_family_count": 48
+        }
+      },
+      "source_entries_basis": "provenance.json",
+      "groups": 1620
+    },
+    {
+      "path": "/home/ubuntu/jope-node-mirror/corpus/corpus/qualification-v2/index.json",
+      "sha256": "4becfff26be84323e1c0965ae076db6bff9817e5c496de4728e1741509cdf72d",
+      "manifest_bytes": 2989017,
+      "schema": "parallel.teaching_corpus.v1",
+      "qualification": true,
+      "label_policy": null,
+      "records": 85498,
+      "record_bytes": 532,
+      "vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+      "context_index_sha256": "8479a6e8e28e4d1fea8925f0f564ba3bf4d12d2800c5233ac03fafcb4db0f6c9",
+      "contexts": 3500,
+      "context_partitions": {
+        "meta_train": 2700,
+        "meta_validation": 600,
+        "meta_test": 200
+      },
+      "unique_context_datasets": 35,
+      "unique_families": 29,
+      "shards": 0,
+      "counts": {
+        "failed_program": 2680,
+        "groups_below_eight": 359,
+        "meta_test_withheld": 4562,
+        "observations_seen": 727369,
+        "unrepresentable:exact parameter has no frozen token; scores cannot be attached to a snapped program": 486920,
+        "unrepresentable:parameter outside frozen vocabulary": 135737
+      },
+      "source_entries": 1258,
+      "declared_record_payload_bytes": 45484936,
+      "payload_files_metadata_only": {
+        "record_files_present": 0,
+        "record_bytes_observed": 0,
+        "record_files_missing": 0,
+        "record_size_mismatches": 0,
+        "label_files_present": 0,
+        "label_bytes_observed": 0,
+        "shard_manifest_files_present": 0,
+        "records.bin_bytes": 45484936,
+        "labels.jsonl_bytes": 25540156,
+        "vocabulary.json_bytes": 74785
+      },
+      "provenance.json": {
+        "path": "/home/ubuntu/jope-node-mirror/corpus/corpus/qualification-v2/provenance.json",
+        "sha256": "f3ca249c71d06a0fcdcd6126230c62899953429a72c3a4a7946b8dba29baa09e",
+        "metadata": {
+          "counts": {
+            "failed_program": 2680,
+            "groups_below_eight": 359,
+            "meta_test_withheld": 4562,
+            "observations_seen": 727369,
+            "unrepresentable:exact parameter has no frozen token; scores cannot be attached to a snapped program": 486920,
+            "unrepresentable:parameter outside frozen vocabulary": 135737
+          },
+          "evaluation_bias": "adaptive_cut_heldout_teacher",
+          "final_tests_opened": false,
+          "groups": 834,
+          "independent_evaluation": false,
+          "index_sha256": "4becfff26be84323e1c0965ae076db6bff9817e5c496de4728e1741509cdf72d",
+          "label_policy": "exact program parameters only; no numeric snapping; duplicate program/cut labels have one vote",
+          "labels_sha256": "f4cbe6cb0e287001daf115a5fe6644076449dd203e6c30acf84802633c7c9685",
+          "qualification": true,
+          "selected_programs": 85498,
+          "source_entries": 1258,
+          "meta_training_family_count": 24
+        }
+      },
+      "source_entries_basis": "provenance.json",
+      "groups": 834
+    },
+    {
+      "path": "/home/ubuntu/jope-node-mirror/corpus/corpus/qualification-v1/index.json",
+      "sha256": "b6a6005f13f8ff9bac3f9c1c0ff713357a2befa565a9d093c1cacd11b8323f3a",
+      "manifest_bytes": 1807418,
+      "schema": "parallel.teaching_corpus.v1",
+      "qualification": true,
+      "label_policy": null,
+      "records": 9955,
+      "record_bytes": 532,
+      "vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+      "context_index_sha256": "8479a6e8e28e4d1fea8925f0f564ba3bf4d12d2800c5233ac03fafcb4db0f6c9",
+      "contexts": 3500,
+      "context_partitions": {
+        "meta_train": 2700,
+        "meta_validation": 600,
+        "meta_test": 200
+      },
+      "unique_context_datasets": 35,
+      "unique_families": 29,
+      "shards": 0,
+      "counts": {
+        "failed_program": 1872,
+        "groups_below_eight": 300,
+        "meta_test_withheld": 4562,
+        "observations_seen": 513232,
+        "unrepresentable:exact parameter has no frozen token; scores cannot be attached to a snapped program": 389545,
+        "unrepresentable:parameter outside frozen vocabulary": 98954
+      },
+      "source_entries": 875,
+      "declared_record_payload_bytes": 5296060,
+      "payload_files_metadata_only": {
+        "record_files_present": 0,
+        "record_bytes_observed": 0,
+        "record_files_missing": 0,
+        "record_size_mismatches": 0,
+        "label_files_present": 0,
+        "label_bytes_observed": 0,
+        "shard_manifest_files_present": 0,
+        "records.bin_bytes": 5296060,
+        "labels.jsonl_bytes": 2466332,
+        "vocabulary.json_bytes": 74785
+      },
+      "provenance.json": {
+        "path": "/home/ubuntu/jope-node-mirror/corpus/corpus/qualification-v1/provenance.json",
+        "sha256": "5adbb90c7827a61e2f72cb6a0a9b568d1c01dcf6760e7817034c03a6765ca08b",
+        "metadata": {
+          "counts": {
+            "failed_program": 1872,
+            "groups_below_eight": 300,
+            "meta_test_withheld": 4562,
+            "observations_seen": 513232,
+            "unrepresentable:exact parameter has no frozen token; scores cannot be attached to a snapped program": 389545,
+            "unrepresentable:parameter outside frozen vocabulary": 98954
+          },
+          "evaluation_bias": "adaptive_cut_heldout_teacher",
+          "final_tests_opened": false,
+          "groups": 530,
+          "independent_evaluation": false,
+          "index_sha256": "b6a6005f13f8ff9bac3f9c1c0ff713357a2befa565a9d093c1cacd11b8323f3a",
+          "label_policy": "exact program parameters only; no numeric snapping; duplicate program/cut labels have one vote",
+          "labels_sha256": "39a49bcca4a932bd2b54368a6a2907fdb81f87131bbeb8872742941031613a23",
+          "qualification": true,
+          "selected_programs": 9955,
+          "source_entries": 875,
+          "meta_training_family_count": 24
+        }
+      },
+      "source_entries_basis": "provenance.json",
+      "groups": 530
+    },
+    {
+      "path": "/home/ubuntu/jope-node-mirror/corpus/corpus/qualification-v3/index.json",
+      "sha256": "ff9670b098775130f53d1efc4a8d4ba245cf8e3ec7c95854a19a4668cf60f4d0",
+      "manifest_bytes": 10061405,
+      "schema": "parallel.teaching_corpus.v1",
+      "qualification": true,
+      "label_policy": null,
+      "records": 422840,
+      "record_bytes": 532,
+      "vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+      "context_index_sha256": "97486594c5581ae984baff353411936d40360af16f9982d89668aad0947ed4da",
+      "contexts": 7000,
+      "context_partitions": {
+        "meta_train": 5400,
+        "meta_validation": 1200,
+        "meta_test": 400
+      },
+      "unique_context_datasets": 35,
+      "unique_families": 29,
+      "shards": 0,
+      "counts": {
+        "failed_program": 3774,
+        "groups_below_eight": 334,
+        "meta_test_withheld": 4562,
+        "observations_seen": 1088060,
+        "unrepresentable:exact parameter has no frozen token; scores cannot be attached to a snapped program": 487209,
+        "unrepresentable:parameter outside frozen vocabulary": 135785
+      },
+      "source_entries": 1942,
+      "declared_record_payload_bytes": 224950880,
+      "payload_files_metadata_only": {
+        "record_files_present": 0,
+        "record_bytes_observed": 0,
+        "record_files_missing": 0,
+        "record_size_mismatches": 0,
+        "label_files_present": 0,
+        "label_bytes_observed": 0,
+        "shard_manifest_files_present": 0,
+        "records.bin_bytes": 224950880,
+        "labels.jsonl_bytes": 131176452,
+        "vocabulary.json_bytes": 74785
+      },
+      "provenance.json": {
+        "path": "/home/ubuntu/jope-node-mirror/corpus/corpus/qualification-v3/provenance.json",
+        "sha256": "51b4e84abbacec571bada132a73098b2a040e0bd2f2dd113835f42629b6b09b7",
+        "metadata": {
+          "counts": {
+            "failed_program": 3774,
+            "groups_below_eight": 334,
+            "meta_test_withheld": 4562,
+            "observations_seen": 1088060,
+            "unrepresentable:exact parameter has no frozen token; scores cannot be attached to a snapped program": 487209,
+            "unrepresentable:parameter outside frozen vocabulary": 135785
+          },
+          "evaluation_bias": "adaptive_cut_heldout_teacher",
+          "final_tests_opened": false,
+          "groups": 1320,
+          "independent_evaluation": false,
+          "index_sha256": "ff9670b098775130f53d1efc4a8d4ba245cf8e3ec7c95854a19a4668cf60f4d0",
+          "label_policy": "exact program parameters only; no numeric snapping; duplicate program/cut labels have one vote",
+          "labels_sha256": "daa0ff14e2b5c86de8f8c9cf12753e45dc6e9406dd51d90e5d0861ad2e1678a9",
+          "qualification": true,
+          "selected_programs": 422840,
+          "source_entries": 1942,
+          "meta_training_family_count": 24
+        }
+      },
+      "source_entries_basis": "provenance.json",
+      "groups": 1320
+    }
+  ]
+}

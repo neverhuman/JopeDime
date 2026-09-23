@@ -1,0 +1,106 @@
+{
+  "autocast_cache_lifetime": "scoped_v2",
+  "committed_exposure_by_rank": [
+    {
+      "attempt": "runs/xbabe2-hardware-qualification-20260914/final-runtime-v2-eof/launch/native-01M2GZ53X6FN996RRG13Z6WNEW-attempt-3-fence-35",
+      "counts": {
+        "actual_fresh_program_presentations": 0,
+        "comparison_groups": 25600,
+        "designated_broad_groups": 25600,
+        "designated_fresh_groups": 0,
+        "groups_with_actual_fresh_program": 0,
+        "program_presentations": 204800
+      },
+      "rank": 0
+    }
+  ],
+  "config_sha256": "2508fc8b8268ea000141c9b119ba3da4e777c506c366168912a88d03482939bf",
+  "corpus_sha256": "1c840597554f76598b7c173a0de6f5d13e1b29bfa971f4fa49777d9d1da47798",
+  "execution_partition": {
+    "accumulation": 8,
+    "autocast": "scoped_bf16_fp32_master_v2",
+    "global_batch": 2048,
+    "microbatch": 256,
+    "normalization": "microbatch_weighted_means_rank_mean_v1",
+    "rng": "mix_seed_local_step_rank_microbatch_v1",
+    "schema": "parallel.training_partition.v1",
+    "world": 1
+  },
+  "final_tests_opened": false,
+  "global_batch": 2048,
+  "independent_evaluation": false,
+  "initialization": {
+    "checkpoint": "runs/eight-a100-recovery-20260912/learning/cycle-000018/train-2/checkpoints/step-60000",
+    "kind": "warm_start",
+    "model_sha256": "053df4f53b84d2ebe7c14fbf907a149760af3d11de4a57b5ff89be8c2d3e8129",
+    "optimizer": "carried FP32 AdamW with bias-correction step",
+    "optimizer_parent_step": 60000,
+    "parent_corpus_sha256": "1c840597554f76598b7c173a0de6f5d13e1b29bfa971f4fa49777d9d1da47798",
+    "parent_step": 60000,
+    "replay_policy": {
+      "corpus_sha256": "1c840597554f76598b7c173a0de6f5d13e1b29bfa971f4fa49777d9d1da47798",
+      "eligible": true,
+      "final_tests_opened": false,
+      "fresh_groups": [],
+      "fresh_records": {},
+      "optimizer": "carry",
+      "parent_checkpoint_sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6",
+      "purpose": "isolated unchanged-corpus hardware qualification, not production continuation outcomes",
+      "qualification": true,
+      "replay": "broad",
+      "sampling_seed": 20260914,
+      "schema": "parallel.replay_policy.v2",
+      "vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787"
+    },
+    "replay_policy_sha256": "50a6a1257c27e69d42cfa409ce0e0f069271519377c1ea0470b46e6ab224a4a0",
+    "resolved_sampler_id": "lineage_fresh_program_champion_plus_seven_v2",
+    "sampler": "lineage-bound counter; local block step starts at zero",
+    "state_sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6"
+  },
+  "local_step": 100,
+  "model_sha256": "1f202cce5cdb328bfff4a393ff4d98cd51a648d753ede12a0da4229613b33ef0",
+  "next_global_example": 204800,
+  "optimizer_metadata_sha256": "93a14ee87f7f2cca94f640777522e92cd2dc762d0fef2f6e7d346b7ed8ecefe5",
+  "optimizer_sha256": "08e2df67aaa2fe9f5e526def9803b6bb7c72d76e0059c7ab73a00b97df601462",
+  "parameter_sha256": "762094a0ae1f636413629c1f5c347d94b8e431623d41edab7850bd99d1a02872",
+  "qualification": true,
+  "ranking_backward": "dense_pairwise_v2",
+  "replay_policy_sha256": "50a6a1257c27e69d42cfa409ce0e0f069271519377c1ea0470b46e6ab224a4a0",
+  "rng": "counter reset before every microbatch: mix(seed ^ step*65537 ^ rank*257 ^ microbatch); LibTorch CPU/CUDA manual_seed",
+  "runtime_objective": "huber_log1p_seconds_v2",
+  "sampler": "family-uniform best teacher plus seven quantile comparators; next global example = step*2048",
+  "sampler_id": "lineage_fresh_program_champion_plus_seven_v2",
+  "scheduler": {
+    "epoch_steps": 4582,
+    "learning_rate": 0.0001,
+    "type": "constant"
+  },
+  "schema": "parallel.checkpoint.v1",
+  "seed": 20260914,
+  "step": 60100,
+  "stochastic_counter_basis": "optimizer_step_minus_optimizer_parent_step",
+  "validation": {
+    "contextfree_bt": 0.3297528028488159,
+    "evaluated_step": 60100,
+    "evaluation_bias": "adaptive_cut_heldout_teacher",
+    "family_balanced": true,
+    "independent_evaluation": false,
+    "panel_sha256": "2a5ac5dd01719bbe6c6afa929302d7c6804edc816c487ebb4d2a91959f6ec722",
+    "ranking_bt": 0.4754210412502289,
+    "ranking_listwise": 2.205483913421631,
+    "runtime_huber": 0.04911944270133972,
+    "sampled_examples": 256,
+    "sampler_id": "family_uniform_champion_plus_seven_quantiles_v2",
+    "sequence_nll": 1.4097923040390015,
+    "source_families": 8,
+    "weighted_losses": {
+      "contextfree_bt": 0.016487641260027885,
+      "ranking_bt": 0.11885526031255722,
+      "ranking_listwise": 0.22054839134216309,
+      "runtime_huber": 0.004911944270133972,
+      "sequence_nll": 1.4097923040390015
+    }
+  },
+  "vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+  "world": 1
+}

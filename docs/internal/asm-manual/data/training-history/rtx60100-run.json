@@ -1,0 +1,1 @@
+{"global_batch":2048,"initial_optimizer_step":60000,"microbatch":256,"production_learning":false,"qualification":true,"requested_step_increment":100,"run":"xbabe2-final-runtime-qualification-v2-20260914","schema":"jope.hardware_qualification_run.v1","target_optimizer_step":60100}

@@ -1,2 +1,4 @@
 # Preserve the original CSV bytes and their evidence hashes, including CRLF records.
 data/plot-*.csv -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+data/training-history/*.csv -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+data/target-history/*.csv -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

@@ -49,7 +49,11 @@
         "maintenance.md:Coverage and reviewed lifecycle",
         "neural-integration/lifecycle-68f56404c3e199e06413bfd645d3fe0803d7b96f/remote-main-verification.json"
       ],
-      "notes": "This task is complete; subsequent implementation remains pending. Keep the measured68 source identity distinct from the rebase-merge commit identity."
+      "notes": "This task is complete; subsequent implementation remains pending. Keep the measured68 source identity distinct from the rebase-merge commit identity.",
+      "planned_owner": {
+        "executes": "Completed PR83 lifecycle",
+        "claude": "Independent native review retained in lifecycle evidence."
+      }
     },
     {
       "id": "DOC-01",
@@ -57,7 +61,7 @@
       "workstream": "manual",
       "priority": "P1",
       "severity": "required acceptance before completed delivery",
-      "current_evidence_level": "assembled thirteen chapters and complete data companions",
+      "current_evidence_level": "assembled seventeen chapters with source-audited training and target histories",
       "status": "canonical private manual assembled",
       "pending_action": "Maintain the dated evidence inventory and current source/pending distinctions.",
       "dependencies": [
@@ -79,7 +83,11 @@
         "dataset-inventory.json",
         "performance-evidence.json"
       ],
-      "notes": "Root integrated the book and renderer. Claude historical plot inputs were copied under stable before/after hashes; no stopped external renderer handoff is required."
+      "notes": "Root integrated the book and renderer. Claude historical plot inputs were copied under stable before/after hashes; no stopped external renderer handoff is required.",
+      "planned_owner": {
+        "executes": "Codex canonical integration",
+        "claude": "Contribution/source findings only; exact-head native review uses a separate non-contributor Claude process."
+      }
     },
     {
       "id": "DOC-02",
@@ -111,7 +119,11 @@
         "languages-examples.md:Example A",
         "languages-examples.md:Example B"
       ],
-      "notes": "Actual acceptance: data/example-acceptance/audit.json. Five recipe refits each predict eight synthetic rows; separate legacy pmlb229 pipeline has four successful measurements. No fitted-export, ASM demo, training or full-panel qualification. Resource-readback race retained."
+      "notes": "Actual acceptance: data/example-acceptance/audit.json. Five recipe refits each predict eight synthetic rows; separate legacy pmlb229 pipeline has four successful measurements. No fitted-export, ASM demo, training or full-panel qualification. Resource-readback race retained.",
+      "planned_owner": {
+        "executes": "Codex (done 16:46Z)",
+        "claude": "none"
+      }
     },
     {
       "id": "DOC-03",
@@ -119,7 +131,7 @@
       "workstream": "manual figures",
       "priority": "P1",
       "severity": "required acceptance before completed delivery",
-      "current_evidence_level": "ten local figure artifacts generated and source-checked",
+      "current_evidence_level": "nineteen local figure artifacts; original metrics and generation points retained",
       "status": "figures rendered; final PDF inspection pending",
       "pending_action": "Retain historical/current labels, complete source CSVs and final PDF visual checks.",
       "dependencies": [
@@ -128,7 +140,9 @@
       "acceptance": {
         "commands": [
           "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_inventory_figures.py",
-          "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_figures.py"
+          "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_figures.py",
+          "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_training_figures.py",
+          "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_target_figures.py"
         ],
         "evidence": [
           "Plot source CSV/JSON, tool source, plot hash, precise captions, missing-stat flags and historical-vs-current labels; no invented sealed statistics or causal speedup."
@@ -141,7 +155,11 @@
         "dataset-inventory.json",
         "performance-evidence.json"
       ],
-      "notes": "Historical Elo belongs to its original ladder/pool/protocol; the current one-dataset proof is not a new Elo ladder. Source and figure checks are retained; authored architecture SVG is a repository source artifact."
+      "notes": "Historical Elo belongs to its original ladder/pool/protocol; the current one-dataset proof is not a new Elo ladder. Source and figure checks are retained; authored architecture SVG is a repository source artifact.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "Fresh non-contributing independent native reviewer"
+      }
     },
     {
       "id": "DOC-04",
@@ -149,7 +167,7 @@
       "workstream": "manual quality",
       "priority": "P1",
       "severity": "required acceptance before completed delivery",
-      "current_evidence_level": "thirteen chapters rendered; full-text and sampled-page checks available",
+      "current_evidence_level": "first edition rendered; expanded seventeen-chapter final checks required",
       "status": "rendered; final publication gates pending",
       "pending_action": "Render docs/*.pdf, extract PDF text, inspect all dense tables/code/figures, verify local links and filenames, and produce a readback checklist.",
       "dependencies": [
@@ -170,7 +188,11 @@
       "source_refs": [
         "maintenance.md:Updating the book"
       ],
-      "notes": "A successful renderer exit is insufficient: the PDF must remain readable and complete."
+      "notes": "A successful renderer exit is insufficient: the PDF must remain readable and complete.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "Fresh non-contributing independent native reviewer"
+      }
     },
     {
       "id": "INT-01",
@@ -200,7 +222,11 @@
         "agent-product-final-68f56404/HANDOFF.json",
         "agent-delivery-refresh-68f56404/HANDOFF.json"
       ],
-      "notes": "NEW is an unused custody directory name. Add-on replay invocation must follow its own pinned helper. Never force stale guards or apply constituent accounting/coverage twice."
+      "notes": "NEW is an unused custody directory name. Add-on replay invocation must follow its own pinned helper. Never force stale guards or apply constituent accounting/coverage twice.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "pre-review of each refreshed replay; native review at exact head"
+      }
     },
     {
       "id": "INT-02",
@@ -237,7 +263,11 @@
         "deploy/ci/fast-lane.sh",
         "deploy/ci/full-lane.sh"
       ],
-      "notes": "Custody syntax tests are not this gate. Required18Python/27Rust/10policy names are proof minima, not total coverage. New code needs actual test collection."
+      "notes": "Custody syntax tests are not this gate. Required18Python/27Rust/10policy names are proof minima, not total coverage. New code needs actual test collection.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "pre-review; native review"
+      }
     },
     {
       "id": "BENCH-01",
@@ -258,7 +288,7 @@
           "\"$J\" benchmark methods"
         ],
         "evidence": [
-          "Original panel SHAba7dace4\u2026,30datasets10/task, exact input-byte verification, native17/5/4recipes and4external families; alias/configuration inventory and unavailable reasons."
+          "Original panel SHAba7dace4…,30datasets10/task, exact input-byte verification, native17/5/4recipes and4external families; alias/configuration inventory and unavailable reasons."
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
@@ -269,7 +299,11 @@
         "crates/jope-bench/src/panel/score.rs",
         "benchmarks/panel.json"
       ],
-      "notes": "Verification is metadata/data validation, no new fits. Do not replace a failed panel dataset."
+      "notes": "Verification is metadata/data validation, no new fits. Do not replace a failed panel dataset.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "read-only receipt audit"
+      }
     },
     {
       "id": "BENCH-02",
@@ -299,7 +333,11 @@
         "crates/jope-bench/adapters/_panel.py",
         "crates/jope-bench/adapters/test_panel.py"
       ],
-      "notes": "Do not nest an outer allocation lock around a front door already taking it. Environment mutation invalidates old inventory."
+      "notes": "Do not nest an outer allocation lock around a front door already taking it. Environment mutation invalidates old inventory.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "read-only receipt audit"
+      }
     },
     {
       "id": "EXEC-01",
@@ -327,7 +365,11 @@
         "deploy/ci/qualify-execution.py",
         "crates/jope-pipeline/src/execution.rs"
       ],
-      "notes": "Current host qualification is not automatically covered by the ordinary required unit lane; missing privileges fail, not skip."
+      "notes": "Current host qualification is not automatically covered by the ordinary required unit lane; missing privileges fail, not skip.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "review"
+      }
     },
     {
       "id": "EXEC-02",
@@ -355,7 +397,11 @@
         "crates/jope-pipeline/src/execution.rs:812",
         "AGENT_CHAT.md:2026-09-23T16:17 delta review"
       ],
-      "notes": "Exact new test name is not present yet; existing module command is the truthful current gate. Ten old host cases do not refute this coverage gap."
+      "notes": "Exact new test name is not present yet; existing module command is the truthful current gate. Ten old host cases do not refute this coverage gap.",
+      "planned_owner": {
+        "executes": "Claude writes the tests; Codex runs them under the CPU lock",
+        "claude": "custody patch (drain-and-fixtures-F2: async reap, pre-gate BudgetExhausted, undrained group)"
+      }
     },
     {
       "id": "EXEC-03",
@@ -385,7 +431,11 @@
         "crates/jope-bench/src/panel/optimize_fit.rs",
         "AGENT_CHAT.md:resume-fix-F2"
       ],
-      "notes": "The two original FixtureBackend reproductions use absent digests and do not cover the same_folds path."
+      "notes": "The two original FixtureBackend reproductions use absent digests and do not cover the same_folds path.",
+      "planned_owner": {
+        "executes": "Claude writes the tests; Codex runs them",
+        "claude": "custody patch (resume-fix-F2: PoolBackend receipt through verify_receipt, Some(shared fold digest))"
+      }
     },
     {
       "id": "EXEC-04",
@@ -413,7 +463,11 @@
         "crates/jope-pipeline/src/neural_search.rs:1380",
         "AGENT_CHAT.md:regressions-F2"
       ],
-      "notes": ""
+      "notes": "",
+      "planned_owner": {
+        "executes": "Claude writes the tests; Codex runs them",
+        "claude": "custody patch (regressions-F2: assert original_deadline stop reason and persisted search receipt)"
+      }
     },
     {
       "id": "EXEC-05",
@@ -441,7 +495,11 @@
         "agent-accounting-union/training-bridge/HANDOFF.json",
         "crates/jope-bench/src/panel/asm_campaign.rs (pending)"
       ],
-      "notes": ""
+      "notes": "",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "review"
+      }
     },
     {
       "id": "NEURAL-01",
@@ -470,7 +528,11 @@
         "crates/jope-policy/src/context_producer/admission.rs:4",
         "crates/jope-pipeline/src/cpu_context_bridge.rs"
       ],
-      "notes": "Metadata/path equality or checksum alone is not numerical qualification; no changed tolerance or checkpoint substitution."
+      "notes": "Metadata/path equality or checksum alone is not numerical qualification; no changed tolerance or checkpoint substitution.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "receipt audit"
+      }
     },
     {
       "id": "TEACH-01",
@@ -499,7 +561,11 @@
         "crates/jope-learning/src/hwm.rs (pending)",
         "crates/jope-learning/src/eligibility.rs (pending)"
       ],
-      "notes": ""
+      "notes": "",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "review"
+      }
     },
     {
       "id": "TEACH-02",
@@ -529,7 +595,11 @@
         "AGENT_CHAT.md:eligibility-B6",
         "crates/jope-bench/src/panel/selection_exposure.rs"
       ],
-      "notes": "No current live leak was observed because no producer emits benchmark-valid panel records. A burn file writer alone is not downstream enforcement."
+      "notes": "No current live leak was observed because no producer emits benchmark-valid panel records. A burn file writer alone is not downstream enforcement.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "optional custody patch: production caller wiring for require_unburned_test_partition plus an integration test"
+      }
     },
     {
       "id": "TEACH-03",
@@ -564,7 +634,11 @@
         "operations-training.md:Present teacher readiness",
         "crates/jope-bench/src/panel/teaching.rs (pending)"
       ],
-      "notes": "Execute separately for230_machine_cpu and712_chscase_geyser1; the prospective choice predates losses. Old55e9,3fd and68 operational receipts cannot be retrofitted. The older queue suggested300 secondseconds per family without admitting that allowance."
+      "notes": "Execute separately for230_machine_cpu and712_chscase_geyser1; the prospective choice predates losses. Old55e9,3fd and68 operational receipts cannot be retrofitted. The older queue suggested300 secondseconds per family without admitting that allowance.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "audit that freeze/vocabulary pins precede fits; independently recompute per-fold gains and the 4-of-5 rule"
+      }
     },
     {
       "id": "TEACH-04",
@@ -592,7 +666,11 @@
         "crates/jope-cli/src/train/corpus.rs (pending)",
         "operations-training.md:Build the real corpus"
       ],
-      "notes": "Only if exactly two families qualify does the recorded machineCPU-development/geyser-training assignment apply. More eligible families must all remain admitted."
+      "notes": "Only if exactly two families qualify does the recorded machineCPU-development/geyser-training assignment apply. More eligible families must all remain admitted.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "audit that every eligible comparison is included"
+      }
     },
     {
       "id": "TRAIN-01",
@@ -622,7 +700,11 @@
         "python/src/jope/policy/train_v3.py (pending)",
         "deploy/ci/training-proof.py (pending)"
       ],
-      "notes": "Required-name inventories and deselected tests do not count as execution. A synthetic CPU checkpoint remains fixture evidence."
+      "notes": "Required-name inventories and deselected tests do not count as execution. A synthetic CPU checkpoint remains fixture evidence.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "review"
+      }
     },
     {
       "id": "TRAIN-02",
@@ -652,7 +734,11 @@
         "crates/jope-cli/src/train.rs (pending)",
         "python/src/jope/policy/training_campaign.py (pending)"
       ],
-      "notes": "Author the cancellation harness against the actual front door and target only its owned processes. CPU mode requires explicit fixture provenance."
+      "notes": "Author the cancellation harness against the actual front door and target only its owned processes. CPU mode requires explicit fixture provenance.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "review"
+      }
     },
     {
       "id": "TRAIN-03",
@@ -678,12 +764,16 @@
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
-      "resource_budget": "One original3600 seconds total window;\u22641200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.",
+      "resource_budget": "One original3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.",
       "source_refs": [
         "python/src/jope/policy/training_campaign.py:780 (pending)",
         "operations-training.md:Plan, run, resume, verify and export"
       ],
-      "notes": "NEURAL-02 gates source and fixture readiness before the GPU hour. It does not depend on a newly trained live export, avoiding a circular prerequisite."
+      "notes": "NEURAL-02 gates source and fixture readiness before the GPU hour. It does not depend on a newly trained live export, avoiding a circular prerequisite.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "review"
+      }
     },
     {
       "id": "TRAIN-04",
@@ -708,12 +798,16 @@
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
-      "resource_budget": "One original3600 seconds total window;\u22641200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.",
+      "resource_budget": "One original3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.",
       "source_refs": [
         "python/src/jope/policy/training_campaign.py:1203 (pending)",
         "python/src/jope/policy/training_campaign.py:1303 (pending)"
       ],
-      "notes": "Resume is conditional, not an instruction to start a third pass after completing the plan. A new state or plan cannot extend the approved hour."
+      "notes": "Resume is conditional, not an instruction to start a third pass after completing the plan. A new state or plan cannot extend the approved hour.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "review"
+      }
     },
     {
       "id": "NEURAL-02",
@@ -744,7 +838,11 @@
         "crates/jope-pipeline/src/experimental_producer.rs (pending)",
         "python/src/jope/policy/experimental_proposal.py (pending)"
       ],
-      "notes": "The new regression consumer is not serving promotion. Synthetic regression may test mechanics but cannot enter the real operational route."
+      "notes": "The new regression consumer is not serving promotion. Synthetic regression may test mechanics but cannot enter the real operational route.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "receipt audit"
+      }
     },
     {
       "id": "NEURAL-03",
@@ -775,7 +873,11 @@
         "crates/jope-bench/src/panel/experimental_proposal.rs (pending)",
         "crates/jope-bench/src/panel/origin_proof.rs (pending)"
       ],
-      "notes": "The current proof-plan scopes one regression dataset. Classification needs its implemented campaign/configuration route; this command alone cannot prove binary or multiclass live consumption."
+      "notes": "The current proof-plan scopes one regression dataset. Classification needs its implemented campaign/configuration route; this command alone cannot prove binary or multiclass live consumption.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "audit that the new checkpoint hash appears in proposal and fit evidence"
+      }
     },
     {
       "id": "INFER-01",
@@ -806,7 +908,11 @@
         "crates/jope-bench/src/panel/inference.rs (pending)",
         "languages-examples.md:State restrictions"
       ],
-      "notes": "The private C++ head gate is broader than the public gate. Python/Rust14of26, C++2of26 and JavaScript6of26 are static head counts, not runtime qualification rates."
+      "notes": "The private C++ head gate is broader than the public gate. Python/Rust14of26, C++2of26 and JavaScript6of26 are static head counts, not runtime qualification rates.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "review of emitter/parity parts"
+      }
     },
     {
       "id": "INFER-02",
@@ -838,7 +944,11 @@
         "crates/jope-bench/src/panel/fitted_export_run.rs (pending)",
         "languages-examples.md:Example C"
       ],
-      "notes": "Library fixtures precede the panel. Actual selected winners require complete confirmations from PANEL-01 and qualification before the original execution cutoff. No separately bounded post-panel qualification front door exists. One fitted fold does not qualify the other four states."
+      "notes": "Library fixtures precede the panel. Actual selected winners require complete confirmations from PANEL-01 and qualification before the original execution cutoff. No separately bounded post-panel qualification front door exists. One fitted fold does not qualify the other four states.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "review of emitter/parity parts"
+      }
     },
     {
       "id": "INSTALL-01",
@@ -868,7 +978,11 @@
         "deploy/install-private.py (pending)",
         "product.md:Build and install"
       ],
-      "notes": "An installer receipt is not policy/context-worker build authority. Do not include training credentials or model bodies in the public inference bundle."
+      "notes": "An installer receipt is not policy/context-worker build authority. Do not include training credentials or model bodies in the public inference bundle.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "new-user walkthrough of quickstart and doctor output"
+      }
     },
     {
       "id": "INSTALL-02",
@@ -899,7 +1013,11 @@
         "product.md:Prepare the panel",
         "agent-acceptance-queue/QUEUE.md"
       ],
-      "notes": "Packaging commands depend on final reviewed artifacts and the actual virtual environment. Preserve versions and file identities; changing the environment invalidates a pinned campaign."
+      "notes": "Packaging commands depend on final reviewed artifacts and the actual virtual environment. Preserve versions and file identities; changing the environment invalidates a pinned campaign.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "new-user walkthrough"
+      }
     },
     {
       "id": "DEMO-01",
@@ -907,7 +1025,7 @@
       "workstream": "measured warm fitted demonstration",
       "priority": "P1",
       "severity": "required acceptance before completed delivery",
-      "current_evidence_level": "warmtargetadd-onprepared;historicalfirstfit\u224850.4s",
+      "current_evidence_level": "warmtargetadd-onprepared;historicalfirstfit≈50.4s",
       "status": "realtrained warm proof pending",
       "pending_action": "Produce actual trained-neural and generic fitted artifacts, reloaded predictions, baseline/comparison and truthful target_met. Do not clip arm budgets to pass sixty seconds.",
       "dependencies": [
@@ -930,7 +1048,11 @@
         "docs/private-warm-target.md (pending)",
         "product.md:Warm fitted demonstration"
       ],
-      "notes": "Under sixty seconds is a measured target. The existing twenty-second-arm example is unqualified. An explicitly admitted longer proof may satisfy execution while missing the target. This checklist grants no implicit300-second allowance."
+      "notes": "Under sixty seconds is a measured target. The existing twenty-second-arm example is unqualified. An explicitly admitted longer proof may satisfy execution while missing the target. This checklist grants no implicit300-second allowance.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "wins/cost table spec; independent recomputation"
+      }
     },
     {
       "id": "PANEL-01",
@@ -966,7 +1088,11 @@
         "crates/jope-bench/src/panel/protocol.rs",
         "crates/jope-bench/src/panel/selection_exposure.rs"
       ],
-      "notes": "Current code forces asm.neural into extra confirmation, not asm.generic. Selected five-fold summaries are adaptive development, and ten wins per category are not promised. Qualify exports before the original6900-second cutoff or preserve unattempted status."
+      "notes": "Current code forces asm.neural into extra confirmation, not asm.generic. Selected five-fold summaries are adaptive development, and ten wins per category are not promised. Qualify exports before the original6900-second cutoff or preserve unattempted status.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "independent read-only recomputation from the journal"
+      }
     },
     {
       "id": "REPORT-01",
@@ -996,7 +1122,11 @@
         "data-evidence.md",
         "crates/jope-bench/src/panel/asm_campaign.rs (pending)"
       ],
-      "notes": "The one-hour comparison supplies wall-duration context, not a matched speedup. Unique artifact hashes do not establish behavioral uniqueness. Never add aggregate service CPU to worker CPU already included in it."
+      "notes": "The one-hour comparison supplies wall-duration context, not a matched speedup. Unique artifact hashes do not establish behavioral uniqueness. Never add aggregate service CPU to worker CPU already included in it.",
+      "planned_owner": {
+        "executes": "Codex",
+        "claude": "independent wins/losses and cost recomputation; every loss published"
+      }
     },
     {
       "id": "MOTIF-01",
@@ -1027,7 +1157,11 @@
         "status.md:Pending acceptance",
         "agent-acceptance-queue/QUEUE.md:motifs"
       ],
-      "notes": "These help commands are currently unavailable at 68 and are acceptance targets. No truthful exact mine invocation exists yet; record it after implementation."
+      "notes": "These help commands are currently unavailable at 68 and are acceptance targets. No truthful exact mine invocation exists yet; record it after implementation.",
+      "planned_owner": {
+        "executes": "Claude code, Codex live run",
+        "claude": "via MOTIF-00"
+      }
     },
     {
       "id": "MOTIF-02",
@@ -1053,7 +1187,11 @@
         "agent-acceptance-queue/QUEUE.md:motifs",
         "docs/adr/ADR-0005-canonical-learning-loop.md"
       ],
-      "notes": "Do not invent mine flags. The historical validate argument shape alone does not establish umbrella wiring or production State admission."
+      "notes": "Do not invent mine flags. The historical validate argument shape alone does not establish umbrella wiring or production State admission.",
+      "planned_owner": {
+        "executes": "Claude design, Codex windows",
+        "claude": "preregistered ablation design"
+      }
     },
     {
       "id": "MOTIF-03",
@@ -1079,7 +1217,11 @@
         "user approval plan:Eligible optimization and reuse",
         "languages-examples.md:Future work"
       ],
-      "notes": "Typed reusable macros may stay within existing operators. Fragment frequency alone does not justify adding an operator."
+      "notes": "Typed reusable macros may stay within existing operators. Fragment frequency alone does not justify adding an operator.",
+      "planned_owner": {
+        "executes": "Claude design, Codex windows",
+        "claude": "two-stage promotion design"
+      }
     },
     {
       "id": "IP-01",
@@ -1108,7 +1250,11 @@
         "deploy/ci/ip-scrub.sh",
         "crates/feat-math/src/advanced_v3/fitted_portable.rs (pending)"
       ],
-      "notes": "Current lint success does not prove unscanned surfaces clean. The user explicitly requested the private GP explanation, so ordinary creation of this manual needs no additional approval."
+      "notes": "Current lint success does not prove unscanned surfaces clean. The user explicitly requested the private GP explanation, so ordinary creation of this manual needs no additional approval.",
+      "planned_owner": {
+        "executes": "Claude",
+        "claude": "IP-Q1..Q5"
+      }
     },
     {
       "id": "MAINT-01",
@@ -1140,7 +1286,11 @@
         "maintenance.md:Coverage and reviewed lifecycle",
         "AGENT_CHAT.md:full-default failures"
       ],
-      "notes": "Check lane environment requirements before invocation. The owning qualification supplies allocation and budget; this manual does not admit them."
+      "notes": "Check lane environment requirements before invocation. The owning qualification supplies allocation and budget; this manual does not admit them.",
+      "planned_owner": {
+        "executes": "Claude (B6-01); Codex runs full lanes",
+        "claude": "author"
+      }
     },
     {
       "id": "FUTURE-01",
@@ -1167,7 +1317,157 @@
         "docs/adr/ADR-0005-canonical-learning-loop.md",
         "architecture.md:Experimental trained models"
       ],
-      "notes": "Training GPU availability does not prove CUDA inference parity. Export is not serving promotion."
+      "notes": "Training GPU availability does not prove CUDA inference parity. Export is not serving promotion.",
+      "planned_owner": {
+        "executes": "deferred",
+        "claude": "CUDA design after EMIT-01"
+      }
+    },
+    {
+      "id": "DOC-05",
+      "original_plan_stage": 0,
+      "workstream": "real training and target history",
+      "priority": "P1",
+      "severity": "documentation acceptance",
+      "current_evidence_level": "Original training and target values verified; final composed-document inspection required",
+      "status": "Original training and target values verified; final composed-document inspection required",
+      "pending_action": "Publish exact observed optimizer/corpus/encoding/target history, component-loss curves, checkpoint lineage, source hashes and explicit comparability/missing-history limits.",
+      "dependencies": [
+        "DOC-01"
+      ],
+      "acceptance": {
+        "commands": [
+          "python3 docs/internal/asm-manual/tools/make_training_figures.py",
+          "python3 docs/internal/asm-manual/tools/make_target_figures.py"
+        ],
+        "evidence": [
+          "Audited original JSON-pointer-to-CSV equality; every curve bound to model/corpus/monitor/objective; original failed/inconclusive observations retained."
+        ],
+        "command_status": "existing plotting interface"
+      },
+      "resource_budget": "No new fits, training or model loads; plotting retained metrics only.",
+      "source_refs": [
+        "sections/14-training-history.md",
+        "sections/15-target-history-packing.md"
+      ],
+      "notes": "Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
+      "planned_owner": "Codex integration; Claude independent source/data cross-check"
+    },
+    {
+      "id": "DOC-06",
+      "original_plan_stage": 0,
+      "workstream": "versions, KPIs and continuation runbook",
+      "priority": "P1",
+      "severity": "documentation acceptance",
+      "current_evidence_level": "Current and pending interfaces source-audited; independent chapter review complete",
+      "status": "Current and pending interfaces source-audited; independent chapter review complete",
+      "pending_action": "Publish the product/model/encoding/vocabulary/corpus/protocol version tuple, north-star and KPI definitions, real continuation evidence, and exact current-versus-pending commands and code.",
+      "dependencies": [
+        "DOC-01"
+      ],
+      "acceptance": {
+        "commands": [],
+        "evidence": [
+          "Source-bound command/flag/API audit; held native grant path disclosed; warm-start distinct from optimizer resume; full input closure and 64 GiB budget compatibility stated."
+        ],
+        "command_status": "no complete executable front door; source/API details in linked chapters"
+      },
+      "resource_budget": "Documentation and metadata validation only; commands do not admit a new training window.",
+      "source_refs": [
+        "sections/16-version-kpis-continuation.md",
+        "sections/17-flywheel-focused-search.md"
+      ],
+      "notes": "Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
+      "planned_owner": "Codex integration; Claude independent source/data cross-check"
+    },
+    {
+      "id": "PACK-01",
+      "original_plan_stage": 3,
+      "workstream": "packed training consumer and incremental loading",
+      "priority": "P2",
+      "severity": "explicit follow-on; not permission to expand campaign budgets",
+      "current_evidence_level": "Legacy binary store exists; pending Python category route still materializes JSONL",
+      "status": "Legacy binary store exists; pending Python category route still materializes JSONL",
+      "pending_action": "Design and qualify a lossless packed reader for the bounded trainer, sharing repeated contexts and immutable shards while excluding sealed-family context vectors; measure host/device loading and fresh-example exposure.",
+      "dependencies": [
+        "TEACH-04",
+        "TRAIN-01"
+      ],
+      "acceptance": {
+        "commands": [],
+        "evidence": [
+          "JSONL-versus-packed token/context/label/sampler equivalence; corruption/schema tests; finite complete labels; startup/RSS/I/O/padding measurements; incremental shard reuse and actual optimizer input counts."
+        ],
+        "command_status": "no complete executable front door; source/API details in linked chapters"
+      },
+      "resource_budget": "Source/fixture planning first; any measured training remains inside a separately declared remaining authorized window.",
+      "source_refs": [
+        "sections/15-target-history-packing.md",
+        "python/src/jope/policy/train_v3.py",
+        "crates/jope-engine/src/teaching_store.rs"
+      ],
+      "notes": "Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
+      "planned_owner": "Codex integration; Claude independent source/data cross-check"
+    },
+    {
+      "id": "FOCUS-01",
+      "original_plan_stage": 6,
+      "workstream": "sustained single-dataset improvement",
+      "priority": "P2",
+      "severity": "explicit follow-on; not permission to expand campaign budgets",
+      "current_evidence_level": "Current bounded proof exists; no incumbent-seeded attack front door",
+      "status": "Current bounded proof exists; no incumbent-seeded attack front door",
+      "pending_action": "Add an authenticated incumbent-aware multi-wave request using full comparison identity, retained original deadline, bounded workers and durable improvement events. Preserve exploration and all non-improvement outcomes.",
+      "dependencies": [
+        "TEACH-01",
+        "TEACH-02",
+        "TEACH-03"
+      ],
+      "acceptance": {
+        "commands": [],
+        "evidence": [
+          "Improving, tied, worse, stale and concurrent incumbents; full OOF/baseline admission; no deadline reset or sealed input; successful no-improvement completion; actual cost per eligible improvement."
+        ],
+        "command_status": "no complete executable front door; source/API details in linked chapters"
+      },
+      "resource_budget": "No indefinite loop or additional allowance implied; whole focused experiment has one predeclared finite budget.",
+      "source_refs": [
+        "sections/17-flywheel-focused-search.md",
+        "crates/jope-bench/src/panel/origin_proof.rs",
+        "crates/jope-pipeline/src/neural_search.rs"
+      ],
+      "notes": "Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
+      "planned_owner": "Codex integration; Claude independent source/data cross-check"
+    },
+    {
+      "id": "LOOP-01",
+      "original_plan_stage": 3,
+      "workstream": "repeatable measured learning flywheel",
+      "priority": "P2",
+      "severity": "explicit follow-on; not permission to expand campaign budgets",
+      "current_evidence_level": "New complete improved-target-to-improved-search cycle not yet qualified",
+      "status": "New complete improved-target-to-improved-search cycle not yet qualified",
+      "pending_action": "Demonstrate linked cycles in which newly eligible target improvements are actually sampled, change parameters, and yield measured next-search benefit against both parent checkpoint and generic search.",
+      "dependencies": [
+        "NEURAL-03",
+        "TEACH-04",
+        "TRAIN-04"
+      ],
+      "acceptance": {
+        "commands": [],
+        "evidence": [
+          "Per-cycle target deltas, actual fresh exposures, component losses on fixed monitors, optimizer/parent/checkpoint hashes, full failures/cost and matched fitted-program outcomes; promotion separately decided."
+        ],
+        "command_status": "no complete executable front door; source/API details in linked chapters"
+      },
+      "resource_budget": "Original one GPU-hour cap remains binding. Further campaigns require their own explicit allocation; this item grants none.",
+      "source_refs": [
+        "sections/14-training-history.md",
+        "sections/16-version-kpis-continuation.md",
+        "sections/17-flywheel-focused-search.md"
+      ],
+      "notes": "Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
+      "planned_owner": "Codex integration; Claude independent source/data cross-check"
     }
   ],
   "validation": {
@@ -1176,5 +1476,485 @@
     "all_six_original_stages_covered": true,
     "all_items_have_evidence_budget_refs": true
   },
-  "documentation_update": "PR83 main guard passed; named example qualification completed. Rendering/publication evidence remains pending until its own verification."
+  "documentation_update": "PR83 main guard passed; named example qualification completed. Rendering/publication evidence remains pending until its own verification.",
+  "coordinated_proposals": {
+    "source_sha256": "334ae97446ef29963bce47582f1550c7d369f0b329ef143c128685991422ffd4",
+    "status": "proposed follow-ons reconciled with the primary task list; not additional execution authorization",
+    "owner_decision_status": "The supplied OD-* recommendations are unresolved proposals except already explicit user directions. They are not new mandatory approval requests or adopted changes to the frozen protocol.",
+    "items": [
+      {
+        "id": "HANDOFF-01",
+        "stage": 0,
+        "priority": "P1",
+        "owner": "Claude",
+        "depends_on": [],
+        "acceptance": "track-a-20260922/manual-20260923/release/SHA256SUMS verifies; FINDINGS.json posted; sections 06/07/09/11 and figures/tools/data handed off",
+        "overlap_with": [
+          "DOC-01",
+          "DOC-05"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "HYG-01",
+        "stage": 5,
+        "priority": "P1",
+        "owner": "Claude",
+        "depends_on": [
+          "INT-01",
+          "product28 merged"
+        ],
+        "acceptance": "cargo metadata shows workspace default members; offline_cli cpp20 test passes; jope-bench run defaults to min(20, cores)",
+        "overlap_with": [
+          "INT-02"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "HELLO-01",
+        "stage": 5,
+        "priority": "P1",
+        "owner": "Claude docs, Codex verbs",
+        "depends_on": [
+          "INSTALL-01",
+          "DEMO-01"
+        ],
+        "acceptance": "a quickstart of at most 5 commands routing to jope demo runs top to bottom from a clean checkout; transcript retained",
+        "overlap_with": [
+          "DEMO-01"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "B6-01",
+        "stage": 0,
+        "priority": "P2",
+        "owner": "Claude",
+        "depends_on": [],
+        "acceptance": "A2 seed diagnostic and retained-evidence asserts; spec_drift repointed (3 ids); sotarena repoint; scratch budget 900/1500 s; neural-env.sh resolves CUDA_HOME; 13 ids added to known-broken-tests.txt",
+        "overlap_with": [
+          "MAINT-01"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "IP-Q1",
+        "stage": 0,
+        "priority": "P1",
+        "owner": "Claude",
+        "depends_on": [
+          "OD-1",
+          "OD-5"
+        ],
+        "acceptance": "CLI help/doctor/README/NOTICE/docs/Cargo descriptions clean; ip-scrub covers NOTICE and schemas; new lint tests fail on old main and pass after",
+        "overlap_with": [
+          "IP-01"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "IP-Q2",
+        "stage": 0,
+        "priority": "P1",
+        "owner": "Claude",
+        "depends_on": [
+          "OD-3",
+          "OD-4"
+        ],
+        "acceptance": "emitter text 2.3.0 with re-pinned fixtures; manifest key reader switch; codec serde aliases",
+        "overlap_with": [
+          "IP-01"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "IP-Q3",
+        "stage": 0,
+        "priority": "P2",
+        "owner": "Claude",
+        "depends_on": [
+          "freeze passed"
+        ],
+        "acceptance": "receipts v3 and PR 83 ids renamed with a dual-name journal loader",
+        "overlap_with": [
+          "IP-01"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "IP-Q4",
+        "stage": 0,
+        "priority": "P2",
+        "owner": "Claude",
+        "depends_on": [
+          "compute window"
+        ],
+        "acceptance": "same-cut v3 evidence; afm.* method id renamed",
+        "overlap_with": [
+          "IP-01",
+          "PANEL-01"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "IP-Q5",
+        "stage": 0,
+        "priority": "P2",
+        "owner": "Claude",
+        "depends_on": [
+          "OD-5"
+        ],
+        "acceptance": "publication boundary: private-path rule for docs/internal/** and docs/asm.md plus a packaging exclusion check",
+        "overlap_with": [
+          "IP-01"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "NAME-01",
+        "stage": 0,
+        "priority": "P1",
+        "owner": "Claude",
+        "depends_on": [
+          "OD-1"
+        ],
+        "acceptance": "no public AFM/ASPFM/Prime/Lime text; lint enforces",
+        "overlap_with": [
+          "IP-01"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "DATA-01",
+        "stage": 0,
+        "priority": "P1",
+        "owner": "Claude",
+        "depends_on": [],
+        "acceptance": "metadata-only inventory of archive-use2, usw2 replicas, custody dev/prod (sealed: counts only, after Codex agrees), bucket configuration, learning per-prefix reconciliation, replica parity, local roots, single-copy risk list, disk headroom; JSON in the s3-estate schema; zero body reads",
+        "overlap_with": [
+          "DOC-01",
+          "DOC-05"
+        ],
+        "disposition": "Metadata-only inventory assigned to Claude; no object-body or numerical access."
+      },
+      {
+        "id": "DOCFIX-01",
+        "stage": 0,
+        "priority": "P1",
+        "owner": "Claude patch, Codex integrates",
+        "depends_on": [
+          "DATA-01 for part b"
+        ],
+        "acceptance": "learning.md, architecture.md, quickstart.md and datasets.md corrected; AGENTS bucket table with sizes; catalogs/s3.json generated from DATA-01",
+        "overlap_with": [
+          "DOC-01"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "DATA-02",
+        "stage": 3,
+        "priority": "P1",
+        "owner": "Claude design, Codex prepares",
+        "depends_on": [
+          "TEACH-03"
+        ],
+        "acceptance": "frozen teaching manifest: seeded, selected before outcomes, families disjoint from all 30 panel families",
+        "overlap_with": [
+          "TEACH-04"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "DATA-03",
+        "stage": 3,
+        "priority": "P2",
+        "owner": "Owner, Claude",
+        "depends_on": [
+          "OD-12"
+        ],
+        "acceptance": "licence-known multiclass corpus with family registry and frozen splits",
+        "overlap_with": [
+          "TEACH-03"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "TEACH-05",
+        "stage": 3,
+        "priority": "P1",
+        "owner": "Codex runs, Claude audits",
+        "depends_on": [
+          "DATA-02",
+          "OD-9"
+        ],
+        "acceptance": "per-wave admission and refusal receipts; every admitted family counted",
+        "overlap_with": [
+          "TEACH-03"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "TRAIN-05",
+        "stage": 3,
+        "priority": "P2",
+        "owner": "Codex",
+        "depends_on": [
+          "TEACH-05",
+          "OD-16"
+        ],
+        "acceptance": "second GPU campaign; consumption reproven",
+        "overlap_with": [
+          "TRAIN-03",
+          "LOOP-01"
+        ],
+        "disposition": "Second campaign is outside the existing one-GPU-hour allowance; no additional budget or deadline is granted."
+      },
+      {
+        "id": "HWM-01",
+        "stage": 6,
+        "priority": "P2",
+        "owner": "Codex implements, Claude designs and tests",
+        "depends_on": [
+          "TEACH-02"
+        ],
+        "acceptance": "incumbent-seeded single-dataset attack; replacement only when the candidate beats the incumbent on at least 4 of 5 folds by the margin; negative tests for stale identity, tie, test-high/OOF-flat and burned partition",
+        "overlap_with": [
+          "FOCUS-01"
+        ],
+        "disposition": "FOCUS-01 covers the user’s focused-search need. Extra incumbent four-of-five-fold rule is a proposed policy, separate from required baseline admission."
+      },
+      {
+        "id": "SEALED-01",
+        "stage": 5,
+        "priority": "P1",
+        "owner": "Codex runs, owner authorizes",
+        "depends_on": [
+          "REPORT-01",
+          "OD-13"
+        ],
+        "acceptance": "preregistered one-shot sealed evaluation; burn receipts; no reselection",
+        "overlap_with": [
+          "REPORT-01"
+        ],
+        "disposition": "Outside current execution scope: frozen sealed evaluation remains untouched. This proposal does not authorize opening it."
+      },
+      {
+        "id": "EMIT-01",
+        "stage": 4,
+        "priority": "P1",
+        "owner": "Claude",
+        "depends_on": [
+          "product28 on main"
+        ],
+        "acceptance": "fitted C++17/20 and JS coverage for winning families with library parity fixtures",
+        "overlap_with": [
+          "INFER-02"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "INFER-03",
+        "stage": 4,
+        "priority": "P2",
+        "owner": "Codex",
+        "depends_on": [
+          "PANEL-01"
+        ],
+        "acceptance": "post-panel export qualification in its own admitted window",
+        "overlap_with": [
+          "INFER-02"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "EMIT-03",
+        "stage": 4,
+        "priority": "P2",
+        "owner": "Claude",
+        "depends_on": [
+          "EMIT-01"
+        ],
+        "acceptance": "language-neutral DSL semantics spec, golden corpus, numeric-policy conformance harness",
+        "overlap_with": [
+          "INFER-01"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "MOTIF-00",
+        "stage": 6,
+        "priority": "P1",
+        "owner": "Claude",
+        "depends_on": [
+          "training64 merged (eligibility API)"
+        ],
+        "acceptance": "jope motifs mine|validate --help exit 0; deterministic fixture output; --locked build and tests",
+        "overlap_with": [
+          "MOTIF-01"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "COST-01",
+        "stage": 5,
+        "priority": "P1",
+        "owner": "Owner constants, Claude table",
+        "depends_on": [
+          "REPORT-01",
+          "OD-14"
+        ],
+        "acceptance": "labelled scenario table separate from the measured table; no quality-parity claim",
+        "overlap_with": [
+          "REPORT-01"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      },
+      {
+        "id": "LAYOUT-01",
+        "stage": 6,
+        "priority": "P2",
+        "owner": "Claude",
+        "depends_on": [
+          "freeze passed"
+        ],
+        "acceptance": "crate package names equal directories; jope-contracts shared types; fewer duplicate Task enums/fold planners",
+        "overlap_with": [
+          "INT-02"
+        ],
+        "disposition": "Track with the overlapping primary item; exact implementation and acceptance remain pending."
+      }
+    ],
+    "external_dependencies": {
+      "OD-1": {
+        "meaning": "Confirm the name ASM in writing (reported by Codex 16:07Z)",
+        "contributor_recommendation": "Confirm; rename public AFM/ASPFM text now, method id with same-cut v3",
+        "disposition": "ASM naming is already explicit user direction; no reconfirmation needed. Any protocol rename remains a separately versioned change.",
+        "source": "data/coordinated-roadmap-proposal.json"
+      },
+      "OD-2": {
+        "meaning": "Confirm HWM train-side OOF admission and the test-to-development relabel with burn receipts (audit D3)",
+        "contributor_recommendation": "Confirm; the eligibility code cites it",
+        "disposition": "Train-side OOF admission and exposed-test-as-development treatment are already explicit user direction; no reconfirmation needed.",
+        "source": "data/coordinated-roadmap-proposal.json"
+      },
+      "OD-3": {
+        "meaning": "D-IP1: ban 'tree' in emitted code",
+        "contributor_recommendation": "Strict ban, masking only std tokens such as BTreeMap",
+        "disposition": "Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization.",
+        "source": "data/coordinated-roadmap-proposal.json"
+      },
+      "OD-4": {
+        "meaning": "D-IP2: extra_trees naming",
+        "contributor_recommendation": "Registry alias on public surfaces",
+        "disposition": "Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization.",
+        "source": "data/coordinated-roadmap-proposal.json"
+      },
+      "OD-5": {
+        "meaning": "D-IP3: publication boundary",
+        "contributor_recommendation": "Keep the repo private; private-path rule plus packaging check; move legacy/research code before any public release",
+        "disposition": "This private manual is explicitly requested and authorized. Broader public-release boundary changes remain separate; this item does not block the manual.",
+        "source": "data/coordinated-roadmap-proposal.json"
+      },
+      "OD-6": {
+        "meaning": "D-IP4: PR 83 identifiers",
+        "contributor_recommendation": "User-visible strings before the freeze; journal/receipt ids after it (IP-Q3)",
+        "disposition": "Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization.",
+        "source": "data/coordinated-roadmap-proposal.json"
+      },
+      "OD-7": {
+        "meaning": "B6 fit fence and data rows",
+        "contributor_recommendation": "In-crate relocation now (restores 4 of 6); production verifier later; hash-pinned Golden42 subset; commit the ILPD fixture",
+        "disposition": "Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization.",
+        "source": "data/coordinated-roadmap-proposal.json"
+      },
+      "OD-8": {
+        "meaning": "Teachers from panel families 230_machine_cpu and 712_chscase_geyser1",
+        "contributor_recommendation": "Keep them, labelled checkpoint-exposed; scale-out disjoint from the panel",
+        "disposition": "Prospective small families already selected from provenance; exposure labels require actual evidence. Unknown must not become known-seen solely from this recommendation.",
+        "source": "data/coordinated-roadmap-proposal.json"
+      },
+      "OD-9": {
+        "meaning": "W2 scale-out CPU (about 4 h)",
+        "contributor_recommendation": "Only if TEACH-03 admits at least 2 families",
+        "disposition": "Proposed additional compute outside the current allocation; no new hours or deadline are granted.",
+        "source": "data/coordinated-roadmap-proposal.json"
+      },
+      "OD-10": {
+        "meaning": "3,755 unknown-licence catalog datasets",
+        "contributor_recommendation": "Internal training only; no redistribution; public claims only on known-licence data",
+        "disposition": "Unresolved data-use proposal. Unknown license metadata does not establish permission for any proposed use.",
+        "source": "data/coordinated-roadmap-proposal.json"
+      },
+      "OD-11": {
+        "meaning": "Lineage-B corpora",
+        "contributor_recommendation": "Diagnostic only; never mixed with admitted teachers",
+        "disposition": "Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization.",
+        "source": "data/coordinated-roadmap-proposal.json"
+      },
+      "OD-12": {
+        "meaning": "Multiclass data (the catalog has none)",
+        "contributor_recommendation": "Approve DATA-03 ingest",
+        "disposition": "Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization.",
+        "source": "data/coordinated-roadmap-proposal.json"
+      },
+      "OD-13": {
+        "meaning": "Sealed one-shot evaluation",
+        "contributor_recommendation": "Approve SEALED-01 after REPORT-01 with the analysis frozen first",
+        "disposition": "Outside current execution scope: sealed evaluation remains untouched.",
+        "source": "data/coordinated-roadmap-proposal.json"
+      },
+      "OD-14": {
+        "meaning": "Cost scenario constants",
+        "contributor_recommendation": "Owner supplies LLM $/token, host $/hour and algorithms per 1 h / 10M tokens",
+        "disposition": "Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization.",
+        "source": "data/coordinated-roadmap-proposal.json"
+      },
+      "OD-15": {
+        "meaning": "CUDA timing",
+        "contributor_recommendation": "After REPORT-01; fix the full-lane CUDA header now",
+        "disposition": "Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization.",
+        "source": "data/coordinated-roadmap-proposal.json"
+      },
+      "OD-16": {
+        "meaning": "Second GPU hour",
+        "contributor_recommendation": "After NEURAL-03 and W2",
+        "disposition": "Proposed additional compute outside the current allocation; no new hours or deadline are granted.",
+        "source": "data/coordinated-roadmap-proposal.json"
+      },
+      "OD-17": {
+        "meaning": "The proposed 300 s proof windows",
+        "contributor_recommendation": "Codex admits them inside the existing envelope and records the admission",
+        "disposition": "Per-proof resource files must identify actual admission and remaining allowance; an example duration does not create a new budget.",
+        "source": "data/coordinated-roadmap-proposal.json"
+      },
+      "product28 merged": {
+        "meaning": "Product28 stopped overlay has completed its own reviewed merge; part of INT-01, currently pending.",
+        "disposition": "External prerequisite, explicitly unresolved unless a separate retained receipt closes it."
+      },
+      "product28 on main": {
+        "meaning": "Same product28 reviewed-main prerequisite; currently pending.",
+        "disposition": "External prerequisite, explicitly unresolved unless a separate retained receipt closes it."
+      },
+      "training64 merged (eligibility API)": {
+        "meaning": "Training64 eligibility interface has completed its own reviewed merge; part of INT-01, currently pending.",
+        "disposition": "External prerequisite, explicitly unresolved unless a separate retained receipt closes it."
+      },
+      "freeze passed": {
+        "meaning": "Final implementation/runtime configuration and required acceptance are frozen; documentation freeze alone does not satisfy this.",
+        "disposition": "External prerequisite, explicitly unresolved unless a separate retained receipt closes it."
+      },
+      "compute window": {
+        "meaning": "A concrete finite resource allocation is admitted; no new allowance is implied.",
+        "disposition": "External prerequisite, explicitly unresolved unless a separate retained receipt closes it."
+      },
+      "DATA-01 for part b": {
+        "meaning": "The metadata inventory proposal DATA-01 is complete for the catalog-generation part of DOCFIX-01.",
+        "disposition": "External prerequisite, explicitly unresolved unless a separate retained receipt closes it."
+      }
+    }
+  },
+  "updated_utc": "2026-09-23T17:39:59.868550+00:00",
+  "primary_item_count": 43,
+  "coordinated_proposal_count": 24
 }

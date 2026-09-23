@@ -1,0 +1,88 @@
+{
+  "schema": "jope.manual.packing/v1",
+  "sequence_slots": 128,
+  "record_bytes": 532,
+  "byte_order": "little_endian",
+  "layout": [
+    {
+      "offset": 0,
+      "bytes": 256,
+      "field": "tokens",
+      "dtype": "128*u16"
+    },
+    {
+      "offset": 256,
+      "bytes": 256,
+      "field": "legal_set_ids",
+      "dtype": "128*u16"
+    },
+    {
+      "offset": 512,
+      "bytes": 2,
+      "field": "sequence_length",
+      "dtype": "u16"
+    },
+    {
+      "offset": 514,
+      "bytes": 2,
+      "field": "reserved_zero",
+      "dtype": "u16"
+    },
+    {
+      "offset": 516,
+      "bytes": 4,
+      "field": "context_index",
+      "dtype": "u32"
+    },
+    {
+      "offset": 520,
+      "bytes": 4,
+      "field": "value",
+      "dtype": "f32"
+    },
+    {
+      "offset": 524,
+      "bytes": 4,
+      "field": "percentile",
+      "dtype": "f32"
+    },
+    {
+      "offset": 528,
+      "bytes": 4,
+      "field": "log1p_runtime",
+      "dtype": "f32"
+    }
+  ],
+  "accepted_snapshot_records": 10214332,
+  "record_payload_bytes_stat": 5434024624,
+  "audit_label_bytes_stat": 3227289461,
+  "index_bytes_hashed": 60589288,
+  "context_vector_width": 2048,
+  "context_vector_dtype": "f32",
+  "context_vector_bytes": 8192,
+  "context_table_bytes_formula": 72859648,
+  "gpu_token_and_legal_identifier_bytes_formula": 5229737984,
+  "gpu_context_id_bytes_formula": 81714656,
+  "formula_excludes": [
+    "legal mask table",
+    "model parameters",
+    "optimizer state",
+    "activations",
+    "batch conversions",
+    "allocator overhead",
+    "peak host staging"
+  ],
+  "reused_shards": 7859,
+  "rebuilt_shards": 18,
+  "reused_fraction": 0.9977148660657611,
+  "performance_not_measured": [
+    "packing wall time",
+    "peak RSS",
+    "GPU peak memory",
+    "incremental transfer latency",
+    "compression ratio relative to equivalent complete JSONL representation"
+  ],
+  "input_payload_bodies_opened": false,
+  "gpu_whole_corpus_repack": true,
+  "pending_python_training64_consumes_rust_packed_store": false
+}

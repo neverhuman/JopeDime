@@ -56,7 +56,11 @@ Do not spend the GPU hour until the regression consumer and its actual fixture t
 | IP-01 | P1 | 0 | public privacy boundaries | residual D-IP4 and nextPRtextwork | INT-01 |
 | MAINT-01 | P2 | 0 | broad diagnostic qualification | not closedbyfastCI | LIFE-01 |
 | FUTURE-01 | P2 | 4 | CUDA inference and serving promotion | deferred | INFER-02, REPORT-01 |
-
+| DOC-05 | P1 | 0 | real training and target history | Original training and target values verified; final composed-document inspection required | DOC-01 |
+| DOC-06 | P1 | 0 | versions, KPIs and continuation runbook | Current and pending interfaces source-audited; independent chapter review complete | DOC-01 |
+| PACK-01 | P2 | 3 | packed training consumer and incremental loading | Legacy binary store exists; pending Python category route still materializes JSONL | TEACH-04, TRAIN-01 |
+| FOCUS-01 | P2 | 6 | sustained single-dataset improvement | Current bounded proof exists; no incumbent-seeded attack front door | TEACH-01, TEACH-02, TEACH-03 |
+| LOOP-01 | P2 | 3 | repeatable measured learning flywheel | New complete improved-target-to-improved-search cycle not yet qualified | NEURAL-03, TEACH-04, TRAIN-04 |
 
 ## Detailed acceptance
 
@@ -87,7 +91,7 @@ Do not spend the GPU hour until the regression consumer and its actual fixture t
 
 ### DOC-01 — manual
 
-**Priority:** P1. **Current evidence:** assembled thirteen chapters and complete data companions. **Status:** canonical private manual assembled.
+**Priority:** P1. **Current evidence:** assembled seventeen chapters with source-audited training and target histories. **Status:** canonical private manual assembled.
 
 **Action:** Maintain the dated evidence inventory and current source/pending distinctions.
 
@@ -134,7 +138,7 @@ python3 "$EXAMPLES/validate-outputs.py" --recipe-output "$EXAMPLE_RUN/recipe"
 
 ### DOC-03 — manual figures
 
-**Priority:** P1. **Current evidence:** ten local figure artifacts generated and source-checked. **Status:** figures rendered; final PDF inspection pending.
+**Priority:** P1. **Current evidence:** nineteen local figure artifacts; original metrics and generation points retained. **Status:** figures rendered; final PDF inspection pending.
 
 **Action:** Retain historical/current labels, complete source CSVs and final PDF visual checks.
 
@@ -158,7 +162,7 @@ OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/
 
 ### DOC-04 — manual quality
 
-**Priority:** P1. **Current evidence:** thirteen chapters rendered; full-text and sampled-page checks available. **Status:** rendered; final publication gates pending.
+**Priority:** P1. **Current evidence:** first edition rendered; expanded seventeen-chapter final checks required. **Status:** rendered; final publication gates pending.
 
 **Action:** Render docs/*.pdf, extract PDF text, inspect all dense tables/code/figures, verify local links and filenames, and produce a readback checklist.
 
@@ -966,3 +970,364 @@ An unsuccessful prerequisite remains a recorded refusal or failure. Do not subst
 Full delivery requires all thirty outcomes, losses and gaps, backend limitations, measured unique-predictor/recipe costs, honest training category scope and actual newly trained consumption. Ten wins per category and an under-sixty-second warm result remain measured targets. The one-hour/ten-million-token comparison must retain unknown hardware, workload, token and currency quantities.
 
 The document gate requires one readable PDF plus matching section Markdown, reproducible figure inputs, source/lifecycle references and this maintained checklist. The maintainer-private examples are authorized documentation; their existence does not expand public inference bundle contents.
+
+
+## Training-history expansion and follow-on acceptance
+
+The user’s training-history, continuation, focused-search and packing questions add five primary items. There are now 43 primary items. Documentation work starts immediately; implementation and numerical follow-ons preserve the original budgets and frozen protocol.
+
+### DOC-05 — real training and target history
+
+**Priority:** P1. **Status:** Original training and target values verified; final composed-document inspection required.
+
+**Action:** Publish exact observed optimizer/corpus/encoding/target history, component-loss curves, checkpoint lineage, source hashes and explicit comparability/missing-history limits.
+
+**Dependencies:** DOC-01.
+
+**Required evidence:** Audited original JSON-pointer-to-CSV equality; every curve bound to model/corpus/monitor/objective; original failed/inconclusive observations retained.
+
+**Commands:** `python3 docs/internal/asm-manual/tools/make_training_figures.py`
+
+**Resources:** No new fits, training or model loads; plotting retained metrics only.
+
+**Sources:** `sections/14-training-history.md`, `sections/15-target-history-packing.md`.
+
+### DOC-06 — versions, KPIs and continuation runbook
+
+**Priority:** P1. **Status:** Current and pending interfaces source-audited; independent chapter review complete.
+
+**Action:** Publish the product/model/encoding/vocabulary/corpus/protocol version tuple, north-star and KPI definitions, real continuation evidence, and exact current-versus-pending commands and code.
+
+**Dependencies:** DOC-01.
+
+**Required evidence:** Source-bound command/flag/API audit; held native grant path disclosed; warm-start distinct from optimizer resume; full input closure and 64 GiB budget compatibility stated.
+
+**Commands:** No complete executable front door is claimed; use the linked chapter’s current/pending interface map.
+
+**Resources:** Documentation and metadata validation only; commands do not admit a new training window.
+
+**Sources:** `sections/16-version-kpis-continuation.md`, `sections/17-flywheel-focused-search.md`.
+
+### PACK-01 — packed training consumer and incremental loading
+
+**Priority:** P2. **Status:** Legacy binary store exists; pending Python category route still materializes JSONL.
+
+**Action:** Design and qualify a lossless packed reader for the bounded trainer, sharing repeated contexts and immutable shards while excluding sealed-family context vectors; measure host/device loading and fresh-example exposure.
+
+**Dependencies:** TEACH-04, TRAIN-01.
+
+**Required evidence:** JSONL-versus-packed token/context/label/sampler equivalence; corruption/schema tests; finite complete labels; startup/RSS/I/O/padding measurements; incremental shard reuse and actual optimizer input counts.
+
+**Commands:** No complete executable front door is claimed; use the linked chapter’s current/pending interface map.
+
+**Resources:** Source/fixture planning first; any measured training remains inside a separately declared remaining authorized window.
+
+**Sources:** `sections/15-target-history-packing.md`, `python/src/jope/policy/train_v3.py`, `crates/jope-engine/src/teaching_store.rs`.
+
+### FOCUS-01 — sustained single-dataset improvement
+
+**Priority:** P2. **Status:** Current bounded proof exists; no incumbent-seeded attack front door.
+
+**Action:** Add an authenticated incumbent-aware multi-wave request using full comparison identity, retained original deadline, bounded workers and durable improvement events. Preserve exploration and all non-improvement outcomes.
+
+**Dependencies:** TEACH-01, TEACH-02, TEACH-03.
+
+**Required evidence:** Improving, tied, worse, stale and concurrent incumbents; full OOF/baseline admission; no deadline reset or sealed input; successful no-improvement completion; actual cost per eligible improvement.
+
+**Commands:** No complete executable front door is claimed; use the linked chapter’s current/pending interface map.
+
+**Resources:** No indefinite loop or additional allowance implied; whole focused experiment has one predeclared finite budget.
+
+**Sources:** `sections/17-flywheel-focused-search.md`, `crates/jope-bench/src/panel/origin_proof.rs`, `crates/jope-pipeline/src/neural_search.rs`.
+
+### LOOP-01 — repeatable measured learning flywheel
+
+**Priority:** P2. **Status:** New complete improved-target-to-improved-search cycle not yet qualified.
+
+**Action:** Demonstrate linked cycles in which newly eligible target improvements are actually sampled, change parameters, and yield measured next-search benefit against both parent checkpoint and generic search.
+
+**Dependencies:** NEURAL-03, TEACH-04, TRAIN-04.
+
+**Required evidence:** Per-cycle target deltas, actual fresh exposures, component losses on fixed monitors, optimizer/parent/checkpoint hashes, full failures/cost and matched fitted-program outcomes; promotion separately decided.
+
+**Commands:** No complete executable front door is claimed; use the linked chapter’s current/pending interface map.
+
+**Resources:** Original one GPU-hour cap remains binding. Further campaigns require their own explicit allocation; this item grants none.
+
+**Sources:** `sections/14-training-history.md`, `sections/16-version-kpis-continuation.md`, `sections/17-flywheel-focused-search.md`.
+
+## Coordinated future backlog: 24 proposals
+
+These are Claude’s coordinated follow-on proposals, retained alongside their overlap with the primary checklist. They are not 24 additional completed features, new budgets, or modifications to the frozen panel. Proposed `OD-*` decisions have not been silently adopted. No sealed evaluation is authorized by this list. The JSON/property list retains each proposed owner and original acceptance description.
+
+### Proposal HANDOFF-01
+
+**Proposed owner:** Claude. **Priority:** P1. **Primary overlap:** DOC-01, DOC-05.
+
+**Proposed acceptance:** track-a-20260922/manual-20260923/release/SHA256SUMS verifies; FINDINGS.json posted; sections 06/07/09/11 and figures/tools/data handed off
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal HYG-01
+
+**Proposed owner:** Claude. **Priority:** P1. **Primary overlap:** INT-02.
+
+**Proposed acceptance:** cargo metadata shows workspace default members; offline_cli cpp20 test passes; jope-bench run defaults to min(20, cores)
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal HELLO-01
+
+**Proposed owner:** Claude docs, Codex verbs. **Priority:** P1. **Primary overlap:** DEMO-01.
+
+**Proposed acceptance:** a quickstart of at most 5 commands routing to jope demo runs top to bottom from a clean checkout; transcript retained
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal B6-01
+
+**Proposed owner:** Claude. **Priority:** P2. **Primary overlap:** MAINT-01.
+
+**Proposed acceptance:** A2 seed diagnostic and retained-evidence asserts; spec_drift repointed (3 ids); sotarena repoint; scratch budget 900/1500 s; neural-env.sh resolves CUDA_HOME; 13 ids added to known-broken-tests.txt
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal IP-Q1
+
+**Proposed owner:** Claude. **Priority:** P1. **Primary overlap:** IP-01.
+
+**Proposed acceptance:** CLI help/doctor/README/NOTICE/docs/Cargo descriptions clean; ip-scrub covers NOTICE and schemas; new lint tests fail on old main and pass after
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal IP-Q2
+
+**Proposed owner:** Claude. **Priority:** P1. **Primary overlap:** IP-01.
+
+**Proposed acceptance:** emitter text 2.3.0 with re-pinned fixtures; manifest key reader switch; codec serde aliases
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal IP-Q3
+
+**Proposed owner:** Claude. **Priority:** P2. **Primary overlap:** IP-01.
+
+**Proposed acceptance:** receipts v3 and PR 83 ids renamed with a dual-name journal loader
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal IP-Q4
+
+**Proposed owner:** Claude. **Priority:** P2. **Primary overlap:** IP-01, PANEL-01.
+
+**Proposed acceptance:** same-cut v3 evidence; afm.* method id renamed
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal IP-Q5
+
+**Proposed owner:** Claude. **Priority:** P2. **Primary overlap:** IP-01.
+
+**Proposed acceptance:** publication boundary: private-path rule for docs/internal/** and docs/asm.md plus a packaging exclusion check
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal NAME-01
+
+**Proposed owner:** Claude. **Priority:** P1. **Primary overlap:** IP-01.
+
+**Proposed acceptance:** no public AFM/ASPFM/Prime/Lime text; lint enforces
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal DATA-01
+
+**Proposed owner:** Claude. **Priority:** P1. **Primary overlap:** DOC-01, DOC-05.
+
+**Proposed acceptance:** metadata-only inventory of archive-use2, usw2 replicas, custody dev/prod (sealed: counts only, after Codex agrees), bucket configuration, learning per-prefix reconciliation, replica parity, local roots, single-copy risk list, disk headroom; JSON in the s3-estate schema; zero body reads
+
+**Disposition:** Metadata-only inventory assigned to Claude; no object-body or numerical access.
+
+### Proposal DOCFIX-01
+
+**Proposed owner:** Claude patch, Codex integrates. **Priority:** P1. **Primary overlap:** DOC-01.
+
+**Proposed acceptance:** learning.md, architecture.md, quickstart.md and datasets.md corrected; AGENTS bucket table with sizes; catalogs/s3.json generated from DATA-01
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal DATA-02
+
+**Proposed owner:** Claude design, Codex prepares. **Priority:** P1. **Primary overlap:** TEACH-04.
+
+**Proposed acceptance:** frozen teaching manifest: seeded, selected before outcomes, families disjoint from all 30 panel families
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal DATA-03
+
+**Proposed owner:** Owner, Claude. **Priority:** P2. **Primary overlap:** TEACH-03.
+
+**Proposed acceptance:** licence-known multiclass corpus with family registry and frozen splits
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal TEACH-05
+
+**Proposed owner:** Codex runs, Claude audits. **Priority:** P1. **Primary overlap:** TEACH-03.
+
+**Proposed acceptance:** per-wave admission and refusal receipts; every admitted family counted
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal TRAIN-05
+
+**Proposed owner:** Codex. **Priority:** P2. **Primary overlap:** TRAIN-03, LOOP-01.
+
+**Proposed acceptance:** second GPU campaign; consumption reproven
+
+**Disposition:** Second campaign is outside the existing one-GPU-hour allowance; no additional budget or deadline is granted.
+
+### Proposal HWM-01
+
+**Proposed owner:** Codex implements, Claude designs and tests. **Priority:** P2. **Primary overlap:** FOCUS-01.
+
+**Proposed acceptance:** incumbent-seeded single-dataset attack; replacement only when the candidate beats the incumbent on at least 4 of 5 folds by the margin; negative tests for stale identity, tie, test-high/OOF-flat and burned partition
+
+**Disposition:** FOCUS-01 covers the user’s focused-search need. Extra incumbent four-of-five-fold rule is a proposed policy, separate from required baseline admission.
+
+### Proposal SEALED-01
+
+**Proposed owner:** Codex runs, owner authorizes. **Priority:** P1. **Primary overlap:** REPORT-01.
+
+**Proposed acceptance:** preregistered one-shot sealed evaluation; burn receipts; no reselection
+
+**Disposition:** Outside current execution scope: frozen sealed evaluation remains untouched. This proposal does not authorize opening it.
+
+### Proposal EMIT-01
+
+**Proposed owner:** Claude. **Priority:** P1. **Primary overlap:** INFER-02.
+
+**Proposed acceptance:** fitted C++17/20 and JS coverage for winning families with library parity fixtures
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal INFER-03
+
+**Proposed owner:** Codex. **Priority:** P2. **Primary overlap:** INFER-02.
+
+**Proposed acceptance:** post-panel export qualification in its own admitted window
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal EMIT-03
+
+**Proposed owner:** Claude. **Priority:** P2. **Primary overlap:** INFER-01.
+
+**Proposed acceptance:** language-neutral DSL semantics spec, golden corpus, numeric-policy conformance harness
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal MOTIF-00
+
+**Proposed owner:** Claude. **Priority:** P1. **Primary overlap:** MOTIF-01.
+
+**Proposed acceptance:** jope motifs mine|validate --help exit 0; deterministic fixture output; --locked build and tests
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal COST-01
+
+**Proposed owner:** Owner constants, Claude table. **Priority:** P1. **Primary overlap:** REPORT-01.
+
+**Proposed acceptance:** labelled scenario table separate from the measured table; no quality-parity claim
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+### Proposal LAYOUT-01
+
+**Proposed owner:** Claude. **Priority:** P2. **Primary overlap:** INT-02.
+
+**Proposed acceptance:** crate package names equal directories; jope-contracts shared types; fewer duplicate Task enums/fold planners
+
+**Disposition:** Track with the overlapping primary item; exact implementation and acceptance remain pending.
+
+## External proposal dependencies and their disposition
+
+The property list is self-contained: every proposed dependency now resolves to a primary item, a coordinated proposal, or the registry below. The original contributor proposal is preserved as `data/coordinated-roadmap-proposal.json`, SHA256 `334ae97446ef29963bce47582f1550c7d369f0b329ef143c128685991422ffd4`. Its recommendations are contributor suggestions, not fresh user instructions. Already explicit user decisions require no reconfirmation.
+
+| Reference | Meaning | Current disposition |
+| --- | --- | --- |
+| OD-1 | Confirm the name ASM in writing (reported by Codex 16:07Z) | ASM naming is already explicit user direction; no reconfirmation needed. Any protocol rename remains a separately versioned change. |
+| OD-2 | Confirm HWM train-side OOF admission and the test-to-development relabel with burn receipts (audit D3) | Train-side OOF admission and exposed-test-as-development treatment are already explicit user direction; no reconfirmation needed. |
+| OD-3 | D-IP1: ban 'tree' in emitted code | Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization. |
+| OD-4 | D-IP2: extra_trees naming | Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization. |
+| OD-5 | D-IP3: publication boundary | This private manual is explicitly requested and authorized. Broader public-release boundary changes remain separate; this item does not block the manual. |
+| OD-6 | D-IP4: PR 83 identifiers | Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization. |
+| OD-7 | B6 fit fence and data rows | Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization. |
+| OD-8 | Teachers from panel families 230_machine_cpu and 712_chscase_geyser1 | Prospective small families already selected from provenance; exposure labels require actual evidence. Unknown must not become known-seen solely from this recommendation. |
+| OD-9 | W2 scale-out CPU (about 4 h) | Proposed additional compute outside the current allocation; no new hours or deadline are granted. |
+| OD-10 | 3,755 unknown-licence catalog datasets | Unresolved data-use proposal. Unknown license metadata does not establish permission for any proposed use. |
+| OD-11 | Lineage-B corpora | Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization. |
+| OD-12 | Multiclass data (the catalog has none) | Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization. |
+| OD-13 | Sealed one-shot evaluation | Outside current execution scope: sealed evaluation remains untouched. |
+| OD-14 | Cost scenario constants | Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization. |
+| OD-15 | CUDA timing | Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization. |
+| OD-16 | Second GPU hour | Proposed additional compute outside the current allocation; no new hours or deadline are granted. |
+| OD-17 | The proposed 300 s proof windows | Per-proof resource files must identify actual admission and remaining allowance; an example duration does not create a new budget. |
+| product28 merged | Product28 stopped overlay has completed its own reviewed merge; part of INT-01, currently pending. | External prerequisite, explicitly unresolved unless a separate retained receipt closes it. |
+| product28 on main | Same product28 reviewed-main prerequisite; currently pending. | External prerequisite, explicitly unresolved unless a separate retained receipt closes it. |
+| training64 merged (eligibility API) | Training64 eligibility interface has completed its own reviewed merge; part of INT-01, currently pending. | External prerequisite, explicitly unresolved unless a separate retained receipt closes it. |
+| freeze passed | Final implementation/runtime configuration and required acceptance are frozen; documentation freeze alone does not satisfy this. | External prerequisite, explicitly unresolved unless a separate retained receipt closes it. |
+| compute window | A concrete finite resource allocation is admitted; no new allowance is implied. | External prerequisite, explicitly unresolved unless a separate retained receipt closes it. |
+| DATA-01 for part b | The metadata inventory proposal DATA-01 is complete for the catalog-generation part of DOCFIX-01. | External prerequisite, explicitly unresolved unless a separate retained receipt closes it. |
+
+## Planned execution and review ownership
+
+Codex owns canonical integration and numerical admission. Claude contributes source and evidence work in the serial queue. A contributor does not become the independent native reviewer of that same change; the final review is assigned to a separate eligible process. The original proposal is retained as history, while the table below reflects this correction.
+
+| Item | Execution | Claude contribution / review scope |
+| --- | --- | --- |
+| LIFE-01 | Completed PR83 lifecycle | Independent native review retained in lifecycle evidence. |
+| DOC-01 | Codex canonical integration | Contribution/source findings only; exact-head native review uses a separate non-contributor Claude process. |
+| DOC-02 | Codex (done 16:46Z) | none |
+| DOC-03 | Codex | Fresh non-contributing independent native reviewer |
+| DOC-04 | Codex | Fresh non-contributing independent native reviewer |
+| INT-01 | Codex | pre-review of each refreshed replay; native review at exact head |
+| INT-02 | Codex | pre-review; native review |
+| BENCH-01 | Codex | read-only receipt audit |
+| BENCH-02 | Codex | read-only receipt audit |
+| EXEC-01 | Codex | review |
+| EXEC-02 | Claude writes the tests; Codex runs them under the CPU lock | custody patch (drain-and-fixtures-F2: async reap, pre-gate BudgetExhausted, undrained group) |
+| EXEC-03 | Claude writes the tests; Codex runs them | custody patch (resume-fix-F2: PoolBackend receipt through verify_receipt, Some(shared fold digest)) |
+| EXEC-04 | Claude writes the tests; Codex runs them | custody patch (regressions-F2: assert original_deadline stop reason and persisted search receipt) |
+| EXEC-05 | Codex | review |
+| NEURAL-01 | Codex | receipt audit |
+| TEACH-01 | Codex | review |
+| TEACH-02 | Codex | optional custody patch: production caller wiring for require_unburned_test_partition plus an integration test |
+| TEACH-03 | Codex | audit that freeze/vocabulary pins precede fits; independently recompute per-fold gains and the 4-of-5 rule |
+| TEACH-04 | Codex | audit that every eligible comparison is included |
+| TRAIN-01 | Codex | review |
+| TRAIN-02 | Codex | review |
+| TRAIN-03 | Codex | review |
+| TRAIN-04 | Codex | review |
+| NEURAL-02 | Codex | receipt audit |
+| NEURAL-03 | Codex | audit that the new checkpoint hash appears in proposal and fit evidence |
+| INFER-01 | Codex | review of emitter/parity parts |
+| INFER-02 | Codex | review of emitter/parity parts |
+| INSTALL-01 | Codex | new-user walkthrough of quickstart and doctor output |
+| INSTALL-02 | Codex | new-user walkthrough |
+| DEMO-01 | Codex | wins/cost table spec; independent recomputation |
+| PANEL-01 | Codex | independent read-only recomputation from the journal |
+| REPORT-01 | Codex | independent wins/losses and cost recomputation; every loss published |
+| MOTIF-01 | Claude code, Codex live run | via MOTIF-00 |
+| MOTIF-02 | Claude design, Codex windows | preregistered ablation design |
+| MOTIF-03 | Claude design, Codex windows | two-stage promotion design |
+| IP-01 | Claude | IP-Q1..Q5 |
+| MAINT-01 | Claude (B6-01); Codex runs full lanes | author |
+| FUTURE-01 | deferred | CUDA design after EMIT-01 |
+| DOC-05 | Codex integration | Independent source/data cross-check |
+| DOC-06 | Codex integration | Independent source/data cross-check |
+| PACK-01 | Codex integration | Independent source/data cross-check |
+| FOCUS-01 | Codex integration | Independent source/data cross-check |
+| LOOP-01 | Codex integration | Independent source/data cross-check |

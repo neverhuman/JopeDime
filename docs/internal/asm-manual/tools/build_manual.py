@@ -49,8 +49,9 @@ def main() -> None:
 
     before = inputs()
     sections = sorted((ROOT / "sections").glob("*.md"))
-    if len(sections) < 12:
-        raise SystemExit("Incomplete manual: expected at least twelve section files")
+    if len(sections) != 17:
+        raise SystemExit("Incomplete manual: expected seventeen section files")
+    chapter_links = {path.name: f"chapter-{index:02}" for index, path in enumerate(sections, 1)}
     nav, content, combined = [], [], []
     for index, path in enumerate(sections, 1):
         source = path.read_text()
@@ -64,6 +65,9 @@ def main() -> None:
         nav.append(f'<li><a href="#{chapter_id}">{index:02}. {title.get_text()}</a></li>')
         for number, heading in enumerate(page.find_all(["h2", "h3"]), 1):
             heading["id"] = f"{chapter_id}-{number}"
+        for link in page.find_all("a", href=True):
+            if link["href"] in chapter_links:
+                link["href"] = "#" + chapter_links[link["href"]]
         for table in page.find_all("table"):
             cells = table.find("tr").find_all(["th", "td"], recursive=False)
             table["class"] = ["dense" if len(cells) >= 8 else "standard"]
@@ -74,7 +78,10 @@ def main() -> None:
             if not image_path.is_relative_to(ROOT) or not image_path.is_file():
                 raise SystemExit(f"Missing or nonlocal figure: {image['src']}")
         content.append(f'<section class="chapter">{page}</section>')
-        combined.append(source.replace("](../", "]("))
+        book_source = source.replace("](../", "](")
+        for filename, anchor in chapter_links.items():
+            book_source = book_source.replace("](" + filename + ")", "](#" + anchor + ")")
+        combined.append(f'<a id="{chapter_id}"></a>\n\n' + book_source)
     cover = """<section class="cover"><div class="eyebrow">JOPE DIME / PRIVATE MAINTAINER EDITION</div>
     <h1>Algorithm<br>Synthesis Model</h1><p class="subtitle">Technology, operations<br>and the evidence behind the claims</p>
     <div class="rule"></div><p class="definition">Learns to generate and optimize<br>executable algorithms from data.</p>
@@ -83,7 +90,8 @@ def main() -> None:
     <span>Historical rankings and current measurements are identified separately.</span></div></section>"""
     front = """<section class="front"><h1>How to use this book</h1>
     <p>Start with the status chapter to distinguish what has shipped, what has been demonstrated, and what remains pending. Operators can then use installation and training procedures; maintainers can follow the architecture, language matrix, benchmark contract, detailed roadmap and evidence index.</p>
-    <p>The appendix contains development statistics for all thirty frozen datasets. The adjacent data directory supplies complete machine-readable statistics, historical ranking inputs, metadata inventories and source pins. The property list supplies the actionable checklist.</p>
+    <p>For actual learning progress, start with chapters 14–17: historical optimizer and target trajectories, binary packing, model versions, measurable KPIs, continuation commands and the remaining flywheel gaps. The plots distinguish real step logs, sampled endpoints and changing evaluation populations.</p>
+    <p>The appendix contains development statistics for all thirty frozen datasets. The adjacent data directory supplies complete machine-readable statistics, historical ranking inputs, metadata inventories and source pins. The property list supplies 43 primary acceptance items and 24 separately marked coordinated proposals.</p>
     <p><strong>Snapshot:</strong> implementation reviewed at 68f56404c3e199e06413bfd645d3fe0803d7b96f; merged main a75e543d2166017cb0139e0a251d51d9a0c98e08. Both have tree 176b75bc36d76c7ce4eaeb7234677ec013468889. Individual observations retain their own timestamps.</p>
     <p>This private manual explains internal methods at the user's request. Public inference bundle allowlists remain separate. No sealed label bodies, model weights or credentials are embedded in this book.</p>
     <h2>Evidence vocabulary</h2><p><strong>Implemented</strong> means source exists. <strong>Qualified</strong> means a named execution was measured. <strong>Pending</strong> means acceptance remains. <strong>Unknown</strong> is not zero. Historical results do not establish current capability.</p>

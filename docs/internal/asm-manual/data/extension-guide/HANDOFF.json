@@ -1,0 +1,48 @@
+{
+  "schema": "manual.extension-handoff/v1",
+  "status": "stopped_custody_only",
+  "source_commit": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
+  "observed_checkout_head": "1daaae61b135e0f8b62be6682bc2f1f92db29704",
+  "files": {
+    "16-version-kpis-continuation.md": "b9eea410d5c05c00a38400bdfb5aa2b05d9692659d793adba7ce06159f4b9b6d",
+    "continue-python-policy.py": "3e44711739f5f8eaf9a41fc9ee651ccce46b040a6c33a686fd7b182528499354",
+    "source-pins.json": "1b8c3e1dffe7d3dea4cb8a2cb3fd01b3b3c3c49b7857240950bcdb467b6043bf",
+    "verification.json": "c1b44f2fad30c3dad47721078b61ad3c35a6a6fc1c57a4507f9bd66424e6ed46"
+  },
+  "integration": {
+    "chapter": "docs/internal/asm-manual/sections/16-version-kpis-continuation.md",
+    "example": "docs/internal/asm-manual/examples/continue-python-policy.py",
+    "metadata": "root selects manual data/evidence location",
+    "related_chapters": [
+      "14-training-history.md",
+      "15-target-history-packing.md",
+      "17-flywheel-focused-search.md"
+    ]
+  },
+  "verification": {
+    "source_anchors_byte_verified": 28,
+    "shell_syntax_blocks": 5,
+    "python_api_argument_names": "pass",
+    "helper_help": "pass",
+    "metadata_only_with_torch_import_prohibited": "pass",
+    "changed_byte_refusal": "pass",
+    "numerical_execution": "unrun",
+    "independent_source_review": "requested_training_refresh; parent Claude review pending"
+  },
+  "confirmed_gaps": [
+    "Current jope umbrella has no learn or bounded train command; train-step is centroid only.",
+    "Direct native jope-parallel train dispatch unconditionally held; no caller environment can override.",
+    "Native controller also expects128GiB available RAM, above approved64GiB; current valid microbatch64/128/256.",
+    "Historical60100 used world1/microbatch256/accumulation8/global2048 with unchangedcorpus and zero freshpresentations; qualification not promotion.",
+    "Full historical corpus context closure includes meta_test descriptors; absence of sealed record rows does not prove exclusion.",
+    "Python CLI init-from is warm start, API resume is distinct; CUDA fallback and task/update/proof gaps remain until pending overlay.",
+    "Release tag workflow CLI build omits asm feature.",
+    "Thirtypanel, neweligibleteaching, GPUtraining, newlytrainedconsumption, under60demo, installedprivatebinary and exactfittedwinner parity remain pending."
+  ],
+  "scope_exclusions": [
+    "No canonical source/index edits.",
+    "No Cargo, model loads, fits, training, installs, downloads or sealed payload reads.",
+    "Illustrative helper does not implement a supervisor or admission validator; numerical branch is unqualified.",
+    "No new release number, promotion, budget or campaign deadline authorized."
+  ]
+}

@@ -7,7 +7,9 @@
 - [Open the detailed property-list checklist](asm-maintainer-status.plist), or its [JSON companion](internal/asm-manual/data/roadmap.json).
 - [Inspect the rendering receipt and input hashes](internal/asm-manual/render-receipt.json).
 
-The book covers the thirty frozen datasets and all 522 feature records, the broader 3,859-dataset catalog, local and remote storage inventories, encodings and neural models, installation and operation, language support, measured examples, historical ranking/Elo plots, maintenance, and a 38-item acceptance roadmap. Sealed target bodies and model weights are not included.
+The book covers the thirty frozen datasets and all 522 feature records, the broader 3,859-dataset catalog, local and remote storage inventories, encodings and neural models, actual historical training/target progress, loss curves, binary packing, continuation commands, language support, measured examples, historical ranking/Elo plots, maintenance, and a 43-item acceptance roadmap with 24 separately marked follow-on proposals. Sealed target bodies and model weights are not included.
+
+**For the learning story, start with sections 14–17.** They distinguish real optimizer updates from better teachers, improved conditional program generation, and a complete measured flywheel. Current product version, accepted checkpoint, historical continuation, and pending experimental interfaces have separate identities.
 
 ## Section Markdown
 
@@ -22,9 +24,13 @@ The book covers the thirty frozen datasets and all 522 feature records, the broa
 | [07 — Data estate](internal/asm-manual/sections/07-data-estate.md) | Panel/corpus statistics, locations, bytes, provenance and metadata gaps |
 | [08 — Visual evidence](internal/asm-manual/sections/08-visual-evidence.md) | Current measured loss, dataset coverage, historical Elo/ranks/relative loss and timing |
 | [09 — Maintenance](internal/asm-manual/sections/09-maintenance.md) | Checkout ownership, resource coordination, reviewed delivery and preservation |
-| [10 — Detailed roadmap](internal/asm-manual/sections/10-roadmap.md) | Thirty-eight stable acceptance items with dependencies, commands, resources and evidence |
+| [10 — Detailed roadmap](internal/asm-manual/sections/10-roadmap.md) | Forty-three stable acceptance items, coordinated follow-ons, dependencies, commands, resources and evidence |
 | [11 — Evidence and glossary](internal/asm-manual/sections/11-evidence-glossary.md) | Source/CI/review/main identities, receipt locations and terminology |
 | [12 — Dataset appendix](internal/asm-manual/sections/12-dataset-statistics.md) | Every frozen dataset, class/category frequencies and all feature statistics |
 | [13 — Source map](internal/asm-manual/sections/13-source-map.md) | Exact-revision source links, pending source pins, companion files and rebuild commands |
+| [14 — Actual training history](internal/asm-manual/sections/14-training-history.md) | Real loss trajectories, optimizer resets and continuation, model lineage, promotion evidence and missing history |
+| [15 — Targets and binary packing](internal/asm-manual/sections/15-target-history-packing.md) | Dataset/split contexts becoming teachers, target-quality changes, corpus versions, packed formats and loader gaps |
+| [16 — Versions, KPIs and continuation](internal/asm-manual/sections/16-version-kpis-continuation.md) | North star, measurable denominators, exact version tuple and current versus pending deep-training commands |
+| [17 — Flywheel and focused search](internal/asm-manual/sections/17-flywheel-focused-search.md) | Remaining loop-closure proofs, current single-dataset commands and sustained incumbent-aware optimization design |
 
 Historical ladders are not current ASM panel results. The current one-dataset operational proof demonstrates the implemented path but loses to its generic comparison arm. Full-panel performance, new bounded training and complete selected fitted-model export qualification remain pending. Public distribution rules remain separate from this private manual.

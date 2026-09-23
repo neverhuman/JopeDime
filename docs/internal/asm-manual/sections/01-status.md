@@ -10,6 +10,14 @@ The implementation snapshot is **68f56404c3e199e06413bfd645d3fe0803d7b96f**, dat
 
 This is a maintainer document for the private product repository. Its explicitly requested GP examples and internal operational paths explain the implementation; they do not expand the allowlist for public inference bundles.
 
+## North star: better algorithms from accumulated experience
+
+The product target is a repeatable learning cycle: verified dataset-and-split inputs become contexts; the policy proposes executable programs; bounded GP fits and improves them; eligible measured programs become teachers; training produces a new checkpoint; and that checkpoint improves a subsequent bounded search. The north star is **better predictive algorithms on previously unseen dataset families at the same declared compute budget**, with reproducible fitted artifacts. More optimizer steps, a larger corpus, lower training loss or a higher historical Elo are supporting observations; each answers a different question.
+
+Measure progress against both the generic search control and the previous accepted checkpoint, using the same data identities, folds, method set and resource envelope. Report task-specific loss, wins/ties/losses, failure and unavailable rates, and cost per unique fitted predictor. A trained checkpoint earns a promotion claim only through its bound qualification procedure. The frozen thirty-dataset panel is a development comparison; it cannot establish unseen-family performance when prior checkpoint exposure is unknown. Sealed evaluation remains untouched.
+
+There **has been real historical policy training**. The accepted model is the recovered lineage-B step-60000 checkpoint, and retained historical records describe substantial optimizer work and multiple teaching-corpus versions. The newer ASM training/teaching integration has not yet completed its own real bounded acceptance. Its zero newly admitted teachers must not be read as an empty historical corpus or as evidence that JopeDime never trained. The training-history and extension chapters separate those timelines, show the actual available losses, and explain which version each result belongs to.
+
 ## How to read a completion claim
 
 | Evidence level | Establishes | Does not establish |
@@ -43,7 +51,7 @@ This is **one preselected regression-dataset operational qualification**, not th
 | Item | Observation |
 | --- | --- |
 | Dataset | `230_machine_cpu` |
-| Initial neural arm | 64 neural slots plus 16 exploration slots |
+| Initial neural arm | 64 actual `neural_policy` slots, zero fallback slots, plus 16 `random_exploration` slots in this proof |
 | Initial generic arm | 80 generic slots |
 | Arm / fit allowance | 120 seconds per arm; 30 seconds per worker fit |
 | Global proof window | 600 seconds, including 30 seconds for reporting |
@@ -80,14 +88,14 @@ GPU work, tokens, money, isolated controller CPU, downloads and installation wer
 | Regression neural consumption | Qualified contexts, proposals, actual fits and descendants | Full panel and newly trained checkpoint consumption |
 | Classification neural consumption | Experimental context/invariance support; follow-on producer prepared | Task-correct live consumption and clearly labelled fixture scope |
 | HWM and teaching eligibility | Follow-on source prepared | Full identity, finite OOF improvement, four-of-five-fold gate and no-signal refusal |
-| Training | Guarded source and test plans prepared | Positive updates, changed parameters, reload, continuation, resume compatibility and bounded GPU proof |
+| New ASM training path | Historical trained model exists; new guarded source and test plans prepared | Positive updates, changed parameters, reload, continuation, resume compatibility and bounded GPU proof for this new path |
 | Trained regression export use | Explicit experimental consumer prepared | Compile and execute exported-checkpoint-driven fits |
 | Portable fitted inference | Native fitted artifacts; export packet prepared | Full state parity and actual selected-winner backend qualification |
 | Installation and warm demo | Source packets prepared | Checksum install, CLI-only build, preparation, fitted artifact/predictions and separate cold/warm timing |
 | Thirty-dataset comparison | Frozen panel and protocol | Unchanged two-hour campaign, every loss/refusal/failure and gap |
 | Motifs | Separate typed library branch | Eligible-state reader, mine command, umbrella wiring and validated reuse |
 | Broad full-main tests | Historical failures inventoried | Reproduce and repair; fast CI is not full qualification |
-| Serving promotion | Not established | Exact release/backend/model acceptance and reviewed promotion |
+| New serving promotion | Recovered accepted step-60000 remains the model binding | Exact release/backend/model acceptance and reviewed promotion for a new checkpoint |
 
 The detailed checklist and property-list expand these rows into actionable items. A prepared patch or planned command is not an installed or executed capability.
 

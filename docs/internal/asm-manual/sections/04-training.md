@@ -4,7 +4,7 @@
 
 At source `68f56404c3e199e06413bfd645d3fe0803d7b96f`, the latest bounded regression origin proof has actual neural proposals, fitted generation-zero candidates, fitted descendants and a successfully authenticated recovered report. The newly authored training path is still a stopped follow-on. Its guarded 64-file patch is `595824ef6eb8e15872be058668503cedad1dd9a5ff98ac4700c6f713251d384c`; manifest `b86b550d7ee39fd93d5202accd5f77c975b7bcb4fd8f8e7706c69c5f279294a2` binds every original packet, overlap resolution and current source/API guard.
 
-The follow-on passed custody replay guards, source syntax, pure metadata checks and feature-graph inspection. That evidence does not establish Rust type checking, a GPU optimizer run, a real newly trained checkpoint, or a successful live trained-checkpoint consumption loop. The current admissible-teacher count remains zero in the inspected evidence. Source support, fixture tests, exact-head CI, live qualification and serving promotion must remain separate status fields.
+The follow-on passed custody replay guards, source syntax, pure metadata checks and feature-graph inspection. That evidence does not establish Rust type checking, a GPU optimizer run, a real newly trained checkpoint, or a successful live trained-checkpoint consumption loop. The newly demonstrated teacher count under this pending ASM admission contract remains zero in the inspected evidence. Historical lineage-B teaching corpora and its accepted trained checkpoint are separate retained assets, described in the training-history chapter; they have not been retroactively certified under the new admission contract. Source support, fixture tests, exact-head CI, live qualification and serving promotion must remain separate status fields.
 
 All commands below involving `jope train` or experimental consumer configuration describe the **pending overlay's implemented interface**. They are a maintainer runbook for integration and authorized acceptance, not claims that these commands were executed at the current PR83 source. Preserve this status notice when extracting examples.
 
@@ -30,7 +30,7 @@ Sources: pending `crates/jope-cli/src/train.rs:1`; `python/src/jope/policy/train
 | Operation | Required policy |
 |---|---|
 | Official frozen30 panel | 20 workers/CPUs, 64GiB, zero swap, at most one GPU task, 30 seconds per fit, 7200 seconds total including300-second reporting reserve |
-| Paired search | 64 neural+16 exploration versus80 generic; default120 seconds per arm; same declared budget and grammar/variation identity |
+| Paired search | 64 policy-pool slots (true neural or explicit fallback)+16 exploration versus 80 generic; default 120 seconds per arm; same declared allowance and grammar/variation identity |
 | Separate origin/teacher qualification | Explicitly preregistered resource manifest and separate journal; no inferred extra allowance and no reset of another campaign |
 | Training | One visible RTX3090, one campaign of at most3600 seconds, at most1200 seconds per category, one active category worker, CPU allowance20,64GiB,zero swap |
 | Training numerical runtime | One Torch thread, FP32 storage, CUDA TF32 enabled by declared policy, AMP disabled; explicit experimental lineage |
@@ -65,7 +65,7 @@ Sources: pending `crates/jope-learning/src/eligibility.rs:170`, `:253`, `:277`, 
 
 ## Present teacher readiness and the smallest real path
 
-The metadata readiness audit verified28 source-family evidence files and the retained original process/context receipts. The inspected historical55e9 and3fd origin runs had no preregistered teaching freeze or vocabulary pins; they cannot be upgraded after the fact. The new68 operational origin proof also was not a teaching campaign. There is therefore no currently demonstrated eligible real corpus to train from.
+The metadata readiness audit verified28 source-family evidence files and the retained original process/context receipts. The inspected historical55e9 and3fd origin runs had no preregistered teaching freeze or vocabulary pins; they cannot be upgraded after the fact. The new68 operational origin proof also was not a teaching campaign. There is therefore no currently demonstrated eligible real corpus for the new ASM admission-and-training proof. This does not negate the historical training corpus or the optimizer work that produced the retained model.
 
 The prospective small pair selected from frozen provenance/size, before observing losses, is:
 
@@ -220,7 +220,7 @@ Source: pending `crates/jope-bench/src/panel/experimental_proposal.rs:36`, `crat
 
 ## Resume, failures and proof interpretation
 
-The current pool treats started-only attempts as uncertain until process/cgroup recovery authenticates their outcome. It does not launch a replacement child merely because the parent process disappeared. Terminal records are persisted before potentially slow drainage. The search uses immutable observed journals and refuses changed completed evidence. At cutoff, only proven never-admitted inventory may normalize; the per-fold replay digest preserves ordered real attempts and output identities. Both live PoolBackend feedback and recovered FitAdapter scoring compute the same shared digest.
+An attempt with a `started/` record and no `finished/` record is never rerun, and the pool does not recover its original result or final counters. After its process group is safely drained, the pool persists terminal `cancelled` with reason `controller_interrupted: original attempt not retried`; CPU, wall time and exit accounting remain unknown. If recovery cannot drain the group, no recovered terminal record is persisted and further admission is blocked (`recovery_not_drained`). Such attempts are excluded from retryable never-admitted inventory. Separately, a normally watched attempt persists its observed terminal outcome before potentially slow cleanup; that rule does not reconstruct interrupted accounting. The search uses immutable observed journals and refuses changed completed evidence. At cutoff, only proven never-admitted inventory may normalize; the per-fold replay digest preserves ordered real attempts and output identities. Both live PoolBackend feedback and recovered FitAdapter scoring compute the same shared digest.
 
 A regression caught during acceptance illustrates the distinction: the d0 source completed964 commands, but its recovered report failed because the two feedback constructors disagreed about replay evidence. Those fit counts did not justify declaring the report passed. The68 correction restored one shared digest computation, followed by a fresh bounded proof and recovered report. The d0 records were retained unchanged.
 

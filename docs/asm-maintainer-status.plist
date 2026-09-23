@@ -90,6 +90,13 @@
 			</array>
 			<key>notes</key>
 			<string>This task is complete; subsequent implementation remains pending. Keep the measured68 source identity distinct from the rebase-merge commit identity.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Completed PR83 lifecycle</string>
+				<key>claude</key>
+				<string>Independent native review retained in lifecycle evidence.</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -103,7 +110,7 @@
 			<key>severity</key>
 			<string>required acceptance before completed delivery</string>
 			<key>current_evidence_level</key>
-			<string>assembled thirteen chapters and complete data companions</string>
+			<string>assembled seventeen chapters with source-audited training and target histories</string>
 			<key>status</key>
 			<string>canonical private manual assembled</string>
 			<key>pending_action</key>
@@ -136,6 +143,13 @@
 			</array>
 			<key>notes</key>
 			<string>Root integrated the book and renderer. Claude historical plot inputs were copied under stable before/after hashes; no stopped external renderer handoff is required.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex canonical integration</string>
+				<key>claude</key>
+				<string>Contribution/source findings only; exact-head native review uses a separate non-contributor Claude process.</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -184,6 +198,13 @@
 			</array>
 			<key>notes</key>
 			<string>Actual acceptance: data/example-acceptance/audit.json. Five recipe refits each predict eight synthetic rows; separate legacy pmlb229 pipeline has four successful measurements. No fitted-export, ASM demo, training or full-panel qualification. Resource-readback race retained.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex (done 16:46Z)</string>
+				<key>claude</key>
+				<string>none</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -197,7 +218,7 @@
 			<key>severity</key>
 			<string>required acceptance before completed delivery</string>
 			<key>current_evidence_level</key>
-			<string>ten local figure artifacts generated and source-checked</string>
+			<string>nineteen local figure artifacts; original metrics and generation points retained</string>
 			<key>status</key>
 			<string>figures rendered; final PDF inspection pending</string>
 			<key>pending_action</key>
@@ -212,6 +233,8 @@
 				<array>
 					<string>OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_inventory_figures.py</string>
 					<string>OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_figures.py</string>
+					<string>OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_training_figures.py</string>
+					<string>OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_target_figures.py</string>
 				</array>
 				<key>evidence</key>
 				<array>
@@ -230,6 +253,13 @@
 			</array>
 			<key>notes</key>
 			<string>Historical Elo belongs to its original ladder/pool/protocol; the current one-dataset proof is not a new Elo ladder. Source and figure checks are retained; authored architecture SVG is a repository source artifact.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>Fresh non-contributing independent native reviewer</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -243,7 +273,7 @@
 			<key>severity</key>
 			<string>required acceptance before completed delivery</string>
 			<key>current_evidence_level</key>
-			<string>thirteen chapters rendered; full-text and sampled-page checks available</string>
+			<string>first edition rendered; expanded seventeen-chapter final checks required</string>
 			<key>status</key>
 			<string>rendered; final publication gates pending</string>
 			<key>pending_action</key>
@@ -275,6 +305,13 @@
 			</array>
 			<key>notes</key>
 			<string>A successful renderer exit is insufficient: the PDF must remain readable and complete.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>Fresh non-contributing independent native reviewer</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -321,6 +358,13 @@
 			</array>
 			<key>notes</key>
 			<string>NEW is an unused custody directory name. Add-on replay invocation must follow its own pinned helper. Never force stale guards or apply constituent accounting/coverage twice.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>pre-review of each refreshed replay; native review at exact head</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -374,6 +418,13 @@
 			</array>
 			<key>notes</key>
 			<string>Custody syntax tests are not this gate. Required18Python/27Rust/10policy names are proof minima, not total coverage. New code needs actual test collection.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>pre-review; native review</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -422,6 +473,13 @@
 			</array>
 			<key>notes</key>
 			<string>Verification is metadata/data validation, no new fits. Do not replace a failed panel dataset.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>read-only receipt audit</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -468,6 +526,13 @@
 			</array>
 			<key>notes</key>
 			<string>Do not nest an outer allocation lock around a front door already taking it. Environment mutation invalidates old inventory.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>read-only receipt audit</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -512,6 +577,13 @@
 			</array>
 			<key>notes</key>
 			<string>Current host qualification is not automatically covered by the ordinary required unit lane; missing privileges fail, not skip.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>review</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -556,6 +628,13 @@
 			</array>
 			<key>notes</key>
 			<string>Exact new test name is not present yet; existing module command is the truthful current gate. Ten old host cases do not refute this coverage gap.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Claude writes the tests; Codex runs them under the CPU lock</string>
+				<key>claude</key>
+				<string>custody patch (drain-and-fixtures-F2: async reap, pre-gate BudgetExhausted, undrained group)</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -602,6 +681,13 @@
 			</array>
 			<key>notes</key>
 			<string>The two original FixtureBackend reproductions use absent digests and do not cover the same_folds path.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Claude writes the tests; Codex runs them</string>
+				<key>claude</key>
+				<string>custody patch (resume-fix-F2: PoolBackend receipt through verify_receipt, Some(shared fold digest))</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -646,6 +732,13 @@
 			</array>
 			<key>notes</key>
 			<string></string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Claude writes the tests; Codex runs them</string>
+				<key>claude</key>
+				<string>custody patch (regressions-F2: assert original_deadline stop reason and persisted search receipt)</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -690,6 +783,13 @@
 			</array>
 			<key>notes</key>
 			<string></string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>review</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -735,6 +835,13 @@
 			</array>
 			<key>notes</key>
 			<string>Metadata/path equality or checksum alone is not numerical qualification; no changed tolerance or checkpoint substitution.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>receipt audit</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -780,6 +887,13 @@
 			</array>
 			<key>notes</key>
 			<string></string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>review</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -826,6 +940,13 @@
 			</array>
 			<key>notes</key>
 			<string>No current live leak was observed because no producer emits benchmark-valid panel records. A burn file writer alone is not downstream enforcement.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>optional custody patch: production caller wiring for require_unburned_test_partition plus an integration test</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -877,6 +998,13 @@
 			</array>
 			<key>notes</key>
 			<string>Execute separately for230_machine_cpu and712_chscase_geyser1; the prospective choice predates losses. Old55e9,3fd and68 operational receipts cannot be retrofitted. The older queue suggested300 secondseconds per family without admitting that allowance.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>audit that freeze/vocabulary pins precede fits; independently recompute per-fold gains and the 4-of-5 rule</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -921,6 +1049,13 @@
 			</array>
 			<key>notes</key>
 			<string>Only if exactly two families qualify does the recorded machineCPU-development/geyser-training assignment apply. More eligible families must all remain admitted.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>audit that every eligible comparison is included</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -967,6 +1102,13 @@
 			</array>
 			<key>notes</key>
 			<string>Required-name inventories and deselected tests do not count as execution. A synthetic CPU checkpoint remains fixture evidence.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>review</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1013,6 +1155,13 @@
 			</array>
 			<key>notes</key>
 			<string>Author the cancellation harness against the actual front door and target only its owned processes. CPU mode requires explicit fixture provenance.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>review</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1060,6 +1209,13 @@
 			</array>
 			<key>notes</key>
 			<string>NEURAL-02 gates source and fixture readiness before the GPU hour. It does not depend on a newly trained live export, avoiding a circular prerequisite.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>review</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1106,6 +1262,13 @@
 			</array>
 			<key>notes</key>
 			<string>Resume is conditional, not an instruction to start a third pass after completing the plan. A new state or plan cannot extend the approved hour.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>review</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1153,6 +1316,13 @@
 			</array>
 			<key>notes</key>
 			<string>The new regression consumer is not serving promotion. Synthetic regression may test mechanics but cannot enter the real operational route.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>receipt audit</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1200,6 +1370,13 @@
 			</array>
 			<key>notes</key>
 			<string>The current proof-plan scopes one regression dataset. Classification needs its implemented campaign/configuration route; this command alone cannot prove binary or multiclass live consumption.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>audit that the new checkpoint hash appears in proposal and fit evidence</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1247,6 +1424,13 @@
 			</array>
 			<key>notes</key>
 			<string>The private C++ head gate is broader than the public gate. Python/Rust14of26, C++2of26 and JavaScript6of26 are static head counts, not runtime qualification rates.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>review of emitter/parity parts</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1295,6 +1479,13 @@
 			</array>
 			<key>notes</key>
 			<string>Library fixtures precede the panel. Actual selected winners require complete confirmations from PANEL-01 and qualification before the original execution cutoff. No separately bounded post-panel qualification front door exists. One fitted fold does not qualify the other four states.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>review of emitter/parity parts</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1341,6 +1532,13 @@
 			</array>
 			<key>notes</key>
 			<string>An installer receipt is not policy/context-worker build authority. Do not include training credentials or model bodies in the public inference bundle.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>new-user walkthrough of quickstart and doctor output</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1388,6 +1586,13 @@
 			</array>
 			<key>notes</key>
 			<string>Packaging commands depend on final reviewed artifacts and the actual virtual environment. Preserve versions and file identities; changing the environment invalidates a pinned campaign.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>new-user walkthrough</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1435,6 +1640,13 @@
 			</array>
 			<key>notes</key>
 			<string>Under sixty seconds is a measured target. The existing twenty-second-arm example is unqualified. An explicitly admitted longer proof may satisfy execution while missing the target. This checklist grants no implicit300-second allowance.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>wins/cost table spec; independent recomputation</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1487,6 +1699,13 @@
 			</array>
 			<key>notes</key>
 			<string>Current code forces asm.neural into extra confirmation, not asm.generic. Selected five-fold summaries are adaptive development, and ten wins per category are not promised. Qualify exports before the original6900-second cutoff or preserve unattempted status.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>independent read-only recomputation from the journal</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1533,6 +1752,13 @@
 			</array>
 			<key>notes</key>
 			<string>The one-hour comparison supplies wall-duration context, not a matched speedup. Unique artifact hashes do not establish behavioral uniqueness. Never add aggregate service CPU to worker CPU already included in it.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Codex</string>
+				<key>claude</key>
+				<string>independent wins/losses and cost recomputation; every loss published</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1580,6 +1806,13 @@
 			</array>
 			<key>notes</key>
 			<string>These help commands are currently unavailable at 68 and are acceptance targets. No truthful exact mine invocation exists yet; record it after implementation.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Claude code, Codex live run</string>
+				<key>claude</key>
+				<string>via MOTIF-00</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1622,6 +1855,13 @@
 			</array>
 			<key>notes</key>
 			<string>Do not invent mine flags. The historical validate argument shape alone does not establish umbrella wiring or production State admission.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Claude design, Codex windows</string>
+				<key>claude</key>
+				<string>preregistered ablation design</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1664,6 +1904,13 @@
 			</array>
 			<key>notes</key>
 			<string>Typed reusable macros may stay within existing operators. Fragment frequency alone does not justify adding an operator.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Claude design, Codex windows</string>
+				<key>claude</key>
+				<string>two-stage promotion design</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1709,6 +1956,13 @@
 			</array>
 			<key>notes</key>
 			<string>Current lint success does not prove unscanned surfaces clean. The user explicitly requested the private GP explanation, so ordinary creation of this manual needs no additional approval.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Claude</string>
+				<key>claude</key>
+				<string>IP-Q1..Q5</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1757,6 +2011,13 @@
 			</array>
 			<key>notes</key>
 			<string>Check lane environment requirements before invocation. The owning qualification supplies allocation and budget; this manual does not admit them.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>Claude (B6-01); Codex runs full lanes</string>
+				<key>claude</key>
+				<string>author</string>
+			</dict>
 		</dict>
 		<dict>
 			<key>id</key>
@@ -1800,6 +2061,244 @@
 			</array>
 			<key>notes</key>
 			<string>Training GPU availability does not prove CUDA inference parity. Export is not serving promotion.</string>
+			<key>planned_owner</key>
+			<dict>
+				<key>executes</key>
+				<string>deferred</string>
+				<key>claude</key>
+				<string>CUDA design after EMIT-01</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>id</key>
+			<string>DOC-05</string>
+			<key>original_plan_stage</key>
+			<integer>0</integer>
+			<key>workstream</key>
+			<string>real training and target history</string>
+			<key>priority</key>
+			<string>P1</string>
+			<key>severity</key>
+			<string>documentation acceptance</string>
+			<key>current_evidence_level</key>
+			<string>Original training and target values verified; final composed-document inspection required</string>
+			<key>status</key>
+			<string>Original training and target values verified; final composed-document inspection required</string>
+			<key>pending_action</key>
+			<string>Publish exact observed optimizer/corpus/encoding/target history, component-loss curves, checkpoint lineage, source hashes and explicit comparability/missing-history limits.</string>
+			<key>dependencies</key>
+			<array>
+				<string>DOC-01</string>
+			</array>
+			<key>acceptance</key>
+			<dict>
+				<key>commands</key>
+				<array>
+					<string>python3 docs/internal/asm-manual/tools/make_training_figures.py</string>
+					<string>python3 docs/internal/asm-manual/tools/make_target_figures.py</string>
+				</array>
+				<key>evidence</key>
+				<array>
+					<string>Audited original JSON-pointer-to-CSV equality; every curve bound to model/corpus/monitor/objective; original failed/inconclusive observations retained.</string>
+				</array>
+				<key>command_status</key>
+				<string>existing plotting interface</string>
+			</dict>
+			<key>resource_budget</key>
+			<string>No new fits, training or model loads; plotting retained metrics only.</string>
+			<key>source_refs</key>
+			<array>
+				<string>sections/14-training-history.md</string>
+				<string>sections/15-target-history-packing.md</string>
+			</array>
+			<key>notes</key>
+			<string>Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.</string>
+			<key>planned_owner</key>
+			<string>Codex integration; Claude independent source/data cross-check</string>
+		</dict>
+		<dict>
+			<key>id</key>
+			<string>DOC-06</string>
+			<key>original_plan_stage</key>
+			<integer>0</integer>
+			<key>workstream</key>
+			<string>versions, KPIs and continuation runbook</string>
+			<key>priority</key>
+			<string>P1</string>
+			<key>severity</key>
+			<string>documentation acceptance</string>
+			<key>current_evidence_level</key>
+			<string>Current and pending interfaces source-audited; independent chapter review complete</string>
+			<key>status</key>
+			<string>Current and pending interfaces source-audited; independent chapter review complete</string>
+			<key>pending_action</key>
+			<string>Publish the product/model/encoding/vocabulary/corpus/protocol version tuple, north-star and KPI definitions, real continuation evidence, and exact current-versus-pending commands and code.</string>
+			<key>dependencies</key>
+			<array>
+				<string>DOC-01</string>
+			</array>
+			<key>acceptance</key>
+			<dict>
+				<key>commands</key>
+				<array/>
+				<key>evidence</key>
+				<array>
+					<string>Source-bound command/flag/API audit; held native grant path disclosed; warm-start distinct from optimizer resume; full input closure and 64 GiB budget compatibility stated.</string>
+				</array>
+				<key>command_status</key>
+				<string>no complete executable front door; source/API details in linked chapters</string>
+			</dict>
+			<key>resource_budget</key>
+			<string>Documentation and metadata validation only; commands do not admit a new training window.</string>
+			<key>source_refs</key>
+			<array>
+				<string>sections/16-version-kpis-continuation.md</string>
+				<string>sections/17-flywheel-focused-search.md</string>
+			</array>
+			<key>notes</key>
+			<string>Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.</string>
+			<key>planned_owner</key>
+			<string>Codex integration; Claude independent source/data cross-check</string>
+		</dict>
+		<dict>
+			<key>id</key>
+			<string>PACK-01</string>
+			<key>original_plan_stage</key>
+			<integer>3</integer>
+			<key>workstream</key>
+			<string>packed training consumer and incremental loading</string>
+			<key>priority</key>
+			<string>P2</string>
+			<key>severity</key>
+			<string>explicit follow-on; not permission to expand campaign budgets</string>
+			<key>current_evidence_level</key>
+			<string>Legacy binary store exists; pending Python category route still materializes JSONL</string>
+			<key>status</key>
+			<string>Legacy binary store exists; pending Python category route still materializes JSONL</string>
+			<key>pending_action</key>
+			<string>Design and qualify a lossless packed reader for the bounded trainer, sharing repeated contexts and immutable shards while excluding sealed-family context vectors; measure host/device loading and fresh-example exposure.</string>
+			<key>dependencies</key>
+			<array>
+				<string>TEACH-04</string>
+				<string>TRAIN-01</string>
+			</array>
+			<key>acceptance</key>
+			<dict>
+				<key>commands</key>
+				<array/>
+				<key>evidence</key>
+				<array>
+					<string>JSONL-versus-packed token/context/label/sampler equivalence; corruption/schema tests; finite complete labels; startup/RSS/I/O/padding measurements; incremental shard reuse and actual optimizer input counts.</string>
+				</array>
+				<key>command_status</key>
+				<string>no complete executable front door; source/API details in linked chapters</string>
+			</dict>
+			<key>resource_budget</key>
+			<string>Source/fixture planning first; any measured training remains inside a separately declared remaining authorized window.</string>
+			<key>source_refs</key>
+			<array>
+				<string>sections/15-target-history-packing.md</string>
+				<string>python/src/jope/policy/train_v3.py</string>
+				<string>crates/jope-engine/src/teaching_store.rs</string>
+			</array>
+			<key>notes</key>
+			<string>Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.</string>
+			<key>planned_owner</key>
+			<string>Codex integration; Claude independent source/data cross-check</string>
+		</dict>
+		<dict>
+			<key>id</key>
+			<string>FOCUS-01</string>
+			<key>original_plan_stage</key>
+			<integer>6</integer>
+			<key>workstream</key>
+			<string>sustained single-dataset improvement</string>
+			<key>priority</key>
+			<string>P2</string>
+			<key>severity</key>
+			<string>explicit follow-on; not permission to expand campaign budgets</string>
+			<key>current_evidence_level</key>
+			<string>Current bounded proof exists; no incumbent-seeded attack front door</string>
+			<key>status</key>
+			<string>Current bounded proof exists; no incumbent-seeded attack front door</string>
+			<key>pending_action</key>
+			<string>Add an authenticated incumbent-aware multi-wave request using full comparison identity, retained original deadline, bounded workers and durable improvement events. Preserve exploration and all non-improvement outcomes.</string>
+			<key>dependencies</key>
+			<array>
+				<string>TEACH-01</string>
+				<string>TEACH-02</string>
+				<string>TEACH-03</string>
+			</array>
+			<key>acceptance</key>
+			<dict>
+				<key>commands</key>
+				<array/>
+				<key>evidence</key>
+				<array>
+					<string>Improving, tied, worse, stale and concurrent incumbents; full OOF/baseline admission; no deadline reset or sealed input; successful no-improvement completion; actual cost per eligible improvement.</string>
+				</array>
+				<key>command_status</key>
+				<string>no complete executable front door; source/API details in linked chapters</string>
+			</dict>
+			<key>resource_budget</key>
+			<string>No indefinite loop or additional allowance implied; whole focused experiment has one predeclared finite budget.</string>
+			<key>source_refs</key>
+			<array>
+				<string>sections/17-flywheel-focused-search.md</string>
+				<string>crates/jope-bench/src/panel/origin_proof.rs</string>
+				<string>crates/jope-pipeline/src/neural_search.rs</string>
+			</array>
+			<key>notes</key>
+			<string>Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.</string>
+			<key>planned_owner</key>
+			<string>Codex integration; Claude independent source/data cross-check</string>
+		</dict>
+		<dict>
+			<key>id</key>
+			<string>LOOP-01</string>
+			<key>original_plan_stage</key>
+			<integer>3</integer>
+			<key>workstream</key>
+			<string>repeatable measured learning flywheel</string>
+			<key>priority</key>
+			<string>P2</string>
+			<key>severity</key>
+			<string>explicit follow-on; not permission to expand campaign budgets</string>
+			<key>current_evidence_level</key>
+			<string>New complete improved-target-to-improved-search cycle not yet qualified</string>
+			<key>status</key>
+			<string>New complete improved-target-to-improved-search cycle not yet qualified</string>
+			<key>pending_action</key>
+			<string>Demonstrate linked cycles in which newly eligible target improvements are actually sampled, change parameters, and yield measured next-search benefit against both parent checkpoint and generic search.</string>
+			<key>dependencies</key>
+			<array>
+				<string>NEURAL-03</string>
+				<string>TEACH-04</string>
+				<string>TRAIN-04</string>
+			</array>
+			<key>acceptance</key>
+			<dict>
+				<key>commands</key>
+				<array/>
+				<key>evidence</key>
+				<array>
+					<string>Per-cycle target deltas, actual fresh exposures, component losses on fixed monitors, optimizer/parent/checkpoint hashes, full failures/cost and matched fitted-program outcomes; promotion separately decided.</string>
+				</array>
+				<key>command_status</key>
+				<string>no complete executable front door; source/API details in linked chapters</string>
+			</dict>
+			<key>resource_budget</key>
+			<string>Original one GPU-hour cap remains binding. Further campaigns require their own explicit allocation; this item grants none.</string>
+			<key>source_refs</key>
+			<array>
+				<string>sections/14-training-history.md</string>
+				<string>sections/16-version-kpis-continuation.md</string>
+				<string>sections/17-flywheel-focused-search.md</string>
+			</array>
+			<key>notes</key>
+			<string>Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.</string>
+			<key>planned_owner</key>
+			<string>Codex integration; Claude independent source/data cross-check</string>
 		</dict>
 	</array>
 	<key>validation</key>
@@ -1815,5 +2314,789 @@
 	</dict>
 	<key>documentation_update</key>
 	<string>PR83 main guard passed; named example qualification completed. Rendering/publication evidence remains pending until its own verification.</string>
+	<key>coordinated_proposals</key>
+	<dict>
+		<key>source_sha256</key>
+		<string>334ae97446ef29963bce47582f1550c7d369f0b329ef143c128685991422ffd4</string>
+		<key>status</key>
+		<string>proposed follow-ons reconciled with the primary task list; not additional execution authorization</string>
+		<key>owner_decision_status</key>
+		<string>The supplied OD-* recommendations are unresolved proposals except already explicit user directions. They are not new mandatory approval requests or adopted changes to the frozen protocol.</string>
+		<key>items</key>
+		<array>
+			<dict>
+				<key>id</key>
+				<string>HANDOFF-01</string>
+				<key>stage</key>
+				<integer>0</integer>
+				<key>priority</key>
+				<string>P1</string>
+				<key>owner</key>
+				<string>Claude</string>
+				<key>depends_on</key>
+				<array/>
+				<key>acceptance</key>
+				<string>track-a-20260922/manual-20260923/release/SHA256SUMS verifies; FINDINGS.json posted; sections 06/07/09/11 and figures/tools/data handed off</string>
+				<key>overlap_with</key>
+				<array>
+					<string>DOC-01</string>
+					<string>DOC-05</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>HYG-01</string>
+				<key>stage</key>
+				<integer>5</integer>
+				<key>priority</key>
+				<string>P1</string>
+				<key>owner</key>
+				<string>Claude</string>
+				<key>depends_on</key>
+				<array>
+					<string>INT-01</string>
+					<string>product28 merged</string>
+				</array>
+				<key>acceptance</key>
+				<string>cargo metadata shows workspace default members; offline_cli cpp20 test passes; jope-bench run defaults to min(20, cores)</string>
+				<key>overlap_with</key>
+				<array>
+					<string>INT-02</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>HELLO-01</string>
+				<key>stage</key>
+				<integer>5</integer>
+				<key>priority</key>
+				<string>P1</string>
+				<key>owner</key>
+				<string>Claude docs, Codex verbs</string>
+				<key>depends_on</key>
+				<array>
+					<string>INSTALL-01</string>
+					<string>DEMO-01</string>
+				</array>
+				<key>acceptance</key>
+				<string>a quickstart of at most 5 commands routing to jope demo runs top to bottom from a clean checkout; transcript retained</string>
+				<key>overlap_with</key>
+				<array>
+					<string>DEMO-01</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>B6-01</string>
+				<key>stage</key>
+				<integer>0</integer>
+				<key>priority</key>
+				<string>P2</string>
+				<key>owner</key>
+				<string>Claude</string>
+				<key>depends_on</key>
+				<array/>
+				<key>acceptance</key>
+				<string>A2 seed diagnostic and retained-evidence asserts; spec_drift repointed (3 ids); sotarena repoint; scratch budget 900/1500 s; neural-env.sh resolves CUDA_HOME; 13 ids added to known-broken-tests.txt</string>
+				<key>overlap_with</key>
+				<array>
+					<string>MAINT-01</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>IP-Q1</string>
+				<key>stage</key>
+				<integer>0</integer>
+				<key>priority</key>
+				<string>P1</string>
+				<key>owner</key>
+				<string>Claude</string>
+				<key>depends_on</key>
+				<array>
+					<string>OD-1</string>
+					<string>OD-5</string>
+				</array>
+				<key>acceptance</key>
+				<string>CLI help/doctor/README/NOTICE/docs/Cargo descriptions clean; ip-scrub covers NOTICE and schemas; new lint tests fail on old main and pass after</string>
+				<key>overlap_with</key>
+				<array>
+					<string>IP-01</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>IP-Q2</string>
+				<key>stage</key>
+				<integer>0</integer>
+				<key>priority</key>
+				<string>P1</string>
+				<key>owner</key>
+				<string>Claude</string>
+				<key>depends_on</key>
+				<array>
+					<string>OD-3</string>
+					<string>OD-4</string>
+				</array>
+				<key>acceptance</key>
+				<string>emitter text 2.3.0 with re-pinned fixtures; manifest key reader switch; codec serde aliases</string>
+				<key>overlap_with</key>
+				<array>
+					<string>IP-01</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>IP-Q3</string>
+				<key>stage</key>
+				<integer>0</integer>
+				<key>priority</key>
+				<string>P2</string>
+				<key>owner</key>
+				<string>Claude</string>
+				<key>depends_on</key>
+				<array>
+					<string>freeze passed</string>
+				</array>
+				<key>acceptance</key>
+				<string>receipts v3 and PR 83 ids renamed with a dual-name journal loader</string>
+				<key>overlap_with</key>
+				<array>
+					<string>IP-01</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>IP-Q4</string>
+				<key>stage</key>
+				<integer>0</integer>
+				<key>priority</key>
+				<string>P2</string>
+				<key>owner</key>
+				<string>Claude</string>
+				<key>depends_on</key>
+				<array>
+					<string>compute window</string>
+				</array>
+				<key>acceptance</key>
+				<string>same-cut v3 evidence; afm.* method id renamed</string>
+				<key>overlap_with</key>
+				<array>
+					<string>IP-01</string>
+					<string>PANEL-01</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>IP-Q5</string>
+				<key>stage</key>
+				<integer>0</integer>
+				<key>priority</key>
+				<string>P2</string>
+				<key>owner</key>
+				<string>Claude</string>
+				<key>depends_on</key>
+				<array>
+					<string>OD-5</string>
+				</array>
+				<key>acceptance</key>
+				<string>publication boundary: private-path rule for docs/internal/** and docs/asm.md plus a packaging exclusion check</string>
+				<key>overlap_with</key>
+				<array>
+					<string>IP-01</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>NAME-01</string>
+				<key>stage</key>
+				<integer>0</integer>
+				<key>priority</key>
+				<string>P1</string>
+				<key>owner</key>
+				<string>Claude</string>
+				<key>depends_on</key>
+				<array>
+					<string>OD-1</string>
+				</array>
+				<key>acceptance</key>
+				<string>no public AFM/ASPFM/Prime/Lime text; lint enforces</string>
+				<key>overlap_with</key>
+				<array>
+					<string>IP-01</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>DATA-01</string>
+				<key>stage</key>
+				<integer>0</integer>
+				<key>priority</key>
+				<string>P1</string>
+				<key>owner</key>
+				<string>Claude</string>
+				<key>depends_on</key>
+				<array/>
+				<key>acceptance</key>
+				<string>metadata-only inventory of archive-use2, usw2 replicas, custody dev/prod (sealed: counts only, after Codex agrees), bucket configuration, learning per-prefix reconciliation, replica parity, local roots, single-copy risk list, disk headroom; JSON in the s3-estate schema; zero body reads</string>
+				<key>overlap_with</key>
+				<array>
+					<string>DOC-01</string>
+					<string>DOC-05</string>
+				</array>
+				<key>disposition</key>
+				<string>Metadata-only inventory assigned to Claude; no object-body or numerical access.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>DOCFIX-01</string>
+				<key>stage</key>
+				<integer>0</integer>
+				<key>priority</key>
+				<string>P1</string>
+				<key>owner</key>
+				<string>Claude patch, Codex integrates</string>
+				<key>depends_on</key>
+				<array>
+					<string>DATA-01 for part b</string>
+				</array>
+				<key>acceptance</key>
+				<string>learning.md, architecture.md, quickstart.md and datasets.md corrected; AGENTS bucket table with sizes; catalogs/s3.json generated from DATA-01</string>
+				<key>overlap_with</key>
+				<array>
+					<string>DOC-01</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>DATA-02</string>
+				<key>stage</key>
+				<integer>3</integer>
+				<key>priority</key>
+				<string>P1</string>
+				<key>owner</key>
+				<string>Claude design, Codex prepares</string>
+				<key>depends_on</key>
+				<array>
+					<string>TEACH-03</string>
+				</array>
+				<key>acceptance</key>
+				<string>frozen teaching manifest: seeded, selected before outcomes, families disjoint from all 30 panel families</string>
+				<key>overlap_with</key>
+				<array>
+					<string>TEACH-04</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>DATA-03</string>
+				<key>stage</key>
+				<integer>3</integer>
+				<key>priority</key>
+				<string>P2</string>
+				<key>owner</key>
+				<string>Owner, Claude</string>
+				<key>depends_on</key>
+				<array>
+					<string>OD-12</string>
+				</array>
+				<key>acceptance</key>
+				<string>licence-known multiclass corpus with family registry and frozen splits</string>
+				<key>overlap_with</key>
+				<array>
+					<string>TEACH-03</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>TEACH-05</string>
+				<key>stage</key>
+				<integer>3</integer>
+				<key>priority</key>
+				<string>P1</string>
+				<key>owner</key>
+				<string>Codex runs, Claude audits</string>
+				<key>depends_on</key>
+				<array>
+					<string>DATA-02</string>
+					<string>OD-9</string>
+				</array>
+				<key>acceptance</key>
+				<string>per-wave admission and refusal receipts; every admitted family counted</string>
+				<key>overlap_with</key>
+				<array>
+					<string>TEACH-03</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>TRAIN-05</string>
+				<key>stage</key>
+				<integer>3</integer>
+				<key>priority</key>
+				<string>P2</string>
+				<key>owner</key>
+				<string>Codex</string>
+				<key>depends_on</key>
+				<array>
+					<string>TEACH-05</string>
+					<string>OD-16</string>
+				</array>
+				<key>acceptance</key>
+				<string>second GPU campaign; consumption reproven</string>
+				<key>overlap_with</key>
+				<array>
+					<string>TRAIN-03</string>
+					<string>LOOP-01</string>
+				</array>
+				<key>disposition</key>
+				<string>Second campaign is outside the existing one-GPU-hour allowance; no additional budget or deadline is granted.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>HWM-01</string>
+				<key>stage</key>
+				<integer>6</integer>
+				<key>priority</key>
+				<string>P2</string>
+				<key>owner</key>
+				<string>Codex implements, Claude designs and tests</string>
+				<key>depends_on</key>
+				<array>
+					<string>TEACH-02</string>
+				</array>
+				<key>acceptance</key>
+				<string>incumbent-seeded single-dataset attack; replacement only when the candidate beats the incumbent on at least 4 of 5 folds by the margin; negative tests for stale identity, tie, test-high/OOF-flat and burned partition</string>
+				<key>overlap_with</key>
+				<array>
+					<string>FOCUS-01</string>
+				</array>
+				<key>disposition</key>
+				<string>FOCUS-01 covers the user’s focused-search need. Extra incumbent four-of-five-fold rule is a proposed policy, separate from required baseline admission.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>SEALED-01</string>
+				<key>stage</key>
+				<integer>5</integer>
+				<key>priority</key>
+				<string>P1</string>
+				<key>owner</key>
+				<string>Codex runs, owner authorizes</string>
+				<key>depends_on</key>
+				<array>
+					<string>REPORT-01</string>
+					<string>OD-13</string>
+				</array>
+				<key>acceptance</key>
+				<string>preregistered one-shot sealed evaluation; burn receipts; no reselection</string>
+				<key>overlap_with</key>
+				<array>
+					<string>REPORT-01</string>
+				</array>
+				<key>disposition</key>
+				<string>Outside current execution scope: frozen sealed evaluation remains untouched. This proposal does not authorize opening it.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>EMIT-01</string>
+				<key>stage</key>
+				<integer>4</integer>
+				<key>priority</key>
+				<string>P1</string>
+				<key>owner</key>
+				<string>Claude</string>
+				<key>depends_on</key>
+				<array>
+					<string>product28 on main</string>
+				</array>
+				<key>acceptance</key>
+				<string>fitted C++17/20 and JS coverage for winning families with library parity fixtures</string>
+				<key>overlap_with</key>
+				<array>
+					<string>INFER-02</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>INFER-03</string>
+				<key>stage</key>
+				<integer>4</integer>
+				<key>priority</key>
+				<string>P2</string>
+				<key>owner</key>
+				<string>Codex</string>
+				<key>depends_on</key>
+				<array>
+					<string>PANEL-01</string>
+				</array>
+				<key>acceptance</key>
+				<string>post-panel export qualification in its own admitted window</string>
+				<key>overlap_with</key>
+				<array>
+					<string>INFER-02</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>EMIT-03</string>
+				<key>stage</key>
+				<integer>4</integer>
+				<key>priority</key>
+				<string>P2</string>
+				<key>owner</key>
+				<string>Claude</string>
+				<key>depends_on</key>
+				<array>
+					<string>EMIT-01</string>
+				</array>
+				<key>acceptance</key>
+				<string>language-neutral DSL semantics spec, golden corpus, numeric-policy conformance harness</string>
+				<key>overlap_with</key>
+				<array>
+					<string>INFER-01</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>MOTIF-00</string>
+				<key>stage</key>
+				<integer>6</integer>
+				<key>priority</key>
+				<string>P1</string>
+				<key>owner</key>
+				<string>Claude</string>
+				<key>depends_on</key>
+				<array>
+					<string>training64 merged (eligibility API)</string>
+				</array>
+				<key>acceptance</key>
+				<string>jope motifs mine|validate --help exit 0; deterministic fixture output; --locked build and tests</string>
+				<key>overlap_with</key>
+				<array>
+					<string>MOTIF-01</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>COST-01</string>
+				<key>stage</key>
+				<integer>5</integer>
+				<key>priority</key>
+				<string>P1</string>
+				<key>owner</key>
+				<string>Owner constants, Claude table</string>
+				<key>depends_on</key>
+				<array>
+					<string>REPORT-01</string>
+					<string>OD-14</string>
+				</array>
+				<key>acceptance</key>
+				<string>labelled scenario table separate from the measured table; no quality-parity claim</string>
+				<key>overlap_with</key>
+				<array>
+					<string>REPORT-01</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+			<dict>
+				<key>id</key>
+				<string>LAYOUT-01</string>
+				<key>stage</key>
+				<integer>6</integer>
+				<key>priority</key>
+				<string>P2</string>
+				<key>owner</key>
+				<string>Claude</string>
+				<key>depends_on</key>
+				<array>
+					<string>freeze passed</string>
+				</array>
+				<key>acceptance</key>
+				<string>crate package names equal directories; jope-contracts shared types; fewer duplicate Task enums/fold planners</string>
+				<key>overlap_with</key>
+				<array>
+					<string>INT-02</string>
+				</array>
+				<key>disposition</key>
+				<string>Track with the overlapping primary item; exact implementation and acceptance remain pending.</string>
+			</dict>
+		</array>
+		<key>external_dependencies</key>
+		<dict>
+			<key>OD-1</key>
+			<dict>
+				<key>meaning</key>
+				<string>Confirm the name ASM in writing (reported by Codex 16:07Z)</string>
+				<key>contributor_recommendation</key>
+				<string>Confirm; rename public AFM/ASPFM text now, method id with same-cut v3</string>
+				<key>disposition</key>
+				<string>ASM naming is already explicit user direction; no reconfirmation needed. Any protocol rename remains a separately versioned change.</string>
+				<key>source</key>
+				<string>data/coordinated-roadmap-proposal.json</string>
+			</dict>
+			<key>OD-2</key>
+			<dict>
+				<key>meaning</key>
+				<string>Confirm HWM train-side OOF admission and the test-to-development relabel with burn receipts (audit D3)</string>
+				<key>contributor_recommendation</key>
+				<string>Confirm; the eligibility code cites it</string>
+				<key>disposition</key>
+				<string>Train-side OOF admission and exposed-test-as-development treatment are already explicit user direction; no reconfirmation needed.</string>
+				<key>source</key>
+				<string>data/coordinated-roadmap-proposal.json</string>
+			</dict>
+			<key>OD-3</key>
+			<dict>
+				<key>meaning</key>
+				<string>D-IP1: ban 'tree' in emitted code</string>
+				<key>contributor_recommendation</key>
+				<string>Strict ban, masking only std tokens such as BTreeMap</string>
+				<key>disposition</key>
+				<string>Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization.</string>
+				<key>source</key>
+				<string>data/coordinated-roadmap-proposal.json</string>
+			</dict>
+			<key>OD-4</key>
+			<dict>
+				<key>meaning</key>
+				<string>D-IP2: extra_trees naming</string>
+				<key>contributor_recommendation</key>
+				<string>Registry alias on public surfaces</string>
+				<key>disposition</key>
+				<string>Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization.</string>
+				<key>source</key>
+				<string>data/coordinated-roadmap-proposal.json</string>
+			</dict>
+			<key>OD-5</key>
+			<dict>
+				<key>meaning</key>
+				<string>D-IP3: publication boundary</string>
+				<key>contributor_recommendation</key>
+				<string>Keep the repo private; private-path rule plus packaging check; move legacy/research code before any public release</string>
+				<key>disposition</key>
+				<string>This private manual is explicitly requested and authorized. Broader public-release boundary changes remain separate; this item does not block the manual.</string>
+				<key>source</key>
+				<string>data/coordinated-roadmap-proposal.json</string>
+			</dict>
+			<key>OD-6</key>
+			<dict>
+				<key>meaning</key>
+				<string>D-IP4: PR 83 identifiers</string>
+				<key>contributor_recommendation</key>
+				<string>User-visible strings before the freeze; journal/receipt ids after it (IP-Q3)</string>
+				<key>disposition</key>
+				<string>Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization.</string>
+				<key>source</key>
+				<string>data/coordinated-roadmap-proposal.json</string>
+			</dict>
+			<key>OD-7</key>
+			<dict>
+				<key>meaning</key>
+				<string>B6 fit fence and data rows</string>
+				<key>contributor_recommendation</key>
+				<string>In-crate relocation now (restores 4 of 6); production verifier later; hash-pinned Golden42 subset; commit the ILPD fixture</string>
+				<key>disposition</key>
+				<string>Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization.</string>
+				<key>source</key>
+				<string>data/coordinated-roadmap-proposal.json</string>
+			</dict>
+			<key>OD-8</key>
+			<dict>
+				<key>meaning</key>
+				<string>Teachers from panel families 230_machine_cpu and 712_chscase_geyser1</string>
+				<key>contributor_recommendation</key>
+				<string>Keep them, labelled checkpoint-exposed; scale-out disjoint from the panel</string>
+				<key>disposition</key>
+				<string>Prospective small families already selected from provenance; exposure labels require actual evidence. Unknown must not become known-seen solely from this recommendation.</string>
+				<key>source</key>
+				<string>data/coordinated-roadmap-proposal.json</string>
+			</dict>
+			<key>OD-9</key>
+			<dict>
+				<key>meaning</key>
+				<string>W2 scale-out CPU (about 4 h)</string>
+				<key>contributor_recommendation</key>
+				<string>Only if TEACH-03 admits at least 2 families</string>
+				<key>disposition</key>
+				<string>Proposed additional compute outside the current allocation; no new hours or deadline are granted.</string>
+				<key>source</key>
+				<string>data/coordinated-roadmap-proposal.json</string>
+			</dict>
+			<key>OD-10</key>
+			<dict>
+				<key>meaning</key>
+				<string>3,755 unknown-licence catalog datasets</string>
+				<key>contributor_recommendation</key>
+				<string>Internal training only; no redistribution; public claims only on known-licence data</string>
+				<key>disposition</key>
+				<string>Unresolved data-use proposal. Unknown license metadata does not establish permission for any proposed use.</string>
+				<key>source</key>
+				<string>data/coordinated-roadmap-proposal.json</string>
+			</dict>
+			<key>OD-11</key>
+			<dict>
+				<key>meaning</key>
+				<string>Lineage-B corpora</string>
+				<key>contributor_recommendation</key>
+				<string>Diagnostic only; never mixed with admitted teachers</string>
+				<key>disposition</key>
+				<string>Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization.</string>
+				<key>source</key>
+				<string>data/coordinated-roadmap-proposal.json</string>
+			</dict>
+			<key>OD-12</key>
+			<dict>
+				<key>meaning</key>
+				<string>Multiclass data (the catalog has none)</string>
+				<key>contributor_recommendation</key>
+				<string>Approve DATA-03 ingest</string>
+				<key>disposition</key>
+				<string>Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization.</string>
+				<key>source</key>
+				<string>data/coordinated-roadmap-proposal.json</string>
+			</dict>
+			<key>OD-13</key>
+			<dict>
+				<key>meaning</key>
+				<string>Sealed one-shot evaluation</string>
+				<key>contributor_recommendation</key>
+				<string>Approve SEALED-01 after REPORT-01 with the analysis frozen first</string>
+				<key>disposition</key>
+				<string>Outside current execution scope: sealed evaluation remains untouched.</string>
+				<key>source</key>
+				<string>data/coordinated-roadmap-proposal.json</string>
+			</dict>
+			<key>OD-14</key>
+			<dict>
+				<key>meaning</key>
+				<string>Cost scenario constants</string>
+				<key>contributor_recommendation</key>
+				<string>Owner supplies LLM $/token, host $/hour and algorithms per 1 h / 10M tokens</string>
+				<key>disposition</key>
+				<string>Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization.</string>
+				<key>source</key>
+				<string>data/coordinated-roadmap-proposal.json</string>
+			</dict>
+			<key>OD-15</key>
+			<dict>
+				<key>meaning</key>
+				<string>CUDA timing</string>
+				<key>contributor_recommendation</key>
+				<string>After REPORT-01; fix the full-lane CUDA header now</string>
+				<key>disposition</key>
+				<string>Unresolved contributor proposal; not a newly imposed approval prerequisite and not execution authorization.</string>
+				<key>source</key>
+				<string>data/coordinated-roadmap-proposal.json</string>
+			</dict>
+			<key>OD-16</key>
+			<dict>
+				<key>meaning</key>
+				<string>Second GPU hour</string>
+				<key>contributor_recommendation</key>
+				<string>After NEURAL-03 and W2</string>
+				<key>disposition</key>
+				<string>Proposed additional compute outside the current allocation; no new hours or deadline are granted.</string>
+				<key>source</key>
+				<string>data/coordinated-roadmap-proposal.json</string>
+			</dict>
+			<key>OD-17</key>
+			<dict>
+				<key>meaning</key>
+				<string>The proposed 300 s proof windows</string>
+				<key>contributor_recommendation</key>
+				<string>Codex admits them inside the existing envelope and records the admission</string>
+				<key>disposition</key>
+				<string>Per-proof resource files must identify actual admission and remaining allowance; an example duration does not create a new budget.</string>
+				<key>source</key>
+				<string>data/coordinated-roadmap-proposal.json</string>
+			</dict>
+			<key>product28 merged</key>
+			<dict>
+				<key>meaning</key>
+				<string>Product28 stopped overlay has completed its own reviewed merge; part of INT-01, currently pending.</string>
+				<key>disposition</key>
+				<string>External prerequisite, explicitly unresolved unless a separate retained receipt closes it.</string>
+			</dict>
+			<key>product28 on main</key>
+			<dict>
+				<key>meaning</key>
+				<string>Same product28 reviewed-main prerequisite; currently pending.</string>
+				<key>disposition</key>
+				<string>External prerequisite, explicitly unresolved unless a separate retained receipt closes it.</string>
+			</dict>
+			<key>training64 merged (eligibility API)</key>
+			<dict>
+				<key>meaning</key>
+				<string>Training64 eligibility interface has completed its own reviewed merge; part of INT-01, currently pending.</string>
+				<key>disposition</key>
+				<string>External prerequisite, explicitly unresolved unless a separate retained receipt closes it.</string>
+			</dict>
+			<key>freeze passed</key>
+			<dict>
+				<key>meaning</key>
+				<string>Final implementation/runtime configuration and required acceptance are frozen; documentation freeze alone does not satisfy this.</string>
+				<key>disposition</key>
+				<string>External prerequisite, explicitly unresolved unless a separate retained receipt closes it.</string>
+			</dict>
+			<key>compute window</key>
+			<dict>
+				<key>meaning</key>
+				<string>A concrete finite resource allocation is admitted; no new allowance is implied.</string>
+				<key>disposition</key>
+				<string>External prerequisite, explicitly unresolved unless a separate retained receipt closes it.</string>
+			</dict>
+			<key>DATA-01 for part b</key>
+			<dict>
+				<key>meaning</key>
+				<string>The metadata inventory proposal DATA-01 is complete for the catalog-generation part of DOCFIX-01.</string>
+				<key>disposition</key>
+				<string>External prerequisite, explicitly unresolved unless a separate retained receipt closes it.</string>
+			</dict>
+		</dict>
+	</dict>
+	<key>updated_utc</key>
+	<string>2026-09-23T17:39:59.868550+00:00</string>
+	<key>primary_item_count</key>
+	<integer>43</integer>
+	<key>coordinated_proposal_count</key>
+	<integer>24</integer>
 </dict>
 </plist>

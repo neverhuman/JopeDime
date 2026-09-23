@@ -1,0 +1,144 @@
+{
+  "source_runtime_commit": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
+  "merged_runtime_main": "a75e543d2166017cb0139e0a251d51d9a0c98e08",
+  "pins": [
+    {
+      "path": "/home/ubuntu/JopeDime/crates/jope-engine/src/corpus.rs",
+      "sha256": "4c7e2d2c15b565fdf3822dd710ea939adb7bdfc8e9cb7938c55e3373a77ca042",
+      "bytes": 37298,
+      "kind": "canonical_source_or_historical_document"
+    },
+    {
+      "path": "/home/ubuntu/JopeDime/crates/jope-engine/src/teaching_store.rs",
+      "sha256": "4b45a3ccb3af8948fc691ee5a7070aa7c8010e93227433afaa38d644d72edfea",
+      "bytes": 52589,
+      "kind": "canonical_source_or_historical_document"
+    },
+    {
+      "path": "/home/ubuntu/JopeDime/crates/jope-engine/src/training.rs",
+      "sha256": "4780516c2444b0a78ca1baa4fb59938c188e2a833448ebf3eaab6d852eb9def4",
+      "bytes": 70414,
+      "kind": "canonical_source_or_historical_document"
+    },
+    {
+      "path": "/home/ubuntu/JopeDime/crates/jope-engine/src/sealed_storage.rs",
+      "sha256": "08ff36a7cb539b28166bec196c665735a056efab8cb27df3a2f0c77e3c64623b",
+      "bytes": 11991,
+      "kind": "canonical_source_or_historical_document"
+    },
+    {
+      "path": "/home/ubuntu/JopeDime/crates/jope-engine/tests/corpus_incremental.rs",
+      "sha256": "331bfe292b25227a3b76e68841bbcff31362c0284fabf4b33a947745b1d607ba",
+      "bytes": 42574,
+      "kind": "canonical_source_or_historical_document"
+    },
+    {
+      "path": "/home/ubuntu/JopeDime/crates/jope-engine/tests/corpus_progress.rs",
+      "sha256": "55d76452d623bd941e6cd47a967137ccb0890020df909f29cdcbd0a1632fd0a0",
+      "bytes": 4964,
+      "kind": "canonical_source_or_historical_document"
+    },
+    {
+      "path": "/home/ubuntu/JopeDime/python/src/jope/schema.py",
+      "sha256": "ac7c63068715fc0da0b1c3398b4b6d2cce5c43e46436717b04ffefbde8578bb5",
+      "bytes": 3563,
+      "kind": "canonical_source_or_historical_document"
+    },
+    {
+      "path": "/home/ubuntu/JopeDime/python/src/jope/policy/train_v3.py",
+      "sha256": "e916219f697bb12fde11f2f731f8313fede76c455c1005763264824208338718",
+      "bytes": 131187,
+      "kind": "canonical_source_or_historical_document"
+    },
+    {
+      "path": "/home/ubuntu/JopeDime/docs/adr/ADR-0005-canonical-learning-loop.md",
+      "sha256": "3d3f3e460da3164ac225275dece474444c47b8fdd5c81fa21a4be1fefc08b4c1",
+      "bytes": 10490,
+      "kind": "canonical_source_or_historical_document"
+    },
+    {
+      "path": "/home/ubuntu/JopeDime/docs/learning.md",
+      "sha256": "7d9f066cc065b8edc051e1a1d0a5fdea28e04fa0a3cf1ef9359586324c927624",
+      "bytes": 23425,
+      "kind": "canonical_source_or_historical_document"
+    },
+    {
+      "path": "/home/ubuntu/JopeDime/docs/legacy/root-docs/audits/worldclass-redteam-20260911/data-folds-evidence/source-corpus-metadata.json",
+      "sha256": "0fa73bd8eeb99625ff9e7ecff5890c40827c252f63f3283df0f7b99fc24ed6f4",
+      "bytes": 4124,
+      "kind": "canonical_source_or_historical_document"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-training-integration/refresh-68f56404/replay-001/source-text/python/src/jope/policy/training_campaign.py",
+      "sha256": "9d9cfb3257ecf2b6072cab8adc6d830f3df096605a06ff0677e6338c2aad5a2c",
+      "bytes": 55513,
+      "kind": "pending_training64_source_not_integrated"
+    },
+    {
+      "path": "/home/ubuntu/jope-node-mirror/accepted60000-closure/runs/eight-a100-recovery-20260912/learning/snapshot-000097/corpus/index.json",
+      "sha256": "1c840597554f76598b7c173a0de6f5d13e1b29bfa971f4fa49777d9d1da47798",
+      "bytes": 60589288,
+      "kind": "historical_index_metadata"
+    },
+    {
+      "path": "/home/ubuntu/jope-node-mirror/teaching-corpus/runs/dataset-inclusion-20260909/teaching-corpus/index.json",
+      "sha256": "f2018db88f54f7c569031a2e77a19a30a7dccfac52f0efd985d2958f1eef6b3c",
+      "bytes": 98330379,
+      "kind": "historical_index_metadata"
+    },
+    {
+      "path": "/home/ubuntu/jope-node-mirror/corpus/corpus/cohort64-qualification-v1/index.json",
+      "sha256": "1ed78e35890c725e074cd806a754ae74caa62a3a07c1d11813921d02398ea582",
+      "bytes": 16742888,
+      "kind": "historical_index_metadata"
+    },
+    {
+      "path": "/home/ubuntu/jope-node-mirror/corpus/corpus/qualification-v2/index.json",
+      "sha256": "4becfff26be84323e1c0965ae076db6bff9817e5c496de4728e1741509cdf72d",
+      "bytes": 2989017,
+      "kind": "historical_index_metadata"
+    },
+    {
+      "path": "/home/ubuntu/jope-node-mirror/corpus/corpus/qualification-v1/index.json",
+      "sha256": "b6a6005f13f8ff9bac3f9c1c0ff713357a2befa565a9d093c1cacd11b8323f3a",
+      "bytes": 1807418,
+      "kind": "historical_index_metadata"
+    },
+    {
+      "path": "/home/ubuntu/jope-node-mirror/corpus/corpus/qualification-v3/index.json",
+      "sha256": "ff9670b098775130f53d1efc4a8d4ba245cf8e3ec7c95854a19a4668cf60f4d0",
+      "bytes": 10061405,
+      "kind": "historical_index_metadata"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-data-history/metadata/body--staging--lineage-a--encodings--CAVEATS.md",
+      "sha256": "cc632eac24d851a46c7057f58a5f2aaea5df1d2da67dcccac1402949ab7ef101",
+      "bytes": 3075,
+      "kind": "etag_pinned_small_s3_metadata_body"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-data-history/metadata/body--staging--lineage-a--encodings--slice500-listing.v1.json",
+      "sha256": "64f828c01295325f1ee461e0badbe23547d0d56a72f5faa2f2563cd83d2bd6b9",
+      "bytes": 11591,
+      "kind": "etag_pinned_small_s3_metadata_body"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-data-history/metadata/body--staging--lineage-a--preserved-archives-20260908-F-D-E--catalog.json",
+      "sha256": "2e25ecf05e031dc0d4e31fe57a863070535ee15c4ee7b039ae92917f2d67aa11",
+      "bytes": 21653,
+      "kind": "etag_pinned_small_s3_metadata_body"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-data-history/metadata/body--staging--lineage-a--genebank--DEPRECATED.md",
+      "sha256": "6950081e315a9e7d5fb0758798835160783ee2f464ed38c2d93d8e765e4edb27",
+      "bytes": 978,
+      "kind": "etag_pinned_small_s3_metadata_body"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-data-history/metadata/body--staging--lineage-b--accepted60000-restored--parallel--.materialization-intent.json",
+      "sha256": "cb877d7b62eeadf58d8720c18349a0466d930ae312367f8546be6fc98c0add57",
+      "bytes": 374,
+      "kind": "etag_pinned_small_s3_metadata_body"
+    }
+  ]
+}

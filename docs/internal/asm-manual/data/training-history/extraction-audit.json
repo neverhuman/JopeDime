@@ -1,0 +1,46 @@
+{
+  "schema": "training_history.extraction_audit.v1",
+  "observed_utc": "2026-09-23T17:33:46.448913+00:00",
+  "status": "PASS",
+  "checks": [
+    {
+      "file": "block-endpoint-metrics.csv",
+      "rows": 1296,
+      "sha256": "5278b22f4115aaf94d4ef45c0dcdc18a3a4c32578a02be7887776af25d563ad6",
+      "every_numeric_value_equals_original_json_pointer": true
+    },
+    {
+      "file": "block-adaptive-validation.csv",
+      "rows": 432,
+      "sha256": "1b797ce9663825e2083084ec4ca1480eeee4fa653e3a97734cc3a06659a1345e",
+      "every_numeric_value_equals_original_json_pointer": true
+    },
+    {
+      "file": "fixed-monitor-metrics.csv",
+      "rows": 16,
+      "sha256": "796d794de8f7560adcd06d559f72f03c478488642fb7e5a76fd149f73e99e761",
+      "every_numeric_value_equals_original_json_pointer": true
+    },
+    {
+      "file": "gen31-epoch-metrics.csv",
+      "rows": 462,
+      "sha256": "1efedc9c5eb14fdb8398fd8646b0eea9b87e6264a648e709c6ed290674b7b34e",
+      "every_numeric_value_equals_original_json_pointer": true
+    }
+  ],
+  "scope": "Original numeric equality, finite values, source hashes and positive source line anchors; block source line anchors identify record or original-log reference while JSON Pointer identifies exact nested metric. No model or corpus bodies loaded.",
+  "source_files": [
+    {
+      "path": "/home/ubuntu/jain-split/jope-dime/docs/audits/worldclass-redteam-20260911/learning-remote-metadata.json",
+      "sha256": "1d2ab6ad9a8df4749bd1da000c6b1ea04d00395a777199907f3b599ad9af528b"
+    },
+    {
+      "path": "/home/ubuntu/JopeDime/docs/legacy/root-docs/audits/worldclass-redteam-20260911/learning-monitor-budget-metadata.json",
+      "sha256": "6c08c960b8a542ed26fc564d29fb78c518f3de32bd97e0b54868cee0d9fc4e6c"
+    },
+    {
+      "path": "/home/ubuntu/jope-prime/registry/compatibility/gen31/train_metrics.jsonl",
+      "sha256": "d57de1b28a8678327c984a82732cd774520db2cb0994d893a45f8a5ea428e312"
+    }
+  ]
+}

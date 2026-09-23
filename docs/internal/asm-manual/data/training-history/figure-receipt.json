@@ -1,0 +1,24 @@
+{
+  "schema": "jope.manual-training-figures/v1",
+  "inputs": {
+    "a100-checkpoint-validation.csv": "867fac4556dfac6c7baff82a303660f4ea5b4c410b21e1d94717bc3a76c10920",
+    "block-adaptive-validation.csv": "1b797ce9663825e2083084ec4ca1480eeee4fa653e3a97734cc3a06659a1345e",
+    "block-endpoint-metrics.csv": "5278b22f4115aaf94d4ef45c0dcdc18a3a4c32578a02be7887776af25d563ad6",
+    "fixed-monitor-metrics.csv": "796d794de8f7560adcd06d559f72f03c478488642fb7e5a76fd149f73e99e761",
+    "gen31-epoch-metrics.csv": "1efedc9c5eb14fdb8398fd8646b0eea9b87e6264a648e709c6ed290674b7b34e",
+    "rtx60100-step-metrics.csv": "d39260191d104cbfc3d0133899cc0a91693560298b6084a0fe59fb629e2b6713"
+  },
+  "outputs": {
+    "training-historical-endpoints.png": "74533f54636fa5b1808456612471ce7fa3d3c0f4edb685c6609a32181bad6dd5",
+    "training-adaptive-validation.png": "939defb052e8eabf971049683857888b810d7df901ce8c368cb069353f0cefbd",
+    "training-fixed-monitor.png": "5d99ce7326be3a7d29f91e4ab82dc7cf8fff19958eb971fd4546c7a108058a5c",
+    "training-gen31-loss.png": "dbbafceb2d4e1621bcdc8a0a0080c00b8013aff57a5231cab102d5dfc5618c6b",
+    "training-gen31-quality.png": "4c0a9f4114cba51f1c6a150dd7f51f7bdbf50967777c3ac78f50dacd9e2acb32",
+    "training-a100-checkpoints.png": "c8981fad33dfde0b1cfb7f797b65fe293dfa6811ac66badaee7d416ce43a770a",
+    "training-rtx60100-steps.png": "1107a925bd27b7145ea7c977c82b791ac60dbdee7c315d064242517fa9482af9"
+  },
+  "matplotlib_version": "3.10.8",
+  "fits": 0,
+  "training_runs": 0,
+  "interpolated_missing_observations": false
+}

@@ -1,0 +1,75 @@
+{
+  "schema": "jope.manual-single-dataset-command-audit/v1",
+  "at": "2026-09-23T17:29:22.873713+00:00",
+  "source_sha": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
+  "binary_sha256": "eab2d5b1b05629020aab3d540d51eb24ba0db18ff0917da188f89a34b6dc5e2b",
+  "commands": [
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "optimize",
+        "capabilities"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"compiled\": true,\n  \"fits\": 0,\n  \"qualified\": false,\n  \"schema\": \"jope.optimize-capabilities/v1\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "optimize",
+        "proof-plan",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Prepare a separately budgeted single-regression operational proof\n\nUsage: jope optimize proof-plan --base-plan <BASE_PLAN> --base-plan-sha256 <BASE_PLAN_SHA256> --configuration <CONFIGURATION> --configuration-sha256 <CONFIGURATION_SHA256> --dataset <DATASET> --resources <RESOURCES> --resources-sha256 <RESOURCES_SHA256> --output <OUTPUT>\n\nOptions:\n      --base-plan <BASE_PLAN>                        \n      --base-plan-sha256 <BASE_PLAN_SHA256>          \n      --configuration <CONFIGURATION>                \n      --configuration-sha256 <CONFIGURATION_SHA256>  \n      --dataset <DATASET>                            \n      --resources <RESOURCES>                        \n      --resources-sha256 <RESOURCES_SHA256>          \n      --output <OUTPUT>                              \n  -h, --help                                         Print help\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "optimize",
+        "run",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Execute or resume the original bounded panel window\n\nUsage: jope optimize run --plan <PLAN> --plan-sha256 <PLAN_SHA256> --manifest <MANIFEST> --datasets <DATASETS> --journal <JOURNAL>\n\nOptions:\n      --plan <PLAN>                \n      --plan-sha256 <PLAN_SHA256>  \n      --manifest <MANIFEST>        \n      --datasets <DATASETS>        \n      --journal <JOURNAL>          \n  -h, --help                       Print help\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "optimize",
+        "report",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Authenticate retained fits and recompute development scores without fitting\n\nUsage: jope optimize report --plan <PLAN> --plan-sha256 <PLAN_SHA256> --manifest <MANIFEST> --datasets <DATASETS> --journal <JOURNAL>\n\nOptions:\n      --plan <PLAN>                \n      --plan-sha256 <PLAN_SHA256>  \n      --manifest <MANIFEST>        \n      --datasets <DATASETS>        \n      --journal <JOURNAL>          \n  -h, --help                       Print help\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "search",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Score a tiny ridge-family GP candidate set on one admitted dataset\n\nUsage: jope search [OPTIONS] --input <INPUT>\n\nOptions:\n      --input <INPUT>  \n      --json           \n  -h, --help           Print help\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "pipeline",
+        "run",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Run dataset -> prepare -> search -> select -> emit and write the receipt\n\nUsage: jope pipeline run [OPTIONS] --dataset <DATASET> --output <OUTPUT>\n\nOptions:\n      --dataset <DATASET>    A 16-hex catalog id resolved in the local cache, or a dataset directory\n      --output <OUTPUT>      Where the preparation, searches, emitted sources and receipt are written\n      --budget <BUDGET>      Total per-cut budget across search and comparison (1..=1000 attempts / 1..=600 active seconds). Multiple cuts reserve half for comparison; an in-flight fit may overrun time [default: evaluations=64,seconds=300]\n      --seed <SEED>          Fold seed for the cut preparation [default: 20260907]\n      --rng-seed <RNG_SEED>  Seed of the search's random streams [default: 20260907]\n      --cuts <CUTS>          How many of the fold partition's cuts to prepare and search (1..=5) [default: 1]\n      --emit <EMIT>          Languages to emit: rust, python, cpp17, cpp20, js, or all [default: rust,python,cpp17,cpp20,js]\n      --policy <POLICY>      The proposal stage: auto and skip record a skip, require fails closed [default: auto]\n      --json                 Print the receipt as one JSON document\n  -h, --help                 Print help\n",
+      "stderr": ""
+    }
+  ],
+  "fits": 0,
+  "models_loaded": false,
+  "new_budget_started": false
+}
