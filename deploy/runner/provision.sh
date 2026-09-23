@@ -89,6 +89,11 @@ install -d -m 0700 -o root -g root /etc/jope-runner
 [[ -f $JOPE_RUNNER_PAT_FILE ]] || { install -m 0600 -o root -g root /dev/null "$JOPE_RUNNER_PAT_FILE"; echo "created empty $JOPE_RUNNER_PAT_FILE — paste the fine-grained PAT (Administration: write on $JOPE_RUNNER_REPO only) into it"; }
 install -d -m 0750 -o root -g root "$JOPE_RUNNER_STATE"
 install -d -m 0755 /opt/jope-runner
+# tmpfiles creates the fixed lock after reboot without replacing an existing
+# locked inode. Never install /dev/null over a live advisory-lock file.
+install -d -m 0755 /etc/tmpfiles.d
+install -m 0644 "$here"/jope-exclusive-cpu.conf /etc/tmpfiles.d/
+systemd-tmpfiles --create /etc/tmpfiles.d/jope-exclusive-cpu.conf
 install -m 0755 "$here"/common.sh "$here"/run.sh "$here"/disk-guard.sh "$here"/prune.sh "$here"/job-started.sh "$here"/job-policy.py /opt/jope-runner/
 install -m 0644 "$here"/jope-runner@.service "$here"/jope-runner@.timer "$here"/jope-runner-prune.service "$here"/jope-runner-prune.timer "$here"/jope-docker-proxy.service /etc/systemd/system/
 # The drop-in was committed but never installed here, so a freshly provisioned host ran with the

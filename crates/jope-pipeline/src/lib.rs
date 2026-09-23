@@ -23,13 +23,18 @@
 pub mod cli;
 pub mod dataset;
 pub mod emit;
+#[cfg(target_os = "linux")]
+pub mod execution;
 pub mod experiment;
+pub mod experiment_v2;
 pub mod front_door;
 pub mod prepare;
 pub mod receipt;
 pub mod run;
 pub mod search;
 pub mod select;
+#[cfg(target_os = "linux")]
+pub mod supervisor;
 
 pub use receipt::{Receipt, RECEIPT_SCHEMA_ID};
 pub use run::{run, Policy, RunOptions};

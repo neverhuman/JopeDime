@@ -30,6 +30,7 @@ dropins=$(systemctl show "jope-runner@$lane.service" -p DropInPaths --value)
 exec 9>"$JOPE_RUNNER_STATE/$lane.lock"
 flock -n 9 || { echo "lane already owned: $lane" >&2; exit 2; }
 jope_runner_check_existing "$lane"
+jope_runner_exclusive_cpu "$lane"
 volume_prefix="jope-$JOPE_RUNNER_DOMAIN-$lane"
 policy="$JOPE_RUNNER_STATE/$lane-policy.json"
 jq -n --arg domain "$JOPE_RUNNER_DOMAIN" --arg lane "$lane" --arg host "$JOPE_RUNNER_HOST" \

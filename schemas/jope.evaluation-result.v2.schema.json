@@ -1,0 +1,147 @@
+{
+  "$defs": {
+    "Consumption": {
+      "additionalProperties": false,
+      "properties": {
+        "accounting_reason": {
+          "type": "string"
+        },
+        "cgroup_peak_memory_bytes": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "cpu_seconds": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "gpu_seconds": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "peak_rss_bytes": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "sampled_peak_rss_bytes": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "wall_seconds": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "accounting_reason"
+      ],
+      "type": "object"
+    },
+    "EvaluationStatus": {
+      "enum": [
+        "completed",
+        "failed",
+        "timed_out",
+        "unavailable",
+        "cancelled",
+        "budget_exhausted"
+      ],
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "consumption": {
+      "$ref": "#/$defs/Consumption"
+    },
+    "fitted_state_sha256": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "predictions_sha256": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "primary": {
+      "format": "double",
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "request_sha256": {
+      "type": "string"
+    },
+    "reused_from_request_sha256": {
+      "description": "A reused fitted predictor retains its original receipt instead of claiming a new fit.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "schema": {
+      "type": "string"
+    },
+    "scored_rows": {
+      "format": "uint",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "secondary": {
+      "additionalProperties": {
+        "format": "double",
+        "type": "number"
+      },
+      "type": "object"
+    },
+    "status": {
+      "$ref": "#/$defs/EvaluationStatus"
+    },
+    "worker_receipt_sha256": {
+      "description": "The worker's command receipt is independently retained and authenticated.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "request_sha256",
+    "status",
+    "secondary",
+    "scored_rows",
+    "consumption",
+    "worker_receipt_sha256"
+  ],
+  "title": "EvaluationResult",
+  "type": "object"
+}

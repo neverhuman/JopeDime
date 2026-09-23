@@ -114,7 +114,60 @@ engine/task fits; missing engines fail that qualification.
 It starts no execution clock. External versions and ASM checkpoint identities still need
 to be added by campaign admission; this preliminary plan is not a complete comparison.
 The low-level fit worker emits complete fitted state and proves reload prediction parity.
-Its process resource limits are supplied by the shared execution controller, still pending.
+The Linux shared execution controller now supplies its process resource limits. Its
+source implementation and live host qualification are separate evidence milestones.
+
+### Bounded comparator execution
+
+`deploy/prepare-panel-runtime.py` pins a checksum-verified binary/build receipt, the
+Python interpreter, adapter source, installed package files and engine versions without
+fitting. It requires the provisioned shared CPU lock and refuses a busy allocation.
+Missing engines remain explicit entries in the comparison roster. The native command
+prefix is `benchmark` for `jope`, or `panel` for `jope-bench`.
+
+Supply that private runtime inventory to the existing plan command:
+
+```sh
+jope benchmark plan --manifest benchmarks/panel.json --datasets DATA_ROOT \
+  --source-sha FULL_SOURCE_SHA --runtimes RUNTIMES.json --output PLAN.json
+jope benchmark run --manifest benchmarks/panel.json --datasets DATA_ROOT \
+  --plan PLAN.json --plan-sha256 PLAN_ID --journal PRIVATE_JOURNAL
+jope benchmark report --manifest benchmarks/panel.json --datasets DATA_ROOT \
+  --plan PLAN.json --plan-sha256 PLAN_ID --journal PRIVATE_JOURNAL
+```
+
+`PLAN_ID` is the semantic identity returned by planning. The journal is outside any
+checkout and `/tmp`. `run` launches the pinned controller as the MainPID of a bounded
+systemd service; it never stops CI services. It requires a delegated cgroup-v2 host,
+the reviewed runner deployment and an idle exclusive CPU allocation. There is no
+process-only fallback. Controller preparation counts inside the original two-hour
+window; the last five minutes are reserved for reporting. Repeating `run` resumes that
+same window, verifies retained inputs and outputs, and does not repeat interrupted fits.
+Jobs cancelled before launch remain eligible to start within the original deadline.
+
+Twenty one-thread fit processes share twenty CPU slots, 64 GiB and zero swap. Dataset
+admission rotates fairly. Independent watchers enforce each 30-second fit deadline,
+including when controller work stalls, and drain forked or detached descendants before
+reusing a slot. Logs are bounded. Resource receipts distinguish measured CPU/wall time,
+cgroup memory, sampled RSS and unknown exact peak RSS. Reusing fold zero during
+confirmation adds no fit cost. Reporting authenticates original commands and rescoring
+inputs, preserves failed/unavailable outcomes, and starts no execution clock.
+
+This plan is explicitly a **comparator qualification**, not the complete ASM panel.
+Neural/generic paired search and the final unchanged thirty-dataset demonstration need
+their additional pinned inputs and measured receipts. The six synthetic host cases in
+`deploy/ci/qualify-execution.py` qualify isolation separately from real panel outcomes.
+
+On 2026-09-23, all six cases passed on xbabe2: timeout with detached descendants,
+successful and timed-out fits during a stalled controller, controller SIGKILL cleanup,
+21 jobs with exactly twenty concurrently active workers, and a kernel-observed memory
+limit failure. Both pool and runner refused the occupied shared lock. These are
+synthetic host proofs, not panel results. The first two attempts exposed missing
+delegated-controller initialization and an incorrect cgroup path comparison; both
+failures and the corrected run are retained in private custody under
+`asm-integration-20260923/workers-integration/host-proof-{1,2,3}-cases`.
+The successful test executable SHA256 is
+`bf1fe4d600564122cab48093969f4934a3d804751ed7b36b183964870fdeadd1`.
 
 ## Experiment and evidence contracts
 
@@ -139,7 +192,8 @@ The initial panel permits twenty isolated workers, at most twenty CPUs, 64 GiB R
 zero swap, one numerical thread per worker, and at most one RTX 3090 task. Its total
 execution limit is two hours including a reserved reporting window. No paid cloud
 services or overlap with the host's exclusive full-CPU CI job is permitted. These
-contracts do not yet enforce process isolation; the worker implementation must prove it.
+contracts are enforced by the shared Linux worker implementation; positive host receipts
+must separately establish the deployed isolation behavior.
 
 Screen every applicable implementation on shared development fold zero. Select the
 true top five frozen method recipes, then confirm them across all five development
