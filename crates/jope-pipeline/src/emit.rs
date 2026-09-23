@@ -158,9 +158,8 @@ pub fn emit(genome: &str, languages: &[Language], directory: &Path) -> Result<Em
 
     let wants_cpp = languages.contains(&Language::Cpp17) || languages.contains(&Language::Cpp20);
     if wants_cpp {
-        match transpile::supports_cpp17(&parsed) {
-            Ok(()) => {
-                let source = transpile::emit_cpp17(&parsed, &options)?;
+        match cpp_source(&parsed)? {
+            Ok(source) => {
                 let artifact = write(directory, "model.cpp", &source)?;
                 for (language, standard) in [
                     (Language::Cpp17, CxxStd::Cxx17),
@@ -176,15 +175,12 @@ pub fn emit(genome: &str, languages: &[Language], directory: &Path) -> Result<Em
                 }
                 targets.push("cpp");
             }
-            Err(unsupported) => {
+            Err(reason) => {
                 for language in [Language::Cpp17, Language::Cpp20] {
                     if languages.contains(&language) {
                         exclusions.push(Exclusion {
                             language: language.as_str(),
-                            reason: format!(
-                                "the C++17 emitter does not cover {}",
-                                unsupported.join(", ")
-                            ),
+                            reason: reason.clone(),
                         });
                     }
                 }
@@ -230,6 +226,19 @@ pub fn emit(genome: &str, languages: &[Language], directory: &Path) -> Result<Em
         genome_sha256: identity.genome_sha256,
         artifacts,
         exclusions,
+    })
+}
+
+/// The one C++ source for a parsed program: [`emit`] writes it to `model.cpp` for both `cpp17`
+/// and `cpp20`, and `jope emit --lang cpp20` takes its bytes from here too. The inner `Err` is
+/// the exclusion reason when the C++ emitter does not cover every element of the program.
+pub fn cpp_source(parsed: &GenomeIr) -> Result<std::result::Result<String, String>> {
+    Ok(match transpile::supports_cpp17(parsed) {
+        Ok(()) => Ok(transpile::emit_cpp17(parsed, &EmitOptions::default())?),
+        Err(unsupported) => Err(format!(
+            "the C++17 emitter does not cover {}",
+            unsupported.join(", ")
+        )),
     })
 }
 

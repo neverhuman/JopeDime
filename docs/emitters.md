@@ -20,8 +20,11 @@ The `emit` example (`cargo run -p feat-math --example emit -- [--all] <program.d
 writes `model.py`/`model.rs` always, `model.cpp`/`model.js` when their gates pass, a sidecar
 `manifest.json` (sha256 and token counts of the sources, math-kernel policy) and `targets.txt`.
 Without `--all` an uncovered target is reported and recorded, never silently dropped; with `--all`
-it is an error naming the unsupported elements. The `jope emit --lang {python,rust,cpp17,cpp20,js}`
-CLI wraps this (`jope emit --lang all` is on `main` since #20).
+it is an error naming the unsupported elements. `jope emit --lang {python,rust,cpp17,cpp20,js,all}`
+is a smaller wrapper over the same `transpile` entry points: it sets the title `jope emit` (so its
+Python and Rust bytes differ from the example's), writes no `manifest.json` or `targets.txt`, and
+its `all` is the four sources. Its `cpp20` output is the `model.cpp` that `jope pipeline run`
+writes, taken from the same function (`jope_pipeline::emit::cpp_source`).
 
 ## Per-target exclusion table
 
