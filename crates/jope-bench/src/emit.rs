@@ -73,6 +73,14 @@ pub fn score_rows(
             report.plan.seed, report.plan.k, report.protocol.screen_fold, report.protocol.top
         );
         for method in &report.methods {
+            let origin = match &method.method.adapter {
+                Some(spec) => format!(
+                    "external adapter {} ({}), controller-scored; ",
+                    spec.name,
+                    spec.version.as_deref().unwrap_or("version unknown")
+                ),
+                None => String::new(),
+            };
             let (value, status, notes) = match stage {
                 Stage::Screen => match method.screen.metrics.get(metric) {
                     Some(v) => (
@@ -125,7 +133,7 @@ pub fn score_rows(
                 source_revision: source_revision.clone(),
                 source_sha256: source_sha256.clone(),
                 source_uri: source_uri.clone(),
-                notes,
+                notes: format!("{origin}{notes}"),
             };
             row.validate()
                 .with_context(|| format!("{}/{}", row.dataset_id, row.method_id))?;
