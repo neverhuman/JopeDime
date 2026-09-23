@@ -90,6 +90,8 @@ cargo run -p jope-arena --bin jope-arena -- elo \
 
 Every row here is a number this tree produced and can reproduce: the ten single-head baselines and the program the search wrote for each dataset, all fitted on the same training rows and scored on the same held-out rows by one evaluator (`docs/same-cut-bench.md`). The search sees only a cut's training rows, and its deep row is the *procedure* re-run on every cut, not one program chosen with knowledge of the other cuts' held-out rows. Bold is the searched program.
 
+**The datasets are a favourable selection.** They are the `test-10` collection, chosen from the published ladder where the historical engine ranked first (`docs/datasets.md`), and they are used here because they are the only committed regression data. Identical cuts make the comparison between methods fair on these ten; they say nothing about a broader panel. The frozen 30-dataset PMLB panel of the experiment contract (`docs/asm.md`) excludes them on purpose; a same-cut run over it is the next evidence step.
+
 | rank | method | Elo | avg rank | dataset wins | coverage |
 | ---: | --- | ---: | ---: | ---: | --- |
 | 1 | baseline.gpr | 1644.0 | 1.80 | 4 | 5/10 |
