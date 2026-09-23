@@ -66,7 +66,8 @@ SAMECUT_DOC = ROOT / "docs/same-cut-bench.md"
 REPORT_SCHEMA = "jope.bench-report/v2"
 # The searched program's ladder id (the deep stage re-runs the search on every cut).
 SEARCHED = "afm.lite-race.v1.resampled"
-# The owner's stated reference point for the same program written by a large language model.
+# The owner's stated reference point for a large language model writing a program for the same
+# task; rendered as a cost comparison, never as a measured or quality claim.
 LLM_REFERENCE_HOURS = 1
 LLM_REFERENCE_TOKENS = 10_000_000
 

@@ -54,6 +54,15 @@ enum Command {
         /// Extra program: `NAME=<dsl>` or `NAME=@<file>` (repeatable).
         #[arg(long = "program")]
         programs: Vec<String>,
+        /// External engine as `NAME=<command...>` (repeatable; whitespace-split, no quoting).
+        /// The command follows the jope.bench-adapter/v1 contract; `<command> --version` is
+        /// probed before any dataset runs. Reference adapters: crates/jope-bench/adapters/
+        /// (`python3 crates/jope-bench/adapters/xgboost_adapter.py` and siblings).
+        #[arg(long = "adapter")]
+        adapters: Vec<String>,
+        /// Wall-clock cap per adapter invocation, in seconds.
+        #[arg(long, default_value_t = 600.0)]
+        adapter_timeout: f64,
         /// Also run the search on the screen cut's training rows and benchmark its program
         /// (regression datasets only; others are skipped when this is set).
         #[arg(long)]
@@ -107,6 +116,8 @@ fn main() -> Result<()> {
             top,
             heads,
             programs,
+            adapters,
+            adapter_timeout,
             search,
             resample_search,
             search_pop,
@@ -130,6 +141,17 @@ fn main() -> Result<()> {
             let mut extra_methods = Vec::new();
             for spec in &programs {
                 extra_methods.push(methods::program(spec)?);
+            }
+            for text in &adapters {
+                let mut spec = jope_bench::adapter::parse_spec(text, adapter_timeout)?;
+                spec.probe()?;
+                eprintln!(
+                    "adapter {}: {} ({})",
+                    spec.name,
+                    spec.version.as_deref().unwrap_or("?"),
+                    spec.command.join(" ")
+                );
+                extra_methods.push(methods::adapter(spec));
             }
             let search_config = search.then_some(SearchConfig {
                 pop: search_pop,

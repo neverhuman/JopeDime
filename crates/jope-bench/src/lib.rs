@@ -13,15 +13,21 @@
 //! multiclass on the schema-bound v3 table API (ROC AUC, log loss, Brier; macro-F1, accuracy).
 //! The search is regression-only for now.
 //!
+//! Tier-2 baselines are external engines (XGBoost, LightGBM, CatBoost, a scikit-learn forest)
+//! run as subprocesses on the same cuts ([`adapter`]): the controller hands them a cut's training
+//! rows and the held-out features only, and scores the predictions they return with the same
+//! evaluator, so their rows are as honest as a program's.
+//!
 //! What it deliberately does not do: touch the catalog's sealed `test.csv` (cuts are made from
 //! training rows only), reuse the pipeline's private evaluator (it carries its own, [`eval`], so
 //! a change there cannot silently change a benchmark), or depend on any crate outside this
-//! workspace. Tier-2 external adapters are a later step.
+//! workspace (adapters are processes, not dependencies).
 //!
 //! Outputs are `jope.bench-report/v2` files ([`report`]) and, from those, `scores.csv` rows plus
 //! registries for a local `jope-arena` track ([`emit`]), so the same Elo ladder code that ranks the
 //! published benchmark ranks this one.
 
+pub mod adapter;
 pub mod cuts;
 pub mod emit;
 pub mod eval;
