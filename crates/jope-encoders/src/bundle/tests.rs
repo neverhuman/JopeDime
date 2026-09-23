@@ -108,7 +108,24 @@ fn canonical_policy_identities_are_reproducible() {
         vocab, JOPE_VOCABULARY_CANONICAL_SHA256,
         "actual vocab={vocab}"
     );
-    assert_eq!(grammar, JOPE_GRAMMAR_SHA256, "actual grammar={grammar}");
+    assert_eq!(
+        grammar, JOPE_GRAMMAR_CONTENT_SHA256,
+        "actual grammar={grammar}"
+    );
+    // The frozen file identity remains independent of parser feature unification.
+    assert_eq!(shipped_manifest().grammar_sha256, JOPE_GRAMMAR_SHA256);
+}
+
+#[test]
+fn canonical_json_keeps_roundtrip_precision() {
+    // These grammar-sized numbers used to round differently when a downstream
+    // crate enabled serde_json/float_roundtrip. The feature is now explicit here.
+    let bytes = br#"{"b":[0.38040102094831724,0.007316577439958028],"a":1.2523828908186794}"#;
+    let value: serde_json::Value = serde_json::from_slice(bytes).unwrap();
+    assert_eq!(
+        canonical_json_bytes(&value).unwrap(),
+        br#"{"a":1.2523828908186794,"b":[0.38040102094831724,0.007316577439958028]}"#
+    );
 }
 
 #[test]

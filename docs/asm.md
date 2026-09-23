@@ -193,6 +193,12 @@ CPU numerical parity requires a successful receipt for the exact source and work
 executable; implementation and fixture tests do not supply that receipt. Existing
 native GPU entry-point holds and accepted regression checkpoint restrictions remain in force.
 
+Bundle validation pins decimal parsing with `serde_json/float_roundtrip`. The
+unchanged component manifest retains its historical grammar identifier, computed
+with the original lower-precision parser; validation separately checks the grammar's
+full-precision content digest. Both identities and the original metadata file digest
+are required, so dependency feature unification cannot change admission.
+
 The paired evaluator preregisters 64 neural slots plus 16 exploration slots against
 80 generic slots under equal 120-second arm allowances. Encoding and proposal work
 count inside the neural allowance. Canonical duplicates retain their origins and

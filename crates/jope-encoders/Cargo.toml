@@ -19,7 +19,8 @@ cuda = ["candle-core/cuda", "candle-nn/cuda"]
 anyhow.workspace = true
 clap.workspace = true
 serde.workspace = true
-serde_json.workspace = true
+# Bundle content hashes must not depend on another workspace crate enabling this.
+serde_json = { workspace = true, features = ["float_roundtrip"] }
 sha2.workspace = true
 blake2 = "0.10"
 candle-core = "0.11.0"

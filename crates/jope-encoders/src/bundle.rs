@@ -49,6 +49,10 @@ const JOPE_VOCABULARY_CANONICAL_SHA256: &str =
     "0701a24881e1e6c9899da746e405873b1e58935ffd19cb60073b8c824281ee7d";
 const JOPE_GRAMMAR_SHA256: &str =
     "a455ee2a435cf105d961ff42a397673779ec25a7c06cacf7061b9f1471c9c180";
+// The frozen manifest above records the original lossy serde_json parse. Keep
+// that declaration unchanged, but verify content with explicit roundtrip f64s.
+const JOPE_GRAMMAR_CONTENT_SHA256: &str =
+    "7664781efab15adebe94829467e37221bb475e5ee6e0e6cde74cf47045b1aa30";
 const OPERATOR_REGISTRY_SHA256: &str =
     "62c7ab26dfcf0f6c0047fe6c9eec192b0440a7080bac92d772c08eed9279c8cb";
 const OPERATOR_REGISTRY_SEMANTIC_SHA256: &str =
