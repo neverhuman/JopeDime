@@ -76,7 +76,7 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
-    /// Emit working Python / Rust / C++17 / JavaScript from a GP genome.
+    /// Emit working Python / Rust / C++17 / C++20 / JavaScript from a program.
     Emit {
         #[arg(long, default_value = DEFAULT_GENOME)]
         genome: String,
