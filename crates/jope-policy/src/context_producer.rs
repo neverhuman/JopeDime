@@ -8,7 +8,7 @@ use anyhow::{ensure, Context, Result};
 use candle_core::{DType, Device, Tensor};
 use hyperion::{
     data::Matrix,
-    hyperion::{fit_quantile_bounds, load_settings},
+    hyperion::{fit_quantile_bounds, load_settings, HyperionSweepSettings},
     hyperion_v7::{
         backend::V7Model, config::SweepPlan, grid::quantize_u8_with_bounds,
         sweep::run_composite_sweep,
@@ -106,12 +106,7 @@ impl CpuProducer {
             "encoder lineage differs from accepted component assets"
         );
         files.hyperion_weights.read(512 << 20)?;
-        files.hyperion_manifest.read(1 << 20)?;
-        let (settings, manifest_sha) = load_settings(&files.hyperion_manifest.path, HYPERION_SEED)?;
-        ensure!(
-            manifest_sha == HYPERION_MANIFEST && settings.emb_dim == 128,
-            "Hyperion manifest/settings changed"
-        );
+        let settings = verified_hyperion_settings(&files.hyperion_manifest)?;
         let hyperion = V7Model::load_cpu(&files.hyperion_weights.path, &settings)?;
         // Loaders use paths internally: rehash after load as well as before it.
         files.hyperion_weights.read(512 << 20)?;
@@ -447,6 +442,20 @@ pub(super) fn validate_hex(s: &str, length: usize) -> Result<()> {
     );
     Ok(())
 }
+fn verified_hyperion_settings(manifest: &AssetFile) -> Result<HyperionSweepSettings> {
+    ensure!(
+        manifest.sha256 == HYPERION_MANIFEST,
+        "Hyperion manifest pin changed"
+    );
+    manifest.read(1 << 20)?;
+    // load_settings returns a legacy 64-bit identifier, not a SHA-256 digest.
+    // Authenticate the original file bytes before and after its path-based read.
+    let (settings, _) = load_settings(&manifest.path, HYPERION_SEED)?;
+    manifest.read(1 << 20)?;
+    ensure!(settings.emb_dim == 128, "Hyperion embedding width changed");
+    Ok(settings)
+}
+
 pub(super) fn vector(v: &[f32], length: usize) -> Result<()> {
     ensure!(
         v.len() == length && v.iter().all(|v| v.is_finite()),
@@ -470,6 +479,22 @@ pub(super) fn validate_rows(rows: &[Vec<f64>]) -> Result<usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn accepted_manifest_uses_sha256_bytes_not_legacy_identifier() {
+        let mut manifest = AssetFile {
+            path: PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("tests/fixtures/accepted-hyperion-manifest.json"),
+            sha256: HYPERION_MANIFEST.into(),
+        };
+        let (_, legacy_id) = load_settings(&manifest.path, HYPERION_SEED).unwrap();
+        assert_eq!(legacy_id.len(), 16);
+        assert_ne!(legacy_id, manifest.sha256);
+        let settings = verified_hyperion_settings(&manifest).unwrap();
+        assert_eq!(settings.emb_dim, 128);
+        assert_eq!(settings.seed, HYPERION_SEED);
+        manifest.sha256 = "0".repeat(64);
+        assert!(verified_hyperion_settings(&manifest).is_err());
+    }
     #[test]
     fn assembly_uses_all_three_frozen_normalizers_including_target() {
         let mut tensors = BTreeMap::new();
