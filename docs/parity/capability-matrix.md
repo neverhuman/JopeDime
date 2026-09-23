@@ -6,6 +6,11 @@ Legend — `status`: `moved` (present here, target + test recorded), `new` (no p
 
 ## Counts
 
+This is a source-migration inventory. A `moved` row establishes a recorded destination;
+its `test` cell names evidence to inspect and may be `none`. Neither a destination nor a test
+name establishes execution, passing coverage, live operational qualification or deployment.
+Use receipts bound to the relevant source SHA, command and execution date for those claims.
+
 Recomputed from the rows below and checked by `deploy/ci/parity-matrix.sh`: a tally that disagrees
 with them fails the gate. Two lanes adding a row of the same kind each bump the same cell to the
 same number, so git reports no conflict — update this table from the rows, not from the last value

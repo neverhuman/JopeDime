@@ -76,11 +76,15 @@ Nothing large is in git. Both stores are content-addressed and manifest-pinned:
   `$JOPE_HOME/datasets/{blobs,by-id}` with `.partial` + rename on hash match, and
   `JOPE_OFFLINE=1` serves the cache only. `JOPE_REGISTRY` (default `$JOPE_HOME/datasets/by-id`) is
   the directory of `<hash>/{train.csv,test.csv,meta.json}` the engine reads.
-- **Learning store** — `s3://veox-jopedime-learning-use2` (HWM ledger, scores, corpora,
-  checkpoints, wave pointers; `jope learn` / `jope hwm` / `jope scores`, WP11).
+- **Learning store** — `s3://veox-jopedime-learning-use2`: the HWM ledger and scores layout that
+  `jope-learning` writes when a `--store` / `JOPE_LEARNING_URL` mirror is configured
+  (`jope-learning hwm` / `jope-learning scores`, WP11). On 2026-09-23 the bucket held only `staging/` second
+  copies and none of that layout ([docs/learning.md](learning.md)).
 - **Archive** — `s3://veox-jopedime-archive-use2`: the unfiltered git bundles
   (`git/20260916-…`, `git/20260918-jope-dime-all-refs.bundle`, with the filter-repo commit-map and
-  ref-map beside them) and evidence batches.
+  ref-map beside them), `git-bundles/20260921/` and the `staging/node-high-value/` second copy.
+  No `evidence/` batches were found in the 2026-09-23 current-object inventory.
+  Per-prefix status: [catalogs/s3.json](../catalogs/s3.json).
 
 Runtime roots (`JOPE_HOME`, `JOPE_STATE`, `JOPE_REGISTRY`, `SOTARENA_ROOT`,
 `SOTARENA_REPORTER_ROOT`) are resolved once by `jope-paths`

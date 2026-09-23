@@ -102,9 +102,12 @@ existing manifest must be byte-identical (otherwise: new `bundle_id`).
 Wiring consumers:
 
 ```sh
-export HYPERION_V7_WEIGHTS=$(jope models path hyperion-v7 model.safetensors)
+export HYPERION_V7_WEIGHTS="$(jope models path hyperion-v7)"
 export JOPE_MODELS_ROOT=$(jope models path jope-prime-gen31-v2)   # starforge parity tests
 ```
+
+`HYPERION_V7_WEIGHTS` is the bundle directory containing both `model.safetensors` and
+`manifest.json`, as required by `crates/hyperion/src/hyperion.rs`; it is not a weights-file path.
 
 ## Environment
 

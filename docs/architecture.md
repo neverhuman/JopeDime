@@ -137,9 +137,13 @@ stage:
 - **S3 (us-east-2, account-private):** `s3://veox-jopedime-models-use2` (`blobs/sha256/<sha>` +
   `bundles/<id>/manifest.json`; bundles `policy-step-60000`, `hyperion-v7`,
   `jope-prime-gen31-v2`), `s3://veox-jopedime-datasets-use2` (blobs, catalog, collections),
-  `s3://veox-jopedime-learning-use2` (HWM ledger, scores, corpora, checkpoints, wave pointers),
-  `s3://veox-jopedime-archive-use2` (git bundles `git/20260916-…` and
-  `git/20260918-jope-dime-all-refs.bundle`, evidence batches). CI reaches them only through the
+  `s3://veox-jopedime-learning-use2` (the `jope-learning` layout — HWM ledger, scores — once a
+  `--store` mirror is configured; on 2026-09-23 it held only `staging/` second copies, see
+  [docs/learning.md](learning.md)), `s3://veox-jopedime-archive-use2` (git bundles
+  `git/20260916-…`, `git/20260918-jope-dime-all-refs.bundle` and `git-bundles/20260921/`, plus
+  the `staging/node-high-value/` second copy; no `evidence/` batches in the 2026-09-23
+  current-object inventory). Prefix status, sizes
+  and replicas: [catalogs/s3.json](../catalogs/s3.json). CI reaches them only through the
   OIDC roles `JopeDimeCiRead`, `JopeDimeTrainer`, `JopeDimeRelease`.
 - **Local:** the five roots of [ADR-0003](adr/ADR-0003-runtime-roots.md) — `JOPE_HOME` (the
   checkout), `JOPE_STATE` (mutable state, the restored `parallel/` tree), `JOPE_REGISTRY`
