@@ -104,6 +104,10 @@ recipe fits median imputation, capped one-hot categories and missing indicators 
 rows only. External adapters retain their own engine precision; the controller uses f64
 scores, a probability row-sum tolerance of 1e-6, and a log-loss floor of 1e-15, without
 renormalizing predictions. These constants are pinned before campaign scoring.
+Install the external engines with the existing locked `foundry` extra in addition to
+`benchmark`: `uv sync --project python --locked --extra cpu --extra benchmark --extra foundry`.
+The required Python CI lane installs both extras and executes all twelve synthetic
+engine/task fits; missing engines fail that qualification.
 
 `jope benchmark plan --manifest benchmarks/panel.json --datasets PATH --source-sha FULL_SHA
 --output PLAN.json` writes a private, immutable Rust screening plan after verification.
