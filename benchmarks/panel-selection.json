@@ -1,0 +1,165 @@
+{
+  "schema": "jope.panel-selection/v1",
+  "panel_id": "asm-private-30-v1",
+  "repository": "EpistasisLab/pmlb",
+  "revision": "7c1f4bdc00136dc2e55c87fa6b8ba6e8af6d1a68",
+  "seed": 20260922,
+  "selection": "Ten datasets per original PMLB task, selected from pinned public metadata before any ASM outcome measurement. Bounded size (150\u20138192 rows, at most 64 features), numeric and categorical inputs, no alternate-label conversion. Excludes the historical favorable test-10, ordinal regression targets, the bodyfat target-proxy feature set and duplicate dataset variants. Regression includes explicitly identified simulated data. Preserve every selected dataset, failure and loss; no outcome-based replacement. Group known date fields and identical feature rows. Unrecorded subject/time dependencies remain a limitation, not an independence claim.",
+  "datasets": [
+    {
+      "id": "197_cpu_act",
+      "task": "regression",
+      "group_columns": []
+    },
+    {
+      "id": "225_puma8NH",
+      "task": "regression",
+      "group_columns": []
+    },
+    {
+      "id": "230_machine_cpu",
+      "task": "regression",
+      "group_columns": []
+    },
+    {
+      "id": "522_pm10",
+      "task": "regression",
+      "group_columns": [
+        "day"
+      ]
+    },
+    {
+      "id": "529_pollen",
+      "task": "regression",
+      "group_columns": []
+    },
+    {
+      "id": "579_fri_c0_250_5",
+      "task": "regression",
+      "group_columns": []
+    },
+    {
+      "id": "auto_insurance_price",
+      "task": "regression",
+      "group_columns": []
+    },
+    {
+      "id": "690_visualizing_galaxy",
+      "task": "regression",
+      "group_columns": []
+    },
+    {
+      "id": "712_chscase_geyser1",
+      "task": "regression",
+      "group_columns": []
+    },
+    {
+      "id": "503_wind",
+      "task": "regression",
+      "group_columns": [
+        "year",
+        "month"
+      ]
+    },
+    {
+      "id": "breast_cancer_wisconsin_diagnostic",
+      "task": "binary",
+      "group_columns": []
+    },
+    {
+      "id": "credit_approval_germany",
+      "task": "binary",
+      "group_columns": []
+    },
+    {
+      "id": "congressional_voting_records",
+      "task": "binary",
+      "group_columns": []
+    },
+    {
+      "id": "haberman",
+      "task": "binary",
+      "group_columns": []
+    },
+    {
+      "id": "ionosphere",
+      "task": "binary",
+      "group_columns": []
+    },
+    {
+      "id": "sonar",
+      "task": "binary",
+      "group_columns": []
+    },
+    {
+      "id": "spambase",
+      "task": "binary",
+      "group_columns": []
+    },
+    {
+      "id": "phoneme",
+      "task": "binary",
+      "group_columns": []
+    },
+    {
+      "id": "tic_tac_toe",
+      "task": "binary",
+      "group_columns": []
+    },
+    {
+      "id": "horse_colic_surgery",
+      "task": "binary",
+      "group_columns": []
+    },
+    {
+      "id": "iris",
+      "task": "multiclass",
+      "group_columns": []
+    },
+    {
+      "id": "wine_recognition",
+      "task": "multiclass",
+      "group_columns": []
+    },
+    {
+      "id": "car_evaluation",
+      "task": "multiclass",
+      "group_columns": []
+    },
+    {
+      "id": "balance_scale",
+      "task": "multiclass",
+      "group_columns": []
+    },
+    {
+      "id": "dermatology",
+      "task": "multiclass",
+      "group_columns": []
+    },
+    {
+      "id": "segmentation",
+      "task": "multiclass",
+      "group_columns": []
+    },
+    {
+      "id": "vehicle",
+      "task": "multiclass",
+      "group_columns": []
+    },
+    {
+      "id": "optdigits",
+      "task": "multiclass",
+      "group_columns": []
+    },
+    {
+      "id": "penguins",
+      "task": "multiclass",
+      "group_columns": []
+    },
+    {
+      "id": "tae",
+      "task": "multiclass",
+      "group_columns": []
+    }
+  ]
+}

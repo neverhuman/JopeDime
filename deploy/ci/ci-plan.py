@@ -12,10 +12,10 @@ LANES = ("changes", "hygiene", "rust-check", "rust-test", "emitters", "inputs", 
 IMAGE = r"deploy/runner/|deploy/docker/|\.github/actions/|deploy/ci/(cargo-artifact|receipt|results|ci-plan|fast-lane|aggregate|coverage)"
 COMMON = rf"Cargo\.(toml|lock)$|rust-toolchain\.toml$|{IMAGE}|\.github/workflows/ci\.yml$"
 FILTERS = {
-    "rust": rf"^(crates/|{COMMON}|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/)",
+    "rust": rf"^(crates/|benchmarks/|schemas/|{COMMON}|\.config/nextest\.toml$|deny\.toml$|deploy/ci/|deploy/systemd/)",
     "emitters": rf"^(crates/feat-math/|datasets/test/|deploy/ci/emitters|{COMMON})",
     "inputs": rf"^(datasets/synthetic/|crates/jope-cli/|{COMMON})",
-    "python": rf"^(python/|deploy/systemd/|{IMAGE}|\.github/workflows/ci\.yml$)",
+    "python": rf"^(python/|benchmarks/|deploy/systemd/|{IMAGE}|\.github/workflows/ci\.yml$)",
     "e2e": rf"^(crates/(jope-pipeline|jope-cli|jope-engine|jope-datasets|feat-math)/|datasets/test/|schemas/|deploy/ci/(e2e-smoke|emitters)|{COMMON})",
 }
 GATES = {"rust-check": "rust", "rust-test": "rust", "emitters": "emitters", "inputs": "inputs", "python": "python", "e2e-smoke": "e2e"}

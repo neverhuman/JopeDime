@@ -1363,3 +1363,22 @@ No source fix is landed by this closure; runner sizing remains withdrawn, lint d
 
 Closure completed; three registered product checkouts remain. Both named lanes and
 generated restorations are absent; immutable archives, local source branches and receipts remain.
+
+## 2026-09-22T23:04:08.794663+00:00 — merged ASM prerequisite lanes closure
+
+PR63 and PR65 completed independent exact-head native review, full manual CI, guarded
+merge and successful main-guard. Source heads 32e99f9214bc0cf86cfa1c53ed2393bcfa1e4df6
+and 09b55e176d627dc502b0969a0adcc78279cfdf15 are preserved in all-refs.bundle plus
+pr65-correction.bundle under /home/ubuntu/jope-rescue-20260921/asm-demonstration-20260922/closed-pr-lanes.
+Independent bare restoration verifies exact heads/trees, connectivity and no alternates.
+Complete s3-live target archive independently restored with 3546 entries and
+1555947833 file bytes; fresh source manifest still matches every archived entry.
+Current status/stash/all-local-only commits/remote tags and privileged consumer scan
+(no hits or permission errors) are in pre-removal.json. No nested mounts observed.
+Remove only s3-live and agents-doc via git worktree remove, then the verified generated
+restore.git and restore-files under codex-verification. Retain source branches, stash,
+immutable bundles/archive and all lifecycle receipts. Canonical is retained with its
+reused target and newly claimed ASM contract branch. No panel/training run started.
+
+Completed: both merged lanes and generated restorations are absent; only the canonical
+product checkout remains registered. Immutable custody and local source refs remain.
