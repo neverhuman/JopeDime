@@ -339,7 +339,9 @@ pub struct Feedback {
     pub fitted_artifact_sha256: Option<String>,
     pub reason: Option<String>,
     pub oof: Option<OofEvidence>,
-    /// No launched attempt exists; retry is permitted inside the original clock.
+    /// At least one required operation was not admitted. Retry is permitted only
+    /// inside the original arm clock. Expired final receipts retain this historical
+    /// observation; the flag does not authorize a later launch.
     pub retryable_inventory: bool,
 }
 impl Feedback {
@@ -1232,6 +1234,20 @@ fn run_population<B: Backend, V: Variation>(
             .observations
             .chunk_by(|a, b| a.candidate.generation == b.candidate.generation)
         {
+            // A nonattempt at expiry remains that original inventory. The
+            // bounded pool may now report BudgetExhausted for its same request;
+            // this cannot change a final receipt or admit another fit. All
+            // completed observations still require exact fitted-output replay.
+            let frozen_inventory = group
+                .iter()
+                .filter(|o| {
+                    saved.stop_reason == "original_deadline"
+                        && backend.now_ms() >= deadline
+                        && o.feedback.retryable_inventory
+                        && o.feedback.status != EvaluationStatus::Completed
+                })
+                .map(|o| o.candidate.id_sha256.clone())
+                .collect::<BTreeSet<_>>();
             let batch = group
                 .iter()
                 .map(|o| o.candidate.clone())
@@ -1246,6 +1262,23 @@ fn run_population<B: Backend, V: Variation>(
                 "saved execution cache changed"
             );
             for observation in group {
+                if frozen_inventory.contains(&observation.candidate.id_sha256) {
+                    let replay: Feedback = serde_json::from_value(
+                        current
+                            .get(&observation.candidate.id_sha256)
+                            .context("saved inventory outcome missing")?
+                            .clone(),
+                    )?;
+                    ensure!(
+                        replay.status != EvaluationStatus::Completed
+                            && replay.loss.is_none()
+                            && replay.physical_fit_starts.is_none_or(|n| n == 0)
+                            && replay.fitted_artifact_sha256.is_none()
+                            && replay.oof.is_none(),
+                        "expired inventory gained fitted evidence"
+                    );
+                    continue;
+                }
                 ensure!(
                     current
                         .get(&observation.candidate.id_sha256)
@@ -1287,7 +1320,12 @@ fn run_population<B: Backend, V: Variation>(
                 feedback,
             });
         }
-        if observations.iter().any(|o| o.feedback.retryable_inventory) {
+        // A nonattempt is resumable only before this arm's original cutoff.
+        // Preserve its exact inventory, but do not strand all completed fits
+        // waiting for the other arm or global campaign window to expire.
+        if backend.now_ms() < deadline
+            && observations.iter().any(|o| o.feedback.retryable_inventory)
+        {
             let inventory = serde_json::to_value(&observations)?;
             backend.persist(
                 &receipt.arm,
@@ -1729,6 +1767,7 @@ mod tests {
         dispatched: Vec<Candidate>,
         unknown_counter: bool,
         admission_unavailable: bool,
+        expire_during_admission: bool,
     }
     impl Default for FixtureBackend {
         fn default() -> Self {
@@ -1741,6 +1780,7 @@ mod tests {
                 dispatched: vec![],
                 unknown_counter: false,
                 admission_unavailable: false,
+                expire_during_admission: false,
             }
         }
     }
@@ -1766,18 +1806,26 @@ mod tests {
         ) -> Result<Vec<Feedback>> {
             if self.admission_unavailable {
                 self.admission_unavailable = false;
+                if self.expire_during_admission {
+                    self.time = self.deadlines[&arm.id_sha256];
+                }
                 return Ok(candidates
                     .iter()
-                    .map(|c| Feedback {
-                        candidate_sha256: c.id_sha256.clone(),
-                        status: EvaluationStatus::Unavailable,
-                        loss: None,
-                        physical_fit_starts: Some(0),
-                        worker_receipt_sha256: None,
-                        fitted_artifact_sha256: None,
-                        reason: Some("synthetic missing dependency".into()),
-                        oof: None,
-                        retryable_inventory: true,
+                    .map(|c| {
+                        self.cache
+                            .get(&c.id_sha256)
+                            .cloned()
+                            .unwrap_or_else(|| Feedback {
+                                candidate_sha256: c.id_sha256.clone(),
+                                status: EvaluationStatus::Unavailable,
+                                loss: None,
+                                physical_fit_starts: Some(0),
+                                worker_receipt_sha256: None,
+                                fitted_artifact_sha256: None,
+                                reason: Some("synthetic missing dependency".into()),
+                                oof: None,
+                                retryable_inventory: true,
+                            })
                     })
                     .collect());
             }
@@ -2438,6 +2486,138 @@ mod tests {
         assert!(resumed.winner().is_some());
         Ok(())
     }
+    #[test]
+    fn nonattempt_at_original_arm_cutoff_finalizes_without_new_deadline() -> Result<()> {
+        let plan = comparison(80);
+        let mut backend = FixtureBackend {
+            admission_unavailable: true,
+            expire_during_admission: true,
+            ..Default::default()
+        };
+        let original_start = backend.time;
+        let mut variation = FixtureVariation {
+            started: backend.started.clone(),
+        };
+        let receipt = run_generic(&mut backend, &plan, &mut variation)?;
+        assert_eq!(
+            receipt.deadline_unix_ms,
+            original_start + plan.seconds * 1000
+        );
+        assert_eq!(receipt.stop_reason, "original_deadline");
+        assert_eq!(receipt.observations.len(), 80);
+        assert!(receipt
+            .observations
+            .iter()
+            .all(|o| o.feedback.status == EvaluationStatus::Unavailable
+                && o.feedback.retryable_inventory));
+        assert!(backend.dispatched.is_empty());
+        assert!(backend
+            .journal
+            .contains_key(&format!("{}/search-receipt", receipt.arm.id_sha256)));
+        assert!(backend.journal.contains_key(&format!(
+            "{}/generation-0000-observed",
+            receipt.arm.id_sha256
+        )));
+        assert!(freeze_winner(&mut backend, &plan, &receipt)?.is_none());
+        backend.time += 100;
+        let resumed = run_generic(&mut backend, &plan, &mut variation)?;
+        assert_eq!(
+            serde_json::to_value(&receipt)?,
+            serde_json::to_value(&resumed)?
+        );
+        assert!(backend.dispatched.is_empty());
+        assert_eq!(backend.deadlines.len(), 1);
+        Ok(())
+    }
+
+    #[test]
+    fn expired_nonattempt_preserves_completed_winner_and_resume_integrity() -> Result<()> {
+        let plan = comparison(80);
+        let arm = plan.arm(true)?;
+        let initial = synthetic_initial(&arm);
+        let mut backend = FixtureBackend::default();
+        let deadline = backend.begin_arm(&arm)?;
+        // Synthetic retained callback outcomes from the same original window.
+        backend.evaluate(&arm, &plan.selection, &initial[..79])?;
+        backend.admission_unavailable = true;
+        backend.expire_during_admission = true;
+        let mut variation = FixtureVariation {
+            started: backend.started.clone(),
+        };
+        let receipt = run_population(
+            &mut backend,
+            &plan,
+            &mut variation,
+            arm.clone(),
+            deadline,
+            initial.clone(),
+            None,
+        )?;
+        assert_eq!(receipt.stop_reason, "original_deadline");
+        assert_eq!(
+            receipt
+                .observations
+                .iter()
+                .filter(|o| o.feedback.status == EvaluationStatus::Completed)
+                .count(),
+            79
+        );
+        assert_eq!(backend.dispatched.len(), 79);
+        let frozen =
+            freeze_winner(&mut backend, &plan, &receipt)?.expect("retained completed winner");
+        assert_eq!(frozen.candidate.origin, Origin::NeuralPolicy);
+        backend.time += 100;
+        let resumed = run_population(
+            &mut backend,
+            &plan,
+            &mut variation,
+            arm.clone(),
+            deadline,
+            initial.clone(),
+            None,
+        )?;
+        assert_eq!(
+            serde_json::to_value(&receipt)?,
+            serde_json::to_value(&resumed)?
+        );
+        assert_eq!(backend.dispatched.len(), 79);
+        assert_eq!(backend.deadlines[&arm.id_sha256], deadline);
+        // A later cache inconsistency cannot turn the original nonattempt into
+        // a measurement hidden by the expiry exception.
+        let pending = initial.last().unwrap();
+        let mut forged = backend.cache[&frozen.candidate.id_sha256].clone();
+        forged.candidate_sha256 = pending.id_sha256.clone();
+        backend.cache.insert(pending.id_sha256.clone(), forged);
+        assert!(run_population(
+            &mut backend,
+            &plan,
+            &mut variation,
+            arm.clone(),
+            deadline,
+            initial.clone(),
+            None
+        )
+        .is_err());
+        backend.cache.remove(&pending.id_sha256);
+        // The expiry exception must never exempt a completed predictor.
+        backend
+            .cache
+            .get_mut(&frozen.candidate.id_sha256)
+            .unwrap()
+            .loss = Some(999.);
+        assert!(run_population(
+            &mut backend,
+            &plan,
+            &mut variation,
+            arm,
+            deadline,
+            initial,
+            None
+        )
+        .is_err());
+        Ok(())
+    }
+
     #[test]
     fn canonical_alias_slot_keeps_origin_without_duplicate_fit() -> Result<()> {
         let plan = comparison(80);
