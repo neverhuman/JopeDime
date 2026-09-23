@@ -1314,7 +1314,9 @@ struct SlowState {
     newest_wave_name: String,
     /// job id -> (attempt the path came from, resolved train_progress.json).
     progress_paths: HashMap<String, (u64, PathBuf)>,
-    metrics_mtimes: HashMap<String, SystemTime>,
+    /// job id -> the train_metrics.jsonl the TRAINER STATE history was last
+    /// read from, so a requeue re-reads even when the mtimes collide.
+    metrics_stamps: HashMap<String, MetricsStamp>,
     gate_generations: IntervalGate,
     generations: Vec<(String, Option<f64>)>,
     gate_dl_history: IntervalGate,
@@ -1322,9 +1324,9 @@ struct SlowState {
     /// run-dir name -> (attempt the path came from, resolved
     /// train_metrics.jsonl). Skips the tree walk without surviving a requeue.
     dl_metrics_paths: HashMap<String, (u64, PathBuf)>,
-    /// run-dir name -> (metrics mtime, parsed points) so a steady-state pass
-    /// only re-reads the generation that is actually still writing.
-    dl_points_cache: HashMap<String, (SystemTime, Vec<TrainerMetricPoint>)>,
+    /// run-dir name -> (metrics file read, parsed points) so a steady-state
+    /// pass only re-reads the generation that is actually still writing.
+    dl_points_cache: HashMap<String, (MetricsStamp, Vec<TrainerMetricPoint>)>,
     gate_seeding: IntervalGate,
     seeding: SeedingCurveView,
     daemon_ages: Vec<(String, u64, u64)>,
@@ -1364,7 +1366,7 @@ impl SlowState {
             newest_wave_receipts: 0,
             newest_wave_name: String::new(),
             progress_paths: HashMap::new(),
-            metrics_mtimes: HashMap::new(),
+            metrics_stamps: HashMap::new(),
             gate_generations: IntervalGate::new(Duration::from_secs(60)),
             generations: Vec::new(),
             gate_dl_history: IntervalGate::new(Duration::from_secs(5)),
@@ -1463,16 +1465,18 @@ fn collect_slow_sources(args: &Args, raw: &RawSources, state: &mut SlowState) {
             if let Some((_, path)) = state.progress_paths.get(&trainer.job_id) {
                 if let Some(dir) = path.parent() {
                     let metrics_path = dir.join("train_metrics.jsonl");
-                    let mtime = fs::metadata(&metrics_path)
-                        .and_then(|metadata| metadata.modified())
-                        .unwrap_or(UNIX_EPOCH);
+                    let stamp = MetricsStamp::of(&metrics_path).unwrap_or_else(|_| MetricsStamp {
+                        path: metrics_path.clone(),
+                        modified: UNIX_EPOCH,
+                        len: 0,
+                    });
                     let changed = state
-                        .metrics_mtimes
+                        .metrics_stamps
                         .get(&trainer.job_id)
-                        .is_none_or(|prior| *prior != mtime);
+                        .is_none_or(|prior| *prior != stamp);
                     if changed || trainer.history.is_empty() {
                         trainer.history = read_metrics_history(&metrics_path);
-                        state.metrics_mtimes.insert(trainer.job_id.clone(), mtime);
+                        state.metrics_stamps.insert(trainer.job_id.clone(), stamp);
                     }
                     if let Some(last) = trainer.history.last() {
                         trainer.bad_passes = last.bad_passes;
@@ -1618,10 +1622,15 @@ fn refresh_trainers(args: &Args, jobs: &[(String, String, PathBuf, bool)], state
             }
             _ => {
                 let resolved = resolve_progress_file(&run_dir);
+                // Only a path resolved from the newest attempt itself may be
+                // cached under it; a fallback to an older attempt is re-resolved
+                // next pass, once the new trainer has written its progress.
                 if let (Some(path), Some(attempt)) = (&resolved, attempt) {
-                    state
-                        .progress_paths
-                        .insert(job_id.clone(), (attempt, path.clone()));
+                    if attempt_of(&run_dir, path) == Some(attempt) {
+                        state
+                            .progress_paths
+                            .insert(job_id.clone(), (attempt, path.clone()));
+                    }
                 }
                 resolved
             }
@@ -1669,6 +1678,44 @@ fn newest_attempt_id(run_dir: &Path) -> Option<u64> {
                 .and_then(|name| name.parse::<u64>().ok())
         })
         .max()
+}
+
+/// The `attempts/<k>/` id a path under `run_dir` belongs to. A path resolved
+/// by `resolve_progress_file` may come from an older attempt (the newest one
+/// has no progress file yet), so it may be cached against the newest attempt
+/// only when this equals `newest_attempt_id`.
+fn attempt_of(run_dir: &Path, path: &Path) -> Option<u64> {
+    path.strip_prefix(run_dir.join("attempts"))
+        .ok()?
+        .components()
+        .next()?
+        .as_os_str()
+        .to_str()?
+        .parse()
+        .ok()
+}
+
+/// Identity of the metrics file a cached parse was read from. A parse is
+/// reused only when the resolved path, its mtime and its length all still
+/// match: mtimes come from the kernel's coarse clock (1 ms ticks), so a
+/// requeued attempt's file can carry the dead attempt's exact mtime, and only
+/// the path tells the two apart.
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct MetricsStamp {
+    path: PathBuf,
+    modified: SystemTime,
+    len: u64,
+}
+
+impl MetricsStamp {
+    fn of(path: &Path) -> io::Result<Self> {
+        let metadata = fs::metadata(path)?;
+        Ok(Self {
+            path: path.to_path_buf(),
+            modified: metadata.modified()?,
+            len: metadata.len(),
+        })
+    }
 }
 
 fn resolve_progress_file(run_dir: &Path) -> Option<PathBuf> {
@@ -1877,7 +1924,7 @@ fn collect_dl_history(
         // Keep the last good history rather than blanking the panel.
         return state.dl_history.clone();
     };
-    let mut found: Vec<(SystemTime, String, PathBuf)> = Vec::new();
+    let mut found: Vec<(MetricsStamp, String)> = Vec::new();
     for entry in entries.filter_map(|entry| entry.ok()) {
         let run_id = entry.file_name().to_string_lossy().to_string();
         if !is_trainer_run_id(&run_id) {
@@ -1906,22 +1953,29 @@ fn collect_dl_history(
                 }) else {
                     continue;
                 };
+                // Between SCQ creating `attempts/<n>/` and the requeued
+                // trainer's first progress write, resolution falls back to
+                // an older attempt. Caching that path under attempt n would
+                // pin the chart to the dead attempt until attempt n+1, so it
+                // is cached only when it came from the newest attempt.
                 if let Some(attempt) = attempt {
-                    state
-                        .dl_metrics_paths
-                        .insert(run_id.clone(), (attempt, path.clone()));
+                    if attempt_of(&entry.path(), &path) == Some(attempt) {
+                        state
+                            .dl_metrics_paths
+                            .insert(run_id.clone(), (attempt, path.clone()));
+                    }
                 }
                 path
             }
         };
-        let Ok(modified) = fs::metadata(&metrics).and_then(|meta| meta.modified()) else {
+        let Ok(stamp) = MetricsStamp::of(&metrics) else {
             continue;
         };
-        found.push((modified, run_id, metrics));
+        found.push((stamp, run_id));
     }
     // Oldest → newest by last write, which for sequential trainer generations is
     // the order they ran in.
-    found.sort_by(|left, right| left.0.cmp(&right.0));
+    found.sort_by_key(|(stamp, _)| stamp.modified);
     let skip = found.len().saturating_sub(DL_GENERATIONS_MAX);
     let kept = found.split_off(skip);
     // Cache retention must be keyed by the ORIGINAL run ids. The display label
@@ -1932,22 +1986,25 @@ fn collect_dl_history(
     // dominate the chart now.
     let kept_ids = kept
         .iter()
-        .map(|(_, run_id, _)| run_id.clone())
+        .map(|(_, run_id)| run_id.clone())
         .collect::<HashSet<_>>();
     let mut runs = Vec::with_capacity(kept.len());
-    for (modified, run_id, metrics) in kept {
+    for (stamp, run_id) in kept {
+        // Keyed on the resolved file, not just its mtime: after a requeue the
+        // path moves to the new attempt even when both files share an mtime.
         let reuse = state
             .dl_points_cache
             .get(&run_id)
-            .filter(|(cached_at, _)| *cached_at == modified)
+            .filter(|(cached, _)| *cached == stamp)
             .map(|(_, points)| points.clone());
+        let modified = stamp.modified;
         let points = match reuse {
             Some(points) => points,
             None => {
-                let points = read_metrics_points(&metrics, DL_RUN_POINTS_MAX);
+                let points = read_metrics_points(&stamp.path, DL_RUN_POINTS_MAX);
                 state
                     .dl_points_cache
-                    .insert(run_id.clone(), (modified, points.clone()));
+                    .insert(run_id.clone(), (stamp, points.clone()));
                 points
             }
         };
@@ -7642,6 +7699,20 @@ mod tests {
         assert_eq!(first.runs[0].points[0].train_loss, 4.0);
 
         write_attempt(2, 2.0);
+        // File mtimes come from the kernel's coarse clock (1 ms ticks here), so
+        // two attempts written back to back can share an mtime to the
+        // nanosecond. Pin that collision instead of leaving it to scheduling:
+        // the new attempt's metrics file carries the dead attempt's exact mtime
+        // (and, with these rows, the same length), so only the resolved path
+        // can tell the two apart.
+        let dead_mtime = fs::metadata(attempt_dir(1).join("train_metrics.jsonl"))
+            .and_then(|metadata| metadata.modified())
+            .expect("attempt 1 mtime");
+        fs::File::options()
+            .write(true)
+            .open(attempt_dir(2).join("train_metrics.jsonl"))
+            .and_then(|file| file.set_modified(dead_mtime))
+            .expect("pin attempt 2 mtime to attempt 1");
         let second = collect_dl_history(root, &live, &mut state);
         assert_eq!(second.runs.len(), 1);
         assert_eq!(
@@ -7651,6 +7722,101 @@ mod tests {
         assert!(
             attempt_dir(1).join("train_metrics.jsonl").is_file(),
             "the old attempt is still on disk - that is exactly the trap"
+        );
+    }
+
+    /// SCQ creates `attempts/<n>/` before the requeued trainer writes its
+    /// first train_progress.json. A pass in that window resolves the path
+    /// through the fallback to the previous attempt; caching that path under
+    /// attempt n would pin the series to the dead attempt until attempt n+1.
+    #[test]
+    fn dl_history_follows_a_requeue_first_seen_before_its_progress_file() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let root = dir.path();
+        let run_id = "jope-selfplay-train-001805437-a-g9";
+        let attempt_dir = |n: u64| {
+            root.join(run_id)
+                .join(format!("attempts/{n}/outputs/training/watermark-1"))
+        };
+        let write_attempt = |n: u64, loss: f64| {
+            let out = attempt_dir(n);
+            fs::create_dir_all(&out).expect("attempt dir");
+            fs::write(out.join("train_progress.json"), "{\"epoch\":1}").expect("progress");
+            fs::write(
+                out.join("train_metrics.jsonl"),
+                format!(
+                    "{{\"epoch\":1,\"train_loss\":{loss},\"val_loss\":{loss},\
+                     \"val_pairwise_win_accuracy\":0.7,\"val_ablation_pairwise_win\":0.6}}\n"
+                ),
+            )
+            .expect("metrics");
+        };
+        write_attempt(1, 4.0);
+        let live: HashSet<String> = [run_id.to_owned()].into_iter().collect();
+        let mut state = SlowState::new();
+        let first = collect_dl_history(root, &live, &mut state);
+        assert_eq!(first.runs[0].points[0].train_loss, 4.0);
+
+        // Requeued: attempt 2 exists but its trainer has not written yet, so
+        // attempt 1 is still the newest data there is.
+        fs::create_dir_all(root.join(run_id).join("attempts/2/outputs")).expect("attempt 2");
+        let staged = collect_dl_history(root, &live, &mut state);
+        assert_eq!(staged.runs.len(), 1);
+        assert_eq!(staged.runs[0].points[0].train_loss, 4.0);
+
+        write_attempt(2, 2.0);
+        let started = collect_dl_history(root, &live, &mut state);
+        assert_eq!(started.runs.len(), 1);
+        assert_eq!(
+            started.runs[0].points[0].train_loss, 2.0,
+            "a path resolved from attempt 1 must not be cached as attempt 2's"
+        );
+    }
+
+    /// TRAINER STATE twin of the test above: `refresh_trainers` keeps the same
+    /// attempt-keyed progress-path cache and must not pin a job to the dead
+    /// attempt either.
+    #[test]
+    fn trainer_state_follows_a_requeue_first_seen_before_its_progress_file() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let run = dir.path().join("jope-selfplay-train-001805437-a-g9");
+        let write_progress = |n: u64, epoch: u64| {
+            let out = run.join(format!("attempts/{n}/outputs/training/watermark-1"));
+            fs::create_dir_all(&out).expect("attempt dir");
+            fs::write(
+                out.join("train_progress.json"),
+                format!("{{\"epoch\":{epoch}}}"),
+            )
+            .expect("progress");
+        };
+        let args = Args {
+            root: dir.path().to_path_buf(),
+            scq: dir.path().join("scq"),
+            refresh_ms: DEFAULT_REFRESH_MS,
+            metrics_root: dir.path().to_path_buf(),
+            gameplay_db: None,
+            claims_db: None,
+            dump_dl_json: false,
+            dump_unified_json: false,
+        };
+        let jobs = vec![("job-1".to_owned(), "xbabe2".to_owned(), run.clone(), true)];
+        let mut state = SlowState::new();
+        write_progress(1, 7);
+        refresh_trainers(&args, &jobs, &mut state);
+        assert_eq!(state.trainers[0].epoch, 7);
+
+        fs::create_dir_all(run.join("attempts/2/outputs")).expect("attempt 2");
+        refresh_trainers(&args, &jobs, &mut state);
+        assert_eq!(
+            state.trainers[0].epoch, 7,
+            "attempt 1 is still the newest data"
+        );
+
+        write_progress(2, 1);
+        refresh_trainers(&args, &jobs, &mut state);
+        assert_eq!(
+            state.trainers[0].epoch, 1,
+            "a path resolved from attempt 1 must not be cached as attempt 2's"
         );
     }
 

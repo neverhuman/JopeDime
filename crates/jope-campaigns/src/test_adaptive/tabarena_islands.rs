@@ -552,7 +552,25 @@ fn initial_population_from_seeds(
     dataset_hash: &str,
 ) -> Result<Vec<Member>> {
     if seeds.len() < TOTAL_POPULATION {
-        bail!("TabArena island initialization requires 60 frozen transfer seeds");
+        bail!(
+            "TabArena island initialization requires at least {TOTAL_POPULATION} frozen \
+             transfer seeds, got {}",
+            seeds.len()
+        );
+    }
+    // The selection below assumes distinct seeds: a repeated semantic hash
+    // would silently place the same genome in two island slots.
+    let mut distinct = HashSet::with_capacity(seeds.len());
+    if let Some(repeat) = seeds
+        .iter()
+        .find(|seed| !distinct.insert(seed.semantic_sha256.as_str()))
+    {
+        bail!(
+            "TabArena island initialization requires distinct transfer seeds; slot {} repeats \
+             semantic hash {}",
+            repeat.slot,
+            repeat.semantic_sha256
+        );
     }
     const STRONG_SEEDS: usize = TOTAL_POPULATION / 2;
     let mut diverse = (STRONG_SEEDS..seeds.len()).collect::<Vec<_>>();
@@ -1876,30 +1894,33 @@ mod tests {
         );
     }
 
+    /// Seeds exactly as production freezes them (canonicalized, then
+    /// deduplicated by semantic hash), from the bank checked in with this
+    /// crate rather than whichever bank the host happens to publish.
+    fn checked_in_transfer_seeds(features: usize) -> Vec<SeedProvenance> {
+        let sources = fast30_bank_sources_from(&checked_in_fast30_bank()).unwrap();
+        assert!(!sources.is_empty());
+        for source in &sources {
+            if let Err(error) = canonicalize_for_features(&source.genome, features) {
+                panic!(
+                    "checked-in bank line {} does not canonicalize: {:?}: {error:#}",
+                    source.record + 1,
+                    source.genome
+                );
+            }
+        }
+        // The transfer-manifest limit (60), not this module's per-island 8.
+        canonical_distinct_seeds(sources, features, super::super::POPULATION)
+    }
+
     #[test]
     fn initial_islands_are_deterministic_and_complete() {
-        let seeds = fast30_bank_sources()
-            .unwrap()
-            .into_iter()
-            .take(60)
-            .enumerate()
-            .map(|(slot, source)| {
-                let canonical = canonicalize_for_features(&source.genome, 10).unwrap();
-                SeedProvenance {
-                    slot,
-                    canonical_genome: canonical.canonical,
-                    semantic_sha256: canonical.semantic_sha256,
-                    complexity: canonical.complexity,
-                    rust_source_len: canonical.rust_source_len,
-                    source_kind: source.kind,
-                    source_file: source.path.to_string_lossy().into_owned(),
-                    source_file_sha256: source.file_sha256,
-                    source_record: source.record,
-                    source_rank: source.rank,
-                    source_score: source.score,
-                }
-            })
-            .collect::<Vec<_>>();
+        let seeds = checked_in_transfer_seeds(10);
+        assert!(
+            seeds.len() >= TOTAL_POPULATION,
+            "checked-in bank holds only {} distinct seeds",
+            seeds.len()
+        );
         let first = initial_population_from_seeds(&seeds, "run-a", "dataset").unwrap();
         let second = initial_population_from_seeds(&seeds, "run-a", "dataset").unwrap();
         let third = initial_population_from_seeds(&seeds, "run-b", "dataset").unwrap();
@@ -1913,6 +1934,33 @@ mod tests {
                 .collect::<BTreeSet<_>>()
                 .len(),
             TOTAL_POPULATION
+        );
+    }
+
+    #[test]
+    fn initial_islands_refuse_too_few_or_repeated_seeds() {
+        let seeds = checked_in_transfer_seeds(10);
+        let error =
+            initial_population_from_seeds(&seeds[..TOTAL_POPULATION - 1], "run-a", "dataset")
+                .unwrap_err();
+        assert!(
+            error.to_string().contains(&format!(
+                "at least {TOTAL_POPULATION} frozen transfer seeds"
+            )),
+            "{error:#}"
+        );
+        let mut repeated = seeds.clone();
+        let last = repeated.len() - 1;
+        repeated[last] = SeedProvenance {
+            slot: last,
+            ..repeated[0].clone()
+        };
+        let error = initial_population_from_seeds(&repeated, "run-a", "dataset").unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("requires distinct transfer seeds"),
+            "{error:#}"
         );
     }
 
