@@ -24,7 +24,7 @@ def main():
         raise RuntimeError('twenty available CPUs required for positive concurrency proof')
     source = hashlib.sha256(binary.read_bytes()).hexdigest()
     records = []
-    for case in ('timeout', 'controller-stall-success', 'controller-stall-timeout', 'controller-sigkill', 'concurrency20', 'memory'):
+    for case in ('timeout', 'controller-stall-success', 'controller-stall-timeout', 'controller-sigkill', 'concurrency20', 'memory', 'graceful-sigterm', 'original-cutoff'):
         unit = f'jope-asm-qualification-{os.getpid()}-{case}.service'
         armed = output / 'sigkill-armed.json'
         command = ['sudo', '-n', 'systemd-run', '--wait', '--pipe', f'--unit={unit}',
@@ -33,7 +33,7 @@ def main():
                    '--property=OOMPolicy=continue',
                    '--property=KillMode=control-group', '--property=SendSIGKILL=yes',
                    '--property=FinalKillSignal=SIGKILL', '--property=TimeoutStopSec=1s',
-                   '--property=RuntimeMaxSec=30s', '--property=Delegate=cpu cpuset memory',
+                   f'--property=RuntimeMaxSec={7 if case == "original-cutoff" else 30}s', '--property=Delegate=cpu cpuset memory',
                    '--property=DelegateSubgroup=controller',
                    f'--property=CPUQuota={2000 if case == "concurrency20" else 200}%',
                    f'--property=AllowedCPUs={" ".join(map(str, cpus if case == "concurrency20" else cpus[:2]))}',
@@ -53,8 +53,23 @@ def main():
                 raise RuntimeError(f'{case} proof did not execute and pass exactly one real host fixture')
             receipt = json.loads(receipts[0])
             if case == 'concurrency20':
-                if receipt != dict(case='concurrency20', peak=20, completed=21, active_after=0):
+                if (any(receipt.get(k) != v for k, v in dict(case='concurrency20', peak=20, completed=21, active_after=0).items()) or not receipt['all_fit_limits_read_back'] or receipt['fit_memory_allocation']['per_fit_bytes'] * 20 + receipt['fit_memory_allocation']['controller_reserve_bytes'] != 1 << 30):
                     raise RuntimeError('twenty-worker concurrency/cap proof failed')
+            elif case in ('graceful-sigterm', 'original-cutoff'):
+                expected = 'cancelled' if case == 'graceful-sigterm' else 'timed_out'
+                if (receipt['case'] != case or receipt['outcome']['command_status'] != expected
+                        or not receipt['descendants_drained'] or not receipt['resumed_without_new_gate']
+                        or receipt['original_window'] != receipt['resumed_window']
+                        or receipt['remaining_global_ms'] <= 0
+                        or receipt['outcome']['consumption']['fit_memory_limit_bytes'] != receipt['fit_memory_allocation']['per_fit_bytes']):
+                    raise RuntimeError('graceful cancellation/cutoff did not retain its original bounded journal')
+                journal = Path(receipt['journal']).resolve(strict=True)
+                retained_files = {'window.json': receipt['window_sha256'],
+                                  'fit-memory-policy.json': receipt['allocation_file_sha256'],
+                                  'finished/' + receipt['outcome']['job_sha256'] + '.json': receipt['finished_sha256']}
+                for relative, digest in retained_files.items():
+                    if hashlib.sha256((journal / relative).read_bytes()).hexdigest() != digest:
+                        raise RuntimeError('retained original cancellation proof changed')
             elif case == 'controller-stall-success':
                 if receipt['command_status'] != 'completed' or receipt['consumption']['wall_seconds'] >= 1.25:
                     raise RuntimeError('controller stall changed a successful fit result')

@@ -18,7 +18,7 @@ you saw.
 | engine-subcommand | 88 | 88 | 0 | 0 | 0 | 0 |
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 6 | 0 | 0 | 0 | 0 |
-| new-bin | 9 | 0 | 9 | 0 | 0 | 0 |
+| new-bin | 12 | 0 | 12 | 0 | 0 | 0 |
 | new-example | 1 | 0 | 1 | 0 | 0 | 0 |
 | ops-sh | 1 | 1 | 0 | 0 | 0 | 0 |
 | root-binary | 56 | 56 | 0 | 0 | 0 | 0 |
@@ -35,9 +35,9 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **773** | **735** | **10** | **1** | **20** | **7** |
+| **total** | **776** | **735** | **13** | **1** | **20** | **7** |
 
-`moved`/`new` rows without a covering test: 654.
+`moved`/`new` rows without a covering test: 657.
 
 ## Rows
 
@@ -816,3 +816,6 @@ you saw.
 | vendored-bin | jain-core/crates/starforge (import, WP3): model_bundle_pack | crates/jope-encoders/src/bin/model_bundle_pack.rs (model_bundle_pack) | none | moved | vendored encoder; tests gated on the starforge weights |
 | vendored-bin | jain-core/crates/starforge (import, WP3): starforge | crates/jope-encoders/src/main.rs (starforge) | none | moved | vendored encoder; tests gated on the starforge weights |
 | new-example | (new) pipeline receipt schema | crates/jope-pipeline/examples/receipt_schema.rs (receipt_schema) | jope-pipeline::schema_agreement committed_schema_is_generated_from_code_exactly | new | Regenerate v2 receipt schema from the Rust contract; v1 retained for reading. |
+| new-bin | (new) bounded CPU context proof | crates/jope-pipeline/src/bin/jope-context-proof.rs (jope-context-proof) | none | new | Private controller behind qualified-context; authentic bounded reference execution and numerical qualification remain separate host evidence. |
+| new-bin | (new) CPU context worker | crates/jope-policy/src/bin/jope-context-worker.rs (jope-context-worker) | none | new | Private context-producer feature worker; accepted assets, fixed numerical policy, no GPU hold bypass. Library contracts do not establish model parity. |
+| new-bin | (new) policy proposal worker | crates/jope-policy/src/bin/jope-policy-producer.rs (jope-policy-producer) | none | new | Private accepted regression proposal worker; source implementation is distinct from actual bounded model/proposal/fit qualification. |

@@ -139,10 +139,10 @@
       ],
       "requires_nonzero_tests": true,
       "stage": "execution",
-      "feature_selection": "package-defaults",
+      "feature_selection": "explicit",
       "result_backend": "nextest",
       "checks": [
-        "cargo nextest run --config-file rust-test-evidence/nextest.toml -P pr --locked $(bash deploy/ci/rust-test-scope.sh)"
+        "cargo nextest run --config-file rust-test-evidence/nextest.toml -P pr --locked $(bash deploy/ci/rust-test-scope.sh) --features jope-pipeline/qualified-context"
       ]
     },
     "emitters": {
@@ -444,7 +444,7 @@
       "requires_nonzero_tests": true,
       "stage": "execution",
       "result_backend": "nextest",
-      "feature_selection": "package-defaults"
+      "feature_selection": "explicit"
     },
     "full-doctests": {
       "command": [
@@ -7909,6 +7909,116 @@
       ],
       "dispositions": [],
       "scope": "Fast Python lane explicitly collects this adapter contract suite in the benchmark environment and includes it in the lane JUnit report. Synthetic estimators verify nullable raw cells, train-only preprocessing, declared probability columns, complete fitted reload, immutable private outputs and leakage refusal. No external-engine or real-panel qualification; not assigned to full-main."
+    },
+    "feature:jope-pipeline/default": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Empty package-default marker; qualified-context separately selected."
+    },
+    "feature:jope-pipeline/neural-search": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "dep:jope-policy"
+        ]
+      },
+      "lanes": [
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Explicit qualified-context enables neural proposal/OOF/evolution contract tests; real model qualification is separate."
+    },
+    "feature:jope-pipeline/qualified-context": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "jope-policy/context-producer",
+          "neural-search"
+        ]
+      },
+      "lanes": [
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Explicit CPU context/receipt feature tests, not a live numerical parity claim."
+    },
+    "feature:jope-policy/context-producer": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "dep:hyperion",
+          "dep:starforge"
+        ]
+      },
+      "lanes": [
+        "rust-test",
+        "full-default",
+        "full-policy"
+      ],
+      "dispositions": [],
+      "scope": "Explicit CPU-only producer contract tests; no GPU or reference-model qualification implied."
+    },
+    "target:jope-pipeline/bin/jope-context-proof": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-pipeline/src/bin/jope-context-proof.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": [
+          "qualified-context"
+        ]
+      },
+      "lanes": [
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Feature-selected controller compilation. Real systemd reference proof remains a separate allocated host run."
+    },
+    "target:jope-policy/bin/jope-context-worker": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-policy/src/bin/jope-context-worker.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": [
+          "context-producer"
+        ]
+      },
+      "lanes": [
+        "rust-test",
+        "full-default",
+        "full-policy"
+      ],
+      "dispositions": [],
+      "scope": "Feature-selected worker compilation; library contracts execute in these lanes, no model load implied."
+    },
+    "target:jope-policy/bin/jope-policy-producer": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-policy/src/bin/jope-policy-producer.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-policy"
+      ],
+      "dispositions": [],
+      "scope": "Private producer binary compilation; unit/library contracts are separate from accepted-model execution."
     }
   }
 }

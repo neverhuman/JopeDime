@@ -46,6 +46,19 @@ pub struct V7Model {
 }
 
 impl V7Model {
+    /// Explicit CPU execution for separately qualified context production.
+    /// Does not inspect device environment or fall back from a GPU attempt.
+    pub fn load_cpu(weights_path: &Path, settings: &HyperionSweepSettings) -> Result<Self> {
+        Self::load_on_device(
+            weights_path,
+            settings,
+            Device::Cpu,
+            #[cfg(feature = "hyperion-cuda")]
+            None,
+        )
+        .map(|model| model.with_full_canvas(false))
+    }
+
     pub fn load(weights_path: &Path, settings: &HyperionSweepSettings) -> Result<Self> {
         #[cfg(feature = "hyperion-cuda")]
         let mut cuda_error: Option<anyhow::Error> = None;

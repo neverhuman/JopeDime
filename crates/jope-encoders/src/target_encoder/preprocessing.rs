@@ -50,18 +50,38 @@ pub(super) fn safe_unit(values: &[f32]) -> Vec<f32> {
 }
 
 pub(super) fn raw_signature(values: &[f32], task: TargetTask, seed: u64) -> Result<Vec<f32>> {
-    let mut rows = Vec::with_capacity(SIGNATURE_VIEWS);
+    let windows = classical_windows(values.len(), task, seed)?;
+    raw_signature_windows(values, task, &windows)
+}
+
+pub(super) fn classical_windows(
+    length: usize,
+    task: TargetTask,
+    seed: u64,
+) -> Result<Vec<Vec<usize>>> {
+    let mut windows = Vec::with_capacity(SIGNATURE_VIEWS);
     for view in 0..SIGNATURE_VIEWS {
         let stream_seed = stable_seed(&[
             "fusion-signature-inference".to_owned(),
             seed.to_string(),
             task.id().to_string(),
-            values.len().to_string(),
+            length.to_string(),
             view.to_string(),
             WINDOW_SIZE.to_string(),
         ])?;
         let mut rng = NumpyPcg64::new(stream_seed);
-        let indices = rng.choice(values.len(), WINDOW_SIZE, false)?;
+        windows.push(rng.choice(length, WINDOW_SIZE, false)?);
+    }
+    Ok(windows)
+}
+
+pub(super) fn raw_signature_windows(
+    values: &[f32],
+    task: TargetTask,
+    windows: &[Vec<usize>],
+) -> Result<Vec<f32>> {
+    let mut rows = Vec::with_capacity(SIGNATURE_VIEWS);
+    for indices in windows {
         let sampled = indices
             .iter()
             .map(|&index| values[index])

@@ -260,6 +260,42 @@ impl StarforgeModel {
         }
         let (mu, sd) = target_mean_std(ctx_y);
         let ctx_y_z: Vec<f32> = ctx_y.iter().map(|&v| (v - mu) / sd).collect();
+        self.regression_fusion_features_normalized(ctx_x, &ctx_y_z, qx, n_features, mu, sd)
+    }
+
+    /// The caller supplies the frozen export's already standardized context labels.
+    /// This avoids a second normalization and preserves the native FP64-to-FP32 seam.
+    pub fn regression_fusion_features_standardized(
+        &self,
+        ctx_x: &[f32],
+        ctx_y: &[f32],
+        qx: &[f32],
+        n_features: usize,
+    ) -> Result<RegressionExpertFeatures> {
+        self.ensure_kind(StarforgeModelKind::Regressor)?;
+        if n_features == 0
+            || ctx_y.is_empty()
+            || ctx_x.len() != ctx_y.len() * n_features
+            || qx.is_empty()
+            || qx.len() % n_features != 0
+            || ctx_x.iter().chain(ctx_y).chain(qx).any(|v| !v.is_finite())
+        {
+            bail!("invalid frozen foundation input");
+        }
+        self.regression_fusion_features_normalized(ctx_x, ctx_y, qx, n_features, 0.0, 1.0)
+    }
+
+    fn regression_fusion_features_normalized(
+        &self,
+        ctx_x: &[f32],
+        ctx_y_z: &[f32],
+        qx: &[f32],
+        n_features: usize,
+        mu: f32,
+        sd: f32,
+    ) -> Result<RegressionExpertFeatures> {
+        let n = ctx_y_z.len();
+        let m = qx.len() / n_features;
         let query_chunk = regression_query_chunk(n, m);
         let mut mean = Vec::with_capacity(m);
         let mut hidden = Vec::with_capacity(m * ICL);
@@ -274,7 +310,7 @@ impl StarforgeModel {
                 vec![1, n + end - start, n_features, 6],
                 &self.device,
             )?;
-            let y = Tensor::from_vec(ctx_y_z.clone(), vec![1, n, 1], &self.device)?;
+            let y = Tensor::from_vec(ctx_y_z.to_vec(), vec![1, n, 1], &self.device)?;
             let chunk = self.forward_regression_features(&x, &y, n, end - start, mu, sd)?;
             mean.extend(chunk.mean);
             hidden.extend(chunk.hidden);

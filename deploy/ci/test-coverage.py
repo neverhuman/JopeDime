@@ -41,6 +41,10 @@ class CoverageTests(unittest.TestCase):
         for lane, disposition in (("rust-check", None), ("rust-test", None), (None, "full-cpu-default")):
             with self.subTest(lane=lane, disposition=disposition):
                 mapping = copy.deepcopy(self.mapping)
+                if lane:
+                    # Exercise a default-only lane even when production CI has
+                    # gained an explicit feature selection for other targets.
+                    mapping["lanes"][lane]["feature_selection"] = "package-defaults"
                 mapping["items"][key]["lanes"] = [lane] if lane else []
                 mapping["items"][key]["dispositions"] = [disposition] if disposition else []
                 self.assertTrue(any("non-default required features" in e for e in coverage.validate(mapping, self.discovered)))

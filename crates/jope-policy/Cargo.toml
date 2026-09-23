@@ -12,15 +12,19 @@ description = "jope-dime step-60000 proposal policy on candle: grammar automaton
 default = []
 # feat-core `jope-dime-testing`: untrained weights and unbound helpers. Never enable in a product build.
 testing = []
+# Independent CPU encoding; never enables the LibTorch batch-worker.
+context-producer = ["dep:hyperion", "dep:starforge"]
 # feat-core `jope-dime-cuda`: declared for the GPU lane, build-unverified (see lib.rs).
 cuda = ["candle-core/cuda", "candle-nn/cuda"]
 
 [dependencies]
 anyhow.workspace = true
+hyperion = { path = "../hyperion", default-features = false, features = ["hyperion-cpu"], optional = true }
+starforge = { path = "../jope-encoders", default-features = false, optional = true }
 rand.workspace = true
 rand_chacha = "0.3"
 serde.workspace = true
-serde_json.workspace = true
+serde_json = { workspace = true, features = ["float_roundtrip"] }
 sha2.workspace = true
 feat-math = { path = "../feat-math" }
 candle-core = { version = "0.11.0", default-features = false }
@@ -33,3 +37,8 @@ zip = { version = "8.6", default-features = false, features = ["deflate"] }
 [[test]]
 name = "jope_dime"
 required-features = ["testing"]
+
+[[bin]]
+name = "jope-context-worker"
+path = "src/bin/jope-context-worker.rs"
+required-features = ["context-producer"]

@@ -50,6 +50,49 @@ const THREAD_VARS: &[&str] = &[
     "RAYON_NUM_THREADS",
 ];
 
+/// Fixed policy for actual fit jobs; reservation-only consumers keep the whole
+/// authorized service allocation. Controller and fits share the same CPU set.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FitMemoryAllocation {
+    pub schema: String,
+    pub experiment_sha256: String,
+    pub total_bytes: u64,
+    pub workers: u16,
+    pub controller_reserve_bytes: u64,
+    pub per_fit_bytes: u64,
+}
+impl FitMemoryAllocation {
+    pub fn identity(&self) -> Result<String> {
+        Ok(crate::sha256_hex(&serde_json::to_vec(self)?))
+    }
+}
+/// One sixteenth is reserved for controller state, plus page/division remainder.
+/// For the frozen 20-worker 64 GiB panel this is 4 GiB plus 20 independent 3 GiB fits.
+/// Shares never expand when fewer jobs are active, so scheduling cannot change
+/// a predictor's memory allowance. Experiment identity pins resources and source.
+pub fn fit_memory_allocation(experiment: &Experiment) -> Result<FitMemoryAllocation> {
+    experiment.validate()?;
+    const PAGE: u64 = 4096;
+    let pages = experiment.resources.memory_bytes / PAGE;
+    let reserve = pages.div_ceil(16);
+    let workers = u64::from(experiment.resources.workers);
+    let fit_pages = pages.saturating_sub(reserve) / workers;
+    ensure!(
+        fit_pages > 0,
+        "memory allocation cannot supply a page to each fit"
+    );
+    let per_fit_bytes = fit_pages * PAGE;
+    Ok(FitMemoryAllocation {
+        schema: "jope.fit-memory-allocation/v1:page4096:controller1of16".into(),
+        experiment_sha256: experiment.identity()?,
+        total_bytes: experiment.resources.memory_bytes,
+        workers: experiment.resources.workers,
+        controller_reserve_bytes: experiment.resources.memory_bytes - per_fit_bytes * workers,
+        per_fit_bytes,
+    })
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Artifact {
@@ -194,6 +237,9 @@ pub fn inventory_dependencies(jobs: &[WorkerJob]) -> Result<Vec<DependencyCheck>
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ObservedConsumption {
+    /// Actual per-fit memory.max readback; None for old/unstarted/unknown evidence.
+    #[serde(default)]
+    pub fit_memory_limit_bytes: Option<u64>,
     #[serde(default)]
     pub gate_released_unix_ms: Option<u64>,
     #[serde(default)]
@@ -269,7 +315,7 @@ pub struct Supervisor {
     pub cgroup_root: PathBuf,
 }
 impl Supervisor {
-    fn verify(&self, experiment: &Experiment, execution_deadline: u64) -> Result<()> {
+    fn verify(&self, experiment: &Experiment, global_deadline: u64) -> Result<()> {
         ensure!(
             self.unit.starts_with("jope-asm-")
                 && self.unit.ends_with(".service")
@@ -356,8 +402,8 @@ impl Supervisor {
         ensure!(
             now_ms()?
                 .checked_add(remaining_ms)
-                .is_some_and(|end| end <= execution_deadline),
-            "supervisor may outlive original execution deadline"
+                .is_some_and(|end| end <= global_deadline),
+            "supervisor may outlive original global deadline"
         );
         let resources = &experiment.resources;
         verify_limit(&self.cgroup_root, "memory.max", resources.memory_bytes)?;
@@ -496,10 +542,8 @@ impl ExecutionPool {
             "original execution window exhausted"
         );
         self.acquire_host()?;
-        self.supervisor.verify(
-            &self.experiment,
-            window.deadline_unix_ms - self.experiment.resources.reporting_seconds * 1000,
-        )
+        self.supervisor
+            .verify(&self.experiment, window.deadline_unix_ms)
     }
 
     /// Starts the single experiment window after the caller's dependency
@@ -545,6 +589,10 @@ impl ExecutionPool {
             self.experiment.resources.per_fit_seconds <= 30,
             "fit allowance exceeds30 seconds"
         );
+        // A changed derived policy cannot silently resume the same journal.
+        // Reservation-only train never reaches this fit-allocation boundary.
+        let memory = fit_memory_allocation(&self.experiment)?;
+        immutable(&self.directory.join("fit-memory-policy.json"), &memory)?;
         let order = jobs
             .iter()
             .enumerate()
@@ -663,9 +711,10 @@ impl ExecutionPool {
             }
             return Ok(outcomes);
         }
-        let admission = self
-            .acquire_host()
-            .and_then(|()| self.supervisor.verify(&self.experiment, execution_deadline));
+        let admission = self.acquire_host().and_then(|()| {
+            self.supervisor
+                .verify(&self.experiment, candidate_window.deadline_unix_ms)
+        });
         if let Err(error) = admission {
             while let Some(job) = queue.pop() {
                 let id = job.identity()?;
@@ -692,6 +741,7 @@ impl ExecutionPool {
             immutable(&self.directory.join("window.json"), &candidate_window)?;
             self.window = Some(candidate_window);
         }
+        let memory = fit_memory_allocation(&self.experiment)?;
         let cpus = parse_cpus(&control_text(
             &self.supervisor.cgroup_root,
             "cpuset.cpus.effective",
@@ -831,7 +881,7 @@ impl ExecutionPool {
                 match Running::start(
                     started.clone(),
                     cpu,
-                    self.experiment.resources.memory_bytes,
+                    memory.per_fit_bytes,
                     self.experiment.resources.per_fit_seconds,
                     self.started_path(&id),
                     self.directory.join("logs"),
@@ -1409,12 +1459,14 @@ impl ProcessFit {
             self.observed_exit_unix_ms.get_or_insert(now_ms()?);
             return Ok(true);
         }
-        if cancellation {
-            self.stop_status = Some(EvaluationStatus::Cancelled);
-        } else if Instant::now() >= self.monotonic_deadline
+        // The original cutoff wins if a simultaneous supervisor/user signal
+        // arrives at that cutoff. Earlier explicit cancellation remains Cancelled.
+        if Instant::now() >= self.monotonic_deadline
             || now_ms()? >= self.started.fit_deadline_unix_ms
         {
             self.stop_status = Some(EvaluationStatus::TimedOut);
+        } else if cancellation {
+            self.stop_status = Some(EvaluationStatus::Cancelled);
         }
         if self.stop_status.is_some() {
             return Ok(true);
@@ -1436,7 +1488,7 @@ impl ProcessFit {
                 if status == EvaluationStatus::Cancelled {
                     "cancelled during fit"
                 } else {
-                    "fit or original arm deadline reached"
+                    "fit, arm, or original execution cutoff reached"
                 }
                 .into(),
             );
@@ -1476,7 +1528,11 @@ impl ProcessFit {
         let memory = control_text(&self.started.cgroup, "memory.peak")
             .ok()
             .and_then(|v| v.parse().ok());
+        let fit_memory_limit_bytes = control_text(&self.started.cgroup, "memory.max")
+            .ok()
+            .and_then(|v| v.parse().ok());
         outcome.consumption = ObservedConsumption {
+            fit_memory_limit_bytes,
             gate_released_unix_ms: self.gate_released_unix_ms,
             observed_exit_unix_ms: self.observed_exit_unix_ms,
             wall_seconds: Some(
@@ -1952,6 +2008,69 @@ mod tests {
             .unwrap()
     }
     #[test]
+    fn fit_memory_is_equal_pinned_and_leaves_controller_headroom() {
+        let mut experiment = fixture_experiment();
+        experiment.resources.workers = 20;
+        experiment.resources.cpus = 20;
+        experiment.resources.memory_bytes = 64 << 30;
+        let policy = fit_memory_allocation(&experiment).unwrap();
+        assert_eq!(policy.per_fit_bytes, 3 << 30);
+        assert_eq!(policy.controller_reserve_bytes, 4 << 30);
+        let pin = policy.identity().unwrap();
+        assert_eq!(policy.identity().unwrap(), pin);
+        experiment.source_sha = "d".repeat(40);
+        assert_ne!(
+            fit_memory_allocation(&experiment)
+                .unwrap()
+                .identity()
+                .unwrap(),
+            pin
+        );
+        for workers in 1..=20 {
+            experiment.resources.workers = workers;
+            for total in [32 << 20, (64u64 << 30) - 1, 64 << 30] {
+                experiment.resources.memory_bytes = total;
+                let p = fit_memory_allocation(&experiment).unwrap();
+                assert_eq!(p.per_fit_bytes % 4096, 0);
+                assert_eq!(
+                    p.per_fit_bytes * u64::from(workers) + p.controller_reserve_bytes,
+                    total
+                );
+                assert!(p.controller_reserve_bytes >= total / 16);
+                assert!(p.per_fit_bytes > 0);
+            }
+        }
+        experiment.resources.memory_bytes = 4096;
+        assert!(fit_memory_allocation(&experiment).is_err());
+    }
+    #[test]
+    fn fit_memory_policy_is_immutable_and_not_applied_to_open_only_training() {
+        let scratch = scratch();
+        let mut experiment = fixture_experiment();
+        experiment.resources.total_seconds = 3600;
+        experiment.resources.per_fit_seconds = 1200;
+        let directory = scratch.path().join("journal");
+        let mut pool = ExecutionPool::open(
+            &experiment,
+            &directory,
+            Supervisor {
+                unit: "unused".into(),
+                cgroup_root: "/unused".into(),
+            },
+        )
+        .unwrap();
+        assert!(!directory.join("fit-memory-policy.json").exists());
+        assert!(pool.run(vec![], &AtomicBool::new(false)).is_err());
+        assert!(!directory.join("fit-memory-policy.json").exists());
+        let policy = fit_memory_allocation(&experiment).unwrap();
+        immutable(&directory.join("fit-memory-policy.json"), &policy).unwrap();
+        immutable(&directory.join("fit-memory-policy.json"), &policy).unwrap();
+        let mut changed = policy;
+        changed.per_fit_bytes += 4096;
+        assert!(immutable(&directory.join("fit-memory-policy.json"), &changed).is_err());
+    }
+
+    #[test]
     fn datasets_get_round_robin_admission() {
         let mut queue = FairQueue::default();
         for (dataset, recipe) in [
@@ -2304,6 +2423,14 @@ mod tests {
             experiment.resources.memory_bytes = 1024 * 1024 * 1024;
             experiment.resources.per_fit_seconds = 10;
         }
+        if case == "graceful-sigterm" {
+            experiment.resources.per_fit_seconds = 5;
+        }
+        if case == "original-cutoff" {
+            experiment.resources.total_seconds = 8;
+            experiment.resources.reporting_seconds = 3;
+            experiment.resources.per_fit_seconds = 5;
+        }
         let supervisor = Supervisor {
             unit,
             cgroup_root: group,
@@ -2325,6 +2452,13 @@ mod tests {
         assert!(!physical.join("journal/window.json").exists());
         if case == "concurrency20" {
             qualify_concurrency(&mut pool, &physical);
+            return;
+        }
+        if case == "graceful-sigterm" || case == "original-cutoff" {
+            // Retain the actual started/finished/window journal as host evidence.
+            let retained = scratch.keep();
+            assert_eq!(fs::canonicalize(&retained).unwrap(), physical);
+            qualify_cancellation_and_resume(pool, &physical, &case);
             return;
         }
         let mut job = fixture_job('a', 'a');
@@ -2439,6 +2573,146 @@ mod tests {
             serde_json::to_string(&outcome).unwrap()
         );
     }
+    fn qualify_cancellation_and_resume(mut pool: ExecutionPool, physical: &Path, case: &str) {
+        let script = physical.join("cancel-descendant.py");
+        write_new(&script, b"import os,time\npid=os.fork()\nif pid==0:\n os.setsid()\n time.sleep(60)\nelse:\n open('descendant.pid','w').write(str(pid))\n time.sleep(60)\n").unwrap();
+        let program = fs::canonicalize("/usr/bin/python3").unwrap();
+        let mut job = fixture_job('a', 'a');
+        job.request.experiment_sha256 = pool.experiment.identity().unwrap();
+        job.directory = pool
+            .directory
+            .join("jobs")
+            .join(job.request.identity().unwrap());
+        job.command = WorkerCommand {
+            program: Artifact {
+                sha256: hash_file(&program).unwrap(),
+                path: program,
+            },
+            args: vec![script.to_string_lossy().into_owned()],
+            inputs: vec![Artifact {
+                sha256: hash_file(&script).unwrap(),
+                path: script,
+            }],
+            environment: BTreeMap::new(),
+        };
+        let cancelled = crate::supervisor::cancellation().unwrap();
+        let original = pool.admit().unwrap().clone();
+        let original_bytes = fs::read(pool.directory.join("window.json")).unwrap();
+        let child_pid_path = job.directory.join("descendant.pid");
+        thread::scope(|scope| {
+            let signal = if case == "graceful-sigterm" {
+                Some(scope.spawn(|| {
+                    let deadline = Instant::now() + Duration::from_secs(1);
+                    while !child_pid_path.is_file() {
+                        assert!(Instant::now() < deadline, "real descendant did not start");
+                        thread::sleep(Duration::from_millis(5));
+                    }
+                    nix::sys::signal::kill(Pid::this(), Signal::SIGTERM).unwrap();
+                }))
+            } else {
+                None
+            };
+            let outcomes = pool.run(vec![job.clone()], &cancelled).unwrap();
+            if let Some(signal) = signal {
+                signal.join().unwrap();
+            }
+            assert_eq!(outcomes.len(), 1);
+            let outcome = &outcomes[0];
+            let expected = if case == "graceful-sigterm" {
+                EvaluationStatus::Cancelled
+            } else {
+                EvaluationStatus::TimedOut
+            };
+            assert_eq!(outcome.command_status, expected);
+            assert_eq!(
+                cancelled.load(Ordering::Acquire),
+                case == "graceful-sigterm"
+            );
+            assert!(outcome.consumption.gate_released_unix_ms.is_some());
+            if case == "original-cutoff" {
+                let started: Started =
+                    read_json(&pool.started_path(&job.identity().unwrap())).unwrap();
+                assert_eq!(
+                    started.fit_deadline_unix_ms,
+                    original.deadline_unix_ms - pool.experiment.resources.reporting_seconds * 1000
+                );
+                assert!(
+                    outcome.consumption.observed_exit_unix_ms.unwrap()
+                        >= started.fit_deadline_unix_ms
+                );
+            }
+            let allocation = fit_memory_allocation(&pool.experiment).unwrap();
+            assert_eq!(
+                outcome.consumption.fit_memory_limit_bytes,
+                Some(allocation.per_fit_bytes)
+            );
+            let group = pool
+                .supervisor
+                .cgroup_root
+                .join(format!("fit-{}", job.identity().unwrap()));
+            assert!(
+                !group.exists()
+                    || named_counter(&group, "cgroup.events", "populated").unwrap() == 0
+            );
+            assert!(!pool.cleanup_path(&job.identity().unwrap()).exists());
+            let descendant: u32 = fs::read_to_string(&child_pid_path)
+                .unwrap()
+                .parse()
+                .unwrap();
+            if let Ok(stat) = fs::read_to_string(format!("/proc/{descendant}/stat")) {
+                assert!(matches!(
+                    stat.rsplit(')').next().unwrap().split_whitespace().next(),
+                    Some("Z" | "X")
+                ));
+            }
+            // A second run uses the same immutable original attempt/window; it
+            // must neither release another gate nor grant a replacement deadline.
+            let retained = fs::read(pool.finished_path(&job.identity().unwrap())).unwrap();
+            let experiment = pool.experiment.clone();
+            let journal = pool.directory.clone();
+            let supervisor = pool.supervisor.clone();
+            drop(pool);
+            let mut resumed_pool = ExecutionPool::open(&experiment, &journal, supervisor).unwrap();
+            let resumed = resumed_pool
+                .run(vec![job.clone()], &AtomicBool::new(false))
+                .unwrap();
+            assert_eq!(
+                serde_json::to_vec(&resumed).unwrap(),
+                serde_json::to_vec(&outcomes).unwrap()
+            );
+            assert_eq!(
+                fs::read(journal.join("window.json")).unwrap(),
+                original_bytes
+            );
+            assert_eq!(
+                fs::read(resumed_pool.finished_path(&job.identity().unwrap())).unwrap(),
+                retained
+            );
+            assert_eq!(
+                resumed_pool.window().unwrap().deadline_unix_ms,
+                original.deadline_unix_ms
+            );
+            let ended = now_ms().unwrap();
+            assert!(
+                ended < original.deadline_unix_ms,
+                "cleanup consumed beyond global deadline"
+            );
+            println!(
+                "execution_host_receipt={}",
+                serde_json::json!({
+                    "case":case,"original_window":original,"resumed_window":resumed_pool.window(),
+                    "journal":journal,"window_sha256":hash_file(&journal.join("window.json")).unwrap(),
+                    "finished_sha256":hash_file(&resumed_pool.finished_path(&job.identity().unwrap())).unwrap(),
+                    "allocation_file_sha256":hash_file(&journal.join("fit-memory-policy.json")).unwrap(),
+                    "outcome":outcome,"descendant_pid":descendant,"descendants_drained":true,
+                    "resumed_without_new_gate":true,"fit_memory_allocation":allocation,
+                    "execution_cutoff_unix_ms":original.deadline_unix_ms-experiment.resources.reporting_seconds*1000,
+                    "completed_unix_ms":ended,"remaining_global_ms":original.deadline_unix_ms-ended
+                })
+            );
+        });
+    }
+
     fn qualify_concurrency(pool: &mut ExecutionPool, physical: &Path) {
         let script = physical.join("concurrency.py");
         let shared = physical.join("barrier");
@@ -2513,9 +2787,13 @@ finally: update(-1)
         assert!(outcomes.iter().all(|o| o.consumption.cpu_seconds.is_some()));
         assert_eq!(state["peak"], 20);
         assert_eq!(state["active"], 0);
+        let memory = fit_memory_allocation(&pool.experiment).unwrap();
+        assert!(outcomes.iter().all(
+            |outcome| outcome.consumption.fit_memory_limit_bytes == Some(memory.per_fit_bytes)
+        ));
         println!(
             "execution_host_receipt={}",
-            serde_json::json!({"case":"concurrency20","peak":20,"completed":outcomes.len(),"active_after":0})
+            serde_json::json!({"case":"concurrency20","peak":20,"completed":outcomes.len(),"active_after":0,"fit_memory_allocation":memory,"all_fit_limits_read_back":true})
         );
     }
 }
