@@ -2,7 +2,7 @@
 
 ## Purpose and scope
 
-This checklist is the requested property-list of remaining work. `roadmap.json` is its machine-readable source, with stable IDs, priorities, evidence levels, dependencies, commands, required receipts, budgets and source references. It describes source68f56404 and the stopped training64/product28/warm/winner follow-ons. PR83 is merged: remote main `a75e543d2166017cb0139e0a251d51d9a0c98e08` has the reviewed source tree, and main-guard35889731910 attempt1 succeeded. Clean canonical main was verified before the documentation branch. LIFE-01 records the completed readback; later source work still needs its own lifecycle.
+This checklist is the requested property-list of remaining work. `roadmap.json` is its machine-readable source, with stable IDs, priorities, evidence levels, dependencies, commands, required receipts, budgets and source references. It describes source 68f56404 and the stopped training64/product28/warm/winner follow-ons. PR83 is merged: remote main `a75e543d2166017cb0139e0a251d51d9a0c98e08` has the reviewed source tree, and main-guard 35889731910 attempt 1 succeeded. Clean canonical main was verified before the documentation branch. LIFE-01 records the completed readback; later source work still needs its own lifecycle.
 
 P0 blocks the specified downstream proof or integration; it does not mean every item is a newly discovered defect. P1 is required for the full requested demonstration or manual. P2 is explicit subsequent work. Commands are unexecuted acceptance templates unless their named evidence says otherwise. Variables must resolve to actual final-source artifacts and emitted identities. An empty command list records a missing truthful interface rather than inventing one.
 
@@ -47,14 +47,14 @@ Do not spend the GPU hour until the regression consumer and its actual fixture t
 | INFER-02 | P1 | 4 | exact selected-winner portability | actual export/parity unrun | INFER-01, PANEL-01 |
 | INSTALL-01 | P1 | 5 | private installation | cold/live path pending | INT-02 |
 | INSTALL-02 | P1 | 5 | final input/runtime preparation | pending final source | INSTALL-01, BENCH-01, BENCH-02 |
-| DEMO-01 | P1 | 5 | measured warm fitted demonstration | realtrained warm proof pending | NEURAL-03, INSTALL-02 |
-| PANEL-01 | P1 | 5 | unchanged thirty-dataset campaign | pending finaltrained configuration | BENCH-01, BENCH-02, NEURAL-03, DEMO-01, INFER-01, INSTALL-02 |
-| REPORT-01 | P1 | 5 | complete measured report | fullcampaign report pending | PANEL-01, EXEC-05 |
-| MOTIF-01 | P1 | 6 | eligible reusable fragments | minefront door incomplete | TEACH-01, TEACH-02, TEACH-03 |
+| DEMO-01 | P1 | 5 | measured warm fitted demonstration | real trained warm proof pending | NEURAL-03, INSTALL-02 |
+| PANEL-01 | P1 | 5 | unchanged thirty-dataset campaign | pending final trained configuration | BENCH-01, BENCH-02, NEURAL-03, DEMO-01, INFER-01, INSTALL-02 |
+| REPORT-01 | P1 | 5 | complete measured report | full campaign report pending | PANEL-01, EXEC-05 |
+| MOTIF-01 | P1 | 6 | eligible reusable fragments | mining front door incomplete | TEACH-01, TEACH-02, TEACH-03 |
 | MOTIF-02 | P1 | 6 | reuse validation | live reuse pending | MOTIF-01 |
 | MOTIF-03 | P2 | 6 | new operators | future conditional work | MOTIF-02 |
-| IP-01 | P1 | 0 | public privacy boundaries | residual D-IP4 and nextPRtextwork | INT-01 |
-| MAINT-01 | P2 | 0 | broad diagnostic qualification | not closedbyfastCI | LIFE-01 |
+| IP-01 | P1 | 0 | public privacy boundaries | residual D-IP4 and future PR text work | INT-01 |
+| MAINT-01 | P2 | 0 | broad diagnostic qualification | not closed by fast CI | LIFE-01 |
 | FUTURE-01 | P2 | 4 | CUDA inference and serving promotion | deferred | INFER-02, REPORT-01 |
 | DOC-05 | P1 | 0 | real training and target history | Original training and target values verified; final composed-document inspection required | DOC-01 |
 | DOC-06 | P1 | 0 | versions, KPIs and continuation runbook | Current and pending interfaces source-audited; independent chapter review complete | DOC-01 |
@@ -80,13 +80,13 @@ Do not spend the GPU hour until the regression consumer and its actual fixture t
 /home/ubuntu/.local/bin/gh-role writer run view 35889731910 --json headSha,attempt,status,conclusion,jobs
 ```
 
-**Required evidence:** PR83 merged2026-09-23T16:34:47Z; remote main a75e543d2166017cb0139e0a251d51d9a0c98e08 has tree176b75bc36d76c7ce4eaeb7234677ec013468889, equal to reviewed68. Main-guard35889731910 attempt1 succeeded; job107278860508 finished16:40:11Z. Clean canonical main verified before docs/asm-maintainer-manual branch claim.
+**Required evidence:** PR83 merged 2026-09-23T16:34:47Z; remote main a75e543d2166017cb0139e0a251d51d9a0c98e08 has tree 176b75bc36d76c7ce4eaeb7234677ec013468889, equal to reviewed 68. Main-guard 35889731910 attempt 1 succeeded; job 107278860508 finished 16:40:11Z. Clean canonical main verified before docs/asm-maintainer-manual branch claim.
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
 **Source/evidence references:** `AGENTS.md:Pull requests`, `status.md:Scope`, `maintenance.md:Coverage and reviewed lifecycle`, `neural-integration/lifecycle-68f56404c3e199e06413bfd645d3fe0803d7b96f/remote-main-verification.json`.
 
-**Qualification limit:** This task is complete; subsequent implementation remains pending. Keep the measured68 source identity distinct from the rebase-merge commit identity.
+**Qualification limit:** This task is complete; subsequent implementation remains pending. Keep the measured 68 source identity distinct from the rebase-merge commit identity.
 
 
 ### DOC-01 — manual
@@ -107,7 +107,7 @@ python3 docs/internal/asm-manual/tools/build_manual.py
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
-**Source/evidence references:** `architecture-training-evidence.json`, `product-language-source-pins.json`, `dataset-inventory.json`, `performance-evidence.json`.
+**Source/evidence references:** `architecture-training-evidence.json`, `product-language-source-pins.json`, `dataset-inventory.json`, `performance-evidence.json.gz`.
 
 **Qualification limit:** Root integrated the book and renderer. Claude historical plot inputs were copied under stable before/after hashes; no stopped external renderer handoff is required.
 
@@ -127,7 +127,7 @@ python3 "$EXAMPLES/validate-outputs.py" --recipe-output "$EXAMPLE_RUN/recipe"
 "$J" pipeline verify-receipt --receipt "$EXAMPLE_RUN/pipeline/receipt.json" --json
 ```
 
-**Required evidence:** examples/commands.json instantiated with actual paths and pinned source/tool versions; five outputs with8finite values and complete-bit comparison; pipeline receipt verification. Stopped audit SHA256 363fbe62a706b44030205da78411243ba206ad2366d546a277babe966b802c91.
+**Required evidence:** examples/commands.json instantiated with actual paths and pinned source/tool versions; five outputs with 8 finite values and complete-bit comparison; pipeline receipt verification. Stopped audit SHA256 363fbe62a706b44030205da78411243ba206ad2366d546a277babe966b802c91.
 
 **Resources:** Completed separate 300-second allocation: one CPU, 4 GiB, zero swap/GPU, network denial declared; 30-second numerical and 60-second compiler caps. Actual receipt retained; independent live property readback limitation is disclosed. No Cargo or frozen-panel campaign; no deadline reset.
 
@@ -138,7 +138,7 @@ python3 "$EXAMPLES/validate-outputs.py" --recipe-output "$EXAMPLE_RUN/recipe"
 
 ### DOC-03 — manual figures
 
-**Priority:** P1. **Current evidence:** nineteen local figure artifacts; original metrics and generation points retained. **Status:** figures rendered; final PDF inspection pending.
+**Priority:** P1. **Current evidence:** twenty-one local figure artifacts; original metrics, complete recovered per-step series and generation points retained. **Status:** figures rendered; final PDF inspection pending.
 
 **Action:** Retain historical/current labels, complete source CSVs and final PDF visual checks.
 
@@ -149,13 +149,17 @@ python3 "$EXAMPLES/validate-outputs.py" --recipe-output "$EXAMPLE_RUN/recipe"
 ```sh
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_inventory_figures.py
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_figures.py
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_training_figures.py
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_target_figures.py
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_legacy_training_figure.py
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_per_step_figure.py
 ```
 
 **Required evidence:** Plot source CSV/JSON, tool source, plot hash, precise captions, missing-stat flags and historical-vs-current labels; no invented sealed statistics or causal speedup.
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
-**Source/evidence references:** `data-evidence.md`, `dataset-inventory.json`, `performance-evidence.json`.
+**Source/evidence references:** `data-evidence.md`, `dataset-inventory.json`, `performance-evidence.json.gz`.
 
 **Qualification limit:** Historical Elo belongs to its original ladder/pool/protocol; the current one-dataset proof is not a new Elo ladder. Source and figure checks are retained; authored architecture SVG is a repository source artifact.
 
@@ -234,7 +238,7 @@ TMPDIR="$ACCEPTANCE/tmp" JOPE_BUILD_JOBS=4 bash deploy/ci/test-inventory.sh --up
 
 **Source/evidence references:** `deploy/ci/coverage.json`, `deploy/ci/training-proof.py (pending)`, `deploy/ci/fast-lane.sh`, `deploy/ci/full-lane.sh`.
 
-**Qualification limit:** Custody syntax tests are not this gate. Required18Python/27Rust/10policy names are proof minima, not total coverage. New code needs actual test collection.
+**Qualification limit:** Custody syntax tests are not this gate. Required 18 Python / 27 Rust / 10 policy names are proof minima, not total coverage. New code needs actual test collection.
 
 
 ### BENCH-01 — frozen benchmark foundation
@@ -253,7 +257,7 @@ TMPDIR="$ACCEPTANCE/tmp" JOPE_BUILD_JOBS=4 bash deploy/ci/test-inventory.sh --up
 "$J" benchmark methods
 ```
 
-**Required evidence:** Original panel SHAba7dace4…,30datasets10/task, exact input-byte verification, native17/5/4recipes and4external families; alias/configuration inventory and unavailable reasons.
+**Required evidence:** Original panel SHA ba7dace4…, 30 datasets, 10 per task, exact input-byte verification, native 17/5/4 recipes and 4 external families; alias/configuration inventory and unavailable reasons.
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
@@ -277,7 +281,7 @@ python3 deploy/prepare-panel-runtime.py --binary "$J" --native-command benchmark
 "$EXTERNAL_PYTHON" -m pytest crates/jope-bench/adapters/test_panel.py -q
 ```
 
-**Required evidence:** Current4engine version/source/package hashes, constructors for3tasks, actual contract-test receipt and explicit unavailability inventory.
+**Required evidence:** Current 4 engine version/source/package hashes, constructors for 3 tasks, actual contract-test receipt and explicit unavailability inventory.
 
 **Resources:** Preparation owns sharedCPUallocation; tests use allocatedCPU; no panel/training window begins.
 
@@ -334,7 +338,7 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked
 
 ### EXEC-03 — receipt replay regression tests
 
-**Priority:** P1. **Current evidence:** shared per-fold helper fixed and real68 recovered report passed. **Status:** test gap: resume-fix-F2.
+**Priority:** P1. **Current evidence:** shared per-fold helper fixed and real 68 recovered report passed. **Status:** test gap: resume-fix-F2.
 
 **Action:** Add PoolBackend-shaped candidate receipt roundtrip asserting live Feedback equals recovered FitAdapter Feedback, including digest and partial completed-fold evidence.
 
@@ -413,7 +417,7 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked
 "$CONTEXT_PROOF" run --plan "$CONTEXT_PLAN" --plan-sha256 "$CONTEXT_PLAN_SHA"
 ```
 
-**Required evidence:** All eight fixed cases pass the unchanged component/context maximum absolute difference of0.0003; source, assets and program identities match. Preserve actual bounded execution receipts and the qualified construction token, original labels and row order.
+**Required evidence:** All eight fixed cases pass the unchanged component/context maximum absolute difference of 0.0003; source, assets and program identities match. Preserve actual bounded execution receipts and the qualified construction token, original labels and row order.
 
 **Resources:** Separate explicit resource manifest and approved allowance required before admission;20 CPUs/workers maximum,64 GiB maximum,zero swap,one thread,30 seconds per fit,120 seconds per arm maximum. No new allowance granted by this checklist.
 
@@ -464,7 +468,7 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked
 
 **Source/evidence references:** `crates/jope-learning/src/eligibility.rs:253 (pending)`, `AGENT_CHAT.md:eligibility-B6`, `crates/jope-bench/src/panel/selection_exposure.rs`.
 
-**Qualification limit:** No current live leak was observed because no producer emits benchmark-valid panel records. A burn file writer alone is not downstream enforcement.
+**Qualification limit:** The source 68 panel has no benchmark-valid producer. Separate historical closure questions remain: indexed meta-test contexts and externally reported exposed high-water marks do not by themselves establish training-label leakage. A burn writer alone is not downstream enforcement.
 
 
 ### TEACH-03 — real teacher collection
@@ -483,13 +487,13 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked
 "$J" optimize report --plan "$FAMILY_PLAN" --plan-sha256 "$FAMILY_PLAN_ID" --manifest "$M" --datasets "$D" --journal "$FAMILY_JOURNAL"
 ```
 
-**Required evidence:** Before-fit freeze, vocabulary and source pins; two independent families and original windows; nine context proofs per dataset; complete five-fold predictions and trivial baselines. Apply the1e-12 absolute plus1e-6 relative gain margin and four-of-five rule. Retain no-signal refusals.
+**Required evidence:** Before-fit freeze, vocabulary and source pins; two independent families and original windows; nine context proofs per dataset; complete five-fold predictions and trivial baselines. Apply the 1e-12 absolute plus 1e-6 relative gain margin and four-of-five rule. Retain no-signal refusals.
 
 **Resources:** Separate explicit resource manifest and approved allowance required before admission;20 CPUs/workers maximum,64 GiB maximum,zero swap,one thread,30 seconds per fit,120 seconds per arm maximum. No new allowance granted by this checklist.
 
 **Source/evidence references:** `agent-training-readiness/readiness-v3.json`, `operations-training.md:Present teacher readiness`, `crates/jope-bench/src/panel/teaching.rs (pending)`.
 
-**Qualification limit:** Execute separately for230_machine_cpu and712_chscase_geyser1; the prospective choice predates losses. Old55e9,3fd and68 operational receipts cannot be retrofitted. The older queue suggested300 secondseconds per family without admitting that allowance.
+**Qualification limit:** Execute separately for 230_machine_cpu and 712_chscase_geyser1; the prospective choice predates losses. Old 55e9, 3fd and 68 operational receipts cannot be retrofitted. The older queue suggested 300 seconds per family without admitting that allowance.
 
 
 ### TEACH-04 — real corpus materialization
@@ -506,7 +510,7 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked
 "$J" train prepare-inputs --learning-state "$LEARNING_STATE" --request "$CORPUS_REQUEST" --request-sha256 "$CORPUS_REQUEST_SHA" --output "$CORPUS_OUTPUT"
 ```
 
-**Required evidence:** At least two real families; every eligible requested comparison included; seed7 partition derived from source families; exact1536+512 context values. No invented context, parameter-bin snapping, label remapping or omission of difficult examples.
+**Required evidence:** At least two real families; every eligible requested comparison included; seed 7 partition derived from source families; exact 1536 + 512 context values. No invented context, parameter-bin snapping, label remapping or omission of difficult examples.
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
@@ -557,7 +561,7 @@ python3 deploy/ci/test-training-proof.py
 
 **Required evidence:** Actual normal and interrupted CPU workers; controller-owned subgroup joined before execution; original deadline, device and runtime unchanged; children drained and resumed state compatible. The native wrapper must enforce admission.
 
-**Resources:** Explicitbounded CPU fixture allocation; same planned3600 seconds/1200scaps are maxima, not authorization to spend them twice; no GPU.
+**Resources:** Explicitbounded CPU fixture allocation; same planned 3600 seconds/1200scaps are maxima, not authorization to spend them twice; no GPU.
 
 **Source/evidence references:** `crates/jope-cli/src/train.rs (pending)`, `python/src/jope/policy/training_campaign.py (pending)`.
 
@@ -581,7 +585,7 @@ python3 deploy/ci/test-training-proof.py
 
 **Required evidence:** Original global/category windows; one RTX3090 UUID; positive updates, changed parameter hashes and task coverage with data_kind/fallback reasons. Save and reload model plus optimizer; record CPU/GPU cost where measured. Requested CUDA must not silently fall back to CPU.
 
-**Resources:** One original3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.
+**Resources:** One original 3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.
 
 **Source/evidence references:** `python/src/jope/policy/training_campaign.py:780 (pending)`, `operations-training.md:Plan, run, resume, verify and export`.
 
@@ -606,7 +610,7 @@ python3 deploy/ci/test-training-proof.py
 
 **Required evidence:** Resume only when needed inside the original window. Prove increased optimizer steps, identical parameters after reload, changed parameters relative to the prior checkpoint, matching export/resume proof and completed task coverage. Keep experimental non-serving status.
 
-**Resources:** One original3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.
+**Resources:** One original 3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.
 
 **Source/evidence references:** `python/src/jope/policy/training_campaign.py:1203 (pending)`, `python/src/jope/policy/training_campaign.py:1303 (pending)`.
 
@@ -653,7 +657,7 @@ python/.venv/bin/python -m pytest python/tests/test_experimental_proposal.py -q
 "$J" optimize report --plan "$CONSUMPTION_PLAN" --plan-sha256 "$CONSUMPTION_PLAN_ID" --manifest "$M" --datasets "$D" --journal "$CONSUMPTION_JOURNAL"
 ```
 
-**Required evidence:** The exported checkpoint hash appears in actual proposal and fit evidence;64+16 versus80 origins remain authenticated. Retain completed descendants where claimed, predictions and fitted states. Regression must be admitted and classifier fixture limits explicit; replay the original window successfully.
+**Required evidence:** The exported checkpoint hash appears in actual proposal and fit evidence;64+16 versus 80 origins remain authenticated. Retain completed descendants where claimed, predictions and fitted states. Regression must be admitted and classifier fixture limits explicit; replay the original window successfully.
 
 **Resources:** Separate explicit resource manifest and approved allowance required before admission;20 CPUs/workers maximum,64 GiB maximum,zero swap,one thread,30 seconds per fit,120 seconds per arm maximum. No new allowance granted by this checklist.
 
@@ -664,7 +668,7 @@ python/.venv/bin/python -m pytest python/tests/test_experimental_proposal.py -q
 
 ### INFER-01 — fitted state and privacy
 
-**Priority:** P0. **Current evidence:** native fitted state exists; product28source prepared. **Status:** qualification pending.
+**Priority:** P0. **Current evidence:** native fitted state exists; product28 source prepared. **Status:** qualification pending.
 
 **Action:** Execute the lossless private codec, complete fitted preprocessing/state reload, and public allowlist/canary tests before export. Unsupported states remain explicit.
 
@@ -684,7 +688,7 @@ bash deploy/ci/ip-scrub.sh
 
 **Source/evidence references:** `crates/feat-math/src/advanced_v3/fitted_portable.rs (pending)`, `crates/jope-bench/src/panel/inference.rs (pending)`, `languages-examples.md:State restrictions`.
 
-**Qualification limit:** The private C++ head gate is broader than the public gate. Python/Rust14of26, C++2of26 and JavaScript6of26 are static head counts, not runtime qualification rates.
+**Qualification limit:** The private C++ head gate is broader than the public gate. Python/Rust 14 of 26, C++ 2 of 26 and JavaScript 6 of 26 are static head counts, not runtime qualification rates.
 
 
 ### INFER-02 — exact selected-winner portability
@@ -703,7 +707,7 @@ bash deploy/ci/ip-scrub.sh
 "$J" benchmark report --plan "$PLAN" --plan-sha256 "$PLAN_ID" --manifest "$M" --datasets "$D" --journal "$JOURNAL"
 ```
 
-**Required evidence:** Exact state, artifact, input, class, toolchain and numerical-policy hashes; actual five-backend outcomes. Python/Rust/C++ use bitwise comparison; JavaScript uses1e-12 absolute and relative tolerance. Recover interrupted work without retrying its child; read-only reports launch nothing. Unsupported never replaces the winner.
+**Required evidence:** Exact state, artifact, input, class, toolchain and numerical-policy hashes; actual five-backend outcomes. Python/Rust/C++ use bitwise comparison; JavaScript uses 1e-12 absolute and relative tolerance. Recover interrupted work without retrying its child; read-only reports launch nothing. Unsupported never replaces the winner.
 
 **Resources:** Same original campaign execution window and worker caps; no new job after t0 + 6900 seconds for official panel. No post-panel allowance is implemented.
 
@@ -714,7 +718,7 @@ bash deploy/ci/ip-scrub.sh
 
 ### INSTALL-01 — private installation
 
-**Priority:** P1. **Current evidence:** installer source and15metadata tests passed. **Status:** cold/live path pending.
+**Priority:** P1. **Current evidence:** installer source and 15 metadata tests passed. **Status:** cold/live path pending.
 
 **Action:** Build the CLI from final source, measure cold build separately, checksum-install the exact Linux binary, and verify actual command help plus dependency/ELF boundaries.
 
@@ -763,7 +767,7 @@ python3 deploy/install-private.py binary --binary "$PRIVATE_BINARY" --sha256 "$B
 
 ### DEMO-01 — measured warm fitted demonstration
 
-**Priority:** P1. **Current evidence:** warmtargetadd-onprepared;historicalfirstfit≈50.4s. **Status:** realtrained warm proof pending.
+**Priority:** P1. **Current evidence:** warmtargetadd-onprepared;historicalfirstfit≈50.4s. **Status:** real trained warm proof pending.
 
 **Action:** Produce actual trained-neural and generic fitted artifacts, reloaded predictions, baseline/comparison and truthful target_met. Do not clip arm budgets to pass sixty seconds.
 
@@ -782,12 +786,12 @@ python3 deploy/ci/qualify-demo.py --binary "$J" --sha256 "$J_SHA" --source-sha "
 
 **Source/evidence references:** `crates/jope-bench/src/panel/demo_asm.rs (pending)`, `docs/private-warm-target.md (pending)`, `product.md:Warm fitted demonstration`.
 
-**Qualification limit:** Under sixty seconds is a measured target. The existing twenty-second-arm example is unqualified. An explicitly admitted longer proof may satisfy execution while missing the target. This checklist grants no implicit300-second allowance.
+**Qualification limit:** Under sixty seconds is a measured target. The existing twenty-second-arm example is unqualified. An explicitly admitted longer proof may satisfy execution while missing the target. This checklist grants no implicit 300-second allowance.
 
 
 ### PANEL-01 — unchanged thirty-dataset campaign
 
-**Priority:** P1. **Current evidence:** protocol/currentfoundation qualified;full panel unstarted. **Status:** pending finaltrained configuration.
+**Priority:** P1. **Current evidence:** protocol/currentfoundation qualified;full panel unstarted. **Status:** pending final trained configuration.
 
 **Action:** Freeze the final roster/configuration and run the unchanged thirty datasets once. Screen fold0, freeze the top five, confirm five development folds, and add asm.neural diagnostically when absent. Retain every failure.
 
@@ -803,16 +807,16 @@ python3 deploy/ci/qualify-demo.py --binary "$J" --sha256 "$J_SHA" --source-sha "
 
 **Required evidence:** All thirty dataset identities, ten per task; every applicable method slot; screen/frozen/confirmation losses; selection-exposure row intersection hashes; no sealed reads; winner backend outcomes and actual win counts.
 
-**Resources:** Exactly7200 seconds including300 seconds reporting reserve;20 CPUs/workers,64 GiB,zero swap,one thread per fit,30 seconds per fit,120 seconds per search arm; sealed labels unopened; existing window never reset.
+**Resources:** Exactly 7200 seconds including 300 seconds reporting reserve;20 CPUs/workers,64 GiB,zero swap,one thread per fit,30 seconds per fit,120 seconds per search arm; sealed labels unopened; existing window never reset.
 
 **Source/evidence references:** `benchmarks/panel.json`, `crates/jope-bench/src/panel/protocol.rs`, `crates/jope-bench/src/panel/selection_exposure.rs`.
 
-**Qualification limit:** Current code forces asm.neural into extra confirmation, not asm.generic. Selected five-fold summaries are adaptive development, and ten wins per category are not promised. Qualify exports before the original6900-second cutoff or preserve unattempted status.
+**Qualification limit:** Current code forces asm.neural into extra confirmation, not asm.generic. Selected five-fold summaries are adaptive development, and ten wins per category are not promised. Qualify exports before the original 6900-second cutoff or preserve unattempted status.
 
 
 ### REPORT-01 — complete measured report
 
-**Priority:** P1. **Current evidence:** one-dataset832predictor/164recipe operational audit. **Status:** fullcampaign report pending.
+**Priority:** P1. **Current evidence:** one-dataset, 832 predictor/164recipe operational audit. **Status:** full campaign report pending.
 
 **Action:** Publish all thirty losses/gaps, outcomes, time/cost per unique artifact and recipe, coverage and failure inventories. Compare the supplied one-hour/ten-million-token scenario only using supported quantities.
 
@@ -826,7 +830,7 @@ python3 deploy/ci/qualify-demo.py --binary "$J" --sha256 "$J_SHA" --source-sha "
 
 **Required evidence:** Report recovery without fits; union of started/finished records; worker CPU distinguished from overlapping service CPU; known and unknown costs; training, installation, preparation and export accounted separately. Tokens and money stay unknown unless measured; retain win/loss/gap tables.
 
-**Resources:** Original300 secondsreportingreserve forpanel; laterreadonlyauditopensnofitbudget.
+**Resources:** Original 300 secondsreportingreserve forpanel; laterreadonlyauditopensnofitbudget.
 
 **Source/evidence references:** `status.md:Cost`, `data-evidence.md`, `crates/jope-bench/src/panel/asm_campaign.rs (pending)`.
 
@@ -835,7 +839,7 @@ python3 deploy/ci/qualify-demo.py --binary "$J" --sha256 "$J_SHA" --source-sha "
 
 ### MOTIF-01 — eligible reusable fragments
 
-**Priority:** P1. **Current evidence:** separate typed library branch exists. **Status:** minefront door incomplete.
+**Priority:** P1. **Current evidence:** separate typed library branch exists. **Status:** mining front door incomplete.
 
 **Action:** Integrate the production eligible-State reader, typed fragment/macro miner and umbrella CLI. Preserve full comparison identity, provenance and private/public separation.
 
@@ -897,7 +901,7 @@ python3 deploy/ci/qualify-demo.py --binary "$J" --sha256 "$J_SHA" --source-sha "
 
 ### IP-01 — public privacy boundaries
 
-**Priority:** P1. **Current evidence:** allowlists/canaries prepared; historicallintblindspots. **Status:** residual D-IP4 and nextPRtextwork.
+**Priority:** P1. **Current evidence:** allowlists/canaries prepared; historicallintblindspots. **Status:** residual D-IP4 and future PR text work.
 
 **Action:** Resolve the approved public vocabulary/naming scope and test actual CLI help, receipts and NOTICE. Preserve the explicitly requested internal manual and the strict public inference allowlist.
 
@@ -920,7 +924,7 @@ bash deploy/ci/ip-scrub.sh
 
 ### MAINT-01 — broad diagnostic qualification
 
-**Priority:** P2. **Current evidence:** historicalfull-default failures inventoried. **Status:** not closedbyfastCI.
+**Priority:** P2. **Current evidence:** historicalfull-default failures inventoried. **Status:** not closed by fast CI.
 
 **Action:** Reproduce and repair recorded full-default, scratch, policy and neural families through their owning full lanes. Retain unavailable capabilities and resource limits.
 
@@ -986,7 +990,16 @@ The user’s training-history, continuation, focused-search and packing question
 
 **Required evidence:** Audited original JSON-pointer-to-CSV equality; every curve bound to model/corpus/monitor/objective; original failed/inconclusive observations retained.
 
-**Commands:** `python3 docs/internal/asm-manual/tools/make_training_figures.py`
+**Commands:**
+
+```sh
+python3 docs/internal/asm-manual/tools/make_training_figures.py
+python3 docs/internal/asm-manual/tools/make_target_figures.py
+python3 docs/internal/asm-manual/tools/make_legacy_training_figure.py
+python3 docs/internal/asm-manual/tools/make_per_step_figure.py
+```
+
+The recovered series preserves 63,000 rows and 378,000 exact metric tokens. Keep all 21 corpus blocks, 20 intervening boundaries and the legacy internal-ladder limitations explicit.
 
 **Resources:** No new fits, training or model loads; plotting retained metrics only.
 

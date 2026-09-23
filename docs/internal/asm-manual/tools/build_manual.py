@@ -43,7 +43,7 @@ def main() -> None:
     # fontTools otherwise stamps subset fonts with the rendering clock.
     os.environ.setdefault("SOURCE_DATE_EPOCH", "1790121600")  # 2026-09-23 UTC
     def inputs():
-        paths = [p for p in sorted(ROOT.rglob("*")) if p.is_file() and p.suffix in {".md", ".json", ".jsonl", ".csv", ".py", ".css", ".png", ".svg", ".plist"} and p.name not in {"render-receipt.json", "MANUAL.md"}]
+        paths = [p for p in sorted(ROOT.rglob("*")) if p.is_file() and p.suffix in {".md", ".json", ".jsonl", ".csv", ".py", ".css", ".png", ".svg", ".plist", ".gz", ".txt"} and p.name not in {"render-receipt.json", "MANUAL.md"}]
         paths.append(DOCS / "asm-maintainer-status.plist")
         return [{"path": str(p.relative_to(DOCS)), "sha256": hashlib.sha256(p.read_bytes()).hexdigest()} for p in paths]
 
@@ -113,7 +113,7 @@ def main() -> None:
     for family in ["DejaVu Sans", "DejaVu Sans:style=Bold", "DejaVu Sans:style=Oblique", "DejaVu Sans:style=Bold Oblique", "DejaVu Sans Mono"]:
         font = Path(subprocess.check_output(["fc-match", "-f", "%{file}", family], text=True))
         fonts.append({"selection": family, "path": str(font), "sha256": hashlib.sha256(font.read_bytes()).hexdigest()})
-    runtime = {"python": sys.version, "source_date_epoch": os.environ["SOURCE_DATE_EPOCH"], "libraries": {name: importlib.metadata.version(name) for name in ["weasyprint", "Markdown", "beautifulsoup4", "pydyf", "fonttools"]}, "fonts": fonts}
+    runtime = {"python": sys.version, "source_date_epoch": os.environ["SOURCE_DATE_EPOCH"], "libraries": {name: importlib.metadata.version(name) for name in ["weasyprint", "Markdown", "beautifulsoup4", "pydyf", "fonttools", "matplotlib", "numpy", "Pillow"]}, "fonts": fonts}
     receipt = {"schema": "jope.manual-render/v1", "sections": len(sections), "pages": len(document.pages), "pdf_sha256": hashlib.sha256(pdf.read_bytes()).hexdigest(), "pdf_bytes": pdf.stat().st_size, "network_resources": False, "runtime": runtime, "inputs": before}
     (ROOT / "render-receipt.json").write_text(json.dumps(receipt, indent=2) + "\n")
     print(json.dumps({k: v for k, v in receipt.items() if k not in {"inputs", "runtime"}}))

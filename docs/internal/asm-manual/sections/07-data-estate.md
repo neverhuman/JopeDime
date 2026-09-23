@@ -8,7 +8,7 @@ The current source has a successful operational proof on `230_machine_cpu`: the 
 
 Every number in this chapter comes from a pinned manifest, prepared development table, immutable report, committed historical snapshot, filesystem metadata, or authenticated AWS metadata request. The audit did not run a fit, load a model, open sealed target bodies, or execute a report command.
 
-The machine-readable companions are `dataset-inventory.json` (all thirty datasets, 522 feature records, complete available upstream metadata and detailed development statistics), `performance-evidence.json` (measured current origin plus historical score cells, timing and ladders), `catalog-summary.json`, `local-estate.json`, `s3-estate.json`, and `metadata-receipts/`. The catalog JSONL retains every available per-dataset catalog field for all 3,859 corpus datasets. No claim is made to enumerate every mathematically possible statistic.
+The machine-readable companions are `dataset-inventory.json` (all thirty datasets, 522 feature records, complete available upstream metadata and detailed development statistics), `performance-evidence.json.gz` (measured current origin plus historical score cells, timing and ladders), `catalog-summary.json`, `local-estate.json`, `s3-estate.json`, and `metadata-receipts/`. The catalog JSONL retains every available per-dataset catalog field for all 3,859 corpus datasets. No claim is made to enumerate every mathematically possible statistic.
 
 ## Frozen thirty-dataset panel
 
@@ -91,7 +91,7 @@ There are two source-level path conventions to name explicitly: dataset cache re
 
 The three bucket listings completed with zero payload-body reads. The learning bucket contains current `staging/lineage-a/`, `staging/lineage-b/` and `staging/mirror-weights/` prefixes; per-lineage byte counts were not separately aggregated by this listing. Current listed learning bytes are 430,645,459,168. A separate CloudWatch daily statistic at 2026-09-23T00:00:00Z reports 645,281 objects and 430,732,116,688 StandardStorage bytes. It is a dated metric with a different scope/capture time; no exact reconciliation with the current listing is claimed. Paginated S3 listing is an observation over an interval, not an atomic bucket snapshot.
 
-These are the three product stores inspected. Known archive and alternate-region locations documented in the host contract were not re-enumerated in this task; their current object/version counts and bytes remain unknown here. Counts of stored objects do not establish recovery completeness, teacher admission or serving eligibility.
+These are the three product stores inspected. Known archive and alternate-region locations documented in the host contract were not re-enumerated in this task; their current object/version counts and bytes remain unknown here. Counts of stored objects do not establish recovery completeness, teacher admission or serving eligibility. The separate DATA-01 archive/replica/local-root reconciliation was still author-active at 19:14 UTC on September 23. Its provisional inventory and DOCFIX-01 corrections are reserved for a reviewed follow-up; no unreleased figures are imported into this edition.
 
 | Local root | Present | Regular files | Logical bytes | Unique-inode logical bytes |
 |---|---|---:|---:|---:|
@@ -158,7 +158,7 @@ These are accounting ratios for one retained run, not extrapolated throughput or
 
 The supplied one-hour/ten-million-token scenario has 3,600 seconds and 10,000,000 tokens by stipulation. This run used 239.143 seconds of wall time but has no measured token or monetary receipt. A dollar comparison, token savings claim, or one-hour quality extrapolation would require actual token usage, contemporaneous input/output/cache rates and an equivalent task/quality protocol. None is invented here.
 
-The preceding d0 source run failed after 194.789382994 seconds at scorer replay. All 964 commands had terminal receipts, with 834 completed and 130 failed. Its exact supervisorCPU was 252.614611 seconds and workerCPU 181.863951 seconds. It remains a failed reproducer; the old journal and deadline were not repaired or reopened.
+The preceding d0 source run failed after 194.789382994 seconds at scorer replay. All 964 commands had terminal receipts, with 834 completed and 130 failed. Its exact supervisor CPU was 252.614611 seconds and worker CPU 181.863951 seconds. It remains a failed reproducer; the old journal and deadline were not repaired or reopened.
 
 ## Existing historical rankings and Elo
 
@@ -177,7 +177,7 @@ Same-cut v1 covers native heads plus resampled search; v2 adds XGBoost 2.1.4, Li
 
 The published SOTArena snapshot puts historical `jope-dime` at rank 1/Elo 2259.8 with 11 wins and 45/45 coverage. All 45 rows are test-selected: 42 best-test evolution-envelope rows plus 3 test-adaptive accepted replays. The corrected benchmark-valid snapshot excludes those 45; **that rank 1 is not a held-out ASM claim**. The corrected snapshot has 304 methods/8,718 rankable rows. Its fixed-seed historical `jope-dime-regressor` entry is rank 31/Elo 1687.0, 1 win, 42/45 coverage; TabFM Ensemble is rank 1/Elo 1934.9. It remains historical public-development evidence.
 
-For plots, use `performance-evidence.json`: 6 complete ladder row sets; 520 same-cut score cells, including missing/rejected statuses; 20 per-dataset reports with exact cut identities, source heads and screen/deep timings; 8,763 historical SOTArena score rows; and the 2 current-origin refit loss rows. Do not blend these into one chart without explicit separate protocol panels. The current frozen 30 matrix has no completed cells yet; represent it as pending, not a fabricated ranking.
+For plots, use `performance-evidence.json.gz`: 6 complete ladder row sets; 520 same-cut score cells, including missing/rejected statuses; 20 per-dataset reports with exact cut identities, source heads and screen/deep timings; 8,763 historical SOTArena score rows; and the 2 current-origin refit loss rows. Do not blend these into one chart without explicit separate protocol panels. The current frozen 30 matrix has no completed cells yet; represent it as pending, not a fabricated ranking.
 
 ### How the retained Elo scale is constructed
 

@@ -9,7 +9,7 @@
 	<key>source_snapshot</key>
 	<string>68f56404c3e199e06413bfd645d3fe0803d7b96f</string>
 	<key>lifecycle_snapshot</key>
-	<string>PR83 merged; main a75e543d2166017cb0139e0a251d51d9a0c98e08 has reviewed68 tree176b75bc36d76c7ce4eaeb7234677ec013468889; main-guard35889731910/1success; clean canonical main verified before docs branch.</string>
+	<string>PR83 merged; main a75e543d2166017cb0139e0a251d51d9a0c98e08 has reviewed 68 tree 176b75bc36d76c7ce4eaeb7234677ec013468889; main-guard 35889731910/1 success; clean canonical main verified before docs branch.</string>
 	<key>authority</key>
 	<string>planning inventory only; commands are not execution receipts or new budget authorization</string>
 	<key>training_overlay_sha256</key>
@@ -43,7 +43,7 @@
 		<string>Eligible optimization and reuse</string>
 	</dict>
 	<key>command_placeholders</key>
-	<string>All variables must name actual final-source artifacts, emitted semanticIDs, byteSHA256s and declared allocations. No command in this JSON has been executed by its author. Commandempty means implementation/frontdoor or render-tool contract is absent; never fabricate it.</string>
+	<string>All variables must name actual final-source artifacts, emitted semantic IDs, byte SHA256s and declared allocations. No command in this JSON has been executed by its author. An empty command list means implementation/frontdoor or render-tool contract is absent; never fabricate it.</string>
 	<key>items</key>
 	<array>
 		<dict>
@@ -74,7 +74,7 @@
 				</array>
 				<key>evidence</key>
 				<array>
-					<string>PR83 merged2026-09-23T16:34:47Z; remote main a75e543d2166017cb0139e0a251d51d9a0c98e08 has tree176b75bc36d76c7ce4eaeb7234677ec013468889, equal to reviewed68. Main-guard35889731910 attempt1 succeeded; job107278860508 finished16:40:11Z. Clean canonical main verified before docs/asm-maintainer-manual branch claim.</string>
+					<string>PR83 merged 2026-09-23T16:34:47Z; remote main a75e543d2166017cb0139e0a251d51d9a0c98e08 has tree 176b75bc36d76c7ce4eaeb7234677ec013468889, equal to reviewed 68. Main-guard 35889731910 attempt 1 succeeded; job 107278860508 finished 16:40:11Z. Clean canonical main verified before docs/asm-maintainer-manual branch claim.</string>
 				</array>
 				<key>command_status</key>
 				<string>exact existing interfaces with declared placeholders</string>
@@ -89,7 +89,7 @@
 				<string>neural-integration/lifecycle-68f56404c3e199e06413bfd645d3fe0803d7b96f/remote-main-verification.json</string>
 			</array>
 			<key>notes</key>
-			<string>This task is complete; subsequent implementation remains pending. Keep the measured68 source identity distinct from the rebase-merge commit identity.</string>
+			<string>This task is complete; subsequent implementation remains pending. Keep the measured 68 source identity distinct from the rebase-merge commit identity.</string>
 			<key>planned_owner</key>
 			<dict>
 				<key>executes</key>
@@ -139,7 +139,7 @@
 				<string>architecture-training-evidence.json</string>
 				<string>product-language-source-pins.json</string>
 				<string>dataset-inventory.json</string>
-				<string>performance-evidence.json</string>
+				<string>performance-evidence.json.gz</string>
 			</array>
 			<key>notes</key>
 			<string>Root integrated the book and renderer. Claude historical plot inputs were copied under stable before/after hashes; no stopped external renderer handoff is required.</string>
@@ -181,7 +181,7 @@
 				</array>
 				<key>evidence</key>
 				<array>
-					<string>examples/commands.json instantiated with actual paths and pinned source/tool versions; five outputs with8finite values and complete-bit comparison; pipeline receipt verification.</string>
+					<string>examples/commands.json instantiated with actual paths and pinned source/tool versions; five outputs with 8 finite values and complete-bit comparison; pipeline receipt verification.</string>
 					<string>Stopped audit SHA256 363fbe62a706b44030205da78411243ba206ad2366d546a277babe966b802c91.</string>
 				</array>
 				<key>command_status</key>
@@ -218,7 +218,7 @@
 			<key>severity</key>
 			<string>required acceptance before completed delivery</string>
 			<key>current_evidence_level</key>
-			<string>nineteen local figure artifacts; original metrics and generation points retained</string>
+			<string>twenty-one local figure artifacts; original metrics, complete recovered per-step series and generation points retained</string>
 			<key>status</key>
 			<string>figures rendered; final PDF inspection pending</string>
 			<key>pending_action</key>
@@ -235,6 +235,8 @@
 					<string>OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_figures.py</string>
 					<string>OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_training_figures.py</string>
 					<string>OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_target_figures.py</string>
+					<string>OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_legacy_training_figure.py</string>
+					<string>OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_per_step_figure.py</string>
 				</array>
 				<key>evidence</key>
 				<array>
@@ -249,7 +251,7 @@
 			<array>
 				<string>data-evidence.md</string>
 				<string>dataset-inventory.json</string>
-				<string>performance-evidence.json</string>
+				<string>performance-evidence.json.gz</string>
 			</array>
 			<key>notes</key>
 			<string>Historical Elo belongs to its original ladder/pool/protocol; the current one-dataset proof is not a new Elo ladder. Source and figure checks are retained; authored architecture SVG is a repository source artifact.</string>
@@ -417,7 +419,7 @@
 				<string>deploy/ci/full-lane.sh</string>
 			</array>
 			<key>notes</key>
-			<string>Custody syntax tests are not this gate. Required18Python/27Rust/10policy names are proof minima, not total coverage. New code needs actual test collection.</string>
+			<string>Custody syntax tests are not this gate. Required 18 Python / 27 Rust / 10 policy names are proof minima, not total coverage. New code needs actual test collection.</string>
 			<key>planned_owner</key>
 			<dict>
 				<key>executes</key>
@@ -457,7 +459,7 @@
 				</array>
 				<key>evidence</key>
 				<array>
-					<string>Original panel SHAba7dace4…,30datasets10/task, exact input-byte verification, native17/5/4recipes and4external families; alias/configuration inventory and unavailable reasons.</string>
+					<string>Original panel SHA ba7dace4…, 30 datasets, 10 per task, exact input-byte verification, native 17/5/4 recipes and 4 external families; alias/configuration inventory and unavailable reasons.</string>
 				</array>
 				<key>command_status</key>
 				<string>exact existing interfaces with declared placeholders</string>
@@ -511,7 +513,7 @@
 				</array>
 				<key>evidence</key>
 				<array>
-					<string>Current4engine version/source/package hashes, constructors for3tasks, actual contract-test receipt and explicit unavailability inventory.</string>
+					<string>Current 4 engine version/source/package hashes, constructors for 3 tasks, actual contract-test receipt and explicit unavailability inventory.</string>
 				</array>
 				<key>command_status</key>
 				<string>exact existing interfaces with declared placeholders</string>
@@ -648,7 +650,7 @@
 			<key>severity</key>
 			<string>required acceptance before completed delivery</string>
 			<key>current_evidence_level</key>
-			<string>shared per-fold helper fixed and real68 recovered report passed</string>
+			<string>shared per-fold helper fixed and real 68 recovered report passed</string>
 			<key>status</key>
 			<string>test gap: resume-fix-F2</string>
 			<key>pending_action</key>
@@ -821,7 +823,7 @@
 				</array>
 				<key>evidence</key>
 				<array>
-					<string>All eight fixed cases pass the unchanged component/context maximum absolute difference of0.0003; source, assets and program identities match. Preserve actual bounded execution receipts and the qualified construction token, original labels and row order.</string>
+					<string>All eight fixed cases pass the unchanged component/context maximum absolute difference of 0.0003; source, assets and program identities match. Preserve actual bounded execution receipts and the qualified construction token, original labels and row order.</string>
 				</array>
 				<key>command_status</key>
 				<string>exact existing interfaces with declared placeholders</string>
@@ -939,7 +941,7 @@
 				<string>crates/jope-bench/src/panel/selection_exposure.rs</string>
 			</array>
 			<key>notes</key>
-			<string>No current live leak was observed because no producer emits benchmark-valid panel records. A burn file writer alone is not downstream enforcement.</string>
+			<string>The source 68 panel has no benchmark-valid producer. Separate historical closure questions remain: indexed meta-test contexts and externally reported exposed high-water marks do not by themselves establish training-label leakage. A burn writer alone is not downstream enforcement.</string>
 			<key>planned_owner</key>
 			<dict>
 				<key>executes</key>
@@ -983,7 +985,7 @@
 				</array>
 				<key>evidence</key>
 				<array>
-					<string>Before-fit freeze, vocabulary and source pins; two independent families and original windows; nine context proofs per dataset; complete five-fold predictions and trivial baselines. Apply the1e-12 absolute plus1e-6 relative gain margin and four-of-five rule. Retain no-signal refusals.</string>
+					<string>Before-fit freeze, vocabulary and source pins; two independent families and original windows; nine context proofs per dataset; complete five-fold predictions and trivial baselines. Apply the 1e-12 absolute plus 1e-6 relative gain margin and four-of-five rule. Retain no-signal refusals.</string>
 				</array>
 				<key>command_status</key>
 				<string>exact existing interfaces with declared placeholders</string>
@@ -997,7 +999,7 @@
 				<string>crates/jope-bench/src/panel/teaching.rs (pending)</string>
 			</array>
 			<key>notes</key>
-			<string>Execute separately for230_machine_cpu and712_chscase_geyser1; the prospective choice predates losses. Old55e9,3fd and68 operational receipts cannot be retrofitted. The older queue suggested300 secondseconds per family without admitting that allowance.</string>
+			<string>Execute separately for 230_machine_cpu and 712_chscase_geyser1; the prospective choice predates losses. Old 55e9, 3fd and 68 operational receipts cannot be retrofitted. The older queue suggested 300 seconds per family without admitting that allowance.</string>
 			<key>planned_owner</key>
 			<dict>
 				<key>executes</key>
@@ -1035,7 +1037,7 @@
 				</array>
 				<key>evidence</key>
 				<array>
-					<string>At least two real families; every eligible requested comparison included; seed7 partition derived from source families; exact1536+512 context values. No invented context, parameter-bin snapping, label remapping or omission of difficult examples.</string>
+					<string>At least two real families; every eligible requested comparison included; seed 7 partition derived from source families; exact 1536 + 512 context values. No invented context, parameter-bin snapping, label remapping or omission of difficult examples.</string>
 				</array>
 				<key>command_status</key>
 				<string>exact existing interfaces with declared placeholders</string>
@@ -1147,7 +1149,7 @@
 				<string>exact existing interfaces with declared placeholders</string>
 			</dict>
 			<key>resource_budget</key>
-			<string>Explicitbounded CPU fixture allocation; same planned3600 seconds/1200scaps are maxima, not authorization to spend them twice; no GPU.</string>
+			<string>Explicitbounded CPU fixture allocation; same planned 3600 seconds/1200scaps are maxima, not authorization to spend them twice; no GPU.</string>
 			<key>source_refs</key>
 			<array>
 				<string>crates/jope-cli/src/train.rs (pending)</string>
@@ -1201,7 +1203,7 @@
 				<string>exact existing interfaces with declared placeholders</string>
 			</dict>
 			<key>resource_budget</key>
-			<string>One original3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.</string>
+			<string>One original 3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.</string>
 			<key>source_refs</key>
 			<array>
 				<string>python/src/jope/policy/training_campaign.py:780 (pending)</string>
@@ -1254,7 +1256,7 @@
 				<string>exact existing interfaces with declared placeholders</string>
 			</dict>
 			<key>resource_budget</key>
-			<string>One original3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.</string>
+			<string>One original 3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.</string>
 			<key>source_refs</key>
 			<array>
 				<string>python/src/jope/policy/training_campaign.py:1203 (pending)</string>
@@ -1356,7 +1358,7 @@
 				</array>
 				<key>evidence</key>
 				<array>
-					<string>The exported checkpoint hash appears in actual proposal and fit evidence;64+16 versus80 origins remain authenticated. Retain completed descendants where claimed, predictions and fitted states. Regression must be admitted and classifier fixture limits explicit; replay the original window successfully.</string>
+					<string>The exported checkpoint hash appears in actual proposal and fit evidence;64+16 versus 80 origins remain authenticated. Retain completed descendants where claimed, predictions and fitted states. Regression must be admitted and classifier fixture limits explicit; replay the original window successfully.</string>
 				</array>
 				<key>command_status</key>
 				<string>exact existing interfaces with declared placeholders</string>
@@ -1390,7 +1392,7 @@
 			<key>severity</key>
 			<string>blocks named downstream claim</string>
 			<key>current_evidence_level</key>
-			<string>native fitted state exists; product28source prepared</string>
+			<string>native fitted state exists; product28 source prepared</string>
 			<key>status</key>
 			<string>qualification pending</string>
 			<key>pending_action</key>
@@ -1423,7 +1425,7 @@
 				<string>languages-examples.md:State restrictions</string>
 			</array>
 			<key>notes</key>
-			<string>The private C++ head gate is broader than the public gate. Python/Rust14of26, C++2of26 and JavaScript6of26 are static head counts, not runtime qualification rates.</string>
+			<string>The private C++ head gate is broader than the public gate. Python/Rust 14 of 26, C++ 2 of 26 and JavaScript 6 of 26 are static head counts, not runtime qualification rates.</string>
 			<key>planned_owner</key>
 			<dict>
 				<key>executes</key>
@@ -1464,7 +1466,7 @@
 				</array>
 				<key>evidence</key>
 				<array>
-					<string>Exact state, artifact, input, class, toolchain and numerical-policy hashes; actual five-backend outcomes. Python/Rust/C++ use bitwise comparison; JavaScript uses1e-12 absolute and relative tolerance. Recover interrupted work without retrying its child; read-only reports launch nothing. Unsupported never replaces the winner.</string>
+					<string>Exact state, artifact, input, class, toolchain and numerical-policy hashes; actual five-backend outcomes. Python/Rust/C++ use bitwise comparison; JavaScript uses 1e-12 absolute and relative tolerance. Recover interrupted work without retrying its child; read-only reports launch nothing. Unsupported never replaces the winner.</string>
 				</array>
 				<key>command_status</key>
 				<string>exact existing interfaces with declared placeholders</string>
@@ -1499,7 +1501,7 @@
 			<key>severity</key>
 			<string>required acceptance before completed delivery</string>
 			<key>current_evidence_level</key>
-			<string>installer source and15metadata tests passed</string>
+			<string>installer source and 15 metadata tests passed</string>
 			<key>status</key>
 			<string>cold/live path pending</string>
 			<key>pending_action</key>
@@ -1608,7 +1610,7 @@
 			<key>current_evidence_level</key>
 			<string>warmtargetadd-onprepared;historicalfirstfit≈50.4s</string>
 			<key>status</key>
-			<string>realtrained warm proof pending</string>
+			<string>real trained warm proof pending</string>
 			<key>pending_action</key>
 			<string>Produce actual trained-neural and generic fitted artifacts, reloaded predictions, baseline/comparison and truthful target_met. Do not clip arm budgets to pass sixty seconds.</string>
 			<key>dependencies</key>
@@ -1639,7 +1641,7 @@
 				<string>product.md:Warm fitted demonstration</string>
 			</array>
 			<key>notes</key>
-			<string>Under sixty seconds is a measured target. The existing twenty-second-arm example is unqualified. An explicitly admitted longer proof may satisfy execution while missing the target. This checklist grants no implicit300-second allowance.</string>
+			<string>Under sixty seconds is a measured target. The existing twenty-second-arm example is unqualified. An explicitly admitted longer proof may satisfy execution while missing the target. This checklist grants no implicit 300-second allowance.</string>
 			<key>planned_owner</key>
 			<dict>
 				<key>executes</key>
@@ -1662,7 +1664,7 @@
 			<key>current_evidence_level</key>
 			<string>protocol/currentfoundation qualified;full panel unstarted</string>
 			<key>status</key>
-			<string>pending finaltrained configuration</string>
+			<string>pending final trained configuration</string>
 			<key>pending_action</key>
 			<string>Freeze the final roster/configuration and run the unchanged thirty datasets once. Screen fold0, freeze the top five, confirm five development folds, and add asm.neural diagnostically when absent. Retain every failure.</string>
 			<key>dependencies</key>
@@ -1690,7 +1692,7 @@
 				<string>exact existing interfaces with declared placeholders</string>
 			</dict>
 			<key>resource_budget</key>
-			<string>Exactly7200 seconds including300 seconds reporting reserve;20 CPUs/workers,64 GiB,zero swap,one thread per fit,30 seconds per fit,120 seconds per search arm; sealed labels unopened; existing window never reset.</string>
+			<string>Exactly 7200 seconds including 300 seconds reporting reserve;20 CPUs/workers,64 GiB,zero swap,one thread per fit,30 seconds per fit,120 seconds per search arm; sealed labels unopened; existing window never reset.</string>
 			<key>source_refs</key>
 			<array>
 				<string>benchmarks/panel.json</string>
@@ -1698,7 +1700,7 @@
 				<string>crates/jope-bench/src/panel/selection_exposure.rs</string>
 			</array>
 			<key>notes</key>
-			<string>Current code forces asm.neural into extra confirmation, not asm.generic. Selected five-fold summaries are adaptive development, and ten wins per category are not promised. Qualify exports before the original6900-second cutoff or preserve unattempted status.</string>
+			<string>Current code forces asm.neural into extra confirmation, not asm.generic. Selected five-fold summaries are adaptive development, and ten wins per category are not promised. Qualify exports before the original 6900-second cutoff or preserve unattempted status.</string>
 			<key>planned_owner</key>
 			<dict>
 				<key>executes</key>
@@ -1719,9 +1721,9 @@
 			<key>severity</key>
 			<string>required acceptance before completed delivery</string>
 			<key>current_evidence_level</key>
-			<string>one-dataset832predictor/164recipe operational audit</string>
+			<string>one-dataset, 832 predictor/164recipe operational audit</string>
 			<key>status</key>
-			<string>fullcampaign report pending</string>
+			<string>full campaign report pending</string>
 			<key>pending_action</key>
 			<string>Publish all thirty losses/gaps, outcomes, time/cost per unique artifact and recipe, coverage and failure inventories. Compare the supplied one-hour/ten-million-token scenario only using supported quantities.</string>
 			<key>dependencies</key>
@@ -1743,7 +1745,7 @@
 				<string>exact existing interfaces with declared placeholders</string>
 			</dict>
 			<key>resource_budget</key>
-			<string>Original300 secondsreportingreserve forpanel; laterreadonlyauditopensnofitbudget.</string>
+			<string>Original 300 secondsreportingreserve forpanel; laterreadonlyauditopensnofitbudget.</string>
 			<key>source_refs</key>
 			<array>
 				<string>status.md:Cost</string>
@@ -1774,7 +1776,7 @@
 			<key>current_evidence_level</key>
 			<string>separate typed library branch exists</string>
 			<key>status</key>
-			<string>minefront door incomplete</string>
+			<string>mining front door incomplete</string>
 			<key>pending_action</key>
 			<string>Integrate the production eligible-State reader, typed fragment/macro miner and umbrella CLI. Preserve full comparison identity, provenance and private/public separation.</string>
 			<key>dependencies</key>
@@ -1926,7 +1928,7 @@
 			<key>current_evidence_level</key>
 			<string>allowlists/canaries prepared; historicallintblindspots</string>
 			<key>status</key>
-			<string>residual D-IP4 and nextPRtextwork</string>
+			<string>residual D-IP4 and future PR text work</string>
 			<key>pending_action</key>
 			<string>Resolve the approved public vocabulary/naming scope and test actual CLI help, receipts and NOTICE. Preserve the explicitly requested internal manual and the strict public inference allowlist.</string>
 			<key>dependencies</key>
@@ -1978,7 +1980,7 @@
 			<key>current_evidence_level</key>
 			<string>historicalfull-default failures inventoried</string>
 			<key>status</key>
-			<string>not closedbyfastCI</string>
+			<string>not closed by fast CI</string>
 			<key>pending_action</key>
 			<string>Reproduce and repair recorded full-default, scratch, policy and neural families through their owning full lanes. Retain unavailable capabilities and resource limits.</string>
 			<key>dependencies</key>
@@ -2096,6 +2098,8 @@
 				<array>
 					<string>python3 docs/internal/asm-manual/tools/make_training_figures.py</string>
 					<string>python3 docs/internal/asm-manual/tools/make_target_figures.py</string>
+					<string>python3 docs/internal/asm-manual/tools/make_legacy_training_figure.py</string>
+					<string>python3 docs/internal/asm-manual/tools/make_per_step_figure.py</string>
 				</array>
 				<key>evidence</key>
 				<array>
@@ -2112,7 +2116,7 @@
 				<string>sections/15-target-history-packing.md</string>
 			</array>
 			<key>notes</key>
-			<string>Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.</string>
+			<string>Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual. Recovered 63,000 rows preserve 378,000 exact metric tokens; all 21 corpus blocks, 20 intervening boundaries and legacy internal-ladder limitations remain explicit.</string>
 			<key>planned_owner</key>
 			<string>Codex integration; Claude independent source/data cross-check</string>
 		</dict>
@@ -2202,7 +2206,7 @@
 				<string>crates/jope-engine/src/teaching_store.rs</string>
 			</array>
 			<key>notes</key>
-			<string>Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.</string>
+			<string>Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual. Accepted-corpus metadata exposes 84.2701% token padding. A proposed 180-byte record must preserve the 128-token grammar via extension/fallback and qualify complete optimizer-input/RNG/continuation parity; compressed disk size is not host or GPU memory.</string>
 			<key>planned_owner</key>
 			<string>Codex integration; Claude independent source/data cross-check</string>
 		</dict>
@@ -3093,7 +3097,7 @@
 		</dict>
 	</dict>
 	<key>updated_utc</key>
-	<string>2026-09-23T17:39:59.868550+00:00</string>
+	<string>2026-09-23T18:48:37.364927+00:00</string>
 	<key>primary_item_count</key>
 	<integer>43</integer>
 	<key>coordinated_proposal_count</key>

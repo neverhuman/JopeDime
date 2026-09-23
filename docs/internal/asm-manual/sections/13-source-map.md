@@ -100,7 +100,7 @@ The manual directory contains the following locally reproducible evidence. The o
 | `data/catalog-summary.json` | Corpus task, row, feature, origin and license metadata totals |
 | `data/metadata-receipts/` | Catalog JSONL and collection/model metadata; no payload bodies |
 | `data/s3-estate.json`, `data/local-estate.json` | Dated current-object and local logical-byte inventories |
-| `data/performance-evidence.json` | Current proof, historical score cells, reports, ladder identities and scope |
+| `data/performance-evidence.json.gz` | Current proof, historical score cells, reports, ladder identities and scope |
 | `data/plot-*.csv` | Compact plot inputs with snapshot and source pins |
 | `data/roadmap.json` | Detailed 43-item dependency/acceptance checklist and 24 separately marked coordinated proposals |
 | `docs/asm-maintainer-status.plist` | XML property-list representation of the same checklist |
@@ -109,9 +109,40 @@ The manual directory contains the following locally reproducible evidence. The o
 | `figures/` | Reproducible charts and associated historical data inputs |
 | `render-receipt.json` | PDF digest, pages, consumed input hashes and rendering environment |
 
+## Lossless evidence packaging
+
+The full performance inventory and original catalog JSONL are stored as `data/performance-evidence.json.gz` and `data/metadata-receipts/veox-jopedime-datasets-use2--catalog--v1--catalog.jsonl.gz` to respect the repository’s 5 MiB file limit. Gzip preserves every original byte; no rows, fields, numeric precision or metadata were removed. `data/evidence-packaging.json` records both compressed and original SHA256 values, sizes and preservation paths. Historical handoffs and the initial assembly manifest intentionally retain their original uncompressed paths and hashes; the packaging receipt supplies the current location mapping.
+
+Read either companion directly with Python’s standard library:
+
+```python
+import gzip
+import json
+from pathlib import Path
+
+root = Path("docs/internal/asm-manual/data")
+with gzip.open(root / "performance-evidence.json.gz", "rt") as stream:
+    performance = json.load(stream)
+with gzip.open(root / "metadata-receipts/veox-jopedime-datasets-use2--catalog--v1--catalog.jsonl.gz", "rt") as stream:
+    catalog = [json.loads(line) for line in stream if line.strip()]
+assert len(catalog) == 3859
+```
+
+The plotting tools consume the separately retained CSVs and summary JSON, so this storage change does not change their inputs or measurements. The renderer hashes the compressed companions as well as the packaging receipt.
+
 ## Rebuilding the book
 
-From the repository root, use the documented pinned rendering environment and these local-only commands:
+The original build used Python 3.12 and the observed direct versions in `tools/requirements-docs.txt`. That file is not a transitive lock or a verified cold installer. A fresh environment also needs working Pango/Fontconfig, DejaVu fonts, and Poppler's `pdfinfo`, `pdftotext` and `pdftoppm`. The render receipt records exact Python/library versions and font-file hashes. The following environment-creation recipe is provided for rebuilding; it was not executed as a fresh installation during this document audit:
+
+```sh
+MANUAL_ENV=/home/ubuntu/.venvs/jope-manual
+python3 -m venv "$MANUAL_ENV"
+"$MANUAL_ENV/bin/python" -m pip install \
+  -r docs/internal/asm-manual/tools/requirements-docs.txt
+. "$MANUAL_ENV/bin/activate"
+```
+
+From the repository root, render the audited retained inputs with these local-only commands:
 
 ```sh
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_inventory_figures.py
@@ -136,6 +167,12 @@ The learning expansion is documented in [actual training history](14-training-hi
 | `data/training-history/metric-definitions.json` | Exact historical loss and KPI meanings; objective changes and missing source-build binding |
 | `data/training-history/verification.json` | Original-value verification of 3,218 metrics and 78 checkpoint records |
 | `data/training-history/figure-receipt.json` | Input/output hashes for seven historical training figures |
+| `data/legacy-training/` | Four original round-1 and reported self-play summary files, source hashes, recomputed diagnostics and a vector-plot receipt; internal Elo is not benchmark-valid |
+| `data/per-step-history/` | All 63,000 retained recovery steps and 378,000 exact metric tokens in compressed CSV, 21 raw-log hashes, corpus boundaries and explicit 100-step means |
+| `data/per-step-history/independent-review/` | Second complete comparison with original logs, checkpoint identities and all derived block/bin statistics; numerical/source review is separate from final-head CI |
+| `figures/per-step-figure-receipt.json` | Source hashes and recomputation checks for all 630 plotted loss bins and 78 adaptive validation points |
+| `data/packing-routing-audit.json` | Selected external packing metadata, recomputed sizes and strictly scoped paired final-search observations; excludes unjoined campaign rows |
+| `data/original-target-receipts-custody.json` | Durable local archive and verification hashes for all 26,357 original development search receipts; archive stays outside Git, with seeds and off-host backup explicitly excluded |
 | `data/target-history/*.csv` | All 159 repeated historical comparison summaries and all 213 illustrative arm/generation points; exact source identities and limits |
 | `data/target-history/manifest.json`, `data/target-history/verification.json` | Six corpus inventories, binary-format source pins and original target-observation verification |
 | `data/target-history/figure-receipt.json` | Input/output hashes for two historical GP-target figures |
@@ -148,6 +185,8 @@ Regenerate the training and target figures before the PDF after changing an audi
 ```sh
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_training_figures.py
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_target_figures.py
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_legacy_training_figure.py
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_per_step_figure.py
 python3 docs/internal/asm-manual/tools/build_manual.py
 ```
 

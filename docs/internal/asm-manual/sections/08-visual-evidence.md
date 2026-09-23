@@ -6,7 +6,7 @@ This is the current bounded operational proof, with one preselected regression d
 
 ![Current operational proof: neural and generic development RMSE](../figures/current-origin-loss.png)
 
-The two underlying records are in `data/plot-current-origin.csv`; exact evidence and denominators are in `data/performance-evidence.json`. There are 34 predictions per final refit. The proof's run wall time is 239.143 seconds; its independent recovered report takes another 18.719 seconds. Numerical measurements, worker counts and costs are detailed in the status and benchmark chapters.
+The two underlying records are in `data/plot-current-origin.csv`; exact evidence and denominators are in `data/performance-evidence.json.gz`. There are 34 predictions per final refit. The proof's run wall time is 239.143 seconds; its independent recovered report takes another 18.719 seconds. Numerical measurements, worker counts and costs are detailed in the status and benchmark chapters.
 
 ## Frozen dataset coverage
 
@@ -28,7 +28,7 @@ The catalog has 3,755 entries with unknown license metadata and 104 with a recor
 
 The historical ranking plots that follow use their separately pinned snapshots. They are not new model runs and are not the current ASM30 campaign. Benchmark-valid and public-development views retain their original eligibility distinctions. Same-cut deep-stage coverage varies because only finalists were deepened; absent cells are not zero losses. Refer to the benchmark-methodology chapter for the exact Elo model, tie rule, coverage limits and adaptive-development interpretation.
 
-All machine-readable rows are retained in `data/performance-evidence.json` and `data/plot-historical-elo.csv`. A displayed top-method subset does not remove the other methods from those inventories. Dataset selection and historical protocol caveats travel with each figure.
+All machine-readable rows are retained in `data/performance-evidence.json.gz` and `data/plot-historical-elo.csv`. A displayed top-method subset does not remove the other methods from those inventories. Dataset selection and historical protocol caveats travel with each figure.
 
 ## Historical benchmark-valid Elo
 

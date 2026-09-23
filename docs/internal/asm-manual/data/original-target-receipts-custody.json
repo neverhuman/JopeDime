@@ -1,0 +1,58 @@
+{
+  "schema": "jope.original-target-receipts-custody-pointer/v1",
+  "status": "verified local custody preservation",
+  "preserved_at": "2026-09-23T18:52:18.571582+00:00",
+  "verified_at": "2026-09-23T18:53:14.073560+00:00",
+  "original_inventory": {
+    "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-data-history/historical-target-quality-events.csv",
+    "sha256": "f06f5e376d663e457ddb090c74df4756ba7a67df39aa8116574b938c27268a6f",
+    "rows": 26357
+  },
+  "logical_source_root": "/home/ubuntu/jope-node-mirror/results",
+  "resolved_source_root": "/home/ubuntu/jain-split/jain-datasets/.runtime/node-archive-mirror-20260914/results",
+  "archive": {
+    "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/original-target-receipts-custody/original-target-search-receipts.tar.gz",
+    "sha256": "8b5eaa4c98025d00dc9bbaf6ae1b5786846be575c806ee495c74b00e3de1194d",
+    "bytes": 5270675,
+    "regular_members": 26357,
+    "original_bytes": 62271855
+  },
+  "manifest": {
+    "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/original-target-receipts-custody/original-receipts-manifest.csv.gz",
+    "sha256": "83632d197615dc78d1a805cf873081b09c7e4ef429a5c84c386696952b85dd45",
+    "bytes": 1552212
+  },
+  "verification": {
+    "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/original-target-receipts-custody/verification.json",
+    "sha256": "514f6ef429b7a5c236054f719bcfdeb812363b92febd51199417b369a6b28f99",
+    "result": "PASS",
+    "members_verified": 26357,
+    "every_original_expected_hash_matched": true,
+    "compressed_stream_crc_checked": true,
+    "extracted_files_written": 0,
+    "original_receipt_bodies_opened_by_verifier": 0
+  },
+  "preservation_receipt": {
+    "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/original-target-receipts-custody/preservation.json",
+    "sha256": "126b3686a5d21586bc0453a3f33f749e7138314a31e358677cc5598f05691bcd"
+  },
+  "reproduce_verification": {
+    "command": "python3 /home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/original-target-receipts-custody/verify_archive.py",
+    "script_sha256": "fd11c07dff5cb6a0a460389930a6681d42aa69ec484235d1e440e5dbd9e8d8cf",
+    "effect": "Reads pinned old inventory and archive; writes verification.json in custody. Preserve the stopped receipt or use a custody copy before rerunning."
+  },
+  "scope": "Exactly26357 previously allowlisted development search.json bodies, generations0\u201370,62271855 original bytes. Every member retains its path relative to the original results root. No seeds.json, observations, source dataset, model, corpus or sealed payloads were added.",
+  "prior_gap_reference": {
+    "path": "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/ch15-check/crosscheck-ch15.json",
+    "sha256": "b6dee81b75987a05392049aca49923f74127160a5281c7c961dacdb01d69f00c",
+    "finding": "ch15-F4",
+    "interpretation": "The reported old accepted60000-restored overlap3530/26357 describes that earlier evidence tree. This new archive preserves all26357 original listed bodies; it does not enlarge the historical admission allowlist."
+  },
+  "limits": [
+    "This is a second local copy outside working trees on the same filesystem, not an off-host or failure-domain-independent backup.",
+    "Bulk archive and compressed full manifest are private custody files, not Git/manual payloads; only this compact pointer is intended for the manual.",
+    "Preservation authenticates historical receipt bytes; it is not fresh fit replay, independent generalization, current teacher eligibility or sampler exposure proof.",
+    "Neighbor seed bodies used by the separately released carry-forward analysis are not preserved by this narrowly authorized archive.",
+    "No deletion, cleanup, training, fits, models, GPU, Cargo, numerical budget reset or new sealed access occurred."
+  ]
+}

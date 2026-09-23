@@ -45,7 +45,8 @@ def main():
     left = [0] * 3
     for key, color in [("improved", "#318c89"), ("unchanged", "#ccd8e1"), ("worsened", "#cb7743")]:
         values = [int(row[key]) for row in summary]
-        bars = ax.barh(range(3), values, left=left, color=color, label=key.capitalize())
+        bars = ax.barh(range(3), values, left=left, color=color,
+                       label={"improved": "Last lower", "unchanged": "Same", "worsened": "Last higher"}[key])
         for bar, value in zip(bars, values):
             if value:
                 ax.text(bar.get_x() + value/2, bar.get_y() + bar.get_height()/2,
@@ -53,15 +54,15 @@ def main():
         left = [a+b for a, b in zip(left, values)]
     ax.set_yticks(range(3), [f"{row['arm']} (n={row['repeated_comparisons']})" for row in summary])
     ax.invert_yaxis()
-    ax.set_xlabel("Repeated recorded comparisons: first versus last retained score")
-    ax.set_title("Historical GP targets improved on a subset of development comparisons")
+    ax.set_xlabel("Repeated arm groups: first versus last carried-forward score")
+    ax.set_title("Historical carried-forward best scores: dependent search arms")
     ax.legend(loc="lower right", fontsize=9)
     ax.grid(axis="x", alpha=.15)
     ax.set_axisbelow(True)
     fig.text(.025, .025,
-             "1,000 completed evaluations per retained search; seeds and elapsed time vary. Denominators differ by arm.\n"
-             "Median relative improvement is zero in all three arms. These are adaptive development results, not a neural win rate.\n"
-             "Source: target-quality-1000-summary.csv and all 159 comparison rows.", fontsize=9)
+             "1,000 evaluations per search; shared incumbent/teacher seeds; unequal elapsed time. Arms are dependent.\n"
+             "64 lower arm groups represent 23 of 55 distinct dataset/cuts; median relative reduction is zero in each arm.\n"
+             "Source: target-quality-1000-summary.csv and all 159 comparison rows; carry-forward-audit.json.", fontsize=9)
     fig.tight_layout(rect=(0, .19, 1, 1))
     fig.savefig(FIG / "target-quality-progress-counts.png", dpi=180, bbox_inches="tight", facecolor="white")
     plt.close(fig)
@@ -79,15 +80,15 @@ def main():
         ax.set_xticks([0, 20, 40, 60, 70])
         ax.grid(alpha=.15)
     axes[0].set_ylabel("Reported best_validation_rmse\n(historical evaluator units)")
-    fig.suptitle("Illustrative pine-chromium cut 1: the final best score is shared by all three arms", fontweight="bold")
+    fig.suptitle("Pine-chromium cut 1: shared teachers carry the final program between arms", fontweight="bold")
     fig.text(.025, .02,
              "Post-hoc example selected for the largest observed neural relative improvement; not a representative random sample.\n"
-             "All 213 original search scores shown. Adaptive teacher validation; checkpoint exposure unknown.\n"
-             "Recorded comparison fields match; RNG and wall time vary. Source: target-quality-pine-chromium-cut1.csv.", fontsize=9)
+             "All 213 scores shown. Generic/shuffled find the final program outside seeds at gen 42; all arms seed it at gen 43.\n"
+             "Adaptive teacher validation; RNG/wall time vary. Source: target-quality-pine-chromium-cut1.csv; carry-forward audit.", fontsize=9)
     fig.tight_layout(rect=(0, .2, 1, .94))
     fig.savefig(FIG / "target-quality-pine-example.png", dpi=180, bbox_inches="tight", facecolor="white")
     plt.close(fig)
-    names = ["target-quality-1000-summary.csv", "target-quality-1000-comparisons.csv", "target-quality-pine-chromium-cut1.csv"]
+    names = ["target-quality-1000-summary.csv", "target-quality-1000-comparisons.csv", "target-quality-pine-chromium-cut1.csv", "carry-forward-audit.json"]
     outputs = ["target-quality-progress-counts.png", "target-quality-pine-example.png"]
     receipt = {"schema": "jope.manual-target-figures/v1",
                "inputs": {name: hashlib.sha256((DATA/name).read_bytes()).hexdigest() for name in names},

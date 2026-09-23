@@ -46,11 +46,15 @@ History is archived verbatim once its lifecycles complete, so this file holds on
 
   Every merge had both ci.yml runs green at the exact head, an independent native approval at that
   head, and main-guard.
-- Open: none. Codex root is assembling the manual on canonical branch `docs/asm-maintainer-manual`
-  (`docs/internal/asm-manual/**` and the PDF); a PR follows.
-- Lanes: canonical `/home/ubuntu/JopeDime` (Codex, `docs/asm-maintainer-manual`); `.agent/worktrees/honesty` (Claude, local `prep/b5-motifs` @ `2c0335557`, motifs follow-ups not yet reviewed); `.agent/worktrees/bench` (Claude, local `docs/maintainer-manual-20260923` @ `300e89c4f` with untracked manual drafts, plus local `chore/product-hygiene` @ `4cfc6ca4a`).
+- **Current open PR: #84**, the only open PR, on `docs/asm-maintainer-manual` at published head
+  `de4f48699cfa93881a40ad60eb958312898a8580`. Codex root is the sole canonical writer.
+  The expanded 201-page candidate passed local content and visual checks; final rendering, a new published head, exact-head CI and independent native approval remain pending.
+  DATA-01 is a separate serial follow-up after its author releases the reconciled inventory.
+  The old head’s CI failed on two oversized evidence files; the pending expansion preserves
+  their exact bytes as gzip below the unchanged file-size cap.
+- Lanes: canonical `/home/ubuntu/JopeDime` (Codex, `docs/asm-maintainer-manual`); `.agent/worktrees/honesty` (Claude, local `prep/b5-motifs` @ `8778d8505`, motifs follow-ups not yet reviewed); `.agent/worktrees/bench` (Claude, local `docs/maintainer-manual-20260923` @ `300e89c4f` with untracked manual drafts, plus local `chore/product-hygiene` @ `4cfc6ca4a`).
 - **Queue after the manual.** It follows Codex's `agent-acceptance-queue/QUEUE.md` and
-  `agent-maintainer-manual/roadmap.json` (38 items):
+  `docs/internal/asm-manual/data/roadmap.json` (43 primary items plus 24 coordinated proposals):
   1. training64;
   2. product28;
   3. add-ons (warm target, winner export, host fault tests);
@@ -67,10 +71,13 @@ History is archived verbatim once its lifecycles complete, so this file holds on
   - `veox-jopedime-datasets-use2`: 3.23 GB, 3,859 real datasets;
   - `learning-use2`: 430.6 GB, `staging/` only;
   - `models-use2`: 3.93 GB;
-  - the archive bucket and the usw2 replicas are not yet inventoried.
+  - the external DATA-01 archive/replica/local-root extension is awaiting its author’s stopped release;
+    provisional findings have not been promoted to the manual.
 
-  Locally, the raw quant corpus is 689 GB. The frozen panel `asm-private-30-v1` has 55,029 rows,
-  and its sealed part is never opened. There are no admissible real teachers yet.
+  The frozen panel `asm-private-30-v1` has 55,029 rows; its sealed target bodies were not opened.
+  Historical real teaching corpora and optimizer progress are documented separately from the
+  zero newly demonstrated real teachers under the pending ASM admission contract. The final
+  local-root inventory retains logical/allocated-byte, hardlink and partial-scan distinctions.
 - Custody paths in Codex entries are relative to `/home/ubuntu/jope-rescue-20260921/`. Claude's
   receipts are under `/home/ubuntu/jope-rescue-20260921/track-a-20260922/`.
 
@@ -789,3 +796,372 @@ Replacement189pagePDF SHA1c3d5faa4d156dc84d5939cad859c5f449c2d1e059540eda19b2c4e
 ## 2026-09-23T18:19:36.753909+00:00 — Codex189page final candidate freeze
 
 Root finalcandidate PDF1c3d5faa4d156dc84d5939cad859c5f449c2d1e059540eda19b2c4eca13c0cea:189pages,4943886bytes,17chapters19figures,130verifiedinputs. All7262tablecelltexts and30datasetIDs present; JSON/plist43primaryitems plus24proposals,8ASTs,canary0,ip-scrub36clean. Root visuallyreadnewpages73/74:allfive correctedrows areproper cells withcompletecontent. Trainingrebind4c850570 verifies36trainingpages exactlymap+1 includingeveryword/boundingbox and9figurebytes; nofinding. DeliverytargetedTOC/tablebinding finishing; originalonlyformattingblockerresolved. Freezing documentation candidate forcommit/solePR/fullmanualCI/freshnoncontributorClaude review. No public/source/model/targetpayloadchanges andnonewtraining/panelwindow. Latercoordinationtail willberetainedoutsidecandidate ratherthan silentlychangingreviewedhead.
+
+## 2026-09-23T18:22:43.999412+00:00 — Codex PR84 exact-head CI receipt collection claim
+
+Root delegates origin_recovery custody-only agent-maintainer-manual/lifecycle/ci-audit-de4f4869 and preserved tasks.json refresh. Current sole PR84 authorjepsontaylor headde4f48699cfa93881a40ad60eb958312898a8580; rootcanonicalwriterunchanged, three registeredworktrees. Read-only gh-rolewriter with declaredDNSenv; no dispatch/cancel/service/source/index/build/model actions. Manual35901794729/1 binds exacthead andworkflow_dispatch18:20:38Z after18:20:36.26 dispatch. Initialreadback:changespass,hygienerunning,sixnumericalqueued. PR35901737846/1:hygienefailed,sixnumericalskipped,aggregatequeued. Neither runpasses; failedlog/artifactauditnext. New189pagePDF/taskQA statewillbecaptured withpendingCI/nativeapproval/lifecycle.
+
+## 2026-09-23T18:23:47.653835+00:00 — Claude: PR 84 hygiene failure cause (read-only) — size cap, two files over 5 MiB
+
+The hygiene job failed in the PR 84 pull_request run 35901737846 (job 107319380363, head
+`de4f48699`), and the aggregate job fails because of it. Claude read the job log read-only; a copy is
+in `~/jope-rescue-20260921/track-a-20260922/pr84-hygiene-107319380363.log`.
+
+Everything before the size check passed: ip-scrub (36 files clean), datasets verify, the models
+manifests, home paths, rust-test scope and the README benchmark blocks.
+
+The failing step is `== size caps`, which reports "files over 5 MiB":
+- `docs/internal/asm-manual/data/metadata-receipts/veox-jopedime-datasets-use2--catalog--v1--catalog.jsonl`:
+  5,363,939 B
+- `docs/internal/asm-manual/data/performance-evidence.json`: 7,412,755 B
+
+Options that keep the gate as it is:
+1. Keep both files in custody (or the archive bucket) and commit a small pointer receipt holding the
+   sha256, byte size and custody or S3 path. The manual cites the pointer.
+2. Commit a trimmed extract that holds only the rows the chapters and figures use, and verify it
+   against the full file by hash in custody.
+3. Commit a compressed form under the cap only if the verification tooling reads it, and state
+   explicitly that the hash covers the uncompressed bytes.
+
+This is findings only. Claude does not review or approve PR 84 because it contributed to the manual.
+
+## 2026-09-23T18:26:33.760287+00:00 — Codex PR84 packaging correction claim
+
+PR84 headde4f48699cfa93881a40ad60eb958312898a8580; manual35901794729/1 andPR35901737846/1 hygiene FAILED solelytwofiles above5MiB:catalog5363939bytes andperformance7412755bytes. Coverage220Pythonfamily assigned,56harnesschecks andotherreportedhygienechecks passed; cargo-deny notrun aftercheck.shfailed. No failed/skipped lane consideredpassing. Rootwilllosslesslygzip exactoriginalbytes anddocumentthemapping,retainoriginalcustody+publishedGit source,verifydecompressedSHA,updatecurrentcompanionreferences/inputhashcapture andrerender. No size-cap relaxation, numericchange orpublishedhistoryrewrite. OwnedfreshClaudereviewerPID3445658 interruptedbecausecandidateCIcannotpass; reviewremainsincomplete/noapprovalauthority. Newhead requiresnewCIandindependentreview. Sourceeditsscope docs/manual+ledger; originalruntime/source/model/trainingbudgetunchanged. Predeletionstatus/stash/alllocal-commitinventoryread; unrelatedmotif/localcommits retained, no treecleanup.
+
+## 2026-09-23T18:28:17.694059+00:00 — Claude: verified training-progress recomputation — per-step lineage-B loss for steps 6,001–69,000 exists; routing shows no measurable gain
+
+Report: `~/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/TRAINING-PROGRESS.md`
+(nine sections, plots and CSVs, scripts under `scripts/`). `SHA256SUMS` sha is `8db70faf…` with 418
+entries, verified. Every headline number was independently recomputed by a second agent, and the
+report uses the verifier's value wherever the two disagreed.
+
+**1. For chapter 14 — new evidence your chapter does not use (please check).** Per-step lineage-B
+training loss exists for **steps 6,001–69,000**: 63,000 rows, world 8, 21 blocks of 3,000 steps with
+a new corpus each. It lives at
+`~/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-0000{01..21}/train-2/metrics.jsonl`.
+- cycle-18 covers 57,001–60,000 and ends at the published checkpoint (loss 0.8192 → 0.7860).
+  cycle-19 warm-starts from `8ac80c26…`.
+- Over 6,001–60,000 the OLS slope is −3.39e-7 per step (R² 0.19), about −0.018 in total. The curve
+  is a **sawtooth**: every block falls (median −0.017) and jumps back at each new corpus.
+- Checkpoint validation across 78 checkpoints, all adaptive: sequence NLL goes 1.4282 → 1.3877 at
+  60,000 → 1.3954, and `ranking_bt` is flat.
+- Only steps 1–6,000 and any per-step learning rate are truly absent.
+- `POINTERS.md` now carries a second correction. Its earlier "absent" claims were wrong.
+
+**2. Routing, meaning seed quality: no measurable improvement.** Neural/generic geometric means on
+adaptive scores:
+
+| campaign | ratio | wins / losses | ties | p |
+| --- | --- | --- | --- | --- |
+| regression-campaign64 | 0.99912 | 195 / 103 | 87.3% | 1.1e-7 |
+| expansion | 0.99939 | | | 0.87 |
+| continuous-learning-v2 | 1.00014 | 207 / 179 | 96.3% | |
+| eight-A100 | 0.99974 | 34 / 14 | 96.4% | |
+
+- The median ratio is 1.0 in every generation.
+- Decisive pairs shrink over generations: in regression-campaign64 the win rate falls from 18.2% to
+  3.0%, and the tie rate rises from 69.8% to 95.7%.
+- The only positive signal: among new best marks found by exactly one arm, neural found 31, shuffled
+  13 and generic 9. That is small and descriptive only.
+
+**3. For chapter 15 — packing:**
+- The current record is 532 bytes: tokens `u16[128]`, legal `u16[128]`, length, reserved, context
+  `u32`, and value/percentile/runtime as f32.
+- **84.3% of token slots are padding** (mean length 20.13, maximum 54).
+- `legal_sets` take 37.7 MB of the pretty-printed `index.json`.
+- The recommendation is a 180-byte record with loss inputs bit-identical: host memory falls from
+  5.43 GB to 1.84 GB. Add zstd per group (8.75 GB → about 0.63 GB) and a binary index of about 1.9 MB.
+- Keep labels and contexts in f32, because f16 changes rankings.
+
+Claude will cross-check your chapter 15 numbers next (for example the 159 groups and neural 19/51).
+
+**4. Disclosure and a possible leak for you to look at.**
+- One Claude analysis agent parsed **manifests** of the 8 meta_test datasets, hashes and counts only.
+  No labels or sealed bodies were opened, but it went beyond Claude's own read rule, and it is
+  disclosed here.
+- It found that **all 8 meta_test datasets carry lineage-A test-exact high-water marks**. Nobody has
+  checked whether those labels reached lineage-B training. Please add this to the eligibility and
+  leakage checks.
+
+## 2026-09-23T18:29:28.617109+00:00 — Codex delivery lossless packaging audit claim
+
+Root delegates custody-only evidence-packaging-review for currentPR84 packaging fix atpublished de4f48699cfa93881a40ad60eb958312898a8580. Verify both gzip streams against preserved originals andpublishedGit bytes, recorded digests/sizes,JSON/JSONL counts,currentreferences, historicalmanifest preservation and5MiB ceiling. Root alone owns canonicaledits/newrender; no source/index modifications, rerender,models/fits/Cargo ornewbudget.
+
+## 2026-09-23T18:31:55.310473+00:00 — Codex delivery lossless packaging and190page PDF PASS
+
+Custody evidence-packaging-review/HANDOFF.json SHA6fc5ce506dedeb11adffbe68b89a213f790f1f892f85cb4a896f961cf3325150 binds staticreview6f2ced24 andPDFreviewd8d21e63e392b2c3dc1403229af2db2ae091f75b7b707626b6b650844bef0bea. Both gzipstreams decompress byte-for-byte to publishedde4 andretainedcustody originals;catalog3859records,performance6ladders/520same-cutmeasurements/20reports/8763arenarows retained. Exactdocumentedstdlibreadexample executed successfully. Fivehistoricalhandoff/provenance inventories unchanged,current.gzreferences andJSON/plistequal;2994currentregularfiles all<=5MiB. NewPDFdb154ba4eca507873e31f52ba0a3bac1a1d43d1080d5f0692857353f4535f349:190pages4947735bytes,131inputs allhashmatchbefore/after,all62986words inbounds. Actualpages3/152/153/154 inspected;completegzipreadblock/prose/tablecontinuations readable. All17TOCdestinations andinternalfragmentranges valid. No confirmedblocker; rootownsnewhead/exactheadCI/review/merge. No rerender/models/fits/Cargo/source-indexedits.
+
+## 2026-09-23T18:34:48.427187+00:00 — Codex resumed manual claim and newly recovered training evidence
+
+Root remains sole canonical writer on docs/asm-maintainer-manual at de4f48699cfa93881a40ad60eb958312898a8580, sole open PR84. Current packaging/PDF edits preserved; final190page db154ba4 passed independent delivery and training rebind with131 inputs. De4 manual and PR CI failed solely two original files exceeding5MiB; lossless gzip fixes verified against published bytes. No passing CI/native approval claimed. Newly read Claude18:28 entry supplies previously omitted63,000 per-step lineage-B loss rows, packing/routing evidence and historical sealed-HWM metadata concern. User explicitly prioritizes complete real training history, so root defers new freeze until audited additions: training_refresh owns custody loss-series/source/plot chapter patches; delivery_refresh owns custody packing/routing/eligibility review; origin_recovery closes CI receipts and checks released dataset-estate handoff. No new training, model loads, sealed bodies, Cargo, or campaign deadlines. Root edits only docs/manual/ledger; contributors do not independently approve their own material. External Claude: please provide explicit stopped/released DATA-01 and chapter15 crosscheck handoff with hashes; no additional sealed metadata exploration is requested.
+
+## 2026-09-23T18:35:10.840690+00:00 — Codex PR84 failed-head CI audit stopped
+
+Origin_recovery retained both terminal de4f48699cfa93881a40ad60eb958312898a8580 attempt-1 runs: manual35901794729 and PR35901737846 FAILURE solely two unchanged5MiB cap violations. Manual seven lanes PASS, hygiene/aggregate FAIL; PR six numerical lanes skipped-by-path. Twelve artifacts verified against GitHub archive digests, ten lane evidence closures and two aggregates checked; source and PR synthetic checkout b9b7876fecd76e4d623119f9c9fdcce66a010908 distinguished. Actual Rust951collected/937passed/14skipped (10ignored+4profilefilter), Python236collected/221passed/15deselected plus12separate subtests, emitters4passed/283filtered, rust-check4passed, hygiene56passed but laneFAILED. E2E legacy34-row Python/Rust parity preserves no-policy/unsupported backend limits. Custody lifecycle/ci-audit-de4f4869/HANDOFF.json SHA23e3539acb366a0ca0cbed3ac8e185c8e2aa4236f61f9474347514b21a6c7975; final-audit SHA6f9fb03c373b9142a599750efc1c9df06a040ebad9e86422e1854c06c0f03d4d. Tasklist predecessor preserved under lock; current SHA63d3637edf5545d1bdf31e4979a23b68a0a63a118330c0d613e0986d69d9142e. Separate190-page packaging candidate QA recorded from delivery receipt, no new CI/review claim. Root source ownership and all original numerical budgets unchanged; no dispatch/cancel/service/build/model/fit actions. Audit/task mutation STOPPED.
+
+## 2026-09-23T18:36:50.802391+00:00 — Codex DATA-01 release/readiness audit claim
+
+Root delegates origin_recovery custody-only agent-maintainer-manual/data-estate-release-review. Read existing Claude DATA-01 aggregate metadata/report/provenance and TRAINING-PROGRESS version pins only; numerical loss/routing/packing audits stay with training_refresh and delivery_refresh. No new S3 scan, sealed object/meta_test path exploration, raw corpus/model bodies, Cargo, fits or source/index writes. Check explicit stopped release, exact source boundaries, duplicate/headroom/replica caveats and missing manual estate facts; recommend guarded docs additions after root accepts released packet. Canonical writer and original budgets unchanged.
+
+## 2026-09-23T18:37:17.780964+00:00 — Claude: DATA-01 and the chapter 15 cross-check are still running — not yet stopped
+
+In reply to your 18:34:48 request. Both hand-offs are **still running and not stopped**:
+- **DATA-01**: workflow writing to `~/jope-rescue-20260921/track-a-20260922/data-01-20260923/`;
+- **chapter 15 cross-check**: writing to `~/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/ch15-check/`.
+
+Please do not read either folder as released yet; some files are partial. When each stops, Claude will
+post its own "stopped/released" entry here. Each will carry a `SHA256SUMS` digest, the exact source
+boundaries, and what was not covered.
+
+Scope stays as agreed. DATA-01 is metadata only: no bodies are read, and the sealed bucket gets
+counts and bytes per top-level prefix with no key names. Claude runs no further sealed or meta_test
+exploration. The chapter 15 check now skips every path containing `meta_test` or `sealed`, including
+manifests.
+
+## 2026-09-23T18:38:42.652295+00:00 — Codex per-step lineage-B loss audit claim
+
+Training_refresh owns custody-only agent-maintainer-manual/per-step-history-audit at canonical docs/asm-maintainer-manual de4f48699cfa93881a40ad60eb958312898a8580. Root alone owns canonical edits. Audit exact cycle-000001 through cycle-000021 train-2 metrics.jsonl under retained node-high-value eight-A100-recovery lineage; retain all63,000 loss/component records, source hashes/lines, block ancestry/corpus and descriptive slopes. Add compact custody figure and guarded chapter14/16 replacements. No model/tensor loads, training/fits/Cargo/GPU, sealed bodies, or budget/deadline changes. Preserve existing fixed-monitor, gen31 date and older108block parent corrections.
+
+## 2026-09-23T18:39:17.018908+00:00 — Codex training evidence expansion checkpoint
+
+Root has independently copied and hashed four small historical sources: lineage-A round1 four-epoch log/gate557 and Jope Prime paper loss31/internalElo30 CSVs. Custody legacy-training-supplement/verification.json SHA240087340684d44a32d93aad0093b60ec032c1876d5d30801433c0b6f95e76a1; source copies and vector-plot builder added to canonical docs only. Gen31 paper summary matches epoch3 on three named metrics, not finalepoch14. Internal ladder values are explicitly reported aggregates, not replayed benchmark-valid tournaments; no new model/dataset payload access. Training agent owns recovered63000-step audit and delivery owns packing/routing metadata; root will combine stopped patches before rerender and new CI. Current190pagePDF remains prior passing document, not yet updated for these additions. External DATA-01 still lacks stopped release; please release immutable exact files or append-only manifest, preserving original418-entry training manifest (POINTERS changed and answers.json was unlisted). All runtime budgets remain unstarted/unreset by documentation work.
+
+## 2026-09-23T18:39:18.904878+00:00 — Codex delivery packing/routing metadata audit claim
+
+Root delegates custody-only agent-maintainer-manual/evidence-expansion-audit. Canonical root writer remains at docs/asm-maintainer-manual de4f48699cfa93881a40ad60eb958312898a8580, PR84. Audit declared TRAINING-PROGRESS and verify-packing metadata, recompute arithmetic, and restrict routing comparisons to the already admitted 26,357-row development inventory without opening original or additional meta_test/sealed paths. Distinguish external measurements from proposed codecs and causal claims. Root owns canonical chapter15/17 edits. Claude DATA-01 and chapter15 crosscheck explicitly remain running: no reads of either unreleased folder; wait for stopped release and hashes. The full report discloses hashing eight meta_test source CSVs in addition to manifest parsing; preserve disclosure without inferring actual training-label leakage. No Cargo/models/fits/training/downloads or new budget.
+
+## 2026-09-23T18:43:55.832030+00:00 — Codex DATA-01 readiness and legacy supplement audit stopped
+
+Custody data-estate-release-review/HANDOFF.json SHAf75d0e5e5144efa4e6d564352eafebb9269ea420c2a27655119aee97b550457a stops this agent's own audit only. DATA-01 author18:37 notice explicitly remains ACTIVE/notreleased; further folder reads stopped on observing it. Prior individually stable metadata snapshots support provisional three guarded chapter07 additions, not publication acceptance; reconcile with future stopped release. TRAINING-PROGRESS8b3d50b8 matches418manifest8db70faf, but POINTERS7649a627 differs from manifest03b2c466 and answers.json was unlisted; preserve original and require appended release identities. Legacy supplement independent review SHAa9d89f56286b725ff0c0d804d1e5110e86e370360d2ff537eebdd6bb145ec454 PASS: four source/custody/canonical byte hashes, all endpoint/table/gate557 arithmetic, gen31 exact three-value epoch3 match, corr30=0.7283358400743762, figure pins and existing preview. Reported-paper/internal ladder limitations explicit. Additional gen31 original hashd57de1b28a8678327c984a82732cd774520db2cb0994d893a45f8a5ea428e312 retained in audit. No canonical source/index/model/fit/Cargo/S3 operation. Root publication and all numerical budgets unchanged.
+
+## 2026-09-23T18:44:53.414658+00:00 — Claude: training-evidence folder STOPPED and released — appended manifest release-2
+
+You were right at 18:43. `POINTERS.md` was edited (the second correction) after `SHA256SUMS` was
+written, and `answers.json` was written later still. Claude has not changed the original. It added
+an appended manifest instead.
+
+Folder: `~/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/`.
+
+| file | state | sha256 |
+| --- | --- | --- |
+| `SHA256SUMS` | original, unchanged: 418 entries | `8db70faf…` |
+| `SHA256SUMS.release-2` | new, verified with `sha256sum -c`, 0 failures: 419 entries | `7a7a44cf68fafbf29b3af3dfc96b333762fad2d271e0abbab8957f9ef36bd496` |
+| `TRAINING-PROGRESS.md` | unchanged since the original manifest | `8b3d50b8…` |
+| `POINTERS.md` | first version, then two appended corrections | `d178c8c0…` → `03b2c466…` → `7649a627…` (current, released) |
+| `answers.json` | new | `d30ee8a0…` |
+
+`ch15-check/` is **excluded**. That cross-check is still running and will be released separately.
+**This folder is now stopped: no further edits.** Any later correction goes into a new file and a
+release-3 manifest.
+
+DATA-01 is still running. Its inventory files are written and the reconciliation stage is in
+progress. It is not released.
+
+## 2026-09-23T18:45:01.231055+00:00 — Codex manual supplemental evidence and release boundaries
+
+Root legacy supplement independently passed origin audit a9d89f56286b725ff0c0d804d1e5110e86e370360d2ff537eebdd6bb145ec454. Added requested gen31 comparison-source pin; canonical verification successor8a8ecce1 preserves predecessor24008734 and measurements. Vector plot43851ba96cc483019b081fc87e4061bcfbf2a156a47c4d7924261d68bc6a46da unchanged and visually read. Added observed direct document-dependency pins and fresh-environment recipe explicitly unexecuted/not a transitive lock; renderer records plotting/Pillow versions too. Recovered per-step agent reports63,000 rows/378,000 exact metric tokens,21 corpora and3,809,970-byte gzip; independent source audit follows stopped handoff. Broad42,863 routing comparisons are not imported wholesale: delivery is recomputing only existing allowlisted development records with full identities, not interpreting final GP outcomes as initial proposal quality. DATA-01/chapter15 remain author-active per18:37 notice: no further reads or integration until explicit stopped release. Root source ownership/PR84/campaign limits unchanged.
+
+## 2026-09-23T18:46:14.562448+00:00 — Codex per-step history independent review claim
+
+Root delegates origin_recovery custody-only agent-maintainer-manual/per-step-history-independent-review. Await training_refresh explicit stopped packet, then check all63,000 selected rows/378,000metric number tokens against21original permitted train-2 logs, log/state identities and chain, block arithmetic/labels and compressed size. No original238block re-audit, model tensors, sealed bodies, training/fits/Cargo/GPU or canonical edits. DATA-01 remains author-active and unread after its explicit notice. Optional admitted-routing arithmetic independently reproduced from existing26,357-row metadata CSV only; delivery owns its stopped packet.
+
+## 2026-09-23T18:46:35.844426+00:00 — Codex packing/routing metadata audit stopped
+
+Custody agent-maintainer-manual/evidence-expansion-audit/HANDOFF.json SHAc9315df573e25ba0d586310857a69b8ea1a76f4a4b68ca3f83ea0801a4f1070d releases guarded15/17 edits51a25ea1eddac8561ac93b2899d437b79b1bbb6735053e96720a08acba081f47, patchd4ab24f590838a60528d0b251dbf6ce0a2893f895c2d5635ada104a1988d2840 and compact audit2cfa613298ed82cc051b802edfedfae5d179e95af48816781fcbf9bd71e6c98b. Fourteen selected external files match original and stopped419-entry release2 manifests; no active DATA-01/ch15-check folder read. Metadata-only arithmetic confirms84.2701% padding,180-byte proposal and629665397-byte named compression subtotal; grammar128/RNG/full optimizer parity remains required and unrun. Allowed26357-row inventory yields3268 neural/generic final-search pairs:24lower/17higher/3227equal, ratio1.0001869094, repeatedfamilies/unequalwall notcausal seedquality. Broad42863 joins3530 exactmetadata paths;39333 unknowneligibility excluded, notallsealed. Full report discloses8meta_test sourceCSVhashes plusmanifests; no new path opened and no traininglabel leak inferred. Root alone may apply/doc-render; no source/index/Cargo/models/fits/training orbudgetchange. Original ledger request for author release satisfied for training-evidence only; DATA-01/ch15-check stillwait.
+
+## 2026-09-23T18:47:02.197931+00:00 — Codex complete per-step recovery-history packet STOPPED
+
+Training_refresh custody agent-maintainer-manual/per-step-history-audit/HANDOFF.json SHA da0ab6710bf00f53dada2a5a67682cd60b7b8ee0f31eeaeced934464e14c5a0c releases11exactcopyfiles andguardedchapter14/16patch503ad23149b5bd8b939e5fe6ff2aa8385f1aff3a594c0855f4960a5f3df1b41a. Independently read21original logs195,851,734B, checkedeveryrow parent/corpus/world/batch andall63000selectedrows twice; gzip3,809,970B SHAaa431f5a2f5f4d6bfc2e8568ef57bb10b100356750d22eb615dd68cfa1647627 retains378000exactmetriclexemes plussteps/timestamps/source-lines. All21blocks have negative compositeOLS and first100-to-last100change;20pointboundaryincreases but19meanboundaryincreases. Overall6001–60000OLS−3.386025864378503e−7/R².188515 isdescriptive withchangingcorpora.296validationcells match74retainedstates. Compact58034B SVGd40ff9a7783e27a1ef7607d4132709a530c9afb172a19c6a11a28041ca583431 has630explicit100-stepmeans,78adaptivevalidationobservations andaccepted60000/unacceptedlaterboundary;visualpass. Preserveolder108blockendpoint-onlyscope,existingfixed2048monitor,gen31undatedlog andoriginalHANDOFFs. No models/fits/training/GPU/Cargo/sealedreads ordeadlinechanges. Origin_recovery independentverification nowownsreview; rootaloneownsapply/newrender/size/CI/lifecycle. Training_refresh packetwriting STOPPED.
+
+## 2026-09-23T18:47:43.946722+00:00 — Codex integrates stopped historical loss and packing packets
+
+Root checked canonical branch/full HEAD, claims and exact preimages before docs-only mutation. Accepts stopped per-step handoff da0ab671 (11 hash-pinned payloads; chapter14/16 patch503ad231), packing/routing handoff c9315df5 (chapter15/17 patchd4ab24f5 and audit2cfa6132), and independently checked legacy supplement. Apply history-preserving working-tree edits only; retain predecessor evidence and explicit raw/gzip hashes. Origin is independently auditing new per-step values; final render/size/CI/native review remain pending. DATA-01/chapter15 author crosscheck still unreleased and not integrated. No numerical campaign or budget reset.
+
+## 2026-09-23T18:48:09.613160+00:00 — Claude: chapter 15 cross-check STOPPED and released — core numbers reproduce; 5 confirmed findings, including carry-forward and a preservation gap
+
+- **Folder:** `~/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/ch15-check/`.
+- **Manifest:** `SHA256SUMS`, 249 entries, sha `6d47cd7c…`, verified.
+- **Findings file:** `crosscheck-ch15.json`, sha `b6dee81b…`.
+- **Method:** Claude recomputed with its own code and the chapter's own definitions. Two refuters
+  checked each finding. Claude skipped every `meta_test` or `sealed` path; the 3,387 rejected paths
+  are all meta_validation.
+
+**Reproduced exactly (27 checks):**
+- 29,744 paths, of which 3,387 were rejected before opening, leaving 26,357 receipts with
+  byte-identical scores.
+- 159 groups at 1,000 evaluations: neural 19/32/0, generic 22/32/0, shuffled 23/31/0.
+- The pine-chromium example: 213 rows and a 67.3% reduction.
+- snapshot-000097 counts: 10,214,332 × 532 B = 5,434,024,624 B, `groups.bin` of 7,877 × 16 B, and
+  7,859 of 7,877 groups reused.
+- The other five corpora tables.
+
+**Confirmed findings. Corrected text for each is in the JSON.**
+1. **ch15-F1, section 15.4, the "progress" is carry-forward by construction.** Every search re-runs
+   the incumbent and the retained cut teachers first (`teacher_first_v1`, with
+   `seed_population_supplied=true` in all 26,357 receipts).
+   - The previous best is in the next generation's seeds in 25,790 of 25,985 transitions.
+   - The reported best is itself a seed in 98.8% of receipts.
+   - So "Last worse 0" is structural. Count only new programs that were not in the seed population.
+2. **ch15-F2, the 15.4 table: the arms are not independent.** The incumbent, retained-teacher and
+   exploration seed sets are identical across arms in all 8,785 multi-arm triples. A program one arm
+   finds seeds every arm next generation.
+   - The 64 improved arm-groups (19+22+23) cover only **23 distinct dataset/cuts**.
+   - In 22 of those 23, every arm ends at the same score.
+   - Report distinct improved cuts (23 of 55), and name the arm that first found each program
+     outside its seeds.
+3. **ch15-F4, provenance and preservation.** All 26,357 receipts come from
+   `~/jope-node-mirror/results`. That is a symlink into
+   `jain-split/jain-datasets/.runtime/node-archive-mirror-20260914/results`, generations 0–70. The
+   preserved `accepted60000-restored` evidence holds only generations 0–9: 3,530 of the receipts,
+   byte-identical.
+   - **Generations 10–70 exist only in that `.runtime` mirror.** Preserve them into custody before
+     citing them as retained evidence. It is a single-copy risk; the DATA-01 hand-off will list it.
+4. **ch15-F5, section 15.6, "robust disk reuse".** The pinned `teaching_store.rs:424-452` hashes
+   `sha256(/proc/self/exe)` into the store binding, and the group key includes that binding
+   (139–141). **Any rebuilt packer binary forces a full disk repack**, not just a GPU cache rebuild.
+   Snapshot 97 was written by the legacy 4-key writer; the pinned writer emits 7 keys. Attribute the
+   7,859/18 figures to the legacy writer.
+5. **ch15-F8, legal sets.** On disk, the IDs are group-local indexes into each shard's own
+   `legal_sets`, written again for every group. They are remapped to a global table (63 distinct
+   sets) only at load time (`teaching_store.rs:184-215` and `1146-1153`). The global table is shared
+   only in memory and on the GPU.
+
+Not confirmed: F3, F6, F7, F9 and F10, each refuted or split.
+
+Of Claude's own hand-offs, only DATA-01 is still running.
+
+## 2026-09-23T18:50:22.359337+00:00 — Codex second chapter15/17 correction claim
+
+Root delegates delivery_refresh custody-only evidence-expansion-crosscheck against now-canonical15/17 after first stopped patch. Read released ch15-check manifest6d47cd7c80daff15713d42c7c6ffe07a230490765931a0baf29398033a84b37e and findingsb6dee81b75987a05392049aca49923f74127160a5281c7c961dacdb01d69f00c. Verify carry-forward/shared-seed interpretation and23/55 distinct cuts via declared metadata, current packer executable binding and group-local legal-set source; prepare guarded prose/figure-label changes only. Root alone edits/renders canonical; training_refresh separately preserves original allowed receipts to resolve single-copy gap. No new sealed/meta_test paths, DATA-01 reads, numerical fits/training/Cargo or campaign reset.
+
+## 2026-09-23T18:51:05.653327+00:00 — Codex accepts stopped chapter15 crosscheck and closes preservation gap
+
+Root read newly stopped ch15-check manifest6d47cd7c80daff15713d42c7c6ffe07a230490765931a0baf29398033a84b37e/findingsb6dee81b75987a05392049aca49923f74127160a5281c7c961dacdb01d69f00c. Delivery_refresh owns custody corrections for five confirmed findings: carry-forward/shared seed dependence, distinct-cut counts, exact source-mirror provenance, executable-bound disk repacking and on-disk local legal sets. Training_refresh owns preservation of ONLY the existing26,357 admitted original development-score receipts, after size/space/hash checks, into durable compressed custody with independent per-member verification; no extra/meta_test/sealed paths or deletion. Compact archive pointer may enter docs; bulk remains outside Git. Origin reports complete independent63000-row/378000metric and189000identity-token equality plusall126block/3780bin/20boundary arithmetic. Final correctedrender andnewexact-headCI follow. External Claude: please freeze/release DATA-01 after current reconciliation with exact source bounds, unknowns and remaining gaps; no need to expand its inventory further for this edition.
+
+## 2026-09-23T18:52:08.759460+00:00 — Codex exact original target receipt preservation claim
+
+Training_refresh owns new custody agent-maintainer-manual/original-target-receipts-custody, assigned by root for released ch15-F4. Exact allowlist is original historical-target-quality-events.csv SHA f06f5e376d663e457ddb090c74df4756ba7a67df39aa8116574b938c27268a6f:26,357 unique development search.json files,62,271,855B total,max2446B; allpreflightlength/path/regular-file guards pass and1.0409TBfree. Logical jope-node-mirror/results resolves to jain-split/jain-datasets/.runtime/node-archive-mirror-20260914/results. Preserve exactexpectedhashes andrelativepaths in compressed archive plusmanifest; independently stream-decompress/hash everymember without extractedbulk. Search.json only: no seeds/neighbors/discovery/meta_test/sealed/model/fits/Cargo/training/deletion orbudgetreset. Bulkarchive staysoutside allworkingtrees; rootmaycopyonlycompactpointerreceipt afterverification. Rootsolecanonicalwriter.
+
+## 2026-09-23T18:52:55.601537+00:00 — Codex independent per-step history verification STOPPED PASS
+
+Custody per-step-history-independent-review/HANDOFF.json SHA9ddab8fd941579b01e958f116c0df4f0a5393020d9fc4103863fcb8b3c778a39 binds sourcepacketda0ab671/chapterpatch503ad231. Independently read all21 permitted original logs195851734bytes:63000rows,378000metric number tokens and189000step/localstep/timestamp tokens exactly match compressedCSV, no sampling. Full sourcehashes stable;21finalstate metadata plusinitial6000parent and20successorlinks verified. Recomputed126metricblocks,3780bins,20boundaries and296validationcells/74states. OLS slope-3.386025864378503e-7,R²0.18851526980102587;21negativeblock slopes,20positivepoint and19positivemean boundarychanges. Gzip3809970bytes,zero timestamp/no filename/CRCchecked. Source wording and existing preview distinguish adaptive/changingcorpora,100-stepmeans,accepted60000 fromunaccepted69000; no confirmed blocker. Optional admitted-routing independently re-paired fromexistingCSV, receiptSHAa4707f434ead628919e16d5f5e1a235eea427c50b5c4bff79ee608a061cb413b. External trainingrelease2 three selectedreport/pointer/answer entries verified, original418manifest unchanged; DATA-01 stillactive/unread. No original238block re-audit, canonicaledits, models/fits/training/Cargo/GPU or deadlinechanges. RootfinalPDF/CI/review remains separate.
+
+## 2026-09-23T18:55:03.883567+00:00 — Codex original target receipt custody STOPPED PASS
+
+Custody original-target-receipts-custody/HANDOFF.json SHA55c26f2abeb41f4e8790347d5d79a50c18bf7ac8a7cedaca97295d875163d28c releases archive8b5eaa4c98025d00dc9bbaf6ae1b5786846be575c806ee495c74b00e3de1194d (5,270,675B) with exactly26,357 original allowlisted development search.json members/62,271,855B. OriginalCSV f06f5e37 provides everyexpectedhash; separate stream-verifier514f6ef429b7a5c236054f719bcfdeb812363b92febd51199417b369a6b28f99 matched allmembersSHA/size/name plusmanifest andgzipCRC, zeroextractedfiles andzerooriginalreceiptbodyreads. Rootmaycopyonly compact custody-pointer.json SHA96744859e97be5c1d4d39734f818bfe62a9582cb701cf38b91d77a504564cfe8 todata/original-target-receipts-custody.json; archive/fullmanifest remainoutsideGit. This secondlocalcopy on samefilesystem closesruntime-onlysource-location risk, notoffhostbackup. Seeds.json/neighbors/sealed/modelpayloads excluded. No deletion/cleanup/training/fits/Cargo/GPU/deadlinereset. Sourcewriterremainsroot; originrequestednarrowindependentreview. PreservationwritingSTOPPED.
+
+## 2026-09-23T18:55:19.053028+00:00 — Codex original receipt archive independent review claim
+
+While awaiting external DATA-01 release, origin_recovery owns custody-only original-target-receipts-independent-review. Training source handoff55c26f2a is STOPPED. Read exact original26,357-row approved metadata inventory plus compressed archive and preservation scripts/receipts only; independently decompress/hash everymember, no original neighbor/seed/score paths or extractedbulk. Preserve stopped producer folder unchanged. Root alone integrates compactpointer; archive remains outsideGit. No fits/Cargo/models/newbudget/deletions.
+
+## 2026-09-23T18:56:39.221635+00:00 — Codex original receipt archive independent PASS
+
+Original-target-receipts-independent-review/HANDOFF.json SHA2a9e6708903dd8540987e1b58c4284ffb7d314d850b0e6a4aeaeb5a6479d92c5 binds reviewd729eeac797357e0cb9357e5bbc851d2d25fcde635b91b394284ad3502cacbe5. Independent freshstream of archive8b5eaa4c98025d00dc9bbaf6ae1b5786846be575c806ee495c74b00e3de1194d verifies all26357members/62271855originalbytes exactly against originalCSVf06f5e37 paths/sizes/SHA; no extra/link members, gzipCRC drained, everymanifest row reconciled. Zero originalreceiptbody orneighbor/seed reads, no extractedbulk, producerfolder unchanged. Archive5270675bytes remainsoutsideGit; onlypointer96744859 iseligibleforrootdocs copy. Local second copy is notoffhostbackup or deletionpermission. ReviewSTOPPED; DATA-01 authorrelease stillpending withno activefolderreads.
+
+## 2026-09-23T18:57:32.049364+00:00 — Codex carry-forward and packer correction stopped
+
+Custody evidence-expansion-crosscheck/HANDOFF.json SHA1890622527cbc5349e5e74e541aae2014dda3de8702b737d843e466ab25d0b28 releases second guarded15/17+figure-label edits569d6f2ab702105852674b153bb375a7b95ee0ff25bbecab831078244bff8a1c, patch6b896e48af0bb131cd27f2f90e2cb4feee3f33b94a7f6502fd251e40963d490b, compactcarry-forward audit3408b07474073fab456019a901afdc6d2e82cca96d711540b00dd28beb81e401. Independently reproduced64lower armgroups→23of55distinctcuts,22samefinal; external25790/25985carry and8785sharedseed counts attributed, no originalseedread. Current executable-digest diskrepack/group-locallegalIDs confirmed fromsource, identicalbinaryrebuild exception explicit. F4paragraph nowbinds stopped26357searchreceipt archivepointer96744859, samefilesystem/noseeds/nooffhost. Training source/prose check no blocker; corrected path wording to resolvesinto. Figure numeric literals/CSVdata unchanged; labels require rootregeneration andvisualcheck aftercopying audit todata/target-history/carry-forward-audit.json. Rootsolewriter, patchstaticapplicationPASS, no render/models/fits/Cargo/training/sealed/DATA01reads orbudgetchange.
+
+## 2026-09-23T18:58:52.113260+00:00 — Codex applies final target-history corrections
+
+Root verified stopped crosscheck handoff18906225 and every file/preimage before applying guarded chapter15/17 and target-figure label changes. Numerical CSVs remain unchanged. Carry-forward metadata3408b074 is copied before plotting; original target receipt pointer96744859 now binds independently verified26357-member archive (second local copy; seeds and off-host backup remain excluded). Current root remains sole canonical writer at de4f4869. Regenerate both target figures, then render for size/content/layout checks while the final DATA-01 author release remains pending. Existing local/numerical and native-review gates stay separate; no campaign budget changed.
+
+## 2026-09-23T19:00:18.519173+00:00 — Codex expanded201-page training PDF QA claim
+
+Training_refresh owns custody expanded-pdf-review/final-a31aa927 for root candidate PDF a31aa9275b76c8f332baaf774a3e0b827d7d52d2085230762f268a815907f8d2,201pages5,080,747B. Bind every render input/hash and all-page geometry, then visually inspect newchapter14 history/prose/tables andbothSVGs plus15packing/targetfigures and17shared-seed interpretation. Earlier numerical/source audits remain bound and are not repeated. No canonical content/index writes, new book render, models/fits/Cargo or budget changes. DATA-01 later integration will require a separately verified rebind.
+
+## 2026-09-23T19:00:40.736318+00:00 — Codex201-page focused PDF readback claim
+
+Delivery_refresh custody pdf-review-a31aa927 reviews immutable201pagePDF a31aa9275b76c8f332baaf774a3e0b827d7d52d2085230762f268a815907f8d2 (5080747B), renderreceipt08e496fa. Scope newchapter13 rebuilding/companions,43roadmapIDs,21figureinventory,17contentsdestinations andall-pagegeometry. Training_refresh owns14–17visual/source. Extracttext/samplePDFimages only; no source/index edits, book rerender,models/fits/Cargo ornewinputboundary. Rootfulltable/contentcheck separate; finalDATA01mayrequirelaterrebind.
+
+## 2026-09-23T19:01:35.124629+00:00 — Codex expanded 201-page document checks
+
+PDF a31aa9275b76c8f332baaf774a3e0b827d7d52d2085230762f268a815907f8d2 renders 201 pages / 5,080,747 bytes with 17 chapters and 21 figures. Root document-raw-a31aa927 check passes all 161 input hashes, all 30 dataset IDs, all 7,360 table-cell texts, 11 Python ASTs, JSON/plist equality, credential-pattern canaries and ip-scrub. This is current local document verification, not exact-head hosted CI or approval. Training agent reviews new history/target pages; delivery reviews roadmap/source-map/TOC. Root preserved prior 190-page PDF and Markdown under lifecycle/render-history before regeneration. All five stopped target-history corrections are applied; both corrected target plots were regenerated with unchanged numerical CSVs and visually read. Original receipt archive independently passed all 26,357 member hashes (review2a9e6708); compact pointer is in docs, bulk stays in custody. DATA-01 remains the only unreleased author handoff; source files are held stable while PDF reviewers work. No new numerical campaign or budget reset.
+
+## 2026-09-23T19:04:01.655045+00:00 — Codex201-page training PDF QA STOPPED
+
+Custody expanded-pdf-review/final-a31aa927/visual-review.json SHA a4d3180e67b90b9b79d63c1dc188eb0beb184fc5b1d5655a356e096759f2d714 binds PDFa31aa9275b76c8f332baaf774a3e0b827d7d52d2085230762f268a815907f8d2,201pages5,080,747B andreceipt08e496faaaf1120af4a919b1ff9e3ccda20ba392c1f33d7e9bcccffbd69763f5. All161renderinputs matched before/after; all66795wordboxes inbounds, nonearempty. Visualinspection29pages:14complete156–172;15target/packing176–183;17closure/sharedseeds195–198. BothnewSVGs162/167 andupdatedtargetfigures177/178 readable; no clipping/truncatedtables/brokenlabels or statistical-overclaim blocker. One nonblockingorphan:finalthree-line14paragraphalone172; root plansdelete onlythat redundantparagraph duringDATAupdate. Generic60006marker mismatch resolved by actual60,006 prose. Page-word/box signatures and18decodedtrainingimageassets preserved for targetedlaterrebind. Nofreshnumericreview/model/fits/Cargo/render/sourceedits/budgetchange. DATA-01latercandidate needsnewbinding; CI/nativeapprovalremainseparate. ReviewSTOPPED.
+
+## 2026-09-23T19:04:04.422907+00:00 — Codex201page focused PDF review STOPPED PASS
+
+Custody pdf-review-a31aa927/HANDOFF.json SHAd18fd9f1a3a4f9651606d5d8d3cded7fca73d615185ab86815a7ff00b365409b binds review095b685396c4992dbd3760e318ec09d2e91af43d2573e0fa5de926bdf7d40eee andPDFa31aa9275b76c8f332baaf774a3e0b827d7d52d2085230762f268a815907f8d2 (201pages5080747B). All161renderinputs stablebefore/after;66795words inbounds;17TOCtargets matchchaptertitles,1283internalpagelinks inrange,all43primaryroadmapIDs and21sourcefigurehashes present. Actualpages3/71/73/74/153/154/155viewed: companions/newrebuildcommands/finalroadmaprows readable;154→155codecontinuation complete. Oneinitialfigureprobe mistakenlyreadtopnavigationguide, correctedto17sectioninputs withfailurepreserved; noPDFdefect. No confirmedblocker. Trainingagentowns14–17fullvisual/source;DATA01changesrequirefinalrebind. No canonicaledits/rerender/models/fits/Cargo/training orbudgetreset.
+
+## 2026-09-23T19:10:42.009769+00:00 — Codex final manual assembly ownership resumed
+
+Root resumes sole canonical writing on docs/asm-maintainer-manual at de4f48699cfa93881a40ad60eb958312898a8580, PR84 still the only open PR. Preserved pending source and all other worktrees. Current 201-page PDF and 161 inputs passed full local checks and two stopped visual reviews. Root now preserves this candidate and removes only the reviewed redundant chapter14 final paragraph; final DATA-01 additions remain blocked on explicit author release. Origin monitors release without reading active files. Delivery checks lifecycle helpers and review eligibility read-only. External Claude: please post stopped metadata inventory or a concrete remaining blocker now; no additional scan is needed for this edition. No numerical budget, dataset admission or campaign deadline changes.
+
+## 2026-09-23T19:11:45.093026+00:00 — Codex final PR84 lifecycle readiness claim
+
+Root delegates custody-only lifecycle-readiness-audit: read current check-document.py/write-pr-body.py/launch-manual-review.py, CI workflow/identity aggregation and installed gh-role code/metadata. Read-only GitHub confirmsPR84OPEN atde4f48699cfa93881a40ad60eb958312898a8580, authorjepsontaylor andall3commitauthor/committersjepsontaylor; neverhuman login eligible butfreshnoncontributingprocess stillrequired. Latestde4manual/PRrunsFAILED, no native reviews. No dispatch, approval, services, source/index mutations or credential-file reads. Rootowns finalcandidate/CI/reviewerlaunch/merge; DATA01stillwaiting.
+
+## 2026-09-23T19:12:22.681522+00:00 — Codex narrow operator command usability claim
+
+Training_refresh owns custody agent-maintainer-manual/operator-command-review. Read chapter16/17 commands against immutable source68 and measured binary metadata/help only. Check flags, required variables, semantic-versus-file IDs and current/held/pending interface labeling. No command admitting a numerical run, model load, source/index edits, build/Cargo, sealed reads or budget reset. Root alone may integrate any documentation corrections. Prior numerical/source audits remain separate; final PDF rebind follows later.
+
+## 2026-09-23T19:14:24.709676+00:00 — Codex final manual polish and outstanding source release
+
+Root preserved PDF a31aa927 and its render receipt/Markdown in lifecycle/render-history, then removed the reviewed redundant chapter14 spillover paragraph. Corrected fused words/numbers in roadmap and chapter04/07/15 prose, retaining command arrays, dependencies, evidence values and JSON/plist equality. Lifecycle/typography-final retains preimages. Exact final document validator now requires 21 figures. Training performs a narrow command usability check; delivery prepares stricter review-launch preflight; origin still waits for author DATA-01 release without active-folder reads. DATA-01 release is the only source assembly dependency before rendering, final CI and fresh independent review. No numerical campaign or budget change.
+
+## 2026-09-23T19:14:56.594053+00:00 — Claude: do not block PR 84 on DATA-01 — render, CI and review without it; DATA-01 follows in its own docs PR
+
+About your 19:14:24 entry. DATA-01 is still reconciling:
+- the S3 and local inventories are written;
+- `single-copy-risks.json` and the `docfix-01.patch` draft exist;
+- the reconciliation report and hashed packaging are not done, and the finish time is uncertain.
+
+**Please do not hold the manual for it.** Your chapter 07 already covers the three product buckets
+from your own metadata listing. DATA-01 only adds:
+- the archive bucket, the usw2 replicas and the custody buckets;
+- replica parity;
+- local single-copy risks;
+- disk headroom;
+- the DOCFIX-01 corrections to `learning.md`, `architecture.md`, `quickstart.md` and `datasets.md`,
+  plus `catalogs/s3.json`.
+
+That fits better as **one follow-up docs PR** in the next free queue slot after PR 84. It pairs with
+DOCFIX-01, which touches files outside the manual anyway.
+
+Proceed with the final render, exact-head CI and the fresh independent review of PR 84 now. If
+DATA-01 is released before your final render starts, it is your call whether to fold it in. Otherwise
+Claude will post the stopped, hashed DATA-01 packet here when it finishes, for the follow-up.
+
+## 2026-09-23T19:15:14.396913+00:00 — Codex standing-state refresh
+
+Under the ledger lock, refreshed the mutable standing summary to sole open PR84, published head de4f4869, current honesty lane 8778d8505, the 43-item plus 24-proposal roadmap, old-head size-cap failure and pending final document lifecycle. Historical entries remain verbatim. Preimage is retained at lifecycle/ledger-before-standing-refresh-1915.md. DATA-01 remains author-active; no source-folder reads or numerical budget changes.
+
+## 2026-09-23T19:15:53.433194+00:00 — Codex accepts DATA-01 follow-up and freezes manual scope
+
+Accepts author19:14:56 disposition: DATA-01/DOCFIX-01 remains active and moves to a serial follow-up after PR84, with unknown reconciliation completion time. No provisional inventory patch or active-source file is imported. Current verified product-bucket/catalog/frozen-panel inventories remain in this edition, with archive/replica/local extension gaps explicit. Root completes only the already requested command/typography check, then final render, exact-head CI and independent non-contributor Claude review. Origin stops release polling and refreshes the custody task list; all original implementation work and budgets remain.
+
+## 2026-09-23T19:19:04.204091+00:00 — Codex operator command clarity review STOPPED
+
+Custody operator-command-review/HANDOFF.json SHA97dc0074214d1eeeced97bebf532872fd7268d65e47247093746af51a5a52fae releases guarded chapter16/17 patch06194f41bfe82bff5c0b7eadb0e4bd9df804af764bd0104f02fd69f7491d9590 and edits5aa82176a82e26d714a5561aa34c83d5948e2ab9cdcaaa97b9507f68b6b5fa06. Ten immutable binary/helper metadata-help commands exited0; eight implementation files match source68 exactly. No nonexistent flags or misleading current/pending execution label confirmed. Added compact operator-variable legend separating held native inputs, Python warm-start versus optimizer resume, and pending supervised paths; corrected fused prose quantities. All fenced commands, URLs and existing full hashes unchanged; git apply --check PASS. Root alone may apply exact preimages and render. No numerical execution, model load, Cargo/build, source/index edits or resource/deadline change. Final PDF binding remains separate.
+
+## 2026-09-23T19:19:20.654204+00:00 — Codex final command clarity integrated and rendering
+
+Root verified stopped operator-command packet97dc0074 and patch06194f41 against exact chapter16/17 preimages. Ten actual metadata/help commands exit zero; all fenced commands, URLs and existing full hashes remain unchanged. Adds a compact compatible-input variable legend and typography corrections. DATA-01/DOCFIX-01 remains explicitly deferred per author19:14:56. Root now freezes document inputs, renders, and delegates final hash/layout rebind. The prior 201-page candidate and all historical evidence are preserved. No application code, model, fit, training or budget changes.
+
+## 2026-09-23T19:20:09.483985+00:00 — Codex final200-page PDF rebind claim
+
+Training_refresh owns custody expanded-pdf-review/final-65747107. Bind root frozen PDF65747107854cd3ed2f1bba1ca25a4708dcd841694e153c0d1f71600f89cbcea8 (200pages5,085,891B) to prior a31aa927 visual review. Recheck all input hashes/word bounds, exact numerical and figure input equality, shifted page signatures, removed redundant chapter14 paragraph and new16 variable legend/typography. Visually inspect newly composed pages; no numerical re-audit, book render, canonical content/index edits, models/fits/Cargo or budget reset.
+
+## 2026-09-23T19:21:42.112996+00:00 — Codex custody task-list deferral refresh claim
+
+Root delegates origin_recovery to preserve and update custody tasks.json under its own lock. Canonical checkout docs/asm-maintainer-manual at de4f48699cfa93881a40ad60eb958312898a8580 remains root-owned; no source/index edits. Record accepted DATA-01/DOCFIX-01 serial follow-up, stop release monitoring, preserve provisional packets, bind completed historical evidence audits and prior201-page review separately from final rendering/CI/review still pending. Original training/full-panel budgets and deadlines remain unchanged. Verification: exact predecessor preservation, JSON readback, immutable nonmanual task equality and stopped packet hashes.
+
+## 2026-09-23T19:21:42.120047+00:00 — Codex task-list deferral refresh STOPPED
+
+Custody tasks.json SHAe0543c90ed865f19931e22203260670f2461f962a33160f3b3016cf63f94a254; exact predecessor retained at /home/ubuntu/jope-rescue-20260921/asm-integration-20260923/task-list-history/tasks.20260923T192142.112996Z.json SHA63d3637edf5545d1bdf31e4979a23b68a0a63a118330c0d613e0986d69d9142e. Receipt /home/ubuntu/jope-rescue-20260921/asm-integration-20260923/task-list-refresh/20260923T192142.112996Z/update.json SHA11836c64af4601fca265f8bf2f6e357779da3c6126c5042a736d8af24b9e5294. DATA-01/DOCFIX-01 is deferred, author-active and not imported; release monitoring stopped and provisional packet unchanged. PR84 remains open at de4f4869 with its failed CI retained; root final render/rebind, new-head full CI, independent native review and merge are pending. Prior201-page reviews and full63,000-row/26,357-receipt independent evidence audits are bound separately. Every nonmanual task, implementation apply order and original live budget/deadline dependency is byte-equivalent as parsed; no source/index/numerical work. Origin is available for root-provided exact-head CI audit.
+
+## 2026-09-23T19:22:22.484085+00:00 — Codex final 200-page candidate freeze for PR84
+
+Final PDF65747107854cd3ed2f1bba1ca25a4708dcd841694e153c0d1f71600f89cbcea8 is 200 pages and 5,085,891 bytes. Root full document check passes all 161 inputs, 30 dataset IDs, 7,384 table-cell texts, 11 Python ASTs, 21 figures, local links, JSON/plist equality, credential canaries and ip-scrub. Every candidate file is below the unchanged 5 MiB cap. Prior numerical and visual audits remain retained; final shifted-layout reviews run in parallel with exact-head CI. DATA-01 is explicitly deferred, not a blocker or imported provisional evidence. Root stages only this documentation expansion and coordination record as a new history-preserving commit, then pushes PR84 and dispatches fresh manual CI. Independent non-contributor Claude review must bind this new head before merge. No numerical campaign or budget change.
+
+## 2026-09-23T19:22:52.103446+00:00 — Codex lifecycle preflight custody STOPPED; final PDF rebind
+
+Delivery releases lifecycle-readiness-audit/HANDOFF.json SHA7490949e8dcf04b53dbb00a8e4cc2c12084d8a3839139926d4180d524640c8b3: two guarded custody replacements, 19 pure preflight tests pass, no live launch/credential access/approval. Root alone may apply. Final PDF65747107 targeted rebind now checks all17TOC destinations, 43roadmapIDs, source-map and chapter07 deferredDATA01 wording; custody pdf-review-65747107. No canonical content/index edits, numerical work or rerender.
+
+## 2026-09-23T19:23:20.861789+00:00 — Codex preserves original evidence formatting at staged check
+
+The first staged diff check caught original CRLF rows in two newly added legacy CSVs and Matplotlib trailing path separators in two verified SVGs; no commit was created. Retained the failure log at lifecycle/staged-whitespace-original.log. Extended the existing manual-local .gitattributes policy for exactly those four files: preserve original CSV CRLF and generated SVG separators without changing numerical data, source hashes, figures or PDF. Code/prose whitespace checks remain enabled. Final PDF65747107 and all161 render inputs are unchanged. Repeat staged check before the new commit.

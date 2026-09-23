@@ -1,0 +1,49 @@
+{
+  "files": [
+    {
+      "path": "command-receipt.json",
+      "bytes": 561,
+      "sha256": "289824c5c8d620303b115f98b6b83d79b960d69e3d244d1a9f1f65043d288d72"
+    },
+    {
+      "path": "numeric-review.json",
+      "bytes": 18650,
+      "sha256": "083509f25ba488c69b78971d9e9fbbdda07710566db4548452ca2e8ec76a1725"
+    },
+    {
+      "path": "release2-readback.json",
+      "bytes": 1280,
+      "sha256": "f80b0db5a6d62b2094142c721b076ef4dc4527e7ac26b092d80db78b630c0fff"
+    },
+    {
+      "path": "routing-scope-review.json",
+      "bytes": 2359,
+      "sha256": "a4707f434ead628919e16d5f5e1a235eea427c50b5c4bff79ee608a061cb413b"
+    },
+    {
+      "path": "scope-review.json",
+      "bytes": 1745,
+      "sha256": "6b0548c7287ad69a80b7b0b0a76f22746ea925baa9783ce0a00657e5a2a845f2"
+    },
+    {
+      "path": "verify.py",
+      "bytes": 10780,
+      "sha256": "9a353fb3c9ab6b3a89306ce43eae6364770ddccfa6426e8cb3628cb7e07ca01a"
+    },
+    {
+      "path": "verify.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "verify.stdout",
+      "bytes": 460,
+      "sha256": "3bb304cf1cf0f36288665a1683ceaad5287021423b5bd42b047a39f581ba4125"
+    },
+    {
+      "path": "verify_routing_scope.py",
+      "bytes": 3332,
+      "sha256": "5f828007db3e6915e4ded2890641033478f337363c839bd553e407051a1b7bf8"
+    }
+  ]
+}

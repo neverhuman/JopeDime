@@ -11,6 +11,8 @@ The book covers the thirty frozen datasets and all 522 feature records, the broa
 
 **For the learning story, start with sections 14–17.** They distinguish real optimizer updates from better teachers, improved conditional program generation, and a complete measured flywheel. Current product version, accepted checkpoint, historical continuation, and pending experimental interfaces have separate identities.
 
+The retained recovery history includes all 63,000 reported steps from 6,001 through 69,000, with 378,000 exact metric values in a compressed companion. Loss plots mark corpus changes and accepted step 60,000; internal self-play Elo and adaptive search comparisons are explicitly separated from benchmark-valid evidence. Packing measurements and proposed smaller formats have separate qualification requirements.
+
 ## Section Markdown
 
 | Section | Contents |

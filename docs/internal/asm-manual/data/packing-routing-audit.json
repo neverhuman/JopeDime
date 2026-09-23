@@ -1,0 +1,244 @@
+{
+  "schema": "jope.manual.evidence-expansion-metadata-audit/v1",
+  "observed_at": "2026-09-23T18:45:28.700982+00:00",
+  "python": "3.12.3",
+  "source_pins": {
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/TRAINING-PROGRESS.md": {
+      "sha256": "8b3d50b87b54802508b0fb027fb9bba50d94790a062fa8f5aa3112ca814e934d",
+      "bytes": 58316
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/packing-review.md": {
+      "sha256": "39523607d43b5d48e5258c63d609382d36948664f0e3d2b178cff5e5e6071b7b",
+      "bytes": 29027
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/verify-packing/v_records.json": {
+      "sha256": "7bb5c565cb4fe4bc057029d1c149437a0466d2a16012215c241bad7f0043c49e",
+      "bytes": 3929
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/verify-packing/v_records.py": {
+      "sha256": "372c2c79ee4caffabe49b9ba1f6c29b157bc669c8ced19b2f593e0eaec08888d",
+      "bytes": 12665
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/verify-packing/v_index.json": {
+      "sha256": "af44565ae9eb3301d437fd6ade11ba3cbda24d4e413c1d08d20811bed2986c7e",
+      "bytes": 3288
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/verify-packing/v_index.py": {
+      "sha256": "89a64c8d709f813f3f97ede6a9a2c64135d2b65a787b258ca0b69d14efa5fa75",
+      "bytes": 6717
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/verify-packing/v_index2.json": {
+      "sha256": "49e932e09cadfd80c52394f41a9e785dca7587a1ddc2e3e9a957aa1ed3b14c57",
+      "bytes": 656
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/verify-packing/v_index2.py": {
+      "sha256": "e461bd2571c7461bb2cec9a49c1ba57bf2ada8a7f7e29b7e8c312d846d0e075b",
+      "bytes": 1880
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/verify-packing/v_ties.json": {
+      "sha256": "6518fa8e78ff03d80a3792c0616bd82a30fa26ff7ac4bb9b301bce5529810584",
+      "bytes": 371
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/verify-packing/v_ties.py": {
+      "sha256": "b253c0656247db8977f50522d975e80be96f62f56707b812c8c88bcbc51940db",
+      "bytes": 1782
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/verify-packing/v_contexts.json": {
+      "sha256": "f9fb022818d89716c315007022b92485a42af46953ba8fac45ae4e9f56d5c2a2",
+      "bytes": 1019
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/verify-packing/v_contexts.py": {
+      "sha256": "3bb38186073bf6bb4ac24250416d2dd1266c25d8193d389d7c207dac7e7414b0",
+      "bytes": 4282
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/verify-seeds/v_analyze.py": {
+      "sha256": "b26deea938b88741f2e788c220c503edaef094037130b5d0f1f9aeca7651e44b",
+      "bytes": 12694
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/work/seed-quality/searches.csv": {
+      "sha256": "cf9a60e7984ed19905c7e68c4825482b3d6afd33e721cbba83e8f51b3ca251b6",
+      "bytes": 26832353
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/SHA256SUMS": {
+      "sha256": "8db70faf02a0d835e9cc3c488f5821da1e20693f6441335dd1a4317eff7768d5",
+      "bytes": 42115
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/SHA256SUMS.release-2": {
+      "sha256": "7a7a44cf68fafbf29b3af3dfc96b333762fad2d271e0abbab8957f9ef36bd496",
+      "bytes": 42196
+    },
+    "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-data-history/historical-target-quality-events.csv": {
+      "sha256": "f06f5e376d663e457ddb090c74df4756ba7a67df39aa8116574b938c27268a6f",
+      "bytes": 19469689
+    },
+    "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-data-history/historical-target-quality-summary.json": {
+      "sha256": "b22d3224cb3981d2eb7c40c3d8c4ebf280fa67120a15a7538711b1bb6702603a",
+      "bytes": 7082
+    },
+    "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-data-history/HANDOFF.json": {
+      "sha256": "89cfbc949ae21f7b8d6a0de0006c40d345fc7128288016d00ed8b0df3ede45f3",
+      "bytes": 2511
+    },
+    "/home/ubuntu/JopeDime/crates/jope-engine/src/training.rs": {
+      "sha256": "4780516c2444b0a78ca1baa4fb59938c188e2a833448ebf3eaab6d852eb9def4",
+      "bytes": 70414
+    },
+    "/home/ubuntu/JopeDime/docs/internal/asm-manual/sections/15-target-history-packing.md": {
+      "sha256": "344ce9cf67c2b40f030a1ca2e9c38651d76b109f19fec59e3cf66c9d07bc0e9c",
+      "bytes": 25836
+    },
+    "/home/ubuntu/JopeDime/docs/internal/asm-manual/sections/17-flywheel-focused-search.md": {
+      "sha256": "9df88e06e8ce2c4700cfe3458351863b35b608c2ce3f6874f94aacc2bee66536",
+      "bytes": 19866
+    },
+    "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/evidence-expansion-audit/audit_metadata.py": {
+      "sha256": "41f7d9762754f9a3eccd5e07bfccd0664ad7c820d4700e25ac60280b18579707",
+      "bytes": 10218
+    }
+  },
+  "external_selected_manifest_entries_verified": 14,
+  "external_release": "Author STOPPED release-2; 419 entries, selected 14 checked in both manifests; active ch15-check excluded and unread",
+  "packing": {
+    "evidence_level": "Independent arithmetic over externally reported payload-audit metadata; no payload replay here",
+    "corpus_sha256": "1c840597554f76598b7c173a0de6f5d13e1b29bfa971f4fa49777d9d1da47798",
+    "records": 10214332,
+    "groups": 7877,
+    "record_bytes": 532,
+    "occupied_token_slots": 205657518,
+    "reserved_token_slots": 1307434496,
+    "mean_token_length": 20.134211223993894,
+    "max_token_length": 54,
+    "padding_fraction": 0.8427014748125476,
+    "pretty_index_legal_sets_value_bytes": 37691003,
+    "pretty_index_bytes": 60589288,
+    "pretty_index_legal_sets_fraction": 0.6220737071543075,
+    "compact_legal_sets_bytes": 8335358,
+    "observed_external_zstd3_T1_bytes": {
+      "records_F0_group_frames": 292918135,
+      "experimental_F1_group_frames": 259362502,
+      "audit_labels_group_frames": 331375483,
+      "index_single_frame": 5371779,
+      "F0_records_labels_index_subtotal": 629665397
+    },
+    "subtotal_excludes": [
+      "shard manifests",
+      "groups.bin",
+      "contexts",
+      "vocabulary",
+      "checkpoint",
+      "other provenance"
+    ],
+    "uncompressed_records_labels_index_subtotal": 8721903373,
+    "proposed_F1_record_bytes": 180,
+    "proposed_F1_record_array_bytes": 1838579760,
+    "binary_index_estimate_bytes": 1906735,
+    "codec_roundtrip_or_training_parity_qualified": false,
+    "host_or_device_peak_memory_measured": false,
+    "f16_new_ties_fraction_all_within_group_pairs": 0.0037739225486371833,
+    "f16_new_ties_fraction_teacher_pairs": 0.0028990477104930165
+  },
+  "routing": {
+    "broad_rows": 42863,
+    "existing_admitted_rows": 26357,
+    "exact_path_and_recorded_field_matches": 3530,
+    "outside_existing_receipt_inventory_by_campaign": {
+      "continuous-learning-v2": 31013,
+      "regression-campaign64": 7056,
+      "regression-campaign64-expansion": 840,
+      "eight-a100-recovery": 424
+    },
+    "outside_does_not_mean_sealed": true,
+    "original_score_files_opened": 0,
+    "paired_fields": [
+      "run",
+      "generation",
+      "dataset",
+      "cut",
+      "family",
+      "prepared_sha256",
+      "vocabulary_sha256",
+      "evaluator_sha256",
+      "evaluator_protocol",
+      "execution_order_protocol",
+      "completed_evaluations"
+    ],
+    "admitted_1000_evaluation_pairs": {
+      "eligible_rows": 10063,
+      "controls": {
+        "generic": {
+          "pairs": 3268,
+          "neural_lower": 24,
+          "neural_higher": 17,
+          "equal": 3227,
+          "geometric_mean_neural_over_control": 1.00018690940596,
+          "distinct_dataset_cut_pairs": 52,
+          "distinct_families": 30,
+          "equal_reported_wall_seconds": 0,
+          "generation_min": 0,
+          "generation_max": 70
+        },
+        "shuffled": {
+          "pairs": 3253,
+          "neural_lower": 24,
+          "neural_higher": 16,
+          "equal": 3213,
+          "geometric_mean_neural_over_control": 1.0000854975733238,
+          "distinct_dataset_cut_pairs": 52,
+          "distinct_families": 31,
+          "equal_reported_wall_seconds": 0,
+          "generation_min": 0,
+          "generation_max": 70
+        }
+      }
+    },
+    "broad_intersection_1000_evaluation_pairs": {
+      "eligible_rows": 1352,
+      "controls": {
+        "generic": {
+          "pairs": 437,
+          "neural_lower": 10,
+          "neural_higher": 4,
+          "equal": 423,
+          "geometric_mean_neural_over_control": 0.9994549461374941,
+          "distinct_dataset_cut_pairs": 50,
+          "distinct_families": 29,
+          "equal_reported_wall_seconds": 0,
+          "generation_min": 0,
+          "generation_max": 9
+        },
+        "shuffled": {
+          "pairs": 439,
+          "neural_lower": 10,
+          "neural_higher": 4,
+          "equal": 425,
+          "geometric_mean_neural_over_control": 0.9993875226454968,
+          "distinct_dataset_cut_pairs": 50,
+          "distinct_families": 29,
+          "equal_reported_wall_seconds": 0,
+          "generation_min": 0,
+          "generation_max": 9
+        }
+      }
+    },
+    "scope": "Repeated adaptive final-search validation RMSE; not pre-evolution proposal quality or independently replicated outcomes",
+    "limitations": [
+      "No newly qualified full build/input/resource closure",
+      "Not equal wall budgets or causal policy evidence",
+      "No p-values or confidence intervals inferred",
+      "No current HWM admission inferred",
+      "No unadmitted source paths followed",
+      "No full broad-source digest equality: join uses retained path and recorded fields"
+    ]
+  },
+  "input_hashes_unchanged_after": true,
+  "unrun": [
+    "Original corpus/labels/context payload verification",
+    "Compression benchmark replay",
+    "New codec implementation",
+    "Pack/unpack parity",
+    "Sampler/loss/gradient/update/reload parity",
+    "Training",
+    "Fitted comparisons",
+    "Sealed/input-closure resolution"
+  ]
+}

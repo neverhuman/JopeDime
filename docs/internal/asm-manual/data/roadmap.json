@@ -2,7 +2,7 @@
   "schema": "jope.maintainer-prioritized-acceptance/v1",
   "created_utc": "2026-09-23T16:42:24.466963+00:00",
   "source_snapshot": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
-  "lifecycle_snapshot": "PR83 merged; main a75e543d2166017cb0139e0a251d51d9a0c98e08 has reviewed68 tree176b75bc36d76c7ce4eaeb7234677ec013468889; main-guard35889731910/1success; clean canonical main verified before docs branch.",
+  "lifecycle_snapshot": "PR83 merged; main a75e543d2166017cb0139e0a251d51d9a0c98e08 has reviewed 68 tree 176b75bc36d76c7ce4eaeb7234677ec013468889; main-guard 35889731910/1 success; clean canonical main verified before docs branch.",
   "authority": "planning inventory only; commands are not execution receipts or new budget authorization",
   "training_overlay_sha256": "595824ef6eb8e15872be058668503cedad1dd9a5ff98ac4700c6f713251d384c",
   "product_overlay_sha256": "57e79ddbc3230af18bee651059aa42f56fe5b76ff4ae5fcb7861d7a542909c0c",
@@ -20,7 +20,7 @@
     "5": "Installation and measured demonstration",
     "6": "Eligible optimization and reuse"
   },
-  "command_placeholders": "All variables must name actual final-source artifacts, emitted semanticIDs, byteSHA256s and declared allocations. No command in this JSON has been executed by its author. Commandempty means implementation/frontdoor or render-tool contract is absent; never fabricate it.",
+  "command_placeholders": "All variables must name actual final-source artifacts, emitted semantic IDs, byte SHA256s and declared allocations. No command in this JSON has been executed by its author. An empty command list means implementation/frontdoor or render-tool contract is absent; never fabricate it.",
   "items": [
     {
       "id": "LIFE-01",
@@ -38,7 +38,7 @@
           "/home/ubuntu/.local/bin/gh-role writer run view 35889731910 --json headSha,attempt,status,conclusion,jobs"
         ],
         "evidence": [
-          "PR83 merged2026-09-23T16:34:47Z; remote main a75e543d2166017cb0139e0a251d51d9a0c98e08 has tree176b75bc36d76c7ce4eaeb7234677ec013468889, equal to reviewed68. Main-guard35889731910 attempt1 succeeded; job107278860508 finished16:40:11Z. Clean canonical main verified before docs/asm-maintainer-manual branch claim."
+          "PR83 merged 2026-09-23T16:34:47Z; remote main a75e543d2166017cb0139e0a251d51d9a0c98e08 has tree 176b75bc36d76c7ce4eaeb7234677ec013468889, equal to reviewed 68. Main-guard 35889731910 attempt 1 succeeded; job 107278860508 finished 16:40:11Z. Clean canonical main verified before docs/asm-maintainer-manual branch claim."
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
@@ -49,7 +49,7 @@
         "maintenance.md:Coverage and reviewed lifecycle",
         "neural-integration/lifecycle-68f56404c3e199e06413bfd645d3fe0803d7b96f/remote-main-verification.json"
       ],
-      "notes": "This task is complete; subsequent implementation remains pending. Keep the measured68 source identity distinct from the rebase-merge commit identity.",
+      "notes": "This task is complete; subsequent implementation remains pending. Keep the measured 68 source identity distinct from the rebase-merge commit identity.",
       "planned_owner": {
         "executes": "Completed PR83 lifecycle",
         "claude": "Independent native review retained in lifecycle evidence."
@@ -81,7 +81,7 @@
         "architecture-training-evidence.json",
         "product-language-source-pins.json",
         "dataset-inventory.json",
-        "performance-evidence.json"
+        "performance-evidence.json.gz"
       ],
       "notes": "Root integrated the book and renderer. Claude historical plot inputs were copied under stable before/after hashes; no stopped external renderer handoff is required.",
       "planned_owner": {
@@ -107,7 +107,7 @@
           "\"$J\" pipeline verify-receipt --receipt \"$EXAMPLE_RUN/pipeline/receipt.json\" --json"
         ],
         "evidence": [
-          "examples/commands.json instantiated with actual paths and pinned source/tool versions; five outputs with8finite values and complete-bit comparison; pipeline receipt verification.",
+          "examples/commands.json instantiated with actual paths and pinned source/tool versions; five outputs with 8 finite values and complete-bit comparison; pipeline receipt verification.",
           "Stopped audit SHA256 363fbe62a706b44030205da78411243ba206ad2366d546a277babe966b802c91."
         ],
         "command_status": "exact existing interfaces with declared placeholders"
@@ -131,7 +131,7 @@
       "workstream": "manual figures",
       "priority": "P1",
       "severity": "required acceptance before completed delivery",
-      "current_evidence_level": "nineteen local figure artifacts; original metrics and generation points retained",
+      "current_evidence_level": "twenty-one local figure artifacts; original metrics, complete recovered per-step series and generation points retained",
       "status": "figures rendered; final PDF inspection pending",
       "pending_action": "Retain historical/current labels, complete source CSVs and final PDF visual checks.",
       "dependencies": [
@@ -142,7 +142,9 @@
           "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_inventory_figures.py",
           "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_figures.py",
           "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_training_figures.py",
-          "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_target_figures.py"
+          "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_target_figures.py",
+          "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_legacy_training_figure.py",
+          "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_per_step_figure.py"
         ],
         "evidence": [
           "Plot source CSV/JSON, tool source, plot hash, precise captions, missing-stat flags and historical-vs-current labels; no invented sealed statistics or causal speedup."
@@ -153,7 +155,7 @@
       "source_refs": [
         "data-evidence.md",
         "dataset-inventory.json",
-        "performance-evidence.json"
+        "performance-evidence.json.gz"
       ],
       "notes": "Historical Elo belongs to its original ladder/pool/protocol; the current one-dataset proof is not a new Elo ladder. Source and figure checks are retained; authored architecture SVG is a repository source artifact.",
       "planned_owner": {
@@ -263,7 +265,7 @@
         "deploy/ci/fast-lane.sh",
         "deploy/ci/full-lane.sh"
       ],
-      "notes": "Custody syntax tests are not this gate. Required18Python/27Rust/10policy names are proof minima, not total coverage. New code needs actual test collection.",
+      "notes": "Custody syntax tests are not this gate. Required 18 Python / 27 Rust / 10 policy names are proof minima, not total coverage. New code needs actual test collection.",
       "planned_owner": {
         "executes": "Codex",
         "claude": "pre-review; native review"
@@ -288,7 +290,7 @@
           "\"$J\" benchmark methods"
         ],
         "evidence": [
-          "Original panel SHAba7dace4…,30datasets10/task, exact input-byte verification, native17/5/4recipes and4external families; alias/configuration inventory and unavailable reasons."
+          "Original panel SHA ba7dace4\u2026, 30 datasets, 10 per task, exact input-byte verification, native 17/5/4 recipes and 4 external families; alias/configuration inventory and unavailable reasons."
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
@@ -323,7 +325,7 @@
           "\"$EXTERNAL_PYTHON\" -m pytest crates/jope-bench/adapters/test_panel.py -q"
         ],
         "evidence": [
-          "Current4engine version/source/package hashes, constructors for3tasks, actual contract-test receipt and explicit unavailability inventory."
+          "Current 4 engine version/source/package hashes, constructors for 3 tasks, actual contract-test receipt and explicit unavailability inventory."
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
@@ -409,7 +411,7 @@
       "workstream": "receipt replay regression tests",
       "priority": "P1",
       "severity": "required acceptance before completed delivery",
-      "current_evidence_level": "shared per-fold helper fixed and real68 recovered report passed",
+      "current_evidence_level": "shared per-fold helper fixed and real 68 recovered report passed",
       "status": "test gap: resume-fix-F2",
       "pending_action": "Add PoolBackend-shaped candidate receipt roundtrip asserting live Feedback equals recovered FitAdapter Feedback, including digest and partial completed-fold evidence.",
       "dependencies": [
@@ -519,7 +521,7 @@
           "\"$CONTEXT_PROOF\" run --plan \"$CONTEXT_PLAN\" --plan-sha256 \"$CONTEXT_PLAN_SHA\""
         ],
         "evidence": [
-          "All eight fixed cases pass the unchanged component/context maximum absolute difference of0.0003; source, assets and program identities match. Preserve actual bounded execution receipts and the qualified construction token, original labels and row order."
+          "All eight fixed cases pass the unchanged component/context maximum absolute difference of 0.0003; source, assets and program identities match. Preserve actual bounded execution receipts and the qualified construction token, original labels and row order."
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
@@ -595,7 +597,7 @@
         "AGENT_CHAT.md:eligibility-B6",
         "crates/jope-bench/src/panel/selection_exposure.rs"
       ],
-      "notes": "No current live leak was observed because no producer emits benchmark-valid panel records. A burn file writer alone is not downstream enforcement.",
+      "notes": "The source 68 panel has no benchmark-valid producer. Separate historical closure questions remain: indexed meta-test contexts and externally reported exposed high-water marks do not by themselves establish training-label leakage. A burn writer alone is not downstream enforcement.",
       "planned_owner": {
         "executes": "Codex",
         "claude": "optional custody patch: production caller wiring for require_unburned_test_partition plus an integration test"
@@ -624,7 +626,7 @@
           "\"$J\" optimize report --plan \"$FAMILY_PLAN\" --plan-sha256 \"$FAMILY_PLAN_ID\" --manifest \"$M\" --datasets \"$D\" --journal \"$FAMILY_JOURNAL\""
         ],
         "evidence": [
-          "Before-fit freeze, vocabulary and source pins; two independent families and original windows; nine context proofs per dataset; complete five-fold predictions and trivial baselines. Apply the1e-12 absolute plus1e-6 relative gain margin and four-of-five rule. Retain no-signal refusals."
+          "Before-fit freeze, vocabulary and source pins; two independent families and original windows; nine context proofs per dataset; complete five-fold predictions and trivial baselines. Apply the 1e-12 absolute plus 1e-6 relative gain margin and four-of-five rule. Retain no-signal refusals."
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
@@ -634,7 +636,7 @@
         "operations-training.md:Present teacher readiness",
         "crates/jope-bench/src/panel/teaching.rs (pending)"
       ],
-      "notes": "Execute separately for230_machine_cpu and712_chscase_geyser1; the prospective choice predates losses. Old55e9,3fd and68 operational receipts cannot be retrofitted. The older queue suggested300 secondseconds per family without admitting that allowance.",
+      "notes": "Execute separately for 230_machine_cpu and 712_chscase_geyser1; the prospective choice predates losses. Old 55e9, 3fd and 68 operational receipts cannot be retrofitted. The older queue suggested 300 seconds per family without admitting that allowance.",
       "planned_owner": {
         "executes": "Codex",
         "claude": "audit that freeze/vocabulary pins precede fits; independently recompute per-fold gains and the 4-of-5 rule"
@@ -657,7 +659,7 @@
           "\"$J\" train prepare-inputs --learning-state \"$LEARNING_STATE\" --request \"$CORPUS_REQUEST\" --request-sha256 \"$CORPUS_REQUEST_SHA\" --output \"$CORPUS_OUTPUT\""
         ],
         "evidence": [
-          "At least two real families; every eligible requested comparison included; seed7 partition derived from source families; exact1536+512 context values. No invented context, parameter-bin snapping, label remapping or omission of difficult examples."
+          "At least two real families; every eligible requested comparison included; seed 7 partition derived from source families; exact 1536 + 512 context values. No invented context, parameter-bin snapping, label remapping or omission of difficult examples."
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
@@ -729,7 +731,7 @@
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
-      "resource_budget": "Explicitbounded CPU fixture allocation; same planned3600 seconds/1200scaps are maxima, not authorization to spend them twice; no GPU.",
+      "resource_budget": "Explicitbounded CPU fixture allocation; same planned 3600 seconds/1200scaps are maxima, not authorization to spend them twice; no GPU.",
       "source_refs": [
         "crates/jope-cli/src/train.rs (pending)",
         "python/src/jope/policy/training_campaign.py (pending)"
@@ -764,7 +766,7 @@
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
-      "resource_budget": "One original3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.",
+      "resource_budget": "One original 3600 seconds total window;\u22641200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.",
       "source_refs": [
         "python/src/jope/policy/training_campaign.py:780 (pending)",
         "operations-training.md:Plan, run, resume, verify and export"
@@ -798,7 +800,7 @@
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
-      "resource_budget": "One original3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.",
+      "resource_budget": "One original 3600 seconds total window;\u22641200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.",
       "source_refs": [
         "python/src/jope/policy/training_campaign.py:1203 (pending)",
         "python/src/jope/policy/training_campaign.py:1303 (pending)"
@@ -864,7 +866,7 @@
           "\"$J\" optimize report --plan \"$CONSUMPTION_PLAN\" --plan-sha256 \"$CONSUMPTION_PLAN_ID\" --manifest \"$M\" --datasets \"$D\" --journal \"$CONSUMPTION_JOURNAL\""
         ],
         "evidence": [
-          "The exported checkpoint hash appears in actual proposal and fit evidence;64+16 versus80 origins remain authenticated. Retain completed descendants where claimed, predictions and fitted states. Regression must be admitted and classifier fixture limits explicit; replay the original window successfully."
+          "The exported checkpoint hash appears in actual proposal and fit evidence;64+16 versus 80 origins remain authenticated. Retain completed descendants where claimed, predictions and fitted states. Regression must be admitted and classifier fixture limits explicit; replay the original window successfully."
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
@@ -885,7 +887,7 @@
       "workstream": "fitted state and privacy",
       "priority": "P0",
       "severity": "blocks named downstream claim",
-      "current_evidence_level": "native fitted state exists; product28source prepared",
+      "current_evidence_level": "native fitted state exists; product28 source prepared",
       "status": "qualification pending",
       "pending_action": "Execute the lossless private codec, complete fitted preprocessing/state reload, and public allowlist/canary tests before export. Unsupported states remain explicit.",
       "dependencies": [
@@ -908,7 +910,7 @@
         "crates/jope-bench/src/panel/inference.rs (pending)",
         "languages-examples.md:State restrictions"
       ],
-      "notes": "The private C++ head gate is broader than the public gate. Python/Rust14of26, C++2of26 and JavaScript6of26 are static head counts, not runtime qualification rates.",
+      "notes": "The private C++ head gate is broader than the public gate. Python/Rust 14 of 26, C++ 2 of 26 and JavaScript 6 of 26 are static head counts, not runtime qualification rates.",
       "planned_owner": {
         "executes": "Codex",
         "claude": "review of emitter/parity parts"
@@ -934,7 +936,7 @@
           "\"$J\" benchmark report --plan \"$PLAN\" --plan-sha256 \"$PLAN_ID\" --manifest \"$M\" --datasets \"$D\" --journal \"$JOURNAL\""
         ],
         "evidence": [
-          "Exact state, artifact, input, class, toolchain and numerical-policy hashes; actual five-backend outcomes. Python/Rust/C++ use bitwise comparison; JavaScript uses1e-12 absolute and relative tolerance. Recover interrupted work without retrying its child; read-only reports launch nothing. Unsupported never replaces the winner."
+          "Exact state, artifact, input, class, toolchain and numerical-policy hashes; actual five-backend outcomes. Python/Rust/C++ use bitwise comparison; JavaScript uses 1e-12 absolute and relative tolerance. Recover interrupted work without retrying its child; read-only reports launch nothing. Unsupported never replaces the winner."
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
@@ -956,7 +958,7 @@
       "workstream": "private installation",
       "priority": "P1",
       "severity": "required acceptance before completed delivery",
-      "current_evidence_level": "installer source and15metadata tests passed",
+      "current_evidence_level": "installer source and 15 metadata tests passed",
       "status": "cold/live path pending",
       "pending_action": "Build the CLI from final source, measure cold build separately, checksum-install the exact Linux binary, and verify actual command help plus dependency/ELF boundaries.",
       "dependencies": [
@@ -1025,8 +1027,8 @@
       "workstream": "measured warm fitted demonstration",
       "priority": "P1",
       "severity": "required acceptance before completed delivery",
-      "current_evidence_level": "warmtargetadd-onprepared;historicalfirstfit≈50.4s",
-      "status": "realtrained warm proof pending",
+      "current_evidence_level": "warmtargetadd-onprepared;historicalfirstfit\u224850.4s",
+      "status": "real trained warm proof pending",
       "pending_action": "Produce actual trained-neural and generic fitted artifacts, reloaded predictions, baseline/comparison and truthful target_met. Do not clip arm budgets to pass sixty seconds.",
       "dependencies": [
         "NEURAL-03",
@@ -1048,7 +1050,7 @@
         "docs/private-warm-target.md (pending)",
         "product.md:Warm fitted demonstration"
       ],
-      "notes": "Under sixty seconds is a measured target. The existing twenty-second-arm example is unqualified. An explicitly admitted longer proof may satisfy execution while missing the target. This checklist grants no implicit300-second allowance.",
+      "notes": "Under sixty seconds is a measured target. The existing twenty-second-arm example is unqualified. An explicitly admitted longer proof may satisfy execution while missing the target. This checklist grants no implicit 300-second allowance.",
       "planned_owner": {
         "executes": "Codex",
         "claude": "wins/cost table spec; independent recomputation"
@@ -1061,7 +1063,7 @@
       "priority": "P1",
       "severity": "required acceptance before completed delivery",
       "current_evidence_level": "protocol/currentfoundation qualified;full panel unstarted",
-      "status": "pending finaltrained configuration",
+      "status": "pending final trained configuration",
       "pending_action": "Freeze the final roster/configuration and run the unchanged thirty datasets once. Screen fold0, freeze the top five, confirm five development folds, and add asm.neural diagnostically when absent. Retain every failure.",
       "dependencies": [
         "BENCH-01",
@@ -1082,13 +1084,13 @@
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
-      "resource_budget": "Exactly7200 seconds including300 seconds reporting reserve;20 CPUs/workers,64 GiB,zero swap,one thread per fit,30 seconds per fit,120 seconds per search arm; sealed labels unopened; existing window never reset.",
+      "resource_budget": "Exactly 7200 seconds including 300 seconds reporting reserve;20 CPUs/workers,64 GiB,zero swap,one thread per fit,30 seconds per fit,120 seconds per search arm; sealed labels unopened; existing window never reset.",
       "source_refs": [
         "benchmarks/panel.json",
         "crates/jope-bench/src/panel/protocol.rs",
         "crates/jope-bench/src/panel/selection_exposure.rs"
       ],
-      "notes": "Current code forces asm.neural into extra confirmation, not asm.generic. Selected five-fold summaries are adaptive development, and ten wins per category are not promised. Qualify exports before the original6900-second cutoff or preserve unattempted status.",
+      "notes": "Current code forces asm.neural into extra confirmation, not asm.generic. Selected five-fold summaries are adaptive development, and ten wins per category are not promised. Qualify exports before the original 6900-second cutoff or preserve unattempted status.",
       "planned_owner": {
         "executes": "Codex",
         "claude": "independent read-only recomputation from the journal"
@@ -1100,8 +1102,8 @@
       "workstream": "complete measured report",
       "priority": "P1",
       "severity": "required acceptance before completed delivery",
-      "current_evidence_level": "one-dataset832predictor/164recipe operational audit",
-      "status": "fullcampaign report pending",
+      "current_evidence_level": "one-dataset, 832 predictor/164recipe operational audit",
+      "status": "full campaign report pending",
       "pending_action": "Publish all thirty losses/gaps, outcomes, time/cost per unique artifact and recipe, coverage and failure inventories. Compare the supplied one-hour/ten-million-token scenario only using supported quantities.",
       "dependencies": [
         "PANEL-01",
@@ -1116,7 +1118,7 @@
         ],
         "command_status": "exact existing interfaces with declared placeholders"
       },
-      "resource_budget": "Original300 secondsreportingreserve forpanel; laterreadonlyauditopensnofitbudget.",
+      "resource_budget": "Original 300 secondsreportingreserve forpanel; laterreadonlyauditopensnofitbudget.",
       "source_refs": [
         "status.md:Cost",
         "data-evidence.md",
@@ -1135,7 +1137,7 @@
       "priority": "P1",
       "severity": "required acceptance before completed delivery",
       "current_evidence_level": "separate typed library branch exists",
-      "status": "minefront door incomplete",
+      "status": "mining front door incomplete",
       "pending_action": "Integrate the production eligible-State reader, typed fragment/macro miner and umbrella CLI. Preserve full comparison identity, provenance and private/public separation.",
       "dependencies": [
         "TEACH-01",
@@ -1230,7 +1232,7 @@
       "priority": "P1",
       "severity": "required acceptance before completed delivery",
       "current_evidence_level": "allowlists/canaries prepared; historicallintblindspots",
-      "status": "residual D-IP4 and nextPRtextwork",
+      "status": "residual D-IP4 and future PR text work",
       "pending_action": "Resolve the approved public vocabulary/naming scope and test actual CLI help, receipts and NOTICE. Preserve the explicitly requested internal manual and the strict public inference allowlist.",
       "dependencies": [
         "INT-01"
@@ -1263,7 +1265,7 @@
       "priority": "P2",
       "severity": "follow-on or maintenance gap",
       "current_evidence_level": "historicalfull-default failures inventoried",
-      "status": "not closedbyfastCI",
+      "status": "not closed by fast CI",
       "pending_action": "Reproduce and repair recorded full-default, scratch, policy and neural families through their owning full lanes. Retain unavailable capabilities and resource limits.",
       "dependencies": [
         "LIFE-01"
@@ -1338,7 +1340,9 @@
       "acceptance": {
         "commands": [
           "python3 docs/internal/asm-manual/tools/make_training_figures.py",
-          "python3 docs/internal/asm-manual/tools/make_target_figures.py"
+          "python3 docs/internal/asm-manual/tools/make_target_figures.py",
+          "python3 docs/internal/asm-manual/tools/make_legacy_training_figure.py",
+          "python3 docs/internal/asm-manual/tools/make_per_step_figure.py"
         ],
         "evidence": [
           "Audited original JSON-pointer-to-CSV equality; every curve bound to model/corpus/monitor/objective; original failed/inconclusive observations retained."
@@ -1350,7 +1354,7 @@
         "sections/14-training-history.md",
         "sections/15-target-history-packing.md"
       ],
-      "notes": "Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
+      "notes": "Added for the user\u2019s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual. Recovered 63,000 rows preserve 378,000 exact metric tokens; all 21 corpus blocks, 20 intervening boundaries and legacy internal-ladder limitations remain explicit.",
       "planned_owner": "Codex integration; Claude independent source/data cross-check"
     },
     {
@@ -1377,7 +1381,7 @@
         "sections/16-version-kpis-continuation.md",
         "sections/17-flywheel-focused-search.md"
       ],
-      "notes": "Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
+      "notes": "Added for the user\u2019s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
       "planned_owner": "Codex integration; Claude independent source/data cross-check"
     },
     {
@@ -1406,7 +1410,7 @@
         "python/src/jope/policy/train_v3.py",
         "crates/jope-engine/src/teaching_store.rs"
       ],
-      "notes": "Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
+      "notes": "Added for the user\u2019s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual. Accepted-corpus metadata exposes 84.2701% token padding. A proposed 180-byte record must preserve the 128-token grammar via extension/fallback and qualify complete optimizer-input/RNG/continuation parity; compressed disk size is not host or GPU memory.",
       "planned_owner": "Codex integration; Claude independent source/data cross-check"
     },
     {
@@ -1436,7 +1440,7 @@
         "crates/jope-bench/src/panel/origin_proof.rs",
         "crates/jope-pipeline/src/neural_search.rs"
       ],
-      "notes": "Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
+      "notes": "Added for the user\u2019s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
       "planned_owner": "Codex integration; Claude independent source/data cross-check"
     },
     {
@@ -1466,7 +1470,7 @@
         "sections/16-version-kpis-continuation.md",
         "sections/17-flywheel-focused-search.md"
       ],
-      "notes": "Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
+      "notes": "Added for the user\u2019s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.",
       "planned_owner": "Codex integration; Claude independent source/data cross-check"
     }
   ],
@@ -1722,7 +1726,7 @@
         "overlap_with": [
           "FOCUS-01"
         ],
-        "disposition": "FOCUS-01 covers the user’s focused-search need. Extra incumbent four-of-five-fold rule is a proposed policy, separate from required baseline admission."
+        "disposition": "FOCUS-01 covers the user\u2019s focused-search need. Extra incumbent four-of-five-fold rule is a proposed policy, separate from required baseline admission."
       },
       {
         "id": "SEALED-01",
@@ -1954,7 +1958,7 @@
       }
     }
   },
-  "updated_utc": "2026-09-23T17:39:59.868550+00:00",
+  "updated_utc": "2026-09-23T18:48:37.364927+00:00",
   "primary_item_count": 43,
   "coordinated_proposal_count": 24
 }

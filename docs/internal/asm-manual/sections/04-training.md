@@ -65,7 +65,7 @@ Sources: pending `crates/jope-learning/src/eligibility.rs:170`, `:253`, `:277`, 
 
 ## Present teacher readiness and the smallest real path
 
-The metadata readiness audit verified28 source-family evidence files and the retained original process/context receipts. The inspected historical55e9 and3fd origin runs had no preregistered teaching freeze or vocabulary pins; they cannot be upgraded after the fact. The new68 operational origin proof also was not a teaching campaign. There is therefore no currently demonstrated eligible real corpus for the new ASM admission-and-training proof. This does not negate the historical training corpus or the optimizer work that produced the retained model.
+The metadata readiness audit verified 28 source-family evidence files and the retained original process/context receipts. The inspected historical 55e9 and 3fd origin runs had no preregistered teaching freeze or vocabulary pins; they cannot be upgraded after the fact. The new 68 operational origin proof also was not a teaching campaign. There is therefore no currently demonstrated eligible real corpus for the new ASM admission-and-training proof. This does not negate the historical training corpus or the optimizer work that produced the retained model.
 
 The prospective small pair selected from frozen provenance/size, before observing losses, is:
 

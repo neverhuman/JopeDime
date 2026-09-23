@@ -600,7 +600,7 @@ Sources: pending `crates/jope-learning/src/eligibility.rs:170`, `:253`, `:277`, 
 
 ## Present teacher readiness and the smallest real path
 
-The metadata readiness audit verified28 source-family evidence files and the retained original process/context receipts. The inspected historical55e9 and3fd origin runs had no preregistered teaching freeze or vocabulary pins; they cannot be upgraded after the fact. The new68 operational origin proof also was not a teaching campaign. There is therefore no currently demonstrated eligible real corpus for the new ASM admission-and-training proof. This does not negate the historical training corpus or the optimizer work that produced the retained model.
+The metadata readiness audit verified 28 source-family evidence files and the retained original process/context receipts. The inspected historical 55e9 and 3fd origin runs had no preregistered teaching freeze or vocabulary pins; they cannot be upgraded after the fact. The new 68 operational origin proof also was not a teaching campaign. There is therefore no currently demonstrated eligible real corpus for the new ASM admission-and-training proof. This does not negate the historical training corpus or the optimizer work that produced the retained model.
 
 The prospective small pair selected from frozen provenance/size, before observing losses, is:
 
@@ -1097,7 +1097,7 @@ The current source has a successful operational proof on `230_machine_cpu`: the 
 
 Every number in this chapter comes from a pinned manifest, prepared development table, immutable report, committed historical snapshot, filesystem metadata, or authenticated AWS metadata request. The audit did not run a fit, load a model, open sealed target bodies, or execute a report command.
 
-The machine-readable companions are `dataset-inventory.json` (all thirty datasets, 522 feature records, complete available upstream metadata and detailed development statistics), `performance-evidence.json` (measured current origin plus historical score cells, timing and ladders), `catalog-summary.json`, `local-estate.json`, `s3-estate.json`, and `metadata-receipts/`. The catalog JSONL retains every available per-dataset catalog field for all 3,859 corpus datasets. No claim is made to enumerate every mathematically possible statistic.
+The machine-readable companions are `dataset-inventory.json` (all thirty datasets, 522 feature records, complete available upstream metadata and detailed development statistics), `performance-evidence.json.gz` (measured current origin plus historical score cells, timing and ladders), `catalog-summary.json`, `local-estate.json`, `s3-estate.json`, and `metadata-receipts/`. The catalog JSONL retains every available per-dataset catalog field for all 3,859 corpus datasets. No claim is made to enumerate every mathematically possible statistic.
 
 ## Frozen thirty-dataset panel
 
@@ -1180,7 +1180,7 @@ There are two source-level path conventions to name explicitly: dataset cache re
 
 The three bucket listings completed with zero payload-body reads. The learning bucket contains current `staging/lineage-a/`, `staging/lineage-b/` and `staging/mirror-weights/` prefixes; per-lineage byte counts were not separately aggregated by this listing. Current listed learning bytes are 430,645,459,168. A separate CloudWatch daily statistic at 2026-09-23T00:00:00Z reports 645,281 objects and 430,732,116,688 StandardStorage bytes. It is a dated metric with a different scope/capture time; no exact reconciliation with the current listing is claimed. Paginated S3 listing is an observation over an interval, not an atomic bucket snapshot.
 
-These are the three product stores inspected. Known archive and alternate-region locations documented in the host contract were not re-enumerated in this task; their current object/version counts and bytes remain unknown here. Counts of stored objects do not establish recovery completeness, teacher admission or serving eligibility.
+These are the three product stores inspected. Known archive and alternate-region locations documented in the host contract were not re-enumerated in this task; their current object/version counts and bytes remain unknown here. Counts of stored objects do not establish recovery completeness, teacher admission or serving eligibility. The separate DATA-01 archive/replica/local-root reconciliation was still author-active at 19:14 UTC on September 23. Its provisional inventory and DOCFIX-01 corrections are reserved for a reviewed follow-up; no unreleased figures are imported into this edition.
 
 | Local root | Present | Regular files | Logical bytes | Unique-inode logical bytes |
 |---|---|---:|---:|---:|
@@ -1247,7 +1247,7 @@ These are accounting ratios for one retained run, not extrapolated throughput or
 
 The supplied one-hour/ten-million-token scenario has 3,600 seconds and 10,000,000 tokens by stipulation. This run used 239.143 seconds of wall time but has no measured token or monetary receipt. A dollar comparison, token savings claim, or one-hour quality extrapolation would require actual token usage, contemporaneous input/output/cache rates and an equivalent task/quality protocol. None is invented here.
 
-The preceding d0 source run failed after 194.789382994 seconds at scorer replay. All 964 commands had terminal receipts, with 834 completed and 130 failed. Its exact supervisorCPU was 252.614611 seconds and workerCPU 181.863951 seconds. It remains a failed reproducer; the old journal and deadline were not repaired or reopened.
+The preceding d0 source run failed after 194.789382994 seconds at scorer replay. All 964 commands had terminal receipts, with 834 completed and 130 failed. Its exact supervisor CPU was 252.614611 seconds and worker CPU 181.863951 seconds. It remains a failed reproducer; the old journal and deadline were not repaired or reopened.
 
 ## Existing historical rankings and Elo
 
@@ -1266,7 +1266,7 @@ Same-cut v1 covers native heads plus resampled search; v2 adds XGBoost 2.1.4, Li
 
 The published SOTArena snapshot puts historical `jope-dime` at rank 1/Elo 2259.8 with 11 wins and 45/45 coverage. All 45 rows are test-selected: 42 best-test evolution-envelope rows plus 3 test-adaptive accepted replays. The corrected benchmark-valid snapshot excludes those 45; **that rank 1 is not a held-out ASM claim**. The corrected snapshot has 304 methods/8,718 rankable rows. Its fixed-seed historical `jope-dime-regressor` entry is rank 31/Elo 1687.0, 1 win, 42/45 coverage; TabFM Ensemble is rank 1/Elo 1934.9. It remains historical public-development evidence.
 
-For plots, use `performance-evidence.json`: 6 complete ladder row sets; 520 same-cut score cells, including missing/rejected statuses; 20 per-dataset reports with exact cut identities, source heads and screen/deep timings; 8,763 historical SOTArena score rows; and the 2 current-origin refit loss rows. Do not blend these into one chart without explicit separate protocol panels. The current frozen 30 matrix has no completed cells yet; represent it as pending, not a fabricated ranking.
+For plots, use `performance-evidence.json.gz`: 6 complete ladder row sets; 520 same-cut score cells, including missing/rejected statuses; 20 per-dataset reports with exact cut identities, source heads and screen/deep timings; 8,763 historical SOTArena score rows; and the 2 current-origin refit loss rows. Do not blend these into one chart without explicit separate protocol panels. The current frozen 30 matrix has no completed cells yet; represent it as pending, not a fabricated ranking.
 
 ### How the retained Elo scale is constructed
 
@@ -1289,7 +1289,7 @@ This is the current bounded operational proof, with one preselected regression d
 
 ![Current operational proof: neural and generic development RMSE](figures/current-origin-loss.png)
 
-The two underlying records are in `data/plot-current-origin.csv`; exact evidence and denominators are in `data/performance-evidence.json`. There are 34 predictions per final refit. The proof's run wall time is 239.143 seconds; its independent recovered report takes another 18.719 seconds. Numerical measurements, worker counts and costs are detailed in the status and benchmark chapters.
+The two underlying records are in `data/plot-current-origin.csv`; exact evidence and denominators are in `data/performance-evidence.json.gz`. There are 34 predictions per final refit. The proof's run wall time is 239.143 seconds; its independent recovered report takes another 18.719 seconds. Numerical measurements, worker counts and costs are detailed in the status and benchmark chapters.
 
 ## Frozen dataset coverage
 
@@ -1311,7 +1311,7 @@ The catalog has 3,755 entries with unknown license metadata and 104 with a recor
 
 The historical ranking plots that follow use their separately pinned snapshots. They are not new model runs and are not the current ASM30 campaign. Benchmark-valid and public-development views retain their original eligibility distinctions. Same-cut deep-stage coverage varies because only finalists were deepened; absent cells are not zero losses. Refer to the benchmark-methodology chapter for the exact Elo model, tie rule, coverage limits and adaptive-development interpretation.
 
-All machine-readable rows are retained in `data/performance-evidence.json` and `data/plot-historical-elo.csv`. A displayed top-method subset does not remove the other methods from those inventories. Dataset selection and historical protocol caveats travel with each figure.
+All machine-readable rows are retained in `data/performance-evidence.json.gz` and `data/plot-historical-elo.csv`. A displayed top-method subset does not remove the other methods from those inventories. Dataset selection and historical protocol caveats travel with each figure.
 
 ## Historical benchmark-valid Elo
 
@@ -1463,7 +1463,7 @@ Before delivery check local links, source identities, totals, metric directions,
 
 ## Purpose and scope
 
-This checklist is the requested property-list of remaining work. `roadmap.json` is its machine-readable source, with stable IDs, priorities, evidence levels, dependencies, commands, required receipts, budgets and source references. It describes source68f56404 and the stopped training64/product28/warm/winner follow-ons. PR83 is merged: remote main `a75e543d2166017cb0139e0a251d51d9a0c98e08` has the reviewed source tree, and main-guard35889731910 attempt1 succeeded. Clean canonical main was verified before the documentation branch. LIFE-01 records the completed readback; later source work still needs its own lifecycle.
+This checklist is the requested property-list of remaining work. `roadmap.json` is its machine-readable source, with stable IDs, priorities, evidence levels, dependencies, commands, required receipts, budgets and source references. It describes source 68f56404 and the stopped training64/product28/warm/winner follow-ons. PR83 is merged: remote main `a75e543d2166017cb0139e0a251d51d9a0c98e08` has the reviewed source tree, and main-guard 35889731910 attempt 1 succeeded. Clean canonical main was verified before the documentation branch. LIFE-01 records the completed readback; later source work still needs its own lifecycle.
 
 P0 blocks the specified downstream proof or integration; it does not mean every item is a newly discovered defect. P1 is required for the full requested demonstration or manual. P2 is explicit subsequent work. Commands are unexecuted acceptance templates unless their named evidence says otherwise. Variables must resolve to actual final-source artifacts and emitted identities. An empty command list records a missing truthful interface rather than inventing one.
 
@@ -1508,14 +1508,14 @@ Do not spend the GPU hour until the regression consumer and its actual fixture t
 | INFER-02 | P1 | 4 | exact selected-winner portability | actual export/parity unrun | INFER-01, PANEL-01 |
 | INSTALL-01 | P1 | 5 | private installation | cold/live path pending | INT-02 |
 | INSTALL-02 | P1 | 5 | final input/runtime preparation | pending final source | INSTALL-01, BENCH-01, BENCH-02 |
-| DEMO-01 | P1 | 5 | measured warm fitted demonstration | realtrained warm proof pending | NEURAL-03, INSTALL-02 |
-| PANEL-01 | P1 | 5 | unchanged thirty-dataset campaign | pending finaltrained configuration | BENCH-01, BENCH-02, NEURAL-03, DEMO-01, INFER-01, INSTALL-02 |
-| REPORT-01 | P1 | 5 | complete measured report | fullcampaign report pending | PANEL-01, EXEC-05 |
-| MOTIF-01 | P1 | 6 | eligible reusable fragments | minefront door incomplete | TEACH-01, TEACH-02, TEACH-03 |
+| DEMO-01 | P1 | 5 | measured warm fitted demonstration | real trained warm proof pending | NEURAL-03, INSTALL-02 |
+| PANEL-01 | P1 | 5 | unchanged thirty-dataset campaign | pending final trained configuration | BENCH-01, BENCH-02, NEURAL-03, DEMO-01, INFER-01, INSTALL-02 |
+| REPORT-01 | P1 | 5 | complete measured report | full campaign report pending | PANEL-01, EXEC-05 |
+| MOTIF-01 | P1 | 6 | eligible reusable fragments | mining front door incomplete | TEACH-01, TEACH-02, TEACH-03 |
 | MOTIF-02 | P1 | 6 | reuse validation | live reuse pending | MOTIF-01 |
 | MOTIF-03 | P2 | 6 | new operators | future conditional work | MOTIF-02 |
-| IP-01 | P1 | 0 | public privacy boundaries | residual D-IP4 and nextPRtextwork | INT-01 |
-| MAINT-01 | P2 | 0 | broad diagnostic qualification | not closedbyfastCI | LIFE-01 |
+| IP-01 | P1 | 0 | public privacy boundaries | residual D-IP4 and future PR text work | INT-01 |
+| MAINT-01 | P2 | 0 | broad diagnostic qualification | not closed by fast CI | LIFE-01 |
 | FUTURE-01 | P2 | 4 | CUDA inference and serving promotion | deferred | INFER-02, REPORT-01 |
 | DOC-05 | P1 | 0 | real training and target history | Original training and target values verified; final composed-document inspection required | DOC-01 |
 | DOC-06 | P1 | 0 | versions, KPIs and continuation runbook | Current and pending interfaces source-audited; independent chapter review complete | DOC-01 |
@@ -1541,13 +1541,13 @@ Do not spend the GPU hour until the regression consumer and its actual fixture t
 /home/ubuntu/.local/bin/gh-role writer run view 35889731910 --json headSha,attempt,status,conclusion,jobs
 ```
 
-**Required evidence:** PR83 merged2026-09-23T16:34:47Z; remote main a75e543d2166017cb0139e0a251d51d9a0c98e08 has tree176b75bc36d76c7ce4eaeb7234677ec013468889, equal to reviewed68. Main-guard35889731910 attempt1 succeeded; job107278860508 finished16:40:11Z. Clean canonical main verified before docs/asm-maintainer-manual branch claim.
+**Required evidence:** PR83 merged 2026-09-23T16:34:47Z; remote main a75e543d2166017cb0139e0a251d51d9a0c98e08 has tree 176b75bc36d76c7ce4eaeb7234677ec013468889, equal to reviewed 68. Main-guard 35889731910 attempt 1 succeeded; job 107278860508 finished 16:40:11Z. Clean canonical main verified before docs/asm-maintainer-manual branch claim.
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
 **Source/evidence references:** `AGENTS.md:Pull requests`, `status.md:Scope`, `maintenance.md:Coverage and reviewed lifecycle`, `neural-integration/lifecycle-68f56404c3e199e06413bfd645d3fe0803d7b96f/remote-main-verification.json`.
 
-**Qualification limit:** This task is complete; subsequent implementation remains pending. Keep the measured68 source identity distinct from the rebase-merge commit identity.
+**Qualification limit:** This task is complete; subsequent implementation remains pending. Keep the measured 68 source identity distinct from the rebase-merge commit identity.
 
 
 ### DOC-01 — manual
@@ -1568,7 +1568,7 @@ python3 docs/internal/asm-manual/tools/build_manual.py
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
-**Source/evidence references:** `architecture-training-evidence.json`, `product-language-source-pins.json`, `dataset-inventory.json`, `performance-evidence.json`.
+**Source/evidence references:** `architecture-training-evidence.json`, `product-language-source-pins.json`, `dataset-inventory.json`, `performance-evidence.json.gz`.
 
 **Qualification limit:** Root integrated the book and renderer. Claude historical plot inputs were copied under stable before/after hashes; no stopped external renderer handoff is required.
 
@@ -1588,7 +1588,7 @@ python3 "$EXAMPLES/validate-outputs.py" --recipe-output "$EXAMPLE_RUN/recipe"
 "$J" pipeline verify-receipt --receipt "$EXAMPLE_RUN/pipeline/receipt.json" --json
 ```
 
-**Required evidence:** examples/commands.json instantiated with actual paths and pinned source/tool versions; five outputs with8finite values and complete-bit comparison; pipeline receipt verification. Stopped audit SHA256 363fbe62a706b44030205da78411243ba206ad2366d546a277babe966b802c91.
+**Required evidence:** examples/commands.json instantiated with actual paths and pinned source/tool versions; five outputs with 8 finite values and complete-bit comparison; pipeline receipt verification. Stopped audit SHA256 363fbe62a706b44030205da78411243ba206ad2366d546a277babe966b802c91.
 
 **Resources:** Completed separate 300-second allocation: one CPU, 4 GiB, zero swap/GPU, network denial declared; 30-second numerical and 60-second compiler caps. Actual receipt retained; independent live property readback limitation is disclosed. No Cargo or frozen-panel campaign; no deadline reset.
 
@@ -1599,7 +1599,7 @@ python3 "$EXAMPLES/validate-outputs.py" --recipe-output "$EXAMPLE_RUN/recipe"
 
 ### DOC-03 — manual figures
 
-**Priority:** P1. **Current evidence:** nineteen local figure artifacts; original metrics and generation points retained. **Status:** figures rendered; final PDF inspection pending.
+**Priority:** P1. **Current evidence:** twenty-one local figure artifacts; original metrics, complete recovered per-step series and generation points retained. **Status:** figures rendered; final PDF inspection pending.
 
 **Action:** Retain historical/current labels, complete source CSVs and final PDF visual checks.
 
@@ -1610,13 +1610,17 @@ python3 "$EXAMPLES/validate-outputs.py" --recipe-output "$EXAMPLE_RUN/recipe"
 ```sh
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_inventory_figures.py
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_figures.py
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_training_figures.py
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_target_figures.py
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_legacy_training_figure.py
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_per_step_figure.py
 ```
 
 **Required evidence:** Plot source CSV/JSON, tool source, plot hash, precise captions, missing-stat flags and historical-vs-current labels; no invented sealed statistics or causal speedup.
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
-**Source/evidence references:** `data-evidence.md`, `dataset-inventory.json`, `performance-evidence.json`.
+**Source/evidence references:** `data-evidence.md`, `dataset-inventory.json`, `performance-evidence.json.gz`.
 
 **Qualification limit:** Historical Elo belongs to its original ladder/pool/protocol; the current one-dataset proof is not a new Elo ladder. Source and figure checks are retained; authored architecture SVG is a repository source artifact.
 
@@ -1695,7 +1699,7 @@ TMPDIR="$ACCEPTANCE/tmp" JOPE_BUILD_JOBS=4 bash deploy/ci/test-inventory.sh --up
 
 **Source/evidence references:** `deploy/ci/coverage.json`, `deploy/ci/training-proof.py (pending)`, `deploy/ci/fast-lane.sh`, `deploy/ci/full-lane.sh`.
 
-**Qualification limit:** Custody syntax tests are not this gate. Required18Python/27Rust/10policy names are proof minima, not total coverage. New code needs actual test collection.
+**Qualification limit:** Custody syntax tests are not this gate. Required 18 Python / 27 Rust / 10 policy names are proof minima, not total coverage. New code needs actual test collection.
 
 
 ### BENCH-01 — frozen benchmark foundation
@@ -1714,7 +1718,7 @@ TMPDIR="$ACCEPTANCE/tmp" JOPE_BUILD_JOBS=4 bash deploy/ci/test-inventory.sh --up
 "$J" benchmark methods
 ```
 
-**Required evidence:** Original panel SHAba7dace4…,30datasets10/task, exact input-byte verification, native17/5/4recipes and4external families; alias/configuration inventory and unavailable reasons.
+**Required evidence:** Original panel SHA ba7dace4…, 30 datasets, 10 per task, exact input-byte verification, native 17/5/4 recipes and 4 external families; alias/configuration inventory and unavailable reasons.
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
@@ -1738,7 +1742,7 @@ python3 deploy/prepare-panel-runtime.py --binary "$J" --native-command benchmark
 "$EXTERNAL_PYTHON" -m pytest crates/jope-bench/adapters/test_panel.py -q
 ```
 
-**Required evidence:** Current4engine version/source/package hashes, constructors for3tasks, actual contract-test receipt and explicit unavailability inventory.
+**Required evidence:** Current 4 engine version/source/package hashes, constructors for 3 tasks, actual contract-test receipt and explicit unavailability inventory.
 
 **Resources:** Preparation owns sharedCPUallocation; tests use allocatedCPU; no panel/training window begins.
 
@@ -1795,7 +1799,7 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked
 
 ### EXEC-03 — receipt replay regression tests
 
-**Priority:** P1. **Current evidence:** shared per-fold helper fixed and real68 recovered report passed. **Status:** test gap: resume-fix-F2.
+**Priority:** P1. **Current evidence:** shared per-fold helper fixed and real 68 recovered report passed. **Status:** test gap: resume-fix-F2.
 
 **Action:** Add PoolBackend-shaped candidate receipt roundtrip asserting live Feedback equals recovered FitAdapter Feedback, including digest and partial completed-fold evidence.
 
@@ -1874,7 +1878,7 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked
 "$CONTEXT_PROOF" run --plan "$CONTEXT_PLAN" --plan-sha256 "$CONTEXT_PLAN_SHA"
 ```
 
-**Required evidence:** All eight fixed cases pass the unchanged component/context maximum absolute difference of0.0003; source, assets and program identities match. Preserve actual bounded execution receipts and the qualified construction token, original labels and row order.
+**Required evidence:** All eight fixed cases pass the unchanged component/context maximum absolute difference of 0.0003; source, assets and program identities match. Preserve actual bounded execution receipts and the qualified construction token, original labels and row order.
 
 **Resources:** Separate explicit resource manifest and approved allowance required before admission;20 CPUs/workers maximum,64 GiB maximum,zero swap,one thread,30 seconds per fit,120 seconds per arm maximum. No new allowance granted by this checklist.
 
@@ -1925,7 +1929,7 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked
 
 **Source/evidence references:** `crates/jope-learning/src/eligibility.rs:253 (pending)`, `AGENT_CHAT.md:eligibility-B6`, `crates/jope-bench/src/panel/selection_exposure.rs`.
 
-**Qualification limit:** No current live leak was observed because no producer emits benchmark-valid panel records. A burn file writer alone is not downstream enforcement.
+**Qualification limit:** The source 68 panel has no benchmark-valid producer. Separate historical closure questions remain: indexed meta-test contexts and externally reported exposed high-water marks do not by themselves establish training-label leakage. A burn writer alone is not downstream enforcement.
 
 
 ### TEACH-03 — real teacher collection
@@ -1944,13 +1948,13 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked
 "$J" optimize report --plan "$FAMILY_PLAN" --plan-sha256 "$FAMILY_PLAN_ID" --manifest "$M" --datasets "$D" --journal "$FAMILY_JOURNAL"
 ```
 
-**Required evidence:** Before-fit freeze, vocabulary and source pins; two independent families and original windows; nine context proofs per dataset; complete five-fold predictions and trivial baselines. Apply the1e-12 absolute plus1e-6 relative gain margin and four-of-five rule. Retain no-signal refusals.
+**Required evidence:** Before-fit freeze, vocabulary and source pins; two independent families and original windows; nine context proofs per dataset; complete five-fold predictions and trivial baselines. Apply the 1e-12 absolute plus 1e-6 relative gain margin and four-of-five rule. Retain no-signal refusals.
 
 **Resources:** Separate explicit resource manifest and approved allowance required before admission;20 CPUs/workers maximum,64 GiB maximum,zero swap,one thread,30 seconds per fit,120 seconds per arm maximum. No new allowance granted by this checklist.
 
 **Source/evidence references:** `agent-training-readiness/readiness-v3.json`, `operations-training.md:Present teacher readiness`, `crates/jope-bench/src/panel/teaching.rs (pending)`.
 
-**Qualification limit:** Execute separately for230_machine_cpu and712_chscase_geyser1; the prospective choice predates losses. Old55e9,3fd and68 operational receipts cannot be retrofitted. The older queue suggested300 secondseconds per family without admitting that allowance.
+**Qualification limit:** Execute separately for 230_machine_cpu and 712_chscase_geyser1; the prospective choice predates losses. Old 55e9, 3fd and 68 operational receipts cannot be retrofitted. The older queue suggested 300 seconds per family without admitting that allowance.
 
 
 ### TEACH-04 — real corpus materialization
@@ -1967,7 +1971,7 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked
 "$J" train prepare-inputs --learning-state "$LEARNING_STATE" --request "$CORPUS_REQUEST" --request-sha256 "$CORPUS_REQUEST_SHA" --output "$CORPUS_OUTPUT"
 ```
 
-**Required evidence:** At least two real families; every eligible requested comparison included; seed7 partition derived from source families; exact1536+512 context values. No invented context, parameter-bin snapping, label remapping or omission of difficult examples.
+**Required evidence:** At least two real families; every eligible requested comparison included; seed 7 partition derived from source families; exact 1536 + 512 context values. No invented context, parameter-bin snapping, label remapping or omission of difficult examples.
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
@@ -2018,7 +2022,7 @@ python3 deploy/ci/test-training-proof.py
 
 **Required evidence:** Actual normal and interrupted CPU workers; controller-owned subgroup joined before execution; original deadline, device and runtime unchanged; children drained and resumed state compatible. The native wrapper must enforce admission.
 
-**Resources:** Explicitbounded CPU fixture allocation; same planned3600 seconds/1200scaps are maxima, not authorization to spend them twice; no GPU.
+**Resources:** Explicitbounded CPU fixture allocation; same planned 3600 seconds/1200scaps are maxima, not authorization to spend them twice; no GPU.
 
 **Source/evidence references:** `crates/jope-cli/src/train.rs (pending)`, `python/src/jope/policy/training_campaign.py (pending)`.
 
@@ -2042,7 +2046,7 @@ python3 deploy/ci/test-training-proof.py
 
 **Required evidence:** Original global/category windows; one RTX3090 UUID; positive updates, changed parameter hashes and task coverage with data_kind/fallback reasons. Save and reload model plus optimizer; record CPU/GPU cost where measured. Requested CUDA must not silently fall back to CPU.
 
-**Resources:** One original3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.
+**Resources:** One original 3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.
 
 **Source/evidence references:** `python/src/jope/policy/training_campaign.py:780 (pending)`, `operations-training.md:Plan, run, resume, verify and export`.
 
@@ -2067,7 +2071,7 @@ python3 deploy/ci/test-training-proof.py
 
 **Required evidence:** Resume only when needed inside the original window. Prove increased optimizer steps, identical parameters after reload, changed parameters relative to the prior checkpoint, matching export/resume proof and completed task coverage. Keep experimental non-serving status.
 
-**Resources:** One original3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.
+**Resources:** One original 3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.
 
 **Source/evidence references:** `python/src/jope/policy/training_campaign.py:1203 (pending)`, `python/src/jope/policy/training_campaign.py:1303 (pending)`.
 
@@ -2114,7 +2118,7 @@ python/.venv/bin/python -m pytest python/tests/test_experimental_proposal.py -q
 "$J" optimize report --plan "$CONSUMPTION_PLAN" --plan-sha256 "$CONSUMPTION_PLAN_ID" --manifest "$M" --datasets "$D" --journal "$CONSUMPTION_JOURNAL"
 ```
 
-**Required evidence:** The exported checkpoint hash appears in actual proposal and fit evidence;64+16 versus80 origins remain authenticated. Retain completed descendants where claimed, predictions and fitted states. Regression must be admitted and classifier fixture limits explicit; replay the original window successfully.
+**Required evidence:** The exported checkpoint hash appears in actual proposal and fit evidence;64+16 versus 80 origins remain authenticated. Retain completed descendants where claimed, predictions and fitted states. Regression must be admitted and classifier fixture limits explicit; replay the original window successfully.
 
 **Resources:** Separate explicit resource manifest and approved allowance required before admission;20 CPUs/workers maximum,64 GiB maximum,zero swap,one thread,30 seconds per fit,120 seconds per arm maximum. No new allowance granted by this checklist.
 
@@ -2125,7 +2129,7 @@ python/.venv/bin/python -m pytest python/tests/test_experimental_proposal.py -q
 
 ### INFER-01 — fitted state and privacy
 
-**Priority:** P0. **Current evidence:** native fitted state exists; product28source prepared. **Status:** qualification pending.
+**Priority:** P0. **Current evidence:** native fitted state exists; product28 source prepared. **Status:** qualification pending.
 
 **Action:** Execute the lossless private codec, complete fitted preprocessing/state reload, and public allowlist/canary tests before export. Unsupported states remain explicit.
 
@@ -2145,7 +2149,7 @@ bash deploy/ci/ip-scrub.sh
 
 **Source/evidence references:** `crates/feat-math/src/advanced_v3/fitted_portable.rs (pending)`, `crates/jope-bench/src/panel/inference.rs (pending)`, `languages-examples.md:State restrictions`.
 
-**Qualification limit:** The private C++ head gate is broader than the public gate. Python/Rust14of26, C++2of26 and JavaScript6of26 are static head counts, not runtime qualification rates.
+**Qualification limit:** The private C++ head gate is broader than the public gate. Python/Rust 14 of 26, C++ 2 of 26 and JavaScript 6 of 26 are static head counts, not runtime qualification rates.
 
 
 ### INFER-02 — exact selected-winner portability
@@ -2164,7 +2168,7 @@ bash deploy/ci/ip-scrub.sh
 "$J" benchmark report --plan "$PLAN" --plan-sha256 "$PLAN_ID" --manifest "$M" --datasets "$D" --journal "$JOURNAL"
 ```
 
-**Required evidence:** Exact state, artifact, input, class, toolchain and numerical-policy hashes; actual five-backend outcomes. Python/Rust/C++ use bitwise comparison; JavaScript uses1e-12 absolute and relative tolerance. Recover interrupted work without retrying its child; read-only reports launch nothing. Unsupported never replaces the winner.
+**Required evidence:** Exact state, artifact, input, class, toolchain and numerical-policy hashes; actual five-backend outcomes. Python/Rust/C++ use bitwise comparison; JavaScript uses 1e-12 absolute and relative tolerance. Recover interrupted work without retrying its child; read-only reports launch nothing. Unsupported never replaces the winner.
 
 **Resources:** Same original campaign execution window and worker caps; no new job after t0 + 6900 seconds for official panel. No post-panel allowance is implemented.
 
@@ -2175,7 +2179,7 @@ bash deploy/ci/ip-scrub.sh
 
 ### INSTALL-01 — private installation
 
-**Priority:** P1. **Current evidence:** installer source and15metadata tests passed. **Status:** cold/live path pending.
+**Priority:** P1. **Current evidence:** installer source and 15 metadata tests passed. **Status:** cold/live path pending.
 
 **Action:** Build the CLI from final source, measure cold build separately, checksum-install the exact Linux binary, and verify actual command help plus dependency/ELF boundaries.
 
@@ -2224,7 +2228,7 @@ python3 deploy/install-private.py binary --binary "$PRIVATE_BINARY" --sha256 "$B
 
 ### DEMO-01 — measured warm fitted demonstration
 
-**Priority:** P1. **Current evidence:** warmtargetadd-onprepared;historicalfirstfit≈50.4s. **Status:** realtrained warm proof pending.
+**Priority:** P1. **Current evidence:** warmtargetadd-onprepared;historicalfirstfit≈50.4s. **Status:** real trained warm proof pending.
 
 **Action:** Produce actual trained-neural and generic fitted artifacts, reloaded predictions, baseline/comparison and truthful target_met. Do not clip arm budgets to pass sixty seconds.
 
@@ -2243,12 +2247,12 @@ python3 deploy/ci/qualify-demo.py --binary "$J" --sha256 "$J_SHA" --source-sha "
 
 **Source/evidence references:** `crates/jope-bench/src/panel/demo_asm.rs (pending)`, `docs/private-warm-target.md (pending)`, `product.md:Warm fitted demonstration`.
 
-**Qualification limit:** Under sixty seconds is a measured target. The existing twenty-second-arm example is unqualified. An explicitly admitted longer proof may satisfy execution while missing the target. This checklist grants no implicit300-second allowance.
+**Qualification limit:** Under sixty seconds is a measured target. The existing twenty-second-arm example is unqualified. An explicitly admitted longer proof may satisfy execution while missing the target. This checklist grants no implicit 300-second allowance.
 
 
 ### PANEL-01 — unchanged thirty-dataset campaign
 
-**Priority:** P1. **Current evidence:** protocol/currentfoundation qualified;full panel unstarted. **Status:** pending finaltrained configuration.
+**Priority:** P1. **Current evidence:** protocol/currentfoundation qualified;full panel unstarted. **Status:** pending final trained configuration.
 
 **Action:** Freeze the final roster/configuration and run the unchanged thirty datasets once. Screen fold0, freeze the top five, confirm five development folds, and add asm.neural diagnostically when absent. Retain every failure.
 
@@ -2264,16 +2268,16 @@ python3 deploy/ci/qualify-demo.py --binary "$J" --sha256 "$J_SHA" --source-sha "
 
 **Required evidence:** All thirty dataset identities, ten per task; every applicable method slot; screen/frozen/confirmation losses; selection-exposure row intersection hashes; no sealed reads; winner backend outcomes and actual win counts.
 
-**Resources:** Exactly7200 seconds including300 seconds reporting reserve;20 CPUs/workers,64 GiB,zero swap,one thread per fit,30 seconds per fit,120 seconds per search arm; sealed labels unopened; existing window never reset.
+**Resources:** Exactly 7200 seconds including 300 seconds reporting reserve;20 CPUs/workers,64 GiB,zero swap,one thread per fit,30 seconds per fit,120 seconds per search arm; sealed labels unopened; existing window never reset.
 
 **Source/evidence references:** `benchmarks/panel.json`, `crates/jope-bench/src/panel/protocol.rs`, `crates/jope-bench/src/panel/selection_exposure.rs`.
 
-**Qualification limit:** Current code forces asm.neural into extra confirmation, not asm.generic. Selected five-fold summaries are adaptive development, and ten wins per category are not promised. Qualify exports before the original6900-second cutoff or preserve unattempted status.
+**Qualification limit:** Current code forces asm.neural into extra confirmation, not asm.generic. Selected five-fold summaries are adaptive development, and ten wins per category are not promised. Qualify exports before the original 6900-second cutoff or preserve unattempted status.
 
 
 ### REPORT-01 — complete measured report
 
-**Priority:** P1. **Current evidence:** one-dataset832predictor/164recipe operational audit. **Status:** fullcampaign report pending.
+**Priority:** P1. **Current evidence:** one-dataset, 832 predictor/164recipe operational audit. **Status:** full campaign report pending.
 
 **Action:** Publish all thirty losses/gaps, outcomes, time/cost per unique artifact and recipe, coverage and failure inventories. Compare the supplied one-hour/ten-million-token scenario only using supported quantities.
 
@@ -2287,7 +2291,7 @@ python3 deploy/ci/qualify-demo.py --binary "$J" --sha256 "$J_SHA" --source-sha "
 
 **Required evidence:** Report recovery without fits; union of started/finished records; worker CPU distinguished from overlapping service CPU; known and unknown costs; training, installation, preparation and export accounted separately. Tokens and money stay unknown unless measured; retain win/loss/gap tables.
 
-**Resources:** Original300 secondsreportingreserve forpanel; laterreadonlyauditopensnofitbudget.
+**Resources:** Original 300 secondsreportingreserve forpanel; laterreadonlyauditopensnofitbudget.
 
 **Source/evidence references:** `status.md:Cost`, `data-evidence.md`, `crates/jope-bench/src/panel/asm_campaign.rs (pending)`.
 
@@ -2296,7 +2300,7 @@ python3 deploy/ci/qualify-demo.py --binary "$J" --sha256 "$J_SHA" --source-sha "
 
 ### MOTIF-01 — eligible reusable fragments
 
-**Priority:** P1. **Current evidence:** separate typed library branch exists. **Status:** minefront door incomplete.
+**Priority:** P1. **Current evidence:** separate typed library branch exists. **Status:** mining front door incomplete.
 
 **Action:** Integrate the production eligible-State reader, typed fragment/macro miner and umbrella CLI. Preserve full comparison identity, provenance and private/public separation.
 
@@ -2358,7 +2362,7 @@ python3 deploy/ci/qualify-demo.py --binary "$J" --sha256 "$J_SHA" --source-sha "
 
 ### IP-01 — public privacy boundaries
 
-**Priority:** P1. **Current evidence:** allowlists/canaries prepared; historicallintblindspots. **Status:** residual D-IP4 and nextPRtextwork.
+**Priority:** P1. **Current evidence:** allowlists/canaries prepared; historicallintblindspots. **Status:** residual D-IP4 and future PR text work.
 
 **Action:** Resolve the approved public vocabulary/naming scope and test actual CLI help, receipts and NOTICE. Preserve the explicitly requested internal manual and the strict public inference allowlist.
 
@@ -2381,7 +2385,7 @@ bash deploy/ci/ip-scrub.sh
 
 ### MAINT-01 — broad diagnostic qualification
 
-**Priority:** P2. **Current evidence:** historicalfull-default failures inventoried. **Status:** not closedbyfastCI.
+**Priority:** P2. **Current evidence:** historicalfull-default failures inventoried. **Status:** not closed by fast CI.
 
 **Action:** Reproduce and repair recorded full-default, scratch, policy and neural families through their owning full lanes. Retain unavailable capabilities and resource limits.
 
@@ -2447,7 +2451,16 @@ The user’s training-history, continuation, focused-search and packing question
 
 **Required evidence:** Audited original JSON-pointer-to-CSV equality; every curve bound to model/corpus/monitor/objective; original failed/inconclusive observations retained.
 
-**Commands:** `python3 docs/internal/asm-manual/tools/make_training_figures.py`
+**Commands:**
+
+```sh
+python3 docs/internal/asm-manual/tools/make_training_figures.py
+python3 docs/internal/asm-manual/tools/make_target_figures.py
+python3 docs/internal/asm-manual/tools/make_legacy_training_figure.py
+python3 docs/internal/asm-manual/tools/make_per_step_figure.py
+```
+
+The recovered series preserves 63,000 rows and 378,000 exact metric tokens. Keep all 21 corpus blocks, 20 intervening boundaries and the legacy internal-ladder limitations explicit.
 
 **Resources:** No new fits, training or model loads; plotting retained metrics only.
 
@@ -4036,7 +4049,7 @@ The manual directory contains the following locally reproducible evidence. The o
 | `data/catalog-summary.json` | Corpus task, row, feature, origin and license metadata totals |
 | `data/metadata-receipts/` | Catalog JSONL and collection/model metadata; no payload bodies |
 | `data/s3-estate.json`, `data/local-estate.json` | Dated current-object and local logical-byte inventories |
-| `data/performance-evidence.json` | Current proof, historical score cells, reports, ladder identities and scope |
+| `data/performance-evidence.json.gz` | Current proof, historical score cells, reports, ladder identities and scope |
 | `data/plot-*.csv` | Compact plot inputs with snapshot and source pins |
 | `data/roadmap.json` | Detailed 43-item dependency/acceptance checklist and 24 separately marked coordinated proposals |
 | `docs/asm-maintainer-status.plist` | XML property-list representation of the same checklist |
@@ -4045,9 +4058,40 @@ The manual directory contains the following locally reproducible evidence. The o
 | `figures/` | Reproducible charts and associated historical data inputs |
 | `render-receipt.json` | PDF digest, pages, consumed input hashes and rendering environment |
 
+## Lossless evidence packaging
+
+The full performance inventory and original catalog JSONL are stored as `data/performance-evidence.json.gz` and `data/metadata-receipts/veox-jopedime-datasets-use2--catalog--v1--catalog.jsonl.gz` to respect the repository’s 5 MiB file limit. Gzip preserves every original byte; no rows, fields, numeric precision or metadata were removed. `data/evidence-packaging.json` records both compressed and original SHA256 values, sizes and preservation paths. Historical handoffs and the initial assembly manifest intentionally retain their original uncompressed paths and hashes; the packaging receipt supplies the current location mapping.
+
+Read either companion directly with Python’s standard library:
+
+```python
+import gzip
+import json
+from pathlib import Path
+
+root = Path("docs/internal/asm-manual/data")
+with gzip.open(root / "performance-evidence.json.gz", "rt") as stream:
+    performance = json.load(stream)
+with gzip.open(root / "metadata-receipts/veox-jopedime-datasets-use2--catalog--v1--catalog.jsonl.gz", "rt") as stream:
+    catalog = [json.loads(line) for line in stream if line.strip()]
+assert len(catalog) == 3859
+```
+
+The plotting tools consume the separately retained CSVs and summary JSON, so this storage change does not change their inputs or measurements. The renderer hashes the compressed companions as well as the packaging receipt.
+
 ## Rebuilding the book
 
-From the repository root, use the documented pinned rendering environment and these local-only commands:
+The original build used Python 3.12 and the observed direct versions in `tools/requirements-docs.txt`. That file is not a transitive lock or a verified cold installer. A fresh environment also needs working Pango/Fontconfig, DejaVu fonts, and Poppler's `pdfinfo`, `pdftotext` and `pdftoppm`. The render receipt records exact Python/library versions and font-file hashes. The following environment-creation recipe is provided for rebuilding; it was not executed as a fresh installation during this document audit:
+
+```sh
+MANUAL_ENV=/home/ubuntu/.venvs/jope-manual
+python3 -m venv "$MANUAL_ENV"
+"$MANUAL_ENV/bin/python" -m pip install \
+  -r docs/internal/asm-manual/tools/requirements-docs.txt
+. "$MANUAL_ENV/bin/activate"
+```
+
+From the repository root, render the audited retained inputs with these local-only commands:
 
 ```sh
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_inventory_figures.py
@@ -4072,6 +4116,12 @@ The learning expansion is documented in [actual training history](#chapter-14), 
 | `data/training-history/metric-definitions.json` | Exact historical loss and KPI meanings; objective changes and missing source-build binding |
 | `data/training-history/verification.json` | Original-value verification of 3,218 metrics and 78 checkpoint records |
 | `data/training-history/figure-receipt.json` | Input/output hashes for seven historical training figures |
+| `data/legacy-training/` | Four original round-1 and reported self-play summary files, source hashes, recomputed diagnostics and a vector-plot receipt; internal Elo is not benchmark-valid |
+| `data/per-step-history/` | All 63,000 retained recovery steps and 378,000 exact metric tokens in compressed CSV, 21 raw-log hashes, corpus boundaries and explicit 100-step means |
+| `data/per-step-history/independent-review/` | Second complete comparison with original logs, checkpoint identities and all derived block/bin statistics; numerical/source review is separate from final-head CI |
+| `figures/per-step-figure-receipt.json` | Source hashes and recomputation checks for all 630 plotted loss bins and 78 adaptive validation points |
+| `data/packing-routing-audit.json` | Selected external packing metadata, recomputed sizes and strictly scoped paired final-search observations; excludes unjoined campaign rows |
+| `data/original-target-receipts-custody.json` | Durable local archive and verification hashes for all 26,357 original development search receipts; archive stays outside Git, with seeds and off-host backup explicitly excluded |
 | `data/target-history/*.csv` | All 159 repeated historical comparison summaries and all 213 illustrative arm/generation points; exact source identities and limits |
 | `data/target-history/manifest.json`, `data/target-history/verification.json` | Six corpus inventories, binary-format source pins and original target-observation verification |
 | `data/target-history/figure-receipt.json` | Input/output hashes for two historical GP-target figures |
@@ -4084,6 +4134,8 @@ Regenerate the training and target figures before the PDF after changing an audi
 ```sh
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_training_figures.py
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_target_figures.py
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_legacy_training_figure.py
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_per_step_figure.py
 python3 docs/internal/asm-manual/tools/build_manual.py
 ```
 
@@ -4102,7 +4154,7 @@ ASM means **Algorithm Synthesis Model: learns to generate and optimize executabl
 
 This chapter reconstructs progress from original retained metrics and checkpoint metadata without loading model tensors, reopening sealed targets, or starting training. It separates three kinds of evidence: loss measurements, changed training state, and improved executable algorithms. Losses measure how the model fits its training objectives. Checkpoint lineage records which parameters and optimizer state were produced. Only a matched downstream fit/search comparison can establish that conditioning on a dataset and split produces better algorithms. A completed optimizer run does not imply the third result.
 
-The supplied CSVs retain original values, source file SHA-256, source path and line, and JSON Pointer where appropriate. There is no interpolation. Seven figures show different populations separately; joining them into one curve would erase changes in architecture, objective, corpus, sampler and validation protocol.
+The supplied CSVs retain original values, source file SHA-256, source path and line, and JSON Pointer where appropriate. There is no interpolation. Separate figures show different populations; joining them into one curve would erase changes in architecture, objective, corpus, sampler and validation protocol. The later recovery lineage now also has an independently audited, complete retained series of 63,000 per-step observations, discovered after the first chapter draft; the older 108-block capture remains endpoint-only.
 
 ## Dated lineage and evidence coverage
 
@@ -4111,7 +4163,7 @@ The supplied CSVs retain original values, source file SHA-256, source path and l
 | Jope Prime gen31, preserved by the provenance inventory dated 2026-07-12 | Fourteen complete epoch-summary rows, explicitly `policy_v3.2`; immutable warm-start checkpoint identified as `6a204434…`; 125,970 training and 2,169 validation rows | Real logged training and validation measurements. The log itself has no wall-clock timestamp or exact trainer-source hash; its event date is not inferred from file modification time. The provenance inventory's date is a historical declaration, not a newly verified execution date. |
 | Lineage A, historical xbabe2 Python control plane | Four surviving frozen corpus snapshots and original warm-start state; substantial live control-plane state and later checkpoint descendants declared lost | Historical training and teaching data existed. The lost accepted-pointer and sealed-use history cannot be reconstructed merely from aggregate scores. |
 | September 9–11 native training audit | 108 completed 3,000-step blocks, 108 different corpus identities and 62 starting checkpoint identities | Original initialization records explicitly reset AdamW. The capture retains each block's first and last metric row, not its complete per-step log. |
-| September 12 recovery lineage, retained A100 checkpoint manifests | 78 checkpoints at recorded steps 4,000–69,000, 22 corpus identities; all record carried FP32 AdamW | This later lineage really carries optimizer ancestry. The accepted serving checkpoint is 60,000, not the maximum retained step. Validation remains adaptive and its corpus/panel changes. |
+| September 12–13 recovery lineage, retained A100 metrics and checkpoint manifests | 63,000 complete metric rows at steps 6,001–69,000 in 21 blocks/corpora; 78 checkpoints at steps 4,000–69,000 across 22 corpus identities | This later lineage carries FP32 AdamW ancestry. Complete logged losses now accompany the metadata. The accepted serving checkpoint remains 60,000; 69,000 is unaccepted. Validation remains adaptive and its corpus/panel changes. |
 | September 14, 22:19:52–22:27:47 UTC | Complete 100-row RTX qualification trajectory, steps 60,001–60,100, interrupted and resumed after 60,006 | Original metadata records carried optimizer state and changed model/parameter identities. It explicitly describes unchanged-corpus hardware qualification, with zero fresh programs; it is not a production improvement or promotion run. |
 | September 18, 20:17:48 UTC publication manifest | Product bundle `policy-step-60000`, source checkpoint `8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6` | The current product's accepted source checkpoint is pinned. Publication time is distinct from training time. |
 | Current bounded ASM work | Verified regression neural-origin search evidence; stopped training64 follow-on and admission readiness | New category training and subsequent consumption of its learned export remain pending. No new GPU-hour budget is inferred from historical training. |
@@ -4149,6 +4201,28 @@ The following definitions explain why similarly named numbers cannot be substitu
 The old v3.2 objective has seven components: sequence NLL, reward Bradley–Terry, reward listwise, runtime Huber, stability BCE, ablation Bradley–Terry and routing cross-entropy. Its profile scales are respectively 1, 1, 0.5, 0.2, 0.5, 1 and 0.5. Reward/ranking/ablation/routing terms use fixed profile scales; sequence, runtime and stability use the retained Kendall–Gal-style learned weighting. The log's `loss_weights` values are `exp(-log_var)`, not complete effective coefficients. This differs materially from the five-term native objective below. Source interpretation is grounded in retained v3.2 code; absence of an exact run-source binding remains explicit.
 
 Sources: original `train_metrics.jsonl` SHA `d57de1b28a8678327c984a82732cd774520db2cb0994d893a45f8a5ea428e312`, lines 1–14; `/home/ubuntu/jope/src/jope/policy/train_v3.py:360,364,438,444,474,580,613`; `policy/model_v3.py:40,286,300,305,372,376`; `policy/losses.py:23,35,48,86,100`; `model.py:981,997,1015`. Full hashes and exact definitions are retained in this chapter's metadata.
+
+## Additional legacy evidence: round 1 and the reported self-play ladder
+
+Four original `round1.train_metrics.jsonl` rows survive for the lineage-A Python model `policy_v3.3-fused-heads`. They log phase A at epochs 1–2 and phase B at 3–4, with learning rate 0.0005. This is a separate model/run from gen31 and the native recovery lineage; their composite losses must not be joined into one trajectory.
+
+| Logged measure | Epoch 1 | Epoch 4 | Interpretation |
+| --- | ---: | ---: | --- |
+| Training composite | 5.191046 | 3.212379 | Better fit to the run's changing phase objective |
+| Validation composite | 9.080722 | 8.241397 | Minimum 7.938042 at epoch 2; the final epoch is worse than that minimum |
+| Validation minus training composite | 3.889675 | 5.029017 | The recorded gap widens; phase changes limit a simple overfitting interpretation |
+| Validation pairwise accuracy | 0.577940 | 0.624193 | A ranking diagnostic, not downstream predictive performance |
+| Validation sequence NLL | 1.686433 | 1.773742 | The final value is worse, despite the lower composite |
+
+A separate gate receipt dated **2026-07-25 10:24:49.812 UTC** compares 557 validation rows per model: pairwise accuracy 0.534717 → 0.663611, sequence NLL 2.110434 → 1.838604, and reward/CV correlation −0.097427 → 0.445109. It records `pass: true` and explicitly says “gate only; nothing deployed or rotated.” These are real retained gate measurements, not proof of current teacher eligibility, an independent unseen-family evaluation, or a subsequent serving promotion. The gate's timestamp does not supply a missing event timestamp for every epoch.
+
+![Legacy round-1 epoch measurements and reported generation-level loss and internal Elo](figures/training-legacy-round1-generations.svg)
+
+The two lower panels retain the **reported paper CSV summaries** from `/home/ubuntu/jope-prime/docs/paper/data/`, rather than replaying their historical tournaments. The loss table has generations 1–31; the internal self-play Elo table has generations 1–30. Across the loss summaries, validation sequence NLL changes from 1.783587 to 2.084099, and pairwise accuracy from 0.594856 to 0.529146. Internal top-1 Elo changes from 1,073.2 to 1,119.2. Over their thirty common generations, the descriptive Pearson correlation between Elo and sequence NLL is +0.728336: higher internal Elo coexists with worse likelihood. Correlation across this evolving history is not a causal result, and the underlying populations/objectives have not been frozen for a new matched evaluation.
+
+The generation-31 summary exactly matches **epoch 3**, not epoch 14, on validation sequence NLL, validation pairwise accuracy and the training sequence component. That explains why a generation-level table and the final gen31 log row can disagree without either number being fabricated. There is no generation-31 Elo row in this retained table. Neither the internal ladder nor its `shipped` column establishes a current release or the benchmark-valid Elo described in chapter 8. Full source-to-tournament provenance and exposure qualification remain separate from this arithmetic/source-file check.
+
+The companion `data/legacy-training/` retains all four original files byte-for-byte, a hash-pinned recomputation receipt and the plot input/output hashes. Their source paths are `/home/ubuntu/jope-flywheel/training/round1/{round1.train_metrics.jsonl,gate-result.v1.json}` and `/home/ubuntu/jope-prime/docs/paper/data/{loss_components_by_generation.csv,elo_trajectory.csv}`. No model or dataset payload was opened to assemble this supplement.
 
 ## The September 11 native objective and 108 reset blocks
 
@@ -4190,11 +4264,35 @@ Sequence and reward-ranking losses did not improve over recovery in these fixed-
 
 All 48 promotion decisions indexed in the September 11 capture were **inconclusive**, with qualification evidence not supplied. This is not a measured 0/48 challenger win rate. It establishes missing evidence at that historical observation. The later accepted 60,000 checkpoint belongs to a subsequent recovery lineage; the September 11 result must not be extended to claim that no later checkpoint was ever accepted. A full joined chain of matched executable comparisons and successive qualified target improvements is still required for a quantitative “the flywheel kept improving” claim.
 
+## Newly recovered complete A100 loss series: steps 6,001–69,000
+
+A second retained source closes a substantial historical evidence gap. Original `metrics.jsonl` files in cycles `000001` through `000021` of `eight-a100-recovery-20260912/learning`, under `/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs`, contain **63,000 contiguous reported optimizer steps**, exactly 3,000 per block. Their embedded timestamps span September 12, 18:43:27 through September 13, 18:09:49 UTC. These dates come from the rows, not filesystem modification time. All rows record rank 0, world 8, microbatch 256, accumulation 1 and global batch 2,048. Every row binds the block's corpus and a carried FP32 AdamW parent; parent identities match the retained checkpoint lineage. A100 attribution is historical run lineage, not a new device probe.
+
+The compressed `data/per-step-history/a100-step-metrics.csv.gz` preserves all 63,000 rows and **378,000 exact numeric metric tokens**: `loss`, `sequence_nll`, `ranking_bt`, `ranking_listwise`, `runtime_huber` and `gradient_norm`. Step, local step and timestamp tokens are also preserved. Cycle plus one-based `source_line` resolves each value to a pinned original log in `source-manifest.json`. This is a selected-column extraction, not a replacement for all raw telemetry: timing breakdowns, counters and other nested fields remain in the source logs. A second read compares every selected token against its original and rechecks each full log hash.
+
+![Complete retained A100 history with explicit 100-step training averages and adaptive checkpoint observations](figures/training-a100-per-step.svg)
+
+The upper panel shows 630 **non-overlapping 100-step arithmetic means**, with a separate line per corpus; it does not display every noisy minibatch point or interpolate absent data. The underlying CSV retains every selected point. The lower panel shows the original 78 checkpoint sequence-NLL observations without joining changed evaluation populations. Dashed orange marks the accepted step 60,000; shaded later steps remain unaccepted.
+
+The within-block pattern is consistent, but its interpretation is bounded. All 21 composite-loss OLS slopes are negative, all 21 final sampled losses are below their first samples, and all 21 last-100 means are below their first-100 means. The median last-100 minus first-100 change is **−0.017066**, with range **−0.043771 to −0.008792**. Every single-point block boundary jumps upward; 19 of 20 boundary comparisons also rise when comparing adjacent 100-step means. Thus “sawtooth” describes the recorded pattern, not a claim that every individual optimization step improves. Each of the 21 blocks has a distinct corpus. Changed sampling and teaching data prevent attributing a boundary jump, or an across-block decline, to parameters alone.
+
+| Block and optimizer range | First sampled loss | Last sampled loss | First-100 mean | Last-100 mean |
+|---|---:|---:|---:|---:|
+| 1: 6,001–9,000 | 0.855045 | 0.792636 | 0.831595 | 0.787825 |
+| 18: 57,001–60,000, accepted endpoint | 0.819152 | 0.785951 | 0.801961 | 0.790811 |
+| 21: 66,001–69,000, unaccepted endpoint | 0.830200 | 0.792011 | 0.809123 | 0.797115 |
+
+A descriptive OLS over all 54,000 observed steps from 6,001 through 60,000 has slope **−3.3860 × 10⁻⁷ loss per step**, R² **0.1885**, and fitted first-to-last change **−0.018284**. These are arithmetic summaries of serially dependent observations from changing corpora, not confidence estimates or a measured generalization gain. `a100-block-statistics.csv` retains all 126 block/metric summaries, including each slope and endpoints; `a100-corpus-boundaries.csv` makes the boundary comparisons explicit.
+
+The composite loss is retained as reported. These 63,000 rows expose four named objective components and gradient norm, but omit top-level `contextfree_bt`, effective objective weights and per-step learning rate. Absence of a telemetry field does not establish that its objective was inactive. Do not fill it with zero, reconstruct the full objective from an incomplete component list, or directly compare its composite scale with the separately recorded RTX qualification run. Loss reduction is evidence of objective fitting; it does not by itself establish better encoding-conditioned GP proposals or cheaper, better fitted algorithms.
+
+The inspected cycle-`000000/train-2` directory has checkpoint/run metadata but no `metrics.jsonl`: steps 3,001–6,000 therefore lack per-step rows **in this inspected source**. The antecedent steps 1–3,000 are outside this per-step source set. This is a precise recovery boundary, not a claim that no other log could exist. It also does not erase the earlier fixed 2,048-example monitor: that separate recovery/cycle-25/cycle-107 comparison remains in the preceding section. The later 78-checkpoint series spans 22 corpora and 21 panels and does not provide one unchanged evaluation population.
+
 ## Carried state, accepted step 60,000 and RTX step 60,100
 
 ![Original A100 checkpoint validation measurements, with accepted step 60000 marked](figures/training-a100-checkpoints.png)
 
-The 78 retained A100 state manifests live under `/home/ubuntu/jope-node-mirror/weights/runs/eight-a100-recovery-20260912/learning/cycle-*/train-2/checkpoints/step-*/state.json`. The retained metadata covers 78 checkpoints, all with “carried FP32 AdamW with bias-correction step.” This is materially different from the 108 reset blocks. It spans 22 corpus identities and recorded steps 4,000–69,000. The graph keeps these as adaptive validation observations. A higher retained step is not automatically the serving model. The accepted 60,000 state's exact hash is `8ac80c26…`, corpus `1c840597…`, model `053df4f5…`, and parameter digest `9c7057e7…`; it records ancestry from step 57,000 and requests fresh-balanced sampling. Its request for 50% fresh comparisons does not mean 50% fresh program slots or measured downstream improvement.
+The 78 retained A100 state manifests live under `/home/ubuntu/jope-node-mirror/weights/runs/eight-a100-recovery-20260912/learning/cycle-*/train-2/checkpoints/step-*/state.json`. The retained metadata covers 78 checkpoints, all with “carried FP32 AdamW with bias-correction step.” This is materially different from the 108 reset blocks. It spans 22 corpus identities and recorded steps 4,000–69,000. The graph keeps these as adaptive validation observations. A higher retained step is not automatically the serving model. The accepted 60,000 state's exact hash is `8ac80c26…`, corpus `1c840597…`, model `053df4f5…`, and parameter digest `9c7057e7…`; it records ancestry from step 57,000 and requests fresh-balanced sampling. Its request for 50% fresh comparisons does not mean 50% fresh program slots or measured downstream improvement. The newly recovered block-18 log ends at this exact step/corpus; block 19 explicitly starts from accepted state `8ac80c26…`. Of the 78 retained checkpoints, 74 also have validation entries inside the recovered per-step logs; all 296 overlapping metric cells match the previously audited checkpoint CSV. Sequence NLL is 1.428209 at step 4,000, 1.387687 at accepted 60,000, and 1.395417 at unaccepted 69,000; different adaptive panels limit this to descriptive observations. The product explicitly refuses the retained step-69,000 state/model identities rather than selecting the highest numbered checkpoint.
 
 ![All 100 original RTX qualification step measurements, with the recorded resume boundary](figures/training-rtx60100-steps.png)
 
@@ -4210,13 +4308,13 @@ The desired loop is concrete: a dataset and split produce verified encodings; co
 
 For every cycle, preserve both sides of the feedback: target improvement under the same task/dataset/split/evaluator/vocabulary/protocol identity, and policy improvement in fitted performance, failure rate and cost under a frozen comparison. Report cold/warm preparation and unique fitted predictors separately from recipe counts. Keep a context-free control, generic proposal control and unchanged accepted policy. A lower teacher-forced NLL can accompany memorization, degraded ranking, or no better executable search, as the historical measurements demonstrate.
 
-The missing historical evidence is specific: full intermediate trajectories for the 108-block capture; an exact run-source binding and event timestamp for gen31; per-term gradient diagnostics; a common independent evaluation series across changed corpora; and a fully joined sequence of qualified target improvements and serving promotions. For the new bounded ASM campaign, corpus admission, actual optimizer update/reload/resume proof, trained-export consumption and matched downstream improvement remain acceptance work. Keep these gaps visible rather than replacing them with a smooth synthetic curve or treating old training as if it had never happened.
+The missing historical evidence is specific: full intermediate trajectories for the older 108-block capture (distinct from the now-recovered later 63,000-step series); an exact run-source binding and event timestamp for gen31; per-term gradient diagnostics; a common independent evaluation series across changed corpora; and a fully joined sequence of qualified target improvements and serving promotions. For the new bounded ASM campaign, corpus admission, actual optimizer update/reload/resume proof, trained-export consumption and matched downstream improvement remain acceptance work. Keep these gaps visible rather than replacing them with a smooth synthetic curve or treating old training as if it had never happened.
 
 ## Reusing the evidence
 
 The adjacent `data/training-history` CSVs are long-form original measurements. `block-endpoint-metrics.csv` has 1,296 rows; `block-adaptive-validation.csv` 432; `fixed-monitor-metrics.csv` 16; `gen31-epoch-metrics.csv` 462; `a100-checkpoint-lineage.csv` 78; `a100-checkpoint-validation.csv` 312; and `rtx60100-step-metrics.csv` 700. The two original small logs are retained alongside the normalized data. Source hashes and line/JSON Pointer anchors make a plotted point independently traceable. The initial extraction audit covers four CSVs. The shipped `verify_history.py` checks all 3,218 metric `value` cells across the measurement CSVs, plus seven fields (step, model/parameter/optimizer/corpus hashes, world and global batch) and the state-file hash for each of the 78 lineage rows. It does not check every auxiliary numeric column, such as elapsed time, parent/local step, requested fresh fraction or row counts. Running that helper writes `verification.json` beside the CSVs; use a custody copy when preserving a stopped evidence bundle. Model bodies and sealed target values were not read for this reconstruction.
 
-The plot builder's figure receipt binds the exact CSV hashes. Regeneration may change PDF structure identifiers, but it must not change these measurements, silently drop recovery records, smooth missing steps, or relabel adaptive validation as independent generalization.
+The additional `data/per-step-history` package preserves the 3,809,970-byte compressed step CSV (SHA `aa431f5a2f5f4d6bfc2e8568ef57bb10b100356750d22eb615dd68cfa1647627`), 21 full source-log hashes, block statistics, explicit 100-step bins and boundary comparisons. `tools/extract_per_step.py` regenerates into a new output directory from the retained raw logs and previously audited checkpoint CSVs; it refuses to overwrite an existing extraction. `tools/make_per_step_figure.py` independently recomputes every plotted bin from the compressed row data before drawing it. Run `python3 docs/internal/asm-manual/tools/make_per_step_figure.py` from the repository root to regenerate this one figure without loading models. The original seven-figure builder remains separate. Both figure receipts bind their exact input hashes.
 
 
 ---
@@ -4227,7 +4325,7 @@ The plot builder's figure receipt binds the exact CSV hashes. Regeneration may c
 
 The retained evidence shows both substantial historical training corpora and some improving historical GP targets. It does **not** show a newly qualified ASM teaching loop, a current thirty-dataset result, or a causal advantage from neural training. Those are different claims with different evidence requirements.
 
-This chapter answers three questions: what one training example contains; how the historical target collections and their observed scores changed; and how efficiently the implementation stores and loads them. The audit read metadata, manifests and development-score receipts. It did not read sealed labels, model tensors, packed target-record bodies or the large audit-label sidecars, and it ran no training or fits. Byte counts marked as observed come from file metadata; this is not a fresh cryptographic verification of every multi-gigabyte payload.
+This chapter answers three questions: what one training example contains; how the historical target collections and their observed scores changed; and how efficiently the implementation stores and loads them. The original manual audit read metadata, manifests and development-score receipts. It did not read sealed labels, model tensors, packed target-record bodies or the large audit-label sidecars, and it ran no training or fits. A later external packing audit reports checks over the accepted corpus payloads; the separately attributed results below were checked here through its retained metadata, scripts and arithmetic, without replaying those payload reads. File-metadata observations, externally reported payload checks, source-derived size calculations and proposed formats remain distinct evidence levels.
 
 ## 15.1 A dataset is not one training example
 
@@ -4291,33 +4389,52 @@ For accepted snapshot 97, metadata records 34,321,997 observations seen, 109,797
 
 The accepted corpus's record split is precise: 9,382,874 `meta_train` records in 6,836 shards and 831,458 `meta_validation` records in 1,041 shards. There are no `meta_test` record shards. The context index nevertheless contains 6,962 training, 1,054 validation and **878 meta-test context descriptors**. Current legacy `training.rs` stages every context in that index before sampling records. Consequently, withholding meta-test record labels is not a proof that sealed families were excluded from the entire historical encoder/trainer input closure. This is a concrete remaining closure audit, not a claim that this documentation audit opened sealed vectors or labels.
 
+A separate external historical-inventory report also discloses parsing manifests for eight datasets marked `meta_test` **and hashing their source CSVs**; its shorter coordination entry mentioned manifests only. That report says all eight have lineage-A `test_exact` high-water marks. This audit did not reopen those paths or inspect their labels. The disclosure does not establish whether labels reached lineage-B training. Before reuse or continuation under the current policy, audit the complete encoder, context-staging, target-admission and sampler input closure, and resolve the old exposed-HWM lineage. Neither zero meta-test record shards nor an old qualification flag closes that question.
+
 The accepted index SHA `1c840597…`, vocabulary `8d55fee4…` and context index `d77e856b…` bind the preserved checkpoint lineage. Its label policy is explicitly `reference_v1`. An old `qualification: true` flag means qualification under that historical implementation and policy. It does not retroactively satisfy current finite train-side OOF improvement over a trivial baseline, improvement on four of five folds, exact source closure and non-exposure requirements.
 
 ## 15.4 Did GP targets get better?
 
-**Yes, on some retained historical development comparisons.** This is measured target-search progress, with substantial limits. It is not inferred from corpus growth.
+**Some recorded carried-forward best scores became lower.** These are historical development outcomes from searches sharing incumbent and teacher seeds. They are not independent discoveries by each arm, and their no-worsening pattern is partly structural. Corpus growth alone would not establish even this narrower result.
 
-The audit enumerated 29,744 retained recovery `search.json` paths. It rejected 3,387 paths outside the accepted context index's `meta_train` dataset/cut allowlist **before opening their score files**. The remaining 26,357 receipts identify adaptive development-validation RMSE, prepared data, vocabulary, evaluator, execution protocol and completion metadata. Each source file and observation ledger has a distinct recorded digest. Their recorded completion times span September 12, 2026 18:37:13 UTC to September 14, 2026 13:37:43 UTC. These times are receipt metadata, not a new replay of the fits.
+The audit enumerated 29,744 `search.json` paths under `/home/ubuntu/jope-node-mirror/results`, which resolves into `/home/ubuntu/jain-split/jain-datasets/.runtime/node-archive-mirror-20260914/results`. This source covers generations 0–70. The later cross-check found only 3,530 of the 26,357 permitted receipts in the separately preserved `accepted60000-restored` tree, all byte-identical: 22,827 original receipts, including every permitted generation 10–70 receipt, were missing from that preservation tree. A subsequent custody archive now preserves all **26,357 original search receipts**, totaling **62,271,855 uncompressed bytes**. A separate streaming verification checked every member name, size and original SHA256 without reopening the source bodies. `original-target-receipts-custody.json` pins the archive and verification. This closes the identified search-receipt single-location gap through a second local copy on the same filesystem; it is not an off-host backup. The separate seed bodies used by the external carry-forward analysis are outside that archive. It rejected 3,387 paths outside the accepted context index's `meta_train` dataset/cut allowlist **before opening their score files**. The remaining 26,357 receipts identify adaptive development-validation RMSE, prepared data, vocabulary, evaluator, execution protocol and completion metadata. Each source file and observation ledger has a distinct recorded digest. Their recorded completion times span September 12, 2026 18:37:13 UTC to September 14, 2026 13:37:43 UTC. These times are receipt metadata, not a new replay of the fits.
 
-For a readable comparison, the table restricts each repeated comparison to exactly 1,000 completed evaluations, matching its recorded dataset/family, cut, prepared SHA, vocabulary SHA, evaluator SHA/protocol, execution-order protocol and run. It compares the first retained generation with the last retained generation within that group. Lower RMSE is better. Improvement and worsening use exact `<` and `>` comparisons of the parsed reported scores; unchanged means exact equality, with no epsilon. It does not use a cumulative minimum for this first-to-last table. The score field is `best_validation_rmse` under the historical `featmath_training_fold_normalized_v1` evaluator; the plots do not claim original target units.
+For a readable comparison, the table restricts each repeated comparison to exactly 1,000 completed evaluations, matching its recorded dataset/family, cut, prepared SHA, vocabulary SHA, evaluator SHA/protocol, execution-order protocol and run. It compares the first retained generation with the last retained generation within that group. Lower RMSE is better. Improvement and worsening use exact `<` and `>` comparisons of the parsed reported scores; unchanged means exact equality, with no epsilon. The analysis script applies no additional cumulative minimum, but the underlying search already carries incumbent/teacher programs forward. Thus the reported per-generation best behaves like an inherited incumbent, rather than a fresh independent draw. The score field is `best_validation_rmse` under the historical `featmath_training_fold_normalized_v1` evaluator; the plots do not claim original target units.
 
-| Historical search arm | Repeated comparisons | Last better | Unchanged | Last worse | Median relative improvement |
+| Historical search arm | Repeated arm groups | Last lower | Same | Last higher | Median relative reduction |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Neural | 51 | 19 | 32 | 0 | 0% |
 | Generic | 54 | 22 | 32 | 0 | 0% |
 | Shuffled | 54 | 23 | 31 | 0 | 0% |
 
-![Historical target progress within the retained 1,000-evaluation subset; arm denominators differ.](figures/target-quality-progress-counts.png)
+![First-to-last carried-forward best scores at 1,000 evaluations; the arms share seeds. The 64 lower arm groups cover 23 distinct dataset/cuts.](figures/target-quality-progress-counts.png)
 
-The denominators differ, so this table is not a paired policy-ranking result. Random seeds change between generations, elapsed time varies, and this audit did not requalify the actual CPU/memory/hardware enforcement or complete build closure of the historical searches. Matching these recorded fields is narrower than the complete current experiment identity. The recorded generation manifests declare 600 seconds and 1,000 evaluations for the illustrative example; those declarations do not establish equal consumed wall time. Checkpoint association is available by generation, but exact exposure of each improved target to later optimizer batches remains unjoined.
+The 159 arm groups cover **55 distinct dataset/cut pairs**. The 64 lower arm groups (19 + 22 + 23) cover only **23 distinct pairs**; 22 of those 23 end at the same score in every available arm. These counts were independently recomputed from the published comparison CSV. The denominators and shared seed pools make the arm counts dependent; one discovery can later appear in multiple arms.
 
-A concrete example is `mendeley-6bspjkt7bg-pine-chromium`, dataset `b68222ad60398ea8`, cut 1. Across generations 0–70 the recorded best development RMSE changes from **0.009749860799638275 to 0.003185684481133936**, a **67.3258% relative reduction**. All three arms finish at the same score. The neural arm first records that final value at generation 43; generic and shuffled do so at generation 42. The plot data include all 213 generation/arm pairs, with no interpolated missing generation. This example was selected after inspection as the largest first-to-last relative improvement in the neural 1,000-evaluation subset; it is illustrative, not representative.
+The separately released external seed audit reports `seed_population_supplied=true` and `teacher_first_v1` for all 26,357 receipts. The previous recorded best appears in the next seed set in 25,790 of 25,985 transitions; 26,051 reported winners (98.84%) are already in that search's seed population. Incumbent, retained-teacher and exploration seed sets are identical across arms in all 8,785 multi-arm dataset/cut/generation groups checked. Those seed-body counts are externally reported and metadata-checked here, not a new local seed-payload replay. They explain why zero first-to-last worsening is not independent evidence of stability. A lower inherited score is also not a new discovery by the receiving arm. `carry-forward-audit.json` preserves these evidence boundaries.
 
-![Post-hoc illustrative pine-chromium cut 1 target history, shown separately for three historical arms; no neural causal claim.](figures/target-quality-pine-example.png)
+This table is therefore not a paired policy-ranking result. Random seeds change between generations, elapsed time varies, and this audit did not requalify the actual CPU/memory/hardware enforcement or complete build closure of the historical searches. Matching these recorded fields is narrower than the complete current experiment identity. The recorded generation manifests declare 600 seconds and 1,000 evaluations for the illustrative example; those declarations do not establish equal consumed wall time. Checkpoint association is available by generation, but exact exposure of each improved target to later optimizer batches remains unjoined.
 
-Relative improvement is `(first_RMSE - last_RMSE) / first_RMSE`. The percentage is meaningful within that dataset/cut. Raw RMSEs from unlike target scales are not averaged to claim overall progress. A running-best curve, if separately shown, must be labelled as such: its monotonicity follows partly from selection. Better retained minima do not prove that a trained neural proposal policy caused the gain. Shared candidate sources, search history and ordinary exploration remain possible explanations.
+A concrete example is `mendeley-6bspjkt7bg-pine-chromium`, dataset `b68222ad60398ea8`, cut 1. Across generations 0–70 the recorded best development RMSE changes from **0.009749860799638275 to 0.003185684481133936**, a **67.3258% relative reduction**. All three arms finish at the same score. The neural arm first records that final value at generation 43; generic and shuffled do so at generation 42. The external seed audit identifies the final program outside the generic and shuffled seed sets at generation 42, then as an `incumbent_cut_teacher` seed in all three arms at generation 43. The neural arm's later equality is carry-forward, not evidence that it independently discovered that program. This identifies generation-level observations; it does not establish which of two same-generation arms discovered the program first in wall-clock time. The plot data include all 213 generation/arm pairs, with no interpolated missing generation. This example was selected after inspection as the largest first-to-last relative improvement in the neural 1,000-evaluation subset; it is illustrative, not representative.
+
+![Post-hoc pine-chromium cut 1 history with shared teachers: generic/shuffled record the final program outside their seeds at generation 42; all arms inherit it at generation 43.](figures/target-quality-pine-example.png)
+
+Relative improvement is `(first_RMSE - last_RMSE) / first_RMSE`. The percentage is meaningful within that dataset/cut. Raw RMSEs from unlike target scales are not averaged to claim overall progress. A running-best curve, if separately shown, must be labelled as such: its monotonicity follows partly from selection. Better retained minima do not prove that a trained neural proposal policy caused the gain. Shared incumbent/teacher seed pools and carry-forward are established in the external audit; search history and ordinary exploration also prevent attribution to policy learning. Count a new search discovery separately from a copied incumbent: authenticate the full seed set, identify the first measured program absent from it, and retain the discovering arm, generation, context, program and parent identities. The aggregate table above does not provide that full per-program discovery ledger.
 
 The small publication files are `target-quality-1000-summary.csv`, `target-quality-1000-comparisons.csv` and `target-quality-pine-chromium-cut1.csv`. Full 26,357-row extracted evidence stays in custody, with its hash in `historical-target-quality-summary.json`; the manual need not embed the 19.5 MB full extraction. This analysis reads development scores only and creates no new teacher eligibility, promotion or benchmark-valid result.
+
+### Paired final-search outcomes within the admitted development inventory
+
+A later metadata-only comparison pairs arms **within the same generation**, keeping the recorded run, dataset/family, cut, prepared SHA, vocabulary SHA, evaluator SHA/protocol, execution-order protocol and exactly 1,000 completed evaluations equal. It uses the existing 26,357 admitted receipts, not a newly expanded input boundary. Scores are finite positive `best_validation_rmse`; lower is better. Each comparison counts exact score equality, with no epsilon.
+
+| Neural compared with | Paired observations | Neural lower | Equal | Neural higher | Geometric mean neural/control RMSE |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Generic | 3,268 | 24 | 3,227 | 17 | 1.0001869094 |
+| Shuffled | 3,253 | 24 | 3,213 | 16 | 1.0000854976 |
+
+These are repeated adaptive **final-search** observations across generations 0–70, not measurements of initial neural seed quality. The generic comparison covers 52 dataset/cut pairs from 30 families; the shuffled comparison covers 52 pairs from 31 families. Reported wall times differ in every pair. Families, contexts and generations repeat; the arms share incumbent, retained-teacher and exploration seeds, and the search can recover from poor initial proposals. The paired rows are not independent arm discoveries. No independent-sample confidence interval, causal advantage or failure-inclusive benchmark claim follows. The ratios are descriptive and close to one; they do not establish that training improved routing.
+
+The external report's broader routing extract has 42,863 rows. Only 3,530 match this chapter's admitted receipt inventory by retained path and all checked score, prepared-data, vocabulary, evaluator, protocol, completed-evaluation and wall-time fields. The other 39,333 are outside that existing inventory; their eligibility remains unqualified here, **not classified as all sealed**. No original score path was reopened for this join. The broader campaign ratios and p-values are therefore not imported. The compact `packing-routing-audit.json` pins inputs, matching fields, arithmetic and exclusions.
 
 To establish a closed improvement loop rather than these separate observations, join: original search/fit completion → exact program and comparison identity → admission event and immutable target record → corpus membership → actual sampler exposure and optimizer continuation → later policy proposal/fit under the same comparison protocol. The historical logs and chapter 14 show training activity; the target receipts here show some improving development scores. That complete causal/eligibility join is still missing.
 
@@ -4328,7 +4445,7 @@ The Rust writer and reader agree on the following fixed-width layout. Offsets ar
 | Offset | Bytes | Stored field | Meaning |
 | ---: | ---: | --- | --- |
 | 0 | 256 | `128 × u16` token IDs | Exact representable grammar sequence, with padded slots |
-| 256 | 256 | `128 × u16` legal-set IDs | Index into shared legal-token sets for each sequence position |
+| 256 | 256 | `128 × u16` legal-set IDs | In `teaching_shards.v1`, group-local index into that shard’s own `legal_sets` for each sequence position |
 | 512 | 2 | `u16` length | Actual token sequence length |
 | 514 | 2 | `u16` zero | Reserved space |
 | 516 | 4 | `u32` context ID | Index into the shared context metadata/vector table |
@@ -4337,17 +4454,37 @@ The Rust writer and reader agree on the following fixed-width layout. Offsets ar
 | 528 | 4 | `f32` log-runtime | Natural logarithm of one plus runtime |
 | Total | **532** | | |
 
-This is binary packing, not general-purpose compression. Every record reserves 128 token slots and 128 legal-state slots. A short program still occupies 532 bytes on disk. Shared context vectors and shared legal sets eliminate much larger repeated structures. `groups.bin` stores two little-endian u64 values per group—start record and count—so a group entry is 16 bytes. The JSON index binds context, vocabulary, record hashes and offsets; each immutable shard also has a manifest and an audit-label sidecar.
+This is binary packing, not general-purpose compression. Every record reserves 128 token slots and 128 legal-state slots. A short program still occupies 532 bytes on disk. Context vectors are shared by context identity. In the accepted sharded format, each group stores its own legal-set table in `shard.json` and its index entry; legal IDs are local to that table. Loading remaps them into one global table (63 distinct sets in the external accepted-corpus audit), shared in host memory and on the GPU. The older monolithic `teaching_corpus.v1` format instead has a top-level legal table. Do not interpret a raw shard ID as a global ID. `groups.bin` stores two little-endian u64 values per group—start record and count—so a group entry is 16 bytes. The JSON index binds context, vocabulary, record hashes and offsets; each immutable shard also has a manifest and an audit-label sidecar.
 
 Original floating-point measurements and exact program provenance are retained separately from the float32 training targets. Historical `reference_v1` orders original f64 RMSEs, uses a median-scaled score value, and assigns ordinal percentiles. The stored value is `1 / (1 + RMSE / max(upper_middle_RMSE, 1e-8))`; the percentile is `1 - i/(n-1)` in the ordered group. Here `upper_middle_RMSE` is the sorted original RMSE at zero-based index `floor(n/2)`, including for an even-sized group; it is not an average of the two middle scores. Its tie behavior is not the later midrank policy. `frozen_z_v1` preserves the first admitted value/percentile for an existing program while new programs receive their initial labels. `strict_midrank_v4` introduces exact-original-precision tie handling and the strict admission contract. These names are different target semantics, not interchangeable storage optimizations. Repacking cannot silently relabel historical targets or snap unsupported program parameters to convenient vocabulary tokens.
 
 The training reader's verified path copies and hashes the actual record bytes into sealed shared storage, or obtains a verified shared sealed file, then uses a read-only memory mapping. Linux file seals prevent later writes, growth and truncation. This protects a running trainer from source-file mutation and mmap truncation faults. It is **not** a promise of zero-copy disk startup: verification and the initial sealed-memory copy have costs. Index, record and context identities remain content-based; a filesystem timestamp is not a substitute for them.
 
+### What the accepted-corpus packing audit measured
+
+The external verifier reports scanning all 10,214,332 records in 7,877 accepted-corpus shards, checking recorded payload/sidecar hashes and layout invariants. Its corpus identity is the same `1c840597…` bound above. This manual independently verifies its selected metadata-file hashes and recomputes the following arithmetic; it does not claim a second scan of the original record or label bodies.
+
+| Quantity | Result | Evidence boundary |
+| --- | ---: | --- |
+| Occupied token slots | 205,657,518 of 1,307,434,496 | Sum of the external length histogram |
+| Mean / maximum sequence length | 20.1342 / 54 tokens | Accepted snapshot only; not a future grammar bound |
+| Padding fraction | 84.2701% | `1 - occupied_slots / (records × 128)` |
+| Pretty-printed `legal_sets` values | 37,691,003 bytes, 62.2074% of the 60,589,288-byte index | Raw stored JSON spans; compact serialization is a different 8,335,358 bytes |
+| Original record arrays | 5,434,024,624 bytes | 10,214,332 × 532 |
+| Proposed 180-byte record arrays | 1,838,579,760 bytes | Layout calculation; excludes indexes, contexts and runtime overhead |
+| Proposed binary index | 1,906,735 bytes | Estimated table components; no qualified reader or writer |
+
+The verifier also reports an actual external `zstd -3 -T1` size experiment: original records compressed separately by group occupy **292,918,135 bytes**, audit-label group frames **331,375,483 bytes**, and one compressed index **5,371,779 bytes**. These named components total **629,665,397 bytes**, versus **8,721,903,373 bytes** uncompressed. This subtotal excludes shard manifests, `groups.bin`, contexts, vocabulary, checkpoint and other provenance; it is not a complete deployable-store size or a host/GPU memory measurement. Experimental 180-byte group records compressed to 259,362,502 bytes in that external experiment. No loader-throughput, optimizer or fitted-search benefit was measured by this metadata audit.
+
+The proposed 180-byte layout is `56 × u16` tokens + `56 × u8` local legal-set IDs + three float32 labels: 112 + 56 + 12 bytes. It would reconstruct length and context from the token prefix and authenticated group metadata. The observed maximum length rounds to 56, and the current loss path already trims each batch to a multiple of eight. Those facts motivate the proposal; they **do not prove bit-identical training**. A production codec must preserve the existing 128-token grammar limit through a versioned extension or verified fallback layout; the observed 54-token maximum does not authorize a smaller grammar cap or truncation. It must reject inconsistent widths and legal-ID overflow, preserve group/sampler order, RNG sequence and all identity/provenance, reconstruct identical legal masks and every optimizer input, and pass record round trips plus fixed-batch token/mask/context/label, loss, gradient, update and reload/continuation parity. Changing physical bytes also changes the current raw-index corpus digest; compatibility needs an explicit verified migration, not an inherited old hash.
+
+Keep the numerical policy separate from byte layout. The external all-pairs calculation reports that float16 creates new value ties in **0.377392%** of all within-group record pairs and **0.289905%** of teacher-versus-other pairs. These have different denominators from adjacent-score pairs. Quantizing labels therefore changes ranking supervision. Preserve float32 training labels and contexts, and original-precision audit observations; compression of their bytes does not require reducing their precision.
+
 ## 15.6 Where reuse helps, and where full work remains
 
-The on-disk teaching store already makes useful incremental choices. A group's content key includes the relevant context/program/lineage bindings. Unchanged verified shards can be reused. New ledger contributions mark affected groups dirty; changed or reordered historical source inputs require reconciliation or a new store rather than silently editing history. Publication uses immutable artifacts and atomic replacement of the published index. Tokenization caches are bounded and exact; invalid exact parameters remain rejected.
+The on-disk teaching store can reuse unchanged verified shards **within an unchanged store binding**. In reviewed source 68, a group's key includes binding, context, programs and lineage. The binding includes twelve semantic source files and the SHA256 of `/proc/self/exe`. A changed packer executable digest therefore rejects the old store binding and changes every group key, requiring a new store/full disk repack even if the logical records are unchanged. A byte-identical reproducible rebuild does not change that digest. This disk invalidation is separate from GPU cache invalidation. New ledger contributions mark affected groups dirty; changed or reordered historical source inputs require reconciliation or a new store rather than silently editing history. Publication uses immutable artifacts and atomic replacement of the published index. Tokenization caches are bounded and exact; invalid exact parameters remain rejected.
 
-Snapshot 97's `packing-timing.json` records **7,859 reused groups and 18 rebuilt groups**, from 51 new ledgers. That is 99.7715% reuse by group count, not a measured 99.7715% reduction in bytes, CPU or latency. The September 11 snapshot421 audit recorded 7,863 reused and 14 rebuilt groups. Neither receipt by itself measures end-to-end pack time or memory. The accepted snapshot's 7,877 record files all exist at the declared lengths in this metadata audit, totaling 5,434,024,624 bytes; their label sidecars add 3,227,289,461 bytes. Sidecars preserve auditability but are not free storage.
+Snapshot 97's historical `packing-timing.json` records **7,859 reused groups and 18 rebuilt groups**, from 51 new ledgers. Attribute these figures to its legacy writer: the retained receipt has the four-field legacy format, whereas reviewed source 68 writes seven fields and has the stronger executable/semantic/lineage binding. The old reuse observation is not a qualification of the current writer. That is 99.7715% reuse by group count, not a measured 99.7715% reduction in bytes, CPU or latency. The September 11 snapshot 421 audit recorded 7,863 reused and 14 rebuilt groups. Neither receipt by itself measures end-to-end pack time or memory. The accepted snapshot's 7,877 record files all exist at the declared lengths in this metadata audit, totaling 5,434,024,624 bytes; their label sidecars add 3,227,289,461 bytes. Sidecars preserve auditability but are not free storage.
 
 The native trainer implementation maintains two different device caches. Its current direct dispatch remains held behind the original-GPU-grant requirement described in chapter 16; the following source behavior is not permission to launch it:
 
@@ -4360,7 +4497,7 @@ Tokens and legal IDs are each stored on the device as 16-bit signed tensors with
 
 For 10,214,332 records, token-plus-legal identifiers alone are `N × 128 × 4 = 5,229,737,984` bytes. Context IDs add `N × 8 = 81,714,656` bytes. The 8,894 shared float32 contexts would occupy 72,859,648 bytes. These are layout calculations, not measured GPU peaks; they exclude the legal mask table, model, optimizer, activations, batch conversions, allocator overhead and host staging. The emitted `resident_identifier_bytes` counter covers only the token/legal identifier term, not complete device use.
 
-The important limitation is that a newly published corpus SHA invalidates the entire token/legal/context-ID cache, even when 7,859 of 7,877 disk shards were reused. There is no qualified incremental device-shard cache in this path. Disk-level incremental packing therefore does not guarantee low-latency continual training. Repeated trainer processes also cannot rely on process-local tensor residency. This is a concrete optimization opportunity to measure before changing the format.
+A newly published corpus SHA invalidates the entire token/legal/context-ID cache even when most disk groups were reused under an unchanged binding. The historical 7,859-of-7,877 receipt illustrates disk reuse under the legacy writer; a changed current packer executable additionally forces full disk repacking as described above. There is no qualified incremental device-shard cache in this path. Disk-level incremental packing therefore does not guarantee low-latency continual training. Repeated trainer processes also cannot rely on process-local tensor residency. This is a concrete optimization opportunity to measure before changing the format.
 
 ## 15.7 Python training and the pending bounded campaign
 
@@ -4375,7 +4512,7 @@ The useful next change is evidence-led rather than another format by name. These
 1. **Measure the actual preparation path.** Retain separate wall time and peak host/device memory for metadata parsing, admission validation, tokenization, hashing/sealing, shard loading, host construction and device transfer. Measure cold and reused cases on the same admitted corpus identity. Include controller/setup cost; do not equate one identifier-array counter with total memory or CPU.
 2. **Give Python a verified packed-reader bridge if those measurements justify it.** Preserve exact tokens, legal sets, float semantics, task/class routing, contexts, splits, original observations and vocabulary/admission pins. Prove JSONL/packed equivalence on admitted fixtures, corruption and changed-input rejection, exact recipe round trips, reload and continuation. A converter that copies old `qualification: true` fields without rechecking the current teacher contract is not sufficient.
 3. **Reuse immutable device shards carefully.** Key reusable material by content digest and explicit vocabulary/grammar/context identities; measure only changed shards transferred. Global legal-set remapping, context IDs, balanced sampling, frozen labels and optimizer/sampler resume must remain reproducible. Appending raw old IDs into a new global table is unsafe without that mapping contract.
-4. **Evaluate padding and compression separately.** Current u16 IDs and shared contexts already save space. Length bucketing or variable-length storage can reduce padding, but require parity and measured GPU throughput. Compressed archive size is not a loader-memory result; compression must preserve bounded random access, hashes and deterministic sampling if adopted. No compression-ratio claim is made here.
+4. **Evaluate padding and compression separately.** Current u16 IDs and shared contexts already save space. The accepted-corpus audit above gives a measured padding opportunity and externally measured compressed byte counts. Length bucketing or a narrower layout still requires parity and measured GPU throughput. Compressed archive size is not a loader-memory result; preserve bounded random access, decompressed and stored-byte hashes, corruption rejection and deterministic sampling before adopting it. Keep the 180-byte record and binary-index estimates labelled as unqualified proposals.
 5. **Close the evidence chain before promoting the result.** Prove an eligible new target entered the corpus, was actually sampled, changed parameters, survived reload and improved later bounded executable-search behavior. Keep resource deadlines and sealed boundaries unchanged.
 
 Relevant source contracts are `crates/jope-engine/src/corpus.rs`, `teaching_store.rs`, `sealed_storage.rs` and `training.rs`; Python uses `python/src/jope/schema.py` and `policy/train_v3.py`. Existing source tests cover byte-identical reuse, changed inputs, frozen labels, original-precision midranks, interruption and immutable verified records. This documentation audit inspected those tests but did not run them. `source-pins.json` binds the inspected source and pending overlay; `HANDOFF.json` binds the chapter and its data.
@@ -4397,6 +4534,8 @@ The current frozen thirty-dataset demonstration is an adaptive **development** c
 
 The latest retained source-68 origin proof is a useful concrete boundary: it executed actual neural proposals, fitted generation zero, and fitted neural descendants, with an authenticated recovered report. Its neural RMSE was 166.3181717454848 versus generic 155.25909998168862 on one regression dataset. This demonstrates consumption, not a quality win or a thirty-dataset result. The fourteen-command private GP example establishes recipe-refit prediction parity across five language configurations; it is not exact-state fitted-winner export. Historical trained corpora also must not be confused with the zero newly demonstrated teachers under the pending ASM admission contract. The measured origin report SHA is `6e0c20720256b0735a6969c45032f44082c92abacadf2c4eb21ef5c390f249dd`; see [measured visual evidence](#chapter-08) and [the private language example](#chapter-05).
 
+Historical optimizer evidence is now more complete: 21 original A100-recovery logs retain all 63,000 steps from 6,001 through 69,000, with 378,000 selected loss/component/gradient values preserved exactly. All 21 blocks show declining within-block composite loss, while each uses a different corpus. This is actual historical fitting evidence, separate from better downstream GP targets or proposal quality. Accepted serving remains step 60,000; later A100 step 69,000 is explicitly refused, and the separately retained world-1 step 60,100 is hardware qualification. See the source-bound CSV, corpus boundaries and explicit averaging in [training history](#chapter-14). No new training or promotion is implied by discovering these logs.
+
 ## What version are we running?
 
 There is no single version number that describes all of the following. Record the entire identity tuple whenever comparing results or continuing training.
@@ -4406,7 +4545,7 @@ There is no single version number that describes all of the following. Record th
 | Product/package | Rust workspace and Python package `0.1.0`; immutable CLI reports `jope 0.1.0` | A packaging/API release number; not a checkpoint generation or proof of installed capability. |
 | Implementation | Reviewed source `68f56404c3e199e06413bfd645d3fe0803d7b96f`, merged as `a75e543d2166017cb0139e0a251d51d9a0c98e08` with the same source tree | A later documentation commit does not rebuild the binary. Preserve binary/build/source-manifest hashes. |
 | Accepted regression policy | Lineage B, step 60000, `parallel.checkpoint.v1`; state hash `8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6` | The current accepted consumer hard-pins this identity and its model/configuration/parameters. |
-| Historical continuation head | Step 60100 is retained hardware-qualification continuation evidence, state SHA `745be4b5e998bce85615349a5b03b901cd8ad2cf605e6dce3b86fbf777cc7388`; verify the actual training-head pointer independently | This is not the accepted serving checkpoint. Do not advance a pointer from a filename or step number. |
+| Hardware-qualification continuation | Step 60100 is retained hardware-qualification continuation evidence, state SHA `745be4b5e998bce85615349a5b03b901cd8ad2cf605e6dce3b86fbf777cc7388`; verify the actual training-head pointer independently | This is not the accepted serving checkpoint. Do not advance a pointer from a filename or step number. |
 | Rejected policy | Step 69000 is explicitly refused by state or model hash | A numerically higher training step does not imply promotion. |
 | Python model family | Current Python implementation declares `policy_v3.4-split-context`, with legacy `policy_v3.3-fused-heads`; trainer resume format `PrimePolicyTrainerResume.v1` | These identify a different trainer/model serialization surface from the accepted native `model.ot` lineage. |
 | Encoder | Current CPU (Rust/Candle FP32) context schema `jope.cpu-context/v1`, separate from the held native GPU path; produced artifacts require pinned native-fixture replay before qualification. Dataset 1536 (Hyperion 512 + projected foundation 1024) + target 512 = 2048 floats; legacy frozen encoder descriptor `parallel.frozen_encoder.v1` | Every component weight, transform, source/backend and assembly hash participates in identity. Dimensions alone do not establish compatibility. |
@@ -4455,6 +4594,24 @@ The checksum-verifying private binary installer and CLI-only source-build helper
 
 Sources: [current umbrella commands](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-cli/src/main.rs#L26), [local train-step dispatch](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-cli/src/main.rs#L308), [Python CLI flags](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/python/src/jope/cli.py#L186), [Python API](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/python/src/jope/policy/train_v3.py#L1331).
 
+### Variables used in the continuation examples
+
+The paths below are operator-supplied placeholders, not newly admitted inputs. Resolve them from the compatible original run inventory; use absolute paths and preserve its hashes, resource limits and original time window. The native command remains held. The pending commands require reviewed integration and the admission checks described below.
+
+| Variables | Required meaning |
+| --- | --- |
+| `JOPE_PARALLEL_NEURAL`, `NATIVE_ROOT` | Source-bound native executable built with `neural`, and its authenticated native data/run root; these paths do not release the dispatch hold. |
+| `QUALIFIED_NATIVE_CORPUS`, `VERIFIED_NATIVE_PARENT`, `VERIFIED_CARRY_POLICY` | Compatible corpus directory with verified allowed input closure, original native checkpoint directory, and validated optimizer-carry policy JSON. Do not substitute a Python checkpoint or blindly reuse the legacy corpus. |
+| `NATIVE_RUN` | Output directory for the declared native run; an interrupted resume retains that same directory, inputs and original allowance. |
+| `PYTHON_ENV`, `TRAINING_PYTHON` | Verified Python environment prefix and the matching Python executable, respectively. |
+| `PYTHON_CORPUS`, `TRUSTED_PYTHON_POLICY` | Compatible admitted Python JSONL corpus and trusted weight artifact for the warm-start example; warm-start weights alone do not restore optimizer state. |
+| `PYTHON_RESUME`, `ORIGINAL_SETTINGS` | Trusted `PrimePolicyTrainerResume.v1` artifact file and companion JSON containing its original compatible settings and audited input inventory. These are separate from the native checkpoint directory. |
+| `PYTHON_CORPUS_SHA256`, `PYTHON_RESUME_SHA256`, `ORIGINAL_SETTINGS_SHA256` | Expected file SHA256 values from the original authenticated input inventory, checked before the helper imports Torch. |
+| `NEW_RUN` | New private output directory for the Python example; the continuation helper requires it not to exist. This new output location does not renew a resource or time allowance. |
+| `FINAL_JOPE`, `FINAL_SOURCE_SHA` | Future source-bound CLI and full source commit after the pending training integration and its required checks; not the current source-68 executable. |
+| `LEARNING_STATE`, `CORPUS_REQUEST`, `CORPUS_REQUEST_SHA256`, `CORPUS_OUTPUT` | Admitted learning state, exact corpus-preparation request and its file SHA256, and private prepared-input output directory, as specified in [training operations](#chapter-04). |
+| `TRAINING_STATE`, `TRAINING_EXPORT` | Original supervised training state directory and private experimental export output directory; resume reuses `TRAINING_STATE`. |
+
 ### Native lineage B: the held command and its blockers
 
 This is the exact implemented command shape, **not an instruction to dispatch it under the present allocation**:
@@ -4474,9 +4631,9 @@ This is the exact implemented command shape, **not an instruction to dispatch it
 
 Here `--steps 100` declares the same increment for the whole original run; resume does not authorize another hundred steps. A completed run explicitly refuses resume. `--initialize` alone starts fresh FP32 AdamW and resets the new-corpus sampler; preserving optimizer ancestry requires the verified carry policy and compatible objective/partition evidence. Do not fabricate that policy JSON or relabel an incompatible recovered checkpoint. Corpus, vocabulary, model, optimizer, config, sampler, partition and deadline checks occur before CUDA.
 
-The current direct controller calls `require_original_gpu_grant`, which **always returns an error**: “original native GPU grant verifier unavailable; numerical dispatch is held.” Environment variables cannot release this gate. A separate typed native funding-admission API exists, but this is not a working direct-trainer bypass. Even after a future proper dispatch integration, the controller's fresh-telemetry check requires at least128 GiB available RAM and50 GiB free disk, incompatible with the current approved64 GiB limit. Valid normal microbatches are64,128 or256, and global batch is2048. With world1/microbatch64, accumulation is32. The retained step60100 hardware qualification actually used world1, microbatch256 and accumulation8, carrying AdamW from60000 to60100 on the unchanged corpus with zero fresh program presentations. Its100-step update is genuine optimizer work; it is not production continuation or promotion. The ADR's microbatch32 example is inaccurate for that retained run and is not a currently accepted CLI topology.
+The current direct controller calls `require_original_gpu_grant`, which **always returns an error**: “original native GPU grant verifier unavailable; numerical dispatch is held.” Environment variables cannot release this gate. A separate typed native funding-admission API exists, but this is not a working direct-trainer bypass. Even after a future proper dispatch integration, the controller's fresh-telemetry check requires at least 128 GiB available RAM and 50 GiB free disk, incompatible with the current approved 64 GiB limit. Valid normal microbatches are 64, 128 or 256, and global batch is 2048. With world 1/microbatch 64, accumulation is 32. The retained step 60100 hardware qualification actually used world 1, microbatch 256 and accumulation 8, carrying AdamW from 60000 to 60100 on the unchanged corpus with zero fresh program presentations. Its 100-step update is genuine optimizer work; it is not production continuation or promotion. The ADR's microbatch 32 example is inaccurate for that retained run and is not a currently accepted CLI topology.
 
-Before any future continuation, audit the **entire** input closure, including every context descriptor and staged tensor, not only training records. The retained snapshot97 index lists8,894 contexts, including878 `meta_test` descriptors, while record rows are train/validation only. Current legacy training stages all indexed contexts before sampling. Absence of sealed record rows therefore does not prove strict sealed-family exclusion. Do not blindly continue that corpus under the new closure policy; preserve the metadata observation and resolve it without opening sealed payloads. See [target history and packing](#chapter-15) and [context staging source](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-engine/src/training.rs#L1179).
+Before any future continuation, audit the **entire** input closure, including every context descriptor and staged tensor, not only training records. The retained snapshot 97 index lists 8,894 contexts, including 878 `meta_test` descriptors, while record rows are train/validation only. Current legacy training stages all indexed contexts before sampling. Absence of sealed record rows therefore does not prove strict sealed-family exclusion. Do not blindly continue that corpus under the new closure policy; preserve the metadata observation and resolve it without opening sealed payloads. See [target history and packing](#chapter-15) and [context staging source](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-engine/src/training.rs#L1179).
 
 Sources: [native command parser](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-engine/src/main.rs#L106), [controller admission and step window](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-engine/src/controller.rs#L478), [dispatch hold](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-engine/src/task_contract.rs#L85), [checkpoint checks and warm start](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-engine/src/training.rs#L923).
 
@@ -4494,7 +4651,7 @@ For a compatible, already admitted Python corpus, the existing CLI can launch a 
   --progress-jsonl "$NEW_RUN/progress.json"
 ```
 
-This example uses the stated256-width architecture; it is suitable only when the intended experiment explicitly uses that architecture. Warm starts may shape-filter or prefix-copy weights. The script's default model, architecture and vocabulary must not be assumed to reproduce the accepted native step60000 model. The CLI command is source-checked but was not executed for this chapter.
+This example uses the stated 256-width architecture; it is suitable only when the intended experiment explicitly uses that architecture. Warm starts may shape-filter or prefix-copy weights. The script's default model, architecture and vocabulary must not be assumed to reproduce the accepted native step 60000 model. The CLI command is source-checked but was not executed for this chapter.
 
 For **actual optimizer continuation**, call the existing API from a private maintainer script. The following is the essential code; `settings.json` must contain the original compatible `kwargs`, and all referenced inputs must be hash-pinned in the operator's original run inventory. The complete companion `continue-python-policy.py` includes those byte-hash checks, exclusive output creation, explicit GPU preflight, and refusal of distributed or non-current resume modes. It is an illustrative API caller, not a new installed product command or a qualified supervisor.
 
@@ -4539,7 +4696,7 @@ This current Python route has material limits. CUDA requests can silently fall b
 
 ## The pending bounded extension path
 
-The stopped training64 patch is `595824ef6eb8e15872be058668503cedad1dd9a5ff98ac4700c6f713251d384c`, with manifest `b86b550d7ee39fd93d5202accd5f77c975b7bcb4fd8f8e7706c69c5f279294a2`. It has not been integrated into source68 or qualified by a fresh real GPU run. Its exact command contract is described in [training operations](#chapter-04); pending files cannot honestly be linked as existing source68 GitHub files.
+The stopped training64 patch is `595824ef6eb8e15872be058668503cedad1dd9a5ff98ac4700c6f713251d384c`, with manifest `b86b550d7ee39fd93d5202accd5f77c975b7bcb4fd8f8e7706c69c5f279294a2`. It has not been integrated into source 68 or qualified by a fresh real GPU run. Its exact command contract is described in [training operations](#chapter-04); pending files cannot honestly be linked as existing source 68 GitHub files.
 
 After reviewed integration, source-bound build/tests, fresh real two-family teacher admission, and verified corpus preparation, the operational sequence is:
 
@@ -4559,7 +4716,7 @@ After reviewed integration, source-bound build/tests, fresh real two-family teac
 "$FINAL_JOPE" train export --state "$TRAINING_STATE" --output "$TRAINING_EXPORT"
 ```
 
-Run and resume are alternatives according to state; do not blindly execute resume after a completed run. The whole campaign permits one RTX3090 and one GPU-hour, at most20 minutes per category,20 CPUs,64 GiB and zero swap. Two passes share each category window; they do not receive fresh time allowances. At least two real admitted families are necessary before claiming the real regression training path. Classification fixtures may demonstrate labeled mechanics when real admission fails, but remain synthetic. Unknown or unavailable categories are reported rather than filled with invented success.
+Run and resume are alternatives according to state; do not blindly execute resume after a completed run. The whole campaign permits one RTX 3090 and one GPU-hour, at most 20 minutes per category, 20 CPUs, 64 GiB and zero swap. Two passes share each category window; they do not receive fresh time allowances. At least two real admitted families are necessary before claiming the real regression training path. Classification fixtures may demonstrate labeled mechanics when real admission fails, but remain synthetic. Unknown or unavailable categories are reported rather than filled with invented success.
 
 Verification must establish positive updates, changed parameters, reload equality, actual optimizer continuation, full input/runtime/source/device/vocabulary compatibility and persisted accounting. Export is experimental. The pending `experimental.regression`, `experimental.binary` and `experimental.multiclass` consumer entries bind task-specific exported checkpoints; a later real fit must prove the new checkpoint generated and fitted candidates. None of these commands updates the accepted serving pointer. Product28, warm-target and winner-export follow training64; they do not fix teacher eligibility by themselves.
 
@@ -4583,7 +4740,7 @@ These are proposed reporting definitions for acceptance, not a claim that every 
 | Reproducibility | Successfully authenticated independent report/reload replays / all requested replays | Same source, model, input, plan, protocol and artifact identities. Stale outputs, missing rows or changed class order are failures. |
 | Promotion | Accepted serving-head advance with independent matched evaluation, exact checkpoint identity and controlled pointer update | Separate from training-head advance and experimental export. No new promotion is claimed. |
 
-Define a dataset-level comparison using the protocol's frozen fold summary; retain fold-level results separately. Keep separate win columns for generic search, the previous checkpoint, and the best eligible frozen non-ASM comparator. A win against one reference is not automatically a win against the others. For a30-dataset target of ten wins per category, each reference's denominator remains ten per category and all thirty outcomes are listed, including unavailable ones. It is a measured target, not a promise. There is currently no completed full-panel result establishing those counts.
+Define a dataset-level comparison using the protocol's frozen fold summary; retain fold-level results separately. Keep separate win columns for generic search, the previous checkpoint, and the best eligible frozen non-ASM comparator. A win against one reference is not automatically a win against the others. For a 30-dataset target of ten wins per category, each reference's denominator remains ten per category and all thirty outcomes are listed, including unavailable ones. It is a measured target, not a promise. There is currently no completed full-panel result establishing those counts.
 
 A minimal additional acceptance record could use the following explicit nulls. This is a **proposed reporting shape**, not an existing on-disk schema:
 
@@ -4657,7 +4814,7 @@ Use eligible teachers from independently identified training families. Keep fami
 
 For each cycle, retain all of the following:
 
-1. **Target creation:** incumbent and challenger recipe hashes, all five candidate and baseline OOF losses, complete fit outcomes and exact comparison identity. Record rejected, tied, failed and unavailable candidates too.
+1. **Target creation:** incumbent and challenger recipe hashes, all five candidate and baseline OOF losses, complete fit outcomes and exact comparison identity. Authenticate the complete initial seed population. Distinguish a newly discovered program absent from that seed set from a carried incumbent, a neural seed and its evolved descendants. Retain discovering arm, program hash, generation, context, parent/ancestry, first measurement and later shared-seed exposure. Count each distinct dataset/cut/program discovery once before reporting per-arm reuse. Record rejected, tied, failed and unavailable candidates too.
 2. **Corpus delta:** previous/new corpus hashes; added, improved, removed and unchanged comparison/program identities; distinct contexts and families; rejection reasons. Distinguish logical rows from unique programs and unique contexts.
 3. **Actual optimizer exposure:** how often newly admitted programs and contexts appeared in committed steps, their weights, sample repetition, padding fraction and fresh/broad sampling fractions. New rows in a manifest are insufficient if the sampler never reaches them.
 4. **Training continuity:** initialization parent, parameter hashes before/after, optimizer initialization versus restored moments, local and cumulative committed steps, effective batch and actual clock/resource use. A failed attempt's compute stays in accounting.
@@ -4673,13 +4830,17 @@ The learned route is a conditional distribution over executable program tokens g
 
 Measure the policy before GP recovery as well as after it. A long search can find the same winner despite poor neural proposals, while a short search may reveal useful initialization that disappears at a larger budget. Shared incumbents can create many ties. Equal time caps do not imply equal completed fit counts, especially when candidate runtimes differ.
 
+The admitted historical evidence in [chapter 15](#chapter-15) illustrates this limit: at 1,000 completed evaluations, 3,268 paired neural/generic final-search observations contain 24 lower neural scores, 17 higher scores and 3,227 exact ties. Their geometric mean neural/generic RMSE is 1.0001869094. They repeat families and generations, consume unequal reported wall time and measure adaptive final winners. The historical arms also share incumbent, retained-teacher and exploration seed pools; a winner can seed every arm in the next generation. In the separate first-to-last table, 64 lower arm groups collapse to 23 distinct dataset/cut pairs out of 55, with identical available-arm final scores in 22 of those 23. Those are dependent carried-forward outcomes, not 64 independent discoveries or wins. They neither establish initial routing quality nor show that later training caused better search. A larger external extract is kept outside this claim where its rows have not joined the admitted inventory.
+
+The same chapter records unresolved historical input closure: meta-test context descriptors were staged by the legacy trainer, while the external author disclosed meta-test manifest inspection and source-CSV hashing alongside old exposed high-water marks. Do not treat these findings as proof of training-label leakage or dismiss them because the packed record split excludes meta-test rows. Resolve the complete allowed-input closure and current teacher eligibility before continuing the old corpus under the new policy.
+
 Useful controls answer different questions: generic grammar sampling tests end-to-end benefit over the non-neural search; the previous accepted checkpoint tests whether training helped; shuffled contexts test conditional information; and random ranking on the same candidate pool tests ranking utility. These additional controls are proposed experiments, not extra runs hidden inside the approved panel. Declare their budget and scope before execution.
 
 ## Commands that exist today for one dataset
 
 The current private Linux `asm` build supports a **separately bounded operational proof on one frozen regression dataset**. This is the closest current neural search front door to focused optimization. It is not an arbitrary-dataset ingestion command, a daemon, or an incumbent-seeded high-water-mark attack.
 
-The following metadata commands are safe preparation and were checked against the immutable reviewed68 CLI:
+The following metadata commands are safe preparation and were checked against the immutable reviewed 68 CLI:
 
 ```sh
 "$JOPE" optimize capabilities
@@ -4736,7 +4897,7 @@ The same `run` command resumes that journal within its original window. Do not c
   --journal "$FOCUS_DIR/journal"
 ```
 
-The command audit for this chapter executed only metadata/help operations. These example execution commands were not run as a new campaign while writing the manual. The separately measured68 proof described in chapter 1 remains the actual numerical example.
+The command audit for this chapter executed only metadata/help operations. These example execution commands were not run as a new campaign while writing the manual. The separately measured 68 proof described in chapter 1 remains the actual numerical example.
 
 ### Other current search surfaces
 
@@ -4767,7 +4928,7 @@ For a dataset outside the frozen panel, first implement or use a separate authen
 
 ## Code to extend
 
-These are the narrow extension points at reviewed source68. Follow the exact-revision links; line numbers refer to that snapshot.
+These are the narrow extension points at reviewed source 68. Follow the exact-revision links; line numbers refer to that snapshot.
 
 | File | Responsibility for the focused extension |
 | --- | --- |

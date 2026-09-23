@@ -1,0 +1,30 @@
+{
+  "schema": "jope.manual.lossless-evidence-packaging/v1",
+  "created_utc": "2026-09-23T18:26:34.212169+00:00",
+  "encoding": "gzip;level9;mtime0",
+  "reason": "5MiB per-current-file repository limit; no evidence loss or cap change",
+  "records": [
+    {
+      "original_path": "data/performance-evidence.json",
+      "original_sha256": "ce36d19251a4d01794ed277597541b8da3ceba4f5076aed723de98d3f9466e8e",
+      "original_bytes": 7412755,
+      "packed_path": "data/performance-evidence.json.gz",
+      "packed_sha256": "f047c21bbfbdaf789497da6b70d7259b2eea78a7aab24512ab5b1c681616d6c2",
+      "packed_bytes": 760340,
+      "decompressed_bytes_equal": true,
+      "original_preserved_at": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/lifecycle/packaging-de4f4869/performance-evidence.json",
+      "original_git_commit": "de4f48699cfa93881a40ad60eb958312898a8580"
+    },
+    {
+      "original_path": "data/metadata-receipts/veox-jopedime-datasets-use2--catalog--v1--catalog.jsonl",
+      "original_sha256": "ab9fda8d2dea46067b70a42812e9d3c1d9dc6ba025780100df34377e81aa1120",
+      "original_bytes": 5363939,
+      "packed_path": "data/metadata-receipts/veox-jopedime-datasets-use2--catalog--v1--catalog.jsonl.gz",
+      "packed_sha256": "f28d1fc59bd454329a05feaefdd68a55b14b609159b960b2f9fae97285049a68",
+      "packed_bytes": 1021027,
+      "decompressed_bytes_equal": true,
+      "original_preserved_at": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/lifecycle/packaging-de4f4869/veox-jopedime-datasets-use2--catalog--v1--catalog.jsonl",
+      "original_git_commit": "de4f48699cfa93881a40ad60eb958312898a8580"
+    }
+  ]
+}

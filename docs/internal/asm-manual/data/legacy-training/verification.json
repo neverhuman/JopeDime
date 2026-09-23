@@ -1,0 +1,144 @@
+{
+  "schema": "jope.manual.legacy-training-supplement/v1",
+  "created_utc": "2026-09-23T18:37:05.342976+00:00",
+  "sources": [
+    {
+      "path": "/home/ubuntu/jope-flywheel/training/round1/round1.train_metrics.jsonl",
+      "copy": "round1.train_metrics.jsonl",
+      "bytes": 6700,
+      "sha256": "df70f54f5b06ae44cfef9cc24c73c31d2d677a416ed84c4368e701b53ef34260"
+    },
+    {
+      "path": "/home/ubuntu/jope-flywheel/training/round1/gate-result.v1.json",
+      "copy": "gate-result.v1.json",
+      "bytes": 2245,
+      "sha256": "53e7f728c01531e0c9147400d4518f4e568a7fb0addeb841fcd0ebb300862d1b"
+    },
+    {
+      "path": "/home/ubuntu/jope-prime/docs/paper/data/loss_components_by_generation.csv",
+      "copy": "loss_components_by_generation.csv",
+      "bytes": 10398,
+      "sha256": "f7d419a5614673c71e51ce85b898107819d242102089d06b980e3de97bb12bbf"
+    },
+    {
+      "path": "/home/ubuntu/jope-prime/docs/paper/data/elo_trajectory.csv",
+      "copy": "elo_trajectory.csv",
+      "bytes": 1948,
+      "sha256": "5d1cc168dc0d7abb02751122ceef86d44ceb2e3de5a40890daa100e90485068c"
+    }
+  ],
+  "round1": {
+    "epochs": 4,
+    "phase_boundary": 2.5,
+    "model_versions": [
+      "policy_v3.3-fused-heads"
+    ],
+    "train_loss": [
+      5.191046204229798,
+      3.212379209456905
+    ],
+    "val_loss": [
+      9.080721696217855,
+      8.24139658610026
+    ],
+    "overfit_gap": [
+      3.889675491988058,
+      5.029017376643354
+    ],
+    "val_pairwise_win_accuracy": [
+      0.5779395353555848,
+      0.6241926211490988
+    ],
+    "val_seq_nll": [
+      1.6864329973856609,
+      1.7737417221069336
+    ],
+    "minimum_validation_loss": 7.938041687011719,
+    "minimum_at_epoch": 2
+  },
+  "round1_gate": {
+    "date": "2026-07-25T10:24:49.812000+00:00",
+    "baseline": {
+      "checkpoint": "/home/ubuntu/jope-flywheel/training/round1/warm_start/d7d6c0b26f644e65433bfec819c56076174555fb8b908d38d5258956bfcdd5df.model.pt",
+      "checkpoint_sha256": "d7d6c0b26f644e65433bfec819c56076174555fb8b908d38d5258956bfcdd5df",
+      "val_rows": 557,
+      "val_rows_common_encodable": true,
+      "val_pairwise_win_accuracy": 0.5347172512526843,
+      "seq_nll": 2.110434134801229,
+      "reward_cv_correlation": -0.09742684662342072,
+      "top1_historical_regret": 0.29741703474428505,
+      "conditional_advantage": 0.024337866857551904,
+      "head_accuracy": {
+        "featmath": 0.09515260323159784
+      },
+      "decode": {
+        "datasets": 16,
+        "attempts": 96,
+        "decode_failures": 0,
+        "decode_success_rate": 1.0,
+        "bridge_valid": 96,
+        "validity_rate": 1.0,
+        "risk_flagged": 4,
+        "safety_rate": 0.9583333333333334
+      }
+    },
+    "trained": {
+      "checkpoint": "/home/ubuntu/jope-flywheel/training/round1/checkpoints/fbcd5459f2c18f6cd5e4c23eef76a508a91d653a82f27c6ea41bcee8cafa2592.model.pt",
+      "checkpoint_sha256": "fbcd5459f2c18f6cd5e4c23eef76a508a91d653a82f27c6ea41bcee8cafa2592",
+      "val_rows": 557,
+      "val_rows_common_encodable": true,
+      "val_pairwise_win_accuracy": 0.6636114655628521,
+      "seq_nll": 1.838604251543681,
+      "reward_cv_correlation": 0.44510889053344727,
+      "top1_historical_regret": 0.29117267893161625,
+      "conditional_advantage": 0.05658087205502482,
+      "head_accuracy": {
+        "featmath": 0.1059245960502693
+      },
+      "decode": {
+        "datasets": 16,
+        "attempts": 96,
+        "decode_failures": 0,
+        "decode_success_rate": 1.0,
+        "bridge_valid": 96,
+        "validity_rate": 1.0,
+        "risk_flagged": 0,
+        "safety_rate": 1.0
+      }
+    },
+    "pass": true,
+    "note": "gate only; nothing deployed or rotated"
+  },
+  "generation_summaries": {
+    "loss_rows": 31,
+    "elo_rows": 30,
+    "val_seq_nll": [
+      1.7835870385169983,
+      2.084098696708679
+    ],
+    "val_pairwise_win": [
+      0.5948560832056761,
+      0.5291461743126663
+    ],
+    "elo_top1": [
+      1073.2,
+      1119.2
+    ],
+    "pearson_elo_nll_over_generations1_30": 0.7283358400743762,
+    "gen31_matches_epoch": 3,
+    "scope": "Retained paper aggregate CSVs; not independently replayed tournaments or complete generation-by-generation optimizer proof. Internal self-play Elo is not benchmark-valid."
+  },
+  "reads": "Four declared small metadata/aggregate sources plus previously audited gen31 log; no models or sealed bodies; no fitting/training.",
+  "comparison_sources": [
+    {
+      "path": "/home/ubuntu/jope-prime/registry/compatibility/gen31/train_metrics.jsonl",
+      "bytes": 21686,
+      "sha256": "d57de1b28a8678327c984a82732cd774520db2cb0994d893a45f8a5ea428e312",
+      "use": "Generation-31 versus epoch-3 equality on three explicitly named metrics; original log already retained by the training-history audit."
+    }
+  ],
+  "supplement_derivation": {
+    "predecessor_verification_sha256": "240087340684d44a32d93aad0093b60ec032c1876d5d30801433c0b6f95e76a1",
+    "change": "Add the comparison-source pin requested by independent metadata review; measurements unchanged."
+  }
+}

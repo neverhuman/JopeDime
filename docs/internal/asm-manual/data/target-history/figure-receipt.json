@@ -3,11 +3,12 @@
   "inputs": {
     "target-quality-1000-summary.csv": "df0445e3f3b29a7aeac4fb54b5fa056fc5a7362c687be4617c6f73dd9f3b6d1d",
     "target-quality-1000-comparisons.csv": "1a3e32526308ce26b4808b0a1a34a651a503f5419ba2343a06751e7bbec87ad9",
-    "target-quality-pine-chromium-cut1.csv": "1cb4393428d78ecfbea1d36aa1b33ea2acd5028aa1f760662d09dc994fd611b9"
+    "target-quality-pine-chromium-cut1.csv": "1cb4393428d78ecfbea1d36aa1b33ea2acd5028aa1f760662d09dc994fd611b9",
+    "carry-forward-audit.json": "3408b07474073fab456019a901afdc6d2e82cca96d711540b00dd28beb81e401"
   },
   "outputs": {
-    "target-quality-progress-counts.png": "88b03df8641e7335c7b51ac578f1181bd34bb8545a433b76fe8a06a20a1f8af1",
-    "target-quality-pine-example.png": "55e7861ac1cc908d588195a819ffeb61103789690f261284d61a848ecbe0ce69"
+    "target-quality-progress-counts.png": "4d654a36aac5bd0e608a225d4170089736af3f96200e13bc4e257b10faff3807",
+    "target-quality-pine-example.png": "b7caf784f1c033742749eafc2ee4b0db5e8c4cecceeacd23eb750d52ca12e1fa"
   },
   "comparisons_recomputed": 159,
   "original_example_scores": 213,
