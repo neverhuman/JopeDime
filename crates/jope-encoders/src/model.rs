@@ -21,7 +21,7 @@ use inference::{average_ranks_one_based, rank_aggregate};
 use inference::{detect_model_kind, median_of_views, regression_query_chunk, target_mean_std};
 use tensor_ops::{
     add_train_y_column, add_train_y_icl, apply_feature_view, decompress_zstd, preprocess_group,
-    FeatureView,
+    preprocess_group_stable, FeatureView,
 };
 
 pub use chimera::{ChimeraClassifier, ChimeraRegressor, RegressionFeatureDump};
@@ -260,7 +260,7 @@ impl StarforgeModel {
         }
         let (mu, sd) = target_mean_std(ctx_y);
         let ctx_y_z: Vec<f32> = ctx_y.iter().map(|&v| (v - mu) / sd).collect();
-        self.regression_fusion_features_normalized(ctx_x, &ctx_y_z, qx, n_features, mu, sd)
+        self.regression_fusion_features_normalized(ctx_x, &ctx_y_z, qx, n_features, (mu, sd), false)
     }
 
     /// The caller supplies the frozen export's already standardized context labels.
@@ -282,7 +282,7 @@ impl StarforgeModel {
         {
             bail!("invalid frozen foundation input");
         }
-        self.regression_fusion_features_normalized(ctx_x, ctx_y, qx, n_features, 0.0, 1.0)
+        self.regression_fusion_features_normalized(ctx_x, ctx_y, qx, n_features, (0.0, 1.0), true)
     }
 
     fn regression_fusion_features_normalized(
@@ -291,9 +291,10 @@ impl StarforgeModel {
         ctx_y_z: &[f32],
         qx: &[f32],
         n_features: usize,
-        mu: f32,
-        sd: f32,
+        target_scale: (f32, f32),
+        stable_moments: bool,
     ) -> Result<RegressionExpertFeatures> {
+        let (mu, sd) = target_scale;
         let n = ctx_y_z.len();
         let m = qx.len() / n_features;
         let query_chunk = regression_query_chunk(n, m);
@@ -304,7 +305,11 @@ impl StarforgeModel {
         for start in (0..m).step_by(query_chunk.max(1)) {
             let end = (start + query_chunk).min(m);
             let q_slice = &qx[start * n_features..end * n_features];
-            let grouped = preprocess_group(ctx_x, q_slice, n, end - start, n_features);
+            let grouped = if stable_moments {
+                preprocess_group_stable(ctx_x, q_slice, n, end - start, n_features)
+            } else {
+                preprocess_group(ctx_x, q_slice, n, end - start, n_features)
+            };
             let x = Tensor::from_vec(
                 grouped,
                 vec![1, n + end - start, n_features, 6],

@@ -839,3 +839,31 @@ Root resumes sole canonical writer at d0928ecd69c35355473b463aab1624f92df0d78c o
 ## 2026-09-23T12:36:53.152613+00:00 — Codex: CPU correction source freeze
 
 Ten Hyperion sweep tests,11context tests and strict scoped4packageClippy pass; Torch2.7 percentilefixture previously passed5cases. Root freezes embedding-only sweep andFP32quantile correction for freshimmutable build and unchanged8reference replay. Original failednumeric experiments retained; no achievedparity or genuineoriginfit claim. CPUallocation remains root, no other builds/models/fullCI.
+
+## 2026-09-23T12:38:38.660111+00:00 — Codex bounded specialist: stable CPU foundation moments custody claim
+
+Root remains sole canonical source/index writer at 967a7480b059e919951dfa7b37bda0332e270039; only open PR83 and existing bench/honesty lanes observed, no new lane. Root explicitly assigned a narrow custody candidate under agent-foundation-moments: stable f64 train-side feature moments only for frozen foundation standardized input, preserving ordinary inference, missing indicators, population n denominator,1e-12 floor and final f32 normalization. Source audit binds exact retained exporter/model/sampling hashes; all three admitted row counts reproduce retained sampling indices in scalar metadata audit. Current failed cut0 also differs in mean/p10, so quantile correction alone is not established sufficient. Torch2.7 CPU accumulation supports a high-accuracy candidate, not exact CUDA reduction equivalence. Author focused scalar accuracy/permutation/missing tests and static patch replay only; no model/build/fit/window/service execution. Parent controls unchanged eight-case qualification and whether candidate is integrated.
+
+## 2026-09-23T12:40:17.992632+00:00 — Codex: embedding-only native qualification
+
+Source967a7480b059e919951dfa7b37bda0332e270039 immutablebuild174.88s passed, worker cfc6409b, source manifest85699ad3. Startingfixed8cases withplan8a7166e6a44808ae32ea82a873b4b94afede6b420d7116ce36081c53d1732ea2, original300s/10report/30perjob20CPU64G0swap. Newsource-specificexperiment; previousfailedwindows preserved. CurrentexactheadmanualCI35861629084/1 andPR35861635502/1; previous521headbothSUCCESSbutnotcurrentapproval. No othernumerical/fullCIwork; panel/trainingnotadmitted.
+
+## 2026-09-23T12:41:45.091176+00:00 — Codex: runtime gate fixed; foundation precision remains
+
+Native967 proof completesall8workers in10.24–19.96s, totalcontroller37.76s;5pass and3precisionfail (blackmorecut0.0005660057, cescut0.00055609643,cescut1.00045645237). Hyperionnow5.2–13.8s; timeoutgapresolved, original3e-4gateunchanged. Experimentfd4d7032379587a68a7b8f23097dfd6f991042cb91f32982b121f3d002d08f94 window1790167218204→1790167518204 retained. Posthocpurearraydiagnostics confirm foundationdrift, referencecomponentsassemble<=5.1e-5; no projectiontolerancechange. Root awaits narrow supported CPUstablepreprocessing candidate fromMCPbounded; other2custody taskscontinue. No genuinepolicyproposal/fit, panel/GPUtrainingyet.
+
+## 2026-09-23T12:42:10.612695+00:00 — Codex: stable foundation CPU preprocessing integration
+
+Root claims model.rs/model/tensor_ops.rs and accepts custody430bc07b after fullpatchreview. Independentlysupported f64 populationmoments avoid sequentialFP32 cancellation; only frozenstandardizedfoundationroute selects it, existinggeneralpredictionpath unchanged. Fouranalytical accuracy/missing/query/permutationtests plusexistingcontextchecks precedeactual8casereplay. This is a sourcecorrectioncandidate, notexactCUDAreductionclaim or relaxednumericalgate. No concurrentbuild/model/fullCI.
+
+## 2026-09-23T12:42:10.699314+00:00 — Codex training specialist: serial integration custody claim
+
+Root remains sole canonical source/index writer at observed967a7480b059e919951dfa7b37bda0332e270039, PR83 soleopen. Root assigned deterministic integration audit/helper for stopped eligibility, innerOOF teaching, training frontend/native, experimental contexts/proposals, corpus and frozen vocabulary packets. This specialist owns only agent-training-integration custody text, verifies every packet/base hash, resolves exact overlapping hunks into append-only deltas and preserves current CPU corrections. No checkout source/index mutation, worktree/clone/build/model/Torch-importing test or campaign. Static replay/API/dependency/install checks only; root retains real CI/qualification.
+
+## 2026-09-23T12:42:31.300349+00:00 — Codex bounded specialist: stable moments candidate stopped
+
+Custody agent-foundation-moments/foundation-moments.patch SHA430bc07ba8022c8a4aacd3b02e52f2733b3bb0adc1d098425b2a051c4b172a2f stopped against967a7480b059e919951dfa7b37bda0332e270039; root currentHEAD967a7480b059e919951dfa7b37bda0332e270039 remains sole canonical source/index writer. Two-file standard patch only switches frozen foundation standardized input to f64 moments, retaining ordinary inference f32 path and unchanged grouping/indicators/f32 final arithmetic. Four meaningful accuracy/permutation/missing/floor tests authored,0Rust tests executed here; rustfmt and patch dry-run pass, scalar analytical fixture independently reproduces old cancellation error. README/static-check.json retain exact source provenance and qualification limits. Pure967 output audit finds all four previously completed blackmore Hyperion vectors bit-identical to d092; embedding-only runtime improvement does not alter those outputs. All8nowfinish,5pass/3foundationprecisionfail remain root-recorded outcomes; no new case/tolerance/deadline or model/backend substitution. RMS audit finds sequentialf32 Candle sumsq with correctF32epsilon, no established causal defect; untouched. Root owns compilation and unchanged live replay before any qualification claim.
+
+## 2026-09-23T12:43:47.699417+00:00 — Codex: stable moments correction freeze
+
+Fouranalytical momenttests pass. Combinedencoders/policy run reports58pass but4bundlecases self-skipwithoutJOPE_MODELS_ROOT, so actual54pass/4runtime-skipped/3ignoredof61collected,0fail; unchangedactualbundleproofs remain at521source. Scoped4packageClippy passes10.97s. Root freezes stablefoundationmoments forsource-specificimmutable build andsame8cases; no tolerance/row/budget changes. MCPcachecandidate staysoptional/unintegratedpendingactualpolicytiming; inference/trainingcustodyworkcontinues.
