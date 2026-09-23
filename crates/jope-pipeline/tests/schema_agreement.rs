@@ -449,3 +449,33 @@ fn schema_only_consumers_require_every_new_v2_field() {
 fn committed_schema_is_generated_from_code_exactly() {
     assert_eq!(schema(), derived_schema());
 }
+
+#[test]
+fn asm_contract_schemas_match_generated_types_exactly() {
+    use jope_pipeline::experiment::{EvaluationRequest, EvaluationResult, Experiment, Panel};
+    let schemas = [
+        (
+            "jope.experiment.v1",
+            serde_json::to_value(schemars::schema_for!(Experiment)).unwrap(),
+        ),
+        (
+            "jope.benchmark-panel.v1",
+            serde_json::to_value(schemars::schema_for!(Panel)).unwrap(),
+        ),
+        (
+            "jope.evaluation-request.v1",
+            serde_json::to_value(schemars::schema_for!(EvaluationRequest)).unwrap(),
+        ),
+        (
+            "jope.evaluation-result.v1",
+            serde_json::to_value(schemars::schema_for!(EvaluationResult)).unwrap(),
+        ),
+    ];
+    for (name, generated) in schemas {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../schemas")
+            .join(format!("{name}.schema.json"));
+        let committed: Value = serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
+        assert_eq!(committed, generated, "{name}");
+    }
+}

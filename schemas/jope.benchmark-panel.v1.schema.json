@@ -1,0 +1,264 @@
+{
+  "$defs": {
+    "Column": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/ColumnKind"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "kind"
+      ],
+      "type": "object"
+    },
+    "ColumnKind": {
+      "enum": [
+        "numeric",
+        "categorical"
+      ],
+      "type": "string"
+    },
+    "License": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_url": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "original": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "original",
+        "evidence_url",
+        "repository",
+        "note"
+      ],
+      "type": "object"
+    },
+    "Metric": {
+      "enum": [
+        "rmse",
+        "auroc",
+        "log_loss"
+      ],
+      "type": "string"
+    },
+    "PanelDataset": {
+      "additionalProperties": false,
+      "properties": {
+        "checkpoint_exposure": {
+          "type": "string"
+        },
+        "classes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "features": {
+          "items": {
+            "$ref": "#/$defs/Column"
+          },
+          "type": "array"
+        },
+        "group_columns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "group_limitations": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "license": {
+          "$ref": "#/$defs/License"
+        },
+        "metric": {
+          "$ref": "#/$defs/Metric"
+        },
+        "rows": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        },
+        "split": {
+          "$ref": "#/$defs/Split"
+        },
+        "task": {
+          "$ref": "#/$defs/Task"
+        }
+      },
+      "required": [
+        "id",
+        "task",
+        "metric",
+        "source",
+        "rows",
+        "features",
+        "classes",
+        "group_columns",
+        "split",
+        "license",
+        "checkpoint_exposure",
+        "description",
+        "group_limitations"
+      ],
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "bytes": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "metadata_sha256": {
+          "type": "string"
+        },
+        "metadata_url": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "url",
+        "sha256",
+        "bytes",
+        "metadata_url",
+        "metadata_sha256"
+      ],
+      "type": "object"
+    },
+    "Split": {
+      "additionalProperties": false,
+      "properties": {
+        "development_rows": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "development_sha256": {
+          "type": "string"
+        },
+        "fold_rows": {
+          "items": {
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "type": "array"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "sealed_rows": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "sealed_sha256": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "protocol",
+        "sha256",
+        "development_sha256",
+        "sealed_sha256",
+        "development_rows",
+        "sealed_rows",
+        "fold_rows"
+      ],
+      "type": "object"
+    },
+    "Task": {
+      "enum": [
+        "regression",
+        "binary",
+        "multiclass",
+        "multi_label",
+        "timeseries"
+      ],
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "datasets": {
+      "items": {
+        "$ref": "#/$defs/PanelDataset"
+      },
+      "type": "array"
+    },
+    "folds": {
+      "format": "uint",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "panel_id": {
+      "type": "string"
+    },
+    "repository": {
+      "type": "string"
+    },
+    "revision": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "seed": {
+      "format": "uint64",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "selection": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "panel_id",
+    "repository",
+    "revision",
+    "seed",
+    "selection",
+    "folds",
+    "datasets"
+  ],
+  "title": "Panel",
+  "type": "object"
+}

@@ -106,7 +106,7 @@ uv --version | grep -qF 'uv 0.11.28' || { uv --version >&2; echo 'expected the i
     # Sync the locked environment (CPU torch)
 (
 cd python
-uv sync --locked --extra dev --extra cpu
+uv sync --locked --extra dev --extra cpu --extra benchmark
 )
     # Ruff lint and format
 (
@@ -118,7 +118,7 @@ uv run --no-sync ruff format --check .
     # Pytest (xbabe2-only tests deselected)
 (
 cd python
-uv run --no-sync pytest -q -m "not xbabe2" -p no:cacheprovider --junitxml="$EVIDENCE/junit.xml"
+uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py -m "not xbabe2" -p no:cacheprovider --junitxml="$EVIDENCE/junit.xml"
 )
     ;;
   rust-test)

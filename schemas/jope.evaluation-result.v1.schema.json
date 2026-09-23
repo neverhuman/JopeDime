@@ -1,0 +1,111 @@
+{
+  "$defs": {
+    "Consumption": {
+      "additionalProperties": false,
+      "properties": {
+        "cpu_seconds": {
+          "format": "double",
+          "type": "number"
+        },
+        "gpu_seconds": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "peak_rss_bytes": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "wall_seconds": {
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "required": [
+        "wall_seconds",
+        "cpu_seconds"
+      ],
+      "type": "object"
+    },
+    "EvaluationStatus": {
+      "enum": [
+        "completed",
+        "failed",
+        "timed_out",
+        "unavailable",
+        "cancelled",
+        "budget_exhausted"
+      ],
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "consumption": {
+      "$ref": "#/$defs/Consumption"
+    },
+    "fitted_state_sha256": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "predictions_sha256": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "primary": {
+      "format": "double",
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "request_sha256": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "scored_rows": {
+      "format": "uint",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "secondary": {
+      "additionalProperties": {
+        "format": "double",
+        "type": "number"
+      },
+      "type": "object"
+    },
+    "status": {
+      "$ref": "#/$defs/EvaluationStatus"
+    }
+  },
+  "required": [
+    "schema",
+    "request_sha256",
+    "status",
+    "secondary",
+    "scored_rows",
+    "consumption"
+  ],
+  "title": "EvaluationResult",
+  "type": "object"
+}
