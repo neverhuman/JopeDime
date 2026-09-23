@@ -1,0 +1,91 @@
+{
+  "captured_utc": "2026-09-23T16:39:11.304906+00:00",
+  "profile": "veox-jepson-prod",
+  "verified_account": "714044927654",
+  "scope": "current objects only; no versions/deleted objects; metadata listing only, no sealed or model bodies",
+  "buckets": [
+    {
+      "bucket": "veox-jopedime-datasets-use2",
+      "complete": true,
+      "objects": 15442,
+      "bytes": 3234922515,
+      "prefixes": {
+        "blobs/": {
+          "objects": 11577,
+          "bytes": 3224104137,
+          "storage_classes": {
+            "STANDARD": 11577
+          }
+        },
+        "catalog/": {
+          "objects": 2,
+          "bytes": 5363942,
+          "storage_classes": {
+            "STANDARD": 2
+          }
+        },
+        "collections/": {
+          "objects": 4,
+          "bytes": 94356,
+          "storage_classes": {
+            "STANDARD": 4
+          }
+        },
+        "datasets/": {
+          "objects": 3859,
+          "bytes": 5360080,
+          "storage_classes": {
+            "STANDARD": 3859
+          }
+        }
+      },
+      "body_reads": 0
+    },
+    {
+      "bucket": "veox-jopedime-learning-use2",
+      "complete": true,
+      "objects": 645281,
+      "bytes": 430645459168,
+      "prefixes": {
+        "staging/": {
+          "objects": 645281,
+          "bytes": 430645459168,
+          "storage_classes": {
+            "STANDARD": 645281
+          }
+        }
+      },
+      "body_reads": 0
+    },
+    {
+      "bucket": "veox-jopedime-models-use2",
+      "complete": true,
+      "objects": 967,
+      "bytes": 3929105273,
+      "prefixes": {
+        "blobs/": {
+          "objects": 21,
+          "bytes": 1461921570,
+          "storage_classes": {
+            "STANDARD": 21
+          }
+        },
+        "bundles/": {
+          "objects": 3,
+          "bytes": 32045,
+          "storage_classes": {
+            "STANDARD": 3
+          }
+        },
+        "staging/": {
+          "objects": 943,
+          "bytes": 2467151658,
+          "storage_classes": {
+            "STANDARD": 943
+          }
+        }
+      },
+      "body_reads": 0
+    }
+  ]
+}

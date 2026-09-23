@@ -1,0 +1,14 @@
+{
+  "schema": "jope.manual-inventory-figures/v1",
+  "sources": {
+    "plot-dataset-sizes.csv": "3c1670203239dc1888beb96ae223ce29b6d5ef51199ff8b00a8dbaea1476c474",
+    "dataset-inventory.json": "c008ebedb5febee38ccba7d3f220009350a6ef055b865c25de2a5ba0ca2e6639",
+    "catalog-summary.json": "e7d7d4a459f9fbc3b6aea10212c26a812938472c647ab5fbcce11a8acf46a4b8",
+    "plot-current-origin.csv": "c5e3fcefc8b493227f259720dd6856bfa1c35eaebd88ef336cefae9250290f02"
+  },
+  "outputs": {
+    "inventory-frozen30.png": "189b1c0a6fc8ebc497ed1a0696ce2aa9ccebc8865dad7e7531508576825d2abe",
+    "inventory-corpus.png": "70188b679c9534d9d4df30f272e0113e2225b96cc3afc8a7e8fb8fe6c8e8a549",
+    "current-origin-loss.png": "abb49e1419659585ff40c890f273e58521059f5f508583a26ee8ff6e5b0a423d"
+  }
+}

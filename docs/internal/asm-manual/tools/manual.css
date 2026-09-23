@@ -1,0 +1,40 @@
+@page { size: A4; margin: 19mm 18mm 19mm; @top-left { content: "JOPE DIME / ASM"; font: 8pt "DejaVu Sans"; color: #526476; } @top-right { content: "PRIVATE MAINTAINER EDITION"; font: 7pt "DejaVu Sans"; color: #526476; } @bottom-left { content: "23 September 2026 · reviewed implementation snapshot"; font: 7pt "DejaVu Sans"; color: #687a8d; } @bottom-right { content: counter(page); font: 8pt "DejaVu Sans"; color: #0d2944; } }
+@page cover { margin: 0; @top-left { content: none; } @top-right { content: none; } @bottom-left { content: none; } @bottom-right { content: none; } }
+html { font-family: "DejaVu Sans", sans-serif; color: #20354a; font-size: 9.5pt; line-height: 1.48; }
+body { margin: 0; }
+.cover { page: cover; min-height: 297mm; box-sizing: border-box; padding: 25mm 22mm; background: #102a43; color: #f5f9fc; break-after: page; }
+.eyebrow { font-size: 9pt; letter-spacing: 2px; color: #8cdddc; }
+.cover h1 { color: white; font-size: 39pt; line-height: 1.08; margin-top: 34mm; border: none; bookmark-level: none; }
+.subtitle { font-size: 20pt; line-height: 1.4; color: #c6dae9; }
+.rule { width: 35mm; height: 1.5mm; background: #55c6c4; margin: 13mm 0; }
+.definition { font-size: 14pt; line-height: 1.6; }
+.cover-bottom { margin-top: 25mm; font-size: 10pt; color: #c6dae9; }
+.cover-bottom span { font-size: 8pt; }
+.front, .contents { break-after: page; }
+.contents ol { list-style: none; padding: 0; }
+.contents li { margin: 4mm 0; border-bottom: .3pt solid #dbe4eb; padding-bottom: 3mm; }
+.contents a { color: #163c5e; text-decoration: none; }
+.contents a::after { content: leader(".") target-counter(attr(href), page); }
+.chapter { break-before: page; }
+h1 { font-size: 24pt; line-height: 1.2; color: #123b5a; border-bottom: 2pt solid #48aaa7; padding-bottom: 5mm; margin: 0 0 7mm; bookmark-level: 1; }
+h1[data-chapter]::before { content: attr(data-chapter) " / "; font-size: 14pt; color: #427d94; }
+h2 { color: #174f70; font-size: 15pt; line-height: 1.25; margin: 7mm 0 3mm; break-after: avoid; bookmark-level: 2; }
+h3 { color: #23617b; font-size: 11pt; margin: 5mm 0 2mm; break-after: avoid; bookmark-level: 3; }
+p { orphans: 3; widows: 3; margin: 2.7mm 0; }
+a { color: #186f92; text-decoration: none; overflow-wrap: anywhere; }
+code { font-family: "DejaVu Sans Mono", monospace; font-size: .85em; overflow-wrap: anywhere; }
+pre { padding: 3mm; background: #f0f5f8; border-left: 2pt solid #6cabb8; font-size: 8pt; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.4; }
+pre code { font-size: 1em; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; margin: 4mm 0; font-size: 8pt; line-height: 1.4; }
+table.dense { font-size: 7.3pt; }
+th { background: #173f5d; color: white; font-weight: 600; text-align: left; }
+th, td { border: .4pt solid #d4e1ea; padding: 1.7mm; vertical-align: top; overflow-wrap: anywhere; }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+tbody tr:nth-child(even) { background: #f2f6f9; }
+td code, th code { font-size: .92em; }
+ul, ol { padding-left: 6mm; }
+li { margin: 1.5mm 0; }
+img { max-width: 100%; max-height: 225mm; display: block; margin: 4mm auto; object-fit: contain; }
+blockquote { border-left: 2pt solid #67a8b5; margin: 4mm 0; padding: 1mm 4mm; background: #f2f7f9; }
+hr { border: 0; border-top: .5pt solid #d4e1ea; }

@@ -1,0 +1,32 @@
+{
+  "created_at": "2026-09-19T00:17:11Z",
+  "description": "The ten committed test datasets (datasets/test/ in the repository), chosen where jope-dime is Elo rank 1 on SOTArena tabular-regression-v2; every member has a recorded licence (MIT, GPL-2.0-only, GPL-3.0-only, CC-BY-4.0, LicenseRef-US-Gov-Public-Domain). Private until the public-readiness review flips it.",
+  "members": [
+    "047e62b52a3f4ede",
+    "1cb97b1d7314d43d",
+    "21fbfe8b53dbcd60",
+    "30ef3eaa6d2971a9",
+    "43b4cc3ab0ebbd97",
+    "693890aae9dc860b",
+    "79e600bc5fcd5da7",
+    "b5beff4a53fa12c0",
+    "c32fa09b48fb2f27",
+    "c7d815714ca52bce"
+  ],
+  "members_sha256": "cc63064f06879949f25fb6191e2bd6825598da23ca5e99532eaba76a75c47f1a",
+  "name": "test-10",
+  "policy": {
+    "allowed_spdx": [
+      "MIT",
+      "GPL-2.0-only",
+      "GPL-3.0-only",
+      "CC-BY-4.0",
+      "LicenseRef-US-Gov-Public-Domain"
+    ],
+    "license_required": true
+  },
+  "schema": "jope.dataset-collection/v1",
+  "task": "regression",
+  "version": 1,
+  "visibility": "private"
+}

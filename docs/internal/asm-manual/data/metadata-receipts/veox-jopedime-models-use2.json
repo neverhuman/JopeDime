@@ -1,0 +1,61 @@
+{
+  "bucket": "veox-jopedime-models-use2",
+  "complete": true,
+  "objects": 967,
+  "bytes": 3929105273,
+  "prefixes": {
+    "blobs/": {
+      "objects": 21,
+      "bytes": 1461921570,
+      "storage_classes": {
+        "STANDARD": 21
+      }
+    },
+    "bundles/": {
+      "objects": 3,
+      "bytes": 32045,
+      "storage_classes": {
+        "STANDARD": 3
+      }
+    },
+    "staging/": {
+      "objects": 943,
+      "bytes": 2467151658,
+      "storage_classes": {
+        "STANDARD": 943
+      }
+    }
+  },
+  "pages": [
+    {
+      "page": 1,
+      "objects": 967,
+      "response_sha256": "069e29fd1738260223398551ec3be6ae58cdf0b129fed8c3f10a5b729a540901",
+      "truncated": false
+    }
+  ],
+  "metadata_objects": [
+    {
+      "Key": "bundles/hyperion-v7/manifest.json",
+      "Size": 2662,
+      "ETag": "\"e4bb8c980e7ec0e71b3dfc2c056c4a75\"",
+      "LastModified": "2026-09-18T20:18:13+00:00",
+      "StorageClass": "STANDARD"
+    },
+    {
+      "Key": "bundles/jope-prime-gen31-v2/manifest.json",
+      "Size": 25515,
+      "ETag": "\"f6ff23d3b8384b88c402cf732bd9756f\"",
+      "LastModified": "2026-09-18T20:19:23+00:00",
+      "StorageClass": "STANDARD"
+    },
+    {
+      "Key": "bundles/policy-step-60000/manifest.json",
+      "Size": 3868,
+      "ETag": "\"7e75f4313db87755196b1d034667422d\"",
+      "LastModified": "2026-09-18T20:18:01+00:00",
+      "StorageClass": "STANDARD"
+    }
+  ],
+  "body_reads": 0
+}

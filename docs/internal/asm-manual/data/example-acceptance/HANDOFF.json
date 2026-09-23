@@ -1,0 +1,20 @@
+{
+  "schema": "jope.manual-example-handoff/v1",
+  "status": "stopped",
+  "receipt_files": {
+    "run.py": "4dfa19855aed4922562ca8e0087f7fb28948327ecf03729ef7c1453761c2cb5f",
+    "allocation.json": "f2778e3e3454105f9caaa39eaf22c1fc667b22338f3eca660990e8134bdcb24a",
+    "inputs.json": "194774a05d9692afac85072ffbb41bb7e7a94a96ea2c711e648628db3d4c11b4",
+    "journal.jsonl": "371d2c1b8416870530d8657e8a99811a85f5572e12e713ae0dbd856ac761cdee",
+    "result.json": "71395a038feeef768bd6c69bb43dcabbfced20333d989cd1161c07213f4f68d6",
+    "launcher-receipt.json": "e86346abe617157d0b564acfd9d393efe8abffcd40da442e55fd1a33276c5b70",
+    "unit-readback.json": "4aeb45cd8f64ebe5e1a41a6187a160d7ce7c9694f772e22a1034fc45e90d36d7",
+    "unit-journal.jsonl": "013bd4a293166aff1ec92bc992dd67bfad1bdc7bfd134ba731581146ffe62a4e",
+    "audit.json": "363fbe62a706b44030205da78411243ba206ad2366d546a277babe966b802c91"
+  },
+  "numerical_execution_completed": true,
+  "allocation_returned": true,
+  "chapters_and_command_packet_unchanged": true,
+  "publication_action": "Root may add a measured example addendum to published manual; retain the original stopped chapters and packet. Emitted sources/models/results stay maintainer-private.",
+  "limits": "Resource limits were passed to and accepted by systemd; live property readback lost to collection. Affinity and cgroup observed; no independent resource enforcement qualification."
+}
