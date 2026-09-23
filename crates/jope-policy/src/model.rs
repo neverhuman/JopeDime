@@ -26,6 +26,7 @@ use super::grammar::PAD;
 use super::sha256_hex;
 
 const LAYER_NORM_EPS: f64 = 1e-5;
+pub(crate) mod cached;
 const LOSS_LOG_VARS: [&str; 7] = [
     "seq_nll",
     "reward_bt",

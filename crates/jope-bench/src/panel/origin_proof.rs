@@ -226,7 +226,19 @@ fn counts(receipt: Option<&SearchReceipt>) -> Value {
             .try_fold(0u64, |a, o| a.checked_add(o.feedback.physical_fit_starts?));
         values.insert(serde_json::to_value(&origin).unwrap().as_str().unwrap().to_owned(),json!({"candidate_slots":observations.len(),"completed_five_fold_candidates":complete,"physical_fit_starts":starts,"known_physical_fit_starts":observations.iter().filter_map(|o|o.feedback.physical_fit_starts).sum::<u64>(),"unknown_start_counters":observations.iter().filter(|o|o.feedback.physical_fit_starts.is_none()).count()}));
     }
-    json!({"available":true,"origins":values,"stop_reason":receipt.stop_reason,"deadline_unix_ms":receipt.deadline_unix_ms})
+    let unique = |initial_only: bool, completed_only: bool| {
+        receipt
+            .observations
+            .iter()
+            .filter(|o| {
+                (!initial_only || o.candidate.generation == 0)
+                    && (!completed_only || o.feedback.status == EvaluationStatus::Completed)
+            })
+            .map(|o| &o.candidate.program_sha256)
+            .collect::<std::collections::BTreeSet<_>>()
+            .len()
+    };
+    json!({"available":true,"origins":values,"candidate_slots":receipt.observations.len(),"generation_zero_slots":receipt.observations.iter().filter(|o|o.candidate.generation==0).count(),"unique_canonical_recipes":unique(false,false),"generation_zero_unique_canonical_recipes":unique(true,false),"completed_five_fold_unique_recipes":unique(false,true),"generation_zero_completed_five_fold_unique_recipes":unique(true,true),"selection_loss_aggregation":"unweighted_mean_of_five_inner_fold_losses","stop_reason":receipt.stop_reason,"deadline_unix_ms":receipt.deadline_unix_ms})
 }
 pub fn report(
     plan: &CampaignPlan,
@@ -314,11 +326,7 @@ pub fn report(
                 && o.feedback.status == EvaluationStatus::Completed
         })
     });
-    let evolved = neural.is_some_and(|r| {
-        r.observations
-            .iter()
-            .any(|o| o.candidate.generation > 0 && o.feedback.status == EvaluationStatus::Completed)
-    });
+    let evolved = neural.is_some_and(SearchReceipt::has_fitted_neural_descendant);
     Ok(
         json!({"schema":PROTOCOL,"ok":true,"dataset":dataset.dataset.id,"task":dataset.dataset.task,"window":window,"outcomes":attached.inventory,"neural":counts(neural),"generic":counts(generic),"genuine_neural_origin_fit_proved":genuine,"neural_offspring_fit_proved":evolved,"generation_zero_and_evolution_proved":genuine&&evolved,"refitted_predictions":predictions,"cost":super::asm_campaign::accounting(plan,journal)?,"final_test_targets_used":false,"complete_panel_demonstration":false,"comparison_wins_claimed":false}),
     )

@@ -98,6 +98,41 @@ pub fn sample_batch<R: Rng>(
     temperature: f32,
     rng: &mut R,
 ) -> Result<Vec<SampledRow>> {
+    sample_batch_impl(
+        (model, context),
+        vocab,
+        task,
+        batch,
+        temperature,
+        rng,
+        false,
+    )
+}
+
+/// Cached production decoding. This returns raw sampled rows, never an admitted
+/// origin or seed binding. `sample_batch` retains the full-prefix reference path.
+pub(crate) fn sample_batch_cached<R: Rng>(
+    model: &PolicyModel,
+    vocab: &Vocab,
+    context: &[f32],
+    task: &str,
+    batch: usize,
+    temperature: f32,
+    rng: &mut R,
+) -> Result<Vec<SampledRow>> {
+    sample_batch_impl((model, context), vocab, task, batch, temperature, rng, true)
+}
+
+fn sample_batch_impl<R: Rng>(
+    policy: (&PolicyModel, &[f32]),
+    vocab: &Vocab,
+    task: &str,
+    batch: usize,
+    temperature: f32,
+    rng: &mut R,
+    cached: bool,
+) -> Result<Vec<SampledRow>> {
+    let (model, context) = policy;
     ensure!(batch > 0, "empty sampling batch");
     ensure!(
         model.config().vocab_size == vocab.tokens.len(),
@@ -107,6 +142,7 @@ pub fn sample_batch<R: Rng>(
     let start = vocab.prefix_state(task)?;
     let mut sequences = vec![prefix.clone(); batch];
     let mut states = vec![start; batch];
+    let mut cache: Option<super::model::cached::DecodeCache<'_>> = None;
     let limit = MAX_PROGRAM_TOKENS.min(model.config().max_seq);
     for _ in prefix.len()..limit {
         let active = (0..batch)
@@ -115,11 +151,30 @@ pub fn sample_batch<R: Rng>(
         if active.is_empty() {
             break;
         }
-        let rows = active
-            .iter()
-            .map(|&i| sequences[i].clone())
-            .collect::<Vec<_>>();
-        let logits = model.next_token_logits(context, &rows)?;
+        let logits = if cached {
+            if let Some(cache) = cache.as_mut() {
+                let tokens = active
+                    .iter()
+                    .map(|&i| *sequences[i].last().expect("sampling prefix is nonempty"))
+                    .collect::<Vec<_>>();
+                cache.advance(&active, &tokens)?
+            } else {
+                let rows = active
+                    .iter()
+                    .map(|&i| sequences[i].clone())
+                    .collect::<Vec<_>>();
+                let (created, logits) =
+                    super::model::cached::DecodeCache::new(model, context, &rows)?;
+                cache = Some(created);
+                logits
+            }
+        } else {
+            let rows = active
+                .iter()
+                .map(|&i| sequences[i].clone())
+                .collect::<Vec<_>>();
+            model.next_token_logits(context, &rows)?
+        };
         let mut next = vec![PAD; batch];
         for (row, &i) in logits.iter().zip(&active) {
             let legal = states[i].legal(vocab);
@@ -374,7 +429,7 @@ pub(crate) fn pure_pool_checked(
     let mut seen = BTreeSet::new();
     let (mut attempted, mut valid, mut duplicate, mut sampled_tokens) = (0, 0, 0, 0);
     for _ in 0..options.rounds {
-        let rows = sample_batch(
+        let rows = sample_batch_cached(
             model,
             vocab,
             context,
@@ -418,4 +473,75 @@ pub(crate) fn pure_pool_checked(
         },
         seen,
     ))
+}
+
+#[cfg(test)]
+mod cache_tests {
+    use super::*;
+    use crate::config::PolicyConfig;
+    use rand::RngCore;
+
+    #[test]
+    fn cached_sampling_preserves_tokens_grammar_finished_rows_and_rng_tail() {
+        let vocab = Vocab::from_json(include_bytes!(
+            "../../jope-engine/assets/grammar/featmath.json"
+        ))
+        .unwrap();
+        let mut config = PolicyConfig::regression(vocab.tokens.len());
+        config.width = 16;
+        config.heads = 4;
+        config.ffn = 32;
+        config.layers = 1;
+        config.dropout = 0.0;
+        let model = PolicyModel::random_weights(config, 3).unwrap();
+        assert!(model.bound_identity().is_none());
+        let context = (0..2048)
+            .map(|i| (i % 13) as f32 / 13.0 - 0.4)
+            .collect::<Vec<_>>();
+        let mut full_rng = ChaCha20Rng::seed_from_u64(7);
+        let mut cached_rng = full_rng.clone();
+        let full = sample_batch(
+            &model,
+            &vocab,
+            &context,
+            "regression",
+            24,
+            25.0,
+            &mut full_rng,
+        )
+        .unwrap();
+        let cached = sample_batch_cached(
+            &model,
+            &vocab,
+            &context,
+            "regression",
+            24,
+            25.0,
+            &mut cached_rng,
+        )
+        .unwrap();
+        assert_eq!(full.len(), cached.len());
+        let mut finished_early = false;
+        for (a, b) in full.iter().zip(&cached) {
+            assert_eq!(a.tokens, b.tokens);
+            assert_eq!(a.program, b.program);
+            let mut state = vocab.prefix_state("regression").unwrap();
+            for &token in &b.tokens[3..] {
+                if state.done() {
+                    finished_early = true;
+                    assert_eq!(token, PAD);
+                } else {
+                    assert!(state.legal(&vocab).contains(&token));
+                    state.advance(&vocab, token).unwrap();
+                }
+            }
+        }
+        assert!(
+            finished_early,
+            "fixture must exercise removal of completed rows"
+        );
+        for _ in 0..16 {
+            assert_eq!(full_rng.next_u64(), cached_rng.next_u64());
+        }
+    }
 }

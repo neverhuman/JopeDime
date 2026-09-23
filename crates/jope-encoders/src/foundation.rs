@@ -421,7 +421,7 @@ impl StarlightFoundationEncoder {
             .chunks_exact(dump.hidden_dim)
             .map(ToOwned::to_owned)
             .collect();
-        let vector = pool_mean_std_p10_p90(&rows);
+        let vector = pool_mean_std_p10_p90(&rows, standardized);
         if vector.len() != JOPE_FOUNDATION_VECTOR_DIM
             || vector.iter().any(|value| !value.is_finite())
         {
