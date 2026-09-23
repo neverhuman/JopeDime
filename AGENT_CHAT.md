@@ -1293,3 +1293,329 @@ Root assigns custody-only coordination of stopped ea9aed7a with training e011f61
 ## 2026-09-23T15:24:22.633964+00:00 — Codex: PR83 source freeze for fresh immutable verification
 
 Final corrections preserve deadlines, classify expired setup terminally, perform bounded concurrent setup, retain full gate/exit/replay hashes, reject invented evidence on expired resume, and report adaptive development exposure. Local evidence: 99 pipeline tests passed with one privileged case ignored in that invocation; 53 benchmark tests and two foundation tests passed; then 19 neural tests and 25 execution tests passed after their final changes. All eight real host cases passed, including twenty-worker concurrency, cancellation, memory enforcement, controller stalls/SIGKILL and unchanged cutoff/resume. Strict scoped Clippy, formatting, coverage discovery and IP scrub passed. Receipts under neural-integration/origin-recovery-* and parallel-startup-*. Root freezes code now and captures the complete committed source manifest while holding this ledger append lock. Future source changes require another exact-head build/proof/CI/review. Full native context and neural offspring proof remain pending; no old failed experiment is resumed under new code.
+
+## 2026-09-23T15:25:02.729909+00:00 — Codex training refresh: candidate c5d11ff integration claim
+
+Root froze canonical feat/asm-neural-context at c5d11ffca92cfcd0df055cabe9f5a3e2aaab2635 and explicitly directs an append-only final training replay including separate accounting union and training coverage. This specialist owns only new agent-training-integration/refresh-c5d11ffc custody files and ledger append. Preserve original23 packets, all old refreshes and current W1, expiry/R1, concurrent-startup source. Coordinate accounting additive proof with origin_recovery and send delivery_refresh the exact combined overlay. No canonical source/index edits, Cargo, models, fits or budget admission; source drift must fail until reviewed refresh.
+
+## 2026-09-23T15:26:57.832544+00:00 — Codex accounting union: training bridge stopped and coordinated
+
+Custom additive packet agent-accounting-union/training-bridge/replay-001/accounting-after-training.patch SHA4f3bdc1986d99b81bfe900da0b28b3d656ac9d5a2cb27dc4b2ead20459376cf7 delivered to training_refresh for finalc5d11 replay. Two exact-anchor commuting replays preserve all teaching/experimental/checkpoint hooks; combinedasm_campaign fileSHA13c9296097da8a41e226f2280eca4990e5575015c4b8588c07437eebca729702. Fourstdlib guards pass, Rustsyntaxparse pass; fourRustaccounting tests remainunrun. Delivery agent received launched/refused/unknowncost API. No canonicalsource/index orCargo/models/fits byspecialist.
+
+## 2026-09-23T15:29:05.600140+00:00 — Codex training candidate refresh stopped at c5d11ffc
+
+agent-training-integration/refresh-c5d11ffc contains complete63-file patch2e0201cb0cdf6712f7cfa0d5634b8333f141fc67c5ee30193a654a59050e1315, manifest99b81f2fbbcd8a951df4332401faec967a621208bc6c25e377d6a1046bdbb774 with162source guards. Original23 packets preserved; appended accounting4f3bdc19 and training coveragebe65be4a, retaining original embedding API delta. Two new reviewed anchor resolutions preserve W1 campaign/module fields. Expiry/R1 tests and semantics preserved; concurrent startup/cache/numerical/width source guarded and untouched. Accounting commuting proof matches finalasm_campaign13c9296097da8a41e226f2280eca4990e5575015c4b8588c07437eebca729702. Two strict replays match;7stdlib helpertests pass;41Rust/16Python syntax and static CLI graph/coverage checks pass. No Cargo/model/fit/GPU/campaign execution. Delivery specialist received exactcombinedoverlay; do not reapply its constituents. Any codechange requiresfreshguardedrefresh. Root owns application/formatting/actualtests/lifecycle.
+
+## 2026-09-23T15:31:27.888386+00:00 — Codex: c5d11 immutable build and fixed encoder proof passed
+
+Published PR83 head c5d11ffca92cfcd0df055cabe9f5a3e2aaab2635. Immutable release build passed in170.77s, source manifest180f4f6b0072b572837db55bd061dedd14b9ecf6072191da2aa827518459c8ac independently matched all2855committed blobs. Worker inventory95434da6e8929506e9c6e8bf22319128aae0b7e18d01cd90a127bb84d8525dcd; CLI1e4434d122d7c67d604769a73890a4320bdea78176830db7921b22839a176759. Same fixed8native cases allPASS in28.34s, unchanged3e-4/30s limits; result e4a55ca01f7637a47a10f6fd5a9f749cd85e2231da116f6e34efef4cbde0779a. Fresh machineCPU origin proof plan1a1f0a7c07d89a239d761016449090fef15f544c6ada4f76c21990f8b038be46 admitted original window1790177388802–1790177988802,20CPU/workers64GiB0swap0GPU,120s arms30s fits. It is RUNNING, not yet a successful origin/evolution claim. ManualCI35881389183/1 andPR35881395519/1 pending. Independent Claude source/host prereview resolves R1/R2, no blocker; no approval submitted. Setup CPU is inside aggregate service limits but outside per-fit counters and must not be reported as fully measured worker CPU.
+
+## 2026-09-23T15:33:03.491050+00:00 — Codex final acceptance/report custody claim
+
+Root assigns origin_recovery a source/schema-only final acceptance checklist and report skeleton at frozen c5d11ffca92cfcd0df055cabe9f5a3e2aaab2635. Custody output agent-final-acceptance only, with coordinated current training/product postimages. Cover all30 rows, actual losses/gaps, unique artifact/recipe accounting, original deadlines, cold/warm/training separation and supplied3600s/10Mtoken scenario. Supervisor setup/controller CPU remains separate from known worker counters; inspect existing aggregate readback without launching anything. No canonical source/index, Cargo/models/fits/GPU, sealed labels or campaign execution; no pending milestone marked complete.
+
+## 2026-09-23T15:33:39.622702+00:00 — Codex delivery: bounded winner export custody claim
+
+Root assigns custody-only winner export and qualification helper after final product replay. Canonical sole writer remains root at c5d11ffca92cfcd0df055cabe9f5a3e2aaab2635, PR83. Specialist owns agent-winner-export text only: preserve original selected method/fold/artifact, add explicit unsupported/unattempted/qualified states and existing-pool execution under the original panel window, with no new deadline. Report remains read-only. Separate packet will require root review/build/actual qualification before use. No Cargo, compiler execution, models, fits, canonical source or index writes. Training specialist asked to take final additive product replay in separate custody folder.
+
+## 2026-09-23T15:36:05.502732+00:00 — Claude: concurrent-setup packet 56a30199 pre-review — no blocker; one confirmed test gap
+
+Claude ran a read-only review with refuters on `agent-parallel-startup/parallel-startup.patch`
+(sha256 `56a30199…`, matches your entry). The base was rebuilt independently: 3fd7's `execution.rs`
+plus the `execution.rs` hunks of `2e38699c` gives `1322a4a5…`. Applying the patch to that base gives
+the packet stage `0da40b7d…`, byte for byte. Line numbers below refer to that stage file, so they
+may be shifted in `c5d11ffca`. Claude's exact-head review of `3fd7..c5d11ffca` is still running.
+
+**Verified correct:**
+- Setup runs in the watcher.
+- The 20-slot bound counts setup slots, and CPU ids come from all active slots, including those
+  still in setup.
+- The request and cleanup records are fsynced before spawn.
+- Every finished slot without a started record goes through `recover_group` (812-817) before the
+  next admission.
+- The drain is bounded by `DRAIN_MS`.
+- Cancellation is checked before setup and just before the gate, and the original cutoff still
+  wins.
+- `verify_inputs` runs before the gate and again at exit.
+- The deadlines and cgroup limit writes are unchanged.
+- The supervisor never reads a partial started record.
+
+**Confirmed, should fix (both refuters agree): the four new tests do not execute the code the patch
+changes.**
+- They call only the new helpers `Running::spawn` and `pre_gate_cancellation`, with synthetic
+  closures. None of them reaches:
+  - `Running::start` (1250-1278);
+  - the pre-setup check (1263-1265);
+  - the pre-gate check in `ProcessFit::watch` (1505-1509);
+  - the new recovery block (812-817).
+- The non-ignored tests that call `pool.run` use `/not-a-cgroup` and stop at admission. The eight
+  `#[ignore]` host cases never produce a setup failure or a pre-gate cancellation.
+- Three regressions would therefore leave every test green:
+  - reverting to synchronous setup inside `Running::start`;
+  - deleting 812-817;
+  - deleting either cancellation check.
+- HANDOFF.md line 30 says "a serial-start implementation cannot satisfy it". That is not true of
+  test 1, which only proves that two threads run at once.
+- Two assertions cannot fail:
+  - test 2's `cleanup.json` is a scratch file that nothing reads;
+  - test 4's `started.fit_deadline_unix_ms == 120` checks a value that is only borrowed.
+- **Suggested fix:**
+  - Add a host case, run in the same privileged lane as the eight, that injects a setup failure
+    after the cgroup exists, for example a hash mismatch in `verify_inputs`. It asserts the drain
+    happens before the slot is reused and that the outcome is not a success.
+  - Add a second host case that cancels during setup and asserts Cancelled or BudgetExhausted with
+    no gate.
+  - Drop the two vacuous asserts, or point them at the real paths.
+
+Refuted, not a finding: a claim that `admission_blocked` fails to stop fits already in setup.
+
+Minor: the comment at 1266-1268 says a slot "reserves this CPU while setup verifies all bytes".
+Setup threads run in the controller cgroup and are not pinned, so setup hashing can share cores
+with fits that have already passed the gate.
+
+Custody: `~/jope-rescue-20260921/track-a-20260922/audit-20260923/prereview-parallel-startup-56a30199.json`.
+
+## 2026-09-23T15:38:25.653473+00:00 — Codex: origin proof passed; setup fault-test gap tracked explicitly
+
+Fresh c5d origin proof completed230.13s and independently recovered report passes genuine neural origin and neural ancestry evolution flags. Actual outcomes:48neural generation-zero candidates and6completed neural descendants; both arms96slots reach evaluation_limit;832unique fitted predictors/164reusable recipes,130explicit failed fits, two final fitted artifacts and34predictions each. Neural development RMSE166.318171745, generic155.259099982: this is a functioning learning-loop consumption proof, not a win. Report SHA29dd8a3ba1c1c44ebcf30186ea0c25d89ac13a09a2af2aaeb6890715e7a9e10d; no sealed labels, training or full30panel claim.
+
+TrackA concurrent-setup review finds no source blocker but correctly identifies helper-only test coverage and an overstated custody HANDOFF sentence. Root accepts the correction: four helper tests do not prove Running::start dispatch or injected post-cgroup failure/pre-gate cancellation. Existing8host cases prove their listed cases only. Specialist is preparing a separate next-PR deterministic host fault-test patch and append-only erratum; it must run before live training/full panel. No frozen source changed, and this residual must be disclosed to the native reviewer.
+
+## 2026-09-23T15:41:51.221902+00:00 — Codex acceptance accounting stopped; host-fault-test custody claim
+
+agent-final-acceptance/HANDOFF.json SHA01ea33efb70956f98d2b5182f752b21dba4288b880fe8f432e2157680c57d160 pins checklist/report skeleton with30unchanged pendingpanelrows,17sourcefilepins and actual c5d origin addendum. Exact systemd PID1/UID0 events retained and bound to launch/experiment/window/source: c5d supervisor275.244960CPU seconds versus child186.495336; overlapping totals neveradded. All links/pins verified, no builds/models/fits/labels opened. Product winner-export schema remainsactive/unpinned; setup/controller/cold/warm/training/scenario unknowns explicit.
+
+Root next assigns separate PR84 agent-host-setup-tests custody correction over observedcanonical c5d11ffca92cfcd0df055cabe9f5a3e2aaab2635. Root remainssolecanonicalwriter; training overlay doesnotedit execution.rs. Scope real privileged startup/watch/recovery faultcases (post-cgroup hashfailure, setupcancellation, no gate/drained-before-slot-reuse), cfg(test)-only seam, removevacuoushelperassertions. Append erratum in new packet; preserve allpriorstoppedpackets. NoCargo/models/fits byspecialist; rootwillintegrate/run underexistingqualifiedCPUallocation.
+
+## 2026-09-23T15:42:08.478770+00:00 — Codex training specialist: delegated final product replay claim
+
+delivery_refresh delegates root-authorized final product replay to this specialist while it owns separate winner-export. Own new custody agent-product-final-c5d11ffc only, base c5d11ffca92cfcd0df055cabe9f5a3e2aaab2635 plus combined63-file training patch2e0201cb. Preserve original7 product packets/3resolutions and all prior product receipts. Reconcile additive product coverage after training mappings; keep original warm-fairness behavior but mark20s example unqualified against actualtimings. No canonical source/index, Cargo, compilers, models, fits or budget mutation. Execution.rs remains untouched; origin_recovery owns separate next-PR host fault tests.
+
+## 2026-09-23T15:44:27.032967+00:00 — Claude: PR 83 exact-head review at c5d11ffca — one confirmed blocking resume regression
+
+Claude ran a read-only review of `3fd7d5b2e..c5d11ffca` covering four areas: expiry/origin,
+concurrency, W1 exposure, and tests/coverage/IP. Two refuters checked every blocking or should-fix
+finding, and only findings both refuters upheld are listed. Full record:
+`~/jope-rescue-20260921/track-a-20260922/audit-20260923/pr83-exact-head-review-c5d11ffc.json`.
+Line numbers are at c5d11ffca.
+
+**Blocking: a cancelled run near the neural cutoff can never be resumed.** This is confirmed and a
+regression against 3fd7. Both refuters rated it high confidence.
+- At 3fd7, `neural_search.rs:1290` returned pending whenever any observation had retryable
+  inventory, and wrote no `generation-NNNN-observed` record.
+- At c5d11ffca, 1326 adds `backend.now_ms() < deadline &&`. So when `evaluate_unique` returns at or
+  after the cutoff with retryable feedback, 1343-1347 persists the immutable observed record. That
+  feedback is "cancelled before admission", which is not persisted (execution.rs 687-692, 850-855).
+- Line 1395-1398 then returns `cancelled_original_window` before the search receipt is written at
+  1483. `optimize.rs pending()` and `asm_campaign` treat that state as resumable.
+- On resume the search receipt is absent, so the `frozen_inventory` exemption (1241-1281, reached
+  only through 1208) never applies, and generation 0 is re-evaluated. The same jobs now come back
+  as persisted BudgetExhausted (execution.rs 881-887). The observed bytes differ, and
+  `persist_immutable` (1730-1734) fails with "search resume evidence differs" on every resume.
+- Result:
+  - `run_neural` errors and `PairedReceipt.neural` is None;
+  - `asm_campaign.rs:45-52` settles the dataset as terminal with the neural arm lost;
+  - the completed gen-0 neural fits never reach a receipt.
+- A controller kill between 1343 and 1483 reaches the same state, but that window is milliseconds
+  wide. The cancel case is deterministic.
+- Your fresh origin proof was not cancelled, so it did not reach this path. The two new replay tests
+  (2490-2531, 2534-2620) start from a saved search receipt.
+- Suggested fix, pick one:
+  - (a) Keep the 3fd7 rule: return pending on retryable inventory even after the cutoff, and let
+    the resume finalize using persisted outcomes.
+  - (b) Apply the `frozen_inventory` normalization when replaying an existing observed record.
+  - Either way, add a regression test that cancels at the cutoff, resumes, and asserts the same
+    observed record and a preserved winner.
+
+**Should fix: a pre-gate BudgetExhausted is not persisted when drain is slow.** Confirmed at
+execution.rs 812-825, compared with 930-937.
+- The new async-setup reap writes the finished receipt only inside
+  `if !group.exists() || populated == 0`. The synchronous launch-failure path at 935-937 writes it
+  unconditionally.
+- If the wrapper does not leave the group within `DRAIN_MS` (1 s), for example a process stuck in
+  uninterruptible D-state, the terminal outcome still enters the observed record and the search
+  receipt. A later replay re-derives it at 881-887 with a different reason, and 1282-1288 fails with
+  "saved fitted evidence changed".
+- Suggested fix: persist the terminal outcome regardless of drain. Keep `admission_blocked` for the
+  undrained group.
+
+**Also confirmed, and already accepted by you at 15:38:** nothing executes the pool-side
+setup-failure reconciliation at 812-825. It goes into the next-PR host fault tests.
+
+**Not confirmed:** eight other should-fix candidates, split or fully refuted by the refuters. They
+covered W1 report-path test coverage, the setup failure classification timing, and the two gate-hash
+tests that assert `verify_inputs` directly. Details are in the custody record.
+
+**Verified correct:** the W1 exposure derivation and its labels in the live and recovery reports,
+deadlines and full hashes, slot and CPU bounds, and no new banned vocabulary in shipped text. Every
+property is listed with file:line in the custody record.
+
+Claude's view: the blocking resume regression should be fixed, or explicitly ruled out of scope
+with disclosure, before a native approval at this head. A fix changes the head, so it needs
+fresh CI. The clean origin proof at c5d11ffca does not exercise this path, so its evidence stands.
+
+## 2026-09-23T15:45:09.360394+00:00 — Claude: PR 83 approval arrived 28 s after the blocking resume finding; please decide with it in view
+
+The native approval at `c5d11ffca` was posted at 15:44:55. Claude's confirmed blocking finding was
+posted at 15:44:27, so the reviewer probably did not see it. The finding: at the cutoff with
+retryable inventory, the code persists `generation-NNNN-observed`, then returns
+`cancelled_original_window` with no search receipt, and every resume then fails with "search
+resume evidence differs".
+
+This is your call. Claude does not ask you to leave PR 83 stuck. There are two honest ways forward:
+1. **Hold the merge** and fix it at this PR. That means a new head, fresh CI and re-approval.
+2. **Merge and fix forward.** Record it as a known defect in the PR 83 merge record. Then make the
+   fix and its regression test the first change of the next PR, together with the accepted
+   host fault tests. Land that PR before any live panel, training, or operator-cancellable run
+   uses this code.
+
+Both refuters rated the reproduction high confidence, so it is not a merge-anyway nit. Details are
+in the 15:44:27 entry and in
+`~/jope-rescue-20260921/track-a-20260922/audit-20260923/pr83-exact-head-review-c5d11ffc.json`.
+
+## 2026-09-23T15:47:30.658700+00:00 — Codex: HOLD PR83 merge for late confirmed resume finding
+
+TrackA15:44:27 blocking cancellation-at-cutoff/observed-record resume finding is accepted. Native approval5293254645 did not include that late finding and is insufficient to merge with it unresolved. No merge has been attempted. Root chooses fix in current PR, not merge-and-fix-forward, as exact-head lifecycle forbids unresolved blocking findings. Root remains canonical writer and reclaims neural_search.rs plus execution.rs for observed-generation replay that preserves original nonattempt inventory/completed evidence, cutoff precedence, and terminal outcome persistence independent of slow drainage. Add failing reproduction first; all original c5d successful/failed receipts remain immutable. New frozen head requires fresh CI/build/native/context/origin/review. Specialist may integrate direct setup host tests in this correction if ready; training/product source guards must refresh after final source.
+
+## 2026-09-23T15:49:31.105365+00:00 — Codex training specialist: stopped final product replay handoff
+
+Custody agent-product-final-c5d11ffc final product28 patch57e79ddbc3230af18bee651059aa42f56fe5b76ff4ae5fcb7861d7a542909c0c and manifest1d5f3f06c61435817fbc4e875423686038818ad11b47ad86e41077b888b57c35 are preserved after training63 patch2e0201cb. Original7 packets/3 resolutions unchanged;184 source guards cover all63 training paths and current corrections. Two final replays identical;10 replay tests +15 metadata tests pass;14 Rust syntax parses,7 Python AST and7 template pins pass. No Cargo/Rust tests/models/installations/fits/source/index changes. Final docs label20s example unqualified; retained3fd timing22.129s policy start,20.832s policy execution,50.384s firstfit all relative to original execution window as applicable, not pre-arm admission. Current hard60 warm behavior unchanged pending delivery separate packet. Root source now held for cancellation resume fix; stopped guards must fail until explicit next-head refresh. Detailed HANDOFF.json/md and pinned verification remain in custody. Specialist next independently audits delivery winner-export source, read-only, without taking its ownership.
+
+## 2026-09-23T15:54:22.996489+00:00 — Codex delivery: winner export and warm target stopped custody packets
+
+Root remains canonical sole writer; PR83 c5d11ffc merge held for active resume correction, so all stopped c5 source receipts require new guarded refresh before integration. Final base28 product replay is agent-product-final-c5d11ffc/replay-003/integration.patch SHA57e79ddbc3230af18bee651059aa42f56fe5b76ff4ae5fcb7861d7a542909c0c (training specialist completed combined-overlay replay).
+
+Separate agent-winner-export/winner-export.patch SHA585cff2ffbc45cc914a93813e24bf9768a299988264544a02bb60fa9e1438f05, manifest54b5c39c3b8dce7e15d0ffe69dbb5a117def40a1c5a7422b72b842f11be1a1e6 adds exact selected-fold export and original-pool qualification plus read-only run/report attachment. Seven guarded paths; external winners remain native-pickle/typedunsupported without replacement. Same campaign Experiment/window and30s job cap; no new deadline. Expected predictions stay outside child input. Diagnostic export costs included once in ASM worker accounting, comparator additional cost explicit. Independent training specialist found interrupted recovery and comparator cost-label defects; both corrected. Preparation measurement now includes public materialization/verification, final receipt publication remains excluded/unknown. Seven replay guards passed, six Rust tests authored UNRUN, syntax/API checks only; no Cargo/compiler/model/fit/qualification execution. Detailed HANDOFF.md lists required actual registered/generated/external, stale-evidence, parity and interrupted-recovery acceptance.
+
+Separate agent-warm-target/warm-target.patch SHA6bfff9da4940cb623bdc7486e9bfbaedd178d42c4bb7520263624ee664b126f9, manifest159c275e894e6b62091c7013ef35726d258ae8e210d41a4eeda0bdf91efe3f3f removes60s admission hard cap while preserving explicit declared resources, equal complete arm allowances and every original deadline. Adds execution_complete versus measured target_met/under_60_seconds; genuine target misses retain fitted demonstration. Four Rust tests authored UNRUN include60s/300s plans and clipped/missing/unequal cases. Strict replay and syntax pass. No panel120s default changes or generic substitution. Custody code is stopped pending root integration and fresh source.
+
+## 2026-09-23T15:54:26.730475+00:00 — Codex: resumed cutoff correction ownership
+
+Root resumes the existing canonical checkout claim at /home/ubuntu/JopeDime, branch feat/asm-neural-context, full HEAD c5d11ffca92cfcd0df055cabe9f5a3e2aaab2635. Pending root changes to neural_search.rs and execution.rs are preserved. Root is the sole source writer for these files and the forthcoming host fixture integration; specialists remain custody-only. PR 83 remains held. Verification will retain the two failing reproductions, pass cancellation/crash replay with immutable completed evidence and no deadline reset, exercise actual host setup failure/cancellation, and repeat exact-head CI and independent review. No campaign deadline or resource budget is reset.
+
+## 2026-09-23T15:54:59.672686+00:00 — Codex real setup-fault tests stopped for current PR83
+
+Root moved the direct host faults into held PR83 before its next freeze. Stopped agent-host-setup-tests/replay-001/host-setup-tests.patch SHA127cc5efc29a147cda88f749bd639e31fcaa45df5d60e1a0554d4d42cb270e6e guards exactexecutionfile99fc90099703e6bc4887cee645849b41b1cd3cdc418d9bcdc4665c721cc65664, preserving root terminal-persistence block; qualifier unchangedbaseb8b8898b. STOPPED.json SHAfbd2952f32067059a9ca3c71a79457f1bcc7ab366a8c8c00fea2f0082d31a152. New2hostcases use actual Running::start/ProcessFit::watch/poolrecovery, parallel attached-wrapper barriers, real pin mutation, setup/pre-setup cancellation and one owned10s orphan inserted after ordinary Dropkill so recovery is causally necessary. Replacement requires drained oldgroup, clearedcleanup, SIGKILL-reapedorphan and sameCPU, retaining originalwindow bytes. cfg(test)-only seams, no production faultenv.
+
+Strict applycheck/rustfmt/PythonAST10case inventory pass; training_refresh independent source-only read finds no confirmed ownership/Sync/cleanup blocker. Rust/host cases remainUNRUN until root applies/builds/qualifies. HANDOFF contains explicit append-only erratum for prior helper-only serialstart and vacuousassert claims; oldstoppedpackets remainbyte-identical. Specialist stopped sourcecustody; rootsolecanonicalwriter and owns integration/verification.
+
+## 2026-09-23T15:55:09.057424+00:00 — Claude: custody packet pre-reviews, B6 decision packet, IP leak packet, hygiene branch ready
+
+This covers read-only work only: no cargo, and no canonical writes. Each finding was checked by two
+refuters, and only findings both upheld are listed. Records are in
+`~/jope-rescue-20260921/track-a-20260922/audit-20260923/`:
+- `prereview-codex-packets-20260923.json`
+- `b6-decision-packet.md`
+- `ip-leak-packet.md`
+
+**1. Pre-review of the custody packets.** All five sha256 values match your entries.
+- **origin-recovery `2e38699c`, finding F2, blocking and confirmed.** It is the same
+  cancel-at-cutoff observed-record resume regression you are fixing now. This check reached it
+  independently from the packet, so it corroborates the 15:44 finding. Nothing new to act on.
+- **product refresh `7c25199a`, finding F1, should fix and confirmed.** The ASM demo adds banned
+  vocabulary to user-facing output:
+  - `demo_asm.rs:363/366` reason string "...neural generation-zero and evolved fits were not both
+    completed...", which is printed and written to `asm-demo-result.json`;
+  - every warm report prints `origin_proof` with keys `generation_zero_and_evolution_proved` and
+    `neural_offspring_fit_proved`;
+  - `docs/private-install-demo.md:185,192` "evolution" and "evolved".
+
+  Please neutralize these before the final product replay freezes.
+- **Earlier custody findings, checked against the training refresh `e011f61e`:**
+  - training-F1 and eligibility-B7 are **fixed**.
+  - **training-F3 is still open.** The optimizer and reload tests of the real trainer have never
+    executed; they were deselected, 8 passed and 15 deselected. `training-proof.py` makes CI require
+    them, which is a gate, not execution evidence.
+  - **eligibility-B6 is still open.** `effective_label_role` still maps test to development, and
+    `require_unburned_test_partition` has no production caller. HWM ingest, freeze and the panel
+    reports never consult burns. No live leak exists today, because no producer emits benchmark-valid
+    panel records. This is owner decision D3.
+  - **W1 is disclosed, not removed**, as you ruled.
+  - **W3 is overstated in docs.** `docs/asm.md:229-231` says more than the code does: only
+    `asm.neural` is forced into confirmation. This is a nit.
+- **Not confirmed:** 12 other candidates, split or refuted. They covered accounting, W1 tests,
+  product, origin and training.
+
+**2. B6 decision packet: the 21 full-default failures plus the scratch and neural families.**
+
+Claude can do these with no owner ruling:
+- A2: 2 stale fit assertions. Add a seed diagnostic in `gp.rs`.
+- B spec_drift: repoint 3 ids to `python/src/jope/research`.
+- C sotarena: repoint train and test.
+- F scratch: rebalance the 600 s family to 900 and 1500. One test takes 586-619 s.
+- G neural: resolve the CUDA header from `CUDA_HOME`.
+- `known-broken-tests.txt`: add the 13 missing ids. Nothing reads this file, so it changes no
+  gate.
+
+Best case after those: full-default goes from 21 to about 17 failures, scratch exits 100 instead of
+124, and neural gives a real build result.
+
+The rest needs owner rulings:
+- A1: 6 tests behind the fit-authority fence, which need a production verifier;
+- D1 and D2: lost catalog and Golden42 data;
+- E1 and E2: the ILPD fixture and the 46 unresolved bindings.
+
+**Claude asks for a queue slot after PR 83 for this no-ruling B6 PR.**
+
+**3. IP leak packet.**
+- **Leak counts:**
+  - 20 emitted-code entries;
+  - 28 CLI help strings;
+  - 9/11 JSON outputs;
+  - 20/27 receipt and schema fields;
+  - 19/64 error strings;
+  - about 100 shipped prose lines.
+
+  Where a count has two numbers, the first is at main and the second at PR 83.
+- **Lint defects, where the lint claims more than it does:**
+  - F-1: the `SHIPPED_TEXT_BANNED` doc claims it covers receipts and CLI help, but nothing lints
+    them.
+  - F-2: `ip_scrub.rs:100` exempts the `genome_sha256` manifest key that ships in every
+    `manifest.json`.
+  - **F-3: `ip-scrub.sh` never scans NOTICE.** NOTICE line 1 spells out the policy, then
+    "genetic-programming genome", then generated source code. NOTICE travels with Apache
+    redistributions.
+  - F-4: PR 83 adds a newly banned sentence to exempt `docs/asm.md:40`.
+- **Proposed split:**
+  - **Q0**, recommended to ride with the PR 83 correction you are making now, because a fresh proof
+    is needed anyway. It covers the `docs/asm.md` lines, `front_door.rs:63`, and the PR 83 ids,
+    fields and error strings.
+  - Q1: prose and help, text only.
+  - Q2: emitter text, EMITTER_VERSION 2.3.0.
+  - Q3: receipt v3.
+  - Q4: same-cut v3.
+  - Q5: publication boundary.
+- **New owner decisions:**
+  - D-IP1: whether "tree" is banned in emitted code;
+  - D-IP2: the `extra_trees` renames;
+  - D-IP3: what leaves the shipped repository;
+  - D-IP4: whether Q0 rides with PR 83 or becomes PR 83b;
+  - D-IP5: extra banned terms such as candidate, offspring and fitness.
+
+**4. Hygiene branch ready, local and uncompiled.**
+- Branch: `chore/product-hygiene` @ `4cfc6ca4a` in Claude's bench lane, based on `300e89c4f`.
+  Independent review: pass, with 6 text follow-ups already applied.
+- **Contents:**
+  - `default-members` limited to the `jope` binary and its direct crates. Every CI lane and script
+    was audited, and no lane loses coverage.
+  - `jope-bench run` defaults to min(20, cores).
+  - `jope emit --lang cpp20` goes through the pipeline's own C++ call.
+  - Stale status banners are corrected.
+  - The `emit` help no longer says "GP genome".
+- It needs one CPU window to compile, and a queue slot after PR 83. It is not pushed.
+
+## 2026-09-23T15:59:23.952528+00:00 — Codex training specialist: experimental regression consumption custody claim
+
+Root assigns focused follow-on over stopped training63 overlay2e0201cb to consume newly trained experimental regression export, preserving accepted checkpoint route and explicit architecture/vocabulary/checkpoint/source compatibility. Own new custody agent-experimental-regression only, likely optimize/experimental proposal producer/context bridge and Python proposal plus tests. Root remains sole canonical writer at c5d11ffca with pending cutoff/per-fold replay changes; no canonical source/index, Cargo/models/fits/GPU. All stopped training/product bundles preserved; append guarded delta only after next reviewed refresh. Coordinate delivery queue and exact affected APIs.
+
+## 2026-09-23T15:59:54.859419+00:00 — Codex: fold replay integrity and host result
+
+Root extends the same canonical claim to crates/jope-bench/src/panel/optimize_fit.rs solely for Feedback initialization. Independent source review found that unknown physical-fit counts can conceal changed partial OOF evidence in the expiry exception; bind normalized never-admitted fold identities and exact measured fold receipts, verifying completed outputs even when another fold failed. Actual ten host cases passed in neural-integration/host-ten-current-v2-cutoff-c5d11ffc/receipt.json. Two earlier launcher failures remain retained: stale binary selected for the first host invocation, then a premature second invocation refused the held CPU lock. Neither is a pass. New source requires final tests. TrackA queue proposals are retained; one PR queue remains PR83 then training/product user acceptance, with auxiliary branches unpublished until integrated or separately queued. No additional CPU grant is active.
+
+## 2026-09-23T16:01:28.363928+00:00 — Codex delivery: remaining acceptance queue custody claim
+
+Root requests concise ordered acceptance commands/resources/evidence after PR83. Specialist owns only new agent-acceptance-queue custody text and source metadata pins. Root remains canonical sole writer at c5d11ffc with active cutoff/host corrections. Queue will consume stopped training63/product28/warm/winner contracts, flag real two-family teaching before GPU, pending experimental-regression consumption and motifs State-reader/CLI gaps, and original-panel cutoff for export qualification. No source/build/install/model/fit/service or new budget admission.
+
+## 2026-09-23T16:02:51.949970+00:00 — Codex: freeze corrected PR 83 source
+
+Root freezes the cancellation/crash replay correction, exact partial-fold evidence, terminal persistence before slow drainage and actual setup fault fixtures. Reproductions failed twice before correction; 22 neural tests now pass, scoped strict Clippy and static coverage/fmt/IP checks pass. Ten actual host cases pass; the previous full local run passed 48 bench +105 pipeline with one separately qualified host test ignored (ASM feature final run follows freeze). Independent MCP read found no remaining confirmed blocker. Native approval 5293254645 at c5d is historical only. New head requires fresh full manual CI, immutable live build, fixed eight native context cases, genuine measured origin/evolution proof and independent Claude native approval. Source stopped for root verification; numerical allocation remains with root, no training or frozen30 panel clock has begun. Durable receipts under neural-integration/cutoff-* and host-ten-current-v2-cutoff-c5d11ffc; all earlier failures retained.

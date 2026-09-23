@@ -276,6 +276,7 @@ impl FitAdapter {
             loss: Some(loss),
             physical_fit_starts: oof.total_fit_starts(),
             worker_receipt_sha256: Some(digest(&outcomes)?),
+            replay_evidence_sha256: None,
             fitted_artifact_sha256: Some(oof.fitted_bundle_sha256()?),
             reason: None,
             oof: Some(oof),

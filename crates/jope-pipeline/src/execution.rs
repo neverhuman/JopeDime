@@ -806,6 +806,14 @@ impl ExecutionPool {
                     let started = running.started.clone();
                     let group = started.cgroup.clone();
                     let outcome = running.finish()?;
+                    // Scientific terminal evidence is durable even if cleanup
+                    // is delayed. The separate cleanup owner continues to block
+                    // admission until the group has actually drained.
+                    if self.started_path(&outcome.job_sha256).exists()
+                        || outcome.command_status == EvaluationStatus::BudgetExhausted
+                    {
+                        immutable(&self.finished_path(&outcome.job_sha256), &outcome)?;
+                    }
                     // Setup now belongs to the watcher. Preserve the same
                     // bounded cleanup used by synchronous launch failures before
                     // releasing its reserved CPU or admitting replacement work.
@@ -818,11 +826,6 @@ impl ExecutionPool {
                     if !group.exists()
                         || named_counter(&group, "cgroup.events", "populated").ok() == Some(0)
                     {
-                        if self.started_path(&outcome.job_sha256).exists()
-                            || outcome.command_status == EvaluationStatus::BudgetExhausted
-                        {
-                            immutable(&self.finished_path(&outcome.job_sha256), &outcome)?;
-                        }
                         self.clear_cleanup(&outcome.job_sha256)?;
                         // Kernel counters are now retained in the finished receipt.
                         let _ = fs::remove_dir(&group);
@@ -1260,11 +1263,13 @@ impl Running {
         let process_started = started.clone();
         let process_journal = started_path.clone();
         Self::spawn(started, cpu, started_path, move |thread_stop| {
+            #[cfg(test)]
+            tests::host_setup_probe(tests::HostSetupStage::BeforeSetup, &process_started)?;
             if cancellation.load(Ordering::Acquire) || thread_stop.load(Ordering::Acquire) {
                 return pre_gate_cancellation(&process_started, now_ms()?);
             }
-            // The existing bounded Running slot reserves this CPU while setup
-            // verifies all bytes and constructs its independently limited group.
+            // The bounded Running slot reserves a child CPU assignment. Setup
+            // hashing stays in the controller group under the aggregate limits.
             // No worker gate opens on the supervisor's serial scheduling thread.
             let process = ProcessFit::start(process_started, cpu, memory_bytes)?;
             process.watch(
@@ -1472,6 +1477,8 @@ impl ProcessFit {
                 .any(|line| line == format!("0::/{expected}")),
             "fit attachment readback differs"
         );
+        #[cfg(test)]
+        tests::host_setup_probe(tests::HostSetupStage::Attached, &running.started)?;
         // Always rehash actual bytes here; preliminary deduplication never
         // admits a command and must not become metadata-only gate verification.
         job.verify_inputs()?;
@@ -1701,6 +1708,12 @@ impl Drop for ProcessFit {
                         let _ = child.wait();
                     });
                 }
+            }
+            #[cfg(test)]
+            if let Err(error) =
+                tests::host_setup_probe(tests::HostSetupStage::AfterDropKill, &self.started)
+            {
+                eprintln!("host setup fault injection failed: {error:#}");
             }
         }
     }
@@ -2228,12 +2241,9 @@ mod tests {
         }
     }
     #[test]
-    fn async_setup_failure_keeps_cleanup_owner_and_original_expiry() {
+    fn async_setup_failure_preserves_original_expiry_without_gate() {
         let scratch = scratch();
         let started = setup_record(scratch.path(), 'b', now_ms().unwrap().saturating_sub(1));
-        let cleanup = scratch.path().join("cleanup.json");
-        immutable(&cleanup, &started).unwrap();
-        let original = fs::read(&cleanup).unwrap();
         let path = scratch.path().join("not-started.json");
         let running = Running::spawn(started, 2, path.clone(), |_| {
             anyhow::bail!("synthetic setup failed at original cutoff")
@@ -2244,8 +2254,6 @@ mod tests {
         assert!(outcome.consumption.gate_released_unix_ms.is_none());
         assert!(outcome.exit_code.is_none());
         assert!(!path.exists());
-        // The watcher never clears cleanup authority. The pool must reconcile it.
-        assert_eq!(fs::read(cleanup).unwrap(), original);
     }
     #[test]
     fn dropping_setup_slot_signals_and_joins_its_watcher() {
@@ -2290,7 +2298,6 @@ mod tests {
         let expired = pre_gate_cancellation(&started, 120).unwrap();
         assert_eq!(expired.command_status, EvaluationStatus::BudgetExhausted);
         assert_eq!(expired.job_sha256, cancelled.job_sha256);
-        assert_eq!(started.fit_deadline_unix_ms, 120);
     }
 
     #[test]
@@ -2736,6 +2743,12 @@ mod tests {
             "reservation must not start the clock"
         );
         assert!(!physical.join("journal/window.json").exists());
+        if matches!(case.as_str(), "setup-hash-failure" | "setup-cancel") {
+            let retained = scratch.keep();
+            assert_eq!(fs::canonicalize(&retained).unwrap(), physical);
+            qualify_setup_faults(&mut pool, &physical, &case);
+            return;
+        }
         if case == "concurrency20" {
             qualify_concurrency(&mut pool, &physical);
             return;
@@ -2997,6 +3010,426 @@ mod tests {
                 })
             );
         });
+    }
+
+    // Installed only by the explicitly ignored real-host fixture. No environment
+    // or fault-injection path is compiled into a production executable.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub(super) enum HostSetupStage {
+        BeforeSetup,
+        Attached,
+        AfterDropKill,
+    }
+    type HostSetupCallback = dyn Fn(HostSetupStage, &Started) -> Result<()> + Send + Sync + 'static;
+    static HOST_SETUP_PROBE: std::sync::Mutex<Option<Arc<HostSetupCallback>>> =
+        std::sync::Mutex::new(None);
+
+    pub(super) fn host_setup_probe(stage: HostSetupStage, started: &Started) -> Result<()> {
+        // Release the registry lock before a callback blocks. The barrier must
+        // permit two actual ProcessFit::start calls to enter concurrently.
+        let callback = HOST_SETUP_PROBE.lock().unwrap().clone();
+        if let Some(callback) = callback {
+            callback(stage, started)?;
+        }
+        Ok(())
+    }
+    struct HostSetupGuard;
+    impl HostSetupGuard {
+        fn install(callback: Arc<HostSetupCallback>) -> Self {
+            let mut probe = HOST_SETUP_PROBE.lock().unwrap();
+            assert!(probe.is_none(), "another real-host setup probe is active");
+            *probe = Some(callback);
+            Self
+        }
+    }
+    impl Drop for HostSetupGuard {
+        fn drop(&mut self) {
+            *HOST_SETUP_PROBE.lock().unwrap() = None;
+        }
+    }
+    #[derive(Default)]
+    struct OwnedSetupOrphan(std::sync::Mutex<Option<Child>>);
+    impl OwnedSetupOrphan {
+        fn insert(&self, started: &Started) -> Result<u32> {
+            let mut slot = self.0.lock().unwrap();
+            ensure!(slot.is_none(), "setup orphan was already injected");
+            // This deliberately recreates a still-live owned group *after* the
+            // ordinary ProcessFit Drop kill. It tests pool recovery, not Drop.
+            // The guard reaps it on failure; systemd also bounds its whole tree.
+            let child = Command::new("/bin/sleep")
+                .arg("10")
+                .stdin(Stdio::null())
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .process_group(0)
+                .spawn()?;
+            let pid = child.id();
+            *slot = Some(child);
+            control_write(&started.cgroup, "cgroup.procs", &pid.to_string())?;
+            let expected = started
+                .cgroup
+                .strip_prefix("/sys/fs/cgroup")?
+                .to_string_lossy();
+            ensure!(
+                fs::read_to_string(format!("/proc/{pid}/cgroup"))?
+                    .lines()
+                    .any(|line| line == format!("0::/{expected}")),
+                "synthetic owned orphan attachment differs"
+            );
+            ensure!(
+                named_counter(&started.cgroup, "cgroup.events", "populated")? == 1,
+                "synthetic owned orphan was not alive in the failed group"
+            );
+            Ok(pid)
+        }
+        fn reaped_after_recovery(&self) -> Result<u32> {
+            let mut slot = self.0.lock().unwrap();
+            let child = slot.as_mut().context("no owned orphan was injected")?;
+            let deadline = Instant::now() + Duration::from_millis(DRAIN_MS);
+            let status = loop {
+                if let Some(status) = child.try_wait()? {
+                    break status;
+                }
+                ensure!(
+                    Instant::now() < deadline,
+                    "pool returned while owned setup orphan remained alive"
+                );
+                thread::sleep(Duration::from_millis(POLL_MS));
+            };
+            use std::os::unix::process::ExitStatusExt;
+            ensure!(
+                status.signal() == Some(9),
+                "owned orphan was not killed by recovery"
+            );
+            Ok(child.id())
+        }
+    }
+    impl Drop for OwnedSetupOrphan {
+        fn drop(&mut self) {
+            if let Some(mut child) = self.0.lock().unwrap().take() {
+                let _ = child.kill();
+                let _ = child.wait();
+            }
+        }
+    }
+    fn setup_host_job(pool: &ExecutionPool, script: &Path, recipe: char) -> WorkerJob {
+        let mut job = fixture_job('a', recipe);
+        job.request.experiment_sha256 = pool.experiment.identity().unwrap();
+        job.directory = pool
+            .directory
+            .join("jobs")
+            .join(job.request.identity().unwrap());
+        let program = fs::canonicalize("/usr/bin/python3").unwrap();
+        job.command = WorkerCommand {
+            program: Artifact {
+                sha256: hash_file(&program).unwrap(),
+                path: program,
+            },
+            args: vec![script.to_string_lossy().into_owned()],
+            inputs: vec![Artifact {
+                sha256: hash_file(script).unwrap(),
+                path: script.to_owned(),
+            }],
+            environment: BTreeMap::new(),
+        };
+        job
+    }
+    fn setup_group_drained(group: &Path) -> Result<bool> {
+        Ok(!group.exists() || named_counter(group, "cgroup.events", "populated")? == 0)
+    }
+    fn qualify_setup_faults(pool: &mut ExecutionPool, physical: &Path, case: &str) {
+        use std::sync::{mpsc, Mutex};
+        let script = physical.join("setup-success.py");
+        write_new(
+            &script,
+            b"from pathlib import Path\nPath('predictions.json').write_text('[]')\n",
+        )
+        .unwrap();
+        let input = physical.join("setup-pinned-input");
+        write_new(&input, b"original pinned bytes").unwrap();
+        let mut failed = setup_host_job(pool, &script, 'a');
+        failed.command.inputs.push(Artifact {
+            path: input.clone(),
+            sha256: hash_file(&input).unwrap(),
+        });
+        let blocker = setup_host_job(pool, &script, 'b');
+        let replacement = setup_host_job(pool, &script, 'c');
+        let failed_id = failed.identity().unwrap();
+        let blocker_id = blocker.identity().unwrap();
+        let replacement_id = replacement.identity().unwrap();
+        let failed_group = pool.supervisor.cgroup_root.join(format!("fit-{failed_id}"));
+        let cleanup = pool.cleanup_path(&failed_id);
+        let started_path = pool.started_path(&failed_id);
+        let original = pool.admit().unwrap().clone();
+        let original_bytes = fs::read(pool.directory.join("window.json")).unwrap();
+        let cancel_case = case == "setup-cancel";
+        let cancellation = Arc::new(AtomicBool::new(false));
+        let orphan = Arc::new(OwnedSetupOrphan::default());
+        let trace = Arc::new(Mutex::new(Vec::<serde_json::Value>::new()));
+        let first_cpu = Arc::new(Mutex::new(None::<String>));
+        let (entered, notices) = mpsc::channel::<String>();
+        let (release_failed, failed_wait) = mpsc::channel::<()>();
+        let (release_blocker, blocker_wait) = mpsc::channel::<()>();
+        let failed_wait = Mutex::new(failed_wait);
+        let blocker_wait = Mutex::new(blocker_wait);
+        let callback = {
+            let failed_id = failed_id.clone();
+            let blocker_id = blocker_id.clone();
+            let replacement_id = replacement_id.clone();
+            let failed_group = failed_group.clone();
+            let cleanup = cleanup.clone();
+            let started_path = started_path.clone();
+            let orphan = orphan.clone();
+            let trace = trace.clone();
+            let first_cpu = first_cpu.clone();
+            Arc::new(
+                move |stage: HostSetupStage, record: &Started| -> Result<()> {
+                    let id = &record.job_sha256;
+                    if id != &failed_id && id != &blocker_id && id != &replacement_id {
+                        return Ok(());
+                    }
+                    if stage == HostSetupStage::Attached {
+                        ensure!(
+                            named_counter(&record.cgroup, "cgroup.events", "populated")? == 1,
+                            "fixture did not reach an attached live gated wrapper"
+                        );
+                        if id == &failed_id {
+                            ensure!(
+                                cleanup.is_file() && !started_path.exists(),
+                                "setup ownership must precede gate evidence"
+                            );
+                            *first_cpu.lock().unwrap() =
+                                Some(control_text(&record.cgroup, "cpuset.cpus.effective")?);
+                        }
+                        if id == &replacement_id {
+                            ensure!(
+                                setup_group_drained(&failed_group)? && !cleanup.exists(),
+                                "replacement admitted before failed setup drainage/cleanup"
+                            );
+                            orphan.reaped_after_recovery()?;
+                            ensure!(
+                                Some(control_text(&record.cgroup, "cpuset.cpus.effective")?)
+                                    == *first_cpu.lock().unwrap(),
+                                "replacement did not reuse the first reserved CPU"
+                            );
+                        }
+                        trace.lock().unwrap().push(serde_json::json!({"stage":"attached","job":id,
+                        "group":record.cgroup,"deadline_unix_ms":record.fit_deadline_unix_ms,
+                        "at_unix_ms":now_ms()?,"prior_group_drained":if id == &replacement_id {Some(true)}else{None}}));
+                        if !cancel_case || id != &replacement_id {
+                            entered.send(id.clone())?;
+                        }
+                        if id == &failed_id {
+                            failed_wait
+                                .lock()
+                                .unwrap()
+                                .recv_timeout(Duration::from_secs(5))?;
+                        } else if id == &blocker_id {
+                            blocker_wait
+                                .lock()
+                                .unwrap()
+                                .recv_timeout(Duration::from_secs(5))?;
+                        }
+                    } else if stage == HostSetupStage::AfterDropKill && id == &failed_id {
+                        let pid = orphan.insert(record)?;
+                        trace.lock().unwrap().push(
+                            serde_json::json!({"stage":"owned_orphan_attached_after_drop_kill",
+                        "job":id,"pid":pid,"group":record.cgroup,"at_unix_ms":now_ms()?}),
+                        );
+                    }
+                    Ok(())
+                },
+            ) as Arc<HostSetupCallback>
+        };
+        let guard = HostSetupGuard::install(callback);
+        let (result, driver) = thread::scope(|scope| {
+            let driver_failed_id = failed_id.clone();
+            let driver_blocker_id = blocker_id.clone();
+            let driver_replacement_id = replacement_id.clone();
+            let driver_cancellation = cancellation.clone();
+            let driver = scope.spawn(move || -> Result<()> {
+                let result = (|| -> Result<()> {
+                    if cancel_case {
+                        ensure!(
+                            notices.recv_timeout(Duration::from_secs(3))? == driver_failed_id,
+                            "cancellation fixture did not reach actual setup"
+                        );
+                        driver_cancellation.store(true, Ordering::Release);
+                    } else {
+                        let a = notices.recv_timeout(Duration::from_secs(3))?;
+                        let b = notices.recv_timeout(Duration::from_secs(3))?;
+                        ensure!(
+                            BTreeSet::from([a, b])
+                                == BTreeSet::from([
+                                    driver_failed_id.clone(),
+                                    driver_blocker_id.clone()
+                                ]),
+                            "two actual setups did not enter before either was released"
+                        );
+                        fs::write(&input, b"changed bytes after real cgroup attachment")?;
+                    }
+                    release_failed.send(())?;
+                    if !cancel_case {
+                        ensure!(
+                            notices.recv_timeout(Duration::from_secs(3))? == driver_replacement_id,
+                            "replacement did not enter while second setup still held its CPU"
+                        );
+                    }
+                    Ok(())
+                })();
+                // Always release both barriers, including assertion/error paths.
+                let _ = release_failed.send(());
+                let _ = release_blocker.send(());
+                result
+            });
+            let jobs = if cancel_case {
+                vec![failed.clone()]
+            } else {
+                vec![failed.clone(), blocker.clone(), replacement.clone()]
+            };
+            // The same bounded pool admission/recovery path; use its shared Arc
+            // directly to make cancellation during the barrier deterministic.
+            let result = pool.run_inner(jobs, cancellation.clone());
+            (result, driver.join().unwrap())
+        });
+        let outcomes = result.unwrap();
+        let diagnostic = serde_json::json!({"case":case,"outcomes":outcomes,
+            "trace":*trace.lock().unwrap(),"driver_error":driver.as_ref().err().map(|e|format!("{e:#}"))});
+        immutable(&physical.join("setup-outcomes.json"), &diagnostic).unwrap();
+        println!("execution_setup_diagnostic={diagnostic}");
+        driver.unwrap();
+        let outcome = outcomes.iter().find(|o| o.job_sha256 == failed_id).unwrap();
+        assert_eq!(
+            outcome.command_status,
+            if cancel_case {
+                EvaluationStatus::Cancelled
+            } else {
+                EvaluationStatus::Unavailable
+            }
+        );
+        if !cancel_case {
+            assert!(outcome
+                .reason
+                .as_ref()
+                .unwrap()
+                .contains("artifact changed:"));
+        }
+        assert!(outcome.consumption.gate_released_unix_ms.is_none());
+        assert!(outcome.consumption.cpu_seconds.is_none());
+        assert!(outcome.exit_code.is_none());
+        assert!(!started_path.exists());
+        assert!(!failed.directory.join("predictions.json").exists());
+        assert!(setup_group_drained(&failed_group).unwrap());
+        assert!(!cleanup.exists());
+        let orphan_pid = orphan.reaped_after_recovery().unwrap();
+        let resumed = if cancel_case {
+            // No replacement clock: same pool/journal/immutable original window.
+            pool.run(vec![replacement.clone()], &AtomicBool::new(false))
+                .unwrap()
+        } else {
+            assert!(outcomes
+                .iter()
+                .filter(|o| o.job_sha256 != failed_id)
+                .all(|o| o.command_status == EvaluationStatus::Completed));
+            vec![outcomes
+                .iter()
+                .find(|o| o.job_sha256 == replacement_id)
+                .unwrap()
+                .clone()]
+        };
+        assert_eq!(resumed[0].command_status, EvaluationStatus::Completed);
+        assert!(resumed[0].consumption.gate_released_unix_ms.is_some());
+        assert_eq!(
+            fs::read(pool.directory.join("window.json")).unwrap(),
+            original_bytes
+        );
+        assert_eq!(
+            pool.window().unwrap().deadline_unix_ms,
+            original.deadline_unix_ms
+        );
+        drop(guard);
+        let before_setup = if cancel_case {
+            qualify_before_setup_cancellation(pool, physical, &script, &original)
+        } else {
+            false
+        };
+        let receipt = serde_json::json!({"case":case,"journal":pool.directory,
+            "original_window":original,"resumed_window":pool.window(),
+            "window_sha256":hash_file(&pool.directory.join("window.json")).unwrap(),
+            "diagnostic_path":physical.join("setup-outcomes.json"),
+            "diagnostic_sha256":hash_file(&physical.join("setup-outcomes.json")).unwrap(),
+            "outcome":outcome,"replacement":resumed[0],"no_failed_gate":true,
+            "owned_orphan_pid":orphan_pid,"owned_orphan_killed_before_reuse":true,
+            "failed_group_drained":true,"cleanup_cleared_before_reuse":true,
+            "same_cpu_reused":true,"actual_parallel_setup":!cancel_case,
+            "before_setup_cancellation_verified":before_setup});
+        immutable(&physical.join("setup-host-receipt.json"), &receipt).unwrap();
+        println!("execution_host_receipt={receipt}");
+    }
+    fn qualify_before_setup_cancellation(
+        pool: &mut ExecutionPool,
+        physical: &Path,
+        script: &Path,
+        original: &ExecutionWindow,
+    ) -> bool {
+        let job = setup_host_job(pool, script, 'd');
+        let id = job.identity().unwrap();
+        let group = pool.supervisor.cgroup_root.join(format!("fit-{id}"));
+        let started = Started {
+            job,
+            job_sha256: id.clone(),
+            started_unix_ms: now_ms().unwrap(),
+            fit_deadline_unix_ms: original.deadline_unix_ms
+                - pool.experiment.resources.reporting_seconds * 1000,
+            cgroup: group.clone(),
+        };
+        let cancelled = Arc::new(AtomicBool::new(false));
+        let flag = cancelled.clone();
+        let attached = Arc::new(AtomicBool::new(false));
+        let observed = attached.clone();
+        let expected = id.clone();
+        let guard = HostSetupGuard::install(Arc::new(move |stage, record| {
+            if record.job_sha256 == expected {
+                if stage == HostSetupStage::BeforeSetup {
+                    flag.store(true, Ordering::Release);
+                }
+                if stage == HostSetupStage::Attached {
+                    observed.store(true, Ordering::Release);
+                }
+            }
+            Ok(())
+        }));
+        immutable(&pool.cleanup_path(&id), &started).unwrap();
+        let cpu = parse_cpus(
+            &control_text(&pool.supervisor.cgroup_root, "cpuset.cpus.effective").unwrap(),
+        )
+        .unwrap()[0];
+        let running = Running::start(
+            started.clone(),
+            cpu,
+            fit_memory_allocation(&pool.experiment)
+                .unwrap()
+                .per_fit_bytes,
+            pool.experiment.resources.per_fit_seconds,
+            pool.started_path(&id),
+            pool.directory.join("logs"),
+            cancelled,
+        )
+        .unwrap();
+        let outcome = running.finish().unwrap();
+        immutable(&physical.join("before-setup-cancellation.json"), &outcome).unwrap();
+        assert_eq!(outcome.command_status, EvaluationStatus::Cancelled);
+        assert!(
+            !attached.load(Ordering::Acquire),
+            "cancelled startup constructed a gated process"
+        );
+        assert!(!group.exists());
+        assert!(!pool.started_path(&id).exists());
+        assert!(outcome.consumption.gate_released_unix_ms.is_none());
+        assert!(pool.recover_group(&started, true).unwrap().is_empty());
+        pool.clear_cleanup(&id).unwrap();
+        drop(guard);
+        true
     }
 
     fn qualify_concurrency(pool: &mut ExecutionPool, physical: &Path) {

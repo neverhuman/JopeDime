@@ -24,7 +24,7 @@ def main():
         raise RuntimeError('twenty available CPUs required for positive concurrency proof')
     source = hashlib.sha256(binary.read_bytes()).hexdigest()
     records = []
-    for case in ('timeout', 'controller-stall-success', 'controller-stall-timeout', 'controller-sigkill', 'concurrency20', 'memory', 'graceful-sigterm', 'original-cutoff'):
+    for case in ('timeout', 'controller-stall-success', 'controller-stall-timeout', 'controller-sigkill', 'concurrency20', 'memory', 'graceful-sigterm', 'original-cutoff', 'setup-hash-failure', 'setup-cancel'):
         unit = f'jope-asm-qualification-{os.getpid()}-{case}.service'
         armed = output / 'sigkill-armed.json'
         command = ['sudo', '-n', 'systemd-run', '--wait', '--pipe', f'--unit={unit}',
@@ -55,6 +55,31 @@ def main():
             if case == 'concurrency20':
                 if (any(receipt.get(k) != v for k, v in dict(case='concurrency20', peak=20, completed=21, active_after=0).items()) or not receipt['all_fit_limits_read_back'] or receipt['fit_memory_allocation']['per_fit_bytes'] * 20 + receipt['fit_memory_allocation']['controller_reserve_bytes'] != 1 << 30):
                     raise RuntimeError('twenty-worker concurrency/cap proof failed')
+            elif case in ('setup-hash-failure', 'setup-cancel'):
+                expected = 'unavailable' if case == 'setup-hash-failure' else 'cancelled'
+                required = ('no_failed_gate', 'owned_orphan_killed_before_reuse',
+                            'failed_group_drained', 'cleanup_cleared_before_reuse', 'same_cpu_reused')
+                if (receipt['case'] != case or receipt['outcome']['command_status'] != expected
+                        or any(receipt.get(key) is not True for key in required)
+                        or receipt['outcome']['consumption']['gate_released_unix_ms'] is not None
+                        or receipt['outcome']['exit_code'] is not None
+                        or receipt['replacement']['command_status'] != 'completed'
+                        or receipt['replacement']['consumption']['gate_released_unix_ms'] is None
+                        or receipt['original_window'] != receipt['resumed_window']
+                        or receipt['actual_parallel_setup'] != (case == 'setup-hash-failure')
+                        or receipt['before_setup_cancellation_verified'] != (case == 'setup-cancel')):
+                    raise RuntimeError('real setup fault did not preserve gate, recovery and original window')
+                journal = Path(receipt['journal']).resolve(strict=True)
+                for path, digest in ((journal / 'window.json', receipt['window_sha256']),
+                                     (Path(receipt['diagnostic_path']), receipt['diagnostic_sha256'])):
+                    if hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+                        raise RuntimeError('setup fault retained evidence changed')
+                diagnostic = json.loads(Path(receipt['diagnostic_path']).read_text())
+                orphan_events = [event for event in diagnostic['trace']
+                                 if event['stage'] == 'owned_orphan_attached_after_drop_kill']
+                if (diagnostic['driver_error'] is not None or len(orphan_events) != 1
+                        or orphan_events[0]['pid'] != receipt['owned_orphan_pid']):
+                    raise RuntimeError('missing actual post-Drop owned orphan evidence')
             elif case in ('graceful-sigterm', 'original-cutoff'):
                 expected = 'cancelled' if case == 'graceful-sigterm' else 'timed_out'
                 if (receipt['case'] != case or receipt['outcome']['command_status'] != expected
