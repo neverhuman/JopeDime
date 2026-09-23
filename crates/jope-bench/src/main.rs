@@ -8,9 +8,10 @@ use clap::{Parser, Subcommand};
 use jope_bench::cuts::{self, FoldPlan};
 use jope_bench::emit::{self, Stage};
 use jope_bench::load::{discover, load_dataset};
-use jope_bench::methods::{self, SearchConfig, DEFAULT_HEADS};
+use jope_bench::methods::{self, SearchConfig, RESAMPLED_SEARCH_METHOD_ID};
 use jope_bench::protocol::{self, Protocol};
 use jope_bench::report::{Report, Stamp};
+use jope_bench::task::Task;
 use jope_bench::{DEFAULT_FOLDS, DEFAULT_SEED};
 
 #[derive(Parser)]
@@ -46,17 +47,20 @@ enum Command {
         /// How many screened methods are re-scored on every cut.
         #[arg(long, default_value_t = 5)]
         top: usize,
-        /// Heads to benchmark as single-head programs (comma-separated; default: every distinct head).
+        /// Heads to benchmark as single-head programs (comma-separated; default: every head of
+        /// each dataset's task, checked against that task's grammar).
         #[arg(long, value_delimiter = ',')]
         heads: Option<Vec<String>>,
         /// Extra program: `NAME=<dsl>` or `NAME=@<file>` (repeatable).
         #[arg(long = "program")]
         programs: Vec<String>,
-        /// Also run the search on the screen cut's training rows and benchmark its program.
+        /// Also run the search on the screen cut's training rows and benchmark its program
+        /// (regression datasets only; others are skipped when this is set).
         #[arg(long)]
         search: bool,
         /// In the deep stage, re-run the search on every cut's training rows and score each
-        /// cut's own program (measures the procedure, not the one program found on the screen cut).
+        /// cut's own program (measures the procedure, not the one program found on the screen
+        /// cut). The method is then `afm.lite-race.v1.resampled`.
         #[arg(long, requires = "search")]
         resample_search: bool,
         /// Search population.
@@ -123,11 +127,9 @@ fn main() -> Result<()> {
                 .num_threads(workers)
                 .build_global()
                 .context("rayon pool")?;
-            let heads: Vec<String> =
-                heads.unwrap_or_else(|| DEFAULT_HEADS.iter().map(|h| (*h).to_owned()).collect());
-            let mut base_methods = methods::baselines(&heads)?;
+            let mut extra_methods = Vec::new();
             for spec in &programs {
-                base_methods.push(methods::program(spec)?);
+                extra_methods.push(methods::program(spec)?);
             }
             let search_config = search.then_some(SearchConfig {
                 pop: search_pop,
@@ -149,16 +151,23 @@ fn main() -> Result<()> {
                         continue;
                     }
                 };
-                if dataset.task() != "regression" {
+                let task = dataset.bench_task()?;
+                if search_config.is_some() && task != Task::Regression {
                     eprintln!(
-                        "skip {} ({}): task {} is not benchmarked yet (regression only)",
+                        "skip {} ({}): --search is regression-only and this dataset is {}",
                         dataset.row.id,
                         dir.display(),
-                        dataset.task()
+                        task.as_str()
                     );
                     skipped += 1;
                     continue;
                 }
+                let mut methods = match &heads {
+                    Some(heads) => methods::baselines(heads, task)
+                        .with_context(|| format!("{} ({})", dataset.row.id, task.as_str()))?,
+                    None => methods::default_baselines(task)?,
+                };
+                methods.extend(extra_methods.iter().cloned());
                 let plan = FoldPlan::new(&dataset.row.dataset_hash, seed, folds);
                 let cuts = match cuts::build(
                     &plan,
@@ -173,7 +182,6 @@ fn main() -> Result<()> {
                         continue;
                     }
                 };
-                let mut methods = base_methods.clone();
                 if let Some(config) = &search_config {
                     let screen = cuts.get(screen_fold).context("screen fold out of range")?;
                     let (x_train, y_train) =
@@ -185,29 +193,33 @@ fn main() -> Result<()> {
                     );
                     if resample_search {
                         found.resample = Some(config.clone());
+                        found.id = RESAMPLED_SEARCH_METHOD_ID.to_owned();
                     }
                     methods.push(found);
                 }
                 let started = std::time::Instant::now();
-                let results = protocol::run(&dataset.x, &dataset.y, &cuts, methods, &protocol)?;
+                let results =
+                    protocol::run(&dataset.x, &dataset.y, &cuts, methods, &protocol, task)?;
                 let report = Report::new(
                     &dataset,
+                    task,
                     &plan,
                     &cuts,
                     &protocol,
-                    search_config.clone(),
                     results,
                     Stamp {
                         workers,
                         git_sha: git_sha.clone(),
+                        search: search_config.clone(),
                     },
                 );
                 let path = out.join(report.file_name());
                 let sha = report.write(&path)?;
                 written += 1;
                 eprintln!(
-                    "{} rows={} features={} cuts={} methods={} seconds={:.1} -> {} ({})",
+                    "{} [{}] rows={} features={} cuts={} methods={} seconds={:.1} -> {} ({})",
                     report.dataset_id,
+                    report.task,
                     report.rows,
                     report.features,
                     report.cuts.len(),
@@ -218,12 +230,20 @@ fn main() -> Result<()> {
                 );
                 for m in report.deep_ranked().iter().take(3) {
                     let deep = m.deep.as_ref().expect("ranked");
+                    let (ladder_metric, _) = task.ladder_metric();
                     eprintln!(
-                        "  deep #{} {:<24} oof_rmse={} oof_r2={} fitness={} seconds={:.2}{}",
+                        "  deep #{} {:<28} oof_{}={} oof_{}={} fitness={} seconds={:.2}{}",
                         m.deep_rank.unwrap_or(0),
                         m.method.id,
-                        deep.oof_rmse.map(|v| format!("{v:.6}")).unwrap_or_default(),
-                        deep.oof_r2.map(|v| format!("{v:.4}")).unwrap_or_default(),
+                        ladder_metric,
+                        deep.oof
+                            .get(ladder_metric)
+                            .map(|v| format!("{v:.6}"))
+                            .unwrap_or_default(),
+                        task.score_metric(),
+                        deep.oof_score
+                            .map(|v| format!("{v:.4}"))
+                            .unwrap_or_default(),
                         deep.robust_fitness
                             .map(|v| format!("{v:.4}"))
                             .unwrap_or_default(),

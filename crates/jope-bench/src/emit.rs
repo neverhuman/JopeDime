@@ -1,7 +1,9 @@
 //! Reports → a local `jope-arena` track: `scores.csv` rows under protocol `same-cut`, plus the
 //! track and registry files the ladder code needs, so `jope-arena elo` ranks the benchmark with
 //! the same Bradley–Terry fit that ranks the published one. Two tracks come out of one run:
-//! `<track>-screen` (every method, one cut) and `<track>-deep` (the finalists, every cut).
+//! `<track>-screen` (every method, one cut) and `<track>-deep` (the finalists, every cut). The
+//! ladder metric and its direction follow the reports' task ([`Task::ladder_metric`]): RMSE
+//! (minimize) for regression, ROC AUC and macro-F1 (maximize) for binary and multiclass.
 
 use std::path::{Path, PathBuf};
 
@@ -12,6 +14,7 @@ use serde_json::json;
 
 use crate::load::sha256_hex;
 use crate::report::Report;
+use crate::task::Task;
 
 /// The protocol every emitted row carries.
 pub const PROTOCOL: &str = "same-cut";
@@ -19,9 +22,9 @@ pub const PROTOCOL: &str = "same-cut";
 /// Which stage's number becomes the row value.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Stage {
-    /// Screen cut RMSE, every method.
+    /// Screen cut ladder metric, every method.
     Screen,
-    /// Pooled out-of-fold RMSE, finalists only; others are `missing`.
+    /// Pooled out-of-fold ladder metric, finalists only; others are `missing`.
     Deep,
 }
 
@@ -35,6 +38,18 @@ impl Stage {
     }
 }
 
+/// The task every report in the set carries (they must agree: one track per task).
+pub fn common_task(reports: &[(PathBuf, Report)]) -> Result<Task> {
+    ensure!(!reports.is_empty(), "no reports to emit");
+    let task = Task::parse(&reports[0].1.task)
+        .with_context(|| format!("report task {:?} is not benchmarked", reports[0].1.task))?;
+    ensure!(
+        reports.iter().all(|(_, r)| r.task == task.as_str()),
+        "reports mix tasks; one track per task"
+    );
+    Ok(task)
+}
+
 /// One `scores.csv` row per (dataset, method).
 pub fn score_rows(
     reports: &[(PathBuf, Report)],
@@ -42,6 +57,8 @@ pub fn score_rows(
     track_id: &str,
     stage: Stage,
 ) -> Result<Vec<ScoreRow>> {
+    let task = common_task(reports)?;
+    let (metric, _) = task.ladder_metric();
     let mut rows = Vec::new();
     for (path, report) in reports {
         let bytes = std::fs::read(path).with_context(|| format!("read {}", path.display()))?;
@@ -57,30 +74,40 @@ pub fn score_rows(
         );
         for method in &report.methods {
             let (value, status, notes) = match stage {
-                Stage::Screen => match method.screen.rmse {
+                Stage::Screen => match method.screen.metrics.get(metric) {
                     Some(v) => (
-                        py_repr(v),
+                        py_repr(*v),
                         "ok",
                         format!("screen cut {}", &method.screen_cut_id[..12]),
                     ),
                     None => (
                         String::new(),
                         "failed",
-                        method.screen.reason.clone().unwrap_or_default(),
+                        method
+                            .screen
+                            .reason
+                            .clone()
+                            .or_else(|| method.screen.note.clone())
+                            .unwrap_or_default(),
                     ),
                 },
                 Stage::Deep => match method.deep.as_ref() {
-                    Some(deep) => match deep.oof_rmse {
+                    Some(deep) => match deep.oof.get(metric) {
                         Some(v) => (
-                            py_repr(v),
+                            py_repr(*v),
                             "ok",
                             format!(
-                                "pooled OOF over {} folds; fold R2 sd {}",
+                                "pooled OOF over {} folds; fold {} sd {}",
                                 deep.folds.len(),
+                                task.score_metric(),
                                 deep.fold_sd.map(py_repr).unwrap_or_default()
                             ),
                         ),
-                        None => (String::new(), "failed", "a fold was rejected".to_owned()),
+                        None => (
+                            String::new(),
+                            "failed",
+                            deep.reason.clone().unwrap_or_default(),
+                        ),
                     },
                     None => (String::new(), "missing", "not a screen finalist".to_owned()),
                 },
@@ -90,7 +117,7 @@ pub fn score_rows(
                 dataset_id: report.dataset_hash.clone(),
                 method_id: method.method.id.clone(),
                 protocol: PROTOCOL.to_owned(),
-                metric: "rmse".to_owned(),
+                metric: metric.to_owned(),
                 value,
                 status: status.to_owned(),
                 benchmark_valid: "True".to_owned(),
@@ -118,12 +145,8 @@ pub fn write_track(
     reports: &[(PathBuf, Report)],
     reports_root: &Path,
 ) -> Result<PathBuf> {
-    ensure!(!reports.is_empty(), "no reports to emit");
-    let task = &reports[0].1.task;
-    ensure!(
-        reports.iter().all(|(_, r)| &r.task == task),
-        "reports mix tasks; one track per task"
-    );
+    let task = common_task(reports)?;
+    let (metric, direction) = task.ladder_metric();
     let track_id = format!("{track_base}-{}", stage.suffix());
     let rows = score_rows(reports, reports_root, &track_id, stage)?;
 
@@ -137,11 +160,11 @@ pub fn write_track(
     let track = json!({
         "schema": "sotarena.track.v1",
         "id": track_id,
-        "name": format!("jope same-cut ({}) · {task}", stage.suffix()),
+        "name": format!("jope same-cut ({}) · {}", stage.suffix(), task.as_str()),
         "public_name": "same-cut",
-        "task": task,
-        "primary_metric": "rmse",
-        "metric_direction": "minimize",
+        "task": task.as_str(),
+        "primary_metric": metric,
+        "metric_direction": direction.as_str(),
         "dataset_registry": dataset_registry,
         "method_registry": "registry/methods.json",
         "scores": format!("results/{track_id}/scores.csv"),

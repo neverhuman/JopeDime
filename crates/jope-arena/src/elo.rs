@@ -113,24 +113,27 @@ pub fn matches_from_scores(
     scores: &BTreeMap<String, BTreeMap<String, f64>>,
     tie_relative_tolerance: f64,
 ) -> Vec<Match> {
+    matches_from_scores_directed(scores, Direction::Minimize, tie_relative_tolerance)
+}
+
+/// [`matches_from_scores`] in either direction. `Minimize` is exactly the benchmark's rule (the
+/// published `rmse` ladders reproduce bit for bit); `Maximize` lets a track ranked by `roc_auc`
+/// or `macro_f1` use the same fit, with the same tie rule and the same visiting order.
+pub fn matches_from_scores_directed(
+    scores: &BTreeMap<String, BTreeMap<String, f64>>,
+    direction: Direction,
+    tie_relative_tolerance: f64,
+) -> Vec<Match> {
     let mut matches = Vec::new();
     for (dataset_id, by_method) in scores {
         let methods: Vec<(&String, f64)> = by_method.iter().map(|(m, v)| (m, *v)).collect();
         for (left, (method_a, score_a)) in methods.iter().enumerate() {
             for (method_b, score_b) in &methods[left + 1..] {
-                let scale = score_a.abs().max(score_b.abs()).max(1.0);
-                let outcome = if (score_a - score_b).abs() <= tie_relative_tolerance * scale {
-                    0.5
-                } else if score_a < score_b {
-                    1.0
-                } else {
-                    0.0
-                };
                 matches.push(Match {
                     dataset_id: dataset_id.clone(),
                     method_a: (*method_a).clone(),
                     method_b: (*method_b).clone(),
-                    outcome_a: outcome,
+                    outcome_a: outcome(*score_a, *score_b, direction, tie_relative_tolerance),
                 });
             }
         }
