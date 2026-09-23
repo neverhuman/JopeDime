@@ -57,7 +57,12 @@ pub struct Outcome {
 }
 
 impl Outcome {
-    fn rejected(reason: String, fit_seconds: f64, predict_seconds: f64, hold_rows: usize) -> Self {
+    pub(crate) fn rejected(
+        reason: String,
+        fit_seconds: f64,
+        predict_seconds: f64,
+        hold_rows: usize,
+    ) -> Self {
         Self {
             status: "rejected".to_owned(),
             reason: Some(reason),
@@ -363,7 +368,7 @@ pub struct FoldResult {
     /// [`Cut::cut_id`].
     pub cut_id: String,
     /// The program scored on this fold (differs per fold only when the search was re-run per
-    /// cut; empty when producing it failed).
+    /// cut; empty for an adapter, and when producing the program failed).
     #[serde(default)]
     pub dsl: String,
     /// The score.
@@ -457,6 +462,37 @@ pub fn evaluate_deep_programs(
             Err(reason) => Outcome::rejected(format!("search: {reason}"), 0.0, 0.0, cut.hold.len()),
         })
         .collect();
+    let labels: Vec<String> = programs
+        .iter()
+        .map(|p| p.clone().unwrap_or_default())
+        .collect();
+    pool(cuts, &labels, outcomes, y, task)
+}
+
+/// Pool one outcome per cut out of fold: every row's held-out prediction in row order, scored
+/// for `task`, penalised by the fold variance. `labels[i]` is recorded as fold `i`'s `dsl`
+/// (the program scored there; empty for an adapter or a fold whose program could not be made).
+/// Any rejected fold, any uncovered row or an undefined pooled score rejects the whole thing.
+pub fn pool(
+    cuts: &[Cut],
+    labels: &[String],
+    outcomes: Vec<Outcome>,
+    y: &[f64],
+    task: Task,
+) -> Deep {
+    if labels.len() != cuts.len() || outcomes.len() != cuts.len() {
+        return Deep::rejected(
+            format!(
+                "{} labels and {} outcomes for {} cuts",
+                labels.len(),
+                outcomes.len(),
+                cuts.len()
+            ),
+            Vec::new(),
+            Vec::new(),
+            0.0,
+        );
+    }
     let seconds = outcomes
         .iter()
         .map(|o| o.fit_seconds + o.predict_seconds)
@@ -465,7 +501,7 @@ pub fn evaluate_deep_programs(
     let mut fold_score = Vec::new();
     let mut all_ok = true;
     let mut folds = Vec::with_capacity(cuts.len());
-    for ((cut, program), outcome) in cuts.iter().zip(programs).zip(outcomes) {
+    for ((cut, label), outcome) in cuts.iter().zip(labels).zip(outcomes) {
         if outcome.is_ok() {
             for (i, &row) in cut.hold.iter().enumerate() {
                 oof[row] = outcome.predictions[i];
@@ -479,7 +515,7 @@ pub fn evaluate_deep_programs(
         folds.push(FoldResult {
             fold: cut.fold,
             cut_id: cut.cut_id.clone(),
-            dsl: program.clone().unwrap_or_default(),
+            dsl: label.clone(),
             outcome: Outcome {
                 predictions: Vec::new(),
                 ..outcome

@@ -111,9 +111,31 @@ or search budget is a new evidence directory, not an edit.
 - No classification dataset is committed yet; `crates/jope-bench/tests/classification.rs` builds
   catalog-layout fixtures in a temporary directory to exercise both tasks end to end. The
   committed regression data stays the only benchmark input in this tree.
-- Tier-2 external baselines (the model-zoo report adapters) are a later step: they accept the same
-  headerless CSV layout but score themselves from the held-out labels and return metrics only, so
-  their rows will be marked as self-reported.
+- **Tier-2 baselines are external engines on the same cuts, scored by us.** `--adapter
+  NAME=<command...>` runs a subprocess under the `jope.bench-adapter/v1` contract: the benchmark
+  writes a cut's training rows (features plus target) and its held-out features (no target) to a
+  private directory, runs `<command...> <train.csv> <predict.csv> <out.csv> <task>`, reads one
+  prediction per held-out row, and scores it with the same evaluator as every program. The adapter
+  never sees a held-out target and nothing it prints is trusted as a score, so its rows are as
+  honest as a program's (the ladder marks them `external adapter <name> (<version>),
+  controller-scored`). `<command...> --version` is probed before any dataset runs and recorded.
+  Reference adapters under `crates/jope-bench/adapters/` (`<engine>_adapter.py`) wrap XGBoost,
+  LightGBM, CatBoost and a scikit-learn random forest with library defaults, a fixed seed and one
+  thread (no tuning, no early stopping), plus a dependency-free constant (`mean_adapter.py`) that
+  the tests use. Adapters are
+  processes, not dependencies: the crate builds and its tests run without any of those libraries
+  installed, and a run that names an adapter whose library is missing fails at the probe. An
+  adapter's wall time is recorded as its fit time; its rows are as deterministic as the engine
+  makes them (the reference adapters are).
+
+  ```sh
+  cargo run --release -p jope-bench -- run --datasets datasets/test --out target/bench/reports \
+    --adapter xgboost="python3 crates/jope-bench/adapters/xgboost_adapter.py" \
+    --adapter lightgbm="python3 crates/jope-bench/adapters/lightgbm_adapter.py" \
+    --adapter catboost="python3 crates/jope-bench/adapters/catboost_adapter.py" \
+    --adapter rf="python3 crates/jope-bench/adapters/sklearn_rf_adapter.py" \
+    --top 5 --search --search-pop 32 --search-gens 8 --resample-search --workers 16
+  ```
 
 ## Files
 
@@ -123,9 +145,13 @@ or search budget is a new evidence directory, not an edit.
 | `crates/jope-bench/src/cuts.rs` | fold plan, cuts, `jope.cut/v1` identity |
 | `crates/jope-bench/src/eval.rs` | the evaluator (frozen kernel for regression, v3 table API for classification), the three variance-penalty rules, deep (pooled out-of-fold) scoring |
 | `crates/jope-bench/src/load.rs` | catalog loading, target checks per task |
-| `crates/jope-bench/src/methods.rs` | baselines checked against the task's grammar, caller programs, the search entry |
+| `crates/jope-bench/src/methods.rs` | baselines checked against the task's grammar, caller programs, adapters, the search entry |
+| `crates/jope-bench/src/adapter.rs` | the `jope.bench-adapter/v1` subprocess contract: inputs written, predictions read, scored here |
+| `crates/jope-bench/adapters/` | reference adapters (XGBoost, LightGBM, CatBoost, scikit-learn random forest, constant mean) |
 | `crates/jope-bench/src/protocol.rs` | screen → top N → deep |
 | `crates/jope-bench/src/report.rs` | `jope.bench-report/v2` |
 | `crates/jope-bench/src/emit.rs` | `scores.csv` rows and track/registry files for `jope-arena`, metric and direction per task |
 | `crates/jope-bench/tests/pwlinear.rs` | offline end-to-end on the committed `pmlb-229-pwlinear`, including bit-for-bit agreement of the deep ridge score with `feat_math::cv_r2` on the same key |
 | `crates/jope-bench/tests/classification.rs` | offline end-to-end for binary and multiclass on generated fixtures, through the maximize ladder |
+| `crates/jope-bench/tests/committed_evidence.rs` | the committed `assets/same-cut/v1` re-derives from itself: tracks and ladders byte for byte, pwlinear's baselines bit for bit |
+| `assets/same-cut/v1/` | the committed evidence and its `SOURCES.md` (commands, recording tree, host, how to reproduce and check) |

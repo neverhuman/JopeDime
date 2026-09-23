@@ -7,6 +7,7 @@ use feat_math::Rows;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::adapter::{evaluate_adapter, evaluate_deep_adapter};
 use crate::cuts::Cut;
 use crate::eval::{evaluate, evaluate_deep_programs, fixed_programs, take, Deep, Outcome};
 use crate::methods::{search_program, Method};
@@ -78,10 +79,21 @@ pub fn rank_order(entries: &[(Option<f64>, &str)]) -> Vec<usize> {
     order
 }
 
-/// Deep-score one method: the fixed program on every cut, or, for a method with `resample`, the
-/// search re-run on each cut's training rows and that cut's own program scored. A cut whose
-/// search fails is a rejected fold naming the cause.
+/// Screen-score one method on one cut: the adapter it names, else its program.
+fn screen(method: &Method, x: &Rows, y: &[f64], cut: &Cut, task: Task) -> Outcome {
+    match &method.adapter {
+        Some(spec) => evaluate_adapter(spec, x, y, cut, task),
+        None => evaluate(&method.dsl, x, y, cut, task),
+    }
+}
+
+/// Deep-score one method: the adapter on every cut; the fixed program on every cut; or, for a
+/// method with `resample`, the search re-run on each cut's training rows and that cut's own
+/// program scored. A cut whose search fails is a rejected fold naming the cause.
 fn deepen(method: &Method, x: &Rows, y: &[f64], cuts: &[Cut], task: Task) -> Deep {
+    if let Some(spec) = &method.adapter {
+        return evaluate_deep_adapter(spec, x, y, cuts, task);
+    }
     let Some(config) = &method.resample else {
         return evaluate_deep_programs(&fixed_programs(&method.dsl, cuts), x, y, cuts, task);
     };
@@ -132,7 +144,7 @@ pub fn run(
     let screen_cut = &cuts[protocol.screen_fold];
     let screens: Vec<Outcome> = methods
         .par_iter()
-        .map(|method| evaluate(&method.dsl, x, y, screen_cut, task))
+        .map(|method| screen(method, x, y, screen_cut, task))
         .collect();
     let mut results: Vec<MethodResult> = methods
         .into_iter()
@@ -236,22 +248,43 @@ mod tests {
             dsl: "(pipe X (no_such_head_ever))".to_owned(),
             produce_seconds: 0.0,
             resample: None,
+            adapter: None,
         });
+        // An adapter goes through the same screen and deep stages as a program.
+        methods.push(crate::methods::adapter(
+            crate::adapter::parse_spec(
+                &format!(
+                    "mean=python3 {}",
+                    concat!(env!("CARGO_MANIFEST_DIR"), "/adapters/mean_adapter.py")
+                ),
+                30.0,
+            )
+            .unwrap(),
+        ));
         let protocol = Protocol {
             screen_fold: 0,
             top: 2,
         };
         let results = run(&x, &y, &cuts, methods.clone(), &protocol, Task::Regression).unwrap();
-        assert_eq!(results.len(), 4);
+        assert_eq!(results.len(), 5);
         assert_eq!(
             results.iter().map(|r| r.screen_rank).collect::<Vec<_>>(),
-            [1, 2, 3, 4]
+            [1, 2, 3, 4, 5]
         );
         assert_eq!(
-            results[3].method.id, "program.broken",
+            results[4].method.id, "program.broken",
             "rejected ranks last"
         );
-        assert!(results[3].deep.is_none());
+        assert!(results[4].deep.is_none());
+        let mean = results
+            .iter()
+            .find(|r| r.method.id == "adapter.mean")
+            .expect("the adapter was screened");
+        assert!(mean.screen.is_ok(), "{:?}", mean.screen);
+        assert_eq!(
+            mean.screen_rank, 4,
+            "a constant prediction ranks below every fitted head"
+        );
         assert_eq!(results.iter().filter(|r| r.deep.is_some()).count(), 2);
         assert!(results[0].deep_rank.is_some());
         let deep = results[0].deep.as_ref().unwrap();
@@ -261,11 +294,11 @@ mod tests {
             assert_eq!(r.screen_cut_id, cuts[0].cut_id);
         }
         // Screen fitness is the raw held-out R², so ranks follow it strictly.
-        let fits: Vec<f64> = results[..3]
+        let fits: Vec<f64> = results[..4]
             .iter()
             .map(|r| r.screen_fitness.unwrap())
             .collect();
-        assert!(fits[0] >= fits[1] && fits[1] >= fits[2], "{fits:?}");
+        assert!(fits.windows(2).all(|w| w[0] >= w[1]), "{fits:?}");
 
         // Duplicate ids are refused.
         methods.push(methods[0].clone());

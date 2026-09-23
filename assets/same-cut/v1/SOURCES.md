@@ -3,8 +3,9 @@
 The first committed same-cut evidence: every tier-1 baseline and the program this repository's
 search wrote, scored on identical held-out cuts of the ten committed regression datasets under
 `datasets/test/`, by a release build of `jope-bench` from the commit each report names in
-`git_sha` (the last commit before the one that adds this directory; its `crates/jope-bench` source
-is the one that ships with the evidence). Nothing here was edited by hand. The ten datasets are the `test-10` collection, chosen from the published ladder
+`git_sha` (the commit before the one that re-recorded this directory; its `crates/jope-bench`
+source is identical to the one that ships with the evidence, and after the rebase merge it stays
+reachable through the pull request's head ref rather than `main`). Nothing here was edited by hand. The ten datasets are the `test-10` collection, chosen from the published ladder
 where the historical engine ranked first (`docs/datasets.md`): a favourable selection, used because
 it is the only committed regression data. The comparison between methods on identical cuts of these
 ten is fair; nothing here generalises to a broader panel. `crates/jope-bench/tests/committed_evidence.rs` re-derives the tracks and both
@@ -32,9 +33,10 @@ jope-arena elo --track jope-same-cut-v1-screen --root assets/same-cut/v1/track \
   --json assets/same-cut/v1/elo-jope-same-cut-v1-screen.json
 ```
 
-The run is deterministic: three full runs on this host (two throwaway runs before this one, then
-this one) produced reports identical in every field except the timings, `generated_at_unix`,
-`host` and `git_sha`. The fold plan is the product pipeline's (`fold_of("<dataset_hash>:20260907",
+The run is deterministic: four full runs on this host (two throwaway runs, a first recording, then
+this re-recording) produced reports identical in every field except the timings,
+`generated_at_unix`, `host` and `git_sha`, and the independent review of the pull request that
+committed them reproduced both ladders byte for byte from a fresh run. The fold plan is the product pipeline's (`fold_of("<dataset_hash>:20260907",
 row, 5)`); the screen cut is fold 0; the top 5 screened methods are re-scored on every cut; the
 search runs with a 32-program pool for 8 rounds on the screen cut's training rows, then again on
 each cut's training rows in the deep stage (`--resample-search`, method id

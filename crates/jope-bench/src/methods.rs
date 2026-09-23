@@ -9,6 +9,7 @@ use feat_math::transpile::Emitted;
 use feat_math::{GenomeIr, Rows};
 use serde::{Deserialize, Serialize};
 
+use crate::adapter::AdapterSpec;
 use crate::eval::numeric_schema;
 use crate::task::Task;
 
@@ -22,17 +23,20 @@ pub enum MethodKind {
     Program,
     /// A program the search produced on the screen cut's training rows.
     Search,
+    /// An external engine run as a subprocess on the same cuts ([`crate::adapter`]).
+    Adapter,
 }
 
-/// One method: an id and the program it runs.
+/// One method: an id and the program it runs (or the adapter it invokes).
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Method {
     /// Ladder id (`baseline.ridge`, `program.<name>`, `afm.lite-race.v1`,
-    /// `afm.lite-race.v1.resampled`).
+    /// `afm.lite-race.v1.resampled`, `adapter.<name>`).
     pub id: String,
     /// Origin.
     pub kind: MethodKind,
-    /// Canonical program text (for a search method: the program found on the screen cut).
+    /// Canonical program text (for a search method: the program found on the screen cut; empty
+    /// for an adapter).
     pub dsl: String,
     /// Wall seconds it took to produce the program (0 for baselines and caller programs; the
     /// search's wall time for a search method). The cost-per-program number starts here.
@@ -43,6 +47,21 @@ pub struct Method {
     /// found on the screen cut (whose selection saw rows the other cuts hold out).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub resample: Option<SearchConfig>,
+    /// The external engine this method runs, for [`MethodKind::Adapter`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub adapter: Option<AdapterSpec>,
+}
+
+/// An external engine as a method, `adapter.<name>`.
+pub fn adapter(spec: AdapterSpec) -> Method {
+    Method {
+        id: spec.id(),
+        kind: MethodKind::Adapter,
+        dsl: String::new(),
+        produce_seconds: 0.0,
+        resample: None,
+        adapter: Some(spec),
+    }
 }
 
 fn canonical(dsl: &str) -> Result<String> {
@@ -85,6 +104,7 @@ pub fn baselines(heads: &[String], task: Task) -> Result<Vec<Method>> {
                 dsl,
                 produce_seconds: 0.0,
                 resample: None,
+                adapter: None,
             })
         })
         .collect()
@@ -124,6 +144,7 @@ pub fn program(spec: &str) -> Result<Method> {
         dsl: canonical(text.trim())?,
         produce_seconds: 0.0,
         resample: None,
+        adapter: None,
     })
 }
 
@@ -184,6 +205,7 @@ pub fn search(x: &Rows, y: &[f64], config: &SearchConfig) -> Result<Method> {
         dsl,
         produce_seconds: started.elapsed().as_secs_f64(),
         resample: None,
+        adapter: None,
     })
 }
 
