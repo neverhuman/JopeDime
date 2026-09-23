@@ -74,11 +74,14 @@ cargo run --release -p jope-arena -- elo --track jope-same-cut-v1-deep --root ta
 
 ## Committed evidence
 
-`assets/same-cut/v1/` holds the first committed run: the ten `datasets/test` regression datasets,
-every default head plus the searched program with `--resample-search` (32 programs × 8 rounds),
-k=5 on the pipeline's seed, top 5 deepened, with the tracks, both ladders and their snapshots
-(`SOURCES.md` there records the exact commands, the recording tree and host). The run is
-deterministic apart from timings. The ten datasets are the `test-10` collection, chosen from the
+`assets/same-cut/v2/` holds the run the README renders: the ten `datasets/test` regression
+datasets, every default head, the four external engines (XGBoost, LightGBM, CatBoost, a
+scikit-learn random forest; library defaults, seed 0, one thread) and the searched program with
+`--resample-search` (32 programs × 8 rounds), k=5 on the pipeline's seed, top 5 deepened, with the
+tracks, both ladders and their snapshots. `assets/same-cut/v1/` is the earlier heads-only run and
+stays committed as its own record; both are checked by the same test. Each directory's
+`SOURCES.md` records the exact commands, the recording tree and host, and (for v2) the engine and
+Python versions the engine rows depend on. Both runs are deterministic apart from timings. The ten datasets are the `test-10` collection, chosen from the
 published ladder where the historical engine ranked first (`docs/datasets.md`): a favourable
 selection, used because it is the only committed regression data. Identical cuts make the
 comparison between methods fair on those ten; the evidence says nothing about a broader panel, and
@@ -157,5 +160,5 @@ or search budget is a new evidence directory, not an edit.
 | `crates/jope-bench/src/emit.rs` | `scores.csv` rows and track/registry files for `jope-arena`, metric and direction per task |
 | `crates/jope-bench/tests/pwlinear.rs` | offline end-to-end on the committed `pmlb-229-pwlinear`, including bit-for-bit agreement of the deep ridge score with `feat_math::cv_r2` on the same key |
 | `crates/jope-bench/tests/classification.rs` | offline end-to-end for binary and multiclass on generated fixtures, through the maximize ladder |
-| `crates/jope-bench/tests/committed_evidence.rs` | the committed `assets/same-cut/v1` re-derives from itself: tracks and ladders byte for byte, pwlinear's baselines bit for bit |
-| `assets/same-cut/v1/` | the committed evidence and its `SOURCES.md` (commands, recording tree, host, how to reproduce and check) |
+| `crates/jope-bench/tests/committed_evidence.rs` | every committed `assets/same-cut/v*` re-derives from itself: tracks and ladders byte for byte, pwlinear's baselines bit for bit, the expected engines present |
+| `assets/same-cut/v1/`, `assets/same-cut/v2/` | the committed evidence (v1 heads only; v2 with the four engines, the one the README renders) and each `SOURCES.md` (commands, recording tree, host, engine versions, how to reproduce and check) |
