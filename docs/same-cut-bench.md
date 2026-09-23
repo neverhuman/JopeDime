@@ -114,11 +114,15 @@ or search budget is a new evidence directory, not an edit.
 - **Tier-2 baselines are external engines on the same cuts, scored by us.** `--adapter
   NAME=<command...>` runs a subprocess under the `jope.bench-adapter/v1` contract: the benchmark
   writes a cut's training rows (features plus target) and its held-out features (no target) to a
-  private directory, runs `<command...> <train.csv> <predict.csv> <out.csv> <task>`, reads one
-  prediction per held-out row, and scores it with the same evaluator as every program. The adapter
-  never sees a held-out target and nothing it prints is trusted as a score, so its rows are as
-  honest as a program's (the ladder marks them `external adapter <name> (<version>),
-  controller-scored`). `<command...> --version` is probed before any dataset runs and recorded.
+  temporary directory readable by its own user only, runs `<command...> <train.csv> <predict.csv>
+  <out.csv> <task>`, reads one prediction per held-out row, and scores it with the same evaluator
+  as every program. The adapter is handed no held-out target and nothing it prints is trusted as a
+  score, so its rows are as honest as a program's (the ladder marks them `external adapter <name>
+  (<version>), controller-scored`). That is a guarantee about what the adapter is given and who
+  scores it, not a sandbox: the child runs as the benchmark's user in its working directory, and
+  it may tune itself inside its own training rows, as the resampled search does, so
+  controller-scored does not mean untuned. `<command...> --version` is probed before any dataset
+  runs and recorded.
   Reference adapters under `crates/jope-bench/adapters/` (`<engine>_adapter.py`) wrap XGBoost,
   LightGBM, CatBoost and a scikit-learn random forest with library defaults, a fixed seed and one
   thread (no tuning, no early stopping), plus a dependency-free constant (`mean_adapter.py`) that
