@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 8",
-  "count": 2631,
+  "count": 2632,
   "ignored": 37,
   "packages": {
    "battle-gpu": {
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 423,
+    "count": 424,
     "ignored": 4,
     "binaries": {
      "feat-math": {
@@ -493,13 +493,14 @@
      },
      "feat-math::ip_scrub": {
       "kind": "test",
-      "count": 4,
+      "count": 5,
       "ignored": 0,
       "tests": [
        "bound_and_fitted_cpp_emitters_are_clean",
        "every_emitter_is_clean_on_every_fixture",
        "the_closed_form_docstring_no_longer_cites_the_method_literature",
-       "the_phrase_lint_trips_on_what_it_must_and_nothing_ordinary"
+       "the_phrase_lint_trips_on_what_it_must_and_nothing_ordinary",
+       "user_supplied_names_do_not_trip_the_bound_and_fitted_lints"
       ]
      },
      "feat-math::kernel_codec": {
@@ -4531,7 +4532,7 @@
   }
  },
  "totals": {
-  "rust": 2631,
+  "rust": 2632,
   "python": 214
  }
 }

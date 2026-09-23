@@ -323,11 +323,21 @@ pub fn emit_fitted_cpp17(model: &BoundModel) -> Result<FittedCppArtifact> {
         "{PRELUDE}\n{head_functions}\n{encode}\n{transform}\n{predict}\n{abi}",
         encode = emit_input(model, missing_aware)?,
     );
+    // The caller's column names and categorical vocabularies are masked before the lint runs
+    // (`emit::user_text`), so the codec's vocabulary arrays cannot trip it on an innocent name.
+    let user = super::emit::user_text(model);
+    let portfolio = matches!(
+        &model.predictor,
+        BoundPredictor::Pipeline {
+            head: V3Head::ClassificationPortfolio(_),
+            ..
+        }
+    );
     for (what, text) in [
         ("fitted C++17 artifact", &source),
         ("fitted C++17 codec", &codec),
     ] {
-        let hits = crate::transpile::lint_shipped_text(text);
+        let hits = super::emit::lint_shipped_masked(text, &user, portfolio);
         if !hits.is_empty() {
             bail!("banned vocabulary in {what}: {}", hits.join(", "));
         }
