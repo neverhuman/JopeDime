@@ -6,7 +6,7 @@
  },
  "rust": {
   "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 8",
-  "count": 2632,
+  "count": 2641,
   "ignored": 37,
   "packages": {
    "battle-gpu": {
@@ -1215,14 +1215,16 @@
     }
    },
    "jope-bench": {
-    "count": 16,
+    "count": 21,
     "ignored": 0,
     "binaries": {
      "jope-bench": {
       "kind": "lib",
-      "count": 13,
+      "count": 15,
       "ignored": 0,
       "tests": [
+       "adapter::tests::adapter_failures_are_rejections_with_the_cause",
+       "adapter::tests::specs_parse_and_the_mean_adapter_answers_the_contract",
        "cuts::tests::cuts_partition_rows_and_ids_follow_every_input",
        "eval::tests::binary_programs_score_auc_and_regression_heads_are_refused",
        "eval::tests::multiclass_programs_score_macro_f1",
@@ -1251,6 +1253,16 @@
       "tests": [
        "a_regression_fixture_still_loads_as_regression",
        "binary_and_multiclass_run_end_to_end_and_rank_by_maximize"
+      ]
+     },
+     "jope-bench::committed_evidence": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "the_pwlinear_baselines_re_evaluate_bit_for_bit",
+       "the_reports_are_one_consistent_run",
+       "the_tracks_and_ladders_re_derive_byte_for_byte"
       ]
      },
      "jope-bench::pwlinear": {
@@ -1404,7 +1416,7 @@
     }
    },
    "jope-dime-regressor": {
-    "count": 1001,
+    "count": 1005,
     "ignored": 3,
     "binaries": {
      "jope-dime-regressor": {
@@ -1662,7 +1674,7 @@
      },
      "jope-dime-regressor::bin/jope-dime-regressor": {
       "kind": "bin",
-      "count": 215,
+      "count": 216,
       "ignored": 3,
       "tests": [
        "commands::binary_cv::cli_smoke_support::export_binary_fixture_registry",
@@ -1843,6 +1855,7 @@
        "test_adaptive::tabarena_islands::tests::dataset_selector_is_exact_ordered_and_fail_closed",
        "test_adaptive::tabarena_islands::tests::deficient_island_recovers_from_globally_valid_parents",
        "test_adaptive::tabarena_islands::tests::initial_islands_are_deterministic_and_complete",
+       "test_adaptive::tabarena_islands::tests::initial_islands_refuse_too_few_or_repeated_seeds",
        "test_adaptive::tabarena_islands::tests::leader_updates_preserve_exact_ties_and_replace_slower_models",
        "test_adaptive::tabarena_islands::tests::only_fresh_post_g0_novel_descendants_can_terminate",
        "test_adaptive::tabarena_islands::tests::tabarena_offspring_stream_is_reproducible_and_run_salted",
@@ -2126,7 +2139,7 @@
      },
      "jope-dime-regressor::bin/jope_selfplay_alarms": {
       "kind": "bin",
-      "count": 43,
+      "count": 44,
       "ignored": 0,
       "tests": [
        "tests::a_binary_branch_drifting_past_its_measured_band_warns_before_it_collapses",
@@ -2163,6 +2176,7 @@
        "tests::no_published_proposal_set_is_silent",
        "tests::one_step_of_unfrozen_labels_is_silent",
        "tests::read_tail_drops_the_partial_leading_line",
+       "tests::the_complete_keeper_fixture_covers_every_required_queue_status_field",
        "tests::the_error_text_and_the_expected_schema_are_both_in_the_alarm",
        "tests::the_extractor_handles_renames_skips_and_defaults",
        "tests::the_freezers_own_alarm_is_lifted",
@@ -2442,7 +2456,7 @@
      },
      "jope-dime-regressor::bin/jope_selfplay_tui": {
       "kind": "bin",
-      "count": 45,
+      "count": 47,
       "ignored": 0,
       "tests": [
        "tests::accepted_task_fronts_are_independent_and_visible",
@@ -2452,6 +2466,7 @@
        "tests::compact_terminal_defaults_to_unified_overview_and_honors_the_gpu_tab",
        "tests::continuous_series_drops_placeholder_zero_losses",
        "tests::degraded_sources_do_not_discard_live_scq_data",
+       "tests::dl_history_follows_a_requeue_first_seen_before_its_progress_file",
        "tests::dl_history_follows_the_new_attempt_after_a_requeue",
        "tests::dl_tab_funnel_shows_both_task_totals",
        "tests::dl_tab_generations_panel_renders_dl_share_column",
@@ -2485,6 +2500,7 @@
        "tests::slow_view_defaults_render_and_alarm_alerts_surface",
        "tests::snapshot_parses_queue_epoch_priorities_and_absent_xbabe5",
        "tests::thousands_formats_exact_counts",
+       "tests::trainer_state_follows_a_requeue_first_seen_before_its_progress_file",
        "tests::training_arms_order_puts_real_trainers_first",
        "tests::trend_arrows_point_the_right_way",
        "tests::validation_phase_never_looks_stuck",
@@ -4532,7 +4548,7 @@
   }
  },
  "totals": {
-  "rust": 2632,
+  "rust": 2641,
   "python": 214
  }
 }

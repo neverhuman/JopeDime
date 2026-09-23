@@ -1600,14 +1600,25 @@ fn confirmed_campaign_winner_sources_at(
         .collect())
 }
 
+/// The generation-zero seed bank checked in with this crate; the fallback
+/// when no published fast30 bank exists on the host.
+fn checked_in_fast30_bank() -> PathBuf {
+    workspace_root().join("seeds/generation-zero.txt")
+}
+
 fn fast30_bank_sources() -> Result<Vec<CandidateSource>> {
     let published =
         paths::quant_mirror_root().join("regression/reports/jain_regressor_fast30_gen0_seeds.txt");
     let path = if published.is_file() {
         published.to_path_buf()
     } else {
-        workspace_root().join("seeds/generation-zero.txt")
+        checked_in_fast30_bank()
     };
+    fast30_bank_sources_from(&path)
+}
+
+fn fast30_bank_sources_from(path: &Path) -> Result<Vec<CandidateSource>> {
+    let path = path.to_path_buf();
     let bytes = fs::read(&path)?;
     let file_sha256 = sha256_bytes(&bytes);
     let text = std::str::from_utf8(&bytes)?;
@@ -1698,15 +1709,21 @@ fn force_fast30_inclusion(seeds: &mut [SeedProvenance], champion: SeedProvenance
     true
 }
 
-fn build_seed_manifest(registry: &Path, spec: &DatasetSpec) -> Result<SeedManifest> {
-    let mut ordered = confirmed_campaign_winner_sources(&spec.dataset_hash)?;
-    ordered.extend(report_sources(registry, &spec.dataset_hash)?);
-    ordered.extend(jope_generation_sources(&spec.dataset_hash)?);
-    ordered.extend(fast30_bank_sources()?);
+/// Canonicalize `ordered` for a dataset with `features` columns and keep the
+/// first source of every distinct semantic hash, in order, until `limit` seeds
+/// are held. Sources that do not canonicalize for the dataset are skipped.
+/// Slots are assigned in acceptance order. Every seed manifest is built
+/// through this one loop, so tests that need a distinct seed set get exactly
+/// the set production would freeze.
+fn canonical_distinct_seeds(
+    ordered: Vec<CandidateSource>,
+    features: usize,
+    limit: usize,
+) -> Vec<SeedProvenance> {
     let mut seen = HashSet::new();
     let mut seeds = Vec::new();
     for source in ordered {
-        let canonical = match canonicalize_for_features(&source.genome, spec.features) {
+        let canonical = match canonicalize_for_features(&source.genome, features) {
             Ok(canonical) => canonical,
             Err(_) => continue,
         };
@@ -1726,10 +1743,19 @@ fn build_seed_manifest(registry: &Path, spec: &DatasetSpec) -> Result<SeedManife
             source_rank: source.rank,
             source_score: source.score,
         });
-        if seeds.len() == POPULATION {
+        if seeds.len() == limit {
             break;
         }
     }
+    seeds
+}
+
+fn build_seed_manifest(registry: &Path, spec: &DatasetSpec) -> Result<SeedManifest> {
+    let mut ordered = confirmed_campaign_winner_sources(&spec.dataset_hash)?;
+    ordered.extend(report_sources(registry, &spec.dataset_hash)?);
+    ordered.extend(jope_generation_sources(&spec.dataset_hash)?);
+    ordered.extend(fast30_bank_sources()?);
+    let mut seeds = canonical_distinct_seeds(ordered, spec.features, POPULATION);
     if seeds.len() != POPULATION {
         bail!(
             "only {} canonical Rust-emittable, deduplicated generation-zero seeds were found",
@@ -1778,33 +1804,7 @@ fn build_transfer_seed_manifest(registry: &Path, spec: &DatasetSpec) -> Result<S
     let mut ordered = prior_test_adaptive_checkpoint_sources(&spec.dataset_hash)?;
     ordered.extend(confirmed_transfer_winner_sources(&spec.dataset_hash)?);
     ordered.extend(fast30_bank_sources()?);
-    let mut seen = HashSet::new();
-    let mut seeds = Vec::new();
-    for source in ordered {
-        let canonical = match canonicalize_for_features(&source.genome, spec.features) {
-            Ok(canonical) => canonical,
-            Err(_) => continue,
-        };
-        if !seen.insert(canonical.semantic_sha256.clone()) {
-            continue;
-        }
-        seeds.push(SeedProvenance {
-            slot: seeds.len(),
-            canonical_genome: canonical.canonical,
-            semantic_sha256: canonical.semantic_sha256,
-            complexity: canonical.complexity,
-            rust_source_len: canonical.rust_source_len,
-            source_kind: source.kind,
-            source_file: source.path.to_string_lossy().into_owned(),
-            source_file_sha256: source.file_sha256,
-            source_record: source.record,
-            source_rank: source.rank,
-            source_score: source.score,
-        });
-        if seeds.len() == POPULATION {
-            break;
-        }
-    }
+    let seeds = canonical_distinct_seeds(ordered, spec.features, POPULATION);
     if seeds.len() != POPULATION {
         bail!(
             "only {} canonical leave-one-dataset-out seeds were found",

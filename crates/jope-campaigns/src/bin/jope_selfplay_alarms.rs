@@ -2173,26 +2173,57 @@ mod tests {
         assert_eq!(row["observed"], "expected number, found string");
     }
 
+    /// A keeper document carrying every field the supply consumer's
+    /// `QueueStatus` requires. Written out by hand, NOT generated from the
+    /// derived field list, so an over-strict extractor still fails
+    /// `a_complete_in_schema_document_is_silent` instead of agreeing with
+    /// itself.
+    fn complete_keeper_document(generated_at_ms: u64) -> String {
+        format!(
+            r#"{{"schema":"JopeSelfplayQueueKeeper.v3","generated_at_ms":{generated_at_ms},
+               "admission_allowed":true,"active_checkpoint_sha256":null,
+               "queued_target":2048,"queued_hard_cap":4096,"queued_starting":3,
+               "queued":2,"starting":1,"dispatching":1,"admission_waves":[],
+               "protected_reserve_waves":[],"complete_current_checkpoint_waves":0,
+               "partial_current_checkpoint_waves":0,"complete_reserve_waves":0,
+               "reserve_manifests":0,"admission_manifests":0,"validated_ready":7,
+               "useful_work":11,"candidate_evaluation_work":0,
+               "unclaimed_current_checkpoint_manifests":7}}"#
+        )
+    }
+
     #[test]
     fn a_complete_in_schema_document_is_silent() {
         let temp = TempDir::new().unwrap();
         let root = contract_root(&temp);
         std::fs::write(
             root.join("ops/queue-keeper-v3.json"),
-            format!(
-                r#"{{"schema":"JopeSelfplayQueueKeeper.v3","generated_at_ms":{},
-                   "admission_allowed":true,"active_checkpoint_sha256":null,
-                   "queued_target":2048,"queued_hard_cap":4096,"queued_starting":3,
-                   "queued":2,"starting":1,"dispatching":1,"admission_waves":[],
-                   "protected_reserve_waves":[],"complete_current_checkpoint_waves":0,
-                   "partial_current_checkpoint_waves":0,"complete_reserve_waves":0,
-                   "reserve_manifests":0,"admission_manifests":0,"validated_ready":7,
-                   "useful_work":11,"unclaimed_current_checkpoint_manifests":7}}"#,
-                now_ms() as u64
-            ),
+            complete_keeper_document(now_ms() as u64),
         )
         .unwrap();
-        assert!(alarm_names(&scan(&root)).is_empty());
+        let names = alarm_names(&scan(&root));
+        assert!(names.is_empty(), "{names:?}");
+    }
+
+    /// "Complete" above is relative to `QueueStatus` as it stands today. When
+    /// the consumer gains a required field, this names the field the fixture
+    /// lacks instead of leaving an unexplained alarm in the test above.
+    #[test]
+    fn the_complete_keeper_fixture_covers_every_required_queue_status_field() {
+        let fixture: Value = serde_json::from_str(&complete_keeper_document(0)).unwrap();
+        let keys = fixture.as_object().unwrap();
+        let source = live_source("src/bin/jope_selfplay_supply.rs");
+        let (_, required) = derive_required_fields(&source, "QueueStatus").unwrap();
+        assert!(!required.is_empty());
+        let missing: Vec<&str> = required
+            .iter()
+            .map(|field| field.name.as_str())
+            .filter(|name| !keys.contains_key(*name))
+            .collect();
+        assert!(
+            missing.is_empty(),
+            "complete_keeper_document lacks required QueueStatus fields {missing:?}"
+        );
     }
 
     #[test]
