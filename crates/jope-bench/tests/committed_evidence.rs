@@ -106,6 +106,27 @@ fn the_reports_are_one_consistent_run() {
             );
             assert_eq!(r.git_sha, first.git_sha, "{what}: one run, one tree");
             assert_eq!(r.host, first.host, "{what}: one run, one host");
+            // Methods are listed in screen order, which differs per dataset: compare by name.
+            let specs = |r: &Report| -> Vec<_> {
+                let mut specs: Vec<_> = r
+                    .methods
+                    .iter()
+                    .filter(|m| m.method.kind == MethodKind::Adapter)
+                    .map(|m| {
+                        m.method
+                            .adapter
+                            .clone()
+                            .expect("adapter rows carry their spec")
+                    })
+                    .collect();
+                specs.sort_by(|a, b| a.name.cmp(&b.name));
+                specs
+            };
+            assert_eq!(
+                specs(r),
+                specs(first),
+                "{what}: one run, one spec and one recorded version per engine"
+            );
             assert_eq!(r.file_name(), path.file_name().unwrap().to_string_lossy());
             assert_eq!(r.cuts.len(), DEFAULT_FOLDS);
             let searched: Vec<_> = r
