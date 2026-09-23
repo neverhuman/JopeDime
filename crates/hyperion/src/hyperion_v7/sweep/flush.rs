@@ -4,7 +4,7 @@ use super::super::EMB_KEEP;
 use super::driver::SweepAccum;
 use super::types::{PatchCoord, PatchModel};
 
-/// Run one model batch and scatter BOTH outputs back to ORIGINAL coordinates with
+/// Run one model batch and scatter requested outputs back to ORIGINAL coordinates with
 /// order-independent weighted running means (the veox flush rule):
 /// - per-row embedding (dims `0..EMB_KEEP`), weight = number of in-range columns the patch covers;
 /// - per-cell confidence logit, weight = 1 per covering patch (the reference `sum/count` rule).
@@ -23,24 +23,36 @@ pub(super) fn flush_patch_batch(
     perm_c: &[usize],
     acc: &mut SweepAccum,
     touched: &mut Vec<(u32, u32)>,
+    with_confidence: bool,
 ) -> Result<()> {
     let batch = coords.len();
     let area = p * p;
-    let out = model.forward_batch(&x_flat[..batch * area], &m_flat[..batch * area], batch, p)?;
+    let (emb, logits) = if with_confidence {
+        let out =
+            model.forward_batch(&x_flat[..batch * area], &m_flat[..batch * area], batch, p)?;
+        (out.emb, Some(out.logits))
+    } else {
+        (
+            model.forward_emb_batch(&x_flat[..batch * area], &m_flat[..batch * area], batch, p)?,
+            None,
+        )
+    };
     let emb_dim = model.emb_dim();
-    if out.emb.len() != batch * emb_dim {
+    if emb.len() != batch * emb_dim {
         bail!(
             "Hyperion model returned {} emb floats for {batch} patches, expected {}",
-            out.emb.len(),
+            emb.len(),
             batch * emb_dim
         );
     }
-    if out.logits.len() != batch * area {
-        bail!(
-            "Hyperion model returned {} logits for {batch} patches of area {area}, expected {}",
-            out.logits.len(),
-            batch * area
-        );
+    if let Some(logits) = &logits {
+        if logits.len() != batch * area {
+            bail!(
+                "Hyperion model returned {} logits for {batch} patches of area {area}, expected {}",
+                logits.len(),
+                batch * area
+            );
+        }
     }
     if emb_dim < EMB_KEEP {
         bail!("Hyperion model emb_dim {emb_dim} is below EMB_KEEP {EMB_KEEP}");
@@ -60,8 +72,10 @@ pub(super) fn flush_patch_batch(
 
         // Scatter the patch's 128-d embedding into EVERY original cell it covers (running SUM),
         // and the per-cell confidence LOGIT (running mean). One shared cell_count per cell.
-        let emb_slice = &out.emb[idx * emb_dim..idx * emb_dim + EMB_KEEP];
-        let logits = &out.logits[idx * area..(idx + 1) * area];
+        let emb_slice = &emb[idx * emb_dim..idx * emb_dim + EMB_KEEP];
+        let logits = logits
+            .as_ref()
+            .map(|values| &values[idx * area..(idx + 1) * area]);
         for i in 0..len_r {
             let r_orig = perm_r[coord.r + i];
             for j in 0..len_c {
@@ -69,8 +83,10 @@ pub(super) fn flush_patch_batch(
                 let cell = r_orig * w + c_orig;
                 let n = acc.cell_count[cell] + 1;
                 // confidence logit: plain running mean (weight 1 per covering patch)
-                let curr = acc.cell_logit_mean[cell];
-                acc.cell_logit_mean[cell] = curr + (logits[i * p + j] - curr) / n as f32;
+                if let Some(logits) = logits {
+                    let curr = acc.cell_logit_mean[cell];
+                    acc.cell_logit_mean[cell] = curr + (logits[i * p + j] - curr) / n as f32;
+                }
                 // embedding: running SUM (finalized to mean / min-max in run_composite_sweep)
                 let base = cell * EMB_KEEP;
                 for (dst, &v) in acc.cell_sum[base..base + EMB_KEEP]

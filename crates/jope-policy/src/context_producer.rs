@@ -11,7 +11,7 @@ use hyperion::{
     hyperion::{fit_quantile_bounds, load_settings, HyperionSweepSettings},
     hyperion_v7::{
         backend::V7Model, config::SweepPlan, grid::quantize_u8_with_bounds,
-        sweep::run_composite_sweep,
+        sweep::run_composite_embedding_sweep,
     },
     progress::NullSink,
 };
@@ -202,7 +202,7 @@ impl CpuProducer {
         let matrix = Matrix::new(columns, n, width);
         let bounds = fit_quantile_bounds(&matrix, self.settings.q_low, self.settings.q_high);
         let grid = quantize_u8_with_bounds(&matrix, &bounds, self.settings.pad_u8);
-        let sweep = run_composite_sweep(
+        let sweep = run_composite_embedding_sweep(
             &self.hyperion,
             &grid,
             self.settings.pad_u8,
@@ -217,7 +217,6 @@ impl CpuProducer {
                 fixed_perms: None,
             },
             &NullSink,
-            |_| {},
         )?;
         ensure!(
             !sweep.cancelled && sweep.row_emb.len() == n * 128,

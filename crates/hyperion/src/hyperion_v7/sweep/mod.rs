@@ -13,7 +13,8 @@ mod validate;
 mod tests;
 
 pub use driver::{
-    run_composite_sweep, run_raw_dataset_vector_sweep, ChunkReport, SweepAccum, SweepOutput,
+    run_composite_embedding_sweep, run_composite_sweep, run_raw_dataset_vector_sweep, ChunkReport,
+    EmbeddingSweepOutput, SweepAccum, SweepOutput,
 };
 pub use orig_v2::{
     run_orig_v2_cell_sweep, OrigV2SweepOutput, OrigV2SweepPlan, ORIG_V2_BASE_SEED, ORIG_V2_BATCH,
