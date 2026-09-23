@@ -2251,6 +2251,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "jope-bench"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "feat-math",
+ "jope-arena",
+ "jope-datasets",
+ "rayon",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+]
+
+[[package]]
 name = "jope-cli"
 version = "0.1.0"
 dependencies = [

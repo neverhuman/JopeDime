@@ -1689,6 +1689,20 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "package:jope-bench": {
+      "discovery": {
+        "kind": "package",
+        "manifest": "crates/jope-bench/Cargo.toml"
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "package:jope-arena": {
       "discovery": {
         "kind": "package",
@@ -4887,6 +4901,57 @@
       "discovery": {
         "kind": "target",
         "source": "crates/jope-arena/tests/elo_regression.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-bench/bin/jope-bench": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-bench/src/main.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately. Binary/example runtime behavior is not claimed by build or its unit-test harness."
+    },
+    "target:jope-bench/lib/jope_bench": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-bench/src/lib.rs",
+        "test": true,
+        "doctest": true,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-bench/test/pwlinear": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-bench/tests/pwlinear.rs",
         "test": true,
         "doctest": false,
         "required_features": []

@@ -1,0 +1,34 @@
+[package]
+name = "jope-bench"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Same-cut benchmark: tier-1 baselines and a searched program scored on identical cuts, screen then deepen"
+
+[lib]
+name = "jope_bench"
+path = "src/lib.rs"
+
+[[bin]]
+name = "jope-bench"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+feat-math = { path = "../feat-math" }
+jope-arena = { path = "../jope-arena" }
+jope-datasets = { path = "../jope-datasets" }
+rayon.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

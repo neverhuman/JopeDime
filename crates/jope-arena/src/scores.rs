@@ -4,7 +4,8 @@
 //! Columns, in order: `track_id, dataset_id, method_id, protocol, metric, value, status,
 //! benchmark_valid, source_kind, source_revision, source_sha256, source_uri, notes`.
 //! `status ∈ {ok, failed, missing, withdrawn}`, `protocol ∈ {blind, public-development,
-//! aspfm-generated}`, `benchmark_valid` is written as Python's `True`/`False`.
+//! aspfm-generated, same-cut}` (the last is this repository's own: every method scored on
+//! identical cuts by `jope-bench`), `benchmark_valid` is written as Python's `True`/`False`.
 //!
 //! Emission reads the receipts a campaign leaves behind — `sotarena.score-receipt.v1`
 //! (`sotarena score`), `JopeDimeDatasetReport.v3` (the Golden42 `score-panel` reports) and
@@ -42,7 +43,7 @@ pub const COLUMNS: [&str; 13] = [
 ];
 
 /// Accepted `protocol` values.
-pub const PROTOCOLS: [&str; 3] = ["blind", "public-development", "aspfm-generated"];
+pub const PROTOCOLS: [&str; 4] = ["blind", "public-development", "aspfm-generated", "same-cut"];
 /// Accepted `status` values.
 pub const STATUSES: [&str; 4] = ["ok", "failed", "missing", "withdrawn"];
 
