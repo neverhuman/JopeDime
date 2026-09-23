@@ -19,7 +19,7 @@ are separate milestones.
 | Classification | [advanced-v3](../crates/feat-math/src/advanced_v3.rs) and its fitted heads | Binary logistic/tree/boosting and multiclass ridge, OvR logistic, diagonal LDA and nearest-centroid implementations exist. Product regression search now refuses other tasks before creating output. |
 | Task metrics | [panel evaluator](../crates/jope-bench/src/panel/score.rs) | RMSE, binary AUROC and multiclass probability-matrix log loss use original labels and explicit class ordering. The multiclass fitting objective remains macro-F1; confirmation uses log loss. |
 | External methods | [typed adapters](../crates/jope-bench/adapters/_panel.py) | XGBoost, LightGBM, CatBoost and scikit-learn RF accept nullable raw cells, fit preprocessing on training rows, and retain complete private fitted artifacts. Dependencies and campaign execution still require qualification. |
-| Neural proposals | [bounded proposal evaluation](../crates/jope-pipeline/src/neural_search.rs) | Source connects verified proposals to fitted generation-zero candidates and training-side selection. Actual accepted-model consumption and CPU context parity still need qualification. |
+| Neural proposals | [bounded proposal evaluation](../crates/jope-pipeline/src/neural_search.rs) | Source connects verified proposals to fitted generation-zero candidates and training-side selection. CPU context qualification and the first timed-out accepted-model attempt are recorded below; successful neural consumption remains pending. |
 | Training | [existing trainer](../crates/jope-engine/src/training.rs), Python trainers | Execution/category/provenance qualification remains. `jope train-step` is a centroid router. Existing sequence, quality and runtime objectives remain unchanged. |
 | Export | Legacy transpiler; advanced bound emitters and fitted C++ runtime | Coverage differs; emitted training recipes do not establish parity of a fitted predictor. Multiclass matrices need one shared output contract. |
 | Reuse | Existing champions and learning/HWM ledgers | General typed motif mining and governed operator promotion are pending. |
@@ -31,6 +31,30 @@ classification evidence and are excluded from this panel execution path.
 The existing production fit-authority fences and accepted regression-only loader
 remain intact. Classification training adapters need explicit experimental lineages;
 serving pointers require their existing qualification and promotion procedure.
+
+On 2026-09-23, source `55e9ed688faf7b9c92ef840cc2564c052838cadc`
+passed the fixed eight native CPU context cases and controller verification under
+the original 3e-4 tolerance and 30-second worker limit. The cases, references and
+failed earlier attempts were retained. Its first optimization proof encoded and
+admitted a fresh context, but the policy producer timed out; that run proved only
+generic fits and evolution. These are dated observations, not qualification of a
+later build. Every new worker build requires its own complete proof.
+
+The standardized foundation path uses stable train-side feature moments and
+Torch 2.7 FP32 percentile positions; ordinary `encode` retains its legacy percentile
+arithmetic. Its small percentile fixtures use Torch 2.7 CPU results. Agreement with
+the retained CUDA components is established separately by the eight-case gate.
+Inner selection minimizes the unweighted mean of five fold losses. Canonical
+duplicates occupy their original proposal slots and add no fit cost; slot counts
+alone therefore do not establish equal numbers of unique fitted programs. Reports
+include unique canonical and completed five-fold recipe counts per arm and verify
+every candidate identity, original slot and earlier completed parent. A neural
+offspring claim requires a completed lineage back to an actual neural proposal.
+
+The CPU proposal decoder caches attention keys and values while retaining the
+full-prefix decoder as a numerical reference. Tests cover PAD masking, active-row
+removal, absolute positions, logits, sampled tokens and the subsequent RNG stream.
+A fixture pass does not establish accepted-model runtime within the worker limit.
 
 ## Frozen private panel
 

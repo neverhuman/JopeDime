@@ -722,3 +722,71 @@ fn assert_emitted_matches(
         );
     }
 }
+
+#[test]
+fn legacy_transform_wide_bound_model_predicts_identically_after_reload() {
+    let width = 300;
+    let schema = DataSchema {
+        columns: (0..width)
+            .map(|j| ColumnSpec::numeric(format!("x{j}")))
+            .collect(),
+        row_semantics: RowSemantics::Iid,
+    };
+    let headers: Vec<_> = schema.columns.iter().map(|c| c.name.clone()).collect();
+    let rows: Vec<Vec<String>> = (0..12)
+        .map(|i| (0..width).map(|j| ((i + j) % 7).to_string()).collect())
+        .collect();
+    let table = RawTable::new(headers, rows).unwrap();
+    let target: Vec<_> = (0..12)
+        .map(|i| if i % 7 >= 3 { 1.0 } else { 0.0 })
+        .collect();
+    let genome = GenomeIr::parse("(pipe X (input numeric=median missing=none) (robust_scale append=true) (histgbm depth=1 rounds=1 bins=8 min_leaf=1 lr=1 lambda=0))").unwrap();
+    let model = fit_table(
+        &genome,
+        &TaskSpec::regression(Objective::R2).unwrap(),
+        &schema,
+        &table,
+        &target,
+    )
+    .unwrap();
+    let expected = model.predict_table(&table).unwrap();
+    assert!(expected.iter().all(|v| v.is_finite()));
+    assert!(expected.windows(2).any(|pair| pair[0] != pair[1]));
+    let reloaded: BoundModel =
+        serde_json::from_slice(&serde_json::to_vec(&model).unwrap()).unwrap();
+    reloaded.validate_binding().unwrap();
+    let actual = reloaded.predict_table(&table).unwrap();
+    assert_eq!(
+        expected.iter().map(|v| v.to_bits()).collect::<Vec<_>>(),
+        actual.iter().map(|v| v.to_bits()).collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn synthesis_width_overflow_is_explicit_not_a_mask_dimension_failure() {
+    let schema = DataSchema {
+        columns: (0..6)
+            .map(|j| ColumnSpec::numeric(format!("x{j}")))
+            .collect(),
+        row_semantics: RowSemantics::Iid,
+    };
+    let table = RawTable::new(
+        schema.columns.iter().map(|c| c.name.clone()).collect(),
+        (0..20)
+            .map(|i| (0..6).map(|j| ((i * (j + 1)) % 13).to_string()).collect())
+            .collect(),
+    )
+    .unwrap();
+    let target: Vec<_> = (0..20).map(|i| i as f64).collect();
+    // Same transform programs as the two retained failed native worker recipes;
+    // the numerical input here is entirely synthetic and carries no panel rows.
+    for (program, width) in [
+        ("(pipe X (input categorical=onehot max_onehot=256 min_count=1 missing=indicator numeric=median) (polar append=true) (target_bin_encode bins=8) (robust_scale append=true) (poly_interact) (standardize append=true) (histgbm depth=2 rounds=180))", 1024),
+        ("(pipe X (input categorical=onehot max_onehot=256 min_count=1 missing=indicator numeric=median) (svd_project append=false iters=16 k=16) (bin_onehot bins=12) (norm_features append=true) (robust_scale append=true) (ridge))", 576),
+    ] {
+        let genome = GenomeIr::parse(program).unwrap();
+        let error = fit_table(&genome, &TaskSpec::regression(Objective::R2).unwrap(), &schema, &table, &target).unwrap_err().to_string();
+        assert!(error.contains(&format!("generated dense width {width} exceeds 512")), "{error}");
+        assert!(!error.contains("row/mask"));
+    }
+}

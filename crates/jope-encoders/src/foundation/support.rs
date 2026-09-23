@@ -68,7 +68,7 @@ pub(super) fn splitmix64(mut value: u64) -> u64 {
     z ^ (z >> 31)
 }
 
-pub(super) fn pool_mean_std_p10_p90(rows: &[Vec<f32>]) -> Vec<f32> {
+pub(super) fn pool_mean_std_p10_p90(rows: &[Vec<f32>], standardized: bool) -> Vec<f32> {
     let d = rows.first().map_or(0, Vec::len);
     let n = rows.len().max(1) as f64;
     let mut mean = vec![0.0; d];
@@ -94,8 +94,13 @@ pub(super) fn pool_mean_std_p10_p90(rows: &[Vec<f32>]) -> Vec<f32> {
     for j in 0..d {
         let mut column: Vec<f64> = rows.iter().map(|row| row[j] as f64).collect();
         column.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-        p10[j] = percentile(&column, 0.1);
-        p90[j] = percentile(&column, 0.9);
+        let quantile = if standardized {
+            percentile_f32
+        } else {
+            percentile
+        };
+        p10[j] = quantile(&column, 0.1);
+        p90[j] = quantile(&column, 0.9);
     }
     mean.into_iter()
         .chain(std)
@@ -109,6 +114,16 @@ pub(super) fn percentile(values: &[f64], q: f64) -> f64 {
     if values.len() <= 1 {
         return values.first().copied().unwrap_or(0.0);
     }
+    let position = q * (values.len() - 1) as f64;
+    let low = position.floor() as usize;
+    let high = position.ceil() as usize;
+    values[low] + (values[high] - values[low]) * (position - low as f64)
+}
+
+fn percentile_f32(values: &[f64], q: f64) -> f64 {
+    if values.len() <= 1 {
+        return values.first().copied().unwrap_or(0.0);
+    }
     // The retained Torch 2.7 graph calls quantile on FP32 hidden rows. Its
     // quantile tensor, rank multiplication and interpolation weights are FP32;
     // a double-precision rank changes pooled tail values on sparse distributions.
@@ -118,8 +133,9 @@ pub(super) fn percentile(values: &[f64], q: f64) -> f64 {
     let start = values[low] as f32;
     let end = values[high] as f32;
     let weight = position - low as f32;
-    // Match Torch's stable lerp branch, including the fused multiply-add used
-    // by the original CUDA FP32 graph.
+    // Match Torch's stable lerp branch. The independent fixtures below pin
+    // Torch 2.7 CPU arithmetic; complete native CUDA-reference parity is
+    // separately checked by the bounded eight-case qualification.
     if weight < 0.5 {
         weight.mul_add(end - start, start) as f64
     } else {
@@ -145,7 +161,22 @@ mod tests {
             let rows = (0..n)
                 .map(|i| vec![if i < zeros { 0.0 } else { 10.0 }])
                 .collect::<Vec<_>>();
-            assert_eq!(pool_mean_std_p10_p90(&rows)[block].to_bits(), expected);
+            assert_eq!(
+                pool_mean_std_p10_p90(&rows, true)[block].to_bits(),
+                expected
+            );
         }
+    }
+
+    #[test]
+    fn ordinary_foundation_pooling_retains_legacy_percentiles() {
+        let rows = (0..158)
+            .map(|i| vec![if i < 142 { 0.0 } else { 10.0 }])
+            .collect::<Vec<_>>();
+        assert_eq!(pool_mean_std_p10_p90(&rows, false)[3], 3.0);
+        assert_eq!(
+            pool_mean_std_p10_p90(&rows, true)[3].to_bits(),
+            1_077_936_256
+        );
     }
 }

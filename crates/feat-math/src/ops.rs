@@ -891,7 +891,14 @@ pub fn apply_op_train(op: &FittedOp, x: &Rows) -> Rows {
 }
 
 pub fn apply_op(op: &FittedOp, x: &Rows) -> Rows {
-    let out: Rows = match op {
+    finish(op, x, apply_op_generated(op, x))
+}
+
+/// The existing transform kernel before the legacy append/width/sanitize epilogue.
+/// Advanced-v3 owns those semantics through its feature roles, masks and lineage;
+/// it must validate generated width before any information can be truncated.
+pub(crate) fn apply_op_generated(op: &FittedOp, x: &Rows) -> Rows {
+    match op {
         FittedOp::Standardize { means, scales, .. } => x
             .iter()
             .map(|r| {
@@ -1239,8 +1246,7 @@ pub fn apply_op(op: &FittedOp, x: &Rows) -> Rows {
                 o
             })
             .collect(),
-    };
-    finish(op, x, out)
+    }
 }
 
 fn op_append(op: &FittedOp) -> bool {

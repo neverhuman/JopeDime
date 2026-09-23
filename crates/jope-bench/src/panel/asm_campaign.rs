@@ -457,11 +457,7 @@ fn verify_receipt(
     receipt: &SearchReceipt,
     experiment: &jope_pipeline::experiment::Experiment,
 ) -> Result<()> {
-    ensure!(
-        receipt.comparison_sha256 == digest(plan)?
-            && receipt.selection_sha256 == plan.selection.identity()?,
-        "search receipt identity changed"
-    );
+    receipt.validate_population(plan)?;
     ensure!(
         receipt.deadline_unix_ms
             == super::receipt_timing::arm_deadline(
@@ -489,12 +485,6 @@ fn verify_receipt(
         );
     }
     for observation in &receipt.observations {
-        observation.candidate.recipe.validate()?;
-        ensure!(
-            observation.candidate.program_sha256 == observation.candidate.recipe.executable_sha256
-                && observation.feedback.candidate_sha256 == observation.candidate.id_sha256,
-            "candidate identity changed"
-        );
         if observation.feedback.status != EvaluationStatus::Completed {
             continue;
         }
@@ -597,8 +587,10 @@ fn verify_producer(journal: &Path, search: &DatasetSearch, receipt: &SearchRecei
             _ => anyhow::bail!("untrusted proposal origin"),
         };
         ensure!(
-            observation.candidate.genome == seed.genome() && observation.candidate.origin == origin,
-            "generation-zero origin/genome differs from actual producer output"
+            observation.candidate.genome == seed.genome()
+                && observation.candidate.origin == origin
+                && observation.candidate.rank_log_weight == seed.rank_log_weight(),
+            "generation-zero origin/genome/rank differs from actual producer output"
         );
     }
     Ok(())

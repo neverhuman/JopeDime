@@ -35,6 +35,7 @@ fn checked_bytes(path: &Path, expected: Option<&str>) -> Result<Vec<u8>> {
     Ok(bytes)
 }
 fn run() -> Result<()> {
+    let started = std::time::Instant::now();
     let args = std::env::args().skip(1).collect::<Vec<_>>();
     if args == ["--help"] {
         println!("{USAGE}");
@@ -139,6 +140,10 @@ fn run() -> Result<()> {
         );
         ensure!(meta["partition"].as_str().is_some_and(|p|["meta_train","meta_validation"].contains(&p)) && meta.get("task").is_none_or(|t|t == "regression") && meta.get("qualification").is_none_or(|q|q.as_bool() == Some(false)) && meta.get("final_test_targets_used").and_then(serde_json::Value::as_bool) == Some(false), "only accepted train-side regression context is supported; experimental classification remains separate");
     }
+    eprintln!(
+        "policy stage=context_verified elapsed_seconds={:.6}",
+        started.elapsed().as_secs_f64()
+    );
     checked_bytes(
         &paths["--transforms"],
         Some("1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22"),
@@ -154,7 +159,15 @@ fn run() -> Result<()> {
     )?;
     physical(&paths["--policy"])?;
     let model = PolicyModel::load_bound(&paths["--policy"], &checkpoint, candle_core::Device::Cpu)?;
+    eprintln!(
+        "policy stage=weights_verified elapsed_seconds={:.6}",
+        started.elapsed().as_secs_f64()
+    );
     let output = producer::produce(&request, &model, &checkpoint, &vocabulary, &context)?;
+    eprintln!(
+        "policy stage=proposals_ranked elapsed_seconds={:.6}",
+        started.elapsed().as_secs_f64()
+    );
     let path = &paths["--output"];
     ensure!(
         path.is_absolute() && !path.starts_with("/tmp"),

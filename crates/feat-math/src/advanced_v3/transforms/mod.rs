@@ -82,10 +82,7 @@ impl V3Op {
 
     pub(super) fn apply(&self, x: &Rows) -> Rows {
         let (mut generated, append) = match self {
-            V3Op::Legacy(op) => (
-                apply_legacy_unbounded(op, x).expect("validated advanced-v3 transform"),
-                legacy_append(op),
-            ),
+            V3Op::Legacy(op) => (crate::ops::apply_op_generated(op, x), legacy_append(op)),
             V3Op::MaxAbs { scales, append } => (
                 x.iter()
                     .map(|row| {
@@ -418,7 +415,7 @@ pub(super) fn fit_v3_op(
                 let y_fit: Vec<f64> = train_idx.iter().map(|&r| y[r]).collect();
                 let x_valid: Rows = valid_idx.iter().map(|&r| block.values[r].clone()).collect();
                 let fold_op = fit_op(stage, &x_fit, &y_fit)?;
-                let transformed = apply_legacy_unbounded(&fold_op, &x_valid)?;
+                let transformed = crate::ops::apply_op_generated(&fold_op, &x_valid);
                 for (&row, value) in valid_idx.iter().zip(transformed) {
                     train[row] = value;
                 }
@@ -812,20 +809,6 @@ fn finish_generated_dense(
     )
 }
 
-fn apply_legacy_unbounded(op: &FittedOp, x: &Rows) -> Result<Rows> {
-    let mut generated = crate::ops::apply_op(op, x);
-    if legacy_append(op) {
-        let width = x.first().map_or(0, Vec::len);
-        for row in &mut generated {
-            if row.len() < width {
-                bail!("legacy append transform returned a short feature row");
-            }
-            row.drain(..width);
-        }
-    }
-    Ok(generated)
-}
-
 fn legacy_append(op: &FittedOp) -> bool {
     match op {
         FittedOp::Standardize { append, .. }
@@ -910,7 +893,7 @@ fn legacy_generated_to_block(
 }
 
 fn legacy_to_block(op: &FittedOp, block: &FeatureBlock) -> Result<FeatureBlock> {
-    let generated = apply_legacy_unbounded(op, &block.values)?;
+    let generated = crate::ops::apply_op_generated(op, &block.values);
     legacy_generated_to_block(op, block, generated)
 }
 
@@ -1748,5 +1731,90 @@ mod tests {
         assert_eq!(transformed.values[0].len(), width);
         assert_eq!(transformed.lineage.len(), width);
         assert_eq!(transformed.values[0][width - 1], 1.0);
+    }
+    fn raw_transform_fixture(width: usize) -> FeatureBlock {
+        FeatureBlock::new(
+            vec![vec![2.0; width]],
+            vec![FeatureRole::Numeric; width],
+            vec![vec![false; width]],
+            vec![],
+            (0..width)
+                .map(|source| FeatureLineage::raw(source, "input:numeric"))
+                .collect(),
+            width,
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn legacy_one_to_one_v3_preserves_wide_raw_columns_and_masks() {
+        let width = 1024;
+        let mut block = raw_transform_fixture(width);
+        block.missing_masks[0][width - 1] = true;
+        block.values[0][width - 1] = 0.0;
+        let op = FittedOp::Standardize {
+            means: vec![1.0; width],
+            scales: vec![2.0; width],
+            append: false,
+        };
+        // Legacy public behavior remains capped; v3 retains all original columns.
+        assert_eq!(
+            crate::ops::apply_op(&op, &block.values)[0].len(),
+            crate::MAX_WIDTH
+        );
+        let output = legacy_to_block(&op, &block).unwrap();
+        assert_eq!(output.values[0].len(), width);
+        assert_eq!(output.values[0][width - 2], 0.5);
+        assert_eq!(output.values[0][width - 1], 0.0);
+        assert_eq!(output.missing_masks, block.missing_masks);
+        assert_eq!(output.widths().raw_derived, width);
+        assert_eq!(output.widths().generated_dense, 0);
+    }
+
+    #[test]
+    fn legacy_append_v3_keeps_raw_plus_allowed_generated_width_on_reload() {
+        let width = 300;
+        let block = raw_transform_fixture(width);
+        let op = V3Op::Legacy(FittedOp::RobustScale {
+            medians: vec![0.0; width],
+            scales: vec![2.0; width],
+            append: true,
+        });
+        let raw = RawTable::new(vec!["x".into()], vec![vec!["2".into()]]).unwrap();
+        let output = op.apply_block(&block, &raw).unwrap();
+        assert_eq!(output.values[0].len(), 600);
+        assert_eq!(output.values[0][299], 2.0);
+        assert_eq!(output.values[0][599], 1.0);
+        assert_eq!(output.widths().raw_derived, 300);
+        assert_eq!(output.widths().generated_dense, 300);
+        let reloaded: V3Op = serde_json::from_slice(&serde_json::to_vec(&op).unwrap()).unwrap();
+        let replayed = reloaded.apply_block(&block, &raw).unwrap();
+        assert_eq!(
+            serde_json::to_value(&replayed).unwrap(),
+            serde_json::to_value(&output).unwrap()
+        );
+        assert_eq!(reloaded.apply(&block.values), output.values);
+    }
+
+    #[test]
+    fn legacy_append_v3_rejects_dense_overflow_before_losing_feature_columns() {
+        let block = raw_transform_fixture(512);
+        let op = FittedOp::Standardize {
+            means: vec![0.0; 512],
+            scales: vec![1.0; 512],
+            append: true,
+        };
+        let mut dense = block.clone();
+        dense.roles = vec![FeatureRole::Generated; 512];
+        dense.lineage = (0..512)
+            .map(|source| FeatureLineage::generated_dense(vec![source], "synthetic:generated"))
+            .collect();
+        dense.validate().unwrap();
+        let error = legacy_to_block(&op, &dense).unwrap_err().to_string();
+        assert!(
+            error.contains("generated dense width 1024 exceeds 512"),
+            "{error}"
+        );
+        assert!(!error.contains("row/mask"));
     }
 }
