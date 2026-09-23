@@ -7,7 +7,7 @@ use clap::{Parser, Subcommand};
 
 use jope_bench::cuts::{self, FoldPlan};
 use jope_bench::emit::{self, Stage};
-use jope_bench::load::{discover, load_dataset};
+use jope_bench::load::{discover, find_manifest, load_dataset};
 use jope_bench::methods::{self, SearchConfig, RESAMPLED_SEARCH_METHOD_ID};
 use jope_bench::protocol::{self, Protocol};
 use jope_bench::report::{Report, Stamp};
@@ -139,6 +139,23 @@ fn main() -> Result<()> {
             });
             let protocol = Protocol { screen_fold, top };
             let dirs = discover(&datasets)?;
+            if let Some(heads) = &heads {
+                // Explicit heads are checked against every discovered dataset's task before
+                // any report is written, so a mixed-task tree cannot abort halfway through.
+                let mut tasks = std::collections::BTreeSet::new();
+                for dir in &dirs {
+                    if let Some(manifest) = find_manifest(dir) {
+                        if let Ok(row) = jope_datasets::cache::read_manifest(&manifest) {
+                            tasks.extend(Task::parse(row.task.as_str()));
+                        }
+                    }
+                }
+                for task in tasks {
+                    methods::baselines(heads, task).with_context(|| {
+                        format!("--heads against the {} datasets", task.as_str())
+                    })?;
+                }
+            }
             std::fs::create_dir_all(&out)?;
             let mut written = 0;
             let mut skipped = 0;
@@ -231,15 +248,24 @@ fn main() -> Result<()> {
                 for m in report.deep_ranked().iter().take(3) {
                     let deep = m.deep.as_ref().expect("ranked");
                     let (ladder_metric, _) = task.ladder_metric();
+                    // The ladder metric and the primary score are one metric for the
+                    // classification tasks; print it once there.
+                    let ladder_column = if ladder_metric == task.score_metric() {
+                        String::new()
+                    } else {
+                        format!(
+                            "oof_{ladder_metric}={} ",
+                            deep.oof
+                                .get(ladder_metric)
+                                .map(|v| format!("{v:.6}"))
+                                .unwrap_or_default()
+                        )
+                    };
                     eprintln!(
-                        "  deep #{} {:<28} oof_{}={} oof_{}={} fitness={} seconds={:.2}{}",
+                        "  deep #{} {:<28} {}oof_{}={} penalised={} seconds={:.2}{}",
                         m.deep_rank.unwrap_or(0),
                         m.method.id,
-                        ladder_metric,
-                        deep.oof
-                            .get(ladder_metric)
-                            .map(|v| format!("{v:.6}"))
-                            .unwrap_or_default(),
+                        ladder_column,
                         task.score_metric(),
                         deep.oof_score
                             .map(|v| format!("{v:.4}"))

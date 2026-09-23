@@ -7,7 +7,7 @@ use jope_arena::elo::Direction;
 use serde::{Deserialize, Serialize};
 
 /// A benchmarked task. Spelled as the dataset catalog spells it.
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[serde(rename_all = "snake_case")]
 pub enum Task {
     /// Numeric target; the frozen kernel's heads.
@@ -69,8 +69,9 @@ impl Task {
     /// single-head program. Regression: every distinct head of the frozen registry (aliases
     /// `logistic`, `gbm` and `ensemble_ridge_gbm` are spellings of `ridge`, `histgbm` and
     /// `ensemble`; `ridge_gcv` is accepted by the interpreter though absent from the registry).
-    /// Binary and multiclass: the schema-bound v3 heads (`portfolio` needs members and is not a
-    /// single-head program).
+    /// Binary: the schema-bound v3 heads, including `portfolio`, which for a binary task is an
+    /// ensemble over the other heads that fits with no members named. Multiclass: the four
+    /// schema-bound multiclass heads.
     pub fn default_heads(self) -> &'static [&'static str] {
         match self {
             Self::Regression => &[
@@ -91,6 +92,7 @@ impl Task {
                 "tab_boost",
                 "extra_trees",
                 "gam_boost",
+                "portfolio",
             ],
             Self::Multiclass => &[
                 "multiclass_ridge",

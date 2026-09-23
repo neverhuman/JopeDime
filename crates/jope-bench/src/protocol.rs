@@ -32,10 +32,13 @@ pub struct MethodResult {
     pub screen: Outcome,
     /// The screen ranking key: the task's primary score on the screen cut ([`Task::score_metric`]),
     /// **raw** (R² uncapped), so a degenerate fold (every method far below zero) still orders
-    /// methods instead of tying them all at −1.
+    /// methods instead of tying them all at −1. When the primary score is undefined for an `ok`
+    /// outcome (a binary screen cut whose held-out rows are one class, where no method has an
+    /// AUC) the key is the negated log loss instead ([`screen_key`]), so the finalists are still
+    /// the least-bad methods rather than an alphabetical pick.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub screen_fitness: Option<f64>,
-    /// 1-based rank by screen fitness (methods without a score last, then by id).
+    /// 1-based rank by screen fitness (methods without a key last, then by id).
     pub screen_rank: usize,
     /// Deep score, for the top N only.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -43,6 +46,17 @@ pub struct MethodResult {
     /// 1-based rank by deep robust fitness among deepened methods that scored.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub deep_rank: Option<usize>,
+}
+
+/// The screen ranking key of an outcome: its primary score, else (for an `ok` outcome whose
+/// primary score is undefined) the negated log loss when recorded, else nothing.
+pub fn screen_key(outcome: &Outcome) -> Option<f64> {
+    if !outcome.is_ok() {
+        return None;
+    }
+    outcome
+        .score
+        .or_else(|| outcome.metrics.get("logloss").map(|loss| -loss))
 }
 
 fn rank_key(fitness: Option<f64>, id: &str) -> (u8, f64, String) {
@@ -124,7 +138,7 @@ pub fn run(
         .into_iter()
         .zip(screens)
         .map(|(method, screen)| {
-            let screen_fitness = screen.score;
+            let screen_fitness = screen_key(&screen);
             MethodResult {
                 method,
                 screen_cut_id: screen_cut.cut_id.clone(),
@@ -307,6 +321,33 @@ mod tests {
         assert_eq!(results.iter().filter(|r| r.deep_rank.is_some()).count(), 2);
         let deep = results[0].deep.as_ref().unwrap();
         assert!(deep.oof.contains_key("auc") && deep.oof.contains_key("logloss"));
+
+        // A one-class screen cut: no method has an AUC there, so the screen ranks by the negated
+        // log loss instead of falling back to an alphabetical pick; the deep stage still pools
+        // every row and scores AUC.
+        let mut skewed = y.clone();
+        for &row in &cuts[0].hold {
+            skewed[row] = 1.0;
+        }
+        let results = run(
+            &x,
+            &skewed,
+            &cuts,
+            default_baselines(Task::Binary).unwrap(),
+            &protocol,
+            Task::Binary,
+        )
+        .unwrap();
+        assert!(results
+            .iter()
+            .all(|r| r.screen.is_ok() && r.screen.score.is_none()));
+        for r in &results {
+            let expected = -r.screen.metrics["logloss"];
+            assert_eq!(r.screen_fitness, Some(expected), "{}", r.method.id);
+        }
+        let keys: Vec<f64> = results.iter().map(|r| r.screen_fitness.unwrap()).collect();
+        assert!(keys.windows(2).all(|w| w[0] >= w[1]), "{keys:?}");
+        assert_eq!(results.iter().filter(|r| r.deep_rank.is_some()).count(), 2);
 
         let (x, y) = crate::eval::tests::toy_multiclass();
         let cuts = build(&FoldPlan::new("m", 1, 4), "m", "s", x.len()).unwrap();
