@@ -86,7 +86,7 @@ cargo run -p jope-arena --bin jope-arena -- elo \
 <!-- samecut:begin -->
 ### Same-cut — every method on identical held-out rows, reproducible from this tree
 
-`jope-same-cut-v1-deep` · 10 regression datasets from `datasets/test` · primary metric **RMSE** (minimize) · fold plan k=5, seed 20260907, screen fold 0, top 5 deepened · search budget 32 programs × 8 rounds, re-run on every cut · recorded at `cfb432f0b` with 16 workers on 128 cores.
+`jope-same-cut-v1-deep` · 10 regression datasets from `datasets/test` · primary metric **RMSE** (minimize) · fold plan k=5, seed 20260907, screen fold 0, top 5 deepened · search budget 32 programs × 8 rounds, re-run on every cut · recorded at `97c4ea1da` with 16 workers on 128 cores.
 
 Every row here is a number this tree produced and can reproduce: the ten single-head baselines and the program the search wrote for each dataset, all fitted on the same training rows and scored on the same held-out rows by one evaluator (`docs/same-cut-bench.md`). The search sees only a cut's training rows, and its deep row is the *procedure* re-run on every cut, not one program chosen with knowledge of the other cuts' held-out rows. Bold is the searched program.
 
@@ -106,22 +106,22 @@ Every row here is a number this tree produced and can reproduce: the ten single-
 | 10 | baseline.histgbm2 | 1391.2 | 4.00 | 1 | 8/10 |
 | 11 | baseline.elasticnet | 1387.7 | 4.50 | 0 | 2/10 |
 
-**Where the search stands today:** rank 3 of 11 on the deep ladder, Elo 1590.3, best method on 2 of 10 datasets, a finalist on 6; on the other 4 it did not make the top-5 screen. Coverage counts datasets where a method reached the deep stage, so the ladder ranks finalists only. The screen ladder (every method, one cut) is committed beside it.
+**Where the search stands today:** rank 3 of 11 on the deep ladder, Elo 1590.3, lowest pooled RMSE on 2 of 10 datasets (the ladder's own rule), a finalist on 6; on the other 4 it did not make the top-5 screen. Coverage counts datasets where a method reached the deep stage, so the ladder ranks finalists only. The screen ladder (every method, one cut) is committed beside it.
 
-**Seconds per program.** Writing the program took the search 2.2 s per dataset on average (median 1.0 s, longest 8.4 s) on the screen cut's training rows, wall time under whatever else the host was running. The reference point set for a large language model writing the same program is about 1 hour and 10,000,000 tokens; that comparison is one of cost, not of quality, and the quality standing is the ladder above.
+**Seconds per program.** Writing the program took the search 2.2 s per dataset on average (median 1.0 s, longest 8.3 s) on the screen cut's training rows, wall time under whatever else the host was running. The owner's stated reference point for a large language model writing a program for the same task, not measured here, is about 1 hour and 10,000,000 tokens; that comparison is one of cost, not of quality, and the quality standing is the ladder above.
 
-| dataset | rows | features | best deep method | RMSE | search deep rank | search |
+| dataset | rows | features | lowest pooled RMSE | RMSE | search rank (penalised score) | search |
 | --- | ---: | ---: | --- | ---: | ---: | ---: |
-| `047e62b52a3f4ede` | 195 | 12 | **afm.lite-race.v1.resampled** | 0.0712 | **1** | 0.4 s |
-| `1cb97b1d7314d43d` | 166 | 10 | baseline.gpr | 0.06635 | 2 | 8.4 s |
-| `21fbfe8b53dbcd60` | 1000 | 21 | baseline.histgbm2 | 0.02594 | screen 6 | 1.4 s |
-| `30ef3eaa6d2971a9` | 109 | 30 | **afm.lite-race.v1.resampled** | 0.071 | **1** | 1.3 s |
+| `047e62b52a3f4ede` | 195 | 12 | **afm.lite-race.v1.resampled** | 0.0712 | 1 | 0.4 s |
+| `1cb97b1d7314d43d` | 166 | 10 | baseline.gpr | 0.06635 | 2 | 8.3 s |
+| `21fbfe8b53dbcd60` | 1000 | 21 | baseline.histgbm2 | 0.02594 | screen 6 | 1.5 s |
+| `30ef3eaa6d2971a9` | 109 | 30 | **afm.lite-race.v1.resampled** | 0.071 | 1 | 1.2 s |
 | `43b4cc3ab0ebbd97` | 482 | 39 | baseline.krr | 0.09057 | screen 6 | 1.3 s |
-| `693890aae9dc860b` | 202 | 1 | baseline.gpr | 0.004291 | 4 | 6.6 s |
-| `79e600bc5fcd5da7` | 180 | 3 | baseline.gpr | 0.1491 | 2 | 0.4 s |
+| `693890aae9dc860b` | 202 | 1 | baseline.gpr | 0.004291 | 4 | 6.7 s |
+| `79e600bc5fcd5da7` | 180 | 3 | baseline.gpr | 0.1491 | 2 | 0.5 s |
 | `b5beff4a53fa12c0` | 575 | 15 | baseline.histgbm | 0.05625 | screen 10 | 0.6 s |
-| `c32fa09b48fb2f27` | 1000 | 9 | baseline.krr | 0.1851 | screen 9 | 0.7 s |
-| `c7d815714ca52bce` | 1000 | 7 | baseline.gpr | 0.1808 | 4 | 0.7 s |
+| `c32fa09b48fb2f27` | 1000 | 9 | baseline.ensemble | 0.185 | screen 9 | 0.7 s |
+| `c7d815714ca52bce` | 1000 | 7 | baseline.gpr | 0.1808 | 4 | 0.8 s |
 
 Sources: `assets/same-cut/v1/leaderboard-jope-same-cut-v1-deep.csv` (sha256 `b19314a57858325e…`) recomputed byte-for-byte from `assets/same-cut/v1/track/results/jope-same-cut-v1-deep/scores.csv`, itself re-derived from the 10 reports under `assets/same-cut/v1/reports` by `crates/jope-bench/tests/committed_evidence.rs`, which also re-evaluates one dataset's baselines on the same cuts. Provenance and the exact commands: `assets/same-cut/v1/SOURCES.md`. Reproduce:
 
