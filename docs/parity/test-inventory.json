@@ -5,9 +5,9 @@
   "python": 214
  },
  "rust": {
-  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 16 --config-file deploy/ci/nextest-inventory.toml",
-  "count": 2353,
-  "ignored": 34,
+  "command": "cargo nextest list --workspace --locked -P main --message-format json --build-jobs 8",
+  "count": 2631,
+  "ignored": 37,
   "packages": {
    "battle-gpu": {
     "count": 6,
@@ -29,7 +29,7 @@
     }
    },
    "feat-math": {
-    "count": 419,
+    "count": 423,
     "ignored": 4,
     "binaries": {
      "feat-math": {
@@ -491,6 +491,17 @@
        "target_stage_emission_rules"
       ]
      },
+     "feat-math::ip_scrub": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "bound_and_fitted_cpp_emitters_are_clean",
+       "every_emitter_is_clean_on_every_fixture",
+       "the_closed_form_docstring_no_longer_cites_the_method_literature",
+       "the_phrase_lint_trips_on_what_it_must_and_nothing_ordinary"
+      ]
+     },
      "feat-math::kernel_codec": {
       "kind": "test",
       "count": 4,
@@ -568,6 +579,93 @@
        "estimator_exact_on_golden_fixtures",
        "estimator_exact_with_custom_options",
        "estimator_is_fast_and_reports_cost"
+      ]
+     }
+    }
+   },
+   "hyperion": {
+    "count": 54,
+    "ignored": 1,
+    "binaries": {
+     "hyperion": {
+      "kind": "lib",
+      "count": 51,
+      "ignored": 0,
+      "tests": [
+       "battle_gpu::control::tests::cancellation_and_deadline_are_typed",
+       "battle_gpu::queue::tests::cpu_handoff_reason_classifies_queue_timeout",
+       "battle_gpu::queue::tests::default_lease_removes_ticket_on_drop",
+       "battle_gpu::queue::tests::interrupted_wait_preserves_type_and_removes_its_ticket",
+       "battle_gpu::queue::tests::queue_acquires_in_fifo_filename_order",
+       "battle_gpu::queue::tests::queue_cleans_expired_tickets",
+       "battle_gpu::queue::tests::thirty_x_bypass_reports_cpu_handoff",
+       "battle_gpu::queue::tests::ticket_storage_handles_missing_directories_and_heartbeats",
+       "hyperion::hvc2::tests::atomic_write_refuses_to_replace_an_existing_cache",
+       "hyperion::hvc2::tests::deterministic_round_trip_is_row_major_and_exact",
+       "hyperion::hvc2::tests::rejects_corruption_truncation_trailing_bytes_and_version_drift",
+       "hyperion::hvc2::tests::rejects_non_finite_and_wrong_model_hashes",
+       "hyperion::hvc2::tests::zero_column_not_applicable_cache_is_valid",
+       "hyperion::orig_v2::tests::defaults_pin_the_correct_all100_profile",
+       "hyperion::orig_v2::tests::frozen_receipt_validation_rejects_profile_drift",
+       "hyperion::orig_v2::tests::joint_rows_preserve_train_then_hold_order",
+       "hyperion::orig_v2::tests::rank_fit_has_old_unique_rank_then_robust_u8_contract",
+       "hyperion::orig_v2::tests::reusable_encoder_path_is_deterministic",
+       "hyperion::orig_v2::tests::train_fitted_rank_replay_uses_only_fit_distribution",
+       "hyperion::orig_v2::tests::train_fitted_train_cache_is_invariant_to_test_values",
+       "hyperion::tests::default_sweeps_is_thirty_and_env_override_still_works",
+       "hyperion::tests::degenerate_matrices_encode_to_valid_values",
+       "hyperion::tests::hyperion_v7_weights_env_supplies_bundle_defaults",
+       "hyperion::tests::left_prepend_places_hyperion_before_base_columns",
+       "hyperion::tests::missing_weights_modes_differ",
+       "hyperion::tests::old_state_defaults_to_right_append_placement",
+       "hyperion::tests::output_names_are_stable",
+       "hyperion::tests::preview_flags_robust_row_concerns_without_raw_values",
+       "hyperion::tests::train_bounds_replay_holdout_shape_and_order",
+       "hyperion_router::tests::both_seeds_and_one_percent_median_are_mandatory",
+       "hyperion_router::tests::fold_win_and_bootstrap_guards_are_enforced",
+       "hyperion_router::tests::minimum_row_and_worst_fold_guards_are_enforced",
+       "hyperion_router::tests::nonfinite_and_nonpartitioning_inputs_fail_closed",
+       "hyperion_router::tests::relative_and_normalized_improvement_thresholds_are_independent",
+       "hyperion_router::tests::strong_repeatable_cv7_evidence_routes_to_cells",
+       "hyperion_router::tests::tie_and_single_seed_evidence_fail_closed_to_raw",
+       "hyperion_v7::config::tests::default_sweep_plan_uses_thirty_sweeps",
+       "hyperion_v7::sweep::orig_v2::tests::orig_v2_is_deterministic_with_sampled_padding",
+       "hyperion_v7::sweep::orig_v2::tests::orig_v2_returns_raw_all_sweep_mean_and_exact_cell_coverage",
+       "hyperion_v7::sweep::tests::batch_size_does_not_change_output",
+       "hyperion_v7::sweep::tests::confidence_in_unit_interval_and_vector_is_row_mean",
+       "hyperion_v7::sweep::tests::frames_identity_vs_binned_and_caps",
+       "hyperion_v7::sweep::tests::invalid_plan_errors",
+       "hyperion_v7::sweep::tests::raw_dataset_vector_matches_weighted_patch_mean",
+       "hyperion_v7::sweep::tests::streaming_output_matches_materialized_weighted_mean",
+       "hyperion_v7::sweep::tests::sweep_zero_uses_identity_permutation",
+       "progress::tests::human_progress_formats_phase2_mvp_and_final_events",
+       "progress::tests::human_progress_throttles_repetitive_progress_but_not_done",
+       "progress::tests::human_seed_line_carries_the_count_but_never_the_genome",
+       "progress::tests::jsonl_sink_round_trips_an_event",
+       "progress::tests::progress_v12_rejects_retired_phase_and_prior_schema"
+      ]
+     },
+     "hyperion::bin/hyperion-batch-worker": {
+      "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
+     "hyperion::bin/hyperion-v5-reference": {
+      "kind": "bin",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "imp::tests::final_target_column_is_dropped",
+       "imp::tests::test_percentiles_use_train_cdf_with_midpoint_ties"
+      ]
+     },
+     "hyperion::weights_smoke": {
+      "kind": "test",
+      "count": 1,
+      "ignored": 1,
+      "tests": [
+       "served_bundle_encodes_a_small_table"
       ]
      }
     }
@@ -1050,14 +1148,17 @@
     }
    },
    "jope-arena": {
-    "count": 34,
+    "count": 40,
     "ignored": 0,
     "binaries": {
      "jope-arena": {
       "kind": "lib",
-      "count": 31,
+      "count": 36,
       "ignored": 0,
       "tests": [
+       "corrections::tests::a_correction_that_selects_nothing_is_an_error",
+       "corrections::tests::bindings_and_promotions_are_refused",
+       "corrections::tests::selectors_demote_only_the_rows_they_name",
        "elo::tests::aggregated_and_per_match_fits_agree",
        "elo::tests::better_method_gets_higher_rating",
        "elo::tests::direction_and_tolerance_are_deterministic",
@@ -1070,6 +1171,8 @@
        "fetch::tests::cache_must_be_outside_the_root",
        "fetch::tests::fetch_verifies_downloads_and_the_cache",
        "io::tests::gz_inputs_are_transparent",
+       "leaderboard::tests::a_maximize_track_ranks_the_largest_value_first",
+       "leaderboard::tests::benchmark_valid_ladder_drops_invalid_rows_and_published_ladder_marks_them",
        "leaderboard::tests::ladder_matches_the_python_reference_shape",
        "leaderboard::tests::pending_counts_only_unresolved_cells",
        "leaderboard::tests::results_resolution_prefers_versions_then_flat",
@@ -1099,9 +1202,10 @@
      },
      "jope-arena::elo_regression": {
       "kind": "test",
-      "count": 3,
+      "count": 4,
       "ignored": 0,
       "tests": [
+       "benchmark_valid_ladder_excludes_the_rows_the_campaign_code_labels_test_adaptive",
        "committed_fixture_reproduces_the_published_ladder",
        "fixture_files_are_the_published_bytes",
        "live_sotarena_root_reproduces_the_published_ladder_when_present"
@@ -1109,27 +1213,202 @@
      }
     }
    },
-   "jope-cli": {
-    "count": 1,
+   "jope-bench": {
+    "count": 16,
     "ignored": 0,
     "binaries": {
-     "jope-cli::bin/jope": {
+     "jope-bench": {
+      "kind": "lib",
+      "count": 13,
+      "ignored": 0,
+      "tests": [
+       "cuts::tests::cuts_partition_rows_and_ids_follow_every_input",
+       "eval::tests::binary_programs_score_auc_and_regression_heads_are_refused",
+       "eval::tests::multiclass_programs_score_macro_f1",
+       "eval::tests::ridge_scores_and_garbage_is_rejected",
+       "eval::tests::robust_fitness_matches_the_campaign_formula",
+       "load::tests::numeric_csv_is_strict",
+       "load::tests::targets_are_checked_against_the_task",
+       "methods::tests::baselines_are_valid_single_head_programs_for_their_task",
+       "protocol::tests::binary_and_multiclass_run_through_the_protocol",
+       "protocol::tests::far_below_zero_still_orders_and_unscored_ranks_last",
+       "protocol::tests::resampled_search_produces_a_program_per_cut",
+       "protocol::tests::screen_ranks_everyone_and_deepens_the_top",
+       "task::tests::spellings_round_trip_and_specs_validate"
+      ]
+     },
+     "jope-bench::bin/jope-bench": {
       "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
+     "jope-bench::classification": {
+      "kind": "test",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "a_regression_fixture_still_loads_as_regression",
+       "binary_and_multiclass_run_end_to_end_and_rank_by_maximize"
+      ]
+     },
+     "jope-bench::pwlinear": {
+      "kind": "test",
       "count": 1,
       "ignored": 0,
       "tests": [
+       "cuts_agree_with_feat_math_cv_and_the_run_is_deterministic"
+      ]
+     }
+    }
+   },
+   "jope-cli": {
+    "count": 29,
+    "ignored": 0,
+    "binaries": {
+     "jope-cli": {
+      "kind": "lib",
+      "count": 14,
+      "ignored": 0,
+      "tests": [
+       "tests::a_fifo_is_rejected_without_waiting_for_a_writer",
+       "tests::altered_file_and_replaced_checksum_cannot_redefine_trust",
+       "tests::generation_never_overwrites_existing_or_incomplete_output",
+       "tests::groups_cannot_cross_partitions_or_lose_identity",
+       "tests::malformed_features_targets_ids_and_splits_fail_schema_validation",
+       "tests::missing_extra_duplicate_and_untrusted_catalog_entries_fail",
+       "tests::missing_unmanifested_and_oversized_files_fail",
+       "tests::named_stress_scenarios_have_their_promised_structure",
+       "tests::swapped_root_and_file_paths_cannot_change_bytes_already_opened",
+       "tests::symlink_files_directories_and_roots_are_rejected",
+       "tests::ten_scenarios_are_valid_and_regeneration_is_byte_identical",
+       "tests::time_reversal_duplicate_times_and_future_partitions_fail",
+       "tests::traversal_and_nonportable_paths_are_rejected",
+       "tests::unknown_fields_and_unsupported_target_shapes_are_rejected"
+      ]
+     },
+     "jope-cli::bin/jope": {
+      "kind": "bin",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "tests::umbrella_keeps_every_verb_and_lists_models_and_datasets",
        "tests::version_is_semver"
+      ]
+     },
+     "jope-cli::offline_cli": {
+      "kind": "test",
+      "count": 13,
+      "ignored": 0,
+      "tests": [
+       "champions_pull_and_push_fail_closed",
+       "cli_generates_checks_and_reports_tampering_from_unrelated_directory",
+       "committed_corpus_matches_regeneration",
+       "emit_all_languages_writes_four_artifacts",
+       "encode_without_weights_fails_closed",
+       "explicit_missing_root_and_missing_offline_flag_fail",
+       "fit_ridge_on_regression_linear_reports_finite_r2",
+       "local_champions_and_train_step_cover_ten_datasets",
+       "route_without_router_fails_closed",
+       "runtime_environment_and_ancestor_resolution_work_without_build_paths",
+       "search_picks_a_ridge_family_genome",
+       "train_step_without_local_fails_closed",
+       "train_step_writes_router_and_route_fits_a_ridge_genome"
+      ]
+     }
+    }
+   },
+   "jope-datasets": {
+    "count": 37,
+    "ignored": 0,
+    "binaries": {
+     "jope-datasets": {
+      "kind": "lib",
+      "count": 22,
+      "ignored": 0,
+      "tests": [
+       "blobs::concurrency_tests::concurrent_ensure_of_one_blob_is_serialised",
+       "blobs::tests::concurrent_links_never_truncate_the_shared_inode",
+       "blobs::tests::ensure_downloads_and_rejects_mismatch",
+       "blobs::tests::store_verify_and_link",
+       "credentials::tests::a_partial_or_empty_result_is_not_a_credential",
+       "credentials::tests::carries_a_session_token_when_one_is_present",
+       "credentials::tests::explicit_precedence_is_static_keys_then_jope_profile_then_aws_profile",
+       "credentials::tests::parses_a_static_key_pair",
+       "credentials::tests::preserves_native_oidc_and_container_providers",
+       "credentials::tests::profile_replaces_ambient_session_token",
+       "credentials::tests::rejects_missing_partial_and_empty_sources",
+       "credentials::tests::tolerates_quoting_and_unrelated_lines",
+       "hash::tests::counts_columns_beyond_the_first_line_cap",
+       "hash::tests::counts_rows_and_columns",
+       "hash::tests::headerless_detection",
+       "meta::tests::real_row",
+       "meta::tests::synthetic_row_and_rejects",
+       "paths::tests::relpaths",
+       "paths::tests::rfc3339",
+       "schema::tests::basic_keywords",
+       "schema::tests::integer_accepts_whole_floats_only",
+       "tests::dir_hash_pattern"
+      ]
+     },
+     "jope-datasets::bin/jope-datasets": {
+      "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
+     "jope-datasets::ingest_dry_run": {
+      "kind": "test",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "dry_run_reports_rows_aliases_duplicates_and_rejects",
+       "mirror_source_checks_index_hashes"
+      ]
+     },
+     "jope-datasets::repo_verify": {
+      "kind": "test",
+      "count": 2,
+      "ignored": 0,
+      "tests": [
+       "committed_repository_passes",
+       "tampering_is_detected"
+      ]
+     },
+     "jope-datasets::roundtrip": {
+      "kind": "test",
+      "count": 6,
+      "ignored": 0,
+      "tests": [
+       "cli_offline_fetch_prints_registry",
+       "failing_helper_cannot_disclose_stderr",
+       "ingest_upload_fetch_verify_roundtrip",
+       "link_seeds_cache_from_registry_layout_and_repo_layout",
+       "native_providers_remain_available",
+       "ranged_resume_completes_a_partial"
+      ]
+     },
+     "jope-datasets::schema_agreement": {
+      "kind": "test",
+      "count": 5,
+      "ignored": 0,
+      "tests": [
+       "catalog_schema_agrees_with_the_rust_types",
+       "collection_schema_agrees_with_the_rust_types",
+       "committed_files_are_byte_identical_to_the_embedded_schemas",
+       "committed_test_datasets_validate",
+       "schema_rejects_bad_rows"
       ]
      }
     }
    },
    "jope-dime-regressor": {
-    "count": 998,
+    "count": 1001,
     "ignored": 3,
     "binaries": {
      "jope-dime-regressor": {
       "kind": "lib",
-      "count": 211,
+      "count": 212,
       "ignored": 0,
       "tests": [
        "dime_activation::tests::abort_restores_runtime_units_and_service_preimages_only",
@@ -1155,6 +1434,7 @@
        "hyperion_gate::tests::excluded_rows_cannot_change_fit_encoder_input",
        "hyperion_gate::tests::hold_encoder_input_masks_targets_but_fit_input_does_not",
        "hyperion_gate::tests::unavailable_runtime_materializes_a_valid_raw_decision",
+       "paths::tests::derived_locations_hang_off_the_roots",
        "recovery_contracts::rollback_v2_tests::missing_altered_stale_duplicate_and_incomplete_evidence_is_rejected",
        "recovery_contracts::rollback_v2_tests::overlay_and_raw_vs_canonical_digest_substitution_are_rejected",
        "recovery_contracts::rollback_v2_tests::v1_and_fake_pass_boolean_cannot_authorize",
@@ -2580,11 +2860,183 @@
      },
      "jope-dime-regressor::systemd_unit_paths": {
       "kind": "test",
-      "count": 2,
+      "count": 4,
       "ignored": 0,
       "tests": [
-       "unit_exec_start_paths_are_absolute",
-       "units_never_resolve_against_a_mutable_checkout"
+       "every_tracked_unit_is_a_template",
+       "rendered_units_resolve_only_under_the_rendered_roots",
+       "selfplay_units_never_resolve_against_the_source_checkout",
+       "unit_exec_start_paths_are_absolute"
+      ]
+     }
+    }
+   },
+   "jope-learning": {
+    "count": 55,
+    "ignored": 0,
+    "binaries": {
+     "jope-learning": {
+      "kind": "lib",
+      "count": 14,
+      "ignored": 0,
+      "tests": [
+       "canon::tests::sha256_vector",
+       "canon::tests::value_objects_sort_their_keys",
+       "champion::tests::key_and_event_hash_follow_the_engine_canonicalisation",
+       "civil::tests::parses_rfc3339",
+       "civil::tests::round_trips_dates",
+       "hwm::tests::admission_rules",
+       "hwm::tests::ingest_moves_pointers_only_on_strict_improvement_and_logs_rejects",
+       "ledger::tests::a_batch_id_is_always_greater_than_the_one_it_chains_onto",
+       "ledger::tests::batches_sealed_within_one_millisecond_still_verify",
+       "ledger::tests::chain_appends_and_verifies_and_detects_tampering",
+       "metric::tests::direction_table",
+       "metric::tests::strictness",
+       "record::tests::identity_hash_is_sha256_of_sorted_compact_json",
+       "record::tests::unknown_fields_are_rejected"
+      ]
+     },
+     "jope-learning::bin/jope-learning": {
+      "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
+     "jope-learning::champions_fixture": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "engine_canonicalisation_is_reproduced_on_real_files",
+       "ingest_preserves_bytes_and_verify_walks_every_chain",
+       "mirror_receives_batches_blobs_and_pointers"
+      ]
+     },
+     "jope-learning::ledger_tamper": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "a_removed_tail_is_invisible_locally_and_refused_by_the_mirror",
+       "a_seal_declaring_an_impossible_event_count_is_a_break_not_an_abort",
+       "freeze_refuses_a_destination_blob_that_does_not_hash_to_the_path_it_sits_under",
+       "freeze_refuses_to_export_from_a_chain_it_cannot_walk"
+      ]
+     },
+     "jope-learning::mirror_lost_update": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "a_host_that_does_not_hold_the_mirrors_tip_cannot_move_it",
+       "the_same_host_still_advances_the_mirror_head_across_batches",
+       "the_score_ledger_tip_is_guarded_the_same_way"
+      ]
+     },
+     "jope-learning::mirror_reconcile": {
+      "kind": "test",
+      "count": 8,
+      "ignored": 0,
+      "tests": [
+       "a_blob_only_the_mirror_still_has_does_not_wedge_the_push",
+       "a_blob_the_local_store_cannot_supply_is_never_published_over",
+       "a_diverged_mirror_is_refused_and_nothing_is_written",
+       "a_failed_blob_push_leaves_the_mirrors_head_where_it_was",
+       "a_local_only_ingest_no_longer_wedges_the_mirror",
+       "a_pointer_from_a_chain_this_host_does_not_have_is_refused",
+       "a_pointer_left_behind_by_a_local_only_ingest_catches_up",
+       "a_wrong_object_under_the_immutable_key_cannot_stand_in_for_the_blob"
+      ]
+     },
+     "jope-learning::nonfinite_scores": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "a_non_finite_cost_is_refused_on_both_record_types",
+       "a_non_finite_score_is_refused_before_anything_is_written",
+       "a_poisoned_ledger_names_the_offending_event",
+       "an_ordinary_rejection_still_gets_its_readable_ledger_event"
+      ]
+     },
+     "jope-learning::schema_agreement": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "committed_schemas_are_the_derived_schemas",
+       "hwm_schema_pins_the_plan_record",
+       "real_records_validate_against_the_committed_schemas"
+      ]
+     },
+     "jope-learning::score_import": {
+      "kind": "test",
+      "count": 6,
+      "ignored": 0,
+      "tests": [
+       "a_duplicate_only_append_with_store_still_publishes_the_backlog",
+       "a_refused_push_does_not_overwrite_the_archived_source",
+       "a_track_id_cannot_write_outside_the_state_root",
+       "an_append_without_store_reports_no_mirror",
+       "an_archive_path_through_a_symlink_is_refused_before_anything_is_created",
+       "one_unsafe_version_refuses_the_whole_import"
+      ]
+     },
+     "jope-learning::sources": {
+      "kind": "test",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "genebank_rows_become_unbound_records",
+       "snapshot_maxima_are_bound_to_the_manifest_hashes",
+       "sotarena_rows_append_verify_and_query"
+      ]
+     },
+     "jope-learning::state_resolve": {
+      "kind": "test",
+      "count": 7,
+      "ignored": 0,
+      "tests": [
+       "a_relative_xdg_state_home_is_ignored_in_favour_of_home",
+       "every_step_agrees_with_jope_paths",
+       "home_is_used_when_nothing_else_is_set",
+       "home_unset_falls_back_to_jope_home_rather_than_erroring",
+       "jope_state_wins_over_xdg_and_home",
+       "state_flag_wins_over_every_variable",
+       "xdg_state_home_wins_over_home"
+      ]
+     }
+    }
+   },
+   "jope-models": {
+    "count": 7,
+    "ignored": 0,
+    "binaries": {
+     "jope-models": {
+      "kind": "lib",
+      "count": 3,
+      "ignored": 0,
+      "tests": [
+       "manifest::tests::committed_manifests_validate",
+       "manifest::tests::invariants",
+       "repo::tests::committed_models_dir_is_consistent"
+      ]
+     },
+     "jope-models::bin/jope-models": {
+      "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     },
+     "jope-models::roundtrip": {
+      "kind": "test",
+      "count": 4,
+      "ignored": 0,
+      "tests": [
+       "cli_pinned_path_verify_and_offline",
+       "corrupted_blob_is_deleted_and_reported",
+       "offline_serves_only_the_cache",
+       "publish_fetch_verify_roundtrip"
       ]
      }
     }
@@ -3360,6 +3812,125 @@
      }
     }
    },
+   "jope-paths": {
+    "count": 12,
+    "ignored": 0,
+    "binaries": {
+     "jope-paths": {
+      "kind": "lib",
+      "count": 12,
+      "ignored": 0,
+      "tests": [
+       "systemd::tests::empty_value_is_an_error",
+       "systemd::tests::renders_a_tree_keeping_subdirectories",
+       "systemd::tests::substitutes_all_four_and_leaves_bare_at_signs",
+       "systemd::tests::unknown_placeholder_is_an_error",
+       "tests::home_prefers_the_environment",
+       "tests::home_resolution_is_independent_of_the_build_directory",
+       "tests::home_walks_up_from_the_current_directory_to_the_marker",
+       "tests::once_str_resolves_once",
+       "tests::quant_root_of_a_bare_registry_is_itself",
+       "tests::registry_and_arena_roots_follow_home_and_state",
+       "tests::state_resolution_order",
+       "tests::string_form"
+      ]
+     },
+     "jope-paths::bin/jope-units-render": {
+      "kind": "bin",
+      "count": 0,
+      "ignored": 0,
+      "tests": []
+     }
+    }
+   },
+   "jope-pipeline": {
+    "count": 51,
+    "ignored": 0,
+    "binaries": {
+     "jope-pipeline": {
+      "kind": "lib",
+      "count": 41,
+      "ignored": 0,
+      "tests": [
+       "emit::tests::a_head_the_cpp_and_js_emitters_do_not_cover_is_recorded_not_dropped",
+       "emit::tests::a_manifest_that_disagrees_with_the_file_it_names_is_refused",
+       "emit::tests::language_lists_parse_into_a_fixed_order",
+       "emit::tests::the_bootstrap_genome_emits_every_language_and_shares_one_cpp_source",
+       "emit::tests::the_reported_identity_follows_the_artifacts_not_the_request",
+       "experiment::tests::budgets_fail_closed_and_resume_keeps_original_deadline",
+       "experiment::tests::frozen_panel_has_ten_of_each_original_task_and_valid_identities",
+       "experiment::tests::identity_binds_fold_classes_checkpoint_and_all_evaluation_inputs",
+       "experiment::tests::zero_nonfinite_incomplete_and_wrong_task_results_cannot_pass",
+       "prepare::tests::a_constant_held_out_target_is_refused_rather_than_scored_as_nan",
+       "prepare::tests::a_cut_never_shares_a_row_between_its_fit_and_its_score",
+       "prepare::tests::cut_counts_are_bounded_by_the_partition",
+       "prepare::tests::the_held_out_folds_are_disjoint_and_cover_the_dataset",
+       "prepare::tests::the_partition_is_a_function_of_the_dataset_and_the_seed_only",
+       "run::tests::classification_is_refused_before_writing_a_regression_run",
+       "run::tests::policies_parse",
+       "run::tests::require_fails_closed_before_the_output_directory_is_touched",
+       "search::tests::a_different_seed_searches_a_different_population",
+       "search::tests::a_nonpreemptible_overrun_prevents_the_next_fit",
+       "search::tests::a_one_evaluation_budget_has_explicit_bootstrap_only_coverage",
+       "search::tests::a_republished_search_is_refused_rather_than_overwritten",
+       "search::tests::a_search_that_measures_nothing_fails_loudly_instead_of_falling_back",
+       "search::tests::a_single_parent_still_produces_a_child",
+       "search::tests::an_empty_parent_set_draws_a_fresh_candidate_instead_of_panicking",
+       "search::tests::budgets_parse_and_are_bounded",
+       "search::tests::comparison_failures_spend_budget_and_are_not_retried",
+       "search::tests::comparison_never_admits_a_fit_after_the_total_evaluation_limit",
+       "search::tests::comparison_never_admits_a_fit_after_the_total_seconds_limit",
+       "search::tests::comparison_stays_within_total_budget_and_keeps_a_common_pool",
+       "search::tests::no_candidate_is_fitted_twice_on_one_cut",
+       "search::tests::the_bootstrap_genome_is_always_measured_first",
+       "search::tests::the_evaluation_bound_stops_the_search_and_is_recorded",
+       "search::tests::the_same_seed_replays_the_same_search",
+       "search::tests::the_search_measures_and_records_per_candidate_evidence",
+       "search::tests::the_seconds_bound_stops_the_search_and_is_recorded",
+       "select::tests::a_failed_observation_never_contributes_a_score",
+       "select::tests::an_unmeasured_search_fails_closed",
+       "select::tests::complete_cover_still_ranks_above_a_better_partial_cover",
+       "select::tests::different_partial_cut_sets_are_never_compared",
+       "select::tests::the_lowest_mean_wins_among_programs_measured_on_the_same_cuts",
+       "select::tests::ties_break_deterministically_on_the_genome"
+      ]
+     },
+     "jope-pipeline::schema_agreement": {
+      "kind": "test",
+      "count": 10,
+      "ignored": 0,
+      "tests": [
+       "a_well_formed_receipt_validates",
+       "asm_contract_schemas_match_generated_types_exactly",
+       "committed_schema_is_generated_from_code_exactly",
+       "old_v1_receipts_remain_readable_without_claiming_v2_budget_guarantees",
+       "receipt_schema_agrees_with_the_rust_type",
+       "schema_only_consumers_require_every_new_v2_field",
+       "the_committed_file_is_byte_identical_to_the_embedded_schema",
+       "the_validator_refuses_an_emit_stage_that_disagrees_with_the_artifacts",
+       "the_validator_rejects_what_the_schema_and_the_invariants_forbid",
+       "v2_rejects_overspending_missing_accounting_and_incomparable_cut_sets"
+      ]
+     }
+    }
+   },
+   "jope-policy": {
+    "count": 4,
+    "ignored": 2,
+    "binaries": {
+     "jope-policy": {
+      "kind": "lib",
+      "count": 4,
+      "ignored": 2,
+      "tests": [
+       "jope_embed::tests::embedding_matches_python_reference",
+       "jope_embed::tests::reviewed_preprocessing_bundle_loads_with_exact_v1_shapes",
+       "jope_embed::tests::versioned_encoder_assembles_blocks_deterministically",
+       "jope_embed::tests::versioned_encoder_rejects_missing_target_sidecar"
+      ]
+     }
+    }
+   },
    "numpy-pcg64": {
     "count": 24,
     "ignored": 1,
@@ -3434,15 +4005,16 @@
     }
    },
    "starforge": {
-    "count": 47,
+    "count": 48,
     "ignored": 1,
     "binaries": {
      "starforge": {
       "kind": "lib",
-      "count": 35,
+      "count": 36,
       "ignored": 1,
       "tests": [
        "bundle::tests::canonical_policy_identities_are_reproducible",
+       "bundle::tests::committed_manifest_is_the_reviewed_identity",
        "bundle::tests::descriptor_relative_reads_enforce_the_byte_bound",
        "bundle::tests::notice_content_is_checked_against_the_manifest",
        "bundle::tests::rejects_absolute_and_unsupported_paths",
@@ -3959,7 +4531,7 @@
   }
  },
  "totals": {
-  "rust": 2353,
+  "rust": 2631,
   "python": 214
  }
 }

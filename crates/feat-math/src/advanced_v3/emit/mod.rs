@@ -58,6 +58,15 @@ pub fn emit_bound(
     let python = emit_bound_python(model)?;
     let rust = emit_bound_rust(model)?;
     let elapsed = start.elapsed().as_nanos().max(1);
+    for (lang, text) in [("Python", &python), ("Rust", &rust)] {
+        let hits = crate::transpile::lint_shipped_text(text);
+        if !hits.is_empty() {
+            bail!(
+                "banned vocabulary in bound {lang} artifact: {}",
+                hits.join(", ")
+            );
+        }
+    }
     let py_tokens = crate::tokens::count_tokens(&python, crate::tokens::Lang::Python);
     let rs_tokens = crate::tokens::count_tokens(&rust, crate::tokens::Lang::Rust);
     let py_total = py_tokens.code_tokens + py_tokens.doc_tokens;
@@ -73,6 +82,13 @@ pub fn emit_bound(
         python_sha256: text_hash(&python),
         rust_sha256: text_hash(&rust),
     })?;
+    let hits = crate::transpile::lint_shipped_text(&manifest);
+    if !hits.is_empty() {
+        bail!(
+            "banned vocabulary in bound artifact manifest: {}",
+            hits.join(", ")
+        );
+    }
     Ok(BoundEmitted {
         python,
         rust,
