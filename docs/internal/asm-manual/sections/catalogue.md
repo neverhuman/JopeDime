@@ -1,4 +1,4 @@
-# Roadmap catalogue: acceptance cards, proposals and ownership
+# Full task catalogue, source/schema index, receipts and glossary
 
 ## Primary acceptance items by stage
 
@@ -23,7 +23,7 @@
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
-**Source/evidence references:** `AGENTS.md:Pull requests`, [§](02-reading-this-manual.md#implementation-snapshot-and-this-manuals-own-identity), [§](17-maintenance.md#coverage-and-reviewed-lifecycle), `neural-integration/lifecycle-68f56404c3e199e06413bfd645d3fe0803d7b96f/remote-main-verification.json`.
+**Source/evidence references:** `AGENTS.md:Pull requests`, [§](status.md#implementation-snapshot-and-this-manuals-own-identity), [§](maintenance.md#coverage-and-reviewed-lifecycle), `neural-integration/lifecycle-68f56404c3e199e06413bfd645d3fe0803d7b96f/remote-main-verification.json`.
 
 **Qualification limit:** This task is complete; subsequent implementation remains pending. Keep the measured source identity 68f56404c3e1 distinct from the rebase-merge commit identity a75e543d2166.
 
@@ -68,7 +68,7 @@ python3 "$EXAMPLES/validate-outputs.py" --recipe-output "$EXAMPLE_RUN/recipe"
 
 **Resources:** Completed separate 300-second allocation: one CPU, 4 GiB, zero swap/GPU, network denial declared; 30-second numerical and 60-second compiler caps. Actual receipt retained; independent live property readback limitation is disclosed. No Cargo or frozen-panel campaign; no deadline reset.
 
-**Source/evidence references:** `examples/commands.json`, `examples/validate-outputs.py`, [§](09-programs-and-languages.md#example-a-a-tiny-private-recipe-fit-and-predictions), [§](09-programs-and-languages.md#example-b-actual-legacy-pipelinesearch-shape).
+**Source/evidence references:** `examples/commands.json`, `examples/validate-outputs.py`, [§](inference.md#example-a-a-tiny-private-recipe-fit-and-predictions), [§](inference.md#example-b-actual-legacy-pipelinesearch-shape).
 
 **Qualification limit:** Actual acceptance: data/example-acceptance/audit.json. Five recipe refits each predict eight synthetic rows; separate legacy pmlb229 pipeline has four successful measurements. No fitted-export, ASM demo, training or full-panel qualification. Resource-readback race retained.
 
@@ -95,7 +95,7 @@ OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
-**Source/evidence references:** [§](05-datasets-and-panel.md#frozen-dataset-coverage), [§](18-measured-performance.md#reading-the-performance-figures), `dataset-inventory.json`, `performance-evidence.json.gz`.
+**Source/evidence references:** [§](datasets.md#frozen-dataset-coverage), [§](gp-targets.md#ranking-figures-interpretation-contract), `dataset-inventory.json`, `performance-evidence.json.gz`.
 
 **Qualification limit:** Historical Elo belongs to its original ladder/pool/protocol; the current one-dataset proof is not a new Elo ladder. Source and figure checks are retained; authored architecture SVG is a repository source artifact.
 
@@ -117,7 +117,7 @@ pdftotext -layout "$MANUAL_PDF" "$MANUAL_TEXT"
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
-**Source/evidence references:** [§](17-maintenance.md#updating-the-book).
+**Source/evidence references:** [§](maintenance.md#updating-the-book).
 
 **Qualification limit:** A successful renderer exit is insufficient: the PDF must remain readable and complete.
 
@@ -144,7 +144,7 @@ The recovered series preserves 63,000 rows and 378,000 exact metric tokens. Keep
 
 **Resources:** No new fits, training or model loads; plotting retained metrics only.
 
-**Sources:** [§](19-training-history.md#training-history-loss-trajectories-and-the-limits-of-progress), [§](20-corpus-and-target-history.md#corpus-and-target-history).
+**Sources:** [§](training-history.md#dated-lineage-and-evidence-coverage), [§](learning.md#what-the-historical-training-and-target-evidence-establishes).
 
 #### DOC-06 — versions, KPIs and continuation runbook
 
@@ -160,7 +160,7 @@ The recovered series preserves 63,000 rows and 378,000 exact metric tokens. Keep
 
 **Resources:** Documentation and metadata validation only; commands do not admit a new training window.
 
-**Sources:** [§](02-reading-this-manual.md#what-version-are-we-running), [§](12-training-the-policy.md#the-continuation-interfaces-that-exist-today), [§](13-flywheel.md#closing-the-flywheel-objectives-closure-ledger-and-kpis), [§](16-focused-search.md#focused-single-dataset-search).
+**Sources:** [§](status.md#what-version-are-we-running), [§](plan.md#the-continuation-interfaces-that-exist-today), [§](learning.md#what-better-and-better-must-mean), [§](search.md#focused-single-dataset-search).
 
 #### INT-01 — serial integration
 
@@ -257,7 +257,7 @@ bash deploy/ci/full-lane.sh full-neural
 
 **Resources:** Existing exclusive CPU CI allocation; one reused lane target, jobs4 unless lane policy sets otherwise; no concurrent numerical campaign.
 
-**Source/evidence references:** `deploy/ci/full-lane.sh`, [§](17-maintenance.md#coverage-and-reviewed-lifecycle), `AGENT_CHAT.md:full-default failures`.
+**Source/evidence references:** `deploy/ci/full-lane.sh`, [§](maintenance.md#coverage-and-reviewed-lifecycle), `AGENT_CHAT.md:full-default failures`.
 
 **Qualification limit:** Check lane environment requirements before invocation. The owning qualification supplies allocation and budget; this manual does not admit them.
 
@@ -464,9 +464,9 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked
 
 **Resources:** Separate explicit resource manifest and approved allowance required before admission;20 CPUs/workers maximum,64 GiB maximum,zero swap,one thread,30 seconds per fit,120 seconds per arm maximum. No new allowance granted by this checklist.
 
-**Source/evidence references:** `agent-training-readiness/readiness-v3.json`, [§](10-teachers-and-targets.md#present-teacher-readiness-and-the-smallest-real-path), `crates/jope-bench/src/panel/teaching.rs (pending)`.
+**Source/evidence references:** `agent-training-readiness/readiness-v3.json`, [§](teachers.md#present-teacher-readiness-and-the-smallest-real-path), `crates/jope-bench/src/panel/teaching.rs (pending)`.
 
-**Qualification limit:** Execute separately for 230_machine_cpu and 712_chscase_geyser1; the prospective choice predates losses. Both are frozen-panel regression datasets, so if either is used to manufacture teachers, later evaluations on it must be labelled exposed/adaptive ([§](13-flywheel.md#freezing-the-experiment-and-choosing-families); OD-8 in [§](03-roadmap.md#proposed-owner-decisions-and-external-dependencies)). Old operational receipts from sources 55e9ed688faf, 3fd7d5b2ebb6 and 68f56404c3e1 cannot be retrofitted. The older queue suggested 300 seconds per family without admitting that allowance.
+**Qualification limit:** Execute separately for 230_machine_cpu and 712_chscase_geyser1; the prospective choice predates losses. Both are frozen-panel regression datasets, so if either is used to manufacture teachers, later evaluations on it must be labelled exposed/adaptive ([§](learning.md#freezing-the-experiment-and-choosing-families); OD-8 in [§](plan.md#proposed-owner-decisions-and-external-dependencies)). Old operational receipts from sources 55e9ed688faf, 3fd7d5b2ebb6 and 68f56404c3e1 cannot be retrofitted. The older queue suggested 300 seconds per family without admitting that allowance.
 
 #### TEACH-04 — real corpus materialization
 
@@ -486,7 +486,7 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
-**Source/evidence references:** `crates/jope-cli/src/train/corpus.rs (pending)`, [§](12-training-the-policy.md#build-the-real-corpus-from-admitted-evidence).
+**Source/evidence references:** `crates/jope-cli/src/train/corpus.rs (pending)`, [§](training.md#build-the-real-corpus-from-admitted-evidence).
 
 **Qualification limit:** Only if exactly two families qualify does the recorded machineCPU-development/geyser-training assignment apply. More eligible families must all remain admitted.
 
@@ -556,7 +556,7 @@ python3 deploy/ci/test-training-proof.py
 
 **Resources:** One original 3600 seconds total window;≤1200 seconds per category including both passes;one RTX 3090,20CPU,64 GiB,zero swap,1Torch thread;no exclusiveCPU CI overlap. Resume never resets.
 
-**Source/evidence references:** `python/src/jope/policy/training_campaign.py:780 (pending)`, [§](12-training-the-policy.md#plan-run-resume-verify-and-export).
+**Source/evidence references:** `python/src/jope/policy/training_campaign.py:780 (pending)`, [§](training.md#plan-run-resume-verify-and-export).
 
 **Qualification limit:** NEURAL-02 gates source and fixture readiness before the GPU hour. It does not depend on a newly trained live export, avoiding a circular prerequisite.
 
@@ -645,7 +645,7 @@ python/.venv/bin/python -m pytest python/tests/test_experimental_proposal.py -q
 
 **Resources:** Source/fixture planning first; any measured training remains inside a separately declared remaining authorized window.
 
-**Sources:** [§](11-corpora-and-packing.md#training-corpora-packed-records-reuse-and-loading), `python/src/jope/policy/train_v3.py`, `crates/jope-engine/src/teaching_store.rs`.
+**Sources:** [§](data-estate.md#record-layout), `python/src/jope/policy/train_v3.py`, `crates/jope-engine/src/teaching_store.rs`.
 
 #### LOOP-01 — repeatable measured learning flywheel
 
@@ -661,7 +661,7 @@ python/.venv/bin/python -m pytest python/tests/test_experimental_proposal.py -q
 
 **Resources:** Original one GPU-hour cap remains binding. Further campaigns require their own explicit allocation; this item grants none.
 
-**Sources:** [§](19-training-history.md#training-history-loss-trajectories-and-the-limits-of-progress), [§](12-training-the-policy.md#the-continuation-interfaces-that-exist-today), [§](13-flywheel.md#closing-the-flywheel-objectives-closure-ledger-and-kpis).
+**Sources:** [§](training-history.md#dated-lineage-and-evidence-coverage), [§](plan.md#the-continuation-interfaces-that-exist-today), [§](learning.md#what-better-and-better-must-mean).
 
 ### Stage 4: portable fitted inference
 
@@ -685,7 +685,7 @@ bash deploy/ci/ip-scrub.sh
 
 **Resources:** Existing exclusive CPU CI allocation; one reused lane target, jobs4 unless lane policy sets otherwise; no concurrent numerical campaign.
 
-**Source/evidence references:** `crates/feat-math/src/advanced_v3/fitted_portable.rs (pending)`, `crates/jope-bench/src/panel/inference.rs (pending)`, [§](09-programs-and-languages.md#state-restrictions-beyond-the-head-table).
+**Source/evidence references:** `crates/feat-math/src/advanced_v3/fitted_portable.rs (pending)`, `crates/jope-bench/src/panel/inference.rs (pending)`, [§](inference.md#state-restrictions-beyond-the-head-table).
 
 **Qualification limit:** The private C++ head gate is broader than the public gate. Python/Rust 14 of 26, C++ 2 of 26 and JavaScript 6 of 26 are static head counts, not runtime qualification rates.
 
@@ -709,7 +709,7 @@ bash deploy/ci/ip-scrub.sh
 
 **Resources:** Same original campaign execution window and worker caps; no new job after t0 + 6900 seconds for official panel. No post-panel allowance is implemented.
 
-**Source/evidence references:** `crates/jope-bench/src/panel/fitted_export.rs (pending)`, `crates/jope-bench/src/panel/fitted_export_run.rs (pending)`, [§](09-programs-and-languages.md#example-c-exact-fitted-winner-export-after-pending-integration).
+**Source/evidence references:** `crates/jope-bench/src/panel/fitted_export.rs (pending)`, `crates/jope-bench/src/panel/fitted_export_run.rs (pending)`, [§](inference.md#example-c-exact-fitted-winner-export-after-pending-integration).
 
 **Qualification limit:** Library fixtures precede the panel. Actual selected winners require complete confirmations from PANEL-01 and qualification before the original execution cutoff. No separately bounded post-panel qualification front door exists. One fitted fold does not qualify the other four states.
 
@@ -727,7 +727,7 @@ bash deploy/ci/ip-scrub.sh
 
 **Resources:** NoCUDAinference/promotionbudgetadmitted bythisroadmap.
 
-**Source/evidence references:** `docs/adr/ADR-0005-canonical-learning-loop.md`, [§](12-training-the-policy.md#what-the-pending-campaign-trains), [§](12-training-the-policy.md#compatibility-checks-and-fail-closed-rules).
+**Source/evidence references:** `docs/adr/ADR-0005-canonical-learning-loop.md`, [§](training.md#what-the-pending-campaign-trains), [§](training.md#compatibility-checks-and-fail-closed-rules).
 
 **Qualification limit:** Training GPU availability does not prove CUDA inference parity. Export is not serving promotion.
 
@@ -753,7 +753,7 @@ python3 deploy/install-private.py binary --binary "$PRIVATE_BINARY" --sha256 "$B
 
 **Resources:** Existing exclusive CPU CI allocation; one reused lane target, jobs4 unless lane policy sets otherwise; no concurrent numerical campaign.
 
-**Source/evidence references:** `deploy/install-private.py (pending)`, [§](14-install-and-prepare.md#build-and-install).
+**Source/evidence references:** `deploy/install-private.py (pending)`, [§](installation.md#build-and-install).
 
 **Qualification limit:** An installer receipt is not policy/context-worker build authority. Do not include training credentials or model bodies in the public inference bundle.
 
@@ -776,7 +776,7 @@ python3 deploy/install-private.py binary --binary "$PRIVATE_BINARY" --sha256 "$B
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
-**Source/evidence references:** [§](14-install-and-prepare.md#prepare-the-panel-and-external-runtimes), `agent-acceptance-queue/QUEUE.md`.
+**Source/evidence references:** [§](installation.md#prepare-the-panel-and-external-runtimes), `agent-acceptance-queue/QUEUE.md`.
 
 **Qualification limit:** Packaging commands depend on final reviewed artifacts and the actual virtual environment. Preserve versions and file identities; changing the environment invalidates a pinned campaign.
 
@@ -799,7 +799,7 @@ python3 deploy/ci/qualify-demo.py --binary "$J" --sha256 "$J_SHA" --source-sha "
 
 **Resources:** Separate explicit resource manifest and approved allowance required before admission;20 CPUs/workers maximum,64 GiB maximum,zero swap,one thread,30 seconds per fit,120 seconds per arm maximum. No new allowance granted by this checklist.
 
-**Source/evidence references:** `crates/jope-bench/src/panel/demo_asm.rs (pending)`, `docs/private-warm-target.md (pending)`, [§](15-running-campaigns.md#warm-fitted-demonstration-after-integration).
+**Source/evidence references:** `crates/jope-bench/src/panel/demo_asm.rs (pending)`, `docs/private-warm-target.md (pending)`, [§](search.md#warm-fitted-demonstration-after-integration).
 
 **Qualification limit:** Under sixty seconds is the declared goal, not a promise; no qualifying measurement exists yet. The existing twenty-second-arm example is unqualified. An explicitly admitted longer proof may satisfy execution while missing the target. This checklist grants no implicit 300-second allowance.
 
@@ -845,7 +845,7 @@ python3 deploy/ci/qualify-demo.py --binary "$J" --sha256 "$J_SHA" --source-sha "
 
 **Resources:** Original 300 secondsreportingreserve forpanel; laterreadonlyauditopensnofitbudget.
 
-**Source/evidence references:** [§](01-current-status.md#cost-interpret-the-units-first), [§](18-measured-performance.md#measured-current-source-operational-proof), `crates/jope-bench/src/panel/asm_campaign.rs (pending)`.
+**Source/evidence references:** [§](scheduling.md#worked-example-cpu-wall-time-and-per-predictor-cost-of-the-one-dataset-proof), [§](status.md#canonical-proof-record-and-per-arm-facts), `crates/jope-bench/src/panel/asm_campaign.rs (pending)`.
 
 **Qualification limit:** The one-hour comparison supplies wall-duration context, not a matched speedup. Unique artifact hashes do not establish behavioral uniqueness. Never add aggregate service CPU to worker CPU already included in it.
 
@@ -913,7 +913,7 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked
 
 **Resources:** Read-only/static custody work; no fitting, models, GPU or campaign admission.
 
-**Source/evidence references:** [§](01-current-status.md#pending-acceptance), `agent-acceptance-queue/QUEUE.md:motifs`.
+**Source/evidence references:** [§](status.md#pending-acceptance), `agent-acceptance-queue/QUEUE.md:motifs`.
 
 **Qualification limit:** These help commands are unavailable at source 68f56404c3e1 and at main a75e543d2166, which has the same tree; they are acceptance targets. No truthful exact mine invocation exists yet; record it after implementation.
 
@@ -949,7 +949,7 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked
 
 **Resources:** Separatelypreregistered ablationbudget; noneadmitted here.
 
-**Source/evidence references:** `user approval plan:Eligible optimization and reuse`, [§](09-programs-and-languages.md#future-work-and-acceptance-boundaries).
+**Source/evidence references:** `user approval plan:Eligible optimization and reuse`, [§](inference.md#future-work-and-acceptance-boundaries).
 
 **Qualification limit:** Typed reusable macros may stay within existing operators. Fragment frequency alone does not justify adding an operator.
 
@@ -967,7 +967,7 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test --locked
 
 **Resources:** No indefinite loop or additional allowance implied; whole focused experiment has one predeclared finite budget.
 
-**Sources:** [§](16-focused-search.md#focused-single-dataset-search), `crates/jope-bench/src/panel/origin_proof.rs`, `crates/jope-pipeline/src/neural_search.rs`.
+**Sources:** [§](search.md#focused-single-dataset-search), `crates/jope-bench/src/panel/origin_proof.rs`, `crates/jope-pipeline/src/neural_search.rs`.
 
 ## Coordinated future backlog: 24 proposals
 
@@ -1222,3 +1222,284 @@ Codex owns canonical integration and numerical admission. Claude contributes sou
 | PACK-01 | Codex integration | Independent source/data cross-check |
 | FOCUS-01 | Codex integration | Independent source/data cross-check |
 | LOOP-01 | Codex integration | Independent source/data cross-check |
+
+## Source index
+
+### Current implementation references
+
+These links bind the reviewed implementation commit `68f56404c3e1`, not a moving branch. PR83 merged it on 2026-09-23 as main `a75e543d2166`, which has the same source tree (`176b75bc36d7`), so each pinned file is also the file at that main commit. Hashes below are SHA256 of file bytes; Git commit/tree identifiers use Git’s separate object identity. A link needs access to the private repository.
+
+| Current source | SHA256 |
+| --- | --- |
+| [benchmarks/panel.json](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/benchmarks/panel.json#L1) | `ba7dace4cd535687002cc95538dbc7f7aaf77ec973177c7159b3c6d22471eee0` |
+| [benchmarks/prepare.py](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/benchmarks/prepare.py#L1) | `7600de95f0769309d814d80c6723d65f0588124b3e0d1a9875d8155fcc4a91c9` |
+| [crates/feat-math/src/advanced_v3/fitted_cpp.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/feat-math/src/advanced_v3/fitted_cpp.rs#L1) | `c20d7e9e7d530102435bdfd07a7c5275de041742a38d681842b87147e6c82fef` |
+| [crates/feat-math/src/emit_cpp.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/feat-math/src/emit_cpp.rs#L1) | `531e4d006caac9c41f3934df8f0f84d1f62749a9380ab4b67d1ec21180e65157` |
+| [crates/feat-math/src/emit_js.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/feat-math/src/emit_js.rs#L1) | `2e18c3a0fa85ff4fb0013d610be9404079956d9331c9988486b828bc7ac805cf` |
+| [crates/feat-math/src/emit_py.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/feat-math/src/emit_py.rs#L1) | `138a8c2a279da1b9df7b3c155606ac7e18c145982400ca7ace40f120cf386ca6` |
+| [crates/feat-math/src/emit_rs.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/feat-math/src/emit_rs.rs#L1) | `92d1277a90886073ba5b3aa19aa9fb461f97ad3290c2c4a91a1ccaeec7c1d405` |
+| [crates/feat-math/src/transpile.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/feat-math/src/transpile.rs#L1) | `374d7c1e54c9199b932963f564306deec8ffcc1f0ac7add5554fdcee04e0892a` |
+| [crates/jope-bench/src/panel/campaign.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-bench/src/panel/campaign.rs#L1) | `95e162538f7601f40bd2e7019639a6622259e516fa38cd1f92e83a0d4117b20c` |
+| [crates/jope-bench/src/panel/campaign_cli.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-bench/src/panel/campaign_cli.rs#L18) | `419262eab7516ba0ede8432a5d1f162fd4d64047681764e55edab9e438bb2ad1` |
+| [crates/jope-bench/src/panel/cli.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-bench/src/panel/cli.rs#L1) | `f1f9879d0b2de5473f8fcd9b3722e5c41147d5e33b26adac0948d0f4541a7b21` |
+| [crates/jope-bench/src/panel/methods.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-bench/src/panel/methods.rs#L1) | `170b3fcd3fadc140c5d3006e34372a8042d6c8939395a3f633085b884e1cdaa6` |
+| [crates/jope-bench/src/panel/optimize_cli.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-bench/src/panel/optimize_cli.rs#L1) | `17af561a039fd4832dd1bd23c226bbde5065b09b5273eb6e0b1353899042bd80` |
+| [crates/jope-bench/src/panel/receipt_timing.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-bench/src/panel/receipt_timing.rs#L1) | `0a479d36f84c9c22381310e9dd83ca4cf4c48594a7541c666587c0226f4a7367` |
+| [crates/jope-bench/src/panel/score.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-bench/src/panel/score.rs#L1) | `10093ed25a81940c7ab985843e742efc49990f3d361c92764d6d6dcae07e81e9` |
+| [crates/jope-bench/src/panel/selection_exposure.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-bench/src/panel/selection_exposure.rs#L9) | `a591787e6eaa95bb2e11d4c46776707076016b06785c4fad1dbc71d1a4d9fc8e` |
+| [crates/jope-cli/src/kernel.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-cli/src/kernel.rs#L1) | `d8f26b2eb49652d61600c699155e7b69664bd0e868e1fc76229da012e6e547c8` |
+| [crates/jope-cli/src/main.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-cli/src/main.rs#L1) | `4b2990e5294d0668a8d5f7a6c1e809d91fbb93be1418fc3fb54f291c88251265` |
+| [crates/jope-cli/src/schema.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-cli/src/schema.rs#L1) | `307ce6a4fa3c22bef7c15e7272bd834100ba78715eba7b1c0547a2e1b6b04d1d` |
+| [crates/jope-paths/src/lib.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-paths/src/lib.rs#L1) | `abc95bfa0e258642e0101b2f82c07706492dfe1d6c8a6fd99043a475893aa120` |
+| [crates/jope-pipeline/src/cli.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-pipeline/src/cli.rs#L1) | `1bd10526c2d58c233f5bb1e9bd575bb5c7afa82691b2238ad2f6993f88bd6ae8` |
+| [crates/jope-pipeline/src/cpu_context_bridge.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-pipeline/src/cpu_context_bridge.rs#L18) | `48dbe30216bf42520df668ca5b3d4a4138d21ae2731ba07c349fe6ec232729ff` |
+| [crates/jope-pipeline/src/dataset.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-pipeline/src/dataset.rs#L1) | `3f34436e6d0bbb747c846d63dfe3bcbc4e1ce4e34863caa37d7dce0c7183e7ba` |
+| [crates/jope-pipeline/src/emit.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-pipeline/src/emit.rs#L1) | `bb351af0947653caf9bfb5d276efd8b2645599503a101f1100b9fc20bb07edb9` |
+| [crates/jope-pipeline/src/execution.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-pipeline/src/execution.rs#L1) | `e38f68bbb765918f421e69d82fa697d822d60a53eb10c51e30cc9f1ec8066a76` |
+| [crates/jope-pipeline/src/experiment.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-pipeline/src/experiment.rs#L1) | `cec0f36073f73de8c09f508512c18e0098bb3f4028af08081d1b6a8639ab2e1e` |
+| [crates/jope-pipeline/src/front_door.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-pipeline/src/front_door.rs#L1) | `71dc0402ff413f020a25983a5ba98386324c16af03363f5deae4fafceafd856a` |
+| [crates/jope-pipeline/src/neural_search.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-pipeline/src/neural_search.rs#L27) | `a8cd55c9c4f7b5a1060eab5979deb76db24484360389f2072f6b906c4bae0390` |
+| [crates/jope-pipeline/src/search_context.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-pipeline/src/search_context.rs#L8) | `e423e9676a75426cdb6fdbbaf908e80c4bc1c89c5d93007aedcdfc0189cd382e` |
+| [crates/jope-pipeline/src/supervisor.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-pipeline/src/supervisor.rs#L1) | `a61265692d61580fe174c44a5f1cc2971e6512b803d91bc480d38c90a73a16b6` |
+| [crates/jope-policy/src/config.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-policy/src/config.rs#L17) | `a740ca64edde353c9624f5fdc3b63878c1200ee95c159a71bca1556abc28ed37` |
+| [crates/jope-policy/src/context_producer.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-policy/src/context_producer.rs#L35) | `f218d0539e273df4f53263c8ca4f06639d68456ab2057a195bf3253e27aa32d2` |
+| [crates/jope-policy/src/context_producer/admission.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-policy/src/context_producer/admission.rs#L4) | `2e98364dfe3994a21ccc2d6115adb7d7396c3de3a9babf15bcae473d4d59c441` |
+| [crates/jope-policy/src/context_producer/input.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-policy/src/context_producer/input.rs#L5) | `0fc3df5ed519439dd47fd27022e4be11594924a46fff4c926901cb514f5e4609` |
+| [crates/jope-policy/src/producer.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-policy/src/producer.rs#L12) | `bfa9ecfe92bc6224d0409e2a66048a9858958a4833102cd57c0201fc4b083895` |
+| [crates/jope-policy/src/bin/jope-policy-producer.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-policy/src/bin/jope-policy-producer.rs#L13) | `73a4678ac5fa362396f943ba02e8bc68e1fd5d00d4610d4de5ba597463fb3e6b` |
+| [crates/jope-policy/src/context_producer/worker.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-policy/src/context_producer/worker.rs#L9) | `c106275c81e706c3eef8ff4644aa74efaf0d8a3e26eb97eb36b9222d052d82c4` |
+| [crates/jope-policy/src/seeds.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-policy/src/seeds.rs#L42) | `434d8a0cde2e34c57291ec3657bf92707de6fbaf99f53e0fbe6f1b4aee969c15` |
+| [crates/jope-policy/src/lib.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-policy/src/lib.rs#L133) | `2b0da78dcd569de31fdd0922c90e56e19e404ba9f1e184a1eb61cf634ac733a8` |
+| [crates/jope-policy/src/model.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-policy/src/model.rs#L28) | `7d0f464fe4bd51ec4b2afa2257678565f959760c74bc347a7d1cebff3efe1e25` |
+| [crates/jope-policy/src/ranking.rs](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-policy/src/ranking.rs#L22) | `92c31cc55f3943aea2246bc0191325fbd625d2019fd49ce33c54f505b751843c` |
+| [deploy/ci/e2e-smoke.sh](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/deploy/ci/e2e-smoke.sh#L1) | `6becfc97830d87907bfb594aae247a117fb23162382d77bc75fbd770b4668354` |
+| [deploy/ci/emitters.sh](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/deploy/ci/emitters.sh#L1) | `beb99faf01c60b4f39b0179eab46696bcd5cc10658b8cdd690962bbd35254e6b` |
+| [deploy/ci/emitters/compare-bits.py](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/deploy/ci/emitters/compare-bits.py#L1) | `eaee5cc96d3d3161c85fefc02d636874adb4d399c340863534d83db5e8fe6249` |
+| [deploy/ci/emitters/driver.cpp](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/deploy/ci/emitters/driver.cpp#L1) | `899ad86994c93ac37312a66acde6900948948b22bfae1dd0be1516c7e99ca416` |
+| [deploy/ci/emitters/driver.js](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/deploy/ci/emitters/driver.js#L1) | `754b98bc8d694ec482e23826412e7dcbde76717e7d2f72d18a9adeb76ad12f75` |
+| [deploy/prepare-panel-runtime.py](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/deploy/prepare-panel-runtime.py#L1) | `f9a0d1d9ca97dfd7664a39a8df6b1e364e738fdfaaa13a0e327402c073ee46f5` |
+| [python/src/jope/policy/model_v3.py](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/python/src/jope/policy/model_v3.py#L93) | `11ab74d12bda8a2fb817b073a685d128eff06479f769e4301488339424314ffe` |
+
+Current interface/semantics: `crates/jope-cli/src/main.rs`, `crates/jope-cli/src/kernel.rs`, `crates/jope-pipeline/src/cli.rs`, `crates/jope-pipeline/src/front_door.rs`, `crates/jope-paths/src/lib.rs`, `crates/jope-bench/src/panel/{cli,campaign_cli,campaign,optimize_cli,methods,score,receipt_timing}.rs`, `crates/jope-pipeline/src/{experiment,execution,supervisor,neural_search}.rs`, `deploy/prepare-panel-runtime.py`, `benchmarks/{panel.json,prepare.py}` and `AGENTS.md`.
+
+### Pending source references
+
+These are stopped custody patch views. They are not installed capabilities and are not linked as if they existed at the reviewed Git commit. Their patch identities and acceptance gates are named in [§](training.md#the-pending-bounded-extension-path-sequence-and-limits), [§](installation.md#command-surfaces-and-the-stopped-integration-order) and the integration card [§](#int-01--serial-integration).
+
+| Pending path | SHA256 of inspected view |
+| --- | --- |
+| `agent-delivery-refresh-68f56404/replay-001/source-text/crates/jope-bench/src/panel/demo_asm.rs` | `dd1a287c4ff3c1447a20e81d2c2990913923cd48c667f3be600f5d6b3c972f62` |
+| `agent-delivery-refresh-68f56404/replay-001/source-text/crates/jope-bench/src/panel/fitted_export.rs` | `2f6e75d70e6d89bbfeac7db7ec67c585e6d7fc5c6287b134851db931ef5ffb30` |
+| `agent-delivery-refresh-68f56404/replay-001/source-text/crates/jope-bench/src/panel/fitted_export_run.rs` | `3b007f44198aaa7b96fbca4936ed7ad551feea086f6018f1ff0458ddee6c7295` |
+| `agent-delivery-refresh-68f56404/replay-001/source-text/docs/private-fitted-qualification.md` | `abf27b0dd7fabc0ee4a1f095d37d2ee4f77c5ffdfd2988699990521089f61ef8` |
+| `agent-delivery-refresh-68f56404/replay-001/source-text/docs/private-warm-target.md` | `4234468c7f9b5348f7a264f815d10d6f62baf1f4b5397c6cf1fed644a12d97a8` |
+| `agent-product-final-68f56404/replay-001/source-text/crates/feat-math/src/advanced_v3/fitted_portable.rs` | `f2f8998251f2e7e97900563a7032b7d8b8c80bf43e080b7b622b2e195f75737f` |
+| `agent-product-final-68f56404/replay-001/source-text/crates/feat-math/src/advanced_v3/fitted_portable/scalar.rs` | `34823e72c9576c7025d6bbb31a44203f397e1d571642d516a63b5ef328413970` |
+| `agent-product-final-68f56404/replay-001/source-text/crates/jope-bench/src/panel/demo.rs` | `00751a3094b42c6f742cffed5f7804803977f47d9f2837b161421e884f7efdfc` |
+| `agent-product-final-68f56404/replay-001/source-text/crates/jope-bench/src/panel/demo_asm.rs` | `74c2c6164015bc65f53d021c77f78d9a9ae7238d6c68bb007da424328707064d` |
+| `agent-product-final-68f56404/replay-001/source-text/crates/jope-bench/src/panel/inference.rs` | `c4929b553dd6893a48b836c2c3838b62b9d96fbd2c5f76634e235eaeed98e626` |
+| `agent-product-final-68f56404/replay-001/source-text/deploy/install-private.py` | `3e4e16d5d7e224624c970aca7217952339c8e679b12752aa8317452c27120e9c` |
+| `agent-product-final-68f56404/replay-001/source-text/docs/private-install-demo.md` | `05d728bba5fdc78c1568650ef8179d71ce19cf5c8860ad23317c8cea53dfebb6` |
+| `crates/jope-bench/src/panel/experimental_proposal.rs` | `d03c765ac08d1ecc039a82f3dbea0c40bc5158baac042e8df348f0c91a90a018` |
+| `crates/jope-bench/src/panel/optimize_cli.rs` | `487a299045d9a24604511cdecd8d4fa0b64ff055e4557339ce34120858549eca` |
+| `crates/jope-bench/src/panel/origin_proof.rs` | `229d26685d60646887e5ec30ec4734aa78dfdb2f37788ffbf30f878ce593b675` |
+| `crates/jope-cli/src/train.rs` | `486235575fc972306a6294233d94f8a37179945931e74bfb298e342752c634a2` |
+| `crates/jope-cli/src/train/corpus.rs` | `a239fd863384817821427033963d8c0c5ebc54642130b087a9848aa51f2d93c5` |
+| `crates/jope-learning/src/eligibility.rs` | `839e1de7b5f2c869817564ed39f3c30843208f7a00a1a277d27fe50857ce1e8d` |
+| `crates/jope-learning/src/eligibility/inner.rs` | `b5fb468fcc554ec7da9227244d435d84593910c254678fb3f4174b5d7a4e9215` |
+| `crates/jope-learning/src/record.rs` | `4360d96a4a6c0a27f5ba78fbcab4f5be10a3a800f56acee6379ef805b3815d61` |
+| `crates/jope-pipeline/src/experimental_producer.rs` | `9a15e7077651ded2adf364a26a579720ae21aa92f0362c0122d132e34162411c` |
+| `crates/jope-pipeline/src/search_plan.rs` | `fe8e402357b9b61359b03760401da9a568b8a1e7092b1222947fc30d2c8fb817` |
+| `crates/jope-policy/src/context_producer/classification.rs` | `465af30abcdc7bcc02c046d92a71e0b7a22be910320e22158ef16b216adc4fa6` |
+| `metadata-receipts/veox-jopedime-models-use2--bundles--hyperion-v7--manifest.json` | `fdaf938fc7f7957c06959f12c130b2bd81cdaef5e5bb2198ba75cf35da1c5233` |
+| `metadata-receipts/veox-jopedime-models-use2--bundles--jope-prime-gen31-v2--manifest.json` | `c8d8d13a2f4cb2eeb21eea364c33e14429c84d344e6b50eb38a472173b97b6f2` |
+| `metadata-receipts/veox-jopedime-models-use2--bundles--policy-step-60000--manifest.json` | `d8e259b26ef8d580ddb99ae5826c9501bcdc0c32045945eef9010926fd796e9e` |
+| `python/src/jope/policy/experimental_proposal.py` | `f0338f0505a27c9f2f5eac7579e2c506da5c116b3a206f44c52a1cf87cf9c0aa` |
+| `python/src/jope/policy/training_campaign.py` | `9d9cfb3257ecf2b6072cab8adc6d830f3df096605a06ff0677e6338c2aad5a2c` |
+
+Pending interfaces: final product postimages of `deploy/install-private.py`, `docs/private-install-demo.md` and panel `{demo,demo_asm,inference}.rs`; stopped add-on postimages of panel `{fitted_export,fitted_export_run}.rs` and `docs/{private-warm-target,private-fitted-qualification}.md`. Exact source and receipt hashes accompany this appendix's custody handoff.
+
+## Machine-readable companions
+
+### Companion files
+
+The manual directory, `docs/internal/asm-manual/`, contains the following locally reproducible evidence. Paths are relative to it, except the property list, which is `docs/asm-maintainer-status.plist` from the repository root. The original metadata/custody paths inside receipts describe where observations were obtained; use the copies under this directory when available. Historical preparation receipts keep their original pre-execution wording; the current state of the examples is the executed result in `data/example-acceptance/result.json` (14 commands, `ok: true`).
+
+| Companion | Purpose |
+| --- | --- |
+| `data/dataset-inventory.json` | Thirty complete development dataset records and 522 feature records |
+| `data/catalog-summary.json` | Corpus task, row, feature, origin and license metadata totals |
+| `data/metadata-receipts/` | Catalog JSONL and collection/model metadata; no payload bodies |
+| `data/s3-estate.json`, `data/local-estate.json` | Dated current-object and local logical-byte inventories |
+| `data/data-estate-extension-summary.json`, `data/data-estate-extension-release.json` | Reconciled aggregate archive/replica/local-root inventories and 19 qualified recovery risks; exact source mappings and raw-packet exclusion boundary |
+| `data/performance-evidence.json.gz` | Current proof, historical score cells, reports, ladder identities and scope |
+| `data/plot-*.csv` | Compact plot inputs with snapshot and source pins |
+| `data/roadmap.json` | Detailed 43-item dependency/acceptance checklist and 24 separately marked coordinated proposals |
+| `docs/asm-maintainer-status.plist` | XML property-list representation of the same checklist |
+| `data/example-acceptance/` | Actual fourteen-command result, audit and handoff |
+| `examples/` | Private synthetic fixture, exact argument packet and complete-output validator |
+| `figures/` | Reproducible charts and associated historical data inputs |
+| `render-receipt.json` | PDF digest, pages, consumed input hashes and rendering environment |
+
+The machine-readable companions are `dataset-inventory.json` (all thirty datasets, 522 feature records, complete available upstream metadata and detailed development statistics), `performance-evidence.json.gz` (measured current origin plus historical score cells, timing and ladders), `catalog-summary.json`, `local-estate.json`, `s3-estate.json`, and `metadata-receipts/`. The catalog JSONL retains every available per-dataset catalog field for all 3,859 corpus datasets. No claim is made to enumerate every mathematically possible statistic.
+
+### Lossless evidence packaging
+
+The full performance inventory and original catalog JSONL are stored as `data/performance-evidence.json.gz` and `data/metadata-receipts/veox-jopedime-datasets-use2--catalog--v1--catalog.jsonl.gz` to respect the repository’s 5 MiB file limit. Gzip preserves every original byte; no rows, fields, numeric precision or metadata were removed. `data/evidence-packaging.json` records both compressed and original SHA256 values, sizes and preservation paths. Historical handoffs and the initial assembly manifest intentionally retain their original uncompressed paths and hashes; the packaging receipt supplies the current location mapping.
+
+Read either companion directly with Python’s standard library:
+
+```python
+import gzip
+import json
+from pathlib import Path
+
+root = Path("docs/internal/asm-manual/data")
+with gzip.open(root / "performance-evidence.json.gz", "rt") as stream:
+    performance = json.load(stream)
+with gzip.open(root / "metadata-receipts/veox-jopedime-datasets-use2--catalog--v1--catalog.jsonl.gz", "rt") as stream:
+    catalog = [json.loads(line) for line in stream if line.strip()]
+assert len(catalog) == 3859
+```
+
+The plotting tools consume the separately retained CSVs and summary JSON, so this storage change does not change their inputs or measurements. The renderer hashes the compressed companions as well as the packaging receipt.
+
+### Training-history and continuation companions
+
+#### Companion inventory
+
+The learning expansion is documented in [actual training history](training-history.md#dated-lineage-and-evidence-coverage), [target history and packing](learning.md#what-the-historical-training-and-target-evidence-establishes), [versions, KPIs and continuation](plan.md#the-continuation-interfaces-that-exist-today), and [flywheel/focused search](learning.md#what-better-and-better-must-mean).
+
+| Companion | Purpose |
+| --- | --- |
+| `data/training-history/*.csv` | Original loss/diagnostic observations and checkpoint lineage, with source hashes and line/JSON Pointer anchors |
+| `data/training-history/metric-definitions.json` | Exact historical loss and KPI meanings; objective changes and missing source-build binding |
+| `data/training-history/verification.json` | Original-value verification of 3,218 metrics and 78 checkpoint records |
+| `data/training-history/figure-receipt.json` | Input/output hashes for seven historical training figures |
+| `data/legacy-training/` | Four original round-1 and reported self-play summary files, source hashes, recomputed diagnostics and a vector-plot receipt; internal Elo is not benchmark-valid |
+| `data/per-step-history/` | All 63,000 retained recovery steps and 378,000 exact metric tokens in compressed CSV, 21 raw-log hashes, corpus boundaries and explicit 100-step means |
+| `data/per-step-history/independent-review/` | Second complete comparison with original logs, checkpoint identities and all derived block/bin statistics; numerical/source review is separate from final-head CI |
+| `figures/per-step-figure-receipt.json` | Source hashes and recomputation checks for all 630 plotted loss bins and 78 adaptive validation points |
+| `data/packing-routing-audit.json` | Selected external packing metadata, recomputed sizes and strictly scoped paired final-search observations; excludes unjoined campaign rows |
+| `data/original-target-receipts-custody.json` | Durable local archive and verification hashes for all 26,357 original development search receipts; archive stays outside Git, with seeds and off-host backup explicitly excluded |
+| `data/target-history/*.csv` | All 159 repeated historical comparison summaries and all 213 illustrative arm/generation points; exact source identities and limits |
+| `data/target-history/manifest.json`, `data/target-history/verification.json` | Six corpus inventories, binary-format source pins and original target-observation verification |
+| `data/target-history/figure-receipt.json` | Input/output hashes for two historical GP-target figures |
+| `data/extension-guide/` | Current-source version/command/API pins, stopped handoff and static/metadata-only verification |
+| `examples/continue-python-policy.py` | Current Python resume API illustration; metadata-only by default, numerical branch unexecuted and externally supervised |
+| `data/single-dataset-help-receipt.json` | Six actual metadata/help commands, with immutable CLI identity and zero fits |
+
+#### Reusing the evidence
+
+The adjacent `data/training-history` CSVs are long-form original measurements. `block-endpoint-metrics.csv` has 1,296 rows; `block-adaptive-validation.csv` 432; `fixed-monitor-metrics.csv` 16; `gen31-epoch-metrics.csv` 462; `a100-checkpoint-lineage.csv` 78; `a100-checkpoint-validation.csv` 312; and `rtx60100-step-metrics.csv` 700. The two original small logs are retained alongside the normalized data. Source hashes and line/JSON Pointer anchors make a plotted point independently traceable. The initial extraction audit covers four CSVs. The shipped `verify_history.py` checks all 3,218 metric `value` cells across the measurement CSVs, plus seven fields (step, model/parameter/optimizer/corpus hashes, world and global batch) and the state-file hash for each of the 78 lineage rows. It does not check every auxiliary numeric column, such as elapsed time, parent/local step, requested fresh fraction or row counts. Running that helper writes `verification.json` beside the CSVs; use a custody copy when preserving a stopped evidence bundle. Model bodies and sealed target values were not read for this reconstruction.
+
+The additional `data/per-step-history` package preserves the 3,809,970-byte compressed step CSV (SHA `aa431f5a2f5f4d6bfc2e8568ef57bb10b100356750d22eb615dd68cfa1647627`), 21 full source-log hashes, block statistics, explicit 100-step bins and boundary comparisons. `tools/extract_per_step.py` regenerates into a new output directory from the retained raw logs and previously audited checkpoint CSVs; it refuses to overwrite an existing extraction. `tools/make_per_step_figure.py` independently recomputes every plotted bin from the compressed row data before drawing it. Run `python3 docs/internal/asm-manual/tools/make_per_step_figure.py` from the repository root to regenerate this one figure without loading models. The original seven-figure builder remains separate. Both figure receipts bind their exact input hashes.
+
+## Receipts
+
+### Important local receipts
+
+The custody root is the single host-local directory `/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/`; this manual records no off-host copy of it. These are host-local receipt locations, not promises that every reader has the same files. The structured documentation evidence identifies the source observations copied into this edition. Weight bodies, source dataset bodies and sealed labels are not embedded in the manual.
+
+| Relative custody path | Meaning |
+| --- | --- |
+| `neural-integration/lifecycle-68f56404c3e199e06413bfd645d3fe0803d7b96f/` | Full author/committer inventory, CI, native reviews, merge and main-guard readbacks |
+| `neural-integration/pr83-final-review-68f56404c3e199e06413bfd645d3fe0803d7b96f/` | Independent review prompt, source/proof inspection and native approval receipt |
+| `neural-integration/source-match-68f56404c3e199e06413bfd645d3fe0803d7b96f.json` | All 2,855 Git blobs match the immutable build input inventory |
+| `neural-integration/native-context-68f56404c3e199e06413bfd645d3fe0803d7b96f/` | Eight native encoder qualification cases under unchanged numerical policy |
+| `neural-integration/origin-run-68f56404.json` | Final operational run command, timing and exit status |
+| `neural-integration/origin-report-68f56404.json` | Independent recovered-report command and timing |
+| `agent-final-acceptance/measured-origin-68f56404/audit.json` | Source/report/worker inventory and independently bound supervisor accounting |
+| `neural-integration/final-head-pipeline-bench-68f56404.json` | Local 53 benchmark and 106 pipeline test results |
+| `neural-integration/final-head-host-ten-68f56404.json` | Ten actual privileged host cases and binary identity |
+| `agent-final-acceptance/failed-origin-d0f5748b/audit.json` | Preserved failed prior run; not an accepted current score |
+| `agent-maintainer-manual/` | Section drafts, structured data inventory, example preparation and documentation observations |
+
+Treat a receipt's command, source SHA, input hashes, runtime and original deadline as one evidence unit. Copying a number out of that unit can lose its scope. A local path alone proves neither continued availability nor integrity: verify the retained hash and the contents required for the claim.
+
+### The PR83 lifecycle record
+
+| Gate | Exact observation |
+| --- | --- |
+| PR | `veox-ai/JopeDime#83`, merged |
+| Manual CI dispatch | Run 35887284772, attempt 1, source `68f56404…`, success |
+| PR CI | Run 35887255898, attempt 1, source `68f56404…`, success |
+| Required CI jobs | Eight lanes and aggregate succeeded in both runs |
+| CI test inventory | 937 Rust passed, 14 skipped; 221 Python passed per run |
+| First independent native review | 5293748183, `neverhuman`, APPROVED, exact full reviewed head, 16:29:01 UTC |
+| Second independent native review | 5293788772, same eligible account, APPROVED, same head, 16:32:43 UTC; includes residual disclosures |
+| Author eligibility | All twelve commits associated with `jepsontaylor` as author and committer; reviewer differs |
+| Merge | Guarded rebase with `--match-head-commit` at the reviewed head, completed at 16:34:47 UTC as main `a75e543d2166…` with the reviewed tree `176b75bc36d7…` |
+| Remote-main verification | Fetched main and compared complete Git tree; canonical clean main observed before documentation branch |
+| Main guard | Run 35889731910, attempt 1, success at resulting main; guard job 107278860508 |
+
+Two review processes overlapped during coordination. Both were independent of the source writer and both approvals are retained; they are not two different human reviewers. One process's supplementary disclosures identify outstanding work rather than silently treating it as fixed. The writer did not select another credential to approve its own source.
+
+The full-main diagnostic run 35889732032 that the PR83 merge queued was cancelled while still queued to preserve the admitted local allocation and let main-guard run. It did not pass or execute. Earlier full-main run 35852022466 failed and remains historical diagnostic evidence requiring repair. Passing fast CI does not replace that outstanding broad qualification.
+
+## Reproduction boundaries
+
+Rendering this manual uses its committed section Markdown, structured data, figure inputs and Python rendering tools. It should not fetch a corpus, load a model, run a fit or contact the sealed store. Plotting historical evidence is distinct from rerunning historical experiments. The included figure data keeps missingness, eligibility and snapshot identities.
+
+The private toy example has its own synthetic input and output receipt. Even a successful five-language recipe/refit comparison cannot qualify a different selected fitted predictor. The pending fitted-inference acceptance must authenticate the retained winner and compare complete saved-state predictions with its original numerical policy.
+
+Operational replay needs more than the document: the exact source/build, immutable workers, model/checkpoint/vocabulary, runtime dependencies, allowed data inputs, original plan and journals, and an available resource allocation. Reproduction that resumes an expired campaign cannot start fresh jobs by assigning a new deadline. A new experiment needs a separately recorded plan; it does not repair the old receipt.
+
+## Names and glossary
+
+ASM is the current product name, settled by the user plan. Historical method IDs such as `afm.lite-race.v1` and `afm.lite-race.v1.resampled` remain exact evidence identifiers in committed same-cut results and the current legacy registry. Use ASM in new prose, but do not rename old identifiers or rewrite frozen reports in place. A method-identity change requires an explicitly versioned new comparison/evidence record. Sources: `crates/jope-bench/src/methods.rs:165`, `:168`; the 2026-09-23 16:07 coordination record.
+
+| Term | Meaning in this repository |
+| --- | --- |
+| ASM | Algorithm Synthesis Model: learns to generate and optimize executable algorithms from data |
+| Algorithm / recipe / program | Executable typed procedure and configuration; reusable across fits. The legacy CLI flag for a recipe is `--genome`. A recipe is not its native fitted predictor, an emitted recipe in another language or a fitted inference bundle ([§](architecture.md#gp-representation-recipes-fitted-predictors-and-the-four-artifact-types)) |
+| Method | A comparable benchmark entrant: a registered native recipe (`rust.*`), an external library adapter (`external.*`), an ASM entrant (`asm.neural`, `asm.generic`) or, in historical ladders, a whole system |
+| Candidate | A recipe placed in one search slot |
+| GP | Genetic programming: search over executable programs using variation and measured selection |
+| Arm | One search population in a campaign, with a fixed proposal source and its own declared allowance: the neural arm (policy pool plus exploration slots) or the generic arm (no policy proposals). Historical searches also ran a shuffled-context arm. Unrelated to the Hyperion asset label `arm_b` (the v5 arm-B weights, `hyperion_v5_arm_b.safetensors`) |
+| Fitted predictor | One recipe plus preprocessing and model state learned from exact training inputs |
+| Checkpoint | Serialized neural proposal-model parameters and compatibility metadata; distinct from a fitted tabular predictor |
+| Context | Authenticated numerical dataset/target representation supplied to the proposal policy |
+| Dataset encoder | Learned or specified mapping from permitted dataset structure/rows to context features |
+| Target encoder / target context | Representation of allowed target information; task-specific and restricted to permitted fitting rows. In the regression context it is the 512-float block computed from min–max-rescaled training targets. The 1,024 foundation values in the 1,536-float “dataset” block also use the training targets ([§](architecture.md#component-dimensions-and-assembly)) |
+| Vocabulary | Token identities, grammar and executable restrictions associated with a checkpoint |
+| Proposal policy | The neural model that proposes program tokens for a context; the accepted regression policy is the lineage-B step-60000 checkpoint |
+| Generation zero | Initial candidate slots before evolutionary descendants; 80 per arm in the current ASM search |
+| Seed pool / RNG seed | Seed pool: the programs placed into generation zero of an arm (historically including incumbents and retained teachers). RNG seed: a random-number seed, such as seed 7 |
+| Exploration candidate | An admitted generic candidate in the neural arm; not falsely labelled neural-origin |
+| Offspring | Mutation or crossover descendant with authenticated parent identities and actual fit evidence |
+| OOF | Out-of-fold: predict rows using a fit that excluded those rows; adaptive recipe selection can still expose them at another stage |
+| Same-cut cuts (historical) | Hashed cuts built by the historical same-cut benchmark command; not comparable with the frozen panel's cuts ([§](benchmark.md#metrics-and-class-order)) |
+| Development-hold score | The score of a final refit on a cut's fitting rows, measured on that cut's held fold (report field `development_hold_score`, `crates/jope-bench/src/panel/origin_proof.rs:321`); the one-dataset proof's RMSE uses 34 held rows |
+| Policy-validation families | In the pending teaching partition, the families held out to validate the policy; older text calls them “development” families. Not the panel's development rows |
+| Exposure / adaptive | Exposure: use of a partition's labels for selection, optimization or reporting. Adaptive: measured on data that also helped choose what is measured, so not an independent generalization estimate ([§](benchmark.md#adaptive-development-exposure)) |
+| Cut identity | Frozen identity of the training/scoring row assignment and evaluator context |
+| Inner folds | Five whole-group folds inside a cut's fitting rows, used for out-of-fold selection and, in the pending eligibility path, for teaching admission ([§](teachers.md#the-preregistered-freeze-and-train-side-inner-split)) |
+| Frozen panel | `asm-private-30-v1` under protocol `asm-panel-v1`: 30 PMLB datasets, ten per task, manifest `ba7dace4…` ([§](data.md#the-frozen-thirty-dataset-panel-identity-totals-groups-and-immutability)). Older text also says official30 or the unchanged thirty-dataset panel. Training-side validation sets that change between checkpoints are not this panel |
+| Task / category | Task: regression, binary classification or multiclass classification. Training text, `--task all-admitted` and the owner's goal of ten wins per category use “category” in this sense; elsewhere “category” means a categorical feature value |
+| Label | The column a dataset asks a model to predict; one of the senses of “target” |
+| Family | A group of related datasets from one source, such as the UCI computer-hardware source of `230_machine_cpu`. The teaching partition assigns whole families to training or validation. The north star (proposed; owner ratification pending) is measured on previously unseen families ([§](status.md#the-proposed-north-star-and-matched-comparisons)) |
+| Development data | Data visible to optimization or recipe/model selection, regardless of a file's name; in the panel, every non-sealed row |
+| Development folds 0–4 | The five original folds of the panel's development rows; every group stays within one fold ([§](data.md#the-frozen-thirty-dataset-panel-identity-totals-groups-and-immutability)) |
+| Cut k | Fit on the development folds other than k and hold out fold k (`dataset.cut(k)`, `crates/jope-bench/src/panel/data.rs:314`). Older text calls cut 0 “fold0” or “development fold zero”. For `230_machine_cpu`, cut 0 has 135 fitting rows and 34 held rows |
+| Sealed evaluation | Separately protected evaluation outside the learning and optimization closure. The “seal-protected shared memory” of the training reader (memfd seals) is unrelated |
+| Burned partition / burn receipt | In the pending training64 patch: a dataset cut originally in the `test` role whose labels were made visible to optimization, so that they now count as development data, and the immutable `jope.label-burn/v1` receipt that records this relabel. Sealed and `meta_test` labels are refused rather than burned. `require_unburned_test_partition` refuses to present a burned partition as untouched; it has no production caller yet (TEACH-02) |
+| HWM | High-water mark: the best retained result for a comparison identity. At `a75e543d2` the current-HWM pointer is keyed only by task, dataset hash and cut (`crates/jope-learning/src/state.rs:13`), so a bound result under a different evaluator, vocabulary or protocol with the same metric can still displace the incumbent (`crates/jope-learning/src/hwm.rs:64`). The pending eligibility/HWM correction (TEACH-01) uses the complete comparison identity (task, dataset, cut, evaluator, split, vocabulary, preprocessing and numerical protocol), so that a result under a different identity cannot displace an unrelated incumbent ([§](teachers.md#the-admission-guard-label-exposure-and-hwm-identity)) |
+| PANEL-WINS (proposed) | **Proposed definition, pending owner ratification; no code at `a75e543d2` computes it.** Per task, the number of the ten frozen datasets on which `asm.neural`'s confirmed five-fold mean development loss is strictly below the minimum over all eligible frozen non-ASM comparators (every `rust.*` and `external.*` recipe). Incomplete, failed or unconfirmed datasets count as not won. `asm.generic` is reported in its own column. Reported as (regression, binary, multiclass); the owner's goal of ten wins per task is (10, 10, 10), a 30/30 sweep ([§](learning.md#win-counting-and-a-proposed-acceptance-record)) |
+| Teaching admission | Eligibility decision permitting a measured example into policy training |
+| Motif / macro | Typed reusable program fragment with eligible provenance; not automatically a new primitive operator |
+| Numerical policy | Declared arithmetic, probability, ordering, tolerance and runtime assumptions fixed before scoring |
+| Alias | Alternate spelling of an existing recipe; not another independent method fit. The regression `ridge` head carries the historical alias `logistic` (`crates/feat-math/src/advanced_v3/grammar.rs:1263`), a known misnomer |
+| Front door | The supported CLI entry point for an operation, which enforces its admission rules, identities and budgets |
+| Head | Name the sense: PR head commit, reward or attention head, estimator head (such as the ridge head), or serving/training pointer |
+| Unsupported | A backend or task deliberately refuses a capability outside its admitted contract |
+| Unavailable | A dependency or required runtime is missing; different from a model failure |
+| Failed | An attempted operation ended unsuccessfully; retain its reason and measured/unknown costs |
+| Skipped | A known test or operation did not execute; not passing coverage |
+| Journal | Incremental durable started/finished/observation records for audit and original-window recovery |
+| Receipt | Evidence binding command, source, inputs, runtime, resources, times, status and artifacts |
+| Provenance | The chain of source, data, model, recipe and execution identities supporting an artifact |
+| Custody | Host-local preservation directories outside Git, such as `/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/`, that hold stopped patches, receipts and evidence. “Custody buckets” (also “custody dev/prod”) are something else: the account's separate `jopedime-714044927654-us-east-2-dev`, `-prod` and `-sealed` S3 buckets ([§](data-estate.md#additional-and-replica-buckets)) |
+| Elo | Relative Bradley–Terry rating on the arena's declared method universe and eligible pairwise scores |
+| Warm demo | Demonstration after verified preparation; report separately from cold installation |
+| Promotion | Explicit qualification of an exact artifact/model/backend for its intended serving use; a merge alone is insufficient |

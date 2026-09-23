@@ -1,29 +1,14 @@
-# Training the policy: from corpus to a consumed checkpoint
+# Training, continuation, export and compatibility
 
 ## What can be claimed now
 
 At source `68f56404c3e199e06413bfd645d3fe0803d7b96f`, the latest bounded regression origin proof has actual neural proposals, fitted generation-zero candidates, fitted descendants and a successfully authenticated recovered report. The newly authored training path is still a stopped follow-on. Its guarded 64-file patch is `595824ef6eb8e15872be058668503cedad1dd9a5ff98ac4700c6f713251d384c`; manifest `b86b550d7ee39fd93d5202accd5f77c975b7bcb4fd8f8e7706c69c5f279294a2` binds every original packet, overlap resolution and current source/API guard.
 
-The follow-on passed custody replay guards, source syntax, pure metadata checks and feature-graph inspection. That evidence does not establish Rust type checking, a GPU optimizer run, a real newly trained checkpoint, or a successful live trained-checkpoint consumption loop. The demonstrated teacher count under this pending ASM admission contract remains zero in the inspected evidence. Historical lineage-B teaching corpora and its accepted trained checkpoint are separate retained assets, described in [§](20-corpus-and-target-history.md#retained-corpus-sizes) and [§](19-training-history.md#carried-state-accepted-step-60000-and-rtx-step-60100); they have not been retroactively certified under the new admission contract. Source support, fixture tests, exact-head CI, live qualification and serving promotion must remain separate status fields.
+The follow-on passed custody replay guards, source syntax, pure metadata checks and feature-graph inspection. That evidence does not establish Rust type checking, a GPU optimizer run, a real newly trained checkpoint, or a successful live trained-checkpoint consumption loop. The demonstrated teacher count under this pending ASM admission contract remains zero in the inspected evidence. Historical lineage-B teaching corpora and its accepted trained checkpoint are separate retained assets, described in [§](data-estate.md#retained-corpus-sizes) and [§](training-history.md#carried-state-accepted-step-60000-and-rtx-step-60100); they have not been retroactively certified under the new admission contract. Source support, fixture tests, exact-head CI, live qualification and serving promotion must remain separate status fields.
 
 All commands below involving `jope train` or experimental consumer configuration describe the **pending overlay's implemented interface**. They are a maintainer runbook for integration and authorized acceptance, not claims that these commands were executed at main `a75e543d2` (PR83). Preserve this status notice when extracting examples.
 
-## The continuation interfaces that exist today
-
-### Current interfaces at a glance
-
-| Interface | Current behavior | Appropriate interpretation |
-|---|---|---|
-| `jope train-step --local` | Fits a centroid router from local labels | Small router training; not the deep policy model. |
-| `jope learn ...` | Not exposed by the umbrella parser at `68f56404` (main `a75e543d2`) | ADR operating intent; do not present as a working command. |
-| `jope-parallel train ...` with `neural` | Native regression trainer syntax exists; direct numerical dispatch is held | Retained native continuation machinery, not presently usable through this direct entry point. |
-| `jope-py train-policy --init-from ...` | Python policy weight warm start; CLI exposes no `--resume-from` | A new optimization run initialized from compatible weights, not exact optimizer continuation. |
-| `train_policy_v3_from_jsonl(..., resume_from=..., resume_checkpoint=...)` | Existing Python API restores model, optimizer, scheduler, scaler and RNG subject to compatibility | A real continuation API, requiring a trusted matching Python resume artifact; not an accepted-native-checkpoint conversion. |
-| Pending `jope train plan/run/resume/verify/export` | Supervised, task-routed, bounded training proof and experimental export | Preferred integration target for the approved one-GPU-hour demonstration; still unintegrated and unexecuted. |
-
-**Today no executable route produces a successor of the accepted step-60000 serving model.** Exact native `--resume` of step 60,000 is refused: its `state.json` has no `execution_partition`, and resume requires the original partition (`crates/jope-engine/src/training.rs:1106`). Every native `jope-parallel train` dispatch, including `--initialize` with a carried optimizer, stops at the dispatch hold ([§](#the-dispatch-hold-resource-incompatibility-and-valid-topologies)); a `parallel.checkpoint_continuation.v1` carry must in addition reproduce the parent run's recorded world/microbatch partition (`crates/jope-engine/src/checkpoint_recovery.rs:191`), and the accepted lineage ran at world 8. `jope-py train-policy --init-from` loads a Python policy payload and copies only shape-compatible tensors (`python/src/jope/policy/train_v3.py:1635`, `:1702`); it is not a loader for the native 512-wide, six-layer model ([§](07-policy-and-search.md#checkpoint-binding-and-configuration)). The Python resume API accepts only a `PrimePolicyTrainerResume.v1` artifact (`train_v3.py:1457`), a schema the native trainer does not write. The pending training64 campaign trains a new, smaller Python model family, not a continuation ([§](#what-the-pending-campaign-trains)).
-
-Sources: [current umbrella commands](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-cli/src/main.rs#L26), [local train-step dispatch](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-cli/src/main.rs#L308), [Python CLI flags](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/python/src/jope/cli.py#L186), [Python API](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/python/src/jope/policy/train_v3.py#L1331).
+## The four continuation modes: native initialize and resume, Python warm start and exact continuation
 
 ### Variables used in the continuation examples
 
@@ -67,10 +52,6 @@ Here `--steps 100` declares the same increment for the whole original run; resum
 #### The dispatch hold, resource incompatibility and valid topologies
 
 The current direct controller calls `require_original_gpu_grant`, which **always returns an error**: “original native GPU grant verifier unavailable; numerical dispatch is held.” Environment variables cannot release this gate. A separate typed native funding-admission API exists, but this is not a working direct-trainer bypass. Even after a future proper dispatch integration, the controller's fresh-telemetry check requires at least 128 GiB available RAM and 50 GiB free disk, incompatible with the current approved 64 GiB limit. Valid normal microbatches are 64, 128 or 256, and global batch is 2048. With world 1/microbatch 64, accumulation is 32. The retained step 60100 hardware qualification actually used world 1, microbatch 256 and accumulation 8, carrying AdamW from 60000 to 60100 on the unchanged corpus with zero fresh program presentations. Its 100-step update is genuine optimizer work; it is not production continuation or promotion. The ADR's microbatch 32 example is inaccurate for that retained run and is not a currently accepted CLI topology.
-
-#### Audit the entire input closure first
-
-Before any future continuation, audit the **entire** input closure, including every context descriptor and staged tensor, not only training records. The retained snapshot 97 index lists 8,894 contexts, including 878 `meta_test` descriptors, while record rows are train/validation only. Current legacy training stages all indexed contexts before sampling. Absence of sealed record rows therefore does not prove strict sealed-family exclusion. Do not blindly continue that corpus under the new closure policy; preserve the metadata observation and resolve it without opening sealed payloads. See [§](20-corpus-and-target-history.md#record-split-and-the-meta-test-closure-question) and [context staging source](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-engine/src/training.rs#L1179).
 
 Sources: [native command parser](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-engine/src/main.rs#L106), [controller admission and step window](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-engine/src/controller.rs#L479), [dispatch hold](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-engine/src/task_contract.rs#L88), [checkpoint checks and warm start](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-engine/src/training.rs#L923).
 
@@ -139,9 +120,7 @@ Use the trusted `PrimePolicyTrainerResume.v1` artifact, not `model.ot`, a safete
 
 This current Python route has material limits. CUDA requests can silently fall back to CPU in the underlying code, so the companion refuses absent CUDA before calling it. Current task-routing/zero-update and resume-proof fixes belong to the pending training overlay. The loader can discard minority embedding widths with a warning; a qualified input inventory should reject such a mixed corpus earlier. Existing Python training alone does not provide the shared cgroup resource contract, original campaign deadline, teaching admission, parameter-change proof or serving promotion. Execute any diagnostic caller only inside a separately admitted resource/time supervisor, not as a way to bypass the pending product gates. See [current device fallback](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/python/src/jope/policy/ddp.py#L25) and [mixed-width handling](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/python/src/jope/policy/train_v3.py#L1497).
 
-## Before a bounded campaign: identities, resources and clocks
-
-### Evidence and identity before execution
+## Evidence and identity before a bounded campaign
 
 A training run has at least four separate identities:
 
@@ -158,29 +137,11 @@ The training runtime inventory hashes installed dependency bytes, excluding gene
 
 Sources: pending `crates/jope-cli/src/train.rs:1`; `python/src/jope/policy/training_campaign.py:120`.
 
-### Resource policy and clocks
-
-| Operation | Required policy |
-|---|---|
-| Official frozen30 panel | 20 workers/CPUs, 64GiB, zero swap, at most one GPU task, 30 seconds per fit, 7200 seconds total including300-second reporting reserve |
-| Paired search | 64 policy-pool slots (true neural or explicit fallback)+16 exploration versus 80 generic; default 120 seconds per arm; same declared allowance and grammar/variation identity |
-| Separate origin/teacher qualification | Explicitly preregistered resource manifest and separate journal; no inferred extra allowance and no reset of another campaign |
-| Training | One visible RTX3090, one campaign of at most3600 seconds, at most1200 seconds per category, one active category worker, CPU allowance20,64GiB,zero swap |
-| Training numerical runtime | One Torch thread, FP32 storage, CUDA TF32 enabled by declared policy, AMP disabled; explicit experimental lineage |
-| CPU training | Explicit synthetic qualification only; never an automatic fallback from requested CUDA |
-| Full-CPU CI | Exclusive; no overlapping campaign/training resource allocation |
-
-The training device check requires exactly one visible CUDA device, an RTX3090 name and a usable GPU UUID. It records requested/resolved device identity. Resume requires the same identity. A missing GPU is an explicit failure; it must not become a successful CPU run under a CUDA claim.
-
-Native planning does not open the training clock. First supervised admission creates the global window. Each category receives at most20 minutes, capped by the remaining global deadline minus its five-second reporting reserve. All passes, validation, reloads and checkpoint work must fit the original window. A pass is one supervised worker attempt: one call of `train_policy_v3_from_jsonl` with `epochs=1` and batch size 256 (2 for synthetic fixtures); every later pass resumes from the previous pass's `resume.pt`. Two passes are required for continuation evidence; they do not receive two category budgets. A fresh directory or modified plan is a new campaign, not a legitimate way to finish an expired approved campaign.
-
-Sources: current `crates/jope-bench/src/panel/campaign_cli.rs:51`; pending `python/src/jope/policy/training_campaign.py:164`, `:704`, `:720`, `:1043`; `crates/jope-cli/src/train.rs:31`.
-
 ## The bounded training campaign chain
 
 ### What the pending campaign trains
 
-The pending training campaign uses the existing Python `JopePolicyModelV3` with task-routed reward/stability behavior. Real admitted training uses width 256, two layers, four heads and feed-forward 1024; synthetic qualification fixtures use width 8, one layer, two heads and feed-forward 16. Both consume the explicit context schema. Training uses one-epoch passes, learning rate 5e-4, batch 256 for admitted rows or 2 for fixtures, AMP disabled and automatic batch-size tuning disabled. These are the bounded campaign's settings, not the accepted step-60000 model's architecture (width 512, six layers, feed-forward 2048; [§](07-policy-and-search.md#checkpoint-binding-and-configuration)). The campaign therefore produces a **new, smaller model family**, not a continuation of step 60,000: its optional initialization is a Python policy payload, and its checkpoint cannot be loaded in place of the accepted model, whose loader rejects incorrectly shaped tensors. Compare it with step 60,000 only through matched downstream fits under the same protocol, never through loss values.
+The pending training campaign uses the existing Python `JopePolicyModelV3` with task-routed reward/stability behavior. Real admitted training uses width 256, two layers, four heads and feed-forward 1024; synthetic qualification fixtures use width 8, one layer, two heads and feed-forward 16. Both consume the explicit context schema. Training uses one-epoch passes, learning rate 5e-4, batch 256 for admitted rows or 2 for fixtures, AMP disabled and automatic batch-size tuning disabled. These are the bounded campaign's settings, not the accepted step-60000 model's architecture (width 512, six layers, feed-forward 2048; [§](architecture.md#checkpoint-binding-and-configuration)). The campaign therefore produces a **new, smaller model family**, not a continuation of step 60,000: its optional initialization is a Python policy payload, and its checkpoint cannot be loaded in place of the accepted model, whose loader rejects incorrectly shaped tensors. Compare it with step 60,000 only through matched downstream fits under the same protocol, never through loss values.
 
 ### Build the real corpus from admitted evidence
 
@@ -250,7 +211,7 @@ After reviewed integration, source-bound build/tests, fresh real two-family teac
 "$FINAL_JOPE" train export --state "$TRAINING_STATE" --output "$TRAINING_EXPORT"
 ```
 
-Run and resume are alternatives according to state; do not blindly execute resume after a completed run. The whole campaign permits one RTX 3090 and one GPU-hour, at most 20 minutes per category, 20 CPUs, 64 GiB and zero swap. Two passes share each category window; they do not receive fresh time allowances. At least two real admitted families are necessary before claiming the real regression training path; with only the two prospective panel families of [§](10-teachers-and-targets.md#present-teacher-readiness-and-the-smallest-real-path), the campaign is a mechanics qualification, not a flywheel test. Classification fixtures may demonstrate labeled mechanics when real admission fails, but remain synthetic. Unknown or unavailable categories are reported rather than filled with invented success.
+Run and resume are alternatives according to state; do not blindly execute resume after a completed run. The whole campaign permits one RTX 3090 and one GPU-hour, at most 20 minutes per category, 20 CPUs, 64 GiB and zero swap. Two passes share each category window; they do not receive fresh time allowances. At least two real admitted families are necessary before claiming the real regression training path; with only the two prospective panel families of [§](teachers.md#present-teacher-readiness-and-the-smallest-real-path), the campaign is a mechanics qualification, not a flywheel test. Classification fixtures may demonstrate labeled mechanics when real admission fails, but remain synthetic. Unknown or unavailable categories are reported rather than filled with invented success.
 
 Verification must establish positive updates, changed parameters, reload equality, actual optimizer continuation, full input/runtime/source/device/vocabulary compatibility and persisted accounting. Export is experimental. The pending `experimental.regression`, `experimental.binary` and `experimental.multiclass` consumer entries bind task-specific exported checkpoints; a later real fit must prove the new checkpoint generated and fitted candidates. None of these commands updates the accepted serving pointer. Product28, warm-target and winner-export follow training64; they do not fix teacher eligibility by themselves.
 

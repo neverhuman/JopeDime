@@ -1,10 +1,10 @@
-# Maintaining, reviewing and preserving the product
+# Maintenance, privacy, release and preservation
 
 ## Questions that should remain answerable after a maintainer handoff
 
 Which reviewed source and runtime produced this artifact? Which exact rows and original labels were available? Was this a recipe, a checkpoint or a saved fitted predictor? Which score selected it, under what comparison identity? Which failures, missing dependencies and cancelled jobs were retained? Did any nominal test labels influence selection? Did resume preserve the original deadline? Does the export predict from saved state, and which backend actually passed? Did training perform positive updates and change parameters? Can another maintainer locate and authenticate the receipt without reading credentials or sealed data?
 
-The roadmap ([§](03-roadmap.md#compact-task-index)) translates the unanswered parts into named acceptance items. Unknowns stay explicit until the corresponding evidence exists.
+The roadmap ([§](plan.md#compact-task-index)) translates the unanswered parts into named acceptance items. Unknowns stay explicit until the corresponding evidence exists.
 
 ## Repository authority and coordination
 
@@ -66,33 +66,21 @@ Immediately recheck head, eligibility, CI and approval before merging. Afterward
 
 Main-guard and the full-main diagnostic share the single xbabe2 `jope-full-cpu` slot and run serially. A main push queues both; full-main has a 120-minute timeout, so main-guard can wait behind it. Read back job/run states and retain the exact source/run/attempt before changing the queue. In the PR83 lifecycle the owner-authorized full-main diagnostic was cancelled while still queued, before any job started, and the owned full timer was restored to allow main-guard to run. That is a recorded unexecuted diagnostic, not passing coverage or general permission to cancel running work. Follow the current allocation owner and runner runbook; never stop another running job to accelerate a merge. Sources: `.github/workflows/main-guard.yml:17`, `.github/workflows/full-main.yml:24`, `docs/runbooks/runner.md:15`, `:131`; the PR83 lifecycle cancellation receipt.
 
-### Worked example: the PR83 lifecycle record
+## Privacy boundaries: the private manual and public fitted bundles
 
-| Gate | Exact observation |
-| --- | --- |
-| PR | `veox-ai/JopeDime#83`, merged |
-| Manual CI dispatch | Run 35887284772, attempt 1, source `68f56404…`, success |
-| PR CI | Run 35887255898, attempt 1, source `68f56404…`, success |
-| Required CI jobs | Eight lanes and aggregate succeeded in both runs |
-| CI test inventory | 937 Rust passed, 14 skipped; 221 Python passed per run |
-| First independent native review | 5293748183, `neverhuman`, APPROVED, exact full reviewed head, 16:29:01 UTC |
-| Second independent native review | 5293788772, same eligible account, APPROVED, same head, 16:32:43 UTC; includes residual disclosures |
-| Author eligibility | All twelve commits associated with `jepsontaylor` as author and committer; reviewer differs |
-| Merge | Guarded rebase with `--match-head-commit` at the reviewed head, completed at 16:34:47 UTC as main `a75e543d2166…` with the reviewed tree `176b75bc36d7…` |
-| Remote-main verification | Fetched main and compared complete Git tree; canonical clean main observed before documentation branch |
-| Main guard | Run 35889731910, attempt 1, success at resulting main; guard job 107278860508 |
+This is a maintainer document for the private product repository. Its explicitly requested GP examples and internal operational paths explain the implementation; they do not expand the allowlist for public inference bundles.
 
-Two review processes overlapped during coordination. Both were independent of the source writer and both approvals are retained; they are not two different human reviewers. One process's supplementary disclosures identify outstanding work rather than silently treating it as fixed. The writer did not select another credential to approve its own source.
+This is a maintainer document containing internal model and discovery design. The user's request authorizes this explanation and the companion private GP examples. It does not enlarge the allowlist for distributed inference artifacts or authorize publishing private weights, discovery histories, vocabulary assets or training corpora. Hashes identify dependencies; they are not the dependencies themselves.
 
-The full-main diagnostic run 35889732032 that the PR83 merge queued was cancelled while still queued to preserve the admitted local allocation and let main-guard run. It did not pass or execute. Earlier full-main run 35852022466 failed and remains historical diagnostic evidence requiring repair. Passing fast CI does not replace that outstanding broad qualification.
+Allowlisted public fitted bundles contain inference code, necessary fitted input dictionaries, class/schema metadata and their hashes. They exclude the private recipe, discovery history and scoring references. The private prepared plan and worker directory remain private. Canary/text-policy checks supplement the explicit file allowlist; passing static checks does not replace actual complete-prediction parity.
 
-## Shared compute
+## Release and installation are independent from model promotion
 
-Fast CI runs on xbabe1. The canonical Ubuntu machine is local xbabe2 for full CPU work. The user's SSH alias `xbabe2` points elsewhere; use the runbook's local form for this machine.
+The current tag workflow runs for `v*`, checks tag = workspace = Python version, builds a Linux binary, writes build provenance and checksums, builds the Python wheel, and records model/dataset references by hash. The committed build command selects default CLI features; it does **not** include `--features asm`. Therefore the existence of this workflow does not prove that a released binary can execute the private ASM path. No newly published release is asserted here. The current private source build in [§](installation.md#development-build-of-the-cli) explicitly selects `asm`.
 
-The exclusive full runner and numerical campaigns share a host lock. Drain owned listeners and verify no active full job before numerical allocation. Do not seize the host by stopping another job. Record allocation ownership and restore the runner after numerical work releases it. Keep full CPU CI separate from the one-GPU-hour training campaign and the frozen panel.
+[Release workflow](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/.github/workflows/release.yml#L71) and [version consistency](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/deploy/ci/version-consistency.sh#L1) are source evidence. A future reviewed version bump can use `just bump X.Y.Z`; that recipe edits manifests and the lockfile and invokes Cargo. It is a developer mutation recipe, not a command executed for this manual or a decision to release any particular version. [Exact bump implementation](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/justfile#L63).
 
-Missing cgroups or dependencies cause explicit failures/unavailable outcomes; they do not authorize an unbounded fallback. Worker control readbacks, not prose, establish the limits actually enforced.
+The checksum-verifying private binary installer and CLI-only source-build helper remain product28 follow-ons. Their concrete commands and cold/warm separation are in [§](installation.md#build-and-install). Installing a new CLI does not admit new data, train a model, or promote a checkpoint. Likewise, `models pull` or a storage manifest does not change the accepted policy pins.
 
 ## Preservation and lane closure
 

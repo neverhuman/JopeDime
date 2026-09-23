@@ -1,55 +1,6 @@
-# Corpus and target history
+# Historical GP targets, rankings, Elo and attribution limits
 
-The retained evidence shows both substantial historical training corpora and some improving historical GP targets. It does **not** show a newly qualified ASM teaching loop, a current thirty-dataset result, or a causal advantage from neural training. Those are different claims with different evidence requirements.
-
-This chapter answers two questions: which historical corpora and target records survive, and how the historical target collections and their observed scores changed. What one training example contains is described in [§](10-teachers-and-targets.md#a-dataset-is-not-one-training-example), and how the implementation stores and loads packed records in [§](11-corpora-and-packing.md). This manual's audit read metadata, manifests and development-score receipts. It did not read sealed labels, model tensors, packed target-record bodies or the large audit-label sidecars, and it ran no training or fits. External packing, inventory and seed audits report results that depend on payloads this audit did not open; those results are attributed separately below and were checked here through retained metadata, scripts and arithmetic, without replaying the payload reads. File-metadata observations, externally reported payload checks and source-derived calculations remain distinct evidence levels.
-
-## What is preserved, and what was lost
-
-### Lineages A and B and the staging store
-
-Two historical lineages must remain separate. Lineage A contains July–September flywheel material, old winner/genebank state and preserved archives. Lineage B contains the native corpus/training chain used by the retained step-60000 checkpoint. `ADR-0005` and `docs/learning.md` describe their intended migration and their observed losses; those dated records do not authorize silently promoting old labels under the current ASM rules.
-
-The learning S3 store is a staging estate: at the 2026-09-23 listings all 645,281 objects in `veox-jopedime-learning-use2` were under `staging/`. Targeted metadata listings found `staging/lineage-a/`, `staging/lineage-b/accepted60000-restored/` and `staging/mirror-weights/`. [§](C-data-estate.md#product-s3-buckets) and [§](C-data-estate.md#learning-store-prefixes) record the bucket census and the per-prefix counts. Object upload time is not the time a target was discovered or consumed. Five small metadata objects were fetched with an ETag precondition and hashed: the encoding caveats, frozen slice listing, archive catalog, genebank deprecation note and accepted60000 materialization intent. Their exact keys, byte lengths, ETags, upload times and fetch hashes are in `metadata/fetched-metadata.json` in custody.
-
-### Lineage-A selections, archives, lost records and exposed score tiers
-
-The frozen July 25 `slice500` listing chose the first 500 bytewise-sorted names from 25,031 directories, excluding 186 incoming entries and hidden packed storage. That is a reproducible selection of candidate datasets, not proof of 500 admitted teachers. The retained encoding caveat says the historical binary target encoder used a regression-flavored checkpoint: binary values were in range, but that did not establish classification training qualification. The same note describes historical target-vector fusion and encoder pins. It must not be recast as the current verified classification-context contract.
-
-Lineage A preserves archives for snapshots `004754860`, `008903292`, `009658180` and `009915070`. The archives' compressed byte sizes and checksums identify preservation containers, not in-memory training size. This audit did not extract them. The historical records declare the strict-test-exact database, pair registry, later immutable checkpoint descendants, acceptance pointers, sealed-consumption receipts and task-Elo registry lost. A directory number or an old selected pointer cannot recreate that missing evidence. The old genebank has an improvement-event schema with task, dataset, score tier, metric, evaluator, source and ingestion time, but lacks the complete cut/vocabulary/protocol identity required by the current HWM. Its 22,798 improvement-event rows are not 22,798 currently admissible teachers; its timestamps include backfill ingestion.
-
-The exact-current HWM identity and current admission requirements are explained in [§](10-teachers-and-targets.md#the-admission-guard-label-exposure-and-hwm-identity) and [§](13-flywheel.md#four-linked-improvements-and-the-comparison-identity). The historical `test_exact` score tier is optimization-exposed development evidence when used to choose programs. Renaming the tier does not restore independence.
-
-## Retained corpus sizes
-
-### Six retained corpora
-
-The following table comes from six directly read local index/provenance files. Snapshot names are identifiers, not a reconstructed wall-clock axis. Several publications have no independently recorded timestamp in their index. These are retained historical corpora, not six steps in one proved monotonic update sequence. Counts must not be summed: corpora overlap.
-
-| Corpus | Records | Contexts | Dataset/family counts | Groups | Record bytes | Audit-label bytes |
-| --- | ---: | ---: | --- | ---: | ---: | ---: |
-| `qualification-v1` | 9,955 | 3,500 | 35 / 29 | 530 | 5,296,060 | 2,466,332 |
-| `qualification-v2` | 85,498 | 3,500 | 35 / 29 | 834 | 45,484,936 | 25,540,156 |
-| `qualification-v3` | 422,840 | 7,000 | 35 / 29 | 1,320 | 224,950,880 | 131,176,452 |
-| `cohort64-qualification-v1` | 779,158 | 8,799 | 64 / 64 | 1,620 | 414,512,056 | 243,431,656 |
-| `dataset-inclusion-20260909` | 5,538,508 | 8,904 | 82 / 82 | 6,815 | 2,946,486,256 | 1,753,858,051 |
-| Accepted60000 closure, `snapshot-000097` | 10,214,332 | 8,894 | 80 / 80 | 7,877 | 5,434,024,624 | 3,227,289,461 |
-
-All six use 532-byte packed records. The first five indexes use `parallel.teaching_corpus.v1`; the accepted closure uses `parallel.teaching_shards.v1`. Their indexes alone range from 1,807,418 to 98,330,379 bytes. The accepted sharded index is 60,589,288 bytes. Large JSON metadata remains a real part of startup work even when target records are binary. Full paths, byte counts, schemas and SHA-256 values are in `corpus-snapshots.csv` and `local-corpus-metadata.json`.
-
-### Snapshot 421 and snapshot 97 accounting
-
-A separate September 11 audit captured snapshot `000421` with 8,899,150 records and 24,313,972 observations seen; its original index hash is `74d643be…`. That is a retained audit observation, not a seventh newly payload-verified corpus. The later accepted `000097` belongs to a different recovery run: 97 is not chronologically earlier than 421. The apparent count difference cannot be called a count of newly discovered unique teachers without joining actual program/context identities and admission events.
-
-For accepted snapshot 97, metadata records 34,321,997 observations seen, 109,797 failed programs, 488,028 withheld meta-test observations, 1,338,630 observations without a matching context, 405,322 exact-parameter tokenization rejections and 112,903 out-of-vocabulary parameter rejections. These diagnostics describe the packer's accounting categories; do not assume they form a disjoint partition that can simply be subtracted from the observation total.
-
-### Record split and the meta-test closure question
-
-The accepted corpus's record split is precise: 9,382,874 `meta_train` records in 6,836 shards and 831,458 `meta_validation` records in 1,041 shards. There are no `meta_test` record shards. The context index nevertheless contains 6,962 training, 1,054 validation and **878 meta-test context descriptors**. Current legacy `training.rs` stages every context in that index before sampling records. Consequently, withholding meta-test record labels is not a proof that sealed families were excluded from the entire historical encoder/trainer input closure. This is a concrete remaining closure audit, not a claim that this documentation audit opened sealed vectors or labels.
-
-A separate external historical-inventory report also discloses parsing manifests for eight datasets marked `meta_test` **and hashing their source CSVs**; its shorter coordination entry mentioned manifests only. That report says all eight have lineage-A `test_exact` high-water marks. This audit did not reopen those paths or inspect their labels. The disclosure does not establish whether labels reached lineage-B training. Before reuse or continuation under the current policy, audit the complete encoder, context-staging, target-admission and sampler input closure, and resolve the old exposed-HWM lineage. Neither zero meta-test record shards nor an old qualification flag closes that question.
-
-The accepted index SHA `1c840597…`, vocabulary `8d55fee4…` and context index `d77e856b…` bind the preserved checkpoint lineage. Its label policy is explicitly `reference_v1`. An old `qualification: true` flag means qualification under that historical implementation and policy. It does not retroactively satisfy current finite train-side OOF improvement over a trivial baseline, improvement on four of five folds, exact source closure and non-exposure requirements.
+This chapter answers two questions: which historical corpora and target records survive, and how the historical target collections and their observed scores changed. What one training example contains is described in [§](teachers.md#a-dataset-is-not-one-training-example), and how the implementation stores and loads packed records in [§](data-estate.md#record-layout). This manual's audit read metadata, manifests and development-score receipts. It did not read sealed labels, model tensors, packed target-record bodies or the large audit-label sidecars, and it ran no training or fits. External packing, inventory and seed audits report results that depend on payloads this audit did not open; those results are attributed separately below and were checked here through retained metadata, scripts and arithmetic, without replaying the payload reads. File-metadata observations, externally reported payload checks and source-derived calculations remain distinct evidence levels.
 
 ## Did GP targets get better?
 
@@ -102,4 +53,75 @@ These are repeated adaptive **final-search** observations across generations 0�
 
 The external report's broader routing extract has 42,863 rows. Only 3,530 match this chapter's admitted receipt inventory by retained path and all checked score, prepared-data, vocabulary, evaluator, protocol, completed-evaluation and wall-time fields. The other 39,333 are outside that existing inventory; their eligibility remains unqualified here, **not classified as all sealed**. No original score path was reopened for this join. The broader campaign ratios and p-values are therefore not imported. The compact `packing-routing-audit.json` pins inputs, matching fields, arithmetic and exclusions.
 
-To establish a closed improvement loop rather than these separate observations, join: original search/fit completion → exact program and comparison identity → admission event and immutable target record → corpus membership → actual sampler exposure and optimizer continuation → later policy proposal/fit under the same comparison protocol. The historical logs in [§](19-training-history.md) show training activity; the target receipts here show some improving, largely carried-forward development scores. That complete causal/eligibility join is still missing.
+## Existing historical rankings and Elo
+
+### Retained snapshots and plot data
+
+Six committed snapshots are available and their ladder and score SHA-256 values were verified against retained bytes. No new Elo computation occurred in this audit. The snapshots use their own method pools and dataset protocols, so their Elo numbers cannot be compared across snapshots as a universal score.
+
+| Snapshot | Rankable rows | Methods | Datasets | Interpretation |
+|---|---:|---:|---:|---|
+| same-cut-v1-screen |110|11|10|historical_same_cut_reproducible_snapshot_not_current_ASM30|
+| same-cut-v1-deep |50|11|10|historical_same_cut_reproducible_snapshot_not_current_ASM30|
+| same-cut-v2-screen |150|15|10|historical_same_cut_reproducible_snapshot_not_current_ASM30|
+| same-cut-v2-deep |50|15|10|historical_same_cut_reproducible_snapshot_not_current_ASM30|
+| historical-sotarena-published |8763|305|45|historical_published_best_known_test_selected_not_benchmark_valid|
+| historical-sotarena-benchmark-valid |8718|304|45|historical_corrected_public_development|
+
+For plots, use `performance-evidence.json.gz`: 6 complete ladder row sets; 520 same-cut score cells, including missing/rejected statuses; 20 per-dataset reports with exact cut identities, source heads and screen/deep timings; 8,763 historical SOTArena score rows; and the 2 current-origin refit loss rows. Do not blend these into one chart without explicit separate protocol panels. The frozen panel (asm-private-30-v1) matrix had no completed cells as of 2026-09-23; represent it as pending, not a fabricated ranking.
+
+### Ranking figures: interpretation contract
+
+Historical ladders retain their original snapshot names. Benchmark-valid and public-development views are separated. Same-cut screening includes all admitted methods; deepening includes only finalists, so empty cells have a deliberate meaning. A rank heatmap compares methods within a dataset and stage; it is not a plot of absolute loss across datasets. Any chart with only the top methods states that limit, while its CSV preserves the full underlying inventory.
+
+The historical ranking plots that follow use their separately pinned snapshots. They are not new model runs and are not a frozen-panel (asm-private-30-v1) campaign. Benchmark-valid and public-development views retain their original eligibility distinctions. Same-cut deep-stage coverage varies because only finalists were deepened; absent cells are not zero losses. See [§](benchmark.md#the-bradleyterry-model-tie-rule-and-defaults) for the exact Elo model and tie rule, [§](benchmark.md#interpreting-a-rating) for coverage limits and [§](benchmark.md#adaptive-development-exposure) for the adaptive-development interpretation.
+
+All machine-readable rows are retained in `data/performance-evidence.json.gz` and `data/plot-historical-elo.csv`. A displayed top-method subset does not remove the other methods from those inventories. Dataset selection and historical protocol caveats travel with each figure.
+
+### SOTArena published and corrected ladders
+
+#### Historical benchmark-valid Elo
+
+This view retains 304 methods and the historical corrected eligibility filter. The historical `jope-dime-regressor` entrant is rank 31 with Elo 1687.0 in this snapshot. “Benchmark-valid” means no retained artifact contradicts a row's flag; comparator protocols were not independently verified. It does not certify that every comparator obeyed today's frozen ASM protocol.
+
+![Historical benchmark-valid Elo ladder and complete rank distribution](../figures/fig01-elo-benchmark-valid.png)
+
+The top-method view is paired with the distribution of the full method universe. Dataset coverage and the identity of the historical entrant remain visible. These numbers describe the retained historical ladder, not the current accepted step-60000 model's thirty-dataset performance.
+
+#### Why the two historical ladders differ
+
+The published SOTArena snapshot puts historical `jope-dime` at rank 1/Elo 2259.8 with 11 wins and 45/45 coverage. All 45 rows are test-selected: 42 best-test evolution-envelope rows plus 3 test-adaptive accepted replays. The corrected benchmark-valid snapshot excludes those 45; **that rank 1 is not a held-out ASM claim**. The corrected snapshot has 304 methods/8,718 rankable rows. Its fixed-seed historical `jope-dime-regressor` entry is rank 31/Elo 1687.0, 1 win, 42/45 coverage; TabFM Ensemble is rank 1/Elo 1934.9. It remains historical public-development evidence.
+
+The published view includes 45 test-selected `jope-dime` rows; the corrected benchmark-valid view removes them. The historical `jope-dime` rank-one Elo of 2259.8 belongs to the former view. It is a best-known test-selected result, not a held-out claim. An eligibility change alters the overlap graph and the fitted ladder, so these ratings must not be combined into a single current score.
+
+![Historical published and benchmark-valid ladders with their distinct eligibility](../figures/fig02-ladders-valid-vs-adaptive.png)
+
+### Historical same-cut screening and deepening
+
+#### Same-cut v1 and v2 snapshots with screen and deep Elo
+
+Same-cut v1 covers native heads plus resampled search; v2 adds XGBoost 2.1.4, LightGBM 4.6.0, CatBoost 1.2.10 and scikit-learn 1.7.2 random forest under Python 3.12.3. Both use the favorable historical test-10 regression selection, seed 20260907, five folds, top-five deepening and 32×8 search. Deep rows include only screened finalists; coverage must be printed with rankings. Their timing fields are then-recorded wall times under uncontrolled host load, not the present isolated-worker timing protocol.
+
+Same-cut v2 compares all fifteen methods during screening on ten regression datasets. Only the five finalists per dataset are deepened across all five cuts, so the deep-stage denominator differs by method. Hollow markers preserve the earlier v1 snapshot; they are a separate run, not confidence intervals. The historical searched program is distinct from the current qualified neural proposal path.
+
+![Historical same-cut screen and deep Elo with coverage](../figures/fig03-samecut-deep-elo.png)
+
+The ten historical datasets were a favorable selection for the earlier engine. Their ranking cannot establish performance on a broader corpus or substitute for the frozen panel (asm-private-30-v1). External engine versions printed in these plots are the historical run versions, not a claim about currently installed adapter versions.
+
+#### Historical relative loss and per-dataset rank
+
+Each heatmap cell is a method's screen RMSE divided by the best screen RMSE on the same dataset. A ratio of one is best; the color saturates at three while displayed values are rounded. This normalization supports within-dataset visual comparison without averaging incompatible raw target units. Outlines show which cells reached the deep stage.
+
+![Historical same-cut relative RMSE heatmap](../figures/fig04-samecut-rmse-heatmap.png)
+
+The rank-distribution plot shows all ten per-dataset screening ranks for each method, with mean and median. It reveals variability hidden by a single aggregate ladder. A rank difference conveys ordering, not the magnitude of a loss improvement or a confidence interval.
+
+![Historical same-cut per-dataset rank distribution](../figures/fig05-samecut-rank-distribution.png)
+
+### Historical production time and the supplied reference scenario
+
+The retained same-cut reports record mean program-production wall time 2.1837062093 seconds, median 0.9870389355 seconds and maximum 8.299870126 seconds across ten datasets. These are recorded timings under the host's contemporary load, not isolated controlled latency measurements and not the current paired ASM proof's elapsed time.
+
+![Historical program-production times and an explicitly unmeasured scenario](../figures/fig06-seconds-per-program.png)
+
+The one-hour/ten-million-token marker is the user's contextual scenario. Workload, hardware, token trace, currency and result quality were not measured under matching conditions. The chart therefore establishes no matched speedup, cost saving, token-efficiency ratio or quality equivalence. The measured current proof and its per-predictor/per-recipe accounting remain separately reported.
