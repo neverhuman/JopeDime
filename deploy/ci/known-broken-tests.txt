@@ -34,14 +34,7 @@ view_contracts fitted_view_predictor_uses_the_exact_cut_and_original_target_unit
 view_contracts isolated_fitted_view_export_binds_success_and_preserves_worker_failures # fit authority fenced
 view_contracts experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits # fit authority fenced
 #
-# --- cause A1: a panic, filed under the fence block but not caused by it ---
-# Counting this one under cause A would make the fence look like it explains more than it does:
-# after A0 is removed the fence explains five entries, and this is a sixth with its own cause.
-queue native_preparation_status_cannot_change_a_live_gp_queue # queue.rs:133 panic
-#
 # --- cause B: behavioural assertions that do not hold on this tree (not environment) ---
-learning_history compact_overview_uses_latest_validation_timestamp_across_overlapping_runs # expects "Validation Sequence NLL: 0.12345"
-learning_history navigation_reaches_both_ends_and_all_view_sizes_remain_usable # expects "Sequence NLL"
 view_contracts matched_search_seed_is_recorded_and_cannot_change_on_resume # expects stderr "RNG seed mismatch"
 view_contracts one_evaluation_budget_runs_the_incumbent_before_neural_candidates # observations[0]["failure"] is not null
 view_contracts projected_gp_candidates_are_exactly_representable_unique_and_durable # left == right assertion
