@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Render the README's measured-results blocks from committed evidence.
 
-Two independent marker pairs, so regenerating one can never clobber the other:
+Three independent marker pairs, so regenerating one can never clobber another:
 
-    <!-- arena:begin --> ... <!-- arena:end -->     the Golden45 ladders
-    <!-- bench:begin --> ... <!-- bench:end -->     emit-path latency
+    <!-- arena:begin --> ... <!-- arena:end -->       the Golden45 ladders
+    <!-- samecut:begin --> ... <!-- samecut:end -->   the same-cut ladder this tree reproduces
+    <!-- bench:begin --> ... <!-- bench:end -->       emit-path latency
 
 Nothing here is hand-typed. Every number is read from a file that is already under
 test: `crates/jope-arena/tests/elo_regression.rs` asserts that both ladders recompute from
@@ -50,12 +51,32 @@ CORRECTIONS = REGRESSION / "protocol-corrections-tabular-regression-v2.json"
 BENCH = REGRESSION / "bench-baseline.json"
 README = ROOT / "README.md"
 
+# The same-cut evidence: `crates/jope-bench/tests/committed_evidence.rs` asserts that the tracks
+# re-derive from the reports and both ladders from the tracks, byte for byte.
+SAMECUT = ROOT / "assets/same-cut/v1"
+SAMECUT_REPORTS = SAMECUT / "reports"
+SAMECUT_TRACK_ID = "jope-same-cut-v1"
+SAMECUT_DEEP_CSV = SAMECUT / f"leaderboard-{SAMECUT_TRACK_ID}-deep.csv"
+SAMECUT_DEEP_SNAPSHOT = SAMECUT / f"elo-{SAMECUT_TRACK_ID}-deep.json"
+SAMECUT_SCREEN_CSV = SAMECUT / f"leaderboard-{SAMECUT_TRACK_ID}-screen.csv"
+SAMECUT_SCREEN_SNAPSHOT = SAMECUT / f"elo-{SAMECUT_TRACK_ID}-screen.json"
+SAMECUT_DEEP_TRACK = SAMECUT / f"track/tracks/{SAMECUT_TRACK_ID}-deep/track.json"
+SAMECUT_DEEP_SCORES = SAMECUT / f"track/results/{SAMECUT_TRACK_ID}-deep/scores.csv"
+SAMECUT_DOC = ROOT / "docs/same-cut-bench.md"
+REPORT_SCHEMA = "jope.bench-report/v2"
+# The searched program's ladder id (the deep stage re-runs the search on every cut).
+SEARCHED = "afm.lite-race.v1.resampled"
+# The owner's stated reference point for the same program written by a large language model.
+LLM_REFERENCE_HOURS = 1
+LLM_REFERENCE_TOKENS = 10_000_000
+
 SNAPSHOT_SCHEMA = "jope.arena-elo-snapshot/v2"
 CORRECTIONS_SCHEMA = "jope.arena-protocol-corrections/v1"
 # This repository's own entries: the campaign method and the fixed-seed reproducible run.
 OURS = ("jope-dime", "jope-dime-regressor")
 
 ARENA_BEGIN, ARENA_END = "<!-- arena:begin -->", "<!-- arena:end -->"
+SAMECUT_BEGIN, SAMECUT_END = "<!-- samecut:begin -->", "<!-- samecut:end -->"
 BENCH_BEGIN, BENCH_END = "<!-- bench:begin -->", "<!-- bench:end -->"
 
 # Where the section is inserted the first time, if the markers are not present yet.
@@ -300,6 +321,168 @@ def render_arena() -> str:
     return "\n".join(out)
 
 
+def load_samecut() -> dict:
+    """The committed same-cut evidence, cross-checked. Fails closed on any disagreement."""
+    deep, deep_rows = load_ladder(SAMECUT_DEEP_SNAPSHOT, SAMECUT_DEEP_CSV, "published")
+    screen, screen_rows = load_ladder(SAMECUT_SCREEN_SNAPSHOT, SAMECUT_SCREEN_CSV, "published")
+    track = json.loads(SAMECUT_DEEP_TRACK.read_text())
+    rel = SAMECUT.relative_to(ROOT)
+    if deep["scores_sha256"] != sha256(SAMECUT_DEEP_SCORES):
+        refuse(f"{rel}: the deep snapshot was not computed from the committed scores.csv")
+    if track["id"] != f"{SAMECUT_TRACK_ID}-deep" or track["primary_metric"] != "rmse":
+        refuse(f"{rel}: the deep track is not {SAMECUT_TRACK_ID}-deep ranked by rmse")
+    if deep["corrections"] is not None or deep["excluded_rows"] != 0:
+        refuse(f"{rel}: the same-cut ladder applies no corrections")
+    reports = [
+        json.loads(p.read_text()) for p in sorted(SAMECUT_REPORTS.glob("*.bench-report.json"))
+    ]
+    if not reports:
+        refuse(f"{rel}: no reports")
+    if not (len(reports) == deep["datasets_scored"] == screen["datasets_scored"]):
+        refuse(f"{rel}: {len(reports)} reports but the ladders scored other dataset counts")
+    first = reports[0]
+    for r in reports:
+        if r["schema"] != REPORT_SCHEMA:
+            refuse(f"{rel}: report schema {r['schema']!r} is not {REPORT_SCHEMA}")
+        if (r["task"], r["ladder_metric"], r["metric_direction"]) != ("regression", "rmse", "minimize"):
+            refuse(f"{rel}: {r['dataset_id']} is not a regression report ranked by rmse")
+        for key in ("protocol", "search", "git_sha", "host", "evaluator"):
+            if r.get(key) != first.get(key) or r.get(key) is None:
+                refuse(f"{rel}: {r['dataset_id']} differs from the first report in {key}")
+        # The plan key names the dataset; seed and fold count are what one run shares.
+        if (r["plan"]["seed"], r["plan"]["k"]) != (first["plan"]["seed"], first["plan"]["k"]):
+            refuse(f"{rel}: {r['dataset_id']} differs from the first report in fold seed or k")
+        searched = [m for m in r["methods"] if m["method"]["kind"] == "search"]
+        if len(searched) != 1 or searched[0]["method"]["id"] != SEARCHED:
+            refuse(f"{rel}: {r['dataset_id']} does not carry exactly one {SEARCHED} row")
+        if searched[0]["method"].get("resample") != r["search"]:
+            refuse(f"{rel}: {r['dataset_id']}: the searched row is not the resampled procedure")
+    ours = next((row for row in deep_rows if row["method_id"] == SEARCHED), None)
+    if ours is None:
+        refuse(f"{rel}: {SEARCHED} is missing from the deep ladder")
+    return {
+        "deep": deep,
+        "deep_rows": deep_rows,
+        "screen": screen,
+        "screen_rows": screen_rows,
+        "track": track,
+        "reports": reports,
+        "ours": ours,
+    }
+
+
+def samecut_row(r: dict) -> str:
+    ours = r["method_id"] == SEARCHED
+    b = "**" if ours else ""
+    return (
+        f"| {b}{r['elo_rank']}{b} | {b}{r['method']}{b} | {b}{r['elo']}{b} | "
+        f"{float(r['average_rank']):.2f} | {r['dataset_wins']} | "
+        f"{r['datasets_scored']}/{r['datasets_total']} |"
+    )
+
+
+def render_samecut() -> str:
+    e = load_samecut()
+    deep, reports, ours = e["deep"], e["reports"], e["ours"]
+    first = reports[0]
+    plan, protocol, search, host = first["plan"], first["protocol"], first["search"], first["host"]
+    n = len(reports)
+    per_dataset = []
+    search_seconds = []
+    finalist = 0
+    best = 0
+    for r in sorted(reports, key=lambda r: r["dataset_id"]):
+        s = next(m for m in r["methods"] if m["method"]["kind"] == "search")
+        # "Best" is the ladder's own rule: the lowest pooled RMSE among the finalists that
+        # scored, ties by method id. (The protocol's deep rank orders by the penalised score,
+        # which can disagree with RMSE on a close dataset; the table says which rule it uses.)
+        scored = [m for m in r["methods"] if m.get("deep") and m["deep"]["status"] == "ok"]
+        if not scored:
+            refuse(f"{SAMECUT.relative_to(ROOT)}: {r['dataset_id']} has no scored finalist")
+        top = min(scored, key=lambda m: (m["deep"]["oof"]["rmse"], m["method"]["id"]))
+        rmse = top["deep"]["oof"]["rmse"]
+        search_seconds.append(s["method"]["produce_seconds"])
+        rank = s.get("deep_rank")
+        if rank is not None:
+            finalist += 1
+        best += top is s
+        per_dataset.append(
+            f"| `{r['dataset_id']}` | {r['rows']} | {r['features']} | "
+            f"{'**' if top is s else ''}{top['method']['id']}{'**' if top is s else ''} | "
+            f"{rmse:.4g} | {rank if rank is not None else f'screen {s['screen_rank']}'} | "
+            f"{s['method']['produce_seconds']:.1f} s |"
+        )
+    mean_s = sum(search_seconds) / n
+    median_s = sorted(search_seconds)[n // 2] if n % 2 else sum(sorted(search_seconds)[n // 2 - 1 : n // 2 + 1]) / 2
+    max_s = max(search_seconds)
+    out = [
+        SAMECUT_BEGIN,
+        f"### Same-cut — every method on identical held-out rows, reproducible from this tree",
+        "",
+        f"`{deep['track_id']}` · {n} regression datasets from `datasets/test` · primary metric "
+        f"**RMSE** (minimize) · fold plan k={plan['k']}, seed {plan['seed']}, screen fold "
+        f"{protocol['screen_fold']}, top {protocol['top']} deepened · search budget {search['pop']} "
+        f"programs × {search['gens']} rounds, re-run on every cut · recorded at "
+        f"`{first['git_sha'][:9]}` with {host['workers']} workers on {host['cores']} cores.",
+        "",
+        "Every row here is a number this tree produced and can reproduce: the ten single-head "
+        "baselines and the program the search wrote for each dataset, all fitted on the same "
+        "training rows and scored on the same held-out rows by one evaluator "
+        f"(`{SAMECUT_DOC.relative_to(ROOT)}`). The search sees only a cut's training rows, and its "
+        "deep row is the *procedure* re-run on every cut, not one program chosen with knowledge "
+        "of the other cuts' held-out rows. Bold is the searched program.",
+        "",
+        "**The datasets are a favourable selection.** They are the `test-10` collection, chosen "
+        "from the published ladder where the historical engine ranked first "
+        "(`docs/datasets.md`), and they are used here because they are the only committed "
+        "regression data. Identical cuts make the comparison between methods fair on these ten; "
+        "they say nothing about a broader panel. The frozen 30-dataset PMLB panel of the "
+        "experiment contract (`docs/asm.md`) excludes them on purpose; a same-cut run over it is "
+        "the next evidence step.",
+        "",
+        "| rank | method | Elo | avg rank | dataset wins | coverage |",
+        "| ---: | --- | ---: | ---: | ---: | --- |",
+        *(samecut_row(r) for r in e["deep_rows"]),
+        "",
+        f"**Where the search stands today:** rank {ours['elo_rank']} of {deep['methods']} on the "
+        f"deep ladder, Elo {ours['elo']}, lowest pooled RMSE on {best} of {n} datasets (the "
+        f"ladder's own rule), a finalist on {finalist}; on the other {n - finalist} it did not "
+        f"make the top-{protocol['top']} screen. Coverage counts datasets where a method reached "
+        "the deep stage, so the ladder ranks finalists only. The screen ladder (every method, "
+        "one cut) is committed beside it.",
+        "",
+        f"**Seconds per program.** Writing the program took the search {mean_s:.1f} s per dataset "
+        f"on average (median {median_s:.1f} s, longest {max_s:.1f} s) on the screen cut's training "
+        f"rows, wall time under whatever else the host was running. The owner's stated reference "
+        f"point for a large language model writing a program for the same task, not measured "
+        f"here, is about {LLM_REFERENCE_HOURS} hour and {LLM_REFERENCE_TOKENS:,} tokens; that "
+        "comparison is one of cost, not of quality, and the quality standing is the ladder above.",
+        "",
+        "| dataset | rows | features | lowest pooled RMSE | RMSE | search rank (penalised score) | search |",
+        "| --- | ---: | ---: | --- | ---: | ---: | ---: |",
+        *per_dataset,
+        "",
+        f"Sources: `{SAMECUT_DEEP_CSV.relative_to(ROOT)}` (sha256 `{sha256(SAMECUT_DEEP_CSV)[:16]}…`) "
+        f"recomputed byte-for-byte from `{SAMECUT_DEEP_SCORES.relative_to(ROOT)}`, itself "
+        f"re-derived from the {n} reports under `{SAMECUT_REPORTS.relative_to(ROOT)}` by "
+        "`crates/jope-bench/tests/committed_evidence.rs`, which also re-evaluates one dataset's "
+        f"baselines on the same cuts. Provenance and the exact commands: `{SAMECUT.relative_to(ROOT)}/SOURCES.md`. "
+        "Reproduce:",
+        "",
+        "```sh",
+        "cargo run --release -p jope-bench -- run --datasets datasets/test --out target/same-cut/reports \\",
+        f"  --top {protocol['top']} --search --search-pop {search['pop']} --search-gens {search['gens']} "
+        f"--resample-search --workers {host['workers']}",
+        "cargo run --release -p jope-bench -- ladder --reports target/same-cut/reports \\",
+        f"  --track-root target/same-cut/track --track {SAMECUT_TRACK_ID}",
+        f"cargo run -p jope-arena -- elo --track {deep['track_id']} --root target/same-cut/track \\",
+        f"  --check --committed {SAMECUT_DEEP_CSV.relative_to(ROOT)}",
+        "```",
+        SAMECUT_END,
+    ]
+    return "\n".join(out)
+
+
 def render_bench() -> str:
     b = json.loads(BENCH.read_text())
     return "\n".join(
@@ -345,10 +528,18 @@ def build(text: str) -> str:
             "## Measured results\n\n"
             "Generated by `deploy/ci/readme-benchmarks.py` from committed evidence. "
             "Do not edit between the markers by hand.\n\n"
-            f"{ARENA_BEGIN}\n{ARENA_END}\n\n{BENCH_BEGIN}\n{BENCH_END}\n\n"
+            f"{ARENA_BEGIN}\n{ARENA_END}\n\n{SAMECUT_BEGIN}\n{SAMECUT_END}\n\n"
+            f"{BENCH_BEGIN}\n{BENCH_END}\n\n"
         )
         text = text[:anchor] + section + text[anchor:]
+    if SAMECUT_BEGIN not in text:
+        # The same-cut block was added after the other two: slot it between them.
+        i = text.find(BENCH_BEGIN)
+        if i == -1:
+            raise SystemExit(f"markers {BENCH_BEGIN} not found; cannot place the same-cut block")
+        text = text[:i] + f"{SAMECUT_BEGIN}\n{SAMECUT_END}\n\n" + text[i:]
     text = splice(text, ARENA_BEGIN, ARENA_END, render_arena())
+    text = splice(text, SAMECUT_BEGIN, SAMECUT_END, render_samecut())
     return splice(text, BENCH_BEGIN, BENCH_END, render_bench())
 
 
@@ -368,6 +559,14 @@ def main() -> int:
         CORRECTIONS,
         BENCH,
         README,
+        SAMECUT_DEEP_CSV,
+        SAMECUT_DEEP_SNAPSHOT,
+        SAMECUT_SCREEN_CSV,
+        SAMECUT_SCREEN_SNAPSHOT,
+        SAMECUT_DEEP_TRACK,
+        SAMECUT_DEEP_SCORES,
+        SAMECUT_REPORTS,
+        SAMECUT_DOC,
     ):
         if not p.exists():
             raise SystemExit(f"missing required input: {p}")
