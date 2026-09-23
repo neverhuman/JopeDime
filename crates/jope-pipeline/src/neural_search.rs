@@ -336,6 +336,10 @@ pub struct Feedback {
     pub loss: Option<f64>,
     pub physical_fit_starts: Option<u64>,
     pub worker_receipt_sha256: Option<String>,
+    /// Ordered fold identities: exact evidence for any admitted/unknown attempt,
+    /// normalized identity only for jobs proven never to have released a gate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub replay_evidence_sha256: Option<String>,
     pub fitted_artifact_sha256: Option<String>,
     pub reason: Option<String>,
     pub oof: Option<OofEvidence>,
@@ -388,6 +392,7 @@ impl Feedback {
             loss: None,
             physical_fit_starts: Some(0),
             worker_receipt_sha256: None,
+            replay_evidence_sha256: None,
             fitted_artifact_sha256: None,
             reason: Some("original arm deadline reached before fit admission".into()),
             oof: None,
@@ -893,6 +898,7 @@ fn evaluate_unique<B: Backend>(
                 loss: None,
                 physical_fit_starts: Some(0),
                 worker_receipt_sha256: None,
+                replay_evidence_sha256: None,
                 fitted_artifact_sha256: None,
                 reason: Some(format!("canonical_duplicate_of:{previous}")),
                 oof: None,
@@ -1234,59 +1240,16 @@ fn run_population<B: Backend, V: Variation>(
             .observations
             .chunk_by(|a, b| a.candidate.generation == b.candidate.generation)
         {
-            // A nonattempt at expiry remains that original inventory. The
-            // bounded pool may now report BudgetExhausted for its same request;
-            // this cannot change a final receipt or admit another fit. All
-            // completed observations still require exact fitted-output replay.
-            let frozen_inventory = group
-                .iter()
-                .filter(|o| {
-                    saved.stop_reason == "original_deadline"
-                        && backend.now_ms() >= deadline
-                        && o.feedback.retryable_inventory
-                        && o.feedback.status != EvaluationStatus::Completed
-                })
-                .map(|o| o.candidate.id_sha256.clone())
-                .collect::<BTreeSet<_>>();
             let batch = group
                 .iter()
                 .map(|o| o.candidate.clone())
                 .collect::<Vec<_>>();
             let feedback = evaluate_unique(backend, &receipt.arm, &comparison.selection, &batch)?;
-            let current = feedback
-                .into_iter()
-                .map(|f| Ok((f.candidate_sha256.clone(), serde_json::to_value(f)?)))
-                .collect::<Result<BTreeMap<_, _>>>()?;
-            ensure!(
-                current.len() == group.len(),
-                "saved execution cache changed"
-            );
-            for observation in group {
-                if frozen_inventory.contains(&observation.candidate.id_sha256) {
-                    let replay: Feedback = serde_json::from_value(
-                        current
-                            .get(&observation.candidate.id_sha256)
-                            .context("saved inventory outcome missing")?
-                            .clone(),
-                    )?;
-                    ensure!(
-                        replay.status != EvaluationStatus::Completed
-                            && replay.loss.is_none()
-                            && replay.physical_fit_starts.is_none_or(|n| n == 0)
-                            && replay.fitted_artifact_sha256.is_none()
-                            && replay.oof.is_none(),
-                        "expired inventory gained fitted evidence"
-                    );
-                    continue;
-                }
-                ensure!(
-                    current
-                        .get(&observation.candidate.id_sha256)
-                        .context("saved worker outcome missing")?
-                        == &serde_json::to_value(&observation.feedback)?,
-                    "saved fitted evidence changed"
-                );
-            }
+            verify_observed_replay(
+                group,
+                &feedback,
+                saved.stop_reason == "original_deadline" && backend.now_ms() >= deadline,
+            )?;
         }
         return Ok(saved);
     }
@@ -1296,9 +1259,28 @@ fn run_population<B: Backend, V: Variation>(
             &format!("generation-{generation:04}-scheduled"),
             &serde_json::to_value(&candidates)?,
         )?;
+        let saved_observations = backend
+            .load(
+                &receipt.arm,
+                &format!("generation-{generation:04}-observed"),
+            )?
+            .map(serde_json::from_value::<Vec<Observation>>)
+            .transpose()?;
+        if let Some(saved) = &saved_observations {
+            ensure!(
+                serde_json::to_value(saved.iter().map(|o| &o.candidate).collect::<Vec<_>>())?
+                    == serde_json::to_value(&candidates)?,
+                "saved observed population changed"
+            );
+        }
         // The pool returns intact cached successes even after the deadline; new
         // jobs receive explicit budget results. Never turn cached fits into zero.
         let feedback = evaluate_unique(backend, &receipt.arm, &comparison.selection, &candidates)?;
+        if let Some(saved) = &saved_observations {
+            // A controller may stop after the observed journal is durable but
+            // before the final search receipt. Replay that same evidence too.
+            verify_observed_replay(saved, &feedback, backend.now_ms() >= deadline)?;
+        }
         let mut by_id = BTreeMap::new();
         for item in feedback {
             ensure!(
@@ -1319,6 +1301,9 @@ fn run_population<B: Backend, V: Variation>(
                 candidate,
                 feedback,
             });
+        }
+        if let Some(saved) = saved_observations {
+            observations = saved;
         }
         // A nonattempt is resumable only before this arm's original cutoff.
         // Preserve its exact inventory, but do not strand all completed fits
@@ -1392,14 +1377,14 @@ fn run_population<B: Backend, V: Variation>(
             }
             continue;
         }
+        if backend.now_ms() >= deadline {
+            receipt.stop_reason = "original_deadline".into();
+            break;
+        }
         if backend.cancelled() {
             receipt.validate_population(comparison)?;
             receipt.stop_reason = "cancelled_original_window".into();
             return Ok(receipt); // terminal attempts stay, but future generations may resume
-        }
-        if backend.now_ms() >= deadline {
-            receipt.stop_reason = "original_deadline".into();
-            break;
         }
         if receipt.observations.len() >= comparison.max_evaluations {
             receipt.stop_reason = "evaluation_limit".into();
@@ -1488,6 +1473,68 @@ fn run_population<B: Backend, V: Variation>(
     Ok(receipt)
 }
 
+/// Preserve original nonattempt inventory at expiry, while authenticating every
+/// measured result. Both final receipts and crash-interrupted observed journals
+/// use the same rule; neither may conceal a later fit or changed fitted output.
+fn verify_observed_replay(
+    saved: &[Observation],
+    feedback: &[Feedback],
+    expired: bool,
+) -> Result<()> {
+    let mut current = BTreeMap::new();
+    for item in feedback {
+        ensure!(
+            current.insert(&item.candidate_sha256, item).is_none(),
+            "duplicate saved execution feedback"
+        );
+    }
+    ensure!(
+        current.len() == saved.len(),
+        "saved execution cache changed"
+    );
+    for observation in saved {
+        let replay = current
+            .remove(&observation.candidate.id_sha256)
+            .context("saved worker outcome missing")?;
+        if expired
+            && observation.feedback.retryable_inventory
+            && observation.feedback.status != EvaluationStatus::Completed
+        {
+            let same_folds = observation
+                .feedback
+                .replay_evidence_sha256
+                .as_ref()
+                .is_some_and(|digest| {
+                    jope_policy::is_sha256_hex(digest)
+                        && replay.replay_evidence_sha256.as_ref() == Some(digest)
+                });
+            // Preparation failures and older known-zero inventory have no fold
+            // digest. Unknown partial attempts never qualify for that fallback.
+            let known_nonattempt = observation.feedback.replay_evidence_sha256.is_none()
+                && observation.feedback.physical_fit_starts == Some(0)
+                && replay.physical_fit_starts == Some(0);
+            ensure!(
+                replay.status != EvaluationStatus::Completed
+                    && replay.loss.is_none()
+                    && replay.physical_fit_starts.is_none_or(|n| n == 0)
+                    && replay.fitted_artifact_sha256.is_none()
+                    && replay.oof.is_none()
+                    && (same_folds
+                        || known_nonattempt
+                        || serde_json::to_value(replay)?
+                            == serde_json::to_value(&observation.feedback)?),
+                "expired inventory gained or changed fitted evidence"
+            );
+        } else {
+            ensure!(
+                serde_json::to_value(replay)? == serde_json::to_value(&observation.feedback)?,
+                "saved fitted evidence changed"
+            );
+        }
+    }
+    Ok(())
+}
+
 fn stream_seed(base: u64, generation: usize, attempt: usize) -> u64 {
     let digest = sha256_hex(format!("{PROTOCOL}/{base}/{generation}/{attempt}").as_bytes());
     u64::from_str_radix(&digest[..16], 16).expect("sha256 hex")
@@ -1569,6 +1616,7 @@ where
                                 loss: None,
                                 physical_fit_starts: Some(0),
                                 worker_receipt_sha256: None,
+                                replay_evidence_sha256: None,
                                 fitted_artifact_sha256: None,
                                 reason: Some(format!("job preparation unavailable: {error:#}")),
                                 oof: None,
@@ -1618,6 +1666,7 @@ where
                 let folds = folds.into_values().collect::<Vec<_>>();
                 ensure!(folds.len() == 5, "incomplete inner fold inventory");
                 let receipt_sha = sha256_hex(&serde_json::to_vec(&folds)?);
+                let replay_sha = fold_replay_evidence(&folds)?;
                 let retryable = folds.iter().any(retryable_inventory);
                 if let Some(failed) = folds
                     .iter()
@@ -1629,14 +1678,12 @@ where
                         loss: None,
                         physical_fit_starts: folds.iter().all(unstarted).then_some(0),
                         worker_receipt_sha256: Some(receipt_sha),
+                        replay_evidence_sha256: Some(replay_sha),
                         fitted_artifact_sha256: None,
                         reason: failed.reason.clone(),
                         oof: None,
                         retryable_inventory: retryable,
                     });
-                }
-                for outcome in &folds {
-                    outcome.verify_outputs()?;
                 }
                 let mut feedback = match (self.score)(candidate, &folds, selection) {
                     Ok(feedback) => feedback,
@@ -1646,6 +1693,7 @@ where
                         loss: None,
                         physical_fit_starts: None,
                         worker_receipt_sha256: Some(receipt_sha.clone()),
+                        replay_evidence_sha256: None,
                         fitted_artifact_sha256: None,
                         reason: Some(format!("controller OOF scoring failed: {error:#}")),
                         oof: None,
@@ -1657,6 +1705,7 @@ where
                     "scorer changed candidate identity"
                 );
                 feedback.worker_receipt_sha256 = Some(receipt_sha);
+                feedback.replay_evidence_sha256 = Some(replay_sha);
                 feedback.retryable_inventory = false;
                 feedback.enforce_selection(selection, candidate);
                 Ok(feedback)
@@ -1680,6 +1729,55 @@ where
         );
         Ok(Some(serde_json::from_slice(&std::fs::read(path)?)?))
     }
+}
+
+fn fold_replay_evidence(folds: &[WorkerOutcome]) -> Result<String> {
+    let mut evidence = Vec::with_capacity(folds.len());
+    ensure!(folds.len() == 5, "incomplete replay fold inventory");
+    let mut requests = BTreeSet::new();
+    for (fold, outcome) in folds.iter().enumerate() {
+        ensure!(
+            requests.insert(&outcome.request_sha256),
+            "duplicate replay fold"
+        );
+        // A completed fold remains scientifically material even if another fold
+        // never started. Authenticate its artifacts before the failure return.
+        outcome.verify_outputs()?;
+        let consumption = &outcome.consumption;
+        let proven_nonattempt = matches!(
+            outcome.command_status,
+            EvaluationStatus::Unavailable
+                | EvaluationStatus::Cancelled
+                | EvaluationStatus::BudgetExhausted
+        ) && outcome.exit_code.is_none()
+            && outcome.signal.is_none()
+            && outcome.outputs.is_empty()
+            && outcome.stdout.is_none()
+            && outcome.stderr.is_none()
+            && consumption.gate_released_unix_ms.is_none()
+            && consumption.observed_exit_unix_ms.is_none()
+            && consumption.fit_memory_limit_bytes.is_none()
+            && consumption.peak_rss_bytes.is_none()
+            && consumption.cgroup_peak_memory_bytes.is_none()
+            && consumption.sampled_peak_rss_bytes.is_none()
+            && ((consumption.accounting_reason == "not_started: gate never released"
+                && consumption.cpu_seconds == Some(0.)
+                && consumption.wall_seconds == Some(0.))
+                || (consumption.accounting_reason
+                    == "launch failed before gate release; gate/setup CPU unavailable"
+                    && consumption.cpu_seconds.is_none()
+                    && consumption.wall_seconds.is_none()));
+        evidence.push(if proven_nonattempt {
+            serde_json::json!({"kind":"proven_unadmitted", "fold":fold,
+                "job":outcome.job_sha256, "request":outcome.request_sha256})
+        } else {
+            serde_json::to_value(outcome)?
+        });
+    }
+    Ok(sha256_hex(&serde_json::to_vec(&(
+        "asm.fold-replay/v1",
+        evidence,
+    ))?))
 }
 
 fn retryable_inventory(outcome: &WorkerOutcome) -> bool {
@@ -1768,6 +1866,8 @@ mod tests {
         unknown_counter: bool,
         admission_unavailable: bool,
         expire_during_admission: bool,
+        cancelled: bool,
+        interrupt_after_observed: bool,
     }
     impl Default for FixtureBackend {
         fn default() -> Self {
@@ -1781,6 +1881,8 @@ mod tests {
                 unknown_counter: false,
                 admission_unavailable: false,
                 expire_during_admission: false,
+                cancelled: false,
+                interrupt_after_observed: false,
             }
         }
     }
@@ -1794,6 +1896,9 @@ mod tests {
         }
         fn now_ms(&self) -> u64 {
             self.time
+        }
+        fn cancelled(&self) -> bool {
+            self.cancelled
         }
         fn produce(&mut self, _job: WorkerJob) -> Result<WorkerOutcome> {
             anyhow::bail!("synthetic coordinator fixture never runs a producer")
@@ -1817,10 +1922,15 @@ mod tests {
                             .cloned()
                             .unwrap_or_else(|| Feedback {
                                 candidate_sha256: c.id_sha256.clone(),
-                                status: EvaluationStatus::Unavailable,
+                                status: if self.cancelled {
+                                    EvaluationStatus::Cancelled
+                                } else {
+                                    EvaluationStatus::Unavailable
+                                },
                                 loss: None,
                                 physical_fit_starts: Some(0),
                                 worker_receipt_sha256: None,
+                                replay_evidence_sha256: None,
                                 fitted_artifact_sha256: None,
                                 reason: Some("synthetic missing dependency".into()),
                                 oof: None,
@@ -1854,6 +1964,7 @@ mod tests {
                         loss: Some(1. + candidate.initial_slot.unwrap_or(0) as f64 / 100.),
                         physical_fit_starts: if self.unknown_counter { None } else { Some(5) },
                         worker_receipt_sha256: Some(sha256_hex(b"synthetic callback receipt")),
+                        replay_evidence_sha256: None,
                         fitted_artifact_sha256: Some(fitted_sha),
                         reason: None,
                         oof: Some(oof),
@@ -1876,6 +1987,10 @@ mod tests {
                 ensure!(old == value, "fixture stale journal");
             } else {
                 self.journal.insert(key, value.clone());
+            }
+            if self.interrupt_after_observed && name.ends_with("-observed") {
+                self.interrupt_after_observed = false;
+                anyhow::bail!("synthetic interruption after durable generation observation");
             }
             Ok(())
         }
@@ -2436,6 +2551,7 @@ mod tests {
             loss: Some(f64::NAN),
             physical_fit_starts: Some(1),
             worker_receipt_sha256: Some(sha256_hex(b"worker")),
+            replay_evidence_sha256: None,
             fitted_artifact_sha256: Some(sha256_hex(b"artifact")),
             reason: None,
             oof: None,
@@ -2615,6 +2731,231 @@ mod tests {
             None
         )
         .is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn partial_fold_replay_authenticates_every_measured_outcome() -> Result<()> {
+        use crate::execution::{Artifact, ObservedConsumption, EXECUTION_SCHEMA};
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/tmp");
+        std::fs::create_dir_all(&root)?;
+        let scratch = tempfile::tempdir_in(root.canonicalize()?)?;
+        let output = scratch.path().join("fitted.json");
+        std::fs::write(&output, b"retained fitted state")?;
+        let artifact = Artifact {
+            path: output.clone(),
+            sha256: sha256_hex(b"retained fitted state"),
+        };
+        let mut folds = (0..5)
+            .map(|fold| WorkerOutcome {
+                schema: EXECUTION_SCHEMA.into(),
+                job_sha256: sha256_hex(format!("job {fold}").as_bytes()),
+                request_sha256: sha256_hex(format!("request {fold}").as_bytes()),
+                command_status: EvaluationStatus::Completed,
+                reason: None,
+                exit_code: Some(0),
+                signal: None,
+                outputs: vec![artifact.clone()],
+                stdout: None,
+                stderr: None,
+                consumption: ObservedConsumption {
+                    gate_released_unix_ms: Some(10),
+                    observed_exit_unix_ms: Some(20),
+                    cpu_seconds: Some(0.01),
+                    wall_seconds: Some(0.01),
+                    accounting_reason: "synthetic measured fixture".into(),
+                    ..Default::default()
+                },
+            })
+            .collect::<Vec<_>>();
+        folds[4].command_status = EvaluationStatus::Cancelled;
+        folds[4].exit_code = None;
+        folds[4].outputs.clear();
+        folds[4].consumption = ObservedConsumption {
+            accounting_reason: "launch failed before gate release; gate/setup CPU unavailable"
+                .into(),
+            ..Default::default()
+        };
+        let digest = fold_replay_evidence(&folds)?;
+        let mut resumed = folds.clone();
+        resumed[4].command_status = EvaluationStatus::BudgetExhausted;
+        resumed[4].reason = Some("original cutoff".into());
+        resumed[4].consumption = ObservedConsumption {
+            cpu_seconds: Some(0.),
+            wall_seconds: Some(0.),
+            accounting_reason: "not_started: gate never released".into(),
+            ..Default::default()
+        };
+        assert_eq!(digest, fold_replay_evidence(&resumed)?);
+        // A partial candidate can retain unknown physical starts while its four
+        // measured folds must match exactly across cancellation and expiry.
+        let arm = comparison(80).arm(true)?;
+        let candidate = synthetic_initial(&arm).remove(0);
+        let mut feedback = Feedback::exhausted(&candidate);
+        feedback.status = EvaluationStatus::Cancelled;
+        feedback.physical_fit_starts = None;
+        feedback.retryable_inventory = true;
+        feedback.replay_evidence_sha256 = Some(digest.clone());
+        let saved = vec![Observation {
+            candidate,
+            feedback: feedback.clone(),
+        }];
+        feedback.status = EvaluationStatus::BudgetExhausted;
+        feedback.worker_receipt_sha256 = Some(sha256_hex(b"new raw inventory"));
+        verify_observed_replay(&saved, &[feedback.clone()], true)?;
+        for index in 0..4 {
+            let mut changed = resumed.clone();
+            changed[index].consumption.cpu_seconds = Some(123.);
+            feedback.replay_evidence_sha256 = Some(fold_replay_evidence(&changed)?);
+            assert!(verify_observed_replay(&saved, &[feedback.clone()], true).is_err());
+        }
+        feedback.replay_evidence_sha256 = None;
+        assert!(verify_observed_replay(&saved, &[feedback], true).is_err());
+        let mut swapped = resumed.clone();
+        swapped.swap(0, 1);
+        assert_ne!(digest, fold_replay_evidence(&swapped)?);
+        assert!(fold_replay_evidence(&resumed[..4]).is_err());
+        let mut duplicate = resumed.clone();
+        duplicate[1] = duplicate[0].clone();
+        assert!(fold_replay_evidence(&duplicate).is_err());
+        // Unknown controller interruption, logs, or any measurement cannot be
+        // normalized solely because the candidate status says unavailable.
+        for variant in 0..6 {
+            let mut changed = folds.clone();
+            match variant {
+                0 => {
+                    changed[4].consumption.accounting_reason = "unknown interrupted attempt".into()
+                }
+                1 => changed[4].stdout = Some(artifact.clone()),
+                2 => changed[4].consumption.observed_exit_unix_ms = Some(20),
+                3 => changed[4].consumption.cpu_seconds = Some(1.),
+                4 => changed[4].consumption.wall_seconds = Some(1.),
+                _ => changed[4].consumption.cgroup_peak_memory_bytes = Some(1),
+            }
+            assert_ne!(digest, fold_replay_evidence(&changed)?);
+        }
+        std::fs::write(output, b"changed fitted state")?;
+        assert!(fold_replay_evidence(&resumed).is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn cancellation_at_cutoff_preserves_observed_generation_on_resume() -> Result<()> {
+        interrupted_observed_generation_replays(true)
+    }
+
+    #[test]
+    fn crash_after_observed_generation_preserves_completed_fits_on_resume() -> Result<()> {
+        interrupted_observed_generation_replays(false)
+    }
+
+    fn interrupted_observed_generation_replays(cancelled: bool) -> Result<()> {
+        let plan = comparison(80);
+        let arm = plan.arm(true)?;
+        let initial = synthetic_initial(&arm);
+        let mut backend = FixtureBackend::default();
+        let deadline = backend.begin_arm(&arm)?;
+        backend.evaluate(&arm, &plan.selection, &initial[..79])?;
+        backend.admission_unavailable = true;
+        backend.expire_during_admission = true;
+        backend.cancelled = cancelled;
+        backend.interrupt_after_observed = !cancelled;
+        let mut variation = FixtureVariation {
+            started: backend.started.clone(),
+        };
+        let first = run_population(
+            &mut backend,
+            &plan,
+            &mut variation,
+            arm.clone(),
+            deadline,
+            initial.clone(),
+            None,
+        );
+        if cancelled {
+            assert!(first.is_ok());
+        } else {
+            assert!(first.is_err());
+            assert!(!backend
+                .journal
+                .contains_key(&format!("{}/search-receipt", arm.id_sha256)));
+        }
+        let observed_key = format!("{}/generation-0000-observed", arm.id_sha256);
+        let original_observed = backend.journal[&observed_key].clone();
+        backend.cancelled = false;
+        backend.time += 100;
+        if !cancelled {
+            let completed_id = initial[0].id_sha256.clone();
+            let pending_id = initial.last().unwrap().id_sha256.clone();
+            let original = backend.cache[&completed_id].clone();
+            let mut partial = Feedback::exhausted(initial.last().unwrap());
+            partial.physical_fit_starts = None;
+            partial.worker_receipt_sha256 = Some(sha256_hex(b"changed partial fold"));
+            backend.cache.insert(pending_id.clone(), partial);
+            assert!(run_population(
+                &mut backend,
+                &plan,
+                &mut variation,
+                arm.clone(),
+                deadline,
+                initial.clone(),
+                None,
+            )
+            .is_err());
+            let mut forged = original.clone();
+            forged.candidate_sha256 = pending_id.clone();
+            backend.cache.insert(pending_id.clone(), forged);
+            assert!(run_population(
+                &mut backend,
+                &plan,
+                &mut variation,
+                arm.clone(),
+                deadline,
+                initial.clone(),
+                None,
+            )
+            .is_err());
+            backend.cache.remove(&pending_id);
+            backend.cache.get_mut(&completed_id).unwrap().loss = Some(999.);
+            assert!(run_population(
+                &mut backend,
+                &plan,
+                &mut variation,
+                arm.clone(),
+                deadline,
+                initial.clone(),
+                None,
+            )
+            .is_err());
+            backend.cache.insert(completed_id, original);
+            assert_eq!(backend.journal[&observed_key], original_observed);
+        }
+        let resumed = run_population(
+            &mut backend,
+            &plan,
+            &mut variation,
+            arm.clone(),
+            deadline,
+            initial,
+            None,
+        )?;
+        assert_eq!(resumed.stop_reason, "original_deadline");
+        assert_eq!(resumed.deadline_unix_ms, deadline);
+        assert_eq!(backend.deadlines.len(), 1);
+        assert_eq!(backend.dispatched.len(), 79);
+        assert_eq!(backend.journal[&observed_key], original_observed);
+        assert_eq!(
+            resumed
+                .observations
+                .iter()
+                .filter(|o| o.feedback.status == EvaluationStatus::Completed)
+                .count(),
+            79
+        );
+        assert!(freeze_winner(&mut backend, &plan, &resumed)?.is_some());
+        assert!(backend
+            .journal
+            .contains_key(&format!("{}/search-receipt", arm.id_sha256)));
         Ok(())
     }
 

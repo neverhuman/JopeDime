@@ -181,7 +181,7 @@ inputs, preserves failed/unavailable outcomes, and starts no execution clock.
 
 This plan is explicitly a **comparator qualification**, not the complete ASM panel.
 Neural/generic paired optimization and the final unchanged thirty-dataset demonstration need
-their additional pinned inputs and measured receipts. The eight synthetic host cases in
+their additional pinned inputs and measured receipts. The ten synthetic host cases in
 `deploy/ci/qualify-execution.py` qualify isolation separately from real panel outcomes.
 
 On 2026-09-23, all six cases passed on xbabe2: timeout with detached descendants,
@@ -201,6 +201,20 @@ SHA256 `fbad494413fe22514f20503e44f4233400c8a5d8dd6396bf246d041f70ea01b7`;
 its commands, original journals, source hashes and receipts are retained under
 `asm-integration-20260923/neural-integration/host-proof-eight-cases` and
 `neural-integration/host-proof-eight.json`. These remain synthetic host proofs.
+Two additional host cases exercise hash failure after real process attachment and
+cancellation during setup. They keep two setup operations active together, inject an
+owned descendant after ordinary process cleanup, and verify the pool drains it before
+reusing the same CPU. The cancellation case also checks refusal before setup and resumes
+on the original clock. All ten cases passed in the retained 19.23-second run at
+`asm-integration-20260923/neural-integration/host-ten-current-v2-cutoff-c5d11ffc`.
+These synthetic fixtures establish worker behavior, not panel performance.
+
+Cancellation at the original arm cutoff now finalizes the receipt. If the controller
+stops after writing a generation's observations, resume preserves those observations
+and authenticates every measured inner-fold result. Only requests proven never to have
+started may acquire a different expiry status; changed partial fitted evidence is rejected.
+Terminal worker outcomes remain durable while delayed cleanup continues to block admission.
+
 The outer service
 ends within the original total deadline; numerical work ends at the earlier cutoff,
 leaving the declared reporting interval available to the controller.
