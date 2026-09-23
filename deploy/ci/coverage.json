@@ -4357,6 +4357,22 @@
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
     },
+    "target:feat-math/test/ip_scrub": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/feat-math/tests/ip_scrub.rs",
+        "test": true,
+        "doctest": false,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
     "target:feat-math/test/kernel_codec": {
       "discovery": {
         "kind": "target",
