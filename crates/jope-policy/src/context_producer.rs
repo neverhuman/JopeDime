@@ -186,6 +186,7 @@ impl CpuProducer {
     /// result (features followed by one regression target), never a corpus root.
     /// This returns components, not an admitted context or policy binding.
     pub fn encode_prepared(&self, rows: &[Vec<f64>]) -> Result<Components> {
+        let started = std::time::Instant::now();
         let width = validate_rows(rows)? - 1;
         let n = rows.len();
         let mut columns = vec![0f32; n * width];
@@ -223,6 +224,10 @@ impl CpuProducer {
             "incomplete Hyperion sweep"
         );
         let hyperion = pool_hyperion(&sweep.row_emb)?;
+        eprintln!(
+            "context stage=hyperion elapsed_seconds={:.6}",
+            started.elapsed().as_secs_f64()
+        );
         let mut foundation = prepare_jope_foundation_rows(rows)?;
         // Native component builder casts to f32, normalizes in f64, then casts back.
         let y = &foundation.input.context_y;
@@ -235,6 +240,10 @@ impl CpuProducer {
             .foundation
             .encode_standardized(&foundation.input)?
             .vector;
+        eprintln!(
+            "context stage=foundation elapsed_seconds={:.6}",
+            started.elapsed().as_secs_f64()
+        );
         let targets = rows.iter().map(|r| r[width]).collect::<Vec<_>>();
         let low = targets.iter().copied().fold(f64::INFINITY, f64::min);
         let high = targets.iter().copied().fold(f64::NEG_INFINITY, f64::max);
@@ -248,6 +257,10 @@ impl CpuProducer {
             .target
             .encode_with_windows(&targets, TargetTask::Regression, &windows)?
             .vector;
+        eprintln!(
+            "context stage=target elapsed_seconds={:.6}",
+            started.elapsed().as_secs_f64()
+        );
         let result = Components {
             hyperion,
             foundation: foundation_vector,

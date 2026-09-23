@@ -216,19 +216,36 @@ pub fn execute(invocation: &WorkerInvocation) -> Result<()> {
     let files: EncoderFiles = serde_json::from_slice(&invocation.assets.read(1 << 20)?)?;
     // Full closure is pinned by the parent and revalidated before any model load.
     asset_inventory(&files)?;
+    let load_started = std::time::Instant::now();
     let producer = CpuProducer::load(&files)?;
+    eprintln!(
+        "context stage=model_load elapsed_seconds={:.6}",
+        load_started.elapsed().as_secs_f64()
+    );
     let bytes = match invocation.mode {
         WorkerMode::Produce => serde_json::to_vec(&producer.produce(
             &input,
             &invocation.source_sha40,
             &invocation.producer_sha256,
         )?)?,
-        WorkerMode::QualifyCase => serde_json::to_vec(&producer.qualify_case(
-            &input,
-            &invocation.input.sha256,
-            &invocation.source_sha40,
-            &invocation.producer_sha256,
-        )?)?,
+        WorkerMode::QualifyCase => {
+            let result = producer.produce_reference_case(
+                &input,
+                &invocation.input.sha256,
+                &invocation.source_sha40,
+                &invocation.producer_sha256,
+            )?;
+            if let Err(error) = admission::validate_reference_case(&input, &result) {
+                // Preserve actual failing values for diagnosis without creating
+                // the requested successful output or changing the exit status.
+                write_new(
+                    &invocation.output.with_extension("unqualified.json"),
+                    &serde_json::to_vec(&result)?,
+                )?;
+                return Err(error);
+            }
+            serde_json::to_vec(&result)?
+        }
     };
     write_new(&invocation.output, &bytes)?;
     println!("{} {}", WORKER_VERSION, sha(&bytes));

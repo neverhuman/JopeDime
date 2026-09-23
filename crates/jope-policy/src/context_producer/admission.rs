@@ -155,6 +155,25 @@ impl CpuProducer {
         source_sha256: &str,
         producer_sha256: &str,
     ) -> Result<QualificationCaseResult> {
+        let result = self.produce_reference_case(
+            case_bytes,
+            expected_case_sha256,
+            source_sha256,
+            producer_sha256,
+        )?;
+        validate_reference_case(case_bytes, &result)?;
+        Ok(result)
+    }
+
+    /// Private unqualified computation. Only a successful comparison can yield
+    /// the ordinary worker output; a failed diagnostic is never an admission.
+    pub(super) fn produce_reference_case(
+        &self,
+        case_bytes: &[u8],
+        expected_case_sha256: &str,
+        source_sha256: &str,
+        producer_sha256: &str,
+    ) -> Result<QualificationCaseResult> {
         ensure!(
             case_bytes.len() <= 128 << 20 && sha(case_bytes) == expected_case_sha256,
             "qualification case differs from controller input pin"
@@ -175,7 +194,6 @@ impl CpuProducer {
             components,
             vector,
         };
-        compare(&reference, &produced)?;
         Ok(QualificationCaseResult {
             schema: "jope.cpu-context-case/v1".into(),
             source_sha256: source_sha256.into(),
@@ -185,6 +203,14 @@ impl CpuProducer {
             produced,
         })
     }
+}
+
+pub(super) fn validate_reference_case(
+    case_bytes: &[u8],
+    result: &QualificationCaseResult,
+) -> Result<()> {
+    let reference: ReferenceCase = serde_json::from_slice(case_bytes)?;
+    compare(&reference, &result.produced)
 }
 
 /// Validate all reference provenance before scheduling, then freeze these exact
@@ -585,12 +611,13 @@ fn compare(reference: &ReferenceCase, produced: &ProducedCase) -> Result<()> {
                 .vector,
             length,
         )?;
-        max_abs(actual, &expected)?;
+        max_abs(actual, &expected).with_context(|| format!("{name} component"))?;
     }
     max_abs(
         &produced.vector,
         &decode_f32(&reference.context_vector, 2048)?,
-    )?;
+    )
+    .context("assembled context")?;
     Ok(())
 }
 fn decode_f32(bytes: &[u8], length: usize) -> Result<Vec<f32>> {
