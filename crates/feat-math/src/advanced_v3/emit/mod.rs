@@ -47,11 +47,14 @@ struct BoundManifest<'a> {
 ///
 /// Only strings that would trip the lint on their own are masked (an innocent
 /// name never touches emitter text), and only in the spellings the artifacts
-/// embed them in: raw, JSON-escaped (the C++ codec and the Python `INPUT`
-/// literal), Rust `Debug`-escaped (the Rust artifact's string literals) and the
-/// `Debug` of the JSON form (the Python artifact embeds its JSON literals through
-/// `{:?}`). Entries shorter than three bytes cannot contain a banned token and are
-/// skipped. Longest first, so a name that contains another is masked whole.
+/// embed them in: raw, JSON-escaped (the C++ codec), Rust `Debug`-escaped (the
+/// Rust artifact's string literals) and the `Debug` of the JSON form (the Python
+/// artifact embeds its JSON literals through `{:?}`). Entries shorter than three
+/// bytes cannot contain a banned token and are skipped. Longest first, so a name
+/// that contains another is masked whole. One edge fails closed: a name that
+/// does not trip raw but whose escaped spelling completes a token (a leading
+/// newline followed by `nls`, say) is not masked, and the artifact is refused
+/// rather than shipped.
 pub(crate) fn user_text(model: &BoundModel) -> Vec<String> {
     let mut raw: Vec<String> = model
         .schema
