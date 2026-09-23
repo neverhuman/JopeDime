@@ -1,0 +1,2008 @@
+{
+  "schema": "jope.maintainer-manual-section-evidence/v1",
+  "source_head": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
+  "training_overlay_patch_sha256": "595824ef6eb8e15872be058668503cedad1dd9a5ff98ac4700c6f713251d384c",
+  "generated_utc": "2026-09-23T16:33:30.098487+00:00",
+  "source_references": [
+    {
+      "view": "current_source",
+      "path": "crates/jope-policy/src/config.rs",
+      "physical_path": "/home/ubuntu/JopeDime/crates/jope-policy/src/config.rs",
+      "sha256": "a740ca64edde353c9624f5fdc3b63878c1200ee95c159a71bca1556abc28ed37",
+      "lines": 351,
+      "anchors": [
+        {
+          "line": 17,
+          "declaration": "pub const EXPORT_RECEIPT_SCHEMA: &str = \"jope.checkpoint_export.v1\";"
+        },
+        {
+          "line": 21,
+          "declaration": "pub struct PolicyConfig {"
+        },
+        {
+          "line": 109,
+          "declaration": "pub struct TensorEntry {"
+        },
+        {
+          "line": 123,
+          "declaration": "pub struct CheckpointBinding {"
+        },
+        {
+          "line": 137,
+          "declaration": "fn text<'a>(value: &'a Value, path: &[&str]) -> Result<&'a str> {"
+        },
+        {
+          "line": 148,
+          "declaration": "fn digest(value: &Value, path: &[&str]) -> Result<String> {"
+        }
+      ]
+    },
+    {
+      "view": "current_source",
+      "path": "crates/jope-policy/src/model.rs",
+      "physical_path": "/home/ubuntu/JopeDime/crates/jope-policy/src/model.rs",
+      "sha256": "7d0f464fe4bd51ec4b2afa2257678565f959760c74bc347a7d1cebff3efe1e25",
+      "lines": 609,
+      "anchors": [
+        {
+          "line": 28,
+          "declaration": "const LAYER_NORM_EPS: f64 = 1e-5;"
+        },
+        {
+          "line": 30,
+          "declaration": "const LOSS_LOG_VARS: [&str; 7] = ["
+        },
+        {
+          "line": 41,
+          "declaration": "pub fn expected_inventory(c: &PolicyConfig) -> Vec<(String, Vec<usize>)> {"
+        },
+        {
+          "line": 98,
+          "declaration": "fn linear(x: &Tensor, w: &Tensor, b: &Tensor) -> Result<Tensor> {"
+        },
+        {
+          "line": 102,
+          "declaration": "fn layer_norm(x: &Tensor, w: &Tensor, b: &Tensor) -> Result<Tensor> {"
+        },
+        {
+          "line": 107,
+          "declaration": "fn softplus(x: f32) -> f32 {"
+        },
+        {
+          "line": 118,
+          "declaration": "pub struct BoundIdentity {"
+        },
+        {
+          "line": 148,
+          "declaration": "pub struct PolicyModel {"
+        }
+      ]
+    },
+    {
+      "view": "current_source",
+      "path": "crates/jope-policy/src/lib.rs",
+      "physical_path": "/home/ubuntu/JopeDime/crates/jope-policy/src/lib.rs",
+      "sha256": "2b0da78dcd569de31fdd0922c90e56e19e404ba9f1e184a1eb61cf634ac733a8",
+      "lines": 278,
+      "anchors": [
+        {
+          "line": 133,
+          "declaration": "pub const ACCEPTED_STATE_SHA256: &str ="
+        },
+        {
+          "line": 136,
+          "declaration": "pub const ACCEPTED_MODEL_SHA256: &str ="
+        },
+        {
+          "line": 139,
+          "declaration": "pub const ACCEPTED_STEP: u64 = 60000;"
+        },
+        {
+          "line": 144,
+          "declaration": "pub const ACCEPTED_PARAMETER_SHA256: &str ="
+        },
+        {
+          "line": 150,
+          "declaration": "pub const ACCEPTED_CONFIG_SHA256: &str ="
+        },
+        {
+          "line": 153,
+          "declaration": "pub const REJECTED_STATE_SHA256: &str ="
+        },
+        {
+          "line": 156,
+          "declaration": "pub const REJECTED_MODEL_SHA256: &str ="
+        },
+        {
+          "line": 159,
+          "declaration": "pub const REJECTED_STEP: u64 = 69000;"
+        },
+        {
+          "line": 161,
+          "declaration": "pub const CHECKPOINT_VOCABULARY_SHA256: &str ="
+        },
+        {
+          "line": 166,
+          "declaration": "pub const PRODUCT_VOCABULARY_SHA256: &str ="
+        },
+        {
+          "line": 170,
+          "declaration": "pub const PRODUCT_RESTRICTIONS: &[(&str, &str)] ="
+        },
+        {
+          "line": 174,
+          "declaration": "pub fn sha256_hex(bytes: &[u8]) -> String {"
+        },
+        {
+          "line": 182,
+          "declaration": "pub fn is_sha256_hex(value: &str) -> bool {"
+        },
+        {
+          "line": 190,
+          "declaration": "pub(crate) fn require_accepted_policy("
+        },
+        {
+          "line": 223,
+          "declaration": "pub(crate) fn require_accepted_vocabulary("
+        },
+        {
+          "line": 244,
+          "declaration": "pub(crate) fn is_accepted_state(state_sha256: &str) -> bool {"
+        },
+        {
+          "line": 249,
+          "declaration": "pub fn refuse_rejected_checkpoint(state_sha256: &str, model_sha256: &str) -> anyhow::Result<()> {"
+        },
+        {
+          "line": 259,
+          "declaration": "pub fn context_from_bytes(bytes: &[u8]) -> anyhow::Result<Vec<f32>> {"
+        },
+        {
+          "line": 272,
+          "declaration": "pub fn context_sha256(values: &[f32]) -> String {"
+        }
+      ]
+    },
+    {
+      "view": "current_source",
+      "path": "crates/jope-policy/src/context_producer.rs",
+      "physical_path": "/home/ubuntu/JopeDime/crates/jope-policy/src/context_producer.rs",
+      "sha256": "f218d0539e273df4f53263c8ca4f06639d68456ab2057a195bf3253e27aa32d2",
+      "lines": 552,
+      "anchors": [
+        {
+          "line": 35,
+          "declaration": "pub const SCHEMA: &str = \"jope.cpu-context/v1\";"
+        },
+        {
+          "line": 36,
+          "declaration": "pub const BACKEND: &str = \"Rust/Candle 0.11 CPU FP32; frozen accepted transforms; native-component qualification required\";"
+        },
+        {
+          "line": 37,
+          "declaration": "pub const TRANSFORMS_SHA256: &str ="
+        },
+        {
+          "line": 39,
+          "declaration": "pub const ASSEMBLY_SHA256: &str ="
+        },
+        {
+          "line": 41,
+          "declaration": "const HYPERION_WEIGHTS: &str = \"88b9e8345e44d3ea609a8286215618a762f14e607fcdada6d27447b1f74668be\";"
+        },
+        {
+          "line": 42,
+          "declaration": "const HYPERION_MANIFEST: &str = \"ebb745f6a0aa6398b1c3d3c9e26585e0536326b65e2083401391203fa37d21ef\";"
+        },
+        {
+          "line": 43,
+          "declaration": "const HYPERION_SEED: u64 = 20_260_623;"
+        },
+        {
+          "line": 47,
+          "declaration": "pub struct AssetFile {"
+        },
+        {
+          "line": 72,
+          "declaration": "pub struct EncoderFiles {"
+        },
+        {
+          "line": 81,
+          "declaration": "pub struct EncoderIdentity {"
+        },
+        {
+          "line": 92,
+          "declaration": "pub struct CpuProducer {"
+        },
+        {
+          "line": 278,
+          "declaration": "pub struct Components {"
+        },
+        {
+          "line": 292,
+          "declaration": "pub struct CpuContextArtifact {"
+        },
+        {
+          "line": 356,
+          "declaration": "struct FrozenTransforms {"
+        },
+        {
+          "line": 422,
+          "declaration": "fn pool_hyperion(flat: &[f32]) -> Result<Vec<f32>> {"
+        },
+        {
+          "line": 445,
+          "declaration": "pub(super) fn sha(bytes: &[u8]) -> String {"
+        },
+        {
+          "line": 448,
+          "declaration": "pub(super) fn validate_hex(s: &str, length: usize) -> Result<()> {"
+        },
+        {
+          "line": 457,
+          "declaration": "fn verified_hyperion_settings(manifest: &AssetFile) -> Result<HyperionSweepSettings> {"
+        },
+        {
+          "line": 471,
+          "declaration": "pub(super) fn vector(v: &[f32], length: usize) -> Result<()> {"
+        },
+        {
+          "line": 478,
+          "declaration": "pub(super) fn validate_rows(rows: &[Vec<f64>]) -> Result<usize> {"
+        }
+      ]
+    },
+    {
+      "view": "current_source",
+      "path": "crates/jope-policy/src/context_producer/input.rs",
+      "physical_path": "/home/ubuntu/JopeDime/crates/jope-policy/src/context_producer/input.rs",
+      "sha256": "0fc3df5ed519439dd47fd27022e4be11594924a46fff4c926901cb514f5e4609",
+      "lines": 324,
+      "anchors": [
+        {
+          "line": 5,
+          "declaration": "pub struct TrainingIdentity {"
+        },
+        {
+          "line": 28,
+          "declaration": "pub enum FeatureKind {"
+        },
+        {
+          "line": 34,
+          "declaration": "pub struct Feature {"
+        },
+        {
+          "line": 40,
+          "declaration": "pub struct TrainingRow {"
+        },
+        {
+          "line": 48,
+          "declaration": "pub struct TrainingInput {"
+        },
+        {
+          "line": 56,
+          "declaration": "pub struct ColumnPreprocessing {"
+        },
+        {
+          "line": 66,
+          "declaration": "pub struct TrainingPreprocessing {"
+        },
+        {
+          "line": 72,
+          "declaration": "pub struct PreparedTraining {"
+        },
+        {
+          "line": 79,
+          "declaration": "pub fn training_rows_sha256(rows: &[TrainingRow]) -> Result<String> {"
+        },
+        {
+          "line": 219,
+          "declaration": "fn parse_finite(value: &str) -> Result<f64> {"
+        },
+        {
+          "line": 226,
+          "declaration": "fn mean_scale(values: &[f64]) -> Result<(f64, f64)> {"
+        }
+      ]
+    },
+    {
+      "view": "current_source",
+      "path": "crates/jope-policy/src/context_producer/admission.rs",
+      "physical_path": "/home/ubuntu/JopeDime/crates/jope-policy/src/context_producer/admission.rs",
+      "sha256": "2e98364dfe3994a21ccc2d6115adb7d7396c3de3a9babf15bcae473d4d59c441",
+      "lines": 702,
+      "anchors": [
+        {
+          "line": 4,
+          "declaration": "pub const VERIFICATION_POLICY: &str = \"jope.cpu-context-verification/v1:8-native-meta-train-cases:2-families:cuts0,1,2,3:all-component-and-context-maxabs<=0.0003:finite-f32:accepted-transforms:exact-source-program-assets:nine-controller-verified-execution-pins:threads1:each-job30s:original-proof-window:native-index6c81da15d75dff6abeaf1d40fb46ec77e98d6146f535392905bfaf1153574b9c:no-held-labels\";"
+        },
+        {
+          "line": 5,
+          "declaration": "pub fn verification_policy_sha256() -> String {"
+        },
+        {
+          "line": 8,
+          "declaration": "pub const REFERENCE_REGISTRY_SHA256: &str ="
+        },
+        {
+          "line": 10,
+          "declaration": "pub const REFERENCE_INDEX_SHA256: &str ="
+        },
+        {
+          "line": 12,
+          "declaration": "const MAX_ABS: f32 = 3e-4;"
+        },
+        {
+          "line": 18,
+          "declaration": "pub struct ReferenceManifest {"
+        },
+        {
+          "line": 27,
+          "declaration": "pub struct ReferenceCase {"
+        },
+        {
+          "line": 39,
+          "declaration": "pub struct NativeComponent {"
+        },
+        {
+          "line": 45,
+          "declaration": "pub struct ProducedCase {"
+        },
+        {
+          "line": 53,
+          "declaration": "pub struct Qualification {"
+        },
+        {
+          "line": 66,
+          "declaration": "pub struct QualificationCaseResult {"
+        },
+        {
+          "line": 82,
+          "declaration": "pub struct ExecutionAttestation {"
+        },
+        {
+          "line": 101,
+          "declaration": "pub struct AdmissionPins {"
+        },
+        {
+          "line": 115,
+          "declaration": "pub struct VerifiedCpuContext {"
+        },
+        {
+          "line": 208,
+          "declaration": "pub(super) fn validate_reference_case("
+        },
+        {
+          "line": 219,
+          "declaration": "pub fn case_inputs(manifest_bytes: &[u8], expected_manifest_sha256: &str) -> Result<Vec<Vec<u8>>> {"
+        },
+        {
+          "line": 234,
+          "declaration": "pub fn aggregate_qualification("
+        },
+        {
+          "line": 267,
+          "declaration": "fn verify_case_outputs(manifest: &ReferenceManifest, qualification: &Qualification) -> Result<()> {"
+        },
+        {
+          "line": 297,
+          "declaration": "pub fn verify_qualified("
+        },
+        {
+          "line": 388,
+          "declaration": "fn verify_execution("
+        },
+        {
+          "line": 428,
+          "declaration": "fn read_manifest(bytes: &[u8]) -> Result<ReferenceManifest> {"
+        },
+        {
+          "line": 594,
+          "declaration": "fn compare(reference: &ReferenceCase, produced: &ProducedCase) -> Result<()> {"
+        },
+        {
+          "line": 623,
+          "declaration": "fn decode_f32(bytes: &[u8], length: usize) -> Result<Vec<f32>> {"
+        },
+        {
+          "line": 632,
+          "declaration": "fn max_abs(actual: &[f32], expected: &[f32]) -> Result<f32> {"
+        }
+      ]
+    },
+    {
+      "view": "current_source",
+      "path": "crates/jope-pipeline/src/cpu_context_bridge.rs",
+      "physical_path": "/home/ubuntu/JopeDime/crates/jope-pipeline/src/cpu_context_bridge.rs",
+      "sha256": "48dbe30216bf42520df668ca5b3d4a4138d21ae2731ba07c349fe6ec232729ff",
+      "lines": 564,
+      "anchors": [
+        {
+          "line": 18,
+          "declaration": "pub struct ExecutionProof {"
+        },
+        {
+          "line": 162,
+          "declaration": "pub fn execution_attestation("
+        },
+        {
+          "line": 261,
+          "declaration": "pub struct CpuContextFiles {"
+        },
+        {
+          "line": 272,
+          "declaration": "pub struct AdmissionExpectation {"
+        },
+        {
+          "line": 281,
+          "declaration": "pub fn load_qualified("
+        }
+      ]
+    },
+    {
+      "view": "current_source",
+      "path": "crates/jope-pipeline/src/search_context.rs",
+      "physical_path": "/home/ubuntu/JopeDime/crates/jope-pipeline/src/search_context.rs",
+      "sha256": "e423e9676a75426cdb6fdbbaf908e80c4bc1c89c5d93007aedcdfc0189cd382e",
+      "lines": 519,
+      "anchors": [
+        {
+          "line": 8,
+          "declaration": "pub const ASSEMBLY_SHA256: &str ="
+        },
+        {
+          "line": 10,
+          "declaration": "pub const TRANSFORMS_SHA256: &str ="
+        },
+        {
+          "line": 12,
+          "declaration": "pub const NATIVE_BACKEND: &str = \"Rust/LibTorch 2.7 CUDA FP32; original frozen transforms\";"
+        },
+        {
+          "line": 13,
+          "declaration": "pub const CLASSIFICATION_LINEAGE: &str = \"asm.experimental-class-partition-pool/v1\";"
+        },
+        {
+          "line": 16,
+          "declaration": "pub struct TrainingIdentity {"
+        },
+        {
+          "line": 44,
+          "declaration": "pub struct NativeContextFiles {"
+        },
+        {
+          "line": 53,
+          "declaration": "pub enum ContextFiles {"
+        },
+        {
+          "line": 165,
+          "declaration": "pub struct VerifiedRegressionContext {"
+        },
+        {
+          "line": 232,
+          "declaration": "fn validate_native_receipt("
+        },
+        {
+          "line": 283,
+          "declaration": "pub struct ExperimentalClassificationContext {"
+        },
+        {
+          "line": 299,
+          "declaration": "pub fn classification_context("
+        }
+      ]
+    },
+    {
+      "view": "current_source",
+      "path": "crates/jope-policy/src/ranking.rs",
+      "physical_path": "/home/ubuntu/JopeDime/crates/jope-policy/src/ranking.rs",
+      "sha256": "92c31cc55f3943aea2246bc0191325fbd625d2019fd49ce33c54f505b751843c",
+      "lines": 445,
+      "anchors": [
+        {
+          "line": 22,
+          "declaration": "pub const SELECTION_ID: &str = \"mean_reward_heads_desc_program_hash_v1\";"
+        },
+        {
+          "line": 23,
+          "declaration": "pub const RANKING_SCHEMA: &str = \"parallel.proposal_quality_ranking.v1\";"
+        },
+        {
+          "line": 24,
+          "declaration": "pub const BACKEND_CPU: &str = \"candle_cpu_float32\";"
+        },
+        {
+          "line": 25,
+          "declaration": "pub const ORDERING: &str = \"mean of four reward heads descending; exact ties by program SHA256 then text; runtime reported without a quality penalty\";"
+        },
+        {
+          "line": 35,
+          "declaration": "pub struct Bindings {"
+        },
+        {
+          "line": 161,
+          "declaration": "pub struct Options {"
+        },
+        {
+          "line": 176,
+          "declaration": "pub struct Prediction {"
+        },
+        {
+          "line": 189,
+          "declaration": "pub struct Ranking {"
+        },
+        {
+          "line": 279,
+          "declaration": "pub fn ranking_for_testing(bindings: Bindings, predictions: Vec<Prediction>) -> Ranking {"
+        },
+        {
+          "line": 300,
+          "declaration": "pub fn compare_predictions(a: &Prediction, b: &Prediction) -> Ordering {"
+        },
+        {
+          "line": 309,
+          "declaration": "pub fn sorted_predictions(mut rows: Vec<Prediction>) -> Result<Vec<Prediction>> {"
+        },
+        {
+          "line": 322,
+          "declaration": "pub fn pool_sha256(programs: &[String]) -> Result<String> {"
+        },
+        {
+          "line": 338,
+          "declaration": "pub fn score_pool("
+        }
+      ]
+    },
+    {
+      "view": "current_source",
+      "path": "crates/jope-pipeline/src/neural_search.rs",
+      "physical_path": "/home/ubuntu/JopeDime/crates/jope-pipeline/src/neural_search.rs",
+      "sha256": "a8cd55c9c4f7b5a1060eab5979deb76db24484360389f2072f6b906c4bae0390",
+      "lines": 3058,
+      "anchors": [
+        {
+          "line": 27,
+          "declaration": "pub const PROTOCOL: &str = \"asm.bounded-neural-search/v1\";"
+        },
+        {
+          "line": 28,
+          "declaration": "pub const INITIAL_SIZE: usize = 80;"
+        },
+        {
+          "line": 29,
+          "declaration": "pub const NEURAL_SLOTS: usize = 64;"
+        },
+        {
+          "line": 30,
+          "declaration": "const ELITES: usize = 4;"
+        },
+        {
+          "line": 36,
+          "declaration": "pub struct PairInputPlan {"
+        },
+        {
+          "line": 133,
+          "declaration": "pub struct EncodingPlan {"
+        },
+        {
+          "line": 179,
+          "declaration": "pub struct ContextCost {"
+        },
+        {
+          "line": 212,
+          "declaration": "pub struct Comparison {"
+        },
+        {
+          "line": 243,
+          "declaration": "pub struct InstallationPins {"
+        },
+        {
+          "line": 268,
+          "declaration": "pub enum Origin {"
+        },
+        {
+          "line": 278,
+          "declaration": "pub struct Candidate {"
+        },
+        {
+          "line": 333,
+          "declaration": "pub struct Feedback {"
+        },
+        {
+          "line": 405,
+          "declaration": "pub struct Observation {"
+        },
+        {
+          "line": 411,
+          "declaration": "pub struct SearchReceipt {"
+        },
+        {
+          "line": 592,
+          "declaration": "pub struct ProposalEvidence {"
+        },
+        {
+          "line": 633,
+          "declaration": "pub struct RegressionVariation<'a> {"
+        },
+        {
+          "line": 661,
+          "declaration": "pub struct PolicyWorker {"
+        },
+        {
+          "line": 673,
+          "declaration": "pub struct NeuralRun {"
+        },
+        {
+          "line": 683,
+          "declaration": "pub struct PairedReceipt {"
+        },
+        {
+          "line": 690,
+          "declaration": "fn freeze_pair<B: Backend, V: Variation>("
+        },
+        {
+          "line": 717,
+          "declaration": "pub fn begin_pair<B: Backend, V: Variation>("
+        },
+        {
+          "line": 729,
+          "declaration": "pub fn encode_for_pair<B: Backend, V: Variation>("
+        },
+        {
+          "line": 772,
+          "declaration": "pub fn run_pair<B: Backend, V: Variation>("
+        },
+        {
+          "line": 823,
+          "declaration": "pub struct FrozenRecipe {"
+        },
+        {
+          "line": 829,
+          "declaration": "pub fn freeze_winner<B: Backend>("
+        },
+        {
+          "line": 884,
+          "declaration": "fn evaluate_unique<B: Backend>("
+        },
+        {
+          "line": 929,
+          "declaration": "pub fn verify_policy_inputs("
+        },
+        {
+          "line": 1026,
+          "declaration": "fn run_neural<B: Backend, V: Variation>("
+        },
+        {
+          "line": 1129,
+          "declaration": "fn run_generic<B: Backend, V: Variation>("
+        },
+        {
+          "line": 1182,
+          "declaration": "fn run_population<B: Backend, V: Variation>("
+        },
+        {
+          "line": 1479,
+          "declaration": "fn verify_observed_replay("
+        },
+        {
+          "line": 1538,
+          "declaration": "fn stream_seed(base: u64, generation: usize, attempt: usize) -> u64 {"
+        },
+        {
+          "line": 1560,
+          "declaration": "pub struct PoolBackend<'a, J, S, P = ExecutionPool> {"
+        },
+        {
+          "line": 1735,
+          "declaration": "pub fn fold_replay_evidence(folds: &[WorkerOutcome]) -> Result<String> {"
+        },
+        {
+          "line": 1784,
+          "declaration": "fn retryable_inventory(outcome: &WorkerOutcome) -> bool {"
+        },
+        {
+          "line": 1796,
+          "declaration": "fn unstarted(outcome: &WorkerOutcome) -> bool {"
+        },
+        {
+          "line": 1807,
+          "declaration": "fn persist_immutable(directory: &Path, name: &str, value: &serde_json::Value) -> Result<()> {"
+        }
+      ]
+    },
+    {
+      "view": "current_source",
+      "path": "crates/jope-bench/src/panel/selection_exposure.rs",
+      "physical_path": "/home/ubuntu/JopeDime/crates/jope-bench/src/panel/selection_exposure.rs",
+      "sha256": "a591787e6eaa95bb2e11d4c46776707076016b06785c4fad1dbc71d1a4d9fc8e",
+      "lines": 143,
+      "anchors": [
+        {
+          "line": 9,
+          "declaration": "fn rows_sha(rows: &[&str]) -> Result<String> {"
+        },
+        {
+          "line": 14,
+          "declaration": "fn overlap(scoring: &[&str], observed: &[&str]) -> Result<Value> {"
+        },
+        {
+          "line": 35,
+          "declaration": "fn fold_exposure(fold: u8, scoring: &[&str], learning: &[&str], screen: &[&str]) -> Result<Value> {"
+        },
+        {
+          "line": 48,
+          "declaration": "pub fn report("
+        }
+      ]
+    },
+    {
+      "view": "current_source",
+      "path": "crates/jope-bench/src/panel/campaign_cli.rs",
+      "physical_path": "/home/ubuntu/JopeDime/crates/jope-bench/src/panel/campaign_cli.rs",
+      "sha256": "419262eab7516ba0ede8432a5d1f162fd4d64047681764e55edab9e438bb2ad1",
+      "lines": 219,
+      "anchors": [
+        {
+          "line": 18,
+          "declaration": "pub struct RunArgs {"
+        },
+        {
+          "line": 34,
+          "declaration": "pub struct ReportArgs {"
+        },
+        {
+          "line": 47,
+          "declaration": "pub fn prepare("
+        },
+        {
+          "line": 120,
+          "declaration": "fn read_plan(path: &Path, expected: &str) -> Result<CampaignPlan> {"
+        },
+        {
+          "line": 130,
+          "declaration": "fn journal(path: &Path) -> Result<PathBuf> {"
+        },
+        {
+          "line": 149,
+          "declaration": "pub fn run(args: RunArgs) -> Result<Value> {"
+        },
+        {
+          "line": 211,
+          "declaration": "pub fn report(args: ReportArgs) -> Result<Value> {"
+        }
+      ]
+    },
+    {
+      "view": "current_source",
+      "path": "python/src/jope/policy/model_v3.py",
+      "physical_path": "/home/ubuntu/JopeDime/python/src/jope/policy/model_v3.py",
+      "sha256": "11ab74d12bda8a2fb817b073a685d128eff06479f769e4301488339424314ffe",
+      "lines": 1058,
+      "anchors": [
+        {
+          "line": 93,
+          "declaration": "def _task_lane_mask(task_types: Sequence[str] | None, rows: int, device: torch.device) -> torch.Tensor:"
+        },
+        {
+          "line": 114,
+          "declaration": "class PolicyV3Batch:"
+        },
+        {
+          "line": 142,
+          "declaration": "class JopePolicyModelV3(nn.Module):"
+        },
+        {
+          "line": 694,
+          "declaration": "def pad_sequences("
+        },
+        {
+          "line": 706,
+          "declaration": "def encode_row_artifacts(row, vocab: ActionVocab):"
+        },
+        {
+          "line": 721,
+          "declaration": "def row_artifact_key(row) -> str:"
+        },
+        {
+          "line": 737,
+          "declaration": "def precompute_row_artifacts("
+        },
+        {
+          "line": 762,
+          "declaration": "def rows_to_policy_v3_batch("
+        },
+        {
+          "line": 967,
+          "declaration": "def _validate_action_vocab_compatibility("
+        },
+        {
+          "line": 982,
+          "declaration": "def load_policy_v3(state: dict[str, Any]) -> JopePolicyModelV3:"
+        }
+      ]
+    },
+    {
+      "view": "pending_training_overlay",
+      "path": "crates/jope-cli/src/train.rs",
+      "physical_path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-training-integration/refresh-68f56404/replay-001/source-text/crates/jope-cli/src/train.rs",
+      "sha256": "486235575fc972306a6294233d94f8a37179945931e74bfb298e342752c634a2",
+      "lines": 1667,
+      "anchors": [
+        {
+          "line": 29,
+          "declaration": "const SCHEMA: &str = \"jope.native-training-plan/v1\";"
+        },
+        {
+          "line": 30,
+          "declaration": "const NUMERICS: &str ="
+        },
+        {
+          "line": 32,
+          "declaration": "const LINEAGE: &str = \"asm.experimental-python-policy-v3/v1\";"
+        },
+        {
+          "line": 38,
+          "declaration": "pub struct TrainCli {"
+        },
+        {
+          "line": 43,
+          "declaration": "enum TrainCommand {"
+        },
+        {
+          "line": 67,
+          "declaration": "struct PlanArgs {"
+        },
+        {
+          "line": 92,
+          "declaration": "struct StateArgs {"
+        },
+        {
+          "line": 97,
+          "declaration": "struct ExportArgs {"
+        },
+        {
+          "line": 104,
+          "declaration": "struct RunArgs {"
+        },
+        {
+          "line": 115,
+          "declaration": "struct NativePlan {"
+        },
+        {
+          "line": 127,
+          "declaration": "struct LaunchRequest {"
+        },
+        {
+          "line": 138,
+          "declaration": "fn now_ms() -> Result<u64> {"
+        },
+        {
+          "line": 144,
+          "declaration": "fn nonce() -> Result<String> {"
+        },
+        {
+          "line": 151,
+          "declaration": "fn uuid(value: &str) -> bool {"
+        },
+        {
+          "line": 161,
+          "declaration": "fn valid_unit(unit: &str, experiment: &Experiment) -> Result<()> {"
+        },
+        {
+          "line": 172,
+          "declaration": "fn digest(value: &impl Serialize) -> Result<String> {"
+        },
+        {
+          "line": 175,
+          "declaration": "fn read<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {"
+        },
+        {
+          "line": 182,
+          "declaration": "fn artifact(path: &Path) -> Result<Artifact> {"
+        },
+        {
+          "line": 201,
+          "declaration": "fn immutable(path: &Path, value: &impl Serialize) -> Result<()> {"
+        },
+        {
+          "line": 221,
+          "declaration": "fn directory(path: &Path, create: bool) -> Result<PathBuf> {"
+        },
+        {
+          "line": 237,
+          "declaration": "fn invocation_path(path: &Path) -> Result<PathBuf> {"
+        },
+        {
+          "line": 254,
+          "declaration": "fn child_environment(state: &Path, device: &str, seed: u64) -> BTreeMap<String, String> {"
+        },
+        {
+          "line": 284,
+          "declaration": "fn text<'a>(value: &'a Value, key: &str) -> Result<&'a str> {"
+        },
+        {
+          "line": 289,
+          "declaration": "fn tasks(plan: &Value) -> Result<Vec<String>> {"
+        },
+        {
+          "line": 306,
+          "declaration": "fn experiment_for_plan(plan: &Value) -> Result<Experiment> {"
+        },
+        {
+          "line": 348,
+          "declaration": "fn load_native("
+        },
+        {
+          "line": 427,
+          "declaration": "fn python_command(native: &NativePlan, state: &Path, operation: &str) -> Command {"
+        },
+        {
+          "line": 445,
+          "declaration": "fn passive_command(mut command: Command, state: &Path, operation: &str) -> Result<Value> {"
+        },
+        {
+          "line": 477,
+          "declaration": "fn plan(args: PlanArgs) -> Result<Value> {"
+        },
+        {
+          "line": 560,
+          "declaration": "struct VerifiedTrainingContext {"
+        },
+        {
+          "line": 574,
+          "declaration": "struct ProducerVerifier;"
+        },
+        {
+          "line": 604,
+          "declaration": "fn admission(native: &NativePlan, plan: &Value, verifier: &dyn ContextVerifier) -> Result<Value> {"
+        },
+        {
+          "line": 644,
+          "declaration": "fn subgroup(supervisor: &Supervisor, invocation: &str) -> Result<PathBuf> {"
+        },
+        {
+          "line": 655,
+          "declaration": "fn populated(path: &Path) -> Result<bool> {"
+        },
+        {
+          "line": 664,
+          "declaration": "fn drain(path: &Path, receipt: &Path) -> Result<()> {"
+        },
+        {
+          "line": 689,
+          "declaration": "fn supervised(args: RunArgs, operation: &str, verifier: &dyn ContextVerifier) -> Result<Value> {"
+        },
+        {
+          "line": 781,
+          "declaration": "fn launch_python("
+        },
+        {
+          "line": 883,
+          "declaration": "fn current_training_report(state: &Path, plan: &Value, started: u64) -> Result<Option<Value>> {"
+        },
+        {
+          "line": 901,
+          "declaration": "fn python_worker(path: &Path, expected: &str) -> Result<Value> {"
+        },
+        {
+          "line": 986,
+          "declaration": "fn run(cli: TrainCli) -> Result<Value> {"
+        },
+        {
+          "line": 1015,
+          "declaration": "pub fn execute(cli: TrainCli) -> ExitCode {"
+        }
+      ]
+    },
+    {
+      "view": "pending_training_overlay",
+      "path": "python/src/jope/policy/training_campaign.py",
+      "physical_path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-training-integration/refresh-68f56404/replay-001/source-text/python/src/jope/policy/training_campaign.py",
+      "sha256": "9d9cfb3257ecf2b6072cab8adc6d830f3df096605a06ff0677e6338c2aad5a2c",
+      "lines": 1410,
+      "anchors": [
+        {
+          "line": 29,
+          "declaration": "def require(condition, message):"
+        },
+        {
+          "line": 34,
+          "declaration": "def encoded(value):"
+        },
+        {
+          "line": 44,
+          "declaration": "def digest(value):"
+        },
+        {
+          "line": 48,
+          "declaration": "def sha(path, deadline_unix_ms=None):"
+        },
+        {
+          "line": 66,
+          "declaration": "def read(path):"
+        },
+        {
+          "line": 70,
+          "declaration": "def artifact(path):"
+        },
+        {
+          "line": 76,
+          "declaration": "def checked(ref, deadline_unix_ms=None):"
+        },
+        {
+          "line": 93,
+          "declaration": "def write(path, value, *, immutable=False):"
+        },
+        {
+          "line": 119,
+          "declaration": "def durable_state(state):"
+        },
+        {
+          "line": 128,
+          "declaration": "def runtime_identity():"
+        },
+        {
+          "line": 168,
+          "declaration": "def experiment_for_plan(plan):"
+        },
+        {
+          "line": 199,
+          "declaration": "def experiment_identity(experiment):"
+        },
+        {
+          "line": 205,
+          "declaration": "def validate_context(row, record, encoder_sha, data_kind):"
+        },
+        {
+          "line": 298,
+          "declaration": "def admitted_rows(inputs, data_kind, selected_task=None):"
+        },
+        {
+          "line": 420,
+          "declaration": "def synthetic_inputs(state, tasks):"
+        },
+        {
+          "line": 506,
+          "declaration": "def make_plan("
+        },
+        {
+          "line": 606,
+          "declaration": "def verify_plan(state):"
+        },
+        {
+          "line": 631,
+          "declaration": "def original_window(state, plan, supervisor_unit, *, admitting=True):"
+        },
+        {
+          "line": 685,
+          "declaration": "def category_window(state, task, window, now=None, *, admitting=True):"
+        },
+        {
+          "line": 719,
+          "declaration": "def checked_device(device):"
+        },
+        {
+          "line": 744,
+          "declaration": "def verify_checkpoint(ref, plan, task, previous=None):"
+        },
+        {
+          "line": 780,
+          "declaration": "def worker(state, task, attempt):"
+        },
+        {
+          "line": 883,
+          "declaration": "def stop_group(child):"
+        },
+        {
+          "line": 892,
+          "declaration": "def cancellation_signals():"
+        },
+        {
+          "line": 904,
+          "declaration": "def read_head(path):"
+        },
+        {
+          "line": 920,
+          "declaration": "def launch_worker(arguments, env, attempt, deadline_unix_ms):"
+        },
+        {
+          "line": 972,
+          "declaration": "def validate_execution_timing(started, outcome, complete, category, validated_unix_ms=None):"
+        },
+        {
+          "line": 1007,
+          "declaration": "def requested_coverage(plan, failures):"
+        },
+        {
+          "line": 1043,
+          "declaration": "def run(state, *, resume=False, supervisor_unit=None):"
+        },
+        {
+          "line": 1203,
+          "declaration": "def verify(state):"
+        },
+        {
+          "line": 1303,
+          "declaration": "def export(state, output):"
+        },
+        {
+          "line": 1340,
+          "declaration": "def main(argv=None):"
+        }
+      ]
+    },
+    {
+      "view": "pending_training_overlay",
+      "path": "crates/jope-learning/src/eligibility.rs",
+      "physical_path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-training-integration/refresh-68f56404/replay-001/source-text/crates/jope-learning/src/eligibility.rs",
+      "sha256": "839e1de7b5f2c869817564ed39f3c30843208f7a00a1a277d27fe50857ce1e8d",
+      "lines": 1922,
+      "anchors": [
+        {
+          "line": 34,
+          "declaration": "const FREEZE: &str = \"jope.optimization-freeze/v1\";"
+        },
+        {
+          "line": 35,
+          "declaration": "const PREDICTIONS: &str = \"jope.train-oof-predictions/v1\";"
+        },
+        {
+          "line": 36,
+          "declaration": "const QUALIFICATION: &str = \"jope.measured-teaching/v1\";"
+        },
+        {
+          "line": 40,
+          "declaration": "pub struct TargetRow {"
+        },
+        {
+          "line": 49,
+          "declaration": "pub struct FreezePlan {"
+        },
+        {
+          "line": 60,
+          "declaration": "pub struct FrozenFold {"
+        },
+        {
+          "line": 69,
+          "declaration": "struct FrozenPolicy {"
+        },
+        {
+          "line": 89,
+          "declaration": "pub struct FreezeReceipt {"
+        },
+        {
+          "line": 96,
+          "declaration": "pub struct FoldPredictions {"
+        },
+        {
+          "line": 115,
+          "declaration": "pub struct OofEvidence {"
+        },
+        {
+          "line": 127,
+          "declaration": "pub struct Qualification {"
+        },
+        {
+          "line": 154,
+          "declaration": "struct StoredQualification {"
+        },
+        {
+          "line": 160,
+          "declaration": "pub struct TeachingManifest {"
+        },
+        {
+          "line": 170,
+          "declaration": "pub struct GuardPolicy {"
+        },
+        {
+          "line": 203,
+          "declaration": "fn authenticated_rows(state: &State, plan: &FreezePlan) -> Result<(PanelDataset, Vec<TargetRow>)> {"
+        },
+        {
+          "line": 241,
+          "declaration": "fn burn_path(state: &State, dataset: &str, cut: &str) -> Result<std::path::PathBuf> {"
+        },
+        {
+          "line": 253,
+          "declaration": "pub fn require_unburned_test_partition(state: &State, dataset: &str, cut: &str) -> Result<()> {"
+        },
+        {
+          "line": 277,
+          "declaration": "pub fn effective_label_role(original: &str, optimization_visible: bool) -> Result<&'static str> {"
+        },
+        {
+          "line": 287,
+          "declaration": "fn task(identity: &HwmIdentity) -> Result<Task> {"
+        },
+        {
+          "line": 325,
+          "declaration": "fn blob<T: for<'de> Deserialize<'de>>(state: &State, sha: &str) -> Result<T> {"
+        },
+        {
+          "line": 333,
+          "declaration": "fn require_blob(state: &State, sha: &str) -> Result<()> {"
+        },
+        {
+          "line": 345,
+          "declaration": "fn freeze_path(state: &State, identity: &str) -> Result<std::path::PathBuf> {"
+        },
+        {
+          "line": 354,
+          "declaration": "fn immutable_write(path: &Path, bytes: &[u8]) -> Result<()> {"
+        },
+        {
+          "line": 373,
+          "declaration": "fn fold_rows(rows: &[TargetRow], fold: u8) -> (Vec<&TargetRow>, Vec<&TargetRow>) {"
+        },
+        {
+          "line": 377,
+          "declaration": "fn rows_sha(rows: &[&TargetRow]) -> Result<String> {"
+        },
+        {
+          "line": 381,
+          "declaration": "fn baseline("
+        },
+        {
+          "line": 427,
+          "declaration": "pub fn freeze_optimization(state: &State, plan: &FreezePlan) -> Result<FreezeReceipt> {"
+        },
+        {
+          "line": 430,
+          "declaration": "fn freeze_impl("
+        },
+        {
+          "line": 555,
+          "declaration": "fn load_freeze(state: &State, receipt: &FreezeReceipt) -> Result<FrozenPolicy> {"
+        },
+        {
+          "line": 583,
+          "declaration": "fn combine(parts: &[Predictions]) -> Result<Predictions> {"
+        },
+        {
+          "line": 617,
+          "declaration": "fn verify_measured_outputs("
+        },
+        {
+          "line": 700,
+          "declaration": "fn measured("
+        },
+        {
+          "line": 1004,
+          "declaration": "pub fn revalidate_qualification(state: &State, record: &HwmRecord) -> Result<Qualification> {"
+        },
+        {
+          "line": 1014,
+          "declaration": "fn qualification_path(state: &State, record: &HwmRecord) -> std::path::PathBuf {"
+        },
+        {
+          "line": 1023,
+          "declaration": "pub fn qualify(state: &State, record: &HwmRecord, evidence: &OofEvidence) -> Result<Qualification> {"
+        },
+        {
+          "line": 1055,
+          "declaration": "pub(crate) fn require_qualified(state: &State, record: &HwmRecord) -> Result<()> {"
+        },
+        {
+          "line": 1067,
+          "declaration": "fn retain_artifact(state: &State, artifact: &Artifact, live: bool) -> Result<()> {"
+        },
+        {
+          "line": 1082,
+          "declaration": "pub fn freeze_teaching(state: &State) -> Result<TeachingManifest> {"
+        }
+      ]
+    },
+    {
+      "view": "pending_training_overlay",
+      "path": "crates/jope-learning/src/eligibility/inner.rs",
+      "physical_path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-training-integration/refresh-68f56404/replay-001/source-text/crates/jope-learning/src/eligibility/inner.rs",
+      "sha256": "b5fb468fcc554ec7da9227244d435d84593910c254678fb3f4174b5d7a4e9215",
+      "lines": 476,
+      "anchors": [
+        {
+          "line": 6,
+          "declaration": "pub const INNER_SCHEMA: &str = \"jope.teaching-inner-partition/v1\";"
+        },
+        {
+          "line": 7,
+          "declaration": "pub const SEED_POLICY: &str ="
+        },
+        {
+          "line": 11,
+          "declaration": "pub struct InnerPartition {"
+        },
+        {
+          "line": 76,
+          "declaration": "fn data(state: &State, panel_sha: &str, id: &str) -> Result<DevelopmentData> {"
+        },
+        {
+          "line": 89,
+          "declaration": "pub fn derive_inner_partition("
+        },
+        {
+          "line": 106,
+          "declaration": "pub(super) fn authenticated_inner_rows("
+        },
+        {
+          "line": 157,
+          "declaration": "pub fn freeze_inner_optimization("
+        },
+        {
+          "line": 166,
+          "declaration": "pub struct InnerEvidence {"
+        },
+        {
+          "line": 177,
+          "declaration": "struct CandidateFreeze {"
+        },
+        {
+          "line": 187,
+          "declaration": "pub fn register_inner_candidate("
+        },
+        {
+          "line": 236,
+          "declaration": "pub(super) struct BoundInner {"
+        },
+        {
+          "line": 247,
+          "declaration": "pub(super) fn bind("
+        },
+        {
+          "line": 410,
+          "declaration": "pub(super) fn validate_execution("
+        }
+      ]
+    },
+    {
+      "view": "pending_training_overlay",
+      "path": "crates/jope-learning/src/record.rs",
+      "physical_path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-training-integration/refresh-68f56404/replay-001/source-text/crates/jope-learning/src/record.rs",
+      "sha256": "4360d96a4a6c0a27f5ba78fbcab4f5be10a3a800f56acee6379ef805b3815d61",
+      "lines": 434,
+      "anchors": [
+        {
+          "line": 10,
+          "declaration": "pub const HWM_SCHEMA: &str = \"jope.hwm/v1\";"
+        },
+        {
+          "line": 11,
+          "declaration": "pub const SCORE_SCHEMA: &str = \"jope.score/v1\";"
+        },
+        {
+          "line": 13,
+          "declaration": "pub const UNBOUND: &str = \"unbound\";"
+        },
+        {
+          "line": 19,
+          "declaration": "pub struct ComparisonContext {"
+        },
+        {
+          "line": 35,
+          "declaration": "pub struct HwmIdentity {"
+        },
+        {
+          "line": 63,
+          "declaration": "pub struct Genome {"
+        },
+        {
+          "line": 77,
+          "declaration": "pub struct Score {"
+        },
+        {
+          "line": 88,
+          "declaration": "pub struct Cost {"
+        },
+        {
+          "line": 99,
+          "declaration": "pub struct Evaluator {"
+        },
+        {
+          "line": 115,
+          "declaration": "pub struct Provenance {"
+        },
+        {
+          "line": 153,
+          "declaration": "pub struct HwmRecord {"
+        },
+        {
+          "line": 266,
+          "declaration": "pub struct ScoreSource {"
+        },
+        {
+          "line": 291,
+          "declaration": "pub struct ScoreRecord {"
+        },
+        {
+          "line": 356,
+          "declaration": "fn nullable_hex64(_: &mut schemars::SchemaGenerator) -> schemars::Schema {"
+        },
+        {
+          "line": 364,
+          "declaration": "pub fn derived_hwm_schema() -> serde_json::Value {"
+        },
+        {
+          "line": 369,
+          "declaration": "pub fn derived_score_schema() -> serde_json::Value {"
+        }
+      ]
+    },
+    {
+      "view": "pending_training_overlay",
+      "path": "crates/jope-pipeline/src/search_plan.rs",
+      "physical_path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-training-integration/refresh-68f56404/replay-001/source-text/crates/jope-pipeline/src/search_plan.rs",
+      "sha256": "fe8e402357b9b61359b03760401da9a568b8a1e7092b1222947fc30d2c8fb817",
+      "lines": 417,
+      "anchors": [
+        {
+          "line": 11,
+          "declaration": "pub const INNER_GROUP_POLICY: &str = \"asm.inner-groups/largest-first-lexicographic-balance-five/v1\";"
+        },
+        {
+          "line": 13,
+          "declaration": "pub fn grouped_inner_folds(rows: &[(String, String)]) -> Result<Vec<Vec<String>>> {"
+        },
+        {
+          "line": 40,
+          "declaration": "pub struct SelectionPlan {"
+        },
+        {
+          "line": 220,
+          "declaration": "fn rows_sha(rows: &[String]) -> Result<String> {"
+        },
+        {
+          "line": 223,
+          "declaration": "pub fn candidate_seed(root: u64, candidate_sha256: &str) -> Result<u64> {"
+        },
+        {
+          "line": 240,
+          "declaration": "pub struct OofEvidence {"
+        },
+        {
+          "line": 304,
+          "declaration": "fn row_id(i: usize) -> String {"
+        },
+        {
+          "line": 308,
+          "declaration": "pub(crate) fn fixture() -> SelectionPlan {"
+        }
+      ]
+    },
+    {
+      "view": "pending_training_overlay",
+      "path": "crates/jope-bench/src/panel/optimize_cli.rs",
+      "physical_path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-training-integration/refresh-68f56404/replay-001/source-text/crates/jope-bench/src/panel/optimize_cli.rs",
+      "sha256": "487a299045d9a24604511cdecd8d4fa0b64ff055e4557339ce34120858549eca",
+      "lines": 202,
+      "anchors": [
+        {
+          "line": 8,
+          "declaration": "pub struct OptimizeCli {"
+        },
+        {
+          "line": 13,
+          "declaration": "pub enum OptimizeCommand {"
+        },
+        {
+          "line": 56,
+          "declaration": "fn run_enabled(cli: OptimizeCli) -> anyhow::Result<Value> {"
+        },
+        {
+          "line": 152,
+          "declaration": "fn run_enabled(_cli: OptimizeCli) -> anyhow::Result<Value> {"
+        },
+        {
+          "line": 157,
+          "declaration": "fn run(cli: OptimizeCli) -> anyhow::Result<Value> {"
+        },
+        {
+          "line": 165,
+          "declaration": "pub fn execute(cli: OptimizeCli) -> ExitCode {"
+        }
+      ]
+    },
+    {
+      "view": "pending_training_overlay",
+      "path": "crates/jope-bench/src/panel/origin_proof.rs",
+      "physical_path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-training-integration/refresh-68f56404/replay-001/source-text/crates/jope-bench/src/panel/origin_proof.rs",
+      "sha256": "229d26685d60646887e5ec30ec4734aa78dfdb2f37788ffbf30f878ce593b675",
+      "lines": 343,
+      "anchors": [
+        {
+          "line": 18,
+          "declaration": "pub const SCOPE: &str = \"asm-origin-proof\";"
+        },
+        {
+          "line": 19,
+          "declaration": "pub const PROTOCOL: &str = \"jope.asm-origin-proof/v1\";"
+        },
+        {
+          "line": 20,
+          "declaration": "const SELECTION_RUNTIME: &str = \"asm-origin-proof-selection\";"
+        },
+        {
+          "line": 23,
+          "declaration": "struct Selection {"
+        },
+        {
+          "line": 28,
+          "declaration": "pub(crate) fn selected(plan: &CampaignPlan) -> Result<String> {"
+        },
+        {
+          "line": 56,
+          "declaration": "pub fn prepare("
+        },
+        {
+          "line": 155,
+          "declaration": "fn input("
+        },
+        {
+          "line": 178,
+          "declaration": "pub fn run("
+        },
+        {
+          "line": 211,
+          "declaration": "fn counts(receipt: Option<&SearchReceipt>) -> Value {"
+        },
+        {
+          "line": 253,
+          "declaration": "pub fn report("
+        }
+      ]
+    },
+    {
+      "view": "pending_training_overlay",
+      "path": "crates/jope-cli/src/train/corpus.rs",
+      "physical_path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-training-integration/refresh-68f56404/replay-001/source-text/crates/jope-cli/src/train/corpus.rs",
+      "sha256": "a239fd863384817821427033963d8c0c5ebc54642130b087a9848aa51f2d93c5",
+      "lines": 713,
+      "anchors": [
+        {
+          "line": 35,
+          "declaration": "pub(super) struct PrepareArgs {"
+        },
+        {
+          "line": 47,
+          "declaration": "struct Request {"
+        },
+        {
+          "line": 60,
+          "declaration": "struct CpuProof {"
+        },
+        {
+          "line": 75,
+          "declaration": "struct FamilyRegistry {"
+        },
+        {
+          "line": 82,
+          "declaration": "struct FamilyEntry {"
+        },
+        {
+          "line": 95,
+          "declaration": "struct FamilyEvidence {"
+        },
+        {
+          "line": 99,
+          "declaration": "fn checked(reference: &Artifact, maximum: u64) -> Result<Vec<u8>> {"
+        },
+        {
+          "line": 112,
+          "declaration": "fn value(reference: &Artifact) -> Result<Value> {"
+        },
+        {
+          "line": 115,
+          "declaration": "fn blob(state: &State, sha: &str) -> Result<Artifact> {"
+        },
+        {
+          "line": 123,
+          "declaration": "fn bytes_file(path: &Path, bytes: &[u8]) -> Result<Artifact> {"
+        },
+        {
+          "line": 138,
+          "declaration": "fn object_file(path: &Path, object: &impl Serialize) -> Result<Artifact> {"
+        },
+        {
+          "line": 142,
+          "declaration": "fn float_sha(values: &[f32]) -> String {"
+        },
+        {
+          "line": 150,
+          "declaration": "fn family<'a>(registry: &'a FamilyRegistry, dataset: &PanelDataset) -> Result<&'a str> {"
+        },
+        {
+          "line": 196,
+          "declaration": "fn partition("
+        },
+        {
+          "line": 268,
+          "declaration": "fn compatible(genome: &str, task: &str, vocabulary: &Value) -> Result<()> {"
+        },
+        {
+          "line": 354,
+          "declaration": "struct Selected {"
+        },
+        {
+          "line": 362,
+          "declaration": "fn verify_context("
+        },
+        {
+          "line": 485,
+          "declaration": "pub(super) fn prepare(args: PrepareArgs) -> Result<Value> {"
+        }
+      ]
+    },
+    {
+      "view": "pending_training_overlay",
+      "path": "crates/jope-bench/src/panel/experimental_proposal.rs",
+      "physical_path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-training-integration/refresh-68f56404/replay-001/source-text/crates/jope-bench/src/panel/experimental_proposal.rs",
+      "sha256": "d03c765ac08d1ecc039a82f3dbea0c40bc5158baac042e8df348f0c91a90a018",
+      "lines": 610,
+      "anchors": [
+        {
+          "line": 33,
+          "declaration": "pub const SCHEMA: &str = \"jope.experimental-python-configuration/v1\";"
+        },
+        {
+          "line": 36,
+          "declaration": "pub struct ExperimentalConfiguration {"
+        },
+        {
+          "line": 168,
+          "declaration": "pub enum ContextInput {"
+        },
+        {
+          "line": 194,
+          "declaration": "pub fn bind_pair<V: Variation>("
+        },
+        {
+          "line": 272,
+          "declaration": "pub enum AdmissionContext {"
+        },
+        {
+          "line": 278,
+          "declaration": "pub struct Admission {"
+        },
+        {
+          "line": 284,
+          "declaration": "fn expected_plan(pair: &PairInputPlan) -> Result<&experimental_producer::RequestPlan> {"
+        },
+        {
+          "line": 290,
+          "declaration": "fn qualification(config: &Configuration) -> Result<&CompletedQualification> {"
+        },
+        {
+          "line": 296,
+          "declaration": "fn regression_expected("
+        },
+        {
+          "line": 316,
+          "declaration": "fn verify_context("
+        },
+        {
+          "line": 338,
+          "declaration": "pub fn prepare<B: Backend, V: Variation>("
+        },
+        {
+          "line": 518,
+          "declaration": "pub fn verify_report<V: Variation>("
+        }
+      ]
+    },
+    {
+      "view": "pending_training_overlay",
+      "path": "crates/jope-pipeline/src/experimental_producer.rs",
+      "physical_path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-training-integration/refresh-68f56404/replay-001/source-text/crates/jope-pipeline/src/experimental_producer.rs",
+      "sha256": "9a15e7077651ded2adf364a26a579720ae21aa92f0362c0122d132e34162411c",
+      "lines": 1463,
+      "anchors": [
+        {
+          "line": 26,
+          "declaration": "pub const PLAN_SCHEMA: &str = \"jope.experimental-proposal-plan/v1\";"
+        },
+        {
+          "line": 27,
+          "declaration": "pub const REQUEST_SCHEMA: &str = \"jope.experimental-proposal-request/v1\";"
+        },
+        {
+          "line": 28,
+          "declaration": "pub const OUTPUT_SCHEMA: &str = \"jope.experimental-proposal-output/v1\";"
+        },
+        {
+          "line": 29,
+          "declaration": "pub const LINEAGE: &str = \"asm.experimental-python-policy-v3/proposals-v1\";"
+        },
+        {
+          "line": 30,
+          "declaration": "pub const NUMERICS: &str = \"torch-cpu-f32:threads=1:deterministic:task-conditioned-mean-reward/v1\";"
+        },
+        {
+          "line": 31,
+          "declaration": "pub const SELECTION: &str = \"mean-reward-desc-executable-sha256-first64/v1\";"
+        },
+        {
+          "line": 32,
+          "declaration": "pub const BOOTSTRAP: &str = \"import json,os,sys,sysconfig; roots=json.loads(sys.argv[1]); stdlib=sysconfig.get_path('stdlib'); sys.path[:]=roots+[stdlib,sysconfig.get_path('platstdlib'),os.path.join(stdlib,'lib-dynload')]; from jope.policy.experimental_proposal import main; main(sys.argv[2:])\";"
+        },
+        {
+          "line": 33,
+          "declaration": "const MAX_METADATA: u64 = 32 << 20;"
+        },
+        {
+          "line": 36,
+          "declaration": "pub const REGRESSION_CONTEXT: &str = \"asm.experimental-regression-context/v1\";"
+        },
+        {
+          "line": 39,
+          "declaration": "pub struct VerifiedProposalContext {"
+        },
+        {
+          "line": 92,
+          "declaration": "pub fn digest(value: &impl Serialize) -> Result<String> {"
+        },
+        {
+          "line": 95,
+          "declaration": "pub fn same(a: &impl Serialize, b: &impl Serialize) -> Result<bool> {"
+        },
+        {
+          "line": 98,
+          "declaration": "pub fn read<T: serde::de::DeserializeOwned>(artifact: &Artifact) -> Result<T> {"
+        },
+        {
+          "line": 106,
+          "declaration": "fn hash(value: &str) -> bool {"
+        },
+        {
+          "line": 112,
+          "declaration": "pub struct Sampling {"
+        },
+        {
+          "line": 139,
+          "declaration": "pub struct PythonRuntime {"
+        },
+        {
+          "line": 312,
+          "declaration": "pub struct RuntimePins {"
+        },
+        {
+          "line": 323,
+          "declaration": "pub struct RuntimeManifest {"
+        },
+        {
+          "line": 331,
+          "declaration": "pub struct DistributionInventory {"
+        },
+        {
+          "line": 341,
+          "declaration": "pub struct RequestPlan {"
+        },
+        {
+          "line": 442,
+          "declaration": "pub struct Request {"
+        },
+        {
+          "line": 460,
+          "declaration": "pub struct GenericBank {"
+        },
+        {
+          "line": 469,
+          "declaration": "pub struct GenericDraw {"
+        },
+        {
+          "line": 475,
+          "declaration": "pub fn generic_bank<V: Variation>("
+        },
+        {
+          "line": 510,
+          "declaration": "pub struct Worker {"
+        },
+        {
+          "line": 520,
+          "declaration": "pub struct CandidateClaim {"
+        },
+        {
+          "line": 535,
+          "declaration": "pub struct Claims {"
+        },
+        {
+          "line": 571,
+          "declaration": "pub struct Evidence {"
+        },
+        {
+          "line": 589,
+          "declaration": "pub struct AdmittedPopulation {"
+        },
+        {
+          "line": 604,
+          "declaration": "struct ExportManifest {"
+        },
+        {
+          "line": 612,
+          "declaration": "struct ExportFile {"
+        },
+        {
+          "line": 618,
+          "declaration": "pub fn export_metadata(plan: &RequestPlan) -> Result<Vec<Artifact>> {"
+        },
+        {
+          "line": 723,
+          "declaration": "pub fn verify_inputs<V: Variation>("
+        },
+        {
+          "line": 834,
+          "declaration": "struct Canonicalization {"
+        },
+        {
+          "line": 841,
+          "declaration": "struct CanonicalResult {"
+        },
+        {
+          "line": 847,
+          "declaration": "fn task_spec(task: Task) -> Result<TaskSpec> {"
+        },
+        {
+          "line": 855,
+          "declaration": "fn validate_recipe(recipe: &SynthesizedRecipe, plan: &RequestPlan) -> Result<()> {"
+        },
+        {
+          "line": 866,
+          "declaration": "fn check_claims("
+        },
+        {
+          "line": 946,
+          "declaration": "fn check_candidates("
+        },
+        {
+          "line": 1075,
+          "declaration": "pub fn admit<V: Variation>("
+        }
+      ]
+    },
+    {
+      "view": "pending_training_overlay",
+      "path": "python/src/jope/policy/experimental_proposal.py",
+      "physical_path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-training-integration/refresh-68f56404/replay-001/source-text/python/src/jope/policy/experimental_proposal.py",
+      "sha256": "f0338f0505a27c9f2f5eac7579e2c506da5c116b3a206f44c52a1cf87cf9c0aa",
+      "lines": 742,
+      "anchors": [
+        {
+          "line": 35,
+          "declaration": "def require(ok, message):"
+        },
+        {
+          "line": 40,
+          "declaration": "def shape(value, keys, name):"
+        },
+        {
+          "line": 44,
+          "declaration": "def sha_bytes(value):"
+        },
+        {
+          "line": 48,
+          "declaration": "def artifact_bytes(ref, maximum=MAX_METADATA):"
+        },
+        {
+          "line": 65,
+          "declaration": "def private_write(path, value):"
+        },
+        {
+          "line": 80,
+          "declaration": "def validate_request(request):"
+        },
+        {
+          "line": 167,
+          "declaration": "def load_context(request):"
+        },
+        {
+          "line": 210,
+          "declaration": "def export_inputs(request):"
+        },
+        {
+          "line": 290,
+          "declaration": "def architecture(payload):"
+        },
+        {
+          "line": 307,
+          "declaration": "def strict_model(request, context, plan, record):"
+        },
+        {
+          "line": 419,
+          "declaration": "def load_bank(request):"
+        },
+        {
+          "line": 449,
+          "declaration": "def canonicalize(request, programs, output_directory, remaining):"
+        },
+        {
+          "line": 524,
+          "declaration": "def assemble(neural, bank, results):"
+        },
+        {
+          "line": 587,
+          "declaration": "def run(request, output_path, *, request_sha256):"
+        },
+        {
+          "line": 730,
+          "declaration": "def main(argv=None):"
+        }
+      ]
+    },
+    {
+      "view": "pending_training_overlay",
+      "path": "crates/jope-policy/src/context_producer/classification.rs",
+      "physical_path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-training-integration/refresh-68f56404/replay-001/source-text/crates/jope-policy/src/context_producer/classification.rs",
+      "sha256": "465af30abcdc7bcc02c046d92a71e0b7a22be910320e22158ef16b216adc4fa6",
+      "lines": 518,
+      "anchors": [
+        {
+          "line": 6,
+          "declaration": "pub const CLASSIFICATION_SCHEMA: &str = \"jope.cpu-classification-components/v1\";"
+        },
+        {
+          "line": 7,
+          "declaration": "pub const CLASSIFICATION_INPUT_SCHEMA: &str = \"jope.cpu-classification-training/v1\";"
+        },
+        {
+          "line": 8,
+          "declaration": "pub const CLASSIFICATION_FEATURE_POLICY: &str = \"asm.experimental-classification-features/v1:training-only-declared-kinds:null-only-missing:hyperion-row128:frozen-dataset-normalizers:foundation-neutral-zero-conditioning:dataset-block-clip32:no-ordinal-targets\";"
+        },
+        {
+          "line": 12,
+          "declaration": "pub enum ClassificationTask {"
+        },
+        {
+          "line": 18,
+          "declaration": "pub struct ClassificationInput {"
+        },
+        {
+          "line": 30,
+          "declaration": "pub struct ClassificationPreprocessing {"
+        },
+        {
+          "line": 34,
+          "declaration": "pub struct PreparedClassification {"
+        },
+        {
+          "line": 203,
+          "declaration": "pub struct ClassificationArtifact {"
+        },
+        {
+          "line": 279,
+          "declaration": "fn neutral_foundation_rows(features: &[Vec<f64>]) -> Vec<Vec<f64>> {"
+        }
+      ]
+    },
+    {
+      "view": "retrieved_model_bundle_metadata",
+      "path": "metadata-receipts/veox-jopedime-models-use2--bundles--hyperion-v7--manifest.json",
+      "sha256": "fdaf938fc7f7957c06959f12c130b2bd81cdaef5e5bb2198ba75cf35da1c5233"
+    },
+    {
+      "view": "retrieved_model_bundle_metadata",
+      "path": "metadata-receipts/veox-jopedime-models-use2--bundles--jope-prime-gen31-v2--manifest.json",
+      "sha256": "c8d8d13a2f4cb2eeb21eea364c33e14429c84d344e6b50eb38a472173b97b6f2"
+    },
+    {
+      "view": "retrieved_model_bundle_metadata",
+      "path": "metadata-receipts/veox-jopedime-models-use2--bundles--policy-step-60000--manifest.json",
+      "sha256": "d8e259b26ef8d580ddb99ae5826c9501bcdc0c32045945eef9010926fd796e9e"
+    }
+  ],
+  "chapters": {
+    "architecture.md": {
+      "sha256": "f91fdc28ab91f1d1ea0a3b72798df5160a5576ab0d8783590aef2a09df774fc8",
+      "words": 2786,
+      "bytes": 21628
+    },
+    "operations-training.md": {
+      "sha256": "33df6ae5b6e72d8bd8423c8c76546fba36e6019f3e143acd6e2710beff89ce6b",
+      "words": 2917,
+      "bytes": 23303
+    }
+  },
+  "checks": {
+    "source_paths_verified": true,
+    "code_fences_balanced": true,
+    "no_cargo_models_fits_gpu": true,
+    "canonical_source_writes": false,
+    "pdf_rendering": "root integration responsibility"
+  }
+}

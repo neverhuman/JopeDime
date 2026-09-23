@@ -1,0 +1,190 @@
+{
+  "cached_dataset_manifests": [
+    {
+      "dataset_hash": "006bca140f93e411",
+      "id": "006bca140f93e411",
+      "origin": "real",
+      "shape": {
+        "categorical_features": 0,
+        "columns": 33,
+        "features": 32,
+        "rows": 2000
+      },
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 22998297,
+        "test_rows": 1000,
+        "train_rows": 1000
+      },
+      "task": "regression"
+    },
+    {
+      "dataset_hash": "0014b9dad5725a1e",
+      "id": "0014b9dad5725a1e",
+      "origin": "real",
+      "shape": {
+        "categorical_features": 0,
+        "columns": 17,
+        "features": 16,
+        "rows": 2000
+      },
+      "split": {
+        "method": "quota stratified by target distribution plus high-variance feature quantile bins",
+        "seed": 18980567,
+        "test_rows": 1000,
+        "train_rows": 1000
+      },
+      "task": "regression"
+    }
+  ],
+  "captured_utc": "2026-09-23T16:29:27.942896+00:00",
+  "environment": {
+    "JOPE_DATASETS_URL": null,
+    "JOPE_HOME": null,
+    "JOPE_LEARNING_URL": null,
+    "JOPE_MODELS_URL": null,
+    "JOPE_REGISTRY": null,
+    "JOPE_STATE": null,
+    "XDG_CACHE_HOME": null,
+    "XDG_STATE_HOME": null
+  },
+  "roots": [
+    {
+      "allocated_unique_inode_bytes": 35930112,
+      "by_top_level": {
+        "asm-private-30-v1": {
+          "files": 150,
+          "logical_bytes": 34412605
+        },
+        "datasets": {
+          "files": 20,
+          "logical_bytes": 2342276
+        }
+      },
+      "directories": 12,
+      "errors": [],
+      "exists": true,
+      "logical_bytes": 36754881,
+      "path": "/home/ubuntu/.cache/jope",
+      "regular_files": 170,
+      "symlinks": 0,
+      "unique_inode_bytes": 35585244
+    },
+    {
+      "allocated_unique_inode_bytes": 0,
+      "by_top_level": {},
+      "directories": 0,
+      "errors": [],
+      "exists": false,
+      "logical_bytes": 0,
+      "path": "/home/ubuntu/.local/state/jope",
+      "regular_files": 0,
+      "symlinks": 0,
+      "unique_inode_bytes": 0
+    },
+    {
+      "allocated_unique_inode_bytes": 1183744,
+      "by_top_level": {
+        "openml-23-cmc": {
+          "files": 4,
+          "logical_bytes": 100934
+        },
+        "openml-29-credit-approval": {
+          "files": 4,
+          "logical_bytes": 86632
+        },
+        "pmlb-229-pwlinear": {
+          "files": 4,
+          "logical_bytes": 10899
+        },
+        "pmlb-695-chatfield-4": {
+          "files": 4,
+          "logical_bytes": 39804
+        },
+        "pmlb-first-principles-supernovae-zg": {
+          "files": 4,
+          "logical_bytes": 9446
+        },
+        "rdatasets-agridat-bancroft-peanut-uniformity": {
+          "files": 4,
+          "logical_bytes": 10841
+        },
+        "rdatasets-stevedata-chile88": {
+          "files": 4,
+          "logical_bytes": 135118
+        },
+        "rdatasets-wooldridge-barium": {
+          "files": 4,
+          "logical_bytes": 59861
+        },
+        "socrata-cdc-food-safety-culture": {
+          "files": 4,
+          "logical_bytes": 102161
+        },
+        "uci-parkinsons-telemonitoring": {
+          "files": 4,
+          "logical_bytes": 540717
+        }
+      },
+      "directories": 10,
+      "errors": [],
+      "exists": true,
+      "logical_bytes": 1096413,
+      "path": "/home/ubuntu/JopeDime/datasets/test",
+      "regular_files": 40,
+      "symlinks": 0,
+      "unique_inode_bytes": 1096413
+    },
+    {
+      "allocated_unique_inode_bytes": 0,
+      "by_top_level": {},
+      "directories": 0,
+      "errors": [],
+      "exists": false,
+      "logical_bytes": 0,
+      "path": "/home/ubuntu/JopeDime/datasets/by-id",
+      "regular_files": 0,
+      "symlinks": 0,
+      "unique_inode_bytes": 0
+    },
+    {
+      "allocated_unique_inode_bytes": 45056,
+      "by_top_level": {
+        "PINNED": {
+          "files": 1,
+          "logical_bytes": 150
+        },
+        "bundles": {
+          "files": 3,
+          "logical_bytes": 32045
+        },
+        "manifest.json": {
+          "files": 1,
+          "logical_bytes": 1492
+        }
+      },
+      "directories": 1,
+      "errors": [],
+      "exists": true,
+      "logical_bytes": 33687,
+      "path": "/home/ubuntu/JopeDime/models",
+      "regular_files": 5,
+      "symlinks": 0,
+      "unique_inode_bytes": 33687
+    },
+    {
+      "allocated_unique_inode_bytes": 0,
+      "by_top_level": {},
+      "directories": 0,
+      "errors": [],
+      "exists": false,
+      "logical_bytes": 0,
+      "path": "/home/ubuntu/JopeDime/state",
+      "regular_files": 0,
+      "symlinks": 0,
+      "unique_inode_bytes": 0
+    }
+  ],
+  "schema": "jope.local-data-estate-metadata/v1",
+  "scope": "listed product cache/state/test/model roots only; lstat inventory, no payload bodies; symlinks not followed; not a scan of entire home/archive/research estate"
+}

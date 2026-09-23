@@ -1,0 +1,125 @@
+{
+  "schema": "asm.manual.training_history.handoff.v1",
+  "status": "STOPPED",
+  "observed_utc": "2026-09-23T17:43:12.204548+00:00",
+  "owner": "training_refresh",
+  "canonical_source_observed": "1daaae61b135e0f8b62be6682bc2f1f92db29704",
+  "scope": "Custody documentation and original metadata extraction only. No model bodies, sealed targets, fits, Cargo or training.",
+  "chapter": "14-training-history.md",
+  "numeric_values_verified": 3218,
+  "checkpoint_lineages_verified": 78,
+  "artifacts": [
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/14-training-history.md",
+      "bytes": 21035,
+      "sha256": "1abd31c768d75cd3daff89ca3e582faf3ccb1ba9ef20ab3bbe42fea4ab12c63e"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/a100-checkpoint-lineage.csv",
+      "bytes": 54217,
+      "sha256": "a141f3615eb5f9e12472becc015bb0b82e2758668b60353055a6ecb2841d486e"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/a100-checkpoint-validation.csv",
+      "bytes": 274177,
+      "sha256": "867fac4556dfac6c7baff82a303660f4ea5b4c410b21e1d94717bc3a76c10920"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/accepted60000-state.json",
+      "bytes": 403795,
+      "sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/block-adaptive-validation.csv",
+      "bytes": 394505,
+      "sha256": "1b797ce9663825e2083084ec4ca1480eeee4fa653e3a97734cc3a06659a1345e"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/block-endpoint-metrics.csv",
+      "bytes": 1258193,
+      "sha256": "5278b22f4115aaf94d4ef45c0dcdc18a3a4c32578a02be7887776af25d563ad6"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/extraction-audit.json",
+      "bytes": 1952,
+      "sha256": "5b41cee2ec22e0091e520f3539e3777ffb22b4b0e0ab4588480c1d041f039090"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/extraction-summary.json",
+      "bytes": 4431,
+      "sha256": "dbb5997d52dc6f1125819ab336245190e33f98e924174884b81ca11402339d54"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/fixed-monitor-metrics.csv",
+      "bytes": 15460,
+      "sha256": "796d794de8f7560adcd06d559f72f03c478488642fb7e5a76fd149f73e99e761"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/gen31-epoch-metrics.csv",
+      "bytes": 143246,
+      "sha256": "1efedc9c5eb14fdb8398fd8646b0eea9b87e6264a648e709c6ed290674b7b34e"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/metric-definitions.json",
+      "bytes": 6148,
+      "sha256": "8b8fa9014ebb9e7fe170393f4f588741d1d4db90a45e177d26435f14d455847b"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/original-learning-monitor-budget-metadata.json",
+      "bytes": 6207,
+      "sha256": "6c08c960b8a542ed26fc564d29fb78c518f3de32bd97e0b54868cee0d9fc4e6c"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/original-train_metrics.jsonl",
+      "bytes": 21686,
+      "sha256": "d57de1b28a8678327c984a82732cd774520db2cb0994d893a45f8a5ea428e312"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/rtx60100-initialization.json",
+      "bytes": 1423,
+      "sha256": "61b27fef0f4556d7b34fb58d73da3936a9158e48a1d5c593c6a2e6e989584a6c"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/rtx60100-latest.json",
+      "bytes": 218,
+      "sha256": "8f3601229b956b76b61041dfc40e2bd1910fcc5be6c87eb955e1b40a718d5e5d"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/rtx60100-run.json",
+      "bytes": 281,
+      "sha256": "36b05431a81bab27238bc91603c72546d7ea08316e8e46f8b921302f61ed8332"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/rtx60100-state.json",
+      "bytes": 4755,
+      "sha256": "745be4b5e998bce85615349a5b03b901cd8ad2cf605e6dce3b86fbf777cc7388"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/rtx60100-step-metrics.csv",
+      "bytes": 378613,
+      "sha256": "d39260191d104cbfc3d0133899cc0a91693560298b6084a0fe59fb629e2b6713"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/source-references.json",
+      "bytes": 2409,
+      "sha256": "d2abdaa2138f16011a2e4a38d316dff37dac4ab577a1395fd4ca491e3eaac42a"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/verification.json",
+      "bytes": 22086,
+      "sha256": "f187a9bdc5ad4f7d58d7c54cc2e4c4e99b79c5fbbb93604e31d93e6b2c50bd03"
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/verify_history.py",
+      "bytes": 3462,
+      "sha256": "df04b945ad3bf32ac53e74c96a628985bd7f9ec728c9da130b15d2707cd50397"
+    }
+  ],
+  "unknowns": [
+    "No original exact-source build attestation or event timestamps in gen31 JSONL. Retained v3.2 source provides interpretations.",
+    "108-block audit capture retains first/last rows, not complete324000-step history.",
+    "No same-panel independent quality series across changedcorpora; no neural-causal promotion loop asserted."
+  ],
+  "source_references": "source-references.json",
+  "verification_command": "python3 /home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/training-history/verify_history.py"
+}

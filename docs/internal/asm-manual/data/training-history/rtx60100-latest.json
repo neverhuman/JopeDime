@@ -1,0 +1,5 @@
+{
+  "checkpoint": "runs/xbabe2-hardware-qualification-20260914/final-runtime-v2-eof/train/checkpoints/step-60100",
+  "state_sha256": "745be4b5e998bce85615349a5b03b901cd8ad2cf605e6dce3b86fbf777cc7388",
+  "step": 60100
+}

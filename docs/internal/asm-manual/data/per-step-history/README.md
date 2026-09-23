@@ -1,0 +1,24 @@
+# Audited per-step recovery telemetry
+
+This packet preserves selected original telemetry from 21 raw metrics.jsonl logs, cycles 000001–000021 of eight-a100-recovery-20260912. The source manifest binds full original file paths, SHA256, byte sizes, every block's corpus and parent/final checkpoint identity. Raw sources stay in retained custody; model files and sealed targets were not opened.
+
+`a100-step-metrics.csv.gz` is deterministic gzip (mtime 0, no stored filename). It contains 63,000 rows, one for every step 6001–69000. The six metric columns preserve 378,000 original JSON numeric lexemes exactly, without rounding: composite `loss`, reported objective components `sequence_nll`, `ranking_bt`, `ranking_listwise`, `runtime_huber`, and `gradient_norm`. Step, local-step and timestamp tokens are also preserved. Cycle plus one-based source_line locates each original row; constant corpus, parent, world/rank and batch fields resolve through source-manifest.json. Other raw telemetry fields are deliberately not copied. Gradient norm is a reported diagnostic, not per-term gradient attribution. Missing contextfree_bt and LR are not zeros.
+
+`a100-block-statistics.csv` contains 126 metric/block rows: first/last sample, mean, first/last 100 means, descriptive OLS slope/R² and fitted-span delta. `a100-step-bins.csv` contains 3,780 bins (630 per metric), each exactly 100 contiguous rows inside one corpus. `a100-corpus-boundaries.csv` contains 20 transitions. No line connects corpora in the figure. There are 21 negative composite slopes; 20 positive single-sample boundary jumps but 19 positive 100-mean jumps.
+
+OLS is ordinary arithmetic over dependent, changing-population observations. No confidence interval, p-value, causal effect, independent generalization or downstream GP benefit is claimed. Adaptive checkpoint validation is the already audited 78-state series (22 corpora, 21 panels); 296 overlapping validation cells in 74 states cross-match these raw logs. Earlier fixed 2048-example recovery/cycle 25/cycle 107 monitoring remains separate.
+
+The data neither promotes 69000 nor replaces accepted 60000. Native model hashes are not reloaded or refitted. The retained world 1 hardware qualification 60100 is a separate run. Current native GPU dispatch/admission and the bounded training64 proof remain pending as described in chapters 14/16.
+
+Recreate extraction into a NEW custody output directory; it intentionally refuses an existing directory:
+
+```sh
+python3 docs/internal/asm-manual/tools/extract_per_step.py \
+  --source /home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning \
+  --history docs/internal/asm-manual/data/training-history \
+  --output /YOUR_CUSTODY/new-per-step-extraction
+```
+
+This checks each selected numeric token on a second read, rehashes each source, checks every row's parent/corpus/world/rank/batch, validates contiguous steps, and cross-matches retained checkpoint validation. It reads telemetry, not model bodies. Regenerate the compact SVG from shipped data with `python3 docs/internal/asm-manual/tools/make_per_step_figure.py`; that helper rechecks all 630 plotted means against the full compressed CSV. `--preview` optionally writes a PNG for local visual review and is not needed for the manual. Both helpers leave original sources unchanged.
+
+Source recovery boundary: inspected cycle 000000/train-2 has metadata but no metrics.jsonl. Steps 3001–6000 lack per-step records there; antecedent 1–3000 is outside this source set. This is not a global absence claim. The older 108-block capture still has only endpoints, and gen31's log has no embedded event timestamp.

@@ -1,0 +1,173 @@
+{
+  "schema": "jope.maintainer-cli-help/v1",
+  "source_head": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
+  "binary_path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+  "binary_sha256": "eab2d5b1b05629020aab3d540d51eb24ba0db18ff0917da188f89a34b6dc5e2b",
+  "commands": [
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": "jope 0.1.0\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "JOPE-Dime fixtures, encode, fit/emit/search, local champions, centroid router, model bundles, dataset catalog and the product pipeline\n\nUsage: jope [COMMAND]\n\nCommands:\n  doctor             Report current ASM capabilities and remaining qualification gaps\n  benchmark          Verify and plan the private, fixed-panel benchmark\n  optimize           Generate and optimize executable algorithms from the verified development panel\n  verify-inputs      Verify the ten synthetic fixtures against the pinned deterministic generator\n  generate-fixtures  Create the versioned synthetic corpus in a new output directory\n  encode             Encode one admitted dataset with CPU Hyperion. Needs HYPERION_V7_WEIGHTS; does not download\n  fit                Fit a GP genome on one admitted dataset (train R\u00b2, holdout R\u00b2)\n  emit               Emit working Python / Rust / C++17 / JavaScript from a GP genome\n  search             Score a tiny ridge-family GP candidate set on one admitted dataset\n  champions          Local champion bank over admitted fixtures. --pull/--push fail closed (no live S3)\n  train-step         One local train step: fit a 128-d centroid router on champion genomes. Live --env fails closed\n  route              Route one dataset through a trained local centroid router, then fit the chosen genome\n  models             Model bundles: fetch, verify, publish and locate content-addressed weights\n  datasets           Dataset catalog: ingest, fetch, verify and link content-addressed datasets\n  pipeline           Product pipeline: dataset, prepared cuts, GP search, emitted code and a receipt\n  help               Print this message or the help of the given subcommand(s)\n\nOptions:\n  -h, --help     Print help\n  -V, --version  Print version\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "fit",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Fit a GP genome on one admitted dataset (train R\u00b2, holdout R\u00b2)\n\nUsage: jope fit [OPTIONS] --input <INPUT>\n\nOptions:\n      --input <INPUT>    \n      --genome <GENOME>  [default: \"(pipe X (ridge))\"]\n      --json             \n  -h, --help             Print help\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "emit",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Emit working Python / Rust / C++17 / JavaScript from a GP genome\n\nUsage: jope emit [OPTIONS] --lang <LANG>\n\nOptions:\n      --genome <GENOME>  [default: \"(pipe X (ridge))\"]\n      --lang <LANG>      rust, python, cpp17, javascript, or all\n      --output <OUTPUT>  \n      --json             \n  -h, --help             Print help\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "search",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Score a tiny ridge-family GP candidate set on one admitted dataset\n\nUsage: jope search [OPTIONS] --input <INPUT>\n\nOptions:\n      --input <INPUT>  \n      --json           \n  -h, --help           Print help\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "pipeline",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Product pipeline: dataset, prepared cuts, GP search, emitted code and a receipt\n\nUsage: jope pipeline <COMMAND>\n\nCommands:\n  run             Run dataset -> prepare -> search -> select -> emit and write the receipt\n  verify-receipt  Validate a receipt against the committed jope.pipeline-receipt/v1 or v2 schema\n  help            Print this message or the help of the given subcommand(s)\n\nOptions:\n  -h, --help     Print help\n  -V, --version  Print version\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "pipeline",
+        "run",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Run dataset -> prepare -> search -> select -> emit and write the receipt\n\nUsage: jope pipeline run [OPTIONS] --dataset <DATASET> --output <OUTPUT>\n\nOptions:\n      --dataset <DATASET>    A 16-hex catalog id resolved in the local cache, or a dataset directory\n      --output <OUTPUT>      Where the preparation, searches, emitted sources and receipt are written\n      --budget <BUDGET>      Total per-cut budget across search and comparison (1..=1000 attempts / 1..=600 active seconds). Multiple cuts reserve half for comparison; an in-flight fit may overrun time [default: evaluations=64,seconds=300]\n      --seed <SEED>          Fold seed for the cut preparation [default: 20260907]\n      --rng-seed <RNG_SEED>  Seed of the search's random streams [default: 20260907]\n      --cuts <CUTS>          How many of the fold partition's cuts to prepare and search (1..=5) [default: 1]\n      --emit <EMIT>          Languages to emit: rust, python, cpp17, cpp20, js, or all [default: rust,python,cpp17,cpp20,js]\n      --policy <POLICY>      The proposal stage: auto and skip record a skip, require fails closed [default: auto]\n      --json                 Print the receipt as one JSON document\n  -h, --help                 Print help\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "benchmark",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Verify and plan the private, fixed-panel benchmark\n\nUsage: jope benchmark <COMMAND>\n\nCommands:\n  verify-manifest  Verify the approved frozen manifest; does not open dataset files or fit models\n  verify-inputs    Check every development file's bytes, actual folds, labels, groups and schema\n  methods          List executable Rust recipes, with aliases and configurations identified separately\n  plan             Write an immutable Rust screening plan after all development inputs verify (zero fits)\n  run              Execute or resume a pinned bounded campaign\n  report           Authenticate retained evidence and recompute scores without fitting\n  help             Print this message or the help of the given subcommand(s)\n\nOptions:\n  -h, --help  Print help\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "benchmark",
+        "plan",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Write an immutable Rust screening plan after all development inputs verify (zero fits)\n\nUsage: jope benchmark plan [OPTIONS] --manifest <MANIFEST> --datasets <DATASETS> --source-sha <SOURCE_SHA> --output <OUTPUT>\n\nOptions:\n      --manifest <MANIFEST>      \n      --datasets <DATASETS>      \n      --source-sha <SOURCE_SHA>  \n      --runtimes <RUNTIMES>      Add pinned runtime inventory for a bounded comparator qualification\n      --output <OUTPUT>          \n  -h, --help                     Print help\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "benchmark",
+        "run",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Execute or resume a pinned bounded campaign\n\nUsage: jope benchmark run --plan <PLAN> --plan-sha256 <PLAN_SHA256> --manifest <MANIFEST> --datasets <DATASETS> --journal <JOURNAL>\n\nOptions:\n      --plan <PLAN>                \n      --plan-sha256 <PLAN_SHA256>  \n      --manifest <MANIFEST>        \n      --datasets <DATASETS>        \n      --journal <JOURNAL>          \n  -h, --help                       Print help\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "benchmark",
+        "report",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Authenticate retained evidence and recompute scores without fitting\n\nUsage: jope benchmark report --plan <PLAN> --plan-sha256 <PLAN_SHA256> --manifest <MANIFEST> --datasets <DATASETS> --journal <JOURNAL>\n\nOptions:\n      --plan <PLAN>                \n      --plan-sha256 <PLAN_SHA256>  \n      --manifest <MANIFEST>        \n      --datasets <DATASETS>        \n      --journal <JOURNAL>          \n  -h, --help                       Print help\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "optimize",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Generate and optimize executable algorithms from the verified development panel\n\nUsage: jope optimize <COMMAND>\n\nCommands:\n  capabilities  Read compiled support without loading any model or admitting a budget\n  proof-plan    Prepare a separately budgeted single-regression operational proof\n  plan          Bind paired ASM arms and scheduling to an existing verified panel plan\n  run           Execute or resume the original bounded panel window\n  report        Authenticate retained fits and recompute development scores without fitting\n  help          Print this message or the help of the given subcommand(s)\n\nOptions:\n  -h, --help  Print help\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "optimize",
+        "proof-plan",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Prepare a separately budgeted single-regression operational proof\n\nUsage: jope optimize proof-plan --base-plan <BASE_PLAN> --base-plan-sha256 <BASE_PLAN_SHA256> --configuration <CONFIGURATION> --configuration-sha256 <CONFIGURATION_SHA256> --dataset <DATASET> --resources <RESOURCES> --resources-sha256 <RESOURCES_SHA256> --output <OUTPUT>\n\nOptions:\n      --base-plan <BASE_PLAN>                        \n      --base-plan-sha256 <BASE_PLAN_SHA256>          \n      --configuration <CONFIGURATION>                \n      --configuration-sha256 <CONFIGURATION_SHA256>  \n      --dataset <DATASET>                            \n      --resources <RESOURCES>                        \n      --resources-sha256 <RESOURCES_SHA256>          \n      --output <OUTPUT>                              \n  -h, --help                                         Print help\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "optimize",
+        "plan",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Bind paired ASM arms and scheduling to an existing verified panel plan\n\nUsage: jope optimize plan --base-plan <BASE_PLAN> --base-plan-sha256 <BASE_PLAN_SHA256> --configuration <CONFIGURATION> --configuration-sha256 <CONFIGURATION_SHA256> --output <OUTPUT>\n\nOptions:\n      --base-plan <BASE_PLAN>                        \n      --base-plan-sha256 <BASE_PLAN_SHA256>          \n      --configuration <CONFIGURATION>                \n      --configuration-sha256 <CONFIGURATION_SHA256>  \n      --output <OUTPUT>                              \n  -h, --help                                         Print help\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "datasets",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Dataset catalog: ingest, fetch, verify and link content-addressed datasets\n\nUsage: jope datasets <COMMAND>\n\nCommands:\n  ingest  Enumerate, hash and de-duplicate a source tree; upload unless --dry-run\n  fetch   Download a dataset id, every dataset of a task, or a collection into the cache\n  verify  Re-hash cached blobs and check links; or check a committed dataset repository\n  link    Seed the cache from a local tree by hashing (no download)\n  schema  Print the JSON Schema derived from the Rust types\n  help    Print this message or the help of the given subcommand(s)\n\nOptions:\n  -h, --help     Print help\n  -V, --version  Print version\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "models",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Model bundles: fetch, verify, publish and locate content-addressed weights\n\nUsage: jope models [OPTIONS] <COMMAND>\n\nCommands:\n  fetch    Download a bundle (or every bundle in models/PINNED) into the cache, verifying sha256\n  verify   Re-hash a populated cache; or check the committed manifests without any download\n  publish  Upload a bundle's blobs create-only, then its manifest last (maintainers)\n  path     Print the cache path of a bundle (or of one file in it); fails when it is not fetched\n  help     Print this message or the help of the given subcommand(s)\n\nOptions:\n      --repo <REPO>  Checkout whose models/ directory holds committed manifests and PINNED [default: .]\n  -h, --help         Print help\n  -V, --version      Print version\n",
+      "stderr": ""
+    }
+  ],
+  "model_loading_or_fit_commands": false
+}

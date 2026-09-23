@@ -1,0 +1,190 @@
+{
+  "schema": "jope.maintainer-private-example/v1",
+  "source_head": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
+  "status": "prepared, not executed",
+  "role": "maintainer-private; never a public fitted bundle",
+  "fixture": {
+    "kind": "synthetic",
+    "training_rows": 16,
+    "validation_rows": 4,
+    "test_rows": 4,
+    "prediction_rows": 8,
+    "targets": "3*x0 - 2*x1 + 5",
+    "official_panel_member": false,
+    "official_deterministic_ten_fixture_corpus_member": false
+  },
+  "placeholders": {
+    "jope": "physical immutable CLI binary verified against receipt",
+    "example": "directory holding these exact fixture files",
+    "output": "new durable private output directory outside Git or /tmp",
+    "repo": "reviewed source checkout for appended drivers and comparison helper"
+  },
+  "commands": [
+    {
+      "id": "legacy-fit",
+      "argv": [
+        "{jope}",
+        "fit",
+        "--input",
+        "{example}/gp-synthetic.json",
+        "--genome",
+        "(pipe X (standardize) (ridge))",
+        "--json"
+      ]
+    },
+    {
+      "id": "legacy-emit",
+      "argv": [
+        "{jope}",
+        "emit",
+        "--genome",
+        "(pipe X (standardize) (ridge))",
+        "--lang",
+        "all",
+        "--output",
+        "{output}/recipe",
+        "--json"
+      ]
+    },
+    {
+      "id": "python-fit-predict",
+      "argv": [
+        "python3",
+        "{output}/recipe/model.py",
+        "{example}/train.csv",
+        "{example}/predict.csv",
+        "{output}/recipe/pred-python.txt"
+      ]
+    },
+    {
+      "id": "rust-compile",
+      "argv": [
+        "rustc",
+        "-O",
+        "{output}/recipe/model.rs",
+        "-o",
+        "{output}/recipe/model-rs"
+      ]
+    },
+    {
+      "id": "rust-fit-predict",
+      "argv": [
+        "{output}/recipe/model-rs",
+        "{example}/train.csv",
+        "{example}/predict.csv",
+        "{output}/recipe/pred-rust.txt"
+      ]
+    },
+    {
+      "id": "cpp17-compile",
+      "requires": "Concatenate recipe/model.cpp and repository/deploy/ci/emitters/driver.cpp to recipe/program.cpp without changing either input.",
+      "argv": [
+        "g++",
+        "-std=c++17",
+        "-O3",
+        "-ffp-contract=off",
+        "-fno-fast-math",
+        "{output}/recipe/program.cpp",
+        "-o",
+        "{output}/recipe/model-cpp17"
+      ]
+    },
+    {
+      "id": "cpp17-fit-predict",
+      "argv": [
+        "{output}/recipe/model-cpp17",
+        "{example}/train.csv",
+        "{example}/predict.csv",
+        "{output}/recipe/pred-cpp17.txt"
+      ]
+    },
+    {
+      "id": "cpp20-compile",
+      "argv": [
+        "g++",
+        "-std=c++20",
+        "-O3",
+        "-ffp-contract=off",
+        "-fno-fast-math",
+        "{output}/recipe/program.cpp",
+        "-o",
+        "{output}/recipe/model-cpp20"
+      ]
+    },
+    {
+      "id": "cpp20-fit-predict",
+      "argv": [
+        "{output}/recipe/model-cpp20",
+        "{example}/train.csv",
+        "{example}/predict.csv",
+        "{output}/recipe/pred-cpp20.txt"
+      ]
+    },
+    {
+      "id": "javascript-fit-predict",
+      "requires": "Concatenate recipe/model.js and repository/deploy/ci/emitters/driver.js to recipe/program.js without changing either input.",
+      "argv": [
+        "node",
+        "{output}/recipe/program.js",
+        "{example}/train.csv",
+        "{example}/predict.csv",
+        "{output}/recipe/pred-js.txt"
+      ]
+    },
+    {
+      "id": "compare-bits",
+      "argv": [
+        "python3",
+        "{repo}/deploy/ci/emitters/compare-bits.py",
+        "{output}/recipe"
+      ]
+    },
+    {
+      "id": "verify-required-language-predictions",
+      "argv": [
+        "python3",
+        "{example}/validate-outputs.py",
+        "--recipe-output",
+        "{output}/recipe"
+      ]
+    },
+    {
+      "id": "legacy-pipeline",
+      "independent_from_tiny_fixture": true,
+      "argv": [
+        "{jope}",
+        "pipeline",
+        "run",
+        "--dataset",
+        "{repo}/datasets/test/pmlb-229-pwlinear",
+        "--budget",
+        "evaluations=4,seconds=60",
+        "--seed",
+        "7",
+        "--rng-seed",
+        "7",
+        "--cuts",
+        "1",
+        "--emit",
+        "rust,python,cpp17,cpp20,js",
+        "--policy",
+        "skip",
+        "--output",
+        "{output}/pipeline",
+        "--json"
+      ]
+    },
+    {
+      "id": "verify-pipeline",
+      "argv": [
+        "{jope}",
+        "pipeline",
+        "verify-receipt",
+        "--receipt",
+        "{output}/pipeline/receipt.json",
+        "--json"
+      ]
+    }
+  ],
+  "requires_actual_admission": "Root must allocate numerical work after the current exclusive live/CI allocation is free. No command was executed by the document author."
+}

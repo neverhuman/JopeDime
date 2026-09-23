@@ -1,0 +1,143 @@
+{
+  "actual_payload_bodies_opened": false,
+  "all_dataset_metadata_in_catalog": true,
+  "catalog_path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-datasets-use2--catalog--v1--catalog.jsonl",
+  "catalog_sha256": "ab9fda8d2dea46067b70a42812e9d3c1d9dc6ba025780100df34377e81aa1120",
+  "collections": [
+    {
+      "all_members_in_catalog": true,
+      "members": 10,
+      "members_sha256_declared": "cc63064f06879949f25fb6191e2bd6825598da23ca5e99532eaba76a75c47f1a",
+      "members_unique": 10,
+      "name": "test-10",
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-datasets-use2--collections--test-10--v1.json",
+      "policy": {
+        "allowed_spdx": [
+          "MIT",
+          "GPL-2.0-only",
+          "GPL-3.0-only",
+          "CC-BY-4.0",
+          "LicenseRef-US-Gov-Public-Domain"
+        ],
+        "license_required": true
+      },
+      "sha256": "84d79fe7bf60483f127429aa3b0cf1a1c1d8d79cb08c36137a1607b617019ab7",
+      "task": "regression",
+      "version": 1,
+      "visibility": "private"
+    },
+    {
+      "all_members_in_catalog": true,
+      "members": 3859,
+      "members_sha256_declared": "0abee3d257f65259c0c5c13a8bfd861b8e71924770cd2a0252de337169aa1a81",
+      "members_unique": 3859,
+      "name": "registry-real-v1",
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-datasets-use2--collections--registry-real-v1--v1.json",
+      "policy": {
+        "allowed_spdx": [],
+        "license_required": false
+      },
+      "sha256": "bf35ea9ecfebc2f77af2ee6448f295f51f5466483ea10b803f168d2586bed9af",
+      "task": "mixed",
+      "version": 1,
+      "visibility": "private"
+    }
+  ],
+  "datasets": 3859,
+  "license_status": {
+    "recorded": 104,
+    "unknown": 3755
+  },
+  "metadata_statistics_are_not_measured_payload_statistics": true,
+  "origins": {
+    "real": 3859
+  },
+  "provenance_platform": {
+    "absent": 1928,
+    "kaggle": 2,
+    "openml": 671,
+    "pmlb": 104,
+    "rdatasets": 1047,
+    "seaborn": 9,
+    "sklearn": 2,
+    "socrata": 45,
+    "tidytuesday": 28,
+    "uci": 16,
+    "worldbank": 7
+  },
+  "schema": "jope.catalog-metadata-audit/v1",
+  "tasks": {
+    "binary": {
+      "datasets": 843,
+      "feature_range": [
+        1,
+        2000
+      ],
+      "features_sum_not_union": 46036,
+      "row_range": [
+        10,
+        69624
+      ],
+      "rows": 1490965,
+      "test_rows_metadata_only": 598658,
+      "train_rows": 892307
+    },
+    "multi_label": {
+      "datasets": 322,
+      "feature_range": [
+        1,
+        20531
+      ],
+      "features_sum_not_union": 40526,
+      "row_range": [
+        23,
+        50000
+      ],
+      "rows": 786436,
+      "test_rows_metadata_only": 230680,
+      "train_rows": 555756
+    },
+    "regression": {
+      "datasets": 2611,
+      "feature_range": [
+        0,
+        1688
+      ],
+      "features_sum_not_union": 177916,
+      "row_range": [
+        10,
+        50000
+      ],
+      "rows": 3025922,
+      "test_rows_metadata_only": 1126948,
+      "train_rows": 1898974
+    },
+    "timeseries": {
+      "datasets": 83,
+      "feature_range": [
+        2,
+        86
+      ],
+      "features_sum_not_union": 627,
+      "row_range": [
+        81,
+        49999
+      ],
+      "rows": 904728,
+      "test_rows_metadata_only": 129209,
+      "train_rows": 775519
+    }
+  },
+  "totals": {
+    "categorical_features": 4628,
+    "columns": 268964,
+    "features": 265105,
+    "rows": 6208051
+  },
+  "unique_dataset_hashes": 3859,
+  "unknowns": [
+    "Payload feature distributions/missingness/class balances not contained in catalog",
+    "Models and datasets listed are stored, not proven usable/qualified",
+    "S3 bucket current listing excludes old versions/deleted objects"
+  ]
+}

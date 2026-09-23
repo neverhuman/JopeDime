@@ -1,0 +1,51 @@
+{
+  "captured_utc": "2026-09-23T16:35:35.107502+00:00",
+  "command": [
+    "aws",
+    "--profile",
+    "veox-jepson-prod",
+    "cloudwatch",
+    "get-metric-statistics",
+    "--region",
+    "us-east-2",
+    "--namespace",
+    "AWS/S3",
+    "--metric-name",
+    "BucketSizeBytes",
+    "--dimensions",
+    "Name=BucketName,Value=veox-jopedime-learning-use2",
+    "Name=StorageType,Value=StandardStorage",
+    "--start-time",
+    "2026-09-21T00:00:00Z",
+    "--end-time",
+    "2026-09-24T00:00:00Z",
+    "--period",
+    "86400",
+    "--statistics",
+    "Average",
+    "--output",
+    "json"
+  ],
+  "exit_code": 0,
+  "response": {
+    "Label": "BucketSizeBytes",
+    "Datapoints": [
+      {
+        "Timestamp": "2026-09-21T00:00:00+00:00",
+        "Average": 430732116688.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-09-23T00:00:00+00:00",
+        "Average": 430732116688.0,
+        "Unit": "Bytes"
+      },
+      {
+        "Timestamp": "2026-09-22T00:00:00+00:00",
+        "Average": 430732116688.0,
+        "Unit": "Bytes"
+      }
+    ]
+  },
+  "error": null
+}

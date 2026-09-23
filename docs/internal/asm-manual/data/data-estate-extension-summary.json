@@ -1,0 +1,497 @@
+{
+  "schema": "jope.manual-data-estate-aggregate-extension/v1",
+  "author_ledger_release_at": "2026-09-23T19:30:23.160305+00:00",
+  "source_manifest_sha256": "4bebee5a4ec1a3629351f53dee7b52de409fe6f75dadb0184d69d13e15423522",
+  "s3_captured_utc": "2026-09-23T17:37:54.490163+00:00",
+  "local_report_generated_utc": "2026-09-23T18:54:01Z",
+  "metadata_only": true,
+  "sealed_scope": "Bucket/top-level-prefix counts and bytes only. No keys, per-object digest identities or payload bodies are included.",
+  "buckets": [
+    {
+      "bucket": "veox-jopedime-archive-use2",
+      "region": "us-east-2",
+      "objects": 180547,
+      "bytes": 33078118944,
+      "complete": true,
+      "captured_utc": {
+        "started": "2026-09-23T17:36:14.010411+00:00",
+        "finished": "2026-09-23T17:37:10.125180+00:00"
+      }
+    },
+    {
+      "bucket": "veox-jopedime-learning-usw2",
+      "region": "us-west-2",
+      "objects": 0,
+      "bytes": 0,
+      "complete": true,
+      "captured_utc": {
+        "started": "2026-09-23T17:36:13.445380+00:00",
+        "finished": "2026-09-23T17:36:13.656999+00:00"
+      }
+    },
+    {
+      "bucket": "veox-jopedime-models-usw2",
+      "region": "us-west-2",
+      "objects": 967,
+      "bytes": 3929105273,
+      "complete": true,
+      "captured_utc": {
+        "started": "2026-09-23T17:34:16.443700+00:00",
+        "finished": "2026-09-23T17:34:16.870471+00:00"
+      }
+    },
+    {
+      "bucket": "veox-jopedime-models-use2",
+      "region": "us-east-2",
+      "objects": 967,
+      "bytes": 3929105273,
+      "complete": true,
+      "captured_utc": {
+        "started": "2026-09-23T17:34:15.485776+00:00",
+        "finished": "2026-09-23T17:34:16.096061+00:00"
+      }
+    },
+    {
+      "bucket": "jopedime-714044927654-us-east-2-dev",
+      "region": "us-east-2",
+      "objects": 186305,
+      "bytes": 118116270003,
+      "complete": true,
+      "captured_utc": {
+        "started": "2026-09-23T17:34:17.218052+00:00",
+        "finished": "2026-09-23T17:35:14.036898+00:00"
+      }
+    },
+    {
+      "bucket": "jopedime-714044927654-us-east-2-prod",
+      "region": "us-east-2",
+      "objects": 186304,
+      "bytes": 117847288926,
+      "complete": true,
+      "captured_utc": {
+        "started": "2026-09-23T17:35:14.390851+00:00",
+        "finished": "2026-09-23T17:36:09.810175+00:00"
+      }
+    },
+    {
+      "bucket": "jopedime-714044927654-us-east-2-sealed",
+      "region": "us-east-2",
+      "objects": 8679,
+      "bytes": 246060447894,
+      "complete": true,
+      "captured_utc": {
+        "started": "2026-09-23T17:36:10.161460+00:00",
+        "finished": "2026-09-23T17:36:13.102722+00:00"
+      }
+    }
+  ],
+  "learning_prefixes": [
+    {
+      "prefix": "staging/lineage-b/accepted60000-restored/",
+      "objects": 225207,
+      "bytes": 110918425513,
+      "basis": "measured"
+    },
+    {
+      "prefix": "staging/lineage-a/encodings/",
+      "objects": 419644,
+      "bytes": 149840032105,
+      "basis": "derived"
+    },
+    {
+      "prefix": "staging/lineage-a/preserved-archives-20260908-F-D-E/",
+      "objects": 34,
+      "bytes": 141775927725,
+      "basis": "measured"
+    },
+    {
+      "prefix": "staging/lineage-a/genebank/",
+      "objects": 5,
+      "bytes": 1809949972,
+      "basis": "measured"
+    },
+    {
+      "prefix": "staging/mirror-weights/",
+      "objects": 391,
+      "bytes": 26301123853,
+      "basis": "measured"
+    }
+  ],
+  "learning_prefix_caveat": "encodings is derived from earlier complete bucket total minus four later measured siblings; closure is by construction across captures, not an independent atomic rescan.",
+  "local_roots": [
+    {
+      "root": "/home/ubuntu/remote_super/quant",
+      "files": 6127909,
+      "bytes": 740214173579,
+      "alloc_bytes": 755552710656,
+      "find_exit_code": 0,
+      "find_stderr_lines": 0,
+      "scan_started_utc": "2026-09-23T17:30:58Z",
+      "scan_elapsed_s": 95.5
+    },
+    {
+      "root": "/home/ubuntu/jope-flywheel",
+      "files": 465739,
+      "bytes": 161547128345,
+      "alloc_bytes": 162954956800,
+      "find_exit_code": 0,
+      "find_stderr_lines": 0,
+      "scan_started_utc": "2026-09-23T17:32:36Z",
+      "scan_elapsed_s": 7.2
+    },
+    {
+      "root": "/home/ubuntu/preserved-archives",
+      "files": 23,
+      "bytes": 141775926746,
+      "alloc_bytes": 141776224256,
+      "find_exit_code": 0,
+      "find_stderr_lines": 0,
+      "scan_started_utc": "2026-09-23T17:32:43Z",
+      "scan_elapsed_s": 0.0
+    },
+    {
+      "root": "/home/ubuntu/jope-preservation",
+      "files": 390889,
+      "bytes": 250487278093,
+      "alloc_bytes": 250592124928,
+      "find_exit_code": 0,
+      "find_stderr_lines": 0,
+      "scan_started_utc": "2026-09-23T17:32:43Z",
+      "scan_elapsed_s": 7.3
+    },
+    {
+      "root": "/home/ubuntu/jope-evidence",
+      "files": 236213,
+      "bytes": 123899684744,
+      "alloc_bytes": 125110591488,
+      "find_exit_code": 0,
+      "find_stderr_lines": 0,
+      "scan_started_utc": "2026-09-23T17:32:51Z",
+      "scan_elapsed_s": 6.6
+    },
+    {
+      "root": "/home/ubuntu/jope-migration-evidence",
+      "files": 234158,
+      "bytes": 33597305065,
+      "alloc_bytes": 35018276864,
+      "find_exit_code": 1,
+      "find_stderr_lines": 15,
+      "scan_started_utc": "2026-09-23T17:32:57Z",
+      "scan_elapsed_s": 9.6
+    },
+    {
+      "root": "/home/ubuntu/jope-dime-mirror",
+      "files": 201251,
+      "bytes": 23067601488,
+      "alloc_bytes": 23633518592,
+      "find_exit_code": 0,
+      "find_stderr_lines": 0,
+      "scan_started_utc": "2026-09-23T17:33:07Z",
+      "scan_elapsed_s": 3.8
+    },
+    {
+      "root": "/home/ubuntu/jope-rescue-20260921",
+      "files": 70442,
+      "bytes": 12508351289,
+      "alloc_bytes": 12767522816,
+      "find_exit_code": 0,
+      "find_stderr_lines": 0,
+      "scan_started_utc": "2026-09-23T17:33:11Z",
+      "scan_elapsed_s": 1.3
+    },
+    {
+      "root": "/home/ubuntu/golden42",
+      "files": 37612,
+      "bytes": 1749309751,
+      "alloc_bytes": 1849475072,
+      "find_exit_code": 0,
+      "find_stderr_lines": 0,
+      "scan_started_utc": "2026-09-23T17:33:12Z",
+      "scan_elapsed_s": 0.8
+    },
+    {
+      "root": "/home/ubuntu/sotarena",
+      "files": 22602,
+      "bytes": 705696476,
+      "alloc_bytes": 776736768,
+      "find_exit_code": 0,
+      "find_stderr_lines": 0,
+      "scan_started_utc": "2026-09-23T17:33:13Z",
+      "scan_elapsed_s": 1.5
+    },
+    {
+      "root": "/home/ubuntu/hyperion/weights",
+      "files": 4,
+      "bytes": 253108234,
+      "alloc_bytes": 253132800,
+      "find_exit_code": 0,
+      "find_stderr_lines": 0,
+      "scan_started_utc": "2026-09-23T17:33:14Z",
+      "scan_elapsed_s": 0.0
+    },
+    {
+      "root": "/home/ubuntu/.cache/jope",
+      "files": 170,
+      "bytes": 36754881,
+      "alloc_bytes": 37158912,
+      "find_exit_code": 0,
+      "find_stderr_lines": 0,
+      "scan_started_utc": "2026-09-23T17:33:14Z",
+      "scan_elapsed_s": 0.0
+    }
+  ],
+  "local_totals": {
+    "files": 7787012,
+    "bytes": 1489842318691,
+    "alloc_bytes": 1510322429952,
+    "bytes_excluding_hardlink_dups": 1472779971117
+  },
+  "local_filesystem_readback": {
+    "filesystem": "/dev/nvme2n1p2",
+    "size_bytes": 7936183619584,
+    "used_bytes": 6815282892800,
+    "avail_bytes": 1040879616000,
+    "use_pct": "87%",
+    "mounted_on": "/",
+    "size_gib": 7391.147,
+    "used_gib": 6347.227,
+    "avail_gib": 969.395,
+    "reserved_or_unavailable_bytes": 80021110784,
+    "reserved_or_unavailable_gib": 74.525
+  },
+  "quant_directory_classes": {
+    "hex16_complete_direct_marker_directories": 2322,
+    "synth_hex16_dataset_directories": 25197,
+    "named_containers": 2,
+    "synth_hex16_class_files": 86923,
+    "synth_hex16_class_bytes": 21494046579,
+    "admitted_dataset_count": null,
+    "description": "Directory-name and train.csv/test.csv/meta.json marker observations only; no payload/row/feature/admission validation."
+  },
+  "configuration_summary": {
+    "buckets_inspected": 9,
+    "versioning_enabled": 9,
+    "object_lock_enabled_bucket_count": 6,
+    "object_lock_default_retention_present_count": 0,
+    "custody_buckets_without_object_lock_configuration": 3,
+    "object_retention_or_legal_hold_verified": false,
+    "learning_replication_prefixes": [
+      "hwm/",
+      "waves/",
+      "checkpoints/serving/",
+      "training-head"
+    ],
+    "learning_usw2_objects": 0,
+    "models_comparison": "Totals and reported depth1-3 prefix counts/bytes match; no key/ETag/payload identity or restore proof."
+  },
+  "risk_aggregate_rows": [
+    {
+      "id": "Q-T3-REG-SYNTH-PAYLOAD",
+      "author_severity": "critical",
+      "files": 75591,
+      "bytes": 21471473310,
+      "size_field": "size/total",
+      "source_size_basis": "census bytes from jope-preservation/20260920/inventory.sqlite (2026-09-20), domain from quant-classified-v2-sources.jsonl",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "Q-T3-SYNTH-BINARY-PAYLOAD",
+      "author_severity": "high",
+      "files": 305284,
+      "bytes": 135798140876,
+      "size_field": "size/total",
+      "source_size_basis": "census bytes from jope-preservation/20260920/inventory.sqlite (2026-09-20), domain from quant-classified-v2-sources.jsonl",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "Q-T3-SYNTH-SOURCES",
+      "author_severity": "high",
+      "files": 101687,
+      "bytes": 126856964874,
+      "size_field": "size",
+      "source_size_basis": "census bytes from jope-preservation/20260920/inventory.sqlite (2026-09-20), domain from quant-classified-v2-sources.jsonl",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "Q-SYNTH-GENERATOR",
+      "author_severity": "critical",
+      "files": 1,
+      "bytes": 102068,
+      "size_field": "size",
+      "source_size_basis": "lstat 2026-09-23",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "Q-BINARY-ORDINARY-UNPACKED",
+      "author_severity": "medium",
+      "files": null,
+      "bytes": null,
+      "size_field": "size",
+      "source_size_basis": "census bytes from jope-preservation/20260920/inventory.sqlite (2026-09-20), domain from quant-classified-v2-sources.jsonl",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "Q-PACKED-DERIVED",
+      "author_severity": "medium",
+      "files": 10924,
+      "bytes": 35571974237,
+      "size_field": "size/total",
+      "source_size_basis": "census bytes from jope-preservation/20260920/inventory.sqlite (2026-09-20), domain from quant-classified-v2-sources.jsonl",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "Q-MODELS",
+      "author_severity": "high",
+      "files": 650015,
+      "bytes": 78566865846,
+      "size_field": "size/lstat_2026_09_23",
+      "source_size_basis": "lstat 2026-09-23 (local-estate-extension) and census 2026-09-20",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "Q-OTHER-RESEARCH",
+      "author_severity": "medium",
+      "files": 227167,
+      "bytes": 11290222107,
+      "size_field": "size/total",
+      "source_size_basis": "census bytes from jope-preservation/20260920/inventory.sqlite (2026-09-20), domain from quant-classified-v2-sources.jsonl",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "M-MIRROR-CLASSES",
+      "author_severity": "critical",
+      "files": 394460,
+      "bytes": 75989854135,
+      "size_field": "size/total_present_locally",
+      "source_size_basis": "lstat 2026-09-23; sha256 from the mirror's own index/<class>.json",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "L-JOPE-DIME-MIRROR",
+      "author_severity": "high",
+      "files": 201251,
+      "bytes": 23067601488,
+      "size_field": "size",
+      "source_size_basis": "lstat 2026-09-23",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "L-JOPE-EVIDENCE-OTHER",
+      "author_severity": "high",
+      "files": 11006,
+      "bytes": 12981259231,
+      "size_field": "size/total",
+      "source_size_basis": "lstat 2026-09-23",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "L-FLYWHEEL-OTHER",
+      "author_severity": "high",
+      "files": 46077,
+      "bytes": 9889859426,
+      "size_field": "size/total",
+      "source_size_basis": "lstat 2026-09-23",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "L-MIGRATION-EVIDENCE-OTHER",
+      "author_severity": "high",
+      "files": 53638,
+      "bytes": 22715493488,
+      "size_field": "size/total",
+      "source_size_basis": "lstat 2026-09-23",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "L-CUSTODY-JOURNALS",
+      "author_severity": "medium",
+      "files": 214,
+      "bytes": 29425778785,
+      "size_field": "size",
+      "source_size_basis": "lstat 2026-09-23",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "L-GOLDEN42",
+      "author_severity": "low",
+      "files": 37612,
+      "bytes": 1749309751,
+      "size_field": "size",
+      "source_size_basis": "lstat 2026-09-23",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "L-JOPE-RESCUE",
+      "author_severity": "medium",
+      "files": 70442,
+      "bytes": 12508351289,
+      "size_field": "size",
+      "source_size_basis": "lstat 2026-09-23",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "L-CACHE-PANEL",
+      "author_severity": "low",
+      "files": 170,
+      "bytes": 36754881,
+      "size_field": "size",
+      "source_size_basis": "lstat 2026-09-23",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "L-SOTARENA-DIRTY",
+      "author_severity": "low",
+      "files": 22602,
+      "bytes": 705696476,
+      "size_field": "size",
+      "source_size_basis": "lstat 2026-09-23",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    },
+    {
+      "id": "U-RETAINED-ROOTS-NOT-SCANNED",
+      "author_severity": "unknown",
+      "files": null,
+      "bytes": null,
+      "size_field": "size",
+      "source_size_basis": "retained-inventory.sqlite roots table (2026-09-20)",
+      "qualification": "Author metadata reconciliation in the surveyed receipts/indexes only; absence of a recorded remote copy is not proof that no copy exists anywhere. Local duplicates and S3 coverage can overlap; do not sum risk rows."
+    }
+  ],
+  "risk_rows_not_additive": true,
+  "unknowns": [
+    "Noncurrent object versions/delete markers",
+    "Per-object retention/legal hold and payload identity",
+    "Fifteen unreadable local directories",
+    "Seven retained roots not rescanned",
+    "Complete global remote-copy census",
+    "Current disk headroom after dated observations",
+    "Training admission or recovery completeness from file counts"
+  ],
+  "source_field_mapping": {
+    "buckets": "s3-estate-extension.json#/buckets (six aggregate fields only)",
+    "learning_prefixes": "s3-estate-extension.json#/learning_use2_targeted/reconciliation/per_prefix",
+    "local_roots": "local-estate-extension.json#/summary_by_root (eight aggregate fields only)",
+    "local_totals": "local-estate-extension.json#/estate_totals_12_roots (four totals only)",
+    "local_filesystem_readback": "local-estate-extension.json#/filesystem/df_root",
+    "quant_directory_classes": "local-estate-extension.json#/quant/class_totals",
+    "configuration_summary": "s3-estate-extension.json#/config and #/parity; source README configuration summary",
+    "risk_aggregate_rows": "single-copy-risks.json#/risks selected ID/severity/count/size fields only"
+  },
+  "source_pins": [
+    {
+      "name": "s3-estate-extension.json",
+      "sha256": "ae091bb2ac6c86e6d8d41230c84f4cbdd06a1ffb2be1bac193e43e780f260063",
+      "bytes": 295807
+    },
+    {
+      "name": "local-estate-extension.json",
+      "sha256": "f30153553b170651905e68569bf0dc0dc0b5c8000dbfb99c306d167cc9eb1e02",
+      "bytes": 413960
+    },
+    {
+      "name": "single-copy-risks.json",
+      "sha256": "115d2d485cddccc0b7d290629b97bf6126c13a014e616410b745f860baba7a9a",
+      "bytes": 23947
+    }
+  ]
+}

@@ -1,0 +1,164 @@
+{
+  "schema": "asm.training_metric_definitions.v1",
+  "definitions": {
+    "sequence_nll": {
+      "native_v3": "Grammar-masked 0.05-smoothed per-program token cross entropy, then normalized program weights 0.05+percentile^4; sampled minibatch values in old endpoints.",
+      "unit": "nats; lower desired within fixed identity"
+    },
+    "ranking_bt": {
+      "native_v3": "Weighted softplus of loser reward minus winner reward for finite unequal-score within-comparison pairs; averaged reward heads and top-decile pair boost.",
+      "unit": "dimensionless; lower desired"
+    },
+    "ranking_listwise": {
+      "native_v3": "Cross entropy from softmax(percentile/0.25) target to predicted log_softmax reward; nonzero target-entropy floor.",
+      "unit": "nats; lower desired with same comparison groups"
+    },
+    "runtime_huber": {
+      "native_v3": "Smooth-L1/Huber on log1p predicted seconds against log1p recorded seconds.",
+      "unit": "log-time error; lower desired"
+    },
+    "contextfree_bt": {
+      "native_v3": "Program-only ablation ranking loss, coefficient0.05. Absent from Sep11 endpoint telemetry; present in60100 original logs.",
+      "unit": "dimensionless"
+    },
+    "val_seq_nll": {
+      "policy_v3.2": "Separate validation evaluator sets smoothing0.0 and averages batch NLL; distinct from val_loss_components.seq_nll (smoothed/provenance-weighted component)."
+    },
+    "val_pairwise_win_accuracy": {
+      "policy_v3.2": "Fraction of unequal-value within-dataset pairs whose predicted ordering Boolean agrees with target ordering. Predicted ties receive implementation-order-dependent Boolean treatment, not explicit half-credit."
+    },
+    "val_ablation_pairwise_win": {
+      "policy_v3.2": "Same pairwise metric using genome-only reward ablation."
+    },
+    "val_conditional_advantage": {
+      "policy_v3.2": "Conditional pairwise accuracy minus genome-only ablation pairwise accuracy; not downstream fit win rate."
+    },
+    "val_top1_historical_regret": {
+      "policy_v3.2": "Mean over datasets of best retained target value minus value of highest predicted-reward retained candidate; not regret to an unknown optimal algorithm."
+    },
+    "val_reward_cv_correlation": {
+      "policy_v3.2": "Pearson correlation between predicted rewards and retained robust_delta labels, despite CV in name; not downstream cross-validation score."
+    },
+    "val_uncertainty_error_spearman": {
+      "policy_v3.2": "Pearson on positional sorted ranks of ensemble standard deviation and absolute reward error; ties do not use average ranks; implementation diagnostic rather than calibrated uncertainty."
+    },
+    "val_head_accuracy_featmath": {
+      "policy_v3.2": "Fraction of featmath validation rows matching the first head-role grammar token under teacher-forced decoding; not valid fitted algorithm accuracy."
+    },
+    "train_loss": {
+      "policy_v3.2": "Across-rank sum of per-batch composite losses divided by executed steps; includes learned uncertainty weights for sequence/runtime/stability and fixed-scale ranking/routing terms."
+    },
+    "overfit_gap": {
+      "policy_v3.2": "val_loss minus train_loss; same logged combination but different example populations and phase weighting."
+    }
+  },
+  "historical_source_binding_limit": "The retained legacy source declares policy_v3.2 and agrees with log field construction. Gen31 log does not embed a source SHA, so these definitions are source-based reconstruction, not an exact-run build attestation.",
+  "source_refs": [
+    {
+      "id": "H01",
+      "path": "/home/ubuntu/jope/src/jope/policy/model_v3.py",
+      "sha256": "8071df02a2abf1b76adb9b73b3c1d981807f2867332779830e2ea58a61590c64",
+      "line_anchors": [
+        40,
+        289,
+        305,
+        315,
+        350,
+        372
+      ]
+    },
+    {
+      "id": "H02",
+      "path": "/home/ubuntu/jope/src/jope/policy/losses.py",
+      "sha256": "81745ee458a3c858a0772f7b3ebf715beb83f7bcff612a78a2c7891073669805",
+      "line_anchors": [
+        24,
+        35,
+        48,
+        56,
+        85,
+        142,
+        207
+      ]
+    },
+    {
+      "id": "H03",
+      "path": "/home/ubuntu/jope/src/jope/policy/train_v3.py",
+      "sha256": "ed8ce1ca60a1402f3c396083d1fede1ef0147e9f0030a2df8947ebce7fdd7009",
+      "line_anchors": [
+        340,
+        358,
+        438,
+        456,
+        474,
+        580,
+        613,
+        639,
+        696
+      ]
+    },
+    {
+      "id": "H04",
+      "path": "/home/ubuntu/jope/src/jope/model.py",
+      "sha256": "12e2bfc106b4d61fb132c96eea8e138b8c826a54b9d2a6de762778c371fa0b0a",
+      "line_anchors": [
+        981,
+        997,
+        1015
+      ]
+    },
+    {
+      "id": "H05",
+      "path": "/home/ubuntu/jope-prime/provenance.json",
+      "sha256": "3b9fed4df8db76e1b8c7f3acf505dcdc14f9edf8b43c1d92179eae9e72d62d5b",
+      "line_anchors": [
+        3,
+        13,
+        129
+      ]
+    },
+    {
+      "id": "H06",
+      "path": "/home/ubuntu/JopeDime/models/bundles/policy-step-60000.json",
+      "sha256": "d8e259b26ef8d580ddb99ae5826c9501bcdc0c32045945eef9010926fd796e9e",
+      "line_anchors": [
+        3,
+        7,
+        73
+      ]
+    },
+    {
+      "id": "H07",
+      "path": "/home/ubuntu/JopeDime/docs/legacy/root-docs/audits/worldclass-redteam-20260911/learning-hpc.md",
+      "sha256": "7473d75920b892d38072e750ca450837eb4cda0d2723c08aebaa44e0e219dbb6",
+      "line_anchors": [
+        9,
+        21,
+        37,
+        45,
+        49,
+        65
+      ]
+    },
+    {
+      "id": "H08",
+      "path": "/home/ubuntu/JopeDime/docs/legacy/root-docs/audits/worldclass-redteam-20260911/evidence/learning-native-v3/neural.rs",
+      "sha256": "0ad270f6d4afe77f474c0aadef7a13109024d380b11d7923b1479397152d67ba",
+      "line_anchors": [
+        447,
+        512
+      ]
+    },
+    {
+      "id": "H09",
+      "path": "/home/ubuntu/JopeDime/docs/legacy/root-docs/audits/worldclass-redteam-20260911/evidence/learning-native-v3/training.rs",
+      "sha256": "4bd74f36d9d64aa5407a4afb4a3cef7dd408d6bb4907ad75682ddbf1dd6134ab",
+      "line_anchors": [
+        692,
+        712,
+        720,
+        863
+      ]
+    }
+  ]
+}

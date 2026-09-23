@@ -1,0 +1,25 @@
+{
+  "schema": "jope.manual-external-training-release-readback/v1",
+  "author_ledger_release": "2026-09-23T18:44:53.414658Z",
+  "manifest_sha256": "7a7a44cf68fafbf29b3af3dfc96b333762fad2d271e0abbab8957f9ef36bd496",
+  "manifest_entries": 419,
+  "selected_entries_verified": [
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/TRAINING-PROGRESS.md",
+      "sha256": "8b3d50b87b54802508b0fb027fb9bba50d94790a062fa8f5aa3112ca814e934d",
+      "bytes": 58316
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/POINTERS.md",
+      "sha256": "7649a627127b60b7a3d3ef6f7e3b8ad19c0b07840692db163fccb7e9e5af132a",
+      "bytes": 11083
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/answers.json",
+      "sha256": "d30ee8a01bfdd157574c678bc6f086102f02169da3ef3dc914858ce06d1349e6",
+      "bytes": 15582
+    }
+  ],
+  "original_manifest_unchanged_sha256": "8db70faf02a0d835e9cc3c488f5821da1e20693f6441335dd1a4317eff7768d5",
+  "scope": "Three selected files independently matched append-only release2; entire419-file closure not rehashed by this reviewer. ch15-check is excluded and not opened here. DATA-01 remains active/unread."
+}

@@ -1,0 +1,703 @@
+{
+  "schema": "jope.manual-render/v1",
+  "sections": 17,
+  "pages": 203,
+  "pdf_sha256": "69418c48a817070c176eb409fe0807b69d7e02970da82fc5b3136a296ed19ebd",
+  "pdf_bytes": 5111355,
+  "network_resources": false,
+  "runtime": {
+    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+    "source_date_epoch": "1790121600",
+    "libraries": {
+      "weasyprint": "68.1",
+      "Markdown": "3.5.2",
+      "beautifulsoup4": "4.12.3",
+      "pydyf": "0.12.1",
+      "fonttools": "4.61.1",
+      "matplotlib": "3.10.8",
+      "numpy": "1.26.4",
+      "Pillow": "10.2.0"
+    },
+    "fonts": [
+      {
+        "selection": "DejaVu Sans",
+        "path": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "sha256": "ae7b7855e115a5966d8b1b3f80f254ccc117ec86f9965e202ee2940453837280"
+      },
+      {
+        "selection": "DejaVu Sans:style=Bold",
+        "path": "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "sha256": "5c1247acef7f2b8522a31742c76d6adcb5569bacc0be7ceaa4dc39dd252ce895"
+      },
+      {
+        "selection": "DejaVu Sans:style=Oblique",
+        "path": "/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf",
+        "sha256": "2d7b524ce7d51db78591b4e19c8185b89f3af0aa6534c5e524cf0c6f4ea673de"
+      },
+      {
+        "selection": "DejaVu Sans:style=Bold Oblique",
+        "path": "/usr/share/fonts/truetype/dejavu/DejaVuSans-BoldOblique.ttf",
+        "sha256": "58d78a24ddff9ab30427550d68f0b9b7dd28d6690f9f4b3e4ebac7105252e9b2"
+      },
+      {
+        "selection": "DejaVu Sans Mono",
+        "path": "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+        "sha256": "c805f9436dbc268644c1d9584f01a601a653e028e08fd74b9b949f6cf8304d88"
+      }
+    ]
+  },
+  "inputs": [
+    {
+      "path": "internal/asm-manual/data/architecture-training-evidence.json",
+      "sha256": "ec1aecd79dca27c85450e9a0a7bdf0b3ddc46067893f1ac22c824a1f58f79560"
+    },
+    {
+      "path": "internal/asm-manual/data/catalog-summary.json",
+      "sha256": "e7d7d4a459f9fbc3b6aea10212c26a812938472c647ab5fbcce11a8acf46a4b8"
+    },
+    {
+      "path": "internal/asm-manual/data/claude-figure-observation.json",
+      "sha256": "c6779ba0def575bc092d749e9a9735bdf23e42c2fb0a8663e195ea9dcc47808f"
+    },
+    {
+      "path": "internal/asm-manual/data/cli-help-68.json",
+      "sha256": "4d9c9712503066e81050f8d9e8dac49c74716077a9e4244f78fc242f2f21371f"
+    },
+    {
+      "path": "internal/asm-manual/data/coordinated-roadmap-proposal.json",
+      "sha256": "334ae97446ef29963bce47582f1550c7d369f0b329ef143c128685991422ffd4"
+    },
+    {
+      "path": "internal/asm-manual/data/data-estate-extension-release.json",
+      "sha256": "366fa00016c262f4771a03f9fc2eba9bf5960d9e5030ec9a592d876e4c9abf5b"
+    },
+    {
+      "path": "internal/asm-manual/data/data-estate-extension-summary.json",
+      "sha256": "e4dbe07502f46028fd2a9ff0ed9776ce0b68c5fe1856b820b7ca94492ef1b2e0"
+    },
+    {
+      "path": "internal/asm-manual/data/data-evidence-HANDOFF.json",
+      "sha256": "cf63d7ad2cd1c56558c2b08af62d233ccbabdb1a1a7e91ed1b774e3de5d5b802"
+    },
+    {
+      "path": "internal/asm-manual/data/dataset-inventory.json",
+      "sha256": "c008ebedb5febee38ccba7d3f220009350a6ef055b865c25de2a5ba0ca2e6639"
+    },
+    {
+      "path": "internal/asm-manual/data/evidence-packaging.json",
+      "sha256": "224a63d0cc663d432787e8d46f4f001600a8eb911606125e69783cfef99c3f6d"
+    },
+    {
+      "path": "internal/asm-manual/data/example-acceptance/HANDOFF.json",
+      "sha256": "a05e8a0e9f9430b0c71ff23c57e5e29532a61bbe118daac3fe358b45f2423346"
+    },
+    {
+      "path": "internal/asm-manual/data/example-acceptance/audit.json",
+      "sha256": "363fbe62a706b44030205da78411243ba206ad2366d546a277babe966b802c91"
+    },
+    {
+      "path": "internal/asm-manual/data/example-acceptance/result.json",
+      "sha256": "71395a038feeef768bd6c69bb43dcabbfced20333d989cd1161c07213f4f68d6"
+    },
+    {
+      "path": "internal/asm-manual/data/extension-guide/HANDOFF.json",
+      "sha256": "9543b91153d9e9362cde98240b5df4c638a563c4ea3420ba18c8bab5f5fc4096"
+    },
+    {
+      "path": "internal/asm-manual/data/extension-guide/source-pins.json",
+      "sha256": "1b8c3e1dffe7d3dea4cb8a2cb3fd01b3b3c3c49b7857240950bcdb467b6043bf"
+    },
+    {
+      "path": "internal/asm-manual/data/extension-guide/verification.json",
+      "sha256": "c1b44f2fad30c3dad47721078b61ad3c35a6a6fc1c57a4507f9bd66424e6ed46"
+    },
+    {
+      "path": "internal/asm-manual/data/initial-assembly-manifest.json",
+      "sha256": "88a5cf555d42b6ce7dcd1da830a72d49fd5f1dbce9f23e9f811f7aaa6d9efc08"
+    },
+    {
+      "path": "internal/asm-manual/data/inventory-figures.json",
+      "sha256": "7f79e52690075e4992f205dd1373a53fbadbcbb2382c11e6b8a090bc3ef1bf2c"
+    },
+    {
+      "path": "internal/asm-manual/data/legacy-training/elo_trajectory.csv",
+      "sha256": "5d1cc168dc0d7abb02751122ceef86d44ceb2e3de5a40890daa100e90485068c"
+    },
+    {
+      "path": "internal/asm-manual/data/legacy-training/figure-receipt.json",
+      "sha256": "4a341843ab3e3aea85ea4b3c4211ad80b01fdbce2caeea0897b67778dfa659ea"
+    },
+    {
+      "path": "internal/asm-manual/data/legacy-training/gate-result.v1.json",
+      "sha256": "53e7f728c01531e0c9147400d4518f4e568a7fb0addeb841fcd0ebb300862d1b"
+    },
+    {
+      "path": "internal/asm-manual/data/legacy-training/loss_components_by_generation.csv",
+      "sha256": "f7d419a5614673c71e51ce85b898107819d242102089d06b980e3de97bb12bbf"
+    },
+    {
+      "path": "internal/asm-manual/data/legacy-training/round1.train_metrics.jsonl",
+      "sha256": "df70f54f5b06ae44cfef9cc24c73c31d2d677a416ed84c4368e701b53ef34260"
+    },
+    {
+      "path": "internal/asm-manual/data/legacy-training/verification.json",
+      "sha256": "8a8ecce13781ec54c5b1d4b0afc4928b6f57cfc08aff871c971974c781f37d50"
+    },
+    {
+      "path": "internal/asm-manual/data/local-estate.json",
+      "sha256": "43a741b92d4c26ed30ebe4901a4afac9455584fc8ef1ecc8b55f7f467634541a"
+    },
+    {
+      "path": "internal/asm-manual/data/metadata-receipts/aws-identity.json",
+      "sha256": "3e3422d8d76138154a9b88afec1ea3ccbd322c772a92a6f62c85e9734da8db0b"
+    },
+    {
+      "path": "internal/asm-manual/data/metadata-receipts/learning-object-count.json",
+      "sha256": "367cc572c1da23aa349273f8f47f9e346dbd5d96aae7e703e994ba1807dc3ef3"
+    },
+    {
+      "path": "internal/asm-manual/data/metadata-receipts/learning-prefixes.json",
+      "sha256": "bc5b1935c30670ff4d799c23c53b915e1fcd02501561f996f94bb72e91550c45"
+    },
+    {
+      "path": "internal/asm-manual/data/metadata-receipts/learning-storage-standard.json",
+      "sha256": "d949d70272258d6c6cfd039f047cc1b4ba78016651dbe491215a836a636f91e7"
+    },
+    {
+      "path": "internal/asm-manual/data/metadata-receipts/metadata-fetches.json",
+      "sha256": "1fdee8320e3456db74e4138b807bebc8d099bdaf1de5c82ebd445a6f0d2f3155"
+    },
+    {
+      "path": "internal/asm-manual/data/metadata-receipts/veox-jopedime-datasets-use2--catalog--v1--catalog.jsonl.gz",
+      "sha256": "f28d1fc59bd454329a05feaefdd68a55b14b609159b960b2f9fae97285049a68"
+    },
+    {
+      "path": "internal/asm-manual/data/metadata-receipts/veox-jopedime-datasets-use2--collections--registry-real-v1--v1.json",
+      "sha256": "bf35ea9ecfebc2f77af2ee6448f295f51f5466483ea10b803f168d2586bed9af"
+    },
+    {
+      "path": "internal/asm-manual/data/metadata-receipts/veox-jopedime-datasets-use2--collections--test-10--v1.json",
+      "sha256": "84d79fe7bf60483f127429aa3b0cf1a1c1d8d79cb08c36137a1607b617019ab7"
+    },
+    {
+      "path": "internal/asm-manual/data/metadata-receipts/veox-jopedime-datasets-use2.json",
+      "sha256": "f91a7fc2c77df7795556836c4a39d0eb30640c074545f3d5f69f846aabd18ac3"
+    },
+    {
+      "path": "internal/asm-manual/data/metadata-receipts/veox-jopedime-learning-use2.json",
+      "sha256": "ea5cb9fe6ce4fc907873934064bdc9bb567461e250b2479e2a0b1ca805dac9cc"
+    },
+    {
+      "path": "internal/asm-manual/data/metadata-receipts/veox-jopedime-models-use2--bundles--hyperion-v7--manifest.json",
+      "sha256": "fdaf938fc7f7957c06959f12c130b2bd81cdaef5e5bb2198ba75cf35da1c5233"
+    },
+    {
+      "path": "internal/asm-manual/data/metadata-receipts/veox-jopedime-models-use2--bundles--jope-prime-gen31-v2--manifest.json",
+      "sha256": "c8d8d13a2f4cb2eeb21eea364c33e14429c84d344e6b50eb38a472173b97b6f2"
+    },
+    {
+      "path": "internal/asm-manual/data/metadata-receipts/veox-jopedime-models-use2--bundles--policy-step-60000--manifest.json",
+      "sha256": "d8e259b26ef8d580ddb99ae5826c9501bcdc0c32045945eef9010926fd796e9e"
+    },
+    {
+      "path": "internal/asm-manual/data/metadata-receipts/veox-jopedime-models-use2.json",
+      "sha256": "a6f31cba8c24e332871ddf4cb715c7c06f0c5c28c542290dec3dd16aa5e35369"
+    },
+    {
+      "path": "internal/asm-manual/data/original-target-receipts-custody.json",
+      "sha256": "96744859e97be5c1d4d39734f818bfe62a9582cb701cf38b91d77a504564cfe8"
+    },
+    {
+      "path": "internal/asm-manual/data/packing-routing-audit.json",
+      "sha256": "2cfa613298ed82cc051b802edfedfae5d179e95af48816781fcbf9bd71e6c98b"
+    },
+    {
+      "path": "internal/asm-manual/data/per-step-history/README.md",
+      "sha256": "dc5cd400f36d9e79ed5ab91c054b7ad3ad1e628e3f1c6a97b52189299bcbfc2c"
+    },
+    {
+      "path": "internal/asm-manual/data/per-step-history/a100-block-statistics.csv",
+      "sha256": "8509abedd1d271f1f14be65b3a37eddbe2e6b7a6bfe10167f447f0277c620d00"
+    },
+    {
+      "path": "internal/asm-manual/data/per-step-history/a100-corpus-boundaries.csv",
+      "sha256": "7943c68c0ef40a710dc735a7ddeafa843d39ac1e1835ea4214735b59ddfaf959"
+    },
+    {
+      "path": "internal/asm-manual/data/per-step-history/a100-step-bins.csv",
+      "sha256": "446399c4088fe7e86fea7038a37acde8704d9cd185f2b9eeffe5b93c29a2ad14"
+    },
+    {
+      "path": "internal/asm-manual/data/per-step-history/a100-step-metrics.csv.gz",
+      "sha256": "aa431f5a2f5f4d6bfc2e8568ef57bb10b100356750d22eb615dd68cfa1647627"
+    },
+    {
+      "path": "internal/asm-manual/data/per-step-history/analysis.json",
+      "sha256": "1a372de445795ef269b66771d222de31d600fc7d520902aed47a00cffd939d9b"
+    },
+    {
+      "path": "internal/asm-manual/data/per-step-history/independent-review/HANDOFF.json",
+      "sha256": "9ddab8fd941579b01e958f116c0df4f0a5393020d9fc4103863fcb8b3c778a39"
+    },
+    {
+      "path": "internal/asm-manual/data/per-step-history/independent-review/command-receipt.json",
+      "sha256": "289824c5c8d620303b115f98b6b83d79b960d69e3d244d1a9f1f65043d288d72"
+    },
+    {
+      "path": "internal/asm-manual/data/per-step-history/independent-review/manifest.json",
+      "sha256": "cc68e625762648a381cf9edd144a7697f9c7edb59d20cd07776829da243815e4"
+    },
+    {
+      "path": "internal/asm-manual/data/per-step-history/independent-review/numeric-review.json",
+      "sha256": "083509f25ba488c69b78971d9e9fbbdda07710566db4548452ca2e8ec76a1725"
+    },
+    {
+      "path": "internal/asm-manual/data/per-step-history/independent-review/release2-readback.json",
+      "sha256": "f80b0db5a6d62b2094142c721b076ef4dc4527e7ac26b092d80db78b630c0fff"
+    },
+    {
+      "path": "internal/asm-manual/data/per-step-history/independent-review/routing-scope-review.json",
+      "sha256": "a4707f434ead628919e16d5f5e1a235eea427c50b5c4bff79ee608a061cb413b"
+    },
+    {
+      "path": "internal/asm-manual/data/per-step-history/independent-review/scope-review.json",
+      "sha256": "6b0548c7287ad69a80b7b0b0a76f22746ea925baa9783ce0a00657e5a2a845f2"
+    },
+    {
+      "path": "internal/asm-manual/data/per-step-history/source-manifest.json",
+      "sha256": "af15d12098d4ec81c0dd505d084000fa4d3c94d869a5f3a917a54d8e85db818c"
+    },
+    {
+      "path": "internal/asm-manual/data/performance-evidence.json.gz",
+      "sha256": "f047c21bbfbdaf789497da6b70d7259b2eea78a7aab24512ab5b1c681616d6c2"
+    },
+    {
+      "path": "internal/asm-manual/data/plot-current-origin.csv",
+      "sha256": "c5e3fcefc8b493227f259720dd6856bfa1c35eaebd88ef336cefae9250290f02"
+    },
+    {
+      "path": "internal/asm-manual/data/plot-data-manifest.json",
+      "sha256": "289e901e54a7e5eb3e28e41a9cf432aa3dcb951c5f88d8de731464a28321adaa"
+    },
+    {
+      "path": "internal/asm-manual/data/plot-dataset-sizes.csv",
+      "sha256": "3c1670203239dc1888beb96ae223ce29b6d5ef51199ff8b00a8dbaea1476c474"
+    },
+    {
+      "path": "internal/asm-manual/data/plot-historical-elo.csv",
+      "sha256": "abace496b0f1f54318264dd8f69537014e15b367e60c33243d8a1b28827ab695"
+    },
+    {
+      "path": "internal/asm-manual/data/product-language-HANDOFF.json",
+      "sha256": "2b36a6fa410ce02710e334a0eaf35c8f24bdc8af7c37b7d33b8c350bdfdc2a75"
+    },
+    {
+      "path": "internal/asm-manual/data/product-language-source-pins.json",
+      "sha256": "daf28d732dd02abf652aea462fe838728b30490b9ce9cb2917ab81bd14885073"
+    },
+    {
+      "path": "internal/asm-manual/data/product-language-validation.json",
+      "sha256": "0328676e5776a0a3df009e388337e684207af984a50ca29ce536163babdd5a8f"
+    },
+    {
+      "path": "internal/asm-manual/data/roadmap.json",
+      "sha256": "57b7cb68a8188302b4c03ecd94bbc7d91423252921b8454733942a3fbf652e55"
+    },
+    {
+      "path": "internal/asm-manual/data/s3-estate.json",
+      "sha256": "3575ba9b0e8ca061e4c83434bde2ce228d0888ceebf9819a48bb39096f55212c"
+    },
+    {
+      "path": "internal/asm-manual/data/single-dataset-help-receipt.json",
+      "sha256": "4e6bb60f88475399f8419810fb23196ad21871847120ccf7968adbae63cc243b"
+    },
+    {
+      "path": "internal/asm-manual/data/target-history/HANDOFF.json",
+      "sha256": "89cfbc949ae21f7b8d6a0de0006c40d345fc7128288016d00ed8b0df3ede45f3"
+    },
+    {
+      "path": "internal/asm-manual/data/target-history/accepted-corpus-binding.json",
+      "sha256": "4e985be1a727814a0e481e79b77b6e36e4902f7cb26da987dd9a5f8aeca1600e"
+    },
+    {
+      "path": "internal/asm-manual/data/target-history/carry-forward-audit.json",
+      "sha256": "3408b07474073fab456019a901afdc6d2e82cca96d711540b00dd28beb81e401"
+    },
+    {
+      "path": "internal/asm-manual/data/target-history/corpus-snapshots.csv",
+      "sha256": "53aeb3a64ebfd219f36592f14ddb2af65ff4ba631e1b8221076a7cc05eaa61c9"
+    },
+    {
+      "path": "internal/asm-manual/data/target-history/figure-receipt.json",
+      "sha256": "c432836adca78960c55bc5d62c28cca7a673a31ea3f14173475fec787e4d0305"
+    },
+    {
+      "path": "internal/asm-manual/data/target-history/historical-target-quality-summary.json",
+      "sha256": "b22d3224cb3981d2eb7c40c3d8c4ebf280fa67120a15a7538711b1bb6702603a"
+    },
+    {
+      "path": "internal/asm-manual/data/target-history/local-corpus-metadata.json",
+      "sha256": "338f782611ca8679beb5f70aefb71c0ac639a76e01a84a0bf0476cbfa238f801"
+    },
+    {
+      "path": "internal/asm-manual/data/target-history/manifest.json",
+      "sha256": "0ebd03b241cdd1b7e21280564cf36633e79e7ddd7a8be3d016c10853ce635947"
+    },
+    {
+      "path": "internal/asm-manual/data/target-history/packing-evidence.json",
+      "sha256": "2e4d3586503cfd3a5755e6bce45e279e8c3e5946a673ce8548428b0d6dddecb7"
+    },
+    {
+      "path": "internal/asm-manual/data/target-history/source-pins.json",
+      "sha256": "8f694fa4f3561e28d7d88968169172e6e573a5ea34a9708e08254bf08a953f81"
+    },
+    {
+      "path": "internal/asm-manual/data/target-history/target-quality-1000-comparisons.csv",
+      "sha256": "1a3e32526308ce26b4808b0a1a34a651a503f5419ba2343a06751e7bbec87ad9"
+    },
+    {
+      "path": "internal/asm-manual/data/target-history/target-quality-1000-summary.csv",
+      "sha256": "df0445e3f3b29a7aeac4fb54b5fa056fc5a7362c687be4617c6f73dd9f3b6d1d"
+    },
+    {
+      "path": "internal/asm-manual/data/target-history/target-quality-pine-chromium-cut1.csv",
+      "sha256": "1cb4393428d78ecfbea1d36aa1b33ea2acd5028aa1f760662d09dc994fd611b9"
+    },
+    {
+      "path": "internal/asm-manual/data/target-history/verification.json",
+      "sha256": "6cd2e16d41f87c8a74306d69d743ec4ef0d7380d876607c9740c1abfd54c7b1f"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/HANDOFF.json",
+      "sha256": "12cf91afb65c9ccff0b8076d4016b5cab78cd90586730c248c1d07b37d8535c7"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/a100-checkpoint-lineage.csv",
+      "sha256": "a141f3615eb5f9e12472becc015bb0b82e2758668b60353055a6ecb2841d486e"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/a100-checkpoint-validation.csv",
+      "sha256": "867fac4556dfac6c7baff82a303660f4ea5b4c410b21e1d94717bc3a76c10920"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/accepted60000-state.json",
+      "sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/block-adaptive-validation.csv",
+      "sha256": "1b797ce9663825e2083084ec4ca1480eeee4fa653e3a97734cc3a06659a1345e"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/block-endpoint-metrics.csv",
+      "sha256": "5278b22f4115aaf94d4ef45c0dcdc18a3a4c32578a02be7887776af25d563ad6"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/extraction-audit.json",
+      "sha256": "5b41cee2ec22e0091e520f3539e3777ffb22b4b0e0ab4588480c1d041f039090"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/extraction-summary.json",
+      "sha256": "dbb5997d52dc6f1125819ab336245190e33f98e924174884b81ca11402339d54"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/figure-receipt.json",
+      "sha256": "a7dc818588e2cb15dc1d673b9f3718cda68d0bf919cd20c8501a8b994c76e145"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/fixed-monitor-metrics.csv",
+      "sha256": "796d794de8f7560adcd06d559f72f03c478488642fb7e5a76fd149f73e99e761"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/gen31-epoch-metrics.csv",
+      "sha256": "1efedc9c5eb14fdb8398fd8646b0eea9b87e6264a648e709c6ed290674b7b34e"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/metric-definitions.json",
+      "sha256": "8b8fa9014ebb9e7fe170393f4f588741d1d4db90a45e177d26435f14d455847b"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/original-learning-monitor-budget-metadata.json",
+      "sha256": "6c08c960b8a542ed26fc564d29fb78c518f3de32bd97e0b54868cee0d9fc4e6c"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/original-train_metrics.jsonl",
+      "sha256": "d57de1b28a8678327c984a82732cd774520db2cb0994d893a45f8a5ea428e312"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/rtx60100-initialization.json",
+      "sha256": "61b27fef0f4556d7b34fb58d73da3936a9158e48a1d5c593c6a2e6e989584a6c"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/rtx60100-latest.json",
+      "sha256": "8f3601229b956b76b61041dfc40e2bd1910fcc5be6c87eb955e1b40a718d5e5d"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/rtx60100-run.json",
+      "sha256": "36b05431a81bab27238bc91603c72546d7ea08316e8e46f8b921302f61ed8332"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/rtx60100-state.json",
+      "sha256": "745be4b5e998bce85615349a5b03b901cd8ad2cf605e6dce3b86fbf777cc7388"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/rtx60100-step-metrics.csv",
+      "sha256": "d39260191d104cbfc3d0133899cc0a91693560298b6084a0fe59fb629e2b6713"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/source-references.json",
+      "sha256": "d2abdaa2138f16011a2e4a38d316dff37dac4ab577a1395fd4ca491e3eaac42a"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/verification.json",
+      "sha256": "f187a9bdc5ad4f7d58d7c54cc2e4c4e99b79c5fbbb93604e31d93e6b2c50bd03"
+    },
+    {
+      "path": "internal/asm-manual/data/training-history/verify_history.py",
+      "sha256": "df04b945ad3bf32ac53e74c96a628985bd7f9ec728c9da130b15d2707cd50397"
+    },
+    {
+      "path": "internal/asm-manual/examples/commands.json",
+      "sha256": "f34771938934d1360cbe054689393198a53929479ba119f5a0faf2b0da7a170a"
+    },
+    {
+      "path": "internal/asm-manual/examples/continue-python-policy.py",
+      "sha256": "3e44711739f5f8eaf9a41fc9ee651ccce46b040a6c33a686fd7b182528499354"
+    },
+    {
+      "path": "internal/asm-manual/examples/gp-synthetic.json",
+      "sha256": "1d9d289f791f3efb5ada9b42555eaedf5f76d9eabf1d176843cd18b7379f31bd"
+    },
+    {
+      "path": "internal/asm-manual/examples/predict.csv",
+      "sha256": "7f4cb0800541aaa12df854544ef0364c44a19f3d197e2ffcb9a6e1e02ad42dab"
+    },
+    {
+      "path": "internal/asm-manual/examples/train.csv",
+      "sha256": "f4c44392e68f87fa1a799f856c9d692652e425669e28e7c34914c06ef91ff61d"
+    },
+    {
+      "path": "internal/asm-manual/examples/validate-outputs.py",
+      "sha256": "4aa8c39f0a376a56cc60a3f8ae05c73870a50c1b190afd6ebdb294f21cfd2a30"
+    },
+    {
+      "path": "internal/asm-manual/figures/architecture-flow.svg",
+      "sha256": "216b4391bb7ab926a6c62f865e345a1172489b4c91bba6c10b44773f0464f095"
+    },
+    {
+      "path": "internal/asm-manual/figures/current-origin-loss.png",
+      "sha256": "abb49e1419659585ff40c890f273e58521059f5f508583a26ee8ff6e5b0a423d"
+    },
+    {
+      "path": "internal/asm-manual/figures/data/fig01_ladder_benchmark_valid.csv",
+      "sha256": "cc7844e7885435c5565eaa6643405b1c74284ee39753acbe84338e6cf5fc4c1d"
+    },
+    {
+      "path": "internal/asm-manual/figures/data/fig02_ladder_published.csv",
+      "sha256": "c04909be042bf52be62bc546a80aec16ca69254a5ebc8c6a81c3d4a73e357fcb"
+    },
+    {
+      "path": "internal/asm-manual/figures/data/fig03_samecut_ladders.csv",
+      "sha256": "9e91965253f35ed7bad980bd3a4abba1b892825d0ab8585d5f1df4d692617126"
+    },
+    {
+      "path": "internal/asm-manual/figures/data/fig04_samecut_v2_per_dataset.csv",
+      "sha256": "7fab5fafaa0ad72f9d4ee4a00f8c955a6907bf51c70f3240cb89dc94376fa3e3"
+    },
+    {
+      "path": "internal/asm-manual/figures/data/fig06_samecut_v2_search_seconds.csv",
+      "sha256": "cc63c351eb31225116e2602558ee8a66bcbd01388f61dfce564c20a6385e6002"
+    },
+    {
+      "path": "internal/asm-manual/figures/fig01-elo-benchmark-valid.png",
+      "sha256": "e37c4f71ce5ae919c4b9cfe483ab5bb78283f21078a6098914e81e53d27a34e6"
+    },
+    {
+      "path": "internal/asm-manual/figures/fig02-ladders-valid-vs-adaptive.png",
+      "sha256": "088c25860d9a67b3a6921a446668605c2cf5917f6bbc8de86b820747735ed8ac"
+    },
+    {
+      "path": "internal/asm-manual/figures/fig03-samecut-deep-elo.png",
+      "sha256": "22527b6d254c0bf8f186786053f81b02160ae9b31b69d94cd628f8a2e94d0ba1"
+    },
+    {
+      "path": "internal/asm-manual/figures/fig04-samecut-rmse-heatmap.png",
+      "sha256": "9d4f73be7397e288f3148f8e9406b0ab45c0f96514495ca85400c376031bd720"
+    },
+    {
+      "path": "internal/asm-manual/figures/fig05-samecut-rank-distribution.png",
+      "sha256": "0a6fcdbdb427aabd3d2cdb138eeefbcb562b4202355733035de988221fcc6a58"
+    },
+    {
+      "path": "internal/asm-manual/figures/fig06-seconds-per-program.png",
+      "sha256": "746189cd9f94f0ec2eee063b5255bc368801d8b7880a1957ca34dd8645880a6c"
+    },
+    {
+      "path": "internal/asm-manual/figures/inventory-corpus.png",
+      "sha256": "70188b679c9534d9d4df30f272e0113e2225b96cc3afc8a7e8fb8fe6c8e8a549"
+    },
+    {
+      "path": "internal/asm-manual/figures/inventory-frozen30.png",
+      "sha256": "189b1c0a6fc8ebc497ed1a0696ce2aa9ccebc8865dad7e7531508576825d2abe"
+    },
+    {
+      "path": "internal/asm-manual/figures/per-step-figure-receipt.json",
+      "sha256": "384d97d88ae2528bc7dbdd22f358ae84d5a68eea4373ad6e098e016f16187473"
+    },
+    {
+      "path": "internal/asm-manual/figures/target-quality-pine-example.png",
+      "sha256": "b7caf784f1c033742749eafc2ee4b0db5e8c4cecceeacd23eb750d52ca12e1fa"
+    },
+    {
+      "path": "internal/asm-manual/figures/target-quality-progress-counts.png",
+      "sha256": "4d654a36aac5bd0e608a225d4170089736af3f96200e13bc4e257b10faff3807"
+    },
+    {
+      "path": "internal/asm-manual/figures/training-a100-checkpoints.png",
+      "sha256": "c8981fad33dfde0b1cfb7f797b65fe293dfa6811ac66badaee7d416ce43a770a"
+    },
+    {
+      "path": "internal/asm-manual/figures/training-a100-per-step.svg",
+      "sha256": "d40ff9a7783e27a1ef7607d4132709a530c9afb172a19c6a11a28041ca583431"
+    },
+    {
+      "path": "internal/asm-manual/figures/training-adaptive-validation.png",
+      "sha256": "939defb052e8eabf971049683857888b810d7df901ce8c368cb069353f0cefbd"
+    },
+    {
+      "path": "internal/asm-manual/figures/training-fixed-monitor.png",
+      "sha256": "5d99ce7326be3a7d29f91e4ab82dc7cf8fff19958eb971fd4546c7a108058a5c"
+    },
+    {
+      "path": "internal/asm-manual/figures/training-gen31-loss.png",
+      "sha256": "dbbafceb2d4e1621bcdc8a0a0080c00b8013aff57a5231cab102d5dfc5618c6b"
+    },
+    {
+      "path": "internal/asm-manual/figures/training-gen31-quality.png",
+      "sha256": "4c0a9f4114cba51f1c6a150dd7f51f7bdbf50967777c3ac78f50dacd9e2acb32"
+    },
+    {
+      "path": "internal/asm-manual/figures/training-historical-endpoints.png",
+      "sha256": "74533f54636fa5b1808456612471ce7fa3d3c0f4edb685c6609a32181bad6dd5"
+    },
+    {
+      "path": "internal/asm-manual/figures/training-legacy-round1-generations.svg",
+      "sha256": "43851ba96cc483019b081fc87e4061bcfbf2a156a47c4d7924261d68bc6a46da"
+    },
+    {
+      "path": "internal/asm-manual/figures/training-rtx60100-steps.png",
+      "sha256": "1107a925bd27b7145ea7c977c82b791ac60dbdee7c315d064242517fa9482af9"
+    },
+    {
+      "path": "internal/asm-manual/sections/01-status.md",
+      "sha256": "1a567b8f26695339db4fe1e18fcb9efc39e8aa2a880d77c532a35f897f840449"
+    },
+    {
+      "path": "internal/asm-manual/sections/02-architecture.md",
+      "sha256": "2384cdab2442c88302380011cee591082f5f37752cd1a8a71c55e3ccbb9477b2"
+    },
+    {
+      "path": "internal/asm-manual/sections/03-operations.md",
+      "sha256": "3eee12845bdbaa62ef34b4f1395aa913994c452a9b0b7480272b8da55031492b"
+    },
+    {
+      "path": "internal/asm-manual/sections/04-training.md",
+      "sha256": "e389f49419bd63d0dccf543765be9479abc7299f168d46cd3b60b7edfc7a5705"
+    },
+    {
+      "path": "internal/asm-manual/sections/05-languages.md",
+      "sha256": "2d0d759dc4bae4ae000b3efeb76117ff2aa474fd146213ca4d1bb6aa573e91a8"
+    },
+    {
+      "path": "internal/asm-manual/sections/06-benchmark-methodology.md",
+      "sha256": "d6db1577b912a6bee133140bc444e2078dc34a31c1b5c6ce2f1428c0d41d216a"
+    },
+    {
+      "path": "internal/asm-manual/sections/07-data-estate.md",
+      "sha256": "b01cdab7a68a30b5f0b00d2ce2a4a9b7d37e7e82fe62282fc2566286677b9c8e"
+    },
+    {
+      "path": "internal/asm-manual/sections/08-visual-evidence.md",
+      "sha256": "b1fa60dcdbbec7ba76272bcd05484fc6b1fd7af301aa838e5b3aa6b7d15cf5d7"
+    },
+    {
+      "path": "internal/asm-manual/sections/09-maintenance.md",
+      "sha256": "7327b9e361e6eb184ca3e9483b88225021d0a96abd803e48e1b42aa03b863c8d"
+    },
+    {
+      "path": "internal/asm-manual/sections/10-roadmap.md",
+      "sha256": "56a818c2ad26d5b1e3f26a3c499ba08662a26c494088440ae041bdd492cc03d8"
+    },
+    {
+      "path": "internal/asm-manual/sections/11-evidence-glossary.md",
+      "sha256": "630bb36ab7f0580f2f041f134b89d86123a6548bb324d1246fc93da1d3a58d06"
+    },
+    {
+      "path": "internal/asm-manual/sections/12-dataset-statistics.md",
+      "sha256": "622c70f791eda9f1e7373e6f20405cf259f9d801f636d7ebed4a1aa22b442bc6"
+    },
+    {
+      "path": "internal/asm-manual/sections/13-source-map.md",
+      "sha256": "51e4e09bdaac06e09f1cdbfb1cabc83aafcc3e5a25b90caa9963eea26542b9bc"
+    },
+    {
+      "path": "internal/asm-manual/sections/14-training-history.md",
+      "sha256": "6baa8659673a867041e902238d334c7c69beda28933747951e4327e18df4d640"
+    },
+    {
+      "path": "internal/asm-manual/sections/15-target-history-packing.md",
+      "sha256": "5e8312ed4bfd95533c3f70da523b2aed797d28a28c6639b011378928deb47edf"
+    },
+    {
+      "path": "internal/asm-manual/sections/16-version-kpis-continuation.md",
+      "sha256": "193d171343b61b70f6a30c5880e8abd252c35ef8818f586af92b7b7ce5077778"
+    },
+    {
+      "path": "internal/asm-manual/sections/17-flywheel-focused-search.md",
+      "sha256": "2c2427b8576ae975ce7de49ab9cadc62e9d4d49f8a990a818241f7ddf038ff88"
+    },
+    {
+      "path": "internal/asm-manual/tools/build_manual.py",
+      "sha256": "083cae46dc87ebff959f37d13b0cbb991fba124b46b0b5cf1d3778d444fcfb00"
+    },
+    {
+      "path": "internal/asm-manual/tools/extract_per_step.py",
+      "sha256": "2e239710e49b9ee3778633b12d9aa3c038c55bcbbef442fe95d169c9159802be"
+    },
+    {
+      "path": "internal/asm-manual/tools/make_figures.py",
+      "sha256": "de58079f080a80892248094007803d067c6a1889b66153d72f03089866ccdccc"
+    },
+    {
+      "path": "internal/asm-manual/tools/make_inventory_figures.py",
+      "sha256": "cfe3913369f33d9b791bf93fe77a999ac3da5c410ec340b590ff40d1dbb1d746"
+    },
+    {
+      "path": "internal/asm-manual/tools/make_legacy_training_figure.py",
+      "sha256": "f198f750f58bf38751b9b159b7cd66249a7470eba5bc67873f9e13b2edd36528"
+    },
+    {
+      "path": "internal/asm-manual/tools/make_per_step_figure.py",
+      "sha256": "ce2026952e5789f5f6a2504028e34854cc0ed1c61645533497f31b70c0bb17a2"
+    },
+    {
+      "path": "internal/asm-manual/tools/make_target_figures.py",
+      "sha256": "8fc7515c6bc6e4357c513b6bdf75adc5d807556ef9ceacf318a6a8802e8c1978"
+    },
+    {
+      "path": "internal/asm-manual/tools/make_training_figures.py",
+      "sha256": "7e133e2d955c29e17dffaf0f3a3703b7e544b95bf8d666fa2882c1c976d3c783"
+    },
+    {
+      "path": "internal/asm-manual/tools/manual.css",
+      "sha256": "cecc8392b8a360130de36292f201010ba687c493c6e16c817f21507ec85298d9"
+    },
+    {
+      "path": "internal/asm-manual/tools/requirements-docs.txt",
+      "sha256": "7e7bc374e7126b6e8725f69847715413f3b42cc93f95bb95f9594154da2496f4"
+    },
+    {
+      "path": "asm-maintainer-status.plist",
+      "sha256": "c1b58e31acfd64c9c4cd369841e798be7b158f8ac82b1273bf2c8dc3c2a5e2ac"
+    }
+  ]
+}

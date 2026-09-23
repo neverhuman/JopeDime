@@ -1,0 +1,31 @@
+{
+  "schema": "jope.maintainer-document-validation/v1",
+  "documents": [
+    {
+      "document": "product.md",
+      "words": 2902,
+      "shell_blocks_syntax_only": 8
+    },
+    {
+      "document": "languages-examples.md",
+      "words": 2883,
+      "shell_blocks_syntax_only": 4
+    }
+  ],
+  "fixture_json_csv_consistency": true,
+  "fixture_rows": 24,
+  "matrix_recipe_rows": 26,
+  "static_public_support_counts": {
+    "python_rust": 14,
+    "cpp17_cpp20": 2,
+    "javascript": 6
+  },
+  "source_files_pinned": 45,
+  "help_commands_executed": 16,
+  "help_commands_all_exit_zero": true,
+  "example_numerical_commands_executed": 0,
+  "compiled_artifacts": 0,
+  "runtime_parity_qualified": false,
+  "prepared_command_arrays": 14,
+  "output_validator": "syntax checked only; actual predictions remain unrun"
+}

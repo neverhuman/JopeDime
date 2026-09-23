@@ -1,0 +1,3 @@
+source_sha,dataset,method,metric,loss,direction,predictions,status,scope
+68f56404c3e199e06413bfd645d3fe0803d7b96f,230_machine_cpu,asm.neural,rmse,166.3181717454848,minimize,34,completed,development hold; one operational origin proof; no panel win or teacher claim
+68f56404c3e199e06413bfd645d3fe0803d7b96f,230_machine_cpu,asm.generic,rmse,155.25909998168862,minimize,34,completed,development hold; one operational origin proof; no panel win or teacher claim

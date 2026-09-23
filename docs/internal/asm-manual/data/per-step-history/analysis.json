@@ -1,0 +1,34 @@
+{
+  "schema": "jope.manual-per-step-analysis/v1",
+  "rows": 63000,
+  "selected_numeric_metric_cells": 378000,
+  "exact_token_roundtrip_rows": 63000,
+  "checkpoint_validation_cells_crossmatched": 296,
+  "first_step": 6001,
+  "last_step": 69000,
+  "accepted_step": 60000,
+  "unaccepted_retained_last_step": 69000,
+  "corpus_count": 21,
+  "block_count": 21,
+  "rows_per_block": 3000,
+  "loss_first": "0.85504549741745",
+  "loss_accepted60000": "0.785950779914856",
+  "loss_last": "0.7920107841491699",
+  "descriptive_ols_6001_60000": {
+    "slope_per_step": -3.386025864378503e-07,
+    "r_squared": 0.18851526980102595,
+    "fitted_span_delta": -0.01828420106505748
+  },
+  "block_loss_last100_minus_first100": {
+    "min": -0.04377070009708395,
+    "median": -0.01706561028957365,
+    "max": -0.008791878223419203
+  },
+  "block_ols_negative_count": 21,
+  "block_endpoint_decrease_count": 21,
+  "boundary_point_increase_count": 20,
+  "boundary_100mean_increase_count": 19,
+  "first_timestamp_utc": "2026-09-12T18:43:27+00:00",
+  "last_timestamp_utc": "2026-09-13T18:09:49+00:00",
+  "uncertainty": "Descriptive OLS only. Serially dependent samples and changing corpora; no inferential confidence, independent evaluation or downstream quality claim."
+}

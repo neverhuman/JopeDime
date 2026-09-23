@@ -1,0 +1,19 @@
+{
+  "schema": "jope.manual-per-step-independent-handoff/v1",
+  "status": "STOPPED_PASS",
+  "observed_at": "2026-09-23T18:52:55.601537+00:00",
+  "reviewed_packet_handoff_sha256": "da0ab6710bf00f53dada2a5a67682cd60b7b8ee0f31eeaeced934464e14c5a0c",
+  "reviewed_chapter_patch_sha256": "503ad23149b5bd8b939e5fe6ff2aa8385f1aff3a594c0855f4960a5f3df1b41a",
+  "full_independent_check": "63,000 rows /378,000 exact metric tokens /189,000 exact identity-time tokens;21full logs and final states plusinitial6000 parent,126metricblocks/3780bins/20boundaries/296validationcells. No sampling.",
+  "remaining": "Root assembly/final PDF/current-headCI/native approval. DATA-01 still author-active; no further reads until release.",
+  "receipts": {
+    "numeric-review.json": "083509f25ba488c69b78971d9e9fbbdda07710566db4548452ca2e8ec76a1725",
+    "scope-review.json": "6b0548c7287ad69a80b7b0b0a76f22746ea925baa9783ce0a00657e5a2a845f2",
+    "command-receipt.json": "289824c5c8d620303b115f98b6b83d79b960d69e3d244d1a9f1f65043d288d72",
+    "routing-scope-review.json": "a4707f434ead628919e16d5f5e1a235eea427c50b5c4bff79ee608a061cb413b",
+    "release2-readback.json": "f80b0db5a6d62b2094142c721b076ef4dc4527e7ac26b092d80db78b630c0fff",
+    "manifest.json": "cc68e625762648a381cf9edd144a7697f9c7edb59d20cd07776829da243815e4"
+  },
+  "canonical_edits": false,
+  "new_models_fits_training_cargo_gpu": false
+}
