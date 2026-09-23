@@ -70,7 +70,7 @@ pub(super) fn classical_windows(
             WINDOW_SIZE.to_string(),
         ])?;
         let mut rng = NumpyPcg64::new(stream_seed);
-        windows.push(rng.choice(length, WINDOW_SIZE, false)?);
+        windows.push(rng.choice(length, WINDOW_SIZE, length < WINDOW_SIZE)?);
     }
     Ok(windows)
 }

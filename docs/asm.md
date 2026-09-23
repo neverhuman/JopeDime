@@ -157,7 +157,7 @@ inputs, preserves failed/unavailable outcomes, and starts no execution clock.
 
 This plan is explicitly a **comparator qualification**, not the complete ASM panel.
 Neural/generic paired optimization and the final unchanged thirty-dataset demonstration need
-their additional pinned inputs and measured receipts. The six synthetic host cases in
+their additional pinned inputs and measured receipts. The eight synthetic host cases in
 `deploy/ci/qualify-execution.py` qualify isolation separately from real panel outcomes.
 
 On 2026-09-23, all six cases passed on xbabe2: timeout with detached descendants,
@@ -171,8 +171,13 @@ failures and the corrected run are retained in private custody under
 The successful test executable SHA256 is
 `bf1fe4d600564122cab48093969f4934a3d804751ed7b36b183964870fdeadd1`.
 
-The current source additionally covers graceful SIGTERM, original cutoff/resume and
-per-worker memory readback. These new host cases have not yet run. The outer service
+All eight cases passed in the follow-up run, including graceful SIGTERM, original
+cutoff/resume and per-worker memory readback. The 16.38-second run used test executable
+SHA256 `fbad494413fe22514f20503e44f4233400c8a5d8dd6396bf246d041f70ea01b7`;
+its commands, original journals, source hashes and receipts are retained under
+`asm-integration-20260923/neural-integration/host-proof-eight-cases` and
+`neural-integration/host-proof-eight.json`. These remain synthetic host proofs.
+The outer service
 ends within the original total deadline; numerical work ends at the earlier cutoff,
 leaving the declared reporting interval available to the controller.
 

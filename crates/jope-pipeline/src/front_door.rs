@@ -59,8 +59,9 @@ pub fn doctor() -> serde_json::Value {
         "capabilities":[
             {"name":"regression pipeline", "status":"implemented", "command":"jope pipeline run", "limit":"generic GP seeds; numerical finite inputs; recipe source emission"},
             {"name":"binary and multiclass pipeline", "status":"not_integrated", "limit":"task-aware kernels exist; the regression pipeline refuses these tasks"},
-            {"name":"bounded 30-dataset benchmark", "status":"execution_implemented", "limit":"frozen inputs, typed fits, shared isolated workers and resumable comparator run/report exist; live host qualification and neural comparison remain required"},
-            {"name":"neural generation-zero proposals", "status":"not_integrated", "limit":"accepted regression policy exists; pipeline does not consume it"},
+            {"name":"bounded 30-dataset benchmark", "status":"execution_implemented", "limit":"frozen inputs, typed fits, shared isolated workers and resumable comparator run/report exist; eight synthetic host isolation cases qualified; real neural comparison remains required"},
+            {"name":"neural generation-zero proposals", "status":if cfg!(feature = "neural-search") {"execution_implemented"} else {"feature_not_enabled"}, "limit":"bounded proposal-to-fit and training-side selection source exists; live accepted-model consumption remains unqualified"},
+            {"name":"CPU context production", "status":if cfg!(feature = "qualified-context") {"qualification_required"} else {"feature_not_enabled"}, "limit":"eight retained native reference cases plus fresh encoding require original bounded execution receipts; numerical parity is not yet measured"},
             {"name":"policy training", "status":"not_qualified", "limit":"existing machinery needs a bounded execution proof; train-step is a centroid router"},
             {"name":"fitted predictor export across five backends", "status":"not_qualified", "limit":"existing emitters have different coverage; recipe emission is not fitted inference parity"}
         ],
