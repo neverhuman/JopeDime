@@ -1,6 +1,6 @@
 # Architecture
 
-> **Status on `main` (2026-09-21):** this page describes the target design from the port plan. Verbs marked WP7/WP11 (`jope models|datasets|learn|hwm|scores`) are not on `main` yet; `jope encode|fit|emit|search|champions|train-step|route` and `verify-inputs|generate-fixtures` are (see the README's "What this SHA actually does").
+> **Status on `main` (2026-09-23):** this page describes the target design from the port plan. `jope models`, `jope datasets` and `jope pipeline` are on `main` (`jope` runs them in process), as are the fixture, encode, fit/emit, champion and router verbs, `benchmark` and `doctor` (`jope --help` lists every verb). There is no `jope learn`, `jope hwm` or `jope scores`; the learning store is the separate `jope-learning` binary, with `hwm` and `scores` subcommands. See the README's "What this SHA actually does".
 
 JopeDime is one repository that holds the whole pipeline
 **dataset → encoders → policy → program → emitted source code**. Rust owns search, evaluation,

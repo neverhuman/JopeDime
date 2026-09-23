@@ -26,7 +26,7 @@ this documentation correction; no new release build or fitted prediction is clai
 # Quickstart (laptop, CPU only)
 
 For what the head of `main` actually does — every `jope` subcommand (`jope --help` lists them;
-besides the fixture, fit/emit, champion and router verbs there are `models`, `datasets`,
+besides the fixture, encode, fit/emit, champion and router verbs there are `models`, `datasets`,
 `pipeline`, `benchmark` and `doctor`) and the install/check commands for them — read the
 [README](../README.md). This page keeps the feat-math quickstart from the WP9 docs pass; every
 timing below was measured at `4235db6`, not at the head of `main`.
@@ -85,9 +85,9 @@ Nothing large is in git. Both stores are content-addressed and manifest-pinned:
   Bundles today: `policy-step-60000`, `hyperion-v7`, `jope-prime-gen31-v2`; the repo commits their
   manifests under `models/` and the lanes that need weights read `models/PINNED`.
   `jope models fetch <bundle-id>` (store `JOPE_MODELS_URL`, default the bucket above) downloads by
-  hash into `$JOPE_HOME/models/`, prints each file's notices and licence line and refuses
-  `redistribution: prohibited` without `--accept-restricted`; `jope models verify` re-hashes a
-  cache. Pull-request lanes never download weights (`jope-models verify --manifests-only`).
+  hash into `$JOPE_HOME/models/`, prints the bundle's notices and each file's licence line, and
+  refuses `redistribution: prohibited` without `--accept-restricted`; `jope models verify`
+  re-hashes a cache. Pull-request lanes never download weights (`jope-models verify --manifests-only`).
 - **Datasets** — `s3://veox-jopedime-datasets-use2`: `blobs/sha256/<sha>`, `datasets/<hash>/manifest.json`,
   `collections/<name>/v<N>.json`, `catalog/`. The ten committed test datasets under `datasets/test/`
   are the public collection `test-10`; `jope datasets fetch <collection|id>` (store
