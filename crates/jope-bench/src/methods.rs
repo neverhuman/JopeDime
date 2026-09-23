@@ -21,14 +21,23 @@ pub enum MethodKind {
 }
 
 /// One method: an id and the program it runs.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Method {
     /// Ladder id (`baseline.ridge`, `program.<name>`, `afm.lite-race.v1`).
     pub id: String,
     /// Origin.
     pub kind: MethodKind,
-    /// Canonical program text.
+    /// Canonical program text (for a search method: the program found on the screen cut).
     pub dsl: String,
+    /// Wall seconds it took to produce the program (0 for baselines and caller programs; the
+    /// search's wall time for a search method). The cost-per-program number starts here.
+    #[serde(default)]
+    pub produce_seconds: f64,
+    /// When set, the deep stage re-runs the search on every cut's training rows and scores
+    /// that cut's own program, so the deep number measures the *procedure*, not the one program
+    /// found on the screen cut (whose selection saw rows the other cuts hold out).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resample: Option<SearchConfig>,
 }
 
 /// Every distinct head of the registry (aliases `logistic`, `gbm` and `ensemble_ridge_gbm` are
@@ -67,6 +76,8 @@ pub fn baselines(heads: &[String]) -> Result<Vec<Method>> {
                 id: format!("baseline.{head}"),
                 kind: MethodKind::Baseline,
                 dsl,
+                produce_seconds: 0.0,
+                resample: None,
             })
         })
         .collect()
@@ -93,6 +104,8 @@ pub fn program(spec: &str) -> Result<Method> {
         id: format!("program.{name}"),
         kind: MethodKind::Program,
         dsl: canonical(text.trim())?,
+        produce_seconds: 0.0,
+        resample: None,
     })
 }
 
@@ -120,8 +133,8 @@ impl Observer for Quiet {
 }
 
 /// Run the lite race on `x`/`y` (a cut's training rows, never more) and return the best
-/// program as a [`MethodKind::Search`] method. The race's own inner folds live inside these rows.
-pub fn search(x: &Rows, y: &[f64], config: &SearchConfig) -> Result<Method> {
+/// program's canonical text. The race's own inner folds live inside these rows.
+pub fn search_program(x: &Rows, y: &[f64], config: &SearchConfig) -> Result<String> {
     let cfg = EvolveConfig {
         pop: config.pop,
         gens: config.gens,
@@ -136,10 +149,19 @@ pub fn search(x: &Rows, y: &[f64], config: &SearchConfig) -> Result<Method> {
         .ranked
         .first()
         .context("search produced no program")?;
+    canonical(&best.dsl)
+}
+
+/// [`search_program`] as a [`MethodKind::Search`] method, with the wall time recorded.
+pub fn search(x: &Rows, y: &[f64], config: &SearchConfig) -> Result<Method> {
+    let started = std::time::Instant::now();
+    let dsl = search_program(x, y, config)?;
     Ok(Method {
         id: SEARCH_METHOD_ID.to_owned(),
         kind: MethodKind::Search,
-        dsl: canonical(&best.dsl)?,
+        dsl,
+        produce_seconds: started.elapsed().as_secs_f64(),
+        resample: None,
     })
 }
 
@@ -157,6 +179,7 @@ mod tests {
         assert!(baselines(&["no_such_head".to_owned()]).is_err());
         let p = program("champ=(pipe X (robust_scale) (ridge))").unwrap();
         assert_eq!(p.id, "program.champ");
+        assert_eq!(p.produce_seconds, 0.0);
         assert!(program("bad name=(pipe X (ridge))").is_err());
         assert!(program("x").is_err());
     }

@@ -74,9 +74,17 @@ fn panic_text(payload: Box<dyn std::any::Any + Send>) -> String {
 /// Fit `dsl` on `cut.train`, predict `cut.hold`, score.
 pub fn evaluate(dsl: &str, x: &Rows, y: &[f64], cut: &Cut) -> Outcome {
     let hold_rows = cut.hold.len();
-    let genome = match GenomeIr::parse(dsl) {
-        Ok(genome) => genome,
-        Err(error) => return Outcome::rejected(format!("parse: {error}"), 0.0, 0.0, hold_rows),
+    let genome = match catch_unwind(AssertUnwindSafe(|| GenomeIr::parse(dsl))) {
+        Ok(Ok(genome)) => genome,
+        Ok(Err(error)) => return Outcome::rejected(format!("parse: {error}"), 0.0, 0.0, hold_rows),
+        Err(payload) => {
+            return Outcome::rejected(
+                format!("parse panicked: {}", panic_text(payload)),
+                0.0,
+                0.0,
+                hold_rows,
+            )
+        }
     };
     let (x_train, y_train) = take(x, y, &cut.train);
     let (x_hold, y_hold) = take(x, y, &cut.hold);
@@ -94,9 +102,9 @@ pub fn evaluate(dsl: &str, x: &Rows, y: &[f64], cut: &Cut) -> Outcome {
                 hold_rows,
             )
         }
-        Err(payic) => {
+        Err(payload) => {
             return Outcome::rejected(
-                format!("fit panicked: {}", panic_text(payic)),
+                format!("fit panicked: {}", panic_text(payload)),
                 started.elapsed().as_secs_f64(),
                 0.0,
                 hold_rows,
@@ -180,11 +188,14 @@ pub struct FoldResult {
     pub fold: usize,
     /// [`Cut::cut_id`].
     pub cut_id: String,
+    /// The program scored on this fold (differs per fold only when the search was re-run per
+    /// cut).
+    pub dsl: String,
     /// The score.
     pub outcome: Outcome,
 }
 
-/// A program scored on every cut, pooled out of fold.
+/// A program (or a per-cut program) scored on every cut, pooled out of fold.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Deep {
     /// `ok` when every fold scored, else `rejected`.
@@ -207,13 +218,37 @@ pub struct Deep {
     pub robust_fitness: Option<f64>,
     /// Wall seconds summed over folds (fit + predict).
     pub seconds: f64,
+    /// Wall seconds spent producing per-fold programs (0 unless the search was re-run per cut).
+    #[serde(default)]
+    pub produce_seconds: f64,
 }
 
-/// Score `dsl` on every cut; folds run in parallel.
+/// Score one program on every cut; folds run in parallel.
 pub fn evaluate_deep(dsl: &str, x: &Rows, y: &[f64], cuts: &[Cut]) -> Deep {
+    let programs: Vec<String> = cuts.iter().map(|_| dsl.to_owned()).collect();
+    evaluate_deep_programs(&programs, x, y, cuts)
+}
+
+/// Score `programs[i]` on `cuts[i]` for every cut and pool out of fold. `programs.len()` must
+/// equal `cuts.len()`; a mismatch is reported as a rejected deep score, never a panic.
+pub fn evaluate_deep_programs(programs: &[String], x: &Rows, y: &[f64], cuts: &[Cut]) -> Deep {
+    if programs.len() != cuts.len() {
+        return Deep {
+            status: "rejected".to_owned(),
+            folds: Vec::new(),
+            fold_r2: Vec::new(),
+            oof_r2: None,
+            oof_rmse: None,
+            fold_sd: None,
+            robust_fitness: None,
+            seconds: 0.0,
+            produce_seconds: 0.0,
+        };
+    }
     let outcomes: Vec<Outcome> = cuts
         .par_iter()
-        .map(|cut| evaluate(dsl, x, y, cut))
+        .zip(programs.par_iter())
+        .map(|(cut, dsl)| evaluate(dsl, x, y, cut))
         .collect();
     let seconds = outcomes
         .iter()
@@ -223,7 +258,7 @@ pub fn evaluate_deep(dsl: &str, x: &Rows, y: &[f64], cuts: &[Cut]) -> Deep {
     let mut fold_r2 = Vec::new();
     let mut all_ok = true;
     let mut folds = Vec::with_capacity(cuts.len());
-    for (cut, outcome) in cuts.iter().zip(outcomes) {
+    for ((cut, dsl), outcome) in cuts.iter().zip(programs).zip(outcomes) {
         if outcome.is_ok() {
             for (i, &row) in cut.hold.iter().enumerate() {
                 oof[row] = outcome.predictions[i];
@@ -235,6 +270,7 @@ pub fn evaluate_deep(dsl: &str, x: &Rows, y: &[f64], cuts: &[Cut]) -> Deep {
         folds.push(FoldResult {
             fold: cut.fold,
             cut_id: cut.cut_id.clone(),
+            dsl: dsl.clone(),
             outcome: Outcome {
                 predictions: Vec::new(),
                 ..outcome
@@ -251,6 +287,7 @@ pub fn evaluate_deep(dsl: &str, x: &Rows, y: &[f64], cuts: &[Cut]) -> Deep {
             fold_sd: None,
             robust_fitness: None,
             seconds,
+            produce_seconds: 0.0,
         };
     }
     let oof_r2 = r2(y, &oof);
@@ -267,6 +304,7 @@ pub fn evaluate_deep(dsl: &str, x: &Rows, y: &[f64], cuts: &[Cut]) -> Deep {
         oof_rmse: Some(oof_rmse),
         fold_sd: Some(fold_sd),
         seconds,
+        produce_seconds: 0.0,
     }
 }
 
@@ -296,17 +334,42 @@ mod tests {
         assert!(ok.is_ok(), "{ok:?}");
         assert!(ok.r2.unwrap() > 0.9);
         assert_eq!(ok.predictions.len(), cuts[0].hold.len());
+
+        // The parser accepts any stage name and fit rejects it; either way the reason names it.
         let bad = evaluate("(pipe X (no_such_head_ever))", &x, &y, &cuts[0]);
         assert_eq!(bad.status, "rejected");
-        assert!(bad.reason.as_deref().unwrap_or("").contains("parse") || bad.reason.is_some());
+        let reason = bad.reason.as_deref().unwrap_or("");
+        assert!(reason.contains("no_such_head_ever"), "{reason}");
+        assert!(bad.rmse.is_none() && bad.r2.is_none());
+        let unparsable = evaluate("(((", &x, &y, &cuts[0]);
+        assert_eq!(unparsable.status, "rejected");
+        assert!(unparsable
+            .reason
+            .as_deref()
+            .unwrap_or("")
+            .starts_with("parse"));
 
         let deep = evaluate_deep("(pipe X (ridge))", &x, &y, &cuts);
         assert_eq!(deep.status, "ok");
         assert_eq!(deep.folds.len(), 4);
         assert!(deep.oof_r2.unwrap() > 0.9);
         assert!(deep.folds.iter().all(|f| f.outcome.predictions.is_empty()));
+        assert!(deep.folds.iter().all(|f| f.dsl == "(pipe X (ridge))"));
         let expected = robust_fitness(deep.oof_r2.unwrap(), &deep.fold_r2);
         assert_eq!(deep.robust_fitness, Some(expected));
+
+        // Per-cut programs: one bad fold rejects the pooled number, and the fold keeps its dsl.
+        let mut programs: Vec<String> =
+            cuts.iter().map(|_| "(pipe X (ridge))".to_owned()).collect();
+        programs[2] = "(pipe X (no_such_head_ever))".to_owned();
+        let mixed = evaluate_deep_programs(&programs, &x, &y, &cuts);
+        assert_eq!(mixed.status, "rejected");
+        assert_eq!(mixed.folds[2].dsl, programs[2]);
+        assert_eq!(mixed.fold_r2.len(), 3);
+        assert_eq!(
+            evaluate_deep_programs(&programs[..2], &x, &y, &cuts).status,
+            "rejected"
+        );
     }
 
     #[test]

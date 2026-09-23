@@ -22,13 +22,16 @@ For every dataset directory under `--datasets` (a directory holding `metadata.js
    `NAME=@file` for any program you want on the ladder, plus `--search`, which runs the lite race
    on the **screen cut's training rows only** and enters its best program as `afm.lite-race.v1`.
 3. **One evaluator.** Parse, fit on the cut's training rows, predict the held-out rows, score
-   RMSE and R². Panics and errors are rejections with a reason; non-finite predictions or scores
-   are rejections. The evaluator is ~40 lines in `crates/jope-bench/src/eval.rs`, deliberately
-   not shared with the pipeline's private one, so a change there cannot silently move a benchmark.
-4. **Screen, then deepen.** Every method is scored on `--screen-fold` (default 0). The
-   `--top N` (default 5) by screen fitness are re-scored on every cut; the committed number is the
-   pooled out-of-fold RMSE/R² over all rows with the campaign's variance-penalised fitness
-   `max(oof_r2, -1) - 0.25 * min(sd(fold_r2), 1)`.
+   RMSE and R². Parse, fit and predict all run under `catch_unwind`; panics and errors are
+   rejections with a reason, and non-finite predictions or scores are rejections. The evaluator
+   is one small function in `crates/jope-bench/src/eval.rs`, deliberately not shared with the
+   pipeline's private one, so a change there cannot silently move a benchmark.
+4. **Screen, then deepen.** Every method is scored on `--screen-fold` (default 0) and ranked by
+   its raw held-out R² there (uncapped, so a degenerate fold still orders methods instead of
+   tying them). The `--top N` (default 5) are re-scored on every cut; the committed number is the
+   pooled out-of-fold RMSE/R² over all rows with the campaign's variance-penalised score
+   `max(oof_r2, -1) - 0.25 * min(sd(fold_r2), 1)` (`robust_fitness`). Method ids must be unique;
+   a duplicate is an error, not two rows.
 5. **Reports.** One `jope.bench-report/v1` per dataset: plan, every cut id, every method's screen
    and deep scores and timings, host cores and worker count, git head when known.
 6. **Ladders.** `jope-bench ladder` turns a directory of reports into two local `jope-arena`
@@ -48,12 +51,16 @@ cargo run --release -p jope-arena -- elo --track jope-same-cut-v1-deep --root ta
 - A method's deep row is the honest one; its screen row is what got it there. A method that is
   strong on the screen cut and weak out of fold is exactly what the deep stage exists to catch.
 - `afm.lite-race.v1` is fitted and scored like any baseline. Its program was chosen using the
-  screen cut's training rows only (the race's inner folds live inside them); its deep score
-  re-fits that fixed program on every cut. That measures the *program*; measuring the *procedure*
-  (re-running the search per fold) is a later flag.
-- A dataset whose screen fold is degenerate (a near-constant held-out target gives wild R²) still
-  ranks by screen fitness, which is capped at −1; the deep stage corrects it. If that recurs,
-  screen on two folds.
+  screen cut's training rows only (the race's inner folds live inside them). Without
+  `--resample-search`, its deep score re-fits that one fixed program on every cut: an honest
+  number for *the program*, but an **optimistic** one for the search, because the program's
+  selection saw rows that the other cuts hold out. With `--resample-search`, the deep stage
+  re-runs the search on each cut's training rows and scores that cut's own program (per-fold
+  programs are recorded in the report); that measures the *procedure* and is the number to quote
+  against baselines. The per-cut search time is recorded as `produce_seconds`.
+- A dataset whose screen fold is degenerate (a near-constant held-out target gives wildly
+  negative R² for every method) is still ordered by raw screen R², so the finalists are the
+  least-bad methods rather than an alphabetical tie. If that recurs, screen on two folds.
 - Regression only in this version. Binary, multiclass and timeseries datasets are skipped with a
   message; they go through the v3 table API in a later step.
 - Tier-2 external baselines (the model-zoo report adapters) are a later step: they accept the same
