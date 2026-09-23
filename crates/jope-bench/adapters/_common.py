@@ -32,7 +32,9 @@ def write(out_path: str, predictions) -> None:
         raise SystemExit("non-finite prediction")
     with open(out_path, "w") as handle:
         for value in predictions:
-            handle.write(f"{value!r}\n")
+            # A plain float: under NumPy 2 the repr of a NumPy scalar is `np.float64(...)`,
+            # which the controller would reject as not a number.
+            handle.write(f"{float(value)!r}\n")
 
 
 def run(fit_predict, version: str) -> int:

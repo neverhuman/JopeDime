@@ -1,8 +1,12 @@
 //! Tier-2 baselines: external engines run as subprocesses on the same cuts and scored by this
 //! crate's evaluator from the predictions they return. The controller writes a cut's training
-//! rows (features plus target) and its held-out features (no target) to a private directory,
-//! runs the adapter, reads one prediction per held-out row and scores it exactly as it scores a
-//! program. The adapter never sees a held-out target, and nothing it prints is trusted as a score.
+//! rows (features plus target) and its held-out features (no target) to a temporary directory
+//! readable by its own user only, runs the adapter, reads one prediction per held-out row and
+//! scores it exactly as it scores a program. The adapter is handed no held-out target, and
+//! nothing it prints is trusted as a score. That is a guarantee about what an adapter is given
+//! and about who scores it, not a sandbox: the child runs with the benchmark's user, working
+//! directory and environment, and it may tune itself inside its own training rows (as the
+//! resampled search does), so "controller-scored" does not mean "untuned".
 //!
 //! Contract [`CONTRACT`]: `<command...> <train.csv> <predict.csv> <out.csv> <task>`. `train.csv`
 //! is headerless numeric with the target last; `predict.csv` is headerless numeric features only,
@@ -61,8 +65,13 @@ pub fn parse_spec(text: &str, timeout_seconds: f64) -> Result<AdapterSpec> {
     if command.is_empty() {
         bail!("adapter {name}: empty command");
     }
-    if !timeout_seconds.is_finite() || timeout_seconds <= 0.0 {
-        bail!("adapter {name}: the timeout must be positive");
+    if !timeout_seconds.is_finite()
+        || timeout_seconds <= 0.0
+        || Duration::try_from_secs_f64(timeout_seconds).is_err()
+    {
+        bail!(
+            "adapter {name}: the timeout must be a positive number of seconds that fits a Duration"
+        );
     }
     Ok(AdapterSpec {
         name: name.to_owned(),
@@ -111,12 +120,21 @@ struct Run {
     stderr: String,
 }
 
+/// A temporary directory readable and writable by this user only.
+fn private_tempdir(prefix: &str) -> Result<tempfile::TempDir> {
+    let mut builder = tempfile::Builder::new();
+    builder.prefix(prefix);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        builder.permissions(std::fs::Permissions::from_mode(0o700));
+    }
+    builder.tempdir().context("adapter scratch directory")
+}
+
 /// Run a command with its output captured, killing it after `timeout_seconds`.
 fn run_with_timeout(command: &[String], args: &[String], timeout_seconds: f64) -> Result<Run> {
-    let dir = tempfile::Builder::new()
-        .prefix("jope-bench-adapter-io-")
-        .tempdir()
-        .context("adapter scratch directory")?;
+    let dir = private_tempdir("jope-bench-adapter-io-")?;
     let stdout_path = dir.path().join("stdout");
     let stderr_path = dir.path().join("stderr");
     let (program, leading) = command.split_first().context("empty adapter command")?;
@@ -128,7 +146,9 @@ fn run_with_timeout(command: &[String], args: &[String], timeout_seconds: f64) -
         .stderr(std::fs::File::create(&stderr_path)?)
         .spawn()
         .with_context(|| format!("spawn {program}"))?;
-    let deadline = Instant::now() + Duration::from_secs_f64(timeout_seconds);
+    let deadline = Instant::now()
+        + Duration::try_from_secs_f64(timeout_seconds)
+            .context("the timeout does not fit a Duration")?;
     let status = loop {
         if let Some(status) = child.try_wait()? {
             break status;
@@ -176,12 +196,9 @@ pub fn evaluate_adapter(spec: &AdapterSpec, x: &Rows, y: &[f64], cut: &Cut, task
     let hold_rows = cut.hold.len();
     let rejected =
         |reason: String, seconds: f64| Outcome::rejected(reason, seconds, 0.0, hold_rows);
-    let dir = match tempfile::Builder::new()
-        .prefix("jope-bench-adapter-")
-        .tempdir()
-    {
+    let dir = match private_tempdir("jope-bench-adapter-") {
         Ok(dir) => dir,
-        Err(error) => return rejected(format!("scratch directory: {error}"), 0.0),
+        Err(error) => return rejected(format!("scratch directory: {error:#}"), 0.0),
     };
     let (x_train, y_train) = take(x, y, &cut.train);
     let (x_hold, y_hold) = take(x, y, &cut.hold);
@@ -359,9 +376,11 @@ mod tests {
     fn adapter_failures_are_rejections_with_the_cause() {
         let (x, y) = toy();
         let cuts = build(&FoldPlan::new("f", 1, 3), "f", "s", x.len()).unwrap();
-        let failing = parse_spec("fail=python3 -c import\u{a0}sys;sys.exit(3)", 30.0);
-        // No quoting in specs: build the command directly instead.
-        assert!(failing.is_ok());
+        // Specs have no quoting, so a command with spaces inside one argument is built directly.
+        assert!(
+            parse_spec("huge=python3 x.py", 1e30).is_err(),
+            "timeout must fit a Duration"
+        );
         let failing = AdapterSpec {
             name: "fail".to_owned(),
             command: vec![
