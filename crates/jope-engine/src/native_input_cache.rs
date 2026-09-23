@@ -190,8 +190,10 @@ fn after_read(inputs: &Inputs, path: &Path, file: &File, identity: &Identity) ->
 }
 /// fstatfs(2) `f_type` of ext4, the only filesystem qualified for reuse below.
 const EXT4_SUPER_MAGIC: u64 = 0xef53;
-/// fstatfs(2) `f_type` of an open file. The field is a signed word on some
-/// targets; filesystem magics are non-negative, so the conversion preserves it.
+/// fstatfs(2) `f_type` of an open file. The field is a signed word whose width
+/// depends on the target, so a magic with its top bit set (btrfs, 0x9123683E, on a
+/// 32-bit target) sign-extends here. Only equality with the ext4 and tmpfs magics,
+/// both below 2^31, is ever tested, and those compare correctly on every target.
 fn filesystem_magic(file: &File) -> Result<u64> {
     let mut status = std::mem::MaybeUninit::<libc::statfs>::uninit();
     if unsafe { libc::fstatfs(file.as_raw_fd(), status.as_mut_ptr()) } != 0 {
