@@ -3,7 +3,10 @@
 The first committed same-cut evidence: every tier-1 baseline and the program this repository's
 search wrote, scored on identical held-out cuts of the ten committed regression datasets under
 `datasets/test/`, by `jope-bench` at the tree this directory was committed from. Nothing here was
-edited by hand. `crates/jope-bench/tests/committed_evidence.rs` re-derives the tracks and both
+edited by hand. The ten datasets are the `test-10` collection, chosen from the published ladder
+where the historical engine ranked first (`docs/datasets.md`): a favourable selection, used because
+it is the only committed regression data. The comparison between methods on identical cuts of these
+ten is fair; nothing here generalises to a broader panel. `crates/jope-bench/tests/committed_evidence.rs` re-derives the tracks and both
 ladders from the reports byte for byte and re-evaluates the committed baselines of one dataset on
 the same cuts; `deploy/ci/readme-benchmarks.py` renders the README block from these files and
 refuses when they disagree with each other.

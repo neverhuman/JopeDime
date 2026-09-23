@@ -78,7 +78,12 @@ cargo run --release -p jope-arena -- elo --track jope-same-cut-v1-deep --root ta
 every default head plus the searched program with `--resample-search` (32 programs × 8 rounds),
 k=5 on the pipeline's seed, top 5 deepened, with the tracks, both ladders and their snapshots
 (`SOURCES.md` there records the exact commands, the recording tree and host). The run is
-deterministic apart from timings. `crates/jope-bench/tests/committed_evidence.rs` re-derives the
+deterministic apart from timings. The ten datasets are the `test-10` collection, chosen from the
+published ladder where the historical engine ranked first (`docs/datasets.md`): a favourable
+selection, used because it is the only committed regression data. Identical cuts make the
+comparison between methods fair on those ten; the evidence says nothing about a broader panel, and
+the README block says so. The experiment contract's frozen 30-dataset PMLB panel (`docs/asm.md`)
+excludes `test-10` on purpose; a same-cut run over that panel is the next evidence step. `crates/jope-bench/tests/committed_evidence.rs` re-derives the
 tracks from the reports and both ladders from the tracks byte for byte, and re-evaluates one
 dataset's baselines on the same cuts bit for bit; `deploy/ci/readme-benchmarks.py` renders the
 README's same-cut block from these files and refuses when they disagree. Regenerate with the

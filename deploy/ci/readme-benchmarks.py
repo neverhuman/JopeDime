@@ -426,6 +426,14 @@ def render_samecut() -> str:
         "deep row is the *procedure* re-run on every cut, not one program chosen with knowledge "
         "of the other cuts' held-out rows. Bold is the searched program.",
         "",
+        "**The datasets are a favourable selection.** They are the `test-10` collection, chosen "
+        "from the published ladder where the historical engine ranked first "
+        "(`docs/datasets.md`), and they are used here because they are the only committed "
+        "regression data. Identical cuts make the comparison between methods fair on these ten; "
+        "they say nothing about a broader panel. The frozen 30-dataset PMLB panel of the "
+        "experiment contract (`docs/asm.md`) excludes them on purpose; a same-cut run over it is "
+        "the next evidence step.",
+        "",
         "| rank | method | Elo | avg rank | dataset wins | coverage |",
         "| ---: | --- | ---: | ---: | ---: | --- |",
         *(samecut_row(r) for r in e["deep_rows"]),
