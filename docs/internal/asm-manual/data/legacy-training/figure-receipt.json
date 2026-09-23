@@ -1,0 +1,16 @@
+{
+  "schema": "jope.manual.legacy-figure/v1",
+  "inputs": {
+    "round1.train_metrics.jsonl": "df70f54f5b06ae44cfef9cc24c73c31d2d677a416ed84c4368e701b53ef34260",
+    "loss_components_by_generation.csv": "f7d419a5614673c71e51ce85b898107819d242102089d06b980e3de97bb12bbf",
+    "elo_trajectory.csv": "5d1cc168dc0d7abb02751122ceef86d44ceb2e3de5a40890daa100e90485068c",
+    "verification.json": "8a8ecce13781ec54c5b1d4b0afc4928b6f57cfc08aff871c971974c781f37d50",
+    "gate-result.v1.json": "53e7f728c01531e0c9147400d4518f4e568a7fb0addeb841fcd0ebb300862d1b"
+  },
+  "output": "figures/training-legacy-round1-generations.svg",
+  "output_sha256": "43851ba96cc483019b081fc87e4061bcfbf2a156a47c4d7924261d68bc6a46da",
+  "interpolation": "Straight lines connect original summaries; no invented observations",
+  "loss_generations": 31,
+  "internal_elo_generations": 30,
+  "round1_epochs": 4
+}

@@ -1,0 +1,38 @@
+{
+  "schema": "jope.maintainer-product-language-handoff/v1",
+  "status": "stopped custody chapters; root owns publication and later execution",
+  "source_head": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
+  "files": {
+    "product.md": "c74a7a4ab2c781ed7407526174c2a2242edf08dac0c9c8f1b4abcaaf15b1125b",
+    "languages-examples.md": "e5ef9cc81e1303478c7b84df05a1786c2f435f56aa58f664b988832b67dd81e0",
+    "cli-help-68.json": "4d9c9712503066e81050f8d9e8dac49c74716077a9e4244f78fc242f2f21371f",
+    "product-language-source-pins.json": "daf28d732dd02abf652aea462fe838728b30490b9ce9cb2917ab81bd14885073",
+    "product-language-validation.json": "0328676e5776a0a3df009e388337e684207af984a50ca29ce536163babdd5a8f",
+    "examples/gp-synthetic.json": "1d9d289f791f3efb5ada9b42555eaedf5f76d9eabf1d176843cd18b7379f31bd",
+    "examples/train.csv": "f4c44392e68f87fa1a799f856c9d692652e425669e28e7c34914c06ef91ff61d",
+    "examples/predict.csv": "7f4cb0800541aaa12df854544ef0364c44a19f3d197e2ffcb9a6e1e02ad42dab",
+    "examples/commands.json": "f34771938934d1360cbe054689393198a53929479ba119f5a0faf2b0da7a170a",
+    "examples/validate-outputs.py": "4aa8c39f0a376a56cc60a3f8ae05c73870a50c1b190afd6ebdb294f21cfd2a30"
+  },
+  "verified": [
+    "16 immutable CLI help/version invocations exit0 with exact executable hash",
+    "12 shell blocks pass bash -n without execution",
+    "24 synthetic JSON rows and matching16train/8prediction CSV rows",
+    "26 registered recipe rows:17regression/5binary/4multiclass;14/2/6 pending fitted support counts",
+    "45 current/pending source text hashes",
+    "pure Python output validator syntax"
+  ],
+  "independent_review": {
+    "agent": "training_refresh",
+    "outcome": "No confirmed source contradiction; numeric/state support matrix and recipe-vs-fitted distinction checked",
+    "actual_models_or_compilers_executed": false
+  },
+  "unrun": [
+    "14 prepared example command arrays (models/compilers/pipeline)",
+    "pending product/training/warm/winner CLI help",
+    "actual selected-state fitted export parity",
+    "PDF render/layout/link verification and canonical documentation publication"
+  ],
+  "private_example_notice": "Tiny synthetic maintainer fixture; neither frozen panel nor official10fixture corpus; legacy emitted code fits again. No public fitted-bundle claim.",
+  "followup_for_root": "Use examples/commands.json and validate-outputs.py when resources are allocated. Preserve source and input hashes, commands, every exit, timings and five8rowprediction files. Add measured evidence as a separate receipt; update published chapter status before rendering if actual execution succeeds or fails."
+}

@@ -1,0 +1,105 @@
+{
+  "schema": "jope.manual-example-stopped-audit/v1",
+  "status": "passed within allocated fixture scope",
+  "source_head": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
+  "merged_main": "a75e543d2166017cb0139e0a251d51d9a0c98e08",
+  "source_tree_identical": true,
+  "counts": {
+    "passed": 14,
+    "failed": 0,
+    "unavailable": 0,
+    "unstarted_deadline": 0
+  },
+  "tool_versions": {
+    "python3": "Python 3.12.3",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "g++": "x86_64-linux-gnu-g++-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "node": "v26.1.0"
+  },
+  "cpu_models": [
+    "AMD Ryzen Threadripper PRO 3995WX 64-Cores"
+  ],
+  "observed_cpu_affinity": [
+    0
+  ],
+  "observed_cgroup": "0::/system.slice/jope-manual-toy-20260923-68.service",
+  "declared_limits": {
+    "cpus": 1,
+    "memory_bytes": 4294967296,
+    "swap_bytes": 0,
+    "gpu_tasks": 0,
+    "total_seconds": 300,
+    "reporting_reserve_seconds": 15,
+    "model_command_seconds": 30,
+    "compiler_command_seconds": 60,
+    "threads": 1,
+    "network": "denied by transient unit"
+  },
+  "constraint_evidence": {
+    "launch_command_accepted": true,
+    "active_property_readback": false,
+    "readback_reason": "Unit was already collected; systemctl returned unloaded defaults, retained in unit-readback.json. Do not interpret those defaults as applied limits.",
+    "readback_limits_not_independently_verified": [
+      "MemoryMax",
+      "MemorySwapMax",
+      "CPUQuota",
+      "network/device policy"
+    ],
+    "no_new_resource_qualification_claim": true
+  },
+  "elapsed_seconds": {
+    "launcher": 10.506140439072624,
+    "controller": 10.40713805705309
+  },
+  "cpu_seconds": {
+    "unit_exact": 9.382049,
+    "command_children": 2.9529630000000004,
+    "controller": 6.398584987,
+    "note": "Unit includes and overlaps children/controller/version/setup; never add unit CPU to subtotals."
+  },
+  "memory_measurements": {
+    "unit_reported_peak_bytes": 5332992,
+    "unit_reported_swap_peak_bytes": 0,
+    "cumulative_reaped_children_maxrss_kib": 168808,
+    "note": "Different accounting domains; the unit-reported5MiB peak is lower than child maxrss. Retain both; no complete-process peak claim."
+  },
+  "recipe_example": {
+    "task": "synthetic regression",
+    "train_rows": 16,
+    "validation_rows": 4,
+    "prediction_rows": 8,
+    "train_r2": 0.9995230651159304,
+    "validation_r2": 0.9918641493060777,
+    "all_five_prediction_bits_identical": true,
+    "prediction_bits": [
+      "b8bd83ba1e4e3640",
+      "38466918df312740",
+      "3423f7d1a9543640",
+      "a8d1dc0b32884040",
+      "b1886ae9345b3640",
+      "66849697778b4040",
+      "72c477ba54e94540",
+      "24375023bd8e4040"
+    ]
+  },
+  "legacy_pipeline": {
+    "dataset_id": "1cb97b1d7314d43d",
+    "dataset_path": "/home/ubuntu/JopeDime/datasets/test/pmlb-229-pwlinear",
+    "synthetic": false,
+    "successful_measurements": 4,
+    "failed_measurements": 0,
+    "selected_recipe": "(pipe X (ridge))",
+    "validation_rmse": 0.07756855737273811,
+    "validation_r2": 0.8151398563824087,
+    "policy": "explicit skip; no neural proposal claim",
+    "receipt_verified": true
+  },
+  "scope_exclusions": [
+    "No frozen-panel campaign",
+    "No policy training",
+    "No genuine-neural origin claim",
+    "No saved-fitted-state export qualification",
+    "No ASM warm-under60 claim"
+  ],
+  "allocation_returned": true
+}

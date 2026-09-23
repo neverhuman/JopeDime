@@ -1,0 +1,174 @@
+{
+  "schema": "jope.manual-data-evidence-handoff/v1",
+  "created_utc": "2026-09-23T16:44:43.856197+00:00",
+  "owner": "origin_recovery",
+  "status": "stopped",
+  "source_sha": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
+  "main_equivalent_source_sha": "a75e543d2166017cb0139e0a251d51d9a0c98e08",
+  "files": [
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/data-evidence.md",
+      "sha256": "2a92656965bd2b3e6a28e217f6ae4e5447c94b69144cd76ea06557657815f2ae",
+      "bytes": 115166
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/dataset-inventory.json",
+      "sha256": "c008ebedb5febee38ccba7d3f220009350a6ef055b865c25de2a5ba0ca2e6639",
+      "bytes": 790382
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/performance-evidence.json",
+      "sha256": "ce36d19251a4d01794ed277597541b8da3ceba4f5076aed723de98d3f9466e8e",
+      "bytes": 7412755
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/catalog-summary.json",
+      "sha256": "e7d7d4a459f9fbc3b6aea10212c26a812938472c647ab5fbcce11a8acf46a4b8",
+      "bytes": 3918
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/local-estate.json",
+      "sha256": "43a741b92d4c26ed30ebe4901a4afac9455584fc8ef1ecc8b55f7f467634541a",
+      "bytes": 4913
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/s3-estate.json",
+      "sha256": "3575ba9b0e8ca061e4c83434bde2ce228d0888ceebf9819a48bb39096f55212c",
+      "bytes": 2088
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/plot-current-origin.csv",
+      "sha256": "c5e3fcefc8b493227f259720dd6856bfa1c35eaebd88ef336cefae9250290f02",
+      "bytes": 460
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/plot-historical-elo.csv",
+      "sha256": "abace496b0f1f54318264dd8f69537014e15b367e60c33243d8a1b28827ab695",
+      "bytes": 138940
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/plot-dataset-sizes.csv",
+      "sha256": "3c1670203239dc1888beb96ae223ce29b6d5ef51199ff8b00a8dbaea1476c474",
+      "bytes": 1535
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/plot-data-manifest.json",
+      "sha256": "289e901e54a7e5eb3e28e41a9cf432aa3dcb951c5f88d8de731464a28321adaa",
+      "bytes": 964
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/data-evidence-source-pins.json",
+      "sha256": "8bc9411c4f617e5874244ce5e6b8cf9cf2ae2367ef1064e7ee1ae0443f14b3d0",
+      "bytes": 3837
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/data-evidence-validation.json",
+      "sha256": "8bd0135157286e2ccfe8a2ff19d7c021453b8b9661c504343af515736f8507e8",
+      "bytes": 987
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/aws-identity.json",
+      "sha256": "3e3422d8d76138154a9b88afec1ea3ccbd322c772a92a6f62c85e9734da8db0b",
+      "bytes": 119
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/learning-object-count.json",
+      "sha256": "367cc572c1da23aa349273f8f47f9e346dbd5d96aae7e703e994ba1807dc3ef3",
+      "bytes": 1067
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/learning-prefixes.json",
+      "sha256": "bc5b1935c30670ff4d799c23c53b915e1fcd02501561f996f94bb72e91550c45",
+      "bytes": 796
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/learning-storage-standard.json",
+      "sha256": "d949d70272258d6c6cfd039f047cc1b4ba78016651dbe491215a836a636f91e7",
+      "bytes": 1085
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/metadata-fetches.json",
+      "sha256": "1fdee8320e3456db74e4138b807bebc8d099bdaf1de5c82ebd445a6f0d2f3155",
+      "bytes": 6068
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-datasets-use2--catalog--v1--catalog.jsonl",
+      "sha256": "ab9fda8d2dea46067b70a42812e9d3c1d9dc6ba025780100df34377e81aa1120",
+      "bytes": 5363939
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-datasets-use2--collections--registry-real-v1--v1.json",
+      "sha256": "bf35ea9ecfebc2f77af2ee6448f295f51f5466483ea10b803f168d2586bed9af",
+      "bytes": 93311
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-datasets-use2--collections--test-10--v1.json",
+      "sha256": "84d79fe7bf60483f127429aa3b0cf1a1c1d8d79cb08c36137a1607b617019ab7",
+      "bytes": 1039
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-datasets-use2.json",
+      "sha256": "f91a7fc2c77df7795556836c4a39d0eb30640c074545f3d5f69f846aabd18ac3",
+      "bytes": 880720
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-learning-use2.json",
+      "sha256": "ea5cb9fe6ce4fc907873934064bdc9bb567461e250b2479e2a0b1ca805dac9cc",
+      "bytes": 111339
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-models-use2--bundles--hyperion-v7--manifest.json",
+      "sha256": "fdaf938fc7f7957c06959f12c130b2bd81cdaef5e5bb2198ba75cf35da1c5233",
+      "bytes": 2662
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-models-use2--bundles--jope-prime-gen31-v2--manifest.json",
+      "sha256": "c8d8d13a2f4cb2eeb21eea364c33e14429c84d344e6b50eb38a472173b97b6f2",
+      "bytes": 25515
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-models-use2--bundles--policy-step-60000--manifest.json",
+      "sha256": "d8e259b26ef8d580ddb99ae5826c9501bcdc0c32045945eef9010926fd796e9e",
+      "bytes": 3868
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-models-use2.json",
+      "sha256": "a6f31cba8c24e332871ddf4cb715c7c06f0c5c28c542290dec3dd16aa5e35369",
+      "bytes": 1423
+    }
+  ],
+  "validation": {
+    "schema": "jope.manual-data-validation/v1",
+    "created_utc": "2026-09-23T16:44:43.855587+00:00",
+    "status": "passed_metadata_and_document_checks",
+    "dataset_count": 30,
+    "feature_records": 522,
+    "checked_current_file_hashes": 90,
+    "all_split_ids_unique_and_development_assignments_match": true,
+    "all_groups_within_one_partition_or_fold": true,
+    "all_category_or_numeric_counts_close": true,
+    "all_heading_and_summary_table_ids_match": true,
+    "spaced_thousands_pattern_absent": true,
+    "historical_ladder_and_scores_hashes_verified": 6,
+    "same_cut_score_cells": 520,
+    "historical_sotarena_rows": 8763,
+    "current_origin_rows": 2,
+    "panel_pending_outcomes": 30,
+    "s3_current_listings_complete": 3,
+    "sealed_target_bodies_opened": false,
+    "numerical_models_fits_or_reports_executed": false,
+    "pdf_rendered_by_this_agent": false,
+    "render_remaining": "Root must inspect PDF table width, page flow, identifiers and figure provenance; this is a Markdown/data handoff."
+  },
+  "canonical_source_or_document_edits": false,
+  "pending_operations": [],
+  "known_omissions": [
+    "No sealed/raw target bodies opened; sealed statistics remain unknown",
+    "S3 other regions/archive/version history not inventoried",
+    "Learning prefix listing aggregated at staging; per-lineage byte breakdown unknown",
+    "No current frozen30 Elo/ranking/result matrix; thirty outcomes pending",
+    "No final cold installation/warm demonstration/GPU training/consumed trained model acceptance",
+    "PDF rendering and reviewed document integration belong to root"
+  ],
+  "supersedes_draft_formatting": "Restored exact dataset IDs, timestamp and thousands tokens after a discarded prose-space pass; validated30 headings and summary IDs. JSON/CSV source artifacts were never affected."
+}

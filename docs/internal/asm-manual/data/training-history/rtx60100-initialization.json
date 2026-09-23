@@ -1,0 +1,28 @@
+{
+  "checkpoint": "runs/eight-a100-recovery-20260912/learning/cycle-000018/train-2/checkpoints/step-60000",
+  "kind": "warm_start",
+  "model_sha256": "053df4f53b84d2ebe7c14fbf907a149760af3d11de4a57b5ff89be8c2d3e8129",
+  "optimizer": "carried FP32 AdamW with bias-correction step",
+  "optimizer_parent_step": 60000,
+  "parent_corpus_sha256": "1c840597554f76598b7c173a0de6f5d13e1b29bfa971f4fa49777d9d1da47798",
+  "parent_step": 60000,
+  "replay_policy": {
+    "corpus_sha256": "1c840597554f76598b7c173a0de6f5d13e1b29bfa971f4fa49777d9d1da47798",
+    "eligible": true,
+    "final_tests_opened": false,
+    "fresh_groups": [],
+    "fresh_records": {},
+    "optimizer": "carry",
+    "parent_checkpoint_sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6",
+    "purpose": "isolated unchanged-corpus hardware qualification, not production continuation outcomes",
+    "qualification": true,
+    "replay": "broad",
+    "sampling_seed": 20260914,
+    "schema": "parallel.replay_policy.v2",
+    "vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787"
+  },
+  "replay_policy_sha256": "50a6a1257c27e69d42cfa409ce0e0f069271519377c1ea0470b46e6ab224a4a0",
+  "resolved_sampler_id": "lineage_fresh_program_champion_plus_seven_v2",
+  "sampler": "lineage-bound counter; local block step starts at zero",
+  "state_sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6"
+}

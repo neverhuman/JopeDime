@@ -1,0 +1,213 @@
+{
+  "schema": "jope.manual.carry-forward-crosscheck/v1",
+  "observed_at": "2026-09-23T18:55:33.054919+00:00",
+  "source_pins": {
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/ch15-check/crosscheck-ch15.json": {
+      "sha256": "b6dee81b75987a05392049aca49923f74127160a5281c7c961dacdb01d69f00c",
+      "bytes": 97151
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/ch15-check/carry-forward.json": {
+      "sha256": "3855044d9a41ab9a314d8d4c3f6eeadf812ba0639229f26452a85eb7b56f49be",
+      "bytes": 3707
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/ch15-check/carry_forward.py": {
+      "sha256": "43324abff3217a6b09eb4e708d8200c770c4102778085f750830185441699be8",
+      "bytes": 3158
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/ch15-check/distinct-improvements.json": {
+      "sha256": "ec9e32775c401a7a0dfb598c71aa3a6191b90ce1ecacf3f9e232f42a64d5c66c",
+      "bytes": 162
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/ch15-check/recompute-targets.json": {
+      "sha256": "4e2be577f4404534a7402467c9e80a56f630c700d3d8ce7ea442586856b82d25",
+      "bytes": 10672
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/ch15-check/recompute_targets.py": {
+      "sha256": "4b580e91534e61edaef8d2d34bca7f7d81edf9dc12ac9297e6a8cb56021a44af",
+      "bytes": 18100
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/ch15-check/f8-legal.json": {
+      "sha256": "acf018ef5c35180144a6db0a4e472989f501439357e030dbb64cdfbecb35872c",
+      "bytes": 1261
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/ch15-check/F4skeptic/check_f4.json": {
+      "sha256": "de0b4cff9c5e0e8d918927662593572424eda904ab5fdb759bf54a4cec726773",
+      "bytes": 1809
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/ch15-check/F4skeptic/check_f4b.json": {
+      "sha256": "fddc8319e7684f9effe52d7588a4973759cee4d8d2b1d5f6f7019673d1dc9808",
+      "bytes": 1274
+    },
+    "/home/ubuntu/jope-rescue-20260921/track-a-20260922/training-evidence-20260923/ch15-check/SHA256SUMS": {
+      "sha256": "6d47cd7c80daff15713d42c7c6ffe07a230490765931a0baf29398033a84b37e",
+      "bytes": 21667
+    },
+    "/home/ubuntu/JopeDime/docs/internal/asm-manual/data/target-history/target-quality-1000-comparisons.csv": {
+      "sha256": "1a3e32526308ce26b4808b0a1a34a651a503f5419ba2343a06751e7bbec87ad9",
+      "bytes": 42782
+    },
+    "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/evidence-expansion-crosscheck/audit_crosscheck.py": {
+      "sha256": "8706ba2cbdfd6b27bb7e247aec8d4b02b317ae17f084cfa6296419ea58586030",
+      "bytes": 6623
+    },
+    "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/original-target-receipts-custody/custody-pointer.json": {
+      "sha256": "96744859e97be5c1d4d39734f818bfe62a9582cb701cf38b91d77a504564cfe8",
+      "bytes": 4057
+    },
+    "/home/ubuntu/JopeDime/crates/jope-engine/src/teaching_store.rs": {
+      "sha256": "4b45a3ccb3af8948fc691ee5a7070aa7c8010e93227433afaa38d644d72edfea",
+      "bytes": 52589
+    },
+    "/home/ubuntu/JopeDime/docs/legacy/root-docs/audits/worldclass-redteam-20260911/evidence/learning-native-v3/teaching_store.rs": {
+      "sha256": "d4b238ee4cd4be69639895cda47a1d0bf1e7878a68b40f77781a47a2db5ef5bc",
+      "bytes": 32204
+    },
+    "/home/ubuntu/JopeDime/docs/internal/asm-manual/sections/15-target-history-packing.md": {
+      "sha256": "40c7fe6d5d196b2fb2fc9b9a2ea16f8a7be2f84530043ed268b4abb014e57e23",
+      "bytes": 32640
+    },
+    "/home/ubuntu/JopeDime/docs/internal/asm-manual/sections/17-flywheel-focused-search.md": {
+      "sha256": "d360ac2ac8baa52aa35f10fb33bab97603e47dda63cfc3d83d3edbbbf790e60b",
+      "bytes": 21023
+    },
+    "/home/ubuntu/JopeDime/docs/internal/asm-manual/tools/make_target_figures.py": {
+      "sha256": "551daaaffa3f98b6bc15bf016e6bdf9e269ba0068e1636a276fa85e025683ccc",
+      "bytes": 5651
+    }
+  },
+  "selected_release_entries_verified": 9,
+  "independently_recomputed_from_published_comparisons": {
+    "arm_groups": 159,
+    "distinct_dataset_cuts": 55,
+    "improved_arm_groups": 64,
+    "distinct_improved_dataset_cuts": 23,
+    "improved_dcs_all_present_arms_same_last_score": 22,
+    "improved_dcs_with_all3_arms_present": 21
+  },
+  "external_seed_payload_audit_metadata_arithmetic": {
+    "all_seed_population_supplied_teacher_first_receipts": 26357,
+    "consecutive_recorded_transitions": 25985,
+    "previous_best_in_next_seeds": 25790,
+    "reported_best_in_own_seeds": 26051,
+    "reported_best_in_own_seeds_fraction": 0.9883901809765907,
+    "multi_arm_groups_shared_incumbent_retained_exploration_sets": 8785,
+    "pine_g41_44": {
+      "g41:generic": {
+        "score": "0.0046975414679629795",
+        "best_sha": "18971327da16f85c",
+        "best_origins": [
+          "incumbent_cut_teacher"
+        ]
+      },
+      "g41:neural": {
+        "score": "0.0046975414679629795",
+        "best_sha": "18971327da16f85c",
+        "best_origins": [
+          "incumbent_cut_teacher"
+        ]
+      },
+      "g41:shuffled": {
+        "score": "0.0046975414679629795",
+        "best_sha": "18971327da16f85c",
+        "best_origins": [
+          "incumbent_cut_teacher"
+        ]
+      },
+      "g42:generic": {
+        "score": "0.003185684481133936",
+        "best_sha": "7e8ca9d9fbb9df17",
+        "best_origins": []
+      },
+      "g42:neural": {
+        "score": "0.0046975414679629795",
+        "best_sha": "18971327da16f85c",
+        "best_origins": [
+          "incumbent_cut_teacher"
+        ]
+      },
+      "g42:shuffled": {
+        "score": "0.003185684481133936",
+        "best_sha": "7e8ca9d9fbb9df17",
+        "best_origins": []
+      },
+      "g43:generic": {
+        "score": "0.003185684481133936",
+        "best_sha": "7e8ca9d9fbb9df17",
+        "best_origins": [
+          "incumbent_cut_teacher"
+        ]
+      },
+      "g43:neural": {
+        "score": "0.003185684481133936",
+        "best_sha": "7e8ca9d9fbb9df17",
+        "best_origins": [
+          "incumbent_cut_teacher"
+        ]
+      },
+      "g43:shuffled": {
+        "score": "0.003185684481133936",
+        "best_sha": "7e8ca9d9fbb9df17",
+        "best_origins": [
+          "incumbent_cut_teacher"
+        ]
+      },
+      "g44:generic": {
+        "score": "0.003185684481133936",
+        "best_sha": "7e8ca9d9fbb9df17",
+        "best_origins": [
+          "incumbent_cut_teacher"
+        ]
+      },
+      "g44:neural": {
+        "score": "0.003185684481133936",
+        "best_sha": "7e8ca9d9fbb9df17",
+        "best_origins": [
+          "incumbent_cut_teacher"
+        ]
+      },
+      "g44:shuffled": {
+        "score": "0.003185684481133936",
+        "best_sha": "7e8ca9d9fbb9df17",
+        "best_origins": [
+          "incumbent_cut_teacher"
+        ]
+      }
+    }
+  },
+  "independently_read_source": {
+    "current_binding": "SHA256(/proc/self/exe) plus 12 semantic source inputs; changed digest rejects old store and changes every group key; byte-identical rebuild does not change identity",
+    "historical_timing": "Four-field legacy timing record, current source writes seven; historical 7859/18 does not establish current writer runtime behavior",
+    "legal_sets": "Shard-local tables/IDs in teaching_shards.v1; loader remaps into shared global table; older monolithic teaching_corpus.v1 differs"
+  },
+  "external_preservation_gap": "Crosscheck reports only3530/26357 search receipts in accepted60000-restored; subsequent stopped preservation receipt covers all26357 search bodies only",
+  "subsequent_search_body_preservation": {
+    "pointer_sha256": "96744859e97be5c1d4d39734f818bfe62a9582cb701cf38b91d77a504564cfe8",
+    "archive": {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/original-target-receipts-custody/original-target-search-receipts.tar.gz",
+      "sha256": "8b5eaa4c98025d00dc9bbaf6ae1b5786846be575c806ee495c74b00e3de1194d",
+      "bytes": 5270675,
+      "regular_members": 26357,
+      "original_bytes": 62271855
+    },
+    "verification": {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/original-target-receipts-custody/verification.json",
+      "sha256": "514f6ef429b7a5c236054f719bcfdeb812363b92febd51199417b369a6b28f99",
+      "result": "PASS",
+      "members_verified": 26357,
+      "every_original_expected_hash_matched": true,
+      "compressed_stream_crc_checked": true,
+      "extracted_files_written": 0,
+      "original_receipt_bodies_opened_by_verifier": 0
+    },
+    "evidence_level": "Read stopped pointer; did not duplicate independent streaming archive verification",
+    "limitations": [
+      "Same-filesystem local second copy, not off-host",
+      "No neighboring seed bodies preserved"
+    ]
+  },
+  "original_receipt_or_seed_paths_opened_here": 0,
+  "independent_seed_payload_replay": false,
+  "current_teacher_admission_or_neural_causality_proved": false,
+  "figure_numeric_changes": false,
+  "source_hashes_unchanged_before_after": true
+}

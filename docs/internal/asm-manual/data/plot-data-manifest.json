@@ -1,0 +1,24 @@
+{
+  "files": [
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/plot-current-origin.csv",
+      "sha256": "c5e3fcefc8b493227f259720dd6856bfa1c35eaebd88ef336cefae9250290f02",
+      "rows": 2
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/plot-historical-elo.csv",
+      "sha256": "abace496b0f1f54318264dd8f69537014e15b367e60c33243d8a1b28827ab695",
+      "rows": 661
+    },
+    {
+      "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/plot-dataset-sizes.csv",
+      "sha256": "3c1670203239dc1888beb96ae223ce29b6d5ef51199ff8b00a8dbaea1476c474",
+      "rows": 30
+    }
+  ],
+  "notes": [
+    "Existing historical Elo only; no new rating fit.",
+    "Do not combine Elo pools or interpret partial coverage as full coverage.",
+    "Current origin rows use development loss and do not prove a panel win."
+  ]
+}

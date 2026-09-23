@@ -1,0 +1,20 @@
+{
+  "schema": "jope.manual-per-step-figure/v1",
+  "inputs": {
+    "/home/ubuntu/JopeDime/docs/internal/asm-manual/data/per-step-history/a100-step-metrics.csv.gz": "aa431f5a2f5f4d6bfc2e8568ef57bb10b100356750d22eb615dd68cfa1647627",
+    "/home/ubuntu/JopeDime/docs/internal/asm-manual/data/per-step-history/a100-step-bins.csv": "446399c4088fe7e86fea7038a37acde8704d9cd185f2b9eeffe5b93c29a2ad14",
+    "/home/ubuntu/JopeDime/docs/internal/asm-manual/data/per-step-history/source-manifest.json": "af15d12098d4ec81c0dd505d084000fa4d3c94d869a5f3a917a54d8e85db818c",
+    "/home/ubuntu/JopeDime/docs/internal/asm-manual/data/training-history/a100-checkpoint-validation.csv": "867fac4556dfac6c7baff82a303660f4ea5b4c410b21e1d94717bc3a76c10920"
+  },
+  "figure": {
+    "path": "/home/ubuntu/JopeDime/docs/internal/asm-manual/figures/training-a100-per-step.svg",
+    "sha256": "d40ff9a7783e27a1ef7607d4132709a530c9afb172a19c6a11a28041ca583431",
+    "bytes": 58034
+  },
+  "source_rows": 63000,
+  "verified_bins": 630,
+  "aggregation": "Non-overlapping100-step arithmetic mean; no line crosses corpus boundary.",
+  "validation_observations": 78,
+  "models_loaded": false,
+  "training_or_fits": false
+}

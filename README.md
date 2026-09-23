@@ -228,6 +228,7 @@ Do not open a stack of PRs. Merge or close the current one before starting the n
 
 ## Further reading
 
+- [Private maintainer manual](docs/asm-maintainer-manual.md) — detailed PDF, section Markdown, current evidence, dataset inventories and acceptance checklist
 - [`docs/quickstart.md`](docs/quickstart.md) — the measured feat-math quickstart (timings from `4235db6`, before PRs #17–#26; not this SHA)
 - [`docs/architecture.md`](docs/architecture.md) — crates, contracts and the intended pipeline
 - [`docs/emitters.md`](docs/emitters.md) — per-target coverage of the Python / Rust / C++17 / JavaScript emitters

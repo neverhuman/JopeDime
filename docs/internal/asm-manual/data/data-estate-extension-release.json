@@ -1,0 +1,64 @@
+{
+  "schema": "jope.manual-data-estate-extension-release/v1",
+  "status": "author_stopped_aggregate_subset_only_whole_packet_not_cleared",
+  "author_ledger_release_at": "2026-09-23T19:30:23.160305+00:00",
+  "source_packet": "/home/ubuntu/jope-rescue-20260921/track-a-20260922/data-01-20260923",
+  "source_manifest": {
+    "name": "SHA256SUMS",
+    "sha256": "4bebee5a4ec1a3629351f53dee7b52de409fe6f75dadb0184d69d13e15423522",
+    "entries": 148
+  },
+  "selected_source_pins": [
+    {
+      "name": "s3-estate-extension.json",
+      "sha256": "ae091bb2ac6c86e6d8d41230c84f4cbdd06a1ffb2be1bac193e43e780f260063",
+      "bytes": 295807
+    },
+    {
+      "name": "local-estate-extension.json",
+      "sha256": "f30153553b170651905e68569bf0dc0dc0b5c8000dbfb99c306d167cc9eb1e02",
+      "bytes": 413960
+    },
+    {
+      "name": "single-copy-risks.json",
+      "sha256": "115d2d485cddccc0b7d290629b97bf6126c13a014e616410b745f860baba7a9a",
+      "bytes": 23947
+    },
+    {
+      "name": "HANDOFF.json",
+      "sha256": "16290f4b2d9505bba75c73d02c01bc2da9817f762edf2cce32d25d2e03b519a8",
+      "bytes": 69951
+    },
+    {
+      "name": "raw/finalize-scan.json",
+      "sha256": "5c5f7fecc06ba16bd5ee586bee3301ae01dba5541b44b985d97f482f37b4ef1b",
+      "bytes": 3516
+    },
+    {
+      "name": "README.md",
+      "sha256": "6cc9b4d7ada3ba843c393700098801d59bfa220bba8a0dfc74ed4ad731a6bd66",
+      "bytes": 12768
+    },
+    {
+      "name": "reconciliation.md",
+      "sha256": "79493b86ad495ee49e2be1895af96c8a334ea9a0a12bbd9535b108946bbe4a77",
+      "bytes": 24422
+    }
+  ],
+  "summary": {
+    "path": "data-estate-extension-summary.json",
+    "sha256": "e4dbe07502f46028fd2a9ff0ed9776ce0b68c5fe1856b820b7ca94492ef1b2e0",
+    "bytes": 19577
+  },
+  "review_scope": "Manifest and seven selected report/status files checked against pinned bytes; aggregate subset projected without raw/source-file/object-key inventory. No whole148-file content validation claimed.",
+  "author_status_discrepancy": "Ledger declares STOPPED/released; pinned HANDOFF records sealed-name gate FAIL and cleared_for_handoff=false. Whole packet is not promoted as clean. The gate-failing raw note and full handoff are excluded; selected aggregate source files are absent from failing-hit paths in the pinned scan.",
+  "canonical_imports": [
+    "data-estate-extension-summary.json",
+    "data-estate-extension-release.json"
+  ],
+  "excluded": "All raw files, full source reports, full HANDOFF, README/reconciliation, tools/scratch and DOCFIX-01. No gate-hit identifiers are copied.",
+  "sealed_scope": "Aggregate bucket/top-level-prefix counts and bytes only; no sealed keys/digests or bodies.",
+  "new_scans_api_calls_or_object_body_reads": false,
+  "docfix_followup": true,
+  "restore_replication_payload_retention_or_teacher_qualification": false
+}

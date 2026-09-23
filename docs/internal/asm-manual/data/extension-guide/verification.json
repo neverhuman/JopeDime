@@ -1,0 +1,43 @@
+{
+  "schema": "manual.extension-static-checks/v1",
+  "chapter_sha256": "b9eea410d5c05c00a38400bdfb5aa2b05d9692659d793adba7ce06159f4b9b6d",
+  "helper_sha256": "3e44711739f5f8eaf9a41fc9ee651ccce46b040a6c33a686fd7b182528499354",
+  "source_reference_count": 28,
+  "source_reference_bytes_match": true,
+  "shell_blocks": [
+    {
+      "block": 1,
+      "syntax_exit": 0,
+      "execution": "not_run"
+    },
+    {
+      "block": 2,
+      "syntax_exit": 0,
+      "execution": "not_run"
+    },
+    {
+      "block": 3,
+      "syntax_exit": 0,
+      "execution": "not_run"
+    },
+    {
+      "block": 4,
+      "syntax_exit": 0,
+      "execution": "not_run"
+    },
+    {
+      "block": 5,
+      "syntax_exit": 0,
+      "execution": "not_run"
+    }
+  ],
+  "helper_api_keywords_exist": true,
+  "helper_help_exit": 0,
+  "metadata_path_exit": 0,
+  "stale_byte_exit": 1,
+  "torch_import_guard": "passed_no_import",
+  "numerical_execution": "not_run",
+  "native_training_dispatch": "source_confirmed_held",
+  "pending_frontdoor_execution": "not_run",
+  "sibling_links": "root chapter allocation; not all files integrated yet"
+}

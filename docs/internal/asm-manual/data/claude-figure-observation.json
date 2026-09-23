@@ -1,0 +1,20 @@
+{
+  "schema": "jope.manual-observed-contribution/v1",
+  "scope": "read-only stable snapshot of historical plot generator and six plot inputs; no checkout ownership transferred",
+  "source_checkout": "/home/ubuntu/JopeDime/.agent/worktrees/bench/docs/internal/maintainer-manual",
+  "observed_source_head": "300e89c4ffc54e5c8ece340fa36f2221b69a2be1",
+  "files": {
+    "tools/make_figures.py": "475dc1629c197afce1845040f64fae3931ce1868597a2f3d1b67ba53f83feb4d",
+    "figures/data/fig01_ladder_benchmark_valid.csv": "cc7844e7885435c5565eaa6643405b1c74284ee39753acbe84338e6cf5fc4c1d",
+    "figures/data/fig02_ladder_published.csv": "c04909be042bf52be62bc546a80aec16ca69254a5ebc8c6a81c3d4a73e357fcb",
+    "figures/data/fig03_samecut_ladders.csv": "9e91965253f35ed7bad980bd3a4abba1b892825d0ab8585d5f1df4d692617126",
+    "figures/data/fig04_samecut_v2_per_dataset.csv": "7fab5fafaa0ad72f9d4ee4a00f8c955a6907bf51c70f3240cb89dc94376fa3e3",
+    "figures/data/fig06_samecut_v2_search_seconds.csv": "cc63c351eb31225116e2602558ee8a66bcbd01388f61dfce564c20a6385e6002"
+  },
+  "integration_corrections": [
+    "historical search label",
+    "rounded heatmap ratios",
+    "unmatched scenario duration scope"
+  ],
+  "unused_figures": "fig07 through fig11 excluded from this historical generator entrypoint"
+}

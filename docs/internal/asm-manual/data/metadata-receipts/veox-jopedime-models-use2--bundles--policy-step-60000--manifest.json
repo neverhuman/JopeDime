@@ -1,0 +1,78 @@
+{
+  "schema": "jope.model-bundle/v2",
+  "bundle_id": "policy-step-60000",
+  "policy_version": "step-60000",
+  "lineage": "node-flywheel-20260909 (lineage B)",
+  "source_checkpoint": "parallel.checkpoint.v1 accepted step-60000 (cycle-000018/train-2/checkpoints/step-60000)",
+  "source_checkpoint_sha256": "8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6",
+  "export": "jain-datasets/tools/ot-export (model.ot -> policy.safetensors + context_transforms.safetensors), 2026-09-17",
+  "consumers": [
+    "crates/jope-policy (candle)",
+    "python/src/jope/policy (reference)"
+  ],
+  "files": [
+    {
+      "path": "context_transforms.safetensors",
+      "sha256": "1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22",
+      "bytes": 8413808,
+      "blob": "blobs/sha256/1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22",
+      "source_key": "staging/policy-step-60000/context_transforms.safetensors",
+      "kind": "context_transforms",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "context_transforms.safetensors",
+        "component_kind": "model",
+        "sha256": "1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22",
+        "spdx_expression": "LicenseRef-Jain-Internal-Model",
+        "license_class": "internal",
+        "source_uri": "urn:jain:model-source:sha256:1b779c6ff7a1a812e3001342d663353d3c7ff54eb93392a600f01813f4c66e22",
+        "redistribution": "internal",
+        "model_lineage": "Trained by the jope-dime learning loop on jain-owned corpora; inputs carry mixed dataset licences, so the weights stay internal until the licence review (plan: public release checklist).",
+        "notice_paths": [
+          "docs/notices/jain-governed-models.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    },
+    {
+      "path": "policy.safetensors",
+      "sha256": "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+      "bytes": 111199088,
+      "blob": "blobs/sha256/4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+      "source_key": "staging/policy-step-60000/policy.safetensors",
+      "kind": "policy",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "policy.safetensors",
+        "component_kind": "model",
+        "sha256": "4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+        "spdx_expression": "LicenseRef-Jain-Internal-Model",
+        "license_class": "internal",
+        "source_uri": "urn:jain:model-source:sha256:4b4b5a40f03c9226b4b15856fd35b90127c8b6a4d1435b815484cdd050744f1e",
+        "redistribution": "internal",
+        "model_lineage": "Trained by the jope-dime learning loop on jain-owned corpora; inputs carry mixed dataset licences, so the weights stay internal until the licence review (plan: public release checklist).",
+        "notice_paths": [
+          "docs/notices/jain-governed-models.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    }
+  ],
+  "notices": [
+    {
+      "path": "docs/notices/jain-governed-models.txt",
+      "text": "Jain-governed model notice\n\nThese frozen artifacts are governed Jain release inputs. They are eligible for the\ndefault model policy but are not certified as open-source or open-weight models.\nRedistribution is permitted only as part of an approved Jain release bundle.\n"
+    }
+  ],
+  "published_at": "2026-09-18T20:17:48Z",
+  "published_by": "jepson via profile veox-jepson (account 714044927654)",
+  "bucket": "veox-jopedime-models-use2",
+  "staging_prefix": "staging/policy-step-60000/",
+  "verification": "every blob: server ChecksumSHA256 (head-object --checksum-mode ENABLED) equals sha256 below; see aws/receipts/publish-*.jsonl"
+}

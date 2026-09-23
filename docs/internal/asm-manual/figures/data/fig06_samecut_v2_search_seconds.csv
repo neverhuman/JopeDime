@@ -1,0 +1,11 @@
+dataset_id,dataset,rows,features,method_id,produce_seconds,screen_rank,deep_rank,report
+047e62b52a3f4ede,chatfield_4,195,12,afm.lite-race.v1.resampled,0.413508546,3,1,assets/same-cut/v2/reports/047e62b52a3f4ede.bench-report.json
+1cb97b1d7314d43d,pwLinear,166,10,afm.lite-race.v1.resampled,8.299870126,2,2,assets/same-cut/v2/reports/1cb97b1d7314d43d.bench-report.json
+21fbfe8b53dbcd60,parkinsons,1000,21,afm.lite-race.v1.resampled,1.427962455,10,,assets/same-cut/v2/reports/21fbfe8b53dbcd60.bench-report.json
+30ef3eaa6d2971a9,barium,109,30,afm.lite-race.v1.resampled,1.273067151,2,1,assets/same-cut/v2/reports/30ef3eaa6d2971a9.bench-report.json
+43b4cc3ab0ebbd97,food-safety,482,39,afm.lite-race.v1.resampled,1.252341702,6,,assets/same-cut/v2/reports/43b4cc3ab0ebbd97.bench-report.json
+693890aae9dc860b,supernovae_zg,202,1,afm.lite-race.v1.resampled,6.605707151,1,4,assets/same-cut/v2/reports/693890aae9dc860b.bench-report.json
+79e600bc5fcd5da7,peanut-uniform.,180,3,afm.lite-race.v1.resampled,0.431608119,8,,assets/same-cut/v2/reports/79e600bc5fcd5da7.bench-report.json
+b5beff4a53fa12c0,credit-approval,575,15,afm.lite-race.v1.resampled,0.693061729,13,,assets/same-cut/v2/reports/b5beff4a53fa12c0.bench-report.json
+c32fa09b48fb2f27,cmc,1000,9,afm.lite-race.v1.resampled,0.721736169,9,,assets/same-cut/v2/reports/c32fa09b48fb2f27.bench-report.json
+c7d815714ca52bce,chile88,1000,7,afm.lite-race.v1.resampled,0.718198945,5,4,assets/same-cut/v2/reports/c7d815714ca52bce.bench-report.json

@@ -1,0 +1,27 @@
+{
+  "schema": "jope.manual-per-step-scope-review/v1",
+  "status": "PASS",
+  "total_original_log_bytes": 195851734,
+  "full_raw_token_check_receipt": {
+    "path": "numeric-review.json",
+    "sha256": "083509f25ba488c69b78971d9e9fbbdda07710566db4548452ca2e8ec76a1725"
+  },
+  "gzip_header": {
+    "mtime": 0,
+    "stored_filename": false,
+    "gzip_crc_verified_by_complete_read": true
+  },
+  "chapter_guards_and_packet_hashes_verified": true,
+  "source_code_anchor": "crates/jope-policy/src/lib.rs:152,155,159,248 explicitly refuses retained69000 state/model; source read only",
+  "confirmed_wording": [
+    "Complete retained63k selected-step series is distinguished from older endpoint-only108blocks and antecedent unavailable-source steps.",
+    "Plot explicitly uses630 non-overlapping100-step means, with separate lines per21corpora; accepted60000 endpoint is a separately labeled star.",
+    "Original78 adaptive validation points are scattered rather than connected across changing22corpora/21panels.",
+    "Every proposed numeric table value and descriptive slope is source-bound; no confidence interval, causal effect, fixed-corpus generalization or downstream GP improvement claimed.",
+    "Optimizer steps are reported original historical metadata; no new GPU/device qualification or serving promotion claimed.",
+    "Missing contextfree_bt/LR telemetry is not interpreted as zero; unselected raw fields stay in original logs."
+  ],
+  "preview": "Existing visual-review.png inspected: readable labels, no confirmed overlap/clipping, accepted and unaccepted region clearly distinguished. No rerender performed.",
+  "confirmed_blockers": [],
+  "final_pdf_layout_verification": "Root final assembled/rendered edition remains separate."
+}

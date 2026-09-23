@@ -1,0 +1,228 @@
+{
+  "schema": "jope.maintainer-manual-inputs/v1",
+  "implementation_source": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
+  "reviewed_main": "a75e543d2166017cb0139e0a251d51d9a0c98e08",
+  "source_tree": "176b75bc36d76c7ce4eaeb7234677ec013468889",
+  "files": [
+    {
+      "path": "data/architecture-training-evidence.json",
+      "sha256": "ec1aecd79dca27c85450e9a0a7bdf0b3ddc46067893f1ac22c824a1f58f79560",
+      "bytes": 62100
+    },
+    {
+      "path": "data/catalog-summary.json",
+      "sha256": "e7d7d4a459f9fbc3b6aea10212c26a812938472c647ab5fbcce11a8acf46a4b8",
+      "bytes": 3918
+    },
+    {
+      "path": "data/cli-help-68.json",
+      "sha256": "4d9c9712503066e81050f8d9e8dac49c74716077a9e4244f78fc242f2f21371f",
+      "bytes": 15099
+    },
+    {
+      "path": "data/data-evidence-HANDOFF.json",
+      "sha256": "cf63d7ad2cd1c56558c2b08af62d233ccbabdb1a1a7e91ed1b774e3de5d5b802",
+      "bytes": 8944
+    },
+    {
+      "path": "data/dataset-inventory.json",
+      "sha256": "c008ebedb5febee38ccba7d3f220009350a6ef055b865c25de2a5ba0ca2e6639",
+      "bytes": 790382
+    },
+    {
+      "path": "data/local-estate.json",
+      "sha256": "43a741b92d4c26ed30ebe4901a4afac9455584fc8ef1ecc8b55f7f467634541a",
+      "bytes": 4913
+    },
+    {
+      "path": "data/metadata-receipts/aws-identity.json",
+      "sha256": "3e3422d8d76138154a9b88afec1ea3ccbd322c772a92a6f62c85e9734da8db0b",
+      "bytes": 119
+    },
+    {
+      "path": "data/metadata-receipts/learning-object-count.json",
+      "sha256": "367cc572c1da23aa349273f8f47f9e346dbd5d96aae7e703e994ba1807dc3ef3",
+      "bytes": 1067
+    },
+    {
+      "path": "data/metadata-receipts/learning-prefixes.json",
+      "sha256": "bc5b1935c30670ff4d799c23c53b915e1fcd02501561f996f94bb72e91550c45",
+      "bytes": 796
+    },
+    {
+      "path": "data/metadata-receipts/learning-storage-standard.json",
+      "sha256": "d949d70272258d6c6cfd039f047cc1b4ba78016651dbe491215a836a636f91e7",
+      "bytes": 1085
+    },
+    {
+      "path": "data/metadata-receipts/metadata-fetches.json",
+      "sha256": "1fdee8320e3456db74e4138b807bebc8d099bdaf1de5c82ebd445a6f0d2f3155",
+      "bytes": 6068
+    },
+    {
+      "path": "data/metadata-receipts/veox-jopedime-datasets-use2--catalog--v1--catalog.jsonl",
+      "sha256": "ab9fda8d2dea46067b70a42812e9d3c1d9dc6ba025780100df34377e81aa1120",
+      "bytes": 5363939
+    },
+    {
+      "path": "data/metadata-receipts/veox-jopedime-datasets-use2--collections--registry-real-v1--v1.json",
+      "sha256": "bf35ea9ecfebc2f77af2ee6448f295f51f5466483ea10b803f168d2586bed9af",
+      "bytes": 93311
+    },
+    {
+      "path": "data/metadata-receipts/veox-jopedime-datasets-use2--collections--test-10--v1.json",
+      "sha256": "84d79fe7bf60483f127429aa3b0cf1a1c1d8d79cb08c36137a1607b617019ab7",
+      "bytes": 1039
+    },
+    {
+      "path": "data/metadata-receipts/veox-jopedime-datasets-use2.json",
+      "sha256": "f91a7fc2c77df7795556836c4a39d0eb30640c074545f3d5f69f846aabd18ac3",
+      "bytes": 880720
+    },
+    {
+      "path": "data/metadata-receipts/veox-jopedime-learning-use2.json",
+      "sha256": "ea5cb9fe6ce4fc907873934064bdc9bb567461e250b2479e2a0b1ca805dac9cc",
+      "bytes": 111339
+    },
+    {
+      "path": "data/metadata-receipts/veox-jopedime-models-use2--bundles--hyperion-v7--manifest.json",
+      "sha256": "fdaf938fc7f7957c06959f12c130b2bd81cdaef5e5bb2198ba75cf35da1c5233",
+      "bytes": 2662
+    },
+    {
+      "path": "data/metadata-receipts/veox-jopedime-models-use2--bundles--jope-prime-gen31-v2--manifest.json",
+      "sha256": "c8d8d13a2f4cb2eeb21eea364c33e14429c84d344e6b50eb38a472173b97b6f2",
+      "bytes": 25515
+    },
+    {
+      "path": "data/metadata-receipts/veox-jopedime-models-use2--bundles--policy-step-60000--manifest.json",
+      "sha256": "d8e259b26ef8d580ddb99ae5826c9501bcdc0c32045945eef9010926fd796e9e",
+      "bytes": 3868
+    },
+    {
+      "path": "data/metadata-receipts/veox-jopedime-models-use2.json",
+      "sha256": "a6f31cba8c24e332871ddf4cb715c7c06f0c5c28c542290dec3dd16aa5e35369",
+      "bytes": 1423
+    },
+    {
+      "path": "data/performance-evidence.json",
+      "sha256": "ce36d19251a4d01794ed277597541b8da3ceba4f5076aed723de98d3f9466e8e",
+      "bytes": 7412755
+    },
+    {
+      "path": "data/plot-current-origin.csv",
+      "sha256": "c5e3fcefc8b493227f259720dd6856bfa1c35eaebd88ef336cefae9250290f02",
+      "bytes": 460
+    },
+    {
+      "path": "data/plot-data-manifest.json",
+      "sha256": "289e901e54a7e5eb3e28e41a9cf432aa3dcb951c5f88d8de731464a28321adaa",
+      "bytes": 964
+    },
+    {
+      "path": "data/plot-dataset-sizes.csv",
+      "sha256": "3c1670203239dc1888beb96ae223ce29b6d5ef51199ff8b00a8dbaea1476c474",
+      "bytes": 1535
+    },
+    {
+      "path": "data/plot-historical-elo.csv",
+      "sha256": "abace496b0f1f54318264dd8f69537014e15b367e60c33243d8a1b28827ab695",
+      "bytes": 138940
+    },
+    {
+      "path": "data/product-language-HANDOFF.json",
+      "sha256": "2b36a6fa410ce02710e334a0eaf35c8f24bdc8af7c37b7d33b8c350bdfdc2a75",
+      "bytes": 2650
+    },
+    {
+      "path": "data/product-language-source-pins.json",
+      "sha256": "daf28d732dd02abf652aea462fe838728b30490b9ce9cb2917ab81bd14885073",
+      "bytes": 9135
+    },
+    {
+      "path": "data/product-language-validation.json",
+      "sha256": "0328676e5776a0a3df009e388337e684207af984a50ca29ce536163babdd5a8f",
+      "bytes": 808
+    },
+    {
+      "path": "data/s3-estate.json",
+      "sha256": "3575ba9b0e8ca061e4c83434bde2ce228d0888ceebf9819a48bb39096f55212c",
+      "bytes": 2088
+    },
+    {
+      "path": "examples/commands.json",
+      "sha256": "f34771938934d1360cbe054689393198a53929479ba119f5a0faf2b0da7a170a",
+      "bytes": 4710
+    },
+    {
+      "path": "examples/gp-synthetic.json",
+      "sha256": "1d9d289f791f3efb5ada9b42555eaedf5f76d9eabf1d176843cd18b7379f31bd",
+      "bytes": 5008
+    },
+    {
+      "path": "examples/predict.csv",
+      "sha256": "7f4cb0800541aaa12df854544ef0364c44a19f3d197e2ffcb9a6e1e02ad42dab",
+      "bytes": 38
+    },
+    {
+      "path": "examples/train.csv",
+      "sha256": "f4c44392e68f87fa1a799f856c9d692652e425669e28e7c34914c06ef91ff61d",
+      "bytes": 139
+    },
+    {
+      "path": "examples/validate-outputs.py",
+      "sha256": "4aa8c39f0a376a56cc60a3f8ae05c73870a50c1b190afd6ebdb294f21cfd2a30",
+      "bytes": 1406
+    },
+    {
+      "path": "sections/01-status.md",
+      "sha256": "864aea572c668876a5977eee941626df66719749d9d32bad5302343dab3caaa1",
+      "bytes": 10521
+    },
+    {
+      "path": "sections/02-architecture.md",
+      "sha256": "f91fdc28ab91f1d1ea0a3b72798df5160a5576ab0d8783590aef2a09df774fc8",
+      "bytes": 21628
+    },
+    {
+      "path": "sections/03-operations.md",
+      "sha256": "c74a7a4ab2c781ed7407526174c2a2242edf08dac0c9c8f1b4abcaaf15b1125b",
+      "bytes": 22127
+    },
+    {
+      "path": "sections/04-training.md",
+      "sha256": "33df6ae5b6e72d8bd8423c8c76546fba36e6019f3e143acd6e2710beff89ce6b",
+      "bytes": 23303
+    },
+    {
+      "path": "sections/05-languages.md",
+      "sha256": "e5ef9cc81e1303478c7b84df05a1786c2f435f56aa58f664b988832b67dd81e0",
+      "bytes": 21440
+    },
+    {
+      "path": "sections/06-benchmark-methodology.md",
+      "sha256": "c58463c57afc36f6c16dc65f14f5508d8e34c51a85754461d5cd2c80961492f3",
+      "bytes": 12359
+    },
+    {
+      "path": "sections/07-data-estate.md",
+      "sha256": "311d358fff304cb40b5d124a2137ab6b2917ab041c9a3ebdf728f60206b50f52",
+      "bytes": 21359
+    },
+    {
+      "path": "sections/09-maintenance.md",
+      "sha256": "796bca0de69680cf5bc40e09bbce266b4a2367e59669647b7ab2e10f1d2190b8",
+      "bytes": 7895
+    },
+    {
+      "path": "sections/11-evidence-glossary.md",
+      "sha256": "3e9fe20be3fb5c387d6bc0a406ec3cdd64d893e394739351649fe3e1f3162a22",
+      "bytes": 10053
+    },
+    {
+      "path": "sections/12-dataset-statistics.md",
+      "sha256": "622c70f791eda9f1e7373e6f20405cf259f9d801f636d7ebed4a1aa22b442bc6",
+      "bytes": 93739
+    }
+  ]
+}

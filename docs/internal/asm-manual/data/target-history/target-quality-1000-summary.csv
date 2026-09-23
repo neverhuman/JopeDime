@@ -1,0 +1,4 @@
+arm,repeated_comparisons,improved,unchanged,worsened,median_relative_improvement,completed_evaluations,definition
+neural,51,19,32,0,0.0,1000,first retained versus last retained generation for recorded comparison fields; adaptive validation RMSE lower is better; RNG and wall time vary
+generic,54,22,32,0,0.0,1000,first retained versus last retained generation for recorded comparison fields; adaptive validation RMSE lower is better; RNG and wall time vary
+shuffled,54,23,31,0,0.0,1000,first retained versus last retained generation for recorded comparison fields; adaptive validation RMSE lower is better; RNG and wall time vary

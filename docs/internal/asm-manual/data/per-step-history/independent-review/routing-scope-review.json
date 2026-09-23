@@ -1,0 +1,55 @@
+{
+  "schema": "jope.manual-routing-independent-scope-review/v1",
+  "status": "PASS_admitted_pair_recomputation_and_wording_scope",
+  "observed_at": "2026-09-23T18:51:35.050435+00:00",
+  "guarded_edits_sha256": "51a25ea1eddac8561ac93b2899d437b79b1bbb6735053e96720a08acba081f47",
+  "audit_sha256": "2cfa613298ed82cc051b802edfedfae5d179e95af48816781fcbf9bd71e6c98b",
+  "admitted_csv_sha256": "f06f5e376d663e457ddb090c74df4756ba7a67df39aa8116574b938c27268a6f",
+  "admitted_csv_rows": 26357,
+  "eligible_1000_rows": 10063,
+  "paired_fields": [
+    "run",
+    "generation",
+    "dataset",
+    "cut",
+    "family",
+    "prepared_sha256",
+    "vocabulary_sha256",
+    "evaluator_sha256",
+    "evaluator_protocol",
+    "execution_order_protocol",
+    "completed_evaluations"
+  ],
+  "results": {
+    "generic": {
+      "pairs": 3268,
+      "neural_lower": 24,
+      "neural_higher": 17,
+      "equal": 3227,
+      "geometric_mean_neural_over_control": 1.00018690940596,
+      "equal_reported_wall_seconds": 0,
+      "distinct_dataset_cut_pairs": 52,
+      "distinct_families": 30
+    },
+    "shuffled": {
+      "pairs": 3253,
+      "neural_lower": 24,
+      "neural_higher": 16,
+      "equal": 3213,
+      "geometric_mean_neural_over_control": 1.0000854975733238,
+      "equal_reported_wall_seconds": 0,
+      "distinct_dataset_cut_pairs": 52,
+      "distinct_families": 31
+    }
+  },
+  "confirmed_blockers": [],
+  "scope": [
+    "Recomputed direct pairing from previously admitted metadata CSV only; no original score receipt or excluded path opened.",
+    "Exact comparisons, no epsilon; math.fsum(log(neural)-log(control)) geometric mean independently matches.",
+    "Read guarded prose and static pairing predicates: recorded identities, same generation, adaptive final-search scope, repeated populations and unequal wall-time limits are explicit.",
+    "Reviewed external payload-audit attribution and proposed-codec compatibility boundaries; did not independently scan packed records/sidecars, rerun compression or establish throughput/parity.",
+    "Did not independently recompute the broader42863-row intersection or audit its external source files; that remains the delivery auditor scope.",
+    "No model, fit, training, Cargo, GPU, sealed body or source edits."
+  ],
+  "verifier_sha256": "5f828007db3e6915e4ded2890641033478f337363c839bd553e407051a1b7bf8"
+}

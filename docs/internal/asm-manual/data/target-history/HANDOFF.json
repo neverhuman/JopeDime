@@ -1,0 +1,51 @@
+{
+  "schema": "jope.manual.corpus-targets-packing-handoff/v1",
+  "stopped_at": "2026-09-23T17:50:05.123354+00:00",
+  "status": "stopped custody documentation and metadata evidence; no canonical integration or live training claim",
+  "owner": "origin_recovery",
+  "chapter_source": "15-corpus-targets-packing.md",
+  "intended_canonical_name": "15-target-history-packing.md",
+  "chapter_sha256": "344ce9cf67c2b40f030a1ca2e9c38651d76b109f19fec59e3cf66c9d07bc0e9c",
+  "manifest_sha256": "0ebd03b241cdd1b7e21280564cf36633e79e7ddd7a8be3d016c10853ce635947",
+  "metadata_checks": "verification.json",
+  "source_scope": "current runtime68 merged as a75; pending training64 explicitly unintegrated",
+  "claimed_results": {
+    "corpus_metadata_indexes": 6,
+    "historical_development_score_receipts": 26357,
+    "non_meta_train_score_paths_excluded_before_open": 3387,
+    "published_1000_evaluation_comparisons": 159,
+    "pine_complete_generation_arm_pairs": 213,
+    "historical_neural_improved_unchanged_worsened": [
+      19,
+      32,
+      0
+    ],
+    "historical_generic_improved_unchanged_worsened": [
+      22,
+      32,
+      0
+    ],
+    "historical_shuffled_improved_unchanged_worsened": [
+      23,
+      31,
+      0
+    ]
+  },
+  "limits": [
+    "Historical adaptive development RMSE, no fresh replay or current HWM/teacher eligibility",
+    "Exact score comparisons; no epsilon; original target units not claimed",
+    "Random seeds and elapsed time vary; complete current comparison resource/build identity not requalified",
+    "Per-target actual checkpoint sampler exposure is unjoined",
+    "Pine example post hoc largest neural relative improvement, not representative; all3 arms same endpoint",
+    "Corpora overlap and most publication timestamps unknown; not a monotonic wall-time growth plot",
+    "Large target-record/model/sealed bodies not read or hashed; payload sizes from stat",
+    "No Cargo/models/fits/training/GPU; no canonical source/index edits",
+    "Root owns two named figure outputs; image links resolve after integration"
+  ],
+  "next_steps": [
+    "Root copies exact guarded publication files and renames chapter",
+    "Root produces target-quality-progress-counts.png and target-quality-pine-example.png from stopped small CSVs",
+    "Independent metadata/number/source review then renderer and full documentation lifecycle",
+    "Future eligible training requires actual admission/exposure/change/reload/consumption proofs; this handoff adds no resource authorization"
+  ]
+}

@@ -1,0 +1,140 @@
+[
+  {
+    "bucket": "veox-jopedime-datasets-use2",
+    "key": "catalog/v1/catalog.jsonl",
+    "status": "metadata_body_fetched",
+    "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-datasets-use2--catalog--v1--catalog.jsonl",
+    "bytes": 5363939,
+    "sha256": "ab9fda8d2dea46067b70a42812e9d3c1d9dc6ba025780100df34377e81aa1120",
+    "etag": "\"c4c7a37a94420175b11a374e4ecb7aec\"",
+    "get_response": {
+      "AcceptRanges": "bytes",
+      "LastModified": "2026-09-19T00:17:11+00:00",
+      "ContentLength": 5363939,
+      "ETag": "\"c4c7a37a94420175b11a374e4ecb7aec\"",
+      "ChecksumSHA256": "q5/ajS3qRgZ7cKQoEunTwdnca6AleAEA3zQ3foGqESA=",
+      "ChecksumType": "FULL_OBJECT",
+      "VersionId": "ZcqyZUbRv6fn1GU8Uenl013vZ0jQ0TDz",
+      "ContentType": "application/json",
+      "ServerSideEncryption": "AES256",
+      "Metadata": {
+        "sha256": "ab9fda8d2dea46067b70a42812e9d3c1d9dc6ba025780100df34377e81aa1120"
+      },
+      "TagCount": 2
+    }
+  },
+  {
+    "bucket": "veox-jopedime-datasets-use2",
+    "key": "collections/registry-real-v1/v1.json",
+    "status": "metadata_body_fetched",
+    "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-datasets-use2--collections--registry-real-v1--v1.json",
+    "bytes": 93311,
+    "sha256": "bf35ea9ecfebc2f77af2ee6448f295f51f5466483ea10b803f168d2586bed9af",
+    "etag": "\"d3a67d588e14cbcf62742557fde1983f\"",
+    "get_response": {
+      "AcceptRanges": "bytes",
+      "LastModified": "2026-09-19T00:19:25+00:00",
+      "ContentLength": 93311,
+      "ETag": "\"d3a67d588e14cbcf62742557fde1983f\"",
+      "ChecksumSHA256": "vzXqns/rwvd68u5kSPKV9R9UZkg+oQuAPxaNJYa+2a8=",
+      "ChecksumType": "FULL_OBJECT",
+      "VersionId": "hFoHI9dhOPpMO_igSJrP56amFYQIl5RZ",
+      "ContentType": "application/json",
+      "ServerSideEncryption": "AES256",
+      "Metadata": {
+        "sha256": "bf35ea9ecfebc2f77af2ee6448f295f51f5466483ea10b803f168d2586bed9af"
+      },
+      "TagCount": 2
+    }
+  },
+  {
+    "bucket": "veox-jopedime-datasets-use2",
+    "key": "collections/test-10/v1.json",
+    "status": "metadata_body_fetched",
+    "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-datasets-use2--collections--test-10--v1.json",
+    "bytes": 1039,
+    "sha256": "84d79fe7bf60483f127429aa3b0cf1a1c1d8d79cb08c36137a1607b617019ab7",
+    "etag": "\"f787ff3ce74d79b8ad3112eba6169481\"",
+    "get_response": {
+      "AcceptRanges": "bytes",
+      "LastModified": "2026-09-19T00:19:25+00:00",
+      "ContentLength": 1039,
+      "ETag": "\"f787ff3ce74d79b8ad3112eba6169481\"",
+      "ChecksumSHA256": "hNef579gSD8SdCmqOwzxocHY15ywjDYTehYHthcBmrc=",
+      "ChecksumType": "FULL_OBJECT",
+      "VersionId": "Lc0VzEwjjvzvuUZGceJjJPJjLIWWvYN.",
+      "ContentType": "application/json",
+      "ServerSideEncryption": "AES256",
+      "Metadata": {
+        "sha256": "84d79fe7bf60483f127429aa3b0cf1a1c1d8d79cb08c36137a1607b617019ab7"
+      },
+      "TagCount": 2
+    }
+  },
+  {
+    "bucket": "veox-jopedime-models-use2",
+    "key": "bundles/hyperion-v7/manifest.json",
+    "status": "metadata_body_fetched",
+    "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-models-use2--bundles--hyperion-v7--manifest.json",
+    "bytes": 2662,
+    "sha256": "fdaf938fc7f7957c06959f12c130b2bd81cdaef5e5bb2198ba75cf35da1c5233",
+    "etag": "\"e4bb8c980e7ec0e71b3dfc2c056c4a75\"",
+    "get_response": {
+      "AcceptRanges": "bytes",
+      "LastModified": "2026-09-18T20:18:13+00:00",
+      "ContentLength": 2662,
+      "ETag": "\"e4bb8c980e7ec0e71b3dfc2c056c4a75\"",
+      "ChecksumSHA256": "/a+Tj8f3lXwGlZ8SwTCyvYHNrvXluyGYunXPNdocUjM=",
+      "ChecksumType": "FULL_OBJECT",
+      "VersionId": "_cuB4xynVGKeBNyaKjsSF_Gms_1Tytcl",
+      "ContentType": "application/json",
+      "ServerSideEncryption": "AES256",
+      "Metadata": {},
+      "ReplicationStatus": "COMPLETED"
+    }
+  },
+  {
+    "bucket": "veox-jopedime-models-use2",
+    "key": "bundles/jope-prime-gen31-v2/manifest.json",
+    "status": "metadata_body_fetched",
+    "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-models-use2--bundles--jope-prime-gen31-v2--manifest.json",
+    "bytes": 25515,
+    "sha256": "c8d8d13a2f4cb2eeb21eea364c33e14429c84d344e6b50eb38a472173b97b6f2",
+    "etag": "\"f6ff23d3b8384b88c402cf732bd9756f\"",
+    "get_response": {
+      "AcceptRanges": "bytes",
+      "LastModified": "2026-09-18T20:19:23+00:00",
+      "ContentLength": 25515,
+      "ETag": "\"f6ff23d3b8384b88c402cf732bd9756f\"",
+      "ChecksumSHA256": "yNjROi9Msu6yHuo2TDPhRCnITTROa1DrOKRyFzuXtvI=",
+      "ChecksumType": "FULL_OBJECT",
+      "VersionId": "_GirI8QEM3aIqrlM9RkoBJYpN40VJdvC",
+      "ContentType": "application/json",
+      "ServerSideEncryption": "AES256",
+      "Metadata": {},
+      "ReplicationStatus": "COMPLETED"
+    }
+  },
+  {
+    "bucket": "veox-jopedime-models-use2",
+    "key": "bundles/policy-step-60000/manifest.json",
+    "status": "metadata_body_fetched",
+    "path": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/metadata-receipts/veox-jopedime-models-use2--bundles--policy-step-60000--manifest.json",
+    "bytes": 3868,
+    "sha256": "d8e259b26ef8d580ddb99ae5826c9501bcdc0c32045945eef9010926fd796e9e",
+    "etag": "\"7e75f4313db87755196b1d034667422d\"",
+    "get_response": {
+      "AcceptRanges": "bytes",
+      "LastModified": "2026-09-18T20:18:01+00:00",
+      "ContentLength": 3868,
+      "ETag": "\"7e75f4313db87755196b1d034667422d\"",
+      "ChecksumSHA256": "2OJZsm741YDduZrlgmyVAbzcDDIEWUXu+QEJJv15bp4=",
+      "ChecksumType": "FULL_OBJECT",
+      "VersionId": "5OjxO2jVpXopWMNu9AYLLDLl3JKXDH.e",
+      "ContentType": "application/json",
+      "ServerSideEncryption": "AES256",
+      "Metadata": {},
+      "ReplicationStatus": "COMPLETED"
+    }
+  }
+]

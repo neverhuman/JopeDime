@@ -1,0 +1,177 @@
+{
+  "schema": "manual.extension-source-pins/v1",
+  "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
+  "observed_checkout_head": "1daaae61b135e0f8b62be6682bc2f1f92db29704",
+  "source_references": [
+    {
+      "path": ".github/workflows/release.yml",
+      "line": 61,
+      "sha256": "0a3228696b173e4bb0b735a5e09705dcab761a3e1dcd8be6b7f99d11d175eecd",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "Cargo.toml",
+      "line": 30,
+      "sha256": "91c5f0b9c6fbab73cbe98e91757e2513a5d0a7e1b146219f14548dfe725c8121",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "crates/jope-bench/src/panel/mod.rs",
+      "line": 36,
+      "sha256": "cf24bb392635a20e3c369117af5950d5992d68fa6d6c11316d0fd99a21ec57bd",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "crates/jope-cli/src/main.rs",
+      "line": 26,
+      "sha256": "4b2990e5294d0668a8d5f7a6c1e809d91fbb93be1418fc3fb54f291c88251265",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "crates/jope-cli/src/main.rs",
+      "line": 308,
+      "sha256": "4b2990e5294d0668a8d5f7a6c1e809d91fbb93be1418fc3fb54f291c88251265",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "crates/jope-datasets/src/catalog.rs",
+      "line": 9,
+      "sha256": "1fdb4f4c85ba697c975f4fe09cf9c231e96ff7ad4fd74b4132da9aa467ca6781",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "crates/jope-engine/src/controller.rs",
+      "line": 478,
+      "sha256": "8b892b863dea923dbc0e208c3f62682960a313fa6d9ea038debc3afba3a939cf",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "crates/jope-engine/src/encoding.rs",
+      "line": 13,
+      "sha256": "c2c98639724d9ee647e21722922576d16cd2dbb95ae5d406c39b11ffe9a55fed",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "crates/jope-engine/src/main.rs",
+      "line": 106,
+      "sha256": "2099bde96eb8d3ed7f32a46608c80d48f73290065546f470bb3efc4a3b89a5e6",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "crates/jope-engine/src/task_contract.rs",
+      "line": 85,
+      "sha256": "29f1ed22a3cda8381d33f29a7e617eb99f650b6be57159fcdfe48ff53af2feb4",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "crates/jope-engine/src/training.rs",
+      "line": 1179,
+      "sha256": "4780516c2444b0a78ca1baa4fb59938c188e2a833448ebf3eaab6d852eb9def4",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "crates/jope-engine/src/training.rs",
+      "line": 923,
+      "sha256": "4780516c2444b0a78ca1baa4fb59938c188e2a833448ebf3eaab6d852eb9def4",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "crates/jope-models/src/manifest.rs",
+      "line": 9,
+      "sha256": "8f96d23f0776c6e6dfd773f8f7257322c8dd97e5bfa3d39b513bb3fcebf47c19",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "crates/jope-policy/src/context_producer.rs",
+      "line": 35,
+      "sha256": "f218d0539e273df4f53263c8ca4f06639d68456ab2057a195bf3253e27aa32d2",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "crates/jope-policy/src/lib.rs",
+      "line": 132,
+      "sha256": "2b0da78dcd569de31fdd0922c90e56e19e404ba9f1e184a1eb61cf634ac733a8",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "deploy/ci/version-consistency.sh",
+      "line": 1,
+      "sha256": "2b651c54daf7da0978252aaa3ae6a9c832f81e73e614ca85dd6ca450da02c58a",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "justfile",
+      "line": 63,
+      "sha256": "fb662d66618889740def0d0359de93b9d571d6ca63f19a563e24e78e28a705d0",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "python/pyproject.toml",
+      "line": 5,
+      "sha256": "fd4455de16a814dcaada8df322f0d0698f8adc95fe0d4097ccb4dcfe84c5cdc3",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "python/src/jope/cli.py",
+      "line": 186,
+      "sha256": "43f1783fe8fbb4e328a8103fea2792a67f37fdebdb125aa1372dab25de0d1d55",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "python/src/jope/policy/ddp.py",
+      "line": 25,
+      "sha256": "2ea2907a170a28c43c93370e2f541c4c2702bb7c31662855be51b2fa1860f3a3",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "python/src/jope/policy/model_v3.py",
+      "line": 43,
+      "sha256": "11ab74d12bda8a2fb817b073a685d128eff06479f769e4301488339424314ffe",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "python/src/jope/policy/train_v3.py",
+      "line": 1331,
+      "sha256": "e916219f697bb12fde11f2f731f8313fede76c455c1005763264824208338718",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "python/src/jope/policy/train_v3.py",
+      "line": 1453,
+      "sha256": "e916219f697bb12fde11f2f731f8313fede76c455c1005763264824208338718",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "python/src/jope/policy/train_v3.py",
+      "line": 1485,
+      "sha256": "e916219f697bb12fde11f2f731f8313fede76c455c1005763264824208338718",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "python/src/jope/policy/train_v3.py",
+      "line": 1692,
+      "sha256": "e916219f697bb12fde11f2f731f8313fede76c455c1005763264824208338718",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "python/src/jope/policy/train_v3.py",
+      "line": 1918,
+      "sha256": "e916219f697bb12fde11f2f731f8313fede76c455c1005763264824208338718",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "python/src/jope/policy/train_v3.py",
+      "line": 2498,
+      "sha256": "e916219f697bb12fde11f2f731f8313fede76c455c1005763264824208338718",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    },
+    {
+      "path": "python/src/jope/policy/train_v3.py",
+      "line": 54,
+      "sha256": "e916219f697bb12fde11f2f731f8313fede76c455c1005763264824208338718",
+      "source": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+    }
+  ],
+  "pending_training_patch_sha256": "595824ef6eb8e15872be058668503cedad1dd9a5ff98ac4700c6f713251d384c",
+  "pending_training_manifest_sha256": "b86b550d7ee39fd93d5202accd5f77c975b7bcb4fd8f8e7706c69c5f279294a2"
+}

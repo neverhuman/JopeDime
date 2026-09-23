@@ -1,0 +1,547 @@
+{
+  "schema": "jope.manual-toy-acceptance/v1",
+  "ok": true,
+  "source_head": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
+  "merged_main": "a75e543d2166017cb0139e0a251d51d9a0c98e08",
+  "inputs_sha256": "194774a05d9692afac85072ffbb41bb7e7a94a96ea2c711e648628db3d4c11b4",
+  "commands": [
+    {
+      "id": "legacy-fit",
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "fit",
+        "--input",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples/gp-synthetic.json",
+        "--genome",
+        "(pipe X (standardize) (ridge))",
+        "--json"
+      ],
+      "started_unix_ms": 1790181874647,
+      "timeout_seconds": 30,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 0.0027239999999999973,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "6a18efa00dba920a86c11507ffb1aa2429fc52c764b3f593a89993132a437f70",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "finished_unix_ms": 1790181874987,
+      "wall_seconds": 0.33983954903669655
+    },
+    {
+      "id": "legacy-emit",
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "emit",
+        "--genome",
+        "(pipe X (standardize) (ridge))",
+        "--lang",
+        "all",
+        "--output",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe",
+        "--json"
+      ],
+      "started_unix_ms": 1790181874999,
+      "timeout_seconds": 30,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 0.0035589999999999997,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "c61eb25c83cf6a9a68673dba857a36fe43354ef38b3df3b4dae049877e58ac8b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "finished_unix_ms": 1790181875334,
+      "wall_seconds": 0.33521188399754465
+    },
+    {
+      "id": "python-fit-predict",
+      "argv": [
+        "/usr/bin/python3.12",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe/model.py",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples/train.csv",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples/predict.csv",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe/pred-python.txt"
+      ],
+      "started_unix_ms": 1790181875342,
+      "timeout_seconds": 30,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 0.021802000000000002,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "finished_unix_ms": 1790181875705,
+      "wall_seconds": 0.36362809396814555
+    },
+    {
+      "id": "rust-compile",
+      "argv": [
+        "/home/ubuntu/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/rustc",
+        "-O",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe/model.rs",
+        "-o",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe/model-rs"
+      ],
+      "started_unix_ms": 1790181875711,
+      "timeout_seconds": 60,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 0.6486310000000001,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "finished_unix_ms": 1790181877222,
+      "wall_seconds": 1.5114319529384375
+    },
+    {
+      "id": "rust-fit-predict",
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe/model-rs",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples/train.csv",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples/predict.csv",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe/pred-rust.txt"
+      ],
+      "started_unix_ms": 1790181877228,
+      "timeout_seconds": 30,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 0.001425999999999955,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "finished_unix_ms": 1790181877564,
+      "wall_seconds": 0.33572954300325364
+    },
+    {
+      "id": "cpp17-compile",
+      "argv": [
+        "/usr/bin/x86_64-linux-gnu-g++-13",
+        "-std=c++17",
+        "-O3",
+        "-ffp-contract=off",
+        "-fno-fast-math",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe/program.cpp",
+        "-o",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe/model-cpp17"
+      ],
+      "started_unix_ms": 1790181877580,
+      "timeout_seconds": 60,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 0.9195069999999997,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "finished_unix_ms": 1790181878940,
+      "wall_seconds": 1.360375790973194
+    },
+    {
+      "id": "cpp17-fit-predict",
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe/model-cpp17",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples/train.csv",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples/predict.csv",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe/pred-cpp17.txt"
+      ],
+      "started_unix_ms": 1790181878948,
+      "timeout_seconds": 30,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 0.0020910000000002316,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "finished_unix_ms": 1790181879282,
+      "wall_seconds": 0.33406710799317807
+    },
+    {
+      "id": "cpp20-compile",
+      "argv": [
+        "/usr/bin/x86_64-linux-gnu-g++-13",
+        "-std=c++20",
+        "-O3",
+        "-ffp-contract=off",
+        "-fno-fast-math",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe/program.cpp",
+        "-o",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe/model-cpp20"
+      ],
+      "started_unix_ms": 1790181879288,
+      "timeout_seconds": 60,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 1.1337220000000001,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "finished_unix_ms": 1790181880804,
+      "wall_seconds": 1.5157699290430173
+    },
+    {
+      "id": "cpp20-fit-predict",
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe/model-cpp20",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples/train.csv",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples/predict.csv",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe/pred-cpp20.txt"
+      ],
+      "started_unix_ms": 1790181880811,
+      "timeout_seconds": 30,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 0.002141999999999755,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "finished_unix_ms": 1790181881160,
+      "wall_seconds": 0.3494212570367381
+    },
+    {
+      "id": "javascript-fit-predict",
+      "argv": [
+        "/home/ubuntu/.nvm/versions/node/v26.1.0/bin/node",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe/program.js",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples/train.csv",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples/predict.csv",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe/pred-js.txt"
+      ],
+      "started_unix_ms": 1790181881175,
+      "timeout_seconds": 30,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 0.02983700000000028,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "finished_unix_ms": 1790181881548,
+      "wall_seconds": 0.3734812850598246
+    },
+    {
+      "id": "compare-bits",
+      "argv": [
+        "/usr/bin/python3.12",
+        "/home/ubuntu/JopeDime/deploy/ci/emitters/compare-bits.py",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe"
+      ],
+      "started_unix_ms": 1790181881562,
+      "timeout_seconds": 30,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 0.021526000000000156,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "68b6a8a8b375828151008d45ed0fbaa6b7cf65fa1ff31553fcf2aeea8884da93",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "finished_unix_ms": 1790181881932,
+      "wall_seconds": 0.3702157869702205
+    },
+    {
+      "id": "verify-required-language-predictions",
+      "argv": [
+        "/usr/bin/python3.12",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples/validate-outputs.py",
+        "--recipe-output",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/recipe"
+      ],
+      "started_unix_ms": 1790181881943,
+      "timeout_seconds": 30,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 0.03390699999999963,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "efd82a758997433d6dc23dfaec77c22f58ce22fe8fa8f186d83466890cfea8a5",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "finished_unix_ms": 1790181882313,
+      "wall_seconds": 0.36989666300360113
+    },
+    {
+      "id": "legacy-pipeline",
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "pipeline",
+        "run",
+        "--dataset",
+        "/home/ubuntu/JopeDime/datasets/test/pmlb-229-pwlinear",
+        "--budget",
+        "evaluations=4,seconds=60",
+        "--seed",
+        "7",
+        "--rng-seed",
+        "7",
+        "--cuts",
+        "1",
+        "--emit",
+        "rust,python,cpp17,cpp20,js",
+        "--policy",
+        "skip",
+        "--output",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/pipeline",
+        "--json"
+      ],
+      "started_unix_ms": 1790181882328,
+      "timeout_seconds": 30,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 0.1279720000000003,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "20081822fe8ce6dae717e34c42ae42e15d448d864873727bb4a80896acd036de",
+      "stderr_sha256": "647eab14acd8b4c0b28bee303ad11167d4b0f610d66d14e04311d87c1fd74cbc",
+      "finished_unix_ms": 1790181882831,
+      "wall_seconds": 0.5030697829788551
+    },
+    {
+      "id": "verify-pipeline",
+      "argv": [
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/neural-integration/live-build-68f56404c3e199e06413bfd645d3fe0803d7b96f/bin/jope",
+        "pipeline",
+        "verify-receipt",
+        "--receipt",
+        "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/output/pipeline/receipt.json",
+        "--json"
+      ],
+      "started_unix_ms": 1790181882844,
+      "timeout_seconds": 30,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 0.004117000000000037,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "20081822fe8ce6dae717e34c42ae42e15d448d864873727bb4a80896acd036de",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "finished_unix_ms": 1790181883196,
+      "wall_seconds": 0.3511675309855491
+    }
+  ],
+  "versions": [
+    {
+      "id": "version-python3",
+      "argv": [
+        "/usr/bin/python3.12",
+        "--version"
+      ],
+      "started_unix_ms": 1790181873072,
+      "timeout_seconds": 5,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 0.0017800000000000003,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "5b3e43dc38ca01e3f5a7854ba50d4330864b0c1e0f646650b2c78cf072acc366",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "finished_unix_ms": 1790181873565,
+      "wall_seconds": 0.49289779900573194
+    },
+    {
+      "id": "version-rustc",
+      "argv": [
+        "/home/ubuntu/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/rustc",
+        "--version"
+      ],
+      "started_unix_ms": 1790181873574,
+      "timeout_seconds": 5,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 0.011709999999999998,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "4ad84f16acc2f3bdcfbc7b0788f1e74a4e649b962154a585b8f8d0b28eb0dd06",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "finished_unix_ms": 1790181873933,
+      "wall_seconds": 0.3590500029968098
+    },
+    {
+      "id": "version-gpp",
+      "argv": [
+        "/usr/bin/x86_64-linux-gnu-g++-13",
+        "--version"
+      ],
+      "started_unix_ms": 1790181873944,
+      "timeout_seconds": 5,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 0.0016989999999999991,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "39553616934606f58b27c04bed0cdbbe5b00c92c831a9aaadebd7ceda61d1334",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "finished_unix_ms": 1790181874280,
+      "wall_seconds": 0.33620020293165
+    },
+    {
+      "id": "version-node",
+      "argv": [
+        "/home/ubuntu/.nvm/versions/node/v26.1.0/bin/node",
+        "--version"
+      ],
+      "started_unix_ms": 1790181874287,
+      "timeout_seconds": 5,
+      "status": "passed",
+      "exit_code": 0,
+      "timed_out": false,
+      "descendants_killed": [],
+      "process_group_drained": true,
+      "child_cpu_seconds": 0.005287,
+      "cumulative_reaped_children_maxrss_kib": 168808,
+      "stdout_sha256": "2ca995cc259b7733f154600fc48973f1dcd71a53749f37176548c8516beeda94",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "finished_unix_ms": 1790181874641,
+      "wall_seconds": 0.354221447953023
+    }
+  ],
+  "counts": {
+    "passed": 14,
+    "failed": 0,
+    "unavailable": 0,
+    "unstarted_deadline": 0
+  },
+  "artifacts": {
+    "output/pipeline/emit/manifest.json": {
+      "sha256": "56879308bac14ac8a87dcf2671c80105c4575dc2bb4fc62340f4d4a20b2afe99",
+      "bytes": 456
+    },
+    "output/pipeline/emit/model.cpp": {
+      "sha256": "838164869ee3449c7ece9355ce1a8f57e3474646dabe16b1afa30c473cba9cf7",
+      "bytes": 11168
+    },
+    "output/pipeline/emit/model.js": {
+      "sha256": "a70c1d256938c81c7afa0a255bb10feef62b5bff20be7c76684e16659de7a22d",
+      "bytes": 19708
+    },
+    "output/pipeline/emit/model.py": {
+      "sha256": "c22b6584a051b3962cdb5004da17621f2e8b66938f579fb1c1bebc0eb10af227",
+      "bytes": 8283
+    },
+    "output/pipeline/emit/model.rs": {
+      "sha256": "df468ac4945057bb1b7046257bb5abffbb6cfd683a42fbf078799dfdaad40f99",
+      "bytes": 10217
+    },
+    "output/pipeline/emit/targets.txt": {
+      "sha256": "75ff83e274d09f09a818464dee3ea1669c1d7f53912b46e46ac0032274b92946",
+      "bytes": 13
+    },
+    "output/pipeline/prepared/prepared.json": {
+      "sha256": "de0d7c73bbc8b731c136c906b58d4fe1460c1124714a32b8d4c7e6f8aa8ced7a",
+      "bytes": 704
+    },
+    "output/pipeline/receipt.json": {
+      "sha256": "2534c4b5782142afbff2716f1bad8d88cc8fdbf8bbb04d711bee4b0fc6a2ca9b",
+      "bytes": 6103
+    },
+    "output/pipeline/search/cut-0/observations.json": {
+      "sha256": "0299c8d08699b22823c38bf4c17edafb1775d8b37cd459ffd7a5d5323a0e81ee",
+      "bytes": 1622
+    },
+    "output/pipeline/search/cut-0/search.json": {
+      "sha256": "01b49aa2ed7460a9464d55f201c4aecc8f84223e88846d5998f9f2c149e86f7c",
+      "bytes": 1195
+    },
+    "output/recipe/model-cpp17": {
+      "sha256": "4580533157883bb68d5c1faa24114a1ffdceb91ecdb02723fa44b2c9ee3eacfd",
+      "bytes": 45872
+    },
+    "output/recipe/model-cpp20": {
+      "sha256": "8c73d103c6388993f983b006de66a29d90c7eb715b922e4066735c5f5d078ab2",
+      "bytes": 49368
+    },
+    "output/recipe/model-rs": {
+      "sha256": "eb824566fb1359cd3c6284406928427e10667f715634a6ee47f07253a4100347",
+      "bytes": 4435048
+    },
+    "output/recipe/model.cpp": {
+      "sha256": "39b7e5fee4c38c9be1e7be022fc579650cc6beb148b1543be7d3dff45a058532",
+      "bytes": 12291
+    },
+    "output/recipe/model.js": {
+      "sha256": "513524f1c0879bc1ae947accc750741388ef3e5a1130886add474e822f22f1dc",
+      "bytes": 19741
+    },
+    "output/recipe/model.py": {
+      "sha256": "e3c78937b4d7ed44063d23ac2645c1dc0a148ae94fa63e63eefe664a418f34d6",
+      "bytes": 9262
+    },
+    "output/recipe/model.rs": {
+      "sha256": "d66a0addd90e7fdab9de288440ad4cb868892b6880dd806319f1b1ccb966bd64",
+      "bytes": 11592
+    },
+    "output/recipe/pred-cpp17.txt": {
+      "sha256": "376fbc9ea80ad2611ac3050ddeb026fae4b1fab471aba252343cbcbce943a424",
+      "bytes": 152
+    },
+    "output/recipe/pred-cpp20.txt": {
+      "sha256": "376fbc9ea80ad2611ac3050ddeb026fae4b1fab471aba252343cbcbce943a424",
+      "bytes": 152
+    },
+    "output/recipe/pred-js.txt": {
+      "sha256": "f5e0a53c49a6cc3015745edcebf2c8561322e1cac4f82155ebaaec3b4265ebf7",
+      "bytes": 147
+    },
+    "output/recipe/pred-python.txt": {
+      "sha256": "f5e0a53c49a6cc3015745edcebf2c8561322e1cac4f82155ebaaec3b4265ebf7",
+      "bytes": 147
+    },
+    "output/recipe/pred-rust.txt": {
+      "sha256": "f5e0a53c49a6cc3015745edcebf2c8561322e1cac4f82155ebaaec3b4265ebf7",
+      "bytes": 147
+    },
+    "output/recipe/program.cpp": {
+      "sha256": "21832bc4477b12b5f91f9224b2fde47460cef5bd6112008c0d2954181ce8c3fe",
+      "bytes": 14892
+    },
+    "output/recipe/program.js": {
+      "sha256": "86537e67d00080d7c51f9bff83dadb0f7f1dd39c98ff6e61d1e341fcd64cc781",
+      "bytes": 21602
+    }
+  },
+  "wall_seconds": 10.40713805705309,
+  "known_child_cpu_seconds": 2.9529630000000004,
+  "controller_cpu_seconds": 6.398584987,
+  "unit_total_cpu_seconds": null,
+  "unit_total_cpu_note": "Use authenticated systemd unit/journal counter if retained; overlaps child counters.",
+  "scope": "legacy synthetic recipe/refit parity and separate legacy pipeline; no fitted-export qualification",
+  "fitted_export_qualified": false,
+  "panel_or_training_budget_started": false
+}
