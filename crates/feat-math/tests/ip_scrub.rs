@@ -236,23 +236,36 @@ fn bound_and_fitted_cpp_emitters_are_clean() {
 /// artifacts carry those names verbatim.
 #[test]
 fn user_supplied_names_do_not_trip_the_bound_and_fitted_lints() {
+    // `gp` is two bytes and innocent on its own: it must not be masked, so that it can never hide
+    // an emitter-written `gp ` (the test only needs emission to succeed and the name to ship).
     let schema = DataSchema {
         columns: vec![
             ColumnSpec::numeric("island"),
             ColumnSpec::numeric("candidate"),
+            ColumnSpec::numeric("gp"),
             ColumnSpec::categorical("region"),
         ],
         row_semantics: RowSemantics::Iid,
     };
-    let categories = ["population", "tournament", "elites", "generation"];
+    // Every category contains a banned word on its own; three also carry a quote, a backslash or
+    // a control character, so the Python artifact embeds them Debug-escaped inside a JSON literal,
+    // the Rust artifact Debug-escaped and the C++ codec JSON-escaped: every spelling the mask must
+    // cover, on a name that would refuse without it.
+    let categories = ["population\"", "elites\\", "generation\u{8}", "tournament"];
     let mut rng = feat_math::Pcg32::new(23, 5);
     let mut rows = Vec::new();
     let mut y = Vec::new();
     for i in 0..120 {
         let a = rng.next_f64();
         let b = rng.next_f64();
+        let c = rng.next_f64();
         let region = categories[i % categories.len()];
-        rows.push(vec![format!("{a:?}"), format!("{b:?}"), region.to_owned()]);
+        rows.push(vec![
+            format!("{a:?}"),
+            format!("{b:?}"),
+            format!("{c:?}"),
+            region.to_owned(),
+        ]);
         y.push(if 3.0 * (a - b) + 0.2 * (i % 4) as f64 > 0.2 {
             1.0
         } else {
@@ -260,7 +273,12 @@ fn user_supplied_names_do_not_trip_the_bound_and_fitted_lints() {
         });
     }
     let table = RawTable::new(
-        vec!["island".into(), "candidate".into(), "region".into()],
+        vec![
+            "island".into(),
+            "candidate".into(),
+            "gp".into(),
+            "region".into(),
+        ],
         rows,
     )
     .unwrap();
@@ -289,8 +307,21 @@ fn user_supplied_names_do_not_trip_the_bound_and_fitted_lints() {
             cpp.codec.contains("population"),
             "{src}: codec vocabulary ships verbatim"
         );
-        // The unmasked lint would have refused every one of these artifacts.
+        assert!(
+            cpp.codec.contains("population\\\""),
+            "{src}: the quoted category ships JSON-escaped in the codec"
+        );
+        assert!(
+            artifact.rust.contains("elites\\\\"),
+            "{src}: the backslash category ships Debug-escaped in the Rust artifact"
+        );
+        assert!(
+            artifact.python.contains("generation"),
+            "{src}: the control-character category ships in the Python artifact"
+        );
+        // The unmasked lint would have refused every one of these artifacts, in every language.
         assert!(!lint_shipped_text(&artifact.python).is_empty());
+        assert!(!lint_shipped_text(&artifact.rust).is_empty());
         assert!(!lint_shipped_text(&cpp.codec).is_empty());
     }
 }

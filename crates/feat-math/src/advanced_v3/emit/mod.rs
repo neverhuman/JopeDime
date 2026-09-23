@@ -43,9 +43,18 @@ struct BoundManifest<'a> {
 /// vocabulary entry. The shipped-text lint runs with them masked
 /// ([`lint_shipped_masked`]), so a column called `island` or a category named
 /// `population` cannot fail emission, while everything the emitter itself
-/// writes is still checked. Both the raw spelling and the JSON-escaped one are
-/// masked, because the artifacts embed the schema as JSON text. Longest first,
-/// so a name that contains another is masked whole.
+/// writes is still checked.
+///
+/// Only strings that would trip the lint on their own are masked (an innocent
+/// name never touches emitter text), and only in the spellings the artifacts
+/// embed them in: raw, JSON-escaped (the C++ codec), Rust `Debug`-escaped (the
+/// Rust artifact's string literals) and the `Debug` of the JSON form (the Python
+/// artifact embeds its JSON literals through `{:?}`). Entries shorter than three
+/// bytes cannot contain a banned token and are skipped. Longest first, so a name
+/// that contains another is masked whole. One edge fails closed: a name that
+/// does not trip raw but whose escaped spelling completes a token (a leading
+/// newline followed by `nls`, say) is not masked, and the artifact is refused
+/// rather than shipped.
 pub(crate) fn user_text(model: &BoundModel) -> Vec<String> {
     let mut raw: Vec<String> = model
         .schema
@@ -58,15 +67,24 @@ pub(crate) fn user_text(model: &BoundModel) -> Vec<String> {
             raw.extend(vocabulary.iter().cloned());
         }
     }
+    let trips = |text: &str| {
+        !crate::transpile::lint_vocabulary_portfolio(text).is_empty()
+            || !crate::transpile::lint_shipped_phrases(text).is_empty()
+    };
     let mut forms = Vec::new();
     for text in raw {
-        if text.len() < 2 {
+        if text.len() < 3 || !trips(&text) {
             continue;
         }
-        if let Ok(json) = serde_json::to_string(&text) {
-            let escaped = &json[1..json.len() - 1];
-            if escaped != text {
-                forms.push(escaped.to_owned());
+        let json = serde_json::to_string(&text).unwrap_or_default();
+        let json_inner = json.get(1..json.len().saturating_sub(1)).unwrap_or("");
+        let debug = format!("{text:?}");
+        let debug_inner = &debug[1..debug.len() - 1];
+        let debug_of_json = format!("{json_inner:?}");
+        let debug_of_json_inner = &debug_of_json[1..debug_of_json.len() - 1];
+        for form in [json_inner, debug_inner, debug_of_json_inner] {
+            if !form.is_empty() && form != text {
+                forms.push(form.to_owned());
             }
         }
         forms.push(text);
