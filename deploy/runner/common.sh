@@ -109,7 +109,9 @@ jope_runner_exclusive_cpu() {
   [[ -f /run/lock/jope-exclusive-cpu.lock ]] || {
     echo "shared CPU lock not provisioned" >&2; return 2;
   }
-  exec 8<>/run/lock/jope-exclusive-cpu.lock
+  # flock on this local inode needs no file writes. The runner's strict service
+  # mount namespace deliberately keeps /run/lock read-only.
+  exec 8</run/lock/jope-exclusive-cpu.lock
   flock -n 8 || { echo "ASM/exclusive CPU allocation active" >&2; return 2; }
   jope_runner_check_asm_groups /sys/fs/cgroup/system.slice
 }
