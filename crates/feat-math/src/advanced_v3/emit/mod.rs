@@ -22,6 +22,9 @@ pub struct BoundEmitted {
     pub timing: crate::transpile::EmitTiming,
 }
 
+/// The bound artifact's sidecar. The JSON key is `program_sha256`; the
+/// `BoundModel` field it comes from keeps its Rust name because the fitted
+/// model codec persists it.
 #[derive(Serialize)]
 struct BoundManifest<'a> {
     schema: &'a str,
@@ -29,7 +32,7 @@ struct BoundManifest<'a> {
     task_sha256: &'a str,
     schema_sha256: &'a str,
     vocabulary_sha256: &'a str,
-    genome_sha256: &'a str,
+    program_sha256: &'a str,
     emitter_version: &'a str,
     python_sha256: String,
     rust_sha256: String,
@@ -37,7 +40,8 @@ struct BoundManifest<'a> {
 
 /// Emit a fitted, raw-CSV prediction program. This is deliberately separate
 /// from `transpile::emit`: the latter remains the frozen artifact-v1 training
-/// program and retains emitter version 2.1 byte-for-byte.
+/// program (pipeline artifacts are byte-identical across emitter versions
+/// 2.1 and 2.2; see `EMITTER_VERSION`).
 pub fn emit_bound(
     model: &BoundModel,
     options: &crate::transpile::EmitOptions,
@@ -64,7 +68,7 @@ pub fn emit_bound(
         task_sha256: &model.task_sha256,
         schema_sha256: &model.schema_sha256,
         vocabulary_sha256: &model.vocabulary_sha256,
-        genome_sha256: &model.genome_sha256,
+        program_sha256: &model.genome_sha256,
         emitter_version: crate::transpile::EMITTER_VERSION,
         python_sha256: text_hash(&python),
         rust_sha256: text_hash(&rust),

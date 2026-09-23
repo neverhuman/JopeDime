@@ -116,7 +116,7 @@ fn canonicalize(source: &str) -> Result<String> {
     let genome = GenomeIr::parse(source)?;
     let canonical = genome.canonical();
     if GenomeIr::parse(&canonical)?.canonical() != canonical {
-        bail!("genome canonicalization is not idempotent");
+        bail!("program canonicalization is not idempotent");
     }
     Ok(canonical)
 }

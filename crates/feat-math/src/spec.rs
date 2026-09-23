@@ -1960,7 +1960,7 @@ pub fn doc_paragraphs(plan: &Plan, opts: &crate::transpile::EmitOptions) -> (Str
                 paragraphs.push(
                     "Predictions are a*f(row) + b where the slope a and intercept b are the \
                      ordinary least-squares line of the training target on f, a linear \
-                     calibration in the style of Keijzer (2003); outputs are clipped to \
+                     calibration of the closed form; outputs are clipped to \
                      [-60, 60]. Missing or malformed CSV cells parse as 0.0 and short rows are \
                      padded with zeros to the training width."
                         .to_string(),

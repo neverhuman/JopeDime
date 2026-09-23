@@ -26,14 +26,14 @@ hard process deadline. A controller requiring hard cancellation still needs an
 isolated numerical worker.
 
 The comparison pool contains up to four measured programs from each cut, ranked
-by that cut's RMSE and canonical genome. Candidates are visited in rank order,
+by that cut's RMSE and canonical program text. Candidates are visited in rank order,
 round-robin across cuts, with duplicates removed. Missing measurements are attempted
 in cut order until each cut's total budget is spent. A failed attempt is retained
 without retry. The pool can remain incomplete when time, evaluations or failures
 prevent coverage; each program lists measured, failed and missing cuts.
 
 Selection requires successful measurements on **all requested cuts**. Among those
-programs, minimum mean held-out RMSE wins; canonical genome breaks ties. Programs
+programs, minimum mean held-out RMSE wins; the canonical program text breaks ties. Programs
 with partial coverage are excluded, even if their score is better on their smaller
 cut set. If no program has complete coverage, selection fails and retains the
 per-cut evidence. No partial or unmeasured fallback is emitted. This is development

@@ -1602,7 +1602,7 @@ pub(crate) fn compile_v3_genome(
     task.validate()?;
     schema.validate()?;
     let GenomeIr::Pipeline(dsl) = genome else {
-        bail!("schema-bound advanced-v3 genomes must be pipelines");
+        bail!("schema-bound advanced-v3 programs must be pipelines");
     };
     let classified = classify_stages(&dsl.stages, task.kind)?;
     let mut canonical_stages = Vec::with_capacity(dsl.stages.len() + 2);

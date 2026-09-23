@@ -25,16 +25,16 @@ git clone https://github.com/veox-ai/JopeDime && cd JopeDime
 # 1. the whole workspace, CPU features only                          (1 m 57 s at 4235db6)
 cargo build --workspace --locked
 
-# 2. the GP engine and emitters: 408 tests incl. the four-language   (13 m 01 s at 4235db6, includes
+# 2. the program engine and emitters: 408 tests incl. the four-language (13 m 01 s at 4235db6, includes
 #    parity proofs (g++/clang++/node/python3 are exercised)           compiling the test binaries)
 cargo test -p feat-math --locked
 
-# 3. the emitted-code matrix: two genomes on datasets/test/pmlb-229-pwlinear —
+# 3. the emitted-code matrix: two programs on datasets/test/pmlb-229-pwlinear —
 #    Python, Rust, g++/clang++ × C++17/C++20 and node produce bit-identical predictions
 #    and byte-identical sources pinned in crates/feat-math/tests/fixtures/emitted/  (20 s at 4235db6)
 bash deploy/ci/emitters.sh
 
-# 4. emit one genome yourself: model.py, model.rs, model.cpp, model.js + manifest.json (0.2 s at 4235db6)
+# 4. emit one program yourself: model.py, model.rs, model.cpp, model.js + manifest.json (0.2 s at 4235db6)
 cargo run -p feat-math --example emit -- crates/feat-math/tests/fixtures/emitted/portable-4lang.dsl /tmp/out
 ```
 
@@ -46,7 +46,7 @@ Known state of step 2 at `4235db6`:
 PR tier is `just ci-pr` (hygiene, fmt, clippy, `cargo nextest -P pr`, Python checks); `just docs`
 runs rustdoc and the markdown link check.
 
-To emit a genome of your own, write its DSL on one line — the champion in
+To emit a program of your own, write its DSL on one line — the champion in
 `crates/feat-math/assets/champions/8944cbdf.dsl` is
 `(pipe X (winsor_clip append=true q=0.1) (cheb append=true degree=6) (robust_scale) (robust_scale) (poly_interact append=true) (quantile_bins bins=16) (histgbm depth=5 lr=0.15 rounds=150))`
 — and pass it to the `emit` example; `--all` makes an uncovered target an error instead of a note

@@ -6,7 +6,7 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "jope-dime step-60000 proposal policy on candle: grammar automaton, policy forward, masked decode, ranking and seed populations"
+description = "jope-dime step-60000 proposal policy on candle: grammar automaton, policy forward, masked decode, ranking and seed pools"
 
 [features]
 default = []

@@ -1,8 +1,8 @@
-//! Emit one genome to every portable target.
+//! Emit one program to every portable target.
 //!
-//! `cargo run -p feat-math --example emit -- [--all] <genome.dsl> <out-dir>` writes `model.py` and
+//! `cargo run -p feat-math --example emit -- [--all] <program.dsl> <out-dir>` writes `model.py` and
 //! `model.rs` (the bit-identical pair, always), `model.cpp` (C++17, also a valid C++20 program) and
-//! `model.js` when the independently certified C++17/ES2020 emitters cover the genome, the sidecar
+//! `model.js` when the independently certified C++17/ES2020 emitters cover the program, the sidecar
 //! `manifest.json`, and `targets.txt` naming what was emitted. With `--all` an uncovered target is
 //! an error naming the unsupported elements; without it the reason is printed and recorded, never
 //! silently dropped. The sources are byte-deterministic — `deploy/ci/emitters.sh` pins their
@@ -19,7 +19,7 @@ fn main() -> Result<()> {
     let require_all = args.iter().any(|arg| arg == "--all");
     args.retain(|arg| arg != "--all");
     let [dsl, out] = args.as_slice() else {
-        bail!("usage: emit [--all] <genome.dsl> <out-dir>");
+        bail!("usage: emit [--all] <program.dsl> <out-dir>");
     };
     let (dsl, out) = (dsl.clone(), out.clone());
     let source = std::fs::read_to_string(&dsl).with_context(|| format!("read {dsl}"))?;

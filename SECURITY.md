@@ -18,7 +18,7 @@ You will get an acknowledgement within three working days and a fix or a documen
 - The S3 layouts described in [docs/datasets.md](docs/datasets.md) and the models/learning-store
   documents (landing with WP7/WP11): bucket policies, OIDC trust, content-addressed integrity.
 - Emitted programs (`model.py`, `model.rs`, `model.cpp`, `model.js`): they are generated from a
-  genome and never contain network, filesystem or environment access — a finding that shows an
+  program and never contain network, filesystem or environment access — a finding that shows an
   emitted artefact doing any of those is a vulnerability in the emitter.
 
 Out of scope: the vendored `crates/smartcluster/*` workspace (report upstream to jain-smartcluster;

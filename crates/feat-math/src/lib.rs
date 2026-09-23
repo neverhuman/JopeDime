@@ -1,11 +1,11 @@
-//! feat-math — the vendored new-math engine: a pipeline-genome DSL with a Rust
-//! reference interpreter, dual standalone-code emitters, and an evolutionary
+//! feat-math — the vendored new-math engine: a pipeline-program DSL with a Rust
+//! reference interpreter, dual standalone-code emitters, and an in-process
 //! search over pipelines.
 //!
-//! Genomes are s-expressions like
+//! Programs are s-expressions like
 //! `(pipe X (winsor_clip q=0.1) (cheb degree=6) (robust_scale) (histgbm depth=5 lr=0.15 rounds=150))`.
 //! Three implementations agree bit-for-bit: (1) this crate's f64 interpreter
-//! (`model::fit/predict`, used to EXECUTE genomes during invention — the Rust
+//! (`model::fit/predict`, used to EXECUTE programs during synthesis — the Rust
 //! version), (2) the emitted standalone Rust artifact, and (3) the emitted
 //! standalone dependency-free Python artifact (`transpile::emit`).
 //!

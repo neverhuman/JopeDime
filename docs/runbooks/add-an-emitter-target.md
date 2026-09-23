@@ -19,7 +19,7 @@ The Python/Rust pair covers the whole DSL; C++ and JS cover 22 transforms and th
    tables, so the gate changes with the table; update the exclusion table in
    [docs/emitters.md](../emitters.md) (and the machine-checked table once `jope-contracts` lands).
 3. Prove parity three ways:
-   - a genome using the op in `tests/golden.rs` style with a `transpile.rs` C++ gate test (compiled
+   - a program using the op in `tests/golden.rs` style with a `transpile.rs` C++ gate test (compiled
      through `cxx::command`, compared bit for bit with the Rust reference);
    - extend `tests/portable/full_ref.{py,rs,cpp,js}` if the op belongs in the portable reference
      (all five backends of `tests/portable_parity.rs` must agree; run with `JOPE_PARITY_STRICT=1`);
@@ -34,7 +34,8 @@ The Python/Rust pair covers the whole DSL; C++ and JS cover 22 transforms and th
    JOPE_CPP_STD=20 cargo test -p feat-math --locked --test portable_parity
    ```
    The predictions' sha256 must not change across any of them (the pins are the same file).
-5. `lint_vocabulary` must stay clean: no search vocabulary, paths or URLs in an emitted artefact.
+5. `lint_shipped_text` must stay clean (`tests/ip_scrub.rs` asserts it over every backend): nothing
+   in an emitted artefact may say how the program was found, and no paths or URLs.
 
 ## Adding a head to C++ / JS
 
@@ -56,7 +57,7 @@ diff the arithmetic by hand before running anything.
 3. Parity: a `tests/portable/full_ref.<ext>` reference and a backend in `portable_parity.rs`
    (strict under `JOPE_PARITY_STRICT=1`; a missing toolchain must fail, not skip); the matrix in
    `emitters.sh` (add the compiler/interpreter to its required-tool list and to the hosted
-   `emitters` lane's setup); pins for both fixture genomes.
+   `emitters` lane's setup); pins for both fixture programs.
 4. Determinism checklist for the new runtime: IEEE-754 doubles only; no FMA (compiler flag or
    language guarantee); sequential reductions; the portable math kernel for `exp/log/pow/tanh` if
    the platform's libm is not correctly rounded; integer RNG reproduced exactly; predictions

@@ -3881,11 +3881,11 @@ pub fn evolve_lite_race_with_exact_initial_population(
     let mut parsed = Vec::with_capacity(cfg.pop);
     for (index, source) in initial_population.iter().enumerate() {
         let genome = parse_canonical_pipeline(source)
-            .map_err(|error| format!("initial population genome {index} is invalid: {error}"))?;
+            .map_err(|error| format!("initial pool entry {index} is invalid: {error}"))?;
         let canonical = genome.to_string();
         if !seen.insert(canonical) {
             return Err(format!(
-                "initial population genome {index} duplicates a canonical pipeline"
+                "initial pool entry {index} duplicates a canonical pipeline"
             ));
         }
         parsed.push(genome);

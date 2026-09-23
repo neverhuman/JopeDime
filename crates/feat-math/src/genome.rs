@@ -88,12 +88,12 @@ impl GenomeIr {
         }
         if let Some(rest) = trimmed.strip_prefix("(sym ") {
             let Some(rest) = rest.strip_suffix(')') else {
-                bail!("symbolic genome requires a closing delimiter");
+                bail!("closed-form program requires a closing delimiter");
             };
             let rest = rest.trim();
             let (mode, expr_src) = match rest.split_once(' ') {
                 Some((m, e)) => (m, e.trim()),
-                None => bail!("symbolic genome must be (sym <affine|raw> \"expr\")"),
+                None => bail!("closed-form program must be (sym <affine|raw> \"expr\")"),
             };
             if !matches!(mode, "affine" | "raw") {
                 bail!("symbolic mode must be affine or raw");
@@ -112,7 +112,7 @@ impl GenomeIr {
                 affine: mode == "affine",
             });
         }
-        bail!("unrecognized genome form: {trimmed}");
+        bail!("unrecognized program form: {trimmed}");
     }
 
     pub fn canonical(&self) -> String {
