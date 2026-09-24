@@ -41,9 +41,14 @@
       "receipt": "https://github.com/veox-ai/JopeDime/pull/90"
     },
     {
-      "observation": "Latest retained completed full-main diagnostic at 5de90b1cc failed; preserved separately from exact-head fast CI. This rebuild does not relabel it passed.",
+      "observation": "Prior retained completed full-main diagnostic at 5de90b1cc failed; preserved separately from exact-head fast CI. This rebuild does not relabel it passed.",
       "observed_utc": "2026-09-24T06:23:44Z",
       "receipt": "https://github.com/veox-ai/JopeDime/actions/runs/35962317775"
+    },
+    {
+      "observation": "Latest full-main diagnostic at PR90 main failed before test execution: actual cgroup limits did not match the approved CPU budget. This is unavailable test coverage, not a source-test failure or successful qualification.",
+      "observed_utc": "2026-09-24T17:10:39Z",
+      "receipt": "https://github.com/veox-ai/JopeDime/actions/runs/36032441940"
     }
   ],
   "observations_note": "Dated observations; a configured command, implemented source and live qualification are separate states.",

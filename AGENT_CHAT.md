@@ -1687,3 +1687,11 @@ Independent Claude review of ce1264483 refused approval: public GP label fixed b
 ## 2026-09-24T17:38:55.535389+00:00 — Codex full-diff and final rebuild verified
 
 LF extraction preserves every CSV value/identity; all six figures unchanged. Full git diff --check origin/main PASS, Python syntax checks PASS, publication192inputs/43tasks/30datasets/522features PASS. Latest PDFs170pages/1783303bytes/72f2c01c5d3331e18a9ca9e0af95287f1f5f2a4f91dd597c2a7cc2e805a5a692 and133pages/4597507bytes/08bb754d6356db9fb3345c0e629c18fdcc7a3c38228ae6d142f969b102eba237. All303pages inspected:300exactly unchanged from complete prior review, root inspected final3,47,52. Actual266legacy destinations/376crosslinks verified. Final custody release-review/{pdf-semantic-check.json,visual-rebind.json}; CI36035446618/36035416852 cancelled as superseded. Ready final follow-up commit and exact-head CI/review; no new claims or execution budget.
+
+## 2026-09-24T17:42:07.650164+00:00 — Codex front-matter alignment
+
+Final root read found front.md hardcoded old reading guide7–8/13 after newchapter insertion. Align to3/8–9/14 and add latest diagnostic36032441940 failure before tests to publication observations (prior35962317775 remains retained). Publication-only correction and owning rebuild; no implementation/metric changes. Source writer root, next exact-head review/CI supersedes2ee778bc.
+
+## 2026-09-24T17:43:59.171227+00:00 — Codex publication final source freeze
+
+Front reading guide aligned; latest diagnostic failure included without losing prior observation. Final PDFs170pages/1783618bytes/807a225eb9455160453a1eb967bf0cd0edcf7fb31778ac3b29cb643875d6445e and133pages/4597534bytes/46d727c294d0576dfdfff5d8c716f3abf57d028d9c0556cfad2acb131c5f54ce. Publication192inputs/43tasks/30datasets/522features PASS; actual266legacy destinations/376crosslinks PASS. All303pages visually qualified:301exact matches to preceding reviewed version, changed frontpages2–3 inspected directly; custody publication-lifecycle/. Full origin/main diff-check and public-prose scrub PASS. No remaining known content issues. Retain source frozen for CI and native review; root sole writer.
