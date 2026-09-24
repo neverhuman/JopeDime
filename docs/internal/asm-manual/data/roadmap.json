@@ -61,7 +61,7 @@
       "workstream": "manual",
       "priority": "P1",
       "severity": "required acceptance before completed delivery",
-      "current_evidence_level": "assembled seventeen chapters with source-audited training and target histories",
+      "current_evidence_level": "assembled thirteen operating chapters and five evidence appendices with source-audited training and target histories",
       "status": "canonical private manual assembled",
       "pending_action": "Maintain the dated evidence inventory and current source/pending distinctions.",
       "dependencies": [
@@ -132,7 +132,7 @@
       "priority": "P1",
       "severity": "required acceptance before completed delivery",
       "current_evidence_level": "twenty-one local figure artifacts; original metrics, complete recovered per-step series and generation points retained",
-      "status": "figures rendered; final PDF inspection pending",
+      "status": "figures rendered; local PDF inspection completed; publication pending",
       "pending_action": "Retain historical/current labels, complete source CSVs and final PDF visual checks.",
       "dependencies": [
         "DOC-01"
@@ -170,7 +170,7 @@
       "workstream": "manual quality",
       "priority": "P1",
       "severity": "required acceptance before completed delivery",
-      "current_evidence_level": "first edition rendered; expanded seventeen-chapter final checks required",
+      "current_evidence_level": "edition 2 rendered in two volumes; local content, navigation and visual checks completed",
       "status": "rendered; final publication gates pending",
       "pending_action": "Render docs/*.pdf, extract PDF text, inspect all dense tables/code/figures, verify local links and filenames, and produce a readback checklist.",
       "dependencies": [

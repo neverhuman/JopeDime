@@ -1,38 +1,40 @@
 # ASM maintainer and user manual
 
-**Private maintainer edition, 23 September 2026.** This manual distinguishes implemented behavior, measured qualification, historical results and pending acceptance. Its implementation snapshot is reviewed PR83: source `68f56404c3e199e06413bfd645d3fe0803d7b96f`, merged main `a75e543d2166017cb0139e0a251d51d9a0c98e08`, with identical source trees.
+**Private maintainer edition 2.** This manual distinguishes implemented behavior, measured qualification, historical results and pending acceptance. The [publication manifest](internal/asm-manual/publication.json) records the implementation snapshot, dated observations and document build independently.
 
-- [Read the PDF](asm-maintainer-manual.pdf).
+- [Read Volume 1: maintainer manual](asm-maintainer-manual.pdf).
+- [Read Volume 2: evidence reference](asm-evidence-reference.pdf).
 - [Read the complete Markdown book](internal/asm-manual/MANUAL.md).
 - [Open the detailed property-list checklist](asm-maintainer-status.plist), or its [JSON companion](internal/asm-manual/data/roadmap.json).
 - [Inspect the rendering receipt and input hashes](internal/asm-manual/render-receipt.json).
 
 The book covers the thirty frozen datasets and all 522 feature records, the broader 3,859-dataset catalog, local and remote storage inventories, encodings and neural models, actual historical training/target progress, loss curves, binary packing, continuation commands, language support, measured examples, historical ranking/Elo plots, maintenance, and a 43-item acceptance roadmap with 24 separately marked follow-on proposals. Sealed target bodies and model weights are not included.
 
-**For the learning story, start with sections 14–17.** They distinguish real optimizer updates from better teachers, improved conditional program generation, and a complete measured flywheel. Current product version, accepted checkpoint, historical continuation, and pending experimental interfaces have separate identities.
+**For the learning story, start with chapters 7–8 and 13, then appendices B–D in Volume 2.** They distinguish real optimizer updates from better teachers, improved conditional program generation, and a complete measured flywheel. Current product version, accepted checkpoint, historical continuation, and pending experimental interfaces have separate identities.
 
 The retained recovery history includes all 63,000 reported steps from 6,001 through 69,000, with 378,000 exact metric values in a compressed companion. Loss plots mark corpus changes and accepted step 60,000; internal self-play Elo and adaptive search comparisons are explicitly separated from benchmark-valid evidence. Packing measurements and proposed smaller formats have separate qualification requirements.
 
 ## Section Markdown
 
-| Section | Contents |
+| Section | Volume |
 | --- | --- |
-| [01 — Current status](internal/asm-manual/sections/01-status.md) | What works, evidence levels, measured results, cost and remaining acceptance |
-| [02 — Architecture](internal/asm-manual/sections/02-architecture.md) | Components, encodings, neural model dimensions, checkpoint identities and compatibility |
-| [03 — Operations](internal/asm-manual/sections/03-operations.md) | Current and pending commands, installation, runtime preparation and recovery |
-| [04 — Training](internal/asm-manual/sections/04-training.md) | Admission, task routing, resource budgets, optimizer proof, reload and continuation |
-| [05 — Languages and examples](internal/asm-manual/sections/05-languages.md) | Complete recipe matrix, fitted-state distinctions and fourteen executed example commands |
-| [06 — Benchmark methods](internal/asm-manual/sections/06-benchmark-methodology.md) | Frozen folds, metrics, class order, ranking/Elo, exposure and accounting |
-| [07 — Data estate](internal/asm-manual/sections/07-data-estate.md) | Panel/corpus statistics, locations, bytes, provenance and metadata gaps |
-| [08 — Visual evidence](internal/asm-manual/sections/08-visual-evidence.md) | Current measured loss, dataset coverage, historical Elo/ranks/relative loss and timing |
-| [09 — Maintenance](internal/asm-manual/sections/09-maintenance.md) | Checkout ownership, resource coordination, reviewed delivery and preservation |
-| [10 — Detailed roadmap](internal/asm-manual/sections/10-roadmap.md) | Forty-three stable acceptance items, coordinated follow-ons, dependencies, commands, resources and evidence |
-| [11 — Evidence and glossary](internal/asm-manual/sections/11-evidence-glossary.md) | Source/CI/review/main identities, receipt locations and terminology |
-| [12 — Dataset appendix](internal/asm-manual/sections/12-dataset-statistics.md) | Every frozen dataset, class/category frequencies and all feature statistics |
-| [13 — Source map](internal/asm-manual/sections/13-source-map.md) | Exact-revision source links, pending source pins, companion files and rebuild commands |
-| [14 — Actual training history](internal/asm-manual/sections/14-training-history.md) | Real loss trajectories, optimizer resets and continuation, model lineage, promotion evidence and missing history |
-| [15 — Targets and binary packing](internal/asm-manual/sections/15-target-history-packing.md) | Dataset/split contexts becoming teachers, target-quality changes, corpus versions, packed formats and loader gaps |
-| [16 — Versions, KPIs and continuation](internal/asm-manual/sections/16-version-kpis-continuation.md) | North star, measurable denominators, exact version tuple and current versus pending deep-training commands |
-| [17 — Flywheel and focused search](internal/asm-manual/sections/17-flywheel-focused-search.md) | Remaining loop-closure proofs, current single-dataset commands and sustained incumbent-aware optimization design |
+| [1 — Current status, versions, north star and measured limitations](internal/asm-manual/sections/status.md) | 1 |
+| [2 — Architecture, encodings, GP representation and model lineages](internal/asm-manual/sections/architecture.md) | 1 |
+| [3 — Installation, preparation, assets, workers and doctor](internal/asm-manual/sections/installation.md) | 1 |
+| [4 — Data, splits, groups, families and permitted input boundaries](internal/asm-manual/sections/data.md) | 1 |
+| [5 — Regression search, fitting, prediction and focused optimization](internal/asm-manual/sections/search.md) | 1 |
+| [6 — Teacher admission, HWM identities and corpus updates](internal/asm-manual/sections/teachers.md) | 1 |
+| [7 — Training, continuation, export and compatibility](internal/asm-manual/sections/training.md) | 1 |
+| [8 — Measuring repeated learning and deciding improvement](internal/asm-manual/sections/learning.md) | 1 |
+| [9 — Complete fitted inference and language support](internal/asm-manual/sections/inference.md) | 1 |
+| [10 — Benchmark execution, ranking, Elo and interpretation](internal/asm-manual/sections/benchmark.md) | 1 |
+| [11 — Scheduling, cancellation, recovery and accounting](internal/asm-manual/sections/scheduling.md) | 1 |
+| [12 — Maintenance, privacy, release and preservation](internal/asm-manual/sections/maintenance.md) | 1 |
+| [13 — Prioritized implementation plan and extension interfaces](internal/asm-manual/sections/plan.md) | 1 |
+| [A — All thirty datasets and all 522 feature records](internal/asm-manual/sections/datasets.md) | 2 |
+| [B — Historical training, checkpoint lineage and original loss trajectories](internal/asm-manual/sections/training-history.md) | 2 |
+| [C — Historical GP targets, rankings, Elo and attribution limits](internal/asm-manual/sections/gp-targets.md) | 2 |
+| [D — Dated data estate, recovery evidence and binary formats](internal/asm-manual/sections/data-estate.md) | 2 |
+| [E — Full task catalogue, source/schema index, receipts and glossary](internal/asm-manual/sections/catalogue.md) | 2 |
 
 Historical ladders are not current ASM panel results. The current one-dataset operational proof demonstrates the implemented path but loses to its generic comparison arm. Full-panel performance, new bounded training and complete selected fitted-model export qualification remain pending. Public distribution rules remain separate from this private manual.

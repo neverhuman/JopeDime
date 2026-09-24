@@ -29,7 +29,7 @@
 
 #### DOC-01 — manual
 
-**Priority:** P1. **Current evidence:** assembled seventeen chapters with source-audited training and target histories. **Status:** canonical private manual assembled.
+**Priority:** P1. **Current evidence:** assembled thirteen operating chapters and five evidence appendices with source-audited training and target histories. **Status:** canonical private manual assembled.
 
 **Action:** Maintain the dated evidence inventory and current source/pending distinctions.
 
@@ -74,7 +74,7 @@ python3 "$EXAMPLES/validate-outputs.py" --recipe-output "$EXAMPLE_RUN/recipe"
 
 #### DOC-03 — manual figures
 
-**Priority:** P1. **Current evidence:** twenty-one local figure artifacts; original metrics, complete recovered per-step series and generation points retained. **Status:** figures rendered; final PDF inspection pending.
+**Priority:** P1. **Current evidence:** twenty-one local figure artifacts; original metrics, complete recovered per-step series and generation points retained. **Status:** figures rendered; local PDF inspection completed; publication pending.
 
 **Action:** Retain historical/current labels, complete source CSVs and final PDF visual checks.
 
@@ -101,7 +101,7 @@ OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/
 
 #### DOC-04 — manual quality
 
-**Priority:** P1. **Current evidence:** first edition rendered; expanded seventeen-chapter final checks required. **Status:** rendered; final publication gates pending.
+**Priority:** P1. **Current evidence:** edition 2 rendered in two volumes; local content, navigation and visual checks completed. **Status:** rendered; final publication gates pending.
 
 **Action:** Render docs/*.pdf, extract PDF text, inspect all dense tables/code/figures, verify local links and filenames, and produce a readback checklist.
 

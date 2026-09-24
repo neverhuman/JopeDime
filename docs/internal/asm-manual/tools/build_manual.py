@@ -156,6 +156,7 @@ def main() -> None:
     def inputs():
         paths = [p for p in sorted(ROOT.rglob("*")) if p.is_file() and p.suffix in {".md", ".json", ".jsonl", ".csv", ".py", ".css", ".png", ".svg", ".plist", ".gz", ".txt"} and p.name not in GENERATED]
         paths.append(DOCS / "asm-maintainer-status.plist")
+        paths.append(DOCS / "asm-maintainer-manual.md")
         return [{"path": str(p.relative_to(DOCS)), "sha256": hashlib.sha256(p.read_bytes()).hexdigest()} for p in paths]
 
     before = inputs()
