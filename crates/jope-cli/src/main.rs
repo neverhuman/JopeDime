@@ -1,6 +1,6 @@
 //! `jope`: the one command line. Fixture, kernel, champion and router verbs live in this
-//! crate; `jope models …`, `jope datasets …` and `jope pipeline …` delegate to the library
-//! crates' own clap commands (no process is spawned).
+//! crate; `jope models …`, `jope datasets …`, `jope pipeline …` and `jope motifs …` delegate
+//! to the library crates' own clap commands (no process is spawned).
 
 use anyhow::{ensure, Result};
 use clap::{Parser, Subcommand};
@@ -138,6 +138,8 @@ enum Command {
     Datasets(jope_datasets::cli::Cli),
     /// Product pipeline: dataset, prepared cuts, GP search, emitted code and a receipt.
     Pipeline(jope_pipeline::cli::Cli),
+    /// Reusable program fragments kept in a private table, with exact expansion checks.
+    Motifs(jope_motifs::cli::Cli),
 }
 
 fn execute(command: &Command) -> Result<Verification> {
@@ -170,8 +172,11 @@ fn execute(command: &Command) -> Result<Verification> {
         | Command::Route { .. }
         | Command::Models(_)
         | Command::Datasets(_)
-        | Command::Pipeline(_) => {
-            unreachable!("kernel, models, datasets and pipeline commands are dispatched separately")
+        | Command::Pipeline(_)
+        | Command::Motifs(_) => {
+            unreachable!(
+                "kernel, models, datasets, pipeline and motifs commands are dispatched separately"
+            )
         }
     }
 }
@@ -222,6 +227,7 @@ fn main() -> ExitCode {
         Command::Models(cli) => return jope_models::cli::exec(cli),
         Command::Datasets(cli) => return jope_datasets::cli::exec(cli),
         Command::Pipeline(cli) => return jope_pipeline::cli::exec(cli),
+        Command::Motifs(cli) => return jope_motifs::cli::exec(cli),
         command => command,
     };
     match &command {
@@ -406,7 +412,7 @@ fn main() -> ExitCode {
 #[cfg(test)]
 mod tests {
     use super::Cli;
-    use clap::CommandFactory;
+    use clap::{CommandFactory, Parser};
 
     #[test]
     fn version_is_semver() {
@@ -434,6 +440,7 @@ mod tests {
             "models",
             "datasets",
             "pipeline",
+            "motifs",
         ] {
             assert!(names.contains(&verb), "{verb} missing from {names:?}");
         }
@@ -445,6 +452,62 @@ mod tests {
         let pipeline = cmd.find_subcommand("pipeline").unwrap();
         let verbs: Vec<&str> = pipeline.get_subcommands().map(|c| c.get_name()).collect();
         assert_eq!(verbs, ["run", "verify-receipt"]);
+        let motifs = cmd.find_subcommand("motifs").unwrap();
+        let verbs: Vec<&str> = motifs.get_subcommands().map(|c| c.get_name()).collect();
+        assert_eq!(verbs, ["mine", "validate"]);
         Cli::command().debug_assert();
+    }
+
+    #[test]
+    fn motifs_help_passes_shipped_text_lint_and_owner_ban() {
+        let mut cmd = Cli::command();
+        cmd.build();
+        let motifs = cmd.find_subcommand_mut("motifs").expect("motifs");
+        assert!(!motifs.is_hide_set());
+        let mut texts = vec![motifs.render_long_help().to_string()];
+        for verb in ["mine", "validate"] {
+            let command = motifs.find_subcommand_mut(verb).expect("verb");
+            texts.push(command.render_long_help().to_string());
+            texts.push(command.render_help().to_string());
+        }
+        // The implemented arguments the acceptance commands use.
+        for flag in [
+            "--state",
+            "--out",
+            "--json",
+            "--min-datasets",
+            "--max-stages",
+        ] {
+            assert!(texts[1].contains(flag), "mine lacks {flag}");
+        }
+        for flag in ["--table", "--state", "--report", "--public-out", "--json"] {
+            assert!(texts[3].contains(flag), "validate lacks {flag}");
+        }
+        for text in &texts {
+            assert!(
+                feat_math::transpile::lint_shipped_text(text).is_empty(),
+                "{text}"
+            );
+            let lower = text.to_lowercase();
+            for word in jope_motifs::export::OWNER_BANNED {
+                assert!(!lower.contains(word), "{word} in {text}");
+            }
+            assert!(!text.contains(jope_motifs::NAME_PREFIX), "{text}");
+        }
+    }
+
+    #[test]
+    fn motifs_verbs_refuse_missing_required_arguments() {
+        for arguments in [
+            ["jope", "motifs"].as_slice(),
+            &["jope", "motifs", "mine"],
+            &["jope", "motifs", "mine", "--state", "/state"],
+            &["jope", "motifs", "validate"],
+            &["jope", "motifs", "validate", "--state", "/state"],
+        ] {
+            assert!(Cli::try_parse_from(arguments).is_err(), "{arguments:?}");
+        }
+        assert!(Cli::try_parse_from(["jope", "motifs", "mine", "--out", "/mined"]).is_ok());
+        assert!(Cli::try_parse_from(["jope", "motifs", "validate", "--table", "/t.json"]).is_ok());
     }
 }
