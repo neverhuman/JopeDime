@@ -896,6 +896,15 @@
         "replay under the same input identity"
       ],
       "owner_phase": "following CPU repair and qualification phase"
+    },
+    "pending-api": {
+      "status": "deferred",
+      "reason": "Reference adapter for an API that is not on this branch. The feature does not build until that API lands, and the default build refuses every read the adapter would serve.",
+      "dependencies": [
+        "jope_learning::eligibility on the base branch",
+        "adapter tests against a qualified State"
+      ],
+      "owner_phase": "Learning eligibility integration"
     }
   },
   "items": {
@@ -1360,6 +1369,19 @@
       ],
       "scope": "GPU feature not selected in CPU CI."
     },
+    "feature:jope-motifs/learning-state": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "dep:jope-learning"
+        ]
+      },
+      "lanes": [],
+      "dispositions": [
+        "pending-api"
+      ],
+      "scope": "Off by default and not selected in CI: the adapter builds only once jope_learning::eligibility lands. Default builds refuse every State read with state_unavailable."
+    },
     "feature:jope-parallel/default": {
       "discovery": {
         "kind": "feature",
@@ -1793,6 +1815,20 @@
       "discovery": {
         "kind": "package",
         "manifest": "crates/jope-models/Cargo.toml"
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "package:jope-motifs": {
+      "discovery": {
+        "kind": "package",
+        "manifest": "crates/jope-motifs/Cargo.toml"
       },
       "lanes": [
         "rust-check",
@@ -6545,6 +6581,23 @@
         "rust-check",
         "rust-test",
         "full-default"
+      ],
+      "dispositions": [],
+      "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."
+    },
+    "target:jope-motifs/lib/jope_motifs": {
+      "discovery": {
+        "kind": "target",
+        "source": "crates/jope-motifs/src/lib.rs",
+        "test": true,
+        "doctest": true,
+        "required_features": []
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default",
+        "full-doctests"
       ],
       "dispositions": [],
       "scope": "Default-feature build/check. Test-enabled targets execute under the PR package/profile selection; Default tests execute under the main nextest profile; declared doctests execute separately."

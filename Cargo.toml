@@ -14,6 +14,7 @@ members = [
   "crates/jope-encoders",
   "crates/jope-models",
   "crates/jope-learning",
+  "crates/jope-motifs",
   "crates/jope-paths",
   "crates/jope-pipeline",
   "crates/numpy-pcg64",

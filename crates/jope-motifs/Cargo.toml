@@ -1,0 +1,34 @@
+[package]
+name = "jope-motifs"
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "JOPE-Dime reusable program fragments: private tables, exact expansion and compatibility checks"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+feat-math = { path = "../feat-math" }
+jope-learning = { path = "../jope-learning", optional = true }
+jope-paths = { path = "../jope-paths" }
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+
+[features]
+# The learning State adapter (src/learning.rs). Off by default: it reads
+# jope_learning::eligibility, which is not on this branch until the eligibility
+# stack lands. Without it no State reader is linked, and every State read is
+# refused with state_unavailable.
+learning-state = ["dep:jope-learning"]
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true
