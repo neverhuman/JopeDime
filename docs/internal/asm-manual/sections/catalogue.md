@@ -649,17 +649,17 @@ python/.venv/bin/python -m pytest python/tests/test_experimental_proposal.py -q
 
 #### LOOP-01 — repeatable measured learning flywheel
 
-**Priority:** P2. **Status:** New complete improved-target-to-improved-search cycle not yet qualified.
+**Priority:** P1. **Status:** New complete improved-target-to-improved-search cycle not yet qualified.
 
-**Action:** Demonstrate linked cycles in which newly eligible target improvements are actually sampled, change parameters, and yield measured next-search benefit against both parent checkpoint and generic search.
+**Action:** Demonstrate the regression chain new eligible target → actual exposure → changed parameters → compatible reload → improved fitted search → another new generation, over linked generations; two passes through one corpus are continuation, not two generations. Measure next-search benefit against both the parent checkpoint and generic search, keep the accepted 512×6 step-60000 model separate from experimental regression lineage v1 (256×2, new initialization), and never promote serving automatically.
 
 **Dependencies:** NEURAL-03, TEACH-04, TRAIN-04.
 
-**Required evidence:** Per-cycle target deltas, actual fresh exposures, component losses on fixed monitors, optimizer/parent/checkpoint hashes, full failures/cost and matched fitted-program outcomes; promotion separately decided.
+**Required evidence:** Per-cycle target deltas, actual fresh exposures, component losses on fixed monitors, optimizer/parent/checkpoint hashes, full failures/cost and matched fitted-program outcomes; promotion separately decided. Decision: the proposed preregistered regression decision rule in learning.md, a proposal and not an achieved result: family-normalized gain versus the parent on at least 10 independent monitor families per round, with sibling fresh-versus-replay-only branches from one immutable parent. Unfunded or insufficient data yields mechanical proof and descriptive results with the causal verdict inconclusive, not an invented success.
 
 **Commands:** No complete executable front door is claimed; use the linked chapter’s current/pending interface map.
 
-**Resources:** Original one GPU-hour cap remains binding. Further campaigns require their own explicit allocation; this item grants none.
+**Resources:** Original one GPU-hour cap remains binding, with at most 20 minutes per category. Its two controlled rounds may remain unfunded or inconclusive within that existing 20-minute regression GPU cap; this item grants no new allocation. Further campaigns require their own explicit allocation.
 
 **Sources:** [§](training-history.md#dated-lineage-and-evidence-coverage), [§](plan.md#the-continuation-interfaces-that-exist-today), [§](learning.md#what-better-and-better-must-mean).
 

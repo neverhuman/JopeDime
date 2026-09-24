@@ -84,8 +84,8 @@
 			<key>source_refs</key>
 			<array>
 				<string>AGENTS.md:Pull requests</string>
-				<string>status.md:Scope</string>
-				<string>maintenance.md:Coverage and reviewed lifecycle</string>
+				<string>sections/status.md#implementation-snapshot-and-this-manuals-own-identity</string>
+				<string>sections/maintenance.md#coverage-and-reviewed-lifecycle</string>
 				<string>neural-integration/lifecycle-68f56404c3e199e06413bfd645d3fe0803d7b96f/remote-main-verification.json</string>
 			</array>
 			<key>notes</key>
@@ -193,8 +193,8 @@
 			<array>
 				<string>examples/commands.json</string>
 				<string>examples/validate-outputs.py</string>
-				<string>languages-examples.md:Example A</string>
-				<string>languages-examples.md:Example B</string>
+				<string>sections/inference.md#example-a-a-tiny-private-recipe-fit-and-predictions</string>
+				<string>sections/inference.md#example-b-actual-legacy-pipelinesearch-shape</string>
 			</array>
 			<key>notes</key>
 			<string>Actual acceptance: data/example-acceptance/audit.json. Five recipe refits each predict eight synthetic rows; separate legacy pmlb229 pipeline has four successful measurements. No fitted-export, ASM demo, training or full-panel qualification. Resource-readback race retained.</string>
@@ -249,7 +249,8 @@
 			<string>Read-only/static custody work; no fitting, models, GPU or campaign admission.</string>
 			<key>source_refs</key>
 			<array>
-				<string>data-evidence.md</string>
+				<string>sections/datasets.md#frozen-dataset-coverage</string>
+				<string>sections/gp-targets.md#ranking-figures-interpretation-contract</string>
 				<string>dataset-inventory.json</string>
 				<string>performance-evidence.json.gz</string>
 			</array>
@@ -303,7 +304,7 @@
 			<string>Read-only/static custody work; no fitting, models, GPU or campaign admission.</string>
 			<key>source_refs</key>
 			<array>
-				<string>maintenance.md:Updating the book</string>
+				<string>sections/maintenance.md#updating-the-book</string>
 			</array>
 			<key>notes</key>
 			<string>A successful renderer exit is insufficient: the PDF must remain readable and complete.</string>
@@ -995,7 +996,7 @@
 			<key>source_refs</key>
 			<array>
 				<string>agent-training-readiness/readiness-v3.json</string>
-				<string>operations-training.md:Present teacher readiness</string>
+				<string>sections/teachers.md#present-teacher-readiness-and-the-smallest-real-path</string>
 				<string>crates/jope-bench/src/panel/teaching.rs (pending)</string>
 			</array>
 			<key>notes</key>
@@ -1047,7 +1048,7 @@
 			<key>source_refs</key>
 			<array>
 				<string>crates/jope-cli/src/train/corpus.rs (pending)</string>
-				<string>operations-training.md:Build the real corpus</string>
+				<string>sections/training.md#build-the-real-corpus-from-admitted-evidence</string>
 			</array>
 			<key>notes</key>
 			<string>Only if exactly two families qualify does the recorded machineCPU-development/geyser-training assignment apply. More eligible families must all remain admitted.</string>
@@ -1207,7 +1208,7 @@
 			<key>source_refs</key>
 			<array>
 				<string>python/src/jope/policy/training_campaign.py:780 (pending)</string>
-				<string>operations-training.md:Plan, run, resume, verify and export</string>
+				<string>sections/training.md#plan-run-resume-verify-and-export</string>
 			</array>
 			<key>notes</key>
 			<string>NEURAL-02 gates source and fixture readiness before the GPU hour. It does not depend on a newly trained live export, avoiding a circular prerequisite.</string>
@@ -1422,7 +1423,7 @@
 			<array>
 				<string>crates/feat-math/src/advanced_v3/fitted_portable.rs (pending)</string>
 				<string>crates/jope-bench/src/panel/inference.rs (pending)</string>
-				<string>languages-examples.md:State restrictions</string>
+				<string>sections/inference.md#state-restrictions-beyond-the-head-table</string>
 			</array>
 			<key>notes</key>
 			<string>The private C++ head gate is broader than the public gate. Python/Rust 14 of 26, C++ 2 of 26 and JavaScript 6 of 26 are static head counts, not runtime qualification rates.</string>
@@ -1477,7 +1478,7 @@
 			<array>
 				<string>crates/jope-bench/src/panel/fitted_export.rs (pending)</string>
 				<string>crates/jope-bench/src/panel/fitted_export_run.rs (pending)</string>
-				<string>languages-examples.md:Example C</string>
+				<string>sections/inference.md#example-c-exact-fitted-winner-export-after-pending-integration</string>
 			</array>
 			<key>notes</key>
 			<string>Library fixtures precede the panel. Actual selected winners require complete confirmations from PANEL-01 and qualification before the original execution cutoff. No separately bounded post-panel qualification front door exists. One fitted fold does not qualify the other four states.</string>
@@ -1530,7 +1531,7 @@
 			<key>source_refs</key>
 			<array>
 				<string>deploy/install-private.py (pending)</string>
-				<string>product.md:Build and install</string>
+				<string>sections/installation.md#build-and-install</string>
 			</array>
 			<key>notes</key>
 			<string>An installer receipt is not policy/context-worker build authority. Do not include training credentials or model bodies in the public inference bundle.</string>
@@ -1583,7 +1584,7 @@
 			<string>Read-only/static custody work; no fitting, models, GPU or campaign admission.</string>
 			<key>source_refs</key>
 			<array>
-				<string>product.md:Prepare the panel</string>
+				<string>sections/installation.md#prepare-the-panel-and-external-runtimes</string>
 				<string>agent-acceptance-queue/QUEUE.md</string>
 			</array>
 			<key>notes</key>
@@ -1638,7 +1639,7 @@
 			<array>
 				<string>crates/jope-bench/src/panel/demo_asm.rs (pending)</string>
 				<string>docs/private-warm-target.md (pending)</string>
-				<string>product.md:Warm fitted demonstration</string>
+				<string>sections/search.md#warm-fitted-demonstration-after-integration</string>
 			</array>
 			<key>notes</key>
 			<string>Under sixty seconds is a measured target. The existing twenty-second-arm example is unqualified. An explicitly admitted longer proof may satisfy execution while missing the target. This checklist grants no implicit 300-second allowance.</string>
@@ -1748,8 +1749,8 @@
 			<string>Original 300 secondsreportingreserve forpanel; laterreadonlyauditopensnofitbudget.</string>
 			<key>source_refs</key>
 			<array>
-				<string>status.md:Cost</string>
-				<string>data-evidence.md</string>
+				<string>sections/scheduling.md#worked-example-cpu-wall-time-and-per-predictor-cost-of-the-one-dataset-proof</string>
+				<string>sections/status.md#canonical-proof-record-and-per-arm-facts</string>
 				<string>crates/jope-bench/src/panel/asm_campaign.rs (pending)</string>
 			</array>
 			<key>notes</key>
@@ -1803,7 +1804,7 @@
 			<string>Read-only/static custody work; no fitting, models, GPU or campaign admission.</string>
 			<key>source_refs</key>
 			<array>
-				<string>status.md:Pending acceptance</string>
+				<string>sections/status.md#pending-acceptance</string>
 				<string>agent-acceptance-queue/QUEUE.md:motifs</string>
 			</array>
 			<key>notes</key>
@@ -1902,7 +1903,7 @@
 			<key>source_refs</key>
 			<array>
 				<string>user approval plan:Eligible optimization and reuse</string>
-				<string>languages-examples.md:Future work</string>
+				<string>sections/inference.md#future-work-and-acceptance-boundaries</string>
 			</array>
 			<key>notes</key>
 			<string>Typed reusable macros may stay within existing operators. Fragment frequency alone does not justify adding an operator.</string>
@@ -2008,7 +2009,7 @@
 			<key>source_refs</key>
 			<array>
 				<string>deploy/ci/full-lane.sh</string>
-				<string>maintenance.md:Coverage and reviewed lifecycle</string>
+				<string>sections/maintenance.md#coverage-and-reviewed-lifecycle</string>
 				<string>AGENT_CHAT.md:full-default failures</string>
 			</array>
 			<key>notes</key>
@@ -2059,7 +2060,8 @@
 			<key>source_refs</key>
 			<array>
 				<string>docs/adr/ADR-0005-canonical-learning-loop.md</string>
-				<string>architecture.md:Experimental trained models</string>
+				<string>sections/training.md#what-the-pending-campaign-trains</string>
+				<string>sections/training.md#compatibility-checks-and-fail-closed-rules</string>
 			</array>
 			<key>notes</key>
 			<string>Training GPU availability does not prove CUDA inference parity. Export is not serving promotion.</string>
@@ -2112,8 +2114,8 @@
 			<string>No new fits, training or model loads; plotting retained metrics only.</string>
 			<key>source_refs</key>
 			<array>
-				<string>sections/14-training-history.md</string>
-				<string>sections/15-target-history-packing.md</string>
+				<string>sections/training-history.md#dated-lineage-and-evidence-coverage</string>
+				<string>sections/learning.md#what-the-historical-training-and-target-evidence-establishes</string>
 			</array>
 			<key>notes</key>
 			<string>Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual. Recovered 63,000 rows preserve 378,000 exact metric tokens; all 21 corpus blocks, 20 intervening boundaries and legacy internal-ladder limitations remain explicit.</string>
@@ -2156,8 +2158,10 @@
 			<string>Documentation and metadata validation only; commands do not admit a new training window.</string>
 			<key>source_refs</key>
 			<array>
-				<string>sections/16-version-kpis-continuation.md</string>
-				<string>sections/17-flywheel-focused-search.md</string>
+				<string>sections/status.md#what-version-are-we-running</string>
+				<string>sections/plan.md#the-continuation-interfaces-that-exist-today</string>
+				<string>sections/learning.md#what-better-and-better-must-mean</string>
+				<string>sections/search.md#focused-single-dataset-search</string>
 			</array>
 			<key>notes</key>
 			<string>Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.</string>
@@ -2201,7 +2205,7 @@
 			<string>Source/fixture planning first; any measured training remains inside a separately declared remaining authorized window.</string>
 			<key>source_refs</key>
 			<array>
-				<string>sections/15-target-history-packing.md</string>
+				<string>sections/data-estate.md#record-layout</string>
 				<string>python/src/jope/policy/train_v3.py</string>
 				<string>crates/jope-engine/src/teaching_store.rs</string>
 			</array>
@@ -2248,7 +2252,7 @@
 			<string>No indefinite loop or additional allowance implied; whole focused experiment has one predeclared finite budget.</string>
 			<key>source_refs</key>
 			<array>
-				<string>sections/17-flywheel-focused-search.md</string>
+				<string>sections/search.md#focused-single-dataset-search</string>
 				<string>crates/jope-bench/src/panel/origin_proof.rs</string>
 				<string>crates/jope-pipeline/src/neural_search.rs</string>
 			</array>
@@ -2263,17 +2267,17 @@
 			<key>original_plan_stage</key>
 			<integer>3</integer>
 			<key>workstream</key>
-			<string>repeatable measured learning flywheel</string>
+			<string>central regression product milestone: repeatable measured learning</string>
 			<key>priority</key>
-			<string>P2</string>
+			<string>P1</string>
 			<key>severity</key>
-			<string>explicit follow-on; not permission to expand campaign budgets</string>
+			<string>central regression product milestone; an unfunded or inconclusive round is reported as such, and this item is not permission to expand campaign budgets</string>
 			<key>current_evidence_level</key>
 			<string>New complete improved-target-to-improved-search cycle not yet qualified</string>
 			<key>status</key>
 			<string>New complete improved-target-to-improved-search cycle not yet qualified</string>
 			<key>pending_action</key>
-			<string>Demonstrate linked cycles in which newly eligible target improvements are actually sampled, change parameters, and yield measured next-search benefit against both parent checkpoint and generic search.</string>
+			<string>Demonstrate the regression chain new eligible target → actual exposure → changed parameters → compatible reload → improved fitted search → another new generation, over linked generations; two passes through one corpus are continuation, not two generations. Measure next-search benefit against both the parent checkpoint and generic search, keep the accepted 512×6 step-60000 model separate from experimental regression lineage v1 (256×2, new initialization), and never promote serving automatically.</string>
 			<key>dependencies</key>
 			<array>
 				<string>NEURAL-03</string>
@@ -2287,20 +2291,21 @@
 				<key>evidence</key>
 				<array>
 					<string>Per-cycle target deltas, actual fresh exposures, component losses on fixed monitors, optimizer/parent/checkpoint hashes, full failures/cost and matched fitted-program outcomes; promotion separately decided.</string>
+					<string>Decision: the proposed preregistered regression decision rule in learning.md, a proposal and not an achieved result: family-normalized gain versus the parent on at least 10 independent monitor families per round, with sibling fresh-versus-replay-only branches from one immutable parent. Unfunded or insufficient data yields mechanical proof and descriptive results with the causal verdict inconclusive, not an invented success.</string>
 				</array>
 				<key>command_status</key>
 				<string>no complete executable front door; source/API details in linked chapters</string>
 			</dict>
 			<key>resource_budget</key>
-			<string>Original one GPU-hour cap remains binding. Further campaigns require their own explicit allocation; this item grants none.</string>
+			<string>Original one GPU-hour cap remains binding, with at most 20 minutes per category. Its two controlled rounds may remain unfunded or inconclusive within that existing 20-minute regression GPU cap; this item grants no new allocation. Further campaigns require their own explicit allocation.</string>
 			<key>source_refs</key>
 			<array>
-				<string>sections/14-training-history.md</string>
-				<string>sections/16-version-kpis-continuation.md</string>
-				<string>sections/17-flywheel-focused-search.md</string>
+				<string>sections/training-history.md#dated-lineage-and-evidence-coverage</string>
+				<string>sections/plan.md#the-continuation-interfaces-that-exist-today</string>
+				<string>sections/learning.md#what-better-and-better-must-mean</string>
 			</array>
 			<key>notes</key>
-			<string>Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual.</string>
+			<string>Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual. The owner’s edition-2 direction (relayed 2026-09-23T22:22:38Z) makes this the central regression product milestone and raises it from P2 to P1 without changing its evidence level. The sibling fresh/replay allocation (25/75 fresh/replay versus replay-only, equal committed updates) is proposed, with no serving promotion.</string>
 			<key>planned_owner</key>
 			<string>Codex integration; Claude independent source/data cross-check</string>
 		</dict>
@@ -2308,7 +2313,7 @@
 	<key>validation</key>
 	<dict>
 		<key>unique_ids</key>
-		<integer>38</integer>
+		<integer>43</integer>
 		<key>dependency_graph_acyclic</key>
 		<true/>
 		<key>all_six_original_stages_covered</key>
@@ -2317,7 +2322,7 @@
 		<true/>
 	</dict>
 	<key>documentation_update</key>
-	<string>PR83 main guard passed; named example qualification completed. Rendering/publication evidence remains pending until its own verification.</string>
+	<string>PR83 main guard passed; named example qualification completed. Edition 1 of the manual merged through PR85 at 2026-09-23T22:33:36Z as main bdfc95c63d905c647e41175e79dc30cdc8600287 (exact-head CI 35927921851 attempt 1 and main-guard 35929010658 succeeded). Edition 2 is a local candidate; its rendering/publication evidence remains pending until its own exact-head CI and independent review.</string>
 	<key>coordinated_proposals</key>
 	<dict>
 		<key>source_sha256</key>
@@ -3097,7 +3102,7 @@
 		</dict>
 	</dict>
 	<key>updated_utc</key>
-	<string>2026-09-23T18:48:37.364927+00:00</string>
+	<string>2026-09-24T00:08:48.233990+00:00</string>
 	<key>primary_item_count</key>
 	<integer>43</integer>
 	<key>coordinated_proposal_count</key>

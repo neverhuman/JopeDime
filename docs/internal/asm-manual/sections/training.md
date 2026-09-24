@@ -8,7 +8,41 @@ The follow-on passed custody replay guards, source syntax, pure metadata checks 
 
 All commands below involving `jope train` or experimental consumer configuration describe the **pending overlay's implemented interface**. They are a maintainer runbook for integration and authorized acceptance, not claims that these commands were executed at main `a75e543d2` (PR83). Preserve this status notice when extracting examples.
 
-## The four continuation modes: native initialize and resume, Python warm start and exact continuation
+**Status as of 2026-09-23 about 23:55 UTC.** The implementation snapshot is unchanged: reviewed `68f56404` merged as main `a75e543d2`. Main has since advanced to `bdfc95c63` (PR85), whose changes since `a75e543d2` touch only documentation, `README.md` and the coordination ledger. Training64 remains a stopped patch outside main; no training GPU window has been admitted and no training clock has started. Each runbook in this chapter carries exactly one status label per route: **available**, **implemented but unqualified**, **pending integration** or **proposed**. The owner's edition-2 design requirements appear here as rules or proposals, not as achieved results.
+
+## The four continuation names and their commands
+
+### Names, runbooks and status
+
+Every way this chapter starts or continues training has exactly one of four names. Report a run by its name rather than by a command flag, and never describe one kind of run with another's name. [§](plan.md#the-continuation-interfaces-that-exist-today) lists the same interfaces at a glance; this chapter remains the operational runbook.
+
+| Name | Definition | Runbooks in this chapter, with status |
+|---|---|---|
+| Cold initialization | New parameters from the declared architecture and seed, with a fresh optimizer; no parent weights or optimizer state | Native `jope-parallel train` with neither `--initialize` nor `--resume`, which records initialization kind `fresh`: implemented but unqualified (dispatch held). `jope-py train-policy` without `--init-from`: implemented but unqualified. The pending campaign's first pass when its inputs name no initialization checkpoint: pending integration. |
+| Weight warm start | Parent weights only; the optimizer starts fresh | Native `--initialize` with no replay policy (recorded as fresh FP32 AdamW, with the new corpus starting at step zero) or with a policy whose `optimizer` is `reset`: implemented but unqualified (held). `jope-py train-policy --init-from` in [§](#weight-warm-start-with-the-existing-cli): implemented but unqualified. The pending campaign's first pass from an initialization checkpoint: pending integration. |
+| Explicit new-corpus transition | Parent weights **and** optimizer state carried onto a different corpus, with the optimizer carry and the sampler initialization both declared | Native `--initialize` with a verified `parallel.replay_policy.v2` policy whose `optimizer` is `carry`; the run records "carried FP32 AdamW with bias-correction step" and a lineage-bound sampler counter whose local block step starts at zero: implemented but unqualified (held). No Python route exists: the pending trainer's strict input provenance rejects a changed corpus on resume. Sibling branches built on this transition are proposed ([§](#proposed-sibling-fresh-and-replay-branches)). |
+| Exact interrupted resume | The original run continues from its own saved state, with its original inputs and original deadline; no allowance is renewed | Native `--resume` in [§](#the-implemented-command-shape): implemented but unqualified (held). The Python API and its companion helper in [§](#exact-optimizer-continuation-through-the-python-api): implemented but unqualified. Pending `train resume` in [§](#plan-run-resume-verify-and-export): pending integration. |
+
+Two passes through one corpus are continuation, not two generations: the pending campaign's second pass continues the same run on the same corpus inside the same window ([§](#plan-run-resume-verify-and-export)).
+
+**Historical instances.** Lineage B's A100 recovery blocks each trained on a distinct corpus while carrying FP32 AdamW, the historical form of a new-corpus transition. Their accepted 512x6 step 60,000 remains the serving model and cannot be exactly resumed, because its state records no `execution_partition`. RTX step 60,100 is a historical hardware continuation: carried AdamW on the unchanged corpus with zero fresh programs, not a production continuation or a promotion. Step 69,000 remains unaccepted. See [§](training-history.md#carried-state-accepted-step-60000-and-rtx-step-60100).
+
+### Rules for exact interrupted resume
+
+These are owner requirements, **pending integration**: no current or pending route meets both of them yet.
+
+1. **Reject optimizer fallback before any update.** An exact resume whose optimizer state is missing or marked incompatible must stop before its first update. It must never continue with a fresh optimizer under the resume name.
+2. **Prove state parity.** A deterministic run that is interrupted and resumed must reach the same parameters, optimizer moments, scheduler, RNG, sampler position and counters as the same run left uninterrupted.
+
+Present behavior against these rules:
+
+- The Python API starts a fresh optimizer, scheduler and scaler when a resume artifact marks its optimizer state incompatible (main `train_v3.py:1919–1930`; pending `train_v3.py:2095–2111`). The companion helper refuses such an artifact before it calls the trainer, so it meets rule 1 for its own narrow case; it provides no parity proof.
+- The pending campaign checks `optimizer_state_resumed` only after a pass has trained (pending `training_campaign.py:771`), so a fallback can consume updates and window time before it is rejected.
+- Resume artifacts are written at epoch end without a minibatch cursor, and the campaign commits whole passes: an interrupted pass restarts from the last committed head inside the original window (pending `training_campaign.py:799`, `:1065`). That re-runs the pass; it is not an update-level continuation.
+- Native `--resume` checks the execution partition, sampler and objectives before CUDA (`crates/jope-engine/src/training.rs:1106–1110`). This manual has no parity evidence for it, and its dispatch is held.
+- No existing test compares interrupted and uninterrupted trajectories.
+
+The proposed follow-up is an explicit strict-resume mode that rejects before updates; update-boundary checkpoints that carry the sampler permutation and cursor, counters and all RNG state; and deterministic equality tests of interrupted against uninterrupted runs. Warm-start behavior keeps its own name. Source: Codex's read-only analysis `boundary-resume-siblings.md` in custody `plan-execution-20260923`.
 
 ### Variables used in the continuation examples
 
@@ -23,12 +57,22 @@ The paths below are operator-supplied placeholders, not newly admitted inputs. R
 | `PYTHON_CORPUS`, `TRUSTED_PYTHON_POLICY` | Compatible admitted Python JSONL corpus and trusted weight artifact for the warm-start example; warm-start weights alone do not restore optimizer state. |
 | `PYTHON_RESUME`, `ORIGINAL_SETTINGS` | Trusted `PrimePolicyTrainerResume.v1` artifact file and companion JSON containing its original compatible settings and audited input inventory. These are separate from the native checkpoint directory. |
 | `PYTHON_CORPUS_SHA256`, `PYTHON_RESUME_SHA256`, `ORIGINAL_SETTINGS_SHA256` | Expected file SHA256 values from the original authenticated input inventory, checked before the helper imports Torch. |
-| `NEW_RUN` | New private output directory for the Python example; the continuation helper requires it not to exist. This new output location does not renew a resource or time allowance. |
+| `NEW_RUN` | New private output directory for the Python example; the continuation helper requires it not to exist and refuses it under `/tmp` or inside a Git working tree. This new output location does not renew a resource or time allowance. |
 | `FINAL_JOPE`, `FINAL_SOURCE_SHA` | Future source-bound CLI and full source commit after the pending training integration and its required checks; not an executable built from the current main `a75e543d2`. |
 | `LEARNING_STATE`, `CORPUS_REQUEST`, `CORPUS_REQUEST_SHA256`, `CORPUS_OUTPUT` | Admitted learning state, exact corpus-preparation request and its file SHA256, and private prepared-input output directory, as specified in [§](#build-the-real-corpus-from-admitted-evidence). |
 | `TRAINING_STATE`, `TRAINING_EXPORT` | Original supervised training state directory and private experimental export output directory; resume reuses `TRAINING_STATE`. |
 
 ### Native lineage B: the held command and its blockers
+
+| Runbook part | Native lineage-B continuation |
+|---|---|
+| Purpose and status | Continue lineage B natively: a weight warm start or an explicit new-corpus transition with `--initialize`, an exact interrupted resume with `--resume`. **Implemented but unqualified**: every direct dispatch stops at the dispatch hold. |
+| Prerequisites and resources | A source-bound `neural` build; a compatible corpus with verified allowed input closure; a verified parent checkpoint and carry policy. The controller's fresh-telemetry check requires at least 128 GiB available RAM and 50 GiB free disk, more than the approved 64 GiB limit. |
+| Manifest-creation command | None is qualified in this manual. Main contains a corpus publisher (`jope-parallel build-corpus`) and code that writes `parallel.replay_policy.v2` policies, but none has been qualified for this runbook. Supply an already verified corpus and policy, never a fabricated one. |
+| Execution | The commands in [§](#the-implemented-command-shape), which are not to be dispatched under the present allocation. |
+| Artifacts and success | Checkpoint directories whose `state.json` binds model, optimizer, configuration, corpus and vocabulary hashes, plus the run's `initialization.json`. No success receipt exists for this held route. |
+| Failure and resume | `--resume` applies only to an interrupted original run with the identical window and inputs. A completed run refuses resume, and accepted step 60,000 cannot be resumed ([§](#rules-for-exact-interrupted-resume)). |
+| Limitations | The dispatch hold, the resource gate and the world-8 partition of the accepted lineage ([§](#the-dispatch-hold-resource-incompatibility-and-valid-topologies)). |
 
 #### The implemented command shape
 
@@ -47,7 +91,7 @@ This is the exact implemented command shape, **not an instruction to dispatch it
   --resume --replay-policy "$VERIFIED_CARRY_POLICY"
 ```
 
-Here `--steps 100` declares the same increment for the whole original run; resume does not authorize another hundred steps. A completed run explicitly refuses resume. `--initialize` alone starts fresh FP32 AdamW and resets the new-corpus sampler; preserving optimizer ancestry requires the verified carry policy and compatible objective/partition evidence. Do not fabricate that policy JSON or relabel an incompatible recovered checkpoint. Corpus, vocabulary, model, optimizer, config, sampler, partition and deadline checks occur before CUDA.
+Here `--steps 100` declares the same increment for the whole original run; resume does not authorize another hundred steps. A completed run explicitly refuses resume. `--initialize` alone starts fresh FP32 AdamW and resets the new-corpus sampler; preserving optimizer ancestry requires the verified carry policy and compatible objective/partition evidence. Do not fabricate that policy JSON or relabel an incompatible recovered checkpoint. Corpus, vocabulary, model, optimizer, config, sampler, partition and deadline checks occur before CUDA. In this chapter's names, the first command is a weight warm start when the policy's `optimizer` is `reset`, and an explicit new-corpus transition when it is `carry` and the corpus differs from the parent's; the second command is an exact interrupted resume.
 
 #### The dispatch hold, resource incompatibility and valid topologies
 
@@ -73,9 +117,19 @@ For a compatible, already admitted Python corpus, the existing CLI can launch a 
 
 This example uses the stated 256-width architecture; it is suitable only when the intended experiment explicitly uses that architecture. Warm starts may shape-filter or prefix-copy weights. The script's default model, architecture and vocabulary must not be assumed to reproduce the accepted native step 60000 model. The CLI command is source-checked but was not executed for this chapter.
 
+| Runbook part | Python weight warm start |
+|---|---|
+| Purpose and status | Start a new Python optimization run from compatible weights: a weight warm start. **Implemented but unqualified**: the CLI exists at `a75e543d2` and was source-checked, not executed, for this chapter. |
+| Prerequisites and resources | A verified Python environment, an admitted compatible JSONL corpus, a trusted weight artifact of the stated architecture, and one CUDA device inside a separately admitted resource/time supervisor. |
+| Manifest-creation command | No manifest-creation command exists at `a75e543d2` for an admitted corpus: the admission contract and its exporter, `train prepare-inputs`, are pending integration ([§](#build-the-real-corpus-from-admitted-evidence)). |
+| Execution | The command above. |
+| Artifacts and success | `policy.pt`, `metrics.jsonl` and `progress.json` under `$NEW_RUN`. A completed run shows an optimization run only, not eligibility, optimizer continuation or improvement. |
+| Failure and resume | The CLI exposes no `--resume-from`. A failed warm start is a failed run; repeating it is a new run in a new directory, without a renewed allowance. |
+| Limitations | Shape-filtered or prefix-copied weights, defaults that do not reproduce the accepted model, and the device fallback in [§](#limits-of-the-current-python-route). |
+
 #### Exact optimizer continuation through the Python API
 
-For **actual optimizer continuation**, call the existing API from a private maintainer script. The following is the essential code; `settings.json` must contain the original compatible `kwargs`, and all referenced inputs must be hash-pinned in the operator's original run inventory. The complete companion `continue-python-policy.py` includes those byte-hash checks, exclusive output creation, explicit GPU preflight, and refusal of distributed or non-current resume modes. It is an illustrative API caller, not a new installed product command or a qualified supervisor.
+For **actual optimizer continuation**, call the existing API from a private maintainer script. The following is the essential code; `settings.json` must contain the original compatible `kwargs`, and all referenced inputs must be hash-pinned in the operator's original run inventory. The complete companion `continue-python-policy.py` includes those byte-hash checks, exclusive output creation, explicit GPU preflight, refusal of distributed or non-current resume modes, and refusal of an `--output` under `/tmp` or inside a Git working tree (the path itself or any parent directory containing a `.git` entry). It is an illustrative API caller, not a new installed product command or a qualified supervisor.
 
 ```python
 from jope.policy.train_v3 import train_policy_v3_from_jsonl
@@ -116,6 +170,16 @@ The settings object uses the illustrative schema `manual.python-resume-settings/
 
 Use the trusted `PrimePolicyTrainerResume.v1` artifact, not `model.ot`, a safetensors export, or a selected `policy.pt` without optimizer state. Existing current-state resume loads model state strictly, verifies action tokens and routing classes, restores optimizer/scheduler/RNG, and appends epochs after `global_epoch`. A best/EMA selected checkpoint may carry an explicit optimizer-incompatible marker and cause a fresh optimizer; that is not accepted as exact continuation by the companion example. Sources: [restore and corpus partition](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/python/src/jope/policy/train_v3.py#L1453), [strict model restore](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/python/src/jope/policy/train_v3.py#L1692), [optimizer compatibility](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/python/src/jope/policy/train_v3.py#L1918), [resume artifact contents](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/python/src/jope/policy/train_v3.py#L2498).
 
+| Runbook part | Python exact interrupted resume (companion helper) |
+|---|---|
+| Purpose and status | Continue an ordinary current-state Python run through the existing API from its epoch-end resume artifact. This is an exact interrupted resume only when the settings, corpus and resume artifact are the original run's and its original window is still open; the helper cannot check the window. **Implemented but unqualified**: only syntax/API and metadata-path checks were performed. |
+| Prerequisites and resources | The trusted resume artifact, original settings, corpus and audited input closure, each with its expected SHA256; one visible RTX 3090; a separately admitted resource/time supervisor. |
+| Manifest-creation command | No manifest-creation command exists: the operator writes `settings.json` in the illustrative `manual.python-resume-settings/v1` schema from the original run's configuration. |
+| Execution | The helper without `--execute-diagnostic` (metadata only, no Torch import), then the same command with it inside the supervisor. |
+| Artifacts and success | `policy.pt`, `resume.pt`, `metrics.jsonl`, `progress.json` and `api-result.json` in the new output directory. The result is scoped as a diagnostic API call, not product acceptance. |
+| Failure and resume | Refuses changed input digests, missing or unknown settings, a resume artifact that is not an ordinary current-state resume with compatible optimizer state, more than one process, anything other than one visible RTX 3090, an existing output directory, and an output under `/tmp` or inside a Git working tree. A retry needs a new output directory and keeps the original window. |
+| Limitations | No interrupted-versus-uninterrupted parity proof and no in-epoch cursor ([§](#rules-for-exact-interrupted-resume)). It fixes `amp=False` and compares only the four architecture fields with the artifact, so it does not detect a changed AMP or batch-size regime. |
+
 #### Limits of the current Python route
 
 This current Python route has material limits. CUDA requests can silently fall back to CPU in the underlying code, so the companion refuses absent CUDA before calling it. Current task-routing/zero-update and resume-proof fixes belong to the pending training overlay. The loader can discard minority embedding widths with a warning; a qualified input inventory should reject such a mixed corpus earlier. Existing Python training alone does not provide the shared cgroup resource contract, original campaign deadline, teaching admission, parameter-change proof or serving promotion. Execute any diagnostic caller only inside a separately admitted resource/time supervisor, not as a way to bypass the pending product gates. See [current device fallback](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/python/src/jope/policy/ddp.py#L25) and [mixed-width handling](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/python/src/jope/policy/train_v3.py#L1497).
@@ -139,9 +203,21 @@ Sources: pending `crates/jope-cli/src/train.rs:1`; `python/src/jope/policy/train
 
 ## The bounded training campaign chain
 
+| Runbook part | Bounded training campaign chain |
+|---|---|
+| Purpose and status | Train, verify and export one bounded experimental policy from admitted evidence: experimental regression lineage v1 plus explicitly synthetic classifier fixtures. **Pending integration**: the training64 patch is outside main and has never run on a GPU. |
+| Prerequisites and resources | Reviewed integration with required checks at the final head, a source-bound `jope` build, fresh real teacher admission covering at least two independent families, and an admitted training window. Resources: one RTX 3090 and one GPU-hour in total, at most 20 minutes per category, 20 CPUs, 64 GiB and zero swap. |
+| Manifest-creation command | `train prepare-inputs` writes the inputs manifest (`inputs.json`) from a `jope.real-training-corpus-request/v1` request, and `train plan` freezes the plan without starting a clock. No command, at `a75e543d2` or in the pending overlay, writes the request itself; its comparison proofs must come from actual admission ([§](#build-the-real-corpus-from-admitted-evidence)). |
+| Execution | `train run`, or `train resume` after an interruption inside the original windows ([§](#plan-run-resume-verify-and-export)). |
+| Artifacts and success | Per-category attempts, receipts and heads in the state directory. `train verify` succeeds only with positive updates, changed parameters, exact reload, resumed optimizer state and at least two committed passes; `train export` then writes a private experimental bundle with a file inventory. |
+| Failure and resume | An exhausted window is recorded as `budget_exhausted`. Resume keeps the plan, the state and the original global and category deadlines; an interrupted pass restarts from the last committed head ([§](#rules-for-exact-interrupted-resume)). |
+| Limitations | Real corpus preparation supports regression only. With two prospective families it is a mechanics qualification, not a flywheel test. Input is JSONL without a packed reader, there are no sibling fresh/replay branches, and export never moves the serving pointer. |
+
 ### What the pending campaign trains
 
 The pending training campaign uses the existing Python `JopePolicyModelV3` with task-routed reward/stability behavior. Real admitted training uses width 256, two layers, four heads and feed-forward 1024; synthetic qualification fixtures use width 8, one layer, two heads and feed-forward 16. Both consume the explicit context schema. Training uses one-epoch passes, learning rate 5e-4, batch 256 for admitted rows or 2 for fixtures, AMP disabled and automatic batch-size tuning disabled. These are the bounded campaign's settings, not the accepted step-60000 model's architecture (width 512, six layers, feed-forward 2048; [§](architecture.md#checkpoint-binding-and-configuration)). The campaign therefore produces a **new, smaller model family**, not a continuation of step 60,000: its optional initialization is a Python policy payload, and its checkpoint cannot be loaded in place of the accepted model, whose loader rejects incorrectly shaped tensors. Compare it with step 60,000 only through matched downstream fits under the same protocol, never through loss values.
+
+**Naming.** The regression line that this campaign would start is called **experimental regression lineage v1 (256x2, new initialization)**. It is planned and has not been trained. Its initialization, M_init, is either a cold initialization or a weight warm start from a declared compatible Python payload. M_init is named M0 only after it has actually trained on the lineage's first admitted corpus, C0, and that run has passed verification; until then no M0 exists. The line stays separate from the accepted 512x6 step 60,000 of lineage B: it is neither its successor nor a replacement for it.
 
 ### Build the real corpus from admitted evidence
 
@@ -185,7 +261,7 @@ Do not use the top-level `--synthetic-fixture` switch in place of missing real r
 
 The planner records requested, admitted, unavailable and fallback categories. With `all-admitted`, a missing real regression category can remain explicitly unavailable while classifier fixtures proceed; that is partial coverage and cannot be reported as completed real-regression training. Current real-classification corpus admission is not qualified. Binary/multiclass fixture fallback retains its own synthetic provenance and task labels.
 
-Verification must establish positive optimizer updates, changed parameter digests, exact reload, an actual resumed optimizer state and increasing step counters, at least two committed passes, complete planned category coverage where claimed, and compatible device/source/runtime/vocabulary/input identities. The worker reloads both `policy.pt` and `resume.pt` and requires equal parameter proof. Each pass belongs to the original category/global windows and contributes an immutable execution/receipt chain. A zero-update checkpoint or interrupted partial output cannot become a successful pass.
+Verification must establish positive optimizer updates, changed parameter digests, exact reload, an actual resumed optimizer state and increasing step counters, at least two committed passes, complete planned category coverage where claimed, and compatible device/source/runtime/vocabulary/input identities. The worker reloads both `policy.pt` and `resume.pt` and requires equal parameter proof. Each pass belongs to the original category/global windows and contributes an immutable execution/receipt chain. A zero-update checkpoint or interrupted partial output cannot become a successful pass. Both planned passes read one corpus inside one category window, so the second pass is continuation within one generation, not a second LOOP-01 generation. It supplies the optimizer-continuation proof: verification refuses a category head with fewer than two committed passes (pending `training_campaign.py:1210`). Verification establishes training mechanics only. An eligible teacher, a new discovery, information actually consumed by the optimizer and an improved policy remain four distinct claims, each needing its own evidence.
 
 Export first performs verification, then writes the exact plan, verification and category artifacts into a private output bundle with a file inventory. It creates experimental training artifacts; it does not update the accepted serving pointer. Sources: pending `python/src/jope/policy/training_campaign.py:744`, `:780`, `:1043`, `:1203`, `:1303`.
 
@@ -214,6 +290,30 @@ After reviewed integration, source-bound build/tests, fresh real two-family teac
 Run and resume are alternatives according to state; do not blindly execute resume after a completed run. The whole campaign permits one RTX 3090 and one GPU-hour, at most 20 minutes per category, 20 CPUs, 64 GiB and zero swap. Two passes share each category window; they do not receive fresh time allowances. At least two real admitted families are necessary before claiming the real regression training path; with only the two prospective panel families of [§](teachers.md#present-teacher-readiness-and-the-smallest-real-path), the campaign is a mechanics qualification, not a flywheel test. Classification fixtures may demonstrate labeled mechanics when real admission fails, but remain synthetic. Unknown or unavailable categories are reported rather than filled with invented success.
 
 Verification must establish positive updates, changed parameters, reload equality, actual optimizer continuation, full input/runtime/source/device/vocabulary compatibility and persisted accounting. Export is experimental. The pending `experimental.regression`, `experimental.binary` and `experimental.multiclass` consumer entries bind task-specific exported checkpoints; a later real fit must prove the new checkpoint generated and fitted candidates. None of these commands updates the accepted serving pointer. Product28, warm-target and winner-export follow training64; they do not fix teacher eligibility by themselves.
+
+### Proposed sibling fresh and replay branches
+
+**Status: proposed.** No implementation exists: the pending campaign advances one mutable head per category over one pinned corpus. It has no immutable sibling parent, branch identifier, committed-update target, 25/75 sampler allocation or per-update fresh-exposure record (pending `training_campaign.py:799`, `:1065`). The owner's design for one controlled round is:
+
+- Two sibling branches, F (fresh) and R (replay only), start from one immutable parent model **and** optimizer state and share the original deadline; neither receives a new window.
+- Both commit the same number of updates and batch slots. F samples 25% fresh and 75% replay examples; R samples replay only.
+- Each records measured fresh exposure, duplicate and unique families, consumed example identities, non-padding tokens and GPU cost. The unchanged parent is kept as a comparison artifact.
+- Moving onto the new corpus is an explicit new-corpus transition that declares optimizer carry and sampler initialization; it is not a resume.
+- Neither branch is promoted to serving.
+
+The first causal experiment keeps architecture, objective, corpus and sampler changes distinguishable, so it does not change the architecture or the reward representation alongside these branches. Within the existing 20-minute regression GPU cap, the two controlled LOOP-01 rounds may remain unfunded or inconclusive. An unfunded round, or one with insufficient data, yields mechanical proof and descriptive results, and its causal outcome is reported as inconclusive, not as success. [§](learning.md#the-closure-ledger) defines LOOP-01.
+
+### Training input packing and the learning store
+
+**Status: proposed.** The pending campaign still reads JSONL into memory and writes a per-attempt `corpus.jsonl`; no packed-reader scalability qualification exists ([§](teachers.md#python-training-input-and-the-pending-bounded-campaign)). Packing work follows phase profiling, in this order:
+
+1. Profile the preparation phases, as in [§](teachers.md#concrete-corpus-improvements-with-acceptance-criteria).
+2. Add a verified Python packed-reader bridge.
+3. Reuse immutable shards, with bounded staging.
+4. Compress.
+5. Adopt a narrower record layout only if measurement justifies it.
+
+Every step preserves float32 supervision, the legal-set mappings and the 128-token grammar, and must show record, batch, loss, gradient, update and resume parity ([§](data-estate.md#compression-the-proposed-180-byte-layout-and-label-precision)). Keep one learning-store writer until an atomic server-side pointer update is qualified. Backup, replication and retention operations remain separately authorized; nothing in this chapter authorizes them ([§](data-estate.md#recorded-custody-risks-and-disk-capacity)).
 
 ## Consuming a newly trained checkpoint
 
@@ -252,9 +352,21 @@ After building a new configuration around the verified export, preregister a sep
 
 Source: pending `crates/jope-bench/src/panel/experimental_proposal.rs:36`, `crates/jope-pipeline/src/experimental_producer.rs:36`, `python/src/jope/policy/experimental_proposal.py`; overlay documentation `docs/experimental-regression-consumption.md`.
 
+| Runbook part | Consumption of a newly trained checkpoint |
+|---|---|
+| Purpose and status | Show that a verified experimental export generated and fitted real candidates. **Pending integration**: the `experimental.regression` consumer exists only in the stopped overlay. |
+| Prerequisites and resources | A verified export, a complete configuration whose `experimental.regression` entry pins it ([§](#the-experimentalregression-configuration-entry)), and a separately authorized operational proof with its own resources. |
+| Manifest-creation command | `optimize proof-plan` preregisters the proof; it exists at `a75e543d2`, without the experimental consumer. No command writes the configuration entry: in the pending source the schema string occurs only as the consumer's expected value, and the overlay documentation has the operator bind it. |
+| Execution | The same front door's run and report steps, recovered from the original journal and deadline. |
+| Artifacts and success | A report that binds the checkpoint hash to actual generation-zero neural fits, with retained fitted artifacts and predictions, and completed descendants with neural ancestry when evolution is claimed. |
+| Failure and resume | Compatibility failures fail closed, with no fallback to the accepted model; recovery uses the original journal and deadline. |
+| Limitations | Consumption is not improvement, and nothing here moves the serving pointer. |
+
 ## Remaining acceptance queue and maintenance risks
 
 The required next integration/acceptance work is sequential: apply guarded training64 after PR83 lifecycle completion; compile and run all required tests at the final head; admit fresh genuine teachers; materialize and verify the corpus; execute the one approved GPU hour; verify/export; consume the new checkpoint in actual fits; qualify fitted portability and warm/cold delivery; execute the unchanged30 panel and report all outcomes. The product chapters cover the remaining deployment stages in detail.
+
+LOOP-01 is the central regression product milestone ([§](learning.md#the-closure-ledger)): a new eligible target, actual exposure, changed parameters, compatible reload, improved fitted search, then another new generation. The training chain in this chapter can supply exposure, changed parameters and compatible reload. Improved fitted search and a further generation also need the consumption proof above and a preregistered decision. Under the owner's proposed rule, a round stops on no eligible discoveries, incompatibility, no material gain, insufficient evidence or an exhausted budget; the best verified checkpoint is preserved, and serving is never promoted automatically.
 
 Maintain explicit checks for changed dependency bytes, an unsupported GPU/device, absent families, zero updates, wrong task heads, changed vocabulary bins, missing continuation, missing native component receipts, stale code hashes, counterfeit fitted outputs, incomplete process-group cleanup and partially written journals. The experimental route is intentionally separate from accepted serving. Any future promotion mechanism must add its own independent evaluation and pointer discipline rather than rename an experimental export.
 

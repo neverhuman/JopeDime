@@ -4,6 +4,25 @@ At source `68f56404c3e199e06413bfd645d3fe0803d7b96f`, merged unchanged as main `
 
 This chapter and the supplied tiny fixture are **maintainer-private**. The DSL, private recipe manifest, discovery metadata and qualification references do not belong in a public inference bundle. The public allowlist described below is deliberately narrower than the manual's working directory.
 
+## Deployment support: definition, priority and status
+
+The owner's rule for this chapter, relayed on 2026-09-23 at 22:27:11 UTC, sets what may be called deployment support. It is a requirement for export work, not a description of the current source:
+
+- **A complete fitted pipeline.** A deployable artifact carries the whole fitted pipeline of the selected model: its ordered transforms, fitted dictionaries, target mappings, classes and their order, and its numerical policy.
+- **The actual winner, without refit.** The backend executes the selected winner from its saved fitted state. Refitting a recipe, even the same recipe on the same rows, is not deployment support.
+- **Unsupported stays visible.** When a backend cannot represent the winner, that backend's result is "winner + unsupported". The winner is never replaced by another recipe that happens to export.
+- **Priority.** Python and Rust first, then C++17 and C++20, then JavaScript.
+- **Inside the original window.** Export work uses the original campaign window and stops before its reporting reserve ([§](#backend-numerical-policies-public-metadata-and-the-export-clock)).
+
+By this rule, no route at merged main `a75e543d2` provides deployment support yet. Status as of 2026-09-23, about 23:55 UTC:
+
+| Route | What it executes | Status |
+|---|---|---|
+| Legacy recipe emitters (`jope emit`, `jope pipeline run --emit`) | Generated source that refits a recipe from a training CSV. None of the 26 registered benchmark recipes can be emitted ([§](#coverage-by-recipe-and-backend)). | **available** for recipe refit only, which the fourteen-command private example run qualified on its fixtures ([§](#measured-execution-of-the-private-examples)). This is not deployment support. |
+| Private fitted C++17 library (`emit_fitted_cpp17`) | Scalar-state C++ generated from a saved `BoundModel`, without refit | **implemented but unqualified** as a deployment route. At `a75e543d2` only the research crate `crates/jope-campaigns` calls it; the `jope` CLI does not. Its admission record, `crates/jope-campaigns/manifests/advanced-v3/fitted-cpp-v3-admission.v1.json`, is marked `test_adaptive: true` and `benchmark_valid: false`. |
+| Public fitted bundles for Python/Rust, C++17/C++20 and JavaScript, driven by `benchmark export-winner` and `benchmark qualify-export` | The selected winner's saved fitted state, lowered for the supported subset, without refit | **pending integration**. These exist only as stopped custody patch views, absent from merged main ([§](#example-c-exact-fitted-winner-export-after-pending-integration)). No winner has been exported or qualified. |
+| CUDA inference | Nothing yet | **proposed**, and deferred until the backends above qualify. |
+
 ## Language interfaces at the frozen source
 
 | Interface | Input and output | Coverage and operational meaning |
@@ -76,6 +95,18 @@ XGBoost, LightGBM, CatBoost and scikit-learn are executable benchmark adapters f
 
 ## Private worked examples and their measured execution
 
+Examples A and B are runbooks that can be executed at merged main. Their runbook summary:
+
+| Runbook part | Examples A and B |
+|---|---|
+| Purpose and status | Show a legacy recipe fit, five-language recipe emission with refit and a bit comparison (A), and the shape of the legacy pipeline search (B). **available**: all fourteen packet commands passed on 23 September 2026 ([§](#measured-execution-of-the-private-examples)). |
+| Prerequisites and resources | A checksum-verified immutable CLI (`J`), the reviewed source checkout (`R`) for the drivers and helpers, `python3`, `rustc`, `g++` and `node`, and a new durable private output directory (`A`) outside Git and `/tmp`. Numerical work needs its own allocation; the executed run declared one CPU, 4 GiB memory, no swap or GPU, no network and 300 seconds in total. |
+| Manifest-creation command | None. The packet `examples/commands.json` is a committed, hand-prepared file, and no committed runner executes it; the 23 September run used a private controller retained in custody. `examples/execution-receipt.json` points from the packet to that run's receipts. |
+| Execution | The listings below, or the argument arrays of `examples/commands.json` with their placeholders filled in. |
+| Artifacts and success | For A: `fit-report.json`, `emit-report.json`, five `pred-*.txt` files, `predictions.bits` and `recipe-parity.json`. For B: `pipeline-result.json` and the pipeline's `receipt.json`. Success means every command exits zero, the validator finds all five prediction files with exactly eight finite, bit-identical values, and receipt verification passes. |
+| Failure and resume | A nonzero exit is a failure; keep its stderr. The packet has no resume step: rerun it into a new output directory. |
+| Limitations | Recipe refits on one synthetic fixture and one legacy pipeline fixture only. No saved-fitted-state export, neural ASM, panel or training qualification. |
+
 ### Example A: a tiny private recipe, fit and predictions
 
 #### The synthetic fixture
@@ -125,7 +156,7 @@ python3 "$E/validate-outputs.py" --recipe-output "$A/recipe" > "$A/recipe-parity
 
 The supplied `validate-outputs.py` requires all five prediction files to exist, each with eight finite values, and checks their complete bit patterns before producing a success receipt. The helper compares every existing `pred-*.txt`; by itself it does not enforce that the required five files were produced. Record each command's nonzero exit as failure and retain its stderr. A comparison of only one surviving file cannot qualify the language matrix. The observed exact bit agreement on this ridge fixture does not imply exact JavaScript agreement for arbitrary transcendental operations.
 
-`examples/commands.json` supplies the exact argument arrays and placeholders for a maintainer runner. Compiler and interpreter versions, source hashes, fixture hashes, commands, exit codes and wall/CPU measurements belong in the execution receipt. Preparation and execution receipts are retained separately: `commands.json` keeps its original `prepared, not executed` status field as a historical record, and the execution is recorded in [§](#measured-execution-of-the-private-examples).
+`examples/commands.json` supplies the exact argument arrays and placeholders for a maintainer runner. Compiler and interpreter versions, source hashes, fixture hashes, commands, exit codes and wall/CPU measurements belong in the execution receipt. Preparation and execution receipts are retained separately: `commands.json` keeps its original `prepared, not executed` status field as a historical record, and the execution is recorded in [§](#measured-execution-of-the-private-examples). The packet is not edited after execution. Instead, `examples/execution-receipt.json` points from it to the execution: it names the packet and its SHA-256, the fourteen-command run of 23 September 2026, and the SHA-256 of each execution receipt under `data/example-acceptance/`.
 
 ### Example B: actual legacy pipeline/search shape
 
@@ -175,9 +206,21 @@ The unit CPU includes overlapping command/controller work; **do not add it to th
 
 This result qualifies the documented **recipe refits and legacy pipeline example**. It does not qualify exact saved-fitted-state export, neural ASM consumption, an ASM under-sixty-second warm demonstration, GPU training or the full panel. No Cargo build or download ran. Full command outputs, tool/input/source/output hashes and the original unit journal are retained in the private `agent-maintainer-manual/examples-run/` evidence directory.
 
-Evidence pins: `HANDOFF.json` SHA256 `a05e8a0e9f9430b0c71ff23c57e5e29532a61bbe118daac3fe358b45f2423346`; `audit.json` SHA256 `363fbe62a706b44030205da78411243ba206ad2366d546a277babe966b802c91`; `result.json` SHA256 `71395a038feeef768bd6c69bb43dcabbfced20333d989cd1161c07213f4f68d6`.
+Evidence pins: `HANDOFF.json` SHA256 `a05e8a0e9f9430b0c71ff23c57e5e29532a61bbe118daac3fe358b45f2423346`; `audit.json` SHA256 `363fbe62a706b44030205da78411243ba206ad2366d546a277babe966b802c91`; `result.json` SHA256 `71395a038feeef768bd6c69bb43dcabbfced20333d989cd1161c07213f4f68d6`. Byte-identical copies of these three files are in `data/example-acceptance/`, and `examples/execution-receipt.json` records the same pins beside the packet's hash.
 
 ## Example C: exact fitted winner export after pending integration
+
+This runbook is the route intended to meet the rule of [§](#deployment-support-definition-priority-and-status). Its commands exist only in stopped custody patch views, and none of it has been executed. Its runbook summary:
+
+| Runbook part | Example C: exact fitted winner export |
+|---|---|
+| Purpose and status | Export the selected winner's saved fitted state to Python, Rust, C++17, C++20 and JavaScript, and qualify each backend against the native predictions, without refit. **pending integration**: `benchmark export-winner` and `benchmark qualify-export` are absent from merged main `a75e543d2`, and the pending view compiles them only with the `asm` feature on Linux. |
+| Prerequisites and resources | The same integrated immutable installed CLI, approved plan and plan ID, manifest, development root and journal as the campaign, with complete confirmation; a pinned tools file ([§](#tool-inventory-qualification-order-and-isolation)); and the original campaign's remaining allowance. Each job has one thread and at most the original 30-second fit limit, inside the campaign's existing supervisor and worker cgroup. |
+| Manifest-creation command | None of its own: the export consumes the campaign's existing plan, manifest and journal. No manifest-creation command exists at `a75e543d2`, or in the pending export view, for the tools file; it must be prepared from the installed bytes, in the campaign `Runtime` schema. |
+| Execution | The three commands of [§](#export-commands-and-winner-selection), with backends qualified in the order Python, Rust, C++17, C++20, JavaScript. |
+| Artifacts and success | The semantic prepared identity, the private `prepared.json`, and a public bundle root with each validated bundle and its public manifest. A backend succeeds only through an executed qualification that meets its numerical policy; `all_backends_qualified` is true only when all five pass. |
+| Failure and resume | A compiler absence, timeout, crash or parity failure blocks the later backends, and a failed comparison stays `failed_parity`. Started work without a finished receipt stays unknown until shared terminal recovery. Repeating the command cannot give an expired campaign a new allowance, and report recovery is read-only. |
+| Limitations | Static public coverage is 14 of 26 recipes for Python/Rust, 2 for each C++ standard and 6 for JavaScript ([§](#coverage-by-recipe-and-backend)). External-library winners are typed unsupported. Fold-zero parity does not prove the other four folds. No separate post-panel validation stage exists. |
 
 ### Export commands and winner selection
 

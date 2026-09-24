@@ -12,7 +12,7 @@ There are **55,029 total rows**, **44,048 development rows**, and **10,981 seale
 
 The panel is immutable once comparison begins. Its identity covers dataset metadata, original labels and types, row IDs, group membership, original development folds, sealed membership and prepared data hashes. Do not replace difficult datasets, reshuffle rows, map categories to arbitrary numeric order, drop missing rows or substitute a different target to make a task executable. Missing source subject or time identifiers remain limitations even when duplicate-feature groups are protected.
 
-Known date columns and identical-feature groups are retained by the prepared split. Missing original subject/time identifiers remain a limitation. A grouped split cannot establish independence when the source never supplied those identifiers. Checkpoint exposure is unknown for these datasets; an unseen-family generalization claim is not supported.
+Known date columns and identical-feature groups are retained by the prepared split. Missing original subject/time identifiers remain a limitation. A grouped split cannot establish independence when the source never supplied those identifiers. Checkpoint exposure is unknown for these datasets; an unseen-family generalization claim is not supported. Pretrained-encoder exposure is also unknown, and the panel remains an adaptive development domain ([§](#three-family-level-domains)).
 
 ## Local preparation and panel storage
 
@@ -68,3 +68,37 @@ The accepted index SHA `1c840597…`, vocabulary `8d55fee4…` and context index
 Before any future continuation, audit the **entire** input closure, including every context descriptor and staged tensor, not only training records. The retained snapshot 97 index lists 8,894 contexts, including 878 `meta_test` descriptors, while record rows are train/validation only. Current legacy training stages all indexed contexts before sampling. Absence of sealed record rows therefore does not prove strict sealed-family exclusion. Do not blindly continue that corpus under the new closure policy; preserve the metadata observation and resolve it without opening sealed payloads. See [§](#record-split-and-the-meta-test-closure-question) and [context staging source](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-engine/src/training.rs#L1179).
 
 [§](#record-split-and-the-meta-test-closure-question) records unresolved historical input closure: meta-test context descriptors were staged by the legacy trainer, while the external author disclosed meta-test manifest inspection and source-CSV hashing alongside old exposed high-water marks. Do not treat these findings as proof of training-label leakage or dismiss them because the packed record split excludes meta-test rows. Resolve the complete allowed-input closure and current teacher eligibility before continuing the old corpus under the new policy.
+
+## Family-level domains and the permitted input closure
+
+This section states the owner's edition-2 rules for which data may reach teaching, training, selection and evaluation. They are requirements, not results. Each carries one status as of 2026-09-23 about 23:55 UTC: available, implemented but unqualified, pending integration or proposed.
+
+### Three family-level domains
+
+Domains are assigned to dataset families, not to rows, files or split names. A split name alone cannot prove an unseen family ([§](learning.md#freezing-the-experiment-and-choosing-families)).
+
+| Domain | Permitted use | Status |
+|---|---|---|
+| Teacher/train | Train-side evidence may produce eligible teachers and policy-training rows | Pending integration: the stopped `training64` packet partitions admitted families into `train` and `development` sides only (pending `crates/jope-cli/src/train/corpus.rs:196-264`) |
+| Adaptive development | Labels may guide screening, selection, confirmation and model monitoring; results are adaptive, not independent | Implemented but unqualified: every panel report at `a75e543d2` records `confirmation_role: "adaptive_development"` (`crates/jope-bench/src/panel/campaign.rs:894`); no full panel has run |
+| Evaluation outside training and selection | Families whose labels informed no teaching, training, selection or monitoring | Proposed: neither current nor pending source defines a separately authenticated evaluation domain |
+
+The frozen panel `asm-private-30-v1` remains an adaptive development domain. Its development labels drive the screen, freeze and confirm procedure ([§](benchmark.md#adaptive-development-exposure)), and a panel family that supplies teachers must additionally be reported as exposed ([§](learning.md#freezing-the-experiment-and-choosing-families)). Because domains are family-level, withholding the panel's sealed rows does not place its families in the third domain. Prior exposure is unknown in two separate places: the accepted policy checkpoint, which `optimize plan` records as `checkpoint_training_exposure: "unknown"` (`crates/jope-bench/src/panel/optimize_cli.rs:128`), and the fixed pretrained encoder assets that produce the proposal context ([§](architecture.md#component-dimensions-and-assembly)). Pretrained-encoder exposure remains unknown; neither unknown may be reported as zero.
+
+### Hashes, eligibility and the complete input closure
+
+A hash is not eligibility. A digest authenticates bytes; it does not decide whether those bytes may be used. The legacy trainer at `a75e543d2` checks every indexed context's bytes against its recorded `sha256` digest and expected size, then stages all of them on the device (`crates/jope-engine/src/training.rs:1187-1203`), so the 878 `meta_test` descriptors in the retained index would pass that integrity check ([§](#record-split-and-the-meta-test-closure-question)). Eligibility comes from each input's admission record and family domain ([§](teachers.md#the-admission-guard-label-exposure-and-hwm-identity)), never from a matching digest.
+
+The permitted input closure covers everything a teaching or training worker can read, directly or transitively: records, context descriptors and tensors, fitted and frozen transforms, and all assets, including encoder and policy weights, vocabulary, admission manifests and checkpoints. Its parts have different status:
+
+| Closure requirement | Status as of 2026-09-23 about 23:55 UTC |
+|---|---|
+| Native projection of admitted contexts | Pending integration: the stopped `training64` preparation requires the requested contexts to cover exactly the admitted comparisons and writes only the selected row contexts (pending `crates/jope-cli/src/train/corpus.rs:572-575`, `:600-635`) |
+| One authenticated inventory of every permitted worker read and its role | Proposed: the same packet's Python campaign opens the complete context index, encoder, vocabulary and admission file, and validates only the contexts that retained rows reference (pending `python/src/jope/policy/training_campaign.py:298-363`) |
+| Rejection of unused forbidden descriptors before loading | Proposed: neither current nor pending source rejects extra context-index entries, and the legacy native route still stages every indexed context |
+
+An unused forbidden descriptor, such as a `meta_test` or evaluation-domain context that no admitted row references, must be rejected before any model, tensor or corpus is loaded; leaving it unsampled is not enough. The tests this requires do not exist yet: an injected unused forbidden context, an unlisted reachable artifact, invariance under mutation of an excluded artifact, and invariance of preprocessing and context under changed holdout labels. Source: the read-only boundary investigation `plan-execution-20260923/boundary-resume-siblings.md` in the ASM custody root.
+
+### Datasets outside the frozen panel
+
+Arbitrary ingestion is separate from the frozen panel. Status: proposed. No arbitrary-dataset ingestion command exists at `a75e543d2`: the one-dataset ASM front door takes a dataset already present in the frozen panel ([§](search.md#front-door-and-safe-metadata-checks)), and a fetchable catalog file is not automatically an admitted ASM input ([§](installation.md#command-surfaces-and-the-stopped-integration-order)). A separate authenticated ingestion request must preserve the new dataset's labels, categories, missingness and groups and assign its family to a domain; it never edits the frozen manifest ([§](search.md#what-is-missing-for-a-sustained-incumbent-seeded-dataset-attack)). Results on an ingested dataset are not frozen-panel results, and frozen-panel results do not qualify an ingested dataset.

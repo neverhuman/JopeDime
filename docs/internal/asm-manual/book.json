@@ -1,7 +1,6 @@
 {
   "schema": "asm-manual.book/v1",
-  "title": "ASM — Maintainer and User Manual",
-  "edition_line": "Edition 2 · 23 September 2026 · implementation a75e543d2 (reviewed 68f56404)",
+  "title": "ASM \u2014 Maintainer and User Manual",
   "cover": {
     "eyebrow": "JOPE DIME / PRIVATE MAINTAINER EDITION",
     "title_lines": [
@@ -17,14 +16,6 @@
       "executable algorithms from data."
     ],
     "bottom_title": "User & maintainer manual",
-    "bottom_lines": [
-      "Edition 2 · 23 September 2026",
-      "",
-      "Implementation: reviewed PR83 / main a75e543d2166",
-      "30 frozen datasets · 522 feature records · full gap checklist",
-      "Status: pipeline proven on one dataset; no panel result; no new training.",
-      "See ‘ASM at a glance’ in chapter 1."
-    ],
     "note": "Historical rankings and current measurements are identified separately."
   },
   "pdf": "asm-maintainer-manual.pdf",

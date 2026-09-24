@@ -88,9 +88,21 @@ Before deletion inspect `git status`, `git stash list`, `git log --all --not --r
 
 Preserve unique source/evidence for the tree being removed, restore independently into the reusable bare verification directory without alternates, and verify the exact commit, tree and connectivity. A valid bundle checksum does not prove the desired detached HEAD was included.
 
-After preservation and a fresh consumer check, remove a closed lane with `git worktree remove`. Indefinite redundant copies are not an alternative to the required reclamation step. Unknown contents remain protected. Follow `deploy/maintenance/README.md`; its reporting timer proposes candidates and never authorizes deletion.
+After preservation and a fresh consumer check, remove a closed lane with `git worktree remove`. Indefinite redundant copies are not an alternative to the required reclamation step. Unknown contents remain protected. Follow `deploy/maintenance/README.md`; its reporting timer proposes candidates and never authorizes deletion. Backup, replication and retention operations remain separately authorized: closing a lane does not authorize them, and neither does this manual.
 
 ## Rebuilding and updating this manual
+
+Rebuilding the book is itself a runbook. Its summary:
+
+| Runbook part | Rebuilding this manual |
+|---|---|
+| Purpose and status | Render both volumes from the committed Markdown, figures and data. **available**: on 2026-09-23 `build_manual.py` rendered both edition-2 volumes of the owner layout, with every gate passing and no warnings. Each build is identified by its own `render-receipt.json`. |
+| Prerequisites and resources | Python 3.12 with the direct versions in `tools/requirements-docs.txt`, Pango/Fontconfig, DejaVu fonts and Poppler; local CPU only. The build opens no network resource, model, dataset or sealed label. |
+| Manifest-creation command | None. `book.json`, `publication.json` and `aliases.json` are reviewed inputs edited directly; no committed command generates them. |
+| Execution | The figure scripts when their data changed, then the renderer ([§](#rebuilding-the-book), [§](#regenerating-the-training-and-target-figures)). |
+| Artifacts and success | Two PDFs under `docs/`, `manual.html`, `MANUAL.md`, `structure.json` and `render-receipt.json`. Success is a zero exit with every gate passed, followed by inspection of the rendered pages and extracted text. |
+| Failure and resume | A failed gate exits nonzero and can leave a PDF without a render receipt; such a PDF is not a build. Fix the input and rerun from the start: there is no partial resume. |
+| Limitations | PDF bytes are not reproducible bit for bit; the renderer does not check that a figure is newer than its data; it runs no model. |
 
 ### Rebuilding the book
 
@@ -111,7 +123,9 @@ OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 docs/internal/asm-manual/tools/make_figures.py
 python3 docs/internal/asm-manual/tools/build_manual.py
 pdfinfo docs/asm-maintainer-manual.pdf
-pdftotext -layout docs/asm-maintainer-manual.pdf /path/to/durable/review/manual.txt
+pdfinfo docs/asm-evidence-reference.pdf
+pdftotext -layout docs/asm-maintainer-manual.pdf /path/to/durable/review/volume-1.txt
+pdftotext -layout docs/asm-evidence-reference.pdf /path/to/durable/review/volume-2.txt
 ```
 
 The two figure scripts above do not regenerate the training and target figures. A complete rebuild also runs the four scripts of [§](#regenerating-the-training-and-target-figures) before `build_manual.py`, because the renderer does not check that a figure is newer than its data. `make_figures.py` still defines a fixed host path to the ASM custody root (`tools/make_figures.py:39-41`), but never uses it.
@@ -119,6 +133,19 @@ The two figure scripts above do not regenerate the training and target figures. 
 Rendering uses Python Markdown, BeautifulSoup and WeasyPrint with system DejaVu fonts; their observed versions and font hashes are retained in the render receipt. Plotting uses Matplotlib and NumPy. The renderer rejects missing/nonlocal images and failed resource fetches, and checks that inputs did not change during rendering. It does not run models, fit predictors, fetch datasets or open sealed labels. Inspect the resulting pages and extracted text before treating a successful render as a complete document.
 
 Byte-identical PDF rebuilding is not promised. `SOURCE_DATE_EPOCH` fixes font-subset timestamps, but the observed WeasyPrint 68.1 tagged-table identifiers contain process-specific values. Preserved first-edition repeat renders had identical normalized logical objects and decoded non-container streams after accounting for those identifiers, while their PDF hashes differed. Keep each output with its own render receipt and verify input hashes, content and layout; do not treat a changed PDF hash alone as changed measurements. This observation concerns the renderer, not numerical predictor reproducibility.
+
+### What the renderer reads, checks and writes
+
+`tools/build_manual.py` takes the layout from `book.json` (schema `asm-manual.book/v1`):
+
+- **Chapters and appendices.** `chapters` is a flat list of section files in reading order, numbered from 1 when rendered. `appendices` lists files whose letters must run A, B, C and onwards. The renderer refuses a file listed twice, a file in `sections/` that `book.json` omits, and a listed file that does not exist.
+- **Volumes.** An appendix with a `volume` key is published in that volume's PDF. Edition 2 publishes chapters 1 to 13 as Volume 1, `docs/asm-maintainer-manual.pdf`, and appendices A to E as Volume 2, `docs/asm-evidence-reference.pdf`. Volume 1 ends with a signpost page that keeps each appendix's letter, title and sections and links into Volume 2. Volume 2 has its own title page and two-level contents.
+- **Position-independent anchors.** Section files are named by topic, not by position. A heading's anchor is `c-<file stem>--<GitHub heading slug>`, and a chapter title's is `c-<file stem>`, so moving a chapter does not change its anchors. Write a cross-reference as a Markdown link whose target is `file.md#slug`, or `#slug` within one file. The renderer fills a link whose text is exactly `§` with the target's number and title, and refuses any internal link it cannot resolve.
+- **Aliases.** `aliases.json`, when present, maps older destinations, such as edition 1's `chapter-NN` and `chapter-NN-M` anchors, to current headings. Each alias becomes an additional anchor on its heading, in whichever volume that heading is published. An alias that names no heading, or that repeats an existing heading anchor, is refused.
+- **Strict heading check.** Each file must begin with exactly one `#` title. Headings go at most four levels deep and may not skip a level. Headings under one parent need distinct titles; a heading followed directly by a heading of the same or a shallower level, or by nothing, is refused as empty; and a heading may not have exactly one subdivision. Fewer than two sections in a file is only a warning. Headings are numbered by the renderer, never by hand, and heading-like lines inside fenced code are not treated as headings.
+- **Size gate.** Each PDF must be at most 5 MiB (5,242,880 bytes), the repository's per-file cap. A larger volume stops the build.
+- **Pinned inputs.** Every Markdown, JSON, JSON Lines, CSV, Python, CSS, PNG, SVG, property-list, gzip and text file under `docs/internal/asm-manual/`, except the generated outputs, is hashed together with `docs/asm-maintainer-status.plist`.
+- **Outputs.** Besides the PDFs: `manual.html` (Volume 1), the combined `MANUAL.md`, `structure.json` with every numbered heading, figure and alias, and `render-receipt.json` (schema `jope.manual-render/v2`). The receipt's `volumes` list gives each PDF's name, page count, SHA-256 and bytes; its top-level `pages`, `pdf_sha256` and `pdf_bytes` describe Volume 1 only. It also records heading counts per level, the alias count, warnings, the Python, library and font identities and every input hash, and it is written only after every gate has passed.
 
 ### Regenerating the training and target figures
 
@@ -134,10 +161,22 @@ python3 docs/internal/asm-manual/tools/build_manual.py
 
 These commands render retained observations; they do not train a model or reconstruct unavailable metrics. The original-history verifier needs the separately preserved source files named in each CSV. Plot rebuilding uses the committed CSVs. No missing source or changed hash may be converted into a successful historical verification.
 
+### The publication record and its three identities
+
+Three identities describe a copy of this book. They change independently, and none implies the others:
+
+| Identity | What it names | Rule and edition-2 value |
+|---|---|---|
+| Implementation snapshot | The reviewed source that the book documents | Reviewed `68f56404c3e199e06413bfd645d3fe0803d7b96f`, merged 2026-09-23T16:34:47Z as main `a75e543d2166017cb0139e0a251d51d9a0c98e08`, tree `176b75bc36d76c7ce4eaeb7234677ec013468889`. A later edition can keep the same snapshot. |
+| Qualification observations | Each measurement the book reports | Each keeps its own observation time and receipt, such as the fourteen-command example run of 23 September 2026 ([§](inference.md#measured-execution-of-the-private-examples)). Rebuilding the book repeats none of them. |
+| Document build | The edition, its pinned inputs and its PDFs | Recorded by the build itself: the input hashes and each volume's PDF hash, bytes and pages in `render-receipt.json`. |
+
+When `docs/internal/asm-manual/publication.json` exists, the renderer prints it in the front matter as the publication record, with one subsection per identity. The snapshot subsection gives source, main, merge time, tree and an optional note. The observations form a table of observation, observed UTC time and receipt. The document-build subsection states the edition and its date, `SOURCE_DATE_EPOCH`, the number of pinned inputs and a SHA-256 digest of their path and hash list. PDF hashes stay in `render-receipt.json`, because a PDF cannot contain its own hash. `publication.json` is a reviewed input edited directly and is itself pinned: the renderer derives none of it from Git, and without the file it prints no publication record.
+
 ### Updating the book
 
-Refresh inventories and receipts, then section Markdown, figures, checklist and PDF. Keep a rendering input manifest. A checkpoint does not update performance figures by implication; merged training source does not prove actual learning. Historical Elo remains historical after regeneration.
+Refresh inventories and receipts, then section Markdown, figures, checklist, `publication.json` and both PDFs. Keep a rendering input manifest. A checkpoint does not update performance figures by implication; merged training source does not prove actual learning. Historical Elo remains historical after regeneration.
 
-A manual change lands through the same reviewed lifecycle as source ([§](#freeze-review-and-merge)): fresh exact-head CI and an independent non-contributor native review of the final head. Every committed file, including the rendered PDF, must stay within the repository's 5 MiB (5,242,880-byte) file cap (`deploy/ci/check.sh:46`), and because the rebase merge lands every commit of the branch, the cap applies to intermediate commits as well. The earlier publication, PR84 (published head `e06c0551`), is being superseded for that reason: the independent non-contributor review 5295763455, a COMMENTED review at `e06c0551`, found two files above the cap in three ancestor commits. Its clean-history successor is local commit `2022017a8` on `docs/asm-maintainer-manual-final`, a single commit on top of main `a75e543d2166…` that carries a 203-page PDF (`69418c48…`); as of 2026-09-23 22:00 UTC it was not yet published and no successor PR was open. This second edition is a restructure and correction of `2022017a8`, prepared in a separate lane for the manual owner to integrate; it needs its own fresh exact-head CI and independent non-contributor review.
+A manual change lands through the same reviewed lifecycle as source ([§](#freeze-review-and-merge)): fresh exact-head CI and an independent non-contributor native review of the final head. Every committed file, including the rendered PDF, must stay within the repository's 5 MiB (5,242,880-byte) file cap (`deploy/ci/check.sh:46`), and because the rebase merge lands every commit of the branch, the cap applies to intermediate commits as well. The earlier publication, PR84 (published head `e06c0551`), was closed as superseded for that reason: the independent non-contributor review 5295763455, a COMMENTED review at `e06c0551`, found two files above the cap in three ancestor commits. Its clean-history successor, commit `2022017a8` on `docs/asm-maintainer-manual-final`, is a single commit on top of main `a75e543d2166…` that carries a 203-page PDF (`69418c48…`). It was published as PR85 and merged at 2026-09-23T22:33:36Z as main `bdfc95c63d905c647e41175e79dc30cdc8600287`, after independent native approval 5297559032 at that exact head and full CI run 35927921851; the following main-guard run 35929010658 passed. This second edition restructures and corrects that published edition. As of 2026-09-23, about 23:55 UTC, it is an unpushed candidate on the local branch `docs/asm-manual-edition-2` (commits `7b9398b76` and `bda953f62`) for the manual owner to integrate; it needs its own fresh exact-head CI and independent non-contributor review.
 
 Before delivery check local links, source identities, totals, metric directions, captions, capability status and rendered pages. Extract PDF text and inspect dense tables, examples and figures. Preserve unavailable statistics and measurements explicitly rather than filling them with zero.

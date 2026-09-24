@@ -1,0 +1,70 @@
+{
+  "schema": "jope.maintainer-private-example-execution-pointer/v1",
+  "role": "Pointer from the historical prepared packet to the evidence of its execution. It is not itself an execution receipt, and it does not modify the packet.",
+  "added_by": "ASM manual edition 2, for PR85 reviewer note NB1",
+  "prepared_packet": {
+    "path": "examples/commands.json",
+    "sha256": "f34771938934d1360cbe054689393198a53929479ba119f5a0faf2b0da7a170a",
+    "status": "prepared, not executed",
+    "status_is_historical": true,
+    "status_note": "The status recorded when the packet was prepared. The packet is kept unchanged as the historical record of preparation; the execution below does not rewrite it.",
+    "source_head": "68f56404c3e199e06413bfd645d3fe0803d7b96f"
+  },
+  "execution": {
+    "status": "executed; 14 of 14 commands passed",
+    "started_unix_ms": 1790181872726,
+    "started_utc": "2026-09-23T16:44:32.726Z",
+    "unit": "jope-manual-toy-20260923-68.service",
+    "executed_packet_sha256": "f34771938934d1360cbe054689393198a53929479ba119f5a0faf2b0da7a170a",
+    "source_head": "68f56404c3e199e06413bfd645d3fe0803d7b96f",
+    "merged_main": "a75e543d2166017cb0139e0a251d51d9a0c98e08",
+    "source_tree": "176b75bc36d76c7ce4eaeb7234677ec013468889",
+    "counts": {
+      "passed": 14,
+      "failed": 0,
+      "unavailable": 0,
+      "unstarted_deadline": 0
+    },
+    "scope": "legacy synthetic recipe/refit parity and separate legacy pipeline; no fitted-export qualification"
+  },
+  "receipts": [
+    {
+      "path": "data/example-acceptance/result.json",
+      "sha256": "71395a038feeef768bd6c69bb43dcabbfced20333d989cd1161c07213f4f68d6",
+      "role": "execution result: every command, exit status, versions, artifacts and counts"
+    },
+    {
+      "path": "data/example-acceptance/audit.json",
+      "sha256": "363fbe62a706b44030205da78411243ba206ad2366d546a277babe966b802c91",
+      "role": "stopped audit: counts, declared limits, measurements and scope exclusions"
+    },
+    {
+      "path": "data/example-acceptance/HANDOFF.json",
+      "sha256": "a05e8a0e9f9430b0c71ff23c57e5e29532a61bbe118daac3fe358b45f2423346",
+      "role": "handoff: SHA-256 of the run's receipt files, including the controller, allocation, inputs, journal, result and audit"
+    }
+  ],
+  "custody": {
+    "directory": "/home/ubuntu/jope-rescue-20260921/asm-integration-20260923/agent-maintainer-manual/examples-run/",
+    "note": "Host-local private custody outside Git. Its HANDOFF.json, audit.json and result.json are byte-identical to the copies above; it also retains the controller, the allocation, the journal and every command's output.",
+    "files": [
+      {
+        "path": "HANDOFF.json",
+        "sha256": "a05e8a0e9f9430b0c71ff23c57e5e29532a61bbe118daac3fe358b45f2423346"
+      },
+      {
+        "path": "run.py",
+        "sha256": "4dfa19855aed4922562ca8e0087f7fb28948327ecf03729ef7c1453761c2cb5f"
+      },
+      {
+        "path": "allocation.json",
+        "sha256": "f2778e3e3454105f9caaa39eaf22c1fc667b22338f3eca660990e8134bdcb24a"
+      },
+      {
+        "path": "journal.jsonl",
+        "sha256": "371d2c1b8416870530d8657e8a99811a85f5572e12e713ae0dbd856ac761cdee"
+      }
+    ]
+  },
+  "manual_section": "sections/inference.md#measured-execution-of-the-private-examples"
+}

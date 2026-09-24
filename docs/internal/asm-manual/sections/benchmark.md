@@ -6,7 +6,7 @@ The frozen ASM panel, the historical same-cut benchmark and the imported SOTAren
 
 | Collection | Inputs and purpose | Current interpretation |
 | --- | --- | --- |
-| Frozen `asm-private-30-v1` | Ten regression, ten binary and ten multiclass datasets; original frozen row assignments | Current implementation target; one regression operational proof, full panel unrun |
+| Frozen `asm-private-30-v1` | Ten regression, ten binary and ten multiclass datasets; original frozen row assignments | Current implementation target and adaptive development domain; one regression operational proof, full panel unrun |
 | Historical same-cut v1/v2 | Ten committed regression datasets; all methods share each cut; screening and deepening | Reproducible historical comparisons; v1 and v2 are separate snapshots |
 | Historical tabular-regression-v2 | Imported score inventory and corrected benchmark-valid/public-development views | Historical ladder with its own coverage and validity rules; not a current ASM qualification |
 
@@ -22,13 +22,36 @@ For each dataset, applicable methods screen on development fold zero. The top fi
 
 ### Adaptive development exposure
 
-This screen/freeze/confirm design uses development data adaptively. The selected recipe can already have learned from rows that occur in a later confirmation fold. Fold-zero labels influence screening. The implementation records these intersections; the five-fold summary remains adaptive development evidence. Sealed rows and sealed meta-test families stay outside learning, optimization and this documentation audit. The word “test” in an optimization-visible file does not make it a valid test set.
+This screen/freeze/confirm design uses development data adaptively. The selected recipe can already have learned from rows that occur in a later confirmation fold. Fold-zero labels influence screening. The implementation records these intersections; the five-fold summary remains adaptive development evidence. Sealed rows and sealed meta-test families stay outside learning, optimization and this documentation audit. The word “test” in an optimization-visible file does not make it a valid test set. Under the owner's family-level domain rule, the frozen panel remains an adaptive development domain even after a complete campaign ([§](data.md#three-family-level-domains)).
 
 The frozen protocol screens methods on development fold 0, freezes the top five recipes, and confirms those recipes on the same five development folds; `asm.neural` is additionally confirmed if it missed the top five. The synthesized recipe was learned from the outer fold 0 fitting set, containing development folds 1–4. Thus those later confirmation folds are exposed to recipe learning. Every frozen recipe's fold 0 labels influenced screen selection. The report derives row intersections and records them per recipe/fold; it labels the selected five-fold summary adaptive development and leaves sealed evaluation unopened. This is the chosen protocol, not an unbiased outer generalization estimate. Source: `crates/jope-bench/src/panel/selection_exposure.rs:1`.
 
 The exposure is not symmetric, so the adaptive bias has a direction: it favours `asm.*` over fixed-configuration comparators. A synthesized `asm.*` recipe is recorded with the learning rule `inner_selection_on_cut_zero_training_rows`: it was chosen by a search of up to 1,000 evaluations per arm on the fold 0 fitting rows, which are development folds 1–4. Every `rust.*` and `external.*` recipe is recorded as `fixed_before_current_dataset_screen`. All methods share only the fold 0 screen selection. The five-fold mean therefore compares an optimistic ASM estimate with comparator estimates exposed only through that screen, and the difference can grow as search pressure grows; an apparent panel win can arise from selection alone. Sources: `crates/jope-bench/src/panel/selection_exposure.rs:71`, `:91-92`; `crates/jope-bench/src/panel/asm_campaign.rs:37`; `crates/jope-bench/src/panel/optimize.rs:132-133`. A nested variant, with an independent ASM search inside each outer fold, is not implemented; requiring it before any external claim is a review proposal pending owner decision.
 
 ## Running the frozen-panel campaign: plan, execute and report
+
+This runbook has seven parts: purpose and status, prerequisites and resources, manifest creation, execution, artifacts and success, failure and resume, and limitations. Status labels are as of 2026-09-23 about 23:55 UTC.
+
+### Purpose, status and prerequisites
+
+**Purpose.** Run the unchanged thirty-dataset protocol once, as roadmap item PANEL-01 ([§](plan.md#compact-task-index)): screen every applicable method on development fold zero, freeze five recipes, confirm them on all five development folds, and report adaptive development evidence for every dataset.
+
+**Status: implemented but unqualified.** `optimize plan`, `benchmark run` and `benchmark report` exist in the immutable CLI at `68f56404`, which has the same tree as main `a75e543d2` ([§](installation.md#command-surfaces-and-the-stopped-integration-order)). No full-panel campaign has run. ASM execution so far is limited to separately bounded one-dataset regression proofs ([§](status.md#canonical-proof-record-and-per-arm-facts)). A campaign with a newly trained policy is pending integration: at `a75e543d2` the configuration validator accepts only the accepted step-60000 policy bytes (`crates/jope-bench/src/panel/optimize.rs:161-165`), and PANEL-01 waits for the final trained configuration.
+
+**Prerequisites and resources.**
+
+| Prerequisite | Requirement |
+|---|---|
+| CLI `$J` | Linux build with the `asm` feature. `run` refuses a binary whose path or SHA-256 differs from the plan's pinned native runtime (`crates/jope-bench/src/panel/campaign_cli.rs:175-184`). |
+| Panel `$M` and data `$D` | Unchanged manifest `ba7dace4…` and verified prepared development data ([§](installation.md#prepare-and-verify-the-panel)) |
+| Base plan and `BASE_PLAN_ID` | Runtime-aware comparator plan and its printed `plan_sha256`. `optimize plan` refuses a base plan whose scope is not `comparator-qualification` (`crates/jope-bench/src/panel/optimize_cli.rs:91-94`). |
+| ASM configuration and its file SHA-256 | Complete `jope.asm-configuration/v1` file. It pins a `jope.asm-worker-build-inventory/v1` release manifest, source manifest, checkpoint receipt, policy weights, vocabulary, frozen transforms, policy and encoder runtimes, encoder assets and optional context qualification (`crates/jope-bench/src/panel/optimize.rs:99-122`). |
+| Journal | Absolute durable path outside `/tmp` and Git working trees; `run` creates it with mode 0700 (`crates/jope-bench/src/panel/campaign_cli.rs:130-147`). |
+| Resources | Fixed by the base plan: 20 workers and 20 CPUs, 64 GiB, zero swap, at most one GPU task, one thread per worker, 30 seconds per fit, 7,200 seconds total including a 300-second reporting reserve (`crates/jope-bench/src/panel/campaign_cli.rs:83-93`). Do not overlap exclusive full-CPU CI ([§](scheduling.md#shared-compute)). |
+
+**Manifest creation.** The panel manifest is committed and frozen: it is verified, never created ([§](installation.md#prepare-and-verify-the-panel)). Prepared data, the runtime inventory and the base plan have creation commands in [§](installation.md#prepare-the-panel-and-external-runtimes), and `optimize plan` below creates the campaign plan. No command at `a75e543d2` creates the ASM configuration or its `jope.asm-worker-build-inventory/v1` release manifest: the committed source only reads and verifies both schemas (`crates/jope-bench/src/panel/optimize.rs:29`, `:102`; `crates/jope-bench/src/panel/worker_build.rs:9`, `:81`). Assemble them from real build, asset and qualification receipts; a short hand-written configuration with invented hashes cannot replace those artifacts ([§](search.md#required-inputs)).
+
+### Preregistered arms and per-task scope
 
 Prepare the qualified configuration before opening an execution window. It binds the actual context producer, source/worker/model inputs, numerical qualification and policy configuration. The standard comparison preregisters a 64-slot policy pool plus 16 exploration candidates against 80 generic candidates, with equal declared arm allowances. Policy-pool shortfalls carry `neural_rejection_fallback`; only `neural_policy` slots count as genuine checkpoint proposals. Generation-zero neural slots must actually fit; a proposal file or generic-only result cannot demonstrate neural consumption.
 
@@ -42,12 +65,17 @@ That preregistration applies in full only to regression at the pinned source `68
 
 At this source, a better policy therefore cannot change binary or multiclass results. Sources: `crates/jope-bench/src/panel/optimize.rs:34`, `:35`, `:493`; `crates/jope-pipeline/src/neural_search.rs:28`.
 
+### Execution, artifacts and success
+
+Plan first. Planning performs zero fits and reports `execution_budget_started: false` (`crates/jope-bench/src/panel/optimize_cli.rs:126`). Capture the printed semantic plan ID rather than hashing the file ([§](installation.md#physical-layout-and-identities)), then execute and report:
+
 ```sh
 "$J" optimize plan \
   --base-plan "$A/base.json" --base-plan-sha256 "$BASE_PLAN_ID" \
   --configuration "$ASM_CONFIGURATION" \
   --configuration-sha256 "$ASM_CONFIGURATION_FILE_SHA256" \
-  --output "$A/panel.json"
+  --output "$A/panel.json" > "$A/panel-plan-receipt.json"
+PANEL_PLAN_ID=$(jq -er '.plan_sha256' "$A/panel-plan-receipt.json")
 
 "$J" benchmark run --plan "$A/panel.json" --plan-sha256 "$PANEL_PLAN_ID" \
   --manifest "$M" --datasets "$D" --journal "$A/panel-journal"
@@ -56,7 +84,17 @@ At this source, a better policy therefore cannot change binary or multiclass res
   --manifest "$M" --datasets "$D" --journal "$A/panel-journal"
 ```
 
+**Artifacts.** `optimize plan` prints `plan_sha256`, `scope: "asm-panel"`, `fits: 0`, `neural_slots: 64`, `exploration_slots: 16`, `generic_slots: 80` and `checkpoint_training_exposure: "unknown"` (`crates/jope-bench/src/panel/optimize_cli.rs:126-129`). `benchmark run` writes the retained plan as immutable `campaign.json` in the journal (`crates/jope-bench/src/panel/campaign.rs:661`) and, when the campaign completes, an immutable report `reports/<report SHA-256>.json` with schema `jope.panel-report/v2` (`campaign.rs:890-900`). The base plan declares `finished`, `observations`, `frozen` and `reports` as expected artifacts (`crates/jope-bench/src/panel/campaign_cli.rs:94-99`). `benchmark run` returns `ok: true` only when its supervised launch exits with status 0; once `campaign.json` exists, its output also carries the read-only recovery report (`campaign_cli.rs:199-208`). Retain the evidence listed in [§](scheduling.md#artifacts-what-evidence-to-retain).
+
+**Success.** Success is a `jope.panel-report/v2` whose dataset list covers all thirty datasets, each with screen outcomes, frozen recipes, confirmation observations, recipe summaries and selection exposure (`campaign.rs:869-872`), and which meets the minimum complete report in [§](#minimum-complete-future-campaign-report). Every report states `sealed_inputs_opened: false`, `optimization_visible_labels: "development"`, `confirmation_role: "adaptive_development"` and `five_fold_summary_is_unbiased_generalization_estimate: false` (`campaign.rs:893-894`). A successful campaign is therefore complete adaptive development evidence, not a sealed-test or unseen-family result.
+
+### Failure, resume and limitations
+
 `optimize run` and `optimize report` delegate to the same campaign contracts. Repeating run with the same plan and journal resumes the original authenticated state and absolute deadline. A restart does not grant another two hours. Do not repair journals by editing receipt fields or copying successes from another experiment. Read-only report recovery authenticates retained artifacts and recomputes scores; it does not fit another predictor.
+
+**Failure and non-final outcomes.** When bounded execution cannot be admitted, the supervised campaign reports `jope.panel-admission/v2` with `ok: false`, and no selection or scientific result is frozen (`crates/jope-bench/src/panel/campaign.rs:728-733`). Resumable inventory is reported as `jope.asm-partial/v1` for the paired arms (`campaign.rs:754-756`) or as `jope.panel-partial/v2` with `ok: false` for confirmation (`campaign.rs:839-841`). Resume each by repeating `benchmark run` with the same plan, plan ID and journal inside the original window; stop reasons and recovery phases are in [§](scheduling.md#reading-stop-reasons-and-resuming). A read-only `benchmark report` refuses a journal that belongs to another plan and returns `jope.panel-recovery-report/v2` with `fits_started: 0` and `clock_started: false` (`campaign.rs:974-978`, `:1216-1222`).
+
+**Limitations.** Both panel report constructors at `a75e543d2` set `complete_asm_demonstration: false` (`campaign.rs:895`, `:1222`). Binary and multiclass datasets have no neural arm at this source. The five-fold summary is adaptive development evidence whose exposure favours `asm.*` ([§](#adaptive-development-exposure)); comparators are fixed default configurations ([§](#minimum-complete-future-campaign-report)); and the panel's policy and pretrained-encoder exposure are unknown ([§](data.md#three-family-level-domains)). Selected-winner export and a newly trained policy are pending integration ([§](installation.md#command-surfaces-and-the-stopped-integration-order)).
 
 ## Metrics and class order
 
