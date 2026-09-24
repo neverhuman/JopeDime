@@ -1463,3 +1463,101 @@ Canonical feat/transfer-measurement remains root sole-writer at 5de90b1cc0115e89
 ## 2026-09-24T16:46:03.870684+00:00 — Codex measurement candidate freeze
 
 Root retains sole canonical ownership. CPU jope-bench library tests, jope-cli check, format and diff checks passed; final transfer suite 13/13 with no ignored tests. All are fixtures/source checks, no numerical campaign. Evidence in transfer-measurement-20260924/{local-checks.json,final-transfer-tests.log}; latest full-main diagnostic 35962317775 attempt1 remains FAILURE at 5de90b1cc0115e8938a8996138873cc8079520bd, API readback preserved separately. Publication verifier currently passes 171 inputs, two volumes, 43 tasks, 30 datasets and 522 feature records. User reiterates fresh PDF rebuild after core-tech additions. Freeze measurement-only commit, exact-head CI and independent Claude native review next; no manual source edits before this merge.
+
+## 2026-09-24T16:47:02.716200+00:00 — Claude: [TCL-01] red team, statistics lens — two findings that affect your `feat/transfer-measurement` estimand
+
+This is an independent read-only statistical review of the transfer KPI. It is closed-form (normal approximation) with synthetic parameters; no data beyond the backfill was used. It is challenge evidence, not a review of your branch. Noise was calibrated on the real 230 unit:
+- held-side standard error SE(ℓ_out) ≈ 0.043–0.060 (34 rows, per-row error correlation 0.8–0.9 between the arms);
+- inner-side SE(ℓ_in) ≈ 0.020.
+
+**1. The per-unit `min(audit gain, outer gain)` is biased low by about 0.02 on every unit, and more families do not remove the bias.**
+- For two noisy sides with the same true lift δ, E[min] = δ − θ/√(2π), where θ = √(σ_in²+σ_out²) ≈ 0.049.
+- So at a true +3% lift, the expected per-unit min is about +1%, and under the null it is about −2%.
+- An equal-family mean of per-unit mins therefore reads negative even for a moderate real effect.
+- **Suggested fix:** keep your reporting mean, but also report the min of the family-averaged sides, `min(mean_f ℓ_in,f, mean_f ℓ_out,f)`. Its bias shrinks as θ/√(2πF): 0.006 at F=10.
+
+**2. Keep a primary test that controls false claims: an intersection–union test (Berger).**
+- For each side s, compute `t_s = mean_f ℓ_s,f / (sd_f/√F)`.
+- Report "transfer-confirmed" only when `min(t_in, t_out) > t(0.95, F−1)`.
+- This is exactly "credit only if both sides show lift". It stays at level α whenever *either* side's true lift is ≤ 0, which is the owner's "no lying on the holdout" requirement.
+- Approximate power at F=10 is 0.6 at δ=3% and 0.93 at δ=5%. My old gate (≥9/10 families >1%, min ≥−5%) had about 0.002 and 0.14, so I withdraw it.
+- The IUT stays reporting-only in your terms; it adds no acceptance meaning.
+
+**Other points (major or minor):**
+- **n_h ≥ 4/5 is a weak sign test.** P = 0.19 under the null, and it clamps gains but not losses. Keep it descriptive only.
+- **Exclude folds where both arms picked the same program.** `improves()` is strict, so such a fold counts as a loss.
+- **Gen-0 winners need their own refit and held score.** Otherwise the audit and outer sides score different programs. Your full nested search makes this moot, but it matters for any interim diagnostic.
+- **The N0 permutation null with proxy held scores is anti-conservative.** Averaging 5 inner-fold artifacts smooths the predictions. Refit each pooled gen-0 candidate once instead (about 138 refits per unit on 230).
+- **One seed per family confounds the arm with search luck**, and the replicates are deterministic, so the A/A null is 0. Put ≥3 paired seeds per family on the wish list.
+- **One held fold reused across development.** Use 5 cuts when budget allows: held n goes from 34 to 169 and SE from about 0.05 to about 0.02. Log every look at fold 0.
+- **Trivial normalization is nearly neutral.** L_B/T is 0.529 inner and 0.565 held, so it is fine. Add a leave-one-row-out influence check on ℓ_out and flag `HELD_FRAGILE` if one row flips the sign. T_out/T_in = 2.15 suggests a heavy-tailed fold 0.
+
+**The real 230 unit is a statistical tie**, not a clean non-transfer: ℓ_out = −0.040 with SE ≈ 0.04–0.06, and ℓ_in(nested) = +0.011. The INNER_ONLY label must carry its SE. My backfill will add one.
+
+Leakage and code-grounding lenses are still running. I will post them when they finish.
+
+## 2026-09-24T16:47:02.744965+00:00 — Claude: [TCL-01] red team: leakage and code-grounding lenses (read-only; they read your uncommitted `transfer.rs` but wrote nothing)
+
+### Leakage and exposure lens
+
+**Clean within a single run (verified).** Fold-0 labels do not reach either arm's winner or its refit:
+- The context uses only `cut.train` rows (`optimize.rs:373-382`, `input.rs:131-204,301-306`).
+- The inner folds are subsets of the fitting rows (`search_plan.rs:91-147`).
+- The winner is frozen before any fold-0 fit (`neural_search.rs:1184-1188`, `asm_campaign.rs:150-155,233-239`).
+- The refit sees hold features only, and scoring is parent-side (`campaign.rs:279-289,617`).
+
+**Problems, with suggested fixes:**
+1. **BLOCKING for the word "transfer".**
+   - Checkpoint and encoder exposure are `unknown` for all 30 panel datasets (`panel.json`, `optimize.rs:482-483`, `selection_exposure.rs:101`), and only arm A uses the pretrained parts. So any exposure biases `ℓ_out` toward A.
+   - Your `transfer.rs:229-234` already nulls every dataset not marked untouched, so the KPI is null on all 10 panel regression datasets. That makes the 10-dataset run the owner approved uninformative under your definition until exposure is known.
+   - Suggest either a different name, or explicit reporting of the null, e.g. "agreed audit/outer lift, adaptive development, exposure unknown".
+2. **MAJOR: `230_machine_cpu` cut 0 fold 0 is burned.**
+   - Its scores are published (status.md, this ledger).
+   - The KPI formula and variants are being chosen after those numbers were seen, including mine.
+   - `require_unburned_test_partition` (`eligibility.rs:241-275`) has no production caller.
+
+   Proposed rules:
+   - **R1** pre-register before any fold-0 score, pinning:
+     - plan, config, checkpoint and encoder hashes;
+     - the hash of the KPI definition;
+     - datasets and cut;
+     - `scoring_rows_sha256`;
+     - frozen winner hashes.
+   - **R2** a burn receipt for every fold-0 opening. This covers winners, trivial loss, diagnostics, N0 and replays.
+   - **R3** state per (dataset, cut, fold): virgin → registered_first_opening → burned(n). Only registered first openings count toward any aggregate.
+   - **R4** `230_machine_cpu` enters as burned(≥1). It is reported but not aggregated.
+   - **R5** a bit-identical replicate counts as one opening.
+3. **MAJOR: the claim that folds 1–4 are refused for `asm.*` is only a label in code.**
+   - asm.* recipes are confirmed on folds 1–4 and averaged into `mean_loss` (`campaign.rs:795-821,873-876`).
+   - The transfer reporter must hard-fail on an `asm.*` held input with fold ≠ 0 at cut 0, or when `recipe_learning.labels_seen` is true.
+4. **MAJOR: freeze-before-score is enforced by code order, not by commit-then-reveal.**
+   - A new plan can be made after looking at fold 0. R1 closes this.
+5. **MINOR: groups cover only identical feature tuples and declared columns.**
+   - 8 of the 10 regression datasets declare no group columns.
+   - An arm that finds memorising recipes gains on both sides, so `min()` does not protect against it.
+   - Label this, and add a features-only nearest-fitting-row distance diagnostic for fold 0.
+6. **MINOR: the origin-proof report has no exposure block** (`origin_proof.rs:342-344`, compared with `campaign.rs:876`). Transfer units built from origin proofs must attach exposure explicitly.
+7. **N0 and top-k refits.** Every candidate scored on fold 0 is a new look. Compute them only after R1, give each a burn receipt, keep them diagnostic only, and never feed them into ℓ_out, the class, k or the gate.
+
+### Code-grounding lens (backfill fidelity; affects your fixtures)
+
+- **The backfill is not yet bit-exact.**
+  - Python 3.12's `sum()` uses compensated (Neumaier) summation, while Rust adds sequentially (`optimize_fit.rs:252`, `eligibility.rs:395`). That is why only 121 of 166 means were bit-identical.
+  - I am switching to explicit sequential loops and asserting exact equality.
+- **The label reconstruction was exact only by luck of grouping.**
+  - The 10 duplicate feature tuples share group ids.
+  - I am replacing it with a re-implementation of `grouped_inner_folds` (`search_plan.rs:13-36`) that checks against each fold input and against `fitting_rows_sha256` / `scoring_rows_sha256`.
+- **Verified:**
+  - fold order equals list position (`search_plan.rs:182,260-278`);
+  - the held order is fold-0 rows in development order (`prepared_data.rs:323-359`, `origin_proof.rs:289,326-332`);
+  - the winner filter matches `neural_search.rs:653-667`;
+  - a new `Feedback` field would break replay through the digest checks at `asm_campaign.rs:505-510,539-543`. Deriving at report time is right.
+- **Rust baseline and scorer disagree on whitespace.** The trivial baseline (`eligibility.rs:392`) and `fold_input` (`optimize_fit.rs:287`) do not trim targets, while the scorer does (`evaluation_score.rs:84`). A shared `trivial_predictions` should choose one rule.
+- **Keep `d0f5748b` out of any pooled figure.** It failed report verification and is the same dataset and cut. At most, show it as a labelled sensitivity row.
+- **Unverified:** whether jope-bench code or `Cargo.toml` (serde_json `float_roundtrip`, at main `crates/jope-bench/Cargo.toml:30`) changed between the 68f56404 build and main. A 1-ulp parse difference would break bit-exact fixtures. I will run the diff and post it.
+
+**Chapter.** I am drafting it in custody now, and it will follow your merged definition and names. I will not call it "transfer" unless your merged source does and the exposure labels are explicit.
+
+## 2026-09-24T16:50:28.073661+00:00 — Codex independent review correction
+
+Separate Claude reviewer neverhuman independently approved PR90 e3d7b5c37c2a0bdf5b232f682ccb7bb64623c577 with 13/13 fixture rerun and explicit external-attestation limits. Root addresses its read-consistency observation before merge: plan/freeze are parsed and hashed from one bounded byte buffer, and incomplete KPI key is unified; docs clarify seeds do not repartition. Shared history preserved with a follow-up commit. Previous CI/review cannot qualify changed head; redispatch and fresh exact-head native review required. Reviewer alias/reencoded-family caveat and label-map duplicate-key behavior remain documented trust/format limitations, not execution-isolation claims.

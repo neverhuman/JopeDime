@@ -106,13 +106,18 @@ fn hex(s: &str, n: usize) -> bool {
         && s.bytes()
             .all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase())
 }
-fn read<T: for<'a> Deserialize<'a>>(path: &Path) -> Result<T> {
-    ensure!(
-        std::fs::metadata(path)?.len() <= 128 * 1024 * 1024,
-        "artifact exceeds 128 MiB"
-    );
-    Ok(serde_json::from_slice(&std::fs::read(path)?)?)
+fn read_bytes(path: &Path) -> Result<Vec<u8>> {
+    let mut bytes = Vec::new();
+    std::fs::File::open(path)?
+        .take(128 * 1024 * 1024 + 1)
+        .read_to_end(&mut bytes)?;
+    ensure!(bytes.len() <= 128 * 1024 * 1024, "artifact exceeds 128 MiB");
+    Ok(bytes)
 }
+fn read<T: for<'a> Deserialize<'a>>(path: &Path) -> Result<T> {
+    Ok(serde_json::from_slice(&read_bytes(path)?)?)
+}
+
 fn verify_asset(a: &Asset) -> Result<()> {
     ensure!(hex(&a.sha256, 64), "invalid asset digest");
     let mut file =
@@ -502,8 +507,9 @@ fn report_validated(
     release_sha256: &str,
     output: &Path,
 ) -> Result<Value> {
-    let plan: Plan = read(plan_path)?;
-    let plan_hash = hash(&std::fs::read(plan_path)?);
+    let plan_bytes = read_bytes(plan_path)?;
+    let plan: Plan = serde_json::from_slice(&plan_bytes)?;
+    let plan_hash = hash(&plan_bytes);
     let rebuilt = build(plan.specification.clone())?;
     ensure!(
         digest(&plan)? == digest(&rebuilt)?,
@@ -513,7 +519,8 @@ fn report_validated(
         path: release_path.into(),
         sha256: release_sha256.into(),
     })?)?;
-    let freeze: Freeze = read(freeze_path)?;
+    let freeze_bytes = read_bytes(freeze_path)?;
+    let freeze: Freeze = serde_json::from_slice(&freeze_bytes)?;
     ensure!(
         release.schema == "jope.transfer-release/v1" && freeze.schema == "jope.transfer-freeze/v1",
         "invalid freeze/release schema"
@@ -521,7 +528,7 @@ fn report_validated(
     ensure!(
         release.plan_sha256 == plan_hash
             && freeze.plan_sha256 == plan_hash
-            && release.freeze_sha256 == hash(&std::fs::read(freeze_path)?),
+            && release.freeze_sha256 == hash(&freeze_bytes),
         "freeze/release identity mismatch"
     );
     ensure!(
@@ -640,7 +647,7 @@ fn report_validated(
         ));
     }
     if !failures.is_empty() {
-        let result = json!({"schema":"jope.transfer-report/v1","ok":false,"kpi":null,"status":"not yet measured","planned_units":plan.planned_units,"planned_predictions":expected,"committed_predictions":predictions.len(),"terminal_outcomes":terminal_slots.len(),"unavailable":unavailable,"failures":failures,"scores_released":false,"fits":0});
+        let result = json!({"schema":"jope.transfer-report/v1","ok":false,"kpi_percentage_points":null,"status":"not yet measured","planned_units":plan.planned_units,"planned_predictions":expected,"committed_predictions":predictions.len(),"terminal_outcomes":terminal_slots.len(),"unavailable":unavailable,"failures":failures,"scores_released":false,"fits":0});
         super::worker::write_private(output, &result)?;
         return Ok(result);
     }
