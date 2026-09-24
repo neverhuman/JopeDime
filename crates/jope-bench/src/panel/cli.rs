@@ -19,6 +19,28 @@ pub struct BenchmarkCli {
 
 #[derive(Subcommand)]
 pub enum BenchmarkCommand {
+    /// Private nested transfer audit plan; zero fits and no execution admission.
+    #[command(hide = true)]
+    TransferPlan {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Private retained-prediction audit; requires an independently pinned release digest.
+    #[command(hide = true)]
+    TransferReport {
+        #[arg(long)]
+        plan: PathBuf,
+        #[arg(long)]
+        freeze: PathBuf,
+        #[arg(long)]
+        release: PathBuf,
+        #[arg(long)]
+        release_sha256: String,
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Verify the approved frozen manifest; does not open dataset files or fit models.
     VerifyManifest {
         #[arg(long)]
@@ -139,6 +161,14 @@ pub fn verify_inputs(panel: &Panel, root: &Path) -> Value {
 
 fn run(cli: BenchmarkCli) -> Result<Value> {
     match cli.command {
+        BenchmarkCommand::TransferPlan { input, output } => super::transfer::plan(&input, &output),
+        BenchmarkCommand::TransferReport {
+            plan,
+            freeze,
+            release,
+            release_sha256,
+            output,
+        } => super::transfer::report(&plan, &freeze, &release, &release_sha256, &output),
         BenchmarkCommand::VerifyManifest { manifest } => {
             let (panel, hash) = read_panel(&manifest)?;
             Ok(
