@@ -40,6 +40,7 @@ pub mod contexts;
 #[cfg(feature = "neural")]
 pub mod auxiliary_training;
 pub mod corpus;
+pub mod corpus_projection;
 pub mod corpus_publication;
 pub mod eval_registry;
 #[cfg(feature = "neural")]

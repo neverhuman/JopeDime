@@ -5,7 +5,7 @@ use crate::{
     manifest::*,
     neural::{Bf16, Config, Policy},
 };
-use anyhow::{ensure, Result};
+use anyhow::{ensure, Context, Result};
 use serde_json::{json, Value};
 use std::{collections::BTreeMap, fs, path::Path};
 use tch::{nn, Device, Kind, Tensor};
@@ -74,6 +74,20 @@ pub fn evaluate(
         ids.iter().flatten().all(|i| allowed.contains(i)),
         "monitor panel contains non-validation supervision"
     );
+    let records = Records::open_verified(
+        &corpus.join("records.bin"),
+        index.records,
+        &index.records_sha256,
+    )?;
+    crate::corpus_projection::verify_panel_record_contexts(
+        &ids.concat(),
+        |id| {
+            ensure!(id < index.records, "monitor panel record outside corpus");
+            Ok(records.get(id).context)
+        },
+        &index.groups,
+        &index.contexts,
+    )?;
     let state: Value = read_json(&checkpoint.join("state.json"))?;
     ensure!(
         file_hash(&checkpoint.join("model.ot"))? == state["model_sha256"]
@@ -101,11 +115,6 @@ pub fn evaluate(
     let mut vs = nn::VarStore::new(device);
     let model = Policy::new(vs.root(), config)?;
     vs.load(checkpoint.join("model.ot"))?;
-    let records = Records::open_verified(
-        &corpus.join("records.bin"),
-        index.records,
-        &index.records_sha256,
-    )?;
     let mut contexts = BTreeMap::<usize, Vec<f32>>::new();
     let mut sums = [0.0; 4];
     for batch in &ids {
@@ -117,7 +126,10 @@ pub fn evaluate(
         for row in &rows {
             let context_id = row.context as usize;
             if !contexts.contains_key(&context_id) {
-                let saved = &index.contexts[context_id];
+                let saved = index
+                    .contexts
+                    .get(context_id)
+                    .context("monitor panel context outside the index")?;
                 let bytes = fs::read(resolve(root, &saved.path)?)?;
                 ensure!(
                     bytes.len() == 8192 && hash(&bytes) == saved.sha256,

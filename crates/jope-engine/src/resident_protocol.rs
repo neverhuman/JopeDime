@@ -167,6 +167,9 @@ pub(crate) fn request_artifacts(
     )?;
     let index_bytes = fs::read(corpus.join("index.json"))?;
     let index: Value = serde_json::from_slice(&index_bytes)?;
+    if task["kind"] == "Train" {
+        crate::corpus_projection::verify_admitted_context_closure(&index)?;
+    }
     paths.push((corpus.join("index.json"), Some(hash(&index_bytes))));
     paths.push((
         corpus.join("vocabulary.json"),

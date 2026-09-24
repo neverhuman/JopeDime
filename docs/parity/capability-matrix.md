@@ -20,7 +20,7 @@ you saw.
 |---|---:|---:|---:|---:|---:|---:|
 | engine-binary | 12 | 11 | 0 | 1 | 0 | 0 |
 | engine-example | 12 | 12 | 0 | 0 | 0 | 0 |
-| engine-subcommand | 88 | 88 | 0 | 0 | 0 | 0 |
+| engine-subcommand | 89 | 88 | 1 | 0 | 0 | 0 |
 | jope-prime-command | 49 | 49 | 0 | 0 | 0 | 0 |
 | justfile-recipe | 6 | 6 | 0 | 0 | 0 | 0 |
 | new-bin | 12 | 0 | 12 | 0 | 0 | 0 |
@@ -40,7 +40,7 @@ you saw.
 | vendored-bin | 6 | 6 | 0 | 0 | 0 | 0 |
 | vendored-example | 6 | 6 | 0 | 0 | 0 | 0 |
 | wire | 5 | 0 | 0 | 0 | 5 | 0 |
-| **total** | **776** | **735** | **13** | **1** | **20** | **7** |
+| **total** | **777** | **735** | **14** | **1** | **20** | **7** |
 
 `moved`/`new` rows without a covering test: 657.
 
@@ -62,6 +62,7 @@ you saw.
 | engine-subcommand | jope-parallel monitor-checkpoint | crates/jope-engine/src/main.rs (jope-parallel monitor-checkpoint) | none | moved | `neural` feature (self-hosted only); `jope engine <sub>` umbrella is WP5 |
 | engine-subcommand | jope-parallel build-corpus | crates/jope-engine/src/main.rs (jope-parallel build-corpus) | jope-parallel::corpus_incremental cpu_cli_marks_verified_publication_completed; jope-parallel::corpus_incremental independent_legacy_binary_has_identical_artifact_bytes | moved | `jope engine <sub>` umbrella is WP5 |
 | engine-subcommand | jope-parallel export-teaching-corpus | crates/jope-engine/src/main.rs (jope-parallel export-teaching-corpus) | none | moved | `jope engine <sub>` umbrella is WP5 |
+| engine-subcommand | (new) jope-parallel project-corpus | crates/jope-engine/src/main.rs (jope-parallel project-corpus) | jope-parallel::corpus_projection cli_projects_a_corpus_and_prints_its_receipt | new | ungated (default and `neural` builds); writes a self-contained corpus copy restricted to training and validation contexts; `jope engine <sub>` umbrella is WP5 |
 | engine-subcommand | jope-parallel comparison-baseline | crates/jope-engine/src/main.rs (jope-parallel comparison-baseline) | none | moved | `jope engine <sub>` umbrella is WP5 |
 | engine-subcommand | jope-parallel enqueue | crates/jope-engine/src/main.rs (jope-parallel enqueue) | jope-parallel::queue command_line_admission_uses_the_exact_campaign_binding | moved | `jope engine <sub>` umbrella is WP5 |
 | engine-subcommand | jope-parallel campaign-coverage | crates/jope-engine/src/main.rs (jope-parallel campaign-coverage) | none | moved | hidden from --help; `jope engine <sub>` umbrella is WP5 |

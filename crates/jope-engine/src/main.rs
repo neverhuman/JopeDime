@@ -217,6 +217,15 @@ enum Cmd {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Write a self-contained corpus copy restricted to training and validation contexts.
+    ProjectCorpus {
+        #[arg(long)]
+        source_root: Option<PathBuf>,
+        #[arg(long)]
+        corpus: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     ComparisonBaseline {
         #[arg(long)]
         jobs: PathBuf,
@@ -1736,6 +1745,19 @@ fn main() -> Result<()> {
         }
         Cmd::ExportTeachingCorpus { corpus, output } => {
             jope_parallel::teaching_store::export(&cli.root, &corpus, &output)?
+        }
+        Cmd::ProjectCorpus {
+            source_root,
+            corpus,
+            output,
+        } => {
+            let receipt = jope_parallel::corpus_projection::project(
+                &cli.root,
+                source_root.as_deref().unwrap_or(cli.root.as_path()),
+                &corpus,
+                &output,
+            )?;
+            println!("{}", serde_json::to_string_pretty(&receipt)?);
         }
         Cmd::Doctor => println!("{}", serde_json::to_string_pretty(&operations::doctor())?),
         #[cfg(feature = "neural")]

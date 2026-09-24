@@ -211,14 +211,17 @@ fn checkpoint(
     micro: usize,
     batch_qualification: bool,
     exposure: &Option<crate::training_exposure::Counts>,
+    family_groups: &crate::training_exposure::FamilyGroups,
+    family_groups_known: bool,
 ) -> Result<()> {
     let step = opt.step;
     let receipt = launch.join(format!("checkpoint-{step}-rank-{rank}.json"));
-    write_json(
-        &receipt,
-        &json!({"rank":rank,"step":step,"parameter_sha256":parameter_hash(vs)?,"exposure":exposure,
-            "attempt":launch.strip_prefix(root)?}),
-    )?;
+    let mut rank_receipt = json!({"rank":rank,"step":step,"parameter_sha256":parameter_hash(vs)?,"exposure":exposure,
+        "committed_family_groups":family_groups,"attempt":launch.strip_prefix(root)?});
+    if !family_groups_known {
+        rank_receipt["family_groups_baseline"] = json!("unknown");
+    }
+    write_json(&receipt, &rank_receipt)?;
     let mut barrier = Tensor::ones([1], (Kind::Float, Device::Cuda(rank)));
     comm.reduce(&mut barrier)?;
     if rank == 0 {
@@ -269,9 +272,14 @@ fn checkpoint(
             crate::task_contract::training_partition(world, micro, global_batch)?;
         state["committed_exposure_by_rank"] = json!(hashes
             .iter()
-            .map(
-                |row| json!({"rank":row["rank"],"counts":row["exposure"],"attempt":row["attempt"]})
-            )
+            .map(|row| {
+                let mut committed = json!({"rank":row["rank"],"counts":row["exposure"],
+                    "committed_family_groups":row["committed_family_groups"],"attempt":row["attempt"]});
+                if let Some(baseline) = row.get("family_groups_baseline") {
+                    committed["family_groups_baseline"] = baseline.clone();
+                }
+                committed
+            })
             .collect::<Vec<_>>());
         write_json(&staging.join("state.json"), &state)?;
         for name in [
@@ -796,6 +804,12 @@ fn rank_impl(
         None => SEED,
     };
     let corpus_hash = file_hash(&corpus.join("index.json"))?;
+    {
+        let index_bytes = fs::read(corpus.join("index.json"))?;
+        ensure!(hash(&index_bytes) == corpus_hash, "corpus index changed");
+        let corpus_index: Value = serde_json::from_slice(&index_bytes)?;
+        crate::corpus_projection::verify_admitted_context_closure(&corpus_index)?;
+    }
     let resident = crate::teaching_store::load_resident(root, corpus)?;
     let (index, records) = resident.as_ref();
     ensure!(
@@ -811,11 +825,20 @@ fn rank_impl(
     let vocabulary: crate::grammar::Vocab = read_json(&corpus.join("vocabulary.json"))?;
     let mut families = BTreeMap::<String, Vec<usize>>::new();
     let mut validation = BTreeMap::<String, Vec<usize>>::new();
+    let mut teacher_family = BTreeMap::<usize, String>::new();
     let mut train_records = 0;
     for (i, g) in index.groups.iter().enumerate() {
         if g.partition == "meta_train" {
             families.entry(g.family.clone()).or_default().push(i);
             train_records += g.records.len();
+            if let Some(&teacher) = g.records.first() {
+                ensure!(
+                    teacher_family
+                        .insert(teacher, g.family.clone())
+                        .is_none_or(|family| family == g.family),
+                    "comparison teacher belongs to two training families"
+                );
+            }
         } else if g.partition == "meta_validation" {
             validation.entry(g.family.clone()).or_default().push(i);
         }
@@ -1020,6 +1043,17 @@ fn rank_impl(
     } else {
         Some(crate::training_exposure::Counts::default())
     };
+    let (family_baseline, family_baseline_known) = if resume {
+        crate::training_exposure::checkpoint_family_baseline(
+            selected_state
+                .as_ref()
+                .context("resume exposure state absent")?,
+            rank,
+            exposure_baseline.as_ref(),
+        )?
+    } else {
+        (crate::training_exposure::FamilyGroups::new(), true)
+    };
     let comm = Nccl::init(rank, world, &launch.join("nccl.id"))?;
     let device = Device::Cuda(rank);
     tch::manual_seed(seed as i64);
@@ -1176,6 +1210,13 @@ fn rank_impl(
     if rank == 0 && !resume {
         write_json(&initialization_path, &initialization)?;
     }
+    ensure!(
+        index
+            .contexts
+            .iter()
+            .all(|c| crate::corpus_projection::admitted_partition(&c.partition)),
+        "non-admitted context partition in training closure"
+    );
     let context_tensor = RESIDENT_CONTEXT.with(|cache| -> Result<Tensor> {
         if let Some((identity, tensor)) = cache.borrow().as_ref() {
             if *identity == index.context_index_sha256 {
@@ -1364,6 +1405,7 @@ fn rank_impl(
     };
     let mut observed_exposure = crate::training_exposure::Counts::default();
     let mut committed_exposure = crate::training_exposure::Counts::default();
+    let mut observed_families = crate::training_exposure::FamilyGroups::new();
     write_json(
         &launch.join(format!("rank-{rank}.json")),
         &json!({"schema":"parallel.neural_training.v1",
@@ -1408,6 +1450,11 @@ fn rank_impl(
                     &fresh_records,
                     serial,
                     balanced && !fresh.is_empty(),
+                )?;
+                crate::training_exposure::observe_families(
+                    &mut observed_families,
+                    &teacher_family,
+                    &ids,
                 )?;
             }
             let mut variables = vs.variables().into_iter().collect::<BTreeMap<_, _>>();
@@ -1497,6 +1544,10 @@ fn rank_impl(
             }
             if checkpoint_due {
                 let checkpoint_started = Instant::now();
+                crate::training_exposure::validate_families(
+                    &observed_families,
+                    &observed_exposure,
+                )?;
                 checkpoint(
                     root,
                     run,
@@ -1520,6 +1571,11 @@ fn rank_impl(
                         .as_ref()
                         .map(|base| base.add(&observed_exposure))
                         .transpose()?,
+                    &crate::training_exposure::combine_families(
+                        &family_baseline,
+                        &observed_families,
+                    )?,
+                    family_baseline_known,
                 )?;
                 committed_exposure = observed_exposure.clone();
                 checkpoint_seconds += checkpoint_started.elapsed().as_secs_f64();
@@ -1593,6 +1649,13 @@ fn rank_impl(
             .as_ref()
             .map(|base| base.add(&observed_exposure))
             .transpose()?);
+        crate::training_exposure::validate_families(&observed_families, &observed_exposure)?;
+        let committed_families =
+            crate::training_exposure::combine_families(&family_baseline, &observed_families)?;
+        complete["committed_family_groups_this_task_rank"] = json!(committed_families);
+        if !family_baseline_known {
+            complete["family_groups_baseline"] = json!("unknown");
+        }
         if policy.is_some() {
             complete["replay_policy_sha256"] = json!(policy_sha);
             complete["actual_fresh_comparisons_this_rank_attempt"] =

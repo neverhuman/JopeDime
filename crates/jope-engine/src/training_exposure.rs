@@ -3,7 +3,11 @@
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
+
+/// Comparison groups per training family. Kept beside `Counts`, never inside
+/// it, so historical checkpoint exposure rows still deserialize.
+pub type FamilyGroups = BTreeMap<String, u64>;
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -160,6 +164,73 @@ pub fn checkpoint_baseline(
     }
 }
 
+/// Every comparison group of eight belongs to the family of its teacher, the first id.
+/// A batch with any unknown teacher adds nothing.
+pub fn observe_families(
+    map: &mut FamilyGroups,
+    teacher_family: &BTreeMap<usize, String>,
+    ids: &[usize],
+) -> Result<()> {
+    ensure!(
+        ids.len() % 8 == 0,
+        "exposure requires complete comparison groups"
+    );
+    let mut batch = FamilyGroups::new();
+    for group in ids.chunks(8) {
+        let family = teacher_family
+            .get(&group[0])
+            .context("comparison teacher has no training family")?;
+        *batch.entry(family.clone()).or_default() += 1;
+    }
+    *map = combine_families(map, &batch)?;
+    Ok(())
+}
+
+pub fn validate_families(map: &FamilyGroups, counts: &Counts) -> Result<()> {
+    let groups = map
+        .values()
+        .try_fold(0u64, |total, groups| total.checked_add(*groups))
+        .context("training family exposure overflow")?;
+    ensure!(
+        groups == counts.comparison_groups,
+        "training family exposure differs from comparison groups"
+    );
+    Ok(())
+}
+
+pub fn combine_families(left: &FamilyGroups, right: &FamilyGroups) -> Result<FamilyGroups> {
+    let mut value = left.clone();
+    for (family, groups) in right {
+        let total = value.entry(family.clone()).or_default();
+        *total = total
+            .checked_add(*groups)
+            .context("training family exposure overflow")?;
+    }
+    Ok(value)
+}
+
+/// Checkpoints without family exposure resume from an empty map with the
+/// baseline marked unknown; that map stays a lower bound, never a total.
+pub fn checkpoint_family_baseline(
+    state: &Value,
+    rank: usize,
+    counts: Option<&Counts>,
+) -> Result<(FamilyGroups, bool)> {
+    let row = &state["committed_exposure_by_rank"][rank];
+    let Some(groups) = row
+        .get("committed_family_groups")
+        .filter(|groups| !groups.is_null())
+    else {
+        return Ok((FamilyGroups::new(), false));
+    };
+    let groups: FamilyGroups = serde_json::from_value(groups.clone())?;
+    let known = row["family_groups_baseline"] != "unknown";
+    if let (true, Some(counts)) = (known, counts) {
+        validate_families(&groups, counts)?;
+    }
+    Ok((groups, known))
+}
+
 pub fn attempt_snapshot(observed: &Counts, committed: &Counts, finished: bool) -> Result<Value> {
     let uncommitted = observed.subtract(committed)?;
     ensure!(
@@ -236,5 +307,63 @@ mod tests {
         state["step"] = json!(3001);
         state["committed_exposure_by_rank"][0]["rank"] = json!(true);
         assert!(checkpoint_baseline(&state, 0, 1, 16).is_err());
+    }
+    #[test]
+    fn family_groups_follow_each_comparison_teacher_and_sum_to_comparison_groups() {
+        let teachers = BTreeMap::from([(0, "a".to_string()), (8, "b".to_string())]);
+        let ids = (0..16).chain(0..8).collect::<Vec<_>>();
+        let mut counts = Counts::default();
+        counts.observe(&ids, &BTreeSet::new(), 0, false).unwrap();
+        let mut families = FamilyGroups::new();
+        observe_families(&mut families, &teachers, &ids).unwrap();
+        assert_eq!(
+            families,
+            FamilyGroups::from([("a".to_string(), 2), ("b".to_string(), 1)])
+        );
+        validate_families(&families, &counts).unwrap();
+        assert!(validate_families(&families, &Counts::default()).is_err());
+        let both = combine_families(&families, &families).unwrap();
+        validate_families(&both, &counts.add(&counts).unwrap()).unwrap();
+        assert!(validate_families(&both, &counts).is_err());
+    }
+    #[test]
+    fn family_groups_refuse_a_missing_teacher_without_partial_credit() {
+        let teachers = BTreeMap::from([(0, "a".to_string())]);
+        let mut map = FamilyGroups::new();
+        let ids = (0..8).chain(1..9).collect::<Vec<_>>();
+        assert!(observe_families(&mut map, &teachers, &ids).is_err());
+        assert!(observe_families(&mut map, &teachers, &ids[..4]).is_err());
+        assert!(map.is_empty());
+    }
+    #[test]
+    fn legacy_resume_starts_family_groups_empty_and_keeps_the_baseline_unknown() {
+        let teachers = BTreeMap::from([(0, "a".to_string())]);
+        let ids = (0..16).map(|id| id % 8).collect::<Vec<_>>();
+        let mut counts = Counts::default();
+        counts.observe(&ids, &BTreeSet::new(), 0, false).unwrap();
+        let mut families = FamilyGroups::new();
+        observe_families(&mut families, &teachers, &ids).unwrap();
+        assert_eq!(
+            checkpoint_family_baseline(&json!({"step":3000}), 0, None).unwrap(),
+            (FamilyGroups::new(), false)
+        );
+        let mut state = json!({"committed_exposure_by_rank":[{"rank":0,"counts":counts}]});
+        assert_eq!(
+            checkpoint_family_baseline(&state, 0, Some(&counts)).unwrap(),
+            (FamilyGroups::new(), false)
+        );
+        state["committed_exposure_by_rank"][0]["committed_family_groups"] = json!(families);
+        assert_eq!(
+            checkpoint_family_baseline(&state, 0, Some(&counts)).unwrap(),
+            (families.clone(), true)
+        );
+        let zero = Counts::default();
+        let differing = checkpoint_family_baseline(&state, 0, Some(&zero));
+        assert!(differing.is_err());
+        state["committed_exposure_by_rank"][0]["family_groups_baseline"] = json!("unknown");
+        assert_eq!(
+            checkpoint_family_baseline(&state, 0, Some(&zero)).unwrap(),
+            (families, false)
+        );
     }
 }

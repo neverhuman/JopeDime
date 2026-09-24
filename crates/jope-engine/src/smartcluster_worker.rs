@@ -490,6 +490,7 @@ pub(crate) fn verify_task_inputs(
     if let Some(closure) = &input.closure {
         input.input_artifacts = read_closure(root, closure)?;
     }
+    verify_training_closure(root, &input)?;
     let _verified_input_scope = crate::native_input_cache::enter(root, &input.input_artifacts)?;
     for (path, sha) in &input.input_artifacts {
         ensure!(
@@ -524,6 +525,26 @@ pub(crate) fn verify_task_inputs(
     }
     verify_required_inputs(&input)?;
     Ok((task, input))
+}
+
+fn verify_training_closure(root: &Path, input: &InputManifest) -> Result<()> {
+    if let Operation::Train { corpus, .. } = &input.operation {
+        // Historical Train manifests over unprojected corpora fail closed here by
+        // design: re-verifying them would open every excluded context they bind.
+        relative(corpus)?;
+        let path = corpus.join("index.json");
+        let sha256 = input
+            .input_artifacts
+            .get(&path)
+            .cloned()
+            .context("training corpus index is not in dependency closure")?;
+        let index = crate::native_genome::load_corpus_index(
+            root,
+            &crate::native_graph::Artifact { path, sha256 },
+        )?;
+        crate::corpus_projection::verify_admitted_context_closure(&index)?;
+    }
+    Ok(())
 }
 
 fn validate_operation(task: &TaskManifest, input: &InputManifest) -> Result<()> {
@@ -2000,6 +2021,61 @@ mod tests {
             *target_optimizer_step = 66000;
         }
         assert!(validate_operation(&task(), &input).is_err());
+    }
+    #[test]
+    fn training_closure_refuses_non_admitted_contexts_by_closure_key() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::create_dir(dir.path().join("corpus")).unwrap();
+        let mut input = InputManifest {
+            schema: "jope.smartcluster_input.v1".into(),
+            root: dir.path().to_path_buf(),
+            operation: Operation::Train {
+                corpus: "corpus".into(),
+                run: "run".into(),
+                launch: "launch".into(),
+                micro: 256,
+                checkpoint_steps: 100,
+                initialize: "initialize".into(),
+                replay_policy: "policy".into(),
+                initial_optimizer_step: 60000,
+                requested_step_increment: 3000,
+                target_optimizer_step: 63000,
+            },
+            closure: None,
+            input_artifacts: BTreeMap::new(),
+            output_receipt: "result".into(),
+        };
+        assert!(verify_training_closure(dir.path(), &input)
+            .unwrap_err()
+            .to_string()
+            .contains("not in dependency closure"));
+        for (partition, admitted) in [("meta_validation", true), ("meta_test", false)] {
+            let contexts = json!([{"partition": "meta_train"}, {"partition": partition}]);
+            let index = json!({"schema": "parallel.teaching_shards.v1", "contexts": contexts});
+            let index = serde_json::to_vec(&index).unwrap();
+            let entry = json!({"path": "corpus/index.json", "sha256": hash(&index)});
+            let mut closure = serde_json::to_vec(&entry).unwrap();
+            closure.push(b'\n');
+            fs::write(dir.path().join("corpus/index.json"), &index).unwrap();
+            fs::write(dir.path().join("closure.jsonl"), &closure).unwrap();
+            input.input_artifacts = read_closure(
+                dir.path(),
+                &ClosureManifest {
+                    path: "closure.jsonl".into(),
+                    sha256: hash(&closure),
+                },
+            )
+            .unwrap();
+            let result = verify_training_closure(dir.path(), &input);
+            if admitted {
+                result.unwrap();
+            } else {
+                assert!(result
+                    .unwrap_err()
+                    .to_string()
+                    .contains("non-admitted context partition at position 1"));
+            }
+        }
     }
     #[test]
     fn unsupported_service_and_unbound_inputs_fail_closed() {
