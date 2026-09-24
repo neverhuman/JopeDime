@@ -2,7 +2,7 @@
 
 The warm ASM invocation targets less than 60 seconds. Its original declared resource budget
 may exceed that target so that a real fitted demonstration can finish and record a measured
-miss. `execution_complete`/`ok` describe authenticated neural consumption, evolution, both
+miss. `execution_complete`/`ok` describe authenticated neural consumption, bounded refinement, both
 fitted outputs, predictions and an unclipped matched comparison. `target_met` and the retained
 `under_60_seconds` field are true only when that execution succeeds in less than 60 seconds.
 A successful execution with `target_met: false` does not pass the latency target.

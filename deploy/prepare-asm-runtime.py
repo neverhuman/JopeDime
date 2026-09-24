@@ -6,11 +6,11 @@ import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import time
+from pathlib import Path
 
 HOST_LOCK = Path("/run/lock/jope-exclusive-cpu.lock")
 TARGETS = ("jope", "jope-context-worker", "jope-policy-producer", "jope-context-proof")
@@ -117,7 +117,7 @@ def build_workers(args):
         stdout, stderr = out / "cargo.stdout.jsonl", out / "cargo.stderr.log"
         started = time.time_ns() // 1_000_000
         with stdout.open("xb") as a, stderr.open("xb") as b:
-            result = subprocess.run(command, cwd=root, env=env, stdout=a, stderr=b)
+            result = subprocess.run(command, cwd=root, env=env, stdout=a, stderr=b, check=False)
         receipt = {"schema": "jope.asm-cargo-build/v1", "source_sha40": args.expect_source,
                    "source_manifest_sha256": digest(source), "command": command,
                    "working_directory": str(root), "started_unix_ms": started,
@@ -206,7 +206,7 @@ def prepare_context(args):
         worker = build["executables"]["jope-context-worker"]
         command += ["--worker", worker["path"], "--worker-sha256", worker["sha256"], "--source-sha40", build["source_sha40"], "--output", str(out)]
         started = time.time()
-        result = subprocess.run(command, capture_output=True, text=True)
+        result = subprocess.run(command, capture_output=True, text=True, check=False)
         write(out / "preparation.json", {"command": command, "started_unix": started, "elapsed_seconds": time.time() - started,
                                          "exit_code": result.returncode, "stdout": result.stdout, "stderr": result.stderr,
                                          "fits": 0, "execution_budget_started": False})
@@ -258,7 +258,7 @@ def configuration(args):
         ref = artifact(out / "configuration.json")
         command = [build["executables"]["jope"]["path"], "optimize", "validate-configuration",
                    "--configuration", ref["path"], "--configuration-sha256", ref["sha256"]]
-        result = subprocess.run(command, capture_output=True, text=True)
+        result = subprocess.run(command, capture_output=True, text=True, check=False)
         write(out / "native-validation.json", {"command": command, "exit_code": result.returncode,
                                                "stdout": result.stdout, "stderr": result.stderr})
         require(result.returncode == 0, "native configuration validation failed; see native-validation.json")

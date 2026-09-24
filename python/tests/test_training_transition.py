@@ -108,3 +108,20 @@ def test_explicit_transition_preserves_moments_and_rejects_invariant_drift(
     assert transition.state_digest(recovered["model"]) == transition.state_digest(after["model"])
     assert transition.state_digest(recovered["optimizer"]) == transition.state_digest(after["optimizer"])
     assert recovered["consumed_batches"] == after["consumed_batches"]
+
+
+def test_fresh_teacher_does_not_relabel_replay_or_routing():
+    reference = synthetic_rows()
+    mixed = copy.deepcopy(reference)
+    fresh = copy.deepcopy(reference[0])
+    fresh.genome = "(pipe X (elasticnet))"
+    fresh.score = 100.0
+    mixed.insert(2, fresh)
+    control = copy.deepcopy(reference)
+    parent = {"routing_families": ["ridge", "elasticnet"], "routing_classes": 3}
+    transition.freeze_supervision(mixed, copy.deepcopy(reference), parent)
+    transition.freeze_supervision(control, copy.deepcopy(reference), parent)
+    assert transition.supervision_snapshot(mixed[:2]) == transition.supervision_snapshot(control[:2])
+    assert [row.metadata["oof_delta_to_incumbent"] for row in mixed[:3]] == [-1.0, 0.0, 99.0]
+    assert [row.metadata["routing_class"] for row in mixed[:3]] == [0, 0, 0]
+    assert [row.score for row in mixed[:3]] == [0.0, 1.0, 100.0]

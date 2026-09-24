@@ -93,6 +93,8 @@ def prepare(state, task, fresh_inputs, updates, fresh_preparation=None):
     )
     root = state / "comparison"
     root.mkdir(exist_ok=False)
+    reference = root / "supervision-reference.jsonl"
+    reference.write_bytes(b"".join(c.encoded(row) + b"\n" for row in replay_rows))
     branches = {}
     for name in BRANCHES:
         folder = root / name
@@ -111,6 +113,7 @@ def prepare(state, task, fresh_inputs, updates, fresh_preparation=None):
             "corpus": c.artifact(corpus),
             "vocabulary": c.artifact(folder / "active_vocab.json"),
             "transition": c.artifact(folder / "transition.json"),
+            "supervision_reference": c.artifact(reference),
             "batches": batches[name],
             "fresh_indices": list(range(len(replay_train), len(replay_train) + len(fresh_train)))
             if name == "fresh_replay"
@@ -135,7 +138,7 @@ def prepare(state, task, fresh_inputs, updates, fresh_preparation=None):
     return value
 
 
-def verify_round(state):
+def verify_round(state, worker_branch=None):
     plan, _ = c.verify_plan(state)
     value = c.read(state / "comparison.json")
     c.require(
@@ -148,17 +151,19 @@ def verify_round(state):
         value["window"] == window and value["category_window"] == category,
         "comparison original window changed",
     )
-    fresh_inputs = c.read(c.checked(value["fresh_inputs"]))
-    c.require(
-        fresh_inputs.pop("schema", None) == "jope.experimental-training-inputs/v1",
-        "fresh input schema differs",
-    )
-    c.admitted_rows(fresh_inputs, plan["category_inputs"][value["task"]]["data_kind"], value["task"])
+    if worker_branch != "replay_only":
+        fresh_inputs = c.read(c.checked(value["fresh_inputs"]))
+        c.require(
+            fresh_inputs.pop("schema", None) == "jope.experimental-training-inputs/v1",
+            "fresh input schema differs",
+        )
+        c.admitted_rows(fresh_inputs, plan["category_inputs"][value["task"]]["data_kind"], value["task"])
     c.verify_checkpoint(value["parent"]["resume"], plan, value["task"])
-    if value["fresh_preparation"]:
+    if worker_branch is None and value["fresh_preparation"]:
         c.checked(value["fresh_preparation"])
-    for branch in value["branches"].values():
-        for key in ("corpus", "vocabulary", "transition"):
+    branches = value["branches"].values() if worker_branch is None else [value["branches"][worker_branch]]
+    for branch in branches:
+        for key in ("corpus", "vocabulary", "transition", "supervision_reference"):
             c.checked(branch[key])
     return plan, value
 
@@ -169,7 +174,7 @@ def worker(state, name, attempt):
     from .train_v3 import train_policy_v3_from_jsonl
 
     state, attempt = Path(state), Path(attempt)
-    plan, value = verify_round(state)
+    plan, value = verify_round(state, name)
     c.original_window(state, plan, os.environ.get("JOPE_SUPERVISOR_UNIT"))
     c.require(
         int(time.time() * 1000) < value["category_window"]["deadline_unix_ms"] - 5000,
@@ -185,15 +190,21 @@ def worker(state, name, attempt):
     binding = {"comparison_sha256": c.sha(state / "comparison.json"), "branch": name}
     recovered = None
     for prior in sorted(attempt.parent.glob("attempt-*"), reverse=True):
-        if prior >= attempt or not (prior / "outcome.json").exists():
+        if prior >= attempt or not (prior / "started.json").exists() or (prior / "rejection.json").exists():
             continue
         for filename in ("resume.pt", "resume.updates.pt"):
             path = prior / filename
             if path.exists():
                 payload = torch.load(path, map_location="cpu", weights_only=False)
                 if payload.get("run_binding") == binding and payload.get("strict_progress"):
-                    recovered = c.artifact(path)
-                    break
+                    stopped = c.stopped_attempt(state, prior, c.read(prior / "started.json"))
+                    if stopped is not None:
+                        recovered = {
+                            "checkpoint": c.artifact(path),
+                            "started": c.artifact(prior / "started.json"),
+                            "outcome": stopped,
+                        }
+                        break
         if recovered:
             break
     tiny = plan["category_inputs"][value["task"]]["data_kind"] == "synthetic_fixture"
@@ -216,12 +227,13 @@ def worker(state, name, attempt):
         ffn_dim=16 if tiny else 1024,
         training_scope=f"category:{value['task']}",
         strict_resume=True,
-        resume_from=c.checked(recovered or value["parent"]["resume"]),
+        resume_from=c.checked(recovered["checkpoint"] if recovered else value["parent"]["resume"]),
         resume_checkpoint=attempt / "resume.pt",
         checkpoint_metadata=binding,
         batch_schedule=branch["batches"],
         corpus_transition=None if recovered else c.read(c.checked(branch["transition"])),
         resume_extra=parent["trainer_extra"],
+        supervision_reference=c.checked(branch["supervision_reference"]),
     )
     proof = result["training_proof"]
     c.require(
@@ -229,6 +241,25 @@ def worker(state, name, attempt):
         "unequal committed update budget",
     )
     saved = torch.load(attempt / "resume.pt", map_location="cpu", weights_only=False)
+    consumed = consumption(value, name, saved)
+    receipt = {
+        "schema": "jope.training-sibling/v1",
+        **binding,
+        "training_proof": proof,
+        "parent_model_sha256": value["parent_model_sha256"],
+        "parent_optimizer_sha256": value["parent_optimizer_sha256"],
+        "resume": c.artifact(attempt / "resume.pt"),
+        "checkpoint": c.artifact(attempt / "policy.pt"),
+        **consumed,
+        "recovered_from": recovered,
+        "completed_unix_ms": int(time.time() * 1000),
+    }
+    c.write(attempt / "complete.json", receipt, immutable=True)
+    return receipt
+
+
+def consumption(value, name, saved):
+    branch = value["branches"][name]
     consumed = saved["consumed_batches"]
     c.require(
         [b["row_indices"] for b in consumed] == branch["batches"],
@@ -240,28 +271,19 @@ def worker(state, name, attempt):
     fresh = sum(i in branch["fresh_indices"] for i in examples)
     c.require(fresh * 4 == len(examples) if name == "fresh_replay" else fresh == 0, "fresh exposure differs")
     families = [rows[i]["metadata"].get("source_family", rows[i]["dataset_id"]) for i in examples]
-    receipt = {
-        "schema": "jope.training-sibling/v1",
-        **binding,
-        "training_proof": proof,
-        "parent_model_sha256": value["parent_model_sha256"],
-        "parent_optimizer_sha256": value["parent_optimizer_sha256"],
-        "resume": c.artifact(attempt / "resume.pt"),
-        "checkpoint": c.artifact(attempt / "policy.pt"),
-        "examples": [c.digest(rows[i]) for i in examples],
+    identities = [c.digest(rows[i]) for i in examples]
+    return {
+        "examples": identities,
         "families": families,
-        "unique_examples": len(set(examples)),
-        "duplicate_examples": len(examples) - len(set(examples)),
+        "unique_examples": len(set(identities)),
+        "duplicate_examples": len(identities) - len(set(identities)),
         "unique_families": len(set(families)),
         "duplicate_families": len(families) - len(set(families)),
         "fresh_examples": fresh,
         "replay_examples": len(examples) - fresh,
         "nonpadding_tokens": sum(b["nonpadding_tokens"] for b in consumed),
-        "recovered_from": recovered,
-        "completed_unix_ms": int(time.time() * 1000),
+        "derived_supervision_sha256": t.digest(saved["derived_supervision"]),
     }
-    c.write(attempt / "complete.json", receipt, immutable=True)
-    return receipt
 
 
 def verify_sibling(value, name, receipt, comparison_sha):
@@ -282,6 +304,26 @@ def verify_sibling(value, name, receipt, comparison_sha):
         saved["training_proof"] == exported["training_proof"] == proof, "sibling checkpoint proof differs"
     )
     verify_training_proof(load_policy_v3(exported), proof)
+    verify_training_proof(load_policy_v3(saved), proof)
+    expected_consumption = consumption(value, name, saved)
+    c.require(
+        all(receipt.get(key) == expected for key, expected in expected_consumption.items()),
+        "sibling consumption receipt differs from checkpoint",
+    )
+    from ..schema import TrainingRow
+
+    branch = value["branches"][name]
+    rows = [
+        TrainingRow.from_json(json.loads(line))
+        for line in c.checked(branch["corpus"]).read_text().splitlines()
+    ]
+    reference = [
+        TrainingRow.from_json(json.loads(line))
+        for line in c.checked(branch["supervision_reference"]).read_text().splitlines()
+    ]
+    t.freeze_supervision(rows, reference, parent)
+    expected_supervision = t.supervision_snapshot([r for r in rows if r.metadata["split"] == "train"])
+    c.require(saved["derived_supervision"] == expected_supervision, "sibling replay supervision differs")
     c.require(
         proof["optimizer_state_resumed"]
         and proof["optimizer_updates_this_run"] == value["updates"]
@@ -291,7 +333,12 @@ def verify_sibling(value, name, receipt, comparison_sha):
         "sibling did not continue the frozen parent",
     )
     if receipt["recovered_from"]:
-        c.checked(receipt["recovered_from"])
+        for ref in receipt["recovered_from"].values():
+            c.checked(ref)
+        stop = c.read(c.checked(receipt["recovered_from"]["outcome"]))
+        if stop.get("schema") == "jope.training-recovery-stop/v1":
+            c.checked(stop["native_invocation"])
+            c.checked(stop["native_drain"])
     return receipt
 
 
@@ -315,6 +362,18 @@ def run(state, supervisor_unit=None):
                 break
             attempt = root / f"attempt-{len(list(root.glob('attempt-*'))) + 1:06d}"
             attempt.mkdir()
+            c.write(
+                attempt / "started.json",
+                {
+                    "plan_sha256": plan["plan_sha256"],
+                    "task": value["task"],
+                    "window_sha256": c.digest(value["window"]),
+                    "category_window_sha256": c.digest(value["category_window"]),
+                    "started_unix_ms": int(time.time() * 1000),
+                    "native_invocation": c.native_invocation(),
+                },
+                immutable=True,
+            )
             env = os.environ.copy()
             env.update(
                 {

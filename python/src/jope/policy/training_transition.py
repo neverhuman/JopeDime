@@ -88,3 +88,81 @@ def validate(transition, saved, expected, parent_path, corpus_path, batches):
     adapted = dict(saved)
     adapted["training_contract"] = expected
     return adapted
+
+
+def row_identity(row):
+    value = copy.deepcopy(row.to_json())
+    for key in ("oof_delta_to_incumbent", "rank_pct", "routing_class", "seq_weight"):
+        value.get("metadata", {}).pop(key, None)
+    return digest(value)
+
+
+def supervision_snapshot(rows):
+    return [
+        {
+            "row_sha256": row_identity(row),
+            **{key: row.metadata.get(key) for key in ("oof_delta_to_incumbent", "rank_pct", "routing_class")},
+            "seq_weight": row.metadata.get("seq_weight", 1.0),
+        }
+        for row in rows
+    ]
+
+
+def freeze_supervision(rows, reference_rows, parent):
+    """Keep replay targets/routing fixed; new scores compare to frozen incumbents."""
+    import math
+
+    from ..split_integrity import partition_training_rows
+    from .train_v3 import _recompute_reward_targets, _routing_winners, _score_label
+
+    selected, reference = partition_training_rows(rows), partition_training_rows(reference_rows)
+    if (
+        selected["report_only"]
+        or reference["report_only"]
+        or not reference["train"]
+        or not reference["development"]
+    ):
+        raise ValueError("supervision reference must contain only train/development rows")
+    for split in ("train", "development"):
+        originals = reference[split]
+        _recompute_reward_targets(originals)
+        frozen = {row_identity(row): row.metadata for row in originals}
+        if len(frozen) != len(originals):
+            raise ValueError("ambiguous duplicate replay supervision rows")
+        groups = {}
+        for row in originals:
+            md = row.metadata or {}
+            identity = md.get("reward_pair_identity") or md.get("dataset_hash") or row.dataset_id
+            score = _score_label(row)
+            if score is not None:
+                groups.setdefault(str(identity), []).append(score)
+        _recompute_reward_targets(selected[split])
+        for row in selected[split]:
+            md = row.metadata or {}
+            old = frozen.get(row_identity(row))
+            identity = md.get("reward_pair_identity") or md.get("dataset_hash") or row.dataset_id
+            scores, score = groups.get(str(identity)), _score_label(row)
+            if old is not None:
+                for key in ("oof_delta_to_incumbent", "rank_pct"):
+                    if key in old:
+                        md[key] = old[key]
+                    else:
+                        md.pop(key, None)
+            elif scores and score is not None:
+                md["oof_delta_to_incumbent"] = score - max(scores)
+                md["rank_pct"] = min(1.0, sum(s < score for s in scores) / max(1, len(scores) - 1))
+            row.metadata = md
+    winners = _routing_winners(reference["train"])
+    families = {name: i for i, name in enumerate(parent.get("routing_families") or [])}
+    for row in [*rows, *reference_rows]:
+        md = row.metadata or {}
+        prov = str(md.get("provenance", "corpus")).split("_g")[0] or "corpus"
+        value, rank = md.get("oof_delta_to_incumbent"), md.get("rank_pct")
+        finite = isinstance(value, (int, float)) and math.isfinite(float(value))
+        if prov not in ("corpus", "quant_report", "seed"):
+            winner = finite and (float(value) == 0.0 or (isinstance(rank, (int, float)) and rank >= 0.9))
+            md["seq_weight"] = 1.0 if winner else (0.05 if finite else 0.0)
+        winner = winners.get(md.get("dataset_hash") or row.dataset_id)
+        md["routing_class"] = families.get(winner[1], parent["routing_classes"] - 1) if winner else -1
+        row.metadata = md
+    return reference
