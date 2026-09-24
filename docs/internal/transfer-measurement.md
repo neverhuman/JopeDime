@@ -49,7 +49,7 @@ work estimate; search, context and I/O overhead are extra.
 
 Groups cannot cross outer partitions. Audit and inner folds deterministically assign
 lexically sorted group IDs round-robin, retaining original row order within partitions.
-Any empty scoring/inner fold is an explicit feasibility failure. This version assumes
+Seeds change executor randomness, not these partitions. Any empty scoring/inner fold is an explicit feasibility failure. This version assumes
 exchangeable groups; time-ordered or other constrained evaluation requires a separately
 versioned protocol. Five outer and five audit folds do not mean 25 fixed-recipe refits:
 all six searches per outer fold are independent, and their winning recipes may differ.
