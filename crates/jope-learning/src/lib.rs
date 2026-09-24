@@ -8,7 +8,7 @@
 //! blobs/sha256/<64hex>                               content-addressed record blobs
 //! hwm/ledger/<yyyy>/<mm>/<ulid>.jsonl               every HWM event, sealed, hash-chained
 //! hwm/ledger/HEAD.json                               tip of the HWM chain
-//! hwm/<task>/<dataset_hash>/<cut_id>/current.json    the current best record for an exact cut
+//! hwm/<task>/<dataset_hash>/<cut_id>/<identity>/current.json    exact-comparison current record
 //! scores/ledger/<yyyy>/<mm>/<ulid>.jsonl            every score row, sealed, hash-chained
 //! scores/ledger/HEAD.json
 //! ```
@@ -16,6 +16,7 @@
 pub mod canon;
 pub mod champion;
 pub mod civil;
+pub mod eligibility;
 pub mod hwm;
 pub mod ledger;
 pub mod metric;

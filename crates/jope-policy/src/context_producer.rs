@@ -27,6 +27,7 @@ use std::{
 };
 
 mod admission;
+pub mod classification;
 mod input;
 pub mod worker;
 pub use admission::*;

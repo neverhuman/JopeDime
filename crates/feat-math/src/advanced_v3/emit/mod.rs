@@ -48,8 +48,8 @@ struct BoundManifest<'a> {
 /// Only strings that would trip the lint on their own are masked (an innocent
 /// name never touches emitter text), and only in the spellings the artifacts
 /// embed them in: raw, JSON-escaped (the C++ codec), Rust `Debug`-escaped (the
-/// Rust artifact's string literals) and the `Debug` of the JSON form (the Python
-/// artifact embeds its JSON literals through `{:?}`). Entries shorter than three
+/// Rust artifact's string literals) and the JSON quotation of the JSON form (the Python
+/// artifact embeds its JSON literals through valid JSON string quotation). Entries shorter than three
 /// bytes cannot contain a banned token and are skipped. Longest first, so a name
 /// that contains another is masked whole. One edge fails closed: a name that
 /// does not trip raw but whose escaped spelling completes a token (a leading
@@ -80,7 +80,7 @@ pub(crate) fn user_text(model: &BoundModel) -> Vec<String> {
         let json_inner = json.get(1..json.len().saturating_sub(1)).unwrap_or("");
         let debug = format!("{text:?}");
         let debug_inner = &debug[1..debug.len() - 1];
-        let debug_of_json = format!("{json_inner:?}");
+        let debug_of_json = serde_json::to_string(json_inner).unwrap_or_default();
         let debug_of_json_inner = &debug_of_json[1..debug_of_json.len() - 1];
         for form in [json_inner, debug_inner, debug_of_json_inner] {
             if !form.is_empty() && form != text {
@@ -207,6 +207,12 @@ fn emit_bound_python(model: &BoundModel) -> Result<String> {
     let ops_json = serde_json::to_string(ops)?;
     let calibration_json = serde_json::to_string(calibration)?;
     let target_json = serde_json::to_string(target)?;
+    let headers_literal = serde_json::to_string(&headers)?;
+    let input_literal = serde_json::to_string(&input)?;
+    let head_json_literal = serde_json::to_string(&head_json)?;
+    let ops_json_literal = serde_json::to_string(&ops_json)?;
+    let calibration_json_literal = serde_json::to_string(&calibration_json)?;
+    let target_json_literal = serde_json::to_string(&target_json)?;
     let kind = match head {
         V3Head::LogitRidge(_) => "logit",
         V3Head::TabBoost(_) => "tab_boost",
@@ -232,12 +238,12 @@ import math
 import struct
 import sys
 
-HEADERS = json.loads({headers:?})
-INPUT = json.loads({input:?})
-OPS = json.loads({ops_json:?})
-HEAD = json.loads({head_json:?})
-CALIBRATION = json.loads({calibration_json:?})
-TARGET = json.loads({target_json:?})
+HEADERS = json.loads({headers_literal})
+INPUT = json.loads({input_literal})
+OPS = json.loads({ops_json_literal})
+HEAD = json.loads({head_json_literal})
+CALIBRATION = json.loads({calibration_json_literal})
+TARGET = json.loads({target_json_literal})
 HEAD_KIND = {kind:?}
 MISSING_AWARE = {missing_aware}
 
@@ -1681,5 +1687,77 @@ mod tests {
     fn emitted_lag_and_roll_use_fitted_group_tails() {
         assert_row_op_artifacts("lag k=2", 0);
         assert_row_op_artifacts("roll k=3", 1);
+    }
+}
+
+#[cfg(test)]
+mod quotation_regression_tests {
+    use super::*;
+    use crate::advanced_v3::{
+        fit_table, predict_table, ColumnSpec, DataSchema, Objective, RawTable, RowSemantics,
+        TaskSpec,
+    };
+    #[test]
+    fn bound_python_control_unicode_json_is_valid_and_preserves_fitted_bits() {
+        let table = RawTable::new(
+            vec!["label\u{2028}\u{301}\u{7f}".into()],
+            (0..12)
+                .map(|i| vec![format!("category-{}\u{2028}\u{301}\u{7f}", i % 3)])
+                .collect(),
+        )
+        .unwrap();
+        let schema = DataSchema {
+            columns: vec![ColumnSpec::categorical(table.headers[0].clone())],
+            row_semantics: RowSemantics::Iid,
+        };
+        let model = fit_table(
+            &crate::GenomeIr::parse("(pipe X (input categorical=onehot) (ridge))").unwrap(),
+            &TaskSpec::regression(Objective::Rmse).unwrap(),
+            &schema,
+            &table,
+            &(0..12).map(|i| i as f64).collect::<Vec<_>>(),
+        )
+        .unwrap();
+        let source = emit_bound(&model, &crate::transpile::EmitOptions::default())
+            .unwrap()
+            .python;
+        let rows = serde_json::to_string(&table.rows).unwrap();
+        let script=format!("{source}\nimport struct\nrows=json.loads({})\nfor row in rows:\n    print(struct.pack('>d',predict_numeric(encode(row)[0])).hex())\n",serde_json::to_string(&rows).unwrap());
+        let mut child = std::process::Command::new("python3")
+            .args([
+                "-c",
+                "import sys;exec(compile(sys.stdin.read(),'<fitted>','exec'))",
+            ])
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .unwrap();
+        use std::io::Write;
+        child
+            .stdin
+            .take()
+            .unwrap()
+            .write_all(script.as_bytes())
+            .unwrap();
+        let output = child.wait_with_output().unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let actual = String::from_utf8(output.stdout)
+            .unwrap()
+            .lines()
+            .map(|line| u64::from_str_radix(line, 16).unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            actual,
+            predict_table(&model, &table)
+                .unwrap()
+                .iter()
+                .map(|v| v.to_bits())
+                .collect::<Vec<_>>()
+        );
     }
 }

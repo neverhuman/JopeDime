@@ -12,6 +12,7 @@ mod evolution;
 mod feature_block;
 mod fitted_cpp;
 mod fitted_cpp_runtime;
+mod fitted_portable;
 mod grammar;
 mod heads;
 mod input;
@@ -36,6 +37,12 @@ pub use fitted_cpp::{emit_fitted_cpp17, supports_fitted_cpp17, FittedCppArtifact
 pub use fitted_cpp_runtime::{
     encode_fitted_cpp17, validate_fitted_cpp_codec, EncodedTable, FittedCppError, FittedCppModel,
     FittedCppRuntime, FittedModelCodec,
+};
+pub use fitted_portable::{
+    emit_fitted_portable, emit_fitted_public_cpp17, fitted_javascript_unsupported,
+    fitted_portable_templates, fitted_portable_unsupported, fitted_public_cpp_unsupported,
+    lint_fitted_public_text, FittedPortableSources, PortableUnsupported, FITTED_PORTABLE_EMITTER,
+    FITTED_PUBLIC_CPP_EMITTER,
 };
 pub use heads::MULTICLASS_MAX_TRANSFORMED_FEATURES;
 pub use pipeline::{

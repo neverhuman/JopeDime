@@ -72,7 +72,11 @@
         "python3 deploy/ci/test-aggregate.py",
         "python3 deploy/ci/test-status.py",
         "python3 deploy/ci/test-runner.py",
-        "python3 deploy/ci/test-full-main.py"
+        "python3 deploy/ci/test-full-main.py",
+        "python3 deploy/ci/test-training-proof.py",
+        "python3 deploy/ci/test-install-private.py",
+        "python3 deploy/ci/test-qualify-demo.py",
+        "python3 deploy/ci/test-prepare-asm-runtime.py"
       ]
     },
     "rust-check": {
@@ -142,7 +146,8 @@
       "feature_selection": "explicit",
       "result_backend": "nextest",
       "checks": [
-        "cargo nextest run --config-file rust-test-evidence/nextest.toml -P pr --locked $(bash deploy/ci/rust-test-scope.sh) --features jope-cli/asm"
+        "cargo nextest run --config-file rust-test-evidence/nextest.toml -P pr --locked $(bash deploy/ci/rust-test-scope.sh) --features jope-cli/asm,jope-cli/qualified-training-context",
+        "python3 deploy/ci/training-proof.py rust --collection \"$EVIDENCE/collection.json\" --junit \"$CARGO_TARGET_DIR/nextest/pr/junit.xml\""
       ]
     },
     "emitters": {
@@ -243,7 +248,8 @@
         "uv sync --locked --extra dev --extra cpu --extra benchmark --extra foundry",
         "uv run --no-sync ruff check .",
         "uv run --no-sync ruff format --check .",
-        "uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m \"not xbabe2\" -p no:cacheprovider --junitxml=\"$EVIDENCE/junit.xml\""
+        "uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m \"not xbabe2\" -p no:cacheprovider --basetemp=\"$EVIDENCE/pytest-tmp\" --junitxml=\"$EVIDENCE/junit.xml\"",
+        "python3 deploy/ci/training-proof.py python --junit \"$EVIDENCE/junit.xml\""
       ]
     },
     "e2e-smoke": {
@@ -402,7 +408,10 @@
       "requires_nonzero_tests": true,
       "stage": "execution",
       "result_backend": "pytest",
-      "feature_selection": "not-applicable"
+      "feature_selection": "not-applicable",
+      "checks": [
+        "python3 deploy/ci/training-proof.py python --junit \"$EVIDENCE/junit.xml\""
+      ]
     },
     "full-default": {
       "command": [
@@ -444,7 +453,10 @@
       "requires_nonzero_tests": true,
       "stage": "execution",
       "result_backend": "nextest",
-      "feature_selection": "explicit"
+      "feature_selection": "explicit",
+      "checks": [
+        "python3 deploy/ci/training-proof.py rust --collection \"$EVIDENCE/collection.json\" --junit \"$EVIDENCE/junit.xml\""
+      ]
     },
     "full-doctests": {
       "command": [
@@ -568,7 +580,10 @@
       "requires_nonzero_tests": true,
       "stage": "execution",
       "result_backend": "nextest",
-      "feature_selection": "explicit"
+      "feature_selection": "explicit",
+      "checks": [
+        "python3 deploy/ci/training-proof.py policy --collection \"$EVIDENCE/collection.json\" --junit \"$EVIDENCE/junit.xml\""
+      ]
     },
     "full-s3-offline": {
       "command": [
@@ -8024,6 +8039,7 @@
       "discovery": {
         "kind": "feature",
         "dependencies": [
+          "dep:jope-learning",
           "dep:jope-policy",
           "jope-pipeline/qualified-context"
         ]
@@ -8033,7 +8049,7 @@
         "full-default"
       ],
       "dispositions": [],
-      "scope": "Explicit CLI asm feature collects paired optimization, typed generic sampler, scheduling, report and build receipt contracts; live model proof separate."
+      "scope": "Explicit CLI asm feature collects paired optimization, typed generic sampler, scheduling, report and build receipt contracts; live model proof separate. Includes authenticated teaching admission through jope-learning; no live training qualification implied."
     },
     "feature:jope-bench/default": {
       "discovery": {
@@ -8060,6 +8076,182 @@
       ],
       "dispositions": [],
       "scope": "Explicit optional CLI command and benchmark integration; CPU-only dependency graph, no GPU/model qualification implied."
+    },
+    "python:deploy/ci/test-training-proof.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Direct stdlib unittest execution verifies required-training collection/JUnit gates reject missing, skipped, failed, stale or renamed cases."
+    },
+    "python:python/tests/test_experimental_proposal.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
+    },
+    "python:python/tests/test_experimental_runtime.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
+    },
+    "python:python/tests/test_frozen_vocabulary_training.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
+    },
+    "python:python/tests/test_policy_training_contract.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
+    },
+    "python:python/tests/test_training_campaign.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
+    },
+    "python:python/tests/test_training_corpus_contract.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
+    },
+    "feature:jope-cli/default": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "qualified-training-context"
+        ]
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "inputs",
+        "full-default"
+      ],
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "scope": "Default CPU-only native training/context admission feature. Hosted nextest explicitly enables qualified-training-context and requires named training/context tests; actual supervised training and GPU execution need separate bounded qualification."
+    },
+    "feature:jope-cli/qualified-training-context": {
+      "discovery": {
+        "kind": "feature",
+        "dependencies": [
+          "dep:jope-policy",
+          "jope-pipeline/qualified-context"
+        ]
+      },
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "inputs",
+        "full-default"
+      ],
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "scope": "Default CPU-only native training/context admission feature. Hosted nextest explicitly enables qualified-training-context and requires named training/context tests; actual supervised training and GPU execution need separate bounded qualification."
+    },
+    "python:deploy/ci/test-install-private.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Direct stdlib unittest execution of checksum-pinned private CLI installation and source-build custody boundaries. Compiler, ELF and binary probes are explicitly mocked; no actual source build, installation or model fit."
+    },
+    "python:deploy/ci/test-qualify-demo.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Direct stdlib unittest execution of synthetic retained demo scoring, identity and tamper validation. No actual model fit, installation or neural demo."
+    },
+    "python:deploy/ci/test-prepare-asm-runtime.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "hygiene"
+      ],
+      "dispositions": [],
+      "scope": "Metadata fixture validation of source/build/worker/configuration pins, custody paths and lock refusal. Compiler and native validator are mocked; no numerical worker or model qualification."
+    },
+    "python:python/tests/test_training_input_closure.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Projected input allowlist metadata fixtures: forbidden/extra/unlisted artifacts and excluded-data mutation invariance, with no model load or numerical qualification."
+    },
+    "python:python/tests/test_training_transition.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Tiny CPU fixtures for explicit optimizer-preserving corpus transitions and equal-update siblings; no real-corpus quality or serving qualification."
+    },
+    "python:python/tests/test_training_comparison.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "dispositions": [],
+      "scope": "Tiny CPU fixtures for explicit optimizer-preserving corpus transitions and equal-update siblings; no real-corpus quality or serving qualification."
     }
   }
 }

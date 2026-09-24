@@ -21,33 +21,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub const INNER_FOLD_POLICY: &str = "asm.inner-groups/largest-first-lexicographic-balance-five/v1";
-
-/// Pure assignment from training IDs/groups. Target values and outer hold rows
-/// cannot influence the inner split. A group is never broken to fill a fold.
+pub const INNER_FOLD_POLICY: &str = jope_pipeline::search_plan::INNER_GROUP_POLICY;
 pub fn inner_folds(rows: &[PreparedRow]) -> Result<Vec<Vec<String>>> {
-    let mut groups: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
-    for row in rows {
-        groups.entry(&row.group).or_default().push(&row.id);
-    }
-    ensure!(
-        groups.len() >= 5,
-        "fewer than five training groups for OOF selection"
-    );
-    let mut groups = groups.into_iter().collect::<Vec<_>>();
-    groups.sort_by(|(a, ar), (b, br)| br.len().cmp(&ar.len()).then(a.cmp(b)));
-    let mut sizes = [0usize; 5];
-    let mut assignment = BTreeMap::new();
-    for (group, members) in groups {
-        let fold = (0..5).min_by_key(|&i| (sizes[i], i)).expect("five folds");
-        sizes[fold] += members.len();
-        assignment.insert(group, fold);
-    }
-    let mut folds = vec![vec![]; 5];
-    for row in rows {
-        folds[assignment[row.group.as_str()]].push(row.id.clone());
-    }
-    Ok(folds)
+    jope_pipeline::search_plan::grouped_inner_folds(
+        &rows
+            .iter()
+            .map(|r| (r.id.clone(), r.group.clone()))
+            .collect::<Vec<_>>(),
+    )
 }
 
 pub fn selection(cut: &DevelopmentCut, outer: EvaluationRequest) -> Result<SelectionPlan> {

@@ -14,6 +14,7 @@ pub const COMPONENT_BUNDLE_MANIFEST_SHA256: &str =
 pub enum WorkerMode {
     Produce,
     QualifyCase,
+    ProduceClassification,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -33,6 +34,7 @@ impl WorkerInvocation {
             match self.mode {
                 WorkerMode::Produce => "produce",
                 WorkerMode::QualifyCase => "qualify-case",
+                WorkerMode::ProduceClassification => "produce-classification",
             }
             .into(),
             "--input".into(),
@@ -71,6 +73,7 @@ impl WorkerInvocation {
         let mode = match field("--mode")? {
             "produce" => WorkerMode::Produce,
             "qualify-case" => WorkerMode::QualifyCase,
+            "produce-classification" => WorkerMode::ProduceClassification,
             _ => anyhow::bail!("unsupported context worker mode"),
         };
         let result = Self {
@@ -228,6 +231,13 @@ pub fn execute(invocation: &WorkerInvocation) -> Result<()> {
             &invocation.source_sha40,
             &invocation.producer_sha256,
         )?)?,
+        WorkerMode::ProduceClassification => {
+            serde_json::to_vec(&producer.produce_classification(
+                &input,
+                &invocation.source_sha40,
+                &invocation.producer_sha256,
+            )?)?
+        }
         WorkerMode::QualifyCase => {
             let result = producer.produce_reference_case(
                 &input,
@@ -274,6 +284,29 @@ pub fn write_new(path: &std::path::Path, bytes: &[u8]) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn classification_is_a_distinct_explicit_worker_mode() {
+        let i = WorkerInvocation {
+            mode: WorkerMode::ProduceClassification,
+            input: AssetFile {
+                path: "/private/input.json".into(),
+                sha256: "a".repeat(64),
+            },
+            assets: AssetFile {
+                path: "/private/assets.json".into(),
+                sha256: "b".repeat(64),
+            },
+            source_sha40: "c".repeat(40),
+            producer_sha256: "d".repeat(64),
+            output: "/private/output.json".into(),
+        };
+        let args = i.arguments();
+        assert_eq!(args[1], "produce-classification");
+        assert!(matches!(
+            WorkerInvocation::parse(&args).unwrap().mode,
+            WorkerMode::ProduceClassification
+        ));
+    }
     #[test]
     fn invocation_roundtrip_and_extra_paths_refused() {
         let i = WorkerInvocation {

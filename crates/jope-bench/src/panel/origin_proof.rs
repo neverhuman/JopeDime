@@ -25,7 +25,7 @@ struct Selection {
     dataset: String,
     resources: Artifact,
 }
-fn selected(plan: &CampaignPlan) -> Result<String> {
+pub(crate) fn selected(plan: &CampaignPlan) -> Result<String> {
     let runtime = plan
         .runtimes
         .get(SELECTION_RUNTIME)
@@ -135,7 +135,19 @@ pub fn prepare(
         "asm.accepted-policy-state".into(),
         jope_policy::ACCEPTED_STATE_SHA256.into(),
     );
+    for (task, experimental) in &config.experimental {
+        for (kind, sha) in [
+            ("policy", &experimental.checkpoint.sha256),
+            ("export", &experimental.export_manifest.sha256),
+            ("runtime", &experimental.runtime.runtime_sha256),
+        ] {
+            plan.experiment
+                .checkpoints
+                .insert(format!("asm.experimental-{kind}/{task}"), sha.clone());
+        }
+    }
     plan.scope = SCOPE.into();
+    super::teaching::preregister(&mut plan, &config)?;
     let identity = plan.identity()?;
     super::worker::write_private(output, &plan)?;
     Ok(
@@ -328,6 +340,6 @@ pub fn report(
     });
     let evolved = neural.is_some_and(SearchReceipt::has_fitted_neural_descendant);
     Ok(
-        json!({"schema":PROTOCOL,"ok":true,"dataset":dataset.dataset.id,"task":dataset.dataset.task,"window":window,"outcomes":attached.inventory,"neural":counts(neural),"generic":counts(generic),"genuine_neural_origin_fit_proved":genuine,"neural_offspring_fit_proved":evolved,"generation_zero_and_evolution_proved":genuine&&evolved,"refitted_predictions":predictions,"cost":super::asm_campaign::accounting(plan,journal)?,"final_test_targets_used":false,"complete_panel_demonstration":false,"comparison_wins_claimed":false}),
+        json!({"schema":PROTOCOL,"ok":true,"dataset":dataset.dataset.id,"task":dataset.dataset.task,"window":window,"outcomes":attached.inventory,"neural":counts(neural),"generic":counts(generic),"genuine_neural_origin_fit_proved":genuine,"neural_offspring_fit_proved":evolved,"generation_zero_and_evolution_proved":genuine&&evolved,"refitted_predictions":predictions,"cost":super::asm_campaign::accounting(plan,journal)?,"final_test_targets_used":false,"optimization_visible_labels":"development","test_headline_eligible":false,"complete_panel_demonstration":false,"comparison_wins_claimed":false}),
     )
 }

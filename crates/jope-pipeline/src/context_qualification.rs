@@ -65,6 +65,60 @@ pub struct CompletedQualification {
     pub case_outputs: Vec<Artifact>,
     pub case_executions: Vec<ExecutionProof>,
 }
+
+impl CompletedQualification {
+    /// Re-admit retained evidence without running workers or opening a window.
+    pub fn verify(&self, source: &str, program: &Artifact) -> Result<()> {
+        ensure!(
+            self.case_outputs.len() == 8 && self.case_executions.len() == 8,
+            "qualification requires eight executed cases"
+        );
+        program.verify()?;
+        let manifest = read_artifact(&self.reference_manifest, 128 << 20)?;
+        let cases = context_producer::case_inputs(&manifest, &self.reference_manifest.sha256)?;
+        let mut outputs = Vec::new();
+        for ((case, output), proof) in cases
+            .iter()
+            .zip(&self.case_outputs)
+            .zip(&self.case_executions)
+        {
+            ensure!(
+                proof.experiment.source_sha == source
+                    && proof.job.command.program.path == program.path
+                    && proof.job.command.program.sha256 == program.sha256,
+                "qualification source or worker differs"
+            );
+            let input_sha = sha256_hex(case);
+            let inputs = proof
+                .job
+                .command
+                .inputs
+                .iter()
+                .filter(|a| a.sha256 == input_sha)
+                .collect::<Vec<_>>();
+            ensure!(
+                inputs.len() == 1,
+                "qualification case input absent or duplicated"
+            );
+            proof.attest(inputs[0], output)?;
+            outputs.push(read_artifact(output, 2 << 20)?);
+        }
+        let rebuilt = context_producer::aggregate_qualification(
+            &manifest,
+            &self.reference_manifest.sha256,
+            outputs,
+            source,
+            &program.sha256,
+        )?;
+        let retained: serde_json::Value =
+            serde_json::from_slice(&read_artifact(&self.qualification, 32 << 20)?)?;
+        ensure!(
+            serde_json::to_value(rebuilt)? == retained,
+            "qualification differs from actual case outputs"
+        );
+        Ok(())
+    }
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct QualificationRun {

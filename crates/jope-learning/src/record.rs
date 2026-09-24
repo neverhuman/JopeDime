@@ -12,7 +12,24 @@ pub const SCORE_SCHEMA: &str = "jope.score/v1";
 /// The evaluator marker for records whose scoring binary is not bound by hash.
 pub const UNBOUND: &str = "unbound";
 
-/// What `identity_sha256` hashes: the canonical JSON of exactly these six fields.
+/// Numerical and class semantics required by new measured teaching admission.
+/// Historical identities omit this field and retain their original hashes.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ComparisonContext {
+    pub numerical_policy: String,
+    pub stage: String,
+    pub aggregation: String,
+    pub label_role: String,
+    pub sealed: bool,
+    pub benchmark_valid: bool,
+    pub recipe_encoding: String,
+    pub class_order: Vec<String>,
+    /// Proposal/checkpoint lineage when applicable; None when no proposal checkpoint applies.
+    pub checkpoint_sha256: Option<String>,
+}
+
+/// What `identity_sha256` hashes: all comparison fields, including optional context.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct HwmIdentity {
@@ -31,6 +48,8 @@ pub struct HwmIdentity {
     pub vocabulary_sha256: String,
     /// Scoring protocol the score was measured under.
     pub protocol: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub comparison: Option<ComparisonContext>,
 }
 
 impl HwmIdentity {
@@ -171,6 +190,39 @@ impl HwmRecord {
             "identity_sha256 does not hash the identity"
         );
         ensure!(is_hex64(&self.identity.cut_id), "cut_id is not 64 hex");
+        if let Some(context) = &self.identity.comparison {
+            ensure!(
+                !context.numerical_policy.trim().is_empty(),
+                "empty numerical policy"
+            );
+            ensure!(
+                !context.stage.is_empty()
+                    && !context.aggregation.is_empty()
+                    && !context.label_role.is_empty()
+                    && !context.recipe_encoding.is_empty(),
+                "incomplete scoring context"
+            );
+            ensure!(
+                context.sealed == self.sealed && context.benchmark_valid == self.benchmark_valid,
+                "record role differs from hashed comparison context"
+            );
+            ensure!(
+                context
+                    .checkpoint_sha256
+                    .as_ref()
+                    .is_none_or(|value| is_hex64(value)),
+                "invalid comparison checkpoint hash"
+            );
+            ensure!(
+                context
+                    .class_order
+                    .iter()
+                    .collect::<std::collections::BTreeSet<_>>()
+                    .len()
+                    == context.class_order.len(),
+                "duplicate comparison classes"
+            );
+        }
         ensure!(
             self.identity.evaluator_sha256 == self.evaluator.sha256,
             "identity.evaluator_sha256 differs from evaluator.sha256"
@@ -324,6 +376,7 @@ mod tests {
 
     fn identity() -> HwmIdentity {
         HwmIdentity {
+            comparison: None,
             task: "regression".into(),
             dataset_hash: "4e9ab20dc7413158".into(),
             cut_id: "0".repeat(64),
@@ -352,6 +405,7 @@ mod tests {
         );
         // Independently computed vector for a fully literal identity.
         let literal = HwmIdentity {
+            comparison: None,
             task: "binary".into(),
             dataset_hash: "0259e0b6af043f58".into(),
             cut_id: "a".repeat(64),

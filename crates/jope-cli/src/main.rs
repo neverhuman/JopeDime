@@ -11,6 +11,9 @@ use jope_cli::{
 };
 use std::{path::PathBuf, process::ExitCode};
 
+#[cfg(target_os = "linux")]
+mod train;
+
 #[derive(Parser)]
 #[command(
     name = "jope",
@@ -26,8 +29,13 @@ struct Cli {
 enum Command {
     /// Report current ASM capabilities and remaining qualification gaps.
     Doctor,
+    /// Fit, save, reload and score one bounded demonstration with measured elapsed time.
+    Demo(jope_bench::panel::demo::DemoCli),
     /// Verify and plan the private, fixed-panel benchmark.
     Benchmark(jope_bench::panel::cli::BenchmarkCli),
+    /// Plan, run, resume and verify bounded experimental policy training.
+    #[cfg(target_os = "linux")]
+    Train(train::TrainCli),
     /// Generate and optimize executable algorithms from the verified development panel.
     Optimize(jope_bench::panel::optimize_cli::OptimizeCli),
     /// Verify the ten synthetic fixtures against the pinned deterministic generator.
@@ -147,7 +155,10 @@ fn execute(command: &Command) -> Result<Verification> {
             }
             verify_inputs(output)
         }
+        #[cfg(target_os = "linux")]
+        Command::Train(_) => unreachable!("training is dispatched separately"),
         Command::Doctor
+        | Command::Demo(_)
         | Command::Benchmark(_)
         | Command::Optimize(_)
         | Command::Encode { .. }
@@ -200,10 +211,13 @@ fn main() -> ExitCode {
     };
     let command = match command {
         Command::Doctor => {
-            println!("{}", jope_pipeline::front_door::doctor());
+            println!("{}", jope_bench::panel::demo::doctor());
             return ExitCode::SUCCESS;
         }
+        Command::Demo(cli) => return jope_bench::panel::demo::execute(cli),
         Command::Benchmark(cli) => return jope_bench::panel::cli::execute(cli),
+        #[cfg(target_os = "linux")]
+        Command::Train(cli) => return train::execute(cli),
         Command::Optimize(cli) => return jope_bench::panel::optimize_cli::execute(cli),
         Command::Models(cli) => return jope_models::cli::exec(cli),
         Command::Datasets(cli) => return jope_datasets::cli::exec(cli),

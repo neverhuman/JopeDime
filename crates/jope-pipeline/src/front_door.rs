@@ -1,48 +1,5 @@
 //! Small front door. Report the measured scope; unsupported capabilities remain
 //! explicit until their own implementation and qualification have landed.
-use anyhow::{Context, Result};
-use clap::{Parser, Subcommand};
-use std::{path::PathBuf, process::ExitCode};
-
-#[derive(Parser)]
-pub struct BenchmarkCli {
-    #[command(subcommand)]
-    pub command: BenchmarkCommand,
-}
-#[derive(Subcommand)]
-pub enum BenchmarkCommand {
-    /// Verify the fixed panel's task, metric, split and input identities (no fits).
-    VerifyManifest {
-        #[arg(long)]
-        manifest: PathBuf,
-    },
-}
-pub fn benchmark(cli: BenchmarkCli) -> ExitCode {
-    let result = match cli.command {
-        BenchmarkCommand::VerifyManifest { manifest } => verify_manifest(&manifest),
-    };
-    match result {
-        Ok(value) => {
-            println!("{value}");
-            ExitCode::SUCCESS
-        }
-        Err(error) => {
-            eprintln!("jope benchmark: {error:#}");
-            ExitCode::FAILURE
-        }
-    }
-}
-fn verify_manifest(path: &std::path::Path) -> Result<serde_json::Value> {
-    let bytes = std::fs::read(path).with_context(|| format!("read {}", path.display()))?;
-    let panel: crate::experiment::Panel = serde_json::from_slice(&bytes)?;
-    panel.validate()?;
-    Ok(
-        serde_json::json!({"schema":"jope.panel-check/v1", "ok":true,
-        "panel":panel.panel_id, "manifest_sha256":crate::sha256_hex(&bytes),
-        "datasets":panel.datasets.len(), "input_bytes_verified":false,
-        "note":"Verify materialized inputs with benchmarks/prepare.py before execution; no fits performed."}),
-    )
-}
 pub fn doctor() -> serde_json::Value {
     let heads: Vec<_> = feat_math::registry::operator_registry()
         .iter()
@@ -59,11 +16,11 @@ pub fn doctor() -> serde_json::Value {
         "capabilities":[
             {"name":"regression pipeline", "status":"implemented", "command":"jope pipeline run", "limit":"generic GP seeds; numerical finite inputs; recipe source emission"},
             {"name":"binary and multiclass pipeline", "status":"not_integrated", "limit":"task-aware kernels exist; the regression pipeline refuses these tasks"},
-            {"name":"bounded 30-dataset benchmark", "status":"execution_implemented", "limit":"frozen inputs, typed fits, shared isolated workers and resumable comparator run/report exist; eight synthetic host isolation cases qualified; real neural comparison remains required"},
-            {"name":"neural generation-zero proposals", "status":if cfg!(feature = "neural-search") {"execution_implemented"} else {"feature_not_enabled"}, "limit":"bounded proposal-to-fit and training-side selection source exists; live accepted-model consumption remains unqualified"},
-            {"name":"CPU context production", "status":if cfg!(feature = "qualified-context") {"qualification_required"} else {"feature_not_enabled"}, "limit":"eight retained native reference cases plus fresh encoding require original bounded execution receipts; numerical parity is not yet measured"},
-            {"name":"policy training", "status":"not_qualified", "limit":"existing machinery needs a bounded execution proof; train-step is a centroid router"},
-            {"name":"fitted predictor export across five backends", "status":"not_qualified", "limit":"existing emitters have different coverage; recipe emission is not fitted inference parity"}
+            {"name":"bounded 30-dataset benchmark", "status":"execution_implemented", "limit":"frozen inputs, typed fits, shared isolated workers and resumable comparator run/report exist; dated synthetic host isolation receipts exist; current host admission and real neural comparison remain required"},
+            {"name":"neural generation-zero proposals", "status":if cfg!(feature = "neural-search") {"execution_implemented"} else {"feature_not_enabled"}, "limit":"bounded proposal-to-fit and training-side selection source exists; accepted-model consumption requires current regression-consumption proof; historical receipts are not current qualification"},
+            {"name":"CPU context production", "status":if cfg!(feature = "qualified-context") {"qualification_required"} else {"feature_not_enabled"}, "limit":"eight retained native reference cases plus fresh encoding require original bounded execution receipts; dated parity receipts exist; current source and asset bindings must be requalified"},
+            {"name":"policy training", "status":"not_qualified", "limit":"experimental category trainer supports admitted projected inputs, strict optimizer resume and controlled siblings; live learning remains unqualified; legacy local train-step updates a centroid router"},
+            {"name":"fitted predictor export across five backends", "status":"not_qualified", "limit":"private fitted export and independent parity verifier are implemented; each winner needs measured backend parity before export qualification"}
         ],
         "native_head_inventory":heads,
         "inventory_note":"Governed registry metadata, including aliases and unavailable entries; not a runnable or qualified benchmark roster. Advanced-v3 heads are inventoried separately in docs/asm.md.",

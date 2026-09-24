@@ -44,6 +44,10 @@ pub enum RejectReason {
     UnboundCannotDisplaceBound,
     /// The incumbent was scored under a different metric.
     MetricMismatch,
+    /// Scores under different full comparison identities cannot displace one another.
+    IdentityMismatch,
+    /// Train-side OOF candidates require recomputable measured teaching admission.
+    TeachingIneligible,
     /// The record failed its structural checks.
     Invalid,
 }
@@ -55,6 +59,8 @@ impl RejectReason {
             RejectReason::NotBetter => "not-better",
             RejectReason::UnboundCannotDisplaceBound => "unbound-cannot-displace-bound",
             RejectReason::MetricMismatch => "metric-mismatch",
+            RejectReason::IdentityMismatch => "identity-mismatch",
+            RejectReason::TeachingIneligible => "teaching-ineligible",
             RejectReason::Invalid => "invalid",
         }
     }
@@ -73,6 +79,9 @@ pub fn decide(incumbent: Option<&HwmRecord>, candidate: &HwmRecord) -> Decision 
     }
     if inc.score.metric != candidate.score.metric {
         return Decision::Rejected(RejectReason::MetricMismatch);
+    }
+    if inc.identity != candidate.identity {
+        return Decision::Rejected(RejectReason::IdentityMismatch);
     }
     let dir = candidate.score.metric.direction();
     if dir.strictly_improves(candidate.score.value, inc.score.value) {
@@ -247,7 +256,18 @@ pub fn ingest(
                 }
             }
         }
-        let decision = decide(incumbent, &c.record);
+        let decision = if c
+            .record
+            .identity
+            .comparison
+            .as_ref()
+            .is_some_and(|context| context.stage == "train_oof")
+            && crate::eligibility::require_qualified(state, &c.record).is_err()
+        {
+            Decision::Rejected(RejectReason::TeachingIneligible)
+        } else {
+            decide(incumbent, &c.record)
+        };
         let (outcome, reason, displaced) = match &decision {
             Decision::Accepted => (
                 "accepted",
@@ -690,7 +710,7 @@ pub fn verify(state: &State, event_dirs: &[PathBuf]) -> Result<VerifyReport> {
         if let Err(err) = r.validate() {
             brk("record-invalid", subject.clone(), err.to_string());
         }
-        if PointerKey::of(r) != e.pointer {
+        if !e.pointer.matches(r) {
             brk(
                 "pointer-key",
                 subject.clone(),
@@ -796,10 +816,23 @@ pub fn verify(state: &State, event_dirs: &[PathBuf]) -> Result<VerifyReport> {
             other => brk("event-outcome", subject.clone(), other.to_string()),
         }
     }
-    let on_disk = state.pointers()?;
+    let (on_disk, pointer_errors) = state.pointers_readable()?;
+    for (path, error) in pointer_errors {
+        brk("pointer-unreadable", path, error);
+    }
     report.pointers_on_disk = on_disk.len() as u64;
     let mut seen = BTreeSet::new();
     for (key, record) in &on_disk {
+        if let Err(error) = record.validate() {
+            brk("pointer-invalid", key.rel(), format!("{error:#}"));
+        }
+        if !key.matches(record) {
+            brk(
+                "pointer-identity",
+                key.rel(),
+                "pointer key differs from record".into(),
+            );
+        }
         seen.insert(key.clone());
         match expected.get(key) {
             Some(exp) if exp.provenance.record_sha256 == record.provenance.record_sha256 => {}
@@ -993,6 +1026,9 @@ pub struct FreezeEntry {
 #[derive(Clone, Debug, Serialize)]
 pub struct FreezeManifest {
     pub schema: String,
+    /// Archive snapshots do not establish train-side OOF teaching eligibility.
+    pub scope: String,
+    pub teaching_eligible: bool,
     pub ledger_head: Option<crate::ledger::Head>,
     pub include_unbound: bool,
     pub pointers: u64,
@@ -1045,6 +1081,8 @@ pub fn freeze(state: &State, out: &Path, include_unbound: bool) -> Result<Freeze
     let pointers = state.pointers()?;
     let mut manifest = FreezeManifest {
         schema: FREEZE_SCHEMA.into(),
+        scope: "diagnostic_hwm_archive".into(),
+        teaching_eligible: false,
         ledger_head: head,
         include_unbound,
         pointers: pointers.len() as u64,
@@ -1155,6 +1193,7 @@ mod tests {
         value: f64,
     ) -> HwmRecord {
         let identity = HwmIdentity {
+            comparison: None,
             task: "regression".into(),
             dataset_hash: dataset.into(),
             cut_id: crate::canon::sha256_hex(cut.as_bytes()),
@@ -1201,6 +1240,151 @@ mod tests {
         }
     }
 
+    #[test]
+    fn comparison_identity_never_collides_across_evaluator_vocabulary_protocol_or_context() {
+        use crate::record::ComparisonContext;
+        let mut base = record("d", "c", BOUND, Metric::Auc, 0.5);
+        base.identity.task = "binary".into();
+        base.identity.comparison = Some(ComparisonContext {
+            numerical_policy: "strict-v1".into(),
+            class_order: vec!["no".into(), "yes".into()],
+            checkpoint_sha256: None,
+            stage: "train_oof".into(),
+            aggregation: "mean_fold_loss".into(),
+            label_role: "development".into(),
+            sealed: false,
+            benchmark_valid: false,
+            recipe_encoding: "native-canonical-dsl-sha256/v1".into(),
+        });
+        base.identity_sha256 = base.identity.sha256().unwrap();
+        let mut variants = Vec::new();
+        let mut changed = base.clone();
+        changed.identity.evaluator_sha256 = "a".repeat(64);
+        changed.evaluator.sha256 = changed.identity.evaluator_sha256.clone();
+        variants.push(changed);
+        let mut changed = base.clone();
+        changed.identity.vocabulary_sha256 = "b".repeat(64);
+        variants.push(changed);
+        let mut changed = base.clone();
+        changed.identity.protocol.push_str("-other");
+        variants.push(changed);
+        let mut changed = base.clone();
+        changed
+            .identity
+            .comparison
+            .as_mut()
+            .unwrap()
+            .numerical_policy
+            .push_str("-other");
+        variants.push(changed);
+        let mut changed = base.clone();
+        changed
+            .identity
+            .comparison
+            .as_mut()
+            .unwrap()
+            .class_order
+            .reverse();
+        variants.push(changed);
+        let mut changed = base.clone();
+        changed
+            .identity
+            .comparison
+            .as_mut()
+            .unwrap()
+            .checkpoint_sha256 = Some("c".repeat(64));
+        variants.push(changed);
+        let mut changed = base.clone();
+        changed.identity.comparison.as_mut().unwrap().stage = "confirm".into();
+        variants.push(changed);
+        let mut changed = base.clone();
+        changed.identity.comparison.as_mut().unwrap().aggregation = "pooled".into();
+        variants.push(changed);
+        let mut changed = base.clone();
+        changed.identity.comparison.as_mut().unwrap().label_role = "test".into();
+        variants.push(changed);
+        let mut changed = base.clone();
+        changed.sealed = true;
+        changed.identity.comparison.as_mut().unwrap().sealed = true;
+        variants.push(changed);
+        let mut changed = base.clone();
+        changed.benchmark_valid = true;
+        changed
+            .identity
+            .comparison
+            .as_mut()
+            .unwrap()
+            .benchmark_valid = true;
+        variants.push(changed);
+        let key = PointerKey::of(&base);
+        for mut candidate in variants {
+            candidate.identity_sha256 = candidate.identity.sha256().unwrap();
+            candidate.score.value = 0.9;
+            assert_ne!(PointerKey::of(&candidate), key);
+            assert_ne!(PointerKey::of(&candidate).rel(), key.rel());
+            assert_eq!(
+                decide(Some(&base), &candidate),
+                Decision::Rejected(RejectReason::IdentityMismatch)
+            );
+        }
+    }
+
+    #[test]
+    fn raw_negative_r2_gains_are_not_clipped() {
+        let old = record("d", "c", BOUND, Metric::R2, -5.0);
+        let improved = record("d", "c", BOUND, Metric::R2, -2.0);
+        assert_eq!(decide(Some(&old), &improved), Decision::Accepted);
+        assert_eq!(
+            decide(Some(&improved), &old),
+            Decision::Rejected(RejectReason::NotBetter)
+        );
+    }
+
+    #[test]
+    fn legacy_pointer_remains_diagnostic_without_fallback_or_rewrite() {
+        let dir = tempfile::tempdir().unwrap();
+        let state = State::at(dir.path());
+        let old = record("d", "c", UNBOUND, Metric::Rmse, 0.1);
+        let mut legacy = PointerKey::of(&old);
+        legacy.identity_sha256 = None;
+        let bytes = serde_json::to_vec(&old).unwrap();
+        atomic_write(&state.pointer_path(&legacy).unwrap(), &bytes).unwrap();
+        assert!(state.read_pointer(&PointerKey::of(&old)).unwrap().is_none());
+        assert!(state
+            .write_pointer(&legacy, &old, Some(&old.provenance.record_sha256))
+            .is_err());
+        let current = record("d", "c", UNBOUND, Metric::Rmse, 0.2);
+        let rep = ingest(
+            &state,
+            None,
+            vec![Candidate {
+                record: current.clone(),
+                blob: b"d/c/unbound/0.2".to_vec(),
+                chain_from_source: false,
+            }],
+            json!({"test":"legacy-preservation"}),
+        )
+        .unwrap();
+        assert_eq!(rep.accepted, 1);
+        assert_eq!(
+            state
+                .read_pointer(&PointerKey::of(&current))
+                .unwrap()
+                .unwrap()
+                .score
+                .value,
+            0.2
+        );
+        assert_eq!(
+            fs::read(state.pointer_path(&legacy).unwrap()).unwrap(),
+            bytes
+        );
+        assert_eq!(state.pointers().unwrap().len(), 2);
+        let manifest = crate::eligibility::freeze_teaching(&state).unwrap();
+        assert!(manifest.entries.is_empty());
+        assert_eq!(manifest.excluded_diagnostic, 2);
+    }
+
     const BOUND: &str = "b5ccee8e33af34313c51896f52466f87f2f8544dcb01672e6d6b4832d1ac4393";
 
     #[test]
@@ -1224,15 +1408,15 @@ mod tests {
             decide(Some(&inc), &record("d", "c", UNBOUND, Metric::Rmse, 0.1)),
             Decision::Rejected(RejectReason::UnboundCannotDisplaceBound)
         );
-        // Bound displaces unbound when strictly better; a tie still keeps the older.
+        // Evaluator changes start separate comparisons; historical scores cannot displace them.
         let unb = record("d", "c", UNBOUND, Metric::R2, 0.8);
         assert_eq!(
             decide(Some(&unb), &record("d", "c", BOUND, Metric::R2, 0.9)),
-            Decision::Accepted
+            Decision::Rejected(RejectReason::IdentityMismatch)
         );
         assert_eq!(
             decide(Some(&unb), &record("d", "c", BOUND, Metric::R2, 0.8)),
-            Decision::Rejected(RejectReason::Tie)
+            Decision::Rejected(RejectReason::IdentityMismatch)
         );
         assert_eq!(
             decide(Some(&unb), &record("d", "c", UNBOUND, Metric::R2, 0.7)),

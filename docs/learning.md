@@ -1,5 +1,12 @@
 # The learning store — `jope.hwm/v1`, `jope.score/v1`, ledgers and pointers
 
+The experimental category-learning implementation now has a separate
+[preparation, strict-resume and sibling-comparison contract](experimental-learning-preparation.md).
+It preserves the accepted serving policy and original campaign deadlines. Tiny CPU proofs
+establish input and optimizer mechanics; real corpus learning, warm demonstration and trained
+regression consumption still require their own source-bound operational receipts. Edition 2
+is a dated publication and is not regenerated to imply those qualifications.
+
 This is the design **as built** by `crates/jope-learning` (WP11 steps L1 and L2 of the port
 plan). It records what the program high-water marks are, where every byte of them lives, how the
 ledgers are chained, how the four preserved sources map into them, and which lineage-A state is

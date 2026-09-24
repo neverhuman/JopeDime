@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+import importlib.util
+import json
+from pathlib import Path
+import tempfile
+import unittest
+import xml.etree.ElementTree as ET
+
+spec = importlib.util.spec_from_file_location("training_proof", Path(__file__).with_name("training-proof.py"))
+proof = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(proof)
+
+
+class TrainingProofTests(unittest.TestCase):
+    def setUp(self):
+        # A retained CI receipt directory or custody directory, never /tmp.
+        self.temporary = tempfile.TemporaryDirectory(prefix="training-proof-", dir=Path(__file__).parent)
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.junit = self.root / "junit.xml"
+        self.collection = self.root / "collection.json"
+
+    def fixture(self, mode):
+        root = ET.Element("testsuites")
+        suite = ET.SubElement(root, "testsuite")
+        collection = {"rust-suites": {}}
+        for binary, name in proof.REQUIRED[mode]:
+            ET.SubElement(suite, "testcase", classname=binary, name=name, time="0.01")
+            binary_suite = collection["rust-suites"].setdefault(binary, {"status": "listed", "testcases": {}})
+            binary_suite["testcases"][name] = {"ignored": False, "filter-match": {"status": "matches"}}
+        return root, collection
+
+    def save(self, root, collection):
+        ET.ElementTree(root).write(self.junit)
+        self.collection.write_text(json.dumps(collection))
+
+    def test_all_three_tasks_and_native_features_are_required(self):
+        for mode, count in (("python", 32), ("rust", 28), ("policy", 10)):
+            with self.subTest(mode=mode):
+                self.save(*self.fixture(mode))
+                result = proof.verify(mode, self.junit, self.collection)
+                self.assertEqual(result["required_executed"], count)
+
+    def test_skipped_failed_and_error_are_not_execution_proof(self):
+        for tag in ("skipped", "failure", "error"):
+            with self.subTest(tag=tag):
+                root, collection = self.fixture("python")
+                ET.SubElement(next(root.iter("testcase")), tag)
+                self.save(root, collection)
+                with self.assertRaisesRegex(ValueError, "did not pass"):
+                    proof.verify("python", self.junit)
+
+    def test_missing_duplicate_and_wrong_suite_refuse(self):
+        for mutation in ("missing", "duplicate", "wrong_suite"):
+            with self.subTest(mutation=mutation):
+                root, collection = self.fixture("python")
+                suite = root.find("testsuite")
+                case = suite.find("testcase")
+                if mutation == "missing":
+                    suite.remove(case)
+                elif mutation == "duplicate":
+                    ET.SubElement(suite, "testcase", **case.attrib)
+                else:
+                    case.set("classname", "unrelated")
+                self.save(root, collection)
+                with self.assertRaisesRegex(ValueError, "missing or duplicate"):
+                    proof.verify("python", self.junit)
+
+    def test_missing_filtered_or_ignored_feature_test_refuses_even_with_green_junit(self):
+        for mutation in ("missing", "filtered", "ignored", "not_listed"):
+            with self.subTest(mutation=mutation):
+                root, collection = self.fixture("rust")
+                binary, name = proof.REQUIRED["rust"][0]
+                suite = collection["rust-suites"][binary]
+                if mutation == "missing":
+                    del suite["testcases"][name]
+                elif mutation == "filtered":
+                    suite["testcases"][name]["filter-match"]["status"] = "mismatch"
+                elif mutation == "ignored":
+                    suite["testcases"][name]["ignored"] = True
+                else:
+                    suite["status"] = "skipped"
+                self.save(root, collection)
+                with self.assertRaisesRegex(ValueError, "not selected"):
+                    proof.verify("rust", self.junit, self.collection)
+
+    def test_actual_trained_regression_must_pass_even_with_other_green_cases(self):
+        # Keep this case identity independent of REQUIRED: an omitted requirement
+        # must not make its negative acceptance fixture disappear too.
+        binary = "tests.test_experimental_proposal"
+        name = "test_actual_trained_classifier_reload_sampling_uses_task_head[regression]"
+        for mutation in ("missing", "skipped", "failure", "error", "duplicate", "wrong_suite"):
+            with self.subTest(mutation=mutation):
+                root, collection = self.fixture("python")
+                suite = root.find("testsuite")
+                matches = [case for case in suite.findall("testcase")
+                           if case.get("classname") == binary and case.get("name") == name]
+                # Also exercise a gate that has accidentally dropped regression.
+                case = matches[0] if matches else ET.SubElement(
+                    suite, "testcase", classname=binary, name=name, time="0.01")
+                self.save(root, collection)
+                proof.verify("python", self.junit)
+                if mutation == "missing":
+                    suite.remove(case)
+                    # An unrelated success keeps aggregate counts green.
+                    ET.SubElement(suite, "testcase", classname=binary,
+                                  name="unrelated_green_case", time="0.01")
+                elif mutation == "duplicate":
+                    ET.SubElement(suite, "testcase", **case.attrib)
+                elif mutation == "wrong_suite":
+                    case.set("classname", "tests.unrelated")
+                else:
+                    ET.SubElement(case, mutation)
+                self.save(root, collection)
+                with self.assertRaisesRegex(ValueError, r"sampling_uses_task_head\[regression\]"):
+                    proof.verify("python", self.junit)
+
+    def test_rust_requires_collection_and_python_does_not(self):
+        self.save(*self.fixture("rust"))
+        with self.assertRaisesRegex(ValueError, "actual nextest collection"):
+            proof.verify("rust", self.junit)
+        self.save(*self.fixture("python"))
+        self.assertEqual(proof.verify("python", self.junit)["required_executed"], 32)
+
+
+if __name__ == "__main__":
+    unittest.main()

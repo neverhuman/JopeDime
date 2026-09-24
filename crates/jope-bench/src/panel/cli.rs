@@ -53,9 +53,31 @@ pub enum BenchmarkCommand {
     /// Authenticate retained evidence and recompute scores without fitting.
     #[cfg(target_os = "linux")]
     Report(super::campaign_cli::ReportArgs),
+    /// Prepare portable code for the existing five-fold winner and selected fitted fold.
+    #[cfg(all(feature = "asm", target_os = "linux"))]
+    ExportWinner(super::fitted_export::ExportArgs),
+    /// Qualify emitted predictions under the original campaign deadline and resource limits.
+    #[cfg(all(feature = "asm", target_os = "linux"))]
+    QualifyExport(super::fitted_export_run::QualifyArgs),
+    #[cfg(all(feature = "asm", target_os = "linux"))]
+    #[command(hide = true)]
+    FittedExportWorker {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Internal single-fit endpoint; the controller supplies resource isolation.
     #[command(hide = true)]
     FitWorker {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Private task/schema validation of an ordered proposal batch; zero fits.
+    #[command(hide = true)]
+    SynthesizedValidate {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
@@ -131,6 +153,7 @@ fn run(cli: BenchmarkCli) -> Result<Value> {
         }
         BenchmarkCommand::Methods => Ok(json!({"schema":"jope.panel-methods/v1", "ok":true,
             "rust":registry()?, "external_adapter_contract":super::methods::ADAPTER_CONTRACT,
+            "fitted_inference":super::inference::registered_inference_inventory()?,
             "note":"An executable recipe inventory is not a completed fit or a measured comparison."})),
         BenchmarkCommand::Plan {
             manifest,
@@ -141,9 +164,14 @@ fn run(cli: BenchmarkCli) -> Result<Value> {
         } => {
             if let Some(runtimes) = runtimes {
                 #[cfg(target_os = "linux")]
-                return super::campaign_cli::prepare(
-                    &manifest, &datasets, source_sha, &runtimes, &output,
-                );
+                {
+                    let mut result = super::campaign_cli::prepare(
+                        &manifest, &datasets, source_sha, &runtimes, &output,
+                    )?;
+                    result["fitted_inference"] =
+                        serde_json::to_value(super::inference::registered_inference_inventory()?)?;
+                    return Ok(result);
+                }
                 #[cfg(not(target_os = "linux"))]
                 anyhow::bail!("bounded runtime plans require Linux");
             }
@@ -198,7 +226,7 @@ fn run(cli: BenchmarkCli) -> Result<Value> {
             }
             let plan = json!({"schema":"jope.panel-plan/v1", "experiment":experiment,
                 "experiment_sha256":identity, "methods":registry,
-                "screen_requests":requests,
+                "screen_requests":requests,"fitted_inference":super::inference::registered_inference_inventory()?,
                 "verified_inputs":verification,"search_arm_seconds":120,
                 "execution_window":null,"fits":0,
                 "scope":"Rust screening inventory; external engine versions and ASM checkpoints must be pinned before campaign admission."});
@@ -210,9 +238,22 @@ fn run(cli: BenchmarkCli) -> Result<Value> {
         BenchmarkCommand::Run(args) => super::campaign_cli::run(args),
         #[cfg(target_os = "linux")]
         BenchmarkCommand::Report(args) => super::campaign_cli::report(args),
+        #[cfg(all(feature = "asm", target_os = "linux"))]
+        BenchmarkCommand::ExportWinner(args) => super::fitted_export::prepare(args),
+        #[cfg(all(feature = "asm", target_os = "linux"))]
+        BenchmarkCommand::QualifyExport(args) => super::fitted_export_run::run(args),
+        #[cfg(all(feature = "asm", target_os = "linux"))]
+        BenchmarkCommand::FittedExportWorker { input, output } => {
+            super::fitted_export_run::worker(&input, &output)?;
+            Ok(json!({"ok":true,"output":output,"fits":0}))
+        }
         BenchmarkCommand::FitWorker { input, output } => {
             super::worker::fit(&input, &output)?;
             Ok(json!({"ok":true,"output":output}))
+        }
+        BenchmarkCommand::SynthesizedValidate { input, output } => {
+            super::proposal_validation::validate_files(&input, &output)?;
+            Ok(json!({"ok":true,"output":output,"fits":0}))
         }
         BenchmarkCommand::SynthesizedFitWorker { input, output } => {
             super::synthesized::worker(&input, &output)?;

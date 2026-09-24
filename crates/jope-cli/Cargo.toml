@@ -20,6 +20,8 @@ jope-datasets = { path = "../jope-datasets" }
 jope-bench = { path = "../jope-bench" }
 jope-models = { path = "../jope-models" }
 jope-pipeline = { path = "../jope-pipeline" }
+jope-learning = { path = "../jope-learning" }
+jope-policy = { path = "../jope-policy", default-features = false, features = ["context-producer"], optional = true }
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
@@ -27,10 +29,15 @@ sha2.workspace = true
 [target.'cfg(unix)'.dependencies]
 rustix = { version = "=1.1.4", features = ["fs"] }
 
+[target.'cfg(target_os = "linux")'.dependencies]
+nix.workspace = true
+
 [dev-dependencies]
 tempfile.workspace = true
 
 [features]
+default = ["qualified-training-context"]
+qualified-training-context = ["jope-pipeline/qualified-context", "dep:jope-policy"]
 asm = ["jope-bench/asm"]
 
 [lints]

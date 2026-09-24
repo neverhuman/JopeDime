@@ -46,6 +46,10 @@ mod emit_js;
 /// to v2.1), every emitter is linted with [`lint_shipped_text`], and the
 /// manifest carries `program` / `program_sha256` beside the legacy `dsl` /
 /// `genome_sha256` keys (readers switch, then the legacy keys go).
+/// Bound Python JSON quotation has a no-bump repair for control/Unicode text that
+/// previously emitted invalid Python (Rust Debug escapes such as `\\u{2028}`).
+/// Printable ASCII bound output and all frozen recipe emitter bytes are unchanged.
+/// The separate fitted-portable/1 public emitter pins its own template identities.
 pub const EMITTER_VERSION: &str = "2.2.0";
 
 /// Which transcendental math implementation an emission request selects.
