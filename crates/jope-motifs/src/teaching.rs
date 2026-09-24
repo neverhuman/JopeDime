@@ -11,12 +11,10 @@
 //!
 //! This module reaches that reader through [`EligibleState`], a projection of exactly the
 //! fields it needs, so the join and the checks below are tested without a learning State. The
-//! adapter for the learning State (`learning`) implements it field for field. It is compiled
-//! only with the `learning-state` feature, which is off by default until the eligibility API
-//! is on this branch; without it no reader is linked and every State read is refused with
-//! `state_unavailable`. The adapter refuses, with the same code, a root that holds no State:
-//! a missing root, or one without the tip of the HWM chain, which every qualified record
-//! needs. So neither a missing reader nor a wrong root ever looks like an empty State.
+//! adapter for the learning State (`learning`) implements it field for field. It refuses with
+//! `state_unavailable` a root that holds no State: a missing root, or one without the tip of
+//! the HWM chain, which every qualified record needs. So a wrong root never looks like an
+//! empty State.
 //!
 //! Every entry is then checked again here. Any failure refuses the whole read with a fixed
 //! code, and nothing missing is ever read as eligible:
@@ -45,18 +43,15 @@
 //! - the program then passes the admission checks of [`QualifiedProgram`]: canonical text
 //!   whose sha256 is the recorded program digest.
 //!
-//! Mirrored shapes. All of them are in `crates/jope-learning/src` of the training63 source
-//! text (integration patch sha256 2e0201cb…, source head c5d11ffc), which is not on this
-//! branch: `eligibility.rs` (sha256 839e1de7…) lines 125-150 (`Qualification`), 159-165
-//! (`TeachingManifest`), 170-200 (`GuardPolicy`), 287-323 (`task`: the comparison
-//! requirements, lines 292-322 re-checked in full here), 506-518 (the label burn receipt) and
-//! 1082-1138 (`freeze_teaching`); `state.rs` (7fbfe07f…) lines 13-38 (`PointerKey`), 198-206
-//! (`State::read_blob`) and 317-368 (`State::pointers`); `record.rs` (4360d96a…) lines 19-53
-//! (`ComparisonContext`, `HwmIdentity`) and 153-260 (`HwmRecord` and its validation); `lib.rs`
-//! (ba4619ed…) lines 5-14 (the State layout). The scorer's numerical policy is
-//! `jope_pipeline::evaluation_score::NUMERICAL_POLICY` (`evaluation_score.rs` e7382192…, line
-//! 13, in the same source text). A later revision of those shapes changes this projection and
-//! the adapter, nothing else.
+//! Projected shapes, all in `crates/jope-learning/src` on `main` (f03b1eb85):
+//! `eligibility.rs` lines 125-150 (`Qualification`), 159-165 (`TeachingManifest`), 168-201
+//! (`GuardPolicy`), 287-323 (`task`: the comparison requirements, lines 292-322 re-checked in
+//! full here), 506-518 (the label burn receipt) and 1117-1174 (`freeze_teaching`); `state.rs`
+//! lines 13-20 (`PointerKey`), 198-206 (`State::read_blob`) and 317-368 (`State::pointers`);
+//! `record.rs` lines 19-59 (`ComparisonContext`, `HwmIdentity`) and 153-260 (`HwmRecord` and
+//! its validation); `lib.rs` (the State layout). The scorer's numerical policy is imported from
+//! `jope_pipeline::evaluation_score::NUMERICAL_POLICY`. A later revision of those shapes
+//! changes this projection and the adapter, nothing else.
 //!
 //! Where the projection differs from the source API, for whoever integrates it:
 //!
@@ -85,9 +80,10 @@ use crate::source::{
 };
 use crate::{is_hex64, Code, Coded};
 use anyhow::{bail, ensure, Result};
+use jope_pipeline::evaluation_score::NUMERICAL_POLICY;
 use std::path::Path;
 
-/// Label of the qualified record set (`TeachingManifest::schema`, eligibility.rs:1098).
+/// Label of the qualified record set (`TeachingManifest::schema`, eligibility.rs:1134).
 pub const SET_SCHEMA: &str = "jope.qualified-teaching-freeze/v1";
 /// Label of one measured admission (`Qualification::schema`, eligibility.rs:36).
 pub const ENTRY_SCHEMA: &str = "jope.measured-teaching/v1";
@@ -96,10 +92,8 @@ pub const GUARD_SCHEMA: &str = "jope.teaching-guard/v1";
 /// Label of a label burn receipt (eligibility.rs:506-510).
 pub const BURN_SCHEMA: &str = "jope.label-burn/v1";
 
-/// The comparison requirements of the measured-admission scorer (eligibility.rs:292-301).
-/// The numerical policy is the scorer's own (`evaluation_score::NUMERICAL_POLICY`).
-const NUMERICAL_POLICY: &str =
-    "asm-panel-f64-v1:platform-libm-v1:probability-epsilon=1e-15:row-sum-tolerance=1e-6";
+// The comparison requirements of the measured-admission scorer (eligibility.rs:292-301); the
+// numerical policy is the scorer's own, imported above.
 const STAGE: &str = "train_oof";
 const AGGREGATION: &str = "mean_fold_loss";
 const RECIPE_ENCODING: &str = "native-canonical-dsl-sha256/v1";
@@ -366,10 +360,9 @@ pub trait EligibleState {
 /// Opens the State at an explicit root, or at the product's resolved default.
 pub(crate) type StateOpener = Box<dyn Fn(Option<&Path>) -> Result<Box<dyn EligibleState>>>;
 
-/// An opener with no reader behind it: the standard opener of a build without the
-/// `learning-state` feature. Every open is refused with `state_unavailable`, never read as an
-/// empty State.
-#[cfg(any(test, not(feature = "learning-state")))]
+/// An opener with no reader behind it, for tests: every open is refused with
+/// `state_unavailable`, never read as an empty State.
+#[cfg(test)]
 pub(crate) fn no_reader(_state: Option<&Path>) -> Result<Box<dyn EligibleState>> {
     bail!(Code("state_unavailable"))
 }

@@ -139,6 +139,9 @@ enum Command {
     /// Product pipeline: dataset, prepared cuts, GP search, emitted code and a receipt.
     Pipeline(jope_pipeline::cli::Cli),
     /// Reusable program fragments kept in a private table, with exact expansion checks.
+    /// Hidden from the default help until the capability is published (owner decision,
+    /// 2026-09-24); `jope motifs --help` still works.
+    #[command(hide = true)]
     Motifs(jope_motifs::cli::Cli),
 }
 
@@ -462,8 +465,12 @@ mod tests {
     fn motifs_help_passes_shipped_text_lint_and_owner_ban() {
         let mut cmd = Cli::command();
         cmd.build();
+        assert!(
+            !cmd.render_help().to_string().contains("motifs"),
+            "motifs must stay out of the default help"
+        );
         let motifs = cmd.find_subcommand_mut("motifs").expect("motifs");
-        assert!(!motifs.is_hide_set());
+        assert!(motifs.is_hide_set());
         let mut texts = vec![motifs.render_long_help().to_string()];
         for verb in ["mine", "validate"] {
             let command = motifs.find_subcommand_mut(verb).expect("verb");

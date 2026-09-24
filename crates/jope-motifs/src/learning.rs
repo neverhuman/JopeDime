@@ -3,9 +3,6 @@
 //! ledgers are opened with the pure `Ledger::open`, and `freeze_teaching` recomputes every
 //! qualification from retained blobs only (`measured(.., live = false)`).
 //!
-//! Reference only: this module needs the eligibility stack (the training63 integration patch,
-//! applied after PR 83), which is not on this branch. It is compiled only with the
-//! `learning-state` feature, which is off by default; enable it once that stack has landed.
 //! The shapes it reads are listed in [`crate::teaching`].
 
 use crate::teaching::{
@@ -25,7 +22,7 @@ use std::path::Path;
 struct LearningState(State);
 
 /// The tip of the State's HWM chain (lib.rs:10). Every qualified record needs an accepted
-/// HWM ledger event (eligibility.rs:1085-1096, 1112-1118), and a chain with events has this
+/// HWM ledger event (eligibility.rs:1121-1132, 1148-1154), and a chain with events has this
 /// file, so a root without it holds nothing that could ever be admitted.
 const CHAIN_TIP: &str = "hwm/ledger/HEAD.json";
 

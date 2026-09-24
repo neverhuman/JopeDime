@@ -191,20 +191,11 @@ impl Env {
     }
 }
 
-/// The standard State opener with the `learning-state` feature: the learning crate's
-/// eligibility API (`learning::open`), which refuses a root that holds no State (missing, or
-/// without the HWM chain tip) with `state_unavailable`.
-#[cfg(feature = "learning-state")]
+/// The standard State opener: the learning crate's eligibility API (`learning::open`), which
+/// refuses a root that holds no State (missing, or without the HWM chain tip) with
+/// `state_unavailable`.
 fn standard_opener() -> StateOpener {
     Box::new(crate::learning::open)
-}
-
-/// The standard State opener without the `learning-state` feature, the default: no reader is
-/// linked, so every State read is refused with `state_unavailable`. `mine` and
-/// `validate --state` exit 2; `validate --table` alone works as before.
-#[cfg(not(feature = "learning-state"))]
-fn standard_opener() -> StateOpener {
-    Box::new(crate::teaching::no_reader)
 }
 
 pub fn exec(cli: Cli) -> ExitCode {
@@ -1352,53 +1343,17 @@ mod tests {
         assert!(out.symlink_metadata().is_err());
     }
 
-    /// The default build links no State reader: the standard opener refuses every root,
-    /// explicit or resolved, and never reads one as an empty State.
-    #[cfg(not(feature = "learning-state"))]
-    #[test]
-    fn standard_build_without_the_adapter_refuses_every_state_read() {
-        let directory = tempfile::tempdir().expect("temporary directory");
-        let root = directory.path().join("state");
-        std::fs::create_dir(&root).expect("state root");
-        let standard = Env::standard();
-        for state in [None, Some(root.as_path())] {
-            let error = (standard.open_state)(state)
-                .err()
-                .expect("no reader is linked");
-            assert_eq!(code_of(&error), Some("state_unavailable"), "{state:?}");
-        }
-        let out = directory.path().join("mined");
-        let env = env_with(Policy::for_test(Vec::new(), false), standard.open_state);
-        let run = invoke_in(
-            &env,
-            &[
-                "jope-motifs",
-                "mine",
-                "--state",
-                utf8(&root),
-                "--out",
-                utf8(&out),
-            ],
-        );
-        assert_eq!(run.status, 2);
-        assert_eq!(run.err, "error: state_unavailable\n");
-        assert!(out.symlink_metadata().is_err());
-    }
-
     /// A root that holds no State (here an existing directory without the HWM chain tip, as a
     /// mistyped `--state` would be) and a missing root are both `state_unavailable` for both
-    /// verbs, never an empty State, and nothing is written.
-    #[cfg(feature = "learning-state")]
+    /// verbs, never an empty State, and nothing is written. The standard opener is the real
+    /// learning adapter.
     #[test]
     fn verbs_over_a_root_without_a_state_write_nothing() {
         let directory = tempfile::tempdir().expect("temporary directory");
         let root = directory.path().join("state");
         std::fs::create_dir(&root).expect("state root");
         let out = directory.path().join("mined");
-        let env = env_with(
-            Policy::for_test(Vec::new(), false),
-            Box::new(crate::learning::open),
-        );
+        let env = env_with(Policy::for_test(Vec::new(), false), Env::standard().open_state);
         let run = invoke_in(
             &env,
             &[
