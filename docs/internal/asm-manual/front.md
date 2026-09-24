@@ -6,7 +6,7 @@ For actual learning progress, start with chapters 7–8 and 13, then appendices 
 
 [§](sections/datasets.md) gives development statistics for all thirty frozen datasets. The adjacent data directory supplies complete machine-readable statistics, historical ranking inputs, metadata inventories and source pins. The property list supplies the primary acceptance inventory and separately marked coordinated proposals; [§](sections/catalogue.md#life-01--coordination) prints them as acceptance cards.
 
-The publication record below identifies the implementation snapshot, dated qualification observations and document build independently.
+The publication record below identifies the implementation snapshot, dated qualification observations and document build independently. The core chapters and roadmap preserve the PR83 application and stopped-overlay observations; chapter 1 separately records the later PR88 integration. A later build date does not turn historical pending labels into a current-main inventory.
 
 This private manual explains internal methods at the user's request. Public inference bundle allowlists remain separate. No sealed label bodies, model weights or credentials are embedded in this book.
 

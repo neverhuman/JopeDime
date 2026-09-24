@@ -2305,7 +2305,7 @@
 				<string>sections/learning.md#what-better-and-better-must-mean</string>
 			</array>
 			<key>notes</key>
-			<string>Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual. The owner’s edition-2 direction (relayed 2026-09-23T22:22:38Z) makes this the central regression product milestone and raises it from P2 to P1 without changing its evidence level. The sibling fresh/replay allocation (25/75 fresh/replay versus replay-only, equal committed updates) is proposed, with no serving promotion.</string>
+			<string>Added for the user’s explicit training-history, continuation, flywheel and packing questions. No numerical work was launched to write this manual. The owner’s edition-2 direction (relayed 2026-09-23T22:22:38Z) makes this the central regression product milestone; to reflect that, this roadmap raises it from P2 to P1 without changing its evidence level. The sibling fresh/replay allocation (25/75 fresh/replay versus replay-only, equal committed updates) is proposed, with no serving promotion.</string>
 			<key>planned_owner</key>
 			<string>Codex integration; Claude independent source/data cross-check</string>
 		</dict>
@@ -2322,7 +2322,7 @@
 		<true/>
 	</dict>
 	<key>documentation_update</key>
-	<string>PR83 main guard passed; named example qualification completed. Edition 1 of the manual merged through PR85 at 2026-09-23T22:33:36Z as main bdfc95c63d905c647e41175e79dc30cdc8600287 (exact-head CI 35927921851 attempt 1 and main-guard 35929010658 succeeded). Edition 2 is a local candidate; its rendering/publication evidence remains pending until its own exact-head CI and independent review.</string>
+	<string>PR83 main guard passed; named example qualification completed. Edition 1 of the manual merged through PR85 at 2026-09-23T22:33:36Z as main bdfc95c63d905c647e41175e79dc30cdc8600287 (exact-head CI 35927921851 attempt 1 and main-guard 35929010658 succeeded). The documentation-correction PR86 (head 0079ceddb) merged at 2026-09-24T00:04:12Z as main 2b375ef11fc9298ffa67d4d03e0bb83053201802; main-guard 35936673729 passed. Edition 2 merged through PR87 at 2026-09-24T02:58:00Z as main 02c0bef6c81ab17e034daea308c1a0b5a7940467, after exact-head CI 35948653955 attempt 1 and independent native approval 5299139743. PR87 main-guard 35949456287 passed. PR88 later integrated the learning/delivery source at 2026-09-24T05:11:50Z as main 0fa1841834d1fc67535f021a91a1911a321e6363, with main-guard 35958877242 passed. Item evidence levels and pending labels below retain the explicitly pinned PR83/stopped-overlay snapshot; they are not a current-main capability inventory.</string>
 	<key>coordinated_proposals</key>
 	<dict>
 		<key>source_sha256</key>
@@ -3102,7 +3102,7 @@
 		</dict>
 	</dict>
 	<key>updated_utc</key>
-	<string>2026-09-24T00:08:48.233990+00:00</string>
+	<string>2026-09-24T05:16:02.695652+00:00</string>
 	<key>primary_item_count</key>
 	<integer>43</integer>
 	<key>coordinated_proposal_count</key>

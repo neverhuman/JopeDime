@@ -248,7 +248,7 @@
         "uv sync --locked --extra dev --extra cpu --extra benchmark --extra foundry",
         "uv run --no-sync ruff check .",
         "uv run --no-sync ruff format --check .",
-        "uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m \"not xbabe2\" -p no:cacheprovider --basetemp=\"$EVIDENCE/pytest-tmp\" --junitxml=\"$EVIDENCE/junit.xml\"",
+        "uv run --no-sync pytest -q tests ../benchmarks/test_prepare.py ../crates/jope-bench/adapters/test_panel.py -m \"not xbabe2\" -p no:cacheprovider --basetemp=\"$pytest_fixtures\" --junitxml=\"$EVIDENCE/junit.xml\"",
         "python3 deploy/ci/training-proof.py python --junit \"$EVIDENCE/junit.xml\""
       ]
     },

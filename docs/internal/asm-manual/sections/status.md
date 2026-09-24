@@ -2,6 +2,8 @@
 
 An **Algorithm Synthesis Model (ASM) learns to generate and optimize executable algorithms from data.** JopeDime turns that objective into a bounded, inspectable workflow: validate original data and row assignments, encode a fitting-only context, propose executable recipes, fit them, measure them under a fixed protocol, evolve measured recipes, retain fitted artifacts, and eventually admit qualified examples into another round of model training. This chapter states the position on 23 September 2026 at about 22:00 UTC, at merged main `a75e543d2166` (reviewed head `68f56404c3e1`, same source tree).
 
+**Later implementation observation — 2026-09-24.** PR88 integrated the training64, product28, warm-demonstration and winner-export packets, the mandatory regression-consumption gate, and preparation, input-closure, strict-resume and controlled-comparison changes. Reviewed source `8fcf5470cf90f8facb4fac598b67725660448864` merged as main `0fa1841834d1fc67535f021a91a1911a321e6363` at 05:11:50 UTC; exact-head CI 35957350158 attempt 1, independent native approval 5300062934 and main-guard 35958877242 passed. A source-bound runtime build and small CPU fixtures passed. No new real-teacher campaign, GPU window or serving promotion was admitted. The operational learning outcome remains inconclusive. The chapter and roadmap status labels below describe their named PR83/stopped-overlay snapshot, not later main. Use the [later implementation runbook](https://github.com/veox-ai/JopeDime/blob/8fcf5470cf90f8facb4fac598b67725660448864/docs/experimental-learning-preparation.md) for the integrated interfaces; historical commands and evidence are retained here.
+
 ## ASM at a glance
 
 This table is the bottom line on 23 September 2026 at about 22:00 UTC. Each row links to the sections that hold its evidence. Development scores are adaptive, and historical results do not establish current capability.
@@ -195,7 +197,7 @@ Final local suites at the snapshot passed **53 benchmark and 106 pipeline tests*
 | Motifs | Separate typed library branch | Eligible-state reader, mine command, umbrella wiring and validated reuse |
 | Broad full-main tests | Historical failures retained; full-main runs 35929010741 and 35936673628 failed, each with eight families passed, two failed and one unavailable. The earlier PR83 record remains historical ([§](catalogue.md#the-pr83-lifecycle-record)) | Reproduce and repair; fast CI is not full qualification |
 | New serving promotion | Recovered accepted step-60000 remains the model binding; the native command that could continue it is held | Exact release/backend/model acceptance and reviewed promotion for a new checkpoint |
-| Manual publication | Edition 1 landed through PR85 at `bdfc95c63`; DOCFIX-01 landed through PR86 at `2b375ef11`. PR84 was superseded because its intermediate history exceeded the 5 MiB file cap. Edition 2 remains pending its own reviewed publication | Edition-2 exact-head CI, independent native approval and reviewed merge |
+| Manual publication | Edition 1 landed through PR85 at `bdfc95c63`; DOCFIX-01 landed through PR86 at `2b375ef11`. PR84 was superseded because its intermediate history exceeded the 5 MiB file cap. Edition 2 landed through PR87 at `02c0bef6c` after exact-head CI and independent native approval; main-guard passed | Each later revision needs fresh exact-head CI, independent native approval and reviewed merge |
 
 [§](plan.md#compact-task-index) and the acceptance cards in [§](catalogue.md#primary-acceptance-items-by-stage) expand these rows into actionable items; the property list carries the same items. A prepared patch or planned command is not an installed or executed capability.
 
@@ -209,11 +211,11 @@ This edition describes the implementation reviewed at `68f56404c3e199e06413bfd64
 
 The manual itself is a later documentation change. Its publication identity must be read from its own Git history and CI receipt, not confused with the implementation snapshot. Follow-on patches described as pending are outside the implementation snapshot even if they are preserved on this host.
 
-Publication state at 2026-09-23 22:34 UTC: edition 1 of this manual is on `main`.
+Publication history, refreshed after the PR87 merge; the application snapshot above stays pinned to PR83:
 
 - **PR84 was closed as superseded** (coordination record of 22:22:38 UTC). Its head is `e06c0551e3ec5ee5260debb3d953c17f34d15093`. The independent non-contributor review 5295763455 (state COMMENTED, 19:30:12 UTC, at that head) withheld approval for two reasons: a blocking finding that three intermediate commits each contain two files larger than the repository's 5 MiB cap (`deploy/ci/check.sh:46`), so a rebase merge would put those commits on `main`; and exact-head CI that was not yet fully green.
 - **PR85, the clean-history successor, merged at 22:33:36 UTC.** Codex, the manual owner, published the single commit `2022017a8c45cc25967ae99ae781ca26276140b8` on `a75e543d2` (branch `docs/asm-maintainer-manual-final`, pushed at 22:21:30 UTC) with a 203-page PDF (SHA-256 `69418c48…`). Exact-head CI run 35927921851 attempt 1 succeeded, and the independent non-contributor review 5297559032 approved that head at 22:32:39 UTC. The merge produced `main` `bdfc95c63d905c647e41175e79dc30cdc8600287`, whose Git tree `fbbed08a…` is identical to that of `2022017a8`.
-- **This edition 2** restructures and corrects `2022017a8`. It was prepared in Claude's lane for the manual owner to integrate. Like any manual change, it needs fresh exact-head CI and an independent non-contributor review before it can merge.
+- **Edition 2** restructures and corrects `2022017a8`. It was prepared in Claude's lane and integrated by the manual owner, preserving the authoring commits. Edition 2 merged through PR87 at 2026-09-24T02:58:00Z as main `02c0bef6c81ab17e034daea308c1a0b5a7940467`, after exact-head CI 35948653955 attempt 1 and independent native approval 5299139743; main-guard 35949456287 passed. Further corrections repeat the reviewed lifecycle.
 
 ### The identity tuple
 

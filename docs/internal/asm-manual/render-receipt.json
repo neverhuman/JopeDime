@@ -11,16 +11,16 @@
   },
   "aliases": 284,
   "warnings": [],
-  "pages": 146,
-  "pdf_sha256": "b64cc70dbab3265c551e97dbe1a79eaeef95959723a4026076c0a2f70b625612",
-  "pdf_bytes": 1240019,
+  "pages": 149,
+  "pdf_sha256": "6557e5de7542912afe3ca8d4c97e22553885d2b61275fda9f559786800af7927",
+  "pdf_bytes": 1255849,
   "volumes": [
     {
       "volume": "main",
       "pdf": "asm-maintainer-manual.pdf",
-      "pages": 146,
-      "pdf_sha256": "b64cc70dbab3265c551e97dbe1a79eaeef95959723a4026076c0a2f70b625612",
-      "pdf_bytes": 1240019,
+      "pages": 149,
+      "pdf_sha256": "6557e5de7542912afe3ca8d4c97e22553885d2b61275fda9f559786800af7927",
+      "pdf_bytes": 1255849,
       "rewritten_links": {
         "cross_volume": 272,
         "local_relative": 0
@@ -30,10 +30,10 @@
       "volume": "evidence",
       "pdf": "asm-evidence-reference.pdf",
       "pages": 132,
-      "pdf_sha256": "0c6511896471af6cbbce4f8e0d29504c0492636ed74cee3ad2fd49b93b0140e8",
-      "pdf_bytes": 4593132,
+      "pdf_sha256": "a8853e601207112a2270983c59262f423b7888e7c2c4ed47c276e8f0063d06a2",
+      "pdf_bytes": 4593136,
       "rewritten_links": {
-        "cross_volume": 91,
+        "cross_volume": 93,
         "local_relative": 0
       }
     }
@@ -41,7 +41,7 @@
   "network_resources": false,
   "runtime": {
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
-    "source_date_epoch": "1790217548",
+    "source_date_epoch": "1790228321",
     "libraries": {
       "weasyprint": "68.1",
       "Markdown": "3.5.2",
@@ -343,7 +343,7 @@
     },
     {
       "path": "internal/asm-manual/data/roadmap.json",
-      "sha256": "8fd826b845e94c87e70b79b98350690d0d66d5e16412d222de17e13488b0aff0"
+      "sha256": "94b1680496f497591442e2507e52e6dbb7d45845856b938a52db3324148253e7"
     },
     {
       "path": "internal/asm-manual/data/s3-estate.json",
@@ -635,15 +635,15 @@
     },
     {
       "path": "internal/asm-manual/front.md",
-      "sha256": "94a02b1b7ce5848cc09517ec088d205293647d96c7b4b9c80000076815d022a1"
+      "sha256": "5062438eeea7f5969374b8f154c6038488394bd961d1daf64750eb48b30d3db7"
     },
     {
       "path": "internal/asm-manual/publication.json",
-      "sha256": "bd30c96736ada4acf1c0d98c3b0b81147e9021183e24f99e83368045ffc95e3b"
+      "sha256": "c62ecc60cdcbb552bc6afe4757e093f9a13f1f8a899b867e03fcbfabcca0869a"
     },
     {
       "path": "internal/asm-manual/sections/architecture.md",
-      "sha256": "d03a97f0bf89c68f3b0070ded53b49d1e95740a330dca425f529fd87d592200b"
+      "sha256": "b4c404504ba9121a991e2a345e31a56cc63d75021f2fcddf2b5e9e7267fa5250"
     },
     {
       "path": "internal/asm-manual/sections/benchmark.md",
@@ -655,11 +655,11 @@
     },
     {
       "path": "internal/asm-manual/sections/data-estate.md",
-      "sha256": "c7186798f9f18089e16e0517ef6bb20ea42ef893fd574d34d2f81a621549c69b"
+      "sha256": "193b421735594ae4b5db7672fb7b42c19d350c061d7a735910d6a627e3587f05"
     },
     {
       "path": "internal/asm-manual/sections/data.md",
-      "sha256": "e3a0ced5cfcd2bbefc87d7251af25d4fb3a02c8c3fdd9d0c91b015e80b344191"
+      "sha256": "ebcd67e936c44cda5341b14071237bbabb040c130574296e8b1350a4e338167a"
     },
     {
       "path": "internal/asm-manual/sections/datasets.md",
@@ -667,7 +667,7 @@
     },
     {
       "path": "internal/asm-manual/sections/inference.md",
-      "sha256": "a0f339867223e38a0d0f295eb9a3c501654a070ec07a8419fbd96cc3ba55fa01"
+      "sha256": "0cabdc9379d608c5fc1e82bb08b7066ae7fac2a68e496bc41ac2a3b536204c7d"
     },
     {
       "path": "internal/asm-manual/sections/installation.md",
@@ -675,15 +675,15 @@
     },
     {
       "path": "internal/asm-manual/sections/learning.md",
-      "sha256": "2e674550017dc9f44558a3f89c7ae383caf2f803ff428460454160c55a7899e8"
+      "sha256": "05f6ffdc6891d3918e921854c3bf7ea3f6d073221e673e4d2482bd452ca86e17"
     },
     {
       "path": "internal/asm-manual/sections/maintenance.md",
-      "sha256": "5f73d90242adb89f41cbfa1e7da811d22209a43f5b893b78b197f33389592023"
+      "sha256": "6a0ea2998e5df03ef1bc4c6e8f17d0e792c6d8a5b09406de6edbfe73ea8e110a"
     },
     {
       "path": "internal/asm-manual/sections/plan.md",
-      "sha256": "86b27f3ace01442f2ddc9234143b5f93cfb9d9d32828ac05bc34667b73748f8b"
+      "sha256": "56fd8b90a7a2005eac8acdf0bff435301e6491d96b5f11fbb942c4371c077050"
     },
     {
       "path": "internal/asm-manual/sections/scheduling.md",
@@ -691,11 +691,11 @@
     },
     {
       "path": "internal/asm-manual/sections/search.md",
-      "sha256": "8320690b45aa0632936a094e8a3bf2788ff717712c5ab48588c07234c9686e29"
+      "sha256": "1896fa6bcd58a07d302e54bb700a69271c62ce7481205fa414eb31c288db3c98"
     },
     {
       "path": "internal/asm-manual/sections/status.md",
-      "sha256": "c3cf3af627f17a123b243da5c2e8ef899679e6c8df54a1b2d96982fb2235a9fc"
+      "sha256": "7674088b028f0b0bbbdc1bc186164a748081280bf55d49e6b3d4a9443d016a41"
     },
     {
       "path": "internal/asm-manual/sections/targets.md",
@@ -703,15 +703,15 @@
     },
     {
       "path": "internal/asm-manual/sections/teachers.md",
-      "sha256": "2910c0522dc32227e03618518e8fb6a088988c80670943abb73b0b7fdde428d3"
+      "sha256": "56a527c085a8b6b3c153141103ad2d79186d49f5cf365950496f5b7e2373c1a4"
     },
     {
       "path": "internal/asm-manual/sections/training-history.md",
-      "sha256": "b6c5517e600a393fcd722af588469beb3d3f8635a28d1cc7dc9148a34127ad06"
+      "sha256": "8389aea1120cc5e058ddd016a3089e8b00a0de76f5dc54d0a0486d3d8fec9c66"
     },
     {
       "path": "internal/asm-manual/sections/training.md",
-      "sha256": "6e6f2af634bcb2c41f5bcd9a28171cc896c1c2ed7e6e49485208d421db514e38"
+      "sha256": "24264b551516c638ae6bf1f239049f7caf2af001072619af80ed63d3186f1882"
     },
     {
       "path": "internal/asm-manual/tools/build_manual.py",
@@ -759,11 +759,11 @@
     },
     {
       "path": "asm-maintainer-status.plist",
-      "sha256": "f175e1656dc3e7b323b750d96b5c4927569bf1b03067ff4666a0e85264395781"
+      "sha256": "a4d287508ca0a9a821f3a7526fcdeed2d12c7775ee8b1cc7e837ce48fee91528"
     },
     {
       "path": "asm-maintainer-manual.md",
-      "sha256": "51c4136bffacb45807c295d9b405187cf41c6e4b401b724aaffb3b7b29631fde"
+      "sha256": "a5a638f409265d9de567334c42f77a9e0be1df5df8f0240749de7cf01ffb99ff"
     }
   ]
 }
