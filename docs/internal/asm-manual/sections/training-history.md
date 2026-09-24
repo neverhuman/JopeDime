@@ -2,6 +2,8 @@
 
 The supplied CSVs retain original values, source file SHA-256, source path and line, and JSON Pointer where appropriate. There is no interpolation. Separate figures show different populations; joining them into one curve would erase changes in architecture, objective, corpus, sampler and validation protocol. The later recovery lineage has an independently audited, complete retained series of 63,000 per-step observations; the older 108-block capture retains only block endpoints.
 
+The new core-technology chapter adds a separately verified [24-record A100 fixed-monitor series](deep-stack.md#a-fixed-panel-learning-curve-for-the-a100-lineage) and historical throughput. It does not replace the different populations retained below.
+
 ## Dated lineage and evidence coverage
 
 | Observation or historical interval | Retained state | What is established; what is not |

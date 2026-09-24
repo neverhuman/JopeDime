@@ -27,6 +27,9 @@
       "file": "architecture.md"
     },
     {
+      "file": "deep-stack.md"
+    },
+    {
       "file": "installation.md"
     },
     {
@@ -92,7 +95,7 @@
       "pdf": "asm-evidence-reference.pdf",
       "title": "Evidence reference",
       "label": "Volume 2",
-      "note": "Volume 2 holds the complete historical records, per-dataset statistics, inventories, binary formats, task catalogue, source and receipt indexes and glossary that the thirteen chapters of Volume 1 summarize and cite."
+      "note": "Volume 2 holds the complete historical records, per-dataset statistics, inventories, binary formats, task catalogue, source and receipt indexes and glossary that the fourteen chapters of Volume 1 summarize and cite."
     }
   },
   "figure_anchors": {

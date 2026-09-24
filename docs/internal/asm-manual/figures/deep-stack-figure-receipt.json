@@ -1,0 +1,107 @@
+{
+ "schema": "deep-stack.figure-receipt/v1",
+ "source_constants": {
+  "dataset_dim": 1536,
+  "target_dim": 512,
+  "target_keep_dim": 512,
+  "width": 512,
+  "layers": 6,
+  "heads": 4,
+  "ffn": 2048,
+  "max_seq": 128,
+  "vocab_size": 401,
+  "embedding_rows": 657,
+  "initial": 80,
+  "neural_slots": 64,
+  "elites": 4,
+  "pool": 64,
+  "exploration": 16,
+  "rounds": 8,
+  "batch": 128,
+  "temperature": 1.0,
+  "clip": 32,
+  "languages": [
+   "python",
+   "rust",
+   "cpp17",
+   "cpp20",
+   "javascript"
+  ],
+  "categories": {
+   "PAD": 1,
+   "BOS": 1,
+   "EOS": 1,
+   "ENGINE": 1,
+   "EXPR_VAR": 14,
+   "EXPR_CONST": 16,
+   "EXPR_FUNC": 11,
+   "EXPR_BINOP": 4,
+   "EXPR_END": 1,
+   "APPEND": 3,
+   "OP": 53,
+   "VAL": 291,
+   "TASK": 4
+  },
+  "n_log_vars": 7,
+  "params": 27796494,
+  "tensors": 136,
+  "parameter_groups": {
+   "context MLP (proposal)": 1313792,
+   "context MLP (reward)": 1313792,
+   "context prefix projection": 262656,
+   "token + position embeddings": 402432,
+   "decoder blocks (6)": 18914304,
+   "output norm": 1024,
+   "reward program embedding + norm": 337408,
+   "context gate and projection": 525312,
+   "4 reward heads": 3149828,
+   "runtime head": 525313,
+   "unused at inference: stability, ablation, loss weights": 1050633
+  }
+ },
+ "inputs": {
+  "/home/ubuntu/JopeDime/crates/jope-engine/assets/grammar/featmath.json": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787",
+  "/home/ubuntu/JopeDime/crates/jope-pipeline/src/emit.rs": "bb351af0947653caf9bfb5d276efd8b2645599503a101f1100b9fc20bb07edb9",
+  "/home/ubuntu/JopeDime/crates/jope-pipeline/src/neural_search.rs": "b67feb5ba5b500bdc40265b7258db00ea8571a7ce8c5ebf5c6eb761725d42fb6",
+  "/home/ubuntu/JopeDime/crates/jope-policy/src/config.rs": "a740ca64edde353c9624f5fdc3b63878c1200ee95c159a71bca1556abc28ed37",
+  "/home/ubuntu/JopeDime/crates/jope-policy/src/context_producer.rs": "f9a166fa4feb71f4f55a0e3f40c5783b2a9ea40c4f8c95b261d25b2e3f69d4af",
+  "/home/ubuntu/JopeDime/crates/jope-policy/src/decode.rs": "032083033044c4470b299f17a41d6a165118c90b8eeb409087f5d94aeb579274",
+  "/home/ubuntu/JopeDime/crates/jope-policy/src/model.rs": "7d0f464fe4bd51ec4b2afa2257678565f959760c74bc347a7d1cebff3efe1e25",
+  "/home/ubuntu/JopeDime/docs/internal/asm-manual/data/deep-stack/a100-fixed-monitor.csv": "d6de475ecd64f33c790dd8a6bd0d61462ec8c0eb58ea49a65c8b7b226ad9c56e",
+  "/home/ubuntu/JopeDime/docs/internal/asm-manual/data/deep-stack/a100-throughput-bins.csv": "b9347c32d0907a1a35e813e026b4fc108b2321e448af212909348b206b335c8f",
+  "/home/ubuntu/JopeDime/docs/internal/asm-manual/data/per-step-history/a100-step-bins.csv": "446399c4088fe7e86fea7038a37acde8704d9cd185f2b9eeffe5b93c29a2ad14",
+  "/home/ubuntu/JopeDime/docs/internal/asm-manual/data/training-history/gen31-epoch-metrics.csv": "1efedc9c5eb14fdb8398fd8646b0eea9b87e6264a648e709c6ed290674b7b34e"
+ },
+ "outputs": {
+  "deep-stack-network.svg": "0836261d3800714648510ae90473cf8a86039df76ac4992631db1774696708cb",
+  "deep-stack-pipeline.svg": "efceb513e46056fdd13541031c126e883efbf0542d37a63dbed845379831c090",
+  "ds-f1-fixed-monitor.png": "f73d8f5bee77d1e07e921a269764fa7dda89f2783cdd1f38df01e7a983611cf9",
+  "ds-f2-a100-components.png": "eb0eea18098cea703eaf6e93be5b8dbcca2a8a817b4cceac73f80a0d62754548",
+  "ds-f3-a100-throughput.png": "b5bb9a0e8ac9051c592ad73788086ff3ee916253b8cc51b3cc378699eff4ac77",
+  "ds-f4-gen31-train-validation.png": "049b96f9e82a0c9e31db6865c782de5a966a84c31b8abed4cfd056b54d7be572"
+ },
+ "command": "python3 docs/internal/asm-manual/tools/make_deep_stack_figures.py --repo REPO --training-data DATA --out FIGURES",
+ "extraction_command": "python3 docs/internal/asm-manual/tools/extract_deep_stack_data.py --out DATA",
+ "plots": {
+  "ds-f1-fixed-monitor.png": {
+   "coverage": "24 records, 23 checkpoint steps 3000\u201369000, 2048 examples per record",
+   "units": "sequence NLL, Bradley\u2013Terry, listwise and runtime Huber losses",
+   "limits": "One unchanged adaptive teaching panel; not untouched evaluation or downstream search quality."
+  },
+  "ds-f2-a100-components.png": {
+   "coverage": "63000 steps in 21 separate 3000-step blocks; 100-step means",
+   "units": "training losses and gradient norm",
+   "limits": "Different block corpora; training minibatches, not held-out performance. No missing-step interpolation."
+  },
+  "ds-f3-a100-throughput.png": {
+   "coverage": "63000 steps, 630 bins, 21 logs, eight A100 GPUs and batch2048",
+   "units": "examples/second and seconds/step",
+   "limits": "Historical timing; logged processing throughput differs from end-to-end throughput. Not a current benchmark."
+  },
+  "ds-f4-gen31-train-validation.png": {
+   "coverage": "gen31 retained epoch records, 125970 train and2169 validation rows",
+   "units": "composite loss, recorded gap and sequence NLL",
+   "limits": "Phase-B reward weighting changes imitation objective; incomparable to native composite losses."
+  }
+ }
+}

@@ -1,0 +1,229 @@
+{
+ "schema": "deep-stack.extraction/v1",
+ "inputs": [
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-118dd53e4acaa6899d822903f9775ea37c222ef7cb622f860e482ebde9f3c096.json",
+   "sha256": "af78541d2f8f84658e084d940139b3b166be3d8e9205828d199223d90be9ad3d"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-16e3f0299c725af8fcf9e4b8cff16b4afab9dcf465888c82561cfe979a0a19e0.json",
+   "sha256": "d55ad258043cb41cc1be118f9f958b810bc9b970696cd490b2f13c6373479251"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-20dca6708ebcffc433b7a63fea3df868c1003adefc19826637367bc4a2fa64fe.json",
+   "sha256": "b7ecc610ad6e169b4355205b6581d8d5e8ee8fc6d6e2fb09007e0dca5dafe85d"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-279377a5f84df382c9bba7c3528ea71563c08144b3e1799b54686718cee2b562.json",
+   "sha256": "86276ff0b99505aaccd970ffdd8b31b03b2d08483c1b2049d2890672d1671a41"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-330be368e7ce2a0ca4950e451c691ebe4bda07562089ff380dd86567171dc445.json",
+   "sha256": "85e028a6c81b0e94bcc1b3541e7cf6abee43934ebdf329bf72ffb5f8395093e7"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-506bc3e4fd080b31c7b10fcab922d7ce8c5e1e1a02fe9eeb8544530c217d1bc0.json",
+   "sha256": "82ed4f29ac2503380dd91d8a158cb161dfe0cc60ff28f70b36f84e36b8ac2604"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-5522d1777a80b019ed9e1134a46264c42e89ae57640ba757aa11eabf6beab864.json",
+   "sha256": "ec53db98df72a129a2190463715460f24a3212062dcc0747b1c02b8f2acec3c7"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-58c4a1f62ca46611913ed75f8cb04cf5ffced7175ab1816af8e38ff9e6329c1c.json",
+   "sha256": "0e1ad6df204650c89fb8e2a76d7fcd88993ad34273bc0e2b32fb8aa6238b84e5"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-69d248ed51035e74a136b5a29d20e1328d50f66d149fc02f959f1d15e3fe80a0.json",
+   "sha256": "a3d7e8baf3c27fd7103919c1f467453413d35d18e44a94d4548066500980d691"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-6a309c39d05830c984916921ede3e5f93c35ea8238e95124f4997f2c5ca927f8.json",
+   "sha256": "7f2585b5522ceeefa929dc903cdf27372fd5719b0241b2b06e3e86215ffde6b6"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-7f215cdaeb45ac72a82069f599f3419380c285e234500f83787145daa4920f1e.json",
+   "sha256": "10afe7ee28aabfba4325091cf026a5f541ed7ee33800b7bb69da3d4273fe5b59"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-8766aa2424c34a9ba5366c4f04947f3191d7a3df5d808a9d396ceddaeb2a4cd7.json",
+   "sha256": "c4e050d9ef5e6fe5cb8ea8fa8f10416b5b8ab5ddcc29f80f5c60832310a9349b"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-8ac80c269cc47c253b6f53fa3bc1eb75bb2fcda0bdace3ff8554be0175c400d6.json",
+   "sha256": "f553b1fbec7eb4e2ed4068dfa6f86efe0b18d653363fff2c29e5467e53beae07"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-8ef5b0ac8a3743f79ba009f0f1d781836afc9b633853ee4191426aeebd5b2a81.json",
+   "sha256": "a8e32a953acbe92f1c983c57fc4e7229b7235fe9ac6119772f730770bfc5ed06"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-9bbedf920659d342b350c7507d33b25e62e98e498c8c681887a9a4f971704528.json",
+   "sha256": "fd01f5ef248622d54edd82760c46d36b165c994b5db61405b286eaaf8b87ff4a"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-a9756f373d4a497174739ac3203165e86bbbdd312171dae1b306799fc2886e8a.json",
+   "sha256": "42f382a4d89db5b836570f8e4160ad71c9522db97058f5522b12626ba208429e"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-ac5040d90f715e15a451d6eaa23c290c34f05c29dda63b753e3b64b2f943821a.json",
+   "sha256": "c1e530a50a578d76b7db510ba371bed7456c6eecc017df7b322385a589ba414f"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-b6cf145ebe9959940829828722607cdb75815e61b59eeef8e3d319da23f8c7a2.json",
+   "sha256": "1b643c7c890f5af47babdaf7a54a54fc3984e5191fafaa8272571dbb147d2fee"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-bbabf49d29e590a937e8e46facb0c505c08956166ebedbeb8462ed4f575e8fda.json",
+   "sha256": "32e450903f282283e0d4a7a15c1081b95ba1ed4cb88a474988fcd3b55070acc1"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-d666f9cdafb509f07cbc4bf0dc5eda7633710313adc25a72dac6071f24d55a5a.json",
+   "sha256": "424ebdb5881f417b7fc4d40429e0ca93690f5ee997392109a2554fc57df299d0"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-d715c47a7209f9525f95181283ed04c08f8697f616e90a6ab2fa30cb63504eeb.json",
+   "sha256": "388125bc2375a0c5e34db46e7e1ae0b1820126a04252d77c511b9a38c8068cf3"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-e2e3aa3c81660bb684cf341da91fe1781bd191772fb88b23533cd29bcf9c3576.json",
+   "sha256": "ea296b224e188ea39c90ff6d74854a309311339b3f935a757da5432f4971d190"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/5ac2caa6c7107ad1633ad249106babe659f383e98444da792bfbeb1c85dff979-e41be9b8d64640bcebc91bcb4e2ddb86536bf7e761c36891acdf56acc1f4d1ee.json",
+   "sha256": "950422f85a8c820eaaca6aafe867fd5934c5d5aaf2a117aa7426b39eb6ddbdcd"
+  },
+  {
+   "path": "/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/b291d70bf7e7fdfa4ae04833049fd62423a5db4eb09d3beb20e32d5d3e5380dd-20dca6708ebcffc433b7a63fea3df868c1003adefc19826637367bc4a2fa64fe.json",
+   "sha256": "bd285eaeaca6afe92702cb61d10c4695e81ac2991b0f75c034f296c66a5ed0f3"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000001/train-2/metrics.jsonl",
+   "sha256": "ae2ae80ca63203bd5c0892ee9d2bc39b23e1e9d272e63297bb25f4fc617410d1"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000002/train-2/metrics.jsonl",
+   "sha256": "dbb2d926760c493a48c551cc2e044db9e897a622d472e6fb82d675f2821e2239"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000003/train-2/metrics.jsonl",
+   "sha256": "80a1d991865fd3b850cb7b048b85ecd3a7423834145740e39b0c6c53545df282"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000004/train-2/metrics.jsonl",
+   "sha256": "ddb1ad4c1e62e410857a663c65571ca1d52491611b62564ffc1d3e5643916aa3"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000005/train-2/metrics.jsonl",
+   "sha256": "21381764fedce2f7b1525f434d2d005fcdb57cdfc89c62562893c3177450f658"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000006/train-2/metrics.jsonl",
+   "sha256": "ff726a21dd9d07f7935265e9595d91e28a41a719ad868746f809c113b17a24b2"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000007/train-2/metrics.jsonl",
+   "sha256": "da3f9541573c33eebc9ff563ed37b180081d5a75096993a8101da632aca7b158"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000008/train-2/metrics.jsonl",
+   "sha256": "881d863114c5668514c9dea37731bd075508b386080b3f62d2c965005b3707c8"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000009/train-2/metrics.jsonl",
+   "sha256": "403e51019943482d7b7f7e7376613bdae0efd3198222c4c279590b538abfe6d0"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000010/train-2/metrics.jsonl",
+   "sha256": "6870baa58cdf4ed4f9c0012315167d61246c2435fec67a4026122ffaa418f2a0"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000011/train-2/metrics.jsonl",
+   "sha256": "1342e0b5d67aa79742b7f07f02a9580ea053f2adaccaecfbab917f9ad20c1c6b"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000012/train-2/metrics.jsonl",
+   "sha256": "5ab658bbceb113963ed3a516403e86e4a0050c300950f3f8273b909b2fa66577"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000013/train-2/metrics.jsonl",
+   "sha256": "687bce4f081f05058d69370573d4e27fbe7a09ac84dbdf5f560c5d239fab92a4"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000014/train-2/metrics.jsonl",
+   "sha256": "77db35aa3cb4f5e3bae7abe2ebeb6aedbc6ace1c838d1e412a6066a20f4e6aa6"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000015/train-2/metrics.jsonl",
+   "sha256": "05683390df42c270f84e63207c23bca98bbf7135e5c3732842a801a08d295e27"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000016/train-2/metrics.jsonl",
+   "sha256": "0685a9b756ce61a2bbe422b9455a87106f47765d111dd184d24ebec7f84f5186"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000017/train-2/metrics.jsonl",
+   "sha256": "93d641c9328515f60831338fdf6f18cb83211986a40c7f428bd6cba55d0c61cd"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000018/train-2/metrics.jsonl",
+   "sha256": "132497806a6e6d0e1735eb1ea4be37cf2270d4b13f0d9f9700955998a9b5c369"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000019/train-2/metrics.jsonl",
+   "sha256": "61276079c5d9480d934be7652d000b71abbc84d824ba6fe652c2f6f81c6b44f0"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000020/train-2/metrics.jsonl",
+   "sha256": "83a8163a468e1fa6bf2cfc9e33a830e87d33b17110f78bc68dd9e82e0343312e"
+  },
+  {
+   "path": "/home/ubuntu/jope-migration-evidence/claude/node-high-value/files/home/ubuntu/jope-dime/parallel/runs/eight-a100-recovery-20260912/learning/cycle-000021/train-2/metrics.jsonl",
+   "sha256": "89732b02b82b541284023d86a361c52977d96a355d47a8ac61dc3778685537db"
+  }
+ ],
+ "f1": {
+  "records": 24,
+  "steps": [
+   3000,
+   6000,
+   9000,
+   12000,
+   15000,
+   18000,
+   21000,
+   24000,
+   27000,
+   30000,
+   33000,
+   36000,
+   39000,
+   42000,
+   45000,
+   48000,
+   51000,
+   54000,
+   57000,
+   60000,
+   63000,
+   66000,
+   69000
+  ],
+  "panel_sha256": "fbff7a04811288ff5e2711575639b9ceca09ca1a66f4e1a9779e2b4154c76977",
+  "corpus_sha256": "11e60a43fc02c9b9452ea22126a017299b5ecb8d050466b15710d6f62853360d",
+  "executables": [
+   "87995977509823197d24c45d29728456227bf16411063ca048e52ec3e5df6f83",
+   "db0aabe973e36474e54f66d7ba5667169a9cb2dbec0269f0f8f64d412fcbc596"
+  ]
+ },
+ "f3": {
+  "bins": 630,
+  "blocks": 21,
+  "overall_median_of_block_medians": {
+   "examples_per_second": 33071.03625715151,
+   "end_to_end_examples_per_second": 31598.980310436476,
+   "step_seconds": 0.061927300500000004,
+   "communication_seconds": 0.010784126000000002
+  }
+ }
+}

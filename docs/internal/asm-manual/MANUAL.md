@@ -639,15 +639,394 @@ Owner naming rules for lineage v1 (proposed):
 
 ---
 
-# Chapter 3 — Installation, preparation, assets, workers and doctor
+# Chapter 3 — How ASM works: data, encoding, model, GP, code, training and learning
+
+This chapter describes the whole ASM stack in one place. The first section explains it without jargon. The rest describes the code and the real measurements. Every number comes from source at the stated commit or from a retained file with a recorded SHA-256. When something has not been measured, this chapter says so and draws no curve for it.
+
+**Scope and snapshot.**
+
+- Source references are to `main` at `5de90b1cc0115e8938a8996138873cc8079520bd` unless marked otherwise.
+- The one-dataset measurements come from two verified origin-proof journals, `68f56404` and `c5d11ffc`, retained in ASM custody. The canonical report is that of journal `68f56404`, written by the build of source `68f56404c3e199e06413bfd645d3fe0803d7b96f`. Several crates changed between that build and `main` (PR88).
+- Numbers recomputed from those journals therefore describe that build. They are not a new run of `main`.
+- No new training experiment, GPU window or sealed row was used to write this chapter. Source at the PR90 merge changes none of the core-code files cited here; source support and operational qualification remain separate.
+
+<a id="c-deep-stack--explain-it-like-im-5"></a>
+
+## 3.1 Explain it like I'm 5
+
+<a id="c-deep-stack--the-recipe-writing-robot"></a>
+
+### 3.1.1 The recipe-writing robot
+
+Imagine a robot chef that invents recipes. Here a *recipe* is a small computer program that turns a table of numbers into predictions, for example "clean the numbers, then draw the best straight line".
+
+1. **You show it your ingredients.** The robot never gets the whole table. It gets a short *summary card*: 2,048 numbers that describe the columns, how they vary, and how the thing you want to predict behaves. The card is made only from rows the robot is allowed to learn from.
+2. **It writes recipe ideas.** A neural network reads the card and writes recipes one word at a time from a fixed list of 401 words. A grammar checker stops it from writing nonsense. It keeps the first 64 different recipes that make sense and adds 16 random "wild" ones, 80 in all.
+3. **A cooking contest picks the best.** Every different recipe is sent off to be really cooked and tasted. Failures and timeouts stay in the record but cannot win. Each recipe is trained on four practice folds and tested on the remaining fold, five times over. The best recipes are mixed and changed to make new ones (*mutation* and *crossover*), and the contest runs again. The network's opinion never decides the winner. Only the real tasting does.
+4. **Writing the winner down is not finished yet.** Code writers can already turn some simpler recipes into Python, Rust, C++17, C++20 and JavaScript programs that re-train themselves. They cannot yet handle an ASM winner, and the separate fitted-state exporter supports only an allowlisted set of fitted models and requires numerical qualification.
+5. **Winners can become lessons.** Later, a recipe that wins *fairly* becomes a teaching example for the network, so its next ideas can be better. That last step is built but has not yet been run on real data.
+
+<a id="c-deep-stack--checking-that-a-win-is-real"></a>
+
+### 3.1.2 Checking that a win is real
+
+A child who only does well on the one test they peeked at has not learned the subject. A child who does well in practice *and* on a new test probably has.
+
+ASM's lift measurement uses the same idea ([§](#c-learning--observed-transferable-lift-reporting-contract-not-yet-measured)). It is built but has not yet been run on any real data. Under it, a new way of searching earns credit only when it beats the old way in two places:
+
+- in the practice rounds, meaning cross-validation on the training rows;
+- on a separate round of rows it never used, the held fold.
+
+Improvement on only one side earns no positive credit under this descriptive rule. The rule does not identify why the sides disagree. When both win, it earns the smaller of the two wins. [§](#c-learning--observed-transferable-lift-reporting-contract-not-yet-measured) makes this exact.
+
+<a id="c-deep-stack--what-the-robot-cannot-do-yet"></a>
+
+### 3.1.3 What the robot cannot do yet
+
+- **It has not yet taught itself anything new.** The step "winners become lessons, lessons make a better network" is built, but no admitted teacher exists and no new network has been trained with it.
+- **These training paths do not use policy-gradient reinforcement learning.** The network learns by copying good recipes (imitation) and by learning to rank them. The contest does the exploring. Rewards can weight imitation targets, but there is no PPO/GRPO policy-gradient update in these paths.
+- **The bounded origin proof covers one dataset.** It does not demonstrate that the network helps; absence of demonstrated improvement is not evidence of equivalence.
+
+<a id="c-deep-stack--the-stack-at-a-glance"></a>
+
+## 3.2 The stack at a glance
+
+![ASM end to end. Green boxes run today with bounded evidence, amber boxes are implemented but held or unqualified, and grey dashed boxes are pending. The generator checks selected architecture constants against source; status labels summarize the dated evidence in this chapter.](figures/deep-stack-pipeline.svg)
+
+| Stage | What happens | Main source | Status |
+|---|---|---|---|
+| 1 Data | Frozen development rows. Cut 0 fits on outer folds 1–4 and holds fold 0 back. Sealed rows are never opened. | `crates/jope-pipeline/src/prepared_data.rs`, `search_plan.rs` | available |
+| 2 Encoding | Hyperion 512 + projected Foundation 1024 + Target 512 = 2,048 floats, clipped to ±32 | `crates/jope-policy/src/context_producer.rs` | available; CPU outputs are labelled unqualified outside the admitted proof path |
+| 3 Policy network | Decoder-only transformer, 512 wide and 6 layers deep, 27,796,494 parameters, accepted step 60,000 | `crates/jope-policy/src/model.rs`, `config.rs` | available (Candle CPU float32) |
+| 4 Proposals | Grammar-masked sampling; 64 ranked + 16 exploration programs | `crates/jope-policy/src/decode.rs`, `ranking.rs`, `seeds.rs` | available |
+| 5 Bounded GP | 80 generation-0 candidates, 4 elites, up to 76 children per generation (capped by the evaluation limit; 16 in the origin proof), every distinct candidate submitted for a real fit | `crates/jope-pipeline/src/neural_search.rs` | available |
+| 6 Refit and held fold | Each arm's winner is refitted on the fitting rows and scored once on fold 0 | `crates/jope-bench/src/panel/asm_campaign.rs`, `campaign.rs` | available |
+| 7 Code emission | Legacy recipe emitters: Python and Rust, plus C++17, C++20 and JavaScript where coverage allows | `crates/jope-pipeline/src/emit.rs` | legacy recipe-refit emitters only; they cannot emit an ASM winner; separate allowlisted fitted-state export is implemented; each emitted model still requires qualification |
+| 8 Teaching corpus | Guard: 5 folds, at least 4 wins over the training-mean baseline, then HWM and a frozen corpus | `crates/jope-learning/src/eligibility.rs` | implemented; zero teachers admitted |
+| 9 Training | Native 512×6 trainer, and the Python 256×2 experimental lineage v1 | `crates/jope-engine/src/training.rs`, `python/src/jope/policy/training_campaign.py` | native held; Python verified only on CPU fixtures |
+| 10 New checkpoint | Must beat its parent in a matched fitted search (LOOP-01) | [§](#c-learning--loop-01-the-central-regression-milestone) | not measured |
+
+<a id="c-deep-stack--deep-technical-walkthrough"></a>
+
+## 3.3 Deep technical walkthrough
+
+<a id="c-deep-stack--stage-1-rows-folds-and-what-each-stage-may-see"></a>
+
+### 3.3.1 Stage 1: rows, folds and what each stage may see
+
+A dataset in the frozen panel is split into five outer folds by group. The development partition file holds only development rows. Each row carries its outer fold, a group id, a row id and the original target string.
+
+For cut 0:
+
+- the **fitting rows** are outer folds 1–4;
+- the **held rows** are outer fold 0.
+
+For `230_machine_cpu` that is 135 fitting rows and 34 held rows. Their row-id hashes are bound by the frozen evaluation request (`fitting_rows_sha256`, `scoring_rows_sha256`). `SelectionPlan::validate` rejects any overlap between fitting and held rows or between their groups (`crates/jope-pipeline/src/search_plan.rs:68-149`).
+
+Inside the fitting rows, selection uses five **inner folds**. `grouped_inner_folds` counts rows per group and sorts groups largest first, then by group id. It gives each group to the fold with the smallest (size, index) (`search_plan.rs:13-36`). Groups never cross inner folds. Only exact duplicate feature tuples and declared group columns form groups: eight of the ten regression panel datasets declare no group columns.
+
+<a id="c-deep-stack--stage-2-the-2048-float-context"></a>
+
+### 3.3.2 Stage 2: the 2,048-float context
+
+The CPU producer builds the context from the fitting rows only (`crates/jope-policy/src/context_producer/input.rs:84-217`):
+
+- numeric columns get training-median imputation and a population z-score;
+- categories are indexed;
+- the target is z-scored.
+
+It then assembles three blocks. `context_producer.rs:189-271` builds the components, `:423-445` pools Hyperion, and `:357-421` standardizes, projects and assembles.
+
+- **Hyperion 512.**
+    - Features only, with no labels.
+    - Each column is quantile-bounded and quantized.
+    - A V7 sweep produces 128 values per row.
+    - The rows are pooled per coordinate as mean, standard deviation, 10th and 90th percentile: 4 × 128.
+    - Then `h = (hyp − μ_h)/σ_h`.
+- **Foundation 1024.**
+    - Features plus the training targets as in-context labels, so this block is **not** label-free.
+    - It is 2,048 raw values.
+    - It is projected with a frozen 1024×2048 matrix: `z = ((f − μ_f)·Pᵀ − μ_p)/σ_p`.
+- **Target 512.**
+    - Training targets min–max scaled to [0, 1].
+    - Two frozen target windows with seed 17.
+    - Then `t = (tgt − μ_t)/σ_t`.
+
+The vector is `concat[h, z, t]`, clipped to ±32 (`context_producer.rs:416`). The recipe identity ends in `frozen-512+1024+512-clip32/v1`; the full string is at `context_producer.rs:127`. The policy configuration still names the first 1,536 values `dataset_dim` and the last 512 `target_dim` (`crates/jope-policy/src/config.rs:39-55`).
+
+[§](#c-architecture--component-dimensions-and-assembly) has the qualification tolerances and the pinned asset hashes.
+
+<a id="c-deep-stack--stage-3-the-policy-network"></a>
+
+### 3.3.3 Stage 3: the policy network
+
+![The accepted policy network. Shapes and parameter counts are computed from a mirror of the tensor inventory in crates/jope-policy/src/model.rs; selected source constants are checked during generation.](figures/deep-stack-network.svg)
+
+The accepted model is lineage B, step 60,000. It is one set of weights with two heads that answer different questions:
+
+- a decoder that **writes** programs;
+- a reward branch that **scores** programs for ordering.
+
+**Decoder (proposal).**
+
+1. The context passes through a two-layer MLP (2048→512→512, GELU and LayerNorm after each layer) and `ctx_proj`.
+2. It becomes the token at position 0.
+3. Program tokens are embedded with `token_emb`, which has 657 rows: 401 vocabulary rows plus 256 spare. A learned `pos_emb` with 129 rows is added.
+4. Six pre-norm decoder blocks follow. Each has causal self-attention with 4 heads of width 128 (packed QKV projection, with future positions and PAD keys masked) and a 512→2048→512 feed-forward network. There is no cross-attention: the context influences every token only through the prefix position.
+5. After `out_norm`, the logits are the hidden state times the *tied* token-embedding matrix, narrowed to the 401 real tokens.
+
+Sources: `crates/jope-engine/src/neural.rs:406-461` for the reference forward pass, and `crates/jope-policy/src/model.rs:366-608` for the Candle port.
+
+**Reward branch (ranking).**
+
+1. A second context MLP of the same shape produces `rz`.
+2. The program is summarised as `g`: the mean of a separate `reward_token_emb` over non-PAD tokens, followed by LayerNorm. It has **no position term**, so two programs with the same multiset of tokens get the same `g`.
+3. The interaction features are `φ = [g, g ⊙ tanh(z_gamma(rz)), |g − z_proj(rz)|]`, 1,536 values.
+4. Four reward heads (1536→512→1) each emit a score. Their mean orders the 64 neural slots and records `rank_log_weight`.
+5. A runtime head, `softplus(MLP([rz, g]))`, estimates cost.
+6. The stability head, the program-only ablation head and seven loss-weight scalars are stored but unused at inference.
+
+Source: `neural.rs:489-531`.
+
+**Parameters.** These are computed from a checked mirror of `expected_inventory` (`model.rs:40-96`): 136 tensors and 27,796,494 parameters.
+
+| Group | Parameters |
+|---|---:|
+| Context MLP (proposal) | 1,313,792 |
+| Context MLP (reward) | 1,313,792 |
+| Context prefix projection | 262,656 |
+| Token + position embeddings | 402,432 |
+| Six decoder blocks | 18,914,304 |
+| Output norm | 1,024 |
+| Reward program embedding + norm | 337,408 |
+| Context gate and projection | 525,312 |
+| Four reward heads | 3,149,828 |
+| Runtime head | 525,313 |
+| Unused at inference (stability, ablation, loss weights) | 1,050,633 |
+| **Total** | **27,796,494** |
+
+The Rust port runs in float32 on the CPU. Its numerical parity with the trained tch forward pass is not established, and its `cuda` feature has never been compiled (`crates/jope-policy/src/lib.rs:82-103`).
+
+<a id="c-deep-stack--stage-4-grammar-sampling-and-ranking"></a>
+
+### 3.3.4 Stage 4: grammar, sampling and ranking
+
+**The vocabulary** (`crates/jope-engine/assets/grammar/featmath.json`) has 401 tokens:
+
+| Category | Tokens |
+|---|---:|
+| `PAD`, `BOS`, `EOS` | 3 |
+| `ENGINE` | 1 |
+| `TASK` | 4 |
+| `OP` (31 transforms, 22 heads) | 53 |
+| `VAL` (binned parameter values) | 291 |
+| `APPEND` | 3 |
+| `EXPR_VAR`, `EXPR_CONST`, `EXPR_FUNC`, `EXPR_BINOP`, `EXPR_END` | 14, 16, 11, 4, 1 |
+
+The product restriction `featmath-jain-v1` keeps the same table but allows fewer operators ([§](#c-architecture--accepted-identities-and-the-product-restriction)).
+
+**Sampling** (`crates/jope-policy/src/decode.rs`):
+
+1. Every row starts from `[BOS, ENGINE=featmath, TASK=regression]`.
+2. At each step, a grammar automaton gives the legal next tokens. Illegal logits are masked, and the token is drawn from `softmax(logits/T)` with a ChaCha20 generator seeded per request.
+3. The defaults are 8 rounds × 128 rows at T = 1 (`decode.rs:39-46`). The origin proof requested 4 rounds × 64 rows at T = 1: see `proposal.request.sampling_rounds` and `sampling_batch` in the neural arm's retained search receipt (journal `origin-proof-68f56404…/journal/asm-search/ec2b7ba9…/search-receipt.json`, SHA-256 `5eae7243b5442635eacb326e0a1ce0b7a4e43ba413ed68e281e1ff33dcd6e069`).
+4. Sampling stops after the round in which `POOL_SIZE` = 64 distinct valid programs exist, and the first 64 in draw order are kept (`decode.rs:221`, `:457-459`). A row is valid if it decodes and `feat_math` parses it. Rows that do not reach `EOS` within 128 tokens are dropped.
+5. A shortfall is filled with grammar-uniform programs, recorded as `neural_rejection_fallback` and never as neural. Then `EXPLORATION_SIZE` = 16 random exploration programs are added (`decode.rs:26-28`).
+
+**Ranking** (`crates/jope-policy/src/ranking.rs:338-445`) scores the 64 pool programs with the mean of the four reward heads. It sorts them by score, breaking ties by program SHA-256. The scores are within-context logits, not calibrated losses. They order slots; they do not choose GP parents.
+
+<a id="c-deep-stack--stage-5-the-bounded-gp-search"></a>
+
+### 3.3.5 Stage 5: the bounded GP search
+
+`neural_search.rs` runs two arms under the same declared budgets:
+
+- the **neural** arm: 64 policy programs plus 16 exploration programs;
+- the **generic** arm: 80 grammar samples.
+
+Constants: `INITIAL_SIZE` = 80, `NEURAL_SLOTS` = 64, `ELITES` = 4 (`neural_search.rs:28-30`).
+
+1. Every canonically distinct candidate is submitted for a real fit on the five inner folds under the execution pool's resource limits (at most 20 workers, 1 thread each, cgroup memory limits; `experiment.rs:58-97`). A canonical duplicate is recorded as failed without a second fit (`neural_search.rs:1192-1233`). A failed or deadline-cut fit gets no loss.
+2. Its **selection loss** is the unweighted mean of its five inner-fold losses (`crates/jope-bench/src/panel/optimize_fit.rs:252`).
+3. The four best by that loss are the parents.
+4. Children alternate between mutation and crossover by attempt parity, and are deduplicated by canonical executable hash. A generation has up to 76 children: `min(76, max_evaluations − observed)` (`neural_search.rs:1718-1719`). The origin proof's cap of 96 allowed one wave of 16.
+5. The arm normally stops at its evaluation limit or its original deadline, whichever comes first. It can also stop with `no_measured_parent` or `search_space_exhausted`, or in a resumable cancellation or admission-pending state (`neural_search.rs:1633`, `:1694`, `:1715`, `:1769`).
+6. The winner is the minimum selection loss, with ties broken by program SHA-256 (`neural_search.rs:653-667`). It is frozen before any held-fold fit.
+
+In the retained origin proof on `230_machine_cpu` (journal `68f56404`):
+
+| | Neural arm | Generic arm |
+|---|---|---|
+| Completed candidates | 77 (62 in generation 0) | 89 (76 in generation 0) |
+| Stop reason | original deadline | evaluation limit |
+| Winner | generation 1, crossover | generation 1, mutation |
+
+The neural winner descends from exploration candidates, not from a `neural_policy` proposal ([§](#c-status--canonical-proof-record-and-per-arm-facts)).
+
+<a id="c-deep-stack--stage-6-refit-the-held-fold-and-code-emission"></a>
+
+### 3.3.6 Stage 6: refit, the held fold and code emission
+
+Each arm's winner is refitted on all 135 fitting rows and scored once on the 34 held rows (`asm_campaign.rs:197-250`). The refit sees the held rows' features only, and scoring happens in the parent process (`campaign.rs:279-289, :617`).
+
+The legacy emitters (`crates/jope-pipeline/src/emit.rs`) write Python and Rust, and C++17, C++20 and JavaScript where their coverage gates admit the recipe. The emitted program contains `fit` and `predict` and refits from a training CSV at run time.
+
+**They cannot emit an executable ASM recipe.** Every ASM recipe carries an inserted `(input …)` stage (`crates/jope-pipeline/src/synthesized_recipe.rs:34-47`), and the legacy planner rejects that stage (`crates/feat-math/src/spec.rs:383-389`, `:592`). A separate allowlisted fitted-state path is implemented in `fitted_export.rs` and `fitted_export_run.rs`, including synthesized worker artifacts through `FittedInferenceView::synthesized`. It packages supported saved state and qualifies emitted predictions; it does not make the legacy planner accept synthesized ASM recipes or establish general ASM-winner coverage. The historical deployment requirements are retained in [§](#c-inference--deployment-support-definition-priority-and-status).
+
+<a id="c-deep-stack--stage-7-teaching-and-training"></a>
+
+### 3.3.7 Stage 7: teaching and training
+
+**Teaching.**
+
+- A candidate becomes a teacher only if the fixed guard admits it: five folds, at least four fold wins over the training-mean (or class-frequency) baseline, and a mean-loss gain above `1e-12 + 1e-6·|baseline|` (`crates/jope-learning/src/eligibility.rs`, `GuardPolicy::current`).
+- It must then pass strict HWM admission into a frozen corpus ([§](#c-teachers--the-admission-guard-label-exposure-and-hwm-identity)).
+- No teacher has been admitted under this guard.
+
+**The native objective**, which produced step 60,000 (`crates/jope-engine/src/training.rs:1257-1339`):
+
+`L = seq_nll + 0.25·BT + 0.1·ListNet + 0.1·runtime_Huber + 0.05·ablation_BT`
+
+- `seq_nll` is grammar-masked token cross-entropy, with 0.05 smoothing inside the legal set and row weight `0.05 + percentile⁴`.
+- `BT` is a weighted pairwise Bradley–Terry loss over the eight programs of each comparison.
+- `ListNet` targets `softmax(percentile/0.25)`.
+- The optimizer is AdamW at a constant learning rate of 1e-4, weight decay 0.01, gradients clipped to norm 1.0 after the all-reduce, with a global batch of 2,048.
+- The trainer is held: `require_original_gpu_grant` refuses every call (`crates/jope-engine/src/task_contract.rs:88-92`).
+
+**The Python v3 objective** (`python/src/jope/policy/losses.py`):
+
+- Kendall–Gal uncertainty weights on `seq_nll` and `runtime_huber`, and fixed weights on the ranking, stability, ablation and routing terms.
+- After phase A, the imitation loss is reward-weighted (RWR).
+- The experimental lineage v1 (256×2) campaign in `training_campaign.py` has run only on CPU fixtures.
+
+**Continuation modes:** cold initialization, weight warm start, explicit new-corpus transition, and exact interrupted resume ([§](#c-training--the-four-continuation-names-and-their-commands)).
+
+<a id="c-deep-stack--stage-8-reinforcement-learning--what-the-code-actually-does"></a>
+
+### 3.3.8 Stage 8: "reinforcement learning" — what the code actually does
+
+| Mechanism | Present? | Where |
+|---|---|---|
+| Policy-gradient reinforcement learning (REINFORCE, PPO, GRPO) | **No.** "GRPO" appears only in a docstring. | `model_v3.py:8` |
+| Expert iteration: policy proposes, GP searches as the expert, guard admits, retrain | Structure implemented; no real generation completed | `neural_search.rs`, `teaching.rs`, `eligibility.rs`, `training_campaign.py` |
+| Reward-weighted regression on imitation targets | Implemented (Python) | `losses.py:387-442` |
+| Rank-weighted behaviour cloning (`0.05 + percentile⁴`) | Implemented (native) | `neural.rs:534-577`; `training.rs:1288-1294` |
+| Preference optimisation (DPO) | Functions written, never called | `neural.rs:578-698` |
+| Tree search (MCTS) | Rejected for now | `expert_iteration_setup.py` |
+
+The repository's own assessment records `flywheel_effect=False` (`python/src/jope/tools/expert_iteration_setup.py:214`) and a neural-seed success rate of 0 of 140 (`:72-84`). The file itself marks that rate as not verified against its source report (`:83`). **Expert iteration, meaning imitation of search results, is the accurate name for this design.** Calling it reinforcement learning would overstate it.
+
+<a id="c-deep-stack--training-runs-and-global-metrics"></a>
+
+## 3.4 Training runs and global metrics
+
+<a id="c-deep-stack--which-numbers-can-be-compared"></a>
+
+### 3.4.1 Which numbers can be compared
+
+A training loss describes the batch it was computed on. Two losses are comparable only when they measure the same population, objective and model family. This section follows three rules:
+
+- **Comparable across checkpoints:** the fixed monitor. It has one panel (`fbff7a04`), one corpus (`11e60a43`) and 2,048 examples for the step-3,000 parent and every A100 block-end checkpoint from 6,000 to 69,000 ([§](#c-deep-stack--a-fixed-panel-learning-curve-for-the-a100-lineage)).
+- **Comparable only within one block or one run:** per-step training losses, and adaptive validation on a panel that changes between blocks.
+- **Not comparable at all:**
+    - composite losses across objectives (native v3 and Python v3.2/v3.3 with learned weights; RTX additionally exposes `contextfree_bt` telemetry, which alone does not establish a changed objective);
+    - any legacy metric across generations, whose training rows grow;
+    - internal Elo against anything.
+
+Metrics that were never logged are listed as such: per-step learning rate (it was constant), tokens per second, a reward-MSE, and any reinforcement-learning advantage.
+
+<a id="c-deep-stack--a-fixed-panel-learning-curve-for-the-a100-lineage"></a>
+
+### 3.4.2 A fixed-panel learning curve for the A100 lineage
+
+![Fixed-panel validation of every A100 block-end checkpoint on one unchanged population (panel fbff7a04, corpus 11e60a43, 2,048 examples). The accepted step 60,000 is dashed, and the unaccepted step 69,000 is dotted. The step-3,000 parent was scored by two executables with identical values.](figures/ds-f1-fixed-monitor.png)
+
+**Source.** The 24 records live under `/home/ubuntu/jain-split/jope-dime/parallel/recovery/eight-a100-20260912/learning-receipts/learning/monitoring/` (schema `parallel.frozen_monitoring.v1`). They cover:
+
+- the parent at step 3,000, scored under executables `87995977…` and `db0aabe9…` with identical values;
+- every block end from 6,000 to 69,000.
+
+Each record states `training_selection_used: false`, `final_tests_opened: false`, `independent_evaluation: false` and `evaluation_bias: "frozen adaptive teaching validation panel"`. The extraction is `data/deep-stack/a100-fixed-monitor.csv`, with a SHA-256 manifest `data/deep-stack/extraction-manifest.json`.
+
+| Checkpoint | Sequence NLL | Bradley–Terry | Listwise | Runtime Huber |
+|---|---:|---:|---:|---:|
+| Parent, step 3,000 | 1.41778 | 0.56216 | 2.31246 | 0.07236 |
+| Lowest value on the panel | 1.37754 (step 45,000) | 0.49244 (33,000) | 2.19595 (9,000) | 0.06648 (45,000) |
+| Accepted step 60,000 | 1.38693 | 0.50920 | 2.22060 | 0.06846 |
+| Unaccepted step 69,000 | 1.39241 | 0.52248 | 2.24601 | 0.07158 |
+
+What this shows:
+
+- **On one unchanged adaptive population, training lowered all four objective losses.** From the parent to step 60,000, sequence NLL fell by 0.0309 nats (2.2%) and Bradley–Terry ranking loss fell by 0.0530 (9.4%).
+- **The minimum retained monitor values occurred before step 60,000.** Sequence NLL was lowest at step 45,000, and from there it rose by 0.0094 by step 60,000 and by 0.0149 by step 69,000. Bradley–Terry was lowest at step 33,000.
+- **So the accepted checkpoint was not this panel's best**, and the later blocks drifted.
+- **The limits.** The panel is adaptive teaching validation, not an independent test. The numbers measure how well the objective fits, not whether GP search improves.
+
+This 24-record series was not in the earlier editions. They showed only the separate fixed comparison of the recovery checkpoint, cycle 25 and cycle 107 ([§](#c-training-history--fixed-monitoring-and-actual-promotion-evidence)). The statement in [§](#c-training-history--telemetry-limits-and-the-recovery-boundary) that the 78-checkpoint series has no unchanged population is still true of that series. The fixed monitor is a separate, unchanged population for the block-end checkpoints.
+
+<a id="c-deep-stack--every-step-of-the-a100-run"></a>
+
+### 3.4.3 Every step of the A100 run
+
+![Training-minibatch metrics for all 63,000 retained A100 steps, as 100-step means, one line per 3,000-step block (each block has its own corpus). The dashed line marks the accepted step 60,000. These are training batches, not a held-out curve.](figures/ds-f2-a100-components.png)
+
+The six plotted metrics come from the retained 100-step bins (`data/per-step-history/a100-step-bins.csv`, 3,780 rows): composite loss, sequence NLL, Bradley–Terry, listwise, runtime Huber and gradient norm. [§](#c-training-history--the-complete-a100-loss-series-steps-600169000) describes how they were extracted.
+
+- Training losses generally fall within each block. Composite loss increases at all 20 single-step corpus boundaries and at 19 of the 20 boundaries when compared using the plotted 100-step means.
+- The gradient norm falls from a first 100-step mean of 0.1798 to a last of 0.1334. It spikes briefly at each block boundary, but unlike the losses it trends down across the whole run.
+
+<a id="c-deep-stack--throughput-and-timing"></a>
+
+### 3.4.4 Throughput and timing
+
+![A100 × 8 throughput with global batch 2,048: examples per second, seconds per optimizer step, and all-reduce seconds per step, as 100-step means read from the 21 original metrics.jsonl logs.](figures/ds-f3-a100-throughput.png)
+
+The median of the 21 block medians gives these figures:
+
+- 33,071 examples/s;
+- 31,599 examples/s end to end;
+- 0.0619 s per step;
+- 0.0108 s of all-reduce per step, about 17% of the step.
+
+The 100-step means range from 26,346 to 39,112 examples/s. The extraction (`data/deep-stack/a100-throughput-bins.csv`) records the SHA-256 of each source log. Tokens per second were never logged.
+
+<a id="c-deep-stack--training-versus-validation-in-the-legacy-gen31-run"></a>
+
+### 3.4.5 Training versus validation in the legacy gen31 run
+
+![Legacy policy_v3.2 gen31: composite loss, the recorded overfit gap and sequence NLL on 125,970 training rows and 2,169 fixed validation rows. Phase A (epochs 1–6) is shaded.](figures/ds-f4-gen31-train-validation.png)
+
+gen31 is the clearest example in the retained data of training loss improving while validation does not:
+
+- Training composite loss fell from 2.926 to 2.022.
+- Validation composite loss stayed between 6.67 and 7.04.
+- The recorded overfit gap grew from 4.11 to 4.90.
+- Training sequence NLL dropped sharply at epoch 7, from 1.474 to 1.008. That is where phase B starts and reward weighting is applied to the imitation loss, so the drop reflects a **change of objective**, not a sudden gain.
+- The 0.05-smoothed validation sequence-loss component (`val_loss_components.seq_nll`) rose from 2.175 to 2.283. This differs from the unsmoothed `val_seq_nll` reported in the historical chapter (2.055572 to 2.182772).
+- Validation pairwise ranking accuracy stayed between 0.527 and 0.539.
+
+[§](#c-training-history--gen31-fitting-the-objectives-versus-using-the-context) gives the context-advantage diagnostics.
+
+<a id="c-deep-stack--measurement-status-and-figure-provenance"></a>
+
+## 3.5 Measurement status and figure provenance
+
+The global KPI is **not yet measured**. The reporting contract in [§](#c-learning--observed-transferable-lift-reporting-contract-not-yet-measured) uses independently repeated nested searches, the per-unit minimum of audit and outer gains, and equal family weighting. The adaptive panel and these historical curves cannot supply an untouched evaluation. No alternative score or statistical significance gate is introduced here.
+
+Reproduce the new historical extraction with `python3 docs/internal/asm-manual/tools/extract_deep_stack_data.py --out OUTPUT`, then draw the six figures with `python3 docs/internal/asm-manual/tools/make_deep_stack_figures.py --repo REPO --training-data OUTPUT --out FIGURES`. The extraction manifest binds every original monitor record and timing log. The figure receipt binds the source files, retained numerical inputs and all output hashes, with per-plot coverage, units and interpretation limits. These are historical observations and source diagrams; none is a new training or fitted-search result.
+
+
+---
+
+# Chapter 4 — Installation, preparation, assets, workers and doctor
 
 <a id="c-installation--scope-and-command-surface"></a>
 
-## 3.1 Scope and command surface
+## 4.1 Scope and command surface
 
 <a id="c-installation--product-checkout-and-cli-evidence"></a>
 
-### 3.1.1 Product, checkout and CLI evidence
+### 4.1.1 Product, checkout and CLI evidence
 
 Algorithm Synthesis Model (ASM) means **“learns to generate and optimize executable algorithms from data.”** The product is the private `veox-ai/JopeDime` repository. On this host its canonical checkout is `/home/ubuntu/JopeDime`; the similarly named research repository at `~/jain-split/jope-dime` is a different upstream.
 
@@ -657,7 +1036,7 @@ The source inventory, a help page, an executed fixture, exact-head CI and a live
 
 <a id="c-installation--command-surfaces-and-the-stopped-integration-order"></a>
 
-### 3.1.2 Command surfaces and the stopped integration order
+### 4.1.2 Command surfaces and the stopped integration order
 
 | Surface | Present in the immutable 68f56404 CLI | Remaining distinction |
 |---|---|---|
@@ -676,7 +1055,7 @@ The stopped integration order is combined **training64** (including regression c
 
 <a id="c-installation--physical-layout-and-identities"></a>
 
-## 3.2 Physical layout and identities
+## 4.2 Physical layout and identities
 
 Keep source, bulk inputs and evidence in separate locations. The examples below use these names; resolve them from actual receipts before execution:
 
@@ -697,11 +1076,11 @@ Campaign journals require absolute durable paths outside Git working trees and `
 
 <a id="c-installation--build-and-install"></a>
 
-## 3.3 Build and install
+## 4.3 Build and install
 
 <a id="c-installation--development-build-of-the-cli"></a>
 
-### 3.3.1 Development build of the CLI
+### 4.3.1 Development build of the CLI
 
 The current development build path builds the Rust CLI from the existing checkout:
 
@@ -715,7 +1094,7 @@ Allocate build/test resources through the repository's existing coordination bef
 
 <a id="c-installation--private-installer-after-integration"></a>
 
-### 3.3.2 Private installer after integration
+### 4.3.2 Private installer after integration
 
 After the pending installer is integrated, prefer its measured source-build and checksum-install front doors:
 
@@ -735,11 +1114,11 @@ The installer's `jope.private-cli-source-build/v1` receipt does not replace a `j
 
 <a id="c-installation--prepare-the-panel-and-external-runtimes"></a>
 
-## 3.4 Prepare the panel and external runtimes
+## 4.4 Prepare the panel and external runtimes
 
 <a id="c-installation--prepare-and-verify-the-panel"></a>
 
-### 3.4.1 Prepare and verify the panel
+### 4.4.1 Prepare and verify the panel
 
 The approved panel contains ten regression, ten binary and ten multiclass datasets. Its exact manifest SHA256 is `ba7dace4cd535687002cc95538dbc7f7aaf77ec973177c7159b3c6d22471eee0`. Reformatting the JSON changes its bytes and is refused even when its apparent meaning is unchanged. Do not replace a failed dataset with an easier fixture.
 
@@ -755,7 +1134,7 @@ Preparation must preserve actual frozen row assignments, original labels, catego
 
 <a id="c-installation--native-roster-and-external-comparator-runtimes"></a>
 
-### 3.4.2 Native roster and external comparator runtimes
+### 4.4.2 Native roster and external comparator runtimes
 
 The native roster has 17 regression recipes, five binary recipes and four multiclass recipes. Aliases do not create extra screening slots. The second GPR configuration is distinct because it has a distinct fitted implementation. Every task also includes four external adapters, each run at library defaults with seed 0 and one thread: XGBoost, LightGBM, CatBoost and a scikit-learn random forest. Native recipes are fixed before the dataset screen and the external adapters keep those defaults, so the campaign performs no per-dataset hyperparameter search for any non-ASM comparator (a head's own internal fitting, such as `ridge_gcv`'s generalized cross-validation, is part of its fixed recipe; [§](#c-benchmark--minimum-complete-future-campaign-report)), while each ASM arm searches within its declared allowance. The highest-rated methods on the historical benchmark-valid ladder, such as TabFM Ensemble, are not panel comparators ([§](#c-targets--sotarena-published-and-corrected-ladders)); panel wins against this roster would therefore not show that ASM beats those methods. Sources: `crates/jope-bench/src/panel/campaign_cli.rs:67`; `crates/jope-bench/adapters/sklearn_rf_adapter.py:2`; `crates/jope-bench/src/panel/selection_exposure.rs:91`; `crates/feat-math/src/heads.rs:65-67`. External library versions, entry points, environment and package bytes must be authenticated before admission.
 
@@ -775,11 +1154,11 @@ Omitting `--runtimes` from `benchmark plan` produces a verified Rust screening i
 
 <a id="c-installation--stored-model-assets-and-the-active-encoder-distinction"></a>
 
-## 3.5 Stored model assets and the active encoder distinction
+## 4.5 Stored model assets and the active encoder distinction
 
 <a id="c-installation--bundle-manifests-and-declared-asset-sizes"></a>
 
-### 3.5.1 Bundle manifests and declared asset sizes
+### 4.5.1 Bundle manifests and declared asset sizes
 
 The metadata-only S3 audit on 2026-09-23 fetched the three bundle manifests below and pinned their returned bytes, ETags and lengths. No model bodies were downloaded for this chapter. These are declared object sizes from the retrieved manifests; they do not measure resident memory, compute cost or a new numerical qualification.
 
@@ -797,7 +1176,7 @@ The three current model bundle manifests are `hyperion-v7`, `jope-prime-gen31-v2
 
 <a id="c-installation--encoder-identity-pitfalls-and-provenance-declarations"></a>
 
-### 3.5.2 Encoder identity pitfalls and provenance declarations
+### 4.5.2 Encoder identity pitfalls and provenance declarations
 
 The storage name `hyperion-v7` must not be confused with the CPU implementation's `V7Model` Rust type. The actual current producer pins weight hash `88b9e834…`, which matches the v5 arm-B asset, with row width 128. The separate stored v7 manifest describes dimension512, eight heads,12 layers and six bands. Replacing the pinned asset based on its newer-looking name changes the encoder identity and invalidates compatibility.
 
@@ -807,11 +1186,11 @@ The retrieved manifests also contain internal/redistribution/provenance declarat
 
 <a id="c-installation--bounded-workers-the-context-worker-and-the-policy-producer"></a>
 
-## 3.6 Bounded workers: the context worker and the policy producer
+## 4.6 Bounded workers: the context worker and the policy producer
 
 <a id="c-installation--context-worker-contract"></a>
 
-### 3.6.1 Context worker contract
+### 4.6.1 Context worker contract
 
 In the bounded ASM flow, encoder weights are loaded inside `jope-context-worker` (`jope-policy`, feature `context-producer`). `--version` prints `jope-context-worker/1`. Its exact eight named arguments are:
 
@@ -825,7 +1204,7 @@ For current `jope optimize`, input derives from `dataset.cut(0)` fitting rows an
 
 <a id="c-installation--policy-producer-contract"></a>
 
-### 3.6.2 Policy producer contract
+### 4.6.2 Policy producer contract
 
 `jope-policy-producer` is a separate pinned bounded job. Its `asm.private-policy-producer/v1` request binds worker source, prepared/training/context hashes, cut, accepted checkpoint state, policy/vocabulary hashes, three RNG seeds and sampling shape. It accepts only the pinned step-60000 weights (`4b4b5a40…44f1e`) and state, rounds 1–8, batch 1–128 and a finite positive temperature. Context input is exactly 8,192 bytes, finite and clipped within [-32,32]. It requires either a qualified CPU context bundle or an authenticated original `parallel.encoding.v1` receipt with the original LibTorch lineage, train-side partition and `final_test_targets_used:false`. Frozen transforms are pinned to `1b779c6f…6e22`.
 
@@ -837,11 +1216,11 @@ Sources: `crates/jope-policy/src/context_producer/worker.rs:28`, `:188`, `:255`;
 
 <a id="c-installation--doctor-checks-and-troubleshooting"></a>
 
-## 3.7 Doctor checks and troubleshooting
+## 4.7 Doctor checks and troubleshooting
 
 <a id="c-installation--reading-identities-from-the-immutable-cli"></a>
 
-### 3.7.1 Reading identities from the immutable CLI
+### 4.7.1 Reading identities from the immutable CLI
 
 These metadata commands do not train or load a checkpoint:
 
@@ -860,7 +1239,7 @@ Do not interpret `qualified: false` in capability metadata as a missing command,
 
 <a id="c-installation--troubleshooting-and-safe-recovery"></a>
 
-### 3.7.2 Troubleshooting and safe recovery
+### 4.7.2 Troubleshooting and safe recovery
 
 | Symptom | Meaning and next action |
 |---|---|
@@ -879,7 +1258,7 @@ Do not interpret `qualified: false` in capability metadata as a missing command,
 
 ---
 
-# Chapter 4 — Data, splits, groups, families and permitted input boundaries
+# Chapter 5 — Data, splits, groups, families and permitted input boundaries
 
 Observation date: 2026-09-23T16:41:48.371336+00:00. Frozen source: `68f56404c3e199e06413bfd645d3fe0803d7b96f`, the reviewed PR83 head; `main` commit `a75e543d2166` has the same tree. These are observations at that source and time. They do not turn stored metadata, a source packet, or historical results into a current operational qualification.
 
@@ -887,7 +1266,7 @@ Every number in this chapter comes from a pinned manifest, prepared development 
 
 <a id="c-data--the-frozen-thirty-dataset-panel-identity-totals-groups-and-immutability"></a>
 
-## 4.1 The frozen thirty-dataset panel: identity, totals, groups and immutability
+## 5.1 The frozen thirty-dataset panel: identity, totals, groups and immutability
 
 Panel `asm-private-30-v1` uses ten regression, ten binary, and ten multiclass datasets from PMLB revision `7c1f4bdc00136dc2e55c87fa6b8ba6e8af6d1a68`. Manifest SHA-256: `ba7dace4cd535687002cc95538dbc7f7aaf77ec973177c7159b3c6d22471eee0`. It was selected before measuring ASM outcomes, excludes the historical favorable test-10 collection, and cannot replace a dataset because a method failed or lost.
 
@@ -899,7 +1278,7 @@ Known date columns and identical-feature groups are retained by the prepared spl
 
 <a id="c-data--local-preparation-and-panel-storage"></a>
 
-## 4.2 Local preparation and panel storage
+## 5.2 Local preparation and panel storage
 
 Local preparation: `/home/ubuntu/.cache/jope/asm-private-30-v1/`. `development/` contains the permitted development tables; `splits/` contains original row/group/fold assignments; `metadata/` contains pinned upstream YAML; `downloads/` contains the original compressed archives; `sealed/` contains withheld partitions. The audit opened development, assignment, and metadata files only. It inspected sizes and expected hashes of raw and sealed files without opening their bodies.
 
@@ -915,11 +1294,11 @@ File sizes are logical bytes, not compressed-memory use or total disk allocation
 
 <a id="c-data--the-broader-s3-corpus-catalog"></a>
 
-## 4.3 The broader S3 corpus catalog
+## 5.3 The broader S3 corpus catalog
 
 <a id="c-data--catalog-composition-by-task"></a>
 
-### 4.3.1 Catalog composition by task
+### 5.3.1 Catalog composition by task
 
 The pinned current catalog is `ab9fda8d2dea46067b70a42812e9d3c1d9dc6ba025780100df34377e81aa1120`: 3,859 distinct dataset hashes, all marked real, 6,208,051 declared rows. Shape metadata sums to 265,105 features and 4,628 categorical features; sums across datasets are not deduplicated semantic quantities. The catalog contains no task explicitly named multiclass; 322 entries are multi-label, which is a different task and must not be silently relabeled.
 
@@ -932,7 +1311,7 @@ The pinned current catalog is `ab9fda8d2dea46067b70a42812e9d3c1d9dc6ba025780100d
 
 <a id="c-data--licence-metadata-anomalies-and-the-corpus-figure"></a>
 
-### 4.3.2 Licence metadata, anomalies and the corpus figure
+### 5.3.2 Licence metadata, anomalies and the corpus figure
 
 **Catalog discrepancy:** the stored registry collection description says 1,416 unknown licenses. Counting the current catalog’s actual license-status fields gives **3,755 unknown and 104 recorded**. This chapter uses the counted fields and retains the stale description as provenance. All 2 collections remain private: `registry-real-v1` has 3,859 members and `test-10` has 10; every listed member occurs in the catalog. No payload or training eligibility validation was performed simply by counting them.
 
@@ -946,11 +1325,11 @@ The catalog has 3,755 entries with unknown license metadata and 104 with a recor
 
 <a id="c-data--the-historical-input-closure-and-the-meta-test-question"></a>
 
-## 4.4 The historical input closure and the meta-test question
+## 5.4 The historical input closure and the meta-test question
 
 <a id="c-data--record-split-and-the-meta-test-closure-question"></a>
 
-### 4.4.1 Record split and the meta-test closure question
+### 5.4.1 Record split and the meta-test closure question
 
 The accepted corpus's record split is precise: 9,382,874 `meta_train` records in 6,836 shards and 831,458 `meta_validation` records in 1,041 shards. There are no `meta_test` record shards. The context index nevertheless contains 6,962 training, 1,054 validation and **878 meta-test context descriptors**. Current legacy `training.rs` stages every context in that index before sampling records. Consequently, withholding meta-test record labels is not a proof that sealed families were excluded from the entire historical encoder/trainer input closure. This is a concrete remaining closure audit, not a claim that this documentation audit opened sealed vectors or labels.
 
@@ -960,7 +1339,7 @@ The accepted index SHA `1c840597…`, vocabulary `8d55fee4…` and context index
 
 <a id="c-data--audit-the-entire-input-closure-before-continuation"></a>
 
-### 4.4.2 Audit the entire input closure before continuation
+### 5.4.2 Audit the entire input closure before continuation
 
 Before any future continuation, audit the **entire** input closure, including every context descriptor and staged tensor, not only training records. The retained snapshot 97 index lists 8,894 contexts, including 878 `meta_test` descriptors, while record rows are train/validation only. Current legacy training stages all indexed contexts before sampling. Absence of sealed record rows therefore does not prove strict sealed-family exclusion. Do not blindly continue that corpus under the new closure policy; preserve the metadata observation and resolve it without opening sealed payloads. See [§](#c-data--record-split-and-the-meta-test-closure-question) and [context staging source](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/crates/jope-engine/src/training.rs#L1179).
 
@@ -968,13 +1347,13 @@ Before any future continuation, audit the **entire** input closure, including ev
 
 <a id="c-data--family-level-domains-and-the-permitted-input-closure"></a>
 
-## 4.5 Family-level domains and the permitted input closure
+## 5.5 Family-level domains and the permitted input closure
 
 This section states the owner's edition-2 rules for which data may reach teaching, training, selection and evaluation. They are requirements, not results. Each carries one status as of 2026-09-23 about 23:55 UTC: available, implemented but unqualified, pending integration or proposed.
 
 <a id="c-data--three-family-level-domains"></a>
 
-### 4.5.1 Three family-level domains
+### 5.5.1 Three family-level domains
 
 Domains are assigned to dataset families, not to rows, files or split names. A split name alone cannot prove an unseen family ([§](#c-learning--freezing-the-experiment-and-choosing-families)).
 
@@ -988,7 +1367,7 @@ The frozen panel `asm-private-30-v1` remains an adaptive development domain. Its
 
 <a id="c-data--hashes-eligibility-and-the-complete-input-closure"></a>
 
-### 4.5.2 Hashes, eligibility and the complete input closure
+### 5.5.2 Hashes, eligibility and the complete input closure
 
 A hash is not eligibility. A digest authenticates bytes; it does not decide whether those bytes may be used. The legacy trainer at `a75e543d2` checks every indexed context's bytes against its recorded `sha256` digest and expected size, then stages all of them on the device (`crates/jope-engine/src/training.rs:1187-1203`), so the 878 `meta_test` descriptors in the retained index would pass that integrity check ([§](#c-data--record-split-and-the-meta-test-closure-question)). Eligibility comes from each input's admission record and family domain ([§](#c-teachers--the-admission-guard-label-exposure-and-hwm-identity)), never from a matching digest.
 
@@ -1004,18 +1383,18 @@ An unused forbidden descriptor, such as a `meta_test` or evaluation-domain conte
 
 <a id="c-data--datasets-outside-the-frozen-panel"></a>
 
-### 4.5.3 Datasets outside the frozen panel
+### 5.5.3 Datasets outside the frozen panel
 
 Arbitrary ingestion is separate from the frozen panel. Status: proposed. No arbitrary-dataset ingestion command exists at `a75e543d2`: the one-dataset ASM front door takes a dataset already present in the frozen panel ([§](#c-search--front-door-and-safe-metadata-checks)), and a fetchable catalog file is not automatically an admitted ASM input ([§](#c-installation--command-surfaces-and-the-stopped-integration-order)). A separate authenticated ingestion request must preserve the new dataset's labels, categories, missingness and groups and assign its family to a domain; it never edits the frozen manifest ([§](#c-search--what-is-missing-for-a-sustained-incumbent-seeded-dataset-attack)). Results on an ingested dataset are not frozen-panel results, and frozen-panel results do not qualify an ingested dataset.
 
 
 ---
 
-# Chapter 5 — Regression search, fitting, prediction and focused optimization
+# Chapter 6 — Regression search, fitting, prediction and focused optimization
 
 <a id="c-search--proposal-generation-and-ranking"></a>
 
-## 5.1 Proposal generation and ranking
+## 6.1 Proposal generation and ranking
 
 Accepted proposals are generated under grammar constraints, and the neural pool is the first 64 distinct valid programs in draw order; any shortfall after the bounded sampling rounds is filled with distinct grammar-uniform programs labelled `neural_rejection_fallback`. Ranking orders that pool by the mean of four reward heads, descending; exact ties use program SHA256 then text. Runtime estimates are reported without subtracting an undocumented runtime penalty. Ranking binds the checkpoint, context and vocabulary and records that scoring labels and fitted GP scores were not read. It does not select or reject programs: all 64 ranked programs and the 16 exploration programs enter generation zero. Sources: `crates/jope-policy/src/ranking.rs:22`; `crates/jope-policy/src/decode.rs:9-11`, `:212-225`, `:359`; `crates/jope-policy/src/seeds.rs:257-270`.
 
@@ -1025,7 +1404,7 @@ The four reward heads read a masked mean of the program's token embeddings, with
 
 <a id="c-search--paired-arms-generation-zero-and-evolution"></a>
 
-## 5.2 Paired arms, generation zero and evolution
+## 6.2 Paired arms, generation zero and evolution
 
 ASM compares a 64-slot policy pool plus 16 exploration generation-zero slots with 80 generic slots. The pool retains `neural_policy` versus `neural_rejection_fallback` origins explicitly. Both arms receive the same declared search and fit allowances, but encoding and proposal work consume the neural arm's own clock; fitting time can differ. A producer refusal, duplicate or failed candidate is an outcome to record. It cannot silently become another neural success or a free replacement arm. Actual inner-fold fits determine selection and offspring ancestry. A model's predicted reward never substitutes for measured loss.
 
@@ -1035,7 +1414,7 @@ Neither arm is seeded from the other, but at `a75e543d2` only the neural arm's i
 
 <a id="c-search--dense-width-refusals-and-the-proposed-feasibility-preflight"></a>
 
-## 5.3 Dense-width refusals and the proposed feasibility preflight
+## 6.3 Dense-width refusals and the proposed feasibility preflight
 
 At `a75e543d2` the 512-column cap applies to generated dense width, not to total schema or raw input width (`MAX_GENERATED_DENSE_WIDTH`, `crates/feat-math/src/advanced_v3/feature_block.rs:6`, `:107-110`). No check runs before launch: the recipe validation that precedes fitting checks task, schema, syntax and stage admissibility but does not predict generated widths, so an over-wide recipe fails inside a launched fit. In the origin proof those refusals were 130 failed commands from 26 recipes, including 16 of 64 `neural_policy` generation-zero candidates ([§](#c-status--failures-dense-width-refusals-and-the-earlier-failed-reproducer)).
 
@@ -1050,7 +1429,7 @@ The accounting hazard is specific. `PoolBackend::evaluate` records every job-pre
 
 <a id="c-search--warm-fitted-demonstration-after-integration"></a>
 
-## 5.4 Warm fitted demonstration after integration
+## 6.4 Warm fitted demonstration after integration
 
 Runbook summary (status as of 2026-09-23 about 23:55 UTC: **pending integration**):
 
@@ -1068,7 +1447,7 @@ Source: pending `docs/private-install-demo.md:90-203` and `crates/jope-bench/src
 
 <a id="c-search--generic-and-asm-demonstration-commands"></a>
 
-### 5.4.1 Generic and ASM demonstration commands
+### 6.4.1 Generic and ASM demonstration commands
 
 The pending generic demo fits one task-compatible registered recipe, saves complete private state, reloads it, verifies unchanged predictions and compares against a train-mean or train-prior baseline. It uses one CPU/worker, 2 GiB total, zero swap/GPU, 30 seconds per fit and 60 seconds total with five seconds reserved for reporting. Its synthetic mode is explicitly labelled; it is not evidence from a real panel dataset.
 
@@ -1089,7 +1468,7 @@ The authenticated ASM route consumes a separately prepared single-regression pro
 
 <a id="c-search--the-under-sixty-second-target-and-historical-timing"></a>
 
-### 5.4.2 The under-sixty-second target and historical timing
+### 6.4.2 The under-sixty-second target and historical timing
 
 The warm-target add-on treats under 60 seconds as a declared, measured goal, not a promise and not a cap that prevents a required real fitted demonstration. Both complete equal arm allowances must fit within the declared original execution window. Unequal, missing or globally clipped arms fail the matched-comparison condition. An explicitly admitted longer allowance can produce a successful complete execution with `target_met: false`; it cannot claim under-60 acceptance. It does not change the official panel's 120-second arm defaults.
 
@@ -1097,13 +1476,13 @@ The retained proof at source `3fd7d5b2` started the policy about 22.1 seconds in
 
 <a id="c-search--focused-single-dataset-search"></a>
 
-## 5.5 Focused single-dataset search
+## 6.5 Focused single-dataset search
 
 Status as of 2026-09-23 about 23:55 UTC: the bounded one-dataset proof front door below is **available** at `a75e543d2` for a regression dataset already in the frozen panel; the sustained, incumbent-aware attack is **proposed** ([§](#c-search--what-is-missing-for-a-sustained-incumbent-seeded-dataset-attack)).
 
 <a id="c-search--commands-that-exist-today-for-one-dataset"></a>
 
-### 5.5.1 Commands that exist today for one dataset
+### 6.5.1 Commands that exist today for one dataset
 
 Runbook summary:
 
@@ -1121,7 +1500,7 @@ Sources: `crates/jope-bench/src/panel/optimize_cli.rs:48-89` and `crates/jope-be
 
 <a id="c-search--front-door-and-safe-metadata-checks"></a>
 
-#### 5.5.1.1 Front door and safe metadata checks
+#### 6.5.1.1 Front door and safe metadata checks
 
 The current private Linux `asm` build supports a **separately bounded operational proof on one frozen regression dataset**. This is the closest current neural search front door to focused optimization. It is not an arbitrary-dataset ingestion command, a daemon, or an incumbent-seeded high-water-mark attack.
 
@@ -1138,7 +1517,7 @@ The following metadata commands are safe preparation and were checked against th
 
 <a id="c-search--required-inputs"></a>
 
-#### 5.5.1.2 Required inputs
+#### 6.5.1.2 Required inputs
 
 | Variable | Meaning |
 | --- | --- |
@@ -1154,7 +1533,7 @@ The base plan and complete configuration are prepared as described in [§](#c-in
 
 <a id="c-search--plan-run-and-report-a-focused-proof"></a>
 
-#### 5.5.1.3 Plan, run and report a focused proof
+#### 6.5.1.3 Plan, run and report a focused proof
 
 Prepare a plan before admitting numerical work:
 
@@ -1192,7 +1571,7 @@ The command audit for this chapter executed only metadata/help operations. These
 
 <a id="c-search--other-current-search-surfaces"></a>
 
-#### 5.5.1.4 Other current search surfaces
+#### 6.5.1.4 Other current search surfaces
 
 `jope search --input "$FIXTURE" --json` scores a tiny ridge-family candidate bank. It is useful for its documented fixture scope; it is not sustained neural GP exploration.
 
@@ -1200,7 +1579,7 @@ The command audit for this chapter executed only metadata/help operations. These
 
 <a id="c-search--what-is-missing-for-a-sustained-incumbent-seeded-dataset-attack"></a>
 
-### 5.5.2 What is missing for a sustained, incumbent-seeded dataset attack
+### 6.5.2 What is missing for a sustained, incumbent-seeded dataset attack
 
 There is no current `--incumbent` input on `optimize proof-plan`, and no shipped `jope optimize attack` command. A finite, wave-by-wave attack interface is a proposed follow-on. Documenting a plausible command string would not make it available.
 
@@ -1226,15 +1605,15 @@ For a dataset outside the frozen panel, first implement or use a separate authen
 
 ---
 
-# Chapter 6 — Teacher admission, HWM identities and corpus updates
+# Chapter 7 — Teacher admission, HWM identities and corpus updates
 
 <a id="c-teachers--a-dataset-is-not-one-training-example"></a>
 
-## 6.1 A dataset is not one training example
+## 7.1 A dataset is not one training example
 
 <a id="c-teachers--accounting-units"></a>
 
-### 6.1.1 Accounting units
+### 7.1.1 Accounting units
 
 A training context describes a particular dataset, split and encoding. Many executable programs can share that context. Each program supplies a separate target sequence and measured supervision. The useful accounting units are therefore:
 
@@ -1249,7 +1628,7 @@ A training context describes a particular dataset, split and encoding. Many exec
 
 <a id="c-teachers--context-vectors-and-program-targets"></a>
 
-### 6.1.2 Context vectors and program targets
+### 7.1.2 Context vectors and program targets
 
 The legacy Rust context is 2,048 little-endian float32 values, or 8,192 bytes. The model receives a 1,536-value dataset lane and a separate 512-value target-statistics lane. The historical encoder recipe described the dataset lane as Hyperion 512 plus Foundation/PCA 1,024. Despite its name, the dataset lane is not label-free: in the current context producer the 1,024 Foundation values are computed from the features together with the standardized training targets, and only the 512 Hyperion values use the features alone ([§](#c-architecture--component-dimensions-and-assembly)). These vectors are shared by context identity; they are not repeated inside every 532-byte target record. The program target is a grammar-token sequence, with the legal-token set for each step, context ID, score-derived value, percentile and log-runtime supervision.
 
@@ -1257,7 +1636,7 @@ A concrete metadata binding in the accepted step-60000 corpus connects dataset `
 
 <a id="c-teachers--the-learning-chain"></a>
 
-### 6.1.3 The learning chain
+### 7.1.3 The learning chain
 
 The learning chain is:
 
@@ -1284,11 +1663,11 @@ For the new ASM path none of the four is established yet: zero teachers have bee
 
 <a id="c-teachers--how-a-fitted-recipe-becomes-an-eligible-teacher"></a>
 
-## 6.2 How a fitted recipe becomes an eligible teacher
+## 7.2 How a fitted recipe becomes an eligible teacher
 
 <a id="c-teachers--the-preregistered-freeze-and-train-side-inner-split"></a>
 
-### 6.2.1 The preregistered freeze and train-side inner split
+### 7.2.1 The preregistered freeze and train-side inner split
 
 The pending eligibility path freezes independent facts before optimization: original dataset and prepared-data identity, ordered rows and groups, target role, exact inner-fold assignment, evaluator and vocabulary identities, numerical policy, baseline and worker/resource pins. This freeze cannot be created retrospectively from a winning candidate's own output. A historical successful fit is not equivalent to preregistered teaching evidence.
 
@@ -1296,7 +1675,7 @@ The train-side inner split uses five whole-group folds. Groups are assigned dete
 
 <a id="c-teachers--the-admission-guard-label-exposure-and-hwm-identity"></a>
 
-### 6.2.2 The admission guard, label exposure and HWM identity
+### 7.2.2 The admission guard, label exposure and HWM identity
 
 Each candidate must produce complete authenticated OOF predictions for all five inner folds. Scores are recomputed from retained predictions, exact targets and ordered class probabilities. The trivial baseline is fitted from each fold's training rows: target mean for regression, class frequencies for classification. The guard uses mean fold loss and admits only if:
 
@@ -1313,7 +1692,7 @@ Sources: pending `crates/jope-learning/src/eligibility.rs:170`, `:253`, `:277`, 
 
 <a id="c-teachers--from-optimization-to-reusable-knowledge"></a>
 
-## 6.3 From optimization to reusable knowledge
+## 7.3 From optimization to reusable knowledge
 
 The pending strict HWM key includes task, dataset hash, cut identity, evaluator, vocabulary and protocol. Scores from different identities cannot overwrite each other or supply training feedback. A recipe must show finite train-side out-of-fold improvement over a trivial baseline and improve on four of five folds before teaching admission. No-signal data should be refused by this gate. An optimization-visible test label is development evidence even if its filename says otherwise.
 
@@ -1321,7 +1700,7 @@ Typed motifs can reuse eligible program fragments and macros while retaining pro
 
 <a id="c-teachers--present-teacher-readiness-and-the-smallest-real-path"></a>
 
-## 6.4 Present teacher readiness and the smallest real path
+## 7.4 Present teacher readiness and the smallest real path
 
 The metadata readiness audit verified 28 source-family evidence files and the retained original process/context receipts. The inspected historical origin runs at `55e9ed688faf` and `3fd7d5b2ebb6` had no preregistered teaching freeze or vocabulary pins; they cannot be upgraded after the fact. The operational origin proof at `68f56404` (the reviewed PR83 head, merged on 2026-09-23 as main `a75e543d2` with the identical tree) also was not a teaching campaign. There is therefore no currently demonstrated eligible real corpus for the new ASM admission-and-training proof. This does not negate the historical training corpus or the optimizer work that produced the retained model.
 
@@ -1342,7 +1721,7 @@ Source evidence: custody `agent-training-readiness/readiness-v3.json`, SHA256 `9
 
 <a id="c-teachers--prepare-a-teaching-campaign-before-it-starts"></a>
 
-## 6.5 Prepare a teaching campaign before it starts
+## 7.5 Prepare a teaching campaign before it starts
 
 Runbook summary (status as of 2026-09-23 about 23:55 UTC: **pending integration**):
 
@@ -1360,7 +1739,7 @@ Sources: pending `crates/jope-bench/src/panel/teaching.rs:48-67`, `:123-125`, `:
 
 <a id="c-teachers--final-build-and-the-teaching-configuration"></a>
 
-### 6.5.1 Final build and the teaching configuration
+### 7.5.1 Final build and the teaching configuration
 
 The final reviewed build must supply its CLI, worker inventory, source manifest, runtime manifests, component assets and qualification receipts. Record the actual built source SHA; do not substitute the latest checkout hash for the binary's source. Recheck that no exclusive CPU CI is running before opening an authorized CPU campaign.
 
@@ -1379,7 +1758,7 @@ The capitalized value is a placeholder, not a valid digest. The complete configu
 
 <a id="c-teachers--plan-run-and-recover-a-teaching-campaign"></a>
 
-### 6.5.2 Plan, run and recover a teaching campaign
+### 7.5.2 Plan, run and recover a teaching campaign
 
 The following shell variables must already name authenticated artifacts. Commands are interface examples and allocate no budget merely by appearing here:
 
@@ -1433,11 +1812,11 @@ Sources: `crates/jope-bench/src/panel/optimize_cli.rs:13` and `crates/jope-bench
 
 <a id="c-teachers--corpus-updates-reuse-device-caches-and-loading"></a>
 
-## 6.6 Corpus updates: reuse, device caches and loading
+## 7.6 Corpus updates: reuse, device caches and loading
 
 <a id="c-teachers--on-disk-shard-reuse"></a>
 
-### 6.6.1 On-disk shard reuse
+### 7.6.1 On-disk shard reuse
 
 The on-disk teaching store can reuse unchanged verified shards **within an unchanged store binding**. In reviewed source `68f56404` (merged as main `a75e543d2` with the identical tree), a group's key includes binding, context, programs and lineage. The binding includes twelve semantic source files and the SHA256 of `/proc/self/exe`. A changed packer executable digest therefore rejects the old store binding and changes every group key, requiring a new store/full disk repack even if the logical records are unchanged. A byte-identical reproducible rebuild does not change that digest. This disk invalidation is separate from GPU cache invalidation. New ledger contributions mark affected groups dirty; changed or reordered historical source inputs require reconciliation or a new store rather than silently editing history. Publication uses immutable artifacts and atomic replacement of the published index. Tokenization caches are bounded and exact; invalid exact parameters remain rejected.
 
@@ -1445,7 +1824,7 @@ Snapshot 97's historical `packing-timing.json` records **7,859 reused groups and
 
 <a id="c-teachers--the-two-device-caches-in-the-native-trainer"></a>
 
-### 6.6.2 The two device caches in the native trainer
+### 7.6.2 The two device caches in the native trainer
 
 The native trainer implementation maintains two different device caches. Its current direct dispatch remains held behind the original-GPU-grant requirement described in [§](#c-training--the-dispatch-hold-resource-incompatibility-and-valid-topologies); the following source behavior is not permission to launch it:
 
@@ -1458,7 +1837,7 @@ Tokens and legal IDs are each stored on the device as 16-bit signed tensors with
 
 <a id="c-teachers--identifier-memory-and-whole-corpus-cache-invalidation"></a>
 
-### 6.6.3 Identifier memory and whole-corpus cache invalidation
+### 7.6.3 Identifier memory and whole-corpus cache invalidation
 
 For 10,214,332 records, token-plus-legal identifiers alone are `N × 128 × 4 = 5,229,737,984` bytes. Context IDs add `N × 8 = 81,714,656` bytes. The 8,894 shared float32 contexts would occupy 72,859,648 bytes. These are layout calculations, not measured GPU peaks; they exclude the legal mask table, model, optimizer, activations, batch conversions, allocator overhead and host staging. The emitted `resident_identifier_bytes` counter covers only the token/legal identifier term, not complete device use.
 
@@ -1466,7 +1845,7 @@ A newly published corpus SHA invalidates the entire token/legal/context-ID cache
 
 <a id="c-teachers--python-training-input-and-the-pending-bounded-campaign"></a>
 
-### 6.6.4 Python training input and the pending bounded campaign
+### 7.6.4 Python training input and the pending bounded campaign
 
 The current Python `train_v3.py` path accepts JSONL `TrainingRow` objects or an in-memory list. It materializes the input rows, partitions them before grammar/reward preparation, and caches each train/validation row's token IDs and sparse per-position legal-ID lists once before the epoch loop. It still rebuilds a dense boolean legal mask of shape `[batch, sequence − 1, vocabulary size]` on the host for every batch before moving it to the device. It also supports a vocabulary-bound persistent row-artifact cache. It is inaccurate to say that Python reparses or retokenizes every example on every optimizer step.
 
@@ -1474,7 +1853,7 @@ However, the pending `training64` campaign's `admitted_rows` path still reads JS
 
 <a id="c-teachers--concrete-corpus-improvements-with-acceptance-criteria"></a>
 
-## 6.7 Concrete corpus improvements, with acceptance criteria
+## 7.7 Concrete corpus improvements, with acceptance criteria
 
 The useful next change is evidence-led rather than another format by name. These are proposals (status: **proposed**), not implemented delivery claims. The owner's order (relayed 2026-09-23T22:27:11Z) is: profile the phases; then a verified Python packed-reader bridge; then immutable shard reuse with bounded staging; then compression; and a narrower record layout only if measurements justify it. Every step preserves float32 supervision, the legal-set mappings and the 128-token grammar limit, and proves record, batch, loss, gradient, update and resume parity ([§](#c-data-estate--compression-the-proposed-180-byte-layout-and-label-precision)).
 
@@ -1494,11 +1873,11 @@ Relevant source contracts are `crates/jope-engine/src/corpus.rs`, `teaching_stor
 
 <a id="c-training"></a>
 
-# Chapter 7 — Training, continuation, export and compatibility
+# Chapter 8 — Training, continuation, export and compatibility
 
 <a id="c-training--what-can-be-claimed-now"></a>
 
-## 7.1 What can be claimed now
+## 8.1 What can be claimed now
 
 At source `68f56404c3e199e06413bfd645d3fe0803d7b96f`, the latest bounded regression origin proof has actual neural proposals, fitted generation-zero candidates, fitted descendants and a successfully authenticated recovered report. The newly authored training path is still a stopped follow-on. Its guarded 64-file patch is `595824ef6eb8e15872be058668503cedad1dd9a5ff98ac4700c6f713251d384c`; manifest `b86b550d7ee39fd93d5202accd5f77c975b7bcb4fd8f8e7706c69c5f279294a2` binds every original packet, overlap resolution and current source/API guard.
 
@@ -1510,11 +1889,11 @@ All commands below involving `jope train` or experimental consumer configuration
 
 <a id="c-training--the-four-continuation-names-and-their-commands"></a>
 
-## 7.2 The four continuation names and their commands
+## 8.2 The four continuation names and their commands
 
 <a id="c-training--names-runbooks-and-status"></a>
 
-### 7.2.1 Names, runbooks and status
+### 8.2.1 Names, runbooks and status
 
 Every way this chapter starts or continues training has exactly one of four names. Report a run by its name rather than by a command flag, and never describe one kind of run with another's name. [§](#c-plan--the-continuation-interfaces-that-exist-today) lists the same interfaces at a glance; this chapter remains the operational runbook.
 
@@ -1531,7 +1910,7 @@ Two passes through one corpus are continuation, not two generations: the pending
 
 <a id="c-training--rules-for-exact-interrupted-resume"></a>
 
-### 7.2.2 Rules for exact interrupted resume
+### 8.2.2 Rules for exact interrupted resume
 
 These are owner requirements, **proposed**: neither PR83 main nor the stopped training64 overlay implements both of them.
 
@@ -1550,7 +1929,7 @@ The proposed follow-up is an explicit strict-resume mode that rejects before upd
 
 <a id="c-training--variables-used-in-the-continuation-examples"></a>
 
-### 7.2.3 Variables used in the continuation examples
+### 8.2.3 Variables used in the continuation examples
 
 The paths below are operator-supplied placeholders, not newly admitted inputs. Resolve them from the compatible original run inventory; use absolute paths and preserve its hashes, resource limits and original time window. The native command remains held. The pending commands require reviewed integration and the admission checks described below.
 
@@ -1570,7 +1949,7 @@ The paths below are operator-supplied placeholders, not newly admitted inputs. R
 
 <a id="c-training--native-lineage-b-the-held-command-and-its-blockers"></a>
 
-### 7.2.4 Native lineage B: the held command and its blockers
+### 8.2.4 Native lineage B: the held command and its blockers
 
 | Runbook part | Native lineage-B continuation |
 |---|---|
@@ -1584,7 +1963,7 @@ The paths below are operator-supplied placeholders, not newly admitted inputs. R
 
 <a id="c-training--the-implemented-command-shape"></a>
 
-#### 7.2.4.1 The implemented command shape
+#### 8.2.4.1 The implemented command shape
 
 This is the exact implemented command shape, **not an instruction to dispatch it under the present allocation**:
 
@@ -1605,7 +1984,7 @@ Here `--steps 100` declares the same increment for the whole original run; resum
 
 <a id="c-training--the-dispatch-hold-resource-incompatibility-and-valid-topologies"></a>
 
-#### 7.2.4.2 The dispatch hold, resource incompatibility and valid topologies
+#### 8.2.4.2 The dispatch hold, resource incompatibility and valid topologies
 
 The current direct controller calls `require_original_gpu_grant`, which **always returns an error**: “original native GPU grant verifier unavailable; numerical dispatch is held.” Environment variables cannot release this gate. A separate typed native funding-admission API exists, but this is not a working direct-trainer bypass. Even after a future proper dispatch integration, the controller's fresh-telemetry check requires at least 128 GiB available RAM and 50 GiB free disk, incompatible with the current approved 64 GiB limit. Valid normal microbatches are 64, 128 or 256, and global batch is 2048. With world 1/microbatch 64, accumulation is 32. The retained step 60100 hardware qualification actually used world 1, microbatch 256 and accumulation 8, carrying AdamW from 60000 to 60100 on the unchanged corpus with zero fresh program presentations. Its 100-step update is genuine optimizer work; it is not production continuation or promotion. The ADR's microbatch 32 example is inaccurate for that retained run and is not a currently accepted CLI topology.
 
@@ -1613,11 +1992,11 @@ Sources: [native command parser](https://github.com/veox-ai/JopeDime/blob/68f564
 
 <a id="c-training--current-python-training-and-a-concrete-continuation-call"></a>
 
-### 7.2.5 Current Python training and a concrete continuation call
+### 8.2.5 Current Python training and a concrete continuation call
 
 <a id="c-training--weight-warm-start-with-the-existing-cli"></a>
 
-#### 7.2.5.1 Weight warm start with the existing CLI
+#### 8.2.5.1 Weight warm start with the existing CLI
 
 For a compatible, already admitted Python corpus, the existing CLI can launch a weight warm start:
 
@@ -1645,7 +2024,7 @@ This example uses the stated 256-width architecture; it is suitable only when th
 
 <a id="c-training--exact-optimizer-continuation-through-the-python-api"></a>
 
-#### 7.2.5.2 Exact optimizer continuation through the Python API
+#### 8.2.5.2 Exact optimizer continuation through the Python API
 
 For **actual optimizer continuation**, call the existing API from a private maintainer script. The following is the essential code; `settings.json` must contain the original compatible `kwargs`, and all referenced inputs must be hash-pinned in the operator's original run inventory. The complete companion `continue-python-policy.py` includes those byte-hash checks, exclusive output creation, explicit GPU preflight, refusal of distributed or non-current resume modes, and refusal of an `--output` under `/tmp` or inside a Git working tree (the path itself or any parent directory containing a `.git` entry). It is an illustrative API caller, not a new installed product command or a qualified supervisor.
 
@@ -1671,7 +2050,7 @@ result = train_policy_v3_from_jsonl(
 
 <a id="c-training--the-companion-continuation-helper-and-the-resume-artifact"></a>
 
-#### 7.2.5.3 The companion continuation helper and the resume artifact
+#### 8.2.5.3 The companion continuation helper and the resume artifact
 
 A concrete invocation of the companion is below. Without the final switch it verifies the supplied byte inventories and prints the call without importing Torch. Fill settings from the original run; do not copy arbitrary architecture, routing or vocabulary choices into a resume. An `audited_input_files` list does not itself prove closure completeness or teacher eligibility.
 
@@ -1702,13 +2081,13 @@ Use the trusted `PrimePolicyTrainerResume.v1` artifact, not `model.ot`, a safete
 
 <a id="c-training--limits-of-the-current-python-route"></a>
 
-#### 7.2.5.4 Limits of the current Python route
+#### 8.2.5.4 Limits of the current Python route
 
 This current Python route has material limits. CUDA requests can silently fall back to CPU in the underlying code, so the companion refuses absent CUDA before calling it. Current task-routing/zero-update and resume-proof fixes belong to the pending training overlay. The loader can discard minority embedding widths with a warning; a qualified input inventory should reject such a mixed corpus earlier. Existing Python training alone does not provide the shared cgroup resource contract, original campaign deadline, teaching admission, parameter-change proof or serving promotion. Execute any diagnostic caller only inside a separately admitted resource/time supervisor, not as a way to bypass the pending product gates. See [current device fallback](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/python/src/jope/policy/ddp.py#L25) and [mixed-width handling](https://github.com/veox-ai/JopeDime/blob/68f56404c3e199e06413bfd645d3fe0803d7b96f/python/src/jope/policy/train_v3.py#L1497).
 
 <a id="c-training--evidence-and-identity-before-a-bounded-campaign"></a>
 
-## 7.3 Evidence and identity before a bounded campaign
+## 8.3 Evidence and identity before a bounded campaign
 
 A training run has at least four separate identities:
 
@@ -1727,7 +2106,7 @@ Sources: pending `crates/jope-cli/src/train.rs:1`; `python/src/jope/policy/train
 
 <a id="c-training--the-bounded-training-campaign-chain"></a>
 
-## 7.4 The bounded training campaign chain
+## 8.4 The bounded training campaign chain
 
 | Runbook part | Bounded training campaign chain |
 |---|---|
@@ -1741,7 +2120,7 @@ Sources: pending `crates/jope-cli/src/train.rs:1`; `python/src/jope/policy/train
 
 <a id="c-training--what-the-pending-campaign-trains"></a>
 
-### 7.4.1 What the pending campaign trains
+### 8.4.1 What the pending campaign trains
 
 The pending training campaign uses the existing Python `JopePolicyModelV3` with task-routed reward/stability behavior. Real admitted training uses width 256, two layers, four heads and feed-forward 1024; synthetic qualification fixtures use width 8, one layer, two heads and feed-forward 16. Both consume the explicit context schema. Training uses one-epoch passes, learning rate 5e-4, batch 256 for admitted rows or 2 for fixtures, AMP disabled and automatic batch-size tuning disabled. These are the bounded campaign's settings, not the accepted step-60000 model's architecture (width 512, six layers, feed-forward 2048; [§](#c-architecture--checkpoint-binding-and-configuration)). The campaign therefore produces a **new, smaller model family**, not a continuation of step 60,000: its optional initialization is a Python policy payload, and its checkpoint cannot be loaded in place of the accepted model, whose loader rejects incorrectly shaped tensors. Compare it with step 60,000 only through matched downstream fits under the same protocol, never through loss values.
 
@@ -1749,7 +2128,7 @@ The pending training campaign uses the existing Python `JopePolicyModelV3` with 
 
 <a id="c-training--build-the-real-corpus-from-admitted-evidence"></a>
 
-### 7.4.2 Build the real corpus from admitted evidence
+### 8.4.2 Build the real corpus from admitted evidence
 
 `train prepare-inputs` takes a request, not hand-written training examples. The request schema binds requested tasks, seed, family registry, vocabulary, encoder and optional initialization checkpoint. Its `contexts` map has one independently pinned proof for every eligible comparison. Each proof includes producer/source, original input, qualification/reference manifest, vector/artifact, frozen transforms, component bundle, actual context execution and eight case executions.
 
@@ -1766,7 +2145,7 @@ Do not author a request using invented eligible comparison IDs: these must come 
 
 <a id="c-training--plan-run-resume-verify-and-export"></a>
 
-### 7.4.3 Plan, run, resume, verify and export
+### 8.4.3 Plan, run, resume, verify and export
 
 The intended real all-category path preserves real admitted regression while allowing explicitly labeled synthetic fallback only for classification categories whose real admission fails:
 
@@ -1799,7 +2178,7 @@ Export first performs verification, then writes the exact plan, verification and
 
 <a id="c-training--the-pending-bounded-extension-path-sequence-and-limits"></a>
 
-### 7.4.4 The pending bounded extension path: sequence and limits
+### 8.4.4 The pending bounded extension path: sequence and limits
 
 The stopped training64 patch is `595824ef6eb8e15872be058668503cedad1dd9a5ff98ac4700c6f713251d384c`, with manifest `b86b550d7ee39fd93d5202accd5f77c975b7bcb4fd8f8e7706c69c5f279294a2`. It has not been integrated into main (`a75e543d2`, PR83) or qualified by a fresh real GPU run. Its exact command contract is described in [§](#c-training--plan-run-resume-verify-and-export); pending files cannot honestly be linked as existing GitHub files at main.
 
@@ -1827,7 +2206,7 @@ Verification must establish positive updates, changed parameters, reload equalit
 
 <a id="c-training--proposed-sibling-fresh-and-replay-branches"></a>
 
-### 7.4.5 Proposed sibling fresh and replay branches
+### 8.4.5 Proposed sibling fresh and replay branches
 
 **Status: proposed.** No implementation exists: the pending campaign advances one mutable head per category over one pinned corpus. It has no immutable sibling parent, branch identifier, committed-update target, 25/75 sampler allocation or per-update fresh-exposure record (pending `training_campaign.py:799`, `:1065`). The owner's design for one controlled round is:
 
@@ -1842,7 +2221,7 @@ The first causal experiment keeps architecture, objective, corpus and sampler ch
 
 <a id="c-training--training-input-packing-and-the-learning-store"></a>
 
-### 7.4.6 Training input packing and the learning store
+### 8.4.6 Training input packing and the learning store
 
 **Status: proposed.** The pending campaign still reads JSONL into memory and writes a per-attempt `corpus.jsonl`; no packed-reader scalability qualification exists ([§](#c-teachers--python-training-input-and-the-pending-bounded-campaign)). Packing work follows phase profiling, in this order:
 
@@ -1856,11 +2235,11 @@ Every step preserves float32 supervision, the legal-set mappings and the 128-tok
 
 <a id="c-training--consuming-a-newly-trained-checkpoint"></a>
 
-## 7.5 Consuming a newly trained checkpoint
+## 8.5 Consuming a newly trained checkpoint
 
 <a id="c-training--the-experimentalregression-configuration-entry"></a>
 
-### 7.5.1 The experimental.regression configuration entry
+### 8.5.1 The experimental.regression configuration entry
 
 The pending final regression consumer is selected by the `experimental.regression` entry of the complete `jope.asm-configuration/v1` object. This entry is an object with:
 
@@ -1881,7 +2260,7 @@ Artifacts use `{path, sha256}` with absolute paths and real file hashes. Runtime
 
 <a id="c-training--compatibility-checks-and-fail-closed-rules"></a>
 
-### 7.5.2 Compatibility checks and fail-closed rules
+### 8.5.2 Compatibility checks and fail-closed rules
 
 Regression additionally requires the export to identify real admitted regression training, the same source commit, and the exact native encoder identity. The consumer admits the complete native context and independently verifies architecture, task, vocabulary, checkpoint and proof. Classification uses its separate context lineage. Missing architecture fields, missing/extra model state, altered vocabulary, source changes, changed encoder assets or a different training task fail closed. No explicit experimental selection silently falls back to the accepted model.
 
@@ -1893,7 +2272,7 @@ Binary and multiclass use their separate experimental context path; a synthetic 
 
 <a id="c-training--proving-consumption-in-a-new-operational-proof"></a>
 
-### 7.5.3 Proving consumption in a new operational proof
+### 8.5.3 Proving consumption in a new operational proof
 
 After building a new configuration around the verified export, preregister a separately authorized operational proof using the same `optimize proof-plan` front door. Its report must bind the new checkpoint hash to actual generation-zero neural fits, retain fitted artifacts/predictions and, when evolution is claimed, show completed descendants with neural ancestry. Recover the report from the same original journal and deadline. Only after those facts are demonstrated should the final official panel configuration be frozen around that checkpoint.
 
@@ -1911,7 +2290,7 @@ Source: pending `crates/jope-bench/src/panel/experimental_proposal.rs:36`, `crat
 
 <a id="c-training--remaining-acceptance-queue-and-maintenance-risks"></a>
 
-## 7.6 Remaining acceptance queue and maintenance risks
+## 8.6 Remaining acceptance queue and maintenance risks
 
 The required next integration/acceptance work is sequential: apply guarded training64 after PR83 lifecycle completion; compile and run all required tests at the final head; admit fresh genuine teachers; materialize and verify the corpus; execute the one approved GPU hour; verify/export; consume the new checkpoint in actual fits; qualify fitted portability and warm/cold delivery; execute the unchanged30 panel and report all outcomes. The product chapters cover the remaining deployment stages in detail.
 
@@ -1926,11 +2305,11 @@ The current source-only regression follow-on has an independent review with no c
 
 <a id="c-learning"></a>
 
-# Chapter 8 — Measuring repeated learning and deciding improvement
+# Chapter 9 — Measuring repeated learning and deciding improvement
 
 <a id="c-learning--observed-transferable-lift-reporting-contract-not-yet-measured"></a>
 
-## 8.1 Observed transferable lift: reporting contract, not yet measured
+## 9.1 Observed transferable lift: reporting contract, not yet measured
 
 **Current global KPI: not yet measured.** Merged PR90 adds private zero-fit planning and
 retained-prediction reporting. This publication contains no new training campaign or
@@ -1939,7 +2318,7 @@ decisions remain unchanged. The older proposal sections below retain their dated
 
 <a id="c-learning--what-the-two-measurements-mean"></a>
 
-### 8.1.1 What the two measurements mean
+### 9.1.1 What the two measurements mean
 
 For each dataset, outer fold and seed, compare the challenger with its parent. The audit
 component averages five gains, each measured by an independently repeated complete search
@@ -1965,7 +2344,7 @@ demonstrated**. Generic-search and fresh-versus-replay controls remain separate 
 
 <a id="c-learning--why-this-needs-a-new-frozen-evaluation"></a>
 
-### 8.1.2 Why this needs a new frozen evaluation
+### 9.1.2 Why this needs a new frozen evaluation
 
 Five outer folds and five training-side audit folds require **30 complete searches per
 arm/dataset/seed**, each with its own inner selection and final refit. Different folds may
@@ -1987,7 +2366,7 @@ the truth of an executor’s isolation claims or admit that future executor.
 
 <a id="c-learning--what-the-score-does-and-does-not-establish"></a>
 
-### 8.1.3 What the score does and does not establish
+### 9.1.3 What the score does and does not establish
 
 This is a conservative descriptive score, not a confidence bound or proof of causality.
 Folds and seeds share data and are not independent statistical samples. Released outcomes
@@ -2004,7 +2383,7 @@ contract `docs/internal/transfer-measurement.md` and merged source `7f2b2bf860e4
 
 <a id="c-learning--reading-the-real-historical-plots-alongside-this-kpi"></a>
 
-### 8.1.4 Reading the real historical plots alongside this KPI
+### 9.1.4 Reading the real historical plots alongside this KPI
 
 The figures in [§](#c-training-history) retain the original observations and their hashes:
 63,000 A100 steps (6001–69000, not invented steps 1–6000), the separate 100-step RTX
@@ -2017,13 +2396,13 @@ bins are declared within-corpus summaries, with no interpolation across missing 
 
 <a id="c-learning--preserved-historical-chapter-snapshot"></a>
 
-## 8.2 Preserved historical chapter snapshot
+## 9.2 Preserved historical chapter snapshot
 
 The following sections retain the original dated source narrative and evidence. The current-source additions above supersede implementation-status descriptions where explicitly stated.
 
 <a id="c-learning--what-better-and-better-must-mean"></a>
 
-## 8.3 What “better and better” must mean
+## 9.3 What “better and better” must mean
 
 A genuine flywheel joins four measured improvements. GP finds a better executable teacher for an unchanged comparison. Training actually consumes that new information. The policy becomes better at proposing or ranking programs for the relevant dataset-and-split context. Finally, the next bounded GP search improves because of that policy. Each arrow needs its own evidence; a growing corpus, a saved checkpoint or a completed search cannot stand in for the whole chain.
 
@@ -2035,7 +2414,7 @@ An incumbent can improve monotonically under a fixed development objective while
 
 <a id="c-learning--what-the-historical-training-and-target-evidence-establishes"></a>
 
-## 8.4 What the historical training and target evidence establishes
+## 9.4 What the historical training and target evidence establishes
 
 ASM means **Algorithm Synthesis Model: learns to generate and optimize executable algorithms from data**. The repository has real historical neural training and real retained GP teaching corpora. It also has substantial uncompleted work before a newly bounded ASM learning campaign can establish useful improvement. These facts must be stated together. “Zero freshly admitted teachers under the new ASM admission guard” describes the new campaign's inspected readiness; it does **not** mean that JopeDime has never trained on real data, that the accepted policy is untrained, or that its historical ten-million-record corpora are synthetic.
 
@@ -2045,7 +2424,7 @@ The retained evidence shows both substantial historical training corpora and som
 
 <a id="c-learning--loop-01-the-central-regression-milestone"></a>
 
-## 8.5 LOOP-01: the central regression milestone
+## 9.5 LOOP-01: the central regression milestone
 
 LOOP-01 is the central regression product milestone. One LOOP-01 generation is the complete chain:
 
@@ -2068,7 +2447,7 @@ The current one-dataset origin proof, which closes context → proposal → fit 
 
 <a id="c-learning--lineages-continuation-names-and-generations"></a>
 
-### 8.5.1 Lineages, continuation names and generations
+### 9.5.1 Lineages, continuation names and generations
 
 The accepted **512×6 step-60,000** model of lineage B (width 512, six layers) remains the serving model and a report baseline. The pending campaign would start a separate line, **experimental regression lineage v1 (256×2, new initialization)**, planned and not yet trained: the width-256, two-layer Python model described in [§](#c-training--what-the-pending-campaign-trains). Its newly initialized model, `M_init`, is called `M0` only after it has actually trained on the first admitted corpus, `C0`. Step 60,100 is historical hardware continuation of step 60,000, and step 69,000 remains unaccepted ([§](#c-architecture--checkpoint-binding-and-configuration)); neither is a LOOP-01 generation. The two lines are compared only through matched downstream fits, never through loss values.
 
@@ -2076,7 +2455,7 @@ Every training attempt must declare one of four continuation names (proposed nam
 
 <a id="c-learning--two-controlled-rounds-within-the-existing-gpu-cap"></a>
 
-### 8.5.2 Two controlled rounds within the existing GPU cap
+### 9.5.2 Two controlled rounds within the existing GPU cap
 
 LOOP-01 calls for two linked controlled rounds. Each round (proposed) trains two sibling branches from one immutable parent model and optimizer state, under the round's original deadline:
 
@@ -2089,7 +2468,7 @@ The existing allocation gives the regression category at most 20 minutes of GPU 
 
 <a id="c-learning--the-closure-ledger"></a>
 
-## 8.6 The closure ledger
+## 9.6 The closure ledger
 
 | Link in the loop | Existing evidence | Remaining proof | Roadmap connection |
 | --- | --- | --- | --- |
@@ -2107,11 +2486,11 @@ The prefixes above refer to the detailed roadmap's existing workstreams; they ar
 
 <a id="c-learning--a-minimal-experiment-that-can-establish-learning"></a>
 
-## 8.7 A minimal experiment that can establish learning
+## 9.7 A minimal experiment that can establish learning
 
 <a id="c-learning--freezing-the-experiment-and-choosing-families"></a>
 
-### 8.7.1 Freezing the experiment and choosing families
+### 9.7.1 Freezing the experiment and choosing families
 
 Freeze the experiment before opening the run window: source and binaries, exact parent checkpoint, corpus membership, encoder and vocabulary, objective weights, optimizer carry policy, sampler, random streams, fit/search budgets and comparison metrics. Keep the accepted parent available as a control. A new objective, new encoding or incompatible optimizer state starts a new lineage; it must not inherit a misleading uninterrupted-step counter.
 
@@ -2119,7 +2498,7 @@ Use eligible teachers from independently identified training families. Keep fami
 
 <a id="c-learning--what-to-retain-for-each-cycle"></a>
 
-### 8.7.2 What to retain for each cycle
+### 9.7.2 What to retain for each cycle
 
 For each cycle, retain all of the following:
 
@@ -2135,13 +2514,13 @@ Two linked successful cycles are a practical demonstration of repeatability. The
 
 <a id="c-learning--the-proposed-preregistered-regression-decision"></a>
 
-### 8.7.3 The proposed preregistered regression decision
+### 9.7.3 The proposed preregistered regression decision
 
 This is the owner's proposed decision rule for LOOP-01 regression rounds. It is a proposal, not an achievement: no round has been judged by it. Preregister it, together with the monitor families, seeds, folds and trivial predictor, before any challenger is compared, and do not change it after seeing results.
 
 <a id="c-learning--family-normalized-gain"></a>
 
-#### 8.7.3.1 Family-normalized gain
+#### 9.7.3.1 Family-normalized gain
 
 For each monitor family, the gain is `g = (L_control − L_challenger) / L_trivial`.
 
@@ -2149,7 +2528,7 @@ For each monitor family, the gain is `g = (L_control − L_challenger) / L_trivi
 
 <a id="c-learning--round-thresholds"></a>
 
-#### 8.7.3.2 Round thresholds
+#### 9.7.3.2 Round thresholds
 
 A round shows a gain only if all of the following hold:
 
@@ -2163,13 +2542,13 @@ Round 2 uses monitor families separate from those of round 1.
 
 <a id="c-learning--baselines-stopping-and-reporting"></a>
 
-#### 8.7.3.3 Baselines, stopping and reporting
+#### 9.7.3.3 Baselines, stopping and reporting
 
 Generic search and the accepted step-60,000 model remain report baselines. A gain over the parent is a different claim from an advantage over generic search or over the product's accepted model. Stop the loop when there are no eligible discoveries, on an incompatibility, when there is no material gain, when the evidence is insufficient, or when the budget is exhausted. Preserve the best checkpoint and never promote to serving automatically. An unfunded round, or one with insufficient data, yields mechanical proof and descriptive results; its causal conclusion is "inconclusive", never an invented success.
 
 <a id="c-learning--distinguish-routing-ranking-and-search-recovery"></a>
 
-## 8.8 Distinguish routing, ranking and search recovery
+## 9.8 Distinguish routing, ranking and search recovery
 
 The learned route is a conditional distribution over executable program tokens given the dataset-and-target context. It is richer than selecting a fixed named estimator. The same model also supplies learned ranking signals. Its reward representation mean-pools independent token embeddings, a bag of actions, with no positional term: at `a75e543d2` both the Python model (`python/src/jope/policy/model_v3.py:399-404`) and the product's Rust port (`crates/jope-policy/src/model.rs:555-567`) compute a padding-masked mean. It has no learned representation of token order: for the same context, programs with the same token multiset have the same pooled representation in exact arithmetic. This limits ranking distinctions between programs whose execution differs only through token order; it does not remove order from the autoregressive proposal decoder. See [§](#c-architecture--decoder-and-reward-architecture); [§](#c-learning--conditioning-diagnostics-before-the-first-causal-experiment) proposes measuring its collisions before any architecture change.
 
@@ -2181,7 +2560,7 @@ Useful controls answer different questions: generic grammar sampling tests end-t
 
 <a id="c-learning--conditioning-diagnostics-before-the-first-causal-experiment"></a>
 
-## 8.9 Conditioning diagnostics before the first causal experiment
+## 9.9 Conditioning diagnostics before the first causal experiment
 
 These diagnostics ask whether the policy actually uses its dataset-and-split context. All are proposed and none has been measured. This manual proposes running them before the first causal LOOP-01 experiment, and keep every diagnostic substitution outside teacher admission: a program proposed or ranked under a substituted context never becomes a teacher.
 
@@ -2199,7 +2578,7 @@ Dense-width feasibility checks must use only permitted fitting information, keep
 
 <a id="c-learning--specialization-without-starving-the-general-learner"></a>
 
-## 8.10 Specialization without starving the general learner
+## 9.10 Specialization without starving the general learner
 
 One difficult dataset can produce many near-duplicate teachers. Count unique canonical programs, meaningful improvements and distinct contexts, not only serialized rows. Retain broader replay and family balance so a successful focused attack does not make the policy forget other problems. [§](#c-data-estate--packing-semantics-legal-sets-and-label-policies) describes how to share repeated contexts and immutable shards without losing original provenance.
 
@@ -2209,11 +2588,11 @@ If the target ratchet moves but fixed-monitor policy quality deteriorates, inves
 
 <a id="c-learning--a-kpi-ledger-with-defined-denominators"></a>
 
-## 8.11 A KPI ledger with defined denominators
+## 9.11 A KPI ledger with defined denominators
 
 <a id="c-learning--kpi-definitions"></a>
 
-### 8.11.1 KPI definitions
+### 9.11.1 KPI definitions
 
 These are proposed reporting definitions for acceptance, not a claim that every current report already emits every field. Preserve the fixed protocol where it already specifies a quantity. Additions must be preregistered before comparing challengers; do not change a definition after seeing results.
 
@@ -2237,7 +2616,7 @@ These are proposed reporting definitions for acceptance, not a claim that every 
 
 <a id="c-learning--win-counting-and-a-proposed-acceptance-record"></a>
 
-### 8.11.2 Win counting and a proposed acceptance record
+### 9.11.2 Win counting and a proposed acceptance record
 
 Define a dataset-level comparison using the protocol's frozen fold summary; retain fold-level results separately. Keep separate win columns for generic search, the previous checkpoint, and the best eligible frozen non-ASM comparator; the last column is PANEL-WINS as proposed in [§](#c-learning--kpi-definitions). A win against one reference is not automatically a win against the others. For the owner's goal of ten wins per task on the 30-dataset panel, each reference's denominator remains ten per task and all thirty outcomes are listed, including unavailable ones; meeting it in every task is a 30/30 sweep. It is a declared goal, not a promise. As of 2026-09-23 there is no completed full-panel result establishing those counts.
 
@@ -2270,7 +2649,7 @@ Retain the receipt path and content hash for each populated quantity, plus its u
 
 <a id="c-learning--what-is-still-needed-to-demonstrate-the-learning-flywheel"></a>
 
-## 8.12 What is still needed to demonstrate the learning flywheel
+## 9.12 What is still needed to demonstrate the learning flywheel
 
 The desired loop is concrete: a dataset and split produce verified encodings; conditioned policy proposals become real generation-zero fits; bounded GP/evolution produces eligible improved programs; the full comparison identity admits those programs as teaching targets; optimizer updates produce a new checkpoint; matched downstream fits show whether that new checkpoint proposes and searches better algorithms. Only then can a promotion change the serving pointer. [§](#c-teachers--a-dataset-is-not-one-training-example) and [§](#c-data-estate--binary-format-the-exact-packed-teaching-record) trace the historical input-to-target representation, and [§](#c-targets--did-gp-targets-get-better) separately reports observed adaptive target improvements in repeated searches with matching recorded comparison fields, including improvements in generic and shuffled arms. Those observations are largely carried-forward development scores from seed pools the arms share; they do not establish neural causality. [§](#c-learning--what-better-and-better-must-mean) defines the remaining current acceptance work.
 
@@ -2283,7 +2662,7 @@ To establish a closed improvement loop rather than these separate observations, 
 
 ---
 
-# Chapter 9 — Complete fitted inference and language support
+# Chapter 10 — Complete fitted inference and language support
 
 At source `68f56404c3e199e06413bfd645d3fe0803d7b96f`, merged unchanged as main `a75e543d2` (same source tree), the legacy `jope emit` and `jope pipeline run --emit` paths produce type 3. `jope fit` computes a fit and reports scores but does not provide a saved fitted-artifact output flag. The pending product/winner packets, which are not part of merged main, expose type 4 from complete benchmark/demo fitted state. Do not advertise a legacy recipe file as the exact fitted winner.
 
@@ -2291,7 +2670,7 @@ This chapter and the supplied tiny fixture are **maintainer-private**. The DSL, 
 
 <a id="c-inference--deployment-support-definition-priority-and-status"></a>
 
-## 9.1 Deployment support: definition, priority and status
+## 10.1 Deployment support: definition, priority and status
 
 The owner's rule for this chapter, relayed on 2026-09-23 at 22:27:11 UTC, sets what may be called deployment support. It is a requirement for export work, not a description of the current source:
 
@@ -2312,7 +2691,7 @@ By this rule, no route at merged main `a75e543d2` provides deployment support ye
 
 <a id="c-inference--language-interfaces-at-the-frozen-source"></a>
 
-## 9.2 Language interfaces at the frozen source
+## 10.2 Language interfaces at the frozen source
 
 | Interface | Input and output | Coverage and operational meaning |
 |---|---|---|
@@ -2331,11 +2710,11 @@ Source anchors: `crates/jope-cli/src/kernel.rs`, `crates/jope-pipeline/src/emit.
 
 <a id="c-inference--complete-registered-recipe-matrix"></a>
 
-## 9.3 Complete registered-recipe matrix
+## 10.3 Complete registered-recipe matrix
 
 <a id="c-inference--coverage-by-recipe-and-backend"></a>
 
-### 9.3.1 Coverage by recipe and backend
+### 10.3.1 Coverage by recipe and backend
 
 The table covers all 26 task-compatible native benchmark recipes. **Yes means the source admits the recipe/head under the additional state restrictions; it is not a measured parity result.** Every row has native Rust fit/save/reload support in the benchmark contract. Public fitted columns come from the pending product packet, which is not in merged main `a75e543d2`; they are unverified against merged source and require actual selected-state qualification. The private C++ column describes the head gate that exists at `a75e543d2` only. Legacy `jope emit` has no column because it can emit none of the 26 recipes: each carries an `input` stage (`crates/jope-bench/src/panel/methods.rs:20-21`, `:50`), which the legacy planner rejects (`crates/feat-math/src/spec.rs:383-389`, `:592`). External adapters are covered in [§](#c-inference--external-winners).
 
@@ -2376,7 +2755,7 @@ Source anchors: `crates/jope-bench/src/panel/methods.rs::rust_methods`, `advance
 
 <a id="c-inference--state-restrictions-beyond-the-head-table"></a>
 
-### 9.3.2 State restrictions beyond the head table
+### 10.3.2 State restrictions beyond the head table
 
 The pending public lowering validates the full model binding and fitted input dimensions. It admits IID rows and fitted IID row order only. Historical state, other model forms, target mappings, nonempty general transform lists and calibration are currently unsupported. Categorical encoding must be the admitted fitted one-hot mode. Missing-aware state is limited to the supported tabular-boosting and extra-tree implementations. Invalid coefficients, schema bindings or dimensions are errors, not legitimate unsupported fallbacks.
 
@@ -2386,13 +2765,13 @@ The existing private C++ library has broader checks for target mappings, transfo
 
 <a id="c-inference--external-winners"></a>
 
-### 9.3.3 External winners
+### 10.3.3 External winners
 
 XGBoost, LightGBM, CatBoost and scikit-learn are executable benchmark adapters for the admitted tasks. Their native fitted artifact retains the estimator pickle and preprocessing/reload evidence. The pending public winner-export helper reports standalone Python, Rust, C++17, C++20 and JavaScript export of that external library state as **typed unsupported**. It preserves the external winner, all losses and native fitted artifact. Installing a library in Python does not make its pickle a dependency-free Python inference bundle.
 
 <a id="c-inference--private-worked-examples-and-their-measured-execution"></a>
 
-## 9.4 Private worked examples and their measured execution
+## 10.4 Private worked examples and their measured execution
 
 Examples A and B are runbooks that can be executed at merged main. Their runbook summary:
 
@@ -2408,11 +2787,11 @@ Examples A and B are runbooks that can be executed at merged main. Their runbook
 
 <a id="c-inference--example-a-a-tiny-private-recipe-fit-and-predictions"></a>
 
-### 9.4.1 Example A: a tiny private recipe, fit and predictions
+### 10.4.1 Example A: a tiny private recipe, fit and predictions
 
 <a id="c-inference--the-synthetic-fixture"></a>
 
-#### 9.4.1.1 The synthetic fixture
+#### 10.4.1.1 The synthetic fixture
 
 The supplied `examples/gp-synthetic.json` contains 24 explicitly synthetic rows with two integer, non-null features and target `3*x0 − 2*x1 + 5`: 16 training rows, four validation rows and four test rows. It is a maintainer example, not one of the frozen thirty datasets or the official ten generated fixtures. `train.csv` contains the same sixteen training rows as headerless `x0,x1,target`; `predict.csv` contains the eight validation/test feature rows with targets removed.
 
@@ -2424,7 +2803,7 @@ One training row is `-12,-5,-21`; the corresponding typed JSON row is:
 
 <a id="c-inference--fit-and-emit-the-recipe"></a>
 
-#### 9.4.1.2 Fit and emit the recipe
+#### 10.4.1.2 Fit and emit the recipe
 
 Set `R` to the repository root, `E` to `$R/docs/internal/asm-manual/examples`, `J` to a checksum-verified immutable CLI and `A` to a new durable private output directory. Execute numerical work only after its allocation is available. Executed on 23 September 2026: all fourteen packet commands of Examples A and B passed ([§](#c-inference--measured-execution-of-the-private-examples)). The listings are reproducible instructions, not receipts; `mkdir` and the two `cat` concatenations are setup steps outside the fourteen:
 
@@ -2440,7 +2819,7 @@ mkdir "$A"
 
 <a id="c-inference--run-and-compare-the-emitted-programs"></a>
 
-#### 9.4.1.3 Run and compare the emitted programs
+#### 10.4.1.3 Run and compare the emitted programs
 
 ```sh
 python3 "$A/recipe/model.py" "$E/train.csv" "$E/predict.csv" "$A/recipe/pred-python.txt"
@@ -2467,7 +2846,7 @@ The supplied `validate-outputs.py` requires all five prediction files to exist, 
 
 <a id="c-inference--example-b-actual-legacy-pipelinesearch-shape"></a>
 
-### 9.4.2 Example B: actual legacy pipeline/search shape
+### 10.4.2 Example B: actual legacy pipeline/search shape
 
 The existing pipeline takes a locally cached catalog dataset directory with `metadata.json` or `manifest.json` and verified files. A bare CSV and the synthetic JSON above are not that catalog format. Use the committed regression fixture for a reproducible offline command:
 
@@ -2488,11 +2867,11 @@ The emitted winner may not be covered by C++ or JavaScript. The receipt retains 
 
 <a id="c-inference--measured-execution-of-the-private-examples"></a>
 
-### 9.4.3 Measured execution of the private examples
+### 10.4.3 Measured execution of the private examples
 
 <a id="c-inference--what-passed-and-what-was-measured"></a>
 
-#### 9.4.3.1 What passed and what was measured
+#### 10.4.3.1 What passed and what was measured
 
 On 23 September 2026, all **14 unchanged example commands passed**, with zero failed, unavailable, timed-out or unstarted commands. The original command packet and static-only preparation receipts are retained unchanged as historical inputs; this execution is separate evidence.
 
@@ -2504,7 +2883,7 @@ The packet also ran the separately identified committed **PMLB 229 pwlinear** le
 
 <a id="c-inference--resources-accounting-and-scope-limits"></a>
 
-#### 9.4.3.2 Resources, accounting and scope limits
+#### 10.4.3.2 Resources, accounting and scope limits
 
 | Measurement | Recorded value |
 |---|---|
@@ -2525,7 +2904,7 @@ Evidence pins: `HANDOFF.json` SHA256 `a05e8a0e9f9430b0c71ff23c57e5e29532a61bbe11
 
 <a id="c-inference--example-c-exact-fitted-winner-export-after-pending-integration"></a>
 
-## 9.5 Example C: exact fitted winner export after pending integration
+## 10.5 Example C: exact fitted winner export after pending integration
 
 This runbook is the route intended to meet the rule of [§](#c-inference--deployment-support-definition-priority-and-status). At the PR83 snapshot, its two export commands, `benchmark export-winner` and `benchmark qualify-export`, existed only in stopped custody patch views; `benchmark report` existed at `a75e543d2`, but the `fitted_inference` section through which it reports export results existed only in those views. PR88 later integrated these interfaces and passed CPU fixture checks ([§](#c-status--implementation-snapshot-and-this-manuals-own-identity)); real campaign winner export remains unqualified. Its runbook summary:
 
@@ -2541,7 +2920,7 @@ This runbook is the route intended to meet the rule of [§](#c-inference--deploy
 
 <a id="c-inference--export-commands-and-winner-selection"></a>
 
-### 9.5.1 Export commands and winner selection
+### 10.5.1 Export commands and winner selection
 
 Use the final integrated installed CLI, original admitted plan and journal, unchanged panel/development inputs and exact selected recipe. The pending front door, absent from merged main `a75e543d2`, accepts a dataset and an existing fitted fold, rather than a replacement recipe:
 
@@ -2561,7 +2940,7 @@ The first command returns the semantic prepared identity, private `prepared.json
 
 <a id="c-inference--tool-inventory-qualification-order-and-isolation"></a>
 
-### 9.5.2 Tool inventory, qualification order and isolation
+### 10.5.2 Tool inventory, qualification order and isolation
 
 The tools file uses the existing private `Runtime` schema keyed by command name, normally `python3`, `rustc`, `g++` and `node`. Each entry pins the physical executable and SHA256, exact version, empty argument prefix, required toolchain/package artifacts, admitted environment and unavailable reason or null. Use the real compiler executable, not an unpinned selector such as a mutable rustup shim. Tool inventory must be prepared from actual installed bytes; an illustrative JSON snippet with invented digests is not admissible.
 
@@ -2571,7 +2950,7 @@ The child receives generated inference files and unlabeled raw prediction rows. 
 
 <a id="c-inference--backend-numerical-policies-public-metadata-and-the-export-clock"></a>
 
-### 9.5.3 Backend numerical policies, public metadata and the export clock
+### 10.5.3 Backend numerical policies, public metadata and the export clock
 
 | Backend | Public files | Pinned numerical comparison |
 |---|---|---|
@@ -2586,7 +2965,7 @@ These jobs use the original campaign's remaining execution allowance; they do no
 
 <a id="c-inference--future-work-and-acceptance-boundaries"></a>
 
-## 9.6 Future work and acceptance boundaries
+## 10.6 Future work and acceptance boundaries
 
 Priority gaps are actual full-state parity for supported winners, broader fitted-state lowering, a typed multiclass C++ boundary, qualified external-library export where feasible, and only later CUDA. Each extension needs exact native-state replay, missing/unknown-category tests, numerical policy fixed before scoring, stale-evidence refusal and public-bundle canaries. New operators additionally need ablation and compatibility evidence; adding an emitter branch alone does not establish reusable learning value.
 
@@ -2597,11 +2976,11 @@ Retain native winners even when every requested language is unsupported. Report 
 
 ---
 
-# Chapter 10 — Benchmark execution, ranking, Elo and interpretation
+# Chapter 11 — Benchmark execution, ranking, Elo and interpretation
 
 <a id="c-benchmark--three-evidence-collections-with-different-purposes"></a>
 
-## 10.1 Three evidence collections with different purposes
+## 11.1 Three evidence collections with different purposes
 
 The frozen ASM panel, the historical same-cut benchmark and the imported SOTArena ladders have different inputs and protocols. Keep their figures and identities separate. A strong historical Elo is not a result for the frozen thirty-dataset ASM panel, which has not yet been run. A rank computed on development labels is not a sealed-test estimate.
 
@@ -2615,11 +2994,11 @@ The plot source tables retain method, dataset, snapshot, coverage and source has
 
 <a id="c-benchmark--frozen-panel-execution-contract"></a>
 
-## 10.2 Frozen-panel execution contract
+## 11.2 Frozen-panel execution contract
 
 <a id="c-benchmark--the-screen-freeze-and-confirm-procedure"></a>
 
-### 10.2.1 The screen, freeze and confirm procedure
+### 11.2.1 The screen, freeze and confirm procedure
 
 For each dataset, screen every applicable native method, configured external adapter and admitted search arm on development fold zero. Freeze the top five recipe identities and confirm those recipes across all five original development folds. Additionally confirm `asm.neural` if it missed the top five; the current code forces only `asm.neural`, not `asm.generic`, into this extra confirmation (`crates/jope-bench/src/panel/campaign.rs:779-783`). A configuration such as `gpr.rbf_linear` is distinct; a spelling alias does not justify an extra independent fit. The recipe is frozen, while the fitted state for each fold is learned from that fold's permitted training rows.
 
@@ -2627,7 +3006,7 @@ For each dataset, applicable methods screen on development fold zero. The top fi
 
 <a id="c-benchmark--adaptive-development-exposure"></a>
 
-### 10.2.2 Adaptive development exposure
+### 11.2.2 Adaptive development exposure
 
 This screen/freeze/confirm design uses development data adaptively. The selected recipe can already have learned from rows that occur in a later confirmation fold. Fold-zero labels influence screening. The implementation records these intersections; the five-fold summary remains adaptive development evidence. Sealed rows and sealed meta-test families stay outside learning, optimization and this documentation audit. The word “test” in an optimization-visible file does not make it a valid test set. Under the owner's family-level domain rule, the frozen panel remains an adaptive development domain even after a complete campaign ([§](#c-data--three-family-level-domains)).
 
@@ -2637,13 +3016,13 @@ The exposure is not symmetric, so the adaptive bias has a direction: it favours 
 
 <a id="c-benchmark--running-the-frozen-panel-campaign-plan-execute-and-report"></a>
 
-## 10.3 Running the frozen-panel campaign: plan, execute and report
+## 11.3 Running the frozen-panel campaign: plan, execute and report
 
 This runbook has seven parts: purpose and status, prerequisites and resources, manifest creation, execution, artifacts and success, failure and resume, and limitations. Status labels are as of 2026-09-23 about 23:55 UTC.
 
 <a id="c-benchmark--purpose-status-and-prerequisites"></a>
 
-### 10.3.1 Purpose, status and prerequisites
+### 11.3.1 Purpose, status and prerequisites
 
 **Purpose.** Run the unchanged thirty-dataset protocol once, as roadmap item PANEL-01 ([§](#c-plan--compact-task-index)): screen every applicable method on development fold zero, freeze five recipes, confirm them on all five development folds, and report adaptive development evidence for every dataset.
 
@@ -2664,7 +3043,7 @@ This runbook has seven parts: purpose and status, prerequisites and resources, m
 
 <a id="c-benchmark--preregistered-arms-and-per-task-scope"></a>
 
-### 10.3.2 Preregistered arms and per-task scope
+### 11.3.2 Preregistered arms and per-task scope
 
 Prepare the qualified configuration before opening an execution window. It binds the actual context producer, source/worker/model inputs, numerical qualification and policy configuration. The standard comparison preregisters a 64-slot policy pool plus 16 exploration candidates against 80 generic candidates, with equal declared arm allowances. Policy-pool shortfalls carry `neural_rejection_fallback`; only `neural_policy` slots count as genuine checkpoint proposals. Generation-zero neural slots must actually fit; a proposal file or generic-only result cannot demonstrate neural consumption.
 
@@ -2680,7 +3059,7 @@ At this source, a better policy therefore cannot change binary or multiclass res
 
 <a id="c-benchmark--execution-artifacts-and-success"></a>
 
-### 10.3.3 Execution, artifacts and success
+### 11.3.3 Execution, artifacts and success
 
 Plan first. Planning performs zero fits and reports `execution_budget_started: false` (`crates/jope-bench/src/panel/optimize_cli.rs:126`). Capture the printed semantic plan ID rather than hashing the file ([§](#c-installation--physical-layout-and-identities)), then execute and report:
 
@@ -2705,7 +3084,7 @@ PANEL_PLAN_ID=$(jq -er '.plan_sha256' "$A/panel-plan-receipt.json")
 
 <a id="c-benchmark--failure-resume-and-limitations"></a>
 
-### 10.3.4 Failure, resume and limitations
+### 11.3.4 Failure, resume and limitations
 
 `optimize run` and `optimize report` delegate to the same campaign contracts. Repeating run with the same plan and journal resumes the original authenticated state and absolute deadline. A restart does not grant another two hours. Do not repair journals by editing receipt fields or copying successes from another experiment. Read-only report recovery authenticates retained artifacts and recomputes scores; it does not fit another predictor.
 
@@ -2715,7 +3094,7 @@ PANEL_PLAN_ID=$(jq -er '.plan_sha256' "$A/panel-plan-receipt.json")
 
 <a id="c-benchmark--metrics-and-class-order"></a>
 
-## 10.4 Metrics and class order
+## 11.4 Metrics and class order
 
 | Task | Primary reported metric | Smaller-is-better search loss | Required prediction shape |
 | --- | --- | --- | --- |
@@ -2735,11 +3114,11 @@ The historical same-cut command has an older contract. It constructs its own has
 
 <a id="c-benchmark--what-elo-means-here"></a>
 
-## 10.5 What Elo means here
+## 11.5 What Elo means here
 
 <a id="c-benchmark--the-bradleyterry-model-tie-rule-and-defaults"></a>
 
-### 10.5.1 The Bradley–Terry model, tie rule and defaults
+### 11.5.1 The Bradley–Terry model, tie rule and defaults
 
 The arena implementation fits a regularized Bradley–Terry model on an Elo scale. For two ratings A and B, its modeled pairwise probability is:
 
@@ -2753,13 +3132,13 @@ Two source paths preserve historical arithmetic: one accumulates individual sort
 
 <a id="c-benchmark--interpreting-a-rating"></a>
 
-### 10.5.2 Interpreting a rating
+### 11.5.2 Interpreting a rating
 
 The rating is relative to the included method universe, evidence eligibility and overlap graph. A high rating on a handful of datasets has different coverage from the same rating on every dataset. Report dataset coverage, full-coverage rank, average rank, wins, pending cells and protocol beside Elo. Adding methods, removing invalid rows or changing overlap can change ratings without any predictor changing. Elo does not measure the magnitude of an RMSE improvement, runtime, memory, statistical certainty or future unseen-data performance. No confidence interval or significance claim is implied by a plotted point.
 
 <a id="c-benchmark--how-the-retained-elo-scale-is-constructed"></a>
 
-### 10.5.3 How the retained Elo scale is constructed
+### 11.5.3 How the retained Elo scale is constructed
 
 `crates/jope-arena/src/elo.rs` fits regularized Bradley–Terry ratings. Each dataset contributes one equal-weight comparison for each pair of methods with available scores. The preferred direction is taken from the metric; RMSE comparisons minimize. A tie has outcome 0.5 when `|a−b| ≤ 1e−12 × max(|a|,|b|,1)`; otherwise the better score receives 1 and the other 0. Missing cells create no comparison and must not become invented defeats.
 
@@ -2769,7 +3148,7 @@ A rating difference summarizes outcomes within one comparison pool. It does not 
 
 <a id="c-benchmark--minimum-complete-future-campaign-report"></a>
 
-## 10.6 Minimum complete future campaign report
+## 11.6 Minimum complete future campaign report
 
 For every one of the thirty immutable datasets, retain the input and cut identities; applicable, skipped and unavailable methods with reasons; screen outcomes; frozen finalists; all confirmation-fold outcomes; `asm.neural`'s extra confirmation when needed; original and fitted recipe identities; class order; selected loss and exposure labels; resource limits and original deadlines; failures and cancellations; actual fit/predict counts; and retained winner/backend outcomes. Report all losses and gaps, not only wins. A deadline-exhausted dataset remains in the denominator with an explicit incomplete outcome.
 
@@ -2782,21 +3161,21 @@ Classification search is also narrower than its comparators. At merged main `a75
 
 ---
 
-# Chapter 11 — Scheduling, cancellation, recovery and accounting
+# Chapter 12 — Scheduling, cancellation, recovery and accounting
 
 <a id="c-scheduling--arm-order-and-clocks"></a>
 
-## 11.1 Arm order and clocks
+## 12.1 Arm order and clocks
 
 The arm order is fixed: neural first, then generic. Fresh context encoding and policy production run inside the neural arm clock, and each arm is clipped to the original execution cutoff. In the origin proof at source `68f56404` the producer gate opened 21.094 seconds after the campaign start and its exit was observed at 41.581 seconds; its measured wall time was 20.486968041 seconds. The neural cutoff then lay 78.613 seconds ahead, before allowing for post-exit verification/setup, so this is remaining arm time rather than guaranteed fit execution time. The neural arm stopped at `original_deadline`. The generic arm began 0.553 seconds after that cutoff, retained its full declared 120-second allowance and stopped at `evaluation_limit`. Equal declared allowances are not equal fit-only time. Sources: `crates/jope-pipeline/src/neural_search.rs:654`, `:701`, `:729`, `:772`; `crates/jope-pipeline/src/execution.rs:592`; the accepted proposal execution and recovered report.
 
 <a id="c-scheduling--resource-limits-shared-compute-and-supervision"></a>
 
-## 11.2 Resource limits, shared compute and supervision
+## 12.2 Resource limits, shared compute and supervision
 
 <a id="c-scheduling--twenty-bounded-workers-resource-limits-and-supervision"></a>
 
-### 11.2.1 Twenty bounded workers: resource limits and supervision
+### 12.2.1 Twenty bounded workers: resource limits and supervision
 
 | Constraint | Official panel policy |
 |---|---|
@@ -2814,7 +3193,7 @@ The default admitted panel allocation is twenty CPUs/workers, 64 GiB memory, zer
 
 <a id="c-scheduling--resource-policy-and-the-training-clock"></a>
 
-### 11.2.2 Resource policy and the training clock
+### 12.2.2 Resource policy and the training clock
 
 | Operation | Required policy |
 |---|---|
@@ -2834,7 +3213,7 @@ Sources: current `crates/jope-bench/src/panel/campaign_cli.rs:51`; pending `pyth
 
 <a id="c-scheduling--shared-compute"></a>
 
-### 11.2.3 Shared compute
+### 12.2.3 Shared compute
 
 Fast CI runs on xbabe1. The canonical Ubuntu machine is local xbabe2 for full CPU work. The user's SSH alias `xbabe2` points elsewhere; use the runbook's local form for this machine.
 
@@ -2844,11 +3223,11 @@ Missing cgroups or dependencies cause explicit failures/unavailable outcomes; th
 
 <a id="c-scheduling--cancellation-resume-and-recovery"></a>
 
-## 11.3 Cancellation, resume and recovery
+## 12.3 Cancellation, resume and recovery
 
 <a id="c-scheduling--reading-stop-reasons-and-resuming"></a>
 
-### 11.3.1 Reading stop reasons and resuming
+### 12.3.1 Reading stop reasons and resuming
 
 Final search reasons include `evaluation_limit`, `original_deadline`, `search_space_exhausted` and `no_measured_parent`. `admission_pending_original_window` and `cancelled_original_window` are non-final: no winner may be frozen while either holds. The proof front door can return `ok:false, state:pending_original_window`. Resume the same plan and journal, preserving its original arm and campaign deadlines; resume never creates another allowance. Before cutoff, unresolved never-admitted inventory may be retried; at/after cutoff it can only be finalized under the existing evidence rules.
 
@@ -2856,7 +3235,7 @@ A setup failure before gate release becomes terminal `budget_exhausted` if its o
 
 <a id="c-scheduling--interrupted-attempts-and-proof-interpretation"></a>
 
-### 11.3.2 Interrupted attempts and proof interpretation
+### 12.3.2 Interrupted attempts and proof interpretation
 
 An attempt with a `started/` record and no `finished/` record is never rerun, and the pool does not recover its original result or final counters. After its process group is safely drained, the pool persists terminal `cancelled` with reason `controller_interrupted: original attempt not retried`; CPU, wall time and exit accounting remain unknown. If recovery cannot drain the group, no recovered terminal record is persisted and further admission is blocked (`recovery_not_drained`). Such attempts are excluded from retryable never-admitted inventory. Separately, a normally watched attempt persists its observed terminal outcome before potentially slow cleanup; that rule does not reconstruct interrupted accounting. The search uses immutable observed journals and refuses changed completed evidence. At cutoff, only proven never-admitted inventory may normalize; the per-fold replay digest preserves ordered real attempts and output identities. Both live PoolBackend feedback and recovered FitAdapter scoring compute the same shared digest.
 
@@ -2866,7 +3245,7 @@ Never extend an expired original deadline, mutate a failed result into a success
 
 <a id="c-scheduling--recovery-phases"></a>
 
-### 11.3.3 Recovery phases
+### 12.3.3 Recovery phases
 
 Identify whether failure occurred before admission, in setup, after the gate, during cleanup, in controller scoring or during report generation.
 
@@ -2882,7 +3261,7 @@ Resume with the same plan and journal. A changed source, dataset, budget or prot
 
 <a id="c-scheduling--artifacts-what-evidence-to-retain"></a>
 
-## 11.4 Artifacts: what evidence to retain
+## 12.4 Artifacts: what evidence to retain
 
 | Evidence | What to retain and inspect |
 |---|---|
@@ -2901,11 +3280,11 @@ Current ASM custody is outside Git at `/home/ubuntu/jope-rescue-20260921/asm-int
 
 <a id="c-scheduling--cost-accounting"></a>
 
-## 11.5 Cost accounting
+## 12.5 Cost accounting
 
 <a id="c-scheduling--counting-predictors-recipes-commands-and-export-cost"></a>
 
-### 11.5.1 Counting predictors, recipes, commands and export cost
+### 12.5.1 Counting predictors, recipes, commands and export cost
 
 A recipe may be evaluated on multiple folds or re-used in later fits. Therefore proposal count, recipe count, unique fitted predictors, launched commands and physical fit starts are different denominators. A cache hit does not become another new predictor; a partial/unknown attempt does not become a zero-cost fit. [§](#c-scheduling--worked-example-cpu-wall-time-and-per-predictor-cost-of-the-one-dataset-proof) applies this accounting to the current proof.
 
@@ -2917,7 +3296,7 @@ In the pending ASM export accounting, `fitted_export_commands` is a subset of gl
 
 <a id="c-scheduling--worked-example-cpu-wall-time-and-per-predictor-cost-of-the-one-dataset-proof"></a>
 
-### 11.5.2 Worked example: CPU, wall time and per-predictor cost of the one-dataset proof
+### 12.5.2 Worked example: CPU, wall time and per-predictor cost of the one-dataset proof
 
 Exact supervisor CPU was **270.889403 CPU-seconds**; summed worker CPU was **181.220773 CPU-seconds**. The supervisor aggregate contains worker use: **do not add them**. Summed worker wall durations were **202.266164543 seconds**; concurrent durations are not elapsed campaign time.
 
@@ -2936,7 +3315,7 @@ These are accounting ratios for one retained run, not extrapolated throughput or
 
 <a id="c-scheduling--the-one-hour-ten-million-token-reference-scenario"></a>
 
-### 11.5.3 The one-hour, ten-million-token reference scenario
+### 12.5.3 The one-hour, ten-million-token reference scenario
 
 GPU work, tokens, money, isolated controller CPU, downloads and installation were not measured by this proof. The supplied one-hour/ten-million-token scenario provides a 3,600-second contextual reference: this proof's run wall time is approximately 6.64% of that duration. This is not a matched-workload speedup. No scenario hardware allocation, predictor count, token trace or cost ledger exists here, so ten million tokens cannot be converted into a measured productivity or currency comparison.
 
@@ -2947,11 +3326,11 @@ The supplied one-hour/ten-million-token scenario is a contextual scenario only. 
 
 ---
 
-# Chapter 12 — Maintenance, privacy, release and preservation
+# Chapter 13 — Maintenance, privacy, release and preservation
 
 <a id="c-maintenance--questions-that-should-remain-answerable-after-a-maintainer-handoff"></a>
 
-## 12.1 Questions that should remain answerable after a maintainer handoff
+## 13.1 Questions that should remain answerable after a maintainer handoff
 
 Which reviewed source and runtime produced this artifact? Which exact rows and original labels were available? Was this a recipe, a checkpoint or a saved fitted predictor? Which score selected it, under what comparison identity? Which failures, missing dependencies and cancelled jobs were retained? Did any nominal test labels influence selection? Did resume preserve the original deadline? Does the export predict from saved state, and which backend actually passed? Did training perform positive updates and change parameters? Can another maintainer locate and authenticate the receipt without reading credentials or sealed data?
 
@@ -2959,7 +3338,7 @@ The roadmap ([§](#c-plan--compact-task-index)) translates the unanswered parts 
 
 <a id="c-maintenance--repository-authority-and-coordination"></a>
 
-## 12.2 Repository authority and coordination
+## 13.2 Repository authority and coordination
 
 The canonical product checkout is `/home/ubuntu/JopeDime`, upstream `veox-ai/JopeDime`. `/home/ubuntu/jain-split/jope-dime` is a different research repository; `/home/ubuntu/jope-dime` may be its symlink. Similar names are not interchangeable source, checkpoint or promotion authorities.
 
@@ -2971,7 +3350,7 @@ Repository operation remains serialized: read the current queue/ledger, claim pa
 
 <a id="c-maintenance--worktrees-and-builds"></a>
 
-## 12.3 Worktrees and builds
+## 13.3 Worktrees and builds
 
 Extra copies belong under `<repo>/.agent/worktrees/`, at most four lanes. `.claude/worktrees` stays a symlink into that shared root. Verify it before worktree operations and keep `.agent/` locally excluded from Git status.
 
@@ -2989,11 +3368,11 @@ Never put source, worktrees or builds in `/tmp`. A target directory can contain 
 
 <a id="c-maintenance--coverage-and-reviewed-lifecycle"></a>
 
-## 12.4 Coverage and reviewed lifecycle
+## 13.4 Coverage and reviewed lifecycle
 
 <a id="c-maintenance--coverage-inventories-and-ci-lanes"></a>
 
-### 12.4.1 Coverage inventories and CI lanes
+### 13.4.1 Coverage inventories and CI lanes
 
 Read `deploy/ci/coverage.md`, mapping and generated inventory together. Discovery counts packages, features and families; execution receipts count what one invocation actually collected and ran. Invocations overlap. Path exclusions, ignored tests and unavailable dependencies do not become passing tests.
 
@@ -3001,7 +3380,7 @@ Fast CI has eight lanes plus aggregate. Full-main diagnostics cover additional f
 
 <a id="c-maintenance--writer-and-reviewer-identities"></a>
 
-### 12.4.2 Writer and reviewer identities
+### 13.4.2 Writer and reviewer identities
 
 The established writer is `jepsontaylor`; the designated independent Claude reviewer uses `neverhuman`. Verify them for every PR. The reviewer must differ from the opener and every associated commit author and committer. Use the full paginated inventory and record unassociated commits.
 
@@ -3014,7 +3393,7 @@ The helper prevents identity mistakes but cannot prove independence. Changing cr
 
 <a id="c-maintenance--freeze-review-and-merge"></a>
 
-### 12.4.3 Freeze, review and merge
+### 13.4.3 Freeze, review and merge
 
 Freeze the full head; dispatch fresh manual CI; retain source SHA, run ID, attempt and dispatch time. Verify current-attempt jobs/aggregate and nonzero meaningful coverage. Supply the independent reviewer with diff, acceptance commands and evidence. A native approval must explicitly bind the final head and remain undismissed. Changed source repeats checks and review.
 
@@ -3027,13 +3406,13 @@ Immediately recheck head, eligibility, CI and approval before merging. Afterward
 
 <a id="c-maintenance--main-guard-and-full-main-scheduling"></a>
 
-### 12.4.4 Main-guard and full-main scheduling
+### 13.4.4 Main-guard and full-main scheduling
 
 Main-guard and the full-main diagnostic share the single xbabe2 `jope-full-cpu` slot and run serially. A main push queues both; full-main has a 120-minute timeout, so main-guard can wait behind it. Read back job/run states and retain the exact source/run/attempt before changing the queue. In the PR83 lifecycle the owner-authorized full-main diagnostic was cancelled while still queued, before any job started, and the owned full timer was restored to allow main-guard to run. That is a recorded unexecuted diagnostic, not passing coverage or general permission to cancel running work. Follow the current allocation owner and runner runbook; never stop another running job to accelerate a merge. Sources: `.github/workflows/main-guard.yml:17`, `.github/workflows/full-main.yml:24`, `docs/runbooks/runner.md:15`, `:131`; the PR83 lifecycle cancellation receipt.
 
 <a id="c-maintenance--privacy-boundaries-the-private-manual-and-public-fitted-bundles"></a>
 
-## 12.5 Privacy boundaries: the private manual and public fitted bundles
+## 13.5 Privacy boundaries: the private manual and public fitted bundles
 
 This is a maintainer document for the private product repository. Its explicitly requested GP examples and internal operational paths explain the implementation; they do not expand the allowlist for public inference bundles.
 
@@ -3043,7 +3422,7 @@ Allowlisted public fitted bundles contain inference code, necessary fitted input
 
 <a id="c-maintenance--release-and-installation-are-independent-from-model-promotion"></a>
 
-## 12.6 Release and installation are independent from model promotion
+## 13.6 Release and installation are independent from model promotion
 
 The current tag workflow runs for `v*`, checks tag = workspace = Python version, builds a Linux binary, writes build provenance and checksums, builds the Python wheel, and records model/dataset references by hash. The committed build command selects default CLI features; it does **not** include `--features asm`. Therefore the existence of this workflow does not prove that a released binary can execute the private ASM path. No newly published release is asserted here. The current private source build in [§](#c-installation--development-build-of-the-cli) explicitly selects `asm`.
 
@@ -3053,7 +3432,7 @@ The checksum-verifying private binary installer and CLI-only source-build helper
 
 <a id="c-maintenance--preservation-and-lane-closure"></a>
 
-## 12.7 Preservation and lane closure
+## 13.7 Preservation and lane closure
 
 Before deletion inspect `git status`, `git stash list`, `git log --all --not --remotes`, and local versus remote tags. A branch-only log misses commits elsewhere.
 
@@ -3063,7 +3442,7 @@ After preservation and a fresh consumer check, remove a closed lane with `git wo
 
 <a id="c-maintenance--rebuilding-and-updating-this-manual"></a>
 
-## 12.8 Rebuilding and updating this manual
+## 13.8 Rebuilding and updating this manual
 
 Rebuilding the book is itself a runbook. Its summary:
 
@@ -3079,7 +3458,7 @@ Rebuilding the book is itself a runbook. Its summary:
 
 <a id="c-maintenance--rebuilding-the-book"></a>
 
-### 12.8.1 Rebuilding the book
+### 13.8.1 Rebuilding the book
 
 The 2026-09-23 builds used Python 3.12 and the observed direct versions in `tools/requirements-docs.txt`. That file is not a transitive lock or a verified cold installer. A fresh environment also needs working Pango/Fontconfig, DejaVu fonts, and Poppler's `pdfinfo`, `pdftotext` and `pdftoppm`. The render receipt records exact Python/library versions and font-file hashes. The following environment-creation recipe is provided for rebuilding; it was not executed as a fresh installation during this document audit:
 
@@ -3111,7 +3490,7 @@ Byte-identical PDF rebuilding is not promised. `SOURCE_DATE_EPOCH` fixes font-su
 
 <a id="c-maintenance--what-the-renderer-reads-checks-and-writes"></a>
 
-### 12.8.2 What the renderer reads, checks and writes
+### 13.8.2 What the renderer reads, checks and writes
 
 `tools/build_manual.py` takes the layout from `book.json` (schema `asm-manual.book/v1`):
 
@@ -3126,7 +3505,7 @@ Byte-identical PDF rebuilding is not promised. `SOURCE_DATE_EPOCH` fixes font-su
 
 <a id="c-maintenance--regenerating-the-training-and-target-figures"></a>
 
-### 12.8.3 Regenerating the training and target figures
+### 13.8.3 Regenerating the training and target figures
 
 Regenerate the training and target figures before the PDF after changing an audited source CSV:
 
@@ -3142,7 +3521,7 @@ These commands render retained observations; they do not train a model or recons
 
 <a id="c-maintenance--the-publication-record-and-its-three-identities"></a>
 
-### 12.8.4 The publication record and its three identities
+### 13.8.4 The publication record and its three identities
 
 Three identities describe a copy of this book. They change independently, and none implies the others:
 
@@ -3156,7 +3535,7 @@ The renderer requires `docs/internal/asm-manual/publication.json` and prints it 
 
 <a id="c-maintenance--updating-the-book"></a>
 
-### 12.8.5 Updating the book
+### 13.8.5 Updating the book
 
 Refresh inventories and receipts, then section Markdown, figures, checklist, `publication.json` and both PDFs. Keep a rendering input manifest. A checkpoint does not update performance figures by implication; merged training source does not prove actual learning. Historical Elo remains historical after regeneration.
 
@@ -3167,15 +3546,15 @@ Before delivery check local links, source identities, totals, metric directions,
 
 ---
 
-# Chapter 13 — Prioritized implementation plan and extension interfaces
+# Chapter 14 — Prioritized implementation plan and extension interfaces
 
 <a id="c-plan--prioritized-implementation-plan"></a>
 
-## 13.1 Prioritized implementation plan
+## 14.1 Prioritized implementation plan
 
 <a id="c-plan--purpose-and-scope"></a>
 
-### 13.1.1 Purpose and scope
+### 14.1.1 Purpose and scope
 
 This checklist is the requested property-list of remaining work. `roadmap.json` is its machine-readable source, with stable IDs, priorities, evidence levels, dependencies, commands, required receipts, budgets and source references. It describes source 68f56404 and the stopped training64, product28, warm-target and winner-export follow-on patches ([§](#c-catalogue--names-and-glossary)). PR83 is merged: remote main `a75e543d2166017cb0139e0a251d51d9a0c98e08` has the reviewed source tree, and main-guard 35889731910 attempt 1 succeeded. That implementation snapshot is unchanged as of 2026-09-23 about 23:55 UTC. Edition 1 of this manual merged later, through PR85 at 22:33:36 UTC, as main `bdfc95c63d905c647e41175e79dc30cdc8600287`, after independent native approval 5297559032 and exact-head CI 35927921851; main-guard 35929010658 passed. That merge changed only documentation files (under `docs/`, plus `README.md` and `AGENT_CHAT.md`). The documentation-correction PR86 (head `0079ceddbaba739d736e80f6fe9b999955c4ad3a`, tree `01ecd51afc77e753ee4fe1f3fbe3c130803bbf43`) merged at 2026-09-24T00:04:12Z as main `2b375ef11fc9298ffa67d4d03e0bb83053201802`; main-guard 35936673729 passed. Edition 2 merged through PR87 at 2026-09-24T02:58:00Z as main `02c0bef6c81ab17e034daea308c1a0b5a7940467`, after exact-head CI 35948653955 attempt 1 and independent native approval 5299139743; main-guard 35949456287 passed; revisions repeat that lifecycle ([§](#c-status--implementation-snapshot-and-this-manuals-own-identity)). Clean canonical main was verified before the documentation branch. LIFE-01 records the completed readback; later source work still needs its own lifecycle.
 
@@ -3185,7 +3564,7 @@ There are 43 primary items. Five of them (DOC-05, DOC-06, PACK-01, FOCUS-01 and 
 
 <a id="c-plan--critical-order"></a>
 
-### 13.1.2 Critical order
+### 14.1.2 Critical order
 
 Verified reviewed main → guarded source integration → actual tests, host qualification and final packaging → fresh qualified contexts and preregistered real teachers → all-eligible family-disjoint corpus → one GPU-hour training with continuation → explicit new-checkpoint consumption → real fitted warm demonstration → unchanged thirty-dataset campaign, selected-state backend qualification inside its remaining window, and report → eligible motif reuse.
 
@@ -3197,7 +3576,7 @@ Do not spend the GPU hour until the regression consumer and its actual fixture t
 
 <a id="c-plan--compact-task-index"></a>
 
-### 13.1.3 Compact task index
+### 14.1.3 Compact task index
 
 | ID | Priority | Stage | Workstream | Current state | Dependencies |
 |---|---|---:|---|---|---|
@@ -3247,7 +3626,7 @@ Do not spend the GPU hour until the regression consumer and its actual fixture t
 
 <a id="c-plan--proposed-owner-decisions-and-external-dependencies"></a>
 
-### 13.1.4 Proposed owner decisions and external dependencies
+### 14.1.4 Proposed owner decisions and external dependencies
 
 The property list is self-contained: every proposed dependency resolves to a primary item, a coordinated proposal, or the registry below. The original contributor proposal is preserved as `data/coordinated-roadmap-proposal.json`, SHA256 `334ae97446ef29963bce47582f1550c7d369f0b329ef143c128685991422ffd4`. Its recommendations are contributor suggestions, not fresh user instructions. Already explicit user decisions require no reconfirmation.
 
@@ -3285,7 +3664,7 @@ The dispositions above are the roadmap data's own and are not edited here. Their
 
 <a id="c-plan--stopping-and-completion-rules"></a>
 
-### 13.1.5 Stopping and completion rules
+### 14.1.5 Stopping and completion rules
 
 An unsuccessful prerequisite remains a recorded refusal or failure. Do not substitute synthetic real-data teachers, another winner, easier datasets or a new deadline. Source completion does not close a runtime task. A plan, help output or checkpoint file is not the corresponding live receipt.
 
@@ -3299,11 +3678,11 @@ The document gate requires one readable PDF plus matching section Markdown, repr
 
 <a id="c-plan--extension-interfaces"></a>
 
-## 13.2 Extension interfaces
+## 14.2 Extension interfaces
 
 <a id="c-plan--the-continuation-interfaces-that-exist-today"></a>
 
-### 13.2.1 The continuation interfaces that exist today
+### 14.2.1 The continuation interfaces that exist today
 
 The training chapter is the authoritative continuation runbook: its per-mode procedures, variables and limits govern ([§](#c-training)). This table is only an at-a-glance reference. Its status labels repeat that chapter's: available, implemented but unqualified, pending integration and proposed. An interface that is present at main `a75e543d2` but has no execution receipt is implemented but unqualified, not available, and no label by itself qualifies a campaign.
 
@@ -3322,7 +3701,7 @@ Sources: [current umbrella commands](https://github.com/veox-ai/JopeDime/blob/68
 
 <a id="c-plan--code-to-extend"></a>
 
-### 13.2.2 Code to extend
+### 14.2.2 Code to extend
 
 These are the narrow extension points at reviewed source `68f56404`, whose tree is identical to merged main `a75e543d2`. Follow the exact-revision links; line numbers refer to that snapshot.
 
@@ -3343,7 +3722,7 @@ The owner’s rules for this extension are proposed, not implemented. Focused op
 
 <a id="c-plan--extending-this-version-without-losing-comparability"></a>
 
-### 13.2.3 Extending this version without losing comparability
+### 14.2.3 Extending this version without losing comparability
 
 A new dataset requires a content/split/group identity, family and exposure classification, train-only preparation, task-correct scoring, and a retained unavailable outcome if any prerequisite fails. A changed encoder requires component/assembly qualification and a new input identity, even when it still outputs 2048 values. A vocabulary change requires explicit token compatibility, executable canonicalization and checkpoint migration decisions. A new learned policy requires optimizer/reload/continuation proof followed by actual downstream generation-and-fit evaluation. A new operator additionally requires typed grammar support, task applicability, ablation and fitted-state/export coverage. A faster scheduler or emitter requires unchanged input/loss semantics and actual cancellation/resume/parity evidence.
 
@@ -4612,6 +4991,8 @@ Sealed target values, target distributions, class balance, feature distributions
 # Appendix B — Historical training, checkpoint lineage and original loss trajectories
 
 The supplied CSVs retain original values, source file SHA-256, source path and line, and JSON Pointer where appropriate. There is no interpolation. Separate figures show different populations; joining them into one curve would erase changes in architecture, objective, corpus, sampler and validation protocol. The later recovery lineage has an independently audited, complete retained series of 63,000 per-step observations; the older 108-block capture retains only block endpoints.
+
+The new core-technology chapter adds a separately verified [24-record A100 fixed-monitor series](#c-deep-stack--a-fixed-panel-learning-curve-for-the-a100-lineage) and historical throughput. It does not replace the different populations retained below.
 
 <a id="c-training-history--dated-lineage-and-evidence-coverage"></a>
 

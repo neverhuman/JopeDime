@@ -1,39 +1,39 @@
 {
   "schema": "jope.manual-render/v2",
-  "chapters": 13,
+  "chapters": 14,
   "appendices": 5,
-  "sections": 18,
+  "sections": 19,
   "headings": {
-    "chapter": 18,
-    "section": 112,
-    "subsection": 203,
+    "chapter": 19,
+    "section": 117,
+    "subsection": 219,
     "sub-subsection": 133
   },
-  "aliases": 284,
+  "aliases": 285,
   "warnings": [],
-  "pages": 155,
-  "pdf_sha256": "f8d345203aee31f581c15e9dfa3babae0620f27ccbb111f388441bf07d17546b",
-  "pdf_bytes": 1317056,
+  "pages": 170,
+  "pdf_sha256": "a8cab53dec41bec0e3b44f10e31e8739470e7519957a16da425d5bac8780f317",
+  "pdf_bytes": 1782994,
   "volumes": [
     {
       "volume": "main",
       "pdf": "asm-maintainer-manual.pdf",
-      "pages": 155,
-      "pdf_sha256": "f8d345203aee31f581c15e9dfa3babae0620f27ccbb111f388441bf07d17546b",
-      "pdf_bytes": 1317056,
+      "pages": 170,
+      "pdf_sha256": "a8cab53dec41bec0e3b44f10e31e8739470e7519957a16da425d5bac8780f317",
+      "pdf_bytes": 1782994,
       "rewritten_links": {
-        "cross_volume": 275,
+        "cross_volume": 280,
         "local_relative": 0
       }
     },
     {
       "volume": "evidence",
       "pdf": "asm-evidence-reference.pdf",
-      "pages": 132,
-      "pdf_sha256": "da6fcd6c1287d3bb40054427d6c46d87c2cfc665b47e2113235847f1fb798e19",
-      "pdf_bytes": 4595937,
+      "pages": 133,
+      "pdf_sha256": "05c5976debb7ff782100b82c2ff5780e4c5671dc13fa9f751c3074eb411d1d7d",
+      "pdf_bytes": 4597553,
       "rewritten_links": {
-        "cross_volume": 95,
+        "cross_volume": 96,
         "local_relative": 0
       }
     }
@@ -41,7 +41,7 @@
   "network_resources": false,
   "runtime": {
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
-    "source_date_epoch": "1790269976",
+    "source_date_epoch": "1790270756",
     "libraries": {
       "weasyprint": "68.1",
       "Markdown": "3.5.2",
@@ -87,7 +87,7 @@
     },
     {
       "path": "internal/asm-manual/book.json",
-      "sha256": "d863efa7def3c3d13f4c08a2b757d7c94226f8181ad70a28208644461d941b61"
+      "sha256": "ef06109c09b3d7c17299bd3c2885060a720ccd3f46e1cf6316e725a1ad07cbd9"
     },
     {
       "path": "internal/asm-manual/data/architecture-training-evidence.json",
@@ -124,6 +124,22 @@
     {
       "path": "internal/asm-manual/data/dataset-inventory.json",
       "sha256": "c008ebedb5febee38ccba7d3f220009350a6ef055b865c25de2a5ba0ca2e6639"
+    },
+    {
+      "path": "internal/asm-manual/data/deep-stack/a100-fixed-monitor.csv",
+      "sha256": "d6de475ecd64f33c790dd8a6bd0d61462ec8c0eb58ea49a65c8b7b226ad9c56e"
+    },
+    {
+      "path": "internal/asm-manual/data/deep-stack/a100-throughput-bins.csv",
+      "sha256": "b9347c32d0907a1a35e813e026b4fc108b2321e448af212909348b206b335c8f"
+    },
+    {
+      "path": "internal/asm-manual/data/deep-stack/a100-throughput-blocks.csv",
+      "sha256": "fe87b5424dad35cdb938a51cc50f024ae2a7104a553eff9d4ab6e292c0b3804d"
+    },
+    {
+      "path": "internal/asm-manual/data/deep-stack/extraction-manifest.json",
+      "sha256": "a7800dc71e6fbf11295036513181aae6f961283d7d5ade7dccc07f839a220bfc"
     },
     {
       "path": "internal/asm-manual/data/evidence-packaging.json",
@@ -558,6 +574,34 @@
       "sha256": "cc63c351eb31225116e2602558ee8a66bcbd01388f61dfce564c20a6385e6002"
     },
     {
+      "path": "internal/asm-manual/figures/deep-stack-figure-receipt.json",
+      "sha256": "a7c06f990a695d4c0f78e61f4e7cfcfb791bb973ab03793c0f5229815616d183"
+    },
+    {
+      "path": "internal/asm-manual/figures/deep-stack-network.svg",
+      "sha256": "0836261d3800714648510ae90473cf8a86039df76ac4992631db1774696708cb"
+    },
+    {
+      "path": "internal/asm-manual/figures/deep-stack-pipeline.svg",
+      "sha256": "efceb513e46056fdd13541031c126e883efbf0542d37a63dbed845379831c090"
+    },
+    {
+      "path": "internal/asm-manual/figures/ds-f1-fixed-monitor.png",
+      "sha256": "f73d8f5bee77d1e07e921a269764fa7dda89f2783cdd1f38df01e7a983611cf9"
+    },
+    {
+      "path": "internal/asm-manual/figures/ds-f2-a100-components.png",
+      "sha256": "eb0eea18098cea703eaf6e93be5b8dbcca2a8a817b4cceac73f80a0d62754548"
+    },
+    {
+      "path": "internal/asm-manual/figures/ds-f3-a100-throughput.png",
+      "sha256": "b5bb9a0e8ac9051c592ad73788086ff3ee916253b8cc51b3cc378699eff4ac77"
+    },
+    {
+      "path": "internal/asm-manual/figures/ds-f4-gen31-train-validation.png",
+      "sha256": "049b96f9e82a0c9e31db6865c782de5a966a84c31b8abed4cfd056b54d7be572"
+    },
+    {
       "path": "internal/asm-manual/figures/fig01-elo-benchmark-valid.png",
       "sha256": "e37c4f71ce5ae919c4b9cfe483ab5bb78283f21078a6098914e81e53d27a34e6"
     },
@@ -655,7 +699,7 @@
     },
     {
       "path": "internal/asm-manual/publication.json",
-      "sha256": "0cb4a047c235c20a65619d88edae63e1c095ecfbb46fcf69048e574b183cef85"
+      "sha256": "7fa363b320aeadc3e5bb3c3664e22e8e1a63f6c008df4d845870a885fe0c10cd"
     },
     {
       "path": "internal/asm-manual/sections/architecture.md",
@@ -680,6 +724,10 @@
     {
       "path": "internal/asm-manual/sections/datasets.md",
       "sha256": "7103239a0f3991ae580ff7f59d9bda2d82dbee42f71e20449bef610ab470c073"
+    },
+    {
+      "path": "internal/asm-manual/sections/deep-stack.md",
+      "sha256": "b92fa63cf16d54f99df5bb99e4129d467e91d1644bf541e90aad5ba6bdbc8dc5"
     },
     {
       "path": "internal/asm-manual/sections/inference.md",
@@ -723,7 +771,7 @@
     },
     {
       "path": "internal/asm-manual/sections/training-history.md",
-      "sha256": "ab69a4eacd09315b498d2f82b062a37cf53d83e2299ddff77c863dc2ade5c960"
+      "sha256": "807bc1d8184437d0f7988e1846767bdd5dcf7a8a0624396f233e05a1df43d86f"
     },
     {
       "path": "internal/asm-manual/sections/training.md",
@@ -734,8 +782,16 @@
       "sha256": "dac37f502895462d678d578557730dc34ab1eab34abf6c8d93efcfd6450013aa"
     },
     {
+      "path": "internal/asm-manual/tools/extract_deep_stack_data.py",
+      "sha256": "9cca1656c50ab0856ded4bdb17a80162d4f1dc87097273ca09714f2dfc95d0ac"
+    },
+    {
       "path": "internal/asm-manual/tools/extract_per_step.py",
       "sha256": "2e239710e49b9ee3778633b12d9aa3c038c55bcbbef442fe95d169c9159802be"
+    },
+    {
+      "path": "internal/asm-manual/tools/make_deep_stack_figures.py",
+      "sha256": "0ec50276e416172af7c51274a98c5ca676c32288d6158541d3d83adc606e1380"
     },
     {
       "path": "internal/asm-manual/tools/make_figures.py",
@@ -791,7 +847,7 @@
     },
     {
       "path": "asm-maintainer-manual.md",
-      "sha256": "da12580a39bb7d591b6be1c0d58b7246f3bbaba04cb095be73cd330105816127"
+      "sha256": "2a24e3890b6b9de470b1f14e7406de41e58d4a1c4c7b3b87618b0b88bfa4219d"
     }
   ]
 }

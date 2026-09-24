@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 346" width="1000" height="346" font-family="DejaVu Sans, sans-serif">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="1000" height="346" fill="white"/>
+<text x="500.0" y="18" text-anchor="middle" font-size="12.5" font-weight="bold">ASM end to end: data → encoding → deep model → GP → code → training</text>
+<rect x="12" y="32" width="178" height="102" rx="6" fill="#e3f1e6" stroke="#333" stroke-width="1.1"/>
+<text x="101.0" y="47" text-anchor="middle" font-weight="bold" font-size="11">1 Data</text>
+<text x="101.0" y="62.0" text-anchor="middle" font-size="9.2">frozen development rows</text>
+<text x="101.0" y="74.5" text-anchor="middle" font-size="9.2">cut 0: folds 1–4 fit,</text>
+<text x="101.0" y="87.0" text-anchor="middle" font-size="9.2">fold 0 held back</text>
+<text x="101.0" y="99.5" text-anchor="middle" font-size="9.2">sealed rows never opened</text>
+<line x1="190" y1="83.0" x2="208" y2="83.0" stroke="#333" stroke-width="1.3" marker-end="url(#arrow)"/>
+<rect x="210" y="32" width="178" height="102" rx="6" fill="#e3f1e6" stroke="#333" stroke-width="1.1"/>
+<text x="299.0" y="47" text-anchor="middle" font-weight="bold" font-size="11">2 Encoding</text>
+<text x="299.0" y="62.0" text-anchor="middle" font-size="9.2">Hyperion 512 (features)</text>
+<text x="299.0" y="74.5" text-anchor="middle" font-size="9.2">Foundation 2048→1024</text>
+<text x="299.0" y="87.0" text-anchor="middle" font-size="9.2">Target 512</text>
+<text x="299.0" y="99.5" text-anchor="middle" font-size="9.2">= 2048 floats, clip ±32</text>
+<line x1="388" y1="83.0" x2="406" y2="83.0" stroke="#333" stroke-width="1.3" marker-end="url(#arrow)"/>
+<rect x="408" y="32" width="178" height="102" rx="6" fill="#e3f1e6" stroke="#333" stroke-width="1.1"/>
+<text x="497.0" y="47" text-anchor="middle" font-weight="bold" font-size="11">3 Policy network</text>
+<text x="497.0" y="62.0" text-anchor="middle" font-size="9.2">decoder 512×6, 4 heads</text>
+<text x="497.0" y="74.5" text-anchor="middle" font-size="9.2">27,796,494 parameters</text>
+<text x="497.0" y="87.0" text-anchor="middle" font-size="9.2">401-token grammar</text>
+<text x="497.0" y="99.5" text-anchor="middle" font-size="9.2">Candle CPU float32</text>
+<line x1="586" y1="83.0" x2="604" y2="83.0" stroke="#333" stroke-width="1.3" marker-end="url(#arrow)"/>
+<rect x="606" y="32" width="178" height="102" rx="6" fill="#e3f1e6" stroke="#333" stroke-width="1.1"/>
+<text x="695.0" y="47" text-anchor="middle" font-weight="bold" font-size="11">4 Proposals</text>
+<text x="695.0" y="62.0" text-anchor="middle" font-size="9.2">grammar-masked sampling</text>
+<text x="695.0" y="74.5" text-anchor="middle" font-size="9.2">64 ranked + 16 exploration</text>
+<text x="695.0" y="87.0" text-anchor="middle" font-size="9.2">= 80 generation-0 programs</text>
+<text x="695.0" y="99.5" text-anchor="middle" font-size="9.2">reward heads order slots</text>
+<line x1="784" y1="83.0" x2="802" y2="83.0" stroke="#333" stroke-width="1.3" marker-end="url(#arrow)"/>
+<rect x="804" y="32" width="178" height="102" rx="6" fill="#e3f1e6" stroke="#333" stroke-width="1.1"/>
+<text x="893.0" y="47" text-anchor="middle" font-weight="bold" font-size="11">5 Bounded GP</text>
+<text x="893.0" y="62.0" text-anchor="middle" font-size="9.2">80 gen-0, 4 elites,</text>
+<text x="893.0" y="74.5" text-anchor="middle" font-size="9.2">≤76 children / generation</text>
+<text x="893.0" y="87.0" text-anchor="middle" font-size="9.2">every fit real, 5 inner</text>
+<text x="893.0" y="99.5" text-anchor="middle" font-size="9.2">OOF folds pick winners</text>
+<rect x="12" y="180" width="178" height="102" rx="6" fill="#f1f1f1" stroke="#333" stroke-width="1.1" stroke-dasharray="5,3"/>
+<text x="101.0" y="195" text-anchor="middle" font-weight="bold" font-size="11">10 New checkpoint</text>
+<text x="101.0" y="210.0" text-anchor="middle" font-size="9.2">must beat its parent in</text>
+<text x="101.0" y="222.5" text-anchor="middle" font-size="9.2">matched fitted search</text>
+<text x="101.0" y="235.0" text-anchor="middle" font-size="9.2">(LOOP-01) — no</text>
+<text x="101.0" y="247.5" text-anchor="middle" font-size="9.2">generation has run</text>
+<rect x="210" y="180" width="178" height="102" rx="6" fill="#fcefd6" stroke="#333" stroke-width="1.1" stroke-dasharray="5,3"/>
+<text x="299.0" y="195" text-anchor="middle" font-weight="bold" font-size="11">9 Training</text>
+<text x="299.0" y="210.0" text-anchor="middle" font-size="9.2">native 512×6 trainer: held</text>
+<text x="299.0" y="222.5" text-anchor="middle" font-size="9.2">Python 256×2 lineage v1:</text>
+<text x="299.0" y="235.0" text-anchor="middle" font-size="9.2">CPU fixtures only,</text>
+<text x="299.0" y="247.5" text-anchor="middle" font-size="9.2">never trained on real data</text>
+<rect x="408" y="180" width="178" height="102" rx="6" fill="#fcefd6" stroke="#333" stroke-width="1.1" stroke-dasharray="5,3"/>
+<text x="497.0" y="195" text-anchor="middle" font-weight="bold" font-size="11">8 Teaching corpus</text>
+<text x="497.0" y="210.0" text-anchor="middle" font-size="9.2">guard: 5 folds, ≥4 wins</text>
+<text x="497.0" y="222.5" text-anchor="middle" font-size="9.2">vs training-mean baseline</text>
+<text x="497.0" y="235.0" text-anchor="middle" font-size="9.2">→ HWM → frozen corpus</text>
+<text x="497.0" y="247.5" text-anchor="middle" font-size="9.2">0 teachers admitted so far</text>
+<rect x="606" y="180" width="178" height="102" rx="6" fill="#fcefd6" stroke="#333" stroke-width="1.1" stroke-dasharray="5,3"/>
+<text x="695.0" y="195" text-anchor="middle" font-weight="bold" font-size="11">7 Code emission</text>
+<text x="695.0" y="210.0" text-anchor="middle" font-size="9.2">legacy emitters: python · rust</text>
+<text x="695.0" y="222.5" text-anchor="middle" font-size="9.2">cpp17 · cpp20 · javascript</text>
+<text x="695.0" y="235.0" text-anchor="middle" font-size="9.2">legacy excludes ASM recipes;</text>
+<text x="695.0" y="247.5" text-anchor="middle" font-size="9.2">fitted export: allowlisted path</text>
+<rect x="804" y="180" width="178" height="102" rx="6" fill="#e3f1e6" stroke="#333" stroke-width="1.1"/>
+<text x="893.0" y="195" text-anchor="middle" font-weight="bold" font-size="11">6 Refit + held fold</text>
+<text x="893.0" y="210.0" text-anchor="middle" font-size="9.2">winner refit on folds 1–4</text>
+<text x="893.0" y="222.5" text-anchor="middle" font-size="9.2">scored once on fold 0</text>
+<text x="893.0" y="235.0" text-anchor="middle" font-size="9.2">(34 rows for 230_machine_cpu)</text>
+<text x="893.0" y="247.5" text-anchor="middle" font-size="9.2">transfer report: not measured</text>
+<line x1="893.0" y1="134" x2="893.0" y2="178" stroke="#333" stroke-width="1.3" marker-end="url(#arrow)"/>
+<line x1="804" y1="231.0" x2="786" y2="231.0" stroke="#333" stroke-width="1.3" marker-end="url(#arrow)"/>
+<path d="M893.0,282 L893.0,298 L497.0,298 L497.0,284" fill="none" stroke="#333" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+<text x="695.0" y="310" text-anchor="middle" font-size="9.2" font-style="italic">frozen winners and their train-side OOF evidence go to the teaching guard</text>
+<line x1="408" y1="231.0" x2="390" y2="231.0" stroke="#333" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+<line x1="210" y1="231.0" x2="192" y2="231.0" stroke="#333" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+<path d="M101.0,180 L101.0,162 L497.0,162 L497.0,136" fill="none" stroke="#333" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+<text x="299.0" y="158" text-anchor="middle" font-size="9.2" font-style="italic">expert iteration: GP is the teacher; not reinforcement learning</text>
+<rect x="140" y="322" width="22" height="13" fill="#e3f1e6" stroke="#333"/><text x="168" y="332" font-size="9.5">runs today (bounded evidence)</text>
+<rect x="400" y="322" width="22" height="13" fill="#fcefd6" stroke="#333" stroke-dasharray="5,3"/><text x="428" y="332" font-size="9.5">implemented, held or unqualified</text>
+<rect x="660" y="322" width="22" height="13" fill="#f1f1f1" stroke="#333" stroke-dasharray="5,3"/><text x="688" y="332" font-size="9.5">pending — not measured</text>
+</svg>
