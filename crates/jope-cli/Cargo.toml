@@ -19,6 +19,7 @@ hyperion = { path = "../hyperion", default-features = false, features = ["hyperi
 jope-datasets = { path = "../jope-datasets" }
 jope-bench = { path = "../jope-bench" }
 jope-models = { path = "../jope-models" }
+jope-motifs = { path = "../jope-motifs" }
 jope-pipeline = { path = "../jope-pipeline" }
 jope-learning = { path = "../jope-learning" }
 jope-policy = { path = "../jope-policy", default-features = false, features = ["context-producer"], optional = true }
