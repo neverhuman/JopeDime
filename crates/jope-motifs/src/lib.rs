@@ -10,9 +10,9 @@
 //!
 //! - [`teaching`] reads the independently qualified records of a learning State, joined to
 //!   their exact-identity pointers, and refuses the whole read with a fixed code when any
-//!   record is unqualified, unauthenticated or lacks its label burn receipt. The adapter for
-//!   the learning State is linked only with the `learning-state` feature, which is off by
-//!   default; without it every State read is refused with `state_unavailable`;
+//!   record is unqualified, unauthenticated or lacks its label burn receipt. The adapter reads
+//!   the learning State through `jope_learning::eligibility`, and a root that holds no State is
+//!   refused with `state_unavailable`;
 //! - [`mine`] builds a table from qualified programs only, and every entry is quarantined;
 //! - [`validate`] checks a table: integrity, byte-exact rewrite and expansion, engine
 //!   determinism, real fits in contexts whose text differs from every recorded host, and
@@ -35,7 +35,6 @@ pub mod table;
 pub mod teaching;
 pub mod validate;
 
-#[cfg(feature = "learning-state")]
 mod learning;
 mod private_io;
 

@@ -896,15 +896,6 @@
         "replay under the same input identity"
       ],
       "owner_phase": "following CPU repair and qualification phase"
-    },
-    "pending-api": {
-      "status": "deferred",
-      "reason": "Reference adapter for an API that is not on this branch. The feature does not build until that API lands, and the default build refuses every read the adapter would serve.",
-      "dependencies": [
-        "jope_learning::eligibility on the base branch",
-        "adapter tests against a qualified State"
-      ],
-      "owner_phase": "Learning eligibility integration"
     }
   },
   "items": {
@@ -1368,19 +1359,6 @@
         "gpu"
       ],
       "scope": "GPU feature not selected in CPU CI."
-    },
-    "feature:jope-motifs/learning-state": {
-      "discovery": {
-        "kind": "feature",
-        "dependencies": [
-          "dep:jope-learning"
-        ]
-      },
-      "lanes": [],
-      "dispositions": [
-        "pending-api"
-      ],
-      "scope": "Off by default and not selected in CI: the adapter builds only once jope_learning::eligibility lands. Default builds refuse every State read with state_unavailable."
     },
     "feature:jope-parallel/default": {
       "discovery": {

@@ -14,18 +14,13 @@ path = "src/lib.rs"
 anyhow.workspace = true
 clap.workspace = true
 feat-math = { path = "../feat-math" }
-jope-learning = { path = "../jope-learning", optional = true }
+jope-learning = { path = "../jope-learning" }
 jope-paths = { path = "../jope-paths" }
+# The scorer's numerical policy, shared with jope-learning rather than copied.
+jope-pipeline = { path = "../jope-pipeline" }
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
-
-[features]
-# The learning State adapter (src/learning.rs). Off by default: it reads
-# jope_learning::eligibility, which is not on this branch until the eligibility
-# stack lands. Without it no State reader is linked, and every State read is
-# refused with state_unavailable.
-learning-state = ["dep:jope-learning"]
 
 [dev-dependencies]
 tempfile.workspace = true
