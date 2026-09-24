@@ -1726,7 +1726,7 @@ mod quotation_regression_tests {
         let mut child = std::process::Command::new("python3")
             .args([
                 "-c",
-                "import sys;exec(compile(sys.stdin.read(),'<fitted>','exec'))",
+                "import sys;exec(compile(sys.stdin.read(),'<fitted>','exec'), {'__name__':'fitted_test'})",
             ])
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
