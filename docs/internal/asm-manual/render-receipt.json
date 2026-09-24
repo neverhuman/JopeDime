@@ -12,15 +12,15 @@
   "aliases": 284,
   "warnings": [],
   "pages": 146,
-  "pdf_sha256": "245d399a76401e8f43a536df1d3f6fe78be195c35cc08f745b61bded3dea55c9",
-  "pdf_bytes": 1238238,
+  "pdf_sha256": "d6e414695dacfdaeba7f6173f62469a06efd1c465a493b20d8fdd165bb1b850b",
+  "pdf_bytes": 1238246,
   "volumes": [
     {
       "volume": "main",
       "pdf": "asm-maintainer-manual.pdf",
       "pages": 146,
-      "pdf_sha256": "245d399a76401e8f43a536df1d3f6fe78be195c35cc08f745b61bded3dea55c9",
-      "pdf_bytes": 1238238,
+      "pdf_sha256": "d6e414695dacfdaeba7f6173f62469a06efd1c465a493b20d8fdd165bb1b850b",
+      "pdf_bytes": 1238246,
       "rewritten_links": {
         "cross_volume": 272,
         "local_relative": 0
@@ -30,8 +30,8 @@
       "volume": "evidence",
       "pdf": "asm-evidence-reference.pdf",
       "pages": 132,
-      "pdf_sha256": "a704a831fbe59ffb9beaf4f361c467cd334a44f818e2dbf8a7c7af67e67a0f44",
-      "pdf_bytes": 4593004,
+      "pdf_sha256": "bdeec804539cecbb3d0d663994eeaba547dbd6bc5690797d5ad0acd2a03ca8d5",
+      "pdf_bytes": 4593060,
       "rewritten_links": {
         "cross_volume": 91,
         "local_relative": 0
@@ -755,7 +755,7 @@
     },
     {
       "path": "internal/asm-manual/tools/verify_publication.py",
-      "sha256": "549c18449fc1ce81c7b823ac5927c0ffb275ef253cea94eeb25aa65de6f1a714"
+      "sha256": "34096395a25d7e0de76c09450f52a7c719b6ecdb058a4d677ada1d52800f4a54"
     },
     {
       "path": "asm-maintainer-status.plist",

@@ -36,8 +36,11 @@ def verify():
     for item in roadmap["items"]:
         rows = [line for line in plan.splitlines() if line.startswith(f"| {item['id']} |")]
         assert len(rows) == 1 and rows[0].split("|")[2].strip() == item["priority"], f"Task index mismatch: {item['id']}"
+        assert rows[0].split("|")[5].strip() == item["status"], f"Task index status mismatch: {item['id']}"
         card = re.search(r"^#### " + re.escape(item["id"]) + r" .*?(?=^#### |^### |\Z)", catalogue, re.M | re.S)
         assert card and f"**Priority:** {item['priority']}." in card[0], f"Task card mismatch: {item['id']}"
+        status = re.search(r"\*\*Status:\*\* (.+?)(?:\n|$)", card[0])
+        assert status and status[1].rstrip(".") == item["status"].rstrip("."), f"Task card status mismatch: {item['id']}"
     inventory = json.loads((ROOT / "data/dataset-inventory.json").read_text())
     assert len(inventory["datasets"]) == 30
     assert sum(len(d["features"]) for d in inventory["datasets"]) == 522
