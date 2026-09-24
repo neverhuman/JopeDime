@@ -65,7 +65,7 @@ closures. This evidence is **not** the existing fixed-program teacher-admission 
 The freeze commits every planned search/arm as a hashed prediction or an explicit
 failed/unavailable outcome with its reason. Missing slots are enumerated. Any absent
 or failed pair blocks the complete headline; no partial freeze releases score subsets.
-Each terminal event precedes the freeze, which precedes the first scored result.
+Each terminal event precedes the freeze, which precedes the first scored audit/outer result. Inner candidate-selection scores remain permitted.
 
 A `jope.transfer-release/v1` receipt binds the exact plan and freeze, executor source,
 chronology and independently verified isolation evidence. Its digest must come from

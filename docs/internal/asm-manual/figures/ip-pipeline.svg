@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 1000" role="img"><title>ASM pipeline and prohibited scoring feedback</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#31536c"/></marker></defs>
+<rect width="1240" height="1000" fill="#fff"/>
+<g font-family="DejaVu Sans, sans-serif" fill="#183448">
+<text x="35" y="40" font-size="24" font-weight="bold" fill="#183448">Data → description → recipes → real fits → eligible teachers → neural updates</text>
+<rect x="35" y="80" width="355" height="135" rx="12" fill="#eef5f8" stroke="#93aab8"/>
+<text x="53" y="112" font-size="22" font-weight="bold" fill="#183448">Frozen data and groups</text>
+<text x="53" y="146" font-size="18" font-weight="normal" fill="#183448">Original labels preserved</text>
+<text x="53" y="172" font-size="18" font-weight="normal" fill="#183448">Train / audit / outer identities</text>
+<rect x="445" y="80" width="350" height="135" rx="12" fill="#eef5f8" stroke="#93aab8"/>
+<text x="463" y="112" font-size="22" font-weight="bold" fill="#183448">Training-only context</text>
+<text x="463" y="146" font-size="18" font-weight="normal" fill="#183448">Hyperion + Foundation + Target</text>
+<text x="463" y="172" font-size="18" font-weight="normal" fill="#183448">2048 values; assets pinned</text>
+<rect x="850" y="80" width="350" height="135" rx="12" fill="#eef5f8" stroke="#93aab8"/>
+<text x="868" y="112" font-size="22" font-weight="bold" fill="#183448">Policy proposals</text>
+<text x="868" y="146" font-size="18" font-weight="normal" fill="#183448">Causal, grammar-masked decoder</text>
+<text x="868" y="172" font-size="18" font-weight="normal" fill="#183448">Learned reward ranks candidates</text>
+<path d="M390 148H445" fill="none" stroke="#31536c" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M795 148H850" fill="none" stroke="#31536c" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="850" y="280" width="350" height="150" rx="12" fill="#eef5f8" stroke="#93aab8"/>
+<text x="868" y="312" font-size="22" font-weight="bold" fill="#183448">Bounded GP search</text>
+<text x="868" y="346" font-size="18" font-weight="normal" fill="#183448">Mutate / cross over recipes</text>
+<text x="868" y="372" font-size="18" font-weight="normal" fill="#183448">Fit candidates on allowed rows</text>
+<text x="868" y="398" font-size="18" font-weight="normal" fill="#183448">Inner selection; final refit</text>
+<path d="M1025 215V280" fill="none" stroke="#31536c" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="445" y="280" width="350" height="150" rx="12" fill="#eef5f8" stroke="#93aab8"/>
+<text x="463" y="312" font-size="22" font-weight="bold" fill="#183448">Fitted predictions</text>
+<text x="463" y="346" font-size="18" font-weight="normal" fill="#183448">Saved preprocessing and weights</text>
+<text x="463" y="372" font-size="18" font-weight="normal" fill="#183448">Measured losses, not reward scores</text>
+<text x="463" y="398" font-size="18" font-weight="normal" fill="#183448">Each search has its own recipe</text>
+<path d="M850 355H795" fill="none" stroke="#31536c" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="35" y="280" width="355" height="150" rx="12" fill="#eef5f8" stroke="#93aab8"/>
+<text x="53" y="312" font-size="22" font-weight="bold" fill="#183448">Training-side teacher guard</text>
+<text x="53" y="346" font-size="18" font-weight="normal" fill="#183448">Fixed-program OOF comparison</text>
+<text x="53" y="372" font-size="18" font-weight="normal" fill="#183448">Baseline + complete identities</text>
+<text x="53" y="398" font-size="18" font-weight="normal" fill="#183448">Eligible rows only</text>
+<path d="M445 355H390" fill="none" stroke="#31536c" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="35" y="495" width="355" height="145" rx="12" fill="#eef5f8" stroke="#93aab8"/>
+<text x="53" y="527" font-size="22" font-weight="bold" fill="#183448">Neural optimizer updates</text>
+<text x="53" y="561" font-size="18" font-weight="normal" fill="#183448">Imitation + ranking objectives</text>
+<text x="53" y="587" font-size="18" font-weight="normal" fill="#183448">AdamW; changed parameters</text>
+<text x="53" y="613" font-size="18" font-weight="normal" fill="#183448">Checkpoint / optimizer lineage</text>
+<path d="M210 430V495" fill="none" stroke="#31536c" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="445" y="495" width="350" height="145" rx="12" fill="#eef5f8" stroke="#93aab8"/>
+<text x="463" y="527" font-size="22" font-weight="bold" fill="#183448">Parent → challenger test</text>
+<text x="463" y="561" font-size="18" font-weight="normal" fill="#183448">Another measured search</text>
+<text x="463" y="587" font-size="18" font-weight="normal" fill="#183448">Same protocol and resource limits</text>
+<text x="463" y="613" font-size="18" font-weight="normal" fill="#183448">No automatic serving promotion</text>
+<path d="M390 565H445" fill="none" stroke="#31536c" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="850" y="495" width="350" height="145" rx="12" fill="#eef5f8" stroke="#93aab8"/>
+<text x="868" y="527" font-size="22" font-weight="bold" fill="#183448">Emitted-code qualification</text>
+<text x="868" y="561" font-size="18" font-weight="normal" fill="#183448">Allowlisted fitted inference</text>
+<text x="868" y="587" font-size="18" font-weight="normal" fill="#183448">Prediction parity by backend</text>
+<text x="868" y="613" font-size="18" font-weight="normal" fill="#183448">Generation is not qualification</text>
+<path d="M1025 430V495" fill="none" stroke="#31536c" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="35" y="715" width="525" height="165" rx="12" fill="#f4f0e7" stroke="#93aab8"/>
+<text x="53" y="747" font-size="22" font-weight="bold" fill="#183448">Separate nested procedure audit</text>
+<text x="53" y="781" font-size="18" font-weight="normal" fill="#183448">5 outer × (5 audit searches + 1 outer search)</text>
+<text x="53" y="807" font-size="18" font-weight="normal" fill="#183448">Repeat complete selection on each permitted partition</text>
+<text x="53" y="833" font-size="18" font-weight="normal" fill="#183448">Commit every prediction / failure before scoring</text>
+<rect x="625" y="715" width="575" height="165" rx="12" fill="#f4f0e7" stroke="#93aab8"/>
+<text x="643" y="747" font-size="22" font-weight="bold" fill="#183448">Frozen-round report</text>
+<text x="643" y="781" font-size="18" font-weight="normal" fill="#183448">Parent contrast: min(audit gain, outer gain) per unit</text>
+<text x="643" y="807" font-size="18" font-weight="normal" fill="#183448">Dataset means → family means → equal-family mean</text>
+<text x="643" y="833" font-size="18" font-weight="normal" fill="#183448">Current KPI: NOT YET MEASURED</text>
+<path d="M560 795H625" fill="none" stroke="#31536c" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M620 640V680H300V715" fill="none" stroke="#31536c" stroke-width="2.5" marker-end="url(#arrow)" stroke-dasharray="8 6"/>
+<path d="M1200 795H1220V355H1200" fill="none" stroke="#a43c36" stroke-width="2.5" stroke-dasharray="7 5"/>
+<path d="M1192 345L1208 365M1208 345L1192 365" stroke="#a43c36" stroke-width="3"/>
+<text x="850" y="680" font-size="16" font-weight="bold" fill="#a43c36">No report → unfinished search</text>
+<text x="35" y="690" font-size="16" font-weight="bold" fill="#a43c36">Outer labels: scorer only</text>
+<path d="M30 680H15V260H620V215" fill="none" stroke="#a43c36" stroke-width="2.5" stroke-dasharray="7 5"/>
+<path d="M610 212L630 230M630 212L610 230" stroke="#a43c36" stroke-width="3"/>
+<text x="35" y="923" font-size="20" font-weight="bold" fill="#a43c36">PROHIBITED: outer scoring labels → context / selection / teachers / optimizer.</text>
+<text x="35" y="951" font-size="20" font-weight="bold" fill="#a43c36">PROHIBITED: released scores → decisions in unfinished folds of the same round.</text>
+<path d="M25 898H1210" stroke="#a43c36" stroke-width="3" stroke-dasharray="8 6"/>
+</g></svg>

@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 1080" role="img"><title>Policy context, causal attention, reward pooling and objectives</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#31536c"/></marker></defs>
+<rect width="1240" height="1080" fill="#fff"/>
+<g font-family="DejaVu Sans, sans-serif" fill="#183448">
+<text x="35" y="42" font-size="24" font-weight="bold" fill="#183448">Two model lineages; a shared diagram does not imply interchangeable weights</text>
+<rect x="35" y="80" width="365" height="165" rx="12" fill="#eef5f8" stroke="#93aab8"/>
+<text x="53" y="112" font-size="22" font-weight="bold" fill="#183448">Permitted training rows</text>
+<text x="53" y="146" font-size="18" font-weight="normal" fill="#183448">Hyperion: row128 → pooled512</text>
+<text x="53" y="172" font-size="18" font-weight="normal" fill="#183448">Foundation: 2048 → projected1024</text>
+<text x="53" y="198" font-size="18" font-weight="normal" fill="#183448">Target: 512</text>
+<text x="53" y="224" font-size="18" font-weight="normal" fill="#183448">Concat / normalize / clip → 2048</text>
+<rect x="450" y="80" width="355" height="165" rx="12" fill="#eef5f8" stroke="#93aab8"/>
+<text x="468" y="112" font-size="22" font-weight="bold" fill="#183448">Separate context MLPs</text>
+<text x="468" y="146" font-size="18" font-weight="normal" fill="#183448">Separate decoder z / reward rz</text>
+<text x="468" y="172" font-size="18" font-weight="normal" fill="#183448">Native: 2048 → 512 → 512</text>
+<text x="468" y="198" font-size="18" font-weight="normal" fill="#183448">Python: bound input → 256 → 256</text>
+<text x="468" y="224" font-size="18" font-weight="normal" fill="#183448">GELU + LayerNorm per layer</text>
+<path d="M400 165H450" fill="none" stroke="#31536c" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="855" y="80" width="345" height="165" rx="12" fill="#eef5f8" stroke="#93aab8"/>
+<text x="873" y="112" font-size="22" font-weight="bold" fill="#183448">Architecture bindings</text>
+<text x="873" y="146" font-size="18" font-weight="normal" fill="#183448">Accepted native: 512 × 6</text>
+<text x="873" y="172" font-size="18" font-weight="normal" fill="#183448">4 heads; FFN 2048; vocab 401</text>
+<text x="873" y="198" font-size="18" font-weight="normal" fill="#183448">Experimental Python: 256 × 2</text>
+<text x="873" y="224" font-size="18" font-weight="normal" fill="#183448">4 heads; FFN 1024; bound vocab</text>
+<rect x="35" y="315" width="565" height="205" rx="12" fill="#eef5f8" stroke="#93aab8"/>
+<text x="53" y="347" font-size="22" font-weight="bold" fill="#183448">Autoregressive program decoder</text>
+<text x="53" y="381" font-size="18" font-weight="normal" fill="#183448">[context token, token embeddings] + positions</text>
+<text x="53" y="407" font-size="18" font-weight="normal" fill="#183448">Pre-LN causal self-attention; padding-key mask</text>
+<text x="53" y="433" font-size="18" font-weight="normal" fill="#183448">Residual attention + feed-forward layers</text>
+<text x="53" y="459" font-size="18" font-weight="normal" fill="#183448">Final norm → tied embedding projection → logits</text>
+<text x="53" y="485" font-size="18" font-weight="normal" fill="#183448">Grammar mask → legal next-token distribution</text>
+<path d="M530 245V280H315V315" fill="none" stroke="#31536c" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="660" y="315" width="540" height="205" rx="12" fill="#eef5f8" stroke="#93aab8"/>
+<text x="678" y="347" font-size="22" font-weight="bold" fill="#183448">Conditional reward / runtime branch</text>
+<text x="678" y="381" font-size="18" font-weight="normal" fill="#183448">Program embeddings → non-PAD masked MEAN g</text>
+<text x="678" y="407" font-size="18" font-weight="normal" fill="#183448">No positions: token-multiset representation</text>
+<text x="678" y="433" font-size="18" font-weight="normal" fill="#183448">φ = [g, g × tanh(gate(rz)), |g − proj(rz)|]</text>
+<text x="678" y="459" font-size="18" font-weight="normal" fill="#183448">φ has 3w values → four reward MLP heads</text>
+<text x="678" y="485" font-size="18" font-weight="normal" fill="#183448">[rz, g] → runtime head → softplus</text>
+<path d="M735 245V280H925V315" fill="none" stroke="#31536c" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="35" y="585" width="565" height="155" rx="12" fill="#eef5f8" stroke="#93aab8"/>
+<text x="53" y="617" font-size="22" font-weight="bold" fill="#183448">Sequence imitation</text>
+<text x="53" y="651" font-size="18" font-weight="normal" fill="#183448">Teacher-forced next-token negative log-likelihood</text>
+<text x="53" y="677" font-size="18" font-weight="normal" fill="#183448">Training programs come from admitted supervision</text>
+<text x="53" y="703" font-size="18" font-weight="normal" fill="#183448">A lower NLL is not a downstream search win</text>
+<path d="M315 520V585" fill="none" stroke="#31536c" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="660" y="585" width="540" height="155" rx="12" fill="#eef5f8" stroke="#93aab8"/>
+<text x="678" y="617" font-size="22" font-weight="bold" fill="#183448">Reward / auxiliary objectives</text>
+<text x="678" y="651" font-size="18" font-weight="normal" fill="#183448">Pairwise Bradley–Terry; listwise ranking</text>
+<text x="678" y="677" font-size="18" font-weight="normal" fill="#183448">Runtime Huber; stability BCE when available</text>
+<text x="678" y="703" font-size="18" font-weight="normal" fill="#183448">Program-only ablation and routing terms</text>
+<path d="M925 520V585" fill="none" stroke="#31536c" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="235" y="815" width="770" height="150" rx="12" fill="#eef5f8" stroke="#93aab8"/>
+<text x="253" y="847" font-size="22" font-weight="bold" fill="#183448">Training update and evidence</text>
+<text x="253" y="881" font-size="18" font-weight="normal" fill="#183448">Profile-dependent objective combination → backward → AdamW</text>
+<text x="253" y="907" font-size="18" font-weight="normal" fill="#183448">Retain actual updates, changed tensors, sampler and optimizer state</text>
+<text x="253" y="933" font-size="18" font-weight="normal" fill="#183448">Resume/transition invariants; export does not promote serving</text>
+<path d="M315 740V815" fill="none" stroke="#31536c" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M925 740V815" fill="none" stroke="#31536c" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="35" y="1018" font-size="20" font-weight="bold" fill="#183448">Implemented objectives are imitation and reward/ranking, not PPO or GRPO.</text>
+<text x="35" y="1046" font-size="20" font-weight="bold" fill="#183448">Tiny CPU fixtures and historical native runs are separate evidence populations.</text>
+</g></svg>

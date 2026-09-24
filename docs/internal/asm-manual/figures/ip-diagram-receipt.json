@@ -1,0 +1,24 @@
+{
+  "schema": "jope.manual-ip-diagrams/v1",
+  "command": "python3 docs/internal/asm-manual/tools/make_ip_diagrams.py",
+  "generator_sha256": "77869b4dde222f0630815287e316d4fd1368c60a43b8bda829f5121fb85b2f61",
+  "figures": [
+    {
+      "path": "ip-pipeline.svg",
+      "sha256": "3220b6b620cdd2d0b29f975373cb9e987f41e61c7813072179268927805a204a"
+    },
+    {
+      "path": "policy-network.svg",
+      "sha256": "aec24bd677b4e7a2b858909b9305dd98eb00d8a4b66438dc7ba722415e6ca6ae"
+    }
+  ],
+  "source_files": {
+    "crates/jope-policy/src/model.rs": "7d0f464fe4bd51ec4b2afa2257678565f959760c74bc347a7d1cebff3efe1e25",
+    "crates/jope-policy/src/config.rs": "a740ca64edde353c9624f5fdc3b63878c1200ee95c159a71bca1556abc28ed37",
+    "python/src/jope/policy/model_v3.py": "6b427f11ca94dcbad961b38702a3b3eb7ca1b1e17416ad7bf593f9e94f1d4e34",
+    "python/src/jope/policy/losses.py": "9c64fdf9b2750046c09ec3ccb3b206bb976f43a32ecbd339501852d71025f501",
+    "python/src/jope/policy/train_v3.py": "0e326f9d204d9ac57c81c731e6cd3bd7c04c82ba4c81a8add1d40092d7812525"
+  },
+  "scope": "Source architecture and required boundaries, not live qualification.",
+  "fits": 0
+}

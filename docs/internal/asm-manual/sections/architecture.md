@@ -1,5 +1,133 @@
 # Architecture, encodings, GP representation and model lineages
 
+## Explain it like I’m 5: learning to suggest better recipes
+
+Imagine a child learning to choose recipes for unfamiliar ingredients. The table of data is
+the ingredients. A small description says what those ingredients look like. The neural
+model reads that description and suggests recipes: perhaps clean the numbers, combine some
+columns, then fit a predictor. It suggests instructions; it does not already know the fitted
+answer for this table.
+
+We cook the recipes by actually fitting them. We test them on examples whose answers were
+withheld from that fit. Genetic programming (GP) changes promising recipes, or combines
+parts of them, and cooks the new versions too. A learned reward score helps choose what to
+try; only the real fitting and scoring tells us how a recipe performed.
+
+Some recipes become teaching examples, but only after the training-side admission rules
+check them. Neural training changes the model’s numerical weights so it can imitate useful
+recipes and rank candidates. We then ask the new model to suggest recipes for another
+measured search. A lower loss on the same objective and examples means a better fit to that lesson; it does not
+by itself mean it will cook better on a new table.
+
+Think of withheld answers as an exam. Practice answers may guide study. The exam answer key
+must stay outside every decision that chooses the recipe being tested. If we look at an exam
+score and change the recipe, that exam has become practice. The nested transfer audit gives
+each practice-side audit its own full search, then separately tests a full-training search
+on the outer exam. All predictions must be committed before anyone sees the round’s audit or outer scores.
+
+![Data, search, teaching and measurement boundaries](../figures/ip-pipeline.svg)
+
+The diagram describes executable source responsibilities and the required measurement
+boundary. It does not claim that a new live learning loop has been qualified. Red paths are
+prohibited dependencies: outer answers must not reach context construction, search,
+teaching or optimizer updates; released results must not adapt unfinished folds.
+
+## Current executable pipeline and the historical snapshot
+
+This addition is pinned to merged measurement source `7f2b2bf860e4b1ac8815c8da55e507143570a905` (PR90).
+It refreshes the executable path while preserving the older sections and their anchors.
+The PR83 source narrative below is a **historical snapshot**: its “pending overlay” language
+is dated to that snapshot. Several of those source components have since merged, as the
+following map records. Implemented source, CPU fixtures, historical runs, live qualification
+and serving promotion remain separate claims.
+
+### From original rows to a conditional program
+
+The native regression context producer uses only permitted fitting rows. Hyperion embeds
+feature rows into 128 values per row, then pools mean, population standard deviation and
+10th/90th percentiles into 512 values. Foundation consumes features **and permitted training
+labels**, producing 2048 values projected to 1024. The target encoder contributes 512.
+Frozen normalizations and clipping assemble a 2048-vector. Thus the configuration name
+`dataset_dim=1536` does not mean label-free: its Foundation block is target-conditioned.
+The source and numerical qualification details remain in [§](#component-dimensions-and-assembly).
+
+The accepted native model has width 512, six causal decoder layers, four attention heads
+and feed-forward width 2048. Its vocabulary projects to 401 output tokens from 657 embedding
+rows. Separate context MLPs map 2048→512→512 for decoding and reward. Decoding prepends a
+context token to program embeddings and adds positions; causal and padding-key masks prevent
+future-token/padding attention. A grammar mask limits each sampled token to legal continuations.
+A valid token sequence still needs executable-schema validation and an actual bounded fit.
+
+The reward path has a different representation: it averages non-padding program-token
+embeddings, without positions. For one context, reordering the same token multiset cannot
+create a different semantic reward representation. It combines that pooled vector with a
+context-gated product and an absolute-difference block, giving 3×width features to four
+reward heads. This learned ranking signal is not a measured RMSE. The runtime head applies
+softplus to predict a positive cost. The autoregressive decoder remains order-sensitive.
+
+![Accepted and experimental neural dimensions, attention and objectives](../figures/policy-network.svg)
+
+### From program candidates to eligible teachers
+
+`crates/jope-policy/src/decode.rs` and `ranking.rs` produce and rank a grammar-constrained candidate
+pool. `crates/jope-pipeline/src/neural_search.rs` and the `jope-bench::panel` orchestration retain
+origin, ancestry, selection and resource identities. `feat-math` supplies typed variation
+and fitted preprocessing/predictors. Mutation and crossover operate on executable recipes;
+scoring evaluates retained predictions against the appropriate labels. A neural proposal,
+a mutated descendant and a generic candidate are distinct origins.
+
+`crates/jope-bench/src/panel/teaching.rs` now implements preregistration, admission and verification;
+`crates/jope-learning/src/eligibility.rs` supplies the guard. Admission uses the fixed candidate’s
+complete train-side OOF comparison, including the trivial baseline and immutable comparison
+identity. Failed, incomplete or ineligible observations are not quietly relabeled teachers.
+That fixed-program evidence serves teaching. The new transfer procedure audit instead
+repeats selection independently inside each fold; these receipts are not interchangeable.
+
+### From teachers to changed parameters and another measured search
+
+`crates/jope-cli/src/train.rs` now exposes preparation/materialization, planning, run, resume,
+comparison and export. `python/src/jope/policy/training_campaign.py` supervises the bounded
+Python path. Its normal experimental configuration is width 256, two layers, four heads and
+feed-forward width 1024. Its input width is corpus/checkpoint-bound `dataset_dim + target_keep_dim`,
+including any permitted zero-tail pruning; it is not universally the native 2048. This is a newly initialized lineage, not a continuation of native
+512×6 step 60,000. Tiny 8×1 CPU smoke fixtures are a third configuration, not historical
+training evidence.
+
+`model_v3.py::loss_components` and `losses.py::kg_combine` implement supervised sequence
+negative log-likelihood, reward pairwise Bradley–Terry and listwise ranking terms, runtime
+Huber, stability BCE, a program-only ablation term and routing cross-entropy, subject to the
+selected profile and available supervision. Diagnostic listwise entropy is a baseline for
+interpreting cross-entropy, not a new measure of generalization. These are imitation and
+reward/ranking objectives; the implemented training path is not PPO or GRPO.
+
+`train_v3.py` runs backward passes and AdamW updates, retaining model/optimizer state,
+sampler/exposure information and proofs of actual update counts and parameter changes.
+`training_transition.py` binds corpus, optimizer and schedule invariants. The comparison
+path implements declared fresh/replay siblings and a replay-only control within their
+original windows; actual sampled exposure must be verified, not inferred from the nominal
+mixture. Resume is not permission to reset a deadline or silently replace replay supervision.
+
+A checkpoint file alone proves none of this. Verify committed updates, changed parameters,
+lineage and reload first; then compare the challenger with its parent by actual downstream
+fitting under one frozen protocol. `training_campaign.py` export verifies the campaign and
+marks the experimental bundle `serving_eligible: false`. It does not promote the accepted
+serving pointer. Native Candle-versus-tch policy numerical parity remains limited as recorded
+in [§](#decoder-and-reward-architecture); the source map is not a new parity qualification.
+
+### From a fitted predictor to deployable code
+
+The private recipe, fitted native state, emitted refitting recipe and fitted inference
+bundle remain four different artifacts ([§](#gp-representation-recipes-fitted-predictors-and-the-four-artifact-types)).
+`fitted_export.rs` prepares an allowlisted bundle and `fitted_export_run.rs` qualifies emitted
+predictions under the original limits. Match the raw input boundary, saved preprocessing and
+native predictions across supported backends. Successful source generation is not numerical
+qualification, and a qualified export is not evidence that training improved the policy.
+
+
+## Preserved historical chapter snapshot
+
+The following sections retain the original dated source narrative and evidence. The current-source additions above supersede implementation-status descriptions where explicitly stated.
+
 **Algorithm Synthesis Model (ASM) learns to generate and optimize executable algorithms from data.** The implementation combines a learned proposal policy with actual fitted evaluation and genetic variation. A generated program is a candidate recipe; a fitted predictor is that recipe plus the state learned from a specific training partition. A checkpoint is the proposal model. Those three artifacts have different identities and different evidence requirements.
 
 This chapter describes source commit `68f56404c3e199e06413bfd645d3fe0803d7b96f`, the reviewed PR83 head. PR83 merged on 2026-09-23 at 16:34:47Z as `main` commit `a75e543d2166017cb0139e0a251d51d9a0c98e08`, which has the same tree (`176b75bc36d76c7ce4eaeb7234677ec013468889`), so the current-source references below also describe `main`. As of 2026-09-23 about 23:55 UTC, the only later merge to `main` was PR85, edition 1 of this manual, which produced `main` `bdfc95c63d905c647e41175e79dc30cdc8600287` at 22:33:36 UTC. PR85 changed only files under `docs/` plus `README.md` and `AGENT_CHAT.md`, and no file under `crates/` or `python/`, so the source references below still describe `main`. Changes described as **pending training overlay** refer to the stopped 64-file custody patch `595824ef6eb8e15872be058668503cedad1dd9a5ff98ac4700c6f713251d384c`. That patch includes experimental regression consumption; it is not in this source commit. Current-source references below are repository paths with source line numbers. Overlay references are explicitly marked and use the stopped overlay's line numbers.

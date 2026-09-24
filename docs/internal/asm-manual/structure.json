@@ -168,13 +168,76 @@
    "number": "2.1",
    "level": 2,
    "kind": "section",
+   "title": "Explain it like I\u2019m 5: learning to suggest better recipes",
+   "id": "c-architecture--explain-it-like-im-5-learning-to-suggest-better-recipes",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.2",
+   "level": 2,
+   "kind": "section",
+   "title": "Current executable pipeline and the historical snapshot",
+   "id": "c-architecture--current-executable-pipeline-and-the-historical-snapshot",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.2.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "From original rows to a conditional program",
+   "id": "c-architecture--from-original-rows-to-a-conditional-program",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.2.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "From program candidates to eligible teachers",
+   "id": "c-architecture--from-program-candidates-to-eligible-teachers",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.2.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "From teachers to changed parameters and another measured search",
+   "id": "c-architecture--from-teachers-to-changed-parameters-and-another-measured-search",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.2.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "From a fitted predictor to deployable code",
+   "id": "c-architecture--from-a-fitted-predictor-to-deployable-code",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.3",
+   "level": 2,
+   "kind": "section",
+   "title": "Preserved historical chapter snapshot",
+   "id": "c-architecture--preserved-historical-chapter-snapshot",
+   "file": "architecture.md",
+   "volume": "main"
+  },
+  {
+   "number": "2.4",
+   "level": 2,
+   "kind": "section",
    "title": "System at a glance: flow diagram and component map",
    "id": "c-architecture--system-at-a-glance-flow-diagram-and-component-map",
    "file": "architecture.md",
    "volume": "main"
   },
   {
-   "number": "2.2",
+   "number": "2.5",
    "level": 2,
    "kind": "section",
    "title": "The learning cycle: what is proven and what remains",
@@ -183,7 +246,7 @@
    "volume": "main"
   },
   {
-   "number": "2.3",
+   "number": "2.6",
    "level": 2,
    "kind": "section",
    "title": "GP representation: recipes, fitted predictors and the four artifact types",
@@ -192,7 +255,7 @@
    "volume": "main"
   },
   {
-   "number": "2.4",
+   "number": "2.7",
    "level": 2,
    "kind": "section",
    "title": "Encodings and the proposal context",
@@ -201,7 +264,7 @@
    "volume": "main"
   },
   {
-   "number": "2.4.1",
+   "number": "2.7.1",
    "level": 3,
    "kind": "subsection",
    "title": "Regression context production",
@@ -210,7 +273,7 @@
    "volume": "main"
   },
   {
-   "number": "2.4.1.1",
+   "number": "2.7.1.1",
    "level": 4,
    "kind": "sub-subsection",
    "title": "Original data and preprocessing",
@@ -219,7 +282,7 @@
    "volume": "main"
   },
   {
-   "number": "2.4.1.2",
+   "number": "2.7.1.2",
    "level": 4,
    "kind": "sub-subsection",
    "title": "Component dimensions and assembly",
@@ -228,7 +291,7 @@
    "volume": "main"
   },
   {
-   "number": "2.4.1.3",
+   "number": "2.7.1.3",
    "level": 4,
    "kind": "sub-subsection",
    "title": "Qualification and admission",
@@ -237,7 +300,7 @@
    "volume": "main"
   },
   {
-   "number": "2.4.2",
+   "number": "2.7.2",
    "level": 3,
    "kind": "subsection",
    "title": "Experimental classification context",
@@ -246,7 +309,7 @@
    "volume": "main"
   },
   {
-   "number": "2.5",
+   "number": "2.8",
    "level": 2,
    "kind": "section",
    "title": "The accepted regression model: lineage B, step 60,000",
@@ -255,7 +318,7 @@
    "volume": "main"
   },
   {
-   "number": "2.5.1",
+   "number": "2.8.1",
    "level": 3,
    "kind": "subsection",
    "title": "Checkpoint binding and configuration",
@@ -264,7 +327,7 @@
    "volume": "main"
   },
   {
-   "number": "2.5.2",
+   "number": "2.8.2",
    "level": 3,
    "kind": "subsection",
    "title": "Decoder and reward architecture",
@@ -273,7 +336,7 @@
    "volume": "main"
   },
   {
-   "number": "2.5.3",
+   "number": "2.8.3",
    "level": 3,
    "kind": "subsection",
    "title": "Accepted identities and the product restriction",
@@ -282,7 +345,7 @@
    "volume": "main"
   },
   {
-   "number": "2.6",
+   "number": "2.9",
    "level": 2,
    "kind": "section",
    "title": "Model lineages",
@@ -1140,13 +1203,67 @@
    "number": "8.1",
    "level": 2,
    "kind": "section",
+   "title": "Observed transferable lift: reporting contract, not yet measured",
+   "id": "c-learning--observed-transferable-lift-reporting-contract-not-yet-measured",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.1.1",
+   "level": 3,
+   "kind": "subsection",
+   "title": "What the two measurements mean",
+   "id": "c-learning--what-the-two-measurements-mean",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.1.2",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Why this needs a new frozen evaluation",
+   "id": "c-learning--why-this-needs-a-new-frozen-evaluation",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.1.3",
+   "level": 3,
+   "kind": "subsection",
+   "title": "What the score does and does not establish",
+   "id": "c-learning--what-the-score-does-and-does-not-establish",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.1.4",
+   "level": 3,
+   "kind": "subsection",
+   "title": "Reading the real historical plots alongside this KPI",
+   "id": "c-learning--reading-the-real-historical-plots-alongside-this-kpi",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.2",
+   "level": 2,
+   "kind": "section",
+   "title": "Preserved historical chapter snapshot",
+   "id": "c-learning--preserved-historical-chapter-snapshot",
+   "file": "learning.md",
+   "volume": "main"
+  },
+  {
+   "number": "8.3",
+   "level": 2,
+   "kind": "section",
    "title": "What \u201cbetter and better\u201d must mean",
    "id": "c-learning--what-better-and-better-must-mean",
    "file": "learning.md",
    "volume": "main"
   },
   {
-   "number": "8.2",
+   "number": "8.4",
    "level": 2,
    "kind": "section",
    "title": "What the historical training and target evidence establishes",
@@ -1155,7 +1272,7 @@
    "volume": "main"
   },
   {
-   "number": "8.3",
+   "number": "8.5",
    "level": 2,
    "kind": "section",
    "title": "LOOP-01: the central regression milestone",
@@ -1164,7 +1281,7 @@
    "volume": "main"
   },
   {
-   "number": "8.3.1",
+   "number": "8.5.1",
    "level": 3,
    "kind": "subsection",
    "title": "Lineages, continuation names and generations",
@@ -1173,7 +1290,7 @@
    "volume": "main"
   },
   {
-   "number": "8.3.2",
+   "number": "8.5.2",
    "level": 3,
    "kind": "subsection",
    "title": "Two controlled rounds within the existing GPU cap",
@@ -1182,7 +1299,7 @@
    "volume": "main"
   },
   {
-   "number": "8.4",
+   "number": "8.6",
    "level": 2,
    "kind": "section",
    "title": "The closure ledger",
@@ -1191,7 +1308,7 @@
    "volume": "main"
   },
   {
-   "number": "8.5",
+   "number": "8.7",
    "level": 2,
    "kind": "section",
    "title": "A minimal experiment that can establish learning",
@@ -1200,7 +1317,7 @@
    "volume": "main"
   },
   {
-   "number": "8.5.1",
+   "number": "8.7.1",
    "level": 3,
    "kind": "subsection",
    "title": "Freezing the experiment and choosing families",
@@ -1209,7 +1326,7 @@
    "volume": "main"
   },
   {
-   "number": "8.5.2",
+   "number": "8.7.2",
    "level": 3,
    "kind": "subsection",
    "title": "What to retain for each cycle",
@@ -1218,7 +1335,7 @@
    "volume": "main"
   },
   {
-   "number": "8.5.3",
+   "number": "8.7.3",
    "level": 3,
    "kind": "subsection",
    "title": "The proposed preregistered regression decision",
@@ -1227,7 +1344,7 @@
    "volume": "main"
   },
   {
-   "number": "8.5.3.1",
+   "number": "8.7.3.1",
    "level": 4,
    "kind": "sub-subsection",
    "title": "Family-normalized gain",
@@ -1236,7 +1353,7 @@
    "volume": "main"
   },
   {
-   "number": "8.5.3.2",
+   "number": "8.7.3.2",
    "level": 4,
    "kind": "sub-subsection",
    "title": "Round thresholds",
@@ -1245,7 +1362,7 @@
    "volume": "main"
   },
   {
-   "number": "8.5.3.3",
+   "number": "8.7.3.3",
    "level": 4,
    "kind": "sub-subsection",
    "title": "Baselines, stopping and reporting",
@@ -1254,7 +1371,7 @@
    "volume": "main"
   },
   {
-   "number": "8.6",
+   "number": "8.8",
    "level": 2,
    "kind": "section",
    "title": "Distinguish routing, ranking and search recovery",
@@ -1263,7 +1380,7 @@
    "volume": "main"
   },
   {
-   "number": "8.7",
+   "number": "8.9",
    "level": 2,
    "kind": "section",
    "title": "Conditioning diagnostics before the first causal experiment",
@@ -1272,7 +1389,7 @@
    "volume": "main"
   },
   {
-   "number": "8.8",
+   "number": "8.10",
    "level": 2,
    "kind": "section",
    "title": "Specialization without starving the general learner",
@@ -1281,7 +1398,7 @@
    "volume": "main"
   },
   {
-   "number": "8.9",
+   "number": "8.11",
    "level": 2,
    "kind": "section",
    "title": "A KPI ledger with defined denominators",
@@ -1290,7 +1407,7 @@
    "volume": "main"
   },
   {
-   "number": "8.9.1",
+   "number": "8.11.1",
    "level": 3,
    "kind": "subsection",
    "title": "KPI definitions",
@@ -1299,7 +1416,7 @@
    "volume": "main"
   },
   {
-   "number": "8.9.2",
+   "number": "8.11.2",
    "level": 3,
    "kind": "subsection",
    "title": "Win counting and a proposed acceptance record",
@@ -1308,7 +1425,7 @@
    "volume": "main"
   },
   {
-   "number": "8.10",
+   "number": "8.12",
    "level": 2,
    "kind": "section",
    "title": "What is still needed to demonstrate the learning flywheel",
@@ -2811,6 +2928,15 @@
    "volume": "evidence"
   },
   {
+   "number": "B.4",
+   "level": 2,
+   "kind": "section",
+   "title": "Current publication regeneration and provenance",
+   "id": "c-training-history--current-publication-regeneration-and-provenance",
+   "file": "training-history.md",
+   "volume": "evidence"
+  },
+  {
    "number": "C",
    "level": 1,
    "kind": "chapter",
@@ -4073,126 +4199,161 @@
  ],
  "figures": [
   {
+   "id": "fig-status-1",
    "number": "Figure 1.1",
    "file": "status.md",
    "src": "figures/current-origin-loss.png",
    "caption": "Current operational proof: neural and generic development-hold RMSE (n = 34)"
   },
   {
+   "id": "fig-architecture-ip-pipeline",
    "number": "Figure 2.1",
+   "file": "architecture.md",
+   "src": "figures/ip-pipeline.svg",
+   "caption": "Data, search, teaching and measurement boundaries"
+  },
+  {
+   "id": "fig-architecture-policy-network",
+   "number": "Figure 2.2",
+   "file": "architecture.md",
+   "src": "figures/policy-network.svg",
+   "caption": "Accepted and experimental neural dimensions, attention and objectives"
+  },
+  {
+   "id": "fig-architecture-1",
+   "number": "Figure 2.3",
    "file": "architecture.md",
    "src": "figures/architecture-flow.svg",
    "caption": "ASM implementation and pending learning loop"
   },
   {
+   "id": "fig-data-1",
    "number": "Figure 4.1",
    "file": "data.md",
    "src": "figures/inventory-corpus.png",
    "caption": "Corpus task counts and license metadata completeness"
   },
   {
+   "id": "fig-datasets-1",
    "number": "Figure A.1",
    "file": "datasets.md",
    "src": "figures/inventory-frozen30.png",
    "caption": "All thirty datasets: frozen rows and feature types"
   },
   {
+   "id": "fig-training-history-1",
    "number": "Figure B.1",
    "file": "training-history.md",
    "src": "figures/training-gen31-loss.png",
    "caption": "Fourteen original gen31 epoch summaries, including training and validation components"
   },
   {
+   "id": "fig-training-history-2",
    "number": "Figure B.2",
    "file": "training-history.md",
    "src": "figures/training-gen31-quality.png",
    "caption": "Gen31 recorded context advantage and ranking diagnostics"
   },
   {
+   "id": "fig-training-history-3",
    "number": "Figure B.3",
    "file": "training-history.md",
    "src": "figures/training-legacy-round1-generations.svg",
    "caption": "Legacy round-1 epoch measurements and reported generation-level loss and internal Elo; the generation panels reproduce reported paper summaries, not a replayed tournament"
   },
   {
+   "id": "fig-training-history-4",
    "number": "Figure B.4",
    "file": "training-history.md",
    "src": "figures/training-historical-endpoints.png",
    "caption": "First and last sampled minibatch measurements for each of 108 reset training blocks"
   },
   {
+   "id": "fig-training-history-5",
    "number": "Figure B.5",
    "file": "training-history.md",
    "src": "figures/training-adaptive-validation.png",
    "caption": "Adaptive validation observations from changing corpus and panel identities"
   },
   {
+   "id": "fig-training-history-6",
    "number": "Figure B.6",
    "file": "training-history.md",
    "src": "figures/training-fixed-monitor.png",
    "caption": "Fixed-corpus and fixed-panel historical checkpoint comparison"
   },
   {
+   "id": "fig-training-history-7",
    "number": "Figure B.7",
    "file": "training-history.md",
    "src": "figures/training-a100-per-step.svg",
    "caption": "Complete retained A100 history: 100-step training averages (upper) and adaptive checkpoint validation on changing panels (lower); the lower panel's decline mixes learning with panel changes and is not a generalization curve"
   },
   {
+   "id": "fig-training-history-8",
    "number": "Figure B.8",
    "file": "training-history.md",
    "src": "figures/training-a100-checkpoints.png",
    "caption": "Original A100 checkpoint validation measurements, with accepted step 60000 marked"
   },
   {
+   "id": "fig-training-history-9",
    "number": "Figure B.9",
    "file": "training-history.md",
    "src": "figures/training-rtx60100-steps.png",
    "caption": "All 100 original step measurements of the world-1 qualification run, a historical hardware continuation rather than a promotion, with the recorded resume boundary; the RTX 3090 attribution comes from ADR-0005, not from the run metadata"
   },
   {
+   "id": "fig-targets-1",
    "number": "Figure C.1",
    "file": "targets.md",
    "src": "figures/target-quality-progress-counts.png",
    "caption": "First-to-last carried-forward best scores at 1,000 evaluations; the arms share seeds. The 64 lower arm groups cover 23 distinct dataset/cuts. No arm group ended higher, so the \u201cLast higher\u201d legend entry has no bar."
   },
   {
+   "id": "fig-targets-2",
    "number": "Figure C.2",
    "file": "targets.md",
    "src": "figures/target-quality-pine-example.png",
    "caption": "Post-hoc pine-chromium cut 1 history with shared teachers: generic/shuffled record the final program outside their seeds at generation 42; all arms inherit it at generation 43."
   },
   {
+   "id": "fig-targets-3",
    "number": "Figure C.3",
    "file": "targets.md",
    "src": "figures/fig01-elo-benchmark-valid.png",
    "caption": "Historical benchmark-valid Elo ladder and complete rank distribution"
   },
   {
+   "id": "fig-targets-4",
    "number": "Figure C.4",
    "file": "targets.md",
    "src": "figures/fig02-ladders-valid-vs-adaptive.png",
    "caption": "Historical published and benchmark-valid ladders with their distinct eligibility"
   },
   {
+   "id": "fig-targets-5",
    "number": "Figure C.5",
    "file": "targets.md",
    "src": "figures/fig03-samecut-deep-elo.png",
    "caption": "Historical same-cut screen and deep Elo with coverage"
   },
   {
+   "id": "fig-targets-6",
    "number": "Figure C.6",
    "file": "targets.md",
    "src": "figures/fig04-samecut-rmse-heatmap.png",
    "caption": "Historical same-cut relative RMSE heatmap"
   },
   {
+   "id": "fig-targets-7",
    "number": "Figure C.7",
    "file": "targets.md",
    "src": "figures/fig05-samecut-rank-distribution.png",
    "caption": "Historical same-cut per-dataset rank distribution"
   },
   {
+   "id": "fig-targets-8",
    "number": "Figure C.8",
    "file": "targets.md",
    "src": "figures/fig06-seconds-per-program.png",

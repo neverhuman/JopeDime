@@ -1,5 +1,86 @@
 # Measuring repeated learning and deciding improvement
 
+## Observed transferable lift: reporting contract, not yet measured
+
+**Current global KPI: not yet measured.** Merged PR90 adds private zero-fit planning and
+retained-prediction reporting. This publication contains no new training campaign or
+untouched nested evaluation. Existing acceptance thresholds, LOOP-01 definitions and serving
+decisions remain unchanged. The older proposal sections below retain their dated scope.
+
+### What the two measurements mean
+
+For each dataset, outer fold and seed, compare the challenger with its parent. The audit
+component averages five gains, each measured by an independently repeated complete search
+using only that audit fold’s training complement, with inner selection confined there, before
+scoring its held-out audit rows. The outer component measures a separate complete search
+selected and fitted using the full outer training partition. Each gain is
+`(parent RMSE − challenger RMSE) / training-mean baseline RMSE`; the baseline is fitted only
+on that score’s permitted training rows. Average the five separately normalized audit gains,
+not their raw RMSEs divided by one pooled denominator.
+
+Take `q = min(audit gain, outer gain)` **before aggregation**. Average folds/seeds within each
+dataset, datasets within each family, then families equally. Display `100 × result`, in
+percentage points of baseline RMSE. A holdout-only gain receives no positive contribution;
+audit-only improvement also receives none. For units `(audit, outer) = (0.3, −0.1)` and
+`(−0.1, 0.3)`, the contribution remains −0.1, rather than becoming +0.1 by taking the minimum
+after pooling. These numbers illustrate the definition and are not experimental results.
+
+The headline is accompanied by both gains, parent/challenger absolute skill against the
+trivial predictor, worst-family degradation, three-way sign agreement, planned/valid
+coverage, family distributions and an audit-versus-outer scatter plot. If relative improvement
+exists without positive mean absolute skill on both components, it says **no absolute skill
+demonstrated**. Generic-search and fresh-versus-replay controls remain separate contrasts.
+
+### Why this needs a new frozen evaluation
+
+Five outer folds and five training-side audit folds require **30 complete searches per
+arm/dataset/seed**, each with its own inner selection and final refit. Different folds may
+select different recipes. Re-scoring a previously selected winner, or selecting from an
+adaptively generated pool after the fact, does not satisfy this contract.
+
+The planner freezes checkpoints, procedure, controls, families, ordered rows/groups, folds,
+seeds, assets, source and resource estimates. Insufficient groups/resources remain explicit
+failures. Every planned prediction or terminal failure is committed before any audit or outer evaluation score
+is released. Inner candidate-selection scores remain available within their permitted search. Missing comparisons, contaminated exposure, invalid identities and zero/nonfinite
+baselines block a complete global score; they never disappear from the denominator.
+
+The existing thirty-dataset panel is adaptive development. It cannot become untouched by
+changing its label in a manifest. Checkpoint and encoder exposure are tracked separately;
+unknown historical exposure prevents an unseen-family claim. A trusted external release
+receipt must attest the admitted executor’s isolation and chronology. Hash verification
+checks bytes and declared dependencies; this reporting implementation does not establish
+the truth of an executor’s isolation claims or admit that future executor.
+
+### What the score does and does not establish
+
+This is a conservative descriptive score, not a confidence bound or proof of causality.
+Folds and seeds share data and are not independent statistical samples. Released outcomes
+become exposed development evidence when used to design subsequent work. The selection-bias
+problem is described by [Cawley and Talbot](https://www.jmlr.org/papers/v11/cawley10a.html),
+fold-dependence by [Bengio and Grandvalet](https://www.jmlr.org/papers/v5/grandvalet04a.html),
+and adaptive reuse by [Dwork et al.](https://arxiv.org/abs/1506.02629). These references motivate
+the precautions; they do not prove a special statistical guarantee for this minimum score.
+
+The CPU tests exercise arithmetic, evidence validation, coverage and a deterministic toy
+selection boundary. Changing its own scoring labels leaves the fixture’s frozen recipe and
+predictions unchanged. That test is not production executor qualification. See the private
+contract `docs/internal/transfer-measurement.md` and merged source `7f2b2bf860e4b1ac8815c8da55e507143570a905`.
+
+### Reading the real historical plots alongside this KPI
+
+The figures in [§](training-history.md) retain the original observations and their hashes:
+63,000 A100 steps (6001–69000, not invented steps 1–6000), the separate 100-step RTX
+continuation, fixed-monitor comparisons and available conditional ranking/regret diagnostics.
+Training corpus, objective, lineage and validation-population boundaries stay visible.
+The fixed monitor is adaptive teaching evidence; decreasing training loss or ranking regret
+cannot substitute for the unmeasured nested transfer KPI. Raw histories remain intact; plotted
+bins are declared within-corpus summaries, with no interpolation across missing history.
+
+
+## Preserved historical chapter snapshot
+
+The following sections retain the original dated source narrative and evidence. The current-source additions above supersede implementation-status descriptions where explicitly stated.
+
 ## What “better and better” must mean
 
 A genuine flywheel joins four measured improvements. GP finds a better executable teacher for an unchanged comparison. Training actually consumes that new information. The policy becomes better at proposing or ranking programs for the relevant dataset-and-split context. Finally, the next bounded GP search improves because of that policy. Each arrow needs its own evidence; a growing corpus, a saved checkpoint or a completed search cannot stand in for the whole chain.

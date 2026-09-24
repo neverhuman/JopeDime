@@ -27,6 +27,11 @@ def verify():
     for target in re.findall(r"\]\(([^)]+)\)", landing):
         assert (DOCS / target.split("#")[0]).is_file(), f"Broken manual entrypoint link: {target}"
     book = json.loads((ROOT / "book.json").read_text())
+    figures = json.loads((ROOT / "structure.json").read_text())["figures"]
+    assert len({f["id"] for f in figures}) == len(figures), "Duplicate figure destination"
+    for source, anchor in book.get("figure_anchors", {}).items():
+        matches = [f for f in figures if f["src"] == source]
+        assert len(matches) == 1 and matches[0]["id"] == anchor, "Stale stable figure anchor"
     for chapter in book["chapters"] + book["appendices"]:
         assert f"(internal/asm-manual/sections/{chapter['file']})" in landing, "Missing manual entrypoint chapter"
     assert set(pub["pdfs"]) == {str(p.relative_to(DOCS)) for p in DOCS.rglob("*.pdf")}, "Undeclared PDF"

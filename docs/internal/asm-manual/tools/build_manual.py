@@ -270,6 +270,7 @@ def main() -> None:
     # Pass 2: resolve links, add numbers to headings and figures, build the contents.
     unresolved = []
     figures: list[dict] = []
+    figure_ids: set[str] = set()
 
     def href_to(target: str, from_volume: str) -> str:
         """An internal link, or a link into the other PDF when the target lives there. A link to
@@ -336,7 +337,12 @@ def main() -> None:
             # Number every figure within its chapter and print its alt text as the caption.
             label = f"Figure {chapter['label']}.{figure_number}"
             holder = image.parent if image.parent.name == "p" and len([c for c in image.parent.contents if str(c).strip()]) == 1 else image
-            figure = page.new_tag("figure", attrs={"class": "fig", "id": f"fig-{stem}-{figure_number}"})
+            # Keep published destinations stable when a new figure precedes an old one.
+            figure_id = book.get("figure_anchors", {}).get(image["src"], f"fig-{stem}-{figure_number}")
+            if not re.fullmatch(r"fig-[a-z0-9-]+", figure_id) or figure_id in figure_ids or figure_id in anchors or figure_id in aliases:
+                raise SystemExit(f"Invalid or duplicate figure destination: {figure_id}")
+            figure_ids.add(figure_id)
+            figure = page.new_tag("figure", attrs={"class": "fig", "id": figure_id})
             caption = page.new_tag("figcaption")
             number_span = page.new_tag("span", attrs={"class": "fignum"})
             number_span.string = label
@@ -345,7 +351,7 @@ def main() -> None:
             holder.replace_with(figure)
             figure.append(image)
             figure.append(caption)
-            figures.append({"number": label, "file": chapter["file"], "src": image["src"], "caption": image.get("alt", "")})
+            figures.append({"id": figure_id, "number": label, "file": chapter["file"], "src": image["src"], "caption": image.get("alt", "")})
         # A contents list at the top of each chapter, one level deeper than the volume contents.
         entries = [s for s in structure if s["file"] == chapter["file"] and s["level"] in (2, 3, 4)]
         if len(entries) >= 3:
